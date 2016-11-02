@@ -57,7 +57,9 @@ namespace engine
    public:
       catNodeManager() ;
       ~catNodeManager() ;
+
       INT32 init() ;
+      INT32 fini() ;
 
       void  attachCB( _pmdEDUCB *cb ) ;
       void  detachCB( _pmdEDUCB *cb ) ;

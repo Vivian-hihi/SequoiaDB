@@ -113,10 +113,18 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Init system log manager failed, rc: %d",
                    rc ) ;
 
+      _pCatCB->regEventHandler( this ) ;
+
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _catDCManager::fini ()
+   {
+      _pCatCB->unregEventHandler( this ) ;
+      return SDB_OK ;
    }
 
    void _catDCManager::attachCB( pmdEDUCB * cb )
@@ -188,13 +196,15 @@ namespace engine
       return groupInImage( _pCatCB->groupID2Name( groupID ) ) ;
    }
 
-   void _catDCManager::onCommandBegin( MsgHeader *pMsg )
+   INT32 _catDCManager::onBeginCommand ( MsgHeader *pMsg )
    {
       setWritedCommand( FALSE ) ;
       _lsn = _pDpsCB->expectLsn() ;
+
+      return SDB_OK ;
    }
 
-   void _catDCManager::onCommandEnd( MsgHeader *pMsg, INT32 result )
+   INT32 _catDCManager::onEndCommand ( MsgHeader *pMsg, INT32 result )
    {
       INT32 rc = SDB_OK ;
       DPS_LSN expectLSN = _pDpsCB->expectLsn() ;
@@ -236,11 +246,17 @@ namespace engine
       }
 
    done:
-      return ;
+      return rc ;
    shutdown:
       PD_LOG( PDSEVERE, "Stop program because save system log, rc: %d", rc ) ;
       PMD_RESTART_DB( rc ) ;
       goto done ;
+   }
+
+   INT32 _catDCManager::onSendReply ( MsgOpReply *pReply, INT32 result )
+   {
+      // Do nothing
+      return SDB_OK ;
    }
 
    INT32 _catDCManager::active()
@@ -379,16 +395,14 @@ namespace engine
       {
          if ( 0 == ctxBuff.size() )
          {
-            rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+            rc = _pCatCB->sendReply( handle, &replyHeader, rc ) ;
          }
          else
          {
             replyHeader.header.messageLength += ctxBuff.size() ;
             replyHeader.numReturned = ctxBuff.recordNum() ;
-            rc = _pCatCB->netWork()->syncSend( handle,
-                                               &(replyHeader.header),
-                                               (void*)ctxBuff.data(),
-                                               ctxBuff.size() ) ;
+            rc = _pCatCB->sendReply( handle, &replyHeader, rc,
+                                     (void *)ctxBuff.data(), ctxBuff.size() ) ;
          }
       }
       return rc ;

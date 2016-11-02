@@ -74,6 +74,8 @@ namespace engine
       _pRtnCB              = NULL ;
       _pAuthCB             = NULL ;
       _pEDUCB              = NULL ;
+      _pDpsCB              = NULL ;
+      _pTransCB            = NULL ;
       _checkEventTimerID   = NET_INVALID_TIMER_ID ;
       _isDelayed           = FALSE ;
 
@@ -419,6 +421,8 @@ namespace engine
       _pRtnCB              = pKrcb->getRTNCB() ;
       _pAuthCB             = pKrcb->getAuthCB() ;
       _pCatCB              = pKrcb->getCATLOGUECB() ;
+      _pDpsCB              = pKrcb->getDPSCB() ;
+      _pTransCB            = pKrcb->getTransCB() ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_INIT ) ;
 
@@ -428,11 +432,19 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to create metadata "
                     "collections/indexes, rc = %d", rc ) ;
 
+      _pCatCB->regEventHandler( this ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT_INIT, rc ) ;
       return rc ;
    error :
       goto done ;
+   }
+
+   INT32 catMainController::fini ()
+   {
+      _pCatCB->unregEventHandler( this ) ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT__CREATESYSIDX, "catMainController::_createSysIndex" )
@@ -726,7 +738,7 @@ namespace engine
                        buffObj, _pEDUCB, _pRtnCB ) ;
       if ( rc )
       {
-         _delContextByID( pGetMore->contextID, FALSE );
+         delContextByID( pGetMore->contextID, FALSE );
       }
       msgLen =  sizeof(MsgOpReply) + buffObj.size() ;
       // free by end of function
@@ -754,7 +766,7 @@ namespace engine
       }
       ossMemcpy( (CHAR *)pReply + sizeof(MsgOpReply), buffObj.data(),
                  buffObj.size() ) ;
-      rc = _pCatCB->netWork()->syncSend(handle, pReply);
+      rc = _pCatCB->sendReply( handle, pReply, rc ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to syncSend, rc = %d", rc ) ;
@@ -814,13 +826,13 @@ namespace engine
             PD_LOG( PDDEBUG,
                     "Kill context %lld",
                     pContextIDs[i] ) ;
-            _delContextByID( pContextIDs[ i ], TRUE ) ;
+            delContextByID( pContextIDs[ i ], TRUE ) ;
          }
       }while ( FALSE ) ;
       msgReply.flags = rc;
       PD_TRACE1 ( SDB_CATMAINCT_KILLCONTEXT,
                   PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( handle, &msgReply );
+      rc = _pCatCB->sendReply( handle, &msgReply, rc );
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR, "Failed to send the message "
@@ -1006,13 +1018,13 @@ namespace engine
 
          if ( 0 == buffObj.size() )
          {
-            rc = _pCatCB->netWork()->syncSend ( handle, &msgReply );
+            rc = _pCatCB->sendReply( handle, &msgReply, rc ) ;
          }
          else
          {
-            rc = _pCatCB->netWork()->syncSend( handle, &msgReply.header,
-                                               (void*)buffObj.data(),
-                                               (UINT32)buffObj.size() ) ;
+            rc = _pCatCB->sendReply( handle, &msgReply, rc,
+                                     (void *)buffObj.data(),
+                                     (UINT32)buffObj.size() ) ;
          }
          if ( rc != SDB_OK )
          {
@@ -1037,7 +1049,8 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       _isDelayed = FALSE ;
-      _pCatCB->getCatDCMgr()->onCommandBegin( msg ) ;
+
+      _pCatCB->onBeginCommand( msg ) ;
 
       if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)msg->opCode &&
            (UINT32)msg->opCode < MSG_CAT_CATALOGUE_END )
@@ -1059,7 +1072,8 @@ namespace engine
          rc = _processMsg( handle, msg ) ;
       }
 
-      _pCatCB->getCatDCMgr()->onCommandEnd( msg, rc ) ;
+      _pCatCB->onEndCommand( msg, rc ) ;
+
       return rc ;
    }
 
@@ -1145,9 +1159,8 @@ namespace engine
             reply.numReturned = 1 ;
             reply.startFrom = 0 ;
 
-            _pCatCB->netWork()->syncSend( handle, (MsgHeader*)&reply,
-                                          (void*)err.objdata(),
-                                          err.objsize() ) ;
+            _pCatCB->sendReply( handle, &reply, rc,
+                                (void *)err.objdata(), err.objsize() ) ;
             break ;
          }
       }
@@ -1220,7 +1233,7 @@ namespace engine
       if ( !isDelayed() )
       {
          PD_TRACE1 ( SDB_CATMAINCT_AUTHCRT, PD_PACK_INT ( rc ) ) ;
-         _pCatCB->netWork()->syncSend( handle, &reply ) ;
+         _pCatCB->sendReply( handle, &reply, rc ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHCRT, rc ) ;
       return rc ;
@@ -1287,7 +1300,7 @@ namespace engine
       if ( !isDelayed() )
       {
          PD_TRACE1 ( SDB_CATMAINCT_AUTHENTICATE, PD_PACK_INT ( rc ) ) ;
-         _pCatCB->netWork()->syncSend( handle, &reply ) ;
+         _pCatCB->sendReply( handle, &reply, rc ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHENTICATE, rc ) ;
       return rc ;
@@ -1356,7 +1369,7 @@ namespace engine
       if ( !isDelayed() )
       {
          PD_TRACE1 ( SDB_CATMAINCT_AUTHDEL, PD_PACK_INT ( rc ) ) ;
-         _pCatCB->netWork()->syncSend( handle, &reply ) ;
+         _pCatCB->sendReply( handle, &reply, rc ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHDEL, rc ) ;
       return rc ;
@@ -1399,7 +1412,7 @@ namespace engine
                   routeID2String( localRouteID ).c_str() ) ;
       }
       reply.flags = rc ;
-      _pCatCB->netWork()->syncSend( handle, (void *)&reply ) ;
+      _pCatCB->sendReply( handle, &reply, rc ) ;
 
       PD_TRACE_EXITRC ( SDB_CATMAINCT_SESSIONINIT, rc ) ;
       return rc ;
@@ -1463,7 +1476,7 @@ namespace engine
       }
    }
 
-   void catMainController::_delContextByID( INT64 contextID, BOOLEAN rtnDel )
+   void catMainController::delContextByID( INT64 contextID, BOOLEAN rtnDel )
    {
       PD_LOG ( PDDEBUG,
                "delete context( contextID=%lld )", contextID ) ;
@@ -1478,6 +1491,66 @@ namespace engine
          }
          _contextLst.erase( iterMap ) ;
       }
+   }
+
+   INT32 catMainController::onBeginCommand ( MsgHeader *pReqMsg )
+   {
+      return _transactionBegin () ;
+   }
+
+   INT32 catMainController::onEndCommand ( MsgHeader *pReqMsg, INT32 result )
+   {
+      return _transactionEnd( result ) ;
+   }
+
+   INT32 catMainController::onSendReply ( MsgOpReply *pReply, INT32 result )
+   {
+      return _transactionEnd( result ) ;
+   }
+
+   INT32 catMainController::_transactionBegin ()
+   {
+      INT32 rc = SDB_OK ;
+
+      // Do not begin transaction on non-primary nodes
+      if ( _pTransCB->isTransOn() )
+      {
+         rc = rtnTransBegin( _pEDUCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to begin transaction" ) ;
+         PD_LOG( PDDEBUG, "Begin transaction" ) ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 catMainController::_transactionEnd ( INT32 result )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( DPS_INVALID_TRANS_ID != _pEDUCB->getTransID() )
+      {
+         if ( SDB_OK == result ||
+              SDB_DMS_EOC == result )
+         {
+            rc = rtnTransCommit( _pEDUCB, _pDpsCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to commit transaction" ) ;
+            PD_LOG( PDDEBUG, "Commit transaction" ) ;
+         }
+         else
+         {
+            rc = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to rollback transaction" ) ;
+            PD_LOG( PDDEBUG, "Rollback transaction" ) ;
+         }
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
 }

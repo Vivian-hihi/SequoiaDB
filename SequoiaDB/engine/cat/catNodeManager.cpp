@@ -84,6 +84,11 @@ namespace engine
       return rc ;
    }
 
+   INT32 catNodeManager::fini()
+   {
+      return SDB_OK ;
+   }
+
    void catNodeManager::attachCB( pmdEDUCB * cb )
    {
       _pEduCB = cb ;
@@ -321,7 +326,7 @@ namespace engine
 
    done:
       PD_TRACE1 ( SDB_CATNODEMGR_PRIMARYCHANGE, PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( handle, &replyHeader ) ;
+      rc = _pCatCB->sendReply( handle, &replyHeader, rc ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "failed to send response(primary-change)(rc=%d)",
@@ -455,16 +460,14 @@ namespace engine
          PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ, PD_PACK_INT ( rc ) ) ;
          if ( 0 == dataLen )
          {
-            rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+            rc = _pCatCB->sendReply( handle, &replyHeader, rc ) ;
          }
          else
          {
             replyHeader.header.messageLength += dataLen ;
             replyHeader.numReturned = 1 ;
-            rc = _pCatCB->netWork()->syncSend( handle,
-                                               &(replyHeader.header),
-                                               (void*)boGroupInfo.objdata(),
-                                               dataLen ) ;
+            rc = _pCatCB->sendReply( handle, &replyHeader, rc,
+                                     (void *)boGroupInfo.objdata(), dataLen ) ;
          }
       }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_GRPREQ, rc ) ;
@@ -570,16 +573,14 @@ namespace engine
       PD_TRACE1 ( SDB_CATNODEMGR_REGREQ, PD_PACK_INT ( rc ) ) ;
       if ( 0 == dataLen )
       {
-         rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+         rc = _pCatCB->sendReply( handle, &replyHeader, rc ) ;
       }
       else
       {
          replyHeader.header.messageLength += dataLen ;
          replyHeader.numReturned = 1 ;
-         rc = _pCatCB->netWork()->syncSend( handle,
-                                            &(replyHeader.header),
-                                            (void*)boNodeInfo.objdata(),
-                                            dataLen ) ;
+         rc = _pCatCB->sendReply( handle, &replyHeader, rc,
+                                  (void *)boNodeInfo.objdata(), dataLen ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_REGREQ, rc ) ;
       return rc;
@@ -776,16 +777,14 @@ namespace engine
       {
          if ( 0 == ctxBuff.size() )
          {
-            rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+            rc = _pCatCB->sendReply( handle, &replyHeader, rc ) ;
          }
          else
          {
             replyHeader.header.messageLength += ctxBuff.size() ;
             replyHeader.numReturned = ctxBuff.recordNum() ;
-            rc = _pCatCB->netWork()->syncSend( handle,
-                                               &(replyHeader.header),
-                                               (void*)ctxBuff.data(),
-                                               ctxBuff.size() ) ;
+            rc = _pCatCB->sendReply( handle, &replyHeader, rc,
+                                     (void *)ctxBuff.data(), ctxBuff.size() ) ;
          }
       }
       return rc ;

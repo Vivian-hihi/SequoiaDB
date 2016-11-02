@@ -67,6 +67,7 @@ namespace engine
 
       typedef std::map<UINT32, string>    GRP_ID_MAP;
       typedef std::map<UINT16, UINT16>    NODE_ID_MAP;
+      typedef std::vector<_catEventHandler *> VEC_EVENT_HANDLER ;
 
       public:
          sdbCatalogueCB() ;
@@ -153,6 +154,17 @@ namespace engine
             return &_levelLockMgr ;
          }
 
+         void regEventHandler ( _catEventHandler *pHandler ) ;
+         void unregEventHandler ( _catEventHandler *pHandler ) ;
+
+         INT32 onBeginCommand ( MsgHeader *pReqMsg ) ;
+         INT32 onEndCommand ( MsgHeader *pReqMsg, INT32 result ) ;
+         INT32 onSendReply ( MsgOpReply *pReply, INT32 result ) ;
+
+         INT32 sendReply ( const NET_HANDLE &handle,
+                           MsgOpReply *pReply, INT32 result,
+                           void *pReplyData = NULL, UINT32 replyDataLen = 0 ) ;
+
       private:
          _netRouteAgent       *_pNetWork ;
          _MsgRouteID          _routeID ;
@@ -174,6 +186,8 @@ namespace engine
 
          MsgRouteID           _primaryID ;
          BOOLEAN              _isActived ;
+
+         VEC_EVENT_HANDLER    _vecEventHandler ;
    } ;
 
    /*

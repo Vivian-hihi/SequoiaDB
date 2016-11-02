@@ -48,6 +48,7 @@
 #include "ossEvent.hpp"
 #include "catCatalogManager.hpp"
 #include "catNodeManager.hpp"
+#include "catEventHandler.hpp"
 #include "utilMap.hpp"
 
 #include <vector>
@@ -64,7 +65,8 @@ namespace engine
       catMainController define
    */
    class catMainController : public _pmdObjBase, public _netMsgHandler,
-                             public _netTimeoutHandler
+                             public _netTimeoutHandler,
+                             public _catEventHandler
    {
    typedef _utilMap< SINT64, UINT64, 20 >    CONTEXT_LIST ;
    typedef std::vector< pmdEDUEvent >        VEC_EVENT ;
@@ -74,7 +76,9 @@ namespace engine
    public:
       catMainController() ;
       virtual ~catMainController() ;
+
       INT32 init() ;
+      INT32 fini() ;
 
       virtual void   attachCB( _pmdEDUCB *cb ) ;
       virtual void   detachCB( _pmdEDUCB *cb ) ;
@@ -88,6 +92,7 @@ namespace engine
       BOOLEAN   isDelayed() const { return _isDelayed ; }
 
       void addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
+      void delContextByID( INT64 contextID, BOOLEAN rtnDel ) ;
 
    public:
       INT32 handleMsg( const NET_HANDLE &handle,
@@ -143,7 +148,17 @@ namespace engine
                                    pmdEDUCB *cb ) ;
       void _delContextByHandle( const UINT32 &handle ) ;
       void _delContext( const UINT32 &handle, UINT32 tid ) ;
-      void _delContextByID( INT64 contextID, BOOLEAN rtnDel ) ;
+
+   public :
+      // functions of _catEventHandler
+      virtual const CHAR *getHandlerName () { return "catMainController" ; }
+      virtual INT32 onBeginCommand ( MsgHeader *pReqMsg ) ;
+      virtual INT32 onEndCommand ( MsgHeader *pReqMsg, INT32 result ) ;
+      virtual INT32 onSendReply ( MsgOpReply *pReply, INT32 result ) ;
+
+   protected :
+      INT32 _transactionBegin () ;
+      INT32 _transactionEnd ( INT32 result ) ;
 
    private :
       pmdEDUMgr         *_pEduMgr;
@@ -151,6 +166,8 @@ namespace engine
       _SDB_DMSCB        *_pDmsCB;
       pmdEDUCB          *_pEDUCB;
       _SDB_RTNCB        *_pRtnCB;
+      _dpsLogWrapper    *_pDpsCB;
+      dpsTransCB        *_pTransCB;
       _authCB           *_pAuthCB;
       CONTEXT_LIST      _contextLst;
       ossSpinXLatch     _contextLatch ;

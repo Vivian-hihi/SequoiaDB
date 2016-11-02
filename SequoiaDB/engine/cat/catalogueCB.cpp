@@ -261,6 +261,12 @@ namespace engine
 
    INT32 sdbCatalogueCB::fini ()
    {
+      // member objects fini
+      _catDCMgr.fini() ;
+      _catNodeMgr.fini() ;
+      _catlogueMgr.fini() ;
+      _catMainCtrl.fini() ;
+
       // unregister event handle
       pmdGetKRCB()->unregEventHandler( this ) ;
 
@@ -752,6 +758,194 @@ namespace engine
             _isActived = FALSE ;
          }
       }
+   }
+
+   void sdbCatalogueCB::regEventHandler ( _catEventHandler *pHandler )
+   {
+      SDB_ASSERT( pHandler, "Handle can't be NULL" ) ;
+      SDB_ASSERT( pmdGetThreadEDUCB() &&
+                  EDU_TYPE_MAIN == pmdGetThreadEDUCB()->getType(),
+                  "Must register in main thread" ) ;
+
+      VEC_EVENT_HANDLER::iterator iter = find( _vecEventHandler.begin(),
+                                               _vecEventHandler.end(),
+                                               pHandler ) ;
+
+      SDB_ASSERT( _vecEventHandler.end() == iter, "Handle can't be same" ) ;
+
+      _vecEventHandler.push_back( pHandler ) ;
+
+      PD_LOG( PDDEBUG, "Register cat event handler [%s]",
+              pHandler->getHandlerName() ) ;
+   }
+
+   void sdbCatalogueCB::unregEventHandler ( _catEventHandler *pHandler )
+   {
+      SDB_ASSERT( pHandler, "Handle can't be NULL" ) ;
+      SDB_ASSERT( pmdGetThreadEDUCB() &&
+                  EDU_TYPE_MAIN == pmdGetThreadEDUCB()->getType(),
+                  "Must unregister in main thread" ) ;
+
+      VEC_EVENT_HANDLER::iterator iter = find( _vecEventHandler.begin(),
+                                               _vecEventHandler.end(),
+                                               pHandler ) ;
+      if ( _vecEventHandler.end() != iter )
+      {
+         _vecEventHandler.erase( iter ) ;
+      }
+
+      PD_LOG( PDDEBUG, "Unregister cat event handler [%s]",
+              pHandler->getHandlerName() ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ONBEGINCMD, "sdbCatalogueCB::onBeginCommand" )
+   INT32 sdbCatalogueCB::onBeginCommand ( MsgHeader *pReqMsg )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATALOGCB_ONBEGINCMD ) ;
+
+      for ( VEC_EVENT_HANDLER::iterator iter = _vecEventHandler.begin();
+            iter != _vecEventHandler.end() ;
+            ++iter )
+      {
+         _catEventHandler *pHandler = (*iter) ;
+         rc = pHandler->onBeginCommand( pReqMsg ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Failed on begin command event [%d] with handler [%s]",
+                    pReqMsg->opCode, pHandler->getHandlerName() ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_CATALOGCB_ONBEGINCMD ) ;
+
+      // Ignore errors
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ONENDCMD, "sdbCatalogueCB::onEndCommand" )
+   INT32 sdbCatalogueCB::onEndCommand ( MsgHeader *pReqMsg, INT32 result )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATALOGCB_ONENDCMD ) ;
+
+      // Over reverse order
+      for ( VEC_EVENT_HANDLER::reverse_iterator iter = _vecEventHandler.rbegin();
+            iter != _vecEventHandler.rend() ;
+            ++iter )
+      {
+         _catEventHandler *pHandler = (*iter) ;
+         rc = pHandler->onEndCommand( pReqMsg, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Failed on end command event [%d] with handler [%s]",
+                    pReqMsg->opCode, pHandler->getHandlerName() ) ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_CATALOGCB_ONENDCMD ) ;
+
+      // ignore errors
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ONSENDREPLY, "sdbCatalogueCB::onSendReply" )
+   INT32 sdbCatalogueCB::onSendReply ( MsgOpReply *pReply, INT32 result )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATALOGCB_ONSENDREPLY ) ;
+
+      // Over reverse order
+      for ( VEC_EVENT_HANDLER::reverse_iterator iter = _vecEventHandler.rbegin();
+            iter != _vecEventHandler.rend() ;
+            ++iter )
+      {
+         _catEventHandler *pHandler = (*iter) ;
+         rc = pHandler->onSendReply( pReply, result ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed on send reply event [%d] with handler [%s]",
+                      pReply->header.opCode, pHandler->getHandlerName() ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATALOGCB_ONSENDREPLY, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_SENDREPLY, "sdbCatalogueCB::sendReply" )
+   INT32 sdbCatalogueCB::sendReply ( const NET_HANDLE &handle,
+                                     MsgOpReply *pReply, INT32 result,
+                                     void *pReplyData, UINT32 replyDataLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATALOGCB_SENDREPLY ) ;
+
+      MsgOpReply errReply ;
+
+      rc = onSendReply( pReply, result ) ;
+      if ( SDB_OK != rc &&
+            ( SDB_OK == result ||
+              SDB_DMS_EOC == result ) )
+      {
+         // Replace with error reply
+
+         // Delete context if the reply message specifies contextID
+         // since Coord will not send KillContext if Catalog reports error
+         SINT64 contextID = pReply->contextID ;
+         if ( -1 != contextID )
+         {
+            getMainController()->delContextByID( contextID, TRUE ) ;
+         }
+
+         // Fill error reply message
+         errReply.header.messageLength = sizeof( MsgOpReply ) ;
+         errReply.header.opCode = pReply->header.opCode ;
+         errReply.header.requestID = pReply->header.requestID ;
+         errReply.header.routeID.value = pReply->header.routeID.value ;
+         errReply.header.TID = pReply->header.TID ;
+
+         errReply.flags = rc ;
+         errReply.contextID = -1 ;
+         errReply.numReturned = 0 ;
+         errReply.startFrom = pReply->startFrom ;
+
+         pReply = &errReply ;
+         pReplyData = NULL ;
+         replyDataLen = 0 ;
+      }
+
+      PD_LOG( PDDEBUG,
+              "Sending reply message [%d] with rc [%d]",
+              pReply->header.opCode, pReply->flags ) ;
+
+      if ( pReplyData )
+      {
+         rc = netWork()->syncSend( handle, &(pReply->header),
+                                   pReplyData, replyDataLen ) ;
+      }
+      else
+      {
+         rc = netWork()->syncSend( handle, &(pReply->header) ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING,
+                 "Failed to send reply message [%d], rc: %d",
+                 pReply->header.opCode, rc ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB_CATALOGCB_SENDREPLY, rc ) ;
+
+      return rc ;
    }
 
    /*
