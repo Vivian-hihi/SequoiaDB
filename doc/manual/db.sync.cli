@@ -58,14 +58,14 @@ Flush the log and data to files.
        \fBGroupID\fR
 .br
               Specify the ID of the replica group need to be
-              backup. Backup all replica groups in default.
+              sync. Sync all replica groups in default.
 .br
               GroupID:1000 or GroupID:[1000, 1001]
 .sp 2
        \fBGroupName\fR
 .br
               Specify the name of the replica group need to
-              backup. Backup all replica groups in default.
+              sync. Sync all replica groups in default.
 .br
               GroupName:"data1" or GroupName:["data1", "data2"]
 .sp 2
