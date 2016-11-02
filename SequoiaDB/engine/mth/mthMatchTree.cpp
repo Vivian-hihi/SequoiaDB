@@ -45,6 +45,15 @@ using namespace bson ;
 
 namespace engine
 {
+   // all elements start with $
+   #define MTH_ELEMENT_KEY_ALL_OP         0
+
+   // all elements start without $
+   #define MTH_ELEMENT_KEY_ALL_NORMAL     1
+
+   // mix $ and not $
+   #define MTH_ELEMENT_KEY_MIX            2
+
    static mthMatchOpMapping g_opstr_to_type_array[] =
    {
       //opstr,                        nodeType
@@ -979,28 +988,48 @@ namespace engine
       }
    }
 
-   BOOLEAN _mthMatchTree::_isExistOpEyeCatcher( const BSONElement &ele )
+   INT32 _mthMatchTree::_getElementKeysFormat( const BSONElement &ele )
    {
       const CHAR *eFieldName = NULL ;
+      INT32 opCount = 0 ;
+      INT32 normalCount = 0 ;
       BSONElement temEle ;
       if ( Object == ele.type() || Array == ele.type() )
       {
-            BSONObjIterator j( ele.embeddedObject() ) ;
-            while ( j.more () )
+         BSONObjIterator j( ele.embeddedObject() ) ;
+         while ( j.more () )
+         {
+            temEle     = j.next() ;
+            eFieldName = temEle.fieldName() ;
+            if ( MTH_OPERATOR_EYECATCHER == eFieldName[0] )
             {
-               temEle     = j.next() ;
-               eFieldName = temEle.fieldName() ;
-               if ( MTH_OPERATOR_EYECATCHER == eFieldName[0] )
-               {
-                  return TRUE ;
-               }
+               opCount++ ;
             }
-            return FALSE ;
+            else
+            {
+               normalCount++ ;
+            }
+         }
       }
       else
       {
-         // only object and array have SubObject!
-         return FALSE ;
+         normalCount = 1 ;
+      }
+
+      if ( opCount > 0  )
+      {
+         if ( normalCount > 0 )
+         {
+            return MTH_ELEMENT_KEY_MIX ;
+         }
+         else
+         {
+            return MTH_ELEMENT_KEY_ALL_OP ;
+         }
+      }
+      else
+      {
+         return MTH_ELEMENT_KEY_ALL_NORMAL ;
       }
    }
 
@@ -1289,6 +1318,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__MTHMATCHTREE_PARSEOBJECTELEMENT ) ;
       INT32 rc = SDB_OK ;
+      INT32 keysFormat = 0 ;
       MTH_FUNC_LIST funcList ;
       const CHAR *fieldName = ele.fieldName() ;
       //fieldName can't start with '$'
@@ -1299,7 +1329,8 @@ namespace engine
                       ele.toString().c_str() ) ;
       }
 
-      if ( !_isExistOpEyeCatcher( ele ) )
+      keysFormat = _getElementKeysFormat( ele ) ;
+      if ( MTH_ELEMENT_KEY_ALL_NORMAL == keysFormat )
       {
          // { a : { xx : xxxxxx, yy : yyyyyy } }
          MTH_FUNC_LIST empty ;
@@ -1310,9 +1341,19 @@ namespace engine
 
          goto done ;
       }
-
+      else if ( MTH_ELEMENT_KEY_MIX == keysFormat )
       {
          // { a : { $xx : xxxxxx, yy : yyyyyy } }
+         // do not allow mix format
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "object's element do not allow exist mix op keys and "
+                 "normal keys:ele=%s,rc=%d", ele.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      else
+      {
+         //MTH_ELEMENT_KEY_ALL_OP
+         // { a : { $xx : xxxxxx, $yy : yyyyyy } }
          BSONObjIterator iter( ele.embeddedObject() ) ;
          const CHAR *regex   = NULL ;
          const CHAR *options = NULL ;
@@ -1364,31 +1405,10 @@ namespace engine
                regex = NULL ;
             }
 
-            if ( MTH_OPERATOR_EYECATCHER == embFieldName[0] )
-            {
-               // { a : { $xx : xxxxxxx } }
-               rc = _pareseObjectInnerOp( ele, embEle, funcList, parent, regex,
-                                          options ) ;
-               PD_RC_CHECK( rc, PDERROR, "_pareseObjectInnerOp failed:rc=%d",
-                            rc ) ;
-            }
-            else
-            {
-               // { a : { xxx : xxxxxx } }, quality condition
-               BSONObjBuilder *b = NULL ;
-               BSONObjBuilder tmpBuilder ;
-               BSONObj tmpObj ;
-               rc = _createBuilder( &b ) ;
-               PD_RC_CHECK( rc, PDERROR, "failed to create BSONObjBuilder:"
-                            "rc=%d", rc ) ;
-
-               tmpBuilder.append( embEle ) ;
-               tmpObj = tmpBuilder.obj() ;
-               b->append( ele.fieldName(), tmpObj ) ;
-               rc = _addOperator( ele.fieldName(), b->done().firstElement(),
-                                  EN_MATCH_OPERATOR_ET, funcList, parent ) ;
-               PD_RC_CHECK( rc, PDERROR, "_addOperator failed:rc=%d", rc ) ;
-            }
+            // { a : { $xx : xxxxxxx } }
+            rc = _pareseObjectInnerOp( ele, embEle, funcList, parent, regex,
+                                       options ) ;
+            PD_RC_CHECK( rc, PDERROR, "_pareseObjectInnerOp failed:rc=%d", rc ) ;
          }
 
          if ( NULL != regex )

@@ -256,7 +256,7 @@ namespace engine
          ~_mthMatchTreeContext() ;
 
          void  clear() ;
-         void clearPart() ;
+         void clearRecordInfo() ;
 
          //****array attribute relate*******
          INT32 getDollarResult( INT32 index, INT32 &value ) ;
@@ -313,6 +313,8 @@ namespace engine
          _utilArray< BSONElement > _elements ;
          /* array attribute relate */
    } ;
+
+   void mthContextClearRecordInfoSafe( _mthMatchTreeContext *context ) ;
 
    class _mthMatchNode ;
    typedef vector< _mthMatchNode* > MATCHNODE_VECTOR ;

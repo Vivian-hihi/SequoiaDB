@@ -2252,13 +2252,22 @@ namespace engine
    INT32 mthType( const CHAR *name, const BSONElement &in,
                   BSONObjBuilder &outBuilder )
    {
-      outBuilder.append( name, in.type() ) ;
+      if ( !in.eoo() )
+      {
+         outBuilder.append( name, in.type() ) ;
+      }
+
       return SDB_OK ;
    }
 
    INT32 mthSize( const CHAR *name, const BSONElement &in,
                   BSONObjBuilder &outBuilder )
    {
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+
       if ( in.type() == Array || in.type() == Object )
       {
          outBuilder.append( name, in.embeddedObject().nFields() ) ;
@@ -2268,6 +2277,7 @@ namespace engine
          outBuilder.appendNull( name ) ;
       }
 
+   done:
       return SDB_OK ;
    }
 

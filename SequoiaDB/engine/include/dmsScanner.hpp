@@ -210,7 +210,7 @@ namespace engine
          BSONObj* _getEndKey () ;
          dmsRecordID* _getStartRID () ;
          dmsRecordID* _getEndRID () ;
-         void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
+         void _updateMaxRecordsNum( _mthRecordGenerator &generator ) ;
 
       private:
          INT64                _maxRecords ;

@@ -149,7 +149,7 @@ namespace engine
                                       _mthMatchLogicNode *parent ) ;
          BOOLEAN  _isExistOpFieldRecursive( const BSONElement &ele,
                                           BOOLEAN ignoreCurrentField = FALSE ) ;
-         BOOLEAN  _isExistOpEyeCatcher( const BSONElement &ele ) ;
+         INT32    _getElementKeysFormat( const BSONElement &ele ) ;
 
          void     _clearFuncList( MTH_FUNC_LIST &funcList ) ;
 

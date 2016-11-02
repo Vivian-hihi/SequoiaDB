@@ -1089,7 +1089,7 @@ namespace engine
 
    //************************_mthMatchFuncCAST********************************
    _mthMatchFuncCAST::_mthMatchFuncCAST( _mthNodeAllocator *allocator )
-                     :_mthMatchFunc( allocator )
+                     :_mthMatchFunc( allocator ), _castType( EOO )
    {
    }
 
@@ -1485,6 +1485,8 @@ namespace engine
    _mthMatchFuncRETURNMATCH::_mthMatchFuncRETURNMATCH( _mthNodeAllocator *allocator )
                             :_mthMatchFunc( allocator )
    {
+      _offset = 0 ;
+      _len = -1 ;
    }
 
    _mthMatchFuncRETURNMATCH::~_mthMatchFuncRETURNMATCH()
@@ -3721,7 +3723,7 @@ namespace engine
    //**************_mthMatchOpNodeELEMMATCH*****************************
    _mthMatchOpNodeELEMMATCH::_mthMatchOpNodeELEMMATCH(
                                               _mthNodeAllocator *allocator )
-                            :_mthMatchOpNode( allocator )
+                            :_mthMatchOpNode( allocator ), _subTree( NULL )
    {
    }
 
@@ -3839,6 +3841,8 @@ namespace engine
             BSONElement innerEle = iter.next() ;
             if ( innerEle.type() == Object || innerEle.type() == Array )
             {
+               //do not clear dollarlist flag
+               subContext.clearRecordInfo() ;
                rc = _subTree->matches( innerEle.embeddedObject(), result,
                                        &subContext ) ;
                PD_RC_CHECK( rc, PDERROR, "matches subtree failed:rc=%d", rc ) ;

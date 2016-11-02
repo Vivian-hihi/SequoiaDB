@@ -331,6 +331,8 @@ namespace engine
                try
                {
                   BSONObj obj( recordData.data() ) ;
+                  //do not clear dollarlist flag
+                  mthContextClearRecordInfoSafe( mthContext ) ;
                   rc = _match->matches( obj, result, mthContext ) ;
                   if ( rc )
                   {
@@ -738,7 +740,7 @@ namespace engine
       return _scanner->getDirection() == _blockScanDir ? &_endRID : &_startRID ;
    }
 
-   void _dmsIXSecScanner::_checkMaxRecordsNum( _mthRecordGenerator &generator )
+   void _dmsIXSecScanner::_updateMaxRecordsNum( _mthRecordGenerator &generator )
    {
       if ( _maxRecords > 0 )
       {
@@ -942,6 +944,8 @@ namespace engine
             try
             {
                BSONObj obj ( recordData.data() ) ;
+               //do not clear dollarlist flag
+               mthContextClearRecordInfoSafe( mthContext ) ;
                rc = _match->matches( obj, result, mthContext ) ;
                if ( rc )
                {
@@ -962,13 +966,13 @@ namespace engine
                      {
                         generator.popFront( _skipNum ) ;
                         _skipNum = 0 ;
-                        _checkMaxRecordsNum( generator ) ;
+                        _updateMaxRecordsNum( generator ) ;
                         goto done ;
                      }
                   }
                   else
                   {
-                     _checkMaxRecordsNum( generator ) ;
+                     _updateMaxRecordsNum( generator ) ;
                      goto done ; // find ok
                   }
                }

@@ -1299,6 +1299,7 @@ namespace engine
 
                if ( _queryModifier )
                {
+                  //dollarList is pointed to _queryModifier->getDollarList()
                   mthContext.getDollarList( dollarList ) ;
                   rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
@@ -1322,11 +1323,8 @@ namespace engine
                --_numToReturn ;
             }
 
-            mthContext.clear() ;
-            if ( NULL != dollarList )
-            {
-               mthContext.enableDollarList() ;
-            }
+            //do not clear dollarlist flag
+            mthContext.clearRecordInfo() ;
          } // end while
 
          if ( SDB_DMS_EOC != rc )
@@ -1478,6 +1476,7 @@ namespace engine
 
                   if ( _queryModifier )
                   {
+                     //dollarList is pointed to _queryModifier->getDollarList()
                      mthContext.getDollarList( dollarList ) ;
                      rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
                      PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
@@ -1517,7 +1516,8 @@ namespace engine
                             rc ) ;
             }
 
-            mthContext.clearPart() ;
+            //do not clear dollarlist flag
+            mthContext.clearRecordInfo() ;
          }
 
          if ( rc && SDB_DMS_EOC != rc )

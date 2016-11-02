@@ -47,6 +47,14 @@ namespace engine
       return left->getWeight() < right->getWeight() ;
    }
 
+   void mthContextClearRecordInfoSafe( _mthMatchTreeContext *context )
+   {
+      if ( NULL != context )
+      {
+         context->clearRecordInfo() ;
+      }
+   }
+
    _mthMatchTreeContext::_mthMatchTreeContext()
    {
       _dollarList.clear() ;
@@ -65,7 +73,9 @@ namespace engine
       clear() ;
    }
 
-   void _mthMatchTreeContext::clearPart()
+   /* clear the record relate information to execute the next
+      _mthMatchTree.matches */
+   void _mthMatchTreeContext::clearRecordInfo()
    {
       _dollarList.clear() ;
       _elements.clear() ;
@@ -79,7 +89,7 @@ namespace engine
 
    void _mthMatchTreeContext::clear()
    {
-      clearPart() ;
+      clearRecordInfo() ;
       _isDollarListEnabled = FALSE ;
    }
 
