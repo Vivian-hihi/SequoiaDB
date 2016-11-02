@@ -30,9 +30,7 @@
 
 *******************************************************************************/
 
-#include "omagentRemoteBase.hpp"
 #include "omagentRemoteUsrFile.hpp"
-#include "omagentCmdBase.hpp"
 #include "omagentMgr.hpp"
 #include "omagentDef.hpp"
 #include "ossCmdRunner.hpp"
@@ -48,7 +46,7 @@ using namespace bson ;
 
 namespace engine
 {
-    /*
+   /*
       _remoteFileOpen implement
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileOpen )
@@ -2311,6 +2309,12 @@ namespace engine
          ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
             << rc ;
          PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
+         goto error ;
+      }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         PD_LOG_MSG( PDERROR, outStr.c_str() ) ;
          goto error ;
       }
 

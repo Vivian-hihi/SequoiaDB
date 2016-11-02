@@ -30,8 +30,8 @@
 
 *******************************************************************************/
 
-#ifndef OMAGENT_REMOTE_SYSTEM_CMD_HPP_
-#define OMAGENT_REMOTE_SYSTEM_CMD_HPP_
+#ifndef OMAGENT_REMOTE_USRSYSTEM_HPP_
+#define OMAGENT_REMOTE_USRSYSTEM_HPP_
 
 #include "omagentCmdBase.hpp"
 #include "omagentRemoteBase.hpp"

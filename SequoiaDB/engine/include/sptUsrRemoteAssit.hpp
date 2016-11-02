@@ -36,8 +36,9 @@
 
 #include "msg.h"
 #include "oss.hpp"
-
-
+#include "sptRemote.hpp"
+#include <string>
+using std::string ;
 namespace engine
 {
    /*
@@ -56,42 +57,13 @@ namespace engine
 
          INT32       disconnect() ;
 
-         INT32       runCommand( const CHAR *pString,
-                                 SINT32 flag,
-                                 UINT64 reqID,
-                                 SINT64 numToSkip,
-                                 SINT64 numToReturn,
-                                 const CHAR *arg1,
-                                 const CHAR *arg2,
-                                 const CHAR *arg3,
-                                 const CHAR *arg4,
-                                 CHAR **ppRetBuffer ) ;
-
-      private:
-         INT32       _sendAndRecv( const MsgHeader *sendMsg,
-                                   MsgHeader **recvMsg, INT32 *size,
-                                   BOOLEAN needRecv,
-                                   BOOLEAN endianConvert ) ;
-
-         INT32       _sendMsg( const MsgHeader *msg, BOOLEAN endianConvert ) ;
-
-         INT32       _recvMsg( MsgHeader **msg, INT32 *msgLength,
-                               BOOLEAN endianConvert ) ;
-
-         INT32       _send( const CHAR *pMsg, INT32 msgLength ) ;
-
-         INT32       _reallocBuffer( CHAR **ppBuffer, INT32 *bufferSize,
-                                     INT32 newSize ) ;
-
-         INT32       _extract( MsgHeader *msg, INT32 msgSize,
-                               SINT64 *contextID,
-                               BOOLEAN *result, BOOLEAN endianConvert ) ;
-
-         INT32       _getRetBuffer( CHAR *pRetMsg, CHAR **ppRetBuffer ) ;
-
+         INT32       runCommand( string command,
+                                 const CHAR* arg1,
+                                 CHAR **ppRetBuffer,
+                                 INT32 &retCode ) ;
       private:
          ossValuePtr _handle ;
-
+         sptRemote   _remote ;
    } ;
    typedef _sptUsrRemoteAssit sptUsrRemoteAssit ;
 }

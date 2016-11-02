@@ -2235,6 +2235,12 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
+      else if ( SDB_OK != exitCode )
+      {
+         rc = exitCode ;
+         detail = BSON( SPT_ERR << outStr ) ;
+         goto error ;
+      }
 
       /* extract result
       format: xxx|xxx|xxx|xxx|xxx|xxx|xxx|xxx

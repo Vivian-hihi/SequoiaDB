@@ -32,15 +32,12 @@
 *******************************************************************************/
 
 #include "omagentRemoteBase.hpp"
-#include "rtnCommandDef.hpp"
-#include "omagentMgr.hpp"
 #include "pmdOptions.h"
 #include "msgDef.h"
 #include "pmd.hpp"
 #include "ossSocket.hpp"
 #include "ossIO.hpp"
 #include "oss.h"
-#include <set>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #if defined (_LINUX)

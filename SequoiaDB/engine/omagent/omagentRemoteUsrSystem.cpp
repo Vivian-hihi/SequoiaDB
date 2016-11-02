@@ -30,11 +30,8 @@
 
 *******************************************************************************/
 
-#include "omagentRemoteBase.hpp"
 #include "omagentRemoteUsrSystem.hpp"
 #include "cmdUsrSystemUtil.hpp"
-#include "omagentCmdBase.hpp"
-#include "omagentMgr.hpp"
 #include "pmdOptions.h"
 #include "utilCommon.hpp"
 #include "omagentDef.hpp"

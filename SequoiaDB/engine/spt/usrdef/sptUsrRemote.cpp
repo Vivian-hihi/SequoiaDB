@@ -168,11 +168,10 @@ namespace engine
                                     BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-
+      INT32 retCode = SDB_OK ;
       CHAR *retBuffer = NULL ;
       BSONObj mergeObj ;
       BSONObj recvObj ;
-      vector< BSONObj > retArray ;
       string command ;
 
       // merge arg
@@ -185,33 +184,37 @@ namespace engine
       }
 
       // run command and get retrun BSONObj
-      rc = _assit.runCommand( ( CMD_ADMIN_PREFIX + command ).c_str(),
-                              0, 0, -1, -1,
-                              mergeObj.objdata(), NULL, NULL, NULL,
-                              &retBuffer ) ;
-      if ( NULL == retBuffer )
+      rc = _assit.runCommand( command, mergeObj.objdata(),
+                              &retBuffer, retCode ) ;
+      if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << "Failed to extract msg" ) ;
-         PD_LOG( PDERROR, "Failed to extract msg in client, rc: %d", rc ) ;
+         detail = BSON( SPT_ERR << getErrDesp( rc ) ) ;
+         PD_LOG( PDERROR, "Failed to run command in client, rc: %d", rc ) ;
          goto error ;
       }
 
-      recvObj.init( retBuffer ) ;
-      if ( SDB_OK != rc )
+      // build recvObj
+      SDB_ASSERT( retBuffer ) ;
+      try
       {
-         if( FALSE == recvObj.hasField( OP_ERR_DETAIL ) )
-         {
-            detail = BSON( SPT_ERR << getErrDesp( rc ) ) ;
-            PD_LOG( PDERROR, "Failed to run command in client, rc: %d", rc ) ;
-            goto error ;
-         }
-         else
-         {
-            detail = BSON( SPT_ERR << recvObj.getStringField( OP_ERR_DETAIL ) ) ;
-            PD_LOG( PDERROR, "Failed to run command in remote sdbcm, "
-                             "rc: %d", rc ) ;
-            goto error ;
-         }
+         recvObj.init( retBuffer ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         detail = BSON( SPT_ERR << "Failed to build recvObj" ) ;
+         PD_LOG( PDERROR, "Failed to build recvObj, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // check remote result
+      if ( SDB_OK != retCode )
+      {
+         rc = retCode ;
+         detail = BSON( SPT_ERR << recvObj.getStringField( OP_ERR_DETAIL ) ) ;
+         PD_LOG( PDERROR, "Failed to run command in remote sdbcm, "
+                          "rc: %d", rc ) ;
+         goto error ;
       }
 
       rval.setBSONObj( "", recvObj ) ;

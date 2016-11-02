@@ -30,12 +30,9 @@
 
 *******************************************************************************/
 
-#include "omagentRemoteBase.hpp"
 #include "omagentRemoteUsrCmd.hpp"
-#include "omagentCmdBase.hpp"
 #include "omagentMgr.hpp"
 #include "omagentDef.hpp"
-#include "omagentUtil.hpp"
 #include "ossCmdRunner.hpp"
 #include <boost/algorithm/string.hpp>
 
