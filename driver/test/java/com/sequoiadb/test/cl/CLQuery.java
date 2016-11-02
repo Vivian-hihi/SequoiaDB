@@ -398,7 +398,8 @@ public class CLQuery {
         query.removeField("$or");
         BSONObject con_type = new BasicBSONObject();
         // {Id:{$type:16}}
-        con_type.put("$type", 16);
+        con_type.put("$type", 1);
+        con_type.put("$et", 16);
 
         query.put("Id", con_type);
 
