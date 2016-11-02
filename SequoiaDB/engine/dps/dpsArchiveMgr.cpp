@@ -977,8 +977,7 @@ namespace engine
 
          dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
          archiveHeader->init();
-         archiveHeader->startLSN.offset =
-            _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId ) ;
+         archiveHeader->startLSN = srcLogHeader._firstLSN ;
          archiveHeader->endLSN.offset =
             _logMgr->calcFirstPhysicalLSNOfFile( logicalFileId + 1 ) ;
          if ( compress )
