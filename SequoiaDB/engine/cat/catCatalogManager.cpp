@@ -528,19 +528,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT16 w = _majoritySize() ;
 
-      string clName, mainCLName ;
-      string srcName, dstName ;
-      UINT32 srcGroupID = CAT_INVALID_GROUPID ;
-      UINT32 dstGroupID = CAT_INVALID_GROUPID ;
       UINT32 returnGroupID = CAT_INVALID_GROUPID ;
-
       UINT64 taskID = CLS_INVALID_TASKID ;
-      INT32 version = -1 ;
-
-      // Lock objects to check available for updates only
-      // Unlock immediately for long task, which make sure subsequent commands
-      // e.g. DropCL, have higher priority to execute on the same collection
-      catCtxLockMgr lockMgr ;
+      INT32 returnVersion = -1 ;
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CMDSPLIT ) ;
 
@@ -567,121 +557,35 @@ namespace engine
                     opCode, taskID ) ;
          }
 
-         if ( MSG_CAT_SPLIT_PREPARE_REQ == opCode ||
-              MSG_CAT_SPLIT_READY_REQ == opCode ||
-              MSG_CAT_SPLIT_CHGMETA_REQ == opCode )
+         // dispatch
+         switch ( opCode )
          {
-            // Extract collection name from query
-            rc = rtnGetSTDStringElement( boQuery, CAT_COLLECTION_NAME,
-                                         clName ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to execute splitCL [%d]: "
-                         "failed to get the field [%s] from query [%s]",
-                         opCode, CAT_COLLECTION_NAME,
-                         boQuery.toString().c_str() ) ;
-
-            // Get and lock collection catalog info
-            // Lock for shared, so could be split in parallel
-            rc = catGetAndLockCollection( clName, boCollection, _pEduCB,
-                                          &lockMgr, SHARED ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to execute splitCL [%d]: "
-                         "Failed to get the collection [%s]",
-                         opCode, clName.c_str() ) ;
-
-            // Update catalog set
-            clsCatalogSet cataSet( clName.c_str() ) ;
-            rc = cataSet.updateCatSet( boCollection ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to execute splitCL [%d] on [%s]: "
-                         "Failed to update catalog set, cata info: %s, rc: %d",
-                         opCode, clName.c_str(),
-                         boCollection.toString().c_str(), rc ) ;
-
-            // Collection must be sharding
-            PD_CHECK( cataSet.isSharding(),
-                      SDB_COLLECTION_NOTSHARD, error, PDERROR,
-                      "Failed to execute splitCL [%d] on [%s]: "
-                      "Could not split non-sharding collection",
-                      opCode, clName.c_str() ) ;
-
-            // Main-collection can't be split
-            PD_CHECK( !cataSet.isMainCL(),
-                      SDB_MAIN_CL_OP_ERR, error, PDERROR,
-                      "Failed to split step [%d] on [%s]: "
-                      "Could not split main-collection",
-                      opCode, clName.c_str() ) ;
-
-            string mainCLName = cataSet.getMainCLName() ;
-            if ( !mainCLName.empty() )
-            {
-               BSONObj dummy ;
-               // Lock for shared, so could be split in parallel
-               // main-collection's version will be updated
-               rc = catGetAndLockCollection( mainCLName, dummy, _pEduCB,
-                                             &lockMgr, SHARED ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to split step [%d] on [%s]: "
-                            "Failed to get the main collection [%s]",
-                            opCode, clName.c_str(),
-                            mainCLName.c_str() ) ;
-            }
-
-            if ( MSG_CAT_SPLIT_PREPARE_REQ == opCode ||
-                 MSG_CAT_SPLIT_READY_REQ == opCode )
-            {
-               rc = catCheckSplitGroups( boQuery, cataSet, lockMgr, _pEduCB,
-                                         srcGroupID, srcName,
-                                         dstGroupID, dstName ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to split step [%d] on [%s]: "
-                            "Failed to check split groups",
-                            opCode, clName.c_str() ) ;
-            }
-
-            switch ( opCode )
-            {
             case MSG_CAT_SPLIT_PREPARE_REQ :
-               returnGroupID = srcGroupID ;
-               rc = catSplitPrepare( clName, cataSet, boQuery, _pEduCB ) ;
+               rc = catSplitPrepare( boQuery, _pEduCB, returnGroupID, returnVersion ) ;
                break ;
             case MSG_CAT_SPLIT_READY_REQ :
                // Generate task ID
                taskID = _taskMgr.getTaskID() ;
-               returnGroupID = dstGroupID ;
-               rc = catSplitReady( clName, cataSet, boQuery, taskID,
-                                   srcGroupID, srcName, dstGroupID, dstName,
-                                   _pEduCB, w ) ;
+               rc = catSplitReady( boQuery, taskID, _pEduCB, w, returnGroupID, returnVersion ) ;
                break ;
             case MSG_CAT_SPLIT_CHGMETA_REQ :
-               rc = catSplitChgMeta( taskID, clName, cataSet, _pEduCB, w ) ;
+               rc = catSplitChgMeta( boQuery, taskID, _pEduCB, w ) ;
                break ;
-            }
-
-            version = cataSet.getVersion() ;
-         }
-         else
-         {
-            // dispatch
-            switch ( opCode )
-            {
-               case MSG_CAT_SPLIT_START_REQ :
-                  rc = catSplitStart( taskID, _pEduCB, w ) ;
-                  break ;
-               case MSG_CAT_SPLIT_CLEANUP_REQ :
-                  rc = catSplitCleanup( taskID, _pEduCB, w ) ;
-                  break ;
-               case MSG_CAT_SPLIT_FINISH_REQ :
-                  rc = catSplitFinish( taskID, _pEduCB, w ) ;
-                  break ;
-               case MSG_CAT_SPLIT_CANCEL_REQ :
-                  rc = catSplitCancel( boQuery, _pEduCB,
-                                       returnGroupID, taskID, w ) ;
-                  break ;
-               default :
-                  rc = SDB_INVALIDARG ;
-                  break ;
-            }
+            case MSG_CAT_SPLIT_START_REQ :
+               rc = catSplitStart( taskID, _pEduCB, w ) ;
+               break ;
+            case MSG_CAT_SPLIT_CLEANUP_REQ :
+               rc = catSplitCleanup( taskID, _pEduCB, w ) ;
+               break ;
+            case MSG_CAT_SPLIT_FINISH_REQ :
+               rc = catSplitFinish( taskID, _pEduCB, w ) ;
+               break ;
+            case MSG_CAT_SPLIT_CANCEL_REQ :
+               rc = catSplitCancel( boQuery, _pEduCB, taskID, w, returnGroupID ) ;
+               break ;
+            default :
+               rc = SDB_INVALIDARG ;
+               break ;
          }
 
          PD_RC_CHECK( rc, PDERROR,
@@ -697,10 +601,9 @@ namespace engine
             vecGroups.push_back( returnGroupID ) ;
 
             if ( MSG_CAT_SPLIT_PREPARE_REQ == opCode ||
-                 MSG_CAT_SPLIT_READY_REQ == opCode ||
-                 MSG_CAT_SPLIT_CHGMETA_REQ == opCode )
+                 MSG_CAT_SPLIT_READY_REQ == opCode )
             {
-               replyBuild.append( CAT_CATALOGVERSION_NAME, version ) ;
+               replyBuild.append( CAT_CATALOGVERSION_NAME, returnVersion ) ;
             }
             if ( CLS_INVALID_TASKID != taskID )
             {
@@ -722,24 +625,21 @@ namespace engine
       return rc ;
 
    error:
-      // Cleanup the task
-      if ( CLS_INVALID_TASKID != taskID )
+      // Cleanup the task ( ONLY for canceled task )
+      if ( CLS_INVALID_TASKID != taskID &&
+           SDB_TASK_HAS_CANCELED == rc )
       {
-         // rollback
-         PD_LOG( PDDEBUG,
-                 "Removing task [%llu]",
-                 taskID ) ;
-         INT32 tmpRC = catRemoveTask( taskID, _pEduCB, 1 ) ;
-         if ( tmpRC )
+         INT32 tmpRC = SDB_OK ;
+
+         PD_LOG( PDDEBUG, "Removing task [%llu]", taskID ) ;
+
+         tmpRC = catRemoveTask( taskID, _pEduCB, 1 ) ;
+         if ( SDB_OK != tmpRC )
          {
             PD_LOG( PDWARNING,
                     "Failed to remove task [%lld], rc: %d",
                     taskID, tmpRC ) ;
          }
-      }
-      if ( SDB_RTN_CONTEXT_NOTEXIST == rc )
-      {
-         rc = SDB_TASK_HAS_CANCELED ;
       }
       goto done ;
    }

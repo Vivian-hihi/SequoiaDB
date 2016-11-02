@@ -48,23 +48,16 @@ using namespace bson ;
 namespace engine
 {
 
-   INT32 catSplitPrepare ( const std::string &clName,
-                           clsCatalogSet &cataSet,
-                           const BSONObj &splitInfo,
-                           pmdEDUCB *cb ) ;
+   INT32 catSplitPrepare ( const BSONObj &splitInfo, pmdEDUCB *cb,
+                           UINT32 &returnGroupID, INT32 &returnVersion ) ;
 
-   INT32 catSplitReady ( const std::string &clName,
-                         clsCatalogSet &cataSet,
-                         const BSONObj &splitInfo,
-                         UINT64 taskID,
-                         UINT32 srcGroupID, const string &srcName,
-                         UINT32 dstGroupID, const string &dstName,
-                         pmdEDUCB *cb, INT16 w ) ;
+   INT32 catSplitReady ( const BSONObj &splitInfo, UINT64 taskID,
+                         pmdEDUCB *cb, INT16 w,
+                         UINT32 &returnGroupID, INT32 &returnVersion ) ;
 
    INT32 catSplitStart ( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
 
-   INT32 catSplitChgMeta ( UINT64 taskID, const std::string &clName,
-                           clsCatalogSet &cataSet,
+   INT32 catSplitChgMeta ( const BSONObj &splitInfo, UINT64 taskID,
                            pmdEDUCB * cb, INT16 w ) ;
 
    INT32 catSplitCleanup ( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
@@ -72,14 +65,7 @@ namespace engine
    INT32 catSplitFinish ( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
 
    INT32 catSplitCancel ( const BSONObj &splitInfo, pmdEDUCB *cb,
-                          UINT32 &groupID, UINT64 &taskID, INT16 w ) ;
-
-   INT32 catCheckSplitGroups ( const BSONObj &splitInfo,
-                               clsCatalogSet &cataSet,
-                               catCtxLockMgr &lockMgr,
-                               pmdEDUCB *cb,
-                               UINT32 &srcGroupID, string &srcName,
-                               UINT32 &dstGroupID, string &dstName ) ;
+                          UINT64 &taskID, INT16 w, UINT32 &returnGroupID ) ;
 
 }
 
