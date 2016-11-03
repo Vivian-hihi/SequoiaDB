@@ -194,7 +194,6 @@ namespace engine
       }
 
       // build recvObj
-      SDB_ASSERT( retBuffer ) ;
       try
       {
          recvObj.init( retBuffer ) ;
