@@ -89,50 +89,50 @@ BSONArray.prototype._formatStr = function() {
 
    if ( objNum > 0 )
    {
-		var eleNum = Object.keys( objArr[0] ).length ;
+      var eleNum = Object.keys( objArr[0] ).length ;
 
-	  	for ( var eleKey in objArr[0] )
+      for ( var eleKey in objArr[0] )
       {
-	     	eleArr.push( eleKey ) ;
-	  	}
+        eleArr.push( eleKey ) ;
+      }
       strArr.push( eleArr ) ;
 
-	  	for ( var obj in  objArr )
-	  	{
-	     	eleArr = new Array() ;
-	     	for( var ele in  objArr[obj] )
-	     	{
-	     	   eleArr.push( objArr[obj][ele] ) ;
-	     	}
-    	 	strArr.push( eleArr ) ;
-	  	}
+      for ( var obj in  objArr )
+      {
+         eleArr = new Array() ;
+         for( var ele in  objArr[obj] )
+         {
+           eleArr.push( objArr[obj][ele] ) ;
+         }
+         strArr.push( eleArr ) ;
+      }
 
-		for ( var i = 0; i < eleNum; i++ )
-		{
-			var max = 0 ;
-			for ( var j = 0; j < objNum + 1; j++ )
-			{
-				if ( strArr[j][i].length > max )
-				{
-					max = strArr[j][i].length ;
-				}
-			}
-			maxSizeArr.push( max + 1 ) ;
-		}
+      for ( var i = 0; i < eleNum; i++ )
+      {
+         var max = 0 ;
+         for ( var j = 0; j < objNum + 1; j++ )
+         {
+            if ( strArr[j][i].length > max )
+            {
+               max = strArr[j][i].length ;
+            }
+         }
+         maxSizeArr.push( max + 1 ) ;
+      }
 
-	  for ( var i = 0; i < strArr.length; i++ )
-	  {
-	   	var arr = strArr[i] ;
-	     	for ( var j = 0; j < arr.length; j++ )
-	     	{
-	        	outStr += " " + arr[j] ;
-				for ( var k = 0; k < maxSizeArr[j] - arr[j].length; k++ )
-				{
-			   	outStr += " " ;
-				}
-	     	}
-		 	outStr += "\n" ;
-	  }
+      for ( var i = 0; i < strArr.length; i++ )
+      {
+         var arr = strArr[i] ;
+         for ( var j = 0; j < arr.length; j++ )
+         {
+            outStr += " " + arr[j] ;
+            for ( var k = 0; k < maxSizeArr[j] - arr[j].length; k++ )
+            {
+               outStr += " " ;
+            }
+         }
+         outStr += "\n" ;
+      }
    }
    return outStr ;
 }
@@ -153,53 +153,52 @@ Oma.prototype.help = function( val ) {
 }
 // end Oma
 
-// Remote
+// Remote member function
 Remote.prototype.getSystem = function() {
-	var system = System.getObj() ;
-	system._remote = this ;
-	return system ;
+   var system = System.getObj() ;
+   system._remote = this ;
+   return system ;
 }
 
 Remote.prototype.getFile = function( filename, mode ) {
-	var file = File._getFileObj() ;
-	file._remote = this ;
+   var file = File._getFileObj() ;
+   file._remote = this ;
 
-	if ( undefined != filename )
-	{
-	   if ( undefined != mode )
-	   {
-	   	this._runCommand( "file open",{ "mode": mode }, {},
-							   	{ "filename": filename } ) ;
-	   }
-		else
-		{
-			this._runCommand( "file open",{}, {},
-							   	{ "filename": filename } ) ;
-		}
-		file._filename = filename ;
-		file._location = 0 ;
-		file._isOpened = true ;
-	}
-
-	return file ;
+   if ( undefined != filename )
+   {
+      if ( undefined != mode )
+      {
+         this._runCommand( "file open",{ "mode": mode }, {},
+                           { "filename": filename } ) ;
+      }
+      else
+      {
+         this._runCommand( "file open",{}, {},
+                           { "filename": filename } ) ;
+      }
+      file._filename = filename ;
+      file._location = 0 ;
+      file._isOpened = true ;
+   }
+   return file ;
 }
 
 Remote.prototype.getCmd = function() {
-	var cmd = new Cmd() ;
-	cmd._remote = this ;
-	cmd._retCode = SDB_OK ;
-	cmd._strOut = '' ;
-	cmd._command = '' ;
-	return cmd ;
+   var cmd = new Cmd() ;
+   cmd._remote = this ;
+   cmd._retCode = SDB_OK ;
+   cmd._strOut = '' ;
+   cmd._command = '' ;
+   return cmd ;
 }
 
 Remote.prototype._runCommand = function( command, optionObj,
                                          matchObj, valueObj ) {
    var bsonObj ;
    var retObj ;
-   if( 6 < arguments.length )
+   if ( 6 < arguments.length )
    {
-	   setLastErrMsg( "too much arguments" ) ;
+      setLastErrMsg( "too much arguments" ) ;
       throw SDB_INVALIDARG ;
    }
    else if ( undefined != valueObj )
@@ -221,10 +220,9 @@ Remote.prototype._runCommand = function( command, optionObj,
 
    return bsonObj ;
 }
-
 // end Remote
 
-// _Filter
+// _Filter member function
 _Filter.prototype.match = function( BSONArrObj ) {
 
    if ( BSONArrObj instanceof Object )
@@ -234,394 +232,47 @@ _Filter.prototype.match = function( BSONArrObj ) {
    else
    {
       setLastErrMsg( "argument must be objArray" ) ;
-	   throw SDB_INVALIDARG ;
+      throw SDB_INVALIDARG ;
    }
 }
 // end _Filter
 
-// System
-System.prototype.getInfo = function()
+// System static function
+System.listProcess = function( optionObj, filterObj )
 {
    var result ;
-	var infoObj ;
-	if ( undefined != this._remote )
-	{
-		var _remoteInfo = this._remote.getInfo() ;
-		infoObj = _remoteInfo.toObj() ;
-		infoObj.isRemote = true ;
-	}
-	else
-	{
-		infoObj = new Object() ;
-		infoObj.isRemote = false ;
-	}
-	result = this._getInfo( infoObj ) ;
-	return result ;
-}
+   var recvObj ;
+   var displayMode = "obj" ;
 
-System.prototype.ping = function( hostname ) {
-	var retObj ;
-
-	if ( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "ping", {},
-                                             { "hostname" : hostname } ) ;
-	}
-	else
-	{
-		retObj = System.ping( hostname ) ;
-	}
-	return retObj ;
-
-}
-
-System.prototype.type = function() {
-
-	var retStr ;
-	if ( 0 < arguments.length )
-	{
-		setLastErrMsg( getErr( SDB_INVALIDARG ) ) ;
-		throw SDB_INVALIDARG ;
-	}
-
-	if ( undefined != this._remote )
-	{
-	    var retObj = this._remote._runCommand( "system type" ) ;
-		retStr = retObj.toObj().type ;
-	}
-	else
-	{
-		retStr = System.type() ;
-	}
-	return retStr ;
-
-}
-
-System.prototype.getReleaseInfo = function() {
-	var retObj ;
-
-	if ( 0 < arguments.length )
-	{
-		setLastErrMsg( getErr( SDB_INVALIDARG ) ) ;
-		throw SDB_INVALIDARG ;
-	}
-
-	if ( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "system get release info" ) ;
-	}
-	else
-	{
-		retObj = System.getReleaseInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.getHostsMap = function() {
-	var retObj ;
-
-	if ( 0 < arguments.length )
-	{
-		setLastErrMsg( "getHostsMap() should have non arguments" ) ;
-		throw SDB_INVALIDARG ;
-	}
-
-	if ( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get hosts map" ) ;
-	}
-	else
-	{
-		retObj = System.getHostsMap() ;
-	}
-   return retObj ;
-}
-
-System.prototype.getAHostMap = function( hostname ) {
-	var retStr ;
-
-	if ( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get a host map", {},
-                                             { "hostname": hostname } ) ;
-		retStr = retObj.toObj().ip ;
-	}
-	else
-	{
-		retStr = System.getAHostMap() ;
-	}
-	return retStr ;
-}
-
-System.prototype.addAHostMap = function( hostname, ip, isReplace ) {
-	if ( undefined != this._remote )
-	{
-		this._remote._runCommand( "add a host map", {}, {},
-								 		 { "hostname": hostname,
-								   		"ip": ip,
-								   		"isReplace": isReplace } ) ;
-	}
-	else
-	{
-		System.addAHostMap( hostname, ip, isReplace ) ;
-	}
-}
-
-System.prototype.delAHostMap = function( hostname ) {
-	if ( undefined != this._remote )
-	{
-		this._remote._runCommand( "delete a host map", {}, { "hostname": hostname } ) ;
-
-	}
-	else
-	{
-		System.delAHostMap( hostname ) ;
-	}
-}
-
-System.prototype.getCpuInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get cpu info" ) ;
-	}
-	else
-	{
-		retObj = System.getCpuInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.snapshotCpuInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "snapshot cpu info" ) ;
-	}
-	else
-	{
-		retObj = System.snapshotCpuInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.getMemInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get mem info" ) ;
-	}
-	else
-	{
-		retObj = System.getMemInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.snapshotMemInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get mem info" ) ;
-	}
-	else
-	{
-		retObj = System.snapshotMemInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.getDiskInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get disk info" ) ;
-	}
-	else
-	{
-		retObj = System.getDiskInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.snapshotDiskInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get disk info" ) ;
-	}
-	else
-	{
-		retObj = System.snapshotDiskInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.getNetcardInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get netcard info" ) ;
-	}
-	else
-	{
-		retObj = System.getNetcardInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.snapshotNetcardInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "snapshot netcard info" ) ;
-	}
-	else
-	{
-		retObj = System.snapshotNetcardInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.getIpTablesInfo = function() {
-	var retObj ;
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get ip tables info" ) ;
-	}
-	else
-	{
-		retObj = System.getIpTablesInfo() ;
-	}
-	return retObj ;
-}
-
-System.prototype.getHostName = function() {
-	var result ;
-
-	if ( 0 < arguments.length )
-	{
-		setLastErrMsg( getErr( SDB_INVALIDARG ) ) ;
-		throw SDB_INVALIDARG ;
-	}
-
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "get hostname" ) ;
-		result = retObj.toObj().hostname ;
-	}
-	else
-	{
-		result = System.getHostName() ;
-	}
-	return result ;
-}
-
-System.prototype.sniffPort = function( port ) {
-	var retObj ;
-
-	if( undefined == port )
-	{
-		setLastErrMsg( "not specified the port to sniff" ) ;
-		throw SDB_INVALIDARG ;
-	}
-
-	if( undefined != this._remote )
-	{
-		var retObj = this._remote._runCommand( "sniff port", {}, { "port": port }) ;
-	}
-	else
-	{
-		retObj = System.sniffPort( port ) ;
-	}
-	return retObj ;
-}
-
-System.prototype.listProcess = function( optionObj, filterObj ) {
-   var retObj ;
-   var result ;
-
-	if ( undefined != this._remote )
+   // check argument
+   if ( undefined != optionObj )
    {
-		var displayMode = "obj" ;
-
-		if ( undefined != optionObj )
-		{
-			if ( undefined != optionObj.displayMode  )
-			{
-				displayMode = optionObj.displayMode ;
-				delete optionObj.displayMode ;
-			}
-		}
-
-		if ( undefined != optionObj )
-		{
-			result = this._remote._runCommand( "list process", optionObj ) ;
-		}
-		else
-		{
-			result = this._remote._runCommand( "list process" ) ;
-		}
-
-		if ( undefined != filterObj )
-		{
-			var filter = new _Filter( filterObj ) ;
-	   	retObj = filter.match( result.toObj() ) ;
-		}
-		else
-		{
-			var filter = new _Filter( {} ) ;
-	   	retObj = filter.match( result.toObj() ) ;
-		}
-
-		if ( "text" == displayMode )
-		{
-		   return retObj._formatStr() ;
-		}
-		else
-		{
-		   return retObj ;
-		}
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+      }
+      recvObj = System._listProcess( optionObj ) ;
    }
    else
    {
-   	retObj = System.listProcess( optionObj, filterObj ) ;
-		return retObj ;
+      recvObj = System._listProcess() ;
    }
-}
 
-System.listProcess = function( optionObj, filterObj )
-{
-	var result ;
-   var recvObj ;
-	var displayMode = "obj" ;
-
-	if ( undefined != optionObj )
-	{
-		if ( undefined != optionObj.displayMode )
-		{
-			displayMode = optionObj.displayMode ;
-			delete optionObj.displayMode ;
-		}
-		recvObj = System._listProcess( optionObj ) ;
-	}
-	else
-	{
-		recvObj = System._listProcess() ;
-	}
-
-   if( undefined != filterObj )
+   // filter result
+   if ( undefined != filterObj )
    {
       var filter = new _Filter( filterObj ) ;
-	   result = filter.match( recvObj.toObj() ) ;
+      result = filter.match( recvObj.toObj() ) ;
    }
    else
    {
       var filter = new _Filter( {} ) ;
-	  	result = filter.match( recvObj.toObj() ) ;
+      result = filter.match( recvObj.toObj() ) ;
    }
 
-   if( "text" == displayMode )
+   // set format
+   if ( "text" == displayMode )
    {
       return result._formatStr() ;
    }
@@ -631,683 +282,1079 @@ System.listProcess = function( optionObj, filterObj )
    }
 }
 
-System.prototype.isProcExist = function( optionObj ) {
-
-	var retArray ;
-	var isExist = false ;
-
-	if ( undefined != optionObj )
-   {
-      if( undefined == optionObj.value )
-      {
-			setLastErrMsg( "value must be config" ) ;
-			throw SDB_OUT_OF_BOUND ;
-      }
-		else
-		{
-			if ( "name" == optionObj.type )
-      	{
-       		retArray = this.listProcess( { "detail": true },
-                                         { "cmd": optionObj.value } ) ;
-     		}
-			else
-			{
-				retArray = this.listProcess( { "detail": true },
-                                         { "pid": optionObj.value } ) ;
-			}
-		}
-
-  	}
-	else
-	{
-		setLastErrMsg( "optionObj must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-
-	if ( 0 != retArray.size() )
-	{
-		isExist = true ;
-	}
-	return isExist ;
-}
-
 System.isProcExist = function( optionObj ) {
-	var retArray ;
-	var isExist ;
+   var retArray ;
+   var isExist ;
 
-	if ( undefined != optionObj )
+   // check argument
+   if ( undefined != optionObj )
    {
-      if( undefined == optionObj.value )
+      if ( undefined == optionObj.value )
       {
-			setLastErrMsg( "value must be config" ) ;
-			throw SDB_OUT_OF_BOUND ;
+         setLastErrMsg( "value must be config" ) ;
+         throw SDB_OUT_OF_BOUND ;
       }
-		else
-		{
-			if ( optionObj.type == "name" )
-      	{
-       		retArray = System.listProcess( { "detail": true },
-                                           { "cmd": optionObj.value } ) ;
-     		}
-			else
-			{
-				retArray = System.listProcess( { "detail": true },
+      else
+      {
+         // get specific process
+         if ( optionObj.type == "name" )
+         {
+             retArray = System.listProcess( { "detail": true },
+                                            { "cmd": optionObj.value } ) ;
+         }
+         else
+         {
+            retArray = System.listProcess( { "detail": true },
                                            { "pid": optionObj.value } ) ;
-			}
-		}
-  	}
-	else
-	{
-		setLastErrMsg( "optionObj must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+         }
+      }
+   }
+   else
+   {
+      setLastErrMsg( "optionObj must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	if ( 0 != retArray.size() )
-	{
-		isExist = true ;
-	}
-	else
-	{
-		isExist = false ;
-	}
-	return isExist ;
-}
-
-System.prototype.addUser = function( userObj ) {
-	if ( undefined != this._remote )
-	{
-	   this._remote._runCommand( "add user", {}, {}, userObj ) ;
-	}
-	else
-	{
-		System.addUser( userObj ) ;
-	}
-}
-
-System.prototype.setUserConfigs = function( optionObj ) {
-	if ( undefined != this._remote )
-	{
-	   this._remote._runCommand( "set user configs", {}, {}, optionObj ) ;
-	}
-	else
-	{
-		System.setUserConfigs( optionObj ) ;
-	}
-}
-
-System.prototype.delUser = function( optionObj ) {
-	if ( undefined != this._remote )
-	{
-	   this._remote._runCommand( "del user", {}, optionObj ) ;
-	}
-	else
-	{
-		System.delUser( optionObj ) ;
-	}
-}
-
-System.prototype.addGroup = function( optionObj ) {
-	if ( undefined != this._remote )
-	{
-	   this._remote._runCommand( "add group", {}, {}, optionObj ) ;
-	}
-	else
-	{
-		System.addGroup( optionObj ) ;
-	}
-}
-
-System.prototype.delGroup = function( name ) {
-	if ( undefined != this._remote )
-	{
-	   this._remote._runCommand( "del group", {}, { "name" :name } ) ;
-	}
-	else
-	{
-		System.delGroup( name ) ;
-	}
-}
-
-System.prototype.listLoginUsers = function( optionObj, filterObj ) {
-	var retArray ;
-
-	if ( undefined != this._remote )
-	{
-		var objArray ;
-		var displayMode = "obj" ;
-		if ( undefined != optionObj )
-		{
-			if ( undefined != optionObj.displayMode )
-			{
-				displayMode = optionObj.displayMode ;
-				delete optionObj.displayMode ;
-			}
-			objArray = this._remote._runCommand( "list login users", optionObj ) ;
-		}
-		else
-		{
-			objArray = this._remote._runCommand( "list login users" ) ;
-		}
-
-		if( undefined != filterObj )
-	   {
-	      var filter = new _Filter( filterObj ) ;
-		   retArray = filter.match( objArray.toObj() ) ;
-	   }
-	   else
-	   {
-	      var filter = new _Filter( {} ) ;
-		  	retArray = filter.match( objArray.toObj() ) ;
-	   }
-
-	   if( "text" == displayMode )
-	   {
-	      retArray = retArray._formatStr() ;
-	   }
-	}
-	else
-	{
-		retArray = System.listLoginUsers( optionObj, filterObj ) ;
-	}
-
-	return retArray ;
+   if ( 0 != retArray.size() )
+   {
+      isExist = true ;
+   }
+   else
+   {
+      isExist = false ;
+   }
+   return isExist ;
 }
 
 System.listLoginUsers = function( optionObj, filterObj ) {
-	var objArray ;
+   var objArray ;
    var retArray ;
-	var displayMode = "obj" ;
+   var displayMode = "obj" ;
 
-	if ( undefined != optionObj )
-	{
-		if ( undefined != optionObj.displayMode )
-		{
-			displayMode = optionObj.displayMode ;
-			delete optionObj.displayMode ;
-		}
-		objArray = System._listLoginUsers( optionObj ) ;
-	}
-	else
-	{
-		objArray = System._listLoginUsers() ;
-	}
+   // check argument
+   if ( undefined != optionObj )
+   {
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+      }
+      objArray = System._listLoginUsers( optionObj ) ;
+   }
+   else
+   {
+      objArray = System._listLoginUsers() ;
+   }
 
-   if( undefined != filterObj )
+   // filter
+   if ( undefined != filterObj )
    {
       var filter = new _Filter( filterObj ) ;
-	   retArray = filter.match( objArray.toObj() ) ;
+      retArray = filter.match( objArray.toObj() ) ;
    }
    else
    {
       var filter = new _Filter( {} ) ;
-	  	retArray = filter.match( objArray.toObj() ) ;
+      retArray = filter.match( objArray.toObj() ) ;
    }
 
-   if( "text" == displayMode )
+   // set display format
+   if ( "text" == displayMode )
    {
       retArray = retArray._formatStr() ;
+   }
+   return retArray ;
+}
+
+System.listAllUsers = function( optionObj, filterObj ) {
+   var objArray ;
+   var retArray ;
+   var displayMode = "obj" ;
+
+   // check argument
+   if ( undefined != optionObj )
+   {
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+      }
+      objArray = System._listAllUsers( optionObj ) ;
+   }
+   else
+   {
+      objArray = System._listAllUsers() ;
+   }
+
+   // filter
+   if ( undefined != filterObj )
+   {
+      var filter = new _Filter( filterObj ) ;
+      retArray = filter.match( objArray.toObj() ) ;
+   }
+   else
+   {
+      var filter = new _Filter( {} ) ;
+      retArray = filter.match( objArray.toObj() ) ;
+   }
+
+   // set display format
+   if ( "text" == displayMode )
+   {
+      retArray = retArray._formatStr() ;
+   }
+
+   return retArray ;
+}
+
+System.listGroups = function( optionObj, filterObj ) {
+   var objArray ;
+   var retArray ;
+   var displayMode = "obj" ;
+
+   // check argument
+   if ( undefined != optionObj )
+   {
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+      }
+      objArray = System._listGroups( optionObj ) ;
+   }
+   else
+   {
+      objArray = System._listGroups() ;
+   }
+
+   // filter
+   if ( undefined != filterObj )
+   {
+      var filter = new _Filter( filterObj ) ;
+      retArray = filter.match( objArray.toObj() ) ;
+   }
+   else
+   {
+      var filter = new _Filter( {} ) ;
+      retArray = filter.match( objArray.toObj() ) ;
+   }
+
+   // set display format
+   if ( "text" == displayMode )
+   {
+      retArray = retArray._formatStr() ;
+   }
+   return retArray ;
+}
+
+System.isUserExist = function( userName ) {
+   var isExist = false ;
+   var retArray ;
+
+   // check argument
+   if ( undefined == userName )
+   {
+      setLastErrMsg( "userName must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // get specific result
+   retArray = System.listAllUsers( { "detail": true }, { "user": userName } ) ;
+
+   if ( 0 != retArray.size() )
+   {
+      isExist = true ;
+   }
+   return isExist ;
+}
+
+System.isGroupExist = function( groupName ) {
+   var isExist = false ;
+   var retArray ;
+
+   // check argument
+   if ( undefined == groupName )
+   {
+      setLastErrMsg( "userName must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // get specific result
+   retArray = System.listGroups( { "detail": true }, { "name": groupName } ) ;
+
+   if ( 0 != retArray.size() )
+   {
+      isExist = true ;
+   }
+   return isExist ;
+}
+
+// System member function
+System.prototype.getInfo = function()
+{
+   var result ;
+   var infoObj ;
+   if ( undefined != this._remote )
+   {
+      var _remoteInfo = this._remote.getInfo() ;
+      infoObj = _remoteInfo.toObj() ;
+      infoObj.isRemote = true ;
+   }
+   else
+   {
+      infoObj = new Object() ;
+      infoObj.isRemote = false ;
+   }
+   result = this._getInfo( infoObj ) ;
+   return result ;
+}
+
+System.prototype.ping = function( hostname ) {
+   var retObj ;
+
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "ping", {},
+                                             { "hostname" : hostname } ) ;
+   }
+   else
+   {
+      retObj = System.ping( hostname ) ;
+   }
+   return retObj ;
+
+}
+
+System.prototype.type = function() {
+   var retStr ;
+
+   // check argument
+   if ( 0 < arguments.length )
+   {
+      setLastErrMsg( getErr( SDB_INVALIDARG ) ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "system type" ) ;
+      retStr = retObj.toObj().type ;
+   }
+   else
+   {
+      retStr = System.type() ;
+   }
+   return retStr ;
+}
+
+System.prototype.getReleaseInfo = function() {
+   var retObj ;
+
+   // check argument
+   if ( 0 < arguments.length )
+   {
+      setLastErrMsg( getErr( SDB_INVALIDARG ) ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      retObj = this._remote._runCommand( "system get release info" ) ;
+   }
+   else
+   {
+      retObj = System.getReleaseInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.getHostsMap = function() {
+   var retObj ;
+
+   if ( 0 < arguments.length )
+   {
+      setLastErrMsg( "getHostsMap() should have non arguments" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      retObj = this._remote._runCommand( "get hosts map" ) ;
+   }
+   else
+   {
+      retObj = System.getHostsMap() ;
+   }
+   return retObj ;
+}
+
+System.prototype.getAHostMap = function( hostname ) {
+   var retStr ;
+
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get a host map", {},
+                                             { "hostname": hostname } ) ;
+      retStr = retObj.toObj().ip ;
+   }
+   else
+   {
+      retStr = System.getAHostMap() ;
+   }
+   return retStr ;
+}
+
+System.prototype.addAHostMap = function( hostname, ip, isReplace ) {
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "add a host map", {}, {},
+                                { "hostname": hostname,
+                                  "ip": ip,
+                                  "isReplace": isReplace } ) ;
+   }
+   else
+   {
+      System.addAHostMap( hostname, ip, isReplace ) ;
+   }
+}
+
+System.prototype.delAHostMap = function( hostname ) {
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "delete a host map", {},
+                                { "hostname": hostname } ) ;
+   }
+   else
+   {
+      System.delAHostMap( hostname ) ;
+   }
+}
+
+System.prototype.getCpuInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get cpu info" ) ;
+   }
+   else
+   {
+      retObj = System.getCpuInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.snapshotCpuInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "snapshot cpu info" ) ;
+   }
+   else
+   {
+      retObj = System.snapshotCpuInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.getMemInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get mem info" ) ;
+   }
+   else
+   {
+      retObj = System.getMemInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.snapshotMemInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get mem info" ) ;
+   }
+   else
+   {
+      retObj = System.snapshotMemInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.getDiskInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get disk info" ) ;
+   }
+   else
+   {
+      retObj = System.getDiskInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.snapshotDiskInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get disk info" ) ;
+   }
+   else
+   {
+      retObj = System.snapshotDiskInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.getNetcardInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get netcard info" ) ;
+   }
+   else
+   {
+      retObj = System.getNetcardInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.snapshotNetcardInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "snapshot netcard info" ) ;
+   }
+   else
+   {
+      retObj = System.snapshotNetcardInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.getIpTablesInfo = function() {
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get ip tables info" ) ;
+   }
+   else
+   {
+      retObj = System.getIpTablesInfo() ;
+   }
+   return retObj ;
+}
+
+System.prototype.getHostName = function() {
+   var result ;
+
+   // check argument
+   if ( 0 < arguments.length )
+   {
+      setLastErrMsg( getErr( SDB_INVALIDARG ) ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "get hostname" ) ;
+      result = retObj.toObj().hostname ;
+   }
+   else
+   {
+      result = System.getHostName() ;
+   }
+   return result ;
+}
+
+System.prototype.sniffPort = function( port ) {
+   var retObj ;
+
+   // check argument
+   if ( undefined == port )
+   {
+      setLastErrMsg( "not specified the port to sniff" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "sniff port", {},
+                                             { "port": port }) ;
+   }
+   else
+   {
+      retObj = System.sniffPort( port ) ;
+   }
+   return retObj ;
+}
+
+System.prototype.listProcess = function( optionObj, filterObj ) {
+   var retObj ;
+   var result ;
+
+   if ( undefined != this._remote )
+   {
+      var displayMode = "obj" ;
+
+      // check argument
+      if ( undefined != optionObj )
+      {
+         if ( undefined != optionObj.displayMode  )
+         {
+            displayMode = optionObj.displayMode ;
+            delete optionObj.displayMode ;
+         }
+      }
+
+      if ( undefined != optionObj )
+      {
+         result = this._remote._runCommand( "list process", optionObj ) ;
+      }
+      else
+      {
+         result = this._remote._runCommand( "list process" ) ;
+      }
+
+      if ( undefined != filterObj )
+      {
+         var filter = new _Filter( filterObj ) ;
+         retObj = filter.match( result.toObj() ) ;
+      }
+      else
+      {
+         var filter = new _Filter( {} ) ;
+         retObj = filter.match( result.toObj() ) ;
+      }
+
+      if ( "text" == displayMode )
+      {
+         return retObj._formatStr() ;
+      }
+      else
+      {
+         return retObj ;
+      }
+   }
+   else
+   {
+      retObj = System.listProcess( optionObj, filterObj ) ;
+      return retObj ;
+   }
+}
+
+System.prototype.isProcExist = function( optionObj ) {
+
+   var retArray ;
+   var isExist = false ;
+
+   // check argument
+   if ( undefined != optionObj )
+   {
+      if ( undefined == optionObj.value )
+      {
+         setLastErrMsg( "value must be config" ) ;
+         throw SDB_OUT_OF_BOUND ;
+      }
+      else
+      {
+         if ( "name" == optionObj.type )
+         {
+             retArray = this.listProcess( { "detail": true },
+                                         { "cmd": optionObj.value } ) ;
+           }
+         else
+         {
+            retArray = this.listProcess( { "detail": true },
+                                         { "pid": optionObj.value } ) ;
+         }
+      }
+
+     }
+   else
+   {
+      setLastErrMsg( "optionObj must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   if ( 0 != retArray.size() )
+   {
+      isExist = true ;
+   }
+   return isExist ;
+}
+
+System.prototype.addUser = function( userObj ) {
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "add user", {}, {}, userObj ) ;
+   }
+   else
+   {
+      System.addUser( userObj ) ;
+   }
+}
+
+System.prototype.setUserConfigs = function( optionObj ) {
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "set user configs", {}, {}, optionObj ) ;
+   }
+   else
+   {
+      System.setUserConfigs( optionObj ) ;
+   }
+}
+
+System.prototype.delUser = function( optionObj ) {
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "del user", {}, optionObj ) ;
+   }
+   else
+   {
+      System.delUser( optionObj ) ;
+   }
+}
+
+System.prototype.addGroup = function( optionObj ) {
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "add group", {}, {}, optionObj ) ;
+   }
+   else
+   {
+      System.addGroup( optionObj ) ;
+   }
+}
+
+System.prototype.delGroup = function( name ) {
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "del group", {}, { "name" :name } ) ;
+   }
+   else
+   {
+      System.delGroup( name ) ;
+   }
+}
+
+System.prototype.listLoginUsers = function( optionObj, filterObj ) {
+   var retArray ;
+
+   if ( undefined != this._remote )
+   {
+      var objArray ;
+      var displayMode = "obj" ;
+
+      // check argument
+      if ( undefined != optionObj )
+      {
+         if ( undefined != optionObj.displayMode )
+         {
+            displayMode = optionObj.displayMode ;
+            delete optionObj.displayMode ;
+         }
+         objArray = this._remote._runCommand( "list login users", optionObj ) ;
+      }
+      else
+      {
+         objArray = this._remote._runCommand( "list login users" ) ;
+      }
+
+      // filter
+      if ( undefined != filterObj )
+      {
+         var filter = new _Filter( filterObj ) ;
+         retArray = filter.match( objArray.toObj() ) ;
+      }
+      else
+      {
+         var filter = new _Filter( {} ) ;
+         retArray = filter.match( objArray.toObj() ) ;
+      }
+
+      // set format
+      if ( "text" == displayMode )
+      {
+         retArray = retArray._formatStr() ;
+      }
+   }
+   else
+   {
+      retArray = System.listLoginUsers( optionObj, filterObj ) ;
    }
    return retArray ;
 }
 
 System.prototype.listAllUsers = function( optionObj, filterObj ) {
-	var retArray ;
-
-	if ( undefined != this._remote )
-	{
-		var objArray ;
-		var displayMode = "obj" ;
-		if ( undefined != optionObj )
-		{
-			if ( undefined != optionObj.displayMode )
-			{
-				displayMode = optionObj.displayMode ;
-				delete optionObj.displayMode ;
-			}
-			objArray = this._remote._runCommand( "list all users", optionObj ) ;
-		}
-		else
-		{
-			objArray = this._remote._runCommand( "list all users" ) ;
-		}
-
-		if( undefined != filterObj )
-	   {
-	      var filter = new _Filter( filterObj ) ;
-		   retArray = filter.match( objArray.toObj() ) ;
-	   }
-	   else
-	   {
-	      var filter = new _Filter( {} ) ;
-		  	retArray = filter.match( objArray.toObj() ) ;
-	   }
-
-	   if( "text" == displayMode )
-	   {
-	      retArray = retArray._formatStr() ;
-	   }
-	}
-	else
-	{
-		retArray = System.listAllUsers( optionObj, filterObj ) ;
-	}
-	return retArray ;
-}
-
-System.listAllUsers = function( optionObj, filterObj ) {
-	var objArray ;
    var retArray ;
-	var displayMode = "obj" ;
 
-	if ( undefined != optionObj )
-	{
-		if ( undefined != optionObj.displayMode )
-		{
-			displayMode = optionObj.displayMode ;
-			delete optionObj.displayMode ;
-		}
-		objArray = System._listAllUsers( optionObj ) ;
-	}
-	else
-	{
-		objArray = System._listAllUsers() ;
-	}
-
-   if( undefined != filterObj )
+   if ( undefined != this._remote )
    {
-      var filter = new _Filter( filterObj ) ;
-	   retArray = filter.match( objArray.toObj() ) ;
+      var objArray ;
+      var displayMode = "obj" ;
+
+      // check argument
+      if ( undefined != optionObj )
+      {
+         if ( undefined != optionObj.displayMode )
+         {
+            displayMode = optionObj.displayMode ;
+            delete optionObj.displayMode ;
+         }
+         objArray = this._remote._runCommand( "list all users", optionObj ) ;
+      }
+      else
+      {
+         objArray = this._remote._runCommand( "list all users" ) ;
+      }
+
+      // filter
+      if ( undefined != filterObj )
+      {
+         var filter = new _Filter( filterObj ) ;
+         retArray = filter.match( objArray.toObj() ) ;
+      }
+      else
+      {
+         var filter = new _Filter( {} ) ;
+         retArray = filter.match( objArray.toObj() ) ;
+      }
+
+      // set display format
+      if ( "text" == displayMode )
+      {
+         retArray = retArray._formatStr() ;
+      }
    }
    else
    {
-      var filter = new _Filter( {} ) ;
-	  	retArray = filter.match( objArray.toObj() ) ;
+      retArray = System.listAllUsers( optionObj, filterObj ) ;
    }
-
-   if( "text" == displayMode )
-   {
-      retArray = retArray._formatStr() ;
-   }
-
    return retArray ;
 }
 
 System.prototype.listGroups = function( optionObj, filterObj ) {
-	var retArray ;
-
-	if ( undefined != this._remote )
-	{
-		var objArray ;
-		var displayMode = "obj" ;
-		if ( undefined != optionObj )
-		{
-			if ( undefined != optionObj.displayMode )
-			{
-				displayMode = optionObj.displayMode ;
-				delete optionObj.displayMode ;
-			}
-			objArray = this._remote._runCommand( "list all groups", optionObj ) ;
-		}
-		else
-		{
-			objArray = this._remote._runCommand( "list all groups" ) ;
-		}
-
-		if( undefined != filterObj )
-	   {
-	      var filter = new _Filter( filterObj ) ;
-		   retArray = filter.match( objArray.toObj() ) ;
-	   }
-	   else
-	   {
-	      var filter = new _Filter( {} ) ;
-		  	retArray = filter.match( objArray.toObj() ) ;
-	   }
-
-	   if( "text" == displayMode )
-	   {
-	      retArray = retArray._formatStr() ;
-	   }
-	}
-	else
-	{
-		retArray = System.listGroups( optionObj, filterObj ) ;
-	}
-
-	return retArray ;
-}
-
-System.listGroups = function( optionObj, filterObj ) {
-	var objArray ;
    var retArray ;
-	var displayMode = "obj" ;
-	if ( undefined != optionObj )
-	{
-		if ( undefined != optionObj.displayMode )
-		{
-			displayMode = optionObj.displayMode ;
-			delete optionObj.displayMode ;
-		}
-		objArray = System._listGroups( optionObj ) ;
-	}
-	else
-	{
-		objArray = System._listGroups() ;
-	}
 
-   if( undefined != filterObj )
+   if ( undefined != this._remote )
    {
-      var filter = new _Filter( filterObj ) ;
-	   retArray = filter.match( objArray.toObj() ) ;
+      var objArray ;
+      var displayMode = "obj" ;
+
+      // check argument
+      if ( undefined != optionObj )
+      {
+         if ( undefined != optionObj.displayMode )
+         {
+            displayMode = optionObj.displayMode ;
+            delete optionObj.displayMode ;
+         }
+         objArray = this._remote._runCommand( "list all groups", optionObj ) ;
+      }
+      else
+      {
+         objArray = this._remote._runCommand( "list all groups" ) ;
+      }
+
+      // filter
+      if ( undefined != filterObj )
+      {
+         var filter = new _Filter( filterObj ) ;
+         retArray = filter.match( objArray.toObj() ) ;
+      }
+      else
+      {
+         var filter = new _Filter( {} ) ;
+         retArray = filter.match( objArray.toObj() ) ;
+      }
+
+      // set display format
+      if ( "text" == displayMode )
+      {
+         retArray = retArray._formatStr() ;
+      }
    }
    else
    {
-      var filter = new _Filter( {} ) ;
-	  	retArray = filter.match( objArray.toObj() ) ;
+      retArray = System.listGroups( optionObj, filterObj ) ;
    }
 
-   if( "text" == displayMode )
-   {
-      retArray = retArray._formatStr() ;
-   }
    return retArray ;
 }
 
 System.prototype.getCurrentUser = function() {
-	var retObj ;
+   var retObj ;
 
-	if ( undefined != this._remote )
-	{
-		retObj = this._remote._runCommand( "get current user" ) ;
-	}
-	else
-	{
-		retObj = System.getCurrentUser() ;
-	}
-	return retObj ;
+   if ( undefined != this._remote )
+   {
+      retObj = this._remote._runCommand( "get current user" ) ;
+   }
+   else
+   {
+      retObj = System.getCurrentUser() ;
+   }
+   return retObj ;
 }
 
 System.prototype.isUserExist = function( userName ) {
-	var isExist = false ;
-	var retArray ;
+   var isExist = false ;
+   var retArray ;
 
-	if( undefined == userName )
+   // check argument
+   if ( undefined == userName )
    {
-		setLastErrMsg( "userName must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
+      setLastErrMsg( "userName must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
    }
 
-	if ( undefined != this._remote )
-	{
-		retArray = this.listAllUsers( { "detail": true }, { "user": userName } ) ;
-	}
-	else
-	{
-		retArray = System.listAllUsers( { "detail": true }, { "user": userName } ) ;
-	}
-
-	if ( 0 != retArray.size() )
-	{
-		isExist = true ;
-	}
-	return isExist ;
-}
-
-System.isUserExist = function( userName ) {
-	var isExist = false ;
-	var retArray ;
-
-	if( undefined == userName )
+   if ( undefined != this._remote )
    {
-		setLastErrMsg( "userName must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
+      retArray = this.listAllUsers( { "detail": true }, { "user": userName } ) ;
    }
-	else
-	{
-		retArray = System.listAllUsers( { "detail": true }, { "user": userName } ) ;
-	}
+   else
+   {
+      retArray = System.listAllUsers( { "detail": true }, { "user": userName } ) ;
+   }
 
-	if ( 0 != retArray.size() )
-	{
-		isExist = true ;
-	}
-	return isExist ;
+   // check result
+   if ( 0 != retArray.size() )
+   {
+      isExist = true ;
+   }
+   return isExist ;
 }
 
 System.prototype.isGroupExist = function( groupName ) {
-	var isExist = false ;
-	var retArray ;
+   var isExist = false ;
+   var retArray ;
 
-	if( undefined == groupName )
+   // check argument
+   if ( undefined == groupName )
    {
-		setLastErrMsg( "groupName must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
+      setLastErrMsg( "groupName must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
    }
 
-	if ( undefined != this._remote )
-	{
-		retArray = this.listGroups( { "detail": true }, { "name": groupName } ) ;
-	}
-	else
-	{
-		retArray = System.listGroups( { "detail": true }, { "name": groupName } ) ;
-	}
-	if ( 0 != retArray.size() )
-	{
-		isExist = true ;
-	}
-	return isExist ;
-}
-
-System.isGroupExist = function( groupName ) {
-	var isExist = false ;
-	var retArray ;
-
-	if( undefined == groupName )
+   if ( undefined != this._remote )
    {
-		setLastErrMsg( "userName must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
+      retArray = this.listGroups( { "detail": true }, { "name": groupName } ) ;
+   }
+   else
+   {
+      retArray = System.listGroups( { "detail": true }, { "name": groupName } ) ;
    }
 
-	retArray = System.listGroups( { "detail": true }, { "name": groupName } ) ;
-
-	if ( 0 != retArray.size() )
-	{
-		isExist = true ;
-	}
-	return isExist ;
+   // check result
+   if ( 0 != retArray.size() )
+   {
+      isExist = true ;
+   }
+   return isExist ;
 }
 
 System.prototype.killProcess = function( optionObj ) {
-	if ( undefined == optionObj )
-	{
-		setLastErrMsg( "optionObj must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-	if ( "object" != typeof( optionObj ) )
-	{
-		setLastErrMsg( "optionObj must be BsonObj" ) ;
-		throw SDB_INVALIDARG ;
-	}
-	if ( undefined != this._remote )
-	{
-		this._remote._runCommand( "kill process", { "sig" : optionObj.sig },
+
+   // check argument
+   if ( undefined == optionObj )
+   {
+      setLastErrMsg( "optionObj must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if ( "object" != typeof( optionObj ) )
+   {
+      setLastErrMsg( "optionObj must be BsonObj" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "kill process", { "sig" : optionObj.sig },
                                 { "pid": optionObj.pid } ) ;
-	}
-	else
-	{
-		System.killProcess( optionObj ) ;
-	}
+   }
+   else
+   {
+      System.killProcess( optionObj ) ;
+   }
 }
 
 System.prototype.getProcUlimitConfigs = function() {
-	var retObj ;
-	if ( 0 < arguments.length )
-	{
-		setLastErrMsg( "getUlimitConfigs() should have non arguments" ) ;
-		throw SDB_INVALIDARG ;
-	}
+   var retObj ;
 
-	if ( undefined != this._remote )
-	{
-		retObj = this._remote._runCommand( "get proc ulimit configs" ) ;
-	}
-	else
-	{
-		retObj = System.getProcUlimitConfigs() ;
-	}
-	return retObj ;
+   // check argument
+   if ( 0 < arguments.length )
+   {
+      setLastErrMsg( "getUlimitConfigs() should have non arguments" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      retObj = this._remote._runCommand( "get proc ulimit configs" ) ;
+   }
+   else
+   {
+      retObj = System.getProcUlimitConfigs() ;
+   }
+   return retObj ;
 }
 
 System.prototype.setProcUlimitConfigs = function( configsObj ) {
 
-	if ( undefined == configsObj )
-	{
-		setLastErrMsg( "configsObj must be configs" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == configsObj )
+   {
+      setLastErrMsg( "configsObj must be configs" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	if ( undefined != this._remote )
-	{
-		this._remote._runCommand( "set proc ulimit configs", {},{},{ "configs": configsObj } ) ;
-	}
-	else
-	{
-		System.setProcUlimitConfigs( configsObj ) ;
-	}
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "set proc ulimit configs", {},{},{ "configs": configsObj } ) ;
+   }
+   else
+   {
+      System.setProcUlimitConfigs( configsObj ) ;
+   }
 }
 
 System.prototype.getUserEnv = function() {
-	var result ;
-	if ( undefined != this._remote )
-	{
-		result = this._remote._runCommand( "get user env" ) ;
-	}
-	else
-	{
-		result = System.getUserEnv() ;
-	}
-	return result ;
+   var result ;
+   if ( undefined != this._remote )
+   {
+      result = this._remote._runCommand( "get user env" ) ;
+   }
+   else
+   {
+      result = System.getUserEnv() ;
+   }
+   return result ;
 }
 
 System.prototype.getSystemConfigs = function( type ) {
-	var retObj ;
+   var retObj ;
 
-	if ( undefined != this._remote )
-	{
-		if ( undefined != type )
-		{
-			retObj = this._remote._runCommand( "get system configs", { "type": type } ) ;
-		}
-		else
-		{
-			retObj = this._remote._runCommand( "get system configs" ) ;
-		}
-	}
-	else
-	{
-		if ( undefined != type )
-		{
-			retObj = System.getSystemConfigs( type ) ;
-		}
-		else
-		{
-			retObj = System.getSystemConfigs( ) ;
-		}
-	}
-	return retObj ;
+   if ( undefined != this._remote )
+   {
+      if ( undefined != type )
+      {
+         retObj = this._remote._runCommand( "get system configs",
+                                            { "type": type } ) ;
+      }
+      else
+      {
+         retObj = this._remote._runCommand( "get system configs" ) ;
+      }
+   }
+   else
+   {
+      if ( undefined != type )
+      {
+         retObj = System.getSystemConfigs( type ) ;
+      }
+      else
+      {
+         retObj = System.getSystemConfigs( ) ;
+      }
+   }
+   return retObj ;
 }
 
 System.prototype.runService = function ( serviceName, command, options ) {
-	var result ;
+   var result ;
 
-	if ( undefined == serviceName )
-	{
-		setLastErrMsg( "serviceName must be config" ) ;
-		throw SDB_INVALIDARG ;
-	}
-	if ( 'string' != typeof( serviceName ) )
-	{
-		setLastErrMsg( "serviceName must be string" ) ;
-		throw SDB_INVALIDARG ;
-	}
+   // check argument
+   if ( undefined == serviceName )
+   {
+      setLastErrMsg( "serviceName must be config" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   if ( 'string' != typeof( serviceName ) )
+   {
+      setLastErrMsg( "serviceName must be string" ) ;
+      throw SDB_INVALIDARG ;
+   }
 
-	if ( undefined == command )
-	{
-		setLastErrMsg( "command must be config" ) ;
-		throw SDB_INVALIDARG ;
-	}
-	if ( 'string' != typeof( command ) )
-	{
-		setLastErrMsg( "command must be string" ) ;
-		throw SDB_INVALIDARG ;
-	}
+   if ( undefined == command )
+   {
+      setLastErrMsg( "command must be config" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   if ( 'string' != typeof( command ) )
+   {
+      setLastErrMsg( "command must be string" ) ;
+      throw SDB_INVALIDARG ;
+   }
 
-	if ( undefined != this._remote )
-	{
-		var retObj ;
-		if ( "undefined" != options )
-		{
-		   retObj = this._remote._runCommand( "run service", { "command": command, "options": options },
-				        		                    { "serviceName": serviceName } ) ;
-		}
-		else
-		{
-			retObj = this._remote._runCommand( "run service", { "command": command },
-				      			                 { "serviceName": serviceName } ) ;
-		}
-		result = retObj.toObj().outStr ;
-	}
-	else
-	{
-	   if ( "undefined" != options )
-	   {
-			result = System.runService( serviceName, command, options ) ;
-	   }
-		else
-		{
-			result = System.runService( serviceName, command ) ;
-		}
-	}
-	return result ;
+   if ( undefined != this._remote )
+   {
+      var retObj ;
+      if ( "undefined" != options )
+      {
+         retObj = this._remote._runCommand( "run service", { "command": command, "options": options },
+                                              { "serviceName": serviceName } ) ;
+      }
+      else
+      {
+         retObj = this._remote._runCommand( "run service", { "command": command },
+                                            { "serviceName": serviceName } ) ;
+      }
+      result = retObj.toObj().outStr ;
+   }
+   else
+   {
+      if ( "undefined" != options )
+      {
+         result = System.runService( serviceName, command, options ) ;
+      }
+      else
+      {
+         result = System.runService( serviceName, command ) ;
+      }
+   }
+   return result ;
 }
-
-
 
 System.prototype.buildTrusty = function() {
 
    if ( "LINUX" == System.type() )
    {
-   	if ( undefined != this._remote )
-   	{
-
-   		var homeDir = System._getHomePath() ;
-   		System._createSshKey() ;
-   		var pubKey = File._readFile( homeDir + "/.ssh/id_rsa.pub" ) ;
-   		this._remote._runCommand( "build trusty", {}, {}, { "key": pubKey } ) ;
+      if ( undefined != this._remote )
+      {
+         var homeDir = System._getHomePath() ;
+         System._createSshKey() ;
+         var pubKey = File._readFile( homeDir + "/.ssh/id_rsa.pub" ) ;
+         this._remote._runCommand( "build trusty", {}, {}, { "key": pubKey } ) ;
       }
-	}
+   }
 }
 
 System.prototype.removeTrusty = function() {
+
    if ( "LINUX" == System.type() )
    {
-   	if ( undefined != this._remote )
-   	{
-   		var homeDir = System._getHomePath() ;
-   		var matchStr = File._readFile( homeDir + "/.ssh/id_rsa.pub" ) ;
-   		this._remote._runCommand( "remove trusty", {}, {},
+      if ( undefined != this._remote )
+      {
+         var homeDir = System._getHomePath() ;
+         var matchStr = File._readFile( homeDir + "/.ssh/id_rsa.pub" ) ;
+         this._remote._runCommand( "remove trusty", {}, {},
                                    { "matchStr": matchStr } ) ;
-   	}
+      }
    }
 }
 
 System.prototype.getPID = function() {
+
+   // check argument
    if ( 0 < arguments.length )
-	{
-		setLastErrMsg( "No need arguments" ) ;
-		throw SDB_INVALIDARG ;
-	}
+   {
+      setLastErrMsg( "No need arguments" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
    var pid ;
    if ( undefined != this._remote )
    {
@@ -1321,11 +1368,14 @@ System.prototype.getPID = function() {
 }
 
 System.prototype.getTID = function() {
+
+   // check argument
    if ( 0 < arguments.length )
-	{
-		setLastErrMsg( "No need arguments" ) ;
-		throw SDB_INVALIDARG ;
-	}
+   {
+      setLastErrMsg( "No need arguments" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
    var tid ;
    if ( undefined != this._remote )
    {
@@ -1339,11 +1389,14 @@ System.prototype.getTID = function() {
 }
 
 System.prototype.getEWD = function() {
+
+   // check argument
    if ( 0 < arguments.length )
-	{
-		setLastErrMsg( "No need arguments" ) ;
-		throw SDB_INVALIDARG ;
-	}
+   {
+      setLastErrMsg( "No need arguments" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
    var ewd ;
    if ( undefined != this._remote )
    {
@@ -1357,921 +1410,952 @@ System.prototype.getEWD = function() {
 }
 // end System
 
-// Cmd
+// Cmd member function
+Cmd.prototype.getInfo = function() {
 
-Cmd.prototype.getInfo = function()
-{
    var result ;
-	var infoObj ;
-	if ( undefined != this._remote )
-	{
-		var _remoteInfo = this._remote.getInfo() ;
-		infoObj = _remoteInfo.toObj() ;
-		infoObj.isRemote = true ;
-	}
-	else
-	{
-		infoObj = new Object() ;
-		infoObj.isRemote = false ;
-	}
-	result = this._getInfo( infoObj ) ;
-	return result ;
+   var infoObj ;
+   if ( undefined != this._remote )
+   {
+      var _remoteInfo = this._remote.getInfo() ;
+      infoObj = _remoteInfo.toObj() ;
+      infoObj.isRemote = true ;
+   }
+   else
+   {
+      infoObj = new Object() ;
+      infoObj.isRemote = false ;
+   }
+   result = this._getInfo( infoObj ) ;
+   return result ;
 }
 
-Cmd.prototype.getCommand = function()
-{
-	if ( undefined != this._remote )
-	{
-		return this._command ;
-	}
-	else
-	{
-		return this._getCommand() ;
-	}
+Cmd.prototype.getCommand = function() {
+
+   if ( undefined != this._remote )
+   {
+      return this._command ;
+   }
+   else
+   {
+      return this._getCommand() ;
+   }
 }
 
-Cmd.prototype.getLastOut = function()
-{
-	if ( undefined != this._remote )
-	{
-		return this._strOut ;
-	}
-	else
-	{
-		return this._getLastOut() ;
-	}
+Cmd.prototype.getLastOut = function() {
+
+   if ( undefined != this._remote )
+   {
+      return this._strOut ;
+   }
+   else
+   {
+      return this._getLastOut() ;
+   }
 }
 
-Cmd.prototype.getLastRet = function()
-{
-	if ( undefined != this._remote )
-	{
-		return this._retCode ;
-	}
-	else
-	{
-		return this._getLastRet() ;
-	}
+Cmd.prototype.getLastRet = function() {
+
+   if ( undefined != this._remote )
+   {
+      return this._retCode ;
+   }
+   else
+   {
+      return this._getLastRet() ;
+   }
 }
 
-Cmd.prototype.run = function( cmd, args, timeout, useShell )
-{
-	var retStr ;
-	if ( undefined == cmd )
-	{
-		setLastErrMsg( "cmd must be config" ) ;
-		throw SDB_INVALIDARG ;
-	}
+Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
+   var retStr ;
 
-	if ( 'string' != typeof( cmd ) )
-	{
-		setLastErrMsg( "cmd must be string" ) ;
-		throw SDB_INVALIDARG ;
-	}
-	if ( undefined != this._remote )
-	{
+   // check argument
+   if ( undefined == cmd )
+   {
+      setLastErrMsg( "cmd must be config" ) ;
+      throw SDB_INVALIDARG ;
+   }
 
-		var retObj = this._remote._runCommand( "cmd run", { "timeout": timeout, "useShell": useShell }, {},
-										 				  { "command": cmd, "args": args } ).toObj() ;
-		this._command = cmd ;
-		this._retCode = retObj.retCode ;
-		this._strOut = retObj.strOut ;
+   if ( 'string' != typeof( cmd ) )
+   {
+      setLastErrMsg( "cmd must be string" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   if ( undefined != this._remote )
+   {
 
-		if ( 0 != this._retCode )
-		{
-			setLastErrMsg( this._strOut ) ;
-			throw this._retCode ;
-		}
-		else
-		{
-			retStr = this._strOut ;
-		}
-	}
-	else
-	{
-		if ( undefined != useShell )
-		{
-			retStr = this._run( cmd, args, timeout, useShell ) ;
-		}
-		else if ( undefined != timeout )
-		{
-			retStr = this._run( cmd, args, timeout ) ;
-		}
-		else if ( undefined != args )
-		{
-			retStr = this._run( cmd, args ) ;
-		}
-		else
-		{
-			retStr = this._run( cmd ) ;
-		}
+      var retObj = this._remote._runCommand( "cmd run", { "timeout": timeout, "useShell": useShell }, {},
+                                             { "command": cmd, "args": args } ).toObj() ;
+      this._command = cmd ;
+      this._retCode = retObj.retCode ;
+      this._strOut = retObj.strOut ;
 
-	}
-	return retStr ;
+      if ( 0 != this._retCode )
+      {
+         setLastErrMsg( this._strOut ) ;
+         throw this._retCode ;
+      }
+      else
+      {
+         retStr = this._strOut ;
+      }
+   }
+   else
+   {
+      if ( undefined != useShell )
+      {
+         retStr = this._run( cmd, args, timeout, useShell ) ;
+      }
+      else if ( undefined != timeout )
+      {
+         retStr = this._run( cmd, args, timeout ) ;
+      }
+      else if ( undefined != args )
+      {
+         retStr = this._run( cmd, args ) ;
+      }
+      else
+      {
+         retStr = this._run( cmd ) ;
+      }
+
+   }
+   return retStr ;
 }
 
-Cmd.prototype.start = function( cmd, args, useShell, timeout )
-{
-	var retStr ;
-	if ( undefined != this._remote )
-	{
-		var recvObj = this._remote._runCommand( "cmd start",
+Cmd.prototype.start = function( cmd, args, useShell, timeout ) {
+   var retStr ;
+
+   if ( undefined != this._remote )
+   {
+      var recvObj = this._remote._runCommand( "cmd start",
                                               { "useShell": useShell,
                                                 "timeout": timeout }, {},
-			                      					 { "command": cmd,
-			                      					   "args": args } ) ;
-		var getObj = recvObj.toObj() ;
+                                               { "command": cmd,
+                                                 "args": args } ) ;
+      var getObj = recvObj.toObj() ;
 
-		this._command = cmd ;
-		this._retCode = getObj.retCode ;
-		this._strOut = getObj.strOut ;
+      this._command = cmd ;
+      this._retCode = getObj.retCode ;
+      this._strOut = getObj.strOut ;
 
-		if ( 0 != this._retCode )
-		{
-			setLastErrMsg( getObj.strOut ) ;
-			throw getObj.retCode ;
-		}
-		else
-		{
-			retStr = getObj.pid ;
-		}
-	}
-	else
-	{
-		if ( undefined != timeout )
-		{
-			retStr = this._start( cmd, args, useShell, timeout ) ;
-		}
-		else if ( undefined != useShell )
-		{
-			retStr = this._start( cmd, args, useShell ) ;
-		}
-		else if ( undefined != args )
-		{
-			retStr = this._start( cmd, args ) ;
-		}
-		else
-		{
-			retStr = this._start( cmd ) ;
-		}
-	}
+      if ( 0 != this._retCode )
+      {
+         setLastErrMsg( getObj.strOut ) ;
+         throw getObj.retCode ;
+      }
+      else
+      {
+         retStr = getObj.pid ;
+      }
+   }
+   else
+   {
+      if ( undefined != timeout )
+      {
+         retStr = this._start( cmd, args, useShell, timeout ) ;
+      }
+      else if ( undefined != useShell )
+      {
+         retStr = this._start( cmd, args, useShell ) ;
+      }
+      else if ( undefined != args )
+      {
+         retStr = this._start( cmd, args ) ;
+      }
+      else
+      {
+         retStr = this._start( cmd ) ;
+      }
+   }
 
-	return retStr ;
+   return retStr ;
 }
 
 Cmd.prototype.runJS = function( code ) {
-	var code ;
-	if ( undefined == code )
-	{
-		setLastErrMsg( "code must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-	if ( "string" != typeof( code ) )
-	{
-		setLastErrMsg( "code must be config" ) ;
-		throw SDB_INVALIDARG ;
-	}
+   var code ;
 
-	if ( undefined != this._remote )
-	{
-		var recvObj ;
-		recvObj = this._remote._runCommand( "cmd run js", {}, {},
-			                                   { "code": code } ) ;
-		return recvObj.toObj().strOut ;
-	}
-	else
-	{
-		setLastErrMsg( "runJS() should be called by remote obj" ) ;
-		throw SDB_SYS ;
-	}
+   // check argument
+   if ( undefined == code )
+   {
+      setLastErrMsg( "code must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if ( "string" != typeof( code ) )
+   {
+      setLastErrMsg( "code must be config" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   // check if is remote obj
+   if ( undefined != this._remote )
+   {
+      var recvObj ;
+      recvObj = this._remote._runCommand( "cmd run js", {}, {},
+                                            { "code": code } ) ;
+      return recvObj.toObj().strOut ;
+   }
+   else
+   {
+      setLastErrMsg( "runJS() should be called by remote obj" ) ;
+      throw SDB_SYS ;
+   }
 }
-
 // end Cmd
 
-// File
+// File static function
+File.list = function( optionObj, filterObj ) {
 
-File.prototype.getInfo = function()
-{
-	var result ;
-	var infoObj ;
-	if ( undefined != this._remote )
-	{
-		var _remoteInfo = this._remote.getInfo() ;
-		infoObj = _remoteInfo.toObj() ;
-		infoObj.isRemote = true ;
-		infoObj.filename = this._filename ;
-	}
-	else
-	{
-		infoObj = new Object() ;
-		infoObj.isRemote = false ;
-	}
-	result = this._getInfo( infoObj ) ;
-	return result ;
+   var retObj ;
+   var objArr ;
+   var result ;
+   var displayMode = "obj" ;
+
+   // check argument
+   if ( undefined != optionObj )
+   {
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+
+      }
+      retObj = File._list( optionObj ) ;
+   }
+   else
+   {
+      retObj = File._list() ;
+   }
+
+   if ( undefined != filterObj )
+   {
+      var filter = new _Filter( filterObj ) ;
+      objArr = filter.match( retObj.toObj() ) ;
+   }
+   else
+   {
+      var filter = new _Filter( {} ) ;
+      objArr =  filter.match( retObj.toObj() ) ;
+   }
+
+   if ( "text" == displayMode )
+   {
+      result = objArr._formatStr() ;
+   }
+   else
+   {
+      result = objArr ;
+   }
+
+   return result ;
+}
+
+File.isFile = function( pathname ) {
+
+   // check argument
+   if ( undefined == pathname )
+   {
+      setLastErrMsg( "pathname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // check return file type
+   if ( "FIL" == File._getPathType( pathname ) )
+   {
+      return true ;
+   }
+   else
+   {
+      return false ;
+   }
+}
+
+File.isDir = function( pathname ) {
+
+   // check argument
+   if ( undefined == pathname )
+   {
+      setLastErrMsg( "pathname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // check return file type
+   if ( "DIR" == File._getPathType( pathname ) )
+   {
+      return true ;
+   }
+   else
+   {
+      return false ;
+   }
+}
+
+File.find = function( optionObj, filterObj ) {
+   var recvObj ;
+   var retArr ;
+   var result ;
+   var displayMode = "obj" ;
+
+   // check argument
+   if ( undefined == optionObj )
+   {
+      setLastErrMsg( "optionObj must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   if ( undefined != optionObj.displayMode )
+   {
+      displayMode = optionObj.displayMode ;
+      delete optionObj.displayMode ;
+   }
+
+   recvObj  = File._find( optionObj ) ;
+
+   // filter
+   if ( undefined != filterObj )
+   {
+      var filter = new _Filter( filterObj ) ;
+      retArr = filter.match( recvObj.toObj() ) ;
+   }
+   else
+   {
+      var filter = new _Filter( {} ) ;
+      retArr = filter.match( recvObj.toObj() ) ;
+   }
+
+   // set display format
+   if ( "text" == displayMode )
+   {
+      result = retArr._formatStr() ;
+   }
+   else
+   {
+      result = retArr ;
+   }
+   return result ;
+}
+
+// File member function
+File.prototype.getInfo = function() {
+   var result ;
+   var infoObj ;
+   if ( undefined != this._remote )
+   {
+      var _remoteInfo = this._remote.getInfo() ;
+      infoObj = _remoteInfo.toObj() ;
+      infoObj.isRemote = true ;
+      infoObj.filename = this._filename ;
+   }
+   else
+   {
+      infoObj = new Object() ;
+      infoObj.isRemote = false ;
+   }
+   result = this._getInfo( infoObj ) ;
+   return result ;
 }
 
 File.prototype.read = function( size ) {
+   var str ;
 
-	var str ;
-	if ( undefined != this._remote )
-	{
-		if ( true != this._isOpened )
-		{
-			setLastErrMsg( "file is not opened" ) ;
-			throw SDB_IO ;
-		}
+   if ( undefined != this._remote )
+   {
+      if ( true != this._isOpened )
+      {
+         setLastErrMsg( "file is not opened" ) ;
+         throw SDB_IO ;
+      }
 
-		var retObj ;
-		if( undefined != size )
-		{
-			retObj= this._remote._runCommand( "file read",{}, {},
-											   		{ "size":size,
-											   		  "filename": this._filename,
-											   		  "location": this._location } ) ;
-		}
-		else
-		{
-			retObj= this._remote._runCommand( "file read",{}, {},
-											   		{ "filename": this._filename,
-											   		  "location": this._location } ) ;
-		}
-		str = retObj.toObj().readStr ;
-		this._location += str.length ;
-	}
-	else
-	{
-		if ( undefined != size )
-		{
-			str = this._read( size ) ;
-		}
-		else
-		{
-			str = this._read() ;
-		}
-	}
-	return str ;
+      var retObj ;
+      if ( undefined != size )
+      {
+         retObj= this._remote._runCommand( "file read",{}, {},
+                                          { "size":size,
+                                            "filename": this._filename,
+                                            "location": this._location } ) ;
+      }
+      else
+      {
+         retObj= this._remote._runCommand( "file read",{}, {},
+                                          { "filename": this._filename,
+                                            "location": this._location } ) ;
+      }
+      str = retObj.toObj().readStr ;
+      this._location += str.length ;
+   }
+   else
+   {
+      if ( undefined != size )
+      {
+         str = this._read( size ) ;
+      }
+      else
+      {
+         str = this._read() ;
+      }
+   }
+   return str ;
 }
 
 File.prototype.write = function( content ){
 
-	if ( undefined != this._remote )
-	{
-		if ( true != this._isOpened )
-		{
-			setLastErrMsg( "file is not opened" ) ;
-			throw SDB_IO ;
-		}
+   if ( undefined != this._remote )
+   {
+      if ( true != this._isOpened )
+      {
+         setLastErrMsg( "file is not opened" ) ;
+         throw SDB_IO ;
+      }
 
-		this._remote._runCommand( "file write", {}, {},
-										  { "filename": this._filename,
-										    "location": this._location,
-										    "content": content } ) ;
-		this._location += content.length ;
-	}
-	else
-	{
-		this._write( content ) ;
-	}
+      this._remote._runCommand( "file write", {}, {},
+                                { "filename": this._filename,
+                                  "location": this._location,
+                                  "content": content } ) ;
+      this._location += content.length ;
+   }
+   else
+   {
+      this._write( content ) ;
+   }
 }
 
 File.prototype.seek = function( offset, where ) {
-	if ( undefined == offset )
-	{
-		setLastErrMsg( "offset must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-	if ( undefined == where )
-	{
-		where = 'b' ;
-	}
 
-	if ( undefined != this._remote )
-	{
-		if ( true != this._isOpened )
-		{
-			setLastErrMsg( "file is not opened" ) ;
-			throw SDB_IO ;
-		}
+   // check argument
+   if ( undefined == offset )
+   {
+      setLastErrMsg( "offset must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-		if ( 'b' == where )
-		{
-			if( offset < 0 )
-			{
-				throw SDB_INVALIDARG ;
-			}
-			this._location = offset ;
-		}
-		else if ( 'c' == where )
-		{
-			if ( 0 > this._location + offset )
-			{
-				throw SDB_INVALIDARG ;
-			}
-			this._location += offset ;
-		}
-		else if ( 'e' == where )
-		{
-			var recvObj = this._remote._runCommand( "file get content size", {},
-				                                     { "name": this._filename } ) ;
-			var size = recvObj.toObj().size ;
+   if ( undefined == where )
+   {
+      where = 'b' ;
+   }
 
-			if ( 0 > size - 1 + offset )
-			{
-				throw SDB_INVALIDARG ;
-			}
-			this._location = size -1 + offset ;
-		}
-		else
-		{
-			setLastErrMsg( "where must be string(b/c/e)" ) ;
-			throw SDB_INVALIDARG ;
-		}
-	}
-	else
-	{
-		this._seek( offset, where ) ;
-	}
+   if ( undefined != this._remote )
+   {
+      if ( true != this._isOpened )
+      {
+         setLastErrMsg( "file is not opened" ) ;
+         throw SDB_IO ;
+      }
+
+      if ( 'b' == where )
+      {
+         if ( offset < 0 )
+         {
+            throw SDB_INVALIDARG ;
+         }
+         this._location = offset ;
+      }
+      else if ( 'c' == where )
+      {
+         if ( 0 > this._location + offset )
+         {
+            throw SDB_INVALIDARG ;
+         }
+         this._location += offset ;
+      }
+      else if ( 'e' == where )
+      {
+         var recvObj = this._remote._runCommand( "file get content size", {},
+                                                 { "name": this._filename } ) ;
+         var size = recvObj.toObj().size ;
+
+         if ( 0 > size - 1 + offset )
+         {
+            throw SDB_INVALIDARG ;
+         }
+         this._location = size -1 + offset ;
+      }
+      else
+      {
+         setLastErrMsg( "where must be string(b/c/e)" ) ;
+         throw SDB_INVALIDARG ;
+      }
+   }
+   else
+   {
+      this._seek( offset, where ) ;
+   }
 }
 
 File.prototype.close = function() {
    if ( undefined == this._remote )
    {
-   	this._close() ;
+      this._close() ;
    }
-	else
-	{
-		this._isOpened = false ;
-	}
+   else
+   {
+      this._isOpened = false ;
+   }
 }
 
 File.prototype.remove = function( filepath ) {
 
-	if ( undefined == filepath )
-	{
-		setLastErrMsg( "filepath must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == filepath )
+   {
+      setLastErrMsg( "filepath must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	if ( undefined != this._remote )
-	{
-		this._remote._runCommand( "file remove", {}, {},
-			                      { "filepath" : filepath } ) ;
-	}
-	else
-	{
-		File.remove( filepath ) ;
-	}
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "file remove", {}, {},
+                               { "filepath" : filepath } ) ;
+   }
+   else
+   {
+      File.remove( filepath ) ;
+   }
 }
 
 File.prototype.exist = function( filepath ) {
-	var isExist ;
+   var isExist ;
 
-	if ( undefined == filepath )
-	{
-		setLastErrMsg( "filepath must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == filepath )
+   {
+      setLastErrMsg( "filepath must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	if ( undefined != this._remote )
-	{
-		var recvObj = this._remote._runCommand( "file is exist", {}, {},
-			                      					 { "filepath" : filepath } ) ;
-		isExist = recvObj.toObj().isExist ;
-	}
-	else
-	{
-		isExist = File.exist( filepath ) ;
-	}
-	return isExist ;
+   if ( undefined != this._remote )
+   {
+      var recvObj = this._remote._runCommand( "file is exist", {}, {},
+                                               { "filepath" : filepath } ) ;
+      isExist = recvObj.toObj().isExist ;
+   }
+   else
+   {
+      isExist = File.exist( filepath ) ;
+   }
+   return isExist ;
 }
 
 File.prototype.copy = function( src, dst, replace, mode ) {
-	if ( undefined == src )
-	{
-		setLastErrMsg( "src must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
 
-	if ( undefined == dst )
-	{
-		setLastErrMsg( "dst must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == src )
+   {
+      setLastErrMsg( "src must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if ( undefined == dst )
+   {
+      setLastErrMsg( "dst must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	if ( undefined != mode )
-	{
-		if ( undefined != this._remote )
-		{
-	   	this._remote._runCommand( "file copy", { "replace": replace, "mode": mode },
-	   		                      { "src": src }, { "dst": dst } ) ;
-		}
-		else
-		{
-			File.copy( src, dst, replace, mode ) ;
-		}
-	}
-	else if ( undefined != replace )
-	{
-		if ( undefined != this._remote )
-		{
-			this._remote._runCommand( "file copy", { "replace": replace },
-	   	                      	 { "src": src }, { "dst": dst } ) ;
-		}
-		else
-		{
-			File.copy( src, dst, replace ) ;
-		}
-	}
-	else
-	{
-		if ( undefined != this._remote )
-		{
-			this._remote._runCommand( "file copy", {},
-	   	                      	 { "src": src }, { "dst": dst } ) ;
-		}
-		else
-		{
-			File.copy( src, dst ) ;
-		}
-	}
+   if ( undefined != mode )
+   {
+      if ( undefined != this._remote )
+      {
+         this._remote._runCommand( "file copy", { "replace": replace, "mode": mode },
+                                  { "src": src }, { "dst": dst } ) ;
+      }
+      else
+      {
+         File.copy( src, dst, replace, mode ) ;
+      }
+   }
+   else if ( undefined != replace )
+   {
+      if ( undefined != this._remote )
+      {
+         this._remote._runCommand( "file copy", { "replace": replace },
+                                   { "src": src }, { "dst": dst } ) ;
+      }
+      else
+      {
+         File.copy( src, dst, replace ) ;
+      }
+   }
+   else
+   {
+      if ( undefined != this._remote )
+      {
+         this._remote._runCommand( "file copy", {},
+                                   { "src": src }, { "dst": dst } ) ;
+      }
+      else
+      {
+         File.copy( src, dst ) ;
+      }
+   }
 }
 
 File.prototype.move = function( src, dst ) {
 
-	if ( undefined == src )
-	{
-		setLastErrMsg( "src must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == src )
+   {
+      setLastErrMsg( "src must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if ( undefined == dst )
+   {
+      setLastErrMsg( "dst must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	if ( undefined == dst )
-	{
-		setLastErrMsg( "dst must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-
-	if ( undefined != this._remote )
-	{
-		this._remote._runCommand( "file move", {}, { "src": src },
-		                        { "dst": dst } ) ;
-	}
-	else
-	{
-		File.move( src, dst ) ;
-	}
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "file move", {}, { "src": src },
+                              { "dst": dst } ) ;
+   }
+   else
+   {
+      File.move( src, dst ) ;
+   }
 }
 
 File.prototype.mkdir = function( name, mode ) {
 
-	if ( undefined == name )
-	{
-		setLastErrMsg( "name must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-
-	if ( undefined != mode )
-	{
-		if ( undefined != this._remote )
-		{
-			this._remote._runCommand( "file mkdir", { "mode": mode }, {},
-											 { "name": name } ) ;
-		}
-		else
-		{
-			File.mkdir( name, mode ) ;
-		}
-	}
-	else
-	{
-		if ( undefined != this._remote )
-		{
-			this._remote._runCommand( "file mkdir", {}, {},
-											 { "name": name } ) ;
-		}
-		else
-		{
-			File.mkdir( name ) ;
-		}
-	}
-}
-
-File.list = function( optionObj, filterObj ) {
-
-	var retObj ;
-	var objArr ;
-	var result ;
-	var displayMode = "obj" ;
-
-	if ( undefined != optionObj )
-	{
-	   if ( undefined != optionObj.displayMode )
-	   {
-	   	displayMode = optionObj.displayMode ;
-			delete optionObj.displayMode ;
-
-	   }
-		retObj = File._list( optionObj ) ;
-	}
-	else
-	{
-		retObj = File._list() ;
-	}
-
-	if ( undefined != filterObj )
-	{
-		var filter = new _Filter( filterObj ) ;
-		objArr = filter.match( retObj.toObj() ) ;
-	}
-	else
-	{
-		var filter = new _Filter( {} ) ;
-		objArr =  filter.match( retObj.toObj() ) ;
-	}
-
-	if ( "text" == displayMode )
-	{
-	   result = objArr._formatStr() ;
-	}
-	else
-	{
-		result = objArr ;
-	}
-
-	return result ;
-}
-
-File.isFile = function( pathname ) {
-	if ( undefined == pathname )
-	{
-		setLastErrMsg( "pathname must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-
-	if( "FIL" == File._getPathType( pathname ) )
-	{
-		return true ;
-	}
-	else
-	{
-		return false ;
-	}
-}
-
-File.isDir = function( pathname ) {
-	if ( undefined == pathname )
-	{
-		setLastErrMsg( "pathname must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-
-	if( "DIR" == File._getPathType( pathname ) )
-	{
-		return true ;
-	}
-	else
-	{
-		return false ;
-	}
-}
-
-File.find = function( optionObj, filterObj ) {
-	var recvObj ;
-	var retArr ;
-	var result ;
-	if ( undefined == optionObj )
-	{
-		setLastErrMsg( "optionObj must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
-
-	var displayMode = "obj" ;
-	if ( undefined != optionObj.displayMode )
-	{
-		displayMode = optionObj.displayMode ;
-		delete optionObj.displayMode ;
-	}
-
-	recvObj  = File._find( optionObj ) ;
-	if ( undefined != filterObj )
-	{
-		var filter = new _Filter( filterObj ) ;
-		retArr = filter.match( recvObj.toObj() ) ;
-	}
-	else
-	{
-		var filter = new _Filter( {} ) ;
-		retArr = filter.match( recvObj.toObj() ) ;
-	}
-
-   if ( "text" == displayMode )
+   // check argument
+   if ( undefined == name )
    {
-   	result = retArr._formatStr() ;
+      setLastErrMsg( "name must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
    }
-	else
-	{
-		result = retArr ;
-	}
-	return result ;
+
+   if ( undefined != mode )
+   {
+      if ( undefined != this._remote )
+      {
+         this._remote._runCommand( "file mkdir", { "mode": mode }, {},
+                                  { "name": name } ) ;
+      }
+      else
+      {
+         File.mkdir( name, mode ) ;
+      }
+   }
+   else
+   {
+      if ( undefined != this._remote )
+      {
+         this._remote._runCommand( "file mkdir", {}, {},
+                                  { "name": name } ) ;
+      }
+      else
+      {
+         File.mkdir( name ) ;
+      }
+   }
 }
 
 File.prototype.find = function( optionObj, filterObj ) {
 
-	if ( undefined == optionObj )
-	{
-		setLastErrMsg( "optionObj must be config" ) ;
-		throw SDB_OUT_OF_BOUND  ;
-	}
-	if ( false == optionObj instanceof Object )
-	{
-		setLastErrMsg( "optionObj must be Object" ) ;
-		throw SDB_INVALIDARG  ;
-	}
+   // check argument
+   if ( undefined == optionObj )
+   {
+      setLastErrMsg( "optionObj must be config" ) ;
+      throw SDB_OUT_OF_BOUND  ;
+   }
+   if ( false == optionObj instanceof Object )
+   {
+      setLastErrMsg( "optionObj must be Object" ) ;
+      throw SDB_INVALIDARG  ;
+   }
 
-	var result ;
-	if ( undefined != this._remote )
-	{
-		var matchResult ;
-		var displayMode = "obj" ;
-		if ( undefined != optionObj.displayMode )
-		{
-			displayMode = optionObj.displayMode ;
-			delete optionObj.displayMode ;
-		}
+   var result ;
+   if ( undefined != this._remote )
+   {
+      var matchResult ;
+      var displayMode = "obj" ;
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+      }
 
-		var recvObj = this._remote._runCommand( "file find", optionObj ).toObj() ;
-		if ( undefined != filterObj )
-		{
-			var filter = new _Filter( filterObj ) ;
-			matchResult = filter.match( recvObj ) ;
-		}
-		else
-		{
-			var filter = new _Filter( {} ) ;
-			matchResult = filter.match( recvObj ) ;
-		}
+      var recvObj = this._remote._runCommand( "file find", optionObj ).toObj() ;
 
-		if ( "text" == displayMode )
-		{
-			result = matchResult._formatStr() ;
-		}
-		else
-		{
-			result = matchResult ;
-		}
-	}
-	else
-	{
-		result = File.find( optionObj, filterObj ) ;
-	}
+      // filter
+      if ( undefined != filterObj )
+      {
+         var filter = new _Filter( filterObj ) ;
+         matchResult = filter.match( recvObj ) ;
+      }
+      else
+      {
+         var filter = new _Filter( {} ) ;
+         matchResult = filter.match( recvObj ) ;
+      }
 
-	return result ;
+      // set display format
+      if ( "text" == displayMode )
+      {
+         result = matchResult._formatStr() ;
+      }
+      else
+      {
+         result = matchResult ;
+      }
+   }
+   else
+   {
+      result = File.find( optionObj, filterObj ) ;
+   }
+
+   return result ;
 }
 
 File.prototype.chmod = function( filename, mode, recursive ) {
 
-	if ( undefined != this._remote )
-	{
-		if ( undefined != recursive )
-		{
-			this._remote._runCommand( "file chmod", { "recursive": recursive },
+   if ( undefined != this._remote )
+   {
+      if ( undefined != recursive )
+      {
+         this._remote._runCommand( "file chmod", { "recursive": recursive },
                                    { "pathname": filename },
-				                       { "mode": mode } ) ;
-		}
-		else
-		{
-			this._remote._runCommand( "file chmod", {}, { "pathname": filename },
-				                       { "mode": mode } ) ;
-		}
-	}
-	else
-	{
-		if ( undefined != recursive )
-		{
-			File.chmod( filename, mode, recursive ) ;
-		}
-		else
-		{
-			File.chmod( filename, mode ) ;
-		}
-	}
+                                   { "mode": mode } ) ;
+      }
+      else
+      {
+         this._remote._runCommand( "file chmod", {}, { "pathname": filename },
+                                   { "mode": mode } ) ;
+      }
+   }
+   else
+   {
+      if ( undefined != recursive )
+      {
+         File.chmod( filename, mode, recursive ) ;
+      }
+      else
+      {
+         File.chmod( filename, mode ) ;
+      }
+   }
 }
 
 File.prototype.toString = function()
 {
-	var result ;
-	if ( undefined != this._remote )
-	{
-		if( undefined != this._filename )
-		{
-			result = this._filename ;
-		}
-		else
-		{
-			result = "" ;
-		}
-	}
-	else
-	{
-		result = this._toString() ;
-	}
-	return result ;
+   var result ;
+   if ( undefined != this._remote )
+   {
+      if ( undefined != this._filename )
+      {
+         result = this._filename ;
+      }
+      else
+      {
+         result = "" ;
+      }
+   }
+   else
+   {
+      result = this._toString() ;
+   }
+   return result ;
 }
 
 File.prototype.chown = function( filename, optionObj, recursive ) {
-	if ( undefined != this._remote )
-	{
-		if ( undefined != recursive )
-		{
-			this._remote._runCommand( "file chown", { "recursive": recursive },
+   if ( undefined != this._remote )
+   {
+      if ( undefined != recursive )
+      {
+         this._remote._runCommand( "file chown", { "recursive": recursive },
                                    { "filename": filename }, optionObj ) ;
-		}
-		else
-		{
-			this._remote._runCommand( "file chown", {}, { "filename": filename },
-				                      optionObj ) ;
-		}
-	}
-	else
-	{
-		if ( undefined != recursive )
-		{
-			File.chown( filename, optionObj, recursive ) ;
-		}
-		else
-		{
-			File.chown( filename, optionObj ) ;
-		}
-	}
+      }
+      else
+      {
+         this._remote._runCommand( "file chown", {}, { "filename": filename },
+                                  optionObj ) ;
+      }
+   }
+   else
+   {
+      if ( undefined != recursive )
+      {
+         File.chown( filename, optionObj, recursive ) ;
+      }
+      else
+      {
+         File.chown( filename, optionObj ) ;
+      }
+   }
 }
 
 File.prototype.chgrp = function( filename, groupname, recursive ) {
-	if ( undefined != this._remote )
-	{
-		if ( undefined != recursive )
-		{
-			this._remote._runCommand( "file chgrp", { "recursive": recursive },
+   if ( undefined != this._remote )
+   {
+      if ( undefined != recursive )
+      {
+         this._remote._runCommand( "file chgrp", { "recursive": recursive },
                                    { "filename": filename },
-				                       { "groupname": groupname } ) ;
-		}
-		else
-		{
-			this._remote._runCommand( "file chgrp", {}, { "filename": filename },
-				                      { "groupname": groupname } ) ;
-		}
-	}
-	else
-	{
-		if ( undefined != recursive )
-		{
-			File.chgrp( filename, groupname, recursive ) ;
-		}
-		else
-		{
-			File.chgrp( filename, groupname ) ;
-		}
-	}
+                                   { "groupname": groupname } ) ;
+      }
+      else
+      {
+         this._remote._runCommand( "file chgrp", {}, { "filename": filename },
+                                  { "groupname": groupname } ) ;
+      }
+   }
+   else
+   {
+      if ( undefined != recursive )
+      {
+         File.chgrp( filename, groupname, recursive ) ;
+      }
+      else
+      {
+         File.chgrp( filename, groupname ) ;
+      }
+   }
 }
 
 File.prototype.setUmask = function( mask ) {
-	if ( undefined == mask )
-	{
-		setLastErrMsg( "mask must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
 
-	if ( undefined != this._remote )
-	{
-		this._remote._runCommand( "file set umask", {}, {}, { "mask": mask } ) ;
-	}
-	else
-	{
-		File.setUmask( mask ) ;
-	}
+   // check argument
+   if ( undefined == mask )
+   {
+      setLastErrMsg( "mask must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   if ( undefined != this._remote )
+   {
+      this._remote._runCommand( "file set umask", {}, {}, { "mask": mask } ) ;
+   }
+   else
+   {
+      File.setUmask( mask ) ;
+   }
 }
 
 File.prototype.getUmask = function() {
-	var result ;
-	if ( undefined != this._remote )
-	{
-		var recvObj = this._remote._runCommand( "file get umask" ) ;
-		result = recvObj.toObj().mask ;
-	}
-	else
-	{
-		result = File.getUmask() ;
-	}
-	return result ;
+   var result ;
+
+   if ( undefined != this._remote )
+   {
+      var recvObj = this._remote._runCommand( "file get umask" ) ;
+      result = recvObj.toObj().mask ;
+   }
+   else
+   {
+      result = File.getUmask() ;
+   }
+   return result ;
 }
 
 File.prototype.list = function( optionObj, filterObj ) {
-	var result ;
-	if ( undefined == optionObj )
-	{
-		optionObj = {} ;
-	}
+   var result ;
+   if ( undefined == optionObj )
+   {
+      optionObj = {} ;
+   }
 
-	if ( undefined != this._remote )
-	{
-	   var displayMode = "obj" ;
-		if ( undefined != optionObj.displayMode )
-		{
-			displayMode = optionObj.displayMode ;
-			delete optionObj.displayMode ;
-		}
+   if ( undefined != this._remote )
+   {
+      var displayMode = "obj" ;
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+      }
 
-		var recvObj = this._remote._runCommand( "file list", optionObj ).toObj() ;
-		var matchResult ;
-		if ( undefined != filterObj )
-		{
-			var filter = new _Filter( filterObj ) ;
-			matchResult = filter.match( recvObj ) ;
-		}
-		else
-		{
-			var filter = new _Filter( {} ) ;
-			matchResult = filter.match( recvObj ) ;
-		}
+      var recvObj = this._remote._runCommand( "file list", optionObj ).toObj() ;
+      var matchResult ;
+      if ( undefined != filterObj )
+      {
+         var filter = new _Filter( filterObj ) ;
+         matchResult = filter.match( recvObj ) ;
+      }
+      else
+      {
+         var filter = new _Filter( {} ) ;
+         matchResult = filter.match( recvObj ) ;
+      }
 
-		if ( "text" == displayMode )
-		{
-			result = matchResult._formatStr() ;
-		}
-		else
-		{
-			result = matchResult ;
-		}
-	}
-	else
-	{
-		result = File.list( pathname, optionObj, filterObj, displayMode ) ;
-	}
-	return result ;
+      if ( "text" == displayMode )
+      {
+         result = matchResult._formatStr() ;
+      }
+      else
+      {
+         result = matchResult ;
+      }
+   }
+   else
+   {
+      result = File.list( pathname, optionObj, filterObj, displayMode ) ;
+   }
+   return result ;
 }
 
 File.prototype.isFile = function( pathname ) {
 
-	if ( undefined == pathname )
-	{
-		setLastErrMsg( "mask must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == pathname )
+   {
+      setLastErrMsg( "mask must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	var result = false ;
-	if ( undefined != this._remote )
-	{
-		var recvObj = this._remote._runCommand( "file get path type", {},
-			                                    { "pathname":pathname } ) ;
-		if( "FIL" == recvObj.toObj().pathType )
-		{
-			result = true ;
-		}
-	}
-	else
-	{
-		result = File.isFile( pathname ) ;
-	}
-	return result ;
+   var result = false ;
+   if ( undefined != this._remote )
+   {
+      var recvObj = this._remote._runCommand( "file get path type", {},
+                                             { "pathname":pathname } ) ;
+      if ( "FIL" == recvObj.toObj().pathType )
+      {
+         result = true ;
+      }
+   }
+   else
+   {
+      result = File.isFile( pathname ) ;
+   }
+   return result ;
 }
 
 File.prototype.isDir = function( pathname ) {
 
-	if ( undefined == pathname )
-	{
-		setLastErrMsg( "mask must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == pathname )
+   {
+      setLastErrMsg( "mask must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	var result = false ;
-	if ( undefined != this._remote )
-	{
-		var recvObj = this._remote._runCommand( "file get path type", {},
-			                                    { "pathname":pathname } ) ;
-		if( "DIR" == recvObj.toObj().pathType )
-		{
-			result = true ;
-		}
-	}
-	else
-	{
-		result = File.isDir( pathname ) ;
-	}
-	return result ;
+   var result = false ;
+   if ( undefined != this._remote )
+   {
+      var recvObj = this._remote._runCommand( "file get path type", {},
+                                             { "pathname":pathname } ) ;
+      if ( "DIR" == recvObj.toObj().pathType )
+      {
+         result = true ;
+      }
+   }
+   else
+   {
+      result = File.isDir( pathname ) ;
+   }
+   return result ;
 }
 
 File.prototype.isEmptyDir = function( pathname ) {
-	if ( undefined == pathname )
-	{
-		setLastErrMsg( "pathname must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
 
-	var result ;
-	if ( undefined != this._remote )
-	{
-		var recvObj = this._remote._runCommand( "file is empty dir", {},
-			                                    { "pathname":pathname } ) ;
+   // check argument
+   if ( undefined == pathname )
+   {
+      setLastErrMsg( "pathname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-		var isEmpty = recvObj.toObj().isEmpty ;
+   var result ;
+   if ( undefined != this._remote )
+   {
+      var recvObj = this._remote._runCommand( "file is empty dir", {},
+                                             { "pathname":pathname } ) ;
+
+      var isEmpty = recvObj.toObj().isEmpty ;
       if ( isEmpty )
       {
          result = true ;
@@ -2280,54 +2364,57 @@ File.prototype.isEmptyDir = function( pathname ) {
       {
          result = false ;
       }
-	}
-	else
-	{
-		result = File.isDir( pathname ) ;
-	}
-	return result ;
+   }
+   else
+   {
+      result = File.isDir( pathname ) ;
+   }
+   return result ;
 }
 
 File.prototype.stat = function( filename ) {
 
-	if ( undefined == filename )
-	{
-		setLastErrMsg( "filename must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
+   // check argument
+   if ( undefined == filename )
+   {
+      setLastErrMsg( "filename must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
 
-	var result ;
-	if ( undefined != this._remote )
-	{
-		result = this._remote._runCommand( "file stat", {},
-		                                  { "filename": filename } ) ;
-	}
-	else
-	{
-		result = File.stat( filename ) ;
-	}
-	return result ;
+   var result ;
+   if ( undefined != this._remote )
+   {
+      result = this._remote._runCommand( "file stat", {},
+                                        { "filename": filename } ) ;
+   }
+   else
+   {
+      result = File.stat( filename ) ;
+   }
+   return result ;
 }
 
 File.prototype.md5 = function( filename ) {
-	if ( undefined == filename )
-	{
-		setLastErrMsg( "filename must be config" ) ;
-		throw SDB_OUT_OF_BOUND ;
-	}
 
-	var result ;
-	if ( undefined != this._remote )
-	{
-		var recvObj = this._remote._runCommand( "file md5", {},
-		                                  	{ "filename": filename } ) ;
-		result = recvObj.toObj().md5 ;
-	}
-	else
-	{
-		result = File.md5( filename ) ;
-	}
-	return result ;
+   // check argument
+   if ( undefined == filename )
+   {
+      setLastErrMsg( "filename must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   var result ;
+   if ( undefined != this._remote )
+   {
+      var recvObj = this._remote._runCommand( "file md5", {},
+                                           { "filename": filename } ) ;
+      result = recvObj.toObj().md5 ;
+   }
+   else
+   {
+      result = File.md5( filename ) ;
+   }
+   return result ;
 
 }
 // end File

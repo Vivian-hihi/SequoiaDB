@@ -194,6 +194,7 @@ namespace engine
       }
 
       // build recvObj
+      SDB_ASSERT( retBuffer, "retBuffer can't be null" ) ;
       try
       {
          recvObj.init( retBuffer ) ;
