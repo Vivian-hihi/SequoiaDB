@@ -31,6 +31,7 @@ spt2Files = [
       "spt/sptBsonobjArray.cpp",
       "spt/sptLibssh2Session.cpp",
       "spt/sptSshSession.cpp",
+      "spt/sptRemote.cpp",
       "spt/usrdef/sptUsrSsh.cpp",
       "spt/sptProperty.cpp",
       "spt/sptGlobalFunc.cpp",
