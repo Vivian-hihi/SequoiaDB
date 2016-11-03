@@ -61,6 +61,7 @@ namespace replay
       INT32 _replayLogFile(engine::dpsLogFile& logFile,
                            DPS_LSN_OFFSET startLSN, DPS_LSN_OFFSET endLSN);
       INT32 _replayLog(const CHAR* log);
+      void  _dumpArchiveFileHeader(engine::dpsArchiveFile& archiveFile);
       void  _dumpLog(const engine::dpsLogRecord& log);
       INT32 _replayDir();
       INT32 _scanDir(UINT32& minFileId, UINT32& maxFileId);

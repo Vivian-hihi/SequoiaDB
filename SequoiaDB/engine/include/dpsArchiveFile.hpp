@@ -142,7 +142,7 @@ namespace engine
       INT32 write( ossFile& fromFile, BOOLEAN compress ) ;
       INT32 extend( INT64 fileSize ) ;
 
-      _dpsLogHeader* getLogHeader() 
+      _dpsLogHeader* getLogHeader()
       {
          SDB_ASSERT( _inited, "can't get log header before inited" ) ;
          SDB_ASSERT( NULL != _logHeader, "_logHeader can't be NULL" ) ;

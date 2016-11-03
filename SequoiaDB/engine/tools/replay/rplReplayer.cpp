@@ -43,6 +43,7 @@
 using namespace engine;
 using namespace bson;
 using namespace sdbclient;
+using namespace std;
 
 namespace replay
 {
@@ -280,6 +281,11 @@ namespace replay
                 file.c_str());
             goto done;
          }
+      }
+
+      if (_options->dump())
+      {
+         _dumpArchiveFileHeader(archiveFile);
       }
 
       if (archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))
@@ -709,6 +715,53 @@ namespace replay
       return rc;
    error:
       goto done;
+   }
+
+   void Replayer::_dumpArchiveFileHeader(dpsArchiveFile& archiveFile)
+   {
+      #define FIELD_WIDTH 8
+      dpsLogHeader* logHeader = archiveFile.getLogHeader();
+      dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader();
+      stringstream ss;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "File" << ": "
+         << archiveFile.path()
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "LogHead" << ": "
+         << string(logHeader->_eyeCatcher, DPS_LOG_HEADER_EYECATCHER_LEN)
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "LogID" << ": "
+         << logHeader->_logID
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "FirstLSN" << ": "
+         << "0x" << hex << right << setfill('0') << setw(16) << logHeader->_firstLSN.offset
+         << "(" << dec << logHeader->_firstLSN.offset << ")"
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "ArchHead" << ": "
+         << string(archiveHeader->eyeCatcher, DPS_ARCHIVE_HEADER_EYECATCHER_LEN)
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "ArchFlag" << ": "
+         << "0x" << hex << right << setfill('0') << setw(8) << archiveHeader->flag
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "StartLSN" << ": "
+         << "0x" << hex << right << setfill('0') << setw(16) << archiveHeader->startLSN.offset
+         << "(" << dec << archiveHeader->startLSN.offset << ")"
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "EndLSN" << ": "
+         << "0x" << hex << right << setfill('0') << setw(16) << archiveHeader->endLSN.offset
+         << "(" << dec << archiveHeader->endLSN.offset << ")"
+         << endl;
+
+      string out = ss.str();
+
+      cout << out << endl;
    }
 
    void Replayer::_dumpLog(const engine::dpsLogRecord& log)
@@ -1226,6 +1279,11 @@ namespace replay
             PD_LOG(PDEVENT, "Archive log file[%s] is filtered",
                    movedFilePath.c_str());
             goto done;
+         }
+
+         if (_options->dump())
+         {
+            _dumpArchiveFileHeader(archiveFile);
          }
 
          if (archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))

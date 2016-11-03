@@ -239,7 +239,7 @@ namespace replay
 
       if (DPS_INVALID_LSN_OFFSET != _minLSN)
       {
-         if (archiveHeader->startLSN.compareOffset(_minLSN) < 0)
+         if (archiveHeader->endLSN.compareOffset(_minLSN) <= 0)
          {
             return TRUE;
          }
@@ -247,7 +247,7 @@ namespace replay
 
       if (DPS_INVALID_LSN_OFFSET != _maxLSN)
       {
-         if (archiveHeader->endLSN.compareOffset(_maxLSN) > 0)
+         if (archiveHeader->startLSN.compareOffset(_maxLSN) > 0)
          {
             return TRUE;
          }
