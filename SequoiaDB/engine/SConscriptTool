@@ -245,6 +245,7 @@ spt2Files = [
       "spt/sptLibssh2Session.cpp",
       "spt/sptSshSession.cpp",
       "spt/usrdef/sptUsrSsh.cpp",
+      "spt/sptRemote.cpp",
       "spt/sptProperty.cpp",
       "spt/sptGlobalFunc.cpp",
       "spt/usrdef/sptUsrCmd.cpp",
