@@ -65,7 +65,7 @@ namespace engine
       _result = SDB_OK ;
    }
 
-   _dpsLogRecord::_dpsLogRecord( const _dpsLogRecord &record ) 
+   _dpsLogRecord::_dpsLogRecord( const _dpsLogRecord &record )
    :_head(record._head),
     _write( record._write )
    {
@@ -646,7 +646,7 @@ namespace engine
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " Type   : %s(%d)"OSS_NEWLINE,
-                                 "CL CREATE", LOG_TYPE_CL_DELETE ) ;
+                                 "CL DROP", LOG_TYPE_CL_DELETE ) ;
             dpsLogRecord::iterator itrCL =
                       this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
