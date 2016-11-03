@@ -65,6 +65,7 @@ namespace replay
       OSS_INLINE SDB_OSS_FILETYPE pathType() const { return _pathType; }
       OSS_INLINE const BSONObj& filter() const { return _filter; }
       OSS_INLINE BOOLEAN dump() const { return _dump; }
+      OSS_INLINE BOOLEAN dumpHeader() const { return _dumpHeader; }
       OSS_INLINE BOOLEAN remove() const { return _delete; }
       OSS_INLINE BOOLEAN watch() const { return _watch; }
       OSS_INLINE BOOLEAN daemon() const { return _daemon; }
@@ -83,6 +84,7 @@ namespace replay
       SDB_OSS_FILETYPE  _pathType;
       BSONObj           _filter;
       BOOLEAN           _dump;
+      BOOLEAN           _dumpHeader;
       BOOLEAN           _delete;
       BOOLEAN           _watch;
       BOOLEAN           _daemon;

@@ -283,9 +283,15 @@ namespace replay
          }
       }
 
-      if (_options->dump())
+      if (_options->dumpHeader())
       {
          _dumpArchiveFileHeader(archiveFile);
+
+         if (!_options->dump())
+         {
+            // no need to dump log
+            goto done;
+         }
       }
 
       if (archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))
@@ -1244,7 +1250,7 @@ namespace replay
          {
             rc = SDB_INTERRUPT;
             PD_LOG(PDINFO, "Rollback is interrupted");
-            goto done;
+            goto error;
          }
 
          rc = ossFile::exists(movedFilePath, exist);
@@ -1278,12 +1284,18 @@ namespace replay
          {
             PD_LOG(PDEVENT, "Archive log file[%s] is filtered",
                    movedFilePath.c_str());
-            goto done;
+            continue;
          }
 
-         if (_options->dump())
+         if (_options->dumpHeader())
          {
             _dumpArchiveFileHeader(archiveFile);
+
+            if (!_options->dump())
+            {
+               // no need to dump log
+               continue;
+            }
          }
 
          if (archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))
@@ -1801,7 +1813,7 @@ namespace replay
    {
       INT32 rc = SDB_OK;
 
-      if (_options->dump())
+      if (_options->dump() || _options->dumpHeader())
       {
          goto done;
       }

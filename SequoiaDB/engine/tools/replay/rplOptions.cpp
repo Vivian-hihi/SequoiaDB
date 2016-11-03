@@ -47,6 +47,7 @@ namespace replay
    #define RPL_OPTION_PATH              "path"
    #define RPL_OPTION_FILTER            "filter"
    #define RPL_OPTION_DUMP              "dump"
+   #define RPL_OPTION_DUMPHEADER        "dumpheader"
    #define RPL_OPTION_DELETE            "delete"
    #define RPL_OPTION_WATCH             "watch"
    #define RPL_OPTION_DAEMON            "daemon"
@@ -64,6 +65,7 @@ namespace replay
    #define RPL_EXPLAIN_FILTER           "log filtering rule, " \
                                         "e.g. --filter '{\"OP\": [\"insert\", \"update\"]}'"
    #define RPL_EXPLAIN_DUMP             "dump log only, default is false"
+   #define RPL_EXPLAIN_DUMPHEADER       "dump archive header only, default is false"
    #define RPL_EXPLAIN_DELETE           "delete log file after replay, " \
                                         "default is false"
    #define RPL_EXPLAIN_WATCH            "continuously watch path and replay log files, " \
@@ -83,6 +85,7 @@ namespace replay
    {
       _pathType = SDB_OSS_UNK;
       _dump = FALSE;
+      _dumpHeader = FALSE;
       _delete = FALSE;
       _watch = FALSE;
       _daemon = FALSE;
@@ -107,6 +110,7 @@ namespace replay
          (RPL_OPTION_PATH,          _TYPE(string),    RPL_EXPLAIN_PATH)
          (RPL_OPTION_FILTER,        _TYPE(string),    RPL_EXPLAIN_FILTER)
          (RPL_OPTION_DUMP,          _TYPE(string),    RPL_EXPLAIN_DUMP)
+         (RPL_OPTION_DUMPHEADER,    _TYPE(string),    RPL_EXPLAIN_DUMPHEADER)
          (RPL_OPTION_DELETE,        _TYPE(string),    RPL_EXPLAIN_DELETE)
          (RPL_OPTION_WATCH,         _TYPE(string),    RPL_EXPLAIN_WATCH)
          (RPL_OPTION_DAEMON,        _TYPE(string),    RPL_EXPLAIN_DAEMON)
@@ -228,11 +232,17 @@ namespace replay
          ossStrToBoolean(dump.c_str(), &_dump);
       }
 
+      if (has(RPL_OPTION_DUMPHEADER))
+      {
+         string dumpHeader = get<string>(RPL_OPTION_DUMPHEADER);
+         ossStrToBoolean(dumpHeader.c_str(), &_dumpHeader);
+      }
+
       if (has(RPL_OPTION_HOST))
       {
          _hostName = get<string>(RPL_OPTION_HOST);
       }
-      else if (!_dump)
+      else if (!_dump && !_dumpHeader)
       {
          std::cerr << "Missing argument: " << RPL_OPTION_HOST << std::endl;
          rc = SDB_INVALIDARG;
@@ -252,7 +262,7 @@ namespace replay
             goto error;
          }
       }
-      else if (!_dump)
+      else if (!_dump && !_dumpHeader)
       {
          std::cerr << "Missing argument: " << RPL_OPTION_SVC << std::endl;
          rc = SDB_INVALIDARG;
