@@ -1886,7 +1886,7 @@ namespace engine
 
          if ( result )
          {
-            if ( _hasReturnMatch && !context.isReturnMatchExecuted() )
+            if ( hasReturnMatch() && !context.isReturnMatchExecuted() )
             {
                BOOLEAN tmpResult = FALSE ;
                rc = _returnMatchNode->execute( matchTarget, context,
@@ -1896,6 +1896,10 @@ namespace engine
             }
 
             rc = context.resolveFieldName() ;
+            PD_RC_CHECK( rc, PDERROR, "resolveFieldName failed:rc=%d", rc ) ;
+
+            rc = _adjustReturnMatchIndex( context ) ;
+            PD_RC_CHECK( rc, PDERROR, "_adjust Index failed:rc=%d", rc ) ;
          }
       }
       catch ( std::exception &e )
@@ -1909,6 +1913,119 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB__MTHMATCHTREE__MATCHES, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /* this function is to adjust the elments's index, in order to correct the
+      elements's index point to the real original source obj's array index.
+   */
+
+   /* let's assume source obj is {a:[3, 7, 8, 10, 11, 15]}. after func $slice:[2,3]
+      the func result is {a:[8, 10, 11]}. after matcher $in:[8,11,13].
+      we have got the last result:{a:[8,11]}.
+
+      now the elements's index just record the index[0, 2] base on
+      the func result({a:[8, 10, 11]}). and we should adjust elements's index to
+      index[2,4] that is base on the source obj({a:[3, 7, 8, 10, 11, 15]})
+   */
+
+   /* we save the source obj's index info to src and do the same func $slice:[2,3]
+      so we can get the index base on the source obj.
+      first, src records the source obj's index info src[0,1,2,3,4,5]
+      second, let the index info do the same func $slice:[2,3]. and we have got dst[2,3,4]
+      third, we have elements' index[0,2],
+      at last, the original source obj' array index is dst[0] and dst[2], it's
+      value is[2,4]
+   */
+   INT32 _mthMatchTree::_adjustReturnMatchIndex( _mthMatchTreeContext &context )
+   {
+      INT32 rc    = SDB_OK ;
+      INT32 i     = 0 ;
+      INT32 count = 0 ;
+      _utilArray< INT32 > src ;
+      _utilArray< INT32 > temp ;
+      _utilArray< INT32 > dst ;
+      MTH_FUNC_LIST funcList ;
+      MTH_FUNC_LIST::iterator iter ;
+      const CHAR *fieldName = NULL ;
+      BSONElement ele ;
+      if ( !hasReturnMatch() || !context.isUseElement() ||
+           context._elements.size() == 0 )
+      {
+         goto done ;
+      }
+
+      fieldName = context.getFieldName() ;
+      SDB_ASSERT( NULL != fieldName, "fieldName must exists" ) ;
+      ele = context._originalObj.getFieldDotted( fieldName ) ;
+      if ( ele.type() != Array )
+      {
+         // if original field is not Array. do it as normal Type
+         context._elements.clear() ;
+         context._isUseElement = FALSE ;
+         goto done ;
+      }
+
+      //first, we got the src
+      count = ele.embeddedObject().nFields() ;
+      for ( i = 0 ; i < count ; i++ )
+      {
+         src.append( i ) ;
+      }
+
+      temp.clear() ;
+      rc = src.copyTo( temp ) ;
+      PD_RC_CHECK( rc, PDERROR, "copyTo temp failed:rc=%d", rc ) ;
+
+      _returnMatchNode->getFuncList( funcList ) ;
+
+      //second, do the same functions
+      if ( funcList.size() == 0 )
+      {
+         // in case funcList is empty.
+         dst.clear() ;
+         rc = src.copyTo( dst ) ;
+         PD_RC_CHECK( rc, PDERROR, "copyTo dst failed:rc=%d", rc ) ;
+      }
+      else
+      {
+         iter = funcList.begin() ;
+         while ( iter != funcList.end() )
+         {
+            _mthMatchFunc *func = *iter ;
+            dst.clear() ;
+            rc = func->adjustIndexForReturnMatch( temp, dst ) ;
+            PD_RC_CHECK( rc, PDERROR, "adjust index failed:rc=%d", rc ) ;
+            temp.clear() ;
+            rc = dst.copyTo( temp ) ;
+            PD_RC_CHECK( rc, PDERROR, "copyTo temp failed:rc=%d", rc ) ;
+
+            iter++ ;
+         }
+      }
+
+      //1. function result size(dst) should be greater or eq than returnMatch
+      //2. source size should be greater or eq than returnMatch
+      if ( dst.size() < context._elements.size() ||
+           src.size() < context._elements.size() )
+      {
+         context._elements.clear() ;
+         context._isUseElement = FALSE ;
+         goto done ;
+      }
+
+      //at last, we got the real index of source obj
+      for ( i = 0 ; i < ( INT32 )context._elements.size() ; i++ )
+      {
+         INT32 tempIndex = context._elements[i] ;
+         SDB_ASSERT( tempIndex < ( INT32 )dst.size(), "out of bound" ) ;
+         SDB_ASSERT( dst[tempIndex] < ( INT32 )src.size(), "out of bound" ) ;
+         context._elements[i] = dst[tempIndex] ;
+      }
+
+   done:
       return rc ;
    error:
       goto done ;
@@ -2138,6 +2255,7 @@ namespace engine
       _totalNum      = 0 ;
       _validNum      = 0 ;
       _src           = BSONObj() ;
+      _arrayObj      = BSONObj() ;
       _srcType       = MTH_SRC_TYPE_ORIGINAL ;
 
       _specifyObj    = BSONObj() ;
@@ -2153,6 +2271,7 @@ namespace engine
       _totalNum      = 0 ;
       _validNum      = 0 ;
       _src           = BSONObj() ;
+      _arrayObj      = BSONObj() ;
       _srcType       = MTH_SRC_TYPE_ORIGINAL ;
 
       _specifyObj    = BSONObj() ;
@@ -2226,11 +2345,16 @@ namespace engine
 
       if ( ( _mthContext->hasReturnMatch() && _mthContext->isUseElement() ) )
       {
+         BSONElement ele = _src.getFieldDotted( _fieldName ) ;
+         _totalNum = _mthContext->_elements.size() ;
          if ( _mthContext->hasExpand() )
          {
-            _srcType  = MTH_SRC_TYPE_ELEMENTS_SPLIT ;
-            _totalNum = _mthContext->_elements.size() ;
-            if ( 0 == _totalNum )
+            if ( ele.type() == Array && _totalNum > 0 )
+            {
+               _srcType = MTH_SRC_TYPE_ELEMENTS_SPLIT ;
+               _arrayObj = ele.embeddedObject() ;
+            }
+            else
             {
                _srcType  = MTH_SRC_TYPE_ORIGINAL_NULL ;
                _totalNum = 1 ;
@@ -2238,8 +2362,17 @@ namespace engine
          }
          else
          {
-            _srcType  = MTH_SRC_TYPE_ELEMENTS ;
-            _totalNum = 1 ;
+            if ( ele.type() == Array && _totalNum > 0 )
+            {
+               _arrayObj = ele.embeddedObject() ;
+               _srcType  = MTH_SRC_TYPE_ELEMENTS ;
+               _totalNum = 1 ;
+            }
+            else
+            {
+               _srcType  = MTH_SRC_TYPE_ORIGINAL_NULL ;
+               _totalNum = 1 ;
+            }
          }
       }
       else if ( _mthContext->hasExpand() )
@@ -2289,8 +2422,8 @@ namespace engine
    }
 
    INT32 _mthRecordGenerator::_createArrayObj( const CHAR* name,
-                                           _utilArray< BSONElement > &elements,
-                                           BSONObjBuilder &builder )
+                                               _utilArray< INT32 > &elements,
+                                               BSONObjBuilder &builder )
    {
       UINT32 i = 0 ;
       BSONArrayBuilder arrayBuilder ;
@@ -2302,7 +2435,12 @@ namespace engine
 
       for ( i = 0 ; i < elements.size() ; i++ )
       {
-         arrayBuilder.append( elements[i] ) ;
+         CHAR indexStr[ 32 ] = "" ;
+         BSONElement ele ;
+         INT32 fieldIndex = _mthContext->_elements[i] ;
+         ossItoa( fieldIndex, indexStr, 31 ) ;
+         ele = _arrayObj.getField( indexStr ) ;
+         arrayBuilder.append( ele ) ;
       }
 
       builder.append( name, arrayBuilder.arr() ) ;
@@ -2530,7 +2668,10 @@ namespace engine
          else if ( MTH_SRC_TYPE_ELEMENTS_SPLIT == _srcType )
          {
             SDB_ASSERT( _index < _mthContext->_elements.size(), "impossible" ) ;
-            ele = _mthContext->_elements[ _index ] ;
+            CHAR indexStr[ 32 ] = "" ;
+            INT32 fieldIndex = _mthContext->_elements[_index] ;
+            ossItoa( fieldIndex, indexStr, 31 ) ;
+            ele = _arrayObj.getField( indexStr ) ;
          }
          else
          {

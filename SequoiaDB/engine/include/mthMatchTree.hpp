@@ -187,20 +187,22 @@ namespace engine
          INT32    _createBuilder( BSONObjBuilder **builder ) ;
          void     _releaseBuilderVec( vector< BSONObjBuilder* > &builderVec ) ;
 
+         INT32    _adjustReturnMatchIndex( _mthMatchTreeContext &context ) ;
+
       private:
-         _mthMatchNode  *_root ;
-         BSONObj        _matchPattern ;
-         BOOLEAN        _isInitialized ;
-         BOOLEAN        _isMatchesAll ;
-         BOOLEAN        _isTotallyConverted ;
-         BOOLEAN        _hasDollarFieldName ;
+         _mthMatchNode     *_root ;
+         BSONObj           _matchPattern ;
+         BOOLEAN           _isInitialized ;
+         BOOLEAN           _isMatchesAll ;
+         BOOLEAN           _isTotallyConverted ;
+         BOOLEAN           _hasDollarFieldName ;
 
-         BOOLEAN        _hasExpand ;
-         BOOLEAN        _hasReturnMatch ;
-         const CHAR *   _attrFieldName ;
-         _mthMatchNode* _returnMatchNode ;
+         BOOLEAN           _hasExpand ;
+         BOOLEAN           _hasReturnMatch ;
+         const CHAR *      _attrFieldName ;
+         _mthMatchOpNode*  _returnMatchNode ;
 
-         _rtnPredicateSet _predicateSet ;
+         _rtnPredicateSet  _predicateSet ;
          _mthNodeAllocator _allocator ;
 
          vector< BSONObjBuilder* > _builderVec ;
@@ -247,7 +249,7 @@ namespace engine
 
    private:
       INT32 _createArrayObj( const CHAR* name,
-                             _utilArray< BSONElement > &elements,
+                             _utilArray< INT32 > &elements,
                              BSONObjBuilder &builder ) ;
 
       INT32 _replaceFieldObject( BSONObjIteratorSorted &iterSort,
@@ -268,6 +270,7 @@ namespace engine
       _mthMatchTreeContext *_mthContext ;
       const CHAR *_fieldName ;
       BSONObj _src ;
+      BSONObj _arrayObj ;
       UINT32 _index ;
       UINT32 _totalNum ;
 

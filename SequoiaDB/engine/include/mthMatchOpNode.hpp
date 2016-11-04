@@ -84,6 +84,9 @@ namespace engine
          virtual const CHAR* getName() = 0 ;
          virtual INT32 call( const BSONElement &in, BSONObj &out ) = 0 ;
 
+         virtual INT32 adjustIndexForReturnMatch( _utilArray< INT32 > &in,
+                                                  _utilArray< INT32 > &out ) ;
+
       protected:
          virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) = 0 ;
@@ -371,6 +374,8 @@ namespace engine
          virtual INT32 getType() ;
          virtual const CHAR* getName() ;
          virtual void clear() ;
+         virtual INT32 adjustIndexForReturnMatch( _utilArray< INT32 > &in,
+                                                  _utilArray< INT32 > &out ) ;
 
       protected:
          virtual INT32 _init( const CHAR *fieldName,
@@ -482,6 +487,7 @@ namespace engine
       public:
          INT32 addFunc( _mthMatchFunc *func ) ;
          INT32 addFuncList( MTH_FUNC_LIST &funcList ) ;
+         void getFuncList( MTH_FUNC_LIST &funcList ) ;
          BOOLEAN hasReturnMatch() ;
 
       protected: /* from itself */
@@ -513,7 +519,7 @@ namespace engine
                              BOOLEAN &matchResult ) ;
 
          INT32 _saveElement( _mthMatchTreeContext &context,  BOOLEAN isMatch,
-                             const BSONElement &ele ) ;
+                             INT32 index ) ;
 
          BOOLEAN _isNot() ;
 

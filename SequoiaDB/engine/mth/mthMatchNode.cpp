@@ -138,6 +138,11 @@ namespace engine
       return _fieldName.setFieldName( name ) ;
    }
 
+   const CHAR *_mthMatchTreeContext::getFieldName()
+   {
+      return _fieldName.getFieldName() ;
+   }
+
    INT32 _mthMatchTreeContext::getDollarResult( INT32 index, INT32 &value )
    {
       UINT32 i = 0 ;
@@ -242,9 +247,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _mthMatchTreeContext::saveElement( const BSONElement &ele )
+   INT32 _mthMatchTreeContext::saveElement( INT32 index )
    {
-      return _elements.append( ele ) ;
+      return _elements.append( index ) ;
    }
 
    INT32 _mthMatchTreeContext::subElements( INT32 offset, INT32 len )
@@ -288,7 +293,7 @@ namespace engine
       }
 
       {
-         _utilArray< BSONElement > dst ;
+         _utilArray< INT32 > dst ;
          INT32 i = 0 ;
          for ( i = 0 ; i < srcSubLen ; i++ )
          {
@@ -384,7 +389,7 @@ namespace engine
          UINT32 i = 0 ;
          for ( i = 0 ; i < _elements.size() ; i++ )
          {
-            result << "\t[" << i << "]:" << _elements[i].toString() << endl ;
+            result << "\t[" << i << "]:" << _elements[i] << endl ;
          }
       }
 

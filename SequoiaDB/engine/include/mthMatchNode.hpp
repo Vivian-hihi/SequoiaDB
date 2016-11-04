@@ -262,8 +262,9 @@ namespace engine
          INT32 getDollarResult( INT32 index, INT32 &value ) ;
 
          INT32 setFieldName( const CHAR *name ) ;
+         const CHAR *getFieldName() ;
          INT32 resolveFieldName() ;
-         INT32 saveElement( const BSONElement &ele ) ;
+         INT32 saveElement( INT32 index ) ;
          INT32 subElements( INT32 offset, INT32 len ) ;
 
          BOOLEAN hasExpand() ;
@@ -279,12 +280,11 @@ namespace engine
          void setReturnMatchExecuted( BOOLEAN isExecuted ) ;
 
          INT32 getRecordNum() ;
-         //*********************************
 
-         void  setObj( const BSONObj &obj ) ;
+         void setObj( const BSONObj &obj ) ;
 
-         void  enableDollarList() ;
-         void  disableDollarList() ;
+         void enableDollarList() ;
+         void disableDollarList() ;
          BOOLEAN isDollarListEnabled() ;
          void appendDollarList( vector<INT64> &dollarList ) ;
          void getDollarList( vector<INT64> *dollarList ) ;
@@ -310,7 +310,9 @@ namespace engine
 
          // if we should use _elements as result or not
          BOOLEAN _isUseElement ;
-         _utilArray< BSONElement > _elements ;
+
+         // record the array's index
+         _utilArray< INT32 > _elements ;
          /* array attribute relate */
    } ;
 

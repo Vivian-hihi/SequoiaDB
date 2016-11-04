@@ -139,6 +139,13 @@ namespace engine
       return builder.obj() ;
    }
 
+   INT32 _mthMatchFunc::adjustIndexForReturnMatch( _utilArray< INT32 > &in,
+                                                   _utilArray< INT32 > &out )
+   {
+      out.clear() ;
+      return in.copyTo( out ) ;
+   }
+
    //************************_mthMatchFuncABS********************************
    _mthMatchFuncABS::_mthMatchFuncABS( _mthNodeAllocator *allocator )
                     :_mthMatchFunc( allocator )
@@ -1248,11 +1255,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
 
-      if ( Array == in.type() )
-      {
-         rc = mthSlice( _fieldName.getFieldName(), in, _begin, _limit, builder ) ;
-         PD_RC_CHECK( rc, PDERROR, "mthSlice failed:rc=%d", rc ) ;
-      }
+      rc = mthSlice( _fieldName.getFieldName(), in, _begin, _limit, builder ) ;
+      PD_RC_CHECK( rc, PDERROR, "mthSlice failed:rc=%d", rc ) ;
 
       out = builder.obj() ;
 
@@ -1344,6 +1348,45 @@ namespace engine
          PD_LOG( PDERROR, "slice's obj is invaid:ele=%s",
                  ele.toString().c_str() ) ;
          goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthMatchFuncSLICE::adjustIndexForReturnMatch( _utilArray< INT32 > &in,
+                                                      _utilArray< INT32 > &out )
+   {
+      INT32 rc    = SDB_OK ;
+      INT32 i     = 0 ;
+      INT32 len   =  _limit ;
+      INT32 start = _begin < 0 ? _begin + in.size() : _begin ;
+      if ( start < 0 )
+      {
+         start = 0 ;
+      }
+
+      if ( len < 0 )
+      {
+         len = in.size() - start ;
+      }
+
+      if ( start >= ( INT32 )in.size() )
+      {
+         len = 0 ;
+      }
+
+      if ( start + len > ( INT32 )in.size() )
+      {
+         len = in.size() - start ;
+      }
+
+      for ( i = 0 ; i < len ; i++ )
+      {
+         rc = out.append( in[ start + i ] ) ;
+         PD_RC_CHECK( rc, PDERROR, "append failed:rc=%d", rc ) ;
       }
 
    done:
@@ -1991,8 +2034,7 @@ namespace engine
    }
 
    INT32 _mthMatchOpNode::_saveElement( _mthMatchTreeContext &context,
-                                        BOOLEAN isMatch,
-                                        const BSONElement &ele )
+                                        BOOLEAN isMatch, INT32 index )
    {
       INT32 rc = SDB_OK ;
       if ( !_hasReturnMatch )
@@ -2005,9 +2047,9 @@ namespace engine
       if ( ( isMatch && !isUnderLogicNot() ) ||
            ( !isMatch && isUnderLogicNot() ) )
       {
-         rc = context.saveElement( ele ) ;
-         PD_RC_CHECK( rc, PDERROR, "save element failed:ele=%s,rc=%d",
-                      ele.toString().c_str(), rc ) ;
+         rc = context.saveElement( index ) ;
+         PD_RC_CHECK( rc, PDERROR, "save element failed:index=%d,rc=%d",
+                      index, rc ) ;
          goto error ;
       }
 
@@ -2170,11 +2212,11 @@ namespace engine
                PD_RC_CHECK( rc, PDERROR, "_valueMatch failed:rc=%d", rc ) ;
                if ( EN_MATCH_OPERATOR_NE == getType() )
                {
-                  rc = _saveElement( context, !tmpResult, innerEle ) ;
+                  rc = _saveElement( context, !tmpResult, index ) ;
                }
                else
                {
-                  rc = _saveElement( context, tmpResult, innerEle ) ;
+                  rc = _saveElement( context, tmpResult, index ) ;
                }
                PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
@@ -2325,6 +2367,16 @@ namespace engine
       goto done ;
    }
 
+   void _mthMatchOpNode::getFuncList( MTH_FUNC_LIST &funcList )
+   {
+      MTH_FUNC_LIST::iterator iter = _funcList.begin() ;
+      while ( iter != _funcList.end() )
+      {
+         funcList.push_back( *iter ) ;
+         iter++ ;
+      }
+   }
+
    BOOLEAN _mthMatchOpNode::hasReturnMatch()
    {
       return _hasReturnMatch ;
@@ -2419,7 +2471,7 @@ namespace engine
    {
       if ( left.canonicalType() == right.canonicalType() )
       {
-         if ( 0 == compareElementValues ( left, right ) )
+         if ( 0 == compareElementValues( left, right ) )
          {
             result = TRUE ;
             return SDB_OK ;
@@ -2923,13 +2975,14 @@ namespace engine
       }
 
       {
+         INT32 index = 0 ;
          BSONObjIterator iter( left.embeddedObject() ) ;
          while ( iter.more() )
          {
             BOOLEAN isMatch = FALSE ;
             BSONElement ele = iter.next() ;
             isMatch = _isMatch( ele ) ;
-            rc = _saveElement( context, isMatch, ele ) ;
+            rc = _saveElement( context, isMatch, index ) ;
             PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
             if ( isMatch )
@@ -2940,6 +2993,8 @@ namespace engine
                   break ;
                }
             }
+
+            index++ ;
          }
       }
 
@@ -3025,13 +3080,14 @@ namespace engine
       }
 
       {
+         INT32 index = 0 ;
          BSONObjIterator iter( left.embeddedObject() ) ;
          while ( iter.more() )
          {
             BOOLEAN isFound = FALSE ;
             BSONElement ele = iter.next() ;
             isFound = _isMatch( ele ) ;
-            rc = _saveElement( context, !isFound, ele ) ;
+            rc = _saveElement( context, !isFound, index ) ;
             PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
             if ( isFound )
@@ -3043,6 +3099,8 @@ namespace engine
                   break ;
                }
             }
+
+            index++ ;
          }
       }
 
@@ -3190,7 +3248,7 @@ namespace engine
                tmpResult = singleResult ;
             }
 
-            rc = _saveElement( context, singleResult, ele ) ;
+            rc = _saveElement( context, singleResult, index ) ;
             PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
             index++ ;
@@ -3223,7 +3281,7 @@ namespace engine
                tmpResult = singleResult ;
             }
 
-            rc = _saveElement( context, singleResult, ele ) ;
+            rc = _saveElement( context, singleResult, index ) ;
             PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
 
             index++ ;
