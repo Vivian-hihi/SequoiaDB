@@ -69,6 +69,7 @@ namespace engine
       { "int32",                      NumberInt },
       { "timestamp",                  Timestamp },
       { "int64",                      NumberLong },
+      { "regex",                      RegEx },
       { "decimal",                    NumberDecimal },
       { "maxkey",                     MaxKey },
    } ;
