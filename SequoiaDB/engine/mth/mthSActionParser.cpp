@@ -270,7 +270,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHTYPEPARSER_PARSE ) ;
 
-      if ( !e.isNumber() || e.numberInt() != 1 )
+      if ( !e.isNumber() || ( e.numberInt() != 1 && e.numberInt() != 2 ) )
       {
          rc = SDB_INVALIDARG ;
          PD_RC_CHECK( rc, PDERROR, "invalid element:e=%s",
@@ -280,6 +280,7 @@ namespace engine
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
       action.setFunc( &mthTypeBuild, &mthTypeGet ) ;
       action.setName( _name.c_str() ) ;
+      action.setArg( BSON( "arg1" << e.numberInt() ) ) ;
    done:
       PD_TRACE_EXITRC( SDB__MTHTYPEPARSER_PARSE, rc ) ;
       return rc ;

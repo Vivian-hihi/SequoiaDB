@@ -116,7 +116,7 @@ namespace engine
    INT32 mthDivide( const CHAR *name, const BSONElement &in,
                     const BSONElement &divisor, BSONObjBuilder &outBuilder ) ;
 
-   INT32 mthType( const CHAR *name, const BSONElement &in,
+   INT32 mthType( const CHAR *name, INT32 outType, const BSONElement &in,
                   BSONObjBuilder &outBuilder ) ;
 
    INT32 mthSize( const CHAR *name, const BSONElement &in,
@@ -149,9 +149,14 @@ namespace engine
    public:
       INT32 getCastType( const CHAR *typeStr, BSONType &type ) ;
 
+      INT32 getCastStr( BSONType type, string &name ) ;
+
    private:
-      typedef _utilMap< string, BSONType > MTH_CAST_TRANS_MAP ;
-      MTH_CAST_TRANS_MAP _castTransMap ;
+      typedef _utilMap< string, BSONType > MTH_CAST_NAME_MAP ;
+      MTH_CAST_NAME_MAP _castTransMap ;
+
+      typedef _utilMap< BSONType, string > MTH_CAST_TYPE_MAP ;
+      MTH_CAST_TYPE_MAP _castTypeMap ;
    } ;
 
    _mthCastTranslator *mthGetCastTranslator() ;

@@ -70,7 +70,7 @@ namespace engine
          goto error ;
       }
 
-      _funcEle   = ele ;
+      _funcEle = ele ;
 
       rc = _init( fieldName, ele ) ;
       if ( SDB_OK != rc )
@@ -82,6 +82,7 @@ namespace engine
    done:
       return rc ;
    error:
+      clear() ;
       goto done ;
    }
 
@@ -1462,7 +1463,7 @@ namespace engine
 
    //**********************_mthMatchFuncTYPE******************************
       _mthMatchFuncTYPE::_mthMatchFuncTYPE( _mthNodeAllocator *allocator )
-                        :_mthMatchFunc( allocator )
+                        :_mthMatchFunc( allocator ), _resultType( -1 )
       {
       }
 
@@ -1488,7 +1489,7 @@ namespace engine
          INT32 rc = SDB_OK ;
          BSONObjBuilder builder ;
 
-         rc = mthType( _fieldName.getFieldName(), in, builder ) ;
+         rc = mthType( _fieldName.getFieldName(), _resultType, in, builder ) ;
          PD_RC_CHECK( rc, PDERROR, "mthType failed:rc=%d" ) ;
          out = builder.obj() ;
 
@@ -1510,13 +1511,20 @@ namespace engine
 
       void _mthMatchFuncTYPE::clear()
       {
+         _resultType = -1 ;
          _mthMatchFunc::clear() ;
       }
 
       INT32 _mthMatchFuncTYPE::_init( const CHAR *fieldName,
                                       const BSONElement &ele )
       {
-         if ( !ele.isNumber() || ele.numberInt() != 1 )
+         if ( !ele.isNumber() )
+         {
+            return SDB_INVALIDARG ;
+         }
+
+         _resultType = ele.numberInt() ;
+         if ( 1 != _resultType && 2 != _resultType )
          {
             return SDB_INVALIDARG ;
          }

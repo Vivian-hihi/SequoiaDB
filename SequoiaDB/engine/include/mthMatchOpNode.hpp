@@ -424,6 +424,7 @@ namespace engine
                               const BSONElement &ele ) ;
 
       private:
+         INT32 _resultType ;
    } ;
 
    class _mthMatchFuncRETURNMATCH : public _mthMatchFunc

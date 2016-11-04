@@ -2249,12 +2249,22 @@ namespace engine
       goto done ;
    }
 
-   INT32 mthType( const CHAR *name, const BSONElement &in,
+   INT32 mthType( const CHAR *name, INT32 outType, const BSONElement &in,
                   BSONObjBuilder &outBuilder )
    {
       if ( !in.eoo() )
       {
-         outBuilder.append( name, in.type() ) ;
+         BSONType type = in.type() ;
+         if ( 1 == outType )
+         {
+            outBuilder.append( name, type ) ;
+         }
+         else
+         {
+            string typeName = "" ;
+            mthGetCastTranslator()->getCastStr( type, typeName ) ;
+            outBuilder.append( name, typeName ) ;
+         }
       }
 
       return SDB_OK ;
@@ -2287,21 +2297,23 @@ namespace engine
       INT32 len = 0 ;
 
       len = sizeof( g_cast_str_to_type_array) / sizeof( mthCastStr2Type ) ;
-      for ( ; i < len ; i++ )
+      for ( i = 0 ; i < len ; i++ )
       {
          mthCastStr2Type *ptype = &g_cast_str_to_type_array[i] ;
          _castTransMap[ ptype->castStr ] = ptype->castType ;
+         _castTypeMap[ ptype->castType ] = ptype->castStr ;
       }
    }
 
    _mthCastTranslator::~_mthCastTranslator()
    {
       _castTransMap.clear() ;
+      _castTypeMap.clear() ;
    }
 
    INT32 _mthCastTranslator::getCastType( const CHAR *typeStr, BSONType &type )
    {
-      MTH_CAST_TRANS_MAP::iterator iter ;
+      MTH_CAST_NAME_MAP::iterator iter ;
 
       INT32 rc = SDB_OK ;
       _utilString<20> us ;
@@ -2346,6 +2358,22 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _mthCastTranslator::getCastStr( BSONType type, string &name )
+   {
+      MTH_CAST_TYPE_MAP::iterator iter ;
+      iter = _castTypeMap.find( type ) ;
+      if ( iter == _castTypeMap.end() )
+      {
+         name = "Unknown Type" ;
+      }
+      else
+      {
+         name = iter->second ;
+      }
+
+      return SDB_OK ;
    }
 
    _mthCastTranslator *mthGetCastTranslator()

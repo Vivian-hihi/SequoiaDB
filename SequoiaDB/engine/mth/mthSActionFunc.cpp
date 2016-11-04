@@ -1367,8 +1367,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHTYPEBUILD ) ;
+      INT32 resultType = 1 ;
+      BSONElement arg = action->getArg().getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
-      rc = mthType( fieldName, e, builder ) ;
+      resultType = arg.numberInt() ;
+
+      rc = mthType( fieldName, resultType, e, builder ) ;
       PD_RC_CHECK( rc, PDERROR, "mthType failed:rc=%d", rc ) ;
 
    done:
@@ -1386,8 +1391,13 @@ namespace engine
       PD_TRACE_ENTRY( SDB__MTHTYPEGET ) ;
       BSONObjBuilder builder ;
       BSONObj obj ;
+      INT32 resultType = 1 ;
+      BSONElement arg = action->getArg().getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
 
-      rc = mthType( fieldName, in, builder ) ;
+      resultType = arg.numberInt() ;
+
+      rc = mthType( fieldName, resultType, in, builder ) ;
       PD_RC_CHECK( rc, PDERROR, "mthType failed:rc=%d", rc ) ;
 
       obj = builder.obj() ;
