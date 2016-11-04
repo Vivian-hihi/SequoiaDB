@@ -295,7 +295,10 @@ namespace replay
          }
       }
 
-      if (!_exclCL.empty() || !_cl.empty())
+      if (!_exclCL.empty() ||
+          !_cl.empty() ||
+          !_exclCS.empty() ||
+          !_cs.empty())
       {
          dpsLogRecord::iterator it = log.find(DPS_LOG_PUBLIC_FULLNAME);
          if (it.valid())
