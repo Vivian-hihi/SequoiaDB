@@ -54,5 +54,8 @@
         <replace token='name="com.sequoiadb.' value='name="testcases-story-java.${deploy.name}-${host.NAME}-${parallel.num}-'>
             <fileset dir="${reports.path}"  includes="*" />
         </replace>
+        <replace token='name="com.story.' value='name="testcases-story-java.${deploy.name}-${host.NAME}-${parallel.num}-'>
+            <fileset dir="${reports.path}"  includes="*" />
+        </replace>
     </target>
 </project>
