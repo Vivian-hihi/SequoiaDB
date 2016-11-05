@@ -1558,7 +1558,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__CHECKARCHIVEQUOTA ) ;
-      INT64 totalSize = 0 ;
       UINT32 minFileId = DPS_INVALID_LOG_FILE_ID ;
       UINT32 maxFileId = DPS_INVALID_LOG_FILE_ID ;
       UINT64 quota ;
@@ -1593,8 +1592,14 @@ namespace engine
 
       if ( DPS_INVALID_LOG_FILE_ID == minFileId )
       {
-         // no archive file
-         SDB_ASSERT( FALSE, "archive not found" ) ;
+         PD_LOG( PDERROR, "Archive size = %lld, but no archive file found",
+                 _archiveSize );
+         rc = _fileMgr.getTotalSize( _archiveSize ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get archive total size, rc=%d", rc ) ;
+            goto error ;
+         }
          goto done ;
       }
 
@@ -1610,17 +1615,15 @@ namespace engine
          goto error ;
       }
 
-      rc = _fileMgr.getTotalSize( totalSize ) ;
+      rc = _fileMgr.getTotalSize( _archiveSize ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to get archive total size, rc=%d", rc ) ;
          goto error ;
       }
 
-      _archiveSize = totalSize ;
-
       PD_LOG( PDEVENT, "Finish deleting archive file, archive size=%lld",
-              totalSize ) ;
+              _archiveSize ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_DPSARCHIVEMGR__CHECKARCHIVEQUOTA, rc ) ;
