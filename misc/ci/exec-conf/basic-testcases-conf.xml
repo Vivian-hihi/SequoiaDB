@@ -10,7 +10,8 @@
         <testsuite>dropCS</testsuite>         
         <testsuite>operators</testsuite>  
         <testsuite>sdbimprt</testsuite>
-        <testsuite>selectorSymbol</testsuite>    
+        <testsuite>selectorSymbol</testsuite>
+        <testsuite>updateSymbol</testsuite>
     </machine1>
     <machine2>
         <testsuite>procedures</testsuite>
@@ -21,9 +22,8 @@
         <testsuite>subCL</testsuite>
         <testsuite>syndate</testsuite>
         <testsuite>transaction</testsuite>
-        <testsuite>updateSymbol</testsuite>
-        <testsuite>sdbLobTool</testsuite>
-        <testsuite>cjson</testsuite>
+        <testsuite>mthMatch</testsuite>
+        <testsuite>sdbLobTool</testsuite>       
         <testsuite>numberLong</testsuite>
     </machine2>
     <machine3>
@@ -42,5 +42,6 @@
         <testsuite>insert</testsuite>
         <testsuite>listCL</testsuite>
         <testsuite>sqlHint</testsuite>
+        <testsuite>cjson</testsuite>
     </machine3>
 </shell>
