@@ -1560,6 +1560,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_DPSARCHIVEMGR__CHECKARCHIVEQUOTA ) ;
       UINT32 minFileId = DPS_INVALID_LOG_FILE_ID ;
       UINT32 maxFileId = DPS_INVALID_LOG_FILE_ID ;
+      UINT64 logFileSize = _logMgr->getLogFileSz() ;
       UINT64 quota ;
 
       quota = pmdGetKRCB()->getOptionCB()->getArchiveQuota() ;
@@ -1571,12 +1572,12 @@ namespace engine
       quota *= DPS_ARCHIVE_QUOTA_BYTES ;
 
       // at least 3 log file size for quota
-      if ( quota < _logMgr->getLogFileSz() * 3 )
+      if ( quota < logFileSize * 3 )
       {
-         quota = _logMgr->getLogFileSz() * 3 ;
+         quota = logFileSize * 3 ;
       }
       // keep one log file size for safty
-      quota -= _logMgr->getLogFileSz() ;
+      quota -= logFileSize ;
 
       if ( _archiveSize <= (INT64)quota )
       {
