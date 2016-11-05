@@ -1,0 +1,143 @@
+<!-- ============================================================================
+@description:  exec java testcase, junit or testng
+@parameter:    TESTCASE_TYPE          eg: tdd_java
+               testcase_dir           eg: /tmp/ci/testcase/tdd/java
+               report_dir             eg：/tmp/ci/report/tdd_java
+@author:       Ting YU 2016-11-2
+============================================================================= -->
+
+<project default="exec_testcase" basedir="../../../">     
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
+   <import file="${basedir}/src/test/exec_testcase/common.xml" />
+   
+   <target name="exec_testcase">             
+      <mkdir dir="${report_dir}"/> 
+       
+      <switch value="${TESTCASE_TYPE}">
+         <case value="tdd_java">             
+            <execjunit casedir="${testcase_dir}" reportdir="${report_dir}"/>
+         </case>
+         <default>
+            <exectestng casedir="${testcase_dir}" reportdir="${report_dir}"/>
+         </default>
+      </switch>
+
+   </target>
+
+   <macrodef name="exectestng">
+      <attribute name="reportdir"/>
+      <attribute name="casedir" />
+      <sequential>      
+         <tstamp>
+            <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+         </tstamp>
+         <stopwatch name="total_time"/>
+         
+         <property name="tmp_report_dir" value="@{casedir}/output" />
+         <mkdir dir="${tmp_report_dir}"/>
+         
+         <path id="calsspath.test">
+            <pathelement path="@{casedir}/build" /> 
+            <fileset dir="@{casedir}/lib" includes="**/*.jar"/>                  
+         </path>
+         <taskdef resource="testngtasks" classpath="@{casedir}/lib/testng-6.9.11.jar"/>
+         <testng outputDir="${tmp_report_dir}" classpathref="calsspath.test">
+            <xmlfileset dir="@{casedir}" includes="testng.xml"/>        
+         </testng>
+              
+         <tstamp>
+            <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+         </tstamp>       
+         <echo message="begin at ${begin_time}, end at ${end_time}" />
+         <stopwatch name="total_time" action="total"/>            
+         
+         <copy todir="@{reportdir}">
+            <fileset dir="${tmp_report_dir}/junitreports"/>
+         </copy> 
+         <modifytestngreport reportdir="@{reportdir}" layer="${TESTCASE_TYPE}"/>
+      </sequential>
+   </macrodef>
+   
+   <macrodef name="execjunit">
+      <attribute name="reportdir"/>
+      <attribute name="casedir" />
+      <sequential>   
+         <tstamp>
+            <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+         </tstamp>
+         <stopwatch name="total_time"/>
+              
+         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
+            <classpath>
+               <pathelement location="@{casedir}/build" />              
+               <fileset dir="@{casedir}/lib" includes="**/*.jar"/>
+            </classpath>
+            <formatter type="xml" />
+            <batchtest todir="@{reportdir}">
+               <fileset dir="@{casedir}/build">
+                  <include name="**/*" />
+                  <exclude name="**/testdata/*" />
+                  <exclude name="**/common/*" />
+               </fileset>
+            </batchtest>
+         </junit>
+              
+         <tstamp>
+            <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+         </tstamp>
+        
+         <echo message="begin at ${begin_time}, end at ${end_time}" />
+         <stopwatch name="total_time" action="total"/>            
+         
+         <modifyjunitreport reportdir="@{reportdir}" layer="${TESTCASE_TYPE}"/>
+      </sequential>
+   </macrodef>
+
+ 
+   <macrodef name="modifytestngreport">
+      <attribute name="reportdir"/>
+      <attribute name="layer" />
+      <sequential> 
+         <replaceregexp match='classname="com\.sequoiadb\.(.*)\.(.*)"' 
+                        replace='classname="@{layer}.\1.\2"' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+         <replaceregexp match='name="(.*)"(.*)classname="@{layer}\.(.*)\.(.*)"' 
+                        replace='name="\4.\1"\2classname="@{layer}.\3"' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+      </sequential>
+   </macrodef>
+   
+   
+   <macrodef name="modifyjunitreport">
+      <attribute name="reportdir"/>
+      <attribute name="layer" />
+      <sequential> 
+         <replaceregexp match='classname="com.sequoiadb.test.' 
+                        replace='classname="@{layer}.' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+         <replaceregexp match='classname="@{layer}\.(.*)\.(.*)" name="(.*)"' 
+                        replace='classname="@{layer}.\1" name="\2.\3"' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>      
+      </sequential>
+   </macrodef>
+</project>

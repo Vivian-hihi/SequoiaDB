@@ -1,0 +1,49 @@
+<!-- ============================================================================
+@description:  ci entry
+@parameter:    DEPLOY_MODE: G1D3|G3D3|STANDALONE, from jenkins configure page
+               NEED_INSTALL_DEPLOY: true|false, from jenkins build page
+@author:       Ting YU 2016-10-19
+============================================================================= -->
+
+<project default="test_build" basedir="../">
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
+   
+   <target name="test_build">
+   
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
+
+      <if>
+         <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
+         <then>
+            <ant antfile="install_deploy.xml" dir="src/install_deploy" inheritAll="true" useNativeBaseDir="true" />
+         </then>
+      </if>
+     
+      <ant antfile="function_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" />
+        
+      
+       
+   </target>
+   
+   <target name="check_parameter">  
+      <if>
+         <isset property="NEED_INSTALL_DEPLOY"/>
+         <else>           
+            <var name="NEED_INSTALL_DEPLOY" value="true" />
+         </else>
+      </if>
+      <if>
+         <isset property="DEPLOY_MODE"/>
+         <else>
+            <var name="DEPLOY_MODE" value="G3D3" />
+         </else>
+      </if>
+   </target>
+
+</project>
+
+
