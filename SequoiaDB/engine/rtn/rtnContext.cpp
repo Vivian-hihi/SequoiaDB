@@ -4277,7 +4277,7 @@ namespace engine
 
    BOOLEAN _rtnContextMainCL::requireOrder () const
    {
-      return 1 < _subs.size() && !(_options._orderBy.isEmpty() ) ;
+      return 1 < _subCLBufList.size() && !(_options._orderBy.isEmpty() ) ;
    }
 
    INT32 _rtnContextMainCL::getMore( INT32 maxNumToReturn,
