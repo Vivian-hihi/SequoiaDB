@@ -22,12 +22,12 @@
       <detectenv detectfile="${testcase_dir}/lib/all_prepare.js" prefix="${prefix}" sdbshell="${sdbdir}"/>     
       <for param="testsuit">
          <path>
-            <dirset dir="${testcase_dir}" includes="*"/>
+            <dirset dir="${testcase_dir}" includes="*" excludes="lib"/>
          </path>
          <sequential>
             <for param="testcase">
                <path>
-                  <fileset dir="@{testsuit}" excludes="commlib.js"/>
+                  <fileset dir="@{testsuit}" includes="*.js" excludes="commlib.js"/>
                </path>
                <sequential>
                   <detectenv detectfile="${testcase_dir}/lib/before_usecase.js" prefix="${prefix}" sdbshell="${sdbdir}"/>
@@ -128,7 +128,7 @@
          </if>
          
          <var name="cmd1" value="-f &quot;${func_option}${commlib_option}@{jsfile}&quot;" />
-         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost'&quot;" />
+         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';&quot;" />
          <echo message="exec cmd: @{sdbshell} ${cmd1} ${cmd2}"/>      
          
          <tstamp>

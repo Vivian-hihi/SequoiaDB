@@ -1,0 +1,116 @@
+<!-- ============================================================================
+@description:  backup dialog after test
+@parameter:    TESTCASE_TYPE          eg: tdd_c
+               DEPLOY_MODE            eg: 
+               TEST_TYPE
+@author:       Ting YU 2016-11-5
+============================================================================= -->
+
+<project default="backup_log" basedir="../../">     
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
+   <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF" >
+      <classpath>
+         <pathelement location="${basedir}/lib/STAFAnt.jar" />
+      </classpath>
+   </taskdef>
+   
+   <target name="backup_log">
+      
+      <property file="${basedir}/src/conf/test.conf" />
+      <propertycopy name="testhost_list" from="${DEPLOY_MODE}_HOST" />
+      <hostinfo prefix="host" />
+      
+      <property name="remote_cmd1" 
+         value="ant -f ${CI_WORK_DIR}/script/src/solve_result/backup_log.xml backup_remote_log" />
+   
+      <for list="${testhost_list}" param="testhost" parallel="true">
+         <sequential>         
+         <staf location="@{testhost}" service="PROCESS"
+               resultPrefix="remote_exec1"
+               request="START SHELL COMMAND ${remote_cmd1} WAIT STDERRTOSTDOUT RETURNSTDOUT"
+               throwBuildException="1"/>
+         <propertyregex property="remote_exec_rc1" input="${remote_exec1.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
+         <if>
+            <equals arg1="${remote_exec_rc1}" arg2="0" />
+            <else>
+               <fail message="exec: ${remote_cmd1}, in host: @{testhost}, return code: not 0"/>
+            </else>
+         </if>        
+         </sequential>
+      </for>
+      
+      <property name="remote_cmd2" 
+         value="ant -f ${CI_WORK_DIR}/script/src/solve_result/backup_log.xml collect_remote_log -Dcontrol_host=${host.NAME}" />
+        
+      <for list="${testhost_list}" param="testhost" parallel="false">
+         <sequential>         
+         <staf location="@{testhost}" service="PROCESS"
+               resultPrefix="remote_exec2"
+               request="START SHELL COMMAND ${remote_cmd2} WAIT STDERRTOSTDOUT RETURNSTDOUT"
+               throwBuildException="1"/>
+         <propertyregex property="remote_exec_rc2" input="${remote_exec2.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
+         <if>
+            <equals arg1="${remote_exec_rc2}" arg2="0" />
+            <else>
+               <fail message="exec: ${remote_cmd2}, in host: @{testhost}, return code: not 0"/>
+            </else>
+         </if>        
+         </sequential>
+      </for>
+      
+      
+      <property name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}"/>
+      <property name="tar_fullname" location="${CI_WORK_DIR}/${backup_reltdir}.tar.gz"/>
+
+      <move file="${CI_WORK_DIR}/diaglog" tofile="${CI_WORK_DIR}/${backup_reltdir}"/>
+      <delete dir="${tar_fullname}" failonerror="false"/>
+      <tar destfile="${tar_fullname}" longfile="gnu" compression="gzip" 
+           basedir="${CI_WORK_DIR}" includes="${backup_reltdir}/**/*"/>
+      <delete dir="${CI_WORK_DIR}/${backup_reltdir}"/>
+      
+   </target>
+
+      
+   <target name="backup_remote_log">
+      <property file="${basedir}/src/conf/test.conf" />
+      <hostinfo prefix="host" />
+      <property name="backup_basedir" location="${CI_WORK_DIR}/diaglog"/>
+      <property name="backup_reltdir" value="${host.NAME}_diaglog"/>
+      <property name="backup_fullname" location="${backup_basedir}/${backup_reltdir}.tar.gz"/>
+      
+      <delete dir="${CI_WORK_DIR}/diaglog"/>
+      <copy todir="${backup_basedir}/${backup_reltdir}">
+         <fileset dir="${INSTALL_DIR}/database" includes="*/*/diaglog/**/*"/>
+         <fileset dir="${INSTALL_DIR}/conf" includes="local/**/*"/>
+      </copy>
+      <move file="${backup_basedir}/${backup_reltdir}/local" tofile="${backup_basedir}/${backup_reltdir}/conf"/>
+      
+      <tar destfile="${backup_fullname}" longfile="gnu" compression="gzip" 
+           basedir="${backup_basedir}" includes="${backup_reltdir}/**/*"/>
+      <delete dir="${backup_basedir}/${backup_reltdir}"/>
+   </target>
+   
+   <target name="collect_remote_log">
+      <property file="${basedir}/src/conf/test.conf" />
+      <hostinfo prefix="host" />
+      <property name="backup_dir" location="${CI_WORK_DIR}/diaglog"/>
+      <property name="backup_fullname" location="${CI_WORK_DIR}/diaglog/${host.NAME}_diaglog.tar.gz"/>
+      <if>
+         <equals arg1="${control_host}" arg2="${host.NAME}" />
+         <else>
+            <staf location="local" service="FS"
+                  request="COPY FILE ${backup_fullname} TODIRECTORY ${backup_dir} TOMACHINE ${control_host}"
+                  throwBuildException="1"/>
+         </else>
+      </if>
+      
+      
+   </target>
+
+
+   
+</project>

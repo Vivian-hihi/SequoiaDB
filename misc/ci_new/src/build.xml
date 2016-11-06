@@ -24,7 +24,17 @@
       </if>
      
       <ant antfile="function_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" />
-        
+      
+      <if>
+         <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
+         <then>
+            <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+               <property name="DTEST_TYPE" value="FUNCTIONTEST"/>
+               <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+            </ant>
+         </then>
+      </if>
+            
       
        
    </target>
@@ -34,6 +44,12 @@
          <isset property="NEED_INSTALL_DEPLOY"/>
          <else>           
             <var name="NEED_INSTALL_DEPLOY" value="true" />
+         </else>
+      </if>
+      <if>
+         <isset property="NEED_BACKUP_LOG"/>
+         <else>           
+            <var name="NEED_BACKUP_LOG" value="true" />
          </else>
       </if>
       <if>
