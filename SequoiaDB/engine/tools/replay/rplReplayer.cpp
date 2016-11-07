@@ -1044,10 +1044,10 @@ namespace replay
 
             if (!partExist)
             {
-               // no archive log file for i
-               PD_LOG(PDDEBUG, "No archive file for file id[%u]",
+               rc = SDB_SYS;
+               PD_LOG(PDERROR, "No archive file for file id[%u]",
                       i);
-               break;
+               goto error;
             }
 
             file = partFile;
