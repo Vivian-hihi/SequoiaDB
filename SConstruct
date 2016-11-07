@@ -222,6 +222,10 @@ add_option( "testcase", "build testcases", 0, False)
 add_option( "shell", "build shell", 0, False)
 add_option( "client", "build C/C++ clients", 0, False)
 add_option( "fmp", "build fmp", 0, False)
+add_option( "doc", "build document(pdf, word)", 0, False)
+add_option( "website", "build web site document", 0, False)
+add_option( "chm", "build chm document", 0, False)
+add_option( "doxygen", "build doxygen document", 0, False)
 
 # language could be en or cn
 add_option( "language" , "description language" , 1 , False )
@@ -329,6 +333,11 @@ hasTool = has_option( "tool" )
 hasShell = has_option( "shell" )
 hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
+hasDoc = has_option( "doc" )
+hasWebSite = has_option( "website" )
+hasChm = has_option( "chm" )
+hasDoxygen = has_option( "doxygen" )
+
 hasFap = False
 if guess_os == "win32":
     hasFap = False
@@ -355,8 +364,9 @@ if hasAll:
       hasFap = False
    else:
       hasFap = True
+   hasDoc = True
 # if nothing specified, let's use engine+client+shell by default
-elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp or hasFap ):
+elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp or hasFap or hasDoc or hasWebSite or hasChm or hasDoxygen ):
    hasEngine = True
    hasClient = True
    hasShell = True
@@ -994,6 +1004,18 @@ if language is None:
    os.system ( "scons -C misc/autogen" )
 else:
    os.system ( "scons -C misc/autogen --language=" + language )
+
+if hasDoc:
+   os.system ( 'python doc_new/build.py --doc' )
+
+if hasWebSite:
+   os.system ( 'python doc_new/build.py --website' )
+
+if hasChm:
+   os.system ( 'python doc_new/build.py --chm' )
+
+if hasDoxygen:
+   os.system ( 'python doc_new/build.py --doxygen' )
 
 if hasEngine:
    env.SConscript( 'SequoiaDB/SConscript', variant_dir=variantDir, duplicate=False )
