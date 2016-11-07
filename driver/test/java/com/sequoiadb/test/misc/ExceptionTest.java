@@ -57,8 +57,9 @@ public class ExceptionTest {
 	}
 	
 	@Test
-	public void Test1() {
-		System.out.println("ok");
+	public void TestEquals() {
+		Assert.assertEquals(true, SDBError.SDB_INVALIDARG.equals(SDBError.SDB_INVALIDARG));
+		Assert.assertEquals(false, SDBError.SDB_SYS.equals(SDBError.SDB_INVALIDARG));
 	}
 	
 	@Test
