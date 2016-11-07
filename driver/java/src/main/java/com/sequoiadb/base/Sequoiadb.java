@@ -40,6 +40,7 @@ import org.bson.util.JSON;
 import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.base.SequoiadbConstants.PreferInstanceType;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.net.ConnectionTCPImpl;
 import com.sequoiadb.net.IConnection;
@@ -723,14 +724,12 @@ public class Sequoiadb {
 		if (flags == 0) {
 			upsertCache(csName);
 			return true;
-		}
-		else if (flags == new BaseException("SDB_DMS_CS_NOTEXIST")
-				.getErrorCode()) {
+		} else if (flags == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()) {
 			removeCache(csName);
 			return false;
-		}
-		else
+		} else {
 			throw new BaseException(flags, csName);
+		}
 	}
 
 	/**

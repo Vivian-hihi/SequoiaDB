@@ -16,7 +16,6 @@
 package com.sequoiadb.net;
 
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,6 +33,7 @@ import javax.net.ssl.X509TrustManager;
 
 import com.sequoiadb.util.Helper;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.util.logger;
 
 /**
@@ -139,7 +139,7 @@ public class ConnectionTCPImpl implements IConnection {
 				logger.getInstance().debug(0, "leave connect\n");
 				return;
 			} catch (IOException ioe) {
-				lastError = new BaseException("SDB_NETWORK", ioe);
+				lastError = new BaseException(SDBError.SDB_NETWORK, ioe);
 				close();
 			}
 			// when we come here, it means network error, let's try until
@@ -283,12 +283,12 @@ public class ConnectionTCPImpl implements IConnection {
 			return byteBuffer;
 			
 		} catch (IOException e) {
-			throw new BaseException("SDB_NETWORK");
+			throw new BaseException(SDBError.SDB_NETWORK, e);
 		} catch(NullPointerException e) {
 			// we can remove this case of exception now, the bug has been fix
 			logger.getInstance().error("objidentity:" + Integer.toString(hashCode()) +"\n");
 			logger.getInstance().error("thread id:" + Long.toString(Thread.currentThread().getId()) +"\n");
-			throw new BaseException("SDB_NETWORK");
+			throw new BaseException(SDBError.SDB_NETWORK, e);
 		}
 	}
 
@@ -318,11 +318,11 @@ public class ConnectionTCPImpl implements IConnection {
                    throw new BaseException("SDB_INVALIDARG");
                }
 			} catch (IOException e) {
-				throw new BaseException("SDB_NETWORK");
+				throw new BaseException(SDBError.SDB_NETWORK, e);
 			}catch(NullPointerException e){
 				logger.getInstance().error("objidentity:" + Integer.toString(hashCode()) +"\n");
 				logger.getInstance().error("thread id:" + Long.toString(Thread.currentThread().getId()) +"\n");
-				throw new BaseException("SDB_NETWORK");
+				throw new BaseException(SDBError.SDB_NETWORK, e);
 			}
 		logger.getInstance().debug(0, "leave receiveSysInfoMsg\n");
 		return buf;

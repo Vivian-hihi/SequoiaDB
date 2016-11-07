@@ -15,94 +15,143 @@
  */
 package com.sequoiadb.exception;
 
-import com.sequoiadb.base.SequoiadbConstants;
 
 /**
- * @author Jacky Zhang
+ * @author tanzhaobo
  * 
  */
 public class BaseException extends RuntimeException {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6115487863398926195L;
-
+	
 	private SDBError error;
-	private String infos = "";
+	private String detail;
+	
 
 	/**
-	 * @param errorType
-	 * @param e
-	 * @throws Exception
+	 * @param error  The enumeration object of sequoiadb error.
+	 * @param detail The error detail.
+	 * @param e      The exception used to build exception chain.
+     * @since v2.8
 	 */
-	public BaseException(String errorType, Exception e) {
-		this(errorType);
+	public BaseException(SDBError error, String detail, Exception e) { 
+		this.error = error;
+		this.detail = detail;
 		this.initCause(e);
 	}
 	
 	/**
-	 * @param errorType
-	 * @throws Exception
+	 * @param error  The enumeration object of sequoiadb error.
+	 * @param detail The error detail.
+     * @since v2.8
 	 */
-	public BaseException(String errorType, Object... info) {
-		error = new SDBError();
-		error.setErrorType(errorType);
+	public BaseException(SDBError error, String detail) {
+		this(error, detail, null);
+	}
+	
+	/**
+	 * @param error  The enumeration object of sequoiadb error.
+	 * @param e      The exception used to build exception chain.
+     * @since v2.8
+	 */
+	public BaseException(SDBError error, Exception e) {
+		this(error, null, e);
+	}
+	
+	/**
+	 * @param error  The enumeration object of sequoiadb error.
+	 * @since v2.8
+	 */
+	public BaseException(SDBError error) {
+		this(error, null, null);
+	}
+	
+	
+	/**
+	 * @param errCode The error code return by engine.
+	 * @since v2.8
+	 */
+	public BaseException(int errCode) {
+		this(SDBError.getSDBError(errCode));
+	}
 
-		if (info != null) {
-			for (Object obj : info)
-				infos += (obj + " ");
-		} else {
-			infos = "no more exception info";
-		}
+	
+	/**
+	 * @param errCode The error code return by engine.
+	 * @param detail  The error detail.
+	 * @since v2.8
+	 */
+	public BaseException(int errCode, String detail) {
+		this(SDBError.getSDBError(errCode), detail, null);
+	}
+	
+	/**
+	 * @param errorType The error type.
+	 * @deprecated since v2.8
+	 */
+	public BaseException(String errorType, Object... objs) {
 		try {
-			error.setErrorCode(SDBErrorLookup.getErrorCodeByType(errorType));
-			error.setErrorDescription("errorType:" + errorType + "," 
-			        + SDBErrorLookup.getErrorDescriptionByType(errorType) 
-			        + "\n Exception Detail:" + infos);
-		} catch (Exception e) {
-			error.setErrorCode(0);
-			error.setErrorDescription(SequoiadbConstants.UNKNOWN_DESC + "\n Exception Detail:"
-					+ infos);
+			this.error = SDBError.valueOf(errorType);
+		} catch(Exception e) {
+			// nothing to do
 		}
+		// prepare the other info
+		String infos = "";
+		if (objs != null && objs.length > 0) {
+			for (Object obj : objs) {
+				if (infos == "") {
+					infos += obj;
+				} else {
+					infos += ", " + obj;
+				}
+			}
+		}
+		this.detail = infos;
 	}
 
 	/**
 	 * 
-	 * @param errorCode
-	 * @throws Exception
+	 * @param errorCode The error code return by engine.
+	 * @deprecated since v2.8
 	 */
-	public BaseException(int errorCode, Object... info) {
-		error = new SDBError();
-		error.setErrorCode(errorCode);
-		if (info != null) {
-			for (Object obj : info)
-				infos += (obj + " ");
-		} else {
-			infos = "no more exception info";
-		}
-		try {
-			error.setErrorType(SDBErrorLookup.getErrorTypeByCode(errorCode));
-			error.setErrorDescription("errorCode:" + errorCode + "," 
-			        + SDBErrorLookup.getErrorDescriptionByCode(errorCode) 
-			        + "\n Exception Detail:" + infos);
-		} catch (Exception e) {
-			error.setErrorType(SequoiadbConstants.UNKNOWN_TYPE);
-			error.setErrorDescription(SequoiadbConstants.UNKNOWN_DESC + "\n Exception Detail:"
-					+ infos);
-		}
+	public BaseException(int errorCode, Object... objs) {
+		this(SDBError.getSDBError(errorCode) != null ? 
+				SDBError.getSDBError(errorCode).getErrorType() : null, objs);
 	}
 
+	
+	/**
+	 * @brief Get the error message.
+	 * @return The error message.
+	 */
 	@Override
 	public String getMessage() {
-		return error.getErrorDescription();
+		if (detail != null && detail != "") {
+			if (error != null) {
+				return error.toString() + ", detail: " + detail;
+			} else {
+				return detail;
+			}
+		} else if (error != null) {
+			return error.toString();
+		} else {
+			return "Unknown Error";
+		}
 	}
-
+	
+	/**
+	 * @brief  Get the error type.
+	 * @return The error type.
+	 */
 	public String getErrorType() {
-		return error.getErrorType();
+		return error != null ? error.getErrorType() : "Unknown Type";
 	}
 
+	/**
+	 * @brief  Get the error code.
+	 * @return The error code.
+	 */
 	public int getErrorCode() {
-		return error.getErrorCode();
+		return error != null ? error.getErrorCode() : 0;
 	}
 }

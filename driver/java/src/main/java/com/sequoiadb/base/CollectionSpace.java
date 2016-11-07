@@ -21,7 +21,6 @@
 package com.sequoiadb.base;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +29,6 @@ import org.bson.BasicBSONObject;
 
 import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBErrorLookup;
 import com.sequoiadb.net.IConnection;
 import com.sequoiadb.util.SDBMessageHelper;
 

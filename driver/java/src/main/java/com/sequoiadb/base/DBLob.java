@@ -26,8 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.bson.BSONObject;
@@ -36,7 +34,6 @@ import org.bson.types.ObjectId;
 
 import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.util.Helper;
 import com.sequoiadb.util.SDBMessageHelper;
 
