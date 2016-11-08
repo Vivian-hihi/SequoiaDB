@@ -2821,8 +2821,8 @@ namespace engine
          rc = arg.getBsonobj( 0, optionObj ) ;
          if ( SDB_OK != rc )
          {
-            detail = BSON( SPT_ERR << "optionObj must be BSON" ) ;
-            PD_LOG( PDERROR, "optionObj must be BSON, rc: %d", rc ) ;
+            detail = BSON( SPT_ERR << "optionObj must be object" ) ;
+            PD_LOG( PDERROR, "optionObj must be object, rc: %d", rc ) ;
             goto error ;
          }
          showDetail = optionObj.getBoolField( "detail" ) ;
