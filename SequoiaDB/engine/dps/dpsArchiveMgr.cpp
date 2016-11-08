@@ -1238,6 +1238,7 @@ namespace engine
       PD_LOG( PDEVENT, "Partial replica log file[%u(%u):%lld-%lld] is archived",
               fileId, logicalFileId, startOffset, endOffset ) ;
 
+      // partial log file is full
       if ( _logMgr->calcLogicalFileID( endOffset ) == logicalFileId + 1 )
       {
          BOOLEAN compress = pmdGetKRCB()->getOptionCB()->archiveCompressOn() ;
@@ -1253,30 +1254,6 @@ namespace engine
                        partialPath.c_str(), rc ) ;
                goto error ;
             }
-
-            rc = archiveFile.init( tmpPath, FALSE ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
-                       tmpPath.c_str(), rc ) ;
-               goto error ;
-            }
-
-            {
-               dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
-               archiveHeader->unsetFlag( DPS_ARCHIVE_PARTIAL ) ;
-               archiveHeader->setFlag( DPS_ARCHIVE_COMPRESSED ) ;
-            }
-
-            rc = archiveFile.flushHeader() ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to flush archive file header[%s], rc=%d",
-                       tmpPath.c_str(), rc ) ;
-               goto error ;
-            }
-
-            archiveFile.close() ;
 
             srcPath = tmpPath ;
 
@@ -1294,6 +1271,33 @@ namespace engine
                }
             }
          }
+
+         rc = archiveFile.init( srcPath, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to init archive file[%s], rc=%d",
+                    srcPath.c_str(), rc ) ;
+            goto error ;
+         }
+
+         {
+            dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader() ;
+            archiveHeader->unsetFlag( DPS_ARCHIVE_PARTIAL ) ;
+            if (compress)
+            {
+               archiveHeader->setFlag( DPS_ARCHIVE_COMPRESSED ) ;
+            }
+         }
+
+         rc = archiveFile.flushHeader() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to flush archive file header[%s], rc=%d",
+                    srcPath.c_str(), rc ) ;
+            goto error ;
+         }
+
+         archiveFile.close() ;
 
          rc = ossFile::rename( srcPath, path ) ;
          if ( SDB_OK != rc )

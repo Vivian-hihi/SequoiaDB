@@ -221,6 +221,34 @@ namespace engine
       return ossDelete( filePath.c_str() ) ;
    }
 
+   INT32 ossFile::deleteFileIfExists( const string& filePath )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN exist = FALSE ;
+
+      rc = ossFile::exists( filePath, exist ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      if ( !exist )
+      {
+         goto done;
+      }
+
+      rc = ossFile::deleteFile( filePath ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 ossFile::getFileSize( const string& filePath, INT64& fileSize )
    {
       return ossGetFileSizeByName( filePath.c_str(), &fileSize ) ;

@@ -61,6 +61,7 @@ namespace engine
    public:
       static INT32 exists( const string& filePath, BOOLEAN& exist ) ;
       static INT32 deleteFile( const string& filePath ) ;
+      static INT32 deleteFileIfExists( const string& filePath ) ;
       static INT32 getFileSize( const string& filePath, INT64& fileSize ) ;
       static INT32 getLastWriteTime( const string& filePath, time_t& time ) ;
       static INT32 rename( const string& oldFilePath, const string& newFilePath ) ;

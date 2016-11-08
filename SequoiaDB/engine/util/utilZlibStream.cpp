@@ -143,52 +143,62 @@ namespace engine
          goto done ;
       }
 
-      if ( _read )
+      for ( ;; )
       {
-         rc = _upstream->read( _zbuf, _zbufSize, rsize ) ;
-         if ( SDB_OK != rc )
+         if ( _read )
          {
-            if ( SDB_EOF == rc )
+            rc = _upstream->read( _zbuf, _zbufSize, rsize ) ;
+            if ( SDB_OK != rc )
             {
-               goto done ;
+               if ( SDB_EOF == rc )
+               {
+                  goto done ;
+               }
+
+               PD_LOG( PDERROR, "Failed to read from upstream, rc=%d", rc ) ;
+               goto error ;
             }
 
-            PD_LOG( PDERROR, "Failed to read from upstream, rc=%d", rc ) ;
+            _zstream->next_in = (Bytef*)_zbuf ;
+            _zstream->avail_in = rsize ;
+         }
+
+         _zstream->next_out = (Bytef*)buf ;
+         _zstream->avail_out = bufLen ;
+
+         rc = inflate( _zstream, Z_NO_FLUSH ) ;
+         if ( Z_BUF_ERROR == rc )
+         {
+            _read = TRUE;
+            rc = SDB_OK;
+            continue;
+         }
+         else if ( Z_OK != rc && Z_STREAM_END != rc )
+         {
+            PD_LOG( PDERROR, "Failed to inflate, zlib error=%d", rc ) ;
+            rc = SDB_UTIL_DECOMPRESS_FAIL ;
             goto error ;
          }
 
-         _zstream->next_in = (Bytef*)_zbuf ;
-         _zstream->avail_in = rsize ;
-      }
+         if ( _zstream->avail_out == 0 )
+         {
+            _read = FALSE ;
+         }
+         else
+         {
+            _read = TRUE ;
+         }
 
-      _zstream->next_out = (Bytef*)buf ;
-      _zstream->avail_out = bufLen ;
+         if ( Z_STREAM_END == rc )
+         {
+            _end = TRUE ;
+            rc = SDB_OK ;
+         }
 
-      rc = inflate( _zstream, Z_NO_FLUSH ) ;
-      if ( Z_OK != rc && Z_STREAM_END != rc )
-      {
-         PD_LOG( PDERROR, "Failed to inflate, zlib error=%d", rc ) ;
-         rc = SDB_UTIL_DECOMPRESS_FAIL ;
-         goto error ;
+         readSize = bufLen - _zstream->avail_out ;
+         SDB_ASSERT( 0 != readSize, "readSize == 0" ) ;
+         break;
       }
-
-      if ( _zstream->avail_out == 0 )
-      {
-         _read = FALSE ;
-      }
-      else
-      {
-         _read = TRUE ;
-      }
-
-      if ( Z_STREAM_END == rc )
-      {
-         _end = TRUE ;
-         rc = SDB_OK ;
-      }
-
-      readSize = bufLen - _zstream->avail_out ;
-      SDB_ASSERT( 0 != readSize, "readSize == 0" ) ;
 
    done:
       return rc ;

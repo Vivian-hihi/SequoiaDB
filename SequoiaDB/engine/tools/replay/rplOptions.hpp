@@ -70,6 +70,8 @@ namespace replay
       OSS_INLINE BOOLEAN watch() const { return _watch; }
       OSS_INLINE BOOLEAN daemon() const { return _daemon; }
       OSS_INLINE BOOLEAN debug() const { return _debug; }
+      OSS_INLINE BOOLEAN deflate() const { return _deflate; }
+      OSS_INLINE BOOLEAN inflate() const { return _inflate; }
 
    private:
       INT32 setOptions();
@@ -89,6 +91,8 @@ namespace replay
       BOOLEAN           _watch;
       BOOLEAN           _daemon;
       BOOLEAN           _debug;
+      BOOLEAN           _deflate;
+      BOOLEAN           _inflate;
    };
 }
 

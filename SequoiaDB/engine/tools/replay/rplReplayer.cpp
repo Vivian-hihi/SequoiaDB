@@ -57,6 +57,9 @@ namespace replay
    #define RPL_STATUS_LAST_FILEID            "lastFileId"
    #define RPL_STATUS_LAST_MOVED_FILETIME    "lastMovedFileTime"
 
+   #define RPL_DEFLATE_SUFFIX                ".deflate"
+   #define RPL_INFLATE_SUFFIX                ".inflate"
+
    BOOLEAN _isRunning = FALSE;
 
    static void _stop(INT32 sigNum)
@@ -187,17 +190,45 @@ namespace replay
    INT32 Replayer::run()
    {
       INT32 rc = SDB_OK;
+      BOOLEAN printResult = TRUE;
 
       _isRunning = TRUE;
 
       if (SDB_OSS_FIL == _options->pathType())
       {
-         rc = _replayFile(_path);
-         if (SDB_OK != rc)
+         if (_options->deflate())
          {
-            PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
-                   _path.c_str(), rc);
-            goto error;
+            printResult = FALSE;
+
+            rc = _deflateFile(_path);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to deflate file[%s], rc=%d",
+                      _path.c_str(), rc);
+               goto error;
+            }
+         }
+         else if (_options->inflate())
+         {
+            printResult = FALSE;
+
+            rc = _inflateFile(_path);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to inflate file[%s], rc=%d",
+                      _path.c_str(), rc);
+               goto error;
+            }
+         }
+         else
+         {
+            rc = _replayFile(_path);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
+                      _path.c_str(), rc);
+               goto error;
+            }
          }
       }
       else if (SDB_OSS_DIR == _options->pathType())
@@ -229,7 +260,10 @@ namespace replay
             PD_LOG(PDERROR, "Failed to write status, rc=%d", rc);
          }
       }
-      PD_LOG(PDINFO, "Replay result:\n%s", _monitor.dump().c_str());
+      if (printResult)
+      {
+         PD_LOG(PDINFO, "Replay result:\n%s", _monitor.dump().c_str());
+      }
       _isRunning = FALSE;
       return rc;
    error:
@@ -1813,7 +1847,10 @@ namespace replay
    {
       INT32 rc = SDB_OK;
 
-      if (_options->dump() || _options->dumpHeader())
+      if (_options->dump() ||
+          _options->dumpHeader() ||
+          _options->deflate() ||
+          _options->inflate())
       {
          goto done;
       }
@@ -2037,6 +2074,152 @@ namespace replay
    done:
       return rc;
    error:
+      goto done;
+   }
+
+   INT32 Replayer::_deflateFile(const string& file)
+   {
+      INT32 rc = SDB_OK;
+      dpsArchiveHeader* archiveHeader = NULL;
+      dpsArchiveFile archiveFile;
+      string deflateFile = file + RPL_DEFLATE_SUFFIX;
+
+      rc = archiveFile.init(file, TRUE);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to init archive log file[%s], rc=%d",
+                file.c_str(), rc);
+         goto error;
+      }
+
+      archiveHeader = archiveFile.getArchiveHeader();
+
+      if (archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDINFO, "Archive file[%s] is already compressed",
+                file.c_str());
+         goto error;
+      }
+
+      rc = ossFile::deleteFileIfExists(deflateFile);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to delete file[%s], rc=%d",
+                deflateFile.c_str(), rc);
+         goto error;
+      }
+
+      rc = _archiveFileMgr.copyArchiveFile(file, deflateFile,
+                                           DPS_ARCHIVE_COPY_COMPRESS);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to compress archive file[%s], rc=%d",
+                file.c_str(), rc);
+         goto error;
+      }
+
+      archiveFile.close();
+      archiveHeader = NULL;
+
+      rc = archiveFile.init(deflateFile, FALSE);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to init archive log file[%s], rc=%d",
+                deflateFile.c_str(), rc);
+         goto error;
+      }
+
+      archiveHeader = archiveFile.getArchiveHeader();
+      archiveHeader->setFlag(DPS_ARCHIVE_COMPRESSED);
+
+      rc = archiveFile.flushHeader();
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to flush header of archive log file[%s], rc=%d",
+                deflateFile.c_str(), rc);
+         goto error;
+      }
+
+      archiveFile.close();
+
+   done:
+      return rc;
+   error:
+      ossFile::deleteFileIfExists(deflateFile);
+      goto done;
+   }
+
+   INT32 Replayer::_inflateFile(const string& file)
+   {
+      INT32 rc = SDB_OK;
+      dpsArchiveHeader* archiveHeader = NULL;
+      dpsArchiveFile archiveFile;
+      string inflateFile = file + RPL_INFLATE_SUFFIX;
+
+      rc = archiveFile.init(file, TRUE);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to init archive log file[%s], rc=%d",
+                file.c_str(), rc);
+         goto error;
+      }
+
+      archiveHeader = archiveFile.getArchiveHeader();
+
+      if (!archiveHeader->hasFlag(DPS_ARCHIVE_COMPRESSED))
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDINFO, "Archive file[%s] is not compressed",
+                file.c_str());
+         goto error;
+      }
+
+      rc = ossFile::deleteFileIfExists(inflateFile);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to delete file[%s], rc=%d",
+                inflateFile.c_str(), rc);
+         goto error;
+      }
+
+      rc = _archiveFileMgr.copyArchiveFile(file, inflateFile,
+                                           DPS_ARCHIVE_COPY_UNCOMPRESS);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to uncompress archive file[%s], rc=%d",
+                file.c_str(), rc);
+         goto error;
+      }
+
+      archiveFile.close();
+      archiveHeader = NULL;
+
+      rc = archiveFile.init(inflateFile, FALSE);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to init archive log file[%s], rc=%d",
+                inflateFile.c_str(), rc);
+         goto error;
+      }
+
+      archiveHeader = archiveFile.getArchiveHeader();
+      archiveHeader->unsetFlag(DPS_ARCHIVE_COMPRESSED);
+
+      rc = archiveFile.flushHeader();
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to flush header of archive log file[%s], rc=%d",
+                inflateFile.c_str(), rc);
+         goto error;
+      }
+
+      archiveFile.close();
+
+   done:
+      return rc;
+   error:
+      ossFile::deleteFileIfExists(inflateFile);
       goto done;
    }
 }

@@ -54,6 +54,8 @@ namespace replay
    #define RPL_OPTION_STATUS            "status"
    #define RPL_OPTION_HELPFULL          "helpfull"
    #define RPL_OPTION_DEBUG             "debug"
+   #define RPL_OPTION_DEFLATE           "deflate"
+   #define RPL_OPTION_INFLATE           "inflate"
 
    #define RPL_EXPLAIN_HELP             "print help information"
    #define RPL_EXPLAIN_VERSION          "print version"
@@ -78,6 +80,8 @@ namespace replay
                                         "replay will start according to the status if it exists"
    #define RPL_EXPLAIN_HELPFULL         "print all options"
    #define RPL_EXPLAIN_DEBUG            "log debug info"
+   #define RPL_EXPLAIN_DEFLATE          "compress archive file, valid when path is file"
+   #define RPL_EXPLAIN_INFLATE          "uncompress archive file, valid when path is file"
 
    #define _TYPE(T) utilOptType(T)
 
@@ -90,6 +94,8 @@ namespace replay
       _watch = FALSE;
       _daemon = FALSE;
       _debug = FALSE;
+      _deflate = FALSE;
+      _inflate = FALSE;
    }
 
    Options::~Options()
@@ -120,6 +126,8 @@ namespace replay
       addOptions("Helpfull Options", TRUE)
          (RPL_OPTION_HELPFULL,       /* no arg */     RPL_EXPLAIN_HELPFULL)
          (RPL_OPTION_DEBUG,          /* no arg */     RPL_EXPLAIN_DEBUG)
+         (RPL_OPTION_DEFLATE,       _TYPE(string),    RPL_EXPLAIN_DEFLATE)
+         (RPL_OPTION_INFLATE,       _TYPE(string),    RPL_EXPLAIN_INFLATE)
       ;
 
       rc = engine::utilOptions::parse(argc, argv);
@@ -238,11 +246,34 @@ namespace replay
          ossStrToBoolean(dumpHeader.c_str(), &_dumpHeader);
       }
 
+      if (has(RPL_OPTION_DEFLATE))
+      {
+         string deflate = get<string>(RPL_OPTION_DEFLATE);
+         ossStrToBoolean(deflate.c_str(), &_deflate);
+      }
+
+      if (has(RPL_OPTION_INFLATE))
+      {
+         string inflate = get<string>(RPL_OPTION_INFLATE);
+         ossStrToBoolean(inflate.c_str(), &_inflate);
+      }
+
+      if (_deflate && _inflate)
+      {
+         rc = SDB_INVALIDARG;
+         std::cerr << "conflict arguments: " << RPL_OPTION_DEFLATE
+                   << " and " << RPL_OPTION_INFLATE
+                   << " can't be specified at the same time" << std::endl;
+         PD_LOG( PDERROR, "%s and %s can't be specified at the same time, rc=%d",
+                 RPL_OPTION_DEFLATE, RPL_OPTION_INFLATE, rc ) ;
+         goto error ;
+      }
+
       if (has(RPL_OPTION_HOST))
       {
          _hostName = get<string>(RPL_OPTION_HOST);
       }
-      else if (!_dump && !_dumpHeader)
+      else if (!_dump && !_dumpHeader && !_deflate && !_inflate)
       {
          std::cerr << "Missing argument: " << RPL_OPTION_HOST << std::endl;
          rc = SDB_INVALIDARG;
@@ -262,7 +293,7 @@ namespace replay
             goto error;
          }
       }
-      else if (!_dump && !_dumpHeader)
+      else if (!_dump && !_dumpHeader && !_deflate && !_inflate)
       {
          std::cerr << "Missing argument: " << RPL_OPTION_SVC << std::endl;
          rc = SDB_INVALIDARG;
