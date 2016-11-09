@@ -13,7 +13,7 @@ public class Constants {
 //	public final static String HOST                        = "192.168.28.2";
 //	public final static String HOST                        = "192.168.20.42";
 	public final static int SERVER                         = 11810;
-  	public final static String HOST                        = "192.168.20.56"; // change this for you own mechine (rhel ubutu-dev1)
+  	public final static String HOST                        = "localhost"; // change this for you own mechine (rhel ubutu-dev1)
   	public final static String BACKUPPATH                  = "/opt/sequoiadb/database/test/backup";
 	public final static String DATAPATH4                   = "/opt/sequoiadb/database/test/data4";
 
