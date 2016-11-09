@@ -16,7 +16,7 @@ using namespace std;
 #define CPPPATH "../../SequoiaDB/engine/oss/ossErr.cpp"
 #define CPATH "../../SequoiaDB/engine/include/ossErr.h"
 #define CSPATH "../../driver/C#.Net/Driver/exception/Errors.cs"
-#define JAVAPATH "../../driver/java/src/main/resources/errors.properties"
+#define JAVAPATH "../../driver/java/src/main/java/com/sequoiadb/exception/SDBError.java"
 #define JSPATH "../../SequoiaDB/engine/spt/error.js"
 #define WEBPATH "../../client/admin/admintpl/error_"
 #define PYTHONPATH "../../driver/python/pysequoiadb/err.prop"
@@ -55,9 +55,11 @@ struct ErrorCode
 
 class RCGen
 {
+private:
     const char* language;
     std::vector<std::pair<std::string, int> > conslist;
     std::vector<ErrorCode> errcodes;
+    int maxErrorNameWidth;
     void loadFromXML ();
     void genC ();
     void genCPP ();

@@ -17,8 +17,14 @@ static string& replace_all ( string &str, const string& old_value, const string 
    return str ;
 }
 
+static inline int max(int a, int b)
+{
+   return (a >= b ? a : b);
+}
+
 RCGen::RCGen (const char* lang) : language (lang)
 {
+    maxErrorNameWidth = 0;
     loadFromXML ();
 }
 
@@ -68,6 +74,7 @@ void RCGen::loadFromXML ()
             errcode.desc_en = vv.get<string>("en");
             errcodes.push_back(errcode);
             i++;
+            maxErrorNameWidth = max(maxErrorNameWidth, (int)errcode.name.length());
         }
     }
     catch ( std::exception&)
@@ -277,25 +284,101 @@ void RCGen::genCS ()
     fout.close();
 }
 
-void RCGen::genJava ()
+void RCGen::genJava()
 {
     ofstream fout(JAVAPATH);
-    if ( fout == NULL )
+
+    string license =
+        "/*    Copyright (C) 2011-2017 SequoiaDB Inc.\n"
+        " *\n"
+        " *    Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+        " *    you may not use this file except in compliance with the License.\n"
+        " *    You may obtain a copy of the License at\n"
+        " *\n"
+        " *    http://www.apache.org/licenses/LICENSE-2.0\n"
+        " *\n"
+        " *    Unless required by applicable law or agreed to in writing, software\n"
+        " *    distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+        " *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+        " *    See the License for the specific language governing permissions and\n"
+        " *    limitations under the License.\n"
+        " */\n";
+    fout << license << endl;
+
+    string comment =
+        "// This Header File is automatically generated, you MUST NOT modify this file anyway!\n"
+        "// On the contrary, you can modify the xml file \"sequoiadb/misc/autogen/rclist.xml\" if necessary!\n";
+    fout << comment << endl;
+
+    fout << "package com.sequoiadb.exception;" << endl;
+    fout << endl;
+    fout << "public enum SDBError {" << endl;
+
+    fout << left;
+
+    for ( int i = 0; i < errcodes.size(); i++ )
     {
-        cout<<"can not open file: "<<JAVAPATH<<endl;
-        exit(0);
+        const ErrorCode& errcode = errcodes[i];
+        fout << "    "
+             << left << setfill(' ') << setw(maxErrorNameWidth + 4) << errcode.name + "("
+             << right << setfill(' ') << setw(5) << errcode.value << ",    "
+             << "\"" << errcode.getDesc(language) << "\"" << "    )";
+        if (i < errcodes.size() - 1)
+        {
+            fout << ",";
+        }
+        else
+        {
+            fout << ";";
+        }
+        fout << endl;
     }
 
-    fout<<std::left;
-    for (int i = 0; i < errcodes.size(); ++i)
-    {
-        fout<<setw(RCALIGN)<<errcodes[i].name
-            <<" = "
-            <<setw(6)<<errcodes[i].value
-            <<": "<<errcodes[i].getDesc(language)<<endl;
-    }
+    fout << endl;
 
-    fout.close();
+    string code =
+      "    private int code;\n"
+      "    private String desc;\n"
+      "\n"
+      "    private SDBError(int code, String desc) {\n"
+      "        this.code = code;\n"
+      "        this.desc = desc;\n"
+      "    }\n"
+      "\n"
+      "    @Override\n"
+      "    public String toString() {\n"
+      "          return this.name() + \"(\" + this.code + \")\" + \": \" + this.desc;\n"
+      "    }\n"
+      "\n"
+      "    public int getErrorCode() {\n"
+      "          return this.code;\n"
+      "    }\n"
+      "\n"
+      "    public String getErrorDescription() {\n"
+      "          return this.desc;\n"
+      "    }\n"
+      "\n"
+      "    public String getErrorType() {\n"
+      "          return this.name();\n"
+      "    }";
+
+    fout << code << endl;
+    fout << endl;
+    fout << "    public static SDBError getSDBError(int errorCode) {" << endl;
+    fout << "        switch(errorCode) {" << endl;
+    for ( int i = 0; i < errcodes.size(); i++ )
+    {
+        const ErrorCode& errcode = errcodes[i];
+        fout << "        case "
+             << right << setfill(' ') << setw(5) << errcode.value
+             << ": " << "return " << errcode.name
+             << ";" << endl;
+    }
+    fout << "        default:    return null;" << endl;
+    fout << "        }" << endl;
+    fout << "    }" << endl;
+
+    fout << "}" << endl;
 }
 
 void RCGen::genPython ()
