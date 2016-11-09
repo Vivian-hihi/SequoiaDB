@@ -133,6 +133,9 @@ namespace engine
          INT32    _addRegExOp( const CHAR *fieldName, const CHAR *regex,
                                const CHAR *options, MTH_FUNC_LIST &funcList,
                                _mthMatchLogicNode *parent ) ;
+         INT32    _addExpandOp( const CHAR *fieldName,
+                                const BSONElement &ele,
+                                _mthMatchLogicNode *parent ) ;
          INT32    _parseRegExElement( const BSONElement &ele,
                                       _mthMatchLogicNode *parent ) ;
          INT32    _parseNormalElement( const BSONElement &ele,

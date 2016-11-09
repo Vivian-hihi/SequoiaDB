@@ -1648,6 +1648,78 @@ namespace engine
       goto done ;
    }
 
+   //************************_mthMatchFuncEXPAND********************************
+   _mthMatchFuncEXPAND::_mthMatchFuncEXPAND( _mthNodeAllocator *allocator )
+                       :_mthMatchFunc( allocator )
+   {
+   }
+
+   _mthMatchFuncEXPAND::~_mthMatchFuncEXPAND()
+   {
+      clear() ;
+   }
+
+   void _mthMatchFuncEXPAND::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchFuncEXPAND() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
+   INT32 _mthMatchFuncEXPAND::call( const BSONElement &in, BSONObj &out )
+   {
+      SDB_ASSERT( FALSE, "impossible" ) ;
+      return SDB_INVALIDARG ;
+   }
+
+   INT32 _mthMatchFuncEXPAND::getType()
+   {
+      return EN_MATCH_ATTR_EXPAND ;
+   }
+
+   const CHAR* _mthMatchFuncEXPAND::getName()
+   {
+      return MTH_ATTR_STR_EXPAND ;
+   }
+
+   const CHAR* _mthMatchFuncEXPAND::getFieldName()
+   {
+      return _fieldName.getFieldName() ;
+   }
+
+   void _mthMatchFuncEXPAND::getElement( BSONElement &ele )
+   {
+      ele = _funcEle ;
+   }
+
+   void _mthMatchFuncEXPAND::clear()
+   {
+      _mthMatchFunc::clear() ;
+   }
+
+   INT32 _mthMatchFuncEXPAND::_init( const CHAR *fieldName,
+                                     const BSONElement &ele )
+   {
+      INT32 rc = SDB_OK ;
+      if ( ele.type() != NumberInt || ele.numberInt() != 1 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "set attr failed:attr=%s,rc=%d",
+                 ele.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    //************************_mthMatchOpNode********************************
    _mthMatchOpNode::_mthMatchOpNode( _mthNodeAllocator *allocator )
                    :_mthMatchNode( allocator )
@@ -1656,6 +1728,7 @@ namespace engine
       _hasDollarFieldName = FALSE ;
       _cmpFieldName       = NULL ;
       _hasReturnMatch     = FALSE ;
+      _hasExpand          = FALSE ;
       _offset             = 0 ;
       _len                = 0 ;
    }
@@ -1740,6 +1813,7 @@ namespace engine
       _isCompareField     = FALSE ;
       _cmpFieldName       = NULL ;
       _hasReturnMatch     = FALSE ;
+      _hasExpand          = FALSE ;
       _offset             = 0 ;
       _len                = 0 ;
 
@@ -2354,6 +2428,23 @@ namespace engine
             _hasReturnMatch = TRUE ;
             _offset         = rmFunc->getOffset() ;
             _len            = rmFunc->getLen() ;
+            mthGetMatchNodeFactory()->releaseFunc( rmFunc ) ;
+         }
+         else if ( func->getType() == EN_MATCH_ATTR_EXPAND )
+         {
+            _mthMatchFuncEXPAND *expandFunc = NULL ;
+            expandFunc = dynamic_cast< _mthMatchFuncEXPAND * > ( func ) ;
+            if ( NULL == expandFunc )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "dynamic_cast(func->EXPAND) failed:"
+                          "func=%s,rc=%d", func->toString().c_str(), rc ) ;
+               goto error ;
+            }
+
+            SDB_ASSERT( FALSE == _hasExpand, "only once" ) ;
+            _hasExpand = TRUE ;
+            mthGetMatchNodeFactory()->releaseFunc( expandFunc ) ;
          }
          else
          {
@@ -2393,8 +2484,34 @@ namespace engine
    BSONObj _mthMatchOpNode::toBson()
    {
       BSONObjBuilder builder ;
-
+      MTH_FUNC_LIST::iterator iter ;
       BSONObjBuilder b( builder.subobjStart( _fieldName.getFieldName() ) ) ;
+
+      if ( _hasExpand )
+      {
+         b.append( MTH_ATTR_STR_EXPAND, 1 ) ;
+      }
+
+      if ( _hasReturnMatch )
+      {
+         BSONObj tmp = BSON( "0" << _offset << "1" << _len ) ;
+         b.appendArray( MTH_ATTR_STR_RETURNMATCH, tmp ) ;
+      }
+
+      iter = _funcList.begin() ;
+      while ( iter != _funcList.end() )
+      {
+         _mthMatchFunc *func = *iter ;
+         BSONObj obj = func->toBson() ;
+         BSONElement ele = obj.firstElement() ;
+         if ( ele.type() == Object || ele.type() == Array )
+         {
+            b.appendElements( ele.embeddedObject() ) ;
+         }
+
+         iter++ ;
+      }
+
       if ( !_isCompareField )
       {
          b.appendAs( _toMatch, getOperatorStr() ) ;
@@ -3786,6 +3903,58 @@ namespace engine
       }
    }
 
+   //**************_mthMatchOpNodeEXPAND*****************************
+   _mthMatchOpNodeEXPAND::_mthMatchOpNodeEXPAND( _mthNodeAllocator *allocator )
+                         :_mthMatchOpNode( allocator )
+   {
+   }
+
+   _mthMatchOpNodeEXPAND::~_mthMatchOpNodeEXPAND()
+   {
+      clear() ;
+   }
+
+   INT32 _mthMatchOpNodeEXPAND::getType()
+   {
+      return EN_MATCH_ATTR_EXPAND ;
+   }
+
+   const CHAR* _mthMatchOpNodeEXPAND::getOperatorStr()
+   {
+      return MTH_ATTR_STR_EXPAND ;
+   }
+
+   UINT32 _mthMatchOpNodeEXPAND::getWeight()
+   {
+      return 0 ;
+   }
+
+   BOOLEAN _mthMatchOpNodeEXPAND::isTotalConverted()
+   {
+      return FALSE ;
+   }
+
+   INT32 _mthMatchOpNodeEXPAND::_valueMatch( const BSONElement &left,
+                                             const BSONElement &right,
+                                             _mthMatchTreeContext &context,
+                                             BOOLEAN &result )
+   {
+      result = TRUE ;
+      return SDB_OK ;
+   }
+
+   void _mthMatchOpNodeEXPAND::release()
+   {
+      if ( NULL != _allocator && _allocator->isAllocatedByme( this ) )
+      {
+         this->~_mthMatchOpNodeEXPAND() ;
+      }
+      else
+      {
+         delete this ;
+      }
+   }
+
    //**************_mthMatchOpNodeELEMMATCH*****************************
    _mthMatchOpNodeELEMMATCH::_mthMatchOpNodeELEMMATCH(
                                               _mthNodeAllocator *allocator )
@@ -4113,7 +4282,46 @@ namespace engine
    BSONObj _mthMatchOpNodeRegex::toBson()
    {
       BSONObjBuilder builder ;
-      builder.appendRegex( _fieldName.getFieldName(), _regex, _options ) ;
+      if ( _funcList.size() == 0 && !_hasReturnMatch && !_hasExpand )
+      {
+         builder.appendRegex( _fieldName.getFieldName(), _regex, _options ) ;
+      }
+      else
+      {
+         MTH_FUNC_LIST::iterator iter ;
+         BSONObjBuilder b( builder.subobjStart( _fieldName.getFieldName() ) ) ;
+
+         if ( _hasExpand )
+         {
+            b.append( MTH_ATTR_STR_EXPAND, 1 ) ;
+         }
+
+         if ( _hasReturnMatch )
+         {
+            BSONObj tmp = BSON( "0" << _offset << "1" << _len ) ;
+            b.appendArray( MTH_ATTR_STR_RETURNMATCH, tmp ) ;
+         }
+
+         iter = _funcList.begin() ;
+         while ( iter != _funcList.end() )
+         {
+            _mthMatchFunc *func = *iter ;
+            BSONObj obj = func->toBson() ;
+            BSONElement ele = obj.firstElement() ;
+            if ( ele.type() == Object || ele.type() == Array )
+            {
+               b.appendElements( ele.embeddedObject() ) ;
+            }
+
+            iter++ ;
+         }
+
+         b.append( MTH_OPERATOR_STR_REGEX, _regex ) ;
+         b.append( MTH_OPERATOR_STR_OPTIONS, _options ) ;
+
+         b.doneFast() ;
+      }
+
       return builder.obj() ;
    }
 

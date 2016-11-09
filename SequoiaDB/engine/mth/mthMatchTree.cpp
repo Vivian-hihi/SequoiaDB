@@ -196,6 +196,9 @@ namespace engine
       case EN_MATCH_OPERATOR_REGEX:
          opNode = new ( allocator ) _mthMatchOpNodeRegex( allocator ) ;
          break ;
+      case EN_MATCH_ATTR_EXPAND:
+         opNode = new ( allocator ) _mthMatchOpNodeEXPAND( allocator ) ;
+         break ;
       default :
          break ;
       }
@@ -322,6 +325,14 @@ namespace engine
             as a function.
          */
          func = new ( allocator ) _mthMatchFuncRETURNMATCH( allocator ) ;
+         break ;
+      case EN_MATCH_ATTR_EXPAND:
+         /*
+            attribute expand's behavior is like function. so we treat it
+            as a function.
+         */
+         func = new ( allocator ) _mthMatchFuncEXPAND( allocator ) ;
+         break ;
       default :
          break ;
       }
@@ -392,6 +403,11 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( NULL != func )
+      {
+         mthGetMatchNodeFactory()->releaseFunc( func ) ;
+         func = NULL ;
+      }
       goto done ;
    }
 
@@ -471,6 +487,44 @@ namespace engine
       goto done ;
    }
 
+   INT32 _mthMatchTree::_addExpandOp( const CHAR *fieldName,
+                                      const BSONElement &ele,
+                                      _mthMatchLogicNode *parent )
+   {
+      INT32 rc = SDB_OK ;
+      _mthMatchOpNode *node = NULL ;
+      BOOLEAN hasAddToTree  = FALSE ;
+
+      node = mthGetMatchNodeFactory()->createOpNode( &_allocator,
+                                                     EN_MATCH_ATTR_EXPAND ) ;
+      if ( NULL == node )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "createOpNode failed:type=%d,rc=%d",
+                 EN_MATCH_ATTR_EXPAND, rc ) ;
+         goto error ;
+      }
+
+      rc = node->init( fieldName, ele ) ;
+      PD_RC_CHECK( rc, PDERROR, "init node failed:ele=%s,rc=%d",
+                   ele.toString().c_str(), rc ) ;
+
+      rc = parent->addChild( node ) ;
+      PD_RC_CHECK( rc, PDERROR, "add child failed:parent=%s,child=%s,rc=%d",
+                   parent->toString().c_str(), node->toString().c_str(), rc ) ;
+
+      hasAddToTree = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      if ( !hasAddToTree )
+      {
+         _releaseTree( node ) ;
+      }
+      goto done ;
+   }
+
    INT32 _mthMatchTree::_addRegExOp( const CHAR *fieldName, const CHAR *regex,
                                      const CHAR *options,
                                      MTH_FUNC_LIST &funcList,
@@ -486,7 +540,7 @@ namespace engine
       if ( NULL == node )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "createOpNodeByOp failed:type=%d,rc=%d",
+         PD_LOG( PDERROR, "createOpNode failed:type=%d,rc=%d",
                  EN_MATCH_OPERATOR_REGEX, rc ) ;
          goto error ;
       }
@@ -1052,11 +1106,12 @@ namespace engine
             goto error ;
          }
 
-         if ( ele.type() != NumberInt && 1 != ele.numberInt() )
+         rc = _addFunction( fieldName, ele, EN_MATCH_ATTR_EXPAND,
+                            funcList ) ;
+         if ( SDB_OK != rc )
          {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "parse expand failed:ele=%s,rc=%d",
-                    ele.toString().c_str(), rc ) ;
+            PD_LOG( PDERROR, "add function failed:fieldName=%s,ele=%s,rc=%d",
+                    fieldName, ele.toString().c_str(), rc ) ;
             goto error ;
          }
 
@@ -1141,7 +1196,7 @@ namespace engine
       {
          rc = _parseAttribute( ele.fieldName(), innerEle, nodeType,
                                funcList );
-
+         PD_RC_CHECK( rc, PDERROR, "_parseAttribute failed:rc=%d", rc ) ;
          goto done ;
       }
 
@@ -1153,37 +1208,25 @@ namespace engine
             //func mod
             rc = _addFunction( ele.fieldName(), innerEle, nodeType,
                                funcList ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "add function failed:fieldName=%s,"
-                       "innerEle=%s,rc=%d", ele.fieldName(),
-                       innerEle.toString().c_str(), rc ) ;
-               goto error ;
-            }
+            PD_RC_CHECK( rc, PDERROR, "add function failed:fieldName=%s,"
+                         "innerEle=%s,rc=%d", ele.fieldName(),
+                         innerEle.toString().c_str(), rc ) ;
          }
          else if ( ( nodeType < EN_MATCH_OPERATOR_END &&
                      nodeType >= EN_MATCH_OPERATOR_ET ) )
          {
             rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList,
                                parent ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
-                       innerEle.toString().c_str(), rc ) ;
-               goto error ;
-            }
+            PD_RC_CHECK( rc, PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
+                         innerEle.toString().c_str(), rc ) ;
          }
          else if ( nodeType < EN_MATCH_FUNC_END &&
                    nodeType >= EN_MATCH_FUNC_ABS )
          {
             rc = _addFunction( ele.fieldName(), innerEle, nodeType, funcList ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "add function failed:fieldName=%s,innerEle=%s,"
-                       "rc=%d", ele.fieldName(), innerEle.toString().c_str(),
-                       rc ) ;
-               goto error ;
-            }
+            PD_RC_CHECK( rc, PDERROR, "add function failed:fieldName=%s,"
+                         "innerEle=%s,rc=%d", ele.fieldName(),
+                         innerEle.toString().c_str(), rc ) ;
          }
          else
          {
@@ -1220,12 +1263,8 @@ namespace engine
 
                rc = _addOperator( ele.fieldName(), tElem, nodeType, funcList,
                                   parent ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_addOperator failed:tElem=%s,rc=%d",
-                          tElem.toString().c_str(), rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_addOperator failed:tElem=%s,rc=%d",
+                            tElem.toString().c_str(), rc ) ;
             }
          }
          else
@@ -1236,24 +1275,16 @@ namespace engine
             {
                rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList,
                                   parent ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
-                          innerEle.toString().c_str(), rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
+                            innerEle.toString().c_str(), rc ) ;
             }
             else
             {
                rc = _addFunction( ele.fieldName(), innerEle, nodeType,
                                   funcList ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "add function failed:fieldName=%s,"
-                          "innerEle=%s,rc=%d", ele.fieldName(),
-                          innerEle.toString().c_str(), rc ) ;
-                  goto error ;
-               }
+               PD_RC_CHECK( rc, PDERROR, "add function failed:fieldName=%s,"
+                            "innerEle=%s,rc=%d", ele.fieldName(),
+                            innerEle.toString().c_str(), rc ) ;
             }
          }
       }
@@ -1434,6 +1465,36 @@ namespace engine
 
          if ( funcList.size() > 0 )
          {
+            // if only have $expand, change it to Operation
+            if ( funcList.size() == 1 )
+            {
+               MTH_FUNC_LIST::iterator iter = funcList.begin() ;
+               _mthMatchFunc *func = *iter ;
+               if ( func->getType() == EN_MATCH_ATTR_EXPAND )
+               {
+                  BSONElement expandEle ;
+                  _mthMatchFuncEXPAND *expandFunc = NULL ;
+                  expandFunc = dynamic_cast< _mthMatchFuncEXPAND * > (func) ;
+                  if ( NULL == expandFunc )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_RC_CHECK( rc, PDERROR, "dynamic_cast(func->FuncEXPAND)"
+                                  " failed:node=%s,rc=%d",
+                                  func->toString().c_str(), rc ) ;
+                  }
+
+                  expandFunc->getElement( expandEle ) ;
+                  rc = _addExpandOp( expandFunc->getFieldName(), expandEle,
+                                     parent ) ;
+                  PD_RC_CHECK( rc, PDERROR, "_addExpandOp failed:fieldName=%s,"
+                               "expandObj=%s,rc=%d", expandEle.fieldName(),
+                               expandEle.toString().c_str(), rc ) ;
+
+                  _clearFuncList( funcList ) ;
+                  goto done ;
+               }
+            }
+
             rc = SDB_INVALIDARG ;
             MTH_FUNC_LIST::iterator iter = funcList.begin() ;
             PD_LOG( PDERROR, "exist extra func:first func=%s",

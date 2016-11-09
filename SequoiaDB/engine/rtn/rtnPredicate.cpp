@@ -220,7 +220,7 @@ namespace engine
          goto done ;
       }
       rc = compareElementValues ( l, r ) ;
-   done : 
+   done :
       PD_TRACE_EXITRC ( SDB_RTNKEYCOMPARE, rc ) ;
       return rc ;
    }
@@ -569,7 +569,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_SIMAPLEREGEX1 ) ;
       return r;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SIMAPLEREGEX2, "simpleRegex" )
    inline string simpleRegex(const BSONElement& e)
    {
@@ -901,7 +901,7 @@ namespace engine
       INT32 op = e.getGtLtOp() ;
       if ( ( !isNot && !e.eoo() && e.type() != RegEx && op == BSONObj::opIN ) )
       {
-         // for IN statement without isNot or if the element type is array 
+         // for IN statement without isNot or if the element type is array
          // and we want equality match {c1:{$et:[1,2,3]}}
          set<BSONElement, element_cmp_lt> vals ;
          vector<rtnPredicate> regexes ;
@@ -1221,7 +1221,7 @@ namespace engine
       }
       PD_TRACE_EXIT ( SDB_RTNPRED_REVERSE ) ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_TOSTRING, "rtnPredicate::toString()" )
    string rtnPredicate::toString() const
    {
@@ -1290,7 +1290,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__RTNPRED_PRED ) ;
       return f->second ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_MALEFORINDEX, "_rtnPredicateSet::matchLevelForIndex" )
    INT32 _rtnPredicateSet::matchLevelForIndex (const BSONObj &keyPattern) const
    {
@@ -1678,7 +1678,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__RTNPREDLISTITE_VALCURSSKEY ) ;
       return re ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_RESET, "_rtnPredicateListIterator::reset" )
    void _rtnPredicateListIterator::reset ()
    {

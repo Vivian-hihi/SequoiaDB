@@ -453,6 +453,30 @@ namespace engine
          INT32 _len ;
    } ;
 
+   class _mthMatchFuncEXPAND : public _mthMatchFunc
+   {
+      public:
+         _mthMatchFuncEXPAND( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchFuncEXPAND() ;
+
+      public:
+         const CHAR* getFieldName() ;
+         void getElement( BSONElement &ele ) ;
+
+      public:
+         virtual void release() ;
+         virtual INT32 call( const BSONElement &in, BSONObj &out ) ;
+         virtual INT32 getType() ;
+         virtual const CHAR* getName() ;
+         virtual void clear() ;
+
+      protected:
+         virtual INT32 _init( const CHAR *fieldName,
+                              const BSONElement &ele ) ;
+
+      private:
+   } ;
+
    typedef _utilList< _mthMatchFunc* > MTH_FUNC_LIST ;
    class _mthMatchOpNode : public _mthMatchNode
    {
@@ -532,6 +556,7 @@ namespace engine
          BOOLEAN _hasDollarFieldName ;
 
          BOOLEAN _hasReturnMatch ;
+         BOOLEAN _hasExpand ;
          INT32 _offset ;
          INT32 _len ;
    } ;
@@ -819,6 +844,26 @@ namespace engine
       public:
          _mthMatchOpNodeISNULL( _mthNodeAllocator *allocator ) ;
          virtual ~_mthMatchOpNodeISNULL() ;
+
+      public:
+         virtual INT32 getType() ;
+         virtual const CHAR *getOperatorStr() ;
+         virtual UINT32 getWeight() ;
+         virtual BOOLEAN isTotalConverted() ;
+         virtual void release() ;
+
+      protected:
+         virtual INT32 _valueMatch( const BSONElement &left,
+                                    const BSONElement &right,
+                                    _mthMatchTreeContext &context,
+                                    BOOLEAN &result ) ;
+   } ;
+
+   class _mthMatchOpNodeEXPAND : public _mthMatchOpNode
+   {
+      public:
+         _mthMatchOpNodeEXPAND( _mthNodeAllocator *allocator ) ;
+         virtual ~_mthMatchOpNodeEXPAND() ;
 
       public:
          virtual INT32 getType() ;

@@ -105,7 +105,7 @@ namespace engine
       EN_MATCH_FUNC_END                = 200,
 
       EN_MATCH_ATTR_RETURNMATCH        = 201,
-      EN_MATCH_ATTR_EXPAND             = 302,
+      EN_MATCH_ATTR_EXPAND             = 202,
 
       EN_MATCH_OP_FUNC_END,
    } ;

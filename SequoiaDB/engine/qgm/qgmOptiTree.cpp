@@ -976,6 +976,34 @@ namespace engine
       return ss.str() ;
    }
 
+   string _qgmOptiTreeNode::toTotalString()
+   {
+      stringstream ss ;
+
+      _toTotalString( ss, "", this ) ;
+
+      return ss.str() ;
+   }
+
+   void _qgmOptiTreeNode::_toTotalString( stringstream &ss, const string &fill,
+                                          qgmOptiTreeNode *node )
+   {
+      if ( NULL == node )
+      {
+         return ;
+      }
+
+      UINT32 i = 0 ;
+      qgmOptiTreeNode *child = NULL ;
+
+      ss << fill << node->toString() << '\n' ;
+      while ( ( child = node->getSubNode( i ) ) != NULL )
+      {
+         _toTotalString( ss, fill + "--" , child ) ;
+         i++ ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_EXTEND, "_qgmOptiTreeNode::extend" )
    INT32 _qgmOptiTreeNode::extend( _qgmOptiTreeNode *&exNode )
    {

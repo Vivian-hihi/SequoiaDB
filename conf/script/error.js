@@ -138,7 +138,7 @@ var SDB_PHP_DRIVER_INTERNAL_ERROR                                    = -131  ; /
 var SDB_COORD_SEND_MSG_FAILED                                        = -132  ; // Failed to send the message;
 var SDB_CAT_NO_NODEGROUP_INFO                                        = -133  ; // No activated group information on catalog;
 var SDB_COORD_REMOTE_DISC                                            = -134  ; // Remote-node is disconnected;
-var SDB_CAT_NO_MATCH_CATALOG                                         = -135  ; // Unable to find the catalog information;
+var SDB_CAT_NO_MATCH_CATALOG                                         = -135  ; // Unable to find the matched catalog information;
 var SDB_CLS_UPDATE_CAT_FAILED                                        = -136  ; // Failed to update catalog;
 var SDB_COORD_UNKNOWN_OP_REQ                                         = -137  ; // Unknown request operation code;
 var SDB_COOR_NO_NODEGROUP_INFO                                       = -138  ; // Group information cannot be found on coordinator node;
@@ -303,12 +303,20 @@ var SDB_DMS_EMPTY_COLLECTION                                         = -296  ; /
 var SDB_LOB_SEQUENCE_EXISTS                                          = -297  ; // LOB sequence exists;
 var SDB_OM_CLUSTER_NOT_EXIST                                         = -298  ; // cluster do not exist;
 var SDB_OM_BUSINESS_NOT_EXIST                                        = -299  ; // business do not exist;
-var SDB_UTIL_COMP_INIT_FAIL                                          = -300  ; // compressor initialization failed;
-var SDB_UTIL_COMP_SETDICT_FAIL                                       = -301  ; // set dictionary for compressor failed;
-var SDB_UTIL_COMP_BUF_SMALL                                          = -302  ; // output buffer for compressor is too small;
-var SDB_UTIL_COMP_COMPRESS_FAIL                                      = -303  ; // compress process failed;
-var SDB_UTIL_COMP_DECOMPRESS_FAIL                                    = -304  ; // compress process failed;
-var SDB_AUTH_USER_NOT_EXIST                                          = -305  ; // user specified is not exist or password is invalid;
+var SDB_AUTH_USER_NOT_EXIST                                          = -300  ; // user specified is not exist or password is invalid;
+var SDB_UTIL_COMPRESS_INIT_FAIL                                      = -301  ; // Compression initialization failed;
+var SDB_UTIL_COMPRESS_FAIL                                           = -302  ; // Compression failed;
+var SDB_UTIL_DECOMPRESS_FAIL                                         = -303  ; // Decompression failed;
+var SDB_UTIL_COMPRESS_ABORT                                          = -304  ; // Compression abort;
+var SDB_UTIL_COMPRESS_BUFF_SMALL                                     = -305  ; // Buffer for compression is too small;
+var SDB_UTIL_DECOMPRESS_BUFF_SMALL                                   = -306  ; // Buffer for decompression is too small;
+var SDB_OSS_UP_TO_LIMIT                                              = -307  ; // Up to the limit;
+var SDB_DS_NOTINIT_OR_DISABLED                                       = -308  ; // sdbDataSource not init or disabled;
+var SDB_DS_NO_COORD                                                  = -309  ; // sdbDataSource has no valid coord;
+var SDB_RULE_ID_IS_NOT_EXIST                                         = -310  ; // the record which exclusive ruleID is not exist;
+var SDB_STRTGY_TASK_NAME_CONFLICT                                    = -311  ; // Task name conflict;
+var SDB_STRTGY_TASK_NOT_EXISTED                                      = -312  ; // The task is not existed;
+var SDB_DPS_LOG_NOT_ARCHIVED                                         = -313  ; // Replica log is not archived;
 
 function _getErr (errCode) {
    var errDesp = [ 
@@ -447,7 +455,7 @@ function _getErr (errCode) {
                    "Failed to send the message",
                    "No activated group information on catalog",
                    "Remote-node is disconnected",
-                   "Unable to find the catalog information",
+                   "Unable to find the matched catalog information",
                    "Failed to update catalog",
                    "Unknown request operation code",
                    "Group information cannot be found on coordinator node",
@@ -612,12 +620,20 @@ function _getErr (errCode) {
                    "LOB sequence exists",
                    "cluster do not exist",
                    "business do not exist",
-                   "compressor initialization failed",
-                   "set dictionary for compressor failed",
-                   "output buffer for compressor is too small",
-                   "compress process failed",
-                   "compress process failed",
-                   "user specified is not exist or password is invalid"
+                   "user specified is not exist or password is invalid",
+                   "Compression initialization failed",
+                   "Compression failed",
+                   "Decompression failed",
+                   "Compression abort",
+                   "Buffer for compression is too small",
+                   "Buffer for decompression is too small",
+                   "Up to the limit",
+                   "sdbDataSource not init or disabled",
+                   "sdbDataSource has no valid coord",
+                   "the record which exclusive ruleID is not exist",
+                   "Task name conflict",
+                   "The task is not existed",
+                   "Replica log is not archived"
    ]; 
    var index = -errCode ;
    if ( index < 0 || index >= errDesp.length ) 

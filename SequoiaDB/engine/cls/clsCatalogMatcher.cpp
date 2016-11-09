@@ -254,6 +254,11 @@ namespace engine
          if ( beField.type() == Object )
          {
             boValue = beField.embeddedObject() ;
+            if ( _isExistUnreconigzeOp( boValue ) )
+            {
+               goto done ;
+            }
+
             if ( isOpObj( boValue ))
             {
                BSONObjIterator i( boValue );
@@ -284,6 +289,37 @@ namespace engine
       return rc;
    error:
       goto done;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_ISEXISTUNRECONIGZEDOP, "clsCatalogMatcher::isExistUnreconigzeOp" )
+   BOOLEAN clsCatalogMatcher::_isExistUnreconigzeOp( const bson::BSONObj obj )
+   {
+      BOOLEAN result = FALSE;
+      PD_TRACE_ENTRY( SDB_CLSCATAMATCHER_ISEXISTUNRECONIGZEDOP ) ;
+      try
+      {
+         BSONObjIterator iter( obj ) ;
+         while ( iter.more() )
+         {
+            BSONElement beTmp = iter.next() ;
+            const CHAR *pFieldName = beTmp.fieldName() ;
+            if ( MTH_OPERATOR_EYECATCHER == pFieldName[0] )
+            {
+               if ( beTmp.getGtLtOp( -1 ) == -1 )
+               {
+                  result = TRUE ;
+                  break ;
+               }
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "failed to check the obj occured unexpected "
+                 "error:%s", e.what() ) ;
+      }
+      PD_TRACE_EXIT( SDB_CLSCATAMATCHER_ISEXISTUNRECONIGZEDOP ) ;
+      return result ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_ISOPOBJ, "clsCatalogMatcher::isOpObj" )
