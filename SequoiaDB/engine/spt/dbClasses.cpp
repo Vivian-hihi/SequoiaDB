@@ -3274,7 +3274,7 @@ static JSBool rg_remove_node ( JSContext *cx, uintN argc, jsval *vp )
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) , "SS/o" ,
                                &strHost , &strPort , &objConfig ) ;
-   REPORT ( ret , "RG.createNode(): wrong arguments" ) ;
+   REPORT ( ret , "RG.removeNode(): wrong arguments" ) ;
 
    if ( objConfig )
    {
