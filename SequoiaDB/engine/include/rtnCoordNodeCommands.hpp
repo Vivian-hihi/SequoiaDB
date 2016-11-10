@@ -98,6 +98,8 @@ namespace engine
       void _logErrorForNodes ( const string &commandName,
                                const string &targetName,
                                const vector<BSONObj> &dataObjs ) ;
+
+      virtual BOOLEAN _flagIsStartNodes () { return FALSE ; }
    } ;
 
    /*
@@ -174,6 +176,8 @@ namespace engine
 
       virtual const CHAR *_getCommandName () const
       { return CMD_NAME_ACTIVE_GROUP ; }
+
+      virtual BOOLEAN _flagIsStartNodes () { return TRUE ; }
    } ;
 
    /*

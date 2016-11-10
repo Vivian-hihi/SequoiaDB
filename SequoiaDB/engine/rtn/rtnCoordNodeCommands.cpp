@@ -564,7 +564,14 @@ namespace engine
 
        if ( dataObjs.size() != 0 )
        {
-          rc = SDB_CM_RUN_NODE_FAILED ;
+          if ( _flagIsStartNodes() )
+          {
+             rc = SDB_CM_RUN_NODE_FAILED ;
+          }
+          else
+          {
+             rc = SDB_CM_OP_NODE_FAILED ;
+          }
           goto error ;
        }
 
@@ -643,7 +650,14 @@ namespace engine
 
       if ( dataObjs.size() != 0 )
       {
-         rc = SDB_CM_RUN_NODE_FAILED ;
+         if ( _flagIsStartNodes() )
+         {
+            rc = SDB_CM_RUN_NODE_FAILED ;
+         }
+         else
+         {
+            rc = SDB_CM_OP_NODE_FAILED ;
+         }
          goto error ;
       }
 
