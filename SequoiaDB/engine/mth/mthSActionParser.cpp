@@ -295,11 +295,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB__MTHSIZEPARSER_PARSE ) ;
 
-      if ( !e.isNumber() || e.numberInt() != 1 )
+      if ( !mthIsNumber1( e ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_RC_CHECK( rc, PDERROR, "invalid element:e=%s",
-                      e.toString().c_str() ) ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
       }
 
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;

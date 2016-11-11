@@ -720,6 +720,12 @@ namespace engine
          }
 
          _limit = subELe.numberInt() ;
+         if ( !mthIsValidLen( _limit ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "limit is invalid:len=%d", _limit ) ;
+            goto error ;
+         }
       }
       else
       {
@@ -1342,6 +1348,13 @@ namespace engine
          }
 
          _limit = subELe.numberInt() ;
+         if ( !mthIsValidLen( _limit ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "limit is invalid:len=%d", _limit ) ;
+            goto error ;
+         }
+
       }
       else
       {

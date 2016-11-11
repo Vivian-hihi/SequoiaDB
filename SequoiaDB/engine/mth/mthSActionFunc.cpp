@@ -37,7 +37,6 @@
 #include "mthTrace.hpp"
 #include "mthSAction.hpp"
 #include "mthElemMatchIterator.hpp"
-#include "mthCommon.hpp"
 #include "utilString.hpp"
 #include "utilStr.hpp"
 #include "../util/fromjson.hpp"

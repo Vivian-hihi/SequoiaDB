@@ -94,6 +94,12 @@ namespace engine
          }
 
          limit = ele.numberInt() ;
+         if ( !mthIsValidLen( limit ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "limit is invalid:len=%d", limit ) ;
+            goto error ;
+         }
       }
       else
       {
@@ -107,7 +113,7 @@ namespace engine
                       &mthSubStrGet ) ;
       action.setName( _name.c_str() ) ;
       action.setArg( BSON( "arg1" << begin << "arg2" << limit ) ) ;
-      
+
    done:
       PD_TRACE_EXITRC( SDB__MTHSUBSTRPARSER_PARSE, rc ) ;
       return rc ;
@@ -142,10 +148,16 @@ namespace engine
          goto error ;
       }
 
+      if ( !mthIsNumber1( e ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
+      }
+
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
       action.setFunc( &mthStrLenBuild,
                       &mthStrLenGet ) ;
-      action.setName( _name.c_str() ) ; 
+      action.setName( _name.c_str() ) ;
    done:
       PD_TRACE_EXITRC( SDB__MTHSTRLENPARSER_PARSE, rc ) ;
       return rc ;
@@ -173,6 +185,12 @@ namespace engine
          PD_LOG( PDERROR, "invalid element" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      if ( !mthIsNumber1( e ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
       }
 
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
@@ -206,6 +224,12 @@ namespace engine
          PD_LOG( PDERROR, "invalid element" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      if ( !mthIsNumber1( e ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
       }
 
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
@@ -242,6 +266,12 @@ namespace engine
          goto error ;
       }
 
+      if ( !mthIsNumber1( e ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
+      }
+
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
       action.setFunc( &mthTrimBuild,
                       &mthTrimGet ) ;
@@ -276,6 +306,12 @@ namespace engine
          goto error ;
       }
 
+      if ( !mthIsNumber1( e ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
+      }
+
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
       action.setFunc( &mthLTrimBuild,
                       &mthLTrimGet ) ;
@@ -308,6 +344,12 @@ namespace engine
          PD_LOG( PDERROR, "invalid element" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      if ( !mthIsNumber1( e ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "placeholder must be 1" ) ;
       }
 
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;

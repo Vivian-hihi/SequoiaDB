@@ -117,7 +117,6 @@ namespace engine
       virtual INT32 parse( const bson::BSONElement &e,
                            _mthSAction &action ) const ;
    } ;
-
 }
 
 #endif

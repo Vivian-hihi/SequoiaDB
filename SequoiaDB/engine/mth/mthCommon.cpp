@@ -2435,5 +2435,29 @@ namespace engine
          return BSONElement() ;
       }
    }
+
+   BOOLEAN mthIsNumber1( const bson::BSONElement &ele )
+   {
+      if ( ele.isNumber() )
+      {
+         if ( ele.numberInt() == 1 )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
+   }
+
+   //substr[begin, len]/slice[begin, len]  len=-1 means unlimit len
+   BOOLEAN mthIsValidLen( INT32 length )
+   {
+      if ( length >= -1 )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
 }
 

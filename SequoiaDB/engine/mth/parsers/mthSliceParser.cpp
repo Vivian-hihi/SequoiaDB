@@ -106,12 +106,12 @@ namespace engine
             else if ( 2 == arraySize )
             {
                limit = ele.numberInt() ;
-               if ( limit < 0 )
+               if ( !mthIsValidLen( limit ) )
                {
-                  PD_LOG( PDERROR, "limit of $slice can not be negative" ) ;
                   rc = SDB_INVALIDARG ;
+                  PD_LOG( PDERROR, "limit is invalid:len=%d", limit ) ;
                   goto error ;
-               } 
+               }
             }
             else
             {

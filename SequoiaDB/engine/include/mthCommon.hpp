@@ -181,6 +181,9 @@ namespace engine
 
    typedef class _mthSliceIterator mthSliceIterator ;
 
+   BOOLEAN mthIsNumber1( const bson::BSONElement &ele ) ;
+   BOOLEAN mthIsValidLen( INT32 length ) ;
+
 }
 
 #endif //MTHCOMMON_HPP__
