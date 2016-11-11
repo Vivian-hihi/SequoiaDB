@@ -2452,7 +2452,7 @@ namespace engine
    //substr[begin, len]/slice[begin, len]  len=-1 means unlimit len
    BOOLEAN mthIsValidLen( INT32 length )
    {
-      return FALSE ;
+      return TRUE ;
    }
 }
 
