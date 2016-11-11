@@ -84,18 +84,18 @@ public class ExceptionTest {
 			Assert.assertEquals("SDB_NETWORK(-15): Network error", e.getMessage());
 		}
 		
-		// case 2: test error code
-		try {
-			cs.createCollection("tmp", new BasicBSONObject("a", 1));
-			Assert.fail();
-		} catch(BaseException e) {
-			System.out.println("case 2's result:");
-			System.out.println("error type: " + e.getErrorType());
-			System.out.println("error code: " + e.getErrorCode());
-			System.out.println("error desc: " + e.getMessage());
-			System.out.println("error stack: ");
-			e.printStackTrace();
-		}
+//		// case 2: test error code
+//		try {
+//			cs.createCollection("tmp", new BasicBSONObject("a", 1));
+//			Assert.fail();
+//		} catch(BaseException e) {
+//			System.out.println("case 2's result:");
+//			System.out.println("error type: " + e.getErrorType());
+//			System.out.println("error code: " + e.getErrorCode());
+//			System.out.println("error desc: " + e.getMessage());
+//			System.out.println("error stack: ");
+//			e.printStackTrace();
+//		}
 
 	}
 	
