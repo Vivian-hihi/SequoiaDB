@@ -67,6 +67,8 @@ _IndexPublic.closeRetryModel = function( $scope ){
 _IndexPublic.createRetryModel = function( $scope, errorInfo, okFun, title, context, okText, closeText ){
    $scope.Components.Confirm.isShow = true ;
    $scope.Components.Confirm.type = 1 ;
+   $scope.Components.Confirm.noOK = false ;
+   $scope.Components.Confirm.noClose = false ;
    $scope.Components.Confirm.title = typeof( title ) == 'string' ? title : $scope.autoLanguage( '获取数据失败' ) ;
    $scope.Components.Confirm.okText = typeof( okText ) == 'string' ? okText : $scope.autoLanguage( '重试' ) ;
    $scope.Components.Confirm.closeText = typeof( closeText ) == 'string' ? closeText : $scope.autoLanguage( '取消' ) ;
@@ -135,46 +137,46 @@ _IndexLeft.updateNav = function( $scope, $rootScope, SdbRest, callBack )
 {
    //获取业务实例列表
    var data = { 'cmd': 'query business', 'sort': JSON.stringify( { 'BusinessName': 1, 'ClusterName': 1 } ) } ;
-   SdbRest.OmOperation( data, function( instanceList ){
-      $rootScope.initNav() ;
-      var navMenuLength = $scope.Left.navMenu.length ;
-      $.each( instanceList, function( index, moduleInfo ){
-         var thisModule = { 'name': moduleInfo['BusinessName'],
-                            'type': moduleInfo['BusinessType'],
-                            'mode': moduleInfo['DeployMod'],
-                            'cluster': moduleInfo['ClusterName'] } ;
-         if( thisModule['type'] == 'spark' )
-         {
-            thisModule['href'] = 'http://' + moduleInfo['BusinessInfo']['HostName'] + ':' + moduleInfo['BusinessInfo']['WebServicePort'] ;
-         }
-         for( var i = 0; i < navMenuLength; ++i )
-         {
-            if( isArray( $scope.Left.navMenu[i]['list'] ) == true )
+   SdbRest.OmOperation( data, {
+      'success': function( instanceList ){
+         $rootScope.initNav() ;
+         var navMenuLength = $scope.Left.navMenu.length ;
+         $.each( instanceList, function( index, moduleInfo ){
+            var thisModule = { 'name': moduleInfo['BusinessName'],
+                               'type': moduleInfo['BusinessType'],
+                               'mode': moduleInfo['DeployMod'],
+                               'cluster': moduleInfo['ClusterName'] } ;
+            if( thisModule['type'] == 'spark' )
             {
-               var moduleLength = $scope.Left.navMenu[i]['list'].length ;
-               for( var k = 0; k < moduleLength; ++k )
+               thisModule['href'] = 'http://' + moduleInfo['BusinessInfo']['HostName'] + ':' + moduleInfo['BusinessInfo']['WebServicePort'] ;
+            }
+            for( var i = 0; i < navMenuLength; ++i )
+            {
+               if( isArray( $scope.Left.navMenu[i]['list'] ) == true )
                {
-                  if( $scope.Left.navMenu[i]['list'][k]['title'].toLocaleLowerCase() == moduleInfo['BusinessType'].toLocaleLowerCase() )
+                  var moduleLength = $scope.Left.navMenu[i]['list'].length ;
+                  for( var k = 0; k < moduleLength; ++k )
                   {
-                     $scope.Left.navMenu[i]['list'][k]['list'].push( thisModule ) ;
+                     if( $scope.Left.navMenu[i]['list'][k]['title'].toLocaleLowerCase() == moduleInfo['BusinessType'].toLocaleLowerCase() )
+                     {
+                        $scope.Left.navMenu[i]['list'][k]['list'].push( thisModule ) ;
+                     }
                   }
                }
             }
+         } ) ;
+         $scope.$apply() ;
+         if( typeof( callBack ) == 'function' )
+         {
+            callBack( instanceList, $scope.Left.navMenu ) ;
          }
-      } ) ;
-      $scope.$apply() ;
-      if( typeof( callBack ) == 'function' )
-      {
-         callBack( instanceList, $scope.Left.navMenu ) ;
       }
-      setTimeout( function(){
-         $rootScope.updateNav( false ) ;
-      }, 5000 ) ;
-   }, function( errorInfo ){
-      setTimeout( function(){
-         $rootScope.updateNav( false ) ;
-      }, 5000 ) ;
-   }, null, null, false ) ;
+   }, {
+      'showLoading': false,
+      'delay': 5000,
+      'loop': true,
+      'scope': false
+   } ) ;
 }
 
 //激活导航要激活的业务的索引
@@ -252,35 +254,32 @@ _IndexBottom.getSystemTime = function( $scope )
 //获取ping值
 _IndexBottom.checkPing = function( $scope, SdbRest, errorNum )
 {
-   if( typeof( errorNum ) == 'undefined') errorNum = 0 ;
-   SdbRest.getPing( function( times ){
-      if( times >= 0 )
+   var isShowErrorModel = false ;
+   setInterval( function(){
+      var status = SdbRest.getNetworkStatus() ;
+      if( status == 1 )
       {
-         if( errorNum > 0 )
+         $scope.Bottom.sysStatus = $scope.autoLanguage( '良好' ) ;
+         $scope.Bottom.statusColor = 'success' ;
+         if( isShowErrorModel )
          {
-            window.location.reload();
-         }
-         else
-         {
-            $scope.Bottom.sysStatus = $scope.autoLanguage( '良好' ) ;
-            $scope.Bottom.statusColor = 'success' ;
-            setTimeout( function(){
-               _IndexBottom.checkPing( $scope, SdbRest, 0 ) ;
-            }, 5000 ) ;
+            _IndexPublic.closeErrorModel( $scope ) ;
          }
       }
-      else
+      else if( status == 2 )
       {
-         ++errorNum ;
-          $scope.Bottom.sysStatus = $scope.autoLanguage( '网络错误' ) ;
+         $scope.Bottom.sysStatus = $scope.autoLanguage( '网络不稳定' ) ;
+         $scope.Bottom.statusColor = 'warning' ;
+      }
+      else if( status == 3 )
+      {
+         $scope.Bottom.sysStatus = $scope.autoLanguage( '网络错误' ) ;
          $scope.Bottom.statusColor = 'error' ;
+         isShowErrorModel = true ;
          _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '服务端连接断开，正在尝试重新连接...' ) ) ;
-         setTimeout( function(){
-            _IndexBottom.checkPing( $scope, SdbRest, errorNum ) ;
-         }, 5000 ) ;
       }
       $scope.$apply() ;
-   } ) ;
+   }, 500 ) ;
 }
 
 // --------------------- Index.Top ---------------------
@@ -335,7 +334,7 @@ _IndexTop.createPasswdModel = function( $scope, SdbRest ){
                return true ;
             }, $scope.autoLanguage( '修改密码失败。' ) ) ;
          }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          }, function(){
             //关闭弹窗
             $scope.Components.Modal.isShow = false ;

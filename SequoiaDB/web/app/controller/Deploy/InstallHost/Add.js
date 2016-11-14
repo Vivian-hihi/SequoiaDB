@@ -47,16 +47,17 @@
       //安装主机
       var installHost = function( installConfig ){
          var data = { 'cmd': 'add host', 'HostInfo': JSON.stringify( installConfig ) } ;
-         SdbRest.OmOperation( data, function( taskInfo ){
-            $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo[0]['TaskID'] ) ;
-            $location.path( '/Deploy/InstallHost' ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               installHost( installConfig ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( '/Deploy/InstallHost' ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  installHost( installConfig ) ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
@@ -382,92 +383,93 @@
       //获取检查主机的数据
       var checkHost = function(){
          var data = { 'cmd': 'check host', 'HostInfo': JSON.stringify( $scope.HostList ) } ;
-         SdbRest.OmOperation( data, function( hostDataList ){
-            $.each( $scope.HostList['HostInfo'], function( index, hostInfo ){
-               $.each( hostDataList, function( index2, hostDataInfo ){
-                  if( hostInfo['HostName'] == hostDataInfo['HostName'] || hostInfo['IP'] == hostDataInfo['IP'] )
-                  {
-                     hostDataInfo['HostName'] = hostInfo['HostName'] ;
-                     hostDataInfo['IP'] = hostInfo['IP'] ;
-                     if( typeof( hostDataInfo['errno'] ) == 'undefined' || hostDataInfo['errno'] == 0 )
+         SdbRest.OmOperation( data, {
+            'success': function( hostDataList ){
+               $.each( $scope.HostList['HostInfo'], function( index, hostInfo ){
+                  $.each( hostDataList, function( index2, hostDataInfo ){
+                     if( hostInfo['HostName'] == hostDataInfo['HostName'] || hostInfo['IP'] == hostDataInfo['IP'] )
                      {
-                        hostDataInfo['errno'] = 0 ;
-                        hostDataInfo['CanUse'] = false ;
-                        hostDataInfo['IsUseNum'] = 0 ;
-                        hostDataInfo['CanNotUseNum'] = 0 ;
-                        hostDataInfo['DiskWarning'] = 0 ;
-                        $.each( hostDataInfo['Disk'], function( index3 ){
-                           if( hostDataInfo['Disk'][index3]['CanUse'] == true && hostDataInfo['Disk'][index3]['IsLocal'] == true )
+                        hostDataInfo['HostName'] = hostInfo['HostName'] ;
+                        hostDataInfo['IP'] = hostInfo['IP'] ;
+                        if( typeof( hostDataInfo['errno'] ) == 'undefined' || hostDataInfo['errno'] == 0 )
+                        {
+                           hostDataInfo['errno'] = 0 ;
+                           hostDataInfo['CanUse'] = false ;
+                           hostDataInfo['IsUseNum'] = 0 ;
+                           hostDataInfo['CanNotUseNum'] = 0 ;
+                           hostDataInfo['DiskWarning'] = 0 ;
+                           $.each( hostDataInfo['Disk'], function( index3 ){
+                              if( hostDataInfo['Disk'][index3]['CanUse'] == true && hostDataInfo['Disk'][index3]['IsLocal'] == true )
+                              {
+                                 hostDataInfo['Disk'][index3]['IsUse'] = true ;
+                                 hostDataInfo['CanUse'] = true ;
+                                 ++hostDataInfo['IsUseNum'] ;
+                              }
+                              else
+                              {
+                                 ++hostDataInfo['CanNotUseNum'] ;
+                              }
+                           } ) ;
+                           var isFind = true ;
+                           while( isFind )
                            {
-                              hostDataInfo['Disk'][index3]['IsUse'] = true ;
-                              hostDataInfo['CanUse'] = true ;
-                              ++hostDataInfo['IsUseNum'] ;
+                              isFind = false ;
+                              $.each( hostDataInfo['Port'], function( index3 ){
+                                 if( hostDataInfo['Port'][index3]['Port'].length == 0 )
+                                 {
+                                    hostDataInfo['Port'].splice( index3, 1 ) ;
+                                    isFind = true ;
+                                    return false ;
+                                 }
+                              } ) ;
+                           }
+                           isFind = true ;
+                           while( isFind )
+                           {
+                              isFind = false ;
+                              $.each( hostDataInfo['Service'], function( index3 ){
+                                 if( hostDataInfo['Service'][index3]['Name'].length == 0 )
+                                 {
+                                    hostDataInfo['Service'].splice( index3, 1 ) ;
+                                    isFind = true ;
+                                    return false ;
+                                 }
+                              } ) ;
+                           }
+                           hostDataInfo['DiskWarning'] = sprintf( $scope.autoLanguage( '有?个磁盘剩余容量不足。' ), hostDataInfo['CanNotUseNum'] ) ;
+                           hostDataInfo['IsUse'] = hostDataInfo['CanUse'] ;
+                           if( hostDataInfo['OMA']['Path'].length > 0 )
+                           {
+                              hostDataInfo['InstallPath'] = hostDataInfo['OMA']['Path'] ;
+                              hostDataInfo['IsUse'] = false ;
                            }
                            else
                            {
-                              ++hostDataInfo['CanNotUseNum'] ;
+                              hostDataInfo['InstallPath'] = installPath ;
                            }
-                        } ) ;
-                        var isFind = true ;
-                        while( isFind )
-                        {
-                           isFind = false ;
-                           $.each( hostDataInfo['Port'], function( index3 ){
-                              if( hostDataInfo['Port'][index3]['Port'].length == 0 )
-                              {
-                                 hostDataInfo['Port'].splice( index3, 1 ) ;
-                                 isFind = true ;
-                                 return false ;
-                              }
-                           } ) ;
-                        }
-                        isFind = true ;
-                        while( isFind )
-                        {
-                           isFind = false ;
-                           $.each( hostDataInfo['Service'], function( index3 ){
-                              if( hostDataInfo['Service'][index3]['Name'].length == 0 )
-                              {
-                                 hostDataInfo['Service'].splice( index3, 1 ) ;
-                                 isFind = true ;
-                                 return false ;
-                              }
-                           } ) ;
-                        }
-                        hostDataInfo['DiskWarning'] = sprintf( $scope.autoLanguage( '有?个磁盘剩余容量不足。' ), hostDataInfo['CanNotUseNum'] ) ;
-                        hostDataInfo['IsUse'] = hostDataInfo['CanUse'] ;
-                        if( hostDataInfo['OMA']['Path'].length > 0 )
-                        {
-                           hostDataInfo['InstallPath'] = hostDataInfo['OMA']['Path'] ;
-                           hostDataInfo['IsUse'] = false ;
+                           if( hostDataInfo['IsUse'] == true )
+                           {
+                              ++$scope.CheckedHostNum ;
+                           }
                         }
                         else
                         {
-                           hostDataInfo['InstallPath'] = installPath ;
+                           hostDataInfo['CanUse'] = false ;
+                           hostDataInfo['IsUse'] = false ;
                         }
-                        if( hostDataInfo['IsUse'] == true )
-                        {
-                           ++$scope.CheckedHostNum ;
-                        }
+                        $scope.HostDataList.push( hostDataInfo ) ;
+                        return false ;
                      }
-                     else
-                     {
-                        hostDataInfo['CanUse'] = false ;
-                        hostDataInfo['IsUse'] = false ;
-                     }
-                     $scope.HostDataList.push( hostDataInfo ) ;
-                     return false ;
-                  }
+                  } ) ;
                } ) ;
-            } ) ;
-            $scope.SwitchHost( $scope.CurrentHost ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               checkHost() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               $scope.SwitchHost( $scope.CurrentHost ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  checkHost() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 

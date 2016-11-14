@@ -73,7 +73,7 @@
                return true ;
             }, $scope.autoLanguage( '获取索引信息失败' ) ) ;
          }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
 
@@ -362,7 +362,7 @@
          }, function(){
             $scope.records = [] ;
             $scope.fieldList = [] ;
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          }, function(){
             $scope.GridData1 = { 'title': [], 'body': [], 'tool': {}, 'options': { 'grid': {} } } ;
             $scope.GridData2 = { 'title': [], 'body': [], 'tool': {}, 'options': { 'grid': {} } } ;
@@ -488,7 +488,7 @@
                $scope.execResult = sprintf( $scope.autoLanguage( '? ? 插入记录失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
                $scope.execRc = false ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             }, function(){
                //关闭弹窗
                $scope.Components.Modal.isShow = false ;
@@ -527,7 +527,7 @@
                $scope.execResult = sprintf( $scope.autoLanguage( '? ? 更新失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
                $scope.execRc = false ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             }, function(){
                //关闭弹窗
                $scope.Components.Modal.isShow = false ;
@@ -764,7 +764,7 @@
                      $scope.execResult = sprintf( $scope.autoLanguage( '? ? 更新失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
                      $scope.execRc = false ;
                   }, function(){
-                     _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                     //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                   }, function(){
                      //关闭弹窗
                      $scope.Components.Modal.isShow = false ;
@@ -796,7 +796,7 @@
                   $scope.execResult = sprintf( $scope.autoLanguage( '? ? 更新失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
                   $scope.execRc = false ;
                }, function(){
-                  _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                  //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                }, function(){
                   //关闭弹窗
                   $scope.Components.Modal.isShow = false ;
@@ -877,7 +877,7 @@
                         $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
                         $scope.execRc = false ;
                      }, function(){
-                        _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                        //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                      }, function(){
                         //关闭弹窗
                         $scope.Components.Modal.isShow = false ;
@@ -916,7 +916,7 @@
                      $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
                      $scope.execRc = false ;
                   }, function(){
-                     _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                     //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                   }, function(){
                      //关闭弹窗
                      $scope.Components.Modal.isShow = false ;
@@ -960,7 +960,7 @@
                $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
                $scope.execRc = false ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             }, function(){
                //关闭弹窗
                $scope.Components.Modal.isShow = false ;

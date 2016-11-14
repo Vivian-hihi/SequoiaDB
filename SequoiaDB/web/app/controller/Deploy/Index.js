@@ -100,132 +100,138 @@
          return flag ;
       }
 
-      var isFirstQueryHostStatus = true ;
       //查询主机状态
       var queryHostStatus = function(){
-         var isFirst = false ;
-         var queryHostList = { 'HostInfo': [] } ;
-         if( $scope.HostList.length == 0 )
-         {
-            SdbFunction.Timeout( queryHostStatus, 5000 ) ;
-            return ;
-         }
-         $.each( $scope.HostList, function( index, hostInfo ){
-            if( isFirstQueryHostStatus || hostInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
-            {
-               queryHostList['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ;
-            }
-         } ) ;
-         isFirstQueryHostStatus = false ;
-         if( queryHostList['HostInfo'].length == 0 )
-         {
-            SdbFunction.Timeout( queryHostStatus, 5000 ) ;
-            return ;
-         }
-         var data = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( queryHostList ) } ;
-         SdbRest.OmOperation( data, function( hostStatusList ){
-            $.each( hostStatusList[0]['HostInfo'], function( index, statusInfo ){
-               var index2 = hostModuleTableIsExist( statusInfo['HostName'] ) ;
-               if( index2 >= 0 )
+         var isFirstQueryHostStatus = true ;
+         var rc = true ;
+         SdbRest.OmOperation( null, {
+            'init': function(){
+               var queryHostList = { 'HostInfo': [] } ;
+               if( $scope.HostList.length == 0 )
                {
-                  if( statusInfo['errno'] == 0 || typeof( statusInfo['errno'] ) == 'undefined' )
+                  rc = false ;
+                  return ;
+               }
+               $.each( $scope.HostList, function( index, hostInfo ){
+                  if( isFirstQueryHostStatus || hostInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
                   {
-                     if( typeof( host_module_table[index2]['CPU'] ) == 'object' )
+                     queryHostList['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ;
+                  }
+               } ) ;
+               isFirstQueryHostStatus = false ;
+               if( queryHostList['HostInfo'].length == 0 )
+               {
+                  rc = false ;
+                  return ;
+               }
+               var data = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( queryHostList ) } ;
+               return data ;
+            },
+            'before': function(){
+               return rc ;
+            },
+            'success': function( hostStatusList ){
+               $.each( hostStatusList[0]['HostInfo'], function( index, statusInfo ){
+                  var index2 = hostModuleTableIsExist( statusInfo['HostName'] ) ;
+                  if( index2 >= 0 )
+                  {
+                     if( statusInfo['errno'] == 0 || typeof( statusInfo['errno'] ) == 'undefined' )
                      {
-                        var resource = host_module_table[index2] ;
-                        var old_idle1   = resource['CPU']['Idle']['Megabit'] ;
-                        var old_idle2   = resource['CPU']['Idle']['Unit'] ;
-                        var old_cpuSum1 = resource['CPU']['Idle']['Megabit'] +
-                                          resource['CPU']['Other']['Megabit'] +
-                                          resource['CPU']['Sys']['Megabit'] +
-                                          resource['CPU']['User']['Megabit'] ;
-                        var old_cpuSum2 = resource['CPU']['Idle']['Unit'] +
-                                          resource['CPU']['Other']['Unit'] +
-                                          resource['CPU']['Sys']['Unit'] +
-                                          resource['CPU']['User']['Unit'] ;
-                        var idle1   = statusInfo['CPU']['Idle']['Megabit'] ;
-                        var idle2   = statusInfo['CPU']['Idle']['Unit'] ;
-                        var cpuSum1 = statusInfo['CPU']['Idle']['Megabit'] +
-                                      statusInfo['CPU']['Other']['Megabit'] +
-                                      statusInfo['CPU']['Sys']['Megabit'] +
-                                      statusInfo['CPU']['User']['Megabit'] ;
-                        var cpuSum2 = statusInfo['CPU']['Idle']['Unit'] +
-                                      statusInfo['CPU']['Other']['Unit'] +
-                                      statusInfo['CPU']['Sys']['Unit'] +
-                                      statusInfo['CPU']['User']['Unit'] ;
-                        host_module_table[index2]['Info']['CPU'] = ( ( 1 - ( ( idle1 - old_idle1 ) * 1024 + ( idle2 - old_idle2 ) / 1024 ) / ( ( cpuSum1 - old_cpuSum1 ) * 1024 + ( cpuSum2 - old_cpuSum2 ) / 1024 ) ) * 100 ) ;
+                        if( typeof( host_module_table[index2]['CPU'] ) == 'object' )
+                        {
+                           var resource = host_module_table[index2] ;
+                           var old_idle1   = resource['CPU']['Idle']['Megabit'] ;
+                           var old_idle2   = resource['CPU']['Idle']['Unit'] ;
+                           var old_cpuSum1 = resource['CPU']['Idle']['Megabit'] +
+                                             resource['CPU']['Other']['Megabit'] +
+                                             resource['CPU']['Sys']['Megabit'] +
+                                             resource['CPU']['User']['Megabit'] ;
+                           var old_cpuSum2 = resource['CPU']['Idle']['Unit'] +
+                                             resource['CPU']['Other']['Unit'] +
+                                             resource['CPU']['Sys']['Unit'] +
+                                             resource['CPU']['User']['Unit'] ;
+                           var idle1   = statusInfo['CPU']['Idle']['Megabit'] ;
+                           var idle2   = statusInfo['CPU']['Idle']['Unit'] ;
+                           var cpuSum1 = statusInfo['CPU']['Idle']['Megabit'] +
+                                         statusInfo['CPU']['Other']['Megabit'] +
+                                         statusInfo['CPU']['Sys']['Megabit'] +
+                                         statusInfo['CPU']['User']['Megabit'] ;
+                           var cpuSum2 = statusInfo['CPU']['Idle']['Unit'] +
+                                         statusInfo['CPU']['Other']['Unit'] +
+                                         statusInfo['CPU']['Sys']['Unit'] +
+                                         statusInfo['CPU']['User']['Unit'] ;
+                           host_module_table[index2]['Info']['CPU'] = ( ( 1 - ( ( idle1 - old_idle1 ) * 1024 + ( idle2 - old_idle2 ) / 1024 ) / ( ( cpuSum1 - old_cpuSum1 ) * 1024 + ( cpuSum2 - old_cpuSum2 ) / 1024 ) ) * 100 ) ;
+                        }
+                        else
+                        {
+                           host_module_table[index2]['Info']['CPU'] = 0 ;
+                        }
+                        host_module_table[index2]['CPU'] = statusInfo['CPU'] ;
+                        var diskFree = 0 ;
+                        var diskSize = 0 ;
+                        $.each( statusInfo['Disk'], function( index2, diskInfo ){
+                           diskFree += diskInfo['Free'] ;
+                           diskSize += diskInfo['Size'] ;
+                        } ) ;
+                        if( diskSize == 0 )
+                        {
+                           host_module_table[index2]['Info']['Disk'] = 0 ;
+                        }
+                        else
+                        {
+                           host_module_table[index2]['Info']['Disk'] = ( 1 - diskFree / diskSize ) * 100 ;
+                        }
+                        host_module_table[index2]['Info']['Memory'] = statusInfo['Memory']['Used'] / statusInfo['Memory']['Size'] * 100 ;
+                        host_module_table[index2]['Error']['Flag'] = 0 ;
+                        var index3 = hostListIsExist( statusInfo['HostName'] ) ;
+                        if( index3 >= 0 )
+                        {
+                           $scope.HostList[index3]['Error']['Flag'] = 0 ;
+                        }
                      }
                      else
                      {
-                        isFirst = true ;
                         host_module_table[index2]['Info']['CPU'] = 0 ;
-                     }
-                     host_module_table[index2]['CPU'] = statusInfo['CPU'] ;
-                     var diskFree = 0 ;
-                     var diskSize = 0 ;
-                     $.each( statusInfo['Disk'], function( index2, diskInfo ){
-                        diskFree += diskInfo['Free'] ;
-                        diskSize += diskInfo['Size'] ;
-                     } ) ;
-                     if( diskSize == 0 )
-                     {
                         host_module_table[index2]['Info']['Disk'] = 0 ;
+                        host_module_table[index2]['Info']['Memory'] = 0 ;
+                        host_module_table[index2]['Error']['Flag'] = statusInfo['errno'] ;
+                        host_module_table[index2]['Error']['Message'] = statusInfo['detail'] ;
+                        var index3 = hostListIsExist( statusInfo['HostName'] ) ;
+                        if( index3 >= 0 )
+                        {
+                           $scope.HostList[index3]['Error']['Flag'] = statusInfo['errno'] ;
+                           $scope.HostList[index3]['Error']['Message'] = statusInfo['detail'] ;
+                        }
+                     }
+                  }
+                  else
+                  {
+                     if( statusInfo['errno'] == 0 || typeof( statusInfo['errno'] ) == 'undefined' )
+                     {
+                        var index3 = hostListIsExist( statusInfo['HostName'] ) ;
+                        if( index3 >= 0 )
+                        {
+                           $scope.HostList[index3]['Error']['Flag'] = 0 ;
+                        }
                      }
                      else
                      {
-                        host_module_table[index2]['Info']['Disk'] = ( 1 - diskFree / diskSize ) * 100 ;
-                     }
-                     host_module_table[index2]['Info']['Memory'] = statusInfo['Memory']['Used'] / statusInfo['Memory']['Size'] * 100 ;
-                     host_module_table[index2]['Error']['Flag'] = 0 ;
-                     var index3 = hostListIsExist( statusInfo['HostName'] ) ;
-                     if( index3 >= 0 )
-                     {
-                        $scope.HostList[index3]['Error']['Flag'] = 0 ;
+                        var index3 = hostListIsExist( statusInfo['HostName'] ) ;
+                        if( index3 >= 0 )
+                        {
+                           $scope.HostList[index3]['Error']['Flag'] = statusInfo['errno'] ;
+                           $scope.HostList[index3]['Error']['Message'] = statusInfo['detail'] ;
+                        }
                      }
                   }
-                  else
-                  {
-                     host_module_table[index2]['Info']['CPU'] = 0 ;
-                     host_module_table[index2]['Info']['Disk'] = 0 ;
-                     host_module_table[index2]['Info']['Memory'] = 0 ;
-                     host_module_table[index2]['Error']['Flag'] = statusInfo['errno'] ;
-                     host_module_table[index2]['Error']['Message'] = statusInfo['detail'] ;
-                     var index3 = hostListIsExist( statusInfo['HostName'] ) ;
-                     if( index3 >= 0 )
-                     {
-                        $scope.HostList[index3]['Error']['Flag'] = statusInfo['errno'] ;
-                        $scope.HostList[index3]['Error']['Message'] = statusInfo['detail'] ;
-                     }
-                  }
-               }
-               else
-               {
-                  if( statusInfo['errno'] == 0 || typeof( statusInfo['errno'] ) == 'undefined' )
-                  {
-                     var index3 = hostListIsExist( statusInfo['HostName'] ) ;
-                     if( index3 >= 0 )
-                     {
-                        $scope.HostList[index3]['Error']['Flag'] = 0 ;
-                     }
-                  }
-                  else
-                  {
-                     var index3 = hostListIsExist( statusInfo['HostName'] ) ;
-                     if( index3 >= 0 )
-                     {
-                        $scope.HostList[index3]['Error']['Flag'] = statusInfo['errno'] ;
-                        $scope.HostList[index3]['Error']['Message'] = statusInfo['detail'] ;
-                     }
-                  }
-               }
-            } ) ;
-            countModule_Host() ;
-            SdbFunction.Timeout( queryHostStatus, isFirst ? 2000 : 5000 ) ;
-         }, function( errorInfo ){
-            SdbFunction.Timeout( queryHostStatus, isFirst ? 2000 : 5000 ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, false ) ;
+               } ) ;
+               countModule_Host() ;
+            }
+         }, {
+            'showLoading': false,
+            'delay': 5000,
+            'loop': true
+         } ) ;
       }
 
       //获取sequoiadb的节点信息
@@ -237,16 +243,19 @@
          $scope.moduleList[moduleIndex]['BusinessInfo'] = {} ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var data = { 'cmd': 'list nodes', 'BusinessName': moduleName } ;
-         SdbRest.OmOperation( data, function( nodeList ){
-           $scope.moduleList[moduleIndex]['BusinessInfo']['NodeList'] = nodeList ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getNodesList( moduleIndex ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, false ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( nodeList ){
+               $scope.moduleList[moduleIndex]['BusinessInfo']['NodeList'] = nodeList ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getNodesList( moduleIndex ) ;
+                  return true ;
+               } ) ;
+            }
+         }, {
+            'showLoading': false
+         } ) ;
       } ;
 
       //获取sequoiadb业务信息
@@ -267,66 +276,70 @@
          {
             sql = 'SELECT t1.Name, t1.Details.TotalIndexPages, t1.Details.PageSize, t1.Details.TotalDataPages, t1.Details.LobPageSize, t1.Details.TotalLobPages FROM (SELECT * FROM $SNAPSHOT_CL WHERE NodeSelect="master" split BY Details) AS t1' ;
          }
-         SdbRest.Exec2( clusterName, moduleName, sql, function( clList ){
-            var index = 0 ;
-            var data = 0 ;
-            var lob = 0 ;
-            var indexPercent = 0 ;
-            var dataPercent = 0 ;
-            var lobPercent = 0 ;
-            $.each( clList, function( clIndex, clInfo ){
-               index += clInfo['PageSize'] * clInfo['TotalIndexPages'] ;
-               data += clInfo['PageSize'] * clInfo['TotalDataPages'] ;
-               lob += clInfo['LobPageSize'] * clInfo['TotalLobPages'] ;
-            } ) ;
-            var sum = index + data + lob ;
-            var indexPercent = fixedNumber( index / sum * 100, 2 ) ;
-            var dataPercent  = fixedNumber( data / sum * 100, 2 ) ;
-            var lobPercent   = 100 - indexPercent - dataPercent ;
-            if( isNaN( indexPercent ) || index == 0 )
-            {
-               indexPercent = 0 ;
-            }
-            if( isNaN( dataPercent ) || data == 0 )
-            {
-               dataPercent = 0 ;
-            }
-            if( isNaN( lobPercent ) || lob == 0 )
-            {
-               lobPercent = 0 ;
-            }
-            $scope.moduleList[ moduleIndex ]['Chart']['Module']['value'] = [
-               [ 0, indexPercent, true, false ],
-               [ 1, dataPercent, true, false ],
-               [ 2, lobPercent, true, false ]
-            ] ;
-
-            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module cl' )
-            {
-               $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
-            }
-
-            SdbFunction.Timeout( function(){
-               getCollectionInfo( moduleIndex ) ;
-            }, 5000 ) ;
-         }, function( errorInfo ){
-            if( moduleMode == 'standalone' )
-            {
-               if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module cl' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
+         SdbRest.Exec2( clusterName, moduleName, sql, {
+            'before': function(){
+               if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
                {
-                  $scope.moduleList[moduleIndex]['Error']['Flag'] = errorInfo['errno'] ;
-                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module cl' ;
-                  $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
-                                                                                errorInfo['description'],
-                                                                                errorInfo['errno'] ) ;
+                  return false ;
+               }
+            },
+            'success': function( clList ){
+               var index = 0 ;
+               var data = 0 ;
+               var lob = 0 ;
+               var indexPercent = 0 ;
+               var dataPercent = 0 ;
+               var lobPercent = 0 ;
+               $.each( clList, function( clIndex, clInfo ){
+                  index += clInfo['PageSize'] * clInfo['TotalIndexPages'] ;
+                  data += clInfo['PageSize'] * clInfo['TotalDataPages'] ;
+                  lob += clInfo['LobPageSize'] * clInfo['TotalLobPages'] ;
+               } ) ;
+               var sum = index + data + lob ;
+               var indexPercent = fixedNumber( index / sum * 100, 2 ) ;
+               var dataPercent  = fixedNumber( data / sum * 100, 2 ) ;
+               var lobPercent   = 100 - indexPercent - dataPercent ;
+               if( isNaN( indexPercent ) || index == 0 )
+               {
+                  indexPercent = 0 ;
+               }
+               if( isNaN( dataPercent ) || data == 0 )
+               {
+                  dataPercent = 0 ;
+               }
+               if( isNaN( lobPercent ) || lob == 0 )
+               {
+                  lobPercent = 0 ;
+               }
+               $scope.moduleList[ moduleIndex ]['Chart']['Module']['value'] = [
+                  [ 0, indexPercent, true, false ],
+                  [ 1, dataPercent, true, false ],
+                  [ 2, lobPercent, true, false ]
+               ] ;
+
+               if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module cl' )
+               {
+                  $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
+               }
+            },
+            'failed': function( errorInfo ){
+               if( moduleMode == 'standalone' )
+               {
+                  if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module cl' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
+                  {
+                     $scope.moduleList[moduleIndex]['Error']['Flag'] = errorInfo['errno'] ;
+                     $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module cl' ;
+                     $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
+                                                                                   errorInfo['description'],
+                                                                                   errorInfo['errno'] ) ;
+                  }
                }
             }
-            SdbFunction.Timeout( function(){
-               getCollectionInfo( moduleIndex ) ;
-            }, 5000 ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, false ) ;
+         }, {
+            'showLoading':false,
+            'delay': 5000,
+            'loop': true
+         } ) ;
       }
 
       //获取sequoiadb的错误节点信息
@@ -343,38 +356,34 @@
          var clusterName = $scope.moduleList[moduleIndex]['ClusterName'] ;
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var data = { 'cmd': 'snapshot system', 'selector': JSON.stringify( { 'ErrNodes': 1 } ) } ;
-         SdbRest.DataOperation2( clusterName, moduleName, data, function( errNodes ){
-            errNodes = errNodes[0]['ErrNodes'] ;
-            if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module node' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
-            {
-               if( errNodes.length > 0 )
+         SdbRest.DataOperation2( clusterName, moduleName, data, {
+            'success': function( errNodes ){
+               errNodes = errNodes[0]['ErrNodes'] ;
+               if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module node' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
                {
-                  $scope.moduleList[moduleIndex]['Error']['Flag'] = errNodes[0]['Flag'] ;
-                  $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module node' ;
-                  $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
-                                                                                errNodes[0]['NodeName'],
-                                                                                errNodes[0]['Flag'] ) ;
-               }
-               else if( errNodes.length == 0 )
-               {
-                  $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
+                  if( errNodes.length > 0 )
+                  {
+                     $scope.moduleList[moduleIndex]['Error']['Flag'] = errNodes[0]['Flag'] ;
+                     $scope.moduleList[moduleIndex]['Error']['Type'] = 'Module node' ;
+                     $scope.moduleList[moduleIndex]['Error']['Message'] = sprintf( $scope.autoLanguage( '节点错误: ?，错误码 ?。' ),
+                                                                                   errNodes[0]['NodeName'],
+                                                                                   errNodes[0]['Flag'] ) ;
+                  }
+                  else if( errNodes.length == 0 )
+                  {
+                     $scope.moduleList[moduleIndex]['Error']['Flag'] = 0 ;
+                  }
                }
             }
-            SdbFunction.Timeout( function(){
-               getErrNodes( moduleIndex ) ;
-            }, 5000 ) ;
-         }, function( errorInfo ){
-            SdbFunction.Timeout( function(){
-               getErrNodes( moduleIndex ) ;
-            }, 5000 ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, null, false ) ;
+         }, {
+            'showLoading': false,
+            'delay': 5000,
+            'loop': true
+         } ) ;
       }
 
       //查询业务
       var queryModule = function(){
-         var data = { 'cmd': 'query business' } ;
          var clusterList = [] ;
          var clusterIsExist = function( clusterName ){
             var flag = 0 ;
@@ -394,100 +403,104 @@
             }
             return flag ;
          }
-         SdbRest.OmOperation( data, function( moduleList ){
-            $scope.moduleList = moduleList ;
-            host_module_table = [] ;
-            autoQueryModuleIndex = [] ;
-            $.each( $scope.moduleList, function( index, moduleInfo ){
+         var data = { 'cmd': 'query business' } ;
+         SdbRest.OmOperation( data, {
+            'success': function( moduleList ){
+               $scope.moduleList = moduleList ;
+               host_module_table = [] ;
+               autoQueryModuleIndex = [] ;
+               $.each( $scope.moduleList, function( index, moduleInfo ){
 
-               var colorId = clusterIsExist( moduleInfo['ClusterName'] ) ;
+                  var colorId = clusterIsExist( moduleInfo['ClusterName'] ) ;
 
-               $scope.moduleList[index]['Color'] = colorId ;
+                  $scope.moduleList[index]['Color'] = colorId ;
 
-               $scope.moduleList[index]['Error'] = {} ;
-               $scope.moduleList[index]['Error']['Flag'] = 0 ;
-               $scope.moduleList[index]['Error']['Type'] = '' ;
-               $scope.moduleList[index]['Error']['Message'] = '' ;
+                  $scope.moduleList[index]['Error'] = {} ;
+                  $scope.moduleList[index]['Error']['Flag'] = 0 ;
+                  $scope.moduleList[index]['Error']['Type'] = '' ;
+                  $scope.moduleList[index]['Error']['Message'] = '' ;
 
-               $scope.moduleList[index]['Chart'] = {} ;
-               $scope.moduleList[index]['Chart']['Module'] = {} ;
-               $scope.moduleList[index]['Chart']['Module']['options'] = $.extend( true, {}, window.SdbSacManagerConf.StorageScaleEchart ) ;
-               $scope.moduleList[index]['Chart']['Module']['options']['title']['text'] = $scope.autoLanguage( '元数据比例' ) ;
+                  $scope.moduleList[index]['Chart'] = {} ;
+                  $scope.moduleList[index]['Chart']['Module'] = {} ;
+                  $scope.moduleList[index]['Chart']['Module']['options'] = $.extend( true, {}, window.SdbSacManagerConf.StorageScaleEchart ) ;
+                  $scope.moduleList[index]['Chart']['Module']['options']['title']['text'] = $scope.autoLanguage( '元数据比例' ) ;
 
-               $scope.moduleList[index]['Chart']['Host'] = {} ;
-               $scope.moduleList[index]['Chart']['Host']['CPU'] = { 'percent': 0 } ;
-               $scope.moduleList[index]['Chart']['Memory'] = { 'percent': 0 } ;
-               $scope.moduleList[index]['Chart']['Disk'] = { 'percent': 0 } ;
-               if( isArray( moduleInfo['Location'] ) )
-               {
-                  $.each( moduleInfo['Location'], function( index2, hostInfo ){
-                     if( hostModuleTableIsExist( hostInfo['HostName'] ) == -1 )
-                     {
-                        host_module_table.push( { 'HostName': hostInfo['HostName'], 'Info': {}, 'Error': {} } ) ;
-                     }
-                  } ) ;
-               }
-               if( moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
-               {
-                  autoQueryModuleIndex.push( index ) ;
-                  getNodesList( index ) ;
-                  getCollectionInfo( index ) ;
-                  getErrNodes( index ) ;
-               }
-            } ) ;
-            $scope.SwitchCluster( $scope.currentCluster ) ;
-            queryHostStatus() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               queryModule() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                  $scope.moduleList[index]['Chart']['Host'] = {} ;
+                  $scope.moduleList[index]['Chart']['Host']['CPU'] = { 'percent': 0 } ;
+                  $scope.moduleList[index]['Chart']['Memory'] = { 'percent': 0 } ;
+                  $scope.moduleList[index]['Chart']['Disk'] = { 'percent': 0 } ;
+                  if( isArray( moduleInfo['Location'] ) )
+                  {
+                     $.each( moduleInfo['Location'], function( index2, hostInfo ){
+                        if( hostModuleTableIsExist( hostInfo['HostName'] ) == -1 )
+                        {
+                           host_module_table.push( { 'HostName': hostInfo['HostName'], 'Info': {}, 'Error': {} } ) ;
+                        }
+                     } ) ;
+                  }
+                  if( moduleInfo['BusinessType'] == 'sequoiadb' && moduleInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
+                  {
+                     autoQueryModuleIndex.push( index ) ;
+                     getNodesList( index ) ;
+                     getCollectionInfo( index ) ;
+                     getErrNodes( index ) ;
+                  }
+               } ) ;
+               $scope.SwitchCluster( $scope.currentCluster ) ;
+               queryHostStatus() ;
+            },
+            'failed': function( errorInfo, retryFun ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  retryFun() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
       //查询主机
       var queryHost = function(){
          var data = { 'cmd': 'query host' } ;
-         SdbRest.OmOperation( data, function( hostList ){
-            $scope.HostList = hostList ;
-            $.each( $scope.HostList, function( index ){
-               $scope.HostList[index]['Error'] = {} ;
-               $scope.HostList[index]['Error']['Flag'] = 0 ;
-            } ) ;
-            $scope.SwitchCluster( $scope.currentCluster ) ;
-            if( defaultShow == 'host' )
-            {
-               $scope.SwitchPage( defaultShow ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( hostList ){
+               $scope.HostList = hostList ;
+               $.each( $scope.HostList, function( index ){
+                  $scope.HostList[index]['Error'] = {} ;
+                  $scope.HostList[index]['Error']['Flag'] = 0 ;
+               } ) ;
+               $scope.SwitchCluster( $scope.currentCluster ) ;
+               if( defaultShow == 'host' )
+               {
+                  $scope.SwitchPage( defaultShow ) ;
+               }
+            },
+            'failed': function( errorInfo, retryFun ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  retryFun() ;
+                  return true ;
+               } ) ;
             }
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               queryHost() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
 
       //查询集群
       var queryCluster = function(){
          var data = { 'cmd': 'query cluster' } ;
-         SdbRest.OmOperation( data, function( clusterList ){
-            $scope.clusterList = clusterList ;
-            if( $scope.clusterList.length > 0 )
-            {
-               queryHost() ;
-               queryModule() ;
+         SdbRest.OmOperation( data, {
+            'success': function( clusterList ){
+               $scope.clusterList = clusterList ;
+               if( $scope.clusterList.length > 0 )
+               {
+                  queryHost() ;
+                  queryModule() ;
+               }
+            },
+            'failed': function( errorInfo, retryFun ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  retryFun() ;
+                  return true ;
+               } ) ;
             }
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               queryCluster() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
 
@@ -585,15 +598,16 @@
       //获取业务类型列表
       var GetModuleType = function(){
          var data = { 'cmd': 'list business type' } ;
-         SdbRest.OmOperation( data, function( moduleType ){
-            $scope.moduleType = moduleType ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               GetModuleType() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( moduleType ){
+               $scope.moduleType = moduleType ;
+            },
+            'failed': function( errorInfo, retryFun ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  retryFun() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
@@ -643,18 +657,19 @@
             if( hostList.length > 0 )
             {
                var data = { 'cmd': 'remove host', 'HostInfo': JSON.stringify( { 'HostInfo': hostList } ) } ;
-               SdbRest.OmOperation( data, function( taskInfo ){
-                  $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
-                  $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
-                  $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo[0]['TaskID'] ) ;
-                  $location.path( '/Deploy/InstallHost' ) ;
-               }, function( errorInfo ){
-                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                     $scope.RemoveHost() ;
-                     return true ;
-                  } ) ;
-               }, function(){
-                  _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               SdbRest.OmOperation( data, {
+                  'success': function( taskInfo ){
+                     $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
+                     $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+                     $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo[0]['TaskID'] ) ;
+                     $location.path( '/Deploy/InstallHost' ) ;
+                  },
+                  'failed': function( errorInfo ){
+                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                        $scope.RemoveHost() ;
+                        return true ;
+                     } ) ;
+                  }
                } ) ;
             }
             else
@@ -822,15 +837,16 @@
       //发现业务
       var discoverModule = function( configure ){
          var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) } ;
-         SdbRest.OmOperation( data, function(){
-            queryCluster() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               discoverModule( configure ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               queryCluster() ;
+            }, 
+            'failed': function( errorInfo, retryFun ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  retryFun() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
@@ -1089,32 +1105,34 @@
          if( typeof( $scope.moduleList[index]['AddtionType'] ) == 'undefined' || $scope.moduleList[index]['AddtionType'] != 1 )
          {
             var data = { 'cmd': 'remove business', 'BusinessName': $scope.moduleList[index]['BusinessName'] } ;
-            SdbRest.OmOperation( data, function( taskInfo ){
-               $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
-               $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
-               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( '/Deploy/InstallModule' ) ;
-            }, function( errorInfo ){
-               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  uninstallModule( moduleName ) ;
-                  return true ;
-               } ) ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            SdbRest.OmOperation( data, {
+               'success': function( taskInfo ){
+                  $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
+                  $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
+                  $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+                  $location.path( '/Deploy/InstallModule' ) ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     uninstallModule( moduleName ) ;
+                     return true ;
+                  } ) ;
+               }
             } ) ;
          }
          else
          {
             var data = { 'cmd': 'undiscover business', 'ClusterName': $scope.moduleList[index]['ClusterName'], 'BusinessName': $scope.moduleList[index]['BusinessName'] } ;
-            SdbRest.OmOperation( data, function(){
-               queryCluster() ;
-            }, function( errorInfo ){
-               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  uninstallModule( moduleName ) ;
-                  return true ;
-               } ) ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            SdbRest.OmOperation( data, {
+               'success': function(){
+                  queryCluster() ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     uninstallModule( moduleName ) ;
+                     return true ;
+                  } ) ;
+               }
             } ) ;
          }
       }
@@ -1172,15 +1190,16 @@
       //创建集群
       var createCluster = function( clusterInfo, success ){
          var data = { 'cmd': 'create cluster', 'ClusterInfo': JSON.stringify( clusterInfo ) } ;
-         SdbRest.OmOperation( data, function(){
-            success() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               createCluster( clusterInfo ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               success() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  createCluster( clusterInfo ) ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
@@ -1314,19 +1333,20 @@
       var removeCluster = function( clusterIndex ){
          var clusterName = $scope.clusterList[clusterIndex]['ClusterName'] ;
          var data = { 'cmd': 'remove cluster', 'ClusterName': clusterName } ;
-         SdbRest.OmOperation( data, function(){
-            if( clusterIndex == $scope.currentCluster )
-            {
-               $scope.currentCluster = 0 ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               if( clusterIndex == $scope.currentCluster )
+               {
+                  $scope.currentCluster = 0 ;
+               }
+               queryCluster() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  removeCluster( clusterIndex ) ;
+                  return true ;
+               } ) ;
             }
-            queryCluster() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               removeCluster( clusterIndex ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
 
@@ -1577,24 +1597,23 @@
             ]
          }
          var data = { 'cmd': 'update host info', 'HostInfo': JSON.stringify( hostInfo ) } ;
-         SdbRest.OmOperation( data, function( scanInfo ){
-
-            hostList[index]['Status'] = $scope.autoLanguage( '更新主机信息成功。' ) ;
-            $scope.HostList[ hostList[index]['SourceIndex'] ]['IP'] = hostList[index]['IP'] ;
-
-            updateHostsInfo( hostList, index + 1, success ) ;
-
-         }, function( errorInfo ){
-            Loading.close() ;
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               Loading.create() ;
-               updateHostsInfo( hostList, index, success ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, false ) ;
-
+         SdbRest.OmOperation( data, {
+            'success': function( scanInfo ){
+               hostList[index]['Status'] = $scope.autoLanguage( '更新主机信息成功。' ) ;
+               $scope.HostList[ hostList[index]['SourceIndex'] ]['IP'] = hostList[index]['IP'] ;
+               updateHostsInfo( hostList, index + 1, success ) ;
+            },
+            'failed': function( errorInfo ){
+               Loading.close() ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  Loading.create() ;
+                  updateHostsInfo( hostList, index, success ) ;
+                  return true ;
+               } ) ;
+            }
+         }, {
+            'showLoading': false
+         } ) ;
       }
 
       //逐个扫描主机
@@ -1632,37 +1651,37 @@
             'AgentService': '-'
          } ;
          var data = { 'cmd': 'scan host', 'HostInfo': JSON.stringify( hostInfo ) } ;
-         SdbRest.OmOperation( data, function( scanInfo ){
-            if( scanInfo[0]['errno'] == -38 || scanInfo[0]['errno'] == 0 )
-            {
-               if( scanInfo[0]['HostName'] == hostList[index]['HostName'] )
+         SdbRest.OmOperation( data, {
+            'success':function( scanInfo ){
+               if( scanInfo[0]['errno'] == -38 || scanInfo[0]['errno'] == 0 )
                {
-                  hostList[index]['Flag'] = 0 ;
-                  hostList[index]['Status'] = $scope.autoLanguage( '匹配成功。' ) ;
+                  if( scanInfo[0]['HostName'] == hostList[index]['HostName'] )
+                  {
+                     hostList[index]['Flag'] = 0 ;
+                     hostList[index]['Status'] = $scope.autoLanguage( '匹配成功。' ) ;
+                  }
+                  else
+                  {
+                     hostList[index]['Status'] = $scope.sprintf( $scope.autoLanguage( '主机名匹配错误，IP地址?的主机名是?。' ), scanInfo[0]['IP'], scanInfo[0]['HostName'] ) ;
+                  }
                }
                else
                {
-                  hostList[index]['Status'] = $scope.sprintf( $scope.autoLanguage( '主机名匹配错误，IP地址?的主机名是?。' ), scanInfo[0]['IP'], scanInfo[0]['HostName'] ) ;
+                  hostList[index]['Status'] = $scope.autoLanguage( '错误' ) + ': ' + scanInfo[0]['detail'] ;
                }
+               scanHosts( hostList, index + 1, success ) ;
+            },
+            'failed': function( errorInfo ){
+               Loading.close() ;
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  Loading.create() ;
+                  scanHosts( hostList, index, success ) ;
+                  return true ;
+               } ) ;
             }
-            else
-            {
-               hostList[index]['Status'] = $scope.autoLanguage( '错误' ) + ': ' + scanInfo[0]['detail'] ;
-            }
-
-            scanHosts( hostList, index + 1, success ) ;
-
-         }, function( errorInfo ){
-            Loading.close() ;
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               Loading.create() ;
-               scanHosts( hostList, index, success ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, false ) ;
-
+         }, {
+            'showLoading': false
+         } ) ;
       }
 
       //创建 更新主机IP 弹窗

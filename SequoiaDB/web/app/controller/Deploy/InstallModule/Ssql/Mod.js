@@ -52,105 +52,106 @@
       //获取配置
       var getModuleConfig = function(){
          var data = { 'cmd': 'get business config', 'TemplateInfo': JSON.stringify( $scope.Configure ) } ;
-         SdbRest.OmOperation( data, function( configure ){
-            configure[0]['Property'] = _Deploy.ConvertTemplate( configure[0]['Property'], 0 ) ;
-            $scope.installConfig = configure[0] ;
-            $scope.NodeList = configure[0]['Config'] ;
-            $scope.Template = {
-               'keyWidth': '160px',
-               'inputList': $.extend( true, [], configure[0]['Property'] )
-            } ;
-            var masterHost = '' ;
-            var standbyIndex = 0 ;
-            $.each( $scope.Template['inputList'], function( index ){
-               var name = $scope.Template['inputList'][index]['name'] ;
-               $scope.Template['inputList'][index]['value'] = $scope.NodeList[0][name] ;
-               if( name == 'master_host' )
-               {
-                  masterHost = $scope.Template['inputList'][index]['value'] ;
-                  $scope.Template['inputList'][index]['type'] = 'select' ;
-                  $scope.Template['inputList'][index]['valid'] = [] ;
-                  $.each( $scope.Configure['HostInfo'], function( index2, hostInfo ){
-                     $scope.Template['inputList'][index]['valid'].push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
-                  } ) ;
-                  $scope.Template['inputList'][index]['onChange'] = function( name, key, value ){
-                     masterHost = value ;
-                     $scope.NodeList[0]['master_host'] = masterHost ;
-                     if( $scope.Template['inputList'][standbyIndex]['value'] == masterHost )
-                     {
-                        $scope.Template['inputList'][standbyIndex]['value'] = '' ;
+         SdbRest.OmOperation( data, {
+            'success': function( configure ){
+               configure[0]['Property'] = _Deploy.ConvertTemplate( configure[0]['Property'], 0 ) ;
+               $scope.installConfig = configure[0] ;
+               $scope.NodeList = configure[0]['Config'] ;
+               $scope.Template = {
+                  'keyWidth': '160px',
+                  'inputList': $.extend( true, [], configure[0]['Property'] )
+               } ;
+               var masterHost = '' ;
+               var standbyIndex = 0 ;
+               $.each( $scope.Template['inputList'], function( index ){
+                  var name = $scope.Template['inputList'][index]['name'] ;
+                  $scope.Template['inputList'][index]['value'] = $scope.NodeList[0][name] ;
+                  if( name == 'master_host' )
+                  {
+                     masterHost = $scope.Template['inputList'][index]['value'] ;
+                     $scope.Template['inputList'][index]['type'] = 'select' ;
+                     $scope.Template['inputList'][index]['valid'] = [] ;
+                     $.each( $scope.Configure['HostInfo'], function( index2, hostInfo ){
+                        $scope.Template['inputList'][index]['valid'].push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                     } ) ;
+                     $scope.Template['inputList'][index]['onChange'] = function( name, key, value ){
+                        masterHost = value ;
+                        $scope.NodeList[0]['master_host'] = masterHost ;
+                        if( $scope.Template['inputList'][standbyIndex]['value'] == masterHost )
+                        {
+                           $scope.Template['inputList'][standbyIndex]['value'] = '' ;
+                        }
+                        $scope.Template['inputList'][standbyIndex]['valid'] = [] ;
+                        $scope.Template['inputList'][standbyIndex]['valid'].push( { 'key': $scope.autoLanguage( '无' ), 'value': '' } ) ;
+                        $.each( $scope.Configure['HostInfo'], function( index2, hostInfo ){
+                           if( hostInfo['HostName'] != masterHost )
+                           {
+                              $scope.Template['inputList'][standbyIndex]['valid'].push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                           }
+                        } ) ;
                      }
-                     $scope.Template['inputList'][standbyIndex]['valid'] = [] ;
-                     $scope.Template['inputList'][standbyIndex]['valid'].push( { 'key': $scope.autoLanguage( '无' ), 'value': '' } ) ;
+                  }
+                  else if( name == 'standby_host' )
+                  {
+                     $scope.Template['inputList'][index]['type'] = 'select' ;
+                     $scope.Template['inputList'][index]['valid'] = [] ;
+                     $scope.Template['inputList'][index]['valid'].push( { 'key': $scope.autoLanguage( '无' ), 'value': '' } ) ;
                      $.each( $scope.Configure['HostInfo'], function( index2, hostInfo ){
                         if( hostInfo['HostName'] != masterHost )
                         {
-                           $scope.Template['inputList'][standbyIndex]['valid'].push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                           $scope.Template['inputList'][index]['valid'].push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                        }
+                        else
+                        {
+                           standbyIndex = index ;
                         }
                      } ) ;
-                  }
-               }
-               else if( name == 'standby_host' )
-               {
-                  $scope.Template['inputList'][index]['type'] = 'select' ;
-                  $scope.Template['inputList'][index]['valid'] = [] ;
-                  $scope.Template['inputList'][index]['valid'].push( { 'key': $scope.autoLanguage( '无' ), 'value': '' } ) ;
-                  $.each( $scope.Configure['HostInfo'], function( index2, hostInfo ){
-                     if( hostInfo['HostName'] != masterHost )
-                     {
-                        $scope.Template['inputList'][index]['valid'].push( { 'key': hostInfo['HostName'], 'value': hostInfo['HostName'] } ) ;
+                     $scope.Template['inputList'][index]['onChange'] = function( name, key, value ){
+                        $scope.NodeList[0]['standby_host'] = value ;
                      }
-                     else
-                     {
-                        standbyIndex = index ;
+                  }
+                  else if( name == 'hdfs_url' )
+                  {
+                     $scope.Template['inputList'][index]['valid'] = {
+                        'min': 1
+                     } ;
+                     $scope.Template['inputList'][index]['onChange'] = function(){
+                        $scope.IsAllClear = $scope.Template.check() ;
                      }
-                  } ) ;
-                  $scope.Template['inputList'][index]['onChange'] = function( name, key, value ){
-                     $scope.NodeList[0]['standby_host'] = value ;
                   }
-               }
-               else if( name == 'hdfs_url' )
-               {
-                  $scope.Template['inputList'][index]['valid'] = {
-                     'min': 1
-                  } ;
-                  $scope.Template['inputList'][index]['onChange'] = function(){
-                     $scope.IsAllClear = $scope.Template.check() ;
-                  }
-               }
-               else if( name == 'segment_hosts' )
-               {
-                  $scope.Template['inputList'][index]['type'] = 'multiple' ;
-                  $scope.Template['inputList'][index]['valid'] = {
-                     'min': 1,
-                     'list': []
-                  } ;
-                  $.each( $scope.Configure['HostInfo'], function( index2, hostInfo ){
-                     $scope.Template['inputList'][index]['valid']['list'].push( {
-                        'key': hostInfo['HostName'],
-                        'value': hostInfo['HostName'],
-                        'checked': $scope.Template['inputList'][index]['value'].indexOf( hostInfo['HostName'] ) >= 0
+                  else if( name == 'segment_hosts' )
+                  {
+                     $scope.Template['inputList'][index]['type'] = 'multiple' ;
+                     $scope.Template['inputList'][index]['valid'] = {
+                        'min': 1,
+                        'list': []
+                     } ;
+                     $.each( $scope.Configure['HostInfo'], function( index2, hostInfo ){
+                        $scope.Template['inputList'][index]['valid']['list'].push( {
+                           'key': hostInfo['HostName'],
+                           'value': hostInfo['HostName'],
+                           'checked': $scope.Template['inputList'][index]['value'].indexOf( hostInfo['HostName'] ) >= 0
+                        } ) ;
                      } ) ;
-                  } ) ;
-                  $scope.Template['inputList'][index]['onChange'] = function(){
-                     $scope.IsAllClear = $scope.Template.check() ;
+                     $scope.Template['inputList'][index]['onChange'] = function(){
+                        $scope.IsAllClear = $scope.Template.check() ;
+                     }
                   }
-               }
-               else
-               {
-                   $scope.Template['inputList'][index]['onChange'] = function(){
-                     $scope.IsAllClear = $scope.Template.check() ;
-                   }
-               }
-            } ) ;           
-            $scope.$apply() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getModuleConfig() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                  else
+                  {
+                      $scope.Template['inputList'][index]['onChange'] = function(){
+                        $scope.IsAllClear = $scope.Template.check() ;
+                      }
+                  }
+               } ) ;           
+               $scope.$apply() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getModuleConfig() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
@@ -159,16 +160,17 @@
       //安装业务
       var installSdb = function( installConfig ){
          var data = { 'cmd': 'add business', 'ConfigInfo': JSON.stringify( installConfig ) } ;
-         SdbRest.OmOperation( data, function( taskInfo ){
-            $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-            $location.path( '/Deploy/InstallModule' ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               installSdb( installConfig ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( '/Deploy/InstallModule' ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  installSdb( installConfig ) ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 

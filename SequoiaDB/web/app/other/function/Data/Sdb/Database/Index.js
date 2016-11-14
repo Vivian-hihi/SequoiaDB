@@ -214,142 +214,143 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
       }
    }
    //获取cs的信息
-   SdbRest.Exec( sql, function( csList ){
-      if( csList.length == 1 && csList[0]['Name'] == null ) csList = [] ;
-      var data = { 'cmd': 'list collectionspaces', 'sort': JSON.stringify( { 'Name': 1 } ) } ;
-      SdbRest.DataOperation( data, function( csList2 ){
-         $.each( csList2, function( index2, csInfo2 ){
-            var hasCS = false ;
-            $.each( csList, function( index, csInfo ){
-               if( csInfo['Name'] == csInfo2['Name'] )
-               {
-                  hasCS = true ;
-                  return false ;
-               }
-            } ) ;
-            if( hasCS == false )
-            {
-               csList.push( csInfo2 ) ;
-            }
-         } ) ;
-         $scope.csList = [] ;
-         $scope.csInfo = csList ;
-         $.each( csList, function( index, csInfo ){
-            var csListIndex = -1 ;
-            //查找cs列表是否已经存在该cs
-            $.each( $scope.csList, function( index2, csInfo2 ){
-               if( csInfo['Name'] == csInfo2['Name'] )
-               {
-                  csListIndex = index2 ;
-                  return false ;
-               }
-            } ) ;
-            //存在则累加
-            if( csListIndex >= 0 )
-            {
-               $scope.csList[csListIndex]['Info']['TotalRecords']    += dataPlus( csInfo['TotalRecords'] ) ;
-               $scope.csList[csListIndex]['Info']['TotalDataSize']   += dataPlus( csInfo['TotalDataSize'] ) ;
-               $scope.csList[csListIndex]['Info']['FreeDataSize']    += dataPlus( csInfo['FreeDataSize'] ) ;
-               $scope.csList[csListIndex]['Info']['TotalIndexSize']  += dataPlus( csInfo['TotalIndexSize'] ) ;
-               $scope.csList[csListIndex]['Info']['FreeIndexSize']   += dataPlus( csInfo['FreeIndexSize'] ) ;
-               $scope.csList[csListIndex]['Info']['TotalLobSize']    += dataPlus( csInfo['TotalLobSize'] ) ;
-               $scope.csList[csListIndex]['Info']['FreeLobSize']     += dataPlus( csInfo['FreeLobSize'] ) ;
-               $scope.csList[csListIndex]['Info']['MaxDataCapSize']  += dataPlus( csInfo['MaxDataCapSize'] ) ;
-               $scope.csList[csListIndex]['Info']['MaxIndexCapSize'] += dataPlus( csInfo['MaxIndexCapSize'] ) ;
-               $scope.csList[csListIndex]['Info']['MaxLobCapSize']   += dataPlus( csInfo['MaxLobCapSize'] ) ;
-               $scope.csList[csListIndex]['Info']['TotalSize']       += dataPlus( csInfo['TotalSize'] ) ;
-               $scope.csList[csListIndex]['Info']['FreeSize']        += dataPlus( csInfo['FreeSize'] ) ;
-               if( csInfo['GroupName'] != null )
-               {
-                  $scope.csList[csListIndex]['GroupName'].push( { 'key': csInfo['GroupName'], 'value': index } ) ;
-               }
-            }
-            //不存在则创建
-            else
-            {
-               var color = '' ;
-               var i = $scope.csList.length ;
-               if( i > 3 ) i = i % 4 ;
-               if( i == 0 ) color = 'green' ;
-               if( i == 1 ) color = 'yellow' ;
-               if( i == 2 ) color = 'blue' ;
-               if( i == 3 ) color = 'violet' ;
-               $scope.csList.push( {
-                  'Name': csInfo['Name'],
-                  'clNum': 0,
-                  'GroupName': ( csInfo['GroupName'] == null ? [] : [ { 'value': index, 'key': csInfo['GroupName'] } ] ),
-                  'hide': false,
-                  'color': color,
-                  'show': false,
-                  'Info': {
-                     'Name':            csInfo['Name'],
-                     'PageSize':        csInfo['PageSize'],
-                     'LobPageSize':     csInfo['LobPageSize'],
-                     'TotalRecords':    csInfo['TotalRecords'],
-                     'FreeDataSize':    csInfo['FreeDataSize'],
-                     'FreeIndexSize':   csInfo['FreeIndexSize'],
-                     'FreeLobSize':     csInfo['FreeLobSize'],
-                     'FreeSize':        csInfo['FreeSize'],
-                     'MaxDataCapSize':  csInfo['MaxDataCapSize'],
-                     'MaxIndexCapSize': csInfo['MaxIndexCapSize'],
-                     'MaxLobCapSize':   csInfo['MaxLobCapSize'],
-                     'TotalDataSize':   csInfo['TotalDataSize'],
-                     'TotalIndexSize':  csInfo['TotalIndexSize'],
-                     'TotalLobSize':    csInfo['TotalLobSize'],
-                     'TotalSize':       csInfo['TotalSize']
+   SdbRest.Exec( sql, {
+      'success': function( csList ){
+         if( csList.length == 1 && csList[0]['Name'] == null ) csList = [] ;
+         var data = { 'cmd': 'list collectionspaces', 'sort': JSON.stringify( { 'Name': 1 } ) } ;
+         SdbRest.DataOperation( data, function( csList2 ){
+            $.each( csList2, function( index2, csInfo2 ){
+               var hasCS = false ;
+               $.each( csList, function( index, csInfo ){
+                  if( csInfo['Name'] == csInfo2['Name'] )
+                  {
+                     hasCS = true ;
+                     return false ;
                   }
                } ) ;
-            }
-            csInfo['PageSize']        = dataSizeFmt( csInfo['PageSize'], 'KB' ) ;
-            csInfo['LobPageSize']     = dataSizeFmt( csInfo['LobPageSize'], 'KB' ) ;
-            csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
-            csInfo['TotalDataSize']   = dataSizeFmt( csInfo['TotalDataSize'], 'MB' ) ;
-            csInfo['FreeDataSize']    = dataSizeFmt( csInfo['FreeDataSize'], 'MB' ) ;
-            csInfo['TotalIndexSize']  = dataSizeFmt( csInfo['TotalIndexSize'], 'MB' ) ;
-            csInfo['FreeIndexSize']   = dataSizeFmt( csInfo['FreeIndexSize'], 'MB' ) ;
-            csInfo['TotalLobSize']    = dataSizeFmt( csInfo['TotalLobSize'], 'MB' ) ;
-            csInfo['FreeLobSize']     = dataSizeFmt( csInfo['FreeLobSize'], 'MB' ) ;
-            csInfo['TotalSize']       = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
-            csInfo['FreeSize']        = dataSizeFmt( csInfo['FreeSize'], 'MB' ) ;
-            csInfo['MaxDataCapSize']  = dataSizeFmt( csInfo['MaxDataCapSize'], 'GB' ) ;
-            csInfo['MaxIndexCapSize'] = dataSizeFmt( csInfo['MaxIndexCapSize'], 'GB' ) ;
-            csInfo['MaxLobCapSize']   = dataSizeFmt( csInfo['MaxLobCapSize'], 'GB' ) ;
-         } ) ;
+               if( hasCS == false )
+               {
+                  csList.push( csInfo2 ) ;
+               }
+            } ) ;
+            $scope.csList = [] ;
+            $scope.csInfo = csList ;
+            $.each( csList, function( index, csInfo ){
+               var csListIndex = -1 ;
+               //查找cs列表是否已经存在该cs
+               $.each( $scope.csList, function( index2, csInfo2 ){
+                  if( csInfo['Name'] == csInfo2['Name'] )
+                  {
+                     csListIndex = index2 ;
+                     return false ;
+                  }
+               } ) ;
+               //存在则累加
+               if( csListIndex >= 0 )
+               {
+                  $scope.csList[csListIndex]['Info']['TotalRecords']    += dataPlus( csInfo['TotalRecords'] ) ;
+                  $scope.csList[csListIndex]['Info']['TotalDataSize']   += dataPlus( csInfo['TotalDataSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['FreeDataSize']    += dataPlus( csInfo['FreeDataSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['TotalIndexSize']  += dataPlus( csInfo['TotalIndexSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['FreeIndexSize']   += dataPlus( csInfo['FreeIndexSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['TotalLobSize']    += dataPlus( csInfo['TotalLobSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['FreeLobSize']     += dataPlus( csInfo['FreeLobSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['MaxDataCapSize']  += dataPlus( csInfo['MaxDataCapSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['MaxIndexCapSize'] += dataPlus( csInfo['MaxIndexCapSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['MaxLobCapSize']   += dataPlus( csInfo['MaxLobCapSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['TotalSize']       += dataPlus( csInfo['TotalSize'] ) ;
+                  $scope.csList[csListIndex]['Info']['FreeSize']        += dataPlus( csInfo['FreeSize'] ) ;
+                  if( csInfo['GroupName'] != null )
+                  {
+                     $scope.csList[csListIndex]['GroupName'].push( { 'key': csInfo['GroupName'], 'value': index } ) ;
+                  }
+               }
+               //不存在则创建
+               else
+               {
+                  var color = '' ;
+                  var i = $scope.csList.length ;
+                  if( i > 3 ) i = i % 4 ;
+                  if( i == 0 ) color = 'green' ;
+                  if( i == 1 ) color = 'yellow' ;
+                  if( i == 2 ) color = 'blue' ;
+                  if( i == 3 ) color = 'violet' ;
+                  $scope.csList.push( {
+                     'Name': csInfo['Name'],
+                     'clNum': 0,
+                     'GroupName': ( csInfo['GroupName'] == null ? [] : [ { 'value': index, 'key': csInfo['GroupName'] } ] ),
+                     'hide': false,
+                     'color': color,
+                     'show': false,
+                     'Info': {
+                        'Name':            csInfo['Name'],
+                        'PageSize':        csInfo['PageSize'],
+                        'LobPageSize':     csInfo['LobPageSize'],
+                        'TotalRecords':    csInfo['TotalRecords'],
+                        'FreeDataSize':    csInfo['FreeDataSize'],
+                        'FreeIndexSize':   csInfo['FreeIndexSize'],
+                        'FreeLobSize':     csInfo['FreeLobSize'],
+                        'FreeSize':        csInfo['FreeSize'],
+                        'MaxDataCapSize':  csInfo['MaxDataCapSize'],
+                        'MaxIndexCapSize': csInfo['MaxIndexCapSize'],
+                        'MaxLobCapSize':   csInfo['MaxLobCapSize'],
+                        'TotalDataSize':   csInfo['TotalDataSize'],
+                        'TotalIndexSize':  csInfo['TotalIndexSize'],
+                        'TotalLobSize':    csInfo['TotalLobSize'],
+                        'TotalSize':       csInfo['TotalSize']
+                     }
+                  } ) ;
+               }
+               csInfo['PageSize']        = dataSizeFmt( csInfo['PageSize'], 'KB' ) ;
+               csInfo['LobPageSize']     = dataSizeFmt( csInfo['LobPageSize'], 'KB' ) ;
+               csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
+               csInfo['TotalDataSize']   = dataSizeFmt( csInfo['TotalDataSize'], 'MB' ) ;
+               csInfo['FreeDataSize']    = dataSizeFmt( csInfo['FreeDataSize'], 'MB' ) ;
+               csInfo['TotalIndexSize']  = dataSizeFmt( csInfo['TotalIndexSize'], 'MB' ) ;
+               csInfo['FreeIndexSize']   = dataSizeFmt( csInfo['FreeIndexSize'], 'MB' ) ;
+               csInfo['TotalLobSize']    = dataSizeFmt( csInfo['TotalLobSize'], 'MB' ) ;
+               csInfo['FreeLobSize']     = dataSizeFmt( csInfo['FreeLobSize'], 'MB' ) ;
+               csInfo['TotalSize']       = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
+               csInfo['FreeSize']        = dataSizeFmt( csInfo['FreeSize'], 'MB' ) ;
+               csInfo['MaxDataCapSize']  = dataSizeFmt( csInfo['MaxDataCapSize'], 'GB' ) ;
+               csInfo['MaxIndexCapSize'] = dataSizeFmt( csInfo['MaxIndexCapSize'], 'GB' ) ;
+               csInfo['MaxLobCapSize']   = dataSizeFmt( csInfo['MaxLobCapSize'], 'GB' ) ;
+            } ) ;
 
-         $.each( $scope.csList, function( index, csInfo ){
-            csInfo['Info']['PageSize']        = dataSizeFmt( csInfo['Info']['PageSize'], 'KB' ) ;
-            csInfo['Info']['LobPageSize']     = dataSizeFmt( csInfo['Info']['LobPageSize'], 'KB' ) ;
-            csInfo['Info']['TotalRecords']    = dataSizeFmt( csInfo['Info']['TotalRecords'], '' ) ;
-            csInfo['Info']['TotalDataSize']   = dataSizeFmt( csInfo['Info']['TotalDataSize'], 'MB' ) ;
-            csInfo['Info']['FreeDataSize']    = dataSizeFmt( csInfo['Info']['FreeDataSize'], 'MB' ) ;
-            csInfo['Info']['TotalIndexSize']  = dataSizeFmt( csInfo['Info']['TotalIndexSize'], 'MB' ) ;
-            csInfo['Info']['FreeIndexSize']   = dataSizeFmt( csInfo['Info']['FreeIndexSize'], 'MB' ) ;
-            csInfo['Info']['TotalLobSize']    = dataSizeFmt( csInfo['Info']['TotalLobSize'], 'MB' ) ;
-            csInfo['Info']['FreeLobSize']     = dataSizeFmt( csInfo['Info']['FreeLobSize'], 'MB' ) ;
-            csInfo['Info']['TotalSize']       = dataSizeFmt( csInfo['Info']['TotalSize'], 'MB' ) ;
-            csInfo['Info']['FreeSize']        = dataSizeFmt( csInfo['Info']['FreeSize'], 'MB' ) ;
-            csInfo['Info']['MaxDataCapSize']  = dataSizeFmt( csInfo['Info']['MaxDataCapSize'], 'GB' ) ;
-            csInfo['Info']['MaxIndexCapSize'] = dataSizeFmt( csInfo['Info']['MaxIndexCapSize'], 'GB' ) ;
-            csInfo['Info']['MaxLobCapSize']   = dataSizeFmt( csInfo['Info']['MaxLobCapSize'], 'GB' ) ;
-         } ) ;
-         $scope.showCSInfo( 0 ) ;
-         $scope.$apply() ;
-         _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
-      }, function( errorInfo ){
+            $.each( $scope.csList, function( index, csInfo ){
+               csInfo['Info']['PageSize']        = dataSizeFmt( csInfo['Info']['PageSize'], 'KB' ) ;
+               csInfo['Info']['LobPageSize']     = dataSizeFmt( csInfo['Info']['LobPageSize'], 'KB' ) ;
+               csInfo['Info']['TotalRecords']    = dataSizeFmt( csInfo['Info']['TotalRecords'], '' ) ;
+               csInfo['Info']['TotalDataSize']   = dataSizeFmt( csInfo['Info']['TotalDataSize'], 'MB' ) ;
+               csInfo['Info']['FreeDataSize']    = dataSizeFmt( csInfo['Info']['FreeDataSize'], 'MB' ) ;
+               csInfo['Info']['TotalIndexSize']  = dataSizeFmt( csInfo['Info']['TotalIndexSize'], 'MB' ) ;
+               csInfo['Info']['FreeIndexSize']   = dataSizeFmt( csInfo['Info']['FreeIndexSize'], 'MB' ) ;
+               csInfo['Info']['TotalLobSize']    = dataSizeFmt( csInfo['Info']['TotalLobSize'], 'MB' ) ;
+               csInfo['Info']['FreeLobSize']     = dataSizeFmt( csInfo['Info']['FreeLobSize'], 'MB' ) ;
+               csInfo['Info']['TotalSize']       = dataSizeFmt( csInfo['Info']['TotalSize'], 'MB' ) ;
+               csInfo['Info']['FreeSize']        = dataSizeFmt( csInfo['Info']['FreeSize'], 'MB' ) ;
+               csInfo['Info']['MaxDataCapSize']  = dataSizeFmt( csInfo['Info']['MaxDataCapSize'], 'GB' ) ;
+               csInfo['Info']['MaxIndexCapSize'] = dataSizeFmt( csInfo['Info']['MaxIndexCapSize'], 'GB' ) ;
+               csInfo['Info']['MaxLobCapSize']   = dataSizeFmt( csInfo['Info']['MaxLobCapSize'], 'GB' ) ;
+            } ) ;
+            $scope.showCSInfo( 0 ) ;
+            $scope.$apply() ;
+            _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
+               return true ;
+            } ) ;
+         }, function(){
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }, null, null, false ) ;
+      },
+      'failed': function( errorInfo ){
          _IndexPublic.createRetryModel( $scope, errorInfo, function(){
             _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
-            return true ;
+             return true ;
          } ) ;
-      }, function(){
-         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-      } ) ;
-   }, function( errorInfo ){
-      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-         _DataDatabaseIndex.getCSInfo( $scope, SdbRest ) ;
-         return true ;
-      } ) ;
-   }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+      }
    } ) ;
 }
 
@@ -483,33 +484,35 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
    }
 
    //获取cl信息
-   SdbRest.Exec( sql, function( clList ){
-      if( $scope.moduleMode == 'standalone' )
-      {
-         success( clList ) ;
-      }
-      else
-      {
-         sql = 'select * from $SNAPSHOT_CATA' ;
-         SdbRest.Exec( sql, function( cataList ){
-            var newList = mergedData( clList, cataList ) ;
-            success( newList ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
-               return true ;
+   SdbRest.Exec( sql, {
+      'success': function( clList ){
+         if( $scope.moduleMode == 'standalone' )
+         {
+            success( clList ) ;
+         }
+         else
+         {
+            sql = 'select * from $SNAPSHOT_CATA' ;
+            SdbRest.Exec( sql, {
+               'success': function( cataList ){
+                  var newList = mergedData( clList, cataList ) ;
+                  success( newList ) ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+                     return true ;
+                  } ) ;
+               }
             } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }
+      },
+      'failed': function( errorInfo ){
+         _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+            _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+            return true ;
          } ) ;
       }
-   }, function( errorInfo ){
-      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-         _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
-         return true ;
-      } ) ;
-   }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
 }
 
@@ -579,8 +582,8 @@ _DataDatabaseIndex.getGroupList = function( $scope, SdbRest ){
                return true ;
             } ) ;
          }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }, null, null, false ) ;
       } ;
       exec() ;
    }
@@ -909,7 +912,7 @@ _DataDatabaseIndex.showCreateCS = function( $scope, SdbRest ){
                   return true ;
                } ) ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
          } ;
          exec() ;
@@ -980,7 +983,7 @@ _DataDatabaseIndex.showRemoveCS = function( $scope, SdbRest ){
                   return true ;
                } ) ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
          } ;
          exec() ;
@@ -1112,7 +1115,7 @@ _DataDatabaseIndex.showCreateCL = function( $scope, SdbRest ){
          } ) ;
          _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
       }, function(){
-         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
       } ) ;
    }
    var csValid = [] ;
@@ -1819,7 +1822,7 @@ _DataDatabaseIndex.showRemoveCL = function( $scope, SdbRest ){
                   return true ;
                } ) ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
          } ;
          exec() ;
@@ -1986,7 +1989,7 @@ _DataDatabaseIndex.showAttachCL = function( $scope, SdbRest ){
                   return true ;
                } ) ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
          } ;
          exec() ;
@@ -2345,7 +2348,7 @@ _DataDatabaseIndex.showSplit = function( $scope, SdbRest ){
                   return true ;
                } ) ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
          } ;
          exec() ;
@@ -2434,7 +2437,7 @@ _DataDatabaseIndex.showCreateIndex = function( $scope, SdbRest ){
                   return true ;
                } ) ;
             }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
             } ) ;
          } ;
          exec() ;
@@ -2498,7 +2501,7 @@ _DataDatabaseIndex.showRemoveIndex = function( $scope, SdbRest ){
                         return true ;
                      } ) ;
                   }, function(){
-                     _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                     //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                   } ) ;
                }
             },
@@ -2553,7 +2556,7 @@ _DataDatabaseIndex.showRemoveIndex = function( $scope, SdbRest ){
                      return true ;
                   } ) ;
                }, function(){
-                  _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                  //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
                } ) ;
             } ;
             exec() ;
@@ -2567,7 +2570,7 @@ _DataDatabaseIndex.showRemoveIndex = function( $scope, SdbRest ){
          return true ;
       } ) ;
    }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+      //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
 }
 
@@ -2627,7 +2630,7 @@ _DataDatabaseIndex.showIndex = function( $scope, SdbRest, csIndex, clIndex ){
          return true ;
       }, $scope.autoLanguage( '获取索引信息失败' ) ) ;
    }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+      //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
 }
 

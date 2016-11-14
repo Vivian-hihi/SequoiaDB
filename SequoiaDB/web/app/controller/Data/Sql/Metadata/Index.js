@@ -37,7 +37,7 @@
                return true ;
             } ) ;
          }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
 
@@ -161,33 +161,6 @@
          dbName = $scope.databaseList[ $scope.databaseIndex ]['Name'] ;
          queryTable() ;
       } ;
-
-      //查询业务信息
-      var queryModuleInfo = function(){
-         var data = { 'cmd': 'query business', 'filter': JSON.stringify( { 'ClusterName': clusterName, 'BusinessName': moduleName } ) } ;
-         SdbRest.OmOperation( data, function( moduleInfo ){
-            if( moduleInfo.length > 0 )
-            {
-               dbName = moduleInfo[0]['BusinessInfo']['DbName'] ;
-               dbUser = moduleInfo[0]['BusinessInfo']['User'] ;
-               dbPwd  = moduleInfo[0]['BusinessInfo']['Passwd'] ;
-               $scope.dbHost = moduleInfo[0]['BusinessInfo']['HostName'] ;
-               $scope.dbPort = moduleInfo[0]['BusinessInfo']['ServiceName'] ;
-               queryDbList( true ) ;
-            }
-            else
-            {
-               $location.path( '/Transfer' ) ;
-            }
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               queryModuleInfo() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
-      }
 
       //创建数据库
       var createDatabase = function( newDBName ){
@@ -584,6 +557,31 @@
          $location.path( '/Data/SQL-Operate/Structure' ) ;
       }
 
-      queryModuleInfo() ;
+      //查询业务信息
+      var data = { 'cmd': 'query business', 'filter': JSON.stringify( { 'ClusterName': clusterName, 'BusinessName': moduleName } ) } ;
+      SdbRest.OmOperation( data, {
+         'success': function( moduleInfo ){
+            if( moduleInfo.length > 0 )
+            {
+               dbName = moduleInfo[0]['BusinessInfo']['DbName'] ;
+               dbUser = moduleInfo[0]['BusinessInfo']['User'] ;
+               dbPwd  = moduleInfo[0]['BusinessInfo']['Passwd'] ;
+               $scope.dbHost = moduleInfo[0]['BusinessInfo']['HostName'] ;
+               $scope.dbPort = moduleInfo[0]['BusinessInfo']['ServiceName'] ;
+               queryDbList( true ) ;
+            }
+            else
+            {
+               $location.path( '/Transfer' ) ;
+            }
+         },
+         'failed': function( errorInfo, retryFun ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               retryFun() ;
+               return true ;
+            } ) ;
+         }
+      } ) ;
+
    } ) ;
 }());

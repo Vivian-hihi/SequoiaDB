@@ -113,8 +113,6 @@
          while( random == $rootScope.onResize ) random = Math.random() ;
          $rootScope.onResize = random ;
       } ;
-      //启动全局任务查询
-      $rootScope.OmQueryTasks = function(){} ;
       //禁止F5做全局刷新，改成局部刷新
       $(document).bind("keydown",function(e){
          switch( e.keyCode )  
@@ -137,17 +135,18 @@
 
       var getOMSysInfo = function(){
          var data = { 'cmd': 'get system info' } ;
-         SdbRest.OmOperation( data, function( systemInfo ){
-            $.each( systemInfo[0], function( key, value ){
-               window.Config[ key ] = value ;
-            } ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getOMSysInfo() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( systemInfo ){
+               $.each( systemInfo[0], function( key, value ){
+                  window.Config[ key ] = value ;
+               } ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getOMSysInfo() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
       getOMSysInfo() ;
@@ -219,8 +218,8 @@
          $scope.Components.French['isShow'] = true ;
       }
 
-      $rootScope.OmQueryTasks = function(){
-         SdbRest.OmOperation( data, function( taskList ){
+      SdbRest.OmOperation( data, {
+         'success': function( taskList ){
             $rootScope.OmTaskList = taskList ;
             $scope.Top.ExecTaskNum = 0 ;
             $.each( taskList, function( index, taskInfo ){
@@ -254,21 +253,17 @@
                $scope.Components.French.TaskList = taskList ;
                $scope.Top.TaskList = taskList ;
             } ) ;
-            setTimeout( function(){
-               $rootScope.OmQueryTasks() ;
-            }, 5000 ) ;
-         }, function( errorInfo ){
-            setTimeout( function(){
-               $rootScope.OmQueryTasks() ;
-            }, 5000 ) ;
-         }, null, null, false ) ;
-      } ;
-
-      $rootScope.OmQueryTasks() ;
-
+         }
+      }, {
+         'showLoading': false,
+         'delay': 5000,
+         'loop': true,
+         'scope': false
+      } ) ;
    } ) ;
    //左边
    sacApp.controller( 'Index.Left.Ctrl', function( $scope, $rootScope, $location, SdbRest, SdbFunction ){
+      $scope.showModuleIndex = -1 ;
       $scope.Left = {} ;
       $scope.Left.nav1 = { width: 80 } ;
       $scope.Left.nav2 = { width: 180, marginLeft: 80 } ;
@@ -303,6 +298,17 @@
                      },
                      {
                         'title': 'Yarn',
+                        'list': []
+                     }
+                  ]
+               },
+               {
+                  'text': $scope.autoLanguage( '监控' ),
+                  'module': 'Monitor',
+                  'icon': 'fa-flash',
+                  'list': [
+                     {
+                        'title': 'SequoiaDB',
                         'list': []
                      }
                   ]
@@ -379,7 +385,10 @@
             if( updateDefault == true )
             {
                $scope.cursorIndex = _IndexLeft.getActiveIndex( $rootScope, SdbFunction, navMenu ) ;
-               $scope.showModuleIndex = $scope.cursorIndex[0] ;
+               if( $scope.showModuleIndex == -1 )
+               {
+                  $scope.showModuleIndex = $scope.cursorIndex[0] ;
+               }
                if( $scope.Left.navMenu[ $scope.showModuleIndex ]['module'] == 'Deploy' )
                {
                   $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
@@ -477,7 +486,11 @@
             switch( moduleType )
             {
             case 'sequoiadb':
-               if( window.Config['Edition'] != 'Enterprise' )
+               if( window.Config['Edition'] == 'Enterprise' )
+               {
+                  $location.path( '/Monitor/Index' ).search( params ) ; break ;
+               }
+               else
                {
                   $location.path( '/Monitor/Preview' ).search( params ) ; break ;
                }

@@ -189,43 +189,44 @@
             {
                var hostInfo = { "ClusterName": clusterName, "HostInfo": hostList[index], "User": formVal['user'], "Passwd": formVal['password'], "SshPort": formVal['ssh'],"AgentService": formVal['proxy'] } ;
                var data = { 'cmd': 'scan host', 'HostInfo': JSON.stringify( hostInfo ) } ;
-               SdbRest.OmOperation( data, function( hostList ){
-                  $.each( hostList, function( index, hostInfo ){
-                     var Status = 'success' ;
-                     var isExists = checkHostIsExist( $scope.HostList, hostInfo['HostName'], hostInfo['IP'] ) ;
-                     if( hostInfo['errno'] != 0 )
-                     {
-                        Status = hostInfo['Status'] ;
-                        if( hostInfo['errno'] == -38 )
+               SdbRest.OmOperation( data, {
+                  'success': function( hostList ){
+                     $.each( hostList, function( index, hostInfo ){
+                        var Status = 'success' ;
+                        var isExists = checkHostIsExist( $scope.HostList, hostInfo['HostName'], hostInfo['IP'] ) ;
+                        if( hostInfo['errno'] != 0 )
                         {
-                           Status = 'exist' ;
+                           Status = hostInfo['Status'] ;
+                           if( hostInfo['errno'] == -38 )
+                           {
+                              Status = 'exist' ;
+                           }
                         }
-                     }
-                     var newHostInfo = { 'checked': ( Status == 'success' ? true : false ), 'Status': Status, 'HostName': hostInfo['HostName'], 'IP': hostInfo['IP'], 'User': formVal['user'], 'Password': formVal['password'], 'SSH': formVal['ssh'], 'Proxy': formVal['proxy']  } ;
-                     if( isExists == -1 || isExists == -2 )
-                     {
-                        $scope.HostList.push( newHostInfo ) ;
-                     }
-                     else
-                     {
-                        $scope.HostList[isExists] = newHostInfo ;
-                     }
-                  } ) ;
-                  $rootScope.tempData( 'Deploy', 'ScanHost', $scope.HostList ) ;
-                  countSuccessHostNum() ;
-                  $scope.CountCheckedHostNum() ;
-                  $scope.HostGridTool = sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), $scope.HostList.length, successNum ) ;
-                  $rootScope.bindResize() ;
-                  $scope.$apply() ;
-                  ++index ;
-                  scanHostOnce() ;
-               }, function( errorInfo ){
-                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                     $scope.scanHost() ;
-                     return true ;
-                  } ) ;
-               }, function(){
-                  _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                        var newHostInfo = { 'checked': ( Status == 'success' ? true : false ), 'Status': Status, 'HostName': hostInfo['HostName'], 'IP': hostInfo['IP'], 'User': formVal['user'], 'Password': formVal['password'], 'SSH': formVal['ssh'], 'Proxy': formVal['proxy']  } ;
+                        if( isExists == -1 || isExists == -2 )
+                        {
+                           $scope.HostList.push( newHostInfo ) ;
+                        }
+                        else
+                        {
+                           $scope.HostList[isExists] = newHostInfo ;
+                        }
+                     } ) ;
+                     $rootScope.tempData( 'Deploy', 'ScanHost', $scope.HostList ) ;
+                     countSuccessHostNum() ;
+                     $scope.CountCheckedHostNum() ;
+                     $scope.HostGridTool = sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), $scope.HostList.length, successNum ) ;
+                     $rootScope.bindResize() ;
+                     $scope.$apply() ;
+                     ++index ;
+                     scanHostOnce() ;
+                  },
+                  'failed': function( errorInfo ){
+                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                        $scope.scanHost() ;
+                        return true ;
+                     } ) ;
+                  }
                } ) ;
             }
          }

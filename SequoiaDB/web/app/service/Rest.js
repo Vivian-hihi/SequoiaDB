@@ -1,6 +1,6 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
-   sacApp.service( 'SdbRest', function( $q, $rootScope, Loading, SdbFunction ){
+   sacApp.service( 'SdbRest', function( $q, $rootScope, $location, Loading, SdbFunction ){
       var g = this ;
       function restBeforeSend( jqXHR )
       {
@@ -16,14 +16,195 @@
 	      }
       }
 
+      //网络状态
+      var NORMAL = 1 ;
+      var INSTABLE = 2 ;
+      var ERROR = 3 ;
+
+      g._lastErrorEvent = null ;
+
+      //网络当前状态
+      g._status = NORMAL ;
+
+      //网络连接错误的次数
+      g._errorNum = 0 ;
+
+      //执行器状态
+      var IDLE = 0
+      var RUNNING = 1 ;
+
+      //执行器当前状态
+      g._runStatus = IDLE ;
+
+      //网络请求队列
+      g._queue = [] ;
+
+      //执行循环模块
+      g._execLoop = function( task, loop ){
+         if( task['scope'] === false || task['scope'] === $location.url() )
+         {
+            if( task['loop'] === loop )
+            {
+               if( task['delay'] > 0 )
+               {
+                  setTimeout( function(){
+                     g._queue.push( task ) ;
+                  }, task['delay'] ) ;
+               }
+               else
+               {
+                  g._queue.push( task ) ;
+               }
+            }
+         }
+      }
+
+      //网络执行器
+      g._run = function(){
+         g._runStatus = RUNNING ;
+         if( g._status == NORMAL )
+         {
+            if( g._queue.length > 0 )
+            {
+               var task = g._queue.shift() ;
+               if( typeof( task['init'] ) == 'function' )
+               {
+                  var value = task['init']() ;
+                  if( typeof( value ) !== 'undefined' )
+                  {
+                     task['data'] = value ;
+                  }
+               }
+               g._post( task['type'], task['url'], task['data'],
+                        task['before'],
+                        function( json, textStatus, jqXHR ){
+                           g._errorNum = 0 ;
+                           g._status = NORMAL ;
+                           if( typeof( task['success'] ) == 'function' )
+                           {
+                              task['success']( json, textStatus, jqXHR ) ;
+                           }
+                           g._execLoop( task, 'success' ) ;
+                        },
+                        function( errInfo ){
+                           g._errorNum = 0 ;
+                           g._status = NORMAL ;
+                           if( typeof( task['failed'] ) == 'function' )
+                           {
+                              task['failed']( errInfo, function(){
+                                 g._queue.push( task ) ;
+                              } ) ;
+                           }
+                           g._execLoop( task, 'failed' ) ;
+                        },
+                        function( XMLHttpRequest, textStatus, errorThrown ){
+                           ++g._errorNum ;
+                           g._status = INSTABLE ;
+                           if( typeof( task['error'] ) == 'function' )
+                           {
+                              task['error']( XMLHttpRequest, textStatus, errorThrown ) ;
+                           }
+                           //g._queue.unshift( task ) ;
+                           g._lastErrorEvent = task['failed'] ;
+                        },
+                        function( XMLHttpRequest, textStatus ){
+                           if( typeof( task['complete'] ) == 'function' )
+                           {
+                              task['complete']( XMLHttpRequest, textStatus ) ;
+                           }
+                           g._execLoop( task, true ) ;
+                        },
+                        task['showLoading'], task['errJson'] ) ;
+               setTimeout( g._run, 100 ) ;
+            }
+            else
+            {
+               setTimeout( g._run, 800 ) ;
+            }
+         }
+         else
+         {
+            g.getPing( function( times ){
+               if( times >= 0 )
+               {
+                  g._errorNum = 0 ;
+                  g._status = NORMAL ;
+                  if( typeof( g._lastErrorEvent ) == 'function' )
+                  {
+                     g._lastErrorEvent( { "errno": -15, "description": "Network error", "detail": "Network error, request status unknown." } ) ;
+                     g._lastErrorEvent = null ;
+                  }
+               }
+               else
+               {
+                  ++g._errorNum ;
+                  if( g._errorNum >= 10 )
+                  {
+                     g._status = ERROR ;
+                  }
+               }
+               setTimeout( g._run, 1000 ) ;
+            } ) ;
+         }
+      }
+
+      //获取网络状态
+      g.getNetworkStatus = function(){
+         return g._status ;
+      }
+
+      /*
+         网络调度器
+         type: POST,GET
+         url: 路径
+         data: post的数据
+         delay: 延迟多少毫秒
+         loop: 循环; 'success':执行成功时循环 'failed':执行失败时循环 true:成功失败都循环
+         scope: 作用域; false:所有页面  true:当前页面
+      */
+      g._insert = function( type, url, data, event, options, errJson ){
+         if( typeof( options ) != 'object' || options === null )
+         {
+            options = {} ;
+         }
+         if( typeof( options['delay'] ) != 'number' )
+         {
+            options['delay'] = 0 ;
+         }
+         if( typeof( options['scope'] ) == 'undefined' )
+         {
+            options['scope'] = $location.url() ;
+         }
+         else
+         {
+            options['scope'] = options['scope'] ? $location.url() : false ;
+         }
+         var task = $.extend( {}, { 'type': type, 'url': url, 'data': data }, event, options ) ;
+         task['errJson'] = errJson ;
+         if( task['delay'] > 0 && !task['loop'] )
+         {
+            setTimeout( function(){
+               g._queue.push( task ) ;
+            }, task['delay'] ) ;
+         }
+         else
+         {
+            g._queue.push( task ) ;
+         }
+         if( g._runStatus == IDLE )
+         {
+            g._run() ;
+         }
+      }
+
       //发送请求
-      g._post = function( data, before, success, failed, error, complete, showLoading, errJson ){
+      g._post = function( type, url, data, before, success, failed, error, complete, showLoading, errJson ){
          if( typeof( showLoading ) == 'undefined' ) showLoading = true ;
          if( showLoading )
          {
             Loading.create() ;
          }
-         $.ajax( { 'type': 'POST', 'url': '/', 'data': data, 'success': function( json, textStatus, jqXHR ){
+         $.ajax( { 'type': type, 'url': url, 'data': data, 'success': function( json, textStatus, jqXHR ){
             json = trim( json ) ;
             if( json.length == 0 && typeof( failed ) === 'function' )
             {
@@ -34,6 +215,7 @@
                }
                catch( e )
                {
+                  printfDebug( e.stack ) ;
                   $rootScope.Components.Confirm.isShow = true ;
                   $rootScope.Components.Confirm.type = 1 ;
                   $rootScope.Components.Confirm.title = 'System error' ;
@@ -58,6 +240,7 @@
                      }
                      catch( e )
                      {
+                        printfDebug( e.stack ) ;
                         $rootScope.Components.Confirm.isShow = true ;
                         $rootScope.Components.Confirm.type = 1 ;
                         $rootScope.Components.Confirm.title = 'System error' ;
@@ -82,6 +265,7 @@
                   }
                   catch( e )
                   {
+                     printfDebug( e.stack ) ;
                      $rootScope.Components.Confirm.isShow = true ;
                      $rootScope.Components.Confirm.type = 1 ;
                      $rootScope.Components.Confirm.title = 'System error' ;
@@ -106,6 +290,7 @@
                   }
                   catch( e )
                   {
+                     printfDebug( e.stack ) ;
                      $rootScope.Components.Confirm.isShow = true ;
                      $rootScope.Components.Confirm.type = 1 ;
                      $rootScope.Components.Confirm.title = 'System error' ;
@@ -126,6 +311,7 @@
                }
                catch( e )
                {
+                  printfDebug( e.stack ) ;
                   $rootScope.Components.Confirm.isShow = true ;
                   $rootScope.Components.Confirm.type = 1 ;
                   $rootScope.Components.Confirm.title = 'System error' ;
@@ -145,6 +331,7 @@
                }
                catch( e )
                {
+                  printfDebug( e.stack ) ;
                   $rootScope.Components.Confirm.isShow = true ;
                   $rootScope.Components.Confirm.type = 1 ;
                   $rootScope.Components.Confirm.title = 'System error' ;
@@ -169,6 +356,7 @@
                }
                catch( e )
                {
+                  printfDebug( e.stack ) ;
                   $rootScope.Components.Confirm.isShow = true ;
                   $rootScope.Components.Confirm.type = 1 ;
                   $rootScope.Components.Confirm.title = 'System error' ;
@@ -182,7 +370,7 @@
          } } ) ;
       }
 
-      //发送请求(新版，异步调用)
+      //发送请求(废弃)
       g._post2 = function( data, showLoading ){
          var defferred = $q.defer() ;
          if( typeof( showLoading ) == 'undefined' ) showLoading = true ;
@@ -234,7 +422,7 @@
          return defferred.promise ;
       }
 
-      //测试发送
+      //测试发送(测试用)
       g._postTest = function( url, success, failed, error )
       {
          //Loading.create() ;
@@ -322,7 +510,7 @@
          } ) ;
       }
 
-      //获取配置文件
+      //获取配置文件(废弃)
       g.getConfig = function( fileName, success )
       {
          var language = SdbFunction.LocalData( 'SdbLanguage' ) ;
@@ -343,29 +531,40 @@
       }
       
       //om系统操作
-      g.OmOperation = function( data, success, failed, error, complete, showLoading ){
-         g._post( data, null, success, failed, error, complete, showLoading ) ;
+      g.OmOperation = function( data, event, options ){
+         g._insert( 'POST', '/', data, event, options ) ;
       }
 
       //数据操作
-      g.DataOperation = function( data, success, failed, error, complete, errJson ){
-         g._post( data, function( jqXHR ){
-	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-	         if( clusterName !== null )
-	         {
-		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
-	         }
-	         var businessName = SdbFunction.LocalData( 'SdbModuleName' )
-	         if( businessName !== null )
-	         {
-		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
-	         }
-         }, success, failed, error, complete, true, errJson ) ;
+      g.DataOperation = function( data, success, failed, error, complete, errJson, showLoading ){
+         g._insert( 'POST', '/', data, {
+            'before': function( jqXHR ){
+	            var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+	            if( clusterName !== null )
+	            {
+		            jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
+	            }
+	            var businessName = SdbFunction.LocalData( 'SdbModuleName' )
+	            if( businessName !== null )
+	            {
+		            jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
+	            }
+            },
+            'success': success,
+            'failed': failed,
+            'error': error,
+            'complete': complete
+         }, {
+            'showLoading': showLoading,
+            'delay': -1,
+            'loop': false
+         }, errJson ) ;
       }
 
       //数据操作( 手工设置cluster和module )
-      g.DataOperation2 = function( clusterName, businessName, data, success, failed, error, complete, errJson, showLoading ){
-         g._post( data, function( jqXHR ){
+      g.DataOperation2 = function( clusterName, businessName, data, event, options, errJson ){
+         var oldBefore = event ? event['before'] : null ;
+         event['before'] = function( jqXHR ){
 	         if( clusterName !== null )
 	         {
 		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
@@ -374,7 +573,12 @@
 	         {
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
 	         }
-         }, success, failed, error, complete, showLoading, errJson ) ;
+            if( typeof( oldBefore ) == 'function' )
+            {
+               return oldBefore( jqXHR ) ;
+            }
+         }
+         g._insert( 'POST', '/', data, event, options, errJson ) ;
       }
 
       //sequoiasql操作
@@ -390,60 +594,71 @@
             data['BusinessName'] = businessName ;
 	      }
          Loading.create() ;
-         g._post( data, null, function( returnData ){
-            var taskDefferred = $q.when( returnData[0] ) ;
-            var taskPromise = taskDefferred.promise ;
-            var taskID = returnData[0] ;
-            var queryTask = function(){
-               var taskData = { 'cmd': 'query task', 'filter': JSON.stringify( taskID ) } ;
-               g._post( taskData, null, function( taskInfo ){
-                  if( taskInfo[0]['Status'] == 0 )
-                  {
-                     queryTask()
-                     return ;
-                  }
-                  if( taskInfo[0]['Status'] == 3 || taskInfo[0]['Status'] == 4 )
-                  {
-                     success( taskInfo[0]['ResultInfo'], true ) ;
-                     Loading.cancel() ;
-                     return ;
-                  }
-                  success( taskInfo[0]['ResultInfo'], false ) ;
-                  setTimeout( queryTask, 100 ) ;
-               }, function( errorInfo ){
-                  Loading.cancel() ;
-                  if( typeof( failed ) == 'function')
-                  {
-                     failed( errorInfo ) ;
-                  }
-               }, function( XMLHttpRequest, textStatus, errorThrown ){
-                  Loading.cancel() ;
-                  if( typeof( error ) === 'function' )
-                  {
-                     error( XMLHttpRequest, textStatus, errorThrown ) ;
-                  }
-               }, complete, false ) ;
-            }
-            queryTask() ;
-         }, function( errorInfo ){
-            Loading.cancel() ;
-            if( typeof( failed ) == 'function')
-            {
-               failed( errorInfo ) ;
-            }
-         }, function( XMLHttpRequest, textStatus, errorThrown ){
-            Loading.cancel() ;
-            if( typeof( error ) === 'function' )
-            {
-               error( XMLHttpRequest, textStatus, errorThrown ) ;
-            }
-         }, complete ) ;
+         g._insert( 'POST', '/', data, {
+            'success': function( returnData ){
+               var taskID = returnData[0] ;
+               var queryTask = function(){
+                  var taskData = { 'cmd': 'query task', 'filter': JSON.stringify( taskID ) } ;
+                  g._insert( 'POST', '/', taskData, {
+                     'success': function( taskInfo ){
+                        if( taskInfo[0]['Status'] == 0 )
+                        {
+                           queryTask()
+                           return ;
+                        }
+                        if( taskInfo[0]['Status'] == 3 || taskInfo[0]['Status'] == 4 )
+                        {
+                           success( taskInfo[0]['ResultInfo'], true ) ;
+                           Loading.cancel() ;
+                           return ;
+                        }
+                        success( taskInfo[0]['ResultInfo'], false ) ;
+                        setTimeout( queryTask, 100 ) ;
+                     },
+                     'failed': function( errorInfo ){
+                        Loading.cancel() ;
+                        if( typeof( failed ) == 'function')
+                        {
+                           failed( errorInfo ) ;
+                        }
+                     },
+                     'error': function( XMLHttpRequest, textStatus, errorThrown ){
+                        Loading.cancel() ;
+                        if( typeof( error ) === 'function' )
+                        {
+                           error( XMLHttpRequest, textStatus, errorThrown ) ;
+                        }
+                     },
+                     'comolete': complete
+                  }, {
+                     'showLoading': false
+                  } ) ;
+               }
+               queryTask() ;
+            },
+            'failed': function( errorInfo ){
+               Loading.cancel() ;
+               if( typeof( failed ) == 'function')
+               {
+                  failed( errorInfo ) ;
+               }
+            },
+            'error': function( XMLHttpRequest, textStatus, errorThrown ){
+               Loading.cancel() ;
+               if( typeof( error ) === 'function' )
+               {
+                  error( XMLHttpRequest, textStatus, errorThrown ) ;
+               }
+            },
+            'complete': complete
+         } ) ;
       }
 
       //SQL(自动获取cluster和module)
-      g.Exec = function( sql, success, failed, error, complete, showLoading ){
+      g.Exec = function( sql, event, options ){
          var data = { 'cmd': 'exec', 'sql': sql } ;
-         g._post( data, function( jqXHR ){
+         var oldBefore = event ? event['before'] : null ;
+         event['before'] = function( jqXHR ){
 	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
 	         if( clusterName !== null )
 	         {
@@ -454,13 +669,19 @@
 	         {
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
 	         }
-         }, success, failed, error, complete, showLoading ) ;
+            if( typeof( oldBefore ) == 'function' )
+            {
+               return oldBefore( jqXHR ) ;
+            }
+         }
+         g._insert( 'POST', '/', data, event, options ) ;
       }
 
       //SQL(手工设置cluster和module)
-      g.Exec2 = function( clusterName, businessName, sql, success, failed, error, complete, showLoading ){
+      g.Exec2 = function( clusterName, businessName, sql, event, options ){
          var data = { 'cmd': 'exec', 'sql': sql } ;
-         g._post( data, function( jqXHR ){
+         var oldBefore = event ? event['before'] : null ;
+         event['before'] = function( jqXHR ){
 	         if( clusterName !== null )
 	         {
 		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
@@ -469,7 +690,12 @@
 	         {
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
 	         }
-         }, success, failed, error, complete, showLoading ) ;
+            if( typeof( oldBefore ) == 'function' )
+            {
+               return oldBefore( jqXHR ) ;
+            }
+         }
+         g._insert( 'POST', '/', data, event, options ) ;
       }
 
       //登录
@@ -477,7 +703,7 @@
          password = $.md5( password ) ;
          var timestamp = parseInt( ( new Date().getTime() ) / 1000 ) ;
 	      var data = { 'cmd' : 'login', 'user': username, 'passwd': password, 'Timestamp': timestamp } ;
-         g._post( data, null, success, failed, error, complete, false ) ;
+         g._post( 'POST', '/', data, null, success, failed, error, complete, false ) ;
       }
 
       //修改密码
@@ -486,7 +712,14 @@
          password = $.md5( password ) ;
          newPassword = $.md5( newPassword ) ;
 	      var data = { 'cmd' : 'change passwd', 'User': username, 'Passwd': password, 'Newpasswd': newPassword, 'Timestamp': timestamp } ;
-         g._post( data, null, success, failed, error, complete, false ) ;
+         g._insert( 'POST', '/', data, {
+            'success': success,
+            'failed': failed,
+            'error': error,
+            'complete': complete
+         }, {
+            'showLoading': false
+         } ) ;
       }
 
       g.getPing = function( complete ){

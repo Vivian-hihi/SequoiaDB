@@ -85,9 +85,12 @@
                $scope.NodeList[index]['show'] = true ;
             }
          } ) ;
-         setTimeout( function(){
-            $scope.NodeListOptions.onResize() ;
-         } ) ;
+         if( typeof( $scope.NodeListOptions.onResize ) == 'function' )
+         {
+            setTimeout( function(){
+               $scope.NodeListOptions.onResize() ;
+            } ) ;
+         }
       }
 
       //创建 创建分区组 弹窗
@@ -503,6 +506,7 @@
                   {
                      $scope.GroupList[groupIndex]['DropdownMenu'][1]['disabled'] = false ;
                   }
+                  $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
                   $scope.bindResize() ;
                }
                else if( type == 3 )
@@ -747,6 +751,7 @@
                {
                   $scope.GroupList[index]['DropdownMenu'][1]['disabled'] = true ;
                }
+               $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
             }
             return isAllClear ;
          }
@@ -876,9 +881,12 @@
             $scope.search_role.text = '' ;
             $scope.search_group.text = '' ;
          }
-         setTimeout( function(){
-            $scope.NodeListOptions.onResize() ;
-         } ) ;
+         if( typeof( $scope.NodeListOptions.onResize ) == 'function' )
+         {
+            setTimeout( function(){
+               $scope.NodeListOptions.onResize() ;
+            } ) ;
+         }
       }
 
       //从节点列表中，聚合成分区组列表
@@ -927,88 +935,89 @@
       //获取业务配置
       var getModuleConfig = function(){
          var data = { 'cmd': 'get business config', 'TemplateInfo': JSON.stringify( $scope.Configure ) } ;
-         SdbRest.OmOperation( data, function( configure ){
-            $scope.installConfig = configure[0] ;
-            $scope.Template = configure[0]['Property'] ;
-            $scope.NodeList = configure[0]['Config'] ;
-            if( $scope.Configure['DeployMod'] == 'standalone' )
-            {
-               $scope.StandaloneForm1 = {
-                  'keyWidth': '160px',
-                  'inputList': _Deploy.ConvertTemplate( $scope.Template, 0 )
-               } ;
-               $scope.StandaloneForm2 = {
-                  'keyWidth': '160px',
-                  'inputList': _Deploy.ConvertTemplate( $scope.Template, 1 )
-               } ;
-               $scope.StandaloneForm3 = {
-                  'keyWidth': '160px',
-                  'inputList': [
-                     {
-                        "name": "other",
-                        "webName": $scope.autoLanguage( "自定义配置" ),
-                        "type": "list",
-                        "valid": {
-                           "min": 0
-                        },
-                        "child": [
-                           [
-                              {
-                                 "name": "name",
-                                 "webName": $scope.autoLanguage( "参数名" ), 
-                                 "placeholder": $scope.autoLanguage( "参数名" ),
-                                 "type": "string",
-                                 "valid": {
-                                    "min": 1
+         SdbRest.OmOperation( data, {
+            'success': function( configure ){
+               $scope.installConfig = configure[0] ;
+               $scope.Template = configure[0]['Property'] ;
+               $scope.NodeList = configure[0]['Config'] ;
+               if( $scope.Configure['DeployMod'] == 'standalone' )
+               {
+                  $scope.StandaloneForm1 = {
+                     'keyWidth': '160px',
+                     'inputList': _Deploy.ConvertTemplate( $scope.Template, 0 )
+                  } ;
+                  $scope.StandaloneForm2 = {
+                     'keyWidth': '160px',
+                     'inputList': _Deploy.ConvertTemplate( $scope.Template, 1 )
+                  } ;
+                  $scope.StandaloneForm3 = {
+                     'keyWidth': '160px',
+                     'inputList': [
+                        {
+                           "name": "other",
+                           "webName": $scope.autoLanguage( "自定义配置" ),
+                           "type": "list",
+                           "valid": {
+                              "min": 0
+                           },
+                           "child": [
+                              [
+                                 {
+                                    "name": "name",
+                                    "webName": $scope.autoLanguage( "参数名" ), 
+                                    "placeholder": $scope.autoLanguage( "参数名" ),
+                                    "type": "string",
+                                    "valid": {
+                                       "min": 1
+                                    },
+                                    "default": "",
+                                    "value": ""
                                  },
-                                 "default": "",
-                                 "value": ""
-                              },
-                              {
-                                 "name": "value",
-                                 "webName": $scope.autoLanguage( "值" ), 
-                                 "placeholder": $scope.autoLanguage( "值" ),
-                                 "type": "string",
-                                 "valid": {
-                                    "min": 1
-                                 },
-                                 "default": "",
-                                 "value": ""
-                              }
+                                 {
+                                    "name": "value",
+                                    "webName": $scope.autoLanguage( "值" ), 
+                                    "placeholder": $scope.autoLanguage( "值" ),
+                                    "type": "string",
+                                    "valid": {
+                                       "min": 1
+                                    },
+                                    "default": "",
+                                    "value": ""
+                                 }
+                              ]
                            ]
-                        ]
-                     }
-                  ]
-               } ;
-               $.each( $scope.StandaloneForm1['inputList'], function( index ){
-                  var name = $scope.StandaloneForm1['inputList'][index]['name'] ;
-                  $scope.StandaloneForm1['inputList'][index]['value'] = $scope.NodeList[0][name] ;
+                        }
+                     ]
+                  } ;
+                  $.each( $scope.StandaloneForm1['inputList'], function( index ){
+                     var name = $scope.StandaloneForm1['inputList'][index]['name'] ;
+                     $scope.StandaloneForm1['inputList'][index]['value'] = $scope.NodeList[0][name] ;
+                  } ) ;
+                  $scope.StandaloneForm1['inputList'].splice( 0, 0, {
+                     "name": "HostName",
+                     "webName": $scope.autoLanguage( '主机名' ),
+                     "type": "string",
+                     "value": $scope.NodeList[0]['HostName'],
+                     "disabled": true
+                  } ) ;
+                  $.each( $scope.StandaloneForm2['inputList'], function( index ){
+                     var name = $scope.StandaloneForm2['inputList'][index]['name'] ;
+                     $scope.StandaloneForm2['inputList'][index]['value'] = $scope.NodeList[0][name] ;
+                  } ) ;
+               }
+               $.each( $scope.NodeList, function( index, nodeInfo ){
+                  countGroup( nodeInfo['role'], nodeInfo['datagroupname'], 1 ) ;
                } ) ;
-               $scope.StandaloneForm1['inputList'].splice( 0, 0, {
-                  "name": "HostName",
-                  "webName": $scope.autoLanguage( '主机名' ),
-                  "type": "string",
-                  "value": $scope.NodeList[0]['HostName'],
-                  "disabled": true
-               } ) ;
-               $.each( $scope.StandaloneForm2['inputList'], function( index ){
-                  var name = $scope.StandaloneForm2['inputList'][index]['name'] ;
-                  $scope.StandaloneForm2['inputList'][index]['value'] = $scope.NodeList[0][name] ;
+               $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
+               $scope.$apply() ;
+               $scope.bindResize() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getModuleConfig() ;
+                  return true ;
                } ) ;
             }
-            $.each( $scope.NodeList, function( index, nodeInfo ){
-               countGroup( nodeInfo['role'], nodeInfo['datagroupname'], 1 ) ;
-            } ) ;
-            $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
-            $scope.$apply() ;
-            $scope.bindResize() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getModuleConfig() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       }
 
@@ -1091,16 +1100,17 @@
 
       var installSdb = function( installConfig ){
          var data = { 'cmd': 'add business', 'ConfigInfo': JSON.stringify( installConfig ) } ;
-         SdbRest.OmOperation( data, function( taskInfo ){
-            $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-            $location.path( '/Deploy/InstallModule' ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               installSdb( installConfig ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( '/Deploy/InstallModule' ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  installSdb( installConfig ) ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 

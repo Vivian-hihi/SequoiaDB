@@ -16,18 +16,20 @@
       $scope.url = '' ;
 
       var data = { 'cmd': 'query business', 'filter': JSON.stringify( { 'BusinessName': moduleName, 'ClusterName': clusterName } ) } ;
-      SdbRest.OmOperation( data, function( moduleInfo ){
-         if( moduleInfo.length > 0 )
-         {
-            moduleInfo = moduleInfo[0]['BusinessInfo'] ;
-            $scope.url = 'http://' + moduleInfo['HostName'] + ':' + moduleInfo['WebServicePort'] ;
+      SdbRest.OmOperation( data, {
+         'success': function( moduleInfo ){
+            if( moduleInfo.length > 0 )
+            {
+               moduleInfo = moduleInfo[0]['BusinessInfo'] ;
+               $scope.url = 'http://' + moduleInfo['HostName'] + ':' + moduleInfo['WebServicePort'] ;
+            }
+         },
+         'failed': function( errorInfo, retryFun ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               retryFun() ;
+               return true ;
+            } ) ;
          }
-      }, function( errorInfo ){
-         _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-            return true ;
-         } ) ;
-      }, function(){
-         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
       } ) ;
    } ) ;
 }());

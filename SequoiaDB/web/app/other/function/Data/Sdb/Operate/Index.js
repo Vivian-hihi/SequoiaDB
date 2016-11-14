@@ -318,33 +318,35 @@ _DataOperateIndex.getCLList = function( $scope, $compile, SdbRest, moduleName, m
    }
 
    //获取集合列表
-   SdbRest.Exec( sql, function( clList ){
-      if( moduleMode == 'standalone' )
-      {
-         success( clList ) ;
-      }
-      else
-      {
-         sql = 'select * from $SNAPSHOT_CATA where IsMainCL=true or MainCLName>"" or ShardingType>""' ;
-         SdbRest.Exec( sql, function( cataList ){
-            var newList = mergedData( clList, cataList ) ;
-            success( newList ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
-               return true ;
+   SdbRest.Exec( sql, {
+      'success': function( clList ){
+         if( moduleMode == 'standalone' )
+         {
+            success( clList ) ;
+         }
+         else
+         {
+            sql = 'select * from $SNAPSHOT_CATA where IsMainCL=true or MainCLName>"" or ShardingType>""' ;
+            SdbRest.Exec( sql, {
+               'success': function( cataList ){
+                  var newList = mergedData( clList, cataList ) ;
+                  success( newList ) ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     _DataDatabaseIndex.getCLInfo( $scope, SdbRest ) ;
+                     return true ;
+                  } ) ;
+               }
             } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         }
+      },
+      'failed': function( errorInfo ){
+         _DataOperateIndex.showPage( $scope, $compile, 1 ) ;
+         _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+            _DataOperateIndex.getCLList( $scope, $compile, SdbRest, moduleName, moduleMode ) ;
+            return true ;
          } ) ;
       }
-   }, function( errorInfo ){
-      _DataOperateIndex.showPage( $scope, $compile, 1 ) ;
-      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-         _DataOperateIndex.getCLList( $scope, $compile, SdbRest, moduleName, moduleMode ) ;
-         return true ;
-      } ) ;
-   }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
    } ) ;
 }

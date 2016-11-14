@@ -560,7 +560,122 @@
             data: [0, 0, 0, 0, 0, 0, 0]
          }
       ]
-   };
+   } ;
+
+   window.SdbSacManagerConf.NetwordOutEchart = {
+      title: {
+         show: true,
+         text: '发送流量',
+         textStyle: {
+            color: '#666',
+            fontFamily: 'Verdana,Georgia,宋体',
+            fontSize: 14
+         }
+      },
+      tooltip: {
+         enterable: true,
+         trigger: 'axis',
+         formatter: '{a0}: {c0}KB'
+      },
+      animation: false,
+      addDataAnimation: false,
+      color: ['rgba(39,169,227,1)'],
+      xAxis: [
+         {
+            type: 'category',
+            boundaryGap: false,
+            data: ['0', '5', '10', '15', '20', '25', '30'],
+            splitLine: {
+               lineStyle: {
+                  color: ['#fff']
+               }
+            }
+         }
+      ],
+      yAxis: [
+         {
+            type: 'value',
+            axisLabel: {
+               formatter: '{value}KB'
+            }
+         }
+      ],
+      grid: {
+         x: 55,
+         y: 40,
+         x2: 20,
+         y2: 60,
+         borderColor: '#000'
+      },
+      series: [
+         {
+            smooth: true,
+            name: 'Write',
+            stack: 'Write',
+            itemStyle: { normal: { areaStyle: { type: 'default' } } },
+            type: 'line',
+            data: [0, 0, 0, 0, 0, 0, 0]
+         }
+      ]
+   } ;
+
+   window.SdbSacManagerConf.NetwordInEchart = {
+      title: {
+         show: true,
+         text: '接收流量',
+         textStyle: {
+            color: '#666',
+            fontFamily: 'Verdana,Georgia,宋体',
+            fontSize: 14
+         }
+      },
+      tooltip: {
+         enterable: true,
+         trigger: 'axis',
+         formatter: '{a0}: {c0}KB'
+      },
+      animation: false,
+      addDataAnimation: false,
+      color: ['rgba(39,169,227,1)'],
+      xAxis: [
+         {
+            type: 'category',
+            boundaryGap: false,
+            data: ['0', '5', '10', '15', '20', '25', '30'],
+            splitLine: {
+               lineStyle: {
+                  color: ['#fff']
+               }
+            }
+         }
+      ],
+      yAxis: [
+         {
+            type: 'value',
+            axisLabel: {
+               formatter: '{value}KB'
+            }
+         }
+      ],
+      grid: {
+         x: 55,
+         y: 40,
+         x2: 20,
+         y2: 60,
+         borderColor: '#000'
+      },
+      series: [
+         {
+            smooth: true,
+            name: 'Write',
+            stack: 'Write',
+            itemStyle: { normal: { areaStyle: { type: 'default' } } },
+            type: 'line',
+            data: [0, 0, 0, 0, 0, 0, 0]
+         }
+      ]
+   } ;
+
 
    window.SdbSacManagerConf.NetwordIOEchart = {
       title: {

@@ -6,6 +6,7 @@
            resolve: resolveFun( [ './app/controller/Transfer.js' ] )
         }
       },
+      //废弃
       { path: '/Index/Index/Index',
         options: {
            templateUrl: './app/template/Index/Index/Index.html',
@@ -117,41 +118,60 @@
            resolve: resolveFun( [ './app/controller/Monitor/Charts.js' ] )
          }
       },
-      //SDB监控页
-      { path: '/Monitor/SDB-Overview/Index',
+      //SDB节点类
+      { path: '/Monitor/SDB-Nodes/Groups',
         options: {
            templateUrl: './app/template/Monitor/Sdb/Overview/Index.html',
            resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Index.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Overview/Charts',
-        options: {
-           templateUrl: './app/template/Monitor/Sdb/Overview/Charts.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Charts.js' ] )
-         }
-      },
-      { path: '/Monitor/SDB-Overview/Session',
-        options: {
-           templateUrl: './app/template/Monitor/Sdb/Overview/Session.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Session.js' ] )
-         }
-      },
-      { path: '/Monitor/SDB-Overview/Node',
+      { path: '/Monitor/SDB-Nodes/Nodes',
         options: {
            templateUrl: './app/template/Monitor/Sdb/Overview/Node.html',
            resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Node.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Overview/Domain',
+      { path: '/Monitor/SDB-Nodes/Charts',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Overview/Domain.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Domain.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Overview/NodesCharts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/NodesCharts.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Overview/Resource',
+      //SDB资源类
+      { path: '/Monitor/SDB-Resources/Domain',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Overview/Resource.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Resource.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Resource/Domain.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/Domain.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Resources/Session',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Resource/Session.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/Session.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Resources/Context',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Resource/Context.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/Context.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Resources/Procedure',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Resource/Procedure.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/Procedure.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Resources/Transaction',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Resource/Transaction.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/Transaction.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Resources/Charts',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Resource/ResourceCharts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/ResourceCharts.js' ] )
          }
       },
       { path: '/Monitor/SDB-Group/Index',
@@ -178,10 +198,10 @@
            resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Session.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Node/Resource',
+      { path: '/Monitor/SDB-Node/Context',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Node/Resource.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Resource.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Node/Context.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Context.js' ] )
          }
       },
       { path: '/Monitor/SDB-Node/Charts',
@@ -222,39 +242,41 @@
            resolve: resolveFun( [ './app/controller/Monitor/Host/List/Charts.js' ] )
          }
       },
-      //监控-单主机预览
+      //监控-单主机
       { path: '/Monitor/Host-Info/Index',
         options: {
            templateUrl: './app/template/Monitor/Host/Info/Index.html',
            resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Index.js' ] )
          }
       },
-      //监控-单主机磁盘
       { path: '/Monitor/Host-Info/Disk',
         options: {
            templateUrl: './app/template/Monitor/Host/Info/Disk.html',
            resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Disk.js' ] )
          }
       },
-      //监控-单主机CPU
       { path: '/Monitor/Host-Info/CPU',
         options: {
            templateUrl: './app/template/Monitor/Host/Info/CPU.html',
            resolve: resolveFun( [ './app/controller/Monitor/Host/Info/CPU.js' ] )
          }
       },
-      //监控-单主机内存
       { path: '/Monitor/Host-Info/Memory',
         options: {
            templateUrl: './app/template/Monitor/Host/Info/Memory.html',
            resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Memory.js' ] )
          }
       },
-      //监控-单主机网络
       { path: '/Monitor/Host-Info/Network',
         options: {
            templateUrl: './app/template/Monitor/Host/Info/Network.html',
            resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Network.js' ] )
+         }
+      },
+      { path: '/Monitor/Host-Info/Charts',
+        options: {
+           templateUrl: './app/template/Monitor/Host/Info/Charts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Charts.js' ] )
          }
       },
       //监控-主机告警

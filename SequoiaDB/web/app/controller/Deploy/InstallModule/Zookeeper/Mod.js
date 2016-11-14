@@ -201,30 +201,31 @@
       //获取配置
       var getModuleConfig = function(){
          var data = { 'cmd': 'get business config', 'TemplateInfo': JSON.stringify( $scope.Configure ) } ;
-         SdbRest.OmOperation( data, function( configure ){
-            configure[0]['Property'] = _Deploy.ConvertTemplate( configure[0]['Property'], 0 ) ;
-            $scope.installConfig = configure[0] ;
-            $scope.NodeList = configure[0]['Config'] ;
-            $scope.Template = {
-               'keyWidth': '160px',
-               'inputList': $.extend( true, [], configure[0]['Property'] )
-            } ;
-            $scope.Template['inputList'].splice( 1, 0, {
-               "name": "HostName",
-               "webName": $scope.autoLanguage( '主机名' ),
-               "type": "select",
-               "value": 0,
-               "valid": []
-            } ) ;
-            $scope.$apply() ;
-            $scope.SwitchNode( 0 ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getModuleConfig() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( configure ){
+               configure[0]['Property'] = _Deploy.ConvertTemplate( configure[0]['Property'], 0 ) ;
+               $scope.installConfig = configure[0] ;
+               $scope.NodeList = configure[0]['Config'] ;
+               $scope.Template = {
+                  'keyWidth': '160px',
+                  'inputList': $.extend( true, [], configure[0]['Property'] )
+               } ;
+               $scope.Template['inputList'].splice( 1, 0, {
+                  "name": "HostName",
+                  "webName": $scope.autoLanguage( '主机名' ),
+                  "type": "select",
+                  "value": 0,
+                  "valid": []
+               } ) ;
+               $scope.$apply() ;
+               $scope.SwitchNode( 0 ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getModuleConfig() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
@@ -233,16 +234,17 @@
       //安装业务
       var installSdb = function( installConfig ){
          var data = { 'cmd': 'add business', 'ConfigInfo': JSON.stringify( installConfig ) } ;
-         SdbRest.OmOperation( data, function( taskInfo ){
-            $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-            $location.path( '/Deploy/InstallModule' ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               installSdb( installConfig ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
+               $location.path( '/Deploy/InstallModule' ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  installSdb( installConfig ) ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 

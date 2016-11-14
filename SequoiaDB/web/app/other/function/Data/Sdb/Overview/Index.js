@@ -116,94 +116,104 @@ _DataOverviewIndex.getCLInfo = function( $scope, SdbRest, index, moduleName, mod
       }
    }
    //获取集合列表
-   SdbRest.Exec2( clusterName, moduleName, sql, function( data ){
-      if( moduleMode == 'standalone' )
-      {
-         success( data ) ;
+   SdbRest.Exec2( clusterName, moduleName, sql, {
+      'success': function( data ){
+         if( moduleMode == 'standalone' )
+         {
+            success( data ) ;
+         }
+         else
+         {
+            sql = 'SELECT * FROM $SNAPSHOT_CATA WHERE IsMainCL=true or MainCLName>"" or ShardingType>""' ;
+            SdbRest.Exec2( clusterName, moduleName, sql, {
+               'success': function( data2 ){
+                  var newData = mergedData( data, data2 ) ;
+                  success( newData ) ;
+               },
+               'failed': function( errorInfo ){
+                  $scope.QueryModule[index]['status1'] = $scope.autoLanguage( '错误' )  ;
+                  $scope.QueryModule[index]['status2'] = $scope.autoLanguage( '业务运行错误' )  ;
+                  $scope.QueryModule[index]['detail'] = '' ;
+                  $scope.QueryModule[index]['errno'] = errorInfo['errno'] ;
+                  $scope.QueryModule[index]['description'] = sprintf( $scope.autoLanguage( '错误码: ?, ?。' ), errorInfo['errno'], errorInfo['description'] ) ;
+                  setTimeout( function(){
+                     _DataOverviewIndex.getCLInfo( $scope, SdbRest, index, moduleName, moduleMode, clusterName )
+                  }, 5000 ) ;
+               }
+            }, {
+               'showLoading': false
+            } ) ;
+         }
+      },
+      'failed': function( errorInfo ){
+         $scope.QueryModule[index]['status1'] = $scope.autoLanguage( '错误' )  ;
+         $scope.QueryModule[index]['status2'] = $scope.autoLanguage( '业务运行错误' )  ;
+         $scope.QueryModule[index]['detail'] = '' ;
+         $scope.QueryModule[index]['errno'] = errorInfo['errno'] ;
+         $scope.QueryModule[index]['description'] = sprintf( $scope.autoLanguage( '错误码: ?, ?。' ), errorInfo['errno'], errorInfo['description'] ) ;
+         setTimeout( function(){
+            _DataOverviewIndex.getCLInfo( $scope, SdbRest, index, moduleName, moduleMode, clusterName )
+         }, 5000 ) ;
       }
-      else
-      {
-         sql = 'SELECT * FROM $SNAPSHOT_CATA WHERE IsMainCL=true or MainCLName>"" or ShardingType>""' ;
-         SdbRest.Exec2( clusterName, moduleName, sql, function( data2 ){
-            var newData = mergedData( data, data2 ) ;
-            success( newData ) ;
-         }, function( errorInfo ){
-            $scope.QueryModule[index]['status1'] = $scope.autoLanguage( '错误' )  ;
-            $scope.QueryModule[index]['status2'] = $scope.autoLanguage( '业务运行错误' )  ;
-            $scope.QueryModule[index]['detail'] = '' ;
-            $scope.QueryModule[index]['errno'] = errorInfo['errno'] ;
-            $scope.QueryModule[index]['description'] = sprintf( $scope.autoLanguage( '错误码: ?, ?。' ), errorInfo['errno'], errorInfo['description'] ) ;
-            setTimeout( function(){
-               _DataOverviewIndex.getCLInfo( $scope, SdbRest, index, moduleName, moduleMode, clusterName )
-            }, 5000 ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, false ) ;
-      }
-   }, function( errorInfo ){
-      $scope.QueryModule[index]['status1'] = $scope.autoLanguage( '错误' )  ;
-      $scope.QueryModule[index]['status2'] = $scope.autoLanguage( '业务运行错误' )  ;
-      $scope.QueryModule[index]['detail'] = '' ;
-      $scope.QueryModule[index]['errno'] = errorInfo['errno'] ;
-      $scope.QueryModule[index]['description'] = sprintf( $scope.autoLanguage( '错误码: ?, ?。' ), errorInfo['errno'], errorInfo['description'] ) ;
-      setTimeout( function(){
-         _DataOverviewIndex.getCLInfo( $scope, SdbRest, index, moduleName, moduleMode, clusterName )
-      }, 5000 ) ;
-   }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-   }, null, false ) ;
+   }, {
+      'showLoading': false
+   } ) ;
 }
 
 //获取业务列表
 _DataOverviewIndex.getModuleList = function( $scope, SdbRest, clusterName ){
    var data = { 'cmd': 'query business', 'filter': JSON.stringify( { 'ClusterName' : clusterName } ) } ;
-   SdbRest.OmOperation( data, function( json ){
-      $.each( json, function( index ){
-         var i = index ;
-         if( index > 3 ) i = index % 4 ;
-         if( i == 0 ) json[index]['color'] = 'green' ;
-         if( i == 1 ) json[index]['color'] = 'yellow' ;
-         if( i == 2 ) json[index]['color'] = 'blue' ;
-         if( i == 3 ) json[index]['color'] = 'violet' ;
-         json[index]['detail'] = $scope.autoLanguage( '正在加载...' ) ;
-         json[index]['errno'] = 0 ;
-         json[index]['description'] = '' ;
-         json[index]['status1'] = '' ;
-         json[index]['status2'] = '' ;
-         json[index]['info'] = [] ;
-         $scope.lastRecord.push( -1 ) ;
-      } ) ;
-      $scope.QueryModule = json ;
-      $.each( $scope.QueryModule, function( index, moduleInfo ){
-         moduleInfo['WebDeployMod'] = moduleInfo.DeployMod ;
-         $.each( $scope.moduleTemplate, function( index2, templateInfo ){
-            if( moduleInfo.DeployMod == templateInfo.DeployMod )
-            {
-               moduleInfo['WebDeployMod'] = templateInfo.WebName ;
-               return false ;
-               
-            }
+   SdbRest.OmOperation( data, {
+      'success': function( json ){
+         $.each( json, function( index ){
+            var i = index ;
+            if( index > 3 ) i = index % 4 ;
+            if( i == 0 ) json[index]['color'] = 'green' ;
+            if( i == 1 ) json[index]['color'] = 'yellow' ;
+            if( i == 2 ) json[index]['color'] = 'blue' ;
+            if( i == 3 ) json[index]['color'] = 'violet' ;
+            json[index]['detail'] = $scope.autoLanguage( '正在加载...' ) ;
+            json[index]['errno'] = 0 ;
+            json[index]['description'] = '' ;
+            json[index]['status1'] = '' ;
+            json[index]['status2'] = '' ;
+            json[index]['info'] = [] ;
+            $scope.lastRecord.push( -1 ) ;
          } ) ;
-         _DataOverviewIndex.getCLInfo( $scope, SdbRest,index, moduleInfo.BusinessName, moduleInfo.DeployMod, clusterName ) ;
-      } ) ;
-      $scope.$apply() ;
-   }, function( errorInfo ){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '获取业务列表失败。' ) ) ;
-   }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-   }, null, false ) ;
+         $scope.QueryModule = json ;
+         $.each( $scope.QueryModule, function( index, moduleInfo ){
+            moduleInfo['WebDeployMod'] = moduleInfo.DeployMod ;
+            $.each( $scope.moduleTemplate, function( index2, templateInfo ){
+               if( moduleInfo.DeployMod == templateInfo.DeployMod )
+               {
+                  moduleInfo['WebDeployMod'] = templateInfo.WebName ;
+                  return false ;
+               
+               }
+            } ) ;
+            _DataOverviewIndex.getCLInfo( $scope, SdbRest,index, moduleInfo.BusinessName, moduleInfo.DeployMod, clusterName ) ;
+         } ) ;
+         $scope.$apply() ;
+      },
+      'failed': function( errorInfo ){
+         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '获取业务列表失败。' ) ) ;
+      }
+   }, {
+      'showLoading': false
+   } ) ;
 }
 
 //获取业务模板
 _DataOverviewIndex.getModuleTemplate = function( $scope, SdbRest, clusterName ){
    var data = { 'cmd': 'get business template', 'BusinessType': 'sequoiadb' } ;
-   SdbRest.OmOperation( data, function( json ){
-      $scope.moduleTemplate = json ;
-      _DataOverviewIndex.getModuleList( $scope, SdbRest, clusterName ) ;
-   }, function( errorInfo ){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '获取业务列表失败。' ) ) ;
-   }, function(){
-      _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+   SdbRest.OmOperation( data, {
+      'success': function( json ){
+         $scope.moduleTemplate = json ;
+         _DataOverviewIndex.getModuleList( $scope, SdbRest, clusterName ) ;
+      }, 
+      'failed': function( errorInfo ){
+         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '获取业务列表失败。' ) ) ;
+      }
    } ) ;
 }
 

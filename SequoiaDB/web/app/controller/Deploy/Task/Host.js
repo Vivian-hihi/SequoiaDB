@@ -92,7 +92,10 @@
                $( bodyEle ).html( div ) ;
             }
             $scope.Components.Modal.onResize = function( width, height ){
-               div.css( { 'height': height - 5 } ) ;
+               if( div !== null )
+               {
+                  div.css( { 'height': height - 5 } ) ;
+               }
             }
             $scope.Components.Modal.ok = function(){
                return true ;
@@ -109,93 +112,96 @@
       var queryTask = function( taskID ){
          $rootScope.tempData( 'Deploy', 'InstallTask', taskID ) ;
          var data = { 'cmd': 'query task', 'filter': JSON.stringify( { 'TaskID': taskID } ) } ;
-         SdbRest.OmOperation( data, function( taskInfo ){
-            $scope.TimeLeft = '' ;
-            if( taskInfo.length > 0 )
-            {
-               $scope.TaskInfo = taskInfo[0] ;
-               $scope.BarColor = 0 ;
-               $scope.TimeLeft = 0 ;
-               var errorNum = 0 ;
-               $.each( $scope.TaskInfo['ResultInfo'], function( index, hostInfo ){
-                  if( hostInfo['errno'] != 0 )
-                  {
-                     ++errorNum ;
-                     $scope.BarColor = 1 ;
-                  }
-                  if( hostInfo['Status'] == 4 )
-                  {
-                     return true ;
-                  }
-                  $scope.TimeLeft += 2 ;
-               } ) ;
-               if( $scope.TaskInfo['ResultInfo'].length == errorNum )
+         SdbRest.OmOperation( data, {
+            'success': function( taskInfo ){
+               $scope.TimeLeft = '' ;
+               if( taskInfo.length > 0 )
                {
-                  $scope.BarColor = 2 ;
-               }
-
-               if( $scope.TimeLeft == 0 )
-               {
-                  $scope.TimeLeft = 1 ;
-               }
-
-               if( $scope.TaskInfo['Status'] == 4 )
-               {
-                  $scope.BarColor = 3 ;
-                  $scope.TimeLeft = '' ;
-                  $scope.IsFinish = true ;
-                  if( typeof( $scope.TaskInfo['errno'] ) == 'number' && $scope.TaskInfo['errno'] != 0 )
+                  $scope.TaskInfo = taskInfo[0] ;
+                  $scope.BarColor = 0 ;
+                  $scope.TimeLeft = 0 ;
+                  var errorNum = 0 ;
+                  $.each( $scope.TaskInfo['ResultInfo'], function( index, hostInfo ){
+                     if( hostInfo['errno'] != 0 )
+                     {
+                        ++errorNum ;
+                        $scope.BarColor = 1 ;
+                     }
+                     if( hostInfo['Status'] == 4 )
+                     {
+                        return true ;
+                     }
+                     $scope.TimeLeft += 2 ;
+                  } ) ;
+                  if( $scope.TaskInfo['ResultInfo'].length == errorNum )
                   {
-                     $scope.TaskInfo['Progress'] = 100 ;
                      $scope.BarColor = 2 ;
-                     $.each( $scope.TaskInfo['ResultInfo'], function( index, hostInfo ){
-                        if( $scope.TaskInfo['ResultInfo'][index]['errno'] == 0 )
-                        {
-                           $scope.TaskInfo['ResultInfo'][index]['errno'] = 1 ;
-                        }
-                        $scope.TaskInfo['ResultInfo'][index]['Status'] = 4 ;
-                        $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] = 'FINISH' ;
-                     } ) ;
+                  }
+
+                  if( $scope.TimeLeft == 0 )
+                  {
+                     $scope.TimeLeft = 1 ;
+                  }
+
+                  if( $scope.TaskInfo['Status'] == 4 )
+                  {
+                     $scope.BarColor = 3 ;
+                     $scope.TimeLeft = '' ;
+                     $scope.IsFinish = true ;
+                     if( typeof( $scope.TaskInfo['errno'] ) == 'number' && $scope.TaskInfo['errno'] != 0 )
+                     {
+                        $scope.TaskInfo['Progress'] = 100 ;
+                        $scope.BarColor = 2 ;
+                        $.each( $scope.TaskInfo['ResultInfo'], function( index, hostInfo ){
+                           if( $scope.TaskInfo['ResultInfo'][index]['errno'] == 0 )
+                           {
+                              $scope.TaskInfo['ResultInfo'][index]['errno'] = 1 ;
+                           }
+                           $scope.TaskInfo['ResultInfo'][index]['Status'] = 4 ;
+                           $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] = 'FINISH' ;
+                        } ) ;
+                     }
+                  }
+                  else
+                  {
+                     if( $scope.TaskInfo['Status'] == 2 )
+                     {
+                        $scope.BarColor = 1 ;
+                     }
+                     $scope.TimeLeft = sprintf( $scope.autoLanguage( '?分钟' ), $scope.TimeLeft ) ;
+                     if( $scope.TaskInfo['Progress'] == 100 )
+                     {
+                        $scope.TaskInfo['Progress'] = 90 ;
+                     }
+                  }
+               
+                  $rootScope.bindResize() ;
+                  $scope.$apply() ;
+
+                  if( $scope.IsFinish == false )
+                  {
+                     SdbFunction.Timeout( function(){
+                        queryTask( taskID ) ;
+                     }, 1500 ) ;
                   }
                }
                else
                {
-                  if( $scope.TaskInfo['Status'] == 2 )
-                  {
-                     $scope.BarColor = 1 ;
-                  }
-                  $scope.TimeLeft = sprintf( $scope.autoLanguage( '?分钟' ), $scope.TimeLeft ) ;
-                  if( $scope.TaskInfo['Progress'] == 100 )
-                  {
-                     $scope.TaskInfo['Progress'] = 90 ;
-                  }
-               }
-               
-               $rootScope.bindResize() ;
-               $scope.$apply() ;
-
-               if( $scope.IsFinish == false )
-               {
-                  SdbFunction.Timeout( function(){
+                  _IndexPublic.createRetryModel( $scope, null, function(){
                      queryTask( taskID ) ;
-                  }, 1500 ) ;
+                     return true ;
+                  }, $scope.autoLanguage( '获取任务信息失败' ), $scope.autoLanguage( '获取任务信息失败，该任务不存在。' ) ) ;
                }
-            }
-            else
-            {
-               _IndexPublic.createRetryModel( $scope, null, function(){
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   queryTask( taskID ) ;
                   return true ;
-               }, $scope.autoLanguage( '获取任务信息失败' ), $scope.autoLanguage( '获取任务信息失败，该任务不存在。' ) ) ;
+               } ) ;
             }
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               queryTask( taskID ) ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null, false ) ;
+         }, {
+            'showLoading': false
+         } ) ;
       }
 
       queryTask( installTask ) ;

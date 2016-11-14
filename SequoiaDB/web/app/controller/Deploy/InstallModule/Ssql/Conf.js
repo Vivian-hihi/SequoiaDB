@@ -43,67 +43,69 @@
       var getHostList = function(){
          var filter = { "ClusterName": clusterName } ;
          var data = { 'cmd': 'query host', 'filter': JSON.stringify( filter ) } ;
-         SdbRest.OmOperation( data, function( hostList ){
-            $scope.HostList = hostList ;
-            $scope.Conf1['DiskNum'] = 0 ;
-            $.each( $scope.HostList, function( index, hostInfo ){
-               $scope.HostList[index]['checked'] = true ;
-               $.each( hostInfo['Disk'], function( index2, diskInfo ){
-                  if( diskInfo['IsLocal'] == true )
-                  {
-                     ++$scope.Conf1['DiskNum'] ;
-                  }
+         SdbRest.OmOperation( data, {
+            'success': function( hostList ){
+               $scope.HostList = hostList ;
+               $scope.Conf1['DiskNum'] = 0 ;
+               $.each( $scope.HostList, function( index, hostInfo ){
+                  $scope.HostList[index]['checked'] = true ;
+                  $.each( hostInfo['Disk'], function( index2, diskInfo ){
+                     if( diskInfo['IsLocal'] == true )
+                     {
+                        ++$scope.Conf1['DiskNum'] ;
+                     }
+                  } ) ;
+               } )  ;
+               getBusinessTemplate() ;
+               $scope.$apply() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getHostList() ;
+                  return true ;
                } ) ;
-            } )  ;
-            getBusinessTemplate() ;
-            $scope.$apply() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getHostList() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            }
          } ) ;
       }
 
       //获取业务模板
       var getBusinessTemplate = function(){
          var data = { 'cmd': 'get business template', 'BusinessType': 'sequoiasql' } ;
-         SdbRest.OmOperation( data, function( templateList ){
-            $.each( templateList, function( index ){
-               templateList[index]['Property'] = _Deploy.ConvertTemplate( templateList[index]['Property'] ) ;
-            } ) ;
-            var confForm = {
-               'keyWidth': '160px',
-               'inputList': [
+         SdbRest.OmOperation( data, {
+            'success': function( templateList ){
+               $.each( templateList, function( index ){
+                  templateList[index]['Property'] = _Deploy.ConvertTemplate( templateList[index]['Property'] ) ;
+               } ) ;
+               var confForm = {
+                  'keyWidth': '160px',
+                  'inputList': [
+                     {
+                        "name": "type",
+                        "webName": $scope.autoLanguage( '部署模式' ),
+                        "type": "select",
+                        "value": "",
+                        "valid": []
+                     }
+                  ]
+               } ;
+               $.each( templateList, function( index, template ){
+                  if( index == 0 )
                   {
-                     "name": "type",
-                     "webName": $scope.autoLanguage( '部署模式' ),
-                     "type": "select",
-                     "value": "",
-                     "valid": []
+                     confForm['inputList'][0]['value'] = template['DeployMod'] ;
+                     $scope.ConfForm2 = { 'keyWidth': '160px', 'inputList': template['Property'] } ;
                   }
-               ]
-            } ;
-            $.each( templateList, function( index, template ){
-               if( index == 0 )
-               {
-                  confForm['inputList'][0]['value'] = template['DeployMod'] ;
-                  $scope.ConfForm2 = { 'keyWidth': '160px', 'inputList': template['Property'] } ;
-               }
-               confForm['inputList'][0]['valid'].push( { 'key': template['WebName'], 'value': template['DeployMod'] } ) ;
-            } ) ;
-            $scope.templateList = templateList ;
-            $scope.ConfForm1 = confForm ;
-            $scope.$apply() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getBusinessTemplate() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+                  confForm['inputList'][0]['valid'].push( { 'key': template['WebName'], 'value': template['DeployMod'] } ) ;
+               } ) ;
+               $scope.templateList = templateList ;
+               $scope.ConfForm1 = confForm ;
+               $scope.$apply() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getBusinessTemplate() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
@@ -120,16 +122,17 @@
       //获取配置
       var getModuleConfig = function( Configure ){
          var data = { 'cmd': 'get business config', 'TemplateInfo': JSON.stringify( Configure ) } ;
-         SdbRest.OmOperation( data, function(){
-            $rootScope.tempData( 'Deploy', 'ModuleConfig', Configure ) ;
-            $location.path( '/Deploy/SSQL-Mod' ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getModuleConfig() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function(){
+               $rootScope.tempData( 'Deploy', 'ModuleConfig', Configure ) ;
+               $location.path( '/Deploy/SSQL-Mod' ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getModuleConfig() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       }
 
