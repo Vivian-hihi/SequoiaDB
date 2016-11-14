@@ -3536,7 +3536,7 @@ namespace engine
 
       if ( clInfo._isCompressed )
       {
-         if ( 0 == fieldMask & CAT_MASK_COMPRESSIONTYPE )
+         if ( 0 == ( fieldMask & CAT_MASK_COMPRESSIONTYPE ) )
          {
             clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
          }
