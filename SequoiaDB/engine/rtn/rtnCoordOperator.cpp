@@ -687,7 +687,7 @@ namespace engine
             nodeID.value = it->first ;
             PD_LOG( PDINFO, "Release node[%s] failed, because send msg "
                     "failed, rc: %d", routeID2String( nodeID ).c_str(),
-                    it->second ) ;
+                    it->second._rc ) ;
             ++it ;
          }
       }
