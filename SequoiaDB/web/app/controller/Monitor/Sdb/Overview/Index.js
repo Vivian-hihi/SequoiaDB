@@ -17,57 +17,52 @@
       $scope.clList = [] ;
       $scope.DatagroupNum = 0 ;
       var statusIcon = '' ;
+      var sql = '' ;
 
       //新表格
       $scope.GroupGridOptions = { 'titleWidth': [] } ;
 
       //渲染网格显示的列
       var gridShowColumn = function(){
-         $scope.GroupGridOptions['titleWidth'] = [] ;
-         $scope.GroupGridOptions['titleWidth'].push( '40px',15,15,30,20,20 ) ;
-         
+         $scope.GroupGridOptions[ 'titleWidth' ] = [] ;
+         $scope.GroupGridOptions[ 'titleWidth' ].push( '40px', 15, 15, 30, 20, 20 ) ;
       }
 
 
-      var sql = '' ;
-      sql = 'SELECT Name, Details FROM $SNAPSHOT_CL WHERE NodeSelect="master" ORDER BY Name' ;
       
-      $scope.queryList = function( data, success, failed, error, complete ){
-         SdbRest._postTest( './test/groupList', success, failed, error ) ;
-      } 
-      
-
       var getClInfo = function(){
+         sql = 'SELECT Name, Details FROM $SNAPSHOT_CL WHERE NodeSelect="master" ORDER BY Name' ;
          //获取CL信息
-         SdbRest.Exec( sql, function( clList ){
-            $scope.clList = clList ;
-            $.each( $scope.GroupList, function( index, groupInfo ){
-               //role 0 is data group
-               if( groupInfo['Role'] == 0 )
-               {
-                  $scope.DatagroupNum = $scope.DatagroupNum + 1 ;
-                  $scope.GroupList[index]['TotalCL'] = 0 ;
-                  $scope.GroupList[index]['TotalRecords'] = 0 ;
-                  $.each( $scope.clList, function( index2, clInfo ){
-                     $.each( clInfo['Details'], function( index3, clDetail ){
-                        if( clDetail['GroupName'] == groupInfo['GroupName'] )
-                        {
-                           ++$scope.GroupList[index]['TotalCL'] ;
-                           $scope.GroupList[index]['TotalRecords'] += clDetail['TotalRecords'] ;
-                        }
-                     } )
-                  } ) ;
-               }
-            } ) ;
-            gridShowColumn() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               $scope.getGroupList() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
+         SdbRest.Exec( sql, {
+            'success': function( clList ){
+               $scope.clList = clList ;
+               $.each( $scope.GroupList, function( index, groupInfo ){
+                  //role 0 is data group
+                  if( groupInfo['Role'] == 0 )
+                  {
+                     $scope.DatagroupNum = $scope.DatagroupNum + 1 ;
+                     $scope.GroupList[ index ][ 'TotalCL' ] = 0 ;
+                     $scope.GroupList[ index ][ 'TotalRecords' ] = 0 ;
+                     $.each( $scope.clList, function( index2, clInfo ){
+                        $.each( clInfo[ 'Details' ], function( index3, clDetail ){
+                           if( clDetail[ 'GroupName' ] == groupInfo[ 'GroupName' ] )
+                           {
+                              ++$scope.GroupList[index]['TotalCL'] ;
+                              $scope.GroupList[index]['TotalRecords'] += clDetail['TotalRecords'] ;
+                           }
+                        } )
+                     } ) ;
+                  }
+               } ) ;
+               gridShowColumn() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  $scope.getGroupList() ;
+                  return true ;
+               } ) ;
+            }
+         }, { 'showLoading': false } ) ;
       }
 
       var getGroupList = function(){
@@ -100,7 +95,7 @@
                return true ;
             } ) ;
          }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       } ;
       getGroupList() ;
@@ -247,18 +242,18 @@
       } ;
 
       //跳转至部署
-      $scope.GotoDeploy = function(){
-         $location.path( '/Deploy/Index' ) ;
+      $scope.GotoResources = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
       } ;
 
       //跳转至监控主页
-      $scope.GotoModule = function(){
-         $location.path( '/Monitor/Index' ) ;
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
       } ;
 
       //跳转至分区组列表
       $scope.GotoGroups = function(){
-         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+         $location.path( '/Monitor/SDB-Nodes/Groups' ) ;
       } ;
 
       //跳转至分区组信息
@@ -274,7 +269,21 @@
          $location.path( '/Monitor/SDB-Node/Index' ) ;
       } ;
 
+       //跳转至资源
+      $scope.GotoResource = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
+      } ;
 
+      //跳转至主机列表
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
+      } ;
+      
+      
+      //跳转至节点列表
+      $scope.GotoNodes = function(){
+         $location.path( '/Monitor/SDB-Nodes/Nodes' ) ;
+      } ;
    } ) ;
 }());
 

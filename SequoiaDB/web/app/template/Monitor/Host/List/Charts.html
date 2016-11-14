@@ -1,58 +1,34 @@
-<div style="padding:10px 15px;" ng-controller="Monitor.HostPerformance.Index.Ctrl" ng-container="{}">
-   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
-         </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{ClusterName}}</a></div>
-         </div>
-         <div class="clear-float"></div>
+<div ng-controller="Monitor.HostPerformance.Index.Ctrl" ng-container="{}">
+   <div style="background:#F4F4F4;" ng-container="{height:57}">
+      <div class="nav-new">
+         <div ng-click="GotoNodes()">节点</div>
+         <div ng-click="GotoResource()">资源</div>
+         <div class="active" ng-click="GotoHosts()">主机</div>
+         <div ng-click="GotoUser()">安全</div>
       </div>
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
-         </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">{{ModuleType}}</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{ModuleName}}</a></div>
-         </div>
-         <div class="clear-float"></div>
+   </div>
+   <div style="padding:8px 15px 10px 15px;" ng-container="{offsetY:-60}">
+      <div class="underlineTab" style="padding-top:10px;border-top:2px solid #F0F0F0;" ng-container="{height:50,marginTop:10}">
+         <ul class="right">
+            <li class="ng-scope" style="float:left;">
+               <a href="#/Monitor/Host-List/Index" class="ng-binding">{{autoLanguage("主机列表")}}</a>
+            </li>
+            <li class="active" style="float:left;">
+               <a href="#/Monitor/Host-List/Charts" class="ng-binding">{{autoLanguage("图表")}}</a>
+            </li>
+         </ul>
       </div>
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-laptop"></i>
-         </div>
-         <div style="height:50px;float:left;">
-            <div style="font-size:90%;">主机数</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Host-List/Index" class="linkButton">48</a></div>
+      <div ng-container="{offsetY:-95,marginTop:10}">
+         <div ng-container="{offsetX:-10,height:'50%'}">
+            <div style="border:1px solid #ddd;float:left;padding:10px;" ng-container="{offsetX:-10,width:'50%'}" create-chart="charts.Cpu"></div>
+            <div style="border:1px solid #ddd;float:left;padding:10px;" ng-container="{offsetX:-10,width:'50%',marginLeft:16}" create-chart="charts.memory"></div>
             <div class="clear-float"></div>
          </div>
-      </div>
-      <div class="clear-float"></div>
-   </div>
-
-   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
-      <ul class="right">
-         <li class="ng-scope" style="float:left;">
-            <a href="#/Monitor/Host-List/Index" class="ng-binding">{{autoLanguage("主机列表")}}</a>
-         </li>
-         <li class="active" style="float:left;">
-            <a href="#/Monitor/Host-List/Charts" class="ng-binding">{{autoLanguage("图表")}}</a>
-         </li>
-      </ul>
-   </div>
-   <div ng-container="{offsetY:-165,marginTop:10}">
-      <div ng-container="{offsetX:-10,height:'50%'}">
-         <div style="border:1px solid #ddd;float:left;padding:10px;" ng-container="{offsetX:-10,width:'50%'}" create-chart="charts.Cpu"></div>
-         <div style="border:1px solid #ddd;float:left;padding:10px;" ng-container="{offsetX:-10,width:'50%',marginLeft:16}" create-chart="charts.memory"></div>
-         <div class="clear-float"></div>
-      </div>
-      <div ng-container="{offsetX:-10,marginTop:20,height:'50%'}">
-         <div style="border:1px solid #ddd;float:left;padding:10px;"  ng-container="{offsetX:-10,width:'50%'}" create-chart="charts.network"></div>
-         <div style="border:1px solid #ddd;float:left;padding:10px;" ng-container="{offsetX:-10,width:'50%',marginLeft:16}" create-chart="charts.Storage"></div>
-         <div class="clear-float"></div>
+         <div ng-container="{offsetX:-10,marginTop:20,height:'50%'}">
+            <div style="border:1px solid #ddd;float:left;padding:10px;" ng-container="{offsetX:-10,width:'50%'}" create-chart="charts.network"></div>
+            <div style="border:1px solid #ddd;float:left;padding:10px;" ng-container="{offsetX:-10,width:'50%',marginLeft:16}" create-chart="charts.Storage"></div>
+            <div class="clear-float"></div>
+         </div>
       </div>
    </div>
 </div>

@@ -108,7 +108,7 @@
                   </td>
                   <td ng-repeat="fieldName in ShowKeyList track by $index">
                      <div class="Ellipsis" ng-switch on="fieldName">
-                        <a class="linkButton" ng-switch-when="SessionID" ng-click="ShowSession()">{{sessionInfo[fieldName]}}</a>
+                        <a class="linkButton" ng-switch-when="SessionID" ng-click="ShowSession(sessionInfo[fieldName])">{{sessionInfo[fieldName]}}</a>
                         <span ng-switch-default>{{sessionInfo[fieldName]}}</span>
                      </div>
                   </td>

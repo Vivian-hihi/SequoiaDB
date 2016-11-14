@@ -6,10 +6,9 @@
       var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       var isOpenSelectMenu = false ;
-      $scope.clusterName = clusterName ;
-      $scope.moduleName = moduleName ;
-      $scope.moduleType =  moduleType ;
-      $scope.NodeList = [] ;
+      $scope.ClusterName = clusterName ;
+      $scope.ModuleName = moduleName ;
+      $scope.ModuleType =  moduleType ;
       $scope.NodeGridOptions = { 'titleWidth': [] } ;
       $scope.ShowKeyList = [ 'NodeName', 'GroupName', 'IsPrimary', 'Role', 'TotalRecords', 'TotalLobs', 'LSN' ] ;
       $scope.ShowKey = [] ;
@@ -20,7 +19,8 @@
       $scope.ClList = [] ;
       var nodesList = [] ;
 
-       //获取节点列表
+
+      //获取节点列表
       var getNodesList = function(){
          var data = { 'cmd': 'list groups' } ;
          SdbRest.DataOperation( data, function( groups ){
@@ -120,41 +120,43 @@
                return true ;
             } ) ;
          }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+            //_IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          } ) ;
       } ;
 
       //获取CL快照
       var getClList = function(){
          var sql = 'SELECT t1.Name,t1.Details.TotalRecords, t1.Details.TotalLobs,t1.Details.NodeName from (SELECT Name, Details FROM $SNAPSHOT_CL WHERE Global = true split By Details) As t1' ;
-         SdbRest.Exec( sql, function( ClList ){
-            $scope.ClList = ClList ;
-            getNodesList() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getDbList() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
+         SdbRest.Exec( sql, {
+            'success': function( ClList ){
+               $scope.ClList = ClList ;
+               getNodesList() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getClList() ;
+                  return true ;
+               } ) ;
+            }
+         },{ 'showLoading': false } ) ;
       } ;
 
       //获取DB快照
       var getDbList = function(){
+         nodesList = [] ;
          var sql  = 'SELECT NodeName, HostName, GroupName, IsPrimary, ServiceName, ServiceStatus, NodeID FROM $SNAPSHOT_DB' ;
-         SdbRest.Exec( sql, function( DbList ){
-            $scope.DbList = DbList ;
-            
-            getClList() ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getDbList() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         } ) ;
+         SdbRest.Exec( sql, {
+            'success': function( DbList ){
+               $scope.DbList = DbList ;
+               getClList() ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getDbList() ;
+                  return true ;
+               } ) ;
+            }
+         }, { 'showLoading': false } ) ;
       } ;
 
       //设置排序字段
@@ -268,20 +270,35 @@
          fn: getDbList
       } ;
 
+       //跳转至资源
+      $scope.GotoResource = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
+      } ;
 
-      //跳转至部署
-      $scope.GotoDeploy = function(){
-         $location.path( '/Deploy/Index' ) ;
+      //跳转至主机列表
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
+      } ;
+      
+      
+      //跳转至节点列表
+      $scope.GotoNodes = function(){
+         $location.path( '/Monitor/SDB-Nodes/Nodes' ) ;
+      } ;
+
+     //跳转至部署
+      $scope.GotoResources = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
       } ;
 
       //跳转至监控主页
-      $scope.GotoModule = function(){
-         $location.path( '/Monitor/Index' ) ;
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
       } ;
 
       //跳转至分区组列表
       $scope.GotoGroups = function(){
-         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+         $location.path( '/Monitor/SDB-Nodes/Groups' ) ;
       } ;
       
       //跳转至节点信息
@@ -298,7 +315,8 @@
       } ;
 
       //跳转至主机信息
-      $scope.GotoHost = function(){
+      $scope.GotoHost = function( HostName ){
+         SdbFunction.LocalData( 'SdbHostName', HostName ) ;
          $location.path( '/Monitor/Host-Info/Index' ) ;
       } ;
 

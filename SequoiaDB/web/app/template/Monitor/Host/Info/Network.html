@@ -1,114 +1,94 @@
-﻿<div style="padding:10px 15px;" ng-controller="Performance.Network.Index.Ctrl" ng-container="{}">
-   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
-         </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{clusterName}}</a></div>
-         </div>
-         <div class="clear-float"></div>
+﻿<div ng-controller="Performance.Network.Index.Ctrl" ng-container="{}">
+   <div style="background:#F4F4F4;" ng-container="{height:57}">
+      <div class="nav-new">
+         <div ng-click="GotoNodes()">节点</div>
+         <div ng-click="GotoResource()">资源</div>
+         <div class="active" ng-click="GotoHosts()">主机</div>
+         <div ng-click="GotoUser()">安全</div>
       </div>
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
-         </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">{{moduleType}}</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{moduleName}}</a></div>
-         </div>
-         <div class="clear-float"></div>
+   </div>
+   <div style="padding:8px 15px 10px 15px;" ng-container="{offsetY:-60}">
+      <div style="background-color:#f0f0f0;" ng-container="{height:2}"></div>
+      <div style="margin-top:10px;" class="well Ellipsis">
+         <i class="fa fa-circle" style="color:#00CC66;"></i>
+         <span style="font-weight:bold;color:#006699;">&nbsp;{{hostName}}</span>
       </div>
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-laptop"></i>
-         </div>
-         <div style="height:50px;float:left;">
-            <div style="font-size:90%;">主机数</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Host-List/Index" class="linkButton">48</a></div>
-            <div class="clear-float"></div>
-         </div>
+
+      <div class="underlineTab" ng-container="{height:34,marginTop:10}">
+         <ul class="left">
+            <li>
+               <a href="#/Monitor/Host-Info/Index">{{autoLanguage("主机信息")}}</a>
+            </li>
+            <li>
+               <a href="#/Monitor/Host-Info/CPU">CPU</a>
+            </li>
+            <li>
+               <a href="#/Monitor/Host-Info/Memory">{{autoLanguage("内存")}}</a>
+            </li>
+            <li>
+               <a href="#/Monitor/Host-Info/Disk">{{autoLanguage("磁盘")}}</a>
+            </li>
+            <li class="active">
+               <a href="#/Monitor/Host-Info/Network">{{autoLanguage("网卡")}}</a>
+            </li>
+            <!--<li>
+               <a href="#/Monitor/Host-Info/Config">{{autoLanguage("系统配置")}}</a>
+            </li>-->
+            <li>
+               <a href="#/Monitor/Host-Info/Charts">{{autoLanguage("图表")}}</a>
+            </li>
+         </ul>
       </div>
-      <div class="clear-float"></div>
-   </div>
+      <div class="content" style="overflow-y:auto;border: 1px solid #E3E7E8;padding:10px;" ng-container="{offsetY:-115,marginTop:10}">
+         <div style="overflow-y:auto;" class="colorfulListBox green" ng-container="{height:270,marginBottom:15,offsetX:-20}" ng-repeat="networkInfo in NetList" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
+            <div ng-container="{height:20,offsetX:-30}" style="color:#666;font-size:100%;font-weight:bold;">网卡{{$index + 1}} - {{networkInfo['Name']}}</div>
+            <div ng-container="{marginTop:15,offsetX:-30,offsetY:-35}">
+               <div style="float:left;font-size:90%;color:#666;font-weight:bold;" ng-container="{width:350}">
+                  <table class="table loosen" style="word-wrap:normal;">
+                     <colgroup>
+                        <col style="width:100px;" />
+                        <col style="width:225px;" />
+                     </colgroup>
+                     <tr>
+                        <td>传输速率</td>
+                        <td>
+                           <div class="Ellipsis">1000Mbps</div>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>已发送流量</td>
+                        <td>
+                           <div class="Ellipsis">{{networkInfo['TXBytes']}}</div>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>已发送数据包</td>
+                        <td>
+                           <div class="Ellipsis">{{networkInfo['TXPackets']}}</div>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>已接收流量</td>
+                        <td>
+                           <div class="Ellipsis">{{networkInfo['RXBytes']}}</div>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>已接收数据包</td>
+                        <td>
+                           <div class="Ellipsis">{{networkInfo['RXPackets']}}</div>
+                        </td>
+                     </tr>
+                  </table>
 
-   <div style="margin-top:10px;" class="well Ellipsis">
-      <i class="fa fa-circle" style="color:#00CC66;"></i>
-      <span style="font-weight:bold;color:#006699;">&nbsp;{{hostName}}</span>
-   </div>
-
-   <div class="underlineTab" ng-container="{height:34,marginTop:10}">
-      <ul class="left">
-         <li>
-            <a href="#/Monitor/Host-Info/Index">{{autoLanguage("主机信息")}}</a>
-         </li>
-         <li>
-            <a href="#/Monitor/Host-Info/CPU">{{autoLanguage("处理器")}}</a>
-         </li>
-         <li>
-            <a href="#/Monitor/Host-Info/Memory">{{autoLanguage("内存")}}</a>
-         </li>
-         <li>
-            <a href="#/Monitor/Host-Info/Disk">{{autoLanguage("磁盘")}}</a>
-         </li>
-         <li class="active">
-            <a href="#/Monitor/Host-Info/Network">{{autoLanguage("网卡")}}</a>
-         </li>
-         <!--<li>
-            <a href="#/Monitor/Host-Info/Config">{{autoLanguage("系统配置")}}</a>
-         </li>-->
-      </ul>
-   </div>
-   <div class="content" style="overflow-y:auto;border: 1px solid #E3E7E8;padding:10px;" ng-container="{offsetY:-185,marginTop:10}">
-      <div style="overflow-y:auto;" class="colorfulListBox green" ng-container="{height:270,marginBottom:15,offsetX:-20}" ng-repeat="networkInfo in hostInfo" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
-         <div ng-container="{height:20,offsetX:-30}" style="color:#666;font-size:100%;font-weight:bold;">网卡{{$index + 1}} - {{networkInfo['Name']}}</div>
-         <div ng-container="{marginTop:15,offsetX:-30,offsetY:-35}">
-            <div style="float:left;font-size:90%;color:#666;font-weight:bold;" ng-container="{width:350}">
-               <table class="table loosen" style="word-wrap:normal;">
-                  <colgroup>
-                     <col style="width:100px;" />
-                     <col style="width:225px;" />
-                  </colgroup>
-                  <tr>
-                     <td>传输速率</td>
-                     <td>
-                        <div class="Ellipsis">{{networkInfo['Rate']}}</div>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td>已发送流量</td>
-                     <td>
-                        <div class="Ellipsis">{{networkInfo['SendTraffic']}}</div>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td>已发送数据包</td>
-                     <td>
-                        <div class="Ellipsis">{{networkInfo['SendPackets']}}</div>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td>已接收流量</td>
-                     <td>
-                        <div class="Ellipsis">{{networkInfo['receivedTraffic']}}</div>
-                     </td>
-                  </tr>
-                  <tr>
-                     <td>已接收数据包</td>
-                     <td>
-                        <div class="Ellipsis">{{networkInfo['receivedpacket']}}</div>
-                     </td>
-                  </tr>
-               </table>
-
-            </div>
-            <div style="float:left;" ng-container="{offsetX:-370}">
-               <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%'}" create-chart="charts.output"></div>
-               <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%'}" create-chart="charts.input"></div>
+               </div>
+               <div style="float:left;" ng-container="{offsetX:-370}">
+                  <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%'}" create-chart="networkInfo.TXChart"></div>
+                  <div style="height:220px;float:left;min-width:320px;" ng-container="{width:'50%'}" create-chart="networkInfo.RXChart"></div>
+                  <div class="clear-float"></div>
+               </div>
                <div class="clear-float"></div>
             </div>
-            <div class="clear-float"></div>
          </div>
       </div>
    </div>

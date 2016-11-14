@@ -11,48 +11,60 @@
       $scope.moduleType =  moduleType ;
       $scope.GridData = [] ;
       $scope.domainList = [] ;
+      $scope.DomainList = [] ;
       var gridData = {} ;
 
-      $scope.queryList = function( data, success, failed, error, complete )
-      {
-         SdbRest._postTest( './test/domainList', success, failed, error ) ;
+
+
+      var getClInfo = function(){
+         sql = 'SELECT Name, Details FROM $SNAPSHOT_CL WHERE NodeSelect="master" ORDER BY Name' ;
+         //获取CL信息
+         SdbRest.Exec( sql, function( clList ){
+            $.each( $scope.DomainList, function( index, domainInfo ){
+               $.each( domainInfo['Groups'], function( groupIndex, groupInfo ){
+                  $scope.DomainList[index]['Groups'][groupIndex]['TotalCL'] = 0 ;
+                  $scope.DomainList[index]['Groups'][groupIndex]['TotalRecords'] = 0 ;
+                  $.each( clList, function( index2, clInfo ){
+                     $.each( clInfo['Details'], function( index3, clDetail ){
+                        if( clDetail['GroupName'] == groupInfo['GroupName'] )
+                        {
+                           ++$scope.DomainList[index]['Groups'][groupIndex]['TotalCL'] ;
+                           $scope.DomainList[index]['Groups'][groupIndex]['TotalRecords'] += clDetail['TotalRecords'] ;
+                        }
+                     } )
+                  } ) ;
+               } ) ;
+            } ) ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getClInfo() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
       }
 
-      $scope.getDomainList = function(){
-         $scope.queryList( {}, function( test ){
-            $.each( test, function( index, domainList ){
-               $scope.domainList.push( domainList['Name'] ) ;
-               gridData = {
-                  'title': [
-                     { "text": $scope.autoLanguage( '分区组名' ) },
-                     { "text": $scope.autoLanguage( '组ID' ) },
-                     { "text": $scope.autoLanguage( '集合空间' ) },
-                     { "text": $scope.autoLanguage( '节点数' ) },
-                     { "text": $scope.autoLanguage( '主节点' ) }
-                  ],
-                  'body': [],
-                  'options': {
-                     'grid': {  'tdModel': 'fixed', 'gridModel': 'fixed', 'tdHeight': '19px', 'titleWidth': [ 25, 15, 15, 10, 35 ] 
-                     },
-                     'order': {
-                        'active': true
-                     }
-                  }
-               }
-               $.each( domainList['Groups'], function( key, value ){
-                  gridData['body'].push( [
-                     { 'html': $compile( '<span class="linkButton" ng-click="GotoGroup()">' + value['GroupName'] + '</span>' )( $scope ) },
-                     { 'text': value['GroupID'] },
-                     { 'text': value['TotalCS'] },
-                     { 'text': value['NodeNumber'] },
-                     { 'html': $compile( '<span class="linkButton" ng-click="GotoNode()">' + value['PrimaryNode'] + '</span>' )( $scope ) }
-                  ] )
-               } )
-               $scope.GridData.push(gridData) ;
-            } )
-         } )
-      }
-      $scope.getDomainList();
+
+      var getDomain = function(){
+         var data = { 'cmd': 'list domains' } ;
+         SdbRest.DataOperation( data, function( domains ){
+            $scope.DomainList = domains ;
+            getClInfo() ;
+         }, function( errorInfo ){
+            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+               getDomain() ;
+               return true ;
+            } ) ;
+         }, function(){
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         } ) ;
+      } ;
+      getDomain();
+
+      
+
+
       
       //显示域详细
       $scope.showDomain = function(){

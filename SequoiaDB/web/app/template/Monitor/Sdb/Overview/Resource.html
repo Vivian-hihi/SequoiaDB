@@ -104,6 +104,9 @@
                <tr ng-repeat="resourceInfo in ResourceList | orderBy:OrderByField">
                   <td>
                      <div class="Ellipsis">
+                        <!--模拟-->
+                        <i class="fa fa-circle" style="color:#00CC66;"  data-desc="正常运行中"></i>
+
                         <i class="fa fa-circle" style="color:#00CC66;" ng-if="resourceInfo['Status'] == 'Running'" data-desc="正常运行中"></i>
                         <i class="fa fa-circle" style="color:#F9A937;" ng-if="resourceInfo['Status'] == 'Waiting'" data-desc="该节点处于waiting状态"></i>
                         <i class="fa fa-circle" style="color:#D9534F;" ng-if="resourceInfo['Status'] == 'Destroying'" data-desc="该节点处于Destroying状态"></i>

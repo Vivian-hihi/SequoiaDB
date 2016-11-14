@@ -1,199 +1,130 @@
-<div style="padding:10px 15px;" ng-controller="Monitor.HostList.Index.Ctrl" ng-container="{}">
-   <div style="border-bottom:3px solid #ddd;padding-top:10px;" ng-container="{height:70}">
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-cubes"></i>
-         </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">集群</div>
-            <div class="Ellipsis" style="font-size:140%;color:#666;width:160px;"><a href="#/Deploy/Index" class="linkButton">{{ClusterName}}</a></div>
-         </div>
-         <div class="clear-float"></div>
-      </div>
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-tasks"></i>
-         </div>
-         <div style="height:50px;float:left;max-width:200px;">
-            <div style="font-size:90%;">{{ModuleType}}</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Index" class="linkButton">{{ModuleName}}</a></div>
-         </div>
-         <div class="clear-float"></div>
-      </div>
-      <div style="float:left;color:#808080;">
-         <div style="height:50px;width:45px;float:left;">
-            <i style="color:#ccc;padding-top:8px;font-size:218%;" class="fa fa-laptop"></i>
-         </div>
-         <div style="height:50px;float:left;">
-            <div style="font-size:90%;">主机数</div>
-            <div class="Ellipsis" style="font-size:140%;width:160px;"><a href="#/Monitor/Host-List/Index" class="linkButton">48</a></div>
-            <div class="clear-float"></div>
-         </div>
-      </div>
-      <div class="clear-float"></div>
-   </div>
-   
-   <div class="underlineTab" ng-container="{height:40,marginTop:10}">
-      <ul class="left">
-         <li class="active">
-            <a href="#/Monitor/Host-List/Index">{{autoLanguage("主机列表")}}</a>
-         </li>
-         <li>
-            <a href="#/Monitor/Host-List/Charts">{{autoLanguage("图表")}}</a>
-         </li>
-         <li style="float:right;width:250px;padding:0;">
-            <input type="text" class="form-control" ng-attr="{'data-desc':'用于快速搜索主机，例：Ubuntu-1201'}" ng-model="SearchName['Host']" ng-change="change()" />
-         </li>
-         <li style="float:right;">搜索：</li>
-      </ul>
-   </div>
-   <div ng-container="{marginTop:10,marginBottom:10,height:40}">
-      <div class="result success Ellipsis" style="height:38px;">
-         所有主机运行正常。
+<div ng-controller="Monitor.HostList.Index.Ctrl" ng-container="{}">
+   <div style="background:#F4F4F4;" ng-container="{height:57}">
+      <div class="nav-new">
+         <div ng-click="GotoNodes()" >节点</div>
+         <div ng-click="GotoResource()">资源</div>
+         <div class="active" ng-click="GotoHosts()">主机</div>
+         <div ng-click="GotoUser()">安全</div>
       </div>
    </div>
-   <div ng-container="{offsetY:-220,marginTop:15}">
-      <div class="Grid2" ng-grid2="HostGridOptions" ng-container="{offsetY:0}">
-         <div class="Grid2Header">
-            <table>
-               <colgroup>
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-               </colgroup>
-               <tbody>
-                  <tr>
-                     <td>
-                        <div class="Ellipsis">{{autoLanguage("主机名")}}</div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">{{autoLanguage("IP地址")}}</div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">{{autoLanguage("磁盘容量")}}</div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">{{autoLanguage("内存大小")}}</div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">{{autoLanguage("操作系统")}}</div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">{{autoLanguage("CPU")}}</div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">{{autoLanguage("网卡数")}}</div>
-                     </td>
-                  </tr>
-               </tbody>
-            </table>
-         </div>
-         <div class="Grid2Body">
-            <table>
-               <colgroup>
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-                  <col />
-               </colgroup>
-               <tbody>
-                  <tr ng-repeat="HostInfo in NewHostList | orderBy:OrderByField">
-                     <td>
-                        <div class="Ellipsis">
-                           <span class="linkButton" ng-click="GotoHost()">{{HostInfo['HostName']}}</span>
-                        </div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">
-                           <span>{{HostInfo['IP']}}</span>
-                        </div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">
-                           <span class="linkButton" ng-click="GotoDisk()">{{HostInfo['DiskSize']}}</span>
-                        </div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">
-                           <span class="linkButton" ng-click="GotoMemory()">{{HostInfo['MemorySize']}}</span>
-                        </div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">
-                           <span>{{HostInfo['OS']['Description']}}</span>
-                        </div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">
-                           <span class="linkButton" ng-click="GotoCPU()">{{HostInfo['CPU'][0]['Model']}}</span>
-                        </div>
-                     </td>
-                     <td>
-                        <div class="Ellipsis">
-                           <span class="linkButton" ng-click="GotoNet()">{{HostInfo['Net'].length}}</span>
-                        </div>
-                     </td>
-                  </tr>
-               </tbody>
-            </table>
+   <div style="padding:8px 15px 10px 15px;" ng-container="{offsetY:-60}">
+      <div class="underlineTab" style="padding-top:10px;border-top:2px solid #F0F0F0;" ng-container="{height:50,marginTop:10}">
+         <ul class="left">
+            <li class="active">
+               <a href="#/Monitor/Host-List/Index">{{autoLanguage("主机列表")}}</a>
+            </li>
+            <li>
+               <a href="#/Monitor/Host-List/Charts">{{autoLanguage("图表")}}</a>
+            </li>
+            <!--<li style="float:right;width:250px;padding:0;">
+               <input type="text" class="form-control" ng-attr="{'data-desc':'用于快速搜索主机，例：Ubuntu-1201'}" ng-model="SearchName['Host']" ng-change="change()" />
+            </li>
+            <li style="float:right;">搜索：</li>-->
+         </ul>
+      </div>
+      <div ng-container="{marginTop:10,marginBottom:10,height:40}">
+         <div class="result success Ellipsis" style="height:38px;">
+            所有主机运行正常。
          </div>
       </div>
-      <div class="GridTool">
-         <div class="ToolLeft">
-            <span>一共有 {{NewHostList.length}} 台主机</span>
-         </div>
-      </div>
-         <!--<div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-grid="HostListOptions" ng-container="{marginTop:10}">
-         <div class="GridHeader">
-            <div class="GridTr">
-               <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
-               <div class="GridTd Ellipsis">{{autoLanguage("IP地址")}}</div>
-               <div class="GridTd Ellipsis">{{autoLanguage("磁盘")}}</div>
-               <div class="GridTd Ellipsis">{{autoLanguage("内存")}}</div>
-               <div class="GridTd Ellipsis">{{autoLanguage("操作系统")}}</div>
-               <div class="GridTd Ellipsis">{{autoLanguage("CPU")}}</div>
-               <div class="GridTd Ellipsis">{{autoLanguage("网卡数")}}</div>
-               <div class="clear-float"></div>
+      <div ng-container="{offsetY:-160,marginTop:15}">
+         <div class="Grid2" ng-grid2="HostGridOptions" ng-container="{offsetY:0}">
+            <div class="Grid2Header">
+               <table>
+                  <colgroup>
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                  </colgroup>
+                  <tbody>
+                     <tr>
+                        <td>
+                           <div class="Ellipsis">{{autoLanguage("主机名")}}</div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">{{autoLanguage("IP地址")}}</div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">{{autoLanguage("磁盘容量")}}</div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">{{autoLanguage("内存大小")}}</div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">{{autoLanguage("操作系统")}}</div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">{{autoLanguage("CPU")}}</div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">{{autoLanguage("网卡数")}}</div>
+                        </td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <div class="Grid2Body">
+               <table>
+                  <colgroup>
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                     <col />
+                  </colgroup>
+                  <tbody>
+                     <tr ng-repeat="HostInfo in NewHostList | orderBy:OrderByField">
+                        <td>
+                           <div class="Ellipsis">
+                              <span class="linkButton" ng-click="GotoHost(HostInfo['HostName'])">{{HostInfo['HostName']}}</span>
+                           </div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">
+                              <span>{{HostInfo['IP']}}</span>
+                           </div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">
+                              <span class="linkButton" ng-click="GotoDisk(HostInfo['HostName'])">{{HostInfo['DiskSize']}}</span>
+                           </div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">
+                              <span class="linkButton" ng-click="GotoMemory(HostInfo['HostName'])">{{HostInfo['MemorySize']}}</span>
+                           </div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">
+                              <span>{{HostInfo['OS']['Description']}}</span>
+                           </div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">
+                              <span class="linkButton" ng-click="GotoCPU(HostInfo['HostName'])">{{HostInfo['CPU'][0]['Model']}}</span>
+                           </div>
+                        </td>
+                        <td>
+                           <div class="Ellipsis">
+                              <span class="linkButton" ng-click="GotoNet(HostInfo['HostName'])">{{HostInfo['Net'].length}}</span>
+                           </div>
+                        </td>
+                     </tr>
+                  </tbody>
+               </table>
             </div>
          </div>
-         <div class="GridBody">
-            <div class="GridTr" ng-repeat="hostInfo in HostList track by $index" ng-hide="hostInfo['show'] == false">
-               <div class="GridTd Ellipsis" style="word-break:break-all;">
-                  <a href="#/Monitor/Host-Info/Index" class="linkButton">{{hostInfo['HostName']}}</a>
-               </div>
-               <div class="GridTd Ellipsis" style="word-break:break-all;">
-                  {{hostInfo['IPAddress']}}
-               </div>
-               <div class="GridTd Ellipsis" style="word-break:break-all;">
-                  {{hostInfo['Disk']}}
-               </div>
-               <div class="GridTd Ellipsis" style="word-break:break-all;">
-                  {{hostInfo['Memory']}}
-               </div>
-               <div class="GridTd Ellipsis" style="word-break:break-all;">
-                  {{hostInfo['OS']}}
-               </div>
-               <div class="GridTd Ellipsis" style="word-break:break-all;">
-                  {{hostInfo['CPU']}}
-               </div>
-               <div class="GridTd Ellipsis" style="word-break:break-all;">
-                  {{hostInfo['NetworkCard']}}
-               </div>
-               <div class="clear-float"></div>
+         <div class="GridTool">
+            <div class="ToolLeft">
+               <span>一共有 {{NewHostList.length}} 台主机</span>
             </div>
          </div>
       </div>
-      <div class="GridTool">
-         <div class="ToolLeft">
-            <span>{{HostGridTool}}</span>
-         </div>
-      </div>-->
-      </div>
+   </div>
 </div>

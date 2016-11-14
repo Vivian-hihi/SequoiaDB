@@ -18,8 +18,8 @@
          var chartInfo = { 'TotalInsert':0, 'TotalUpdate': 0, 'TotalDelete':0, 'TotalRead':0 } ;
          var SumInfo = {} ;
          sql = 'SELECT TotalInsert, TotalRead, TotalDelete, TotalUpdate FROM $SNAPSHOT_DB WHERE GroupName="' + GroupName + '" AND NodeSelect = "master"' ;
-         SdbFunction.Interval( function(){
-            SdbRest.Exec( sql, function( DbInfo ){
+         SdbRest.Exec( sql, {
+            'success': function( DbInfo ){
                DbInfo = DbInfo[0] ;
                if( typeof( SumInfo['TotalInsert'] ) == 'undefined' )
                {
@@ -41,16 +41,20 @@
                   SumInfo['TotalRead'] = DbInfo['TotalRead'] ;
                }
 
-            }, function( errorInfo ){
+            },
+            'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  getDbInfo() ;
+                  getChartInfo() ;
                   return true ;
                } ) ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-            }, null, false ) ;
-         }, 2000 ) ;
+            }
+         }, {
+            'showLoading': false,
+            'delay': 5000,
+            'loop': true
+         } ) ;
       } ;
+      getChartInfo() ;
       
       $scope.charts['Insert'] = {} ;
       $scope.charts['Insert']['options'] = window.SdbSacManagerConf.RecordInsertEchart ;
@@ -63,7 +67,6 @@
 
       $scope.charts['Read'] = {} ;
       $scope.charts['Read']['options'] = window.SdbSacManagerConf.RecordReadEchart ;
-      getChartInfo() ;
 
       //跳转至部署
       $scope.GotoDeploy = function(){
@@ -77,7 +80,22 @@
 
       //跳转至分区组列表
       $scope.GotoGroups = function(){
-         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+         $location.path( '/Monitor/SDB-Nodes/Groups' ) ;
+      } ;
+       //跳转至资源
+      $scope.GotoResource = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
+      } ;
+
+      //跳转至主机列表
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
+      } ;
+      
+      
+      //跳转至节点列表
+      $scope.GotoNodes = function(){
+         $location.path( '/Monitor/SDB-Nodes/Nodes' ) ;
       } ;
    } ) ;
 

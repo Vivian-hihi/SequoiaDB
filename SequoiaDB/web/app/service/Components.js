@@ -285,7 +285,8 @@
          g.resize() ;
       } ) ;
    } ) ;
-   //填写信息用的弹窗
+
+   //填写信息用的弹窗(废弃)
    sacApp.service( 'FormModal', function( $window, SdbFunction, SdbRest ){
       var g = this ;
       g.zIndex = 3000 ;

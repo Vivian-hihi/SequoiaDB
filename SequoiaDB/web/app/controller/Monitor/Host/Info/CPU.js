@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Performance.CPU.Index.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Performance.CPU.Index.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
       $scope.ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
       $scope.ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
       $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
@@ -23,26 +23,27 @@
             'cmd': 'query host',
             'filter': JSON.stringify( { 'HostName': hostName } )
          } ;
-         SdbRest.OmOperation( data, function( hostInfo ){
-            $.each( hostInfo[0]['CPU'], function( index, cpuInfo ){
-               cpuInfo['Freq'] = parseFloat( cpuInfo['Freq'].substr(0,4) ) ;
-               //数据暂无，待补充
-               cpuInfo['L1Cache'] = '1MB' ;
-               cpuInfo['L2Cache'] = '2MB' ;
-               cpuInfo['L3Cache'] = '8MB' ;
-               //逻辑处理器
-               cpuInfo['Processor'] = 4 ;
-               //进程数
-               cpuInfo['Processes'] = 126 ;
-               $scope.CpuList.push( cpuInfo ) ;
-            } ) ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getCpuInfo() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.OmOperation( data, {
+            'success': function( hostInfo ){
+               $.each( hostInfo[0]['CPU'], function( index, cpuInfo ){
+                  cpuInfo['Freq'] = parseFloat( cpuInfo['Freq'].substr(0,4) ) ;
+                  //数据暂无，待补充
+                  cpuInfo['L1Cache'] = '1MB' ;
+                  cpuInfo['L2Cache'] = '2MB' ;
+                  cpuInfo['L3Cache'] = '8MB' ;
+                  //逻辑处理器
+                  cpuInfo['Processor'] = 4 ;
+                  //进程数
+                  cpuInfo['Processes'] = 126 ;
+                  $scope.CpuList.push( cpuInfo ) ;
+               } ) ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getCpuInfo() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       } ;
 
@@ -51,8 +52,8 @@
             'cmd':'query host status',
             'HostInfo': JSON.stringify( { "HostInfo": [ { 'HostName': hostName } ] } )
          } ;
-         SdbFunction.Interval( function(){
-            SdbRest.OmOperation( data, function( chartInfo ){
+         SdbRest.OmOperation( data, {
+            'success': function( chartInfo ){
                diskUsed = 0 ;
                diskSize = 0 ;
                chartDetail = chartInfo[0]['HostInfo'][0] ;
@@ -71,27 +72,25 @@
                   $scope.charts['Cpu']['value'] = [ [ 0, 0, true, false ],[ 1, s, true, false   ] ] ;
                   sumCpu = sumCpuOld ;
                   idleCpu = idleCpuOld ;
-
                }
                else
                {
-
                   $scope.charts['Cpu']['value'] = [ [ 0, 100 - ( ( idleCpuOld - idleCpu ) / ( sumCpuOld - sumCpu ) ).toFixed(2) * 100, true, false ],[ 1, s, true, false ] ] ;
-
                   sumCpu = sumCpuOld ;
                   idleCpu = idleCpuOld ;
                }
-
-               //alert(( idleCpuOld/sumCpuOld ).toFixed(2) * 100)
-            }, function( errorInfo ){
+            },
+            'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   getChartInfo() ;
                   return true ;
                } ) ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-            }, null, false ) ;
-         }, 5000 )
+            }
+         }, {
+            'showLoading': false,
+            'delay': 5000,
+            'loop': true
+         } ) ;
       } ;
       getCpuInfo() ;
       getChartInfo() ;
@@ -116,6 +115,22 @@
          } ) ;
       }
       $scope.getInfo();
+
+      //跳转至资源
+      $scope.GotoResource = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
+      } ;
+
+      //跳转至主机列表
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
+      } ;
+      
+      
+      //跳转至节点列表
+      $scope.GotoNodes = function(){
+         $location.path( '/Monitor/SDB-Nodes/Nodes' ) ;
+      } ;
    } ) ;
 
 }());

@@ -2,13 +2,12 @@
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.SdbNode.Session.Ctrl', function( $scope, $compile, SdbRest, $location, SdbFunction ){
-      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
-      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      $scope.ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      $scope.ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
+      $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      var HostName = SdbFunction.LocalData( 'SdbHostName' ) ;
+      var svcname = SdbFunction.LocalData( 'SdbServiceName' ) ;
       var isOpenSelectMenu = false ;
-      $scope.clusterName = clusterName ;
-      $scope.moduleName = moduleName ;
-      $scope.moduleType =  moduleType ;
 
       var isOpenSelectMenu = false ;
       $scope.SessionList = [] ;
@@ -18,9 +17,6 @@
       $scope.SelectMenu = [] ;
       $scope.OrderByField = [] ;
       $scope.SessionType = 'all' ;
-      //节点信息，后期根据 跳转函数 获取节点名（主机名+端口号）
-      var HostName = 'ubuntu-test-03' ;
-      var svcname = 11830 ;
 
       //设置排序字段
       $scope.SetOrderField = function( fieldName ){
@@ -91,8 +87,8 @@
       //渲染网格显示的列
       var gridShowColumn = function(){
          $scope.SessionGridOptions['titleWidth'] = [] ;
-         $scope.SessionGridOptions['titleWidth'].push( '50px' ) ;
-         var widthPercent = 100 / $scope.ShowKeyList.length ;
+         $scope.SessionGridOptions['titleWidth'].push( '50px', '230px' ) ;
+         var widthPercent = 100 / ( $scope.ShowKeyList.length - 1 ) ;
          $.each( $scope.ShowKeyList, function( index, keyName ){
             $scope.SessionGridOptions['titleWidth'].push( widthPercent ) ;
          } ) ;
@@ -128,75 +124,56 @@
       var sql = 'SELECT * FROM $SNAPSHOT_SESSION WHERE HostName="' + HostName +'" AND svcname="'+ svcname + '"' ;
 
       var getSessionList = function(){
-         SdbRest.Exec( sql, function( SessionList ){
-            $scope.SessionList = [] ;
-            var keyList = [] ;
-            $.each( SessionList, function( index, value ){
-               if( typeof( value['SessionID'] ) != 'undefined' )
-               {
-                  keyList = SdbFunction.getJsonKeys( value, 0, keyList ) ;
-                  $scope.SessionList.push( value )
-               }
-            } ) ;
-            $scope.ShowKey = [] ;
-            $scope.SelectMenu = [] ;
-            $.each( keyList, function( index, key ){
-               if( key != 'Status' )
-               {}
-               $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
-               $scope.SelectMenu.push( { 
-                  'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
-                  'onClick': function(){}
+         SdbRest.Exec( sql, {
+            'success': function( SessionList ){
+               $scope.SessionList = [] ;
+               var keyList = [] ;
+               $.each( SessionList, function( index, value ){
+                  if( typeof( value['SessionID'] ) != 'undefined' )
+                  {
+                     keyList = SdbFunction.getJsonKeys( value, 0, keyList ) ;
+                     $scope.SessionList.push( value )
+                  }
                } ) ;
-            } ) ;
-            $scope.SelectMenu.push( { 
-               'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList()" style="width:100%;">确定</button>' )( $scope )
-            } ) ;
-            gridShowColumn() ;
-            $scope.Timer.complete = true ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getSessionList() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-         }, null ,false ) ;
-
+               $scope.ShowKey = [] ;
+               $scope.SelectMenu = [] ;
+               $.each( keyList, function( index, key ){
+                  
+                  $scope.ShowKey.push( { 'key': key, 'show': $scope.ShowKeyList.indexOf( key ) >= 0 } ) ;
+                  $scope.SelectMenu.push( { 
+                     'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px"><input type="checkbox" ng-model="ShowKey[\'' + index + '\'][\'show\']"/>&nbsp;' + key + '</div></label>' )( $scope ),
+                     'onClick': function(){}
+                  } ) ;
+               } ) ;
+               $scope.SelectMenu.push( { 
+                  'html': $compile( '<button class="btn btn-primary" ng-click="SaveShowKeyList()" style="width:100%;">确定</button>' )( $scope )
+               } ) ;
+               gridShowColumn() ;
+               $scope.Timer.complete = true ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getSessionList() ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
       } ;
-
+      
       getSessionList() ;
    
 
       //显示会话详细
-      $scope.ShowSession = function(){
-         $scope.Components.Modal.sessionInfo = {
-            '会话ID' : 'Host-test-02:11810:10' ,
-            '对应系统线程ID': 854 ,
-            '会话状态' : 'Running' ,
-            'EDU类型' : 'Agent' ,
-            '等待请求的队列长度' : 0 ,
-            '已经处理请求的数量' : 150 ,
-            '上下文ID数组' : 199 ,
-            '数据记录读' : 0 ,
-            '索引读' : 0 ,
-            '数据记录写' : 0 ,
-            '索引写' : 0 ,
-            '总更新记录数量' : 0 ,
-            '总删除记录数量' : 0 ,
-            '总插入记录数量' : 0 ,
-            '总读取记录数量' : 0 ,
-            '总数据读' : 0 ,
-            '总数据读时间' : 0 ,
-            '总数据写时间' : 0 ,
-            '读取记录的时间' : 0 ,
-            '写入记录的时间' : 0 ,
-            '连接发起时间' : "2016-04-07-19.19.42.932665",
-            '最后一次操作类型' : 'COMMAND',
-            'LastOpInfo' : 'Command:$SNAPSHOT_SESSION_CUR, Collection:, Match:{}, Selector:{}, OrderBy:{ \"SessionID\": 1 }, Hint:{}, Skip:0, Limit:-1, Flag:0x00000000(0)',
-            "UserCPU" : 0.03 ,
-            "SysCPU" : 0.02
-         } ;
+      $scope.ShowSession = function( sessionID ){
+         
+         var choose = {} ;
+         $.each( $scope.SessionList, function( index, sessionInfo ){
+            if( sessionInfo['SessionID'] == sessionID )
+            {
+               choose = sessionInfo ;
+            }
+         } )
+         $scope.Components.Modal.sessionInfo = choose ;
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = '会话详细' ;
          $scope.Components.Modal.noOK = true ;
@@ -209,10 +186,10 @@
 <td style="width:60%;background-color:#F1F4F5;"><b>Value</b></td>\
 </tr>\
 <tr>\
-<td>会话ID</td>\
-<td>{{data.sessionInfo["会话ID"]}}</td>\
+<td>SessionID</td>\
+<td>{{data.sessionInfo["SessionID"]}}</td>\
 </tr>\
-<tr ng-repeat="(key, value) in data.sessionInfo" ng-if="key != \'会话ID\'">\
+<tr ng-repeat="(key, value) in data.sessionInfo" ng-if="key != \'SessionID\'">\
 <td>{{key}}</td>\
 <td>{{value}}</td>\
 </tr>\
@@ -255,7 +232,6 @@
             isOpenSelectMenu = false ;
             $scope.Timer.status = 'start' ;
          }
-         alert($scope.Timer['interval'])
          $scope.SessionType = $scope.screenResult['Role'] ;
          if( $scope.screenResult['Role'] == 'current' )
          {
@@ -288,7 +264,23 @@
 
       //跳转至分区组列表
       $scope.GotoGroups = function(){
-         $location.path( '/Monitor/SDB-Overview/Index' ) ;
+         $location.path( '/Monitor/SDB-Nodes/Groups' ) ;
+      } ;
+
+       //跳转至资源
+      $scope.GotoResource = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
+      } ;
+
+      //跳转至主机列表
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
+      } ;
+      
+      
+      //跳转至节点列表
+      $scope.GotoNodes = function(){
+         $location.path( '/Monitor/SDB-Nodes/Nodes' ) ;
       } ;
    } ) ;
 }());

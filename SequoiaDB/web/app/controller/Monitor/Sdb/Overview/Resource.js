@@ -14,7 +14,7 @@
       $scope.SelectMenu = [] ;
       $scope.ResourceList = [] ;
       $scope.ResourceGridOptions = { 'titleWidth': [] } ;
-      $scope.ShowKeyList = [ 'SessionID', 'ContextID', 'Description', 'DataRead' ] ;
+      $scope.ShowKeyList = [ 'SessionID', 'ContextID', 'Type', 'Description', 'DataRead', 'IndexRead' ] ;
       $scope.ShowKey = [] ;
       $scope.SelectMenu = [] ;
       $scope.OrderByField = [] ;

@@ -1,16 +1,12 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbNode.Index.Ctrl', function( $scope, $compile, SdbRest, SdbFunction ){
-      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
-      var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
-      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+   sacApp.controllerProvider.register( 'Monitor.SdbNode.Index.Ctrl', function( $scope, $compile, SdbRest, $location, SdbFunction ){
+      $scope.ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      $scope.ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
+      $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       var HostName = SdbFunction.LocalData( 'SdbHostName' ) ;
       var svcname = SdbFunction.LocalData( 'SdbServiceName' ) ;
-      $scope.clusterName = clusterName ;
-      $scope.moduleName = moduleName ;
-      $scope.moduleType = moduleType ;
       $scope.TotalRecords = 0 ;
       $scope.TotalLobs = 0 ;
       $scope.TotalCl = 0 ;
@@ -24,8 +20,8 @@
          var chartInfo = { 'TotalInsert':0, 'TotalUpdate': 0, 'TotalDelete':0, 'TotalRead':0 } ;
          var SumInfo = {} ;
          sql = 'SELECT TotalInsert, TotalRead, TotalDelete, TotalUpdate FROM $SNAPSHOT_DB WHERE HostName="' + HostName +'" AND svcname="'+ svcname + '"' ;
-         SdbFunction.Interval( function(){
-            SdbRest.Exec( sql, function( DbInfo ){
+         SdbRest.Exec( sql, { 
+            'success': function( DbInfo ){
                DbInfo = DbInfo[0] ;
                if( typeof( SumInfo['TotalInsert'] ) == 'undefined' )
                {
@@ -47,54 +43,59 @@
                   SumInfo['TotalRead'] = DbInfo['TotalRead'] ;
                }
 
-            }, function( errorInfo ){
+            },
+            'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
                   getDbInfo() ;
                   return true ;
                } ) ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-            }, null, false ) ;
-         }, 5000 ) ;
+            }
+         }, {
+            'showLoading': false,
+            'delay': 5000,
+            'loop': true
+         } ) ;
       } ;
 
       var getDbInfo = function(){
          sql = 'SELECT NodeName, Role, IsPrimary, GroupName, HostName, Disk, NodeID, ServiceStatus, TotalInsert, TotalRead, TotalDelete, TotalUpdate FROM $SNAPSHOT_DB WHERE HostName="' + HostName +'" AND svcname="'+ svcname + '"' ;
-         SdbRest.Exec( sql, function( DbInfo ){
-            $scope.nodeInfo = DbInfo[0] ;
-            //LSN无法获取
-            $scope.nodeInfo['TotalRecords'] = $scope.TotalRecords ;
-            $scope.nodeInfo['TotalLobs'] = $scope.TotalLobs ;
-            $scope.nodeInfo['TotalCl'] = $scope.TotalCl ;
-            getChartInfo()
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getDbInfo() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+         SdbRest.Exec( sql, {
+            'success': function( DbInfo ){
+               $scope.nodeInfo = DbInfo[0] ;
+               //LSN无法获取
+               $scope.nodeInfo['TotalRecords'] = $scope.TotalRecords ;
+               $scope.nodeInfo['TotalLobs'] = $scope.TotalLobs ;
+               $scope.nodeInfo['TotalCl'] = $scope.TotalCl ;
+               getChartInfo()
+            }, 
+            'failed':function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getDbInfo() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       } ;
 
       var getClList = function(){
-         sql = 'SELECT t1.Name,t1.Details.TotalRecords, t1.Details.TotalLobs,t1.Details.NodeName FROM (SELECT Name, Details FROM $SNAPSHOT_CL WHERE HostName="' + HostName +'" AND svcname="'+ svcname + '"' + ' SPLIT By Details) As t1'
-         SdbRest.Exec( sql, function( ClList ){
-            $.each( ClList, function( index, ClInfo ){
-               $scope.TotalRecords += ClInfo['TotalRecords'] ;
-               $scope.TotalLobs += ClInfo['TotalLobs'] ;
-            } ) ;
-            $scope.TotalCl = ClList.length ;
+         sql = 'SELECT t1.Name, t1.Details.TotalRecords, t1.Details.TotalLobs, t1.Details.NodeName FROM (SELECT Name, Details FROM $SNAPSHOT_CL WHERE HostName="' + HostName +'" AND svcname="'+ svcname + '"' + ' SPLIT By Details) As t1'
+         SdbRest.Exec( sql, {
+            'success': function( ClList ){
+               $.each( ClList, function( index, ClInfo ){
+                  $scope.TotalRecords += ClInfo['TotalRecords'] ;
+                  $scope.TotalLobs += ClInfo['TotalLobs'] ;
+               } ) ;
+               $scope.TotalCl = ClList.length ;
 
-            $scope.ClList = ClList ;
-            getDbInfo()
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getClInfo() ;
-               return true ;
-            } ) ;
-         }, function(){
-            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+               $scope.ClList = ClList ;
+               getDbInfo()
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getClInfo() ;
+                  return true ;
+               } ) ;
+            }
          } ) ;
       } ;
 
@@ -113,5 +114,27 @@
 
       $scope.charts['Query'] = {} ;
       $scope.charts['Query']['options'] = window.SdbSacManagerConf.RecordReadEchart ;
+
+      //跳转至分区组
+      $scope.GotoGroup = function( GroupName ){
+         SdbFunction.LocalData( 'SdbGroupName', GroupName ) ;
+         $location.path( '/Monitor/SDB-Group/Index' ) ;
+      } ;
+
+      //跳转至资源
+      $scope.GotoResources = function(){
+         $location.path( '/Monitor/SDB-Resources/Domain' ) ;
+      } ;
+
+      //跳转至主机列表
+      $scope.GotoHosts = function(){
+         $location.path( '/Monitor/Host-List/Index' ) ;
+      } ;
+      
+      
+      //跳转至节点列表
+      $scope.GotoNodes = function(){
+         $location.path( '/Monitor/SDB-Nodes/Nodes' ) ;
+      } ;
    } ) ;
 }());
