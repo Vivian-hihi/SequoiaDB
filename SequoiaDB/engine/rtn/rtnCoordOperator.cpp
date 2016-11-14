@@ -487,11 +487,11 @@ namespace engine
          ROUTE_RC_MAP::iterator it = pRC->begin() ;
          while( it != pRC->end() )
          {
-            retry = rtnCoordCataReplyCheck( cb, it->second, _canRetry( times ),
+            retry = rtnCoordCataReplyCheck( cb, it->second._rc, _canRetry( times ),
                                             cataInfo, &hasUpdate, canUpdate ) ;
             if ( !retry )
             {
-               errRC = it->second ;
+               errRC = it->second._rc ;
                if ( pNodeID )
                {
                   pNodeID->value = it->first ;
@@ -886,7 +886,7 @@ namespace engine
 
       if ( failedNodes.size() != 0 )
       {
-         rc = rcTmp ? rcTmp : failedNodes.begin()->second ;
+         rc = rcTmp ? rcTmp : failedNodes.begin()->second._rc ;
          goto error ;
       }
 

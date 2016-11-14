@@ -54,6 +54,7 @@ namespace engine
    */
    const CHAR *sdbGetErrMsg() ;
    void  sdbSetErrMsg( const CHAR *err ) ;
+   void  sdbSetErrMsg( const CHAR *err, const CHAR *detail ) ;
    BOOLEAN sdbIsErrMsgEmpty() ;
 
    INT32 sdbGetErrno() ;

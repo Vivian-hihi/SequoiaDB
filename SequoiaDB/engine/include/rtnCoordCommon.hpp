@@ -46,8 +46,40 @@ using namespace bson ;
 
 namespace engine
 {
+   struct coordErrorInfo
+   {
+      INT32       _rc ;
+      BSONObj     _obj ;
+
+      coordErrorInfo( INT32 rc = SDB_OK )
+      {
+         _rc = rc ;
+      }
+      coordErrorInfo( INT32 rc, const BSONObj &obj )
+      {
+         _rc = rc ;
+         _obj = obj.getOwned() ;
+      }
+      coordErrorInfo( const MsgOpReply *reply )
+      {
+         INT32 offset = reply->header.messageLength -
+                        (INT32)sizeof( MsgOpReply ) ;
+         _rc = reply->flags ;
+         if ( reply->flags && offset > 0 )
+         {
+            try
+            {
+               _obj = BSONObj( (const CHAR*)reply + offset ).getOwned() ;
+            }
+            catch( std::exception & )
+            {
+               /// do nothing
+            }
+         }
+      }
+   } ;
    typedef std::queue<CHAR *>                         REPLY_QUE ;
-   typedef _utilMap< UINT64, INT32, 20 >              ROUTE_RC_MAP ;
+   typedef _utilMap< UINT64, coordErrorInfo, 20 >     ROUTE_RC_MAP ;
    typedef _utilMap< UINT64, MsgHeader*, 20 >         ROUTE_REPLY_MAP ;
    typedef _utilMap< UINT32, netIOVec, 20 >           GROUP_2_IOVEC ;
    typedef std::set< INT32 >                          SET_RC ;
@@ -470,6 +502,13 @@ namespace engine
                                     BSONObj *pNewObj = NULL ) ;
 
    BOOLEAN rtnCoordCanRetry( UINT32 retryTimes ) ;
+
+   void  rtnBuildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
+                                  BSONObjBuilder &builder ) ;
+
+   BSONObj rtnBuildErrorObj( INT32 &flag,
+                             pmdEDUCB *cb,
+                             ROUTE_RC_MAP *pFailedNodes = NULL ) ;
 
 }
 

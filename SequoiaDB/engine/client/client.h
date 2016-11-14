@@ -100,6 +100,18 @@ typedef ossValuePtr sdbDomainHandle ;
 typedef ossValuePtr sdbLobHandle ;
 typedef ossValuePtr sdbDCHandle ;
 
+/** Callback function when the reply message is error **/
+typedef void (*ERROR_ON_REPLY_FUNC)( const CHAR *pErrorObj,
+                                     INT32 flag,
+                                     const CHAR *pDescription,
+                                     const CHAR *pDetail ) ;
+
+/** \fn INT32 sdbSetErrorOnReplyCallback ( ERROR_ON_REPLY_FUNC func )
+    \brief Set the callback function when reply message if error from server
+    \param [in] func The callback function when called on reply error
+*/
+SDB_EXPORT void sdbSetErrorOnReplyCallback( ERROR_ON_REPLY_FUNC func ) ;
+
 /** sdbReplicaNodeHandle will be deprecated in version 2.x, use sdbNodeHandle instead of it. */
 typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 
@@ -213,6 +225,20 @@ SDB_EXPORT INT32 sdbSecureConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
     \param [in] handle The database connection handle
 */
 SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle ) ;
+
+/** \fn void sdbGetLastErrorObj ( bson *obj )
+    \brief Get the error object info for the last operation in the thread
+    \param [out] obj The return error bson object
+    \retval SDB_OK Get error object Success
+    \retval SDB_DMS_EOC There is no error object
+    \retval Others Get error object Fail
+*/
+SDB_EXPORT INT32 sdbGetLastErrorObj( bson *obj ) ;
+
+/** \fn void sdbCleanLastErrorObj ()
+    \brief Clean the last error object info in the thread
+*/
+SDB_EXPORT void sdbCleanLastErrorObj() ;
 
 /** \fn INT32 sdbCreateUsr( sdbConnectionHandle cHandle, const CHAR *pUsrName,
                             const CHAR *pPasswd ) ;
@@ -2446,14 +2472,11 @@ SDB_EXPORT INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info ) ;
     \brief sync database which are specified
     \param [in] cHandle The database connection handle
     \param [in] options The options specified by user
-    \param [out] info The info returns from database after synchronization done
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-/// not released yet!
 SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
-                            bson *options,
-                            bson *info ) ;
+                            bson *options ) ;
 
 
 /** \fn void sdbSetConnectionInterruptFunc( sdbConnectionHandle cHandle,

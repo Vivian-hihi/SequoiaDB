@@ -60,6 +60,12 @@
 #include "utilStr.hpp"
 #include "ossProc.hpp"
 
+#if defined (SDB_CLIENT)
+#include "../client/client.h"
+#include "../client/client_internal.h"
+#include "msg.h"
+#endif // SDB_CLIENT
+
 #define SAFE_BSON_DISPOSE( p ) \
    do { if ( p ) { bson_dispose( p ) ; ( p ) = NULL ; } } while ( 0 )
 
@@ -74,26 +80,26 @@
 
 #define REPORT_RC(cond, funcName, rc)                       \
    do {                                                     \
-      engine::sdbSetErrMsg( NULL ) ;\
-      engine::sdbSetErrno( SDB_OK ) ;                           \
+      engine::sdbSetErrMsg( NULL ) ;                        \
+      engine::sdbSetErrno( SDB_OK ) ;                       \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
          engine::sdbSetErrMsg( rc ? getErrDesp( rc ) : NULL ) ;\
          engine::sdbSetErrno( rc ) ;                         \
-         JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
+         JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;\
          goto error ;                                       \
       }                                                     \
    } while ( 0 )
 
 #define REPORT_RC_MSG(cond, funcName, rc, msg )             \
    do {                                                     \
-      engine::sdbSetErrMsg( NULL ) ;                         \
-      engine::sdbSetErrno( SDB_OK ) ;                           \
+      engine::sdbSetErrMsg( NULL ) ;                        \
+      engine::sdbSetErrno( SDB_OK ) ;                       \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
          engine::sdbSetErrMsg( msg ? msg : getErrDesp( rc ) ) ;\
          engine::sdbSetErrno( rc ) ;                         \
-         JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
+         JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;\
          goto error ;                                       \
       }                                                     \
    } while ( 0 )
@@ -431,6 +437,43 @@ error :
    goto done ;
 }
 
+#if defined (SDB_CLIENT)
+static JSBool sdb_get_last_error_obj ( JSContext *cx , uintN argc , jsval *vp )
+{
+   JSObject *        bsonObj  = NULL ;
+   bson *            record   = NULL ;
+   INT32             rc       = SDB_OK ;
+   JSBool            ret      = JS_TRUE ;
+
+   // record will be freed in done:
+   record = bson_create() ;
+   VERIFY ( record ) ;
+
+   rc = sdbGetLastErrorObj( record ) ;
+   REPORT_RC ( SDB_OK == rc || SDB_DMS_EOC == rc , "getLastErrorObj()" , rc ) ;
+
+   if ( SDB_DMS_EOC == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+      goto done ;
+   }
+
+   bsonObj = JS_NewObject ( cx , &bson_class , 0 , 0 ) ;
+   VERIFY ( bsonObj ) ;
+
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( bsonObj ) ) ;
+   ret = JS_SetPrivate ( cx , bsonObj , record ) ;
+   VERIFY ( ret ) ;
+
+done :
+   return ret ;
+error :
+   SAFE_BSON_DISPOSE ( record ) ;
+   TRY_REPORT ( cx , "getLastErrorObj(): false" ) ;
+   goto done ;
+}
+#endif // SDB_CLIENT
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
 static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
 {
@@ -488,6 +531,9 @@ error :
 static JSFunctionSpec global_functions[] = {
    JS_FS ( "print" , global_print , 1 , 0 ) ,
    JS_FS ( "traceFmt", trace_fmt, 3, 0 ) ,
+#if defined (SDB_CLIENT)
+   JS_FS ( "getLastErrorObj", sdb_get_last_error_obj, 0, 0 ),
+#endif // SDB_CLIENT
    JS_FS ( "man", global_help, 1, 0 ),
    JS_FS_END
 } ;
@@ -495,9 +541,6 @@ static JSFunctionSpec global_functions[] = {
 // end global functions
 
 #if defined (SDB_CLIENT)
-#include "../client/client.h"
-#include "../client/client_internal.h"
-#include "msg.h"
 
 SDB_EXTERN_C_START
 SDB_EXPORT INT32 __sdbGetReserveSpace1 ( sdbConnectionHandle cHandle,
@@ -4838,7 +4881,6 @@ static INT32 _sdb_connect ( const CHAR *hostName, const CHAR *serviceName,
       ret = sdbConnect ( hostName, serviceName, userName, passwd, handle ) ;
    }
 
-done:
    return ret ;
 }
 
@@ -7770,10 +7812,8 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
    JSObject *jsObj = NULL ;
    CHAR *printBuf = NULL ;
    BOOLEAN opSpecified = FALSE ;
-   bson info ;
    bson options ;
    bson_init( &options ) ;
-   bson_init( &info ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "/o" , &jsObj ) ;
@@ -7790,19 +7830,7 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
       opSpecified = TRUE ;
    }
 
-   rc = sdbSyncDB( *connection,
-                   opSpecified ? &options : NULL,
-                   &info ) ;
-   if ( 5 <= bson_size( &info ) )
-   {
-      UINT32 bufLen = 10 * 1024 ;
-      printBuf = ( CHAR * )SDB_OSS_MALLOC( bufLen ) ;
-      if ( NULL != printBuf )
-      {
-         bson_sprint( printBuf, bufLen, &info ) ;
-      }
-   }
-
+   rc = sdbSyncDB( *connection, opSpecified ? &options : NULL ) ;
    if ( SDB_OK == rc )
    {
       JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
@@ -7814,7 +7842,6 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
 
 done:
    bson_destroy( &options ) ;
-   bson_destroy( &info ) ;
    if ( printBuf )
    {
       SDB_OSS_FREE( printBuf ) ;

@@ -178,7 +178,7 @@ namespace engine
          routeID.value = it->first ;
          BSONObj errObj = BSON( FIELD_NAME_NODEID <<
                                 (INT32)routeID.columns.nodeID <<
-                                FIELD_NAME_RCFLAG << it->second ) ;
+                                FIELD_NAME_RCFLAG << it->second._rc ) ;
          arrayBuild.append( errObj ) ;
          ++it ;
       }
@@ -193,7 +193,7 @@ namespace engine
 
          if ( SDB_OK == rc && faileds.size() > 0 )
          {
-            rc = faileds.begin()->second ;
+            rc = faileds.begin()->second._rc ;
          }
          goto error ;
       }

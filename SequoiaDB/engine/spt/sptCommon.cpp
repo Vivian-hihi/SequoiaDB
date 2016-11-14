@@ -56,6 +56,8 @@ namespace engine
    static OSS_THREAD_LOCAL BOOLEAN __hasSetErrNo__  = FALSE ;
    static OSS_THREAD_LOCAL BOOLEAN __needClearErrorInfo__ = FALSE ;
 
+   static CHAR* s_emptyMsg = "" ;
+
    const CHAR *sdbGetErrMsg()
    {
       return __errmsg__ ;
@@ -63,7 +65,6 @@ namespace engine
 
    void sdbSetErrMsg( const CHAR *err )
    {
-      static CHAR* s_emptyMsg = "" ;
       __hasSetErrMsg__        = FALSE ;
       if ( NULL != __errmsg__ && s_emptyMsg != __errmsg__ )
       {
@@ -74,6 +75,35 @@ namespace engine
       {
          __errmsg__ = ossStrdup( err ) ;
          __hasSetErrMsg__ = TRUE ;
+      }
+   }
+
+   void sdbSetErrMsg( const CHAR *err, const CHAR *detail )
+   {
+      BOOLEAN errValid = ( err && *err ) ? TRUE : FALSE ;
+      BOOLEAN detailValid = ( detail && *detail ) ? TRUE : FALSE ;
+
+      if ( errValid ^ detailValid )
+      {
+         sdbSetErrMsg( errValid ? err : detail ) ;
+      }
+      else if ( errValid && detailValid )
+      {
+         __hasSetErrMsg__        = FALSE ;
+         if ( NULL != __errmsg__ && s_emptyMsg != __errmsg__ )
+         {
+            SDB_OSS_FREE( __errmsg__ ) ;
+            __errmsg__ = s_emptyMsg ;
+         }
+
+         INT32 len = ossStrlen( err ) + ossStrlen( detail ) + 10 ;
+         __errmsg__ = ( CHAR* )SDB_OSS_MALLOC( len + 1 ) ;
+         if ( __errmsg__ )
+         {
+            ossSnprintf( __errmsg__, len, "%s:\n%s", err, detail ) ;
+            __errmsg__[ len ] = '\0' ;
+            __hasSetErrMsg__ = TRUE ;
+         }
       }
    }
 

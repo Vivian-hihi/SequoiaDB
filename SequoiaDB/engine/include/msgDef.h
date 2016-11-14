@@ -310,6 +310,7 @@
 #define FIELD_NAME_CHARACTER                 "character"
 #define FIELD_NAME_GLOBAL                    "Global"
 #define FIELD_NAME_ERROR_NODES               "ErrNodes"
+#define FIELD_NAME_ERROR_IINFO               "ErrInfo"
 #define FIELD_NAME_FUNC                      "func"
 #define FIELD_NAME_FUNCTYPE                  "funcType"
 #define FIELD_NAME_PREFERED_INSTANCE         "PreferedInstance"

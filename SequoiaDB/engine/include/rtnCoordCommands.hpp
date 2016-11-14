@@ -545,7 +545,7 @@ namespace engine
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
-      INT32 _syncDB( MsgHeader *pMsg, pmdEDUCB *cb, SINT64 &contextID ) ;
+      INT32 _syncDB( MsgHeader *pMsg, pmdEDUCB *cb, rtnContextBuf *buf ) ;
    } ;
 
    /*

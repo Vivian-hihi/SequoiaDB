@@ -230,10 +230,12 @@ namespace engine
          }
          else
          {
+            coordErrorInfo errInfo( pReply ) ;
             PD_LOG( ( pContext ? PDINFO : PDWARNING ),
-                    "Failed to process reply[node: %s, flag: %d]",
-                    routeID2String( nodeID ).c_str(), pReply->flags ) ;
-            faileds[ nodeID.value ] = pReply->flags ;
+                    "Failed to process reply[node: %s, flag: %d, obj: %s]",
+                    routeID2String( nodeID ).c_str(), pReply->flags,
+                    errInfo._obj.toString().c_str() ) ;
+            faileds[ nodeID.value ] = errInfo ;
          }
 
          if ( !takeOver )
@@ -252,82 +254,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
 
-      CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
-      ROUTE_RC_MAP::iterator iter ;
-      CoordGroupInfoPtr groupInfo ;
-      string strHostName ;
-      string strServiceName ;
-      string strNodeName ;
-      string strGroupName ;
-      MsgRouteID routeID ;
-      BSONObj errObj ;
-      BSONObjBuilder builder ;
-      BSONArrayBuilder arrayBD( builder.subarrayStart(
-                                FIELD_NAME_ERROR_NODES ) ) ;
-      if ( 0 == failedNodes.size() )
+      if ( failedNodes.size() > 0 )
       {
-         goto done ;
+         BSONObjBuilder builder ;
+         rtnBuildFailedNodeReply( failedNodes, builder ) ;
+
+         rc = pContext->append( builder.obj() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
       }
-
-      iter = failedNodes.begin() ;
-      while ( iter != failedNodes.end() )
-      {
-         routeID.value = iter->first ;
-         rc = pCoordcb->getGroupInfo( routeID.columns.groupID, groupInfo ) ;
-         if ( rc )
-         {
-            PD_LOG( PDWARNING, "Failed to get group[%d] info, rc: %d",
-                    routeID.columns.groupID, rc ) ;
-            errObj = BSON( FIELD_NAME_NODEID <<
-                           (INT32)routeID.columns.nodeID <<
-                           FIELD_NAME_RCFLAG << iter->second ) ;
-         }
-         else
-         {
-            strGroupName = groupInfo->groupName() ;
-
-            routeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
-            rc = groupInfo->getNodeInfo( routeID, strHostName,
-                                         strServiceName ) ;
-            if ( rc )
-            {
-               PD_LOG( PDWARNING, "Failed to get node[%d] info failed, rc: %d",
-                       routeID.columns.nodeID, rc ) ;
-               errObj = BSON( FIELD_NAME_NODEID <<
-                              (INT32)routeID.columns.nodeID <<
-                              FIELD_NAME_RCFLAG << iter->second ) ;
-            }
-            else
-            {
-               strNodeName = strHostName + ":" + strServiceName ;
-               errObj = BSON( FIELD_NAME_NODE_NAME << strNodeName <<
-                              FIELD_NAME_RCFLAG << iter->second ) ;
-            }
-         }
-
-         try
-         {
-            errObj = BSON( FIELD_NAME_NODE_NAME << strNodeName <<
-                           FIELD_NAME_HOST << strHostName <<
-                           FIELD_NAME_SERVICE_NAME << strServiceName <<
-                           FIELD_NAME_GROUPNAME << strGroupName <<
-                           FIELD_NAME_NODEID << (INT32)routeID.columns.nodeID <<
-                           FIELD_NAME_GROUPID << routeID.columns.groupID <<
-                           FIELD_NAME_RCFLAG << iter->second ) ;
-            arrayBD.append( errObj ) ;
-         }
-         catch ( std::exception &e )
-         {
-            PD_LOG( PDWARNING, "Build error object occur exception: %s",
-                    e.what() ) ;
-            /// then ignored this record
-         }
-         ++iter ;
-      }
-
-      arrayBD.done() ;
-      rc = pContext->append( builder.obj() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
 
    done:
       return rc ;
@@ -1145,7 +1079,7 @@ namespace engine
       }
       else if ( !_allowFailed() && failedNodes.size() > 0 )
       {
-         rc = failedNodes.begin()->second ;
+         rc = failedNodes.begin()->second._rc ;
          goto error ;
       }
 
@@ -2972,7 +2906,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( CMD_RTNCOCMDSYNCDB_EXEC ) ;
 
-      rc = _syncDB( pMsg, cb, contextID ) ;
+      rc = _syncDB( pMsg, cb, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to sync db:%d", rc ) ;
@@ -2988,12 +2922,11 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDSYNCDB__SYNCDB, "rtnCoordCMDSyncDB::_syncDB" )
    INT32 rtnCoordCMDSyncDB::_syncDB( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
-                                     SINT64 &contextID )
+                                     rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( CMD_RTNCOCMDSYNCDB__SYNCDB ) ;
       ROUTE_RC_MAP errNodes ;
-      rtnContextCoord *context = NULL ;
       rtnCoordCtrlParam ctrlParam ;
 
       ctrlParam._isGlobal = TRUE ;
@@ -3063,16 +2996,11 @@ namespace engine
 
       rc = executeOnNodes( pMsg, cb, ctrlParam,
                            RTN_CTRL_MASK_NODE_SELECT|RTN_CTRL_MASK_ROLE,
-                           errNodes, &context ) ;
+                           errNodes, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to execute on nodes: %d", rc ) ;
          goto error ;
-      }
-
-      if ( NULL != context )
-      {
-         contextID = context->contextID() ;
       }
 
    done:
@@ -3080,15 +3008,13 @@ namespace engine
       {
          SDB_OSS_FREE( pNewMsg ) ;
       }
+      if ( ( rc || errNodes.size() > 0 ) && buf )
+      {
+         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &errNodes ) ) ;
+      }
       PD_TRACE_EXITRC( CMD_RTNCOCMDSYNCDB__SYNCDB, rc ) ;
       return rc ;
    error:
-      if ( context )
-      {
-         sdbGetRTNCB()->contextDelete( context->contextID(), cb ) ;
-         contextID = -1 ;
-         context = NULL ;
-      }
       goto done ;
    }
 

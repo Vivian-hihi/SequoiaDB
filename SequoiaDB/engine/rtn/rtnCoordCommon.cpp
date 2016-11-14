@@ -3589,7 +3589,7 @@ namespace engine
                                   failedNodes ) ;
       if ( failedNodes.size() != 0 )
       {
-         rc = failedNodes.begin()->second ;
+         rc = failedNodes.begin()->second._rc ;
       }
       rtnCoordClearRequest( cb, successNodes ) ;
 
@@ -3769,6 +3769,109 @@ namespace engine
    BOOLEAN rtnCoordCanRetry( UINT32 retryTimes )
    {
       return retryTimes < RTN_COORD_MAX_RETRYTIMES ? TRUE : FALSE ;
+   }
+
+   void rtnBuildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
+                                 BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( failedNodes.size() > 0 )
+      {
+         CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
+         CoordGroupInfoPtr groupInfo ;
+         string strHostName ;
+         string strServiceName ;
+         string strNodeName ;
+         string strGroupName ;
+         MsgRouteID routeID ;
+         BSONObj errObj ;
+         BSONArrayBuilder arrayBD( builder.subarrayStart(
+                                   FIELD_NAME_ERROR_NODES ) ) ;
+         ROUTE_RC_MAP::iterator iter = failedNodes.begin() ;
+         while ( iter != failedNodes.end() )
+         {
+            routeID.value = iter->first ;
+            rc = pCoordcb->getGroupInfo( routeID.columns.groupID, groupInfo ) ;
+            if ( rc )
+            {
+               PD_LOG( PDWARNING, "Failed to get group[%d] info, rc: %d",
+                       routeID.columns.groupID, rc ) ;
+               strGroupName = "-" ;
+            }
+            else
+            {
+               strGroupName = groupInfo->groupName() ;
+
+               routeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
+               rc = groupInfo->getNodeInfo( routeID, strHostName,
+                                            strServiceName ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDWARNING, "Failed to get node[%d] info failed, "
+                          "rc: %d", routeID.columns.nodeID, rc ) ;
+                  strNodeName = "-" ;
+                  strHostName = "-" ;
+                  strServiceName = "-" ;
+               }
+               else
+               {
+                  strNodeName = strHostName + ":" + strServiceName ;
+               }
+            }
+
+            try
+            {
+               errObj = BSON( FIELD_NAME_NODE_NAME << strNodeName <<
+                              FIELD_NAME_HOST << strHostName <<
+                              FIELD_NAME_SERVICE_NAME << strServiceName <<
+                              FIELD_NAME_GROUPNAME << strGroupName <<
+                              FIELD_NAME_NODEID << (INT32)routeID.columns.nodeID <<
+                              FIELD_NAME_GROUPID << routeID.columns.groupID <<
+                              FIELD_NAME_RCFLAG << iter->second._rc <<
+                              FIELD_NAME_ERROR_IINFO << iter->second._obj ) ;
+               arrayBD.append( errObj ) ;
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDWARNING, "Build error object occur exception: %s",
+                       e.what() ) ;
+               /// then ignored this record
+            }
+            ++iter ;
+         }
+
+         arrayBD.done() ;
+      }
+   }
+
+   BSONObj rtnBuildErrorObj( INT32 &flag,
+                             pmdEDUCB *cb,
+                             ROUTE_RC_MAP *pFailedNodes )
+   {
+      BSONObjBuilder builder ;
+      const CHAR *pDetail = "" ;
+
+      if ( SDB_OK == flag && pFailedNodes && pFailedNodes->size() > 0 )
+      {
+         flag = SDB_COORD_NOT_ALL_DONE ;
+      }
+
+      if ( cb && cb->getInfo( EDU_INFO_ERROR ) )
+      {
+         pDetail = cb->getInfo( EDU_INFO_ERROR ) ;
+      }
+
+      builder.append( OP_ERRNOFIELD, flag ) ;
+      builder.append( OP_ERRDESP_FIELD, getErrDesp( flag ) ) ;
+      builder.append( OP_ERR_DETAIL, pDetail ? pDetail : "" ) ;
+      /// add ErrNodes
+      if ( pFailedNodes && pFailedNodes->size() > 0 )
+      {
+         rtnBuildFailedNodeReply( *pFailedNodes, builder ) ;
+      }
+
+      return builder.obj() ;
    }
 
 }
