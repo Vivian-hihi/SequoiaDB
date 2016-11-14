@@ -3231,77 +3231,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__CATPARSECOMPRESSIONTYPE, "_catParseCompressionType" )
-   static INT32 _catParseCompressionType( const BSONObj &boCollection,
-                                          catCollectionInfo &clInfo,
-                                          BSONElement &elem,
-                                          BOOLEAN compressOptHit )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__CATPARSECOMPRESSIONTYPE ) ;
-      BOOLEAN compressed = FALSE ;
-
-      // If the "Compressed" option is not hit yet, traverse the option to find
-      // out if it is set some place else.
-      if ( !compressOptHit )
-      {
-         BSONObjIterator it( boCollection ) ;
-         while ( it.more() )
-         {
-            BSONElement elemTmp = it.next() ;
-            if ( 0 == ossStrcmp( elemTmp.fieldName(), CAT_COMPRESSED ) )
-            {
-               PD_CHECK( Bool == elemTmp.type(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] type [%d] error",
-                         CAT_COMPRESSED, elemTmp.type() ) ;
-               compressed = elemTmp.Bool() ;
-            }
-         }
-      }
-      else
-      {
-         compressed = clInfo._isCompressed ;
-      }
-
-      if ( !compressed )
-      {
-         PD_LOG( PDERROR, "CompressionType option can only be set when "
-                 "Compressed option is set as true") ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      PD_CHECK( String == elem.type(),
-                SDB_INVALIDARG, error, PDWARNING,
-                "Field [%s] type [%d] error",
-                CAT_COMPRESSIONTYPE, elem.type() ) ;
-      if ( 0 == ossStrcmp( elem.valuestr(), CAT_COMPRESSOR_LZW ) )
-      {
-         clInfo._compressorType = UTIL_COMPRESSOR_LZW ;
-      }
-      else if ( 0 == ossStrcmp( elem.valuestr(), CAT_COMPRESSOR_SNAPPY ) )
-      {
-         clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
-      }
-      else
-      {
-         PD_LOG( PDWARNING,
-                 "Invalid Compression Type. Field[%s] value[%s] should "
-                 "be [%s|%s] or leave empty",
-                 CAT_COMPRESSIONTYPE, elem.valuestr(),
-                 CAT_COMPRESSOR_LZW, CAT_COMPRESSOR_SNAPPY );
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB__CATPARSECOMPRESSIONTYPE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKANDBUILDCATARECORD, "catCheckAndBuildCataRecord" )
    INT32 catCheckAndBuildCataRecord( const BSONObj &boCollection,
                                      UINT32 &fieldMask,
@@ -3451,7 +3380,6 @@ namespace engine
                       "Field [%s] type [%d] error",
                       CAT_COMPRESSED, eleTmp.type() ) ;
             clInfo._isCompressed = eleTmp.boolean() ;
-            clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
             fieldMask |= CAT_MASK_COMPRESSED ;
          }
          // main-collection flag
@@ -3530,10 +3458,26 @@ namespace engine
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),
                                    CAT_COMPRESSIONTYPE ) )
          {
-            rc = _catParseCompressionType( boCollection, clInfo, eleTmp,
-                                           fieldMask & CAT_MASK_COMPRESSED ) ;
-            if ( rc )
+            PD_CHECK( String == eleTmp.type(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] type [%d] error",
+                      CAT_COMPRESSIONTYPE, eleTmp.type() ) ;
+            if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_LZW ) )
             {
+               clInfo._compressorType = UTIL_COMPRESSOR_LZW ;
+            }
+            else if ( 0 == ossStrcmp( eleTmp.valuestr(), CAT_COMPRESSOR_SNAPPY ) )
+            {
+               clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
+            }
+            else
+            {
+               PD_LOG( PDWARNING,
+                       "Invalid Compression Type. Field[%s] value[%s] should "
+                       "be [%s|%s] or leave empty",
+                       CAT_COMPRESSIONTYPE, eleTmp.valuestr(),
+                       CAT_COMPRESSOR_LZW, CAT_COMPRESSOR_SNAPPY );
+               rc = SDB_INVALIDARG ;
                goto error ;
             }
 
@@ -3588,6 +3532,21 @@ namespace engine
       {
          PD_CHECK( clInfo._pCLName, SDB_INVALIDARG, error, PDWARNING,
                    "Collection name not set" ) ;
+      }
+
+      if ( clInfo._isCompressed )
+      {
+         if ( 0 == fieldMask & CAT_MASK_COMPRESSIONTYPE )
+         {
+            clInfo._compressorType = UTIL_COMPRESSOR_SNAPPY ;
+         }
+      }
+      else
+      {
+         PD_CHECK( UTIL_COMPRESSOR_INVALID == clInfo._compressorType,
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "CompressionType can only be set when Compressed is true."
+                   ) ;
       }
 
    done :
