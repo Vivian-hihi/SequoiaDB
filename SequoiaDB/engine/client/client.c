@@ -1086,10 +1086,10 @@ static INT32 _getRetInfo ( sdbConnectionHandle cHandle,
 
    // check
    HANDLE_CHECK( cHandle, db, SDB_HANDLE_TYPE_CONNECTION ) ;
-   if ( NULL == pCursor )
+
+   if ( pCursor )
    {
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      *pCursor = SDB_INVALID_HANDLE ;
    }
 
    // if nothing return by engine, see we need to return cursor or not
@@ -1097,7 +1097,6 @@ static INT32 _getRetInfo ( sdbConnectionHandle cHandle,
         ( ((UINT32)((MsgHeader*)*ppBuffer)->messageLength) <=
            ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) ) )
    {
-      *pCursor = SDB_INVALID_HANDLE ;
       goto done ;
    }
 
@@ -1127,7 +1126,14 @@ static INT32 _getRetInfo ( sdbConnectionHandle cHandle,
    }
 
    // return cursor
-   *pCursor = (sdbCursorHandle)cursor ;
+   if ( pCursor )
+   {
+      *pCursor = (sdbCursorHandle)cursor ;
+   }
+   else
+   {
+      sdbReleaseCursor( (sdbCursorHandle)cursor ) ;
+   }
 
 done:
    return rc ;
