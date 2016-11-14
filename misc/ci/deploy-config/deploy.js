@@ -185,7 +185,8 @@ function deployClster( mode )
                         sharingbreak:30000,
                         diagnum:30,
                         optimeout:60000,
-                        fap:fapValue
+                        fap:fapValue,
+                        maxpool:50
                       };
          dataRG.createNode( tmpHostList[i], dataPort, 
                             databaseDir+"/data/"+dataPort,
