@@ -15,7 +15,6 @@ sptFiles = [
       "spt/sptConvertor.cpp",
       "spt/sptParseTroff.cpp",
       "spt/sptConvertorHelper.cpp",
-	  "spt/sptUtil.cpp",
       "spt/sptCommon.cpp"
       ]
 
