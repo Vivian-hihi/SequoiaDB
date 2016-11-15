@@ -49,7 +49,6 @@ public:
    sptConvertor2( JSContext *cx )
    :_cx( cx )
    {
-
    }
 
    ~sptConvertor2()
@@ -65,36 +64,8 @@ public:
                           std::string &str ) ;
 
 private:
-   INT32 _traverse( JSObject *obj , bson::BSONObjBuilder &builder ) ;
-
-   INT32 _appendToBson( const std::string &name,
-                        const jsval &val,
-                        bson::BSONObjBuilder &builder ) ;
-
-   INT32 _getDecimalPrecision( const CHAR *precisionStr, 
-                               INT32 *precision, INT32 *scale ) ;
-   BOOLEAN _addSpecialObj( JSObject *obj,
-                           const CHAR *key,
-                           bson::BSONObjBuilder &builder ) ;
-
-   BOOLEAN _getProperty( JSObject *obj,
-                         const CHAR *fieldName,
-                         JSType type,
-                         jsval &val ) ;
-
-   INT32 _toString( const jsval &val, std::string &str ) ;
-
-   INT32 _toInt( const jsval &val, INT32 &iN ) ;
-
-   INT32 _toDouble( const jsval &val, FLOAT64 &fV ) ;
-
-   INT32 _toBoolean( const jsval &val, BOOLEAN &bL ) ;
-
-   BOOLEAN _isValidNumberLong( const CHAR *value ) ;
-
-private:
    JSContext *_cx ;
 } ;
 
-#endif
+#endif // SPTCONVERTOR2_HPP_
 
