@@ -1,0 +1,169 @@
+/*******************************************************************************
+*@Description : fields have included relations
+*               $elemMatch/$elemMatchOne/$slice/$default/$include
+*@Modify list :
+*               2015-01-29  xiaojun Hu  Change
+*******************************************************************************/
+
+function main( db )
+{
+   try
+   {
+      var recordNum = 1 ;
+      var addRecord1 = { "nest1":{"nest2":{"nest3":["a","b"]}}} ;
+      var addRecord2 = [{ "nest1":[{"nest2":[{"nest3":["a","b"]}]}]}] ;
+      var addRecord3 = [{ "nest1":[{"nest2":[{"nest3":["A","B","C","D","E","F","G","H"]}]}]}] ;
+      var cl = commCreateCL( db, COMMCSNAME, COMMCLNAME, 0, true, true, false,
+                             "create colleciton in the begnning" ) ;
+      // auto generate data
+      selAutoGenData( cl, recordNum, addRecord1, addRecord2, addRecord3 ) ;
+      println( "success to insert record: " + recordNum ) ;
+
+      /*【Test Point 1.1】 {$include:1} */
+      var condObj = {} ;
+      var selObj = { "ExtraField1.nest1.nest2.nest3": {"$include":1},
+                     "ExtraField1.nest1.nest2": {"$include":1},
+                     "ExtraField1.nest1": {"$include":1},
+                     "ExtraField1": {"$include":1},
+                     "Group.HostName": { "$include":1 },
+                     "Group.Service.Name": {"$include":1},
+                     "Group.Service": { "$include":1 },
+                     "Group": { "$include":1 },
+                     "Group.NodeID": { "$include":1 },
+                     "ExtraField2.nest1.nest2.nest3": {"$include":1},
+                     "ExtraField2.nest1.nest2": {"$include":1},
+                     "ExtraField2.nest1": {"$include":1},
+                     "ExtraField2": {"$include":1},
+                     "Group.NodeID": { "$include":1 }} ;
+      var ret = selMainQuery( cl, condObj, selObj ) ;
+      // verify
+      var retObj = JSON.parse( ret ) ;
+      if( 20000 != retObj["Group"][0]["Service"][0]["Name"] ||
+          20001 != retObj["Group"][0]["Service"][1]["Name"] ||
+          20002 != retObj["Group"][0]["Service"][2]["Name"] ||
+          20003 != retObj["Group"][0]["Service"][3]["Name"] ||
+          "Host_1" != retObj["Group"][0]["HostName"] || 1000 != retObj["Group"][0]["NodeID"] ||
+          "a,b" != retObj["ExtraField1"]["nest1"]["nest2"]["nest3"] ||
+          "a,b" != retObj["ExtraField2"][0]["nest1"][0]["nest2"][0]["nest3"] )
+      {
+         println( "return record: " + ret ) ;
+         throw "ErrReturnRecord$include/1" ;
+      }
+      println( "query selector: " + JSON.stringify( selObj ) ) ;
+      /*【Test Point 1.2】 {$include:0}*/
+      var condObj = {} ;
+      var selObj = { "ExtraField1.nest1.nest2.nest3": {"$include":0},
+                     "ExtraField1.nest1.nest2": {"$include":0},
+                     "ExtraField1.nest1": {"$include":0},
+                     "ExtraField1": {"$include":0},
+                     "Group.HostName": { "$include":0 },
+                     "Group.Service.Name": {"$include":0},
+                     "Group.Service": { "$include":0 },
+                     "Group": { "$include":0 },
+                     "Group.NodeID": { "$include":0 },
+                     "ExtraField2.nest1.nest2.nest3": {"$include":0},
+                     "ExtraField2.nest1.nest2": {"$include":0},
+                     "ExtraField2.nest1": {"$include":0},
+                     "ExtraField2": {"$include":0},
+                     "Group.NodeID": { "$include":0 }} ;
+      var ret = selMainQuery( cl, condObj, selObj ) ;
+      // verify
+      var retObj = JSON.parse( ret ) ;
+      if( 1 != retObj["GroupID"] || 1 != retObj["Version"] ||
+          1 != retObj["ExtraField4"]["$undefined"] ||
+          "A,B,C,D,E,F,G,H" != retObj["ExtraField3"][0]["nest1"][0]["nest2"][0]["nest3"] )
+      {
+         println( "return record: " + ret ) ;
+         throw "ErrReturnRecord$include/0" ;
+      }
+      println( "query selector: " + JSON.stringify( selObj ) ) ;
+
+      /*Test Point 2 $default*/
+      var condObj = {} ;
+      var selObj = { "ExtraField1.nest1.nest2.nest3": {"$default":0},
+                     "ExtraField1.nest1.nest2": {"$default":0},
+                     "ExtraField1.nest1": {"$default":0},
+                     "ExtraField1": {"$default":0},
+                     "Group.HostName": { "$default":0 },
+                     "Group.Service.Name": {"$default":0},
+                     "Group.Service": { "$default":0 },
+                     "Group": { "$default":0 },
+                     "Group.NodeID": { "$default":0 },
+                     "ExtraField2.nest1.nest2.nest3": {"$default":0},
+                     "ExtraField2.nest1.nest2": {"$default":0},
+                     "ExtraField2.nest1": {"$default":0},
+                     "ExtraField2": {"$default":0},
+                     "Group.NodeID": { "$default":0 }} ;
+      var ret = selMainQuery( cl, condObj, selObj ) ;
+      // verify
+      var retObj = JSON.parse( ret ) ;
+      if( 20000 != retObj["Group"][0]["Service"][0]["Name"] ||
+          20001 != retObj["Group"][0]["Service"][1]["Name"] ||
+          20002 != retObj["Group"][0]["Service"][2]["Name"] ||
+          20003 != retObj["Group"][0]["Service"][3]["Name"] ||
+          "Host_1" != retObj["Group"][0]["HostName"] ||
+          1000 != retObj["Group"][0]["NodeID"] ||
+          "a,b" != retObj["ExtraField1"]["nest1"]["nest2"]["nest3"] ||
+          "a,b" != retObj["ExtraField2"][0]["nest1"][0]["nest2"][0]["nest3"] )
+      {
+         println( "return record: " + ret ) ;
+         throw "ErrReturnRecord$defult" ;
+      }
+      println( "query selector: " + JSON.stringify( selObj ) ) ;
+
+      /*Test Point 3 $slice*/
+      var condObj = {} ;
+      var selObj = { "ExtraField1.nest1.nest2.nest3": {"$slice":1},
+                     "ExtraField2.nest1.nest2.nest3": {"$slice":1},
+                     "ExtraField2.nest1.nest2": {"$slice":1},
+                     "ExtraField2.nest1": {"$slice":1},
+                     "ExtraField2": {"$slice":1},
+                     "Group.Service.Name": {"$slice":1},
+                     "Group.Service": { "$slice":1},
+                     "Group": { "$slice":1 },
+                     "Group.NodeID": { "$slice":1 },
+                     "ExtraField3.nest1.nest2.nest3": {"$slice":5},
+                     "ExtraField3.nest1.nest2": {"$slice":1},
+                     "ExtraField3.nest1": {"$slice":1},
+                     "ExtraField3": {"$slice":1}} ;
+      var ret = selMainQuery( cl, condObj, selObj ) ;
+      // verify
+      var retObj = JSON.parse( ret ) ;
+      if( "Host_1" != retObj["Group"][0]["HostName"] ||
+          0 != retObj["Group"][0]["Service"][0]["Type"] ||
+          20000 != retObj["Group"][0]["Service"][0]["Name"] ||
+          1000 != retObj["Group"][0]["NodeID"] ||
+          1 != retObj["GroupID"] ||
+          "a" != retObj["ExtraField1"]["nest1"]["nest2"]["nest3"] ||
+          "a" != retObj["ExtraField2"][0]["nest1"][0]["nest2"][0]["nest3"] ||
+          "A,B,C,D,E" != retObj["ExtraField3"][0]["nest1"][0]["nest2"][0]["nest3"] ||
+          1 != retObj["ExtraField4"]["$undefined"] )
+      {
+         println( "return record : " + ret ) ;
+         throw "ErrReturnRecord$slice" ;
+      }
+      println( "query selector: " + JSON.stringify( selObj ) ) ;
+   }
+   catch( e )
+   {
+      println( "failed selector: " + JSON.stringify( selObj ) ) ;
+      throw e ;
+   }
+}
+
+
+// Run Main
+try
+{
+   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
+               "drop collection in the begining" ) ;
+   main( db ) ;
+   //commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
+   //            "drop collection in the end") ;
+}
+catch( e )
+{
+   //commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
+   //            "drop collection in the end") ;
+   throw e ;
+}

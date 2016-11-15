@@ -1,0 +1,52 @@
+// create cl.
+// normal case.
+
+
+TESTCLNAME = CHANGEDPREFIX+"bar" ;
+
+try
+{
+   commDropCL( db, COMMCSNAME, TESTCLNAME, true, true, "drop CL in the beginning" );
+}
+catch (e)
+{
+   if ( e != -34)
+   {
+      println( "unexpected err happened when clear cs:" + e ) ;
+      throw e ;
+   }
+}
+
+try
+{
+   var varCS = commCreateCS( db, COMMCSNAME, true, "failed to create CS" );
+}
+catch ( e )
+{
+   println( "failed to create cs, rc= " + e );
+   throw e ;
+}
+var j = true ;
+try
+{
+   var varCL = varCS.createCL( "SYS"+TESTCLNAME ) ;
+}
+catch ( e )
+{
+   j = false ;
+}
+if( j ){
+   throw -1 ;
+}
+
+
+try
+{
+   commDropCL( db, COMMCSNAME, TESTCLNAME, true, true, "drop CL in the end" );
+}
+catch (e)
+{
+   println( "unexpected err happened when clear cs:" + e ) ;
+   throw e ;
+}
+

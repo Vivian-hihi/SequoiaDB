@@ -1,0 +1,78 @@
+// insert record.
+// normal case.
+try
+{
+   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true, "drop cl in the beginning" ) ;
+}
+catch(e)
+{
+   println( "unexpected err happened when clear cs:" + e ) ;
+   throw e ;
+}
+
+
+try{
+   var claSize = new RSize( COMMCSNAME );
+   var varCS = commCreateCS( db, COMMCSNAME, true, "create CS in the beginning" );
+   var len = claSize.ReplSize();
+   if( 1 == len && -1 != len ){
+      var len = 1 ;
+   }else{
+      var len = len - 1 ;
+   }
+   var varCL = varCS.createCL(COMMCLNAME,{ReplSize:len},{Compressed:true});
+}catch( e ){
+   throw e ;
+}
+try
+{
+   varCL.insert({a:1}) ;
+}
+catch ( e )
+{
+   println( "failed to insert record, rc= " + e ) ;
+   throw e ;
+}
+
+var rc ;
+
+var j = 0 ; 
+
+sleep(3000);
+
+try
+{
+	rc = varCL.find({a:1}) ;
+}
+catch ( e )
+{
+	println( "failed to read record, rc= " + e ) ;
+	throw e;
+}
+
+var size = 0 ;
+while ( true )
+{
+  var i = rc.next() ;
+  if ( !i )
+     break ;
+	else
+	   size++ ;
+}
+	
+if ( 1 != size )
+{
+   println( " get more than one record" ) ;
+   throw -1 ;
+}
+
+try
+{
+   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
+               "drop colleciton in the end" );
+}
+catch ( e )
+{
+   println( "failed to drop cs, rc= " + e ) ;
+   throw e ;
+}

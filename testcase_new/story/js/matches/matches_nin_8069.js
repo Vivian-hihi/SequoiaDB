@@ -1,0 +1,97 @@
+﻿/************************************************************************
+*@Description:   seqDB-8069:使用$nin查询，指定多个不同数据类型的值
+                    cover all data type
+*@Author:  2016/5/20  xiaoni huang
+************************************************************************/
+main();
+
+function main()
+{  
+   try
+   {
+      var clName = COMMCLNAME+"_matches8067" ;
+      
+      var cl = readyCL( clName );
+   	
+   	var dataType = [ "int", "double", "null", "string", "bool", 
+   	                 "long", "oid", "regex", "binary", "date", "timestamp" ];   //length: 11
+   	var rawData  = [ {int:    -2147483648}, 
+   	                 {double: -1.7E+308}, 
+   	                 {null:   null}, 
+   	                 {string: "test"}, 
+   	                 {bool:   true}, 
+   	                 {long:   {"$numberLong":"-9223372036854775808"}}, 
+   	                 {oid:    {"$oid": "123abcd00ef12358902300ef"}}, 
+   	                 {regex:  {"$regex": "^rg", "$options": "i"}}, 
+   	                 {binary: {"$binary": "aGVsbG8gd29ybGQ=", "$type": "1"}}, 
+   	                 {date:   {"$date": "2038-01-18"}}, 
+   	                 {timestamp: {"$timestamp": "2038-01-18-23.59.59.999999"}},
+   	                 {tmp: 1} ];  //length: 12
+      insertRecs( cl, rawData, dataType );
+      
+      var rc = findRecs( cl, rawData, dataType );
+      
+      checkResult( rc, rawData, dataType );
+   
+      cleanCL( clName );
+   }
+   catch(e)
+   {
+   	throw e;
+   }
+}
+
+function insertRecs( cl, rawData, dataType )
+{
+   println("\n---Begin to insert records.");
+   
+   for( i = 0; i < rawData.length; i++ )
+   {
+      cl.insert( {a: i, b: rawData[i][dataType[i]]} );
+   }
+}
+
+function findRecs( cl, rawData, dataType )
+{
+   println("\n---Begin to find records.");
+   
+   var tmpValue = [];
+   for( i = 0; i < dataType.length; i++ )
+   {
+      tmpValue.push( rawData[i][dataType[i]] );
+   }
+   var rc = cl.find( {b:{$nin: tmpValue }} ).sort({a:1});
+   
+   return rc ;
+}
+
+function checkResult( rc, rawData, dataType )
+{
+   println("\n---Begin to check result.");
+   
+   var findRecsArray = [];
+   while( tmpRecs = rc.next() )
+   {
+      findRecsArray.push( tmpRecs.toObj() );
+   }
+   //println(JSON.stringify(findRecsArray));
+   
+   //compare number
+   var expLen = 1;  
+   if( findRecsArray.length !== expLen )
+   {
+      throw buildException("checkResult", null, "[compare number]", 
+                          "[recsNum:"+ expLen +"]",
+                          "[recsNum:"+ findRecsArray.length +"]");
+   }
+   
+   //compare records
+   var actB = findRecsArray[0]["b"]["$undefined"];
+   var expB = rawData[11]["tmp"];  //rawData[11]: {tmp:1}
+   if( actB !== expB )
+   {
+   throw buildException("checkResult", null, "[compare records]", 
+                     '["b": '+ expB +']',
+                     '["b": '+ actB +']');
+   }
+}

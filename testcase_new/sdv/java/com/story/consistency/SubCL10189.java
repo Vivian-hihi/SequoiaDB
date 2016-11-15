@@ -1,0 +1,174 @@
+package com.story.consistency;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.testng.annotations.Test;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.testng.Assert;
+
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.story.consistency.CommLib;
+
+/**
+* TestLink: seqDB-10189
+* @author xiaoni huang init
+* @Date   2016.10.14
+*/
+
+public class SubCL10189 {
+	private CommLib CommLib = new CommLib();
+	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+	private static Sequoiadb sdb = null;
+	private String csName = "cs10189";
+	private String clName = "cl10189";
+	private String mCSName = csName + "_mainCS";
+	private String sCSName = csName + "_subCS";
+	private String mCLName = clName + "_mainCL";
+	private String sCLName = clName + "_subCL";
+	
+	@BeforeClass
+	@Parameters({"coordAddr"})
+	public void setUp(String coordAddr){
+		//start time
+		System.out.println("Begin to run " + this.getClass().getName() 
+					+ ", begin in: " + dateFm.format(new Date().getTime()));
+		try{
+			sdb = new Sequoiadb(coordAddr, "", "");
+			//clear env
+			CommLib.clearCS(sdb, csName);
+			//create cs/cl
+			SubCL10189 SubCL10189 = new SubCL10189();
+			SubCL10189.createSubCL(sdb);
+		}catch(BaseException e){
+			Assert.fail("Failed to prepare env at th begining. "
+					+ "ErrorMsg:\n" +e.getMessage());
+		}
+	}
+	
+	@AfterClass
+	public void tearDown(){
+		try{
+			//clear env
+			CommLib.clearCS(sdb, csName);
+		}catch(BaseException e){
+			Assert.fail("ErrorMsg:\n" +e.getMessage());
+		}finally{
+			System.out.println("End to run " + this.getClass().getName() 
+						+ ", end in: " + dateFm.format(new Date().getTime()));
+			sdb.disconnect();
+		}
+	}
+	
+	@Test(invocationCount = 10, threadPoolSize = 10)
+	@Parameters({"coordAddr"})
+	public void testSubCL10189(String coordAddr){
+		Sequoiadb db  = null;
+		//-----create cs/mainCL
+		try{
+			db = new Sequoiadb(coordAddr, "", "");
+			
+			SubCL10189 SubCL10189 = new SubCL10189();
+			SubCL10189.createMainCL(db);
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
+		}
+		
+		//-----attach cl-----
+		try
+		{
+			BSONObject options = new BasicBSONObject();
+			BSONObject lowBoundObj = new BasicBSONObject();
+			BSONObject upBoundObj  = new BasicBSONObject();
+			lowBoundObj.put("a", 1);
+			upBoundObj.put("a", 100);
+			options.put("LowBound", lowBoundObj);
+			options.put("UpBound", upBoundObj);
+			db.getCollectionSpace(mCSName).getCollection(mCLName).
+					attachCollection(sCSName + "." + sCLName, options);
+		    
+			//check results of catalog
+			CommLib.checkCLOfCatalog(db, csName, clName);
+			CommLib.checkCLOfDataRG(db, csName, clName);
+			boolean rc = CommLib.compareDataAndCata(db, csName, clName);
+			Assert.assertTrue(rc);
+		}catch(BaseException e){
+			if(e.getErrorCode() != -235 && e.getErrorCode() != -23){  
+				//-235:Duplicated attach collection partition
+				//-23:Collection does not exist
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
+		}
+		
+		//-----drop mainCS-----
+		try{
+			db.dropCollectionSpace(mCSName);
+			
+			//check results of catalog
+			CommLib.checkCLOfCatalog(db, csName, clName);
+			CommLib.checkCLOfDataRG(db, csName, clName);
+			boolean rc = CommLib.compareDataAndCata(db, csName, clName);
+			Assert.assertTrue(rc);
+		}catch(BaseException e){
+			if(e.getErrorCode() != -34){  //-23:Collection space does not exist
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
+		}finally{
+			db.disconnect();
+		}
+		
+	}
+	
+	public void createMainCL(Sequoiadb sdb){
+		try{
+			sdb.createCollectionSpace(mCSName);
+			
+			BSONObject mOpt = new BasicBSONObject();
+			BSONObject mSubObj = new BasicBSONObject();
+			mSubObj.put("a", 1);
+			mOpt.put("ShardingKey", mSubObj); 
+			mOpt.put("ReplSize", 0);
+			mOpt.put("IsMainCL", true);
+			sdb.getCollectionSpace(mCSName).createCollection(mCLName, mOpt);
+			
+		}catch(BaseException e){
+			if(e.getErrorCode() != -22 && e.getErrorCode() != -33){  
+				//-22:Collection already exists
+				//-33:Collection space already exists
+				sdb.disconnect();
+				Assert.fail(e.getMessage());
+			}
+		}
+		
+	}
+	
+	public void createSubCL(Sequoiadb sdb){
+		try{
+			sdb.createCollectionSpace(sCSName);
+			
+			BSONObject sOpt = new BasicBSONObject();
+			BSONObject sSubObj = new BasicBSONObject();
+			sSubObj.put("a", 1);
+			sOpt.put("ShardingKey", sSubObj);
+			sOpt.put("ReplSize", 0);
+			sdb.getCollectionSpace(sCSName).createCollection(sCLName, sOpt);
+			
+		}catch(BaseException e){
+			if(e.getErrorCode() != -22 && e.getErrorCode() != -33){  
+				//-22:Collection already exists
+				//-33:Collection space already exists
+				sdb.disconnect();
+				Assert.fail(e.getMessage());
+			}
+		}
+		
+	}
+	
+}
