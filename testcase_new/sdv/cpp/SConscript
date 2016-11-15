@@ -5,11 +5,11 @@ Import("dllBuildEnv")
 Import("staticBuildEnv")
 
 gtestFiles = [
-      "../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
+      "../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
       ]
 
 gtestMainFile = [
-      "../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
+      "../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
       ]
 
 testCommonFiles = [

@@ -10,11 +10,11 @@ Import("staticBuildEnv")
 Import("client_lib_dir")
 
 gtestFiles = [
-      "../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
+      "../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
       ]
 
 gtestMainFile = [
-      "../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
+      "../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
       ]
 
 clientStaticLib = [

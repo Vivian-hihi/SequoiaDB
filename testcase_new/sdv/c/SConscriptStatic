@@ -3,27 +3,27 @@ import os
 Import("env")
 
 gtestFiles = [
-      "../../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
+      "../../../../../../SequoiaDB/engine/gtest/src/gtest-all.cc"
       ]
 
 gtestMainFile = [
-      "../../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
+      "../../../../../../SequoiaDB/engine/gtest/src/gtest_main.cc"
       ]
 
 testFiles1 = [
         "testcommon.c",
         "decimal.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles2 = [
         "testcommon.c",
         "numberLong.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 testFiles3 = [
         "testcommon.c",
         "trunOncache.cpp",
-        "../../../../../../../client/lib/libstaticsdbc.a"
+        "../../../../../../client/lib/libstaticsdbc.a"
       ]
 
 

@@ -6,11 +6,11 @@ import re
 from os.path import join, dirname, abspath
 
 root_dir = dirname(File('SConstruct').rfile().abspath)
-client_include_dir = join(root_dir,'../../../../client/include')
-#boost_dir = join(root_dir, '../../../../thirdparty/boost')
-client_lib_dir = join(root_dir,'../../../../client/lib')
+client_include_dir = join(root_dir,'../../../client/include')
+#boost_dir = join(root_dir, '../../../thirdparty/boost')
+client_lib_dir = join(root_dir,'../../../client/lib')
 #boost_lib_dir = join(boost_dir, 'lib')
-gtest_dir = join(root_dir, '../../../../SequoiaDB/engine/gtest/')
+gtest_dir = join(root_dir, '../../../SequoiaDB/engine/gtest/')
 options = {}
 options_topass = {}
 
