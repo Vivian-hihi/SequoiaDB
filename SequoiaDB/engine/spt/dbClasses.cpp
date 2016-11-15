@@ -7810,7 +7810,6 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection  = NULL ;
    JSObject *jsObj = NULL ;
-   CHAR *printBuf = NULL ;
    BOOLEAN opSpecified = FALSE ;
    bson options ;
    bson_init( &options ) ;
@@ -7837,15 +7836,11 @@ static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
    }
    else
    {
-      REPORT_RC_MSG( FALSE, "Sdb.sync()", rc, printBuf ) ;
+      REPORT_RC( FALSE, "Sdb.sync()", rc ) ;
    }
 
 done:
    bson_destroy( &options ) ;
-   if ( printBuf )
-   {
-      SDB_OSS_FREE( printBuf ) ;
-   }
    PD_TRACE_EXIT( SDB_SDB_SYNC ) ;
    return ret ;
 error:
