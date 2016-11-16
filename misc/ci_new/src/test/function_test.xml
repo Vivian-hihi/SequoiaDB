@@ -30,6 +30,8 @@
       
       <antcall target="ready_testcase"/>
       
+      <antcall target="ready_lib"/>
+      
       <antcall target="compile_testcase" />
       
       <antcall target="divide_testcase" />
@@ -62,6 +64,22 @@
       <mkdir dir="${case_basedir}"/>
       <copy todir="${case_basedir}">
          <fileset dir="${WORKSPACE}/sequoiadb/testcase"/>
+      </copy>
+   </target>
+   
+   <target name="ready_lib">
+      <property name="client_dir" location="${WORKSPACE}/sequoiadb/client" />
+      
+      <delete dir="${client_dir}/include" failonerror="false" />
+      <delete dir="${client_dir}/lib" failonerror="false" />
+      <mkdir dir="${client_dir}/include"/>
+      <mkdir dir="${client_dir}/lib"/>
+      
+      <copy todir="${client_dir}/include">
+         <fileset dir="${INSTALL_DIR}/include" includes="**/*"/>
+      </copy>
+      <copy todir="${client_dir}/lib">
+         <fileset dir="${INSTALL_DIR}/lib" includes="*.so,*.a"/>
       </copy>
    </target>
    
