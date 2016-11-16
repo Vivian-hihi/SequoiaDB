@@ -51,7 +51,7 @@
                   request="CREATE DIRECTORY ${CI_WORK_DIR} WAIT 1m"
                   throwBuildException="1"/>
             <staf location="local" service="FS"
-                  request="COPY FILE ${package_fullname} TODIRECTORY ${CI_WORK_DIR} TOMACHINE @{testhost} WAIT 10m"
+                  request="COPY FILE ${package_fullname} TODIRECTORY ${CI_WORK_DIR} TOMACHINE @{testhost}"
                   throwBuildException="1"/>
             <staf location="@{testhost}" service="PROCESS"
                   request="START SHELL COMMAND chmod +x ${CI_WORK_DIR}/${package_name} WAIT 1m"
