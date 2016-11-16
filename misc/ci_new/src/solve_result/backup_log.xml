@@ -24,6 +24,7 @@
       <propertycopy name="testhost_list" from="${DEPLOY_MODE}_HOST" />
       <hostinfo prefix="host" />
       
+      <!-- 1.backup remote log-->
       <property name="remote_cmd1" 
          value="ant -f ${CI_WORK_DIR}/script/src/solve_result/backup_log.xml backup_remote_log" />
    
@@ -43,6 +44,7 @@
          </sequential>
       </for>
       
+      <!-- 2.collect remote log-->
       <property name="remote_cmd2" 
          value="ant -f ${CI_WORK_DIR}/script/src/solve_result/backup_log.xml collect_remote_log -Dcontrol_host=${host.NAME}" />
         
@@ -62,7 +64,7 @@
          </sequential>
       </for>
       
-      
+      <!-- 3.compress, generate tar-->
       <property name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}"/>
       <property name="tar_fullname" location="${CI_WORK_DIR}/${backup_reltdir}.tar.gz"/>
 
@@ -72,6 +74,11 @@
            basedir="${CI_WORK_DIR}" includes="${backup_reltdir}/**/*"/>
       <delete dir="${CI_WORK_DIR}/${backup_reltdir}"/>
       
+      <!-- 4.send to backup host-->
+      <staf location="local" service="FS"
+            request="COPY FILE ${tar_fullname} TODIRECTORY ${BACKLOG_DIR} TOMACHINE ${JENKINS_HOST}"
+            throwBuildException="1"/>
+            
    </target>
 
       
