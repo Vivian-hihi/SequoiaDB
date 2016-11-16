@@ -1051,40 +1051,47 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__CLOSESSWITHEXCEP ) ;
-      REQUESTID_MAP sendMap ;
       REPLY_QUE q ;
-      netMultiRouteAgent *route = pmdGetKRCB()->getCoordCB(
-                                  )->getRouteAgent() ;
-      MsgOpKillContexts killMsg ;
-      killMsg.header.messageLength = sizeof ( MsgOpKillContexts ) ;
-      killMsg.header.opCode = MSG_BS_KILL_CONTEXT_REQ ;
-      killMsg.header.TID = cb->getTID() ;
-      killMsg.header.routeID.value = 0;
-      killMsg.ZERO = 0;
-      killMsg.numContexts = 1 ;
 
-      SUB_STREAMS::const_iterator itr = _subs.begin() ;
-      for ( ; itr != _subs.end(); ++itr )
+      /// When the cb->isInterrupted(), don't kill context, because the
+      /// session will send interrupt or disconnect message to peer node
+      if ( !cb->isInterrupted() )
       {
-         killMsg.contextIDs[0] = itr->second.contextID ;
-         rc = rtnCoordSendRequestToNode( &killMsg, itr->second.id,
-                                         route, cb, sendMap ) ;
+         REQUESTID_MAP sendMap ;
+         netMultiRouteAgent *route = pmdGetKRCB()->getCoordCB(
+                                     )->getRouteAgent() ;
+         MsgOpKillContexts killMsg ;
+         killMsg.header.messageLength = sizeof ( MsgOpKillContexts ) ;
+         killMsg.header.opCode = MSG_BS_KILL_CONTEXT_REQ ;
+         killMsg.header.TID = cb->getTID() ;
+         killMsg.header.routeID.value = 0;
+         killMsg.ZERO = 0;
+         killMsg.numContexts = 1 ;
+
+         SUB_STREAMS::const_iterator itr = _subs.begin() ;
+         for ( ; itr != _subs.end(); ++itr )
+         {
+            killMsg.contextIDs[0] = itr->second.contextID ;
+            rc = rtnCoordSendRequestToNode( &killMsg, itr->second.id,
+                                            route, cb, sendMap ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to kill sub context on node[%d:%hd], rc:%d",
+                       itr->second.id.columns.groupID,
+                       itr->second.id.columns.nodeID, rc ) ;
+               /// try to rollback all substreams, so do not goto error.
+            }
+         }
+
+         rc = rtnCoordGetReply( cb, sendMap, q, MSG_BS_KILL_CONTEXT_RES,
+                                TRUE, TRUE ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to kill sub context on node[%d:%hd], rc:%d",
-                    itr->second.id.columns.groupID,
-                    itr->second.id.columns.nodeID, rc ) ;
-            /// try to rollback all substreams, so do not goto error.
+            PD_LOG( PDERROR, "failed to get reply:%d", rc ) ;
+            goto error ;
          }
       }
 
-      rc = rtnCoordGetReply( cb, sendMap, q, MSG_BS_KILL_CONTEXT_RES,
-                             TRUE, TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply:%d", rc ) ;
-         goto error ;
-      }
    done:
       while ( !q.empty() )
       {

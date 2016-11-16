@@ -785,11 +785,6 @@ namespace engine
       {
          pmdEDUEvent pmdEvent ;
          BOOLEAN isGotMsg = cb->waitEvent( pmdEvent, waitTime ) ;
-         // if we hit interrupt, let's just get out of here. Don't need to worry
-         // about cb queue, pmdEDUCB::clear() is going to clean it up.
-         PD_CHECK( !cb->isInterrupted() && !cb->isForced(),
-                   SDB_APP_INTERRUPT, error, PDERROR,
-                   "Interrupt! stop receiving reply!" ) ;
 
          // if we didn't receive anything
          if ( FALSE == isGotMsg )
@@ -800,6 +795,16 @@ namespace engine
             }
             else
             {
+               /// If we hit interrupt, let's just get out of here.
+               /// Don't need to worry about cb queue,
+               /// pmdEDUCB::clear() is going to clean it up.
+               if ( cb->isInterrupted() || cb->isForced() )
+               {
+                  PD_LOG( PDERROR, "Recieve reply failed, because the "
+                          "session is interrupted" ) ;
+                  rc = SDB_APP_INTERRUPT ;
+                  goto error ;
+               }
                continue ;
             }
          }
