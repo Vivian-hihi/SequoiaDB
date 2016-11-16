@@ -17,6 +17,16 @@ static string& replace_all ( string &str, const string& old_value, const string 
    return str ;
 }
 
+static bool strStartsWith( const string& str, const string& substr )
+{
+   if ( str.empty() || substr.empty() )
+   {
+      return false ;
+   }
+
+   return str.compare( 0, substr.size(), substr ) == 0 ;
+}
+
 static inline int max(int a, int b)
 {
    return (a >= b ? a : b);
@@ -69,9 +79,13 @@ void RCGen::loadFromXML ()
             ErrorCode errcode ;
             ptree vv = v.second.get_child(DESCRIPTION);
             errcode.name = v.second.get<string>(NAME);
-            errcode.value = -(i+1);
             errcode.desc_cn = vv.get<string>("cn");
             errcode.desc_en = vv.get<string>("en");
+            errcode.value = -(i+1);
+            if (strStartsWith(errcode.name, RESERVED_ERROR))
+            {
+               errcode.reserved = true;
+            }
             errcodes.push_back(errcode);
             i++;
             maxErrorNameWidth = max(maxErrorNameWidth, (int)errcode.name.length());
@@ -135,7 +149,7 @@ void RCGen::genC ()
 
     for (int i = 0; i < conslist.size(); ++i)
     {
-        fout<<"#define "<<setw(RCALIGN)<<conslist[i].first<<conslist[i].second<<endl;
+        fout<<"#define "<<setw(maxErrorNameWidth + 2)<<conslist[i].first<<conslist[i].second<<endl;
     }
     fout<<endl;
 
@@ -151,7 +165,7 @@ void RCGen::genC ()
     for (int i = 0; i < errcodes.size(); ++i)
     {
         fout<<"#define "
-            <<setw(RCALIGN)<<errcodes[i].name
+            <<setw(maxErrorNameWidth + 2)<<errcodes[i].name
             <<setw(6)<<errcodes[i].value
             <<"/**< "<<errcodes[i].getDesc(language)<<" */"<<endl;
     }
@@ -253,13 +267,13 @@ void RCGen::genCS ()
     for (int i = 0; i < size; ++i)
     {
         fout<<"            "
-            <<setw(RCALIGN)<<errcodes[i].name
+            <<setw(maxErrorNameWidth + 2)<<errcodes[i].name
             <<" = "
             <<errcodes[i].value
             <<","<<endl;
     }
     fout<<"            "
-        <<setw(RCALIGN)<<errcodes[size].name
+        <<setw(maxErrorNameWidth + 2)<<errcodes[size].name
         <<" = "
         <<errcodes[size].value
         <<endl;
@@ -277,7 +291,7 @@ void RCGen::genCS ()
     fout<<"            "
         <<"\""<<errcodes[size].getDesc(language)<<"\""<<endl;
 
-    fout<<"            };"<<endl
+    fout<<"        };"<<endl
         <<"    }"<<endl
         <<"}";
 
@@ -446,7 +460,7 @@ void RCGen::genJS ()
    fout << "/* Error Constants */" << endl ;
    for ( int i = 0 ; i < conslist.size() ; i++ )
    {
-      fout << "var " << setw(RCALIGN) << conslist[i].first << " = "
+      fout << "var " << setw(maxErrorNameWidth + 2) << conslist[i].first << " = "
          << setw(6) << conslist[i].second << ";" << endl ;
    }
    fout << endl ;
@@ -454,7 +468,7 @@ void RCGen::genJS ()
    fout << "/* Error Codes */" << endl ;
    for ( int i = 0 ; i < errcodes.size() ; i++ )
    {
-      fout << "var " << setw(RCALIGN) << errcodes[i].name << " = "
+      fout << "var " << setw(maxErrorNameWidth + 2) << errcodes[i].name << " = "
          << setw(6) << -(i + 1) << "; // "
          << errcodes[i].getDesc(language) << ";" << endl ;
    }
@@ -496,6 +510,11 @@ void RCGen::genDoc()
    for ( it = errcodes.begin(); it != errcodes.end(); it++ )
    {
       const ErrorCode& errcode = *it;
+      if (errcode.reserved)
+      {
+         continue;
+      }
+
       fout << "| " << errcode.name
            << " | " << errcode.value
            << " | " << errcode.getDesc(language)

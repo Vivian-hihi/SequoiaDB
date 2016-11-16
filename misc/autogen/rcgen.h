@@ -8,8 +8,6 @@
 
 using namespace std;
 
-// name string align
-#define RCALIGN 64
 // xml source file
 #define RCXMLSRC "rclist.xml"
 // output file path
@@ -28,6 +26,7 @@ using namespace std;
 #define NAME "name"
 #define VALUE "value"
 #define DESCRIPTION "description"
+#define RESERVED_ERROR "SDB_ERROR_RESERVED"
 
 struct ErrorCode
 {
@@ -35,6 +34,12 @@ struct ErrorCode
    string desc_en ;
    string desc_cn ;
    int    value ;
+   bool   reserved ;
+
+   ErrorCode():
+    value(0), reserved(false)
+   {
+   }
 
    string getDesc(string lang) const
    {
