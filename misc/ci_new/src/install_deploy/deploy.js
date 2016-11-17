@@ -109,7 +109,8 @@ function deployClster( mode )
                   sharingbreak:30000,
                   diagnum:30,
                   optimeout:60000,
-                  fap:fapValue
+                  fap:fapValue,
+                  transactionon:true
                 };
    db.createCataRG( controlHost, cataPort, 
                     databaseDir+"/cata/"+cataPort,
