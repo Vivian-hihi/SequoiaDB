@@ -70,6 +70,7 @@
                resultproperty="rc" 
                failonerror="false" >
             <arg line="${cmd}"/>
+            <env key="MONGOC_TEST_HOST" path="localhost:${SVCNAME}" />
             <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:@{dbdir}/lib" />
          </exec>
               
