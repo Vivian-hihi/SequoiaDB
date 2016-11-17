@@ -1,452 +1,473 @@
-<!-- @param ${WORKSPACE}: The path of workspace -->
-<!-- @param ${CPU.version}: The CPU name -->
-<!-- @param ${compile.debug}: The flag whether debug version -->
-<!-- @param ${choise.jdk5} : choise the jdk version , default is jdk6 , if you choise jdk5,enter true-->
-<!-- @param ${SPARK_VERSION} : when build sdb_spark_conenctor, choise the spark version , default is 1.6.1 -->
-
-<project name="build-srccode" default="mk-release">
-   <property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
-   <property name="RELEASE_DIR" value="${WORKSPACE}/release" />
-   <property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
-   <property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
-    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-        <classpath>
-            <pathelement location="${CODE_DIR}/misc/ci/exec-tools/ant-sdbtasks.jar" />
-        </classpath>
-    </taskdef>
-
-   <target name="ready" depends="">
-      <delete file="${CODE_DIR}/misc/ci/ci.build.properties" failonerror="false" />
-      <delete dir="${RELEASE_DIR}/" failonerror="false" />
-      <echo message="copy the ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} file to be named ${CODE_DIR}/misc/ci/ci.build.properties" />
-      <copy file="${CODE_DIR}/misc/ci/ci-properies-files/ci.build.properties.${CPU.version}" tofile="${CODE_DIR}/misc/ci/ci.build.properties" />
-      <echo message="copy ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} to ${CODE_DIR}/misc/ci/ci.build.properties is OK" />
+<project default="main" basedir="../../">
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
+   
+   <target name="main">     
+      <antcallback target="check_parameter" return="cmd_debug, cmd_etp"/>
       
-      <property file="${CODE_DIR}/misc/ci/ci.build.properties" />
+      <property name="WORKSPACE" value="/home/jenkins/workspace/test" />
+      <property name="SPARK_VERSION" value="1.6.1" />
+      
+      <property name="srccode_dir" location="${WORKSPACE}/sequoiadb" />
+      <property name="release_dir" location="${WORKSPACE}/release" />    
+      <property name="java_driver_jar" value="sequoiadb.jar" />             
+      
+      <delete dir="${release_dir}" failonerror="false"/>
+      <mkdir dir="${release_dir}"/>
+      
+      <dbversion srccodedir="${srccode_dir}" version="sequoiadb_version"/>
+      <antcall target="compile_src"/>   
+      <antcall target="compile_java_driver"/>
+      <antcall target="compile_php_driver"/>
+      <antcall target="compile_python_driver"/>
+      <antcall target="compile_pg_connector"/>
+      <antcall target="compile_hive_connector"/>
+      <antcall target="compile_hadoop_connector"/>
+      <antcall target="compile_spark_connector"/>
+      <antcall target="build_driver_package"/>
+      <antcall target="copy_package_file"/>
+      <antcall target="build_run_package"/>
+    
    </target>
 
-   <target name="compile-src" depends="ready">
-      <property name="java.driver.jar.name" value="sequoiadb.jar" />
-
-      <echo message="Begin to compile source code..." />
-      <delete dir="${CODE_DIR}/bin"  failonerror="false" />
-      <mkdir dir="${CODE_DIR}/bin" />
-      <delete dir="${CODE_DIR}/build" failonerror="false" />
+   <target name="check_parameter">  
       <if>
-         <equals arg1="${compile.debug}" arg2="true" />
-         <then>
-            <echo message="compile.debug is ture" />
-            <property name="compile.arg.line" value="--dd" />
-            <echo message="${compile.arg.line}" />
-         </then>
-         <else>
-            <echo message="compile.debug is false" />
-            <property name="compile.arg.line" value="" />
-            <echo message="${compile.arg.line}" />
+         <isset property="IS_DEBUG"/>
+         <else>           
+            <var name="IS_DEBUG" value="true" />
          </else>
       </if>
-
       <if>
-         <equals arg1="${enterprise}" arg2="true" />
-         <then>
-            <echo message="enterprise is ture" />
-            <property name="enterprise.line" value=" --enterprise" />
-            <echo message="${enterprise.line}" />
+         <equals arg1="${IS_DEBUG}" arg2="true" />
+         <then>          
+            <property name="cmd_debug" value="--dd" />           
          </then>
          <else>
-            <echo message="enterprise is false" />
-            <property name="enterprise.line" value="" />
-            <echo message="${enterprise.line}" />
+            <property name="cmd_debug" value="" />
          </else>
       </if>
+      
+      <if>
+         <isset property="IS_ENTERPRISE"/>
+         <else>
+            <var name="IS_ENTERPRISE" value="true" />
+         </else>
+      </if>
+      <if>
+         <equals arg1="${IS_ENTERPRISE}" arg2="true" />
+         <then>          
+            <property name="cmd_etp" value="--enterprise" />           
+         </then>
+         <else>
+            <property name="cmd_etp" value="" />
+         </else>
+      </if>
+   </target>
+       
+   <target name="compile_src">
+      <delete dir="${srccode_dir}/bin"  failonerror="false" />
+      <delete dir="${srccode_dir}/build" failonerror="false" />
+      
+      <var name="cmd" value="${cmd_debug} ${cmd_etp} --all -j 4" />
+      <echo message="exec cmd: scons ${cmd}" />
+      <exec executable="scons" dir="${srccode_dir}" failonerror="true">
+         <arg line="${cmd}" />
+      </exec>
+   </target>
+   
+   <target name="compile_pg_connector">
+      <var name="src_dir" value="${srccode_dir}/driver/postgresql" />
+      
+      <!--compile--> 
+      <exec executable="make" dir="${fdw_src_dir}" failonerror="true">
+         <arg line="clean" />
+      </exec>
+      <exec executable="make" dir="${fdw_src_dir}" failonerror="true">
+         <arg line="local" />
+      </exec>
+      <exec executable="make" dir="${fdw_src_dir}" failonerror="true">
+         <arg line="all" />
+      </exec>
+      
+      <!--get svn version--> 
+      <var name="fdw_svn" unset="true" />
+      <svnversion dir="${src_dir}" version="fdw_svn" />
+      
+      <!--get edition (judge changed or original) -->
+      <exec executable="bash" dir="${src_dir}" outputproperty="fdw_edition">
+         <arg value="-c" />
+         <arg line="&quot;nm sdb_fdw.so | grep sdbuseownpostgres&quot;" />
+      </exec>
+      
+      <!--change fdw name-->
+      <if>
+         <equals arg1="${fdw_edition}" arg2="" />
+         <then>            
+            <property name="fdw_name" value="sdb_fdw.so_${sequoiadb_version}_${fdw_svn}" />
+            <move file="${src_dir}/sdb_fdw.so" tofile="${src_dir}/${fdw_name}"/>
+            <echo message="fdw is original, fdw new name = ${fdw_name}" />  
+         </then>
+         <else>             
+            <property name="fdw_name" value="sdb_fdw.so_e_${sequoiadb_version}_${fdw_svn}" />
+            <move file="${src_dir}/sdb_fdw.so" tofile="${src_dir}/${fdw_name}"/>
+            <echo message="fdw is enterprise, fdw new name = ${fdw_name}" />  
+         </else>
+      </if>
+      
+      <!--copy to build directory-->
+      <delete dir="${src_dir}/build" failonerror="false"/>
+      <mkdir dir="${src_dir}/build"/>
+      <copy file="${src_dir}/${fdw_name}"       todir="${src_dir}/build" />
+      <copy file="${src_dir}/sdb_fdw.control"   todir="${src_dir}/build" />
+      <copy file="${src_dir}/sdb_fdw--1.0.sql"  todir="${src_dir}/build" />
 
-      <echo message="exec scons ${compile.arg.line}${enterprise.line} --all -j 4" />
-      <exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
-         <arg line="${compile.arg.line}${enterprise.line} --all -j 4" />
+   </target>
+   
+   <target name="compile_java_driver">
+      <var name="src_dir" value="${srccode_dir}/driver/java" />
+      <exec executable="scons" dir="${src_dir}" failonerror="true">
+         <arg line="${cmd_debug}" />
       </exec>
-         
-      <echo message="Compile the connector of postgresql..." />
-      <exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
-         <arg line=" clean" />
-      </exec>
-      <exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
-         <arg line=" local" />
-      </exec>
-      <exec executable="make" dir="${CODE_DIR}/driver/postgresql" failonerror="true">
-         <arg line=" all" />
-      </exec>
+   </target>
+   
+   <target name="compile_hive_connector">
+      <var name="src_dir" value="${srccode_dir}/driver/hadoop/hive" />
       
-      <echo message="Build java driver..." />
-      <echo message="exec scons ${compile.arg.line}" />
-      <exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/java" failonerror="true">
-         <arg line="${compile.arg.line}" />
-      </exec>
-      
-      <ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hive/build.xml">
-         <property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
-         <property name="javac.base.dir" value="${WORKSPACE}/sequoiadb/"/>
-         <property name="root.dir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hive/"/>
+      <property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
+      <property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
+            
+      <ant antfile="${src_dir}//build.xml">
+         <property name="java.driver.jar" value="${srccode_dir}/driver/java/${java_driver_jar}"/>
+         <property name="javac.base.dir" value="${srccode_dir}"/>
+         <property name="root.dir" value="${src_dir}"/>
          <property name="open.source.hive_connector.filename" value="${open.source.hive_connector.filename}" />
          <property name="cdh.hive_connector.filename" value="${cdh.hive_connector.filename}" />
       </ant>
       
-      <ant antfile="${WORKSPACE}/sequoiadb/driver/spark/build.xml">
+      <!--copy to build directory-->
+      <delete dir="${src_dir}/build" failonerror="false"/>
+      <mkdir dir="${src_dir}/build"/>
+      <copy file="${src_dir}/${cdh.hive_connector.filename}"         todir="${src_dir}/build" />
+      <copy file="${src_dir}/${open.source.hive_connector.filename}" todir="${src_dir}/build" />
+   </target>
+   
+   <target name="compile_hadoop_connector">
+      <var name="src_dir" value="${srccode_dir}/driver/hadoop/hadoop-connector" />
+      
+      <ant antfile="${src_dir}/build.xml">
+         <property name="hadoop.version" value="1.2" />
+         <property name="basedir" value="${src_dir}" />
+         <property name="java.driver.jar" value="${srccode_dir}/driver/java/${java_driver_jar}"/>
+      </ant>
+      <ant antfile="${src_dir}/build.xml">
+         <property name="hadoop.version" value="2.2" />
+         <property name="basedir" value="${src_dir}" />
+         <property name="java.driver.jar" value="${srccode_dir}/driver/java/${java_driver_jar}"/>
+      </ant>
+      
+      <!--copy to build directory-->
+      <delete dir="${src_dir}/build" failonerror="false"/>
+      <mkdir dir="${src_dir}/build"/>
+      <copy todir="${src_dir}/build" >
+         <fileset dir="${src_dir}" includes="**/hadoop-connector-*.jar" />
+      </copy>
+   </target>
+   
+   <target name="compile_spark_connector">
+      <var name="src_dir" value="${srccode_dir}/driver/spark" />      
+      <ant antfile="${src_dir}/build.xml">
         <property name="SPARK_VERSION" value="${SPARK_VERSION}" />
         <property name="spark_connector_root_dir" value="${WORKSPACE}/sequoiadb/driver/spark" />
       </ant>
-
-      <ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
-         <property name="hadoop.version" value="1.2" />
-         <property name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
-         <property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
-      </ant>
-      <ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
-         <property name="hadoop.version" value="2.2" />
-         <property name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
-         <property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
-      </ant>
-
-      <chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
-      <echo message="/usr/bin/gcc  ${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
-      <exec executable="/usr/bin/gcc" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true">
-         <arg line="${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
-      </exec>
-      <exec executable="./print_version" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true" outputproperty="projects.version" />
-      <echo message="&#10;projects.version=${projects.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
-      <echo message="projects.version=${projects.version}" />
-      <echo message="compile source code completed." />
    </target>
-
-   <target name="mk-driver" depends="compile-src">
-      <property name="DRIVER.DIR" value="${RELEASE_DIR}/driver" />
-
-      <echo message="Begin to make driver package.." />
+   
+   <target name="compile_php_driver">
+      <property name="php_version_list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0" />
+      <var name="src_dir" value="${srccode_dir}/driver/php5" />
+      
+      <delete dir="${src_dir}/release" failonerror="false"/>
+      <mkdir dir="${src_dir}/release" />
+      <delete dir="${src_dir}/build" failonerror="false"/>
+      
       <if>
-         <equals arg1="${compile.debug}" arg2="true" />
+         <equals arg1="${cmd_debuge}" arg2="true" />
          <then>
-            <property name="build.result.dir" value="dd" />
+            <property name="build_dir" location="${src_dir}/build/dd" />
          </then>
          <else>
-            <property name="build.result.dir" value="normal" />
+            <property name="build_dir" location="${src_dir}/build/normal" />
          </else>
       </if>
-
-      <mkdir dir="${DRIVER.DIR}/hadoop"/>
-      <mkdir dir="${DRIVER.DIR}/java" />
-      <mkdir dir="${DRIVER.DIR}/CSharp"/>
-      <mkdir dir="${DRIVER.DIR}/include" />
-      <mkdir dir="${DRIVER.DIR}/lib/phplib" />
-      <mkdir dir="${DRIVER.DIR}/lib" />
-      <mkdir dir="${DRIVER.DIR}/python" />
-      <mkdir dir="${DRIVER.DIR}/samples" />
-      <mkdir dir="${DRIVER.DIR}/postgresql" />
-
-      <copy file="${CODE_DIR}/driver/C#.Net/build/release/sequoiadb.dll" tofile="${DRIVER.DIR}/CSharp/sequoiadb.dll" />
-      <copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
-      <copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
-      <copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
-      <copy todir="${DRIVER.DIR}/hadoop" >
-         <fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector-*.jar" />
-      </copy>
-      <copy todir="${DRIVER.DIR}/lib">
-         <fileset dir="${CODE_DIR}/client/lib/" includes="*" />
-      </copy>
-      <copy todir="${DRIVER.DIR}/include">
-         <fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
-      </copy>
-      <copy todir="${DRIVER.DIR}/samples">
-         <fileset dir="${CODE_DIR}/client/samples/" includes="**/*" />
-      </copy>
-
-      <!--get svn version--> 
-      <echo message="svn info | grep Revision | awk '{print $2}', dir = ${CODE_DIR}/driver/postgresql" /> 
-      <exec executable="bash" dir="${CODE_DIR}/driver/postgresql" failonerror="true" outputproperty="fdw_svn">
-         <arg value="-c" />
-         <arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
-      </exec>     
-      <echo message="fdw svn revision = ${fdw_svn}" />
-      
-      <!--get edition (judge changed or original) -->
-      <exec executable="bash" dir="${CODE_DIR}/driver/postgresql" outputproperty="fdw_output">
-         <arg value="-c" />
-         <arg line="&quot;nm sdb_fdw.so | grep sdbuseownpostgres&quot;" />
-      </exec>  
-      
-      <!--change fdw name-->
-      <if>
-         <equals arg1="${fdw_output}" arg2="" />
-         <then>            
-            <property name="fdw_name" value="sdb_fdw.so_${projects.version}_${fdw_svn}" /> 
-            <echo message="fdw is original, fdw new name = ${fdw_name}" />  
-         </then>
-         <else>             
-            <property name="fdw_name" value="sdb_fdw.so_e_${projects.version}_${fdw_svn}" />
-            <echo message="fdw is enterprise, fdw new name = ${fdw_name}" />  
-         </else>
-      </if>        
-      
-      <!--copy fdw to drvier tar-->
-      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${DRIVER.DIR}/postgresql/${fdw_name}" />
-      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.control" />
-      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${DRIVER.DIR}/postgresql/sdb_fdw--1.0.sql" />
-      <chmod file="${DRIVER.DIR}/postgresql/${fdw_name}" perm="a+x" />
-      
-      <property name="test-type-linux-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0" />
-      <property name="test-type-win32-list" value="5.3.18,5.4.15" />
-      <for list="${test-type-linux-list}" param="php.version">
+            
+      <for list="${php_version_list}" param="php_version">
          <sequential>
-            <antcall target="build-and-copy-php" inheritAll="true">
-               <param name="php.version" value="@{php.version}" />
-            </antcall>
+            <chmod perm="u+x" file="${srccode_dir}/thirdparty/php/linux/retriConfig.sh" />
+            <exec executable="${srccode_dir}/thirdparty/php/linux/retriConfig.sh" failonerror="true">
+               <arg line="${php_version} " />
+            </exec>
+            <exec executable="scons" dir="${src_dir}" failonerror="true">
+               <arg line="${cmd_debuge} --phpversion=${php_version}" />
+            </exec>
+            <copy file="${build_dir}/libsdbphp-${php_version}.so" todir="${src_dir}/release" />
          </sequential>
       </for>
-
-      <antcall target="build-and-copy-python" inheritAll="true">
-         <param name="python.dir" value="${CODE_DIR}/driver/python" />
-         <param name="DRIVER.DIR" value="${DRIVER.DIR}" />
-      </antcall>
-
-      <exec executable="tar" dir="${RELEASE_DIR}" failonerror="true">
-         <arg line="zcvf ${project.name}-driver-${projects.version}-${os.and.platform}.tar.gz driver" />
-      </exec>
-      <echo message="Make driver package completed." />
    </target>
 
-   <target name="build-and-copy-php" depends="">
-      <delete dir="${CODE_DIR}/driver/php5/build" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
-
-      <chmod perm="u+x" file="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" />
-      <exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php/linux" failonerror="true">
-         <arg line="  ${php.version} " />
+   <target name="compile_python_driver" >
+      <var name="src_dir" value="${srccode_dir}/driver/python" />      
+      <exec executable="scons" dir="${src_dir}">
+         <arg line="${cmd_debug}" />
       </exec>
-      <exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/php5" failonerror="true">
-         <arg line=" ${compile.arg.line} --phpversion=${php.version}" />
-      </exec>
-
-      <copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsdbphp-${php.version}.so" todir="${DRIVER.DIR}/lib/phplib" />
-      <copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsdbphp-${php.version}.so" todir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
    </target>
-
-   <target name="build-and-copy-python" depends="">
-      <property name="python.tar" value="pysequoiadb.tar.gz" />
-      <exec executable="scons" dir="${python.dir}">
-         <arg line=" " />
+   
+   <!--target name="compile_doc" >
+      <exec executable="scons" dir="${src_dir}">
+         <arg line="--website" />
       </exec>
-      <exec executable="/bin/chmod" dir="${python.dir}">
-         <arg line=" u+x ${python.tar}" />
-      </exec>
-      <copy file="${python.dir}/${python.tar}" todir="${DRIVER.DIR}/python" />
-   </target>
-
-   <target name="mk-release" depends="mk-driver,compile-src">
-      <property name="DRIVER.DIR" value="${RELEASE_DIR}/driver" />
-
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/bin" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/include" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/samples" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/java/jdk" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/CSharp" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/hadoop" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/doc" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/conf/samples" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/conf/local" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/conf/log" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/conf/script" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/www" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/tools/server/php" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/python" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/postgresql" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/packet" />        
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/web" />
-
-      <!-- <if>
-         <equals arg1="${compile.debug}" arg2="true" />
-         <then>
-            <property name="build.result.dir" value="dd" />
-         </then>
-         <else>
-            <property name="build.result.dir" value="normal" />
-         </else>
-      </if> -->
-
-       <copy todir="${RELEASE_DIR}/sequoiadb/bin" >
-          <fileset dir="${CODE_DIR}/bin">
-               <include name="**/*" />
-               <exclude name="lib*" />
-          </fileset>
-       </copy>
-       <copy todir="${RELEASE_DIR}/sequoiadb/web" >
-          <fileset dir="${CODE_DIR}/SequoiaDB/web">
-               <include name="**/*" />
-          </fileset>
-       </copy>
-      <copy todir="${RELEASE_DIR}/sequoiadb/lib">
-         <fileset dir="${CODE_DIR}/client/lib/" includes="**/*" />
-      </copy>
-      <copy todir="${RELEASE_DIR}/sequoiadb/tools/sdbsupport">
-         <fileset dir="${CODE_DIR}/tools/sdbsupport" includes="**/*" />
-      </copy>
-      <chmod file="${RELEASE_DIR}/sequoiadb/tools/sdbsupport/sdbsupport.sh" perm="u+x" />
-      <copy todir="${RELEASE_DIR}/sequoiadb/include/">
-         <fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
-      </copy>
-      <copy todir="${RELEASE_DIR}/sequoiadb/www">
-         <fileset dir="${CODE_DIR}/client/admin/admintpl" />
-      </copy>
-      <copy todir="${RELEASE_DIR}/sequoiadb/samples">
-         <fileset dir="${CODE_DIR}/client/samples/" />
-      </copy>
-      <copy file="${CODE_DIR}/driver/C#.Net/build/release/sequoiadb.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sequoiadb.dll" />
-      <copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
-         <fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector-*.jar" />
-      </copy>
-      <copy todir="${RELEASE_DIR}/sequoiadb/conf/script">
-         <fileset dir="${CODE_DIR}/conf/script" includes="**/*" />
-      </copy>
-      <copy todir="${RELEASE_DIR}/sequoiadb/python">
-         <fileset dir="${DRIVER.DIR}/python" />
-      </copy>
-      <copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
-      <copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
-      <copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
-
-      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${RELEASE_DIR}/sequoiadb/postgresql/${fdw_name}" />
-      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.control" />
-      <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw--1.0.sql" />
-      <chmod file="${RELEASE_DIR}/sequoiadb/postgresql/${fdw_name}" perm="a+x" />
+   </target-->
+   
+   <target name="build_driver_package" >
+      <property name="release_driver_dir" location="${release_dir}/driver" />
+      <delete dir="${release_driver_dir}" failonerror="false"/>
+      <mkdir dir="${release_driver_dir}"/>
       
+      <mkdir dir="${release_driver_dir}/hadoop"/>
+      <mkdir dir="${release_driver_dir}/java" />
+      <mkdir dir="${release_driver_dir}/CSharp"/>
+      <mkdir dir="${release_driver_dir}/include" />
+      <mkdir dir="${release_driver_dir}/lib/phplib" />
+      <mkdir dir="${release_driver_dir}/lib" />
+      <mkdir dir="${release_driver_dir}/python" />
+      <mkdir dir="${release_driver_dir}/samples" />
+      <mkdir dir="${release_driver_dir}/postgresql" />
+      
+      <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
+            tofile="${release_driver_dir}/CSharp/sequoiadb.dll" />
+      <copy file="${srccode_dir}/driver/java/${java_driver_jar}" 
+            todir="${release_driver_dir}/java" />
+            
+      <copy todir="{release_driver_dir}/hadoop" >
+         <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
+      </copy>     
+      <copy todir="{release_driver_dir}/hadoop" >
+         <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
+      </copy>         
+      <copy todir="${release_driver_dir}/lib">
+         <fileset dir="${srccode_dir}/client/lib/" includes="*" />
+      </copy>
+      <copy todir="${release_driver_dir}/include">
+         <fileset dir="${srccode_dir}/client/include/" includes="**/*" />
+      </copy>
+      <copy todir="${release_driver_dir}/samples">
+         <fileset dir="${srccode_dir}/client/samples/" includes="**/*" />
+      </copy>
+      <copy todir="${release_driver_dir}/postgresql" >
+         <fileset dir="${srccode_dir}/driver/postgresql/build" includes="**/*" />
+      </copy>     
+      <chmod dir="${release_driver_dir}/postgresql" includes="*sdb_fdw.so*" perm="a+x" />
+      <copy todir="${release_driver_dir}/lib/phplib" >
+         <fileset dir="${srccode_dir}/driver/php5/release" includes="*.so" />
+      </copy>
+      <copy file="${python.dir}/pysequoiadb.tar.gz" todir="${release_driver_dir}/python" />
+      
+      <tar destfile="sequoiadb-driver-${sequoiadb_version}-${os.and.platform}.tar.gz" 
+           longfile="gnu" compression="gzip" 
+           basedir="${release_dir}" includes="driver/**/*"/>
+
+   </target>
+   
+   <target name="copy_package_file" >
+      <property name="release_db_dir" location="${release_dir}/sequoiadb" />
+      <delete dir="${release_db_dir}" failonerror="false"/>
+      <mkdir dir="${release_db_dir}"/>
+      
+      <mkdir dir="${release_db_dir}/CSharp" />
+      <mkdir dir="${release_db_dir}/bin" />
+      <mkdir dir="${release_db_dir}/conf/samples" />
+      <mkdir dir="${release_db_dir}/conf/local" />
+      <mkdir dir="${release_db_dir}/conf/log" />
+      <mkdir dir="${release_db_dir}/conf/script" />
+      <mkdir dir="${release_db_dir}/doc" />
+      <mkdir dir="${release_db_dir}/hadoop" />
+      <mkdir dir="${release_db_dir}/include" />
+      <mkdir dir="${release_db_dir}/java/jdk" />
+      <mkdir dir="${release_db_dir}/lib" />
+      <mkdir dir="${release_db_dir}/license" />
+      <mkdir dir="${release_db_dir}/packet" />
+      <mkdir dir="${release_db_dir}/postgresql" />
+      <mkdir dir="${release_db_dir}/python" />
+      <mkdir dir="${release_db_dir}/samples" />
+      <mkdir dir="${release_db_dir}/tools/server/php" />  
+      <mkdir dir="${release_db_dir}/web" />
+      <mkdir dir="${release_db_dir}/www" />
+      
+      <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
+            tofile="${release_db_dir}/CSharp/sequoiadb.dll" />
+              
+      <copy todir="${release_db_dir}/bin" >
+         <fileset dir="${srccode_dir}/bin" includes="**/*"/>
+      </copy>
+      <copy file="${srccode_dir}/script/sdbwsart" todir="${release_db_dir}/bin" />
+      <replaceregexp file="${release_db_dir}/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />
+      <copy file="${srccode_dir}/script/sdbwstop" todir="${release_db_dir}/bin" />
+      <replaceregexp file="${release_db_dir}/bin/sdbwstop" match="&#13;&#10;" replace="&#10;" flags="g" />
+
+      
+      <copy todir="${release_db_dir}/conf/script">
+         <fileset dir="${srccode_dir}/conf/script" includes="**/*" />
+      </copy>
+      <copy todir="${release_db_dir}/conf/samples/">
+         <fileset dir="${srccode_dir}/conf/samples/" />
+      </copy>
+      <copy file="${srccode_dir}/conf/sdbcm.conf" todir="${release_db_dir}/conf" />
+      
+      <!--TODO: compile doc-->
+      
+      <copy todir="{release_db_dir}/hadoop" >
+         <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
+      </copy>
+      <copy todir="{release_db_dir}/hadoop" >
+         <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
+      </copy>
+      
+      <copy todir="${release_db_dir}/include">
+         <fileset dir="${srccode_dir}/client/include" includes="**/*" />
+      </copy>
+      
+      <copy file="${srccode_dir}/driver/java/${java_driver_jar}" todir="${release_db_dir}/java" />
       <if>
          <equals arg1="${os.arch}" arg2="ppc64" />
          <then>
-            <property name="PHP.VERSION" value="php_power" />
-            <property name="jdk.file.dir" value="jdk_ppclinux64"/>
+            <property name="php_version_arch" value="php_power" />
+            <property name="jdk_arch" value="jdk_ppclinux64"/>
          </then>
       </if>
       <if>
          <equals arg1="Linux" arg2="${os.name}" />
          <then>
-            <property name="jdk.file.dir" value="jdk_linux64"/>
-            <property name="PHP.VERSION" value="php_linux" />
-         </then>
-         <else>
-            <property name="jdk.file.dir" value="jdk_win64"/>
-            <property name="PHP.VERSION" value="php_win" />
-         </else>
+            <property name="jdk_arch" value="jdk_linux64"/>
+            <property name="php_version_arch" value="php_linux" />
+         </then>        
       </if>
-
-      <copy todir="${RELEASE_DIR}/sequoiadb/java/jdk">
-         <fileset dir="${CODE_DIR}/java/${jdk.file.dir}/" />
+      <copy todir="${release_db_dir}/java/jdk">
+         <fileset dir="${srccode_dir}/java/${jdk_arch}/" />
       </copy>
-      <copy todir="${RELEASE_DIR}/sequoiadb/conf/samples/">
-         <fileset dir="${CODE_DIR}/conf/samples/" />
+      
+      <copy todir="${release_db_dir}/lib">
+         <fileset dir="${srccode_dir}/client/lib" includes="**/*" />
       </copy>
-      <copy file="${CODE_DIR}/conf/sdbcm.conf" todir="${RELEASE_DIR}/sequoiadb/conf" />
-
-      <copy todir="${RELEASE_DIR}/sequoiadb/tools/server/php">
-         <fileset dir="${CODE_DIR}/tools/server/${PHP.VERSION}/" />
+      
+      <copy todir="${release_db_dir}/license">
+         <fileset dir="${srccode_dir}/license" />
       </copy>
-      <copy file="${CODE_DIR}/script/sequoiadb" todir="${RELEASE_DIR}/sequoiadb/" />
-      <replaceregexp file="${RELEASE_DIR}/sequoiadb/sequoiadb" match="&#13;&#10;" replace="&#10;" flags="g" />
-
-      <copy file="${CODE_DIR}/script/install_om.sh" todir="${RELEASE_DIR}/sequoiadb/" />
-
-      <copy file="${CODE_DIR}/script/sdbwsart" todir="${RELEASE_DIR}/sequoiadb/bin" />
-      <replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />
-      <copy file="${CODE_DIR}/script/sdbwstop" todir="${RELEASE_DIR}/sequoiadb/bin" />
-      <replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwstop" match="&#13;&#10;" replace="&#10;" flags="g" />
-
+      
+      <copy todir="${release_db_dir}/postgresql" >
+         <fileset dir="${srccode_dir}/driver/postgresql/build" includes="**/*" />
+      </copy>     
+      <chmod dir="${release_db_dir}/postgresql" includes="*sdb_fdw.so*" perm="a+x" />
+      
+      <copy todir="${release_db_dir}/python">
+         <fileset dir="${release_driver_dir}/python" />
+      </copy>
+      
+      <copy todir="${release_db_dir}/samples">
+         <fileset dir="${srccode_dir}/client/samples" />
+      </copy>
+      
+      <copy todir="${release_db_dir}/tools/sdbsupport">
+         <fileset dir="${srccode_dir}/tools/sdbsupport" includes="**/*" />
+      </copy>
+      <chmod file="${release_db_dir}/tools/sdbsupport/sdbsupport.sh" perm="u+x" />
+      <copy todir="${release_db_dir}/tools/server/php">
+         <fileset dir="${srccode_dir}/tools/server/${php_version_arch}/" />
+      </copy>
+      
+      <copy todir="${release_db_dir}/web" >
+         <fileset dir="${srccode_dir}/SequoiaDB/web" includes="**/*"/>
+      </copy>
+      
+      <copy todir="${release_db_dir}/www">
+         <fileset dir="${srccode_dir}/client/admin/admintpl" />
+      </copy>
+      
+      <!--sigle file-->
+      <copy file="${srccode_dir}/script/sequoiadb"                todir="${release_db_dir}/" />  
+      <copy file="${srccode_dir}/script/install_om.sh"            todir="${release_db_dir}/" />
+      <copy file="${srccode_dir}/misc/ci/mkrelease/compatible.sh" todir="${release_db_dir}" />
+      <copy file="${srccode_dir}/misc/ci/mkrelease/version.conf"  todir="${release_db_dir}" />
+      <replaceregexp file="${release_db_dir}/sequoiadb" match="&#13;&#10;" replace="&#10;" flags="g" />
+          
+      <!--exclude .svn-->
       <delete includeemptydirs="true">
-         <fileset dir="${RELEASE_DIR}/sequoiadb" includes="**/.svn" />
+         <fileset dir="${release_db_dir}" includes="**/.svn" />
       </delete>
-
-      <antcall target="mk-doc" inheritAll="true" />
-      <!-- The solution of trunk -->
-
-      <!-- <copy todir="${RELEASE_DIR}/sequoiadb/doc">
-         <fileset dir="${CODE_DIR}/doc/out" />
-      </copy>
-      <copydir src="${CODE_DIR}/doc/manual" dest="${RELEASE_DIR}/sequoiadb/doc/manual" includes="**/*" /> -->
-      <!-- The temp solution of branch 1.12 -->
-
-      <copy todir="${RELEASE_DIR}/sequoiadb/license">
-         <fileset dir="${CODE_DIR}/license" />
-      </copy>
-
-      <copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_server.xml"  todir="${RELEASE_DIR}/" />
-      <copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_en.lng"      todir="${RELEASE_DIR}/" />
-      <copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_zh.lng"      todir="${RELEASE_DIR}/" />
-        <copy file="${CODE_DIR}/misc/ci/mkrelease/normal_component.xml"  todir="${RELEASE_DIR}/" />
-        <copy file="${CODE_DIR}/misc/ci/mkrelease/upgrade_component.xml" todir="${RELEASE_DIR}/" />
-        <copy file="${CODE_DIR}/misc/ci/mkrelease/compatible.sh"         todir="${RELEASE_DIR}/sequoiadb" />
-        <copy file="${CODE_DIR}/misc/ci/mkrelease/version.conf"          todir="${RELEASE_DIR}/sequoiadb" />
+   </target>   
+      
+   <target name="build_run_package" >   
+      <copy file="${srccode_dir}/misc/ci/mkrelease/sequoiadb_server.xml"  todir="${release_dir}/" />
+      <copy file="${srccode_dir}/misc/ci/mkrelease/sequoiadb_en.lng"      todir="${release_dir}/" />
+      <copy file="${srccode_dir}/misc/ci/mkrelease/sequoiadb_zh.lng"      todir="${release_dir}/" />
+      <copy file="${srccode_dir}/misc/ci/mkrelease/normal_component.xml"  todir="${release_dir}/" />
+      <copy file="${srccode_dir}/misc/ci/mkrelease/upgrade_component.xml" todir="${release_dir}/" />
         
-
       <if>
-         <equals arg1="${enterprise}" arg2="true" />
+         <equals arg1="${IS_ENTERPRISE}" arg2="true" />
          <then>
-            <echo message="the verion is enterprise" />
-            <property name="version.name" value="-${enterprise.name}" />
-            <echo message="${version.name}" />
+            <property name="editon_str" value="-enterprise " />
          </then>
-         <else>
-            <echo message="the version is not enterprise" />
-            <property name="version.name" value="" />
-            <echo message="${version.name}" />
+         <else>          
+            <property name="editon_str" value="" />
          </else>
       </if>
 
-      <exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
-         <arg line="build sequoiadb_server.xml --setvars project.version=${projects.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
+      <var name="cmd" value="build sequoiadb_server.xml --setvars project.version=${sequoiadb_version} --setvars platform=${os.and.platform} --setvars enterpriseversion=${editon_str} --setvars project.outputDirectory=${release_dir}"/>
+      <echo>exec cmd: builder ${cmd}</echo>
+      <exec executable="builder" dir="${release_dir}" failonerror="true">
+         <arg line="${cmd}" />
       </exec>
-      <echo message="builder build sequoiadb_server.xml --setvars project.version=${projects.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
-      <!-- <echo message="Make relase package completed." />
-      <echo message="os.name=${os.name}, os.arch=${os.arch}" />
-      <if>
-         <equals arg1="${os.arch}" arg2="amd64" />
-         <then>
-            <echo message="begin to make rpm package.." />
-            <echo message="tar the sequoiadb-${projects.version}.tar.gz to /usr/src/packages/SOURCES..." />
-            <move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${projects.version}" />
-            <tar destfile="/usr/src/packages/SOURCES/sequoiadb-${projects.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${projects.version}/**" compression="gzip" />
-            <copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb-${projects.version}.spec" todir="/usr/src/packages/SPECS" />
-            <stafTools workType="shell" workHost="LOCAL" common="rpmbuild -bb -bb sequoiadb-${projects.version}.spec" workDir="/usr/src/packages/SPECS" waitTime="30m" />
-            <copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${projects.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" failonerror="false" />
-              <delete file="/usr/src/packages/SOURCES/sequoiadb-${projects.version}.tar.gz" />
-              <delete file="/usr/src/packages/SPECS/sequoiadb-${projects.version}.spec" />
-            <echo message="Make rpm package completed.." />
+           
+   </target>   
+   
+   
+   <macrodef name="dbversion">
+      <attribute name="srccodedir"/>
+      <attribute name="version"/>
+      <sequential>
+         <var name="tools_dir" value="@{srccodedir}/misc/ci/exec-tools"/>
+         <exec executable="gcc" dir="${tools_dir}" failonerror="true">
+            <arg line="${tools_dir}/print_version.c -o ${tools_dir}/print_version -I@{srccodedir}/SequoiaDB/engine/include" />
+         </exec>
+         <var name="@{version}" unset="true"/>
+         <exec executable="${tools_dir}/print_version" outputproperty="@{version}" failonerror="true" />
+      </sequential>
+   </macrodef>
+   
+   <macrodef name="svnversion">
+      <attribute name="dir"/>
+      <attribute name="verison"/>
+      <sequential>
+         <var name="@{verison}" unset="true"/>
+         <exec executable="bash" dir="@{dir}" outputproperty="@{version}" failonerror="true" >
+            <arg value="-c" />
+            <arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
+         </exec>
+      </sequential>
+   </macrodef>
+ 
 
 
-            <echo message="begin to make rpm package.." />
-            <exec executable="python" timeout="100000" dir="${WORKSPACE}/sequoiadb/script" outputproperty="RPM.INFO" resultproperty="ret.rpm">
-               <arg line=" package.py" />
-            </exec>
-            <copy file="${WORKSPACE}/sequoiadb/script/sequoiadb-${projects.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
-            <delete file="${WORKSPACE}/sequoiadb/script/sequoiadb-${projects.version}-1.x86_64.rpm" />
-         </then>
-      </if> -->
-   </target>
 
-   <target name="mk-doc">
-      <delete dir="${RELEASE_DIR}/sequoiadb/doc" failonerror="false" />
-      <mkdir dir="${RELEASE_DIR}/sequoiadb/doc" />
-      <if>
-         <equals arg1="${CPU.version}" arg2="x86" />
-         <then>
-            <property name="target_name" value="deploy_api_images" />
-         </then>
-         <else>
-            <property name="target_name" value="copy_offline_doc" />
-         </else>
-      </if>
-      <ant antfile="${CODE_DIR}/misc/ci/build-file/build-api.xml" target="${target_name}">
-         <property name="root_dir" value="${CODE_DIR}/doc" />
-         <property name="RELEASE_DIR" value="${RELEASE_DIR}" />
-         <property name="isDeploy" value="${isDeploy}" />
-      </ant>
-      <copy todir="${RELEASE_DIR}/sequoiadb/doc">
-         <fileset dir="${CODE_DIR}/doc/out" />
-      </copy>
-      <copydir src="${CODE_DIR}/doc/manual" dest="${RELEASE_DIR}/sequoiadb/doc/manual" includes="**/*" />
-   </target>
+
+
+
+
+
+
+
+
+
+ 
 </project>
