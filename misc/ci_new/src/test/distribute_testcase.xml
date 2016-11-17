@@ -19,7 +19,6 @@
             <case value="function_test">
                <for list="${large_data_list},${reliability_list},${configure_list}" param="feature">
                   <sequential>
-                     <echo>---------------------@{casedir}/@{feature}</echo>
                      <delete dir="@{casedir}/@{feature}" failonerror="false"/>                     
                      <delete file="@{casedir}/@{feature}" failonerror="false"/>
                      <delete file="@{casedir}/@{feature}.static" failonerror="false"/>
