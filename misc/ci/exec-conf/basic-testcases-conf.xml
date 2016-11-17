@@ -43,5 +43,6 @@
         <testsuite>listCL</testsuite>
         <testsuite>sqlHint</testsuite>
         <testsuite>cjson</testsuite>
+        <testsuite>idIndex</testsuite>
     </machine3>
 </shell>
