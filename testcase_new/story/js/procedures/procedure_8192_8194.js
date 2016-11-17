@@ -11,14 +11,14 @@ var pcdName2 = 'sum_procedure_8192';
 main();
 
 function main()
-{	
+{
    if( commIsStandalone(db) )
    {
       println(" Deploy mode is standalone!");
       return;
    }  
-	try
-	{         
+   try
+   {         
       ready();
       createPcd();
       excutePcd();
@@ -78,36 +78,25 @@ function excutePcd()
 function listPcd()
 {
    println("\n---begin to list procedures");
+   var rc = db.listProcedures();
    
-   var expPcds = [];
+   println("\n---begin to list procedures by filter");
    
    var expPcd1 = {};
    expPcd1["name"]      = pcdName1;
    expPcd1["func"]      = "function "+pcdName1+"() {\n    db.createCS(\""+csName+"\");\n}";
    expPcd1["funcType"]  = 0;
-   expPcds.push(expPcd1);
+   
+   var rc = db.listProcedures( {name: pcdName1} );
+   checkResult( rc, [expPcd1] ); 
    
    var expPcd2 = {};
    expPcd2["name"]      = pcdName2;
    expPcd2["func"]      = "function "+pcdName2+"(x, y, z) {\n    return x + y + z;\n}";
    expPcd2["funcType"]  = 0;
-   expPcds.push(expPcd2);
      
-   var rc = db.listProcedures();
-   checkResult( rc, expPcds ); 
-   
-   println("\n---begin to list procedures by filter");
-     
-   var expPcds = [];
-   
-   var expPcd1 = {};
-   expPcd1["name"]      = pcdName1;
-   expPcd1["func"]      = "function "+pcdName1+"() {\n    db.createCS(\""+csName+"\");\n}";
-   expPcd1["funcType"]  = 0;
-   expPcds.push(expPcd1);
-     
-   var rc = db.listProcedures({name:pcdName1});
-   checkResult( rc, expPcds ); 
+   var rc = db.listProcedures( {name: pcdName2} );
+   checkResult( rc, [expPcd2] );
 }
 
 function removePcd()
@@ -115,16 +104,16 @@ function removePcd()
    println("\n---begin to remove procedure");
    db.removeProcedure(pcdName1);
    
-   var expPcds = [];
-   
    var expPcd2 = {};
    expPcd2["name"]      = pcdName2;
    expPcd2["func"]      = "function "+pcdName2+"(x, y, z) {\n    return x + y + z;\n}";
    expPcd2["funcType"]  = 0;
-   expPcds.push(expPcd2);
      
-   var rc = db.listProcedures();
-   checkResult( rc, expPcds ); 
+   var rc = db.listProcedures( {name:pcdName1} );
+   checkResult( rc, [] ); 
+   
+   var rc = db.listProcedures( {name:pcdName2} );
+   checkResult( rc, [expPcd2] ); 
    
 }
 

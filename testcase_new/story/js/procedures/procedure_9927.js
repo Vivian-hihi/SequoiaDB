@@ -7,14 +7,14 @@ var pcdName = COMMCLNAME + '_procedurename';
 main();
 
 function main()
-{	
+{
    if( commIsStandalone(db) )
    {
       println(" Deploy mode is standalone!");
       return;
    }  
-	try
-	{               
+   try
+   {               
       ready();
       removeNotExistPcd();
       parameterCheck();

@@ -54,7 +54,7 @@ function createPcd( db1, db2 )
    expPcd1["funcType"]  = 0;
    expPcds.push(expPcd1);  
      
-   var rc = db2.listProcedures();
+   var rc = db2.listProcedures( {name:pcdName} );
    checkResult( rc, expPcds ); 
 }
 
@@ -65,7 +65,7 @@ function removePcd( db1, db2 )
    
    println("\n---begin to list procedures by coord " + db2.toString());  
    var expPcds = [];    
-   var rc = db2.listProcedures();
+   var rc = db2.listProcedures( {name:pcdName} );
    checkResult( rc, expPcds ); 
 }
 
@@ -85,7 +85,7 @@ function createPcdAgain( db1, db2 )
    expPcd1["funcType"]  = 0;
    expPcds.push(expPcd1);  
      
-   var rc = db2.listProcedures();
+   var rc = db2.listProcedures( {name:pcdName} );
    checkResult( rc, expPcds ); 
 }
 
