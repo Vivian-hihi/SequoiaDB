@@ -1,5 +1,5 @@
 ﻿/****************************************************
-@description: 对多条lob（1000条）进行插入查询删除操作
+@description: 对多条lob（700条）进行插入查询删除操作
 @author:
               2015-10-27 TingYU
 ****************************************************/
@@ -17,7 +17,7 @@ function main()
       var srcMd5 = create1File( fileName, fileSize );//md5sum of source file
       
       //put lob and check
-      var lobNum = 1000;
+      var lobNum = 700;
 	   var lobIdArr = putSomeLobs( cl, fileName, lobNum );
 	   var expLobArr = lobIdArr;
 	   checkLob( cl, expLobArr, srcMd5 );
