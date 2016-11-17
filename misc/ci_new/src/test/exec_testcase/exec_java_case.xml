@@ -109,6 +109,13 @@
                         encoding="utf-8">
             <fileset dir="@{reportdir}" includes="**/*"/>
          </replaceregexp>
+         <replaceregexp match='classname="com\.story\.(.*)\.(.*)"' 
+                        replace='classname="@{layer}.\1.\2"' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
          <replaceregexp match='name="(.*)"(.*)classname="@{layer}\.(.*)\.(.*)"' 
                         replace='name="\4.\1"\2classname="@{layer}.\3"' 
                         flags="g" 
