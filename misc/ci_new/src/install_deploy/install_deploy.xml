@@ -48,7 +48,7 @@
       <for list="${testhost_list}" param="testhost" parallel="false">
          <sequential>
             <staf location="@{testhost}" service="FS"
-                  request="CREATE DIRECTORY ${CI_WORK_DIR} WAIT 1m"
+                  request="CREATE DIRECTORY ${CI_WORK_DIR}"
                   throwBuildException="1"/>
             <staf location="local" service="FS"
                   request="COPY FILE ${package_fullname} TODIRECTORY ${CI_WORK_DIR} TOMACHINE @{testhost}"
