@@ -12,6 +12,13 @@ function main( db )
    commDropCL( db, COMMCSNAME, "subCL2", true, true, "drop cl in the beginning" ); 
    try
 	{
+	   //@ clean start:
+      if( true == commIsStandalone( db ) )
+      {
+         println( "run mode is standalone" );
+         return;
+      }    
+
       // create collection
       var options = {ShardingKey:{ a:1}, ShardingType: "range",ReplSize:0,Compressed:true, IsMainCL:true}      
       var mainCL = commCreateCLByOption(db, COMMCSNAME, clName, options, true, true);
