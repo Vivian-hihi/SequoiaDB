@@ -23,7 +23,7 @@
         <testsuite>syndate</testsuite>
         <testsuite>transaction</testsuite>
         <testsuite>mthMatch</testsuite>
-        <testsuite>sdbLobTool</testsuite>       
+        <testsuite>sdbLobTool</testsuite>
         <testsuite>numberLong</testsuite>
     </machine2>
     <machine3>
@@ -32,7 +32,7 @@
         <testsuite>truncate</testsuite>        
         <testsuite>selectorQuery</testsuite>
         <testsuite>lob</testsuite>
-        <testsuite>findAndMOdify</testsuite>
+        <testsuite>findAndModify</testsuite>
         <testsuite>index</testsuite>
         <testsuite>decimal</testsuite>
         <testsuite>matches</testsuite>
