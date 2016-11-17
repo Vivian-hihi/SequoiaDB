@@ -102,7 +102,9 @@ function test_UsedSkipOfFailedSplit(cl)
    var funname = "test_UsedSkipOfFailedSplit";
    try
    {
-      loadMultipleDoc(cl, 5 * 4 * getDataGroupNum());
+      var groupNum = getDataGroupNum();
+      if ( groupNum == 1 ) return;
+      loadMultipleDoc(cl, 5 * 4 * groupNum);
       var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).skip(2).update({$set:{b:1}}).toArray();
       
       throw -1;
@@ -131,7 +133,9 @@ function test_UsedLimitOfFailedSplit(cl)
    var funname = "test_UsedLimitOfFailedSplit";
    try
    {
-      loadMultipleDoc(cl, 5 * 4 * getDataGroupNum());
+      var groupNum = getDataGroupNum();
+      if ( groupNum == 1 ) return;
+      loadMultipleDoc(cl, 5 * 4 * groupNum);
       var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).limit(2).update({$set:{b:1}}).toArray();
       
       throw -1;
@@ -160,6 +164,8 @@ function test_UsedSkipAndLimitOfFailedSplit(cl)
    var funname = "test_UsedSkipAndLimitOfFailedSplit";
    try
    {
+      var groupNum = getDataGroupNum();
+      if ( groupNum == 1 ) return;
       loadMultipleDoc(cl, 5 * 4 * getDataGroupNum());
       var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).skip(2).limit(5).update({$set:{b:1}}).toArray();
       

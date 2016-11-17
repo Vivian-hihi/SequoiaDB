@@ -102,8 +102,10 @@ function test_UsedSkipOfFailedSplit(cl)
    var funname = "test_UsedSkipOfFailedSplit";
    try
    {
-      loadMultipleDoc(cl, 5 * 4 * getDataGroupNum());
-      var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).skip(2).remove().toArray();
+      var groupNum = getDataGroupNum();
+      if ( groupNum == 1 ) return;
+      loadMultipleDoc(cl, 5 * 4 * groupNum);
+      var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lte:20150201}}]}).skip(2).remove().toArray();
       
       throw -1;
    }
@@ -122,7 +124,7 @@ function test_UsedSkipOfFailedSplit(cl)
 }
 
 /*******************************************************************************
-*@Description：测试op为remove时, 主子表情况下结合limit，结果不落在单张子表上
+*@Description：测试op为remove时, 主子表情况下结合limit，结果不落在单个分区表上
 *@Input：find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).limit(2).remove()
 *@Expectation：报-289错误
 ********************************************************************************/
@@ -131,7 +133,9 @@ function test_UsedLimitOfFailedSplit(cl)
    var funname = "test_UsedLimitOfFailedSplit";
    try
    {
-      loadMultipleDoc(cl, 5 * 4 * getDataGroupNum());
+      var groupNum = getDataGroupNum();
+      if ( groupNum == 1 ) return;
+      loadMultipleDoc(cl, 5 * 4 * groupNum);
       var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).limit(2).remove().toArray();
       
       throw -1;
@@ -151,7 +155,7 @@ function test_UsedLimitOfFailedSplit(cl)
 }
 
 /*******************************************************************************
-*@Description：测试op为remove时, 主子表情况下结合skip+limit，结果不落在单张子表上
+*@Description：测试op为remove时, 主子表情况下结合skip+limit，结果不落在单分区上
 *@Input：find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).skip(2).limit(5).remove()
 *@Expectation：报-289错误
 ********************************************************************************/
@@ -160,8 +164,10 @@ function test_UsedSkipAndLimitOfFailedSplit(cl)
    var funname = "test_UsedSkipAndLimitOfFailedSplit";
    try
    {
-      loadMultipleDoc(cl, 5 * 4 * getDataGroupNum());
-      var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lt:20150201}}]}).skip(2).limit(5).remove().toArray();
+      var groupNum = getDataGroupNum();
+      if ( groupNum == 1 ) return;
+      loadMultipleDoc(cl, 5 * 4 * groupNum);
+      var arrdoc = cl.find({$and:[{date:{$gte:20150101}},{date:{$lte:20150201}}]}).skip(2).limit(5).remove().toArray();
       
       throw -1;
    }
