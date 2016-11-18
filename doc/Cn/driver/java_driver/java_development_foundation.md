@@ -11,17 +11,22 @@ import com.sequoiadb.exception.BaseException;
 public class Sample {
   public static void main(String[] args) {
     String connString = "192.168.1.2:11810";
-	  try {
+	   try {
 		  // 建立 SequoiaDB 数据库连接
 		  Sequoiadb sdb = new Sequoiadb(connString, "", "");
 		  // 获取所有 Collection 信息，并打印出来
 		  DBCursor cursor = sdb.listCollections();
-		  while(cursor.hasNext()) {
-		    System.out.println(cursor.getNext());
+          try {
+		     while(cursor.hasNext()) {
+		       System.out.println(cursor.getNext());
+             }
+          } finally {
+             cursor.close();
+          }        
 	    }
 	  } catch (BaseException e) {
 		  System.out.println("Sequoiadb driver error, error description:" + e.getErrorType());
-		}
+      }
   }
 }</pre>
 
@@ -62,11 +67,17 @@ queryCondition = (BSONObject) JSON.parse("{age:{$ne:20}}");
 // 查询所有记录，并把查询结果放在游标对象中
 cursor = cl.query(queryCondition, null, null, null);
 // 从游标中显示所有记录
-while (cursor.hasNext()) {
-  BSONObject record = cursor.getNext();
-  String name = (String) record.get("name");
-  System.out.println("name=" +  name);
-} </pre>
+try {
+   while (cursor.hasNext()) {
+      BSONObject record = cursor.getNext();
+      String name = (String) record.get("name");
+      System.out.println("name=" +  name);
+   }
+} finally {
+   cursor.close();
+} 
+
+</pre>
 
 **Note:**
 
