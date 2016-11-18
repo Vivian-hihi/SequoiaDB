@@ -1066,12 +1066,14 @@ JS_MAPPING_END()
       */
       try
       {
-         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+         boost::algorithm::split( splited, buf,
+                                  boost::is_any_of( "\r\n" ) ) ;
       }
-      catch( std::exception e )
+      catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
 
@@ -1100,7 +1102,8 @@ JS_MAPPING_END()
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -1229,7 +1232,8 @@ JS_MAPPING_END()
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
 
@@ -1264,7 +1268,8 @@ JS_MAPPING_END()
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -1323,7 +1328,8 @@ JS_MAPPING_END()
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -1372,7 +1378,8 @@ JS_MAPPING_END()
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -1418,7 +1425,8 @@ JS_MAPPING_END()
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
 
@@ -1454,7 +1462,8 @@ JS_MAPPING_END()
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -1513,7 +1522,8 @@ JS_MAPPING_END()
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -1560,7 +1570,8 @@ JS_MAPPING_END()
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -1575,8 +1586,8 @@ JS_MAPPING_END()
                              _sptReturnVal &rval,
                              BSONObj &detail )
    {
-      INT32 rc = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc = SDB_OK ;
       UINT32 exitCode    = 0 ;
       BOOLEAN isRecursive = FALSE ;
       stringstream       cmd ;
@@ -1657,19 +1668,22 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrFile::chown( const _sptArguments &arg,
                              _sptReturnVal &rval,
                              BSONObj &detail )
    {
-      INT32 rc = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc = SDB_OK ;
       UINT32  exitCode    = 0 ;
       BOOLEAN isRecursive = FALSE ;
       string username = "" ;
@@ -1782,19 +1796,22 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrFile::chgrp( const _sptArguments &arg,
                              _sptReturnVal &rval,
                              BSONObj &detail )
    {
-      INT32 rc = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc = SDB_OK ;
       UINT32 exitCode    = 0 ;
       BOOLEAN isRecursive = FALSE ;
       stringstream cmd ;
@@ -1876,21 +1893,24 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrFile::getUmask( const _sptArguments &arg,
                                 _sptReturnVal &rval,
                                 BSONObj &detail )
    {
+#if defined(_LINUX)
       INT32              rc = SDB_OK ;
       UINT32             exitCode = 0 ;
       string             outStr ;
-#if defined(_LINUX)
       string cmd = "umask" ;
       _ossCmdRunner runner ;
 
@@ -1926,20 +1946,24 @@ JS_MAPPING_END()
       {
          outStr.erase( outStr.size()-1, 1 ) ;
       }
-#endif
       rval.setStringVal( "", outStr.c_str() ) ;
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      rval.setStringVal( "", "" ) ;
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrFile::setUmask( const _sptArguments &arg,
                                 _sptReturnVal &rval,
                                 BSONObj &detail )
    {
-      INT32              rc = SDB_OK ;
 #if defined(_LINUX)
+      INT32              rc = SDB_OK ;
       INT32              mask ;
       stringstream       cmd ;
       _ossCmdRunner      runner ;
@@ -1999,11 +2023,14 @@ JS_MAPPING_END()
 
       // set mask
       umask( userMask ) ;
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrFile::getPathType( const _sptArguments &arg,
@@ -2258,11 +2285,11 @@ JS_MAPPING_END()
       {
          boost::algorithm::split( splited, outStr, boost::is_any_of("\r\n") ) ;
       }
-      catch( std::exception &e )
+      catch( std::exception )
       {
          rc = SDB_SYS ;
          detail = BSON( SPT_ERR << "Failed to split result" ) ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result" ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -2283,17 +2310,18 @@ JS_MAPPING_END()
       {
          rc = SDB_SYS ;
          detail = BSON( SPT_ERR << "Failed to extract file stat" ) ;
+         PD_LOG( PDERROR, "Failed to extract file stat" ) ;
          goto error ;
       }
       try
       {
          boost::algorithm::split( token, splited[ 0 ], boost::is_any_of("|") ) ;
       }
-      catch( std::exception &e )
+      catch( std::exception )
       {
          rc = SDB_SYS ;
          detail = BSON( SPT_ERR << "Failed to split result" ) ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc" ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = token.begin();

@@ -415,7 +415,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -432,7 +433,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to trim ,rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to trim ,rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          if ( "Distributor ID" == *itr &&
@@ -926,7 +928,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       if ( splited.empty() )
@@ -955,7 +958,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          for ( vector<string>::iterator itr2 = columns.begin();
@@ -1255,7 +1259,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -1285,7 +1290,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          for ( vector<string>::iterator itr2 = columns.begin();
@@ -1416,7 +1422,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -1454,7 +1461,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          try
@@ -1468,7 +1476,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to trim, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to trim, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          if ( strModelName == columns.at(0) )
@@ -1591,7 +1600,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -1613,7 +1623,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          for ( vector<string>::iterator itr2 = columns.begin();
@@ -1764,7 +1775,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -1904,7 +1916,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -1926,7 +1939,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          if ( 6 != columns.size() )
@@ -2061,7 +2075,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -2083,7 +2098,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          for ( vector<string>::iterator itr2 = columns.begin();
@@ -2133,7 +2149,7 @@ namespace engine
             lineBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL, TRUE ) ;
             arrBuilder << lineBuilder.obj() ;
          }
-         catch ( std::exception &e )
+         catch ( std::exception )
          {
             rc = SDB_SYS ;
             goto error ;
@@ -2321,7 +2337,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       iterLine = vLines.begin() ;
@@ -2340,7 +2357,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             vector<string>::iterator iterColumn = vColumns.begin() ;
@@ -2904,7 +2922,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -2937,7 +2956,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -2989,7 +3009,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -3035,7 +3056,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -3071,7 +3093,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -3104,7 +3127,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -3142,7 +3166,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -3174,7 +3199,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -3406,8 +3432,8 @@ namespace engine
                                  _sptReturnVal &rval,
                                  BSONObj &detail )
    {
-      INT32 rc          = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc          = SDB_OK ;
       BSONObj           userObj ;
       string            outStr ;
       stringstream      cmd ;
@@ -3532,19 +3558,22 @@ namespace engine
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::addGroup( const _sptArguments &arg,
                                   _sptReturnVal &rval,
                                   BSONObj &detail )
    {
-      INT32 rc        = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc        = SDB_OK ;
       BSONObj         groupObj ;
       string          outStr ;
       stringstream    cmd ;
@@ -3638,19 +3667,22 @@ namespace engine
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::setUserConfigs( const _sptArguments &arg,
                                         _sptReturnVal &rval,
                                         BSONObj &detail )
    {
-      INT32 rc          = SDB_OK ;
 #if defined(_LINUX)
+      INT32 rc          = SDB_OK ;
       BSONObj           optionObj ;
       string            outStr ;
       stringstream      cmd ;
@@ -3783,19 +3815,22 @@ namespace engine
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::delUser( const _sptArguments & arg,
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      INT32 rc          = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc          = SDB_OK ;
       BSONObj           optionObj ;
       string            outStr ;
       stringstream      cmd ;
@@ -3871,19 +3906,22 @@ namespace engine
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::delGroup( const _sptArguments & arg,
                                   _sptReturnVal & rval,
                                   BSONObj & detail )
    {
-      INT32 rc          = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc          = SDB_OK ;
       BSONObj           optionObj ;
       string            name ;
       string            outStr ;
@@ -3934,20 +3972,23 @@ namespace engine
          detail = BSON( SPT_ERR << outStr ) ;
          goto error ;
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::listLoginUsers( const _sptArguments & arg,
                                         _sptReturnVal & rval,
                                         BSONObj & detail )
    {
+#if defined (_LINUX)
       INT32 rc           = SDB_OK ;
       BSONObjBuilder     builder ;
-#if defined (_LINUX)
       BOOLEAN showDetail = FALSE ;
       UINT32 exitCode    = 0 ;
       BSONObj            optionObj ;
@@ -4009,12 +4050,16 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to extract login user info" ) ;
          goto error ;
       }
-#endif
       rval.setBSONObj( "", builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      rval.setBSONObj( "", BSONObj() ) ;
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::_extractLoginUsersInfo( const CHAR *buf,
@@ -4043,7 +4088,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -4077,7 +4123,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -4125,7 +4172,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -4157,7 +4205,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -4171,9 +4220,9 @@ namespace engine
                                       _sptReturnVal & rval,
                                       BSONObj & detail )
    {
+#if defined (_LINUX)
       INT32 rc           = SDB_OK ;
       BSONObjBuilder     builder ;
-#if defined (_LINUX)
       BOOLEAN showDetail = FALSE ;
       UINT32 exitCode    = 0 ;
       string             outStr ;
@@ -4235,12 +4284,16 @@ namespace engine
          detail = BSON( SPT_ERR <<"Failed to extract all users info" ) ;
          goto error ;
       }
-#endif
       rval.setBSONObj( "", builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      rval.setBSONObj( "", BSONObj() ) ;
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::_extractAllUsersInfo( const CHAR *buf,
@@ -4268,7 +4321,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -4301,7 +4355,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
@@ -4326,7 +4381,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
@@ -4345,7 +4401,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -4359,9 +4416,9 @@ namespace engine
                                     _sptReturnVal & rval,
                                     BSONObj & detail )
    {
+#if defined (_LINUX)
       INT32 rc           = SDB_OK ;
       BSONObjBuilder     builder ;
-#if defined (_LINUX)
       BOOLEAN showDetail = FALSE ;
       UINT32 exitCode    = 0 ;
       BSONObj            optionObj ;
@@ -4423,12 +4480,16 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to extract group info" ) ;
          goto error ;
       }
-#endif
       rval.setBSONObj( "", builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      rval.setBSONObj( "", BSONObj() ) ;
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::_extractGroupsInfo( const CHAR *buf,
@@ -4456,7 +4517,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -4489,7 +4551,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -4526,7 +4589,8 @@ namespace engine
             catch( std::exception &e )
             {
                rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+               PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                       rc, e.what() ) ;
                goto error ;
             }
             for ( vector<string>::iterator itrCol = columns.begin();
@@ -4557,7 +4621,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Fail to build retObj, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Fail to build retObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
       }
@@ -4571,9 +4636,9 @@ namespace engine
                                         _sptReturnVal & rval,
                                         BSONObj & detail )
    {
+#if defined (_LINUX)
       INT32 rc           = SDB_OK ;
       BSONObjBuilder     builder ;
-#if defined (_LINUX)
       UINT32 exitCode    = 0 ;
       stringstream       cmd ;
       stringstream       gidStr ;
@@ -4637,21 +4702,25 @@ namespace engine
       builder.append( "user", username ) ;
       builder.append( "gid", gidStr.str() ) ;
       builder.append( "dir", homeDir ) ;
-#endif
       rval.setBSONObj( "", builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      rval.setBSONObj( "", BSONObj() ) ;
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::getSystemConfigs( const _sptArguments &arg,
                                           _sptReturnVal &rval,
                                           BSONObj &detail )
    {
+#if defined (_LINUX)
       INT32 rc           = SDB_OK ;
       BSONObjBuilder     builder ;
-#if defined (_LINUX)
       UINT32 exitCode    = 0 ;
       string             type ;
       stringstream       cmd ;
@@ -4680,11 +4749,11 @@ namespace engine
          {
             boost::algorithm::split( splited, type, boost::is_any_of( " |" ) ) ;
          }
-         catch( std::exception &e )
+         catch( std::exception )
          {
             rc = SDB_SYS ;
             detail = BSON( SPT_ERR << "Failed to split result" ) ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result" ) ;
             goto error ;
          }
          if( !splited.empty() &&
@@ -4741,12 +4810,16 @@ namespace engine
       // extract result
       rc = _extractSystemInfo( outStr.c_str(),
                                builder ) ;
-#endif
       rval.setBSONObj( "", builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      rval.setBSONObj( "", BSONObj() ) ;
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::_extractSystemInfo( const CHAR *buf,
@@ -4772,7 +4845,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -4802,7 +4876,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          for ( vector<string>::iterator itrCol = columns.begin();
@@ -4842,9 +4917,9 @@ namespace engine
                                               _sptReturnVal &rval,
                                               BSONObj &detail )
    {
+#if defined (_LINUX)
       INT32 rc               = SDB_OK ;
       BSONObjBuilder         builder ;
-#if defined (_LINUX)
       INT32 resourceType[] = { RLIMIT_CORE, RLIMIT_DATA, RLIMIT_NICE,
                                RLIMIT_FSIZE, RLIMIT_SIGPENDING, RLIMIT_MEMLOCK,
                                RLIMIT_RSS, RLIMIT_NOFILE, RLIMIT_MSGQUEUE,
@@ -4881,21 +4956,25 @@ namespace engine
          }
          builder.append( resourceName[ index ], (UINT32)rlim.rlim_cur ) ;
       }
-#endif
       rval.setBSONObj( "", builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      rval.setBSONObj( "", BSONObj() ) ;
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::setProcUlimitConfigs( const _sptArguments &arg,
                                               _sptReturnVal &rval,
                                               BSONObj &detail )
    {
+#if defined (_LINUX)
       INT32 rc           = SDB_OK ;
       BSONObj            configsObj ;
-#if defined (_LINUX)
       INT32 resourceType[] = { RLIMIT_CORE, RLIMIT_DATA, RLIMIT_NICE,
                                RLIMIT_FSIZE, RLIMIT_SIGPENDING, RLIMIT_MEMLOCK,
                                RLIMIT_RSS, RLIMIT_NOFILE, RLIMIT_MSGQUEUE,
@@ -4969,11 +5048,14 @@ namespace engine
             }
          }
       }
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::runService( const _sptArguments &arg,
@@ -5078,8 +5160,8 @@ namespace engine
                                       _sptReturnVal &rval,
                                       BSONObj &detail )
    {
-      INT32 rc           = SDB_OK ;
 #if defined (_LINUX)
+      INT32 rc           = SDB_OK ;
       UINT32 exitCode    = 0 ;
       _ossCmdRunner      runner ;
       string             outStr ;
@@ -5101,11 +5183,14 @@ namespace engine
          goto error ;
       }
 
-#endif
    done:
       return rc ;
    error:
       goto done ;
+
+#elif defined (_WINDOWS)
+      return SDB_OK ;
+#endif
    }
 
    INT32 _sptUsrSystem::getHomePath( const _sptArguments & arg,
@@ -5216,7 +5301,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       for ( vector<string>::iterator itr = splited.begin();
@@ -5246,7 +5332,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          for ( vector<string>::iterator itrCol = columns.begin() ;
@@ -5348,7 +5435,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          homePath = splited[ 1 ] ;

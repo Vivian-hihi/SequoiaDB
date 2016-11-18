@@ -203,7 +203,8 @@ namespace engine
       {
          rc = SDB_SYS ;
          detail = BSON( SPT_ERR << "Failed to build recvObj" ) ;
-         PD_LOG( PDERROR, "Failed to build recvObj, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to build recvObj, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
 
