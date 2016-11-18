@@ -305,7 +305,13 @@ namespace engine
             const CHAR *pFieldName = beTmp.fieldName() ;
             if ( MTH_OPERATOR_EYECATCHER == pFieldName[0] )
             {
-               if ( beTmp.getGtLtOp( -1 ) == -1 )
+               INT32 op = beTmp.getGtLtOp( -1 ) ;
+               if ( op == -1 )
+               {
+                  result = TRUE ;
+                  break ;
+               }
+               else if ( op == BSONObj::opMOD && beTmp.isNumber() )
                {
                   result = TRUE ;
                   break ;
