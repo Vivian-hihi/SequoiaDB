@@ -5,20 +5,19 @@
       </classpath>
    </taskdef>
    
-   <target name="main">     
-      <antcallback target="check_parameter" return="cmd_debug, cmd_etp"/>
-      
-      <property name="WORKSPACE" value="/home/jenkins/workspace/test" />
-      <property name="SPARK_VERSION" value="1.6.1" />
-      
+   <target name="main">    
       <property name="srccode_dir" location="${WORKSPACE}/sequoiadb" />
       <property name="release_dir" location="${WORKSPACE}/release" />    
       <property name="java_driver_jar" value="sequoiadb.jar" />             
+
+      <antcallback target="check_parameter" return="cmd_debug, cmd_etp, SPARK_VERSION"/>
       
       <delete dir="${release_dir}" failonerror="false"/>
       <mkdir dir="${release_dir}"/>
       
       <dbversion srccodedir="${srccode_dir}" version="sequoiadb_version"/>
+      <getplatform resultProperty="platform" />
+      
       <antcall target="compile_src"/>   
       <antcall target="compile_java_driver"/>
       <antcall target="compile_php_driver"/>
@@ -27,6 +26,7 @@
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
       <antcall target="compile_spark_connector"/>
+      <antcall target="compile_website"/>
       <antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
@@ -65,6 +65,13 @@
             <property name="cmd_etp" value="" />
          </else>
       </if>
+      
+      <if>
+         <isset property="SPARK_VERSION"/>
+         <else>           
+            <var name="SPARK_VERSION" value="1.6.1" />
+         </else>
+      </if>
    </target>
        
    <target name="compile_src">
@@ -82,13 +89,13 @@
       <var name="src_dir" value="${srccode_dir}/driver/postgresql" />
       
       <!--compile--> 
-      <exec executable="make" dir="${fdw_src_dir}" failonerror="true">
+      <exec executable="make" dir="${src_dir}" failonerror="true">
          <arg line="clean" />
       </exec>
-      <exec executable="make" dir="${fdw_src_dir}" failonerror="true">
+      <exec executable="make" dir="${src_dir}" failonerror="true">
          <arg line="local" />
       </exec>
-      <exec executable="make" dir="${fdw_src_dir}" failonerror="true">
+      <exec executable="make" dir="${src_dir}" failonerror="true">
          <arg line="all" />
       </exec>
       
@@ -193,7 +200,7 @@
       <delete dir="${src_dir}/build" failonerror="false"/>
       
       <if>
-         <equals arg1="${cmd_debuge}" arg2="true" />
+         <equals arg1="${cmd_debug}" arg2="--dd" />
          <then>
             <property name="build_dir" location="${src_dir}/build/dd" />
          </then>
@@ -202,16 +209,17 @@
          </else>
       </if>
             
-      <for list="${php_version_list}" param="php_version">
+      <for list="${php_version_list}" param="phpversion">
          <sequential>
             <chmod perm="u+x" file="${srccode_dir}/thirdparty/php/linux/retriConfig.sh" />
             <exec executable="${srccode_dir}/thirdparty/php/linux/retriConfig.sh" failonerror="true">
-               <arg line="${php_version} " />
+               <arg line="@{phpversion} " />
             </exec>
+            <echo>exec cmd: scons ${cmd_debug} --phpversion=@{phpversion}, in dir: ${src_dir}</echo>
             <exec executable="scons" dir="${src_dir}" failonerror="true">
-               <arg line="${cmd_debuge} --phpversion=${php_version}" />
+               <arg line="${cmd_debug} --phpversion=@{phpversion}" />
             </exec>
-            <copy file="${build_dir}/libsdbphp-${php_version}.so" todir="${src_dir}/release" />
+            <copy file="${build_dir}/libsdbphp-@{phpversion}.so" todir="${src_dir}/release" />
          </sequential>
       </for>
    </target>
@@ -223,11 +231,11 @@
       </exec>
    </target>
    
-   <!--target name="compile_doc" >
-      <exec executable="scons" dir="${src_dir}">
+   <target name="compile_website" >
+      <exec executable="scons" dir="${srccode_dir}">
          <arg line="--website" />
       </exec>
-   </target-->
+   </target>
    
    <target name="build_driver_package" >
       <property name="release_driver_dir" location="${release_dir}/driver" />
@@ -249,10 +257,10 @@
       <copy file="${srccode_dir}/driver/java/${java_driver_jar}" 
             todir="${release_driver_dir}/java" />
             
-      <copy todir="{release_driver_dir}/hadoop" >
+      <copy todir="${release_driver_dir}/hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
       </copy>     
-      <copy todir="{release_driver_dir}/hadoop" >
+      <copy todir="${release_driver_dir}/hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
       </copy>         
       <copy todir="${release_driver_dir}/lib">
@@ -271,9 +279,9 @@
       <copy todir="${release_driver_dir}/lib/phplib" >
          <fileset dir="${srccode_dir}/driver/php5/release" includes="*.so" />
       </copy>
-      <copy file="${python.dir}/pysequoiadb.tar.gz" todir="${release_driver_dir}/python" />
+      <copy file="${srccode_dir}/driver/python/pysequoiadb.tar.gz" todir="${release_driver_dir}/python" />
       
-      <tar destfile="sequoiadb-driver-${sequoiadb_version}-${os.and.platform}.tar.gz" 
+      <tar destfile="${release_dir}/sequoiadb-driver-${sequoiadb_version}-${platform}.tar.gz" 
            longfile="gnu" compression="gzip" 
            basedir="${release_dir}" includes="driver/**/*"/>
 
@@ -324,12 +332,12 @@
       </copy>
       <copy file="${srccode_dir}/conf/sdbcm.conf" todir="${release_db_dir}/conf" />
       
-      <!--TODO: compile doc-->
+      <!--TODO: copy doc-->
       
-      <copy todir="{release_db_dir}/hadoop" >
+      <copy todir="${release_db_dir}/hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
       </copy>
-      <copy todir="{release_db_dir}/hadoop" >
+      <copy todir="${release_db_dir}/hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
       </copy>
       
@@ -359,6 +367,9 @@
       <copy todir="${release_db_dir}/lib">
          <fileset dir="${srccode_dir}/client/lib" includes="**/*" />
       </copy>
+      <copy todir="${release_db_dir}/lib/phplib" >
+         <fileset dir="${srccode_dir}/driver/php5/release" includes="*.so" />
+      </copy>
       
       <copy todir="${release_db_dir}/license">
          <fileset dir="${srccode_dir}/license" />
@@ -369,9 +380,7 @@
       </copy>     
       <chmod dir="${release_db_dir}/postgresql" includes="*sdb_fdw.so*" perm="a+x" />
       
-      <copy todir="${release_db_dir}/python">
-         <fileset dir="${release_driver_dir}/python" />
-      </copy>
+      <copy todir="${release_db_dir}/python" file="${srccode_dir}/driver/python/pysequoiadb.tar.gz"/>
       
       <copy todir="${release_db_dir}/samples">
          <fileset dir="${srccode_dir}/client/samples" />
@@ -406,13 +415,11 @@
       </delete>
    </target>   
       
-   <target name="build_run_package" >   
-      <copy file="${srccode_dir}/misc/ci/mkrelease/sequoiadb_server.xml"  todir="${release_dir}/" />
-      <copy file="${srccode_dir}/misc/ci/mkrelease/sequoiadb_en.lng"      todir="${release_dir}/" />
-      <copy file="${srccode_dir}/misc/ci/mkrelease/sequoiadb_zh.lng"      todir="${release_dir}/" />
-      <copy file="${srccode_dir}/misc/ci/mkrelease/normal_component.xml"  todir="${release_dir}/" />
-      <copy file="${srccode_dir}/misc/ci/mkrelease/upgrade_component.xml" todir="${release_dir}/" />
-        
+   <target name="build_run_package" >
+      <copy todir="${release_dir}">
+         <fileset dir="${srccode_dir}/misc/ci/mkrelease" />
+      </copy>      
+   
       <if>
          <equals arg1="${IS_ENTERPRISE}" arg2="true" />
          <then>
@@ -423,14 +430,14 @@
          </else>
       </if>
 
-      <var name="cmd" value="build sequoiadb_server.xml --setvars project.version=${sequoiadb_version} --setvars platform=${os.and.platform} --setvars enterpriseversion=${editon_str} --setvars project.outputDirectory=${release_dir}"/>
+      <var name="cmd" value="build sequoiadb_server.xml --setvars project.version=${sequoiadb_version} --setvars platform=${platform} --setvars enterpriseversion=${editon_str} --setvars project.outputDirectory=${release_dir}"/>
       <echo>exec cmd: builder ${cmd}</echo>
+      <echo>exec in dir: ${release_dir}</echo>
       <exec executable="builder" dir="${release_dir}" failonerror="true">
          <arg line="${cmd}" />
       </exec>
            
    </target>   
-   
    
    <macrodef name="dbversion">
       <attribute name="srccodedir"/>
@@ -447,13 +454,29 @@
    
    <macrodef name="svnversion">
       <attribute name="dir"/>
-      <attribute name="verison"/>
+      <attribute name="version"/>
       <sequential>
          <var name="@{verison}" unset="true"/>
          <exec executable="bash" dir="@{dir}" outputproperty="@{version}" failonerror="true" >
             <arg value="-c" />
             <arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
          </exec>
+      </sequential>
+   </macrodef>
+   
+   <macrodef name="getplatform">
+      <attribute name="resultProperty"/>
+      <sequential>
+         <exec executable="uname" outputproperty="uname" failonerror="true" >
+            <arg line="-i" />
+         </exec>
+         <var name="@{resultProperty}" value="unknown" unset="true"/>
+         <condition property="@{resultProperty}" value="linux_x86_64">
+            <equals arg1="${uname}" arg2="x86_64" />
+         </condition>
+         <condition property="@{resultProperty}" value="ppc_linux_64">
+            <equals arg1="${uname}" arg2="ppc64" />
+         </condition>
       </sequential>
    </macrodef>
  
