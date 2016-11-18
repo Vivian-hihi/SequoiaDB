@@ -1006,16 +1006,24 @@ else:
    os.system ( "scons -C misc/autogen --language=" + language )
 
 if hasDoc:
-   os.system ( 'python doc_new/build.py --doc' )
+   errno = os.system ( 'python doc_new/build.py --doc' )
+   if errno != 0:
+      os._exit( 1 )
 
 if hasWebSite:
-   os.system ( 'python doc_new/build.py --website' )
+   errno = os.system ( 'python doc_new/build.py --website' )
+   if errno != 0:
+      os._exit( 1 )
 
 if hasChm:
-   os.system ( 'python doc_new/build.py --chm' )
+   errno = os.system ( 'python doc_new/build.py --chm' )
+   if errno != 0:
+      os._exit( 1 )
 
 if hasDoxygen:
-   os.system ( 'python doc_new/build.py --doxygen' )
+   errno = os.system ( 'python doc_new/build.py --doxygen' )
+   if errno != 0:
+      os._exit( 1 )
 
 if hasEngine:
    env.SConscript( 'SequoiaDB/SConscript', variant_dir=variantDir, duplicate=False )
