@@ -140,7 +140,7 @@
 
          <switch value="@{casetype}">
          
-            <case value="sdv_php">               
+            <!--case value="sdv_php">               
                <dividecase basedir="${case_basedir}" reltdir="${case_reltdir}"
                            outputdir="${testcase_outdir}" hostlist="${testhost_list}">
                   <dividedfileele>
@@ -150,7 +150,7 @@
                      <fileset dir="${case_dir}" includes="tools/**/*,func.php,*/lib/*.php"/>
                   </commonfileele>
                </dividecase>
-            </case>
+            </case-->
             
             <case value="sdv_js">
                <dividecase basedir="${case_basedir}" reltdir="${case_reltdir}"
