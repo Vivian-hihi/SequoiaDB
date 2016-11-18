@@ -111,6 +111,7 @@ TEST(TimeTest,keepAliveTimoutNotZeroAgain)
 	string url = "localhost:11810" ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
+	sdbCollectionSpace cs ;
 
 	conf.setCheckIntervalInfo(3,6) ;
 	ds.init(url,conf) ;
@@ -118,8 +119,8 @@ TEST(TimeTest,keepAliveTimoutNotZeroAgain)
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
 	EXPECT_EQ(9,ds.getIdleConnNum()) ;
 	ossSleep(3*1000) ;
-	conn->createUsr("lxw","lxw") ;
-	conn->removeUsr("lxw","lxw") ;
+	conn->createCollectionSpace( "datasourceTestCs_lxw",SDB_PAGESIZE_4K,cs ) ;
+	conn->dropCollectionSpace( "datasourceTestCs_lxw" ) ;
 	ossSleep(3*1000) ;					// 获取连接后总休眠时间>keepAliveTimeout，但单次休眠时间<keepAliveTimeout,此连接未超时，但是连接池内的连接已经超时了
 	ds.releaseConnection(conn) ;
 	ossSleep(3*1000) ;					// 释放连接后休眠时间>checkInterval,连接不应该被清除，连接池的空闲连接为1

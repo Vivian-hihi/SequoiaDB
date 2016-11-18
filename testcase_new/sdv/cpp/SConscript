@@ -36,6 +36,8 @@ testFiles9 = [ "DS_ChecktimeTest.cpp" ]
 
 testFiles10 = [ "DS_ClTest.cpp" ]
 
+testFiles11 = [ "DS_InvalidUsrTest.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -50,7 +52,8 @@ DS_InvalidConnTest = dllBuildEnv.Program("DS_InvalidConnTest", [testFiles6, gtes
 DS_ConnTest = dllBuildEnv.Program("DS_ConnTest", [testFiles7, gtestMainObj])
 DS_ThreadTest = dllBuildEnv.Program("DS_ThreadTest", [testFiles8, gtestMainObj,testCommonFiles])
 DS_ChecktimeTest = dllBuildEnv.Program("DS_ChecktimeTest", [testFiles9, gtestMainObj])
-DS_ClTest = dllBuildEnv.Program("DS_ClTest", [testFiles10, gtestMainObj])  
+DS_ClTest = dllBuildEnv.Program("DS_ClTest", [testFiles10, gtestMainObj])
+DS_InvalidUsrTest = dllBuildEnv.Program("DS_InvalidUsrTest", [testFiles11, gtestMainObj])  
 
 # static compile
 # dll compile
@@ -64,13 +67,14 @@ DS_ConnTest.static = staticBuildEnv.Program("DS_ConnTest.static",[testFiles7, gt
 DS_ThreadTest.static = staticBuildEnv.Program("DS_ThreadTest.static",[testFiles8, gtestMainObj,testCommonFiles])
 DS_ChecktimeTest.static = staticBuildEnv.Program("DS_ChecktimeTest.static",[testFiles9, gtestMainObj])
 DS_ClTest.static = staticBuildEnv.Program("DS_ClTest.static",[testFiles10, gtestMainObj])
+DS_InvalidUsrTest.static = staticBuildEnv.Program("DS_InvalidUsrTest.static",[testFiles11, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
-							  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest ] )
+							  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
 							  time.static,DS_InvalidArgTest.static,DS_InvalidConnTest.static,
-							  DS_ConnTest.static,DS_ThreadTest.static,DS_ChecktimeTest.static,DS_ClTest.static ] )
+							  DS_ConnTest.static,DS_ThreadTest.static,DS_ChecktimeTest.static,DS_ClTest.static,DS_InvalidUsrTest.static ] )
 
