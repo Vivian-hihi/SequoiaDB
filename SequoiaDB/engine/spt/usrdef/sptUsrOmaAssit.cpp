@@ -64,6 +64,7 @@ namespace engine
       if ( 0 != _handle )
       {
          sdbDisconnect( _handle ) ;
+         sdbReleaseConnection( (sdbConnectionHandle) _handle ) ;
          _handle = 0 ;
       }
       return SDB_OK ;
@@ -175,6 +176,34 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrOmaAssit::runCommand( string command,  const CHAR* arg1,
+                                      CHAR **ppRetBuffer, INT32 &retCode,
+                                      BOOLEAN needRecv )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 == _handle )
+      {
+         rc = SDB_NETWORK ;
+         goto error ;
+      }
+      rc = _omaRemote.runCommand( _handle,
+                                  ( CMD_ADMIN_PREFIX + command ).c_str(),
+                                  0, 0, -1, -1,
+                                  arg1, NULL, NULL, NULL,
+                                  ppRetBuffer, retCode, needRecv ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to run command, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _sptUsrOmaAssit::_releaseNodeHandle( ossValuePtr handle )
    {
       if ( 0 != handle )
@@ -214,7 +243,7 @@ namespace engine
       r->_sock = s->_sock ;
       r->_endianConvert = s->_endianConvert ;
       ossStrncpy( r->_serviceName, pSvcName, CLIENT_MAX_SERVICENAME ) ;
-
+      _regSocket( ( ossValuePtr )&r->_sock ) ;
    done:
       return rc ;
    error:
@@ -252,12 +281,73 @@ namespace engine
       r->_endianConvert = connection->_endianConvert ;
       r->_isCatalog = FALSE ;
       ossStrncpy( r->_replicaGroupName, COORD_GROUPNAME, CLIENT_RG_NAMESZ ) ;
-
+      _regSocket( ( ossValuePtr )&r->_sock ) ;
    done:
       return rc ;
    error:
       goto done ;
    }
 
+   INT32 _sptUsrOmaAssit::_regSocket( ossValuePtr pSock )
+   {
+      assert( 0 != pSock ) ;
+
+      INT32 rc        = SDB_OK ;
+      BOOLEAN hasLock = FALSE ;
+      Node *p         = NULL ;
+      Node **ptr      = NULL ;
+      sdbConnectionStruct *connection = (sdbConnectionStruct *)_handle ;
+
+      // pass invalid socket
+      if ( NULL == *(Socket **)pSock )
+      {
+         goto done ;
+      }
+
+      ossMutexLock( &connection->_sockMutex ) ;
+      hasLock = TRUE ;
+
+      // if client has disconnected, stop registing
+      if ( NULL == connection->_sock )
+      {
+         goto done ;
+      }
+
+      ptr = &connection->_sockets ;
+
+      p = (Node*)SDB_OSS_MALLOC( sizeof(Node) ) ;
+      if ( !p )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ossMemset ( p, 0, sizeof(Node) ) ;
+      p->data = pSock ;
+      p->next = NULL ;
+
+      // if it's the 1st time to add handle
+      if ( !(*ptr) )
+         *ptr = p ;
+      // add handle to the node header
+      else
+      {
+         p->next = *ptr ;
+         *ptr = p ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      if ( TRUE == hasLock )
+      {
+         ossMutexUnlock( &connection->_sockMutex ) ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
 }
 

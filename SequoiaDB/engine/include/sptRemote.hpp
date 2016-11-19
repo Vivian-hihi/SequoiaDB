@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = sptMsg.hpp
+   Source File Name = sptRemote.hpp
 
    Dependencies: N/A
 
@@ -63,7 +63,8 @@ namespace engine
                                  const CHAR *arg3,
                                  const CHAR *arg4,
                                  CHAR **ppRetBuffer,
-                                 INT32 &retCode ) ;
+                                 INT32 &retCode,
+                                 BOOLEAN needRecv = TRUE ) ;
 
       private:
          INT32       _sendAndRecv( ossValuePtr handle,

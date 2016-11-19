@@ -31,6 +31,7 @@
 *******************************************************************************/
 
 #include "sptUsrOma.hpp"
+#include "cmdUsrOmaUtil.hpp"
 #include "omagentDef.hpp"
 #include "ossUtil.hpp"
 #include "utilStr.hpp"
@@ -40,11 +41,16 @@
 #include "pmdOptions.h"
 #include "utilParam.hpp"
 #include "../bson/bsonobj.h"
+#include "pmdDaemon.hpp"
+#include "pmdDef.hpp"
+#include "utilNodeOpr.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
+   #define SDB_SDBCM_WAIT_TIMEOUT      ( 6 )   /// seconds
+
    /*
       Function Define
    */
@@ -59,6 +65,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, removeOM)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, startNode)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, stopNode)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, runCommand)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, close)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, help)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaInstallInfo)
@@ -69,6 +76,7 @@ namespace engine
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getAOmaSvcName)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, addAOmaSvcName)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, delAOmaSvcName)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, start )
 
    /*
       Function Map
@@ -85,6 +93,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC("removeOM", removeOM)
       JS_ADD_MEMBER_FUNC("startNode", startNode)
       JS_ADD_MEMBER_FUNC("stopNode", stopNode)
+      JS_ADD_MEMBER_FUNC("_runCommand", runCommand)
       JS_ADD_MEMBER_FUNC("close", close)
       JS_ADD_STATIC_FUNC("help", help)
       JS_ADD_STATIC_FUNC("getOmaInstallInfo", getOmaInstallInfo)
@@ -95,21 +104,8 @@ namespace engine
       JS_ADD_STATIC_FUNC("getAOmaSvcName", getAOmaSvcName)
       JS_ADD_STATIC_FUNC("addAOmaSvcName", addAOmaSvcName)
       JS_ADD_STATIC_FUNC("delAOmaSvcName", delAOmaSvcName)
+      JS_ADD_STATIC_FUNC("start", start )
    JS_MAPPING_END()
-
-   #define SPT_OMA_REL_PATH            SDBCM_CONF_DIR_NAME OSS_FILE_SEP
-   #define SPT_OMA_REL_PATH_FILE       SPT_OMA_REL_PATH SDBCM_CFG_FILE_NAME
-
-   /*
-      define config
-   */
-   #define MAP_CONFIG_DESC( desc ) \
-      desc.add_options() \
-      ( SDBCM_RESTART_COUNT, po::value<INT32>(), "" ) \
-      ( SDBCM_RESTART_INTERVAL, po::value<INT32>(), "" ) \
-      ( SDBCM_AUTO_START, po::value<string>(), "" ) \
-      ( SDBCM_DIALOG_LEVEL, po::value<INT32>(), "" ) \
-      ( "*", po::value<string>(), "" )
 
    /*
       _sptUsrOma Implement
@@ -203,6 +199,7 @@ namespace engine
          << " Oma.addAOmaSvcName( hostname, svcname, [isReplace], [confFile] )"
          << endl
          << " Oma.delAOmaSvcName( hostname, [confFile] )" << endl
+         << " Oma.start( optionObj )" << endl
          << endl
          << "var oma = new Oma( [hostname], [svcname] )" << endl
          << "   createCoord( svcname, dbpath, [config obj] )" << endl
@@ -213,6 +210,20 @@ namespace engine
          << "   removeOM( svcname, [config obj] )" << endl
          << "   startNode( svcname )" << endl
          << "   stopNode( svcname )" << endl
+         << "   getOmaInstallFile()" << endl
+         << "   getOmaInstallInfo()" << endl
+         << "   getOmaConfigFile()" << endl
+         << "   getOmaConfigs( [confFile] )" << endl
+         << "   setOmaConfigs( obj, [confFile] )" << endl
+         << "   getAOmaSvcName( hostname, [confFile] )" << endl
+         << "   addAOmaSvcName( hostname, svcname, [isReplace], [confFile] )"
+         << endl
+         << "   delAOmaSvcName( hostname, [confFile] )" << endl
+         << "   listNodes( optionObj, [filterObj] )" << endl
+         << "   getNodeConfigs( svcname )" << endl
+         << "   setNodeConfigs( svcname, configsObj )" << endl
+         << "   updateNodeConfigs( svcname, configsObj )" << endl
+         << "   stop()" << endl
          << "   close()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
@@ -504,11 +515,259 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrOma::runCommand( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 retCode = SDB_OK ;
+      CHAR *retBuffer = NULL ;
+      INT32 needRecv = TRUE ;
+      BSONObj mergeObj ;
+      BSONObj recvObj ;
+      string command ;
+
+      // merge arg
+      rc = _mergeArg( arg, detail, command, &mergeObj ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to mergeArg" ) ;
+         PD_LOG( PDERROR, "Failed to merge arg, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // get argument needRecv
+      if ( arg.argc() >= 5 )
+      {
+         rc = arg.getNative( 4, &needRecv, SPT_NATIVE_INT32 ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "needRecv must be bool" ) ;
+            goto error ;
+         }
+      }
+
+      // run command and get retrun BSONObj
+      rc = _assit.runCommand( command, mergeObj.objdata(),
+                              &retBuffer, retCode, needRecv ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << getErrDesp( rc ) ) ;
+         PD_LOG( PDERROR, "Failed to run command in client, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // if need recv, need to build recvObj ;
+      if ( needRecv )
+      {
+         // build recvObj
+         SDB_ASSERT( retBuffer, "retBuffer can't be null" ) ;
+         try
+         {
+            recvObj.init( retBuffer ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Failed to build recvObj" ) ;
+            PD_LOG( PDERROR, "Failed to build recvObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
+            goto error ;
+         }
+
+         // if remote cm failed to exec command, retObj contain error detail
+         if ( SDB_OK != retCode )
+         {
+            rc = retCode ;
+            detail = BSON( SPT_ERR << recvObj.getStringField( OP_ERR_DETAIL ) ) ;
+            PD_LOG( PDERROR, "Failed to run command in remote sdbcm, "
+                             "rc: %d", rc ) ;
+            goto error ;
+         }
+
+         rval.setBSONObj( "", recvObj ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrOma::close( const _sptArguments & arg,
                             _sptReturnVal & rval,
                             BSONObj & detail )
    {
       return _assit.disconnect() ;
+   }
+
+   INT32 _sptUsrOma::start( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR progName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      BOOLEAN asProc = FALSE ;
+      BOOLEAN asStandalone = FALSE ;
+      string procShortName = PMDDMN_EXE_NAME ;
+      OSSPID pid = OSS_INVALID_PID ;
+      vector < ossProcInfo > procs ;
+      list<const CHAR*> argvs ;
+      BSONObj optionObj ;
+      utilNodeInfo cmInfo ;
+      stringstream portArg ;
+      string portStr ;
+      stringstream aliveTimeArg ;
+      string alivetimeStr ;
+      stringstream outStr ;
+
+      rc = ossGetEWD ( progName, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get excutable file's working "
+                        "directory" ) ;
+         goto error ;
+      }
+
+      if ( 0 < arg.argc() )
+      {
+         rc = arg.getBsonobj( 0, optionObj ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "optionObj must be BSONObj" ) ;
+            goto error ;
+         }
+
+#if defined (_WINDOWS)
+         asProc = optionObj.getBoolField( "asproc" ) ;
+         if ( asProc )
+         {
+            argvs.push_back( "--asproc" ) ;
+         }
+#endif
+         if ( optionObj.hasField( "alivetime" ) )
+         {
+            BSONType alivetimeType = optionObj.getField( "alivetime" ).type() ;
+            if ( NumberInt == alivetimeType )
+            {
+               aliveTimeArg << optionObj.getIntField( "alivetime" ) ;
+               argvs.push_back( "alivetime" ) ;
+               argvs.push_back( aliveTimeArg.str().c_str() ) ;
+            }
+            else if ( String == alivetimeType )
+            {
+               alivetimeStr = optionObj.getStringField( "alivetime" ) ;
+               argvs.push_back( "alivetime" ) ;
+               argvs.push_back( alivetimeStr.c_str() ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               detail = BSON( SPT_ERR << "alivetime must be int" ) ;
+               goto error ;
+            }
+         }
+
+         if ( optionObj.hasField( "port" ) )
+         {
+            BSONType portType = optionObj.getField( "port" ).type() ;
+            if ( NumberInt == portType )
+            {
+               portArg << optionObj.getIntField( "port" ) ;
+               argvs.push_back( "--port" ) ;
+               argvs.push_back( portArg.str().c_str() ) ;
+            }
+            else if ( String == portType )
+            {
+               portStr = optionObj.getStringField( "port" ) ;
+               argvs.push_back( "--port" ) ;
+               argvs.push_back( portStr.c_str() ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               detail = BSON( SPT_ERR << "port must be int or string" ) ;
+               goto error ;
+            }
+         }
+
+         asStandalone = optionObj.getBoolField( "standalone" ) ;
+         if ( asStandalone )
+         {
+            asProc = TRUE ;
+            procShortName = SDBSDBCMPROG ;
+            argvs.push_back( "--standalone" ) ;
+         }
+
+      }
+      utilCatPath( progName, OSS_MAX_PATHSIZE, procShortName.c_str() ) ;
+      argvs.insert( argvs.begin(), progName ) ;
+
+      if ( !asStandalone )
+      {
+         // first to check whether the process exist
+         ossEnumProcesses( procs, procShortName.c_str(), TRUE, TRUE ) ;
+         if ( procs.size() > 0 )
+         {
+            // find it
+            outStr << "Success: sdbcmd is already started ("
+                   << (*procs.begin())._pid << ")" << endl ;
+            goto done ;
+         }
+      }
+
+      // start progress
+      rc = _startSdbcm ( argvs, pid, asProc ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to start sdbcm" ) ;
+         goto error ;
+      }
+
+      if ( !asStandalone )
+      {
+         while ( ossIsProcessRunning( pid ) )
+         {
+            procs.clear() ;
+            ossEnumProcesses( procs, procShortName.c_str(), TRUE, TRUE ) ;
+            if ( procs.size() > 0 )
+            {
+               outStr << "Success: sdbcmd is successfully started "
+                      << "(" << (*procs.begin())._pid << ")" << endl ;
+               break ;
+            }
+            ossSleep( 200 ) ;
+         }
+
+         if ( procs.size() == 0 )
+         {
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Failed to start sdbcm" ) ;
+            goto error ;
+         }
+      }
+
+      // wait bussiness ok
+      rc = utilWaitNodeOK( cmInfo, NULL,
+                           asStandalone ? pid : OSS_INVALID_PID,
+                           SDB_TYPE_OMA, SDB_SDBCM_WAIT_TIMEOUT,
+                           asStandalone ? TRUE : FALSE ) ;
+      if ( SDB_OK == rc )
+      {
+         outStr << "Success: " << SDB_TYPE_OMA_STR
+                << "(" << cmInfo._svcname.c_str() << ")"
+                << " is successfully start (" << cmInfo._pid << ")" << endl ;
+      }
+      else
+      {
+         detail = BSON( SPT_ERR << "Failed to wait sdbcm ok" ) ;
+         goto error ;
+      }
+
+   done:
+      rval.setStringVal( "", outStr.str().c_str() ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::getOmaInstallInfo( const _sptArguments & arg,
@@ -928,7 +1187,7 @@ namespace engine
          goto error ;
       }
 
-      // isReplace
+      // get isReplace
       if ( arg.argc() > 2 )
       {
          rc = arg.getNative( 2, (void*)&isReplace, SPT_NATIVE_INT32 ) ;
@@ -939,7 +1198,7 @@ namespace engine
         }
       }
 
-      // confFile
+      // get confFile
       if ( arg.argc() > 3 )
       {
          rc = arg.getString( 3, confFile ) ;
@@ -1094,6 +1353,108 @@ namespace engine
       goto done ;
    }
 
+#if defined (_WINDOWS)
+   INT32  _sptUsrOma::_startSdbcm ( list<const CHAR*> &argv, OSSPID &pid,
+                                    BOOLEAN asProc )
+   {
+      if ( asProc )
+      {
+         return ossStartProcess( argv, pid ) ;
+      }
+      else
+      {
+         return ossStartService( PMDDMN_SVCNAME_DEFAULT ) ;
+      }
+   }
+
+#elif defined (_LINUX)
+   INT32  _sptUsrOma::_startSdbcm ( list<const CHAR*> &argv, OSSPID &pid,
+                                    BOOLEAN asProc )
+   {
+      return ossStartProcess( argv, pid ) ;
+   }
+#endif
+
+   INT32 _sptUsrOma::_mergeArg( const _sptArguments &arg,
+                                bson::BSONObj &detail,
+                                string &command,
+                                BSONObj *mergeObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj optionObj ;
+      BSONObj matchObj ;
+      BSONObj valueObj ;
+
+      // get command
+      rc = arg.getString( 0, command ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         detail = BSON( SPT_ERR << "command must be config" ) ;
+         PD_LOG( PDERROR, "Command must be config, rc: %d", rc ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "command must be string" ) ;
+         PD_LOG( PDERROR, "Command must be string, rc: %d", rc ) ;
+         goto error ;
+      }
+      else if ( command.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "command can't be empty" ) ;
+         PD_LOG( PDERROR, "Command can't be empty, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // get optionObj
+      if ( arg.argc() >= 2 )
+      {
+         rc = arg.getBsonobj( 1, optionObj ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "optionObj must be BSONObj" ) ;
+            PD_LOG( PDERROR, "Failed to get BSONObj , rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      // get matchObj
+      if ( arg.argc() >= 3 )
+      {
+         rc = arg.getBsonobj( 2, matchObj ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "matchObj must be BSONObj" ) ;
+            PD_LOG( PDERROR, "Failed to get mathcObj , rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      // get valueObj
+      if ( arg.argc() >= 4 )
+      {
+         rc = arg.getBsonobj( 3, valueObj ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "valueObj must be BSONObj" ) ;
+            PD_LOG( PDERROR, "Failed to get valueObj , rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      // merge argument
+      {
+         BSONObjBuilder builder ;
+         builder.append( "$optionObj", optionObj ) ;
+         builder.append( "$matchObj", matchObj ) ;
+         builder.append( "$valueObj", valueObj ) ;
+         *mergeObj = builder.obj() ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
-
-

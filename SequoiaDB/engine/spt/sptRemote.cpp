@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = sptMsg.cpp
+   Source File Name = sptRemote.cpp
 
    Dependencies: N/A
 
@@ -113,9 +113,10 @@ do                                                                          \
                                  const CHAR *arg3,
                                  const CHAR *arg4,
                                  CHAR **ppRetBuffer,
-                                 INT32 &retCode )
+                                 INT32 &retCode,
+                                 BOOLEAN needRecv )
    {
-      SDB_ASSERT( handle, "handle can't be null"  ) ;
+      SDB_ASSERT( handle, "handle can't be null" ) ;
       SDB_ASSERT( pString, "pString cam't be null" ) ;
 
       INT32 rc          = SDB_OK ;
@@ -147,40 +148,44 @@ do                                                                          \
                          ( const MsgHeader* )connection->_pSendBuffer,
                          ( MsgHeader** )&( connection->_pReceiveBuffer ),
                          &( connection->_receiveBufferSize ),
-                         TRUE, connection->_endianConvert ) ;
+                         needRecv, connection->_endianConvert ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to build send and recv msg, rc = %d", rc ) ;
 
-      // extract message
-      rc = _extract( (MsgHeader *)connection->_pReceiveBuffer,
-                     connection->_receiveBufferSize,
-                     &contextID, &result,
-                     connection->_endianConvert ) ;
-
-      if ( SDB_OK != rc )
+      if ( needRecv )
       {
-         if ( TRUE == result )
+         // extract message
+         rc = _extract( (MsgHeader *)connection->_pReceiveBuffer,
+                        connection->_receiveBufferSize,
+                        &contextID, &result,
+                        connection->_endianConvert ) ;
+
+         if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Failed to extract msg in client, rc = %d", rc ) ;
-            goto error ;
+            if ( TRUE == result )
+            {
+               PD_LOG( PDERROR, "Failed to extract msg in client, rc = %d",
+                       rc ) ;
+               goto error ;
+            }
+            else
+            {
+               retCode = rc ;
+               rc = SDB_OK ;
+               PD_LOG( PDERROR, "Failed to run command in engine, rc = %d",
+                       rc ) ;
+            }
          }
-         else
-         {
-            retCode = rc ;
-            rc = SDB_OK ;
-            PD_LOG( PDERROR, "Failed to run command in engine, rc = %d", rc ) ;
-         }
+
+         // check whether the return message is what we want or not
+         CHECK_RET_MSGHEADER( connection->_pSendBuffer,
+                              connection->_pReceiveBuffer,
+                              handle ) ;
+
+         // try to get retObj
+         rc = _getRetBuffer( connection->_pReceiveBuffer, ppRetBuffer ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get retObjArray, rc = %d", rc ) ;
       }
-
-      // check whether the return message is what we want or not
-      CHECK_RET_MSGHEADER( connection->_pSendBuffer,
-                           connection->_pReceiveBuffer,
-                           handle ) ;
-
-      // try to get retObj
-      rc = _getRetBuffer( connection->_pReceiveBuffer, ppRetBuffer ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get retObjArray, rc = %d", rc ) ;
-
    done:
       return rc ;
    error:

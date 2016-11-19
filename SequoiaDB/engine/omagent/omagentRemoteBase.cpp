@@ -32,12 +32,14 @@
 *******************************************************************************/
 
 #include "omagentRemoteBase.hpp"
+#include "cmdUsrOmaUtil.hpp"
 #include "pmdOptions.h"
 #include "msgDef.h"
 #include "pmd.hpp"
 #include "ossSocket.hpp"
 #include "ossIO.hpp"
 #include "oss.h"
+#include "ossProc.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #if defined (_LINUX)
@@ -278,7 +280,8 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                 rc, e.what() ) ;
          goto error ;
       }
       if ( splited.empty() )
@@ -306,7 +309,8 @@ namespace engine
          catch( std::exception &e )
          {
             rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Failed to split result, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
             goto error ;
          }
          for ( vector<string>::iterator itr2 = columns.begin();
@@ -380,4 +384,272 @@ namespace engine
       builder.append( CMD_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
    }
 
+   /*
+      _remoteOmaConfigs implement
+   */
+
+   _remoteOmaConfigs::_remoteOmaConfigs()
+   {
+   }
+
+   _remoteOmaConfigs::~_remoteOmaConfigs()
+   {
+   }
+
+   string _remoteOmaConfigs::_getOmaConfFile()
+   {
+      utilInstallInfo info ;
+      CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      if ( SDB_OK == utilGetInstallInfo( info ) )
+      {
+         if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
+                                           SPT_OMA_REL_PATH_FILE,
+                                           OSS_MAX_PATHSIZE,
+                                           confFile ) &&
+              SDB_OK == ossAccess( confFile ) )
+         {
+            goto done ;
+         }
+      }
+
+      // exePath + ../conf/sdbcm.conf
+      ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
+      utilCatPath( confFile, OSS_MAX_PATHSIZE, SDBCM_CONF_PATH_FILE ) ;
+
+   done:
+      return confFile ;
+   }
+
+   INT32 _remoteOmaConfigs::_getOmaConfInfo( const string & confFile,
+                                             BSONObj &conf,
+                                             string &errMsg,
+                                             BOOLEAN allowNotExist )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po::variables_map vm ;
+
+      MAP_CONFIG_DESC( desc ) ;
+
+      rc = ossAccess( confFile.c_str() ) ;
+      if ( rc )
+      {
+         if ( allowNotExist )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] is not exist" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+
+      rc = utilReadConfigureFile( confFile.c_str(), desc, vm ) ;
+      if ( SDB_FNE == rc )
+      {
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] is not exist" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+      else if ( SDB_PERM == rc )
+      {
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] permission error" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         stringstream ss ;
+         ss << "read conf file[" << confFile << "] error" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjBuilder builder ;
+         po ::variables_map::iterator it = vm.begin() ;
+         while ( it != vm.end() )
+         {
+            if ( SDBCM_RESTART_COUNT == it->first ||
+                 SDBCM_RESTART_INTERVAL == it->first ||
+                 SDBCM_DIALOG_LEVEL == it->first )
+            {
+               builder.append( it->first, it->second.as<INT32>() ) ;
+            }
+            else if ( SDBCM_AUTO_START == it->first )
+            {
+               BOOLEAN autoStart = TRUE ;
+               ossStrToBoolean( it->second.as<string>().c_str(), &autoStart ) ;
+               builder.appendBool( it->first, autoStart ) ;
+            }
+            else
+            {
+               builder.append( it->first, it->second.as<string>() ) ;
+            }
+            ++it ;
+         }
+         conf = builder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32  _remoteOmaConfigs::_confObj2Str( const bson::BSONObj &conf, string &str,
+                                           string &errMsg,
+                                           const CHAR* pExcept )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONObjIterator it ( conf ) ;
+      while ( it.more() )
+      {
+         BSONElement e = it.next() ;
+
+         if ( pExcept && 0 != pExcept[0] &&
+              0 == ossStrcmp( pExcept, e.fieldName() ) )
+         {
+            continue ;
+         }
+
+         ss << e.fieldName() << "=" ;
+         if ( e.type() == String )
+         {
+            ss << e.valuestr() ;
+         }
+         else if ( e.type() == NumberInt )
+         {
+            ss << e.numberInt() ;
+         }
+         else if ( e.type() == NumberLong )
+         {
+            ss << e.numberLong() ;
+         }
+         else if ( e.type() == NumberDouble )
+         {
+            ss << e.numberDouble() ;
+         }
+         else if ( e.type() == Bool )
+         {
+            ss << ( e.boolean() ? "TRUE" : "FALSE" ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            stringstream errss ;
+            errss << e.toString() << " is invalid config" ;
+            errMsg = errss.str() ;
+            goto error ;
+         }
+         ss << endl ;
+      }
+      str = ss.str() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _remoteOmaConfigs::_getNodeConfigFile( string svcname,
+                                                string &filePath )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      string confPath = SDBCM_LOCAL_PATH OSS_FILE_SEP
+                        + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
+
+      // get ewd
+      rc = ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get ewd, rc: %s", rc ) ;
+         goto error ;
+      }
+
+      // get full path
+      rc = utilCatPath( confFile, OSS_MAX_PATHSIZE, confPath.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to cat path: %s", rc ) ;
+         goto error ;
+      }
+
+      filePath = confFile ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _remoteOmaConfigs::_getNodeConfInfo( const string & confFile,
+                                              BSONObj &conf,
+                                              string &errMsg,
+                                              BOOLEAN allowNotExist )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po ::variables_map vm ;
+
+      MAP_CONFIG_DESC( desc ) ;
+
+      rc = ossAccess( confFile.c_str() ) ;
+      if ( rc )
+      {
+         if ( allowNotExist )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] is not exist" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+
+      rc = utilReadConfigureFile( confFile.c_str(), desc, vm ) ;
+      if ( SDB_FNE == rc )
+      {
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] is not exist" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+      else if ( SDB_PERM == rc )
+      {
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] permission error" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         stringstream ss ;
+         ss << "read conf file[" << confFile << "] error" ;
+         errMsg = ss.str() ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjBuilder builder ;
+         po ::variables_map::iterator it = vm.begin() ;
+         while ( it != vm.end() )
+         {
+            builder.append( it->first, it->second.as<string>() ) ;
+            ++it ;
+         }
+         conf = builder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }

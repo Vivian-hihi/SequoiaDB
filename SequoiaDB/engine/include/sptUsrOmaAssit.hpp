@@ -34,6 +34,9 @@
 #define SPT_USROMA_ASSIT_HPP__
 
 #include "oss.hpp"
+#include "sptRemote.hpp"
+#include <string>
+using std::string ;
 
 namespace engine
 {
@@ -63,6 +66,10 @@ namespace engine
 
          INT32       stopNode( const CHAR *pSvcName ) ;
 
+         INT32       runCommand( string command, const CHAR *arg1,
+                                 CHAR **ppRetBuffer, INT32 &retCode,
+                                 BOOLEAN needRecv = TRUE ) ;
+
       protected:
 
          INT32       _getNodeHandle( const CHAR *pSvcName,
@@ -71,10 +78,12 @@ namespace engine
 
          INT32       _getCoordGroupHandle( ossValuePtr &handle ) ;
 
+         INT32       _regSocket( ossValuePtr pSock ) ;
+
       private:
          ossValuePtr          _handle ;
          ossValuePtr          _groupHandle ;
-
+         sptRemote            _omaRemote ;
    } ;
    typedef _sptUsrOmaAssit sptUsrOmaAssit ;
 

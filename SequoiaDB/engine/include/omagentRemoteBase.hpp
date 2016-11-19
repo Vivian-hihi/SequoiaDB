@@ -87,5 +87,31 @@ namespace engine
                                   bson::BSONObjBuilder &builder ) ;
    } ;
 
+   /*
+      _remoteOmaConfigs define
+   */
+   class _remoteOmaConfigs : public _remoteExec
+   {
+      public:
+         _remoteOmaConfigs() ;
+
+         virtual ~_remoteOmaConfigs() ;
+
+         virtual const CHAR * name() = 0 ;
+
+      protected:
+         string _getOmaConfFile() ;
+
+         INT32 _getOmaConfInfo( const string & confFile, bson::BSONObj &conf,
+                             string &errMsg, BOOLEAN allowNotExist = FALSE  ) ;
+
+         INT32  _confObj2Str( const bson::BSONObj &conf, string &str,
+                              string &errMsg, const CHAR* pExcept = NULL ) ;
+
+         INT32 _getNodeConfigFile( string svcname, string &filePath ) ;
+
+         INT32 _getNodeConfInfo( const string & confFile, bson::BSONObj &conf,
+                             string &errMsg, BOOLEAN allowNotExist = FALSE  ) ;
+   } ;
 }
 #endif

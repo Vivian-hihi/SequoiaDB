@@ -97,6 +97,10 @@ namespace engine
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
+      INT32 runCommand( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
       INT32 close( const _sptArguments &arg,
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;
@@ -136,6 +140,10 @@ namespace engine
                                    _sptReturnVal &rval,
                                    bson::BSONObj &detail ) ;
 
+      static INT32 start( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
    protected:
       INT32 _createNode( const _sptArguments &arg,
                          _sptReturnVal &rval,
@@ -147,6 +155,11 @@ namespace engine
                          bson::BSONObj &detail,
                          const CHAR *pNodeStr ) ;
 
+      INT32 _mergeArg( const _sptArguments &arg,
+                       bson::BSONObj &detail,
+                       string &command,
+                       bson::BSONObj *mergeObj ) ;
+
       static string _getConfFile() ;
 
       static INT32  _getConfInfo( const string &confFile,
@@ -157,6 +170,10 @@ namespace engine
       static INT32  _confObj2Str( const bson::BSONObj &conf, string &str,
                                   bson::BSONObj &detail,
                                   const CHAR* pExcept = NULL ) ;
+
+      static INT32 _startSdbcm ( list<const CHAR*> &argv,
+                                 OSSPID &pid,
+                                 BOOLEAN asProc ) ;
 
    private:
       sptUsrOmaAssit          _assit ;

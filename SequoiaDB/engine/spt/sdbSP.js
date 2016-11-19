@@ -72,13 +72,11 @@ BSONArray.prototype._formatStr = function() {
 
    var bsonObj = this.toArray() ;
    var objArr = new Array() ;
-   var strArr = new Array() ;
+   var eleArr = new Array() ;
    var maxSizeArr = new Array() ;
    var outStr = "" ;
-   var eleArr = new Array() ;
-
+   var colNameArr = new Array() ;
    var objNum ;
-   var eleNum ;
 
    for ( var i in bsonObj )
    {
@@ -89,44 +87,64 @@ BSONArray.prototype._formatStr = function() {
 
    if ( objNum > 0 )
    {
-      var eleNum = Object.keys( objArr[0] ).length ;
-
-      for ( var eleKey in objArr[0] )
+      // get row name and init maxSizeArr
+      for( var index in objArr )
       {
-        eleArr.push( eleKey ) ;
-      }
-      strArr.push( eleArr ) ;
-
-      for ( var obj in  objArr )
-      {
-         eleArr = new Array() ;
-         for( var ele in  objArr[obj] )
+         for ( var eleKey in objArr[ index ] )
          {
-           eleArr.push( objArr[obj][ele] ) ;
-         }
-         strArr.push( eleArr ) ;
-      }
-
-      for ( var i = 0; i < eleNum; i++ )
-      {
-         var max = 0 ;
-         for ( var j = 0; j < objNum + 1; j++ )
-         {
-            if ( strArr[j][i].length > max )
+            if ( -1 == colNameArr.indexOf( eleKey ) )
             {
-               max = strArr[j][i].length ;
+               colNameArr.push( eleKey ) ;
+               maxSizeArr[ eleKey ] = eleKey.length ;
             }
          }
-         maxSizeArr.push( max + 1 ) ;
       }
 
-      for ( var i = 0; i < strArr.length; i++ )
+      for ( var index in objArr )
       {
-         var arr = strArr[i] ;
-         for ( var j = 0; j < arr.length; j++ )
+         var localArr = new Array() ;
+         for( var ele in objArr[ index ] )
          {
-            outStr += " " + arr[j] ;
-            for ( var k = 0; k < maxSizeArr[j] - arr[j].length; k++ )
+            var localEle = objArr[ index ][ ele ].toString() ;
+            localArr[ ele ] = localEle ;
+            if ( maxSizeArr[ ele ] < localEle.length )
+            {
+               maxSizeArr[ ele ] = localEle.length ;
+            }
+         }
+         eleArr.push( localArr ) ;
+      }
+
+      for( var index in maxSizeArr )
+      {
+         maxSizeArr[ index ] = maxSizeArr[ index ] + 1 ;
+      }
+      for ( var index in colNameArr )
+      {
+         var localRowName = colNameArr[ index ] ;
+         outStr += " " + localRowName ;
+         for ( var k = 0; k < maxSizeArr[ localRowName ] - localRowName.length ;
+               k++ )
+         {
+            outStr += " " ;
+         }
+      }
+      outStr += "\n" ;
+
+      for ( var index in eleArr )
+      {
+         var arr = eleArr[ index ] ;
+         for ( var ele in colNameArr )
+         {
+            var localRowName = colNameArr[ ele ] ;
+            var localEle = arr[ localRowName ] ;
+            if ( undefined == localEle )
+            {
+               localEle = "" ;
+            }
+            outStr += " " + localEle ;
+            for ( var k = 0; k < maxSizeArr[ localRowName ] - localEle.length;
+                  k++ )
             {
                outStr += " " ;
             }
@@ -138,7 +156,232 @@ BSONArray.prototype._formatStr = function() {
 }
 // end BSONArray
 
-// Oma
+// Oma member function
+Oma.prototype.getOmaInstallFile = function() {
+   return this._runCommand( "oma get oma install file" ).toObj().installFile ;
+}
+
+Oma.prototype.getOmaInstallInfo = function() {
+   return this._runCommand( "oma get oma install info" ) ;
+}
+
+Oma.prototype.getOmaConfigFile = function() {
+   return this._runCommand( "oma get oma config file" ).toObj().confFile ;
+}
+
+Oma.prototype.getOmaConfigs = function( confFile ) {
+   var recvObj ;
+
+   // run command
+   if ( undefined != confFile )
+   {
+      recvObj = this._runCommand( "oma get oma configs", {},
+                                  { "confFile": confFile } ) ;
+   }
+   else
+   {
+      recvObj = this._runCommand( "oma get oma configs" ) ;
+   }
+   return recvObj ;
+}
+
+Oma.prototype.setOmaConfigs = function( configsObj, confFile ) {
+
+   // check argument
+   if ( undefined == configsObj )
+   {
+      setLastErrMsg( "obj must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // run command
+   if ( undefined != confFile )
+   {
+      this._runCommand( "oma set oma configs", {}, { "confFile": confFile },
+                        { "configsObj": configsObj } ) ;
+   }
+   else
+   {
+      this._runCommand( "oma set oma configs", {}, {},
+                        { "configsObj": configsObj } ) ;
+   }
+}
+
+Oma.prototype.getAOmaSvcName = function( hostname, confFile ) {
+   // check argument
+   if ( undefined == hostname )
+   {
+      setLastErrMsg( "hostname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   var recvObj ;
+
+   // run command
+   if ( undefined != confFile )
+   {
+      recvObj = this._runCommand( "oma get a oma svc name", {},
+                                  { "confFile": confFile,
+                                    "hostname": hostname } ) ;
+   }
+   else
+   {
+      recvObj = this._runCommand( "oma get a oma svc name", {},
+                                  { "hostname": hostname } ) ;
+   }
+   return recvObj.toObj().svcName ;
+}
+
+Oma.prototype.addAOmaSvcName = function( hostname, svcname,
+                                         isReplace, confFile ) {
+   // check argument
+   if ( undefined == hostname  )
+   {
+      setLastErrMsg( "hostname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   else if ( undefined == svcname )
+   {
+      setLastErrMsg( "svcname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   if ( undefined == isReplace )
+   {
+      isReplace = true ;
+   }
+
+   // run command
+   if ( undefined != confFile )
+   {
+      this._runCommand( "oma add a oma svc name", { "isReplace": isReplace },
+                        { "confFile": confFile },
+                        { "hostname": hostname, "svcname": svcname } ) ;
+   }
+   else
+   {
+      this._runCommand( "oma add a oma svc name", { "isReplace": isReplace },
+                        {}, { "hostname": hostname, "svcname": svcname } ) ;
+   }
+}
+
+Oma.prototype.delAOmaSvcName = function( hostname, confFile ) {
+
+   // check argument
+   if ( undefined == hostname  )
+   {
+      setLastErrMsg( "hostname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // run command
+   if ( undefined != confFile )
+   {
+      this._runCommand( "oma del a oma svc name", {},
+                        { "hostname": hostname, "confFile": confFile } ) ;
+   }
+   else
+   {
+      this._runCommand( "oma del a oma svc name", {},
+                        { "hostname": hostname } ) ;
+   }
+}
+
+Oma.prototype.listNodes = function( optionObj, filterObj ) {
+   var displayMode ;
+
+   // check argument
+   if ( undefined != optionObj )
+   {
+      if ( "object" != typeof( optionObj ) )
+      {
+         setLastErrMsg( "optionObj must be object" ) ;
+         throw SDB_INVALIDARG ;
+      }
+
+      if ( undefined != optionObj.displayMode )
+      {
+         displayMode = optionObj.displayMode ;
+         delete optionObj.displayMode ;
+      }
+   }
+   else
+   {
+      optionObj = {} ;
+   }
+
+   // run command
+   var recvObj = this._runCommand( "oma list nodes", optionObj ) ;
+   var retArray ;
+
+   // filter
+   if ( undefined != filterObj )
+   {
+      var filter = new _Filter( filterObj ) ;
+      retArray = filter.match( recvObj.toObj() ) ;
+   }
+   else
+   {
+      var filter = new _Filter( {} ) ;
+      retArray = filter.match( recvObj.toObj() ) ;
+   }
+
+   // set display format
+   if ( "text" == displayMode )
+   {
+      retArray = retArray._formatStr() ;
+   }
+   return retArray ;
+}
+
+Oma.prototype.getNodeConfigs = function( svcname ) {
+   // check svcname
+   if ( undefined == svcname )
+   {
+      setLastErrMsg( "svcname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // run command
+   return this._runCommand( "oma get node configs",
+                            {}, { "svcname": svcname } ) ;
+}
+
+Oma.prototype.setNodeConfigs = function( svcname, configsObj ) {
+   // check argument
+   if ( undefined == svcname )
+   {
+      setLastErrMsg( "svcname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if ( undefined == configsObj )
+   {
+      setLastErrMsg( "configsObj must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // run command
+   this._runCommand( "oma set node configs", {},
+                     { "svcname": svcname }, { "configsObj": configsObj } ) ;
+}
+
+Oma.prototype.updateNodeConfigs = function( svcname, configsObj ) {
+   // check argument
+   if ( undefined == svcname )
+   {
+      setLastErrMsg( "svcname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if ( undefined == configsObj )
+   {
+      setLastErrMsg( "configsObj must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+
+   // run command
+   this._runCommand( "oma update node configs", {},
+                     { "svcname": svcname }, { "configsObj": configsObj } ) ;
+}
+
 Oma.prototype.help = function( val ) {
    if ( val == undefined )
    {
@@ -514,7 +757,7 @@ System.prototype.ping = function( hostname ) {
 
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "ping", {},
+      var retObj = this._remote._runCommand( "system ping", {},
                                              { "hostname" : hostname } ) ;
    }
    else
@@ -579,7 +822,7 @@ System.prototype.getHostsMap = function() {
 
    if ( undefined != this._remote )
    {
-      retObj = this._remote._runCommand( "get hosts map" ) ;
+      retObj = this._remote._runCommand( "system get hosts map" ) ;
    }
    else
    {
@@ -593,7 +836,7 @@ System.prototype.getAHostMap = function( hostname ) {
 
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get a host map", {},
+      var retObj = this._remote._runCommand( "system get a host map", {},
                                              { "hostname": hostname } ) ;
       retStr = retObj.toObj().ip ;
    }
@@ -605,9 +848,13 @@ System.prototype.getAHostMap = function( hostname ) {
 }
 
 System.prototype.addAHostMap = function( hostname, ip, isReplace ) {
+   if ( undefined == isReplace )
+   {
+      isReplace = true ;
+   }
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "add a host map", {}, {},
+      this._remote._runCommand( "system add a host map", {}, {},
                                 { "hostname": hostname,
                                   "ip": ip,
                                   "isReplace": isReplace } ) ;
@@ -621,7 +868,7 @@ System.prototype.addAHostMap = function( hostname, ip, isReplace ) {
 System.prototype.delAHostMap = function( hostname ) {
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "delete a host map", {},
+      this._remote._runCommand( "system delete a host map", {},
                                 { "hostname": hostname } ) ;
    }
    else
@@ -634,7 +881,7 @@ System.prototype.getCpuInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get cpu info" ) ;
+      var retObj = this._remote._runCommand( "system get cpu info" ) ;
    }
    else
    {
@@ -647,7 +894,7 @@ System.prototype.snapshotCpuInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "snapshot cpu info" ) ;
+      var retObj = this._remote._runCommand( "system snapshot cpu info" ) ;
    }
    else
    {
@@ -660,7 +907,7 @@ System.prototype.getMemInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get mem info" ) ;
+      var retObj = this._remote._runCommand( "system get mem info" ) ;
    }
    else
    {
@@ -673,7 +920,7 @@ System.prototype.snapshotMemInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get mem info" ) ;
+      var retObj = this._remote._runCommand( "system get mem info" ) ;
    }
    else
    {
@@ -686,7 +933,7 @@ System.prototype.getDiskInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get disk info" ) ;
+      var retObj = this._remote._runCommand( "system get disk info" ) ;
    }
    else
    {
@@ -699,7 +946,7 @@ System.prototype.snapshotDiskInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get disk info" ) ;
+      var retObj = this._remote._runCommand( "system get disk info" ) ;
    }
    else
    {
@@ -712,7 +959,7 @@ System.prototype.getNetcardInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get netcard info" ) ;
+      var retObj = this._remote._runCommand( "system get netcard info" ) ;
    }
    else
    {
@@ -725,7 +972,7 @@ System.prototype.snapshotNetcardInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "snapshot netcard info" ) ;
+      var retObj = this._remote._runCommand( "system snapshot netcard info" ) ;
    }
    else
    {
@@ -738,7 +985,7 @@ System.prototype.getIpTablesInfo = function() {
    var retObj ;
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get ip tables info" ) ;
+      var retObj = this._remote._runCommand( "system get ip tables info" ) ;
    }
    else
    {
@@ -759,7 +1006,7 @@ System.prototype.getHostName = function() {
 
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "get hostname" ) ;
+      var retObj = this._remote._runCommand( "system get hostname" ) ;
       result = retObj.toObj().hostname ;
    }
    else
@@ -781,7 +1028,7 @@ System.prototype.sniffPort = function( port ) {
 
    if ( undefined != this._remote )
    {
-      var retObj = this._remote._runCommand( "sniff port", {},
+      var retObj = this._remote._runCommand( "system sniff port", {},
                                              { "port": port }) ;
    }
    else
@@ -802,6 +1049,11 @@ System.prototype.listProcess = function( optionObj, filterObj ) {
       // check argument
       if ( undefined != optionObj )
       {
+         if ( "object" != typeof( optionObj ) )
+         {
+            setLastErrMsg( "optionObj must be object" ) ;
+            throw SDB_INVALIDARG ;
+         }
          if ( undefined != optionObj.displayMode  )
          {
             displayMode = optionObj.displayMode ;
@@ -811,11 +1063,11 @@ System.prototype.listProcess = function( optionObj, filterObj ) {
 
       if ( undefined != optionObj )
       {
-         result = this._remote._runCommand( "list process", optionObj ) ;
+         result = this._remote._runCommand( "system list process", optionObj ) ;
       }
       else
       {
-         result = this._remote._runCommand( "list process" ) ;
+         result = this._remote._runCommand( "system list process" ) ;
       }
 
       if ( undefined != filterObj )
@@ -889,7 +1141,7 @@ System.prototype.isProcExist = function( optionObj ) {
 System.prototype.addUser = function( userObj ) {
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "add user", {}, {}, userObj ) ;
+      this._remote._runCommand( "system add user", {}, {}, userObj ) ;
    }
    else
    {
@@ -900,7 +1152,7 @@ System.prototype.addUser = function( userObj ) {
 System.prototype.setUserConfigs = function( optionObj ) {
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "set user configs", {}, {}, optionObj ) ;
+      this._remote._runCommand( "system set user configs", {}, {}, optionObj ) ;
    }
    else
    {
@@ -911,7 +1163,7 @@ System.prototype.setUserConfigs = function( optionObj ) {
 System.prototype.delUser = function( optionObj ) {
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "del user", {}, optionObj ) ;
+      this._remote._runCommand( "system del user", {}, optionObj ) ;
    }
    else
    {
@@ -922,7 +1174,7 @@ System.prototype.delUser = function( optionObj ) {
 System.prototype.addGroup = function( optionObj ) {
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "add group", {}, {}, optionObj ) ;
+      this._remote._runCommand( "system add group", {}, {}, optionObj ) ;
    }
    else
    {
@@ -933,7 +1185,7 @@ System.prototype.addGroup = function( optionObj ) {
 System.prototype.delGroup = function( name ) {
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "del group", {}, { "name" :name } ) ;
+      this._remote._runCommand( "system del group", {}, { "name" :name } ) ;
    }
    else
    {
@@ -957,11 +1209,12 @@ System.prototype.listLoginUsers = function( optionObj, filterObj ) {
             displayMode = optionObj.displayMode ;
             delete optionObj.displayMode ;
          }
-         objArray = this._remote._runCommand( "list login users", optionObj ) ;
+         objArray = this._remote._runCommand( "system list login users",
+                                              optionObj ) ;
       }
       else
       {
-         objArray = this._remote._runCommand( "list login users" ) ;
+         objArray = this._remote._runCommand( "system list login users" ) ;
       }
 
       // filter
@@ -1005,11 +1258,12 @@ System.prototype.listAllUsers = function( optionObj, filterObj ) {
             displayMode = optionObj.displayMode ;
             delete optionObj.displayMode ;
          }
-         objArray = this._remote._runCommand( "list all users", optionObj ) ;
+         objArray = this._remote._runCommand( "system list all users",
+                                              optionObj ) ;
       }
       else
       {
-         objArray = this._remote._runCommand( "list all users" ) ;
+         objArray = this._remote._runCommand( "system list all users" ) ;
       }
 
       // filter
@@ -1053,11 +1307,12 @@ System.prototype.listGroups = function( optionObj, filterObj ) {
             displayMode = optionObj.displayMode ;
             delete optionObj.displayMode ;
          }
-         objArray = this._remote._runCommand( "list all groups", optionObj ) ;
+         objArray = this._remote._runCommand( "system list all groups",
+                                              optionObj ) ;
       }
       else
       {
-         objArray = this._remote._runCommand( "list all groups" ) ;
+         objArray = this._remote._runCommand( "system list all groups" ) ;
       }
 
       // filter
@@ -1091,7 +1346,7 @@ System.prototype.getCurrentUser = function() {
 
    if ( undefined != this._remote )
    {
-      retObj = this._remote._runCommand( "get current user" ) ;
+      retObj = this._remote._runCommand( "system get current user" ) ;
    }
    else
    {
@@ -1169,10 +1424,15 @@ System.prototype.killProcess = function( optionObj ) {
       setLastErrMsg( "optionObj must be BsonObj" ) ;
       throw SDB_INVALIDARG ;
    }
+   if ( undefined == optionObj.sig )
+   {
+      optionObj.sig = "term"
+   }
 
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "kill process", { "sig" : optionObj.sig },
+      this._remote._runCommand( "system kill process",
+                                { "sig" : optionObj.sig },
                                 { "pid": optionObj.pid } ) ;
    }
    else
@@ -1193,7 +1453,7 @@ System.prototype.getProcUlimitConfigs = function() {
 
    if ( undefined != this._remote )
    {
-      retObj = this._remote._runCommand( "get proc ulimit configs" ) ;
+      retObj = this._remote._runCommand( "system get proc ulimit configs" ) ;
    }
    else
    {
@@ -1213,7 +1473,8 @@ System.prototype.setProcUlimitConfigs = function( configsObj ) {
 
    if ( undefined != this._remote )
    {
-      this._remote._runCommand( "set proc ulimit configs", {},{},{ "configs": configsObj } ) ;
+      this._remote._runCommand( "system set proc ulimit configs", {},{},
+                                { "configs": configsObj } ) ;
    }
    else
    {
@@ -1225,7 +1486,7 @@ System.prototype.getUserEnv = function() {
    var result ;
    if ( undefined != this._remote )
    {
-      result = this._remote._runCommand( "get user env" ) ;
+      result = this._remote._runCommand( "system get user env" ) ;
    }
    else
    {
@@ -1241,12 +1502,12 @@ System.prototype.getSystemConfigs = function( type ) {
    {
       if ( undefined != type )
       {
-         retObj = this._remote._runCommand( "get system configs",
+         retObj = this._remote._runCommand( "system get system configs",
                                             { "type": type } ) ;
       }
       else
       {
-         retObj = this._remote._runCommand( "get system configs" ) ;
+         retObj = this._remote._runCommand( "system get system configs" ) ;
       }
    }
    else
@@ -1294,12 +1555,15 @@ System.prototype.runService = function ( serviceName, command, options ) {
       var retObj ;
       if ( "undefined" != options )
       {
-         retObj = this._remote._runCommand( "run service", { "command": command, "options": options },
-                                              { "serviceName": serviceName } ) ;
+         retObj = this._remote._runCommand( "system run service",
+                                            { "command": command,
+                                              "options": options },
+                                            { "serviceName": serviceName } ) ;
       }
       else
       {
-         retObj = this._remote._runCommand( "run service", { "command": command },
+         retObj = this._remote._runCommand( "system run service",
+                                            { "command": command },
                                             { "serviceName": serviceName } ) ;
       }
       result = retObj.toObj().outStr ;
@@ -1327,7 +1591,8 @@ System.prototype.buildTrusty = function() {
          var homeDir = System._getHomePath() ;
          System._createSshKey() ;
          var pubKey = File._readFile( homeDir + "/.ssh/id_rsa.pub" ) ;
-         this._remote._runCommand( "build trusty", {}, {}, { "key": pubKey } ) ;
+         this._remote._runCommand( "system build trusty", {}, {},
+                                   { "key": pubKey } ) ;
       }
    }
 }
@@ -1340,7 +1605,7 @@ System.prototype.removeTrusty = function() {
       {
          var homeDir = System._getHomePath() ;
          var matchStr = File._readFile( homeDir + "/.ssh/id_rsa.pub" ) ;
-         this._remote._runCommand( "remove trusty", {}, {},
+         this._remote._runCommand( "system remove trusty", {}, {},
                                    { "matchStr": matchStr } ) ;
       }
    }
@@ -1358,7 +1623,7 @@ System.prototype.getPID = function() {
    var pid ;
    if ( undefined != this._remote )
    {
-      pid = this._remote._runCommand( "get pid" ).toObj().PID ;
+      pid = this._remote._runCommand( "system get pid" ).toObj().PID ;
    }
    else
    {
@@ -1379,7 +1644,7 @@ System.prototype.getTID = function() {
    var tid ;
    if ( undefined != this._remote )
    {
-      tid = this._remote._runCommand( "get tid" ).toObj().TID ;
+      tid = this._remote._runCommand( "system get tid" ).toObj().TID ;
    }
    else
    {
@@ -1400,7 +1665,7 @@ System.prototype.getEWD = function() {
    var ewd ;
    if ( undefined != this._remote )
    {
-      ewd = this._remote._runCommand( "get ewd" ).toObj().EWD ;
+      ewd = this._remote._runCommand( "system get ewd" ).toObj().EWD ;
    }
    else
    {
@@ -1476,16 +1741,33 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
       throw SDB_INVALIDARG ;
    }
 
-   if ( 'string' != typeof( cmd ) )
+   if ( "string" != typeof( cmd ) )
    {
       setLastErrMsg( "cmd must be string" ) ;
       throw SDB_INVALIDARG ;
    }
+   if ( undefined == args )
+   {
+      args = "" ;
+   }
+   if ( undefined == timeout )
+   {
+      timeout = 0 ;
+   }
+   if ( undefined == useShell )
+   {
+      useShell = 1 ;
+   }
+
+   // remote call
    if ( undefined != this._remote )
    {
 
-      var retObj = this._remote._runCommand( "cmd run", { "timeout": timeout, "useShell": useShell }, {},
-                                             { "command": cmd, "args": args } ).toObj() ;
+      var retObj = this._remote._runCommand( "cmd run",
+                                             { "timeout": timeout,
+                                               "useShell": useShell }, {},
+                                             { "command": cmd,
+                                               "args": args } ).toObj() ;
       this._command = cmd ;
       this._retCode = retObj.retCode ;
       this._strOut = retObj.strOut ;
@@ -1506,25 +1788,36 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
       {
          retStr = this._run( cmd, args, timeout, useShell ) ;
       }
-      else if ( undefined != timeout )
-      {
-         retStr = this._run( cmd, args, timeout ) ;
-      }
-      else if ( undefined != args )
-      {
-         retStr = this._run( cmd, args ) ;
-      }
-      else
-      {
-         retStr = this._run( cmd ) ;
-      }
-
    }
    return retStr ;
 }
 
 Cmd.prototype.start = function( cmd, args, useShell, timeout ) {
    var retStr ;
+
+   // check argument
+   if ( undefined == cmd )
+   {
+      setLastErrMsg( "cmd must be config" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   if ( "string" != typeof( cmd ) )
+   {
+      setLastErrMsg( "cmd must be string" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   if ( undefined == args )
+   {
+      args = "" ;
+   }
+   if ( undefined == useShell )
+   {
+      useShell = 1 ;
+   }
+   if ( undefined == timeout )
+   {
+      timeout = 100 ;
+   }
 
    if ( undefined != this._remote )
    {
@@ -1551,22 +1844,7 @@ Cmd.prototype.start = function( cmd, args, useShell, timeout ) {
    }
    else
    {
-      if ( undefined != timeout )
-      {
-         retStr = this._start( cmd, args, useShell, timeout ) ;
-      }
-      else if ( undefined != useShell )
-      {
-         retStr = this._start( cmd, args, useShell ) ;
-      }
-      else if ( undefined != args )
-      {
-         retStr = this._start( cmd, args ) ;
-      }
-      else
-      {
-         retStr = this._start( cmd ) ;
-      }
+      retStr = this._start( cmd, args, useShell, timeout ) ;
    }
 
    return retStr ;

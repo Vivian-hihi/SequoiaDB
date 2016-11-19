@@ -219,7 +219,8 @@ omagentFiles = [
       "omagent/omagentRemoteBase.cpp",
       "omagent/omagentRemoteUsrSystem.cpp",
       "omagent/omagentRemoteUsrFile.cpp",
-      "omagent/omagentRemoteUsrCmd.cpp"
+      "omagent/omagentRemoteUsrCmd.cpp",
+      "omagent/omagentRemoteUsrOma.cpp"
       ]
 
 sptFiles = [
