@@ -14,7 +14,6 @@ var db = new Sdb( COORDHOSTNAME, COORDSVCNAME ) ;
 function main( db )
 {
    // 1. check nodes
-   println("---begin to check nodes");
    var groups = commGetGroups( db, "", "", false ) ;
    var checkLSN = false ;
    if ( 0 != RUNRESULT )
@@ -38,7 +37,6 @@ function main( db )
    }
    
    // 2. drop CHANGEDPREFIX's all collection
-   println("---begin to drop all cl");
    var cols = commGetCSCL( db, CHANGEDPREFIX ) ;
    for ( var i = 0; i < cols.length; ++i )
    {
@@ -61,7 +59,6 @@ function main( db )
    }
    
    // 3. drop CHANGEDPREFIX backup
-   println("---begin to drop backup");
    var backups = commGetBackups( db, CHANGEDPREFIX ) ;
    for ( var j = 0 ; j < backups.length ; ++j )
    {
@@ -76,7 +73,6 @@ function main( db )
    }
    
    // 4. drop CHANGEDPREFIX domain
-   println("---begin to drop domain");
    var domains = commGetDomains( db, CHANGEDPREFIX ) ;
    for ( var j = 0 ; j < domains.length ; ++j )
    {
@@ -91,7 +87,6 @@ function main( db )
    }
 
    // 5. drop CHANGEDPREFIX procedure
-   println("---begin to drop procedure");
    var procedures = commGetProcedures( db, CHANGEDPREFIX ) ;
    for ( var j = 0 ; j < procedures.length ; ++j )
    {
