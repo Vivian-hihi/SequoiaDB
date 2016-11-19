@@ -124,7 +124,9 @@ public class MetaData7074 extends SdbTestBase{
 	public void test(){
 		//get domain groups name
 		boolean expectAutoSplit = (boolean) domainOption.get("AutoSplit");
-		commlib.checkDomainInfo(sdb, null, null, null, null, 
+		BSONObject matcher = new BasicBSONObject();
+		matcher.put("Name", domainName);
+		commlib.checkDomainInfo(sdb, matcher, null, null, null, 
 								replicaGroups, domainName, expectAutoSplit);
 		
 		BasicBSONList csNameArr = getCSInDomain(domainName);
