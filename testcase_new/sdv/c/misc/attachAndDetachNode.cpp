@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "testcommon.h"
+#include "../testcommon.h"
 
 const char* SPAREPORTSTART = "20000" ;
 const char* SPAREPORTSTOP = "30000" ;

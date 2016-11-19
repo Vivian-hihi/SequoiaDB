@@ -10,7 +10,7 @@
 #include <string.h>
 #include "jstobs.h"
 #include "client.h"
-#include "testcommon.h"
+#include "../testcommon.h"
 
 char CSNAME[] = "c_driver_test";
 char CLNAME[] = "numberLong";

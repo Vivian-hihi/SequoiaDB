@@ -27,21 +27,21 @@ testCommonFiles = [
 
 clientStaticLibFile = join( client_lib_dir, 'libstaticsdbc.a' )
 
-testFiles1 = [ "decimal.cpp" ]
+testFiles1 = [ "./misc/decimal.cpp" ]
 
-testFiles2 = [ "numberLong.cpp" ]
+testFiles2 = [ "./misc/numberLong.cpp" ]
       
-testFiles3 = [ "trunOncache.cpp" ]
+testFiles3 = [ "./misc/trunOncache.cpp" ]
 
-testFiles4 = [ "restAbnormal.cpp" ]
+testFiles4 = [ "./misc/restAbnormal.cpp" ]
 
-testFiles5 = [ "procedure.cpp" ]
+testFiles5 = [ "./misc/procedure.cpp" ]
 
-testFiles6 = [ "socketMutex.cpp" ] 
+testFiles6 = [ "./misc/socketMutex.cpp" ] 
 
-testFiles7 = [ "index.cpp" ]
+testFiles7 = [ "./misc/index.cpp" ]
 
-testFiles8 = [ "dropCsAndWriteLob.cpp" ]
+testFiles8 = [ "./misc/dropCsAndWriteLob.cpp" ]
 
 testFiles9 = [ "./concurrent/concurrentCs.cpp" ]
 

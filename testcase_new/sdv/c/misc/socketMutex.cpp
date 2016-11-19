@@ -6,7 +6,7 @@
 *****************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
-#include "impWorker.hpp"
+#include "../impWorker.hpp"
 
 #define ThreadNum 10
 

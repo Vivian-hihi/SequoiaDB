@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <gtest/gtest.h>
 #include "client.h"
-#include "testcommon.h"
+#include "../testcommon.h"
 
 char CSNAME[] = "c_driver_test";
 char CLNAME[] = "decimal";

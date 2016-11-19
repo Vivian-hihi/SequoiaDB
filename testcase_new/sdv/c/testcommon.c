@@ -72,3 +72,36 @@ BOOLEAN isStandalone( sdbConnectionHandle db )
    sdbReleaseCursor(cursor) ;
    return isStdalone;
 }
+
+void getConf()
+{
+    FILE *fp ;
+    fp = fopen(file,"rt") ;
+    if(fp == NULL)
+        printf("Cannot open file driver.conf") ;
+    char str[100] ;
+    char temp[10] ;
+    while( fscanf(fp,"%s",str) != EOF )
+    {
+        if(strcmp(str,"HOSTNAME") == 0)
+        {
+            fscanf(fp,"%s%s",temp,HOSTNAME) ;
+            continue ;
+        }
+        if(strcmp(str,"SVCNAME") == 0)
+        {
+            fscanf(fp,"%s%s",temp,SVCNAME) ;
+            continue ;
+        }
+        if(strcmp(str,"CHANGEDPREFIX") == 0)
+        {
+            fscanf(fp,"%s%s",temp,CHANGEDPREFIX) ;
+            continue ;
+        }
+
+    }
+    fclose(fp) ;
+    printf("HostName: %s\n",HOSTNAME) ;
+    printf("SvcName: %s\n",SVCNAME) ;
+    printf("CHANGEDPREFIX: %s\n",CHANGEDPREFIX) ;
+}

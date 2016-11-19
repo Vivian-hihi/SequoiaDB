@@ -8,10 +8,16 @@
 #define PASSWD                "" 
 #define RESTPORT               11814
 
+char HOSTNAME[100] ;
+char SVCNAME[100] ;
+char CHANGEDPREFIX[100] ;
+char *file = "driver.conf" ;
+
 SDB_EXTERN_C_START
 
 INT32 createCollection ( sdbConnectionHandle *cl, CHAR *csName, CHAR *clName );
 BOOLEAN isStandalone( sdbConnectionHandle db );
+void getConf() ;
 
 SDB_EXTERN_C_END
 
