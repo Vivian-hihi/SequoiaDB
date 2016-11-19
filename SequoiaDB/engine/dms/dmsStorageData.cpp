@@ -555,7 +555,7 @@ namespace engine
                _dmsMME->_mbList[i]._lastCompressRatio =
                   _mbStatInfo[i]._lastCompressRatio ;
             }
-            if ( _dmsMME->_mbList[i]._totalDataLen != 
+            if ( _dmsMME->_mbList[i]._totalDataLen !=
                  _mbStatInfo[i]._totalDataLen )
             {
                _dmsMME->_mbList[i]._totalDataLen =
@@ -1222,7 +1222,7 @@ namespace engine
 
       /*
       * Not to write the extent, so perfermance will improved
-      * 
+      *
       extAddr->_flag = DMS_EXTENT_FLAG_FREED ;
       // change logical id
       extAddr->_logicID = DMS_INVALID_EXTENT ;
@@ -3784,7 +3784,6 @@ namespace engine
 
       try
       {
-#ifdef _DEBUG
          if ( !dmsAccessAndFlagCompatiblity ( context->mb()->_flag,
                                               DMS_ACCESS_TYPE_FETCH ) )
          {
@@ -3805,7 +3804,6 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-#endif // _DEBUG
 
          pRecord = recordRW.readPtr() ;
 
@@ -3879,7 +3877,7 @@ namespace engine
                                     EXCLUSIVE ) ;
       utilDictHandle dictAddr =
          _compressorEntry[ context->mbID() ].getDictionary() ;
-      
+
       if ( UTIL_INVALID_DICT != dictAddr )
       {
          endFixedAddr( (const ossValuePtr)dictAddr -
