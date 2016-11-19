@@ -8,10 +8,9 @@
 #define PASSWD                "" 
 #define RESTPORT               11814
 
-char HOSTNAME[100] ;
-char SVCNAME[100] ;
-char CHANGEDPREFIX[100] ;
-char *confFile = "driver.conf" ;
+extern char HOSTNAME[100] ;
+extern char SVCNAME[100] ;
+extern char CHANGEDPREFIX[100] ;
 
 SDB_EXTERN_C_START
 

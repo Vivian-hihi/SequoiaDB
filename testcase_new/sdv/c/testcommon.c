@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include "testcommon.h"
 
+char HOSTNAME[100] ;
+char SVCNAME[100] ;
+char CHANGEDPREFIX[100] ;
+char* confFile = "driver.conf" ;
+
 INT32 createCollection( sdbCollectionHandle *cl,
                         CHAR *csName,
                         CHAR *clName )
