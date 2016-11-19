@@ -76,7 +76,7 @@ BOOLEAN isStandalone( sdbConnectionHandle db )
 void getConf()
 {
     FILE *fp ;
-    fp = fopen(file,"rt") ;
+    fp = fopen(confFile,"rt") ;
     if(fp == NULL)
         printf("Cannot open file driver.conf") ;
     char str[100] ;

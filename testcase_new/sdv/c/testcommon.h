@@ -11,7 +11,7 @@
 char HOSTNAME[100] ;
 char SVCNAME[100] ;
 char CHANGEDPREFIX[100] ;
-char *file = "driver.conf" ;
+char *confFile = "driver.conf" ;
 
 SDB_EXTERN_C_START
 
