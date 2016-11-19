@@ -364,7 +364,6 @@ if hasAll:
       hasFap = False
    else:
       hasFap = True
-   hasDoc = True
 # if nothing specified, let's use engine+client+shell by default
 elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp or hasFap or hasDoc or hasWebSite or hasChm or hasDoxygen ):
    hasEngine = True
