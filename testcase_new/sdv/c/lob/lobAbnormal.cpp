@@ -39,12 +39,12 @@ TEST( lobAbnormalTest, NotExistLob )
    ASSERT_EQ( SDB_FNE, rc ) << "fail to test read not exist lob" ;
    
    // get not exist lob size
-   int size ;
+   SINT64 size ;
    rc = sdbGetLobSize( lob, &size ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test get not exist lob size" ;
    
    // get not exist lob create time
-   int mills ;
+   UINT64 mills ;
    rc = sdbGetLobCreateTime( lob, &mills ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test get not exist lob create time" ;
    
@@ -109,7 +109,7 @@ TEST( lobAbnormalTest, NotClosedLob )
    ASSERT_EQ( SDB_LOB_IS_NOT_AVAILABLE, rc ) << "fail to test remove lob when lob is not closed" ;
    
    // close lob
-   rc = sdbCloseLob( lob ) ;
+   rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob in the end" ;
    
    // free buffer
@@ -154,13 +154,13 @@ TEST( lobAbnormalTest, WriteLobWithReadMode )
    // write lob with read mode
    bson_oid_t oid ;
    bson_oid_gen( &oid ) ;
-   rc = sdbOpenLob( cl, &oid1, SDB_LOB_READ, &lob ) ;
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with read mode" ;
    rc = sdbWriteLob( lob, lobWriteBuffer, lobSize ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test write lob with read mode" ;
    
    // close lob
-   rc = sdbCloseLob( lob ) ;
+   rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to close lob in the end" ;
    
    // free buffer
