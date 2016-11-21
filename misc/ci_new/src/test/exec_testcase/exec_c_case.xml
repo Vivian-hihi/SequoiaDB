@@ -51,11 +51,11 @@
       <attribute name="dbdir"/>
       <attribute name="casefullname" />   
       <attribute name="report" />
-      <sequential>  
+      <sequential>
+         <var name="begin_time" unset="true"/>
          <tstamp>
             <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>
-         <stopwatch name="total_time"/>
 
          <var name="cmd" value="--gtest_filter=* --gtest_output=xml:@{report}"/>   
          <echo message="${line.separator}exec cmd: @{casefullname} ${cmd}"/>
@@ -72,14 +72,14 @@
             <arg line="${cmd}"/>
             <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:@{dbdir}/lib" />
          </exec>
-              
+            
+         <var name="end_time" unset="true"/>
          <tstamp>
             <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>
 
          <echo message="${screen_output}" />
          <echo message="begin at ${begin_time}, end at ${end_time}" />
-         <stopwatch name="total_time" action="total"/>
          
       </sequential>
    </macrodef>

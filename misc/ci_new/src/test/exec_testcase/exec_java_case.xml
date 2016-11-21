@@ -31,11 +31,11 @@
    <macrodef name="exectestng">
       <attribute name="reportdir"/>
       <attribute name="casedir" />
-      <sequential>      
+      <sequential>
+         <var name="begin_time" unset="true"/>
          <tstamp>
             <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>
-         <stopwatch name="total_time"/>
          
          <property name="tmp_report_dir" value="@{casedir}/output" />
          <mkdir dir="${tmp_report_dir}"/>
@@ -48,12 +48,12 @@
          <testng outputDir="${tmp_report_dir}" classpathref="calsspath.test">
             <xmlfileset dir="@{casedir}" includes="testng.xml"/>        
          </testng>
-              
+         
+         <var name="end_time" unset="true"/>
          <tstamp>
             <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>       
          <echo message="begin at ${begin_time}, end at ${end_time}" />
-         <stopwatch name="total_time" action="total"/>            
          
          <copy todir="@{reportdir}">
             <fileset dir="${tmp_report_dir}/junitreports"/>

@@ -131,6 +131,7 @@
          <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';&quot;" />
          <echo message="exec cmd: @{sdbshell} ${cmd1} ${cmd2}"/>      
          
+         <var name="begin_time" unset="true"/>
          <tstamp>
             <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>       
@@ -147,13 +148,14 @@
             <arg line="${cmd1} ${cmd2}" />
          </exec>
          
+         <var name="end_time" unset="true"/>
          <tstamp>
             <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>
                  
          <echo message="${screen_output}" />
          <echo message="the result code is ${rc}, begin at ${begin_time}, end at ${end_time}" />
-         <stopwatch name="testcase_time" action="total"/>
+         <stopwatch name="total_time" action="total"/>
          
          <!--report-->
          <hostinfo prefix="host" />

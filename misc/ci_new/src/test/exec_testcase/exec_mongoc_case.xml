@@ -22,8 +22,15 @@
       <chmod dir="${testcase_dir}" perm="u+x" includes="*" />
       <var name="testcase_name" value="test-mongo"/>
       
+      <!--before excute-->
       <markinlog casename ="${testcase_dir}/${testcase_name}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
+      <var name="begin_time" unset="true"/>
+      <tstamp>
+         <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+      </tstamp>
+      <stopwatch name="total_time"/>
       
+      <!--excute-->      
       <hostinfo prefix="host" />
       <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}.xml"/>
       
@@ -38,11 +45,19 @@
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${INSTALL_DIR}/lib" />       
          <env key="MONGOC_TEST_HOST" value="localhost:11817" />
       </exec>
+   
+      <!--after excute-->
+      <markinlog casename ="${testcase_dir}/test-mongo" marktype="end" sdbshell="${sdbshell_fullname}"/>
+      <var name="end_time" unset="true"/>
+      <tstamp>
+         <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+      </tstamp>
+
+      <echo message="${screen_output}" />
+      <echo message="begin at ${begin_time}, end at ${end_time}" />
+      <stopwatch name="total_time" action="total"/>
 
       <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}" />
-      
-      <markinlog casename ="${testcase_dir}/test-mongo" marktype="end" sdbshell="${sdbshell_fullname}"/>
-        
    </target>
     
    <macrodef name="modifyreport">

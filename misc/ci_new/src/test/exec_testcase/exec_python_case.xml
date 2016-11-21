@@ -76,7 +76,8 @@
       <attribute name="report" />
       <attribute name="casename" />   
       <attribute name="suitname" />
-      <sequential>  
+      <sequential>
+         <var name="begin_time" unset="true"/>
          <tstamp>
             <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>
@@ -96,7 +97,8 @@
                failonerror="false" >
             <arg line="${cmd}"/>
          </exec>
-              
+ 
+         <var name="end_time" unset="true"/> 
          <tstamp>
             <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>

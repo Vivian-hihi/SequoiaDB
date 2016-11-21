@@ -62,11 +62,11 @@
       <attribute name="suitfullname" />
       <attribute name="prefix" />
       <attribute name="report" />
-      <sequential>  
+      <sequential> 
+         <var name="begin_time" unset="true"/>
          <tstamp>
             <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>       
-         <stopwatch name="total_time"/>
 
          <var name="phpbin" value="@{dbdir}/tools/server/php/bin/php-bin"/>
          <var name="phpunit" value="@{suitfullname}/../tools/phpunit.phar"/>
@@ -83,13 +83,13 @@
             <arg line="${cmd}"/>
          </exec>
               
+         <var name="end_time" unset="true"/>
          <tstamp>
             <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>
 
          <echo message="${screen_output}" />
          <echo message="begin at ${begin_time}, end at ${end_time}" />
-         <stopwatch name="total_time" action="total"/>     
       </sequential>
    </macrodef>
 
