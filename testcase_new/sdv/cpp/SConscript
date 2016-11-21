@@ -13,30 +13,30 @@ gtestMainFile = [
       ]
 
 testCommonFiles = [
-        "testcommon.cpp","DS_impWorker.cpp","DS_thread.cpp"
+        "testcommon.cpp","impWorker.cpp","./datasource/DS_thread.cpp"
       ]
 
-testFiles1 = [ "decimal.cpp" ]
+testFiles1 = [ "./misc/decimal.cpp" ]
 
-testFiles2 = [ "numberLong.cpp" ]
+testFiles2 = [ "./misc/numberLong.cpp" ]
 
-testFiles3 = [ "trunOncache.cpp" ]
+testFiles3 = [ "./misc/trunOncache.cpp" ]
 
-testFiles4 = [ "time.cpp" ] 
+testFiles4 = [ "./misc/time.cpp" ] 
 
-testFiles5 = [ "DS_InvalidArgTest.cpp" ]
+testFiles5 = [ "./datasource/DS_InvalidArgTest.cpp" ]
 
-testFiles6 = [ "DS_InvalidConnTest.cpp" ]
+testFiles6 = [ "./datasource/DS_InvalidConnTest.cpp" ]
 
-testFiles7 = [ "DS_ConnTest.cpp" ]
+testFiles7 = [ "./datasource/DS_ConnTest.cpp" ]
 
-testFiles8 = [ "DS_ThreadTest.cpp" ]
+testFiles8 = [ "./datasource/DS_ThreadTest.cpp" ]
 
-testFiles9 = [ "DS_ChecktimeTest.cpp" ]
+testFiles9 = [ "./datasource/DS_ChecktimeTest.cpp" ]
 
-testFiles10 = [ "DS_ClTest.cpp" ]
+testFiles10 = [ "./datasource/DS_ClTest.cpp" ]
 
-testFiles11 = [ "DS_InvalidUsrTest.cpp" ]
+testFiles11 = [ "./datasource/DS_InvalidUsrTest.cpp" ]
 
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)

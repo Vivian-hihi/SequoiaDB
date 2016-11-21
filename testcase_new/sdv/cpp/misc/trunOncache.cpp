@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "client.hpp"
 #include <sys/time.h>
-#include "testcommon.hpp"
+#include "../testcommon.hpp"
 
 using namespace std ;
 using namespace sdbclient ;

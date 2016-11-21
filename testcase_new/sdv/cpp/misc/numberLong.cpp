@@ -10,7 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include "client.hpp"
-#include "testcommon.hpp"
+#include "../testcommon.hpp"
 
 using namespace std;
 using namespace sdbclient;

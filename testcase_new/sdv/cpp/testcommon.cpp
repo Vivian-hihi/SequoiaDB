@@ -5,10 +5,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <gtest/gtest.h>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace sdbclient;
 using namespace bson;
+
+string HOSTNAME ;
+string SVCNAME ;
+string CHANGEDPREFIX ;
+string confFile = "driver.conf" ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName )
 {
@@ -40,4 +47,39 @@ void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName )
       rc = cs.createCollection( clName, *cl );
    }
    ASSERT_EQ( SDB_OK, rc );
+}
+
+void getConf()
+{
+   ifstream ifs("driver.conf") ;
+   if( !ifs.is_open() )
+   {
+      cout<<"Error open file driver.conf!!"<<endl ;
+      return -1 ;
+   }
+   string line ;
+   while( getline(ifs,line) )
+   {
+      istringstream is(line) ;
+      string str ;
+      is>>str ;
+      if(str == "HOSTNAME")
+      {
+         is>>str>>HOSTNAME ;
+         continue ;
+      }
+      if(str == "SVCNAME")
+      {
+         is>>str>>SVCNAME ;
+         continue ;
+      }
+      if(str == "CHANGEDPREFIX")
+      {
+         is>>str>>CHANGEDPREFIX ;
+         continue ;
+      }
+   }
+   cout<<"HostName: "<<HOSTNAME<<endl ;
+   cout<<"SvcName: "<<SVCNAME<<endl ;
+   cout<<"CHANGEDPREFIX: "<<CHANGEDPREFIX<<endl ;
 }

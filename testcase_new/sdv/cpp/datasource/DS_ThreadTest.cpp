@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <sdbDataSource.hpp>
 #include <iostream>
-#include "DS_impWorker.hpp"
+#include "../impWorker.hpp"
 #include "DS_thread.hpp"
 
 // 定义线程数量

@@ -9,7 +9,11 @@ using namespace sdbclient ;
 #define SERVER                "11810" 
 #define CSNAME                "story_cpp_test_cs" 
 
+extern string HSOTAME ;
+extern string SVCNAME ;
+extern string CHANGEDPREFIX ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName );
+void getConf() ;
 
 #endif
