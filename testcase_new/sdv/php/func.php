@@ -8,24 +8,46 @@ class BaseOperator
    protected $groupNames = array();
    
    //coord param
-   protected $COORDHOSTNAME;
-   protected $COORDSVCNAME;
+   protected $COORDHOSTNAME;  //random value from CI.
+   protected $COORDSVCNAME;  //random value from CI.
    //group param
    protected $CATALOG_GROUPNAME;
    protected $COORD_GROUPNAME;
    protected $SPARE_GROUPNAME;
    //metadata param
    public $CHANGEDPREFIX;   //random value from CI.
-   public $COMMDOMAINNAME;  //doamin name
+   public $COMMDOMAINNAME;  
    public $COMMCSNAME;
    public $COMMCLNAME;
    
    protected function init()
    {  
-      if ( !isset($this -> COORDHOSTNAME)  && empty($this -> COORDHOSTNAME) ) { $this -> COORDHOSTNAME = 'localhost'; }
-      if ( !isset($this -> COORDSVCNAME)   && empty($this -> COORDSVCNAME) )  { $this -> COORDSVCNAME = '11810'; }
-      if ( !isset($this -> CHANGEDPREFIX)  && empty($this -> CHANGEDPREFIX) ) { $this -> CHANGEDPREFIX = "local_test"; }
-      if ( !isset($this -> ignoreNotExist) && empty($this -> ignoreNotExist) ){ $this -> ignoreNotExist = false; }
+      //hostname
+      if ( !isset( $_POST['HOSTNAME'] ) && empty( $_POST['HOSTNAME'] ) ) 
+      { 
+         $this -> COORDHOSTNAME = 'localhost'; 
+      }
+      $this -> COORDHOSTNAME = $_POST['HOSTNAME'];
+      
+      //svcname
+      if ( !isset( $_POST['SVCNAME'] ) && empty( $_POST['SVCNAME'] ) )  
+      { 
+         $this -> COORDSVCNAME = '11810'; 
+      }
+      $this -> COORDSVCNAME = $_POST['SVCNAME'];
+      
+      //random string
+      if ( !isset( $_POST['CHANGEDPREFIX'] ) && empty( $this -> CHANGEDPREFIX ) ) 
+      { 
+         $this -> CHANGEDPREFIX = "php_test"; 
+      }
+      $this -> CHANGEDPREFIX = $_POST['CHANGEDPREFIX'];
+      
+      //ignoreNotExist
+      if ( !isset( $this -> ignoreNotExist ) && empty( $this -> ignoreNotExist ) )
+      { 
+         $this -> ignoreNotExist = false; 
+      }
       
       $this -> COMMDOMAINNAME = $this -> CHANGEDPREFIX ."_domain";
       $this -> COMMCSNAME = $this -> CHANGEDPREFIX ."_cs";
