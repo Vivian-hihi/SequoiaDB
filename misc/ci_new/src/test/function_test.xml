@@ -47,7 +47,7 @@
          <isset property="TESTCASE_TYPE"/>
          <else>           
             <var name="TESTCASE_TYPE" value="tdd_c,tdd_cpp,tdd_java,tdd_php,tdd_python,tdd_mongoc,
-                                             story_ant,story_js,story_lob,
+                                             story_ant,story_js,
                                              sdv_c,sdv_cpp,sdv_java,sdv_php,sdv_js" />
          </else>
       </if>
@@ -102,9 +102,6 @@
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
             <case value="tdd_mongoc">
-               <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
-            </case>
-            <case value="story_lob">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
             <case value="sdv_c">
@@ -329,9 +326,6 @@
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
                      </case>
                      <case value="sdv_cpp">
-                        <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
-                     </case>
-                     <case value="story_lob">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
                      </case>
                      
