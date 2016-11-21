@@ -49,7 +49,11 @@ testFiles10 = [ "./concurrent/concurrentCl.cpp" ]
 
 testFiles11 = [ "./concurrent/concurrentLob.cpp" ]
 
-testFiles12 = [ "./concurrent/concurrentCursor.cpp" ] 
+testFiles12 = [ "./concurrent/concurrentCursor.cpp" ]
+
+testFiles13 = [ "./lob/lobNormal.cpp" ]
+
+testFiles14 = [ "./lob/lobAbnormal.cpp" ] 
 
 
 # compile common lib
@@ -72,7 +76,9 @@ dropCsAndWriteLob = dllBuildEnv.Program("dropCsAndWriteLob",  [testFiles8, testC
 concurrentCs   = dllBuildEnv.Program("concurrentCs",  [testFiles9, testCommon, gtestMainObj])
 concurrentCl   = dllBuildEnv.Program("concurrentCl",  [testFiles10, testCommon, gtestMainObj])
 concurrentLob     = dllBuildEnv.Program("concurrentLob",  [testFiles11, testCommon, gtestMainObj])
-concurrentCursor     = dllBuildEnv.Program("concurrentCursor",  [testFiles12, testCommon, gtestMainObj])
+concurrentCursor  = dllBuildEnv.Program("concurrentCursor",  [testFiles12, testCommon, gtestMainObj])
+lobNormal      = dllBuildEnv.Program("lobNormal",  [testFiles13, testCommon, gtestMainObj])
+lobAbnormal    = dllBuildEnv.Program("lobAbnormal",  [testFiles14, testCommon, gtestMainObj])
 
 # static compile
 
@@ -88,6 +94,8 @@ concurrentCs.static  = staticBuildEnv.Program("concurrentCs.static",    [testFil
 concurrentCl.static  = staticBuildEnv.Program("concurrentCl.static",    [testFiles10, testCommon, gtestMainObj])
 concurrentLob.static     = staticBuildEnv.Program("concurrentLob.static",    [testFiles11, testCommon, gtestMainObj])
 concurrentCursor.static  = staticBuildEnv.Program("concurrentCursor.static",    [testFiles12, testCommon, gtestMainObj])
+lobNormal.static         = staticBuildEnv.Program("lobNormal.static",  [testFiles13, testCommon, gtestMainObj])
+lobAbnormal.static       = staticBuildEnv.Program("lobAbnormal.static",  [testFiles14, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -102,6 +110,8 @@ env.Install( '#/build_test', [   decimal,
 							 	 concurrentCl,
 								 concurrentLob,
 								 concurrentCursor,
+								 lobNormal,
+								 lobAbnormal
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -116,5 +126,7 @@ env.Install( '#/build_test', [   decimal.static,
 								 concurrentCl.static,
 								 concurrentLob.static,
 								 concurrentCursor.static,
+								 lobNormal.static,
+								 lobAbnormal.static
                               ] )
 
