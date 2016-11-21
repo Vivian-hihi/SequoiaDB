@@ -1,0 +1,62 @@
+<!-- ============================================================================
+@description:  execute mongoc testcase
+@parameter:    testcase_dir
+               report_dir
+               TESTCASE_TYPE
+@author:       Ting YU 2016-12-21
+============================================================================= -->
+
+<project default="exec_testcase" basedir="../../../">     
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
+   <import file="${basedir}/src/test/exec_testcase/common.xml" />
+   
+   <target name="exec_testcase">
+      <property file="${basedir}/src/conf/test.conf" />
+      <property name="sdbshell_fullname" value="${INSTALL_DIR}/bin/sdb" /> 
+      
+      <mkdir dir="${report_dir}"/>
+      <chmod dir="${testcase_dir}" perm="u+x" includes="*" />
+      <var name="testcase_name" value="test-mongo"/>
+      
+      <markinlog casename ="${testcase_dir}/${testcase_name}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
+      
+      <hostinfo prefix="host" />
+      <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}.xml"/>
+      
+      <echo>exec cmd: ${testcase_dir}/test-mongo -f -F ${report_fullname}</echo>
+      <exec executable="./test-mongo" 
+            dir="${testcase_dir}" 
+            timeout="1200000" 
+            outputproperty="screen_output" 
+            resultproperty="rc" 
+            failonerror="false">
+         <arg line=" -f -F ${report_fullname}" />
+         <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${INSTALL_DIR}/lib" />       
+         <env key="MONGOC_TEST_HOST" value="localhost:11817" />
+      </exec>
+
+      <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}" />
+      
+      <markinlog casename ="${testcase_dir}/test-mongo" marktype="end" sdbshell="${sdbshell_fullname}"/>
+        
+   </target>
+    
+   <macrodef name="modifyreport">
+      <attribute name="report"/>
+      <attribute name="layer" />
+      <sequential>                
+         <replaceregexp file="@{report}"
+                        match='classname="(.*)"' 
+                        replace='classname="@{layer}"' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8"> 
+         </replaceregexp>
+      </sequential>
+   </macrodef>
+   
+</project>
