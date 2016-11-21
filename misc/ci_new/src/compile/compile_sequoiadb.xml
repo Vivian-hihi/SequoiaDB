@@ -10,7 +10,7 @@
       <property name="release_dir" location="${WORKSPACE}/release" />    
       <property name="java_driver_jar" value="sequoiadb.jar" />             
 
-      <antcallback target="check_parameter" return="cmd_debug, cmd_etp, SPARK_VERSION"/>
+      <antcallback target="check_parameter" return="cmd_debug, cmd_etp, SPARK_VERSION, BIN_PACKAGE"/>
       
       <delete dir="${release_dir}" failonerror="false"/>
       <mkdir dir="${release_dir}"/>
@@ -30,7 +30,7 @@
       <antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
-    
+      <antcall target="build_bin_package"/>
    </target>
 
    <target name="check_parameter">  
@@ -72,6 +72,13 @@
             <var name="SPARK_VERSION" value="1.6.1" />
          </else>
       </if>
+	  
+	  <if>
+         <isset property="BIN_PACKAGE"/>
+         <else>           
+            <var name="BIN_PACKAGE" value="false" />
+         </else>
+      </if> 
    </target>
        
    <target name="compile_src">
@@ -438,6 +445,25 @@
       </exec>
            
    </target>   
+   
+   <target name="build_bin_package"> 
+      <if>
+        <equals arg1="${IS_ENTERPRISE}" arg2="true" />
+        <then>
+           <property name="enterprise_str" value="-enterprise" />
+        </then>
+        <else>          
+           <property name="enterprise_str" value="" />
+        </else>
+      </if>
+      <if>
+         <equals arg1="${BIN_PACKAGE}" arg2="true" />
+         <then>
+		   <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-bin.tar.gz" compression="gzip" 
+		        basedir="${release_dir}/sequoiadb/" includes="bin/**" />
+         </then>
+      </if>  
+   </target>
    
    <macrodef name="dbversion">
       <attribute name="srccodedir"/>
