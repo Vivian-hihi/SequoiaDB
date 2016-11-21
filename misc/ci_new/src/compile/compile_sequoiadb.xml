@@ -25,7 +25,7 @@
       <antcall target="compile_pg_connector"/>
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
-      <antcall target="compile_spark_connector"/>
+      <!--antcall target="compile_spark_connector"/-->
       <antcall target="compile_website"/>
       <antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
