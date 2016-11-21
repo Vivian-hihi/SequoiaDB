@@ -53,10 +53,8 @@ void getConf()
 {
    ifstream ifs("driver.conf") ;
    if( !ifs.is_open() )
-   {
       cout<<"Error open file driver.conf!!"<<endl ;
-      return -1 ;
-   }
+
    string line ;
    while( getline(ifs,line) )
    {

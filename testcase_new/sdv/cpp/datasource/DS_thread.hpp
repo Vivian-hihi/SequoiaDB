@@ -1,7 +1,7 @@
 #ifndef DS_THREAD_HPP
 #define DS_THRAED_HPP
 
-#include "DS_impWorker.hpp"
+#include "../impWorker.hpp"
 #include <sdbDataSource.hpp>
 #include <gtest/gtest.h>
 #include <vector>
