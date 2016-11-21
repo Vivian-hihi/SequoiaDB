@@ -16,5 +16,9 @@
 OutOfMemory  Permgen space
 说明分配的Permgen space内存空间不足
 
-3、kill -9 jenkins进程，重启nohup java -jar jenkins_2.7.4.war -X:MaxPermSize=512m &
-                                                                                                                                                                                        
+3、查看top，进程占用的内存为654MB
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                                             
+22388 root      20   0 1539m 654m  24m S    1 17.1  19:43.78 java 
+
+4、kill -9 jenkins进程，重启nohup java -jar jenkins_2.7.4.war -X:MaxPermSize=1024m &
+
