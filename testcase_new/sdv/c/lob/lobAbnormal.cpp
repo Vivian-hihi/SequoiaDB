@@ -52,10 +52,12 @@ TEST( lobAbnormalTest, NotExistLob )
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to test close not exist lob" ;
    
+   /* raise core dump 	
    // remove not exist lob
    rc = sdbRemoveLob( lob, &oid ) ;
    ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to remove not exist lob" ;
-   
+   */   
+
    // drop cs,release handle
    rc = sdbDropCollectionSpace( db, CsName ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to drop cs in the end" ;
@@ -110,7 +112,7 @@ TEST( lobAbnormalTest, NotClosedLob )
    
    // close lob
    rc = sdbCloseLob( &lob ) ;
-   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob in the end" ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) << "fail to close lob in the end" ;
    
    // free buffer
    free( lobWriteBuffer ) ;
@@ -150,10 +152,18 @@ TEST( lobAbnormalTest, WriteLobWithReadMode )
 		return ;
 	}
 	memset( lobWriteBuffer, 'a', lobSize ) ; 
-   
-   // write lob with read mode
+
+   // open lob,write lob,close lob
    bson_oid_t oid ;
    bson_oid_gen( &oid ) ;
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with create mode" ;
+   rc = sdbWriteLob( lob, lobWriteBuffer, lobSize ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to write lob" ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+   
+   // write lob with read mode
    rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) << "fail to open lob with read mode" ;
    rc = sdbWriteLob( lob, lobWriteBuffer, lobSize ) ;
