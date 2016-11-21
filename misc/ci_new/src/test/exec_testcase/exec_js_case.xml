@@ -135,7 +135,7 @@
          <tstamp>
             <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>       
-         <stopwatch name="testcase_time"/>
+         <stopwatch name="total_time"/>
 
          <var name="screen_output" unset="true"/>
          <var name="rc" unset="true"/>
