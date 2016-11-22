@@ -1,4 +1,5 @@
 <?php 
+include_once './global.php';
 
 class BaseOperator
 {  
@@ -23,25 +24,13 @@ class BaseOperator
    protected function init()
    {  
       //hostname
-      if ( !isset( $_POST['HOSTNAME'] ) && empty( $_POST['HOSTNAME'] ) ) 
-      { 
-         $this -> COORDHOSTNAME = 'localhost'; 
-      }
-      $this -> COORDHOSTNAME = $_POST['HOSTNAME'];
+      $this -> COORDHOSTNAME = globalParameter::getHostName();
       
       //svcname
-      if ( !isset( $_POST['SVCNAME'] ) && empty( $_POST['SVCNAME'] ) )  
-      { 
-         $this -> COORDSVCNAME = '11810'; 
-      }
-      $this -> COORDSVCNAME = $_POST['SVCNAME'];
+      $this -> COORDSVCNAME = globalParameter::getCoordPort();
       
       //random string
-      if ( !isset( $_POST['CHANGEDPREFIX'] ) && empty( $this -> CHANGEDPREFIX ) ) 
-      { 
-         $this -> CHANGEDPREFIX = "php_test"; 
-      }
-      $this -> CHANGEDPREFIX = $_POST['CHANGEDPREFIX'];
+      $this -> CHANGEDPREFIX = globalParameter::getChangedPrefix();
       
       //ignoreNotExist
       if ( !isset( $this -> ignoreNotExist ) && empty( $this -> ignoreNotExist ) )
