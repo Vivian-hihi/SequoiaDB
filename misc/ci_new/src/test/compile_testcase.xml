@@ -47,6 +47,25 @@
       </sequential>
    </macrodef>
    
+   <macrodef name="compilemongocccase">
+      <attribute name="srcdir"/>
+      <attribute name="dbdir"/>
+      <sequential>         
+         <property name="scons_cmd" value="--dd " />         
+         <echo message="exec cmd: scons ${scons_cmd}"/>
+         <echo message="exec dir: @{srcdir}"/>
+         <exec executable="scons" dir="@{srcdir}" failonerror="true">
+            <arg line="${scons_cmd}" />
+         </exec>
+         <delete includeemptydirs="true" failonerror="true">
+            <fileset dir="@{srcdir}" includes="**/*" excludes="build_test/**/*,lib/**/*,testcase.conf"/>
+         </delete>
+         <move todir="@{srcdir}">
+            <fileset dir="@{srcdir}/build_test" />
+         </move>
+      </sequential>
+   </macrodef>   
+   
    <macrodef name="compilecase">
       <attribute name="srcdir"/>
       <attribute name="dbdir"/>
@@ -61,6 +80,9 @@
             </case>
             <case value="cpp">
                <compileccase srcdir="@{srcdir}" dbdir="@{dbdir}"/>
+            </case>
+            <case value="mongoc">
+               <compilemongoccase srcdir="@{srcdir}" dbdir="@{dbdir}"/>
             </case>
             <default/>
          </switch>        
