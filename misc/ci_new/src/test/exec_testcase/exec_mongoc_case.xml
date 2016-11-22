@@ -36,6 +36,7 @@
       <echo>export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${testcase_dir}/lib</echo>
       <echo>export MONGOC_TEST_HOST=localhost:11817</echo>
       <echo>exec cmd: ${testcase_dir}/test-mongo -f -F ${report_fullname}</echo>
+      <var name="screen_output" unset="true"/>
       <exec executable="./test-mongo" 
             dir="${testcase_dir}" 
             timeout="1200000" 
@@ -46,15 +47,14 @@
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${testcase_dir}/lib" />       
          <env key="MONGOC_TEST_HOST" value="localhost:11817" />
       </exec>
-   
+      <echo message="${screen_output}" />
+
       <!--after excute-->
       <markinlog casename ="${testcase_dir}/test-mongo" marktype="end" sdbshell="${sdbshell_fullname}"/>
       <var name="end_time" unset="true"/>
       <tstamp>
          <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
-      
-      <echo message="screen_output: ${screen_output}" />
       <echo message="begin at ${begin_time}, end at ${end_time}" />
       
       <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}" />

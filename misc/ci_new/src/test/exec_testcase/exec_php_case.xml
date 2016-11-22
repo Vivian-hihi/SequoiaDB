@@ -92,7 +92,8 @@
          <var name="cmd" value="${phpunit} ${conf_cmd} --log-junit @{report} @{suitfullname}"/>
          <echo message="exec cmd: ${phpbin} ${cmd}"/>
          
-         <var name="screen_output" unset="true"/>         
+         <var name="screen_output" unset="true"/> 
+         <var name="rc" unset="true"/> 
          <exec executable="${phpbin}" 
                dir="@{suitfullname}" 
                timeout="1800000" 
@@ -101,13 +102,12 @@
                failonerror="false" >
             <arg line="${cmd}"/>
          </exec>
+         <echo message="${screen_output}" />
               
          <var name="end_time" unset="true"/>
          <tstamp>
             <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>
-
-         <echo message="${screen_output}" />
          <echo message="begin at ${begin_time}, end at ${end_time}" />
       </sequential>
    </macrodef>
