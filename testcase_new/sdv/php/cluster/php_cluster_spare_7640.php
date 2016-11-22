@@ -17,7 +17,14 @@ class spareRGTest extends PHPUnit_Framework_TestCase
    {
       echo "enter setUpBeforeClass\n";
       self::$db = new Sequoiadb();
-      $err = self::$db->connect( "192.168.30.62:11800" );
+      $err = self::$db -> connect(globalParameter::getHostName(), 
+                                  globalParameter::getCoordPort()) ;
+      if ( $err['errno'] != 0 )
+      {
+         echo "Failed to connect database, error code: ".$err['errno'] ;
+         self::$skipTestCase = true ;
+         return;
+      } 
       self::$db->setSessionAttr(array('PreferedInstance' => 'm' )) ; 
       self::$group = new ReplicaGroup(self::$db, "SYSSpare");
       echo "leave setUpBeforeClass\n";

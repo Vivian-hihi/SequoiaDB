@@ -13,7 +13,14 @@ class cataLogGroupTest extends PHPUnit_Framework_TestCase
    public function setUp()
    {
       $this->db = new Sequoiadb();
-      $err = $this->db->connect( "192.168.30.62:11800" );
+      $err = self::$db -> connect(globalParameter::getHostName(), 
+                                  globalParameter::getCoordPort()) ;
+      if ( $err['errno'] != 0 )
+      {
+         echo "Failed to connect database, error code: ".$err['errno'] ;
+         self::$skipTestCase = true ;
+         return;
+      } 
       $this->assertEquals( 0, $err['errno'] ) ;
    }
    

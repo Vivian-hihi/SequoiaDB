@@ -7,6 +7,7 @@
 <?php
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/lib/ReplicaGroup.php';
+include_once Cur_Path.'../global.php';
 class dataGroupTest extends PHPUnit_Framework_TestCase
 {
    private static $db;
@@ -15,7 +16,14 @@ class dataGroupTest extends PHPUnit_Framework_TestCase
    public static function setUpBeforeClass()
    {
       self::$db = new Sequoiadb();
-      $err = self::$db->connect( "r520-2:11800");
+      $err = self::$db -> connect(globalParameter::getHostName(), 
+                                  globalParameter::getCoordPort()) ;
+      if ( $err['errno'] != 0 )
+      {
+         echo "Failed to connect database, error code: ".$err['errno'] ;
+         self::$skipTestCase = true ;
+         return;
+      } 
       
       self::$catagroup=new ReplicaGroup(self::$db, "SYSCatalogGroup");
       $err = self::$catagroup->create('r520-2', '30000', '/opt/sequoiadb/database/catalog/30000');
