@@ -8,28 +8,34 @@
 class BackupTask
 {
    private $db;
-   public function __construct($db)
+   public function __construct( $db )
    {
-      $this->db = $db;
+      $this->db = $db ;
    }
    
-   public function backupOffline($options)
+   public function backupOffline( $options )
    {
-      $err = $this->db->backupOffline($options);
-      return $err['errno'];
+      $err = $this->db->backupOffline( $options ) ;
+      return $err['errno'] ;
    }
    
-   public function removeBackup($options)
+   public function removeBackup( $options )
    {
-      $err = $this->db->removeBackup($options);
-      return $err['errno'];
+      $err = $this->db->removeBackup( $options ) ;
+      return $err['errno'] ;
    }
    
-   public function listBackup($options)
+   public function listBackup( $options )
    {
-      $exist = false;
-      $cursor = $this->db->listBackup($options);
-      while($record = $cursor->next())
+      $exist = false ;
+      $cursor = $this->db->listBackup( $options ) ;
+      $err = $this->db->getError() ;
+      if ( $err['errno'] != 0 ) 
+      {
+         echo "Failed to call listBackup, error code: ".$err['errno'] ;
+         return $exist ;
+      }
+      while( $record = $cursor->next() )
       {
          $exist = true;
       }
