@@ -22,12 +22,12 @@ class taskTest extends PHPUnit_Framework_TestCase
     
     private static function loadData()
     {
-       $number = 10000000;
+       $number = 10000;
        $batchSize = 1000;
-       $docs = array();
        $id = 0;
        for ($i = 0; $i < $number; $i += $batchSize)
        {
+          $docs = array();
           for ($j = 0; $j < $batchSize ; $j++)
           {
              $doc = array();
@@ -36,10 +36,11 @@ class taskTest extends PHPUnit_Framework_TestCase
              $doc['b'] = 1;
              $doc['d'] = 'zzz';
              $id = $id + 1;
+             array_push($docs, $doc) ;
              //self::$cl->insert(doc);
           } 
           
-          $err = self::$cl->bulkInsert($docs) ;
+          $err = self::$cl->bulkInsert( $docs ) ;
           if( $err['errno'] != 0 ) {
             self::$skipTestCase === true ;
             echo "Failed to insert records, error code: ".$err['errno'] ;
@@ -51,30 +52,32 @@ class taskTest extends PHPUnit_Framework_TestCase
     private static function getSrcGroup($fullname)
     {
        $cursor = self::$db -> snapshot(SDB_SNAP_CATALOG, array('Name' => $fullname));
-       $err = $db -> getError() ;
+       $err = self::$db -> getError() ;
        if ($err['errno'] != 0)
        {
           self::$skipTestCase === true ;
           echo "Failed to call snapshot, error code: ".$err['errno'] ;
-          return;
+          return "" ;
        }
+
        while ($record = $cursor->next())
        {
-          return $record['CataInfo']['GroupName'];
+          var_dump( $record ) ;
+          return $record['CataInfo'][0]['GroupName'];
        }
        
-       return "";
+       return "" ;
     }
     
     private static function getDestGroup($groupname)
     {
         $cursor = self::$db->list(SDB_LIST_GROUPS);
-        $err = $db -> getError() ;
+        $err = self::$db -> getError() ;
         if ($err['errno'] != 0)
         {
           self::$skipTestCase === true ;
           echo "Failed to call snapshot, error code: ".$err['errno'] ;
-          return;
+          return "" ;
         }
         while ($record = $cursor->next())
         {
@@ -145,7 +148,7 @@ class taskTest extends PHPUnit_Framework_TestCase
        $err = self::$db -> getError() ;
        if( $err['errno'] != 0 ) 
        {
-          echo "Failed to call selectCS, error code: ".$err['errno'] ;\
+          echo "Failed to call selectCS, error code: ".$err['errno'] ;
           self::$skipTestCase = true ;
           return;
        }
@@ -164,14 +167,7 @@ class taskTest extends PHPUnit_Framework_TestCase
        
        self::asyncSplit($srcgroupname, $destgroupname);
     }
-    
-    public function setUp()
-    {
-       if( self::$skipTestCase === true )
-       {
-          $this -> markTestSkipped( "connect failed" );
-       }
-    }
+
     public function testSelectParameter()
     {
        $selector = mt_rand(0,2);
@@ -180,10 +176,10 @@ class taskTest extends PHPUnit_Framework_TestCase
     
     public function testlist()
     {
-       $ret = self::$task->listbycondition(json_encode(array('Name' => $fullname)));
+       $ret = self::$task->listbycondition(json_encode(array('Name' => self::$fullname)));
        $this->assertEquals(true, $ret);
        
-       $ret = self::$task->listbycondition(array('Name' => $fullname));
+       $ret = self::$task->listbycondition(array('Name' => self::$fullname));
        $this->assertEquals(true, $ret);
        
     }
@@ -193,7 +189,7 @@ class taskTest extends PHPUnit_Framework_TestCase
      */
     public function testWait($selector)
     {
-       $taskID = self::$task->getTaskId(array('Name' => $fullname));
+       $taskID = self::$task->getTaskId(array('Name' => self::$fullname));
        if ($selector == 0)
        {
           $ret = self::$task->wait(array($taskID));
@@ -207,7 +203,7 @@ class taskTest extends PHPUnit_Framework_TestCase
           $ret = self::$task->wait($taskID);
        }
        
-       $this->assertEquals(0, $err);
+       $this->assertEquals(0, $ret);
     }
     
     /**
@@ -234,7 +230,7 @@ class taskTest extends PHPUnit_Framework_TestCase
        if (common::IsStandlone(self::$db))
        {
           self::$db->close();
-          return
+          return ;
        }
        else
        {
