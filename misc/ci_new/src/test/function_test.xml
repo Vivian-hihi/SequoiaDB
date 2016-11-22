@@ -142,10 +142,10 @@
                <dividecase basedir="${case_basedir}" reltdir="${case_reltdir}"
                            outputdir="${testcase_outdir}" hostlist="${testhost_list}">
                   <dividedfileele>
-                     <fileset dir="${case_dir}" includes="**/*.php" excludes="tools/**/*,func.php,*/lib/*.php"/>
+                     <fileset dir="${case_dir}" includes="**/*.php" excludes="tools/**/*,phpunit.xml,func.php,*/lib/*.php"/>
                   </dividedfileele>
                   <commonfileele>
-                     <fileset dir="${case_dir}" includes="tools/**/*,func.php,*/lib/*.php"/>
+                     <fileset dir="${case_dir}" includes="tools/**/*,phpunit.xml,func.php,*/lib/*.php"/>
                   </commonfileele>
                </dividecase>
             </case-->
