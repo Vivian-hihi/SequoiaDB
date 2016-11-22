@@ -91,6 +91,7 @@
          <var name="phpunit" value="@{suitfullname}/../tools/phpunit.phar"/>
          <var name="cmd" value="${phpunit} ${conf_cmd} --log-junit @{report} @{suitfullname}"/>
          <echo message="exec cmd: ${phpbin} ${cmd}"/>
+         <echo message="exec dir: @{suitfullname}"/>
          
          <var name="screen_output" unset="true"/> 
          <var name="rc" unset="true"/> 
