@@ -81,15 +81,15 @@
          <if>
             <available file="@{suitfullname}/../phpunit.xml"/>
             <then>
-               <var name="conf" value="@{suitfullname}/../phpunit.xml"/>
+               <var name="conf_cmd" value="-c @{suitfullname}/../phpunit.xml"/>
             </then>
             <else>
-               <var name="conf" value=""/>
+               <var name="conf_cmd" value=""/>
             </else>
          </if>
          <var name="phpbin" value="@{dbdir}/tools/server/php/bin/php-bin"/>
          <var name="phpunit" value="@{suitfullname}/../tools/phpunit.phar"/>
-         <var name="cmd" value="${phpunit} -c ${conf} --log-junit @{report} @{suitfullname}"/>
+         <var name="cmd" value="${phpunit} ${conf_cmd} --log-junit @{report} @{suitfullname}"/>
          <echo message="exec cmd: ${phpbin} ${cmd}"/>
          
          <var name="screen_output" unset="true"/>         
