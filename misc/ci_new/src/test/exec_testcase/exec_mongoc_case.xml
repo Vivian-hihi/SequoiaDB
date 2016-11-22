@@ -57,20 +57,19 @@
       </tstamp>
       <echo message="begin at ${begin_time}, end at ${end_time}" />
       
-      <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}" />
+      <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}_parallel" />
    </target>
     
    <macrodef name="modifyreport">
       <attribute name="report"/>
       <attribute name="layer" />
       <sequential>                
-         <replaceregexp file="@{report}"
-                        match='classname="(.*)"' 
-                        replace='classname="@{layer}"' 
+         <replaceregexp file="@{report}" 
+                        match='testcase name' 
+                        replace='testcase classname="@{layer}" name'  
                         flags="g" 
                         byline="true" 
-                        encoding="utf-8"> 
-         </replaceregexp>
+                        encoding="utf-8"/> 
       </sequential>
    </macrodef>
    
