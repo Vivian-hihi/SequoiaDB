@@ -683,7 +683,7 @@ TestSuite_ParallelWorker (void *data) /* IN */
 
    if (AtomicInt_DecrementAndTest (info->count)) {
       TestSuite_PrintJsonFooter (stdout);
-      if (info->suite->outfile && !info->suite->generatexmlreport) {
+      if (info->suite->outfile) {
          if ( !info->suite->generatexmlreport ){
             TestSuite_PrintJsonFooter (info->suite->outfile);
          }
