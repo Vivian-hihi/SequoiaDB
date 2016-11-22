@@ -7,25 +7,65 @@
 <?php
    define('Cur_Path', dirname(__FILE__));
    include_once Cur_Path.'/lib/lob.php';
+   include_once Cur_Path.'/../global.php';
    class LobTest extends PHPUnit_Framework_TestCase
    {
-      private static $db;
-      private static $cs;
-      private static $cl;
-      private static $wmd5;
+      private static $db ;
+      private static $cs ;
+      private static $cl ;
+      private static $wmd5 ;
+      private static $skipTestCase ;
       public static function setUpBeforeClass()
       {
          self::$db = new SequoiaDB();
-         $err = self::$db->connect( "localhost:11810" );
+         $err = self::$db->connect( globalParameter::getHostName() , 
+                                    globalParameter::getCoordPort() ) ;
+         if ( $err['errno'] != 0 )
+         {
+            echo "Failed to connect database, error code: ".$err['errno'] ;
+            self::$skipTestCase = true ;
+            return ;
+         }   
          $err = self::$db->setSessionAttr(array('PreferedInstance' => 'm' )) ;
-        
-         $random = mt_rand(1000,10000); 
-         $csName = 'php_test'.$random;
-         $clName = 'php_test'.$random;
-         $err=self::$db->createCS($csName);
-         
-         self::$cs = self::$db->selectCS($csName);
-         self::$cl = self::$cs->createCL($clName);
+         if ( $err['errno'] != 0 )
+         {
+            echo "Failed to call setSessionAttr, error code: ".$err['errno'] ;
+            self::$skipTestCase = true ;
+            return ;
+         }
+         $random = mt_rand( 1000, 10000 ); 
+         $csName = globalParameter::getChangedPrefix().$random;
+         $clName = globalParameter::getChangedPrefix().$random;
+         $err=self::$db->createCS( $csName );
+         if ( $err['errno'] != 0 )
+         {
+            echo "Failed to connect database, error code: ".$err['errno'] ;
+            self::$skipTestCase = true ;
+            return ;
+         }
+         self::$cs = self::$db->selectCS( $csName );
+         $err = self::$db->getError() ;
+         if( $err['errno'] != 0 ) 
+         {
+            echo "Failed to call selectCS, error code: ".$err['errno'] ;\
+            self::$skipTestCase = true ;
+            return;
+         }    
+         self::$cl = self::$cs->createCL( $clName );
+         $err = self::$db->getError() ;
+         if( $err['errno'] != 0 ) {
+            echo "Failed to create collection, error code: ".$err['errno'] ;
+            self::$skipTestCase = true ;
+            return ;
+         }
+      }
+      
+      public function setUp()
+      {
+         if ( self::$skipTestCase == true )
+         {
+            $this->markTestSkipped( 'init failed' );
+         }
       }
       
       private function getOid()
@@ -41,18 +81,18 @@
          return $oid;
       }
       
-      private function checkLobExist($oid, $lob)
+      private function checkLobExist( $oid, $lob )
       {
          $ret = false;
          $cursor = self::$cl->listLob() ;
-         $this->assertEquals( false, empty($cursor)) ;
+         $this->assertEquals( false, empty( $cursor ) ) ;
          while( $record = $cursor -> next() )
          {
            // date_default_timezone_set("UTC");
            // $curtime = gettimeofday();
            // $curusec = $curtime['sec'] * 1000000 + $curtime['usec']; 
             if ($record['Oid'] == $oid){
-                    $ret = true;
+               $ret = true;
             }
          }
 
@@ -60,10 +100,10 @@
          
          $ret = false;
          $cr = self::$cl->listLobPieces();
-         $this->assertEquals( false, empty($cr)) ;
+         $this->assertEquals( false, empty( $cr ) ) ;
          while( $record = $cr -> next() )
          {
-            if ($record['Oid'] == $oid){
+            if ( $record['Oid'] == $oid ){
                $ret = true;
             }
          }
@@ -73,51 +113,51 @@
       
       public function testLob7681And7688()
       {
-         $lob = new Lob(self::$db, self::$cl);
+         $lob = new Lob( self::$db, self::$cl );
          $oid = $this->getOid();
-         $err = $lob->open($oid, SDB_LOB_CREATEONLY);
-         $this->assertEquals(0, $err);
+         $err = $lob->open( $oid, SDB_LOB_CREATEONLY );
+         $this->assertEquals( 0, $err );
          
-         $err = $lob->write(1024);
-         $this->assertEquals( 0, $err) ;
+         $err = $lob->write( 1024 );
+         $this->assertEquals( 0, $err ) ;
          
          
          //var_dump("write successfully"); 
          $err = $lob->closeLob();
-         $this->assertEquals( 0, $err) ;
+         $this->assertEquals( 0, $err ) ;
          //var_dump("close successfully");
          
 
-         $ret = $this->checkLobExist($oid, $lob);
-         $this->assertEquals( true, $ret) ;
-         $err = $lob->remove($oid);
-         $this->assertEquals( 0, $err) ;
-         $ret = $this->checkLobExist($oid, $lob);
-         $this->assertEquals( false, $ret) ;
+         $ret = $this->checkLobExist( $oid, $lob );
+         $this->assertEquals( true, $ret ) ;
+         $err = $lob->remove( $oid ) ;
+         $this->assertEquals( 0, $err ) ;
+         $ret = $this->checkLobExist( $oid, $lob );
+         $this->assertEquals( false, $ret ) ;
       }
       
       public function ntestWrite7682()
       {
          var_dump("testWriteForNotOpen");
-         $lob = new Lob(self::$db, self::$cl);
+         $lob = new Lob( self::$db, self::$cl );
          $ret = SDB_CLT_INVALID_HANDLE;
          //$err = $lob->write(1024);
-         $this->assertEquals( SDB_CLT_INVALID_HANDLE, $ret) ;
+         $this->assertEquals( SDB_CLT_INVALID_HANDLE, $ret ) ;
       }
       
       public function testWrite7683()
       {
-         $lob = new Lob(self::$db, self::$cl);
+         $lob = new Lob( self::$db, self::$cl );
          $oid = $this->getOid();
-         $err = $lob->open($oid, SDB_LOB_CREATEONLY);
-         $this->assertEquals( 0, $err) ;
+         $err = $lob->open($oid, SDB_LOB_CREATEONLY );
+         $this->assertEquals( 0, $err ) ;
          
-         $err = $lob->write(1024);
-         $this->assertEquals( 0, $err) ;
+         $err = $lob->write( 1024 );
+         $this->assertEquals( 0, $err ) ;
          
-         self::$wmd5 = md5($lob->getWContent()); 
+         self::$wmd5 = md5( $lob->getWContent() ); 
          $err = $lob->closeLob();
-         $this->assertEquals( 0, $err) ;
+         $this->assertEquals( 0, $err ) ;
 
          return $oid;
       }
@@ -128,43 +168,43 @@
        */
       public function testRead7684And7689($oid)
       {
-         $lob = new Lob(self::$db, self::$cl);
-         $err = $lob->open($oid, SDB_LOB_READ);
-         $this->assertEquals( 0, $err) ;
+         $lob = new Lob( self::$db, self::$cl );
+         $err = $lob->open( $oid, SDB_LOB_READ );
+         $this->assertEquals( 0, $err ) ;
          $err = $lob->read();
-         $this->assertEquals( 0, $err) ;
+         $this->assertEquals( 0, $err ) ;
          
          $ret = $lob->getCreateTime();         
-         $this->assertEquals( $ret > new SequoiaINT64 (0), true) ;
+         $this->assertEquals( $ret > new SequoiaINT64 (0), true ) ;
          $err = $lob->closeLob();
-         $this->assertEquals( 0, $err) ;
+         $this->assertEquals( 0, $err ) ;
         
-         $this->rbuf = $lob->getRContent(); 
-         $ret =  (self::$wmd5 == md5($this->rbuf));
-         $this->assertEquals( true, $ret) ;
+         $this->rbuf = $lob->getRContent() ; 
+         $ret =  ( self::$wmd5 == md5( $this->rbuf ) ) ;
+         $this->assertEquals( true, $ret ) ;
       }
       
       public function ntestRead7685()
       {
-         var_dump("testReadForNotOpen");
-         $lob = new Lob(self::$db, self::$cl);
-         $ret = SDB_CLT_INVALID_HANDLE;
+         var_dump( "testReadForNotOpen" ) ;
+         $lob = new Lob( self::$db, self::$cl ) ;
+         $ret = SDB_CLT_INVALID_HANDLE ;
          //$err = $lob->read();
-         $this->assertEquals( SDB_CLT_INVALID_HANDLE, $ret) ;
+         $this->assertEquals( SDB_CLT_INVALID_HANDLE, $ret ) ;
       }
       
       public function ntestSeek7686()
       {
-         var_dump("testSeekForWrite");
-         $lob = new Lob(self::$db, self::$cl);
+         var_dump( "testSeekForWrite" );
+         $lob = new Lob( self::$db, self::$cl );
          $oid = $this->getOid();
-         $err = $lob->open($oid, SDB_LOB_CREATEONLY);
-         $this->assertEquals( 0, $err) ;
+         $err = $lob->open( $oid, SDB_LOB_CREATEONLY );
+         $this->assertEquals( 0, $err ) ;
          
-         $err = $lob->seek(1024, SDB_LOB_END);
-         $this->assertEquals( -6, $err) ;
-         $err=$lob->write(1024);
-         $this->assertEquals( -6, $err) ;
+         $err = $lob->seek( 1024, SDB_LOB_END );
+         $this->assertEquals( -6, $err ) ;
+         $err=$lob->write( 1024 );
+         $this->assertEquals( -6, $err ) ;
          $lob->close();
       }
       
@@ -175,26 +215,26 @@
       public function testSeek7687($oid)
       {
          var_dump("testSeekForRead");
-         $lob = new Lob(self::$db, self::$cl);
-         $err = $lob->open($oid, SDB_LOB_READ);
-         $this->assertEquals( 0, $err) ;
-         $err = $lob->read(512);
-         $this->assertEquals( 0, $err) ;
+         $lob = new Lob( self::$db, self::$cl );
+         $err = $lob->open( $oid, SDB_LOB_READ );
+         $this->assertEquals( 0, $err ) ;
+         $err = $lob->read( 512 );
+         $this->assertEquals( 0, $err ) ;
          
-         $err = $lob->seek(0, SDB_LOB_SET);
-         $this->assertEquals( 0, $err) ;
+         $err = $lob->seek( 0, SDB_LOB_SET );
+         $this->assertEquals( 0, $err ) ;
          
          //$err = $lob->seek(511, SDB_LOB_SET);
          //$this->assertEquals( 0, $err) ;
-         $err = $lob->read(512);
-         $this->assertEquals( 0, $err) ;
+         $err = $lob->read( 512 );
+         $this->assertEquals( 0, $err ) ;
          
          $err = $lob->closeLob();
-         $this->assertEquals( 0, $err) ;
+         $this->assertEquals( 0, $err ) ;
          
          $this->rbuf = $lob->getRContent();
-         $ret =  (self::$wmd5 == md5($this->rbuf));
-         $this->assertEquals( true, $ret) ;
+         $ret =  ( self::$wmd5 == md5( $this->rbuf ) );
+         $this->assertEquals( true, $ret ) ;
  
       }
         
