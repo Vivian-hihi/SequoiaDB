@@ -1,5 +1,6 @@
 <?php 
-include_once './global.php';
+define('Cur_Path', dirname(__FILE__));
+include_once Cur_Path.'/../global.php';
 
 class BaseOperator
 {  
