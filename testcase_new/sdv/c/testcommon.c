@@ -85,22 +85,23 @@ void getConf()
     if(fp == NULL)
         printf("Cannot open file driver.conf") ;
     char str[100] ;
-    char temp[10] ;
     while( fscanf(fp,"%s",str) != EOF )
     {
+        char* token = strstr(str,"=") ;
+        token[0] = '\0' ;
         if(strcmp(str,"HOSTNAME") == 0)
         {
-            fscanf(fp,"%s%s",temp,HOSTNAME) ;
+            strcpy(HOSTNAME,token+1) ;
             continue ;
         }
         if(strcmp(str,"SVCNAME") == 0)
         {
-            fscanf(fp,"%s%s",temp,SVCNAME) ;
+            strcpy(SVCNAME,token+1) ;
             continue ;
         }
         if(strcmp(str,"CHANGEDPREFIX") == 0)
         {
-            fscanf(fp,"%s%s",temp,CHANGEDPREFIX) ;
+            strcpy(CHANGEDPREFIX,token+1) ;
             continue ;
         }
 
