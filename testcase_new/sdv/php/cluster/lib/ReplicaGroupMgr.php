@@ -8,8 +8,9 @@
 include 'ReplicaGroup.php';
 class ReplicaGroupMgr
 {
-    private $db;
-    private $groups;
+    private $db ;
+    private $groups ;
+    private $err ;
     public function __construct($sdb)
     {
        $this->db = $sdb;
@@ -20,20 +21,38 @@ class ReplicaGroupMgr
     {
     }
     
+    public function getError()
+    {
+       return $this->err;
+    }
+    
     public function getGroups()
     {
         $cursor = $this->db->listGroup();
-        if (empty($cursor))
+        if ( empty( $cursor ) )
         {
-            $err = $this->db->getError();
-            return $err['errno'];
+            $this->err = $this->db->getError();
+            return $this->groups;
         }
         
-        while($record = $cursor->next())
+        while( $record = $cursor->next() )
         {
-           $group = new ReplicaGroup($this->db, $record['GroupName']);
+           $group = new ReplicaGroup( $this->db, $record['GroupName'] );
+           if ( $group->getError()['errno'] != 0 )
+           {
+              $this->err = $group->getError();
+              unset( $this->groups );
+              return;
+           }
+           
            $group->getNodes();
-           array_push($this->groups, $group);
+           if ( $group->getError()['errno'] != 0 )
+           {
+              $this->err = $group->getError();
+              unset( $this->groups );
+              return;
+           }
+           array_push( $this->groups, $group );
         }
         
         return $this->groups;
@@ -43,21 +62,33 @@ class ReplicaGroupMgr
     {
         $groups = array();
         $cursor = $this->db->listGroup();
-        if (empty($cursor))
+        if ( empty( $cursor ) )
         {
-            $err = $this->db->getError();
-            return $err['errno'];
+            $this->err = $this->db->getError();
+            return $groups;
         }
         
-        while($record = $cursor->next())
+        while( $record = $cursor->next() )
         {
-           if ($record['GroupName'] != "SYSCoord" &&
-               $record['GroupName'] != "SYSCatalogGroup" &&
-               $record['GroupName'] != "SYSSpare")
+           if ( $record['GroupName'] != "SYSCoord" &&
+                $record['GroupName'] != "SYSCatalogGroup" &&
+                $record['GroupName'] != "SYSSpare" )
            {
-              $group = new ReplicaGroup($this->db, $record['GroupName']);
+              $group = new ReplicaGroup( $this->db, $record['GroupName'] );
+              if ( $group->getError()['errno'] != 0 )
+              {
+                 $this->err = $group->getError();
+                 unset( $this->groups );
+                 return;
+              }
               $group->getNodes();
-              array_push($groups, $group);
+              if ( $group->getError()['errno'] != 0 )
+              {
+                 $this->err = $group->getError();
+                 unset( $this->groups );
+                 return;
+              }
+              array_push( $groups, $group );
            }
         }
         

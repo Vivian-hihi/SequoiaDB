@@ -7,28 +7,33 @@
 <?php
 class ReplicaNode
 {
-    protected $hostName;
-    protected $serviceName;
-    protected $dbpath;
-    protected $cfg;
-    protected $group;
-    protected $node;
+    protected $hostName ;
+    protected $serviceName ;
+    protected $dbpath ;
+    protected $cfg ;
+    protected $group ;
+    protected $node ;
+    protected $db ;
+    protected $err ; 
     
  
-    public function __construct($group, 
+    public function __construct($db,
+                                $group, 
                                 $hostName, 
                                 $srvName,
                                 $dbpath = '',
                                 $cfg = NULL,
                                 $node = NULL)
     {
-       $this->group = $group;
-       $this->hostName =  $hostName;
-       $this->serviceName =  $srvName;
-       $this->dbpath =  $dbpath;
-       if (empty($node))
+       $this->db = $db ;
+       $this->group = $group ;
+       $this->hostName =  $hostName ;
+       $this->serviceName =  $srvName ; 
+       $this->dbpath =  $dbpath ;
+       if ( empty( $node ) )
        {
-          $this->node = $this->group->getNode($this->hostName.':'.$this->serviceName);
+          $this->node = $this->group->getNode( $this->hostName.':'.$this->serviceName );
+          $this->err = $this->db->getError() ;
        }
        else
        {
@@ -38,11 +43,16 @@ class ReplicaNode
        $this->cfg = $cfg;
     }
     
+    public function getError()
+    {
+       return $this->err;
+    }
+    
     public function getName()
     {
-       if (empty($this->node)) return $this->hostName.":".$this->serviceName;
-       $name = $this->node->getName();
-       if (0 == strcmp($name, $this->hostName.":".$this->serviceName))
+       if ( empty( $this->node ) ) return $this->hostName.":".$this->serviceName ;
+       $name = $this->node->getName() ;
+       if ( 0 == strcmp( $name, $this->hostName.":".$this->serviceName ))
        {
           return $name;
        }
@@ -68,19 +78,19 @@ class ReplicaNode
     public function getServiceName()
     {
        $name = $this->node->getServiceName();
-       if (0 == strcmp($name,$this->serviceName))
+       if (0 == strcmp( $name, $this->serviceName ) )
        {
           return $name;
        }
        else 
        {
-          return array($name, $this->serviceName); 
+          return array( $name, $this->serviceName ); 
        }
     }
     
     public function getStatus()
     {
-       $status = $this->node-> getStatus() ;
+       $status = $this->node->getStatus() ;
        return $status;
     }
     
@@ -90,13 +100,13 @@ class ReplicaNode
     
     public function create()
     {
-        $err = $this->group->createNode($this->hostName, $this->serviceName,
-                                        $this->dbpath, $this->cfg);
+        $err = $this->group->createNode( $this->hostName, $this->serviceName,
+                                        $this->dbpath, $this->cfg );
                                         
         if ($err['errno'] == 0)
         {
-           $this->node = $this->group->getNode($this->hostName.":".$this->serviceName);
-           if (empty($this->node))
+           $this->node = $this->group->getNode( $this->hostName.":".$this->serviceName );
+           if ( empty( $this->node ) )
            {
               //$err = $this->
               echo "empty node\n";
@@ -110,11 +120,11 @@ class ReplicaNode
         //var_dump($this->hostName);
         //var_dump($this->serviceName);
         //var_dump($this->cfg);
-        if (empty($this->cfg)){
-           $err = $this->group->removeNode($this->hostName, $this->serviceName, $this->cfg);
+        if ( empty( $this->cfg ) ){
+           $err = $this->group->removeNode( $this->hostName, $this->serviceName, $this->cfg );
         }
         else{
-           $err = $this->group->removeNode($this->hostName, $this->serviceName, $this->cfg);
+           $err = $this->group->removeNode( $this->hostName, $this->serviceName, $this->cfg );
         }
         return $err['errno'];
     }
