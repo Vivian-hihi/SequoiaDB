@@ -19,6 +19,13 @@
       <property name="sdbdir" value="${INSTALL_DIR}/bin/sdb" />            
       
       <prefix resultproperty="prefix"/>
+      <replaceregexp file="${testcase_dir}/phpunit.xml"
+                     match='"CHANGEDPREFIX" value="(.*)"' 
+                     match='"CHANGEDPREFIX" value="${prefix}"' 
+                     flags="g" 
+                     byline="true" 
+                     encoding="utf-8">
+            
       <for param="testsuit">
          <path>
             <dirset dir="${testcase_dir}" includes="*" excludes="tools"/>
@@ -42,7 +49,6 @@
                   <var name="report_fullname" value="${report_dir}/${report_filename}"/>
 
                   <execonesuit suitfullname="@{testsuit}" 
-                                 prefix="${prefix}" 
                                  dbdir="${INSTALL_DIR}" 
                                  report="${report_fullname}"/>
                   <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testsuite_name}" />
@@ -60,7 +66,6 @@
    <macrodef name="execonesuit">
       <attribute name="dbdir"/>
       <attribute name="suitfullname" />
-      <attribute name="prefix" />
       <attribute name="report" />
       <sequential> 
          <var name="begin_time" unset="true"/>
@@ -70,8 +75,9 @@
 
          <var name="phpbin" value="@{dbdir}/tools/server/php/bin/php-bin"/>
          <var name="phpunit" value="@{suitfullname}/../tools/phpunit.phar"/>
-         <var name="cmd" value="${phpunit} --log-junit @{report} @{suitfullname}"/>
-         <echo message="exec cmd: ${phpbin} ${cmd}"/><!--TODO: add changedprefix-->
+         <var name="conf" value="@{suitfullname}/../phpunit.xml"/>
+         <var name="cmd" value="${phpunit} -c ${conf} --log-junit @{report} @{suitfullname}"/>
+         <echo message="exec cmd: ${phpbin} ${cmd}"/>
          
          <var name="screen_output" unset="true"/>         
          <exec executable="${phpbin}" 
