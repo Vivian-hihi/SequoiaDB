@@ -14,7 +14,7 @@
       private static $cs ;
       private static $cl ;
       private static $wmd5 ;
-      private static $skipTestCase ;
+      private static $skipTestCase = false ;
       public static function setUpBeforeClass()
       {
          self::$db = new SequoiaDB();
@@ -44,10 +44,10 @@
             return ;
          }
          self::$cs = self::$db->selectCS( $csName );
-         $err = self::$db->getError() ;
+         $err = self::$db->getError();
          if( $err['errno'] != 0 ) 
          {
-            echo "Failed to call selectCS, error code: ".$err['errno'] ;\
+            echo "Failed to call selectCS, error code: ".$err['errno'] ;
             self::$skipTestCase = true ;
             return;
          }    
