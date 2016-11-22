@@ -6,8 +6,8 @@
 ***************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
-#include "../impWorker.hpp"
-#include "../testcommon.h"
+#include "../common/impWorker.hpp"
+#include "../common/testcommon.h"
 
 using import::Worker ;
 using import::WorkerRoutine ;
@@ -19,7 +19,8 @@ using import::WorkerArgs ;
 sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 sdbCSHandle cs = SDB_INVALID_HANDLE ;
 sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
-const char* CsName = "concurrentTestCs" ;
+const char* CsModName = "concurrentTestCs" ;
+char CsName[100] ;
 const char* ClName = "concurrentTestCl" ;
 sdbCursorHandle cursor[ThreadNum] ;
 
@@ -36,9 +37,11 @@ void ConcurrentTest::SetUpTestCase()
 {
    // connect to sdb
 	int rc = SDB_OK ;
-	rc = sdbConnect( HOST, SERVER, USER, PASSWD, &db ) ;
+	getConf() ;
+	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
 	// create cs
+	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
 	EXPECT_EQ( rc, SDB_OK ) << "fail to create cs" ;
 	// create cl 

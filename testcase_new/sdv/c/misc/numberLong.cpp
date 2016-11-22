@@ -10,9 +10,10 @@
 #include <string.h>
 #include "jstobs.h"
 #include "client.h"
-#include "../testcommon.h"
+#include "../common/testcommon.h"
 
-char CSNAME[] = "c_driver_test";
+const char* CsModName = "c_driver_test";
+char CSNAME[100] ;
 char CLNAME[] = "numberLong";
 
 /*
@@ -116,6 +117,7 @@ TEST( numberLong, boundary )
    //create cl
    sdbCollectionHandle cl = 0 ;
    INT32 rc = SDB_OK;
+   getUniqueName( CsModName,CSNAME ) ;
    rc = createCollection( &cl, CSNAME, CLNAME ); 
 //   createCollection( &cl ) ;
    

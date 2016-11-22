@@ -8,12 +8,10 @@
 #include <client.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "../common/testcommon.h"
 
-char *HostName = "localhost" ;
-char *SvcName = "11810" ;
-char *Usr = "" ;
-char *Passwd = "" ;
-char *CsName = "c_driver_test" ;
+char *CsModName = "c_driver_test" ;
+char CsName[100] ;
 char *ClName = "index" ;
 sdbConnectionHandle db = 0 ;
 sdbCSHandle cs = 0 ;
@@ -22,8 +20,10 @@ sdbCollectionHandle cl = 0 ;
 void prepareCl()
 {
 	int rc = SDB_OK ;
-	rc = sdbConnect(HostName,SvcName,Usr,Passwd,&db) ;
+	getConf() ;
+	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
 	ASSERT_EQ(rc,SDB_OK)<<"fail to connect sdb" ;
+	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace(db,CsName,SDB_PAGESIZE_4K,&cs) ;
 	if( rc == SDB_DMS_CS_EXIST )
 	{

@@ -10,16 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../testcommon.h"
+#include "../common/testcommon.h"
 
 const char* SPAREPORTSTART = "20000" ;
 const char* SPAREPORTSTOP = "30000" ;
 const char* SPAREPATH = "/opt/sequoiadb/database/data/" ;
-
-const char* HostName = "localhost" ;
-const char* SvcName = "11810" ;
-const char* Usr = "" ;
-const char* Password = "" ;
 
 sdbConnectionHandle db = 0 ;
 sdbReplicaGroupHandle dataRG = 0,tempRG = 0 ;
@@ -104,7 +99,8 @@ void AttachAndDetachNodeTest::SetUpTestCase()
 {
     int rc = SDB_OK ;
     // connect to sdb
-    rc = sdbConnect(HostName,SvcName,Usr,Password,&db) ;
+    getConf() ;
+    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
     EXPECT_EQ(rc,SDB_OK)<<"fail to connect sdb" ;	
 }
 

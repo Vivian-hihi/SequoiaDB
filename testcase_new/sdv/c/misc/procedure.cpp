@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 #include <string.h>
 #include "client.h"
-#include "../testcommon.h"
+#include "../common/testcommon.h"
 
 void* create_pcd(void *arg);
 void* remove_pcd(void *arg);
@@ -20,7 +20,8 @@ TEST( procedure, cocurrent_create_remove_excute )
    
    // judge standalone
    sdbConnectionHandle db = 0;
-   rc = sdbConnect( HOST, SERVER, "", "", &db );
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db );
    ASSERT_GE( rc, 0 ); 
    if( isStandalone(db) )
    {
@@ -67,7 +68,8 @@ void* excute_pcd(void *arg)
    bson_iterator it;
    
    // new db
-   rc = sdbConnect( HOST, SERVER, "", "", &db );
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db );
    if( rc != 0 )
    {
       printf( "fail to connect, rc = %d\n", rc ); 
@@ -123,7 +125,8 @@ void* create_pcd(void *arg)
    sdbConnectionHandle db = 0;
 
    // new db
-   rc = sdbConnect( HOST, SERVER, "", "", &db );
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db );
    if( rc != 0 )
    {
       printf( "fail to connect, rc = %d\n", rc ); 
@@ -160,7 +163,8 @@ void* remove_pcd(void *arg)
    sdbConnectionHandle db = 0;
    
    // new db
-   rc = sdbConnect( HOST, SERVER, "", "", &db );
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db );
    if( rc != 0 )
    {
       printf( "fail to connect, rc = %d\n", rc ); 

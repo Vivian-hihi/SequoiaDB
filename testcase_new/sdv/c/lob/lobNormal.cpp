@@ -1,4 +1,4 @@
-/************************************************************************
+﻿/************************************************************************
 *@Description : Test lob basic operation: write lob, read lob, seek read
 *               lob and drop lob in collection.
 *               Test get lob create time.
@@ -11,11 +11,8 @@
 #include <malloc.h>
 #include <time.h>
 #include <sys/time.h>
+#include "../common/testcommon.h"
 
-#define HOST      "localhost"
-#define SVCNAME   "11810"
-#define USR       ""
-#define PASSWD    ""
 
 TEST( lobNormalTest, BasicOperation )
 {
@@ -23,13 +20,16 @@ TEST( lobNormalTest, BasicOperation )
    sdbCSHandle cs          = SDB_INVALID_HANDLE ;
    sdbCSHandle cl          = SDB_INVALID_HANDLE ;
    sdbLobHandle lob        = SDB_INVALID_HANDLE ;
-   const char* CsName      = "lobNormalTestCs" ;
+   const char* CsModName   = "lobNormalTestCs" ;
+   char CsName[100] ;
    const char* ClName      = "lobNormalTestCl" ;
    int rc = SDB_OK ;
    
    // connect sdb,create cs cl
-   rc = sdbConnect( HOST, SVCNAME, USR, PASSWD, &db ) ;
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+   getUniqueName( CsModName,CsName ) ;
    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
    rc = sdbCreateCollection( cs, ClName, &cl ) ;
@@ -114,13 +114,16 @@ TEST( lobNormalTest, getLobCreateTime )
    sdbCSHandle cs         = SDB_INVALID_HANDLE ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    sdbLobHandle lob       = SDB_INVALID_HANDLE ;
-   const char* CsName      = "lobNormalTestCs" ;
-   const char* ClName      = "lobNormalTestCl" ;
+   const char* CsModName  = "lobNormalTestCs" ;
+   char CsName[100] ;
+   const char* ClName     = "lobNormalTestCl" ;
    int rc = SDB_OK ;
    
    // connect sdb,create cs cl
-   rc = sdbConnect( HOST, SVCNAME, USR, PASSWD, &db ) ;
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+   getUniqueName( CsModName,CsName ) ;
    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
    rc = sdbCreateCollection( cs, ClName, &cl ) ;

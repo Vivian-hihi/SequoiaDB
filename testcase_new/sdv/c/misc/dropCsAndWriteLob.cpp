@@ -8,12 +8,8 @@
 #include <gtest/gtest.h>
 #include <client.h>
 #include <stdio.h>
-#include "../impWorker.hpp"
-
-const char* HostName = "localhost" ;
-const char* SvcName = "11810" ;
-const char* Usr = "" ;
-const char* Passwd = "" ;
+#include "../common/impWorker.hpp"
+#include "../common/testcommon.h"
 
 #define CHECK_RC(rc,msg) if(rc != SDB_OK) { printf("%s,rc=%d\n",msg,rc) ; return rc ; } ;
 
@@ -21,7 +17,8 @@ INT32 createSplitCollection(sdbConnectionHandle* db,sdbCSHandle* cs,sdbCollectio
 {
 	int rc = SDB_OK ; 
 	// connect to sdb
-	rc = sdbConnect(HostName,SvcName,Usr,Passwd,db) ;
+	getConf() ;
+	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, db ) ;
 	CHECK_RC(rc,"fail to connect sdb") ;
 	// create collection space
 	rc = sdbCreateCollectionSpace(*db,CsName,SDB_PAGESIZE_4K,cs) ;
@@ -105,13 +102,15 @@ void func_dropCs(ThreadArg *arg)
 
 TEST(lobTest,dropCsAndWriteLob)
 {
-	sdbConnectionHandle db = SDB_INVALID_HANDLE ;
-	sdbCSHandle cs = SDB_INVALID_HANDLE ;
-	sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
-	const char* CsName = "lxw_lobtest" ;
-	const char* ClName = "dropAndWrite" ;
+	sdbConnectionHandle db  = SDB_INVALID_HANDLE ;
+	sdbCSHandle cs          = SDB_INVALID_HANDLE ;
+	sdbCollectionHandle cl  = SDB_INVALID_HANDLE ;
+	const char* CsModName   = "lxw_lobtest" ;
+	char CsName[100] ;
+	const char* ClName      = "dropAndWrite" ;
 	int rc = SDB_OK ;
 	// create collection
+	getUniqueName( CsModName,CsName ) ;
 	rc = createSplitCollection(&db,&cs,&cl,CsName,ClName) ;
 	EXPECT_EQ(rc,SDB_OK) ;
 	// generate lob

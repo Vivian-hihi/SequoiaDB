@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include "testcommon.h"
 
 char HOSTNAME[100] ;
 char SVCNAME[100] ;
 char CHANGEDPREFIX[100] ;
-char* confFile = "driver.conf" ;
+
+char* confFile = "./common/driver.conf" ;
 
 INT32 createCollection( sdbCollectionHandle *cl,
                         CHAR *csName,
@@ -15,11 +17,12 @@ INT32 createCollection( sdbCollectionHandle *cl,
 
    // connect to sdb
    sdbConnectionHandle db = 0;
-   rc = sdbConnect( HOST, SERVER, "", "", &db );
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db );
    if ( rc )
    {
       printf( "Failed to connect database, hostname=%s, coord= %s\n",
-              HOST, SERVER );     
+              HOSTNAME, SVCNAME );     
       goto error ;
    }
    
@@ -83,7 +86,16 @@ void getConf()
     FILE *fp ;
     fp = fopen(confFile,"rt") ;
     if(fp == NULL)
-        printf("Cannot open file driver.conf") ;
+    {
+        printf("Cannot open file driver.conf.Use default value.\n") ;
+		strcpy(HOSTNAME,"localhost") ;
+		strcpy(SVCNAME,"11810") ;
+		strcpy(CHANGEDPREFIX,"sdv_c_test") ;
+		printf("HostName: %s\n",HOSTNAME) ;
+    	printf("SvcName: %s\n",SVCNAME) ;
+    	printf("CHANGEDPREFIX: %s\n",CHANGEDPREFIX) ;
+        return ;
+    }
     char str[100] ;
     while( fscanf(fp,"%s",str) != EOF )
     {
@@ -110,4 +122,10 @@ void getConf()
     printf("HostName: %s\n",HOSTNAME) ;
     printf("SvcName: %s\n",SVCNAME) ;
     printf("CHANGEDPREFIX: %s\n",CHANGEDPREFIX) ;
+}
+
+void getUniqueName(const char* modName,char name[])
+{
+   pid_t pid = getpid() ;
+   sprintf( name,"%s_%d_%s",CHANGEDPREFIX,pid,modName ) ;
 }

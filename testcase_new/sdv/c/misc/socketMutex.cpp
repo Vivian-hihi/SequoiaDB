@@ -6,14 +6,11 @@
 *****************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
-#include "../impWorker.hpp"
+#include "../common/impWorker.hpp"
+#include "../common/testcommon.h"
 
 #define ThreadNum 10
 
-const char* HostName = "localhost" ;
-const char* SvcName = "11810" ;
-const char* Usr = "" ;
-const char* Passwd = "" ;
 char* CsName[ThreadNum] ;
 char* ClName[ThreadNum] ;
 
@@ -41,7 +38,9 @@ void SocketMutexTest::SetUpTestCase()
         char number[20] ;
         sprintf(number,"%d",i) ;
         strcat(temp,number) ;
-        CsName[i] = strdup(temp) ;
+        char name[100] ;
+        getUniqueName(temp,name) ;
+        CsName[i] = strdup(name) ;
     }
 
     // make ClName
@@ -56,7 +55,8 @@ void SocketMutexTest::SetUpTestCase()
 
     // connect to sdb
 	int rc = SDB_OK ;
-	rc = sdbConnect(HostName,SvcName,Usr,Passwd,&db) ;
+	getConf() ;
+	rc = sdbConnect(HOSTNAME,SVCNAME,USER,PASSWD,&db) ;
 	ASSERT_EQ(rc,SDB_OK)<<"fail to connect sdb in the beginning" ;
 
 	// create cs and cl
@@ -257,7 +257,7 @@ TEST_F(SocketMutexTest,cl)
 	}
 	sdbReleaseConnection( db ) ;
 	// after test,reconnect and get cs cl
-    rc = sdbConnect(HostName,SvcName,Usr,Passwd,&db) ;
+    rc = sdbConnect(HOSTNAME,SVCNAME,USER,PASSWD,&db) ;
     EXPECT_EQ(rc,SDB_OK) ;
 	for(int i=0;i<ThreadNum;++i)
 	{
@@ -304,7 +304,7 @@ TEST_F(SocketMutexTest,disconnect)
         delete workers[i] ;
     }
     // after test,reconnect and get cs cl
-	rc = sdbConnect(HostName,SvcName,Usr,Passwd,&db) ;
+	rc = sdbConnect(HOSTNAME,SVCNAME,USER,PASSWD,&db) ;
 	EXPECT_EQ(rc,SDB_OK) ;
 	for(int i=0;i<ThreadNum;++i)
 	{

@@ -1,4 +1,4 @@
-/************************************************************************
+﻿/************************************************************************
 *@Description : Test lob abnormal use:not exist lob,not closed lob,write
 *               lob with read mode.
 *@Modify List :
@@ -8,11 +8,7 @@
 #include <gtest/gtest.h>
 #include <client.h>
 #include <malloc.h>
-
-#define HOST      "localhost"
-#define SVCNAME   "11810"
-#define USR       ""
-#define PASSWD    ""
+#include "../common/testcommon.h"
 
 TEST( lobAbnormalTest, NotExistLob )
 {
@@ -20,13 +16,16 @@ TEST( lobAbnormalTest, NotExistLob )
    sdbCSHandle cs         = SDB_INVALID_HANDLE ;
    sdbCSHandle cl         = SDB_INVALID_HANDLE ;
    sdbLobHandle lob       = SDB_INVALID_HANDLE ;
-   const char* CsName      = "lobAbnormalTestCs" ;
-   const char* ClName      = "lobAbnormalTestCl" ;
+   const char* CsModName  = "lobAbnormalTestCs" ;
+   char CsName[100] ;
+   const char* ClName     = "lobAbnormalTestCl" ;
    int rc = SDB_OK ;
    
    // connect sdb,create cs cl
-   rc = sdbConnect( HOST, SVCNAME, USR, PASSWD, &db ) ;
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+   getUniqueName( CsModName,CsName ) ;
    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
    rc = sdbCreateCollection( cs, ClName, &cl ) ;
@@ -72,13 +71,16 @@ TEST( lobAbnormalTest, NotClosedLob )
    sdbCSHandle cs         = SDB_INVALID_HANDLE ;
    sdbCSHandle cl         = SDB_INVALID_HANDLE ;
    sdbLobHandle lob       = SDB_INVALID_HANDLE ;
-   const char* CsName      = "lobAbnormalTestCs" ;
-   const char* ClName      = "lobAbnormalTestCl" ;
+   const char* CsModName  = "lobAbnormalTestCs" ;
+   char CsName[100] ;
+   const char* ClName     = "lobAbnormalTestCl" ;
    int rc = SDB_OK ;
    
    // connect sdb,create cs cl
-   rc = sdbConnect( HOST, SVCNAME, USR, PASSWD, &db ) ;
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+   getUniqueName( CsModName,CsName ) ;
    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
    rc = sdbCreateCollection( cs, ClName, &cl ) ;
@@ -131,13 +133,16 @@ TEST( lobAbnormalTest, WriteLobWithReadMode )
    sdbCSHandle cs         = SDB_INVALID_HANDLE ;
    sdbCSHandle cl         = SDB_INVALID_HANDLE ;
    sdbLobHandle lob       = SDB_INVALID_HANDLE ;
-   const char* CsName     = "lobAbnormalTestCs" ;
+   const char* CsModName  = "lobAbnormalTestCs" ;
+   char CsName[100] ;
    const char* ClName     = "lobAbnormalTestCl" ;
    int rc = SDB_OK ;
    
    // connect sdb,create cs cl
-   rc = sdbConnect( HOST, SVCNAME, USR, PASSWD, &db ) ;
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+   getUniqueName( CsModName,CsName ) ;
    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
    ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
    rc = sdbCreateCollection( cs, ClName, &cl ) ;

@@ -6,9 +6,10 @@
 #include <stdlib.h>
 #include <gtest/gtest.h>
 #include "client.h"
-#include "../testcommon.h"
+#include "../common/testcommon.h"
 
-char CSNAME[] = "c_driver_test";
+const char* CsModName = "c_driver_test";
+char CSNAME[100] ;
 char CLNAME[] = "decimal";
 
 TEST( decimal, zero )
@@ -533,6 +534,7 @@ TEST( decimal, append )
    
    //create cl
    sdbCollectionHandle cl = 0;
+   getUniqueName( CsModName,CSNAME ) ;
    rc = createCollection( &cl, CSNAME, CLNAME );   
    ASSERT_EQ( SDB_OK, rc );
    
@@ -630,6 +632,7 @@ TEST( decimal, boundary ) //str
    
    //create cl
    sdbCollectionHandle cl = 0;
+   getUniqueName( CsModName,CSNAME ) ;
    rc = createCollection( &cl, CSNAME, CLNAME );   
    ASSERT_EQ( SDB_OK, rc );
    

@@ -22,7 +22,7 @@ clientStaticLib = [
        ]
 
 testCommonFiles = [
-      "testcommon.c","impWorker.cpp"
+      "./common/testcommon.c","./common/impWorker.cpp"
       ]
 
 clientStaticLibFile = join( client_lib_dir, 'libstaticsdbc.a' )

@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <string.h>
 #include "client.h"
-#include "../testcommon.h"
+#include "../common/testcommon.h"
 #include <unistd.h>
 #include <netdb.h>
 #include <errno.h>
@@ -22,7 +22,8 @@ void checkServer()
    int rc;
    // connect to coord
    sdbConnectionHandle db = 0;
-   rc = sdbConnect( HOST, SERVER, "", "", &db );
+   getConf() ;
+   rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db );
    ASSERT_GE(rc, 0) << "connect coord error";
 }
 

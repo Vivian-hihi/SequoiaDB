@@ -7,8 +7,8 @@
 **************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
-#include "../impWorker.hpp"
-#include "../testcommon.h"
+#include "../common/impWorker.hpp"
+#include "../common/testcommon.h"
 
 using import::Worker ;
 using import::WorkerRoutine ;
@@ -34,7 +34,8 @@ void ConcurrentTest::SetUpTestCase()
 {
    // connect to sdb
 	int rc = SDB_OK ;
-	rc = sdbConnect( HOST, SERVER, USER, PASSWD, &db ) ;
+	getConf() ;
+	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
 	// make domain name
 	for( int i = 0;i < ThreadNum;i++ )
