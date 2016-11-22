@@ -58,22 +58,21 @@ void getConf()
    string line ;
    while( getline(ifs,line) )
    {
-      istringstream is(line) ;
-      string str ;
-      is>>str ;
+      int pos = line.find_first_of("=") ;
+      string str = line.substr(0,pos) ;
       if(str == "HOSTNAME")
       {
-         is>>str>>HOSTNAME ;
+         HOSTNAME = line.substr(pos+1) ;
          continue ;
       }
       if(str == "SVCNAME")
       {
-         is>>str>>SVCNAME ;
+         SVCNAME = line.substr(pos+1) ;
          continue ;
       }
       if(str == "CHANGEDPREFIX")
       {
-         is>>str>>CHANGEDPREFIX ;
+         CHANGEDPREFIX = line.substr(pos+1) ;
          continue ;
       }
    }
