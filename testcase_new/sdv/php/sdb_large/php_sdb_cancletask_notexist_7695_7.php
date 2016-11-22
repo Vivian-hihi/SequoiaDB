@@ -9,6 +9,7 @@
    define('Cur_Path', dirname(__FILE__));
    include_once Cur_Path.'/lib/task.php';
    include_once Cur_Path.'/lib/comm.php';
+   include_once Cur_Path.'/../global.php';
 class taskTest extends PHPUnit_Framework_TestCase
 {
     private static $db;
@@ -17,31 +18,46 @@ class taskTest extends PHPUnit_Framework_TestCase
     private static $cl;
     private static $needtest;
     private static $fullname;
+    private static $skipTestCase = false ;
     
     private static function loadData()
     {
        $number = 10000000;
        $batchSize = 1000;
        $docs = array();
+       $id = 0;
        for ($i = 0; $i < $number; $i += $batchSize)
        {
           for ($j = 0; $j < $batchSize ; $j++)
           {
              $doc = array();
-             $doc['_id'] = $j;
-             $doc['a'] = $j;
+             $doc['_id'] = $id;
+             $doc['a'] = $id;
              $doc['b'] = 1;
              $doc['d'] = 'zzz';
-             self::$cl->insert(doc);
+             $id = $id + 1;
+             //self::$cl->insert(doc);
           } 
           
-          //self::$cl->bulkInsert($docs);
+          $err = self::$cl->bulkInsert($docs) ;
+          if( $err['errno'] != 0 ) {
+            self::$skipTestCase === true ;
+            echo "Failed to insert records, error code: ".$err['errno'] ;
+            return ;
+          }
        }
     }
     
     private static function getSrcGroup($fullname)
     {
        $cursor = self::$db -> snapshot(SDB_SNAP_CATALOG, array('Name' => $fullname));
+       $err = $db -> getError() ;
+       if ($err['errno'] != 0)
+       {
+          self::$skipTestCase === true ;
+          echo "Failed to call snapshot, error code: ".$err['errno'] ;
+          return;
+       }
        while ($record = $cursor->next())
        {
           return $record['CataInfo']['GroupName'];
@@ -53,6 +69,13 @@ class taskTest extends PHPUnit_Framework_TestCase
     private static function getDestGroup($groupname)
     {
         $cursor = self::$db->list(SDB_LIST_GROUPS);
+        $err = $db -> getError() ;
+        if ($err['errno'] != 0)
+        {
+          self::$skipTestCase === true ;
+          echo "Failed to call snapshot, error code: ".$err['errno'] ;
+          return;
+        }
         while ($record = $cursor->next())
         {
            $name = $record['GroupName'];
@@ -71,6 +94,7 @@ class taskTest extends PHPUnit_Framework_TestCase
         if (empty($srcname) ||
             empty($destname))
         {
+           self::$skipTestCase = true ;
            return;
         }
         else
@@ -82,6 +106,10 @@ class taskTest extends PHPUnit_Framework_TestCase
     
     protected function setUp()
     {
+       if( self::$skipTestCase === true )
+       {
+          $this -> markTestSkipped( "connect failed" );
+       }
        if (common::IsStandlone(self::$db))
        {
           $this->markTestSkipped('database is standlone'); 
@@ -91,15 +119,44 @@ class taskTest extends PHPUnit_Framework_TestCase
     public static function setUpBeforeClass()
     {
        self::$db = new SequoiaDB();
-       $err = self::$db -> connect('localhost:11810');
+       
+       $err = self::$db -> connect(globalParameter::getHostName(), 
+                                   globalParameter::getCoordPort());
+       if ( $err['errno'] != 0 )
+       {
+          echo "Failed to connect database, error code: ".$err['errno'] ;
+          self::$skipTestCase = true ;
+          return;
+       }                                   
        if (common::IsStandlone(self::$db)) return;
        
        self::$task = new Task(self::$db);
        $rnd = mt_rand(0,1000); 
-       $name = 'php_test_'.$rnd;
+       $name = globalParameter::getChangedPrefix().$rnd;
        $err = self::$db ->createCS($name);
+       if( $err['errno'] != 0 ) 
+       {
+           echo "Failed to call createCS, error code: ".$err['errno'] ;
+           self::$skipTestCase = true ;
+           return ;
+       }
+       
        self::$cs = self::$db -> selectCS($name);
+       $err = self::$db -> getError() ;
+       if( $err['errno'] != 0 ) 
+       {
+          echo "Failed to call selectCS, error code: ".$err['errno'] ;\
+          self::$skipTestCase = true ;
+          return;
+       }
+       
        self::$cl = self::$cs->createCL($name, json_encode(array('ShardingType' => 'hash', 'ShardingKey' =>array('_id' => 1))));
+       $err = self::$db -> getError() ;
+       if( $err['errno'] != 0 ) {
+          echo "Failed to create collection, error code: ".$err['errno'] ;
+          self::$skipTestCase = true ;
+          return ;
+       }
        self::$fullname = $name.'.'.$name;
        self::loadData();
        $srcgroupname = self::getSrcGroup(self::$fullname);
@@ -107,7 +164,14 @@ class taskTest extends PHPUnit_Framework_TestCase
        
        self::asyncSplit($srcgroupname, $destgroupname);
     }
-
+    
+    public function setUp()
+    {
+       if( self::$skipTestCase === true )
+       {
+          $this -> markTestSkipped( "connect failed" );
+       }
+    }
     public function testSelectParameter()
     {
        $selector = mt_rand(0,2);
@@ -116,7 +180,6 @@ class taskTest extends PHPUnit_Framework_TestCase
     
     public function testlist()
     {
-       if (!self::$needtest) return;
        $ret = self::$task->listbycondition(json_encode(array('Name' => $fullname)));
        $this->assertEquals(true, $ret);
        
@@ -131,7 +194,6 @@ class taskTest extends PHPUnit_Framework_TestCase
     public function testWait($selector)
     {
        $taskID = self::$task->getTaskId(array('Name' => $fullname));
-       
        if ($selector == 0)
        {
           $ret = self::$task->wait(array($taskID));

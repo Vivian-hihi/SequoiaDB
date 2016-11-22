@@ -7,16 +7,33 @@
 <?php
    define('Cur_Path', dirname(__FILE__));
    include_once Cur_Path.'/lib/backuptask.php';
+   include_once Cur_Path.'/../global.php';
 class backuptest extends PHPUnit_Framework_TestCase
 {
    private static $db;
    private static $backupTask;
    private static $options;
+   private static $skipTestCase = false;
    public static function setUpBeforeClass()
    {
       self::$db = new SequoiaDB();
-      self::$db->connect('localhost:11810');
+      $coordHostName = globalParameter::getHostName();
+      $coordPort = globalParameter::getCoordPort();
+      $err = self::$db->connect($coordHostName, $coordPort);
+      if( $err['errno'] != 0 )
+      {
+         echo "Failed to connect database, error code: ".$err['errno'] ;
+         self::$skipTestCase = true;
+      }
       self::$backupTask = new BackupTask(self::$db);
+   }
+   
+   public function setUp()
+   {
+      if( self::$skipTestCase === true )
+      {
+         $this -> markTestSkipped( "connect failed" );
+      }
    }
 
    public function testbackup()
