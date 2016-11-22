@@ -1,4 +1,4 @@
-﻿/************************************************************************
+/************************************************************************
 *@Description : Test lob abnormal use:not exist lob,not closed lob,write
 *               lob with read mode.
 *@Modify List :
