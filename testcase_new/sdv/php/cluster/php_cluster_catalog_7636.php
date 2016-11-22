@@ -7,13 +7,17 @@
 <?php
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/lib/ReplicaGroup.php';
+include_once Cur_Path.'/../global.php';
+
 class cataLogGroupTest extends PHPUnit_Framework_TestCase 
 {
    private $db;
    public function setUp()
    {
+      $coordHostName = globalParameter::getHostName();
+      $coordPort = globalParameter::getHostName();
       $this->db = new Sequoiadb();
-      $err = self::$db -> connect(globalParameter::getHostName(), 
+      $err = $this->db -> connect(globalParameter::getHostName(), 
                                   globalParameter::getCoordPort()) ;
       if ( $err['errno'] != 0 )
       {
@@ -50,7 +54,7 @@ class cataLogGroupTest extends PHPUnit_Framework_TestCase
       $this->assertEquals( 0, $err ) ;
       
       $nodes = $group->getNodes();
-      $this->assertEquals( 1,  count($nodes)) ;
+      $this->assertEquals( 1,  count($nodes) ) ;
       $node = $nodes[0];
       $this->assertEquals( 'r520-2',  $node->getHostName()) ;
       $this->assertEquals( '30000',  $node->getServiceName()) ;

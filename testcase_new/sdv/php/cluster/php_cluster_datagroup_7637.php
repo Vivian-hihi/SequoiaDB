@@ -7,7 +7,7 @@
 <?php
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/lib/ReplicaGroup.php';
-include_once Cur_Path.'../global.php';
+include_once Cur_Path.'/../global.php';
 class dataGroupTest extends PHPUnit_Framework_TestCase
 {
    private static $db;

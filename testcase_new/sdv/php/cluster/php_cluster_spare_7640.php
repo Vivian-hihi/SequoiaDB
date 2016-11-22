@@ -5,14 +5,16 @@
         2016-4-27 wenjing wang init
 ****************************************************/
 <?php
-define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/lib/ReplicaGroupMgr.php';
+ define('Cur_Path', dirname(__FILE__));
+ include_once Cur_Path.'/lib/ReplicaGroupMgr.php';
+ include_once Cur_Path.'/../global.php';
 
 class spareRGTest extends PHPUnit_Framework_TestCase
 {
    private static $db;
    private static $group;
    private static $node;
+   private static $skipTestCase = false;
    public static function setUpBeforeClass()
    {
       echo "enter setUpBeforeClass\n";
@@ -26,8 +28,22 @@ class spareRGTest extends PHPUnit_Framework_TestCase
          return;
       } 
       self::$db->setSessionAttr(array('PreferedInstance' => 'm' )) ; 
-      self::$group = new ReplicaGroup(self::$db, "SYSSpare");
+      self::$group = new ReplicaGroup(self::$db, 'SYSSpare' );
+      if ( self::$group->getError()['errno'] != 0 )
+      {
+         echo "Failed to getGroup, error code: ".$err['errno'] ;
+         self::$skipTestCase = true ;
+         return;
+      }
       echo "leave setUpBeforeClass\n";
+   }
+   
+   public function setUp()
+   {
+      if( self::$skipTestCase === true )
+      {
+         $this -> markTestSkipped( "connect failed" );
+      }
    }
    
    

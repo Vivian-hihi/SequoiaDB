@@ -29,8 +29,8 @@ class ReplicaGroup
           var_dump( $groupName ) ;
           $this->group = $this->db->getGroup( $groupName ) ;
           if( empty( $this->group ) ) {
-             $this->err = $db -> getError() ;
-             echo "Failed to call getGroup, error code: ".$err['errno'] ;
+             $this->err = $this->db -> getError() ;
+             echo "Failed to call getGroup, error code: ".$this->err['errno'] ;
              return ;
           }
        }
@@ -61,7 +61,7 @@ class ReplicaGroup
     
     public function reelect( $options = NULL )
     {
-        $err = $this->group->reelect( options );
+        $err = $this->group->reelect( $options );
         return $err['errno'];
     }
     
@@ -74,7 +74,8 @@ class ReplicaGroup
     public function getNodes()
     {
         $detail = $this->group->getDetail();
-        $this->err = $db -> getError();
+        var_dump( $detail );
+        $this->err = $this->db -> getError();
         if ($this->err['errno'] != 0 ) return NULL;
         
         $groupName = $detail['GroupName'];
@@ -82,13 +83,17 @@ class ReplicaGroup
         {
            return NULL;
         }
-        
+        echo "&&&&&&&&&&&&&&&&&&&&&&&&"; 
         $nodesOfGroup = $detail['Group'];
-        $this->PrimaryNode = $detail['PrimaryNode'];
+        if ( array_key_exists('PrimaryNode', $detail) )
+        {
+           $this->PrimaryNode = $detail['PrimaryNode'];
+        }
         for ( $i=0; $i<count($nodesOfGroup); ++$i )
         {
            $tmp = $nodesOfGroup[$i];
-           $repliNode = new ReplicaNode( $this->group, 
+           $repliNode = new ReplicaNode($this->db,
+                                        $this->group, 
                                         $tmp['HostName'], 
                                         $tmp['Service'][0]['Name'],
                                         $tmp['dbpath'] );
@@ -229,8 +234,9 @@ class ReplicaGroup
     
     public function addNode( $hostName, $serviceName, $dbpath, $cfg = NULL )
     {
+        echo "addNode***************8";
         var_dump( $this->group );
-        $repliNode = new ReplicaNode( $this->group, $hostName, $serviceName,
+        $repliNode = new ReplicaNode( $this->db, $this->group, $hostName, $serviceName,
                                      $dbpath, $cfg );
         $err = $repliNode->create();
         if ($err == 0)

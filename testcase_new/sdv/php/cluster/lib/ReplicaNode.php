@@ -30,7 +30,8 @@ class ReplicaNode
        $this->hostName =  $hostName ;
        $this->serviceName =  $srvName ; 
        $this->dbpath =  $dbpath ;
-       if ( empty( $node ) )
+       var_dump( $this->group );
+       if ( empty( $node ) && !empty( $this->group ))
        {
           $this->node = $this->group->getNode( $this->hostName.':'.$this->serviceName );
           $this->err = $this->db->getError() ;
