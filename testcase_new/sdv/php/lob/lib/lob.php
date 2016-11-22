@@ -7,16 +7,16 @@
 <?php
 class Lob
 {
-   private $db;
-   private $cl;
-   private $lob;
-   private $wbuf;
-   private $rbuf;
+   private $db ;
+   private $cl ;
+   private $lob ;
+   private $wbuf ;
+   private $rbuf ;
       
-   public function __construct($db, $cl)
+   public function __construct( $db, $cl )
    {
-      $this->db = $db;
-      $this->cl = $cl;
+      $this->db = $db ;
+      $this->cl = $cl ;
    }
    
    public function getWContent()
@@ -26,35 +26,35 @@ class Lob
    
    public function getRContent()
    {
-      return $this->rbuf;
+      return $this->rbuf ;
    }
 
-   public function open($oid, $mode)
+   public function open( $oid, $mode )
    {
-      $this->lob = $this->cl->openLob($oid, $mode);
-      $err = $this->db->getError();
-      return $err['errno'];
+      $this->lob = $this->cl->openLob( $oid, $mode ) ;
+      $err = $this->db->getError() ;
+      return $err['errno'] ;
    }
    
    public function remove($oid)
    {
-      $err = $this->cl->removeLob($oid);
-      return $err['errno'];
+      $err = $this->cl->removeLob( $oid ) ;
+      return $err['errno'] ;
    }
    
-   private function getRandomStr($len)
+   private function getRandomStr( $len )
    {
-      $str="";
-      for ($i=0; $i<$len; $i++)
+      $str = "" ;
+      for ( $i=0 ; $i<$len ; $i++ )
       {
-         $val = mt_rand(33, 126);
-         $ch = chr($val);
-         $str=$str.$ch;
+         $val = mt_rand( 33, 126 ) ;
+         $ch = chr( $val ) ;
+         $str=$str.$ch ;
       }
-      return $str;
+      return $str ;
    }
 
-   public function write($len)
+   public function write( $len )
    {    
      /* if (empty($this->lob))
       {
@@ -62,53 +62,53 @@ class Lob
          $this->lob = new SequoiaLob();
       }*/
       
-      $str = $this->getRandomStr($len);
-      $err = $this->lob->write($str);
+      $str = $this->getRandomStr( $len ) ;
+      $err = $this->lob->write( $str ) ;
       if ($err['errno'] == 0)
       {
-         $this->wbuf = $this->wbuf.$str;
+         $this->wbuf = $this->wbuf.$str ;
       }
        
-      return $err['errno'];
+      return $err['errno'] ;
    }
    
-   public function read($len=0)
+   public function read( $len = 0 )
    {  
-      if (empty($this->lob))
+      if ( empty( $this->lob ) )
       {
-         $this->lob = new SequoiaLob();
+         $this->lob = new SequoiaLob() ;
       }
       
-      if ($len == 0)
+      if ( $len == 0 )
       {
-         $len = $this->lob->getSize();
+         $len = $this->lob->getSize() ;
       }
-      $buf = $this->lob->read($len);
+      $buf = $this->lob->read( $len ) ;
    
-      $err = $this->db->getError();
-      if ($err['errno'] == 0)
+      $err = $this->db->getError() ;
+      if ( $err['errno'] == 0 )
       {
-         $this->rbuf = $this->rbuf.$buf;
+         $this->rbuf = $this->rbuf.$buf ;
       }
-      return $err['errno'];
+      return $err['errno'] ;
    }
   
-   public function seek($offset, $pos)
+   public function seek( $offset, $pos )
    {
-      $err = $this->lob->seek($offset, $pos);
-      return $err['errno'];
+      $err = $this->lob->seek( $offset, $pos ) ;
+      return $err['errno'] ;
    }
    
    public function closeLob()
    {
-      $err = $this->lob->close();
-      return $err['errno'];
+      $err = $this->lob->close() ;
+      return $err['errno'] ;
    }
    
    public function getCreateTime()
    {
-      $time = $this->lob->getCreateTime();
-      return $time;
+      $time = $this->lob->getCreateTime() ;
+      return $time ;
    }
 }
 ?>
