@@ -1,4 +1,4 @@
-﻿/************************************************************************
+/************************************************************************
 *@Description : Test lob basic operation: write lob, read lob, seek read
 *               lob and drop lob in collection.
 *               Test get lob create time.
