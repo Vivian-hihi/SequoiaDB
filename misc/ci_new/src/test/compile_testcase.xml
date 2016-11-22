@@ -47,7 +47,7 @@
       </sequential>
    </macrodef>
    
-   <macrodef name="compilemongocccase">
+   <macrodef name="compilemongoccase">
       <attribute name="srcdir"/>
       <attribute name="dbdir"/>
       <sequential>         
