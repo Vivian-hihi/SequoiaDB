@@ -28,12 +28,13 @@
       <tstamp>
          <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
-      <stopwatch name="total_time"/>
       
       <!--excute-->      
       <hostinfo prefix="host" />
       <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}.xml"/>
       
+      <echo>export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${testcase_dir}/lib</echo>
+      <echo>export MONGOC_TEST_HOST=localhost:11817</echo>
       <echo>exec cmd: ${testcase_dir}/test-mongo -f -F ${report_fullname}</echo>
       <exec executable="./test-mongo" 
             dir="${testcase_dir}" 
@@ -42,7 +43,7 @@
             resultproperty="rc" 
             failonerror="false">
          <arg line=" -f -F ${report_fullname}" />
-         <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${INSTALL_DIR}/lib" />       
+         <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${testcase_dir}/lib" />       
          <env key="MONGOC_TEST_HOST" value="localhost:11817" />
       </exec>
    
@@ -52,11 +53,10 @@
       <tstamp>
          <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
-
-      <echo message="${screen_output}" />
+      
+      <echo message="screen_output: ${screen_output}" />
       <echo message="begin at ${begin_time}, end at ${end_time}" />
-      <stopwatch name="total_time" action="total"/>
-
+      
       <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}" />
    </target>
     
