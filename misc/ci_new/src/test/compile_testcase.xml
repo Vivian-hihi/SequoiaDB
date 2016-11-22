@@ -39,7 +39,7 @@
             <arg line="${scons_cmd}" />
          </exec>
          <delete includeemptydirs="true" failonerror="true">
-            <fileset dir="@{srcdir}" includes="**/*" excludes="build_test/**/*,testcase.conf;driver.conf"/>
+            <fileset dir="@{srcdir}" includes="**/*" excludes="build_test/**/*,testcase.conf"/>
          </delete>
          <move todir="@{srcdir}">
             <fileset dir="@{srcdir}/build_test" />
