@@ -14,7 +14,7 @@ class evalJsTest extends PHPUnit_Framework_TestCase
     protected function setUp()
     {
        $this->db = new Sequoiadb() ;
-       $err = self::$db->connect( globalParameter::getHostName() , 
+       $err = $this->db->connect( globalParameter::getHostName() , 
                                   globalParameter::getCoordPort() ) ;
        $this->assertEquals( 0, $err['errno'] ) ;
        if ( common::IsStandlone( $this->db ) ) 

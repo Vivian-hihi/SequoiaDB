@@ -17,7 +17,7 @@ class Task
    {
       $num = 0 ;
       $cursor = $this->db->listTask() ;
-      $err = $db -> getError() ;
+      $err = $this->db -> getError() ;
       if ( $err['errno'] != 0 )
       {
          echo "Failed to call listTask, error code: ".$err['errno'] ;
@@ -34,7 +34,7 @@ class Task
    {
       $exist = false ;
       $cursor = $this->db->listTask( $condition ) ;
-      $err = $db -> getError() ;
+      $err = $this->db -> getError() ;
       if ( $err['errno'] != 0 )
       {
          echo "Failed to call listTask, error code: ".$err['errno'] ;
@@ -51,7 +51,7 @@ class Task
    {
       $taskID = -1 ;
       $cursor = $this->db->listTask( $condition ) ;
-      $err = $db -> getError() ;
+      $err = $this->db -> getError() ;
       if ( $err['errno'] != 0 )
       {
          echo "Failed to call listTask, error code: ".$err['errno'] ;
