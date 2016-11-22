@@ -110,7 +110,7 @@
          <!--report-->
          <hostinfo prefix="host" />
          <echo file="@{report}" 
-               message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;@{suitname}&quot; type=&quot;${TESTCASE_TYPE}&quot; deploy=&quot;${DEPLOY_TYPE}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
+               message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;@{suitname}&quot; type=&quot;${TESTCASE_TYPE}&quot; deploy=&quot;${DEPLOY_MODE}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
          <if>
             <equals arg1="${rc}" arg2="0" />
