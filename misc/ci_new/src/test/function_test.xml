@@ -101,11 +101,12 @@
             <case value="tdd_c">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
-            <case value="tdd_mongoc">
-               <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
-            </case>
             <case value="sdv_c">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+            </case>
+            
+            <case value="tdd_mongoc">
+               <compilecase type="mongoc" srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
             
             <case value="tdd_cpp">
