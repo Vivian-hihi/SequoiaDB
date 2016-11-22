@@ -9,20 +9,34 @@
    define('Cur_Path', dirname(__FILE__));
    include_once Cur_Path.'/lib/task.php';
    include_once Cur_Path.'/lib/comm.php';
+   include_once Cur_Path.'/../global.php';
 class taskTest extends PHPUnit_Framework_TestCase
 {
     private static $db;
     private static $task;
+    private static $skipTestCase = false;
     public static function setUpBeforeClass()
     {
        self::$db = new SequoiaDB();
-       $err = self::$db -> connect('localhost:11810');
+       $err = self::$db->connect( globalParameter::getHostName() , 
+                                  globalParameter::getCoordPort() ) ;
+       if ( $err['errno'] != 0 )
+       {
+         echo "Failed to connect database, error code: ".$err['errno'] ;
+         self::$skipTestCase = true ;
+         return ;
+       }                                    
        self::$task = new Task(self::$db);
     }
     
     public function setUp()
     {
-       if (common::IsStandlone(self::$db))
+       if ( self::$skipTestCase == true )
+       {
+         $this->markTestSkipped( 'connect failed' );
+       }
+       
+       if ( common::IsStandlone(self::$db) )
        {
           $this->markTestSkipped('database is standlone'); 
        }

@@ -7,17 +7,19 @@
 <?php
    define('Cur_Path', dirname(__FILE__));
    include_once Cur_Path.'/lib/comm.php';
+   include_once Cur_Path.'/../global.php';
 class evalJsTest extends PHPUnit_Framework_TestCase
 {
     protected $db;
     protected function setUp()
     {
-       $this->db = new Sequoiadb();
-       $err = $this->db->connect( "localhost:11810" );
+       $this->db = new Sequoiadb() ;
+       $err = self::$db->connect( globalParameter::getHostName() , 
+                                  globalParameter::getCoordPort() ) ;
        $this->assertEquals( 0, $err['errno'] ) ;
-       if (common::IsStandlone($this->db)) 
+       if ( common::IsStandlone( $this->db ) ) 
        {
-          $this->markTestSkipped('database is standlone'); 
+          $this->markTestSkipped('database is standlone') ; 
        }
     }
     
