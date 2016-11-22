@@ -98,8 +98,12 @@ class SequoiaDB_Domain_Test extends PHPUnit_Framework_TestCase
          $this -> assertEquals( 0, $err['errno'], 'listDomain错误' ) ;
          $this -> assertNotEmpty( $cursor, 'listDomain错误' ) ;
          $num = 0 ;
-         while( $record = $cursor -> next() ) {
-            ++$num ;
+         while( $record = $cursor -> next() )
+         {
+            if( $record['Name'] == 'php_driver_my_domain' )
+            {
+               ++$num ;
+            }
          }
          $this -> assertEquals( 1, $num, 'listDomain错误' ) ;
       }
