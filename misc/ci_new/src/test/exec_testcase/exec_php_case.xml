@@ -21,10 +21,10 @@
       <prefix resultproperty="prefix"/>
       <replaceregexp file="${testcase_dir}/phpunit.xml"
                      match='"CHANGEDPREFIX" value="(.*)"' 
-                     match='"CHANGEDPREFIX" value="${prefix}"' 
+                     replace='"CHANGEDPREFIX" value="${prefix}"' 
                      flags="g" 
                      byline="true" 
-                     encoding="utf-8">
+                     encoding="utf-8"/>
             
       <for param="testsuit">
          <path>
@@ -108,15 +108,13 @@
                         replace='&lt;testcase name="\2.\1" class="\2" file' 
                         flags="g" 
                         byline="true" 
-                        encoding="utf-8">            
-         </replaceregexp>
+                        encoding="utf-8"/>            
          <replaceregexp file="@{report}"
                         match='&lt;testcase n' 
                         replace='&lt;testcase classname="@{layer}" n' 
                         flags="g" 
                         byline="true" 
-                        encoding="utf-8">           
-         </replaceregexp>
+                        encoding="utf-8"/>
       </sequential>
    </macrodef>
 </project>
