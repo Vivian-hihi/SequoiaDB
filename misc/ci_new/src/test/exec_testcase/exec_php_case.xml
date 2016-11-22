@@ -18,13 +18,18 @@
       <property file="${basedir}/src/conf/test.conf" />
       <property name="sdbdir" value="${INSTALL_DIR}/bin/sdb" />            
       
-      <prefix resultproperty="prefix"/>
-      <replaceregexp file="${testcase_dir}/phpunit.xml"
-                     match='"CHANGEDPREFIX" value="(.*)"' 
-                     replace='"CHANGEDPREFIX" value="${prefix}"' 
-                     flags="g" 
-                     byline="true" 
-                     encoding="utf-8"/>
+      <if>
+         <available file="${testcase_dir}/phpunit.xml"/>
+         <then>
+            <prefix resultproperty="prefix"/>
+            <replaceregexp file="${testcase_dir}/phpunit.xml"
+                           match='"CHANGEDPREFIX" value="(.*)"' 
+                           replace='"CHANGEDPREFIX" value="${prefix}"' 
+                           flags="g" 
+                           byline="true" 
+                           encoding="utf-8"/>
+         </then>
+      </if>    
             
       <for param="testsuit">
          <path>
@@ -73,9 +78,17 @@
             <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
          </tstamp>       
 
+         <if>
+            <available file="@{suitfullname}/../phpunit.xml"/>
+            <then>
+               <var name="conf" value="@{suitfullname}/../phpunit.xml"/>
+            </then>
+            <else>
+               <var name="conf" value=""/>
+            </else>
+         </if>
          <var name="phpbin" value="@{dbdir}/tools/server/php/bin/php-bin"/>
          <var name="phpunit" value="@{suitfullname}/../tools/phpunit.phar"/>
-         <var name="conf" value="@{suitfullname}/../phpunit.xml"/>
          <var name="cmd" value="${phpunit} -c ${conf} --log-junit @{report} @{suitfullname}"/>
          <echo message="exec cmd: ${phpbin} ${cmd}"/>
          
