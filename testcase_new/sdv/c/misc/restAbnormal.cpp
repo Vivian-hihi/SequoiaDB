@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <string.h>
 #include "client.h"
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 #include <unistd.h>
 #include <netdb.h>
 #include <errno.h>

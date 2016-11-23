@@ -8,7 +8,7 @@
 #include <client.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 char *CsModName = "c_driver_test" ;
 char CsName[100] ;

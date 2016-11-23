@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <gtest/gtest.h>
 #include "client.h"
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 const char* CsModName = "c_driver_test";
 char CSNAME[100] ;

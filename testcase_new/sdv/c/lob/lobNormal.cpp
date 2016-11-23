@@ -11,7 +11,7 @@
 #include <malloc.h>
 #include <time.h>
 #include <sys/time.h>
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 
 TEST( lobNormalTest, BasicOperation )

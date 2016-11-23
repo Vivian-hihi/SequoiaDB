@@ -9,7 +9,7 @@
 #include <client.h>
 #include <stdio.h>
 #include "../common/impWorker.hpp"
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 #define CHECK_RC(rc,msg) if(rc != SDB_OK) { printf("%s,rc=%d\n",msg,rc) ; return rc ; } ;
 

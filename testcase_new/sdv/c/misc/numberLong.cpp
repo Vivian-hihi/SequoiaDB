@@ -10,7 +10,7 @@
 #include <string.h>
 #include "jstobs.h"
 #include "client.h"
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 const char* CsModName = "c_driver_test";
 char CSNAME[100] ;

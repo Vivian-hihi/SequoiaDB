@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <client.h>
 #include "../common/impWorker.hpp"
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 using import::Worker ;
 using import::WorkerRoutine ;

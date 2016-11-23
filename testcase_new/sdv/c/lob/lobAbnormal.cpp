@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 #include <client.h>
 #include <malloc.h>
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 TEST( lobAbnormalTest, NotExistLob )
 {

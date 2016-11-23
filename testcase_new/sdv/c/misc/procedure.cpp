@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 #include <string.h>
 #include "client.h"
-#include "../common/testcommon.h"
+#include "../common/testcommon.hpp"
 
 void* create_pcd(void *arg);
 void* remove_pcd(void *arg);
