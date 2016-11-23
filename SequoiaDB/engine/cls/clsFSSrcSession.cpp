@@ -2407,6 +2407,22 @@ namespace engine
       _pFreezingWindow->registerCL( clFullName, _ntyOverTime ) ;
       PD_LOG( PDEVENT, "Session[%s]: Begin to block all write operations "
               "of collection[%s]", sessionName(), clFullName ) ;
+      /// If the collection has main collection, need to block its main
+      /// collection
+      _pCatAgent->lock_r() ;
+      clsCatalogSet *pSet = _pCatAgent->collectionSet( clFullName ) ;
+      if ( pSet )
+      {
+         _mainCLName = pSet->getMainCLName() ;
+      }
+      _pCatAgent->release_r() ;
+      if ( !_mainCLName.empty() )
+      {
+         _pFreezingWindow->registerCL( _mainCLName.c_str(), _ntyOverTime ) ;
+         PD_LOG( PDEVENT, "Session[%s]: Begin to block all write operations "
+                 "of the main collection[%s]", sessionName(),
+                 _mainCLName.c_str() ) ;
+      }
    }
 
    INT32 _clsSplitSrcSession::_scanType() const
@@ -2622,7 +2638,7 @@ namespace engine
       _clsCatalogSet *pSet = NULL ;
       shardCB *pShard = sdbGetShardCB() ;
       UINT32 groupID = pShard->nodeID().columns.groupID ;
-      BOOLEAN sendRsp = FALSE ;
+      BOOLEAN hasSplit = FALSE ;
       INT32 rc = SDB_OK ;
       std::string mainCLName;
 
@@ -2658,12 +2674,7 @@ namespace engine
       }
       if ( !pSet || !pSet->isKeyInGroup( _rangeKeyObj, groupID ) )
       {
-         sendRsp = TRUE ;
-         _pFreezingWindow->unregisterCL( _curCollecitonName.c_str() ) ;
-         _ntyOverTime = 0 ;
-         PD_LOG( PDEVENT, "Session[%s]: End to block all write operations "
-                 "of collection[%s]", sessionName(),
-                 _curCollecitonName.c_str() ) ;
+         hasSplit = TRUE ;
       }
       _pCatAgent->release_r() ;     //unlock
       if ( !mainCLName.empty() )
@@ -2678,8 +2689,23 @@ namespace engine
          }
       }
 
-      if ( sendRsp )
+      if ( hasSplit )
       {
+         _ntyOverTime = 0 ;
+         /// Unblock
+         _pFreezingWindow->unregisterCL( _curCollecitonName.c_str() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: End to block all write operations "
+                 "of collection[%s]", sessionName(),
+                 _curCollecitonName.c_str() ) ;
+         if ( !_mainCLName.empty() )
+         {
+            _pFreezingWindow->unregisterCL( _mainCLName.c_str() ) ;
+            PD_LOG( PDEVENT, "Session[%s]: End to block all write operations "
+                    "of the main collection[%s]", sessionName(),
+                    _mainCLName.c_str() ) ;
+            _mainCLName.clear() ;
+         }
+
          MsgClsFSLEndRes res ;
          res.header.header.requestID = header->requestID ;
          res.header.header.routeID = header->routeID ;
@@ -2690,6 +2716,11 @@ namespace engine
          {
             pmdGetKRCB()->getClsCB()->invalidateCata(
                _curCollecitonName.c_str() ) ;
+            if ( !mainCLName.empty() )
+            {
+               pmdGetKRCB()->getClsCB()->invalidateCata(
+                  mainCLName.c_str() ) ;
+            }
          }
       }
 
@@ -2960,6 +2991,13 @@ namespace engine
          PD_LOG( PDEVENT, "Session[%s]: End to block all write operations "
                  "of collection[%s]", sessionName(),
                  _curCollecitonName.c_str() ) ;
+      }
+      if ( !_mainCLName.empty() && _ntyOverTime > 0 )
+      {
+         _pFreezingWindow->unregisterCL( _mainCLName.c_str() ) ;
+         PD_LOG( PDEVENT, "Session[%s]: End to block all write operations "
+                 "of the main collection[%s]", sessionName(),
+                 _mainCLName.c_str() ) ;
       }
 
       // wait cleanup done
