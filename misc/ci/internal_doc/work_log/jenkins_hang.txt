@@ -20,5 +20,5 @@ OutOfMemory  Permgen space
   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                                             
 22388 root      20   0 1539m 654m  24m S    1 17.1  19:43.78 java 
 
-4、kill -9 jenkins进程，重启nohup java -jar jenkins_2.7.4.war -X:MaxPermSize=1024m &
+4、kill -9 jenkins进程，重启nohup java -XX:MaxPermSize=1024m -jar jenkins_2.7.4.war &
 
