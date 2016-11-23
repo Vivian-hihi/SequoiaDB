@@ -290,6 +290,8 @@ namespace engine
 
    INT32 _sptUsrOmaAssit::_regSocket( ossValuePtr pSock )
    {
+      SDB_ASSERT( 0 != pSock, "pSock can't be null" ) ;
+
       INT32 rc        = SDB_OK ;
       BOOLEAN hasLock = FALSE ;
       Node *p         = NULL ;
