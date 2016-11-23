@@ -223,7 +223,6 @@ namespace engine
          << "   getNodeConfigs( svcname )" << endl
          << "   setNodeConfigs( svcname, configsObj )" << endl
          << "   updateNodeConfigs( svcname, configsObj )" << endl
-         << "   stop()" << endl
          << "   close()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
