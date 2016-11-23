@@ -1,22 +1,31 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "testcommon.h"
+#include <gtest/gtest.h>
+#include <string>
+#include <vector>
+#include "testcommon.hpp"
 
-char HOSTNAME[100] ;
-char SVCNAME[100] ;
-char CHANGEDPREFIX[100] ;
+using namespace std ;
+using testing::internal::String ;
+using testing::internal::g_argvs ;
+extern vector<String> g_argvs ;
 
-char* confFile = "./common/driver.conf" ;
+// default value
+char HOSTNAME[100] = "localhost" ;
+char SVCNAME[100] = "11810" ;
+char CHANGEDPREFIX[100] = "sdv_c_test" ;
 
 INT32 createCollection( sdbCollectionHandle *cl,
                         CHAR *csName,
                         CHAR *clName )
 {
    INT32 rc = SDB_OK;
+   sdbConnectionHandle db = 0;
+   sdbCSHandle cs = 0;
+   bson clOptions;   
 
    // connect to sdb
-   sdbConnectionHandle db = 0;
    getConf() ;
    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db );
    if ( rc )
@@ -26,8 +35,7 @@ INT32 createCollection( sdbCollectionHandle *cl,
       goto error ;
    }
    
-   // create cs
-   sdbCSHandle cs = 0;   
+   // create cs   
    rc = sdbCreateCollectionSpace( db, csName, 65536, &cs );
    if( SDB_DMS_CS_EXIST == rc )
    {
@@ -40,7 +48,6 @@ INT32 createCollection( sdbCollectionHandle *cl,
    }
    
    // create cl
-   bson clOptions;
    bson_init( &clOptions );
    bson_append_int( &clOptions, "ReplSize", 0 );
    bson_finish( &clOptions );
@@ -83,45 +90,26 @@ BOOLEAN isStandalone( sdbConnectionHandle db )
 
 void getConf()
 {
-    FILE *fp ;
-    fp = fopen(confFile,"rt") ;
-    if(fp == NULL)
+    printf( "Print command args:\n" ) ;
+    for( int i = 0;i < g_argvs.size();i++ )
+      printf( "%s ",g_argvs[i].c_str() ) ;
+    printf( "\n" ) ;
+    
+    for( int i = 0;i < g_argvs.size();i++ )
     {
-        printf("Cannot open file driver.conf.Use default value.\n") ;
-		strcpy(HOSTNAME,"localhost") ;
-		strcpy(SVCNAME,"11810") ;
-		strcpy(CHANGEDPREFIX,"sdv_c_test") ;
-		printf("HostName: %s\n",HOSTNAME) ;
-    	printf("SvcName: %s\n",SVCNAME) ;
-    	printf("CHANGEDPREFIX: %s\n",CHANGEDPREFIX) ;
-        return ;
+      String para = g_argvs[i] ;
+      if( para == "--hostname" || para == "-n" )
+         strcpy( HOSTNAME,g_argvs[i+1].c_str() ) ;
+      else if( para == "--svcname" || para == "-s" )
+         strcpy( SVCNAME,g_argvs[i+1].c_str() ) ;
+      else if( para == "--changedprefix" || para == "-c" )
+         strcpy( CHANGEDPREFIX,g_argvs[i+1].c_str() ) ;
     }
-    char str[100] ;
-    while( fscanf(fp,"%s",str) != EOF )
-    {
-        char* token = strstr(str,"=") ;
-        token[0] = '\0' ;
-        if(strcmp(str,"HOSTNAME") == 0)
-        {
-            strcpy(HOSTNAME,token+1) ;
-            continue ;
-        }
-        if(strcmp(str,"SVCNAME") == 0)
-        {
-            strcpy(SVCNAME,token+1) ;
-            continue ;
-        }
-        if(strcmp(str,"CHANGEDPREFIX") == 0)
-        {
-            strcpy(CHANGEDPREFIX,token+1) ;
-            continue ;
-        }
-
-    }
-    fclose(fp) ;
+    
     printf("HostName: %s\n",HOSTNAME) ;
     printf("SvcName: %s\n",SVCNAME) ;
     printf("CHANGEDPREFIX: %s\n",CHANGEDPREFIX) ;
+    printf("\n") ;
 }
 
 void getUniqueName(const char* modName,char name[])
