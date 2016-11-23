@@ -5,34 +5,28 @@ import static org.junit.Assert.*;
 import com.sequoiadb.test.common.*;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.sequoiadb.base.ClientOptions;
 import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
+@FixMethodOrder(MethodSorters.JVM)
 public class DBClientCache {
-//	private static Sequoiadb sdb = null ;
-//	private static CollectionSpace cs = null;
-//	private static DBCollection cl = null;
-//	private static DBCursor cursor = null;
 	private static String csName1 = "cs_cache_java1";
 	private static String csName2 = "cs_cache_java2";
 	private static String csName3 = "cs_cache_java3";
@@ -73,13 +67,10 @@ public class DBClientCache {
 
 	@Before
 	public void setUp() throws Exception {
-//		sdb = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
-//		assertNotNull(sdb);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-//		sdb.disconnect();
 	}
 	
 	/// case1:测试initClient接口及ClientOptions是否生效
