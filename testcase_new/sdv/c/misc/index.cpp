@@ -21,7 +21,7 @@ void prepareCl()
 {
 	int rc = SDB_OK ;
 	getConf() ;
-	rc = sdbConnect( "192.168.31.49", SVCNAME, USER, PASSWD, &db ) ;
+	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
 	ASSERT_EQ(rc,SDB_OK)<<"fail to connect sdb" ;
 	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace(db,CsName,SDB_PAGESIZE_4K,&cs) ;
