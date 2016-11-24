@@ -122,7 +122,7 @@
             <else>
                <echo file="@{report}" 
                      append="true"
-                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;DEPLOY MODE: ${DEPLOY_MODE}&#10;&#10;EXECUTE CMD: python ${cmd}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />             
+                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;EXECUTE CMD: python ${cmd}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />             
             </else>
          </if>
                          

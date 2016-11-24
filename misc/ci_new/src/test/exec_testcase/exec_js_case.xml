@@ -1,7 +1,6 @@
 <!-- ============================================================================
 @description:  exec js testcase
 @parameter:    TESTCASE_TYPE          eg: story_js
-               DEPLOY_MODE            eg: G3D3
                testcase_dir           eg: /tmp/ci/testcase/story/js
                report_dir             eg：/tmp/ci/report/story_js
 @author:       Ting YU 2016-11-1
@@ -177,7 +176,7 @@
             <else>
                <echo file="@{report}" 
                      append="true" 
-                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.${suitname}&quot; name=&quot;${casename}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;DEPLOY MODE: ${DEPLOY_MODE}&#10;&#10;EXECUTE CMD:&#10;@{sdbshell} ${cmd1} ${cmd2}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;&#10;EXCUTE before_usecase.js OUTPUT MESSAGE:&#10;@{beforeoutput}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" /> 
+                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.${suitname}&quot; name=&quot;${casename}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;EXECUTE CMD:&#10;@{sdbshell} ${cmd1} ${cmd2}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;&#10;EXCUTE before_usecase.js OUTPUT MESSAGE:&#10;@{beforeoutput}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" /> 
             </else>
          </if>
 
