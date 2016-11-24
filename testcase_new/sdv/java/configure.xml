@@ -2,7 +2,7 @@
 <!--this xml is for ci, please don't modify it-->
 <!--testcase which should configure node -->
 
-<suite name = "driver" verbose="1" parallel="classes" thread-count="5">  
+<suite name = "driver" verbose="1">  
    <parameter name="HOSTNAME" value="localhost" />
    <parameter name="SVCNAME" value="11810" />
    <parameter name="CHANGEDPREFIX" value="story_java_test" />
@@ -10,7 +10,11 @@
    <parameter name="RSRVPORTEND" value="27000" />
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
-
+   <test name="transaction">
+     <packages> 
+         <package name="com.story.transaction"/>
+     </packages>  
+   </test>
 
 </suite>
    

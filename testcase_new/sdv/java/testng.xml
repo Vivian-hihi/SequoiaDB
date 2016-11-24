@@ -39,6 +39,7 @@
          <package name="com.story.decimal" />
          <package name="com.story.metadata" />
          <package name="com.story.sdb"/>
+         <package name="com.story.procedure/>
       </packages>    
    </test>
 </suite>
