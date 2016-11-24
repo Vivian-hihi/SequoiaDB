@@ -25,7 +25,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
-@FixMethodOrder(MethodSorters.JVM)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DBClientCache {
 	private static String csName1 = "cs_cache_java1";
 	private static String csName2 = "cs_cache_java2";
@@ -75,7 +75,8 @@ public class DBClientCache {
 	
 	/// case1:测试initClient接口及ClientOptions是否生效
 	@Test
-	public void testInitClientWithDefaultValue() {
+	public void test_1_InitClientWithDefaultValue() {
+		System.out.println("************test 1************");
 		Sequoiadb db = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
 		try {
 			assertNotNull(db);
@@ -110,8 +111,10 @@ public class DBClientCache {
 			db.disconnect();
 		}
 	}
+	
 	@Test
-	public void testInitClientWithDefinedValue() {
+	public void test_2_InitClientWithDefinedValue() {
+		System.out.println("************test 2************");
 		boolean definedBoolValue = true;
 		long definedLongValue = 0 * 1000;
 		ClientOptions options = new ClientOptions();
@@ -214,7 +217,8 @@ public class DBClientCache {
 	*/
 	@Test
 	@Ignore
-	public void testCacheIntervalWorksOrNot() throws InterruptedException {
+	public void test_3_CacheIntervalWorksOrNot() throws InterruptedException {
+		System.out.println("************test 3************");
 		boolean definedBoolValue = true;
 		long definedLongValue = 6 * 1000;
 		ClientOptions options = new ClientOptions();
@@ -240,7 +244,8 @@ public class DBClientCache {
 	/// case3:测试与缓存相关的几个函数内部逻辑是否正确
 	// upsertCache/removeCache/fetchCache
 	@Test
-	public void testCacheLogicWithEnableCache() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+	public void test_4_CacheLogicWithEnableCache() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+		System.out.println("************test 4************");
 		boolean defaultBoolValue = true;
 		long defaultLongValue = 60 * 1000;
 		ClientOptions options = new ClientOptions();
@@ -344,7 +349,8 @@ public class DBClientCache {
 	}
 	
 	@Test
-	public void testCacheLogicWithDisableCache() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+	public void test_5_CacheLogicWithDisableCache() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+		System.out.println("************test 5************");
 		boolean defaultBoolValue = false;
 		long defaultLongValue = 60 * 1000;
 		ClientOptions options = new ClientOptions();
@@ -412,8 +418,9 @@ public class DBClientCache {
 	/// case5: cache开启时，尝试异常场景
 	// 需要手工
 	@Test
-	public void testInvalidSituaction() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException
+	public void test_6_InvalidSituaction() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException
 	{
+		System.out.println("************test 6************");
 		ClientOptions options = new ClientOptions();
 		options.setEnableCache(true);
 		Sequoiadb.initClient(options);
