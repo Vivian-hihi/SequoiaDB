@@ -146,6 +146,7 @@ if __name__ == "__main__":
       db = client( hostname, service )
            
       # main
+      raise  Exception( 'ERROR' )
       if( isStandalone( db ) == True ):
          print 'Mode is standalone!'
          exit(0) 
