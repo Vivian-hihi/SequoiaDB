@@ -1,6 +1,7 @@
 <!-- ============================================================================
 @description:  exec js testcase
 @parameter:    TESTCASE_TYPE          eg: story_js
+               DEPLOY_MODE            eg: G3D3
                testcase_dir           eg: /tmp/ci/testcase/story/js
                report_dir             eg：/tmp/ci/report/story_js
 @author:       Ting YU 2016-11-1
@@ -30,7 +31,8 @@
                   <fileset dir="@{testsuit}" includes="*.js" excludes="commlib.js"/>
                </path>
                <sequential>
-                  <detectenv detectfile="${testcase_dir}/lib/before_usecase.js" prefix="${prefix}" sdbshell="${sdbdir}"/>
+                  <detectenv detectfile="${testcase_dir}/lib/before_usecase.js" prefix="${prefix}" 
+                             sdbshell="${sdbdir}" output="before_output"/>
                   
                   <markinlog casename ="@{testcase}" marktype="begin" sdbshell="${sdbdir}"/>
                   
@@ -38,7 +40,8 @@
                   <basename property="testcase_name" file="@{testcase}" suffix=".js"/>
                   <hostinfo prefix="host" />
                   <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}.xml"/>
-                  <execonecase jsfile="@{testcase}" prefix="${prefix}" sdbshell="${sdbdir}" report="${report_fullname}"/>
+                  <execonecase jsfile="@{testcase}" prefix="${prefix}" sdbshell="${sdbdir}" report="${report_fullname}" 
+                               beforeoutput="${before_output}"/>
                   
                   <markinlog casename ="@{testcase}" marktype="end" sdbshell="${sdbdir}"/>
                   
@@ -56,6 +59,7 @@
          <attribute name="sdbshell"/>
          <attribute name="detectfile" />
          <attribute name="prefix" />
+         <attribute name="output" default="screen_output"/>
          <sequential>
             <var name="jsdir" unset="true"/>
             <dirname property="jsdir" file="@{detectfile}" />
@@ -75,16 +79,16 @@
             <var name="cmd1" value="-f &quot;${func_option}@{detectfile}&quot;" />
             <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='@{prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost'&quot;" />
             <echo message="exec cmd: @{sdbshell} ${cmd1} ${cmd2}"/>      
-            <var name="screen_output" unset="true"/>
+            <var name="@{output}" unset="true"/>
             <var name="rc" unset="true"/>
             <exec executable="@{sdbshell}" 
                   timeout="1800000" 
-                  outputproperty="screen_output" 
+                  outputproperty="@{output}" 
                   resultproperty="rc"
                   failonerror="false">
                <arg line="${cmd1} ${cmd2}" />
             </exec>
-            <echo message="${screen_output}" />       
+            <echo message="${@{output}}" />       
          </sequential>
    </macrodef>
 
@@ -94,6 +98,7 @@
       <attribute name="jsfile" />
       <attribute name="prefix" />
       <attribute name="report" />
+      <attribute name="beforeoutput" />
       <sequential>       
          <var name="jsdir" unset="true"/>
          <var name="casename" unset="true"/>
@@ -160,19 +165,19 @@
          <!--report-->
          <hostinfo prefix="host" />
          <echo file="@{report}" 
-               message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${suitname}&quot; type=&quot;${TESTCASE_TYPE}&quot; deploy=&quot;${DEPLOY_MODE}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
+               message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${suitname}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
          <if>
             <equals arg1="${rc}" arg2="0" />
             <then>
                <echo file="@{report}" 
                      append="true" 
-                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.${suitname}&quot; name=&quot;${casename}&quot; begin_time=&quot;${begin_time}&quot; end_time=&quot;${end_time}&quot; time=&quot;${total_time}&quot; path=&quot;${jsdir}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
+                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.${suitname}&quot; name=&quot;${casename}&quot; time=&quot;${total_time}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
             </then>
             <else>
                <echo file="@{report}" 
                      append="true" 
-                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.${suitname}&quot; name=&quot;${casename}&quot; begin_time=&quot;${begin_time}&quot; end_time=&quot;${end_time}&quot; time=&quot;${total_time}&quot; path=&quot;${jsdir}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;Exec: @{sdbshell} ${cmd1} ${cmd2}&#10;RETURNCODE : ${rc}&#10;ERROR MESSAGE : &#10;${screen_output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" /> 
+                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.${suitname}&quot; name=&quot;${casename}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;DEPLOY MODE: ${DEPLOY_MODE}&#10;&#10;EXECUTE CMD:&#10;@{sdbshell} ${cmd1} ${cmd2}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;&#10;EXCUTE before_usecase.js OUTPUT MESSAGE:&#10;@{beforeoutput}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" /> 
             </else>
          </if>
 
@@ -181,5 +186,4 @@
       </sequential>
    </macrodef>
 
- 
 </project>
