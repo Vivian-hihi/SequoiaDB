@@ -12,6 +12,7 @@ function main()
     
 	try
 	{
+      throw "error for ci";
 	   ready( csName );
 	   createCS( csName );
 	   createCL( csName, clName );
