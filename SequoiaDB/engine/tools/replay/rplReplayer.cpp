@@ -503,6 +503,12 @@ namespace replay
             _monitor.setLastLSN(currentLSN);
             currentLSN += logHeader._length;
             _monitor.setNextLSN(currentLSN);
+            if (_filter.largerThanMaxLSN(logHeader._lsn))
+            {
+               PD_LOG(PDINFO, "Current LSN[%lld] is larger than max LSN",
+                      logHeader._lsn);
+               goto done;
+            }
             continue;
          }
 
@@ -885,6 +891,14 @@ namespace replay
             {
                goto error;
             }
+
+            if (_monitor.getLastLSN() != DPS_INVALID_LSN_OFFSET &&
+                _filter.largerThanMaxLSN(_monitor.getLastLSN()))
+            {
+               PD_LOG(PDDEBUG, "Last LSN[%lld] is over max LSN",
+                      _monitor.getLastLSN());
+               goto done;
+            }
          }
 
          if (!_options->watch())
@@ -1132,6 +1146,14 @@ namespace replay
             }
          }
          PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
+
+         if (_monitor.getLastLSN() != DPS_INVALID_LSN_OFFSET &&
+             _filter.largerThanMaxLSN(_monitor.getLastLSN()))
+         {
+            PD_LOG(PDDEBUG, "Last LSN[%lld] is over max LSN",
+                   _monitor.getLastLSN());
+            goto done;
+         }
 
          movedExist = FALSE;
          rc = ossFile::exists(movedFile, movedExist);

@@ -324,6 +324,32 @@ namespace replay
       return FALSE;
    }
 
+   BOOLEAN Filter::lessThanMinLSN(DPS_LSN_OFFSET lsn)
+   {
+      if (DPS_INVALID_LSN_OFFSET != _minLSN)
+      {
+         if (lsn < _minLSN)
+         {
+            return TRUE;
+         }
+      }
+
+      return FALSE;
+   }
+
+   BOOLEAN Filter::largerThanMaxLSN(DPS_LSN_OFFSET lsn)
+   {
+      if (DPS_INVALID_LSN_OFFSET != _maxLSN)
+      {
+         if (lsn >= _maxLSN)
+         {
+            return TRUE;
+         }
+      }
+
+      return FALSE;
+   }
+
    BOOLEAN Filter::_isFileFiltered(const string& fileName)
    {
       // this file is excluded
@@ -412,20 +438,14 @@ namespace replay
 
    BOOLEAN Filter::_isLSNFiltered(DPS_LSN_OFFSET lsn)
    {
-      if (DPS_INVALID_LSN_OFFSET != _minLSN)
+      if (lessThanMinLSN(lsn))
       {
-         if (lsn < _minLSN)
-         {
-            return TRUE;
-         }
+         return TRUE;
       }
 
-      if (DPS_INVALID_LSN_OFFSET != _maxLSN)
+      if (largerThanMaxLSN(lsn))
       {
-         if (lsn >= _maxLSN)
-         {
-            return TRUE;
-         }
+         return TRUE;
       }
 
       return FALSE;
