@@ -1,0 +1,49 @@
+/* *****************************************************************************
+@discretion: 执行数据更新/删除操作，提交事务
+@author：2015-11-18 wuyan  Init
+***************************************************************************** */
+
+var clName = CHANGEDPREFIX + "_transaction005";
+function main()
+{		
+	try
+	{
+      if( !commIsTransEnabled( db ) )
+      {
+         println( "transaction is disabled" ) ;   
+      }
+
+      var cl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ; 
+      var dataNum = 1000; 
+      var insert = new insertData( cl, dataNum ); 
+       //update data,then commmit transaction
+      var update = new updateData ( cl ); 
+      execTransaction(insert,beginTrans,update,commitTrans);
+      checkResult( cl, true, update ); 
+      
+      //remove data and left some datas,then commit transaction
+      var removeNum = 88;
+      var remove = new removeData( cl , removeNum );
+      execTransaction(beginTrans,remove,commitTrans);
+      checkResult( cl, true, remove ); 
+      
+      
+        
+	   //@ clean end
+		commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
+   }
+   catch( e )
+   {
+      throw e;
+   }
+   finally
+   {
+      if ( undefined !== db )
+      {
+         db.close();
+      }
+   }
+}
+
+main();
+

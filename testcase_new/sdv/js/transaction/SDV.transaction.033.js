@@ -1,0 +1,66 @@
+/************************************************************************
+*@Description:	seqDB-6022：执行事务和非事务操作，回滚事务_SD.transaction.033
+               依次执行开启事务、创建cscl、增删改、回滚
+*@Author:  		TingYU  2015/11/23
+************************************************************************/
+main();
+
+function main()
+{
+   var csName = COMMCLNAME + "_yt";
+   var clName = COMMCLNAME + "_yt";
+   
+   try
+   {
+      if( !commIsTransEnabled( db ) )
+      {
+         println( "transaction is disabled" );
+         return;
+      }      
+      
+      execTransaction( beginTrans );
+      
+      var cl = createCSCL( csName, clName, {ReplSize:0} );
+           
+      var dataNum = 5000;
+      var insert = new insertData( cl, dataNum );
+      var update = new updateData ( cl );
+      var remove = new removeData ( cl );
+      execTransaction( insert );
+      checkResult( cl, true, insert );
+      execTransaction( update );
+      checkResult( cl, true, update );
+      execTransaction( remove );
+      checkResult( cl, true, remove );
+      
+      execTransaction( rollbackTrans );
+      checkResult( cl, false, insert );
+                          
+	   clean( csName );
+   }
+   catch( e )
+   {
+      throw e;
+   }
+   finally
+   {
+   }
+}
+
+function createCSCL( csName, clName, option )
+{
+	println( "--create cs and cl" );
+	
+	commDropCS( db, csName, true, "drop cs in ready" );
+	commCreateCS( db, csName, false, "create cs  in begin" );
+   var cl = commCreateCLByOption( db, csName, clName, option, false, false, "create cl in begin" );  
+   
+   return cl;
+}
+
+function clean( csName )
+{
+	println("--clean" );
+	
+	commDropCS( db, csName, false, "drop cs in clean" );
+} 

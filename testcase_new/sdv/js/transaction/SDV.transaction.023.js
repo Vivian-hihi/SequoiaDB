@@ -1,0 +1,80 @@
+/* *****************************************************************************
+@discretion: 创建唯一索引，插入相同记录
+@author：2015-11-21 wuyan  Init
+***************************************************************************** */
+
+var clName = CHANGEDPREFIX + "_transaction023";
+function transOperation( cl )
+{
+   var dataNum = 1000; 
+   var insert = new insertData( cl, dataNum );            
+   execTransaction( beginTrans, insert );
+   checkResult( cl, true, insert ); 
+   
+    //insert  the same datas
+   try
+   {
+      execTransaction(insert) ;
+   }
+   catch( e )   
+   {
+      if ( e == "insertData.exec() unknown error expect: -38" )
+      {
+         // think right
+      }
+      else  
+      {
+         throw buildException("execTransaction(insert)", e )
+      }
+   }
+   
+   //commit transaction after autoRollback 
+   try
+   {
+      execTransaction(commitTrans) ;
+   }
+   catch( e )
+   {
+      if ( e == "commitTrans() unknown error expect: -196" )
+      {
+         // think right
+      }
+      else
+      {
+         throw buildException("execTransaction(commitTrans)", e )
+      }
+   }
+      
+   checkResult( cl, false, insert ) ;  
+}
+function main()
+{		
+	try
+	{
+      if( !commIsTransEnabled( db ) )
+      {
+         println( "transaction is disabled" ) ;   
+      }
+
+      var cl = commCreateCL( db, COMMCSNAME, clName, 0, false, true, true ) ; 
+      commCreateIndex( cl, 'testIndex', {no:1}, true, false)      
+      transOperation( cl )   
+      
+      //@ clean end
+		commDropCL( db, COMMCSNAME, clName, false, false,"drop CL in the beginning" );
+   }
+   catch( e )
+   {
+      throw e;
+   }
+   finally
+   {
+      if ( undefined !== db )
+      {
+         db.close();
+      }
+   }
+}
+
+main();
+

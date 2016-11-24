@@ -1,0 +1,89 @@
+/* *****************************************************************************
+@discretion: 主子表执行事务操作，提交事务
+@author：2015-11-18 wuyan  Init
+***************************************************************************** */
+
+var csName     = CHANGEDPREFIX + "_cs" ;  
+function preCheckEnv(db)
+{
+   try
+	{
+      if (commIsStandalone(db))
+      {
+         return;
+      }
+      if( !commIsTransEnabled( db ) )
+      {
+         println( "transaction is disabled" ) ;   
+      }
+      if( commGetGroupsNum(db) < 2 )
+      {  
+	      println("This testcase needs at least 2 groups to split sub cl!");
+		   return;
+	   }
+   }
+   catch( e )
+   {
+      throw e;
+   }
+}
+
+function createCL(csName)
+{
+    try
+	{
+      var mainCLName = CHANGEDPREFIX + "_mcl" ;
+      var subCLName  = CHANGEDPREFIX + "_scl" ;
+        
+      var cs = commCreateCS( db, csName, true, "create cs in the beginning" );
+      var mainCL = cs.createCL( mainCLName, { ShardingKey:{ no:1 }, ShardingType:"range", ReplSize:0, 
+                              Compressed:true, IsMainCL:true } ) ; 
+      println("mainCL="+mainCL)
+      var subCL = cs.createCL( subCLName, { ShardingKey:{ no:1 }, ShardingType: "hash", ReplSize:0,
+                              Compressed:true} ) ;
+      var options = { LowBound: {"no":0}, UpBound: {"no":1000} } ; 
+      mainCL.attachCL( COMMCSNAME+"."+subCLName, options ); 
+      println("test")
+      return mainCL;
+    }
+   catch( e )
+   {
+      throw e;
+   }    
+}
+
+function main()
+{		
+	try
+	{
+	   preCheckEnv(db);	     
+	   var cl = createCL(COMMCSNAME);
+	   
+      var dataNum = 1000; 
+      var insert = new insertData( cl, dataNum ); 
+       //update data,then commmit transaction
+      var update = new updateData( cl );
+      var remove = new removeData( cl ); 
+      execTransaction( beginTrans, insert, update );      
+      checkResult( cl, true, update );
+      execTransaction( remove, commitTrans); 
+      checkResult( cl, true, remove );  
+                
+      //@ clean end
+		commDropCS( db, csName, false, "drop CS in the beginning" );
+   }
+   catch( e )
+   {
+      throw e;
+   }
+   finally
+   {
+      if ( undefined !== db )
+      {
+         db.close();
+      }
+   }
+}
+
+main();
+
