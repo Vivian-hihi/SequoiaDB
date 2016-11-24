@@ -18,7 +18,7 @@
 
          <switch value="@{testtype}">
             <case value="function_test">
-               <for list="${large_data_list},{sync_list},${configure_list},${reliability_list}" param="feature">
+               <for list="${large_data_list},${sync_list},${configure_list},${reliability_list}" param="feature">
                   <sequential>
                      <delete dir="@{casedir}/@{feature}" failonerror="false"/>                     
                      <delete file="@{casedir}/@{feature}" failonerror="false"/>
