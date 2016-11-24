@@ -19,8 +19,6 @@ using import::WorkerArgs ;
 sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 sdbReplicaGroupHandle rg[ThreadNum] = { 0 } ;
 char* rgName[ThreadNum] ;
-const char* hostname = "sdbserver1" ;
-const char* dir = "/opt/sequoiadb/database/data/" ;
 
 class ConcurrentTest : public testing::Test
 {
@@ -37,7 +35,7 @@ void ConcurrentTest::SetUpTestCase()
 	// make rgName
    for( i = 0;i < ThreadNum;++i )
    {
-      char temp[20] = "datagroup" ;
+      char temp[50] = "lxw_datagroup" ;
       char number[10] ;
       sprintf( number, "%d", i ) ;
       strcat( temp, number ) ;
@@ -93,20 +91,20 @@ void func_rg( ThreadArg* arg )
    
    // make svcName1 2
    char svcName1[10] ;
-   sprintf( svcName1, "%d", 11900+i*100 ) ;
+   sprintf( svcName1, "%d", RSRVPORTBEGIN+i*10 ) ;
    char svcName2[10] ;
-   sprintf( svcName2, "%d", 11900+i*100+10 ) ;
+   sprintf( svcName2, "%d", RSRVPORTBEGIN+i*10+5 ) ;
    
    // make dbPath1 2
    char dbPath1[100], dbPath2[100] ;
-   sprintf( dbPath1, "%s%s", dir, svcName1 ) ;
-   sprintf( dbPath2, "%s%s", dir, svcName2 ) ;
+   sprintf( dbPath1, "%s%s", RSRVNODEDIR, svcName1 ) ;
+   sprintf( dbPath2, "%s%s", RSRVNODEDIR, svcName2 ) ;
    
    // create node1 2
    int rc = SDB_OK ;
-   rc = sdbCreateNode( rg, hostname, svcName1, dbPath1, NULL ) ;
+   rc = sdbCreateNode( rg, IPADDR, svcName1, dbPath1, NULL ) ;
    EXPECT_EQ( rc, SDB_OK ) << "fail to create node1 in rg " << i ;
-   rc = sdbCreateNode( rg, hostname, svcName2, dbPath2, NULL ) ;
+   rc = sdbCreateNode( rg, IPADDR, svcName2, dbPath2, NULL ) ;
    EXPECT_EQ( rc, SDB_OK ) << "fail to create node2 in rg " << i ;
    
    // start rg
@@ -119,14 +117,16 @@ void func_rg( ThreadArg* arg )
    
    // remove node1 success
    // cannot remove node2 which is the only one node in rg
-   rc = sdbRemoveNode( rg, hostname, svcName1, NULL ) ;
+   rc = sdbRemoveNode( rg, IPADDR, svcName1, NULL ) ;
    EXPECT_EQ( rc, SDB_OK ) << "fail to remove node1 in rg " << i ;  
-   rc = sdbRemoveNode( rg, hostname, svcName2, NULL ) ;
+   rc = sdbRemoveNode( rg, IPADDR, svcName2, NULL ) ;
    EXPECT_EQ( rc, SDB_CATA_RM_NODE_FORBIDDEN ) << "fail to test remove node2 in rg " << i ;
 }
 
 TEST_F( ConcurrentTest,ReplicaGroup )
 {
+	getConf() ;
+	getLocalIpAddr() ;
    // create multi thread to operate different rg
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;

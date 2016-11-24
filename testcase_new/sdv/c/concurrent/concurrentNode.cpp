@@ -19,9 +19,7 @@ using import::WorkerArgs ;
 sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
 sdbNodeHandle node[ThreadNum] = { 0 } ;
-const char* rgName = "mygroup" ;
-const char* hostname = "sdbserver1" ;
-const char* dir = "/opt/sequoiadb/database/data/" ;
+const char* rgName = "lxwgroup" ;
 char* svcName[ThreadNum] ;
 char* dbPath[ThreadNum] ;
 
@@ -38,7 +36,10 @@ void ConcurrentTest::SetUpTestCase()
 {
    // connect to sdb
 	int rc = SDB_OK ;
-	rc = sdbConnect( HOST, SERVER, USER, PASSWD, &db ) ;
+	getConf() ;
+	getLocalIpAddr() ;
+
+	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
 	// create replicaGroup
 	rc = sdbCreateReplicaGroup( db, rgName, &rg ) ;
@@ -47,7 +48,9 @@ void ConcurrentTest::SetUpTestCase()
 	// make svcName
 	for( int i = 0;i < ThreadNum;i++)
 	{
-	   int number = 11900 + i*10 ;
+	   int port_begin ;
+	   sscanf(RSRVPORTBEGIN,"%d",&port_begin) ;
+	   int number = port_begin + i*10 ;
 	   char temp[10] ;
 	   sprintf( temp, "%d", number ) ;
 	   svcName[i] = strdup( temp ) ;
@@ -56,16 +59,16 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++)
 	{
 	   char temp[100] ;
-	   sprintf( temp, "%s%s", dir, svcName[i] ) ;
+	   sprintf( temp, "%s%s", RSRVNODEDIR, svcName[i] ) ;
 	   dbPath[i] = strdup( temp ) ;
 	}
 	
 	// create node and get node
 	for( int i = 0;i < ThreadNum;i++)
 	{
-	   rc = sdbCreateNode( rg, hostname, svcName[i], dbPath[i], NULL ) ;
+	   rc = sdbCreateNode( rg, IPADDR, svcName[i], dbPath[i], NULL ) ;
 	   EXPECT_EQ( rc, SDB_OK ) << "fail to create node " << i ;
-	   rc = sdbGetNodeByHost( rg, hostname, svcName[i], &node[i] ) ;
+	   rc = sdbGetNodeByHost( rg, IPADDR, svcName[i], &node[i] ) ;
 	   EXPECT_EQ( rc, SDB_OK ) << "fail to get node " << i ;
 	}
 }
@@ -108,13 +111,14 @@ void func_node( ThreadArg* arg )
    sdbNodeHandle node = arg->node ;
    int i = arg->tid ;
    int rc = SDB_OK ;
-   
+   getHost() ;
+
    // get node address
    const char *host, *svc, *nodeName ;
    int nodeId ;
    rc = sdbGetNodeAddr( node, &host, &svc, &nodeName, &nodeId ) ;
    EXPECT_EQ( rc, SDB_OK ) << "fail to get node addr,i = " << i ;
-   EXPECT_STREQ( host, hostname ) << "fail to check host of node,i = " << i ;
+   EXPECT_STREQ( host, IPADDR ) << "fail to check host of node,i = " << i ;
    EXPECT_STREQ( svc, svcName[i] ) << "fail to check svc name of node, i = " << i ;
    printf( "%d: nodeName = %s nodeId = %d\n", i, nodeName, nodeId ) ;
    

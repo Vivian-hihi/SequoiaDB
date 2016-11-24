@@ -12,26 +12,9 @@
 #include <string.h>
 #include "../common/testcommon.hpp"
 
-const char* SPAREPORTSTART = "20000" ;
-const char* SPAREPORTSTOP = "30000" ;
-const char* SPAREPATH = "/opt/sequoiadb/database/data/" ;
-
 sdbConnectionHandle db = 0 ;
 sdbReplicaGroupHandle dataRG = 0,tempRG = 0 ;
 sdbNodeHandle tempNode = 0 ;
-
-void getNodeHostName(char str[], int size)
-{
-	// FILE *fp = fopen("/etc/hostname","r") ;
-	FILE *fp = popen("hostname","r") ;
-	fgets(str,size,fp) ;
-    if(str[strlen(str)-1] == '\n')
-	{
-       str[strlen(str)-1] = 0;
-    }
-	fclose(fp) ;
-	fp = NULL ;
-}
 
 bool getDataRG(sdbConnectionHandle db)
 {
@@ -124,41 +107,50 @@ TEST_F(AttachAndDetachNodeTest,onlyAttachAndOnlyDetach)
 		sdbReleaseConnection(db) ;
 		return ;
 	}
+
 	// get data group dataRG
 	ASSERT_TRUE(getDataRG(db)) ;
+
 	// create tempNode
-	int a = (atoi(SPAREPORTSTART) + atoi(SPAREPORTSTOP)) / 2 ;
+	getConf() ;
+	int a = (atoi(RSRVPORTBEGIN) + atoi(RSRVPORTEND)) / 2 ;
 	char tempNodeSvcName[10] ;
 	sprintf(tempNodeSvcName,"%d",a) ;
 	printf("temp node svcname: %s\n",tempNodeSvcName) ;
+	
 	char tempNodeDbPath[100] ;
-	strcpy(tempNodeDbPath,SPAREPATH) ;
+	strcpy(tempNodeDbPath,RSRVNODEDIR) ;
 	strcat(tempNodeDbPath,tempNodeSvcName) ;
 	printf("temp node dbpath: %s\n",tempNodeDbPath) ;
-    char tempNodeHostName[100] = {0};
-	getNodeHostName(tempNodeHostName, sizeof(tempNodeHostName)) ;
-	printf("temp node hostname: %s\n",tempNodeHostName) ;
-	int rc = sdbCreateNode(dataRG,tempNodeHostName,tempNodeSvcName,tempNodeDbPath,NULL) ;
+    
+	getHost() ;
+	int rc = sdbCreateNode(dataRG,HOST,tempNodeSvcName,tempNodeDbPath,NULL) ;
 	ASSERT_EQ(rc,SDB_OK)<<"fail to create tempNode" ;
+	
 	// detach tempNode from dataRG
-	rc = sdbDetachNode(dataRG,tempNodeHostName,tempNodeSvcName,NULL) ;
+	rc = sdbDetachNode(dataRG,HOST,tempNodeSvcName,NULL) ;
 	ASSERT_EQ(rc,SDB_OK)<<"fail to detach tempNode" ;
-	rc = sdbGetNodeByHost(dataRG,tempNodeHostName,tempNodeSvcName,&tempNode);
+	rc = sdbGetNodeByHost(dataRG,HOST,tempNodeSvcName,&tempNode);
 	ASSERT_EQ(rc,SDB_CLS_NODE_NOT_EXIST)<<"fail to check detach" ;
+	
 	// create tempRG
     rc = sdbCreateReplicaGroup(db,"temp",&tempRG) ;
     ASSERT_EQ(rc,SDB_OK)<<"fail to create tempRG" ;
+	
 	// attach tempNode to tempRG
-    rc = sdbAttachNode(tempRG,tempNodeHostName,tempNodeSvcName,NULL) ;
+    rc = sdbAttachNode(tempRG,HOST,tempNodeSvcName,NULL) ;
     ASSERT_EQ(rc,SDB_OK)<<"fail to attach tempNode" ;
-    rc = sdbGetNodeByHost(tempRG,tempNodeHostName,tempNodeSvcName,&tempNode) ;
+    rc = sdbGetNodeByHost(tempRG,HOST,tempNodeSvcName,&tempNode) ;
     ASSERT_EQ(rc,SDB_OK)<<"fail to check attach" ;
-    // start tempRG
+    
+	// start tempRG
     rc = sdbStartReplicaGroup(tempRG) ;
     ASSERT_EQ(rc,SDB_OK)<<"fail to start tempRG" ;
+	
 	// stop tempRG
 	rc = sdbStopReplicaGroup(tempRG) ;
 	ASSERT_EQ(rc,SDB_OK)<<"fail to stop tempRG" ;
+	
 	// remove tempRG
 	rc = sdbRemoveReplicaGroup(db,"temp") ;
 	ASSERT_EQ(rc,SDB_OK)<<"fail to remove tempRG" ;

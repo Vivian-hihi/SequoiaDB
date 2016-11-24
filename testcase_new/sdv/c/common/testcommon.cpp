@@ -4,6 +4,13 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <arpa/inet.h>
+#include <string.h>
 #include "testcommon.hpp"
 
 using namespace std ;
@@ -11,10 +18,17 @@ using testing::internal::String ;
 using testing::internal::g_argvs ;
 extern vector<String> g_argvs ;
 
+#define ETH_NAME "eth0"
+
 // default value
-char HOSTNAME[100] = "localhost" ;
-char SVCNAME[100] = "11810" ;
+char HOSTNAME[100]      = "localhost" ;
+char SVCNAME[100]       = "11810" ;
 char CHANGEDPREFIX[100] = "sdv_c_test" ;
+char RSRVPORTBEGIN[100] = "26000" ;
+char RSRVPORTEND[100]   = "27000" ;
+char RSRVNODEDIR[100]   = "/opt/sequoiadb/database/" ;
+char IPADDR[100]        = "192.168.31.61" ;
+char HOST[100]          = "sdbserver1" ;
 
 INT32 createCollection( sdbCollectionHandle *cl,
                         CHAR *csName,
@@ -116,4 +130,39 @@ void getUniqueName(const char* modName,char name[])
 {
    pid_t pid = getpid() ;
    sprintf( name,"%s_%d_%s",CHANGEDPREFIX,pid,modName ) ;
+}
+
+void getLocalIpAddr()
+{
+	int sock ;
+    struct sockaddr_in sin ;
+    struct ifreq ifr ;
+
+    sock = socket(AF_INET,SOCK_DGRAM,0) ;
+    if(sock == -1)
+	{
+        printf("Error in socket.\n") ;
+	}
+
+    strncpy(ifr.ifr_name,ETH_NAME,IFNAMSIZ) ;
+    ifr.ifr_name[IFNAMSIZ-1] = 0 ;
+
+    if(ioctl(sock,SIOCGIFADDR,&ifr) < 0)
+    {
+        printf("Error in ioctl.\n") ;
+    }
+
+    memcpy(&sin,&ifr.ifr_addr,sizeof(sin)) ;
+    sprintf(IPADDR,"%s",inet_ntoa(sin.sin_addr)) ;
+	printf("Local Ip Address: %s\n",IPADDR) ;
+}
+
+void getHost()
+{
+	FILE *fp = fopen("/etc/hostname","r") ;
+	if(fp == NULL)
+		printf("Error open /etc/hostname") ;
+	fscanf(fp,"%s",HOST) ;
+	fclose(fp) ;
+	printf("Host: %s\n",HOST) ;
 }
