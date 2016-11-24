@@ -67,7 +67,19 @@
       <!-- 3.compress, generate tar-->
       <property name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}"/>
       <property name="tar_fullname" location="${CI_WORK_DIR}/${backup_reltdir}.tar.gz"/>
-
+      
+      <mkdir dir="${CI_WORK_DIR}/${backup_reltdir}${INSTALL_DIR}/bin"/>
+      <tar destfile="${CI_WORK_DIR}/${backup_reltdir}${INSTALL_DIR}/bin/sequoiadb.tar.gz" compression="gzip" 
+           basedir="${INSTALL_DIR}/bin/" includes="sequoiadb"/>
+      <var name="cmd" 
+           value="-s &quot;println('execute db.list(7):');db=new Sdb('localhost',${SVCNAME});println(db.list(7));db.close();&quot;" />  
+      <exec executable="${INSTALL_DIR}/bin/sdb" 
+            timeout="20000" 
+            output="${CI_WORK_DIR}/${backup_reltdir}/ReplicaGroup.info"
+            resultproperty="rc">
+         <arg line="${cmd}" />
+      </exec>
+      
       <move file="${CI_WORK_DIR}/diaglog" tofile="${CI_WORK_DIR}/${backup_reltdir}"/>
       <delete dir="${tar_fullname}" failonerror="false"/>
       <tar destfile="${tar_fullname}" longfile="gnu" compression="gzip" 
@@ -95,6 +107,14 @@
          <fileset dir="${INSTALL_DIR}/conf" includes="local/**/*"/>
       </copy>
       <move file="${backup_basedir}/${backup_reltdir}/local" tofile="${backup_basedir}/${backup_reltdir}/conf"/>
+      
+      <delete dir="${backup_basedir}/${backup_reltdir}/toollog" failonerror="false"/>
+      <mkdir dir="${backup_basedir}/${backup_reltdir}/toollog"/>
+      <copy todir="${backup_basedir}/${backup_reltdir}/toollog">
+         <fileset dir="${CI_WORK_DIR}/testcase/">
+            <include name="**/*.log"/>
+         </fileset>
+      </copy>
       
       <tar destfile="${backup_fullname}" longfile="gnu" compression="gzip" 
            basedir="${backup_basedir}" includes="${backup_reltdir}/**/*"/>
