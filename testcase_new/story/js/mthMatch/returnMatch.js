@@ -6,8 +6,19 @@
 **************************************/
 function main()
 {
+   //set find data from master
+   db.setSessionAttr( { PreferedInstance: "M" } );
+   
    //clean environment before test
-   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,"drop CL in the beginning" ) ;
+   mainCL_Name = CHANGEDPREFIX + "_maincl10331" ;
+   subCL_Name1 = CHANGEDPREFIX + "_subcl103311";
+   subCL_Name2 = CHANGEDPREFIX + "_subcl103312";
+   subCL_Name3 = CHANGEDPREFIX + "_subcl103313";
+   
+   commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection" );
+   commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection" );
+   commDropCL( db, COMMCSNAME, subCL_Name3, true, true, "clean main collection" );
+	commDropCL( db, COMMCSNAME, mainCL_Name, true, true, "clean main collection" );
    
    //check test environment before split
    try
@@ -31,13 +42,35 @@ function main()
       throw e;
    }
    
-   //create cl for hash split
-   var ClOption = {ShardingKey:{"No":1},ShardingType:"hash", ReplSize:0};
-   var dbcl = commCreateCLByOption( db, COMMCSNAME, COMMCLNAME, ClOption, true, true );
+   //create maincl for range split
+   var mainCLOption = {ShardingKey:{"No":1},ShardingType:"range", IsMainCL:true};
+   var dbcl = commCreateCLByOption( db, COMMCSNAME, mainCL_Name, mainCLOption, true, true );
+   
+   //create subcl
+   var subClOption1 = {ShardingKey:{"No":1},ShardingType:"range", ReplSize:0};
+   commCreateCLByOption( db, COMMCSNAME, subCL_Name1, subClOption1, true, true );
+   
+   var subClOption2 = {ShardingKey:{"No":1},ShardingType:"hash", ReplSize:0};
+   commCreateCLByOption( db, COMMCSNAME, subCL_Name2, subClOption2, true, true );
+   
+   commCreateCL( db, COMMCSNAME, subCL_Name3, 0);
    
    //split cl
-   startCondition = {Partition:2014};
-   splitGrInfo = ClSplitOneTimes( COMMCSNAME, COMMCLNAME, startCondition, null ); 
+   startCondition1 = {No:0};
+   splitGrInfo = ClSplitOneTimes( COMMCSNAME, subCL_Name1, startCondition1, null ); 
+   
+   startCondition2 = {Partition:2014};
+   splitGrInfo = ClSplitOneTimes( COMMCSNAME, subCL_Name2, startCondition2, null ); 
+   
+   //attach subcl
+   try{
+	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name1, { LowBound:{No:1},UpBound:{No:2} } ) ;
+	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name2, { LowBound:{No:2},UpBound:{No:4} } ) ;
+	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name3, { LowBound:{No:4},UpBound:{No:7} } ) ;
+   }catch( e ){
+	   println( "failed to attch sub cl, rc = " + e );
+       throw e;
+   }
    
    //insert data 
 	var doc = [{No:1,b:1},

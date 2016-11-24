@@ -1,7 +1,7 @@
 /************************************
-*@Description: slice as function
+*@Description: main-sub table use numberic functions,
 *@author:      zhaoyu
-*@createdate:  2016.11.1
+*@createdate:  2016.11.18
 *@testlinkCase: 
 **************************************/
 function main()
@@ -10,10 +10,10 @@ function main()
    db.setSessionAttr( { PreferedInstance: "M" } );
    
    //clean environment before test
-   mainCL_Name = CHANGEDPREFIX + "_maincl9198" ;
-   subCL_Name1 = CHANGEDPREFIX + "_subcl91981";
-   subCL_Name2 = CHANGEDPREFIX + "_subcl91982";
-   subCL_Name3 = CHANGEDPREFIX + "_subcl91983";
+   mainCL_Name = CHANGEDPREFIX + "_maincl10486" ;
+   subCL_Name1 = CHANGEDPREFIX + "_subcl104861";
+   subCL_Name2 = CHANGEDPREFIX + "_subcl104862";
+   subCL_Name3 = CHANGEDPREFIX + "_subcl104863";
    
    commDropCL( db, COMMCSNAME, subCL_Name1, true, true, "clean sub collection" );
    commDropCL( db, COMMCSNAME, subCL_Name2, true, true, "clean sub collection" );
@@ -43,7 +43,7 @@ function main()
    }
    
    //create maincl for range split
-   var mainCLOption = {ShardingKey:{"No":1},ShardingType:"range", IsMainCL:true};
+   var mainCLOption = {ShardingKey:{"a":1},ShardingType:"range", IsMainCL:true};
    var dbcl = commCreateCLByOption( db, COMMCSNAME, mainCL_Name, mainCLOption, true, true );
    
    //create subcl
@@ -64,66 +64,51 @@ function main()
    
    //attach subcl
    try{
-	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name1, { LowBound:{No:1},UpBound:{No:3} } ) ;
-	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name2, { LowBound:{No:3},UpBound:{No:6} } ) ;
-	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name3, { LowBound:{No:6},UpBound:{No:10} } ) ;
+	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name1, { LowBound:{a:-1000},UpBound:{a:1000} } ) ;
+	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name2, { LowBound:{a:1000},UpBound:{a:2000} } ) ;
+	   dbcl.attachCL( COMMCSNAME + "." + subCL_Name3, { LowBound:{a:2000},UpBound:{a:3000} } ) ;
    }catch( e ){
 	   println( "failed to attch sub cl, rc = " + e );
        throw e;
    }
    
    //insert data 
-	var doc = [{No:1,a:[1,2,3,4,5,6]},
-	           {No:2,a:{0:1,1:2,2:3,3:4,4:5,5:6}},
-	           {No:3,a:[4,5,6,7,8]},
-	           {No:4,a:{0:4,1:5,2:6,2:7,4:8}},
-	           {No:5,a:1},
-	           {No:6,a:[1,2,3,4,5,6,7,8,9]},
-	           {No:7,a:[1,2,3,7,8,9]},
-	           {No:8,a:[11,12,13,17,18,19]},
-			   {No:9,b:[1,2,3,4,5,6,7]}];
+	var doc = [{No:1,a:-1.2,b:-1.2,c:-1.2},
+			   {No:2,a:1200,b:1200,c:1200},
+			   {No:3,a:2500,b:2500,c:2500}];
 	insertData(dbcl, doc);
    
-   //use et
-   var findCondition1 = {a:{$slice:[2,3],$et:[3,4,5]}};
-   var expRecs1 = [{No:1,a:[1,2,3,4,5,6]},
-                   {No:6,a:[1,2,3,4,5,6,7,8,9]}];
+   var findCondition1 = {a:{$abs:1,$et:1.2},b:{$abs:1,$et:1.2},c:{$abs:1,$et:1.2}};
+   var expRecs1 = [{No:1,a:-1.2,b:-1.2,c:-1.2}];
    checkResult( dbcl, findCondition1, null, expRecs1, {No:1} );
    
-   //use in/nin/all
-   var findCondition2 = {a:{$slice:[2,3],$returnMatch:0,$in:[3,6,20,8,4,5]}};
-   var expRecs2 = [{No:1,a:[3,4,5]},
-	               {No:3,a:[6,8]},
-	               {No:6,a:[3,4,5]},
-	               {No:7,a:[3,8]}];
+   var findCondition2 = {a:{$floor:1,$et:-2},b:{$floor:1,$et:-2},c:{$floor:1,$et:-2}};
+   var expRecs2 = [{No:1,a:-1.2,b:-1.2,c:-1.2}];
    checkResult( dbcl, findCondition2, null, expRecs2, {No:1} );
    
-   var findCondition3 = {a:{$slice:[2,3],$returnMatch:0,$nin:[6,20,5,2,11]}};
-   var expRecs3 = [{No:2,a:{0:1,1:2,2:3,3:4,4:5,5:6}},
-	               {No:4,a:{0:4,1:5,2:6,2:7,4:8}},
-	               {No:5,a:1},
-	               {No:7,a:[3,7,8]},
-	               {No:8,a:[13,17,18]},
-				   {No:9,b:[1,2,3,4,5,6,7]}];
+   var findCondition3 = {a:{$ceiling:1,$et:-1},b:{$ceiling:1,$et:-1},c:{$ceiling:1,$et:-1}};
+   var expRecs3 = [{No:1,a:-1.2,b:-1.2,c:-1.2}];
    checkResult( dbcl, findCondition3, null, expRecs3, {No:1} );
    
-   var findCondition4 = {a:{$slice:[2,3],$returnMatch:0,$all:[5,3]}};
-   var expRecs4 = [{No:1,a:[3,5]},
-	               {No:6,a:[3,5]}];
+   var findCondition4 = {a:{$subtract:1000,$et:200},b:{$subtract:1000,$et:200},c:{$subtract:1000,$et:200}};
+   var expRecs4 = [{No:2,a:1200,b:1200,c:1200}];
    checkResult( dbcl, findCondition4, null, expRecs4, {No:1} );
    
-   var findCondition5 = {a:{$slice:[2,3],$returnMatch:0,$exists:0}};
-   var expRecs5 = [{No:9,b:[1,2,3,4,5,6,7]}];
+   var findCondition5 = {a:{$add:500,$et:3000},b:{$add:500,$et:3000},c:{$add:500,$et:3000}};
+   var expRecs5 = [{No:3,a:2500,b:2500,c:2500}];
    checkResult( dbcl, findCondition5, null, expRecs5, {No:1} );
    
-   var findCondition6 = {a:{$slice:[2,3],$returnMatch:0,$isnull:1}};
-   var expRecs6 = [{No:9,b:[1,2,3,4,5,6,7]}];
+   var findCondition6 = {a:{$multiply:2,$et:2400},b:{$multiply:2,$et:2400},c:{$multiply:2,$et:2400}};
+   var expRecs6 = [{No:2,a:1200,b:1200,c:1200}];
    checkResult( dbcl, findCondition6, null, expRecs6, {No:1} );
    
-   var findCondition7 = {"a.$0":{$slice:[2,3],$returnMatch:0,$et:1}};
-   var expRecs7 = [{No:1,a:[1,2,3,4,5,6]},
-				   {No:6,a:[1,2,3,4,5,6,7,8,9]},
-				   {No:7,a:[1,2,3,7,8,9]}];
+   var findCondition7 = {a:{$divide:5,$et:500},b:{$divide:5,$et:500},c:{$divide:5,$et:500}};
+   var expRecs7 = [{No:3,a:2500,b:2500,c:2500}];
    checkResult( dbcl, findCondition7, null, expRecs7, {No:1} );
+   
+   var findCondition8 = {a:{$mod:5,$et:0},b:{$mod:5,$et:0},c:{$mod:5,$et:0}};
+   var expRecs8 = [{No:2,a:1200,b:1200,c:1200},
+				   {No:3,a:2500,b:2500,c:2500}];
+   checkResult( dbcl, findCondition8, null, expRecs8, {No:1} );
 }
 main()
