@@ -11,6 +11,12 @@
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
    
+   <test name="javadriver" >
+      <packages>
+         <package name="com.sequoiadb.decimal" />
+      </packages>    
+   </test>
+   
 
 </suite>
    
