@@ -59,8 +59,7 @@ function main( db )
       cmd.run( "rm -rf " + exportFile ) ;
    }
 }
-   
-/***
+ 
 // Test
 try
 {
@@ -80,5 +79,4 @@ finally
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
                    "clean collection in the end, wrong" ) ;
    db.close();
-} 
-***/
+}

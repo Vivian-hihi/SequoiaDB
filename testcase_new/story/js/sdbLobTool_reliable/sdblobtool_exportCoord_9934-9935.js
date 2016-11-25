@@ -62,8 +62,7 @@ function main( db )
       cmd.run( "rm -rf " + exportFile ) ;
    }
 }
- 
-/***   
+    
 // Test
 try
 {
@@ -84,4 +83,3 @@ finally
                    "clean collection in the end, wrong" ) ;
    db.close();
 } 
-***/
