@@ -10,16 +10,11 @@
    <parameter name="RSRVPORTEND" value="27000" />
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
+   
    <test name="transaction">
      <packages> 
          <package name="com.story.transaction"/>
      </packages>  
-   </test>
-   
-   <test name="consistency" >
-         <packages>
-            <package name="com.story.consistencyCluster"/>
-         </packages>
    </test>
 
 </suite>
