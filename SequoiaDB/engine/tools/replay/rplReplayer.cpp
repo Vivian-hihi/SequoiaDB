@@ -379,7 +379,8 @@ namespace replay
       PD_LOG(PDEVENT, "Replay archive log file[%s] successfully",
              file.c_str());
 
-      if (_options->remove())
+      // only delete full file
+      if (_options->remove() && _archiveFileMgr.isFullFileName(file))
       {
          rc = ossFile::deleteFile(file);
          if (SDB_OK != rc)
