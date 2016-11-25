@@ -27,6 +27,8 @@ char CHANGEDPREFIX[100] = "sdv_c_test" ;
 char RSRVPORTBEGIN[100] = "26000" ;
 char RSRVPORTEND[100]   = "27000" ;
 char RSRVNODEDIR[100]   = "/opt/sequoiadb/database/" ;
+char WORKDIR[100]       = "/tmp/ctest" ; 
+
 char IPADDR[100]        = "192.168.31.61" ;
 char HOST[100]          = "sdbserver1" ;
 
@@ -118,11 +120,23 @@ void getConf()
          strcpy( SVCNAME,g_argvs[i+1].c_str() ) ;
       else if( para == "--changedprefix" || para == "-c" )
          strcpy( CHANGEDPREFIX,g_argvs[i+1].c_str() ) ;
+	  else if( para == "--rsrvportbegin" || para == "-b" )
+		 strcpy( RSRVPORTBEGIN,g_argvs[i+1].c_str() ) ;
+	  else if( para == "--rsrvportend" || para == "-e" )
+		 strcpy( RSRVPORTEND,g_argvs[i+1].c_str() ) ;
+	  else if( para == "--rsrvnodedir" || para == "-d" )
+		 strcpy( RSRVNODEDIR,g_argvs[i+1].c_str() ) ;
+	  else if( para == "--workdir" || para == "-w" )
+		 strcpy( WORKDIR,g_argvs[i+1].c_str() ) ; 
     }
     
-    printf("HostName: %s\n",HOSTNAME) ;
-    printf("SvcName: %s\n",SVCNAME) ;
+    printf("HOSTNAME: %s\n",HOSTNAME) ;
+    printf("SVCNAME: %s\n",SVCNAME) ;
     printf("CHANGEDPREFIX: %s\n",CHANGEDPREFIX) ;
+	printf("RSPVPORTBEGIN: %s\n",RSRVPORTBEGIN) ;
+	printf("RSPVPORTEND: %s\n",RSRVPORTEND) ;
+	printf("RSPVNODEDIR: %s\n",RSRVNODEDIR) ;
+	printf("WORKDIR: %s\n",WORKDIR) ;
     printf("\n") ;
 }
 

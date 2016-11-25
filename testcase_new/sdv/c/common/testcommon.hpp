@@ -12,6 +12,8 @@ extern char CHANGEDPREFIX[100] ;
 extern char RSRVPORTBEGIN[100] ;
 extern char RSRVPORTEND[100] ;
 extern char RSRVNODEDIR[100] ;
+extern char WORKDIR[100] ;
+
 extern char IPADDR[100] ;
 extern char HOST[100] ;
 
@@ -22,7 +24,7 @@ INT32 createCollection ( sdbConnectionHandle *cl, CHAR *csName, CHAR *clName );
 // check standalone
 BOOLEAN isStandalone( sdbConnectionHandle db );
 
-// get CI parameter HOSTNAME/SVCNAME/CHANGEDPREFIX/RSPVPORTBEGIN/RSPVPORTEND/RSPVNODEDIR
+// get CI parameter HOSTNAME/SVCNAME/CHANGEDPREFIX/RSRVPORTBEGIN/RSRVPORTEND/RSRVNODEDIR/WORKDIR
 void getConf() ;
 
 // get a unique name: CHANGEDPREFIX + pid + modName = name
