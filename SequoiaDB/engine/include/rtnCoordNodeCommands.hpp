@@ -87,6 +87,10 @@ namespace engine
    class rtnCoordCMDOpOnNodes
    {
    protected :
+      rtnCoordCMDOpOnNodes () {}
+
+      virtual ~rtnCoordCMDOpOnNodes () {}
+
       INT32 _opOnNodes ( const vector<INT32> &opList,
                          const BSONObj &boGroupInfo,
                          vector<BSONObj> &dataObjs ) ;
