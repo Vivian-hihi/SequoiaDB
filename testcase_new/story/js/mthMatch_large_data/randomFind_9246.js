@@ -23,7 +23,7 @@ function main()
          insertData(dbcl, recs);
       }
       
-      var loopNum = 10;
+      var loopNum = 1;
       for(var i= 0; i< loopNum;i++){
    	   //create index
    	   commCreateIndex( dbcl, "fieldName1Index", {fieldName1:1});
