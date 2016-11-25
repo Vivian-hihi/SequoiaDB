@@ -15,14 +15,6 @@
             <package name="com.story.consistencyData"/>
          </packages>
    </test>
-   
-   <!--
-   <test name="consistency" >
-         <packages>
-            <package name="com.story.consistencyCluster"/>
-         </packages>
-   </test>
-   -->
 
 </suite>
    

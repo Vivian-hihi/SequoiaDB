@@ -15,6 +15,12 @@
          <package name="com.story.transaction"/>
      </packages>  
    </test>
+   
+   <test name="consistency" >
+         <packages>
+            <package name="com.story.consistencyCluster"/>
+         </packages>
+   </test>
 
 </suite>
    
