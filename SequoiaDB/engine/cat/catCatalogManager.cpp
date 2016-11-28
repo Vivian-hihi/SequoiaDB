@@ -291,8 +291,8 @@ namespace engine
       PD_CHECK ( pCatReq->header.messageLength >=
                  (INT32)sizeof(MsgCatQueryCatReq),
                  SDB_INVALIDARG, error, PDERROR,
-                 "recived unexpected query catalogue request, "
-                 "message length(%d) is invalied",
+                 "received unexpected query catalogue request, "
+                 "message length(%d) is invalid",
                  pCatReq->header.messageLength ) ;
       // extract and query
       try
@@ -321,17 +321,27 @@ namespace engine
                                    _pEduCB, numToSkip, numToReturn ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to query from catalog, rc = %d", rc ) ;
-         // check for how many records were returned
-         // need to make sure returned record must be one
-         // 1) if returned = 0, it means collection does not exist
-         // 2) if returned > 1, it means possible catalog corruption
-         PD_CHECK ( pReply->numReturned >= 1, SDB_DMS_NOTEXIST, error,
-                    PDWARNING, "Collection does not exist:%s",
-                    matcher.toString().c_str() ) ;
-         PD_CHECK ( pReply->numReturned <= 1, SDB_CAT_CORRUPTION, error,
-                    PDSEVERE,
-                    "More than one records returned for query, "
-                    "possible catalog corruption" ) ;
+         if ( 0 == ossStrcmp( matcher.firstElementFieldName(),
+                              CAT_CATALOGNAME_NAME ) )
+         {
+            // check for how many records were returned
+            // need to make sure returned record must be one
+            // 1) if returned = 0, it means collection does not exist
+            // 2) if returned > 1, it means possible catalog corruption
+            PD_CHECK ( pReply->numReturned >= 1, SDB_DMS_NOTEXIST, error,
+                       PDWARNING, "Collection does not exist:%s",
+                       matcher.toString().c_str() ) ;
+            PD_CHECK ( pReply->numReturned <= 1, SDB_CAT_CORRUPTION, error,
+                       PDSEVERE,
+                       "More than one records returned for query, "
+                       "possible catalog corruption" ) ;
+         }
+         else
+         {
+            PD_CHECK ( pReply->numReturned >= 1, SDB_DMS_NOTEXIST, error,
+                       PDWARNING, "Collection does not exist:%s",
+                       matcher.toString().c_str() ) ;
+         }
       }
       catch ( std::exception &e )
       {

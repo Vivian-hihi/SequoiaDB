@@ -1892,6 +1892,13 @@ namespace engine
       }
       return FALSE;
    }
+
+
+   INT32 _clsCatalogSet::getSubCLCount ()
+   {
+      return _subCLList.size() ;
+   }
+
    std::string _clsCatalogSet::getMainCLName()
    {
       return _mainCLName;

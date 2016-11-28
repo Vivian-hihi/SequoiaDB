@@ -229,6 +229,7 @@ namespace engine
                                          CLS_SUBCL_SORT_TYPE sortType =
                                          SUBCL_SORT_BY_ID );
          BOOLEAN           isContainSubCL( const std::string &subCLName );
+         INT32             getSubCLCount () ;
          std::string       getMainCLName();
          INT32             addSubCL ( const CHAR *subCLName,
                                       const BSONObj &lowBound,

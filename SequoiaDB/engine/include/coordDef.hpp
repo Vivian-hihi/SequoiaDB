@@ -92,6 +92,11 @@ namespace engine
          return _catlogSet.isContainSubCL( subCLName );
       }
 
+      INT32 getSubCLCount ()
+      {
+         return _catlogSet.getSubCLCount() ;
+      }
+
       INT32 getGroupByMatcher( const bson::BSONObj & matcher,
                                CoordGroupList &groupLst )
       {

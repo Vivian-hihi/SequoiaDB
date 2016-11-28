@@ -336,7 +336,8 @@ namespace engine
 
    INT32 rtnCoordGetRemoteCata( pmdEDUCB *cb,
                                 const CHAR *pCollectionName,
-                                CoordCataInfoPtr &cataInfo ) ;
+                                CoordCataInfoPtr &cataInfo,
+                                BOOLEAN forSubCL = FALSE ) ;
 
    /*
       will update collection stat by reply flag

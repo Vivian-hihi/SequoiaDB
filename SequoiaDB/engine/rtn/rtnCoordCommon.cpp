@@ -1093,7 +1093,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETREMOTECATA, "rtnCoordGetRemoteCata" )
    INT32 rtnCoordGetRemoteCata( pmdEDUCB *cb,
                                 const CHAR *pCollectionName,
-                                CoordCataInfoPtr &cataInfo )
+                                CoordCataInfoPtr &cataInfo,
+                                BOOLEAN forSubCL )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETREMOTECATA ) ;
@@ -1119,14 +1120,25 @@ namespace engine
          BSONObj boFieldSelector;
          BSONObj boOrderBy;
          BSONObj boHint;
+         SINT64 numToReturn ;
          try
          {
-            boQuery = BSON( CAT_CATALOGNAME_NAME << pCollectionName ) ;
+            if ( forSubCL )
+            {
+               // Acquire for sub-collections of mainCL with given name
+               boQuery = BSON( CAT_MAINCL_NAME << pCollectionName ) ;
+               numToReturn = -1 ;
+            }
+            else
+            {
+               boQuery = BSON( CAT_CATALOGNAME_NAME << pCollectionName ) ;
+               numToReturn = 1 ;
+            }
          }
          catch ( std::exception &e )
          {
             rc = SDB_SYS;
-            PD_LOG ( PDERROR, "Get reomte catalogue failed, while "
+            PD_LOG ( PDERROR, "Get remote catalogue failed, while "
                      "build query-obj received unexception error:%s",
                      e.what() );
             break ;
@@ -1135,7 +1147,7 @@ namespace engine
          INT32 bufferSize = 0;
          // the buffer will be free after call sendRequestToPrimary
          rc = msgBuildQueryCatalogReqMsg ( &pBuffer, &bufferSize,
-                                           0, 0, 0, 1, cb->getTID(),
+                                           0, 0, 0, numToReturn, cb->getTID(),
                                            &boQuery, &boFieldSelector,
                                            &boOrderBy, &boHint );
          if ( rc != SDB_OK )
@@ -1184,11 +1196,11 @@ namespace engine
             {
                nodeID.value = pReply->header.routeID.value ;
                primaryID = pReply->startFrom ;
+               // updateCataInfo is called inside rtnCoordProcessQueryCatReply
                rc = rtnCoordProcessQueryCatReply( pReply, cataInfo ) ;
                if( SDB_OK == rc )
                {
                   isGetExpectReply = TRUE ;
-                  pCoordcb->updateCataInfo( pCollectionName, cataInfo ) ;
                }
             }
             if ( NULL != pReply )
@@ -1213,36 +1225,34 @@ namespace engine
                     pCollectionName, rc ) ;
 
             if ( ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc ) &&
-                 pCoordcb->isSubCollection( pCollectionName ) )
+                 ( pCoordcb->isSubCollection( pCollectionName ) || forSubCL ) )
             {
                /// change the error
+               /// forSubCL: we recursively query for sub-collections only when
+               /// the cached main-collection contains more than one
+               /// sub-collections. If Catalog reports nothing, it means the
+               /// version of cached main-collection is too old.
                rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
             }
          }
          break ;
       }while ( TRUE ) ;
 
-      if ( SDB_OK == rc && cataInfo->isMainCL() )
+      // Only recursively querying when mainCL contains subCLs
+      if ( SDB_OK == rc && !forSubCL &&
+           cataInfo.get() && cataInfo->isMainCL() &&
+           cataInfo->getSubCLCount() > 0 )
       {
-         vector< string > subCLLst ;
-         cataInfo->getSubCLList( subCLLst ) ;
-
-         vector< string >::iterator iterLst = subCLLst.begin() ;
-         while ( iterLst != subCLLst.end() )
+         CoordCataInfoPtr subCataInfo ;
+         rc = rtnCoordGetRemoteCata( cb, pCollectionName, subCataInfo, TRUE ) ;
+         if ( SDB_OK != rc )
          {
-            CoordCataInfoPtr subCataInfoTmp ;
-            rc = rtnCoordGetRemoteCata( cb, iterLst->c_str(),
-                                        subCataInfoTmp ) ;
-            if( rc )
-            {
-               PD_LOG( PDERROR, "Get main collection[%s]'s sub collection[%s] "
-                       "failed, rc: %d", pCollectionName, iterLst->c_str(),
-                       rc ) ;
-               // remove main catalog info
-               pCoordcb->delCataInfo( pCollectionName ) ;
-               break ;
-            }
-            ++iterLst ;
+            PD_LOG( PDWARNING, "Get main collection[%s]'s sub collections "
+                    "failed, rc: %d", pCollectionName,
+                    rc ) ;
+            // remove main catalog info
+            pCoordcb->delCataInfo( pCollectionName ) ;
+            goto error ;
          }
       }
 
@@ -2543,43 +2553,62 @@ namespace engine
    INT32 rtnCoordProcessQueryCatReply ( MsgCatQueryCatRsp *pReply,
                                         CoordCataInfoPtr &cataInfo )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
+
       PD_TRACE_ENTRY ( SDB_RTNCOPROCESSQUERYCATREPLY ) ;
 
-      do
+      PD_CHECK ( SDB_OK == pReply->flags,
+                 pReply->flags, error, PDWARNING,
+                 "Received unexpected reply while query "
+                 "catalogue(flag=%d)", pReply->flags ) ;
+
+      try
       {
-         if ( 0 == pReply->flags )
+         pmdKRCB *pKrcb           = pmdGetKRCB() ;
+         CoordCB *pCoordcb        = pKrcb->getCoordCB() ;
+         INT32 flag               = 0 ;
+         INT64 contextID          = -1 ;
+         INT32 startFrom          = 0 ;
+         INT32 numReturned        = 0 ;
+         vector < BSONObj > objList ;
+
+         rc = msgExtractReply ( (CHAR *)pReply, &flag, &contextID, &startFrom,
+                                &numReturned, objList ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to extract reply msg, rc = %d", rc ) ;
+
+         for ( UINT32 i = 0 ; i < objList.size() ; i ++ )
          {
-            try
+            CoordCataInfoPtr tmpInfo ;
+
+            rc = rtnCoordProcessCatInfoObj( objList[i], tmpInfo ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to parse query-catalogue-reply, "
+                         "parse catalogue info from bson-obj failed, rc: %d",
+                         rc ) ;
+            pCoordcb->updateCataInfo( tmpInfo->getName(), tmpInfo ) ;
+
+            // Return the pointer of the first one
+            if ( i == 0 )
             {
-               BSONObj boCataInfo( (CHAR *)pReply + sizeof(MsgCatQueryCatRsp) ) ;
-               rc = rtnCoordProcessCatInfoObj( boCataInfo, cataInfo ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to parse query-catalogue-reply, "
-                          "parse catalogue info from bson-obj failed, rc: %d",
-                          rc ) ;
-                  break ;
-               }
-            }
-            catch ( std::exception &e )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG ( PDERROR, "Failed to parse query-catalogue-reply,"
-                        "received unexpected error:%s", e.what() ) ;
-               break ;
+               cataInfo = tmpInfo ;
             }
          }
-         else
-         {
-            PD_LOG ( PDWARNING, "Received unexpected reply while query "
-                     "catalogue(flag=%d)", pReply->flags ) ;
-         }
-         rc = pReply->flags ;
-      } while ( FALSE ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to parse query-catalogue-reply,"
+                  "received unexpected error:%s", e.what() ) ;
+         goto error ;
+      }
 
       PD_TRACE_EXITRC ( SDB_RTNCOPROCESSQUERYCATREPLY, rc ) ;
-      return rc;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOPROCESSCATINFOOBJ, "rtnCoordProcessCatInfoObj" )
