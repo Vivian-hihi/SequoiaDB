@@ -62,6 +62,9 @@ public class TestProcedure7121 extends SdbTestBase{
     
     @Test
     public void test() {
+        if (!Util.isCluster(this.sdb)) {
+            return ;
+        }
         testJSProcedure();
         testRMProcedure();
     }
@@ -160,6 +163,9 @@ public class TestProcedure7121 extends SdbTestBase{
     
     @Test
     public void testEvalJS() {
+        if (!Util.isCluster(this.sdb)) {
+            return ;
+        }
         String code = "function sum_7121(x, y){ var z = x + y;}";
         String evalCode = "sum_7121(0.5, -2)";
         testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_VOID);
