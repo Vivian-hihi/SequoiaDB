@@ -32,7 +32,7 @@
             <pathelement path="${java.testcase.path}/build" />        
         </path>
         <testng outputDir="${tmp.reports.path}" classpathref="calsspath.test">
-            <xmlfileset dir="${java.testcase.path}" includes="testng.xml"/>        
+            <xmlfileset dir="${java.testcase.path}" includes="testng.xml,testng_consistency.xml"/>        
         </testng>        
     	    			 	    
         <tstamp>
