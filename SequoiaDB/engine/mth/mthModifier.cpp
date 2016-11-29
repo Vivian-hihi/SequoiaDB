@@ -252,18 +252,19 @@ namespace engine
             rc = decimal.add( inc, result ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d", 
-                       decimal.toString().c_str(),
-                       inc.toString().c_str(), rc ) ;
+               PD_LOG_MSG( PDERROR, "decimal add failed:v1=%s,v2=%s,rc=%d", 
+                           decimal.toString().c_str(),
+                           inc.toString().c_str(), rc ) ;
                goto error ;
             }
 
             rc = result.updateTypemod( decimal.getTypemod() ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "result is out of precision:result=%s,"
-                       "precision=%d,scale=%d,rc=%d", result.toString().c_str(),
-                       decimal.getPrecision(), decimal.getScale(), rc ) ;
+               PD_LOG_MSG( PDERROR, "result is out of precision:result=%s,"
+                           "precision=%d,scale=%d,rc=%d",
+                           result.toString().c_str(),
+                           decimal.getPrecision(), decimal.getScale(), rc ) ;
                goto error ;
             }
 
@@ -1206,7 +1207,8 @@ namespace engine
          // object contains field name and value
          // for example
          // $inc : { votes: 1 }    # for increment votes by 1
-         PD_LOG ( PDERROR, "each element in modifier pattern must be object" ) ;
+         PD_LOG_MSG ( PDERROR, "each element in modifier pattern must "
+                      "be object" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1534,9 +1536,10 @@ namespace engine
          rc = _parseElement(i.next() ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to parse match pattern[%s, pos: %d], "
-                     "rc: %d", modifierPattern.toString().c_str(), eleNum,
-                     rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to parse match "
+                         "pattern[%s, pos: %d], rc: %d",
+                         modifierPattern.toString().c_str(), eleNum,
+                         rc ) ;
             goto error ;
          }
          eleNum ++ ;
@@ -1595,9 +1598,9 @@ namespace engine
          }
          catch( std::exception &e )
          {
-            PD_LOG ( ( _ignoreTypeError ? PDINFO : PDERROR ),
-                     "Failed to append for %s: %s",
-                     me->_toModify.toString().c_str(), e.what() ) ;
+            PD_LOG_MSG ( ( _ignoreTypeError ? PDINFO : PDERROR ),
+                         "Failed to append for %s: %s",
+                         me->_toModify.toString().c_str(), e.what() ) ;
             if ( !_ignoreTypeError )
             {
                rc = SDB_INVALIDARG ;
@@ -1770,7 +1773,7 @@ namespace engine
 
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to append string, rc: %d", rc ) ;
+         PD_LOG_MSG( PDERROR, "Failed to append string, rc: %d", rc ) ;
          goto error ;
       }
       else if ( hasUnknowDollar )
@@ -1804,7 +1807,7 @@ namespace engine
                                 &newRootLen ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to append string, rc: %d", rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to append string, rc: %d", rc ) ;
             goto error ;
          }
 
@@ -1815,8 +1818,8 @@ namespace engine
                              bb, es, modifierIndex, hasCreateNewRoot ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to build new object for %s, rc: %d",
-                     me->_toModify.toString().c_str(), rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to build new object for %s, rc: %d",
+                         me->_toModify.toString().c_str(), rc ) ;
             goto error ;
          }
          bb.done() ;
@@ -1835,16 +1838,16 @@ namespace engine
          }
          catch( std::exception &e )
          {
-            PD_LOG ( PDERROR, "Failed to append for %s: %s",
-                     me->_toModify.toString().c_str(), e.what() );
+            PD_LOG_MSG ( PDERROR, "Failed to append for %s: %s",
+                         me->_toModify.toString().c_str(), e.what() );
             rc = SDB_INVALIDARG ;
             goto error ;
          }
 
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to append for %s, rc: %d",
-                     me->_toModify.toString().c_str(), rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to append for %s, rc: %d",
+                         me->_toModify.toString().c_str(), rc ) ;
             goto error ;
          }
       }
@@ -2129,8 +2132,8 @@ namespace engine
                                    hasCreateNewRoot ) ;
                if ( rc )
                {
-                  PD_LOG ( PDERROR, "Failed to build object: %s, rc: %d",
-                           e.toString().c_str(), rc ) ;
+                  PD_LOG_MSG ( PDERROR, "Failed to build object: %s, rc: %d",
+                               e.toString().c_str(), rc ) ;
                   rc = SDB_INVALIDARG ;
                   goto error ;
                }
@@ -2155,8 +2158,8 @@ namespace engine
                                    hasCreateNewRoot ) ;
                if ( rc )
                {
-                  PD_LOG ( PDERROR, "Failed to build array: %s, rc: %d",
-                           e.toString().c_str(), rc ) ;
+                  PD_LOG_MSG ( PDERROR, "Failed to build array: %s, rc: %d",
+                               e.toString().c_str(), rc ) ;
                   rc = SDB_INVALIDARG ;
                   goto error ;
                }
@@ -2210,18 +2213,18 @@ namespace engine
             }
             catch( std::exception &e )
             {
-               PD_LOG ( PDERROR, "Failed to apply changes for %s: %s",
-                        _modifierElements[(*modifierIndex)
-                        ]._toModify.toString().c_str(),
-                        e.what() ) ;
+               PD_LOG_MSG ( PDERROR, "Failed to apply changes for %s: %s",
+                            _modifierElements[(*modifierIndex)
+                            ]._toModify.toString().c_str(),
+                            e.what() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to apply change for %s, rc: %d",
-                        _modifierElements[(*modifierIndex)
-                        ]._toModify.toString().c_str(), rc ) ;
+               PD_LOG_MSG ( PDERROR, "Failed to apply change for %s, rc: %d",
+                            _modifierElements[(*modifierIndex)
+                            ]._toModify.toString().c_str(), rc ) ;
                goto error ;
             }
             // since we have processed the original data, we increase element
@@ -2250,10 +2253,10 @@ namespace engine
          case RIGHT_SUBFIELD:
          default :
             //we should never reach this codepath
-            PD_LOG ( PDERROR, "Reaching unexpected codepath, cmp( %s, %s, "
-                     "res: %d )", _modifierElements[(*modifierIndex)
-                     ]._toModify.toString().c_str(),
-                     *ppRoot, cmp ) ;
+            PD_LOG_MSG ( PDERROR, "Reaching unexpected codepath, cmp( %s, %s, "
+                         "res: %d )", _modifierElements[(*modifierIndex)
+                         ]._toModify.toString().c_str(),
+                         *ppRoot, cmp ) ;
             rc = SDB_SYS ;
             goto error ;
          }
@@ -2287,9 +2290,9 @@ namespace engine
                                       modifierIndex, hasCreateNewRoot ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to append for %s, rc: %d",
-                        _modifierElements[(*modifierIndex)
-                                         ]._toModify.toString().c_str(), rc );
+               PD_LOG_MSG ( PDERROR, "Failed to append for %s, rc: %d",
+                            _modifierElements[(*modifierIndex)
+                            ]._toModify.toString().c_str(), rc );
                goto error ;
             }
          }
@@ -2346,7 +2349,7 @@ namespace engine
       pBuffer = (CHAR*)SDB_OSS_MALLOC ( SDB_PAGE_SIZE ) ;
       if ( !pBuffer )
       {
-         PD_LOG ( PDERROR, "Failed to allocate buffer for select" ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to allocate buffer for select" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -2384,7 +2387,7 @@ namespace engine
                           &modifierIndex, FALSE ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to modify target, rc: %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to modify target, rc: %d", rc ) ;
          goto error ;
       }
       // now target owns the builder buffer, since obj() will decouple() the
