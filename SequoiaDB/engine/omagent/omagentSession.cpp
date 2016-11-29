@@ -466,15 +466,18 @@ namespace engine
          PD_LOG ( PDERROR, "Error code is invalid[rc:%d]", rc ) ;
          rc = SDB_SYS ;
       }
+      builder.append( OP_ERRNOFIELD, rc ) ;
+      builder.append( OP_ERRDESP_FIELD, getErrDesp( rc ) ) ;
+
       if ( eduCB()->getInfo( EDU_INFO_ERROR ) &&
            0 != *( eduCB()->getInfo( EDU_INFO_ERROR ) ) )
       {
-         builder.append( OMA_FIELD_DETAIL,
+         builder.append( OP_ERR_DETAIL,
                          eduCB()->getInfo( EDU_INFO_ERROR ) ) ;
       }
       else
       {
-         builder.append( OMA_FIELD_DETAIL, getErrDesp( rc ) ) ;
+         builder.append( OP_ERR_DETAIL, getErrDesp( rc ) ) ;
       }
 
       goto done ;
