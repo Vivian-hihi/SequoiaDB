@@ -15,7 +15,7 @@ class Task
    
    public function listall()
    {
-      $num = 0 ;
+      $num = -1 ;
       $cursor = $this->db->listTask() ;
       $err = $this->db -> getError() ;
       if ( $err['errno'] != 0 )
