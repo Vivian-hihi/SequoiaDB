@@ -29,8 +29,8 @@
             <case value="largedata_test">
                <for list="${large_data_list}" param="feature">
                   <sequential>
-                     <delete dir="@{casedir}" >
-                        <exclude dir="@{feature}/**/*"/>
+                     <delete>
+                        <fileset dir="@{casedir}" excludes="@{feature}/**/*"/>
                      </delete>
                   </sequential>
                </for>
