@@ -4,6 +4,7 @@
 @input:        mode: STANDALONE | G1D3 | G3D3
                hostList: e.g.['host1','host2','host3'], G1D3 and G3D3 need 3 hosts
                installDir: default "/opt/sequoiadb"
+               diagLevel: 0 1 2 3 4 5, default 4
 @author:       Ting YU 2016-04-26   
 ******************************************************/
 if ( typeof(mode) === "undefined" ) 
@@ -23,6 +24,7 @@ if ( hostList.constructor !== Array )
    throw "invalid para: hostList, should be array"; 
 }
 if ( typeof(installDir) === "undefined" ) installDir = "/opt/sequoiadb";
+if ( typeof(diagLevel) === "undefined" ) diagLevel = 4;
 
 var cmPort         = 11790;
 var tmpCoordPort   = 18800;
@@ -73,7 +75,7 @@ function deployStandalone()
       var oma = new Oma( hostname, cmPort );
       oma.createData( STANDALONEPort, 
                       databaseDir+"/STANDALONE/"+STANDALONEPort,
-                      {diaglevel:5, fap:fapValue} );
+                      {diaglevel:diagLevel, fap:fapValue} );
       oma.startNode( STANDALONEPort );     
    }
    
@@ -105,7 +107,7 @@ function deployClster( mode )
    
    //2 create cata group
    println("-----begin to create cata group");
-   var config = { diaglevel:5,
+   var config = { diaglevel:diagLevel,
                   sharingbreak:30000,
                   diagnum:30,
                   optimeout:60000,
@@ -144,7 +146,7 @@ function deployClster( mode )
    var coordRG = db.createCoordRG();
    for( var i in hostList )
    {
-      var config = {  diaglevel:5,                      
+      var config = {  diaglevel:diagLevel,                      
                       diagnum:30,
                       optimeout:60000,
                       fap:fapValue 
@@ -165,7 +167,7 @@ function deployClster( mode )
       var dataRG = db.createRG( datargName );
       for( var i in hostList )
       {
-         var config = { diaglevel:5,
+         var config = { diaglevel:diagLevel,
                         sharingbreak:30000,
                         diagnum:30,
                         optimeout:60000,

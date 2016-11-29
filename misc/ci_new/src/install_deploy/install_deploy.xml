@@ -94,7 +94,7 @@
       <!--exec deploy.js-->
       <property name="sdb_shell" value="${INSTALL_DIR}/bin/sdb"/>
       <property name="deploy_cmd1" value="-f ${basedir}/src/install_deploy/deploy.js" />
-      <property name="deploy_cmd2" value="-e &quot;var hostList=${testhost_jsarr};var mode='${DEPLOY_MODE}';&quot;" />
+      <property name="deploy_cmd2" value="-e &quot;var hostList=${testhost_jsarr};var mode='${DEPLOY_MODE}';var diagLevel=3;&quot;" />
       <echo message="exec cmd: ${sdb_shell} ${deploy_cmd1} ${deploy_cmd2}"/>
       <exec executable="${sdb_shell}" timeout="600000" failonerror="true">                                   
          <arg line="${deploy_cmd1} ${deploy_cmd2}" />

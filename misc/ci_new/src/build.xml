@@ -37,6 +37,31 @@
   
    </target>
    
+   <target name="largedata_test_build">
+   
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
+
+      <if>
+         <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
+         <then>
+            <ant antfile="install_deploy.xml" dir="src/install_deploy" inheritAll="true" useNativeBaseDir="true" />
+         </then>
+      </if>
+     
+      <ant antfile="largedata_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" />
+      
+      <if>
+         <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
+         <then>
+            <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+               <property name="TEST_TYPE" value="FUNCTIONTEST"/>
+               <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+            </ant>
+         </then>
+      </if>
+  
+   </target>
+   
    <target name="compile_build">
       <ant antfile="compile_sequoiadb.xml" dir="src/compile" inheritAll="true" useNativeBaseDir="true" />
    </target>
