@@ -123,7 +123,12 @@ namespace engine
 
    INT32 _catDCManager::fini ()
    {
-      _pCatCB->unregEventHandler( this ) ;
+      // Check the pointer in case that it is not initialized
+      // before unregister the handler
+      if ( _pCatCB )
+      {
+         _pCatCB->unregEventHandler( this ) ;
+      }
       return SDB_OK ;
    }
 
