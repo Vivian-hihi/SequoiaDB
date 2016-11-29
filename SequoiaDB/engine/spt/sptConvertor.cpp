@@ -44,6 +44,7 @@
 #include "../client/base64c.h"
 #include "../client/jstobs.h"
 #include <boost/lexical_cast.hpp>
+#include "sptSPDef.hpp"
 
 #define SPT_CONVERTOR_SPE_OBJSTART '$'
 #define SPT_SPEOBJ_MINKEY "$minKey"
@@ -1386,7 +1387,7 @@ INT32 sptConvertor::toString( JSContext *cx,
       if ( NULL != p )
       {
          str.assign( p ) ;
-         free( p ) ;
+         SAFE_JS_FREE( cx, p ) ;
       }
    }
 done:
