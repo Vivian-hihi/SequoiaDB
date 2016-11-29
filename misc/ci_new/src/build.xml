@@ -29,7 +29,7 @@
          <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
          <then>
             <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
-               <property name="TEST_TYPE" value="FUNCTIONTEST"/>
+               <property name="TEST_TYPE" value="BASETEST"/>
                <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
             </ant>
          </then>
@@ -54,7 +54,7 @@
          <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
          <then>
             <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
-               <property name="TEST_TYPE" value="FUNCTIONTEST"/>
+               <property name="TEST_TYPE" value="LARGEDATATEST"/>
                <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
             </ant>
          </then>
