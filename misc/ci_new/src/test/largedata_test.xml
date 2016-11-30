@@ -22,7 +22,7 @@
       <antcallback target="check_parameter" return="TESTCASE_TYPE, DEPLOY_MODE"/>
       
       <propertycopy name="testhost_list" from="${DEPLOY_MODE}_HOST" />          
-      <property name="case_basedir" location="${WORKSPACE}/sequoiadb/testcase_functiontest" />
+      <property name="case_basedir" location="${WORKSPACE}/sequoiadb/testcase_largedata" />
       <property name="testcase_outdir" location="${WORKSPACE}/tmp" />
       <property name="remote_casedir" location="${CI_WORK_DIR}/testcase" />
       
@@ -31,6 +31,8 @@
       <antcall target="ready_lib"/>
       
       <antcall target="compile_testcase" />
+      
+      <antcall target="filter_testcase" />
       
       <antcall target="divide_testcase" />
       
@@ -45,7 +47,7 @@
          <isset property="TESTCASE_TYPE"/>
          <else>           
             <var name="TESTCASE_TYPE" value="tdd_c,tdd_cpp,tdd_java,tdd_php,tdd_python,tdd_mongoc,
-                                             story_ant,story_js,
+                                             story_java,story_js,
                                              sdv_c,sdv_cpp,sdv_java,sdv_php,sdv_js" />
          </else>
       </if>
@@ -120,19 +122,29 @@
       </for>
    </target>
    
+   <target name="filter_testcase">
+      <for list="${TESTCASE_TYPE}" param="casetype" trim="true" parallel="false">
+         <sequential>    
+         <echo>******begin to filter @{casetype} testcase******</echo>     
+         <var name="case_reltdir" unset="true"/>
+         <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/> 
+         <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>      
+         <filtercase casedir="${case_dir}" testtype="largedata_test"/>
+         </sequential>
+      </for>
+   </target>
+   
    <target name="divide_testcase">
       <delete dir="${testcase_outdir}" failonerror="false" />
       <mkdir dir="${testcase_outdir}"/>
       
-      <for list="${TESTCASE_TYPE}" param="casetype" parallel="false">
+      <for list="${TESTCASE_TYPE}" param="casetype" trim="true" parallel="false">
          <sequential>    
          <echo>******begin to divide @{casetype} testcase******</echo>
          
          <var name="case_reltdir" unset="true"/>
          <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/>
-         
          <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>
-         <readycase casedir="${case_dir}" testtype="largedata_test"/>
 
          <switch value="@{casetype}">
          
