@@ -5483,7 +5483,7 @@ namespace engine
          << " System.listProcess( [optionObj], [filterObj] )" << endl
          << " System.isProcExist( optionObj )" << endl
          << " System.killProcess( optionObj )" << endl
-         << " System.getEnv()" << endl
+         << " System.getUserEnv()" << endl
 #if defined (_LINUX)
          << " System.addUser( userObj )" << endl
          << " System.addGroup( groupObj )" << endl
@@ -5535,7 +5535,7 @@ namespace engine
          << "   listProcess( [optionObj], [filterObj] )" << endl
          << "   isProcExist( optionObj )" << endl
          << "   killProcess( optionObj )" << endl
-         << "   getEnv()" << endl
+         << "   getUserEnv()" << endl
          << "   addUser( userObj )" << endl
          << "   addGroup( groupObj )" << endl
          << "   setUserConfigs( optionObj )" << endl
