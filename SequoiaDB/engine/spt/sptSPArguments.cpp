@@ -53,9 +53,9 @@ namespace engine
       _vp = NULL ;
    }
 
-
    INT32 _sptSPArguments::getString( UINT32 pos,
-                                     std::string &value ) const
+                                     std::string &value,
+                                     BOOLEAN strict ) const
    {
       INT32 rc = SDB_OK ;
       JSString *jsStr = NULL ;
@@ -76,20 +76,29 @@ namespace engine
          goto error ;
       }
 
-      if ( !JSVAL_IS_STRING( *val ) )
+      /// strict for String
+      if ( strict )
       {
-         PD_LOG( PDERROR, "jsval is not a string." ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         if ( !JSVAL_IS_STRING( *val ) )
+         {
+            PD_LOG( PDERROR, "jsval is not a string." ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         jsStr = JSVAL_TO_STRING( *val ) ;
       }
-
-      jsStr = JSVAL_TO_STRING( *val ) ;
+      /// transfer other to string
+      else
+      {
+         jsStr = JS_ValueToString( _context, *val ) ;
+      }
+      /// Check the result
       if ( NULL == jsStr )
       {
          PD_LOG( PDERROR, "failed to convert jsval to jsstr" ) ;
          rc = SDB_SYS ;
          goto error ;
-      } 
+      }
 
       str = JS_EncodeString ( _context , jsStr ) ;
       if ( NULL == str )
@@ -100,7 +109,7 @@ namespace engine
       }
 
       value.assign( str ) ;
-      
+
    done:
       SAFE_JS_FREE( _context, str ) ;
       return rc ;

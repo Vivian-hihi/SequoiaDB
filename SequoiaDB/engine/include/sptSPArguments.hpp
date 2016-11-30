@@ -47,7 +47,8 @@ namespace engine
    public:
       virtual INT32 getNative( UINT32 pos, void *value,
                                SPT_NATIVE_TYPE type ) const ;
-      virtual INT32 getString( UINT32 pos, std::string &value ) const ;
+      virtual INT32 getString( UINT32 pos, std::string &value,
+                               BOOLEAN strict = TRUE ) const ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const ;
       virtual UINT32 argc() const
       {

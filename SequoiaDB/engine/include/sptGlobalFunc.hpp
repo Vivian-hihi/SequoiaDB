@@ -69,9 +69,22 @@ namespace engine
                                     _sptReturnVal &rval,
                                     bson::BSONObj &detail ) ;
 
+      static INT32 print( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
       static INT32 sleep( const _sptArguments &arg,
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;
+
+      static INT32 traceFmt( const _sptArguments &arg,
+                             _sptReturnVal &rval,
+                             bson::BSONObj &detail ) ;
+
+      static INT32 globalHelp( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
+
    } ;
    typedef class _sptGlobalFunc sptGlobalFunc ;
 }

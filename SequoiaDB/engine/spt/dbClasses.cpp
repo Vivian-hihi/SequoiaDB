@@ -215,13 +215,6 @@ extern BOOLEAN g_disablePassEncode ;
 SDB_EXTERN_C_END
 #endif // SDB_FMP
 
-// troff file's relative path
-#if defined (_WINDOWS)
-#define TF_REL_PATH "..\\doc\\manual\\"
-#else
-#define TF_REL_PATH "../doc/manual/"
-#endif
-
 OSS_INLINE JSObject *SDB_JSVAL_TO_OBJECT( jsval x )
 {
    if ( JSVAL_IS_NULL(x) || JSVAL_IS_VOID(x) )
@@ -345,154 +338,6 @@ static JSFunctionSpec bson_functions[] = {
 } ;
 
 // end Bson
-
-// global functions
-// PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_PRINT, "global_print" )
-static JSBool global_print ( JSContext *cx , uintN argc , jsval *vp )
-{
-   PD_TRACE_ENTRY ( SDB_GLOBAL_PRINT );
-   JSBool      ret      = JS_TRUE ;
-   JSString *  strVal   = NULL ;
-   CHAR *      val      = NULL ;
-
-   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "S" , &strVal ) ;
-   REPORT ( ret , "print(): wrong arguments" ) ;
-
-   // val is freed in done:, use NULL replace cx
-   val = (CHAR *) JS_EncodeString ( NULL , strVal ) ;
-   if ( val )
-   {
-      ossPrintf ( "%s" , val ) ;
-   }
-   else
-   {
-#if defined (_DEBUG)
-      PD_LOG ( PDWARNING ,
-               "Failed to encode BSON record in javascript engine. "
-               "It is possible the record contains invalid UTF-8 string" ) ;
-#endif
-   }
-
-   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
-
-done :
-   //SAFE_JS_FREE ( cx , val ) ;
-   if ( val )
-      free ( val ) ;
-   PD_TRACE_EXIT ( SDB_GLOBAL_PRINT );
-   return ret ;
-error :
-   TRY_REPORT ( cx , "print(): false" ) ;
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_TRACE_FMT, "trace_fmt" )
-static JSBool trace_fmt ( JSContext *cx, uintN argc, jsval *vp )
-{
-   PD_TRACE_ENTRY ( SDB_TRACE_FMT );
-   JSBool                  ret          = JS_FALSE ;
-   CHAR                   *pInputName   = NULL ;
-   CHAR                   *pOutputName  = NULL ;
-   INT32                   formatType   = 0 ;
-   JSString               *strInput     = NULL ;
-   JSString               *strOutput    = NULL ;
-   INT32                   rc           = SDB_OK ;
-
-   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) , "iSS" ,
-                               &formatType , &strInput , &strOutput ) ;
-   REPORT ( ret, "traceFmt(): wrong arguments" ) ;
-
-   // input is freed in done
-   pInputName = (CHAR*) JS_EncodeString ( cx, strInput ) ;
-   VERIFY ( pInputName ) ;
-
-   // output is freed in done
-   pOutputName = (CHAR*) JS_EncodeString ( cx, strOutput ) ;
-   VERIFY ( pOutputName ) ;
-
-   if ( PD_TRACE_FORMAT_TYPE_FLOW != formatType &&
-        PD_TRACE_FORMAT_TYPE_FORMAT != formatType )
-   {
-      rc = SDB_INVALIDARG ;
-      REPORT_RC ( JS_FALSE, "traceFmt(): bad format type", rc ) ;
-   }
-
-   rc = pdTraceCB::format ( pInputName, pOutputName,
-                            (_pdTraceFormatType)formatType ) ;
-   REPORT_RC ( SDB_OK == rc, "traceFmt()", rc ) ;
-   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
-done :
-   SAFE_JS_FREE ( cx, pInputName ) ;
-   SAFE_JS_FREE ( cx, pOutputName ) ;
-   PD_TRACE_EXIT ( SDB_TRACE_FMT );
-   return ret ;
-error :
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
-static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
-{
-   PD_TRACE_ENTRY ( SDB_GLOBAL_HELP );
-#if defined (SDB_SHELL)
-   INT32 rc                                     = SDB_OK ;
-   CHAR tfPath[ OSS_MAX_PATHSIZE + 1 ]          = { 0 } ;
-   CHAR pwdPath[ OSS_MAX_PATHSIZE + 1 ]         = { 0 } ;
-#endif
-   JSBool ret                                   = JS_TRUE ;
-   JSString *strCate                            = NULL ;
-   JSString *strCmd                             = NULL ;
-   CHAR *cate                                    = NULL ;
-   CHAR *cmd                                    = NULL ;
-
-   // extract arguments
-   ret = JS_ConvertArguments ( cx, argc, JS_ARGV ( cx , vp ),
-                               "S/S", &strCate, &strCmd ) ;
-   REPORT ( ret , "help(): wrong arguments" ) ;
-
-   // cate is freed in done:
-   cate = (CHAR *) JS_EncodeString ( cx, strCate ) ;
-   VERIFY ( cate ) ;
-   if ( argc > 1 )
-   {
-      // cmd is freed in done:
-      cmd = (CHAR *) JS_EncodeString ( cx, strCmd ) ;
-      VERIFY ( cmd ) ;
-   }
-
-#if defined (SDB_SHELL)
-   // get the troff file path 
-   rc = ossGetEWD( pwdPath, OSS_MAX_PATHSIZE ) ;
-   REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-   rc = engine::utilBuildFullPath( pwdPath, TF_REL_PATH,
-                                   OSS_MAX_PATHSIZE, tfPath ) ;
-   REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-   // get manHelp instance and display xxx.help() or xxx.help(yyy)
-   rc = manHelp::getInstance( tfPath ).getFileHelp( cate, cmd ) ;
-   REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-#endif
-   JS_SET_RVAL ( cx , vp, JSVAL_VOID ) ;
-
-done :
-   SAFE_JS_FREE ( cx, cate ) ;
-   SAFE_JS_FREE ( cx, cmd ) ;
-
-   PD_TRACE_EXIT ( SDB_GLOBAL_HELP );
-   return ret ;
-error :
-   TRY_REPORT ( cx , "help(): false" ) ;
-   goto done ;
-}
-
-static JSFunctionSpec global_functions[] = {
-   JS_FS ( "print" , global_print , 1 , 0 ) ,
-   JS_FS ( "traceFmt", trace_fmt, 3, 0 ) ,
-   JS_FS ( "man", global_help, 1, 0 ),
-   JS_FS_END
-} ;
-
-// end global functions
 
 #if defined (SDB_CLIENT)
 #include "../client/client.h"
@@ -8723,8 +8568,6 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
 /// WARNING:  modify jsobj_is_sdbobj when u add a new object.
 
    JSBool ret = JS_TRUE ;
-
-   VERIFY ( JS_DefineFunctions ( cx , obj , global_functions ) ) ;
 
    VERIFY ( JS_InitClass ( cx , obj , 0 , &bson_class ,
                            bson_constructor , 0 ,
