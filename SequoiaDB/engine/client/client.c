@@ -3937,7 +3937,7 @@ SDB_EXPORT INT32 sdbEvalJS(sdbConnectionHandle cHandle,
       goto error ;
    }
 
-   if ( *type < SDB_SPD_RES_TYPE_VOID || *type > SDB_SPD_RES_TYPE_RN )
+   if ( !type )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
