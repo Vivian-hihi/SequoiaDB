@@ -37,9 +37,6 @@
 
 using namespace bson ;
 
-const UINT32 MAX_SKIP_LEN  = 15 ;
-const UINT32 MAX_RULE_LEN = MAX_SKIP_LEN + 2 ;
-
 namespace engine
 {
    _sptSPArguments::_sptSPArguments( JSContext *context, uintN argc, jsval *vp )
@@ -191,6 +188,7 @@ namespace engine
                break ; \
             default : \
                PD_LOG( PDERROR, "type[%d] is error", type ) ; \
+               rc = SDB_INVALIDARG ; \
                goto error ; \
          } \
       } while ( 0 )

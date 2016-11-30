@@ -37,10 +37,12 @@ using namespace bson ;
 
 namespace engine
 {
-JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, getLastErrorMsg )
-JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, setLastErrorMsg )
-JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, getLastError )
-JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, setLastError )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getLastErrorMsg )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getLastError )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, getLastErrorObj )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, setLastErrorMsg )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, setLastError )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, setLastErrorObj )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 
 JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
@@ -48,6 +50,8 @@ JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "setLastErrMsg", setLastErrorMsg )
    JS_ADD_GLOBAL_FUNC( "getLastError", getLastError )
    JS_ADD_GLOBAL_FUNC( "setLastError", setLastError )
+   JS_ADD_GLOBAL_FUNC( "getLastErrObj", getLastErrorObj )
+   JS_ADD_GLOBAL_FUNC( "setLastErrObj", setLastErrorObj )
    JS_ADD_GLOBAL_FUNC( "sleep", sleep )
 JS_MAPPING_END()
 
@@ -55,11 +59,9 @@ JS_MAPPING_END()
                                           _sptReturnVal &rval,
                                           bson::BSONObj &detail )
    {
-      sdbSetNeedClearErrorInfo( FALSE ) ;
       if ( NULL != sdbGetErrMsg() )
       {
          rval.setStringVal( "", sdbGetErrMsg() ) ;
-         sdbSetErrMsg( NULL ) ;
       }
       return SDB_OK ;
    }
@@ -68,23 +70,27 @@ JS_MAPPING_END()
                                           _sptReturnVal & rval,
                                           BSONObj & detail )
    {
+      INT32 rc = SDB_OK ;
       string msg ;
-      sdbSetNeedClearErrorInfo( FALSE ) ;
-      if ( SDB_OK == arg.getString( 0, msg ) )
+
+      rc = arg.getString( 0, msg ) ;
+      if ( SDB_OK == rc )
       {
          sdbSetErrMsg( msg.c_str() ) ;
       }
-      return SDB_OK ;
+      else
+      {
+         detail = BSON( SPT_ERR << "The 1st param must be string" ) ;
+      }
+      return rc ;
    }
 
    INT32 _sptGlobalFunc::getLastError( const _sptArguments & arg,
                                        _sptReturnVal & rval,
                                        BSONObj & detail )
    {
-      sdbSetNeedClearErrorInfo( FALSE ) ;
       INT32 error = sdbGetErrno() ;
       rval.setNativeVal( "",  NumberInt, (const void*)&error ) ;
-      sdbSetErrno( SDB_OK ) ;
       return SDB_OK ;
    }
 
@@ -92,13 +98,58 @@ JS_MAPPING_END()
                                        _sptReturnVal & rval,
                                        BSONObj & detail )
    {
+      INT32 rc = SDB_OK ;
       INT32 errNum = SDB_OK ;
-      sdbSetNeedClearErrorInfo( FALSE ) ;
-      if( SDB_OK == arg.getNative( 0, (void*)&errNum, SPT_NATIVE_INT32 ) )
+
+      rc = arg.getNative( 0, (void*)&errNum, SPT_NATIVE_INT32 ) ;
+      if( SDB_OK == rc )
       {
          sdbSetErrno( errNum ) ;
       }
+      else
+      {
+         detail = BSON( SPT_ERR << "The 1st param must be number" ) ;
+      }
+      return rc ;
+   }
+
+   INT32 _sptGlobalFunc::getLastErrorObj( const _sptArguments &arg,
+                                          _sptReturnVal &rval,
+                                          BSONObj &detail )
+   {
+      const CHAR *pObjData = sdbGetErrorObj() ;
+
+      if ( pObjData )
+      {
+         try
+         {
+            BSONObj obj( pObjData ) ;
+            rval.setBSONObj( "", obj ) ;
+         }
+         catch( std::exception & )
+         {
+         }
+      }
       return SDB_OK ;
+   }
+
+   INT32 _sptGlobalFunc::setLastErrorObj( const _sptArguments &arg,
+                                          _sptReturnVal &rval,
+                                          BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+
+      rc = arg.getBsonobj( 0, obj ) ;
+      if ( SDB_OK == rc )
+      {
+         sdbSetErrorObj( obj.objdata(), obj.objsize() ) ;
+      }
+      else
+      {
+         detail = BSON( SPT_ERR << "The 1st param must be object" ) ;
+      }
+      return rc ;
    }
 
    INT32 _sptGlobalFunc::sleep( const _sptArguments &arg,
@@ -110,12 +161,13 @@ JS_MAPPING_END()
       rc = arg.getNative( 0, &time, SPT_NATIVE_INT32 ) ;
       if ( SDB_OK != rc )
       {
+         detail = BSON( SPT_ERR << "The 1st param must be number" ) ;
          goto error ;
       }
 
       ossSleepmillis( time ) ;
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       goto done ;
    }

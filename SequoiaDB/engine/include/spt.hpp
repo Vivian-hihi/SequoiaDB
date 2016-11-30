@@ -96,13 +96,15 @@ namespace engine
 
       friend class Scope;
    private:
-      JSRuntime *_runtime;
-      JSErrorReporter _errorReporter ;
+      JSRuntime *_runtime ;
+
    };
 
 } // namespace engine
 
 JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
+
+void   InitScopeEngine() ;
 
 #endif
 

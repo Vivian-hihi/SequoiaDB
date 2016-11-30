@@ -207,8 +207,6 @@ namespace engine
                                    INT32 rc,
                                    const bson::BSONObj &detail )
    {
-      sdbSetErrno( rc ) ;
-
       if ( SDB_OK != rc )
       {
          stringstream ss ;
@@ -254,21 +252,20 @@ namespace engine
             }
             ++count ;
          }
-         sdbSetErrMsg( ss.str().c_str() ) ;
 
+         string strMsg = ss.str() ;
          if ( sdbIsErrMsgEmpty() )
          {
-            sdbSetErrMsg( getErrDesp( rc ) ) ;
+            sdbSetErrMsg( strMsg.empty() ? getErrDesp(rc) : strMsg.c_str(),
+                          FALSE ) ;
+         }
+         if ( SDB_OK == sdbGetErrno() )
+         {
+            sdbSetErrno( rc, FALSE ) ;
          }
 
          JS_SetPendingException( cx , INT_TO_JSVAL( rc ) ) ;
       }
-      else
-      {
-         sdbSetErrMsg( NULL ) ;
-      }
-
-      return ;
    }
 
 }

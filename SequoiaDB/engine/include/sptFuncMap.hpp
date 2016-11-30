@@ -50,7 +50,6 @@ namespace engine
        _destruct(NULL),
        _resolve(NULL)
       {
-
       }
 
       virtual ~_sptFuncMap()

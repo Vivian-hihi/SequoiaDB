@@ -102,6 +102,7 @@ typedef ossValuePtr sdbDCHandle ;
 
 /** Callback function when the reply message is error **/
 typedef void (*ERROR_ON_REPLY_FUNC)( const CHAR *pErrorObj,
+                                     UINT32 objSize,
                                      INT32 flag,
                                      const CHAR *pDescription,
                                      const CHAR *pDetail ) ;

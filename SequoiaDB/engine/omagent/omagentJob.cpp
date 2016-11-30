@@ -78,7 +78,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       _omaTask *pTask = _taskPtr.get() ;
-      
+
+      /// register edu exit hook func
+      pmdSetEDUHook( (PMD_ON_EDU_EXIT_FUNC)sdbHookFuncOnThreadExit ) ;
+
       if ( NULL == pTask )
       {
          rc = SDB_INVALIDARG ;

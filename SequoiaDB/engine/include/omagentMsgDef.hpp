@@ -89,7 +89,6 @@
 #define OMA_FIELD_AGENT_IS_RUNNING                 "IsRunning"
 #define OMA_FIELD_INSTALL_PATH                     "InstallPath"
 
-#define OMA_FIELD_RC                               "Rc"
 #define OMA_FIELD_ERRNO                            "errno"
 #define OMA_FIELD_DETAIL                           "detail"
 #define OMA_FIELD_HASRUNNING                       "HasRunning"

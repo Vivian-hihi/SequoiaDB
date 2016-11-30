@@ -45,6 +45,20 @@ using namespace bson ;
 
 namespace engine
 {
+   static OSS_THREAD_LOCAL PMD_ON_EDU_EXIT_FUNC __eduHookFunc = NULL ;
+
+   PMD_ON_EDU_EXIT_FUNC pmdSetEDUHook( PMD_ON_EDU_EXIT_FUNC hookFunc )
+   {
+      PMD_ON_EDU_EXIT_FUNC oldFunc = __eduHookFunc ;
+      __eduHookFunc = hookFunc ;
+      return oldFunc ;
+   }
+
+   PMD_ON_EDU_EXIT_FUNC pmdGetEDUHook()
+   {
+      return __eduHookFunc ;
+   }
+
    pmdSysInfo* pmdGetSysInfo()
    {
       static pmdSysInfo s_sysInfo ;

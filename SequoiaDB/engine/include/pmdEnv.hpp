@@ -50,6 +50,14 @@ namespace engine
    typedef  void (*PMD_ON_QUIT_FUNC)() ;
 
    /*
+      Be called when pmdEDU exit
+   */
+   typedef  void (*PMD_ON_EDU_EXIT_FUNC)() ;
+
+   PMD_ON_EDU_EXIT_FUNC pmdSetEDUHook( PMD_ON_EDU_EXIT_FUNC hookFunc ) ;
+   PMD_ON_EDU_EXIT_FUNC pmdGetEDUHook() ;
+
+   /*
       pmd system info define
    */
    typedef struct _pmdSysInfo

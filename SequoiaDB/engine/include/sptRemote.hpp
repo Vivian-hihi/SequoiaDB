@@ -40,6 +40,7 @@
 
 namespace engine
 {
+
    /*
       sptRemote define
    */
@@ -91,7 +92,8 @@ namespace engine
 
          INT32       _extract( MsgHeader *msg, INT32 msgSize,
                                SINT64 *contextID,
-                               BOOLEAN *result, BOOLEAN endianConvert ) ;
+                               BOOLEAN &extracted,
+                               BOOLEAN endianConvert ) ;
 
          INT32       _getRetBuffer( CHAR *pRetMsg, CHAR **ppRetBuffer ) ;
 

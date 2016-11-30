@@ -136,6 +136,8 @@ namespace engine
                    _pmdAsyncSession::sessionName(), _client.getPeerIPAddr(),
                    _client.getPeerPort() ) ;
       eduCB()->setName( _detailName ) ;
+      /// register edu exit hook func
+      pmdSetEDUHook( (PMD_ON_EDU_EXIT_FUNC)sdbHookFuncOnThreadExit ) ;
       _pNodeMgr = sdbGetOMAgentMgr()->getNodeMgr() ;
       /// clear self scopes
       sdbGetOMAgentMgr()->clearScopeBySession() ;

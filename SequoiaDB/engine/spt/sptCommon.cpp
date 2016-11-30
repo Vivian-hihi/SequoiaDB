@@ -39,66 +39,222 @@
 #include "ossMem.h"
 #include <string>
 #include <sstream>
+#include "msg.h"
 
 using namespace std ;
 
 namespace engine
 {
+
    /*
       Global function
    */
-   static OSS_THREAD_LOCAL CHAR *__errmsg__ = NULL ;
-   static OSS_THREAD_LOCAL INT32 __errno__ = SDB_OK ;
-   static OSS_THREAD_LOCAL BOOLEAN __printError__ = TRUE ;
-   static OSS_THREAD_LOCAL BOOLEAN __hasReadData__ = FALSE ;
+   static OSS_THREAD_LOCAL CHAR     *__errmsg__          = NULL ;
+   static OSS_THREAD_LOCAL UINT32   __errmsgSize__       = 0 ;
+   static OSS_THREAD_LOCAL INT32    __errno__            = SDB_OK ;
 
-   static OSS_THREAD_LOCAL BOOLEAN __hasSetErrMsg__ = FALSE ;
-   static OSS_THREAD_LOCAL BOOLEAN __hasSetErrNo__  = FALSE ;
-   static OSS_THREAD_LOCAL BOOLEAN __needClearErrorInfo__ = FALSE ;
+   static OSS_THREAD_LOCAL CHAR     *__errobj__          = NULL ;
+   static OSS_THREAD_LOCAL UINT32   __errobjSize__       = 0 ;
+   
+   static OSS_THREAD_LOCAL BOOLEAN  __printError__       = TRUE ;
+   static OSS_THREAD_LOCAL BOOLEAN  __hasReadData__      = FALSE ;
 
-   static CHAR* s_emptyMsg = "" ;
+   static OSS_THREAD_LOCAL BOOLEAN  __hasSetErrMsg__     = FALSE ;
+   static OSS_THREAD_LOCAL BOOLEAN  __hasSetErrNo__      = FALSE ;
+   static OSS_THREAD_LOCAL BOOLEAN  __hasSetErrObj__     = FALSE ;
+   static OSS_THREAD_LOCAL BOOLEAN  __needClearErrorInfo__ = FALSE ;
+
+   /*
+      Local Functions Define
+   */
+   static const CHAR* _buildObjByErrno( INT32 flag, const CHAR *pDetail )
+   {
+      /// BSON Struct
+      /// Size(4Byte) + Type(1Byte)(value:16) + FileName('errno'+'\0') + Value(4Bytes)
+      ///             + Type(1Byte)(value:2) + FileName('description'+'\0') + Size(4Bytes) + Value(...'\0')
+      ///             + Type(1Byte)(value:2) + FileName('detail'+'\0') + Size(4Bytes) + Value(...'\0')
+      ///             + Type(1Byte)(value:0)
+      const CHAR *pErr = getErrDesp( flag ) ;
+      UINT32 errLen = ossStrlen( pErr ) ;
+      UINT32 detailLen = 0 ;
+      UINT32 objSize = 0 ;
+      CHAR *pObjBuff = NULL ;
+
+      if ( !pDetail )
+      {
+         pDetail = "" ;
+      }
+      detailLen = ossStrlen( pDetail ) ;
+
+      objSize = 4 +  /// size
+                1 + ossStrlen( OP_ERRNOFIELD ) + 1 + 4 +   /// OP_ERRNOFIELD
+                1 + ossStrlen( OP_ERRDESP_FIELD ) + 1 + 4 + errLen + 1 +  /// OP_ERRDESP_FIELD
+                1 + ossStrlen( OP_ERR_DETAIL ) + 1 + 4 + detailLen + 1 +  /// OP_ERR_DETAIL
+                1 ;  /// EOO
+
+      if ( __errobjSize__ > 0 && __errobjSize__ < objSize )
+      {
+         SDB_OSS_FREE( __errobj__ ) ;
+         __errobj__ = NULL ;
+         __errobjSize__ = 0 ;
+      }
+
+      if ( __errobjSize__ < objSize )
+      {
+         UINT32 tmpSize = objSize + 50 ;
+         __errobj__ = ( CHAR* )SDB_OSS_MALLOC( tmpSize ) ;
+         if ( __errobj__ )
+         {
+            __errobjSize__ = tmpSize ;
+            pObjBuff = __errobj__ ;
+         }
+      }
+      else
+      {
+         pObjBuff = __errobj__ ;
+      }
+
+      if ( pObjBuff )
+      {
+         UINT32 offset = 0 ;
+
+         /// size
+         *(INT32*)&pObjBuff[offset] = objSize ;
+         offset += 4 ;
+
+         /// OP_ERRNOFIELD
+         pObjBuff[ offset ] = (CHAR)16 ;
+         offset += 1 ;
+         ossStrcpy( &pObjBuff[ offset ], OP_ERRNOFIELD ) ;
+         offset += ( ossStrlen( OP_ERRNOFIELD ) + 1 ) ;
+         *(INT32*)&pObjBuff[offset] = flag ;
+         offset += 4 ;
+
+         /// OP_ERRDESP_FIELD
+         pObjBuff[ offset ] = (CHAR)2 ;
+         offset += 1 ;
+         ossStrcpy( &pObjBuff[ offset ], OP_ERRDESP_FIELD ) ;
+         offset += ( ossStrlen( OP_ERRDESP_FIELD ) + 1 ) ;
+         *(INT32*)&pObjBuff[offset] = errLen + 1 ;
+         offset += 4 ;
+         ossStrcpy( &pObjBuff[ offset ], pErr ) ;
+         offset += ( errLen + 1 ) ;
+
+         /// OP_ERR_DETAIL
+         pObjBuff[ offset ] = (CHAR)2 ;
+         offset += 1 ;
+         ossStrcpy( &pObjBuff[ offset ], OP_ERR_DETAIL ) ;
+         offset += ( ossStrlen( OP_ERR_DETAIL ) + 1 ) ;
+         *(INT32*)&pObjBuff[offset] = detailLen + 1 ;
+         offset += 4 ;
+         ossStrcpy( &pObjBuff[ offset ], pDetail ) ;
+         offset += ( detailLen + 1 ) ;
+
+         /// EOO
+         pObjBuff[ offset ] = 0 ;
+
+         __hasSetErrObj__ = TRUE ;
+      }
+
+      return pObjBuff ;
+   }
 
    const CHAR *sdbGetErrMsg()
    {
-      return __errmsg__ ;
+      return __errmsg__ ? __errmsg__ : "" ;
    }
 
-   void sdbSetErrMsg( const CHAR *err )
+   void sdbSetErrMsg( const CHAR *err, BOOLEAN replace )
    {
+      if ( !replace && __hasSetErrMsg__ )
+      {
+         /// not replace
+         return ;
+      }
+
+      UINT32 len              = 0 ;
       __hasSetErrMsg__        = FALSE ;
-      if ( NULL != __errmsg__ && s_emptyMsg != __errmsg__ )
+
+      if ( err && *err )
       {
-         SDB_OSS_FREE( __errmsg__ ) ;
-         __errmsg__ = s_emptyMsg ;
+         len = ossStrlen( err ) ;
       }
-      if ( err && 0 != *err )
+
+      if ( len > 0 )
       {
-         __errmsg__ = ossStrdup( err ) ;
-         __hasSetErrMsg__ = TRUE ;
+         /// make sure space
+         if ( __errmsgSize__ > 0 && __errmsgSize__ < len + 1 )
+         {
+            SDB_OSS_FREE( __errmsg__ ) ;
+            __errmsg__ = NULL ;
+            __errmsgSize__ = 0 ;
+         }
+
+         if ( __errmsgSize__ < len + 1 )
+         {
+            UINT32 tmpSize = len + 10 ;
+            __errmsg__ = ( CHAR* )SDB_OSS_MALLOC( tmpSize ) ;
+            if ( __errmsg__ )
+            {
+               __errmsgSize__ = tmpSize ;
+            }
+         }
+
+         /// copy data
+         if ( __errmsgSize__ >= len + 1 )
+         {
+            ossStrcpy( __errmsg__, err ) ;
+            __hasSetErrMsg__ = TRUE ;
+         }
+      }
+      else if ( __errmsgSize__ > 0 )
+      {
+         __errmsg__[ 0 ] = '\0' ;
       }
    }
 
-   void sdbSetErrMsg( const CHAR *err, const CHAR *detail )
+   void sdbSetErrMsgWithDetail( const CHAR *err, const CHAR *detail,
+                                BOOLEAN replace )
    {
+      if ( !replace && __hasSetErrMsg__ )
+      {
+         /// not replace
+         return ;
+      }
+
       BOOLEAN errValid = ( err && *err ) ? TRUE : FALSE ;
       BOOLEAN detailValid = ( detail && *detail ) ? TRUE : FALSE ;
 
-      if ( errValid ^ detailValid )
+      if ( ( errValid ^ detailValid ) || ( !errValid & !detailValid ) )
       {
          sdbSetErrMsg( errValid ? err : detail ) ;
       }
       else if ( errValid && detailValid )
       {
+         UINT32 len              = 0 ;
          __hasSetErrMsg__        = FALSE ;
-         if ( NULL != __errmsg__ && s_emptyMsg != __errmsg__ )
+
+         len = ossStrlen( err ) + ossStrlen( detail ) + 10 ;
+
+         /// make sure space
+         if ( __errmsgSize__ > 0 && __errmsgSize__ < len + 1 )
          {
             SDB_OSS_FREE( __errmsg__ ) ;
-            __errmsg__ = s_emptyMsg ;
+            __errmsg__ = NULL ;
+            __errmsgSize__ = 0 ;
          }
 
-         INT32 len = ossStrlen( err ) + ossStrlen( detail ) + 10 ;
-         __errmsg__ = ( CHAR* )SDB_OSS_MALLOC( len + 1 ) ;
-         if ( __errmsg__ )
+         if ( __errmsgSize__ < len + 1 )
+         {
+            UINT32 tmpSize = len + 10 ;
+            __errmsg__ = ( CHAR* )SDB_OSS_MALLOC( tmpSize ) ;
+            if ( __errmsg__ )
+            {
+               __errmsgSize__ = tmpSize ;
+            }
+         }
+
+         if ( __errmsgSize__ >= len + 1 )
          {
             ossSnprintf( __errmsg__, len, "%s:\n%s", err, detail ) ;
             __errmsg__[ len ] = '\0' ;
@@ -121,16 +277,102 @@ namespace engine
       return __errno__ ;
    }
 
-   void sdbSetErrno( INT32 errNum )
+   void sdbSetErrno( INT32 errNum, BOOLEAN replace )
    {
+      if ( !replace && __hasSetErrNo__ )
+      {
+         /// not replace
+         return ;
+      }
       __errno__ = errNum ;
       __hasSetErrNo__ = errNum ? TRUE : FALSE ;
+   }
+
+   void sdbSetErrorObj( const CHAR *pObjData, UINT32 objSize )
+   {
+      __hasSetErrObj__ = FALSE ;
+
+      if ( __errobjSize__ > 0 && __errobjSize__ < objSize )
+      {
+         SDB_OSS_FREE( __errobj__ ) ;
+         __errobj__ = NULL ;
+         __errobjSize__ = 0 ;
+      }
+
+      if ( __errobjSize__ < objSize )
+      {
+         UINT32 tmpSize = objSize + 50 ;
+         __errobj__ = ( CHAR* )SDB_OSS_MALLOC( tmpSize ) ;
+         if ( __errobj__ )
+         {
+            __errobjSize__ = tmpSize ;
+         }
+      }
+
+      if ( objSize > 0 )
+      {
+         __hasSetErrObj__ = TRUE ;
+         ossMemcpy( __errobj__, pObjData, objSize ) ;
+      }
+      else if ( __errobjSize__ >= sizeof( INT32 ) )
+      {
+         ossMemset( __errobj__, 0, sizeof( INT32 ) ) ;
+      }
+   }
+
+   const CHAR* sdbGetErrorObj()
+   {
+      if ( __errobjSize__ >= 5 && *(INT32*)__errobj__ >= 5 &&
+           __hasSetErrObj__ )
+      {
+         return __errobj__ ;
+      }
+      else if ( SDB_OK != __errno__ )
+      {
+         return _buildObjByErrno( __errno__, __errmsg__ ) ;
+      }
+      return NULL ;
+   }
+
+   void sdbHookFuncOnThreadExit()
+   {
+      if ( __errmsgSize__ > 0 )
+      {
+         SDB_OSS_FREE( __errmsg__ ) ;
+         __errmsg__ = NULL ;
+         __errmsgSize__ = 0 ;
+      }
+      if ( __errobjSize__ > 0 )
+      {
+         SDB_OSS_FREE( __errobj__ ) ;
+         __errobj__ = NULL ;
+         __errobjSize__ = 0 ;
+      }
+   }
+
+   void sdbErrorCallback( const CHAR *pErrorObj,
+                          UINT32 objSize,
+                          INT32 flag,
+                          const CHAR *pDescription,
+                          const CHAR *pDetail )
+   {
+      sdbSetErrorObj( pErrorObj, objSize ) ;
+      sdbSetErrno( flag, FALSE ) ;
+      if ( 0 != ossStrcmp( pDescription, pDetail ) )
+      {
+         sdbSetErrMsgWithDetail( pDescription, pDetail, FALSE ) ;
+      }
+      else
+      {
+         sdbSetErrMsg( pDescription, FALSE ) ;
+      }
    }
 
    void sdbClearErrorInfo()
    {
       sdbSetErrno( SDB_OK ) ;
       sdbSetErrMsg( NULL ) ;
+      sdbSetErrorObj( NULL, 0 ) ;
    }
 
    BOOLEAN sdbNeedPrintError()
@@ -219,6 +461,7 @@ namespace engine
       }
       __hasSetErrMsg__ = FALSE ;
       __hasSetErrNo__  = FALSE ;
+      __hasSetErrObj__ = FALSE ;
    }
 
 }

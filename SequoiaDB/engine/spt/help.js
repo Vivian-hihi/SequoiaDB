@@ -28,6 +28,8 @@ var help = function( val ) {
       println("   setLastError(<errno>)                              set last error number") ;
       println("   getLastErrMsg()                                    get last error detail information");
       println("   setLastErrMsg(<msg>)                               set last error detail information");
+	  println("   getLastErrObj()                                    get last error object information");
+	  println("   setLastErrObj(<obj>)                               set last error object information");
       println("   clear                                              clear the terminal screen");
       println("   history -c                                         clear the history");
       println("   quit                                               exit");

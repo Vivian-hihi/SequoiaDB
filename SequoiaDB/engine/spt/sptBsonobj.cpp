@@ -42,7 +42,7 @@ namespace engine
    */
    JS_CONSTRUCT_FUNC_DEFINE( _sptBsonobj, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptBsonobj, destruct)
-   JS_MEMBER_FUNC_DEFINE( _sptBsonobj, toJson )
+   JS_MEMBER_FUNC_DEFINE_NORESET( _sptBsonobj, toJson )
 
    JS_BEGIN_MAPPING( _sptBsonobj, "BSONObj" )
      JS_ADD_MEMBER_FUNC( "toJson", toJson )

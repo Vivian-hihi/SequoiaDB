@@ -61,6 +61,7 @@ namespace engine
 
    INT32 _sptContainer::init()
    {
+      InitScopeEngine() ;
       return SDB_OK ;
    }
 

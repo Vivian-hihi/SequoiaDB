@@ -80,6 +80,11 @@ namespace engine
          return _jsClassName.empty() ;
       }
 
+      void  setIgnore()
+      {
+         _jsClassName = "" ;
+      }
+
       BOOLEAN isInstanceOf( JSContext *cx, JSObject *obj )
       {
          if ( !_init )

@@ -33,13 +33,23 @@
 #ifndef SPT_INJECTION_HPP_
 #define SPT_INJECTION_HPP_
 
+#include "sptCommon.hpp"
+
 namespace engine
 {
-   #define JS_MEMBER_FUNC_DEFINE( className, funcName )\
+   #define _JS_MEMBER_FUNC_DEFINE_( className, funcName, resetError )\
            static JSBool __##funcName( JSContext *cx , uintN argc , jsval *vp )\
            {\
               JSBool ret = JS_TRUE ; \
               INT32 rc = SDB_OK ; \
+              if ( resetError ) \
+              { \
+                 sdbClearErrorInfo() ; \
+              } \
+              else \
+              { \
+                 sdbSetNeedClearErrorInfo( FALSE ) ; \
+              } \
               typedef INT32 (className::*FUNC)(const _sptArguments &,\
                                               _sptReturnVal &,\
                                                bson::BSONObj &);\
@@ -56,11 +66,25 @@ namespace engine
               goto done ;\
            }
 
-   #define JS_CONSTRUCT_FUNC_DEFINE( className, funcName )\
+   #define JS_MEMBER_FUNC_DEFINE( className, funcName ) \
+      _JS_MEMBER_FUNC_DEFINE_( className, funcName, TRUE )
+
+   #define JS_MEMBER_FUNC_DEFINE_NORESET( className, funcName ) \
+      _JS_MEMBER_FUNC_DEFINE_( className, funcName, FALSE )
+
+   #define _JS_CONSTRUCT_FUNC_DEFINE_( className, funcName, resetError )\
            static JSBool __##funcName( JSContext *cx , uintN argc , jsval *vp )\
            {\
               JSBool ret = JS_TRUE ; \
               INT32 rc = SDB_OK ; \
+              if ( resetError ) \
+              { \
+                 sdbClearErrorInfo() ; \
+              } \
+              else \
+              { \
+                 sdbSetNeedClearErrorInfo( FALSE ) ; \
+              } \
               typedef INT32 (className::*FUNC)(const _sptArguments &,\
                                               _sptReturnVal &,\
                                                bson::BSONObj &);\
@@ -77,6 +101,12 @@ namespace engine
               goto done ;\
            }
 
+   #define JS_CONSTRUCT_FUNC_DEFINE( className, funcName ) \
+      _JS_CONSTRUCT_FUNC_DEFINE_( className, funcName, TRUE )
+
+   #define JS_CONSTRUCT_FUNC_DEFINE_NORESET( className, funcName ) \
+      _JS_CONSTRUCT_FUNC_DEFINE_( className, funcName, FALSE )
+
    #define JS_DESTRUCT_FUNC_DEFINE( className, funcName ) \
             static void __##funcName( JSContext *cx ,  JSObject *obj )\
             {\
@@ -85,12 +115,20 @@ namespace engine
                                (cx, obj, &className::funcName ) ;\
             }
 
-   #define JS_RESOLVE_FUNC_DEFINE( className, funcName )\
+   #define _JS_RESOLVE_FUNC_DEFINE_( className, funcName, resetError )\
            static JSBool __##funcName(JSContext *cx , JSObject *obj , jsid id ,\
                             uintN flags , JSObject ** objp)\
             {\
               JSBool ret = JS_TRUE ; \
               INT32 rc = SDB_OK ; \
+              if ( resetError ) \
+              { \
+                 sdbClearErrorInfo() ; \
+              } \
+              else \
+              { \
+                 sdbSetNeedClearErrorInfo( FALSE ) ; \
+              } \
               typedef INT32 (className::*FUNC)(const CHAR *idValue,\
                                                _sptReturnVal &,\
                                                 bson::BSONObj &);\
@@ -107,11 +145,25 @@ namespace engine
               goto done ;\
            }
 
-   #define JS_STATIC_FUNC_DEFINE( className, funcName )\
+   #define JS_RESOLVE_FUNC_DEFINE( className, funcName ) \
+      _JS_RESOLVE_FUNC_DEFINE_( className, funcName, TRUE )
+
+   #define JS_RESOLVE_FUNC_DEFINE_NORESET( className, funcName ) \
+      _JS_RESOLVE_FUNC_DEFINE_( className, funcName, FALSE )
+
+   #define _JS_STATIC_FUNC_DEFINE_( className, funcName, resetError )\
            static JSBool __##funcName(JSContext *cx, uintN argc , jsval *vp ) \
            {\
               JSBool ret = JS_TRUE ; \
               INT32 rc = SDB_OK ; \
+              if ( resetError ) \
+              { \
+                 sdbClearErrorInfo() ; \
+              } \
+              else \
+              { \
+                 sdbSetNeedClearErrorInfo( FALSE ) ; \
+              } \
               typedef INT32 (*FUNC)( const _sptArguments &,\
                                      _sptReturnVal &,\
                                      bson::BSONObj &);\
@@ -128,11 +180,25 @@ namespace engine
               goto done ;\
            }
 
-   #define JS_GLOBAL_FUNC_DEFINE( className, funcName )\
+   #define JS_STATIC_FUNC_DEFINE( className, funcName ) \
+      _JS_STATIC_FUNC_DEFINE_( className, funcName, TRUE )
+
+   #define JS_STATIC_FUNC_DEFINE_NORESET( className, funcName ) \
+      _JS_STATIC_FUNC_DEFINE_( className, funcName, FALSE )
+
+   #define _JS_GLOBAL_FUNC_DEFINE_( className, funcName, resetError )\
            static JSBool __##funcName(JSContext *cx, uintN argc , jsval *vp ) \
            {\
               JSBool ret = JS_TRUE ; \
               INT32 rc = SDB_OK ; \
+              if ( resetError ) \
+              { \
+                 sdbClearErrorInfo() ; \
+              } \
+              else \
+              { \
+                 sdbSetNeedClearErrorInfo( FALSE ) ; \
+              } \
               typedef INT32 (*FUNC)( const _sptArguments &,\
                                      _sptReturnVal &,\
                                      bson::BSONObj &);\
@@ -148,6 +214,12 @@ namespace engine
            error:\
               goto done ;\
            }
+
+   #define JS_GLOBAL_FUNC_DEFINE( className, funcName ) \
+      _JS_GLOBAL_FUNC_DEFINE_( className, funcName, TRUE )
+
+   #define JS_GLOBAL_FUNC_DEFINE_NORESET( className, funcName ) \
+      _JS_GLOBAL_FUNC_DEFINE_( className, funcName, FALSE )
 
    #define JS_DECLARE_CLASS( className )\
            public: \

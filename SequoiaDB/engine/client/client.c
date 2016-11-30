@@ -617,8 +617,8 @@ static INT32 _extract ( MsgHeader *msg, INT32 size,
               SDB_OK == _extractErrorObj( _pErrorBuf,
                                           NULL, &pErr, &pDetail ) )
          {
-            (*_sdbErrorOnReplyCallback)( _pErrorBuf, replyFlag,
-                                         pErr, pDetail ) ;
+            (*_sdbErrorOnReplyCallback)( _pErrorBuf, (UINT32)_errorBufSize,
+                                         replyFlag, pErr, pDetail ) ;
          }
       }
    }

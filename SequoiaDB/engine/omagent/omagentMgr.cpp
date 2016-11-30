@@ -756,6 +756,8 @@ namespace engine
 
    void _omAgentMgr::attachCB( _pmdEDUCB * cb )
    {
+      /// register edu exit hook func
+      pmdSetEDUHook( (PMD_ON_EDU_EXIT_FUNC)sdbHookFuncOnThreadExit ) ;
       _msgHandler.attach( cb ) ;
       _timerHandler.attach( cb ) ;
       _attachEvent.signalAll() ;

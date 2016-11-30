@@ -41,6 +41,7 @@
 #include "omagentDef.hpp"
 #include "network.h"
 #include "common.h"
+#include "sptCommon.hpp"
 
 #if defined( _LINUX ) || defined (_AIX)
 #include <arpa/inet.h>
@@ -88,12 +89,59 @@ do                                                                          \
    }                                                                        \
 }while( FALSE )
 
+   /*
+      Local function define
+   */
 
+   static INT32 _extractErrorObj( const CHAR *pErrorBuf,
+                                  INT32 *pFlag,
+                                  const CHAR **ppErr,
+                                  const CHAR **ppDetail )
+   {
+      INT32 rc = SDB_OK ;
+      bson localobj ;
+      bson_iterator it ;
 
-/*
-   define member functions
-*/
+      bson_init( &localobj ) ;
 
+      if ( !pErrorBuf )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = bson_init_finished_data( &localobj, pErrorBuf ) ;
+      if ( rc )
+      {
+         rc = SDB_CORRUPTED_RECORD ;
+         goto error ;
+      }
+
+      if ( pFlag && BSON_INT == bson_find( &it, &localobj, OP_ERRNOFIELD ) )
+      {
+         *pFlag = bson_iterator_int( &it ) ;
+      }
+      if ( ppErr && BSON_STRING == bson_find( &it, &localobj,
+                                              OP_ERRDESP_FIELD ) )
+      {
+         *ppErr = bson_iterator_string( &it ) ;
+      }
+      if ( ppDetail && BSON_STRING == bson_find( &it, &localobj,
+                                                 OP_ERR_DETAIL ) )
+      {
+         *ppDetail = bson_iterator_string( &it ) ;
+      }
+
+   done:
+      bson_destroy( &localobj ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      define member functions
+   */
    _sptRemote::_sptRemote()
    {
    }
@@ -120,7 +168,7 @@ do                                                                          \
       SDB_ASSERT( pString, "pString cam't be null" ) ;
 
       INT32 rc          = SDB_OK ;
-      BOOLEAN result    = FALSE ;
+      BOOLEAN extracted = FALSE ;
       SINT64 contextID  = 0 ;
       sdbConnectionStruct *connection = 0;
       retCode = SDB_OK ;
@@ -157,12 +205,12 @@ do                                                                          \
          // extract message
          rc = _extract( (MsgHeader *)connection->_pReceiveBuffer,
                         connection->_receiveBufferSize,
-                        &contextID, &result,
+                        &contextID, extracted,
                         connection->_endianConvert ) ;
 
          if ( SDB_OK != rc )
          {
-            if ( TRUE == result )
+            if ( !extracted )
             {
                PD_LOG( PDERROR, "Failed to extract msg in client, rc = %d",
                        rc ) ;
@@ -172,8 +220,8 @@ do                                                                          \
             {
                retCode = rc ;
                rc = SDB_OK ;
-               PD_LOG( PDERROR, "Failed to run command in engine, rc = %d",
-                       rc ) ;
+               PD_LOG( PDINFO, "Failed to run command in engine, rc = %d",
+                       retCode ) ;
             }
          }
 
@@ -385,7 +433,8 @@ do                                                                          \
 
    INT32 _sptRemote::_extract( MsgHeader * msg, INT32 msgSize,
                                SINT64 * contextID,
-                               BOOLEAN * result, BOOLEAN endianConvert )
+                               BOOLEAN &extracted,
+                               BOOLEAN endianConvert )
    {
       INT32 rc = SDB_OK ;
       INT32 replyFlag = -1 ;
@@ -393,18 +442,40 @@ do                                                                          \
       INT32 startFrom = -1 ;
       CHAR *pBuffer = ( CHAR* )msg ;
 
+      extracted = FALSE ;
       rc = clientExtractReply ( pBuffer, &replyFlag, contextID,
                                 &startFrom, &numReturned, endianConvert ) ;
-      if ( SDB_OK != replyFlag )
+      if ( rc )
       {
-         *result = FALSE ;
-         rc = replyFlag ;
+         goto error ;
       }
-      else
+      rc = replyFlag ;
+      extracted = TRUE ;
+
+      if ( SDB_OK != replyFlag && SDB_DMS_EOC != replyFlag )
       {
-         *result = TRUE ;
+         INT32 rcTmp       = SDB_OK ;
+         INT32 dataOff     = 0 ;
+         INT32 dataSize    = 0 ;
+         const CHAR *pErr  = NULL ;
+         const CHAR *pDetail = NULL ;
+         const CHAR *pErrorBuf = NULL ;
+
+         dataOff = ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) ;
+         dataSize = msg->messageLength - dataOff ;
+         /// save error info
+         if ( dataSize > 0 )
+         {
+            pErrorBuf = ( const CHAR* )msg + dataOff ;
+            if ( SDB_OK == _extractErrorObj( pErrorBuf,
+                                             NULL, &pErr, &pDetail ) )
+            {
+               sdbErrorCallback( pErrorBuf, (UINT32)dataSize,
+                                 replyFlag, pErr, pDetail ) ;
+            }
+         }
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to extract reply, rc: %d", rc) ;
+
    done:
       return rc ;
    error:

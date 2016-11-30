@@ -51,14 +51,34 @@ namespace engine
 
    }
 
-   INT32 _sptScope::getLastError()
+   INT32 _sptScope::getLastError() const
    {
       return sdbGetErrno() ;
    }
 
-   const CHAR* _sptScope::getLastErrMsg()
+   const CHAR* _sptScope::getLastErrMsg() const
    {
       return sdbGetErrMsg() ;
+   }
+
+   bson::BSONObj _sptScope::getLastErrObj() const
+   {
+      const CHAR *pObjData = sdbGetErrorObj() ;
+
+      if ( pObjData )
+      {
+         try
+         {
+            bson::BSONObj obj( pObjData ) ;
+            return obj ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         }
+      }
+
+      return bson::BSONObj() ;
    }
 
    INT32 _sptScope::loadUsrDefObj( _sptObjDesc *desc )

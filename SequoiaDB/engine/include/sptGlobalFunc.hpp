@@ -61,6 +61,14 @@ namespace engine
                                  _sptReturnVal &rval,
                                  bson::BSONObj &detail ) ;
 
+      static INT32 setLastErrorObj( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
+
+      static INT32 getLastErrorObj( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
+
       static INT32 sleep( const _sptArguments &arg,
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;

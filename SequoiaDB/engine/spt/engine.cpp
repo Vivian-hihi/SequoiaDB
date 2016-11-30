@@ -94,6 +94,7 @@ namespace engine {
 
    BOOLEAN ScriptEngine::init()
    {
+      InitScopeEngine() ;
       _runtime = JS_NewRuntime( 32 * 1024 * 1024 );
       return _runtime ? TRUE : FALSE ;
    }

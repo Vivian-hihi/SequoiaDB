@@ -1384,6 +1384,13 @@ namespace engine
                     myEDUID, getEDUName( type ), eduName ) ;
          }
       }
+
+      /// Call the thread exit hook function to release thread local variables
+      if ( pmdGetEDUHook() )
+      {
+         PMD_ON_EDU_EXIT_FUNC pFunc = pmdGetEDUHook() ;
+         pFunc() ;
+      }
       // undeclare must happen after all TLS access
       pmdUndeclareEDUCB () ;
       PD_LOG ( PDEVENT, "Terminating thread[%d] for EDU[ID:%lld, Type:%s, "
@@ -1406,21 +1413,6 @@ namespace engine
    _pmdEDUCB *pmdGetThreadEDUCB ()
    {
       return __eduCB ;
-   }
-
-   _pmdEDUCB *pmdCreateThreadEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type )
-   {
-      __eduCB = SDB_OSS_NEW _pmdEDUCB ( mgr, type ) ;
-      return __eduCB ;
-   }
-
-   void pmdDeleteThreadEDUCB ()
-   {
-      if ( __eduCB )
-      {
-         SDB_OSS_DEL __eduCB ;
-         __eduCB = NULL ;
-      }
    }
 
    _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p )

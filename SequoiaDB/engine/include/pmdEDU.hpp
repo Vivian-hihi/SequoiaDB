@@ -515,16 +515,8 @@ namespace engine
    typedef class _pmdEDUCB pmdEDUCB ;
 
    _pmdEDUCB *pmdGetThreadEDUCB () ;
-
-   // this function must be called by the thread that want to create EDUCB
-   _pmdEDUCB *pmdCreateThreadEDUCB ( _pmdEDUMgr *mgr, EDU_TYPES type ) ;
-
-   // this function must be called by the thread that want to delete EDUCB
-   void pmdDeleteThreadEDUCB () ;
-
    _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p ) ;
-
-   void pmdUndeclareEDUCB () ;
+   void      pmdUndeclareEDUCB () ;
 
    /*
       ENTRY POINT
