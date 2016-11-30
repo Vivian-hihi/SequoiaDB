@@ -32,10 +32,19 @@
 #include "sptGlobalFunc.hpp"
 #include "ossUtil.hpp"
 #include "sptCommon.hpp"
-#include "sptParseTroff.hpp"
 #include "ossProc.hpp"
 #include "utilStr.hpp"
 #include "pdTrace.hpp"
+
+#ifdef SDB_SHELL
+   #include "sptParseTroff.hpp"
+
+   #if defined (_WINDOWS)
+      #define TF_REL_PATH "..\\doc\\manual\\"
+   #else
+      #define TF_REL_PATH "../doc/manual/"
+   #endif // _WINDOWS
+#endif // SDB_SHELL
 
 using namespace bson ;
 
@@ -271,12 +280,6 @@ JS_MAPPING_END()
       goto done ;
    }
 
-   #if defined (_WINDOWS)
-      #define TF_REL_PATH "..\\doc\\manual\\"
-   #else
-      #define TF_REL_PATH "../doc/manual/"
-   #endif // _WINDOWS
-
    INT32 _sptGlobalFunc::globalHelp( const _sptArguments &arg,
                                      _sptReturnVal &rval,
                                      BSONObj &detail )
@@ -302,7 +305,7 @@ JS_MAPPING_END()
             goto error ;
          }
       }
-
+#ifdef SDB_SHELL
       rc = ossGetEWD( cmdPath, OSS_MAX_PATHSIZE ) ;
       if ( rc )
       {
@@ -320,6 +323,7 @@ JS_MAPPING_END()
       {
          goto error ;
       }
+#endif //SDB_SHELL
 
    done:
       return rc ;
