@@ -454,7 +454,6 @@ do                                                                          \
 
       if ( SDB_OK != replyFlag && SDB_DMS_EOC != replyFlag )
       {
-         INT32 rcTmp       = SDB_OK ;
          INT32 dataOff     = 0 ;
          INT32 dataSize    = 0 ;
          const CHAR *pErr  = NULL ;
