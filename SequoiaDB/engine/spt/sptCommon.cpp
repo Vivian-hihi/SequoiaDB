@@ -80,7 +80,7 @@ namespace engine
       UINT32 objSize = 0 ;
       CHAR *pObjBuff = NULL ;
 
-      if ( !pDetail )
+      if ( !pDetail || 0 == ossStrcmp( pErr, pDetail ) )
       {
          pDetail = "" ;
       }
