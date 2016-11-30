@@ -428,10 +428,10 @@
    </target>
 
    <target name="mk-doc">
-      <echo message="exec scons ${compile.arg.line}${enterprise.line} --website" />
+      <!--echo message="exec scons ${compile.arg.line}${enterprise.line} --website" />
       <exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
          <arg line="${compile.arg.line}${enterprise.line} --website" />
-      </exec>
+      </exec-->
    
       <delete dir="${RELEASE_DIR}/sequoiadb/doc" failonerror="false" />
       <mkdir dir="${RELEASE_DIR}/sequoiadb/doc" />
