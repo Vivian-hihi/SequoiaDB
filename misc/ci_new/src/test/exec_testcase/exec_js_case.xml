@@ -73,7 +73,17 @@
                <else>
                   <var name="func_option" value="" />
                </else>
-            </if>                      
+            </if>
+
+            <if>
+               <equals arg1="${TEST_TYPE}" arg2="LARGEDATATEST" />
+               <then>               
+                  <var name="timelimit" value="7200000" />
+               </then>
+               <else>
+                  <var name="timelimit" value="1800000" />
+               </else>
+            </if>
                     
             <var name="cmd1" value="-f &quot;${func_option}@{detectfile}&quot;" />
             <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='@{prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost'&quot;" />
@@ -81,7 +91,7 @@
             <var name="@{output}" unset="true"/>
             <var name="rc" unset="true"/>
             <exec executable="@{sdbshell}" 
-                  timeout="1800000" 
+                  timeout="${timelimit}" 
                   outputproperty="@{output}" 
                   resultproperty="rc"
                   failonerror="false">
