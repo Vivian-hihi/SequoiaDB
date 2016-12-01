@@ -253,7 +253,7 @@
       </for>
       
       <!--execute testcase in remote host-->
-      <var name="test_remote_cmd" value="ant -f ${testscript_dir}/function_test.xml exec_remote_testcase" />
+      <var name="test_remote_cmd" value="ant -f ${testscript_dir}/function_test.xml exec_remote_testcase -DTEST_TYPE=${TEST_TYPE}" />
       <for list="${testhost_list}" param="testhost" parallel="true">
          <sequential>
             <staf location="@{testhost}" service="PROCESS"                  

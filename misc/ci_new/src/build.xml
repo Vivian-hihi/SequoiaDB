@@ -13,7 +13,7 @@
    </taskdef>
    
    <target name="test_build">
-   
+      <var name="TEST_TYPE" value="BASETEST"/>
       <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
 
       <if>
@@ -23,13 +23,15 @@
          </then>
       </if>
      
-      <ant antfile="function_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" />
+      <ant antfile="function_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
+         <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+      </ant>
       
       <if>
          <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
          <then>
             <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
-               <property name="TEST_TYPE" value="BASETEST"/>
+               <property name="TEST_TYPE" value="${TEST_TYPE}"/>
                <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
             </ant>
          </then>
@@ -38,7 +40,7 @@
    </target>
    
    <target name="largedata_test_build">
-   
+      <var name="TEST_TYPE" value="LARGEDATATEST"/>
       <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
 
       <if>
@@ -48,13 +50,15 @@
          </then>
       </if>
      
-      <ant antfile="largedata_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" />
+      <ant antfile="largedata_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
+         <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+      </ant>
       
       <if>
          <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
          <then>
             <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
-               <property name="TEST_TYPE" value="LARGEDATATEST"/>
+               <property name="TEST_TYPE" value="${TEST_TYPE}"/>
                <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
             </ant>
          </then>
