@@ -34,6 +34,8 @@
       
       <antcall target="compile_testcase" />
       
+      <antcall target="filter_testcase" />
+
       <antcall target="divide_testcase" />
       
       <antcall target="distribute_testcase" />
@@ -122,6 +124,18 @@
       </for>
    </target>
    
+   <target name="filter_testcase">
+      <for list="${TESTCASE_TYPE}" param="casetype" trim="true" parallel="false">
+         <sequential>    
+         <echo>******begin to filter @{casetype} testcase******</echo>     
+         <var name="case_reltdir" unset="true"/>
+         <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/> 
+         <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>      
+         <filtercase casedir="${case_dir}" testtype="largedata_test"/>
+         </sequential>
+      </for>
+   </target>
+   
    <target name="divide_testcase">
       <delete dir="${testcase_outdir}" failonerror="false" />
       <mkdir dir="${testcase_outdir}"/>
@@ -132,10 +146,8 @@
          
          <var name="case_reltdir" unset="true"/>
          <propertyregex property="case_reltdir" input="@{casetype}" regexp="_" replace="/"/>
-         
          <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>
-         <readycase casedir="${case_dir}" />
-
+         
          <switch value="@{casetype}">
          
             <case value="sdv_php">               

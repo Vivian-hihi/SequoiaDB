@@ -5,44 +5,7 @@
       </classpath>
    </taskdef>
    
-   <!--delete other type of testcase, name can be better-->
-   <macrodef name="readycase">
-      <attribute name="casedir"/>
-      <attribute name="testtype" default="normal_test"/>
-      <sequential>
-         <var name="large_data_list" unset="true"/>
-         <var name="sync_list" unset="true"/>
-         <var name="configure_list" unset="true"/> 
-         <var name="reliability_list" unset="true"/>      
-         <property file="@{casedir}/testcase.conf"/>
-
-         <switch value="@{testtype}">
-            <case value="normal_test">
-               <for list="${large_data_list},${sync_list},${configure_list},${reliability_list}" param="feature">
-                  <sequential>
-                     <delete dir="@{casedir}/@{feature}" failonerror="false"/>                     
-                     <delete file="@{casedir}/@{feature}" failonerror="false"/>
-                     <delete file="@{casedir}/@{feature}.static" failonerror="false"/>
-                  </sequential>
-               </for>
-            </case>
-            <case value="largedata_test">
-               <var name="excludelist" value="" />
-               <for list="${large_data_list}" param="feature">
-                  <sequential>
-                     <var name="excludepath" value="@{feature}/**/*" />
-                     <var name="excludelist" value="${excludelist},${excludepath}"/>
-                  </sequential>
-               </for>
-               <delete includeEmptyDirs="true">
-                  <fileset dir="@{casedir}" excludes="testcase.conf,${excludelist}"/>
-               </delete>               
-            </case>
-            <default/>
-         </switch>
-      </sequential>
-   </macrodef>
-   
+   <!--delete other type of testcase-->  
    <macrodef name="filtercase">
       <attribute name="casedir"/>
       <attribute name="testtype" default="base_test"/>
@@ -55,6 +18,7 @@
          <property file="@{casedir}/testcase.conf"/>
 
          <switch value="@{testtype}">
+         
             <case value="base_test">
                <for list="${large_data_list},${sync_list},${configure_list},${reliability_list}" param="feature">
                   <sequential>
@@ -64,6 +28,7 @@
                   </sequential>
                </for>
             </case>
+            
             <case value="largedata_test">
                <var name="excludelist" unset="true" />
                <var name="excludelist" value="" />
@@ -83,7 +48,9 @@
                   <fileset dir="@{casedir}" excludes="testcase.conf,${excludelist}"/>
                </delete>
             </case>
+            
             <default/>
+            
          </switch>
          
          <delete includeEmptyDirs="true" failonerror="false"><!--java directory did not have testcase.conf  tmp-->
