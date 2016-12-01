@@ -2533,6 +2533,99 @@ error:
    goto done ;
 }
 
+static JSBool collection_get_query_meta( JSContext *cx , uintN argc , jsval *vp )
+{
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *collection = NULL ;
+   INT32 skip = 0 ;
+   INT32 limit = -1 ;
+   JSObject *objCondition = NULL ;
+   JSObject *objSort = NULL ;
+   JSObject *objHint = NULL ;
+
+   bson *condition = NULL ;
+   bson *sort = NULL ;
+   bson *hint = NULL ;
+
+   sdbCursorHandle *cursor = NULL ;
+   JSObject *objCursor = NULL ;
+   JSBool hasModify = JS_FALSE ;
+   INT32 flags = 0 ;
+
+   collection = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( collection , "SdbCollection.getQueryMeta(): no collection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "oooii" , &objCondition,
+                               &objSort, &objHint,
+                               &skip, &limit ) ;
+   REPORT ( ret , "SdbCollection.getQueryMeta(): wrong arguments" ) ;
+
+   if ( NULL != objCondition )
+   {
+      ret = objToBson ( cx , objCondition , &condition ) ;
+      VERIFY ( ret ) ;
+   }
+
+   if ( NULL != objSort )
+   {
+      ret = objToBson ( cx , objSort , &sort ) ;
+      VERIFY ( ret ) ;
+   }
+
+   if ( NULL != objHint )
+   {
+      ret = objToBson ( cx , objHint, &hint ) ;
+      VERIFY ( ret ) ;
+
+      // find '$Modify'
+      bson_iterator it ;
+      bson_type type = bson_find( &it, hint, FIELD_NAME_MODIFY ) ;
+      if ( BSON_OBJECT == type )
+      {
+         hasModify = JS_TRUE ;
+      }
+   }
+
+   if ( hasModify )
+   {
+      flags |= FLG_QUERY_MODIFY ;
+   }
+
+   cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
+   VERIFY ( cursor ) ;
+   *cursor = SDB_INVALID_HANDLE ;
+
+   objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
+   VERIFY ( objCursor ) ;
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
+
+   rc = sdbGetQueryMeta( *collection, condition, sort, hint, skip, limit, cursor ) ;
+   REPORT_RC ( SDB_OK == rc || SDB_DMS_EOC == rc ,
+               "SdbCollection.getQueryMeta()" , rc ) ;
+   if ( SDB_DMS_EOC == rc )
+   {
+      SAFE_JS_FREE ( cx , cursor ) ;
+      cursor = NULL ;
+   }
+   else
+   {
+      VERIFY ( JS_SetPrivate ( cx , objCursor , cursor ) ) ;
+   }
+
+done:
+   SAFE_BSON_DISPOSE( condition ) ;
+   SAFE_BSON_DISPOSE( sort ) ;
+   SAFE_BSON_DISPOSE( hint ) ;
+   return ret ;
+error:
+   SAFE_RELEASE_CURSOR ( cursor ) ;
+   SAFE_JS_FREE ( cx , cursor ) ;
+   goto done ;
+}
+
 static JSFunctionSpec collection_functions[] = {
     JS_FS ( "rawFind" , collection_raw_find , 0 , 0 ) ,
     JS_FS ( "_insert" , collection_insert , 1 , 0 ) ,
@@ -2560,6 +2653,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "truncate", collection_truncate, 0, 0 ),
     JS_FS ( "createIdIndex", collection_crt_id_index, 0, 0 ),
     JS_FS ( "dropIdIndex", collection_drop_id_index, 0, 0 ),
+    JS_FS ( "getQueryMeta", collection_get_query_meta, 0, 0 ),
     JS_FS_END
 } ;
 

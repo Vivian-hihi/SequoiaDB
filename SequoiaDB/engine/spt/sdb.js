@@ -735,6 +735,14 @@ SdbQuery.prototype.explain = function( options ) {
                                     options ) ;
 }
 
+SdbQuery.prototype.getQueryMeta = function() {
+   return this._collection.getQueryMeta( this._query,
+                                         this._sort,
+                                         this._hint,
+                                         this._skip,
+                                         this._limit ) ;
+}
+
 SdbQuery.prototype.size = function() {
 //   return this.toArray().length;
    this._exec();
