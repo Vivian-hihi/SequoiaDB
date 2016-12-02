@@ -395,8 +395,9 @@
 		<property name="sjava_deploy_path" value="${deploy_dir}/hlt/drivers_testcases/story_java" />
 		
     	<echo level="info" message="1 : Copy ${driver_dir}/java/sequoiadb.jar to ${sjava_deploy_path}/lib/sequoiadb.jar." />
-		<copy file="${driver_dir}/java/sequoiadb.jar"   todir="${sjava_deploy_path}/lib" />
-		<copy file="${sjava_src_path}/testng.xml"       todir="${sjava_deploy_path}" />
+		<copy file="${driver_dir}/java/sequoiadb.jar" todir="${sjava_deploy_path}/lib" />
+		<copy file="${sjava_src_path}/testng.xml"             todir="${sjava_deploy_path}" />
+      <copy file="${sjava_src_path}/testng_consistency.xml" todir="${sjava_deploy_path}" />
 		<copy todir="${sjava_deploy_path}/lib">
 		   <fileset dir="${sjava_src_path}/lib">
 		      <exclude name="sequoiadb.jar"/>
