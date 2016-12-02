@@ -1,6 +1,6 @@
 <!-- ============================================================================
 @description:  exec java testcase, junit or testng
-@parameter:    TEST_TYPE              eg: FUNCTIONTEST
+@parameter:    TEST_TYPE              eg: NORMALTEST
                TESTCASE_TYPE          eg: tdd_java
                testcase_dir           eg: /tmp/ci/testcase/tdd/java
                report_dir             eg：/tmp/ci/report/tdd_java
@@ -47,7 +47,7 @@
          </path>
          <taskdef resource="testngtasks" classpath="@{casedir}/lib/testng-6.9.11.jar"/>
          <switch value="${TEST_TYPE}">
-            <case value="BASETEST">
+            <case value="NORMALTEST">
                <var name="xmlfile" value="testng.xml"/>
             </case>
             <case value="LARGEDATATEST">

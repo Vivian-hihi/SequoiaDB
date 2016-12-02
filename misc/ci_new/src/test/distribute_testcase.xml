@@ -8,7 +8,7 @@
    <!--delete other type of testcase-->  
    <macrodef name="filtercase">
       <attribute name="casedir"/>
-      <attribute name="testtype" default="base_test"/>
+      <attribute name="testtype" default="normal_test"/>
       <sequential>
          <var name="large_data_list" unset="true"/>
          <var name="sync_list" unset="true"/>
@@ -19,7 +19,7 @@
 
          <switch value="@{testtype}">
          
-            <case value="base_test">
+            <case value="normal_test">
                <for list="${large_data_list},${sync_list},${configure_list},${reliability_list}" param="feature">
                   <sequential>
                      <delete dir="@{casedir}/@{feature}" failonerror="false"/>                     

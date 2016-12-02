@@ -13,7 +13,7 @@
    </taskdef>
    
    <target name="test_build">
-      <var name="TEST_TYPE" value="BASETEST"/>
+      <var name="TEST_TYPE" value="NORMALTEST"/>
       <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
 
       <if>
@@ -23,7 +23,7 @@
          </then>
       </if>
      
-      <ant antfile="function_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
+      <ant antfile="normal_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
       </ant>
       

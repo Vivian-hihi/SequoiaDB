@@ -24,7 +24,7 @@
       <antcallback target="check_parameter" return="TESTCASE_TYPE, DEPLOY_MODE"/>
       
       <propertycopy name="testhost_list" from="${DEPLOY_MODE}_HOST" />          
-      <property name="case_basedir" location="${WORKSPACE}/sequoiadb/testcase_functiontest" />
+      <property name="case_basedir" location="${WORKSPACE}/sequoiadb/testcase_normaltest" />
       <property name="testcase_outdir" location="${WORKSPACE}/tmp" />
       <property name="remote_casedir" location="${CI_WORK_DIR}/testcase" />
       
@@ -251,7 +251,7 @@
 
    <target name="execute_testcase">
       <var name="testscript_dir" value="${CI_WORK_DIR}/script/src/test" />     
-      <var name="testscript_log" value="${testscript_dir}/function_test.log" />
+      <var name="testscript_log" value="${testscript_dir}/normal_test.log" />
       
       <!--ready in remote host-->
       <for list="${testhost_list}" param="testhost" parallel="true">
@@ -265,7 +265,7 @@
       </for>
       
       <!--execute testcase in remote host-->
-      <var name="test_remote_cmd" value="ant -f ${testscript_dir}/function_test.xml exec_remote_testcase -DTEST_TYPE=${TEST_TYPE}" />
+      <var name="test_remote_cmd" value="ant -f ${testscript_dir}/normal_test.xml exec_remote_testcase -DTEST_TYPE=${TEST_TYPE}" />
       <for list="${testhost_list}" param="testhost" parallel="true">
          <sequential>
             <staf location="@{testhost}" service="PROCESS"                  
