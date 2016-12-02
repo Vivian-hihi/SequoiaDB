@@ -79,9 +79,11 @@
       <sequential>
          <var name="begin_time" unset="true"/>
          <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
-         <stopwatch name="total_time"/>
+         <script language="javascript">
+            project.setProperty('start_ms', new Date().getTime());
+         </script>
 
          <var name="cmd" value="@{casefullname} -H localhost -p ${SVCNAME}"/>   
          <echo message="${line.separator}exec cmd: python ${cmd}"/>
@@ -102,10 +104,12 @@
          
          <var name="end_time" unset="true"/> 
          <tstamp>
-            <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
          <echo message="begin at ${begin_time}, end at ${end_time}" />
-         <stopwatch name="total_time" action="total"/>    
+         <script language="javascript">
+            project.setProperty('total_time', ( new Date().getTime() - start_ms ) / 1000 );
+         </script>   
          
          <!--report-->
          <hostinfo prefix="host" />

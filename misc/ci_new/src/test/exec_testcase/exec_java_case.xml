@@ -35,7 +35,7 @@
       <sequential>
          <var name="begin_time" unset="true"/>
          <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
          
          <property name="tmp_report_dir" value="@{casedir}/output" />
@@ -61,7 +61,7 @@
          
          <var name="end_time" unset="true"/>
          <tstamp>
-            <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>       
          <echo message="begin at ${begin_time}, end at ${end_time}" />
          
@@ -77,9 +77,8 @@
       <attribute name="casedir" />
       <sequential>   
          <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
-         <stopwatch name="total_time"/>
               
          <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
@@ -97,11 +96,10 @@
          </junit>
               
          <tstamp>
-            <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
         
-         <echo message="begin at ${begin_time}, end at ${end_time}" />
-         <stopwatch name="total_time" action="total"/>            
+         <echo message="begin at ${begin_time}, end at ${end_time}" />           
          
          <modifyjunitreport reportdir="@{reportdir}" layer="${TESTCASE_TYPE}"/>
       </sequential>

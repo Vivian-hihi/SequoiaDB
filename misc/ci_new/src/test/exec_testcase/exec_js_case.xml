@@ -147,9 +147,11 @@
          
          <var name="begin_time" unset="true"/>
          <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>       
-         <stopwatch name="total_time"/>
+         <script language="javascript">
+            project.setProperty('start_ms', new Date().getTime());
+         </script>
 
          <var name="screen_output" unset="true"/>
          <var name="rc" unset="true"/>
@@ -164,12 +166,14 @@
          
          <var name="end_time" unset="true"/>
          <tstamp>
-            <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
-                 
+         <script language="javascript">
+            project.setProperty('total_time', ( new Date().getTime() - start_ms ) / 1000 );
+         </script>
+      
          <echo message="${screen_output}" />
          <echo message="the result code is ${rc}, begin at ${begin_time}, end at ${end_time}" />
-         <stopwatch name="total_time" action="total"/>
          
          <!--report-->
          <hostinfo prefix="host" />

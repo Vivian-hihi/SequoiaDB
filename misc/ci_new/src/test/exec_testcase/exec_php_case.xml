@@ -75,7 +75,7 @@
       <sequential> 
          <var name="begin_time" unset="true"/>
          <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>       
 
          <if>
@@ -107,7 +107,7 @@
               
          <var name="end_time" unset="true"/>
          <tstamp>
-            <format property="end_time" pattern="yyyy-MM-dd-hh.mm.ss a" />
+            <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
          <echo message="begin at ${begin_time}, end at ${end_time}" />
       </sequential>
