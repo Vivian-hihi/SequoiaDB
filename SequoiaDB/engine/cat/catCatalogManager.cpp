@@ -861,8 +861,8 @@ namespace engine
          for ( UINT32 i = 0 ; i < domainGroups.size() ; ++i )
          {
             rc = catGroupID2Name( domainGroups[i], strGroupName, _pEduCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Group id [%d] to group name failed, "
-                         "rc: %d", groupID, rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "Group id [%u] to group name failed, "
+                         "rc: %d", domainGroups[i], rc ) ;
             // Lock data group in this domain
             PD_CHECK( lockMgr.tryLockGroup( strGroupName, SHARED ),
                       SDB_LOCK_FAILED, error, PDERROR,
