@@ -379,9 +379,13 @@ namespace engine
                              SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                              INT16 w ) ;
 
-   /* Transaction */
+   /* Transaction control */
    INT32 catTransBegin ( _pmdEDUCB *cb ) ;
    INT32 catTransEnd ( INT32 result, _pmdEDUCB *cb, SDB_DPSCB *pDpsCB ) ;
+
+   /* Catalog group sync control */
+   void catSetSyncW ( INT16 w ) ;
+   INT16 catGetSyncW () ;
 }
 
 #endif //CAT_COMMON_HPP__

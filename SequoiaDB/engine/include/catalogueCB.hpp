@@ -113,7 +113,7 @@ namespace engine
                                     vector< UINT32 > &groups,
                                     BOOLEAN ignoreErr = FALSE ) ;
 
-         INT16    majoritySize() ;
+         INT16    majoritySize( BOOLEAN needWaitSync = FALSE ) ;
          INT32    primaryCheck( _pmdEDUCB *cb, BOOLEAN canDelay,
                                 BOOLEAN &isDelay ) ;
          UINT16   getPrimaryNode() const { return _primaryID.columns.nodeID ; }
@@ -163,7 +163,11 @@ namespace engine
 
          INT32 sendReply ( const NET_HANDLE &handle,
                            MsgOpReply *pReply, INT32 result,
-                           void *pReplyData = NULL, UINT32 replyDataLen = 0 ) ;
+                           void *pReplyData = NULL, UINT32 replyDataLen = 0,
+                           BOOLEAN needSync = TRUE ) ;
+
+         void fillErrReply ( const MsgOpReply *pReply, MsgOpReply *pErrReply,
+                             INT32 rc ) ;
 
       private:
          _netRouteAgent       *_pNetWork ;

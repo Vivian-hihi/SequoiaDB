@@ -43,6 +43,9 @@
 #define IS_REPLY_TYPE(type)         (INT32)((UINT32)type >> 31 )
 #define GET_REQUEST_TYPE(type)      (INT32)((UINT32)type & 0x7FFFFFFF)
 
+/// Reserved for cata delay event
+#define CAT_DELAY_EVENT_TYPE        ( MAKE_REPLY_TYPE( 0 ) )
+
 enum MSG_TYPE
 {
    // system msg

@@ -273,7 +273,7 @@ namespace engine
 
 #if defined ( _DEBUG )
       // only for debug, wait the group other node sync complete
-      if ( dpsCB )
+      if ( dpsCB && SDB_ROLE_CATALOG != pmdGetDBRole() )
       {
          dpsCB->completeOpr( cb, CLS_REPLSET_MAX_NODE_SIZE ) ;
       }

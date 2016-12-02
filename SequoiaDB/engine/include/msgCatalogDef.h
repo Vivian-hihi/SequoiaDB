@@ -125,4 +125,9 @@
 #define CAT_ASSIGNGROUP_FOLLOW            "$follow"
 #define CAT_ASSIGNGROUP_RANDOM            "$random"
 
+#define CAT_DELAY_REPLY_TYPE_NAME         "DELAYEVENT"
+#define CAT_DELAY_REPLY_MSG_NAME          "DELAYREPLY"
+#define CAT_DELAY_SYNC_LSN_NAME           "DELAYSYNCLSN"
+#define CAT_DELAY_SYNC_W_NAME             "DELAYSYNCW"
+
 #endif // MSGCATALOGDEF_HPP__

@@ -68,9 +68,19 @@ namespace engine
    {
    }
 
-   INT16 sdbCatalogueCB::majoritySize()
+   INT16 sdbCatalogueCB::majoritySize( BOOLEAN needWaitSync )
    {
-      return (INT16)( sdbGetReplCB()->groupSize() / 2 + 1 ) ;
+      // For sub-command inside transaction, do not wait for replicas
+      // For ending transaction of commands, wait for majority number of replicas
+      INT16 w = (INT16)( sdbGetReplCB()->groupSize() / 2 + 1 ) ;
+      INT16 ret = 1 ;
+
+      if ( needWaitSync )
+      {
+         ret = w ;
+      }
+
+      return ret ;
    }
 
    INT32 sdbCatalogueCB::primaryCheck( _pmdEDUCB *cb, BOOLEAN canDelay,
@@ -882,7 +892,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_SENDREPLY, "sdbCatalogueCB::sendReply" )
    INT32 sdbCatalogueCB::sendReply ( const NET_HANDLE &handle,
                                      MsgOpReply *pReply, INT32 result,
-                                     void *pReplyData, UINT32 replyDataLen )
+                                     void *pReplyData, UINT32 replyDataLen,
+                                     BOOLEAN needSync )
    {
       INT32 rc = SDB_OK ;
 
@@ -891,61 +902,80 @@ namespace engine
       MsgOpReply errReply ;
 
       rc = onSendReply( pReply, result ) ;
-      if ( SDB_OK != rc &&
-            ( SDB_OK == result ||
-              SDB_DMS_EOC == result ) )
-      {
-         // Replace with error reply
+      PD_RC_CHECK( rc, PDERROR, "On send reply failed, rc: %d", rc ) ;
 
+      if ( needSync )
+      {
+         rc = _catMainCtrl.waitSync( handle, pReply, pReplyData, replyDataLen ) ;
+         PD_RC_CHECK( rc, PDERROR, "Wait sync failed, rc: %d", rc ) ;
+      }
+
+   done :
+      if ( !isDelayed() && pReply )
+      {
+         PD_LOG( PDDEBUG,
+                 "Sending reply message [%d] with rc [%d]",
+                 pReply->header.opCode, pReply->flags ) ;
+         if ( pReplyData )
+         {
+            rc = netWork()->syncSend( handle, &(pReply->header),
+                                      pReplyData, replyDataLen ) ;
+         }
+         else
+         {
+            rc = netWork()->syncSend( handle, &(pReply->header) ) ;
+         }
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Failed to send reply message [%d], rc: %d",
+                    pReply->header.opCode, rc ) ;
+         }
+      }
+      PD_TRACE_EXITRC( SDB_CATALOGCB_SENDREPLY, rc ) ;
+      return rc ;
+
+   error :
+      if ( pReply )
+      {
          // Delete context if the reply message specifies contextID
          // since Coord will not send KillContext if Catalog reports error
          SINT64 contextID = pReply->contextID ;
          if ( -1 != contextID )
          {
-            getMainController()->delContextByID( contextID, TRUE ) ;
+            _catMainCtrl.delContextByID( contextID, TRUE ) ;
          }
 
-         // Fill error reply message
-         errReply.header.messageLength = sizeof( MsgOpReply ) ;
-         errReply.header.opCode = pReply->header.opCode ;
-         errReply.header.requestID = pReply->header.requestID ;
-         errReply.header.routeID.value = pReply->header.routeID.value ;
-         errReply.header.TID = pReply->header.TID ;
-
-         errReply.flags = rc ;
-         errReply.contextID = -1 ;
-         errReply.numReturned = 0 ;
-         errReply.startFrom = pReply->startFrom ;
-
-         pReply = &errReply ;
-         pReplyData = NULL ;
-         replyDataLen = 0 ;
+         if ( SDB_OK == result ||
+              SDB_DMS_EOC == result )
+         {
+            // Replace with error reply
+            fillErrReply( pReply, &errReply, rc ) ;
+            pReply = &errReply ;
+            pReplyData = NULL ;
+            replyDataLen = 0 ;
+         }
       }
+      goto done ;
+   }
 
-      PD_LOG( PDDEBUG,
-              "Sending reply message [%d] with rc [%d]",
-              pReply->header.opCode, pReply->flags ) ;
+   void sdbCatalogueCB::fillErrReply ( const MsgOpReply *pReply,
+                                       MsgOpReply *pErrReply, INT32 rc )
+   {
+      SDB_ASSERT( pReply, "pReply should not be NULL" ) ;
+      SDB_ASSERT( pErrReply, "pErrReply should not be NULL" ) ;
 
-      if ( pReplyData )
-      {
-         rc = netWork()->syncSend( handle, &(pReply->header),
-                                   pReplyData, replyDataLen ) ;
-      }
-      else
-      {
-         rc = netWork()->syncSend( handle, &(pReply->header) ) ;
-      }
+      // Fill error reply message
+      pErrReply->header.messageLength = sizeof( MsgOpReply ) ;
+      pErrReply->header.opCode = pReply->header.opCode ;
+      pErrReply->header.requestID = pReply->header.requestID ;
+      pErrReply->header.routeID.value = pReply->header.routeID.value ;
+      pErrReply->header.TID = pReply->header.TID ;
 
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING,
-                 "Failed to send reply message [%d], rc: %d",
-                 pReply->header.opCode, rc ) ;
-      }
-
-      PD_TRACE_EXITRC( SDB_CATALOGCB_SENDREPLY, rc ) ;
-
-      return rc ;
+      pErrReply->flags = rc ;
+      pErrReply->contextID = -1 ;
+      pErrReply->numReturned = 0 ;
+      pErrReply->startFrom = pReply->startFrom ;
    }
 
    /*

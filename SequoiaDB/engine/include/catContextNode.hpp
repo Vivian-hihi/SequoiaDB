@@ -234,6 +234,7 @@ namespace engine
       std::string _hostName ;
       std::string _localSvc ;
       std::string _nodeName ;
+      INT32 _nodeCount ;
       UINT16 _nodeID ;
       BOOLEAN _forced ;
    } ;

@@ -55,8 +55,12 @@ using namespace bson;
 namespace engine
 {
 
-   #define CAT_MAX_DELAY_RETRY_TIMES         ( 100 )
-   #define CAT_DEALY_TIME_INTERVAL           ( 100 ) // ms
+   // Wait sync retries 3600 times, for each time, waits for 100ms. Plus the
+   // waiting time interval 100ms for delay events, totally wait for
+   // about 640000ms
+   #define CAT_SYNC_MAX_RETRY_TIMES ( 3600 )
+   #define CAT_SYNC_FIRST_INTERVAL ( 200 ) // ms
+   #define CAT_SYNC_INTERVAL ( 0 ) // ms
 
    BEGIN_OBJ_MSG_MAP( catMainController, _pmdObjBase )
       ON_EVENT( PMD_EDU_EVENT_ACTIVE, _onActiveEvent )
@@ -77,6 +81,8 @@ namespace engine
       _pDpsCB              = NULL ;
       _checkEventTimerID   = NET_INVALID_TIMER_ID ;
       _isDelayed           = FALSE ;
+      _delayWithoutSync    = FALSE ;
+      _lastCheckDelayTick  = 0 ;
 
       _changeEvent.signal() ;
    }
@@ -118,13 +124,17 @@ namespace engine
    {
       if ( _checkEventTimerID == timerID )
       {
-         _dispatchDelayedOperation( TRUE ) ;
+         if ( _needCheckDelay() )
+         {
+            _dispatchDelayedOperation( TRUE ) ;
+            _setCheckDelayTick() ;
+         }
       }
 
       _pmdObjBase::onTimer( timerID, interval ) ;
    }
 
-   BOOLEAN catMainController::delayCurOperation()
+   BOOLEAN catMainController::delayCurOperation( UINT32 maxRetryTimes )
    {
       BOOLEAN result       = TRUE ;
       pmdEDUEvent *last    = getLastEvent() ;
@@ -147,7 +157,7 @@ namespace engine
          {
             ossUnpack32From64( _lastDelayEvent._userData, tryTime, handle ) ;
 
-            if ( tryTime > CAT_MAX_DELAY_RETRY_TIMES )
+            if ( tryTime > maxRetryTimes )
             {
                result = FALSE ;
                goto done ;
@@ -178,28 +188,54 @@ namespace engine
          }
 
          event._userData = ossPack32To64( ++tryTime, handle ) ;
-         _vecEvent.push_back( event ) ;
-         _isDelayed = TRUE ;
-
-         PD_LOG ( PDDEBUG, "Delay event %u %d", handle, event._eventType ) ;
-
-         // begin timer
-         if ( NET_INVALID_TIMER_ID == _checkEventTimerID )
-         {
-            _checkEventTimerID = _pCatCB->setTimer( CAT_DEALY_TIME_INTERVAL ) ;
-         }
+         _delayEvent( event ) ;
+         PD_LOG ( PDDEBUG, "Delay event handle: [%u] type: [%d]",
+                  handle, event._eventType ) ;
       }
 
    done:
       return result ;
    }
 
+   void catMainController::_delayEvent ( pmdEDUEvent &event )
+   {
+      _vecEvent.push_back( event ) ;
+      _isDelayed = TRUE ;
+
+      // Make sure the timer is set
+      if ( NET_INVALID_TIMER_ID == _checkEventTimerID )
+      {
+         _checkEventTimerID = _pCatCB->setTimer( CAT_DEALY_TIME_INTERVAL ) ;
+      }
+   }
+
+   BOOLEAN catMainController::_needCheckDelay ()
+   {
+      if ( _vecEvent.size() > 0 &&
+           pmdGetTickSpanTime( _lastCheckDelayTick ) >= CAT_DEALY_TIME_INTERVAL )
+      {
+            return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
+   void catMainController::_setCheckDelayTick ()
+   {
+      // Set check timestamp
+      _lastCheckDelayTick = pmdGetDBTick() ;
+   }
+
    void catMainController::_dispatchDelayedOperation( BOOLEAN dispatch )
    {
       UINT32 handle  = 0 ;
       UINT32 tryTime = 0 ;
+
       VEC_EVENT tmpVecEvent = _vecEvent ;
       _vecEvent.clear() ;
+
+      // Initialize the flag, we need to wait sync
+      _delayWithoutSync = FALSE ;
 
       VEC_EVENT::iterator it = tmpVecEvent.begin() ;
       while ( it != tmpVecEvent.end() )
@@ -211,22 +247,16 @@ namespace engine
          if ( dispatch )
          {
             ossUnpack32From64( event._userData, tryTime, handle ) ;
-            _defaultMsgFunc( ( NET_HANDLE )handle,
-                             ( MsgHeader * )event._Data ) ;
+            MsgHeader *msg = ( MsgHeader * )event._Data ;
+            _defaultMsgFunc( ( NET_HANDLE )handle, msg ) ;
          }
 
          pmdEduEventRelase( _lastDelayEvent, _pEDUCB ) ;
       }
       tmpVecEvent.clear() ;
+
       // reset last delay event
       _lastDelayEvent.reset() ;
-      // if no event, need to kill timer
-      if ( NET_INVALID_TIMER_ID != _checkEventTimerID &&
-           0 == _vecEvent.size() )
-      {
-         _pCatCB->killTimer( _checkEventTimerID ) ;
-         _checkEventTimerID = NET_INVALID_TIMER_ID ;
-      }
    }
 
    void catMainController::_deleteDelayedOperation ( UINT32 handle )
@@ -350,7 +380,7 @@ namespace engine
          eventMsg->timeoutMsg.timerID = id ;
 
          // post the timeout event of current timestamp
-         _pEDUCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT, 
+         _pEDUCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT,
                                            PMD_EDU_MEM_ALLOC,
                                            (void*)eventMsg ) ) ;
       }
@@ -432,6 +462,9 @@ namespace engine
 
       _pCatCB->regEventHandler( this ) ;
 
+      // Set timer
+      _checkEventTimerID = _pCatCB->setTimer( CAT_DEALY_TIME_INTERVAL ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT_INIT, rc ) ;
       return rc ;
@@ -445,6 +478,12 @@ namespace engine
       // before unregister the handler
       if ( _pCatCB )
       {
+         if ( NET_INVALID_TIMER_ID != _checkEventTimerID )
+         {
+            _pCatCB->killTimer( _checkEventTimerID ) ;
+            _checkEventTimerID = NET_INVALID_TIMER_ID ;
+         }
+
          _pCatCB->unregEventHandler( this ) ;
       }
       return SDB_OK ;
@@ -1139,9 +1178,18 @@ namespace engine
             rc = _processRemoteDisc( handle, pMsg ) ;
             break ;
          }
+      case CAT_DELAY_EVENT_TYPE :
+         {
+            // Only process the event is already delayed
+            if ( _lastDelayEvent._Data )
+            {
+               rc = _processDelayReply( handle, pMsg ) ;
+               break ;
+            }
+         }
       default :
          {
-            PD_LOG( PDERROR, "Recieve unknow msg[opCode:(%d)%d, len: %d, "
+            PD_LOG( PDERROR, "Receive unknown msg[opCode:(%d)%d, len: %d, "
                     "tid: %d, reqID: %lld, nodeID: %u.%u.%u]",
                     IS_REPLY_TYPE(pMsg->opCode), GET_REQUEST_TYPE(pMsg->opCode),
                     pMsg->messageLength, pMsg->TID, pMsg->requestID,
@@ -1498,6 +1546,7 @@ namespace engine
 
    INT32 catMainController::onBeginCommand ( MsgHeader *pReqMsg )
    {
+      catSetSyncW( 0 ) ;
       return catTransBegin( _pEDUCB ) ;
    }
 
@@ -1506,10 +1555,444 @@ namespace engine
       return catTransEnd( result, _pEDUCB, _pDpsCB ) ;
    }
 
+   INT32 catMainController::waitSync ( const NET_HANDLE &handle,
+                                       MsgOpReply *pReply,
+                                       void *pReplyData, UINT32 replyDataLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( 0 != _pEDUCB->getLsnCount() )
+      {
+         INT16 w = catGetSyncW() ;
+         rc = _waitSyncInternal( handle, TRUE, _pEDUCB->getEndLsn(), w,
+                                 pReply, pReplyData, replyDataLen ) ;
+         PD_RC_CHECK( rc, PDERROR, "Wait sync failed, rc: %d", rc ) ;
+      }
+
+   done :
+      _pEDUCB->resetLsn() ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
    INT32 catMainController::onSendReply ( MsgOpReply *pReply, INT32 result )
    {
       return catTransEnd( result, _pEDUCB, _pDpsCB ) ;
    }
 
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_DELAYREPLY, "catMainController::_processDelayReply" )
+   INT32 catMainController::_processDelayReply( const NET_HANDLE &handle,
+                                                MsgHeader *pMsg )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATMAINCT_DELAYREPLY ) ;
+
+      MsgOpReply *pReply = NULL ;
+      CAT_DELAY_REPLY_TYPE msgType = CAT_DELAY_REPLY_UNKNOWN ;
+      MsgOpReply errReply ;
+      BSONObj boEvent ;
+
+      try
+      {
+
+         // Extract delay reply
+         rc = _extractDelayReplyEvent( (MsgOpReply *)pMsg, msgType,
+                                       &pReply, boEvent ) ;
+         PD_CHECK( SDB_OK == rc,
+                   SDB_UNKNOWN_MESSAGE, error, PDERROR,
+                   "Failed to extract delayed reply message" ) ;
+
+         switch ( msgType )
+         {
+         case CAT_DELAY_REPLY_SYNC :
+         {
+            UINT64 syncLsn = 0 ;
+            INT32 tmpW = 0 ;
+            INT16 w = 0 ;
+            rc = rtnGetNumberLongElement( boEvent, CAT_DELAY_SYNC_LSN_NAME,
+                                          (INT64 &)syncLsn ) ;
+            PD_CHECK( SDB_OK == rc,
+                      SDB_UNKNOWN_MESSAGE, error, PDERROR,
+                      "Failed to extract delayed reply message, "
+                      "failed to extract %s",
+                      CAT_DELAY_SYNC_LSN_NAME ) ;
+
+            rc = rtnGetIntElement ( boEvent, CAT_DELAY_SYNC_W_NAME, tmpW ) ;
+            if ( SDB_FIELD_NOT_EXIST == rc )
+            {
+               rc = SDB_OK ;
+               tmpW = 0 ;
+            }
+            PD_CHECK( SDB_OK == rc,
+                      SDB_UNKNOWN_MESSAGE, error, PDERROR,
+                      "Failed to extract delayed reply message, "
+                      "failed to extract %s",
+                      CAT_DELAY_SYNC_W_NAME ) ;
+
+            w = (INT16)tmpW ;
+            rc = _waitSyncInternal( handle, FALSE, syncLsn, w, pReply ) ;
+
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to process delayed reply message, failed to wait "
+                         "sync failed, rc: %d", rc ) ;
+            break ;
+         }
+         default :
+            PD_LOG( PDERROR,
+                    "Failed to extract delayed reply message, unknown type: %d",
+                    msgType ) ;
+            rc = SDB_UNKNOWN_MESSAGE ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to extract delayed reply message: %s",
+                  e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      if ( pReply && !isDelayed() )
+      {
+         PD_LOG( PDDEBUG,
+                 "Finished process delayed reply [rc: %d], "
+                 "sending reply message [%d]",
+                 rc, pReply->header.opCode ) ;
+         rc = _pCatCB->sendReply( handle, pReply, rc, NULL, 0, FALSE ) ;
+      }
+      PD_TRACE_EXITRC( SDB_CATMAINCT_DELAYREPLY, rc ) ;
+      return rc ;
+
+   error :
+      {
+         MsgOpReply *pTmpReply = ( MsgOpReply *)pMsg ;
+
+         // Delete context if the reply message specifies contextID
+         // since Coord will not send KillContext if Catalog reports error
+         SINT64 contextID = pTmpReply->contextID ;
+         if ( -1 != contextID )
+         {
+            delContextByID( contextID, TRUE ) ;
+         }
+
+         // Replace with error reply
+         _pCatCB->fillErrReply( pTmpReply, &errReply, rc ) ;
+         pReply = &errReply ;
+      }
+      goto done ;
+   }
+
+   INT32 catMainController::_waitSyncInternal ( const NET_HANDLE &handle,
+                                                BOOLEAN firstTry,
+                                                UINT64 syncLsn, INT16 w,
+                                                MsgOpReply *pReply,
+                                                void *pReplyData,
+                                                UINT32 replyDataLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      replCB *pRepl = sdbGetReplCB() ;
+      UINT64 timeout = firstTry ? CAT_SYNC_FIRST_INTERVAL :
+                                  CAT_SYNC_INTERVAL ;
+
+      // Recheck w in the delayed event, reset w in below cases
+      // 1. w is <= 0, which means not set
+      // 2. w is > current majority size, which means the node number of
+      //    catalog group has been reduced
+      INT16 curSyncW = 0 ;
+      if ( w <= 0 ||
+           w > _pCatCB->majoritySize( TRUE ) )
+      {
+         curSyncW = _pCatCB->majoritySize( TRUE ) ;
+      }
+      else
+      {
+         // w is 1 or smaller than current majority size,
+         // we could have a try
+         _delayWithoutSync = FALSE ;
+         curSyncW = w ;
+      }
+
+      // For the first try, always wait sync before delay
+      _delayWithoutSync = firstTry ? FALSE : _delayWithoutSync ;
+
+      // No need to wait
+      if ( !_pDpsCB || curSyncW <= 1 )
+      {
+         goto done ;
+      }
+
+      if ( _delayWithoutSync )
+      {
+         // Delay sync directly
+         rc = SDB_TIMEOUT ;
+      }
+      else
+      {
+         rc = pRepl->sync( syncLsn, _pEDUCB, curSyncW, timeout ) ;
+      }
+
+      if ( SDB_TIMEOUT == rc )
+      {
+         // The earlier wait sync failed, don't wait for later ones in the
+         // delayed list for this round
+         _delayWithoutSync = TRUE ;
+
+         rc = _delaySync( handle, firstTry, syncLsn, w,
+                          pReply, pReplyData, replyDataLen ) ;
+         PD_RC_CHECK( rc, PDERROR, "Wait sync delay failed, "
+                      "w: [%d/%d], LSN: [%llu], first: [%s], rc: %d",
+                      w, curSyncW, syncLsn, firstTry ? "TRUE" : "FALSE", rc ) ;
+         PD_LOG( PDDEBUG,
+                 "Wait sync delayed: w: [%d/%d], LSN: [%llu], first: [%s]",
+                 w, curSyncW, syncLsn, firstTry ? "TRUE" : "FALSE" ) ;
+      }
+      else
+      {
+         PD_RC_CHECK( rc, PDERROR, "Wait sync failed, "
+                      "w: [%d/%d], LSN: [%llu], first: [%s], rc: %d",
+                      w, curSyncW, syncLsn, firstTry ? "TRUE" : "FALSE", rc ) ;
+
+         PD_LOG( PDDEBUG,
+                 "Wait sync finished: w: [%d/%d], LSN: [%llu], first: [%s]",
+                 w, curSyncW, syncLsn, firstTry ? "TRUE" : "FALSE" ) ;
+      }
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   INT32 catMainController::_delaySync ( const NET_HANDLE &handle,
+                                         BOOLEAN firstTry,
+                                         UINT64 syncLsn, INT16 w,
+                                         MsgOpReply *pReply,
+                                         void *pReplyData,
+                                         UINT32 replyDataLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      pmdEDUEvent event ;
+      CHAR *pBuffer = NULL ;
+      INT32 bufferSize = 0 ;
+
+      if ( !firstTry )
+      {
+         if ( delayCurOperation( CAT_SYNC_MAX_RETRY_TIMES ) )
+         {
+            goto done ;
+         }
+         else
+         {
+            rc = SDB_CLS_WAIT_SYNC_FAILED ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Delay wait sync failed, rc: %d",
+                         rc ) ;
+         }
+      }
+
+      rc = _buildDelaySyncEvent( &pBuffer, &bufferSize, syncLsn, w,
+                                 pReply, pReplyData, replyDataLen ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Build catalog wait sync request failed, rc: %d",
+                   rc ) ;
+
+      event._eventType = PMD_EDU_EVENT_MSG ;
+      event._Data = pBuffer ;
+      event._dataMemType = PMD_EDU_MEM_SELF ;
+      event._eventType = PMD_EDU_EVENT_MSG ;
+      event._userData = ossPack32To64( 1, handle ) ;
+
+      _delayEvent( event ) ;
+
+      PD_LOG ( PDDEBUG, "Delay event handle: [%u] type: [%d]",
+               handle, event._eventType ) ;
+
+   done :
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   INT32 catMainController::_buildDelaySyncEvent ( CHAR **ppBuffer,
+                                                   INT32 *pBufferSize,
+                                                   UINT64 syncLsn, INT16 w,
+                                                   MsgOpReply *pReply,
+                                                   void *pReplyData,
+                                                   UINT32 replyDataLen )
+   {
+      // For wait sync event, record the sync LSN and w
+      BSONObj boEvent = BSON( CAT_DELAY_SYNC_LSN_NAME << (INT64)syncLsn <<
+                              CAT_DELAY_SYNC_W_NAME << (INT32)w ) ;
+      return _buildDelayReplyEvent( ppBuffer, pBufferSize,
+                                    CAT_DELAY_REPLY_SYNC,
+                                    pReply, pReplyData, replyDataLen,
+                                    boEvent ) ;
+   }
+
+   INT32 catMainController::_buildDelayReplyEvent ( CHAR **ppBuffer,
+                                                    INT32 *pBufferSize,
+                                                    CAT_DELAY_REPLY_TYPE type,
+                                                    MsgOpReply *pReply,
+                                                    void *pReplyData,
+                                                    UINT32 replyDataLen,
+                                                    const BSONObj &boInfo )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != ppBuffer &&
+                  NULL != pBufferSize, "invalid pBuffer" ) ;
+
+      SDB_ASSERT( NULL != pReply , "invalid pReply" ) ;
+
+      CHAR *pTmpBuffer = NULL ;
+      INT32 tmpBufferSize = 0 ;
+      MsgOpReply *pDelayReply = NULL ;
+      INT32 delayReplylen = pReply->header.messageLength ;
+
+      // Merge the reply message first
+      if ( pReplyData )
+      {
+         SDB_ASSERT( (UINT32)delayReplylen == sizeof ( MsgOpReply ) + replyDataLen,
+                     "mismatched message length" ) ;
+         rc = msgCheckBuffer ( &pTmpBuffer, &tmpBufferSize, delayReplylen ) ;
+         PD_RC_CHECK ( rc, PDERROR,
+                       "Failed to allocate temporary message buffer, rc: %d",
+                       rc ) ;
+         ossMemcpy( pTmpBuffer, pReply, sizeof( MsgOpReply ) ) ;
+         ossMemcpy( pTmpBuffer + sizeof( MsgOpReply ), pReplyData, replyDataLen ) ;
+         pDelayReply = (MsgOpReply *)pTmpBuffer ;
+      }
+      else
+      {
+         pDelayReply = pReply ;
+      }
+
+      try
+      {
+         BSONObjBuilder boBuilder ;
+         BSONObj boEvent ;
+
+         // Format of delay reply event:
+         // MsgOpReply header
+         // { DELAYEVENT : <type>, DELAYREPLY: <reply>, ... }
+
+         boBuilder.append( CAT_DELAY_REPLY_TYPE_NAME, (INT32)type ) ;
+         boBuilder.appendElements( boInfo ) ;
+         if ( pDelayReply )
+         {
+            boBuilder.appendBinData( CAT_DELAY_REPLY_MSG_NAME, delayReplylen,
+                                     BinDataGeneral, (CHAR *)pDelayReply ) ;
+         }
+
+         boEvent = boBuilder.obj() ;
+         UINT32 eventLen = sizeof( MsgOpReply ) + (UINT32)boEvent.objsize() ;
+
+         rc = _pEDUCB->allocBuff( (UINT32)eventLen, ppBuffer,
+                                  (UINT32 *)pBufferSize ) ;
+         PD_RC_CHECK ( rc, PDERROR,
+                       "Failed to allocate event buffer, rc: %d",
+                       rc ) ;
+
+         // Fill the event header
+         ossMemcpy( (*ppBuffer), pReply, sizeof( MsgOpReply ) ) ;
+         MsgHeader *pDelayMsg = (MsgHeader *)(*ppBuffer) ;
+         pDelayMsg->opCode = CAT_DELAY_EVENT_TYPE ;
+         pDelayMsg->messageLength = eventLen ;
+
+         // Fill the event content
+         ossMemcpy( (*ppBuffer) + sizeof( MsgOpReply ), boEvent.objdata(),
+                    boEvent.objsize() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to extract delayed reply message: %s",
+                  e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      SAFE_OSS_FREE( pTmpBuffer ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   INT32 catMainController::_extractDelayReplyEvent ( const MsgOpReply *pDelayedReply,
+                                                      CAT_DELAY_REPLY_TYPE &type,
+                                                      MsgOpReply **ppReply,
+                                                      BSONObj &boInfo )
+   {
+      INT32 rc = SDB_OK ;
+
+      CHAR *pOffset = (CHAR *)pDelayedReply ;
+      UINT32 msgLen = (UINT32)pDelayedReply->header.messageLength ;
+
+      PD_CHECK( msgLen > sizeof( MsgOpReply ),
+                SDB_UNKNOWN_MESSAGE, error, PDERROR,
+                "Failed to extract delayed reply message, mismatched "
+                "message length" ) ;
+
+      try
+      {
+         // Format of delay reply event:
+         // MsgOpReply header
+         // { DELAYEVENT : <type>, DELAYREPLY: <reply>, ... }
+
+         pOffset += sizeof( MsgOpReply ) ;
+         boInfo = BSONObj( pOffset ) ;
+
+         rc = rtnGetIntElement( boInfo, CAT_DELAY_REPLY_TYPE_NAME,
+                                (INT32 &)type ) ;
+         PD_CHECK( SDB_OK == rc,
+                   SDB_UNKNOWN_MESSAGE, error, PDERROR,
+                   "Failed to extract delayed reply message, "
+                   "failed to extract %s",
+                   CAT_DELAY_REPLY_TYPE_NAME ) ;
+
+         PD_CHECK ( BinData == boInfo.getField( CAT_DELAY_REPLY_MSG_NAME ).type(),
+                    SDB_UNKNOWN_MESSAGE, error, PDERROR,
+                    "Failed to extract delayed reply message, "
+                    "failed to extract %s",
+                    CAT_DELAY_REPLY_MSG_NAME ) ;
+
+         if ( ppReply )
+         {
+            BSONElement boMsg = boInfo.getField( CAT_DELAY_REPLY_MSG_NAME ) ;
+            INT32 replyLen = 0 ;
+
+            (*ppReply) = (MsgOpReply *)boMsg.binData( replyLen ) ;
+
+            PD_CHECK( (*ppReply)->header.messageLength == replyLen,
+                      SDB_UNKNOWN_MESSAGE, error, PDERROR,
+                      "Failed to extract delayed reply message, "
+                      "failed to extract %s",
+                      CAT_DELAY_REPLY_MSG_NAME ) ;
+
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to extract delayed reply message: %s",
+                  e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
 }
 

@@ -61,6 +61,18 @@ namespace engine
    class _authCB ;
    class sdbCatalogueCB ;
 
+   enum CAT_DELAY_REPLY_TYPE
+   {
+      CAT_DELAY_REPLY_UNKNOWN = 0,
+
+      // Wait synchronization of transaction ending LSN
+      // between Catalog replicas
+      CAT_DELAY_REPLY_SYNC,
+   } ;
+
+   #define CAT_MAX_DELAY_RETRY_TIMES         ( 100 )
+   #define CAT_DEALY_TIME_INTERVAL           ( 100 ) // ms
+
    /*
       catMainController define
    */
@@ -70,6 +82,8 @@ namespace engine
    {
    typedef _utilMap< SINT64, UINT64, 20 >    CONTEXT_LIST ;
    typedef std::vector< pmdEDUEvent >        VEC_EVENT ;
+
+
 
    DECLARE_OBJ_MSG_MAP()
 
@@ -88,7 +102,8 @@ namespace engine
       ossEvent* getAttachEvent() { return &_attachEvent ; }
       ossEvent* getChangeEvent() { return &_changeEvent ; }
 
-      BOOLEAN   delayCurOperation() ;
+      BOOLEAN   delayCurOperation ( UINT32 maxRetryTimes =
+                                           CAT_MAX_DELAY_RETRY_TIMES ) ;
       BOOLEAN   isDelayed() const { return _isDelayed ; }
 
       void addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
@@ -106,9 +121,15 @@ namespace engine
       virtual INT32 _defaultMsgFunc ( NET_HANDLE handle,
                                       MsgHeader* msg ) ;
 
-      INT32 _processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processMsg ( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
 
-      void  _dispatchDelayedOperation( BOOLEAN dispatch ) ;
+      void _delayEvent ( pmdEDUEvent &event ) ;
+
+      BOOLEAN _needCheckDelay () ;
+
+      void _setCheckDelayTick () ;
+
+      void _dispatchDelayedOperation ( BOOLEAN dispatch ) ;
 
       void _deleteDelayedOperation ( UINT32 handle ) ;
 
@@ -134,6 +155,7 @@ namespace engine
       INT32 _processQueryRequest ( const NET_HANDLE &handle,
                                    MsgHeader *pMsg,
                                    const CHAR *pCollectionName ) ;
+      INT32 _processDelayReply ( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
 
    protected:
       INT32 _postMsg( const NET_HANDLE &handle, const MsgHeader *pHead ) ;
@@ -152,9 +174,43 @@ namespace engine
    public :
       // functions of _catEventHandler
       virtual const CHAR *getHandlerName () { return "catMainController" ; }
+
       virtual INT32 onBeginCommand ( MsgHeader *pReqMsg ) ;
+
       virtual INT32 onEndCommand ( MsgHeader *pReqMsg, INT32 result ) ;
+
       virtual INT32 onSendReply ( MsgOpReply *pReply, INT32 result ) ;
+
+   public :
+      // functions of wait sync
+      virtual INT32 waitSync( const NET_HANDLE &handle, MsgOpReply *pReply,
+                              void *pReplyData, UINT32 replyDataLen ) ;
+
+   protected :
+      INT32 _waitSyncInternal ( const NET_HANDLE &handle, BOOLEAN firstTry,
+                                UINT64 syncLsn, INT16 w, MsgOpReply *pReply,
+                                void *pReplyData = NULL,
+                                UINT32 replyDataLen = 0 ) ;
+
+      INT32 _delaySync ( const NET_HANDLE &handle, BOOLEAN firstTry,
+                         UINT64 syncLsn, INT16 w,
+                         MsgOpReply *pReply, void *pReplyData,
+                         UINT32 replyDataLen ) ;
+
+      INT32 _buildDelaySyncEvent ( CHAR **ppBuffer, INT32 *pBufferSize,
+                                   UINT64 waitingLsn, INT16 w,
+                                   MsgOpReply *pReply,
+                                   void *pReplyData, UINT32 replyDataLen ) ;
+
+      INT32 _buildDelayReplyEvent ( CHAR **ppBuffer, INT32 *pBufferSize,
+                                    CAT_DELAY_REPLY_TYPE type,
+                                    MsgOpReply *pReply, void *pReplyData,
+                                    UINT32 replyDataLen,
+                                    const BSONObj &boInfo ) ;
+
+      INT32 _extractDelayReplyEvent ( const MsgOpReply *pDelayedReply,
+                                      CAT_DELAY_REPLY_TYPE &type,
+                                      MsgOpReply **ppReply, BSONObj &boInfo ) ;
 
    private :
       pmdEDUMgr         *_pEduMgr;
@@ -171,11 +227,13 @@ namespace engine
 
       ossEvent          _changeEvent ;
 
-      // for cata lock
+      // for cata delayed event
       VEC_EVENT         _vecEvent ;
       UINT32            _checkEventTimerID ;
       pmdEDUEvent       _lastDelayEvent ;
       BOOLEAN           _isDelayed ;
+      BOOLEAN           _delayWithoutSync ;
+      UINT64            _lastCheckDelayTick ;
 
    } ;
 

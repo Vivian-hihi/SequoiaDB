@@ -824,6 +824,10 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATENODE_ROLLBACK_INT ) ;
 
+      // do not need to wait
+      w = 1 ;
+      catSetSyncW( 1 ) ;
+
       rc = catRemoveNodeStep ( _targetName, _nodeID, cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK ( rc, PDWARNING,
                     "Failed to rollback create node [%s] on group [%s], rc: %d",
@@ -915,6 +919,7 @@ namespace engine
    {
       _executeAfterLock = FALSE ;
       _needRollback = TRUE ;
+      _nodeCount = 0 ;
       _nodeID = CAT_INVALID_NODEID ;
       _forced = FALSE ;
    }
@@ -953,6 +958,15 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field[%s], rc: %d",
                       PMD_OPTION_DBPATH, rc ) ;
+
+         rc = rtnGetBooleanElement( _boQuery, CMD_NAME_ENFORCED, _forced ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+            _forced = FALSE ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      CMD_NAME_ENFORCED, rc ) ;
       }
       catch ( std::exception &e )
       {
@@ -1061,6 +1075,8 @@ namespace engine
                 "Failed to lock node [%s] on group [%s]",
                 _nodeName.c_str(), _targetName.c_str() ) ;
 
+      _nodeCount = boNodeList.nFields() ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATCTXRMNODE_CHECK_INT, rc ) ;
       return rc ;
@@ -1080,11 +1096,32 @@ namespace engine
       BSONArray baNewNodeList ;
       BSONObj boGroup ;
 
+      // For below cases, we don't wait sync
+      // 1. forced remove-node command
+      // 2. during forced reelect
       replCB *pReplCB = pmdGetKRCB()->getClsCB()->getReplCB() ;
+      if ( _forced || pReplCB->isInStepUp() )
+      {
+         w = 1 ;
+         catSetSyncW( 1 ) ;
+      }
+      else if ( 0 == _targetName.compare( CATALOG_GROUPNAME ) )
+      {
+         INT16 tmpW = 1 ;
+         if ( _nodeCount > 0 )
+         {
+            // Reduce sync w at the end of command,
+            // since we are removing a Catalog node
+            tmpW = (INT16)( ( _nodeCount - 1 ) / 2 + 1 ) ;
+         }
+         if ( w > tmpW )
+         {
+            w = tmpW ;
+         }
+         catSetSyncW( tmpW ) ;
+      }
 
-      w = ( _forced || pReplCB->isInStepUp() ) ? 1 : w ;
-
-      rc = catRemoveNodeStep ( _targetName, _nodeID, cb, _pDmsCB, _pDpsCB, w ) ;
+      rc = catRemoveNodeStep( _targetName, _nodeID, cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to remove node [%s] from group [%s], rc: %d",
                     _targetName.c_str(), _nodeName.c_str(), rc ) ;

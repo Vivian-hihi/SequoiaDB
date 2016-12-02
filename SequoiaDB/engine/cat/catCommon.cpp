@@ -4034,5 +4034,17 @@ namespace engine
    error :
       goto done ;
    }
+
+   static OSS_THREAD_LOCAL INT16 _catSyncW ;
+
+   void catSetSyncW ( INT16 w )
+   {
+      _catSyncW = w ;
+   }
+
+   INT16 catGetSyncW ()
+   {
+      return _catSyncW ;
+   }
 }
 
