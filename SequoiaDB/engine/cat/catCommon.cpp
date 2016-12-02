@@ -3975,5 +3975,64 @@ namespace engine
    error :
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATTRANSBEGIN, "catTransBegin" )
+   INT32 catTransBegin ( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATTRANSBEGIN ) ;
+
+      pmdKRCB *pKrcb = pmdGetKRCB() ;
+      dpsTransCB *pTransCB = pKrcb->getTransCB() ;
+
+      // Ignored if transaction is not enabled
+      if ( pTransCB && pTransCB->isTransOn() )
+      {
+         rc = rtnTransBegin( cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to begin transaction, rc: %d", rc ) ;
+         PD_LOG( PDDEBUG, "Begin transaction" ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATTRANSBEGIN, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATTRANSEND, "catTransEnd" )
+   INT32 catTransEnd ( INT32 result, _pmdEDUCB *cb, SDB_DPSCB *pDpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATTRANSEND ) ;
+
+      if ( DPS_INVALID_TRANS_ID != cb->getTransID() )
+      {
+         if ( SDB_OK == result ||
+              SDB_DMS_EOC == result )
+         {
+            rc = rtnTransCommit( cb, pDpsCB ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to commit transaction, rc: %d", rc ) ;
+            PD_LOG( PDDEBUG, "Commit transaction" ) ;
+         }
+         else
+         {
+            rc = rtnTransRollback( cb, pDpsCB ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to rollback transaction, rc: %d", rc ) ;
+            PD_LOG( PDDEBUG, "Rollback transaction" ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_CATTRANSEND, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
 }
 

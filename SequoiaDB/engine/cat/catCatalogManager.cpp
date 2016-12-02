@@ -644,18 +644,13 @@ namespace engine
       if ( CLS_INVALID_TASKID != taskID &&
            SDB_TASK_HAS_CANCELED == rc )
       {
-         INT32 tmpRC = SDB_OK ;
-
          // rollback transaction before remove task
-         if ( DPS_INVALID_TRANS_ID != _pEduCB->getTransID() )
+         INT32 tmpRC = catTransEnd( rc, _pEduCB, _pDpsCB ) ;
+         if ( SDB_OK != tmpRC )
          {
-            tmpRC = rtnTransRollback( _pEduCB, _pDpsCB ) ;
-            if ( SDB_OK != tmpRC )
-            {
-               PD_LOG( PDWARNING,
-                       "Failed to process error result for opCode [%d], rc: %d",
-                       opCode, tmpRC ) ;
-            }
+            PD_LOG( PDWARNING,
+                    "Failed to process error result for opCode [%d], rc: %d",
+                    opCode, tmpRC ) ;
          }
 
          PD_LOG( PDDEBUG, "Removing task [%llu]", taskID ) ;

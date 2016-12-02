@@ -156,10 +156,6 @@ namespace engine
       virtual INT32 onEndCommand ( MsgHeader *pReqMsg, INT32 result ) ;
       virtual INT32 onSendReply ( MsgOpReply *pReply, INT32 result ) ;
 
-   protected :
-      INT32 _transactionBegin () ;
-      INT32 _transactionEnd ( INT32 result ) ;
-
    private :
       pmdEDUMgr         *_pEduMgr;
       sdbCatalogueCB    *_pCatCB;
@@ -167,7 +163,6 @@ namespace engine
       pmdEDUCB          *_pEDUCB;
       _SDB_RTNCB        *_pRtnCB;
       _dpsLogWrapper    *_pDpsCB;
-      dpsTransCB        *_pTransCB;
       _authCB           *_pAuthCB;
       CONTEXT_LIST      _contextLst;
       ossSpinXLatch     _contextLatch ;

@@ -75,7 +75,6 @@ namespace engine
       _pAuthCB             = NULL ;
       _pEDUCB              = NULL ;
       _pDpsCB              = NULL ;
-      _pTransCB            = NULL ;
       _checkEventTimerID   = NET_INVALID_TIMER_ID ;
       _isDelayed           = FALSE ;
 
@@ -422,7 +421,6 @@ namespace engine
       _pAuthCB             = pKrcb->getAuthCB() ;
       _pCatCB              = pKrcb->getCATLOGUECB() ;
       _pDpsCB              = pKrcb->getDPSCB() ;
-      _pTransCB            = pKrcb->getTransCB() ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_INIT ) ;
 
@@ -1500,62 +1498,17 @@ namespace engine
 
    INT32 catMainController::onBeginCommand ( MsgHeader *pReqMsg )
    {
-      return _transactionBegin () ;
+      return catTransBegin( _pEDUCB ) ;
    }
 
    INT32 catMainController::onEndCommand ( MsgHeader *pReqMsg, INT32 result )
    {
-      return _transactionEnd( result ) ;
+      return catTransEnd( result, _pEDUCB, _pDpsCB ) ;
    }
 
    INT32 catMainController::onSendReply ( MsgOpReply *pReply, INT32 result )
    {
-      return _transactionEnd( result ) ;
-   }
-
-   INT32 catMainController::_transactionBegin ()
-   {
-      INT32 rc = SDB_OK ;
-
-      // Do not begin transaction on non-primary nodes
-      if ( _pTransCB->isTransOn() )
-      {
-         rc = rtnTransBegin( _pEDUCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to begin transaction" ) ;
-         PD_LOG( PDDEBUG, "Begin transaction" ) ;
-      }
-
-   done :
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   INT32 catMainController::_transactionEnd ( INT32 result )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( DPS_INVALID_TRANS_ID != _pEDUCB->getTransID() )
-      {
-         if ( SDB_OK == result ||
-              SDB_DMS_EOC == result )
-         {
-            rc = rtnTransCommit( _pEDUCB, _pDpsCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to commit transaction" ) ;
-            PD_LOG( PDDEBUG, "Commit transaction" ) ;
-         }
-         else
-         {
-            rc = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to rollback transaction" ) ;
-            PD_LOG( PDDEBUG, "Rollback transaction" ) ;
-         }
-      }
-
-   done :
-      return rc ;
-   error :
-      goto done ;
+      return catTransEnd( result, _pEDUCB, _pDpsCB ) ;
    }
 
 }

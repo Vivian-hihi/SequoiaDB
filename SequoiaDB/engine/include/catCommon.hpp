@@ -378,6 +378,10 @@ namespace engine
                              _pmdEDUCB *cb,
                              SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                              INT16 w ) ;
+
+   /* Transaction */
+   INT32 catTransBegin ( _pmdEDUCB *cb ) ;
+   INT32 catTransEnd ( INT32 result, _pmdEDUCB *cb, SDB_DPSCB *pDpsCB ) ;
 }
 
 #endif //CAT_COMMON_HPP__
