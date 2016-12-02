@@ -147,7 +147,7 @@
          <var name="case_dir" value="${case_basedir}/${case_reltdir}"/>
 
          <switch value="@{casetype}">
-         
+
             <case value="sdv_php">               
                <dividecase basedir="${case_basedir}" reltdir="${case_reltdir}"
                            outputdir="${testcase_outdir}" hostlist="${testhost_list}">

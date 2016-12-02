@@ -1,7 +1,5 @@
 <!-- ============================================================================
-@description:  test of daily build
-@parameter:    DEPLOY_MODE: G1D3|G3D3|STANDALONE, from jenkins configure page
-               TESTCASE_TYPE                       from jenkins build page
+@description:  daily build, except largedata, sync, reliable, configure test
 @author:       Ting YU 2016-10-19
 ============================================================================= -->
 
@@ -33,7 +31,7 @@
       <antcall target="ready_lib"/>
       
       <antcall target="compile_testcase" />
-      
+
       <antcall target="filter_testcase" />
 
       <antcall target="divide_testcase" />
