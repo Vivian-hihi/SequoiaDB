@@ -228,7 +228,6 @@ OSS_INLINE JSObject *SDB_JSVAL_TO_OBJECT( jsval x )
 static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs )
 {
    PD_TRACE_ENTRY ( SDB_OBJ2BSON ) ;
-   char *      js          = NULL ;
    JSBool      ret         = JS_TRUE ;
    INT32 rc                = SDB_OK ;
 
@@ -241,7 +240,6 @@ static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs )
    }
 
 done :
-   SAFE_JS_FREE ( cx , js ) ;
    PD_TRACE_EXIT ( SDB_OBJ2BSON );
    return ret ;
 error :
@@ -596,6 +594,7 @@ static JSBool cursor_close ( JSContext *cx , uintN argc , jsval *vp )
    rc = sdbCloseCursor( *cursor ) ;
    REPORT_RC ( SDB_OK == rc, "SdbCursor.close()", rc ) ;
    SAFE_RELEASE_CURSOR ( cursor ) ;
+   SAFE_JS_FREE ( cx , cursor ) ;
    // set sdbCursorHandle* to be NULL in js cursor object
    JS_SetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ), NULL ) ;
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
@@ -6695,12 +6694,15 @@ static JSBool sdb_start_rg ( JSContext *cx , uintN argc , jsval *vp )
 
 done:
    if ( rgName )
+   {
       SAFE_JS_FREE ( cx, rgName ) ;
+   }
+
+   SAFE_RELEASE_RG ( rg ) ;
+   SAFE_JS_FREE ( cx, rg ) ;
    PD_TRACE_EXIT ( SDB_SDB_START_RG );
    return ret ;
 error:
-   SAFE_RELEASE_RG ( rg ) ;
-   SAFE_JS_FREE ( cx, rg ) ;
    TRY_REPORT ( cx, "Sdb.startRG(): false" ) ;
    goto done ;
 }
