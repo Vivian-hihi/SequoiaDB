@@ -21,7 +21,7 @@
    <target name="backup_log">
       
       <property file="${basedir}/src/conf/test.conf" />
-      <propertycopy name="testhost_list" from="${DEPLOY_MODE}_HOST" />
+      <propertycopy name="testhost_list" from="${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <hostinfo prefix="host" />
       
       <!-- 1.backup remote log-->
