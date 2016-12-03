@@ -40,8 +40,12 @@ function importData( csName, clName, imprtFile )
    println("\n---Begin to import data and check exec result.");
    
    //backup sdbimport.log and generate new sdbimport.log
-   var time = cmd.run( 'date "+%Y-%m-%d-%H:%M:%S"' );
-   cmd.run( 'mv ./sdbimport.log sdbimport.log_'+ time );
+   var rt = cmd.run( 'find ./ -name "sdbimport.log"' );
+   if( rt !== '' )  //file is exist
+   {
+      var time = cmd.run( 'date "+%Y-%m-%d-%H:%M:%S"' );
+      cmd.run( 'mv ./sdbimport.log sdbimport.log_'+ time );
+   }
    
    //---------------------scene1-------------------------
    println( '-----------scene1--Begin to import, headerline exist duplicate field name: a-----------\n' );
