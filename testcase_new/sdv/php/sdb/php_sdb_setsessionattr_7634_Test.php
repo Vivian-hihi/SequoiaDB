@@ -20,12 +20,13 @@ class setSessionAttrTest extends PHPUnit_Framework_TestCase
        
        $suffix = uniqid() ;
        $name = globalParameter::getChangedPrefix() ;
-       $cs = $this->db->selectCS( $name.$suffix ) ;
+       $this->name = $name.$suffix ;
+       $cs = $this->db->selectCS( $this->name ) ;
        if ( empty( $cs ) )
        {
-          $err = $this->db->createCS( $name.$suffix ) ;
+          $err = $this->db->createCS( $this->name ) ;
           $this->assertEquals( 0, $err['errno'] ) ;
-          $cs = $this->db->selectCS( $name.$suffix ) ;
+          $cs = $this->db->selectCS( $this->name ) ;
           if ( empty( $cs ) )
           {
              $err = $this->db->getError() ;
@@ -33,12 +34,12 @@ class setSessionAttrTest extends PHPUnit_Framework_TestCase
           }
        }
         
-       $this->cl = $cs->selectCL( $name.$suffix ) ;
+       $this->cl = $cs->selectCL( $this->name ) ;
        if ( empty( $this->cl ) )
        {
-          $err = $cs-> createCL( $name.$suffix ) ;
+          $err = $cs-> createCL( $this->name ) ;
           $this->assertEquals( 0, $err['errno'] ) ;
-          $cl = $cs->selectCL( $name.$suffix ) ;
+          $cl = $cs->selectCL( $this->name ) ;
           if (empty($cl))
           {
              $err = $this->db->getError() ;
@@ -65,9 +66,10 @@ class setSessionAttrTest extends PHPUnit_Framework_TestCase
         while( $record = $cursor -> next() ) 
         {
             var_dump( $record ) ;
+            $find = true;
         }
         
-        $err = $db -> getError() ;
+        $err = $this->db -> getError() ;
         if( $err['errno'] != -29 || !$find ) 
         {
            $this->assertEquals( 0, $err['errno'] ) ;
@@ -77,7 +79,7 @@ class setSessionAttrTest extends PHPUnit_Framework_TestCase
     
     protected function tearDown()
     {
-        $err = $this->db->dropCS( 'foo' );
+        $err = $this->db->dropCS( $this->name );
         $this->assertEquals( 0, $err['errno'] ) ;
         $err = $this->db->close();
         $this->assertEquals( 0, $err['errno'] ) ;
