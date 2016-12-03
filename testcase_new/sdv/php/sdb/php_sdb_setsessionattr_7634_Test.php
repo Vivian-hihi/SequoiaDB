@@ -60,17 +60,17 @@ class setSessionAttrTest extends PHPUnit_Framework_TestCase
         $err = $this->cl->insert( $doc );
         $this->assertEquals( 0, $err['errno'] ) ;
         
+        $find = false;
         $cursor = $this->cl->find( $doc ) ;
-        if( empty( $cursor ) ) 
-        {
-            $err = $db -> getError() ;
-            $this->assertEquals( 0, $err['errno'] ) ;
-            $this->assertFalse( empty( $cursor ) );
-        }
-        
         while( $record = $cursor -> next() ) 
         {
             var_dump( $record ) ;
+        }
+        
+        $err = $db -> getError() ;
+        if( $err['errno'] != -29 || !$find ) 
+        {
+           $this->assertEquals( 0, $err['errno'] ) ;
         }
        
     }
@@ -78,6 +78,7 @@ class setSessionAttrTest extends PHPUnit_Framework_TestCase
     protected function tearDown()
     {
         $err = $this->db->dropCS( 'foo' );
+        $this->assertEquals( 0, $err['errno'] ) ;
         $err = $this->db->close();
         $this->assertEquals( 0, $err['errno'] ) ;
     }
