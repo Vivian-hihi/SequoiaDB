@@ -85,7 +85,7 @@
       {
          $ret = false;
          $cursor = self::$cl->listLob() ;
-         $this->assertEquals( false, empty( $cursor ) ) ;
+         $this->assertEquals( 0, self::$db->getError()['errno'] ) ;
          while( $record = $cursor -> next() )
          {
            // date_default_timezone_set("UTC");
@@ -95,12 +95,13 @@
                $ret = true;
             }
          }
-
+         
+         $this->assertEquals( -29, self::$db->getError()['errno'] ) ;
          if (!$ret) return $ret;
          
          $ret = false;
          $cr = self::$cl->listLobPieces();
-         $this->assertEquals( false, empty( $cr ) ) ;
+         $this->assertEquals( 0, self::$db->getError()['errno'] ) ;
          while( $record = $cr -> next() )
          {
             if ( $record['Oid'] == $oid ){
@@ -108,6 +109,7 @@
             }
          }
          
+         $this->assertEquals( -29, self::$db->getError()['errno'] ) ;
          return $ret;
       }
       
