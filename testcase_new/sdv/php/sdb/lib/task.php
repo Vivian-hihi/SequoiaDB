@@ -23,8 +23,15 @@ class Task
          echo "Failed to call listTask, error code: ".$err['errno'] ;
          return $num ;
       }
-      while( $cursor->next() ){
-         $num++ ;
+      if ( empty( $cursor ) ) 
+      {
+         $num = 0 ;
+      }
+      else
+      {
+         while( $cursor->next() ){
+            $num++ ;
+         }
       }
       
       return $num ;
