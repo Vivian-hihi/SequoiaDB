@@ -450,10 +450,16 @@
       </copy>
       <copydir src="${CODE_DIR}/doc/manual" dest="${RELEASE_DIR}/sequoiadb/doc/manual" includes="**/*" />
       
-      <echo message="exec scons --website" />
-      <exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
-         <arg line="--website" />
-      </exec>
+      <if>
+         <equals arg1="${CPU.version}" arg2="x86" />
+         <then>
+            <echo message="exec scons --website" />
+            <exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
+               <arg line="--website" />
+            </exec>
+         </then>
+      </if>
+      
    </target>
    
 </project>
