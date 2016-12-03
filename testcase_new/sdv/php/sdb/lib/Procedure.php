@@ -54,14 +54,15 @@ class Procedure
    {
       $exist = false;
       $cursor = $this->db->listProcedure($this->buildParameter($name));
-      if (empty($cursor))
-      {
-         return $exist;
-      }
-
+      
       while($record = $cursor->next())
       {
          $exist = true;
+      }
+      $err = $this->db->getError() ;
+      if ( $err['errno'] != -29 ){
+         $exist = false ;
+         var_dump($err) ;
       }
 
       return $exist;
