@@ -23,16 +23,16 @@ class Task
          echo "Failed to call listTask, error code: ".$err['errno'] ;
          return $num ;
       }
-      if ( empty( $cursor ) ) 
-      {
-         $num = 0 ;
-      }
-      else
-      {
-         while( $cursor->next() ){
+      
+      while( $cursor->next() ){
             $num++ ;
-         }
       }
+      
+      $err = $this->db -> getError() ;
+      if ( $num == -1 && $err['errno'] == -29 )
+      {
+         $num = 0;
+      } 
       
       return $num ;
    }
