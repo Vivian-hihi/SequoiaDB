@@ -9,6 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
@@ -41,15 +42,19 @@ public class SubCL10195 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//create cs
 			sdb.createCollectionSpace(mCSName);
 			sdb.createCollectionSpace(sCSName);
 			//create subCL
-			createMainCL(sdb);
-			createSubCL(sdb);
-			attachCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
+			this.attachCL(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -59,7 +64,6 @@ public class SubCL10195 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail("ErrorMsg:\n" +e.getMessage());
@@ -123,7 +127,7 @@ public class SubCL10195 extends SdbTestBase {
 
 		//-----attachCL-----
 		try{
-			attachCL(db);
+			this.attachCL(db);
 			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23){  

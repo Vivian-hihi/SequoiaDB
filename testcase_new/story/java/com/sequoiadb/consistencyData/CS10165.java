@@ -8,6 +8,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.AfterClass;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.consistencyData.CommLib;
@@ -36,6 +37,10 @@ public class CS10165 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "

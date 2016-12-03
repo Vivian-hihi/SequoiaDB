@@ -9,6 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
@@ -40,14 +41,18 @@ public class SubCL10199 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//create cs
 			sdb.createCollectionSpace(mCSName);
 			sdb.createCollectionSpace(sCSName);
 			//create subCL
-			SubCL10199.this.createMainCL(sdb);
-			SubCL10199.this.createSubCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -57,7 +62,6 @@ public class SubCL10199 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail("ErrorMsg:\n" +e.getMessage());
@@ -79,9 +83,10 @@ public class SubCL10199 extends SdbTestBase {
 		
 		//-----attachCL-----
 		try{
-			SubCL10199.this.attachCL(db);
-			SubCL10199.this.checkResult(db);
+			this.attachCL(db);
+			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
+			db.disconnect();
 			Assert.fail(e.getMessage());
 		}
 		
@@ -91,9 +96,9 @@ public class SubCL10199 extends SdbTestBase {
 			if(csDB.isCollectionExist(mCLName)){
 				csDB.getCollection(mCLName).detachCollection(sCSName + "." + sCLName);
 			}
-			
-			SubCL10199.this.checkResult(db);
+			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
+			db.disconnect();
 			Assert.fail(e.getMessage());
 		}
 		
@@ -128,7 +133,6 @@ public class SubCL10199 extends SdbTestBase {
 	}
 	
 	public void attachCL(Sequoiadb sdb){
-		//-----attach cl-----
 		try
 		{
 			BSONObject options = new BasicBSONObject();
@@ -148,16 +152,5 @@ public class SubCL10199 extends SdbTestBase {
 			}
 		}
 	}
-		
-		public void checkResult(Sequoiadb sdb){
-			try{
-				CommLib.checkCLOfCatalog(sdb, csName, clName);
-				CommLib.checkCLOfDataRG(sdb, csName, clName);
-				boolean rc = CommLib.compareDataAndCata(sdb, csName, clName);
-				Assert.assertTrue(rc);
-			}catch(BaseException e){
-				sdb.disconnect();
-				Assert.fail(e.getMessage());
-			}
-		}
+	
 }

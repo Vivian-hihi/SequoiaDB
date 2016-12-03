@@ -80,9 +80,9 @@ public class CS10168 extends SdbTestBase {
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}
-		CS10168.this.createMainCL(db);
-		CS10168.this.createSubCL(db);
-		CS10168.this.attachCL(db);
+		this.createMainCL(db);
+		this.createSubCL(db);
+		this.attachCL(db);
 		
 		//-----drop subCS-----
 		try{

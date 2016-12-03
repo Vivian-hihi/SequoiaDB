@@ -40,9 +40,9 @@ public class Index10216 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			//judge the mode and group number
+			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
-				throw new SkipException("The mode is standlone, skip the testCase.");
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
 			}
 			
 			//clear env
@@ -50,9 +50,9 @@ public class Index10216 extends SdbTestBase {
 			//create cs
 			sdb.createCollectionSpace(csName);
 			//create subCL
-			Index10216.this.createMainCL(sdb);
-			Index10216.this.createSubCL(sdb);
-			Index10216.this.attachCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
+			this.attachCL(sdb);
 			//create index
 			BSONObject opt = new BasicBSONObject();
 			opt.put("b", 1);

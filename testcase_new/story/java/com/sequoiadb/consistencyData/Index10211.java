@@ -9,9 +9,9 @@ import org.testng.annotations.AfterClass;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.consistencyData.CommLib;
 import com.sequoiadb.exception.BaseException;
@@ -39,6 +39,10 @@ public class Index10211 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//create cs/cl
@@ -81,7 +85,9 @@ public class Index10211 extends SdbTestBase {
 			opt.put("a", 1);
 			clDB.createIndex(idxName, opt, false, false);
 			//check results
-			if(clDB != null)checkResult(db);
+			if(clDB != null){
+				CommLib.checkIndex(sdb, csName, clName);
+			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -247){  //-247:Redefine index
 				Assert.fail(e.getMessage());
@@ -92,7 +98,7 @@ public class Index10211 extends SdbTestBase {
 		try{
 			clDB.dropIndex(idxName);
 			//check results
-			checkResult(db);
+			CommLib.checkIndex(sdb, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -47){  //-47:Index name does not exist
 				Assert.fail(e.getMessage());
@@ -103,23 +109,4 @@ public class Index10211 extends SdbTestBase {
 		
 	}
 	
-	public void checkResult(Sequoiadb sdb){
-		try{
-			if(CommLib.isStandAlone(sdb)){
-				DBCollection clDB = sdb.getCollectionSpace(csName).getCollection(clName);
-				DBCursor idxInfo = clDB.getIndex("$id");
-				if(idxInfo.hasNext()){
-					clDB.dropIdIndex();
-				}else{
-					BSONObject opt = new BasicBSONObject();
-					opt.put("SortBufferSize", 128);
-					clDB.createIdIndex(opt);
-				}
-			}else{
-				CommLib.checkIndex(sdb, csName, clName);
-			}
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
-	}
 }

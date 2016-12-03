@@ -41,9 +41,9 @@ public class Index10213 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			//judge the mode and group number
+			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
-				throw new SkipException("The mode is standlone, skip the testCase.");
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
 			}
 			
 			//clear env
@@ -51,9 +51,9 @@ public class Index10213 extends SdbTestBase {
 			//create cs
 			sdb.createCollectionSpace(csName);
 			//create subCL
-			Index10213.this.createMainCL(sdb);
-			Index10213.this.createSubCL(sdb);
-			Index10213.this.attachCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
+			this.attachCL(sdb);
 			
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "

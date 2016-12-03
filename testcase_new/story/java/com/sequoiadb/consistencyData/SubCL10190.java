@@ -9,6 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.consistencyData.CommLib;
@@ -39,10 +40,14 @@ public class SubCL10190 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//create cs/cl
-			SubCL10190.this.createMainCL(sdb);
+			this.createMainCL(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -69,7 +74,7 @@ public class SubCL10190 extends SdbTestBase {
 		//-----create cs/mainCL
 		try{
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			SubCL10190.this.createSubCL(db);
+			this.createSubCL(db);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}

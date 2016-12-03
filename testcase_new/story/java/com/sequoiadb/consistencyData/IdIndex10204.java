@@ -9,9 +9,9 @@ import org.testng.annotations.AfterClass;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.consistencyData.CommLib;
 import com.sequoiadb.exception.BaseException;
@@ -37,6 +37,10 @@ public class IdIndex10204 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//create cs/cl
@@ -82,7 +86,7 @@ public class IdIndex10204 extends SdbTestBase {
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
 			//check results
-			IdIndex10204.this.checkResult(db);
+			CommLib.checkIndex(sdb, csName, clName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -92,33 +96,12 @@ public class IdIndex10204 extends SdbTestBase {
 		try{
 			clDB.dropIdIndex();
 			//check results
-			IdIndex10204 IdIndex10204 = new IdIndex10204();
-			IdIndex10204.checkResult(db);
+			CommLib.checkIndex(sdb, csName, clName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
 			db.disconnect();
 		}
 		
-	}
-	
-	public void checkResult(Sequoiadb sdb){
-		try{
-			if(CommLib.isStandAlone(sdb)){
-				DBCollection clDB = sdb.getCollectionSpace(csName).getCollection(clName);
-				DBCursor idxInfo = clDB.getIndex("$id");
-				if(idxInfo.hasNext()){
-					clDB.dropIdIndex();
-				}else{
-					BSONObject opt = new BasicBSONObject();
-					opt.put("SortBufferSize", 128);
-					clDB.createIdIndex(opt);
-				}
-			}else{
-				CommLib.checkIndex(sdb, csName, clName);
-			}
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
 	}
 }

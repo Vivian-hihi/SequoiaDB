@@ -24,8 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 */
 
 public class IdIndex10205 extends SdbTestBase {
-	private CommLib CommLib = new CommLib();
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String csName = "cs10205";
 	private String clName = "cs10205";
@@ -49,9 +49,9 @@ public class IdIndex10205 extends SdbTestBase {
 			//create cs
 			sdb.createCollectionSpace(csName);
 			//create subCL
-			IdIndex10205.this.createMainCL(sdb);
-			IdIndex10205.this.createSubCL(sdb);
-			IdIndex10205.this.attachCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
+			this.attachCL(sdb);
 			
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "

@@ -22,8 +22,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 */
 
 public class Node10234 extends SdbTestBase {
-	private CommLib CommLib = new CommLib();
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String rgName = "group10234";
 	
@@ -42,10 +42,10 @@ public class Node10234 extends SdbTestBase {
 			//clear group
 			CommLib.clearGroup(sdb, rgName);
 			//ready group/node
-			Node10234.this.createGroupAndNode(sdb, 
-											  SdbTestBase.reservedPortBegin, 
-											  SdbTestBase.reservedPortEnd, 
-											  SdbTestBase.reservedDir);
+			this.createGroupAndNode(sdb, 
+								    SdbTestBase.reservedPortBegin, 
+								    SdbTestBase.reservedPortEnd, 
+								    SdbTestBase.reservedDir);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -86,9 +86,8 @@ public class Node10234 extends SdbTestBase {
 			
 			rgDB.detachNode(hostName, svcName, null);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -204 && e.getErrorCode() != -155){  
-				//-204:Unable to remove the last node or primary in a group
-				//-155:Node does not exist (node has been to detach)
+			if(e.getErrorCode() != -204 //-204:Unable to remove the last node or primary in a group
+					&& e.getErrorCode() != -155){  //-155:Node does not exist (node has been to detach)
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -98,8 +97,7 @@ public class Node10234 extends SdbTestBase {
 		{
 			rgDB.attachNode(hostName, svcName, null);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -157){  
-				//-157:Invalid node configuration  (node has been to attach)
+			if(e.getErrorCode() != -157){  //-157:Invalid node configuration  (node has been to attach)
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -112,13 +110,9 @@ public class Node10234 extends SdbTestBase {
 		try{
 			sdb.createReplicaGroup(rgName);
 			//create 7 node
-			CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
-			CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
-			CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
-			CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
-			CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
-			CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
-			CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
+			for(int i = 0; i < 7; i++){
+				CommLib.createNode(sdb, rgName, startPort, endPort, nodePath);
+			}
 			//start
 			sdb.getReplicaGroup(rgName).start();
 		}catch(BaseException e){

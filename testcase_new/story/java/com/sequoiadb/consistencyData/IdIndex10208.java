@@ -24,8 +24,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 */
 
 public class IdIndex10208 extends SdbTestBase {
-	private CommLib CommLib = new CommLib();
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String csName = "cs10208";
 	private String clName = "cs10208";
@@ -49,9 +49,9 @@ public class IdIndex10208 extends SdbTestBase {
 			//create cs
 			sdb.createCollectionSpace(csName);
 			//create subCL
-			IdIndex10208.this.createMainCL(sdb);
-			IdIndex10208.this.createSubCL(sdb);
-			IdIndex10208.this.attachCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
+			this.attachCL(sdb);
 			//create index
 			BSONObject opt = new BasicBSONObject();
 			opt.put("SortBufferSize", 128);

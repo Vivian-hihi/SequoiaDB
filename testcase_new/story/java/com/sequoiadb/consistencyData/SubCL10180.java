@@ -42,14 +42,14 @@ public class SubCL10180 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			//judge the mode and group number
+			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
 				throw new SkipException("The mode is standlone, " + "skip the testCase.");
 			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//ready env
-			SubCL10180.this.readyCL();
+			this.readyCL();
 			
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "

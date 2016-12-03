@@ -9,6 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
@@ -40,15 +41,19 @@ public class SubCL10196 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//create cs
 			sdb.createCollectionSpace(mCSName);
 			sdb.createCollectionSpace(sCSName);
 			//create subCL
-			SubCL10196.this.createMainCL(sdb);
-			SubCL10196.this.createSubCL(sdb);
-			SubCL10196.this.attachCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
+			this.attachCL(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -58,7 +63,6 @@ public class SubCL10196 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail("ErrorMsg:\n" +e.getMessage());
@@ -85,7 +89,7 @@ public class SubCL10196 extends SdbTestBase {
 				csDB.getCollection(mCLName).detachCollection(sCSName + "." + sCLName);
 			}
 			
-			SubCL10196.this.checkResult(db);
+			this.checkResult(db);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23 && e.getErrorCode() != -34){  //-23:Collection does not exist
 				db.disconnect();
@@ -97,7 +101,7 @@ public class SubCL10196 extends SdbTestBase {
 		try{
 			db.dropCollectionSpace(mCSName);
 
-			SubCL10196.this.checkResult(db);
+			this.checkResult(db);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){  //-34:Collection space does not exist
 				db.disconnect();
@@ -117,14 +121,15 @@ public class SubCL10196 extends SdbTestBase {
 		
 		//-----create subCL-----
 		try{
-			SubCL10196.this.createSubCL(db);
+			this.createSubCL(db);
 		}catch(BaseException e){
+			db.disconnect();
 			Assert.fail(e.getMessage());
 		}
 
 		//-----attachCL-----
 		try{
-			SubCL10196.this.attachCL(db);
+			this.attachCL(db);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23){  //-23:Collection does not exist
 				db.disconnect();

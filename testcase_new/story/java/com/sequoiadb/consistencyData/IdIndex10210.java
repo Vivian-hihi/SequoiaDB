@@ -9,9 +9,9 @@ import org.testng.annotations.AfterClass;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.SkipException;
 
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.consistencyData.CommLib;
 import com.sequoiadb.exception.BaseException;
@@ -30,7 +30,6 @@ public class IdIndex10210 extends SdbTestBase {
 	private String csName = "cs10210";
 	private String clName = "cl10210";
 	
-	
 	@BeforeClass
 	public void setUp(){
 		//start time
@@ -38,6 +37,10 @@ public class IdIndex10210 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			//judge the mode
+			if(CommLib.isStandAlone(sdb)){
+				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			
@@ -89,7 +92,7 @@ public class IdIndex10210 extends SdbTestBase {
 			if(clDB != null)clDB.dropIdIndex();
 			//check results
 			if( db.isCollectionSpaceExist(csName) ){
-				this.checkResult(db);
+				CommLib.checkIndex(sdb, csName, clName);
 			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -248  //-248: Dropping the collection space is in progress
@@ -140,7 +143,7 @@ public class IdIndex10210 extends SdbTestBase {
 			clDB.createIdIndex(opt);
 			//check results
 			if(db.isCollectionSpaceExist(csName)){
-				checkResult(db);
+				CommLib.checkIndex(sdb, csName, clName);
 			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -248 //-248:Dropping the collection space is in progress
@@ -153,23 +156,4 @@ public class IdIndex10210 extends SdbTestBase {
 		
 	}
 	
-	public void checkResult(Sequoiadb sdb){
-		try{
-			if(CommLib.isStandAlone(sdb)){
-				DBCollection clDB = sdb.getCollectionSpace(csName).getCollection(clName);
-				DBCursor idxInfo = clDB.getIndex("$id");
-				if(idxInfo.hasNext()){
-					clDB.dropIdIndex();
-				}else{
-					BSONObject opt = new BasicBSONObject();
-					opt.put("SortBufferSize", 128);
-					clDB.createIdIndex(opt);
-				}
-			}else{
-				CommLib.checkIndex(sdb, csName, clName);
-			}
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
-	}
 }

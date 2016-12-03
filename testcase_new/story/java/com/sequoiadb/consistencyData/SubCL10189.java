@@ -41,15 +41,14 @@ public class SubCL10189 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			//judge the mode and group number
+			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
 				throw new SkipException("The mode is standlone, " + "skip the testCase.");
 			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			//create cs/cl
-			SubCL10189 SubCL10189 = new SubCL10189();
-			SubCL10189.createSubCL(sdb);
+			this.createSubCL(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -80,7 +79,7 @@ public class SubCL10189 extends SdbTestBase {
 		}
 		
 		try{
-			SubCL10189.this.createMainCL(db);
+			this.createMainCL(db);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){
 				Assert.fail(e.getMessage());

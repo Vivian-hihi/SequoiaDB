@@ -42,7 +42,7 @@ public class SubCL10186 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			//judge the mode and group number
+			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
 				throw new SkipException("The mode is standlone, " + "skip the testCase.");
 			}
@@ -51,7 +51,7 @@ public class SubCL10186 extends SdbTestBase {
 			CommLib.clearCL(sdb, csName, clName);
 			CommLib.clearCS(sdb, csName);
 			//ready env
-			SubCL10186.this.readyCL();
+			this.readyCL();
 			
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "

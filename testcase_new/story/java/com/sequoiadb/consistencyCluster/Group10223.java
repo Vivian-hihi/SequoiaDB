@@ -51,8 +51,8 @@ public class Group10223 extends SdbTestBase {
 			CommLib.clearGroup(sdb, rgName);
 			//ready env
 			dataGroups = CommLib.getDataGroupNames(sdb);
-			Group10223.this.createDomain(sdb);
-			Group10223.this.createGroupAndNode();
+			this.createDomain(sdb);
+			this.createGroupAndNode();
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
