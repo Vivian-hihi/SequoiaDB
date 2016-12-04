@@ -65,10 +65,15 @@
          </tstamp>       
          <echo message="begin at ${begin_time}, end at ${end_time}" />
          
-         <copy todir="@{reportdir}">
-            <fileset dir="${tmp_report_dir}/junitreports"/>
-         </copy> 
-         <modifytestngreport reportdir="@{reportdir}" layer="${TESTCASE_TYPE}"/>
+         <if>
+            <available file="${tmp_report_dir}/junitreports" type="dir"/>
+            <then>
+               <copy todir="@{reportdir}">
+                  <fileset dir="${tmp_report_dir}/junitreports"/>
+               </copy> 
+               <modifytestngreport reportdir="@{reportdir}" layer="${TESTCASE_TYPE}"/>
+            </then>
+         </if>
       </sequential>
    </macrodef>
    
