@@ -3039,7 +3039,7 @@ namespace engine
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
-         PD_LOG( PDERROR, "Caller must hold mb exlusive lock[%s]",
+         PD_LOG( PDERROR, "Caller must hold mb exclusive lock[%s]",
                  context->toString().c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
