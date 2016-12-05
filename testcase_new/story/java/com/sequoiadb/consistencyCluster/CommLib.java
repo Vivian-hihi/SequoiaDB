@@ -1,4 +1,4 @@
-package com.sequoiadb.consistencyData;
+package com.sequoiadb.consistencyCluster;
 
 import java.util.ArrayList;
 import java.util.List;

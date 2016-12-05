@@ -87,7 +87,7 @@ public class IdIndex10207 extends SdbTestBase {
 			if(db.isCollectionSpaceExist(csName) && db.getCollectionSpace(csName).isCollectionExist(clName)){
 				clDB.createIdIndex(opt);
 				//check results
-				CommLib.checkIndex(sdb, csName, clName);
+				CommLib.checkIndex(db, csName, clName);
 			}
 		}catch(BaseException e){
 			db.disconnect();

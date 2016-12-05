@@ -86,7 +86,7 @@ public class Index10211 extends SdbTestBase {
 			clDB.createIndex(idxName, opt, false, false);
 			//check results
 			if(clDB != null){
-				CommLib.checkIndex(sdb, csName, clName);
+				CommLib.checkIndex(db, csName, clName);
 			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -247){  //-247:Redefine index

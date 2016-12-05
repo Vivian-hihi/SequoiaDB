@@ -90,7 +90,7 @@ public class IdIndex10209 extends SdbTestBase {
 		try{
 			clDB.dropIdIndex();
 			//check results
-			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -116,7 +116,7 @@ public class IdIndex10209 extends SdbTestBase {
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
 			//check results
-			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}

@@ -92,7 +92,7 @@ public class IdIndex10210 extends SdbTestBase {
 			if(clDB != null)clDB.dropIdIndex();
 			//check results
 			if( db.isCollectionSpaceExist(csName) ){
-				CommLib.checkIndex(sdb, csName, clName);
+				CommLib.checkIndex(db, csName, clName);
 			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -248  //-248: Dropping the collection space is in progress
@@ -143,7 +143,7 @@ public class IdIndex10210 extends SdbTestBase {
 			clDB.createIdIndex(opt);
 			//check results
 			if(db.isCollectionSpaceExist(csName)){
-				CommLib.checkIndex(sdb, csName, clName);
+				CommLib.checkIndex(db, csName, clName);
 			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -248 //-248:Dropping the collection space is in progress

@@ -89,7 +89,7 @@ public class CL10179 extends SdbTestBase{
 			}
 			csDB = db.getCollectionSpace(csName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -33){
+			if(e.getErrorCode() != -33 && e.getErrorCode() != -34){
 				Assert.fail(e.getMessage());
 			}
 		}

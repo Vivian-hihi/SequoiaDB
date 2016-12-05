@@ -92,12 +92,13 @@ public class Index10212 extends SdbTestBase {
 				if(clDB != null){
 					clDB.createIndex(name + i.nextInt(100), opt, false, false);
 					//check results
-					CommLib.checkIndex(sdb, csName, clName);
+					CommLib.checkIndex(db, csName, clName);
 				}
 			}
 		}catch(BaseException e){
 			if( e.getErrorCode() != -247  //-247:Redefine index
 					&& e.getErrorCode() != -46){  //-46:Duplicate index name
+				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -107,6 +108,7 @@ public class Index10212 extends SdbTestBase {
 			db.getCollectionSpace(csName).dropCollection(clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23){ 
+				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
 		}
