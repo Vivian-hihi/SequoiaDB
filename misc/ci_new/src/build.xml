@@ -43,6 +43,7 @@
                      <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
                   </ant>
                </then>
+            </if>
          </then>
       </if>
   
