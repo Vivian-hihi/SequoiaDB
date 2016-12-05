@@ -1,0 +1,44 @@
+<project default="get_build_status" basedir="../../">
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
+   
+   <target name="get_build_status">
+      <property file="${basedir}/src/conf/test.conf" />
+      
+      <countstr str="&lt;failure&gt;"  resultproperty="fail_begin_num"/>
+      <countstr str="&lt;/failure&gt;" resultproperty="fail_end_num"/>
+        
+      <condition property="build_status" value="successful" else="unstable">
+         <and>
+            <equals arg1="${fail_begin_num}" arg2="0"/>
+            <equals arg1="${fail_end_num}" arg2="0"/>
+         </and>
+      </condition>
+      <echo>build status is ${build_status}</echo>
+
+   </target>
+   
+   <macrodef name="countstr">
+      <attribute name="resultproperty"/>
+      <attribute name="str"/>
+      <sequential>
+         <var name="@{resultproperty}" unset="true"/>
+         <resourcecount property="@{resultproperty}">
+         <tokens>
+            <concat>
+               <filterchain>
+                  <tokenfilter>
+                     <containsstring contains="@{str}"/>
+                  </tokenfilter>
+               </filterchain>
+               <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
+            </concat>
+         </tokens>
+         </resourcecount>
+      </sequential>
+   </macrodef>
+ 
+</project>

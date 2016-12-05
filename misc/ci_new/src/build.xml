@@ -11,6 +11,7 @@
          <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
       </classpath>
    </taskdef>
+   <include file="${basedir}/src/solve_result/get_build_status.xml" as="status_file"/>
    
    <target name="test_build">
       <var name="TEST_TYPE" value="NORMALTEST"/>
@@ -29,13 +30,19 @@
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
       </ant>
       
+      <antcallback target="status_file.get_build_status" return="build_status"/>
+      
       <if>
-         <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
+         <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
-            <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
-               <property name="TEST_TYPE" value="${TEST_TYPE}"/>
-               <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
-            </ant>
+            <if>
+               <equals arg1="${build_status}" arg2="unstable" />
+               <then>
+                  <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                     <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                  </ant>
+               </then>
          </then>
       </if>
   
@@ -59,7 +66,7 @@
       </ant>
       
       <if>
-         <equals arg1="${NEED_BACKUP_LOG}" arg2="true" />
+         <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
             <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
                <property name="TEST_TYPE" value="${TEST_TYPE}"/>
@@ -84,9 +91,9 @@
          </else>
       </if>
       <if>
-         <isset property="NEED_BACKUP_LOG"/>
+         <isset property="BACKUP_LOG_WHEN_FAIL"/>
          <else>           
-            <var name="NEED_BACKUP_LOG" value="true" />
+            <var name="BACKUP_LOG_WHEN_FAIL" value="true" />
          </else>
       </if>
       <if>
