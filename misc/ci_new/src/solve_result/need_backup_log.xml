@@ -1,0 +1,60 @@
+<project name="test" default="testcall" basedir="../../">
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
+   <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF" >
+      <classpath>
+         <pathelement location="${basedir}/lib/STAFAnt.jar" />
+      </classpath>
+   </taskdef>
+   <target name="count_fail_tag">
+      <property file="${basedir}/src/conf/test.conf" />
+      <sequential>
+         <resourcecount property="fail_start_tag">
+         <tokens>
+            <concat>
+               <filterchain>
+                  <tokenfilter>
+                     <containsstring contains="&lt;failure&gt;"/>
+                  </tokenfilter>
+               </filterchain>
+               <fileset dir="${CI_WORK_DIR}/report/" includes="**/*.xml"/>
+            </concat>
+         </tokens>
+         </resourcecount>
+      </sequential>
+      <sequential>
+         <resourcecount property="fail_end_tag">
+         <tokens>
+            <concat>
+               <filterchain>
+                  <tokenfilter>
+                     <containsstring contains="&lt;/failure&gt;"/>
+                  </tokenfilter>
+               </filterchain>
+               <fileset dir="${CI_WORK_DIR}/report/" includes="**/*.xml"/>
+            </concat>
+         </tokens>
+         </resourcecount>
+      </sequential>
+      <condition property="re">
+         <and>
+            <equals arg1="${fail_start_tag}" arg2="${fail_end_tag}"/>
+            <not>
+               <equals arg1="${fail_start_tag}" arg2="0"/>
+            </not>
+            <not>
+               <equals arg1="${fail_end_tag}" arg2="0"/>
+            </not>
+         </and>
+      </condition>
+      <if>
+         <equals arg1="${re}" arg2="true"/>
+         <the>
+            <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" />
+         </then>
+      </if>
+   </target>
+</project>
