@@ -1,4 +1,4 @@
-/* *****************************************************************************
+Ôªø/* *****************************************************************************
 @Description: subCL common functions
 @modify list:
    2014-07-30 pusheng Ding  Init
@@ -121,14 +121,14 @@ function compareJSONObj(objA, objB, options) {
 		if (bValue === undefined)  bValue = aValue - 1;
 		if (aValue === undefined && bValue === undefined) { aValue = 0; bValue = 0; }
 		if (sortFlag === 1) {
-			//’˝–Ú
+			//Ê≠£Â∫è
 			if (aValue < bValue) {
 				return 1;
 			} else if(aValue > bValue) {
 				return -1;
 			}
 		} else {
-			//ƒÊ–Ú
+			//ÈÄÜÂ∫è
 			if (aValue > bValue) {
 				return 1;
 			} else if(aValue < bValue) {
@@ -224,7 +224,7 @@ function ClSplitOneTimes( csName, clName, startCondition, endCondition )
 
 /************************************
 *@Description: get Group name and Service name
-*@author£∫wuyan 2015/10/20
+*@authorÔºöwuyan 2015/10/20
 **************************************/
 function getGroupName(db, mustBePrimary)
 {
