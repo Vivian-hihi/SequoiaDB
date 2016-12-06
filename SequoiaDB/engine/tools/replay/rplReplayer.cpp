@@ -39,6 +39,9 @@
 #include "ixm.hpp"
 #include <sstream>
 #include <iostream>
+#include <boost/filesystem/path.hpp>
+
+namespace fs = boost::filesystem ;
 
 using namespace engine;
 using namespace bson;
@@ -380,14 +383,20 @@ namespace replay
              file.c_str());
 
       // only delete full file
-      if (_options->remove() && _archiveFileMgr.isFullFileName(file))
+      if (_options->remove())
       {
-         rc = ossFile::deleteFile(file);
-         if (SDB_OK != rc)
+         fs::path dir( file );
+         string fileName = dir.filename().string();
+
+         if (_archiveFileMgr.isFullFileName(fileName))
          {
-            PD_LOG(PDERROR, "Failed to delete log file[%s], rc=%d",
-                   file.c_str(), rc);
-            goto error;
+            rc = ossFile::deleteFile(file);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to delete log file[%s], rc=%d",
+                      file.c_str(), rc);
+               goto error;
+            }
          }
       }
 
