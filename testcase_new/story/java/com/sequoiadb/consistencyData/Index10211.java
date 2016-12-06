@@ -69,7 +69,7 @@ public class Index10211 extends SdbTestBase {
 	}
 	
 	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testIdIndex10211(){
+	public void testIndex10211(){
 		Sequoiadb db  = null;
 		DBCollection clDB = null;
 		try{
@@ -98,7 +98,7 @@ public class Index10211 extends SdbTestBase {
 		try{
 			clDB.dropIndex(idxName);
 			//check results
-			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -47){  //-47:Index name does not exist
 				Assert.fail(e.getMessage());

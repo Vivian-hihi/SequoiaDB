@@ -89,7 +89,7 @@ public class SubCL10196 extends SdbTestBase {
 				csDB.getCollection(mCLName).detachCollection(sCSName + "." + sCLName);
 			}
 			
-			this.checkResult(db);
+			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23 && e.getErrorCode() != -34){  //-23:Collection does not exist
 				db.disconnect();
@@ -101,9 +101,9 @@ public class SubCL10196 extends SdbTestBase {
 		try{
 			db.dropCollectionSpace(mCSName);
 
-			this.checkResult(db);
+			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34){  //-34:Collection space does not exist
+			if(e.getErrorCode() != -34){  
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
@@ -151,7 +151,7 @@ public class SubCL10196 extends SdbTestBase {
 			mOpt.put("IsMainCL", true);
 			sdb.getCollectionSpace(mCSName).createCollection(mCLName, mOpt);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -22){  //-22:Collection already exists
+			if(e.getErrorCode() != -22){  
 				sdb.disconnect();
 				Assert.fail(e.getMessage());
 			}
@@ -176,7 +176,6 @@ public class SubCL10196 extends SdbTestBase {
 	}
 	
 	public void attachCL(Sequoiadb sdb){
-		//-----attach cl-----
 		try
 		{
 			BSONObject options = new BasicBSONObject();
@@ -205,16 +204,5 @@ public class SubCL10196 extends SdbTestBase {
 			}
 		}
 	}
-		
-		public void checkResult(Sequoiadb sdb){
-			try{
-				CommLib.checkCLOfCatalog(sdb, csName, clName);
-				CommLib.checkCLOfDataRG(sdb, csName, clName);
-				boolean rc = CommLib.compareDataAndCata(sdb, csName, clName);
-				Assert.assertTrue(rc);
-			}catch(BaseException e){
-				sdb.disconnect();
-				Assert.fail(e.getMessage());
-			}
-		}
+	
 }

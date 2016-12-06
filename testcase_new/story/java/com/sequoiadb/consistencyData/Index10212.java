@@ -70,8 +70,8 @@ public class Index10212 extends SdbTestBase {
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testIdIndex10212(){
+	@Test(invocationCount = 100, threadPoolSize = 100)
+	public void testIndex10212(){
 		Sequoiadb db  = null;
 		CollectionSpace csDB = null;
 		try{
@@ -97,7 +97,8 @@ public class Index10212 extends SdbTestBase {
 			}
 		}catch(BaseException e){
 			if( e.getErrorCode() != -247  //-247:Redefine index
-					&& e.getErrorCode() != -46){  //-46:Duplicate index name
+					&& e.getErrorCode() != -46  //-46:Duplicate index name
+					&& e.getErrorCode() != -23 ){
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}

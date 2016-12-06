@@ -80,7 +80,7 @@ public class Index10216 extends SdbTestBase {
 	}
 	
 	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testIndex10208(){
+	public void testIndex10216(){
 		Sequoiadb db  = null;
 		DBCollection clDB = null;
 		try{

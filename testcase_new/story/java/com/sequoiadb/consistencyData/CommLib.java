@@ -258,7 +258,7 @@ public class CommLib {
 									"The group is SYSCatalogGroup, " + nodeAddrs.get(j) 
 								  + " and " + nodeAddrs.get(j-1) + " is not consistent.");
 						}
-						dataDB.closeAllCursors();
+						//dataDB.closeAllCursors();
 					}
 				}while(!checkSucc && failCnt < maxCnt);
 			}
@@ -357,7 +357,7 @@ public class CommLib {
 										"The group is " + groupName +", " + nodeAddrs.get(j) 
 									  + " and " + nodeAddrs.get(j-1) + " is not consistent.");
 							}
-							dataDB.closeAllCursors();
+							//dataDB.closeAllCursors();
 						}
 					}while(!checkSucc && failCnt < maxCnt);
 				}
@@ -405,8 +405,12 @@ public class CommLib {
 								return false;
 							}
 						}
+						cur.close();
+						cataDB.disconnect();
 					}
 				}
+				cursor.close();
+				dataDB.disconnect();
 			}
 		}catch(BaseException e){
 			Assert.fail("Failed to check cl for dataRG. ErrorMsg:\n" + e.getMessage());
@@ -436,9 +440,15 @@ public class CommLib {
 						String dataMAddr = sdb.getReplicaGroup(dataGroupNames).getMaster().getNodeName();
 						Sequoiadb dataDB = new Sequoiadb(dataMAddr, "", "");
 						dataDB.getCollectionSpace(csName).getCollection(tmpCLName);
+						
+						dataDB.disconnect();
 					}
 				}
 			}
+			
+			cursor.close();
+			cataDB.disconnect();
+			
 		}catch(BaseException e){
 			if(e.getErrorCode() == -23){  //-23:Collection does not exist
 				Assert.fail("Failed to check cl for dataRG. ErrorMsg:\n" + e.getMessage());
