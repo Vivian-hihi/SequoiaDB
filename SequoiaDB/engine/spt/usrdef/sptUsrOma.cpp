@@ -646,17 +646,15 @@ namespace engine
          if ( optionObj.hasField( "alivetime" ) )
          {
             BSONType alivetimeType = optionObj.getField( "alivetime" ).type() ;
+
             if ( NumberInt == alivetimeType )
             {
                aliveTimeArg << optionObj.getIntField( "alivetime" ) ;
-               argvs.push_back( "alivetime" ) ;
-               argvs.push_back( aliveTimeArg.str().c_str() ) ;
+               alivetimeStr = aliveTimeArg.str() ;
             }
             else if ( String == alivetimeType )
             {
                alivetimeStr = optionObj.getStringField( "alivetime" ) ;
-               argvs.push_back( "alivetime" ) ;
-               argvs.push_back( alivetimeStr.c_str() ) ;
             }
             else
             {
@@ -664,6 +662,8 @@ namespace engine
                detail = BSON( SPT_ERR << "alivetime must be int" ) ;
                goto error ;
             }
+            argvs.push_back( "--alivetime" ) ;
+            argvs.push_back( alivetimeStr.c_str() ) ;
          }
 
          if ( optionObj.hasField( "port" ) )
@@ -672,14 +672,11 @@ namespace engine
             if ( NumberInt == portType )
             {
                portArg << optionObj.getIntField( "port" ) ;
-               argvs.push_back( "--port" ) ;
-               argvs.push_back( portArg.str().c_str() ) ;
+               portStr = portArg.str() ;
             }
             else if ( String == portType )
             {
                portStr = optionObj.getStringField( "port" ) ;
-               argvs.push_back( "--port" ) ;
-               argvs.push_back( portStr.c_str() ) ;
             }
             else
             {
@@ -687,6 +684,8 @@ namespace engine
                detail = BSON( SPT_ERR << "port must be int or string" ) ;
                goto error ;
             }
+            argvs.push_back( "--port" ) ;
+            argvs.push_back( portStr.c_str() ) ;
          }
 
          asStandalone = optionObj.getBoolField( "standalone" ) ;
@@ -696,10 +695,9 @@ namespace engine
             procShortName = SDBSDBCMPROG ;
             argvs.push_back( "--standalone" ) ;
          }
-
       }
       utilCatPath( progName, OSS_MAX_PATHSIZE, procShortName.c_str() ) ;
-      argvs.insert( argvs.begin(), progName ) ;
+      argvs.push_front( progName ) ;
 
       if ( !asStandalone )
       {
