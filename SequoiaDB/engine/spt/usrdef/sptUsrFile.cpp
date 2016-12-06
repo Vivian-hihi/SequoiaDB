@@ -1285,12 +1285,10 @@ JS_MAPPING_END()
                }
             }
 
-            // at least 9 columns
+            // one line has 9 columns at least. otherwise, discard it
             if ( 9 > columns.size() )
             {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to build result" ) ;
-               goto error ;
+               continue ;
             }
             else
             {

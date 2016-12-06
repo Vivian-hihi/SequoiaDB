@@ -1139,19 +1139,17 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
       // extract the follow 4 fields from the return content
-      INT32 fieldNum       = 4 ;
       string strModelName  = "model name" ;
       string strFreq       = "cpu MHz" ;
       string strCoreNum    = "cpu cores" ;
       string strPhysicalID = "physical id" ;
       // use to mark which field we had accessed
       INT32 flag           = 0x00000000 ;
-      INT32 totalFlag      = 0x00001111 ;
+      BOOLEAN mustPush ;
       vector<string> splited ;
       vector<cpuInfo> vecCpuInfo ;
       set<string> physicalIDSet ;
       cpuInfo info ;
-      INT32 counter = 1 ;
 
       try
       {
@@ -1177,24 +1175,17 @@ namespace engine
             itr++ ;
          }
       }
-      if ( ( splited.size() % fieldNum ) != 0 )
-      {
-         PD_LOG( PDERROR, "the return rows[%d] should be multiple of %d",
-                 splited.size(), fieldNum ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
+
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
-            itr++, counter++ )
+            itr++ )
       {
          // *itr is in the format of "xxx : xx", so let's
          // split it with ":"
          vector<string> columns ;
-
          try
          {
-            boost::algorithm::split( columns, *itr, boost::is_any_of(":") ) ;
+            boost::algorithm::split( columns, *itr, boost::is_any_of( ":" ) ) ;
          }
          catch( std::exception &e )
          {
@@ -1218,26 +1209,56 @@ namespace engine
                     rc, e.what() ) ;
             goto error ;
          }
-         if ( strModelName == columns.at(0) )
+
+         mustPush = FALSE ;
+         if ( strModelName == columns.at( 0 ) )
          {
-            info.modelName = columns.at(1) ;
-            flag |= 0x00000001 ;
+            if ( ( flag ^ 0x00000001 ) > flag )
+            {
+               info.modelName = columns.at( 1 ) ;
+               flag ^= 0x00000001 ;
+            }
+            else
+            {
+               mustPush = TRUE ;
+            }
          }
-         else if ( strFreq == columns.at(0) )
+         else if ( strFreq == columns.at( 0 ) )
          {
-            info.freq = columns.at(1) ;
-            flag |= 0x00000010 ;
+            if ( ( flag ^ 0x00000010 ) > flag )
+            {
+               info.freq = columns.at( 1 ) ;
+               flag ^= 0x00000010 ;
+            }
+            else
+            {
+               mustPush = TRUE ;
+            }
          }
-         else if ( strCoreNum == columns.at(0) )
+         else if ( strCoreNum == columns.at( 0 ) )
          {
-            info.coreNum = columns.at(1) ;
-            flag |= 0x00000100 ;
+            if ( ( flag ^ 0x00000100 ) > flag )
+            {
+               info.coreNum = columns.at( 1 ) ;
+               flag ^= 0x00000100 ;
+            }
+            else
+            {
+               mustPush = TRUE ;
+            }
          }
          else if ( strPhysicalID == columns.at(0) )
          {
-            physicalIDSet.insert( columns.at(1) ) ;
-            info.physicalID = columns.at(1) ;
-            flag |= 0x00001000 ;
+            if ( ( flag ^ 0x00001000 ) > flag )
+            {
+               physicalIDSet.insert( columns.at(1) ) ;
+               info.physicalID = columns.at(1) ;
+               flag ^= 0x00001000 ;
+            }
+            else
+            {
+               mustPush = TRUE ;
+            }
          }
          else
          {
@@ -1246,22 +1267,22 @@ namespace engine
             goto error ;
          }
          // check and keep the cpu info
-         if ( ( counter % fieldNum ) == 0  )
+         if ( TRUE == mustPush )
          {
-            if ( flag == totalFlag )
-            {
-               vecCpuInfo.push_back( info ) ;
-               info.reset() ;
-               flag = 0 ;
-            }
-            else
-            {
-               PD_LOG( PDERROR, "unexpect cpu info[%s]", buf ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
+            vecCpuInfo.push_back( info ) ;
+            info.reset() ;
+            flag = 0 ;
+            // need to decrease itr becase not use the value of itr
+            itr-- ;
          }
       }
+
+      // push last info obj
+      if ( flag )
+      {
+         vecCpuInfo.push_back( info ) ;
+      }
+
       // merge the cpu info
       for ( set<string>::iterator itr = physicalIDSet.begin();
             itr != physicalIDSet.end(); itr++ )
@@ -2247,10 +2268,10 @@ namespace engine
                }
             }
 
+            // if not match format,discard the row
             if ( vColumns.size() < 9 )
             {
-               rc = SDB_SYS ;
-               goto error ;
+               continue ;
             }
       //card rx_byte   rx_packet rx_err rx_drop tx_byte tx_packet tx_err tx_drop
       //lo   14755559460 44957591  0      0       14755559460 44957591 0 0
@@ -2630,15 +2651,17 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj optionObj ;
       string outStr ;
+      stringstream     cmd ;
       _ossCmdRunner runner ;
 
+
 #if defined ( _LINUX )
-   #define LIST_PROCESS "ps aux"
+   cmd << "ps ax -o user -o pid -o stat -o command" ;
 #elif defined (_WINDOWS)
-   #define LIST_PROCESS "tasklist /FO \"CSV\""
+   cmd << "tasklist /FO \"CSV\"" ;
 #endif
 
-      rc = runner.exec( LIST_PROCESS, exitCode,
+      rc = runner.exec( cmd.str().c_str(), exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
@@ -2650,8 +2673,10 @@ namespace engine
       rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "failed to read msg from cmd \""
-                     LIST_PROCESS"\", rc :%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to exec cmd " << cmd.str() << ",rc:"
+            << rc ;
+         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
          goto error ;
       }
 
@@ -2682,12 +2707,12 @@ namespace engine
       }
 
       /* format:
-      USER       PID %CPU %MEM    VSZ   RSS TTY     STAT START   TIME COMMAND
-      root         1  0.0  0.0  84096  1352 ?       Ss   Jun12   0:06 /sbin/init
+      USER       PID STAT COMMAND
+      root         1  Ss  /sbin/init
       */
       try
       {
-         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\r\n" ) ) ;
       }
       catch( std::exception &e )
       {
@@ -2743,23 +2768,21 @@ namespace engine
                }
             }
 
-            // result at least contain 11 cols
-            if ( 11 > columns.size() )
+            // result at least contain 4 cols
+            if ( 4 > columns.size() )
             {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to build result" ) ;
-               goto error ;
+               continue ;
             }
 
             // filename may contain ' ', need to merge
-            for ( UINT32 index = 11; index < columns.size(); index++ )
+            for ( UINT32 index = 4; index < columns.size(); index++ )
             {
-               columns[ 10 ] += " " + columns[ index ] ;
+               columns[ 3 ] += " " + columns[ index ] ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_USER, columns[ 0 ] ) ;
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_PROC_STATUS, columns[ 7 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 10 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_STATUS, columns[ 2 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 3 ] ) ;
             procVec.push_back( proObjBuilder.obj() ) ;
          }
       }
@@ -2796,21 +2819,19 @@ namespace engine
                }
             }
 
-            // result at least contain 11 cols
-            if ( 11 > columns.size() )
+            // result at least contain 4 cols
+            if ( 4 > columns.size() )
             {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to build result" ) ;
-               goto error ;
+               continue ;
             }
 
             // filename may contain ' ', need to merge
-            for ( UINT32 index = 11; index < columns.size(); index++ )
+            for ( UINT32 index = 4; index < columns.size(); index++ )
             {
-               columns[ 10 ] += " " + columns[ index ] ;
+               columns[ 3 ] += " " + columns[ index ] ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 10 ] ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 3 ] ) ;
             procVec.push_back( proObjBuilder.obj() ) ;
          }
       }
@@ -2914,6 +2935,12 @@ namespace engine
                   itrCol++ ;
                }
             }
+
+            // result must contain 5 col
+            if ( 5 != columns.size() )
+            {
+               continue ;
+            }
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_USER, "" ) ;
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_STATUS, "" ) ;
@@ -2955,6 +2982,11 @@ namespace engine
                }
             }
 
+            // result must contain 5 col
+            if ( 5 != columns.size() )
+            {
+               continue ;
+            }
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_PID, columns[ 1 ] ) ;
             proObjBuilder.append( CMD_USR_SYSTEM_PROC_CMD, columns[ 0 ] ) ;
             procVec.push_back( proObjBuilder.obj() ) ;
@@ -3665,8 +3697,12 @@ namespace engine
       }
 
       /* format:
-         xxxxxxxxx tty1         2016-06-12 10:31
-         xxxxxxxxx pts/0        2016-10-11 13:01 (xxx.xxx.xxx.xxx)
+            xxxxxxxxx tty          2016-10-11 13:01
+         or
+            xxxxxxxxx pts/0        2016-10-11 13:01 (xxx.xxx.xxx.xxx)
+         or
+            xxxxxxxxx pts/1        Dec  2 11:44     (192.168.10.53)
+
       */
       try
       {
@@ -3700,8 +3736,8 @@ namespace engine
          {
             vector<string> columns ;
             BSONObjBuilder proObjBuilder ;
-            string ip ;
-
+            string loginIp ;
+            string loginTime ;
             try
             {
                boost::algorithm::split( columns, *itrSplit,
@@ -3727,19 +3763,28 @@ namespace engine
                }
             }
 
-            // ip will be empty if login by tty
-            if ( 5 > columns.size() )
+            // at least contain 4 col
+            if ( 4 > columns.size() )
             {
-               ip = "" ;
+               continue ;
+            }
+            else if ( 4 == columns.size() )
+            {
+               loginIp = "" ;
             }
             else
             {
-               ip = columns[ 4 ].substr( 1, columns[ 4 ].size()-2 );
+               loginIp = columns.back().substr( 1, columns.back().size()-2 );
+               loginTime = columns[ 2 ] ;
+               for( UINT32 index = 3; index < columns.size() - 1; index++ )
+               {
+                  loginTime += " " + columns[ index ] ;
+               }
             }
             proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_FROM, columns[ 2 ] + " " + columns[ 3 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_LOGIN, ip ) ;
-
+            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TIME, loginTime ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_FROM, loginIp ) ;
+            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TTY, columns[ 1 ] ) ;
             procVec.push_back( proObjBuilder.obj() ) ;
          }
       }
@@ -3774,6 +3819,12 @@ namespace engine
                {
                   itrCol++ ;
                }
+            }
+
+            // at least contain 4 col
+            if ( 4 > columns.size() )
+            {
+               continue ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
             procVec.push_back( proObjBuilder.obj() ) ;
@@ -3940,6 +3991,12 @@ namespace engine
                        rc, e.what() ) ;
                goto error ;
             }
+
+            // if no match format
+            if ( columns.size() != 7 )
+            {
+               continue ;
+            }
             proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
             proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_GID, columns[ 3 ] ) ;
             proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_DIR, columns[ 5 ] ) ;
@@ -3965,6 +4022,12 @@ namespace engine
                PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
                        rc, e.what() ) ;
                goto error ;
+            }
+
+            // if no match format
+            if ( columns.size() != 7 )
+            {
+               continue ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
             procVec.push_back( proObjBuilder.obj() ) ;
@@ -4118,6 +4181,7 @@ namespace engine
          {
             vector<string> columns ;
             BSONObjBuilder proObjBuilder ;
+            string groupMem ;
 
             try
             {
@@ -4142,6 +4206,22 @@ namespace engine
                {
                   itrCol++ ;
                }
+            }
+
+            // if no match format
+            if ( columns.size() < 3 )
+            {
+               continue ;
+            }
+
+            // if group has list of user
+            if ( columns.size() == 4 )
+            {
+               groupMem = columns[ 3 ] ;
+            }
+            else
+            {
+               groupMem = "" ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
             proObjBuilder.append( CMD_USR_SYSTEM_GROUP_GID, columns[ 2 ] ) ;
@@ -4180,6 +4260,12 @@ namespace engine
                {
                   itrCol++ ;
                }
+            }
+
+            // if no match format
+            if ( columns.size() < 3 )
+            {
+               continue ;
             }
             proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
             procVec.push_back( proObjBuilder.obj() ) ;
@@ -5500,8 +5586,12 @@ namespace engine
             }
          }
 
-         // at least conatain 2 cols
-         if ( columns.size() < 2 )
+         // at least conatain 1 cols
+         if ( columns.size() < 1 )
+         {
+            continue ;
+         }
+         else if ( columns.size() == 1 )
          {
             value = "" ;
          }

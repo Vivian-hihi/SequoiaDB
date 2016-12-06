@@ -46,9 +46,9 @@ namespace engine
       void reset()
       {
          modelName  = "" ;
-         coreNum    = "" ;
+         coreNum    = "1" ;
          freq       = "" ;
-         physicalID = "" ;
+         physicalID = "0" ;
       }
    } ;
    typedef struct _cpuInfo cpuInfo ;
@@ -124,7 +124,8 @@ namespace engine
    #define CMD_USR_SYSTEM_PROC_CMD           "cmd"
    #define CMD_USR_SYSTEM_LOGINUSER_USER     "user"
    #define CMD_USR_SYSTEM_LOGINUSER_FROM     "from"
-   #define CMD_USR_SYSTEM_LOGINUSER_LOGIN    "login"
+   #define CMD_USR_SYSTEM_LOGINUSER_TTY      "tty"
+   #define CMD_USR_SYSTEM_LOGINUSER_TIME     "time"
    #define CMD_USR_SYSTEM_ALLUSER_USER       "user"
    #define CMD_USR_SYSTEM_ALLUSER_GID        "gid"
    #define CMD_USR_SYSTEM_ALLUSER_DIR        "dir"
