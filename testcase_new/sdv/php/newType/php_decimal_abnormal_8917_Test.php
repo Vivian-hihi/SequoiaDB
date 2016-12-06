@@ -7,7 +7,6 @@
         2016-7-7 XiaoNi Huang init
 ****************************************************/
 <?php
-include_once 'func.php';
 define('Cur_Path', dirname(__FILE__));
 include_once Cur_Path.'/../func.php';
 
