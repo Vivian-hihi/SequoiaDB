@@ -72,7 +72,7 @@
          </script>
          
          <var name="cmd1" value="-f @{casefile} test" />
-         <var name="cmd2" value="-Dhost.NAME=localhost -Dcoord.service.port=${SVCNAME} -DCS_PRIX=${prefix} -Dinstall.path=${INSTALL_DIR} -DantTask.jar.path=${casedir}/../ant-sdbtasks" />
+         <var name="cmd2" value="-Dhost.NAME=localhost -Dcoord.service.port=${SVCNAME} -DCS_PRIX=${prefix} -Dinstall.path=/opt -DantTask.jar.path=${casedir}/../ant-sdbtasks" />
          <echo message="exec cmd: ant ${cmd1} ${cmd2}"/>   
          
          <var name="screen_output" unset="true"/>
