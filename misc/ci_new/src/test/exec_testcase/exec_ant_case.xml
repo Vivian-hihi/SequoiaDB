@@ -70,9 +70,9 @@
          <script language="javascript">
             project.setProperty('start_ms', new Date().getTime());
          </script>
-
-         <property name="cmd1" value="-f @{casefile} test" />
-         <property name="cmd2" value="-Dhost.NAME=localhost -Dcoord.service.port=${SVCNAME} -DCS_PRIX=${prefix} -Dinstall.path=${INSTALL_DIR} -DantTask.jar.path=${casedir}/../ant-sdbtasks" />
+         
+         <var name="cmd1" value="-f @{casefile} test" />
+         <var name="cmd2" value="-Dhost.NAME=localhost -Dcoord.service.port=${SVCNAME} -DCS_PRIX=${prefix} -Dinstall.path=${INSTALL_DIR} -DantTask.jar.path=${casedir}/../ant-sdbtasks" />
          <echo message="exec cmd: ant ${cmd1} ${cmd2}"/>   
          
          <var name="screen_output" unset="true"/>
@@ -104,8 +104,7 @@
                <copy file="${basedir}/src/test/exec_testcase/report_succ_temple.xml" tofile="@{report}"/>
             </then>
             <else>
-               <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="@{report}"/>
-               <replace file="@{report}" token='ERROR_MESSAGE' value='${screen_output}'/>
+               <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="@{report}"/>            
             </else>
          </if>
          
@@ -113,6 +112,18 @@
          <replace file="@{report}" token='TESTSUIT_NAME' value='${suitname}'/>
          <replace file="@{report}" token='TESTCASE_NAME' value='${casename}'/>
          <replace file="@{report}" token='0000' value='${total_time}'/>
+         
+         <if>
+            <equals arg1="${rc}" arg2="0" />            
+            <else>
+               <hostinfo prefix="host" />
+               <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
+               <var name="ms2" value="EXECUTE CMD:&#10;ant ${cmd1} ${cmd2}&#10;"/>
+               <var name="ms3" value="RETURN CODE: ${rc}&#10;"/>
+               <var name="ms4" value="OUTPUT MESSAGE:&#10;${screen_output}&#10;"/>
+               <replace file="@{report}" token="ERROR_MESSAGE" value="${ms1}${ms2}${ms3}${ms4}"/>
+            </else>
+         </if>
          
       </sequential>
    </macrodef>
