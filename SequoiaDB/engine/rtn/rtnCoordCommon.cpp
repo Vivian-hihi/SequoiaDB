@@ -1094,7 +1094,7 @@ namespace engine
    INT32 rtnCoordGetRemoteCata( pmdEDUCB *cb,
                                 const CHAR *pCollectionName,
                                 CoordCataInfoPtr &cataInfo,
-                                BOOLEAN forSubCL )
+                                BOOLEAN withSubCL )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETREMOTECATA ) ;
@@ -1123,10 +1123,11 @@ namespace engine
          SINT64 numToReturn ;
          try
          {
-            if ( forSubCL )
+            if ( withSubCL )
             {
                // Acquire for sub-collections of mainCL with given name
-               boQuery = BSON( CAT_MAINCL_NAME << pCollectionName ) ;
+               boQuery = OR( BSON( CAT_CATALOGNAME_NAME << pCollectionName ),
+                             BSON( CAT_MAINCL_NAME << pCollectionName ) ) ;
                numToReturn = -1 ;
             }
             else
@@ -1197,7 +1198,9 @@ namespace engine
                nodeID.value = pReply->header.routeID.value ;
                primaryID = pReply->startFrom ;
                // updateCataInfo is called inside rtnCoordProcessQueryCatReply
-               rc = rtnCoordProcessQueryCatReply( pReply, cataInfo ) ;
+               rc = rtnCoordProcessQueryCatReply( pReply,
+                                                  pCollectionName,
+                                                  cataInfo ) ;
                if( SDB_OK == rc )
                {
                   isGetExpectReply = TRUE ;
@@ -1225,13 +1228,9 @@ namespace engine
                     pCollectionName, rc ) ;
 
             if ( ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc ) &&
-                 ( pCoordcb->isSubCollection( pCollectionName ) || forSubCL ) )
+                 pCoordcb->isSubCollection( pCollectionName ) )
             {
                /// change the error
-               /// forSubCL: we recursively query for sub-collections only when
-               /// the cached main-collection contains more than one
-               /// sub-collections. If Catalog reports nothing, it means the
-               /// version of cached main-collection is too old.
                rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
             }
          }
@@ -1239,12 +1238,12 @@ namespace engine
       }while ( TRUE ) ;
 
       // Only recursively querying when mainCL contains subCLs
-      if ( SDB_OK == rc && !forSubCL &&
+      if ( SDB_OK == rc && !withSubCL &&
            cataInfo.get() && cataInfo->isMainCL() &&
            cataInfo->getSubCLCount() > 0 )
       {
-         CoordCataInfoPtr subCataInfo ;
-         rc = rtnCoordGetRemoteCata( cb, pCollectionName, subCataInfo, TRUE ) ;
+         CoordCataInfoPtr updatedCataInfo ;
+         rc = rtnCoordGetRemoteCata( cb, pCollectionName, updatedCataInfo, TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDWARNING, "Get main collection[%s]'s sub collections "
@@ -1254,6 +1253,7 @@ namespace engine
             pCoordcb->delCataInfo( pCollectionName ) ;
             goto error ;
          }
+         cataInfo = updatedCataInfo ;
       }
 
    done:
@@ -2551,6 +2551,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOPROCESSQUERYCATREPLY, "rtnCoordProcessQueryCatReply" )
    INT32 rtnCoordProcessQueryCatReply ( MsgCatQueryCatRsp *pReply,
+                                        const CHAR *pCollectionName,
                                         CoordCataInfoPtr &cataInfo )
    {
       INT32 rc = SDB_OK ;
@@ -2588,11 +2589,18 @@ namespace engine
                          rc ) ;
             pCoordcb->updateCataInfo( tmpInfo->getName(), tmpInfo ) ;
 
-            // Return the pointer of the first one
-            if ( i == 0 )
+            if ( 0 == ossStrcmp( tmpInfo->getName(), pCollectionName ) )
             {
                cataInfo = tmpInfo ;
             }
+         }
+
+         if ( !cataInfo.get() )
+         {
+            rc = SDB_DMS_NOTEXIST ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get required collection [%s] from "
+                         "query-catalogue-reply", pCollectionName ) ;
          }
       }
       catch ( std::exception &e )

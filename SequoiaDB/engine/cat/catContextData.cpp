@@ -1553,17 +1553,28 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXDROPCL_MAKEREPLY ) ;
 
-      if ( !_groupList.empty() && CAT_CONTEXT_READY == _status )
+      if ( CAT_CONTEXT_READY == _status )
       {
          BSONObjBuilder retObjBuilder ;
+
          if ( _needUpdateCoord )
          {
             // Version of collection in Coord need to be updated
             retObjBuilder.appendElements(
                   BSON( CAT_COLLECTION << _boTarget.getOwned() ) ) ;
+            // Append GROUP field even if the list is empty
+            _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
          }
-         _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
-         buffObj = rtnContextBuf( retObjBuilder.obj() ) ;
+         else if ( !_groupList.empty() )
+         {
+            _pCatCB->makeGroupsObj( retObjBuilder, _groupList, TRUE ) ;
+         }
+
+         BSONObj retObj = retObjBuilder.obj() ;
+         if ( !retObj.isEmpty() )
+         {
+            buffObj = rtnContextBuf( retObj ) ;
+         }
       }
       else
       {

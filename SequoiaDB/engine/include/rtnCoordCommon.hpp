@@ -337,12 +337,13 @@ namespace engine
    INT32 rtnCoordGetRemoteCata( pmdEDUCB *cb,
                                 const CHAR *pCollectionName,
                                 CoordCataInfoPtr &cataInfo,
-                                BOOLEAN forSubCL = FALSE ) ;
+                                BOOLEAN withSubCL = FALSE ) ;
 
    /*
       will update collection stat by reply flag
    */
    INT32 rtnCoordProcessQueryCatReply ( MsgCatQueryCatRsp *pReply,
+                                        const CHAR *pCollectionName,
                                         CoordCataInfoPtr &cataInfo ) ;
    INT32 rtnCoordProcessCatInfoObj ( const BSONObj &boCataInfo,
                                      CoordCataInfoPtr &cataInfo ) ;
