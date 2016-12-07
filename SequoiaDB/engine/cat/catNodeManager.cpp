@@ -545,7 +545,10 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to get node-info:%s (rc=%d)",
                   boReq.toString().c_str(), rc );
-         rc = ( SDB_CLS_NODE_NOT_EXIST == rc ) ? SDB_CAT_AUTH_FAILED : rc ;
+         rc = ( SDB_CLS_NODE_NOT_EXIST == rc ) ?
+                    ( pmdIsPrimary() ? SDB_CAT_AUTH_FAILED :
+                                       SDB_CLS_NOT_PRIMARY ) :
+                    rc ;
          goto error;
       }
       else if ( realRole != nodeRole )
@@ -562,7 +565,10 @@ namespace engine
          PD_LOG( PDERROR, "Check and update node info failed, rc: %d, "
                  "request obj: %s, node obj: %s", rc,
                  boReq.toString().c_str(), boNodeInfo.toString().c_str() ) ;
-         rc = ( SDB_CLS_NODE_NOT_EXIST == rc ) ? SDB_CAT_AUTH_FAILED : rc ;
+         rc = ( SDB_CLS_NODE_NOT_EXIST == rc ) ?
+                    ( pmdIsPrimary() ? SDB_CAT_AUTH_FAILED :
+                                       SDB_CLS_NOT_PRIMARY ) :
+                    rc ;
          goto error ;
       }
 
