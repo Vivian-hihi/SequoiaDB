@@ -14,7 +14,7 @@
    <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF"/>     
    
    <target name="main">
-      <propertycopy name="testhost_list" from="${TEST_TYPE}_${DEPLOY_MODE}_HOST" />    
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />    
       <antcall target="uninstall"/>
       <antcallback target="ready_package" return="package_name"/><!--variable package_name used in target install--> 
       <antcall target="install"/>

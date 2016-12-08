@@ -15,19 +15,21 @@
    
    <target name="test_build">
       <var name="TEST_TYPE" value="NORMALTEST"/>
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, plat_form"/>
 
       <if>
          <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
          <then>
             <ant antfile="install_deploy.xml" dir="src/install_deploy" inheritAll="true" useNativeBaseDir="true" >
                <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+               <property name="plat_form" value="${plat_form}"/>
             </ant>
          </then>
       </if>
      
       <ant antfile="normal_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+         <property name="plat_form" value="${plat_form}"/>
       </ant>
       
       <antcallback target="status_file.get_build_status" return="build_status"/>
@@ -41,6 +43,7 @@
                   <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
                      <property name="TEST_TYPE" value="${TEST_TYPE}"/>
                      <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                     <property name="plat_form" value="${plat_form}"/>
                   </ant>
                </then>
             </if>
@@ -103,7 +106,26 @@
             <var name="DEPLOY_MODE" value="G3D3" />
          </else>
       </if>
+      <getplatform resultProperty="plat_form"/>
    </target>
+   
+   
+   <macrodef name="getplatform">
+      <attribute name="resultProperty"/>
+      <sequential>
+         <exec executable="uname" outputproperty="uname" failonerror="true" >
+            <arg line="-i" />
+         </exec>
+         <var name="@{resultProperty}" value="unknown" unset="true"/>
+         <condition property="@{resultProperty}" value="linux_x86_64">
+            <equals arg1="${uname}" arg2="X86" />
+         </condition>
+         <condition property="@{resultProperty}" value="ppc_linux_64">
+            <equals arg1="${uname}" arg2="PPC" />
+         </condition>
+      </sequential>
+   </macrodef>
+   
 
 </project>
 
