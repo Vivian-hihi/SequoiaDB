@@ -15,8 +15,9 @@
    
    <target name="test_build">
       <var name="TEST_TYPE" value="NORMALTEST"/>
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, plat_form"/>
-
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
+      <getplatform resultProperty="plat_form"/>
+      
       <if>
          <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
          <then>
@@ -106,7 +107,6 @@
             <var name="DEPLOY_MODE" value="G3D3" />
          </else>
       </if>
-      <getplatform resultProperty="plat_form"/>
    </target>
    
    
