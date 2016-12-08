@@ -17,7 +17,6 @@
       <var name="TEST_TYPE" value="NORMALTEST"/>
       <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
       <getplatform resultProperty="plat_form"/>
-      
       <if>
          <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
          <then>
@@ -117,11 +116,11 @@
             <arg line="-i" />
          </exec>
          <var name="@{resultProperty}" value="unknown" unset="true"/>
-         <condition property="@{resultProperty}" value="linux_x86_64">
-            <equals arg1="${uname}" arg2="X86" />
+         <condition property="@{resultProperty}" value="X86">
+            <equals arg1="${uname}" arg2="x86_64" />
          </condition>
-         <condition property="@{resultProperty}" value="ppc_linux_64">
-            <equals arg1="${uname}" arg2="PPC" />
+         <condition property="@{resultProperty}" value="PPC">
+            <equals arg1="${uname}" arg2="ppc64" />
          </condition>
       </sequential>
    </macrodef>
