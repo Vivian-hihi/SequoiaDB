@@ -65,6 +65,13 @@
       <copy todir="${case_basedir}">
          <fileset dir="${WORKSPACE}/sequoiadb/testcase"/>
       </copy>
+      
+      <if>
+         <equals arg1="${plat_form}" arg2="PPC" />
+         <then>
+            <delete dir="${case_basedir}/tdd/mongoc" />
+         </then>
+      </if>
    </target>
    
    <target name="ready_lib">
