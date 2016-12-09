@@ -57,7 +57,7 @@ function main()
    try{
 	   dbcl_IndexScan.attachCL( COMMCSNAME + "." + indexScan_subCL_Name1, { LowBound:{No:0},UpBound:{No:2222} } ) ;
 	   dbcl_IndexScan.attachCL( COMMCSNAME + "." + indexScan_subCL_Name2, { LowBound:{No:2222},UpBound:{No:5555} } ) ;
-	   dbcl_IndexScan.attachCL( COMMCSNAME + "." + indexScan_subCL_Name3, { LowBound:{No:5555},UpBound:{No:10000} } ) ;
+	   dbcl_IndexScan.attachCL( COMMCSNAME + "." + indexScan_subCL_Name3, { LowBound:{No:5555},UpBound:{No:20000} } ) ;
    }catch( e ){
 	   println( "failed to attch sub cl, rc = " + e );
        throw e;
@@ -88,7 +88,7 @@ function main()
    try{
 	   dbcl_TableScan.attachCL( COMMCSNAME + "." + tableScan_subCL_Name1, { LowBound:{No:0},UpBound:{No:2222} } ) ;
 	   dbcl_TableScan.attachCL( COMMCSNAME + "." + tableScan_subCL_Name2, { LowBound:{No:2222},UpBound:{No:5555} } ) ;
-	   dbcl_TableScan.attachCL( COMMCSNAME + "." + tableScan_subCL_Name3, { LowBound:{No:5555},UpBound:{No:10000} } ) ;
+	   dbcl_TableScan.attachCL( COMMCSNAME + "." + tableScan_subCL_Name3, { LowBound:{No:5555},UpBound:{No:20000} } ) ;
    }catch( e ){
 	   println( "failed to attch sub cl, rc = " + e );
        throw e;
@@ -97,7 +97,7 @@ function main()
    //insert random numberical data
    for(var i= 0; i< 200;i++){
       var rd = new dataGenerator();
-      var recs = rd.getRecords( 10000, ["int", "long", "float", "array"], fieldNames );
+      var recs = rd.getRecords( 20000, ["int", "long", "float", "array"], fieldNames );
       insertData(dbcl_IndexScan, recs);
       insertData(dbcl_TableScan, recs);
    }
