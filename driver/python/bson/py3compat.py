@@ -40,6 +40,12 @@ if PY3:
     text_type   = str
     next_item   = "__next__"
 
+    def reraise(tp, value, tb=None):
+        if value.__traceback__ is not tb:
+            raise value.with_traceback(tb)
+        else:
+            raise value
+
 else:
     try:
         from cStringIO import StringIO
@@ -58,5 +64,9 @@ else:
     # since we won't ever get here under python3.
     text_type   = unicode
     next_item   = "next"
+
+    exec('''def reraise(tp, value, tb=None):
+            raise tp, value, tb
+    ''')
 
 string_types = (binary_type, text_type)

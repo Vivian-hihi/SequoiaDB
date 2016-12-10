@@ -61,9 +61,37 @@
  *@brief     macro to cast C++ object to a python object 
  **/
 
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 1
+
+#define __OBJNAME "cppobj"
+
+#define MAKE_PYOBJECT( cpp_object ) \
+    ( PyObject * )PyCapsule_New( cpp_object, __OBJNAME, NULL )
+
+#define PyCObject_FromVoidPtr( cpp_object, destructor ) \
+    PyCapsule_New( cpp_object, __OBJNAME, destructor )
+
+#define PyCObject_AsVoidPtr( pyobj ) \
+    PyCapsule_GetPointer( pyobj, __OBJNAME)
+
+#else
+
 #define MAKE_PYOBJECT( cpp_object )  \
    ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
-   
+
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+#define PyString_Check PyUnicode_Check
+
+#if PY_MINOR_VERSION >= 3
+#define PyString_AsString PyUnicode_AsUTF8
+#else
+#error "python3 should be >= 3.3"
+#endif
+
+#endif
 
 #define MAKE_RETURN_INT( ret_value ) \
    ( PyObject * )Py_BuildValue( "i", ret_value )
@@ -182,6 +210,10 @@
       }                                                                 \
    }while( FALSE ) 
 
+struct module_state {
+    PyObject *error;
+};
+
 ///<  macros used in module declaration
 #define DEFINE_MODULE(modulename, methods)   \
 static struct PyModuleDef moduledef = {      \
@@ -200,7 +232,7 @@ static struct PyModuleDef moduledef = {      \
    #define INITERROR return NULL
    #define DECLARE_MODULE_FUN(modulename, methods)    \
       DEFINE_MODULE(modulename, methods)              \
-      PyMODINIT_FUNC PyInit__##modulename(void)
+      PyMODINIT_FUNC PyInit_##modulename(void)
 #else                                       
    #define INITERROR return                        
    #define DECLARE_MODULE_FUN(modulename, methods) \

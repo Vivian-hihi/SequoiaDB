@@ -12,6 +12,14 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import os
+import sys
+PY3 = sys.version_info[0] == 3
+if PY3:
+   import configparser as ConfigParser
+else:
+   import ConfigParser
+
 from pysequoiadb import const
 from pysequoiadb.enum import enum
 
@@ -63,21 +71,17 @@ def get_info(code):
 
    return info
 
-import os
-import sys
-import string
 
 init=False
 
 def init_errmaps():
    if False == os.access(os.path.dirname(__file__) + "/err.prop", os.R_OK):
       raise Exception("file not exist")
-   import ConfigParser
    config = ConfigParser.ConfigParser()
    config.read(os.path.dirname(__file__) + "/err.prop")
    pairs = config.items("error")
    for pair in pairs:
-      const.errmaps[ string.atoi(pair[0]) ] = pair[1];
+      const.errmaps[ int(pair[0]) ] = pair[1];
 
 if False == init:
    init_errmaps()

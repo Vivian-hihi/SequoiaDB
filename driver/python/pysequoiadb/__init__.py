@@ -52,7 +52,7 @@ from pysequoiadb.error import (SDBTypeError,
 
 import sys
 try:
-   import sdb
+   from . import sdb
 except ImportError:
    raise Exception("Cannot find extension: sdb")
 
@@ -92,10 +92,7 @@ system_error  = [ const.SDB_OOM,
                   const.SDB_SYS ]
 
 def _print(what):
-   if PY3:
-      print(what)
-   else:
-      print what
+   print(what)
 
 def _raise_if_error(msg, rc):
    """Check return value, raise a SDBBaseError if error occurred.

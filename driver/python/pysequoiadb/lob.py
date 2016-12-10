@@ -1,5 +1,5 @@
 try:
-   import sdb
+   from . import sdb
 except ImportError:
    raise Exception("Cannot find extension: sdb")
 

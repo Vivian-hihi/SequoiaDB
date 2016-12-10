@@ -16,7 +16,7 @@
 """
 
 try:
-   import sdb
+   from . import sdb
 except ImportError:
    raise Exception("Cannot find extension: sdb")
 
@@ -545,8 +545,8 @@ class collection(object):
       bson_order_by = None
       bson_hint = None
 
-      num_to_skip = 0L
-      num_to_return = -1L
+      num_to_skip = 0
+      num_to_return = -1
       flags = 0
 
       if "condition" in kwargs:
@@ -1009,8 +1009,8 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      num_to_skip = 0L
-      num_to_return = -1L
+      num_to_skip = 0
+      num_to_return = -1
 
       if "num_to_skip" in kwargs:
          if not isinstance(kwargs.get("num_to_skip"), long):
@@ -1235,7 +1235,7 @@ class collection(object):
       bson_order_by = None
       bson_hint = None
 
-      num_to_skip = 0L
+      num_to_skip = 0
       flags = 0
 
       if "condition" in kwargs:
@@ -1270,7 +1270,7 @@ class collection(object):
          rc = sdb.cl_query(self._cl, result._cursor,
                           bson_condition, bson_selector,
                           bson_order_by, bson_hint,
-                          num_to_skip, 1L, flags)
+                          num_to_skip, 1, flags)
          pysequoiadb._raise_if_error("Failed to query one", rc)
       except SDBBaseError:
          del result
@@ -1329,8 +1329,8 @@ class collection(object):
       bson_hint = None
       bson_options = None
 
-      num_to_skip = 0L
-      num_to_return = -1L
+      num_to_skip = 0
+      num_to_return = -1
       flag = 0
 
       if "condition" in kwargs:
