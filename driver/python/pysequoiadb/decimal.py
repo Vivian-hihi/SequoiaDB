@@ -16,9 +16,9 @@
 """
 import bson
 from bson.py3compat import binary_type as bstr
-from bson.py3compat import PY3
+from bson.py3compat import (PY3, long_type)
 try:
-   import bsondecimal as decimal
+   from . import bsondecimal as decimal
 except:
    raise Exception("failed to import extension: decimal")
 
@@ -172,10 +172,10 @@ class Decimal(object):
    def __parse(self, value):
       """set the value of decimal, only int(long)/float(double)/str is accepted
       """
-      if isinstance(value, int):
-         return self.__from_int(value)
-      elif (not PY3) and isinstance(value, long):
+      if isinstance(value, long_type):
          return self.__from_string(str(value))
+      elif isinstance(value, int):
+         return self.__from_int(value)
       elif isinstance(value, float):
          return self.__from_float(value)
       elif isinstance(value, bstr):
@@ -193,10 +193,10 @@ class Decimal(object):
       """compare between two decimal object.
       if int is specified, int value will be converted to an decimal object, then compare
       """
-      if isinstance(rhs, int):
-         _ = decimal.compareInt(self.__decimal, rhs)
-      elif (not PY3) and isinstance(rhs, long):
+      if isinstance(rhs, long_type):
          _ = self.compare(Decimal(rhs))
+      elif isinstance(rhs, int):
+         _ = decimal.compareInt(self.__decimal, rhs)
       elif isinstance(rhs, float):
          _ = self.compare(Decimal(rhs))
       elif isinstance(rhs, Decimal):

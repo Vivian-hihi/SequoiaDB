@@ -37,7 +37,9 @@ if PY3:
         return bytes.fromhex(h)
 
     binary_type = bytes
-    text_type   = str
+    str_type = str
+    text_type = str
+    long_type = int
     next_item   = "__next__"
 
     def reraise(tp, value, tb=None):
@@ -60,13 +62,13 @@ else:
         return h.decode('hex')
 
     binary_type = str
+    str_type = basestring
     # 2to3 will convert this to "str". That's okay
     # since we won't ever get here under python3.
-    text_type   = unicode
+    text_type = unicode
+    long_type = long
     next_item   = "next"
 
-    exec('''def reraise(tp, value, tb=None):
-            raise tp, value, tb
-    ''')
+    exec('''def reraise(tp, value, tb=None): raise tp, value, tb''')
 
 string_types = (binary_type, text_type)

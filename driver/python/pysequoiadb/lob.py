@@ -5,8 +5,8 @@ except ImportError:
 
 import bson
 from bson.objectid import ObjectId
+from bson.py3compat import (PY3, str_type)
 import pysequoiadb
-
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
 from pysequoiadb.common import const
@@ -149,7 +149,7 @@ class lob(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(data, basestring):
+      if not isinstance(data, str_type):
          raise SDBTypeError("data should be byte or string")
 
       try:

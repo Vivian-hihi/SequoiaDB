@@ -222,6 +222,7 @@ elif guess_os == "linux":
    else:
       env.Append( CPPFLAGS=" -O3")
 
+#python_include="/opt/python3.5/include/python3.5m"
 env.Append( CPPPATH=[ root_dir, client_include, boost_dir,
                       common_include_dir, bson_include_dir, python_include, ssl_include ] )
 

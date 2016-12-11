@@ -19,6 +19,7 @@ except ImportError:
 
 import bson
 import pysequoiadb
+from bson.py3compat import (PY3, str_type)
 from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
@@ -52,8 +53,8 @@ class datacenter(object):
          pysequoiadb.error.SDBBaseError
       """
 
-      if not isinstance(addr, basestring):
-         raise TypeError("addr must be an instance of basestring")
+      if not isinstance(addr, str_type):
+         raise TypeError("addr must be an instance of str_type")
 
       try:
          rc = sdb.dc_create_image(self._dc, addr)

@@ -23,6 +23,7 @@ except ImportError:
 import bson
 import types
 import pysequoiadb
+from bson.py3compat import (PY3, str_type)
 from pysequoiadb.replicanode import replicanode
 from pysequoiadb.common import const
 from pysequoiadb import common
@@ -197,10 +198,10 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(hostname, basestring):
-         raise SDBTypeError("hostname must be an instance of basestring")
-      if not isinstance(servicename, basestring):
-         raise SDBTypeError("servicename must be an instance of basestring")
+      if not isinstance(hostname, str_type):
+         raise SDBTypeError("hostname must be an instance of str_type")
+      if not isinstance(servicename, str_type):
+         raise SDBTypeError("servicename must be an instance of str_type")
 
       try:
          node = replicanode(self._client)
@@ -226,8 +227,8 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(nodename, basestring):
-         raise SDBTypeError("nodename must be an instance of basestring")
+      if not isinstance(nodename, str_type):
+         raise SDBTypeError("nodename must be an instance of str_type")
 
       try:
          node = replicanode(self._client)
@@ -253,12 +254,12 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(hostname, basestring):
-         raise SDBTypeError("host must be an instance of basestring")
-      if not isinstance(servicename, basestring):
-         raise SDBTypeError("service name must be an instance of basestring")
-      if not isinstance(dbpath, basestring):
-         raise SDBTypeError("path must be an instance of basestring")
+      if not isinstance(hostname, str_type):
+         raise SDBTypeError("host must be an instance of str_type")
+      if not isinstance(servicename, str_type):
+         raise SDBTypeError("service name must be an instance of str_type")
+      if not isinstance(dbpath, str_type):
+         raise SDBTypeError("path must be an instance of str_type")
       if config is not None and not isinstance(config, dict):
          raise SDBTypeError("config must be an instance of dict")
 
@@ -283,10 +284,10 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(hostname, basestring):
-         raise SDBTypeError("host must be an instance of basestring")
-      if not isinstance(servicename, basestring):
-         raise SDBTypeError("service name must be an instance of basestring")
+      if not isinstance(hostname, str_type):
+         raise SDBTypeError("host must be an instance of str_type")
+      if not isinstance(servicename, str_type):
+         raise SDBTypeError("service name must be an instance of str_type")
       if config is not None and not isinstance(config, dict):
          raise SDBTypeError("config must be an instance of dict")
 
@@ -361,10 +362,10 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(hostname, basestring):
-         raise SDBTypeError("host must be an instance of basestring")
-      if not isinstance(servicename, basestring):
-         raise SDBTypeError("service name must be an instance of basestring")
+      if not isinstance(hostname, str_type):
+         raise SDBTypeError("host must be an instance of str_type")
+      if not isinstance(servicename, str_type):
+         raise SDBTypeError("service name must be an instance of str_type")
       if config is not None and not isinstance(config, dict):
          raise SDBTypeError("config must be an instance of dict")
 
@@ -389,10 +390,10 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(hostname, basestring):
-         raise SDBTypeError("host must be an instance of basestring")
-      if not isinstance(servicename, basestring):
-         raise SDBTypeError("service name must be an instance of basestring")
+      if not isinstance(hostname, str_type):
+         raise SDBTypeError("host must be an instance of str_type")
+      if not isinstance(servicename, str_type):
+         raise SDBTypeError("service name must be an instance of str_type")
       if config is not None and not isinstance(config, dict):
          raise SDBTypeError("config must be an instance of dict")
 

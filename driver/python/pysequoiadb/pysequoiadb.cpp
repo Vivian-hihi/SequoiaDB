@@ -836,7 +836,7 @@ __METHOD_IMP(sdb_eval_JS)
    }
 
 done:
-   return MAKE_RETURN_INT_INT_PYSTRING_SIZE(rc, sdb_spd_res_type,
+   return MAKE_RETURN_INT_INT_PYBYTES_SIZE(rc, sdb_spd_res_type,
       errmsg.objdata(), errmsg.objsize()) ;
 }
 
@@ -2442,7 +2442,7 @@ __METHOD_IMP(cr_next)
    }
 
 done :
-   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, retObj.objdata(),
+   return MAKE_RETURN_INT_PYBYTES_SIZE( rc, retObj.objdata(),
       retObj.objsize() ) ;
 error :
    goto done ;
@@ -2468,7 +2468,7 @@ __METHOD_IMP(cr_current)
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYBYTES_SIZE( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
@@ -2572,7 +2572,7 @@ __METHOD_IMP(gp_get_detail)
    CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
    rc = replica_group->getDetail( bson ) ;
 done :
-   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, bson.objdata(),
+   return MAKE_RETURN_INT_PYBYTES_SIZE( rc, bson.objdata(),
       bson.objsize() ) ;
 error :
    goto done ;
@@ -3196,7 +3196,7 @@ __METHOD_IMP(lob_read)
    rc = lob->read( len, buffer, &realLen ) ;
 
 done:
-   retObj = MAKE_RETURN_INT_PYSTRING_SIZE( rc, buffer, realLen ) ;
+   retObj = MAKE_RETURN_INT_PYBYTES_SIZE( rc, buffer, realLen ) ;
    if ( NULL != buffer )
    {
       delete [] buffer ;
@@ -3667,7 +3667,7 @@ __METHOD_IMP(dc_get_detail)
    }
 
 done :
-   return MAKE_RETURN_INT_PYSTRING_SIZE(rc, retInfo.objdata(),
+   return MAKE_RETURN_INT_PYBYTES_SIZE(rc, retInfo.objdata(),
                                                 retInfo.objsize() ) ;
 error :
    goto done ;

@@ -31,7 +31,7 @@ from bson.errors import (InvalidBSON,
 from bson.max_key import MaxKey
 from bson.min_key import MinKey
 from bson.objectid import ObjectId
-from bson.py3compat import (PY3, b, binary_type)
+from bson.py3compat import (PY3, b, binary_type, str_type, text_type, long_type)
 from bson.regex import Regex
 from bson.son import SON, RE_TYPE
 from bson.timestamp import Timestamp
@@ -118,7 +118,7 @@ def _get_c_string(data, position, length=None):
 
 
 def _make_c_string(string, check_null=False):
-    if isinstance(string, unicode):
+    if isinstance(string, text_type):
         if check_null and "\x00" in string:
             raise InvalidDocument("BSON keys / regex patterns must not "
                                   "contain a NULL character")
@@ -284,7 +284,7 @@ def _get_long(data, position, as_class, tz_aware, uuid_subtype, compile_re):
     # Have to cast to long; on 32-bit unpack may return an int.
     # 2to3 will change long to int. That's fine since long doesn't
     # exist in python3.
-    value = long(struct.unpack("q", data[position:position + 8])[0])
+    value = long_type(struct.unpack("q", data[position:position + 8])[0])
     position += 8
     return value, position
 
@@ -359,7 +359,7 @@ if _use_c:
 
 
 def _element_to_bson(key, value, check_keys, uuid_subtype):
-    if not isinstance(key, basestring):
+    if not isinstance(key, str_type):
         raise InvalidDocument("documents must have only string keys, "
                               "key was %r" % key)
 
@@ -415,7 +415,7 @@ def _element_to_bson(key, value, check_keys, uuid_subtype):
         cstring = _make_c_string(value)
         length = struct.pack("i", len(cstring))
         return BSONSTR + name + length + cstring
-    if isinstance(value, unicode):
+    if isinstance(value, text_type):
         cstring = _make_c_string(value)
         length = struct.pack("i", len(cstring))
         return BSONSTR + name + length + cstring
@@ -439,7 +439,7 @@ def _element_to_bson(key, value, check_keys, uuid_subtype):
         return BSONINT + name + struct.pack("i", value)
     # 2to3 will convert long to int here since there is no long in python3.
     # That's OK. The previous if block will match instead.
-    if isinstance(value, long):
+    if isinstance(value, long_type):
         if value > MAX_INT64 or value < MIN_INT64:
             raise OverflowError("BSON can only handle up to 8-byte ints")
         return BSONLON + name + struct.pack("q", value)
@@ -491,7 +491,7 @@ def _dict_to_bson(dict, check_keys, uuid_subtype, top_level=True):
         if top_level and "_id" in dict:
             elements.append(_element_to_bson("_id", dict["_id"],
                                              check_keys, uuid_subtype))
-        for (key, value) in dict.iteritems():
+        for (key, value) in dict.items():
             if not top_level or key != "_id":
                 elements.append(_element_to_bson(key, value,
                                                  check_keys, uuid_subtype))

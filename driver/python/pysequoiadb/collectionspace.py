@@ -22,6 +22,7 @@ except ImportError:
 
 import bson
 import pysequoiadb
+from bson.py3compat import (PY3, str_type)
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
@@ -143,8 +144,8 @@ class collectionspace(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(cl_name, basestring):
-         raise SDBTypeError("collection must be an instance of basestring")
+      if not isinstance(cl_name, str_type):
+         raise SDBTypeError("collection must be an instance of str_type")
 
       try:
          cl = collection()
@@ -173,8 +174,8 @@ class collectionspace(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(cl_name, basestring):
-         raise SDBTypeError("collection must be an instance of basestring")
+      if not isinstance(cl_name, str_type):
+         raise SDBTypeError("collection must be an instance of str_type")
 
       bson_options = None
       if options is not None:
@@ -207,8 +208,8 @@ class collectionspace(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(cl_name, basestring):
-         raise SDBTypeError("collection must be an instance of basestring")
+      if not isinstance(cl_name, str_type):
+         raise SDBTypeError("collection must be an instance of str_type")
 
       try:
          rc = sdb.cs_drop_collection(self._cs, cl_name)

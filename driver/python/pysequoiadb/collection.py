@@ -23,7 +23,7 @@ except ImportError:
 import bson
 from bson.objectid import ObjectId
 import pysequoiadb
-
+from bson.py3compat import (PY3, str_type, long_type)
 from pysequoiadb.cursor import cursor
 from pysequoiadb.lob import lob
 from pysequoiadb import error
@@ -152,10 +152,10 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(source_group_name, basestring):
-         raise SDBTypeError("source group name must be an instance of basestring")
-      if not isinstance(target_group_name, basestring):
-         raise SDBTypeError("target group name must be an instance of basestring")
+      if not isinstance(source_group_name, str_type):
+         raise SDBTypeError("source group name must be an instance of str_type")
+      if not isinstance(target_group_name, str_type):
+         raise SDBTypeError("target group name must be an instance of str_type")
 
       bson_split_condition = None
       if split_condition is not None:
@@ -191,10 +191,10 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(source_group_name, basestring):
-         raise SDBTypeError("source group name must be an instance of basestring")
-      if not isinstance(target_group_name, basestring):
-         raise SDBTypeError("target group name must be an instance of basestring")
+      if not isinstance(source_group_name, str_type):
+         raise SDBTypeError("source group name must be an instance of str_type")
+      if not isinstance(target_group_name, str_type):
+         raise SDBTypeError("target group name must be an instance of str_type")
       if not isinstance(percent, float) and not isinstance(percent, int):
          raise SDBTypeError("precent must be an instance of float or int values in (0, 100]")
 
@@ -234,10 +234,10 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(source_group_name, basestring):
-         raise SDBTypeError("source group name must be an instance of basestring")
-      if not isinstance(target_group_name, basestring):
-         raise SDBTypeError("target group name must be an instance of basestring")
+      if not isinstance(source_group_name, str_type):
+         raise SDBTypeError("source group name must be an instance of str_type")
+      if not isinstance(target_group_name, str_type):
+         raise SDBTypeError("target group name must be an instance of str_type")
 
       bson_split_condition = None
       if split_condition is not None:
@@ -281,10 +281,10 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(source_group_name, basestring):
-         raise SDBTypeError("source group name must be an instance of basestring")
-      if not isinstance(target_group_name, basestring):
-         raise SDBTypeError("target group name must be an instance of basestring")
+      if not isinstance(source_group_name, str_type):
+         raise SDBTypeError("source group name must be an instance of str_type")
+      if not isinstance(target_group_name, str_type):
+         raise SDBTypeError("target group name must be an instance of str_type")
       if not isinstance(percent, float):
          raise SDBTypeError("percent must be an instance of float")
 
@@ -464,7 +464,7 @@ class collection(object):
          oidv = doc.pop("_id")
          if isinstance(oidv, dict):
             oid = ObjectId(oidv["$oid"])
-         elif isinstance(oidv, basestring):
+         elif isinstance(oidv, str_type):
             oid = ObjectId(oidv)
          elif isinstance(oidv, ObjectId):
             oid = oidv
@@ -566,12 +566,12 @@ class collection(object):
             raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
       if "num_to_skip" in kwargs:
-         if not isinstance(kwargs.get("num_to_skip"), long):
+         if not isinstance(kwargs.get("num_to_skip"), long_type):
             raise SDBTypeError("num_to_skip must be an instance of long")
          else:
             num_to_skip = kwargs.get("num_to_skip")
       if "num_to_return" in kwargs:
-         if not isinstance(kwargs.get("num_to_return"), long):
+         if not isinstance(kwargs.get("num_to_return"), long_type):
             raise SDBTypeError("num_to_return must be an instance of long")
          else:
             num_to_return = kwargs.get("num_to_return")
@@ -824,8 +824,8 @@ class collection(object):
       """
       if not isinstance(index_def, dict):
          raise SDBTypeError("index definition must be an instance of dict")
-      if not isinstance(idx_name, basestring):
-         raise SDBTypeError("index name must be an instance of basestring")
+      if not isinstance(idx_name, str_type):
+         raise SDBTypeError("index name must be an instance of str_type")
       if not isinstance(is_unique, bool):
          raise SDBTypeError("is_unique must be an instance of bool")
       if not isinstance(is_enforced, bool):
@@ -862,8 +862,8 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if idx_name is not None and not isinstance(idx_name, basestring):
-         raise SDBTypeError("index name must be an instance of basestring")
+      if idx_name is not None and not isinstance(idx_name, str_type):
+         raise SDBTypeError("index name must be an instance of str_type")
       if idx_name is None:
          idx_name = ""
 
@@ -888,8 +888,8 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(idx_name, basestring):
-         raise SDBTypeError("index name must be an instance of basestring")
+      if not isinstance(idx_name, str_type):
+         raise SDBTypeError("index name must be an instance of str_type")
 
       try:
          rc = sdb.cl_drop_index(self._cl, idx_name)
@@ -1013,12 +1013,12 @@ class collection(object):
       num_to_return = -1
 
       if "num_to_skip" in kwargs:
-         if not isinstance(kwargs.get("num_to_skip"), long):
+         if not isinstance(kwargs.get("num_to_skip"), long_type):
             raise SDBTypeError("number to skip must be an instance of long")
          else:
             num_to_skip = kwargs.get("num_to_skip")
       if "num_to_return" in kwargs:
-         if not isinstance(kwargs.get("num_to_return"), long):
+         if not isinstance(kwargs.get("num_to_return"), long_type):
             raise SDBTypeError("number to return must be an instance of long")
          else:
             num_to_return = kwargs.get("num_to_return")
@@ -1063,11 +1063,11 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(cl_full_name, basestring):
+      if not isinstance(cl_full_name, str_type):
          raise SDBTypeError("full name of subcollection must be \
-                          an instance of basestring")
+                          an instance of str_type")
       if not isinstance(options, dict):
-         raise SDBTypeError("options must be an instance of basestring")
+         raise SDBTypeError("options must be an instance of str_type")
 
       bson_options = None
       if options is not None:
@@ -1089,8 +1089,8 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(sub_cl_full_name, basestring):
-         raise SDBTypeError("name of subcollection must be an instance of basestring")
+      if not isinstance(sub_cl_full_name, str_type):
+         raise SDBTypeError("name of subcollection must be an instance of str_type")
 
       try:
          rc = sdb.cl_detach_collection(self._cl, sub_cl_full_name)
@@ -1139,7 +1139,7 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(oid, bson.ObjectId) and not isinstance(oid, basestring):
+      if not isinstance(oid, bson.ObjectId) and not isinstance(oid, str_type):
          raise SDBTypeError("oid must be bson.ObjectId or string")
 
       if isinstance(oid, bson.ObjectId):
@@ -1255,7 +1255,7 @@ class collection(object):
             raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
       if "num_to_skip" in kwargs:
-         if not isinstance(kwargs.get("num_to_skip"), long):
+         if not isinstance(kwargs.get("num_to_skip"), long_type):
             raise SDBTypeError("num_to_skip must be an instance of long")
          else:
             num_to_skip = kwargs.get("num_to_skip")
@@ -1350,12 +1350,12 @@ class collection(object):
             raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
       if "num_to_skip" in kwargs:
-         if not isinstance(kwargs.get("num_to_skip"), long):
+         if not isinstance(kwargs.get("num_to_skip"), long_type):
             raise SDBTypeError("num_to_skip must be an instance of long")
          else:
             num_to_skip = kwargs.get("num_to_skip")
       if "num_to_return" in kwargs:
-         if not isinstance(kwargs.get("num_to_return"), long):
+         if not isinstance(kwargs.get("num_to_return"), long_type):
             raise SDBTypeError("num_to_return must be an instance of long")
          else:
             num_to_return = kwargs.get("num_to_return")

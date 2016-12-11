@@ -25,6 +25,7 @@ except ImportError:
 
 import bson
 import pysequoiadb
+from bson.py3compat import (PY3, str_type, long_type)
 from pysequoiadb.collectionspace import collectionspace
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
@@ -96,33 +97,33 @@ class client(object):
       self.__connected = False
       if host is None:
          self.__host = self.HOST
-      elif isinstance(host, basestring):
+      elif isinstance(host, str_type):
          self.__host = host
       else:
-         raise SDBTypeError("host must be an instance of basestring")
+         raise SDBTypeError("host must be an instance of str_type")
 
       if service is None:
          self.__service = self.SERVICE
       elif isinstance(service, int):
          self.__service = str(service)
-      elif isinstance(service, basestring):
+      elif isinstance(service, str_type):
          self.__service = service
       else:
-         raise SDBTypeError("service name must be an instance of int or basestring")
+         raise SDBTypeError("service name must be an instance of int or str_type")
 
       if user is None:
          _user = self.USER
-      elif isinstance(user, basestring):
+      elif isinstance(user, str_type):
          _user = user
       else:
-         raise SDBTypeError("user name must be an instance of basestring")
+         raise SDBTypeError("user name must be an instance of str_type")
 
       if psw is None:
          _psw = self.PSW
-      elif isinstance(psw, basestring):
+      elif isinstance(psw, str_type):
          _psw = psw
       else:
-         raise SDBTypeError("password must be an instance of basestring")
+         raise SDBTypeError("password must be an instance of str_type")
 
       if isinstance(ssl, bool):
          self.__ssl = ssl
@@ -251,7 +252,7 @@ class client(object):
       else:
          policy = "random"
       if not isinstance(policy, str):
-         raise SDBTypeError("policy must be an instance of basestring")
+         raise SDBTypeError("policy must be an instance of str_type")
 
       if len(hosts) == 0:
          raise SDBTypeError("hosts must hava at least 1 item",
@@ -262,7 +263,7 @@ class client(object):
       if "user" in kwargs:
          if not isinstance(kwargs.get("user"), str):
             raise SDBTypeError("user name in kwargs must be \
-                            an instance of basestring")
+                            an instance of str_type")
          _user = kwargs.get("user")
       else:
          _user = self.USER
@@ -270,13 +271,13 @@ class client(object):
       if "password" in kwargs:
          if not isinstance(kwargs.get("password"), str):
             raise SDBTypeError("password in kwargs must be \
-                            an instance of basestring")
+                            an instance of str_type")
          _psw = kwargs.get("password")
       else:
          _psw = self.PSW
 
       # connect to localhost first
-      if 0 == cmp("local_first", policy):
+      if "local_first" == policy:
          for ip in hosts:
             if ("localhost" in ip.values() or
                 local in ip.values() or
@@ -284,17 +285,17 @@ class client(object):
 
                host = ip['host']
                svc = ip['service']
-               if isinstance(host, basestring):
+               if isinstance(host, str_type):
                   self.__host = host
                else:
-                  raise SDBTypeError("policy must be an instance of basestring")
+                  raise SDBTypeError("policy must be an instance of str_type")
 
                if isinstance(svc, int):
                   self.__service = str(svc)
-               elif isinstance(svc, basestring):
+               elif isinstance(svc, str_type):
                   self.__service = svc
                else:
-                  raise SDBTypeError("policy must be an instance of int or basestring")
+                  raise SDBTypeError("policy must be an instance of int or str_type")
 
                try:
                   self.connect(self.__host, self.__service,
@@ -307,9 +308,9 @@ class client(object):
 
       # without local host in hosts, check policy
       size = len(hosts)
-      if 0 == cmp("random", policy) or 0 == cmp("local_first", policy):
+      if "random" == policy or "local_first" == policy:
          position = random.randint(0, size - 1)
-      elif 0 == cmp("one_by_one", policy):
+      elif "one_by_one" == policy:
          position = 0;
       else:
          raise SDBTypeError("policy must be 'random' or 'one_by_one'.")
@@ -320,14 +321,14 @@ class client(object):
          host = ip['host']
          svc = ip['service']
 
-         if isinstance(host, basestring):
+         if isinstance(host, str_type):
             self.__host = host
          else:
-            raise SDBTypeError("policy must be an instance of basestring")
+            raise SDBTypeError("policy must be an instance of str_type")
 
          if isinstance(svc, int):
             self.__service = str(svc)
-         elif isinstance(svc, basestring):
+         elif isinstance(svc, str_type):
             self.__service = svc
          else:
             raise SDBTypeError("policy must be an instance of int or str")
@@ -361,35 +362,35 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if isinstance(host, basestring):
+      if isinstance(host, str_type):
          self.__host = host
       else:
-         raise SDBTypeError("host must be an instance of basestring")
+         raise SDBTypeError("host must be an instance of str_type")
 
       if isinstance(service, int):
          self.__service = str(service)
-      elif isinstance( service, basestring ):
+      elif isinstance( service, str_type ):
          self.__service = service
       else:
-         raise SDBTypeError("service name must be an instance of int or basestring")
+         raise SDBTypeError("service name must be an instance of int or str_type")
 
       if "user" in kwargs:
          user = kwargs.get("user")
       else:
          user = self.USER
-      if isinstance(user, basestring):
+      if isinstance(user, str_type):
          _user = user
       else:
-         raise SDBTypeError("user name must be an instance of basestring")
+         raise SDBTypeError("user name must be an instance of str_type")
       
       if "password" in kwargs:
          psw = kwargs.get("password")
       else:
          psw = self.PSW
-      if isinstance(psw, basestring):
+      if isinstance(psw, str_type):
          _psw = psw
       else:
-         raise SDBTypeError("password must be an instance of basestring")
+         raise SDBTypeError("password must be an instance of str_type")
 
       try:
          rc = sdb.sdb_connect(self._client, self.__host, self.__service,
@@ -430,11 +431,11 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(name, basestring):
-         raise SDBTypeError("user name must be an instance of basestring")
+      if not isinstance(name, str_type):
+         raise SDBTypeError("user name must be an instance of str_type")
 
-      if not isinstance(psw, basestring):
-         raise SDBTypeError("password must be an instance of basestring")
+      if not isinstance(psw, str_type):
+         raise SDBTypeError("password must be an instance of str_type")
 
       try:
          rc = sdb.sdb_create_user(self._client, name, psw)
@@ -453,11 +454,11 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(name, basestring):
-         raise SDBTypeError("user name must be an instance of basestring")
+      if not isinstance(name, str_type):
+         raise SDBTypeError("user name must be an instance of str_type")
 
-      if not isinstance(psw, basestring):
-         raise SDBTypeError("password must be an instance of basestring")
+      if not isinstance(psw, str_type):
+         raise SDBTypeError("password must be an instance of str_type")
 
       try:
          rc = sdb.sdb_remove_user(self._client, name, psw)
@@ -627,8 +628,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(cl_full_name, basestring):
-         raise SDBTypeError("full name of collection must be an instance of basestring")
+      if not isinstance(cl_full_name, str_type):
+         raise SDBTypeError("full name of collection must be an instance of str_type")
       if '.' not in cl_full_name:
          raise SDBTypeError("Full name must included '.'")
 
@@ -655,8 +656,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(cs_name, basestring):
-         raise SDBTypeError("name of collection space must be an instance of basestring")
+      if not isinstance(cs_name, str_type):
+         raise SDBTypeError("name of collection space must be an instance of str_type")
 
       try:
          cs = collectionspace()
@@ -705,8 +706,8 @@ class client(object):
                       524288  :  512k
       """
       ops = {}
-      if not isinstance(cs_name, basestring):
-         raise SDBTypeError("name of collection space must be an instance of basestring")
+      if not isinstance(cs_name, str_type):
+         raise SDBTypeError("name of collection space must be an instance of str_type")
       if isinstance(options, int):
          if options not in [0, 4096, 8192, 16384, 32768, 65536]:
             raise SDBTypeError("page size is invalid")
@@ -740,9 +741,9 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(cs_name, basestring):
+      if not isinstance(cs_name, str_type):
          raise SDBTypeError("name of collection space must be\
-                         an instance of basestring")
+                         an instance of str_type")
 
       try:
          rc = sdb.sdb_drop_collection_space(self._client, cs_name)
@@ -820,8 +821,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(group_name, basestring):
-         raise SDBTypeError("group name must be an instance of basestring")
+      if not isinstance(group_name, str_type):
+         raise SDBTypeError("group name must be an instance of str_type")
 
       try:
          result = replicagroup(self._client)
@@ -873,8 +874,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(group_name, basestring):
-         raise SDBTypeError("group name must be an instance of basestring")
+      if not isinstance(group_name, str_type):
+         raise SDBTypeError("group name must be an instance of str_type")
 
       try:
          replica_group = replicagroup(self._client)
@@ -898,8 +899,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(group_name, basestring):
-         raise SDBTypeError("group name must be an instance of basestring")
+      if not isinstance(group_name, str_type):
+         raise SDBTypeError("group name must be an instance of str_type")
 
       try:
          rc = sdb.sdb_remove_replica_group(self._client, group_name)
@@ -920,12 +921,12 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(host, basestring):
-         raise SDBTypeError("host must be an instance of basestring")
-      if not isinstance(service, basestring):
-         raise SDBTypeError("service name must be an instance of basestring")
-      if not isinstance(path, basestring):
-         raise SDBTypeError("path must be an instance of basestring")
+      if not isinstance(host, str_type):
+         raise SDBTypeError("host must be an instance of str_type")
+      if not isinstance(service, str_type):
+         raise SDBTypeError("service name must be an instance of str_type")
+      if not isinstance(path, str_type):
+         raise SDBTypeError("path must be an instance of str_type")
       if not isinstance(configure, dict):
          raise SDBTypeError("configure must be an instance of dict")
 
@@ -948,8 +949,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(sql, basestring):
-         raise SDBTypeError("update sql must be an instance of basestring")
+      if not isinstance(sql, str_type):
+         raise SDBTypeError("update sql must be an instance of str_type")
 
       try:
          rc = sdb.sdb_exec_update(self._client, sql)
@@ -969,8 +970,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(sql, basestring):
-         raise SDBTypeError("sql must be an instance of basestring")
+      if not isinstance(sql, str_type):
+         raise SDBTypeError("sql must be an instance of str_type")
 
       try:
          result = cursor()
@@ -1053,8 +1054,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(code, basestring):
-         raise SDBTypeError("code must be an instance of basestring")
+      if not isinstance(code, str_type):
+         raise SDBTypeError("code must be an instance of str_type")
       try:
          rc = sdb.sdb_create_JS_procedure(self._client, code)
          pysequoiadb._raise_if_error("Failed to crate procedure", rc)
@@ -1071,8 +1072,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(name, basestring):
-         raise SDBTypeError("procedure name must be an instance of basestring")
+      if not isinstance(name, str_type):
+         raise SDBTypeError("procedure name must be an instance of str_type")
 
       try:
          rc = sdb.sdb_remove_procedure(self._client, name)
@@ -1120,8 +1121,8 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(name, basestring):
-         raise SDBTypeError("code must be an instance of basestring")
+      if not isinstance(name, str_type):
+         raise SDBTypeError("code must be an instance of str_type")
 
       try:
          result = cursor()
@@ -1376,7 +1377,7 @@ class client(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(task_id, long):
+      if not isinstance(task_id, long_type):
          raise SDBTypeError("task id must be an instance of list")
 
       async = 0
