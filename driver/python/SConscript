@@ -1,6 +1,8 @@
 Import("env")
 Import("path")
 Import("curPath")
+Import("guess_os")
+Import("py3")
 
 import sys
 import os
@@ -152,6 +154,17 @@ base.append(env.Install("#/pysequoiadb", driver))
 base.append(env.Install("#/bson", decimal))
 base.append(env.Install("#/bson", "pysequoiadb/decimal.py")) 
 
+if py3:
+   py_version = "py3"
+else:
+   py_version = "py2"
+if guess_os == "win32":
+   suffix = ".zip"
+else:
+   suffix = ".tar.gz"
+
+package_name = "pysequoiadb-" + py_version + suffix
+
 def zipPackage(target, source):
    with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as zfile:
       for path in source:
@@ -164,7 +177,7 @@ def zipPackage(target, source):
 def zipPackageAction(target=None, source=None, env = env):
    os.chdir(PYHOME)
    os.rename("bson/decimal.dll", "bson/bsondecimal.dll")
-   zipPackage('pysequoiadb.zip', ['pysequoiadb', 'bson', 'setup.py'])
+   zipPackage(package_name, ['pysequoiadb', 'bson', 'setup.py'])
 
 if sys.platform == 'win32':
    run = env.Command(target = None, source = base, action = zipPackageAction)
@@ -172,9 +185,9 @@ else:
    act = []
    act.append("mv ./pysequoiadb/libsdb.so ./pysequoiadb/sdb.so")
    act.append("mv ./bson/libdecimal.so ./bson/bsondecimal.so")
-   act.append("tar -zcvf pysequoiadb.tar.gz   \
+   act.append("tar -zcvf %s \
                ./bson ./pysequoiadb ./setup.py \
-               --exclude-vcs")
+               --exclude-vcs" % package_name )
    run = env.Command(target = None, source = base, action = act )
 env.Depends(run, base)
 env.AlwaysBuild(run)

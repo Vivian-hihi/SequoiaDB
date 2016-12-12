@@ -53,15 +53,6 @@ def GuessArch():
 guess_os = GuessOS()
 guess_arch = GuessArch()
 
-if guess_os == 'linux':
-   ver = sys.version_info[0]
-   sub = sys.version_info[1]
-   python_include = sys.prefix + '/include/' + ("python%d.%d" % (ver, sub))
-   python_lib = sys.prefix + '/lib/' + ("python%d.%d" % (ver, sub))
-elif guess_os == 'win32':
-   python_include = sys.prefix + "/include/"
-   python_lib = sys.prefix + '/libs/'
-
 def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
    if dest is None:
       dest = name
@@ -132,8 +123,10 @@ def get_variant_dir():
 
 add_option( "dd", "debug build no optimization, additional debug logging, etc...",
             0 , True , "debugBuildAndLogging" )
+add_option( "py3", "compile python3 driver", 0, True )
 
 debugBuild = has_option( "debugBuildAndLogging" )
+py3 = has_option( "py3" )
 
 variantDir = get_variant_dir()
 env = Environment( BUILD_DIR=variantDir )
@@ -141,6 +134,28 @@ env = Environment( BUILD_DIR=variantDir )
 env.Append ( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 env.Append ( CPPDEFINES=[ "SDB_CLIENT" ] )
 env.Append ( CPPDEFINES=[ "SDB_SSL" ] )
+
+def check_py3():
+   sys.stdout.write("check if python3 exists: ")
+   sys.stdout.flush()
+   res = os.system("python3 --version")
+   return (res == 0)
+
+if py3:
+   if not check_py3():
+      raise Exception("python3 driver need python3, but not found")
+   res = os.popen("python3 py3include.py").readlines()
+   python_include = res[0].strip()
+   python_lib = res[1].strip()
+else:
+   if guess_os == 'linux':
+      ver = sys.version_info[0]
+      sub = sys.version_info[1]
+      python_include = sys.prefix + '/include/' + ("python%d.%d" % (ver, sub))
+      python_lib = sys.prefix + '/lib/' + ("python%d.%d" % (ver, sub))
+   elif guess_os == 'win32':
+      python_include = sys.prefix + "/include/"
+      python_lib = sys.prefix + '/libs/'
 
 if guess_os == "win32":
    # check VC compiler
@@ -222,7 +237,6 @@ elif guess_os == "linux":
    else:
       env.Append( CPPFLAGS=" -O3")
 
-#python_include="/opt/python3.5/include/python3.5m"
 env.Append( CPPPATH=[ root_dir, client_include, boost_dir,
                       common_include_dir, bson_include_dir, python_include, ssl_include ] )
 
@@ -231,6 +245,8 @@ env.Append( LIBPATH= python_lib)
 Export("env")
 Export("path")
 Export("curPath")
+Export("guess_os")
+Export("py3")
 
 # exec build scons
 env.SConscript( 'SConscript', variant_dir=variantDir, duplicate=False )
