@@ -601,7 +601,11 @@ __METHOD_IMPLEMENT(toBsonElement)
    }
 
 done:
+#if PY_MAJOR_VERSION >= 3
+   return (PyObject *)Py_BuildValue("(i,y#)", rc, ele.value(), ele.valuesize()) ;
+#else
    return (PyObject *)Py_BuildValue("(i,s#)", rc, ele.value(), ele.valuesize()) ;
+#endif
 error:
    goto done ;
 }

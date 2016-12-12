@@ -15,7 +15,6 @@
 """decimal supported for Python driver of SequoiaDB
 """
 import bson
-from bson.py3compat import binary_type as bstr
 from bson.py3compat import (PY3, long_type)
 try:
    from . import bsondecimal as decimal
@@ -178,7 +177,7 @@ class Decimal(object):
          return self.__from_int(value)
       elif isinstance(value, float):
          return self.__from_float(value)
-      elif isinstance(value, bstr):
+      elif isinstance(value, str):
          return self.__from_string(value)
       else:
          raise TypeError("invalid value to parse")
