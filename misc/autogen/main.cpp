@@ -35,6 +35,12 @@ static void genTrace ()
    TraceGen::genList () ;
 }
 
+static void genVer()
+{
+   VerGen verGen ;
+   verGen.run(false) ;
+}
+
 enum supportedLangs
 {
    LANG_CN = 0,
@@ -56,7 +62,7 @@ static void genDoc ( const char *lang )
    optGen.run () ;
 
    VerGen verGen ;
-   verGen.run() ;
+   verGen.run(true) ;
 
    for ( int i = 0; i < LANG_MAX; ++i )
    {
@@ -97,5 +103,6 @@ int main (int argc, char** argv)
    genTrace () ;
    genDoc ( "cn" ) ;
    genBuild () ;
+   genVer() ;
    return 0;
 }

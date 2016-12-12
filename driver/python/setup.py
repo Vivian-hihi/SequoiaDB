@@ -17,6 +17,7 @@ import sys
 import os
 import glob
 import shutil
+from version import version
 
 if 'win32' == sys.platform:
    dlls = './pysequoiadb/*.dll'
@@ -56,7 +57,7 @@ extra_opts['package_data'] = { 'pysequoiadb':['err.prop', libsdb],
                                         libdecimal],}
 #extra_opts['ext_modules'] = ext_modules
 setup(name = 'pysequoiadb',
-      version = '2.8',
+      version = version,
       author = 'SequoiaDB Inc.',
       license = 'Apache License 2',
       description = 'This is a sequoiadb python driver use adapter package',

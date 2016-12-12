@@ -6,7 +6,7 @@ class VerGen
 public:
     VerGen() ;
     ~VerGen() ;
-    void run() ;
+    void run(bool doc) ;
 } ;
 
 #endif /* VER_GEN_H__ */
