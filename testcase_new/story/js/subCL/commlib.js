@@ -349,4 +349,66 @@ function insertBulkData( dbcl, recordNum, recordStart, recordEnd )
    }
    return doc;
 }
-
+/************************************************
+ * @Description:  insert records by an array
+ * @Author:       linsuqiang
+ * @Date:         2016-11-30
+ * **********************************************/
+ function bulkinsert( mainCL, recs )
+{
+   try
+   {
+      mainCL.insert( recs );
+   }
+   catch( e )
+   {
+      println( "records for inserting contain wrong records." );
+      throw buildException( "bulkinsert", null, "", "", "" + e );
+   }
+}
+/************************************************
+ * @Description:  insert valid records one by one
+ * @Author:       linsuqiang
+ * @Date:         2016-11-30
+ * **********************************************/
+function insertValidRecs( mainCL, recs )
+{
+   for( var i = 0; i < recs.length; i++ )
+   {
+      try
+      {
+         mainCL.insert( recs[i] );
+      }
+      catch( e )
+      {
+         throw buildException( "insertValidRecs", null, "[" + ( parseInt( i ) + 1 ) + " th record: " + recs[i] + "",
+                               "", "" + e );
+      }
+   }
+}
+/************************************************
+ * @Description:  insert invalid records one by one
+ * @Author:       linsuqiang
+ * @Date:         2016-11-30
+ * **********************************************/
+function insertInvalidRecs( mainCL, recs )
+{
+   for( var i = 0; i < recs.length; i++ )
+   {
+      try
+      {
+         mainCL.insert( recs[i] );
+         throw "record is valid unexceptedly";
+      }
+      catch( e )
+      {  // -135 is caused by out bound, not useful for all conditions！！
+         var exceptE = -135;
+         if( e !== exceptE )
+         {
+            throw buildException( "insertInvalidRecs", null, "[" + ( parseInt( i ) + 1 ) + " th record]" + recs[i], 
+                                 "[" + exceptE + "]", 
+                                 "[" + e + "]" );
+         }
+      }
+   }
+}
