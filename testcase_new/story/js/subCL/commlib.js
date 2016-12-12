@@ -412,3 +412,50 @@ function insertInvalidRecs( mainCL, recs )
       }
    }
 }
+
+
+/**
+ * 比较两个JSON对象是否相等
+ * @param  {[json]} objA
+ * @param  {[json]} objB
+ * @return {[boolean]}
+ * @author ouyangzhongnan
+ */
+/**=========================================================================*/
+function compare(objA, objB) {
+    if (!isObj(objA) || !isObj(objB)) return false;
+    if (getLength(objA) != getLength(objB)) return false;
+    return compareObj(objA, objB, true);
+}
+function isObj(object) {
+    return object && typeof (object) == 'object' && Object.prototype.toString.call(object).toLowerCase() == "[object object]";
+}
+function isArray(object) {
+    return object && typeof (object) == 'object' && object.constructor == Array;
+}
+function getLength(object) {
+    var count = 0;
+    for (var i in object) count++;
+    return count;
+}
+function compareObj(objA, objB, flag) {
+    for (var key in objA) {
+        if (!flag)
+            break;
+        if (!objB.hasOwnProperty(key)) { flag = false; break; }
+        if (!isArray(objA[key])) {
+            if (objB[key] != objA[key]) { flag = false; break; }
+        } else {
+            if (!isArray(objB[key])) { flag = false; break; }
+            var oA = objA[key], oB = objB[key];
+            if (oA.length != oB.length) { flag = false; break; }
+            for (var k in oA) {
+                if (!flag)
+                    break;
+                flag = compareObj(oA[k], oB[k], flag);
+            }
+        }
+    }
+    return flag;
+}
+/**=========================================================================*/
