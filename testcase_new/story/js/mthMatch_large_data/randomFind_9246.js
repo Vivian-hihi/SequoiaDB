@@ -95,7 +95,7 @@ function main()
    }
    
    //insert random numberical data
-   for(var i= 0; i< 200;i++){
+   for(var i= 0; i< 100;i++){
       var rd = new dataGenerator();
       var recs = rd.getRecords( 20000, ["int", "long", "float", "array"], fieldNames );
       insertData(dbcl_IndexScan, recs);
