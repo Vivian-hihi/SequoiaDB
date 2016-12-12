@@ -24,12 +24,12 @@ if __name__ == "__main__":
 
       # insert records
       records = []
-      for idx in xrange(0, 10):
+      for idx in range(10):
          name = 'SequoiaDB' + str(idx)
          sport = {"Rank":idx, "Name":name}
          records.append(sport)
 
-      cl.bulk_insert(1, [{'idx':i} for i in xrange(10)]) #records
+      cl.bulk_insert(1, [{'idx':i} for i in range(10)]) #records
 
       full_name = cl.get_full_name()
       sql1 = "select * from %s" % full_name
@@ -76,7 +76,7 @@ if __name__ == "__main__":
       db.disconnect()
       del db
 
-   except (SDBTypeError, SDBBaseError), e:
+   except (SDBTypeError, SDBBaseError) as e:
       pysequoiadb._print(e)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print(e.detail)

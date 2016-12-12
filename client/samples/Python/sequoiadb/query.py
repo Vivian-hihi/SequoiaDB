@@ -66,5 +66,5 @@ if __name__ == "__main__":
       db.disconnect()
       del db
 
-   except (SDBTypeError, SDBBaseError), e:
+   except (SDBTypeError, SDBBaseError) as  e:
       pysequoiadb._print(e)

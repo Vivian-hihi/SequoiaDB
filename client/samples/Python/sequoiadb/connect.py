@@ -15,7 +15,7 @@ if "__main__" == __name__:
       db_default = client()
       pysequoiadb._print( db_default )
       del db_default
-   except (SDBTypeError, SDBBaseError), e:
+   except (SDBTypeError, SDBBaseError) as e:
       pysequoiadb._print(e)
 
    # connect to db, using default args value.
@@ -24,7 +24,7 @@ if "__main__" == __name__:
    try:
       db_to_1 = client('192.168.20.48', 11810, '', '')
       del db_to_1
-   except (SDBTypeError, SDBBaseError), e:
+   except (SDBTypeError, SDBBaseError) as e:
       pysequoiadb._print(e)
 
    # connect to db, using default args value.
@@ -50,5 +50,5 @@ if "__main__" == __name__:
       # release clinet
       del db
 
-   except (SDBTypeError, SDBBaseError), e:
+   except (SDBTypeError, SDBBaseError) as e:
       pysequoiadb._print(e)

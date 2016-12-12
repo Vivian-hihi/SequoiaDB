@@ -52,7 +52,7 @@ if __name__ == "__main__":
             record = cr.next()
          except SDBEndOfCursor :
             break
-         except SDBBaseError, e:
+         except SDBBaseError as e:
             raise
          pysequoiadb._print(record)
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
       db.disconnect()
       del db
 
-   except (SDBTypeError, SDBBaseError), e:
+   except (SDBTypeError, SDBBaseError) as e:
       pysequoiadb._print(e)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print(e.detail)

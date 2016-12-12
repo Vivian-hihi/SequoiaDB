@@ -39,5 +39,5 @@ if __name__ == "__main__":
 
       del db
 
-   except (SDBTypeError, SDBBaseError), e:
+   except (SDBTypeError, SDBBaseError) as e:
       pysequoiadb._print(e)
