@@ -191,5 +191,5 @@ function checkResult( mainCL, validRecs )
 {
    println( "\n---Begin to check records." );
    var rc = mainCL.find().sort( { _id: 1 } );
-   checkRec( rc, validRecs );
+   lsqCheckRec( rc, validRecs );
 }

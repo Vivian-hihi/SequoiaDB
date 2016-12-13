@@ -163,7 +163,7 @@ function testMatch( mainCL, option, expRes, matchName )
    actRes = mainCL.find( option ).sort( { _id: 1 } );
    try
    {
-      checkRec( actRes, expRes );
+      lsqCheckRec( actRes, expRes );
    }
    catch( e )
    {
