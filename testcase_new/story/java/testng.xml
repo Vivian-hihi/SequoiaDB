@@ -17,6 +17,14 @@
       </packages>    
    </test>
    
+   <test name="attachTest" >
+      <packages>
+         <package name="com.sequoiadb.attachtest" />
+      </packages>    
+   </test>
+   
+   
+   
 
 </suite>
    
