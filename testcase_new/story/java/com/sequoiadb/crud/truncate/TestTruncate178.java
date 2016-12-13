@@ -1,0 +1,88 @@
+package com.sequoiadb.crud.truncate;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestBase;
+
+/**
+ * @FileName:seqDB-178:dropCS与truncate的并发
+ * 插入数据，一条线程执行dropCS，另一条线程执行truncate
+ * @Author linsuqiang
+ * @Date 2016-12-06
+ * @Version 1.00
+ */
+public class TestTruncate178 extends SdbTestBase {
+
+	private static Sequoiadb sdb = null;
+	private String myCsName = "cs_178";
+	private String clName = "cl_178";
+	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+
+	@BeforeClass
+	public void setUp() {
+		System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
+		try{
+			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			if (!sdb.isCollectionSpaceExist(myCsName)){
+				sdb.createCollectionSpace(myCsName);
+			}
+			DBCollection cl = Commlib.createCL(sdb, myCsName, clName);
+			// doing insert
+			Commlib.insertData( cl );
+		}catch(BaseException e){			
+			Assert.fail( e.getMessage() );
+		}
+	}
+	
+	@AfterClass
+	public void tearDown(){	
+		try{	
+			if( sdb.isCollectionSpaceExist(myCsName) ){
+				sdb.dropCollectionSpace( myCsName );
+			}
+			sdb.disconnect();
+		}catch(BaseException e){
+			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}
+		System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
+	}
+
+	@Test
+	public void launchTruncate() {
+		Sequoiadb db = null;
+		DBCollection cl = null;
+		try{
+			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			cl = db.getCollectionSpace(myCsName).getCollection(clName);
+			// doing truncate
+			cl.truncate();
+		}catch( Exception e ){
+			// all exceptions are acceptable, as long as no core dump and hanging
+		}finally{
+			db.disconnect();
+		}
+	}
+	
+	@Test
+	public void launchDropCS() {
+		Sequoiadb db = null;
+		try{
+			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			// doing drop CS
+			db.dropCollectionSpace( myCsName );
+		}catch( Exception e ){
+			// all exceptions are acceptable, as long as no core dump and hanging
+		}finally{
+			db.disconnect();
+		}
+	}
+}
