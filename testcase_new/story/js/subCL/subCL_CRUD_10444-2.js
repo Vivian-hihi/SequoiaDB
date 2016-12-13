@@ -53,7 +53,7 @@ function main()
    testMatch( mainCL, allOption, allExpRes, "$all" );
 
    // test $size
-   var sizeOption = { arr: { $size: 3 } };
+   var sizeOption = { arr: { $size: 1, $et: 3 } };
    var sizeExpRes = [{ arr: [ "Tom", "Mike", "Jhon" ], MCLKEY: 555 },
                       { arr: [ "Mike", "Tom", "Jerry" ], MCLKEY: 555 } ];
    testMatch( mainCL, sizeOption, sizeExpRes, "$size" );
@@ -79,7 +79,7 @@ function main()
    bulkinsert( mainCL, strRecs );
 
    // test $type
-   var typeOption = { str_1: { $type: 2 } };
+   var typeOption = { str_1: { $type: 1, $et: 2 } };
    var typeExpRes = [  { str_1: "Hello World", str_2: "Hello World", MCLKEY: 555 },
                         { str_1: "hello friends", str_2: "Hi friends", MCLKEY: 555 },
                         { str_1: "Hell oworld", MCLKEY: 555 } ];
