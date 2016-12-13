@@ -412,6 +412,47 @@ function insertInvalidRecs( mainCL, recs )
       }
    }
 }
+/************************************
+*@Description: compare actual and expect result,
+               they is not the same ,return error ,
+               else return ok
+*@author:      linsuqiang
+*@createDate:  2016.12.13
+**************************************/
+function lsqCheckRec( rc, expRecs )
+{           
+   //get actual records to array
+   var actRecs = [];
+   while( rc.next() )
+   {
+      actRecs.push( rc.current().toObj() );
+   }
+   //check count
+   if( actRecs.length !== expRecs.length )
+   {
+      println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));
+      throw buildException("check count", null, "",
+                           expRecs.length, actRecs.length);
+   }
+   
+   //check every records every fields,expRecs as compare source
+   for( var i in expRecs )
+   {
+      var actRec = actRecs[i];
+      var expRec = expRecs[i];
+      
+      for ( var f in expRec )
+      {
+         if( JSON.stringify(actRec[f]) !== JSON.stringify(expRec[f]) )
+         {
+            println("\nerror occurs in "+(parseInt(i)+1)+"th record, in field '"+f+"'");
+            println("\nactual record= "+JSON.stringify(actRec)+"\n\nexpect record= "+JSON.stringify(expRec));
+            println("\nactual recs in cl= "+JSON.stringify(actRecs)+"\n\nexpect recs= "+JSON.stringify(expRecs));       
+            throw buildException("lsqCheckRec()", "rec ERROR");
+         }
+      }
+   }
+}
 
 
 /**
