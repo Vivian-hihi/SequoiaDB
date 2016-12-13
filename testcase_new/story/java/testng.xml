@@ -19,7 +19,8 @@
    </test>
    
    <test name="parralmethod" parallel="methods" thread-count="5">
-      <packages>     
+      <packages>
+         <package name="com.sequoiadb.crud" />
       </packages>    
    </test>
    
