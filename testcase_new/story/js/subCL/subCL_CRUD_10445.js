@@ -121,5 +121,5 @@ function testSel( mainCL, option )
 
 function checkFound( mainCL, foundRes, foundExpRes )
 {
-   checkRec( foundRes, foundExpRes);
+   lsqCheckRec( foundRes, foundExpRes);
 }
