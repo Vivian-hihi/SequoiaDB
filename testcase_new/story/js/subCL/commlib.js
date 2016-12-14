@@ -499,4 +499,134 @@ function compareObj(objA, objB, flag) {
     }
     return flag;
 }
+/*******************************
+****准备好ShardingKey为正序的测试环境。
+****其中的步骤包括：
+****创建ShardingKey为正序的主表
+****把子表挂载到主表
+****同时批量插入一些数据
+*******************************/
+function prepareByPositiveSequence( mainCL_Name, subCL_Name1, subCL_Name2 )
+{
+   //获取所有的数据组
+   var groupsArray = commGetGroups( db, false, "", false, true, true );
+   //创建主表
+   var mainCLOption = { ShardingKey:{ "a":1 }, ShardingType:"range", IsMainCL:true };
+   var mainCL = commCreateCLByOption( db, COMMCSNAME, mainCL_Name, mainCLOption, true, true );
+   //创建普通子表
+   var groupName1 = groupsArray[1][0].GroupName;
+   var groupName2 = groupsArray[2][0].GroupName;
+   var subClOption1 = { Group:groupName1 };
+   commCreateCLByOption( db, COMMCSNAME, subCL_Name1, subClOption1, true, true );
+   //创建分区表
+   var subClOption2 = { Group:groupName2, ShardingKey:{ "b":1 }, ShardingType:"range", ReplSize:0 };
+   commCreateCLByOption( db, COMMCSNAME, subCL_Name2, subClOption2, true, true );
+   //attach 普通的表
+   mainCL.attachCL( COMMCSNAME + "." + subCL_Name1, { LowBound:{ a:0   },UpBound:{ a:10 } } ) ;
+   //attach分区表
+   mainCL.attachCL( COMMCSNAME + "." + subCL_Name2, { LowBound:{ a:10 },UpBound:{ a:20} } ) ;
+   //对分区字表进行分区
+   try
+   {
+      //sprilt subcl
+      db.getCS( COMMCSNAME ).getCL( subCL_Name2 ).split( groupName2, groupName1, { b:0 },{ b:50 } );
+   }
+   catch(e)
+   {
+      throw buildException( "prepareByPositiveSequence()", e, "split subc2", "split subc2 success",
+                           "split subc2 fail" );
+   }
+   insertData( mainCL );
+}
+/*******************************
+****准备好ShardingKey为逆序的测试环境。
+****其中的步骤包括：
+****创建ShardingKey为逆序的主表
+****把子表挂载到主表
+****同时批量插入一些数据
+*******************************/
+function prepareByInvertedSequence( mainCL_Name, subCL_Name1, subCL_Name2 )
+{
+   //获取所有的数据组
+   var groupsArray = commGetGroups( db, false, "", false, true, true );
+   //创建主表
+   var mainCLOption = { ShardingKey:{ "a":-1 },ShardingType:"range",IsMainCL:true };
+   var mainCL = commCreateCLByOption( db, COMMCSNAME, mainCL_Name, mainCLOption, true, true );
+   //创建普通子表
+   var groupName1 = groupsArray[1][0].GroupName;
+   var groupName2 = groupsArray[2][0].GroupName;
+   var subClOption1 = {Group:groupName1};
+   commCreateCLByOption( db, COMMCSNAME, subCL_Name1, subClOption1, true, true );
+   //创建分区表
+   var subClOption2 = { Group:groupName2, ShardingKey:{ "b":1 }, ShardingType:"range", ReplSize:0 };
+   commCreateCLByOption( db, COMMCSNAME, subCL_Name2, subClOption2, true, true ); 
+   //attach 普通的表
+   mainCL.attachCL( COMMCSNAME + "." + subCL_Name1, { LowBound:{a:9  }, UpBound:{a:-1} } ) ;
+   //attach分区表
+   mainCL.attachCL( COMMCSNAME + "." + subCL_Name2, { LowBound:{a:19}, UpBound:{a:9} } ) ;
+   //对分区字表进行分区
+   try
+   {
+      //sprilt subcl
+      db.getCS( COMMCSNAME ).getCL( subCL_Name2 ).split( groupName2, groupName1, {b:0}, {b:50} );
+   }
+   catch(e)
+   {
+      throw buildException("prepareByInvertedSequence()", e, "split subc2", "split subc2 success",
+                           "split subc2 fail");
+   }
+   insertData( mainCL );
+}
+
+function insertData( mainCL )
+{
+   //插入数据
+   var doc = [];
+   for( var j = 0; j < 20; j++ )
+   {
+      for( var k = 0; k < 100; k++ )
+      {
+         doc.push( { a:j, b:k, test:"testData"+k } );
+      }
+   }
+   try
+   {
+   //批量向表插入数据
+   mainCL.insert( doc );
+   }
+   catch( e )
+   {
+      throw buildException( "insertData()", e, "insert data", "insert data success", "insert data fail" );
+   }
+}
+
+function zxqCheckRec( realData, expectDataArray )
+{
+   if( realData.count() != expectDataArray.length )
+   {
+      println( realData.count()+"   "+expectDataArray.length );
+      println( "real count is not same as expect count" );
+      throw buildException( "zxqCheckRec()", null, "check data", "check data success", "check data fail" );
+   }
+   else
+   {
+      var current;
+      var expect;
+      for( var i = 0; i < realData.count(); i++ )
+      {
+         current = realData.current().toObj();
+         expect = expectDataArray[i];
+         if(current.a !== expect.a||current.b!==expect.b||current.test!==expect.test)
+         {
+            println( "real data is not same as expect data" );
+            throw buildException( "zxqCheckRec()", null, "check data", "check data success",
+                                 "check data fail" );
+         }
+         realData.next();
+      }
+      println( "real data is same as expect data" );
+   }
+}
+
+
 /**=========================================================================*/
