@@ -8,7 +8,9 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -34,32 +36,26 @@ public class TestQueryOne7090 extends SdbTestBase{
     private String clName = "cl7090";
     private ArrayList<BSONObject> insertRecods;
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
-        String commCSName = SdbTestBase.csName;
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + 
                     ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(coordAddr, "", "");
-            if (!this.sdb.isCollectionSpaceExist(commCSName)) {
-                try{
-                    this.cs = this.sdb.createCollectionSpace(commCSName); 
-                } catch (BaseException e) {
-                    Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
-                }
-            } else {
-                this.cs = this.sdb.getCollectionSpace(commCSName);
-            }
-            if (this.cs.isCollectionExist(clName)) {
-                this.cs.dropCollection(clName);
-            }
-            this.cl = this.cs.createCollection(clName);
-            this.cl.createIndex("numIndex", (BSONObject) JSON.parse("{num:-1}"), false, false);
+            this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName);
+            createCL();
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestQueryOne7090 setUp error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestQueryOne7090 setUp error, error description:" + e.getMessage());
         }
+    }
+    
+    public void createCL() {
+        if (this.cs.isCollectionExist(clName)) {
+            this.cs.dropCollection(clName);
+        }
+        this.cl = this.cs.createCollection(clName);
+        this.cl.createIndex("numIndex", (BSONObject) JSON.parse("{num:-1}"), false, false);
     }
     
     @Test
@@ -82,7 +78,6 @@ public class TestQueryOne7090 extends SdbTestBase{
             } 
             this.cl.bulkInsert(this.insertRecods, 0 );
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestQueryOne7090 insertData error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestQueryOne7090 insertData error, error description:" + e.getMessage());
         }
     }
@@ -101,7 +96,6 @@ public class TestQueryOne7090 extends SdbTestBase{
             Assert.assertEquals(actualObject, expectedObject, "Sequoiadb driver TestQueryOne7090 checkQueryOne" +
                     "actualList:" +actualObject + "; expectedList:" + expectedObject);
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestQueryOne7090 checkQueryOne error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestQueryOne7090 checkQueryOne error:" + e.getMessage());
         }
     }
@@ -119,18 +113,21 @@ public class TestQueryOne7090 extends SdbTestBase{
             Assert.assertEquals(actualObject, expectedObject, "Sequoiadb driver TestQueryOne7090 checkQueryOneNoData" +
                     "actualList:" +actualObject + "; expectedList:" + expectedObject);
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestQueryOne7090 checkQueryOne error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestQueryOne7090 checkQueryOne error:" + e.getMessage());
         }
     }
     
-    @AfterTest
+    @AfterClass
     public void tearDown() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        if (this.cs.isCollectionExist(clName)) {
-            this.cs.dropCollection(clName);
+        try {
+            System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.sdb.disconnect();
+        } catch (BaseException e) {
+            Assert.fail("Sequoiadb driver TestQueryOne7090 tearDown error:" + e.getMessage());
         }
-        this.sdb.disconnect();
     }
 }

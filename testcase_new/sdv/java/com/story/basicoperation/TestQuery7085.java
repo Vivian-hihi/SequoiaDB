@@ -10,8 +10,8 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -36,32 +36,26 @@ public class TestQuery7085 extends SdbTestBase{
     private String clName = "cl7085";
     private ArrayList<BSONObject> insertRecods;
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
-        String commCSName = SdbTestBase.csName;
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + 
                     ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(coordAddr, "", "");
-            if (!this.sdb.isCollectionSpaceExist(commCSName)) {
-                try{
-                    this.cs = this.sdb.createCollectionSpace(commCSName); 
-                } catch (BaseException e) {
-                    Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
-                }
-            } else {
-                this.cs = this.sdb.getCollectionSpace(commCSName);
-            }
-            if (this.cs.isCollectionExist(clName)) {
-                this.cs.dropCollection(clName);
-            }
-            this.cl = this.cs.createCollection(clName);
-            this.cl.createIndex("nameIndex", (BSONObject) JSON.parse("{name:1}"), false, false);
+            this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName);
+            createCL();
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestQuery7085 setUp error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestQuery7085 setUp error, error description:" + e.getMessage());
         }
+    }
+    
+    public void createCL() {
+        if (this.cs.isCollectionExist(clName)) {
+            this.cs.dropCollection(clName);
+        }
+        this.cl = this.cs.createCollection(clName);
+        this.cl.createIndex("nameIndex", (BSONObject) JSON.parse("{name:1}"), false, false);
     }
     
     @Test
@@ -115,7 +109,6 @@ public class TestQuery7085 extends SdbTestBase{
             } 
             this.cl.bulkInsert(this.insertRecods, 0 );
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestQuery7085 insert recods error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestQuery7085 insert recods error:" + e.getMessage());
         }
     }
@@ -151,18 +144,21 @@ public class TestQuery7085 extends SdbTestBase{
             Assert.assertEquals(actualList, expectedList, "actualList:" +actualList.toString() 
                                 + "; expectedList:" + expectedList.toString());
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestQuery7085 checkQuery error :" + e.getMessage());
             Assert.fail("Sequoiadb driver TestQuery7085 checkQuery error :" + e.getMessage());
         }
     }
     
-    @AfterTest
+    @AfterClass
     public void tearDown() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        if (this.cs.isCollectionExist(clName)) {
-            this.cs.dropCollection(clName);
+        try {
+            System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.sdb.disconnect();
+        } catch (BaseException e) {
+            Assert.fail("Sequoiadb driver TestQuery7085 tearDown error:" + e.getMessage());
         }
-        this.sdb.disconnect();
     }   
 }

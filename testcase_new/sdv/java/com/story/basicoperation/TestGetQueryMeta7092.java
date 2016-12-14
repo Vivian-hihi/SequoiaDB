@@ -9,8 +9,8 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -19,7 +19,6 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
-
 
 /**
  * @FileName:TestGetQueryMeta7092
@@ -37,32 +36,26 @@ public class TestGetQueryMeta7092 extends SdbTestBase{
     private String clName = "cl7092";
     private ArrayList<BSONObject> insertRecods;
 
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
-        String commCSName = SdbTestBase.csName;
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + 
                     ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(coordAddr, "", "");
-            if (!this.sdb.isCollectionSpaceExist(commCSName)) { 
-                try{
-                    this.cs = this.sdb.createCollectionSpace(commCSName,4*1024); 
-                } catch (BaseException e) {
-                    Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
-                }
-            } else {
-                this.cs = this.sdb.getCollectionSpace(commCSName);
-            }
-            if (this.cs.isCollectionExist(clName)) {
-                this.cs.dropCollection(clName);
-            }
-            this.cl = this.cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{a:-1}}"));
-            this.cl.createIndex("ageIndex", "{\"age\":-1}", false, false);
+            this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName);
+            createCL();
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestGetQueryMeta7092 setUp error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestGetQueryMeta7092 setUp error, error description:" + e.getMessage());
         }
+    }
+    
+    public void createCL() {
+        if (this.cs.isCollectionExist(clName)) {
+            this.cs.dropCollection(clName);
+        }
+        this.cl = this.cs.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{a:-1}}"));
+        this.cl.createIndex("ageIndex", "{\"age\":-1}", false, false);
     }
     
     @Test
@@ -86,7 +79,6 @@ public class TestGetQueryMeta7092 extends SdbTestBase{
             } 
             this.cl.bulkInsert(this.insertRecods, DBCollection.FLG_INSERT_CONTONDUP );
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestGetQueryMeta7092 insertData error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestGetQueryMeta7092 insertData error, error description:" + e.getMessage());
         }
     }
@@ -117,19 +109,21 @@ public class TestGetQueryMeta7092 extends SdbTestBase{
             cursor.close();
             Assert.assertEquals(i, 100);
         }catch (BaseException e) {
-            e.printStackTrace();
-            System.out.println("Sequoiadb driver TestGetQueryMeta7092 checkGetQueryMeta error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestGetQueryMeta7092 checkGetQueryMeta error:" + e.getMessage());
         }
     }
     
-    @AfterTest
+    @AfterClass
     public void tearDown() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        if (this.cs.isCollectionExist(clName)) {
-            this.cs.dropCollection(clName);
+        try {
+            System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.sdb.disconnect();
+        } catch (BaseException e) {
+            Assert.fail("Sequoiadb driver TestGetQueryMeta7092 tearDown error:" + e.getMessage());
         }
-        this.sdb.disconnect();
     }
 }
