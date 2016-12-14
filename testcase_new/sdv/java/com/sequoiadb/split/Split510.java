@@ -63,7 +63,7 @@ public class Split510 extends SdbTestBase {
 			destGroupName = tmp.get(1);
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase510 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split510 setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null)
 				sdb.disconnect();

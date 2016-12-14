@@ -47,7 +47,7 @@ public class Split537 extends SdbTestBase {
 			currentCL = MySdbTools.createCL(clName, commCS, "{ShardingKey:{\"a\":1},ShardingType:\"range\"}");
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase537 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split537 setUp error, error description:" + e.getMessage());
 		}
 	}
 

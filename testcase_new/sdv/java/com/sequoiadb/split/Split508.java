@@ -64,7 +64,7 @@ public class Split508 extends SdbTestBase {
 			destGroupName = tmp.get(1);
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase508 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split508 setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

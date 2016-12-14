@@ -48,7 +48,7 @@ public class Split536 extends SdbTestBase {
 			this.currentCL = MySdbTools.createCL(clName, commCS, "{ShardingKey:{\"a\":1}}");
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase536 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split536 setUp error, error description:" + e.getMessage());
 		}
 	}
 

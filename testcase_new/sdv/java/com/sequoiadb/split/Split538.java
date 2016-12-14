@@ -62,7 +62,7 @@ public class Split538 extends SdbTestBase {
 			destGroupName = tmp.get(1);
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase538 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split538 setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null)
 				sdb.disconnect();

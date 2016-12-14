@@ -58,7 +58,7 @@ public class Split511 extends SdbTestBase {
 			}
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase511 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split511 setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null)
 				sdb.disconnect();

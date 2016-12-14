@@ -64,7 +64,7 @@ public class Split512 extends SdbTestBase {
 			destGroupName = tmp.get(1);
 		} catch (Exception e) {
 			tearDown();// 清理可能创建的CL
-			Assert.fail("TestCase512 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split512 setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

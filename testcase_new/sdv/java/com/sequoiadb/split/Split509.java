@@ -65,7 +65,7 @@ public class Split509 extends SdbTestBase {
 			destGroupName = tmp.get(1);
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase509 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split509 setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

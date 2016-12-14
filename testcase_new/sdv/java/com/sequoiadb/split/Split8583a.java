@@ -61,7 +61,7 @@ public class Split8583a extends SdbTestBase {
 			}
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase8583a setUp error, error description:" + e.getMessage());
+			Assert.fail("Split8583a setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null)
 				sdb.disconnect();
