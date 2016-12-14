@@ -54,7 +54,7 @@
    <target name="compile_website">
       <delete dir="${srccode_dir}/doc_new/build" failonerror="false" />
       
-      <var name="cmd" value="--doc" />
+      <var name="cmd" value="--website" />
       <echo message="exec cmd: scons.bat ${cmd}" />
       <exec executable="scons.bat" dir="${srccode_dir}" failonerror="true">
          <arg line="${cmd}" />
