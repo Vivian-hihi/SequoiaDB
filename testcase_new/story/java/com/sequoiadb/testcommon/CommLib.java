@@ -25,7 +25,7 @@ public class CommLib {
 			sdb.listReplicaGroups();
 		}catch(BaseException e){
 			if( e.getErrorCode() == -159 ){  //-159:The operation is for coord node only
-				System.out.printf("The mode is standalone.");
+				//System.out.printf("The mode is standalone.");
 				return true;
 			}
 		}
