@@ -49,7 +49,7 @@
             </if>
          </then>
       </if>
-  
+   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result"/>
    </target>
    
    <target name="largedata_test_build">
@@ -82,7 +82,7 @@
             </ant>
          </then>
       </if>
-  
+   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result"/>
    </target>
    
    <target name="compile_build">
