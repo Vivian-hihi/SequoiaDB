@@ -268,8 +268,8 @@
       </for>
       <var name="err_msg" value="${node_core_msg}&#10;$${node_start_error_msg}"/>
       <replace file="${report_dir}/node_exception_report.xml" token="ERROR_MESSAGE" value="${err_msg}"/>
-      <replace file="${report_dir}/node_exception_report.xml" token="TESTCASE_TYPE" value="detect_node"/>
-      <replace file="${report_dir}/node_exception_report.xml" token="TESTSUIT_NAME" value="exception"/>
+      <replace file="${report_dir}/node_exception_report.xml" token="TESTCASE_TYPE" value="detect_env"/>
+      <replace file="${report_dir}/node_exception_report.xml" token="TESTSUIT_NAME" value="detect_node"/>
       <replace file="${report_dir}/node_exception_report.xml" token="TESTCASE_NAME" value="node_exception"/>
       <var name="str_count" unset="true"/>
       
@@ -310,9 +310,9 @@
             <replace file="${report_dir}/testcase_core_dump_report.xml" token='ERROR_MESSAGE' value='${error_msg}'/>
          </else>
       </if>
-      <replace file="${report_dir}/testcase_core_dump_report.xml" token='TESTCASE_TYPE' value='detect_testcase'/>
-      <replace file="${report_dir}/testcase_core_dump_report.xml" token='TESTSUIT_NAME' value='core_dump'/>
-      <replace file="${report_dir}/testcase_core_dump_report.xml" token='TESTCASE_NAME' value='core_dump'/>
+      <replace file="${report_dir}/testcase_core_dump_report.xml" token='TESTCASE_TYPE' value='detect_env'/>
+      <replace file="${report_dir}/testcase_core_dump_report.xml" token='TESTSUIT_NAME' value='detect_testcase_core'/>
+      <replace file="${report_dir}/testcase_core_dump_report.xml" token='TESTCASE_NAME' value='testcase_core_exception'/>
       <var name="str_count" unset="true"/>
    </target>
    
