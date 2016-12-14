@@ -3,10 +3,23 @@
 <!--testcase for function test, which can be excuted concurrently-->
 
 <suite name="tddjava" verbose="1" junit="true">
-   <!--test name="lob" >
+   <test name="lob" >
       <packages>
-         <package name="com.sequoiadb.lob"/>
+         <package name="com.sequoiadb.test.bug"/>
+         <package name="com.sequoiadb.test.cl"/>
+         <package name="com.sequoiadb.test.cs"/>
+         <package name="com.sequoiadb.test.cursor"/>
+         <package name="com.sequoiadb.test.datasource"/>
+         <package name="com.sequoiadb.test.db"/>
+         <package name="com.sequoiadb.test.decimal"/>
+         <package name="com.sequoiadb.test.domain"/>
+         <package name="com.sequoiadb.test.lob"/>
+         <package name="com.sequoiadb.test.misc"/>
+         <!-- never run the follow test case in CI -->
+         <!-- <package name="com.sequoiadb.test.dc"/> -->
+         <!-- <package name="com.sequoiadb.test.node"/> -->
+         <!-- <package name="com.sequoiadb.test.rg"/> -->
       </packages>
-   </test--> 
+   </test> 
 </suite>
    
