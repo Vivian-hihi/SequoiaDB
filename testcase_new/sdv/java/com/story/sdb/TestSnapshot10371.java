@@ -10,7 +10,9 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -28,7 +30,7 @@ public class TestSnapshot10371 extends SdbTestBase{
     private String commCSName;
     private String clName = "cl10371";
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         this.coordAddr = SdbTestBase.coordUrl;
         this.commCSName = SdbTestBase.csName;
@@ -36,24 +38,20 @@ public class TestSnapshot10371 extends SdbTestBase{
                 ". the TestCase start at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         try {
             this.sdb = new Sequoiadb( this.coordAddr, "", "");
-            if (!this.sdb.isCollectionSpaceExist(this.commCSName)) {
-                try{
-                    this.cs = this.sdb.createCollectionSpace(this.commCSName); 
-                } catch (BaseException e) {
-                    Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
-                }
-            } else {
-                this.cs = this.sdb.getCollectionSpace(this.commCSName);
-            }
-            try {
-                if (this.cs.isCollectionExist(clName)) {
-                    this.cs.dropCollection(clName);
-                }
-                this.cs.createCollection(clName);
-            } catch (BaseException e) {
-                Assert.fail("Sequoiadb driver TestSnapshot10371 setUp error, error description:" + e.getMessage());
-            }
+            this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName);
+            createCL();
         }catch (BaseException e) {
+            Assert.fail("Sequoiadb driver TestSnapshot10371 setUp error, error description:" + e.getMessage());
+        }
+    }
+    
+    public void createCL() {
+        try {
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.cs.createCollection(clName);
+        } catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestSnapshot10371 setUp error, error description:" + e.getMessage());
         }
     }
@@ -279,13 +277,17 @@ public class TestSnapshot10371 extends SdbTestBase{
         return dataGroupList;
     }
     
-    @AfterTest
+    @AfterClass
     public void tearDown() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        if (this.cs.isCollectionExist(clName)) {
-            this.cs.dropCollection(clName);
+        try {
+            System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.sdb.disconnect();
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
         }
-        this.sdb.disconnect();
     }
 }

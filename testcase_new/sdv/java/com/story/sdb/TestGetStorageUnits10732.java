@@ -9,7 +9,9 @@ import java.util.Map;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -25,32 +27,27 @@ public class TestGetStorageUnits10732 extends SdbTestBase{
     private String commCSName;
     private String clName = "cl10372";
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
-        String coordAddr = SdbTestBase.coordUrl;
         this.commCSName = SdbTestBase.csName;
         System.out.println("the TestCase Name:" + this.getClass().getName() + 
                 ". the TestCase start at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         try {
-            this.sdb = new Sequoiadb( coordAddr, "", "");
-            if (!this.sdb.isCollectionSpaceExist(this.commCSName)) {
-                try{
-                    this.cs = this.sdb.createCollectionSpace(this.commCSName); 
-                } catch (BaseException e) {
-                    Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
-                }
-            } else {
-                this.cs = this.sdb.getCollectionSpace(this.commCSName);
-            }
-            try {
-                if (this.cs.isCollectionExist(clName)) {
-                    this.cs.dropCollection(clName);
-                }
-                this.cs.createCollection(clName);
-            } catch (BaseException e) {
-                Assert.fail("Sequoiadb driver TestGetStorageUnits10732 setUp error, error description:" + e.getMessage());
-            }
+            this.sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "");
+            this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName);
+            createCL();
         }catch (BaseException e) {
+            Assert.fail("Sequoiadb driver TestGetStorageUnits10732 setUp error, error description:" + e.getMessage());
+        }
+    }
+    
+    public void createCL() {
+        try {
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.cs.createCollection(clName);
+        } catch (BaseException e) {
             Assert.fail("Sequoiadb driver TestGetStorageUnits10732 setUp error, error description:" + e.getMessage());
         }
     }
@@ -60,6 +57,7 @@ public class TestGetStorageUnits10732 extends SdbTestBase{
         List<BSONObject> dataGroupList = this.getDataGroup(); //get dataRG
         List<String> actual = new ArrayList<String>();
         if ( dataGroupList.size() > 0 && Util.isCluster(this.sdb)){
+            
             BSONObject dataGroup0 = dataGroupList.get(0);
             BSONObject group = (BSONObject) dataGroup0.get("Group");
             try {
@@ -71,7 +69,7 @@ public class TestGetStorageUnits10732 extends SdbTestBase{
                 Assert.fail("Sequoiadb driver TestGetStorageUnits10732 testTestGetStorageUnits error, error description:" + e.getMessage());
             }
             //Thread.sleep(100);
-            Sequoiadb db = new Sequoiadb(this.getUrlByGroupInfo(group), "", "");
+            Sequoiadb db = new Sequoiadb(this.getUrlByGroupInfo(group,dataGroup0.get("PrimaryNode")), "", "");
             actual.clear();
             actual = db.getStorageUnits();
             db.disconnect();
@@ -100,9 +98,9 @@ public class TestGetStorageUnits10732 extends SdbTestBase{
         return dataGroupList;
     }
     
-    public String getUrlByGroupInfo(BSONObject group) {
+    public String getUrlByGroupInfo(BSONObject group,Object primaryNode) {
         Map<String, Object> map = group.toMap();  
-        BSONObject dataObj = this.convertMapToObj(map);
+        BSONObject dataObj = this.convertMapToObj(map,primaryNode);
         String hostName = (String) dataObj.get("HostName");
         map = ((BSONObject) dataObj.get("Service")).toMap();
         String port = "";
@@ -115,21 +113,29 @@ public class TestGetStorageUnits10732 extends SdbTestBase{
         }
         return hostName + ":" + port;
     }
-    public BSONObject convertMapToObj(Map<String, Object> map) {
+    public BSONObject convertMapToObj(Map<String, Object> map,Object object) {
+        String primaryNode = object.toString();
         BSONObject obj = null;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             obj = (BSONObject) entry.getValue();
+            if (primaryNode.equals(obj.get("NodeID").toString())) {
+                break;
+            }
         }
         return obj;
     }
     
-    @AfterTest
+    @AfterClass
     public void tearDown() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        if (this.cs.isCollectionExist(clName)) {
-            this.cs.dropCollection(clName);
+        try {
+            System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.sdb.disconnect();
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
         }
-        this.sdb.disconnect();
     }
 }
