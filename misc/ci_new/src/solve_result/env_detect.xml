@@ -27,7 +27,10 @@
       <!-- node exception report xml -->
       <antcall target="generate_node_start_report"/>
       <!-- cp report to ${WORKSPACE}/report-->
-      <copyfile src="${report_dir}" dest="${WORKSPACE}/report"/>
+      <delete dir="${WORKSPACE}/report/env_detect"/>
+      <copy todir="${WORKSPACE}/report/env_detect">
+         <fileset dir="${report_dir}" includes="*.xml"/>
+      </copy>
    </target>
    
    <target name="detect_remote_env">
