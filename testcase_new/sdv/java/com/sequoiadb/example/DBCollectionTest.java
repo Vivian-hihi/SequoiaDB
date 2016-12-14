@@ -1,4 +1,4 @@
-package com.sequoiadb.test;
+package com.sequoiadb.example;
 
 import org.bson.BSONObject;
 
