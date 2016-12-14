@@ -105,6 +105,12 @@ namespace engine
                                          INT32 &retCode )
    {
       INT32 rc          = SDB_OK ;
+
+      if ( 0 == _handle )
+      {
+         rc = SDB_NETWORK ;
+         goto error ;
+      }
       rc = _remote.runCommand( _handle, ( CMD_ADMIN_PREFIX + command ).c_str(),
                                0, 0, -1, -1,
                                arg1, NULL, NULL, NULL, ppRetBuffer, retCode ) ;

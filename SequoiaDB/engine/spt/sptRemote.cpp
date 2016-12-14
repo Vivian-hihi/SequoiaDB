@@ -164,8 +164,8 @@ do                                                                          \
                                  INT32 &retCode,
                                  BOOLEAN needRecv )
    {
+      SDB_ASSERT( handle, "handle can't be 0" ) ;
       SDB_ASSERT( pString, "pString can't be null" ) ;
-
       INT32 rc          = SDB_OK ;
       BOOLEAN extracted = FALSE ;
       SINT64 contextID  = 0 ;
