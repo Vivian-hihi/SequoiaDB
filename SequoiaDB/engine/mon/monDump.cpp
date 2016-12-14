@@ -1138,7 +1138,7 @@ namespace engine
             babLockList.append( _pos->first.toBson() ) ;
             ++_pos ;
          }
-         bobEduTransInfo.done() ;
+         babLockList.done() ;
 
          if ( _pos == _curTransInfo._lockList.end() )
          {
