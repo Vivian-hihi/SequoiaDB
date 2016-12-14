@@ -389,3 +389,21 @@ function getSrcGroup( csName, clName )
       throw e ;
    }
 }
+
+/************************************
+*@Description: attach cl
+*@author:      zhaoyu
+*@createdate:  2016.11.23
+**************************************/
+function attachCL( dbcl, subCLName, range )
+{
+   try
+   {
+      dbcl.attachCL( subCLName, range ) ;
+      println( "--attach cl success" ) ;
+   }
+   catch(e)
+   {
+      throw buildException("attachCL()", e, "attach cl", "attach cl success","attach cl fail");
+   }
+}
