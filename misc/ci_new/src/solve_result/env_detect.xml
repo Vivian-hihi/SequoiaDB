@@ -9,12 +9,10 @@
          <pathelement location="${basedir}/lib/STAFAnt.jar" />
       </classpath>
    </taskdef>
-
-   <property file="${basedir}/src/conf/test.conf" />
-   <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
    
    <target name="main_target">
-
+      <property file="${basedir}/src/conf/test.conf" />
+      <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
       <antcall target="detect_remote_env">
          <param name="detect_target_name" value="dectect_node_status"/>
          <param name="collect_remote_log_target_name" value="collect_remote_node_status_log"/>
@@ -30,6 +28,7 @@
    </target>
    
    <target name="detect_remote_env">
+      <property file="${basedir}/src/conf/test.conf" />
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <hostinfo prefix="host" />
 
@@ -74,6 +73,7 @@
    </target>
    
    <target name="dectect_node_status">
+      <property file="${basedir}/src/conf/test.conf" />
       <delete dir="${report_dir}"/>
       <mkdir dir="${report_dir}"/>
       <hostinfo prefix="host" />
@@ -149,6 +149,7 @@
    </macrodef>
  
    <target name="collect_remote_node_status_log">
+      <property file="${basedir}/src/conf/test.conf" />
       <hostinfo prefix="host" />
       <property name="backup_dir" location="${report_dir}"/>
       <property name="backup_fullname" location="${report_dir}/${host.NAME}_node_start.log"/>
@@ -167,6 +168,7 @@
    </target>
    
    <target name="collect_remote_testcase_core_log">
+      <property file="${basedir}/src/conf/test.conf" />
       <hostinfo prefix="host" />
       <property name="backup_dir" location="${report_dir}"/>
       <property name="backup_fullname" location="${report_dir}/${host.NAME}_testcase_core.log"/>
@@ -181,6 +183,7 @@
    </target>
 
    <target name="generate_node_start_report">
+      <property file="${basedir}/src/conf/test.conf" />
       <property name="exception_flag" value="false"/>
       <!--count core-->
       <count_str searchstring="core">
@@ -263,6 +266,7 @@
    </target>
    
    <target name="generate_testcase_core_report">
+      <property file="${basedir}/src/conf/test.conf" />
       <count_str searchstring="core">
          <path-elements>
             <fileset dir="${report_dir}/" includes="*testcase_core*.log"/>
@@ -302,6 +306,7 @@
    </target>
    
    <target name="dectect_testcase_core">
+      <property file="${basedir}/src/conf/test.conf" />
       <hostinfo prefix="host" />
       <resourcecount property="corefilenum">
          <fileset dir="${CI_WORK_DIR}/testcase/" includes="**/*core*" excludes="**/*core*.jar"/>
