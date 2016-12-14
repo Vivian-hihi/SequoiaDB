@@ -5,7 +5,7 @@
 <suite name="tddjava" verbose="1" junit="true">
    <test name="lob" >
       <packages>
-         <package name="com.sequoiadb.test.bug"/>
+         <!--package name="com.sequoiadb.test.bug"/>
          <package name="com.sequoiadb.test.cl"/>
          <package name="com.sequoiadb.test.cs"/>
          <package name="com.sequoiadb.test.cursor"/>
@@ -14,7 +14,7 @@
          <package name="com.sequoiadb.test.decimal"/>
          <package name="com.sequoiadb.test.domain"/>
          <package name="com.sequoiadb.test.lob"/>
-         <package name="com.sequoiadb.test.misc"/>
+         <package name="com.sequoiadb.test.misc"/-->
          <!-- never run the follow test case in CI -->
          <!-- <package name="com.sequoiadb.test.dc"/> -->
          <!-- <package name="com.sequoiadb.test.node"/> -->
