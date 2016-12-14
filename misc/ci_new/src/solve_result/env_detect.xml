@@ -26,6 +26,8 @@
       <antcall target="generate_testcase_core_report"/>
       <!-- node exception report xml -->
       <antcall target="generate_node_start_report"/>
+      <!-- cp report to ${WORKSPACE}/report-->
+      <copyfile src="${report_dir}" dest="${WORKSPACE}/report"/>
    </target>
    
    <target name="detect_remote_env">
