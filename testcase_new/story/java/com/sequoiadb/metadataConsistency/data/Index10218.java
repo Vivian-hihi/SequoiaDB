@@ -78,7 +78,9 @@ public class Index10218 extends SdbTestBase {
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			clDB = db.getCollectionSpace(csName).getCollection(clName);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -34){
+				Assert.fail(e.getMessage());
+			}
 		}
 		
 		//-----drop index-----
@@ -88,6 +90,8 @@ public class Index10218 extends SdbTestBase {
 			clDB.dropIndex(name + i.nextInt(42));
 			//check results
 			CommLib.checkIndex(db, csName, clName);
+		}catch(NullPointerException e){
+			
 		}catch(BaseException e){
 			if(e.getErrorCode() != -47  //-47:Index name does not exist
 					&& e.getErrorCode() != -248  //-248:Dropping the collection space is in progress

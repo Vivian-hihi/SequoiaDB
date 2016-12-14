@@ -58,6 +58,10 @@ public class IdIndex10207 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkCSOfCatalog(sdb, csName);
+			CommLib.checkIndex(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -77,28 +81,31 @@ public class IdIndex10207 extends SdbTestBase {
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			clDB = db.getCollectionSpace(csName).getCollection(clName);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -34){
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
 		}
 		
 		//-----create index-----
 		try{
 			BSONObject opt = new BasicBSONObject();
 			opt.put("SortBufferSize", 128);
-			if(db.isCollectionSpaceExist(csName) && db.getCollectionSpace(csName).isCollectionExist(clName)){
+			if(clDB != null){
 				clDB.createIdIndex(opt);
-				//check results
-				CommLib.checkIndex(db, csName, clName);
 			}
 		}catch(BaseException e){
-			db.disconnect();
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -23 
+					&& e.getErrorCode() != -34
+					&& e.getErrorCode() != -248){ //-248:Dropping the collection space is in progress
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
 		}
 		
 		//-----drop cs-----
 		try{
 			db.dropCollectionSpace(csName);
-			//check results
-			CommLib.checkCSOfCatalog(db, csName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){
 				db.disconnect();
@@ -111,6 +118,7 @@ public class IdIndex10207 extends SdbTestBase {
 			db.createCollectionSpace(csName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -33){
+				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
 		}

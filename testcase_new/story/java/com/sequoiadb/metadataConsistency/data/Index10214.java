@@ -76,6 +76,7 @@ public class Index10214 extends SdbTestBase {
 			clDB = db.getCollectionSpace(csName).getCollection(clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){
+				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -92,8 +93,11 @@ public class Index10214 extends SdbTestBase {
 				CommLib.checkIndex(db, csName, clName);
 			}
 		}catch(BaseException e){
-			if(e.getErrorCode() != -247  //-247:Redefine index
-				&& e.getErrorCode() != -248){ //-248:Dropping the collection space is in progress
+			if(e.getErrorCode() != -248  //-248:Dropping the collection space is in progress
+				&& e.getErrorCode() != -247  //-247:Redefine index  
+				&& e.getErrorCode() != -23	){
+				db.disconnect();
+				Assert.fail(e.getMessage());
 			}
 		}
 		
@@ -103,18 +107,29 @@ public class Index10214 extends SdbTestBase {
 			//check results
 			CommLib.checkCSOfCatalog(db, csName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34){
+			if(e.getErrorCode() != -34 
+					&& e.getErrorCode() != -147){  //-147:Unable to lock
+				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
 		}
 		
 		//-----create cs-----
 		try{
+			db.createCollectionSpace(csName);
+		}catch(BaseException e){
+			if(e.getErrorCode() != -33){
+				Assert.fail(e.getMessage());
+			}
+		}
+		
+		//-----create cl-----
+		try{
 			BSONObject opt = new BasicBSONObject();
 			opt.put("AutoIndexId", false);
-			db.createCollectionSpace(csName).createCollection(clName, opt);
+			db.getCollectionSpace(csName).createCollection(clName, opt);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -33 && e.getErrorCode() != -22){
+			if(e.getErrorCode() != -34 && e.getErrorCode() != -22){
 				Assert.fail(e.getMessage());
 			}
 		}finally{

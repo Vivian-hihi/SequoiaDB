@@ -98,13 +98,17 @@ public class CL10179 extends SdbTestBase{
 			BSONObject opt = new BasicBSONObject();
 			int i = random.nextInt(dataGroups.size());
 			opt.put("Group", dataGroups.get(i));
-			if(csDB != null)csDB.getCollection(clName).alterCollection(opt);
+			if(csDB != null){
+				csDB.getCollection(clName).alterCollection(opt);
+			}
 			//check results
 			CommLib.checkCLResult(db, csName, clName);
+		}catch(NullPointerException e){
+			
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23){ 
 				Assert.fail(e.getMessage());
-			}
+			} 
 		}finally{
 			db.disconnect();
 		}

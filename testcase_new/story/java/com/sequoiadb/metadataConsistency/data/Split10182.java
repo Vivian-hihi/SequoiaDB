@@ -62,6 +62,10 @@ public class Split10182 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check result
+			CommLib.checkCLResult(sdb, csName, clName);
+			
+			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail("ErrorMsg:\n" +e.getMessage());
@@ -86,8 +90,6 @@ public class Split10182 extends SdbTestBase {
 			strCond.put("a", bound);
 			endCond.put("a", bound + 100);
 			clDB.split(groupNames.get(0), groupNames.get(1), strCond, endCond);
-			//check result
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -175){ //-175:The mutex task already exist
 				Assert.fail(e.getMessage());
