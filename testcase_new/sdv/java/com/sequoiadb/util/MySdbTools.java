@@ -110,9 +110,6 @@ public class MySdbTools {
 		try {
 			CommLib commlib = new CommLib();
 			ArrayList<String> groups = commlib.getDataGroupNames(sdb);
-			if (groups.size() < 2) {
-				throw new Exception("current environment less than tow groups");
-			}
 			dbc = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + csName + "." + clName + "\"}", null, null);
 			BasicBSONList list = null;
 			if (dbc.hasNext()) {
@@ -121,12 +118,15 @@ public class MySdbTools {
 				throw new Exception("Sequoiadb can not find Collection:"+csName+"."+clName);
 			}
 			String srcGroupName = (String) ((BSONObject) list.get(0)).get("GroupName");
+			resault.add(srcGroupName);
+			if (groups.size() < 2) {
+				return resault;
+			}
 			String destGroupName;
 			if (srcGroupName.equals(groups.get(0)))
 				destGroupName = groups.get(1);
 			else
 				destGroupName = groups.get(0);
-			resault.add(srcGroupName);
 			resault.add(destGroupName);
 			return resault;
 		} catch (BaseException e) {
