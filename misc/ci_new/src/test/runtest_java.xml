@@ -11,7 +11,11 @@
 ============================================================================= -->
 
 <project basedir="../../" default="run_testcase_main_target">
-   <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+      </classpath>
+   </taskdef>
    
    <target name="run_testcase_main_target">
 
@@ -65,12 +69,12 @@
             <generatexml/>
          </else>
       </if>
-      <path id="calsspath.test">
+      <path id="testcasecalsspath">
          <pathelement path="${casedir}/build" /> 
          <fileset dir="${casedir}/lib" includes="**/*.jar"/>                  
       </path>
       <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.9.11.jar"/>
-      <testng outputDir="${tmp_report_dir}" classpathref="calsspath.test">
+      <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
          <xmlfileset dir="${casedir}" includes="${xmlfile}"/>
       </testng>
       <var name="end_time" unset="true"/>
