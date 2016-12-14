@@ -12,7 +12,7 @@
    
    <test name="consistency" >
          <packages>
-            <package name="com.sequoiadb.consistencyData"/>
+            <package name="com.sequoiadb.metadataConsistency.data"/>
          </packages>
    </test>
 
