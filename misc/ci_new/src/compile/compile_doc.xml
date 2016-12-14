@@ -44,7 +44,7 @@
    <target name="compile_doc">
       <delete dir="${WORKSPACE}/release" failonerror="false" />
       <mkdir dir="${WORKSPACE}/release"/>
-      <delete dir="${srccode_dir}/doc_new/build" failonerror="false" />
+      <delete dir="${srccode_dir}/doc/build" failonerror="false" />
       
       <var name="cmd" value="--doc" />
       <echo message="exec cmd: scons.bat ${cmd}" />
@@ -53,12 +53,12 @@
       </exec>
       
       <copy todir="${WORKSPACE}/release" failonerror="true" >
-         <fileset dir="${srccode_dir}/doc_new/build/output" includes="*SequoiaDB*"/>
+         <fileset dir="${srccode_dir}/doc/build/output" includes="*SequoiaDB*"/>
       </copy>
    </target>
    
    <target name="compile_website">
-      <delete dir="${srccode_dir}/doc_new/build" failonerror="false" />
+      <delete dir="${srccode_dir}/doc/build" failonerror="false" />
       
       <var name="cmd" value="--website" />
       <echo message="exec cmd: scons.bat ${cmd}" />
