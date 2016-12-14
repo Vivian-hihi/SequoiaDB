@@ -37,89 +37,12 @@
       </packages>    
    </test>
    
-  <test name="testCase508" enabled="true" parallel="methods"
-		thread-count="2">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase508" />
-		</classes>
-	</test>
-	
-	<test name="testCase509" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase509" />
-		</classes>
-	</test>
-
-	<test name="testCase510" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase510" />
-		</classes>
-	</test>
-
-	<test name="testCase511" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase511" />
-		</classes>
-	</test>
-	
-	<test name="testCase512" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase512" />
-		</classes>
-	</test>
-
-	<test name="testCase513" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase513" />
-		</classes>
-	</test>
-
-	<test name="testCase514" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase514" />
-		</classes>
-	</test>
-
-	<test name="testCase536" enabled="true" parallel="methods"
-		thread-count="2">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase536" />
-		</classes>
-	</test>
-
-	<test name="testCase537" enabled="true" parallel="methods"
-		thread-count="2">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase537" />
-		</classes>
-	</test>
-
-	<test name="testCase538" enabled="true" parallel="methods"
-		thread-count="2">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase538" />
-		</classes>
-	</test>
-
-	<test name="testCase8583a" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase8583a" />
-		</classes>
-	</test>
-
-	<test name="testCase8583b" enabled="true" parallel="methods"
-		thread-count="3">
-		<classes>
-			<class name="com.sequoiadb.splittest.TestCase8583b" />
-		</classes>
-	</test>
+   <test name="split" enabled="true" parallel="methods" thread-count="10">
+		  <packages>
+			   <package name="com.sequoiadb.split" />
+		  </packages>
+	 </test>
    
+ 
 </suite>
    
