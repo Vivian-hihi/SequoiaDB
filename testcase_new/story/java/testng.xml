@@ -15,6 +15,7 @@
       <packages>
          <package name="com.sequoiadb.decimal" />
          <package name="com.sequoiadb.attachtest" />
+         <package name="com.sequoiadb.lob" />
       </packages>    
    </test>
    
