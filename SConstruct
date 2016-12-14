@@ -1006,23 +1006,19 @@ else:
 
 if hasDoc:
    errno = os.system ( 'python doc_new/build.py --doc' )
-   if errno != 0:
-      os._exit( 1 )
+   os._exit( errno )
 
 if hasWebSite:
    errno = os.system ( 'python doc_new/build.py --website' )
-   if errno != 0:
-      os._exit( 1 )
+   os._exit( errno )
 
 if hasChm:
    errno = os.system ( 'python doc_new/build.py --chm' )
-   if errno != 0:
-      os._exit( 1 )
+   os._exit( errno )
 
 if hasDoxygen:
    errno = os.system ( 'python doc_new/build.py --doxygen' )
-   if errno != 0:
-      os._exit( 1 )
+   os._exit( errno )
 
 if hasEngine:
    env.SConscript( 'SequoiaDB/SConscript', variant_dir=variantDir, duplicate=False )
