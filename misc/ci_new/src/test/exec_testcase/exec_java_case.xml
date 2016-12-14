@@ -14,103 +14,25 @@
       </classpath>
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
-
+   <property name="testcase_dir" value="/trunk/testcase_new/sdv/java"/>
+   <property name="report_dir" value="/trunk/testcase_new/report/sdv_java"/>
    
-   <target name="exec_testcase">   
+   <target name="exec_testcase">             
       <mkdir dir="${report_dir}"/> 
-       
-      <switch value="${TESTCASE_TYPE}">
-         <case value="tdd_java">             
-            <execjunit casedir="${testcase_dir}" reportdir="${report_dir}"/>
-         </case>
-         <default>
-            <exectestng casedir="${testcase_dir}" reportdir="${report_dir}"/>
-         </default>
-      </switch>
-
+      <ant antfile="${basedir}/src/test/runtest_java.xml" target="execjavatestcase">
+         <property name="casedir" value="${testcase_dir}"/>
+         <property name="reportdir" value="${report_dir}"/>
+      </ant>
+      <if>
+         <available file="${testcase_dir}/output/junitreports" type="dir"/>
+         <then>
+            <copy todir="${report_dir}">
+               <fileset dir="${testcase_dir}/output/junitreports"/>
+            </copy> 
+            <modifytestngreport reportdir="${report_dir}" layer="${TESTCASE_TYPE}"/>
+         </then>
+      </if>
    </target>
-
-   <macrodef name="exectestng">
-      <attribute name="reportdir"/>
-      <attribute name="casedir" />
-      <sequential>
-         <var name="begin_time" unset="true"/>
-         <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
-         </tstamp>
-         
-         <property name="tmp_report_dir" value="@{casedir}/output" />
-         <mkdir dir="${tmp_report_dir}"/>
-         
-         <path id="calsspath.test">
-            <pathelement path="@{casedir}/build" /> 
-            <fileset dir="@{casedir}/lib" includes="**/*.jar"/>                  
-         </path>
-         <taskdef resource="testngtasks" classpath="@{casedir}/lib/testng-6.9.11.jar"/>
-         <switch value="${TEST_TYPE}">
-            <case value="NORMALTEST">
-               <var name="xmlfile" value="testng.xml"/>
-            </case>
-            <case value="LARGEDATATEST">
-               <var name="xmlfile" value="largedata.xml"/>
-            </case>
-            <default/>
-         </switch>
-         <testng outputDir="${tmp_report_dir}" classpathref="calsspath.test">
-            <xmlfileset dir="@{casedir}" includes="${xmlfile}"/>
-         </testng>
-         
-         <var name="end_time" unset="true"/>
-         <tstamp>
-            <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
-         </tstamp>       
-         <echo message="begin at ${begin_time}, end at ${end_time}" />
-         
-         <if>
-            <available file="${tmp_report_dir}/junitreports" type="dir"/>
-            <then>
-               <copy todir="@{reportdir}">
-                  <fileset dir="${tmp_report_dir}/junitreports"/>
-               </copy> 
-               <modifytestngreport reportdir="@{reportdir}" layer="${TESTCASE_TYPE}"/>
-            </then>
-         </if>
-      </sequential>
-   </macrodef>
-   
-   <macrodef name="execjunit">
-      <attribute name="reportdir"/>
-      <attribute name="casedir" />
-      <sequential>   
-         <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
-         </tstamp>
-              
-         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
-            <classpath>
-               <pathelement location="@{casedir}/build" />              
-               <fileset dir="@{casedir}/lib" includes="**/*.jar"/>
-            </classpath>
-            <formatter type="xml" />
-            <batchtest todir="@{reportdir}">
-               <fileset dir="@{casedir}/build">
-                  <include name="**/*" />
-                  <exclude name="**/testdata/*" />
-                  <exclude name="**/common/*" />
-               </fileset>
-            </batchtest>
-         </junit>
-              
-         <tstamp>
-            <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
-         </tstamp>
-        
-         <echo message="begin at ${begin_time}, end at ${end_time}" />           
-         
-         <modifyjunitreport reportdir="@{reportdir}" layer="${TESTCASE_TYPE}"/>
-      </sequential>
-   </macrodef>
-
  
    <macrodef name="modifytestngreport">
       <attribute name="reportdir"/>
@@ -140,25 +62,4 @@
       </sequential>
    </macrodef>
    
-   
-   <macrodef name="modifyjunitreport">
-      <attribute name="reportdir"/>
-      <attribute name="layer" />
-      <sequential> 
-         <replaceregexp match='classname="com.sequoiadb.test.' 
-                        replace='classname="@{layer}.' 
-                        flags="g" 
-                        byline="true" 
-                        encoding="utf-8">
-            <fileset dir="@{reportdir}" includes="**/*"/>
-         </replaceregexp>
-         <replaceregexp match='classname="@{layer}\.(.*)\.(.*)" name="(.*)"' 
-                        replace='classname="@{layer}.\1" name="\2.\3"' 
-                        flags="g" 
-                        byline="true" 
-                        encoding="utf-8">
-            <fileset dir="@{reportdir}" includes="**/*"/>
-         </replaceregexp>      
-      </sequential>
-   </macrodef>
 </project>
