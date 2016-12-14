@@ -1553,7 +1553,7 @@ System.prototype.runService = function ( serviceName, command, options ) {
    if ( undefined != this._remote )
    {
       var retObj ;
-      if ( "undefined" != options )
+      if ( undefined != options )
       {
          retObj = this._remote._runCommand( "system run service",
                                             { "command": command,
