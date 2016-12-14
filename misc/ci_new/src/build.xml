@@ -97,7 +97,9 @@
       <ant antfile="compile_sequoiadb.xml" dir="src/compile" inheritAll="true" useNativeBaseDir="true" />
    </target>
    
-   
+   <target name="compile_doc_build">
+      <ant antfile="compile_doc.xml" dir="src/compile" inheritAll="true" useNativeBaseDir="true" />
+   </target>
    
    <target name="check_parameter">  
       <if>
