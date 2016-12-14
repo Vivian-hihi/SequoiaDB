@@ -53,7 +53,7 @@
       </exec>
       
       <copy todir="${WORKSPACE}/release" failonerror="true" >
-         <fileset dir="${srccode_dir}/doc_new/build" includes="*SequoiaDB*"/>
+         <fileset dir="${srccode_dir}/doc_new/build/output" includes="*SequoiaDB*"/>
       </copy>
    </target>
    
