@@ -1,4 +1,4 @@
-package com.sequoiadb.splittest;
+package com.sequoiadb.split;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.util.MySdbTools;
 
@@ -32,13 +32,14 @@ import com.sequoiadb.util.MySdbTools;
  *
  */
 
-public class TestCase508 extends SdbTestBase {
+public class Split508 extends SdbTestBase {
 	private String clName = "testcaseCL508";
 	private String srcGroupName;
 	private String destGroupName;
 	private AtomicInteger a = new AtomicInteger();
 	private AtomicInteger b = new AtomicInteger();
-	ArrayList<Integer> successRange = new ArrayList<>();
+	private boolean isStandAlone;
+	private boolean isGroupTooless;
 
 	@BeforeTest(enabled = true)
 	public void setUp() {
@@ -47,9 +48,18 @@ public class TestCase508 extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			sdb = new Sequoiadb(coordUrl, "", "");
+			CommLib commlib = new CommLib();
+			isStandAlone = commlib.isStandAlone(sdb);
+			if (isStandAlone) {
+				return;
+			}
 			CollectionSpace commCS = sdb.getCollectionSpace(csName);
 			MySdbTools.createCL(clName, commCS, "{ShardingKey:{\"a\":1,\"b\":-1},ShardingType:\"range\"}");
 			ArrayList<String> tmp = MySdbTools.getGroupName(sdb, csName, clName);
+			if (tmp.size() != 2) {
+				isGroupTooless = true;
+				return;
+			}
 			srcGroupName = tmp.get(0);
 			destGroupName = tmp.get(1);
 		} catch (Exception e) {
@@ -65,6 +75,9 @@ public class TestCase508 extends SdbTestBase {
 	// 写入待切分的记录（1000）
 	@Test(enabled = true)
 	public void beforSplitInsertData() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb db = null;
 		try {
 			db = new Sequoiadb(coordUrl, "", "");
@@ -86,6 +99,9 @@ public class TestCase508 extends SdbTestBase {
 	// 切分
 	@Test(enabled = true, dependsOnMethods = "beforSplitInsertData", groups = "split_508")
 	public void splitCL1() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");
@@ -105,6 +121,9 @@ public class TestCase508 extends SdbTestBase {
 	// 切分
 	@Test(enabled = true, dependsOnMethods = "beforSplitInsertData", groups = "split_508")
 	public void splitCL2() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");
@@ -123,18 +142,24 @@ public class TestCase508 extends SdbTestBase {
 	// 检查切分后结果
 	@Test(enabled = true, dependsOnGroups = "split_508")
 	public void checkReault() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		Sequoiadb destDataNode = null;
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");
 			int destPort = sdb.getReplicaGroup(destGroupName).getMaster().getPort();
-			destDataNode = new Sequoiadb(hostName + ":" + destPort, "", "");
-			long destDataCount1 = destDataNode.getCollectionSpace(csName).getCollection(clName).getCount("{a:{$gte:0,$lte:20}}");
-			long destDataCount2 = destDataNode.getCollectionSpace(csName).getCollection(clName).getCount("{a:{$gte:30,$lte:50}}");
+			String destHostName = sdb.getReplicaGroup(destGroupName).getMaster().getHostName();
+			destDataNode = new Sequoiadb(destHostName + ":" + destPort, "", "");
+			long destDataCount1 = destDataNode.getCollectionSpace(csName).getCollection(clName)
+					.getCount("{a:{$gte:0,$lte:20}}");
+			long destDataCount2 = destDataNode.getCollectionSpace(csName).getCollection(clName)
+					.getCount("{a:{$gte:30,$lte:50}}");
 			long destDataCount3 = destDataNode.getCollectionSpace(csName).getCollection(clName).getCount();
-			
-			Assert.assertEquals(destDataCount1+destDataCount2, 42);//目标组含有全部切分范围的数据
-			Assert.assertEquals(destDataCount3, 42);//目标组仅含有切分范围的数据
+
+			Assert.assertEquals(destDataCount1 + destDataCount2, 42);// 目标组含有全部切分范围的数据
+			Assert.assertEquals(destDataCount3, 42);// 目标组仅含有切分范围的数据
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		} finally {
@@ -151,11 +176,6 @@ public class TestCase508 extends SdbTestBase {
 		return obj;
 	}
 
-//	@DataProvider(name = "rangeArgumentsProvider")
-//	public Object[][] dataProvider() {
-//		return new Object[][] { { "a:500" } };
-//	}
-
 	@AfterTest(enabled = true)
 	public void tearDown() {
 		System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
@@ -164,8 +184,9 @@ public class TestCase508 extends SdbTestBase {
 		try {
 			CollectionSpace commCS = sdb.getCollectionSpace(csName);
 			if (commCS != null) {
-				if (commCS.isCollectionExist(clName))
+				if (commCS.isCollectionExist(clName)) {
 					commCS.dropCollection(clName);
+				}
 			}
 		} catch (BaseException e) {
 			// do something??

@@ -1,4 +1,4 @@
-package com.sequoiadb.splittest;
+package com.sequoiadb.split;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.util.MySdbTools;
 
@@ -31,11 +32,13 @@ import com.sequoiadb.util.MySdbTools;
  *
  */
 
-public class TestCase8583a extends SdbTestBase {
+public class Split8583a extends SdbTestBase {
 	private String clName = "testcaseCL8583a";
 	private String srcGroupName;
 	private String destGroupName;
 	private AtomicInteger a = new AtomicInteger();
+	private boolean isStandAlone;
+	private boolean isGroupTooless;
 
 	@BeforeTest(enabled = true)
 	public void setUp() {
@@ -44,8 +47,18 @@ public class TestCase8583a extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			sdb = new Sequoiadb(coordUrl, "", "");
+			CommLib commlib = new CommLib();
+			isStandAlone = commlib.isStandAlone(sdb);
+			if (isStandAlone) {
+				return;
+			}
 			CollectionSpace commCS = sdb.getCollectionSpace(csName);
 			MySdbTools.createCL(clName, commCS, "{ShardingKey:{\"a\":1},ShardingType:\"range\"}");
+			ArrayList<String> tmp = MySdbTools.getGroupName(sdb, csName, clName);
+			if (tmp.size() != 2) {
+				isGroupTooless = true;
+				return;
+			}
 		} catch (Exception e) {
 			tearDown();
 			Assert.fail("TestCase8583a setUp error, error description:" + e.getMessage());
@@ -58,6 +71,9 @@ public class TestCase8583a extends SdbTestBase {
 	// 写入待切分的记录（1000）
 	@Test(groups = "insertdata")
 	public void beforSplitInsertData() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb db = null;
 		try {
 			db = new Sequoiadb(coordUrl, "", "");
@@ -79,6 +95,9 @@ public class TestCase8583a extends SdbTestBase {
 	// 获取集合所在组名，和切分目标组名
 	@Test(enabled = true, dependsOnMethods = "beforSplitInsertData")
 	public void getGroupName() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		a.set(0);
 		try {
@@ -100,6 +119,9 @@ public class TestCase8583a extends SdbTestBase {
 	// 切分删除CL
 	@Test(dependsOnMethods = "getGroupName", groups = "splitAndDelete_8538a", timeOut = 60000)
 	public void dropCL() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		try {
 
@@ -124,6 +146,9 @@ public class TestCase8583a extends SdbTestBase {
 	// 切分
 	@Test(enabled = true, dependsOnMethods = "getGroupName", groups = "splitAndDelete_8538a")
 	public void splitCL() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");
@@ -142,6 +167,9 @@ public class TestCase8583a extends SdbTestBase {
 	// 检查结果
 	@Test(enabled = true, dependsOnGroups = "splitAndDelete_8538a")
 	public void checkReault() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");

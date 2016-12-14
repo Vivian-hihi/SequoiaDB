@@ -1,4 +1,4 @@
-package com.sequoiadb.splittest;
+package com.sequoiadb.split;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,7 +15,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.util.MySdbTools;
 
@@ -26,11 +26,12 @@ import com.sequoiadb.util.MySdbTools;
  *
  */
 
-public class TestCase536 extends SdbTestBase {
+public class Split536 extends SdbTestBase {
 	private Sequoiadb sdb;
 	private CollectionSpace commCS;
 	private DBCollection currentCL;
 	private String clName = "testcaseCL536";
+	private boolean isStandAlone;
 
 	@BeforeTest(enabled = true)
 	public void setUp() {
@@ -38,6 +39,11 @@ public class TestCase536 extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			this.sdb = new Sequoiadb(coordUrl, "", "");
+			CommLib commlib = new CommLib();
+			isStandAlone = commlib.isStandAlone(sdb);
+			if (isStandAlone) {
+				return;
+			}
 			this.commCS = sdb.getCollectionSpace(csName);
 			this.currentCL = MySdbTools.createCL(clName, commCS, "{ShardingKey:{\"a\":1}}");
 		} catch (Exception e) {
@@ -48,12 +54,15 @@ public class TestCase536 extends SdbTestBase {
 
 	@Test(enabled = true)
 	public void test() {
+		if (isStandAlone) {
+			return;
+		}
 		DBCursor dbc = null;
 		try {
 			dbc = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + currentCL.getFullName() + "\"}", null, null);
 			BasicBSONList list = (BasicBSONList) dbc.getNext().get("CataInfo");
-			String srcGroupName = (String) ((BSONObject) list.get(0)).get("GroupName");//获取源数据组名
-			String destGroupName = "thisDataGroupShouldNotExists_536";//定义一个不存在组名
+			String srcGroupName = (String) ((BSONObject) list.get(0)).get("GroupName");// 获取源数据组名
+			String destGroupName = "thisDataGroupShouldNotExists_536";// 定义一个不存在组名
 			Sequoiadb db = new Sequoiadb(coordUrl, "", "");
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 			for (int i = 0; i < 10; i++) {

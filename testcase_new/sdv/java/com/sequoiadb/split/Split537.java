@@ -1,4 +1,4 @@
-package com.sequoiadb.splittest;
+package com.sequoiadb.split;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import com.sequoiadb.base.DBCollection;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.util.MySdbTools;
 
@@ -24,11 +25,12 @@ import com.sequoiadb.util.MySdbTools;
  * @version 1.00
  *
  */
-public class TestCase537 extends SdbTestBase {
+public class Split537 extends SdbTestBase {
 	private Sequoiadb sdb;
 	private CollectionSpace commCS;
 	private DBCollection currentCL;
 	private String clName = "testcaseCL537";
+	private boolean isStandAlone;
 
 	@BeforeTest(enabled = true)
 	public void setUp() {
@@ -36,6 +38,11 @@ public class TestCase537 extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			sdb = new Sequoiadb(coordUrl, "", "");
+			CommLib commlib = new CommLib();
+			isStandAlone = commlib.isStandAlone(sdb);
+			if (isStandAlone) {
+				return;
+			}
 			commCS = sdb.getCollectionSpace(csName);
 			currentCL = MySdbTools.createCL(clName, commCS, "{ShardingKey:{\"a\":1},ShardingType:\"range\"}");
 		} catch (Exception e) {
@@ -46,8 +53,14 @@ public class TestCase537 extends SdbTestBase {
 
 	@Test(enabled = true)
 	public void test() {
+		if (isStandAlone) {
+			return;
+		}
 		try {
 			ArrayList<String> groups = MySdbTools.getGroupName(sdb, csName, clName);
+			if (groups.size() < 2) {
+				return;
+			}
 			currentCL.split(groups.get(0), groups.get(1), 50);
 		} catch (BaseException e) {
 			Assert.assertEquals(e.getErrorCode(), -296, e.getMessage());

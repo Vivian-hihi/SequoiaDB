@@ -1,4 +1,4 @@
-package com.sequoiadb.splittest;
+package com.sequoiadb.split;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,23 +19,26 @@ import com.sequoiadb.base.DBCollection;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.util.MySdbTools;
 
 /**
- * @FileName:SEQDB-538 1、在cl下指定范围条件进行数据切分 2、执行split操作，其中设置的范围区间不在CL分区范围内
- *                     3、查看数据切分是否成功 4、插入该范围区间的数据，查看数据写入情况
+ * @FileName:SEQDB-510 1.在CS下创建cl，指定分区方式为range 2、向cl中插入大量数据，如插入1百万条记录
+ *                     3、并发执行多个split，其中切分范围不相同，如一个切分范围为（0,10】，另一个切分范围为（80,100]
+ *                     4、查看数据切分是否正确
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class TestCase538 extends SdbTestBase {
-	private String clName = "testcaseCL538";
+public class Split510 extends SdbTestBase {
+	private String clName = "testcaseCL510";
 	private String srcGroupName;
 	private String destGroupName;
 	private AtomicInteger a = new AtomicInteger();
+	private boolean isStandAlone;
+	private boolean isGroupTooless;
 
 	@BeforeTest(enabled = true)
 	public void setUp() {
@@ -44,14 +47,23 @@ public class TestCase538 extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			sdb = new Sequoiadb(coordUrl, "", "");
+			CommLib commlib = new CommLib();
+			isStandAlone = commlib.isStandAlone(sdb);
+			if (isStandAlone) {
+				return;
+			}
 			CollectionSpace commCS = sdb.getCollectionSpace(csName);
 			MySdbTools.createCL(clName, commCS, "{ShardingKey:{\"a\":1},ShardingType:\"range\"}");
 			ArrayList<String> tmp = MySdbTools.getGroupName(sdb, csName, clName);
+			if (tmp.size() != 2) {
+				isGroupTooless = true;
+				return;
+			}
 			srcGroupName = tmp.get(0);
 			destGroupName = tmp.get(1);
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase538 setUp error, error description:" + e.getMessage());
+			Assert.fail("TestCase510 setUp error, error description:" + e.getMessage());
 		} finally {
 			if (sdb != null)
 				sdb.disconnect();
@@ -61,6 +73,9 @@ public class TestCase538 extends SdbTestBase {
 	// 写入待切分的记录（1000）
 	@Test
 	public void beforSplitInsertData() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb db = null;
 		try {
 			db = new Sequoiadb(coordUrl, "", "");
@@ -79,15 +94,59 @@ public class TestCase538 extends SdbTestBase {
 
 	}
 
-	// 切分(2000,3000)
-	@Test(enabled = true, dependsOnMethods = "beforSplitInsertData", groups = "split_538")
+	// 切分(0,100)
+	@Test(enabled = true, dependsOnMethods = "beforSplitInsertData", groups = "split_510")
 	public void splitCL1() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");
 			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-			cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{a:2000}"),
-					(BSONObject) JSON.parse("{a:3000}"));
+			cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{a:0}"), (BSONObject) JSON.parse("{a:100}"));
+		} catch (BaseException e) {
+			Assert.fail(e.getMessage());
+		} finally {
+			if (sdb != null)
+				sdb.disconnect();
+		}
+
+	}
+
+	// 切分(200,300)
+	@Test(enabled = true, dependsOnMethods = "beforSplitInsertData", groups = "split_510")
+	public void splitCL2() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
+		Sequoiadb sdb = null;
+		try {
+			sdb = new Sequoiadb(coordUrl, "", "");
+			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+			cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{a:200}"),
+					(BSONObject) JSON.parse("{a:300}"));
+		} catch (BaseException e) {
+			Assert.fail(e.getMessage());
+		} finally {
+			if (sdb != null)
+				sdb.disconnect();
+		}
+
+	}
+
+	// 切分(500,600)
+	@Test(enabled = true, dependsOnMethods = "beforSplitInsertData", groups = "split_510")
+	public void splitCL3() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
+		Sequoiadb sdb = null;
+		try {
+			sdb = new Sequoiadb(coordUrl, "", "");
+			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+			cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{a:500}"),
+					(BSONObject) JSON.parse("{a:600}"));
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		} finally {
@@ -98,33 +157,30 @@ public class TestCase538 extends SdbTestBase {
 	}
 
 	// 检查切分后结果，尝试写入数据
-	@Test(enabled = true, dependsOnGroups = "split_538")
+	@Test(enabled = true, dependsOnGroups = "split_510")
 	public void checkReault() {
+		if (isStandAlone || isGroupTooless) {
+			return;
+		}
 		Sequoiadb sdb = null;
-		Sequoiadb dataNode = null;
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");
 			int port = sdb.getReplicaGroup(destGroupName).getMaster().getPort();
 			String destHostName = sdb.getReplicaGroup(destGroupName).getMaster().getHostName();
-			dataNode = new Sequoiadb(destHostName + ":" + port, "", "");
-			long count = dataNode.getCollectionSpace(csName).getCollection(clName).getCount();
-			Assert.assertEquals(count, 0);
+			Sequoiadb dataNode = new Sequoiadb(destHostName + ":" + port, "", "");
+			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
+			long count1 = cl.getCount("{a:{$gte:500,$lt:600}}");
+			long count2 = cl.getCount("{a:{$gte:200,$lt:300}}");
+			long count3 = cl.getCount("{a:{$gte:0,$lt:100}}");
+
+			Assert.assertEquals(count1 + count2 + count3, 300);// 目标组应当含有上述范围数据
+			Assert.assertEquals(cl.getCount(), 300);// 目标组仅含上述数据
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		}
 		try {
 			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-			cl.insert((BSONObject) JSON.parse("{a:2500}"));
-			cl.insert((BSONObject) JSON.parse("{a:-500}"));
-			long rs = dataNode.getCollectionSpace(csName).getCollection(clName).getCount("{a:2500}");
-			Assert.assertEquals(rs, 1);
-			
-			int srcport = sdb.getReplicaGroup(srcGroupName).getMaster().getPort();
-			String srcHostName = sdb.getReplicaGroup(srcGroupName).getMaster().getHostName();
-			Sequoiadb srcdataNode = new Sequoiadb(srcHostName + ":" + srcport, "", "");
-			long count2 = srcdataNode.getCollectionSpace(csName).getCollection(clName).getCount("{a:-500}");
-			Assert.assertEquals(count2, 1);// 新插入的数据正确落入源数据组
-			
+			cl.insert((BSONObject) JSON.parse("{a:-2000}"));
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		} finally {
