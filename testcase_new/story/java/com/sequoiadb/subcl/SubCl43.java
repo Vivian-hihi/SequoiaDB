@@ -44,7 +44,7 @@ public class SubCl43 extends SdbTestBase {
 			subCL_1 = MySdbTools.createCL(subCLName_1, commCS, "{ShardingKey:{\"tx_id\":1},ShardingType:\"hash\"}");
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase43 setUp error, error description:" + e.getMessage());
+			Assert.fail("SubCl43 setUp error, error description:" + e.getMessage());
 		}
 	}
 

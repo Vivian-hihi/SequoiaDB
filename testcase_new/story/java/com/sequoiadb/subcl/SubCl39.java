@@ -42,7 +42,7 @@ public class SubCl39 extends SdbTestBase {
 			mainCL = MySdbTools.createCL(mainCLName, commCS, "{IsMainCL:true,ShardingKey:{\"alph\":1}}");
 		} catch (Exception e) {
 			tearDown();
-			Assert.fail("TestCase39 setUp error, error description:" + e.getMessage());
+			Assert.fail("SubCl39 setUp error, error description:" + e.getMessage());
 		}
 	}
 
