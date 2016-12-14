@@ -1,0 +1,51 @@
+监控是一种监视当前系统状态的方式。在 SequoiaDB 中，用户可以使用快照（SNAPSHOT）与列表（LIST）命令进行系统监控。
+
+>   **Note:** 
+>
+>   如果在集群环境下查询快照，连接协调节点就可以获取。
+
+连接协调节点，默认是获取整个集群的快照信息，如：
+
+```lang-javascript
+> db.snapshot( SDB_SNAP_SYSTEM )
+```
+
+要获取指定分区组的快照信息，使用条件查询，如：
+
+```lang-javascript
+> db.snapshot( SDB_SNAP_SYSTEM, { GroupName: "group1" } )
+```
+
+要获取指定节点的快照信息，如：
+
+```lang-javascript
+> db.snapshot( SDB_SNAP_SYSTEM, { HostName: "hostname1", svcname: "11810" } )
+```
+
+##快照##
+
+[快照](database_management/monitoring/snapshot/snapshot.md) 是一种得到系统当前状态的命令，主要分为以下类型：
+
+*   [上下文快照](database_management/monitoring/snapshot/SDB_SNAP_CONTEXTS.md)
+*   [当前会话上下文快照](database_management/monitoring/snapshot/SDB_SNAP_CONTEXTS_CURRENT.md)
+*   [会话快照](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS.md)
+*   [当前会话快照](database_management/monitoring/snapshot/SDB_SNAP_SESSIONS_CURRENT.md)
+*   [集合快照](database_management/monitoring/snapshot/SDB_SNAP_COLLECTIONS.md)
+*   [集合空间快照](database_management/monitoring/snapshot/SDB_SNAP_COLLECTIONSPACES.md)
+*   [数据库快照](database_management/monitoring/snapshot/SDB_SNAP_DATABASE.md)
+*   [系统快照](database_management/monitoring/snapshot/SDB_SNAP_SYSTEM.md)
+*   [编目信息快照](database_management/monitoring/snapshot/SDB_SNAP_CATALOG.md)
+
+
+##列表##
+
+[列表](database_management/monitoring/list/list.md) 是一种轻量级的得到系统当前状态的命令，主要分为以下类型：
+
+*   [上下文列表](database_management/monitoring/list/SDB_LIST_CONTEXTS.md)
+*   [当前会话上下文列表](database_management/monitoring/list/SDB_LIST_CONTEXTS_CURRENT.md)
+*   [会话列表](database_management/monitoring/list/SDB_LIST_SESSIONS.md)
+*   [当前会话列表](database_management/monitoring/list/SDB_LIST_SESSIONS_CURRENT.md)
+*   [集合列表](database_management/monitoring/list/SDB_LIST_COLLECTIONS.md)
+*   [集合空间列表](database_management/monitoring/list/SDB_LIST_COLLECTIONSPACES.md)
+*   [存储单元列表](database_management/monitoring/list/SDB_LIST_STORAGEUNITS.md)
+*   [分区组列表](database_management/monitoring/list/SDB_LIST_GROUPS.md)

@@ -1005,19 +1005,19 @@ else:
    os.system ( "scons -C misc/autogen --language=" + language )
 
 if hasDoc:
-   errno = os.system ( 'python doc_new/build.py --doc' )
+   errno = os.system ( 'python doc/build.py --doc' )
    os._exit( errno )
 
 if hasWebSite:
-   errno = os.system ( 'python doc_new/build.py --website' )
+   errno = os.system ( 'python doc/build.py --website' )
    os._exit( errno )
 
 if hasChm:
-   errno = os.system ( 'python doc_new/build.py --chm' )
+   errno = os.system ( 'python doc/build.py --chm' )
    os._exit( errno )
 
 if hasDoxygen:
-   errno = os.system ( 'python doc_new/build.py --doxygen' )
+   errno = os.system ( 'python doc/build.py --doxygen' )
    os._exit( errno )
 
 if hasEngine:
