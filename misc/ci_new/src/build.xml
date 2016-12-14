@@ -49,7 +49,11 @@
             </if>
          </then>
       </if>
-   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result"/>
+   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result">
+      <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+      <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+      <property name="plat_form" value="${plat_form}"/>
+   </ant>
    </target>
    
    <target name="largedata_test_build">
@@ -82,7 +86,11 @@
             </ant>
          </then>
       </if>
-   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result"/>
+   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result">
+      <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+      <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+      <property name="plat_form" value="${plat_form}"/>
+   </ant>
    </target>
    
    <target name="compile_build">

@@ -30,7 +30,7 @@
    </target>
    
    <target name="detect_remote_env">
-      <propertycopy name="testhost_list" from="${DEPLOY_MODE}_HOST" />
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       <hostinfo prefix="host" />
 
       <property name="remote_cmd1" 
