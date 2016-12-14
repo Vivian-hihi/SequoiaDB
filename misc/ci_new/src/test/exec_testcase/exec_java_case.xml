@@ -14,8 +14,9 @@
       </classpath>
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
+
    
-   <target name="exec_testcase">             
+   <target name="exec_testcase">   
       <mkdir dir="${report_dir}"/> 
        
       <switch value="${TESTCASE_TYPE}">
