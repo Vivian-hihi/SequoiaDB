@@ -1,0 +1,44 @@
+package com.sequoiadb;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+public class Config {
+    private static final String propertiesFileName = "test.properties";
+    private static Properties properties;
+
+    static {
+        properties = new Properties();
+        InputStream in = Config.class.getClassLoader().getResourceAsStream(propertiesFileName);
+        try {
+            properties.load(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static final String singleHost = "single.host";
+    private static final String singlePort = "single.port";
+    private static final String singleUsername = "single.username";
+    private static final String singlePassword = "single.password";
+
+    private Config() {
+    }
+
+    public static String getSingleHost() {
+        return properties.getProperty(singleHost);
+    }
+
+    public static String getSinglePort() {
+        return properties.getProperty(singlePort);
+    }
+
+    public static String getSingleUsername() {
+        return properties.getProperty(singleUsername);
+    }
+
+    public static String getSinglePassword() {
+        return properties.getProperty(singlePassword);
+    }
+}
