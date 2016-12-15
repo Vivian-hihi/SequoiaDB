@@ -13,7 +13,7 @@
    
    <test name="transaction">
      <packages> 
-         <package name="com.story.transaction"/>
+         <package name="com.sequoiadb.transaction"/>
      </packages>  
    </test>
 

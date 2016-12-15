@@ -13,10 +13,10 @@
    
    <test name="story">  
       <packages> 
-         <package name="com.story.auth"/>
-         <package name="com.story.sdbserial"/>
-         <package name="com.story.backup"/>
-         <package name="com.story.clustermanager"/>
+         <package name="com.sequoiadb.auth"/>
+         <package name="com.sequoiadb.sdbserial"/>
+         <package name="com.sequoiadb.backup"/>
+         <package name="com.sequoiadb.clustermanager"/>
       </packages>  
    </test>
 

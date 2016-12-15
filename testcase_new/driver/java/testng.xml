@@ -22,11 +22,11 @@
    
    <test name="javadriver" parallel="classes" thread-count="5">
       <packages> 
-         <package name="com.story.basicoperation" />
-         <package name="com.story.bsontypes"/>
-         <package name="com.story.metadata" />
-         <package name="com.story.sdb"/>
-         <package name="com.story.procedure"/>
+         <package name="com.sequoiadb.basicoperation" />
+         <package name="com.sequoiadb.bsontypes"/>
+         <package name="com.sequoiadb.metadata" />
+         <package name="com.sequoiadb.sdb"/>
+         <package name="com.sequoiadb.procedure"/>
       </packages>    
    </test>
    
