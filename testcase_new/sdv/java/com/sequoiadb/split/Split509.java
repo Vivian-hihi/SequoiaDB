@@ -134,7 +134,7 @@ public class Split509 extends SdbTestBase {
 			cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{a:50}"),
 					(BSONObject) JSON.parse("{a:150}"));
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -175,e.getMessage());
+			Assert.assertEquals(e.getErrorCode() == -175 || e.getErrorCode() == -176, true,e.getMessage());
 			return;
 		} finally {
 			if (sdb != null) {
