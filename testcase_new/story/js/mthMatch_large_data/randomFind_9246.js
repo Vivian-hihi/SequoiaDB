@@ -1,5 +1,5 @@
 /************************************
-*@Description: random data,random matches,find data,only check count
+*@Description: random data,random matches,find data
 *@author:      zhaoyu
 *@createdate:  2016.11.3
 *@testlinkCase:seqDB-9246 
@@ -15,6 +15,8 @@ var fieldNames = ['fieldName1','fieldName2','fieldName3','fieldName4','fieldName
 
 function main()
 {
+   //var startTime = new Date();
+   //println("startTime:" + startTime.toLocaleString());
    //clean environment before test
    clearEnviron();
    
@@ -32,6 +34,8 @@ function main()
    var loopNum = 20;
    queryDataAndCheck( dbcl_IndexScan, loopNum );
    println("check result success");
+   //var endTime = new Date();
+   //println("endTime:" + endTime.toLocaleString());
 }
 main()
  
@@ -210,7 +214,7 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
       }
       
       //check every records every fields,tbScanRecs as compare source
-      /*while( ixScanCursor.next() && tbScanCursor.next() )
+      while( ixScanCursor.next() && tbScanCursor.next() )
       {
    		var ixScanRec = ixScanCursor.current().toObj();
    		delete ixScanRec["_id"];
@@ -223,6 +227,6 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
 				println("\n\ntbScanExplainRecs:"+JSON.stringify(tbScanExplainRecs));
 				throw buildException("check record", null, JSON.stringify(ixScanRec),JSON.stringify(tbScanRec));
 			}
-      }*/
+      }
    }
 }
