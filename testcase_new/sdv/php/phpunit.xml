@@ -1,8 +1,0 @@
-<phpunit>
-   <php>
-      <includePath>.</includePath>
-      <post name="HOSTNAME" value="localhost" />
-      <post name="SVCNAME" value="11810" />
-      <post name="CHANGEDPREFIX" value="sdv_php_test" />
-   </php>
-</phpunit>
