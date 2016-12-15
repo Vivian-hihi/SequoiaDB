@@ -1013,8 +1013,8 @@ INT32 ossGetDiskInfo ( const CHAR *pPath,
       ossErr = ossGetLastError () ;
       goto error ;
    }
-   totalBytes = vfs.f_bsize * vfs.f_blocks ;
-   freeBytes = vfs.f_bsize * vfs.f_bavail ;
+   totalBytes = vfs.f_frsize * vfs.f_blocks ;
+   freeBytes = vfs.f_bsize * vfs.f_bfree ;
 #endif
 done :
 #if defined (_WINDOWS)
@@ -1443,17 +1443,17 @@ std::string ossProcLimits::str()const
 INT32 ossProcLimits::init()
 {
    INT32 rc = SDB_OK ;
-   _initRLimit( RLIMIT_AS, OSS_LIMIT_VIRTUAL_MEM ) ; 
-   _initRLimit( RLIMIT_CORE, OSS_LIMIT_CORE_SZ ) ; 
-   _initRLimit( RLIMIT_CPU, OSS_LIMIT_CPU_TIME ) ; 
-   _initRLimit( RLIMIT_DATA, OSS_LIMIT_DATA_SEG_SZ ) ; 
-   _initRLimit( RLIMIT_FSIZE, OSS_LIMIT_FILE_SZ ) ;  
+   _initRLimit( RLIMIT_AS, OSS_LIMIT_VIRTUAL_MEM ) ;
+   _initRLimit( RLIMIT_CORE, OSS_LIMIT_CORE_SZ ) ;
+   _initRLimit( RLIMIT_CPU, OSS_LIMIT_CPU_TIME ) ;
+   _initRLimit( RLIMIT_DATA, OSS_LIMIT_DATA_SEG_SZ ) ;
+   _initRLimit( RLIMIT_FSIZE, OSS_LIMIT_FILE_SZ ) ;
    _initRLimit( RLIMIT_STACK, OSS_LIMIT_STACK_SIZE ) ;
    _initRLimit( RLIMIT_NOFILE, OSS_LIMIT_OPEN_FILE ) ;
 #if !defined (_AIX)
-   _initRLimit( RLIMIT_LOCKS, OSS_LIMIT_FILE_LOCK ) ; 
-   _initRLimit( RLIMIT_MEMLOCK, OSS_LIMIT_MEM_LOCK ) ; 
-   _initRLimit( RLIMIT_MSGQUEUE, OSS_LIMIT_MSG_QUEUE ) ; 
+   _initRLimit( RLIMIT_LOCKS, OSS_LIMIT_FILE_LOCK ) ;
+   _initRLimit( RLIMIT_MEMLOCK, OSS_LIMIT_MEM_LOCK ) ;
+   _initRLimit( RLIMIT_MSGQUEUE, OSS_LIMIT_MSG_QUEUE ) ;
    _initRLimit( RLIMIT_RTPRIO, OSS_LIMIT_SCHE_PRIO) ;
 #endif  //_AIX
    return rc ;
