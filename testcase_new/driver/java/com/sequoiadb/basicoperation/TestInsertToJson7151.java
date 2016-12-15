@@ -39,7 +39,7 @@ public class TestInsertToJson7151 extends SdbTestBase{
 	//insert records
 	String []records = {"{'no':-2147483648,'tlong':9223372036854775807,'tf':1.7e+308,'td':{'$decimal':'123.45'},boolt:true}",
 	        "{no:0,numlong:{'$numberLong':'-9223372036854775808'},oid:{ '$oid':'123abcd00ef12358902300ef'},tfm:-1.7E+308}",
-	        "{no:1,numlongm:{'$numberLong':'9223372036854775807'},'ts':'test',reg:{'$regex':'^�?','$options':'i'},tc:'可能会被�?'}",
+	        "{no:1,numlongm:{'$numberLong':'9223372036854775807'},'ts':'test',reg:{'$regex':'^张','$options':'i'},tc:'可能会被调'}",
 	        "{no:2147483647,date:{'$date':'2012-01-01'},time:{'$timestamp':'2012-01-01-13.14.26.124233'},arr:['abc',345,true]}"};
 	
 	@BeforeClass

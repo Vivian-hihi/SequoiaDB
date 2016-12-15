@@ -104,7 +104,7 @@ public class TestInsertToBson7152 extends SdbTestBase{
 			arr.put("1","test");
 			arr.put("2",2.34);
 			obj.put("arr",arr);
-			obj.put("tc","企业�?*分布");
+			obj.put("tc","企业级*分布");
 			obj.put("boolt",true);
 			obj.put("boolf",false);	
 			obj.put("binary", regex);	

@@ -81,7 +81,7 @@ public class TestDeleteToBson7163 extends SdbTestBase {
 				arr.put("0", 3+i);
 				arr.put("1","test");
 				arr.put("2",2.34);
-				arr.put("3","中文�?*�?");
+				arr.put("3","中文测*试");
 				obj.put("date",new Date());
 				obj.put("arr",arr);						
 				list.add(obj);				
