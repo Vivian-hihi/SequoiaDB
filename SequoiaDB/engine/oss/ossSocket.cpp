@@ -1329,7 +1329,12 @@ INT32 ossGetPort( const CHAR * pServiceName, UINT16 & port )
       servinfo = getservbyname ( pServiceName, "tcp" ) ;
       if ( !servinfo )
       {
-         port = atoi ( pServiceName ) ;
+         INT32 tmpPort = atoi ( pServiceName ) ;
+         if ( 0 >= tmpPort || 65535 < tmpPort )
+         {
+            rc = SDB_INVALIDARG ;
+         }
+         port = tmpPort ;
       }
       else
       {

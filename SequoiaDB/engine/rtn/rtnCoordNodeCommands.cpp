@@ -319,7 +319,14 @@ namespace engine
          if ( strCataSvc.empty() )
          {
             UINT16 svcPort = 0 ;
-            ossGetPort( strSvcName.c_str(), svcPort ) ;
+
+            rc = ossGetPort( strSvcName.c_str(), svcPort ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Invalid svcname: %s", strSvcName.c_str() ) ;
+               goto error ;
+            }
+
             CHAR szPort[ 10 ] = { 0 } ;
             ossItoa( svcPort + MSG_ROUTE_CAT_SERVICE , szPort, 10 ) ;
             strCataSvc = szPort ;

@@ -264,15 +264,15 @@ namespace engine
       }
       else if ( rc )
       {
-         UINT16 port = 0 ;
-         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
+         INT32 port = 0 ;
+         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
             detail = BSON( SPT_ERR << "svcname must be string or int" ) ;
          }
-         else if ( port <= 0 || port >= 65535 )
+         else if ( port <= 0 || port > 65535 )
          {
-            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65535 )" ) ;
+            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65536 )" ) ;
             rc = SDB_INVALIDARG ;
          }
          else
@@ -354,15 +354,15 @@ namespace engine
       }
       else if ( rc )
       {
-         UINT16 port = 0 ;
-         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
+         INT32 port = 0 ;
+         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
             detail = BSON( SPT_ERR << "svcname must be string or int" ) ;
          }
-         else if ( port <= 0 || port >= 65535 )
+         else if ( port <= 0 || port > 65535 )
          {
-            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65535 )" ) ;
+            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65536 )" ) ;
             rc = SDB_INVALIDARG ;
          }
          else
@@ -444,15 +444,15 @@ namespace engine
       }
       else if ( rc )
       {
-         UINT16 port = 0 ;
-         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
+         INT32 port = 0 ;
+         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
             detail = BSON( SPT_ERR << "svcname must be string or int" ) ;
          }
-         else if ( port <= 0 || port >= 65535 )
+         else if ( port <= 0 || port > 65535 )
          {
-            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65535 )" ) ;
+            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65536 )" ) ;
             rc = SDB_INVALIDARG ;
          }
          else
@@ -486,15 +486,15 @@ namespace engine
       }
       else if ( rc )
       {
-         UINT16 port = 0 ;
-         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
+         INT32 port = 0 ;
+         rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
             detail = BSON( SPT_ERR << "svcname must be string or int" ) ;
          }
-         else if ( port <= 0 || port >= 65535 )
+         else if ( port <= 0 || port > 65535 )
          {
-            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65535 )" ) ;
+            detail = BSON( SPT_ERR << "svcname must in range ( 0, 65536 )" ) ;
             rc = SDB_INVALIDARG ;
          }
          else

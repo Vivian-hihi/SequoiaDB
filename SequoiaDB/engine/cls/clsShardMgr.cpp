@@ -43,7 +43,7 @@
 
 using namespace bson ;
 
-namespace engine 
+namespace engine
 {
 
    #define CLS_CATA_RETRY_MAX_TIMES          ( 4 )
@@ -470,7 +470,9 @@ namespace engine
             // convert from service port to real port
             _hostAndPort &tmpInfo = hosts[pos] ;
             pos = ( pos + 1 ) % hosts.size() ;
-            ossGetPort( tmpInfo._svc.c_str(), port ) ;
+            rc = ossGetPort( tmpInfo._svc.c_str(), port ) ;
+            PD_RC_CHECK( rc, PDERROR, "Invalid svcname: %s",
+                         tmpInfo._svc.c_str() ) ;
 
             // use millisecond
             // establish a socket connection, will be closed by end of
@@ -594,7 +596,7 @@ namespace engine
          PD_LOG( PDERROR, "Update group[%d] info failed, rc: %d",
                  groupID, rc ) ;
       }
-      goto error ;      
+      goto error ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SND2CAT, "_clsShardMgr::sendToCatlog" )
@@ -1417,7 +1419,7 @@ namespace engine
                // if another to find by old id, let's simply update using the
                // new info
                _pNetRtAgent->updateRoute ( nodeItem._id,
-                                           nodeItem._host, 
+                                           nodeItem._host,
                                            nodeItem._service[
                                            MSG_ROUTE_CAT_SERVICE].c_str() ) ;
                PD_LOG ( PDDEBUG, "Update catalog node[%u:%u] to %s:%s",

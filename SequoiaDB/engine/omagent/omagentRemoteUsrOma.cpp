@@ -1122,12 +1122,12 @@ namespace engine
       if ( NumberInt == bsonType  )
       {
          stringstream ss ;
-         UINT16 port ;
+         INT32 port ;
          port = _matchObj.getIntField( "svcname" ) ;
-         if ( 0 >= port || 65535 <= port )
+         if ( 0 >= port || 65535 < port )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "svcname must in range ( 0, 65535 )" ) ;
+            PD_LOG_MSG( PDERROR, "svcname must in range ( 0, 65536 )" ) ;
             goto error ;
          }
          ss << port ;
@@ -1206,12 +1206,12 @@ namespace engine
       if ( NumberInt == bsonType  )
       {
          stringstream ss ;
-         UINT16 port ;
+         INT32 port ;
          port = _matchObj.getIntField( "svcname" ) ;
-         if ( 0 >= port || 65535 <= port )
+         if ( 0 >= port || 65535 < port )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "svcname must in range ( 0, 65535 )" ) ;
+            PD_LOG_MSG( PDERROR, "svcname must in range ( 0, 65536 )" ) ;
             goto error ;
          }
          ss << port ;
@@ -1316,12 +1316,12 @@ namespace engine
       if ( NumberInt == bsonType  )
       {
          stringstream ss ;
-         UINT16 port ;
+         INT32 port ;
          port = _matchObj.getIntField( "svcname" ) ;
-         if ( 0 >= port || 65535 <= port )
+         if ( 0 >= port || 65535 < port )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "svcname must in range ( 0, 65535 )" ) ;
+            PD_LOG_MSG( PDERROR, "svcname must in range ( 0, 65536 )" ) ;
             goto error ;
          }
          ss << port ;

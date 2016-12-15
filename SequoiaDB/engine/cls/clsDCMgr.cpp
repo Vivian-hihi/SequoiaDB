@@ -40,7 +40,7 @@
 
 using namespace bson ;
 
-namespace engine 
+namespace engine
 {
 
    #define DC_UPDATE_FORCE_TIMEOUT           ( 60 * OSS_ONE_SEC )
@@ -669,31 +669,34 @@ namespace engine
 
       SDB_ASSERT( cb && msg, "Handle can't be NULL" ) ;
 
-      ossGetPort( node._service, port ) ;
-      ossSocket sock( node._host, port, millsec ) ;
-      rc = sock.initSocket() ;
-      PD_RC_CHECK( rc, PDERROR, "Init socket[%s:%d] failed, rc: %d",
-                   node._host, port, rc ) ;
+      rc = ossGetPort( node._service, port ) ;
+      PD_RC_CHECK( rc, PDERROR, "Invalid svcname: %s", node._service ) ;
 
-      rc = sock.connect( (INT32)millsec ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Connect to %s:%d failed, rc: %d",
-                   node._host, port, rc ) ;
+      {
+         ossSocket sock( node._host, port, millsec ) ;
+         rc = sock.initSocket() ;
+         PD_RC_CHECK( rc, PDERROR, "Init socket[%s:%d] failed, rc: %d",
+                      node._host, port, rc ) ;
 
-      if ( ppRecvMsg )
-      {
-         rc = pmdSyncSendMsg( msg, ppRecvMsg, &sock, cb, useCBMem,
-                              (INT32)millsec, DC_UPDATE_FORCE_TIMEOUT ) ;
-      }
-      else
-      {
-         rc = pmdSend( (const CHAR*)msg, msg->messageLength, &sock, cb,
-                       (INT32)millsec ) ;
-      }
-      if ( rc )
-      {
-         goto error ;
-      }
+         rc = sock.connect( (INT32)millsec ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Connect to %s:%d failed, rc: %d",
+                      node._host, port, rc ) ;
 
+         if ( ppRecvMsg )
+         {
+            rc = pmdSyncSendMsg( msg, ppRecvMsg, &sock, cb, useCBMem,
+                                 (INT32)millsec, DC_UPDATE_FORCE_TIMEOUT ) ;
+         }
+         else
+         {
+            rc = pmdSend( (const CHAR*)msg, msg->messageLength, &sock, cb,
+                          (INT32)millsec ) ;
+         }
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
    done:
       return rc ;
    error:
@@ -712,7 +715,7 @@ namespace engine
       hasLock = TRUE ;
 
       // first send to primary node
-      if ( _peerCatPrimary >= 0 && 
+      if ( _peerCatPrimary >= 0 &&
            ( UINT32 )_peerCatPrimary < _vecCatlog.size() )
       {
          rc = _syncSend2PeerNode( cb, msg, ppRecvMsg,

@@ -1542,7 +1542,7 @@ namespace engine
 
       // --weight
       rdxUInt( pEX, PMD_OPTION_WEIGHT, _weight,
-               FALSE, TRUE, 10, FALSE ) ; 
+               FALSE, TRUE, 10, FALSE ) ;
       rdvMinMax( pEX, _weight, 1, 100, TRUE ) ;
 
 #ifdef SDB_ENTERPRISE
@@ -1638,8 +1638,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ROLE dbRole = SDB_ROLE_STANDALONE ;
 
-      ossGetPort( _krcbSvcName, _krcbSvcPort ) ;
-      if ( 0 == _krcbSvcPort )
+      rc = ossGetPort( _krcbSvcName, _krcbSvcPort ) ;
+      if ( SDB_OK != rc )
       {
          std::cerr << "Invalid svcname: " << _krcbSvcName << endl ;
          rc = SDB_INVALIDARG ;
