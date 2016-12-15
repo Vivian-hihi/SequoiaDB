@@ -26,7 +26,7 @@
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
       <!--antcall target="compile_spark_connector"/-->
-      <antcall target="compile_website"/>
+      <antcall target="compile_document"/>
       <antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
@@ -238,10 +238,82 @@
       </exec>
    </target>
    
-   <target name="compile_website" >
-      <exec executable="scons" dir="${srccode_dir}">
-         <arg line="--website" />
-      </exec>
+   <target name="compile_document" >
+      <!--copy docment files and tar-->
+      <var name="tmp_dir" value="${srccode_dir}/tmp"/>
+      <delete dir="${tmp_dir}" failonerror="false"/>
+      <mkdir dir="${tmp_dir}/sequoiadb"/>
+      <copy todir="">
+         <fileset dir="${srccode_dir}" includes="*"/>
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/include"   includes="**/*"/>
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/oss"       includes="**/*"/>
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/client"    includes="**/*"/>
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/spt"       includes="**/*"/>
+         <fileset dir="${srccode_dir}/SequoiaDB/engine/pd"        includes="**/*"/>
+         <fileset dir="${srccode_dir}/driver"                     includes="**/*"/>
+         <fileset dir="${srccode_dir}/tools/server/php_win"       includes="**/*"/>
+         <fileset dir="${srccode_dir}/doc"                        includes="**/*"/>
+         <fileset dir="${srccode_dir}/misc"                       includes="**/*"/>
+         <fileset dir="${srccode_dir}/site_scons"                 includes="**/*"/>
+         <fileset dir="${srccode_dir}/java/jdk_win32"             includes="**/*"/>
+      </copy>
+      
+      <!--compress, generate tar-->
+      <var name="tar_name" value="sequoiadb.tar.gz"/>
+      <tar destfile="${tmp_dir}/${tar_name}" longfile="gnu" compression="gzip" 
+           basedir="${tmp_dir}" includes="sequoiadb/**/*"/>
+      
+      <!--send files to remote host-->
+      <var name="remote_workspace" value="C:\Users\jenkins\workspace\${JOB_NAME}"/>
+      
+      <staf location="${DOC_HOST}" service="FS"
+            request="DELETE ENTRY ${remote_workspace} RECURSE CONFIRM"
+            throwBuildException=""/>
+      <staf location="${DOC_HOST}" service="FS"
+            request="CREATE DIRECTORY ${remote_workspace} FULLPATH"
+            throwBuildException="1"/>
+            
+      <staf location="local" service="FS"
+            request="COPY FILE ${tmp_dir}/${tar_name} TODIRECTORY ${remote_workspace} TOMACHINE ${DOC_HOST}"
+            throwBuildException="1"/>
+            
+      <staf location="${DOC_HOST}" service="PROCESS"
+            request="START SHELL COMMAND tar zxvf ${remote_workspace}/${tar_name} -C ${remote_workspace} WAIT 10m RETURNSTDERR"
+            throwBuildException="1"/>  
+            
+      <!--excute compile document-->
+      <var name="cmd1" value="ant -f ${remote_workspace}/misc/ci_new/compile/compile_doc.xml main" />
+      <var name="cmd2" value="-DDOC=true -DWEBISTE=false -DWORKSPACE=${remote_workspace}" />
+      <var name="compile_log" value="${remote_workspace}/misc/ci_new/compile/compile_doc.log" />
+      <staf location="${DOC_HOST}" service="PROCESS"
+            resultPrefix="remote_exec"
+            request="START SHELL COMMAND ${cmd1} ${cmd2} STDOUTAPPEND ${compile_log} STDERRTOSTDOUT WAIT"
+            throwBuildException="1"/> 
+      <staf location="${DOC_HOST}" service="FS"
+            request="GET FILE ${compile_log} TEXT"
+            throwBuildException="1"/>
+            
+      <propertyregex property="remote_exec_rc" input="${remote_exec.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>      
+      <if>
+         <equals arg1="${remote_exec_rc}" arg2="0" />
+         <else>
+            <fail message="exec: ${cmd1} ${cmd2}, in host: ${DOC_HOST}, return code: not 0"/>
+         </else>
+      </if>
+      
+      <!--collect compile output from remote host-->
+      <var name="local_output_dir" value="${srccode_dir}/doc/build"/>
+      <delete dir="${local_output_dir}" failonerror="false"/>
+      <mkdir dir="${local_output_dir}"/>
+      
+      <hostinfo prefix="host" />
+      <staf location="${DOC_HOST}" service="FS"
+            request="COPY DIRECTORY ${remote_workspace}/release TODIRECTORY ${local_output_dir} TOMACHINE ${host.NAME} RECURSE"
+            throwBuildException="1"/>
+            
+      <delete includeEmptyDirs="true">
+         <fileset dir="${local_output_dir}" excludes="*.pdf,*.chm"/>
+      </delete>
    </target>
    
    <target name="build_driver_package" >
@@ -339,7 +411,13 @@
       </copy>
       <copy file="${srccode_dir}/conf/sdbcm.conf" todir="${release_db_dir}/conf" />
       
-      <!--TODO: copy doc-->
+      <copy todir="${release_db_dir}/doc">
+         <fileset dir="${srccode_dir}/doc/build/" />
+      </copy>
+      <!--TODO: copy sdb help doc>
+      <copy todir="${release_db_dir}/doc/manual">
+         <fileset dir="${srccode_dir}/doc/manual" />
+      </copy-->
       
       <copy todir="${release_db_dir}/hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
