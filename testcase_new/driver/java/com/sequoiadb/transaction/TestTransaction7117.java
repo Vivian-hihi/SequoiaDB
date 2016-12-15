@@ -1,4 +1,4 @@
-package com.story.transaction;
+package com.sequoiadb.transaction;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

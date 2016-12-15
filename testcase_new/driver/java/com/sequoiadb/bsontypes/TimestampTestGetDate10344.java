@@ -1,4 +1,4 @@
-package com.story.bsontypes;
+package com.sequoiadb.bsontypes;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

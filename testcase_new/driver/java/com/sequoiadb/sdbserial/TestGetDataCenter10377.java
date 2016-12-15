@@ -1,4 +1,4 @@
-package com.story.sdbserial;
+package com.sequoiadb.sdbserial;
 
 import org.bson.BSONObject;
 import org.testng.Assert;

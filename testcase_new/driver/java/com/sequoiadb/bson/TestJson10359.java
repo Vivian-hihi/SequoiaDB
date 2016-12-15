@@ -1,4 +1,4 @@
-package com.story.bson;
+package com.sequoiadb.bson;
 
 import org.bson.BasicBSONCallback;
 import org.bson.util.JSON;

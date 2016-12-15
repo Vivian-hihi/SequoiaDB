@@ -1,4 +1,4 @@
-package com.story.basicoperation;
+package com.sequoiadb.basicoperation;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ public class TestDeleteToBson7163 extends SdbTestBase {
 				arr.put("0", 3+i);
 				arr.put("1","test");
 				arr.put("2",2.34);
-				arr.put("3","中文测*试");
+				arr.put("3","中文�?*�?");
 				obj.put("date",new Date());
 				obj.put("arr",arr);						
 				list.add(obj);				

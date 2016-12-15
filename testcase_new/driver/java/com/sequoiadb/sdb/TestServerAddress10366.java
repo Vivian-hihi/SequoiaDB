@@ -1,4 +1,4 @@
-package com.story.sdb;
+package com.sequoiadb.sdb;
 
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;

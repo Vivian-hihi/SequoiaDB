@@ -1,4 +1,4 @@
-package com.story.basicoperation;
+package com.sequoiadb.basicoperation;
 
 public class CataInfoItem {
 	public String groupName;

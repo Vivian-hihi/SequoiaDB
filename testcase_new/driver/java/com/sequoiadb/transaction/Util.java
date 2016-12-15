@@ -1,4 +1,4 @@
-package com.story.transaction;
+package com.sequoiadb.transaction;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;

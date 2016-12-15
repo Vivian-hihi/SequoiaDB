@@ -1,4 +1,4 @@
-package com.story.auth;
+package com.sequoiadb.auth;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;

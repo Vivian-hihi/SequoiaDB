@@ -1,4 +1,4 @@
-package com.story.basicoperation;
+package com.sequoiadb.basicoperation;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

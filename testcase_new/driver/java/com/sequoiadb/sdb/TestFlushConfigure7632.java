@@ -1,4 +1,4 @@
-package com.story.sdb;
+package com.sequoiadb.sdb;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;

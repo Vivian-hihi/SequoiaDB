@@ -1,4 +1,4 @@
-package com.story.basicoperation;
+package com.sequoiadb.basicoperation;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

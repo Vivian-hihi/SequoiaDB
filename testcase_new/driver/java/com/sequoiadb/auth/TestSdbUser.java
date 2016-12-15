@@ -1,4 +1,4 @@
-package com.story.auth;
+package com.sequoiadb.auth;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -1,4 +1,4 @@
-package com.story.sdb;
+package com.sequoiadb.sdb;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;

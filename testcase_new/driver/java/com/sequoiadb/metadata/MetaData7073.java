@@ -1,4 +1,4 @@
-package com.story.metadata;
+package com.sequoiadb.metadata;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;

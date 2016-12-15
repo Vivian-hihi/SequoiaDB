@@ -1,4 +1,4 @@
-package com.story.procedure;
+package com.sequoiadb.procedure;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -1,4 +1,4 @@
-package com.story.metadata;
+package com.sequoiadb.metadata;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
