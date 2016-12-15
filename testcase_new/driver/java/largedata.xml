@@ -11,6 +11,5 @@
    <parameter name="RSRVNODEDIR"    value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR"        value="/tmp/javatest" />
    
-
 </suite>
    
