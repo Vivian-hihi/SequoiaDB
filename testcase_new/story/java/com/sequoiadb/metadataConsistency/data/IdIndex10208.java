@@ -160,7 +160,7 @@ public class IdIndex10208 extends SdbTestBase {
 	
 	public void createIdIndex(Sequoiadb sdb){
 		try{
-			DBCollection clDB = sdb.getCollectionSpace(csName).getCollection(clName);
+			DBCollection clDB = sdb.getCollectionSpace(csName).getCollection(mCLName);
 			BSONObject opt2 = new BasicBSONObject();
 			opt2.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt2);
