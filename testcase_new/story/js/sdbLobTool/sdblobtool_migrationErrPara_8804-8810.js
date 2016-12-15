@@ -56,8 +56,8 @@ function main( db )
                         "collection":COMMCSNAME+".noexist_fcl", 
                         "dsthost":"172.168.20.43", "dstservice":"90000", 
                         "dstcollection":COMMCSNAME+".noexist_tcl" } ;
-   var errCode = { "hostname":"-13", "svcname":"-79", "operation":"-6", "collection":"-23",
-                   "dsthost":"-13", "dstservice":"-79", "dstcollection":"-23" } ;
+   var errCode = { "hostname":"-13", "svcname":"-6", "operation":"-6", "collection":"-23",
+                   "dsthost":"-13", "dstservice":"-6", "dstcollection":"-23" } ;
    
    for( var k in errParameter )
    {

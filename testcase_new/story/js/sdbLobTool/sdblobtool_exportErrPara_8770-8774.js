@@ -42,7 +42,7 @@ function main( db )
    var errParameter = { "hostname":"172.168.20.43", "svcname":"90000", "operation":"expo", 
                         "collection":COMMCSNAME+".noexists_cl" } ;
    // 对应的错误码(集群模式和独立模式)
-   var errCode = { "hostname":"-13", "svcname":"-79", "operation":"-6", "collection":"-23" } ;
+   var errCode = { "hostname":"-13", "svcname":"-6", "operation":"-6", "collection":"-23" } ;
    
       
    // 执行导出操作前，首先需要创建一个含有大对象的集合COMMCLNAME

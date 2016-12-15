@@ -60,7 +60,7 @@ function main( db )
    
    var errParameter = { "hostname":"172.168.20.43", "svcname":"90000", "operation":"impo", 
                         "collection":COMMCSNAME+".noexists_cl" } ;
-   var errCode = { "hostname":"-13", "svcname":"-79", "operation":"-6", "collection":"-23" } ;
+   var errCode = { "hostname":"-13", "svcname":"-6", "operation":"-6", "collection":"-23" } ;
    for( var k in errParameter )
    {
       var tmp = Args[k] ;
