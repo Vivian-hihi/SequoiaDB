@@ -18,19 +18,19 @@
       <dbversion srccodedir="${srccode_dir}" version="sequoiadb_version"/>
       <getplatform resultProperty="platform" />
       
-      <antcall target="compile_src"/>   
+      <!--antcall target="compile_src"/>   
       <antcall target="compile_java_driver"/>
       <antcall target="compile_php_driver"/>
       <antcall target="compile_python_driver"/>
       <antcall target="compile_pg_connector"/>
       <antcall target="compile_hive_connector"/>
-      <antcall target="compile_hadoop_connector"/>
+      <antcall target="compile_hadoop_connector"/-->
       <!--antcall target="compile_spark_connector"/-->
       <antcall target="compile_document"/>
-      <antcall target="build_driver_package"/>
+      <!--antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
-      <antcall target="build_bin_package"/>
+      <antcall target="build_bin_package"/-->
    </target>
 
    <target name="check_parameter">  
