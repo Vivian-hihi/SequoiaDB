@@ -31,9 +31,9 @@
       <antcall target="ready_lib"/>
       
       <antcall target="compile_testcase" />
-      
+
       <antcall target="filter_testcase" />
-      
+
       <antcall target="divide_testcase" />
       
       <antcall target="distribute_testcase" />
@@ -48,7 +48,8 @@
          <else>           
             <var name="TESTCASE_TYPE" value="tdd_c,tdd_cpp,tdd_java,tdd_php,tdd_python,tdd_mongoc,
                                              story_java,story_js,
-                                             sdv_c,sdv_cpp,sdv_java,sdv_php,sdv_js" />
+                                             sdv_java,sdv_js,
+                                             driver_c,driver_cpp,driver_java,driver_php" />
          </else>
       </if>
       <if>
@@ -65,6 +66,13 @@
       <copy todir="${case_basedir}">
          <fileset dir="${WORKSPACE}/sequoiadb/testcase"/>
       </copy>
+      
+      <if>
+         <equals arg1="${plat_form}" arg2="PPC" />
+         <then>
+            <delete dir="${case_basedir}/tdd/mongoc" />
+         </then>
+      </if>
    </target>
    
    <target name="ready_lib">
@@ -100,11 +108,14 @@
             <case value="sdv_java">
                <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
+            <case value="driver_java">
+               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+            </case>
             
             <case value="tdd_c">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
-            <case value="sdv_c">
+            <case value="driver_c">
                <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
             
@@ -115,7 +126,7 @@
             <case value="tdd_cpp">
                <compilecase type="cpp"    srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>            
-            <case value="sdv_cpp">
+            <case value="driver_cpp">
                <compilecase type="cpp"    srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
             </case>
             
@@ -336,10 +347,10 @@
                      <case value="tdd_cpp">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
                      </case>
-                     <case value="sdv_c">
+                     <case value="driver_c">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
                      </case>
-                     <case value="sdv_cpp">
+                     <case value="driver_cpp">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_c_case.xml"/>
                      </case>
                      
@@ -350,6 +361,9 @@
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
                      </case>
                      <case value="sdv_java">
+                        <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
+                     </case>
+                     <case value="driver_java">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
                      </case>
                      
@@ -363,7 +377,7 @@
                      <case value="tdd_php">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_php_case.xml"/>
                      </case>
-                     <case value="sdv_php">
+                     <case value="driver_php">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_php_case.xml"/>
                      </case>
                      
@@ -373,6 +387,10 @@
    
                      <case value="tdd_mongoc">
                         <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_mongoc_case.xml"/>
+                     </case>
+                     
+                     <case value="story_ant">
+                        <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_ant_case.xml"/>
                      </case>
                      
                      <default>
@@ -390,11 +408,7 @@
             </for>           
          </sequential>
       </for>
-      
-      
+
    </target>
-   
-   
-   
-   
+
 </project>
