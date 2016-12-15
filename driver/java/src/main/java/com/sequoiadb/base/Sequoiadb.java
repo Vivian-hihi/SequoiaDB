@@ -298,7 +298,7 @@ public class Sequoiadb {
 		}
 		catch (UnknownHostException e)
 		{
-			throw new BaseException("SDB_NETWORK", connString, e);
+			throw new BaseException(SDBError.SDB_NETWORK, connString, e);
 		}
 		// authentication
 		this.userName = username;
@@ -336,7 +336,7 @@ public class Sequoiadb {
 		int size = connStrings.size();
 		if (0 == size)
 		{
-			throw new BaseException("SDB_INVALIDARG", "Address list is empty");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "Address list is empty");
 		}
 		Random random = new Random();
 		int count = random.nextInt(size);
@@ -355,7 +355,7 @@ public class Sequoiadb {
 				}
 				catch (UnknownHostException e)
 				{
-					throw new BaseException("SDB_NETWORK", str);
+					throw new BaseException(SDBError.SDB_NETWORK, str);
 				}
 				// authentication
 				this.userName = username;
@@ -366,7 +366,7 @@ public class Sequoiadb {
 			{
 				if ( mark == count)
 				{
-					throw new BaseException("SDB_NET_CANNOT_CONNECT");
+					throw new BaseException(SDBError.SDB_NET_CANNOT_CONNECT);
 				}
 				continue;
 			}
@@ -432,7 +432,7 @@ public class Sequoiadb {
 		}
 		catch (UnknownHostException e)
 		{
-			throw new BaseException("SDB_NETWORK", addr, port, e);
+			throw new BaseException(SDBError.SDB_NETWORK, addr + ":" + port, e);
 		}
 		// authentication
 		this.userName = username;
@@ -454,14 +454,14 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.MSG_AUTH_VERIFY_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if (flags != 0)
 		{
 			connection.close();
-			throw new BaseException(flags, userName, password);
+			throw new BaseException(SDBError.getSDBError(flags), "failed to auth, user is" + userName);
 		}
 	}
 
@@ -475,7 +475,7 @@ public class Sequoiadb {
 	 */
 	public void createUser(String username, String password) throws BaseException {
 		if(username == null || password == null) {
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 		byte[] request = SDBMessageHelper.buildAuthMsg(username, password,
 				getNextRequstID(), (byte) 1, endianConvert);
@@ -484,12 +484,12 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.MSG_AUTH_CRTUSR_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, username, password);
+			throw new BaseException(SDBError.getSDBError(flags), "failed to create user " + username);
 		}
 	}
 
@@ -509,12 +509,12 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.MSG_AUTH_DELUSR_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, username, password);
+			throw new BaseException(SDBError.getSDBError(flags), "failed to remove user " + username);
 		}
 	}
 
@@ -644,9 +644,9 @@ public class Sequoiadb {
 	public CollectionSpace createCollectionSpace(String csName, BSONObject options)
 			throws BaseException {
 		if (csName == null || csName == "")
-			throw new BaseException("SDB_INVALIDARG", csName);
+			throw new BaseException(SDBError.SDB_INVALIDARG, csName);
 		if (isCollectionSpaceExist(csName))
-			throw new BaseException("SDB_DMS_CS_EXIST", csName);
+			throw new BaseException(SDBError.SDB_DMS_CS_EXIST, csName);
 		SDBMessage rtnSDBMessage = createCS(csName, options);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
@@ -664,7 +664,7 @@ public class Sequoiadb {
 	 */
 	public void dropCollectionSpace(String csName) throws BaseException {
 		if (!isCollectionSpaceExist(csName)) {
-			throw new BaseException("SDB_DMS_CS_NOTEXIST", csName);
+			throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
 		}
 		BSONObject matcher = new BasicBSONObject();
 		matcher.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
@@ -701,7 +701,7 @@ public class Sequoiadb {
 		if (isCollectionSpaceExist(csName)) {
 			return new CollectionSpace(this, csName);
 		} else {
-			throw new BaseException("SDB_DMS_CS_NOTEXIST", csName);
+			throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
 		}
 	}
 
@@ -884,8 +884,8 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.MSG_BS_SQL_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if (flags != 0) {
@@ -910,8 +910,8 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.MSG_BS_SQL_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if (flags != 0) {
@@ -1025,7 +1025,7 @@ public class Sequoiadb {
 			command += " " + SequoiadbConstants.CATA;
 			break;
 		default:
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 
 		SDBMessage rtn = adminCommand(command, 0, 0, -1, -1, matcher, selector,
@@ -1035,7 +1035,10 @@ public class Sequoiadb {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
 				return null;
 			} else {
-				throw new BaseException(flags, matcher, selector, orderBy);
+				String msg = "matcher = " + matcher.toString() +
+						", selector = " + selector.toString() +
+						", orderBy = " + orderBy.toString();
+				throw new BaseException(SDBError.getSDBError(flags), msg);
 			}
 		}
 		return new DBCursor(rtn, this);
@@ -1057,8 +1060,8 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.TRANS_BEGIN_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if(flags != 0)
@@ -1080,8 +1083,8 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.TRANS_COMMIT_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if(flags != 0)
@@ -1103,8 +1106,8 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtn.getOperationCode() != Operation.TRANS_ROLLBACK_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtn.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtn.getOperationCode().toString());
         }
 		int flags = rtn.getFlags();
 		if(flags != 0)
@@ -1121,7 +1124,7 @@ public class Sequoiadb {
 	{
 		// check the argument
 		if ( null == code || code.equals("") ){
-			throw new BaseException("SDB_INVALIDARG", code);
+			throw new BaseException(SDBError.SDB_INVALIDARG, code);
 		}
 		// build code type bson
 		BSONObject newobj = new BasicBSONObject();
@@ -1148,7 +1151,7 @@ public class Sequoiadb {
 	{
 		// check the argument
 		if ( null == name || name.equals("") ) {
-			throw new BaseException("SDB_INVALIDARG", name);
+			throw new BaseException(SDBError.SDB_INVALIDARG, name);
 		}
 		// append the name to a bson
 		BSONObject newobj = new BasicBSONObject();
@@ -1189,7 +1192,7 @@ public class Sequoiadb {
 	{
 		// check the argument
 		if ( code == null || code.equals("") ){
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 		SptEvalResult evalResult = new Sequoiadb.SptEvalResult();
 		// build code type bson
@@ -1289,7 +1292,7 @@ public class Sequoiadb {
 					continue ;
 				}
 				else{
-					throw new BaseException("SDB_INVALIDARG", key);
+					throw new BaseException(SDBError.SDB_INVALIDARG, key);
 				}
 			}
 		}
@@ -1303,7 +1306,11 @@ public class Sequoiadb {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
 				return cursor;
 			} else {
-				throw new BaseException(flags, matcher, selector, orderBy, options);
+				String msg = "matcher = " + matcher.toString() +
+						", selector = " + selector.toString() +
+						", orderBy = " + orderBy.toString() +
+						", options = " + options.toString();
+				throw new BaseException(SDBError.getSDBError(flags), msg);
 			}
 		}
 		cursor = new DBCursor(rtn, this);
@@ -1334,7 +1341,7 @@ public class Sequoiadb {
 					continue ;
 				}
 				else{
-					throw new BaseException("SDB_INVALIDARG");
+					throw new BaseException(SDBError.SDB_INVALIDARG);
 				}
 			}
 		}
@@ -1366,8 +1373,11 @@ public class Sequoiadb {
 				                      selector, orderBy, hint);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, matcher,
-                                    selector, orderBy, hint);
+			String msg = "matcher = " + matcher.toString() +
+					", selector = " + selector.toString() +
+					", orderBy = " + orderBy.toString() +
+					", hint = " + hint.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// return the result by cursor
 		DBCursor cursor = null;
@@ -1385,7 +1395,7 @@ public class Sequoiadb {
 	public void waitTasks ( long[] taskIDs ) throws BaseException {
 		// check argument
 		if ( taskIDs == null || taskIDs.length == 0)
-			throw new BaseException("SDB_INVALIDARG", taskIDs);
+			throw new BaseException(SDBError.SDB_INVALIDARG, taskIDs.toString());
 		// append argument:{ "TaskID": { "$in": [ 1, 2, 3 ] } }
 		BSONObject newObj = new BasicBSONObject();
 		BSONObject subObj = new BasicBSONObject();
@@ -1415,8 +1425,10 @@ public class Sequoiadb {
 	 */
 	public void cancelTask ( long taskID, boolean isAsync ) throws BaseException {
 		// check argument
-		if ( taskID <= 0)
-			throw new BaseException("SDB_INVALIDARG", taskID, isAsync);
+		if ( taskID <= 0) {
+			String msg = "taskID = " + taskID + ", isAsync = " + isAsync;
+			throw new BaseException(SDBError.SDB_INVALIDARG, msg);
+		}
 		// append argument
 		BSONObject newObj = new BasicBSONObject();
 		newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, taskID);
@@ -1482,7 +1494,7 @@ public class Sequoiadb {
 	    
 		if ( !options.containsField(
 		        SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE) ) {
-			throw new BaseException( "SDB_INVALIDARG", options );
+			throw new BaseException( SDBError.SDB_INVALIDARG, options.toString() );
 		}
 		// build obj
 		BSONObject newObj = new BasicBSONObject();
@@ -1491,7 +1503,7 @@ public class Sequoiadb {
 		if ( value instanceof Integer ) {
 			v = (Integer)value;
 			if ( v < 1 || v > 7 )
-				throw new BaseException( "SDB_INVALIDARG", options );
+				throw new BaseException( SDBError.SDB_INVALIDARG, options.toString() );
 		} else if ( value instanceof String ) {
 			if ( value.equals("M") || value.equals("m") )
 				v = PreferInstanceType.INS_MASTER.getCode();
@@ -1500,9 +1512,9 @@ public class Sequoiadb {
 			else if ( value.equals("A") || value.equals("a") )
 				v = PreferInstanceType.INS_ANYONE.getCode();
 			else
-				throw new BaseException( "SDB_INVALIDARG", options );
+				throw new BaseException( SDBError.SDB_INVALIDARG, options.toString() );
 		} else {
-			throw new BaseException( "SDB_INVALIDARG", options );
+			throw new BaseException( SDBError.SDB_INVALIDARG, options.toString() );
 		}
 		newObj.put( SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE, v );
 		// command
@@ -1549,7 +1561,7 @@ public class Sequoiadb {
 	 */
 	public boolean isDomainExist(String domainName) throws BaseException {
 		if (null == domainName || domainName.equals(""))
-			throw new BaseException("SDB_INVALIDARG", domainName);
+			throw new BaseException(SDBError.SDB_INVALIDARG, domainName);
 		BSONObject matcher = new BasicBSONObject();
 		matcher.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
 		DBCursor cursor = getList(SDB_LIST_DOMAINS, matcher, null, null);
@@ -1577,10 +1589,11 @@ public class Sequoiadb {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Domain createDomain(String domainName, BSONObject options) throws BaseException {
-		if (null == domainName || domainName.equals(""))
-			throw new BaseException("SDB_INVALIDARG", domainName, options);
+		if (null == domainName || domainName.equals("")) {
+			throw new BaseException(SDBError.SDB_INVALIDARG, "domain name is empty or null");
+		}
 		if (isDomainExist(domainName))
-			throw new BaseException("SDB_CAT_DOMAIN_EXIST", domainName);
+			throw new BaseException(SDBError.SDB_CAT_DOMAIN_EXIST, domainName);
 		
 		BSONObject newObj = new BasicBSONObject();
 		newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
@@ -1608,7 +1621,7 @@ public class Sequoiadb {
 	 */
 	public void dropDomain(String domainName) throws BaseException {
 		if (null == domainName || domainName.equals(""))
-			throw new BaseException("SDB_INVALIDARG", domainName);
+			throw new BaseException(SDBError.SDB_INVALIDARG, "domain name is empty or null");
 		
 		BSONObject newObj = new BasicBSONObject();
 		newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
@@ -1635,7 +1648,7 @@ public class Sequoiadb {
 		if (isDomainExist(domainName)) {
 			return new Domain(this, domainName);
 		} else {
-			throw new BaseException("SDB_CAT_DOMAIN_NOT_EXIST", domainName);
+			throw new BaseException(SDBError.SDB_CAT_DOMAIN_NOT_EXIST, domainName);
 		}
 	}
 	
@@ -1868,7 +1881,7 @@ public class Sequoiadb {
 			command = SequoiadbConstants.CMD_NAME_LIST_CL_IN_DOMAIN;
 			break;
 		default:
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 
 		SDBMessage rtn = adminCommand(command, flag, reqID, skipNum, returnNum,
@@ -1878,7 +1891,11 @@ public class Sequoiadb {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
 				return null;
 			} else {
-				throw new BaseException(flags, query, selector, order, hint);
+				String msg = "query = " + query.toString() +
+						", selector = " + selector.toString() +
+						", order = " + order.toString() +
+						", hint = " + hint.toString();
+				throw new BaseException(SDBError.getSDBError(flags), msg);
 			}
 		}
 		return new DBCursor(rtn, this);
@@ -1915,7 +1932,7 @@ public class Sequoiadb {
 	
 	private void initConnection(ConfigOptions options) throws BaseException {
 		if (options == null)
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		connection = new ConnectionTCPImpl(serverAddress, options);
 		connection.initialize();
 	}
@@ -2085,7 +2102,7 @@ public class Sequoiadb {
 
 	private void sendKillContextMsg() {
 		if (connection == null )
-			throw new BaseException("SDB_NETWORK");
+			throw new BaseException(SDBError.SDB_NETWORK);
 		long[] contextIds = new long[] { -1 };
 		byte[] request = SDBMessageHelper.buildKillCursorMsg(0, contextIds,
 				endianConvert);
@@ -2094,8 +2111,8 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtnSDBMessage.getOperationCode() != Operation.OP_KILL_CONTEXT_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtnSDBMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtnSDBMessage.getOperationCode().toString());
         }
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
@@ -2215,5 +2232,4 @@ public class Sequoiadb {
 	    DBDataCenter dc = new DBDataCenterConcrete(this);
 	    return dc;
 	}
-	
 }

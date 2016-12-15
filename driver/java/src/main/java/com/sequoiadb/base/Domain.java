@@ -20,6 +20,7 @@
  */
 package com.sequoiadb.base;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -84,7 +85,7 @@ public class Domain {
 	 */
 	public void alterDomain(BSONObject options) throws BaseException {
 		if (null == options)
-			throw new BaseException("SDB_INVALIDARG", options);
+			throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
 		// append argument
 		BSONObject newObj = new BasicBSONObject();
 		newObj.put(SequoiadbConstants.FIELD_NAME_NAME, this.name);

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -92,7 +93,7 @@ public class ReplicaGroup {
 		} catch (BaseException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS", e);
+			throw new BaseException(SDBError.SDB_SYS, e);
 		}
 	}
 
@@ -119,7 +120,7 @@ public class ReplicaGroup {
 		Object primaryNodeObj = group
 				.get(SequoiadbConstants.FIELD_NAME_PRIMARY);
 		if (primaryNodeObj == null)
-			throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
+			throw new BaseException(SDBError.SDB_CLS_NODE_NOT_EXIST);
 		Object groupInfoObj = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
 		if (groupInfoObj == null)
 			return null;
@@ -128,7 +129,7 @@ public class ReplicaGroup {
 			BSONObject nodeInfo = (BSONObject) nodeInfoObj;
 			nodeId = nodeInfo.get(SequoiadbConstants.FIELD_NAME_NODEID);
 			if (nodeId == null)
-				throw new BaseException("SDB_SYS");
+				throw new BaseException(SDBError.SDB_SYS);
 			if (nodeId.equals(primaryNodeObj)) {
 				primaryData = nodeInfo;
 				break;
@@ -160,7 +161,7 @@ public class ReplicaGroup {
 		Object primaryNodeObj = group
 				.get(SequoiadbConstants.FIELD_NAME_PRIMARY);
 		if (primaryNodeObj == null)
-			throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
+			throw new BaseException(SDBError.SDB_CLS_NODE_NOT_EXIST);
 		Object groupInfoObj = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
 		if (groupInfoObj == null)
 			return null;
@@ -169,7 +170,7 @@ public class ReplicaGroup {
 			BSONObject nodeInfo = (BSONObject) nodeInfoObj;
 			Object nodeId = nodeInfo.get(SequoiadbConstants.FIELD_NAME_NODEID);
 			if (nodeId == null)
-				throw new BaseException("SDB_SYS");
+				throw new BaseException(SDBError.SDB_SYS);
 			if (nodeId.equals(primaryNodeObj)) {
 				primaryData = nodeInfo;
 			} else {
@@ -208,7 +209,7 @@ public class ReplicaGroup {
 	public Node getNode(String nodeName) throws BaseException {
 		String[] temp = nodeName.split(":");
 		if (temp.length != 2) {
-			throw new BaseException("SDB_INVALIDARG", nodeName);
+			throw new BaseException(SDBError.SDB_INVALIDARG, nodeName);
 		}
 		BSONObject group = sequoiadb.getDetailById(id);
 		if (group == null)
@@ -229,7 +230,7 @@ public class ReplicaGroup {
 				hostName = nodeInfo.get(SequoiadbConstants.FIELD_NAME_HOST);
 				port = getNodePort(nodeInfo);
 				if (nodeId == null || hostName == null)
-					throw new BaseException("SDB_SYS");
+					throw new BaseException(SDBError.SDB_SYS);
 				String hostName2 = InetAddress.getByName(temp[0]).toString()
 						.split("/")[1];
 				hostName = InetAddress.getByName(hostName.toString())
@@ -241,7 +242,7 @@ public class ReplicaGroup {
 				}
 			}
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS", nodeName);
+			throw new BaseException(SDBError.SDB_SYS, nodeName);
 		}
 		return null;
 	}
@@ -273,7 +274,7 @@ public class ReplicaGroup {
 				nodeInfo = (BSONObject) obj;
 				nodeIdObj = nodeInfo.get(SequoiadbConstants.FIELD_NAME_NODEID);
 				if (nodeIdObj == null)
-					throw new BaseException("SDB_SYS");
+					throw new BaseException(SDBError.SDB_SYS);
 				nodeId = Integer.parseInt(nodeIdObj.toString());
 				hostName = InetAddress.getByName(hostName).toString()
 						.split("/")[1];
@@ -290,7 +291,7 @@ public class ReplicaGroup {
 		} catch (BaseException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS", hostName, port);
+			throw new BaseException(SDBError.SDB_SYS, hostName + ":" + port);
 		}
 		return null;
 	}
@@ -331,7 +332,9 @@ public class ReplicaGroup {
                 SequoiadbConstants.NODE, config);
         int flags = rtn.getFlags();
         if (flags != 0) {
-            throw new BaseException(flags, hostName, port, configure);
+        	String msg = "node = " + hostName + ":" + port +
+					", configure = " + configure.toString();
+            throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         
         return getNode(hostName, port);
@@ -373,7 +376,9 @@ public class ReplicaGroup {
                 SequoiadbConstants.NODE, config);
         int flags = rtn.getFlags();
         if (flags != 0) {
-            throw new BaseException(flags, hostName, port, configure);
+        	String msg = "node = " + hostName + ":" + port +
+					", configure = " + configure.toString();
+            throw new BaseException(SDBError.getSDBError(flags), msg);
         }
     }
 
@@ -412,7 +417,10 @@ public class ReplicaGroup {
 				SequoiadbConstants.NODE, config);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, hostName, port, dbPath, configure);
+			String msg = "node = " + hostName + ":" + port +
+					", dbPath = " + dbPath +
+					", configure = " + configure.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		return getNode(hostName, port);
 	}
@@ -452,7 +460,10 @@ public class ReplicaGroup {
                 SequoiadbConstants.NODE, config);
         int flags = rtn.getFlags();
         if (flags != 0) {
-            throw new BaseException(flags, hostName, port, dbPath, configure);
+        	String msg = "node = " + hostName + ":" + port +
+					", dbPath = " + dbPath +
+					", configure = " + configure;
+            throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         return getNode(hostName, port);
     }
@@ -488,7 +499,9 @@ public class ReplicaGroup {
 				SequoiadbConstants.NODE, config);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, port, configure);
+			String msg = "node = " + hostName + ":" + port +
+					", configure = " + configure.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 	}
 
@@ -538,10 +551,10 @@ public class ReplicaGroup {
 	private int getNodePort(BSONObject node) {
 		Object services = node.get(SequoiadbConstants.FIELD_NAME_GROUPSERVICE);
 		if (services == null)
-			throw new BaseException("SDB_SYS", node);
+			throw new BaseException(SDBError.SDB_SYS, node.toString());
 		BasicBSONList serviceInfos = (BasicBSONList) services;
 		if (serviceInfos.size() == 0)
-			throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
+			throw new BaseException(SDBError.SDB_CLS_NODE_NOT_EXIST);
 		int port = -1;
 		for (Object obj : serviceInfos) {
 			BSONObject service = (BSONObject) obj;
@@ -553,7 +566,7 @@ public class ReplicaGroup {
 			}
 		}
 		if (port == -1)
-			throw new BaseException("SDB_SYS", node);
+			throw new BaseException(SDBError.SDB_SYS, node.toString());
 		return port;
 	}
 

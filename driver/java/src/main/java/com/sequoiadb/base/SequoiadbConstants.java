@@ -15,6 +15,7 @@
  */
 package com.sequoiadb.base;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 
 import com.sequoiadb.exception.BaseException;
@@ -234,8 +235,8 @@ public class SequoiadbConstants {
 	
 
     public final static int SDB_EOF = 
-                                new BaseException("SDB_EOF").getErrorCode();
-	public final static int SDB_DMS_EOC = new BaseException("SDB_DMS_EOC")
+                                new BaseException(SDBError.SDB_EOF).getErrorCode();
+	public final static int SDB_DMS_EOC = new BaseException(SDBError.SDB_DMS_EOC)
 			.getErrorCode();
 
 	public final static String LITTLE_ENDIAN = "LITTLE_ENDIAN";

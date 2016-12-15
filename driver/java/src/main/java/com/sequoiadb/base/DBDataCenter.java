@@ -23,6 +23,7 @@ package com.sequoiadb.base;
 
 import java.nio.ByteBuffer;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -174,7 +175,7 @@ class DBDataCenterConcrete implements DBDataCenter
         int flags = rtn.getFlags();
         if (flags != 0) {
             if (flags == SequoiadbConstants.SDB_DMS_EOC) {
-                throw new BaseException("SDB_SYS");
+                throw new BaseException(SDBError.SDB_SYS);
             } else {
                 throw new BaseException(flags);
             }
@@ -182,7 +183,7 @@ class DBDataCenterConcrete implements DBDataCenter
         
         DBCursor cursor = new DBCursor(rtn, _sdb);
         if(!cursor.hasNext()) {
-            throw new BaseException("SDB_DMS_EOC");
+            throw new BaseException(SDBError.SDB_DMS_EOC);
         }
         
         BSONObject obj = cursor.getNext();

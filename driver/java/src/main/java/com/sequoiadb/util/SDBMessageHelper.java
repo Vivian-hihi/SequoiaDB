@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import com.sequoiadb.exception.SDBError;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.bson.BSON;
 import org.bson.BSONCallback;
@@ -191,7 +192,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 
@@ -224,7 +225,7 @@ public class SDBMessageHelper {
 			opCode = Operation.MSG_AUTH_DELUSR.getOperationCode();
 			break;
 		default:
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 		fieldList.add(assembleHeader(messageLength, reqID,
 				SequoiadbConstants.ZERO_NODEID, opCode, endianConvert));
@@ -325,7 +326,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 
@@ -377,7 +378,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 	
@@ -453,7 +454,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 
@@ -534,7 +535,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 
@@ -573,7 +574,7 @@ public class SDBMessageHelper {
 			return msgInByteArray;
 		} catch (java.io.UnsupportedEncodingException e) {
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 	
@@ -633,7 +634,7 @@ public class SDBMessageHelper {
 			return messageLength;
 		} catch (java.io.UnsupportedEncodingException e) {
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 
@@ -662,7 +663,7 @@ public class SDBMessageHelper {
 		int MessageLength = byteBuffer.getInt();
 
 		if (MessageLength < MESSAGE_HEADER_LENGTH) {
-			throw new BaseException("SDB_INVALIDSIZE", MessageLength);
+			throw new BaseException(SDBError.SDB_INVALIDSIZE, String.valueOf(MessageLength));
 		}
 
 		// Request message length
@@ -782,7 +783,7 @@ public class SDBMessageHelper {
         int messageLength = byteBuffer.getInt();
 
         if (messageLength < MESSAGE_HEADER_LENGTH) {
-            throw new BaseException("SDB_SYS", 
+            throw new BaseException(SDBError.SDB_SYS,
             		"receive invalid message lengthe: " + messageLength);
         }
 
@@ -863,7 +864,7 @@ public class SDBMessageHelper {
         int MessageLength = byteBuffer.getInt();
 
         if (MessageLength < MESSAGE_HEADER_LENGTH) {
-            throw new BaseException("SDB_SYS", MessageLength);
+            throw new BaseException(SDBError.SDB_SYS, String.valueOf(MessageLength));
         }
 
         // Request message length
@@ -917,7 +918,7 @@ public class SDBMessageHelper {
 		int MessageLength = byteBuffer.getInt();
 
 		if (MessageLength < MESSAGE_HEADER_LENGTH) {
-			throw new BaseException("SDB_INVALIDSIZE", MessageLength);
+			throw new BaseException(SDBError.SDB_INVALIDSIZE, String.valueOf(MessageLength));
 		}
 
 		// Request message length
@@ -1162,7 +1163,7 @@ public class SDBMessageHelper {
 			BSONObject o1 = (BSONObject) cb.get();
 			return o1;
 		} catch (IOException e) {
-			throw new BaseException("SDB_INVALIDARG", e);
+			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
 
@@ -1256,7 +1257,7 @@ public class SDBMessageHelper {
 		else if (eyeCatcher == SequoiadbConstants.MSG_SYSTEM_INFO_EYECATCHER_REVERT)
 			endianConvert = true;
 		else
-			throw new BaseException("SDB_INVALIDARG", eyeCatcher);
+			throw new BaseException(SDBError.SDB_INVALIDARG, String.valueOf(eyeCatcher));
 
 		return endianConvert;
 	}
@@ -1399,9 +1400,9 @@ public class SDBMessageHelper {
 			
 			}
 		}
-		if (offset - begin != objSize)
-			throw new BaseException("SDB_INVALIDSIZE");
-
+		if (offset - begin != objSize) {
+            throw new BaseException(SDBError.SDB_INVALIDSIZE);
+        }
 	}
 
 	private static int getBsonLength(byte[] inBytes, int offset,
@@ -1444,16 +1445,15 @@ public class SDBMessageHelper {
         int reqCode = reqOpCode.getOperationCode();
         int resCode = resOpCode.getOperationCode();
         if ((reqCode|Operation.RES_FLAG) != resCode) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
                     ("request=" + reqOpCode + " response=" + resOpCode));
         }
     }
-    
+
     public static void checkMsgReqID(long reqID, long resID) {
         if (reqID != resID) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", "reqID is different"
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE, "reqID is different"
                     + "reqID=" + reqID + " resID=" + resID);
         }
     }
-
 }

@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.sequoiadb.exception.SDBError;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -134,7 +135,7 @@ public class DBCollection {
 	 */
 	public void setMainKeys(String[] keys) throws BaseException {
 		if (keys == null)
-			throw new BaseException("SDB_INVALIDARG", (Object[])keys);
+			throw new BaseException(SDBError.SDB_INVALIDARG, keys.toString());
 		// remove the main keys set in last time
 		mainKeys.clear();
 		// add the new main keys
@@ -177,7 +178,7 @@ public class DBCollection {
 	 */
 	public Object insert(BSONObject insertor) throws BaseException {
 		if (insertor == null)
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		
 		if (this.insert_buffer == null) {
 			this.insert_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
@@ -206,8 +207,8 @@ public class DBCollection {
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtnSDBMessage.getOperationCode() != Operation.OP_INSERT_RES) {
-		    throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-		            rtnSDBMessage.getOperationCode());
+		    throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+		            rtnSDBMessage.getOperationCode().toString());
 		}
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
@@ -260,7 +261,7 @@ public class DBCollection {
         }
         catch (Exception e)
         {
-            throw new BaseException("SDB_INVALIDARG", type, e);
+            throw new BaseException(SDBError.SDB_INVALIDARG, type.toString(), e);
         }
         BSONObject matcher = new BasicBSONObject();
         BSONObject modifer = new BasicBSONObject(); 
@@ -342,7 +343,7 @@ public class DBCollection {
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
         if (type == null || type.size() == 0)
-            throw new BaseException("SDB_INVALIDARG", type);
+            throw new BaseException(SDBError.SDB_INVALIDARG, type.toString());
         // transform java object to bson object
         List<BSONObject> objs = new ArrayList<BSONObject>();
         try {
@@ -351,7 +352,7 @@ public class DBCollection {
                 objs.add(BasicBSONObject.typeToBson(it.next(), ignoreNullValue));
             }
         } catch (Exception e) {
-            throw new BaseException("SDB_INVALIDARG", type, e);
+            throw new BaseException(SDBError.SDB_INVALIDARG, type.toString(), e);
         }
         BSONObject matcher = new BasicBSONObject();
         BSONObject modifer = new BasicBSONObject();
@@ -439,9 +440,9 @@ public class DBCollection {
 			throws BaseException {
 
 		if (flag != 0 && flag != FLG_INSERT_CONTONDUP)
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		if (insertor == null || insertor.size() == 0)
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 
 		if (this.insert_buffer == null) {
 			this.insert_buffer = IoBuffer.allocate(DEF_BULK_BUFFER_LENGTH);
@@ -464,12 +465,13 @@ public class DBCollection {
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtnSDBMessage.getOperationCode() != Operation.OP_INSERT_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtnSDBMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtnSDBMessage.getOperationCode().toString());
         }
 		int flags = rtnSDBMessage.getFlags();
-		if (flags != 0)
-			throw new BaseException(flags, insertor);
+		if (flags != 0) {
+			throw new BaseException(SDBError.getSDBError(flags), insertor.toString());
+		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
 		// shrink the memory
@@ -574,7 +576,9 @@ public class DBCollection {
 		SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, matcher, hint);
+			String msg = "matcher = " + matcher.toString() +
+					", hint = " + hint.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
@@ -1005,8 +1009,13 @@ public class DBCollection {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
 				return null;
 			} else {
-				throw new BaseException(flags, matcher, selector, orderBy, hint,
-						skipRows, returnRows);
+				String msg = "matcher = " + matcher.toString() +
+						", selector = " + selector.toString() +
+						", orderBy = " + orderBy.toString() +
+						", hint = " + hint.toString() +
+						", skipRows = " + skipRows +
+						", returnRows = " + returnRows;
+				throw new BaseException(SDBError.getSDBError(flags), msg);
 			}
 		}
 		// upsert cache
@@ -1103,7 +1112,7 @@ public class DBCollection {
 
 		if (isUpdate) {
 			if (update == null || update.isEmpty()) {
-				throw new BaseException("SDB_INVALIDARG", "update can't be empty");
+				throw new BaseException(SDBError.SDB_INVALIDARG, "update can't be empty");
 			}
 
 			modify.put(SequoiadbConstants.FIELD_NAME_OP,
@@ -1270,7 +1279,7 @@ public class DBCollection {
 	public void createIndex(String name, BSONObject key, boolean isUnique,
 			boolean enforced, int sortBufferSize ) throws BaseException {
 	    if(sortBufferSize < 0){
-	        throw new BaseException("SDB_INVALIDARG", sortBufferSize);
+	        throw new BaseException(SDBError.SDB_INVALIDARG, "sortBufferSize less than 0");
 	    }
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.CREATE_INX;
@@ -1291,7 +1300,10 @@ public class DBCollection {
 
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, name, key, isUnique);
+			String msg = "name = " + name +
+					", key = " + key.toString() +
+					", isUnique = " + isUnique;
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
@@ -1479,7 +1491,7 @@ public class DBCollection {
 				dummyObj, dummyObj, newobj, -1, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
-			throw new BaseException(flags, matcher);
+			throw new BaseException(SDBError.getSDBError(flags), "matcher = " + matcher.toString());
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
 		List<BSONObject> rtn = getMoreCommand(rtnSDBMessage);
@@ -1507,14 +1519,17 @@ public class DBCollection {
 			try{
 				newobj.put(SequoiadbConstants.FIELD_NAME_HINT, hint);
 			}catch(Exception e){
-				throw new BaseException("SDB_SYS", e);
+				throw new BaseException(SDBError.SDB_SYS, e);
 			}
 		}
 		SDBMessage rtnSDBMessage = adminCommand(commandString, condition,
 				dummyObj, dummyObj, newobj, -1, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
-		if (flags != 0)
-			throw new BaseException(flags, condition, hint);
+		if (flags != 0) {
+			String msg = "condition = " + condition.toString() +
+					", hint = " + hint.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
+		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
 		List<BSONObject> rtn = getMoreCommand(rtnSDBMessage);
@@ -1572,8 +1587,7 @@ public class DBCollection {
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
 		    null == splitCondition){
-			 throw new BaseException("SDB_INVALIDARG", sourceGroupName, 
-			         destGroupName, splitCondition);
+			 throw new BaseException(SDBError.SDB_INVALIDARG, "null parameter");
 		  }
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
@@ -1589,8 +1603,11 @@ public class DBCollection {
 				dummy, dummy, -1, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, sourceGroupName, destGroupName,
-					splitCondition, splitEndCondition);
+			String msg = "sourceGroupName = " + sourceGroupName +
+					", destGroupName = " + destGroupName +
+					", splitCondition = " + splitCondition.toString() +
+					", splitEndCondition = " + splitEndCondition.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
@@ -1613,9 +1630,8 @@ public class DBCollection {
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
 		   (percent <= 0.0 || percent > 100.0)){
-			 throw new BaseException("SDB_INVALIDARG", sourceGroupName,
-			         destGroupName, percent);
-		  }
+			 throw new BaseException(SDBError.SDB_INVALIDARG);
+		}
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
 		obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
@@ -1628,8 +1644,10 @@ public class DBCollection {
 				dummy, dummy, -1, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, sourceGroupName, destGroupName,
-					percent);
+			String msg = "sourceGroupName = " + sourceGroupName +
+					", destGroupName = " + destGroupName +
+					", percent = " + percent;
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
@@ -1663,9 +1681,8 @@ public class DBCollection {
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
 		    null == splitCondition){
-			 throw new BaseException("SDB_INVALIDARG", sourceGroupName,
-					 destGroupName, splitCondition, splitEndCondition);
-		  }
+			 throw new BaseException(SDBError.SDB_INVALIDARG);
+		}
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
 		obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
@@ -1682,17 +1699,22 @@ public class DBCollection {
 				dummy, dummy, -1, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, sourceGroupName, destGroupName,
-					splitCondition, splitEndCondition);
+			String msg = "sourceGroupName = " + sourceGroupName +
+					", destGroupName = " + destGroupName +
+					", splitCondition = " + splitCondition.toString() +
+					", splitEndCondition = " + splitEndCondition.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// build cursor object to get result from database
 		DBCursor cursor = new DBCursor(rtnSDBMessage, this);
-		if (!cursor.hasNext())
-			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		if (!cursor.hasNext()) {
+			throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
+		}
 		BSONObject result = cursor.getNext();
 		boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
-		if (!flag)
-			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		if (!flag) {
+			throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
+		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
 		long taskid = (Long)result.get(SequoiadbConstants.FIELD_NAME_TASKID);
@@ -1717,8 +1739,7 @@ public class DBCollection {
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
 		   (percent <= 0.0 || percent > 100.0)){
-			 throw new BaseException("SDB_INVALIDARG", sourceGroupName, destGroupName,
-		                             percent);
+			 throw new BaseException(SDBError.SDB_INVALIDARG);
 		  }
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
@@ -1735,17 +1756,19 @@ public class DBCollection {
 				dummy, dummy, 0, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, sourceGroupName, destGroupName,
-					                percent);
+			String msg = "sourceGroupName = " + sourceGroupName +
+					", destGroupName = " + destGroupName +
+					", percent = " + percent;
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// build cursor object to get result from database
 		DBCursor cursor = new DBCursor(rtnSDBMessage, this);
 		if (!cursor.hasNext())
-			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+			throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
 		BSONObject result = cursor.getNext();
 		boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
 		if (!flag)
-			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+			throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
 		long taskid = (Long)result.get(SequoiadbConstants.FIELD_NAME_TASKID);
@@ -1763,7 +1786,7 @@ public class DBCollection {
 			throws BaseException {
 
 		if (obj == null || obj.size() == 0)
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 
 		if (this.insert_buffer == null) {
 			this.insert_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
@@ -1785,8 +1808,8 @@ public class DBCollection {
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 		if ( rtnSDBMessage.getOperationCode() != Operation.OP_AGGREGATE_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtnSDBMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtnSDBMessage.getOperationCode().toString());
         }
 		DBCursor cursor = null;
 		int flags = rtnSDBMessage.getFlags();
@@ -1794,7 +1817,7 @@ public class DBCollection {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
 				return cursor;
 			} else {
-				throw new BaseException(flags, obj);
+				throw new BaseException(SDBError.getSDBError(flags), obj.toString());
 			}
 		}
 		// upsert cache
@@ -1851,8 +1874,13 @@ public class DBCollection {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
 				return cursor;
 			} else {
-				throw new BaseException(flags, query, hint, orderBy, hint1,
-						skipRows, returnRows);
+				String msg = "query = " + query.toString() +
+						", hint = " + hint.toString() +
+						", orderBy = " + orderBy.toString() +
+						", hint = " + hint1 +
+						", skipRows = " + skipRows +
+						", returnRows = " + returnRows;
+				throw new BaseException(SDBError.getSDBError(flags), msg);
 			}
 		}
 		// upsert cache
@@ -1876,8 +1904,7 @@ public class DBCollection {
 		if ( null == subClFullName || subClFullName.equals("") ||
 		     null == options ||
 		     null == collectionFullName || collectionFullName.equals("") ) {
-			throw new BaseException("SDB_INVALIDARG", subClFullName,
-			        options, collectionFullName);
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 		// command
 		String command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_ATTACH_CL;
@@ -1893,7 +1920,9 @@ public class DBCollection {
 				      			                  0, -1, 0 );
 		int flags = rtnSDBMessage.getFlags();
 		if (0 != flags){
-			throw new BaseException(flags, subClFullName, options);
+			String msg = "subCollectionName = " + subClFullName +
+					", options = " + options.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
@@ -1910,7 +1939,7 @@ public class DBCollection {
 		// check arguments
 		if ( null == subClFullName || subClFullName.equals("") ||
 		     null == collectionFullName || collectionFullName.equals("") ) {
-			throw new BaseException("SDB_INVALIDARG", subClFullName);
+			throw new BaseException(SDBError.SDB_INVALIDARG, subClFullName);
 		}
 		// command
 		String command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_DETACH_CL;
@@ -1947,7 +1976,7 @@ public class DBCollection {
 	public void alterCollection( BSONObject options ) throws BaseException {
 		// check arguments
 		if ( null == options ) {
-			throw new BaseException("SDB_INVALIDARG", options);
+			throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
 		}
 		// command
 		String command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_ALTER_COLLECTION;
@@ -1963,7 +1992,7 @@ public class DBCollection {
                 newobj.put(SequoiadbConstants.FIELD_NAME_ALTER, tmpAlter);
             }
 		    else {
-		        throw new BaseException("SDB_INVALIDARG", options);
+		        throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
 		    }
 		    newobj.put(SequoiadbConstants.FIELD_NAME_ALTER_TYPE, 
 		            SequoiadbConstants.SDB_ALTER_CL);
@@ -1977,7 +2006,7 @@ public class DBCollection {
                     newobj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, tmpOptions);
                 }
                 else {
-                    throw new BaseException("SDB_INVALIDARG", options);
+                    throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
                 }
 		    }
 		    
@@ -1988,7 +2017,7 @@ public class DBCollection {
 				      			                  0, -1, 0 );
 		int flags = rtnSDBMessage.getFlags();
 		if (0 != flags){
-			throw new BaseException(flags, options);
+			throw new BaseException(SDBError.getSDBError(flags), options.toString());
 		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
@@ -2111,8 +2140,12 @@ public class DBCollection {
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 		SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 		int flags = rtnSDBMessage.getFlags();
-		if (flags != 0)
-			throw new BaseException(flags, matcher, modifier, hint);
+		if (flags != 0) {
+			String msg = "matcher = " + matcher.toString() +
+					", modifier = " + modifier.toString() +
+					", hint = " + hint.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
+		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
 	}
@@ -2207,12 +2240,12 @@ public class DBCollection {
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobRemoveReply( res );
         if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_REMOVE_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    resMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    resMessage.getOperationCode().toString());
         }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
-            throw new BaseException( flag, removeObj );
+            throw new BaseException(SDBError.getSDBError(flag), removeObj.toString());
         }
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
@@ -2233,8 +2266,9 @@ public class DBCollection {
         SDBMessage rtnSDBMessage = adminCommand(commandString, query,
                 dummyObj, dummyObj, dummyObj, -1, -1, 0);
         int flags = rtnSDBMessage.getFlags();
-        if (flags != 0)
-            throw new BaseException(flags, query);
+        if (flags != 0) {
+			throw new BaseException(SDBError.getSDBError(flags), query.toString());
+		}
 		// upsert cache
 		sequoiadb.upsertCache(collectionFullName);
     }

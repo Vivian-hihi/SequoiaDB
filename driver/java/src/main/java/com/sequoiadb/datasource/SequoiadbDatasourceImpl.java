@@ -20,31 +20,21 @@
  */
 package com.sequoiadb.datasource;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.net.ConfigOptions;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.net.ConfigOptions;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @class SequoiadbDatasourceImpl
@@ -341,7 +331,7 @@ public class SequoiadbDatasourceImpl
 			select.put("Group.HostName","");
 			select.put("Group.Service","");
 			DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, condition, select, null);
-			BaseException exp = new BaseException("SDB_SYS", "Invalid coord information got from catalog");
+			BaseException exp = new BaseException(SDBError.SDB_SYS, "Invalid coord information got from catalog");
 			_addrList.clear();
 			while(cursor.hasNext()) {
 				BSONObject obj = cursor.getNext();
@@ -397,8 +387,8 @@ public class SequoiadbDatasourceImpl
 	public SequoiadbDatasourceImpl(List<String> urls, String username, String password,
 			ConfigOptions nwOpt, DatasourceOptions dsOpt) throws BaseException {
 		if (null == urls || 0 == urls.size())
-			throw new BaseException("SDB_INVALIDARG", "coord addresses can't be empty or null");
-		
+			throw new BaseException(SDBError.SDB_INVALIDARG, "coord addresses can't be empty or null");
+
         // init connection pool
 		_init(urls, username, password, nwOpt, dsOpt);
 	}
@@ -416,7 +406,7 @@ public class SequoiadbDatasourceImpl
 	public SequoiadbDatasourceImpl(String url, String username, String password,
 			DatasourceOptions dsOpt) throws BaseException {
 		if (null == url || "" == url)
-			throw new BaseException("SDB_INVALIDARG", "coord address can't be empty or null");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "coord address can't be empty or null");
 		ArrayList<String> urls = new ArrayList<String>();
 		urls.add(url);
 	    _init(urls, username, password, null, dsOpt);
@@ -485,10 +475,10 @@ public class SequoiadbDatasourceImpl
 		rlock.lock(); 
 		try {
 			if (_hasClosed) {
-				throw new BaseException("SDB_SYS", "connection pool has closed");
+				throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
 			}
 			if (null == url || "" == url) {
-				throw new BaseException("SDB_INVALIDARG", "coord address can't be empty or null");
+				throw new BaseException(SDBError.SDB_INVALIDARG, "coord address can't be empty or null");
 			}
 			// parse coord address to the format "192.168.20.165:11810"
 			String addr = _parseCoordAddr(url);
@@ -518,10 +508,10 @@ public class SequoiadbDatasourceImpl
 		rlock.lock(); 
 		try {
 			if (_hasClosed) {
-				throw new BaseException("SDB_SYS", "connection pool has closed");
+				throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
 			}
 			if (null == url) {
-				throw new BaseException("SDB_INVALIDARG", "coord address can't be null");
+				throw new BaseException(SDBError.SDB_INVALIDARG, "coord address can't be null");
 			}
 			// parse coord address to the format "192.168.20.165:11810"
 			String addr = _parseCoordAddr(url);
@@ -549,7 +539,7 @@ public class SequoiadbDatasourceImpl
 		try {
 			return (DatasourceOptions) _dsOpt.clone();
 		} catch (CloneNotSupportedException e) {
-			throw new BaseException("SDB_SYS", "failed to clone connnection pool options");
+			throw new BaseException(SDBError.SDB_SYS, "failed to clone connnection pool options");
 		} finally {
 			rlock.unlock();
 		}
@@ -567,7 +557,7 @@ public class SequoiadbDatasourceImpl
 		wlock.lock(); 
 		try {
 			if (_hasClosed) {
-				throw new BaseException("SDB_SYS", "connection pool has closed");
+				throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
 			}
 			// check options
 			_checkDatasourceOptions(dsOpt);
@@ -581,7 +571,7 @@ public class SequoiadbDatasourceImpl
 			try {
 				_dsOpt = (DatasourceOptions) dsOpt.clone();
 			} catch (CloneNotSupportedException e) {
-				throw new BaseException("SDB_INVALIDARG", "failed to clone connection pool options");
+				throw new BaseException(SDBError.SDB_INVALIDARG, "failed to clone connection pool options");
 			}
 			// when data source is disable, return directly
 			if (!_isDatasourceOn) {
@@ -618,7 +608,7 @@ public class SequoiadbDatasourceImpl
 					}
 				} else {
 					// should never happen
-					throw new BaseException("SDB_SYS", "the item manager is null");
+					throw new BaseException(SDBError.SDB_SYS, "the item manager is null");
 				}
 			}
 			// check need to restart timer and threads or not
@@ -652,7 +642,7 @@ public class SequoiadbDatasourceImpl
 		wlock.lock(); 
 		try {
 			if (_hasClosed) {
-				throw new BaseException("SDB_SYS", "connection pool has closed");
+				throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
 			}
 			if (_isDatasourceOn) {
 				return;
@@ -683,7 +673,7 @@ public class SequoiadbDatasourceImpl
 		wlock.lock(); 
 		try {
 			if (_hasClosed) {
-				throw new BaseException("SDB_SYS", "connection pool has closed");
+				throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
 			}
 			if (!_isDatasourceOn) {
 				return;
@@ -730,10 +720,10 @@ public class SequoiadbDatasourceImpl
 		rlock.lock(); 
 		try {
 			if (timeout < 0) {
-				throw new BaseException("SDB_INVALIDARG", "timeout should not be less than 0");
+				throw new BaseException(SDBError.SDB_INVALIDARG, "timeout should not be less than 0");
 			}
 			if (_hasClosed) {
-				throw new BaseException("SDB_SYS", "connection pool has closed");
+				throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
 			}
 			// when the pool is disabled
 			if (!_isDatasourceOn) {
@@ -751,7 +741,7 @@ public class SequoiadbDatasourceImpl
 					// sanity check
 					if (sdb == null) {
 						// should never come here
-						throw new BaseException("SDB_SYS", "point 1: error happen for getting connection");
+						throw new BaseException(SDBError.SDB_SYS, "point 1: error happen for getting connection");
 					}
 				} else {
 					// when we have no connection in idle pool,
@@ -763,7 +753,7 @@ public class SequoiadbDatasourceImpl
 						// sanity check
 						if (sdb == null) {
 							// should never come here
-							throw new BaseException("SDB_SYS", "point 2: error happen for getting connection");
+							throw new BaseException(SDBError.SDB_SYS, "point 2: error happen for getting connection");
 						}
 						connItem.setAddr(sdb.getServerAddress().toString());
 						synchronized(_createConnSingal) {
@@ -796,13 +786,13 @@ public class SequoiadbDatasourceImpl
 							}
 						}
 						if (connItem == null) {
-							throw new BaseException("SDB_DRIVER_DS_RUNOUT", "connection pool has run out");
+							throw new BaseException(SDBError.SDB_DRIVER_DS_RUNOUT, "connection pool has run out");
 						} else {
 							sdb = _idleConnPool.poll(connItem);
 							// sanity check
 							if (sdb == null) {
 								// should never come here
-								throw new BaseException("SDB_SYS", "point 3: error happen for getting connection");
+								throw new BaseException(SDBError.SDB_SYS, "point 3: error happen for getting connection");
 							}
 						}
 					}
@@ -844,10 +834,10 @@ public class SequoiadbDatasourceImpl
 		rlock.lock(); 
 		try {
 			if (sdb == null) {
-				throw new BaseException("SDB_INVALIDARG", "connection can't be null");
+				throw new BaseException(SDBError.SDB_INVALIDARG, "connection can't be null");
 			}
 			if (_hasClosed) {
-				throw new BaseException("SDB_SYS", "connection pool has closed");
+				throw new BaseException(SDBError.SDB_SYS, "connection pool has closed");
 			}
 			// in case the data source is disable
 			if (!_isDatasourceOn) {
@@ -859,7 +849,7 @@ public class SequoiadbDatasourceImpl
 						if (item == null)
 							// multi-thread may let item to be null,   
 							// and it should never happen
-							throw new BaseException("SDB_SYS", 
+							throw new BaseException(SDBError.SDB_SYS,
 									"Point 1: connection pool does't have item for the coming back connection");
 						_connItemMgr.releaseItem(item);
 					}
@@ -875,11 +865,11 @@ public class SequoiadbDatasourceImpl
 					// remove it from busy queue
 					item = _usedConnPool.poll(sdb);
 					if (item == null)
-						throw new BaseException("SDB_SYS", 
+						throw new BaseException(SDBError.SDB_SYS,
 								"Point 2: connection pool does't have item for the coming back connection");
 				} else {
 					// throw exception to let user know current connection does't contained in the pool
-					throw new BaseException("SDB_INVALIDARG", 
+					throw new BaseException(SDBError.SDB_INVALIDARG,
 							"the connection pool doesn't contain the offered connection");
 				}
 			}
@@ -971,7 +961,7 @@ public class SequoiadbDatasourceImpl
 			try {
 				_dsOpt = (DatasourceOptions)dsOpt.clone();
 			} catch (CloneNotSupportedException e) {
-				throw new BaseException("SDB_INVALIDARG", "failed to clone connection pool options");
+				throw new BaseException(SDBError.SDB_INVALIDARG, "failed to clone connection pool options");
 			}
 		}
 		
@@ -1080,7 +1070,7 @@ public class SequoiadbDatasourceImpl
 	
 	private void _checkDatasourceOptions(DatasourceOptions newOpt) throws BaseException {
 		if (null == newOpt) {
-			throw new BaseException("SDB_INVALIDARG", "the offering datasource options can't be null");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "the offering datasource options can't be null");
 		}
 
     	int deltaIncCount = newOpt.getDeltaIncCount();
@@ -1092,35 +1082,35 @@ public class SequoiadbDatasourceImpl
   	    	
 		// 1. maxCount
 		if (maxCount < 0)
-			throw new BaseException("SDB_INVALIDARG", "maxCount can't be less then 0");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "maxCount can't be less then 0");
 		
 		// 2. deltaIncCount
 		if (deltaIncCount <= 0)
-			throw new BaseException("SDB_INVALIDARG", "deltaIncCount should be more then 0");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "deltaIncCount should be more then 0");
 		
 		// 3. maxIdleCount
 		if (maxIdleCount < 0)
-			throw new BaseException("SDB_INVALIDARG", "maxIdleCount can't be less then 0");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "maxIdleCount can't be less then 0");
 	
 		// 4. keepAliveTimeout
 		if (keepAliveTimeout < 0)
-			throw new BaseException("SDB_INVALIDARG", "keepAliveTimeout can't be less than 0");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "keepAliveTimeout can't be less than 0");
 
 		// 5. checkInterval
 		if (checkInterval <= 0)
-			throw new BaseException("SDB_INVALIDARG", "checkInterval should be more than 0");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "checkInterval should be more than 0");
 		if ( 0 != keepAliveTimeout && checkInterval >= keepAliveTimeout)
-			throw new BaseException("SDB_INVALIDARG", "when keepAliveTimeout is not 0, checkInterval should be less than keepAliveTimeout" );
+			throw new BaseException(SDBError.SDB_INVALIDARG, "when keepAliveTimeout is not 0, checkInterval should be less than keepAliveTimeout" );
 
 		// 6. syncCoordInterval
 		if (syncCoordInterval < 0)
-			throw new BaseException("SDB_INVALIDARG", "syncCoordInterval can't be less than 0");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "syncCoordInterval can't be less than 0");
 			
     	if (0 != maxCount) {
 			if (deltaIncCount > maxCount)
-				throw new BaseException("SDB_INVALIDARG", "deltaIncCount can't be great then maxCount" );
+				throw new BaseException(SDBError.SDB_INVALIDARG, "deltaIncCount can't be great then maxCount" );
 			if (maxIdleCount > maxCount)
-				throw new BaseException("SDB_INVALIDARG", "maxIdleCount can't be great then maxCount" );
+				throw new BaseException(SDBError.SDB_INVALIDARG, "maxIdleCount can't be great then maxCount" );
     	}
 	}
 	
@@ -1165,7 +1155,7 @@ public class SequoiadbDatasourceImpl
 		
     	// sanity check, should never hit here
     	if (null == sdb) {
-    		throw new BaseException("SDB_SYS", "failed to create connection directly");
+    		throw new BaseException(SDBError.SDB_SYS, "failed to create connection directly");
     	}
     	
 		return sdb;
@@ -1201,7 +1191,7 @@ public class SequoiadbDatasourceImpl
 			}
 		}
 		if (retConn == null)
-			throw new BaseException("SDB_INVALIDARG", "no available address for connection");
+			throw new BaseException(SDBError.SDB_INVALIDARG, "no available address for connection");
 		return retConn;
 	}
 	
@@ -1380,9 +1370,9 @@ public class SequoiadbDatasourceImpl
 		try {
 			ia = InetAddress.getByName(hostName);
 		} catch (UnknownHostException e) {
-			throw new BaseException("SDB_SYS", "Failed to parse host name to ip for UnknownHostException");
+			throw new BaseException(SDBError.SDB_SYS, "Failed to parse host name to ip for UnknownHostException");
 		} catch (SecurityException e) {
-			throw new BaseException("SDB_SYS", "Failed to parse host name to ip for SecurityException");
+			throw new BaseException(SDBError.SDB_SYS, "Failed to parse host name to ip for SecurityException");
 		}
 		return ia.getHostAddress();
 	}
@@ -1394,17 +1384,17 @@ public class SequoiadbDatasourceImpl
 			int port = 0;
 			String[] tmp = coordAddr.split(":");
 			if (tmp.length < 2)
-				throw new BaseException("SDB_INVALIDARG", "Point 1: invalid format coord address: " + coordAddr);
+				throw new BaseException(SDBError.SDB_INVALIDARG, "Point 1: invalid format coord address: " + coordAddr);
 			host = tmp[0].trim();
 			try {
 				host = InetAddress.getByName(host).toString().split("/")[1];
 			} catch (Exception e) {
-				throw new BaseException("SDB_INVALIDARG", e);
+				throw new BaseException(SDBError.SDB_INVALIDARG, e);
 			}
 			port = Integer.parseInt(tmp[1].trim());
 			retCoordAddr = host + ":" + port;
 		} else {
-			throw new BaseException("SDB_INVALIDARG", "Point 2: invalid format coord address: " + coordAddr);
+			throw new BaseException(SDBError.SDB_INVALIDARG, "Point 2: invalid format coord address: " + coordAddr);
 		}
 		return retCoordAddr;
 	}

@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 
 
 class CountInfo implements Comparable<CountInfo>{
@@ -175,7 +176,7 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 				} else if (Operation.DELETE == opr) {
 					info = _countInfoSet.lower(_dumpCountInfo);
 				} else {
-					throw new BaseException("SDB_SYS", "Invalid operation: " + opr);
+					throw new BaseException(SDBError.SDB_SYS, "Invalid operation: " + opr);
 				}
 				// if we have no countInfo or all the countInfos are unavailable
 				// let's return
@@ -189,7 +190,7 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 					item = list.poll();
 				} else {
 					// should never happen
-					throw new BaseException("SDB_SYS", "Invalid state in strategy");
+					throw new BaseException(SDBError.SDB_SYS, "Invalid state in strategy");
 				}
 				
 				/// Check the connItem can be use or not.
@@ -258,7 +259,7 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 					info = _countInfoMap.get(addr);				
 					if (info == null) {
 						// should never happen
-						throw new BaseException("SDB_SYS", "Point1: the pool has no information about address: " + addr);
+						throw new BaseException(SDBError.SDB_SYS, "Point1: the pool has no information about address: " + addr);
 					}
 					// update the countInfo which is in the state of unavailable
 					if (info.getAvailable() == false) {
@@ -271,7 +272,7 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 					list = _idleConnItemMap.get(addr);
 					if (list == null) {
 						// should never happen
-						throw new BaseException("SDB_SYS", "Point2: the pool has no information about address: " + addr);
+						throw new BaseException(SDBError.SDB_SYS, "Point2: the pool has no information about address: " + addr);
 					}
 					list.add(item);
 				} else if (change < 0) {
@@ -280,15 +281,15 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 					list = _idleConnItemMap.get(addr);
 					if (list == null) {
 						// should never happen
-						throw new BaseException("SDB_SYS", "Point3: the pool has no information about address: " + addr);
+						throw new BaseException(SDBError.SDB_SYS, "Point3: the pool has no information about address: " + addr);
 					}
 					if (list.size() == 0) {
 						// should never happen
-						throw new BaseException("SDB_SYS", "Point4: the pool has no information about address: " + addr);
+						throw new BaseException(SDBError.SDB_SYS, "Point4: the pool has no information about address: " + addr);
 					}
 					if (list.remove(item) == false) {
 						// should never happen
-						throw new BaseException("SDB_SYS", "Point5: the pool has no information about address: " + addr);
+						throw new BaseException(SDBError.SDB_SYS, "Point5: the pool has no information about address: " + addr);
 					}
 					// when current list has not connItem any more, let's set current address unusable.
 					if (list.size() == 0) {
@@ -298,7 +299,7 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 						_countInfoSet.add(info);
 					}
 				} else {
-					throw new BaseException("SDB_SYS", "Point1: invalid change in idle pool");
+					throw new BaseException(SDBError.SDB_SYS, "Point1: invalid change in idle pool");
 				}
 			} else if (ItemStatus.USED == status) {
 				// when _countInfoMap does not contain this address, 
@@ -309,7 +310,7 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 					// the info may be removed when strategy removed address
 					if (null == info) {
 						// should never happen
-						throw new BaseException("SDB_SYS", "Point6: the pool has no information about address: " + addr);
+						throw new BaseException(SDBError.SDB_SYS, "Point6: the pool has no information about address: " + addr);
 					}
 					_countInfoSet.remove(info);
 					if (change > 0) {
@@ -317,13 +318,13 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 					} else if (change < 0) {
 						info.decreaseCount(change);
 					} else {
-						throw new BaseException("SDB_SYS", "Point2: invalid change in idle pool");
+						throw new BaseException(SDBError.SDB_SYS, "Point2: invalid change in idle pool");
 					}
 					_countInfoSet.add(info);
 				}
 			} else {
 				// should never happen
-				throw new BaseException("SDB_SYS", "Invalid item status: " + status);
+				throw new BaseException(SDBError.SDB_SYS, "Invalid item status: " + status);
 			}
 		} finally {
 			_lock.unlock();
@@ -368,5 +369,4 @@ public class ConcreteBalanceStrategy implements IConnectStrategy {
 	private void _restoreIdleConnItemInfo(String addr) {
 		addAddress(addr);
 	}
-	
 }

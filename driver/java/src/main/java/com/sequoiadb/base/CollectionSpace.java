@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -119,7 +120,7 @@ public class CollectionSpace {
 			sequoiadb.upsertCache(collectionFullName);
 			return true;
 		}
-		else if ( flags == new BaseException("SDB_DMS_NOTEXIST").getErrorCode()) {
+		else if ( flags == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
 			sequoiadb.removeCache(collectionFullName);
 			return false;
 		}
@@ -156,7 +157,7 @@ public class CollectionSpace {
 	public DBCollection createCollection(String collectionName)
 			throws BaseException {
 		if (isCollectionExist(collectionName)) {
-			throw new BaseException("SDB_DMS_EXIST", collectionName);
+			throw new BaseException(SDBError.SDB_DMS_EXIST, collectionName);
 		}
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.CREATE_CMD + " "
@@ -198,7 +199,9 @@ public class CollectionSpace {
 		SDBMessage rtn = adminCommand(commandString, obj, null, null, null);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, collectionFullName, options);
+			String msg = "collection = " + collectionFullName +
+					", options = " + options.toString();
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 		sequoiadb.upsertCache(collectionFullName);
 		return getCollection(collectionName);
@@ -225,7 +228,7 @@ public class CollectionSpace {
 	 */
 	public void dropCollection(String collectionName) throws BaseException {
 		if (!isCollectionExist(collectionName)) {
-			throw new BaseException("SDB_DMS_NOTEXIST", collectionName);
+			throw new BaseException(SDBError.SDB_DMS_NOTEXIST, collectionName);
 		}
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.DROP_CMD + " "

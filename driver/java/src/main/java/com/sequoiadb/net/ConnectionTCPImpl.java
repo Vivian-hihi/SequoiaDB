@@ -98,9 +98,9 @@ public class ConnectionTCPImpl implements IConnection {
 							ctx.init(null, new TrustManager[] { tm }, null);
 							sslContext = ctx;
 						} catch (NoSuchAlgorithmException nsae) {
-							throw new BaseException("SDB_NETWORK", nsae);
+							throw new BaseException(SDBError.SDB_NETWORK, nsae);
 						} catch (KeyManagementException kme) {
-							throw new BaseException("SDB_NETWORK", kme);
+							throw new BaseException(SDBError.SDB_NETWORK, kme);
 						}
 					}
 				}
@@ -223,7 +223,7 @@ public class ConnectionTCPImpl implements IConnection {
 				int retSize = input.read(receive_buffer, rtn, 4 - rtn);
 				if (retSize == -1) {
 					close();
-					throw new BaseException("SDB_NETWORK"); 
+					throw new BaseException(SDBError.SDB_NETWORK);
 				}
 				rtn += retSize;
 			}
@@ -247,7 +247,7 @@ public class ConnectionTCPImpl implements IConnection {
 				retSize = input.read(receive_buffer, rtn, msgSize - rtn);
 				if (-1 == retSize) {
 					close();
-					throw new BaseException("SDB_NETWORK");
+					throw new BaseException(SDBError.SDB_NETWORK);
 				}
 				rtn += retSize;
 			}
@@ -256,7 +256,7 @@ public class ConnectionTCPImpl implements IConnection {
 			// throw error
 			if (rtn != msgSize) {
 				close();
-				throw new BaseException("SDB_NETWORK");
+				throw new BaseException(SDBError.SDB_NETWORK);
 			}
 /*
 			if (rtn != msgSize) {
@@ -304,7 +304,7 @@ public class ConnectionTCPImpl implements IConnection {
             	   retSize = input.read(buf, rtn, msgSize - rtn);
             	   if (-1 == retSize) {
                        close();
-                       throw new BaseException("SDB_NETWORK");
+                       throw new BaseException(SDBError.SDB_NETWORK);
             	   }
                    rtn += retSize;
                }
@@ -315,7 +315,7 @@ public class ConnectionTCPImpl implements IConnection {
             		   bbf.append(String.format("%02x", by));
             	   }
                    close();
-                   throw new BaseException("SDB_INVALIDARG");
+                   throw new BaseException(SDBError.SDB_INVALIDARG);
                }
 			} catch (IOException e) {
 				throw new BaseException(SDBError.SDB_NETWORK, e);
@@ -341,12 +341,12 @@ public class ConnectionTCPImpl implements IConnection {
 	@Override
 	public void sendMessage(ByteBuffer buffer) throws BaseException {
 	    if (buffer == null) {
-	    	throw new BaseException("SDB_SYS", "send ByteBuffer is null");
+	    	throw new BaseException(SDBError.SDB_SYS, "send ByteBuffer is null");
 	    }
 		if (buffer.hasArray()) {
 			sendMessage(buffer.array());
 		} else {
-			throw new BaseException("SDB_SYS", "send ByteBuffer is not ok");
+			throw new BaseException(SDBError.SDB_SYS, "send ByteBuffer is not ok");
 		}
 	}
 	
@@ -362,10 +362,10 @@ public class ConnectionTCPImpl implements IConnection {
             try {
             	output.write(msg, 0, length);
             } catch (IOException e) {
-    			throw new BaseException("SDB_NETWORK", e);
+    			throw new BaseException(SDBError.SDB_NETWORK, e);
             }
         } else {
-        	throw new BaseException("SDB_SYS", "output stream is null");
+        	throw new BaseException(SDBError.SDB_SYS, "output stream is null");
         }
 		logger.getInstance().debug(0, "leave sendMessage\n");
 	}

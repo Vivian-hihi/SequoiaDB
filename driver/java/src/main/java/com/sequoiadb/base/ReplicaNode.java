@@ -3,6 +3,7 @@ package com.sequoiadb.base;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -167,8 +168,7 @@ public class ReplicaNode {
 		SDBMessage rtn = adminCommand(commandString, obj);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			if (flags == new BaseException("SDB_NET_CANNOT_CONNECT")
-					.getErrorCode()) {
+			if (flags == SDBError.SDB_NET_CANNOT_CONNECT.getErrorCode()) {
 				status = NodeStatus.SDB_NODE_INACTIVE;
 				return status;
 			} else {
@@ -207,7 +207,8 @@ public class ReplicaNode {
 						: SequoiadbConstants.CMD_NAME_SHUTDOWN_NODE, config);
 		int flags = rtn.getFlags();
 		if(flags != 0) {
-			throw new BaseException(flags, hostName, port);
+			String msg = "node = " + hostName + ":" + port;
+			throw new BaseException(SDBError.getSDBError(flags), msg);
 		}
 	}
 

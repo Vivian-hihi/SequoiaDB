@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 
 /**
  * @author Jacky Zhang
@@ -82,7 +83,7 @@ public class ServerAddress {
 			try {
 			this.host = InetAddress.getByName(this.host).toString().split("/")[1];
 			} catch (Exception e) {
-				throw new BaseException("SDB_INVALIDARG", e);
+				throw new BaseException(SDBError.SDB_INVALIDARG, e);
 			}
 			this.port = Integer.parseInt(tmp[1].trim());
 		} else {

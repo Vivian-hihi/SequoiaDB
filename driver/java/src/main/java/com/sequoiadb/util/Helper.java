@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 
 /**
  * @author Jacky Zhang
@@ -33,14 +34,14 @@ public class Helper {
 	public static void addBytesToByteBuffer(ByteBuffer buffer, byte[] byteArray, 
 			int off, int len, int multipler) {
 		if (off + len > byteArray.length) {
-			throw new BaseException("SDB_SYS", "off + len is more then byteArray.length");
+			throw new BaseException(SDBError.SDB_SYS, "off + len is more then byteArray.length");
 		}
 		int newLength = (len % multipler == 0) ? len 
 				: (len + multipler - len % multipler);
 		int incLength = newLength - len;
 		// check
 		if (newLength > buffer.remaining()) {
-			throw new BaseException("SDB_SYS", String.format(
+			throw new BaseException(SDBError.SDB_SYS, String.format(
 					"buffer is too small, need %d bytes, but remaining is %d", 
 					newLength, buffer.remaining()));
 		}
@@ -52,7 +53,7 @@ public class Helper {
 	
 	public static void alignByteBuffer(ByteBuffer buffer, int inc) {
 		if (inc > buffer.remaining()) {
-			throw new BaseException("SDB_SYS", "inc is more than the remaining in ByteBuffer");
+			throw new BaseException(SDBError.SDB_SYS, "inc is more than the remaining in ByteBuffer");
 		}
 		if (inc > 0) {
 			buffer.position(buffer.position() + inc);
@@ -109,7 +110,7 @@ public class Helper {
 			}
 			return outputStream.toByteArray();
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS", e);
+			throw new BaseException(SDBError.SDB_SYS, e);
 		}
 	}
 
@@ -141,7 +142,7 @@ public class Helper {
 
 	public static int byteToInt(byte[] byteArray, boolean endianConvert) {
 		if (byteArray == null) {
-			throw new BaseException("SDB_CLI_CONV_ERROR");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 
 		ByteBuffer bb = ByteBuffer.wrap(byteArray);
@@ -156,7 +157,7 @@ public class Helper {
 
 	public static int byteToInt(byte[] array, int begin) {
 		if (array == null)
-			throw new BaseException("SDB_CLI_CONV_ERROR");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		ByteBuffer bb = ByteBuffer.allocate(4);
 		int count = 0;
 		while (count < 4) {
@@ -168,7 +169,7 @@ public class Helper {
 
 	public static int byteToInt(byte[] array) {
 		if (array == null)
-			throw new BaseException("SDB_CLI_CONV_ERROR");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		ByteBuffer bb = ByteBuffer.allocate(4);
 		int count = 0;
 		while (count < 4) {
@@ -188,7 +189,7 @@ public class Helper {
 
 	public static long byteToLong(byte[] byteArray, boolean endianConvert) {
 		if (byteArray == null || byteArray.length != 8) {
-			throw new BaseException("SDB_CLI_CONV_ERROR");
+			throw new BaseException(SDBError.SDB_INVALIDARG);
 		}
 
 		ByteBuffer bb = ByteBuffer.wrap(byteArray);

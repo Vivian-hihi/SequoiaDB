@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 
 public class ConcreteLocalStrategy extends AbstractStrategy{
 	private Random _rand = new Random(47);
@@ -86,7 +87,7 @@ public class ConcreteLocalStrategy extends AbstractStrategy{
 	            }
 	        }
 		} catch (SocketException e) {
-			throw new BaseException("SDB_SYS", "failed to get local ip address");
+			throw new BaseException(SDBError.SDB_SYS, "failed to get local ip address");
 		}
 		return localIPs;
 	}

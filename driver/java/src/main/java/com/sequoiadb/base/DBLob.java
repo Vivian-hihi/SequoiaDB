@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -208,7 +209,7 @@ class DBLobConcrete implements DBLob {
      */
     public DBLobConcrete( DBCollection cl ) throws BaseException {
         if ( cl == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "cl is null" );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "cl is null");
         }
         
         _cl            = cl;
@@ -248,19 +249,17 @@ class DBLobConcrete implements DBLob {
      */
     public void open( ObjectId id, int mode ) throws BaseException {
         if ( _isOpen ) {
-            throw new BaseException( "SDB_INVALIDARG", "lob have opened:id="
-                    + _id );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "lob have opened: id = " + _id);
         }
         
         if ( SDB_LOB_CREATEONLY != mode && SDB_LOB_READ != mode ) {
-            throw new BaseException( "SDB_INVALIDARG", "mode is unsupported:" 
-                            + mode );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "mode is unsupported: " + mode);
         }
         
         if ( SDB_LOB_READ == mode ) {
             if ( null == id ) {
-                throw new BaseException( "SDB_INVALIDARG", "id must be specify"
-                        + " in mode:" + mode );
+                throw new BaseException(SDBError.SDB_INVALIDARG, "id must be specify"
+                        + " in mode:" + mode);
             }
         }
         
@@ -293,17 +292,17 @@ class DBLobConcrete implements DBLob {
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
         displayResponse( resMessage );
         if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_OPEN_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    resMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    resMessage.getOperationCode().toString());
         }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
-            throw new BaseException( flag, openLob );
+            throw new BaseException(SDBError.getSDBError(flag), openLob.toString());
         }
         List<BSONObject> objList = resMessage.getObjectList();
         if ( objList.size() != 1 ) {
-            throw new BaseException( "SDB_NET_BROKEN_MSG", 
-                    "objList.size()="+objList.size() );
+            throw new BaseException(SDBError.SDB_NET_BROKEN_MSG,
+                    "objList.size()="+objList.size());
         }
         
         BSONObject obj =  objList.get(0);
@@ -324,7 +323,7 @@ class DBLobConcrete implements DBLob {
     private ByteBuffer sendRequest( ByteBuffer request )
             throws BaseException {
         if ( request == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "request can't be null" );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "request can't be null");
         }
         
         _cl.getConnection().sendMessage( request );
@@ -374,8 +373,8 @@ class DBLobConcrete implements DBLob {
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
         if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_CLOSE_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    resMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    resMessage.getOperationCode().toString());
         }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
@@ -394,10 +393,10 @@ class DBLobConcrete implements DBLob {
     @Override
     public void write( InputStream in ) throws BaseException {
     	if ( !_isOpen ) {
-    		throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
+    		throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
     	}
         if ( in == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "input is null" );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "input is null");
         }
         // get data from input stream
         int readNum = 0;
@@ -407,7 +406,7 @@ class DBLobConcrete implements DBLob {
 				write(tmpBuf, 0, readNum);
 			}
 		} catch (IOException e) {
-			BaseException exp = new BaseException("SDB_SYS");
+			BaseException exp = new BaseException(SDBError.SDB_SYS);
 			exp.initCause(e);
 			throw exp;
 		}
@@ -435,23 +434,23 @@ class DBLobConcrete implements DBLob {
      */
     public void write( byte[] b, int off, int len ) throws BaseException {
         if ( !_isOpen ) {
-            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
+            throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
         }
 
         if ( b == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "input is null" );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "input is null");
         }
         
         if ( len < 0 || len > b.length ) {
-        	throw new BaseException( "SDB_INVALIDARG", "invalid len" );
+        	throw new BaseException(SDBError.SDB_INVALIDARG, "invalid len");
         }
         
         if ( off < 0 || off > b.length ) {
-            throw new BaseException( "SDB_INVALIDARG", "invalid off" );        	
+            throw new BaseException(SDBError.SDB_INVALIDARG, "invalid off");
         }
         
         if ( off + len > b.length ) {
-        	throw new BaseException( "SDB_INVALIDARG", "off + len is great than b.length" );
+        	throw new BaseException(SDBError.SDB_INVALIDARG, "off + len is great than b.length");
         }
         int offset = off;
         int leftLen = len;
@@ -476,11 +475,11 @@ class DBLobConcrete implements DBLob {
     @Override
     public void read( OutputStream out ) throws BaseException {
         if ( !_isOpen ) {
-            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
+            throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
         }
         
         if ( out == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "output stream is null" );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "output stream is null");
         }
         // read data to output stream
         int readNum = 0;
@@ -489,7 +488,7 @@ class DBLobConcrete implements DBLob {
         	try {
 				out.write(tmpBuf, 0, readNum);
 			} catch (IOException e) {
-				BaseException exp = new BaseException("SDB_SYS");
+				BaseException exp = new BaseException(SDBError.SDB_SYS);
 				exp.initCause(e);
 				throw exp;
 			}
@@ -525,23 +524,23 @@ class DBLobConcrete implements DBLob {
      */
     public int read( byte[] b, int off, int len ) throws BaseException {
         if ( !_isOpen ) {
-            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
+            throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
         }
         
         if ( b == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "b is null" );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "b is null");
         }
         
         if ( len < 0 || len > b.length ) {
-        	throw new BaseException( "SDB_INVALIDARG", "invalid len" );
+        	throw new BaseException(SDBError.SDB_INVALIDARG, "invalid len");
         }
         
         if ( off < 0 || off > b.length ) {
-            throw new BaseException( "SDB_INVALIDARG", "invalid off" );        	
+            throw new BaseException(SDBError.SDB_INVALIDARG, "invalid off");
         }
         
         if ( off + len > b.length ) {
-        	throw new BaseException( "SDB_INVALIDARG", "off + len is great than b.length" );
+        	throw new BaseException(SDBError.SDB_INVALIDARG, "off + len is great than b.length");
         }
         
         if ( b.length == 0 ) {
@@ -564,17 +563,17 @@ class DBLobConcrete implements DBLob {
      */
     public void seek( long size, int seekType ) throws BaseException {
         if ( !_isOpen ) {
-            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
+            throw new BaseException(SDBError.SDB_LOB_NOT_OPEN, "lob is not open");
         }
 
         if ( _mode != SDB_LOB_READ ) {
-            throw new BaseException( "SDB_OPTION_NOT_SUPPORT", "seek() is not supported"
-                    + " in mode=" + _mode );
+            throw new BaseException(SDBError.SDB_OPTION_NOT_SUPPORT, "seek() is not supported"
+                    + " in mode=" + _mode);
         }
         
         if ( SDB_LOB_SEEK_SET == seekType ) {
             if ( size < 0 || size > _size ) {
-                throw new BaseException( "SDB_INVALIDARG", "out of bound" );
+                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound");
             }
             
             _readOffset = size;
@@ -582,21 +581,20 @@ class DBLobConcrete implements DBLob {
         else if ( SDB_LOB_SEEK_CUR == seekType ) {
             if ( ( _size < _readOffset + size ) 
                     || ( _readOffset + size < 0 ) ) {
-                throw new BaseException( "SDB_INVALIDARG", "out of bound" );
+                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound");
             }
             
             _readOffset += size;
         }
         else if ( SDB_LOB_SEEK_END == seekType ) {
             if ( size < 0 || size > _size ) {
-                throw new BaseException( "SDB_INVALIDARG", "out of bound" );
+                throw new BaseException(SDBError.SDB_INVALIDARG, "out of bound");
             }
             
             _readOffset = _size - size;
         }
         else {
-            throw new BaseException( "SDB_INVALIDARG", "unreconigzed seekType:"
-                    + seekType );
+            throw new BaseException(SDBError.SDB_INVALIDARG, "unreconigzed seekType: " + seekType);
         }
     }
     
@@ -628,7 +626,7 @@ class DBLobConcrete implements DBLob {
     
     private int _readInCache( byte[] buf, int off, int needRead ) {
     	if ( needRead > buf.length - off ) {
-    		throw new BaseException( "SDB_SYS", "buf size is to small" );
+    		throw new BaseException(SDBError.SDB_SYS, "buf size is to small");
     	}
     	int readInCache = (int)(_cachedOffset + _cachedDataBuff.remaining() - _readOffset);
     	readInCache = readInCache <= needRead ? readInCache : needRead;
@@ -680,8 +678,8 @@ class DBLobConcrete implements DBLob {
         /// check the return contents and make sure no error had happen
         displayResponse( resMessage );
         if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_READ_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    resMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    resMessage.getOperationCode().toString());
         }
         int rc = resMessage.getFlags();
         // meet the end of the lob
@@ -696,21 +694,21 @@ class DBLobConcrete implements DBLob {
         int retMsgLen = resMessage.getRequestLength();
         if ( retMsgLen < SDBMessageHelper.MESSAGE_OPREPLY_LENGTH + 
         		SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH ) {
-        	throw new BaseException( "SDB_SYS", 
-        			"invalid message's length: " + retMsgLen );
+        	throw new BaseException(SDBError.SDB_SYS,
+        			"invalid message's length: " + retMsgLen);
         }
         long offsetInEngine = resMessage.getLobOffset();
         if ( _readOffset != offsetInEngine ) {
-        	throw new BaseException( "SDB_SYS", 
+        	throw new BaseException(SDBError.SDB_SYS,
         			"local read offset(" + _readOffset + 
-        			") is not equal with what we expect(" + offsetInEngine + ")" );        	
+        			") is not equal with what we expect(" + offsetInEngine + ")");
         }
         int retLobLen = resMessage.getLobLen();
         if ( retMsgLen < SDBMessageHelper.MESSAGE_OPREPLY_LENGTH + 
         		SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH + retLobLen )
         {
-        	throw new BaseException( "SDB_SYS", 
-        			"invalid message's length: " + retMsgLen );        	
+        	throw new BaseException(SDBError.SDB_SYS,
+        			"invalid message's length: " + retMsgLen);
         }	
         /// get return data
         _cachedDataBuff = resMessage.getLobCachedDataBuf();
@@ -718,7 +716,7 @@ class DBLobConcrete implements DBLob {
         // sanity check 
         int remainLen = _cachedDataBuff.remaining();
         if ( remainLen != retLobLen ) {
-        	throw new BaseException( "SDB_SYS", "the remaining in buffer(" + remainLen + 
+        	throw new BaseException(SDBError.SDB_SYS, "the remaining in buffer(" + remainLen +
         			") is not equal with what we expect(" + retLobLen + ")" );
         }
         // if what we got is more than what we expect,
@@ -806,8 +804,8 @@ class DBLobConcrete implements DBLob {
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
         if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_WRITE_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    resMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    resMessage.getOperationCode().toString());
         }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
@@ -819,7 +817,7 @@ class DBLobConcrete implements DBLob {
 
     private ByteBuffer generateWriteLobRequest( byte[] input, int off, int len ) {
     	if (off + len > input.length) {
-    		throw new BaseException("SDB_SYS", "off + len is more than input.length");
+    		throw new BaseException(SDBError.SDB_SYS, "off + len is more than input.length");
     	}
         int totalLen = SDBMessageHelper.MESSAGE_OPLOB_LENGTH 
                 + SDBMessageHelper.MESSAGE_LOBTUPLE_LENGTH 
@@ -918,7 +916,7 @@ class DBLobConcrete implements DBLob {
         
         return totalBuff;
     }
-    
+
     private void displayResponse( SDBMessage resMessage ) {
 //        int flag = resMessage.getFlags();
 //        System.out.println( "flags=" + flag );

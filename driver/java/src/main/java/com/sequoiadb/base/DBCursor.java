@@ -5,6 +5,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -153,7 +154,7 @@ public class DBCursor {
 	 */
 	public BSONObject getNext() throws BaseException {
 		if (connection == null)
-			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST", connection);
+			throw new BaseException(SDBError.SDB_RTN_CONTEXT_NOTEXIST, "connection is null");
 		if (times == 0)
 			hasNext();
 		if (hasMore) {
@@ -176,7 +177,7 @@ public class DBCursor {
 	 */
 	public byte[] getNextRaw() throws BaseException {
 		if (connection == null)
-			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST", connection);
+			throw new BaseException(SDBError.SDB_RTN_CONTEXT_NOTEXIST, "connection is null");
 		if (times == 0)
 			hasNextRaw();
 		if (hasMore) {
@@ -198,7 +199,7 @@ public class DBCursor {
 	 */
 	public BSONObject getCurrent() throws BaseException{
 		if (connection == null)
-			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+			throw new BaseException(SDBError.SDB_RTN_CONTEXT_NOTEXIST);
 		// in case the first time we get date
         if ( index == -1 )
             return getNext();
@@ -261,7 +262,7 @@ public class DBCursor {
 
 	private void getListFromDB(boolean decode) {
 		if (connection == null)
-			throw new BaseException("SDB_NOT_CONNECTED");
+			throw new BaseException(SDBError.SDB_NOT_CONNECTED);
 
 		if ( contextId == -1 ){
 		    hasMore = false;
@@ -294,8 +295,8 @@ public class DBCursor {
 		}
 		
 		if ( rtnSDBMessage.getOperationCode() != Operation.OP_GETMORE_RES) {
-            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
-                    rtnSDBMessage.getOperationCode());
+            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
+                    rtnSDBMessage.getOperationCode().toString());
         }
 
 		int flags = rtnSDBMessage.getFlags();
