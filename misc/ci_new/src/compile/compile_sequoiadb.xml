@@ -243,7 +243,7 @@
       <var name="tmp_dir" value="${srccode_dir}/tmp"/>
       <delete dir="${tmp_dir}" failonerror="false"/>
       <mkdir dir="${tmp_dir}/sequoiadb"/>
-      <copy todir="">
+      <copy todir="${tmp_dir}/sequoiadb">
          <fileset dir="${srccode_dir}" includes="*"/>
          <fileset dir="${srccode_dir}/SequoiaDB/engine/include"   includes="**/*"/>
          <fileset dir="${srccode_dir}/SequoiaDB/engine/oss"       includes="**/*"/>
