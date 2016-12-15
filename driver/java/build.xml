@@ -7,7 +7,6 @@
     <delete dir="${base.dir}/temp" failonerror="false" />
     <mkdir dir="${base.dir}/temp" />
     <mkdir dir="${base.dir}/build"  />
-    <copy file="${base.dir}/src/main/resources/errors.properties" todir="${base.dir}/build" />
   </target>
   <target name="build_java_driver" depends="clean_env">
     <property name="is.debug" value="false" />
