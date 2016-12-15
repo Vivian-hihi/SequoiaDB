@@ -171,7 +171,7 @@ namespace engine
                                    _sptReturnVal & rval,
                                    BSONObj & detail )
    {
-      detail = BSON( SPT_ERR << "Please get System Obj by calling Remote member function: getSystem()" ) ;
+      detail = BSON( SPT_ERR << "new System is forbidden." ) ;
       return SDB_SYS ;
    }
 
@@ -2715,12 +2715,34 @@ namespace engine
          goto error ;
       }
       rc = arg.getNative( 0, &port, SPT_NATIVE_INT32 ) ;
-      if ( rc )
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "failed to get port argument: %d", rc ) ;
-         ss << "port is not a number" ;
+         string svcname ;
+         UINT16 tempPort ;
+         rc = arg.getString( 0, svcname ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "failed to get port argument: %d", rc ) ;
+            ss << "port must be number or string" ;
+            goto error ;
+         }
+
+         rc = ossGetPort( svcname.c_str(), tempPort ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "failed to get port by serviceName: %d", rc ) ;
+            ss << "Invalid svcname " << svcname ;
+            goto error ;
+         }
+         port = tempPort ;
+      }
+      if ( 0 >= port || 65535 < port )
+      {
+         rc = SDB_INVALIDARG ;
+         ss << "port must in range ( 0, 65536 )" ;
          goto error ;
       }
+
       {
       PD_LOG ( PDDEBUG, "sniff port is: %d", port ) ;
       _ossSocket sock( port, OSS_ONE_SEC ) ;

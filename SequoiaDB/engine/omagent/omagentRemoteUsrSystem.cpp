@@ -2553,14 +2553,35 @@ namespace engine
          goto error ;
       }
 
-      if ( NumberInt != _matchObj.getField( "port" ).type() )
+      if ( NumberInt == _matchObj.getField( "port" ).type() )
+      {
+         _port = _matchObj.getIntField( "port" ) ;
+      }
+      else if ( String == _matchObj.getField( "port" ).type() )
+      {
+         UINT16 tempPort ;
+         string svcname = _matchObj.getStringField( "port" ) ;
+         rc = ossGetPort( svcname.c_str(), tempPort ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Invalid svcname: %s", svcname.c_str() ) ;
+            goto error ;
+         }
+         _port = tempPort ;
+      }
+      else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "port is not a number" ) ;
+         PD_LOG_MSG( PDERROR, "port must be number or string" ) ;
          goto error ;
       }
-      _port = _matchObj.getIntField( "port" ) ;
 
+      if ( 0 >= _port || 65535 < _port )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "port must in range ( 0, 65536 )" ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
