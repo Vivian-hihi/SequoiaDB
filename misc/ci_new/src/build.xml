@@ -31,9 +31,15 @@
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
          <property name="plat_form" value="${plat_form}"/>
       </ant>
-      
+            
+       <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
+         <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="plat_form" value="${plat_form}"/>
+      </ant>
+   
       <antcallback target="status_file.get_build_status" return="build_status"/>
-      
+
       <if>
          <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
@@ -49,11 +55,7 @@
             </if>
          </then>
       </if>
-   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
-      <property name="TEST_TYPE" value="${TEST_TYPE}"/>
-      <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
-      <property name="plat_form" value="${plat_form}"/>
-   </ant>
+  
    </target>
    
    <target name="largedata_test_build">
@@ -76,21 +78,30 @@
          <property name="plat_form" value="${plat_form}"/>
       </ant>
       
+      <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
+         <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="plat_form" value="${plat_form}"/>
+      </ant>
+   
+      <antcallback target="status_file.get_build_status" return="build_status"/>
+
       <if>
          <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
-            <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
-               <property name="TEST_TYPE" value="${TEST_TYPE}"/>
-               <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
-               <property name="plat_form" value="${plat_form}"/>
-            </ant>
+            <if>
+               <equals arg1="${build_status}" arg2="unstable" />
+               <then>
+                  <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                     <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                     <property name="plat_form" value="${plat_form}"/>
+                  </ant>
+               </then>
+            </if>
          </then>
       </if>
-   <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
-      <property name="TEST_TYPE" value="${TEST_TYPE}"/>
-      <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
-      <property name="plat_form" value="${plat_form}"/>
-   </ant>
+   
    </target>
    
    <target name="compile_build">
