@@ -64,6 +64,9 @@ public class Index10213 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -93,8 +96,6 @@ public class Index10213 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("a" + i.nextInt(10000), 1);
 			clDB.createIndex(name + i.nextInt(10000), opt, false, false);
-			//check results
-			CommLib.checkIndex(db, csName, sCLName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -247){  //-247:Redefine index
 				Assert.fail(e.getMessage());

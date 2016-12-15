@@ -18,8 +18,7 @@ import com.sequoiadb.metadataConsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* TestLink: seqDB-10161
-*			seqDB-10162
+* TestLink: seqDB-10161: concurrency[create domain, alter domain, drop domain]
 * @author xiaoni huang init
 * @Date   2016.9.20
 */

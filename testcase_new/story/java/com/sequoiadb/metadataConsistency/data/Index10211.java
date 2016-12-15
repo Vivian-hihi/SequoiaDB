@@ -57,6 +57,9 @@ public class Index10211 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -76,6 +79,7 @@ public class Index10211 extends SdbTestBase {
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			clDB = db.getCollectionSpace(csName).getCollection(clName);
 		}catch(BaseException e){
+			db.disconnect();
 			Assert.fail(e.getMessage());
 		}
 		
@@ -84,12 +88,9 @@ public class Index10211 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("a", 1);
 			clDB.createIndex(idxName, opt, false, false);
-			//check results
-			if(clDB != null){
-				CommLib.checkIndex(db, csName, clName);
-			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -247){  //-247:Redefine index
+				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
 		}
@@ -97,8 +98,6 @@ public class Index10211 extends SdbTestBase {
 		//-----drop index-----
 		try{
 			clDB.dropIndex(idxName);
-			//check results
-			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -47){  //-47:Index name does not exist
 				Assert.fail(e.getMessage());

@@ -45,16 +45,9 @@ public class IdIndex10209 extends SdbTestBase {
 			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
-			//create cs/cl
-			sdb.createCollectionSpace(csName);
-			BSONObject opt = new BasicBSONObject();
-			opt.put("AutoIndexId", false);
-			DBCollection clDB = sdb.getCollectionSpace(csName).
-						createCollection(clName, opt);
-			//create index
-			BSONObject opt2 = new BasicBSONObject();
-			opt2.put("SortBufferSize", 128);
-			clDB.createIdIndex(opt2);
+			//ready env
+			this.createCL(csName);
+			this.createIdIndex(csName);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -64,6 +57,10 @@ public class IdIndex10209 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkCLResult(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -89,8 +86,6 @@ public class IdIndex10209 extends SdbTestBase {
 		//-----drop index-----
 		try{
 			clDB.dropIdIndex();
-			//check results
-			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -102,12 +97,11 @@ public class IdIndex10209 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("ReplSize", 1);
 		    csDB.getCollection(clName).alterCollection(opt);
-			
-			//check results of catalog
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			db.disconnect();
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -147){
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
 		}
 		
 		//-----create index-----
@@ -115,12 +109,36 @@ public class IdIndex10209 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
-			//check results
-			CommLib.checkIndex(db, csName, clName);
+		}catch(BaseException e){
+			if(e.getErrorCode() != -147  //-147:Unable to lock
+					&& e.getErrorCode() != -43){ //-43:Failed to initialize index
+				Assert.fail(e.getMessage());
+			}
+		}
+		
+	}
+	
+	public void createCL(String csName){
+		try{
+			CollectionSpace csDB = sdb.createCollectionSpace(csName);
+			
+			BSONObject opt = new BasicBSONObject();
+			opt.put("AutoIndexId", false);
+			csDB.createCollection(clName, opt);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}
-		
+	}
+	
+	public void createIdIndex(String csName){
+		try{
+			DBCollection clDB = sdb.getCollectionSpace(csName).getCollection(clName);
+			BSONObject opt2 = new BasicBSONObject();
+			opt2.put("SortBufferSize", 128);
+			clDB.createIdIndex(opt2);
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
+		}
 	}
 	
 }

@@ -26,11 +26,9 @@
       <packages>
          <package name="com.sequoiadb.crud" />
          <package name="com.sequoiadb.subcl"/>
+         <package name="com.sequoiadb.metadataConsistency.data"/>
       </packages>    
    </test>
-   
-   
-   
 
 </suite>
    

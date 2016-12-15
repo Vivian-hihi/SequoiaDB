@@ -53,12 +53,7 @@ public class Index10216 extends SdbTestBase {
 			this.createMainCL(sdb);
 			this.createSubCL(sdb);
 			this.attachCL(sdb);
-			//create index
-			BSONObject opt = new BasicBSONObject();
-			opt.put("b", 1);
-			sdb.getCollectionSpace(csName).getCollection(mCLName).
-					createIndex(idxName, opt, false, false);
-			
+			this.createIndex(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -68,6 +63,10 @@ public class Index10216 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkCLResult(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -93,8 +92,6 @@ public class Index10216 extends SdbTestBase {
 		//-----drop index-----
 		try{
 			clDB.dropIndex(idxName);
-			//check results
-			CommLib.checkIndex(db, csName, sCLName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -47){  //-47:Index name does not exist
 				Assert.fail(e.getMessage());
@@ -106,8 +103,6 @@ public class Index10216 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("b", 1);
 			clDB.createIndex(idxName, opt, false, false);
-			//check results
-			CommLib.checkIndex(db, csName, sCLName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}
@@ -145,7 +140,6 @@ public class Index10216 extends SdbTestBase {
 	}
 	
 	public void attachCL(Sequoiadb sdb){
-		//-----attach cl-----
 		try
 		{
 			BSONObject options = new BasicBSONObject();
@@ -163,5 +157,16 @@ public class Index10216 extends SdbTestBase {
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}
-	}	
+	}
+	
+	public void createIndex(Sequoiadb sdb){
+		try{
+			BSONObject opt = new BasicBSONObject();
+			opt.put("b", 1);
+			sdb.getCollectionSpace(csName).getCollection(mCLName).
+					createIndex(idxName, opt, false, false);
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
+		}
+	}
 }

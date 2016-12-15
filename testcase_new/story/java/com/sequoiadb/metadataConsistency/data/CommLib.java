@@ -366,6 +366,8 @@ public class CommLib {
 					}while(!checkSucc && failCnt < maxCnt);
 				}
 			}
+		}catch(NullPointerException e){
+			
 		}catch(BaseException e){
 			if(e.getErrorCode() != -248  //-248:Dropping the collection space is in progress
 					&& e.getErrorCode() != -34

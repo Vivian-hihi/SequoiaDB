@@ -98,7 +98,9 @@ public class Index10212 extends SdbTestBase {
 		}catch(BaseException e){
 			if( e.getErrorCode() != -247  //-247:Redefine index
 					&& e.getErrorCode() != -46  //-46:Duplicate index name
-					&& e.getErrorCode() != -23 
+					&& e.getErrorCode() != -23
+					&& e.getErrorCode() != -34  
+					//because is only one CL in CS, delete the CS data file when deleting the last CL, so exception -34 when creatIndex 
 					&& e.getErrorCode() != -108){ //-108:Catalog version is expired on coordinator node
 				db.disconnect();
 				Assert.fail(e.getMessage());

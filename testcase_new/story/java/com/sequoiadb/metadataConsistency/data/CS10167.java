@@ -61,6 +61,10 @@ public class CS10167 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results of catalog
+			CommLib.checkCSOfCatalog(sdb, csName);
+			CommLib.checkCLResult(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -87,8 +91,6 @@ public class CS10167 extends SdbTestBase {
 		//-----drop mainCS-----
 		try{
 			db.dropCollectionSpace(mCSName);
-			//check results of catalog
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){  
 				Assert.fail(e.getMessage());
@@ -111,8 +113,6 @@ public class CS10167 extends SdbTestBase {
 		//-----drop subCL-----
 		try{
 			db.getCollectionSpace(sCSName).dropCollection(sCLName);
-			//check results of catalog
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23){ 
 				Assert.fail(e.getMessage());

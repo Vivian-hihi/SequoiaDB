@@ -53,8 +53,8 @@ public class Split10192 extends SdbTestBase {
 			CommLib.clearCS(sdb, csName);
 			//ready env
 			sdb.createCollectionSpace(csName);
-			createMainCL(sdb);
-			createSubCL(sdb);
+			this.createMainCL(sdb);
+			this.createSubCL(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());

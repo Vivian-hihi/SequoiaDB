@@ -56,6 +56,11 @@ public class Index10214 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkCLResult(sdb, csName, clName);
+			CommLib.checkCSOfCatalog(sdb, csName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -88,10 +93,6 @@ public class Index10214 extends SdbTestBase {
 			if(clDB != null){
 				clDB.createIndex(idxName, opt, false, false);
 			}
-			//check results
-			if(db.isCollectionSpaceExist(csName)){
-				CommLib.checkIndex(db, csName, clName);
-			}
 		}catch(BaseException e){
 			if(e.getErrorCode() != -248  //-248:Dropping the collection space is in progress
 				&& e.getErrorCode() != -247  //-247:Redefine index  
@@ -104,8 +105,6 @@ public class Index10214 extends SdbTestBase {
 		//-----drop cs-----
 		try{
 			db.dropCollectionSpace(csName);
-			//check results
-			CommLib.checkCSOfCatalog(db, csName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34 
 					&& e.getErrorCode() != -147){  //-147:Unable to lock

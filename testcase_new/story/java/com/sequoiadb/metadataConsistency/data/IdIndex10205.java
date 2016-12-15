@@ -62,6 +62,9 @@ public class IdIndex10205 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -89,8 +92,6 @@ public class IdIndex10205 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
-			//check results
-			CommLib.checkIndex(db, csName, sCLName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -99,8 +100,6 @@ public class IdIndex10205 extends SdbTestBase {
 		//-----drop index-----
 		try{
 			clDB.dropIdIndex();
-			//check results
-			CommLib.checkIndex(db, csName, sCLName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{

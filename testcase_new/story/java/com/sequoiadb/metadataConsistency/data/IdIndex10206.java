@@ -19,7 +19,7 @@ import com.sequoiadb.metadataConsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* TestLink: seqDB-10206: concurrency[attachCL, drop mainCL]
+* TestLink: seqDB-10206: concurrency[attachCL, alter cl]
 * @author xiaoni huang init
 * @Date   2016.10.17
 */
@@ -45,11 +45,8 @@ public class IdIndex10206 extends SdbTestBase {
 			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
-			//create cs/cl
-			sdb.createCollectionSpace(csName);
-			BSONObject opt = new BasicBSONObject();
-			opt.put("AutoIndexId", false);
-			sdb.getCollectionSpace(csName).createCollection(clName, opt);
+			//ready env
+			this.createCL(csName);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -59,6 +56,10 @@ public class IdIndex10206 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkCLResult(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -86,8 +87,6 @@ public class IdIndex10206 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
-			//check results
-			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -100,9 +99,6 @@ public class IdIndex10206 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("ReplSize", 1);
 		    csDB.getCollection(clName).alterCollection(opt);
-			
-			//check results of catalog
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -111,13 +107,23 @@ public class IdIndex10206 extends SdbTestBase {
 		//-----drop index-----
 		try{
 			clDB.dropIdIndex();
-			//check results
-			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
 			db.disconnect();
 		}
 		
+	}
+	
+	public void createCL(String csName){
+		try{
+			CollectionSpace csDB = sdb.createCollectionSpace(csName);
+			
+			BSONObject opt = new BasicBSONObject();
+			opt.put("AutoIndexId", false);
+			csDB.createCollection(clName, opt);
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
+		}
 	}
 }

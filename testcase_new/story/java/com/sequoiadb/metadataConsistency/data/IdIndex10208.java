@@ -18,7 +18,7 @@ import com.sequoiadb.metadataConsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
-* TestLink: seqDB-10208: concurrency[dropCL in mainCL]
+* TestLink: seqDB-10208: concurrency[dropIndex in mainCL]
 * @author xiaoni huang init
 * @Date   2016.10.20
 */
@@ -52,11 +52,7 @@ public class IdIndex10208 extends SdbTestBase {
 			this.createMainCL(sdb);
 			this.createSubCL(sdb);
 			this.attachCL(sdb);
-			//create index
-			BSONObject opt = new BasicBSONObject();
-			opt.put("SortBufferSize", 128);
-			sdb.getCollectionSpace(csName).getCollection(mCLName).createIdIndex(opt);
-			
+			this.createIdIndex(sdb);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -66,6 +62,9 @@ public class IdIndex10208 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, sCLName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -92,8 +91,6 @@ public class IdIndex10208 extends SdbTestBase {
 		//-----drop index-----
 		try{
 			clDB.dropIdIndex();
-			//check results
-			CommLib.checkIndex(db, csName, sCLName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -104,8 +101,6 @@ public class IdIndex10208 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
-			//check results
-			CommLib.checkIndex(db, csName, sCLName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
@@ -141,11 +136,9 @@ public class IdIndex10208 extends SdbTestBase {
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}
-		
 	}
 	
 	public void attachCL(Sequoiadb sdb){
-		//-----attach cl-----
 		try
 		{
 			BSONObject options = new BasicBSONObject();
@@ -160,6 +153,17 @@ public class IdIndex10208 extends SdbTestBase {
 				sdb.getCollectionSpace(csName).getCollection(mCLName).
 					attachCollection(csName + "." + sCLName + i, options);
 			}
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
+		}
+	}
+	
+	public void createIdIndex(Sequoiadb sdb){
+		try{
+			DBCollection clDB = sdb.getCollectionSpace(csName).getCollection(clName);
+			BSONObject opt2 = new BasicBSONObject();
+			opt2.put("SortBufferSize", 128);
+			clDB.createIdIndex(opt2);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}

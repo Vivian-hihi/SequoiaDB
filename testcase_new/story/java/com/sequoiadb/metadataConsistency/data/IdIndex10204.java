@@ -11,6 +11,7 @@ import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -43,11 +44,8 @@ public class IdIndex10204 extends SdbTestBase {
 			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
-			//create cs/cl
-			sdb.createCollectionSpace(csName);
-			BSONObject opt = new BasicBSONObject();
-			opt.put("AutoIndexId", false);
-			sdb.getCollectionSpace(csName).createCollection(clName, opt);
+			//ready env
+			this.createCL(csName);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -57,6 +55,9 @@ public class IdIndex10204 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -85,8 +86,6 @@ public class IdIndex10204 extends SdbTestBase {
 			BSONObject opt = new BasicBSONObject();
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
-			//check results
-			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			db.disconnect();
 			Assert.fail(e.getMessage());
@@ -95,13 +94,23 @@ public class IdIndex10204 extends SdbTestBase {
 		//-----drop index-----
 		try{
 			clDB.dropIdIndex();
-			//check results
-			CommLib.checkIndex(db, csName, clName);
 		}catch(BaseException e){
 			Assert.fail(e.getMessage());
 		}finally{
 			db.disconnect();
 		}
 		
+	}
+	
+	public void createCL(String csName){
+		try{
+			CollectionSpace csDB = sdb.createCollectionSpace(csName);
+			
+			BSONObject opt = new BasicBSONObject();
+			opt.put("AutoIndexId", false);
+			csDB.createCollection(clName, opt);
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
+		}
 	}
 }

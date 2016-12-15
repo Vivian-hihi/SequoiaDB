@@ -152,7 +152,9 @@ public class SubCL10190 extends SdbTestBase {
 			sdb.getCollectionSpace(sCSName).createCollection(sCLName, sOpt);
 			
 		}catch(BaseException e){
-			if(e.getErrorCode() != -22 && e.getErrorCode() != -33){  
+			if(e.getErrorCode() != -22 
+					&& e.getErrorCode() != -33
+					&& e.getErrorCode() != -34){  
 				sdb.disconnect();
 				Assert.fail(e.getMessage());
 			}

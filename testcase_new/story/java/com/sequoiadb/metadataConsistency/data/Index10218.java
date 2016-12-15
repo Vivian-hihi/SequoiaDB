@@ -59,6 +59,11 @@ public class Index10218 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkIndex(sdb, csName, clName);
+			CommLib.checkCLResult(sdb, csName, clName);
+			CommLib.checkCSOfCatalog(sdb, csName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -88,8 +93,6 @@ public class Index10218 extends SdbTestBase {
 			String name = idxName;
 			Random i = new Random();
 			clDB.dropIndex(name + i.nextInt(42));
-			//check results
-			CommLib.checkIndex(db, csName, clName);
 		}catch(NullPointerException e){
 			
 		}catch(BaseException e){
@@ -104,8 +107,6 @@ public class Index10218 extends SdbTestBase {
 		//-----drop cs-----
 		try{
 			db.dropCollectionSpace(csName);
-			//check results
-			CommLib.checkCSOfCatalog(db, csName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){
 				Assert.fail(e.getMessage());

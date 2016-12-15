@@ -11,6 +11,7 @@ import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -44,11 +45,8 @@ public class IdIndex10207 extends SdbTestBase {
 			}
 			//clear env
 			CommLib.clearCS(sdb, csName);
-			//create cs/cl
-			sdb.createCollectionSpace(csName);
-			BSONObject opt = new BasicBSONObject();
-			opt.put("AutoIndexId", false);
-			sdb.getCollectionSpace(csName).createCollection(clName, opt);
+			//ready env
+			this.createCL(csName);
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -134,6 +132,18 @@ public class IdIndex10207 extends SdbTestBase {
 			}
 		}finally{
 			db.disconnect();
+		}
+	}
+	
+	public void createCL(String csName){
+		try{
+			CollectionSpace csDB = sdb.createCollectionSpace(csName);
+			
+			BSONObject opt = new BasicBSONObject();
+			opt.put("AutoIndexId", false);
+			csDB.createCollection(clName, opt);
+		}catch(BaseException e){
+			Assert.fail(e.getMessage());
 		}
 	}
 	
