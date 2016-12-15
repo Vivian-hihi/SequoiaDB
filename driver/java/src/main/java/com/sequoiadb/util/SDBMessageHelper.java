@@ -43,8 +43,6 @@ import org.bson.io.OutputBuffer;
 import org.bson.types.BSONDecimal;
 import org.bson.types.ObjectId;
 
-import com.google.gson.Gson;
-import com.google.gson.internal.Primitives;
 import com.sequoiadb.base.SDBMessage;
 import com.sequoiadb.base.SequoiadbConstants;
 import com.sequoiadb.base.SequoiadbConstants.Operation;
@@ -1166,36 +1164,6 @@ public class SDBMessageHelper {
 		} catch (IOException e) {
 			throw new BaseException("SDB_INVALIDARG", e);
 		}
-	}
-
-	public static BSONObject fromObject(Object object) throws BaseException {
-		Gson gson = new Gson();
-		String jString = gson.toJson(object);
-
-		return fromJson(jString);
-	}
-
-	public static <T> T fromBson(BSONObject bObj, Class<T> classOfT) {
-		bObj.removeField("_id");
-		Gson gson = new Gson();
-		Object object = gson.fromJson(bObj.toString(), (Type) classOfT);
-		return Primitives.wrap(classOfT).cast(object);
-	}
-
-	public static BSONObject fromJson(String jsonString) throws BaseException {
-
-		String fullString = "{\"bsonMap\":" + jsonString + "}";
-
-		Gson gson = new Gson();
-		ConvertHelpObject obj = gson.fromJson(fullString,
-				ConvertHelpObject.class);
-
-		LinkedHashMap<String, Object> bsonMap = obj.getBsonMap();
-
-		BSONObject o1 = new BasicBSONObject();
-		o1.putAll(bsonMap);
-
-		return o1;
 	}
 
 	private class ConvertHelpObject {
