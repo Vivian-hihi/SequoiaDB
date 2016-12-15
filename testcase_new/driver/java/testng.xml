@@ -30,12 +30,6 @@
       </packages>    
    </test>
    
-   <test name="split" enabled="true" parallel="methods" thread-count="10">
-		  <packages>
-			   <package name="com.sequoiadb.split" />
-		  </packages>
-	 </test>
-   
  
 </suite>
    
