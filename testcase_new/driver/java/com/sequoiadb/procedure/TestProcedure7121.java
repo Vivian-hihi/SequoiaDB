@@ -32,7 +32,6 @@ public class TestProcedure7121 extends SdbTestBase{
     private CollectionSpace cs;
     private String clName = "cl7121";
     
-    //@Parameters({"coordAddr","commCSName"})
     @BeforeTest
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
@@ -55,7 +54,6 @@ public class TestProcedure7121 extends SdbTestBase{
             }
             this.cs.createCollection(clName);
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestProcedure7121 setUp error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestProcedure7121 setUp error, error description:" + e.getMessage());
         }
     }
@@ -101,7 +99,6 @@ public class TestProcedure7121 extends SdbTestBase{
             cur.close();
             Assert.assertEquals(count, 0);
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestProcedure7121 testJSProcedure error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestProcedure7121 testJSProcedure error, error description:" + e.getMessage());
         }
     }
@@ -150,13 +147,11 @@ public class TestProcedure7121 extends SdbTestBase{
             errObj = evalResult2.getErrMsg();
             Assert.assertNotNull(errObj, "Sequoiadb driver TestProcedure7121 testEval no function sum_7121");
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestProcedure7121 testEval error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestProcedure7121 testEval error, error description:" + e.getMessage());
         }
         try{
             sdb.rmProcedure("sum_7121");
         }catch (BaseException e){
-            System.out.println("Failed to remove js procedure");
             Assert.fail("Error message is: "+e.getMessage()+e.getErrorCode());
         }
     }
@@ -219,25 +214,27 @@ public class TestProcedure7121 extends SdbTestBase{
             }
             Assert.assertEquals(actual, expected);
         }catch (BaseException e) {
-            System.out.println("test testEvalWithReturnType" + returnType +" error, error description:" + e.getMessage());
             Assert.fail("test testEvalWithReturnType" + returnType +" error, error description:" + e.getMessage());
         }
         
         try{
             sdb.rmProcedure("sum_7121");
         }catch (BaseException e){
-            System.out.println("test testEvalWithReturnType" + returnType +" failed to remove js procedure");
-            System.out.println("test testEvalWithReturnType" + returnType +" error message is: "+e.getMessage()+e.getErrorCode());
+            Assert.fail(e.getMessage());
         }
     }
     
     @AfterTest
     public void tearDown() {
-        System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-        if (this.cs.isCollectionExist(clName)) {
-            this.cs.dropCollection(clName);
+        try {
+            System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
+            }
+            this.sdb.disconnect();
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
         }
-        this.sdb.disconnect();
     }  
 }
