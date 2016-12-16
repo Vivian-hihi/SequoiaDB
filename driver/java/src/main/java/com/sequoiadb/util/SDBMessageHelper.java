@@ -190,8 +190,6 @@ public class SDBMessageHelper {
 	
 			return msgInByteArray;
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
@@ -324,8 +322,6 @@ public class SDBMessageHelper {
 	
 			return messageLength;
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
@@ -376,8 +372,6 @@ public class SDBMessageHelper {
 	
 			return messageLength;
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
@@ -452,8 +446,6 @@ public class SDBMessageHelper {
 	
 			return msgInByteArray;
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
@@ -533,8 +525,6 @@ public class SDBMessageHelper {
 	
 			return msgInByteArray;
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			throw new BaseException(SDBError.SDB_INVALIDARG, e);
 		}
 	}
