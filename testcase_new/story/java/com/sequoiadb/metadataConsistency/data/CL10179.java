@@ -65,6 +65,9 @@ public class CL10179 extends SdbTestBase{
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkCLResult(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 			CommLib.clearDomain(sdb, domainName);
@@ -101,8 +104,6 @@ public class CL10179 extends SdbTestBase{
 			if(csDB != null){
 				csDB.getCollection(clName).alterCollection(opt);
 			}
-			//check results
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(NullPointerException e){
 			
 		}catch(BaseException e){
@@ -120,8 +121,6 @@ public class CL10179 extends SdbTestBase{
 		try{
 			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			db.dropCollectionSpace(csName);
-			//check results
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){ 
 				Assert.fail(e.getMessage());

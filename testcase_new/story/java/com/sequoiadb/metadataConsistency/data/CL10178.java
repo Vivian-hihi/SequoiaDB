@@ -98,8 +98,6 @@ public class CL10178 extends SdbTestBase{
 				csDB.getCollection(tmpCLName).
 						alterCollection(opt);
 			}
-			//check results
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23){ 
 				Assert.fail(e.getMessage());
@@ -118,8 +116,6 @@ public class CL10178 extends SdbTestBase{
 			
 			CollectionSpace csDB = db.getCollectionSpace(csName);
 			csDB.dropCollection(clName + "_" + random.nextInt(number));
-			//check results
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23){  
 				Assert.fail(e.getMessage());
