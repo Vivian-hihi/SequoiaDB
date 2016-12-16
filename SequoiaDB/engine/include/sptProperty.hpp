@@ -46,9 +46,9 @@ namespace engine
 {
    typedef void (*SPT_RELEASE_OBJ_FUNC)(void *instance) ;
 
-   #define SPT_MAX_NUMBER_VALUE           ( (INT64)2^53-1 )
+   #define SPT_MAX_NUMBER_VALUE           ( 9007199254740991LL )
    #define SPT_MIN_NUMBER_VALUE           (-SPT_MAX_NUMBER_VALUE)
-   #define SPT_MAX_INT_VALUE              ( (INT32)2^31-1 )
+   #define SPT_MAX_INT_VALUE              ( 2147483647 )
    #define SPT_MIN_INT_VALUE              (-SPT_MAX_INT_VALUE)
 
    class _sptProperty ;

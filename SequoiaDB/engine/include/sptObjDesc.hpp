@@ -134,11 +134,11 @@ namespace engine
 
    protected:
       std::string _jsClassName ;
-      const _sptObjDesc *_parent ;
       _sptFuncMap _funcMap ;
+      BOOLEAN     _init ;
       JSClass     _classDef ;
       const JSObject*   _prototypeDef ;
-      BOOLEAN     _init ;
+      const _sptObjDesc *_parent ;
       BOOLEAN     _isHide ;
    } ;
    typedef class _sptObjDesc sptObjDesc ;
