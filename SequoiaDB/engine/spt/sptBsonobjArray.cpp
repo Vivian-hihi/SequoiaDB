@@ -186,7 +186,7 @@ namespace engine
             detail = BSON( SPT_ERR << "The 1st param must be INT32 value" ) ;
             goto error ;
          }
-         if ( idValue < _vecObj.size() )
+         if ( idValue < (INT32)_vecObj.size() )
          {
             /// set the return value
             rval.getReturnVal().setValue( _vecObj[idValue] ) ;
