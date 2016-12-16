@@ -536,8 +536,8 @@ public class DBCollection {
         SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
         int flags = rtnSDBMessage.getFlags();
         if (flags != 0) {
-            String msg = "matcher = " + matcher.toString() +
-                    ", hint = " + hint.toString();
+            String msg = "matcher = " + matcher +
+                    ", hint = " + hint;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // upsert cache
@@ -970,10 +970,10 @@ public class DBCollection {
             if (flags == SequoiadbConstants.SDB_DMS_EOC) {
                 return null;
             } else {
-                String msg = "matcher = " + matcher.toString() +
-                        ", selector = " + selector.toString() +
-                        ", orderBy = " + orderBy.toString() +
-                        ", hint = " + hint.toString() +
+                String msg = "matcher = " + matcher +
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy +
+                        ", hint = " + hint +
                         ", skipRows = " + skipRows +
                         ", returnRows = " + returnRows;
                 throw new BaseException(SDBError.getSDBError(flags), msg);
@@ -1262,7 +1262,7 @@ public class DBCollection {
         int flags = rtn.getFlags();
         if (flags != 0) {
             String msg = "name = " + name +
-                    ", key = " + key.toString() +
+                    ", key = " + key +
                     ", isUnique = " + isUnique;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
@@ -1486,8 +1486,8 @@ public class DBCollection {
                 dummyObj, dummyObj, newobj, -1, -1, 0);
         int flags = rtnSDBMessage.getFlags();
         if (flags != 0) {
-            String msg = "condition = " + condition.toString() +
-                    ", hint = " + hint.toString();
+            String msg = "condition = " + condition +
+                    ", hint = " + hint;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // upsert cache
@@ -1565,8 +1565,8 @@ public class DBCollection {
         if (flags != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
                     ", destGroupName = " + destGroupName +
-                    ", splitCondition = " + splitCondition.toString() +
-                    ", splitEndCondition = " + splitEndCondition.toString();
+                    ", splitCondition = " + splitCondition +
+                    ", splitEndCondition = " + splitEndCondition;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // upsert cache
@@ -1661,8 +1661,8 @@ public class DBCollection {
         if (flags != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
                     ", destGroupName = " + destGroupName +
-                    ", splitCondition = " + splitCondition.toString() +
-                    ", splitEndCondition = " + splitEndCondition.toString();
+                    ", splitCondition = " + splitCondition +
+                    ", splitEndCondition = " + splitEndCondition;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // build cursor object to get result from database
@@ -1824,10 +1824,9 @@ public class DBCollection {
             if (flags == SequoiadbConstants.SDB_DMS_EOC) {
                 return cursor;
             } else {
-                String msg = "query = " + query.toString() +
-                        ", hint = " + hint.toString() +
-                        ", orderBy = " + orderBy.toString() +
-                        ", hint = " + hint1 +
+                String msg = "query = " + query +
+                        ", hint = " + hint +
+                        ", orderBy = " + orderBy +
                         ", skipRows = " + skipRows +
                         ", returnRows = " + returnRows;
                 throw new BaseException(SDBError.getSDBError(flags), msg);
@@ -1871,7 +1870,7 @@ public class DBCollection {
         int flags = rtnSDBMessage.getFlags();
         if (0 != flags) {
             String msg = "subCollectionName = " + subClFullName +
-                    ", options = " + options.toString();
+                    ", options = " + options;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // upsert cache
@@ -2088,9 +2087,9 @@ public class DBCollection {
         SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
         int flags = rtnSDBMessage.getFlags();
         if (flags != 0) {
-            String msg = "matcher = " + matcher.toString() +
-                    ", modifier = " + modifier.toString() +
-                    ", hint = " + hint.toString();
+            String msg = "matcher = " + matcher +
+                    ", modifier = " + modifier +
+                    ", hint = " + hint;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // upsert cache

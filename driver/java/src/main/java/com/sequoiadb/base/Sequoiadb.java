@@ -1008,9 +1008,9 @@ public class Sequoiadb {
             if (flags == SequoiadbConstants.SDB_DMS_EOC) {
                 return null;
             } else {
-                String msg = "matcher = " + matcher.toString() +
-                        ", selector = " + selector.toString() +
-                        ", orderBy = " + orderBy.toString();
+                String msg = "matcher = " + matcher +
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy;
                 throw new BaseException(SDBError.getSDBError(flags), msg);
             }
         }
@@ -1272,10 +1272,10 @@ public class Sequoiadb {
             if (flags == SequoiadbConstants.SDB_DMS_EOC) {
                 return cursor;
             } else {
-                String msg = "matcher = " + matcher.toString() +
-                        ", selector = " + selector.toString() +
-                        ", orderBy = " + orderBy.toString() +
-                        ", options = " + options.toString();
+                String msg = "matcher = " + matcher +
+                        ", selector = " + selector +
+                        ", orderBy = " + orderBy +
+                        ", options = " + options;
                 throw new BaseException(SDBError.getSDBError(flags), msg);
             }
         }
@@ -1337,10 +1337,10 @@ public class Sequoiadb {
                 selector, orderBy, hint);
         int flags = rtn.getFlags();
         if (flags != 0) {
-            String msg = "matcher = " + matcher.toString() +
-                    ", selector = " + selector.toString() +
-                    ", orderBy = " + orderBy.toString() +
-                    ", hint = " + hint.toString();
+            String msg = "matcher = " + matcher +
+                    ", selector = " + selector +
+                    ", orderBy = " + orderBy +
+                    ", hint = " + hint;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // return the result by cursor
@@ -1854,15 +1854,14 @@ public class Sequoiadb {
             if (flags == SequoiadbConstants.SDB_DMS_EOC) {
                 return null;
             } else {
-                String msg = "query = " + query.toString() +
-                        ", selector = " + selector.toString() +
-                        ", order = " + order.toString() +
-                        ", hint = " + hint.toString();
+                String msg = "query = " + query +
+                        ", selector = " + selector +
+                        ", order = " + order +
+                        ", hint = " + hint;
                 throw new BaseException(SDBError.getSDBError(flags), msg);
             }
         }
         return new DBCursor(rtn, this);
-
     }
 
     String getUserName() {

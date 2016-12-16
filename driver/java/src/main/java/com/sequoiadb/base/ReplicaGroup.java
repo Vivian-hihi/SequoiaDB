@@ -324,7 +324,7 @@ public class ReplicaGroup {
         int flags = rtn.getFlags();
         if (flags != 0) {
             String msg = "node = " + hostName + ":" + port +
-                    ", configure = " + configure.toString();
+                    ", configure = " + configure;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
 
@@ -365,7 +365,7 @@ public class ReplicaGroup {
         int flags = rtn.getFlags();
         if (flags != 0) {
             String msg = "node = " + hostName + ":" + port +
-                    ", configure = " + configure.toString();
+                    ", configure = " + configure;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
     }
@@ -403,7 +403,7 @@ public class ReplicaGroup {
         if (flags != 0) {
             String msg = "node = " + hostName + ":" + port +
                     ", dbPath = " + dbPath +
-                    ", configure = " + configure.toString();
+                    ", configure = " + configure;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         return getNode(hostName, port);
@@ -477,7 +477,7 @@ public class ReplicaGroup {
         int flags = rtn.getFlags();
         if (flags != 0) {
             String msg = "node = " + hostName + ":" + port +
-                    ", configure = " + configure.toString();
+                    ", configure = " + configure;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
     }
