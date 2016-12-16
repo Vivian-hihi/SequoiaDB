@@ -91,26 +91,25 @@ public class Decimal9592 extends SdbTestBase{
 			+ decimalWithPrecision3 + ", decimalWithPrecision1 is :" + decimalWithPrecision1);
 			}
 			
-//			if(!decimalNoPrecision3.equals(intNumber)){
-//				Assert.fail("equal decimal data failed, decimalNoPrecision3 is :" 
-//			+ decimalNoPrecision3 + ", intNumber is :" + intNumber);
-//			}
-//			
-//			if(!decimalWithPrecision3.equals(intNumber)){
-//				Assert.fail("equal decimal data failed, decimalWithPrecision3 is :" 
-//			+ decimalWithPrecision3 + ", intNumber is :" + intNumber);
-//			}
-//			
-//			if(decimalWithPrecision2.equals(intNumber)){
-//				System.out.println("equals:"+decimalWithPrecision2.equals(intNumber));
-//				Assert.fail("equal decimal data failed, decimalWithPrecision2 is :" 
-//			+ decimalWithPrecision2 + ", intNumber is :" + intNumber);
-//			}
-//			
-//			if(decimalNoPrecision2.equals(intNumber)){
-//				Assert.fail("equal decimal data failed, decimalNoPrecision2 is :" 
-//			+ decimalNoPrecision2 + ", intNumber is :" + intNumber);
-//			}
+			if(!decimalNoPrecision3.equals(decimalWithPrecision3)){
+				Assert.fail("equal decimal data failed, decimalNoPrecision3 is :" 
+			+ decimalNoPrecision3 + ", decimalWithPrecision3 is :" + decimalWithPrecision3);
+			}
+			
+			if(decimalWithPrecision3.equals(intNumber)){
+				Assert.fail("equal decimal data failed, decimalWithPrecision3 is :" 
+			+ decimalWithPrecision3 + ", intNumber is :" + intNumber);
+			}
+			
+			if(decimalWithPrecision2.equals(decimalWithPrecision3)){
+				Assert.fail("equal decimal data failed, decimalWithPrecision2 is :" 
+			+ decimalWithPrecision2 + ", decimalWithPrecision3 is :" + decimalWithPrecision3);
+			}
+			
+			if(!decimalWithPrecision3.equals(decimalWithPrecision3)){
+				Assert.fail("equal decimal data failed, decimalWithPrecision3 is :" 
+			+ decimalWithPrecision3 + ", decimalWithPrecision3 is :" + decimalWithPrecision3);
+			}
 			
 			if(decimalWithPrecision3.hashCode() != decimalWithPrecision3.hashCode()){
 				Assert.fail("decimal hashCode() failed, decimalWithPrecision3 is :" 
