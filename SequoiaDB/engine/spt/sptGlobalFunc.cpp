@@ -35,16 +35,13 @@
 #include "ossProc.hpp"
 #include "utilStr.hpp"
 #include "pdTrace.hpp"
+#include "sptParseTroff.hpp"
 
-#ifdef SDB_SHELL
-   #include "sptParseTroff.hpp"
-
-   #if defined (_WINDOWS)
-      #define TF_REL_PATH "..\\doc\\manual\\"
-   #else
-      #define TF_REL_PATH "../doc/manual/"
-   #endif // _WINDOWS
-#endif // SDB_SHELL
+#if defined (_WINDOWS)
+   #define TF_REL_PATH "..\\doc\\manual\\"
+#else
+   #define TF_REL_PATH "../doc/manual/"
+#endif // _WINDOWS
 
 using namespace bson ;
 
@@ -57,6 +54,9 @@ JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, setLastErrorMsg )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, setLastError )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, setLastErrorObj )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, print )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, showClass )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, showClassfull)
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, forceGC )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, traceFmt )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, globalHelp )
@@ -72,6 +72,9 @@ JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "print", print )
    JS_ADD_GLOBAL_FUNC( "traceFmt", traceFmt )
    JS_ADD_GLOBAL_FUNC( "man", globalHelp )
+   JS_ADD_GLOBAL_FUNC( "showClass", showClass )
+   JS_ADD_GLOBAL_FUNC( "showClassfull", showClassfull )
+   JS_ADD_GLOBAL_FUNC( "forceGC", forceGC )
 JS_MAPPING_END()
 
    INT32 _sptGlobalFunc::getLastErrorMsg( const _sptArguments &arg,
@@ -80,7 +83,7 @@ JS_MAPPING_END()
    {
       if ( NULL != sdbGetErrMsg() )
       {
-         rval.setStringVal( "", sdbGetErrMsg() ) ;
+         rval.getReturnVal().setValue( sdbGetErrMsg() ) ;
       }
       return SDB_OK ;
    }
@@ -109,7 +112,7 @@ JS_MAPPING_END()
                                        BSONObj & detail )
    {
       INT32 error = sdbGetErrno() ;
-      rval.setNativeVal( "",  NumberInt, (const void*)&error ) ;
+      rval.getReturnVal().setValue( error ) ;
       return SDB_OK ;
    }
 
@@ -143,7 +146,7 @@ JS_MAPPING_END()
          try
          {
             BSONObj obj( pObjData ) ;
-            rval.setBSONObj( "", obj ) ;
+            rval.getReturnVal().setValue( obj ) ;
          }
          catch( std::exception & )
          {
@@ -305,7 +308,7 @@ JS_MAPPING_END()
             goto error ;
          }
       }
-#ifdef SDB_SHELL
+
       rc = ossGetEWD( cmdPath, OSS_MAX_PATHSIZE ) ;
       if ( rc )
       {
@@ -323,12 +326,89 @@ JS_MAPPING_END()
       {
          goto error ;
       }
-#endif //SDB_SHELL
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptGlobalFunc::showClass( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    BSONObj &detail )
+   {
+      string className ;
+      arg.getString( 0, className ) ;
+      return _showClassInner( className, FALSE, rval, detail ) ;
+   }
+
+   INT32 _sptGlobalFunc::showClassfull( const _sptArguments &arg,
+                                        _sptReturnVal &rval,
+                                        BSONObj &detail )
+   {
+      string className ;
+      arg.getString( 0, className ) ;
+      return _showClassInner( className, TRUE, rval, detail ) ;
+   }
+
+   INT32 _sptGlobalFunc::_showClassInner( const string &className,
+                                          BOOLEAN showHide,
+                                          _sptReturnVal &rval,
+                                          BSONObj &detail )
+   {
+      set<string> names ;
+      stringstream ss ;
+
+      if ( !className.empty() )
+      {
+         const _sptObjDesc *desc = sptGetObjFactory()->findObj( className ) ;
+         if ( desc )
+         {
+            desc->getFuncMap().getStaticFuncNames( names, showHide ) ;
+            sptGetObjFactory()->getClassFuncNames( (JSContext*)sdbGetThreadContext(),
+                                                   className,
+                                                   names,
+                                                   showHide ) ;
+         }
+         ss << className << "'s functions:" << endl ;
+      }
+      else
+      {
+         sptGetObjFactory()->getClassNames( names, showHide ) ;
+         ss << "All classes:" << endl ;
+         set<string>::iterator it = names.begin() ;
+         while( it != names.end() )
+         {
+            ss << "   " << *it << endl ;
+            ++it ;
+         }
+         /// get global function
+         names.clear() ;
+         const _sptObjDesc *desc = sptGetObjFactory()->findObj( className ) ;
+         if ( desc )
+         {
+            desc->getFuncMap().getStaticFuncNames( names, showHide ) ;
+            ss << "Global functions:" << endl ;
+         }
+      }
+
+      set<string>::iterator it = names.begin() ;
+      while( it != names.end() )
+      {
+         ss << "   " << *it << "()" << endl ;
+         ++it ;
+      }
+
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptGlobalFunc::forceGC( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  BSONObj &detail )
+   {
+      JS_GC( (JSContext*)sdbGetThreadContext() ) ;
+      return SDB_OK ;
    }
 
 }

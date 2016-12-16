@@ -36,12 +36,33 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "sptInvokeDef.hpp"
-
+#include "sptSPDef.hpp"
+#include <map>
+#include <string>
+#include <set>
 
 namespace engine
 {
    using namespace JS_INVOKER ;
+   using namespace std ;
 
+   struct _sptFuncInfo
+   {
+      JS_INVOKER::MEMBER_FUNC    _pFunc ;
+      UINT32                     _attr ;
+
+      _sptFuncInfo( JS_INVOKER::MEMBER_FUNC func = NULL,
+                    UINT32 attr = SPT_FUNC_DEFAULT )
+      {
+         _pFunc = func ;
+         _attr = attr ;
+      }
+   } ;
+   typedef _sptFuncInfo  sptFuncInfo ;
+
+   /*
+      _sptFuncMap define
+   */
    class _sptFuncMap : public SDBObject
    {
    public:
@@ -60,7 +81,7 @@ namespace engine
          _normal.clear() ;
       }
    public:
-      typedef std::map<std::string, JS_INVOKER::MEMBER_FUNC>
+      typedef std::map<std::string, sptFuncInfo>
               NORMAL_FUNCS ;
    public:
       BOOLEAN isMemberFunc( const CHAR *funcName ) const
@@ -79,7 +100,7 @@ namespace engine
                         _normal.find( funcName ) ;
             if ( _normal.end() != itr )
             {
-               func = itr->second ;
+               func = itr->second._pFunc ;
             }
          }
 
@@ -91,37 +112,54 @@ namespace engine
          return _normal ;
       }
 
+      void getMemberFuncNames( set<string> &setFuncs,
+                               BOOLEAN showHide = FALSE ) const
+      {
+         NORMAL_FUNCS::const_iterator itr = _normal.begin() ;
+         while( itr != _normal.end() )
+         {
+            if ( showHide || ( itr->second._attr & SPT_PROP_ENUMERATE ) )
+            {
+               setFuncs.insert( itr->first ) ;
+            }
+            ++itr ;
+         }
+      }
+
       const NORMAL_FUNCS &getStaticFuncs() const
       {
          return _static ;
       }
 
-      const NORMAL_FUNCS &getGlobalFuncs() const
+      void getStaticFuncNames( set<string> &setFuncs,
+                               BOOLEAN showHide = FALSE ) const
       {
-         return _global ;
+         NORMAL_FUNCS::const_iterator itr = _static.begin() ;
+         while( itr != _static.end() )
+         {
+            if ( showHide || ( itr->second._attr & SPT_PROP_ENUMERATE ) )
+            {
+               setFuncs.insert( itr->first ) ;
+            }
+            ++itr ;
+         }
       }
 
       BOOLEAN addMemberFunc( const CHAR *name,
-                             JS_INVOKER::MEMBER_FUNC f )
+                             JS_INVOKER::MEMBER_FUNC f,
+                             UINT32 attr = SPT_FUNC_DEFAULT )
       {
          return ( NULL != name && NULL != f ) ?
-                _normal.insert( std::make_pair( name, f ) ).second :
+                _normal.insert( std::make_pair( name, sptFuncInfo( f, attr ) ) ).second :
                 FALSE ;
       }
 
       BOOLEAN addStaticFunc( const CHAR *name,
-                             JS_INVOKER::MEMBER_FUNC f )
+                             JS_INVOKER::MEMBER_FUNC f,
+                             UINT32 attr = SPT_FUNC_DEFAULT )
       {
          return ( NULL != name && NULL != f ) ?
-                _static.insert( std::make_pair( name, f ) ).second :
-                FALSE ;
-      }
-
-      BOOLEAN addGlobalFunc( const CHAR *name,
-                             JS_INVOKER::MEMBER_FUNC f )
-      {
-         return ( NULL != name && NULL != f ) ?
-                _global.insert( std::make_pair( name, f ) ).second :
+                _static.insert( std::make_pair( name, sptFuncInfo( f, attr ) ) ).second :
                 FALSE ;
       }
 
@@ -158,7 +196,6 @@ namespace engine
 
       NORMAL_FUNCS _normal ;
       NORMAL_FUNCS _static ;
-      NORMAL_FUNCS _global ;
       JS_INVOKER::MEMBER_FUNC _construct ;
       JS_INVOKER::DESTRUCT_FUNC _destruct ;
       JS_INVOKER::RESLOVE_FUNC _resolve ;
@@ -166,5 +203,5 @@ namespace engine
    typedef class _sptFuncMap sptFuncMap ;
 }
 
-#endif
+#endif // SPT_FUNCMAP_HPP_
 

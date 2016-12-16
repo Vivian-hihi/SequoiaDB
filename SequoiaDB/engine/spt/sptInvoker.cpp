@@ -111,33 +111,36 @@ namespace engine
                                      jsval *rvp )
    {
       INT32 rc = SDB_OK ;
-      const sptProperty &rpro = rval.getVal() ;
+      sptProperty &rpro = rval.getReturnVal() ;
       jsval val = JSVAL_VOID ;
 
+      /// process return val
       if ( EOO == rpro.getType() )
       {
          *rvp = JSVAL_VOID ;
          goto done ;
       }
-      else if ( Object == rpro.getType() )
+      else if ( rpro.isObject() )
       {
-         JSObject *jsObj = JS_NewObject ( cx, (JSClass *)(rval.getClassDef()),
+         JSObject *jsObj = JS_NewObject ( cx,
+                                          (JSClass *)(rpro.getObjDesc()->getClassDef()),
                                           0 , 0 ) ;
          if ( NULL == jsObj )
          {
             PD_LOG( PDERROR, "faile to new js object" ) ;
             rc = SDB_OOM ;
-            /// need to release object instance
-            rval.releaseObj() ;
             goto error ;
          }
 
          JS_SetPrivate( cx, jsObj, rpro.getValue() ) ;
 
-         if ( !rval.getValProperties().empty() )
+         /// need to take over the object
+         rpro.takeoverObject() ;
+         /// set the return val's properties
+         if ( !rval.getReturnValProperties().empty() )
          {
             rc = _sptInvoker::setProperty( cx, jsObj,
-                                           rval.getValProperties() ) ;
+                                           rval.getReturnValProperties() ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -145,6 +148,29 @@ namespace engine
          }
 
          val = OBJECT_TO_JSVAL( jsObj ) ;
+      }
+      else if ( rpro.isArray() )
+      {
+         const SPT_PROPERTIES &elem = rpro.getArray() ;
+         if ( elem.size() > 0 )
+         {
+            JSObject *jsObj = JS_NewArrayObject( cx, elem.size(), NULL ) ;
+            if ( NULL == jsObj )
+            {
+               PD_LOG( PDERROR, "Failed to new js Array" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            rc = setArrayElems( cx, jsObj, elem ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to set the array's elem "
+                       "failed, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            val = OBJECT_TO_JSVAL( jsObj ) ;
+         }
       }
       else
       {
@@ -155,11 +181,22 @@ namespace engine
          }
       }
 
-      if ( !rpro.getName().empty() && NULL != obj )
+      /// set self properties
+      if ( obj && !rval.getSelfProperties().empty() )
       {
-         if ( !JS_SetProperty( cx, obj,
-                               rpro.getName().c_str(),
-                               &val ))
+         rc = _sptInvoker::setProperty( cx, obj, rval.getSelfProperties() ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+      /// set the return val to property
+      if ( obj && !rpro.getName().empty() )
+      {
+         if ( !JS_DefineProperty( cx, obj, rpro.getName().c_str(),
+                                  val, 0, 0, rpro.getAttr() ) )
+         // if ( !JS_SetProperty( cx, obj, rpro.getName().c_str(), &val ) )
          {
             PD_LOG( PDERROR, "failed to set obj to parent obj" ) ;
             rc = SDB_SYS ;
@@ -180,23 +217,171 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SPT_PROPERTIES::const_iterator itr = properties.begin() ;
+
       for ( ; itr != properties.end(); itr++ )
       {
-         SDB_ASSERT( !itr->getName().empty(), "name can not be empty" ) ;
-         jsval val = JSVAL_VOID ;
-         rc = _getValFromProperty( cx, *itr, val ) ;
-         if ( SDB_OK != rc )
+         sptProperty *prop = (sptProperty*)(*itr) ;
+         SDB_ASSERT( !prop->getName().empty(), "name can not be empty" ) ;
+
+         if ( prop->getName().empty() )
          {
-            goto error ;
+            continue ;
+         }
+         else if ( bson::EOO == prop->getType() )
+         {
+            continue ;
          }
 
-         if ( !JS_SetProperty( cx, obj, itr->getName().c_str(), &val ) )
+         jsval val = JSVAL_VOID ;
+
+         if ( prop->isObject() )
+         {
+            JSObject *jsObj = JS_NewObject ( cx,
+                                             (JSClass *)(prop->getObjDesc()->getClassDef()),
+                                             0 , 0 ) ;
+            if ( NULL == jsObj )
+            {
+               PD_LOG( PDERROR, "faile to new js object" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+
+            JS_SetPrivate( cx, jsObj, prop->getValue() ) ;
+
+            /// need to take over the object
+            prop->takeoverObject() ;
+
+            val = OBJECT_TO_JSVAL( jsObj ) ;
+         }
+         else if ( prop->isArray() )
+         {
+            const SPT_PROPERTIES &elem = prop->getArray() ;
+            if ( 0 == elem.size() )
+            {
+               continue ;
+            }
+            JSObject *jsObj = JS_NewArrayObject( cx, elem.size(), NULL ) ;
+            if ( NULL == jsObj )
+            {
+               PD_LOG( PDERROR, "Failed to new js Array" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            rc = setArrayElems( cx, jsObj, elem ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to set the array's elem "
+                       "failed, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            val = OBJECT_TO_JSVAL( jsObj ) ;
+         }
+         else
+         {
+            rc = _getValFromProperty( cx, *prop, val ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+         if ( !JS_DefineProperty( cx, obj, prop->getName().c_str(),
+                                  val, 0, 0, prop->getAttr() ) )
+         //if ( !JS_SetProperty( cx, obj, prop->getName().c_str(), &val ) )
          {
             PD_LOG( PDERROR, "failed to set property of obj" ) ;
             rc = SDB_SYS ;
             goto error ;
          }
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptInvoker::setArrayElems( JSContext *cx,
+                                     JSObject *obj,
+                                     const SPT_PROPERTIES &properties )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 index = 0 ;
+      SPT_PROPERTIES::const_iterator itr = properties.begin() ;
+
+      for ( ; itr != properties.end(); itr++ )
+      {
+         sptProperty *prop = (sptProperty*)(*itr) ;
+
+         if ( bson::EOO == prop->getType() )
+         {
+            continue ;
+         }
+
+         jsval val = JSVAL_VOID ;
+
+         if ( prop->isObject() )
+         {
+            JSObject *jsObj = JS_NewObject ( cx,
+                                             (JSClass *)(prop->getObjDesc()->getClassDef()),
+                                             0 , 0 ) ;
+            if ( NULL == jsObj )
+            {
+               PD_LOG( PDERROR, "faile to new js object" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+
+            JS_SetPrivate( cx, jsObj, prop->getValue() ) ;
+
+            /// need to take over the object
+            prop->takeoverObject() ;
+
+            val = OBJECT_TO_JSVAL( jsObj ) ;
+         }
+         else if ( prop->isArray() )
+         {
+            const SPT_PROPERTIES &elem = prop->getArray() ;
+            if ( 0 == elem.size() )
+            {
+               continue ;
+            }
+            JSObject *jsObj = JS_NewArrayObject( cx, elem.size(), NULL ) ;
+            if ( NULL == jsObj )
+            {
+               PD_LOG( PDERROR, "Failed to new js Array" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            rc = setArrayElems( cx, jsObj, elem ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to set the array's array elem "
+                       "failed, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            val = OBJECT_TO_JSVAL( jsObj ) ;
+         }
+         else
+         {
+            rc = _getValFromProperty( cx, *prop, val ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+
+         if ( !JS_DefineElement( cx, obj, index,
+                                 val, 0, 0, prop->getAttr() ) )
+         {
+            PD_LOG( PDERROR, "Failed to add the %d item of array", index ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         ++index ;
+      }
+
    done:
       return rc ;
    error:

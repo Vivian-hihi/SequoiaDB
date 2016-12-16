@@ -33,6 +33,9 @@
 #ifndef SPT_SPDEF_HPP_
 #define SPT_SPDEF_HPP_
 
+#include "core.hpp"
+#include "jsapi.h"
+
 namespace engine
 {
    #define SAFE_JS_FREE( cx, p ) \
@@ -42,6 +45,19 @@ namespace engine
    #define SPT_EVAL_FLAG_PRINT   0x00000001
 
    #define SPT_ERR               "ErrMsg"
+
+   /*
+      SPT_PROP_ATTR define
+   */
+   /// visible to enumerate. for...in, for...each, JS_Enumerate
+   #define SPT_PROP_ENUMERATE                JSPROP_ENUMERATE
+   /// can't be set
+   #define SPT_PROP_READONLY                 JSPROP_READONLY
+   /// can't be deleted
+   #define SPT_PROP_PERMANENT                JSPROP_PERMANENT
+
+   #define SPT_PROP_DEFAULT                  (SPT_PROP_ENUMERATE|SPT_PROP_READONLY|SPT_PROP_PERMANENT)
+   #define SPT_FUNC_DEFAULT                  (SPT_PROP_ENUMERATE)
 
 }
 

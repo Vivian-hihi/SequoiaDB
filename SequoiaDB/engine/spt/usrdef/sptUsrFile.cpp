@@ -80,16 +80,16 @@ JS_STATIC_FUNC_DEFINE( _sptUsrFile, getStat )
 
 
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
-   JS_ADD_MEMBER_FUNC( "_read", read )
-   JS_ADD_MEMBER_FUNC( "_write", write )
-   JS_ADD_MEMBER_FUNC( "_close", close )
-   JS_ADD_MEMBER_FUNC( "_seek", seek )
-   JS_ADD_MEMBER_FUNC( "_getInfo", getInfo )
-   JS_ADD_MEMBER_FUNC( "_toString", toString )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_read", read, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_write", write, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_close", close, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_seek", seek, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_getInfo", getInfo, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_toString", toString, 0 )
    JS_ADD_MEMBER_FUNC( "help", memberHelp )
-   JS_ADD_STATIC_FUNC( "_getFileObj", getFileObj )
-   JS_ADD_STATIC_FUNC( "_readFile", readFile )
-   JS_ADD_STATIC_FUNC( "_getPathType", getPathType )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_getFileObj", getFileObj, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_readFile", readFile, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_getPathType", getPathType, 0 )
    JS_ADD_STATIC_FUNC( "remove", remove )
    JS_ADD_STATIC_FUNC( "exist", exist )
    JS_ADD_STATIC_FUNC( "copy", copy )
@@ -97,8 +97,8 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_STATIC_FUNC( "mkdir", mkdir )
    JS_ADD_STATIC_FUNC( "setUmask", setUmask )
    JS_ADD_STATIC_FUNC( "getUmask", getUmask )
-   JS_ADD_STATIC_FUNC( "_list", list )
-   JS_ADD_STATIC_FUNC( "_find", find )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_list", list, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_find", find, 0 )
    JS_ADD_STATIC_FUNC( "chmod", chmod )
    JS_ADD_STATIC_FUNC( "chown", chown )
    JS_ADD_STATIC_FUNC( "chgrp", chgrp )
@@ -202,8 +202,8 @@ JS_MAPPING_END()
                  _filename.c_str(), rc ) ;
          goto error ;
       }
+      rval.addSelfProperty( "_filename" )->setValue( _filename ) ;
 
-      rval.setUsrObjectVal( "", this, SPT_CLASS_DEF( this ) ) ;
    done:
       return rc ;
    error:
@@ -217,9 +217,16 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
 
       // new File Object and set return value
-      _sptUsrFile * fileObj = new _sptUsrFile() ;
-      rval.setUsrObjectVal( "", fileObj, SPT_CLASS_DEF( fileObj ) ) ;
-
+      _sptUsrFile * fileObj = _sptUsrFile::crtInstance() ;
+      if ( !fileObj )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Create object failed" ) ;
+      }
+      else
+      {
+         rval.setUsrObjectVal<_sptUsrFile>( fileObj ) ;
+      }
       return rc ;
    }
 
@@ -282,7 +289,7 @@ JS_MAPPING_END()
       }
       buf[ read ] = '\0' ;
 
-      rval.setStringVal( "", buf ) ;
+      rval.getReturnVal().setValue( buf ) ;
    done:
       if ( SPT_READ_LEN < len && NULL != buf )
       {
@@ -403,7 +410,7 @@ JS_MAPPING_END()
                                 _sptReturnVal & rval,
                                 bson::BSONObj & detail )
    {
-      rval.setStringVal( "", _filename.c_str() ) ;
+      rval.getReturnVal().setValue( _filename ) ;
       return SDB_OK ;
    }
 
@@ -437,7 +444,7 @@ JS_MAPPING_END()
       // build result
       builder.append( "type", "File" ) ;
       builder.appendElements( remoteInfo ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -471,7 +478,7 @@ JS_MAPPING_END()
          << "   isEmptyDir( dirName )" << endl
          << "   stat( filename )" << endl
          << "   md5( filename )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -538,7 +545,7 @@ JS_MAPPING_END()
          fileExist = TRUE ;
       }
       rc = SDB_OK ;
-      rval.setNativeVal( "",  Bool, (const void*)&fileExist ) ;
+      rval.getReturnVal().setValue( fileExist ? true : false ) ;
 
    done:
       return rc ;
@@ -860,7 +867,7 @@ JS_MAPPING_END()
       }
 
       buf[ offset.offset ] = '\0' ;
-      rval.setStringVal( "", buf ) ;
+      rval.getReturnVal().setValue( buf ) ;
 
    done:
       op.Close() ;
@@ -1044,7 +1051,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -1196,7 +1203,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -1944,14 +1951,14 @@ JS_MAPPING_END()
       {
          outStr.erase( outStr.size()-1, 1 ) ;
       }
-      rval.setStringVal( "", outStr.c_str() ) ;
+      rval.getReturnVal().setValue( outStr ) ;
    done:
       return rc ;
    error:
       goto done ;
 
 #elif defined (_WINDOWS)
-      rval.setStringVal( "", "" ) ;
+      rval.getReturnVal().setValue( "" ) ;
       return SDB_OK ;
 #endif
    }
@@ -2097,7 +2104,7 @@ JS_MAPPING_END()
             break ;
       }
 
-      rval.setStringVal( "", pathType.c_str() ) ;
+      rval.getReturnVal().setValue( pathType ) ;
    done:
       return rc ;
    error:
@@ -2194,7 +2201,7 @@ JS_MAPPING_END()
          isEmpty = TRUE ;
       }
 #endif
-      rval.setNativeVal( "", Bool, &isEmpty ) ;
+      rval.getReturnVal().setValue( isEmpty ? true : false ) ;
    done:
       return rc ;
    error:
@@ -2377,7 +2384,7 @@ JS_MAPPING_END()
       builder.append( "modifyTime", token[ 5 ] ) ;
       builder.append( "changeTime", token[ 6 ] ) ;
       builder.append( "type", fileType ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -2457,7 +2464,7 @@ JS_MAPPING_END()
       builder.append( "modifyTime", "" ) ;
       builder.append( "changeTime", "" ) ;
       builder.append( "type", fileType ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -2523,7 +2530,7 @@ JS_MAPPING_END()
       }
       md5_finish( &st, digest ) ;
       code = md5::digestToString( digest ) ;
-      rval.setStringVal( "", code.c_str() ) ;
+      rval.getReturnVal().setValue( code ) ;
    done:
       if ( TRUE == isOpen )
          ossClose( file ) ;
@@ -2565,7 +2572,7 @@ JS_MAPPING_END()
          << " File.isEmptyDir( dirName )" << endl
          << " File.stat( filename )" << endl
          << " File.md5( filename )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 

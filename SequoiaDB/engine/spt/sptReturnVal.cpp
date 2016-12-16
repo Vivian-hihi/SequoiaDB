@@ -40,80 +40,62 @@ using namespace bson ;
 
 namespace engine
 {
-   INT32 _sptReturnVal::setNativeVal( const CHAR *name,
-                                      bson::BSONType type,
-                                      const void *value )
+
+   _sptReturnVal::_sptReturnVal()
    {
-      INT32 rc = SDB_OK ;
-      rc = _property.assignNative( name, type, value ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to assign property:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
-   INT32 _sptReturnVal::setUsrObjectVal( const CHAR *name,
-                                         void *value,
-                                         const void *classDef )
+   _sptReturnVal::~_sptReturnVal()
    {
-      SDB_ASSERT( NULL != classDef, "class def can not be NULL" ) ;
-      INT32 rc = SDB_OK ;
-      rc = _property.assignUsrObject( name, value ) ;
-      if ( SDB_OK != rc )
+      /// release
+      UINT32 i = 0 ;
+      for ( i = 0 ; i < _valProperties.size() ; ++i )
       {
-         goto error ;
+         SDB_OSS_DEL _valProperties[ i ] ;
       }
+      _valProperties.clear() ;
 
-      _classDef = classDef ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      for ( i = 0 ; i < _selfProperties.size() ; ++i )
+      {
+         SDB_OSS_DEL _selfProperties[ i ] ;
+      }
+      _selfProperties.clear() ;
    }
 
-   INT32 _sptReturnVal::setStringVal( const CHAR *name,
-                                      const CHAR *value )
+   sptProperty* _sptReturnVal::addReturnValProperty( const std::string &name,
+                                                     UINT32 attr )
    {
-      return _property.assignString( name, value ) ;
+      sptProperty *add = SDB_OSS_NEW sptProperty() ;
+      if ( add )
+      {
+         add->setName( name ) ;
+         add->setAttr( attr ) ;
+         _valProperties.push_back( add ) ;
+      }
+      return add ;
    }
 
-   INT32 _sptReturnVal::setBSONObj( const CHAR *name,
-                                    const bson::BSONObj &obj )
+   sptProperty* _sptReturnVal::addSelfProperty( const std::string &name,
+                                                UINT32 attr )
    {
-      INT32 rc = SDB_OK ;
-      rc = _property.assignBsonobj( name, obj ) ;
-      if ( SDB_OK != rc )
+      sptProperty *add = SDB_OSS_NEW sptProperty() ;
+      if ( add )
       {
-         goto error ;
+         add->setName( name ) ;
+         add->setAttr( attr ) ;
+         _selfProperties.push_back( add ) ;
       }
-
-      _classDef = _sptBsonobj::__desc.getClassDef() ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return add ;
    }
 
-   INT32 _sptReturnVal::setBSONArray( const CHAR *name,
-                                      const std::vector< BSONObj > &vecObj )
+   void _sptReturnVal::setReturnValName( const string &name )
    {
-      INT32 rc = SDB_OK ;
-      rc = _property.assignBsonArray( name, vecObj ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+      _val.setName( name ) ;
+   }
 
-      _classDef = _sptBsonobjArray::__desc.getClassDef() ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+   void _sptReturnVal::setReturnValAttr( UINT32 attr )
+   {
+      _val.setAttr( attr ) ;
    }
 
 }

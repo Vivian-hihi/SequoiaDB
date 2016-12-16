@@ -47,6 +47,9 @@
 #define CMD_CLEARHISTORY   "history-c"
 #define CMD_CLEARHISTORY1  "history-c;"
 
+#define SPT_OBJ_CNAME_PROPNAME      "__className__"
+#define SPT_OBJ_ID_PROPNAME         "__id__"
+
 namespace engine
 {
    /*
@@ -100,6 +103,15 @@ namespace engine
    void     sdbReportError( const CHAR *filename, UINT32 lineno,
                             const CHAR *msg, BOOLEAN isException ) ;
 
+   UINT32   sdbGetGlobalID() ;
+
+   const void* sdbGetThreadContext() ;
+   void     sdbDeclareThreadContext( const void *pContext ) ;
+   void     sdbUndeclareThreadContext( const void *pContext ) ;
+
+   const void* sdbGetThreadGlobal() ;
+   void     sdbDeclareThreadGlobal( const void *pGlobal ) ;
+   void     sdbUndeclareThreadGlobal( const void *pGlobal ) ;
 }
 
 #endif //SPTCOMMON_HPP__

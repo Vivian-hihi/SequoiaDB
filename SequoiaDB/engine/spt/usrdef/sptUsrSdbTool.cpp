@@ -80,7 +80,7 @@ namespace engine
       stringstream ss ;
       ss << "Sdbtool functions:" << endl
          << " Sdbtool.listNodes( [option obj], [filter obj], [rootPath] )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -284,7 +284,7 @@ namespace engine
       }
 
       // set result
-      rval.setBSONArray( "", vecObj ) ;
+      rval.getReturnVal().setValue( vecObj ) ;
 
    done:
       return rc ;

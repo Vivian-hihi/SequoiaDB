@@ -44,10 +44,10 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptUsrFilter, match )
    JS_STATIC_FUNC_DEFINE( _sptUsrFilter, help )
 
-   JS_BEGIN_MAPPING( _sptUsrFilter, "_Filter" )
+   JS_BEGIN_MAPPING_WITHHIDE( _sptUsrFilter, "_Filter" )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
-      JS_ADD_MEMBER_FUNC( "_match", match )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_match", match, 0 )
       JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
@@ -126,7 +126,7 @@ namespace engine
          }
       }
 
-      rval.setBSONArray( "", outputVec ) ;
+      rval.getReturnVal().setValue( outputVec ) ;
    done:
       return rc ;
    error:
@@ -193,7 +193,7 @@ namespace engine
          << "var filter = new _Filter( filterObj )" << endl
          << "   match( bsonArray )" << endl
          << " Filter.help()" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 }

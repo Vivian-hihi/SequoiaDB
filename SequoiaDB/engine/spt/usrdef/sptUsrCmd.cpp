@@ -54,12 +54,12 @@ namespace engine
    JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
-      JS_ADD_MEMBER_FUNC( "_getLastRet", getLastRet )
-      JS_ADD_MEMBER_FUNC( "_getLastOut", getLastOut )
-      JS_ADD_MEMBER_FUNC( "_run", exec )
-      JS_ADD_MEMBER_FUNC( "_start", start )
-      JS_ADD_MEMBER_FUNC( "_getCommand", getCommand )
-      JS_ADD_MEMBER_FUNC( "_getInfo", getInfo )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_getLastRet", getLastRet, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_getLastOut", getLastOut, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_run", exec, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_start", start, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_getCommand", getCommand, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_getInfo", getInfo, 0 )
       JS_ADD_MEMBER_FUNC( "toString", toString )
       JS_ADD_MEMBER_FUNC( "help", memberHelp )
       JS_ADD_STATIC_FUNC( "help", staticHelp )
@@ -92,7 +92,7 @@ namespace engine
                                _sptReturnVal & rval,
                                BSONObj & detail )
    {
-      rval.setStringVal( "", "CommandRunner" ) ;
+      rval.getReturnVal().setValue( "CommandRunner" ) ;
       return SDB_OK ;
    }
 
@@ -115,7 +115,7 @@ namespace engine
       builder.append( "type", "Cmd" ) ;
       builder.appendElements( remoteInfo ) ;
 
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -127,7 +127,7 @@ namespace engine
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      rval.setNativeVal( "", NumberInt, (const void*)&_retCode ) ;
+      rval.getReturnVal().setValue( _retCode ) ;
       return SDB_OK ;
    }
 
@@ -135,7 +135,7 @@ namespace engine
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      rval.setStringVal( "", _strOut.c_str() ) ;
+      rval.getReturnVal().setValue( _strOut ) ;
       return SDB_OK ;
    }
 
@@ -143,7 +143,7 @@ namespace engine
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      rval.setStringVal( "", _command.c_str() ) ;
+      rval.getReturnVal().setValue( _command ) ;
       return SDB_OK ;
    }
 
@@ -229,7 +229,7 @@ namespace engine
             goto error ;
          }
 
-         rval.setStringVal( "", _strOut.c_str() ) ;
+         rval.getReturnVal().setValue( _strOut ) ;
       }
 
    done:
@@ -390,7 +390,7 @@ namespace engine
                }
             }
          }
-         rval.setNativeVal( "", NumberInt, (const void*)&pid ) ;
+         rval.getReturnVal().setValue( (INT32)pid ) ;
       }
 
    done:
@@ -430,7 +430,7 @@ namespace engine
          << "   getLastOut()" << endl
          << "Remote Cmd functions:" << endl
          << "   runJS( code )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -453,7 +453,7 @@ namespace engine
          << "   getLastOut()" << endl
          << "Remote Cmd functions:" << endl
          << "   runJS( code )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -474,7 +474,7 @@ namespace engine
 
       if ( setToRVal )
       {
-         rval.setStringVal( "", outStr.c_str() ) ;
+         rval.getReturnVal().setValue( outStr ) ;
       }
       else
       {

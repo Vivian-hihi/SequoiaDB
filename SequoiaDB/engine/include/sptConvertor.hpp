@@ -43,6 +43,9 @@
 #include "../client/bson/bson.h"
 #include <string>
 
+/*
+   sptConvertor
+*/
 class sptConvertor
 {
 public:

@@ -93,7 +93,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC("removeOM", removeOM)
       JS_ADD_MEMBER_FUNC("startNode", startNode)
       JS_ADD_MEMBER_FUNC("stopNode", stopNode)
-      JS_ADD_MEMBER_FUNC("_runCommand", runCommand)
+      JS_ADD_MEMBER_FUNC_WITHATTR("_runCommand", runCommand, 0)
       JS_ADD_MEMBER_FUNC("close", close)
       JS_ADD_STATIC_FUNC("help", help)
       JS_ADD_STATIC_FUNC("getOmaInstallInfo", getOmaInstallInfo)
@@ -165,7 +165,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to connect %s:%s, rc: %d",
                    _hostname.c_str(), _svcname.c_str(), rc ) ;
 
-      rval.setUsrObjectVal( "", this, SPT_CLASS_DEF( this ) ) ;
+      rval.addSelfProperty( "_host" )->setValue( _hostname ) ;
+      rval.addSelfProperty( "_svcname" )->setValue( _svcname ) ;
 
    done:
       return rc ;
@@ -180,7 +181,7 @@ namespace engine
       string name = _hostname ;
       name += ":" ;
       name += _svcname ;
-      rval.setStringVal( "", name.c_str() ) ;
+      rval.getReturnVal().setValue( name ) ;
       return SDB_OK ;
    }
 
@@ -224,7 +225,7 @@ namespace engine
          << "   setNodeConfigs( svcname, configsObj )" << endl
          << "   updateNodeConfigs( svcname, configsObj )" << endl
          << "   close()" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -584,7 +585,7 @@ namespace engine
             goto error ;
          }
 
-         rval.setBSONObj( "", recvObj ) ;
+         rval.getReturnVal().setValue( recvObj ) ;
       }
    done:
       return rc ;
@@ -761,7 +762,7 @@ namespace engine
       }
 
    done:
-      rval.setStringVal( "", outStr.str().c_str() ) ;
+      rval.getReturnVal().setValue( outStr.str() ) ;
       return rc ;
    error:
       goto done ;
@@ -785,7 +786,7 @@ namespace engine
          builder.append( SDB_INSTALL_USER_FIELD, info._user ) ;
          builder.append( SDB_INSTALL_PATH_FIELD, info._path ) ;
          builder.append( SDB_INSTALL_MD5_FIELD, info._md5 ) ;
-         rval.setBSONObj( "", builder.obj() ) ;
+         rval.getReturnVal().setValue( builder.obj() ) ;
       }
 
    done:
@@ -798,7 +799,7 @@ namespace engine
                                         _sptReturnVal & rval,
                                         BSONObj & detail )
    {
-      rval.setStringVal( "", SDB_INSTALL_FILE_NAME ) ;
+      rval.getReturnVal().setValue( SDB_INSTALL_FILE_NAME ) ;
       return SDB_OK ;
    }
 
@@ -910,7 +911,7 @@ namespace engine
                                        BSONObj & detail )
    {
       string confFile = _getConfFile() ;
-      rval.setStringVal( "", confFile.c_str() ) ;
+      rval.getReturnVal().setValue( confFile ) ;
       return SDB_OK ;
    }
 
@@ -941,7 +942,7 @@ namespace engine
       {
          goto error ;
       }
-      rval.setBSONObj( "", conf ) ;
+      rval.getReturnVal().setValue( conf ) ;
 
    done:
       return rc ;
@@ -1116,7 +1117,7 @@ namespace engine
 
          if ( e.type() == String )
          {
-            rval.setStringVal( "", e.valuestr() ) ;
+            rval.getReturnVal().setValue( e.valuestr() ) ;
          }
          else
          {

@@ -55,6 +55,8 @@ namespace engine
       _sptBsonobjArray( const vector< BSONObj > &vecObjs ) ;
       virtual ~_sptBsonobjArray() ;
 
+      const vector< BSONObj >& getBsonArray() const { return _vecObj ; }
+
    public:
 
       static INT32 help( const _sptArguments &arg,
@@ -85,6 +87,13 @@ namespace engine
       INT32 getIndex( const _sptArguments &arg,
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
+
+      INT32 resolve( const _sptArguments &arg,
+                     BOOLEAN &processed,
+                     string &callFunc,
+                     BOOLEAN &setIDProp,
+                     _sptReturnVal &rval,
+                     bson::BSONObj &detail ) ;
 
    private:
       vector< BSONObj >          _vecObj ;

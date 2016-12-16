@@ -45,73 +45,41 @@ namespace engine
     _type( EOO )
    {
       _pReleaseFunc = NULL ;
+      _desc = NULL ;
+      _attr = SPT_PROP_DEFAULT ;
    }
 
-   _sptProperty::_sptProperty( const _sptProperty &other )
+   void _sptProperty::clear()
    {
-      _name = other._name ;
-      _type = other._type ;
-      _value = 0 ;
-      if ( String == other._type )
-      {
-         UINT32 size = ossStrlen( ( const CHAR * )other._value ) ;
-         CHAR *p = ( CHAR * )SDB_OSS_MALLOC( size + 1 );
-         if ( NULL != p )
-         {
-            ossMemcpy( p, ( const CHAR * )( other._value ), size + 1 ) ;
-            _value = ( UINT64 )p ;
-         }
-      }
-      else
-      {
-         _value = other._value ;
-         _pReleaseFunc = other._pReleaseFunc ;
-      }
-   }
-
-   _sptProperty::~_sptProperty()
-   {
-      _name.clear() ;
-
-      /// when it is a object,
-      /// value will be released in js destructor.
       if ( String == _type )
       {
          CHAR *p = ( CHAR * )_value ;
          SDB_OSS_FREE( p ) ;
-         _value = 0 ;
+      }
+      else if ( isObject() && 0 != _value && _pReleaseFunc )
+      {
+         _pReleaseFunc( (void*)_value ) ;
       }
 
-      _type = EOO ;
-   }
+      /// clear the array
+      for ( UINT32 i = 0 ; i < _array.size() ; ++i )
+      {
+         SDB_OSS_DEL _array[ i ] ;
+      }
+      _array.clear() ;
 
-   _sptProperty &_sptProperty::operator=( const _sptProperty &other )
-   {
-      _name = other._name ;
-      _type = other._type ;
       _value = 0 ;
-      if ( String == other._type )
-      {
-         UINT32 size = ossStrlen( ( const CHAR * )other._value ) ;
-         CHAR *p = ( CHAR * )SDB_OSS_MALLOC( size + 1 );
-         if ( NULL != p )
-         {
-            ossMemcpy( p, ( const CHAR * )( other._value ), size ) ;
-            p[size] = '\0' ;
-            _value = ( UINT64 )p ;
-         }
-      }
-      else
-      {
-         _value = other._value ;
-         _pReleaseFunc = other._pReleaseFunc ;
-      }
-
-      return *this ;
+      _pReleaseFunc = NULL ;
+      _desc = NULL ;
+      _type = bson::EOO ;
    }
 
-   INT32 _sptProperty::assignNative( const CHAR *name,
-                                     bson::BSONType type,
+   _sptProperty::~_sptProperty()
+   {
+      clear() ;
+   }
+
+   INT32 _sptProperty::assignNative( bson::BSONType type,
                                      const void *value )
    {
       INT32 rc = SDB_OK ;
@@ -119,9 +87,8 @@ namespace engine
                   Bool == type ||
                   NumberInt == type, "invalid value type" ) ;
       SDB_ASSERT( NULL != value, "can not be NULL" ) ;
-      SDB_ASSERT( EOO == _type, "can not be reassigned" ) ;
 
-      _value = 0 ;
+      clear() ;
 
       if ( NumberDouble == type )
       {
@@ -133,25 +100,31 @@ namespace engine
          BOOLEAN *v = (BOOLEAN *)(&_value);
          *v = *((const BOOLEAN *)value) ;
       }
-      else
+      else if ( NumberInt == type )
       {
          INT32 *v = (INT32 *)(&_value) ;
          *v = *((const INT32 *)value) ;
       }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
-      _name.assign( name ) ;
       _type = type ;
+
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
-   INT32 _sptProperty::assignString( const CHAR *name,
-                                     const CHAR *value )
+   INT32 _sptProperty::assignString( const CHAR *value )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != name && NULL != value, "can not be null" ) ;
-      SDB_ASSERT( EOO == _type, "can not be reassigned" ) ;
 
-      _value = 0 ;
+      clear() ;
+
       UINT32 size = ossStrlen( value ) ;
       CHAR *p = ( CHAR * )SDB_OSS_MALLOC( size + 1 ) ; /// +1 for \0
       if ( NULL == p )
@@ -163,7 +136,6 @@ namespace engine
 
       ossMemcpy( p, value, size + 1 ) ;
       _value = (UINT64)p ;
-      _name.assign( name ) ;
       _type = String ;
 
    done:
@@ -172,11 +144,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptProperty::assignBsonobj( const CHAR *name,
-                                      const bson::BSONObj &value )
+   INT32 _sptProperty::assignBsonobj( const bson::BSONObj &value )
    {
       INT32 rc = SDB_OK ;
-      releaseObj() ;
+
+      clear() ;
 
       _sptBsonobj *bs = SDB_OSS_NEW _sptBsonobj( value ) ;
       if ( NULL == bs )
@@ -185,24 +157,23 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      _pReleaseFunc = (SPT_RELEASE_OBJ_FUNC)_sptBsonobj::releaseInstance ;
 
-      rc = assignUsrObject( name, bs ) ;
+      rc = assignUsrObject<_sptBsonobj>( bs ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _sptProperty::assignBsonArray( const CHAR *name,
-                                        const std::vector < BSONObj > &vecObj )
+   INT32 _sptProperty::assignBsonArray( const std::vector < BSONObj > &vecObj )
    {
       INT32 rc = SDB_OK ;
-      releaseObj() ;
+      clear() ;
 
       _sptBsonobjArray *bsonarray = SDB_OSS_NEW _sptBsonobjArray( vecObj ) ;
       if ( NULL == bsonarray )
@@ -211,31 +182,17 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      _pReleaseFunc = (SPT_RELEASE_OBJ_FUNC)_sptBsonobjArray::releaseInstance ;
 
-      rc = assignUsrObject( name, bsonarray ) ;
+      rc = assignUsrObject<_sptBsonobjArray>( bsonarray ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
    done:
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 _sptProperty::assignUsrObject( const CHAR *name,
-                                        void *value )
-   {
-      INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != name, "can no be null" ) ;
-      SDB_ASSERT( EOO == _type, "can not be reassigned" ) ;
-
-      _value = 0 ;
-      _name.assign(name);
-      _type = Object ;
-      _value = ( UINT64 )value ;
-      return rc ;
    }
 
    INT32 _sptProperty::getNative( bson::BSONType type,
@@ -256,7 +213,7 @@ namespace engine
          BOOLEAN *v = ( BOOLEAN * )value ;
          *v = *(( BOOLEAN *)( &_value )) ;
       }
-      else
+      else if ( NumberInt == type )
       {
          INT32 *v = ( INT32 * )value ;
          *v = *(( INT32 *)( &_value )) ;
@@ -269,6 +226,26 @@ namespace engine
    {
       SDB_ASSERT( String == _type, "type must be string" ) ;
       return ( CHAR * )_value ;
+   }
+
+   _sptProperty* _sptProperty::addArrayItem()
+   {
+      if ( EOO == _type )
+      {
+         _type = Array ;
+      }
+      else if ( Array != _type )
+      {
+         clear() ;
+         _type = Array ;
+      }
+
+      _sptProperty *add = SDB_OSS_NEW _sptProperty() ;
+      if ( add )
+      {
+         _array.push_back( add ) ;
+      }
+      return add ;
    }
 
 }

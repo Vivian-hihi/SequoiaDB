@@ -33,7 +33,6 @@
 #include "sptContainer.hpp"
 #include "sptSPScope.hpp"
 #include "spt.hpp"
-#include "../spt/js_in_cpp.hpp"
 #include "pd.hpp"
 #include "sptUsrSsh.hpp"
 #include "sptUsrCmd.hpp"
@@ -44,14 +43,14 @@
 #include "sptUsrSdbTool.hpp"
 #include "sptUsrRemote.hpp"
 #include "sptUsrFilter.hpp"
+#include "../client/common.h"
 
 namespace engine
 {
    #define SPT_SCOPE_CACHE_SIZE                 0 //(30)
 
-   _sptContainer::_sptContainer( INT32 loadMask )
+   _sptContainer::_sptContainer()
    {
-      _loadMask = loadMask ;
    }
 
    _sptContainer::~_sptContainer()
@@ -61,6 +60,8 @@ namespace engine
 
    INT32 _sptContainer::init()
    {
+      sptGetObjFactory()->sortAndAssert() ;
+      initCacheStrategy( FALSE, 0 ) ;
       InitScopeEngine() ;
       return SDB_OK ;
    }
@@ -78,7 +79,8 @@ namespace engine
       return SDB_OK ;
    }
 
-   _sptScope* _sptContainer::_getFromCache( SPT_SCOPE_TYPE type )
+   _sptScope* _sptContainer::_getFromCache( SPT_SCOPE_TYPE type,
+                                            UINT32 loadMask )
    {
       _sptScope *pScope = NULL ;
       VEC_SCOPE_IT it ;
@@ -88,7 +90,8 @@ namespace engine
       while ( it != _vecScopes.end() )
       {
          pScope = *it ;
-         if ( type == pScope->getType() )
+         if ( type == pScope->getType() &&
+              loadMask == pScope->getLoadMask() )
          {
             _vecScopes.erase( it ) ;
             break ;
@@ -99,7 +102,8 @@ namespace engine
       return pScope ;
    }
 
-   _sptScope* _sptContainer::_createScope( SPT_SCOPE_TYPE type )
+   _sptScope* _sptContainer::_createScope( SPT_SCOPE_TYPE type,
+                                           UINT32 loadMask )
    {
       INT32 rc = SDB_OK ;
       _sptScope *scope = NULL ;
@@ -111,21 +115,14 @@ namespace engine
 
       if ( NULL == scope )
       {
-         PD_LOG( PDERROR, "it is a unknown type of scope:%d", type ) ;
+         ossPrintf( "it is a unknown type of scope:%d"OSS_NEWLINE, type ) ;
          goto error ;
       }
 
-      rc = scope->start() ;
+      rc = scope->start( loadMask ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to init scope, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      rc = _loadObj( scope ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to load objs, rc: %d", rc ) ;
+         ossPrintf( "Failed to init scope, rc: %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
 
@@ -136,18 +133,19 @@ namespace engine
       goto done ;
    }
 
-   _sptScope *_sptContainer::newScope( SPT_SCOPE_TYPE type )
+   _sptScope *_sptContainer::newScope( SPT_SCOPE_TYPE type,
+                                       UINT32 loadMask )
    {
-      _sptScope *scope = _getFromCache( type ) ;
+      _sptScope *scope = _getFromCache( type, loadMask ) ;
       if ( scope )
       {
          goto done ;
       }
 
-      scope = _createScope( type ) ;
+      scope = _createScope( type, loadMask ) ;
       if ( !scope )
       {
-         PD_LOG( PDERROR, "Failed to create scope[%d]", type ) ;
+         ossPrintf( "Failed to create scope[%d]"OSS_NEWLINE, type ) ;
          goto error ;
       }
 
@@ -181,65 +179,6 @@ namespace engine
 
    done:
       return ;
-   }
-
-   INT32 _sptContainer::_loadObj( _sptScope * pScope )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( _loadMask & SPT_OBJ_MASK_STANDARD )
-      {
-         if ( !InitDbClasses( ((sptSPScope *)pScope)->getContext(),
-                              ((sptSPScope *)pScope)->getGlobalObj() ) )
-         {
-            PD_LOG( PDERROR, "Failed to init dbclass" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-      }
-
-      if ( _loadMask & SPT_OBJ_MASK_USR )
-      {
-         rc = pScope->loadUsrDefObj<_sptUsrSsh>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrCmd>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrCmd, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrFile>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrFile, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrSystem>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrSystem, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrOma>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrOma, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrHash>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrHash, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrSdbTool>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrSdbTool, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrRemote>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrRemote, rc = %d", rc ) ;
-         rc = pScope->loadUsrDefObj<_sptUsrFilter>() ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to load class _sptUsrFilter, rc = %d", rc ) ;
-      }
-
-      if ( _loadMask & SPT_OBJ_MASK_INNER_JS )
-      {
-         rc = evalInitScripts2( pScope ) ;
-         PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                    "Failed to init spt scope, rc = %d", rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
 }

@@ -63,6 +63,15 @@ namespace engine
                                BOOLEAN strict = TRUE ) const = 0 ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const = 0 ;
       virtual UINT32 argc() const = 0 ;
+
+      virtual BOOLEAN isString( UINT32 pos ) const = 0 ;
+      virtual BOOLEAN isInt( UINT32 pos ) const = 0 ;
+      virtual BOOLEAN isBoolean( UINT32 pos ) const = 0 ;
+      virtual BOOLEAN isDouble( UINT32 pos ) const = 0 ;
+      virtual BOOLEAN isNumber( UINT32 pos ) const = 0 ;
+      virtual BOOLEAN isObject( UINT32 pos ) const = 0 ;
+      virtual BOOLEAN isNull( UINT32 pos ) const = 0 ;
+      virtual BOOLEAN isVoid( UINT32 pos ) const = 0 ;
    } ;
    typedef class _sptArguments sptArguments ;
 }

@@ -45,41 +45,38 @@ namespace engine
    typedef std::vector< _sptScope* >            VEC_SCOPE ;
    typedef VEC_SCOPE::iterator                  VEC_SCOPE_IT ;
 
-   #define SPT_OBJ_MASK_STANDARD                0x0001
-   #define SPT_OBJ_MASK_USR                     0x0002
-   #define SPT_OBJ_MASK_INNER_JS                0x0004
-
-   #define SPT_OBJ_MASK_ALL                     0xFFFF
-
+   /*
+      _sptContainer define
+   */
    class _sptContainer : public SDBObject
    {
    public:
-      _sptContainer( INT32 loadMask = SPT_OBJ_MASK_ALL ) ;
+      _sptContainer() ;
       virtual ~_sptContainer() ;
 
       INT32    init () ;
       INT32    fini () ;
 
    public:
-      _sptScope   *newScope( SPT_SCOPE_TYPE type = SPT_SCOPE_TYPE_SP ) ;
+      _sptScope   *newScope( SPT_SCOPE_TYPE type = SPT_SCOPE_TYPE_SP,
+                             UINT32 loadMask = SPT_OBJ_MASK_ALL ) ;
       void        releaseScope( _sptScope *pScope ) ;
 
    protected:
-      _sptScope* _getFromCache( SPT_SCOPE_TYPE type ) ;
+      _sptScope* _getFromCache( SPT_SCOPE_TYPE type,
+                                UINT32 loadMask ) ;
 
-      _sptScope* _createScope( SPT_SCOPE_TYPE type ) ;
-
-      INT32      _loadObj( _sptScope *pScope ) ;
+      _sptScope* _createScope( SPT_SCOPE_TYPE type,
+                               UINT32 loadMask ) ;
 
    private:
       VEC_SCOPE            _vecScopes ;
       ossSpinXLatch        _latch ;
-      INT32                _loadMask ;
 
    } ;
 
    typedef class _sptContainer sptContainer ;
 }
 
-#endif
+#endif // SPT_CONTAINER_HPP_
 

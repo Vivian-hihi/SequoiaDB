@@ -54,7 +54,16 @@ namespace engine
       {
          return _argc ;
       }
-   
+
+      virtual BOOLEAN isString( UINT32 pos ) const ;
+      virtual BOOLEAN isInt( UINT32 pos ) const ;
+      virtual BOOLEAN isBoolean( UINT32 pos ) const ;
+      virtual BOOLEAN isDouble( UINT32 pos ) const ;
+      virtual BOOLEAN isNumber( UINT32 pos ) const ;
+      virtual BOOLEAN isObject( UINT32 pos ) const ;
+      virtual BOOLEAN isNull( UINT32 pos ) const ;
+      virtual BOOLEAN isVoid( UINT32 pos ) const ;
+
    private:
       jsval *_getValAtPos( UINT32 pos ) const ;
 

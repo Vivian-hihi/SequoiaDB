@@ -64,6 +64,9 @@ namespace engine
    static OSS_THREAD_LOCAL BOOLEAN  __hasSetErrObj__     = FALSE ;
    static OSS_THREAD_LOCAL BOOLEAN  __needClearErrorInfo__ = FALSE ;
 
+   static OSS_THREAD_LOCAL const void* __curJSContext__  = NULL ;
+   static OSS_THREAD_LOCAL const void* __curJSGlobal__   = NULL ;
+
    /*
       Local Functions Define
    */
@@ -348,6 +351,9 @@ namespace engine
          __errobj__ = NULL ;
          __errobjSize__ = 0 ;
       }
+
+      __curJSContext__ = NULL ;
+      __curJSGlobal__ = NULL ;
    }
 
    void sdbErrorCallback( const CHAR *pErrorObj,
@@ -462,6 +468,48 @@ namespace engine
       __hasSetErrMsg__ = FALSE ;
       __hasSetErrNo__  = FALSE ;
       __hasSetErrObj__ = FALSE ;
+   }
+
+   UINT32 sdbGetGlobalID()
+   {
+      static UINT32 _gid = 0 ;
+      return ++_gid ;
+   }
+
+   const void* sdbGetThreadContext()
+   {
+      return __curJSContext__ ;
+   }
+
+   void  sdbDeclareThreadContext( const void *pContext )
+   {
+      __curJSContext__ = pContext ;
+   }
+
+   void  sdbUndeclareThreadContext( const void *pContext )
+   {
+      if ( pContext == __curJSContext__ )
+      {
+         __curJSContext__ = NULL ;
+      }
+   }
+
+   const void* sdbGetThreadGlobal()
+   {
+      return __curJSGlobal__ ;
+   }
+
+   void  sdbDeclareThreadGlobal( const void *pGlobal )
+   {
+      __curJSGlobal__ = pGlobal ;
+   }
+
+   void  sdbUndeclareThreadGlobal( const void *pGlobal )
+   {
+      if ( pGlobal == __curJSGlobal__ )
+      {
+         __curJSGlobal__ = NULL ;
+      }
    }
 
 }

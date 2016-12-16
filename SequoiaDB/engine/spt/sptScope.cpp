@@ -35,15 +35,13 @@
 #include "sptObjDesc.hpp"
 #include "ossUtil.hpp"
 #include "sptCommon.hpp"
-#include "../client/common.h"
 
 namespace engine
 {
-   _sptScope::OBJ_DESCS _sptScope::_descs ;
 
    _sptScope::_sptScope()
    {
-      initCacheStrategy( FALSE, 0 ) ;
+      _loadMask = 0 ;
    }
 
    _sptScope::~_sptScope()

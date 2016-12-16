@@ -104,7 +104,7 @@ namespace engine
    JS_BEGIN_MAPPING( _sptUsrSystem, "System" )
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
-      JS_ADD_MEMBER_FUNC( "_getInfo", getInfo )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_getInfo", getInfo, 0 )
       JS_ADD_MEMBER_FUNC( "help", memberHelp )
       JS_ADD_STATIC_FUNC( "getObj", getObj )
       JS_ADD_STATIC_FUNC( "ping", ping )
@@ -128,24 +128,24 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getPID", getPID )
       JS_ADD_STATIC_FUNC( "getTID", getTID )
       JS_ADD_STATIC_FUNC( "getEWD", getEWD )
-      JS_ADD_STATIC_FUNC( "_listProcess", listProcess )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_listProcess", listProcess, 0 )
       JS_ADD_STATIC_FUNC( "killProcess", killProcess )
       JS_ADD_STATIC_FUNC( "addUser", addUser )
       JS_ADD_STATIC_FUNC( "addGroup", addGroup )
       JS_ADD_STATIC_FUNC( "setUserConfigs", setUserConfigs )
       JS_ADD_STATIC_FUNC( "delUser", delUser )
       JS_ADD_STATIC_FUNC( "delGroup", delGroup )
-      JS_ADD_STATIC_FUNC( "_listLoginUsers", listLoginUsers )
-      JS_ADD_STATIC_FUNC( "_listAllUsers", listAllUsers )
-      JS_ADD_STATIC_FUNC( "_listGroups", listGroups )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_listLoginUsers", listLoginUsers, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_listAllUsers", listAllUsers, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_listGroups", listGroups, 0 )
       JS_ADD_STATIC_FUNC( "getCurrentUser", getCurrentUser )
       JS_ADD_STATIC_FUNC( "getSystemConfigs", getSystemConfigs )
       JS_ADD_STATIC_FUNC( "getProcUlimitConfigs", getProcUlimitConfigs )
       JS_ADD_STATIC_FUNC( "setProcUlimitConfigs", setProcUlimitConfigs )
       JS_ADD_STATIC_FUNC( "runService", runService )
       JS_ADD_STATIC_FUNC( "getUserEnv", getUserEnv )
-      JS_ADD_STATIC_FUNC( "_createSshKey", createSshKey )
-      JS_ADD_STATIC_FUNC( "_getHomePath", getHomePath )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_createSshKey", createSshKey, 0 )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "_getHomePath", getHomePath, 0 )
       JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
 
@@ -162,8 +162,16 @@ namespace engine
                                 BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      _sptUsrSystem * systemObj = new _sptUsrSystem() ;
-      rval.setUsrObjectVal( "", systemObj, SPT_CLASS_DEF( systemObj ) ) ;
+      _sptUsrSystem * systemObj = _sptUsrSystem::crtInstance() ;
+      if ( !systemObj )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Create object failed" ) ;
+      }
+      else
+      {
+         rval.setUsrObjectVal<_sptUsrSystem>( systemObj ) ;
+      }
       return rc ;
    }
 
@@ -171,7 +179,8 @@ namespace engine
                                    _sptReturnVal & rval,
                                    BSONObj & detail )
    {
-      detail = BSON( SPT_ERR << "new System is forbidden." ) ;
+      detail = BSON( SPT_ERR << "Please get System Obj by calling Remote "
+                                "member function: getSystem()" ) ;
       return SDB_SYS ;
    }
 
@@ -200,7 +209,7 @@ namespace engine
 
       builder.append( "type", "System" ) ;
       builder.appendElements( remoteInfo ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -256,7 +265,7 @@ namespace engine
 
       builder.append( CMD_USR_SYSTEM_TARGET, host ) ;
       builder.appendBool( CMD_USR_SYSTEM_REACHABLE, SDB_OK == exitCode ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -277,9 +286,9 @@ namespace engine
       }
 
 #if defined (_LINUX)
-      rval.setStringVal( "", "LINUX") ;
+      rval.getReturnVal().setValue( "LINUX") ;
 #elif defined (_WINDOWS)
-      rval.setStringVal( "", "WINDOWS" ) ;
+      rval.getReturnVal().setValue( "WINDOWS" ) ;
 #endif
    done:
       return rc ;
@@ -321,7 +330,7 @@ namespace engine
          builder.append( CMD_USR_SYSTEM_DESP, info._desp ) ;
          builder.append( CMD_USR_SYSTEM_BIT, info._bit ) ;
 
-         rval.setBSONObj( "", builder.obj() ) ;
+         rval.getReturnVal().setValue( builder.obj() ) ;
          goto done ;
       }
 
@@ -390,7 +399,7 @@ namespace engine
       {
          builder.append( CMD_USR_SYSTEM_BIT, 32 ) ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -495,7 +504,7 @@ namespace engine
       }
 
       _buildHostsResult( vecItems, builder ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -545,7 +554,7 @@ namespace engine
             ++it ;
             if( LINE_HOST == item._lineType && hostname == item._host )
             {
-               rval.setStringVal( "", item._ip.c_str() ) ;
+               rval.getReturnVal().setValue( item._ip ) ;
                goto done ;
             }
          }
@@ -1107,7 +1116,7 @@ namespace engine
       builder.appendNumber( CMD_USR_SYSTEM_IDLE, idle ) ;
       builder.appendNumber( CMD_USR_SYSTEM_OTHER, other ) ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -1185,7 +1194,7 @@ namespace engine
          builder.appendNumber( CMD_USR_SYSTEM_IDLE, idle ) ;
          builder.appendNumber( CMD_USR_SYSTEM_OTHER, other ) ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -1222,7 +1231,7 @@ namespace engine
          builder.appendNumber( CMD_USR_SYSTEM_IDLE, idle ) ;
          builder.appendNumber( CMD_USR_SYSTEM_OTHER, other ) ;
 
-         rval.setBSONObj( "", builder.obj() ) ;
+         rval.getReturnVal().setValue( builder.obj() ) ;
       }
    done:
       return rc ;
@@ -1743,7 +1752,7 @@ namespace engine
                          (INT32)((totalPhys-availPhys)/CMD_MB_SIZE) ) ;
          builder.append( CMD_USR_SYSTEM_FREE,(INT32)(availPhys/CMD_MB_SIZE) ) ;
          builder.append( CMD_USR_SYSTEM_UNIT, "M" ) ;
-         rval.setBSONObj( "", builder.obj() ) ;
+         rval.getReturnVal().setValue( builder.obj() ) ;
          goto done ;
       }
 
@@ -1768,7 +1777,7 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -2002,7 +2011,7 @@ namespace engine
       }
 
       builder.append( CMD_USR_SYSTEM_DISKS, arrBuilder.arr() ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -2062,7 +2071,7 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -2210,7 +2219,7 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -2333,7 +2342,7 @@ namespace engine
       }
       {
          BSONObj info = BSON( "FireWall" << "unknown" ) ;
-         rval.setBSONObj( "", info ) ;
+         rval.getReturnVal().setValue( info ) ;
       }
    done:
       return rc ;
@@ -2663,7 +2672,7 @@ namespace engine
          goto error ;
       }
 
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
    done:
       return rc ;
@@ -2690,7 +2699,7 @@ namespace engine
          goto error ;
       }
 
-      rval.setStringVal( "", hostName ) ;
+      rval.getReturnVal().setValue( hostName ) ;
 
    done:
       return rc ;
@@ -2715,7 +2724,7 @@ namespace engine
          goto error ;
       }
       rc = arg.getNative( 0, &port, SPT_NATIVE_INT32 ) ;
-      if ( SDB_OK != rc )
+      if ( rc )
       {
          string svcname ;
          UINT16 tempPort ;
@@ -2731,7 +2740,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "failed to get port by serviceName: %d", rc ) ;
-            ss << "Invalid svcname " << svcname ;
+            ss << "Invalid svcname: " << svcname ;
             goto error ;
          }
          port = tempPort ;
@@ -2767,8 +2776,7 @@ namespace engine
          result = TRUE ;
       }
       builder.appendBool( CMD_USR_SYSTEM_USABLE, result ) ;
-      //rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
       //close the socket
       sock.close() ;
       }
@@ -2796,7 +2804,7 @@ namespace engine
          goto error ;
       }
       id = ossGetCurrentProcessID() ;
-      rval.setNativeVal( "", NumberInt, (const void *)(&id) ) ;
+      rval.getReturnVal().setValue( id ) ;
 
    done:
       return rc ;
@@ -2822,7 +2830,7 @@ namespace engine
       }
 
       id = (UINT32)ossGetCurrentThreadID() ;
-      rval.setNativeVal( "", NumberInt, (const void *)(&id) ) ;
+      rval.getReturnVal().setValue( id ) ;
 
    done:
       return rc ;
@@ -2854,7 +2862,7 @@ namespace engine
          goto error ;
       }
 
-      rval.setStringVal( "", buf ) ;
+      rval.getReturnVal().setValue( buf ) ;
 
    done:
       return rc ;
@@ -2931,7 +2939,7 @@ namespace engine
          goto error ;
       }
 
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -4101,14 +4109,14 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to extract login user info" ) ;
          goto error ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
 
 #elif defined (_WINDOWS)
-      rval.setBSONObj( "", BSONObj() ) ;
+      rval.getReturnVal().setValue( BSONObj() ) ;
       return SDB_OK ;
 #endif
    }
@@ -4354,14 +4362,14 @@ namespace engine
          detail = BSON( SPT_ERR <<"Failed to extract all users info" ) ;
          goto error ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
 
 #elif defined (_WINDOWS)
-      rval.setBSONObj( "", BSONObj() ) ;
+      rval.getReturnVal().setValue( BSONObj() ) ;
       return SDB_OK ;
 #endif
    }
@@ -4562,14 +4570,14 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to extract group info" ) ;
          goto error ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
 
 #elif defined (_WINDOWS)
-      rval.setBSONObj( "", BSONObj() ) ;
+      rval.getReturnVal().setValue( BSONObj() ) ;
       return SDB_OK ;
 #endif
    }
@@ -4807,14 +4815,14 @@ namespace engine
       builder.append( "user", username ) ;
       builder.append( "gid", gidStr.str() ) ;
       builder.append( "dir", homeDir ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
 
 #elif defined (_WINDOWS)
-      rval.setBSONObj( "", BSONObj() ) ;
+      rval.getReturnVal().setValue( BSONObj() ) ;
       return SDB_OK ;
 #endif
    }
@@ -4915,14 +4923,14 @@ namespace engine
       // extract result
       rc = _extractSystemInfo( outStr.c_str(),
                                builder ) ;
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
 
 #elif defined (_WINDOWS)
-      rval.setBSONObj( "", BSONObj() ) ;
+      rval.getReturnVal().setValue( BSONObj() ) ;
       return SDB_OK ;
 #endif
    }
@@ -5061,14 +5069,14 @@ namespace engine
          }
          builder.append( resourceName[ index ], (UINT32)rlim.rlim_cur ) ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
       goto done ;
 
 #elif defined (_WINDOWS)
-      rval.setBSONObj( "", BSONObj() ) ;
+      rval.getReturnVal().setValue( BSONObj() ) ;
       return SDB_OK ;
 #endif
    }
@@ -5254,7 +5262,7 @@ namespace engine
          outStr.erase( outStr.size()-1, 1 ) ;
       }
 
-      rval.setStringVal( "", outStr.c_str() ) ;
+      rval.getReturnVal().setValue( outStr ) ;
    done:
       return rc ;
    error:
@@ -5311,7 +5319,7 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to get home path" ) ;
          goto error ;
       }
-      rval.setStringVal( "", homeDir.c_str() ) ;
+      rval.getReturnVal().setValue( homeDir ) ;
    done:
       return rc ;
    error:
@@ -5371,7 +5379,7 @@ namespace engine
          detail = BSON( SPT_ERR << "Failed to extract env info" ) ;
          goto error ;
       }
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
    error:
@@ -5610,7 +5618,7 @@ namespace engine
          << " System.getSystemConfigs( [type] )" << endl
 #endif
          << " System.runService( servicename, command, [option] )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -5662,7 +5670,7 @@ namespace engine
          << "   buildTrusty()" << endl
          << "   removeTrusty()" << endl
          << "   runService( servicename, command, [option] )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 }

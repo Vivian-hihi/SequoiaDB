@@ -85,6 +85,24 @@ namespace engine
                                _sptReturnVal &rval,
                                bson::BSONObj &detail ) ;
 
+      static INT32 showClass( const _sptArguments &arg,
+                              _sptReturnVal &rval,
+                              bson::BSONObj &detail ) ;
+
+      static INT32 showClassfull( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail ) ;
+
+      static INT32 forceGC( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail ) ;
+
+   protected:
+      static INT32 _showClassInner( const string &className,
+                                    BOOLEAN showHide,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
+
    } ;
    typedef class _sptGlobalFunc sptGlobalFunc ;
 }

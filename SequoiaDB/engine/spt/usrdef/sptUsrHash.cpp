@@ -78,7 +78,7 @@ namespace engine
       }
       
       code = md5::md5simpledigest( str ) ; 
-      rval.setStringVal( "", code.c_str() ) ;
+      rval.getReturnVal().setValue( code ) ;
        
    done:
       return rc ;
@@ -144,7 +144,7 @@ namespace engine
       }
       md5_finish( &st, digest ) ;
       code = md5::digestToString( digest ) ;
-      rval.setStringVal( "", code.c_str() ) ;
+      rval.getReturnVal().setValue( code ) ;
 
    done:
       if ( TRUE == isOpen )
@@ -163,7 +163,7 @@ namespace engine
       ss << "Hash functions:" << endl
          << " Hash.md5( str )" << endl 
          << " Hash.fileMD5( filename )" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 

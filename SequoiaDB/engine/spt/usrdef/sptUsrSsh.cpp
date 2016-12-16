@@ -142,7 +142,10 @@ JS_MAPPING_END()
       _localIP = _session->getLocalIPAddr() ;
       _peerIP = _session->getPeerIPAddr() ;
 
-      rval.setUsrObjectVal( "", this, SPT_CLASS_DEF( this ) ) ;
+      rval.addSelfProperty("_host")->setValue( _host ) ;
+      rval.addSelfProperty("_port")->setValue( port ) ;
+      rval.addSelfProperty("_usrname")->setValue( _user ) ;
+
    done:
       return rc ;
    error:
@@ -174,7 +177,7 @@ JS_MAPPING_END()
       string str = _user ;
       str += "@" ;
       str += _host ;
-      rval.setStringVal( "", str.c_str() ) ;
+      rval.getReturnVal().setValue( str ) ;
       return SDB_OK ;
    }
 
@@ -374,12 +377,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = rval.setStringVal( "", _lastOutStr.c_str() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to set string to return val." ) ;
-         goto error ;
-      }
+      rval.getReturnVal().setValue( _lastOutStr ) ;
 
    done:
       return rc ;
@@ -406,7 +404,7 @@ JS_MAPPING_END()
          << "   pull( remote_file, local_file, [mode] )" << endl
          << "   getLocalIP()" << endl
          << "   getPeerIP()" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -414,7 +412,7 @@ JS_MAPPING_END()
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      rval.setNativeVal( "",  NumberInt, ( const void *)&_lastRet ) ;
+      rval.getReturnVal().setValue( _lastRet ) ;
       return SDB_OK ;
    }
 
@@ -422,7 +420,7 @@ JS_MAPPING_END()
                                     _sptReturnVal & rval,
                                     BSONObj & detail )
    {
-      rval.setStringVal( "", _lastOutStr.c_str() ) ;
+      rval.getReturnVal().setValue( _lastOutStr ) ;
       return SDB_OK ;
    }
 
@@ -437,7 +435,7 @@ JS_MAPPING_END()
          rc = SDB_NETWORK ;
          goto error ;
       }
-      rval.setStringVal( "", _localIP.c_str() ) ;
+      rval.getReturnVal().setValue( _localIP ) ;
 
    done:
       return rc ;
@@ -456,7 +454,7 @@ JS_MAPPING_END()
          rc = SDB_NETWORK ;
          goto error ;
       }
-      rval.setStringVal( "", _peerIP.c_str() ) ;
+      rval.getReturnVal().setValue( _peerIP ) ;
 
    done:
       return rc ;

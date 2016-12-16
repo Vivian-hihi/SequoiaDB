@@ -35,12 +35,25 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "ossUtil.hpp"
+#include "sptObjDesc.hpp"
+#include "sptSPDef.hpp"
 #include "../bson/bson.hpp"
+#include "pd.hpp"
 #include <vector>
 
 namespace engine
 {
    typedef void (*SPT_RELEASE_OBJ_FUNC)(void *instance) ;
+
+   #define SPT_MAX_NUMBER_VALUE           ( (INT64)2^53-1 )
+   #define SPT_MIN_NUMBER_VALUE           (-SPT_MAX_NUMBER_VALUE)
+   #define SPT_MAX_INT_VALUE              ( (INT32)2^31-1 )
+   #define SPT_MIN_INT_VALUE              (-SPT_MAX_INT_VALUE)
+
+   class _sptProperty ;
+
+   typedef std::vector<_sptProperty*>     SPT_PROP_ARRAY ;
 
    /*
       _sptProperty define
@@ -49,31 +62,162 @@ namespace engine
    {
    public:
       _sptProperty() ;
-      _sptProperty( const _sptProperty &other ) ;
-      _sptProperty &operator=(const _sptProperty &other) ;
       virtual ~_sptProperty() ;
+
+      void  clear() ;
+
+      void  setValue( INT32 value )
+      {
+         assignNative( bson::NumberInt, (const void*)&value ) ;
+      }
+      void  setValue( UINT32 value )
+      {
+         setValue( (INT32)value ) ;
+      }
+      void  setValue( FLOAT64 value )
+      {
+         assignNative( bson::NumberDouble, (const void*)&value ) ;
+      }
+      void  setValue( INT64 value )
+      {
+         if ( value < SPT_MIN_NUMBER_VALUE ||
+              value > SPT_MAX_NUMBER_VALUE )
+         {
+            /// to string
+            CHAR tmp[ 50 ] = { 0 } ;
+            ossSnprintf( tmp, sizeof(tmp)-1, "%lld", value ) ;
+            setValue( (std::string)tmp ) ;
+         }
+         else if ( value < SPT_MIN_INT_VALUE ||
+                   value > SPT_MAX_INT_VALUE )
+         {
+            setValue( (FLOAT64)value ) ;
+         }
+         else
+         {
+            setValue( (INT32)value ) ;
+         }
+      }
+      void  setValue( UINT64 value )
+      {
+         setValue( (INT64)value ) ;
+      }
+      void  setValue( bool value )
+      {
+         BOOLEAN valueTmp = value ? TRUE : FALSE ;
+         assignNative( bson::Bool, (const void*)&valueTmp ) ;
+      }
+      void  setValue( const std::string &value )
+      {
+         assignString( value.c_str() ) ;
+      }
+      void  setValue( const CHAR *value )
+      {
+         assignString( value ) ;
+      }
+      void  setValue( const bson::BSONObj &value )
+      {
+         assignBsonobj( value ) ;
+      }
+      void  setValue( const std::vector< bson::BSONObj > &value )
+      {
+         assignBsonArray( value ) ;
+      }
+
+      template< typename T >
+      void  setValue( const std::vector<T> &array )
+      {
+         _sptProperty *item = NULL ;
+         for ( UINT32 i = 0 ; i < array.size() ; ++i )
+         {
+            item = addArrayItem() ;
+            if ( item )
+            {
+               item->setValue( array[i] ) ;
+            }
+            else
+            {
+               break ;
+            }
+         }
+      }
+
+      void  setName( const std::string &name )
+      {
+         _name = name ;
+      }
 
    public:
       /// BOOLEAN, INT32, FLOAT64
-      INT32 assignNative( const CHAR *name,
-                          bson::BSONType type,
+      INT32 assignNative( bson::BSONType type,
                           const void *value ) ;
 
       /// value should be base64 coded when
       /// it is a binary data.
-      INT32 assignString( const CHAR *name,
-                          const CHAR *value ) ;
+      INT32 assignString( const CHAR *value ) ;
 
-      INT32 assignBsonobj( const CHAR *name,
-                           const bson::BSONObj &value ) ;
+      INT32 assignBsonobj( const bson::BSONObj &value ) ;
 
-      INT32 assignBsonArray( const CHAR *name,
-                             const std::vector< bson::BSONObj > &vecObj ) ;
+      INT32 assignBsonArray( const std::vector< bson::BSONObj > &vecObj ) ;
 
-      /// WARNING: value will be registered in
-      /// engine and released in JS_Destructor.
-      INT32 assignUsrObject( const CHAR *name,
-                             void *value ) ;
+      _sptProperty* addArrayItem() ;
+
+      void  setAttr( UINT32 attr )
+      {
+         _attr = attr ;
+      }
+      UINT32 getAttr() const
+      {
+         return _attr ;
+      }
+      void  setReadOnly( BOOLEAN readOnly )
+      {
+         if ( readOnly )
+         {
+            _attr |= SPT_PROP_READONLY ;
+         }
+         else
+         {
+            _attr &= ~SPT_PROP_READONLY ;
+         }
+      }
+      void  setEnumerate( BOOLEAN enumerate )
+      {
+         if ( enumerate )
+         {
+            _attr |= SPT_PROP_ENUMERATE ;
+         }
+         else
+         {
+            _attr &= ~SPT_PROP_ENUMERATE ;
+         }
+      }
+      void setPermanent( BOOLEAN permanent )
+      {
+         if ( permanent )
+         {
+            _attr |= SPT_PROP_PERMANENT ;
+         }
+         else
+         {
+            _attr &= ~SPT_PROP_PERMANENT ;
+         }
+      }
+
+      template< typename T >
+      INT32 assignUsrObject( void *value )
+      {
+         INT32 rc = SDB_OK ;
+
+         clear() ;
+
+         _value = ( UINT64 )value ;
+         _type = bson::Object ;
+         _desc = &(T::__desc) ;
+         _pReleaseFunc = &( T::releaseInstance ) ;
+
+         return rc ;
+      }
 
       INT32 getNative( bson::BSONType type,
                        void *value ) const ;
@@ -86,9 +230,34 @@ namespace engine
          return _type ;
       }
 
+      inline BOOLEAN isObject() const
+      {
+         return bson::Object == _type ? TRUE : FALSE ;
+      }
+      inline BOOLEAN isArray() const
+      {
+         return bson::Array == _type ? TRUE : FALSE ;
+      }
+
       inline void *getValue() const
       {
          return ( void * )_value ;
+      }
+
+      const sptObjDesc* getObjDesc() const
+      {
+         return _desc ;
+      }
+
+      inline void takeoverObject()
+      {
+         if ( isObject() )
+         {
+            _pReleaseFunc = NULL ;
+            _value = 0 ;
+            _type = bson::EOO ;
+            _name = "" ;
+         }
       }
 
       inline const std::string &getName() const
@@ -96,15 +265,9 @@ namespace engine
          return _name ;
       }
 
-      inline void releaseObj()
+      const SPT_PROP_ARRAY& getArray() const
       {
-         if ( bson::Object == _type && 0 != _value && _pReleaseFunc )
-         {
-            _pReleaseFunc( (void*)_value ) ;
-            _value = 0 ;
-            _pReleaseFunc = NULL ;
-            _type = bson::EOO ;
-         }
+         return _array ;
       }
 
    private:
@@ -112,7 +275,16 @@ namespace engine
       UINT64 _value ;
       bson::BSONType _type ;
       SPT_RELEASE_OBJ_FUNC _pReleaseFunc ;
-      
+      const _sptObjDesc *_desc ;
+      UINT32   _attr ;
+
+      SPT_PROP_ARRAY       _array ;
+
+   private:
+      /// Forbidden
+      _sptProperty( const _sptProperty &other ) ;
+      _sptProperty &operator=(const _sptProperty &other) ;
+
    } ;
    typedef class _sptProperty sptProperty ;
 }

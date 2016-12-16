@@ -47,6 +47,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptBsonobjArray, next)
    JS_MEMBER_FUNC_DEFINE( _sptBsonobjArray, pos)
    JS_MEMBER_FUNC_DEFINE( _sptBsonobjArray, getIndex)
+   JS_RESOLVE_FUNC_DEFINE(_sptBsonobjArray, resolve)
 
    /* static function define */
    JS_STATIC_FUNC_DEFINE(_sptBsonobjArray, help)
@@ -59,6 +60,7 @@ namespace engine
      JS_ADD_MEMBER_FUNC( "index", getIndex )
      JS_ADD_CONSTRUCT_FUNC( construct )
      JS_ADD_DESTRUCT_FUNC( destruct )
+     JS_ADD_RESOLVE_FUNC(resolve)
      /* static function */
      JS_ADD_STATIC_FUNC("help", help)
    JS_MAPPING_END()
@@ -107,7 +109,7 @@ namespace engine
          << " BSONArray(obj).toArray()" << endl
          << " BSONArray(obj).toString()" << endl
          << " BSONArray(obj).index()" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -116,7 +118,7 @@ namespace engine
                                  BSONObj &detail )
    {
       INT32 size = _vecObj.size() ;
-      rval.setNativeVal( "",  NumberInt, (const void*)&size ) ;
+      rval.getReturnVal().setValue( size ) ;
       return SDB_OK ;
    }
 
@@ -129,7 +131,7 @@ namespace engine
       {
          hasMore = TRUE ;
       }
-      rval.setNativeVal( "",  Bool, ( const void *)&hasMore ) ;
+      rval.getReturnVal().setValue( hasMore ? true : false ) ;
 
       return SDB_OK ;
    }
@@ -140,7 +142,7 @@ namespace engine
    {
       if ( _curPos < _vecObj.size() )
       {
-         rval.setBSONObj( "", _vecObj[_curPos] ) ;
+         rval.getReturnVal().setValue( _vecObj[_curPos] ) ;
          ++_curPos ;
       }
 
@@ -153,7 +155,7 @@ namespace engine
    {
       if ( _curPos < _vecObj.size() )
       {
-         rval.setBSONObj( "", _vecObj[_curPos] ) ;
+         rval.getReturnVal().setValue( _vecObj[_curPos] ) ;
       }
       return SDB_OK ;
    }
@@ -162,8 +164,41 @@ namespace engine
                                      _sptReturnVal &rval,
                                      BSONObj &detail )
    {
-      rval.setNativeVal( "", NumberInt, (const void *)&_curPos ) ;
+      rval.getReturnVal().setValue( _curPos ) ;
       return SDB_OK ;
+   }
+
+   INT32 _sptBsonobjArray::resolve( const _sptArguments &arg,
+                                    BOOLEAN &processed,
+                                    string &callFunc,
+                                    BOOLEAN &setIDProp,
+                                    _sptReturnVal &rval,
+                                    BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( arg.isInt( 0 ) )
+      {
+         INT32 idValue = 0 ;
+         rc = arg.getNative( 0, (void*)&idValue, SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "The 1st param must be INT32 value" ) ;
+            goto error ;
+         }
+         if ( idValue < _vecObj.size() )
+         {
+            /// set the return value
+            rval.getReturnVal().setValue( _vecObj[idValue] ) ;
+         }
+         processed = TRUE ;
+         setIDProp = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 }

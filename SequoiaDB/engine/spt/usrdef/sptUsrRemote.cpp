@@ -62,7 +62,7 @@ namespace engine
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC( destruct )
       JS_ADD_MEMBER_FUNC( "toString", toString )
-      JS_ADD_MEMBER_FUNC( "__runCommand", runCommand )
+      JS_ADD_MEMBER_FUNC_WITHATTR( "__runCommand", runCommand, 0 )
       JS_ADD_MEMBER_FUNC( "getInfo", getInfo )
       JS_ADD_MEMBER_FUNC( "close", close )
       JS_ADD_MEMBER_FUNC( "help", memberHelp )
@@ -130,7 +130,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to connect %s:%s, rc: %d",
                    _hostname.c_str(), _svcname.c_str(), rc ) ;
 
-      rval.setUsrObjectVal( "", this, SPT_CLASS_DEF( this ) ) ;
+      rval.addSelfProperty( "_host" )->setValue( _hostname ) ;
+      rval.addSelfProperty( "_svcname" )->setValue( _svcname ) ;
 
    done:
       return rc ;
@@ -151,7 +152,7 @@ namespace engine
 
       name += ":" ;
       name += _svcname ;
-      rval.setStringVal( "", name.c_str() ) ;
+      rval.getReturnVal().setValue( name ) ;
       return SDB_OK ;
    }
 
@@ -218,7 +219,7 @@ namespace engine
          goto error ;
       }
 
-      rval.setBSONObj( "", recvObj ) ;
+      rval.getReturnVal().setValue( recvObj ) ;
    done:
       return rc ;
    error:
@@ -235,7 +236,7 @@ namespace engine
       builder.append( "hostname", _hostname ) ;
       builder.append( "svcname", _svcname ) ;
 
-      rval.setBSONObj( "", builder.obj() ) ;
+      rval.getReturnVal().setValue( builder.obj() ) ;
 
       return rc ;
    }
@@ -251,7 +252,7 @@ namespace engine
          << "   getFile( [filename] )" << endl
          << "   getCmd()" << endl
          << "   close()" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 
@@ -265,7 +266,7 @@ namespace engine
          << "   getFile( [filename] )" << endl
          << "   getCmd()" << endl
          << "   close()" << endl ;
-      rval.setStringVal( "", ss.str().c_str() ) ;
+      rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
 

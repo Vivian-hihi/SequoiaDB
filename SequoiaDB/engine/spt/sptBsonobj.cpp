@@ -69,15 +69,28 @@ namespace engine
                                  _sptReturnVal &rval,
                                  bson::BSONObj &detail)
    {
-      detail = BSON( SPT_ERR << "new BSONObj is forbidden." ) ;
-      return SDB_INVALIDARG ;
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+
+      rc = arg.getBsonobj( 0, obj ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "The 1st param must be Object" ) ;
+         goto error ;
+      }
+      _obj = obj ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptBsonobj::toJson( const _sptArguments &arg,
                               _sptReturnVal &rval,
                                bson::BSONObj &detail )
    {
-      rval.setStringVal( "", _obj.toString( false, true ).c_str()) ;
+      rval.getReturnVal().setValue( _obj.toString( false, true ) ) ;
       return SDB_OK ;
    }
 

@@ -48,6 +48,15 @@ namespace engine
       SPT_SCOPE_TYPE_V8 = 1,
    } ;
 
+   #define SPT_OBJ_MASK_STANDARD                0x0001
+   #define SPT_OBJ_MASK_USR                     0x0002
+   #define SPT_OBJ_MASK_INNER_JS                0x0004
+
+   #define SPT_OBJ_MASK_ALL                     0xFFFF
+
+   /*
+      _sptScope define
+   */
    class _sptScope : public SDBObject
    {
    public:
@@ -56,12 +65,13 @@ namespace engine
 
       virtual SPT_SCOPE_TYPE getType() const = 0 ;
 
+      UINT32 getLoadMask() const { return _loadMask ; }
       INT32  getLastError() const ;
       const CHAR* getLastErrMsg() const ;
       bson::BSONObj getLastErrObj() const ;
 
    public:
-      virtual INT32 start() = 0 ;
+      virtual INT32 start( UINT32 loadMask = SPT_OBJ_MASK_ALL ) = 0 ;
 
       virtual void shutdown() = 0 ;
 
@@ -71,40 +81,36 @@ namespace engine
                           INT32 flag, // SPT_EVAL_FLAG_NONE/SPT_EVAL_FLAG_PRINT
                           bson::BSONObj &rval,
                           bson::BSONObj &detail ) = 0 ;
-   public:
-      template<typename T>
-      INT32 loadUsrDefObj()
-      {
-         return loadUsrDefObj( &(T::__desc) ) ;
-      }
 
-      INT32 loadUsrDefObj( _sptObjDesc *desc ) ;
+      virtual void   getGlobalFunNames( set<string> &setFunc ) = 0 ;
+
+      virtual void   getObjStaticFunNames( const string &objName,
+                                           set<string> &setFunc ) = 0 ;
+
+      virtual void   getObjFunNames( const void *pObj,
+                                     set<string> &setFunc ) = 0 ;
+
+      virtual void   getObjPropNames( const void *pObj,
+                                      set<string> &setProp ) = 0 ;
+
+      virtual BOOLEAN isInstanceOf( const void *pObj,
+                                   const string &objName ) = 0 ;
+
+      virtual string getObjClassName( const void *pObj ) = 0 ;
+
+   public:
+      INT32          loadUsrDefObj( _sptObjDesc *desc ) ;
 
    private:
       virtual INT32 _loadUsrDefObj( _sptObjDesc *desc ) = 0 ;
 
-   private:
-      typedef std::map<std::string, const _sptObjDesc *> OBJ_DESCS ;
-
    protected:
-      BOOLEAN _addDesc( const CHAR *name, const _sptObjDesc *desc )
-      {
-         return _descs.insert( std::make_pair( name, desc ) ).second ;
-      }
+      UINT32         _loadMask ;
 
-      const _sptObjDesc *getDesc( const CHAR *name )
-      {
-         OBJ_DESCS::const_iterator itr = _descs.find( name ) ;
-         return _descs.end() == itr ?
-                NULL : itr->second ;
-      }
-
-   private:
-      static OBJ_DESCS _descs ;
    } ;
    typedef class _sptScope sptScope ;
 
 }
 
-#endif
+#endif // SPT_SCOPE_HPP_
 

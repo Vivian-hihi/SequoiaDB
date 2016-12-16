@@ -33,8 +33,6 @@
 #ifndef SPT_INVOKEDEF_HPP_
 #define SPT_INVOKEDEF_HPP_
 
-#include "sptArguments.hpp"
-#include "sptReturnVal.hpp"
 #include "jsapi.h"
 
 namespace engine
@@ -46,9 +44,9 @@ namespace engine
       typedef void (*DESTRUCT_FUNC)(JSContext *cx , JSObject *obj) ;
 
       typedef JSBool (*RESLOVE_FUNC)( JSContext *cx , JSObject *obj , jsid id ,
-                            uintN flags , JSObject ** objp) ;
+                                      uintN flags , JSObject ** objp) ;
    }
 }
 
-#endif
+#endif // SPT_INVOKEDEF_HPP_
 

@@ -172,6 +172,94 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN _sptSPArguments::isString( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_STRING( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isNull( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_NULL( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isVoid( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_VOID( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isInt( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_INT( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isDouble( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_TO_DOUBLE( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isNumber( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_NUMBER( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isObject( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_OBJECT( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _sptSPArguments::isBoolean( UINT32 pos ) const
+   {
+      jsval *val = NULL ;
+      if ( _argc > pos && NULL != ( val = _getValAtPos( pos ) ) &&
+           JSVAL_IS_BOOLEAN( *val ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
    #define NATIVE_VALUE_EQ( pData, type, value ) \
       do \
       { \

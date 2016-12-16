@@ -37,78 +37,65 @@
 #include "oss.hpp"
 #include "sptProperty.hpp"
 #include <vector>
+#include <string>
 
 namespace engine
 {
-   typedef std::vector<sptProperty> SPT_PROPERTIES ;
+   typedef SPT_PROP_ARRAY  SPT_PROPERTIES ;
 
+   /*
+      _sptReturnVal define
+   */
    class _sptReturnVal : public SDBObject
    {
    public:
-      _sptReturnVal()
-      : _classDef(NULL)
-      {}
+      _sptReturnVal() ;
+      ~_sptReturnVal() ;
 
-      virtual ~_sptReturnVal()
+      sptProperty& getReturnVal()
       {
-         _classDef = NULL ;
+         return _val ;
       }
 
-      INT32 setNativeVal( const CHAR *name,
-                          bson::BSONType type,
-                          const void *value ) ;
+      void setReturnValAttr( UINT32 attr ) ;
+      void setReturnValName( const string &name ) ;
 
-      INT32 setStringVal( const CHAR *name,
-                          const CHAR *value ) ;
+      sptProperty* addReturnValProperty( const std::string &name,
+                                         UINT32 attr = SPT_PROP_DEFAULT ) ;
+      sptProperty* addSelfProperty( const std::string &name,
+                                    UINT32 attr = SPT_PROP_DEFAULT ) ;
 
-      INT32 setUsrObjectVal( const CHAR *name,
-                             void *value,
-                             const void *classDef ) ;
-
-      INT32 setBSONObj( const CHAR *name,
-                        const bson::BSONObj &obj ) ;
-
-      INT32 setBSONArray( const CHAR *name,
-                          const std::vector< bson::BSONObj > &vecObj ) ;
-
-      const sptProperty &getVal() const
+      const SPT_PROPERTIES& getReturnValProperties() const
       {
-         return _property ;
+         return _valProperties ;
       }
 
-      const void *getClassDef()const
+      const SPT_PROPERTIES& getSelfProperties() const
       {
-         return _classDef ;
+         return _selfProperties ;
       }
 
-      void addReturnValProperty( const sptProperty &property )
+      template< typename T >
+      INT32 setUsrObjectVal( void *value )
       {
-         _properties.push_back( property ) ;
-      }
-    
-      const SPT_PROPERTIES &getValProperties()const
-      {
-         return _properties ;
-      }
-
-      void releaseObj()
-      {
-         _property.releaseObj() ;
+         return _val.assignUsrObject< T >( value ) ;
       }
 
    private:
-      /// property name in parent.
-      /// if this field is assigned,
-      /// return value will be set into parent object as a property.
-      sptProperty _property ;
-      const void *_classDef ;
+      /// Return val. If the val's field name is not empty, will
+      /// add this val to self as property with the name
+      sptProperty       _val ;
 
-      /// properties of return val.
-      SPT_PROPERTIES _properties ;
+      /// properties of return val. In used only when _val is Object.
+      /// Will ignored the item its name is empty.
+      SPT_PROPERTIES    _valProperties ;
+
+      /// properties of self. Will ignored the item its name is empty.
+      SPT_PROPERTIES    _selfProperties ;
    } ;
 
    typedef class _sptReturnVal sptReturnVal ;
 }
 
-#endif
+#endif // SPT_RETURNVAL_HPP_
 

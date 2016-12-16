@@ -21,6 +21,7 @@ sptFiles = [
 spt2Files = [
       "spt/sptContainer.cpp",
       "spt/sptInvoker.cpp",
+      "spt/sptObjDesc.cpp",
       "spt/sptReturnVal.cpp",
       "spt/sptScope.cpp",
       "spt/sptSPArguments.cpp",

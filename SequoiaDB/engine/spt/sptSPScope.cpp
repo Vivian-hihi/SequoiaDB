@@ -41,6 +41,8 @@
 #include "sptConvertor2.hpp"
 #include "sptConvertorHelper.hpp"
 #include "sptCommon.hpp"
+#include "spt.hpp"
+#include "../spt/js_in_cpp.hpp"
 
 namespace engine
 {
@@ -78,12 +80,12 @@ namespace engine
       shutdown() ;
    }
 
-   INT32 _sptSPScope::start()
+   INT32 _sptSPScope::start( UINT32 loadMask )
    {
       INT32 rc = SDB_OK ;
       if ( NULL != _runtime )
       {
-         PD_LOG( PDERROR, "scope has already been started up" ) ;
+         ossPrintf( "scope has already been started up"OSS_NEWLINE) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -91,7 +93,7 @@ namespace engine
       _runtime = JS_NewRuntime( RUNTIME_SIZE );
       if ( NULL == _runtime )
       {
-         PD_LOG( PDERROR, "failed to init js runtime" ) ;
+         ossPrintf( "failed to init js runtime"OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -99,7 +101,7 @@ namespace engine
       _context = JS_NewContext( _runtime, RUNTIME_SIZE / 8 );
       if ( NULL == _context )
       {
-         PD_LOG( PDERROR, "failed to init js context" ) ;
+         ossPrintf( "failed to init js context"OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -112,37 +114,27 @@ namespace engine
                                                   NULL );
       if ( NULL == _global )
       {
-         PD_LOG( PDERROR, "failed to init js global object" ) ;
+         ossPrintf( "failed to init js global object"OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
       if ( !JS_InitStandardClasses( _context, _global ) )
       {
-         PD_LOG( PDERROR, "failed to init standard class" ) ;
+         ossPrintf( "failed to init standard class"OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      rc = loadUsrDefObj( &(_sptBsonobj::__desc) ) ;
-      if ( SDB_OK != rc )
+      rc = _loadObj( loadMask ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to load bsonobj:%d", rc ) ;
+         ossPrintf( "Failed to load object: %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
-      rc = loadUsrDefObj( &(_sptBsonobjArray::__desc) ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to load bsonobjarray:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = loadUsrDefObj( &(_sptGlobalFunc::__desc) ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to load bsonobj:%d", rc ) ;
-         goto error ;
-      }
+      _loadMask = loadMask ;
+      sdbDeclareThreadContext( _context ) ;
+      sdbDeclareThreadGlobal( _global ) ;
 
    done:
       return rc ;
@@ -151,9 +143,59 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptSPScope::_loadObj( UINT32 loadMask )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( loadMask & SPT_OBJ_MASK_STANDARD )
+      {
+         if ( !InitDbClasses( _context, _global ) )
+         {
+            ossPrintf( "Failed to init dbclass"OSS_NEWLINE ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      if ( loadMask & SPT_OBJ_MASK_USR )
+      {
+         SPT_VEC_OBJDESC vecObjs ;
+         sptGetObjFactory()->getObjDescs( vecObjs ) ;
+         for ( UINT32 i = 0 ; i < vecObjs.size() ; ++i )
+         {
+            sptObjDesc *desc = (sptObjDesc*)vecObjs[ i ] ;
+
+            rc = loadUsrDefObj( desc ) ;
+            if ( rc )
+            {
+               ossPrintf( "Load object[%s] failed, rc: %d"OSS_NEWLINE,
+                          desc->getJSClassName(), rc ) ;
+               goto error ;
+            }
+         }
+      }
+
+      if ( loadMask & SPT_OBJ_MASK_INNER_JS )
+      {
+         rc = evalInitScripts2( this ) ;
+         if ( rc )
+         {
+            ossPrintf ( "Failed to init spt scope, rc = %d"OSS_NEWLINE, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _sptSPScope::shutdown()
    {
-      
+      sdbUndeclareThreadContext( _context ) ;
+      sdbUndeclareThreadGlobal( _global ) ;
+
       if ( NULL != _context )
       {
          void *p = JS_GetContextPrivate( _context ) ;
@@ -177,22 +219,19 @@ namespace engine
       }
 
       _global = NULL ;
-
    }
 
    INT32 _sptSPScope::_loadUsrDefObj( _sptObjDesc *desc )
    {
       INT32 rc = SDB_OK ;
-      if ( !desc->getIgnore() )
+      if ( !desc->isIgnoredName() )
       {
          rc = _loadUsrClass( desc ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
       }
-
-      rc = _loadGlobal( desc ) ;
+      else
+      {
+         rc = _loadGlobal( desc ) ;
+      }
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -207,12 +246,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const _sptFuncMap &fMap = desc->getFuncMap() ;
-      const sptFuncMap::NORMAL_FUNCS &funcs =
-                                     fMap.getGlobalFuncs() ;
+      const sptFuncMap::NORMAL_FUNCS &funcs = fMap.getStaticFuncs() ;
       JSFunctionSpec *specs = new JSFunctionSpec[funcs.size() + 1] ;
       if ( NULL == specs )
       {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -223,9 +261,9 @@ namespace engine
       for ( ; i < funcs.size() ; i++, itr++ )
       {
          specs[i].name = itr->first.c_str() ;
-         specs[i].call = itr->second ;
+         specs[i].call = itr->second._pFunc ;
          specs[i].nargs = 0 ;
-         specs[i].flags = 0 ;
+         specs[i].flags = itr->second._attr ;
       }
       specs[i].name = NULL ;
       specs[i].call = NULL ;
@@ -234,7 +272,7 @@ namespace engine
 
       if ( !JS_DefineFunctions( _context, _global, specs ) )
       {
-         PD_LOG( PDERROR, "failed to define global functions" ) ;
+         ossPrintf( "failed to define global functions"OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -249,12 +287,15 @@ namespace engine
    INT32 _sptSPScope::_loadUsrClass( _sptObjDesc *desc )
    {
       INT32 rc = SDB_OK ;
+      JSObject *prototype = NULL ;
+      const sptObjDesc *parentDesc = NULL ;
+      JSObject *parent_proto = NULL ;
       const CHAR *objName = desc->getJSClassName() ;
       const _sptFuncMap &fMap = desc->getFuncMap() ;
       JS_INVOKER::MEMBER_FUNC construct = fMap.getConstructor() ;
       JS_INVOKER::DESTRUCT_FUNC destruct = fMap.getDestructor() ;
       JS_INVOKER::RESLOVE_FUNC resolve = fMap.getResolver() ;
-      
+
       uint32 flags = NULL == resolve ?
                      JSCLASS_HAS_PRIVATE :
                      JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ;
@@ -281,12 +322,25 @@ namespace engine
 
       JSFunctionSpec *fSpecs = NULL ;
       JSFunctionSpec *sfSpecs = NULL ;
+
+      if ( !desc->isIgnoredParent() )
+      {
+         parentDesc = desc->getParent() ;
+         if ( !parentDesc )
+         {
+            ossPrintf( "Get object[%s]'s parent object failed"OSS_NEWLINE,
+                       desc->getJSClassName() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         parent_proto = (JSObject*)parentDesc->getPrototypeDef() ;
+      }
  
       /// +1 for FS_END
       fSpecs = new JSFunctionSpec[memberFuncs.size() + 1] ;
       if ( NULL == fSpecs )
       {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -294,49 +348,62 @@ namespace engine
       sfSpecs = new JSFunctionSpec[staticFuncs.size() + 1] ;
       if ( NULL == sfSpecs )
       {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
          rc = SDB_OOM ;
          goto error ;
       }
 
       {
-      UINT32 i = 0 ;
-      sptFuncMap::NORMAL_FUNCS::const_iterator itr = memberFuncs.begin() ;
-      for ( ; i < memberFuncs.size() ; i++, itr++ )
-      {
-         fSpecs[i].name = itr->first.c_str() ;
-         fSpecs[i].call = itr->second ;
+         UINT32 i = 0 ;
+         sptFuncMap::NORMAL_FUNCS::const_iterator itr = memberFuncs.begin() ;
+         for ( ; i < memberFuncs.size() ; i++, itr++ )
+         {
+            fSpecs[i].name = itr->first.c_str() ;
+            fSpecs[i].call = itr->second._pFunc ;
+            fSpecs[i].nargs = 0 ;
+            fSpecs[i].flags = itr->second._attr ;
+         }
+         fSpecs[i].name = NULL ;
+         fSpecs[i].call = NULL ;
          fSpecs[i].nargs = 0 ;
          fSpecs[i].flags = 0 ;
-      }
-      fSpecs[i].name = NULL ;
-      fSpecs[i].call = NULL ;
-      fSpecs[i].nargs = 0 ;
-      fSpecs[i].flags = 0 ;
 
-      i = 0 ;
-      itr = staticFuncs.begin() ;
-      for ( ; i < staticFuncs.size() ; i++, itr++ )
-      {
-         sfSpecs[i].name = itr->first.c_str() ;
-         sfSpecs[i].call = itr->second ;
+         i = 0 ;
+         itr = staticFuncs.begin() ;
+         for ( ; i < staticFuncs.size() ; i++, itr++ )
+         {
+            sfSpecs[i].name = itr->first.c_str() ;
+            sfSpecs[i].call = itr->second._pFunc ;
+            sfSpecs[i].nargs = 0 ;
+            sfSpecs[i].flags = itr->second._attr ;
+         }
+         sfSpecs[i].name = NULL ;
+         sfSpecs[i].call = NULL ;
          sfSpecs[i].nargs = 0 ;
          sfSpecs[i].flags = 0 ;
-      }
-      sfSpecs[i].name = NULL ;
-      sfSpecs[i].call = NULL ;
-      sfSpecs[i].nargs = 0 ;
-      sfSpecs[i].flags = 0 ;
 
-      if ( !JS_InitClass( _context, _global, 0, (JSClass *)desc->getClassDef(),
-                          construct, 0, 0, fSpecs,
-                          0, sfSpecs ) )
-      {
-         PD_LOG( PDERROR, "failed to call js_initclass" ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         prototype = JS_InitClass( _context, /// context
+                                   _global,  /// object
+                                   parent_proto,  /// parent_proto
+                                   (JSClass*)desc->getClassDef(), /// class
+                                   construct, /// constructor
+                                   0, /// nargs
+                                   0, /// ps
+                                   fSpecs, /// fs
+                                   0, /// static_ps
+                                   sfSpecs /// static_fs
+                                   ) ;
+
+         if ( !prototype )
+         {
+            ossPrintf( "failed to call js_initclass"OSS_NEWLINE ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         desc->setClassPrototype( prototype ) ;
       }
-      }
+
    done:
       delete []fSpecs ;
       delete []sfSpecs ;
@@ -367,7 +434,6 @@ namespace engine
                                len, filename, lineno, &jsrval ) )
       {
          rc = sdbGetErrno() ? sdbGetErrno() : SDB_SPT_EVAL_FAIL ;
-         PD_LOG( PDERROR, "failed to eval js code" ) ;
          goto error ;
       }
 
@@ -521,8 +587,8 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "the type[%d] is not supported yet",
-                 JS_TypeOfValue( cx, jsrval ) ) ;
+         ossPrintf( "the type[%d] is not supported yet"OSS_NEWLINE,
+                    JS_TypeOfValue( cx, jsrval ) ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -532,6 +598,48 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   BOOLEAN _sptSPScope::isInstanceOf( const void *pObj,
+                                      const string &objName )
+   {
+      JSObject *pJSObj = ( JSObject* )pObj ;
+      return sptGetObjFactory()->isInstanceOf( _context, pJSObj, objName ) ;
+   }
+
+   string _sptSPScope::getObjClassName( const void *pObj )
+   {
+      JSObject *pJSObj = ( JSObject* )pObj ;
+      return sptGetObjFactory()->getClassName( _context, pJSObj ) ;
+   }
+
+   void _sptSPScope::getGlobalFunNames( set< string > &setFunc )
+   {
+      sptGetObjFactory()->getObjFuncNames( _context, _global, setFunc ) ;
+   }
+
+   void _sptSPScope::getObjStaticFunNames( const string &objName,
+                                           set< string > &setFunc )
+   {
+      const _sptObjDesc *desc = sptGetObjFactory()->findObj( objName ) ;
+      if ( desc )
+      {
+         return desc->getFuncMap().getStaticFuncNames( setFunc ) ;
+      }
+   }
+
+   void _sptSPScope::getObjFunNames( const void *pObj,
+                                     set< string > &setFunc )
+   {
+      JSObject *pJSObj = ( JSObject* )pObj ;
+      return sptGetObjFactory()->getObjFuncNames( _context, pJSObj, setFunc ) ;
+   }
+
+   void _sptSPScope::getObjPropNames( const void *pObj,
+                                      set< string > &setProp )
+   {
+      JSObject *pJSObj = ( JSObject* )pObj ;
+      return sptGetObjFactory()->getObjPropNames( _context, pJSObj, setProp ) ;
    }
 
 }
