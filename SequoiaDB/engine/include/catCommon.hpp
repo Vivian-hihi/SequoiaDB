@@ -138,9 +138,17 @@ namespace engine
    INT32 catAddCL2CS( const CHAR *csName, const CHAR *clName,
                       pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
                       _dpsLogWrapper * dpsCB, INT16 w ) ;
+
    INT32 catDelCLFromCS( const string &clFullName,
                          pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
                          _dpsLogWrapper * dpsCB,
+                         INT16 w ) ;
+   INT32 catDelCLsFromCS( const string &csName,
+                          const vector<string> &deleteCLLst,
+                          pmdEDUCB * cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
+                          INT16 w ) ;
+   INT32 catUpdateCSCLs( const string &csName, vector<string> &collections,
+                         pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
                          INT16 w ) ;
    INT32 catRestoreCS( const CHAR *csName, const BSONObj &oldInfo,
                        pmdEDUCB *cb, _SDB_DMSCB * dmsCB,
@@ -164,6 +172,10 @@ namespace engine
 
    INT32 catUpdateCatalog( const CHAR *clFullName, const BSONObj &cataInfo,
                            pmdEDUCB *cb, INT16 w ) ;
+
+   INT32 catUpdateCatalogByPush ( const CHAR * clFullName,
+                                  const CHAR *field, const BSONObj &boObj,
+                                  pmdEDUCB * cb, INT16 w ) ;
 
    INT32 catUpdateCatalogByUnset( const CHAR * clFullName, const CHAR * field,
                                   pmdEDUCB * cb, INT16 w ) ;
@@ -310,10 +322,8 @@ namespace engine
                            INT16 w ) ;
 
    /* Drop Collection */
-   INT32 catDropCLStep ( const string &clName, INT32 version,
-                         _pmdEDUCB *cb,
-                         SDB_DMSCB *pDmsCB,
-                         SDB_DPSCB *pDpsCB,
+   INT32 catDropCLStep ( const string &clName, INT32 version, BOOLEAN delFromCS,
+                         _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                          INT16 w ) ;
 
    /* Alter Collection */
@@ -348,6 +358,11 @@ namespace engine
                               _pmdEDUCB *cb,
                               SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                               INT16 w ) ;
+
+   /* Unlink sub Collections from the same Space */
+   INT32 catUnlinkCSStep ( const string &mainCLName, const string &csName,
+                           _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
+                           INT16 w ) ;
 
    /* Check and build Collection record */
    INT32 catCheckAndBuildCataRecord ( const BSONObj &boCollection,

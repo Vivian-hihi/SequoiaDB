@@ -105,8 +105,6 @@ namespace engine
 
    _catCtxDataMultiTaskBase::~_catCtxDataMultiTaskBase ()
    {
-      // _onCtxDelete() ;
-
       // Clear sub tasks
       _catSubTasks::iterator iter = _subTasks.begin() ;
       while ( iter != _subTasks.end() )
@@ -209,44 +207,29 @@ namespace engine
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPCS_TASK, "_catCtxDataMultiTaskBase::_addDropCSTask" )
-   INT32 _catCtxDataMultiTaskBase::_addDropCSTask ( const std::string &csName,
-                                                    _catCtxDropCSTask **ppCtx,
-                                                    BOOLEAN pushExec )
+   INT32 _catCtxDataMultiTaskBase::_pushExecTask ( _catCtxDataTask *pCtx )
    {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPCS_TASK ) ;
-
-      _catCtxDropCSTask *pCtx = NULL ;
-      pCtx = SDB_OSS_NEW _catCtxDropCSTask( csName ) ;
-      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
-                "Failed to create drop collection space [%s] sub-task",
-                csName.c_str() ) ;
-
-      _addTask( pCtx, pushExec ) ;
-      if ( ppCtx )
-      {
-         (*ppCtx) = pCtx ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPCS_TASK, rc ) ;
-      return rc ;
-   error :
-      SAFE_OSS_DELETE( pCtx ) ;
-      goto done ;
+      _execTasks.push_back( pCtx ) ;
+      return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPCL_TASK, "_catCtxDataMultiTaskBase::_addDropCLTask" )
-   INT32 _catCtxDataMultiTaskBase::_addDropCLTask ( const std::string &clName,
-                                                    INT32 version,
-                                                    _catCtxDropCLTask **ppCtx,
-                                                    BOOLEAN pushExec )
+   /*
+    * _catCtxCLMultiTask implement
+    */
+   _catCtxCLMultiTask::_catCtxCLMultiTask ( INT64 contextID, UINT64 eduID )
+   : _catCtxDataMultiTaskBase( contextID, eduID )
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXCL_DROPCL_TASK, "_catCtxCLMultiTask::_addDropCLTask" )
+   INT32 _catCtxCLMultiTask::_addDropCLTask ( const std::string &clName,
+                                              INT32 version,
+                                              _catCtxDropCLTask **ppCtx,
+                                              BOOLEAN pushExec )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPCL_TASK ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXCL_DROPCL_TASK ) ;
 
       _catCtxDropCLTask *pCtx = NULL ;
       pCtx = SDB_OSS_NEW _catCtxDropCLTask( clName, version ) ;
@@ -261,83 +244,31 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPCL_TASK, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXCL_DROPCL_TASK, rc ) ;
       return rc ;
    error :
       SAFE_OSS_DELETE( pCtx ) ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_UNLINKMAINCL_TASK, "_catCtxDataMultiTaskBase::_addUnlinkMainCLTask" )
-   INT32 _catCtxDataMultiTaskBase::_addUnlinkMainCLTask ( const std::string &mainCLName,
-                                                          const std::string &subCLName,
-                                                          _catCtxUnlinkMainCLTask **ppCtx,
-                                                          BOOLEAN pushExec )
+   /*
+    * _catCtxIndexMultiTask implement
+    */
+   _catCtxIndexMultiTask::_catCtxIndexMultiTask ( INT64 contextID, UINT64 eduID )
+   : _catCtxDataMultiTaskBase( contextID, eduID )
    {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_UNLINKMAINCL_TASK ) ;
-
-      _catCtxUnlinkMainCLTask *pCtx = NULL ;
-      pCtx = SDB_OSS_NEW _catCtxUnlinkMainCLTask( mainCLName, subCLName ) ;
-      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
-                "Failed to create unlink main-collection [%s/%s] sub-task",
-                mainCLName.c_str(), subCLName.c_str() ) ;
-
-      _addTask( pCtx, pushExec ) ;
-      if ( ppCtx )
-      {
-         (*ppCtx) = pCtx ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_UNLINKMAINCL_TASK, rc ) ;
-      return rc ;
-   error :
-      SAFE_OSS_DELETE( pCtx ) ;
-      goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_UNLINKSUBCL_TASK, "_catCtxDataMultiTaskBase::_addUnlinkSubCLTask" )
-   INT32 _catCtxDataMultiTaskBase::_addUnlinkSubCLTask ( const std::string &mainCLName,
-                                                         const std::string &subCLName,
-                                                         _catCtxUnlinkSubCLTask **ppCtx,
-                                                         BOOLEAN pushExec )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXINDEX_CREATEIDX_TASK, "_catCtxIndexMultiTask::_addCreateIdxTask" )
+   INT32 _catCtxIndexMultiTask::_addCreateIdxTask ( const std::string &clName,
+                                                    const std::string &idxName,
+                                                    const BSONObj &boIdx,
+                                                    _catCtxCreateIdxTask **ppCtx,
+                                                    BOOLEAN pushExec )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_UNLINKSUBCL_TASK ) ;
-
-      _catCtxUnlinkSubCLTask *pCtx = NULL ;
-      pCtx = SDB_OSS_NEW _catCtxUnlinkSubCLTask( mainCLName, subCLName ) ;
-      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
-                "Failed to create link sub-collection [%s/%s] sub-task",
-                mainCLName.c_str(), subCLName.c_str() ) ;
-
-      _addTask( pCtx, pushExec ) ;
-      if ( ppCtx )
-      {
-         (*ppCtx) = pCtx ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_UNLINKSUBCL_TASK, rc ) ;
-      return rc ;
-   error :
-      SAFE_OSS_DELETE( pCtx ) ;
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_CREATEIDX_TASK, "_catCtxDataMultiTaskBase::_addCreateIdxTask" )
-   INT32 _catCtxDataMultiTaskBase::_addCreateIdxTask ( const std::string &clName,
-                                                       const std::string &idxName,
-                                                       const BSONObj &boIdx,
-                                                       _catCtxCreateIdxTask **ppCtx,
-                                                       BOOLEAN pushExec )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_CREATEIDX_TASK ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXINDEX_CREATEIDX_TASK ) ;
 
       _catCtxCreateIdxTask *pCtx = NULL ;
       pCtx = SDB_OSS_NEW _catCtxCreateIdxTask( clName, idxName, boIdx ) ;
@@ -352,22 +283,22 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_CREATEIDX_TASK, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXINDEX_CREATEIDX_TASK, rc ) ;
       return rc ;
    error :
       SAFE_OSS_DELETE( pCtx ) ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASK, "_catCtxDataMultiTaskBase::_addDropIdxTask" )
-   INT32 _catCtxDataMultiTaskBase::_addDropIdxTask ( const std::string &clName,
-                                                     const std::string &idxName,
-                                                     _catCtxDropIdxTask **ppCtx,
-                                                     BOOLEAN pushExec )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXINDEX_DROPIDX_TASK, "_catCtxIndexMultiTask::_addDropIdxTask" )
+   INT32 _catCtxIndexMultiTask::_addDropIdxTask ( const std::string &clName,
+                                                  const std::string &idxName,
+                                                  _catCtxDropIdxTask **ppCtx,
+                                                  BOOLEAN pushExec )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASK ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXINDEX_DROPIDX_TASK ) ;
 
       _catCtxDropIdxTask *pCtx = NULL ;
       pCtx = SDB_OSS_NEW _catCtxDropIdxTask( clName, idxName ) ;
@@ -382,284 +313,21 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASK, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXINDEX_DROPIDX_TASK, rc ) ;
       return rc ;
    error :
       SAFE_OSS_DELETE( pCtx ) ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPCL_SUBTASK, "_catCtxDataMultiTaskBase::_addDropCLSubTasks" )
-   INT32 _catCtxDataMultiTaskBase::_addDropCLSubTasks ( _catCtxDropCLTask *pDropCLTask,
-                                                        _pmdEDUCB *cb,
-                                                        BOOLEAN fromDropCS,
-                                                        std::set<std::string> *pExternalCL )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPCL_SUBTASK ) ;
-
-      try
-      {
-         const std::string &clName = pDropCLTask->getDataName() ;
-         clsCatalogSet cataSet( clName.c_str() );
-
-         rc = cataSet.updateCatSet( pDropCLTask->getDataObj() ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to parse catalog info [%s], rc: %d",
-                      clName.c_str(), rc ) ;
-
-         if ( cataSet.isMainCL() )
-         {
-            std::vector< std::string > subCLLst;
-            std::vector< std::string >::iterator iterSubCL;
-            rc = cataSet.getSubCLList( subCLLst );
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get sub-collection list of collection [%s], "
-                         "rc: %d",
-                         clName.c_str(), rc ) ;
-            iterSubCL = subCLLst.begin() ;
-            while( iterSubCL != subCLLst.end() )
-            {
-               std::string subCLName = (*iterSubCL) ;
-               _catCtxUnlinkSubCLTask *pUnlinkSubCLTask = NULL ;
-
-               // Unlink the sub collection from deleting collection
-               rc = _addUnlinkSubCLTask( clName, subCLName, &pUnlinkSubCLTask ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to create unlink collection task for "
-                            "sub-collection [%s], rc: %d",
-                            subCLName.c_str(), rc ) ;
-               if ( fromDropCS )
-               {
-                  BOOLEAN inSameSpace = FALSE ;
-                  pUnlinkSubCLTask->addIgnoreRC( SDB_DMS_NOTEXIST ) ;
-                  rc = catCollectionsInSameSpace ( clName.c_str(), clName.size(),
-                                                   subCLName.c_str(), subCLName.size() ,
-                                                   inSameSpace ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Failed to check whether main and sub collections "
-                               "[%s] and [%s] are in the space, rc: %d",
-                               clName.c_str(), subCLName.c_str(), rc ) ;
-                  if ( inSameSpace )
-                  {
-                     // Collection Space has been already locked
-                     pUnlinkSubCLTask->disableLocks() ;
-                  }
-               }
-               rc = pUnlinkSubCLTask->checkTask( cb, _lockMgr ) ;
-               if ( SDB_DMS_NOTEXIST == rc ||
-                    SDB_INVALID_SUB_CL == rc )
-               {
-                  PD_LOG ( PDWARNING,
-                           "Sub-collection [%s] have been changed",
-                           subCLName.c_str() ) ;
-                  rc = SDB_OK ;
-                  ++iterSubCL ;
-                  continue;
-               }
-
-               if ( !fromDropCS )
-               {
-                  // Do not delete sub-collections when dropping space
-                  _catCtxDropCLTask *pDropSubCLTask = NULL ;
-                  rc = _addDropCLTask( (*iterSubCL), -1, &pDropSubCLTask ) ;
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Failed to create drop sub-collection [%s] task, "
-                               "rc: %d",
-                               subCLName.c_str(), rc ) ;
-
-                  // Already locked in unlink phase
-                  pDropSubCLTask->disableLocks() ;
-
-                  rc = pDropSubCLTask->checkTask( cb, _lockMgr ) ;
-                  if ( SDB_DMS_NOTEXIST == rc ||
-                       SDB_INVALID_SUB_CL == rc )
-                  {
-                     PD_LOG ( PDWARNING,
-                              "Sub-collection [%s] have been changed",
-                              subCLName.c_str() ) ;
-                     rc = SDB_OK ;
-                     ++iterSubCL ;
-                     continue;
-                  }
-                  PD_RC_CHECK( rc, PDERROR,
-                               "Failed to check drop sub-collection [%s] task, "
-                               "rc: %d",
-                               subCLName.c_str(), rc ) ;
-               }
-
-               rc = catGetCollectionGroupSet( pUnlinkSubCLTask->getDataObj(),
-                                              _groupList ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to collect groups for sub-collection [%s], "
-                            "rc: %d",
-                            subCLName.c_str(), rc ) ;
-
-               ++iterSubCL ;
-            }
-         } else {
-            std::string mainCLName = cataSet.getMainCLName() ;
-            if ( !mainCLName.empty() )
-            {
-               _catCtxUnlinkMainCLTask *pUnlinkMainCLTask = NULL ;
-               rc = _addUnlinkMainCLTask( mainCLName, clName, &pUnlinkMainCLTask ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to create unlink main-collection [%s] task, "
-                            "rc: %d",
-                            mainCLName.c_str(), rc ) ;
-               if ( fromDropCS )
-               {
-                  BOOLEAN inSameSpace = FALSE ;
-                  pUnlinkMainCLTask->addIgnoreRC( SDB_DMS_NOTEXIST ) ;
-
-                  if ( pExternalCL &&
-                       pExternalCL->find( mainCLName ) == pExternalCL->end() )
-                  {
-                     rc = catCollectionsInSameSpace ( mainCLName.c_str(), mainCLName.size(),
-                                                      clName.c_str(), clName.size() ,
-                                                      inSameSpace ) ;
-                     PD_RC_CHECK( rc, PDERROR,
-                                  "Failed to check whether main and sub collections "
-                                  "[%s] and [%s] are in the space, rc: %d",
-                                  mainCLName.c_str(), clName.c_str(), rc ) ;
-                     if ( inSameSpace )
-                     {
-                        // Collection Space has been already locked
-                        pUnlinkMainCLTask->disableLocks() ;
-                     }
-                     pExternalCL->insert( mainCLName ) ;
-                  }
-                  else
-                  {
-                     pUnlinkMainCLTask->disableLocks() ;
-                  }
-               }
-               rc = pUnlinkMainCLTask->checkTask( cb, _lockMgr ) ;
-               if ( SDB_DMS_NOTEXIST == rc ||
-                    SDB_INVALID_MAIN_CL == rc )
-               {
-                  PD_LOG ( PDWARNING,
-                           "Main-collection [%s] have been changed",
-                           mainCLName.c_str() ) ;
-                  rc = SDB_OK ;
-               }
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to check main-collection [%s] task, rc: %d",
-                            mainCLName.c_str(), rc ) ;
-            }
-            rc = catGetCollectionGroupSet( pDropCLTask->getDataObj(),
-                                           _groupList ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to collect groups for collection [%s], rc: %d",
-                         clName.c_str(), rc ) ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPCL_SUBTASK, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPCS_SUBTASK, "_catCtxDataMultiTaskBase::_addDropCSSubTasks" )
-   INT32 _catCtxDataMultiTaskBase::_addDropCSSubTasks ( _catCtxDropCSTask *pDropCSTask,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXINDEX_CREATEIDX_SUBTASK, "_catCtxIndexMultiTask::_addCreateIdxSubTasks" )
+   INT32 _catCtxIndexMultiTask::_addCreateIdxSubTasks ( _catCtxCreateIdxTask *pCreateIdxTask,
+                                                        catCtxLockMgr &lockMgr,
                                                         _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPCS_SUBTASK ) ;
-
-      try
-      {
-         BSONElement ele ;
-
-         ele = pDropCSTask->getDataObj().getField( CAT_COLLECTION ) ;
-
-         if ( Array == ele.type() )
-         {
-            BSONObjIterator i ( ele.embeddedObject() ) ;
-            std::set<std::string> externalCL ;
-            while ( i.more() )
-            {
-               string clFullName ;
-               BSONObj boTmp ;
-               const CHAR *pCLName = NULL ;
-               _catCtxDropCLTask *pDropCLTask = NULL ;
-               BSONElement beTmp = i.next() ;
-               PD_CHECK( Object == beTmp.type(),
-                         SDB_CAT_CORRUPTION, error, PDERROR,
-                         "Invalid collection record field type: %d",
-                         beTmp.type() ) ;
-               boTmp = beTmp.embeddedObject() ;
-               rc = rtnGetStringElement( boTmp, CAT_COLLECTION_NAME, &pCLName ) ;
-               PD_CHECK( SDB_OK == rc,
-                         SDB_CAT_CORRUPTION, error, PDERROR,
-                         "Get field [%s] failed, rc: %d",
-                         CAT_COLLECTION_NAME, rc ) ;
-
-               clFullName = _targetName ;
-               clFullName += "." ;
-               clFullName += pCLName ;
-
-               rc = _addDropCLTask( clFullName, -1, &pDropCLTask );
-
-               // Space has been locked already
-               pDropCLTask->disableLocks() ;
-
-               rc = pDropCLTask->checkTask( cb, _lockMgr ) ;
-               PD_RC_CHECK( rc, PDWARNING,
-                            "Failed to check drop collection [%s] task, rc: %d",
-                            clFullName.c_str(), rc ) ;
-
-               rc = _addDropCLSubTasks( pDropCLTask, cb, TRUE, &externalCL ) ;
-               PD_RC_CHECK( rc , PDERROR,
-                            "Failed to add sub-tasks for drop collection [%s], "
-                            "rc: %d",
-                            clFullName.c_str(), rc ) ;
-
-               PD_LOG ( PDDEBUG,
-                        "Found %d external collections for drop collection space",
-                        externalCL.size() ) ;
-            }
-         }
-         else if ( !ele.eoo() )
-         {
-            PD_LOG( PDERROR, "Invalid collection field[%s] type: %d",
-                    CAT_COLLECTION, ele.type() ) ;
-            rc = SDB_CAT_CORRUPTION ;
-            goto error ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPCS_SUBTASK, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_CREATEIDX_SUBTASK, "_catCtxDataMultiTaskBase::_addCreateIdxSubTasks" )
-   INT32 _catCtxDataMultiTaskBase::_addCreateIdxSubTasks ( _catCtxCreateIdxTask *pCreateIdxTask,
-                                                           catCtxLockMgr &lockMgr,
-                                                           _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_CREATEIDX_SUBTASK ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXINDEX_CREATEIDX_SUBTASK ) ;
 
       try
       {
@@ -756,22 +424,22 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_CREATEIDX_SUBTASK, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXINDEX_CREATEIDX_SUBTASK, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_CREATEIDX_TASKS, "_catCtxDataMultiTaskBase::_addCreateIdxTasks" )
-   INT32 _catCtxDataMultiTaskBase::_addCreateIdxTasks ( const std::string &clName,
-                                                        const std::string &idxName,
-                                                        const BSONObj &boIdx,
-                                                        BOOLEAN uniqueCheck,
-                                                        _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXINDEX_CREATEIDX_TASKS, "_catCtxIndexMultiTask::_addCreateIdxTasks" )
+   INT32 _catCtxIndexMultiTask::_addCreateIdxTasks ( const std::string &clName,
+                                                     const std::string &idxName,
+                                                     const BSONObj &boIdx,
+                                                     BOOLEAN uniqueCheck,
+                                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_CREATEIDX_TASKS ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXINDEX_CREATEIDX_TASKS ) ;
 
       // Unlock immediately
       catCtxLockMgr lockMgr ;
@@ -811,20 +479,20 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_CREATEIDX_TASKS, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXINDEX_CREATEIDX_TASKS, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPIDX_SUBTASK, "_catCtxDataMultiTaskBase::_addDropIdxSubTasks" )
-   INT32 _catCtxDataMultiTaskBase::_addDropIdxSubTasks ( _catCtxDropIdxTask *pDropIdxTask,
-                                                         catCtxLockMgr &lockMgr,
-                                                         _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXINDEX_DROPIDX_SUBTASK, "_catCtxIndexMultiTask::_addDropIdxSubTasks" )
+   INT32 _catCtxIndexMultiTask::_addDropIdxSubTasks ( _catCtxDropIdxTask *pDropIdxTask,
+                                                      catCtxLockMgr &lockMgr,
+                                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPIDX_SUBTASK ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXINDEX_DROPIDX_SUBTASK ) ;
 
       try
       {
@@ -894,20 +562,20 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPIDX_SUBTASK, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXINDEX_DROPIDX_SUBTASK, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASKS, "_catCtxDataMultiTaskBase::_addDropIdxTasks" )
-   INT32 _catCtxDataMultiTaskBase::_addDropIdxTasks ( const std::string &clName,
-                                                      const std::string &idxName,
-                                                      _pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXINDEX_DROPIDX_TASKS, "_catCtxIndexMultiTask::_addDropIdxTasks" )
+   INT32 _catCtxIndexMultiTask::_addDropIdxTasks ( const std::string &clName,
+                                                   const std::string &idxName,
+                                                   _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASKS ) ;
+      PD_TRACE_ENTRY ( SDB_CATCTXINDEX_DROPIDX_TASKS ) ;
 
       // Unlock immediately
       catCtxLockMgr lockMgr ;
@@ -936,23 +604,17 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;
 
    done :
-      PD_TRACE_EXITRC ( SDB_CATCTXDATAMULTITASK_DROPIDX_TASKS, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATCTXINDEX_DROPIDX_TASKS, rc ) ;
       return rc;
    error :
       goto done;
-   }
-
-   INT32 _catCtxDataMultiTaskBase::_pushExecTask ( _catCtxDataTask *pCtx )
-   {
-      _execTasks.push_back( pCtx ) ;
-      return SDB_OK ;
    }
 
    /*
     * _catCtxDropCS implement
     */
    _catCtxDropCS::_catCtxDropCS ( INT64 contextID, UINT64 eduID )
-   : _catCtxDataMultiTaskBase( contextID, eduID )
+   : _catCtxCLMultiTask( contextID, eduID )
    {
       _executeAfterLock = FALSE ;
       _commitAfterExecute = TRUE ;
@@ -1036,6 +698,319 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATCTXDROPCS_CHECK_INT, rc ) ;
       return rc ;
    error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCS_DROPCS_TASK, "_catCtxDropCS::_addDropCSTask" )
+   INT32 _catCtxDropCS::_addDropCSTask ( const std::string &csName,
+                                         _catCtxDropCSTask **ppCtx,
+                                         BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCS_DROPCS_TASK ) ;
+
+      _catCtxDropCSTask *pCtx = NULL ;
+      pCtx = SDB_OSS_NEW _catCtxDropCSTask( csName ) ;
+      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
+                "Failed to create drop collection space [%s] sub-task",
+                csName.c_str() ) ;
+
+      _addTask( pCtx, pushExec ) ;
+      if ( ppCtx )
+      {
+         (*ppCtx) = pCtx ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCS_DROPCS_TASK, rc ) ;
+      return rc ;
+   error :
+      SAFE_OSS_DELETE( pCtx ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCS_DROPCS_SUBTASK, "_catCtxDropCS::_addDropCSSubTasks" )
+   INT32 _catCtxDropCS::_addDropCSSubTasks ( _catCtxDropCSTask *pDropCSTask,
+                                             _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCS_DROPCS_SUBTASK ) ;
+
+      try
+      {
+         BSONElement ele ;
+
+         ele = pDropCSTask->getDataObj().getField( CAT_COLLECTION ) ;
+
+         if ( Array == ele.type() )
+         {
+            BSONObjIterator i ( ele.embeddedObject() ) ;
+            std::set<std::string> externalMainCL ;
+            while ( i.more() )
+            {
+               string clFullName ;
+               BSONObj boTmp ;
+               const CHAR *pCLName = NULL ;
+               _catCtxDropCLTask *pDropCLTask = NULL ;
+               BSONElement beTmp = i.next() ;
+               PD_CHECK( Object == beTmp.type(),
+                         SDB_CAT_CORRUPTION, error, PDERROR,
+                         "Invalid collection record field type: %d",
+                         beTmp.type() ) ;
+               boTmp = beTmp.embeddedObject() ;
+               rc = rtnGetStringElement( boTmp, CAT_COLLECTION_NAME, &pCLName ) ;
+               PD_CHECK( SDB_OK == rc,
+                         SDB_CAT_CORRUPTION, error, PDERROR,
+                         "Get field [%s] failed, rc: %d",
+                         CAT_COLLECTION_NAME, rc ) ;
+
+               clFullName = _targetName ;
+               clFullName += "." ;
+               clFullName += pCLName ;
+
+               rc = _addDropCLTask( clFullName, -1, &pDropCLTask );
+
+               // Space has been locked already
+               pDropCLTask->disableLocks() ;
+
+               rc = pDropCLTask->checkTask( cb, _lockMgr ) ;
+               PD_RC_CHECK( rc, PDWARNING,
+                            "Failed to check drop collection [%s] task, rc: %d",
+                            clFullName.c_str(), rc ) ;
+
+               rc = _addDropCLSubTasks( pDropCLTask, cb, externalMainCL ) ;
+               PD_RC_CHECK( rc , PDERROR,
+                            "Failed to add sub-tasks for drop collection [%s], "
+                            "rc: %d",
+                            clFullName.c_str(), rc ) ;
+            }
+
+            PD_LOG ( PDDEBUG,
+                     "Found %d external main collections for drop collection space",
+                     externalMainCL.size() ) ;
+
+            if ( externalMainCL.size() > 0 )
+            {
+               _catCtxUnlinkCSTask *pUnlinkCS = NULL ;
+               rc = _addUnlinkCSTask( _targetName, &pUnlinkCS ) ;
+               PD_RC_CHECK( rc , PDERROR,
+                            "Failed to add unlinkCS [%s] task, rc: %d",
+                            _targetName.c_str(), rc ) ;
+
+               pUnlinkCS->unlinkCS( externalMainCL ) ;
+
+               pUnlinkCS->checkTask( cb, _lockMgr ) ;
+               PD_RC_CHECK( rc, PDWARNING,
+                            "Failed to check unlinkCS [%s] task, rc: %d",
+                            _targetName.c_str(), rc ) ;
+
+               pUnlinkCS->addIgnoreRC( SDB_DMS_NOTEXIST ) ;
+               pUnlinkCS->addIgnoreRC( SDB_INVALID_MAIN_CL ) ;
+            }
+
+         }
+         else if ( !ele.eoo() )
+         {
+            PD_LOG( PDERROR, "Invalid collection field[%s] type: %d",
+                    CAT_COLLECTION, ele.type() ) ;
+            rc = SDB_CAT_CORRUPTION ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCS_DROPCS_SUBTASK, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCS_DROPCL_SUBTASK, "_catCtxDropCS::_addDropCLSubTasks" )
+   INT32 _catCtxDropCS::_addDropCLSubTasks ( _catCtxDropCLTask *pDropCLTask,
+                                             _pmdEDUCB *cb,
+                                             std::set<std::string> &externalMainCL )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCS_DROPCL_SUBTASK ) ;
+
+      // For DropCL inside a DropCS:
+      // 1. if cl is a sub-collection, need unlink it's main-collection
+      // 2. if cl is a main-collection, need unlink it's sub-collections
+
+      try
+      {
+         const std::string &clName = pDropCLTask->getDataName() ;
+         clsCatalogSet cataSet( clName.c_str() );
+
+         rc = cataSet.updateCatSet( pDropCLTask->getDataObj() ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to parse catalog info [%s], rc: %d",
+                      clName.c_str(), rc ) ;
+
+         if ( cataSet.isMainCL() )
+         {
+            std::vector< std::string > subCLLst;
+            std::vector< std::string >::iterator iterSubCL;
+
+            rc = cataSet.getSubCLList( subCLLst );
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get sub-collection list of collection [%s], "
+                         "rc: %d",
+                         clName.c_str(), rc ) ;
+            iterSubCL = subCLLst.begin() ;
+            while( iterSubCL != subCLLst.end() )
+            {
+               std::string subCLName = (*iterSubCL) ;
+
+               // Do not delete sub-collections when dropping space
+               BOOLEAN inSameSpace = FALSE ;
+               _catCtxUnlinkSubCLTask *pUnlinkSubCLTask = NULL ;
+
+               // Unlink the sub collection from deleting collection
+               rc = _addUnlinkSubCLTask( clName, subCLName, &pUnlinkSubCLTask ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to create unlink collection task for "
+                            "sub-collection [%s], rc: %d",
+                            subCLName.c_str(), rc ) ;
+
+               pUnlinkSubCLTask->addIgnoreRC( SDB_DMS_NOTEXIST ) ;
+
+               rc = catCollectionsInSameSpace ( clName.c_str(), clName.size(),
+                                                subCLName.c_str(), subCLName.size() ,
+                                                inSameSpace ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to check whether main and sub collections "
+                            "[%s] and [%s] are in the space, rc: %d",
+                            clName.c_str(), subCLName.c_str(), rc ) ;
+               if ( inSameSpace )
+               {
+                  // Collection Space has been already locked
+                  pUnlinkSubCLTask->disableLocks() ;
+               }
+               rc = pUnlinkSubCLTask->checkTask( cb, _lockMgr ) ;
+               if ( SDB_DMS_NOTEXIST == rc ||
+                    SDB_INVALID_SUB_CL == rc )
+               {
+                  PD_LOG ( PDWARNING,
+                           "Sub-collection [%s] have been changed",
+                           subCLName.c_str() ) ;
+                  rc = SDB_OK ;
+                  ++iterSubCL ;
+                  continue ;
+               }
+
+               rc = catGetCollectionGroupSet( pUnlinkSubCLTask->getDataObj(),
+                                              _groupList ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to collect groups for sub-collection [%s], "
+                            "rc: %d",
+                            subCLName.c_str(), rc ) ;
+
+               ++iterSubCL ;
+            }
+         } else {
+            std::string mainCLName = cataSet.getMainCLName() ;
+            if ( !mainCLName.empty() )
+            {
+               BOOLEAN inSameSpace = FALSE ;
+
+               if ( externalMainCL.find( mainCLName ) == externalMainCL.end() )
+               {
+                  rc = catCollectionsInSameSpace ( mainCLName.c_str(), mainCLName.size(),
+                                                   clName.c_str(), clName.size() ,
+                                                   inSameSpace ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Failed to check whether main and sub collections "
+                               "[%s] and [%s] are in the space, rc: %d",
+                               mainCLName.c_str(), clName.c_str(), rc ) ;
+                  externalMainCL.insert( mainCLName ) ;
+               }
+            }
+            rc = catGetCollectionGroupSet( pDropCLTask->getDataObj(),
+                                           _groupList ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to collect groups for collection [%s], rc: %d",
+                         clName.c_str(), rc ) ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCS_DROPCL_SUBTASK, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCS_UNLINKCS_TASK, "_catCtxDropCS::_addUnlinkCSTask" )
+   INT32 _catCtxDropCS::_addUnlinkCSTask ( const std::string &csName,
+                                           _catCtxUnlinkCSTask **ppCtx,
+                                           BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCS_UNLINKCS_TASK ) ;
+
+      _catCtxUnlinkCSTask *pCtx = NULL ;
+      pCtx = SDB_OSS_NEW _catCtxUnlinkCSTask( csName ) ;
+      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
+                "Failed to add unlinkCS [%s] task", csName.c_str() ) ;
+
+      _addTask( pCtx, pushExec ) ;
+      if ( ppCtx )
+      {
+         (*ppCtx) = pCtx ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCS_UNLINKCS_TASK, rc ) ;
+      return rc ;
+   error :
+      SAFE_OSS_DELETE( pCtx ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCS_UNLINKSUBCL_TASK, "_catCtxDropCS::_addUnlinkSubCLTask" )
+   INT32 _catCtxDropCS::_addUnlinkSubCLTask ( const std::string &mainCLName,
+                                              const std::string &subCLName,
+                                              _catCtxUnlinkSubCLTask **ppCtx,
+                                              BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCS_UNLINKSUBCL_TASK ) ;
+
+      _catCtxUnlinkSubCLTask *pCtx = NULL ;
+      pCtx = SDB_OSS_NEW _catCtxUnlinkSubCLTask( mainCLName, subCLName ) ;
+      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
+                "Failed to create link sub-collection [%s/%s] sub-task",
+                mainCLName.c_str(), subCLName.c_str() ) ;
+
+      _addTask( pCtx, pushExec ) ;
+      if ( ppCtx )
+      {
+         (*ppCtx) = pCtx ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCS_UNLINKSUBCL_TASK, rc ) ;
+      return rc ;
+   error :
+      SAFE_OSS_DELETE( pCtx ) ;
       goto done ;
    }
 
@@ -1248,7 +1223,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXCREATECL_ROLLBACK_INT ) ;
 
-      rc = catDropCLStep( _targetName, _version, cb, _pDmsCB, _pDpsCB, w ) ;
+      rc = catDropCLStep( _targetName, _version, TRUE, cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to drop collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;
@@ -1466,7 +1441,7 @@ namespace engine
     * _catCtxDropCL implement
     */
    _catCtxDropCL::_catCtxDropCL ( INT64 contextID, UINT64 eduID )
-   : _catCtxDataMultiTaskBase( contextID, eduID )
+   : _catCtxCLMultiTask( contextID, eduID )
    {
       _executeAfterLock = FALSE ;
       _commitAfterExecute = TRUE ;
@@ -1529,7 +1504,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to check collection task, rc: %d", rc ) ;
 
-      rc = _addDropCLSubTasks ( pDropCLTask, cb, FALSE ) ;
+      rc = _addDropCLSubTasks ( pDropCLTask, cb ) ;
       PD_RC_CHECK( rc , PDERROR,
                    "Failed to add sub-tasks for drop collection") ;
 
@@ -1586,11 +1561,213 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCL_DROPCL_SUBTASK, "_catCtxDropCL::_addDropCLSubTasks" )
+   INT32 _catCtxDropCL::_addDropCLSubTasks ( _catCtxDropCLTask *pDropCLTask,
+                                             _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCL_DROPCL_SUBTASK ) ;
+
+      // For DropCL:
+      // 1. if cl is a sub-collection, need unlink it's main-collection
+      // 2. if cl is a main-collection, need delete it's sub-collections
+
+      try
+      {
+         const std::string &clName = pDropCLTask->getDataName() ;
+         clsCatalogSet cataSet( clName.c_str() );
+
+         rc = cataSet.updateCatSet( pDropCLTask->getDataObj() ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to parse catalog info [%s], rc: %d",
+                      clName.c_str(), rc ) ;
+
+         // Since we might need to drop a batch of collections, we use
+         // DelCLsFromCSTask to handle the changes to each "Collection" array
+         // of the spaces which the collections belong
+         _catCtxDelCLsFromCSTask *pDelCLsFromCSTask = NULL ;
+         rc = _addDelCLsFromCSTask ( &pDelCLsFromCSTask, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to create delCLsFromCS task, "
+                      "rc: %d", rc ) ;
+         // Add the dropping collection to DelCLsFromCSTask first
+         rc = pDelCLsFromCSTask->deleteCL( clName ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to add collection [%s] into delCLsFromCS task, "
+                      "rc: %d", clName.c_str(), rc ) ;
+
+         if ( cataSet.isMainCL() )
+         {
+            // For main-collection
+            std::vector< std::string > subCLLst;
+            std::vector< std::string >::iterator iterSubCL;
+
+            rc = cataSet.getSubCLList( subCLLst );
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to get sub-collection list of collection [%s], "
+                         "rc: %d",
+                         clName.c_str(), rc ) ;
+            iterSubCL = subCLLst.begin() ;
+            while( iterSubCL != subCLLst.end() )
+            {
+               std::string subCLName = (*iterSubCL) ;
+
+               // Drop sub-collection
+               _catCtxDropCLTask *pDropSubCLTask = NULL ;
+               rc = _addDropCLTask( subCLName, -1, &pDropSubCLTask ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to create drop sub-collection [%s] task, "
+                            "rc: %d",
+                            subCLName.c_str(), rc ) ;
+
+               pDropSubCLTask->addIgnoreRC( SDB_DMS_NOTEXIST ) ;
+
+               rc = pDropSubCLTask->checkTask( cb, _lockMgr ) ;
+               if ( SDB_DMS_NOTEXIST == rc ||
+                    SDB_INVALID_SUB_CL == rc )
+               {
+                  PD_LOG ( PDWARNING,
+                           "Sub-collection [%s] have been changed",
+                           subCLName.c_str() ) ;
+                  rc = SDB_OK ;
+                  ++iterSubCL ;
+                  continue;
+               }
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to check drop sub-collection [%s] task, "
+                            "rc: %d",
+                            subCLName.c_str(), rc ) ;
+
+               rc = pDelCLsFromCSTask->deleteCL( subCLName ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to add collection [%s] into delCLsFromCS task, "
+                            "rc: %d", subCLName.c_str(), rc ) ;
+
+               rc = catGetCollectionGroupSet( pDropSubCLTask->getDataObj(),
+                                              _groupList ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to collect groups for sub-collection [%s], "
+                            "rc: %d",
+                            subCLName.c_str(), rc ) ;
+
+               ++iterSubCL ;
+            }
+         } else {
+            std::string mainCLName = cataSet.getMainCLName() ;
+            if ( !mainCLName.empty() )
+            {
+               _catCtxUnlinkMainCLTask *pUnlinkMainCLTask = NULL ;
+               rc = _addUnlinkMainCLTask( mainCLName, clName, &pUnlinkMainCLTask ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to create unlink main-collection [%s] task, "
+                            "rc: %d",
+                            mainCLName.c_str(), rc ) ;
+
+               rc = pUnlinkMainCLTask->checkTask( cb, _lockMgr ) ;
+               if ( SDB_DMS_NOTEXIST == rc ||
+                    SDB_INVALID_MAIN_CL == rc )
+               {
+                  PD_LOG ( PDWARNING,
+                           "Main-collection [%s] have been changed",
+                           mainCLName.c_str() ) ;
+                  rc = SDB_OK ;
+               }
+               PD_RC_CHECK( rc, PDERROR,
+                            "Failed to check main-collection [%s] task, rc: %d",
+                            mainCLName.c_str(), rc ) ;
+               pUnlinkMainCLTask->addIgnoreRC( SDB_DMS_NOTEXIST ) ;
+               pUnlinkMainCLTask->addIgnoreRC( SDB_INVALID_MAIN_CL ) ;
+            }
+            rc = catGetCollectionGroupSet( pDropCLTask->getDataObj(),
+                                           _groupList ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Failed to collect groups for collection [%s], rc: %d",
+                         clName.c_str(), rc ) ;
+         }
+
+         if ( pDelCLsFromCSTask )
+         {
+            pDelCLsFromCSTask->checkTask( cb, _lockMgr ) ;
+            _pushExecTask( pDelCLsFromCSTask ) ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCL_DROPCL_SUBTASK, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCL_UNLINKMAINCL_TASK, "_catCtxDropCL::_addUnlinkMainCLTask" )
+   INT32 _catCtxDropCL::_addUnlinkMainCLTask ( const std::string &mainCLName,
+                                               const std::string &subCLName,
+                                               _catCtxUnlinkMainCLTask **ppCtx,
+                                               BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCL_UNLINKMAINCL_TASK ) ;
+
+      _catCtxUnlinkMainCLTask *pCtx = NULL ;
+      pCtx = SDB_OSS_NEW _catCtxUnlinkMainCLTask( mainCLName, subCLName ) ;
+      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
+                "Failed to create unlink main-collection [%s/%s] sub-task",
+                mainCLName.c_str(), subCLName.c_str() ) ;
+
+      _addTask( pCtx, pushExec ) ;
+      if ( ppCtx )
+      {
+         (*ppCtx) = pCtx ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCL_UNLINKMAINCL_TASK, rc ) ;
+      return rc ;
+   error :
+      SAFE_OSS_DELETE( pCtx ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDROPCL_DELCLCS_TASK, "_catCtxDropCL::_addDelCLsFromCSTask" )
+   INT32 _catCtxDropCL::_addDelCLsFromCSTask ( _catCtxDelCLsFromCSTask **ppCtx,
+                                               BOOLEAN pushExec )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDROPCL_DELCLCS_TASK ) ;
+
+      _catCtxDelCLsFromCSTask *pCtx = NULL ;
+      pCtx = SDB_OSS_NEW _catCtxDelCLsFromCSTask() ;
+      PD_CHECK( pCtx, SDB_SYS, error, PDERROR,
+                "Failed to add delClsFromCS task" ) ;
+
+      _addTask( pCtx, pushExec ) ;
+      if ( ppCtx )
+      {
+         (*ppCtx) = pCtx ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDROPCL_DELCLCS_TASK, rc ) ;
+      return rc ;
+   error :
+      SAFE_OSS_DELETE( pCtx ) ;
+      goto done ;
+   }
+
    /*
     * _catCtxAlterCL implement
     */
    _catCtxAlterCL::_catCtxAlterCL ( INT64 contextID, UINT64 eduID )
-   : _catCtxDataMultiTaskBase( contextID, eduID )
+   : _catCtxIndexMultiTask( contextID, eduID )
    {
       _executeAfterLock = TRUE ;
       _needRollback = FALSE ;
@@ -2421,7 +2598,7 @@ namespace engine
     * _catCtxCreateIdx implement
     */
    _catCtxCreateIdx::_catCtxCreateIdx ( INT64 contextID, UINT64 eduID )
-   : _catCtxDataMultiTaskBase ( contextID, eduID )
+   : _catCtxIndexMultiTask( contextID, eduID )
    {
       _executeAfterLock = TRUE ;
       _needRollback = TRUE ;
@@ -2496,7 +2673,7 @@ namespace engine
     * _catCtxDropIdx implement
     */
    _catCtxDropIdx::_catCtxDropIdx ( INT64 contextID, UINT64 eduID )
-   : _catCtxDataMultiTaskBase( contextID, eduID )
+   : _catCtxIndexMultiTask( contextID, eduID )
    {
       _executeAfterLock = TRUE ;
       _needRollback = FALSE ;

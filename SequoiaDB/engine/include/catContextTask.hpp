@@ -306,6 +306,56 @@ namespace engine
       BSONObj _boIdx ;
    } ;
 
+   /*
+    * _catCtxDelCLsFromCSTask define
+    */
+   class _catCtxDelCLsFromCSTask : public _catCtxDataTask
+   {
+   public :
+      _catCtxDelCLsFromCSTask () ;
+
+      virtual ~_catCtxDelCLsFromCSTask () {}
+
+      INT32 deleteCL ( const std::string &clFullName ) ;
+
+   protected :
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
+
+      virtual INT32 _executeInternal ( _pmdEDUCB *cb,
+                                       SDB_DMSCB *pDmsCB,
+                                       SDB_DPSCB *pDpsCB,
+                                       INT16 w ) ;
+
+   protected :
+      typedef std::map< std::string, std::vector<std::string> > COLLECTION_MAP ;
+      COLLECTION_MAP _deleteCLMap ;
+   } ;
+
+   /*
+    * _catCtxUnlinkCSTask define
+    */
+   class _catCtxUnlinkCSTask : public _catCtxDataTask
+   {
+   public :
+      _catCtxUnlinkCSTask ( const std::string &csName ) ;
+
+      virtual ~_catCtxUnlinkCSTask () {}
+
+      INT32 unlinkCS ( const std::string &mainCLName ) ;
+
+      INT32 unlinkCS ( const std::set<std::string> &mainCLLst ) ;
+
+   protected :
+      virtual INT32 _checkInternal ( _pmdEDUCB *cb, catCtxLockMgr &lockMgr ) ;
+
+      virtual INT32 _executeInternal ( _pmdEDUCB *cb,
+                                       SDB_DMSCB *pDmsCB,
+                                       SDB_DPSCB *pDpsCB,
+                                       INT16 w ) ;
+
+   protected :
+      std::set<std::string> _mainCLLst ;
+   } ;
 }
 
 #endif //CATCONTEXTBASETASK_HPP_

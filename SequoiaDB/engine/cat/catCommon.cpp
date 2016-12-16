@@ -1037,6 +1037,103 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELCLSFROMCS, "catDelCLsFromCS" )
+   INT32 catDelCLsFromCS( const string &csName,
+                          const vector<string> &deleteCLLst,
+                          pmdEDUCB * cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
+                          INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_CATDELCLSFROMCS ) ;
+
+      BSONObj boSpace, boCollections ;
+      vector<string> remainCLs ;
+      BOOLEAN isExist = FALSE ;
+
+      rc = catCheckSpaceExist( csName.c_str(), isExist, boSpace, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to get info of collection space [%s], rc: %d",
+                   csName.c_str(), rc ) ;
+      PD_CHECK( isExist, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
+                "Collection space [%s] does not exist!",
+                csName.c_str() ) ;
+
+      rc = rtnGetArrayElement( boSpace, CAT_COLLECTION, boCollections ) ;
+      PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDWARNING,
+                "Failed to get the field [%s] from [%s], rc: %d",
+                CAT_COLLECTION, boSpace.toString().c_str(), rc ) ;
+
+      {
+         BSONObjIterator iter( boCollections ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            string collection ;
+            rc = rtnGetSTDStringElement( ele.embeddedObject(),
+                                         CAT_COLLECTION_NAME,
+                                         collection ) ;
+            PD_CHECK( SDB_OK == rc, SDB_CAT_CORRUPTION, error, PDWARNING,
+                      "Failed to get the field [%s], rc: %d",
+                      CAT_COLLECTION_NAME, ele.toString().c_str(), rc ) ;
+            if ( find( deleteCLLst.begin(), deleteCLLst.end(), collection ) ==
+                 deleteCLLst.end() )
+            {
+               remainCLs.push_back( collection ) ;
+            }
+         }
+      }
+
+      rc = catUpdateCSCLs( csName, remainCLs, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to update collections from collection space [%s], "
+                   "rc: %d", csName.c_str(), rc ) ;
+   done :
+      PD_TRACE_EXITRC( SDB_CATDELCLSFROMCS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATECSCL, "catUpdateCSCLs" )
+   INT32 catUpdateCSCLs( const string &csName, vector<string> &collections,
+                         pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
+                         INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATUPDATECSCL ) ;
+
+      BSONObj matcher = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
+      BSONObj dummy ;
+
+      BSONObjBuilder builder ;
+      BSONObjBuilder subBuilder( builder.subobjStart( "$set" ) ) ;
+      BSONArrayBuilder arrBuilder( subBuilder.subarrayStart( CAT_COLLECTION ) ) ;
+      for ( vector<string>::iterator iter = collections.begin() ;
+            iter != collections.end() ;
+            ++ iter )
+      {
+         arrBuilder << BSON( CAT_COLLECTION_NAME << (*iter) ) ;
+      }
+      arrBuilder.done() ;
+      subBuilder.done() ;
+      BSONObj modifier = builder.obj() ;
+
+      rc = rtnUpdate( CAT_COLLECTION_SPACE_COLLECTION, matcher, modifier,
+                      dummy, 0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
+                   "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
+                   matcher.toString().c_str(), modifier.toString().c_str(),
+                   rc ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATUPDATECSCL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRESTORECS, "catRestoreCS" )
    INT32 catRestoreCS( const CHAR * csName, const BSONObj & oldInfo,
                        pmdEDUCB * cb, SDB_DMSCB * dmsCB,
@@ -1249,6 +1346,35 @@ namespace engine
                    rc ) ;
    done:
       PD_TRACE_EXITRC ( SDB_CATUPDATECATALOG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATECATALOGBYPUSH, "catUpdateCatalogByPush" )
+   INT32 catUpdateCatalogByPush ( const CHAR * clFullName,
+                                  const CHAR *field, const BSONObj &boObj,
+                                  pmdEDUCB * cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      PD_TRACE_ENTRY ( SDB_CATUPDATECATALOGBYPUSH ) ;
+      BSONObj hint ;
+      BSONObj match = BSON( CAT_CATALOGNAME_NAME << clFullName ) ;
+      BSONObj updator = BSON( "$inc" << BSON( CAT_VERSION_NAME << 1 ) <<
+                              "$push" << BSON( field << boObj ) ) ;
+
+      rc = rtnUpdate( CAT_COLLECTION_INFO_COLLECTION,
+                      match, updator, hint,
+                      0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDSEVERE, "Failed to update collection[%s] catalog info"
+                   "by push [%s:%s], rc: %d", clFullName, field,
+                   boObj.toString().c_str(), rc ) ;
+   done:
+      PD_TRACE_EXITRC ( SDB_CATUPDATECATALOGBYPUSH, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -2960,7 +3086,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDROPCLSTEP, "catDropCLStep" )
-   INT32 catDropCLStep ( const string &clName, INT32 version,
+   INT32 catDropCLStep ( const string &clName, INT32 version, BOOLEAN delFromCS,
                          _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
                          INT16 w )
    {
@@ -3014,11 +3140,14 @@ namespace engine
                  clName.c_str(), rc ) ;
       }
 
-      // 3) Pull collection from collection space info
-      rc = catDelCLFromCS( clName, cb, pDmsCB, pDpsCB, w ) ;
-      PD_RC_CHECK( rc, PDWARNING,
-                   "Failed to remove collection [%s] from space, rc: %d",
-                   clName.c_str(), rc ) ;
+      if ( delFromCS )
+      {
+         // 3) Pull collection from collection space info
+         rc = catDelCLFromCS( clName, cb, pDmsCB, pDpsCB, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to remove collection [%s] from space, rc: %d",
+                      clName.c_str(), rc ) ;
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_CATDROPCLSTEP, rc ) ;
@@ -3060,6 +3189,7 @@ namespace engine
 
       BSONObj mainCLObj ;
       clsCatalogSet mainCLSet( mainCLName.c_str() ) ;
+      clsCatalogItem *pItem = NULL ;
 
       rc = catGetCollection( mainCLName, mainCLObj, cb ) ;
       PD_RC_CHECK( rc, PDWARNING,
@@ -3073,20 +3203,27 @@ namespace engine
       SDB_ASSERT( mainCLSet.isRangeSharding(),
                   "main-collection must be range-sharding!" ) ;
 
-      rc = mainCLSet.addSubCL( subCLName.c_str(), lowBound, upBound ) ;
+      rc = mainCLSet.addSubCL( subCLName.c_str(), lowBound, upBound, &pItem ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to add sub-collection [%s] into main-collection [%s], "
                    "lowBound: [%s], upBound: [%s], rc: %d",
                    subCLName.c_str(), mainCLName.c_str(),
                    lowBound.toString().c_str(), upBound.toString().c_str(), rc ) ;
 
+      if ( pItem )
+      {
+         BSONObj newSubCLObj = pItem->toBson() ;
+         rc = catUpdateCatalogByPush( mainCLName.c_str(), CAT_CATALOGINFO_NAME,
+                                      newSubCLObj, cb, w ) ;
+      }
+      else
       {
          BSONObj subListObj = mainCLSet.toCataInfoBson() ;
          rc = catUpdateCatalog( mainCLName.c_str(), subListObj, cb, w ) ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "Failed to update the catalog of main-collection [%s], rc: %d",
-                      mainCLName.c_str(), rc ) ;
       }
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to update the catalog of main-collection [%s], rc: %d",
+                   mainCLName.c_str(), rc ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB_CATLINKMAINCLSTEP, rc ) ;
@@ -3159,8 +3296,9 @@ namespace engine
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to parse catalog-info of main-collection(%s)",
                    mainCLName.c_str() ) ;
-      SDB_ASSERT( mainCLSet.isRangeSharding(),
-                  "main-collection must be range-sharding!" ) ;
+      PD_CHECK( mainCLSet.isRangeSharding() && mainCLSet.isMainCL(),
+                SDB_INVALID_MAIN_CL, error, PDWARNING,
+                "main-collection must be range-sharding!" ) ;
 
       if ( needBounds )
       {
@@ -3191,6 +3329,82 @@ namespace engine
                    "Failed to delete the sub-collection [%s] from "
                    "main-collection [%s], rc: %d",
                    subCLName.c_str(), mainCLName.c_str(), rc ) ;
+
+      {
+         // Update the catalog
+         BSONObj subListObj = mainCLSet.toCataInfoBson() ;
+         rc = catUpdateCatalog( mainCLName.c_str(), subListObj, cb, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to update the catalog of "
+                      "main-collection [%s], rc: %d",
+                      mainCLName.c_str(), rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATUNLINKMAINCLSTEP, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUNLINKCSSTEP, "catUnlinkCSStep" )
+   INT32 catUnlinkCSStep ( const string &mainCLName, const string &csName,
+                           _pmdEDUCB *cb, SDB_DMSCB *pDmsCB, SDB_DPSCB *pDpsCB,
+                           INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATUNLINKMAINCLSTEP ) ;
+
+      BSONObj mainCLObj ;
+      clsCatalogSet mainCLSet( mainCLName.c_str() ) ;
+      vector<string> subCLLst ;
+      CHAR szCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
+      CHAR szCLName[ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
+
+      // Update the object first
+      rc = catGetCollection( mainCLName, mainCLObj, cb ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "failed to get catalog-info of main-collection(%s)",
+                   mainCLName.c_str() ) ;
+
+      // Parse the object to get the sub-collection list
+      rc = mainCLSet.updateCatSet( mainCLObj ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to parse catalog-info of main-collection(%s)",
+                   mainCLName.c_str() ) ;
+      PD_CHECK( mainCLSet.isRangeSharding() && mainCLSet.isMainCL(),
+                SDB_INVALID_MAIN_CL, error, PDWARNING,
+                "main-collection must be range-sharding!" ) ;
+
+      rc = mainCLSet.getSubCLList( subCLLst ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to get sub-collection list of main-collection(%s)",
+                   mainCLName.c_str() ) ;
+
+      for ( vector<string>::iterator iter = subCLLst.begin() ;
+            iter != subCLLst.end() ;
+            ++ iter )
+      {
+         string &subCLName = (*iter) ;
+         rc = catResolveCollectionName( subCLName.c_str(), subCLName.size(),
+                                        szCSName, DMS_COLLECTION_SPACE_NAME_SZ,
+                                        szCLName, DMS_COLLECTION_NAME_SZ ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to resolve collection name [%s] failed, rc: %d",
+                      subCLName.c_str(), rc ) ;
+
+         if ( 0 == csName.compare( szCSName ) )
+         {
+            // Delete the sub-collection from list
+            rc = mainCLSet.delSubCL( subCLName.c_str() ) ;
+            PD_RC_CHECK( rc, PDWARNING,
+                         "Failed to delete the sub-collection [%s] from "
+                         "main-collection [%s], rc: %d",
+                         subCLName.c_str(), mainCLName.c_str(), rc ) ;
+         }
+      }
 
       {
          // Update the catalog

@@ -1904,8 +1904,10 @@ namespace engine
       return _mainCLName;
    }
 
-   INT32 _clsCatalogSet::addSubCL ( const CHAR *subCLName, const BSONObj &lowBound,
-                                    const BSONObj &upBound )
+   INT32 _clsCatalogSet::addSubCL ( const CHAR *subCLName,
+                                    const BSONObj &lowBound,
+                                    const BSONObj &upBound,
+                                    clsCatalogItem **ppItem )
    {
       INT32 rc = SDB_OK;
       BSONObj lowBoundObj;
@@ -2021,6 +2023,12 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to add the new item(rc=%d)",
                    rc );
+
+      if ( ppItem )
+      {
+         (*ppItem) = pNewItem ;
+      }
+
    done:
       return rc;
    error:

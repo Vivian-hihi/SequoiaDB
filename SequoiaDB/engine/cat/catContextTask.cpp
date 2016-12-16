@@ -210,6 +210,9 @@ namespace engine
       _dataName = dataName ;
    }
 
+   /*
+    * _catCtxDropCSTask implement
+    */
    _catCtxDropCSTask::_catCtxDropCSTask ( const std::string &csName )
    : _catCtxDataTask( csName )
    {
@@ -357,7 +360,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXDROPCLTASK_EXECUTE_INT ) ;
 
-      rc = catDropCLStep( _dataName, _version, cb, pDmsCB, pDpsCB, w ) ;
+      rc = catDropCLStep( _dataName, _version, FALSE, cb, pDmsCB, pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to drop collection [%s], rc=%d",
                    _dataName.c_str(), rc ) ;
@@ -729,4 +732,208 @@ namespace engine
       return SDB_OK ;
    }
 
+   /*
+    * _catCtxDelCLsFromCSTask implement
+    */
+   _catCtxDelCLsFromCSTask::_catCtxDelCLsFromCSTask ()
+   : _catCtxDataTask( "" )
+   {
+   }
+
+   INT32 _catCtxDelCLsFromCSTask::deleteCL ( const std::string &clFullName )
+   {
+      INT32 rc = SDB_OK ;
+
+      CHAR szCLName[ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
+      CHAR szCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
+
+      rc = catResolveCollectionName( clFullName.c_str(), clFullName.size(),
+                                     szCSName, DMS_COLLECTION_SPACE_NAME_SZ,
+                                     szCLName, DMS_COLLECTION_NAME_SZ ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Resolve collection name[%s] failed, rc: %d",
+                   clFullName.c_str(), rc ) ;
+
+      {
+         COLLECTION_MAP::iterator iter = _deleteCLMap.find( szCSName ) ;
+         if ( iter == _deleteCLMap.end() )
+         {
+            vector<string> collections ;
+            collections.push_back( szCLName ) ;
+            _deleteCLMap.insert( make_pair( szCSName, collections ) ) ;
+         }
+         else
+         {
+            iter->second.push_back( szCLName ) ;
+         }
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDELCLCSTASK_CHECK_INT, "_catCtxDelCLsFromCSTask::_checkInternal" )
+   INT32 _catCtxDelCLsFromCSTask::_checkInternal ( _pmdEDUCB *cb,
+                                                   catCtxLockMgr &lockMgr )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDELCLCSTASK_CHECK_INT ) ;
+
+      // Do nothing
+
+      PD_TRACE_EXITRC ( SDB_CATCTXDELCLCSTASK_CHECK_INT, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXDELCLCSTASK_EXECUTE_INT, "_catCtxDelCLsFromCSTask::_executeInternal" )
+   INT32 _catCtxDelCLsFromCSTask::_executeInternal ( _pmdEDUCB *cb,
+                                                     SDB_DMSCB *pDmsCB,
+                                                     SDB_DPSCB *pDpsCB,
+                                                     INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXDELCLCSTASK_EXECUTE_INT ) ;
+
+      for ( COLLECTION_MAP::iterator iterCS = _deleteCLMap.begin();
+            iterCS != _deleteCLMap.end() ;
+            ++ iterCS )
+      {
+         const string &csName = iterCS->first ;
+         const vector<string> &deleteCLLst = iterCS->second ;
+
+         rc = catDelCLsFromCS( csName, deleteCLLst, cb, pDmsCB, pDpsCB, w ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to delete collections from collection space [%s], "
+                      "rc: %d",
+                      csName.c_str(), rc ) ;
+
+         PD_LOG ( PDDEBUG,
+                  "Finished delete collections from collection space [%s] task",
+                  csName.c_str() ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXDELCLCSTASK_EXECUTE_INT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /*
+    * _catCtxUnlinkCSTask implement
+    */
+   _catCtxUnlinkCSTask::_catCtxUnlinkCSTask ( const std::string &csName )
+   : _catCtxDataTask( csName )
+   {
+   }
+
+   INT32 _catCtxUnlinkCSTask::unlinkCS ( const std::string &mainCLName )
+   {
+      INT32 rc = SDB_OK ;
+
+      _mainCLLst.insert( mainCLName ) ;
+
+      return rc ;
+   }
+
+   INT32 _catCtxUnlinkCSTask::unlinkCS ( const std::set<std::string> &mainCLLst )
+   {
+      INT32 rc = SDB_OK ;
+
+      _mainCLLst.insert( mainCLLst.begin(), mainCLLst.end() ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXUNLINKCSTASK_CHECK_INT, "_catCtxUnlinkCSTask::_checkInternal" )
+   INT32 _catCtxUnlinkCSTask::_checkInternal ( _pmdEDUCB *cb,
+                                               catCtxLockMgr &lockMgr )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXUNLINKCSTASK_CHECK_INT ) ;
+
+      std::set<std::string>::iterator iterMainCL = _mainCLLst.begin() ;
+
+      while ( iterMainCL != _mainCLLst.end() )
+      {
+         const string &mainCLName = (*iterMainCL) ;
+         BSONObj boMainCL ;
+
+         rc = catGetAndLockCollection( mainCLName, boMainCL, cb,
+                                       _needLocks ? &lockMgr : NULL, EXCLUSIVE ) ;
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            rc = SDB_OK ;
+            _mainCLLst.erase( iterMainCL++ ) ;
+            continue ;
+         }
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to get the main-collection [%s], rc: %d",
+                      mainCLName.c_str(), rc ) ;
+
+         // Main-collection should be main collection
+         rc = catCheckMainCollection( boMainCL, TRUE ) ;
+         if ( SDB_INVALID_MAIN_CL == rc )
+         {
+            rc = SDB_OK ;
+            _mainCLLst.erase( iterMainCL++ ) ;
+            continue ;
+         }
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Source collection [%s] must be partitioned-collection!",
+                      mainCLName.c_str() ) ;
+
+         iterMainCL ++ ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXUNLINKCSTASK_CHECK_INT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCTXUNLINKCSTASK_EXECUTE_INT, "_catCtxUnlinkCSTask::_executeInternal" )
+   INT32 _catCtxUnlinkCSTask::_executeInternal ( _pmdEDUCB *cb,
+                                                 SDB_DMSCB *pDmsCB,
+                                                 SDB_DPSCB *pDpsCB,
+                                                 INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATCTXUNLINKCSTASK_EXECUTE_INT ) ;
+
+      for ( std::set<std::string>::iterator iterMainCL = _mainCLLst.begin();
+            iterMainCL != _mainCLLst.end() ;
+            ++ iterMainCL )
+      {
+         const string &mainCLName = (*iterMainCL) ;
+
+         rc = catUnlinkCSStep( mainCLName, _dataName, cb, pDmsCB, pDpsCB, w ) ;
+         if ( SDB_DMS_NOTEXIST == rc ||
+              SDB_INVALID_MAIN_CL == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to unlink collections of space [%s] from "
+                      "main collection [%s], rc: %d",
+                      _dataName.c_str(), mainCLName.c_str(), rc ) ;
+
+         PD_LOG ( PDDEBUG,
+                  "Finished unlink collections from main collection [%s] task",
+                  mainCLName.c_str() ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CATCTXUNLINKCSTASK_EXECUTE_INT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
 }

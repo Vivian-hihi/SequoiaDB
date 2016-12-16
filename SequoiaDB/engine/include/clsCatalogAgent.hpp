@@ -233,13 +233,14 @@ namespace engine
          std::string       getMainCLName();
          INT32             addSubCL ( const CHAR *subCLName,
                                       const BSONObj &lowBound,
-                                      const BSONObj &upBound ) ;
+                                      const BSONObj &upBound,
+                                      clsCatalogItem **ppItem ) ;
 
-         INT32 delSubCL ( const CHAR *subCLName );
+         INT32 delSubCL ( const CHAR *subCLName ) ;
 
          INT32 getSubCLBounds ( const std::string &subCLName,
                                 BSONObj &lowBound,
-                                BSONObj &upBound ) const;
+                                BSONObj &upBound ) const ;
 
          UINT32 getInternalV() const { return _internalV ; }
          UINT32 getShardingKeySiteID() const { return _skSiteID ; }

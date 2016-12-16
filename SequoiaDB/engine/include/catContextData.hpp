@@ -83,25 +83,41 @@ namespace engine
 
       void _addTask ( _catCtxDataTask *pCtx, BOOLEAN pushExec ) ;
 
-      INT32 _addDropCSTask ( const std::string &csName,
-                             _catCtxDropCSTask **ppCtx,
-                             BOOLEAN pushExec = TRUE ) ;
+      INT32 _pushExecTask ( _catCtxDataTask *pCtx ) ;
 
+   protected :
+      _catSubTasks _subTasks ;
+      _catSubTasks _execTasks ;
+   } ;
+
+   /*
+    * _catCtxCLMultiTask define
+    */
+   class _catCtxCLMultiTask : public _catCtxDataMultiTaskBase
+   {
+   public :
+      _catCtxCLMultiTask ( INT64 contextID, UINT64 eduID ) ;
+
+      virtual ~_catCtxCLMultiTask () {}
+
+   protected :
       INT32 _addDropCLTask ( const std::string &clName,
                              INT32 version,
                              _catCtxDropCLTask **ppCtx,
                              BOOLEAN pushExec = TRUE ) ;
+   } ;
 
-      INT32 _addUnlinkMainCLTask ( const std::string &mainCLName,
-                                   const std::string &subCLName,
-                                   _catCtxUnlinkMainCLTask **ppCtx,
-                                   BOOLEAN pushExec = TRUE ) ;
+   /*
+    * _catCtxIndexMultiTask define
+    */
+   class _catCtxIndexMultiTask : public _catCtxDataMultiTaskBase
+   {
+   public :
+      _catCtxIndexMultiTask ( INT64 contextID, UINT64 eduID ) ;
 
-      INT32 _addUnlinkSubCLTask ( const std::string &mainCLName,
-                                  const std::string &subCLName,
-                                  _catCtxUnlinkSubCLTask **ppCtx,
-                                  BOOLEAN pushExec = TRUE ) ;
+      virtual ~_catCtxIndexMultiTask () {}
 
+   protected :
       INT32 _addCreateIdxTask ( const std::string &clName,
                                 const std::string &idxName,
                                 const BSONObj &boIdx,
@@ -112,14 +128,6 @@ namespace engine
                               const std::string &idxName,
                               _catCtxDropIdxTask **pCtx,
                               BOOLEAN pushExec = TRUE ) ;
-
-      INT32 _addDropCLSubTasks ( _catCtxDropCLTask *pDropCLTask,
-                                 _pmdEDUCB *cb,
-                                 BOOLEAN fromDropCS,
-                                 std::set<std::string> *pExternalCL = NULL ) ;
-
-      INT32 _addDropCSSubTasks ( _catCtxDropCSTask *pDropCSTask,
-                                 _pmdEDUCB *cb ) ;
 
       INT32 _addCreateIdxSubTasks ( _catCtxCreateIdxTask *pCreateIdxTask,
                                     catCtxLockMgr &lockMgr,
@@ -138,18 +146,12 @@ namespace engine
       INT32 _addDropIdxTasks ( const std::string &clName,
                                const std::string &idxName,
                                _pmdEDUCB *cb ) ;
-
-      INT32 _pushExecTask ( _catCtxDataTask *pCtx ) ;
-
-   protected :
-      _catSubTasks _subTasks ;
-      _catSubTasks _execTasks ;
    } ;
 
    /*
     * _catCtxDropCS define
     */
-   class _catCtxDropCS : public _catCtxDataMultiTaskBase
+   class _catCtxDropCS : public _catCtxCLMultiTask
    {
    public :
       _catCtxDropCS ( INT64 contextID, UINT64 eduID ) ;
@@ -161,9 +163,30 @@ namespace engine
          return RTN_CONTEXT_CAT_DROP_CS ;
       }
 
+   protected :
       virtual INT32 _parseQuery ( _pmdEDUCB *cb ) ;
 
       virtual INT32 _checkInternal ( _pmdEDUCB *cb ) ;
+
+      INT32 _addDropCSTask ( const std::string &csName,
+                             _catCtxDropCSTask **ppCtx,
+                             BOOLEAN pushExec = TRUE ) ;
+
+      INT32 _addDropCSSubTasks ( _catCtxDropCSTask *pDropCSTask,
+                                 _pmdEDUCB *cb ) ;
+
+      INT32 _addDropCLSubTasks ( _catCtxDropCLTask *pDropCLTask,
+                                 _pmdEDUCB *cb,
+                                 std::set<std::string> &externalMainCL ) ;
+
+      INT32 _addUnlinkCSTask ( const std::string &csName,
+                               _catCtxUnlinkCSTask **ppCtx,
+                               BOOLEAN pushExec = TRUE ) ;
+
+      INT32 _addUnlinkSubCLTask ( const std::string &mainCLName,
+                                  const std::string &subCLName,
+                                  _catCtxUnlinkSubCLTask **ppCtx,
+                                  BOOLEAN pushExec = TRUE ) ;
    } ;
 
    typedef class _catCtxDropCS catCtxDropCS ;
@@ -213,7 +236,7 @@ namespace engine
    /*
     * _catCtxDropCL define
     */
-   class _catCtxDropCL : public _catCtxDataMultiTaskBase
+   class _catCtxDropCL : public _catCtxCLMultiTask
    {
    public :
       _catCtxDropCL ( INT64 contextID, UINT64 eduID ) ;
@@ -232,6 +255,17 @@ namespace engine
 
       virtual INT32 _makeReply ( rtnContextBuf &buffObj ) ;
 
+      INT32 _addDropCLSubTasks ( _catCtxDropCLTask *pDropCLTask,
+                                 _pmdEDUCB *cb ) ;
+
+      INT32 _addUnlinkMainCLTask ( const std::string &mainCLName,
+                                   const std::string &subCLName,
+                                   _catCtxUnlinkMainCLTask **ppCtx,
+                                   BOOLEAN pushExec = TRUE ) ;
+
+      INT32 _addDelCLsFromCSTask ( _catCtxDelCLsFromCSTask **ppCtx,
+                                   BOOLEAN pushExec = TRUE ) ;
+
    protected :
       INT32 _needUpdateCoord ;
    } ;
@@ -241,7 +275,7 @@ namespace engine
    /*
     * _catCtxAlterCL define
     */
-   class _catCtxAlterCL : public _catCtxDataMultiTaskBase
+   class _catCtxAlterCL : public _catCtxIndexMultiTask
    {
    public :
       _catCtxAlterCL ( INT64 contextID, UINT64 eduID ) ;
@@ -356,10 +390,11 @@ namespace engine
    /*
     * _catCtxCreateIdx define
     */
-   class _catCtxCreateIdx : public _catCtxDataMultiTaskBase
+   class _catCtxCreateIdx : public _catCtxIndexMultiTask
    {
    public :
       _catCtxCreateIdx ( INT64 contextID, UINT64 eduID ) ;
+
       virtual ~_catCtxCreateIdx () ;
 
       virtual RTN_CONTEXT_TYPE getType () const
@@ -381,7 +416,7 @@ namespace engine
    /*
     * _catCtxDropIdx define
     */
-   class _catCtxDropIdx : public _catCtxDataMultiTaskBase
+   class _catCtxDropIdx : public _catCtxIndexMultiTask
    {
    public :
       _catCtxDropIdx ( INT64 contextID, UINT64 eduID ) ;
