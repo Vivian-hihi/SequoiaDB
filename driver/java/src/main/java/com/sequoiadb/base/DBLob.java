@@ -913,7 +913,7 @@ class DBLobConcrete implements DBLob {
         
         //*******************_meta**********************
         Helper.addBytesToByteBuffer(totalBuff, bOpenLob, 0, bOpenLob.length, 4);
-        
+
         return totalBuff;
     }
 

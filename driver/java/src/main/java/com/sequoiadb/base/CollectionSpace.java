@@ -212,7 +212,7 @@ public class CollectionSpace {
 	 * @brief Drop current collectionSpace
 	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated the method will be deprecated in version 2.x, use dropCollectionSpace instead
+	 * @deprecated the method will be deprecated in version 2.x, use Sequoiadb.dropCollectionSpace instead
 	 * @see com.sequoiadb.base.Sequoiadb.dropCollectionSpace
 	 */
 	public void drop() throws BaseException {

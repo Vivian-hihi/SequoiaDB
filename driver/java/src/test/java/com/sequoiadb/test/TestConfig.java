@@ -1,16 +1,16 @@
-package com.sequoiadb;
+package com.sequoiadb.test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class Config {
+public class TestConfig {
     private static final String propertiesFileName = "test.properties";
     private static Properties properties;
 
     static {
         properties = new Properties();
-        InputStream in = Config.class.getClassLoader().getResourceAsStream(propertiesFileName);
+        InputStream in = TestConfig.class.getClassLoader().getResourceAsStream(propertiesFileName);
         try {
             properties.load(in);
         } catch (IOException e) {
@@ -23,7 +23,7 @@ public class Config {
     private static final String singleUsername = "single.username";
     private static final String singlePassword = "single.password";
 
-    private Config() {
+    private TestConfig() {
     }
 
     public static String getSingleHost() {
