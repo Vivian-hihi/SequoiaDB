@@ -28,8 +28,8 @@ import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.net.IConnection;
+import com.sequoiadb.util.IOBuffer;
 import com.sequoiadb.util.SDBMessageHelper;
-import org.apache.mina.core.buffer.IoBuffer;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -53,9 +53,8 @@ public class DBCollection {
     private Set<String> mainKeys;
     private boolean ensureOID;
 
-    private IoBuffer insert_buffer;
+    private IOBuffer insertBuffer;
     private static final int DEF_BUFFER_LENGTH = 64 * 1024;
-    private static final int DEF_BULK_BUFFER_LENGTH = 2 * 1024 * 1024;
 
     /**
      * @memberof FLG_INSERT_CONTONDUP 0x00000001
@@ -160,9 +159,20 @@ public class DBCollection {
         this.csName = cs.getName();
         this.collectionFullName = csName + "." + name.trim();
         this.connection = sequoiadb.getConnection();
-        this.insert_buffer = null;
+        this.insertBuffer = null;
         this.mainKeys = new HashSet<String>();
         this.ensureOID = true;
+    }
+
+    private void ensureInsertBuffer() {
+        if (this.insertBuffer == null) {
+            this.insertBuffer = new IOBuffer(DEF_BUFFER_LENGTH);
+            ByteOrder order = sequoiadb.endianConvert ?
+                    ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
+            insertBuffer.order(order);
+        } else {
+            insertBuffer.clear();
+        }
     }
 
     /**
@@ -178,17 +188,7 @@ public class DBCollection {
         if (insertor == null)
             throw new BaseException(SDBError.SDB_INVALIDARG);
 
-        if (this.insert_buffer == null) {
-            this.insert_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
-            this.insert_buffer.setAutoExpand(true);
-            if (sequoiadb.endianConvert) {
-                insert_buffer.order(ByteOrder.LITTLE_ENDIAN);
-            } else {
-                insert_buffer.order(ByteOrder.BIG_ENDIAN);
-            }
-        } else {
-            insert_buffer.clear();
-        }
+        ensureInsertBuffer();
 
         Object retObj = insertor.get(SequoiadbConstants.OID);
         if (retObj == null) {
@@ -197,10 +197,10 @@ public class DBCollection {
             retObj = objId;
         }
 
-        int message_length = SDBMessageHelper.buildInsertRequest(insert_buffer,
+        int message_length = SDBMessageHelper.buildInsertRequest(insertBuffer,
                 sequoiadb.getNextRequstID(), collectionFullName, insertor);
 
-        connection.sendMessage(insert_buffer.array(), 0, message_length);
+        connection.sendMessage(insertBuffer.array(), 0, message_length);
 
         ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
         SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
@@ -428,23 +428,13 @@ public class DBCollection {
         if (insertor == null || insertor.size() == 0)
             throw new BaseException(SDBError.SDB_INVALIDARG);
 
-        if (this.insert_buffer == null) {
-            this.insert_buffer = IoBuffer.allocate(DEF_BULK_BUFFER_LENGTH);
-            this.insert_buffer.setAutoExpand(true);
-            if (sequoiadb.endianConvert) {
-                insert_buffer.order(ByteOrder.LITTLE_ENDIAN);
-            } else {
-                insert_buffer.order(ByteOrder.BIG_ENDIAN);
-            }
-        } else {
-            insert_buffer.clear();
-        }
+        ensureInsertBuffer();
 
         int messageLength = SDBMessageHelper.buildBulkInsertRequest(
-                insert_buffer, sequoiadb.getNextRequstID(), collectionFullName,
+                insertBuffer, sequoiadb.getNextRequstID(), collectionFullName,
                 insertor, flag, this.ensureOID);
 
-        connection.sendMessage(insert_buffer.array(), 0, messageLength);
+        connection.sendMessage(insertBuffer.array(), 0, messageLength);
 
         ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
         SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
@@ -458,20 +448,6 @@ public class DBCollection {
         }
         // upsert cache
         sequoiadb.upsertCache(collectionFullName);
-        // shrink the memory
-        /*
-		int capacity = insert_buffer.capacity();
-		// if the capacity large then 16m, halves it
-		if(capacity >= 8 * DEF_BULK_BUFFER_LENGTH) {
-			insert_buffer.position(0);
-			insert_buffer.limit(capacity/2);
-		}
-		else {
-			insert_buffer.position(0);
-			insert_buffer.limit(DEF_BULK_BUFFER_LENGTH);
-		}
-		insert_buffer.shrink();
-		*/
     }
 
     /**
@@ -1522,13 +1498,13 @@ public class DBCollection {
     }
 
 	/*
-	 * @fn void rename(String newName)
+     * @fn void rename(String newName)
 	 * @brief rename the current collection by new name
 	 * @param newName
 	 *            The new name of current DBCollection
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	/*
+    /*
 	public void rename(String newName) throws BaseException {
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.RENAME_COLLECTION;
@@ -1772,22 +1748,12 @@ public class DBCollection {
         if (obj == null || obj.size() == 0)
             throw new BaseException(SDBError.SDB_INVALIDARG);
 
-        if (this.insert_buffer == null) {
-            this.insert_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
-            this.insert_buffer.setAutoExpand(true);
-            if (sequoiadb.endianConvert) {
-                insert_buffer.order(ByteOrder.LITTLE_ENDIAN);
-            } else {
-                insert_buffer.order(ByteOrder.BIG_ENDIAN);
-            }
-        } else {
-            insert_buffer.clear();
-        }
+        ensureInsertBuffer();
 
-        int messageLength = SDBMessageHelper.buildAggrRequest(insert_buffer,
+        int messageLength = SDBMessageHelper.buildAggrRequest(insertBuffer,
                 sequoiadb.getNextRequstID(), collectionFullName, obj);
 
-        connection.sendMessage(insert_buffer.array(), 0, messageLength);
+        connection.sendMessage(insertBuffer.array(), 0, messageLength);
 
         ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
         SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);

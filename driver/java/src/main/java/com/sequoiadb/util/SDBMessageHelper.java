@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2012 SequoiaDB Inc.
+ * Copyright (C) 2012-2017 SequoiaDB Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.sequoiadb.base.SequoiadbConstants;
 import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import org.apache.mina.core.buffer.IoBuffer;
 import org.bson.*;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
@@ -230,25 +229,25 @@ public class SDBMessageHelper {
         return msg;
     }
 
-    public static int buildBulkInsertRequest(IoBuffer bulk_buffer, long reqID,
+    public static int buildBulkInsertRequest(IOBuffer ioBuffer, long reqID,
                                              String collectionFullName, List<BSONObject> insertor, int flag, boolean ensureOID)
             throws BaseException {
         try {
             int messageLength = SDBMessageHelper.MESSAGE_OPINSERT_LENGTH - 1;
 
-            int startPos = bulk_buffer.position();
+            int startPos = ioBuffer.position();
 
-            bulk_buffer.putInt(-1); // messageLength
-            bulk_buffer.putInt(Operation.OP_INSERT.getOperationCode()); // operationCode
-            bulk_buffer.put(SequoiadbConstants.ZERO_NODEID); // NodeID
-            bulk_buffer.putLong(reqID); // requestID
+            ioBuffer.putInt(-1); // messageLength
+            ioBuffer.putInt(Operation.OP_INSERT.getOperationCode()); // operationCode
+            ioBuffer.put(SequoiadbConstants.ZERO_NODEID); // NodeID
+            ioBuffer.putLong(reqID); // requestID
 
-            bulk_buffer.putInt(0); // version
-            bulk_buffer.putShort((short) 0); // W
-            bulk_buffer.putShort((short) 0); // Padding
-            bulk_buffer.putInt(flag); // flag
+            ioBuffer.putInt(0); // version
+            ioBuffer.putShort((short) 0); // W
+            ioBuffer.putShort((short) 0); // Padding
+            ioBuffer.putInt(flag); // flag
             byte[] collByteArray = collectionFullName.getBytes("UTF-8");
-            bulk_buffer.putInt(collByteArray.length); // CollectionName
+            ioBuffer.putInt(collByteArray.length); // CollectionName
 
             byte[] newCollectionName = new byte[collByteArray.length + 1];
             for (int i = 0; i < collByteArray.length; i++) {
@@ -258,7 +257,7 @@ public class SDBMessageHelper {
             messageLength += Helper.roundToMultipleXLength(
                     newCollectionName.length, 4);
 
-            bulk_buffer.put(Helper.roundToMultipleX(newCollectionName, 4));
+            ioBuffer.put(Helper.roundToMultipleX(newCollectionName, 4));
             if (true == ensureOID) {
                 for (int i = 0; i < insertor.size(); i++) {
 
@@ -271,13 +270,13 @@ public class SDBMessageHelper {
                     }
 
                     // change to bytes
-                    int record_length = bsonObjectToByteBuffer(bulk_buffer, record);
+                    int record_length = bsonObjectToByteBuffer(ioBuffer, record);
 
                     // byte alignment
                     int length = Helper.roundToMultipleXLength(record_length, 4);
                     int j = 0;
                     while (record_length + j < length) {
-                        bulk_buffer.put(BTYE_FILL);
+                        ioBuffer.put(BTYE_FILL);
                         j++;
                     }
 
@@ -287,13 +286,13 @@ public class SDBMessageHelper {
                 for (int i = 0; i < insertor.size(); i++) {
 
                     // change to bytes
-                    int record_length = bsonObjectToByteBuffer(bulk_buffer, insertor.get(i));
+                    int record_length = bsonObjectToByteBuffer(ioBuffer, insertor.get(i));
 
                     // byte alignment
                     int length = Helper.roundToMultipleXLength(record_length, 4);
                     int j = 0;
                     while (record_length + j < length) {
-                        bulk_buffer.put(BTYE_FILL);
+                        ioBuffer.put(BTYE_FILL);
                         j++;
                     }
 
@@ -301,8 +300,8 @@ public class SDBMessageHelper {
                 }
             }
 
-            bulk_buffer.position(startPos); // set the real messageLength
-            bulk_buffer.putInt(messageLength);
+            ioBuffer.position(startPos); // set the real messageLength
+            ioBuffer.putInt(messageLength);
 
             return messageLength;
         } catch (UnsupportedEncodingException e) {
@@ -310,25 +309,25 @@ public class SDBMessageHelper {
         }
     }
 
-    public static int buildInsertRequest(IoBuffer bulk_buffer, long reqID,
+    public static int buildInsertRequest(IOBuffer ioBuffer, long reqID,
                                          String collectionFullName, BSONObject insertor)
             throws BaseException {
         try {
             int messageLength = SDBMessageHelper.MESSAGE_OPINSERT_LENGTH - 1;
 
-            int startPos = bulk_buffer.position();
+            int startPos = ioBuffer.position();
 
-            bulk_buffer.putInt(-1); // messageLength
-            bulk_buffer.putInt(Operation.OP_INSERT.getOperationCode()); // operationCode
-            bulk_buffer.put(SequoiadbConstants.ZERO_NODEID); // NodeID
-            bulk_buffer.putLong(reqID); // requestID
+            ioBuffer.putInt(-1); // messageLength
+            ioBuffer.putInt(Operation.OP_INSERT.getOperationCode()); // operationCode
+            ioBuffer.put(SequoiadbConstants.ZERO_NODEID); // NodeID
+            ioBuffer.putLong(reqID); // requestID
 
-            bulk_buffer.putInt(0); // version
-            bulk_buffer.putShort((short) 0); // W
-            bulk_buffer.putShort((short) 0); // Padding
-            bulk_buffer.putInt(0); // flag
+            ioBuffer.putInt(0); // version
+            ioBuffer.putShort((short) 0); // W
+            ioBuffer.putShort((short) 0); // Padding
+            ioBuffer.putInt(0); // flag
             byte[] collByteArray = collectionFullName.getBytes("UTF-8");
-            bulk_buffer.putInt(collByteArray.length); // CollectionName
+            ioBuffer.putInt(collByteArray.length); // CollectionName
 
             byte[] newCollectionName = new byte[collByteArray.length + 1];
             for (int i = 0; i < collByteArray.length; i++) {
@@ -338,21 +337,21 @@ public class SDBMessageHelper {
             messageLength += Helper.roundToMultipleXLength(
                     newCollectionName.length, 4);
 
-            bulk_buffer.put(Helper.roundToMultipleX(newCollectionName, 4));
+            ioBuffer.put(Helper.roundToMultipleX(newCollectionName, 4));
 
-            int record_length = bsonObjectToByteBuffer(bulk_buffer, insertor);
+            int record_length = bsonObjectToByteBuffer(ioBuffer, insertor);
 
             int length = Helper.roundToMultipleXLength(record_length, 4);
             int j = 0;
             while (record_length + j < length) {
-                bulk_buffer.put(BTYE_FILL);
+                ioBuffer.put(BTYE_FILL);
                 j++;
             }
 
             messageLength += length;
 
-            bulk_buffer.position(startPos);
-            bulk_buffer.putInt(messageLength);
+            ioBuffer.position(startPos);
+            ioBuffer.putInt(messageLength);
 
             return messageLength;
         } catch (UnsupportedEncodingException e) {
@@ -552,30 +551,30 @@ public class SDBMessageHelper {
     }
 
     /*
-     * public static int buildAggrRequest(ByteBuffer bulk_buffer, String
+     * public static int buildAggrRequest(ByteBuffer ioBuffer, String
      * collectionFullName, List<BSONObject> insertor) throws BaseException {
-     * return buildBulkInsertRequest(bulk_buffer,collectionFullName,insertor,0);
+     * return buildBulkInsertRequest(ioBuffer,collectionFullName,insertor,0);
      * }
      */
-    public static int buildAggrRequest(IoBuffer bulk_buffer, long reqID,
+    public static int buildAggrRequest(IOBuffer ioBuffer, long reqID,
                                        String collectionFullName,
                                        List<BSONObject> insertor)
             throws BaseException {
         try {
             int messageLength = SDBMessageHelper.MESSAGE_OPINSERT_LENGTH - 1;
-            int startPos = bulk_buffer.position();
+            int startPos = ioBuffer.position();
 
-            bulk_buffer.putInt(-1); // messageLength
-            bulk_buffer.putInt(Operation.OP_AGGREGATE.getOperationCode()); // operationCode
-            bulk_buffer.put(SequoiadbConstants.ZERO_NODEID); // NodeID
-            bulk_buffer.putLong(reqID); // requestID
+            ioBuffer.putInt(-1); // messageLength
+            ioBuffer.putInt(Operation.OP_AGGREGATE.getOperationCode()); // operationCode
+            ioBuffer.put(SequoiadbConstants.ZERO_NODEID); // NodeID
+            ioBuffer.putLong(reqID); // requestID
 
-            bulk_buffer.putInt(0); // version
-            bulk_buffer.putShort((short) 0); // W
-            bulk_buffer.putShort((short) 0); // Padding
-            bulk_buffer.putInt(0); // flag
+            ioBuffer.putInt(0); // version
+            ioBuffer.putShort((short) 0); // W
+            ioBuffer.putShort((short) 0); // Padding
+            ioBuffer.putInt(0); // flag
             byte[] collByteArray = collectionFullName.getBytes("UTF-8");
-            bulk_buffer.putInt(collByteArray.length); // CollectionName
+            ioBuffer.putInt(collByteArray.length); // CollectionName
 
             byte[] newCollectionName = new byte[collByteArray.length + 1];
 
@@ -586,23 +585,23 @@ public class SDBMessageHelper {
             messageLength += Helper.roundToMultipleXLength(
                     newCollectionName.length, 4);
 
-            bulk_buffer.put(Helper.roundToMultipleX(newCollectionName, 4));
+            ioBuffer.put(Helper.roundToMultipleX(newCollectionName, 4));
 
             for (int i = 0; i < insertor.size(); i++) {
-                int record_length = bsonObjectToByteBuffer(bulk_buffer,
+                int record_length = bsonObjectToByteBuffer(ioBuffer,
                         insertor.get(i));
 
                 int length = Helper.roundToMultipleXLength(record_length, 4);
                 int j = 0;
                 while (record_length + j < length) {
-                    bulk_buffer.put(BTYE_FILL);
+                    ioBuffer.put(BTYE_FILL);
                     j++;
                 }
                 messageLength += length;
             }
             // set the real messageLength
-            bulk_buffer.position(startPos);
-            bulk_buffer.putInt(messageLength);
+            ioBuffer.position(startPos);
+            ioBuffer.putInt(messageLength);
 
             return messageLength;
         } catch (java.io.UnsupportedEncodingException e) {
@@ -1097,10 +1096,10 @@ public class SDBMessageHelper {
         return objList;
     }
 
-    public static int bsonObjectToByteBuffer(IoBuffer byteBuffer,
+    public static int bsonObjectToByteBuffer(IOBuffer byteBuffer,
                                              BSONObject obj) {
         BSONEncoder e = new BasicBSONEncoder();
-        ByteOutputBuffer1 buf = new ByteOutputBuffer1(byteBuffer);
+        ByteOutputBuffer buf = new ByteOutputBuffer(byteBuffer);
 
         e.set(buf);
         int length = e.putObject(obj);

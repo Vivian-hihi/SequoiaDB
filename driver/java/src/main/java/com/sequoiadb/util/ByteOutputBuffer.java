@@ -1,20 +1,31 @@
+/**
+ * Copyright (C) 2012-2017 SequoiaDB Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.sequoiadb.util;
 
-import org.apache.mina.core.buffer.IoBuffer;
 import org.bson.io.OutputBuffer;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteOrder;
 
-//import java.nio.ByteBuffer;
+public class ByteOutputBuffer extends OutputBuffer {
+    private IOBuffer ioBuffer;
 
-public class ByteOutputBuffer1 extends OutputBuffer {
-
-    private IoBuffer ioBuffer = null;
-
-    public ByteOutputBuffer1(IoBuffer bufferImpl) {
-        ioBuffer = bufferImpl;
+    ByteOutputBuffer(IOBuffer buffer) {
+        ioBuffer = buffer;
     }
 
     @Override
@@ -38,7 +49,7 @@ public class ByteOutputBuffer1 extends OutputBuffer {
         ioBuffer.putInt(x);
     }
 
-    private static final int swapInt32(int i) {
+    private static int swapInt32(int i) {
         return (i & 0xFF) << 24
                 | (i >> 8 & 0xFF) << 16
                 | (i >> 16 & 0xFF) << 8
@@ -88,13 +99,11 @@ public class ByteOutputBuffer1 extends OutputBuffer {
     @Override
     public void seekEnd() {
         ioBuffer.position(ioBuffer.capacity());
-
     }
 
     @Override
     public void seekStart() {
         ioBuffer.position(0);
-
     }
 
     @Override
@@ -107,5 +116,4 @@ public class ByteOutputBuffer1 extends OutputBuffer {
         out.write(ioBuffer.array());
         return ioBuffer.capacity();
     }
-
 }
