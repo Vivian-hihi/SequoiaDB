@@ -547,7 +547,6 @@ public class SDBMessageHelper {
             byte[] msgInByteArray = Helper.concatByteArray(fieldList);
             return msgInByteArray;
         } catch (java.io.UnsupportedEncodingException e) {
-            e.printStackTrace();
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
     }
@@ -607,7 +606,6 @@ public class SDBMessageHelper {
 
             return messageLength;
         } catch (java.io.UnsupportedEncodingException e) {
-            e.printStackTrace();
             throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
     }
@@ -1187,7 +1185,6 @@ public class SDBMessageHelper {
         try {
             md5 = MessageDigest.getInstance("MD5");
         } catch (Exception e) {
-            e.printStackTrace();
             return "";
         }
         char[] charArray = inStr.toCharArray();
