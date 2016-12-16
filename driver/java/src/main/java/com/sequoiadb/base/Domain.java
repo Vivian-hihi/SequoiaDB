@@ -1,17 +1,21 @@
 /**
- *      Copyright (C) 2012 SequoiaDB Inc.
+ * Copyright (C) 2012 SequoiaDB Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * @package com.sequoiadb.base;
+ * @brief SequoiaDB Driver for Java
+ * @author Tanzhaobo
  */
 /**
  * @package com.sequoiadb.base;
@@ -20,54 +24,53 @@
  */
 package com.sequoiadb.base;
 
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-
-import com.sequoiadb.exception.BaseException;
 
 /**
  * @class Domain
  * @brief Database operation interfaces of Sequoiadb domain.
  */
 public class Domain {
-	private String name;
-	private Sequoiadb sequoiadb;
+    private String name;
+    private Sequoiadb sequoiadb;
 
-	/**
-	 * @fn String getName()
-	 * @brief Return the name of current domain.
-	 * @return The name of current domain
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @fn String getName()
+     * @brief Return the name of current domain.
+     * @return The name of current domain
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @fn Sequoiadb getSequoiadb()
-	 * @brief Return the Sequoiadb connection instance of current domain belong to.
-	 * @return Sequoiadb connection instance 
-	 */
-	public Sequoiadb getSequoiadb() {
-		return sequoiadb;
-	}
+    /**
+     * @fn Sequoiadb getSequoiadb()
+     * @brief Return the Sequoiadb connection instance of current domain belong to.
+     * @return Sequoiadb connection instance
+     */
+    public Sequoiadb getSequoiadb() {
+        return sequoiadb;
+    }
 
-	/**
-	 * @fn Domain(Sequoiadb sequoiadb, String name)
-	 * @brief Constructor
-	 * @param sequoiadb
-	 *            Sequoiadb connection instance 
-	 * @param name
-	 *            the name for the created domain
-	 */
-	Domain(Sequoiadb sequoiadb, String name) {
-		this.name = name;
-		this.sequoiadb = sequoiadb;
-	}
-	
-	/**
-	 * @fn void alterDomain(BSONObject options)
-	 * @brief Alter the current domain.
+    /**
+     * @fn Domain(Sequoiadb sequoiadb, String name)
+     * @brief Constructor
+     * @param sequoiadb
+     *            Sequoiadb connection instance
+     * @param name
+     *            the name for the created domain
+     */
+    Domain(Sequoiadb sequoiadb, String name) {
+        this.name = name;
+        this.sequoiadb = sequoiadb;
+    }
+
+    /**
+     * @fn void alterDomain(BSONObject options)
+     * @brief Alter the current domain.
      * @param options the options user wants to alter:
      *<ul>
      *<li>Groups:    The list of replica groups' names which the domain is going to contain.
@@ -81,54 +84,54 @@ public class Domain {
      *               However, it won't automatically split data into those groups which were add into this domain later.
      *               eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
      *</ul>
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public void alterDomain(BSONObject options) throws BaseException {
-		if (null == options)
-			throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
-		// append argument
-		BSONObject newObj = new BasicBSONObject();
-		newObj.put(SequoiadbConstants.FIELD_NAME_NAME, this.name);
-		newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
-		// run command
-		SDBMessage rtn = this.sequoiadb.adminCommand(SequoiadbConstants.CMD_NAME_ALTER_DOMAIN,
-				                      0, 0, 0, -1, newObj,
-				                      null, null, null);
-		int flags = rtn.getFlags();
-		if (flags != 0) {
-			throw new BaseException(flags);
-		}
-	}
-	
-	/**
-	 * @fn DBCursor listCSInDomain()
-	 * @brief List all the collection spaces in current domain.
-	 * @return the cursor of result
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public DBCursor listCSInDomain() throws BaseException {
-		return listCSCL(Sequoiadb.SDB_LIST_CS_IN_DOMAIN);
-	}
-	
-	/**
-	 * @fn DBCursor listCLInDomain()
-	 * @brief List all the collections in current domain.
-	 * @return the cursor of result
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public DBCursor listCLInDomain() throws BaseException {
-		return listCSCL(Sequoiadb.SDB_LIST_CL_IN_DOMAIN);
-	}
-	
-	private DBCursor listCSCL(int type) throws BaseException {
-		// append argument
-		BSONObject matcher = new BasicBSONObject();
-		BSONObject selector = new BasicBSONObject();
-		matcher.put(SequoiadbConstants.FIELD_NAME_DOMAIN, this.name);
-		selector.put(SequoiadbConstants.FIELD_NAME_NAME, null);
-		// get cs or cl in current domain 
-		DBCursor cursor = this.sequoiadb.getList(type, matcher, selector, null);
-		return cursor;
-	}
-	
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public void alterDomain(BSONObject options) throws BaseException {
+        if (null == options)
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        // append argument
+        BSONObject newObj = new BasicBSONObject();
+        newObj.put(SequoiadbConstants.FIELD_NAME_NAME, this.name);
+        newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+        // run command
+        SDBMessage rtn = this.sequoiadb.adminCommand(SequoiadbConstants.CMD_NAME_ALTER_DOMAIN,
+                0, 0, 0, -1, newObj,
+                null, null, null);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags);
+        }
+    }
+
+    /**
+     * @fn DBCursor listCSInDomain()
+     * @brief List all the collection spaces in current domain.
+     * @return the cursor of result
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public DBCursor listCSInDomain() throws BaseException {
+        return listCSCL(Sequoiadb.SDB_LIST_CS_IN_DOMAIN);
+    }
+
+    /**
+     * @fn DBCursor listCLInDomain()
+     * @brief List all the collections in current domain.
+     * @return the cursor of result
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public DBCursor listCLInDomain() throws BaseException {
+        return listCSCL(Sequoiadb.SDB_LIST_CL_IN_DOMAIN);
+    }
+
+    private DBCursor listCSCL(int type) throws BaseException {
+        // append argument
+        BSONObject matcher = new BasicBSONObject();
+        BSONObject selector = new BasicBSONObject();
+        matcher.put(SequoiadbConstants.FIELD_NAME_DOMAIN, this.name);
+        selector.put(SequoiadbConstants.FIELD_NAME_NAME, null);
+        // get cs or cl in current domain
+        DBCursor cursor = this.sequoiadb.getList(type, matcher, selector, null);
+        return cursor;
+    }
+
 }

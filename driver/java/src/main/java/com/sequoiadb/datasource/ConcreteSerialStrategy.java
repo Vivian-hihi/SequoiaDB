@@ -1,23 +1,22 @@
 package com.sequoiadb.datasource;
 
-public class ConcreteSerialStrategy extends AbstractStrategy{
+public class ConcreteSerialStrategy extends AbstractStrategy {
 
-	private int _counter = 0;
-	
-	@Override
-	public String getAddress() {
-		String addr = null;
-		_lockForAddr.lock();
-		try {
-			if (1 <= _addrs.size()) {
-				addr = _addrs.get((0x7fff&(_counter++))%(_addrs.size()));
-			}
-		} finally {
-			_lockForAddr.unlock();
-		}
-		return addr;
-	}
+    private int _counter = 0;
 
+    @Override
+    public String getAddress() {
+        String addr = null;
+        _lockForAddr.lock();
+        try {
+            if (1 <= _addrs.size()) {
+                addr = _addrs.get((0x7fff & (_counter++)) % (_addrs.size()));
+            }
+        } finally {
+            _lockForAddr.unlock();
+        }
+        return addr;
+    }
 
 
 }
