@@ -2,6 +2,7 @@ package com.sequoiadb.procedure;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -32,6 +33,7 @@ public class TestProcedure7121 extends SdbTestBase{
     private CollectionSpace cs;
     private String clName = "cl7121";
     
+    //@Parameters({"coordAddr","commCSName"})
     @BeforeTest
     public void setUp() {
         String coordAddr = SdbTestBase.coordUrl;
@@ -54,15 +56,13 @@ public class TestProcedure7121 extends SdbTestBase{
             }
             this.cs.createCollection(clName);
         }catch (BaseException e) {
+            System.out.println("Sequoiadb driver TestProcedure7121 setUp error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestProcedure7121 setUp error, error description:" + e.getMessage());
         }
     }
     
     @Test
     public void test() {
-        if (!Util.isCluster(this.sdb)) {
-            return ;
-        }
         testJSProcedure();
         testRMProcedure();
     }
@@ -99,6 +99,7 @@ public class TestProcedure7121 extends SdbTestBase{
             cur.close();
             Assert.assertEquals(count, 0);
         }catch (BaseException e) {
+            System.out.println("Sequoiadb driver TestProcedure7121 testJSProcedure error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestProcedure7121 testJSProcedure error, error description:" + e.getMessage());
         }
     }
@@ -147,20 +148,19 @@ public class TestProcedure7121 extends SdbTestBase{
             errObj = evalResult2.getErrMsg();
             Assert.assertNotNull(errObj, "Sequoiadb driver TestProcedure7121 testEval no function sum_7121");
         }catch (BaseException e) {
+            System.out.println("Sequoiadb driver TestProcedure7121 testEval error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestProcedure7121 testEval error, error description:" + e.getMessage());
         }
         try{
             sdb.rmProcedure("sum_7121");
         }catch (BaseException e){
+            System.out.println("Failed to remove js procedure");
             Assert.fail("Error message is: "+e.getMessage()+e.getErrorCode());
         }
     }
     
     @Test
     public void testEvalJS() {
-        if (!Util.isCluster(this.sdb)) {
-            return ;
-        }
         String code = "function sum_7121(x, y){ var z = x + y;}";
         String evalCode = "sum_7121(0.5, -2)";
         testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_VOID);
@@ -173,6 +173,24 @@ public class TestProcedure7121 extends SdbTestBase{
         code = "function sum_7121(x, y){ return true;}";
         evalCode = "sum_7121(1,2)";
         testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_BOOL);
+        
+        code = "function sum_7121(x, y){ var o={a:123}; return o;}";
+        evalCode = "sum_7121(1,2)";
+        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_OBJ);
+//
+//        code = "function sum_7121(coordAddr, csName){ var db=new Sdb(coordAddr,\"\",\"\"); var cs =db.getCS(csName); db.close(); return cs;}";
+//        evalCode = "sum_7121('" + SdbTestBase.coordUrl + "','" +SdbTestBase.csName+"')";
+//        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_CS);
+//        code = "function sum_7121(coordAddr, csName, clName){ var db=new Sdb(coordAddr,\"\",\"\"); " +
+//        		"var cs=db.getCS(csName); var cl=cs.getCL(clName); db.close; return cl;}";
+//        evalCode = "sum_7121('" + SdbTestBase.coordUrl + "','" +SdbTestBase.csName+"','" + this.clName +"')";
+//        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_CL);
+//        
+//        code = "function sum_7121(coordAddr){ var db=new Sdb(coordAddr,\"\",\"\"); var rg = db.getCoordRG(); db.close();return rg;}";
+//        evalCode = "sum_7121('" + SdbTestBase.coordUrl +"')";
+//        testEvalWithReturnType(code, evalCode, Sequoiadb.SptReturnType.TYPE_RG);
+
+        
     }
     
     public void testEvalWithReturnType(String code, String evalCode, SptReturnType returnType) {
@@ -210,31 +228,31 @@ public class TestProcedure7121 extends SdbTestBase{
                 expected.put("value", true);
             }
             if (returnType.equals(Sequoiadb.SptReturnType.TYPE_OBJ)) {
-                expected.put("value", "123");
+                String str = "{\"a\" : 123}";
+                expected.put("value", JSON.parse(str));
             }
-            Assert.assertEquals(actual, expected);
+            //TODO
+           Assert.assertEquals(actual, expected);
         }catch (BaseException e) {
+            System.out.println("test testEvalWithReturnType" + returnType +" error, error description:" + e.getMessage());
             Assert.fail("test testEvalWithReturnType" + returnType +" error, error description:" + e.getMessage());
         }
         
         try{
             sdb.rmProcedure("sum_7121");
         }catch (BaseException e){
-            Assert.fail(e.getMessage());
+            System.out.println("test testEvalWithReturnType" + returnType +" failed to remove js procedure");
+            System.out.println("test testEvalWithReturnType" + returnType +" error message is: "+e.getMessage()+e.getErrorCode());
         }
     }
     
     @AfterTest
     public void tearDown() {
-        try {
-            System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            if (this.cs.isCollectionExist(clName)) {
-                this.cs.dropCollection(clName);
-            }
-            this.sdb.disconnect();
-        } catch (BaseException e) {
-            Assert.fail(e.getMessage());
+        System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+        if (this.cs.isCollectionExist(clName)) {
+            this.cs.dropCollection(clName);
         }
+        this.sdb.disconnect();
     }  
 }
