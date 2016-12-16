@@ -41,6 +41,7 @@
 #include "sptSPDef.hpp"
 #include "sptSPArguments.hpp"
 #include "sptReturnVal.hpp"
+#include "sptCommon.hpp"
 #include "../bson/bson.hpp"
 
 
