@@ -75,11 +75,11 @@ def clean( cs_name ):
 def insert_decimal( cl, data ):
    print '---begin to insert data'
    try:
-      cl.insert( doc )
+      cl.insert( data )
    except SDBBaseError,e:
-      pysequoiadb._print("insert decimal:%s failed" % doc)
+      pysequoiadb._print("insert decimal:%s failed" % data)
       
-def check_Result( condition, value, json ):
+def check_Result( cl, condition, obj, doc ):
    print '---begin to check data'
    cnt = cl.get_count(condition=condition)
    rec = cl.query(condition=condition).next()
@@ -162,105 +162,105 @@ if __name__ == "__main__":
       obj = Decimal( 2147483647, 10, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #2
       obj = Decimal( -2147483648, 10, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #3
       obj = Decimal( 0, 5, 2)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #4
       obj = Decimal( 9223372036854775807l, 19, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #5
       obj = Decimal( -9223372036854775808l, 19, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #6
       obj = Decimal( 1.7e308, 1000, 2)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #7
       obj = Decimal( -1.7e308, 1000, 2)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #8
       obj = Decimal( 4.9e-324, 1000, 324)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #9
       obj = Decimal( -4.9e-324, 1000, 324)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #10
       obj = Decimal( -.49, 5, 2)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #11
       obj = Decimal( "92233720368547758089223372036854775808", 1000, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #12
       obj = Decimal( "-92233720368547758089223372036854775808", 1000, 2)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #13
       obj = Decimal( "4.92513687945623587412589623", 27, 26)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #14
       obj = Decimal( "-4.92513687945623587412589623", 27, 26)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #15
       obj = Decimal( "0", 27, 26)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #16
@@ -270,14 +270,14 @@ if __name__ == "__main__":
       obj = Decimal( "1", 1, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #18
       obj = Decimal( "1", 1000, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #19
@@ -299,14 +299,14 @@ if __name__ == "__main__":
       obj = Decimal( "1", 1000, 0)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #24
       obj = Decimal( "1", 1000, 999)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #25
@@ -325,21 +325,21 @@ if __name__ == "__main__":
       obj = Decimal( "123.56", 5, 2)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #30
       obj = Decimal( "123.56", 5, 1)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #31
       obj = Decimal( "123.56", 6, 3)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #32
@@ -352,105 +352,105 @@ if __name__ == "__main__":
       obj = Decimal( 2147483647, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #35
       obj = Decimal( -2147483648, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #36
       obj = Decimal( 0, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #37
       obj = Decimal( 9223372036854775807l, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #38
       obj = Decimal( -9223372036854775808l, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #39
       obj = Decimal( 1.7e308, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #40
       obj = Decimal( -1.7e308, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #41
       obj = Decimal( 4.9e-324, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #42
       obj = Decimal( -4.9e-324, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #43
       obj = Decimal( -.49, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #44
       obj = Decimal( "92233720368547758089223372036854775808", None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #45
       obj = Decimal( "-92233720368547758089223372036854775808", None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #46
       obj = Decimal( "4.92513687945623587412589623", None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #47
       obj = Decimal( "-4.92513687945623587412589623", None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #48
       obj = Decimal( "0", None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #49
@@ -461,7 +461,7 @@ if __name__ == "__main__":
       obj.set_zero()
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       if( obj.compare(0) != 0 ):
          print 'expect: 0, actual: %s' % ( obj )     
          raise  Exception( 'CHECK_VALUE_ERROR' )
@@ -476,7 +476,7 @@ if __name__ == "__main__":
       obj.set_max()
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       obj1 = Decimal( "9e+1000", None, None)
       if( obj.compare(obj1) != 1 ):
          print 'expect: 0, actual: %s' % ( obj )     
@@ -492,7 +492,7 @@ if __name__ == "__main__":
       obj.set_min()
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       obj1 = Decimal( "-9e-1000", None, None)
       if( obj.compare(obj1) != -1 ):
          print 'expect: 0, actual: %s' % ( obj )     
@@ -709,7 +709,7 @@ if __name__ == "__main__":
       obj = Decimal( value, None, None)
       doc = {"a":obj,"_id":1}
       insert_decimal( cl, doc )
-      check_Result( {"a":{"$type":100}}, obj, doc )
+      check_Result( cl, {"a":{"$type":1,"$et":100}}, obj, doc )
       cl.delete()
       
       #72
@@ -722,11 +722,8 @@ if __name__ == "__main__":
       value = value + "."
       while ( j <= 16383):
          value = value + "8"
-         j = j + 1 
-      obj = Decimal( value, None, None)
-      doc = {"a":obj,"_id":1}
-      insert_decimal( cl, doc )
-      cl.delete()
+         j = j + 1
+      check_InvalidValueArg_Result( value, None, None )
       
       #73
       i = 0
@@ -734,10 +731,7 @@ if __name__ == "__main__":
       while ( i <= 131072):
          value = value + "9"
          i = i + 1
-      obj = Decimal( value, None, None)
-      doc = {"a":obj,"_id":2}
-      insert_decimal( cl, doc )
-      cl.delete()
+      check_InvalidValueArg_Result( value, None, None )
       
       #74
       j = 0
@@ -745,12 +739,136 @@ if __name__ == "__main__":
       value = value + "."
       while ( j <= 16383):
          value = value + "8"
-         j = j + 1 
-      obj = Decimal( value, None, None)
-      doc = {"a":obj,"_id":3}
-      insert_decimal( cl, doc )
-      cl.delete()
+         j = j + 1
+      check_InvalidValueArg_Result( value, None, None )
+      
+      #seqDB-10493
+      obj = Decimal( 2147483647, 100, 2 )
+      json = '{"$decimal": "2147483647.00", "$precision": [100, 2]}'
+      if( dumps(obj) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(obj), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'actual : %s, expect: %s' % ( loads(json), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(obj) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(obj), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(json), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(dumps(obj)).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(dumps(obj)), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(loads(json)) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(loads(json)), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
          
+      obj = Decimal( -9223372036854775808l, 100, 2 )
+      json = '{"$decimal": "-9223372036854775808.00", "$precision": [100, 2]}'
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(dumps(obj)).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(dumps(obj)), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(loads(json)) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(loads(json)), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+         
+      obj = Decimal( 4.9e-324, 1000, 325 )
+      json = '{"$decimal": "0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000049", "$precision": [1000, 325]}'
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(dumps(obj)).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(dumps(obj)), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(loads(json)) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(loads(json)), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+         
+      obj = Decimal( 2147483647, None, None )
+      json = '{"$decimal": "2147483647"}'
+      if( dumps(obj) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(obj), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'actual : %s, expect: %s' % ( loads(json), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(obj) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(obj), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(json), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(dumps(obj)).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(dumps(obj)), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(loads(json)) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(loads(json)), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+         
+      obj = Decimal( -9223372036854775808l, None, None )
+      json = '{"$decimal": "-9223372036854775808"}'
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(dumps(obj)).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(dumps(obj)), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(loads(json)) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(loads(json)), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+         
+      obj = Decimal( "4.9e-324", None, None )
+      json = '{"$decimal": "0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000049"}'
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(obj) != json ):
+         print 'expect: %s, actual: %s' % ( json, dumps(obj) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(json).compare( obj ) != 0 ):
+         print 'expect: %s, actual: %s' % ( obj, loads(json) )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( loads(dumps(obj)).compare( obj ) != 0 ):
+         print 'actual: %s, expect: %s' % ( loads(dumps(obj)), obj )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+      if( dumps(loads(json)) != json ):
+         print 'actual: %s, expect: %s' % ( dumps(loads(json)), json )
+         raise  Exception( 'CHECK_JSON_ERROR' )
+       
       print 'all test case pass'
             
    except SDBBaseError, e:
