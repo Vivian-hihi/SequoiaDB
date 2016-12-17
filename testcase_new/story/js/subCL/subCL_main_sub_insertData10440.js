@@ -6,18 +6,32 @@
 **************************************/
 function main()
 {
+   //check test environment before split
+   try
+	{
+	   //standalone can not split
+	   if( true == commIsStandalone( db ) )
+      {
+         println( "run mode is standalone" );
+         return;
+      }     
+      //less two groups,can not split
+      var allGroupName = getGroupName( db );       
+      if( 1 === allGroupName.length )
+      {
+         println("--least two groups");
+         return ;
+      }
+   }
+   catch( e )
+   {
+      throw e;
+   }
    
    mainCL_Name = CHANGEDPREFIX + "_maincl" ;
    subCL_Name1 = CHANGEDPREFIX + "_subcl1";
    subCL_Name2 = CHANGEDPREFIX + "_subcl2";
-
-   //少于两个数据组，不适合测试该用例
-   var allGroupName = getGroupName( db );
-   if( 1 === allGroupName.length )
-   {
-      println("--least two groups");
-      return ;
-   }
+   
    //clean environment before test
    commDropCL( db, COMMCSNAME, mainCL_Name, true, true, 
                   "clean sub collection" ); 
