@@ -434,9 +434,14 @@
       </copy>
       <copy file="${srccode_dir}/conf/sdbcm.conf" todir="${release_db_dir}/conf" />
       
-      <copy todir="${release_db_dir}/doc">
-         <fileset dir="${srccode_dir}/doc/build/" />
-      </copy>
+      <if>
+         <equals arg1="${plat_form}" arg2="X86" />
+         <then>
+            <copy todir="${release_db_dir}/doc">
+               <fileset dir="${srccode_dir}/doc/build/" />
+            </copy>
+         </then>
+      </if>
       <!--TODO: copy sdb help doc>
       <copy todir="${release_db_dir}/doc/manual">
          <fileset dir="${srccode_dir}/doc/manual" />
