@@ -57,7 +57,7 @@ public class SequoiadbDatasourceImpl {
     private IConnectionPool _usedConnPool = null;
     private IConnectStrategy _strategy = null;
     private ConnectionItemMgr _connItemMgr = null;
-    private Object _createConnSingal = new Object();
+    private final Object _createConnSingal = new Object();
     // for creating connections
     private String _username = null;
     private String _password = null;
@@ -72,7 +72,7 @@ public class SequoiadbDatasourceImpl {
     private boolean _hasClosed = false;
     // for thread safe
     private ReentrantReadWriteLock _rwLock = new ReentrantReadWriteLock();
-    private Object _objForReleaseConn = new Object();
+    private final Object _objForReleaseConn = new Object();
     // for others
     private Random _rand = new Random(47);
     private double MULTIPLE = 1.2;

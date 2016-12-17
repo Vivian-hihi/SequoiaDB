@@ -1359,7 +1359,7 @@ public class Sequoiadb {
     public void waitTasks(long[] taskIDs) throws BaseException {
         // check argument
         if (taskIDs == null || taskIDs.length == 0)
-            throw new BaseException(SDBError.SDB_INVALIDARG, taskIDs.toString());
+            throw new BaseException(SDBError.SDB_INVALIDARG, "taskIDs is empty or null");
         // append argument:{ "TaskID": { "$in": [ 1, 2, 3 ] } }
         BSONObject newObj = new BasicBSONObject();
         BSONObject subObj = new BasicBSONObject();

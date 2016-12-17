@@ -132,7 +132,7 @@ public class DBCollection {
      */
     public void setMainKeys(String[] keys) throws BaseException {
         if (keys == null)
-            throw new BaseException(SDBError.SDB_INVALIDARG, keys.toString());
+            throw new BaseException(SDBError.SDB_INVALIDARG, "keys is null");
         // remove the main keys set in last time
         mainKeys.clear();
         // add the new main keys
@@ -328,7 +328,7 @@ public class DBCollection {
      */
     public /*! @cond x*/ <T> /*! @endcond */ void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
         if (type == null || type.size() == 0)
-            throw new BaseException(SDBError.SDB_INVALIDARG, type.toString());
+            throw new BaseException(SDBError.SDB_INVALIDARG, "type is empty or null");
         // transform java object to bson object
         List<BSONObject> objs = new ArrayList<BSONObject>();
         try {

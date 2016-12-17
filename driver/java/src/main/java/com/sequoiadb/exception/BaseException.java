@@ -16,6 +16,8 @@
 package com.sequoiadb.exception;
 
 
+import java.util.Arrays;
+
 /**
  * @author tanzhaobo
  *
@@ -95,18 +97,8 @@ public class BaseException extends RuntimeException {
         } catch (Exception e) {
             // nothing to do
         }
-        // prepare the other info
-        String infos = "";
-        if (objs != null && objs.length > 0) {
-            for (Object obj : objs) {
-                if (infos == "") {
-                    infos += obj;
-                } else {
-                    infos += ", " + obj;
-                }
-            }
-        }
-        this.detail = infos;
+
+        this.detail = Arrays.toString(objs);
     }
 
     /**
@@ -115,8 +107,7 @@ public class BaseException extends RuntimeException {
      * @deprecated since v2.8
      */
     public BaseException(int errorCode, Object... objs) {
-        this(SDBError.getSDBError(errorCode) != null ?
-                SDBError.getSDBError(errorCode).getErrorType() : null, objs);
+        this(SDBError.getSDBError(errorCode), Arrays.toString(objs));
     }
 
 

@@ -119,7 +119,6 @@ public class IOBuffer {
     }
 
     public IOBuffer put(byte[] src) {
-    	ensureCapacity(src.length);
         put(src, 0, src.length);
         return this;
     }

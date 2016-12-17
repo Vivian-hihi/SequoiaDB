@@ -336,7 +336,7 @@ public enum SDBError {
     private int code;
     private String desc;
 
-    private SDBError(int code, String desc) {
+    SDBError(int code, String desc) {
         this.code = code;
         this.desc = desc;
     }
