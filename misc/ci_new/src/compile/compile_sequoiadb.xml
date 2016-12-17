@@ -243,9 +243,13 @@
    </target>
 
    <target name="compile_python_driver" >
-      <var name="src_dir" value="${srccode_dir}/driver/python" />      
+      <var name="src_dir" value="${srccode_dir}/driver/python" /> 
+      
       <exec executable="scons" dir="${src_dir}">
          <arg line="${cmd_debug}" />
+      </exec>
+      <exec executable="scons" dir="${src_dir}">
+         <arg line="${cmd_debug} --py3" />
       </exec>
    </target>
    
