@@ -1765,11 +1765,11 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          {
             break ;
          }
-         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+         bsonConvertJsonRawConcat ( pbuf, left, "{ \"$code\": \"", FALSE ) ;
          CHECK_LEFT ( left )
          bsonConvertJsonRawConcat ( pbuf, left, bson_iterator_code( &i ), TRUE ) ;
          CHECK_LEFT ( left )
-         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
+         bsonConvertJsonRawConcat ( pbuf, left, "\" }", FALSE ) ;
          CHECK_LEFT ( left )
          break ;
       }

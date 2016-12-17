@@ -606,11 +606,15 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       }
       case BSON_CODE:
       {
+         bson_sprint_raw_concat ( pbuf, left, "{ \"$code\": \"", 0 ) ;
+         CHECK_LEFT ( left )
          bson_sprint_raw_concat ( pbuf, left, delCharStr, 0 ) ;
          CHECK_LEFT ( left )
          bson_sprint_raw_concat ( pbuf, left, bson_iterator_code( i ), 1 ) ;
          CHECK_LEFT ( left )
          bson_sprint_raw_concat ( pbuf, left, delCharStr, 0 ) ;
+         CHECK_LEFT ( left )
+         bson_sprint_raw_concat ( pbuf, left, "\" }", 0 ) ;
          CHECK_LEFT ( left )
          break;
       }

@@ -667,62 +667,69 @@ namespace bson {
         toString(s, includeFieldName, full);
         return s.str();
     }
+
+    inline void escapeString( StringBuilder& s, const char *pStr, int len )
+    {
+        for ( int i = 0; i < len; ++i )
+        {
+           switch( *pStr )
+           {
+           case '\"':
+           {
+              s << "\\\"" ;
+              break ;
+           }
+           case '\\':
+           {
+              s << "\\\\" ;
+              break ;
+           }
+           case '\b':
+           {
+              s << "\\b" ;
+              break ;
+           }
+           case '\f':
+           {
+              s << "\\f" ;
+              break ;
+           }
+           case '\n':
+           {
+              s << "\\n" ;
+              break ;
+           }
+           case '\r':
+           {
+              s << "\\r" ;
+              break ;
+           }
+           case '\t':
+           {
+              s << "\\t" ;
+              break ;
+           }
+           default:
+           {
+              s << (*pStr) ;
+              break ;
+           }
+           }
+           ++pStr ;
+        }
+    }
+
+    inline void escapeString( StringBuilder& s, const char *pStr )
+    {
+        escapeString( s, pStr, strlen( pStr ) ) ;
+    }
+
     inline void BSONElement::toString(StringBuilder& s, bool includeFieldName,
       bool full ) const {
         if ( includeFieldName && type() != EOO )
         {
-            //s << "\"" << fieldName() << "\": ";
             s << "\"" ;
-            int len = 0 ;
-            const char *tempData = fieldName() ;
-            len = strlen( tempData ) ;
-            for ( int i = 0; i < len; ++i )
-            {
-               switch( *tempData )
-               {
-               case '\"':
-               {
-                  s << "\\\"" ;
-                  break ;
-               }
-               case '\\':
-               {
-                  s << "\\\\" ;
-                  break ;
-               }
-               case '\b':
-               {
-                  s << "\\b" ;
-                  break ;
-               }
-               case '\f':
-               {
-                  s << "\\f" ;
-                  break ;
-               }
-               case '\n':
-               {
-                  s << "\\n" ;
-                  break ;
-               }
-               case '\r':
-               {
-                  s << "\\r" ;
-                  break ;
-               }
-               case '\t':
-               {
-                  s << "\\t" ;
-                  break ;
-               }
-               default:
-               {
-                  s << (*tempData) ;
-                  break ;
-               }
-               }
-               ++tempData ;
-            }
+            escapeString( s, fieldName() ) ;
             s << "\": " ;
         }
         switch ( type() ) {
@@ -765,57 +772,9 @@ namespace bson {
             s << "\" }" ;
             */
             s << "{ \"$regex\": \"" ;
-            const char *tempData = regex() ;
-            int len = strlen( tempData ) ;
-            for ( int i = 0; i < len; ++i )
-            {
-               switch( *tempData )
-               {
-               case '\"':
-               {
-                  s << "\\\"" ;
-                  break ;
-               }
-               case '\\':
-               {
-                  s << "\\\\" ;
-                  break ;
-               }
-               case '\b':
-               {
-                  s << "\\b" ;
-                  break ;
-               }
-               case '\f':
-               {
-                  s << "\\f" ;
-                  break ;
-               }
-               case '\n':
-               {
-                  s << "\\n" ;
-                  break ;
-               }
-               case '\r':
-               {
-                  s << "\\r" ;
-                  break ;
-               }
-               case '\t':
-               {
-                  s << "\\t" ;
-                  break ;
-               }
-               default:
-               {
-                  s << (*tempData) ;
-                  break ;
-               }
-               }
-               ++tempData ;
-            }
+            escapeString( s, regex() ) ;
             s << "\", \"$options\": \"" ;
-            const char *p = regexFlags () ;
+            const char *p = regexFlags() ;
             if ( p ) s << p ;
             s << "\" }" ;
         }
@@ -877,82 +836,34 @@ namespace bson {
               << codeWScopeObject().toString(false, full) << ")";
             break;
         case Code:
+            s << "{ \"$code\": \"" ;
             if ( !full &&  valuestrsize() > 80 ) {
-                s.write(valuestr(), 70);
+                const char *pStr = valuestr() ;
+                int len = strlen( pStr ) ;
+                len = len > 70 ? 70 : len ;
+                escapeString( s, valuestr(), len ) ;
+                //s.write(valuestr(), 70);
                 s << "...";
             }
             else {
-                s.write(valuestr(), valuestrsize()-1);
+                escapeString( s, valuestr() ) ;
+                //s.write(valuestr(), valuestrsize()-1);
             }
+            s << "\" }";
             break;
         case Symbol:
         case bson::String:
             s << '"';
             if ( !full &&  valuestrsize() > 160 ) {
-                s.write(valuestr(), 150);
-                s << "...\"";
+                const char *pStr = valuestr() ;
+                int len = strlen( pStr ) ;
+                len = len > 150 ? 150 : len ;
+                escapeString( s, valuestr(), len ) ;
+                //s.write(valuestr(), 150);
+                s << "...";
             }
             else {
-               int len = 0 ;
-               const char *tempData = valuestr() ;
-               len = valuestrsize()-1 ;
-               for ( int i = 0; i < len; ++i )
-               {
-                  switch( *tempData )
-                  {
-                  /*
-                    the JSON standard does not need to be
-                    escaped single quotation marks
-                  */
-                  /*case '\'':
-                  {
-                     s << "\\\'" ;
-                     break ;
-                  }*/
-                  case '\"':
-                  {
-                     s << "\\\"" ;
-                     break ;
-                  }
-                  case '\\':
-                  {
-                     s << "\\\\" ;
-                     break ;
-                  }
-                  case '\b':
-                  {
-                     s << "\\b" ;
-                     break ;
-                  }
-                  case '\f':
-                  {
-                     s << "\\f" ;
-                     break ;
-                  }
-                  case '\n':
-                  {
-                     s << "\\n" ;
-                     break ;
-                  }
-                  case '\r':
-                  {
-                     s << "\\r" ;
-                     break ;
-                  }
-                  case '\t':
-                  {
-                     s << "\\t" ;
-                     break ;
-                  }
-                  default:
-                  {
-                     s << (*tempData) ;
-                     break ;
-                  }
-                  }
-                  ++tempData ;
-               }
-               //s.write(valuestr(), valuestrsize()-1);
+               escapeString( s, valuestr() ) ;
                s << '"';
             }
             break;
