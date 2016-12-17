@@ -1,6 +1,6 @@
 package com.sequoiadb.datasource;
 
-public class ConcreteSerialStrategy extends AbstractStrategy {
+class ConcreteSerialStrategy extends AbstractStrategy {
 
     private int _counter = 0;
 

@@ -2,7 +2,7 @@ package com.sequoiadb.datasource;
 
 import java.util.Random;
 
-public class ConcreteRandomStrategy extends AbstractStrategy {
+class ConcreteRandomStrategy extends AbstractStrategy {
     private Random _rand = new Random(47);
 
     @Override

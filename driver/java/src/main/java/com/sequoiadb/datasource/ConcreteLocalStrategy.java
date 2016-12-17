@@ -8,7 +8,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.*;
 
-public class ConcreteLocalStrategy extends AbstractStrategy {
+class ConcreteLocalStrategy extends AbstractStrategy {
     private Random _rand = new Random(47);
     private List<String> _localAddrs = new ArrayList<String>();
     private List<String> _localIPs = new ArrayList<String>();

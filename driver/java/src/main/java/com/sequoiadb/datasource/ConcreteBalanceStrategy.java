@@ -70,7 +70,7 @@ class CountInfo implements Comparable<CountInfo> {
     }
 }
 
-public class ConcreteBalanceStrategy implements IConnectStrategy {
+class ConcreteBalanceStrategy implements IConnectStrategy {
 
     private HashMap<String, LinkedList<ConnItem>> _idleConnItemMap = new HashMap<String, LinkedList<ConnItem>>();
     private HashMap<String, CountInfo> _countInfoMap = new HashMap<String, CountInfo>();

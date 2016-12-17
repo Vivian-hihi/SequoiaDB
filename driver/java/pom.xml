@@ -111,6 +111,9 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <excludePackageNames>com.sequoiadb.util:org.bson.io:org.bson.util.annotations</excludePackageNames>
+                        </configuration>
                     </plugin>
                     <!-- GPG -->
                     <plugin>

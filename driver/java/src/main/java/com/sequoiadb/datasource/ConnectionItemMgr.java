@@ -40,7 +40,7 @@ class ConnItem implements Comparable<ConnItem> {
     }
 }
 
-public class ConnectionItemMgr {
+class ConnectionItemMgr {
     private int _capacity;
     private static long _sequenceNumber = -1;
     private TreeSet<ConnItem> _idleItem = null;
