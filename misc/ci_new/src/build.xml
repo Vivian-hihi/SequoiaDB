@@ -105,6 +105,7 @@
    </target>
    
    <target name="compile_build">
+      <getplatform resultProperty="plat_form"/>
       <ant antfile="compile_sequoiadb.xml" dir="src/compile" inheritAll="true" useNativeBaseDir="true" />
    </target>
    

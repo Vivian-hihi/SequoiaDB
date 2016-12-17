@@ -32,7 +32,12 @@
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
       <!--TODO: antcall target="compile_spark_connector"/-->
-      <antcall target="compile_document"/>
+      <if>
+         <equals arg1="${plat_form}" arg2="X86" />
+         <then>
+            <antcall target="compile_document"/>
+         </then>
+      </if>
       <antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
