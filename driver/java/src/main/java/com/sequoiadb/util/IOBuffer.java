@@ -119,7 +119,7 @@ public class IOBuffer {
     }
 
     public IOBuffer put(byte[] src) {
-        buf.put(src, 0, src.length);
+        put(src, 0, src.length);
         return this;
     }
 
