@@ -378,7 +378,10 @@
       <copy todir="${release_driver_dir}/lib/phplib" >
          <fileset dir="${srccode_dir}/driver/php5/release" includes="*.so" />
       </copy>
-      <copy file="${srccode_dir}/driver/python/pysequoiadb.tar.gz" todir="${release_driver_dir}/python" />
+      
+      <copy todir="${release_driver_dir}/python" >
+         <fileset dir="${srccode_dir}/driver/python/" includes="pysequoiadb*py*.tar.gz" />
+      </copy>
       
       <tar destfile="${release_dir}/sequoiadb-driver-${sequoiadb_version}-${platform}.tar.gz" 
            longfile="gnu" compression="gzip" 
@@ -485,7 +488,9 @@
       </copy>     
       <chmod dir="${release_db_dir}/postgresql" includes="*sdb_fdw.so*" perm="a+x" />
       
-      <copy todir="${release_db_dir}/python" file="${srccode_dir}/driver/python/pysequoiadb.tar.gz"/>
+      <copy todir="${release_db_dir}/python" >
+         <fileset dir="${srccode_dir}/driver/python/" includes="pysequoiadb*py*.tar.gz" />
+      </copy>
       
       <copy todir="${release_db_dir}/samples">
          <fileset dir="${srccode_dir}/client/samples" />
