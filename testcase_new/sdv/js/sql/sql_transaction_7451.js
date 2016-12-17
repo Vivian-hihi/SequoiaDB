@@ -125,7 +125,7 @@ function main( db )
    println("------Begin to drop cl in the end.");
    try
    {
-      db.execUpdate( "drop collection "+csName+"."+clName1 ) ;
+      db.execUpdate( "drop collection "+csName+"."+clName ) ;
    }
    catch (e)
    {
