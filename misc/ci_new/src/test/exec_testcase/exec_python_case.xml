@@ -59,7 +59,7 @@
          <var name="pythondir" value="@{dbdir}/python"/>
          <switch value="@{type}">
             <case value="install">
-               <untar src="${pythondir}/pysequoiadb.tar.gz" dest="${pythondir}" compression="gzip"/>
+               <untar src="${pythondir}/pysequoiadb-2.8-py2.tar.gz" dest="${pythondir}" compression="gzip"/>
                <exec executable="python" dir="${pythondir}">
                   <arg line=" setup.py install" />
                </exec>
