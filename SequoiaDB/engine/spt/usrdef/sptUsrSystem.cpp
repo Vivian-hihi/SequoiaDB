@@ -128,24 +128,24 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getPID", getPID )
       JS_ADD_STATIC_FUNC( "getTID", getTID )
       JS_ADD_STATIC_FUNC( "getEWD", getEWD )
-      JS_ADD_MEMBER_FUNC_WITHATTR( "_listProcess", listProcess, 0 )
+      JS_ADD_STATIC_FUNC_WITHATTR( "_listProcess", listProcess, 0 )
       JS_ADD_STATIC_FUNC( "killProcess", killProcess )
       JS_ADD_STATIC_FUNC( "addUser", addUser )
       JS_ADD_STATIC_FUNC( "addGroup", addGroup )
       JS_ADD_STATIC_FUNC( "setUserConfigs", setUserConfigs )
       JS_ADD_STATIC_FUNC( "delUser", delUser )
       JS_ADD_STATIC_FUNC( "delGroup", delGroup )
-      JS_ADD_MEMBER_FUNC_WITHATTR( "_listLoginUsers", listLoginUsers, 0 )
-      JS_ADD_MEMBER_FUNC_WITHATTR( "_listAllUsers", listAllUsers, 0 )
-      JS_ADD_MEMBER_FUNC_WITHATTR( "_listGroups", listGroups, 0 )
+      JS_ADD_STATIC_FUNC_WITHATTR( "_listLoginUsers", listLoginUsers, 0 )
+      JS_ADD_STATIC_FUNC_WITHATTR( "_listAllUsers", listAllUsers, 0 )
+      JS_ADD_STATIC_FUNC_WITHATTR( "_listGroups", listGroups, 0 )
       JS_ADD_STATIC_FUNC( "getCurrentUser", getCurrentUser )
       JS_ADD_STATIC_FUNC( "getSystemConfigs", getSystemConfigs )
       JS_ADD_STATIC_FUNC( "getProcUlimitConfigs", getProcUlimitConfigs )
       JS_ADD_STATIC_FUNC( "setProcUlimitConfigs", setProcUlimitConfigs )
       JS_ADD_STATIC_FUNC( "runService", runService )
       JS_ADD_STATIC_FUNC( "getUserEnv", getUserEnv )
-      JS_ADD_MEMBER_FUNC_WITHATTR( "_createSshKey", createSshKey, 0 )
-      JS_ADD_MEMBER_FUNC_WITHATTR( "_getHomePath", getHomePath, 0 )
+      JS_ADD_STATIC_FUNC_WITHATTR( "_createSshKey", createSshKey, 0 )
+      JS_ADD_STATIC_FUNC_WITHATTR( "_getHomePath", getHomePath, 0 )
       JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
 
@@ -4127,7 +4127,7 @@ namespace engine
    {
       INT32 rc            = SDB_OK ;
       vector<string>      splited ;
-      vector< BSONObj >   procVec ;
+      vector< BSONObj >   userVec ;
 
       if ( NULL == buf )
       {
@@ -4175,7 +4175,7 @@ namespace engine
                itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
             string loginIp ;
             string loginTime ;
             try
@@ -4221,11 +4221,11 @@ namespace engine
                   loginTime += " " + columns[ index ] ;
                }
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TIME, loginTime ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_FROM, loginIp ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TTY, columns[ 1 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TIME, loginTime ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_FROM, loginIp ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TTY, columns[ 1 ] ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
       else
@@ -4234,7 +4234,7 @@ namespace engine
             itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
 
             try
             {
@@ -4266,19 +4266,19 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER,
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER,
                                   columns[ 0 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
 
       // merge vector< BSONObj > into BsonObj
-      for( UINT32 index = 0; index < procVec.size(); index++ )
+      for( UINT32 index = 0; index < userVec.size(); index++ )
       {
          try
          {
             builder.append( boost::lexical_cast<string>( index ).c_str(),
-                            procVec[ index ] ) ;
+                            userVec[ index ] ) ;
          }
          catch( std::exception &e )
          {
@@ -4380,7 +4380,7 @@ namespace engine
    {
       INT32 rc           = SDB_OK ;
       vector<string>     splited ;
-      vector< BSONObj >  procVec ;
+      vector< BSONObj >  userVec ;
 
       if ( NULL == buf )
       {
@@ -4423,7 +4423,7 @@ namespace engine
                itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
 
             try
             {
@@ -4443,10 +4443,10 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_GID, columns[ 3 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_DIR, columns[ 5 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_GID, columns[ 3 ] ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_DIR, columns[ 5 ] ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
       else
@@ -4455,7 +4455,7 @@ namespace engine
                itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
 
             try
             {
@@ -4475,18 +4475,18 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
 
       // merge vector< BSONObj > into BsonObj
-      for( UINT32 index = 0; index < procVec.size(); index++ )
+      for( UINT32 index = 0; index < userVec.size(); index++ )
       {
          try
          {
             builder.append( boost::lexical_cast<string>( index ).c_str(),
-                            procVec[ index ] ) ;
+                            userVec[ index ] ) ;
          }
          catch( std::exception &e )
          {
@@ -4588,7 +4588,7 @@ namespace engine
    {
       INT32 rc           = SDB_OK ;
       vector<string>     splited ;
-      vector< BSONObj >  procVec ;
+      vector< BSONObj >  groupVec ;
 
       if ( NULL == buf )
       {
@@ -4631,7 +4631,7 @@ namespace engine
                itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder groupObjBuilder ;
             string groupMem ;
 
             try
@@ -4674,10 +4674,10 @@ namespace engine
             {
                groupMem = "" ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_GID, columns[ 2 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_MEMBERS, groupMem ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_GID, columns[ 2 ] ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_MEMBERS, groupMem ) ;
+            groupVec.push_back( groupObjBuilder.obj() ) ;
          }
       }
       else
@@ -4686,7 +4686,7 @@ namespace engine
                itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder groupObjBuilder ;
 
             try
             {
@@ -4718,18 +4718,18 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
+            groupVec.push_back( groupObjBuilder.obj() ) ;
          }
       }
 
       // merge into BsonObj
-      for( UINT32 index = 0; index < procVec.size(); index++ )
+      for( UINT32 index = 0; index < groupVec.size(); index++ )
       {
          try
          {
             builder.append( boost::lexical_cast<string>( index ).c_str(),
-                            procVec[ index ] ) ;
+                            groupVec[ index ] ) ;
          }
          catch( std::exception &e )
          {
