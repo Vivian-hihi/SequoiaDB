@@ -53,7 +53,7 @@
       </exec>
       
       <copy todir="${WORKSPACE}/release" failonerror="true" >
-         <fileset dir="${srccode_dir}/doc/build/output" includes="*.word,*.pdf,*.chm"/>
+         <fileset dir="${srccode_dir}/doc/build/output" includes="*.doc,*.pdf,*.chm"/>
       </copy>
    </target>
    
