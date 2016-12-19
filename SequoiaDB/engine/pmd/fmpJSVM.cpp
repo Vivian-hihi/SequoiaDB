@@ -451,6 +451,6 @@ INT32 _fmpJSVM::_transCode2Str( const BSONElement &ele,
                                 std::string &str )
 {
    INT32 rc = SDB_OK ;
-   str = ele.toString(FALSE, TRUE ) ;
+   str = ele.code() ;
    return rc ;
 }
