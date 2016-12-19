@@ -32,12 +32,6 @@
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
       <!--TODO: antcall target="compile_spark_connector"/-->
-      <if>
-         <equals arg1="${plat_form}" arg2="X86" />
-         <then>
-            <antcall target="compile_document"/>
-         </then>
-      </if>
       <antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
@@ -438,14 +432,9 @@
       </copy>
       <copy file="${srccode_dir}/conf/sdbcm.conf" todir="${release_db_dir}/conf" />
       
-      <if>
-         <equals arg1="${plat_form}" arg2="X86" />
-         <then>
-            <copy todir="${release_db_dir}/doc">
-               <fileset dir="${srccode_dir}/doc/build/" />
-            </copy>
-         </then>
-      </if>
+      <copy todir="${release_db_dir}/doc">
+         <fileset dir="${srccode_dir}/archive/" includes="*.pdf,*.chm"/>
+      </copy>
       <!--TODO: copy sdb help doc>
       <copy todir="${release_db_dir}/doc/manual">
          <fileset dir="${srccode_dir}/doc/manual" />
