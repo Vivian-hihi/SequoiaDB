@@ -333,8 +333,7 @@ namespace bson {
         /** Retrieve the code string for a Code element */
         string code() const {
             assert(type() == Code);
-            string str = _asCode() ;
-            return str ;
+            return _asCode() ;
         }
 
         /** like operator== but doesn't check the fieldname,
