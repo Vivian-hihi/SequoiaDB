@@ -84,7 +84,7 @@ function listPcd()
    
    var expPcd1 = {};
    expPcd1["name"]      = pcdName1;
-   expPcd1["func"]      = "function "+pcdName1+"() {\n    db.createCS(\""+csName+"\");\n}";
+   expPcd1["func"]      = { "$code": "function "+pcdName1+"() {\n    db.createCS(\""+csName+"\");\n}" } ;
    expPcd1["funcType"]  = 0;
    
    var rc = db.listProcedures( {name: pcdName1} );
@@ -92,7 +92,7 @@ function listPcd()
    
    var expPcd2 = {};
    expPcd2["name"]      = pcdName2;
-   expPcd2["func"]      = "function "+pcdName2+"(x, y, z) {\n    return x + y + z;\n}";
+   expPcd2["func"]      = { "$code": "function "+pcdName2+"(x, y, z) {\n    return x + y + z;\n}" } ;
    expPcd2["funcType"]  = 0;
      
    var rc = db.listProcedures( {name: pcdName2} );
@@ -106,7 +106,7 @@ function removePcd()
    
    var expPcd2 = {};
    expPcd2["name"]      = pcdName2;
-   expPcd2["func"]      = "function "+pcdName2+"(x, y, z) {\n    return x + y + z;\n}";
+   expPcd2["func"]      = { "$code": "function "+pcdName2+"(x, y, z) {\n    return x + y + z;\n}" } ;
    expPcd2["funcType"]  = 0;
      
    var rc = db.listProcedures( {name:pcdName1} );
