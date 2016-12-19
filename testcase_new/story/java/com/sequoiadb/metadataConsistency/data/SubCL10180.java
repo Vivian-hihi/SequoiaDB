@@ -60,6 +60,9 @@ public class SubCL10180 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkCLResult(sdb, csName, clName);
+			
 			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
@@ -89,9 +92,8 @@ public class SubCL10180 extends SdbTestBase {
 				opt.put("ReplSize", 7);
 			    csDB.getCollection(tmpName).alterCollection(opt);
 			}
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23){  //-23:Collection does not exist
+			if(e.getErrorCode() != -23){  
 				Assert.fail(e.getMessage());
 			}
 		}finally{
@@ -113,12 +115,8 @@ public class SubCL10180 extends SdbTestBase {
 		try{
 			String tmpName = sCLName + random.nextInt(number);
 			csDB.dropCollection(tmpName);
-			
-			//check results of catalog
-			CommLib.checkCLResult(db, csName, clName);
-			
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23){ //-23:Collection does not exist
+			if(e.getErrorCode() != -23){ 
 				Assert.fail(e.getMessage());
 			}
 		}finally{

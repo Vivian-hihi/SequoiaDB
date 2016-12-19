@@ -26,9 +26,15 @@
       <packages>
          <package name="com.sequoiadb.crud" />
          <package name="com.sequoiadb.subcl"/>
+      </packages>    
+   </test>
+   
+   <test name="mixed" parallel="methods" thread-count="1">
+      <packages>
          <package name="com.sequoiadb.metadataConsistency.data"/>
       </packages>    
    </test>
+   
 
 </suite>
    

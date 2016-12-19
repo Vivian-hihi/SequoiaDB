@@ -55,6 +55,7 @@ public class SubCL10194 extends SdbTestBase {
 			this.createSubCL(sdb);
 			this.attachCL(sdb);
 		}catch(BaseException e){
+			sdb.disconnect();
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
 		}

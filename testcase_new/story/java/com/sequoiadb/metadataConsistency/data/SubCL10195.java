@@ -56,6 +56,7 @@ public class SubCL10195 extends SdbTestBase {
 			this.createSubCL(sdb);
 			this.attachCL(sdb);
 		}catch(BaseException e){
+			sdb.disconnect();
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
 		}
@@ -64,6 +65,10 @@ public class SubCL10195 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check result
+			CommLib.checkCLResult(sdb, csName, clName);
+			
+			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
 			Assert.fail("ErrorMsg:\n" +e.getMessage());
@@ -74,7 +79,7 @@ public class SubCL10195 extends SdbTestBase {
 		}
 	}
 	
-	@Test(invocationCount = 100, threadPoolSize = 100)
+	@Test(invocationCount = 10, threadPoolSize = 10)
 	public void testSubCL10195(){
 		Sequoiadb db = null;
 		try{
@@ -89,7 +94,6 @@ public class SubCL10195 extends SdbTestBase {
 			if(csDB.isCollectionExist(mCLName)){
 				csDB.getCollection(mCLName).detachCollection(sCSName + "." + sCLName);
 			}
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23 && e.getErrorCode() != -34){  
 				db.disconnect();
@@ -100,7 +104,6 @@ public class SubCL10195 extends SdbTestBase {
 		//-----drop mainCS-----
 		try{
 			db.dropCollectionSpace(mCSName);
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -34){  
 				db.disconnect();
@@ -128,7 +131,6 @@ public class SubCL10195 extends SdbTestBase {
 		//-----attachCL-----
 		try{
 			this.attachCL(db);
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -23 && e.getErrorCode() != -34){  
 				db.disconnect();
