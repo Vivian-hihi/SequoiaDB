@@ -134,7 +134,7 @@
          <if>
             <equals arg1="${TEST_TYPE}" arg2="LARGEDATATEST" />
             <then>               
-               <var name="timelimit" value="7200000" />
+               <var name="timelimit" value="14400000" />
             </then>
             <else>
                <var name="timelimit" value="1800000" />
