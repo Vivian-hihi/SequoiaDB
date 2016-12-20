@@ -641,10 +641,10 @@ namespace engine
             {
                builder.append( it->first, it->second.as<string>() ) ;
             }
-            catch
+            catch( std::exception &e )
             {
-               PD_LOG_MSG( PDERROR, "Failed to append config item: %s",
-                           it->first.c_str() ) ;
+               PD_LOG_MSG( PDERROR, "Failed to append config item: %s(%s)",
+                           it->first.c_str(), e.what() ) ;
             }
             ++it ;
          }
