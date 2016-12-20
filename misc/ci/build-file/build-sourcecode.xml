@@ -92,7 +92,9 @@
       
       <ant antfile="${WORKSPACE}/sequoiadb/driver/spark/build.xml">
         <property name="SPARK_VERSION" value="${SPARK_VERSION}" />
-        <property name="spark_connector_root_dir" value="${WORKSPACE}/sequoiadb/driver/spark" />
+        <property name="SCALA_VERSION" value="${SCALA_VERSION}" />
+        <property name="root.dir" value="${WORKSPACE}/sequoiadb/driver/spark" />
+        <property name="WORKSPACE" value="${WORKSPACE}" />
       </ant>
 
       <ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
