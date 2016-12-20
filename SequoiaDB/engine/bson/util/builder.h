@@ -108,6 +108,7 @@ accesses) is the same as if
             else {
                 data = 0;
             }
+            reservedBytes = 0;
             l = 0;
         }
         ~_BufBuilder() { kill(); }
@@ -121,9 +122,11 @@ accesses) is the same as if
 
         void reset() {
             l = 0;
+            reservedBytes = 0;
         }
         void reset( int maxSize ) {
             l = 0;
+            reservedBytes = 0;
             if ( maxSize && size > maxSize ) {
                 al.Free(data);
                 data = (char*)al.Malloc(maxSize);
@@ -198,21 +201,45 @@ accesses) is the same as if
         /* returns the pre-grow write position */
         inline char* grow(int by) {
             int oldlen = l;
-            l += by;
-            if ( l > size ) {
-                grow_reallocate();
+            int newLen = l + by;
+            int minSize = newLen + reservedBytes;
+            if ( minSize > size ) {
+                grow_reallocate(minSize);
             }
+            l = newLen;
             return data + oldlen;
         }
 
+        /**
+         * Reserve room for some number of bytes to be claimed at a later time.
+         */
+        void reserveBytes(int bytes) {
+            int minSize = l + reservedBytes + bytes;
+            if (minSize > size)
+                grow_reallocate(minSize);
+
+            // This must happen *after* any attempt to grow.
+            reservedBytes += bytes;
+        }
+
+        /**
+         * Claim an earlier reservation of some number of bytes. These bytes
+         * must already have been reserved. Appends of up to this many bytes
+         * immediately following a claim are guaranteed to succeed without a
+         * need to reallocate.
+         */
+        void claimReservedBytes(int bytes) {
+            assert(reservedBytes >= bytes);
+            reservedBytes -= bytes;
+        }
     private:
         /* "slow" portion of 'grow()'  */
-        void NOINLINE_DECL grow_reallocate() {
+        void NOINLINE_DECL grow_reallocate(int minSize) {
             int a = size * 2;
             if ( a == 0 )
                 a = 512;
-            if ( l > a )
-                a = l + 16 * 1024;
+            if ( minSize > a )
+                a = minSize + 16 * 1024;
             if ( a > BufferMaxSize )
                 msgasserted(13548, "BufBuilder grow() > 64MB");
             data = (char *) al.Realloc(data, a);
@@ -222,6 +249,8 @@ accesses) is the same as if
         char *data;
         int l;
         int size;
+        // eagerly grow_reallocate to keep this many bytes of spare room.
+        int reservedBytes;
 
         friend class StringBuilder;
     };

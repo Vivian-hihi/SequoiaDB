@@ -100,6 +100,9 @@ namespace bson {
           _offset( sizeof(unsigned) ), _s( this ) , _tracker(0) , _doneCalled(false) {
             _b.appendNum((unsigned)0);
             _b.skip(4); /*leave room for size field and ref-count*/
+
+            // Reserve space for the EOO byte. This means _done() can't fail.
+            _b.reserveBytes(1);
         }
 
         /** @param baseBuilder construct a BSONObjBuilder using an existing BufBuilder
@@ -109,6 +112,8 @@ namespace bson {
         BSONObjBuilder( BufBuilder &baseBuilder ) : _b( baseBuilder ), _buf( 0 ),
           _offset( baseBuilder.len() ), _s( this ) , _tracker(0) , _doneCalled(false) {
             _b.skip( 4 );
+            // Reserve space for the EOO byte. This means _done() can't fail.
+            _b.reserveBytes(1);
         }
 
         BSONObjBuilder( const BSONSizeTracker & tracker ) : _b(_buf) ,
@@ -116,6 +121,8 @@ namespace bson {
           _s( this ) , _tracker( (BSONSizeTracker*)(&tracker) ) , _doneCalled(false) {
             _b.appendNum((unsigned)0); // ref-count
             _b.skip(4);
+            // Reserve space for the EOO byte. This means _done() can't fail.
+            _b.reserveBytes(1);
         }
 
         ~BSONObjBuilder() {
@@ -652,6 +659,7 @@ namespace bson {
         BSONObj asTempObj() {
             BSONObj temp(_done());
             _b.setlen(_b.len()-1); //next append should overwrite the EOO
+            _b.reserveBytes(1);    // Rereserve room for the real EOO
             _doneCalled = false;
             return temp;
         }
@@ -736,6 +744,8 @@ namespace bson {
 
             _doneCalled = true;
             _s.endField();
+
+            _b.claimReservedBytes(1);  // Prevents adding EOO from failing.
             _b.appendNum((char) EOO);
             char *data = _b.buf() + _offset;
             int size = _b.len() - _offset;
