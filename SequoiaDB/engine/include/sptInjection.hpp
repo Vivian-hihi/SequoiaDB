@@ -134,6 +134,7 @@ namespace engine
                  sdbSetNeedClearErrorInfo( FALSE ) ; \
               } \
               typedef INT32 (className::*FUNC)( const _sptArguments &args, \
+                                                UINT32 opcode, \
                                                 BOOLEAN &processed, \
                                                 string &callFunc, \
                                                 BOOLEAN &setIDProp, \

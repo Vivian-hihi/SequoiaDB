@@ -40,6 +40,7 @@
 #include <string>
 #include <sstream>
 #include "msg.h"
+#include "sptSPDef.hpp"
 
 using namespace std ;
 
@@ -510,6 +511,44 @@ namespace engine
       {
          __curJSGlobal__ = NULL ;
       }
+   }
+
+   BOOLEAN sptIsOpGetProperty( UINT32 opcode )
+   {
+      if ( SPT_JSOP_GETPROP == opcode ||
+           SPT_JSOP_GETXPROP == opcode ||
+           SPT_JSOP_GETLOCALPROP == opcode ||
+           SPT_JSOP_GETARGPROP == opcode ||
+           SPT_JSOP_GETTHISPROP == opcode ||
+           SPT_JSOP_LENGTH == opcode )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN sptIsOpSetProperty( UINT32 opcode )
+   {
+      if ( SPT_JSOP_SETPROP == opcode ||
+           SPT_JSOP_SETGNAME == opcode ||
+           SPT_JSOP_SETNAME == opcode ||
+           SPT_JSOP_SETMETHOD == opcode )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN sptIsOpCallProperty( UINT32 opcode )
+   {
+      if ( SPT_JSOP_CALL == opcode ||
+           SPT_JSOP_FUNAPPLY == opcode ||
+           SPT_JSOP_FUNCALL == opcode ||
+           SPT_JSOP_CALLPROP == opcode )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
 }

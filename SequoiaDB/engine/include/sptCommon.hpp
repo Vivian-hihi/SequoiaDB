@@ -112,6 +112,11 @@ namespace engine
    const void* sdbGetThreadGlobal() ;
    void     sdbDeclareThreadGlobal( const void *pGlobal ) ;
    void     sdbUndeclareThreadGlobal( const void *pGlobal ) ;
+
+   BOOLEAN sptIsOpGetProperty( UINT32 opcode ) ;
+   BOOLEAN sptIsOpSetProperty( UINT32 opcode ) ;
+   BOOLEAN sptIsOpCallProperty( UINT32 opcode ) ;
+
 }
 
 #endif //SPTCOMMON_HPP__

@@ -169,6 +169,7 @@ namespace engine
    }
 
    INT32 _sptBsonobjArray::resolve( const _sptArguments &arg,
+                                    UINT32 opcode,
                                     BOOLEAN &processed,
                                     string &callFunc,
                                     BOOLEAN &setIDProp,

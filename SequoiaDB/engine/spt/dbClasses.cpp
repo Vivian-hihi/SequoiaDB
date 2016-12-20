@@ -59,6 +59,7 @@
 #include <boost/lexical_cast.hpp>
 #include "utilStr.hpp"
 #include "ossProc.hpp"
+#include "jscntxt.h"
 
 #define SAFE_BSON_DISPOSE( p ) \
    do { if ( p ) { bson_dispose( p ) ; ( p ) = NULL ; } } while ( 0 )
@@ -2900,7 +2901,9 @@ static JSBool rg_get_master ( JSContext *cx, uintN argc, jsval *vp )
    VERIFY ( JS_SetPrivate ( cx , objRN , rn ) ) ;
 
    valRG = JS_THIS ( cx, vp ) ;
-   VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG ) ) ;
+   VERIFY( JS_DefineProperty( cx, objRN, "_rg", valRG,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG ) ) ;
 
    strHostName = JS_NewStringCopyN ( cx , hostName , ossStrlen ( hostName ) ) ;
    VERIFY ( strHostName ) ;
@@ -2982,7 +2985,9 @@ static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
    VERIFY ( JS_SetPrivate ( cx , objRN , rn ) ) ;
 
    valRG = JS_THIS ( cx, vp ) ;
-   VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG ) ) ;
+   VERIFY( JS_DefineProperty( cx, objRN, "_rg", valRG,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG ) ) ;
 
    strHostName = JS_NewStringCopyN ( cx , hostName , ossStrlen ( hostName ) ) ;
    VERIFY ( strHostName ) ;
@@ -3150,7 +3155,9 @@ static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
    VERIFY ( JS_SetPrivate ( cx, objRN, rn ) ) ;
 
    valRG = JS_THIS ( cx, vp ) ;
-   VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG ) ) ;
+   VERIFY( JS_DefineProperty( cx, objRN, "_rg", valRG,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG ) ) ;
 
    strHostName = JS_NewStringCopyN ( cx, hostName, ossStrlen ( hostName ) ) ;
    VERIFY ( strHostName ) ;
@@ -3288,11 +3295,15 @@ JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
    if ( NULL == valRG )
    {
       jsval valRG2 = JS_THIS ( cx, vp ) ;
-      VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG2 ) ) ;
+      VERIFY( JS_DefineProperty( cx, objRN, "_rg", valRG2,
+                                 0, 0, JSPROP_READONLY ) ) ;
+      //VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG2 ) ) ;
    }
    else
    {
-      VERIFY ( JS_SetProperty ( cx, objRN, "_rg", valRG ) ) ;
+      VERIFY( JS_DefineProperty( cx, objRN, "_rg", *valRG,
+                                 0, 0, JSPROP_READONLY ) ) ;
+      //VERIFY ( JS_SetProperty ( cx, objRN, "_rg", valRG ) ) ;
    }
 
    strHostName = JS_NewStringCopyN ( cx , hostName , ossStrlen ( hostName ) ) ;
@@ -3585,6 +3596,10 @@ static JSBool cs_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    if ( ! JSVAL_IS_STRING ( valID ) )
       goto done ;
 
+   if ( cx->regs && engine::SPT_JSOP_GETPROP != (UINT32)(*cx->regs->pc ) )
+   {
+      goto done ;
+   }
    /// when the property is exist, ignored
    {
       JSObject *prototype = JS_GetPrototype( cx, obj ) ;
@@ -3692,18 +3707,24 @@ static JSBool get_cl_and_setproperty( JSContext *cx, jsval *vp,
    if ( NULL == vpcs )
    {
       valCS = JS_THIS ( cx , vp ) ;
-      VERIFY ( JS_SetProperty ( cx , objCollection , "_cs" , &valCS ) ) ;
+      VERIFY( JS_DefineProperty( cx, objCollection, "_cs", valCS,
+                                 0, 0, JSPROP_READONLY ) ) ;
+      //VERIFY ( JS_SetProperty ( cx , objCollection , "_cs" , &valCS ) ) ;
    }
    else
    {
-      VERIFY ( JS_SetProperty ( cx , objCollection , "_cs" , vpcs ) ) ;
+      VERIFY( JS_DefineProperty( cx, objCollection, "_cs", *vpcs,
+                                 0, 0, JSPROP_READONLY ) ) ;
+      //VERIFY ( JS_SetProperty ( cx , objCollection , "_cs" , vpcs ) ) ;
    }
 
    valName = STRING_TO_JSVAL ( clStr ) ;
    VERIFY ( JS_SetProperty ( cx , objCollection , "_name" , &valName ) ) ;
 
    valCL = OBJECT_TO_JSVAL ( objCollection ) ;
-   VERIFY ( JS_SetProperty ( cx , JS_THIS_OBJECT ( cx , vp ) , clName , &valCL ) ) ;
+   VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT ( cx , vp ), clName, valCL,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx , JS_THIS_OBJECT ( cx , vp ) , clName , &valCL ) ) ;
 done:
    PD_TRACE_EXIT( GET_CL_AND_SETPROPERTY ) ;
    return ret ;
@@ -3800,7 +3821,9 @@ static JSBool cs_create_cl ( JSContext *cx , uintN argc , jsval *vp )
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCL ) ) ;
 
    valCS = JS_THIS ( cx, vp ) ;
-   VERIFY ( JS_SetProperty ( cx , objCL , "_cs" , &valCS ) ) ;
+   VERIFY( JS_DefineProperty( cx, objCL, "_cs", valCS,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx , objCL , "_cs" , &valCS ) ) ;
 
    VERIFY ( JS_SetPrivate ( cx , objCL , collection ) ) ;
 
@@ -3808,7 +3831,9 @@ static JSBool cs_create_cl ( JSContext *cx , uintN argc , jsval *vp )
    VERIFY ( JS_SetProperty ( cx , objCL , "_name" , &valName ) ) ;
 
    valCL = OBJECT_TO_JSVAL ( objCL ) ;
-   VERIFY ( JS_SetProperty ( cx , JS_THIS_OBJECT ( cx , vp ) , clName, &valCL ) ) ;
+   VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT ( cx , vp ), clName, valCL,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx , JS_THIS_OBJECT ( cx , vp ) , clName, &valCL ) ) ;
 
 done :
    SAFE_BSON_DISPOSE ( bsonOptions ) ;
@@ -4159,7 +4184,9 @@ static JSBool sdb_get_dc ( JSContext *cx , uintN argc , jsval *vp )
 
    // set property and private
    js_val_conn = JS_THIS( cx, vp ) ;
-   VERIFY( JS_SetProperty( cx, js_obj_dc, "_conn", &js_val_conn ) ) ;
+   VERIFY( JS_DefineProperty( cx, js_obj_dc, "_conn", js_val_conn,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY( JS_SetProperty( cx, js_obj_dc, "_conn", &js_val_conn ) ) ;
 
    js_str_name = JS_NewStringCopyN( cx, dcName, ossStrlen(dcName) ) ;
    VERIFY( js_str_name ) ;
@@ -4170,7 +4197,9 @@ static JSBool sdb_get_dc ( JSContext *cx , uintN argc , jsval *vp )
 
    // set js dc object as a property of sdb obj
    js_val_dc = OBJECT_TO_JSVAL( js_obj_dc ) ;
-   VERIFY( JS_SetProperty( cx, JS_THIS_OBJECT( cx, vp), dcName, &js_val_dc ) ) ;
+   VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT( cx, vp), dcName, js_val_dc,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY( JS_SetProperty( cx, JS_THIS_OBJECT( cx, vp), dcName, &js_val_dc ) ) ;
 
    // return the newly build dc obj
    JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( js_obj_dc ) ) ;
@@ -4610,6 +4639,10 @@ static JSBool sdb_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    if ( ! JSVAL_IS_STRING ( valID ) )
       goto done ;
 
+   if ( cx->regs && engine::SPT_JSOP_GETPROP != (UINT32)(*cx->regs->pc ) )
+   {
+      goto done ;
+   }
    /// when the property is exist, ignored
    {
       JSObject *prototype = JS_GetPrototype( cx, obj ) ;
@@ -5154,7 +5187,9 @@ static JSBool sdb_create_rg ( JSContext *cx, uintN argc, jsval *vp )
 
    // These two lines must precede JS_SET_RVAL due to using JS_THIS
    valConn = JS_THIS ( cx, vp ) ;
-   VERIFY ( JS_SetProperty ( cx, objRG, "_conn", &valConn ) ) ;
+   VERIFY( JS_DefineProperty( cx, objRG, "_conn", valConn,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx, objRG, "_conn", &valConn ) ) ;
 
    JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL ( objRG ) ) ;
 
@@ -5768,14 +5803,19 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
          csObj = JS_NewObject ( cx , &cs_class , 0 , 0 ) ;
          VERIFY ( csObj ) ;
          valConn = JS_THIS ( cx , vp ) ;
-         VERIFY ( JS_SetProperty ( cx , csObj , "_conn" , &valConn ) ) ;
+         VERIFY( JS_DefineProperty( cx, csObj, "_conn", valConn,
+                                    0, 0, JSPROP_READONLY ) ) ;
+         //VERIFY ( JS_SetProperty ( cx , csObj , "_conn" , &valConn ) ) ;
          VERIFY ( JS_SetPrivate ( cx , csObj , cs ) ) ;
          jscsname = JS_NewStringCopyN( cx, name, ossStrlen(name) );
          valCSName = STRING_TO_JSVAL ( jscsname ) ;
          VERIFY ( JS_SetProperty ( cx , csObj , "_name" , &valCSName ) ) ;
          valCS = OBJECT_TO_JSVAL ( csObj ) ;
-         VERIFY ( JS_SetProperty ( cx, JS_THIS_OBJECT ( cx , vp ),
-                  name, &valCS ) ) ;
+         VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT ( cx , vp ),
+                                    name, valCS,
+                                    0, 0, JSPROP_READONLY ) ) ;
+         /* VERIFY ( JS_SetProperty ( cx, JS_THIS_OBJECT ( cx , vp ),
+                  name, &valCS ) ) ; */
 
          jsname = JS_NewStringCopyN( cx, clName, ossStrlen(clName) );
          VERIFY( jsname ) ;
@@ -5827,8 +5867,9 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
          JSObject* rgObj = JS_NewObject ( cx, &rg_class, 0, 0 ) ;
          VERIFY ( rgObj ) ;
          valConn = JS_THIS ( cx, vp ) ;
-         VERIFY ( JS_SetProperty ( cx, rgObj, "_conn",
-                  &valConn ) ) ;
+         VERIFY( JS_DefineProperty( cx, rgObj, "_conn", valConn,
+                                    0, 0, JSPROP_READONLY ) ) ;
+         //VERIFY ( JS_SetProperty ( cx, rgObj, "_conn", &valConn ) ) ;
          VERIFY ( JS_SetPrivate ( cx, rgObj, rg ) ) ;
          jsRGName = JS_NewStringCopyN ( cx , name , ossStrlen ( name ) ) ;
          VERIFY ( jsRGName ) ;
@@ -6110,7 +6151,9 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    VERIFY ( objCS ) ;
    // set the newly build cs obj's properties
    valConn = JS_THIS ( cx, vp ) ;
-   VERIFY ( JS_SetProperty ( cx, objCS, "_conn", &valConn ) ) ;
+   VERIFY( JS_DefineProperty( cx, objCS, "_conn", valConn,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx, objCS, "_conn", &valConn ) ) ;
    valName = STRING_TO_JSVAL ( strCSName ) ;
    VERIFY ( JS_SetProperty ( cx , objCS , "_name" , &valName ) ) ;
    // set the cs handle we get from the C driver as a private member of the
@@ -6119,7 +6162,9 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    // set the cs obj as a property of current sdb obj, so we can get this cs obj
    // through the sdb obj
    valCS = OBJECT_TO_JSVAL ( objCS ) ;
-   VERIFY ( JS_SetProperty ( cx , JS_THIS_OBJECT ( cx , vp ) , csName, &valCS ) ) ;
+   VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT ( cx , vp ), csName, valCS,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx , JS_THIS_OBJECT ( cx , vp ) , csName, &valCS ) ) ;
    // return the newly build cs obj
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCS ) ) ;
 
@@ -6172,7 +6217,9 @@ JSBool get_rg_and_setproperty( JSContext *cx, jsval *vp,
    objRG = JS_NewObject ( cx, &rg_class, 0, 0 ) ;
    VERIFY ( objRG ) ;
    valConn = JS_THIS ( cx, vp ) ;
-   VERIFY ( JS_SetProperty ( cx, objRG, "_conn", &valConn ) ) ;
+   VERIFY( JS_DefineProperty( cx, objRG, "_conn", valConn,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx, objRG, "_conn", &valConn ) ) ;
 
    JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL ( objRG ) ) ;
 
@@ -6268,7 +6315,9 @@ JSBool get_cs_and_setproperty( JSContext *cx, jsval *vp,
    VERIFY ( csObj ) ;
    // set the propertis of the newly build cs obj
    valConn = JS_THIS ( cx , vp ) ;
-   VERIFY ( JS_SetProperty ( cx , csObj , "_conn" , &valConn ) ) ;
+   VERIFY( JS_DefineProperty( cx, csObj, "_conn", valConn,
+                              0, 0, JSPROP_READONLY ) ) ;
+   //VERIFY ( JS_SetProperty ( cx , csObj , "_conn" , &valConn ) ) ;
    valName = STRING_TO_JSVAL ( jsCSName ) ;
    VERIFY ( JS_SetProperty ( cx , csObj , "_name" , &valName ) ) ;
    // set the cs handle we get from the c driver as a private member of the
@@ -6276,8 +6325,10 @@ JSBool get_cs_and_setproperty( JSContext *cx, jsval *vp,
    VERIFY ( JS_SetPrivate ( cx , csObj , cs ) ) ;
    // set the newly build cs obj as a property of current sdb obj
    valCS = OBJECT_TO_JSVAL ( csObj ) ;
-   VERIFY ( JS_SetProperty ( cx, JS_THIS_OBJECT ( cx , vp ),
-            csName, &valCS ) ) ;
+   VERIFY( JS_DefineProperty( cx, JS_THIS_OBJECT ( cx , vp ), csName, valCS,
+                              0, 0, JSPROP_READONLY ) ) ;
+   /*VERIFY ( JS_SetProperty ( cx, JS_THIS_OBJECT ( cx , vp ),
+            csName, &valCS ) ) ;*/
    // return the newly build cs obj
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( csObj ) ) ;
 done:

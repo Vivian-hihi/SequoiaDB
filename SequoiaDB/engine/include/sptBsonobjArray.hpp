@@ -89,6 +89,7 @@ namespace engine
                       bson::BSONObj &detail ) ;
 
       INT32 resolve( const _sptArguments &arg,
+                     UINT32 opcode,
                      BOOLEAN &processed,
                      string &callFunc,
                      BOOLEAN &setIDProp,
