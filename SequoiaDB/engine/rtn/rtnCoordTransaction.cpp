@@ -71,7 +71,6 @@ namespace engine
 
       if ( !cb->isTransaction() )
       {
-         rc = SDB_DPS_TRANS_NO_TRANS ;
          goto error;
       }
 
@@ -297,8 +296,7 @@ namespace engine
 
       if ( !cb->isTransaction() )
       {
-         rc = SDB_DPS_TRANS_NO_TRANS ;
-         goto error;
+         goto done;
       }
 
       // add last op info
