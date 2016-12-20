@@ -4,12 +4,12 @@
 *@author      : Liang XueWang
 ******************************************************************************/
 
-// 测试创建节点时端口号为边界值及边界值以内( 0, 65535 )
+// 测试创建节点时端口号为边界值及边界值以内( 0, 65536 )
 OmaTest.prototype.testSvcnameBoundary = function()
 {
    this.testInit() ;
-   var ErrorSvcname = [ 0, 65535 ] ;
-   var CorrSvcname = [ 1, 65534 ] ;
+   var ErrorSvcname = [ 0, 65536 ] ;
+   var CorrSvcname = [ 1, 65535 ] ;
    for( var i = 0;i < ErrorSvcname.length;i++ )
    {
       try

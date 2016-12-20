@@ -13,7 +13,7 @@ OmaTest.prototype.testListNodesNormal = function()
    var cmd = remote.getCmd() ;
    
    // 测试选项条件为type:db, role:coord, mode:run, showalone:true, expand:true, displaymode:obj
-   // 过滤条件为role:coord时枚举节点
+   // 过滤条件为svcname:COORDSVCNAME时枚举节点
    var option = {} ;
    option["type"] = "db" ;
    option["role"] = "coord" ;
@@ -23,11 +23,27 @@ OmaTest.prototype.testListNodesNormal = function()
    option["expand"] = true ;
    option["displaymode"] = "obj" ;
    var filter = {} ;
-   filter["role"] = "coord" ;
+   filter["svcname"] = "" + COORDSVCNAME ;
    var nodes = this.oma.listNodes( option, filter ) ;
    
    var InstallPath = commGetInstallPath() ;
-   var tmpInfo = cmd.run( InstallPath + "/bin/sdblist -t db -r coord -m run --expand" ) ;
+   var tmpInfo ;
+   try
+   {
+      var command = InstallPath + "/bin/sdblist -t db -r coord -p " + COORDSVCNAME + " -m run --expand" ;
+      tmpInfo = cmd.run( command ) ;
+   }
+   catch( e )
+   {
+      if( e == 1 && this.isStandalone )
+      {
+         tmpInfo = "Total: 0" ;
+      }
+      else
+      {
+         throw buildException( "testListNodes", e, "sdblist coord", 0, e ) ;
+      }
+   }
    checkListNodes( nodes, tmpInfo ) ;
    
    // 测试选项条件为type:om, role:om, mode:local, showalone:false, expand:false, displaymode:text
@@ -47,10 +63,9 @@ OmaTest.prototype.testListNodesNormal = function()
    }
    catch( e )
    {
-      if( e == 1 )
+      if( e == 1 && !isOmExist( this.hostname, this.svcname ) )
       {
          tmpInfo = "Total: 0" ;
-         println( "sdblist om get nothing,hostname=" + this.hostname ) ;
       }
       else
       {
@@ -62,10 +77,12 @@ OmaTest.prototype.testListNodesNormal = function()
    // 测试选项条件为type:all,过滤条件为$and $or组合时枚举节点
    var option = {} ;
    option["type"] = "all" ;
-   var filter = { $and: [ { $or: [{role:"data"},{role:"coord"},{role:"catalog"}] },{ type: "sequoiadb" } ] } ;
+   option["showalone"] = true ;
+   var filter = { $and: [ { $or: [ { role: "data" }, { role: "coord" }, { role: "catalog" }, { role: "standalone" } ] },
+                                   { type: "sequoiadb" } ] } ;
    nodes = this.oma.listNodes( option, filter ) ;
    tmpInfo = cmd.run( InstallPath + "/bin/sdblist -t db" ) ;
-   checkListNodes( nodes,tmpInfo ) ; 
+   checkListNodes( nodes, tmpInfo ) ; 
                           
    this.oma.close() ;
    remote.close() ;
@@ -156,7 +173,12 @@ function checkListNodes( nodes,info )
    var ind = info.indexOf( tmpStr ) ;
    var num2 = info.slice( ind + tmpStr.length ).split( "\n" )[0] ;
    if( num1 != num2 )
+   {
+      println( "listnodes: " + JSON.stringify( nodes.toArray() ) ) ;
+      println() ;
+      println( "sdblist: " + info ) ;
       throw buildException( "checkListNodes", 0, "check nodes num", num1, num2 ) ;
+   }
 }
 
 

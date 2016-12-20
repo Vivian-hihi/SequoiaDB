@@ -5,22 +5,28 @@
 
 function OmaTest( HostName, CmSvcName, isLegalHost, isLegalSvc )
 {
-   if( typeof(HostName) == "undefined" )
+   if( HostName == undefined )
       this.hostname = COORDHOSTNAME ;
    else
       this.hostname = HostName ;
-   if( typeof(CmSvcName) == "undefined" )
+   if( CmSvcName == undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = CmSvcName ;
-   if( typeof(isLegalHost) == "undefined" )
-      this.isLegalHost = true ;
+   if( isLegalHost == undefined )
+      this.islegalhost = true ;
    else
       this.islegalhost = isLegalHost ;
-   if( typeof(isLegalSvc) == "undefined" )
+   if( isLegalSvc == undefined )
       this.islegalsvc = true ;
    else
       this.islegalsvc = isLegalSvc ;
+   if( this.islegalhost )
+   {
+      var db = new Sdb( this.hostname, COORDSVCNAME ) ;
+      this.isStandalone = commIsStandalone( db ) ;
+      db.close() ;
+   }
 }
 
 OmaTest.prototype.toString = function()
@@ -85,7 +91,7 @@ function toolGetHosts()
    var Hosts = [] ;
    var k = 0 ;
    
-   var db = new Sdb() ;
+   var db = new Sdb( COORDHOSTNAME, COORDSVCNAME ) ;
    if( commIsStandalone(db) )
    {
       println( "Run mode is standalone." ) ;

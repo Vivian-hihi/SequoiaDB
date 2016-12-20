@@ -16,7 +16,9 @@ OmaTest.prototype.testCreateCoordWithIllegalOma = function( svcname )
    }
    catch( e )
    {
-      if( e != -15 )
+      if( ( e == -15 ) || ( this.isStandalone && e == -159 ) )
+         ;
+      else
       {
          throw buildException( "testCreateCoordWithIllegalOma", e ) ;
       }   

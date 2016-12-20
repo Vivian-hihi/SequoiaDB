@@ -77,7 +77,9 @@ OmaTest.prototype.testRemoveCoordWithWrongConf = function()
    }
    catch( e )
    {
-      if( e != -146 )
+      if( ( e == -146 ) || ( this.isStandalone && e == -3 ) )
+         ;
+      else
       {
          throw buildException( "testRemoveCoordWithWrongConf", e, 
                                "remove coord with wrong config", -146, e ) ;
