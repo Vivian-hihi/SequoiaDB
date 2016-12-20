@@ -31,7 +31,7 @@ function main()
    println("createIndex success");
    
    //query use random conditon and check result
-   var loopNum = 20;
+   var loopNum = 10;
    queryDataAndCheck( dbcl_IndexScan, loopNum );
    println("check result success");
    //var endTime = new Date();
