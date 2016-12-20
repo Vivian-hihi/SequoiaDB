@@ -194,8 +194,28 @@ namespace engine
       /// set the return val to property
       if ( obj && !rpro.getName().empty() )
       {
-         if ( !JS_DefineProperty( cx, obj, rpro.getName().c_str(),
-                                  val, 0, 0, rpro.getAttr() ) )
+         if ( rpro.isNeedDelete() )
+         {
+            JSBool found = JS_FALSE ;
+            uintN attr = 0 ;
+            if ( JS_GetPropertyAttributes( cx, obj, rpro.getName().c_str(),
+                                           &attr, &found ) &&
+                 found &&
+                 ( attr & SPT_PROP_PERMANENT ) )
+            {
+               attr &= ~SPT_PROP_PERMANENT ;
+               JS_SetPropertyAttributes( cx, obj, rpro.getName().c_str(),
+                                         attr, &found ) ;
+            }
+
+            if ( found )
+            {
+               jsval dval = JSVAL_VOID ;
+               JS_DeleteProperty2( cx, obj, rpro.getName().c_str(), &dval ) ;
+            }
+         }
+         else if ( !JS_DefineProperty( cx, obj, rpro.getName().c_str(),
+                                       val, 0, 0, rpro.getAttr() ) )
          // if ( !JS_SetProperty( cx, obj, rpro.getName().c_str(), &val ) )
          {
             PD_LOG( PDERROR, "failed to set obj to parent obj" ) ;
@@ -226,6 +246,26 @@ namespace engine
          if ( prop->getName().empty() )
          {
             continue ;
+         }
+         else if ( prop->isNeedDelete() )
+         {
+            JSBool found = JS_FALSE ;
+            uintN attr = 0 ;
+            if ( JS_GetPropertyAttributes( cx, obj, prop->getName().c_str(),
+                                           &attr, &found ) &&
+                 found &&
+                 ( attr & SPT_PROP_PERMANENT ) )
+            {
+               attr &= ~SPT_PROP_PERMANENT ;
+               JS_SetPropertyAttributes( cx, obj, prop->getName().c_str(),
+                                         attr, &found ) ;
+            }
+
+            if ( found )
+            {
+               jsval dval = JSVAL_VOID ;
+               JS_DeleteProperty2( cx, obj, prop->getName().c_str(), &dval ) ;
+            }
          }
          else if ( bson::EOO == prop->getType() )
          {

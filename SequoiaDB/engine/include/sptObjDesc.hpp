@@ -166,19 +166,53 @@ namespace engine
                                       const string &objName ) ;
          string         getClassName( JSContext *cx, JSObject *obj ) ;
 
+
+         /*
+            Get the Object's all functions, include prototype's function
+            implement in js code.
+         */
          void           getObjFuncNames( JSContext *cx,
                                          JSObject *obj,
                                          set<string> &setFuns,
                                          BOOLEAN showHide = FALSE ) ;
+
+         /*
+            Get the Object's all static functions in its constructor.
+         */
+         void           getObjStaticFunNames( JSContext *cx,
+                                              JSObject *obj,
+                                              set<string> &setFuns,
+                                              BOOLEAN showHide = FALSE ) ;
 
          void           getClassFuncNames( JSContext *cx,
                                            const string &className,
                                            set<string> &setFuns,
                                            BOOLEAN showHide = FALSE ) ;
 
+         void           getClassStaticFuncNames( JSContext *cx,
+                                                 const string &className,
+                                                 set<string> &setFuns,
+                                                 BOOLEAN showHide = FALSE ) ;
+
+         /*
+            Get the Object's all properties, include prototype's prop
+            implement in js code.
+         */
          void           getObjPropNames( JSContext *cx,
                                          JSObject *obj,
                                          set<string> &setProp ) ;
+         /*
+            Get the Object's all static properties in its constructor
+         */
+         void           getObjStaticPropNames( JSContext *cx,
+                                               JSObject *obj,
+                                               set<string> &setProp ) ;
+         /*
+            Get the static properties in its constructor by className
+         */
+         void           getClassStaticPropNames( JSContext *cx,
+                                                 const string &className,
+                                                 set<string> &setProp ) ;
 
          void           getClassNames( set<string> &setClass,
                                        BOOLEAN showHide = FALSE ) ;
@@ -193,9 +227,32 @@ namespace engine
          void           _sortAndAssert( SPT_VEC_OBJDESC &vecObj,
                                         const sptObjDesc *desc ) ;
 
+         /*
+            Only get the object's funcs
+         */
          void           _getObjFuncNames( JSContext *cx,
                                           JSObject *obj,
                                           set<string> &setFuns ) ;
+
+         /*
+            Only get the object's propertys
+         */
+         void           _getObjPropNames( JSContext *cx,
+                                          JSObject *obj,
+                                          set<string> &setProp ) ;
+
+         /*
+            Get the class Native's mem/static Functions with parent
+         */
+         void           _getClassMemFuncNamesByNative( const string &className,
+                                                       set<string> &setFuns,
+                                                       BOOLEAN showHide = FALSE ) ;
+         void           _getClassStaticFuncNamesByNative( const string &className,
+                                                          set<string> &setFuns,
+                                                          BOOLEAN showHide = FALSE ) ;
+
+         JSObject*      _newObjectByName( JSContext *cx,
+                                          const string &className ) ;
 
       private:
          SPT_VEC_OBJDESC         _vecObjs ;

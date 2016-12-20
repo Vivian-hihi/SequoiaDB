@@ -47,6 +47,7 @@ namespace engine
       _pReleaseFunc = NULL ;
       _desc = NULL ;
       _attr = SPT_PROP_DEFAULT ;
+      _deleted = FALSE ;
    }
 
    void _sptProperty::clear()

@@ -3565,40 +3565,6 @@ static void cs_destructor ( JSContext *cx , JSObject *obj )
    PD_TRACE_EXIT ( SDB_CS_DESTRUCTOR );
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_ISSPECCOLLNM, "isSpecialCollectionName" )
-static JSBool isSpecialCollectionName ( const CHAR *name )
-{
-   PD_TRACE_ENTRY ( SDB_ISSPECCOLLNM );
-   static CHAR *specialNames[] = { "getCL" ,
-                                   "createCL" ,
-                                   "dropCL" ,
-                                   "toString" ,
-                                   "help" } ;
-   JSBool   in = JS_FALSE ;
-   INT32    i  = 0 ;
-   INT32    n  = sizeof ( specialNames ) / sizeof ( CHAR * ) ;
-
-   SDB_ASSERT ( name , "invalid argument" ) ;
-
-   if ( '_' == name[0] )
-   {
-      in = JS_TRUE ;
-      goto done ;
-   }
-
-   for ( ; i < n ; i++ )
-   {
-      if ( ossStrcmp ( specialNames[i] , name ) == 0 )
-      {
-         in = JS_TRUE ;
-         goto done ;
-      }
-   }
-done :
-   PD_TRACE_EXIT ( SDB_ISSPECCOLLNM );
-   return in ;
-}
-
 // In the official documentation of Spider Monkey 1.8.5, the 3rd paramenter id
 // is said to be of type jsval, but it is actually jsid.
 // PD_TRACE_DECLARE_FUNCTION ( SDB_CS_RESV, "cs_resolve" )
@@ -3609,7 +3575,6 @@ static JSBool cs_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    JSBool                  ret            = JS_TRUE ;
    jsval                   valRes         = JSVAL_VOID ;
    jsval                   valID          = JSVAL_VOID ;
-   CHAR *                  name           = NULL ;
 
    ret = JS_IdToValue ( cx , id , &valID ) ;
    VERIFY ( ret ) ;
@@ -3620,23 +3585,35 @@ static JSBool cs_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    if ( ! JSVAL_IS_STRING ( valID ) )
       goto done ;
 
-   // name is freed in done:
-   name = (CHAR *) JS_EncodeString ( cx , JSVAL_TO_STRING ( valID ) ) ;
-   VERIFY ( name ) ;
-
    /// when the property is exist, ignored
-   /*{
+   {
       JSObject *prototype = JS_GetPrototype( cx, obj ) ;
-      JSBool found = JS_FALSE ;
-      if ( prototype &&
-           JS_HasPropertyById( cx, prototype, id, &found ) &&
-           found )
+      if ( prototype )
       {
-         goto done ;
-      }
-   }*/
+         JSClass *pClass = NULL ;
+         JSResolveOp tmpResoveOp = NULL ;
+         JSBool hasRet = FALSE ;
+         JSBool found = FALSE ;
 
-   if ( isSpecialCollectionName ( name ) ) goto done ;
+         pClass = JS_GET_CLASS( cx, obj ) ;
+         SDB_ASSERT( pClass, "Class can't be empty" ) ;
+         if ( pClass )
+         {
+            tmpResoveOp = pClass->resolve ;
+            pClass->resolve = JS_ResolveStub ;
+         }
+         hasRet = JS_HasPropertyById( cx, prototype, id, &found ) ;
+         if ( pClass )
+         {
+            pClass->resolve = tmpResoveOp ;
+         }
+
+         if ( hasRet && found )
+         {
+            goto done ;
+         }
+      }
+   }
 
    ret = JS_CallFunctionName ( cx , obj , "_resolveCL" ,
                                1 , &valID , &valRes ) ;
@@ -3645,7 +3622,6 @@ static JSBool cs_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    *objp = obj ;
 
 done :
-   SAFE_JS_FREE ( cx , name ) ;
    PD_TRACE_EXIT ( SDB_CS_RESV );
    return ret ;
 error :
@@ -4614,95 +4590,6 @@ static void sdb_destructor ( JSContext *cx , JSObject *obj )
    PD_TRACE_EXIT ( SDB_DESTRUCTOR );
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_ISSPECSNM, "isSpecialCSName" )
-static JSBool isSpecialCSName ( const CHAR *name )
-{
-   PD_TRACE_ENTRY ( SDB_ISSPECSNM );
-   static CHAR *specialNames[] = { "listCollectionSpaces" ,
-                                   "listCollections" ,
-                                   "listReplicaGroups",
-                                   "getCS" ,
-                                   "getRG" ,
-                                   "getDC",
-                                   "createCS" ,
-                                   "createRG",
-                                   "removeRG",
-                                   "createCataRG",
-                                   "dropCS" ,
-                                   "toString" ,
-                                   "snapshot" ,
-                                   "resetSnapshot" ,
-                                   "list",
-                                   "startRG",
-                                   "createUsr",
-                                   "dropUsr",
-                                   "exec",
-                                   "execUpdate",
-                                   "traceOn",
-                                   "traceResume",
-                                   "traceOff",
-                                   "traceStatus",
-                                   "transBegin",
-                                   "transCommit",
-                                   "transRollback",
-                                   "close",
-                                   "flushConfigure",
-                                   "createProcedure",
-                                   "removeProcedure",
-                                   "listProcedures",
-                                   "createDomain",
-                                   "dropDomain",
-                                   "getDomain",
-                                   "listDomains",
-                                   "eval",
-                                   "backupOffline",
-                                   "listBackup",
-                                   "removeBackup",
-                                   "listTasks",
-                                   "waitTasks",
-                                   "cancelTask",
-                                   "setSessionAttr",
-                                   "msg",
-                                   "invalidateCache",
-                                   "forceSession",
-                                   "help",
-                                   "getCatalogRG",
-                                   "removeCatalogRG",
-                                   "createCoordRG",
-                                   "removeCoordRG",
-                                   "getCoordRG",
-                                   "forceStepUp",
-                                   "createSpareRG",
-                                   "getSpareRG",
-                                   "removeSpareRG",
-                                   "sync"
-   };
-   JSBool   in = JS_FALSE ;
-   INT32    i  = 0 ;
-   INT32    n  = sizeof ( specialNames ) / sizeof ( CHAR * ) ;
-
-   SDB_ASSERT ( name , "invalid argument" ) ;
-
-   if ( '_' == name[0] )
-   {
-      in = JS_TRUE ;
-      goto done ;
-   }
-
-   for ( ; i < n ; i++ )
-   {
-      if ( ossStrcmp ( specialNames[i] , name ) == 0 )
-      {
-         in = JS_TRUE ;
-         goto done ;
-      }
-   }
-
-done :
-   PD_TRACE_EXIT ( SDB_ISSPECSNM );
-   return in ;
-}
-
 // In the official documentation of Spider Monkey 1.8.5, the 3rd paramenter id
 // is said to be of type jsval, but it is actually jsid.
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RESV, "sdb_resolve" )
@@ -4713,7 +4600,6 @@ static JSBool sdb_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    JSBool                  ret         = JS_TRUE ;
    jsval                   valRes      = JSVAL_VOID ;
    jsval                   valID       = JSVAL_VOID ;
-   CHAR *                  name        = NULL ;
 
    ret = JS_IdToValue ( cx , id , &valID ) ;
    VERIFY ( ret ) ;
@@ -4724,23 +4610,35 @@ static JSBool sdb_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    if ( ! JSVAL_IS_STRING ( valID ) )
       goto done ;
 
-   // name is freed in done:
-   name = (CHAR *) JS_EncodeString ( cx , JSVAL_TO_STRING ( valID ) ) ;
-   VERIFY ( name ) ;
-
    /// when the property is exist, ignored
-   /*{
+   {
       JSObject *prototype = JS_GetPrototype( cx, obj ) ;
-      JSBool found = JS_FALSE ;
-      if ( prototype &&
-           JS_HasPropertyById( cx, prototype, id, &found ) &&
-           found )
+      if ( prototype )
       {
-         goto done ;
-      }
-   }*/
+         JSClass *pClass = NULL ;
+         JSResolveOp tmpResoveOp = NULL ;
+         JSBool hasRet = FALSE ;
+         JSBool found = FALSE ;
 
-   if ( isSpecialCSName ( name ) ) goto done ;
+         pClass = JS_GET_CLASS( cx, obj ) ;
+         SDB_ASSERT( pClass, "Class can't be empty" ) ;
+         if ( pClass )
+         {
+            tmpResoveOp = pClass->resolve ;
+            pClass->resolve = JS_ResolveStub ;
+         }
+         hasRet = JS_HasPropertyById( cx, prototype, id, &found ) ;
+         if ( pClass )
+         {
+            pClass->resolve = tmpResoveOp ;
+         }
+
+         if ( hasRet && found )
+         {
+            goto done ;
+         }
+      }
+   }
 
    ret = JS_CallFunctionName ( cx, obj , "_resolveCS" , 1 , &valID , &valRes ) ;
    VERIFY ( ret ) ;
@@ -4748,7 +4646,6 @@ static JSBool sdb_resolve ( JSContext *cx , JSObject *obj , jsid id ,
    *objp = obj ;
 
 done :
-   SAFE_JS_FREE ( cx , name ) ;
    PD_TRACE_EXIT ( SDB_SDB_RESV );
    return ret ;
 error :

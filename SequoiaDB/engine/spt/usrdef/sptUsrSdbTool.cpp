@@ -51,6 +51,7 @@ namespace engine
    /*
       Function Define
    */
+   JS_CONSTRUCT_FUNC_DEFINE(_sptUsrSdbTool, construct)
    JS_STATIC_FUNC_DEFINE(_sptUsrSdbTool, help)
    JS_STATIC_FUNC_DEFINE(_sptUsrSdbTool, listNodes)
 
@@ -58,6 +59,7 @@ namespace engine
       Function Map
    */
    JS_BEGIN_MAPPING( _sptUsrSdbTool, "Sdbtool" )
+      JS_ADD_CONSTRUCT_FUNC(construct)
       JS_ADD_STATIC_FUNC("help", help)
       JS_ADD_STATIC_FUNC("listNodes", listNodes)
    JS_MAPPING_END()
@@ -71,6 +73,14 @@ namespace engine
 
    _sptUsrSdbTool::~_sptUsrSdbTool()
    {
+   }
+
+   INT32 _sptUsrSdbTool::construct( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      detail = BSON( SPT_ERR << "Sdbtool can't new" ) ;
+      return SDB_INVALIDARG ;
    }
 
    INT32 _sptUsrSdbTool::help( const _sptArguments & arg,

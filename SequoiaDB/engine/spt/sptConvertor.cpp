@@ -197,6 +197,10 @@ INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
       }
    }
 done:
+   if ( properties )
+   {
+      JS_DestroyIdArray( _cx, properties ) ;
+   }
    return rc ;
 error:
    goto done ;

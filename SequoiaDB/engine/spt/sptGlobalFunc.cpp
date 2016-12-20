@@ -361,16 +361,28 @@ JS_MAPPING_END()
 
       if ( !className.empty() )
       {
-         const _sptObjDesc *desc = sptGetObjFactory()->findObj( className ) ;
-         if ( desc )
+         /// static functions
+         sptGetObjFactory()->getClassStaticFuncNames( (JSContext*)sdbGetThreadContext(),
+                                                      className,
+                                                      names,
+                                                      showHide ) ;
+         if ( names.size() > 0 )
          {
-            desc->getFuncMap().getStaticFuncNames( names, showHide ) ;
-            sptGetObjFactory()->getClassFuncNames( (JSContext*)sdbGetThreadContext(),
-                                                   className,
-                                                   names,
-                                                   showHide ) ;
+            ss << className << "'s static functions:" << endl ;
+            set<string>::iterator it = names.begin() ;
+            while( it != names.end() )
+            {
+               ss << "   " << *it << "()" << endl ;
+               ++it ;
+            }
+            names.clear() ;
          }
-         ss << className << "'s functions:" << endl ;
+         /// member functions
+         sptGetObjFactory()->getClassFuncNames( (JSContext*)sdbGetThreadContext(),
+                                                className,
+                                                names,
+                                                showHide ) ;
+         ss << className << "'s member functions:" << endl ;
       }
       else
       {
@@ -384,12 +396,11 @@ JS_MAPPING_END()
          }
          /// get global function
          names.clear() ;
-         const _sptObjDesc *desc = sptGetObjFactory()->findObj( className ) ;
-         if ( desc )
-         {
-            desc->getFuncMap().getStaticFuncNames( names, showHide ) ;
-            ss << "Global functions:" << endl ;
-         }
+         sptGetObjFactory()->getClassStaticFuncNames( (JSContext*)sdbGetThreadContext(),
+                                                      "",
+                                                      names,
+                                                      showHide ) ;
+         ss << "Global functions:" << endl ;
       }
 
       set<string>::iterator it = names.begin() ;

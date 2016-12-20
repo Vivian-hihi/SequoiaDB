@@ -99,6 +99,7 @@ namespace engine
          }
 
          JS_SET_RVAL( cx, vp, jsRval ) ;
+
       done:
          return rc ;
       error:
@@ -283,14 +284,33 @@ namespace engine
 
             /// when the property is exist, ignored
             JSObject *prototype = JS_GetPrototype( cx, obj ) ;
-            JSBool found = JS_FALSE ;
-            if ( prototype &&
-                 JS_HasPropertyById( cx, prototype, id, &found ) &&
-                 found )
+            if ( prototype )
             {
-               goto done ;
+               JSClass *pClass = NULL ;
+               JSResolveOp tmpResoveOp = NULL ;
+               JSBool hasRet = FALSE ;
+               JSBool found = FALSE ;
+
+               pClass = JS_GET_CLASS( cx, obj ) ;
+               SDB_ASSERT( pClass, "Class can't be empty" ) ;
+               if ( pClass )
+               {
+                  tmpResoveOp = pClass->resolve ;
+                  pClass->resolve = JS_ResolveStub ;
+               }
+               hasRet = JS_HasPropertyById( cx, prototype, id, &found ) ;
+               if ( pClass )
+               {
+                  pClass->resolve = tmpResoveOp ;
+               }
+
+               if ( hasRet && found )
+               {
+                  goto done ;
+               }
             }
-            else if ( JSVAL_IS_STRING ( valID ) )
+
+            if ( JSVAL_IS_STRING ( valID ) )
             {
                jsval valProp = JSVAL_VOID ;
                string idstr ;

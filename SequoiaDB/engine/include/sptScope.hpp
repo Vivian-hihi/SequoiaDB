@@ -82,13 +82,16 @@ namespace engine
                           bson::BSONObj &rval,
                           bson::BSONObj &detail ) = 0 ;
 
-      virtual void   getGlobalFunNames( set<string> &setFunc ) = 0 ;
+      virtual void   getGlobalFunNames( set<string> &setFunc,
+                                        BOOLEAN showHide = FALSE ) = 0 ;
 
       virtual void   getObjStaticFunNames( const string &objName,
-                                           set<string> &setFunc ) = 0 ;
+                                           set<string> &setFunc,
+                                           BOOLEAN showHide = FALSE ) = 0 ;
 
       virtual void   getObjFunNames( const void *pObj,
-                                     set<string> &setFunc ) = 0 ;
+                                     set<string> &setFunc,
+                                     BOOLEAN showHide = FALSE ) = 0 ;
 
       virtual void   getObjPropNames( const void *pObj,
                                       set<string> &setProp ) = 0 ;

@@ -162,24 +162,64 @@ namespace engine
       return name ;
    }
 
+   void _sptObjFactory::_getClassMemFuncNamesByNative( const string &className,
+                                                       set<string> &setFuns,
+                                                       BOOLEAN showHide )
+   {
+      const _sptObjDesc *desc = findObj( className ) ;
+      while ( desc )
+      {
+         desc->getFuncMap().getMemberFuncNames( setFuns, showHide ) ;
+         desc = desc->getParent() ;
+      }
+   }
+
+   void _sptObjFactory::_getClassStaticFuncNamesByNative( const string &className,
+                                                          set < string > &setFuns,
+                                                          BOOLEAN showHide )
+   {
+      const _sptObjDesc *desc = findObj( className ) ;
+      if ( desc )
+      {
+         desc->getFuncMap().getStaticFuncNames( setFuns, showHide ) ;
+      }
+   }
+
    void _sptObjFactory::getObjFuncNames( JSContext *cx,
                                          JSObject *obj,
                                          set< string > &setFuns,
                                          BOOLEAN showHide )
    {
+      /// 1. to get native funcs
       string className = getClassName( cx, obj ) ;
-      const sptObjDesc *desc = findObj( className ) ;
+      _getClassMemFuncNamesByNative( className, setFuns, showHide ) ;
 
-      if ( desc->isIgnoredName() )
-      {
-         desc->getFuncMap().getStaticFuncNames( setFuns, showHide ) ;
-      }
-      else
-      {
-         desc->getFuncMap().getMemberFuncNames( setFuns, showHide ) ;
-      }
-
+      /// 2. to get self func2
       _getObjFuncNames( cx, obj, setFuns ) ;
+      /// 3. get prototype's funcs
+      JSObject *prototype = JS_GetPrototype( cx, obj ) ;
+      while( prototype )
+      {
+         _getObjFuncNames( cx, prototype, setFuns ) ;
+         prototype = JS_GetPrototype( cx, prototype ) ;
+      }
+   }
+
+   void _sptObjFactory::getObjStaticFunNames( JSContext *cx,
+                                              JSObject *obj,
+                                              set < string > &setFuns,
+                                              BOOLEAN showHide )
+   {
+      /// 1. to get native static funcs
+      string className = getClassName( cx, obj ) ;
+      _getClassStaticFuncNamesByNative( className, setFuns, showHide ) ;
+
+      /// 2. to get constructor's static functions
+      JSObject *constructor = JS_GetConstructor( cx, obj ) ;
+      if ( constructor )
+      {
+         _getObjFuncNames( cx, constructor, setFuns ) ;
+      }
    }
 
    void _sptObjFactory::getClassFuncNames( JSContext *cx,
@@ -187,18 +227,24 @@ namespace engine
                                            set< string > &setFuns,
                                            BOOLEAN showHide )
    {
-      const _sptObjDesc *desc = findObj( className ) ;
-      if ( desc )
+      JSObject *jsObj = _newObjectByName( cx, className ) ; ;
+      if ( jsObj )
       {
-         JSObject *jsObj = JS_NewObject ( cx,
-                                          (JSClass *)(desc->getClassDef()),
-                                          0 , 0 ) ;
-         if ( jsObj )
-         {
-            _getObjFuncNames( cx, jsObj, setFuns ) ;
-            JS_MaybeGC( cx ) ;
-         }
-         desc->getFuncMap().getMemberFuncNames( setFuns, showHide ) ;
+         getObjFuncNames( cx, jsObj, setFuns, showHide ) ;
+         JS_MaybeGC( cx ) ;
+      }
+   }
+
+   void _sptObjFactory::getClassStaticFuncNames( JSContext *cx,
+                                                 const string &className,
+                                                 set < string > &setFuns,
+                                                 BOOLEAN showHide )
+   {
+      JSObject *jsObj = _newObjectByName( cx, className ) ;
+      if ( jsObj )
+      {
+         getObjStaticFunNames( cx, jsObj, setFuns, showHide ) ;
+         JS_MaybeGC( cx ) ;
       }
    }
 
@@ -206,74 +252,47 @@ namespace engine
                                          JSObject *obj,
                                          set< string > &setProp )
    {
+      /// first get self prop
+      _getObjPropNames( cx, obj, setProp ) ;
+      /// then get prototype's prop
       JSObject *prototype = NULL ;
-      JSIdArray *properties = NULL ;
-
       prototype = JS_GetPrototype( cx, obj ) ;
-      if ( !prototype )
+      while( prototype )
       {
-         goto done ;
+         _getObjPropNames( cx, prototype, setProp ) ;
+         prototype = JS_GetPrototype( cx, prototype ) ;
       }
+   }
 
-      properties = JS_Enumerate( cx, prototype ) ;
-      if ( !properties )
+   void _sptObjFactory::getObjStaticPropNames( JSContext *cx,
+                                               JSObject *obj,
+                                               set < string > &setProp )
+   {
+      JSObject *constructor = JS_GetConstructor( cx, obj ) ;
+      if ( constructor )
       {
-         goto done ;
+         _getObjPropNames( cx, constructor, setProp ) ;
       }
+   }
 
-      for ( jsint i = 0; i < properties->length; i++ )
+   void _sptObjFactory::getClassStaticPropNames( JSContext *cx,
+                                                 const string &className,
+                                                 set < string > &setProp )
+   {
+      JSObject *jsObj = _newObjectByName( cx, className ) ;
+      if ( jsObj )
       {
-         jsid id = properties->vector[i] ;
-         jsval fieldName = JSVAL_VOID ;
-         jsval fieldValue = JSVAL_VOID ;
-
-         if ( !JS_GetPropertyById( cx, prototype, id, &fieldValue ) )
-         {
-            continue ;
-         }
-         JSObject *objvalue = NULL ;
-         if ( JSVAL_IS_OBJECT( fieldValue ) &&
-              NULL != ( objvalue = JSVAL_TO_OBJECT( fieldValue ) ) &&
-              JS_ObjectIsFunction( cx, objvalue ) )
-         {
-            continue ;
-         }
-         if ( !JS_IdToValue( cx, id, &fieldName ) )
-         {
-            continue ;
-         }
-         JSString *jsStr = JS_ValueToString( cx, fieldName ) ;
-         if ( !jsStr )
-         {
-            continue ;
-         }
-         CHAR *str = JS_EncodeString( cx, jsStr ) ;
-         if ( !str )
-         {
-            continue ;
-         }
-         setProp.insert( str ) ;
-         JS_free( cx, str ) ;
+         getObjStaticPropNames( cx, jsObj, setProp ) ;
+         JS_MaybeGC( cx ) ;
       }
-
-   done:
-      return ;
    }
 
    void _sptObjFactory::_getObjFuncNames( JSContext *cx,
                                           JSObject *obj,
                                           set< string > &setFuns )
    {
-      JSObject *prototype = NULL ;
       JSIdArray *properties = NULL ;
-
-      prototype = JS_GetPrototype( cx, obj ) ;
-      if ( !prototype )
-      {
-         goto done ;
-      }
-
-      properties = JS_Enumerate( cx, prototype ) ;
+      properties = JS_Enumerate( cx, obj ) ;
       if ( !properties )
       {
          goto done ;
@@ -285,7 +304,7 @@ namespace engine
          jsval fieldName = JSVAL_VOID ;
          jsval fieldValue = JSVAL_VOID ;
 
-         if ( !JS_GetPropertyById( cx, prototype, id, &fieldValue ) )
+         if ( !JS_GetPropertyById( cx, obj, id, &fieldValue ) )
          {
             continue ;
          }
@@ -319,6 +338,61 @@ namespace engine
          setFuns.insert( str ) ;
          JS_free( cx, str ) ;
       }
+
+      /// free
+      JS_DestroyIdArray( cx, properties ) ;
+
+   done:
+      return ;
+   }
+
+   void _sptObjFactory::_getObjPropNames( JSContext *cx,
+                                          JSObject *obj,
+                                          set< string > &setProp )
+   {
+      JSIdArray *properties = NULL ;
+      properties = JS_Enumerate( cx, obj ) ;
+      if ( !properties )
+      {
+         goto done ;
+      }
+
+      for ( jsint i = 0; i < properties->length; i++ )
+      {
+         jsid id = properties->vector[i] ;
+         jsval fieldName = JSVAL_VOID ;
+         jsval fieldValue = JSVAL_VOID ;
+
+         if ( !JS_GetPropertyById( cx, obj, id, &fieldValue ) )
+         {
+            continue ;
+         }
+         JSObject *objvalue = NULL ;
+         if ( JSVAL_IS_OBJECT( fieldValue ) &&
+              NULL != ( objvalue = JSVAL_TO_OBJECT( fieldValue ) ) &&
+              JS_ObjectIsFunction( cx, objvalue ) )
+         {
+            continue ;
+         }
+         if ( !JS_IdToValue( cx, id, &fieldName ) )
+         {
+            continue ;
+         }
+         JSString *jsStr = JS_ValueToString( cx, fieldName ) ;
+         if ( !jsStr )
+         {
+            continue ;
+         }
+         CHAR *str = JS_EncodeString( cx, jsStr ) ;
+         if ( !str )
+         {
+            continue ;
+         }
+         setProp.insert( str ) ;
+         JS_free( cx, str ) ;
+      }
+      /// free
+      JS_DestroyIdArray( cx, properties ) ;
 
    done:
       return ;
@@ -402,6 +476,41 @@ namespace engine
             setClass.insert( desc->getJSClassName() ) ;
          }
       }
+   }
+
+   JSObject* _sptObjFactory::_newObjectByName( JSContext *cx,
+                                               const string &className )
+   {
+      JSObject *jsObj = NULL ;
+
+      if ( className.empty() )
+      {
+         jsObj = (JSObject*)sdbGetThreadGlobal() ;
+      }
+      else
+      {
+         const _sptObjDesc *desc = findObj( className ) ;
+         if ( desc )
+         {
+            jsObj = JS_NewObject ( cx, (JSClass *)(desc->getClassDef()),
+                                   0 , 0 ) ;
+         }
+         if ( jsObj )
+         {
+            jsval val = JSVAL_VOID ;
+            JSString *jsstr = JS_NewStringCopyN( cx, className.c_str(),
+                                                 className.length() ) ;
+            if ( jsstr )
+            {
+               val = STRING_TO_JSVAL( jsstr ) ;
+               JS_DefineProperty( cx, jsObj, SPT_OBJ_CNAME_PROPNAME,
+                                  val, 0, 0,
+                                  SPT_PROP_READONLY|SPT_PROP_PERMANENT ) ;
+            }
+         }
+      }
+
+      return jsObj ;
    }
 
    sptObjFactory* sptGetObjFactory()

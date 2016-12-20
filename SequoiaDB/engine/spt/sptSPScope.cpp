@@ -613,26 +613,28 @@ namespace engine
       return sptGetObjFactory()->getClassName( _context, pJSObj ) ;
    }
 
-   void _sptSPScope::getGlobalFunNames( set< string > &setFunc )
+   void _sptSPScope::getGlobalFunNames( set< string > &setFunc,
+                                        BOOLEAN showHide )
    {
-      sptGetObjFactory()->getObjFuncNames( _context, _global, setFunc ) ;
+      sptGetObjFactory()->getObjStaticFunNames( _context, _global,
+                                                setFunc, showHide ) ;
    }
 
    void _sptSPScope::getObjStaticFunNames( const string &objName,
-                                           set< string > &setFunc )
+                                           set< string > &setFunc,
+                                           BOOLEAN showHide )
    {
-      const _sptObjDesc *desc = sptGetObjFactory()->findObj( objName ) ;
-      if ( desc )
-      {
-         return desc->getFuncMap().getStaticFuncNames( setFunc ) ;
-      }
+      sptGetObjFactory()->getClassStaticFuncNames( _context, objName,
+                                                   setFunc, showHide ) ;
    }
 
    void _sptSPScope::getObjFunNames( const void *pObj,
-                                     set< string > &setFunc )
+                                     set< string > &setFunc,
+                                     BOOLEAN showHide )
    {
       JSObject *pJSObj = ( JSObject* )pObj ;
-      return sptGetObjFactory()->getObjFuncNames( _context, pJSObj, setFunc ) ;
+      return sptGetObjFactory()->getObjFuncNames( _context, pJSObj,
+                                                  setFunc, showHide ) ;
    }
 
    void _sptSPScope::getObjPropNames( const void *pObj,

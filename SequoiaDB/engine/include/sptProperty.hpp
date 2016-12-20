@@ -203,6 +203,17 @@ namespace engine
             _attr &= ~SPT_PROP_PERMANENT ;
          }
       }
+      /*
+         The property'attr can't be set with SPT_PROP_PERMANENT
+      */
+      void  setDelete( BOOLEAN del = TRUE )
+      {
+         _deleted = del ;
+      }
+      BOOLEAN isNeedDelete() const
+      {
+         return _deleted ;
+      }
 
       template< typename T >
       INT32 assignUsrObject( void *value )
@@ -277,6 +288,7 @@ namespace engine
       SPT_RELEASE_OBJ_FUNC _pReleaseFunc ;
       const _sptObjDesc *_desc ;
       UINT32   _attr ;
+      BOOLEAN  _deleted ;
 
       SPT_PROP_ARRAY       _array ;
 
