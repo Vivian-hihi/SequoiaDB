@@ -50,7 +50,7 @@ function createPcd( db1, db2 )
    
    var expPcd1 = {};
    expPcd1["name"]      = pcdName;
-   expPcd1["func"]      = "function "+pcdName+"() {\n    return 100;\n}";
+   expPcd1["func"]      = { "$code": "function "+pcdName+"() {\n    return 100;\n}" };
    expPcd1["funcType"]  = 0;
    expPcds.push(expPcd1);  
      
@@ -81,7 +81,7 @@ function createPcdAgain( db1, db2 )
    
    var expPcd1 = {};
    expPcd1["name"]      = pcdName;
-   expPcd1["func"]      = "function "+pcdName+"() {\n    return 99;\n}";
+   expPcd1["func"]      = { "$code": "function "+pcdName+"() {\n    return 99;\n}" };
    expPcd1["funcType"]  = 0;
    expPcds.push(expPcd1);  
      
