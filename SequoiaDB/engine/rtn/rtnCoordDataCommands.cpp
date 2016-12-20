@@ -652,7 +652,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( CMD_RTNCOCMDCREATECL_GENROLLBACKMSG ) ;
 
-      INT32 bufSize ;
+      INT32 bufSize = 0 ;
 
       rc = msgBuildDropCLMsg( ppMsgBuf, &bufSize, pArgs->_targetName.c_str(), 0 ) ;
       PD_RC_CHECK ( rc, PDWARNING,
@@ -1052,13 +1052,13 @@ namespace engine
 
       PD_TRACE_ENTRY ( CMD_RTNCOCMDLINKCL_GENROLLBACKMSG ) ;
 
-      INT32 bufSize ;
+      INT32 bufSize = 0 ;
 
       _rtnCMDLinkCLArgs *pSelfArgs = ( _rtnCMDLinkCLArgs * )pArgs ;
 
       rc = msgBuildUnlinkCLMsg( ppMsgBuf, &bufSize,
-                                 pSelfArgs->_targetName.c_str(),
-                                 pSelfArgs->_subCLName.c_str(), 0 ) ;
+                                pSelfArgs->_targetName.c_str(),
+                                pSelfArgs->_subCLName.c_str(), 0 ) ;
       PD_RC_CHECK ( rc, PDWARNING,
                     "Failed to rollback %s on [%s/%s]: "
                     "failed to build unlink message, rc: %d",
@@ -1185,7 +1185,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_GENROLLBACKMSG ) ;
 
-      INT32 bufSize ;
+      INT32 bufSize = 0 ;
 
       _rtnCMDUnlinkCLArgs *pSelfArgs = ( _rtnCMDUnlinkCLArgs * )pArgs ;
 
@@ -2004,7 +2004,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( CMD_RTNCOCMDCREATEIDX_GENROLLBACKMSG ) ;
 
-      INT32 bufSize ;
+      INT32 bufSize = 0 ;
 
       _rtnCMDCreateIndexArgs *pSelfArgs = ( _rtnCMDCreateIndexArgs * ) pArgs ;
 
