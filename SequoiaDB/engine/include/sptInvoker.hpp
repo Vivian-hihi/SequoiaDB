@@ -42,7 +42,6 @@
 #include "sptSPArguments.hpp"
 #include "sptReturnVal.hpp"
 #include "sptCommon.hpp"
-#include "jscntxt.h"
 #include "../bson/bson.hpp"
 
 
@@ -291,12 +290,6 @@ namespace engine
          {
             jsval vp[ 3 ] = { JSVAL_VOID, JSVAL_VOID, valID } ;
             _sptSPArguments args( cx, 1, &vp[0] ) ;
-            UINT32 opcode = 0 ;
-
-            if ( cx->regs )
-            {
-               opcode = (UINT32)(*cx->regs->pc ) ;
-            }
 
             /// when the property is exist, ignored
             JSObject *prototype = JS_GetPrototype( cx, obj ) ;
@@ -340,7 +333,7 @@ namespace engine
             }
 
             rc = (( ( T * )instance )->*f)( args,
-                                            opcode,   /// SPT_JS_OP_CODE
+                                            _getOpCode( cx ), /// SPT_JS_OP_CODE
                                             processed,
                                             callFunc,
                                             setIDProp,
@@ -420,6 +413,8 @@ namespace engine
       static void _reportError( JSContext *cx,
                                 INT32 rc,
                                 const bson::BSONObj &detail ) ;
+
+      static UINT32 _getOpCode( JSContext *cx ) ;
  
    } ;
    typedef class _sptInvoker sptInvoker ;

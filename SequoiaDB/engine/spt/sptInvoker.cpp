@@ -32,6 +32,7 @@
 #include "sptInvoker.hpp"
 #include "ossUtil.hpp"
 #include "sptCommon.hpp"
+#include "jscntxt.h"
 
 using namespace bson ;
 
@@ -491,6 +492,16 @@ namespace engine
 
          JS_SetPendingException( cx , INT_TO_JSVAL( rc ) ) ;
       }
+   }
+
+   UINT32 _sptInvoker::_getOpCode( JSContext *cx )
+   {
+      UINT32 opcode = 0 ;
+      if ( cx && cx->regs )
+      {
+         opcode = (UINT32)(*cx->regs->pc ) ;
+      }
+      return opcode ;
    }
 
 }
