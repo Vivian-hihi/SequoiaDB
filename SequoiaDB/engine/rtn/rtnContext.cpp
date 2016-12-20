@@ -5413,9 +5413,19 @@ namespace engine
                                          TRUE, _mbContext ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
-                  _collectionName, rc ) ;
-         goto error ;
+         // Ignore SDB_DMS_NOTEXIST, which means the CL mignt be deleted already
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            PD_LOG ( PDWARNING, "Collection %s doesn't exist, ignored in drop "
+                     "collection, rc: %d", _collectionName, rc ) ;
+            rc = SDB_OK ;
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
+                     _collectionName, rc ) ;
+            goto error ;
+         }
       }
 
       _su->getAPM()->invalidatePlans ( _clShortName ) ;
