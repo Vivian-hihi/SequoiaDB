@@ -73,6 +73,7 @@ namespace engine
       // defaut service name
       ossSnprintf( _dftSvcName, OSS_MAX_SERVICENAME, "%u",
                    SDBCM_DFT_PORT ) ;
+      ossStrcpy( _cmServiceName, _dftSvcName ) ;
 
       _useCurUser = FALSE ;
       _useStandAlone = FALSE ;
@@ -381,6 +382,7 @@ namespace engine
       {
          ossStrncpy( _cmServiceName, serviceName, OSS_MAX_SERVICENAME ) ;
          _cmServiceName[ OSS_MAX_SERVICENAME ] = 0 ;
+         ossGetPort( _cmServiceName, _localPort ) ;
       }
    }
 
