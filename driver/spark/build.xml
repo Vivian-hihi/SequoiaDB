@@ -19,7 +19,6 @@
    <property name="source.dir" value="${root.dir}/src_${SPARK_VERSION}" />
    <property name="lib" value="${root.dir}/lib_${SPARK_VERSION}" />
    <property name="scala.lib" value="${root.dir}/scala_${SCALA_VERSION}_lib" />
-   <property name="jar.filename" value="${target.dir}/spark-sequoiadb_${SCALA_VERSION}-${SEQUOIADB_VERSION}.jar" />
    <property name="auxlib" value="${root.dir}/auxlib" />
    <property name="java.home" value="/var/lib/jenkins/workspace/compile_db_x86_trunk/sequoiadb/java/jdk6_linux64" />
    <taskdef resource="scala/tools/ant/antlib.xml">
@@ -34,7 +33,6 @@
          <pathelement location="${WORKSPACE}/sequoiadb/misc/ci/exec-tools/ant-sdbtasks.jar" />
       </classpath>
    </taskdef>
-      <echoproperties />
    
    <target name="clean" depends="">
       <delete dir="${target.dir}" />
@@ -100,6 +98,7 @@
       <entry key="build.time" value="${current.time}"/>
       <entry key="SequoiaDB_version" value="${project.version}"/>
    </propertyfile>
+   <property name="jar.filename" value="${target.dir}/spark-sequoiadb_${SCALA_VERSION}-${project.version}.jar" />
 
       <jar file="${jar.filename}">
          <manifest>
