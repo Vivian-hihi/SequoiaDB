@@ -57,9 +57,7 @@ namespace engine
             subBuilder.append ( fieldName, value ) ; \
             subBuilder.done () ; \
          } \
-      } while ( 0)
-
-
+      } while ( 0 )
 
 #define ADD_CHG_ELEMENT( builder, ele, strChg ) \
    do { \
@@ -69,7 +67,7 @@ namespace engine
          subBuilder.append ( ele ) ; \
          subBuilder.done () ; \
       } \
-   } while ( 0)
+   } while ( 0 )
 
 #define ADD_CHG_ELEMENT_AS( builder, ele, eleFieldName, strChg ) \
    do { \
@@ -79,7 +77,7 @@ namespace engine
          subBuilder.appendAs ( ele, eleFieldName ) ; \
          subBuilder.done () ; \
       } \
-   } while ( 0)
+   } while ( 0 )
 
 #define ADD_CHG_UNSET_FIELD( builder, fieldName ) \
    do { \
@@ -89,7 +87,7 @@ namespace engine
          subBuilder.append ( fieldName, "" ) ; \
          subBuilder.done () ; \
       } \
-   } while ( 0)
+   } while ( 0 )
 
 #define ADD_CHG_NUMBER( builder, fieldName, value, strChg ) \
    do { \
@@ -101,7 +99,7 @@ namespace engine
       } \
    } while ( 0 )
 
-#define ADD_CHG_ARRAY_OBJ(builder, obj, objFiledName, strChg ) \
+#define ADD_CHG_ARRAY_OBJ( builder, obj, objFiledName, strChg ) \
    do { \
       if ( builder ) \
       { \
@@ -110,6 +108,9 @@ namespace engine
          subBuilder.done () ; \
       } \
    } while ( 0 )
+
+#define SET_ARRAY_POS_NAME    "pos"
+#define SET_ARRAY_OBJS_NAME   "objs"
 
    /*
       _mthModifier implement
@@ -386,8 +387,8 @@ namespace engine
          sub.appendAs ( me._toModify, sub.numStr(n) ) ;
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+         _buildSetArray( _dstChgBuilder, pRoot, n, me._toModify ) ;
+         _buildSetArray( _srcChgBuilder, pRoot, n, BSONArrayBuilder().arr() ) ;
       }
 
    done :
@@ -439,6 +440,8 @@ namespace engine
             n++ ;
          }
 
+         INT32 beginPos = n ;
+
          i = BSONObjIterator ( me._toModify.embeddedObject()) ;
          while( i.more() )
          {
@@ -449,8 +452,10 @@ namespace engine
 
          if ( 0 != pushNum )
          {
-            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+            _buildSetArray( _dstChgBuilder, pRoot, beginPos,
+                            me._toModify.embeddedObject() ) ;
+            _buildSetArray( _srcChgBuilder, pRoot, beginPos,
+                            BSONArrayBuilder().arr() ) ;
          }
       }
 
@@ -489,6 +494,7 @@ namespace engine
          BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          INT32 n = 0 ;
          BOOLEAN changed = FALSE ;
+         INT32 changedPos = 0 ;
          // for each element in the original data
          BSONObjIterator i ( in.embeddedObject() ) ;
          while ( i.more() )
@@ -519,6 +525,10 @@ namespace engine
             }
             else
             {
+               if ( !changed )
+               {
+                  changedPos = n ;
+               }
                changed = TRUE ;
             }
          }
@@ -526,8 +536,8 @@ namespace engine
 
          if ( changed )
          {
-            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+            _buildSetArray( _dstChgBuilder, pRoot, changedPos, -1, newObj ) ;
+            _buildSetArray( _srcChgBuilder, pRoot, changedPos, -1, in.embeddedObject() ) ;
          }
       }
 
@@ -581,21 +591,20 @@ namespace engine
       {
          BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          INT32 n = 0 ;
+         INT32 changedPos = 0 ;
          // if specify < 0, which means pop the n'th element from front
          if ( me._toModify.number() < 0 )
          {
+            changedPos = 0 ;
             INT32 m = (INT32)me._toModify.number() ;
             BSONObjIterator i ( in.embeddedObject() ) ;
             while ( i.more() )
             {
                m++ ;
+               BSONElement be = i.next() ;
                if ( m > 0 )
                {
-                  sub.appendAs( i.next(), sub.numStr(n++) ) ;
-               }
-               else
-               {
-                  i.next() ;
+                  sub.appendAs( be, sub.numStr(n++) ) ;
                }
             }
          }
@@ -612,6 +621,7 @@ namespace engine
                count++ ;
             }
             count = count - m ;
+            changedPos = count > 0 ? count : 0 ;
             i = BSONObjIterator ( in.embeddedObject() ) ;
             while ( i.more() )
             {
@@ -629,8 +639,8 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+         _buildSetArray( _dstChgBuilder, pRoot, changedPos, -1, newObj ) ;
+         _buildSetArray( _srcChgBuilder, pRoot, changedPos, -1, in.embeddedObject() ) ;
       }
 
    done :
@@ -828,8 +838,8 @@ namespace engine
          //add new element
          if ( orgNum != n )
          {
-            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+            _buildSetArray( _dstChgBuilder, pRoot, orgNum, -1, newObj ) ;
+            _buildSetArray( _srcChgBuilder, pRoot, orgNum, -1, in.embeddedObject() ) ;
          }
       }
    done :
@@ -968,6 +978,474 @@ namespace engine
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF22, rc );
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPSETARRMDF1, "_mthModifier::_applySetArrayModifier" )
+   template<class Builder>
+   INT32 _mthModifier::_applySetArrayModifier ( const CHAR *pRoot, Builder &bb,
+                                                const BSONElement &in,
+                                                ModifierElement &me )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__MTHMDF__APPSETARRMDF1 ) ;
+
+      BSONElement beModify = me._toModify ;
+      const CHAR *pShort = in.fieldName() ;
+      INT32 beginPos = 0, endPos = 0 ;
+      BSONObj arr ;
+
+      if ( Array != in.type() )
+      {
+         PD_LOG_MSG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
+                      "Original data type is not array: %s",
+                      in.toString().c_str() ) ;
+         if ( _ignoreTypeError )
+         {
+            rc = _appendSetArrayModifier( pRoot, pShort, bb, me ) ;
+            if ( SDB_OK == rc )
+            {
+               // Using $set in the rollback log, $set the original object
+               // Replay log is set in _append function
+               ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+            }
+            else
+            {
+               PD_LOG_MSG ( PDERROR,
+                            "Failed to apply $setarray [%s], rc: %d",
+                            beModify.toString( TRUE, TRUE ).c_str(),
+                            rc ) ;
+            }
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
+         goto done ;
+      }
+
+      rc = _parseSetArray( beModify, beginPos, endPos, arr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to parse $setarray [%s], rc: %d",
+                      beModify.toString( TRUE, TRUE ).c_str(),
+                      rc ) ;
+         goto done ;
+      }
+
+      {
+         // create bson builder for the array
+         BSONArrayBuilder newbb( bb.subarrayStart ( pShort ) ) ;
+
+         INT32 idx = 0 ;
+         BSONObjIterator iter ( in.embeddedObject()) ;
+         while ( iter.more() && idx < beginPos )
+         {
+            newbb << iter.next() ;
+            idx++ ;
+         }
+
+         if ( idx < beginPos )
+         {
+            // The size of orig array is smaller than the begin position,
+            // we need to fill null elements between the end of original array
+            // to the begin position
+            // In this case, we need to log elements from the end of the
+            // original array
+            INT32 tmpBeginPos = beginPos ;
+
+            beginPos = idx ;
+            endPos = -1 ;
+
+            // Fill null elements
+            while ( idx < tmpBeginPos )
+            {
+               newbb.appendNull() ;
+               idx ++ ;
+            }
+
+            // Append the new elements
+            BSONObjIterator iterNew ( arr ) ;
+            while ( iterNew.more() )
+            {
+               newbb << iterNew.next() ;
+            }
+         }
+         else
+         {
+            INT32 addedCnt = 0, deletedCnt = 0 ;
+
+            // Append the new elements
+            BSONObjIterator iterNew ( arr ) ;
+            while ( iterNew.more() )
+            {
+               newbb << iterNew.next() ;
+               addedCnt ++ ;
+            }
+
+            if ( beginPos <= endPos )
+            {
+               // Skip elements between the begin position and the end position
+               // in the original array
+               while ( iter.more() && idx <= endPos )
+               {
+                  iter.next() ;
+                  idx ++ ;
+                  deletedCnt ++ ;
+               }
+
+               // If the number of added elements equals to the number deleted
+               // elements, we only need to log the elements between the begin
+               // position and the end position
+               // Otherwise, the size of array is changed, we need to log the
+               // elements from the begin position to the end
+               // e.g. $setarray:{field:{pos:[2,3],objs:[2,3]}}, we only record
+               // the objs [2,3]
+               // e.g. $setarray:{field:{pos:[2,3],objs:[2,3,4]}}, the size of
+               // array is changed, we need to record from position 2 to the end
+               if ( addedCnt != deletedCnt || !iter.more() )
+               {
+                  endPos = -1 ;
+               }
+
+               // Append the remain elements in the original array
+               while ( iter.more() )
+               {
+                  newbb << iter.next() ;
+                  idx ++ ;
+               }
+            }
+         }
+
+         BSONObj newObj = newbb.done() ;
+         _buildSetArray( _dstChgBuilder, pRoot, beginPos, endPos, newObj ) ;
+         _buildSetArray( _srcChgBuilder, pRoot, beginPos, endPos, in.embeddedObject() ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__MTHMDF__APPSETARRMDF1, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPSETARRMDF2, "_mthModifier::_appendSetArrayModifier" )
+   template<class Builder>
+   INT32 _mthModifier::_appendSetArrayModifier ( const CHAR *pRoot,
+                                                 const CHAR *pShort,
+                                                 Builder &bb,
+                                                 ModifierElement &me )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__MTHMDF__APPSETARRMDF2 ) ;
+
+      BSONElement beModify = me._toModify ;
+      INT32 beginPos = 0, endPos = 0 ;
+      BSONObj arr ;
+
+      rc = _parseSetArray( beModify, beginPos, endPos, arr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to parse $setarray [%s], rc: %d",
+                      beModify.toString( TRUE, TRUE ).c_str(), rc ) ;
+         goto done ;
+      }
+
+      {
+         // Create bson builder for the array
+         BSONArrayBuilder tmpbb ( bb.subarrayStart( pShort ) ) ;
+
+         // Fill null for the beginning of the new array
+         INT32 idx = 0 ;
+         for ( idx = 0 ; idx < beginPos ; idx ++ )
+         {
+            tmpbb.appendNull() ;
+         }
+
+         // Fill the new array with given array
+         BSONObjIterator iter( arr ) ;
+         while ( iter.more() )
+         {
+            tmpbb << iter.next() ;
+            idx ++ ;
+         }
+         BSONObj newObj = tmpbb.done() ;
+
+         // Using $set in the replay log
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__MTHMDF__APPSETARRMDF2, rc ) ;
+      return rc ;
+   }
+
+   INT32 _mthModifier::_parseSetArray( const BSONElement &toModify,
+                                       INT32 &beginPos, INT32 &endPos,
+                                       BSONObj &arr )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj boModify ;
+      BSONElement bePos ;
+
+      if ( Object != toModify.type() )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "$setarray input must be an object: %s",
+                     toModify.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      boModify = toModify.embeddedObject() ;
+
+      // Parse SET_ARRAY_POS_NAME
+      if ( !boModify.hasField( SET_ARRAY_POS_NAME ) )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "$setarray must have the %s field",
+                     SET_ARRAY_POS_NAME ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      bePos = boModify.getField( SET_ARRAY_POS_NAME ) ;
+      if ( NumberInt == bePos.type() )
+      {
+         beginPos = bePos.numberInt() ;
+         if ( beginPos < 0 )
+         {
+            PD_LOG_MSG( PDERROR,
+                        "The %s field in $setarray must be a positive integer",
+                        SET_ARRAY_POS_NAME ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         endPos = -1 ;
+      }
+      else if ( Array == bePos.type() )
+      {
+         INT32 idx = 0 ;
+         BSONObjIterator i( bePos.embeddedObject() ) ;
+         while ( i.more() && idx < 2 )
+         {
+            BSONElement beTmp = i.next() ;
+            if ( NumberInt == beTmp.type() )
+            {
+               if ( 0 == idx )
+               {
+                  beginPos = beTmp.numberInt() ;
+               }
+               else if ( 1 == idx )
+               {
+                  endPos = beTmp.numberInt() ;
+               }
+            }
+            else
+            {
+               PD_LOG_MSG( PDERROR,
+                           "The %s field in $setarray must be an array with 2 integers",
+                           SET_ARRAY_POS_NAME ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            idx ++ ;
+         }
+         if ( 2 != idx || i.more() )
+         {
+            PD_LOG_MSG( PDERROR,
+                        "The %s field in $setarray must be an array with 2 "
+                        "integers", SET_ARRAY_POS_NAME ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( beginPos < 0 )
+         {
+            PD_LOG_MSG( PDERROR,
+                        "The beginPos [%d] of %s field in $setarray must be a "
+                        "positive integer", beginPos, SET_ARRAY_POS_NAME ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( endPos < 0 )
+         {
+            PD_LOG_MSG( PDERROR,
+                        "The endPos [%d] of %s field in $setarray must be a "
+                        "positive integer", endPos, SET_ARRAY_POS_NAME ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( beginPos > endPos )
+         {
+            PD_LOG_MSG( PDERROR,
+                        "The beginPos [%d] of %s field in $setarray must be <= the "
+                        "endPos [%d]", beginPos, SET_ARRAY_POS_NAME, endPos ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      else
+      {
+         PD_LOG_MSG( PDERROR,
+                     "The %s field in $setarray must be an integer or an array",
+                     SET_ARRAY_POS_NAME ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // Parse SET_ARRAY_OBJS_NAME
+      if ( !boModify.hasField( SET_ARRAY_OBJS_NAME ) )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "$setarray input %s must have %s field",
+                     toModify.toString( TRUE, TRUE ).c_str(),
+                     SET_ARRAY_OBJS_NAME ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( Array != boModify.getField( SET_ARRAY_OBJS_NAME ).type() )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "%s field in $setarray input %s must be an array",
+                     SET_ARRAY_OBJS_NAME,
+                     toModify.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      arr = boModify.getObjectField( SET_ARRAY_OBJS_NAME ) ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   template<class Builder>
+   void _mthModifier::_buildSetArray ( Builder *builder, const CHAR *pRoot,
+                                       INT32 beginPos, INT32 endPos,
+                                       const BSONObj &arr )
+   {
+      if ( !builder )
+      {
+         return ;
+      }
+
+      SDB_ASSERT( beginPos >= 0, "beginPos must >= 0" ) ;
+
+      if ( beginPos <= 10 && endPos < 0 )
+      {
+         // The "pos" field will take a space of the record, so if it is a small
+         // array or change is applied to almost the whole array, we use $set
+         // which may generate a smaller record
+         ADD_CHG_ARRAY_OBJ( builder, arr, pRoot, "$set" ) ;
+      }
+      else
+      {
+         BSONObjBuilder subBuilder( builder->subobjStart( "$setarray" ) ) ;
+         BSONObjBuilder sub2Builder( subBuilder.subobjStart( pRoot ) ) ;
+
+         if ( beginPos <= endPos )
+         {
+            BSONObjBuilder posBuilder( sub2Builder.subarrayStart( SET_ARRAY_POS_NAME ) ) ;
+            posBuilder.append( posBuilder.numStr( 0 ), beginPos ) ;
+            posBuilder.append( posBuilder.numStr( 1 ), endPos ) ;
+            posBuilder.done() ;
+
+            BSONArrayBuilder arrBuilder( sub2Builder.subarrayStart( SET_ARRAY_OBJS_NAME ) ) ;
+            BSONObjIterator iter( arr ) ;
+            INT32 pos = 0 ;
+            while ( iter.more() && pos < beginPos )
+            {
+               iter.next() ;
+               pos ++ ;
+            }
+            while ( iter.more() && pos <= endPos )
+            {
+               arrBuilder << iter.next() ;
+               pos ++ ;
+            }
+            arrBuilder.done() ;
+         }
+         else
+         {
+            sub2Builder.append( SET_ARRAY_POS_NAME, beginPos ) ;
+
+            BSONArrayBuilder arrBuilder( sub2Builder.subarrayStart( SET_ARRAY_OBJS_NAME ) ) ;
+            BSONObjIterator iter( arr ) ;
+            INT32 pos = 0 ;
+            while ( iter.more() && pos < beginPos )
+            {
+               iter.next() ;
+               pos ++ ;
+            }
+            while ( iter.more() )
+            {
+               arrBuilder << iter.next() ;
+            }
+            arrBuilder.done() ;
+         }
+
+         sub2Builder.done() ;
+         subBuilder.done() ;
+      }
+   }
+
+   template<class Builder>
+   void _mthModifier::_buildSetArray ( Builder *builder, const CHAR *pRoot,
+                                       INT32 beginPos, const BSONObj &arr )
+   {
+      if ( !builder )
+      {
+         return ;
+      }
+
+      SDB_ASSERT( beginPos >= 0, "beginPos must >= 0" ) ;
+
+      if ( beginPos == 0 )
+      {
+         ADD_CHG_ARRAY_OBJ( builder, arr, pRoot, "$set" ) ;
+      }
+      else
+      {
+         BSONObjBuilder subBuilder( builder->subobjStart( "$setarray" ) ) ;
+         BSONObjBuilder sub2Builder( subBuilder.subobjStart( pRoot ) ) ;
+         sub2Builder.append( SET_ARRAY_POS_NAME, beginPos ) ;
+         sub2Builder.appendArray( SET_ARRAY_OBJS_NAME, arr ) ;
+         sub2Builder.done() ;
+         subBuilder.done() ;
+      }
+   }
+
+   template<class Builder>
+   void _mthModifier::_buildSetArray ( Builder *builder, const CHAR *pRoot,
+                                       INT32 beginPos, const BSONElement &ele )
+   {
+      if ( !builder )
+      {
+         return ;
+      }
+
+      SDB_ASSERT( beginPos >= 0, "beginPos must >= 0" ) ;
+
+      if ( beginPos == 0 )
+      {
+         BSONObjBuilder subBuilder( builder->subobjStart ( "$set" ) ) ;
+         BSONArrayBuilder arrBuilder( subBuilder.subarrayStart( pRoot ) ) ;
+         arrBuilder << ele ;
+         arrBuilder.done() ;
+         subBuilder.done() ;
+      }
+      else
+      {
+         BSONObjBuilder subBuilder( builder->subobjStart( "$setarray" ) ) ;
+         BSONObjBuilder sub2Builder( subBuilder.subobjStart( pRoot ) ) ;
+         sub2Builder.append( SET_ARRAY_POS_NAME, beginPos ) ;
+         BSONArrayBuilder arrBuilder( sub2Builder.subarrayStart( SET_ARRAY_OBJS_NAME ) ) ;
+         arrBuilder << ele ;
+         arrBuilder.done() ;
+         sub2Builder.done() ;
+         subBuilder.done() ;
+      }
    }
 
    BOOLEAN _mthModifier::_pullElementMatch( BSONElement& org,
@@ -1115,10 +1593,18 @@ namespace engine
          } // r
          else if ( field[1] == 's' )
          {
-            if ( field[2] == 'e' && field[3] == 't' &&
-                 field[4] == 0 )
+            if ( field[2] == 'e' && field[3] == 't' )
             {
-               return SET ;
+               if ( field[4] == 0 )
+               {
+                  return SET ;
+               }
+               else if ( field[4] == 'a' && field[5] == 'r' &&
+                         field[6] == 'r' && field[7] == 'a' &&
+                         field[8] == 'y' && field[9] == 0 )
+               {
+                  return SETARRAY ;
+               }
             }
          }
          else if ( field[1] == 'u' )
@@ -1690,6 +2176,9 @@ namespace engine
       case BIT:
          rc = _appendBitModifier2 ( pRoot, pShort, b, 0, *me ) ;
          break ;
+      case SETARRAY :
+         rc = _appendSetArrayModifier( pRoot, pShort, b, *me ) ;
+         break ;
       default:
          PD_LOG_MSG ( PDERROR, "unknow modifier type[%d]", me->_modType ) ;
          rc = SDB_INVALIDARG ;
@@ -1938,6 +2427,9 @@ namespace engine
          break ;
       }
       case NULLOPR:
+         break ;
+      case SETARRAY :
+         rc = _applySetArrayModifier( *ppRoot, b, e, *me ) ;
          break ;
       default :
          PD_LOG_MSG ( PDERROR, "unknow modifier type[%d]", me->_modType ) ;

@@ -74,6 +74,7 @@ namespace engine
       NULLOPR,
       REPLACE,
       KEEP,
+      SETARRAY,
 
       UNKNOW
    } ;
@@ -252,6 +253,33 @@ namespace engine
       INT32 _appendBitModifier2 ( const CHAR *pRoot, const CHAR *pShort,
                                   Builder &bb, INT32 in,
                                   ModifierElement &me ) ;
+
+      // Process $setarray
+      template<class Builder>
+      INT32 _applySetArrayModifier ( const CHAR *pRoot, Builder &bb,
+                                     const BSONElement &in,
+                                     ModifierElement &me ) ;
+
+      template<class Builder>
+      INT32 _appendSetArrayModifier ( const CHAR *pRoot, const CHAR *pShort,
+                                      Builder &bb, ModifierElement &me ) ;
+
+      INT32 _parseSetArray( const BSONElement &toModify, INT32 &beginPos,
+                            INT32 &endPos, BSONObj &arr ) ;
+
+      template<class Builder>
+      OSS_INLINE void _buildSetArray ( Builder *builder, const CHAR *pRoot,
+                                       INT32 beginPos, INT32 endPos,
+                                       const BSONObj &arr ) ;
+
+      template<class Builder>
+      OSS_INLINE void _buildSetArray ( Builder *builder, const CHAR *pRoot,
+                                       INT32 beginPos, const BSONObj &arr ) ;
+
+      template<class Builder>
+      OSS_INLINE void _buildSetArray ( Builder *builder, const CHAR *pRoot,
+                                       INT32 beginPos, const BSONElement &ele ) ;
+
       // if the original object has the element we asked to modify, then e is
       // the
       // original element, b is the builder, me is the info that we want to
