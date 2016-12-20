@@ -432,7 +432,7 @@ namespace engine
                                    INT32 rc,
                                    const bson::BSONObj &detail )
    {
-      if ( SDB_OK != rc )
+      if ( SDB_OK != rc && !JS_IsExceptionPending( cx ) )
       {
          stringstream ss ;
          BSONObjIterator itr( detail) ;

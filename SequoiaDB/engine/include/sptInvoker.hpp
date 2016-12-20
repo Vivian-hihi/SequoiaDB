@@ -98,8 +98,12 @@ namespace engine
             goto error ;
          }
 
+         if ( JS_IsExceptionPending( cx ) )
+         {
+            rc = SDB_SPT_EVAL_FAIL ;
+            goto error ;
+         }
          JS_SET_RVAL( cx, vp, jsRval ) ;
-
       done:
          return rc ;
       error:
@@ -212,6 +216,11 @@ namespace engine
             }
          }
 
+         if ( JS_IsExceptionPending( cx ) )
+         {
+            rc = SDB_SPT_EVAL_FAIL ;
+            goto error ;
+         }
       done:
          return rc ;
       error:
