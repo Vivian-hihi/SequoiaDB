@@ -3708,7 +3708,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
-      vector< BSONObj > procVec ;
+      vector< BSONObj > userVec ;
 
       if ( NULL == buf )
       {
@@ -3756,7 +3756,7 @@ namespace engine
             itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
             string loginIp ;
             string loginTime ;
             try
@@ -3802,11 +3802,11 @@ namespace engine
                   loginTime += " " + columns[ index ] ;
                }
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TIME, loginTime ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_FROM, loginIp ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TTY, columns[ 1 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TIME, loginTime ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_FROM, loginIp ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_TTY, columns[ 1 ] ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
       else
@@ -3815,7 +3815,7 @@ namespace engine
             itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
 
             try
             {
@@ -3847,18 +3847,18 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
 
       // merge vector< BSONObj > into BsonObj
-      for( UINT32 index = 0; index < procVec.size(); index++ )
+      for( UINT32 index = 0; index < userVec.size(); index++ )
       {
          try
          {
             builder.append( boost::lexical_cast<string>( index ).c_str(),
-                            procVec[ index ] ) ;
+                            userVec[ index ] ) ;
          }
          catch( std::exception &e )
          {
@@ -3955,7 +3955,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
-      vector< BSONObj > procVec ;
+      vector< BSONObj > userVec ;
 
       if ( NULL == buf )
       {
@@ -3998,7 +3998,7 @@ namespace engine
                itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
 
             try
             {
@@ -4018,10 +4018,10 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_GID, columns[ 3 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_DIR, columns[ 5 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_GID, columns[ 3 ] ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_DIR, columns[ 5 ] ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
       else
@@ -4030,7 +4030,7 @@ namespace engine
                itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder userObjBuilder ;
 
             try
             {
@@ -4050,18 +4050,18 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            userObjBuilder.append( CMD_USR_SYSTEM_ALLUSER_USER, columns[ 0 ] ) ;
+            userVec.push_back( userObjBuilder.obj() ) ;
          }
       }
 
       // merge vector< BSONObj > into BsonObj
-      for( UINT32 index = 0; index < procVec.size(); index++ )
+      for( UINT32 index = 0; index < userVec.size(); index++ )
       {
          try
          {
             builder.append( boost::lexical_cast<string>( index ).c_str(),
-                            procVec[ index ] ) ;
+                            userVec[ index ] ) ;
          }
          catch( std::exception &e )
          {
@@ -4158,7 +4158,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
-      vector< BSONObj > procVec ;
+      vector< BSONObj > groupVec ;
 
       if ( NULL == buf )
       {
@@ -4201,7 +4201,7 @@ namespace engine
             itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder groupObjBuilder ;
             string groupMem ;
 
             try
@@ -4244,10 +4244,10 @@ namespace engine
             {
                groupMem = "" ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_GID, columns[ 2 ] ) ;
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_MEMBERS, columns[ 3 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_GID, columns[ 2 ] ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_MEMBERS, columns[ 3 ] ) ;
+            groupVec.push_back( groupObjBuilder.obj() ) ;
          }
       }
       else
@@ -4256,7 +4256,7 @@ namespace engine
             itrSplit != splited.end(); itrSplit++ )
          {
             vector<string> columns ;
-            BSONObjBuilder proObjBuilder ;
+            BSONObjBuilder groupObjBuilder ;
 
             try
             {
@@ -4288,18 +4288,18 @@ namespace engine
             {
                continue ;
             }
-            proObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
-            procVec.push_back( proObjBuilder.obj() ) ;
+            groupObjBuilder.append( CMD_USR_SYSTEM_GROUP_NAME, columns[ 0 ] ) ;
+            groupVec.push_back( groupObjBuilder.obj() ) ;
          }
       }
 
       // merge into BsonObj
-      for( UINT32 index = 0; index < procVec.size(); index++ )
+      for( UINT32 index = 0; index < groupVec.size(); index++ )
       {
          try
          {
             builder.append( boost::lexical_cast<string>( index ).c_str(),
-                            procVec[ index ] ) ;
+                            groupVec[ index ] ) ;
          }
          catch( std::exception &e )
          {
@@ -4354,6 +4354,8 @@ namespace engine
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
          stringstream ss ;
          ss << "failed to exec cmd " << cmd.str() << ",rc:"
             << rc
@@ -4367,13 +4369,13 @@ namespace engine
       rc = runner.read( username ) ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
          ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
             << rc ;
          PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
          goto error ;
       }
-
       if( username[ username.size() - 1 ] == '\n' )
       {
          username.erase( username.size()-1, 1 ) ;
@@ -4389,33 +4391,13 @@ namespace engine
       gidStr << gid ;
 
       // get home dir
-      rc = runner.exec( "echo $HOME", exitCode,
-                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      rc = _getHomePath( homeDir ) ;
       if ( SDB_OK != rc )
       {
-         stringstream ss ;
-         ss << "failed to exec cmd " << "echo $HOME" << ",rc: "
-            << rc
-            << ",exit: "
-            << exitCode ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
+         PD_LOG_MSG( PDERROR, "Failed to get home path" ) ;
          goto error ;
       }
 
-      rc = runner.read( homeDir ) ;
-      if ( SDB_OK != rc )
-      {
-         stringstream ss ;
-         ss << "failed to read msg from cmd \"" << "echo $HOME" << "\", rc:"
-            << rc ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
-         goto error ;
-      }
-
-      if( homeDir[ homeDir.size() - 1 ] == '\n' )
-      {
-         homeDir.erase( homeDir.size()-1, 1 ) ;
-      }
       builder.append( "user", username ) ;
       builder.append( "gid", gidStr.str() ) ;
       builder.append( "dir", homeDir ) ;
@@ -5139,9 +5121,13 @@ namespace engine
       UINT32          exitCode    = 0 ;
       stringstream    cmd ;
       stringstream    grepCmd ;
+      stringstream    echoCmd ;
       _ossCmdRunner   runner ;
       string          outStr ;
       string          pubKey ;
+      string          homePath ;
+      string          sshPath ;
+      string          keyPath ;
 
       // get pub key
       if ( FALSE == _valueObj.hasField( "key" ) )
@@ -5158,8 +5144,36 @@ namespace engine
       }
       pubKey = _valueObj.getStringField( "key" ) ;
 
+      rc = _getHomePath( homePath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get home path" ) ;
+         goto error ;
+      }
+
+      sshPath = homePath + "/.ssh/" ;
+      rc = ossAccess( sshPath.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( SDB_FNE == rc )
+         {
+            rc = ossMkdir( sshPath.c_str(), OSS_RWXU ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "Failed to mkdir, rc:%d", rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to access dir: %s", sshPath.c_str() ) ;
+            goto error ;
+         }
+      }
+
       // check whether it had build Trusty
-      grepCmd << "touch ~/.ssh/authorized_keys; grep -x \"" << pubKey << "\" ~/.ssh/authorized_keys" ;
+      grepCmd << "touch " << homePath << "/.ssh/authorized_keys; grep -x \""
+              << pubKey << "\" "<< homePath << "/.ssh/authorized_keys" ;
       rc = runner.exec( grepCmd.str().c_str(), exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
@@ -5174,14 +5188,6 @@ namespace engine
       }
 
       rc = runner.read( outStr ) ;
-      if ( SDB_OK != rc )
-      {
-         stringstream ss ;
-         ss << "failed to read msg from cmd \"" << grepCmd.str() << "\", rc:"
-            << rc ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
-         goto error ;
-      }
       if( '\n' == outStr[ outStr.size()-1 ] )
       {
          outStr.erase( outStr.size()-1, 1 ) ;
@@ -5191,7 +5197,8 @@ namespace engine
       if ( outStr.empty() )
       {
          // echo pub key to authorized_keys
-         cmd << "echo -n \"" << pubKey << "\" >> ~/.ssh/authorized_keys" ;
+         cmd << "echo -n \"" << pubKey << "\" >> " << homePath
+             << "/.ssh/authorized_keys" ;
          rc = runner.exec( cmd.str().c_str(), exitCode,
                            FALSE, -1, FALSE, NULL, TRUE ) ;
          if ( SDB_OK != rc )
@@ -5206,8 +5213,11 @@ namespace engine
          }
 
          // set authorizedkeys mode
-         rc = runner.exec( "chmod 700 ~/.ssh; chmod 600 ~/.ssh/authorized_keys",
-                           exitCode, FALSE, -1, FALSE, NULL, TRUE ) ;
+         echoCmd << "chmod 755 " << homePath << ";"
+                 << "chmod 700 " << homePath << "/.ssh;"
+                 << "chmod 644 " << homePath << "/.ssh/authorized_keys" ;
+         rc = runner.exec( echoCmd.str().c_str(), exitCode, FALSE,
+                           -1, FALSE, NULL, TRUE ) ;
          if ( SDB_OK != rc )
          {
             stringstream ss ;
@@ -5256,6 +5266,7 @@ namespace engine
       stringstream       cmd ;
       _ossCmdRunner      runner ;
       string             outStr ;
+      string             homePath ;
 
       if ( FALSE == _valueObj.hasField( "matchStr" ) )
       {
@@ -5272,8 +5283,15 @@ namespace engine
       }
       matchStr = _valueObj.getStringField( "matchStr" ) ;
 
+      rc = _getHomePath( homePath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get root dir" ) ;
+         goto error ;
+      }
 
-      cmd << "cat ~/.ssh/authorized_keys";
+      // get authorized_keys content
+      cmd << "cat " << homePath << "/.ssh/authorized_keys";
 
       rc = runner.exec( cmd.str().c_str(), exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
@@ -5335,7 +5353,7 @@ namespace engine
          matchStr.erase( matchStr.size()-1, 1 ) ;
       }
 
-      rc = _getHomeDir( fileDir ) ;
+      rc = _getHomePath( fileDir ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to get root dir" ) ;
@@ -5412,51 +5430,6 @@ namespace engine
 #elif defined (_WINDOWS)
       return SDB_OK ;
 #endif
-   }
-
-   INT32 _remoteSystemRemoveTrusty::_getHomeDir( string &homeDir )
-   {
-      INT32 rc = SDB_OK ;
-      UINT32 exitCode = 0 ;
-      string             cmd ;
-      _ossCmdRunner      runner ;
-
-#if defined (_LINUX)
-      cmd = "echo $HOME" ;
-#elif defined (_WINDOWS )
-      cmd = "cmd /C set HOMEPATH" ;
-#endif
-      rc = runner.exec( cmd.c_str(), exitCode,
-                        FALSE, -1, FALSE, NULL, TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         stringstream ss ;
-         ss << "failed to exec cmd " << cmd << ",rc: "
-            << rc
-            << ",exit: "
-            << exitCode ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
-         goto error ;
-      }
-
-      rc = runner.read( homeDir ) ;
-      if ( SDB_OK != rc )
-      {
-         stringstream ss ;
-         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
-            << rc ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
-         goto error ;
-      }
-
-      if( homeDir[ homeDir.size() - 1 ] == '\n' )
-      {
-         homeDir.erase( homeDir.size()-1, 1 ) ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    /*

@@ -46,6 +46,8 @@
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <sys/resource.h>
+#include <sys/types.h>
+#include <pwd.h>
 #else
 #include <iphlpapi.h>
 #pragma comment( lib, "IPHLPAPI.lib" )
@@ -5278,16 +5280,28 @@ namespace engine
       UINT32 exitCode    = 0 ;
       _ossCmdRunner      runner ;
       string             outStr ;
+      string             homePath ;
+      string             cmd ;
+      // get home path
+      rc = _getHomePath( homePath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get home path, rc: %d", rc ) ;
+         detail = BSON( SPT_ERR << "Failed to get home path" ) ;
+         goto error ;
+      }
 
+      cmd = "echo -e \"n\" | ssh-keygen -t rsa -f " + homePath +
+            "/.ssh/id_rsa -N \"\" " ;
       // create Ssh key
-      rc = runner.exec( "echo -e \"n\" | ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\" ",
+      rc = runner.exec( cmd.c_str(),
                         exitCode, FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
          stringstream ss ;
-         ss << "failed to exec cmd " << "echo -e \"\n\n\n\" | ssh-keygen -t rsa"
+         ss << "failed to exec cmd " << cmd
             << ",rc: "
             << rc
             << ",exit: "
@@ -5495,13 +5509,13 @@ namespace engine
    INT32 _sptUsrSystem::_getHomePath( string &homePath )
    {
       INT32              rc = SDB_OK ;
-      UINT32             exitCode = 0 ;
-      string             homeDir ;
       string             cmd ;
       _ossCmdRunner      runner ;
+      UINT32             exitCode = 0 ;
+      string             outStr ;
 
 #if defined (_LINUX)
-      cmd = "echo $HOME" ;
+      cmd = "whoami" ;
 #elif defined (_WINDOWS)
       cmd = "cmd /C set HOMEPATH" ;
 #endif
@@ -5512,41 +5526,41 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
                  rc, exitCode ) ;
-         stringstream ss ;
-         ss << "failed to exec cmd " << cmd << ",rc: "
-            << rc
-            << ",exit: "
-            << exitCode ;
          goto error ;
       }
 
       // get result
-      rc = runner.read( homeDir ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
-         stringstream ss ;
-         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
-            << rc ;
          goto error ;
       }
-      if( !homeDir.empty() && homeDir[ homeDir.size() - 1 ] == '\n' )
+      if( !outStr.empty() && outStr[ outStr.size() - 1 ] == '\n' )
       {
 #if defined (_LINUX)
-         homeDir.erase( homeDir.size()-1, 1 ) ;
+         // erase /n
+         outStr.erase( outStr.size()-1, 1 ) ;
 #elif defined (_WINDOWS)
-         homeDir.erase( homeDir.size()-2, 2 ) ;
+         // erase /r/n
+         outStr.erase( outStr.size()-2, 2 ) ;
 #endif
       }
 
 #if defined (_LINUX)
-      homePath = homeDir ;
+      {
+         OSSUID uid = 0 ;
+         OSSGID gid = 0 ;
+         ossGetUserInfo( outStr.c_str(), uid, gid ) ;
+         struct passwd *pw = getpwuid( uid ) ;
+         homePath = pw->pw_dir ;
+      }
 #elif defined (_WINDOWS)
       {
          vector< string > splited ;
          try
          {
-            boost::algorithm::split( splited, homeDir,
+            boost::algorithm::split( splited, outStr,
                                      boost::is_any_of( "=" ) ) ;
          }
          catch( std::exception &e )

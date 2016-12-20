@@ -268,8 +268,10 @@ namespace engine
 
       static INT32 _snapshotNetcardInfo( bson::BSONObjBuilder &builder,
                                          bson::BSONObj &detail ) ;
+
       static INT32 _extractNetCardSnapInfo( const CHAR *buf,
                                             bson::BSONObjBuilder &builder ) ;
+
       static INT32 _extractProcessInfo( const CHAR *buf,
                                         bson::BSONObjBuilder &builder,
                                         BOOLEAN showDetail ) ;

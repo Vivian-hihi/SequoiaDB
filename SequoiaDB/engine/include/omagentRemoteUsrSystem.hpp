@@ -523,7 +523,7 @@ namespace engine
    /*
       _remoteSystemGetCurrentUser define
    */
-   class _remoteSystemGetCurrentUser : public _remoteExec
+   class _remoteSystemGetCurrentUser : public _remoteOmaGetHomePath
    {
       DECLARE_OACMD_AUTO_REGISTER()
       public:
@@ -623,7 +623,7 @@ namespace engine
    /*
       _remoteSystemBuildTrusty define
    */
-   class _remoteSystemBuildTrusty : public _remoteExec
+   class _remoteSystemBuildTrusty : public _remoteOmaGetHomePath
    {
       DECLARE_OACMD_AUTO_REGISTER()
       public:
@@ -642,7 +642,7 @@ namespace engine
    /*
       _remoteSystemRemoveTrusty define
    */
-   class _remoteSystemRemoveTrusty : public _remoteExec
+   class _remoteSystemRemoveTrusty : public _remoteOmaGetHomePath
    {
       DECLARE_OACMD_AUTO_REGISTER()
       public:
@@ -656,8 +656,6 @@ namespace engine
 
       private:
          INT32 _removeKey( const CHAR* buf, string matchStr ) ;
-
-         INT32 _getHomeDir( string &homeDir ) ;
    } ;
 
    /*

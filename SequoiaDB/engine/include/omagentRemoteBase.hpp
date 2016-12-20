@@ -113,5 +113,18 @@ namespace engine
          INT32 _getNodeConfInfo( const string & confFile, bson::BSONObj &conf,
                              string &errMsg, BOOLEAN allowNotExist = FALSE  ) ;
    } ;
+
+   class _remoteOmaGetHomePath : public _remoteExec
+   {
+      public:
+         _remoteOmaGetHomePath() ;
+
+         virtual ~_remoteOmaGetHomePath() ;
+
+         virtual const CHAR *name() = 0 ;
+
+      protected:
+         INT32 _getHomePath( string &homePath ) ;
+   } ;
 }
 #endif

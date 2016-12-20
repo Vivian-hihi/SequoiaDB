@@ -36,6 +36,7 @@
 #include "pmdOptions.h"
 #include "msgDef.h"
 #include "pmd.hpp"
+#include "ossCmdRunner.hpp"
 #include "ossSocket.hpp"
 #include "ossIO.hpp"
 #include "oss.h"
@@ -46,6 +47,8 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <pwd.h>
 #else
 #include <iphlpapi.h>
 #pragma comment( lib, "IPHLPAPI.lib" )
@@ -474,21 +477,14 @@ namespace engine
          po ::variables_map::iterator it = vm.begin() ;
          while ( it != vm.end() )
          {
-            if ( SDBCM_RESTART_COUNT == it->first ||
-                 SDBCM_RESTART_INTERVAL == it->first ||
-                 SDBCM_DIALOG_LEVEL == it->first )
-            {
-               builder.append( it->first, it->second.as<INT32>() ) ;
-            }
-            else if ( SDBCM_AUTO_START == it->first )
-            {
-               BOOLEAN autoStart = TRUE ;
-               ossStrToBoolean( it->second.as<string>().c_str(), &autoStart ) ;
-               builder.appendBool( it->first, autoStart ) ;
-            }
-            else
+            try
             {
                builder.append( it->first, it->second.as<string>() ) ;
+            }
+            catch( std::exception )
+            {
+               PD_LOG( PDERROR, "Failed to append config item: %s",
+                       it->first.c_str() ) ;
             }
             ++it ;
          }
@@ -641,7 +637,15 @@ namespace engine
          po ::variables_map::iterator it = vm.begin() ;
          while ( it != vm.end() )
          {
-            builder.append( it->first, it->second.as<string>() ) ;
+            try
+            {
+               builder.append( it->first, it->second.as<string>() ) ;
+            }
+            catch
+            {
+               PD_LOG_MSG( PDERROR, "Failed to append config item: %s",
+                           it->first.c_str() ) ;
+            }
             ++it ;
          }
          conf = builder.obj() ;
@@ -652,4 +656,94 @@ namespace engine
    error:
       goto done ;
    }
+
+   /*
+      _remoteOmaGetHomePath implement
+   */
+
+   _remoteOmaGetHomePath::_remoteOmaGetHomePath()
+   {
+   }
+
+   _remoteOmaGetHomePath::~_remoteOmaGetHomePath()
+   {
+   }
+
+   INT32 _remoteOmaGetHomePath::_getHomePath( string &homePath )
+   {
+      INT32              rc = SDB_OK ;
+      string             cmd ;
+      _ossCmdRunner      runner ;
+      UINT32             exitCode = 0 ;
+      string             outStr ;
+
+#if defined (_LINUX)
+      cmd = "whoami" ;
+#elif defined (_WINDOWS)
+      cmd = "cmd /C set HOMEPATH" ;
+#endif
+      // run cmd
+      rc = runner.exec( cmd.c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         goto error ;
+      }
+
+      // get result
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         goto error ;
+      }
+      if( !outStr.empty() && outStr[ outStr.size() - 1 ] == '\n' )
+      {
+#if defined (_LINUX)
+         // erase /n
+         outStr.erase( outStr.size()-1, 1 ) ;
+#elif defined (_WINDOWS)
+         // erase /r/n
+         outStr.erase( outStr.size()-2, 2 ) ;
+#endif
+      }
+
+#if defined (_LINUX)
+      {
+         OSSUID uid = 0 ;
+         OSSGID gid = 0 ;
+         ossGetUserInfo( outStr.c_str(), uid, gid ) ;
+         struct passwd *pw = getpwuid( uid ) ;
+         homePath = pw->pw_dir ;
+      }
+#elif defined (_WINDOWS)
+      {
+         vector< string > splited ;
+         try
+         {
+            boost::algorithm::split( splited, outStr,
+                                     boost::is_any_of( "=" ) ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
+            goto error ;
+         }
+         homePath = splited[ 1 ] ;
+         for( UINT32 index = 2; index < splited.size(); index++ )
+         {
+            homePath += splited[ index ] ;
+         }
+      }
+#endif
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
