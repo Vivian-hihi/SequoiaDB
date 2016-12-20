@@ -45,6 +45,7 @@
         <classpath>
            <fileset dir="${lib}" includes="*.jar" />
            <fileset dir="${auxlib}" includes="*.jar" />
+           <fileset dir="${WORKSPACE}/sequoiadb/driver/java" includes="sequoiadb.jar" />
         </classpath>
       </scalac>
    </target>

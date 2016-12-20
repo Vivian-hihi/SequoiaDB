@@ -37,7 +37,7 @@ import com.sequoiadb.base.SequoiadbDatasource
 import com.sequoiadb.base.Sequoiadb
 import com.sequoiadb.base.DBQuery
 import com.sequoiadb.exception.BaseException
-import com.sequoiadb.exception.SDBErrorLookup
+import com.sequoiadb.exception.SDBError
 import org.bson.BSONObject
 import org.bson.BasicBSONObject
 import org.bson.types.BasicBSONList
@@ -89,7 +89,7 @@ case class SequoiadbPartitioner(
       // if we get SDB_RTN_COORD_ONLY error, that means we connect to standalone or data node
       // in that case we simply return null instead of throwing exception
       case ex: BaseException => {
-        if ( ex.getErrorCode == SDBErrorLookup.getErrorCodeByType("SDB_RTN_COORD_ONLY")) {
+        if ( SDBError.getSDBError (ex.getErrorCode) == SDBError.SDB_RTN_COORD_ONLY) {
           None
         }
         else {
