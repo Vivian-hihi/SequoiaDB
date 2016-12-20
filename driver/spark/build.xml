@@ -2,7 +2,6 @@
 <!--@param ${root.dir} : The path where is it  -->
 <!--@param ${SCALA_VERSION} : default 2.11, you can choose 2.10 or 2.11 -->
 <!--@param ${SPARK_VERSION} : default 2.0.0, you can choose 1.6.1 or 2.0.0 -->
-<!--@param ${SEQUOIADB_VERSION} : default 2.6.0, you can choose 2.6.0 -->
 <!--@param #{WORKSPACE} : default value = /var/lib/jenkins/workspace/compile_db_x86_trunk -->
 
 <project name="sdb" default="jar" basedir=".">
@@ -11,7 +10,6 @@
    <property name="target.dir" value="${root.dir}/target" />
    <property name="SCALA_VERSION" value="2.11" />
    <property name="SPARK_VERSION" value="2.0.0" />
-   <property name="SEQUOIADB_VERSION" value="2.6.0" />
    <property name="WORKSPACE" value="/var/lib/jenkins/workspace/compile_db_x86_trunk" />
    
    <property name="build.dir" value="${target.dir}/build" />
