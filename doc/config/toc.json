@@ -1075,6 +1075,20 @@
                "en": "SequoiaDB Shell Method List",
                "contents": [
                   {
+                     "id": 1482314046,
+                     "dir": "Overview",
+                     "cn": "概述",
+                     "en": "Overview",
+                     "contents": [
+                        {
+                           "id": 1482314609,
+                           "file": "location",
+                           "cn": "命令位置参数",
+                           "en": "location"
+                        },
+                     ]
+                  },
+                  {
                      "id": 1432190765,
                      "dir": "Global",
                      "cn": "Global",
@@ -1097,6 +1111,12 @@
                            "file": "getLastErrMsg",
                            "cn": "getLastErrMsg()",
                            "en": "getLastErrMsg()"
+                        }
+                        {
+                           "id": 1482314046,
+                           "file": "getLastErrObj",
+                           "cn": "getLastErrObj()",
+                           "en": "getLastErrObj()"
                         }
                      ]
                   },
