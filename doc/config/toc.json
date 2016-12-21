@@ -1379,6 +1379,12 @@
                            "en": "startRG()"
                         },
                         {
+                           "id": 1482329455,
+                           "file": "sync",
+                           "cn": "sync()",
+                           "en": "sync()"
+                        },
+                        {
                            "id": 1432190811,
                            "file": "traceOff",
                            "cn": "traceOff()",
