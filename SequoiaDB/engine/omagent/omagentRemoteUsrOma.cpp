@@ -268,7 +268,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
          goto error ;
       }
-      sdbGetOMAgentMgr()->onConfigChange() ;
+
    done:
       return rc ;
    error:
