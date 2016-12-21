@@ -1,5 +1,5 @@
 ##语法##
-***sync( [options] )***
+***db.sync( [options] )***
 
 持久化数据和日志到磁盘。
 
@@ -25,7 +25,7 @@
   *  **SDB_BACKUP_HAS_ALREADY_START**(-67)  
      与离线备份任务冲突，可以关闭'阻塞模式'进行重试。  
   *  **SDB_REBUILD_HAS_ALREADY_START**(-149)  
-     与本地重组任务冲突，可以关闭'阻塞模式'进行重试。  
+     与本地重建任务冲突，可以关闭'阻塞模式'进行重试。  
   *  **SDB_DMS_STATE_NOT_COMPATIBLE**(-148)  
      与其它阻塞操作冲突（如其它sync操作），可以关闭'阻塞模式'进行重试。
   *  **SDB_DMS_CS_NOTEXIST**(-34)  
