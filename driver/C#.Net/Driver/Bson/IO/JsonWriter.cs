@@ -356,11 +356,6 @@ namespace SequoiaDB.Bson.IO
 
             switch (_jsonWriterSettings.OutputMode)
             {
-                case JsonOutputMode.Strict:
-                case JsonOutputMode.JavaScript:
-                    WriteNameHelper(Name);
-                    _textWriter.Write(value);
-                    break;
                 case JsonOutputMode.TenGen:
                 case JsonOutputMode.Shell:
                     WriteNameHelper(Name);
@@ -380,9 +375,25 @@ namespace SequoiaDB.Bson.IO
                         _textWriter.Write(value);
                     }
                     break;
+                case JsonOutputMode.Strict:
+                case JsonOutputMode.JavaScript:
                 default:
                     WriteNameHelper(Name);
-                    _textWriter.Write(value);
+                    if (!_jsonWriterSettings.JsCompatibility)
+                    {
+                        _textWriter.Write(value);
+                    }
+                    else
+                    {
+                        if (value >= -9007199254740991L && value <= 9007199254740991L)
+                        {
+                            _textWriter.Write(value);
+                        }
+                        else
+                        {
+                            _textWriter.Write("{{\"$numberLong\": {0}}}", value);
+                        }
+                    }
                     break;
             }
 

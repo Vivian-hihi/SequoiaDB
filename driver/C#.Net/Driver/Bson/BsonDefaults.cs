@@ -29,6 +29,7 @@ namespace SequoiaDB.Bson
         private static GuidRepresentation __guidRepresentation = GuidRepresentation.CSharpLegacy;
         private static int __maxDocumentSize = 4 * 1024 * 1024; // 4MiB
         private static int __maxSerializationDepth = 100;
+        private static bool __compatible = false;
 
         // public static properties
         /// <summary>
@@ -59,5 +60,34 @@ namespace SequoiaDB.Bson
             get { return __maxSerializationDepth; }
             set { __maxSerializationDepth = value; }
         }
+
+        /// <summary>
+        /// When "compatible" is true, the content of BsonDocument method "toString" is show 
+        ///       absolutely the same with which is show in sdb shell.
+        /// compatible true or false, default to be false;
+        ///
+        /// {@code
+        /// // we have a bson as below:
+        ///  BSONObject obj = new BasicBSONObject("a", Long.MAX_VALUE);
+        /// // sdb shell shows this bson like this:
+        /// {"a" : { "$numberLong" : "9223372036854775807"}}
+        /// // sdb shell use javascript grammer, so, it can't display number
+        /// // which is great that 2^53 - 1. So it use "$numberLong" to represent
+        /// // the type, and keep the number between the quotes.
+        /// // However, in java, when we use "obj.toString()", 
+        /// // most of the time, we don't hope to get a result with 
+        /// // the format "$numberLong", we hope to see the result as 
+        /// // below:
+        /// {"a" : 9223372036854775807}
+        /// // When parameter "compatible" is false, we get this kind of result
+        /// // all the time. Otherwise, we get a result which is show as the sdb shell shows.
+        /// }
+        /// </summary>
+        public static bool JsCompatibility
+        {
+            get { return __compatible; }
+            set { __compatible = value; }
+        }
+
     }
 }

@@ -1243,7 +1243,9 @@ namespace SequoiaDB.Bson
         /// <returns>A string representation of the document.</returns>
         public override string ToString()
         {
-            return this.ToJson();
+            JsonWriterSettings settings = JsonWriterSettings.Defaults;
+            settings.JsCompatibility = Bson.BsonDefaults.JsCompatibility;
+            return this.ToJson(this.GetType(), settings);
         }
 
         /// <summary>

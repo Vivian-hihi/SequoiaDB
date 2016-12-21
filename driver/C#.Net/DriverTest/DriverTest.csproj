@@ -40,12 +40,10 @@
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="SequoiaDB, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="SequoiaDB">
       <HintPath>..\Driver\bin\Debug\SequoiaDB.dll</HintPath>
     </Reference>
-    <Reference Include="SequoiaDB.Bson, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="SequoiaDB.Bson">
       <HintPath>..\Driver\bin\Debug\SequoiaDB.Bson.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -64,8 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseExceptionTest.cs" />
+    <Compile Include="BSONTest.cs" />
     <Compile Include="CollectionSpaceTest.cs" />
-    <Compile Include="Collection\CLSplitAndTask.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DataCenterTest.cs" />

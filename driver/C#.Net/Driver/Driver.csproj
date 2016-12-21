@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="base\ClientOptions.cs" />
     <Compile Include="base\CollectionSpace.cs" />
     <Compile Include="base\DataCenter.cs" />
     <Compile Include="base\DBCollection.cs" />

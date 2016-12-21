@@ -35,8 +35,9 @@ namespace SequoiaDB.Bson.IO
         private bool _indent = false;
         private string _indentChars = "  ";
         private string _newLineChars = "\r\n";
-        private JsonOutputMode _outputMode = JsonOutputMode.Shell;
+        private JsonOutputMode _outputMode = JsonOutputMode.Strict;
         private Version _shellVersion = new Version(2, 0, 0);
+        private bool _javascriptCompatibility = false;
 
         // constructors
         /// <summary>
@@ -183,6 +184,19 @@ namespace SequoiaDB.Bson.IO
             {
                 if (IsFrozen) { throw new InvalidOperationException("JsonWriterSettings is frozen."); }
                 _shellVersion = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the javascript compatibility.
+        /// </summary>
+        public bool JsCompatibility
+        {
+            get { return _javascriptCompatibility; }
+            set
+            {
+                if (IsFrozen) { throw new InvalidOperationException("JsonWriterSettings is frozen."); }
+                _javascriptCompatibility = value;
             }
         }
 
