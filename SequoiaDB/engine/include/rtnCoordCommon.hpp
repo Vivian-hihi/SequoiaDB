@@ -62,14 +62,14 @@ namespace engine
       }
       coordErrorInfo( const MsgOpReply *reply )
       {
-         INT32 offset = reply->header.messageLength -
+         INT32 length = reply->header.messageLength -
                         (INT32)sizeof( MsgOpReply ) ;
          _rc = reply->flags ;
-         if ( reply->flags && offset > 0 )
+         if ( reply->flags && length > 0 )
          {
             try
             {
-               _obj = BSONObj( (const CHAR*)reply + offset ).getOwned() ;
+               _obj = BSONObj( (const CHAR*)reply + sizeof( MsgOpReply ) ).getOwned() ;
             }
             catch( std::exception & )
             {
