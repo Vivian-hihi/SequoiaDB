@@ -1172,6 +1172,7 @@ namespace engine
 
 #endif // SDB_ENGINE
 
+   #define PMD_EDU_MAX_TIMEOUT               ( 300 * OSS_ONE_SEC )
    /*
       edu entry point functions
    */
@@ -1208,6 +1209,7 @@ namespace engine
       BOOLEAN     eduDestroyed = FALSE ;
       BOOLEAN     isForced     = FALSE ;
       CHAR        eduName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      UINT32      timeout = 0 ;
 
       // save kernel thread id ( Linux ), or thread handle ( windows )
 #if defined (_WINDOWS)
@@ -1256,9 +1258,18 @@ namespace engine
             }
             else
             {
-               continue ;
+               timeout += OSS_ONE_SEC ;
+               if ( timeout > PMD_EDU_MAX_TIMEOUT )
+               {
+                  isForced = TRUE ;
+               }
+               else
+               {
+                  continue ;
+               }
             }
          }
+         timeout = 0 ;
          initCurAuditMask( getAuditMask() ) ;
 
          if ( !isForced && PMD_EDU_EVENT_RESUME == event._eventType )
