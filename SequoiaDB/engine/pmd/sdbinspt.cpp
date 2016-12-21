@@ -2084,7 +2084,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
       }
    }
 
-   if ( UTIL_COMPRESSOR_INVALID != (UTIL_COMPRESSOR_TYPE)mb->_compressorType )
+   if ( DMS_INVALID_COMPRESSOR_TYPE != mb->_compressorType )
    {
       rc = prepareCompressor( file, pageSize, mb, id,
                               pExpBuffer, compressorEntry, err ) ;
