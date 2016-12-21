@@ -26,7 +26,7 @@ try
 }
 catch( e )
 {
-  if ( e == -23)
+  if ( e == -23 || e == -6)
     {
       res = true ;
      }
