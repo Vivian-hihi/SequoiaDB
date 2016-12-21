@@ -90,7 +90,7 @@
             <fileset dir="${INSTALL_DIR}/database/" includes="**/*core*" />
          </path>
          <sequential>
-            <echo message="${host.NAME}   @{nodecorname}&#10;" file="${report_dir}/${host.NAME}_node_core.log" append="true"/>
+            <echo message="${host.NAME}   ${host.ADDR4}   @{nodecorname}&#10;" file="${report_dir}/${host.NAME}_node_core.log" append="true"/>
          </sequential>
       </for>
       <!--detect node count node start-->
@@ -108,7 +108,7 @@
                <patternset refid="files"/>
                <contains text="Start sequoiadb"/>
             </fileset>
-            <echo message="${host.NAME}   @{dirname}   " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
+            <echo message="${host.NAME}   ${host.ADDR4}   @{dirname}   " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
            
             <count_str searchstring="Start sequoiadb">
                 <path-elements>
@@ -330,7 +330,7 @@
             <for param="corfilename">
                <fileset dir="${CI_WORK_DIR}/testcase/" includes="**/*core*" excludes="**/*core*.jar"/>
                <sequential>
-                  <echo message="${host.NAME}   @{corfilename} &#10;" file="${report_dir}/${host.NAME}_testcase_core.log" append="true"/>
+                  <echo message="${host.NAME}   ${host.ADDR4}   @{corfilename} &#10;" file="${report_dir}/${host.NAME}_testcase_core.log" append="true"/>
                </sequential>
             </for>
          </else>
