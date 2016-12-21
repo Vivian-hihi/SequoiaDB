@@ -254,7 +254,7 @@ function _insertDocAll( $db, $id, $config, $path )
       $contents = file_get_contents( $path ) ;
       $title = mysqli_real_escape_string( $db, $title ) ;
       $contents = mysqli_real_escape_string( $db, $contents ) ;
-      $sql = "INSERT INTO `tp_doc$id` (`cat_id`, `title`, `fileshort`, `content`, `keywords`, `add_time`, `file_url`, `link`, `edition`) VALUES($catid, '$title', '', '$contents', '', 1476159462, '', '', $id)" ;
+      $sql = "INSERT INTO `tp_doc$id` (`cat_id`, `title`, `fileshort`, `content`, `keywords`, `add_time`, `file_url`, `link`, `edition`) VALUES($catid, '$title', '', '$contents', '', '".time()."', '', '', $id)" ;
       if( mysqli_query( $db, $sql ) == FALSE )
       {
          echo "Falied to insert tp_doc$id record\n" ;
