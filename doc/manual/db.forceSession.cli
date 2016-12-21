@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-forceSession - Stop the specified session's current operation.
+forceSession - Stop the specified session's current operation and terminate it.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -15,7 +15,7 @@ forceSession - Stop the specified session's current operation.
 .sp 2
 
 .sp 2
-db.forceSession(\fB<sessionID>\fR)
+db.forceSession(\fB<sessionID>\fR, \fB[options]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -25,18 +25,49 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Stop the specified session's current operation.
+Stop the specified session's current operation and terminate it.
 .sp 2
 \fBsessionID (int)\fR
 .br
        The ID of the session.
 .sp 2
+\fBoptions (json object)\fR
+.br
+       Specify location params, such as NodeID, HostName, svcname, etc.
+       It only takes effect on coordinate nodes. The self node in default.
+.sp 2
+       \fBNodeID\fR
+.br
+              Specify the sessionID's location by node ID.
+.br
+              NodeID:1000
+.sp 2
+       \fBHostName\fR
+.br
+              Specify the sessionID's location by node name.
+              The param should be used with 'svcname'.
+.br
+              HostName:"host-01"
+
+.sp 2
+       \fBsvcname\fR
+.br
+              Specify the sessionID's location by svcname.
+              The param should be used with 'HostName'.
+.br
+              svcname:"11820"
+
+.sp 2
 \fBNote: \fR
 .sp 2
-   *  Only the user session can be terminated.
+   *  Only the user session can be forced.
 .SH "Examples"
 
 .sp 2
-Stop the session with the ID of 100.
+1. Stop the session with the ID of 100 in self node.
 .sp 2
-db.forceSession(100)
+   db.forceSession(100)
+.sp 2
+2. Stop the session with the ID of 100 in node 1001( Run on coordinate node ).
+.sp 2
+   db.forceSession(100, {NodeID:1001})
