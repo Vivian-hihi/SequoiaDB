@@ -2576,7 +2576,7 @@ namespace engine
             goto error ;
          }
 
-         _sessionID = sessionID.Long() ;
+         _sessionID = sessionID.numberLong() ;
       }
       catch ( std::exception &e )
       {
