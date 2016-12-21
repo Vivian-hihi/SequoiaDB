@@ -778,10 +778,26 @@
          <cn>大对象文件路径</cn>
       </description>
       <detail>
-         <en>1. It specifies the catalog of lob. <fig></fig>
+         <en>1. It specifies the path of lob. <fig></fig>
              2. If it is not specified, the default path is "Data file path".</en>
-         <cn>1.指定大对象存放目录。<fig></fig>
+         <cn>1.指定大对象存放路径。<fig></fig>
              2.如果不指定，则默认为：数据文件路径</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_LOBMETAPATH</name>
+      <long>lobmetapath</long>
+      <description>
+         <en>Large object meta file path</en>
+         <cn>大对象元数据文件路径</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the path of lob. <fig></fig>
+             2. If it is not specified, the default path is the same with 'lobpath'.</en>
+         <cn>1.指定大对象元数据存放路径。<fig></fig>
+             2.如果不指定，则默认与'lobpath'保持一致</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
