@@ -8,7 +8,6 @@ function insertData( dbcl, insertData )
    try
    {
       dbcl.insert(insertData);
-      println( "--insert data success" ) ;
    }
    catch(e)
    {

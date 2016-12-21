@@ -25,6 +25,7 @@ function main()
    
    //insert random numberical data
    insertRandomData( dbcl_IndexScan );
+   println("insert data success");
       
    //create index for index scan
    createIndex( dbcl_IndexScan );
