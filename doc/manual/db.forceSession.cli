@@ -34,7 +34,8 @@ Stop the specified session's current operation and terminate it.
 \fBoptions (json object)\fR
 .br
        Specify location params, such as NodeID, HostName, svcname, etc.
-       It only takes effect on coordinate nodes. The self node in default.
+       It only takes effect on coordinate nodes. The self node in 
+       default.
 .sp 2
        \fBNodeID\fR
 .br
@@ -68,6 +69,7 @@ Stop the specified session's current operation and terminate it.
 .sp 2
    db.forceSession(100)
 .sp 2
-2. Stop the session with the ID of 100 in node 1001( Run on coordinate node ).
+2. Stop the session with the ID of 100 in node 1001
+   ( Run on coordinate node ).
 .sp 2
    db.forceSession(100, {NodeID:1001})
