@@ -2118,11 +2118,13 @@ SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
     \brief interrupte the session
     \param [in] cHandle The connection handle
     \param [in] sessionID The id of the session which we want to inerrupt
+    \param [in] options The location information, such as NodeID, HostName and svcname
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
-                                  SINT64 sessionID ) ;
+                                  SINT64 sessionID,
+                                  bson *options ) ;
 
 /** \fn INT32 sdbOpenLob( sdbCollectionHandle cHandle,
                           const bson_oid_t *oid,

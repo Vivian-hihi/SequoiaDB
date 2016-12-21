@@ -8514,7 +8514,8 @@ error:
 }
 
 SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
-                                  SINT64 sessionID )
+                                  SINT64 sessionID,
+                                  bson *options )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN bsoninit = FALSE ;
@@ -8525,6 +8526,24 @@ SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
 
    BSON_INIT( query ) ;
    BSON_APPEND( query, FIELD_NAME_SESSIONID, sessionID, long ) ;
+   if ( options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next( &it ) )
+      {
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key, FIELD_NAME_SESSIONID ) )
+         {
+            rc = bson_append_element( &query, NULL, &it ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+      }
+   }
    BSON_FINISH( query ) ;
    rc = _runCommand ( cHandle, connection->_sock, &connection->_pSendBuffer,
                       &connection->_sendBufferSize,

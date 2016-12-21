@@ -235,9 +235,9 @@ static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs )
    VERIFY ( cx && obj && bs ) ;
 
    {
-   sptConvertor convertor( cx ) ;
-   rc = convertor.toBson( obj, bs ) ;
-   VERIFY( SDB_OK == rc ) ;
+      sptConvertor convertor( cx ) ;
+      rc = convertor.toBson( obj, bs ) ;
+      VERIFY( SDB_OK == rc ) ;
    }
 
 done :
@@ -7590,6 +7590,7 @@ static JSBool sdb_force_session( JSContext *cx, uintN argc, jsval *vp )
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection = NULL ;
    SINT64 sessionID = -1 ;
+   bson *options = NULL ;
    CHAR *sessionStr = NULL ;
    BOOLEAN ret = TRUE ;
    jsval *argv = JS_ARGV ( cx , vp ) ;
@@ -7598,11 +7599,13 @@ static JSBool sdb_force_session( JSContext *cx, uintN argc, jsval *vp )
                  JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
    REPORT ( connection , "Sdb.forceSession(): no connection handle" ) ;
 
-   if ( 1 != argc )
+   if ( 1 != argc && 2 != argc )
    {
       REPORT ( ret , "Sdb.forceSession(): wrong arguments" ) ;
    }
-   else if ( JSVAL_IS_INT(argv[0]) )
+
+   /// The first param
+   if ( JSVAL_IS_INT(argv[0]) )
    {
       sessionID = JSVAL_TO_INT( argv[0] ) ;
    }
@@ -7624,11 +7627,30 @@ static JSBool sdb_force_session( JSContext *cx, uintN argc, jsval *vp )
       REPORT ( ret , "Sdb.forceSession(): wrong arguments" ) ;
    }
 
-   rc = sdbForceSession( *connection, sessionID ) ;
+   /// The second param
+   if ( argc >= 2 )
+   {
+      if ( JSVAL_IS_OBJECT( argv[1] ) )
+      {
+         JSObject *pOptObj = JSVAL_TO_OBJECT( argv[1] ) ;
+         VERIFY( pOptObj ) ;
+
+         ret = objToBson( cx, pOptObj, &options ) ;
+         REPORT ( ret , "Sdb.forceSession(): failed to convert object" ) ;
+      }
+      else
+      {
+         REPORT ( FALSE , "Sdb.forceSession(): wrong arguments" ) ;
+      }
+   }
+
+   rc = sdbForceSession( *connection, sessionID, options ) ;
    REPORT_RC ( SDB_OK == rc , "Sdb.forceSession()" , rc ) ;
    JS_SET_RVAL( cx , vp , JSVAL_VOID ) ;
+
 done:
    SAFE_JS_FREE( cx, sessionStr ) ;
+   SAFE_BSON_DISPOSE( options ) ;
    PD_TRACE_EXIT( SDB_SDB_FORCE_SESSION ) ;
    return ret ;
 error:
