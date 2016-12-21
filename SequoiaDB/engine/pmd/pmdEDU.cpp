@@ -1328,10 +1328,11 @@ namespace engine
          {
             pmdEduEventRelase( event, cb ) ;
             event.reset () ;
-         }
-         else if ( cb->isForced() )
-         {
-            isForced = TRUE ;
+
+            if ( cb->isForced() )
+            {
+               isForced = TRUE ;
+            }
          }
 
          // call return EDU to return the EDU to pool. pool will decide whether
