@@ -3038,6 +3038,11 @@ namespace engine
                            errNodes, NULL ) ;
       if ( SDB_OK != rc )
       {
+         if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
+         {
+            rc = SDB_COORD_UNKNOWN_OP_REQ ;
+            goto error ;
+         }
          PD_LOG( PDERROR, "failed to execute on nodes: %d", rc ) ;
          goto error ;
       }
