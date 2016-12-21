@@ -477,14 +477,45 @@ namespace engine
          po ::variables_map::iterator it = vm.begin() ;
          while ( it != vm.end() )
          {
-            try
+            if ( SDBCM_RESTART_COUNT == it->first ||
+                 SDBCM_RESTART_INTERVAL == it->first ||
+                 SDBCM_DIALOG_LEVEL == it->first )
             {
-               builder.append( it->first, it->second.as<string>() ) ;
+               try
+               {
+                  builder.append( it->first, it->second.as<INT32>() ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG_MSG( PDERROR, "Failed to append config item: %s(%s)",
+                              it->first.c_str(), e.what() ) ;
+               }
             }
-            catch( std::exception )
+            else if ( SDBCM_AUTO_START == it->first )
             {
-               PD_LOG( PDERROR, "Failed to append config item: %s",
-                       it->first.c_str() ) ;
+               BOOLEAN autoStart = TRUE ;
+               try
+               {
+                  ossStrToBoolean( it->second.as<string>().c_str(), &autoStart ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG_MSG( PDERROR, "Failed to turn convert Boolean item: "
+                              "%s(%s) to string", it->first.c_str(), e.what() ) ;
+               }
+               builder.appendBool( it->first, autoStart ) ;
+            }
+            else
+            {
+               try
+               {
+                  builder.append( it->first, it->second.as<string>() ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG_MSG( PDERROR, "Failed to append config item: %s(%s)",
+                              it->first.c_str(), e.what() ) ;
+               }
             }
             ++it ;
          }
