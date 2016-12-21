@@ -100,6 +100,7 @@ namespace engine
          INT32 open ( const CHAR *pDataPath,
                       const CHAR *pIndexPath,
                       const CHAR *pLobPath,
+                      const CHAR *pLobMetaPath,
                       IDataSyncManager *pSyncMgr,
                       BOOLEAN createNew = TRUE ) ;
          void  close () ;

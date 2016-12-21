@@ -123,6 +123,7 @@ namespace engine
          rc = rtnLoadCollectionSpaces ( pmdGetOptionCB()->getDbPath(),
                                         pmdGetOptionCB()->getIndexPath(),
                                         pmdGetOptionCB()->getLobPath(),
+                                        pmdGetOptionCB()->getLobMetaPath(),
                                         this ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to load collectionspaces, rc: %d",
                       rc ) ;

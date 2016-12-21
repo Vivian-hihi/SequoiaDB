@@ -2248,6 +2248,7 @@ namespace engine
                   rc = rtnLoadCollectionSpaces ( _pOptCB->getDbPath(),
                                                  _pOptCB->getIndexPath(),
                                                  _pOptCB->getLobPath(),
+                                                 _pOptCB->getLobMetaPath(),
                                                  _pDMSCB ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to load collection spaces, "
                                "rc: %d", rc ) ;
@@ -2390,9 +2391,14 @@ namespace engine
       {
          path = _pOptCB->getIndexPath() ;
       }
-      else
+      else if ( BAR_DATA_TYPE_RAW_LOBD == pExtHeader->_dataType )
       {
          path = _pOptCB->getLobPath() ;
+      }
+      else
+      {
+         /// lob meta
+         path = _pOptCB->getLobMetaPath() ;
       }
 
       rc = _openSUFile( path, suName, suFileName, sequence  ) ;
@@ -2465,6 +2471,7 @@ namespace engine
             rc = rtnLoadCollectionSpaces ( _pOptCB->getDbPath(),
                                            _pOptCB->getIndexPath(),
                                            _pOptCB->getLobPath(),
+                                           _pOptCB->getLobMetaPath(),
                                            _pDMSCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to load collection spaces, "
                          "rc: %d", rc ) ;

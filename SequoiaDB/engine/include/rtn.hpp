@@ -224,16 +224,18 @@ namespace engine
                                   const CHAR *dataPath,
                                   const CHAR *indexPath,
                                   const CHAR *lobPath,
+                                  const CHAR *lobMetaPath,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly = FALSE ) ;
 
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
                                    const CHAR *indexPath,
                                    const CHAR *lobPath,
+                                   const CHAR *lobMetaPath,
                                    SDB_DMSCB *dmsCB ) ;
 
    void rtnDelContextForCollectionSpace ( const CHAR *pCollectionSpace,
-                                           _pmdEDUCB *cb ) ;
+                                          _pmdEDUCB *cb ) ;
 
    INT32 rtnDelCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                         _pmdEDUCB *cb,

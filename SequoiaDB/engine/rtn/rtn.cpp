@@ -414,6 +414,7 @@ namespace engine
                                   const CHAR *dataPath,
                                   const CHAR *indexPath,
                                   const CHAR *lobPath,
+                                  const CHAR *lobMetaPath,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly )
    {
@@ -421,6 +422,7 @@ namespace engine
       SDB_ASSERT ( dataPath, "data path can't be NULL" ) ;
       SDB_ASSERT ( indexPath, "index path can't be NULL" ) ;
       SDB_ASSERT ( lobPath, "lob path can't be NULL" ) ;
+      SDB_ASSERT ( lobMetaPath, "lob meta path can't be NULL" ) ;
 
       INT32 rc                                 = SDB_DMS_CS_NOTEXIST ;
       PD_TRACE_ENTRY ( SDB_RTNLOADCS );
@@ -474,6 +476,7 @@ namespace engine
                         rc = storageUnit->open ( dataPath,
                                                  indexPath,
                                                  lobPath,
+                                                 lobMetaPath,
                                                  pmdGetSyncMgr(),
                                                  FALSE ) ;
                         if ( rc )
@@ -594,6 +597,7 @@ namespace engine
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
                                    const CHAR *indexPath,
                                    const CHAR *lobPath,
+                                   const CHAR *lobMetaPath,
                                    SDB_DMSCB *dmsCB )
    {
       INT32 rc                                 = SDB_OK ;
@@ -606,6 +610,7 @@ namespace engine
       SDB_ASSERT ( dataPath, "data path can't be NULL" ) ;
       SDB_ASSERT ( indexPath, "index path can't be NULL" ) ;
       SDB_ASSERT ( lobPath, "lob path can't be NULL" ) ;
+      SDB_ASSERT ( lobMetaPath, "lob meta path can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
       try
@@ -641,6 +646,7 @@ namespace engine
                      rc = storageUnit->open ( dataPath,
                                               indexPath,
                                               lobPath,
+                                              lobMetaPath,
                                               pmdGetSyncMgr(),
                                               FALSE ) ;
                      if ( rc )
@@ -930,6 +936,7 @@ namespace engine
                                        pmdGetOptionCB()->getDbPath(),
                                        pmdGetOptionCB()->getIndexPath(),
                                        pmdGetOptionCB()->getLobPath(),
+                                       pmdGetOptionCB()->getLobMetaPath(),
                                        dmsCB, FALSE ) ;
          if ( rc )
          {

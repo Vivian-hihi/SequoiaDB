@@ -63,6 +63,11 @@ namespace engine {
       {
          _nodePaths.push_back( options->getLobPath() ) ;
       }
+      /// lobmetapath
+      if ( 0 != ossStrncmp( dbpath, options->getLobMetaPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getLobMetaPath() ) ;
+      }
       /// dialog path
       if ( 0 != ossStrncmp( dbpath, options->getDiagLogPath(), pathLen ) )
       {
@@ -149,8 +154,14 @@ namespace engine {
       {
          goto error ;
       }
-      /// lob path
-      rc = _checkExistedFiles( options->getLobPath(), "*.lobm", 1 ) ;
+      /// lob meta path
+      rc = _checkExistedFiles( options->getLobMetaPath(), "*.lobm", 1 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      /// lob data path
+      rc = _checkExistedFiles( options->getLobPath(), "*.lobd", 1 ) ;
       if ( rc )
       {
          goto error ;

@@ -160,6 +160,7 @@ namespace engine
    INT32 _dmsStorageUnit::open( const CHAR *pDataPath,
                                 const CHAR *pIndexPath,
                                 const CHAR *pLobPath,
+                                const CHAR *pLobMetaPath,
                                 IDataSyncManager *pSyncMgr,
                                 BOOLEAN createNew )
    {
@@ -216,7 +217,7 @@ namespace engine
       }
 
       // open lob
-      rc = _pLobSu->open( pLobPath, pSyncMgr, createNew ) ;
+      rc = _pLobSu->open( pLobPath, pLobMetaPath, pSyncMgr, createNew ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open storage lob, rc:%d", rc ) ;

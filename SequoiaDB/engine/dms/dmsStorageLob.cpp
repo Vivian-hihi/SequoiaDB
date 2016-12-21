@@ -75,6 +75,7 @@ namespace engine
     _pSyncMgrTmp( NULL )
    {
       ossMemset( _path, 0, sizeof( _path ) ) ;
+      ossMemset( _metaPath, 0, sizeof( _metaPath ) ) ;
       _needDelayOpen = FALSE ;
 
       _dmsData->_attachLob( this ) ;
@@ -98,6 +99,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_OPEN, "_dmsStorageLob::open" )
    INT32 _dmsStorageLob::open( const CHAR *path,
+                               const CHAR *metaPath,
                                IDataSyncManager *pSyncMgr,
                                BOOLEAN createNew )
    {
@@ -106,6 +108,7 @@ namespace engine
 
       // copy path
       ossStrncpy( _path, path, OSS_MAX_PATHSIZE ) ;
+      ossStrncpy( _metaPath, metaPath, OSS_MAX_PATHSIZE ) ;
       _pSyncMgrTmp = pSyncMgr ;
 
       // if not create lobs
@@ -115,7 +118,7 @@ namespace engine
       }
       else
       {
-         rc = _openLob( path, createNew ) ;
+         rc = _openLob( path, metaPath, createNew ) ;
          /// when open exist lob files, need to analysis the lob count
          if ( !createNew && SDB_OK == rc &&
               getHeader()->_version <= DMS_LOB_VERSION_1 )
@@ -146,7 +149,7 @@ namespace engine
          goto done ;
       }
 
-      rc = _openLob( _path, TRUE ) ;
+      rc = _openLob( _path, _metaPath, TRUE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Delay open[%s] failed, rc: %d",
@@ -169,11 +172,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__OPENLOB, "_dmsStorageLob::_openLob" )
    INT32 _dmsStorageLob::_openLob( const CHAR *path,
+                                   const CHAR *metaPath,
                                    BOOLEAN createNew )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__OPENLOB ) ;
-      rc = openStorage( path, _pSyncMgrTmp, createNew ) ;
+      rc = openStorage( metaPath, _pSyncMgrTmp, createNew ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lobm file:%s, rc:%d",

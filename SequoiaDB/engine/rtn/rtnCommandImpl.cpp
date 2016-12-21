@@ -845,6 +845,7 @@ namespace engine
                                        pmdGetOptionCB()->getDbPath(),
                                        pmdGetOptionCB()->getIndexPath(),
                                        pmdGetOptionCB()->getLobPath(),
+                                       pmdGetOptionCB()->getLobMetaPath(),
                                        dmsCB, FALSE ) ;
          if ( rc != SDB_DMS_CS_NOTEXIST )
          {
@@ -869,6 +870,7 @@ namespace engine
       rc = su->open ( pmdGetOptionCB()->getDbPath(),
                       pmdGetOptionCB()->getIndexPath(),
                       pmdGetOptionCB()->getLobPath(),
+                      pmdGetOptionCB()->getLobMetaPath(),
                       pmdGetSyncMgr(),
                       TRUE ) ;
       if ( rc )

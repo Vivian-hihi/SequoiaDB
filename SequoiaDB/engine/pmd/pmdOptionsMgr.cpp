@@ -1289,6 +1289,7 @@ namespace engine
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _krcbLobMetaPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _auditMaskStr, 0, sizeof( _auditMaskStr ) ) ;
 
       _krcbMaxPool         = 0 ;
@@ -1395,6 +1396,9 @@ namespace engine
 
       // --lobpath
       rdxPath( pEX, PMD_OPTION_LOBPATH, _krcbLobPath, sizeof(_krcbLobPath),
+               FALSE, FALSE, "" ) ;
+      // --lobmetapath
+      rdxPath( pEX, PMD_OPTION_LOBMETAPATH, _krcbLobMetaPath, sizeof(_krcbLobMetaPath),
                FALSE, FALSE, "" ) ;
 
       // --maxpool
@@ -1811,9 +1815,25 @@ namespace engine
          utilCatPath( _krcbWWWPath, OSS_MAX_PATHSIZE, "" ) ;
       }
 
+      if ( 0 == _archivePath[0] )
+      {
+         if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_ARCHIVE_LOG_PATH,
+                                           OSS_MAX_PATHSIZE, _archivePath ) ||
+              SDB_OK != utilCatPath( _archivePath, OSS_MAX_PATHSIZE, "" ) )
+         {
+            std::cerr << "archivelog path is too long!" << endl ;
+            rc = SDB_INVALIDPATH ;
+            goto error ;
+         }
+      }
+
       if ( 0 == _krcbLobPath[0] )
       {
          ossStrcpy( _krcbLobPath, _krcbDbPath ) ;
+      }
+      if ( 0 == _krcbLobMetaPath[0] )
+      {
+         ossStrcpy( _krcbLobMetaPath, _krcbLobPath ) ;
       }
 
       if ( 0 == _dmsTmpBlkPath[0] )
@@ -1827,76 +1847,88 @@ namespace engine
             goto error ;
          }
       }
-      else
-      {
-         if ( 0 == ossStrcmp( _krcbDbPath, _dmsTmpBlkPath))
-         {
-            std::cerr << "tmp path and data path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-         if ( 0 == ossStrcmp( _krcbIndexPath, _dmsTmpBlkPath))
-         {
-            std::cerr << "tmp path and index path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-         if ( 0 == ossStrcmp( _krcbLogPath, _dmsTmpBlkPath))
-         {
-            std::cerr << "tmp path and log path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-         if ( 0 == ossStrcmp( _krcbBkupPath, _dmsTmpBlkPath))
-         {
-            std::cerr << "tmp path and bkup path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-         if ( 0 == ossStrcmp( _krcbDiagLogPath, _dmsTmpBlkPath))
-         {
-            std::cerr << "tmp path and diaglog path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-         if ( 0 == ossStrcmp( _krcbAuditLogPath, _dmsTmpBlkPath ) )
-         {
-            std::cerr << "tmp path and auditlog path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-         if ( 0 == ossStrcmp( _krcbWWWPath, _dmsTmpBlkPath ) )
-         {
-            std::cerr << "tmp path and www path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-         if ( 0 == ossStrcmp( _krcbLobPath, _dmsTmpBlkPath ) )
-         {
-            std::cerr << "tmp path and lob path should not be the same"
-                      << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
-      }
 
-      if ( 0 == _archivePath[0] )
+      /// Check the tmp path is valid. Can't be the prefix or the same with
+      /// other direcotorys
+      if ( 0 == ossStrncmp( _krcbDbPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
       {
-         if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_ARCHIVE_LOG_PATH,
-                                           OSS_MAX_PATHSIZE, _archivePath ) ||
-              SDB_OK != utilCatPath( _archivePath, OSS_MAX_PATHSIZE, "" ) )
-         {
-            std::cerr << "archivelog path is too long!" << endl ;
-            rc = SDB_INVALIDPATH ;
-            goto error ;
-         }
+         std::cerr << "tmp path and data path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbIndexPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and index path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbLogPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and log path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbBkupPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and bkup path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbDiagLogPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and diaglog path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbAuditLogPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and auditlog path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbWWWPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and www path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbLobPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and lob path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _krcbLobMetaPath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and lob meta path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+      if ( 0 == ossStrncmp( _archivePath, _dmsTmpBlkPath,
+                            ossStrlen( _dmsTmpBlkPath ) ) )
+      {
+         std::cerr << "tmp path and archive path should not be the same"
+                   << endl ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
       }
 
       if ( _archiveOn )
@@ -2197,35 +2229,42 @@ namespace engine
          rc = ossDelete( _krcbBkupPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbBkupPath, rc ) ;
-           }
+     }
 
       if ( _krcbLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbLogPath ) )
       {
          rc = ossDelete( _krcbLogPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbLogPath, rc ) ;
-           }
+     }
 
       if ( _krcbDiagLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbDiagLogPath ) )
       {
          rc = ossDelete( _krcbDiagLogPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbDiagLogPath, rc ) ;
-           }
+     }
 
       if ( _krcbAuditLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbAuditLogPath ) )
       {
          rc = ossDelete( _krcbAuditLogPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbAuditLogPath, rc ) ;
-           }
+     }
 
       if ( _krcbLobPath[ 0 ] != 0 && 0 == ossAccess( _krcbLobPath ) )
       {
          rc = ossDelete( _krcbLobPath ) ;
          PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
                       _krcbLobPath, rc ) ;
-     }
+      }
+
+      if ( _krcbLobMetaPath[ 0 ] != 0 && 0 == ossAccess( _krcbLobMetaPath ) )
+      {
+         rc = ossDelete( _krcbLobMetaPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _krcbLobMetaPath, rc ) ;
+      }
 
       if ( _krcbIndexPath[ 0 ] != 0 && 0 == ossAccess( _krcbIndexPath ) )
       {
@@ -2317,6 +2356,14 @@ namespace engine
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create lob dir: " << _krcbLobPath <<
+                      ", rc = " << rc << std::endl ;
+         goto error ;
+      }
+
+      rc = ossMkdir( _krcbLobMetaPath ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         std::cerr << "Failed to create lob meta dir: " << _krcbLobMetaPath <<
                       ", rc = " << rc << std::endl ;
          goto error ;
       }

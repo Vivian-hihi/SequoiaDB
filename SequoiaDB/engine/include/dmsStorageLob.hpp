@@ -88,6 +88,7 @@ namespace engine
 
    public:
       INT32 open( const CHAR *path,
+                  const CHAR *metaPath,
                   IDataSyncManager *pSyncMgr,
                   BOOLEAN createNew ) ;
 
@@ -144,6 +145,7 @@ namespace engine
 
    protected:
       INT32  _openLob( const CHAR *path,
+                       const CHAR *metaPath,
                        BOOLEAN createNew ) ;
       INT32 _delayOpen() ;
 
@@ -228,6 +230,7 @@ namespace engine
       _dmsStorageData               *_dmsData ;
       _dmsStorageLobData            _data ;
       CHAR                          _path[ OSS_MAX_PATHSIZE + 1 ] ;
+      CHAR                          _metaPath[ OSS_MAX_PATHSIZE + 1 ] ;
       BOOLEAN                       _needDelayOpen ;
       ossSpinXLatch                 _delayOpenLatch ;
 
