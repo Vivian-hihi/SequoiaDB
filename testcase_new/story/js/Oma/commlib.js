@@ -3,16 +3,16 @@
 *@author      : Liang XueWang
 ******************************************************************************/
 
-function OmaTest( HostName, CmSvcName, isLegalHost, isLegalSvc )
+function OmaTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
 {
-   if( HostName == undefined )
+   if( hostName == undefined )
       this.hostname = COORDHOSTNAME ;
    else
-      this.hostname = HostName ;
-   if( CmSvcName == undefined )
+      this.hostname = hostName ;
+   if( cmSvcName == undefined )
       this.svcname = CMSVCNAME ;
    else
-      this.svcname = CmSvcName ;
+      this.svcname = cmSvcName ;
    if( isLegalHost == undefined )
       this.islegalhost = true ;
    else
@@ -31,7 +31,7 @@ function OmaTest( HostName, CmSvcName, isLegalHost, isLegalSvc )
 
 OmaTest.prototype.toString = function()
 {
-   println( "OmaTest: hostname=" + this.hostname + " svcname=" + this.svcname ) ;
+   return ( "OmaTest: hostname=" + this.hostname + " svcname=" + this.svcname ) ;
 }
 
 OmaTest.prototype.testInit = function() 
@@ -46,7 +46,7 @@ OmaTest.prototype.testInit = function()
          ;
       else
       {
-         throw buildException( "testInit", e ) ;
+         throw buildException( "testInit", e, "init oma " + this, "0 -15", e ) ;
       }
    } 
 }
@@ -55,13 +55,12 @@ OmaTest.prototype.testInit = function()
 *@Description : get a idle svcname
 *@author      : Liang XueWang            
 ******************************************************************************/
-function toolGetIdleSvcName( HostName, CmSvcName )
+function toolGetIdleSvcName( hostName, cmSvcName )
 {
-   var remote = new Remote( HostName, CmSvcName ) ;
+   var remote = new Remote( hostName, cmSvcName ) ;
    var cmd = remote.getCmd() ;
      
    var svcname ;
-   
    for( svcname = RSRVPORTBEGIN; svcname <= RSRVPORTEND; svcname = svcname*1 + 5 )
    {
       try
@@ -78,6 +77,7 @@ function toolGetIdleSvcName( HostName, CmSvcName )
          throw buildException( "getIdleSvcName", e ) ;
       }
    }
+   
    remote.close() ;
    return svcname ;
 }
@@ -88,7 +88,7 @@ function toolGetIdleSvcName( HostName, CmSvcName )
 ******************************************************************************/
 function toolGetHosts()
 {
-   var Hosts = [] ;
+   var hosts = [] ;
    var k = 0 ;
    
    var db = new Sdb( COORDHOSTNAME, COORDSVCNAME ) ;
@@ -96,7 +96,7 @@ function toolGetHosts()
    {
       println( "Run mode is standalone." ) ;
       db.close() ;
-      return Hosts ;
+      return hosts ;
    }
    
    var tmpInfo = db.listReplicaGroups().toArray() ;
@@ -106,12 +106,12 @@ function toolGetHosts()
       var tmpArr = tmpObj.Group ;
       for( var j = 0;j < tmpArr.length;j++ )
       {
-         if( Hosts.indexOf( tmpArr[j].HostName ) == -1 )
-            Hosts[k++] = tmpArr[j].HostName ;
+         if( hosts.indexOf( tmpArr[j].HostName ) == -1 )
+            hosts[k++] = tmpArr[j].HostName ;
       }
    }
    db.close() ;
-   return Hosts ;
+   return hosts ;
 }
 
 /******************************************************************************
@@ -121,8 +121,8 @@ function toolGetHosts()
 function toolGetLocalhost()
 {
    var cmd = new Cmd() ;
-   var Localhost = cmd.run( "hostname" ).split( "\n" )[0] ;
-   return Localhost ;
+   var localhost = cmd.run( "hostname" ).split( "\n" )[0] ;
+   return localhost ;
 }
 
 /******************************************************************************
@@ -150,9 +150,9 @@ function toolGetRemotehost()
 *@Description : check sdbom exist or not
 *@author      : Liang XueWang            
 ******************************************************************************/
-function isOmExist( HostName, CmSvcName )
+function isOmExist( hostName, cmSvcName )
 {
-   var oma = new Oma( HostName, CmSvcName ) ;
+   var oma = new Oma( hostName, cmSvcName ) ;
    var rc ;
    
    var arr = oma.listNodes( { type: "om" } ).toArray() ;
@@ -184,7 +184,7 @@ function checkResult( info, content, func )
          var value1 = content[j].slice( ind+i.length+1 ).toLowerCase() ;
          var value2 = info[i].toString().toLowerCase() ;
          if( value1 != value2 )
-            throw buildException( "checkResult", 0, func + " i=" + i, value1, value2 ) ;   
+            throw buildException( "checkResult", null, func + " i=" + i, value1, value2 ) ;   
       }
       if( found == false )
          throw buildException( "checkResult", func + ", i=" + i ) ;   

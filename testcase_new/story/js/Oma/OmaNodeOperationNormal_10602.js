@@ -1,7 +1,7 @@
 /******************************************************************************
-*@Description : test Oma function createCoord removeCoord createData
-*               removeData startNode stopNode createOM removeOM Normal
-*               TestLink: 10602 10612 10613
+*@Description : test js object oma function: createCoord removeCoord createData
+*                              Normal        removeData startNode stopNode 
+*               TestLink: 10602 Oma创建、删除、启动、停止协调节点和数据节点
 *@author      : Liang XueWang
 ******************************************************************************/
 
@@ -19,7 +19,8 @@ OmaTest.prototype.testCoordNodeOperationNormal = function( svcname )
    }
    catch( e )
    {
-      throw buildException( "testCoordNodeOperationNormal", e ) ;
+      throw buildException( "testCoordNodeOperationNormal", e, 
+                            "coord node operation " + this, 0, e ) ;
    }
    this.oma.close() ;  
 }
@@ -33,49 +34,38 @@ OmaTest.prototype.testDataNodeOperationNormal = function( svcname )
       var dbpath = RSRVNODEDIR + "coord/" + svcname ;
       this.oma.createData( svcname, dbpath ) ;
       this.oma.startNode( svcname ) ;
+      checkDataNodeValid( this.hostname, svcname ) ;
       this.oma.stopNode( svcname ) ;
       this.oma.removeData( svcname ) ; 
    }
    catch( e )
    {
-      throw buildException( "testDataNodeOperationNormal", e ) ;
+      throw buildException( "testDataNodeOperationNormal", e,
+                            "data node operation " + this, 0, e ) ;
    }
    this.oma.close() ;   
 }
 
-// 测试创建删除om
-OmaTest.prototype.testOMOperation = function( svcname, isOmExist )
+/******************************************************************************
+*@Description : check node is valid ( create cs cl in node )
+*@author      : Liang XueWang              
+******************************************************************************/
+function checkDataNodeValid( hostname, svcname )
 {
-   this.testInit() ;
-   var dbpath = RSRVNODEDIR + "sms/" + svcname ;
-   if( isOmExist )
+   try
    {
-      try
-      {
-         this.oma.createOM( svcname, dbpath ) ;
-         throw 0 ;
-      }
-      catch( e )
-      {
-         if( e != -145 )
-         {
-            throw buildException( "testOMOperation", e, "createOm when om exist", -145, e ) ;
-         }
-      }
+      var db = new Sdb( hostname, svcname ) ;
+      var CsName = "testDataNodeValidCs" ;
+      var cs = db.createCS( CsName ) ;
+      cs.createCL( "bar" ) ;
+      db.dropCS( CsName ) ;
+      db.close() ;
    }
-   else
+   catch( e )
    {
-      try
-      {
-         this.oma.createOM( svcname, dbpath ) ;
-      }
-      catch( e )
-      {
-         throw buildException( "testOMOperation", e, "createOm when om not exist", 0, e ) ;
-      }
-      this.oma.removeOM( svcname ) ;
+      throw buildException( "checkDataNodeValid", e, 
+                            "check node " + hostname + ":" + svcname, 0, e ) ;
    }
-   this.oma.close() ;
 }
 
 function main()
@@ -98,35 +88,19 @@ function main()
       return ;
    }
    
-   // 判断OM是否存在
-   var OmExist1 = isOmExist( localhost, CMSVCNAME ) ;
-   var OmExist2 = isOmExist( remotehost, CMSVCNAME ) ;
-   
    var ot1 = new OmaTest( localhost, CMSVCNAME ) ;
    var ot2 = new OmaTest( remotehost, CMSVCNAME ) ;
    
    var ots = [ ot1, ot2 ] ;
    var svcnames = [ svcname1, svcname2 ] ;
-   var OmExists = [ OmExist1, OmExist2 ] ;
    
    for( var i = 0;i < ots.length;i++ )
    {
-      try
-      {
-         // 测试协调节点的正常操作
-         ots[i].testCoordNodeOperationNormal( svcnames[i] ) ;
-         
-         // 测试数据节点的正常操作
-         ots[i].testDataNodeOperationNormal( svcnames[i] ) ;
-         
-         // 测试OM的正常操作
-         ots[i].testOMOperation( svcnames[i], OmExists[i] ) ;
-      }
-      catch( e )
-      {
-         ots[i].toString() ;
-         throw e ;
-      }
+      // 测试协调节点的正常操作
+      ots[i].testCoordNodeOperationNormal( svcnames[i] ) ;
+      
+      // 测试数据节点的正常操作
+      ots[i].testDataNodeOperationNormal( svcnames[i] ) ;
    }
 }
 

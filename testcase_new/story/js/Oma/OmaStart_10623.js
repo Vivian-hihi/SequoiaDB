@@ -1,6 +1,7 @@
 /******************************************************************************
-*@Description : test Oma function start 手工测试
-*               TestLink: 10623 10624
+*@Description : test js object oma function: start
+*               TestLink: 10623 Oma启动本地cm
+*                         10624 Oma启动本地cm，alivetime设置为0
 *@author      : Liang XueWang
 ******************************************************************************/
 
@@ -8,7 +9,7 @@ main()
 
 function main()
 {
-   // testOmaStart() ;
+   testOmaStart() ;
 }
    
 /******************************************************************************
@@ -31,20 +32,23 @@ function testOmaStart()
    option["port"] = svcname ;
    option["alivetime"] = 2 ;
    option["standalone"] = true ;
+   
    Oma.start( option ) ;
    
    // 检查cm端口及超时
    var oma = new Oma() ;
    var num = oma.listNodes( { type: "cm", showalone: true } ).toArray().length ;
-   if( num != 3 )
+   if( num != 3 )  // cm, cmd, standalone cm
    {
-      throw buildException( "testOmaStart", 0, "check cm after start a standalone cm", 3, num ) ;
+      throw buildException( "testOmaStart", null, 
+                            "check cm after start a standalone cm", 3, num ) ;
    }
    sleep( 5*1000 ) ;
    num =  oma.listNodes( { type: "cm", showalone: true } ).toArray().length ;
    if( num != 2 )
    {
-      throw buildException( "testOmaStart", 0, "check cm after standalone cm timeout", 2, num ) ;
+      throw buildException( "testOmaStart", null, 
+                            "check cm after standalone cm timeout", 2, num ) ;
    }
    
    // 启动一个非standalone的cm时，首先需要先停止当前的cm
@@ -56,7 +60,8 @@ function testOmaStart()
    var option = {} ;
    option["port"] = svcname ;
    option["alivetime"] = 0 ;
-   option["standalone"] = false ;   
+   option["standalone"] = false ; 
+     
    Oma.start( option ) ;
    
    // 检查cm端口及超时

@@ -1,6 +1,7 @@
 /******************************************************************************
 *@Description : test oma svcname boundary number
-*               TestLink: 10605 10606
+*               TestLink: 10605 Oma创建节点，端口号为边界值   65535，1 
+*                         10606 Oma创建节点，端口号超过边界值 65536，0
 *@author      : Liang XueWang
 ******************************************************************************/
 
@@ -17,13 +18,14 @@ OmaTest.prototype.testSvcnameBoundary = function()
          var svcname = ErrorSvcname[i] ;
          var dbpath = RSRVNODEDIR + "data/" + svcname ;
          this.oma.createData( svcname, dbpath ) ;
-         throw 0 ;
+         throw "create data with " + svcname + "should be failed" ;
       }
       catch( e )
       {
          if( e != -6 )
          {
-            throw buildException( "testSvcnameBoundary", -6, "create data", -6, e ) ;
+            throw buildException( "testSvcnameBoundary", -6, 
+                                  "create data " + this, -6, e ) ;
          }
       }
    }
@@ -38,9 +40,11 @@ OmaTest.prototype.testSvcnameBoundary = function()
       }
       catch( e )
       {
-         throw buildException( "testSvcnameBoundary", 0, "create data", 0, e ) ;
+         throw buildException( "testSvcnameBoundary", 0, 
+                               "create data " + this, 0, e ) ;
       }   
    }
+   this.oma.close() ;
 }
 
 function main()
@@ -55,16 +59,8 @@ function main()
    
    for( var i = 0;i < ots.length;i++ )
    {
-      try
-      {
-         // 测试端口号取边界值及超出边界时创建节点（0,65535）（1,65534）
-         ots[i].testSvcnameBoundary() ;
-      }
-      catch( e )
-      {
-         ots[i].toString() ;
-         throw e ;
-      }
+      // 测试端口号取边界值及超出边界时创建节点（0,65536）（1,65535）
+      // ots[i].testSvcnameBoundary() ;
    }
 }
 

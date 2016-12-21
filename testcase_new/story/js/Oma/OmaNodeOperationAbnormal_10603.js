@@ -1,8 +1,16 @@
 /******************************************************************************
-*@Description : test function createCoord,removeCoord,createData,removeData
-*               startNode,stopNode,close Abnormal
-*               TestLink: 10603 10604 10607 10608 10609 10610 10611 10614 10615
-*                         10616
+*@Description : test js object oma function: createCoord removeCoord createData
+*                              Abnormal      removeData startNode stopNode close             
+*               TestLink: 10603 Oma创建节点，端口已存在
+*                         10604 Oma创建节点，文件路径无权限                 
+*                         10607 Oma创建节点，节点配置信息错误
+*                         10608 Oma创建节点，添加不存在的配置项
+*                         10609 Oma删除节点，端口号不存在
+*                         10610 Oma删除节点，端口号类型不匹配
+*                         10611 Oma删除节点，节点配置信息不正确
+*                         10614 Oma启动节点，节点不存在 
+*                         10615 Oma停止节点，节点不存在
+*                         10616 关闭Oma对象
 *@author      : Liang XueWang               
 ******************************************************************************/
 
@@ -10,20 +18,23 @@
 OmaTest.prototype.testCreateExistCoord = function()
 {
    this.testInit() ;
+   
    try
    {
       var svcname = COORDSVCNAME ;
       var dbpath = RSRVNODEDIR + "coord/" + svcname ;
       this.oma.createCoord( svcname, dbpath ) ;
-      throw 0 ;
+      throw "create exist coord should be failed" ;
    }
    catch( e )
    {
       if( e != -145 )
       {
-         throw buildException( "testCreateExistCoord", e, "create exist coord", -145, e ) ;
+         throw buildException( "testCreateExistCoord", e, 
+                               "create exist coord " + this, -145, e ) ;
       }
    }
+   
    this.oma.close() ;
 }
 
@@ -34,13 +45,14 @@ OmaTest.prototype.testRemoveNotExistCoord = function( svcname )
    try
    {
       this.oma.removeCoord( svcname ) ;
-      throw 0 ;
+      throw "remove not exist coord should be failed" ;
    }
    catch( e )
    {
       if( e != -146 )
       {
-         throw buildException( "testRemoveNotExistCoord", e, "remove not exist coord", -146, e ) ;
+         throw buildException( "testRemoveNotExistCoord", e, 
+                               "remove not exist coord " + this, -146, e ) ;
       }
    }
    this.oma.close() ;
@@ -53,14 +65,14 @@ OmaTest.prototype.testRemoveCoordWithWrongSvc = function()
    try
    {
       this.oma.removeCoord( CMSVCNAME ) ;
-      throw 0 ;
+      throw "remove coord with cm svcname should be failed" ;
    }
    catch( e )
    {
       if( e != -146 )
       {
          throw buildException( "testRemoveCoordWithWrongSvc", e, 
-                               "remove coord with cmsvcname", -146, e ) ;
+                               "remove coord with cmsvcname " + this, -146, e ) ;
       }
    }
    this.oma.close() ;
@@ -70,19 +82,24 @@ OmaTest.prototype.testRemoveCoordWithWrongSvc = function()
 OmaTest.prototype.testRemoveCoordWithWrongConf = function()
 {
    this.testInit() ;
+   
+   if( this.isStandalone )
+   {
+      println( "Run mode is standalone" ) ;
+      return ;
+   }
+   
    try
    {
       this.oma.removeCoord( COORDSVCNAME, { clustername: "!@#$%^&*" } ) ;
-      throw 0 ;
+      throw "remove coord with wrong config should be failed" ;
    }
    catch( e )
    {
-      if( ( e == -146 ) || ( this.isStandalone && e == -3 ) )
-         ;
-      else
+      if( e !== -146  )
       {
          throw buildException( "testRemoveCoordWithWrongConf", e, 
-                               "remove coord with wrong config", -146, e ) ;
+                               "remove coord with wrong config " + this, -146, e ) ;
       }
    }
    this.oma.close() ;
@@ -95,13 +112,14 @@ OmaTest.prototype.testStartNotExistNode = function( svcname )
    try
    {
       this.oma.startNode( svcname ) ;
-      throw 0 ;
+      throw "start not exist node should be failed" ;
    }
    catch( e )
    {
       if( e != -146 )
       {
-         throw buildException( "testStartNotExistNode", e, "start not exist node", -146, e ) ;
+         throw buildException( "testStartNotExistNode", e, 
+                               "start not exist node " + this, -146, e ) ;
       }
    }
    this.oma.close() ;
@@ -117,7 +135,8 @@ OmaTest.prototype.testStopNotExistNode = function( svcname )
    }
    catch( e )
    {
-      throw buildException( "testStopNotExistNode", e, "stop not exist node", 0, e ) ;
+      throw buildException( "testStopNotExistNode", e, 
+                            "stop not exist node " + this, 0, e ) ;
    }
    this.oma.close() ;
 }
@@ -143,7 +162,7 @@ OmaTest.prototype.testCreateCoordWithWrongConf = function( svcname )
    catch( e )
    {
       throw buildException( "testCreateCoordWithWrongConf", e, 
-                            "create coord with wrong config", 0, e ) ;
+                            "create coord with wrong config " + this, 0, e ) ;
    }
    this.oma.close() ;
 }
@@ -155,14 +174,14 @@ OmaTest.prototype.testCreateCoordWithNoPermit = function( svcname )
    try
    {
       this.oma.createCoord( svcname, "/root/"+svcname ) ;
-      throw 0 ;
+      throw "create coord with no permission should be failed" ;
    }
    catch( e )
    {
       if( e != -3 )
       {
          throw buildException( "testCreateCoordWithNoPermit", e, 
-                               "create coord with no permit", -3, e ) ;
+                               "create coord with no permit " + this, -3, e ) ;
       }
    }
    this.oma.close() ;
@@ -176,13 +195,14 @@ OmaTest.prototype.testOmaClose = function()
    try
    {
       this.oma.stopNode( COORDSVCNAME ) ;
-      throw 0 ;
+      throw "stop node after oma close should be failed" ;
    }
    catch( e )
    {
       if( e != -6 )
       {
-         throw buildException( "testOmaClose", e, "stop coord node after close", -6, e ) ;
+         throw buildException( "testOmaClose", e, 
+                               "stop coord node after close " + this, -6, e ) ;
       }
    }
 }
@@ -214,40 +234,32 @@ function main()
    
    for( i = 0;i < ots.length;i++ )
    {
-      try
-      {
-         // 测试创建已存在的节点
-         ots[i].testCreateExistCoord() ;
-         
-         // 测试删除不存在的节点
-         ots[i].testRemoveNotExistCoord( svcnames[i] ) ;
-         
-         // 测试删除节点时端口号不匹配
-         ots[i].testRemoveCoordWithWrongSvc() ;
-         
-         // 测试删除节点时配置项非法
-         ots[i].testRemoveCoordWithWrongConf() ;
-         
-         // 测试启动不存在的节点
-         ots[i].testStartNotExistNode( svcnames[i] ) ;
-         
-         // 测试停止不存在的节点
-         ots[i].testStopNotExistNode( svcnames[i] ) ;
-         
-         // 测试创建节点时配置项非法
-         ots[i].testCreateCoordWithWrongConf( svcnames[i] ) ;
-         
-         // 测试创建节点时路径无权限
-         ots[i].testCreateCoordWithNoPermit( svcnames[i] ) ;
-         
-         // 测试oma关闭后执行操作
-         ots[i].testOmaClose() ;
-      }
-      catch( e )
-      {
-         ots[i].toString() ;
-         throw e ;
-      }
+      // 测试创建已存在的节点
+      ots[i].testCreateExistCoord() ;
+      
+      // 测试删除不存在的节点
+      ots[i].testRemoveNotExistCoord( svcnames[i] ) ;
+      
+      // 测试删除节点时端口号不匹配
+      ots[i].testRemoveCoordWithWrongSvc() ;
+      
+      // 测试删除节点时配置项非法
+      ots[i].testRemoveCoordWithWrongConf() ;
+      
+      // 测试启动不存在的节点
+      ots[i].testStartNotExistNode( svcnames[i] ) ;
+      
+      // 测试停止不存在的节点
+      ots[i].testStopNotExistNode( svcnames[i] ) ;
+      
+      // 测试创建节点时配置项非法
+      ots[i].testCreateCoordWithWrongConf( svcnames[i] ) ;
+      
+      // 测试创建节点时路径无权限
+      ots[i].testCreateCoordWithNoPermit( svcnames[i] ) ;
+      
+      // 测试oma关闭后执行操作
+      ots[i].testOmaClose() ;
    }
 }
 
