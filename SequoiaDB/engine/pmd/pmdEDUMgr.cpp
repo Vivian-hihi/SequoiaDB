@@ -226,7 +226,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_FORCEUSREDU, "_pmdEDUMgr::forceUserEDU" )
    INT32 _pmdEDUMgr::forceUserEDU ( EDUID eduID )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc = SDB_PMD_SESSION_NOT_EXIST ;
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_FORCEUSREDU );
       std::map<EDUID, pmdEDUCB*>::iterator it ;
       if ( isSystemEDU ( eduID ) )
@@ -243,6 +243,7 @@ namespace engine
             if ( (*it).second->getID () == eduID )
             {
                (*it).second->force () ;
+               rc = SDB_OK ;
                goto done ;
             }
          }
@@ -251,6 +252,7 @@ namespace engine
             if ( (*it).second->getID () == eduID )
             {
                (*it).second->force () ;
+               rc = SDB_OK ;
                goto done ;
             }
          }
