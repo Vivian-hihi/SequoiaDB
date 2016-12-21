@@ -35,6 +35,7 @@
 #include "omManager.hpp"
 #include "pmdEDUMgr.hpp"
 #include "msgDef.h"
+#include "fmpDef.h"
 #include "utilCommon.hpp"
 #include "ossMem.hpp"
 #include "rtnCommand.hpp"
@@ -779,57 +780,86 @@ namespace engine
                                  &RestToMSGTransfer::_convertDropCS },
          { CMD_NAME_DROP_COLLECTION,
                                  &RestToMSGTransfer::_convertDropCL },
-         { CMD_NAME_CREATE_INDEX, &RestToMSGTransfer::_converCreateIndex },
-         { CMD_NAME_DROP_INDEX,  &RestToMSGTransfer::_converDropIndex },
+         { CMD_NAME_CREATE_INDEX, &RestToMSGTransfer::_convertCreateIndex },
+         { CMD_NAME_DROP_INDEX,  &RestToMSGTransfer::_convertDropIndex },
          { CMD_NAME_SPLIT,       &RestToMSGTransfer::_convertSplit },
+
+         { REST_CMD_NAME_TRUNCATE_COLLECTION,
+                              &RestToMSGTransfer::_convertTruncateCollection },
          { REST_CMD_NAME_ATTACH_COLLECTION, 
                                  &RestToMSGTransfer::_coverAttachCollection },
-         { CMD_NAME_ALTER_COLLECTION,  
+         { REST_CMD_NAME_DETACH_COLLECTION, 
+                                 &RestToMSGTransfer::_coverDetachCollection },
+         { CMD_NAME_ALTER_COLLECTION,
                                  &RestToMSGTransfer::_convertAlterCollection },
+
          { CMD_NAME_GET_COUNT,   &RestToMSGTransfer::_convertGetCount },
+
          { CMD_NAME_LIST_GROUPS, &RestToMSGTransfer::_convertListGroups },
+         { REST_CMD_NAME_START_GROUP,
+                                 &RestToMSGTransfer::_convertStartGroup },
+         { REST_CMD_NAME_STOP_GROUP,
+                                 &RestToMSGTransfer::_convertStopGroup },
+
+         { REST_CMD_NAME_START_NODE,
+                                 &RestToMSGTransfer::_convertStartNode },
+         { REST_CMD_NAME_STOP_NODE,
+                                 &RestToMSGTransfer::_convertStopNode },
+
+         { CMD_NAME_CRT_PROCEDURE,
+                                 &RestToMSGTransfer::_convertCreateProcedure },
+         { CMD_NAME_RM_PROCEDURE,
+                                 &RestToMSGTransfer::_convertRemoveProcedure },
          { CMD_NAME_LIST_PROCEDURES,   
                                  &RestToMSGTransfer::_convertListProcedures },
          { CMD_NAME_LIST_CONTEXTS, 
                                  &RestToMSGTransfer::_convertListContexts },
          { CMD_NAME_LIST_CONTEXTS_CURRENT, 
-                              &RestToMSGTransfer::_convertListContextsCurrent },
+                                 &RestToMSGTransfer::_convertListContextsCurrent },
          { CMD_NAME_LIST_SESSIONS, 
                                  &RestToMSGTransfer::_convertListSessions },
          { CMD_NAME_LIST_SESSIONS_CURRENT, 
-                              &RestToMSGTransfer::_convertListSessionsCurrent },
+                                 &RestToMSGTransfer::_convertListSessionsCurrent },
          { CMD_NAME_LIST_COLLECTIONS, 
                                  &RestToMSGTransfer::_convertListCollections },
          { CMD_NAME_LIST_COLLECTIONSPACES, 
-                             &RestToMSGTransfer::_convertListCollectionSpaces },
+                                 &RestToMSGTransfer::_convertListCollectionSpaces },
          { CMD_NAME_LIST_STORAGEUNITS, 
                                  &RestToMSGTransfer::_convertListStorageUnits },
+         { CMD_NAME_CREATE_DOMAIN,
+                                 &RestToMSGTransfer::_convertCreateDomain },
+         { CMD_NAME_DROP_DOMAIN, &RestToMSGTransfer::_convertDropDomain },
+         { CMD_NAME_ALTER_DOMAIN,
+                                 &RestToMSGTransfer::_convertAlterDomain },
          { CMD_NAME_LIST_DOMAINS,  
                                  &RestToMSGTransfer::_convertListDomains },
          { CMD_NAME_LIST_TASKS,  &RestToMSGTransfer::_convertListTasks },
-         { REST_CMD_NAME_LISTINDEXES, &RestToMSGTransfer::_convertListIndexes },
+         { REST_CMD_NAME_LISTINDEXES,
+                                 &RestToMSGTransfer::_convertListIndexes },
 //         { CMD_NAME_LIST_CL_IN_DOMAIN, &RestToMSGTransfer::_convertQuery },
          { CMD_NAME_SNAPSHOT_CONTEXTS, 
                                  &RestToMSGTransfer::_convertSnapshotContext },
          { CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT, 
-                           &RestToMSGTransfer::_convertSnapshotContextCurrent },
+                                 &RestToMSGTransfer::_convertSnapshotContextCurrent },
          { CMD_NAME_SNAPSHOT_SESSIONS, 
                                  &RestToMSGTransfer::_convertSnapshotSessions },
          { CMD_NAME_SNAPSHOT_SESSIONS_CURRENT, 
-                        &RestToMSGTransfer::_convertSnapshotSessionsCurrent },
+                                 &RestToMSGTransfer::_convertSnapshotSessionsCurrent },
          { CMD_NAME_SNAPSHOT_COLLECTIONS, 
-                              &RestToMSGTransfer::_convertSnapshotCollections },
+                                 &RestToMSGTransfer::_convertSnapshotCollections },
          { CMD_NAME_SNAPSHOT_COLLECTIONSPACES, 
-                        &RestToMSGTransfer::_convertSnapshotCollectionSpaces },
+                                 &RestToMSGTransfer::_convertSnapshotCollectionSpaces },
          { CMD_NAME_SNAPSHOT_DATABASE, 
-                              &RestToMSGTransfer::_convertSnapshotDatabase },
+                                 &RestToMSGTransfer::_convertSnapshotDatabase },
          { CMD_NAME_SNAPSHOT_SYSTEM, 
-                              &RestToMSGTransfer::_convertSnapshotSystem },
+                                 &RestToMSGTransfer::_convertSnapshotSystem },
          { CMD_NAME_SNAPSHOT_CATA,  
                                  &RestToMSGTransfer::_convertSnapshotCata },
          { CMD_NAME_LIST_LOBS,   &RestToMSGTransfer::_convertListLobs },
          { OM_LOGIN_REQ,         &RestToMSGTransfer::_convertLogin },
-         { REST_CMD_NAME_EXEC,   &RestToMSGTransfer::_convertExec }
+         { REST_CMD_NAME_EXEC,   &RestToMSGTransfer::_convertExec },
+         { CMD_NAME_FORCE_SESSION,
+                                 &RestToMSGTransfer::_convertForceSession }
       } ;
 
       len = sizeof( s_commandArray ) / sizeof( restCommand2Func ) ;
@@ -1773,8 +1803,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 RestToMSGTransfer::_converCreateIndex( restAdaptor *pAdaptor,
-                                                MsgHeader **msg )
+   INT32 RestToMSGTransfer::_convertCreateIndex( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg )
    {
       INT32 rc                = SDB_OK ;
       CHAR *pBuff             = NULL ;
@@ -1919,9 +1949,9 @@ namespace engine
    error:
       goto done ;
    }
-
-   INT32 RestToMSGTransfer::_converDropIndex( restAdaptor *pAdaptor,
-                                              MsgHeader **msg )
+   
+   INT32 RestToMSGTransfer::_convertDropIndex( restAdaptor *pAdaptor,
+                                               MsgHeader **msg )
    {
       INT32 rc                = SDB_OK ;
       CHAR *pBuff             = NULL ;
@@ -2123,6 +2153,56 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_convertTruncateCollection( restAdaptor *pAdaptor,
+                                                        MsgHeader **msg )
+   {
+      INT32 rc                = SDB_OK ;
+      INT32 buffSize          = 0 ;
+      CHAR *pBuff             = NULL ;
+      const CHAR *pCollection = NULL ;
+      const CHAR *pCommand    = CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE ;
+      BSONObj query ;
+
+      // collection full name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pCollection ) ;
+      if ( NULL == pCollection )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
+                     FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_COLLECTION, pCollection ) ;
+         query = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 RestToMSGTransfer::_coverAttachCollection( restAdaptor *pAdaptor,
                                                     MsgHeader **msg )
    {
@@ -2221,6 +2301,68 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_coverDetachCollection( restAdaptor *pAdaptor,
+                                                    MsgHeader **msg )
+   {
+      INT32 rc                = SDB_OK ;
+      INT32 buffSize          = 0 ;
+      CHAR *pBuff             = NULL ;
+      const CHAR *pCommand    = CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL ;
+      const CHAR *pCollection = NULL ;
+      const CHAR *pSubCLName  = NULL ;
+      BSONObj query ;
+
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_COLLECTION, 
+                          &pCollection ) ;
+      if ( NULL == pCollection )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
+                     REST_KEY_NAME_COLLECTION ) ;
+         goto error ;
+      }
+
+      // subcl name
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_SUBCLNAME, &pSubCLName ) ;
+      if ( NULL == pSubCLName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field[%s] failed", 
+                     REST_KEY_NAME_SUBCLNAME ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_NAME, pCollection ) ;
+         ob.append ( FIELD_NAME_SUBCLNAME, pSubCLName ) ;
+         query = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 RestToMSGTransfer::_convertListGroups( restAdaptor *pAdaptor,
                                                 MsgHeader **msg )
    {
@@ -2231,6 +2373,230 @@ namespace engine
 
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, NULL, 
                              NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertStartGroup( restAdaptor *pAdaptor,
+                                                MsgHeader **msg )
+   {
+      INT32 rc             = SDB_OK ;
+      INT32 buffSize       = 0 ;
+      CHAR *pBuff          = NULL ;
+      const CHAR *pName    = NULL ;
+      const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ;
+      BSONObj query ;
+
+      // Name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pName ) ;
+      if ( NULL == pName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_GROUPNAME, pName ) ;
+         query = ob.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertStopGroup( restAdaptor *pAdaptor,
+                                               MsgHeader **msg )
+   {
+      INT32 rc             = SDB_OK ;
+      INT32 buffSize       = 0 ;
+      CHAR *pBuff          = NULL ;
+      const CHAR *pName    = NULL ;
+      const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN_GROUP ;
+      BSONObj query ;
+
+      // Name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pName ) ;
+      if ( NULL == pName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_GROUPNAME, pName ) ;
+         query = ob.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertStartNode( restAdaptor *pAdaptor,
+                                               MsgHeader **msg )
+   {
+      INT32 rc              = SDB_OK ;
+      INT32 buffSize        = 0 ;
+      CHAR *pBuff           = NULL ;
+      const CHAR *pHostName = NULL ;
+      const CHAR *pSvcname  = NULL ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_STARTUP_NODE ;
+      BSONObj query ;
+
+      // HostName
+      pAdaptor->getQuery( _restSession, FIELD_NAME_HOST, &pHostName ) ;
+      if ( NULL == pHostName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_HOST ) ;
+         goto error ;
+      }
+
+      // svcname
+      pAdaptor->getQuery( _restSession, OM_CONF_DETAIL_SVCNAME, &pSvcname ) ;
+      if ( NULL == pSvcname )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_CONF_DETAIL_SVCNAME ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_HOST, pHostName ) ;
+         ob.append ( OM_CONF_DETAIL_SVCNAME, pSvcname ) ;
+         query = ob.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertStopNode( restAdaptor *pAdaptor,
+                                              MsgHeader **msg )
+   {
+      INT32 rc              = SDB_OK ;
+      INT32 buffSize        = 0 ;
+      CHAR *pBuff           = NULL ;
+      const CHAR *pHostName = NULL ;
+      const CHAR *pSvcname  = NULL ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN_NODE ;
+      BSONObj query ;
+
+      // HostName
+      pAdaptor->getQuery( _restSession, FIELD_NAME_HOST, &pHostName ) ;
+      if ( NULL == pHostName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_HOST ) ;
+         goto error ;
+      }
+
+      // svcname
+      pAdaptor->getQuery( _restSession, OM_CONF_DETAIL_SVCNAME, &pSvcname ) ;
+      if ( NULL == pSvcname )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_CONF_DETAIL_SVCNAME ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_HOST, pHostName ) ;
+         ob.append ( OM_CONF_DETAIL_SVCNAME, pSvcname ) ;
+         query = ob.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                             &query, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
@@ -2638,16 +3004,123 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_convertCreateProcedure( restAdaptor *pAdaptor,
+                                                     MsgHeader **msg )
+   {
+      INT32 rc             = SDB_OK ;
+      INT32 buffSize       = 0 ;
+      CHAR *pBuff          = NULL ;
+      const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_CRT_PROCEDURE ;
+      const CHAR *pJsCode  = NULL ;
+      BSONObj query ;
+
+      // code
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_CODE, 
+                          &pJsCode ) ;
+      if ( NULL == pJsCode )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     REST_KEY_NAME_CODE ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.appendCode ( FIELD_NAME_FUNC, pJsCode ) ;
+         ob.append ( FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS ) ;
+         query = ob.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertRemoveProcedure( restAdaptor *pAdaptor,
+                                                     MsgHeader **msg )
+   {
+      INT32 rc              = SDB_OK ;
+      INT32 buffSize        = 0 ;
+      CHAR *pBuff           = NULL ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_RM_PROCEDURE ;
+      const CHAR *pFuncName = NULL ;
+      BSONObj query ;
+
+      // function
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_FUNCTION, 
+                          &pFuncName ) ;
+      if ( NULL == pFuncName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     REST_KEY_NAME_FUNCTION ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_FUNC, pFuncName ) ;
+         query = ob.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, 
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 RestToMSGTransfer::_convertListProcedures( restAdaptor *pAdaptor,
                                                     MsgHeader **msg )
    {
       INT32 rc = SDB_OK ;
+      INT32 buffSize = 0 ;
+      SINT64 skip = 0 ;
+      SINT64 returnRow = -1 ;
+      CHAR *pBuff = NULL ;
+      const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES ;
+      const CHAR *pSkip = NULL ;
+      const CHAR *pReturnRow = NULL ;
       BSONObj selector ;
       BSONObj order ;
       BSONObj match ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
-      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES ;
 
       rc = _convertListBase( pAdaptor, match, selector, order ) ;
       if ( SDB_OK != rc )
@@ -2655,9 +3128,92 @@ namespace engine
          PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
          goto error ;
       }
+      //Skip
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SKIP, &pSkip ) ;
+      //ReturnNum(Limit)
+      pAdaptor->getQuery( _restSession, FIELD_NAME_RETURN_NUM, &pReturnRow ) ;
+      if ( NULL == pReturnRow )
+      {
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_LIMIT, &pReturnRow ) ;
+      }
+      if ( NULL != pSkip )
+      {
+         skip = ossAtoll( pSkip ) ;
+      }
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
-                             &selector, &order, NULL ) ;
+      if ( NULL != pReturnRow )
+      {
+         returnRow = ossAtoll( pReturnRow ) ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, skip,
+                             returnRow, &match, &selector, &order,
+                             NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertAlterDomain( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 buffSize = 0 ;
+      CHAR *pBuff = NULL ;
+      const CHAR *pName = NULL ;
+      const CHAR *pOptions = NULL ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ;
+      BSONObj query ;
+      BSONObj options ;
+
+      // name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pName ) ;
+      if( NULL == pName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+      
+      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOptions ) ;
+      if( NULL != pOptions )
+      {
+         rc = fromjson( pOptions, options, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, "
+                        "value=%s", FIELD_NAME_OPTIONS, pOptions ) ;
+            goto error ;
+         }
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_NAME, pName ) ;
+         ob.append ( FIELD_NAME_OPTIONS, options ) ;
+         query = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
@@ -2693,6 +3249,119 @@ namespace engine
 
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
                              &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertCreateDomain( restAdaptor *pAdaptor,
+                                                  MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 buffSize        = 0 ;
+      CHAR *pBuff           = NULL ;
+      const CHAR *pName     = NULL ;
+      const CHAR *pOption   = NULL ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_CREATE_DOMAIN ;
+      BSONObj query ;
+      BSONObj options ;
+
+      // name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pName ) ;
+      if ( NULL == pName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+
+      // options
+      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
+      if ( NULL == pOption )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_OPTIONS ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pOption, options, 0 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                     FIELD_NAME_OPTIONS, pOption ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         ob.append ( FIELD_NAME_NAME, pName ) ;
+         if( NULL != pOption )
+         {
+            ob.append ( FIELD_NAME_OPTIONS, options ) ;
+         }
+         query = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertDropDomain( restAdaptor *pAdaptor,
+                                                MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_DROP_DOMAIN ;
+      const CHAR *pName     = NULL ;
+      BSONObj query ;
+
+      // name
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, 
+                          &pName ) ;
+      if ( NULL == pName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+
+      query = BSON( FIELD_NAME_NAME << pName ) ;
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
@@ -3319,6 +3988,80 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build exec command failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertForceSession( restAdaptor *pAdaptor,
+                                                  MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 buffSize = 0 ;
+      SINT64 sessionId = 0 ;
+      CHAR *pBuff = NULL ;
+      const CHAR *pOption    = NULL ;
+      const CHAR *pSessionId = NULL ;
+      const CHAR *pCommand   = CMD_ADMIN_PREFIX CMD_NAME_FORCE_SESSION ;
+      BSONObj query ;
+      BSONObj options ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SESSIONID, &pSessionId ) ;
+      if( NULL == pSessionId )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get exec's field failed:field=%s", 
+                     FIELD_NAME_SESSIONID ) ;
+         goto error ;
+      }
+      sessionId = ossAtoll( pSessionId ) ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
+      if( NULL != pOption )
+      {
+         rc = fromjson( pOption, options, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_OPTIONS, pOption ) ;
+            goto error ;
+         }
+      }
+
+      try
+      {
+         BSONObjBuilder ob ;
+         BSONObjIterator it( options ) ;
+         ob.appendNumber( FIELD_NAME_SESSIONID, sessionId ) ;
+         while( it.more() )
+         {
+            BSONElement ele = it.next() ;
+            if ( 0 != ossStrcmp( ele.fieldName(), FIELD_NAME_SESSIONID ) )
+            {
+               ob.append( ele ) ;
+            }
+         }
+         query = ob.obj() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create BSON object: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1,
+                             &query, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
          goto error ;
       }
 

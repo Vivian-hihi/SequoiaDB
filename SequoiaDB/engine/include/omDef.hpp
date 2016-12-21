@@ -573,6 +573,8 @@ namespace engine
    #define REST_KEY_NAME_SQL                 "Sql"
    #define REST_KEY_NAME_LOWBOUND            "Lowbound"
    #define REST_KEY_NAME_UPBOUND             "Upbound"
+   #define REST_KEY_NAME_CODE                "Code"
+   #define REST_KEY_NAME_FUNCTION            "Function"
 }
 
 #endif // OM_DEF_HPP__

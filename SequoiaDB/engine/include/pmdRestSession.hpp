@@ -228,7 +228,13 @@ namespace engine
    #define REST_CMD_NAME_SNAPSHOT      "snapshot"
    #define REST_CMD_NAME_EXEC          "exec"
    #define REST_CMD_NAME_LISTINDEXES   "list indexes"
+   #define REST_CMD_NAME_TRUNCATE_COLLECTION "truncate collection"
    #define REST_CMD_NAME_ATTACH_COLLECTION "attach collection"
+   #define REST_CMD_NAME_DETACH_COLLECTION "detach collection"
+   #define REST_CMD_NAME_START_GROUP   "start group"
+   #define REST_CMD_NAME_STOP_GROUP    "stop group"
+   #define REST_CMD_NAME_START_NODE    "start node"
+   #define REST_CMD_NAME_STOP_NODE     "stop node"
 
    class RestToMSGTransfer ;   
    typedef INT32 ( RestToMSGTransfer::*restTransFunc )( restAdaptor *pAdaptor, 
@@ -282,13 +288,17 @@ namespace engine
 
          INT32       _convertSplit( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
-         INT32       _converCreateIndex( restAdaptor *pAdaptor,
-                                         MsgHeader **msg ) ;
+         INT32       _convertCreateIndex( restAdaptor *pAdaptor,
+                                          MsgHeader **msg ) ;
 
-         INT32       _converDropIndex( restAdaptor *pAdaptor, 
-                                       MsgHeader **msg ) ;
+         INT32       _convertDropIndex( restAdaptor *pAdaptor, 
+                                        MsgHeader **msg ) ;
 
+         INT32       _convertTruncateCollection( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg ) ;
          INT32       _coverAttachCollection( restAdaptor *pAdaptor,
+                                             MsgHeader **msg ) ;
+         INT32       _coverDetachCollection( restAdaptor *pAdaptor,
                                              MsgHeader **msg ) ;
          
          INT32       _convertAlterCollection( restAdaptor *pAdaptor,
@@ -306,8 +316,19 @@ namespace engine
                                                   MsgHeader **msg ) ;
          INT32       _convertListSessions( restAdaptor *pAdaptor,
                                            MsgHeader **msg ) ;
+
          INT32       _convertListGroups( restAdaptor *pAdaptor,
                                          MsgHeader **msg ) ;
+         INT32       _convertStartGroup( restAdaptor *pAdaptor,
+                                         MsgHeader **msg ) ;
+         INT32       _convertStopGroup( restAdaptor *pAdaptor,
+                                        MsgHeader **msg ) ;
+
+         INT32       _convertStartNode( restAdaptor *pAdaptor,
+                                         MsgHeader **msg ) ;
+         INT32       _convertStopNode( restAdaptor *pAdaptor,
+                                        MsgHeader **msg ) ;
+
          INT32       _convertListSessionsCurrent( restAdaptor *pAdaptor,
                                                   MsgHeader **msg ) ;
          INT32       _convertListCollections( restAdaptor *pAdaptor,
@@ -316,8 +337,20 @@ namespace engine
                                                    MsgHeader **msg ) ;
          INT32       _convertListStorageUnits( restAdaptor *pAdaptor,
                                                MsgHeader **msg ) ;
+
+         INT32       _convertCreateProcedure( restAdaptor *pAdaptor,
+                                              MsgHeader **msg ) ;
+         INT32       _convertRemoveProcedure( restAdaptor *pAdaptor,
+                                              MsgHeader **msg ) ;
          INT32       _convertListProcedures( restAdaptor *pAdaptor,
                                              MsgHeader **msg ) ;
+
+         INT32       _convertCreateDomain( restAdaptor *pAdaptor,
+                                           MsgHeader **msg ) ;
+         INT32       _convertDropDomain( restAdaptor *pAdaptor,
+                                         MsgHeader **msg ) ;
+         INT32       _convertAlterDomain( restAdaptor *pAdaptor,
+                                          MsgHeader **msg ) ;
          INT32       _convertListDomains( restAdaptor *pAdaptor,
                                           MsgHeader **msg ) ;
          INT32       _convertListTasks( restAdaptor *pAdaptor,
@@ -356,6 +389,9 @@ namespace engine
          INT32       _buildExecMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                     const CHAR *pSql, UINT64 reqID ) ;
          INT32       _convertExec( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+
+         INT32       _convertForceSession( restAdaptor *pAdaptor,
+                                           MsgHeader **msg ) ;
 
          INT32       _convertLogin( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 

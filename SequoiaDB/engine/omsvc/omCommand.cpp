@@ -450,6 +450,10 @@ namespace engine
       }
 
       _restAdaptor->getQuery(_restSession, FIELD_NAME_FILTER, &pMatcher ) ;
+      if( NULL == pMatcher )
+      {
+         _restAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatcher ) ;
+      }
       if ( NULL != pMatcher )
       {
          rc = fromjson( pMatcher, matcher ) ;
@@ -462,6 +466,12 @@ namespace engine
       }
 
       _restAdaptor->getQuery(_restSession, FIELD_NAME_SORT, &pOrder ) ;
+      if( NULL == pOrder )
+      {
+         _restAdaptor->getQuery( _restSession,
+                                 REST_KEY_NAME_ORDERBY,
+                                 &pOrder ) ;
+      }
       if ( NULL != pOrder )
       {
          rc = fromjson( pOrder, order ) ;
