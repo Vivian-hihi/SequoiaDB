@@ -5,7 +5,7 @@ try{
    db.dropCS("");
 }
 catch( e ){
-   if(e==-34){
+   if(e==-6){
       res = true ;
 }
 }
