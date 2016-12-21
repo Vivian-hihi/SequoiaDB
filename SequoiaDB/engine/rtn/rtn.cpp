@@ -1411,6 +1411,7 @@ namespace engine
       std::set<monCollectionSpace> allCS ;
       BOOLEAN dmsLocked = FALSE ;
       BOOLEAN syncSpecCS = FALSE ;
+      UINT32 syncCSNum = 0 ;
 
       if ( !dpsCB || !dpsCB )
       {
@@ -1475,6 +1476,7 @@ namespace engine
          {
             continue ;
          }
+         ++syncCSNum ;
          /// get cs lock
          rc = dmsCB->nameToSUAndLock ( csName, suID, &su, SHARED ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc )
@@ -1516,6 +1518,11 @@ namespace engine
             PD_LOG( PDERROR, "Failed to commit dps log: %d", rc ) ;
             goto error ;
          }
+      }
+      else if ( syncSpecCS && 0 == syncCSNum )
+      {
+         rc = SDB_DMS_CS_NOTEXIST ;
+         goto error ;
       }
 
    done:
