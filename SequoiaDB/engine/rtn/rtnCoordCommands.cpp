@@ -3018,6 +3018,41 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOORDFORCESESSION, "rtnCoordForceSession::execute" )
+   INT32 rtnCoordForceSession::execute( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        INT64 &contextID,
+                                        rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOORDFORCESESSION ) ;
+      ROUTE_RC_MAP errNodes ;
+      rtnCoordCtrlParam ctrlParam ;
+
+      ctrlParam._isGlobal = FALSE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+
+      rc = executeOnNodes( pMsg, cb, ctrlParam,
+                           RTN_CTRL_MASK_ALL,
+                           errNodes, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on nodes: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( ( rc || errNodes.size() > 0 ) && buf )
+      {
+         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &errNodes ) ) ;
+      }
+      PD_TRACE_EXITRC( CMD_RTNCOORDFORCESESSION, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
     * rtnCoordCMD2Phase implement
     */

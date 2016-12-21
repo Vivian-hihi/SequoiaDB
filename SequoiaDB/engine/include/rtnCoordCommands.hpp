@@ -548,6 +548,15 @@ namespace engine
       INT32 _syncDB( MsgHeader *pMsg, pmdEDUCB *cb, rtnContextBuf *buf ) ;
    } ;
 
+   class rtnCoordForceSession: public rtnCoordCommand
+   {
+   public:
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
+                             rtnContextBuf *buf ) ;
+   } ;
+
    /*
     * rtnCoordCMD2Phase define
     */

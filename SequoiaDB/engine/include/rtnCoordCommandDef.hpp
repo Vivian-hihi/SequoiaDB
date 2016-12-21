@@ -93,6 +93,7 @@ namespace engine
    #define COORD_CMD_REELECT                  CMD_ADMIN_PREFIX CMD_NAME_REELECT
    #define COORD_CMD_TRUNCATE                 CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE
    #define COORD_CMD_SYNC_DB                  CMD_ADMIN_PREFIX CMD_NAME_SYNC_DB
+   #define COORD_CMD_FORCE_SESSION            CMD_ADMIN_PREFIX CMD_NAME_FORCE_SESSION
 
    /*
       Snapshot Define

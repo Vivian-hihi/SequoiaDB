@@ -177,6 +177,7 @@ namespace engine
    RTN_COORD_CMD_ADD( COORD_CMD_REELECT, rtnCoordCMDReelection, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_TRUNCATE, rtnCoordCMDTruncate, FALSE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_SYNC_DB, rtnCoordCMDSyncDB, FALSE ) ;
+   RTN_COORD_CMD_ADD( COORD_CMD_FORCE_SESSION, rtnCoordForceSession, TRUE ) ;
    RTN_COORD_CMD_END
 
    /*
