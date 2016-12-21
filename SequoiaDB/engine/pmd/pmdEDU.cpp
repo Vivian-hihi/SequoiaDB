@@ -1172,7 +1172,6 @@ namespace engine
 
 #endif // SDB_ENGINE
 
-   #define PMD_EDU_MAX_TIMEOUT               ( 300 * OSS_ONE_SEC )
    /*
       edu entry point functions
    */
@@ -1235,7 +1234,6 @@ namespace engine
 
       while ( !eduDestroyed )
       {
-         UINT32 timeout = 0 ;
          type = cb->getType () ;
          // currently the thread status should be either WAITING or CREATING
          // usually we don't expect agent sitting in creating for long time
@@ -1258,18 +1256,9 @@ namespace engine
             }
             else
             {
-               timeout += OSS_ONE_SEC ;
-               if ( timeout > PMD_EDU_MAX_TIMEOUT )
-               {
-                  isForced = TRUE ;
-               }
-               else
-               {
-                  continue ;
-               }
+               continue ;
             }
          }
-         timeout = 0 ;
          initCurAuditMask( getAuditMask() ) ;
 
          if ( !isForced && PMD_EDU_EVENT_RESUME == event._eventType )
@@ -1339,6 +1328,10 @@ namespace engine
          {
             pmdEduEventRelase( event, cb ) ;
             event.reset () ;
+         }
+         else if ( cb->isForced() )
+         {
+            isForced = TRUE ;
          }
 
          // call return EDU to return the EDU to pool. pool will decide whether
