@@ -39,13 +39,45 @@ class SequoiaDB_Session_Test extends PHPUnit_Framework_TestCase
       while( $record = $cursor -> next() ) {
          $sessionID = $record['SessionID'] ;
       }
-      $err = $db -> forceSession( $sessionID ) ;
-      if( $err['errno'] == -16 )
+      if( $sessionID > 0 )
       {
-         //把自己断开连接了, 说明forceSession正常
-         return ;
+         //有session
+         echo '\n\n关闭会话2: '.$sessionID.'\n\n' ;
+         $err = $db -> forceSession( $sessionID ) ;
+         if( $err['errno'] == -16 )
+         {
+            //把自己断开连接了, 说明forceSession正常
+            return ;
+         }
+         $this -> assertEquals( 0, $err['errno'], 'forceSession错误' ) ;
       }
-      $this -> assertEquals( 0, $err['errno'], 'forceSession错误' ) ;
+      
+      $cursor = $db -> execSQL( 'select * from $SNAPSHOT_SESSION where Status="Running"' ) ;
+      $sessionID = -1 ;
+      $nodename = '' ;
+      while( $record = $cursor -> next() )
+      {
+         if( $record['Type'] == 'ShardAgent' )
+         {
+            $nodename  = $record['NodeName'] ;
+            $sessionID = $record['SessionID'] ;
+            break ;
+         }
+      }
+      if( $sessionID > 0 )
+      {
+         //有session
+         $hostname = explode( ':', $nodename ) ;
+         $svcname  = $hostname[1] ;
+         $hostname = $hostname[0] ;
+         $err = $db -> forceSession( $sessionID, array( 'HostName' => $hostname, 'svcname' => $svcname ) ) ;
+         if( $err['errno'] == -16 )
+         {
+            //把自己断开连接了, 说明forceSession正常
+            return ;
+         }
+         $this -> assertEquals( 0, $err['errno'], 'forceSession错误' ) ;
+      }
    }
 }
 

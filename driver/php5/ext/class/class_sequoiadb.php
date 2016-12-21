@@ -1812,6 +1812,17 @@ class SequoiaDB
     *
     * @param $sessionID an integer or the SequoiaINT64 Object argument. The id of the session which we want to inerrupt.
     *
+    * @param $options	an array or the string argument. The location information, such as NodeID, HostName and svcname.
+    *                              the options are as below:
+    *                              @code
+    *                              HostName:  Node's HostName.
+                                   svcname:   Node's svcname.
+                                   NodeID:    Node ID.
+                                   GroupID:   Replica group ID.
+                                   GroupName: Replica group name.
+    *                              @endcode
+    *
+    *
     * @return Returns the result, default return array.
     *
     * @retval array   array( 'errno' => 0 )
@@ -1846,6 +1857,21 @@ class SequoiaDB
     *    return ;
     * }
     * @endcode
+    *
+    * Example: Force specified node session
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $err = $db -> forceSession( 1, array( "HostName" => "host-01", "svcname" => "11810" ) ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to call forceSession, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * @endcode
    */
-   public function forceSession( integer|SequoiaINT64 $sessionID ){}
+   public function forceSession( integer|SequoiaINT64 $sessionID, array|string $options = null ){}
 }
