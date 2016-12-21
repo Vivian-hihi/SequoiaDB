@@ -8,12 +8,12 @@
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | ------ | ------ | ------ |
 | sessionID | int | 会话编号 | 是 |
-| options | json对象 | **[命令位置参数](reference\Sequoiadb_command\location.md)** | 否 |
+| options | json对象 | **[命令位置参数](reference/Sequoiadb_command/location.md)** | 否 |
 
 > **Note:**
 >
 > * 只有用户会话可以被终止。
-> * 会话编号可以通过[list()](reference\Sequoiadb_command\Sdb\list.md)或[snapshot()](reference\Sequoiadb_command\Sdb\snapshot.md)获取。
+> * 会话编号可以通过[list()](reference/Sequoiadb_command/Sdb/list.md)或[snapshot()](reference/Sequoiadb_command/Sdb/snapshot.md)获取。
 > * options参数只在协调节点生效。
 > * 如果终止的会话是当前会话，连接会被断开，不能再执行操作。
 
