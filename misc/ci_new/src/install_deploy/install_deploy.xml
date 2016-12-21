@@ -62,7 +62,18 @@
    
    <target name="install" depends="">       
       <for list="${testhost_list}" param="testhost" parallel="true">
-         <sequential>            
+         <sequential> 
+            <staf location="@{testhost}" service="FS"
+                  request="QUERY ENTRY ${INSTALL_DIR}"
+                  resultPrefix="check_dir"
+                  throwBuildException=""/>
+            <if>
+               <equals arg1="${check_dir.rc}" arg2="48" />
+               <else>
+                  <fail message="exec: QUERY ENTRY ${INSTALL_DIR}, expect directory not exists. expect return code is 48, actual: ${check_dir.rc}"/>
+               </else>
+            </if>
+            
             <staf location="@{testhost}" service="PROCESS"
                   request="START SHELL COMMAND ${CI_WORK_DIR}/${package_name} --mode unattended WAIT 10m STDERRTOSTDOUT RETURNSTDOUT"
                   resultPrefix="install"
