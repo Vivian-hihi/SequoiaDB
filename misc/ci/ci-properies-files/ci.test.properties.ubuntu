@@ -23,7 +23,7 @@ sharingbreak=20000
 all.spare.port.start=26000
 all.spare.port.stop=29000
 
-jenkins_master=ubun-test1
+jenkins_master=ubuntu-ci001
 trunk_machine=ubun-test4,ubun-test3,ubun-test2
 trunk_machine_control=ubun-test4
 branch_machine=ubuntu-ci003,ubuntu-ci002,ubuntu-ci001
