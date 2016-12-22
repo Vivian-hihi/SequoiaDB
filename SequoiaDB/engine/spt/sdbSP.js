@@ -2203,7 +2203,7 @@ File.prototype.exist = function( filepath ) {
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file is exist", {}, {},
-                                               { "filepath" : filepath } ) ;
+                                              { "filepath" : filepath } ) ;
       isExist = recvObj.toObj().isExist ;
    }
    else
@@ -2227,36 +2227,29 @@ File.prototype.copy = function( src, dst, replace, mode ) {
       throw SDB_OUT_OF_BOUND ;
    }
 
-   if ( undefined != mode )
+   if ( undefined != this._remote )
    {
-      if ( undefined != this._remote )
+      var optionObj = {} ;
+      if ( undefined != mode )
       {
-         this._remote._runCommand( "file copy", { "replace": replace, "mode": mode },
-                                  { "src": src }, { "dst": dst } ) ;
+         optionObj.mode = mode ;
       }
-      else
+      if ( undefined != replace )
       {
-         File.copy( src, dst, replace, mode ) ;
+         optionObj.replace = replace ;
       }
-   }
-   else if ( undefined != replace )
-   {
-      if ( undefined != this._remote )
-      {
-         this._remote._runCommand( "file copy", { "replace": replace },
-                                   { "src": src }, { "dst": dst } ) ;
-      }
-      else
-      {
-         File.copy( src, dst, replace ) ;
-      }
+      this._remote._runCommand( "file copy", optionObj,
+                                { "src": src }, { "dst": dst } ) ;
    }
    else
    {
-      if ( undefined != this._remote )
+      if ( undefined != mode )
       {
-         this._remote._runCommand( "file copy", {},
-                                   { "src": src }, { "dst": dst } ) ;
+         File.copy( src, dst, replace, mode ) ;
+      }
+      else if ( undefined != replace )
+      {
+         File.copy( src, dst, replace ) ;
       }
       else
       {
@@ -2561,7 +2554,7 @@ File.prototype.list = function( optionObj, filterObj ) {
    }
    else
    {
-      result = File.list( pathname, optionObj, filterObj, displayMode ) ;
+      result = File.list( optionObj, filterObj ) ;
    }
    return result ;
 }
@@ -2645,7 +2638,7 @@ File.prototype.isEmptyDir = function( pathname ) {
    }
    else
    {
-      result = File.isDir( pathname ) ;
+      result = File.isEmptyDir( pathname ) ;
    }
    return result ;
 }

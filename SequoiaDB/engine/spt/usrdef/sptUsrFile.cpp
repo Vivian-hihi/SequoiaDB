@@ -40,6 +40,7 @@
 
 #if defined(_LINUX)
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #define SPT_MD5_READ_LEN 1024
@@ -644,6 +645,56 @@ JS_MAPPING_END()
             permission |= OSS_RU ;
          }
       }
+#if defined (_LINUX)
+      else
+      {
+         struct stat fileStat ;
+         mode_t fileMode ;
+         permission = 0 ;
+         if ( stat( src.c_str(), &fileStat ) )
+         {
+            detail = BSON( SPT_ERR << "Failed to get src file stat" ) ;
+            rc = SDB_SYS ;
+         }
+         fileMode = fileStat.st_mode ;
+         if ( fileMode & S_IRUSR )
+         {
+            permission |= OSS_RU ;
+         }
+         if ( fileMode & S_IWUSR )
+         {
+            permission |= OSS_WU ;
+         }
+         if ( fileMode & S_IXUSR )
+         {
+            permission |= OSS_XU ;
+         }
+         if ( fileMode & S_IRGRP )
+         {
+            permission |= OSS_RG ;
+         }
+         if ( fileMode & S_IWGRP )
+         {
+            permission |= OSS_WG ;
+         }
+         if ( fileMode & S_IXGRP )
+         {
+            permission |= OSS_XG ;
+         }
+         if ( fileMode & S_IROTH )
+         {
+            permission |= OSS_RO ;
+         }
+         if ( fileMode & S_IWOTH )
+         {
+            permission |= OSS_WO ;
+         }
+         if ( fileMode & S_IXOTH )
+         {
+            permission |= OSS_XO ;
+         }
+      }
+#endif
 
       rc = ossFileCopy( src.c_str(), dst.c_str(), permission, isReplace ) ;
       if ( rc )
@@ -2544,10 +2595,11 @@ JS_MAPPING_END()
                                   BSONObj & detail )
    {
       stringstream ss ;
-      ss << "File functions:" << endl
-         << "var file = new File( filename, [mode] )" << endl
-         << "var file = remoteObj.getFile()" << endl
-         << "var file = remoteObj.getFile( filename, [mode] )" << endl
+      ss << "Methods to access:" << endl
+         << " var file = new File( filename, [mode] )" << endl
+         << " var file = remoteObj.getFile()" << endl
+         << " var file = remoteObj.getFile( filename, [mode] )" << endl
+         << "File functions:" << endl
          << "   read( [size] )" << endl
          << "   write( content )" << endl
          << "   seek( offset, [where] ) " << endl

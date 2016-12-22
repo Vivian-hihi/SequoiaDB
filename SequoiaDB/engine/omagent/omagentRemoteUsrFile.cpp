@@ -628,6 +628,56 @@ namespace engine
             permission |= OSS_RU ;
          }
       }
+#if defined (_LINUX)
+      else
+      {
+         struct stat fileStat ;
+         mode_t fileMode ;
+         permission = 0 ;
+         if ( stat( src.c_str(), &fileStat ) )
+         {
+            PD_LOG_MSG( PDERROR, "Failed to get src file stat" ) ;
+            rc = SDB_SYS ;
+         }
+         fileMode = fileStat.st_mode ;
+         if ( fileMode & S_IRUSR )
+         {
+            permission |= OSS_RU ;
+         }
+         if ( fileMode & S_IWUSR )
+         {
+            permission |= OSS_WU ;
+         }
+         if ( fileMode & S_IXUSR )
+         {
+            permission |= OSS_XU ;
+         }
+         if ( fileMode & S_IRGRP )
+         {
+            permission |= OSS_RG ;
+         }
+         if ( fileMode & S_IWGRP )
+         {
+            permission |= OSS_WG ;
+         }
+         if ( fileMode & S_IXGRP )
+         {
+            permission |= OSS_XG ;
+         }
+         if ( fileMode & S_IROTH )
+         {
+            permission |= OSS_RO ;
+         }
+         if ( fileMode & S_IWOTH )
+         {
+            permission |= OSS_WO ;
+         }
+         if ( fileMode & S_IXOTH )
+         {
+            permission |= OSS_XO ;
+         }
+      }
+#endif
 
       // copy file
       rc = ossFileCopy( src.c_str(), dst.c_str(), permission, isReplace ) ;
