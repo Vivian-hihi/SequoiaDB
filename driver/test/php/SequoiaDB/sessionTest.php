@@ -42,7 +42,6 @@ class SequoiaDB_Session_Test extends PHPUnit_Framework_TestCase
       if( $sessionID > 0 )
       {
          //有session
-         echo '\n\n关闭会话2: '.$sessionID.'\n\n' ;
          $err = $db -> forceSession( $sessionID ) ;
          if( $err['errno'] == -16 )
          {
