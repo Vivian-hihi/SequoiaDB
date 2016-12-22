@@ -259,4 +259,82 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>archiveon</Name>
+		<WebName>开启复制日志归档</WebName>
+		<Type>bool</Type>
+		<Default>false</Default>
+		<Valid>true,false</Valid>
+		<Display>select box</Display>
+		<Edit>true</Edit>
+		<Desc>开启复制日志归档功能，默认值为false</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivecompresson</Name>
+		<WebName>开启复制日志归档压缩</WebName>
+		<Type>bool</Type>
+		<Default>true</Default>
+		<Valid>true,false</Valid>
+		<Display>select box</Display>
+		<Edit>true</Edit>
+		<Desc>开启复制日志归档压缩功能，默认值为true</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivepath</Name>
+		<WebName>归档日志文件路径</WebName>
+		<Type>path</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>归档日志文件路径</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivetimeout</Name>
+		<WebName>未归档超时时间</WebName>
+		<Type>int</Type>
+		<Default>600</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>判定未归档的超时时间(秒)，默认值：600，0表示不超时</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archiveexpired</Name>
+		<WebName>归档日志文件的过期时间</WebName>
+		<Type>int</Type>
+		<Default>240</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>归档日志文件的过期时间(小时)，默认值:240，0表示不过期</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivequota</Name>
+		<WebName>归档日志目录磁盘配额</WebName>
+		<Type>int</Type>
+		<Default>10</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
 </Property>

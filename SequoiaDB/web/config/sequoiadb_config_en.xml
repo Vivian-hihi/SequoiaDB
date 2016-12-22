@@ -259,4 +259,82 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>archiveon</Name>
+		<WebName>turn on replica log archive</WebName>
+		<Type>bool</Type>
+		<Default>false</Default>
+		<Valid>true,false</Valid>
+		<Display>select box</Display>
+		<Edit>true</Edit>
+		<Desc>Turn on replica log archive, default false</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivecompresson</Name>
+		<WebName>turn on replica log archive compression</WebName>
+		<Type>bool</Type>
+		<Default>true</Default>
+		<Valid>true,false</Valid>
+		<Display>select box</Display>
+		<Edit>true</Edit>
+		<Desc>Turn on replica log archive compression, default true</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivepath</Name>
+		<WebName>archive log file path</WebName>
+		<Type>path</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>Archive log file path</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivetimeout</Name>
+		<WebName>timeout interval for archiving</WebName>
+		<Type>int</Type>
+		<Default>600</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>The timeout interval for archiving( in seconds ), default:600, 0 for no-timeout.</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archiveexpired</Name>
+		<WebName>expired time for archive log file</WebName>
+		<Type>int</Type>
+		<Default>240</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>The expired time for archive log file ( in hours ), default:240, 0 for no-expired.</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>archivequota</Name>
+		<WebName>disk quota for archive log directory</WebName>
+		<Type>int</Type>
+		<Default>10</Default>
+		<Valid>0-</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>The disk quota for archive log directory ( in GB ), default:10, 0 for no limit.</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
 </Property>
