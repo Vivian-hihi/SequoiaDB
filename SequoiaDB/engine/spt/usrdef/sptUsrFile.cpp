@@ -471,7 +471,7 @@ JS_MAPPING_END()
          << "   chown( filename, optionObj, [recursive] )" << endl
          << "   chgrp( filename, groupname, [recursive] )" << endl
          << "   setUmask( umask )" << endl
-         << "   getUmask()" << endl
+         << "   getUmask( base )" << endl
          << "   list( [optionObj], [filterObj] )" << endl
          << "   isFile( pathname )" << endl
          << "   isDir( pathname )" << endl
@@ -2615,7 +2615,7 @@ JS_MAPPING_END()
          << " File.chown( filename, optionObj, [recursive] )" << endl
          << " File.chgrp( filename, groupname, [recursive] )" << endl
          << " File.setUmask( umask )" << endl
-         << " File.getUmask()" << endl
+         << " File.getUmask( base )" << endl
 #endif
          << " File.list( [optionObj], [filterObj] )" << endl
          << " File.isFile( pathname )" << endl
