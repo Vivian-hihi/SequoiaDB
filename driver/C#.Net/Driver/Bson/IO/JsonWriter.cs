@@ -159,7 +159,7 @@ namespace SequoiaDB.Bson.IO
             {
                 WriteStartDocument();
                 WriteString("$binary", Convert.ToBase64String(bytes));
-                WriteString("$type", ((int)subType).ToString("x2"));
+                WriteString("$type", ((int)subType).ToString());
                 WriteEndDocument();
             }
 
@@ -200,7 +200,87 @@ namespace SequoiaDB.Bson.IO
             {
                 case JsonOutputMode.Strict:
                     WriteStartDocument();
-                    WriteInt64("$date", value);
+                    if (!BsonDefaults.JsCompatibility)
+                    {
+                        WriteInt64("$date", value);
+                    }
+                    else
+                    {
+                        // i am going to convert utc time to local time, 
+                        // for DateTime can only represent time in the range [0001-01-01 00:00:00, 9999-12-31 23:31:59],
+                        // so i need to ensure the result of local time is in the bound of this range.
+
+                        var minLetfBound = BsonConstants.DateTimeMinValueMillisecondsSinceEpoch + BsonConstants.DateTimeValueMillisecondsForOneDate;
+                        var maxRightBound = BsonConstants.DateTimeMaxValueMillisecondsSinceEpoch + BsonConstants.DateTimeValueMillisecondsForHalfDate;
+                        var safeRightBound = BsonConstants.DateTimeMaxValueMillisecondsSinceEpoch - BsonConstants.DateTimeValueMillisecondsForHalfDate;
+                        if (value >= minLetfBound && value <= maxRightBound)
+                        {
+                            DateTime utcDateTime;
+                            DateTime localTime;
+                            if (value <= safeRightBound)
+                            {
+                                // when value is less or equal than safeRightBound
+                                // the date of it's localtime must less or equal than "9999-12-31"
+                                utcDateTime = BsonUtils.ToDateTimeFromMillisecondsSinceEpoch(value);
+                                localTime = utcDateTime.ToLocalTime();
+                                if (localTime.Date.Year >= 1900 && localTime.Date.Year <= 9999)
+                                {
+                                    // when the localtime is in the range of [1900-01-01 00:00:00, 9999-12-31 23:59:59]
+                                    // we show it in the format "xxxx-xx-xx"
+                                    _textWriter.Write(" \"$date\" : \"{0}\"", localTime.ToString("yyyy-MM-dd"));
+                                }
+                                else
+                                {
+                                    WriteInt64("$date", value);
+                                }
+                            }
+                            else if (value <= BsonConstants.DateTimeMaxValueMillisecondsSinceEpoch)
+                            {
+                                // get the time zone
+                                long spanMs = (long)TimeZoneInfo.Local.BaseUtcOffset.TotalSeconds * 1000;
+                                if (value + spanMs <= BsonConstants.DateTimeMaxValueMillisecondsSinceEpoch)
+                                {
+                                    // when span is negative, should come here to show by format
+                                    utcDateTime = BsonUtils.ToDateTimeFromMillisecondsSinceEpoch(value);
+                                    localTime = utcDateTime.ToLocalTime();
+                                    _textWriter.Write(" \"$date\" : \"{0}\"", localTime.ToString("yyyy-MM-dd"));
+                                }
+                                else
+                                {
+                                    // when span is positive, may be come here to show by digits
+                                    WriteInt64("$date", value);
+                                }
+                            }
+                            else
+                            {
+                                // get the time zone
+                                long spanMs = (long)TimeZoneInfo.Local.BaseUtcOffset.TotalSeconds * 1000;
+                                if (spanMs >= 0)
+                                {
+                                    // in [max_utc, max_utc+12], localtime must be greater than "9999-12-31",
+                                    // so, output the digits directly
+                                    WriteInt64("$date", value);
+                                }
+                                else
+                                {
+                                    if (value + spanMs <= BsonConstants.DateTimeMaxValueMillisecondsSinceEpoch)
+                                    {
+                                        // in [max_utc-12, max_utc) whose localtime is "9999-12-31"
+                                        _textWriter.Write(" \"$date\" : \"9999-12-31\"");
+                                    }
+                                    else
+                                    {
+                                        // in [max_utc-12, max_utc) whose localtime is greater than "9999-12-31"
+                                        WriteInt64("$date", value);
+                                    }
+                                }
+                            }
+                        }
+                        else 
+                        {
+                            WriteInt64("$date", value);
+                        }
+                    }
                     WriteEndDocument();
                     break;
                 case JsonOutputMode.JavaScript:
@@ -379,7 +459,7 @@ namespace SequoiaDB.Bson.IO
                 case JsonOutputMode.JavaScript:
                 default:
                     WriteNameHelper(Name);
-                    if (!_jsonWriterSettings.JsCompatibility)
+                    if (!BsonDefaults.JsCompatibility)
                     {
                         _textWriter.Write(value);
                     }
@@ -391,7 +471,7 @@ namespace SequoiaDB.Bson.IO
                         }
                         else
                         {
-                            _textWriter.Write("{{\"$numberLong\": {0}}}", value);
+                            _textWriter.Write("{{ \"$numberLong\": {0} }}", value);
                         }
                     }
                     break;
@@ -653,9 +733,31 @@ namespace SequoiaDB.Bson.IO
             }
 
             WriteStartDocument();
-            WriteInt64("$timestamp", value);
+            if (!BsonDefaults.JsCompatibility)
+            {
+                WriteInt64("$timestamp", value);
+            }
+            else
+            {
+                var minLetfBound =  (BsonConstants.DateTimeMinValueMillisecondsSinceEpoch + BsonConstants.DateTimeValueMillisecondsForOneDate) / 1000;
+                var maxRightBound = (BsonConstants.DateTimeMaxValueMillisecondsSinceEpoch - BsonConstants.DateTimeValueMillisecondsForOneDate) / 1000;
+                int sec = (int)(value >> 32);
+                int inc = (int)value;
+                if (sec >= minLetfBound && sec <= maxRightBound)
+                {
+                    DateTime utcDateTime;
+                    DateTime localTime;
+                    utcDateTime = BsonUtils.ToDateTimeFromMillisecondsSinceEpoch(sec * 1000L);
+                    localTime = utcDateTime.ToLocalTime();
+                    _textWriter.Write(" \"$timestamp\" : \"{0}.{1}\"", localTime.ToString("yyyy-MM-dd-HH.mm.ss"), inc);
+                }
+                else
+                {
+                    // should nerver come here, if so, let't display by digits
+                    WriteInt64("$timestamp", value);
+                }
+            }
             WriteEndDocument();
-
             State = GetNextState();
         }
 

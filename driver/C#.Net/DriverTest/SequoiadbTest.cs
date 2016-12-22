@@ -132,6 +132,7 @@ namespace DriverTest
             list.Add("192.168.20.35:12340");
             list.Add("192.168.20.165:11810");
             list.Add("192.168.20.35:12340");
+            list.Add("192.168.20.42:50000");
             list.Add("192.168.20.42:11810");
 
             ConfigOptions options = new ConfigOptions();

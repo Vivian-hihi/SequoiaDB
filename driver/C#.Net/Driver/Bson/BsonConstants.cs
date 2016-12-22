@@ -29,6 +29,8 @@ namespace SequoiaDB.Bson
         private static readonly long __dateTimeMaxValueMillisecondsSinceEpoch;
         private static readonly long __dateTimeMinValueMillisecondsSinceEpoch;
         private static readonly DateTime __unixEpoch;
+        private static readonly long __dateTimeValueMillisecondsForHalfDate;
+        private static readonly long __dateTimeValueMillisecondsForOneDate;
 
         // static constructor
         static BsonConstants()
@@ -37,6 +39,9 @@ namespace SequoiaDB.Bson
             __unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             __dateTimeMaxValueMillisecondsSinceEpoch = (DateTime.MaxValue - __unixEpoch).Ticks / 10000;
             __dateTimeMinValueMillisecondsSinceEpoch = (DateTime.MinValue - __unixEpoch).Ticks / 10000;
+            __dateTimeValueMillisecondsForHalfDate = 43200000; // 3600 * 12 * 1000 ms
+            __dateTimeValueMillisecondsForOneDate = __dateTimeValueMillisecondsForHalfDate * 2;
+            DateTime utc1900 = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         }
 
         // public static properties
@@ -60,5 +65,22 @@ namespace SequoiaDB.Bson
         /// Gets the Unix Epoch for BSON DateTimes (1970-01-01).
         /// </summary>
         public static DateTime UnixEpoch { get { return __unixEpoch; } }
+
+        /// <summary>
+        /// Gets the millisecnds for half date
+        /// </summary>
+        public static long DateTimeValueMillisecondsForHalfDate
+        {
+            get { return __dateTimeValueMillisecondsForHalfDate; }
+        }
+
+        /// <summary>
+        /// Gets the millisecnds for noe date
+        /// </summary>
+        public static long DateTimeValueMillisecondsForOneDate
+        {
+            get { return __dateTimeValueMillisecondsForOneDate; }
+        }
+        
     }
 }
