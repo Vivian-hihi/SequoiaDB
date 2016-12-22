@@ -1243,14 +1243,15 @@ namespace engine
            cataInfo->getSubCLCount() > 0 )
       {
          CoordCataInfoPtr updatedCataInfo ;
-         rc = rtnCoordGetRemoteCata( cb, pCollectionName, updatedCataInfo, TRUE ) ;
+         const CHAR *pCLName = cataInfo->getName() ;
+         rc = rtnCoordGetRemoteCata( cb, pCLName, updatedCataInfo, TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDWARNING, "Get main collection[%s]'s sub collections "
-                    "failed, rc: %d", pCollectionName,
+                    "failed, rc: %d", pCLName,
                     rc ) ;
             // remove main catalog info
-            pCoordcb->delCataInfo( pCollectionName ) ;
+            pCoordcb->delCataInfo( pCLName ) ;
             goto error ;
          }
          cataInfo = updatedCataInfo ;
@@ -1977,8 +1978,9 @@ namespace engine
               ( !pHasUpdate ||
                 ( pHasUpdate && !(*pHasUpdate) ) ) )
          {
-            if ( SDB_OK == rtnCoordGetRemoteCata( cb, cataInfo->getName(),
-                                                  cataInfo ) )
+            CHAR clName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
+            ossStrncpy( clName, cataInfo->getName(), DMS_COLLECTION_FULL_NAME_SZ ) ;
+            if ( SDB_OK == rtnCoordGetRemoteCata( cb, clName, cataInfo ) )
             {
                if ( pHasUpdate )
                {

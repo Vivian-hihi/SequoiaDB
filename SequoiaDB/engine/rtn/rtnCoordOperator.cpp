@@ -287,9 +287,12 @@ namespace engine
          cataInfo->getMatchSubCLs( objMatch, subCLList ) ;
          if ( 0 == subCLList.size() )
          {
-            rc = rtnCoordGetRemoteCata( cb, cataInfo->getName(), cataInfo ) ;
+            CHAR clName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] = { 0 } ;
+            ossStrncpy( clName, cataInfo->getName(), DMS_COLLECTION_FULL_NAME_SZ ) ;
+
+            rc = rtnCoordGetRemoteCata( cb, clName, cataInfo ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to update collection[%s]'s "
-                         "catalog info, rc: %d", cataInfo->getName(),
+                         "catalog info, rc: %d", clName,
                          rc ) ;
             ++options._retryTimes ;
             rc = cataInfo->getMatchSubCLs( objMatch, subCLList ) ;
