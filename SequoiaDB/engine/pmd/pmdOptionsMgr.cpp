@@ -1938,6 +1938,12 @@ namespace engine
                    "when configure archiveon" ) ;
       }
 
+      // Enable transaction always for Catalog
+      if ( SDB_ROLE_CATALOG == dbRole )
+      {
+         _transactionOn = TRUE ;
+      }
+
       if ( _transactionOn )
       {
          PD_CHECK( _logFileNum >= 5, SDB_INVALIDARG, error, PDERROR,
