@@ -2013,6 +2013,33 @@ File.find = function( optionObj, filterObj ) {
    return result ;
 }
 
+File.getUmask = function( base ) {
+
+   var umaskStr = File._getUmask() ;
+   var umask = parseInt( umaskStr, 8 ) ;
+   if ( undefined != base )
+   {
+      if ( '8' == base )
+      {
+         umask = '0' + umask.toString( 8 ) ;
+      }
+      else if ( '10' == base )
+      {
+         umask = umask.toString( 10 ) ;
+      }
+      else if ( '16' == base )
+      {
+         umask = '0x' + umask.toString( 16 ) ;
+      }
+      else
+      {
+         setLastErrMsg( "base must be string('8'/'10'/'16')" ) ;
+         throw SDB_INVALIDARG ;
+      }
+   }
+   return umask ;
+}
+
 // File member function
 File.prototype.getInfo = function() {
    var result ;
@@ -2499,17 +2526,38 @@ File.prototype.setUmask = function( mask ) {
    }
 }
 
-File.prototype.getUmask = function() {
+File.prototype.getUmask = function( base ) {
    var result ;
 
    if ( undefined != this._remote )
    {
       var recvObj = this._remote._runCommand( "file get umask" ) ;
-      result = recvObj.toObj().mask ;
+      var umask = parseInt( recvObj.toObj().mask, 8 ) ;
+      if ( undefined != base )
+      {
+         if ( '8' == base )
+         {
+            umask = "0" + umask.toString( 8 ) ;
+         }
+         else if ( '10' == base )
+         {
+            umask = umask.toString( 10 ) ;
+         }
+         else if ( '16' == base )
+         {
+            umask = "0x" + umask.toString( 16 ) ;
+         }
+         else
+         {
+            setLastErrMsg( "base must be string('8'/'10'/'16')" ) ;
+            throw SDB_INVALIDARG ;
+         }
+      }
+      result = umask ;
    }
    else
    {
-      result = File.getUmask() ;
+      result = File.getUmask( base ) ;
    }
    return result ;
 }
