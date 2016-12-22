@@ -62,7 +62,7 @@ function testOmaStart()
    option["alivetime"] = 0 ;
    option["standalone"] = false ; 
      
-   Oma.start( option ) ;
+   Oma.start( option ) ;   // 启动的cm为当前用户所有
    
    // 检查cm端口及超时
    oma = new Oma( COORDHOSTNAME, svcname ) ;
@@ -80,12 +80,8 @@ function testOmaStart()
    oma.close() ;
    
    // 测试完成后，恢复原有的cm端口
-   cmd.run( InstallPath + "/bin/sdbcmtop" ) ;
-   var option = {} ;
-   option["port"] = CMSVCNAME ;
-   option["alivetime"] = 0 ;
-   option["standalone"] = false ;   
-   Oma.start( option ) ;
+   cmd.run( InstallPath + "/bin/sdbcmtop --I" ) ;
+   cmd.run( InstallPath + "/bin/sdbcmart" ) ;
       
    // windows下asport参数手工验证
 }
