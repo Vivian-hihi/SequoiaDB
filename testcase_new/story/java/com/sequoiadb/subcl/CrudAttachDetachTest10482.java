@@ -97,7 +97,7 @@ public class CrudAttachDetachTest10482 extends SdbTestBase {
 	public void crud() {
 		try {
 			int a = 0;
-			for (int i = 400; i < 600; i++) {
+			for (int i = 400; i < 1000; i++) {
 				a = i%200;
 				maincl.insert((BSONObject) JSON.parse(" {name_:'"+i+"',a:"+a+"} "));
 			}
@@ -108,7 +108,6 @@ public class CrudAttachDetachTest10482 extends SdbTestBase {
 			for (int i = 200; i < 400; i++) {
 				maincl.delete((BSONObject) JSON.parse(" {name:'name_"+i+"'} "));
 			}
-			Assert.assertTrue(false, "crud data faild");
 		} catch (BaseException e) {
 			if(e.getErrorCode() != -135) {
 				e.printStackTrace();
