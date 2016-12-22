@@ -418,7 +418,7 @@ namespace engine
                                  BSONObj & detail )
    {
       stringstream ss ;
-      ss << "Cmd functions:" << endl
+      ss << "Cmd member functions:" << endl
          << "   run( cmd, [args], [timeout], [useShell] )  " << endl
          << "        timeout(ms), default 0: never timeout," << endl
          << "        useShell 0/1, default 1" << endl
@@ -439,9 +439,10 @@ namespace engine
                            BSONObj & detail )
    {
       stringstream ss ;
-      ss << "Cmd functions:" << endl
+      ss << "Methods to access:" << endl
          << " var cmd = new Cmd()" << endl
          << " var cmd = remoteObj.getCmd()" << endl
+         << "Cmd member functions:" << endl
          << "   run( cmd, [args], [timeout], [useShell] )  " << endl
          << "        timeout(ms), default 0: never timeout," << endl
          << "        useShell 0/1, default 1" << endl
@@ -451,7 +452,7 @@ namespace engine
          << "   getCommand()" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl
-         << "Remote Cmd functions:" << endl
+         << "Remote Cmd member functions:" << endl
          << "   runJS( code )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
