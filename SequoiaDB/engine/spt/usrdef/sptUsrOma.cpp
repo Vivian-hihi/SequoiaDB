@@ -803,29 +803,52 @@ namespace engine
       return SDB_OK ;
    }
 
-   string _sptUsrOma::_getConfFile()
+   INT32 _sptUsrOma::_getConfFile( string &confFile )
    {
+      INT32 rc = SDB_OK ;
       utilInstallInfo info ;
-      CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR confPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       if ( SDB_OK == utilGetInstallInfo( info ) )
       {
          if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
                                            SPT_OMA_REL_PATH_FILE,
                                            OSS_MAX_PATHSIZE,
-                                           confFile ) &&
-              SDB_OK == ossAccess( confFile ) )
+                                           confPath ) &&
+              SDB_OK == ossAccess( confPath ) )
          {
             goto done ;
          }
       }
 
       // exePath + ../conf/sdbcm.conf
-      ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
-      utilCatPath( confFile, OSS_MAX_PATHSIZE, SDBCM_CONF_PATH_FILE ) ;
-
+      rc = ossGetEWD( confPath, OSS_MAX_PATHSIZE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get EWD, rc:%d", rc ) ;
+         goto error ;
+      }
+      rc = utilCatPath( confPath, OSS_MAX_PATHSIZE, SDBCM_CONF_PATH_FILE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to build full path, rc:%d", rc ) ;
+         goto error ;
+      }
+      rc = ossAccess( confPath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to access config file: %s, rc:%d",
+                 confPath, rc ) ;
+         goto error ;
+      }
    done:
-      return confFile ;
+      if ( SDB_OK == rc )
+      {
+         confFile = confPath ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::_getConfInfo( const string & confFile, BSONObj &conf,
@@ -910,9 +933,20 @@ namespace engine
                                        _sptReturnVal & rval,
                                        BSONObj & detail )
    {
-      string confFile = _getConfFile() ;
+      INT32 rc = SDB_OK ;
+      string confFile ;
+
+      rc = _getConfFile( confFile ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get config file" ) ;
+         goto error ;
+      }
       rval.getReturnVal().setValue( confFile ) ;
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::getOmaConfigs( const _sptArguments & arg,
@@ -934,7 +968,12 @@ namespace engine
       }
       else
       {
-         confFile = _getConfFile() ;
+         rc = _getConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _getConfInfo( confFile, conf, detail ) ;
@@ -1038,7 +1077,12 @@ namespace engine
       }
       else
       {
-         confFile = _getConfFile() ;
+         rc = _getConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _confObj2Str( conf, str, detail ) ;
@@ -1094,7 +1138,12 @@ namespace engine
       }
       else
       {
-         confFile = _getConfFile() ;
+         rc = _getConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _getConfInfo( confFile, confObj, detail ) ;
@@ -1208,7 +1257,12 @@ namespace engine
       }
       else
       {
-         confFile = _getConfFile() ;
+         rc = _getConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _getConfInfo( confFile, confObj, detail, TRUE ) ;
@@ -1308,7 +1362,12 @@ namespace engine
       }
       else
       {
-         confFile = _getConfFile() ;
+         rc = _getConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _getConfInfo( confFile, confObj, detail, TRUE ) ;

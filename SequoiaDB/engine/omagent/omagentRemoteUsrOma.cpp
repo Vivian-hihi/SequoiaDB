@@ -133,9 +133,21 @@ namespace engine
 
    INT32 _remoteOmaGetOmaConfigFile::doit( BSONObj &retObj )
    {
-      string confFile = _getOmaConfFile() ;
+      INT32 rc = SDB_OK ;
+      string confFile ;
+
+      rc = _getOmaConfFile( confFile ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
+         goto error ;
+      }
+
       retObj = BSON( "confFile" << confFile.c_str() ) ;
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -177,7 +189,12 @@ namespace engine
       }
       else
       {
-         confFile = _getOmaConfFile() ;
+         rc = _getOmaConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       // get config info
@@ -249,7 +266,12 @@ namespace engine
       }
       else
       {
-         confFile = _getOmaConfFile() ;
+         rc = _getOmaConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _confObj2Str( conf, str, errMsg ) ;
@@ -329,7 +351,12 @@ namespace engine
       }
       else
       {
-         confFile = _getOmaConfFile() ;
+         rc = _getOmaConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       // get config obj and match
@@ -468,7 +495,12 @@ namespace engine
       }
       else
       {
-         confFile = _getOmaConfFile() ;
+         rc = _getOmaConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _getOmaConfInfo( confFile, confObj, errMsg, TRUE ) ;
@@ -592,7 +624,12 @@ namespace engine
       }
       else
       {
-         confFile = _getOmaConfFile() ;
+         rc = _getOmaConfFile( confFile ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
+            goto error ;
+         }
       }
 
       rc = _getOmaConfInfo( confFile, confObj, errMsg, TRUE ) ;

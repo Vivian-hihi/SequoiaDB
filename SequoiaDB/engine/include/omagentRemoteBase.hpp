@@ -100,7 +100,7 @@ namespace engine
          virtual const CHAR * name() = 0 ;
 
       protected:
-         string _getOmaConfFile() ;
+         INT32 _getOmaConfFile( string &confFile ) ;
 
          INT32 _getOmaConfInfo( const string & confFile, bson::BSONObj &conf,
                              string &errMsg, BOOLEAN allowNotExist = FALSE  ) ;

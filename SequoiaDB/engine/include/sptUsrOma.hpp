@@ -160,7 +160,7 @@ namespace engine
                        string &command,
                        bson::BSONObj *mergeObj ) ;
 
-      static string _getConfFile() ;
+      static INT32 _getConfFile( string &confFile ) ;
 
       static INT32  _getConfInfo( const string &confFile,
                                   bson::BSONObj &conf,

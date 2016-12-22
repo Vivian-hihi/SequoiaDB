@@ -399,29 +399,53 @@ namespace engine
    {
    }
 
-   string _remoteOmaConfigs::_getOmaConfFile()
+   INT32 _remoteOmaConfigs::_getOmaConfFile( string &confFile )
    {
+      INT32 rc = SDB_OK ;
       utilInstallInfo info ;
-      CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR confPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       if ( SDB_OK == utilGetInstallInfo( info ) )
       {
+         // info._path + conf/sdbcm.conf
          if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
                                            SPT_OMA_REL_PATH_FILE,
                                            OSS_MAX_PATHSIZE,
-                                           confFile ) &&
-              SDB_OK == ossAccess( confFile ) )
+                                           confPath ) &&
+              SDB_OK == ossAccess( confPath ) )
          {
             goto done ;
          }
       }
 
       // exePath + ../conf/sdbcm.conf
-      ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
-      utilCatPath( confFile, OSS_MAX_PATHSIZE, SDBCM_CONF_PATH_FILE ) ;
-
+      rc = ossGetEWD( confPath, OSS_MAX_PATHSIZE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get EWD, rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = utilCatPath( confPath, OSS_MAX_PATHSIZE, SDBCM_CONF_PATH_FILE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to cat path, rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = ossAccess( confPath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to access config file: %d, rc: %d",
+                 confPath, rc ) ;
+         goto error ;
+      }
    done:
-      return confFile ;
+      if ( SDB_OK == rc )
+      {
+         confFile = confPath ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _remoteOmaConfigs::_getOmaConfInfo( const string & confFile,
@@ -588,9 +612,30 @@ namespace engine
                                                 string &filePath )
    {
       INT32 rc = SDB_OK ;
+      utilInstallInfo info ;
       CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      string confPath = SDBCM_LOCAL_PATH OSS_FILE_SEP
-                        + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
+
+      //  /conf/local/SVCNAME/sdb.conf
+      string installPathConfPath = OSS_FILE_SEP SDBCM_CONF_DIR_NAME OSS_FILE_SEP
+                                   SDBCM_LOCAL_DIR_NAME OSS_FILE_SEP
+                                   + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
+
+      // ../conf/local/SVCNAME/sdb.conf
+      string ewdConfPath = SDBCM_LOCAL_PATH OSS_FILE_SEP
+                           + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
+
+      if ( SDB_OK == utilGetInstallInfo( info ) )
+      {
+         // info._path + /conf/local/SVCNAME/sdb.conf
+         if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
+                                           installPathConfPath.c_str(),
+                                           OSS_MAX_PATHSIZE,
+                                           confFile ) &&
+              SDB_OK == ossAccess( confFile ) )
+         {
+            goto done ;
+         }
+      }
 
       // get ewd
       rc = ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
@@ -600,16 +645,19 @@ namespace engine
          goto error ;
       }
 
-      // get full path
-      rc = utilCatPath( confFile, OSS_MAX_PATHSIZE, confPath.c_str() ) ;
+      // get full path: ewd + ../conf/local/SVCNAME/sdb.conf
+      rc = utilCatPath( confFile, OSS_MAX_PATHSIZE, ewdConfPath.c_str() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to cat path: %s", rc ) ;
          goto error ;
       }
 
-      filePath = confFile ;
    done:
+      if ( SDB_OK == rc )
+      {
+         filePath = confFile ;
+      }
       return rc ;
    error:
       goto done ;
