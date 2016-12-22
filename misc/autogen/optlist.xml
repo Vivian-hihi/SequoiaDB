@@ -1131,11 +1131,11 @@
       <name>PMD_OPTION_ARCHIVE_ON</name>
       <long>archiveon</long>
       <description>
-         <en>Turn on replica log archive, defalut false.</en>
+         <en>Turn on replica log archive, default false.</en>
          <cn>开启复制日志归档功能，默认值为false。</cn>
       </description>
       <detail>
-         <en>Turn on replica log archive, defalut false.</en>
+         <en>Turn on replica log archive, default false.</en>
          <cn>开启复制日志归档功能，默认值为false。</cn>
       </detail>
       <default>false</default>
@@ -1146,11 +1146,11 @@
       <name>PMD_OPTION_ARCHIVE_COMPRESS_ON</name>
       <long>archivecompresson</long>
       <description>
-         <en>Turn on replica log archive compression, defalut true.</en>
+         <en>Turn on replica log archive compression, default true.</en>
          <cn>开启复制日志归档压缩功能，默认值为true。</cn>
       </description>
       <detail>
-         <en>Turn on replica log archive compression, defalut true.</en>
+         <en>Turn on replica log archive compression, default true.</en>
          <cn>开启复制日志归档压缩功能，默认值为true。</cn>
       </detail>
       <default>true</default>
@@ -1177,11 +1177,11 @@
       <name>PMD_OPTION_ARCHIVE_TIMEOUT</name>
       <long>archivetimeout</long>
       <description>
-         <en>The timeout period for no archive in each operation ( in seconds ), default:600, 0 for no-timeout.</en>
+         <en>The timeout interval for archiving( in seconds ), default:600, 0 for no-timeout.</en>
          <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时。</cn>
       </description>
       <detail>
-         <en>The timeout period for no archive in each operation ( in seconds ), default:600, 0 for no-timeout.</en>
+         <en>The timeout interval for archiving( in seconds ), default:600, 0 for no-timeout.</en>
          <cn>判定未归档的超时时间(秒)，默认值：600，0表示不超时。</cn>
       </detail>
       <type>int</type>
@@ -1209,12 +1209,12 @@
       <name>PMD_OPTION_ARCHIVE_QUOTA</name>
       <long>archivequota</long>
       <description>
-         <en>The quota for archive log directory ( in GB ), default:10, 0 for no limit.</en>
-         <cn>归档日志目录的配额(GB)，默认值：10，0表示没有限制。</cn>
+         <en>The disk quota for archive log directory ( in GB ), default:10, 0 for no limit.</en>
+         <cn>归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制。</cn>
       </description>
       <detail>
-         <en>The quota for archive log directory ( in GB ), default:10, 0 for no limit.</en>
-         <cn>归档日志目录的配额(GB)，默认值：10，0表示没有限制。</cn>
+         <en>The disk quota for archive log directory ( in GB ), default:10, 0 for no limit.</en>
+         <cn>归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制。</cn>
       </detail>
       <type>int</type>
       <default>10</default>
