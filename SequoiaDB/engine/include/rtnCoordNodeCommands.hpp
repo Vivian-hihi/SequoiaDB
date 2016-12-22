@@ -245,6 +245,11 @@ namespace engine
                                        const CoordGroupList &groupLst,
                                        const vector<BSONObj> &cataObjs ) ;
 
+      virtual INT32 _doCommit ( MsgHeader *pMsg,
+                                pmdEDUCB * cb,
+                                rtnContextCoord **ppContext,
+                                _rtnCMDArguments *pArgs ) ;
+
       virtual const CHAR *_getCommandName () const
       { return CMD_NAME_REMOVE_GROUP ; }
    } ;

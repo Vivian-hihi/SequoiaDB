@@ -1131,6 +1131,33 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDRMGRP_DOCOMMIT, "rtnCoordCMDRemoveGroup::_doCommit" )
+   INT32 rtnCoordCMDRemoveGroup::_doCommit ( MsgHeader *pMsg,
+                                             pmdEDUCB * cb,
+                                             rtnContextCoord **ppContext,
+                                             _rtnCMDArguments *pArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMDRMGRP_DOCOMMIT ) ;
+
+      rc = rtnCoordNodeCMD3Phase::_doCommit( pMsg, cb, ppContext, pArgs ) ;
+      if ( 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) )
+      {
+         if ( SDB_OK != rc )
+         {
+            // Should have problem (e.g. -79) when removing Catalog group
+            PD_LOG( PDWARNING, "Ignored error %d when %s on [%s]",
+                    rc, _getCommandName(), pArgs->_targetName.c_str() ) ;
+            rc = SDB_OK ;
+         }
+      }
+
+      PD_TRACE_EXITRC ( CMD_RTNCOCMDRMGRP_DOCOMMIT, rc ) ;
+
+      return rc ;
+   }
+
    /*
     * rtnCoordCMDCreateNode implement
     */
