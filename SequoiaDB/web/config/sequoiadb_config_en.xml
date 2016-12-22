@@ -288,7 +288,7 @@
 	<FILLER>
 		<Name>archivepath</Name>
 		<WebName>archive log file path</WebName>
-		<Type>path</Type>
+		<Type>string</Type>
 		<Default></Default>
 		<Valid></Valid>
 		<Display>text box</Display>
