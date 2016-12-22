@@ -1,0 +1,460 @@
+/******************************************************************************
+*@Description : test js object System function: getCpuInfo snapshotCpuInfo
+*               getMemInfo snapshotMemInfo getDiskInfo snapshotDiskInfo
+*               getNetcardInfo snapshotNetcardInfo
+*               TestLink : 10680 System对象获取cpu信息
+*                          10681 System对象获取cpu快照
+*                          10682 System对象获取内存信息
+*                          10683 System对象获取内存快照
+*                          10684 System对象获取磁盘信息
+*                          10685 System对象获取磁盘快照
+*                          10686 System对象获取网卡信息
+*                          10687 System对象获取网卡快照 
+*@author      : Liang XueWang
+******************************************************************************/
+
+// 测试获取Cpu信息  /proc/cpuinfo 需要注意PPC的区别
+SystemTest.prototype.testGetCpuInfo = function()
+{
+   this.init() ;
+   
+   var cpuInfo = this.system.getCpuInfo().toObj() ;
+   var isppc = isPPC( this.hostname, this.svcname ) ;
+   
+   // 测试物理cpu的个数
+   checkCpuNum( this.cmd, cpuInfo, isppc) ;
+   
+   // 测试cpu名称
+   checkCpuName( this.cmd, cpuInfo, isppc ) ;
+   
+   // 测试cpu时间
+   checkCpuTime( this.cmd, cpuInfo ) ;
+   
+   this.release() ;  
+}
+
+// 测试获取Cpu快照  getCpuInfo校验
+SystemTest.prototype.testSnapshotCpuInfo = function()
+{
+   this.init() ;
+   
+   var cpuInfo1 = this.system.getCpuInfo().toObj() ;
+   var cpuInfo2 = this.system.snapshotCpuInfo().toObj() ;
+   for( var k in cpuInfo2 )
+   {
+      if( !isApproEqual( cpuInfo1[k], cpuInfo2[k] ) )
+      {
+         throw buildException( "testSnapshotCpuInfo", null, 
+               "check key: " + k + " " + this, cpuInfo1[k], cpuInfo2[k] ) ;   
+      }
+   }
+   
+   this.release() ;
+}
+
+// 测试获取内存信息
+SystemTest.prototype.testGetMemInfo = function()
+{
+   this.init() ;
+   
+   var memInfo1 = this.system.getMemInfo().toObj() ;
+   var command = "free -m | grep Mem | awk '{print $2,$3,$4}'" ;
+   var tmpInfo = this.cmd.run( command ).split( "\n" )[0] ;
+   var memInfo2 = tmpInfo.split( " " ) ;
+   var size = memInfo2[0] ;   // 内存总大小
+   var used = memInfo2[1] ;   // 已使用内存大小
+   var free = memInfo2[2] ;   // 空闲内存大小
+   var unit = "M" ;
+   if( !isApproEqual( size, memInfo1.Size ) || 
+       !isApproEqual( used, memInfo1.Used ) || 
+       !isApproEqual( free, memInfo1.Free ) || 
+       unit != memInfo1.Unit )
+   {
+      throw buildException( "testGetMemInfo", null, 
+            "check mem info " + this, memInfo2, JSON.stringify( memInfo1 ) ) ;
+   }
+   
+   this.release() ;
+}
+
+// 测试获取内存快照  getMemInfo校验
+SystemTest.prototype.testSnapshotMemInfo = function()
+{
+   this.init() ;
+   
+   var memInfo1 = this.system.getMemInfo().toObj() ;
+   var memInfo2 = this.system.snapshotMemInfo().toObj() ;
+   for( var k in memInfo1 )
+   {
+      if( memInfo2[k] != memInfo1[k] && 
+          !isApproEqual( memInfo2[k], memInfo1[k] ) )
+      {
+         throw buildException( "testSnapshotMemInfo", null, 
+               "check key: " + k + " " + this, memInfo1[k], memInfo2[k] ) ;
+      }
+   }
+   
+   this.release() ;   
+}
+
+// 测试获取磁盘信息
+SystemTest.prototype.testGetDiskInfo = function()
+{
+   this.init() ;
+   
+   var diskInfo = this.system.getDiskInfo().toObj() ;
+   var diskFileContent = this.cmd.run( "cat /etc/mtab" ).split( "\n" ) ;
+   
+   // 测试磁盘挂载点、文件系统等信息
+   checkDiskInfo( diskInfo, diskFileContent ) ;
+   
+   // 测试磁盘总容量，已使用容量
+   var command = "df -m | grep -v Filesystem | awk '{print $1,$2,$3,$4}'" ;
+   var result = this.cmd.run( command ).split( "\n" ) ;
+   checkDiskSize( diskInfo, result ) ;
+   
+   this.release() ;
+}
+
+// 测试获取磁盘快照  getDiskInfo校验
+SystemTest.prototype.testSnapshotDiskInfo = function()
+{
+   this.init() ;
+   
+   var disks1 = this.system.getDiskInfo().toObj().disks ;
+   var disks2 = this.system.snapshotDiskInfo().toObj().disks ;
+   if( disks1 != disks2 )
+   {
+      throw buildException( "testSnapshotDiskInfo", null, 
+            "test disks " + this, JSON.stringify( disks1 ), JSON.stringify( disks2 ) ) ;
+   }
+   
+   this.release() ;
+}
+
+// 测试获取网卡信息
+SystemTest.prototype.testGetNetcardInfo = function()
+{
+   this.init() ;
+   
+   var netcards1 = this.system.getNetcardInfo().toObj().Netcards ;
+   var netcards2 = getNetcards( this.cmd ).Netcards ;
+   checkNetcards( netcards1, netcards2 ) ;
+   
+   this.release() ;
+}
+
+// 测试获取网卡快照
+SystemTest.prototype.testSnapshotNetcardInfo = function()
+{
+   this.init() ;
+   
+   var info1 = this.system.snapshotNetcardInfo().toObj() ;
+   var command = "cat /proc/net/dev | grep -E -v 'Receive|bytes' | " +
+                 "sed 's/:/ /g' | awk '{print $1,$2,$3,$4,$5,$10,$11,$12,$13}'" ;
+   var info2 = this.cmd.run( command ).split( "\n" ) ;
+   var timestamp = this.cmd.run( "date +%s" ).split( "\n" )[0] ;
+   
+   // 测试时间戳
+   if( info1.CalendarTime != timestamp )
+   {
+      throw buildException( "testSnapshotNetcardInfo", null, 
+            "test timestamp " + this, timestamp, info1.CalendarTime ) ;
+   }            
+   // 测试网卡收发消息
+   for( var i = 0;i < info2.length-1;i++ )
+   {
+      var tmp = info2[i].split( " " ) ;
+      var Name = tmp[0] ;          // 网卡名
+      var RXBytes = tmp[1]*1 ;     // 接收字节数
+      var RXPackets = tmp[2]*1 ;   // 接收数据包数
+      var RXErrors = tmp[3]*1 ;    // 接收数据包失败数
+      var RXDrops = tmp[4]*1 ;     // 接收数据包丢弃数
+      var TXBytes = tmp[5]*1 ;     // 发送字节数
+      var TXPackets = tmp[6]*1 ;   // 发送数据包数
+      var TXErrors = tmp[7]*1 ;    // 发送数据包失败数
+      var TXDrops = tmp[8]*1 ;     // 发送数据包丢弃数
+      
+      var netcard = info1.Netcards[i] ;
+      if( Name != netcard.Name || 
+          !isApproEqual( RXBytes, netcard.RXBytes) || 
+          !isApproEqual( RXPackets, netcard.RXPackets) || 
+          !isApproEqual( RXErrors, netcard.RXErrors ) ||
+          !isApproEqual( RXDrops, netcard.RXDrops) || 
+          !isApproEqual( TXBytes, netcard.TXBytes ) ||
+          !isApproEqual( TXPackets, netcard.TXPackets) || 
+          !isApproEqual( TXErrors, netcard.TXErrors) ||
+          !isApproEqual( TXDrops, netcard.TXDrops) )
+      {
+         throw buildException( "testSnapshotNetcardInfo", null, 
+               "test netcard " + this, tmp, JSON.stringify( netcard ) ) ;
+      }
+   }
+   
+   this.release() ;
+}
+
+/******************************************************************************
+*@Description : check get cpu info  cpu num 
+*@author      : Liang XueWang
+******************************************************************************/
+function checkCpuNum( cmd, info, isppc )
+{
+   var cpuNum ;    // 物理cpu个数
+   try
+   {
+      if( isppc )
+         cpuNum = cmd.run( "cat /proc/cpuinfo | grep processor | uniq |" +
+                           " wc -l" ).split( "\n" )[0] ;
+      else
+         cpuNum = cmd.run( "cat /proc/cpuinfo | grep 'physical id' | uniq |" +  
+                           " wc -l" ).split( "\n" )[0] ;
+   }
+   catch( e )
+   {
+      throw buildException( "checkCpuNum", e, "get cpu num", 0, e ) ;
+   }
+   if( cpuNum != info.Cpus.length )
+   {
+      throw buildException( "checkCpuNum", null, "test cpu num", 
+                            cpuNum, cpuInfo.Cpus.length ) ;
+   }
+}
+
+/******************************************************************************
+*@Description : check get cpu info  cpu name 
+*@author      : Liang XueWang
+******************************************************************************/
+function checkCpuName( cmd, info, isppc )
+{
+   var cpuNames ;
+   try
+   {
+      if( isppc )
+         cpuNames = cmd.run( "cat /proc/cpuinfo | grep cpu | uniq |" +
+                             " cut -d ':' -f 2 | sed 's/^ *//g'" ).split( "\n" ) ;
+      else
+         cpuNames = cmd.run( "cat /proc/cpuinfo | grep 'model name' | uniq |" +
+                             " cut -d ':' -f 2 | sed 's/^ *//g'" ).split( "\n" ) ;
+   }
+   catch( e )
+   {
+      throw buildException( "checkCpuName", e, "get cpu name", 0, e ) ;
+   }
+   for( var i = 0;i < info.Cpus.length;i++ )
+   {
+      var cpuName = info.Cpus[i].Info ;
+      if( cpuNames.indexOf( cpuName ) == -1 )
+      {
+         throw buildException( "checkCpuName", null, "test cpu name", 
+                               cpuName, cpuNames ) ;
+      }
+   } 
+}
+
+/******************************************************************************
+*@Description : check get cpu info  sys name 
+*@author      : Liang XueWang
+******************************************************************************/
+function checkCpuTime( cmd, info )
+{
+   var times = cmd.run( "cat /proc/stat | head -n 1 |" + 
+                        " awk '{for(i=2;i<9;i++) print $i}'" ).split( "\n" ) ;
+   // 单位：jiffies   1 jiffies = 0.01 second  (x86节拍为1秒100次)
+   var userTime = times[0]*1 ;     // 系统启动到当前时刻，用户态的Cpu时间 
+   var niceTime = times[1]*1 ;     // 系统启动到当前时刻，nice为负的Cpu时间
+   var systemTime = times[2]*1 ;   // 系统启动到当前时刻，核心时间
+   var idleTime = times[3]*1 ;     // 系统启动到当前时刻，除硬盘IO以外的其他等待时间
+   var iowaitTime = times[4]*1 ;   // 系统启动到当前时刻，硬盘IO的等待时间
+   var irqTime = times[5]*1 ;      // 系统启动到当前时刻，硬中断时间
+   var softirqTime = times[6]*1 ;  // 系统启动到当前时刻，软中断时间
+   
+   // 转为秒数后比较，微秒有误差（去除小数部分）
+   if( !isApproEqual( ( userTime + niceTime )/100, info.User/1000 ) )
+   {
+      throw buildException( "checkCpuTime", 0, "check user time", 
+                            userTime + niceTime, info.User ) ;
+   }
+   if( !isApproEqual( systemTime/100, info.Sys/1000 ) )
+   {
+      throw buildException( "checkCpuTime", 0, "check sys time", 
+                            systemTime, info.Sys ) ;
+   }
+   if( !isApproEqual( idleTime/100, info.Idle/1000 ) )
+   {
+      throw buildException( "checkCpuTime", 0, "check idle time", 
+                            idleTime, info.Idle ) ;
+   }
+   if( !isApproEqual( ( iowaitTime + irqTime + softirqTime )/100, info.Other/1000 ) )
+   {
+      throw buildException( "checkCpuTime", 0, "check other time", 
+                            iowaitTime + irqTime + softirqTime, info.Other ) ;
+   }
+}
+
+/******************************************************************************
+*@Description : check get disk info  Filesystem FsType Mount IsLocal
+*@author      : Liang XueWang
+******************************************************************************/
+function checkDiskInfo( info, content )
+{
+   var disks = info.Disks ;
+   for( var i = 0;i < disks.length;i++ )
+   {
+      var found = false ;
+      for( var j = 0;j < content.length;j++ )
+      {
+         if( content[j].indexOf( disks[i].Filesystem ) != -1 &&   // 分区名
+             content[j].indexOf( disks[i].FsType ) != -1 &&       // 文件系统类型
+             content[j].indexOf( disks[i].Mount ) != -1 )         // 挂载点
+         {
+            found = true ;
+            break ;
+         }
+      }
+      if( found == false )
+      {
+         throw buildException( "checkDiskInfo", null, "check disk info", 
+                               disks[i], content ) ; 
+      }
+      if( disks[i].Filesystem.indexOf( "/dev" ) != -1 &&
+          disks[i].IsLocal != true )
+      {
+         throw buildException( "checkDiskInfo", null, "check IsLocal", 
+                               disks[i].Filesystem, disks[i].IsLocal ) ;
+      }
+      if( disks[i].Filesystem.indexOf( "/dev" ) == -1 &&
+          disks[i].IsLocal != false )
+      {
+         throw buildException( "checkDiskInfo", null, "check IsLocal", 
+                               disks[i].Filesystem, disks[i].IsLocal ) ;
+      }  
+   }
+}
+
+/******************************************************************************
+*@Description : check get disk info  Size  Used  Unit
+*@author      : Liang XueWang
+******************************************************************************/
+function checkDiskSize( info, res )
+{
+   var disks = info.Disks ;
+   for( var i = 0;i < res.length-1;i++ )
+   {
+      var tmp = res[i].split( " " ) ;
+      var fs = tmp[0] ;
+      var size = tmp[1]*1 ;
+      var used = tmp[2]*1 ;
+      var avail = tmp[3]*1 ;
+      
+      var found = false ;
+      for( var j = 0;j < disks.length;j++ )
+      {
+         if( fs == disks[j].Filesystem &&                    // 分区名
+             isApproEqual( size, disks[j].Size ) &&          // 磁盘总大小
+             isApproEqual( size-avail, disks[j].Used ) &&    // 已使用磁盘大小
+             "MB" == disks[j].Unit )
+         {
+            found = true ;
+            break ;
+         }
+      }
+      if( found == false )
+      {
+         throw buildException( "checkDiskSize", null, "check disk size", 
+                               res[i], JSON.stringify( disks ) ) ;   
+      }
+   }      
+}
+
+/******************************************************************************
+*@Description : get netcard name and ip,return object
+*@author      : Liang XueWang
+******************************************************************************/
+function getNetcards( cmd )
+{
+   var obj = {} ;
+   obj.Netcards = [] ;
+   
+   var names = cmd.run( "cat /proc/net/dev | grep : | cut -d : -f 1" ).split( "\n" ) ;
+   var ips = [] ;
+   for( var i = 0;i < names.length-1;i++ )
+   {
+      names[i] = names[i].replace( /[/t ]/g, '' ) ;
+      try
+      {
+         var command = "ifconfig " + names[i] + " | grep 'inet addr'" +
+                       " | awk -F : '{print $2}' | awk '{print $1}'" ;
+         ips[i] = cmd.run( command ).split( "\n" )[0] ;
+      }
+      catch( e )
+      {
+         throw buildException( "getNetcards", e, "get ip of " + names[i], 0, e ) ;
+      }
+      obj.Netcards[i] = {} ;
+      obj.Netcards[i].Name = names[i] ;
+      obj.Netcards[i].Ip = ips[i] ;
+   }
+   return obj ;
+}
+
+/******************************************************************************
+*@Description : get netcard name and ip,return object
+*@author      : Liang XueWang
+******************************************************************************/
+function checkNetcards( netcards1, netcards2 )
+{
+   if( netcards1.length != netcards2.length )
+   {
+      throw buildException( "checkNetcards", null, "check netcards num", 
+                            netcards1.length, netcards2.length ) ;  
+   }
+   for( var i = 0;i < netcards1.length;i++ )
+   {
+      var found = false ;
+      for( var j = 0;j < netcards2.length;j++ )
+      {
+         if( netcards1[i].toString() == netcards2[j].toString() )
+         {
+            found = true ;
+            break ;
+         }
+      }
+      if( found == false )
+      {
+         throw buildException( "checkNetcards", 0, "check netcard info",
+               JSON.stringify( netcards1[i] ), JSON.stringify( netcards2 ) ) ;   
+      }  
+   }
+}
+
+function main()
+{
+   var localhost = toolGetLocalhost() ;
+   var remotehost = toolGetRemotehost() ;
+   
+   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
+   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
+   var sts = [ st1, st2 ] ;
+   
+   for( var i = 0;i < sts.length;i++ )
+   {
+      sts[i].testGetCpuInfo() ;
+      
+      sts[i].testSnapshotCpuInfo() ;
+      
+      sts[i].testGetMemInfo() ;
+      
+      sts[i].testSnapshotMemInfo() ;
+      
+      sts[i].testGetDiskInfo() ;
+      
+      sts[i].testSnapshotDiskInfo() ;
+      
+      sts[i].testGetNetcardInfo() ;
+      
+      sts[i].testSnapshotNetcardInfo() ;
+   } 
+}
+
+main()
