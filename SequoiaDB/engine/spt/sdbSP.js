@@ -2019,21 +2019,25 @@ File.getUmask = function( base ) {
    var umask = parseInt( umaskStr, 8 ) ;
    if ( undefined != base )
    {
-      if ( '8' == base )
+      if ( "string" == typeof( base ) )
+      {
+         base = parseInt( base ) ;
+      }
+      if ( 8 == base )
       {
          umask = '0' + umask.toString( 8 ) ;
       }
-      else if ( '10' == base )
+      else if ( 10 == base )
       {
          umask = umask.toString( 10 ) ;
       }
-      else if ( '16' == base )
+      else if ( 16 == base )
       {
          umask = '0x' + umask.toString( 16 ) ;
       }
       else
       {
-         setLastErrMsg( "base must be string('8'/'10'/'16')" ) ;
+         setLastErrMsg( "base must be number( 8/10/16 )" ) ;
          throw SDB_INVALIDARG ;
       }
    }
@@ -2535,21 +2539,25 @@ File.prototype.getUmask = function( base ) {
       var umask = parseInt( recvObj.toObj().mask, 8 ) ;
       if ( undefined != base )
       {
-         if ( '8' == base )
+         if ( "string" == typeof( base ) )
+         {
+            base = parseInt( base ) ;
+         }
+         if ( 8 == base )
          {
             umask = "0" + umask.toString( 8 ) ;
          }
-         else if ( '10' == base )
+         else if ( 10 == base )
          {
             umask = umask.toString( 10 ) ;
          }
-         else if ( '16' == base )
+         else if ( 16 == base )
          {
             umask = "0x" + umask.toString( 16 ) ;
          }
          else
          {
-            setLastErrMsg( "base must be string('8'/'10'/'16')" ) ;
+            setLastErrMsg( "base must be number( 8/10/16 )" ) ;
             throw SDB_INVALIDARG ;
          }
       }
