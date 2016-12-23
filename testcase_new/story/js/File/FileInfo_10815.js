@@ -13,7 +13,7 @@ FileTest.prototype.testGetInfo = function()
    
    if( this.file == File )   // 检查文件是否为本地File类类型
    {
-      println( "File has no function getInfo." ) ;
+      // println( "File has no function getInfo." ) ;
       return ;
    }
    
@@ -61,7 +61,7 @@ FileTest.prototype.testStat = function()
    var dir = "/tmp" ;               // 目录
    var normalFile = "/etc/hosts" ;  // 普通文件
    var charFile = "/dev/null" ;     // 字符设备文件
-   var blockFile = "/dev/sda" ;     // 块设备文件
+   var blockFile = "/dev/loop0" ;     // 块设备文件
    var linkFile = "/dev/stdin" ;    // 链接文件
    var socketFile = "/dev/log" ;    // 套接字文件
    var fifoFile = "/tmp/testFifo" ; // 命名管道文件 
