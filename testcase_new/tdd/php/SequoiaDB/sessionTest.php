@@ -34,12 +34,14 @@ class SequoiaDB_Session_Test extends PHPUnit_Framework_TestCase
     */
    public function test_forceSession( $db )
    {
+      $isFind = false ;
       $sessionID = -1 ;
       $cursor = $db -> list( SDB_LIST_SESSIONS_CURRENT ) ;
       while( $record = $cursor -> next() ) {
          $sessionID = $record['SessionID'] ;
+         $isFind = true ;
       }
-      if( $sessionID > 0 )
+      if( $isFind )
       {
          //有session
          $err = $db -> forceSession( $sessionID ) ;
@@ -52,7 +54,7 @@ class SequoiaDB_Session_Test extends PHPUnit_Framework_TestCase
       }
       
       $cursor = $db -> execSQL( 'select * from $SNAPSHOT_SESSION where Status="Running"' ) ;
-      $sessionID = -1 ;
+      $isFind = false ;
       $nodename = '' ;
       while( $record = $cursor -> next() )
       {
@@ -60,10 +62,11 @@ class SequoiaDB_Session_Test extends PHPUnit_Framework_TestCase
          {
             $nodename  = $record['NodeName'] ;
             $sessionID = $record['SessionID'] ;
+            $isFind = true ;
             break ;
          }
       }
-      if( $sessionID > 0 )
+      if( $isFind )
       {
          //有session
          $hostname = explode( ':', $nodename ) ;
