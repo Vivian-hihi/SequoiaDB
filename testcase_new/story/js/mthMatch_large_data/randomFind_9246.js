@@ -111,7 +111,7 @@ function createCLForIndexScan()
    //attach cl
    attachCL( dbcl_IndexScan, COMMCSNAME + "." + indexScan_subCL_Name1, { LowBound:{No:0},UpBound:{No:2222} } );
    attachCL( dbcl_IndexScan, COMMCSNAME + "." + indexScan_subCL_Name2, { LowBound:{No:2222},UpBound:{No:5555} } );
-   attachCL( dbcl_IndexScan, COMMCSNAME + "." + indexScan_subCL_Name3, { LowBound:{No:5555},UpBound:{No:20000} } );
+   attachCL( dbcl_IndexScan, COMMCSNAME + "." + indexScan_subCL_Name3, { LowBound:{No:5555},UpBound:{No:50000} } );
    
    return dbcl_IndexScan;
 }
@@ -130,18 +130,32 @@ function createIndex( dbcl_IndexScan )
       else{
          indexDef[key] = -1;
       }
-      commCreateIndex( dbcl_IndexScan, "fieldName" + i + "Index", indexDef);
+      var idxName = "fieldName" + i + "Index";
+      
+      try
+      {
+         dbcl_IndexScan.createIndex( idxName, indexDef, false, false, 1536 ) ;
+      }
+      catch( e )
+      {
+         buildException("createIndex", e, 
+                        'createIndex( ' + idxName + ', ' + indexDef + ', false, false, 1536 )',
+                        0, e);
+      }
    }
 }
+
 
 //insert random numberical data
 function insertRandomData( dbcl_IndexScan )
 {
-   for(var i= 0; i< 100;i++)
+   for(var i= 0; i< 40;i++)
    {
       var rd = new dataGenerator();
-      var recs = rd.getRecords( 20000, ["int", "long", "float", "array"], fieldNames );
+      var recs = rd.getRecords( 50000, ["int", "long", "float", "array"], fieldNames );
       insertData(dbcl_IndexScan, recs);
+      rd = null;
+      recs.length = 0;  // release space
    }
 }
 
