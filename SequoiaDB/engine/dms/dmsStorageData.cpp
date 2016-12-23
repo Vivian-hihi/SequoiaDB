@@ -3557,9 +3557,10 @@ namespace engine
 
       SDB_ASSERT ( !recordData.isEmpty(), "recordData can't be empty" ) ;
 
-      if ( recordData.len() + DMS_RECORD_METADATA_SZ > DMS_RECORD_USER_MAX_SZ )
+      // Check the new object size
+      if ( newObj.objsize() + DMS_RECORD_METADATA_SZ > DMS_RECORD_USER_MAX_SZ )
       {
-         PD_LOG ( PDERROR, "record is too big: %d", recordData.len() ) ;
+         PD_LOG ( PDERROR, "record is too big: %d", newObj.objsize() ) ;
          rc = SDB_DMS_RECORD_TOO_BIG ;
          goto error ;
       }
