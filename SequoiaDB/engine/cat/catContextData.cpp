@@ -1496,7 +1496,10 @@ namespace engine
 
       _catCtxDropCLTask *pDropCLTask = NULL ;
 
-      rc = _addDropCLTask( _targetName, _version, &pDropCLTask ) ;
+      // Add the dropCL task after removing CL from CS
+      // If one of them is interupted by multiple times of system crashes, we
+      // could use the same dropCL command to continue the drop process.
+      rc = _addDropCLTask( _targetName, _version, &pDropCLTask, FALSE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to create drop collection task, rc: %d", rc ) ;
 
@@ -1507,6 +1510,10 @@ namespace engine
       rc = _addDropCLSubTasks ( pDropCLTask, cb ) ;
       PD_RC_CHECK( rc , PDERROR,
                    "Failed to add sub-tasks for drop collection") ;
+
+      rc = _pushExecTask( pDropCLTask ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push drop collection task, rc: %d", rc ) ;
 
       rc = catLockGroups( _groupList, cb, _lockMgr, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock groups, rc: %d", rc ) ;

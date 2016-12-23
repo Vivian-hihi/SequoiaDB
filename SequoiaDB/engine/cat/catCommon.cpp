@@ -3097,7 +3097,6 @@ namespace engine
       BSONObj boCollection ;
 
       // 1) Remove tasks with the collection
-      /// TODO: no need any more
       rc = catRemoveCLTasks( clName, cb, w ) ;
       if ( SDB_CAT_TASK_NOTFOUND == rc )
       {
