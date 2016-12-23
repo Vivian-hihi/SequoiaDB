@@ -10,7 +10,7 @@ FileTest.prototype.testGetUmask = function()
 {
    this.init() ;
    
-   var umask1 = this.file.getUmask() ;    // 获取掩码
+   var umask1 = this.file.getUmask( '8' ) ;    // 获取掩码
    var umask2 = this.cmd.run( "umask" ).split( "\n" )[0] ;
    if( umask1 != umask2 )
    {
@@ -27,10 +27,10 @@ FileTest.prototype.testSetUmask = function()
 {
    this.init() ;
    
-   var oldUmask = this.file.getUmask() ;
+   var oldUmask = this.file.getUmask( '8' ) ;
    
    this.file.setUmask( 0222 ) ;   // 设置掩码
-   var umask = this.file.getUmask() ;   
+   var umask = this.file.getUmask( '8' ) ;   
    if( umask != "0222" )
    {
       throw buildException( "testSetUmask", null, 
