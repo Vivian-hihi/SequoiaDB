@@ -76,9 +76,9 @@ function main()
    rt1.testGetNoPermitFile() ;
    rt2.testGetNoPermitFile() ;
    
-   // 测试获取sdb文件（当前正在使用的文件）
-   rt1.testGetSdbFile( localhost ) ;
-   rt2.testGetSdbFile( localhost ) ;
+   // 测试获取sdb文件（当前正在使用的文件，手工验证）
+   // rt1.testGetSdbFile( localhost ) ;
+   // rt2.testGetSdbFile( localhost ) ;
 }
 
 main()
