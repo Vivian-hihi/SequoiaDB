@@ -2839,7 +2839,7 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDTRUNCATE_EXEC, "rtnCoordCMDTruncate::execute" ) 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDTRUNCATE_EXEC, "rtnCoordCMDTruncate::execute" )
    INT32 rtnCoordCMDTruncate::execute( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
                                        INT64 &contextID,
@@ -2868,6 +2868,7 @@ namespace engine
             PD_LOG( PDERROR, "invalid truncate msg:%s",
                     boQuery.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
+            goto error ;
          }
          fullName = e.valuestr() ;
       }
