@@ -614,28 +614,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       utilInstallInfo info ;
       CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-
-      //  /conf/local/SVCNAME/sdb.conf
-      string installPathConfPath = OSS_FILE_SEP SDBCM_CONF_DIR_NAME OSS_FILE_SEP
-                                   SDBCM_LOCAL_DIR_NAME OSS_FILE_SEP
-                                   + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
-
       // ../conf/local/SVCNAME/sdb.conf
       string ewdConfPath = SDBCM_LOCAL_PATH OSS_FILE_SEP
                            + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
-
-      if ( SDB_OK == utilGetInstallInfo( info ) )
-      {
-         // info._path + /conf/local/SVCNAME/sdb.conf
-         if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
-                                           installPathConfPath.c_str(),
-                                           OSS_MAX_PATHSIZE,
-                                           confFile ) &&
-              SDB_OK == ossAccess( confFile ) )
-         {
-            goto done ;
-         }
-      }
 
       // get ewd
       rc = ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
@@ -653,6 +634,13 @@ namespace engine
          goto error ;
       }
 
+      rc = ossAccess( confFile ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to access config file: %d, rc: %d",
+                 confFile, rc ) ;
+         goto error ;
+      }
    done:
       if ( SDB_OK == rc )
       {
