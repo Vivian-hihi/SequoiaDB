@@ -204,7 +204,7 @@ function checkCpuNum( cmd, info, isppc )
    try
    {
       if( isppc )
-         cpuNum = cmd.run( "cat /proc/cpuinfo | grep processor | uniq |" +
+         cpuNum = cmd.run( "cat /proc/cpuinfo | grep machine | uniq |" +
                            " wc -l" ).split( "\n" )[0] ;
       else
          cpuNum = cmd.run( "cat /proc/cpuinfo | grep 'physical id' | uniq |" +  
@@ -439,7 +439,7 @@ function main()
    
    for( var i = 0;i < sts.length;i++ )
    {
-      sts[i].testGetCpuInfo() ;
+      // sts[i].testGetCpuInfo() ;
       
       sts[i].testSnapshotCpuInfo() ;
       

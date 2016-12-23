@@ -69,7 +69,7 @@ function main()
    for( var i = 0;i < sts.length;i++ )
    {
       // 测试获取limits
-      sts[i].testGetProcUlimitConfigs() ;
+      // sts[i].testGetProcUlimitConfigs() ;
       
       // 测试设置limits
       sts[i].testSetProcUlimitConfigs() ;

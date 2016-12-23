@@ -150,7 +150,7 @@ function main()
       sts[i].testType() ;
       
       // 测试获取操作系统发行版本
-      sts[i].testGetReleaseInfo() ;
+      // sts[i].testGetReleaseInfo() ;
       
       // 测试获取防火墙信息
       sts[i].testGetIpTablesInfo() ;
