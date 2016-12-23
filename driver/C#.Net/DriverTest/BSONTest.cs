@@ -56,7 +56,7 @@ namespace DriverTest
         public void MyTestCleanup()
         {
             //cs.DropCollection(cName);
-            sdb.DropCollectionSpace(csName);
+            //sdb.DropCollectionSpace(csName);
             sdb.Disconnect();
         }
         #endregion
@@ -92,7 +92,7 @@ namespace DriverTest
             }
 
             expect1 = "{ \"a\" : 0, \"b\" : 2147483647, \"c\" : -2147483648, \"e\" : 2147483648, \"f\" : -2147483649, \"g\" : 9223372036854775807, \"h\" : -9223372036854775808 }";
-            expect2 = "{ \"a\" : 0, \"b\" : 2147483647, \"c\" : -2147483648, \"e\" : 2147483648, \"f\" : -2147483649, \"g\" : { \"$numberLong\": 9223372036854775807 }, \"h\" : { \"$numberLong\": -9223372036854775808 } }";
+            expect2 = "{ \"a\" : 0, \"b\" : 2147483647, \"c\" : -2147483648, \"e\" : 2147483648, \"f\" : -2147483649, \"g\" : { \"$numberLong\": \"9223372036854775807\" }, \"h\" : { \"$numberLong\": \"-9223372036854775808\" } }";
             // case 1:
             Console.WriteLine("case1's result is: {0}", result.ToString());
             Assert.AreEqual(expect1, result.ToString());
@@ -149,8 +149,10 @@ namespace DriverTest
             // case2:
             BsonDefaults.JsCompatibility = true;
             Console.WriteLine("document is: {0}", doc);
-            expect = "{ \"int\" : 1, \"long\" : { \"$numberLong\": 9223372036854775807 }, \"double\" : 1.23, \"decimal\" : { \"$decimal\" : \"1.01234567890123456789\" }, \"string\" : \"I'am robot!\", \"oid\" : { \"$oid\" : \"123456789012345678901234\" }, \"bool\" : true, \"date\" : { \"$date\" : \"2016-12-22\" }, \"timestamp\" : { \"$timestamp\" : \"2016-12-22-16.53.07.999999\" }, \"binary\" : { \"$binary\" : \"aGVsbG8gd29ybGQ=\", \"$type\" : \"0\" }, \"regex\" : { \"$regex\" : \"^abc\", \"$options\" : \"i\" }, \"object\" : { \"a\" : 1 }, \"array\" : [1, 2], \"null\" : null, \"minkey\" : { \"$minkey\" : 1 }, \"maxkey\" : { \"$maxkey\" : 1 } }";
+            expect = "{ \"int\" : 1, \"long\" : { \"$numberLong\": \"9223372036854775807\" }, \"double\" : 1.23, \"decimal\" : { \"$decimal\" : \"1.01234567890123456789\" }, \"string\" : \"I'am robot!\", \"oid\" : { \"$oid\" : \"123456789012345678901234\" }, \"bool\" : true, \"date\" : { \"$date\" : \"2016-12-22\" }, \"timestamp\" : { \"$timestamp\" : \"2016-12-22-16.53.07.999999\" }, \"binary\" : { \"$binary\" : \"aGVsbG8gd29ybGQ=\", \"$type\" : \"0\" }, \"regex\" : { \"$regex\" : \"^abc\", \"$options\" : \"i\" }, \"object\" : { \"a\" : 1 }, \"array\" : [1, 2], \"null\" : null, \"minkey\" : { \"$minkey\" : 1 }, \"maxkey\" : { \"$maxkey\" : 1 } }";
             Assert.AreEqual(expect, doc.ToString());
+
+            coll.Insert(doc);
 
         }
 

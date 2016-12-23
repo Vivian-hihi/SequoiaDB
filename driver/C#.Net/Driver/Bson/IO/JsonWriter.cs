@@ -471,7 +471,7 @@ namespace SequoiaDB.Bson.IO
                         }
                         else
                         {
-                            _textWriter.Write("{{ \"$numberLong\": {0} }}", value);
+                            _textWriter.Write("{{ \"$numberLong\": \"{0}\" }}", value);
                         }
                     }
                     break;
