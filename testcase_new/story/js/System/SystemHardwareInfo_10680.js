@@ -352,7 +352,7 @@ function checkDiskSize( info, res )
       {
          if( fs == disks[j].Filesystem &&                    // 分区名
              isApproEqual( size, disks[j].Size ) &&          // 磁盘总大小
-             isApproEqual( size-avail, disks[j].Used ) &&    // 已使用磁盘大小
+             isApproEqual( used, disks[j].Used ) &&    // 已使用磁盘大小
              "MB" == disks[j].Unit )
          {
             found = true ;
