@@ -16,7 +16,7 @@ SystemTest.prototype.testGetInfo = function()
    this.init() ;
    if( this.system == System )
    {
-      println( "System has no function getInfo" ) ;
+      // println( "System has no function getInfo" ) ;
       return ;
    }
    

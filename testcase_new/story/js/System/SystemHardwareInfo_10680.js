@@ -217,7 +217,7 @@ function checkCpuNum( cmd, info, isppc )
    if( cpuNum != info.Cpus.length )
    {
       throw buildException( "checkCpuNum", null, "test cpu num", 
-                            cpuNum, cpuInfo.Cpus.length ) ;
+                            cpuNum, info.Cpus.length ) ;
    }
 }
 
