@@ -2328,7 +2328,8 @@ namespace engine
                 || SQL_GRAMMAR::OR == type
                 || SQL_GRAMMAR::LIKE == type
                 || SQL_GRAMMAR::INN == type
-                || SQL_GRAMMAR::IS == type )
+                || SQL_GRAMMAR::IS == type
+                || SQL_GRAMMAR::ISNOT == type )
       {
          PD_CHECK( 2 == root->children.size(),
                    SDB_INVALIDARG,
