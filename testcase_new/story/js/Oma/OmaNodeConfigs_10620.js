@@ -16,7 +16,7 @@ OmaTest.prototype.testNodeConfigs = function()
    
    // 测试getNodeConfigs
    var configs = this.oma.getNodeConfigs( COORDSVCNAME ).toObj() ;
-   var InstallPath = commGetInstallPath() ;
+   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var command = "cat " + InstallPath + "/conf/local/" + COORDSVCNAME + "/sdb.conf" ;
    try
    {

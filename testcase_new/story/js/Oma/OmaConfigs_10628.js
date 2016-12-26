@@ -18,7 +18,7 @@ OmaTest.prototype.testGetOmaConfigsNormal = function()
    
    // 测试getOmaConfigFile
    var configFile = this.oma.getOmaConfigFile() ;
-   var installPath = commGetInstallPath() ;
+   var installPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var expectFile = installPath + "/conf/sdbcm.conf" ;
    if( configFile != expectFile )
    {
@@ -46,7 +46,7 @@ OmaTest.prototype.testGetOmaConfigsNormal = function()
 OmaTest.prototype.testGetOmaConfigsAbnormal = function()
 {
    this.testInit() ;
-   var installPath = commGetInstallPath() ;
+   var installPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    // 测试getOmaConfigs时，文件不存在
    try
    {

@@ -26,7 +26,7 @@ OmaTest.prototype.testListNodes1 = function()
    
    var nodes = this.oma.listNodes( option, filter ) ;
    
-   var InstallPath = commGetInstallPath() ;
+   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var command = InstallPath + "/bin/sdblist -t db -r coord -p " + COORDSVCNAME + 
                  " -m run --expand" ;
    try
@@ -62,7 +62,7 @@ OmaTest.prototype.testListNodes2 = function()
    
    var nodes = this.oma.listNodes( option, filter ) ;
    
-   var InstallPath = commGetInstallPath() ;
+   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var command = InstallPath + "/bin/sdblist -t om -r om -m local" ;
    var tmpInfo ;
    try
@@ -102,7 +102,7 @@ OmaTest.prototype.testListNodes3 = function()
                                     
    var nodes = this.oma.listNodes( option, filter ) ;
    
-   var InstallPath = commGetInstallPath() ;
+   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var command = InstallPath + "/bin/sdblist -t db" ;
    try
    {
