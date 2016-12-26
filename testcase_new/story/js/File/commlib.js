@@ -169,7 +169,9 @@ function toolGetSequoiadbDir( hostname, svcname )
 {
    var remote = new Remote( hostname, svcname ) ;
    var system = remote.getSystem() ;
-   var dir = system.getEWD() + "/.." ;
+   var dir = system.getEWD() ;
+   var ind = dir.indexOf( "/bin" ) ;
+   dir = dir.slice( 0, ind ) ;
    remote.close() ;
    return dir ;
 }
