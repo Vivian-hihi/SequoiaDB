@@ -33,7 +33,7 @@ RemoteTest.prototype.testGetSdbFile = function( hostname )
 {
    this.testInit() ;
    
-   var InstallPath = commGetInstallPath() ;
+   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    if( this.hostname == hostname )
    {
       try
