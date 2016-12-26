@@ -32,7 +32,14 @@ SystemTest.prototype.testSniffPortBoundary = function()
    this.init() ;
    
    var ErrorPort = [ 0, 65536, "0", "65536" ] ;
-   var CorrePort = [ 1, 65535, "1", "65535" ] ;
+   var CorrePort = [ 1, 65535, "1", "65535" ] ;  // 1是保留端口，普通用户不能占用
+   var user = this.system.getCurrentUser().toObj().user ;
+   var result ;
+   if( user == "root" )
+      result = [ true, true, true, true ] ;
+   else
+      result = [ false, true, false, true ] ;
+   
    for( var i = 0;i < ErrorPort.length;i++ )
    {
       try
@@ -52,10 +59,10 @@ SystemTest.prototype.testSniffPortBoundary = function()
    for( var i = 0;i < CorrePort.length;i++ )
    {
       var useable = this.system.sniffPort( CorrePort[i] ).toObj().Usable ;
-      if( useable != true )
+      if( useable != result[i] )  
       {
          throw buildException( "testSniffPortBoundary", null, 
-               "test sniff port " + CorrePort[i] + " " + this, true, useable ) ;
+               "test sniff port " + CorrePort[i] + " " + this, result[i], useable ) ;
       }
    }
    
