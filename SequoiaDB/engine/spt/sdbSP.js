@@ -407,8 +407,14 @@ Remote.prototype.getFile = function( filename, mode ) {
    var file = File._getFileObj() ;
    file._remote = this ;
 
-   if ( undefined != filename )
+   if ( 1 <= arguments.length )
    {
+      if ( "string" != typeof( filename ) )
+      {
+         setLastErrMsg( "filename must be string" ) ;
+         throw SDB_INVALIDARG ;
+      }
+
       if ( undefined != mode )
       {
          this._runCommand( "file open",{ "mode": mode }, {},
