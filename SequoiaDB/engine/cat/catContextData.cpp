@@ -2486,6 +2486,21 @@ namespace engine
          PD_LOG( PDWARNING,
                  "Sub-collection [%s] hasn't been linked",
                  _subCLName.c_str() ) ;
+
+         // Check if the mainCL contain the subCL, if so, still need
+         // to update mainCL to remove the item in its the subCL list
+         clsCatalogSet mainCLSet( _targetName.c_str() ) ;
+
+         rc = mainCLSet.updateCatSet( _boTarget ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Failed to parse catalog-info of main-collection(%s)",
+                      _targetName.c_str() ) ;
+         PD_CHECK( mainCLSet.isContainSubCL( _subCLName ),
+                   SDB_INVALID_SUB_CL, error, PDERROR,
+                   "Failed to unlink sub-collection, the main-collection"
+                   "[%s] doesn't contain sub-collection [%s]",
+                   _targetName.c_str(), _subCLName.c_str() ) ;
+
          _needUpdateSubCL = FALSE ;
       }
 
