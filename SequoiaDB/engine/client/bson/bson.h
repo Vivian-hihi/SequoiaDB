@@ -1290,5 +1290,19 @@ SDB_EXPORT void bson_swap_endian64( void *outp, const void *inp );
 
 SDB_EXPORT bson_bool_t bson_is_inf( double d, int *pSign ) ;
 
+/**
+ * when this value is not zero, the bson_print
+ * method will
+ * show the string which is the same with that 
+ * shows in sdb shell.
+ */
+SDB_EXPORT void setJSCompatibility(int compatible);
+
+/**
+ * get whether bson_print method will show the string
+ * which is the same with that shows in sdb shell or not
+ */
+SDB_EXPORT int getJSCompatibility();
+
 SDB_EXTERN_C_END
 #endif

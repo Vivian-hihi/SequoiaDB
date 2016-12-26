@@ -28,6 +28,7 @@
  *    limitations under the License.
  */
 #include "ossFeat.h"
+#include "ossTypes.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@
 #include <WinBase.h>
 #endif
 
+static int jsCompatibility = 0;
 const int initialBufferSize = 0;
 
 /* only need one of these */
@@ -628,8 +630,25 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       }
       case BSON_LONG:
       {
-         char temp[32] = {0} ;
-         sprintf ( temp, "%lld", ( long long )bson_iterator_long( i ) ) ;
+         char temp[64] = {0} ;
+         const char *pFormat = 0 ;
+         long long num = ( long long )bson_iterator_long( i );
+         if (!jsCompatibility)
+         {
+            pFormat = "%lld" ;
+         }
+         else
+         {
+            if ( num >= OSS_SINT64_JS_MIN && num <= OSS_SINT64_JS_MAX )
+            {
+               pFormat = "%lld" ;
+            }
+            else
+            {
+               pFormat = "{ \"$numberLong\": \"%lld\" }" ;
+            }
+         }
+         sprintf ( temp, pFormat, num ) ;
          bson_sprint_raw_concat ( pbuf, left, temp, 0 ) ;
          CHECK_LEFT ( left )
          break;
@@ -2240,6 +2259,17 @@ SDB_EXPORT bson_bool_t bson_is_inf( double d, int *pSign )
     }
     return 0 ;
 }
+
+SDB_EXPORT void setJSCompatibility(int compatible)
+{
+    jsCompatibility = compatible;
+}
+
+SDB_EXPORT int getJSCompatibility()
+{
+    return jsCompatibility;
+}
+
 
 void LocalTime ( time_t *Time, struct tm *TM )
 {

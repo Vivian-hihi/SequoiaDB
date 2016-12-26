@@ -768,6 +768,8 @@ namespace bson {
 
     /* BSONObj ------------------------------------------------------------*/
 
+    bool BSONObj::_jsCompatibility = false;
+
     string BSONObj::md5() const
       { return md5::md5simpledigest((const md5_byte_t*)_objdata , objsize() ); }
 

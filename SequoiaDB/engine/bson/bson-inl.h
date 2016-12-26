@@ -23,6 +23,7 @@
 #include <map>
 #include <limits>
 #include <time.h>
+#include "ossTypes.h"
 #include "util/misc.h"
 #include "util/hex.h"
 #include "base64c.h"
@@ -801,8 +802,26 @@ namespace bson {
             break;
         }
         case NumberLong:
-            s << _numberLong();
+        {
+            long long num = _numberLong();
+            if ( !BSONObj::getJSCompatibility() )
+            {
+                s << num;
+            }
+            else
+            {
+                if ( num >= OSS_SINT64_JS_MIN && num <= OSS_SINT64_JS_MAX )
+                {
+                    s << num;
+                }
+                else
+                {
+                    s << "{ \"$numberLong\": \"" << num << "\" }";
+                }
+
+            }
             break;
+        }
         case NumberDecimal:
             s << _numberDecimalStr();
             break;

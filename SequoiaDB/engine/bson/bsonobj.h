@@ -512,6 +512,28 @@ namespace bson {
             if ( check && !isValid() )
                 _assertInvalid();
         }
+    public:
+        /**
+         * when this value is not zero, the BSONObje::toString() 
+         * method will
+         * show the string which is the same with that 
+         * shows in sdb shell.
+         */
+        static void setJSCompatibility(bool compatible) {
+            _jsCompatibility = compatible;
+        }
+
+        /**
+         * get whether bson_print method will show the string
+         * which is the same with that shows in sdb shell or not
+         */
+        static bool getJSCompatibility() {
+            return _jsCompatibility;
+        }
+
+    private:
+        static bool _jsCompatibility;
+
 
     private:
         const char *_objdata;
