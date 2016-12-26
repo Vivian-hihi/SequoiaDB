@@ -45,7 +45,7 @@ function _init()
    task_id = getTaskID( SYS_JSON ) ;
    setTaskLogFileName( task_id ) ;
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_DATA_RG,
-            sprintf( "Begin to remove data group in task[?]", task_id ) ) ;
+            sprintf( "Begin to run task[?] for removing data groups", task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -57,7 +57,7 @@ function _init()
 function _final()
 {
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_DATA_RG,
-            sprintf( "Finish removing data group in task[?]", task_id ) ) ;
+            sprintf( "Finish running task[?] for removing data groups", task_id ) ) ;
 }
 
 function main()
@@ -66,8 +66,9 @@ function main()
    var tmpCoordSvcName  = null ;
    var authUser         = null ;
    var authPasswd       = null ;
-   var groupName        = null ;
    var db               = null ;
+   var groupNames       = [] ;
+   var csNum            = 0;
    var i                = 0 ;
    
    _init() ;
@@ -81,7 +82,6 @@ function main()
          tmpCoordSvcName  = SYS_JSON[TmpCoordSvcName] ;
          authUser         = BUS_JSON[AuthUser] ;
          authPasswd       = BUS_JSON[AuthPasswd] ;
-         groupNames       = BUS_JSON[UninstallGroupNames] ;
       }
       catch( e )
       {
@@ -109,7 +109,41 @@ function main()
                   errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
          exception_handle( rc, errMsg ) ;
       }
-      // 3. remove data group
+      // 3. check whether the data groups are empty or not
+      csNum = db.listCollectionSpaces().size();
+      if (csNum != 0)
+      {
+         rc = SDB_CAT_RM_GRP_FORBIDDEN;
+         errMsg = sprintf( "Can't remove data groups, for there still has " + 
+                           "[?] collection space(s) in the database", csNum ) ;
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_REMOVE_DATA_RG,
+                  errMsg + ", rc: " + rc ) ;
+         exception_handle( rc, errMsg ) ;
+      }
+      // 4. get data groups from catalog
+      try
+      {
+         var cur = db.listReplicaGroups();
+         var ret = null;
+         while( (ret = cur.next()) != undefined )
+         {
+            var rg = JSON.parse( ret ) ;
+            if ( rg[GroupName] != OMA_SYS_CATALOG_RG && rg[GroupName] != OMA_SYS_COORD_RG )
+            {
+               groupNames.push( rg[GroupName] ) ;
+            }
+         }
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         errMsg = "Failed to get data group's info from catalog" ;
+         rc = GETLASTERROR() ;
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_REMOVE_DATA_RG,
+                  errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+         exception_handle( rc, errMsg ) ;
+      }
+      // 5. remove data group
       for ( i = 0; i < groupNames.length; i++ )
       {
          try
@@ -142,7 +176,7 @@ function main()
             if ( OMA_WAIT_CATALOG_TRY_TIMES == j )
             {
                PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_REMOVE_DATA_RG,
-                        "Catalog has no primary" ) ;
+                        sprintf( "Data group[?] has no primary", groupNames[i] ) ) ;
                throw SDB_CLS_NOT_PRIMARY ;
             }
          }
