@@ -192,14 +192,16 @@ function checkResult( info, content, func )
 }
 
 /******************************************************************************
-*@Description : get sequoiadb dir eg: /opt/sequoiadb/bin/.. /trunk/bin/..
+*@Description : get sequoiadb dir eg: /opt/sequoiadb /trunk
 *@author      : Liang XueWang              
 ******************************************************************************/
 function toolGetSequoiadbDir( hostname, svcname )
 {
    var remote = new Remote( hostname, svcname ) ;
    var system = remote.getSystem() ;
-   var dir = system.getEWD() + "/.." ;
+   var dir = system.getEWD() ;
+   var ind = dir.indexOf( "/bin" ) ;
+   dir = dir.slice( 0, ind ) ;
    remote.close() ;
    return dir ;
 }
