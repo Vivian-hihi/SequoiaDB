@@ -109,7 +109,7 @@ SystemTest.prototype.testGetDiskInfo = function()
    checkDiskInfo( diskInfo, diskFileContent ) ;
    
    // 测试磁盘总容量，已使用容量
-   var command = "df -m | grep -v Filesystem | awk '{print $1,$2,$3,$4}'" ;
+   var command = "df -mP | grep -v Filesystem | awk '{print $1,$2,$3,$4}'" ;
    var result = this.cmd.run( command ).split( "\n" ) ;
    checkDiskSize( diskInfo, result ) ;
    
