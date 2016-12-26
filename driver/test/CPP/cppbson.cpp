@@ -680,3 +680,36 @@ TEST ( cpp_bson_base_type, OR )
 { \"e\": { \"$ne\": 99 } } ] }" ) ;
 }
 
+TEST(cpp_bson_base_type, bson_jsCompatibility_toString)
+{
+   const char *pExpect1 = "{ \"a\": 9223372036854775807, \"b\": -9223372036854775808, \"c\": 2147483648, \"d\": -2147483649, \"e\": 0 }";
+   const char *pExpect2 = "{ \"a\": { \"$numberLong\": \"9223372036854775807\" }, \"b\": { \"$numberLong\": \"-9223372036854775808\" }, \"c\": 2147483648, \"d\": -2147483649, \"e\": 0 }";
+
+   BSONObj obj;
+   BSONObjBuilder bob;
+
+   INT64 a = 9223372036854775807LL;
+   INT64 b = -9223372036854775808LL;
+   INT64 c = 2147483648LL;
+   INT64 d = -2147483649LL;
+   INT64 e = 0LL;
+
+   bob.append( "a", a );
+   bob.append( "b", b );
+   bob.append( "c", c );
+   bob.append( "d", d );
+   bob.append( "e", e );
+   obj = bob.obj() ;
+
+   cout << "disable js compatibility: " << endl << obj.toString(false, true).c_str() << endl;
+   ASSERT_EQ( 0, strncmp( obj.toString(false, true).c_str(), pExpect1, strlen(pExpect1) ) ) ;
+
+   BSONObj::setJSCompatibility( true ) ;
+   cout << "enable js compatibility: " << endl << obj.toString(false, true).c_str() << endl;
+   ASSERT_EQ( 0, strncmp( obj.toString(false, true).c_str(), pExpect2, strlen(pExpect2) ) ) ;
+
+   BSONObj::setJSCompatibility( false ) ;
+   cout << "disable js compatibility: " << endl << obj.toString(false, true).c_str() << endl;
+   ASSERT_EQ( 0, strncmp( obj.toString(false, true).c_str(), pExpect1, strlen(pExpect1) ) ) ;
+}
+
