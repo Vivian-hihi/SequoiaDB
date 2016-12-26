@@ -9,7 +9,10 @@ FileTest.prototype.testFind = function()
 {
    this.init() ;
    
-   var values = [ "sdbcm.conf", "sdbadmin", "0755", "sdbadmin_group" ] ;  
+   var tmpObj = toolGetCmUserGroup( this.cmd ) ;
+   var user = tmpObj.user ;
+   var group = tmpObj.group ;
+   var values = [ "sdbcm.conf", user, "0755", group ] ;  
    var modes = [ "n", "u", "p", "g" ] ;   // 按文件名、用户、文件权限、用户组查找
    var args = [ "-name", "-user", "-perm", "-group" ] ;
    var path = commGetInstallPath() + "/conf" ;

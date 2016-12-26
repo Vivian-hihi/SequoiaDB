@@ -143,3 +143,20 @@ function toolGetCurrentUser( hostName, cmSvcName )
    var user = cmd.run( "whoami" ).split( "\n" )[0] ;
    return user ;
 }
+
+/******************************************************************************
+*@Description : get user and group  sdbcm.conf
+*@author      : Liang XueWang            
+******************************************************************************/
+function toolGetCmUserGroup( cmd )
+{
+   var InstallPath = commGetInstallPath() ;
+   var file = InstallPath + "/conf/sdbcm.conf" ;
+   var command = "ls -l " + file + " | awk '{print $3,$4}'" ;
+   var tmpInfo = cmd.run( command ).split( "\n" )[0] ;
+   var tmp = tmpInfo.split( " " ) ;
+   var result = {} ;
+   result["user"] = tmp[0] ;
+   result["group"] = tmp[1] ;
+   return result ;
+}
