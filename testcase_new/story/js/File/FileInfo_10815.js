@@ -65,7 +65,7 @@ FileTest.prototype.testStat = function()
    var linkFile = "/dev/stdin" ;    // 链接文件
    var socketFile = "/dev/log" ;    // 套接字文件
    var fifoFile = "/tmp/testFifo" ; // 命名管道文件
-   this.cmd.run( "rm -rf" + fifoFile ) ; 
+   this.cmd.run( "rm -rf " + fifoFile ) ; 
    this.cmd.run( "mkfifo " + fifoFile ) ; 
    // var unkowntypeFile ;
    var files = [ dir, normalFile, charFile, blockFile, linkFile, socketFile, fifoFile ] ;
@@ -78,7 +78,7 @@ FileTest.prototype.testStat = function()
       var stat2 = tmp.split( "|" ) ;
       checkStat( stat1, stat2 ) ;
    }
-   this.cmd.run( "rm -rf" + fifoFile ) ;
+   this.cmd.run( "rm -rf " + fifoFile ) ;
    
    this.release() ;
 }
