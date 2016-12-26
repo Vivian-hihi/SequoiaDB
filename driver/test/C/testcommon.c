@@ -781,3 +781,18 @@ INT32 gettid()
    return (INT32)syscall(SYS_gettid) ;
 #endif
 }
+
+INT32 bson_compare(const CHAR *pStr, const bson *b)
+{
+   INT32 rc  = 0 ;
+   CHAR *p = NULL ;
+   INT32 bufferSize = bson_sprint_length ( b ) ;
+   p = (CHAR*)malloc(bufferSize) ;
+   if ( !p )
+      return -2;
+   bson_sprint ( p, bufferSize, b ) ;
+   rc = strncmp( pStr, p, bufferSize ) ;
+   free ( p ) ;
+   return rc == 0 ? 0 : ( rc > 0 ? 1 : -1 );
+}
+
