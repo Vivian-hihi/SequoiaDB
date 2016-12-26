@@ -3276,7 +3276,7 @@ namespace engine
          {
             cmd << " -d "
                 <<  _valueObj.getStringField( "dir" ) ;
-            if ( TRUE ==  _valueObj.getBoolField( "createDir" ) )
+            if ( TRUE ==  _valueObj.getBoolField( "isMove" ) )
             {
                cmd << " -m" ;
             }

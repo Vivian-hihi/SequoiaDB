@@ -1265,7 +1265,7 @@ namespace engine
 
       try
       {
-         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\r\n" ) ) ;
       }
       catch( std::exception &e )
       {
@@ -1351,43 +1351,43 @@ namespace engine
             }
             // merge cpu info
             {
-            UINT32 coreNum    = processorCount ;
-            string info       = modelName ;
-            string strAvgFreq ;
-            FLOAT32 totalFreq = 0.0 ;
+               UINT32 coreNum    = processorCount ;
+               string info       = modelName ;
+               string strAvgFreq ;
+               FLOAT32 totalFreq = 0.0 ;
 
-            for ( vector<string>::iterator itr2 = vecFreq.begin();
-                  itr2 != vecFreq.end(); itr2++ )
-            {
-               string freq = *itr2 ;
+               for ( vector<string>::iterator itr2 = vecFreq.begin();
+                     itr2 != vecFreq.end(); itr2++ )
+               {
+                  string freq = *itr2 ;
+                  try
+                  {
+                     boost::algorithm::replace_last( freq, "MHz", "" ) ;
+                     FLOAT32 inc = boost::lexical_cast<FLOAT32>( freq ) ;
+                     totalFreq += inc / 1000.0 ;
+                  }
+                  catch( std::exception &e )
+                  {
+                     PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s]",
+                             e.what(), freq.c_str() ) ;
+                     rc = SDB_SYS ;
+                     goto error ;
+                  }
+               }
                try
                {
-                  boost::algorithm::replace_last( freq, "MHz", "" ) ;
-                  FLOAT32 inc = boost::lexical_cast<FLOAT32>( freq ) ;
-                  totalFreq += inc / 1000.0 ;
+                  strAvgFreq = boost::lexical_cast<string>( totalFreq / coreNum ) ;
                }
                catch( std::exception &e )
                {
-                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%s]",
-                          e.what(), freq.c_str() ) ;
+                  PD_LOG( PDERROR, "unexpected err happened:%s, content:[%f]",
+                          e.what(), totalFreq / coreNum ) ;
                   rc = SDB_SYS ;
                   goto error ;
                }
-            }
-            try
-            {
-               strAvgFreq = boost::lexical_cast<string>( totalFreq / coreNum ) ;
-            }
-            catch( std::exception &e )
-            {
-               PD_LOG( PDERROR, "unexpected err happened:%s, content:[%f]",
-                       e.what(), totalFreq / coreNum ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-            arrBuilder << BSON( CMD_USR_SYSTEM_CORE << coreNum
-                                << CMD_USR_SYSTEM_INFO << info
-                                << CMD_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;
+               arrBuilder << BSON( CMD_USR_SYSTEM_CORE << coreNum
+                                   << CMD_USR_SYSTEM_INFO << info
+                                   << CMD_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;
             }
             // clean the counters
             processorCount = 0 ;
@@ -3827,7 +3827,7 @@ namespace engine
             cmd << " -d "
                 << optionObj.getStringField( "dir" ) ;
 
-            if ( TRUE == optionObj.getBoolField( "createDir" ) )
+            if ( TRUE == optionObj.getBoolField( "isMove" ) )
             {
                cmd << " -m" ;
             }
