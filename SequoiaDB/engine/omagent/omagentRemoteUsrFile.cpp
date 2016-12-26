@@ -477,6 +477,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string filepath ;
+      BSONObjBuilder builder ;
       BOOLEAN fileExist = FALSE ;
 
       if ( FALSE == _valueObj.hasField( "filepath" ) )
@@ -506,7 +507,8 @@ namespace engine
       }
 
       rc = SDB_OK ;
-      retObj = BSON( "isExist" << fileExist ) ;
+      builder.appendBool( "isExist", fileExist ) ;
+      retObj = builder.obj() ;
    done:
       return rc ;
    error:
