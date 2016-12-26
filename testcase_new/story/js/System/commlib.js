@@ -48,11 +48,12 @@ SystemTest.prototype.release = function()
 *@Description : check two number is approximately equal to each other or not
 *@author      : Liang XueWang
 ******************************************************************************/
-function isApproEqual( n1, n2 )
+function isApproEqual( n1, n2 )  // n1 n2 >= 0
 {
    var max = n1 > n2 ? n1 : n2 ;
    var min = ( max == n1 ) ? n2 : n1 ;
-   return ( min >= 0.9*max ) ;
+   if( min == 0 ) return max <= 2 ;
+   else return min / max >= 0.9 ;
 }
 
 /******************************************************************************
