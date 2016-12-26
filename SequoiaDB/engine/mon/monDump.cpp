@@ -1072,8 +1072,12 @@ namespace engine
          monAppendSystemInfo( builder, _addInfoMask ) ;
          builder.append( FIELD_NAME_SESSIONID,
                          (INT64)_curTransInfo._eduID ) ;
-         builder.append( FIELD_NAME_TRANSACTION_ID,
-                         (INT64)pTransCB->getTransID( _curTransInfo._transID ) ) ;
+         /// nodeID(16bit) | TAG(8bit) | SN(40bit)
+         CHAR strTransID[ 4 + 2 + 10 + 2 ] = { 0 } ;
+         ossSnprintf( strTransID, sizeof( strTransID ) - 1,
+                      "%04x%010x", ( _curTransInfo._transID >> 48 ),
+                      ( _curTransInfo._transID & DPS_TRANSID_SN_BIT ) ) ;
+         builder.append( FIELD_NAME_TRANSACTION_ID, strTransID ) ;
          builder.appendBool( FIELD_NAME_IS_ROLLBACK,
                              pTransCB->isRollback( _curTransInfo._transID ) ?
                              TRUE : FALSE ) ;
