@@ -156,7 +156,7 @@ SystemTest.prototype.testSnapshotNetcardInfo = function()
    var timestamp = this.cmd.run( "date +%s" ).split( "\n" )[0] ;
    
    // 测试时间戳
-   if( info1.CalendarTime != timestamp )
+   if( !isApproEqual( info1.CalendarTime, timestamp ) )
    {
       throw buildException( "testSnapshotNetcardInfo", null, 
             "test timestamp " + this, timestamp, info1.CalendarTime ) ;
@@ -451,7 +451,7 @@ function main()
       
       sts[i].testSnapshotDiskInfo() ;
       
-      sts[i].testGetNetcardInfo() ;
+      // sts[i].testGetNetcardInfo() ;
       
       sts[i].testSnapshotNetcardInfo() ;
    } 

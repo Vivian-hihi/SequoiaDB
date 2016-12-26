@@ -31,15 +31,22 @@ SystemTest.prototype.testSniffPortBoundary = function()
 {
    this.init() ;
    
-   var ErrorPort = [ 0, 65536 ] ;
-   var CorrePort = [ 1, 65535 ] ;
+   var ErrorPort = [ 0, 65536, "0", "65536" ] ;
+   var CorrePort = [ 1, 65535, "1", "65535" ] ;
    for( var i = 0;i < ErrorPort.length;i++ )
    {
-      var useable = this.system.sniffPort( ErrorPort[i] ).toObj().Usable ;
-      if( useable != false )
+      try
       {
-         throw buildException( "testSniffPortBoundary", null, 
-               "test sniff port " + ErrorPort[i] + " " + this, false, useable ) ;
+         this.system.sniffPort( ErrorPort[i] ) ;
+         throw "sniff port " + ErrorPort[i] + " should be failed" ; 
+      }
+      catch( e )
+      {
+         if( e != -6 )
+         {
+            throw buildException( "testSniffPortBoundary", e, 
+                  "test sniff port " + ErrorPort[i] + " " + this, e, -6 ) ;
+         }
       }
    }
    for( var i = 0;i < CorrePort.length;i++ )
@@ -75,7 +82,7 @@ function main()
       // 测试端口状态
       sts[i].testSniffPort( svcnames[i] ) ;
       // 测试端口状态，端口号为边界值
-      // sts[i].testSniffPortBoundary() ;
+      sts[i].testSniffPortBoundary() ;
    }
 }
    
