@@ -9,7 +9,7 @@ FileTest.prototype.testList = function()
 {
    this.init() ;
    
-   var dir = commGetInstallPath() ;
+   var dir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var option = {} ;
    option["pathname"] = dir ;
    option["detail"] = true ;

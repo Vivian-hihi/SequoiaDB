@@ -160,3 +160,16 @@ function toolGetCmUserGroup( cmd )
    result["group"] = tmp[1] ;
    return result ;
 }
+
+/******************************************************************************
+*@Description : get sequoiadb dir eg: /opt/sequoiadb/bin/.. /trunk/bin/..
+*@author      : Liang XueWang              
+******************************************************************************/
+function toolGetSequoiadbDir( hostname, svcname )
+{
+   var remote = new Remote( hostname, svcname ) ;
+   var system = remote.getSystem() ;
+   var dir = system.getEWD() + "/.." ;
+   remote.close() ;
+   return dir ;
+}

@@ -12,7 +12,7 @@ FileTest.prototype.testIsFile = function()
 {
    this.init() ;
    
-   var pathName = commGetInstallPath() ;
+   var pathName = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var fileName = pathName + "/conf/sdbcm.conf" ;
    var notExist = pathName + "/conf/notexist" ;
  
@@ -45,7 +45,7 @@ FileTest.prototype.testIsDir = function()
 {
    this.init() ;
    
-   var pathName = commGetInstallPath() ;
+   var pathName = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var fileName = pathName + "/conf/sdbcm.conf" ;
    var result = this.file.isDir( pathName ) ;    // 判断目录
    if( result != true )
@@ -66,7 +66,7 @@ FileTest.prototype.testIsEmptyDir = function()
 {
    this.init() ;
    
-   var pathName = commGetInstallPath() ;
+   var pathName = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var emptyDir = "/tmp/lxw/testdir" ;
    this.cmd.run( "mkdir -p " + emptyDir ) ;
    var fileName = pathName + "/conf/sdbcm.conf" ;
@@ -103,7 +103,7 @@ FileTest.prototype.testExist = function()
 {
    this.init() ;
    
-   var path = commGetInstallPath() ;
+   var path = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var existfile = path + "/conf/sdbcm.conf" ;
    var notexist = path + "/conf/sdb.conf" ;
    

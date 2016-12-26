@@ -40,7 +40,7 @@ FileTest.prototype.testMd5 = function()
 {
    this.init() ;
    
-   var fileName = commGetInstallPath() + "/conf/sdbcm.conf" ;
+   var fileName = toolGetSequoiadbDir( this.hostname, this.svcname ) + "/conf/sdbcm.conf" ;
    var md5 = this.file.md5( fileName ) ;
    var tmpInfo = this.cmd.run( "md5sum " + fileName ).split( "\n" )[0] ;
    var expect = tmpInfo.split( " " )[0] ;
