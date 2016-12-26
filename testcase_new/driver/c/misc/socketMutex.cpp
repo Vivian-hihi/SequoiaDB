@@ -315,6 +315,7 @@ TEST_F(SocketMutexTest,disconnect)
 	}	
 }
 
+/*
 // close all cursors between multi threads
 TEST_F(SocketMutexTest,closeAllCursor)
 {
@@ -345,3 +346,4 @@ TEST_F(SocketMutexTest,closeAllCursor)
         delete workers[i] ;
     }
 }
+*/
