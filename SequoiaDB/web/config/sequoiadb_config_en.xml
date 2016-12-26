@@ -337,4 +337,56 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>indexpath</Name>
+		<WebName>Index Path</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>Index storing path,Default is 'dbpath'</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>bkuppath</Name>
+		<WebName>Backup Path</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>Backup storing path, Default is 'dbpath/bakfile'</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>lobpath</Name>
+		<WebName>Lob Data Path</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>Lob data file storing path, Default is 'dbpath'</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>lobmetapath</Name>
+		<WebName>Lob Meta Path</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>Lob meta file storing path, Default is 'dbpath'</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
 </Property>

@@ -337,4 +337,56 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>indexpath</Name>
+		<WebName>索引路径</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>索引文件存放路径，缺省为"dbpath"</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>bkuppath</Name>
+		<WebName>备份路径</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>备份数据文件存放路径，缺省为"dbpath/bakfile"</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>lobpath</Name>
+		<WebName>大对象数据路径</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>大数象数据文件存放路径，缺省为"dbpath"</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>lobmetapath</Name>
+		<WebName>大对象元数据路径</WebName>
+		<Type>string</Type>
+		<Default></Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>大数象元数据文件存放路径，缺省为"dbpath"</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
 </Property>
