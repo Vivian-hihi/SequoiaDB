@@ -90,11 +90,11 @@ SystemTest.prototype.testIsGroupExist = function()
 {
    this.init();
    
-   var result = this.system.isGroupExist( "sdbadmin_group" ) ;
+   var result = this.system.isGroupExist( "root" ) ;
    if( result != true )
    {
       throw buildException( "testIsGroupExist", null, 
-            "test sdbadmin_group " + this, true, result ) ;
+            "test root " + this, true, result ) ;
    }
    result = this.system.isGroupExist( "!@#$%" ) ;
    if( result != false )
