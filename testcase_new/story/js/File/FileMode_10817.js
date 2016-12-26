@@ -20,6 +20,7 @@ FileTest.prototype.testChmod = function()
    this.file.chmod( tmpFilename, 0755 ) ;    // 更改权限
    var command = "ls -l " + tmpFilename + " | awk '{print $1}'" ;
    var mode = this.cmd.run( command ).split( "\n" )[0] ;
+   mode = mode.slice( 0, 10 ) ;
    this.cmd.run( "rm -rf " + tmpFilename ) ;
    if( mode != "-rwxr-xr-x" )
    {
