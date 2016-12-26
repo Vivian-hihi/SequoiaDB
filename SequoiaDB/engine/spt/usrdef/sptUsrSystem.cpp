@@ -3679,9 +3679,18 @@ namespace engine
          else
          {
             cmd << " -g " << groupObj.getStringField( "id" ) ;
-            if ( TRUE == groupObj.getBoolField( "isUnique" ) )
+            if ( TRUE == groupObj.hasField( "isUnique" ) )
             {
-               cmd << " -o" ;
+               if ( Bool != groupObj.getField( "isUnique" ).type() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  detail = BSON( SPT_ERR << "isUnique must be bool" ) ;
+                  goto error ;
+               }
+               if ( FALSE == groupObj.getBoolField( "isUnique" ) )
+               {
+                  cmd << " -o" ;
+               }
             }
          }
       }

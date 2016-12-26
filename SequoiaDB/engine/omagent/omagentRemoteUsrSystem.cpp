@@ -3485,11 +3485,19 @@ namespace engine
          }
          else
          {
-            cmd << " -g "
-                << _valueObj.getStringField( "id" ) ;
-            if ( TRUE == _valueObj.getBoolField( "isUnique" ) )
+            cmd << " -g " << _valueObj.getStringField( "id" ) ;
+            if ( TRUE == _valueObj.hasField( "isUnique" ) )
             {
-               cmd << " -o" ;
+               if ( Bool != _valueObj.getField( "isUnique" ).type() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "isUnique must be bool" ) ;
+                  goto error ;
+               }
+               if ( FALSE == _valueObj.getBoolField( "isUnique" ) )
+               {
+                  cmd << " -o" ;
+               }
             }
          }
       }
