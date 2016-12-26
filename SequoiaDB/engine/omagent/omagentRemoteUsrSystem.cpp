@@ -3797,17 +3797,26 @@ namespace engine
             {
                continue ;
             }
-            else if ( 4 == columns.size() )
-            {
-               loginIp = "" ;
-            }
             else
             {
-               loginIp = columns.back().substr( 1, columns.back().size()-2 );
-               loginTime = columns[ 2 ] ;
-               for( UINT32 index = 3; index < columns.size() - 1; index++ )
+               string &ipStr = columns.back() ;
+               if ( ipStr[ ipStr.size() - 1 ] == ')' )
                {
-                  loginTime += " " + columns[ index ] ;
+                  loginIp = ipStr.substr( 1, ipStr.size() - 2 );
+                  loginTime = columns[ 2 ] ;
+                  for ( UINT32 index = 3; index < columns.size() - 1; index++ )
+                  {
+                     loginTime += " " + columns[ index ] ;
+                  }
+               }
+               else
+               {
+                  loginIp = "" ;
+                  loginTime = columns[ 2 ] ;
+                  for( UINT32 index = 3; index < columns.size(); index++ )
+                  {
+                     loginTime += " " + columns[ index ] ;
+                  }
                }
             }
             userObjBuilder.append( CMD_USR_SYSTEM_LOGINUSER_USER, columns[ 0 ] ) ;
