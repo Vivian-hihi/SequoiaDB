@@ -378,22 +378,29 @@ function getNetcards( cmd )
    
    var names = cmd.run( "cat /proc/net/dev | grep : | cut -d : -f 1" ).split( "\n" ) ;
    var ips = [] ;
+   var k = 0 ;
    for( var i = 0;i < names.length-1;i++ )
    {
       names[i] = names[i].replace( /[/t ]/g, '' ) ;
       try
       {
-         var command = "ifconfig " + names[i] + " | grep 'inet addr'" +
-                       " | awk -F : '{print $2}' | awk '{print $1}'" ;
-         ips[i] = cmd.run( command ).split( "\n" )[0] ;
+         var command = "ip addr show " + names[i] + " | grep inet | grep -v inet6"
+                       + " | awk '{print $2}'" ;
+         var tmpInfo = cmd.run( command ).split( "\n" ) ;
+         for( var j = 0;j < tmpInfo.length-1;j++ )
+         {
+            var ind = tmpInfo[j].indexOf( "/" ) ;
+            var ip = tmpInfo[j].slice( 0, ind ) ;
+            obj.Netcards[k] = {} ;
+            obj.Netcards[k].Name = names[i] ;
+            obj.Netcards[k].Ip = ip ;
+            k++ ;
+         }
       }
       catch( e )
       {
          throw buildException( "getNetcards", e, "get ip of " + names[i], 0, e ) ;
       }
-      obj.Netcards[i] = {} ;
-      obj.Netcards[i].Name = names[i] ;
-      obj.Netcards[i].Ip = ips[i] ;
    }
    return obj ;
 }
@@ -407,7 +414,7 @@ function checkNetcards( netcards1, netcards2 )
    if( netcards1.length != netcards2.length )
    {
       throw buildException( "checkNetcards", null, "check netcards num", 
-                            netcards1.length, netcards2.length ) ;  
+            JSON.stringify( netcards1 ), JSON.stringify( netcards2 ) ) ;  
    }
    for( var i = 0;i < netcards1.length;i++ )
    {
@@ -451,7 +458,7 @@ function main()
       
       sts[i].testSnapshotDiskInfo() ;
       
-      // sts[i].testGetNetcardInfo() ;
+      sts[i].testGetNetcardInfo() ;
       
       sts[i].testSnapshotNetcardInfo() ;
    } 
