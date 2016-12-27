@@ -33,6 +33,7 @@ public class SubCL10200 extends SdbTestBase {
 	private String sCSName = csName + "_s";
 	private String mCLName = clName + "_m";
 	private String sCLName = clName + "_s";
+	private Random randomInt = new Random();
 	
 	@BeforeClass
 	public void setUp(){
@@ -94,15 +95,14 @@ public class SubCL10200 extends SdbTestBase {
 		//-----detachCL-----
 		try{
 			//random generate domain name
-			Random randomInt = new Random();
-			String tmpName = mCLName;
-			tmpName = mCLName + "_" + randomInt.nextInt(30);
+			String tmpName = mCLName + "_" + randomInt.nextInt(30);
 			//detachCL
 			db.getCollectionSpace(mCSName).getCollection(tmpName).
-					detachCollection(sCSName + "." + sCLName);
+				detachCollection(sCSName + "." + sCLName);
 			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -6){  //Duplicated attach
+			if(e.getErrorCode() != -242  //-242:Invalid collection partition 
+					&& e.getErrorCode() != -6){ //detach when not attach, exception -6
 				Assert.fail(e.getMessage());
 			}
 		}finally{
@@ -152,9 +152,7 @@ public class SubCL10200 extends SdbTestBase {
 			options.put("LowBound", lowBoundObj);
 			options.put("UpBound", upBoundObj);
 			//random generate domain name
-			Random randomInt = new Random();
-			String tmpName = mCLName;
-			tmpName = mCLName + "_" + randomInt.nextInt(30);
+			String tmpName = mCLName + "_" + randomInt.nextInt(30);
 			//attachCL
 			sdb.getCollectionSpace(mCSName).getCollection(tmpName).
 					attachCollection(sCSName + "." + sCLName, options);

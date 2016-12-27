@@ -95,7 +95,9 @@ public class SubCL10195 extends SdbTestBase {
 				csDB.getCollection(mCLName).detachCollection(sCSName + "." + sCLName);
 			}
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23 && e.getErrorCode() != -34){  
+			if(e.getErrorCode() != -242 //-242:Invalid collection partition
+					&& e.getErrorCode() != -34
+					&& e.getErrorCode() != -23){  
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}

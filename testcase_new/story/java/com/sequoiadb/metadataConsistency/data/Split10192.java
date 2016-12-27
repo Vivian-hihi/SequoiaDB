@@ -91,7 +91,7 @@ public class Split10192 extends SdbTestBase {
 			//check result
 			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -175 //-175:The mutex task already exist&& 
+			if(e.getErrorCode() != -175 //-175:The mutex task already exist 
 					&& e.getErrorCode() != -147){  //-147:Unable to lock
 				Assert.fail(e.getMessage());
 			}
@@ -122,7 +122,9 @@ public class Split10192 extends SdbTestBase {
 			db.getCollectionSpace(csName).getCollection(mCLName).
 			detachCollection(csName + "." + sCLName);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -242){  //-242:Invalid collection partition 
+				Assert.fail(e.getMessage());
+			}
 		}finally{
 			db.disconnect();
 		}
