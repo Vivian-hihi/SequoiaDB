@@ -557,6 +557,18 @@
                            "file": "SDB_SNAP_CATALOG",
                            "cn": "编目信息快照",
                            "en": "SDB_SNAP_CATALOG"
+                        },
+                        {
+                           "id": 1479173720,
+                           "file": "SDB_SNAP_TRANSACTION",
+                           "cn": "事务快照",
+                           "en": "SDB_SNAP_TRANSACTION"
+                        },
+                        {
+                           "id": 1479173721,
+                           "file": "SDB_SNAP_TRANSACTION_CURRENT",
+                           "cn": "当前事务快照",
+                           "en": "SDB_SNAP_TRANSACTION_CURRENT"
                         }
                      ]
                   },
