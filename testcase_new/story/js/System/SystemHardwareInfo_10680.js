@@ -381,7 +381,7 @@ function getNetcards( cmd )
    var k = 0 ;
    for( var i = 0;i < names.length-1;i++ )
    {
-      names[i] = names[i].replace( /[/t ]/g, '' ) ;
+      names[i] = names[i].replace( /[\t ]/g, '' ) ;
       try
       {
          var command = "ip addr show " + names[i] + " | grep inet | grep -v inet6"
