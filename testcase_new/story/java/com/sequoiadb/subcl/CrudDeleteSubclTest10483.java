@@ -207,11 +207,6 @@ public class CrudDeleteSubclTest10483 extends SdbTestBase{
 	private void checkData() {
 		boolean flag = true;
 		try {
-			subcls[2].getCount();
-		} catch (BaseException e) {
-			e.printStackTrace();
-		}
-		try {
 			CollectionSpace cs = sdb.getCollectionSpace( csName );
 			// check delete subcl
 			if ( !cs.isCollectionExist(subclNames[2]) ) {
@@ -242,6 +237,8 @@ public class CrudDeleteSubclTest10483 extends SdbTestBase{
 				} else {
 					flag = false;
 				}
+			} else {
+				flag = false;
 			}
 		} catch (BaseException e) {
 			e.printStackTrace();
