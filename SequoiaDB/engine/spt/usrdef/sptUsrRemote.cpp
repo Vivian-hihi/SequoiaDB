@@ -249,7 +249,7 @@ namespace engine
       ss << "Remote functions:" << endl
          << "var remote = new Remote( [hostname], [svcname] )" << endl
          << "   getSystem()" << endl
-         << "   getFile( [filename] )" << endl
+         << "   getFile( [filename], [mode] )" << endl
          << "   getCmd()" << endl
          << "   close()" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
@@ -263,7 +263,7 @@ namespace engine
       stringstream ss ;
       ss << "Remote member functions:" << endl
          << "   getSystem()" << endl
-         << "   getFile( [filename] )" << endl
+         << "   getFile( [filename], [mode] )" << endl
          << "   getCmd()" << endl
          << "   close()" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
