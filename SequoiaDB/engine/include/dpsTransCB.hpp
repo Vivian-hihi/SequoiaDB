@@ -74,6 +74,8 @@ namespace engine
       DPS_TRANS_ID         _transID ;
       DPS_LSN_OFFSET       _curTransLsn ;
       UINT64               _eduID ;
+      UINT64               _relatedNID ;
+      UINT32               _relatedTID ;
       UINT32               _locksNum ;
       dpsTransLockId       _waitLock ;
       DpsTransCBLockList   _lockList ;

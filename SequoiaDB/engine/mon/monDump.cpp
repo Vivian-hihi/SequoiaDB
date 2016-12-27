@@ -1087,6 +1087,8 @@ namespace engine
                          _curTransInfo._waitLock.toBson() ) ;
          builder.append( FIELD_NAME_TRANS_LOCKS_NUM,
                          (INT32)_curTransInfo._locksNum ) ;
+         monAppendSessionIdentify( builder, _curTransInfo._relatedNID,
+                                   _curTransInfo._relatedTID ) ;
 
          _curEduInfo = builder.obj() ;
          _slice = 0 ;
