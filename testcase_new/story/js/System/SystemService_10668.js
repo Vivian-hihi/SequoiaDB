@@ -24,16 +24,16 @@ SystemTest.prototype.testRunServiceSSH = function()
    if( info.indexOf( "start" ) != -1 )   // 如果服务已启动，则停止再启动服务
    {
       this.system.runService( "ssh", "stop", "" ) ;
-      var status = this.system.runService( "ssh", "status", "" ) ;
+      var status = this.system.runService( "ssh", "status" ) ;
       checkStatus( status, "stop" ) ;
       this.system.runService( "ssh", "start", "" ) ;
-      status = this.system.runService( "ssh", "status", "" ) ;
+      status = this.system.runService( "ssh", "status" ) ;
       checkStatus( status, "start" ) ;   
    }
    else if( info.indexOf( "stop" ) != -1 )  // 如果服务已停止，则启动服务
    {
       this.system.runService( "ssh", "start", "" ) ;
-      var status = this.system.runService( "ssh", "status", "" ) ;
+      var status = this.system.runService( "ssh", "status" ) ;
       checkStatus( status, "start" ) ;   
    }
    else
@@ -58,7 +58,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
    
    // 获取服务状态
    this.init() ;
-   var info = this.system.runService( "ssh", "status", "" ) ;
+   var info = this.system.runService( "ssh", "status" ) ;
    var command ;
    if( info.indexOf( "start" ) != -1 )
       command = "start" ;
@@ -66,7 +66,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
       command = "stop" ;   
    try
    {
-      this.system.runService( "ssh", command, "" ) ;
+      this.system.runService( "ssh", command ) ;
       throw "run service duplicate should be failed" ;
    }
    catch( e )
@@ -80,7 +80,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
    // 测试完成后，启动服务
    try
    {
-      this.system.runService( "ssh", "start", "" ) ;
+      this.system.runService( "ssh", "start" ) ;
    }
    catch( e )
    {
@@ -112,7 +112,7 @@ SystemTest.prototype.testStopSdbcm = function()
    }
    try
    {
-      this.system.runService( "sdbcm", "stop", "" ) ;
+      this.system.runService( "sdbcm", "stop" ) ;
    }
    catch( e )
    {
