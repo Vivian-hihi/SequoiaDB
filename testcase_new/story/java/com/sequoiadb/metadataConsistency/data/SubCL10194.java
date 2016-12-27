@@ -93,7 +93,8 @@ public class SubCL10194 extends SdbTestBase {
 			
 			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23){  
+			if(e.getErrorCode() != -242 //-242:Invalid collection partition
+					&& e.getErrorCode() != -23){  
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}

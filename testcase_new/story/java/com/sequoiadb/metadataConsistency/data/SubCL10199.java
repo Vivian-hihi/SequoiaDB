@@ -98,10 +98,11 @@ public class SubCL10199 extends SdbTestBase {
 			}
 			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			db.disconnect();
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -242){  //-242:Invalid collection partition 
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
 		}
-		
 	}
 	
 	public void createMainCL(Sequoiadb sdb){
