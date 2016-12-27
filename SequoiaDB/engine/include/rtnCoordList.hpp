@@ -146,9 +146,31 @@ namespace engine
    } ;
 
    /*
+      rtnCoordCMDListCollectionSpaceIntr define
+   */
+   class rtnCoordCMDListCollectionSpaceIntr : public rtnCoordCMDQueryBase
+   {
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName,
+                                 BSONObj &outSelector ) ;
+   } ;
+
+   /*
       rtnCoordCMDListCollection define
    */
    class rtnCoordCMDListCollection : public rtnCoordCMDQueryBase
+   {
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName,
+                                 BSONObj &outSelector ) ;
+   } ;
+
+   /*
+      rtnCoordCMDListCollectionIntr define
+   */
+   class rtnCoordCMDListCollectionIntr : public rtnCoordCMDQueryBase
    {
    protected:
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,

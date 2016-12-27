@@ -159,6 +159,17 @@ namespace engine
    }
 
    /*
+      rtnCoordCMDListCollectionSpaceIntr implement
+   */
+   INT32 rtnCoordCMDListCollectionSpaceIntr::_preProcess( rtnQueryOptions &queryOpt,
+                                                          string &clName,
+                                                          BSONObj &outSelector )
+   {
+      clName = CAT_COLLECTION_SPACE_COLLECTION ;
+      return SDB_OK ;
+   }
+
+   /*
       rtnCoordCMDListCollection implement
    */
    INT32 rtnCoordCMDListCollection::_preProcess( rtnQueryOptions &queryOpt,
@@ -170,6 +181,17 @@ namespace engine
       builder.appendNull( CAT_COLLECTION_NAME ) ;
       outSelector = queryOpt._selector ;
       queryOpt._selector = builder.obj() ;
+      return SDB_OK ;
+   }
+
+   /*
+      rtnCoordCMDListCollectionIntr implement
+   */
+   INT32 rtnCoordCMDListCollectionIntr::_preProcess( rtnQueryOptions &queryOpt,
+                                                     string & clName,
+                                                     BSONObj &outSelector )
+   {
+      clName = CAT_COLLECTION_INFO_COLLECTION ;
       return SDB_OK ;
    }
 

@@ -95,8 +95,8 @@ namespace engine
    /* Virtual list */
    RTN_COORD_CMD_ADD( COORD_CMD_LISTBACKUPINTR, rtnCoordListBackupIntr, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_LISTGROUPINTR,  rtnCoordCMDListGroups, TRUE ) ;
-   RTN_COORD_CMD_ADD( COORD_CMD_LISTCSINTR, rtnCoordCMDListCollectionSpace, TRUE ) ;
-   RTN_COORD_CMD_ADD( COORD_CMD_LISTCLINTR, rtnCoordCMDListCollection, TRUE ) ;
+   RTN_COORD_CMD_ADD( COORD_CMD_LISTCSINTR, rtnCoordCMDListCollectionSpaceIntr, TRUE ) ;
+   RTN_COORD_CMD_ADD( COORD_CMD_LISTCLINTR, rtnCoordCMDListCollectionIntr, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_LISTCTXINTR, rtnCoordCMDListIntrBase, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_LISTCTXCURINTR, rtnCoordCMDListCurIntrBase, TRUE ) ;
    RTN_COORD_CMD_ADD( COORD_CMD_LISTSESSINTR, rtnCoordCMDListIntrBase, TRUE ) ;
