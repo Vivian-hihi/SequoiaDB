@@ -633,7 +633,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          char temp[64] = {0} ;
          const char *pFormat = 0 ;
          long long num = ( long long )bson_iterator_long( i );
-         if (!jsCompatibility)
+         if (!bson_get_js_compatibility())
          {
             pFormat = "%lld" ;
          }
@@ -859,8 +859,20 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       total += 16 ;
       break ;
    case BSON_LONG :
-      total += 32 ;
+   {
+      if (!bson_get_js_compatibility())
+      {
+         total += 32 ;
+      }
+      else 
+      {
+         // show as{ "a": { "$numberLong": "-9223372036854775808" } }
+         // so, we need at least 42 bytes 
+         // for { "$numberLong": "-9223372036854775808" }
+         total += 64 ;
+      }
       break ;
+   }
    case BSON_DECIMAL :
       total += bson_sprint_decimal_length_iterator( i ) ;
       break ;
@@ -2260,12 +2272,12 @@ SDB_EXPORT bson_bool_t bson_is_inf( double d, int *pSign )
     return 0 ;
 }
 
-SDB_EXPORT void setJSCompatibility(int compatible)
+SDB_EXPORT void bson_set_js_compatibility(int compatible)
 {
     jsCompatibility = compatible;
 }
 
-SDB_EXPORT int getJSCompatibility()
+SDB_EXPORT int bson_get_js_compatibility()
 {
     return jsCompatibility;
 }

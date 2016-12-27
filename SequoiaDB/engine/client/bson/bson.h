@@ -1296,13 +1296,13 @@ SDB_EXPORT bson_bool_t bson_is_inf( double d, int *pSign ) ;
  * show the string which is the same with that 
  * shows in sdb shell.
  */
-SDB_EXPORT void setJSCompatibility(int compatible);
+SDB_EXPORT void bson_set_js_compatibility(int compatible);
 
 /**
  * get whether bson_print method will show the string
  * which is the same with that shows in sdb shell or not
  */
-SDB_EXPORT int getJSCompatibility();
+SDB_EXPORT int bson_get_js_compatibility();
 
 SDB_EXTERN_C_END
 #endif
