@@ -232,7 +232,7 @@ function autoTest()
    if [ $runAll -eq 0 ]; then
       ./runtest.sh -s 0
    else
-      ./runtest.sh -s 0 -t hlt
+      ./runtest.sh -s 0 -t story 
    fi
    echo "=============================End test usecases================================="
 }

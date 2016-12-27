@@ -1,11 +1,11 @@
-#bin/bash
+#!/bin/bash
 
 # define test root path
-hltTestRoot="testcases/hlt/js_testcases/js"
-sdvTestRoot="testcases/sdv/normal_parallel"
-testRoots=($hltTestRoot)
+storyTestRoot="testcase_new/story/js"
+sdvTestRoot="testcase_new/sdv/js"
+testRoots=($storyTestRoot)
 
-libRoot="testcases/hlt/js_testcases/libs"
+libRoot="testcase_new/story/js/lib"
 commlibstr="commlib.js"
 
 sdbRoot="bin"
@@ -16,9 +16,9 @@ coordsvcname="50000"
 catasvcname="30000"
 coordhostname="localhost"
 
-spareportstart="26000"
-spareportstop="27000"
-spareportPath="/opt/sequoiadb/database/"
+rsrvportbegin="26000"
+rsrvportend="27000"
+rsrvnodedir="/opt/sequoiadb/database/"
 
 runresult=0
 
@@ -53,7 +53,8 @@ lastCmdStr=""
 needExit=0
 
 # define ignore path and file
-ignoredPaths=("vote" "dataCompress")
+ignoredPaths=()
+#ignoredPaths=("vote" "dataCompress" "bakupRestore")
 ignoredFiles=("commlib.js")
 
 # print help information
@@ -65,14 +66,14 @@ function showHelpInfo()
    echo ""
    echo " -p path     : 运行指定路径下的JS用例。为相对目录，默认根目录为用例目录"
    echo " -f file     : 运行指定的JS用例。为相对目录，默认根目录为用例目录"
-   echo " -t type     : 运行指定类型的用例，可取hlt|sdv|all。当不指定-t-p-f时，默认跑基本用例；当不指定-t指定了-f|-p默认跑hlt"
-   echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止"
+   echo " -t type     : 运行指定类型的用例，可取story|sdv|all。当不指定-t-p-f时，默认跑基本用例；当不指定-t指定了-f|-p默认跑story"
+   echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止，默认为1"
    echo " -n svcname  : 指定测试的COORD节点服务名"
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
    echo " -c cataport : 指定测试的CATALOG节点服务名"
-   echo " -s1         : 指定预留的SPAREPORTSTART端口号，默认为26000"
-   echo " -s2         : 指定预留的SPAREPORTSTOP端口号，默认为27000"
-   echo " -sp         : 指定用预留端口创建节点的路径SPAREPORTPATH，默认为/opt/sequoiadb/database/"
+   echo " -s1         : 指定预留的RSRVPORTBEGIN端口号，默认为26000"
+   echo " -s2         : 指定预留的RSRVPORTEND端口号，默认为27000"
+   echo " -sp         : 指定用预留端口创建节点的路径RSRVNODEDIR，默认为/opt/sequoiadb/database/"
    echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
    echo ""
@@ -121,7 +122,7 @@ function runJSFile()
    local file=$1
    
    result=0
-   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var SPAREPORTSTART='${spareportstart}';var SPAREPORTSTOP='${spareportstop}'; var CATASVCNAME='$catasvcname'; var SPAREPORTPATH='$spareportPath'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$file\""
+   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var RSRVPORTBEGIN='${rsrvportbegin}';var RSRVPORTEND='${rsrvportend}'; var CATASVCNAME='$catasvcname'; var RSRVNODEDIR='$rsrvnodedir'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$file\""
 #   runresult=0
    if [ $printOut -eq 1 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
@@ -310,13 +311,13 @@ function analyPara()
                          catasvcname="$1"
                          ;;                
          -s1)            shift
-                         spareportstart="$1"
+                         rsrvportbegin="$1"
                          ;;
          -s2)            shift
-                         spareportstop="$1"
+                         rsrvportend="$1"
                          ;;
          -sp )           shift
-                         spareportPath="$1"
+                         rsrvnodedir="$1"
                          ;;
          -t )            shift   
                          testType="$1"              
@@ -337,13 +338,13 @@ function analyPara()
 function analyTestType()
 {
    case $testType in
-      hlt )    testRoots[0]=$hltTestRoot
+      story )  testRoots[0]=$storyTestRoot
                runAllTest=1
                ;;
       sdv )    testRoots[0]=$sdvTestRoot
                runAllTest=1
                ;;
-      all )    testRoots[0]=$hltTestRoot
+      all )    testRoots[0]=$storyTestRoot
                testRoots[1]=$sdvTestRoot
                runAllTest=1
                ;;
@@ -354,6 +355,21 @@ function analyTestType()
                showHelpInfo 1
                ;;
    esac                                    
+}
+
+function filterTestcase()
+{  
+   local testRoot=$1
+   
+   pathLists=(`sed -n '2,6p' $testRoot/testcase.conf |awk -F '=' '{print $2}'`)
+   for pathList in ${pathLists[@]} 
+   do
+      path2Space=${pathList//,/ }
+      for path in $path2Space
+      do
+         ignoredPaths+=($path)
+      done
+   done
 }
    
 function generateFindCmd()
@@ -514,14 +530,16 @@ echo "UUID          : $uuid"
 echo "UUNAME        : $uuname"
 echo "COORDSVCNAME  : $coordsvcname"
 echo "COORDHOSTNAME : $coordhostname"
-echo "SPAREPORTSTART: $spareportstart"
-echo "SPAREPORTSTOP : $spareportstop"
-echo "SPAREPORTPATH : $spareportPath"
+echo "RSRVPORTBEGIN : $rsrvportbegin"
+echo "RSRVPORTEND   : $rsrvportend"
+echo "RSRVNODEDIR   : $rsrvnodedir"
 
 # generate command of find test files, and print 
 declare -a findCmds                         #define findCmds as array
 for testRoot in ${testRoots[@]}
-do   
+do 
+   unset ignoredPaths
+   filterTestcase $testRoot
    generateFindCmd $testRoot
    findCmds[${#findCmds[@]}]="$findCmdStr"  #add element in tail of array    
 done
@@ -534,8 +552,8 @@ beginTimeSec=`date +%s`
 for(( i=0; i<${#testRoots[@]}; i++ ))
 do
    case ${testRoots[i]} in
-      $hltTestRoot )    reportDir="${reportDirRoot}/hlt"
-                        tmpType="hlt"
+      $storyTestRoot )  reportDir="${reportDirRoot}/story"
+                        tmpType="story"
                         mkdir ${reportDir}
                         ;;
       $sdvTestRoot )    reportDir="${reportDirRoot}/sdv"
