@@ -33,7 +33,10 @@ FileTest.prototype.init = function()
    else
    {
       this.remote = new Remote( this.hostname, this.svcname ) ;
-      this.file = this.remote.getFile( this.filename ) ;   // 远程File类类型或远程file对象
+      if( this.filename == undefined )
+         this.file = this.remote.getFile() ;          // 远程File类类型
+      else
+         this.file = this.remote.getFile( this.filename ) ;  // 远程file对象
       this.cmd = this.remote.getCmd() ;   // 远程cmd对象
    }
 }
