@@ -787,6 +787,9 @@ INT32 bson_compare(const CHAR *pStr, const bson *b)
    INT32 rc  = 0 ;
    CHAR *p = NULL ;
    INT32 bufferSize = bson_sprint_length ( b ) ;
+   INT32 strLen = strlen( pStr ) ;
+   if (strLen > bufferSize)
+      return 1;
    p = (CHAR*)malloc(bufferSize) ;
    if ( !p )
       return -2;

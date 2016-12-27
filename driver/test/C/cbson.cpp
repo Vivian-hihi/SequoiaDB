@@ -604,12 +604,12 @@ TEST(cbson, cbson_jsCompatibility_toString)
    bson_print( &obj );
    ASSERT_EQ( 0, bson_compare(pExpect1, &obj) );
 
-   setJSCompatibility( 1 );
+   bson_set_js_compatibility( 1 );
    cout << "enable js compatibility: " ;
    bson_print( &obj );
    ASSERT_EQ( 0, bson_compare(pExpect2, &obj) );
 
-   setJSCompatibility( 0 );
+   bson_set_js_compatibility( 0 );
    cout << "disable js compatibility: " ;
    bson_print( &obj );
    ASSERT_EQ( 0, bson_compare(pExpect1, &obj) );
