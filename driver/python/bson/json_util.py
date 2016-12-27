@@ -109,6 +109,17 @@ _RE_OPT_TABLE = {
     "x": re.X,
 }
 
+_js_compatibility = False
+
+def set_js_compatiability(compatible):
+    global _js_compatibility
+    if not isinstance(compatible, bool):
+        raise Exception("compatible should be type of bool")
+    _js_compatibility = compatible
+
+def get_js_compatiability():
+    global _js_compatibility
+    return _js_compatibility
 
 def dumps(obj, *args, **kwargs):
     """Helper function that wraps :class:`json.dumps`.
@@ -219,7 +230,7 @@ def default(obj):
     if isinstance(obj, ObjectId):
         return {"$oid": str(obj)}
     if isinstance(obj, int) or ((not PY3) and isinstance(obj, long)):
-        if obj > 9007199254740991 or obj < -9007199254740991:
+        if (obj > 9007199254740991 or obj < -9007199254740991) and get_js_compatiability():
             return {"$numberLong": str(obj)}
     if isinstance(obj, Decimal):
         return json.loads(str(obj))
