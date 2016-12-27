@@ -1426,7 +1426,7 @@ namespace engine
 
       try
       {
-         boost::algorithm::split( splited, buf, boost::is_any_of( "\r\n" ) ) ;
+         boost::algorithm::split( splited, buf, boost::is_any_of( "\n" ) ) ;
       }
       catch( std::exception &e )
       {
@@ -1449,6 +1449,9 @@ namespace engine
          }
       }
 
+      // there is at lease one cpu
+      physicalIDSet.insert( "0" ) ;
+      info.reset() ;
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
             itr++ )
@@ -1458,7 +1461,8 @@ namespace engine
          vector<string> columns ;
          try
          {
-            boost::algorithm::split( columns, *itr, boost::is_any_of( ":" ) ) ;
+            boost::algorithm::split( columns, *itr, boost::is_any_of( "\t:" ),
+                                     boost::token_compress_on ) ;
          }
          catch( std::exception &e )
          {
@@ -1562,7 +1566,7 @@ namespace engine
       {
          string physicalID = *itr ;
          UINT32 coreNum    = 0 ;
-         string info       = "" ;
+         string modelName  = "" ;
          string strAvgFreq ;
          FLOAT32 totalFreq = 0.0 ;
          for ( vector<cpuInfo>::iterator itr2 = vecCpuInfo.begin();
@@ -1570,7 +1574,7 @@ namespace engine
          {
             if ( physicalID == itr2->physicalID )
             {
-               // set freq
+               // sum freq
                try
                {
                   FLOAT32 inc = boost::lexical_cast<FLOAT32>( itr2->freq ) ;
@@ -1583,12 +1587,12 @@ namespace engine
                   rc = SDB_SYS ;
                   goto error ;
                }
-               // set info
-               if ( info == "" )
+               // set modelName if it is uninitialized
+               if ( modelName == "" )
                {
-                  info = itr2->modelName ;
+                  modelName = itr2->modelName ;
                }
-               // set core num
+               // add core num
                coreNum++ ;
             }
          }
@@ -1604,7 +1608,7 @@ namespace engine
             goto error ;
          }
          arrBuilder << BSON( CMD_USR_SYSTEM_CORE << coreNum
-                             << CMD_USR_SYSTEM_INFO << info
+                             << CMD_USR_SYSTEM_INFO << modelName
                              << CMD_USR_SYSTEM_FREQ << strAvgFreq + "GHz" ) ;
       }
       builder.append( CMD_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
