@@ -108,7 +108,6 @@ public class CrudDeleteSubclTest10483 extends SdbTestBase{
 			for (int i = 300; i < 600; i++) {
 				maincl.delete((BSONObject) JSON.parse(" {name:'name_"+i+"'} "));
 			} 
-			Assert.assertTrue(false, "crud data faild");
 		} catch (BaseException e) {
 			if (e.getErrorCode() != -135 ) e.printStackTrace();
 			Assert.assertEquals(e.getErrorCode(), -135, "crud data faild: "+e.getMessage());
