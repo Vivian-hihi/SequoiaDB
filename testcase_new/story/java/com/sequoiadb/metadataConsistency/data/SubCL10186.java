@@ -46,13 +46,11 @@ public class SubCL10186 extends SdbTestBase {
 			if(CommLib.isStandAlone(sdb)){
 				throw new SkipException("The mode is standlone, " + "skip the testCase.");
 			}
-			
 			//clear env
 			CommLib.clearCL(sdb, csName, clName);
 			CommLib.clearCS(sdb, csName);
 			//ready env
 			this.readyCL();
-			
 		}catch(BaseException e){
 			Assert.fail("Failed to prepare env at th begining. "
 					+ "ErrorMsg:\n" +e.getMessage());
@@ -62,6 +60,8 @@ public class SubCL10186 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
+			//check results
+			CommLib.checkCLResult(sdb, csName, clName);
 			//clear env
 			CommLib.clearCL(sdb, csName, clName);
 			CommLib.clearCS(sdb, csName);
@@ -98,9 +98,6 @@ public class SubCL10186 extends SdbTestBase {
 			options.put("UpBound", upBoundObj);
 			csDB.getCollection(mCLName + random.nextInt(number)).
 					attachCollection(csName + "." + sCLName + random.nextInt(number), options);
-		    
-			//check results of catalog
-			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -235 //-235:Duplicated attach collection partition
 					&& e.getErrorCode() != -237){  //-237:New boundary is conflict with the existing boundary
