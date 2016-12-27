@@ -147,17 +147,7 @@
                     <group>root</group>
                     <owner>root</owner>
                 </changeOwnerAndGroup>
-                <changePermissions permissions="6755" files="${installdir}/bin/sdbomtool"/>
-                                              
-                <runProgram>
-                    <program>rm</program>
-                    <programArguments>-f ${installdir}/www/doc</programArguments>            
-                </runProgram>        
-                <createSymLink linkName="${installdir}/www/doc" target="${installdir}/doc"/>
-                <runProgram>
-                    <program>chown</program>
-                    <programArguments>-h ${username}:${groupname} ${installdir}/www/doc</programArguments>            
-                </runProgram>  
+                <changePermissions permissions="6755" files="${installdir}/bin/sdbomtool"/>                                            
                                                              
                 <changeOwnerAndGroup>
                     <files>${project.rollbackBackupDirectory};${installdir}/rollback</files>
@@ -563,7 +553,6 @@
             </actionList>
         </if>        
         
-        
         <!--other-->
         <removeUnixService>
             <name>sdbcm</name>            
@@ -599,4 +588,3 @@
     <vendor>SequoiaDB</vendor>      
     
 </project>
-

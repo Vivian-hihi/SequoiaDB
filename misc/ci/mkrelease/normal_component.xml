@@ -10,9 +10,9 @@
     </initializationActionList>
        
     <readyToInstallActionList>  
-        <!--check disk-->     
+        <!--check disk--> 
         <checkFreeDiskSpaceFunction/>
-        
+         
         <!--check umask-->
         <checkUmaskFunction/> 
         
