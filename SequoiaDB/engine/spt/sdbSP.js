@@ -1741,7 +1741,7 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
    var retStr ;
 
    // check argument
-   if ( undefined == cmd )
+   if ( 1 > arguments.length )
    {
       setLastErrMsg( "cmd must be config" ) ;
       throw SDB_INVALIDARG ;
@@ -1752,15 +1752,27 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
       setLastErrMsg( "cmd must be string" ) ;
       throw SDB_INVALIDARG ;
    }
-   if ( undefined == args )
+   this._command = cmd ;
+
+   if ( 2 > arguments.length )
    {
       args = "" ;
    }
-   if ( undefined == timeout )
+   else
+   {
+      if ( "string" != typeof( args ) )
+      {
+         setLastErrMsg( "environment should be a string" ) ;
+         throw SDB_INVALIDARG ;
+      }
+      this._command += " " + args ;
+   }
+
+   if ( 3 > arguments.length )
    {
       timeout = 0 ;
    }
-   if ( undefined == useShell )
+   if ( 4 > arguments.length )
    {
       useShell = 1 ;
    }
@@ -1774,7 +1786,7 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
                                                "useShell": useShell }, {},
                                              { "command": cmd,
                                                "args": args } ).toObj() ;
-      this._command = cmd ;
+
       this._retCode = retObj.retCode ;
       this._strOut = retObj.strOut ;
 
@@ -1802,25 +1814,38 @@ Cmd.prototype.start = function( cmd, args, useShell, timeout ) {
    var retStr ;
 
    // check argument
-   if ( undefined == cmd )
+   if ( 1 > arguments.length )
    {
       setLastErrMsg( "cmd must be config" ) ;
       throw SDB_INVALIDARG ;
    }
+
    if ( "string" != typeof( cmd ) )
    {
       setLastErrMsg( "cmd must be string" ) ;
       throw SDB_INVALIDARG ;
    }
-   if ( undefined == args )
+   this._command = cmd ;
+
+   if ( 2 > arguments.length )
    {
       args = "" ;
    }
-   if ( undefined == useShell )
+   else
+   {
+      if ( "string" != typeof( args ) )
+      {
+         setLastErrMsg( "environment should be a string" ) ;
+         throw SDB_INVALIDARG ;
+      }
+      this._command += " " + args ;
+   }
+
+   if ( 3 > arguments.length )
    {
       useShell = 1 ;
    }
-   if ( undefined == timeout )
+   if ( 4 > arguments.length )
    {
       timeout = 100 ;
    }
@@ -1834,7 +1859,6 @@ Cmd.prototype.start = function( cmd, args, useShell, timeout ) {
                                                  "args": args } ) ;
       var getObj = recvObj.toObj() ;
 
-      this._command = cmd ;
       this._retCode = getObj.retCode ;
       this._strOut = getObj.strOut ;
 
