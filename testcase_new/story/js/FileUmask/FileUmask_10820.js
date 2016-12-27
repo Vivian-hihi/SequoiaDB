@@ -56,6 +56,37 @@ FileTest.prototype.testSetUmask = function()
    this.release() ;
 }
 
+// 测试使用不同进制获取Umask
+FileTest.prototype.testGetUmaskWithBase = function()
+{
+   this.init() ;
+   
+   var oldUmask = this.file.getUmask( '8' ) ;
+   
+   this.file.setUmask( 0222 ) ;
+   var umask = this.file.getUmask() ;
+   if( umask != 146 || typeof( umask ) != "number" )
+   {
+      throw buildException( "getUmaskWithBase", null, 
+            "get umask with no parameter " + this, 146, umask ) ;
+   }
+   
+   var base = [ '8', '10', '16' ] ;
+   var result = [ '0222', '146', '0x92' ] ;
+   for( var i = 0;i < base.length;i++ )
+   {
+      umask = this.file.getUmask( base[i] ) ;
+      if( umask != result[i] || typeof( umask ) != "string" )
+      {
+         throw buildException( "getUmaskWithBase", null, 
+               "get umask with base " + base[i] + " " + this, result[i], umask ) ;
+      }
+   }
+   
+   this.file.setUmask( parseInt( oldUmask, 8 ) ) ; 
+   this.release() ;
+}
+
 function main()
 {
    // 获取本地主机和远程主机
@@ -73,10 +104,13 @@ function main()
    for( var i = 0; i < fts.length;i++ )
    {
       // 测试获取文件权限默认掩码
-      fts[i].testGetUmask() ;
+      // fts[i].testGetUmask() ;
       
       // 测试设置文件权限默认掩码
       fts[i].testSetUmask() ;
+      
+      // 测试使用不同进制获取掩码
+      fts[i].testGetUmaskWithBase() ;
    }
 }
 
