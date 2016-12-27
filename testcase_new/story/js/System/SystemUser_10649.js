@@ -48,7 +48,7 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user != "root" )
    {
-      println( user + " have no permission to create user." ) ;
+      // println( user + " have no permission to create user." ) ;
       return ;
    }
    
@@ -97,7 +97,7 @@ SystemTest.prototype.testAddExistUser = function()
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user != "root" )
    {
-      println( user + " have no permission to create user." ) ;
+      // println( user + " have no permission to create user." ) ;
       return ;
    }
    
@@ -356,7 +356,7 @@ function main()
       sts[i].testListAllUsers() ;
       
       // 测试获取当前用户信息
-      // sts[i].testGetCurrentUser() ;
+      sts[i].testGetCurrentUser() ;
       
       // 测试判断用户是否存在
       sts[i].testIsUserExist() ;
