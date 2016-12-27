@@ -259,9 +259,6 @@ namespace engine
 
       /* Send command to Data Groups with the TID of client */
       virtual BOOLEAN _flagReserveClientTID () { return TRUE ; }
-
-      /* Get list of Data Groups from Catalog with the P1 catalog command */
-      virtual BOOLEAN _flagUpdateBeforeCata () { return TRUE ; }
    } ;
 
    /*
