@@ -52,7 +52,7 @@ function isApproEqual( n1, n2 )  // n1 n2 >= 0
 {
    var max = n1 > n2 ? n1 : n2 ;
    var min = ( max == n1 ) ? n2 : n1 ;
-   return min / max >= 0.9 || max - min <= 2 ;
+   return min / max >= 0.85 || max - min <= 2 ;
 }
 
 /******************************************************************************
