@@ -48,6 +48,8 @@ namespace engine
 
    #define  OM_REST_HEAD_SDBUSER         "SdbUser"
    #define  OM_REST_HEAD_SDBPASSWD       "SdbPasswd"
+   #define  OM_REST_HEAD_SDBHOSTNAME     "SdbHostName"
+   #define  OM_REST_HEAD_SDBSERVICENAME  "SdbServiceName"
 
    class _dpsLogWrapper ;
    class _SDB_RTNCB ;

@@ -538,6 +538,55 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omRestSession::_setSpecifyNode( const CHAR *pSdbHostName,
+                                          const CHAR *pSdbSvcName,
+                                          list<omNodeInfo> &nodeList )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isFind = FALSE ;
+      list<omNodeInfo>::iterator iter ;
+
+      if( ( pSdbHostName == NULL && pSdbSvcName != NULL ) ||
+          ( pSdbHostName != NULL && pSdbSvcName == NULL ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "fail to get %s,rc=%d",
+                 pSdbHostName == NULL ?
+                 OM_REST_HEAD_SDBHOSTNAME :OM_REST_HEAD_SDBSERVICENAME, rc ) ;
+         goto error ;
+      }
+
+      if( pSdbHostName != NULL && pSdbSvcName != NULL )
+      {
+         for( iter = nodeList.begin(); iter != nodeList.end(); ++iter )
+         {
+            if( iter->hostName.compare( pSdbHostName ) == 0 &&
+                iter->service.compare( pSdbSvcName ) == 0 )
+            {
+               omNodeInfo tmpNodeInfo = *iter ;
+               nodeList.erase( iter ) ;
+               nodeList.push_front( tmpNodeInfo ) ;
+               isFind = TRUE ;
+               break ;
+            }
+         }
+         if( isFind == FALSE )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "specified node does not exist,"
+                    " %s: %s, %s: %s, rc=%d",
+                    OM_REST_HEAD_SDBHOSTNAME, pSdbHostName,
+                    OM_REST_HEAD_SDBSERVICENAME, pSdbSvcName, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omRestSession::_processSdbTransferMsg( restAdaptor *pAdaptor,
                                                  const CHAR *pClusterName,
                                                  const CHAR *pBusinessName )
@@ -551,7 +600,9 @@ namespace engine
       list<omNodeInfo> nodeList ;
       const CHAR *pSdbUser      = NULL ;
       const CHAR *pSdbPasswd    = NULL ;
-
+      const CHAR *pSdbHostName  = NULL ;
+      const CHAR *pSdbSvcName   = NULL ;
+      
       if ( !isAuthOK() )
       {
          rc = SDB_PMD_SESSION_NOT_EXIST ;
@@ -567,6 +618,18 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get business info failed:rc=%d", rc ) ;
+         _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+         goto error ;
+      }
+
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBHOSTNAME,
+                               &pSdbHostName ) ;
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBSERVICENAME,
+                               &pSdbSvcName ) ;
+      rc = _setSpecifyNode( pSdbHostName, pSdbSvcName, nodeList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "set specify node failed:rc=%d", rc ) ;
          _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
          goto error ;
       }

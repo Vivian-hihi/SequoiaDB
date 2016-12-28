@@ -59,6 +59,9 @@ namespace engine
       protected:
          INT32             _processOMRestMsg( HTTP_PARSE_COMMON command,
                                               const CHAR *pFilePath ) ;
+         INT32             _setSpecifyNode( const CHAR *pSdbHostName,
+                                            const CHAR *pSdbSvcName,
+                                            list<omNodeInfo> &nodeList ) ;
          INT32             _processSdbTransferMsg( restAdaptor *pAdaptor,
                                                 const CHAR *pClusterName,
                                                 const CHAR *pBusinessName ) ;
