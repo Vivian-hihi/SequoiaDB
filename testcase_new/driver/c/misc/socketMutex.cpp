@@ -224,6 +224,7 @@ void func_closeCursor2(ThreadArg *arg)
     sdbReleaseCursor(cursor) ;
 }
 
+/*
 // multi threads operate multi cs cl
 // after threads close cursor and stop,main thread close all cursor and disconnect
 TEST_F(SocketMutexTest,cl)
@@ -315,7 +316,6 @@ TEST_F(SocketMutexTest,disconnect)
 	}	
 }
 
-/*
 // close all cursors between multi threads
 TEST_F(SocketMutexTest,closeAllCursor)
 {
