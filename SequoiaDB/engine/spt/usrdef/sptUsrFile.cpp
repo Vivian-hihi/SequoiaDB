@@ -2188,6 +2188,13 @@ JS_MAPPING_END()
          goto error ;
       }
 
+      rc = ossAccess( pathname.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "pathname not exist" ) ;
+         goto error ;
+      }
+
       // check path type
       rc = ossGetPathType( pathname.c_str(), &type ) ;
       if ( SDB_OK != rc )

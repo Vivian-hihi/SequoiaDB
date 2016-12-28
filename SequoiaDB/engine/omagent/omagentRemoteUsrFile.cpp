@@ -2245,6 +2245,13 @@ namespace engine
       }
       pathname = _matchObj.getStringField( "pathname" ) ;
 
+      rc = ossAccess( pathname.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "pathname not exist" ) ;
+         goto error ;
+      }
+
       // check path type
       rc = ossGetPathType( pathname.c_str(), &type ) ;
       if ( SDB_OK != rc )
