@@ -360,7 +360,7 @@ namespace engine
 
       outStr = "" ;
 #if defined (_LINUX)
-      rc = runner.exec( "uname -a", exitCode,
+      rc = runner.exec( "getconf LONG_BIT", exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
 #elif defined (_WINDOWS)
       rc = SDB_SYS ;
@@ -374,7 +374,7 @@ namespace engine
             rc = SDB_SYS ;
          }
          stringstream ss ;
-         ss << "failed to exec cmd \"uname -a\", rc:"
+         ss << "failed to exec cmd \"getconf LONG_BIT\", rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -387,13 +387,13 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
-         ss << "failed to read msg from cmd \"uname -a\", rc:"
+         ss << "failed to read msg from cmd \"getconf LONG_BIT\", rc:"
             << rc ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
 
-      if ( NULL != ossStrstr( outStr.c_str(), "x86_64") )
+      if ( NULL != ossStrstr( outStr.c_str(), "64") )
       {
          builder.append( CMD_USR_SYSTEM_BIT, 64 ) ;
       }
