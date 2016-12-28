@@ -4,6 +4,8 @@
 * @Modify:      Liang xuewang Init
 *				2016-11-10
 *****************************************************/
+
+/*
 #include <gtest/gtest.h>
 #include <client.h>
 #include "../common/impWorker.hpp"
@@ -224,7 +226,6 @@ void func_closeCursor2(ThreadArg *arg)
     sdbReleaseCursor(cursor) ;
 }
 
-/*
 // multi threads operate multi cs cl
 // after threads close cursor and stop,main thread close all cursor and disconnect
 TEST_F(SocketMutexTest,cl)
