@@ -454,6 +454,8 @@ namespace engine
                                    BOOLEAN *pUpdate = NULL,
                                    BOOLEAN canUpdate = TRUE ) ;
 
+   BOOLEAN rtnCoordCataCheckFlag( INT32 flag ) ;
+
    INT32 rtnCataChangeNtyToAllNodes( pmdEDUCB *cb ) ;
 
    #define RTN_CTRL_MASK_GLOBAL           0x00000001

@@ -181,6 +181,8 @@ namespace engine
 
       BOOLEAN isSubCollection( const CHAR *pCLName ) ;
 
+      void delMainCLCataInfo( const CHAR *pSubCLName ) ;
+
       void  invalidateCataInfo() ;
       void  invalidateGroupInfo( UINT64 identify = 0 ) ;
 

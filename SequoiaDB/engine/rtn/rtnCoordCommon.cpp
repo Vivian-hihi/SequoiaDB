@@ -3561,13 +3561,7 @@ namespace engine
                                    BOOLEAN *pUpdate,
                                    BOOLEAN canUpdate )
    {
-      if ( canRetry && (
-           SDB_CLS_COORD_NODE_CAT_VER_OLD == flag ||
-           SDB_CLS_NO_CATALOG_INFO == flag ||
-           SDB_CLS_GRP_NOT_EXIST == flag ||
-           SDB_CLS_NODE_NOT_EXIST == flag ||
-           SDB_CAT_NO_MATCH_CATALOG == flag )
-          )
+      if ( canRetry && rtnCoordCataCheckFlag( flag ) )
       {
          if ( canUpdate && cataInfo.get() )
          {
@@ -3594,6 +3588,15 @@ namespace engine
       }
 
       return FALSE ;
+   }
+
+   BOOLEAN rtnCoordCataCheckFlag( INT32 flag )
+   {
+      return ( SDB_CLS_COORD_NODE_CAT_VER_OLD == flag ||
+               SDB_CLS_NO_CATALOG_INFO == flag ||
+               SDB_CLS_GRP_NOT_EXIST == flag ||
+               SDB_CLS_NODE_NOT_EXIST == flag ||
+               SDB_CAT_NO_MATCH_CATALOG == flag ) ;
    }
 
    INT32 rtnCataChangeNtyToAllNodes( pmdEDUCB * cb )

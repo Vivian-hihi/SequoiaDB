@@ -455,6 +455,30 @@ namespace engine
       return FALSE ;
    }
 
+   void _CoordCB::delMainCLCataInfo( const CHAR *pSubCLName )
+   {
+      string strSubCLName = pSubCLName ;
+      CoordCataMap::iterator it ;
+      clsCatalogSet *pCatSet = NULL ;
+      ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE ) ;
+
+      it = _cataInfoMap.begin() ;
+      while( it != _cataInfoMap.end() )
+      {
+         pCatSet = it->second->getCatalogSet() ;
+         if ( !pCatSet || !pCatSet->isMainCL() )
+         {
+            /// do nothing
+         }
+         else if ( pCatSet->isContainSubCL( strSubCLName ) )
+         {
+            _cataInfoMap.erase( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+   }
+
    void _CoordCB::delCataInfo ( const string &collectionName )
    {
       ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );

@@ -117,9 +117,24 @@ namespace engine
       CoordCataInfoPtr cataInfo ;
       UINT32 retryTimes = 0 ;
 
+   retry_before_cata :
       if ( _flagUpdateBeforeCata() && _flagDoOnCollection() )
       {
          rc = rtnCoordGetRemoteCata( cb, pArgs->_targetName.c_str(), cataInfo ) ;
+         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+         {
+            // If the rc is SDB_CLS_COORD_NODE_CAT_VER_OLD, it might be caused
+            // by the out-of-date mainCL cache, removed the mainCL cache and
+            // try again.
+            pmdKRCB *pKrcb = pmdGetKRCB() ;
+            CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
+            pCoordcb->delMainCLCataInfo( pArgs->_targetName.c_str() ) ;
+         }
+         if ( rtnCoordCataCheckFlag( rc ) && _canRetry( retryTimes ) )
+         {
+            retryTimes ++ ;
+            goto retry_before_cata ;
+         }
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to %s on [%s]: "
                       "Update collection [%s] catalog info failed, rc: %d",
