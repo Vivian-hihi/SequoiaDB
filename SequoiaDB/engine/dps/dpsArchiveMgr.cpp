@@ -1141,7 +1141,7 @@ namespace engine
                goto error ;
             }
 
-            rc = _logMgr->search( lsn, &block, DPS_SERCAH_ALL, FALSE, &len ) ;
+            rc = _logMgr->search( lsn, &block, DPS_SEARCH_ALL, FALSE, &len ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Failed to find LSN[%lld], rc=%d",

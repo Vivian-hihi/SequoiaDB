@@ -60,7 +60,7 @@ namespace engine
    #define  DPS_SEARCH_MEM       0x01
    // indicating also search in file
    #define  DPS_SEARCH_FILE      0x10
-   #define  DPS_SERCAH_ALL       (DPS_SEARCH_MEM|DPS_SEARCH_FILE)
+   #define  DPS_SEARCH_ALL       (DPS_SEARCH_MEM|DPS_SEARCH_FILE)
 
    class _pmdEDUCB ;
    class dpsTransCB ;

@@ -224,7 +224,7 @@ namespace engine
              _lsn.compareOffset( expectLSN.offset ) < 0 )
       {
          _mb.clear() ;
-         rc = _pDpsCB->search( _lsn, &_mb, DPS_SERCAH_ALL ) ;
+         rc = _pDpsCB->search( _lsn, &_mb, DPS_SEARCH_ALL ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Search dps log[%d.%lld] failed, expect "

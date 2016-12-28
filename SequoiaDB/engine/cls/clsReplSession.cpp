@@ -1385,7 +1385,7 @@ namespace engine
                  fLsn.offset, fLsn.version, eLsn.offset, eLsn.version ) ;
          _mb.clear() ;
 
-         _logger->search( search, &_mb, DPS_SERCAH_ALL, -1,
+         _logger->search( search, &_mb, DPS_SEARCH_ALL, -1,
                           CLS_REPL_MAX_TIME, CLS_SYNC_MAX_LEN ) ;
       }
 

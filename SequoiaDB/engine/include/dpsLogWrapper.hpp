@@ -73,7 +73,7 @@ namespace engine
       public:
          virtual INT32     search( const DPS_LSN &minLsn,
                                    _dpsMessageBlock *mb,
-                                   UINT8 type = DPS_SERCAH_ALL,
+                                   UINT8 type = DPS_SEARCH_ALL,
                                    INT32 maxNum = 1,        // -1 for unlimited
                                    INT32 maxTime = -1,      // -1 for unlimited
                                    INT32 maxSize = 5242880  // -1 for unlimited
@@ -81,7 +81,7 @@ namespace engine
 
          virtual INT32     searchHeader( const DPS_LSN &lsn,
                                          _dpsMessageBlock *mb,
-                                         UINT8 type = DPS_SERCAH_ALL ) = 0 ;
+                                         UINT8 type = DPS_SEARCH_ALL ) = 0 ;
 
          virtual DPS_LSN   getStartLsn ( BOOLEAN logBufOnly = FALSE ) = 0 ;
 
@@ -144,14 +144,14 @@ namespace engine
    public:
       virtual INT32     search( const DPS_LSN &minLsn,
                                 _dpsMessageBlock *mb,
-                                UINT8 type = DPS_SERCAH_ALL,
+                                UINT8 type = DPS_SEARCH_ALL,
                                 INT32 maxNum = 1,
                                 INT32 maxTime = -1,
                                 INT32 maxSize = 5242880 ) ;
 
       virtual INT32     searchHeader( const DPS_LSN &lsn,
                                       _dpsMessageBlock *mb,
-                                      UINT8 type = DPS_SERCAH_ALL ) ;
+                                      UINT8 type = DPS_SEARCH_ALL ) ;
 
       virtual DPS_LSN   getStartLsn ( BOOLEAN logBufOnly = FALSE ) ;
 
