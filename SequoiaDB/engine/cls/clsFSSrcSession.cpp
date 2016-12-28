@@ -2030,16 +2030,16 @@ namespace engine
          }
 
          /// compare
-         UINT64 maxLSN = pContext->mb()->_commitLSN ;
-         if ( DPS_INVALID_LSN_OFFSET != pContext->mb()->_idxCommitLSN &&
-              pContext->mb()->_idxCommitLSN > maxLSN )
+         UINT64 maxLSN = pContext->mbStat()->_lastLSN.peek() ;
+         if ( DPS_INVALID_LSN_OFFSET != pContext->mbStat()->_idxLastLSN.peek() &&
+              pContext->mbStat()->_idxLastLSN.peek() > maxLSN )
          {
-            maxLSN = pContext->mb()->_idxCommitLSN ;
+            maxLSN = pContext->mbStat()->_idxLastLSN.peek() ;
          }
-         if ( DPS_INVALID_LSN_OFFSET != pContext->mb()->_lobCommitLSN &&
-              pContext->mb()->_lobCommitLSN > maxLSN )
+         if ( DPS_INVALID_LSN_OFFSET != pContext->mbStat()->_lobLastLSN.peek() &&
+              pContext->mbStat()->_lobLastLSN.peek() > maxLSN )
          {
-            maxLSN = pContext->mb()->_lobCommitLSN ;
+            maxLSN = pContext->mbStat()->_lobLastLSN.peek() ;
          }
 
          if ( maxLSN != info.maxLSN() ||
