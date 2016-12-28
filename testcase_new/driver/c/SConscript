@@ -81,7 +81,7 @@ numberLong     = dllBuildEnv.Program("numberLong",    [testFiles2, testCommon, g
 turnOncache    = dllBuildEnv.Program("turnOncache",   [testFiles3, testCommon, gtestMainObj])
 restAbnormal   = dllBuildEnv.Program("restAbnormal",  [testFiles4, testCommon, gtestMainObj])
 procedure      = dllBuildEnv.Program("procedure",  [testFiles5, testCommon, gtestMainObj])
-socketMutex    = dllBuildEnv.Program("socketMutex",  [testFiles6, testCommon, gtestMainObj])
+# socketMutex    = dllBuildEnv.Program("socketMutex",  [testFiles6, testCommon, gtestMainObj])
 index          = dllBuildEnv.Program("index",  [testFiles7, testCommon, gtestMainObj])
 dropCsAndWriteLob = dllBuildEnv.Program("dropCsAndWriteLob",  [testFiles8, testCommon, gtestMainObj])
 concurrentCs   = dllBuildEnv.Program("concurrentCs",  [testFiles9, testCommon, gtestMainObj])
@@ -104,7 +104,7 @@ numberLong.static    = staticBuildEnv.Program("numberLong.static",   [testFiles2
 turnOncache.static   = staticBuildEnv.Program("turnOncache.static",  [testFiles3, testCommon, gtestMainObj])
 restAbnormal.static  = staticBuildEnv.Program("restAbnormal.static", [testFiles4, testCommon, gtestMainObj])
 procedure.static     = staticBuildEnv.Program("procedure.static",    [testFiles5, testCommon, gtestMainObj])
-socketMutex.static   = staticBuildEnv.Program("socketMutex.static",    [testFiles6, testCommon, gtestMainObj])
+# socketMutex.static   = staticBuildEnv.Program("socketMutex.static",    [testFiles6, testCommon, gtestMainObj])
 index.static         = staticBuildEnv.Program("index.static",    [testFiles7, testCommon, gtestMainObj])
 dropCsAndWriteLob.static = staticBuildEnv.Program("dropCsAndWriteLob.static",    [testFiles8, testCommon, gtestMainObj])
 concurrentCs.static  = staticBuildEnv.Program("concurrentCs.static",    [testFiles9, testCommon, gtestMainObj])
@@ -126,7 +126,6 @@ env.Install( '#/build_test', [   decimal,
                                  turnOncache,
 								 restAbnormal,
 								 procedure,
-								 socketMutex,
 								 index,
 								 dropCsAndWriteLob,
 								 concurrentCs,
@@ -145,7 +144,6 @@ env.Install( '#/build_test', [   decimal.static,
                                  turnOncache.static,
          						 restAbnormal.static,
          						 procedure.static,
-								 socketMutex.static,
 								 index.static,
 								 dropCsAndWriteLob.static,
 								 concurrentCs.static,
