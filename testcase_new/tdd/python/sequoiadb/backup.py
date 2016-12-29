@@ -21,8 +21,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError  as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -36,22 +36,22 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
 
 def isStandalone( db ):   
-   print '---begin to get cluster mode'   
+   print( '---begin to get cluster mode' )  
    is_standalone = False
    try:
       db.list_replica_groups()
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -159 == e.code ):
          is_standalone = True
       else:
@@ -60,7 +60,7 @@ def isStandalone( db ):
    return is_standalone 
    
 def getOneRG():
-   print '---begin to get 1 data group name'
+   print( '---begin to get 1 data group name' )
    rc = db.get_list( 7, condition={'Role': 0} ) 
    info = rc.next()
    dataRG = info['GroupName'] 
@@ -68,19 +68,19 @@ def getOneRG():
    return dataRG
    
 def ready( backupName ):
-   print '---begin to remove backup in ready'
+   print( '---begin to remove backup in ready' )
    try:
       db.remove_backup( {'Name': backupName} )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -241 != e.code ):         
          raise e
    
 def backup( dataRGName, backupName ):   
-   print '---begin to backup data group: %s' % (dataRGName)   
+   print( '---begin to backup data group: %s' % (dataRGName) )   
    option = {'GroupName': dataRGName, 'Name': backupName, 'OverWrite': True}
    db.backup_offline( option )
 
-   print '---begin to list backup'
+   print( '---begin to list backup' )
    option = {'Name': backupName}
    cursor = db.list_backup( option )
    i = 0        
@@ -93,11 +93,11 @@ def backup( dataRGName, backupName ):
       except SDBBaseError :
          raise e
    if( i != 1 ):
-      print 'exeute: list_backup( %d )' % ( option )
-      print 'return record number, expect: 1, actual: %d' % ( i )
+      print( 'exeute: list_backup( %d )' % ( option ) )
+      print( 'return record number, expect: 1, actual: %d' % ( i ) )
       raise  Exception( 'COUNT_ERROR' )     
    
-   print '---begin to remove backup: %s' % (backupName)
+   print( '---begin to remove backup: %s' % (backupName) )
    db.remove_backup( {'Name': backupName} )
    
    option = {'Name': backupName}
@@ -112,15 +112,15 @@ def backup( dataRGName, backupName ):
       except SDBBaseError :
          raise e
    if( i != 0 ):
-      print 'exeute: remove_backup, list_backup( %s )' % ( option )
-      print 'return record number, expect: 0, actual: %d' % ( i )
+      print( 'exeute: remove_backup, list_backup( %s )' % ( option ) )
+      print( 'return record number, expect: 0, actual: %d' % ( i ) )
       raise  Exception( 'CHECK_ERROR' )      
       
 def clean( backupName ):
-   print '---begin to remove backup in clean'
+   print( '---begin to remove backup in clean' )
    try:
       db.remove_backup( {'Name': backupName} )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -241 != e.code ):
          pysequoiadb._print(e.detail)           
          raise e
@@ -136,18 +136,18 @@ if __name__ == "__main__":
       
       # main
       if( isStandalone( db ) == True ):
-         print 'Mode is standalone!'
+         print( 'Mode is standalone!' )
          exit(0) 
       else:    
          dataRGName = getOneRG()
          backup( dataRGName, backupName )
       
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print( e.detail )
       raise e  
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                    
          clean( backupName )    
          db.disconnect()
          del db 

@@ -10,6 +10,7 @@ from pysequoiadb import const
 from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 import sys,getopt
 import traceback
+import operator
 
 hostname=None
 service=None
@@ -23,8 +24,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError  as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -38,47 +39,47 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
 
 def createCL( cs_name, cl_name ):
-   print '---begin to drop cs in ready'
+   print( '---begin to drop cs in ready' )
    try:
       db.drop_collection_space( cs_name )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):         
          raise e
                    
-   print '---begin to create cs cl'
+   print( '---begin to create cs cl' )
    cs = db.create_collection_space( cs_name )     
    cl = cs.create_collection( cl_name, {"ReplSize":0} )
    
    return cl
    
 def createLobWithOid( cl, oid ):     
-   print '---begin to creat lob, specified oid'  
+   print( '---begin to creat lob, specified oid' )  
    obj = cl.create_lob( oid )
    data = "1234567891011121314151617181920"
    obj.write( data, 31 )
    obj.close()
    
-   print '---begin to creat lob, oid has been existed'
+   print( '---begin to creat lob, oid has been existed' )
    try:
       obj = cl.create_lob( oid )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -5 != e.code ):
          pysequoiadb._print( e.detail )        
          raise e      
      
 def createLobWithoutOid( cl ):        
-   print '---begin to creat lob, did not specified oid'
+   print( '---begin to creat lob, did not specified oid' )
    obj = cl.create_lob()
    obj.write( "hello", 5 )
    oid = obj.get_oid()
@@ -87,7 +88,7 @@ def createLobWithoutOid( cl ):
    return oid
    
 def listLob( cl ):
-   print '---begin to list lob'
+   print( '---begin to list lob' )
    
    i = 0 ;
    rc = cl.list_lobs()
@@ -101,33 +102,33 @@ def listLob( cl ):
          raise e
 
    if( i != 2 ):
-      print 'return lob number, expect: 2, actual: %d' % ( i )
+      print( 'return lob number, expect: 2, actual: %d' % ( i ) )
       raise  Exception( 'CHECK_ERROR' )
       
 def getLob( cl, oid ):
-   print '---begin to get lob: %s' % ( oid )
+   print( '---begin to get lob: %s' % ( oid ) )
    
    obj = cl.get_lob( oid )
    
    # get oid  
    oidGet = obj.get_oid()
-   if ( 0 != cmp( oidGet, oid ) ):
-      print 'cl.get_lob( %s ), get_oid return %s' % ( oid, oidGet )
+   if ( True != operator.eq( oidGet, oid ) ):
+      print( 'cl.get_lob( %s ), get_oid return %s' % ( oid, oidGet ) )
       raise  Exception( 'GET_OID_ERROR' )
       
    # read lob
    obj.seek( 11, 0 )
    data = obj.read( 20 ) 
    expData =  "11121314151617181920" 
-   if( data != expData ):
-      print 'exec: seek(11,0),read(20), expect: %s, atual: %s ' % ( expData, data )
+   if( data.decode() != expData ):
+      print( 'exec: seek(11,0),read(20), expect: %s, atual: %s ' % ( expData, data.decode() ) )
       raise  Exception( 'READ_LOB_ERROR' )
       
    #get lob's size
    size = obj.get_size()
    expSize = 31
    if ( size != expSize ):
-      print 'exec: get_size(), expect: %d, atual: %d ' % ( expSize, size )
+      print( 'exec: get_size(), expect: %d, atual: %d ' % ( expSize, size ) )
       raise  Exception( 'GET_SIZE_ERROR' )
      
    #get lob's create time
@@ -136,7 +137,7 @@ def getLob( cl, oid ):
    obj.close()
 
 def removeLob( cl, oid1, oid2 ):
-   print '---begin to remove lob'
+   print( '---begin to remove lob' )
    
    cl.remove_lob( oid1 )
    cl.remove_lob( oid2 )
@@ -154,14 +155,14 @@ def removeLob( cl, oid1, oid2 ):
          raise e
 
    if( i != 0 ):
-      print 'remove all lob, exec: list_lobs(), expect: return 0 lob, actual: %d' % ( i )
+      print( 'remove all lob, exec: list_lobs(), expect: return 0 lob, actual: %d' % ( i ) )
       raise  Exception( 'CHECK_ERROR' )
    
 def clean( cs_name ):
-   print '---begin to drop cs in finally'
+   print( '---begin to drop cs in finally' )
    try:
       db.drop_collection_space( cs_name )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ): 
          pysequoiadb._print(e.detail)             
          raise e
@@ -183,12 +184,12 @@ if __name__ == "__main__":
       removeLob( cl, oid1, oid2 )
       clean( cs_name )
    
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print( e.detail )
       raise e  
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                    
          clean( cs_name )     
          db.disconnect()
          del db 

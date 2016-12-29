@@ -21,8 +21,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError  as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -36,38 +36,38 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
 
 def createCL( cs_name, cl_name):
-   print '---begin to drop cs in ready'
+   print( '---begin to drop cs in ready' )
    try:
       db.drop_collection_space(cs_name)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):            
          raise e
                    
-   print '---begin to create cs cl'
+   print( '---begin to create cs cl' )
    cs = db.create_collection_space(cs_name)     
    cl = cs.create_collection(cl_name, {"ReplSize":0})
    
    return cl
    
 def insert( cl ):   
-   print '---begin to insert records'
+   print( '---begin to insert records' )
    for i in range( 0, 10 ):
       rec = { "item":"item"+str(i), "_id":i }
       cl.insert( rec )
       
 def findAndUpdate( cl ):      
-   print '---begin to findAndUpdate'
+   print( '---begin to findAndUpdate' )
    cursor = cl.query_and_update( update = {"$set":{"item":"updated_item"}}, 
                                  condition = {"_id": 1}, return_new=True )
                                  
@@ -77,8 +77,8 @@ def findAndUpdate( cl ):
       try:
          record = cursor.next()
          if ( "updated_item" != record['item'] or 1 != record['_id'] ):
-            print 'return value, expect: {_id:1,item:"updated_item"}, atual: '
-            print record
+            print( 'return value, expect: {_id:1,item:"updated_item"}, atual: ' )
+            print( record )
             raise Exception( 'CHECK_ERROR' ) 
          i = i + 1                  
       except SDBEndOfCursor :
@@ -86,12 +86,12 @@ def findAndUpdate( cl ):
       except SDBBaseError :
          raise e       
    if( 1 != i ):
-      print 'return value, expect: 1 record, atual: %d record' % (i)
+      print( 'return value, expect: 1 record, atual: %d record' % (i) )
       raise  Exception( 'CHECK_ERROR' )       
    cursor.close()  
    
 def findAndRemove( cl ):
-   print '---begin to findAndRemove'
+   print( '---begin to findAndRemove' )
    cursor = cl.query_and_remove( condition={"item":"updated_item"} )
    
    # check return value
@@ -100,8 +100,8 @@ def findAndRemove( cl ):
       try:
          record = cursor.next()
          if( "updated_item" != record['item'] or 1 != record['_id'] ):
-            print 'return value, expect: {_id:1,item:"updated_item"}, atual: '
-            print record
+            print( 'return value, expect: {_id:1,item:"updated_item"}, atual: ' )
+            print( record )
             raise Exception( 'CHECK_ERROR' )
          i = i + 1   
       except SDBEndOfCursor :
@@ -109,15 +109,15 @@ def findAndRemove( cl ):
       except SDBBaseError :
          raise e
    if( 1 != i ):
-      print 'return value, expect: 1 record, atual: %d record' % (i)
+      print( 'return value, expect: 1 record, atual: %d record' % (i) )
       raise  Exception( 'CHECK_ERROR' )       
    cursor.close()
 
 def clean( cs_name ):
-   print '---begin to drop cs in finally'
+   print( '---begin to drop cs in finally' )
    try:
       db.drop_collection_space(cs_name)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ): 
          pysequoiadb._print(e.detail)                     
          raise e
@@ -135,15 +135,15 @@ if __name__ == "__main__":
       findAndUpdate( cl )
       findAndRemove( cl )
    
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print(e.detail)
       raise e  
-   except ( Exception ), e:
+   except ( Exception )  as e:
       pysequoiadb._print(e)
       raise e
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                    
          clean( cs_name )     
          db.disconnect()
          del db 

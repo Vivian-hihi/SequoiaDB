@@ -23,8 +23,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError  as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -38,32 +38,32 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
 
 def createCL( cs_name, cl_name ):
-   print '---begin to drop cs in ready'
+   print( '---begin to drop cs in ready' )
    try:
       db.drop_collection_space( cs_name )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):         
          raise e
                    
-   print '---begin to create cs cl'
+   print( '---begin to create cs cl' )
    cs = db.create_collection_space( cs_name )     
    cl = cs.create_collection( cl_name, {"ReplSize":0} )
    
    return cl
    
 def insertRec( cl ):   
-   print '---begin to insert records'
+   print( '---begin to insert records' )
    data1 = {'no':'229095', 'name':'Tom',   'major':'English',  'score':100}
    data2 = {'no':'229096', 'name':'Tina',  'major':'English',  'score':60}
    data3 = {'no':'229095', 'name':'Tom',   'major':'Math',     'score':80}
@@ -78,7 +78,7 @@ def insertRec( cl ):
    cl.insert( data6 )
 
 def aggregate( cl ): 
-   print '---begin to aggregate'
+   print( '---begin to aggregate' )
    match = SON({'$match':{'no':{'$exists':1}}})
    group = SON({'$group':{'_id':'$major','avg_score':{'$avg':'$score'},'major':{'$first':'$major'}}})
    sort  = SON({'$sort':{'avg_score':1}})
@@ -95,29 +95,29 @@ def aggregate( cl ):
          
          # check field value
          if ( rec['major'] != 'Math' or rec['avg_score'] != 75.0 ):
-            print 'expect: {major:"Math", avg_score:75.0}, actual: %s' % ( rec )
+            print( 'expect: {major:"Math", avg_score:75.0}, actual: %s' % ( rec ) )
             raise  Exception( 'CHECK_FIELD_VALUE_ERROR' )
             
          # check field number
          fieldNum = len(rec)
          if ( fieldNum != 2 ):
-            print 'expect: {major:"Math", avg_score:75.0}, actual: %s' % ( rec )
+            print( 'expect: {major:"Math", avg_score:75.0}, actual: %s' % ( rec ) )
             raise  Exception( 'CHECK_FIELD_NUMBER_ERROR' )   
       except SDBEndOfCursor:
          break
-      except ( Exception ), e:
+      except ( Exception )  as e:
          raise e
          
    # check count      
    if ( i != 1 ):
-      print 'expect: return 1 record, actual: return %d record' % ( i )
+      print( 'expect: return 1 record, actual: return %d record' % ( i ) )
       raise  Exception( 'COUNT_ERROR' )
       
 def clean( cs_name ):
-   print '---begin to drop cs in finally'
+   print( '---begin to drop cs in finally' )
    try:
       db.drop_collection_space( cs_name )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):  
          pysequoiadb._print(e.detail)            
          raise e
@@ -134,12 +134,12 @@ if __name__ == "__main__":
       insertRec( cl )
       aggregate( cl )
    
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print( e.detail )
       raise e  
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                    
          clean( cs_name )     
          db.disconnect()
          del db 

@@ -21,8 +21,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError  as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -36,37 +36,37 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
 
 def createCL( cs_name, cl_name):
-   print '---begin to drop cs in ready'
+   print( '---begin to drop cs in ready' )
    try:
       db.drop_collection_space(cs_name)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):            
          raise e
                    
-   print '---begin to create cs cl'
+   print( '---begin to create cs cl' )
    cs = db.create_collection_space(cs_name)     
    cl = cs.create_collection(cl_name, {"ReplSize":0})
    
    return cl
    
 def insert( cl ):   
-   print '---begin to insert records'
+   print( '---begin to insert records' )
    for i in range(1,100):
       cl.insert({'age':i,'name':'mike'+str(i)})
       
 def query( cl ):   
-   print '---begin to query'
+   print( '---begin to query' )
    
    condition = {'age':{'$gt':96}}
    selector = {'age':'','name':''}
@@ -79,8 +79,8 @@ def query( cl ):
       try:
          record = cursor.next()
          if( record['age'] != ageVal ):
-            print 'exeute: cl.query, condition=%s, selector=%s, order_by=%s' % (condition, selector, order)     
-            print 'expect: {age:%d, name:"mike"%d}, actual: %s' % ( ageVal, ageVal, record )
+            print( 'exeute: cl.query, condition=%s, selector=%s, order_by=%s' % (condition, selector, order) )   
+            print( 'expect: {age:%d, name:"mike"%d}, actual: %s' % ( ageVal, ageVal, record ) )
             raise  Exception( 'CHECK_ERROR' )
          ageVal = ageVal - 1 
          i = i + 1
@@ -89,15 +89,15 @@ def query( cl ):
       except SDBBaseError :
          raise e
    if( i != 3 ):
-      print 'exeute: cl.query, condition=%s, selector=%s, order_by=%s' % (condition, selector, order)
-      print 'return record number, expect: 3, actual: %d' % ( i )
+      print( 'exeute: cl.query, condition=%s, selector=%s, order_by=%s' % (condition, selector, order) )
+      print( 'return record number, expect: 3, actual: %d' % ( i ) )
       raise  Exception( 'COUNT_ERROR' ) 
             
 def clean( cs_name ):
-   print '---begin to drop cs in finally'
+   print( '---begin to drop cs in finally' )
    try:
       db.drop_collection_space(cs_name)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ): 
          pysequoiadb._print(e.detail)             
          raise e
@@ -116,12 +116,12 @@ if __name__ == "__main__":
       insert( cl )
       query( cl )
       
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print(e.detail)
       raise e  
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                    
          clean( cs_name )     
          db.disconnect()
          del db 

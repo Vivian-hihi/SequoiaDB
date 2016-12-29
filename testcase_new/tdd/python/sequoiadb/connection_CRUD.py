@@ -21,8 +21,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError  as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -36,47 +36,47 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
 
 def createCL( cs_name, cl_name):
-   print '---begin to drop cs in ready'
+   print( '---begin to drop cs in ready' )
    try:
       db.drop_collection_space(cs_name)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):            
          raise e
                    
-   print '---begin to create cs cl'
+   print( '---begin to create cs cl' )
    cs = db.create_collection_space(cs_name)     
    cl = cs.create_collection(cl_name, {"ReplSize":0})
    
    return cl
    
 def clean( cs_name ):
-   print '---begin to drop cs in finally'
+   print( '---begin to drop cs in finally' )
    try:
       db.drop_collection_space(cs_name)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):  
          pysequoiadb._print(e.detail)            
          raise e
 
 def connectHost( hostname, service ):
-   print '---begin to connect to host'
+   print( '---begin to connect to host' )
    hosts = [{'host':hostname,'service':service}]
    db.connect_to_hosts(hosts,user="",password="",policy="random")
    db.connect(hostname,service,user="",password="")
    
 def insert( cl ):
-   print '---begin to insert'
+   print( '---begin to insert' )
    
    data = {'age':1,'name':'tom'}
    cl.insert(data)
@@ -85,7 +85,7 @@ def insert( cl ):
    db.exec_update(insert_sql)
    
 def update( cl ):
-   print '---begin to update'
+   print( '---begin to update' )
    
    update_sql = 'update '+cs_name+'.'+cl_name+' set name = \'tom_new\' where age = 1'
    db.exec_update(update_sql)
@@ -95,12 +95,12 @@ def update( cl ):
    cl.update(rule,condition=cond)
 
 def query( cl ):
-   print '---begin to query'
+   print( '---begin to query' )
    
    # check count
    cnt = cl.get_count()
    if( 2 != cnt ):
-      print 'excute: cl.get_count(), expect: 2, actual: %d' % ( cnt )
+      print( 'excute: cl.get_count(), expect: 2, actual: %d' % ( cnt ) )
       raise  Exception( 'COUNT_ERROR' )   
    
    # check record {name:"kate_new", age:24}
@@ -110,11 +110,11 @@ def query( cl ):
       try:
          record = cursor.next()
          if ( record['name'] != 'kate_new' ):
-            print 'excute: cl.query(%s), expect: {name:"kate_new", age:24}, actual: %s' % ( cond, record )
+            print( 'excute: cl.query(%s), expect: {name:"kate_new", age:24}, actual: %s' % ( cond, record ) )
             raise  Exception( 'RECORD_ERROR' )
       except SDBEndOfCursor:
          break
-      except ( Exception ), e:
+      except ( Exception )  as e:
          raise e
          
    # check record {name:"tom_new", age:1}
@@ -125,15 +125,15 @@ def query( cl ):
       try:
          record = cursor.next()
          if ( record['name'] != 'tom_new' ):
-            print 'excute: cl.exec_sql(%s), expect: {name:"tom_new", age:1}, actual: %s' % ( select_sql, record )
+            print( 'excute: cl.exec_sql(%s), expect: {name:"tom_new", age:1}, actual: %s' % ( select_sql, record ) )
             raise  Exception( 'RECORD_ERROR' )
       except SDBEndOfCursor:
          break
-      except ( Exception ), e:
+      except ( Exception )  as e:
          raise e
 
 def delete( cl ):
-   print '---begin to delete'
+   print( '---begin to delete' )
    
    delete_sql = 'delete from '+cs_name+'.'+cl_name +' where age=1'
    db.exec_update(delete_sql)
@@ -143,7 +143,7 @@ def delete( cl ):
 
    cnt = cl.get_count()
    if( 0 != cnt ):
-      print 'excute: cl.get_count(), expect: 0, actual: %d' % ( cnt )
+      print( 'excute: cl.get_count(), expect: 0, actual: %d' % ( cnt ) )
       raise  Exception( 'COUNT_ERROR' )   
                               
 if __name__ == "__main__":
@@ -161,12 +161,12 @@ if __name__ == "__main__":
       query( cl )
       delete( cl )
          
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print(e.detail)
       raise e  
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                    
          clean( cs_name )     
          db.disconnect()
          del db  

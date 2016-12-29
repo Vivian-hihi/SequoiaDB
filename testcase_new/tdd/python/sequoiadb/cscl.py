@@ -21,8 +21,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError  as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -36,21 +36,21 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
       
 def clean( cs_name ):
-   print '---begin to drop cs in finally'
+   print( '---begin to drop cs in finally' )
    try:
       db.drop_collection_space(cs_name)
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -34 != e.code ):
          pysequoiadb._print(e.detail)  
          raise e
@@ -65,41 +65,41 @@ if __name__ == "__main__":
       cs_name = "pydriver_cscltest_cs"
       cl_name = "pydriver_cscltest_cl"
       
-      print '---begin to create cs and get cs'     
+      print( '---begin to create cs and get cs' )
       db.create_collection_space( cs_name )
       cs = db.get_collection_space( cs_name )
       
-      print '---begin to create existed cs'
+      print( '---begin to create existed cs' )
       hasErr33 = False
       try:
          db.create_collection_space( cs_name )    
-      except SDBBaseError, e:        
+      except SDBBaseError as e:        
          if ( -33 == e.code ):
             hasErr33 = True
          else:
             raise e
       if( hasErr33 == False ):
-         print 'expect: return error -33, actual: return no error'
+         print( 'expect: return error -33, actual: return no error' )
          raise  Exception( 'RETURN_CODE_ERROR' )
               
-      print '---begin to get non-existed cs'
+      print( '---begin to get non-existed cs' )
       hasErr34 = False
       try:
          db.get_collection_space( 'not_exist_cs' )  
-      except SDBBaseError, e:        
+      except SDBBaseError as e:        
          if ( -34 == e.code ):
             hasErr34 = True
          else:
             raise e
       if( hasErr33 == False ):
-         print 'expect: return error -33, actual: return no error'
+         print( 'expect: return error -33, actual: return no error' )
          raise  Exception( 'RETURN_CODE_ERROR' )
          
-      print '---begin to create cl and get cl'     
+      print( '---begin to create cl and get cl' )     
       cs.create_collection( cl_name )
       cl = cs.get_collection( cl_name )
       
-      print '---begin to list cs'
+      print( '---begin to list cs' )
       cursor = db.list_collection_spaces()
       hasThisCS = False
       while True:
@@ -109,13 +109,13 @@ if __name__ == "__main__":
                hasThisCS = True
          except SDBEndOfCursor:
             break
-         except ( Exception ), e:
+         except ( Exception )  as e:
             raise e
       if( hasThisCS != True ):
-         print 'excute: db.list_collection_spaces(), expect: has cs %s, actual: has not' % ( cs_name )
+         print( 'excute: db.list_collection_spaces(), expect: has cs %s, actual: has not' % ( cs_name ) )
          raise  Exception( 'CHECK_ERROR' )
 
-      print '---begin to list cl'
+      print( '---begin to list cl' )
       cl_full_name = cs_name + '.' + cl_name 
       cursor = db.list_collections()
       hasThisCL = False
@@ -126,24 +126,24 @@ if __name__ == "__main__":
                hasThisCL = True
          except SDBEndOfCursor:
             break
-         except ( Exception ), e:
+         except ( Exception )  as e:
             raise e
       if( hasThisCL != True ):            
-         print 'excute: db.list_collections(), expect: has cl %s, actual: has not' % ( cl_full_name )
+         print( 'excute: db.list_collections(), expect: has cl %s, actual: has not' % ( cl_full_name ) )
          raise  Exception( 'CHECK_ERROR' )
       
-      print '---begin to drop cl'     
+      print( '---begin to drop cl' )  
       cs.drop_collection( cl_name )
       
-      print '---begin to drop cs'     
+      print( '---begin to drop cs' )     
       db.drop_collection_space( cs_name )      
    
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print(e.detail)
       raise e  
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                    
          clean( cs_name )     
          db.disconnect()
          del db 
