@@ -306,17 +306,83 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnCLRebuilder::_exportOneExtent( pmdEDUCB *cb,
+                                            dmsMBContext *mbContext,
+                                            dmsReorgUnit *pSU,
+                                            dmsExtentID extID,
+                                            BOOLEAN forward,
+                                            UINT32 &remainPages,
+                                            dmsExtentID &nextExtID,
+                                            BOOLEAN &valid )
+   {
+      INT32 rc = SDB_OK ;
+      dmsExtRW extRW ;
+      const dmsExtent *extent = NULL ;
+
+      if ( extID < 0 ||
+           (UINT32)extID >= _pSU->data()->getHeader()->_pageNum )
+      {
+         PD_LOG( PDERROR, "Extent id[%d] is invalid", extID) ;
+         valid = FALSE ;
+         goto error ;
+      }
+
+      extRW = _pSU->data()->extent2RW( extID, -1 ) ;
+      extRW.setNothrow( TRUE ) ;
+      extent = extRW.readPtr<dmsExtent>() ;
+      if ( !extent )
+      {
+         PD_LOG( PDERROR, "Get extent[%d]'s address failed", extID ) ;
+         valid = FALSE ;
+         goto error ;
+      }
+
+      if ( forward )
+      {
+         nextExtID = extent->_nextExtent ;
+      }
+      else
+      {
+         nextExtID = extent->_prevExtent ;
+      }
+
+      if ( !extent->validate( mbContext->mbID() ) ||
+           extent->_blockSize == 0 ||
+           extent->_blockSize > remainPages ||
+           nextExtID == extID )
+      {
+         PD_LOG( PDERROR, "Extent[%d] is invalid", extID ) ;
+         valid = FALSE ;
+         goto error ;
+      }
+
+      remainPages -= extent->_blockSize ;
+
+      rc = _exportByAExtent( cb, mbContext, pSU, extID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnCLRebuilder::_exportByExtents( pmdEDUCB *cb,
                                             dmsMBContext *mbContext,
                                             dmsReorgUnit *pSU )
    {
       INT32 rc = SDB_OK ;
       UINT32 extentNum = 0 ;
-      const dmsExtent *pExtent = NULL ;
       dmsExtentID extentID = DMS_INVALID_EXTENT ;
       dmsExtentID nextExtID = DMS_INVALID_EXTENT ;
+      dmsExtentID stopExtID = DMS_INVALID_EXTENT ;
       dmsExtRW extRW ;
-      UINT32 maxExtentPages = _pSU->data()->segmentPages() ;
+      BOOLEAN valid = TRUE ;
+      BOOLEAN damaged = FALSE ;
+      UINT32 maxRemainPages = _pSU->data()->pageNum() ;
 
       nextExtID = mbContext->mb()->_firstExtentID ;
       while( DMS_INVALID_EXTENT != nextExtID )
@@ -327,47 +393,75 @@ namespace engine
             goto error ;
          }
 
-         if ( nextExtID < 0 ||
-              (UINT32)nextExtID >= _pSU->data()->getHeader()->_pageNum )
-         {
-            PD_LOG( PDERROR, "Extent[%d]'s next extent[%d] error",
-                    extentID, nextExtID ) ;
-            break ;
-         }
          extentID = nextExtID ;
-         extRW = _pSU->data()->extent2RW( extentID, -1 ) ;
-         extRW.setNothrow( TRUE ) ;
-         pExtent = extRW.readPtr<dmsExtent>() ;
-         if ( !pExtent )
-         {
-            PD_LOG( PDERROR, "Get extent[%d]'s address failed",
-                    extentID ) ;
-            break ;
-         }
-         nextExtID = pExtent->_nextExtent ;
-
-         if ( !pExtent->validate( mbContext->mbID() ) ||
-              pExtent->_blockSize == 0 ||
-              pExtent->_blockSize > maxExtentPages )
-         {
-            PD_LOG( PDERROR, "Extent[%d] is invalid", extentID ) ;
-            continue ;
-         }
-         /// export this page's data
-         ++extentNum ;
-         rc = _exportByAExtent( cb, mbContext, pSU, extentID ) ;
+         rc = _exportOneExtent( cb, mbContext, pSU, extentID, TRUE,
+                                maxRemainPages, nextExtID, valid ) ;
          if ( rc )
          {
             goto error ;
          }
+
+         // Once an invalid extent is found, we stop the traverse.
+         if ( !valid )
+         {
+            damaged = TRUE ;
+            break ;
+         }
+
+         ++extentNum ;
       }
 
+      // If we haven't reached the last extent, it means some extents at the
+      // middle of the extent list are corrupted. In that case, continue to scan
+      // the extents backwards in order to save as much data as possible.
       if ( extentID != mbContext->mb()->_lastExtentID )
       {
-         PD_LOG( PDWARNING, "Collection[%s]'s extent list is damaged, Last "
-                 "extent:%d, Processed last extent:%d, Processed extent "
-                 "count:%u", _clFullName.c_str(),
-                 mbContext->mb()->_lastExtentID, extentID, extentNum ) ;
+         if ( !damaged )
+         {
+            damaged = TRUE ;
+         }
+
+         stopExtID = extentID ;
+         valid = TRUE ;
+
+         nextExtID = mbContext->mb()->_lastExtentID ;
+         while ( DMS_INVALID_EXTENT != nextExtID )
+         {
+            if ( cb->isInterrupted() )
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
+
+            extentID = nextExtID ;
+            rc = _exportOneExtent( cb, mbContext, pSU, extentID, FALSE,
+                                   maxRemainPages, nextExtID, valid ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            if ( !valid )
+            {
+               break ;
+            }
+
+            ++extentNum ;
+
+            if ( nextExtID == stopExtID )
+            {
+               break ;
+            }
+         }
+      }
+
+      if ( damaged )
+      {
+         PD_LOG( PDWARNING, "Collection[%s]'s extent list is damaged. Last "
+                 "extent:%d, forward processed last extent:%d, backward "
+                 "processed last extent:%d. Processed extent count:%u",
+                 _clFullName.c_str(), mbContext->mb()->_lastExtentID,
+                 stopExtID, extentID, extentNum ) ;
       }
 
    done:
@@ -1045,7 +1139,7 @@ namespace engine
            context->getMBContext()->clLID() != mbContext->clLID() )
       {
          /// collection has re-create or truncated, so not rebuild
-         goto done ;         
+         goto done ;
       }
 
       /// open reorg su
@@ -1332,7 +1426,7 @@ namespace engine
       ossTickDelta timeSpan ;
       ossTickConversionFactor factor ;
       UINT32 seconds = 0 ;
-      UINT32 microSec = 0 ;      
+      UINT32 microSec = 0 ;
       UINT32 dropCount = 0 ;
 
       beginTick.sample() ;

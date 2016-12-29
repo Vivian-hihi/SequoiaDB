@@ -163,7 +163,16 @@ namespace engine
                               BOOLEAN createNew ) ;
 
          void     _cleanRegSU() ;
-         
+
+         INT32 _exportOneExtent( pmdEDUCB *cb,
+                                 dmsMBContext *mbContext,
+                                 dmsReorgUnit *pSU,
+                                 dmsExtentID extID,
+                                 BOOLEAN forward,
+                                 UINT32 &remainPages,
+                                 dmsExtentID &nextExtID,
+                                 BOOLEAN &valid ) ;
+
          /*
             Export data by extent scan
          */
