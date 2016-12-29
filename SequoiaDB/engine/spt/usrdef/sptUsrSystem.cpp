@@ -5091,7 +5091,15 @@ namespace engine
             detail = BSON( SPT_ERR << "Failed to get user limit info" ) ;
             goto error ;
          }
-         builder.append( resourceName[ index ], (UINT32)rlim.rlim_cur ) ;
+         if ( ( CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX < (UINT64)rlim.rlim_cur ) &&
+              ( -1 != rlim.rlim_cur ) )
+         {
+            builder.append( resourceName[ index ],  boost::lexical_cast<string>( rlim.rlim_cur ) ) ;
+         }
+         else
+         {
+            builder.append( resourceName[ index ], (INT64)rlim.rlim_cur ) ;
+         }
       }
       rval.getReturnVal().setValue( builder.obj() ) ;
    done:
@@ -5142,10 +5150,11 @@ namespace engine
       {
          if ( configsObj[ resourceName[ index ] ].ok() )
          {
-            if( FALSE == configsObj.getField( resourceName[ index ] ).isNumber() )
+            if( FALSE == configsObj.getField( resourceName[ index ] ).isNumber() &&
+                String != configsObj.getField( resourceName[ index ] ).type() )
             {
                rc = SDB_INVALIDARG ;
-               detail = BSON( SPT_ERR << "value must be number" ) ;
+               detail = BSON( SPT_ERR << "value must be number or string" ) ;
                goto error ;
             }
 
@@ -5157,13 +5166,33 @@ namespace engine
                goto error ;
             }
 
-            rlim.rlim_cur = configsObj.getIntField( resourceName[ index ] ) ;
+            if ( configsObj.getField( resourceName[ index ] ).isNumber() )
+            {
+               rlim.rlim_cur = ( UINT64 ) configsObj.getField( resourceName[ index ] ).numberLong() ;
+            }
+            else
+            {
+               try
+               {
+                  rlim.rlim_cur = boost::lexical_cast<UINT64>( string( configsObj.getStringField( resourceName[ index ] ) ) ) ;
+               }
+               catch( std::exception &e )
+               {
+                  rc = SDB_INVALIDARG ;
+                  stringstream ss ;
+                  ss << configsObj.getStringField( resourceName[ index ] )
+                     << " could not be interpreted as number" ;
+                  detail = BSON( SPT_ERR << ss.str().c_str() ) ;
+                  goto error ;
+               }
+            }
+
             if ( 0 != setrlimit( resourceType[ index ], &rlim ) )
             {
                if ( EINVAL == errno )
                {
                   rc = SDB_INVALIDARG ;
-                  detail = BSON( SPT_ERR << "Invalid argument" ) ;
+                  detail = BSON( SPT_ERR << "Invalid argument: " + string( resourceName[ index ] ) ) ;
                   PD_LOG( PDERROR, "Invalid argument, argument: %s",
                           resourceName[ index ] ) ;
                   goto error ;

@@ -4682,7 +4682,15 @@ namespace engine
             PD_LOG_MSG( PDERROR, "Failed to get user limit info" ) ;
             goto error ;
          }
-         builder.append( resourceName[ index ], (UINT32)rlim.rlim_cur ) ;
+         if ( ( CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX < (UINT64)rlim.rlim_cur ) &&
+              ( -1 != rlim.rlim_cur ) )
+         {
+            builder.append( resourceName[ index ],  boost::lexical_cast<string>( rlim.rlim_cur ) ) ;
+         }
+         else
+         {
+            builder.append( resourceName[ index ], (INT64)rlim.rlim_cur ) ;
+         }
       }
 
       retObj = builder.obj() ;
@@ -4752,10 +4760,11 @@ namespace engine
       {
          if ( configsObj[ resourceName[ index ] ].ok() )
          {
-            if( FALSE == configsObj.getField( resourceName[ index ] ).isNumber() )
+            if( FALSE == configsObj.getField( resourceName[ index ] ).isNumber() &&
+                String != configsObj.getField( resourceName[ index ] ).type() )
             {
                rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "value must be number" ) ;
+               PD_LOG_MSG( PDERROR, "value must be number or string" ) ;
                goto error ;
             }
 
@@ -4767,13 +4776,31 @@ namespace engine
                goto error ;
             }
 
-            rlim.rlim_cur = configsObj.getIntField( resourceName[ index ] ) ;
+            if ( configsObj.getField( resourceName[ index ] ).isNumber() )
+            {
+               rlim.rlim_cur = ( UINT64 ) configsObj.getField( resourceName[ index ] ).numberLong() ;
+            }
+            else
+            {
+               try
+               {
+                  rlim.rlim_cur = boost::lexical_cast<UINT64>( string( configsObj.getStringField( resourceName[ index ] ) ) ) ;
+               }
+               catch( std::exception &e )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "%s could not be interpreted as number",
+                              configsObj.getStringField( resourceName[ index ] ) ) ;
+                  goto error ;
+               }
+            }
             if ( 0 != setrlimit( resourceType[ index ], &rlim ) )
             {
                if ( EINVAL == errno )
                {
                   rc = SDB_INVALIDARG ;
-                  PD_LOG_MSG( PDERROR, "invalid argument" ) ;
+                  PD_LOG_MSG( PDERROR, "invalid argument: %s",
+                              resourceName[ index ] ) ;
                   goto error ;
                }
                else if ( EPERM == errno )
