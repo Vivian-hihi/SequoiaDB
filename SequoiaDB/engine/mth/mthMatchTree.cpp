@@ -2696,7 +2696,6 @@ namespace engine
    {
       SDB_ASSERT( _validNum > 0, "must hasNext" ) ;
 
-      static BSONObj staticEmptyObj ;
       BSONObj tmpObj ;
       INT32 rc = SDB_OK ;
 
@@ -2715,7 +2714,6 @@ namespace engine
          }
          else if ( MTH_SRC_TYPE_ORIGINAL_NULL == _srcType )
          {
-            BSONElement ele = staticEmptyObj.firstElement() ;
          }
          else if ( MTH_SRC_TYPE_ELEMENTS == _srcType )
          {
