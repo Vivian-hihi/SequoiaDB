@@ -258,7 +258,7 @@ namespace engine
 
             return getResult() ;
          }
-         virtual INT32 postLoaded()
+         virtual INT32 postLoaded( PMD_CFG_STEP step )
          {
             if ( 0 != ossStrcmp( _action, RS_BK_RESTORE ) &&
                  0 != ossStrcmp( _action, RS_BK_LIST ) )

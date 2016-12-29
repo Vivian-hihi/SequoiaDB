@@ -304,7 +304,7 @@ public:
 
 public:
    virtual INT32 doDataExchange( engine::pmdCfgExchange *pEx ) ;
-   virtual INT32 postLoaded() ;
+   virtual INT32 postLoaded( engine::PMD_CFG_STEP step ) ;
    virtual INT32 preSaving() ;
 
 public:

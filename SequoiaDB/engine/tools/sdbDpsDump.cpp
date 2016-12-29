@@ -910,7 +910,7 @@ INT32 _dpsDumper::doDataExchange( engine::pmdCfgExchange *pEx )
    return getResult() ;
 }
 
-INT32 _dpsDumper::postLoaded()
+INT32 _dpsDumper::postLoaded( engine::PMD_CFG_STEP step )
 {
    return SDB_OK ;
 }

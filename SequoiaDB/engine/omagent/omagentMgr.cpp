@@ -193,7 +193,7 @@ namespace engine
             // file or dir not exist
             PD_LOG( PDWARNING, "Config[%s] not exist, use default config",
                     _cfgFileName ) ;
-            rc = postLoaded() ;
+            rc = postLoaded( PMD_CFG_STEP_INIT ) ;
             goto done ;
          }
          PD_LOG( PDERROR, "Failed to read config from file[%s], rc: %d",
@@ -276,7 +276,7 @@ namespace engine
       return getResult () ;
    }
 
-   INT32 _omAgentOptions::postLoaded()
+   INT32 _omAgentOptions::postLoaded( PMD_CFG_STEP step )
    {
       INT32 rc = SDB_OK ;
 
@@ -291,7 +291,7 @@ namespace engine
       rc = SDB_OK ;
 
       // parse om address line
-      if ( 0 != _omAddress[ 0 ] )
+      if ( 0 != _omAddress[ 0 ] && 0 == _vecOMAddr.size() )
       {
          rc = parseAddressLine( _omAddress, _vecOMAddr ) ;
          PD_RC_CHECK( rc, PDERROR, "Parse om address[%s] failed, rc: %d",

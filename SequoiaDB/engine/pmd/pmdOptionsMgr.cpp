@@ -477,7 +477,7 @@ namespace engine
          }
          mapKeyValue = ex1.getKVMap() ;
       }
-      rc = postLoaded() ;
+      rc = postLoaded( PMD_CFG_STEP_REINIT ) ;
       if ( rc )
       {
          goto error ;
@@ -523,7 +523,7 @@ namespace engine
       {
          goto restore ;
       }
-      rc = postLoaded() ;
+      rc = postLoaded( PMD_CFG_STEP_CHG ) ;
       if ( rc )
       {
          goto restore ;
@@ -562,7 +562,7 @@ namespace engine
       {
          goto error ;
       }
-      rc = postLoaded() ;
+      rc = postLoaded( PMD_CFG_STEP_INIT ) ;
       if ( rc )
       {
          goto error ;
@@ -627,7 +627,7 @@ namespace engine
       return rc ;
    }
 
-   INT32 _pmdCfgRecord::postLoaded()
+   INT32 _pmdCfgRecord::postLoaded( PMD_CFG_STEP step )
    {
       return SDB_OK ;
    }
@@ -1637,7 +1637,7 @@ namespace engine
       return getResult () ;
    }
 
-   INT32 _pmdOptionsMgr::postLoaded ()
+   INT32 _pmdOptionsMgr::postLoaded ( PMD_CFG_STEP step )
    {
       INT32 rc = SDB_OK ;
       SDB_ROLE dbRole = SDB_ROLE_STANDALONE ;
@@ -1957,10 +1957,13 @@ namespace engine
          _memDebugSize = OSS_MAX ( _memDebugSize, SDB_MEMDEBUG_MINGUARDSIZE ) ;
       }
 
-      rc = parseAddressLine( _catAddrLine, _vecCat ) ;
-      if ( rc )
+      if ( 0 == _vecCat.size() )
       {
-         goto error ;
+         rc = parseAddressLine( _catAddrLine, _vecCat ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
       // if start is stanalone, must enable dps local
@@ -1990,10 +1993,13 @@ namespace engine
          }
       }
 
-      rc = parseAddressLine( _omAddrLine, _vecOm ) ;
-      if ( rc )
+      if ( 0 == _vecOm.size() )
       {
-         goto error ;
+         rc = parseAddressLine( _omAddrLine, _vecOm ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
    done:

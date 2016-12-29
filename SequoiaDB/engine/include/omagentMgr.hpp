@@ -109,7 +109,7 @@ namespace engine
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
-         virtual INT32 postLoaded() ;
+         virtual INT32 postLoaded( PMD_CFG_STEP step ) ;
          virtual INT32 preSaving() ;
 
       private:

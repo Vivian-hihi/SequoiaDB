@@ -3759,7 +3759,7 @@ INT32 _sdbCi::doDataExchange( engine::pmdCfgExchange *pEx )
    return getResult() ;
 }
 
-INT32 _sdbCi::postLoaded()
+INT32 _sdbCi::postLoaded( PMD_CFG_STEP step )
 {
    return SDB_OK ;
 }
