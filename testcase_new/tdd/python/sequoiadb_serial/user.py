@@ -21,8 +21,8 @@ def parse_option():
    
    try:  
       opts, args = getopt.getopt( sys.argv[1:], 'hH:p:', ['help'] )
-   except getopt.GetoptError, err:
-      print str( err )
+   except getopt.GetoptError as err:
+      print( str( err ) )
       usage()
       sys.exit(1)
    
@@ -36,23 +36,23 @@ def parse_option():
          usage()
          sys.exit()
       else:
-         print 'arguments error'
+         print( 'arguments error' )
          usage()
          sys.exit(1)
          
 def usage():
-   print 'Command options:'
-   print '-h,--help  help'
-   print '-H   arg   hostname'
-   print '-p   arg   coord_port'
+   print( 'Command options:' )
+   print( '-h,--help  help' )
+   print( '-H   arg   hostname' )
+   print( '-p   arg   coord_port' )
    
 def isStandalone( db ):   
-   print '---begin to check cluster mode'
+   print( '---begin to check cluster mode' )
    
    is_standalone = False
    try:
       db.list_replica_groups()
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -159 == e.code ):
          is_standalone = True
       else:
@@ -61,22 +61,22 @@ def isStandalone( db ):
    return is_standalone 
         
 def clean( username, password ):
-   print '---begin to remove user in finally'      
+   print( '---begin to remove user in finally' )      
    try:      
       db.remove_user( username, password )
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       if ( -6 != e.code and -300 != e.code ): #standalone throw -6  
          pysequoiadb._print(e.detail)          
          raise e 
          
 def user( username, password ):
-   print '---begin to create new user'             
+   print( '---begin to create new user' )             
    db.create_user(username,password)
    
-   print '---begin to login by new user'          
+   print( '---begin to login by new user' )          
    db_new = client(hostname,service,username,password)
    
-   print '---begin to remove new user'             
+   print( '---begin to remove new user' )             
    db.remove_user(username,password)
       
 if __name__ == "__main__":   
@@ -91,12 +91,12 @@ if __name__ == "__main__":
       else:         
          user( username, password )
          
-   except SDBBaseError, e:
+   except SDBBaseError as e:
       pysequoiadb._print(e.detail)
       raise e  
             
    finally:  
-      if( locals().has_key('db') ):                    
+      if( 'db' in locals() ):                     
          clean( username, password )
          db.disconnect()
          del db 
