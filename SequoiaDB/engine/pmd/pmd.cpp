@@ -448,10 +448,6 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
-      setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
-      setAuditMask( pmdGetOptionCB()->auditMask() ) ;
-      initCurAuditMask( getAuditMask() ) ;
-
       // Reconfig all registered cbs
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
       {

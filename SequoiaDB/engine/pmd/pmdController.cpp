@@ -281,6 +281,13 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _pmdController::onConfigChange()
+   {
+      setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
+      setAuditMask( pmdGetOptionCB()->auditMask() ) ;
+      initCurAuditMask( getAuditMask() ) ;
+   }
+
    void _pmdController::registerCB( SDB_ROLE dbrole )
    {
       // For data node we need DPS ( log ), Transaction, Cluster and Bufferpool

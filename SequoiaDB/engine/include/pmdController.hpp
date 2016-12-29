@@ -68,6 +68,7 @@ namespace engine
          virtual INT32  active () ;
          virtual INT32  deactive () ;
          virtual INT32  fini () ;
+         virtual void   onConfigChange() ;
 
          void           onTimer( UINT32 interval ) ;
 
