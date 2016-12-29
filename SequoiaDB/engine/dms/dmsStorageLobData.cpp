@@ -86,6 +86,131 @@ namespace engine
       return _fileName.c_str() ;
    }
 
+   INT32 _dmsStorageLobData::rename( const CHAR *csName,
+                                     const CHAR *suFileName,
+                                     _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pBuff = NULL ;
+      dmsStorageUnitHeader *pHeader = NULL ;
+
+      if ( !isOpened() )
+      {
+         _fileName = suFileName ;
+      }
+      else
+      {
+         CHAR tmpPathFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         ossStrcpy( tmpPathFile, _fullPath ) ;
+
+         CHAR *pos = ossStrstr( tmpPathFile, _fileName.c_str() ) ;
+         if ( !pos )
+         {
+            PD_LOG( PDERROR, "File full path[%s] is not include su file[%s]",
+                    _fullPath, _fileName.c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         *pos = '\0' ;
+
+         rc = cb->allocBuff( sizeof(dmsStorageUnitHeader), &pBuff, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Alloc buff failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         pHeader = ( dmsStorageUnitHeader*)pBuff ;
+         /// get header
+         rc = _getFileHeader( *pHeader, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get file header failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         utilCatPath( tmpPathFile, OSS_MAX_PATHSIZE, suFileName ) ;
+
+#ifdef _WINDOWS
+         /// modify header
+         ossStrncpy( pHeader->_name, csName, DMS_SU_NAME_SZ ) ;
+         pHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
+
+         rc = _writeFileHeader( *pHeader, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Write file header failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         /// close
+         close() ;
+         /// rename
+         rc = ossRenamePath( _fullPath, tmpPathFile ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rename file[%s] to %s failed, rc: %d",
+                    _fullPath, tmpPathFile, rc ) ;
+            goto error ;
+         }
+         /// reopen
+         _fileName = suFileName ;
+         ossStrcpy( _fullPath, tmpPathFile ) ;
+         {
+            UINT32 mode = OSS_READWRITE | OSS_SHAREREAD ;
+            if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
+            {
+               mode |= OSS_DIRECTIO ;
+            }
+            rc = ossOpen( _fullPath, mode, OSS_RU|OSS_WU|OSS_RG, _file ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to open file:%s, rc:%d",
+                       _fullPath, rc ) ;
+               goto error ;
+            }
+            rc = ossGetFileSize( &_file, &_fileSz ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to get size of file:%s, rc:%d",
+                       _fileName.c_str(), rc ) ;
+               goto error ;
+            }
+         }
+#else
+         /// rename filename
+         rc = ossRenamePath( _fullPath, tmpPathFile ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rename file[%s] to %s failed, rc: %d",
+                    _fullPath, tmpPathFile, rc ) ;
+            goto error ;
+         }
+
+         _fileName = suFileName ;
+         ossStrcpy( _fullPath, tmpPathFile ) ;
+
+         /// modify header
+         ossStrncpy( pHeader->_name, csName, DMS_SU_NAME_SZ ) ;
+         pHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
+
+         rc = _writeFileHeader( *pHeader, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Write file header failed, rc: %d", rc ) ;
+            goto error ;
+         }
+#endif //_WINDOWS
+      }
+
+   done:
+      if ( pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA_OPEN, "_dmsStorageLobData::open" )
    INT32 _dmsStorageLobData::open( const CHAR *path,
                                    BOOLEAN createNew,
@@ -867,7 +992,7 @@ namespace engine
          else
          {
             t.buf = (void*)pBuff ;
-            t.size = sizeof( dmsStorageUnitHeader ) ;   
+            t.size = sizeof( dmsStorageUnitHeader ) ;
          }
 
          /// no need to align size of header.
@@ -1030,13 +1155,6 @@ namespace engine
          goto error ;
       }
 
-      rc = ossSeek( &_file, 0, OSS_SEEK_SET ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to seek file:%d", rc ) ;
-         goto error ;
-      }
-
       {
       _dmsLobDirectInBuffer buffer( &header, sizeof( header ),
                                     0, cb ) ;
@@ -1058,8 +1176,9 @@ namespace engine
          }
       }
 
-      rc = ossReadN( &_file, t.size,
-                     ( CHAR * )( t.buf ), readLen ) ;
+      rc = ossSeekAndReadN( &_file, 0, t.size,
+                            ( CHAR * )( t.buf ),
+                            readLen ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read file:%d", rc ) ;
@@ -1075,6 +1194,59 @@ namespace engine
       SDB_ASSERT( sizeof( _dmsStorageUnitHeader ) == readLen, "impossible" ) ;
    done:
       PD_TRACE_EXITRC( SDB_DMSSTORAGELOBDATA__FETFILEHEADER, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSLOBDATA_WRFILEHEADER, "_dmsStorageLobData::_writeFileHeader" )
+   INT32 _dmsStorageLobData::_writeFileHeader( const _dmsStorageUnitHeader &header,
+                                               _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_DMSLOBDATA_WRFILEHEADER ) ;
+
+      UINT32 len = sizeof(header) ;
+      _dmsLobDirectOutBuffer buffer( (const void*)&header, len, cb ) ;
+      _dmsLobDirectBuffer::tuple t ;
+      SINT64 written = 0 ;
+
+      INT64 writeOffset = 0 ;
+      if ( writeOffset + len > _fileSz )
+      {
+         PD_LOG( PDERROR, "Offset[%lld] grater than file size[%lld] in "
+                 "file[%s]", writeOffset, _fileSz, _fileName.c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
+      {
+         t.buf = ( void * )&header ;
+         t.size = len ;
+      }
+      else
+      {
+         rc = buffer.getAlignedTuple( t ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to align the buffer:%d", rc ) ;
+            goto error ;  
+         }
+      }
+
+      rc = ossSeekAndWriteN( &_file, writeOffset,
+                             ( const CHAR * )( t.buf ), t.size,
+                             written ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to write data, offset:%d, len:%d, rc:%d",
+                 writeOffset, len, rc ) ;
+         goto error ; 
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_DMSLOBDATA_WRFILEHEADER, rc ) ;
       return rc ;
    error:
       goto done ;

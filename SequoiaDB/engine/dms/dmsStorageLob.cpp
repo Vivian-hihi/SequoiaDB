@@ -79,6 +79,7 @@ namespace engine
       _needDelayOpen = FALSE ;
 
       _dmsData->_attachLob( this ) ;
+      _isRename = FALSE ;
    }
 
    _dmsStorageLob::~_dmsStorageLob()
@@ -129,6 +130,46 @@ namespace engine
 
       PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_OPEN, rc ) ;
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_RENAME, "_dmsStorageLob::rename" )
+   INT32 _dmsStorageLob::rename( const CHAR *csName,
+                                 const CHAR *lobmFileName,
+                                 const CHAR *lobdFileName )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_RENAME ) ;
+
+      _isRename = TRUE ;
+      if ( _needDelayOpen )
+      {
+         ossStrncpy( _suFileName, lobmFileName, DMS_SU_FILENAME_SZ ) ;
+         _suFileName[ DMS_SU_FILENAME_SZ ] = '\0' ;
+      }
+      else
+      {
+         rc = renameStorage( csName, lobmFileName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rename lob meta failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      /// rename lob data
+      rc = _data.rename( csName, lobdFileName, pmdGetThreadEDUCB() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rename lob data failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      _isRename = FALSE ;
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_RENAME, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__DELAYOPEN, "_dmsStorageLob::_delayOpen" )
@@ -1412,7 +1453,10 @@ namespace engine
 
    void _dmsStorageLob::_onClosed()
    {
-      _data.close() ;
+      if ( !_isRename )
+      {
+         _data.close() ;
+      }
    }
 
    INT32 _dmsStorageLob::_onOpened()

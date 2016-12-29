@@ -838,13 +838,13 @@ namespace engine
          {
             if ( FALSE == allowRunChg )
             {
-               if ( pEX->hasField( pFieldName ) )
+               /*if ( pEX->hasField( pFieldName ) )
                {
                   _result = SDB_PERM ;
                   PD_LOG ( PDWARNING, "Field[%s] do not support changing in "
                            "runtime", pFieldName ) ;
                   goto error ;
-               }
+               }*/
                goto done ;
             }
             if ( !pEX->hasField( pFieldName ) )
@@ -959,13 +959,13 @@ namespace engine
          {
             if ( FALSE == allowRunChg )
             {
-               if ( pEX->hasField( pFieldName ) )
+               /*if ( pEX->hasField( pFieldName ) )
                {
                   _result = SDB_PERM ;
                   PD_LOG ( PDWARNING, "Field[%s] do not support changing in "
                            "runtime", pFieldName ) ;
                   goto error ;
-               }
+               }*/
                goto done ;
             }
             if ( !pEX->hasField( pFieldName ) )

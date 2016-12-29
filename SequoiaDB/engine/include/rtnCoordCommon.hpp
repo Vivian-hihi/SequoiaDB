@@ -488,7 +488,7 @@ namespace engine
          _isGlobal = TRUE ;
          _filterID = FILTER_ID_MATCHER ;
          _emptyFilterSel = NODE_SEL_ALL ;
-         ossMemset( &_role, 0, sizeof( _role ) ) ;
+         ossMemset( (void*)_role, 0, sizeof( _role ) ) ;
          _role[ SDB_ROLE_DATA ] = 1 ;
          _role[ SDB_ROLE_CATALOG ] = 1 ;
          _rawData = FALSE ;
@@ -496,6 +496,18 @@ namespace engine
 
          _useSpecialGrp = FALSE ;
          _useSpecialNode = FALSE ;
+      }
+
+      void resetRole()
+      {
+         ossMemset( (void*)_role, 0, sizeof( _role ) ) ;
+      }
+      void setAllRole()
+      {
+         for ( INT32 i = 0 ; i < SDB_ROLE_MAX ; ++i )
+         {
+            _role[ i ] = 1 ;
+         }
       }
    } ;
    typedef _rtnCoordCtrlParam rtnCoordCtrlParam ;

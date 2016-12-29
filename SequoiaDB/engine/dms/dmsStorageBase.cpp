@@ -1001,6 +1001,93 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageBase::renameStorage( const CHAR *csName,
+                                         const CHAR *suFileName )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR tmpPathFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      ossStrcpy( tmpPathFile, _fullPathName ) ;
+
+      CHAR *pos = ossStrstr( tmpPathFile, _suFileName ) ;
+      if ( !pos )
+      {
+         PD_LOG( PDERROR, "File full path[%s] is not include su file[%s]",
+                 _fullPathName, _suFileName ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *pos = '\0' ;
+      utilCatPath( tmpPathFile, OSS_MAX_PATHSIZE, suFileName ) ;
+
+      if ( !_dmsHeader || _isClosed )
+      {
+         PD_LOG( PDERROR, "File is not open" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+#ifdef _WINDOWS
+      /// modify the header
+      ossStrncpy( _dmsHeader->_name, csName, DMS_SU_NAME_SZ ) ;
+      _dmsHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
+      flushHeader( TRUE ) ;
+
+      {
+         IDataSyncManager *pSyncMgr = _pSyncMgr ;
+         UINT64 lasLSN = _dmsHeader->_commitLsn ;
+         /// close
+         closeStorage( lasLSN ) ;
+
+         /// rename
+         rc = ossRenamePath( _fullPathName, tmpPathFile ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Rename file[%s] to %s failed, rc: %d",
+                    _fullPathName, tmpPathFile, rc ) ;
+            goto error ;
+         }
+
+         /// open
+         *pos = '\0' ;
+         ossStrncpy( _suFileName, suFileName, DMS_SU_FILENAME_SZ ) ;
+         _suFileName[ DMS_SU_FILENAME_SZ ] = '\0' ;
+         ossStrncpy( _pStorageInfo->_suName, csName, DMS_SU_NAME_SZ ) ;
+         _pStorageInfo->_suName[ DMS_SU_NAME_SZ ] = 0 ;
+         rc = openStorage( tmpPathFile, pSyncMgr, FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Open storage file failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+#else
+      /// rename filename
+      rc = ossRenamePath( _fullPathName, tmpPathFile ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rename file[%s] to %s failed, rc: %d",
+                 _fullPathName, tmpPathFile, rc ) ;
+         goto error ;
+      }
+
+      ossStrncpy( _suFileName, suFileName, DMS_SU_FILENAME_SZ ) ;
+      _suFileName[ DMS_SU_FILENAME_SZ ] = '\0' ;
+
+      ossStrcpy( _fullPathName, tmpPathFile ) ;
+
+      /// modify the header
+      ossStrncpy( _dmsHeader->_name, csName, DMS_SU_NAME_SZ ) ;
+      _dmsHeader->_name[ DMS_SU_NAME_SZ ] = 0 ;
+      flushHeader( TRUE ) ;
+
+#endif // _WINDOWS
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _dmsStorageBase::_postOpen( INT32 cause )
    {
       INT32 rc = SDB_OK ;

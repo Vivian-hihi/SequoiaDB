@@ -50,6 +50,8 @@ namespace engine
 #define NAME_DROP_COLLECTION                 CMD_NAME_DROP_COLLECTION
 #define NAME_DROP_COLLECTIONSPACE            CMD_NAME_DROP_COLLECTIONSPACE
 #define NAME_DROP_INDEX                      CMD_NAME_DROP_INDEX
+#define NAME_LOAD_COLLECTIONSPACE            CMD_NAME_LOAD_COLLECTIONSPACE
+#define NAME_UNLOAD_COLLECTIONSPACE          CMD_NAME_UNLOAD_COLLECTIONSPACE
 #define NAME_GET_COUNT                       CMD_NAME_GET_COUNT
 #define NAME_GET_INDEXES                     CMD_NAME_GET_INDEXES
 #define NAME_GET_DATABLOCKS                  CMD_NAME_GET_DATABLOCKS
@@ -63,6 +65,7 @@ namespace engine
 #define NAME_LIST_STORAGEUNITS               CMD_NAME_LIST_STORAGEUNITS
 #define NAME_LIST_BACKUPS                    CMD_NAME_LIST_BACKUPS
 #define NAME_RENAME_COLLECTION               CMD_NAME_RENAME_COLLECTION
+#define NAME_RENAME_COLLECTIONSPACE          CMD_NAME_RENAME_COLLECTIONSPACE
 #define NAME_REORG_OFFLINE                   CMD_NAME_REORG_OFFLINE
 #define NAME_REORG_ONLINE                    CMD_NAME_REORG_ONLINE
 #define NAME_REORG_RECOVER                   CMD_NAME_REORG_RECOVER
@@ -100,6 +103,7 @@ namespace engine
 #define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
 #define NAME_ALTER_DC                        CMD_NAME_ALTER_DC
 #define NAME_SYNC_DB                         CMD_NAME_SYNC_DB
+#define NAME_RELOAD_CONFIG                   CMD_NAME_RELOAD_CONFIG
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP
@@ -145,6 +149,9 @@ namespace engine
       CMD_DROP_COLLECTIONSPACE               = 21,
       CMD_DROP_INDEX                         = 22,
 
+      CMD_LOAD_COLLECTIONSPACE               = 25,
+      CMD_UNLOAD_COLLECTIONSPACE             = 26,
+
       CMD_GET_COUNT                          = 30,
       CMD_GET_INDEXES                        = 31,
       CMD_GET_DATABLOCKS                     = 32,
@@ -170,6 +177,7 @@ namespace engine
       CMD_LIST_TRANS_CURRENT                 = 56,
 
       CMD_RENAME_COLLECTION                  = 60,
+      CMD_RENAME_COLLECTIONSPACE             = 61,
 
       CMD_REORG_OFFLINE                      = 70,
       CMD_REORG_ONLINE                       = 71,
@@ -231,6 +239,7 @@ namespace engine
       CMD_JSON_LOAD                          = 180,
 
       CMD_EXPORT_CONFIG                      = 200,
+      CMD_RELOAD_CONFIG                      = 201,
 
       CMD_REMOVE_BACKUP                      = 210,
 

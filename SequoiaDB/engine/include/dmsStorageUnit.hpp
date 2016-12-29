@@ -106,6 +106,8 @@ namespace engine
          void  close () ;
          INT32 remove () ;
 
+         INT32 renameCS( const CHAR *pNewName ) ;
+
          dmsStorageData    *data() { return _pDataSu ; }
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }

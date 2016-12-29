@@ -1140,12 +1140,12 @@ namespace engine
    }
 
    /*
-      rtnCoordCMDMonIntrBase implement
+      rtnCoordCmdWithLocation implement
    */
-   INT32 rtnCoordCMDMonIntrBase::execute( MsgHeader *pMsg,
-                                          pmdEDUCB *cb,
-                                          INT64 &contextID,
-                                          rtnContextBuf *buf )
+   INT32 rtnCoordCmdWithLocation::execute( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           INT64 &contextID,
+                                           rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       rtnCoordCtrlParam ctrlParam ;
@@ -1156,45 +1156,86 @@ namespace engine
 
       _preSet( cb, ctrlParam ) ;
 
+      rc = _preExcute( pMsg, cb, ctrlParam ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Pre-excute failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
       rc = executeOnNodes( pMsg, cb, ctrlParam, _getControlMask(),
-                           faileds, &pContext, FALSE, NULL, NULL ) ;
+                           faileds, _useContext() ? &pContext : NULL,
+                           FALSE, NULL, NULL ) ;
       if ( rc )
       {
          if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
          {
-            rc = SDB_COORD_UNKNOWN_OP_REQ ;
+            rc = _onLocalMode( rc ) ;
          }
-         else
+
+         if ( rc )
          {
-            PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+            if ( SDB_COORD_UNKNOWN_OP_REQ != rc )
+            {
+               PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+            }
+            goto error ;
          }
-         goto error ;
       }
 
       if ( pContext )
       {
-         if ( _useContext() )
-         {
-            contextID = pContext->contextID() ;
-         }
-         else
-         {
-            pmdGetKRCB()->getRTNCB()->contextDelete( pContext->contextID(),
-                                                     cb ) ;
-            pContext = NULL ;
-         }
+         contextID = pContext->contextID() ;
+      }
+
+      rc = _posExcute( pMsg, cb, faileds ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Post-excute failed, rc: %d", rc ) ;
+         goto error ;
       }
 
    done:
+      if ( ( rc || faileds.size() > 0 ) && -1 == contextID && buf )
+      {
+         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &faileds ) ) ;
+      }
       return rc ;
    error:
+      if ( -1 != contextID )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
       goto done ;
    }
 
+   INT32 rtnCoordCmdWithLocation::_preExcute( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              rtnCoordCtrlParam &ctrlParam )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 rtnCoordCmdWithLocation::_posExcute( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              ROUTE_RC_MAP &faileds )
+   {
+      return SDB_OK ;
+   }
+
+   /*
+      rtnCoordCMDMonIntrBase implement
+   */
    void rtnCoordCMDMonIntrBase::_preSet( pmdEDUCB *cb,
                                          rtnCoordCtrlParam &ctrlParam )
    {
       ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
+   }
+
+   INT32 rtnCoordCMDMonIntrBase::_onLocalMode( INT32 flag )
+   {
+      return SDB_COORD_UNKNOWN_OP_REQ ;
    }
 
    /*
@@ -2434,41 +2475,35 @@ namespace engine
       goto done;
    }
 
-   INT32 rtnCoordCMDExpConfig::execute( MsgHeader *pMsg,
-                                        pmdEDUCB *cb,
-                                        INT64 &contextID,
-                                        rtnContextBuf *buf )
+   INT32 rtnCoordCMDExpConfig::_onLocalMode( INT32 flag )
    {
-      INT32 rc = SDB_OK ;
-      ROUTE_RC_MAP faileds ;
-      rtnCoordCtrlParam ctrlParam ;
+      return SDB_COORD_UNKNOWN_OP_REQ ;
+   }
 
+   void rtnCoordCMDExpConfig::_preSet( pmdEDUCB *cb,
+                                       rtnCoordCtrlParam &ctrlParam ) 
+   {
       ctrlParam._isGlobal = FALSE ;
       ctrlParam._filterID = FILTER_ID_MATCHER ;
       ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
-      contextID = -1 ;
+      ctrlParam._role[ SDB_ROLE_CATALOG ] = 1 ;
+      ctrlParam._role[ SDB_ROLE_DATA ] = 1 ;
+   }
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL, faileds ) ;
-      if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
-      {
-         /// submmit to local command
-         rc = SDB_COORD_UNKNOWN_OP_REQ ;
-         goto error ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+   UINT32 rtnCoordCMDExpConfig::_getControlMask() const
+   {
+      return RTN_CTRL_MASK_ALL ;
+   }
 
+   INT32 rtnCoordCMDExpConfig::_posExcute( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           ROUTE_RC_MAP &faileds )
+   {
       /// do on local
-      rc = pmdGetKRCB()->getOptionCB()->reflush2File() ;
+      INT32 rc = pmdGetKRCB()->getOptionCB()->reflush2File() ;
       if ( rc )
       {
-         PD_LOG( PDWARNING, "Flush local config to file failed, rc: %d", rc ) ;
-         rc = SDB_RTN_EXPORTCONF_NOT_COMPLETE ;
-         goto error ;
-      }
-
-      if ( faileds.size() > 0 )
-      {
-         rc = SDB_RTN_EXPORTCONF_NOT_COMPLETE ;
+         PD_LOG( PDERROR, "Flush local config to file failed, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -2727,47 +2762,27 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDINVALIDATECACHE_EXEC, "rtnCoordCMDInvalidateCache::execute" )
-   INT32 rtnCoordCMDInvalidateCache::execute( MsgHeader *pMsg,
-                                              pmdEDUCB *cb,
-                                              INT64 &contextID,
-                                              rtnContextBuf *buf )
+   void rtnCoordCMDInvalidateCache::_preSet( pmdEDUCB * cb,
+                                             rtnCoordCtrlParam & ctrlParam )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDINVALIDATECACHE_EXEC ) ;
-
-      ROUTE_RC_MAP uncompleted ;
-      rtnCoordCtrlParam ctrlParam ;
-
-      contextID = -1 ;
       ctrlParam._isGlobal = TRUE ;
       ctrlParam._filterID = FILTER_ID_MATCHER ;
       ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+   }
 
+   INT32 rtnCoordCMDInvalidateCache::_preExcute( MsgHeader *pMsg,
+                                                 pmdEDUCB *cb,
+                                                 rtnCoordCtrlParam &ctrlParam )
+   {
       /// invalidate local catalog cache and group cache
       sdbGetCoordCB()->invalidateCataInfo() ;
       sdbGetCoordCB()->invalidateGroupInfo() ;
+      return SDB_OK ;
+   }
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL,
-                           uncompleted ) ;
-      if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
-      {
-         rc = SDB_OK ;
-         goto done ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
-
-      if ( !uncompleted.empty() )
-      {
-         rc = SDB_COORD_NOT_ALL_DONE ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDINVALIDATECACHE_EXEC, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+   UINT32 rtnCoordCMDInvalidateCache::_getControlMask() const
+   {
+      return RTN_CTRL_MASK_ALL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDREELECTION_EXEC, "rtnCoordCMDReelection::execute" )
@@ -2898,42 +2913,24 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDSYNCDB_EXEC, "rtnCoordCMDSyncDB::execute" )
-   INT32 rtnCoordCMDSyncDB::execute( MsgHeader *pMsg,
-                                     pmdEDUCB *cb,
-                                     INT64 &contextID,
-                                     rtnContextBuf *buf )
+   void rtnCoordCMDSyncDB::_preSet( pmdEDUCB *cb,
+                                    rtnCoordCtrlParam &ctrlParam )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDSYNCDB_EXEC ) ;
-
-      rc = _syncDB( pMsg, cb, buf ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to sync db:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDSYNCDB_EXEC, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDSYNCDB__SYNCDB, "rtnCoordCMDSyncDB::_syncDB" )
-   INT32 rtnCoordCMDSyncDB::_syncDB( MsgHeader *pMsg,
-                                     pmdEDUCB *cb,
-                                     rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDSYNCDB__SYNCDB ) ;
-      ROUTE_RC_MAP errNodes ;
-      rtnCoordCtrlParam ctrlParam ;
-
       ctrlParam._isGlobal = TRUE ;
       ctrlParam._filterID = FILTER_ID_MATCHER ;
       ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+   }
 
+   UINT32 rtnCoordCMDSyncDB::_getControlMask() const
+   {
+      return RTN_CTRL_MASK_NODE_SELECT|RTN_CTRL_MASK_ROLE ;
+   }
+
+   INT32 rtnCoordCMDSyncDB::_preExcute( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        rtnCoordCtrlParam &ctrlParam )
+   {
+      INT32 rc = SDB_OK ;
       CHAR *pQuery = NULL ;
       CHAR *pNewMsg = NULL ;
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
@@ -2995,12 +2992,92 @@ namespace engine
          goto error ;
       }
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam,
-                           RTN_CTRL_MASK_NODE_SELECT|RTN_CTRL_MASK_ROLE,
-                           errNodes, NULL ) ;
-      if ( SDB_OK != rc )
+   done:
+      if ( pNewMsg )
       {
-         PD_LOG( PDERROR, "failed to execute on nodes: %d", rc ) ;
+         SDB_OSS_FREE( pNewMsg ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void rtnCoordCmdLoadCS::_preSet( pmdEDUCB * cb,
+                                    rtnCoordCtrlParam &ctrlParam )
+   {
+      ctrlParam._isGlobal = TRUE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+      ctrlParam.resetRole() ;
+      ctrlParam._role[ SDB_ROLE_DATA ] = 1 ;
+   }
+
+   UINT32 rtnCoordCmdLoadCS::_getControlMask() const
+   {
+      return RTN_CTRL_MASK_NODE_SELECT ;
+   }
+
+   INT32 rtnCoordCmdLoadCS::_preExcute( MsgHeader * pMsg,
+                                        pmdEDUCB * cb,
+                                        rtnCoordCtrlParam &ctrlParam )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pQuery = NULL ;
+      CHAR *pNewMsg = NULL ;
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &pQuery, NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Extract message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      try
+      {
+         const CHAR *csName = NULL ;
+         BSONObj obj( pQuery ) ;
+         BSONElement e = obj.getField( FIELD_NAME_NAME ) ;
+         if ( String == e.type() )
+         {
+            csName = e.valuestr() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_NAME, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         {
+            INT32 newMsgSize = 0 ;
+            CoordGroupList grpLst ;
+            rtnQueryOptions queryOpt ;
+
+            queryOpt._fullName = "CAT" ;
+            queryOpt._query = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
+            rc = queryOpt.toQueryMsg( &pNewMsg, newMsgSize ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Alloc query msg failed, rc: %d", rc ) ;
+               goto error ;
+            }
+            /// chage the opCode
+            ((MsgHeader*)pNewMsg)->opCode = MSG_CAT_QUERY_SPACEINFO_REQ ;
+            rc = executeOnCataGroup( (MsgHeader*)pNewMsg, cb, &grpLst ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Query collectionspace[%s] info from catalog "
+                       "failed, rc: %d", csName, rc ) ;
+               goto error ;
+            }
+            ctrlParam._useSpecialGrp = TRUE ;
+            ctrlParam._specialGrps = grpLst ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
          goto error ;
       }
 
@@ -3009,54 +3086,64 @@ namespace engine
       {
          SDB_OSS_FREE( pNewMsg ) ;
       }
-      if ( ( rc || errNodes.size() > 0 ) && buf )
-      {
-         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &errNodes ) ) ;
-      }
-      PD_TRACE_EXITRC( CMD_RTNCOCMDSYNCDB__SYNCDB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOORDFORCESESSION, "rtnCoordForceSession::execute" )
-   INT32 rtnCoordForceSession::execute( MsgHeader *pMsg,
-                                        pmdEDUCB *cb,
-                                        INT64 &contextID,
-                                        rtnContextBuf *buf )
+   INT32 rtnCoordForceSession::_onLocalMode( INT32 flag )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOORDFORCESESSION ) ;
-      ROUTE_RC_MAP errNodes ;
-      rtnCoordCtrlParam ctrlParam ;
+      return SDB_COORD_UNKNOWN_OP_REQ ;
+   }
 
+   void rtnCoordForceSession::_preSet( pmdEDUCB * cb,
+                                       rtnCoordCtrlParam & ctrlParam )
+   {
       ctrlParam._isGlobal = FALSE ;
       ctrlParam._filterID = FILTER_ID_MATCHER ;
       ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+   }
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam,
-                           RTN_CTRL_MASK_ALL,
-                           errNodes, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
-         {
-            rc = SDB_COORD_UNKNOWN_OP_REQ ;
-            goto error ;
-         }
-         PD_LOG( PDERROR, "failed to execute on nodes: %d", rc ) ;
-         goto error ;
-      }
+   UINT32 rtnCoordForceSession::_getControlMask() const
+   {
+      return RTN_CTRL_MASK_ALL ;
+   }
 
-   done:
-      if ( ( rc || errNodes.size() > 0 ) && buf )
-      {
-         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &errNodes ) ) ;
-      }
-      PD_TRACE_EXITRC( CMD_RTNCOORDFORCESESSION, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+   INT32 rtnCoordSetPDLevel::_onLocalMode( INT32 flag )
+   {
+      return SDB_COORD_UNKNOWN_OP_REQ ;
+   }
+
+   void rtnCoordSetPDLevel::_preSet( pmdEDUCB * cb,
+                                     rtnCoordCtrlParam & ctrlParam )
+   {
+      ctrlParam._isGlobal = FALSE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+   }
+
+   UINT32 rtnCoordSetPDLevel::_getControlMask() const
+   {
+      return RTN_CTRL_MASK_ALL ;
+   }
+
+   INT32 rtnCoordReloadConf::_onLocalMode( INT32 flag )
+   {
+      return SDB_COORD_UNKNOWN_OP_REQ ;
+   }
+
+   void rtnCoordReloadConf::_preSet( pmdEDUCB * cb,
+                                     rtnCoordCtrlParam & ctrlParam )
+   {
+      ctrlParam._isGlobal = TRUE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+      ctrlParam._role[ SDB_ROLE_CATALOG ] = 1 ;
+   }
+
+   UINT32 rtnCoordReloadConf::_getControlMask() const
+   {
+      return RTN_CTRL_MASK_ALL ;
    }
 
    /*

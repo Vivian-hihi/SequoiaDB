@@ -71,6 +71,7 @@ namespace replay
       case LOG_TYPE_TS_COMMIT:
       case LOG_TYPE_TS_ROLLBACK:
       case LOG_TYPE_INVALIDATE_CATA:
+      case LOG_TYPE_CS_RENAME:
          return "unsupported";
       default:
          SDB_ASSERT(FALSE, "unknown log type");

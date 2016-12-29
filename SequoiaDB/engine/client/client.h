@@ -1046,7 +1046,24 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
-                                       CHAR *pBuffer, INT32 size ) ;
+                                CHAR *pBuffer, INT32 size ) ;
+
+/** \fn INT32 sdbRenameCollection( sdbCSHandle cHandle,
+                                   const CHAR *pOldName,
+                                   const CHAR *pNewName,
+                                   bson *options )
+    \brief Set the node's diagnostic level
+    \param [in] cHandle The collection space handle
+    \param [in] pOldName The old collection short name
+    \param [in] pNewName The new collection short name
+    \param [in] options Reserved
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbRenameCollection( sdbCSHandle cHandle,
+                                      const CHAR *pOldName,
+                                      const CHAR *pNewName,
+                                      bson *options ) ;
 
 /** \fn INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
                              CHAR *pCLName, INT32 size )
@@ -1058,7 +1075,7 @@ SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
-                                       CHAR *pBuffer, INT32 size ) ;
+                                CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
                                  CHAR *pBuffer, INT32 size )
@@ -1070,7 +1087,7 @@ SDB_EXPORT INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
-                                            CHAR *pBuffer, INT32 size ) ;
+                                    CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
                                    const CHAR *pSourceRG,
@@ -1160,16 +1177,6 @@ SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
                                             FLOAT64 percent,
                                             SINT64 *taskID ) ;
 
-/* \fn INT32 sdbRenameCollection ( sdbCollectionHandle cHandle,
-                                   const CHAR *pNewName )
-    \brief Rename the specified collection
-    \param [in] cHandle The collection handle
-    \param [in] pNewName The new collection name
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-
-SDB_EXPORT INT32 sdbRenameCollection ( sdbCollectionHandle cHandle,
-                                       const CHAR *pNewName ) ;
 */
 /** \fn INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
                                bson *indexDef,
@@ -2471,16 +2478,125 @@ SDB_EXPORT INT32 sdbAttachGroups( sdbDCHandle cHandle, bson *info ) ;
 */
 SDB_EXPORT INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info ) ;
 
-/** \fn INT32 sdbSyncDB( sdbConnectionHandle cHandle, bson *options, bson *info )
+/** \fn INT32 sdbSyncDB( sdbConnectionHandle cHandle, bson *options )
     \brief sync database which are specified
     \param [in] cHandle The database connection handle
-    \param [in] options The options specified by user
+    \param [in] options The control options:
+                Deep:
+                  (INT32) Flush with deep mode or not. 1 in default.
+                  0 for non-deep mode,1 for deep mode,-1 means use the configuration with server
+                Block:
+                  (Bool) Flush with block mode or not. false in default.
+                CollectionSpace:
+                  (String) Specify the collectionspace to sync.
+                  If not set, will sync all the collectionspaces and logs,
+                  otherwise, will only sync the collectionspace specified.
+                Others:(Only take effect in coordinate nodes)
+                  GroupID:INT32,
+                  GroupName:String,
+                  NodeID:INT32,
+                  HostName:String,
+                  svcname:String
+                  ...
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
                             bson *options ) ;
 
+/** \fn INT32 sdbLoadCollectionSpace( sdbConnectionHandle cHandle,
+                                      const CHAR *csName,
+                                      bson *options )
+    \brief Load the specified collection space to database from file
+    \param [in] cHandle The database connection handle
+    \param [in] csName The specified collection space name
+    \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbLoadCollectionSpace( sdbConnectionHandle cHandle,
+                                         const CHAR *csName,
+                                         bson *options ) ;
+
+/** \fn INT32 sdbUnloadCollectionSpace( sdbConnectionHandle cHandle,
+                                        const CHAR *csName,
+                                        bson *options )
+    \brief Unload the specified collection space from database
+    \param [in] cHandle The database connection handle
+    \param [in] csName The specified collection space name
+    \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbUnloadCollectionSpace( sdbConnectionHandle cHandle,
+                                           const CHAR *csName,
+                                           bson *options ) ;
+
+/** \fn INT32 sdbSetPDLevel( sdbConnectionHandle cHandle,
+                             INT32 pdLevel,
+                             bson *options )
+    \brief Set the node's diagnostic level
+    \param [in] cHandle The database connection handle
+    \param [in] pdLevel Diagnostic level, value:[0~5]
+    \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbSetPDLevel( sdbConnectionHandle cHandle,
+                                INT32 pdLevel,
+                                bson *options ) ;
+
+/** \fn INT32 sdbReloadConfig( sdbConnectionHandle cHandle,
+                               bson *options )
+    \brief Set the node's diagnostic level
+    \param [in] cHandle The database connection handle
+    \param [in] options The control options:(Only take effect in coordinate nodes)
+                GroupID:INT32,
+                GroupName:String,
+                NodeID:INT32,
+                HostName:String,
+                svcname:String,
+                ...
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbReloadConfig( sdbConnectionHandle cHandle,
+                                  bson *options ) ;
+
+/** \fn INT32 sdbRenameCollectionSpace( sdbConnectionHandle cHandle,
+                                        const CHAR *pOldName,
+                                        const CHAR *pNewName,
+                                        bson *options )
+    \brief Set the node's diagnostic level
+    \param [in] cHandle The database connection handle
+    \param [in] pOldName The old collection space name
+    \param [in] pNewName The new collection space name
+    \param [in] options Reserved
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbRenameCollectionSpace( sdbConnectionHandle cHandle,
+                                           const CHAR *pOldName,
+                                           const CHAR *pNewName,
+                                           bson *options ) ;
 
 /** \fn void sdbSetConnectionInterruptFunc( sdbConnectionHandle cHandle,
  *                                          socketInterruptFunc func )

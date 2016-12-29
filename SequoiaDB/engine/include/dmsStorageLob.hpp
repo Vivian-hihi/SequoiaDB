@@ -94,6 +94,10 @@ namespace engine
 
       void  removeStorageFiles() ;
 
+      INT32 rename( const CHAR *csName,
+                    const CHAR *lobmFileName,
+                    const CHAR *lobdFileName ) ;
+
       INT32 getLobMeta( const bson::OID &oid,
                         dmsMBContext *mbContext,
                         _pmdEDUCB *cb,
@@ -236,6 +240,8 @@ namespace engine
 
       utilCacheUnit                 *_pCacheUnit ;
       IDataSyncManager              *_pSyncMgrTmp ;
+
+      BOOLEAN                       _isRename ;
 
    } ;
    typedef class _dmsStorageLob dmsStorageLob ;

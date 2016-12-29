@@ -1374,7 +1374,7 @@ namespace engine
       return _fullCollectionName.c_str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRENAMECL_INIT, "_rtnRenameCollection::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRENAMECL_INIT, "_rtnRenameCollection::init" )
    INT32 _rtnRenameCollection::init ( INT32 flags, INT64 numToSkip,
                                       INT64 numToReturn,
                                       const CHAR * pMatcherBuff,
@@ -1385,32 +1385,41 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNRENAMECL_INIT ) ;
 
-      BSONObj arg ( pMatcherBuff ) ;
+      try
+      {
+         BSONObj arg ( pMatcherBuff ) ;
 
-      rc = rtnGetStringElement ( arg, FIELD_NAME_COLLECTIONSPACE, &_csName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get string[collectionspace]" ) ;
-         goto error ;
-      }
-      rc = rtnGetStringElement ( arg, FIELD_NAME_OLDNAME,
-                                 &_oldCollectionName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get string[oldname]" ) ;
-         goto error ;
-      }
-      rc = rtnGetStringElement ( arg, FIELD_NAME_NEWNAME,
-                                 &_newCollectionName ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get string[newname]" ) ;
-         goto error ;
-      }
+         rc = rtnGetStringElement ( arg, FIELD_NAME_COLLECTIONSPACE, &_csName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get string[collectionspace]" ) ;
+            goto error ;
+         }
+         rc = rtnGetStringElement ( arg, FIELD_NAME_OLDNAME,
+                                    &_oldCollectionName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get string[oldname]" ) ;
+            goto error ;
+         }
+         rc = rtnGetStringElement ( arg, FIELD_NAME_NEWNAME,
+                                    &_newCollectionName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get string[newname]" ) ;
+            goto error ;
+         }
 
-      _fullCollectionName = _csName ;
-      _fullCollectionName += "." ;
-      _fullCollectionName += _oldCollectionName ;
+         _fullCollectionName = _csName ;
+         _fullCollectionName += "." ;
+         _fullCollectionName += _oldCollectionName ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB__RTNRENAMECL_INIT, rc ) ;
@@ -1419,7 +1428,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRENAMECL_DOIT, "_rtnRenameCollection::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRENAMECL_DOIT, "_rtnRenameCollection::doit" )
    INT32 _rtnRenameCollection::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                       SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                                       INT16 w , INT64 *pContextID )
@@ -1429,13 +1438,15 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       SDB_DMSCB *pDmsCB = pmdGetKRCB()->getDMSCB() ;
+      BOOLEAN dmsLock = FALSE ;
 
       rc = dmsCB->writable ( cb ) ;
       if ( rc )
       {
-         // do not call writeDown if writable fail
-         goto not_locked ;
+         goto error ;
       }
+      dmsLock = TRUE ;
+
       rc = rtnCollectionSpaceLock ( _csName, pDmsCB, FALSE, &su, suID ) ;
       if ( SDB_OK != rc )
       {
@@ -1462,14 +1473,131 @@ namespace engine
          goto error ;
       }
 
+      /// clean apm
+      su->getAPM()->invalidatePlans( _oldCollectionName ) ;
+
    done:
-      dmsCB->writeDown ( cb ) ;
-   not_locked:
       if ( suID != DMS_INVALID_CS )
       {
          pDmsCB->suUnlock ( suID ) ;
       }
+      if ( dmsLock )
+      {
+         dmsCB->writeDown ( cb ) ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNRENAMECL_DOIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRenameCollectionSpace)
+   _rtnRenameCollectionSpace::_rtnRenameCollectionSpace()
+   {
+      _oldName = NULL ;
+      _newName = NULL ;
+   }
+   _rtnRenameCollectionSpace::~_rtnRenameCollectionSpace()
+   {
+   }
+
+   INT32 _rtnRenameCollectionSpace::init ( INT32 flags, INT64 numToSkip,
+                                           INT64 numToReturn,
+                                           const CHAR * pMatcherBuff,
+                                           const CHAR * pSelectBuff,
+                                           const CHAR * pOrderByBuff,
+                                           const CHAR * pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj arg ( pMatcherBuff ) ;
+         rc = rtnGetStringElement ( arg, FIELD_NAME_OLDNAME,
+                                    &_oldName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get string[oldname]" ) ;
+            goto error ;
+         }
+         rc = rtnGetStringElement ( arg, FIELD_NAME_NEWNAME,
+                                    &_newName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get string[newname]" ) ;
+            goto error ;
+         }
+
+         rc = dmsCheckCSName( _oldName, FALSE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         rc = dmsCheckCSName( _newName, FALSE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRENAMECS_DOIT, "_rtnRenameCollectionSpace::doit" )
+   INT32 _rtnRenameCollectionSpace::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
+                                           SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
+                                           INT16 w , INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__RTNRENAMECS_DOIT ) ;
+      SDB_DMSCB *pDmsCB = pmdGetKRCB()->getDMSCB() ;
+      BOOLEAN dmsLock = FALSE ;
+
+      rc = dmsCB->writable ( cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      dmsLock = TRUE ;
+
+      // let's find out whether the collection space is held by this
+      // EDU. If so we have to get rid of those contexts
+      if ( NULL != cb )
+      {
+         rtnDelContextForCollectionSpace( _oldName, cb ) ;
+      }
+
+      rc = dmsCB->renameCollectionSpace( _oldName, _newName, cb, dpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to rename collectionspace from %s to %s",
+                  _oldName, _newName ) ;
+         goto error ;
+      }
+      if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
+      {
+         /// AUDIT
+         PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CS,
+                           _oldName, rc,
+                           "NewCollectionSpaceName:%s",
+                           _newName ) ;
+      }
+
+   done:
+      if ( dmsLock )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
+      PD_TRACE_EXITRC ( SDB__RTNRENAMECS_DOIT, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1510,7 +1638,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREORG_DOIT, "_rtnReorg::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREORG_DOIT, "_rtnReorg::doit" )
    INT32 _rtnReorg::doit ( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                            SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                            INT16 w , INT64 *pContextID )
@@ -1809,6 +1937,76 @@ namespace engine
                getPDLevelDesp( getPDLevel() ) ) ;
       PD_TRACE_EXIT ( SDB__RTNSETPDLEVEL_DOIT ) ;
       return SDB_OK ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnReloadConfig)
+
+   _rtnReloadConfig::_rtnReloadConfig()
+   {
+   }
+
+   _rtnReloadConfig::~_rtnReloadConfig()
+   {
+   }
+
+   const CHAR* _rtnReloadConfig::name()
+   {
+      return NAME_RELOAD_CONFIG ;
+   }
+
+   RTN_COMMAND_TYPE _rtnReloadConfig::type()
+   {
+      return CMD_RELOAD_CONFIG ;
+   }
+
+   INT32 _rtnReloadConfig::init( INT32 flags, INT64 numToSkip,
+                                 INT64 numToReturn,
+                                 const CHAR *pMatcherBuff,
+                                 const CHAR * pSelectBuff,
+                                 const CHAR * pOrderByBuff,
+                                 const CHAR * pHintBuff )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _rtnReloadConfig::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                 INT16 w, INT64 * pContextID )
+   {
+      INT32 rc = SDB_OK ;
+
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
+      pmdOptionsCB tmpCB ;
+      BSONObj cfgObj ;
+
+      rc = tmpCB.initFromFile( optCB->getConfFile(), FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init config file[%s] failed, rc: %d",
+                 optCB->getConfFile(), rc ) ;
+         goto error ;
+      }
+
+      rc = tmpCB.toBSON( cfgObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Convert config to bson failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = optCB->change( cfgObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Reload config[%s] failed, rc: %d",
+                 cfgObj.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      PD_LOG( PDEVENT, "Reload config succeed" ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnTraceStart)
@@ -3130,6 +3328,83 @@ namespace engine
    error:
       goto done ;
    }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnLoadCollectionSpace )
+   _rtnLoadCollectionSpace::_rtnLoadCollectionSpace()
+   {
+      _csName = NULL ;
+   }
+   _rtnLoadCollectionSpace::~_rtnLoadCollectionSpace()
+   {
+   }
+
+   INT32 _rtnLoadCollectionSpace::init( INT32 flags, INT64 numToSkip,
+                                        INT64 numToReturn,
+                                        const CHAR * pMatcherBuff,
+                                        const CHAR * pSelectBuff,
+                                        const CHAR * pOrderByBuff,
+                                        const CHAR * pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj matcher( pMatcherBuff ) ;
+         BSONElement e = matcher.getField( FIELD_NAME_NAME ) ;
+         if ( String == e.type() )
+         {
+            _csName = e.valuestr() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
+                    FIELD_NAME_NAME, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnLoadCollectionSpace::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                        _SDB_RTNCB * rtnCB,
+                                        _dpsLogWrapper *dpsCB,
+                                        INT16 w , INT64 *pContextID )
+   {
+      return rtnLoadCollectionSpace( _csName,
+                                     pmdGetOptionCB()->getDbPath(),
+                                     pmdGetOptionCB()->getIndexPath(),
+                                     pmdGetOptionCB()->getLobPath(),
+                                     pmdGetOptionCB()->getLobMetaPath(),
+                                     dmsCB, FALSE ) ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace )
+   _rtnUnloadCollectionSpace::_rtnUnloadCollectionSpace()
+   {
+   }
+   _rtnUnloadCollectionSpace::~_rtnUnloadCollectionSpace()
+   {
+   }
+
+   INT32 _rtnUnloadCollectionSpace::doit( _pmdEDUCB * cb, _SDB_DMSCB * dmsCB,
+                                          _SDB_RTNCB * rtnCB,
+                                          _dpsLogWrapper * dpsCB,
+                                          INT16 w, INT64 * pContextID )
+   {
+      return rtnUnloadCollectionSpace( _csName, cb, dmsCB ) ;
+   }
+
 }
 
 

@@ -103,6 +103,14 @@ namespace engine
    INT32 dpsRecord2CSDel( const CHAR *logRecord,
                           const CHAR **csName ) ;
 
+   INT32 dpsCSRename2Record( const CHAR *csName,
+                             const CHAR *newCSName,
+                             dpsLogRecord &record ) ;
+
+   INT32 dpsRecord2CSRename( const CHAR *logRecord,
+                             const CHAR **csName,
+                             const CHAR **newCSName ) ;
+
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
                           UINT8 &compressorType,

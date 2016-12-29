@@ -335,6 +335,71 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_RENAMECS, "_dmsStorageUnit::renameCS" )
+   INT32 _dmsStorageUnit::renameCS( const CHAR *pNewName )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_RENAMECS ) ;
+
+      CHAR dataFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
+      CHAR idxFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
+
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu || !_pCacheUnit )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Alloc memory failed" ) ;
+         goto error ;
+      }
+
+      /// data and index
+      ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   pNewName, _storageInfo._sequence,
+                   DMS_DATA_SU_EXT_NAME ) ;
+      ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   pNewName, _storageInfo._sequence,
+                   DMS_INDEX_SU_EXT_NAME ) ;
+
+      rc = _pDataSu->renameStorage( pNewName, dataFileName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rename storage data failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = _pIndexSu->renameStorage( pNewName, idxFileName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rename storage index failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /// lobm and lobd
+      ossMemset( dataFileName, 0, sizeof( dataFileName ) ) ;
+      ossMemset( idxFileName, 0 , sizeof( idxFileName ) ) ;
+      ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   pNewName, _storageInfo._sequence,
+                   DMS_LOB_META_SU_EXT_NAME ) ;
+      ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   pNewName, _storageInfo._sequence,
+                   DMS_LOB_DATA_SU_EXT_NAME ) ;
+
+      rc = _pLobSu->rename( pNewName, dataFileName, idxFileName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rename storage lob failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /// update storage info
+      ossStrncpy( _storageInfo._suName, pNewName, DMS_SU_NAME_SZ ) ;
+      _storageInfo._suName[DMS_SU_NAME_SZ] = 0 ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB__DMSSU_RENAMECS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__RESETCOLLECTION, "_dmsStorageUnit::_resetCollection" )
    INT32 _dmsStorageUnit::_resetCollection( dmsMBContext *context )
    {

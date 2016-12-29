@@ -86,6 +86,12 @@ namespace engine
       DPS_LOG_CSDEL_CSNAME = 1,
    } ;
 
+   enum DPS_LOG_CSRENAME
+   {
+      DPS_LOG_CSRENAME_CSNAME       = 1,
+      DPS_LOG_CSRENAME_NEWNAME      = 2
+   } ;
+
    enum DPS_LOG_CLCRT
    {
       DPS_LOG_CLCRT_ATTRIBUTE = 1,

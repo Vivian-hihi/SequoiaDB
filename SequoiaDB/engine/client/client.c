@@ -4459,6 +4459,81 @@ error :
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbRenameCollection( sdbCSHandle cHandle,
+                                      const CHAR *pOldName,
+                                      const CHAR *pNewName,
+                                      bson *options )
+{
+   INT32 rc                        = SDB_OK ;
+   sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
+   sdbConnectionStruct *connection = NULL ;
+   CHAR fullCollectionName [ CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 2 ] = {0};
+
+   bson query ;
+   BOOLEAN bsoninit = FALSE ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
+
+   if ( !pOldName || !*pOldName || !pNewName || !*pNewName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
+
+   BSON_INIT( query ) ;
+   BSON_APPEND( query, FIELD_NAME_COLLECTIONSPACE, cs->_CSName, string ) ;
+   BSON_APPEND( query, FIELD_NAME_OLDNAME, pOldName, string ) ;
+   BSON_APPEND( query, FIELD_NAME_NEWNAME, pNewName, string ) ;
+   if ( options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next( &it ) )
+      {
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key, FIELD_NAME_OLDNAME ) &&
+              0 != ossStrcmp( key, FIELD_NAME_NEWNAME ) &&
+              0 != ossStrcmp( key, FIELD_NAME_COLLECTIONSPACE ) )
+         {
+            rc = bson_append_element( &query, NULL, &it ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+      }
+   }
+   BSON_FINISH( query ) ;
+
+   rc = _runCommand2( cs->_connection, &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_RENAME_COLLECTION,
+                      0, 0, -1, -1,
+                      &query, NULL, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   ossStrncpy ( fullCollectionName, cs->_CSName, sizeof(cs->_CSName) ) ;
+   ossStrncat ( fullCollectionName, ".", 1 ) ;
+   ossStrncat ( fullCollectionName, pOldName, CLIENT_COLLECTION_NAMESZ );
+   rc = removeCachedObject( connection->_tb, fullCollectionName, FALSE ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   BSON_DESTROY( query ) ;
+   return rc ;
+error :
+   goto done ;
+}
+
 SDB_EXPORT INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
                                 CHAR *pBuffer, INT32 size )
 {
@@ -4896,76 +4971,6 @@ done :
 error :
    goto done ;
 }
-
-/*
-SDB_EXPORT INT32 sdbRenameCollection ( sdbCollectionHandle cHandle,
-                                       const CHAR *pNewName )
-{
-   INT32 rc = SDB_OK ;
-   BOOLEAN result ;
-   SINT64 contextID = 0 ;
-   bson obj ;
-   bson_init ( &obj ) ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   if ( !cs ||
-        cs->_handleType != SDB_HANDLE_TYPE_COLLECTION )
-   {
-      rc = SDB_CLT_INVALID_HANDLE ;
-      goto error ;
-   }
-   if ( !pNewName )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   rc = bson_append_string ( &obj, FIELD_NAME_COLLECTIONSPACE, cs->_CSName ) ;
-   if ( rc )
-   {
-      rc = SDB_SYS ;
-      goto error ;
-   }
-   rc = bson_append_string ( &obj, FIELD_NAME_OLDNAME, cs->_collectionName ) ;
-   if ( rc )
-   {
-      rc = SDB_SYS ;
-      goto error ;
-   }
-   rc = bson_append_string ( &obj, FIELD_NAME_NEWNAME, pNewName ) ;
-   if ( rc )
-   {
-      rc = SDB_SYS ;
-      goto error ;
-   }
-   bson_finish ( &obj ) ;
-
-   rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                              CMD_ADMIN_PREFIX CMD_NAME_RENAME_COLLECTION,
-                              0, 0, -1, -1, &obj,
-                              NULL, NULL, NULL, cs->_endianConvert ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-   rc = _send ( cs->_sock, (MsgHeader*)cs->_pSendBuffer,
-                cs->_endianConvert ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-
-   rc = _recvExtract ( cs->_sock, (MsgHeader**)&cs->_pReceiveBuffer,
-                       &cs->_receiveBufferSize, &contextID, &result,
-                       cs->_endianConvert ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-done :
-   bson_destroy ( &obj ) ;
-   return rc ;
-error :
-   goto done ;
-}*/
 
 static INT32 _sdbCreateIndex( sdbCollectionHandle cHandle,
                               bson *indexDef,
@@ -10276,4 +10281,254 @@ done:
 error:
    goto done ;
 }
+
+SDB_EXPORT INT32 sdbLoadCollectionSpace( sdbConnectionHandle cHandle,
+                                         const CHAR *csName,
+                                         bson *options )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   bson query ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   BSON_INIT( query ) ;
+   BSON_APPEND( query, FIELD_NAME_NAME, csName, string ) ;
+   if ( options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next( &it ) )
+      {
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key, FIELD_NAME_NAME ) )
+         {
+            rc = bson_append_element( &query, NULL, &it ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+      }
+   }
+   BSON_FINISH( query ) ;
+
+   rc = _runCommand2( cHandle, &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_LOAD_COLLECTIONSPACE,
+                      0, 0, -1, -1,
+                      &query, NULL, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   BSON_DESTROY( query ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbUnloadCollectionSpace( sdbConnectionHandle cHandle,
+                                           const CHAR *csName,
+                                           bson *options )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   bson query ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   if ( !csName || !*csName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_INIT( query ) ;
+   BSON_APPEND( query, FIELD_NAME_NAME, csName, string ) ;
+   if ( options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next( &it ) )
+      {
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key, FIELD_NAME_NAME ) )
+         {
+            rc = bson_append_element( &query, NULL, &it ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+      }
+   }
+   BSON_FINISH( query ) ;
+
+   rc = _runCommand2( cHandle, &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_UNLOAD_COLLECTIONSPACE,
+                      0, 0, -1, -1,
+                      &query, NULL, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   BSON_DESTROY( query ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbSetPDLevel( sdbConnectionHandle cHandle,
+                                INT32 pdLevel,
+                                bson *options )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   bson query ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   BSON_INIT( query ) ;
+   BSON_APPEND( query, FIELD_NAME_PDLEVEL, pdLevel, int ) ;
+   if ( options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next( &it ) )
+      {
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key, FIELD_NAME_PDLEVEL ) )
+         {
+            rc = bson_append_element( &query, NULL, &it ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+      }
+   }
+   BSON_FINISH( query ) ;
+
+   rc = _runCommand2( cHandle, &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_SET_PDLEVEL,
+                      0, 0, -1, -1,
+                      &query, NULL, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   BSON_DESTROY( query ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbReloadConfig( sdbConnectionHandle cHandle,
+                                  bson *options )
+{
+   INT32 rc = SDB_OK ;
+
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   rc = _runCommand2( cHandle, &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_RELOAD_CONFIG,
+                      0, 0, -1, -1,
+                      options, NULL, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbRenameCollectionSpace( sdbConnectionHandle cHandle,
+                                           const CHAR *pOldName,
+                                           const CHAR *pNewName,
+                                           bson *options )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   bson query ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   if ( !pOldName || !*pOldName || !pNewName || !*pNewName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_INIT( query ) ;
+   BSON_APPEND( query, FIELD_NAME_OLDNAME, pOldName, string ) ;
+   BSON_APPEND( query, FIELD_NAME_NEWNAME, pNewName, string ) ;
+   if ( options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next( &it ) )
+      {
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key, FIELD_NAME_OLDNAME ) &&
+              0 != ossStrcmp( key, FIELD_NAME_NEWNAME ) )
+         {
+            rc = bson_append_element( &query, NULL, &it ) ;
+            if ( SDB_OK != rc )
+            {
+               rc = SDB_DRIVER_BSON_ERROR ;
+               goto error ;
+            }
+         }
+      }
+   }
+   BSON_FINISH( query ) ;
+
+   rc = _runCommand2( cHandle, &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      CMD_ADMIN_PREFIX CMD_NAME_RENAME_COLLECTIONSPACE,
+                      0, 0, -1, -1,
+                      &query, NULL, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done:
+   BSON_DESTROY( query ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 

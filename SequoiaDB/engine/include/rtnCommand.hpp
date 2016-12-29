@@ -715,6 +715,9 @@ namespace engine
 
    } ;
 
+   /*
+      Only in standalone
+   */
    class _rtnRenameCollection : public _rtnCommand
    {
       DECLARE_CMD_AUTO_REGISTER()
@@ -722,6 +725,7 @@ namespace engine
       public:
          _rtnRenameCollection () ;
          virtual ~_rtnRenameCollection () ;
+         virtual INT32 spaceService () { return CMD_SPACE_SERVICE_LOCAL ; }
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -741,7 +745,33 @@ namespace engine
          const CHAR           *_newCollectionName ;
          const CHAR           *_csName ;
          std::string          _fullCollectionName ;
-   };
+   } ;
+
+   class _rtnRenameCollectionSpace : public _rtnCommand
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnRenameCollectionSpace () ;
+         virtual ~_rtnRenameCollectionSpace () ;
+         virtual INT32 spaceService () { return CMD_SPACE_SERVICE_LOCAL ; }
+
+         virtual const CHAR * name () { return NAME_RENAME_COLLECTIONSPACE ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_RENAME_COLLECTIONSPACE ; }
+         virtual BOOLEAN      writable () { return TRUE ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
+      protected:
+         const CHAR           *_oldName ;
+         const CHAR           *_newName ;
+   } ;
 
    class _rtnReorg : public _rtnCommand
    {
@@ -886,6 +916,27 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
       protected:
          INT32             _pdLevel ;
+   } ;
+
+   class _rtnReloadConfig : public _rtnCommand
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnReloadConfig() ;
+         virtual ~_rtnReloadConfig() ;
+
+      public:
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                              INT16 w = 1, INT64 *pContextID = NULL ) ;
    } ;
 
    class _rtnTraceStart : public _rtnCommand
@@ -1236,6 +1287,48 @@ namespace engine
       BOOLEAN        _block ;
 
    } ;
+
+   class _rtnLoadCollectionSpace : public _rtnCommand
+   {
+   DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnLoadCollectionSpace() ;
+      virtual ~_rtnLoadCollectionSpace() ;
+
+   public:
+      virtual const CHAR * name () { return NAME_LOAD_COLLECTIONSPACE ; }
+      virtual RTN_COMMAND_TYPE type() { return CMD_LOAD_COLLECTIONSPACE ; }
+
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+   protected:
+      const CHAR        *_csName ;
+
+   } ;
+
+   class _rtnUnloadCollectionSpace : public _rtnLoadCollectionSpace
+   {
+   DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnUnloadCollectionSpace() ;
+      virtual ~_rtnUnloadCollectionSpace() ;
+
+   public:
+      virtual const CHAR * name () { return NAME_UNLOAD_COLLECTIONSPACE ; }
+      virtual RTN_COMMAND_TYPE type() { return CMD_UNLOAD_COLLECTIONSPACE ; }
+
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL ) ;
+   } ;
+
 }
 
 const UINT32 pdGetTraceFunctionListNum();

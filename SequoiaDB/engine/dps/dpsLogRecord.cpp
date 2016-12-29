@@ -603,7 +603,7 @@ namespace engine
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  " Type   : %s(%d)"OSS_NEWLINE,
                                  "CS DROP", LOG_TYPE_CS_DELETE ) ;
-            dpsLogRecord::iterator itrCS, itrPageSize ;
+            dpsLogRecord::iterator itrCS ;
             itrCS = this->find( DPS_LOG_CSCRT_CSNAME ) ;
             if ( !itrCS.valid() )
             {
@@ -619,7 +619,42 @@ namespace engine
                                  itrCS.value() ) ;
 
             break ;
+         }
+         case LOG_TYPE_CS_RENAME:
+         {
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "CS RENAME", LOG_TYPE_CS_RENAME ) ;
+            dpsLogRecord::iterator itrCS, itrNewCS ;
+            itrCS = this->find( DPS_LOG_CSRENAME_CSNAME ) ;
+            if ( !itrCS.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find csname in record" ) ;
+               PD_LOG( PDERROR, "Failed to find csname in record" ) ;
+               goto done ;
+            }
 
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " CSName : %s"OSS_NEWLINE,
+                                 itrCS.value() ) ;
+
+            itrNewCS = this->find( DPS_LOG_CSRENAME_NEWNAME ) ;
+            if ( !itrNewCS.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "Failed to find new csname in record" ) ;
+               PD_LOG( PDERROR, "Failed to find new csname in record" ) ;
+               goto done ;
+            }
+
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 "New CSName : %s"OSS_NEWLINE,
+                                 itrNewCS.value() ) ;
+
+            break ;
          }
          case LOG_TYPE_CL_CRT :
          {

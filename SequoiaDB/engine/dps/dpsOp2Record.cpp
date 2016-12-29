@@ -582,6 +582,88 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CSRENAME2RECORD, "dpsCSRename2Record" )
+   INT32 dpsCSRename2Record( const CHAR * csName,
+                             const CHAR * newCSName,
+                             dpsLogRecord & record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_CSRENAME2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != csName, "Collectionspace name can't be NULL" ) ;
+      SDB_ASSERT( NULL != newCSName, "New collectionspace name can't be NULL" ) ;
+
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_CS_RENAME ;
+
+      rc = record.push( DPS_LOG_CSRENAME_CSNAME,
+                        ossStrlen( csName) + 1,
+                        csName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push csname to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_CSRENAME_NEWNAME,
+                        ossStrlen( newCSName ) + 1,
+                        newCSName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to push new csname to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_CSRENAME2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2CSRENAME, "dpsRecord2CSRename" )
+   INT32 dpsRecord2CSRename( const CHAR * logRecord,
+                             const CHAR **csName,
+                             const CHAR **newCSName )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2CSRENAME ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to load cs del record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      {
+         dpsLogRecord::iterator itrCsName =
+                              record.find( DPS_LOG_CSRENAME_CSNAME ) ;
+         if ( !itrCsName.valid() )
+         {
+            PD_LOG( PDERROR, "Failed to find tag csname in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         *csName = itrCsName.value() ;
+
+         itrCsName = record.find( DPS_LOG_CSRENAME_NEWNAME ) ;
+         if ( !itrCsName.valid() )
+         {
+            PD_LOG( PDERROR, "Failed to find tag new csname in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         *newCSName = itrCsName.value() ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2CSRENAME, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLCRT2RECORD, "dpsCLCrt2Record" )
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,

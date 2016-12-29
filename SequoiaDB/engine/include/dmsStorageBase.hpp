@@ -429,6 +429,9 @@ namespace engine
          void  closeStorage ( UINT64 lastLSN ) ;
          INT32 removeStorage() ;
 
+         INT32 renameStorage( const CHAR *csName,
+                              const CHAR *suFileName ) ;
+
          /// flush functions
          INT32 flushHeader( BOOLEAN sync = FALSE ) ;
          INT32 flushSME( BOOLEAN sync = FALSE ) ;

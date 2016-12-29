@@ -3894,10 +3894,78 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_RENAME_CL, "cs_rename_cl" )
+static JSBool cs_rename_cl( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_CS_RENAME_CL );
+   sdbCSHandle *  cs                = NULL ;
+   JSString *     jsStrOldName      = NULL ;
+   CHAR *         pOldName          = NULL ;
+   JSString *     jsStrNewName      = NULL ;
+   CHAR *         pNewName          = NULL ;
+   JSObject *     pJSObj            = NULL ;
+   INT32          rc                = SDB_OK ;
+   JSBool         ret               = JS_TRUE ;
+   JSBool         foundp            = JS_FALSE ;
+   jsval          val               = JSVAL_VOID ;
+
+   BOOLEAN opSpecified = FALSE ;
+   bson options ;
+   bson_init( &options ) ;
+
+   cs = (sdbCSHandle *) JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( cs , "SdbCS.renameCL(): no collection space handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "SS/o" , &jsStrOldName,
+                               &jsStrNewName, &pJSObj ) ;
+   REPORT ( ret , "SdbCS.renameCL(): wrong arguments" ) ;
+
+   pOldName = (CHAR *)JS_EncodeString( cx, jsStrOldName ) ;
+   VERIFY ( pOldName ) ;
+   pNewName = (CHAR *)JS_EncodeString( cx, jsStrNewName ) ;
+   VERIFY ( pNewName ) ;
+
+   if ( NULL != pJSObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( pJSObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
+   }
+
+   if ( !JS_HasProperty ( cx , JS_THIS_OBJECT ( cx , vp ) , pOldName ,
+                          &foundp ) )
+   {
+      ret = JS_FALSE ;
+      goto error ;
+   }
+
+   rc = sdbRenameCollection( *cs, pOldName, pNewName,
+                             opSpecified ? &options : NULL ) ;
+   REPORT_RC ( SDB_OK == rc , "SdbCS.renameCL()" , rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+   JS_DeleteProperty2 ( cx , JS_THIS_OBJECT ( cx , vp ) , pOldName ,
+                        &val ) ;
+
+done :
+   SAFE_JS_FREE ( cx, pOldName ) ;
+   SAFE_JS_FREE ( cx, pNewName ) ;
+   bson_destroy( &options ) ;
+   PD_TRACE_EXIT ( SDB_CS_RENAME_CL );
+   return ret ;
+error :
+   TRY_REPORT ( cx , "SdbCS.renameCL(): false" ) ;
+   goto done ;
+}
+
 static JSFunctionSpec cs_functions[] = {
    JS_FS ( "getCL" , cs_get_cl , 1 , 0 ) ,
    JS_FS ( "dropCL" , cs_drop_cl , 1 , 0 ) ,
    JS_FS ( "createCL" , cs_create_cl , 1 , 0 ) ,
+   JS_FS ( "renameCL" , cs_rename_cl , 1 , 0 ) ,
    JS_FS_END
 } ;
 
@@ -7740,6 +7808,279 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LOADCS, "sdb_load_cs" )
+static JSBool sdb_load_cs ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_LOADCS ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle *connection  = NULL ;
+   CHAR *csName = NULL ;
+   JSString *jsCSName = NULL ;
+   JSObject *jsObj = NULL ;
+   BOOLEAN opSpecified = FALSE ;
+   bson options ;
+   bson_init( &options ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "S/o", &jsCSName, &jsObj ) ;
+   REPORT ( ret , "Sdb.loadCS(): wrong arguments" ) ;
+
+   csName = (CHAR *)JS_EncodeString( cx, jsCSName ) ;
+   VERIFY ( csName ) ;
+
+   if ( NULL != jsObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( jsObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
+   }
+
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.loadCS(): no connection handle" ) ;
+
+   rc = sdbLoadCollectionSpace( *connection, csName,
+                                opSpecified ? &options : NULL ) ;
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+   }
+   else
+   {
+      REPORT_RC( FALSE, "Sdb.loadCS()", rc ) ;
+   }
+
+done:
+   SAFE_JS_FREE ( cx, csName ) ;
+   bson_destroy( &options ) ;
+   PD_TRACE_EXIT( SDB_SDB_LOADCS ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "Sdb.loadCS(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_UNLOADCS, "sdb_unload_cs" )
+static JSBool sdb_unload_cs ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_UNLOADCS ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle *connection  = NULL ;
+   CHAR *csName = NULL ;
+   JSString *jsCSName = NULL ;
+   JSObject *jsObj = NULL ;
+   BOOLEAN opSpecified = FALSE ;
+   bson options ;
+   bson_init( &options ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "S/o", &jsCSName, &jsObj ) ;
+   REPORT ( ret , "Sdb.unloadCS(): wrong arguments" ) ;
+
+   csName = (CHAR *)JS_EncodeString( cx, jsCSName ) ;
+   VERIFY ( csName ) ;
+
+   if ( NULL != jsObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( jsObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
+   }
+
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.unloadCS(): no connection handle" ) ;
+
+   rc = sdbUnloadCollectionSpace( *connection, csName,
+                                  opSpecified ? &options : NULL ) ;
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+   }
+   else
+   {
+      REPORT_RC( FALSE, "Sdb.unloadCS()", rc ) ;
+   }
+
+done:
+   SAFE_JS_FREE ( cx, csName ) ;
+   bson_destroy( &options ) ;
+   PD_TRACE_EXIT( SDB_SDB_UNLOADCS ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "Sdb.unloadCS(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SETPDLEVEL, "sdb_set_pdlevel" )
+static JSBool sdb_set_pdlevel ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_SETPDLEVEL ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle *connection  = NULL ;
+   int32_t level = PDWARNING ;
+   JSObject *jsObj = NULL ;
+   BOOLEAN opSpecified = FALSE ;
+   bson options ;
+   bson_init( &options ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "i/o", &level, &jsObj ) ;
+   REPORT ( ret , "Sdb.setPDLevel(): wrong arguments" ) ;
+
+   if ( NULL != jsObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( jsObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
+   }
+
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.setPDLevel(): no connection handle" ) ;
+
+   rc = sdbSetPDLevel( *connection, level,
+                       opSpecified ? &options : NULL ) ;
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+   }
+   else
+   {
+      REPORT_RC( FALSE, "Sdb.setPDLevel()", rc ) ;
+   }
+
+done:
+   bson_destroy( &options ) ;
+   PD_TRACE_EXIT( SDB_SDB_SETPDLEVEL ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "Sdb.setPDLevel(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RELOAD_CONF, "sdb_reload_config" )
+static JSBool sdb_reload_config ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_RELOAD_CONF ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle *connection  = NULL ;
+   JSObject *jsObj = NULL ;
+   BOOLEAN opSpecified = FALSE ;
+   bson options ;
+   bson_init( &options ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/o", &jsObj ) ;
+   REPORT ( ret , "Sdb.reloadConf(): wrong arguments" ) ;
+
+   if ( NULL != jsObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( jsObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
+   }
+
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.reloadConf(): no connection handle" ) ;
+
+   rc = sdbReloadConfig( *connection, opSpecified ? &options : NULL ) ;
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+   }
+   else
+   {
+      REPORT_RC( FALSE, "Sdb.reloadConf()", rc ) ;
+   }
+
+done:
+   bson_destroy( &options ) ;
+   PD_TRACE_EXIT( SDB_SDB_RELOAD_CONF ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "Sdb.reloadConf(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RENAMECS, "sdb_rename_cs" )
+static JSBool sdb_rename_cs ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_RENAMECS ) ;
+   JSBool ret                    = JS_TRUE ;
+   INT32 rc                      = SDB_OK ;
+   sdbConnectionHandle *connection  = NULL ;
+   CHAR *oldCSName               = NULL ;
+   CHAR *newCSName               = NULL ;
+   JSString *jsOldCSName         = NULL ;
+   JSString *jsNewCSName         = NULL ;
+   JSObject *jsObj               = NULL ;
+   BOOLEAN opSpecified           = FALSE ;
+   JSBool foundp                 = JS_FALSE ;
+   jsval val                     = JSVAL_VOID ;
+   bson options ;
+   bson_init( &options ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "SS/o", &jsOldCSName, &jsNewCSName,
+                               &jsObj ) ;
+   REPORT ( ret , "Sdb.renameCS(): wrong arguments" ) ;
+
+   oldCSName = (CHAR *)JS_EncodeString( cx, jsOldCSName ) ;
+   VERIFY ( oldCSName ) ;
+   newCSName = (CHAR *)JS_EncodeString( cx, jsNewCSName ) ;
+   VERIFY ( newCSName ) ;
+
+   if ( NULL != jsObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( jsObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
+   }
+
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.renameCS(): no connection handle" ) ;
+
+   if ( !JS_HasProperty ( cx , JS_THIS_OBJECT(cx, vp) , oldCSName , &foundp ))
+   {
+      ret = JS_FALSE ;
+      goto error ;
+   }
+
+   rc = sdbRenameCollectionSpace( *connection, oldCSName, newCSName,
+                                  opSpecified ? &options : NULL ) ;
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+   }
+   else
+   {
+      REPORT_RC( FALSE, "Sdb.renameCS()", rc ) ;
+   }
+   JS_DeleteProperty2 ( cx , JS_THIS_OBJECT(cx, vp) , oldCSName , &val ) ;
+
+done:
+   SAFE_JS_FREE ( cx, oldCSName ) ;
+   SAFE_JS_FREE ( cx, newCSName ) ;
+   bson_destroy( &options ) ;
+   PD_TRACE_EXIT( SDB_SDB_RENAMECS ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "Sdb.renameCS(): false" ) ;
+   goto done ;
+}
+
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
    JS_FS ( "getRG" , sdb_get_rg , 1 , 0 ) ,
@@ -7786,6 +8127,11 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "forceSession", sdb_force_session, 0, 0 ),
    JS_FS ( "forceStepUp", sdb_force_step_up, 0, 0 ),
    JS_FS ( "sync", sdb_sync, 0, 0 ),
+   JS_FS ( "loadCS", sdb_load_cs, 0, 0 ),
+   JS_FS ( "unloadCS", sdb_unload_cs, 0, 0 ),
+   JS_FS ( "setPDLevel", sdb_set_pdlevel, 0, 0 ),
+   JS_FS ( "reloadConf", sdb_reload_config, 0, 0 ),
+   JS_FS ( "renameCS", sdb_rename_cs, 0, 0 ),
    JS_FS_END
 } ;
 

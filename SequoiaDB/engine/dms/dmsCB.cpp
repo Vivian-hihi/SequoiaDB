@@ -187,7 +187,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBNMINST, "_SDB_DMSCB::_CSCBNameInsert" )
-   INT32 _SDB_DMSCB::_CSCBNameInsert ( const CHAR *pName, UINT32 topSequence,
+   INT32 _SDB_DMSCB::_CSCBNameInsert ( const CHAR *pName,
+                                       UINT32 topSequence,
                                        _dmsStorageUnit *su,
                                        dmsStorageUnitID &suID )
    {
@@ -221,10 +222,12 @@ namespace engine
    }
 
    INT32 _SDB_DMSCB::_CSCBNameLookup ( const CHAR *pName,
-                                       SDB_DMS_CSCB **cscb )
+                                       SDB_DMS_CSCB **cscb,
+                                       dmsStorageUnitID *suID,
+                                       BOOLEAN exceptDeleting )
    {
-      INT32 rc = SDB_OK;
-      SDB_ASSERT( cscb, "cscb can't be null!" );
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( cscb, "cscb can't be null!" ) ;
 #if defined (_WINDOWS)
       std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
 #elif defined (_LINUX)
@@ -235,25 +238,39 @@ namespace engine
          rc = SDB_DMS_CS_NOTEXIST ;
          goto error;
       }
-      *cscb = _cscbVec[(*it).second];
-      if ( *cscb != NULL )
+      if ( suID )
       {
-         goto done;
+         *suID = it->second ;
       }
-      if( _delCscbVec[(*it).second] )
+
+      if ( _cscbVec[(*it).second] )
       {
-         rc = SDB_DMS_CS_DELETING;
+         *cscb = _cscbVec[(*it).second] ;
+      }
+      else if ( _delCscbVec[(*it).second] )
+      {
+         if ( !exceptDeleting )
+         {
+            *cscb = _delCscbVec[(*it).second] ;
+         }
+         else
+         {
+            rc = SDB_DMS_CS_DELETING ;
+            goto error ;
+         }
       }
       else
       {
-         SDB_ASSERT( FALSE, "faint, why the cs is in map?" );
-         rc = SDB_DMS_CS_NOTEXIST;
+         /// This is impossible in this case
+         SDB_ASSERT( FALSE, "This is impossible in this case" ) ;
+         rc = SDB_DMS_CS_NOTEXIST ;
+         goto error ;
       }
-      goto error;
+
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    INT32 _SDB_DMSCB::_CSCBNameLookupAndLock ( const CHAR *pName,
@@ -264,41 +281,32 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       SDB_ASSERT( cscb, "cscb can't be null!" );
-      suID = DMS_INVALID_CS ;
-      *cscb = NULL;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
-      if ( _cscbNameMap.end() == (it = _cscbNameMap.find(pName)) )
+
+      rc = _CSCBNameLookup( pName, cscb, &suID, TRUE ) ;
+      if ( rc )
       {
-         return SDB_DMS_CS_NOTEXIST ;
-      }
-      dmsStorageUnitID temp_suID = (*it).second ;
-      if ( NULL == _cscbVec[temp_suID] )
-      {
-         if ( NULL == _delCscbVec[temp_suID] )
-         {
-            return SDB_DMS_CS_NOTEXIST ;
-         }
-         return SDB_DMS_CS_DELETING ;
+         goto error ;
       }
 
       if ( EXCLUSIVE == lockType )
       {
-         rc = _latchVec[temp_suID]->lock_w( millisec ) ;
+         rc = _latchVec[suID]->lock_w( millisec ) ;
       }
       else
       {
-         rc = _latchVec[temp_suID]->lock_r( millisec ) ;
+         rc = _latchVec[suID]->lock_r( millisec ) ;
       }
-      if ( SDB_OK == rc )
+      if ( rc )
       {
-         suID = temp_suID ;
-         *cscb = _cscbVec[suID] ;
+         goto error ;
       }
-      return rc;
+
+   done:
+      return rc ;
+   error:
+      suID = DMS_INVALID_CS ;
+      *cscb = NULL ;
+      goto done ;
    }
 
    void _SDB_DMSCB::_CSCBRelease ( dmsStorageUnitID suID,
@@ -323,7 +331,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMREMV );
-      dmsStorageUnitID suID ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
       UINT32 csLID = ~0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       BOOLEAN isTransLocked = FALSE;
@@ -331,24 +339,16 @@ namespace engine
       BOOLEAN isLocked = FALSE ;
       UINT32 logRecSize = 0;
       dpsMergeInfo info ;
-      dpsLogRecord &record = info.getMergeBlock().record();
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
-      std::vector<SDB_DMS_CSCB*> *pVecCscb = NULL ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
 
-      pCSCB = NULL ;
       _mutex.get_shared () ;
-      if ( _cscbNameMap.end() == (it = _cscbNameMap.find( pName )))
+      rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
+      _mutex.release_shared () ;
+
+      if ( rc )
       {
-         _mutex.release_shared () ;
-         rc = SDB_DMS_CS_NOTEXIST ;
          goto error ;
       }
-      suID = (*it).second ;
-      _mutex.release_shared () ;
 
       if ( NULL != dpsCB )
       {
@@ -373,7 +373,6 @@ namespace engine
    retry :
       // now let's lock the collectionspace, if we can't lock it, let's return
       // false. we shouldn't wait forever
-      //if ( !_latchVec[suID]->try_get() )
       if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
       {
          rc = SDB_LOCK_FAILED ;
@@ -389,52 +388,43 @@ namespace engine
 
       // there is a small timing hole before getting the latch, so we have
       // to get current suID again to verify
-      if ( _cscbNameMap.end() == (it = _cscbNameMap.find(pName)) ||
-           suID != (*it).second )
       {
-         // if we no longer able to find the collectionspace, or the same
-         // name maps to another suID, then let's get out of here
-         rc = SDB_DMS_CS_NOTEXIST ;
-         goto error ;
-      }
-
-      if ( _cscbVec[suID] )
-      {
-         pVecCscb = &_cscbVec ;
-      }
-      else if ( _delCscbVec[suID] )
-      {
-        pVecCscb = &_delCscbVec ;
-      }
-
-      if ( pVecCscb )
-      {
-         pCSCB = (*pVecCscb)[ suID ] ;
-         SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
-
-         // if only for empty
-         if ( onlyEmpty && 0 != pCSCB->_su->data()->getCollectionNum() )
+         dmsStorageUnitID suTmpID = DMS_INVALID_SUID ;
+         SDB_DMS_CSCB *tmpCSCB = NULL ;
+         rc = _CSCBNameLookup( pName, &tmpCSCB, &suTmpID, TRUE ) ;
+         if ( rc )
          {
-            rc = SDB_DMS_CS_NOT_EMPTY ;
             goto error ;
          }
-
-         csLID = pCSCB->_su->LogicalCSID() ;
-         if ( cb )
+         else if ( suTmpID != suID )
          {
-            rc = pTransCB->transLockTryX( cb, csLID );
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
-                        rc ) ;
-               goto error ;
-            }
-            isTransLocked = TRUE ;
+            rc = SDB_DMS_CS_NOTEXIST ;
+            goto error ;
          }
-         (*pVecCscb)[suID] = NULL ;
       }
 
-      _cscbNameMap.erase(pName) ;
+      SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
+      // if only for empty
+      if ( onlyEmpty && 0 != pCSCB->_su->data()->getCollectionNum() )
+      {
+         rc = SDB_DMS_CS_NOT_EMPTY ;
+         goto error ;
+      }
+      csLID = pCSCB->_su->LogicalCSID() ;
+      if ( cb )
+      {
+         rc = pTransCB->transLockTryX( cb, csLID ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
+                     rc ) ;
+            goto error ;
+         }
+         isTransLocked = TRUE ;
+      }
+
+      _cscbVec[ suID ] = NULL ;
+      _cscbNameMap.erase( pName ) ;
       _freeList.push_back ( suID ) ;
 
       // log here
@@ -444,7 +434,6 @@ namespace engine
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
          {
-            
             PD_LOG ( PDERROR, "Failed to insert cscrt into log, rc = %d", rc ) ;
             goto error ;
          }
@@ -474,6 +463,149 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBRENAME, "_SDB_DMSCB::_CSCBRename" )
+   INT32 _SDB_DMSCB::_CSCBRename( const CHAR *pName,
+                                  const CHAR *pNewName,
+                                  _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBRENAME );
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      UINT32 csLID = ~0 ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
+      BOOLEAN isReserved = FALSE;
+      BOOLEAN isLocked = FALSE ;
+      UINT32 logRecSize = 0;
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
+      SDB_DMS_CSCB *pCSCB = NULL ;
+
+      _mutex.get_shared () ;
+      rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
+      _mutex.release_shared () ;
+
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( NULL != dpsCB )
+      {
+         // reserved log-size
+         rc = dpsCSRename2Record( pName, pNewName, record ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build record:%d",rc ) ;
+            goto error ;
+         }
+         rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
+         logRecSize = record.alignedLen() ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to reserved log space(length=%u)",
+                      logRecSize ) ;
+         isReserved = TRUE ;
+      }
+
+   retry :
+      // now let's lock the collectionspace, if we can't lock it, let's return
+      // false. we shouldn't wait forever
+      if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
+      {
+         rc = SDB_LOCK_FAILED ;
+         goto error ;
+      }
+      if ( !_mutex.try_get() )
+      {
+         _latchVec[suID]->release_w () ;
+         goto retry ;
+      }
+      isLocked = TRUE ;
+      _latchVec[suID]->release_w () ;
+
+      // there is a small timing hole before getting the latch, so we have
+      // to get current suID again to verify
+      {
+         dmsStorageUnitID suTmpID = DMS_INVALID_SUID ;
+         SDB_DMS_CSCB *tmpCSCB = NULL ;
+         rc = _CSCBNameLookup( pName, &tmpCSCB, &suTmpID, TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else if ( suTmpID != suID )
+         {
+            rc = SDB_DMS_CS_NOTEXIST ;
+            goto error ;
+         }
+
+         /// check the new collectionspace
+         rc = _CSCBNameLookup( pNewName, &tmpCSCB, NULL, TRUE ) ;
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         else if ( SDB_OK == rc )
+         {
+            rc = SDB_DMS_CS_EXIST ;
+            goto error ;
+         }
+         else
+         {
+            goto error ;
+         }
+      }
+
+      SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
+      csLID = pCSCB->_su->LogicalCSID() ;
+
+      rc = pCSCB->_su->renameCS( pNewName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rename collection space[%s] to [%s] failed, "
+                 "rc: %d", pName, pNewName, rc ) ;
+         goto error ;
+      }
+
+      ossStrncpy( pCSCB->_name, pNewName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+      pCSCB->_name[ DMS_COLLECTION_SPACE_NAME_SZ ] = 0 ;
+      _cscbNameMap.erase( pName ) ;
+      _cscbNameMap[ pCSCB->_name ] = suID ;
+
+      // log here
+      if ( dpsCB )
+      {
+         info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
+         rc = dpsCB->prepare ( info ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to insert cscrt into log, rc = %d", rc ) ;
+            goto error ;
+         }
+         _mutex.release() ;
+         isLocked = FALSE ;
+
+         dpsCB->writeData( info ) ;
+      }
+
+   done :
+      if ( isLocked )
+      {
+         _mutex.release () ;
+      }
+      if ( isReserved )
+      {
+         pTransCB->releaseLogSpace( logRecSize, cb );
+      }
+      PD_TRACE_EXITRC ( SDB__SDB_DMSCB__CSCBRENAME, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBNMREMVP1, "_SDB_DMSCB::_CSCBNameRemoveP1" )
    INT32 _SDB_DMSCB::_CSCBNameRemoveP1 ( const CHAR *pName,
                                          _pmdEDUCB *cb,
@@ -481,27 +613,22 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMREMVP1 );
-      dmsStorageUnitID suID ;
-      SDB_DMS_CSCB *pCSCB = NULL;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::iterator it ;
-#endif
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      SDB_DMS_CSCB *pCSCB = NULL ;
+      BOOLEAN metaLock = FALSE ;
+
       _mutex.get_shared () ;
-      if ( _cscbNameMap.end() == (it = _cscbNameMap.find( pName )))
+      rc = _CSCBNameLookup( pName, &pCSCB, &suID, TRUE ) ;
+      _mutex.release_shared () ;
+
+      if ( rc )
       {
-         _mutex.release_shared () ;
-         rc = SDB_DMS_CS_NOTEXIST ;
          goto error ;
       }
-      suID = (*it).second ;
-      _mutex.release_shared () ;
 
    retry :
       // now let's lock the collectionspace, if we can't lock it, let's return
       // false. we shouldn't wait forever
-      //if ( !_latchVec[suID]->try_get() )
       if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
       {
          rc = SDB_LOCK_FAILED ;
@@ -513,48 +640,39 @@ namespace engine
          goto retry ;
       }
 
+      metaLock = TRUE ;
       _latchVec[suID]->release_w () ;
 
       // there is a small timing hole before getting the latch, so we have
       // to get current suID again to verify
-      if ( _cscbNameMap.end() == (it = _cscbNameMap.find(pName)) ||
-           suID != (*it).second )
       {
-         // if we no longer able to find the collectionspace, or the same
-         // name maps to another suID, then let's get out of here
-         //_latchVec[suID]->release () ;
-         _mutex.release () ;
-         rc = SDB_DMS_CS_NOTEXIST ;
-         goto error ;
+         dmsStorageUnitID suTmpID = DMS_INVALID_SUID ;
+         SDB_DMS_CSCB *tmpCSCB = NULL ;
+         rc = _CSCBNameLookup( pName, &tmpCSCB, &suTmpID, TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         else if ( suTmpID != suID )
+         {
+            rc = SDB_DMS_CS_NOTEXIST ;
+            goto error ;
+         }
       }
 
-      if ( _cscbVec[suID] )
-      {
-         pCSCB = _cscbVec[suID] ;
-         SDB_ASSERT ( pCSCB->_name, "cs-name can't be null" );
-         _delCscbVec[ suID ] = pCSCB;
-         _cscbVec[suID] = NULL;
-      }
-      else
-      {
-         if ( _delCscbVec[suID] )
-         {
-            rc = SDB_DMS_CS_DELETING;
-         }
-         else
-         {
-            SDB_ASSERT( FALSE, "faint, why cs is in map?" );
-            PD_LOG( PDWARNING, "couldn't find the cscb(name:%s)", pName );
-            _cscbNameMap.erase( it );
-            rc = SDB_DMS_CS_NOTEXIST ;
-         }
-         _mutex.release () ;
-         goto error ;
-      }
+      SDB_ASSERT ( pCSCB->_name, "cs-name can't be null" ) ;
+      _delCscbVec[ suID ] = pCSCB ;
+      _cscbVec[suID] = NULL ;
 
       _mutex.release () ;
+      metaLock = FALSE ;
 
    done :
+      if ( metaLock )
+      {
+         _mutex.release() ;
+         metaLock = FALSE ;
+      }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB__CSCBNMREMVP1, rc );
       return rc ;
    error :
@@ -563,40 +681,32 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBNMREMVP1CANCEL, "_SDB_DMSCB::_CSCBNameRemoveP1Cancel" )
    INT32 _SDB_DMSCB::_CSCBNameRemoveP1Cancel ( const CHAR *pName,
-                                             _pmdEDUCB *cb,
-                                             SDB_DPSCB *dpsCB )
+                                               _pmdEDUCB *cb,
+                                               SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMREMVP1CANCEL );
-      dmsStorageUnitID suID ;
-      SDB_DMS_CSCB *pCSCB = NULL;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      SDB_DMS_CSCB *pCSCB = NULL ;
 
+      ossScopedLock _lock( &_mutex, EXCLUSIVE ) ;
+      rc = _CSCBNameLookup( pName, &pCSCB, &suID, FALSE ) ;
+      if ( rc )
       {
-         ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-         if ( _cscbNameMap.end() == (it = _cscbNameMap.find(pName)) )
-         {
-            // there must be some errors if the cs is not in del-map
-            SDB_ASSERT( FALSE, "faint, why the cs is not in the map?" );
-            rc = SDB_DMS_CS_NOTEXIST;
-            goto error;
-         }
-         suID = (*it).second;
-         pCSCB = _delCscbVec[suID];
-         if ( pCSCB )
-         {
-            SDB_ASSERT( pCSCB->_su, "su can't be null!" );
-            _cscbVec[suID] = pCSCB;
-            _delCscbVec[suID] = NULL;
-         }
-         else
-         {
-            SDB_ASSERT( FALSE, "faint, where is the CSCB?" );
-         }
+         SDB_ASSERT( FALSE, "Impossible in the case" ) ;
+         goto error ;
+      }
+
+      if ( _delCscbVec[suID] != pCSCB )
+      {
+         SDB_ASSERT( FALSE, "Impossible in this case" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else
+      {
+         _delCscbVec[ suID ] = NULL ;
+         _cscbVec[ suID ] = pCSCB ;
       }
 
    done :
@@ -608,68 +718,105 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__CSCBNMREMVP2, "_SDB_DMSCB::_CSCBNameRemoveP2" )
    INT32 _SDB_DMSCB::_CSCBNameRemoveP2 ( const CHAR *pName,
-                                       _pmdEDUCB *cb,
-                                       SDB_DPSCB *dpsCB,
-                                       SDB_DMS_CSCB *&pCSCB )
+                                         _pmdEDUCB *cb,
+                                         SDB_DPSCB *dpsCB,
+                                         SDB_DMS_CSCB *&pCSCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMREMVP2 );
-      dmsStorageUnitID suID ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
       UINT32 csLID = ~0 ;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::iterator it ;
-#endif
-      pCSCB = NULL ;
-      {
-         ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-         // in this phase, the cs must be moved to del-map.
-         if ( _cscbNameMap.end() == (it = _cscbNameMap.find(pName)) )
-         {
-            // there must be some errors if the cs is not in del-map.
-            SDB_ASSERT( FALSE, "faint, why the cs is not in map?" );
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
+      BOOLEAN isTransLocked = FALSE ;
+      BOOLEAN isReserved = FALSE ;
+      BOOLEAN isLocked = FALSE ;
+      UINT32 logRecSize = 0 ;
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
 
-            // if we no longer able to find the collectionspace, or the same
-            // name maps to another suID, then let's get out of here
-            rc = SDB_DMS_CS_NOTEXIST ;
+      if ( NULL != dpsCB )
+      {
+         // reserved log-size
+         rc = dpsCSDel2Record( pName, record ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build record:%d",rc ) ;
             goto error ;
          }
-         suID = (*it).second ;
-         if ( _delCscbVec[suID] )
+         rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
+         logRecSize = record.alignedLen() ;
+         rc = pTransCB->reservedLogSpace( logRecSize, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to reserved log space(length=%u)",
+                      logRecSize ) ;
+         isReserved = TRUE ;
+      }
+
+      _mutex.get() ;
+      isLocked = TRUE ;
+
+      rc = _CSCBNameLookup( pName, &pCSCB, &suID, FALSE ) ;
+      if ( rc )
+      {
+         SDB_ASSERT( FALSE, "Impossible in this case" ) ;
+         goto error ;
+      }
+      if ( pCSCB != _delCscbVec[suID] )
+      {
+         SDB_ASSERT( FALSE, "Impossible in this case" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
+      csLID = pCSCB->_su->LogicalCSID() ;
+      if ( cb )
+      {
+         rc = pTransCB->transLockTryX( cb, csLID ) ;
+         if ( rc )
          {
-            pCSCB = _delCscbVec[suID] ;
-            SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
-            csLID = pCSCB->_su->LogicalCSID () ;
-            _delCscbVec[suID] = NULL ;
+            PD_LOG ( PDERROR, "Failed to lock collection-space, rc:%d",
+                     rc ) ;
+            goto error ;
          }
+         isTransLocked = TRUE ;
+      }
+      _delCscbVec[ suID ] = NULL ;
+      _cscbNameMap.erase( pName ) ;
+      _freeList.push_back ( suID ) ;
 
-         _cscbNameMap.erase(it) ;
-         _freeList.push_back ( suID ) ;
-
-         // log here
-         if ( dpsCB )
+      // log here
+      if ( dpsCB )
+      {
+         info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
+         rc = dpsCB->prepare ( info ) ;
+         if ( rc )
          {
-            dpsMergeInfo info ;
-            info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
-
-            dpsLogRecord &record = info.getMergeBlock().record();
-
-            rc = dpsCSDel2Record( pName, record ) ;
-            PD_RC_CHECK( rc, PDERROR, "failed to build record:%d", rc );
-
-            rc = dpsCB->prepare ( info ) ;
-            if ( rc )
-            {
-               _mutex.release () ;
-               PD_LOG ( PDERROR, "Failed to insert cscrt into log, rc = %d", rc ) ;
-               goto error ;
-            }
-            dpsCB->writeData( info ) ;
+            PD_LOG ( PDERROR, "Failed to insert cscrt into log, rc = %d",
+                     rc ) ;
+            goto error ;
          }
+         _mutex.release() ;
+         isLocked = FALSE ;
+
+         dpsCB->writeData( info ) ;
       }
 
    done :
+      if ( isLocked )
+      {
+         _mutex.release () ;
+      }
+      if ( isTransLocked )
+      {
+         pTransCB->transLockRelease( cb, csLID );
+      }
+      if ( isReserved )
+      {
+         pTransCB->releaseLogSpace( logRecSize, cb );
+      }
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB__CSCBNMREMVP2, rc );
       return rc ;
    error :
@@ -1052,39 +1199,31 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      rc = _CSCBNameRemove ( pName, cb, dpsCB, onlyEmpty, pCSCB ) ;
+      if ( rc )
       {
-         _mutex.get_shared() ;
-         SDB_DMS_CSCB *cscb = NULL;
-         rc = _CSCBNameLookup( pName, &cscb ) ;
-         if ( rc )
-         {
-            _mutex.release_shared() ;
-            goto error ;
-         }
-         dmsStorageUnit *su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
+         goto error ;
+      }
+      else if ( !pCSCB )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
-         // release the DMSCB latch before attempting to drop the collectionspace
-         _mutex.release_shared() ;
-         rc = _CSCBNameRemove ( pName, cb, dpsCB, onlyEmpty, pCSCB ) ;
+      if ( removeFile )
+      {
+         rc = pCSCB->_su->remove() ;
+      }
+      else
+      {
+         pCSCB->_su->close() ;
+      }
+      SDB_OSS_DEL pCSCB ;
 
-         if ( SDB_OK == rc && pCSCB )
-         {
-            if ( removeFile )
-            {
-               rc = pCSCB->_su->remove() ;
-            }
-            else
-            {
-               pCSCB->_su->close() ;
-            }
-            SDB_OSS_DEL pCSCB ;
-
-            if ( rc )
-            {
-               goto error ;
-            }
-         }
+      if ( rc )
+      {
+         goto error ;
       }
 
    done :
@@ -1122,6 +1261,50 @@ namespace engine
       return rc ;
    }
 
+   INT32 _SDB_DMSCB::renameCollectionSpace( const CHAR *pName,
+                                            const CHAR *pNewName,
+                                            _pmdEDUCB *cb,
+                                            SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMS_CSCB *pCSCB = NULL ;
+
+      if ( !pName || !pNewName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      /// check the new collection space
+      _mutex.get_shared() ;
+      rc = _CSCBNameLookup( pNewName, &pCSCB, NULL, TRUE ) ;
+      _mutex.release_shared() ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( SDB_OK == rc )
+      {
+         rc = SDB_DMS_CS_EXIST ;
+         goto error ;
+      }
+      else
+      {
+         goto error ;
+      }
+
+      rc = _CSCBRename( pName, pNewName, cb, dpsCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCSP1, "_SDB_DMSCB::dropCollectionSpaceP1" )
    INT32 _SDB_DMSCB::dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                              SDB_DPSCB *dpsCB )
@@ -1134,28 +1317,15 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      {
-         _mutex.get_shared() ;
-         SDB_DMS_CSCB *cscb = NULL;
-         rc = _CSCBNameLookup( pName, &cscb ) ;
-         if ( rc )
-         {
-            _mutex.release_shared() ;
-            goto error ;
-         }
-         dmsStorageUnit *su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
 
-         // release the DMSCB latch before attempting to drop the collectionspace
-         _mutex.release_shared() ;
-         rc = _CSCBNameRemoveP1( pName, cb, dpsCB ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to drop cs[%s], rc: %d",
-                    pName, rc ) ;
-            goto error ;
-         }
+      rc = _CSCBNameRemoveP1( pName, cb, dpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to drop cs[%s], rc: %d",
+                 pName, rc ) ;
+         goto error ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1, rc );
       return rc ;
@@ -1177,8 +1347,8 @@ namespace engine
       }
       rc = _CSCBNameRemoveP1Cancel( pName, cb, dpsCB );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to cancel remove cs(rc=%d)",
-                  rc );
+                   "failed to cancel remove cs(rc=%d)",
+                   rc );
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1CANCEL, rc );
       return rc ;
@@ -1199,18 +1369,24 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      {
-         rc = _CSCBNameRemoveP2( pName, cb, dpsCB, pCSCB ) ;
 
-         if ( SDB_OK == rc && pCSCB )
-         {
-            // if remove file failed, we can do nothing
-            rc = pCSCB->_su->remove() ;
-            SDB_OSS_DEL pCSCB ;
-            PD_RC_CHECK( rc, PDERROR,
-                        "remove failed(rc=%d)", rc );
-         }
+      rc = _CSCBNameRemoveP2( pName, cb, dpsCB, pCSCB ) ;
+      if ( rc )
+      {
+         goto error ;
       }
+      else if ( !pCSCB )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // if remove file failed, we can do nothing
+      rc = pCSCB->_su->remove() ;
+      SDB_OSS_DEL pCSCB ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "remove failed(rc=%d)", rc ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP2, rc );
       return rc ;

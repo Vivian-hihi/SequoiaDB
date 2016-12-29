@@ -215,9 +215,9 @@ namespace engine
    } ;
 
    /*
-      rtnCoordCMDMonIntrBase define
+      rtnCoordCmdWithLocation define
    */
-   class rtnCoordCMDMonIntrBase : public rtnCoordCommand
+   class rtnCoordCmdWithLocation : public rtnCoordCommand
    {
    public:
       virtual INT32 execute( MsgHeader *pMsg,
@@ -227,8 +227,27 @@ namespace engine
 
    private:
       virtual BOOLEAN _useContext() = 0 ;
-      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual INT32   _onLocalMode( INT32 flag ) = 0 ;
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) = 0 ;
       virtual UINT32  _getControlMask() const = 0 ;
+
+      virtual INT32   _preExcute( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  rtnCoordCtrlParam &ctrlParam ) ;
+      virtual INT32   _posExcute( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  ROUTE_RC_MAP &faileds ) ;
+
+   } ;
+
+   /*
+      rtnCoordCMDMonIntrBase define
+   */
+   class rtnCoordCMDMonIntrBase : public rtnCoordCommand
+   {
+   private:
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual INT32   _onLocalMode( INT32 flag ) ;
 
    } ;
 
@@ -443,13 +462,17 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
-   class rtnCoordCMDExpConfig : public rtnCoordCommand
+   class rtnCoordCMDExpConfig : public rtnCoordCmdWithLocation
    {
-   public :
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
+   private:
+      virtual BOOLEAN _useContext() { return FALSE ; }
+      virtual INT32   _onLocalMode( INT32 flag ) ;
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual UINT32  _getControlMask() const ;
+
+      virtual INT32   _posExcute( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  ROUTE_RC_MAP &faileds ) ;
    } ;
 
    class rtnCoordCMDCrtProcedure : public rtnCoordCommand
@@ -510,13 +533,17 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
-   class rtnCoordCMDInvalidateCache : public rtnCoordCommand
+   class rtnCoordCMDInvalidateCache : public rtnCoordCmdWithLocation
    {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
+   private:
+      virtual BOOLEAN _useContext() { return FALSE ; }
+      virtual INT32   _onLocalMode( INT32 flag ) { return SDB_OK ; }
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual UINT32  _getControlMask() const ;
+
+      virtual INT32   _preExcute( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  rtnCoordCtrlParam &ctrlParam ) ;
    } ;
 
    class rtnCoordCMDReelection : public rtnCoordCommand
@@ -537,24 +564,59 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
-   class rtnCoordCMDSyncDB : public rtnCoordCommand
+   class rtnCoordCMDSyncDB : public rtnCoordCmdWithLocation
    {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
    private:
-      INT32 _syncDB( MsgHeader *pMsg, pmdEDUCB *cb, rtnContextBuf *buf ) ;
+      virtual BOOLEAN _useContext() { return FALSE ; }
+      virtual INT32   _onLocalMode( INT32 flag ) { return flag ; }
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual UINT32  _getControlMask() const ;
+
+      virtual INT32   _preExcute( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  rtnCoordCtrlParam &ctrlParam ) ;
    } ;
 
-   class rtnCoordForceSession: public rtnCoordCommand
+   class rtnCoordCmdLoadCS : public rtnCoordCmdWithLocation
    {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
+   private:
+      virtual BOOLEAN _useContext() { return FALSE ; }
+      virtual INT32   _onLocalMode( INT32 flag ) { return flag ; }
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual UINT32  _getControlMask() const ;
+
+      virtual INT32   _preExcute( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  rtnCoordCtrlParam &ctrlParam ) ;
+   } ;
+
+   typedef rtnCoordCmdLoadCS rtnCoordCmdUnloadCS ;
+
+   class rtnCoordForceSession: public rtnCoordCmdWithLocation
+   {
+   private:
+      virtual BOOLEAN _useContext() { return FALSE ; }
+      virtual INT32   _onLocalMode( INT32 flag ) ;
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual UINT32  _getControlMask() const ;
+   } ;
+
+   class rtnCoordSetPDLevel : public rtnCoordCmdWithLocation
+   {
+   private:
+      virtual BOOLEAN _useContext() { return FALSE ; }
+      virtual INT32   _onLocalMode( INT32 flag ) ;
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual UINT32  _getControlMask() const ;
+   } ;
+
+   class rtnCoordReloadConf : public rtnCoordCmdWithLocation
+   {
+   private:
+      virtual BOOLEAN _useContext() { return FALSE ; }
+      virtual INT32   _onLocalMode( INT32 flag ) ;
+      virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
+      virtual UINT32  _getControlMask() const ;
    } ;
 
    /*

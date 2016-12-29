@@ -170,11 +170,16 @@ namespace engine
 
    private:
       void  _logCSCBNameMap () ;
+
       INT32 _CSCBNameInsert ( const CHAR *pName, UINT32 topSequence,
                               _dmsStorageUnit *su,
                               dmsStorageUnitID &suID ) ;
+
       INT32 _CSCBNameLookup ( const CHAR *pName,
-                              SDB_DMS_CSCB **cscb ) ;
+                              SDB_DMS_CSCB **cscb,
+                              dmsStorageUnitID *suID = NULL,
+                              BOOLEAN exceptDeleting = TRUE ) ;
+
       INT32 _CSCBNameLookupAndLock ( const CHAR *pName,
                                      dmsStorageUnitID &suID,
                                      SDB_DMS_CSCB **cscb,
@@ -196,6 +201,11 @@ namespace engine
                                 SDB_DPSCB *dpsCB,
                                 SDB_DMS_CSCB *&pCSCB ) ;
       void _CSCBNameMapCleanup () ;
+
+      INT32 _CSCBRename( const CHAR *pName,
+                         const CHAR *pNewName,
+                         _pmdEDUCB *cb,
+                         SDB_DPSCB *dpsCB ) ;
 
       INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB, BOOLEAN removeFile,
@@ -230,6 +240,11 @@ namespace engine
       INT32 dropEmptyCollectionSpace( const CHAR *pName, _pmdEDUCB *cb,
                                       SDB_DPSCB *dpsCB ) ;
       INT32 unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb ) ;
+
+      INT32 renameCollectionSpace( const CHAR *pName,
+                                   const CHAR *pNewName,
+                                   _pmdEDUCB *cb,
+                                   SDB_DPSCB *dpsCB ) ;
 
       void dumpInfo ( std::set<monCLSimple> &collectionList,
                       BOOLEAN sys = FALSE ) ;

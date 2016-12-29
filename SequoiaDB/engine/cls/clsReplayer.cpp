@@ -523,6 +523,36 @@ namespace engine
             }
             break ;
          }
+         case LOG_TYPE_CS_RENAME :
+         {
+            const CHAR *oldName = NULL ;
+            const CHAR *newName = NULL ;
+            rc = dpsRecord2CSRename( (const CHAR *)recordHeader,
+                                     &oldName,
+                                     &newName ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            while( TRUE )
+            {
+               rc = _dmsCB->renameCollectionSpace( oldName, newName,
+                                                   eduCB, _dpsCB ) ;
+               if ( SDB_LOCK_FAILED == rc )
+               {
+                  ossSleep ( 100 ) ;
+                  continue ;
+               }
+               break ;
+            }
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
+                       oldName, newName, rc ) ;
+               goto error ;
+            }
+            break ;
+         }
          case LOG_TYPE_CL_TRUNC :
          {
             const CHAR *clname = NULL ;
@@ -898,6 +928,36 @@ namespace engine
                                                 eduCB,
                                                 _dpsCB ) ;
             _dmsCB->suUnlock ( suID ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",
+                       newName, oldName, rc ) ;
+               goto error ;
+            }
+            break ;
+         }
+         case LOG_TYPE_CS_RENAME :
+         {
+            const CHAR *oldName = NULL ;
+            const CHAR *newName = NULL ;
+            rc = dpsRecord2CSRename( (const CHAR *)recordHeader,
+                                     &oldName,
+                                     &newName ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            while( TRUE )
+            {
+               rc = _dmsCB->renameCollectionSpace( newName, oldName,
+                                                   eduCB, _dpsCB ) ;
+               if ( SDB_LOCK_FAILED == rc )
+               {
+                  ossSleep ( 100 ) ;
+                  continue ;
+               }
+               break ;
+            }
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to rename %s to %s, rc: %d",

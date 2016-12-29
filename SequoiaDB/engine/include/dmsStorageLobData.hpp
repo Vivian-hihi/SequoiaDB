@@ -90,6 +90,10 @@ namespace engine
                   const dmsStorageInfo &info,
                   _pmdEDUCB *cb ) ;
 
+      INT32 rename( const CHAR *csName,
+                    const CHAR *suFileName,
+                    _pmdEDUCB *cb ) ;
+
       BOOLEAN isOpened() const ;
 
       INT32 close() ;
@@ -115,6 +119,9 @@ namespace engine
 
       INT32 _getFileHeader( _dmsStorageUnitHeader &header,
                             _pmdEDUCB *cb ) ;
+
+      INT32 _writeFileHeader( const _dmsStorageUnitHeader &header,
+                              _pmdEDUCB *cb ) ;
 
       OSS_INLINE SINT64 getSeek( DMS_LOB_PAGEID page,
                                  UINT32 offset ) const
