@@ -357,7 +357,7 @@ function main()
       sts[i].testSetUserConfigs() ;
       
       // 测试枚举登录用户
-      // sts[i].testListLoginUsers() ;
+      sts[i].testListLoginUsers() ;
       
       // 测试枚举所有用户
       sts[i].testListAllUsers() ;
