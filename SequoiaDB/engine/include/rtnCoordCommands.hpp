@@ -243,7 +243,7 @@ namespace engine
    /*
       rtnCoordCMDMonIntrBase define
    */
-   class rtnCoordCMDMonIntrBase : public rtnCoordCommand
+   class rtnCoordCMDMonIntrBase : public rtnCoordCmdWithLocation
    {
    private:
       virtual void    _preSet( pmdEDUCB *cb, rtnCoordCtrlParam &ctrlParam ) ;
