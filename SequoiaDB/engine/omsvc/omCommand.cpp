@@ -1729,13 +1729,23 @@ namespace engine
 
    INT32 omScanHostCommand::_sendMsgToLocalAgent( omManager *om,
                                              pmdRemoteSession *remoteSession,
-                                             MsgHeader *pMsg )
+                                             MsgHeader *pMsg,
+                                             BOOLEAN isUseLocalHost )
    {
       MsgRouteID localAgentID ;
       INT32 rc = SDB_OK ;
 
-      localAgentID = om->updateAgentInfo( _localAgentHost,
-                                          _localAgentService ) ;
+      if ( isUseLocalHost )
+      {
+         localAgentID = om->updateAgentInfo( OM_DEFAULT_LOCAL_HOST,
+                                             _localAgentService ) ;
+      }
+      else
+      {
+         localAgentID = om->updateAgentInfo( _localAgentHost,
+                                             _localAgentService ) ;
+      }
+
       if ( NULL == remoteSession->addSubSession( localAgentID.value ) )
       {
          rc = SDB_OOM ;
@@ -1878,7 +1888,7 @@ namespace engine
       }
 
       pMsg = (MsgHeader *)pContent ;
-      rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
+      rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg, TRUE ) ;
       if ( SDB_OK != rc )
       {
          SDB_OSS_FREE( pContent ) ;
