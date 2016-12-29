@@ -528,6 +528,9 @@ namespace engine
       const CHAR *cmService = _options.getCMServiceName() ;
       MsgRouteID nodeID ;
 
+      /// register config handle to omagentOptions
+      _options.setConfigHandler( pmdGetKRCB() ) ;
+
       // init om addr
       _initOMAddr( _vecOmNode ) ;
       if ( _vecOmNode.size() > 0 )
