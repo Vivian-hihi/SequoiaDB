@@ -10,7 +10,8 @@
 RemoteTest.prototype.testGetNoPermitFile = function()
 {
    this.testInit() ;
-   
+   var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
+   if( user == "root" ) return ;
    try
    {
       this.remote.getFile( "/root/notexist" ) ;
@@ -33,12 +34,12 @@ RemoteTest.prototype.testGetSdbFile = function( hostname )
 {
    this.testInit() ;
    
-   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    if( this.hostname == hostname )
    {
       try
       {
-         this.remote.getFile( InstallPath + "/bin/sdb" ) ;
+         this.remote.getFile( sdbDir[0] + "/bin/sdb" ) ;
          throw "get using sdb file should be failed" ;
       }
       catch( e )
@@ -53,7 +54,7 @@ RemoteTest.prototype.testGetSdbFile = function( hostname )
    {
       try
       {
-         this.remote.getFile( InstallPath + "/bin/sdb" ) ;
+         this.remote.getFile( sdbDir[0] + "/bin/sdb" ) ;
       }
       catch( e )
       {
