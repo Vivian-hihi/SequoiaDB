@@ -108,14 +108,14 @@ FileTest.prototype.testExist = function()
    var notexist = sdbDir[0] + "/conf/sdb.conf" ;
    
    var result = this.file.exist( sdbDir[0] ) ;   // 判断存在的目录
-   if( result != 1 )
-      throw buildException( "testExist", null, "test " + path + " " + this, 1, result ) ;
+   if( result !== true )
+      throw buildException( "testExist", null, "test " + sdbDir[0] + " " + this, true, result ) ;
    result = this.file.exist( existfile ) ;  // 判断存在的文件
-   if( result != 1 )
-      throw buildException( "testExist", null, "test " + existfile + " " + this, 1, result ) ;
+   if( result !== true )
+      throw buildException( "testExist", null, "test " + existfile + " " + this, true, result ) ;
    result = this.file.exist( notexist ) ;   // 判断不存在的文件
-   if( result != 0 )
-      throw buildException( "testExist", null, "test " + notexist + " " + this, 0, result ) ;
+   if( result !== false )
+      throw buildException( "testExist", null, "test " + notexist + " " + this, false, result ) ;
       
    this.release() ; 
 }
