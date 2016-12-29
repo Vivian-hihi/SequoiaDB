@@ -162,7 +162,7 @@ def _json_convert(obj):
     converted into json.
     """
     if hasattr(obj, 'iteritems') or hasattr(obj, 'items'):  # PY3 support
-        return SON(((k, _json_convert(v)) for k, v in obj.iteritems()))
+        return SON(((k, _json_convert(v)) for k, v in obj.items()))
     elif hasattr(obj, '__iter__') and not isinstance(obj, string_types):
         return list((_json_convert(v) for v in obj))
     try:
