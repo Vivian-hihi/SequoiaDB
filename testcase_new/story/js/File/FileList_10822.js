@@ -50,7 +50,7 @@ function main()
    for( var i = 0; i < fts.length;i++ )
    {
       // 测试枚举目录中的文件
-      // fts[i].testList() ;
+      fts[i].testList() ;
    }
 }
 
