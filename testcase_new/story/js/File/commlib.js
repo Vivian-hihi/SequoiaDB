@@ -151,10 +151,13 @@ function toolGetCurrentUser( hostName, cmSvcName )
 *@Description : get user and group  sdbcm.conf
 *@author      : Liang XueWang            
 ******************************************************************************/
-function toolGetCmUserGroup( cmd )
+function toolGetCmUserGroup( hostname, svcname )
 {
-   var InstallPath = commGetInstallPath() ;
-   var file = InstallPath + "/conf/sdbcm.conf" ;
+   var sdbDir = toolGetSequoiadbDir( hostname, svcname ) ;
+   var file = sdbDir[0] + "/conf/sdbcm.conf" ;
+   
+   var remote = new Remote( hostname, svcname ) ;
+   var cmd = remote.getCmd() ;
    var command = "ls -l " + file + " | awk '{print $3,$4}'" ;
    var tmpInfo = cmd.run( command ).split( "\n" )[0] ;
    var tmp = tmpInfo.split( " " ) ;
@@ -165,16 +168,18 @@ function toolGetCmUserGroup( cmd )
 }
 
 /******************************************************************************
-*@Description : get sequoiadb dir eg: /opt/sequoiadb/bin/.. /trunk/bin/..
+*@Description : get sequoiadb dir eg: /opt/sequoiadb/bin/.. /opt/sequoiadb
 *@author      : Liang XueWang              
 ******************************************************************************/
 function toolGetSequoiadbDir( hostname, svcname )
 {
    var remote = new Remote( hostname, svcname ) ;
    var system = remote.getSystem() ;
-   var dir = system.getEWD() ;
-   var ind = dir.indexOf( "/bin" ) ;
-   dir = dir.slice( 0, ind ) ;
+   var dir = [] ;
+   var tmp = system.getEWD() ;
+   var ind = tmp.indexOf( "/bin" ) ;
+   dir[0] = tmp + "/.." ;
+   dir[1] = tmp.slice( 0, ind ) ;
    remote.close() ;
    return dir ;
 }

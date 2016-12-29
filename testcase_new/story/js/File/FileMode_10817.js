@@ -36,7 +36,7 @@ FileTest.prototype.testChown = function()
    var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( cmUser != "root" )
    {
-      println( cmUser + " has no permission to chown." ) ;
+      // println( cmUser + " has no permission to chown." ) ;
       return ;
    }
    
@@ -66,7 +66,7 @@ FileTest.prototype.testChgrp = function()
    var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( cmUser != "root" )
    {
-      println( cmUser + " has no permission to chgrp." ) ;
+      // println( cmUser + " has no permission to chgrp." ) ;
       return ;
    }
    

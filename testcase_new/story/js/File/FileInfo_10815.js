@@ -40,7 +40,8 @@ FileTest.prototype.testMd5 = function()
 {
    this.init() ;
    
-   var fileName = toolGetSequoiadbDir( this.hostname, this.svcname ) + "/conf/sdbcm.conf" ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) 
+   var fileName = sdbDir[0] + "/conf/sdbcm.conf" ;
    var md5 = this.file.md5( fileName ) ;
    var tmpInfo = this.cmd.run( "md5sum " + fileName ).split( "\n" )[0] ;
    var expect = tmpInfo.split( " " )[0] ;
@@ -73,8 +74,16 @@ FileTest.prototype.testStat = function()
    for( var i = 0;i < files.length;i++ )
    {
       var stat1 = this.file.stat( files[i] ).toObj() ;
-      var command = "stat -c '%n|%s|%A|%U|%G|%x|%y|%z' " + files[i] ;
-      var tmp = this.cmd.run( command ).split( "\n" )[0] ;
+      try
+      {
+         var command = "stat -c '%n|%s|%A|%U|%G|%x|%y|%z' " + files[i] ;
+         var tmp = this.cmd.run( command ).split( "\n" )[0] ;
+      }
+      catch( e )
+      {
+         println( "run command " + command ) ;
+         throw buildException( "testStat", e ) ;
+      }
       var stat2 = tmp.split( "|" ) ;
       checkStat( stat1, stat2 ) ;
    }

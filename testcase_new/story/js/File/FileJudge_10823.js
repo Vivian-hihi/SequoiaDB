@@ -12,14 +12,14 @@ FileTest.prototype.testIsFile = function()
 {
    this.init() ;
    
-   var pathName = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var fileName = pathName + "/conf/sdbcm.conf" ;
-   var notExist = pathName + "/conf/notexist" ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var fileName = sdbDir[0] + "/conf/sdbcm.conf" ;
+   var notExist = sdbDir[0] + "/conf/notexist" ;
  
-   var result = this.file.isFile( pathName ) ;   // 判断非文件
+   var result = this.file.isFile( sdbDir[0] ) ;   // 判断非文件
    if( result != false )
    {
-      throw buildException( "testIsFile", null, "test " + pathName + this, false, result ) ;
+      throw buildException( "testIsFile", null, "test " + sdbDir + this, false, result ) ;
    }
    result = this.file.isFile( fileName ) ;       // 判断文件 
    if( result != true )
@@ -45,12 +45,12 @@ FileTest.prototype.testIsDir = function()
 {
    this.init() ;
    
-   var pathName = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var fileName = pathName + "/conf/sdbcm.conf" ;
-   var result = this.file.isDir( pathName ) ;    // 判断目录
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var fileName = sdbDir[0] + "/conf/sdbcm.conf" ;
+   var result = this.file.isDir( sdbDir[0] ) ;    // 判断目录
    if( result != true )
    {
-      throw buildException( "testIsDir", null, "test " + pathName + this, true, result ) ;
+      throw buildException( "testIsDir", null, "test " + sdbDir + this, true, result ) ;
    }
    result = this.file.isDir( fileName ) ;        // 判断非目录
    if( result != false )
@@ -66,12 +66,12 @@ FileTest.prototype.testIsEmptyDir = function()
 {
    this.init() ;
    
-   var pathName = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var emptyDir = "/tmp/lxw/testdir" ;
    this.cmd.run( "mkdir -p " + emptyDir ) ;
-   var fileName = pathName + "/conf/sdbcm.conf" ;
+   var fileName = sdbDir[0] + "/conf/sdbcm.conf" ;
 
-   var result = this.file.isEmptyDir( pathName ) ;  // 判断非空目录
+   var result = this.file.isEmptyDir( sdbDir[0] ) ;  // 判断非空目录
    if( result != false )
    {
       throw buildException( "testIsEmptyDir", null, 
@@ -103,11 +103,11 @@ FileTest.prototype.testExist = function()
 {
    this.init() ;
    
-   var path = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var existfile = path + "/conf/sdbcm.conf" ;
-   var notexist = path + "/conf/sdb.conf" ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var existfile = sdbDir[0] + "/conf/sdbcm.conf" ;
+   var notexist = sdbDir[0] + "/conf/sdb.conf" ;
    
-   var result = this.file.exist( path ) ;   // 判断存在的目录
+   var result = this.file.exist( sdbDir[0] ) ;   // 判断存在的目录
    if( result != 1 )
       throw buildException( "testExist", null, "test " + path + " " + this, 1, result ) ;
    result = this.file.exist( existfile ) ;  // 判断存在的文件

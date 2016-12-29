@@ -11,10 +11,10 @@ FileTest.prototype.testList = function()
    
    var dir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var option = {} ;
-   option["pathname"] = dir ;
+   option["pathname"] = dir[0] ;
    option["detail"] = true ;
    var files1 = this.file.list( option ).toArray() ;   // 枚举文件
-   var command = "ls -al " + dir + " | sed -n '4,$p' | awk '{print $1,$3,$9}'" ;
+   var command = "ls -al " + dir[0] + " | sed -n '4,$p' | awk '{print $1,$3,$9}'" ;
    var files2 = this.cmd.run( command ).split( "\n" ) ;
    for( var i = 0;i < files1.length;i++ )
    {

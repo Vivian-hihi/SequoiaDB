@@ -9,13 +9,14 @@ FileTest.prototype.testFind = function()
 {
    this.init() ;
    
-   var tmpObj = toolGetCmUserGroup( this.cmd ) ;
+   var tmpObj = toolGetCmUserGroup( this.hostname, this.svcname ) ;
    var user = tmpObj.user ;
    var group = tmpObj.group ;
    var values = [ "sdbcm.conf", user, "0755", group ] ;  
    var modes = [ "n", "u", "p", "g" ] ;   // 按文件名、用户、文件权限、用户组查找
    var args = [ "-name", "-user", "-perm", "-group" ] ;
-   var path = toolGetSequoiadbDir( this.hostname, this.svcname ) + "/conf" ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) 
+   var path = sdbDir[0] + "/conf" ;
    
    var options = [] ;    // 查找选项
    var commands = [] ;   // 查找命令
