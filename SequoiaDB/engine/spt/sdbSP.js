@@ -2055,7 +2055,7 @@ File.getUmask = function( base ) {
       }
       if ( 8 == base )
       {
-         umask = '0' + umask.toString( 8 ) ;
+         umask = ( "0000" + umask.toString( 8 ) ).substr( -4 ) ;
       }
       else if ( 10 == base )
       {
@@ -2575,7 +2575,7 @@ File.prototype.getUmask = function( base ) {
          }
          if ( 8 == base )
          {
-            umask = "0" + umask.toString( 8 ) ;
+            umask = ( "0000" + umask.toString( 8 ) ).substr( -4 ) ;
          }
          else if ( 10 == base )
          {
