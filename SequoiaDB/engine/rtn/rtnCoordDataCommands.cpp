@@ -129,10 +129,6 @@ namespace engine
             pmdKRCB *pKrcb = pmdGetKRCB() ;
             CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
             pCoordcb->delMainCLCataInfo( pArgs->_targetName.c_str() ) ;
-         }
-         if ( rtnCoordCataCheckFlag( rc ) && _canRetry( retryTimes ) )
-         {
-            retryTimes ++ ;
             goto retry_before_cata ;
          }
          PD_RC_CHECK( rc, PDERROR,
