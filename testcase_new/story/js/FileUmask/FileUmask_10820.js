@@ -71,8 +71,8 @@ FileTest.prototype.testGetUmaskWithBase = function()
             "get umask with no parameter " + this, 146, umask ) ;
    }
    
-   var base = [ '8', '10', '16' ] ;
-   var result = [ '0222', '146', '0x92' ] ;
+   var base = [ '8', '10', '16', 8, 10, 16 ] ;
+   var result = [ '0222', '146', '0x92', '0222', '146', '0x92' ] ;
    for( var i = 0;i < base.length;i++ )
    {
       umask = this.file.getUmask( base[i] ) ;
