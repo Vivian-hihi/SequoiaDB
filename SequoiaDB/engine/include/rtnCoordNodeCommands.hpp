@@ -208,6 +208,11 @@ namespace engine
                                      const vector<BSONObj> &cataObjs,
                                      CoordGroupList &sucGroupLst ) ;
 
+      virtual INT32 _doCommit ( MsgHeader *pMsg,
+                                pmdEDUCB * cb,
+                                rtnContextCoord **ppContext,
+                                _rtnCMDArguments *pArgs ) ;
+
       virtual const CHAR *_getCommandName () const
       { return CMD_NAME_SHUTDOWN_GROUP ; }
 

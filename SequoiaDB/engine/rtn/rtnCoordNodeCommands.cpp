@@ -945,6 +945,33 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDSHUTDOWNGRP_DOCOMMIT, "rtnCoordCMDShutdownGroup::_doCommit" )
+   INT32 rtnCoordCMDShutdownGroup::_doCommit ( MsgHeader *pMsg,
+                                               pmdEDUCB * cb,
+                                               rtnContextCoord **ppContext,
+                                               _rtnCMDArguments *pArgs )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( CMD_RTNCOCMDSHUTDOWNGRP_DOCOMMIT ) ;
+
+      rc = rtnCoordNodeCMD2Phase::_doCommit( pMsg, cb, ppContext, pArgs ) ;
+      if ( 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) )
+      {
+         if ( SDB_OK != rc )
+         {
+            // Should have problem (e.g. -79) when removing Catalog group
+            PD_LOG( PDWARNING, "Ignored error %d when %s on [%s]",
+                    rc, _getCommandName(), pArgs->_targetName.c_str() ) ;
+            rc = SDB_OK ;
+         }
+      }
+
+      PD_TRACE_EXITRC ( CMD_RTNCOCMDSHUTDOWNGRP_DOCOMMIT, rc ) ;
+
+      return rc ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDSHUTDOWNGRP_DOAUDIT, "rtnCoordCMDShutdownGroup::_doAudit" )
    INT32 rtnCoordCMDShutdownGroup::_doAudit ( _rtnCMDArguments *pArgs,
                                               INT32 rc )
