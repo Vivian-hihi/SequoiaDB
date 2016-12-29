@@ -278,6 +278,8 @@ namespace engine
          SDB_DPSCB               *_pDpsCB ;
          INT16                   _w ;
 
+         UINT64                  _lastLsn ;
+
       private:
          INT64                   _contextID ;
          UINT64                  _eduID ;
