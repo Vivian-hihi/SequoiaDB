@@ -17,6 +17,8 @@ SystemTest.prototype.testRunServiceSSH = function()
       // println( user + " have no permission to run ssh service." ) ;
       return ;
    }
+   if( !isSSHExist( this.hostname, this.svcname ) )
+      return ;
    
    // 获取服务状态
    this.init() ;
@@ -55,6 +57,8 @@ SystemTest.prototype.testRunServiceDuplicate = function()
       // println( user + " have no permission to run ssh service." ) ;
       return ;
    }
+   if( !isSSHExist( this.hostname, this.svcname ) )
+      return ;
    
    // 获取服务状态
    this.init() ;
@@ -135,6 +139,31 @@ function checkStatus( status, msg )
       throw buildException( "checkStatus", null, 
             "check service status " + msg, status, msg ) ;
    }   
+}
+
+/******************************************************************************
+*@Description : check ssh service exist or not
+*@author      : Liang XueWang            
+******************************************************************************/
+function isSSHExist( hostname, svcname )
+{
+   var remote = new Remote( hostname, svcname ) ;
+   var cmd = new Cmd() ;
+   var exist ;
+   try
+   {
+      cmd.run( "service ssh status" ) ;
+      exist = true ;
+   }
+   catch( e )
+   {
+      if( e == 1 )
+         exist = false ;
+      else
+         throw buildException( "isSSHExist", e ) ;
+   }
+   remote.close() ;
+   return exist ;
 }
 
 function main()
