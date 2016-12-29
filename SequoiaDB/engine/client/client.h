@@ -1177,7 +1177,6 @@ SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
                                             FLOAT64 percent,
                                             SINT64 *taskID ) ;
 
-*/
 /** \fn INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
                                bson *indexDef,
                                const CHAR *pIndexName,
