@@ -40,7 +40,6 @@ public class CreateMainCl25 extends SdbTestBase{
 				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		try{
 			db = new Sequoiadb(SdbTestBase.coordUrl,"","");
-			System.out.println(SdbTestBase.coordUrl);
 		}catch(BaseException e){
 			Assert.assertTrue(false, "connect  failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}	
