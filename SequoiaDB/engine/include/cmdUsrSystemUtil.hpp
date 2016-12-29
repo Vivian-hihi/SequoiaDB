@@ -133,6 +133,12 @@ namespace engine
    #define CMD_USR_SYSTEM_GROUP_GID          "gid"
    #define CMD_USR_SYSTEM_GROUP_MEMBERS      "members"
 
+   /*
+      sdbshell convert int to double which > 2^32
+      FLOAT64 mantissa = 52bit, can exact represent int number < 2^53-1
+    */
+   #define CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX 0x1FFFFFFFFFFFFFuLL
+
    enum USRSYSTEM_HOST_LINE_TYPE
    {
       LINE_HOST         = 1,
