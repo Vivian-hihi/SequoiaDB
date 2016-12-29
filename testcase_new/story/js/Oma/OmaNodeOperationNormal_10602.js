@@ -19,6 +19,7 @@ OmaTest.prototype.testCoordNodeOperationNormal = function( svcname )
    }
    catch( e )
    {
+      println( "coord " + svcname + " dbpath " + dbpath ) ;
       throw buildException( "testCoordNodeOperationNormal", e, 
                             "coord node operation " + this, 0, e ) ;
    }
@@ -40,6 +41,7 @@ OmaTest.prototype.testDataNodeOperationNormal = function( svcname )
    }
    catch( e )
    {
+      println( "data " + svcname + " dbpath " + dbpath ) ;
       throw buildException( "testDataNodeOperationNormal", e,
                             "data node operation " + this, 0, e ) ;
    }
@@ -63,6 +65,7 @@ function checkDataNodeValid( hostname, svcname )
    }
    catch( e )
    {
+      println( "node " + hostname + ":" + svcname ) ;
       throw buildException( "checkDataNodeValid", e, 
                             "check node " + hostname + ":" + svcname, 0, e ) ;
    }

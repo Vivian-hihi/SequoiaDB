@@ -30,6 +30,7 @@ OmaTest.prototype.testCreateExistCoord = function()
    {
       if( e != -145 )
       {
+         println( "create coord " + svcname + " dbpath " + dbpath) ;
          throw buildException( "testCreateExistCoord", e, 
                                "create exist coord " + this, -145, e ) ;
       }
@@ -51,6 +52,7 @@ OmaTest.prototype.testRemoveNotExistCoord = function( svcname )
    {
       if( e != -146 )
       {
+         println( "remove coord " + svcname ) ;
          throw buildException( "testRemoveNotExistCoord", e, 
                                "remove not exist coord " + this, -146, e ) ;
       }
@@ -71,6 +73,7 @@ OmaTest.prototype.testRemoveCoordWithWrongSvc = function()
    {
       if( e != -146 )
       {
+         println( "remove coord " + CMSVCNAME ) ;
          throw buildException( "testRemoveCoordWithWrongSvc", e, 
                                "remove coord with cmsvcname " + this, -146, e ) ;
       }
@@ -85,7 +88,7 @@ OmaTest.prototype.testRemoveCoordWithWrongConf = function()
    
    if( this.isStandalone )
    {
-      println( "Run mode is standalone" ) ;
+      // println( "Run mode is standalone" ) ;
       return ;
    }
    
@@ -98,6 +101,7 @@ OmaTest.prototype.testRemoveCoordWithWrongConf = function()
    {
       if( e !== -146  )
       {
+         println( "remove coord " + COORDSVCNAME ) ;
          throw buildException( "testRemoveCoordWithWrongConf", e, 
                                "remove coord with wrong config " + this, -146, e ) ;
       }
@@ -118,6 +122,7 @@ OmaTest.prototype.testStartNotExistNode = function( svcname )
    {
       if( e != -146 )
       {
+         println( "start node " + svcname ) ;
          throw buildException( "testStartNotExistNode", e, 
                                "start not exist node " + this, -146, e ) ;
       }
@@ -135,6 +140,7 @@ OmaTest.prototype.testStopNotExistNode = function( svcname )
    }
    catch( e )
    {
+      println( "stop node " + svcname ) ;
       throw buildException( "testStopNotExistNode", e, 
                             "stop not exist node " + this, 0, e ) ;
    }
@@ -161,6 +167,7 @@ OmaTest.prototype.testCreateCoordWithWrongConf = function( svcname )
    }
    catch( e )
    {
+      println( "coord " + svcname + " dbpath " + dbpath ) ;
       throw buildException( "testCreateCoordWithWrongConf", e, 
                             "create coord with wrong config " + this, 0, e ) ;
    }
@@ -171,6 +178,8 @@ OmaTest.prototype.testCreateCoordWithWrongConf = function( svcname )
 OmaTest.prototype.testCreateCoordWithNoPermit = function( svcname )
 {
    this.testInit() ;
+   var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
+   if( user == "root" ) return ;
    try
    {
       this.oma.createCoord( svcname, "/root/"+svcname ) ;
@@ -180,6 +189,7 @@ OmaTest.prototype.testCreateCoordWithNoPermit = function( svcname )
    {
       if( e != -3 )
       {
+         println( "create coord " + svcname + " dbpath " + "/root/" + svcname ) ;
          throw buildException( "testCreateCoordWithNoPermit", e, 
                                "create coord with no permit " + this, -3, e ) ;
       }
@@ -201,6 +211,7 @@ OmaTest.prototype.testOmaClose = function()
    {
       if( e != -6 )
       {
+         println( "stop node " + COORDSVCNAME ) ;
          throw buildException( "testOmaClose", e, 
                                "stop coord node after close " + this, -6, e ) ;
       }

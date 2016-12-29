@@ -26,8 +26,8 @@ OmaTest.prototype.testListNodes1 = function()
    
    var nodes = this.oma.listNodes( option, filter ) ;
    
-   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var command = InstallPath + "/bin/sdblist -t db -r coord -p " + COORDSVCNAME + 
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var command = sdbDir[0] + "/bin/sdblist -t db -r coord -p " + COORDSVCNAME + 
                  " -m run --expand" ;
    try
    {
@@ -35,7 +35,8 @@ OmaTest.prototype.testListNodes1 = function()
    }
    catch( e )
    {
-      throw buildException( "testListNodes1", e, command + " " + this, 0, e ) ;
+      println( "run command " + command ) ;
+      throw buildException( "testListNodes1", e, this, 0, e ) ;
    }
    
    checkListNodes( nodes, tmpInfo ) ;
@@ -62,8 +63,8 @@ OmaTest.prototype.testListNodes2 = function()
    
    var nodes = this.oma.listNodes( option, filter ) ;
    
-   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var command = InstallPath + "/bin/sdblist -t om -r om -m local" ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var command = sdbDir[0] + "/bin/sdblist -t om -r om -m local" ;
    var tmpInfo ;
    try
    {
@@ -77,7 +78,8 @@ OmaTest.prototype.testListNodes2 = function()
       }
       else
       {
-         throw buildException( "testListNodes2", e, command + " " + this, 0, e ) ;
+         println( "run command " + command ) ;
+         throw buildException( "testListNodes2", e, this, 0, e ) ;
       }
    }
    
@@ -102,15 +104,16 @@ OmaTest.prototype.testListNodes3 = function()
                                     
    var nodes = this.oma.listNodes( option, filter ) ;
    
-   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var command = InstallPath + "/bin/sdblist -t db" ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var command = sdbDir[0] + "/bin/sdblist -t db" ;
    try
    {
       var tmpInfo = cmd.run( command ) ;
    }
    catch( e )
    {
-      throw buildException( "testListNodes3", e, command + " " + this, 0, e ) ;
+      println( "run command " + coammand ) ;
+      throw buildException( "testListNodes3", e, this, 0, e ) ;
    }
    
    checkListNodes( nodes, tmpInfo ) ; 

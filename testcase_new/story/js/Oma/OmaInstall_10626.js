@@ -25,15 +25,53 @@ OmaTest.prototype.testOmaInstall = function()
    {
       var InstallInfo = this.oma.getOmaInstallInfo().toObj() ;
       var InstallFileContent = cmd.run( "cat /etc/default/sequoiadb" ).split( "\n" ) ;
+      checkOmaInstallInfo( InstallInfo, InstallFileContent ) ;
    }
    catch( e )
    {
-      throw buildException( "testOmaInstall", e, "get oma install info " + this, 0, e ) ;
+      if( e != -4 )
+      {
+         throw buildException( "testOmaInstall", e, 
+               "get oma install info " + this, 0, e ) ;
+      }
    }
-   checkResult( InstallInfo, InstallFileContent, "getOmaInstallInfo" ) ;
+   
 
    this.oma.close() ;
    remote.close() ;
+}
+
+/******************************************************************************
+*@Description : check getOmaInstallInfo
+*@author      : Liang XueWang              
+******************************************************************************/
+function checkOmaInstallInfo( info, content )
+{
+   var keys = [ "NAME", "SDBADMIN_USER", "INSTALL_DIR", "MD5" ] ;
+   for( var i = 0;i < keys.length;i++ )
+   {
+      var found = false ;
+      for( var j = 0;j < content.length;j++ )
+      {
+         content[j] = content[j].replace( / /g,"" ) ;
+         var ind = content[j].indexOf( keys[i] ) ;
+         if( ind == -1 )
+            continue ;
+         found = true ;
+         var value1 = content[j].slice( ind+keys[i].length+1 ).toLowerCase() ;
+         var value2 = info[keys[i]].toString().toLowerCase() ;
+         if( value1 != value2 )
+         {
+            throw buildException( "checkOmaInstallInfo", null, 
+                  "check key " + keys[i], value1, value2 ) ;
+         }   
+      }
+      if( found == false && info[keys[i]] != "" )
+      {
+         throw buildException( "checkOmaInstallInfo", null,
+               "check key " + keys[i], "", info.keys[i]  ) ; 
+      }  
+   }
 }
 
 function main()

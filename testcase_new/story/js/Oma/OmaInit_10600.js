@@ -12,7 +12,7 @@ OmaTest.prototype.testCreateCoordWithIllegalOma = function( svcname )
    
    if( this.isStandalone )
    {
-      println( "Run mode is standalone." ) ;
+      // println( "Run mode is standalone." ) ;
       return ;
    }
    
@@ -26,6 +26,7 @@ OmaTest.prototype.testCreateCoordWithIllegalOma = function( svcname )
    {
       if(  e !== -15  )
       {
+         println( "create coord " + svcname + " dbpath " + dbpath ) ;
          throw buildException( "testCreateCoordWithIllegalOma", e,
                "test create coord with illegal oma " + this, "-15 -159", e ) ;
       }   

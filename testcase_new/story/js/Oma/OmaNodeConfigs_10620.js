@@ -16,14 +16,15 @@ OmaTest.prototype.testNodeConfigs = function()
    
    // 测试getNodeConfigs
    var configs = this.oma.getNodeConfigs( COORDSVCNAME ).toObj() ;
-   var InstallPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var command = "cat " + InstallPath + "/conf/local/" + COORDSVCNAME + "/sdb.conf" ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var command = "cat " + sdbDir[0] + "/conf/local/" + COORDSVCNAME + "/sdb.conf" ;
    try
    {
       var contents = cmd.run( command ).split( "\n" ) ;
    }
    catch( e )
    {
+      println( "run command " + command ) ;
       throw buildException( "testNodeConfigs", e, "get node configs " + this, 0, e ) ;
    }
    checkResult( configs, contents, "getNodeConfigs" ) ;

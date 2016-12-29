@@ -18,19 +18,21 @@ OmaTest.prototype.testGetOmaConfigsNormal = function()
    
    // 测试getOmaConfigFile
    var configFile = this.oma.getOmaConfigFile() ;
-   var installPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var expectFile = installPath + "/conf/sdbcm.conf" ;
-   if( configFile != expectFile )
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var files = [] ;
+   files[0] = sdbDir[0] + "/conf/sdbcm.conf" ;  
+   files[1] = sdbDir[1] + "/conf/sdbcm.conf" ;   
+   if( configFile != files[0] && configFile != files[1] )
    {
       throw buildException( "testGetOmaConfigsNormal", null, "get oma config file " + this, 
-                            expectFile, configFile ) ;
+                            files, configFile ) ;
    }
    
    // 测试getOmaConfigs
    try
    {   
       var configs = this.oma.getOmaConfigs().toObj() ;
-      var configFileContent = cmd.run( "cat " + expectFile ).split( "\n" ) ;
+      var configFileContent = cmd.run( "cat " + configFile ).split( "\n" ) ;
    }
    catch( e )
    {
@@ -46,7 +48,7 @@ OmaTest.prototype.testGetOmaConfigsNormal = function()
 OmaTest.prototype.testGetOmaConfigsAbnormal = function()
 {
    this.testInit() ;
-   var installPath = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    // 测试getOmaConfigs时，文件不存在
    try
    {
@@ -65,7 +67,7 @@ OmaTest.prototype.testGetOmaConfigsAbnormal = function()
    // 测试getOmaConfigs时，文件不是oma配置文件
    try
    {
-      this.oma.getOmaConfigs( installPath + "/bin/sdb" ) ;
+      this.oma.getOmaConfigs( sdbDir[0] + "/bin/sdb" ) ;
       throw "get oma configs with sdb file should be failed" ;
    }
    catch( e )

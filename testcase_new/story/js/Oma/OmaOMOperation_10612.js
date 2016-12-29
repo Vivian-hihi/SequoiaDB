@@ -21,6 +21,7 @@ OmaTest.prototype.testOMOperation = function( svcname, isOmExist )
       {
          if( e != -145 )
          {
+            println( "svcname = " + svcname + " dbpath = " + dbpath ) ;
             throw buildException( "testOMOperation", e, 
                                   "createOm when om exist " + this, -145, e ) ;
          }
@@ -34,6 +35,7 @@ OmaTest.prototype.testOMOperation = function( svcname, isOmExist )
       }
       catch( e )
       {
+         println( "svcname = " + svcname + " dbpath = " + dbpath ) ;
          throw buildException( "testOMOperation", e, 
                                "createOm when om not exist " + this, 0, e ) ;
       }

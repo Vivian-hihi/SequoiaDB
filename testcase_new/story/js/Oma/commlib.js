@@ -166,7 +166,7 @@ function isOmExist( hostName, cmSvcName )
 }
 
 /******************************************************************************
-*@Description : check getOmaInstallInfo/getOmaConfigs/getNodeConfigs result
+*@Description : check getOmaConfigs/getNodeConfigs result
 *@author      : Liang XueWang              
 ******************************************************************************/
 function checkResult( info, content, func )
@@ -192,16 +192,31 @@ function checkResult( info, content, func )
 }
 
 /******************************************************************************
-*@Description : get sequoiadb dir eg: /opt/sequoiadb /trunk
+*@Description : get sequoiadb dir eg: /opt/sequoiadb/bin/.. /opt/sequoiadb/
 *@author      : Liang XueWang              
 ******************************************************************************/
 function toolGetSequoiadbDir( hostname, svcname )
 {
    var remote = new Remote( hostname, svcname ) ;
    var system = remote.getSystem() ;
-   var dir = system.getEWD() ;
-   var ind = dir.indexOf( "/bin" ) ;
-   dir = dir.slice( 0, ind ) ;
+   var dir = [] ;
+   var tmp = system.getEWD() ;
+   var ind = tmp.indexOf( "/bin" ) ;
+   dir[0] = tmp + "/.." ;
+   dir[1] = tmp.slice( 0, ind ) ;
    remote.close() ;
    return dir ;
+}
+
+/******************************************************************************
+*@Description : get sdbcm user
+*@author      : Liang XueWang            
+******************************************************************************/
+function toolGetSdbcmUser( hostName, cmSvcName )
+{
+   var remote = new Remote( hostName, cmSvcName ) ;
+   var cmd = remote.getCmd() ;
+   var command = "ps aux | grep sdbcm | grep -E -v 'grep|sdbcmd' | awk '{print $1}'" ;
+   var user = cmd.run( command ).split( "\n" )[0] ;
+   return user ;   
 }
