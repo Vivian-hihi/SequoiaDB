@@ -14,7 +14,16 @@ SystemTest.prototype.testGetSystemConfigs = function()
    {
       var configObj = this.system.getSystemConfigs( type[i] ).toObj() ;
       
-      var info = this.cmd.run( "sysctl -a 2> /dev/null | grep " + type[i] ).split( "\n" ) ;
+      try
+      {
+         var command = "sysctl -a 2> /dev/null | grep " + type[i] ;
+         var info = this.cmd.run( command ).split( "\n" ) ;
+      }
+      catch( e )
+      {
+         println( "run command " + command ) ;
+         throw buildException( "testGetSystemConfigs", e, "get " + type[i], 0, e ) ;
+      }
       var obj = {} ;
       for( var i = 0;i < info.length-1;i++ )
       {

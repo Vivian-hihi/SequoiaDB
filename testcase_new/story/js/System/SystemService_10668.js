@@ -14,7 +14,7 @@ SystemTest.prototype.testRunServiceSSH = function()
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user != "root" )
    {
-      println( user + " have no permission to run ssh service." ) ;
+      // println( user + " have no permission to run ssh service." ) ;
       return ;
    }
    
@@ -52,7 +52,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user != "root" )
    {
-      println( user + " have no permission to run ssh service." ) ;
+      // println( user + " have no permission to run ssh service." ) ;
       return ;
    }
    
@@ -100,7 +100,7 @@ SystemTest.prototype.testStopSdbcm = function()
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user == "root" )
    {
-      println( "Cannot stop sdbcm service owned by root." ) ;
+      // println( "Cannot stop sdbcm service owned by root." ) ;
       return ;
    }
    

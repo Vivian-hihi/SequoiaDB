@@ -16,9 +16,12 @@ SystemTest.prototype.testAddDelGroup = function( isUnique )
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user != "root" )
    {
-      println( user + " have no permission to create group." ) ;
+      // println( user + " have no permission to create group." ) ;
       return ;
    }
+   // 检查sdbadmin_group是否存在
+   if( !isSdbadminGroupExist( this.hostname, this.svcname ) )
+      return ;
    
    this.init() ;
    

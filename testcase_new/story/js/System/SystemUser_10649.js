@@ -51,6 +51,10 @@ SystemTest.prototype.testAddDelUser = function( createDir )
       // println( user + " have no permission to create user." ) ;
       return ;
    }
+   // 检查用户组sdbadmin_group sequoiadb是否存在
+   if( !isSdbadminGroupExist( this.hostname, this.svcname ) || 
+       !isSequoiadbExist( this.hostname, this.svcname ) )
+      return ;
    
    var userObj = {} ;
    userObj["name"] = "createUser" ;          // 用户名
@@ -60,6 +64,7 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    userObj["dir"] = "/home/createUser" ;     // 用户主目录
    userObj["createDir"] = createDir ;        // 是否自动创建用户主目录
    
+   this.init() ;
    try
    {
       // 创建用户
@@ -104,8 +109,8 @@ SystemTest.prototype.testAddExistUser = function()
    this.init() ;
    try
    {
-      this.system.addUser( { name: "sdbadmin" } ) ;
-      throw "create sdbadmin user should be failed" ;
+      this.system.addUser( { name: "root" } ) ;
+      throw "create user root should be failed" ;
    }
    catch( e )
    {
@@ -124,9 +129,11 @@ SystemTest.prototype.testSetUserConfigs = function()
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user != "root" )
    {
-      println( user + " have no permission to set user configs." ) ;
+      // println( user + " have no permission to set user configs." ) ;
       return ;
    }
+   if( !isSdbadminGroupExist( this.hostname, this.svcname ) )
+      return ;
    
    // 首先创建用户
    var userObj = {} ;

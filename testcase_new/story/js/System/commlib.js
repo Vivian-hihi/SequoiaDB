@@ -191,16 +191,93 @@ function isEmptyObject( obj )
 }
 
 /******************************************************************************
-*@Description : get sequoiadb dir eg: /opt/sequoiadb /trunk
+*@Description : get sequoiadb dir eg: /opt/sequoiadb /opt/sequoiadb/bin/..
 *@author      : Liang XueWang              
 ******************************************************************************/
 function toolGetSequoiadbDir( hostname, svcname )
 {
    var remote = new Remote( hostname, svcname ) ;
    var system = remote.getSystem() ;
-   var dir = system.getEWD() ;
-   var ind = dir.indexOf( "/bin" ) ;
-   dir = dir.slice( 0, ind ) ;
+   var dir = [] ;
+   var tmp = system.getEWD() ;
+   var ind = tmp.indexOf( "/bin" ) ;
+   dir[0] = tmp + "/.." ;
+   dir[1] = tmp.slice( 0, ind ) ;
    remote.close() ;
    return dir ;
+}
+
+/******************************************************************************
+*@Description : check user sdbadmin exist or not
+*@author      : Liang XueWang              
+******************************************************************************/
+function isSdbadminExist( hostname, svcname )
+{
+   var remote = new Remote( hostname, svcname ) ;
+   var cmd = remote.getCmd() ;
+   var exist ;
+   try
+   {
+      cmd.run( "cat /etc/passwd | grep sdbadmin" ) ;
+      exist = true ;
+   }
+   catch( e )
+   {
+      if( e == 1 )
+         exist = false ;
+      else
+         throw buildException( "IsSdbadminExist", e ) ;
+   }
+   remote.close() ;
+   return exist ;
+}
+
+/******************************************************************************
+*@Description : check group sdbadmin_group exist or not
+*@author      : Liang XueWang              
+******************************************************************************/
+function isSdbadminGroupExist( hostname, svcname )
+{
+   var remote = new Remote( hostname, svcname ) ;
+   var cmd = remote.getCmd() ;
+   var exist ;
+   try
+   {
+      cmd.run( "cat /etc/group | grep sdbadmin_group" ) ;
+      exist = true ;
+   }
+   catch( e )
+   {
+      if( e == 1 )
+         exist = false ;
+      else
+         throw buildException( "IsSdbadminGroupExist", e ) ;
+   }
+   remote.close() ;
+   return exist ;
+}
+
+/******************************************************************************
+*@Description : check group sequoiadb exist or not
+*@author      : Liang XueWang              
+******************************************************************************/
+function isSequoiadbExist( hostname, svcname )
+{
+   var remote = new Remote( hostname, svcname ) ;
+   var cmd = remote.getCmd() ;
+   var exist ;
+   try
+   {
+      cmd.run( "cat /etc/group | grep sequoiadb" ) ;
+      exist = true ;
+   }
+   catch( e )
+   {
+      if( e == 1 )
+         exist = false ;
+      else
+         throw buildException( "IsSequoiadbExist", e ) ;
+   }
+   remote.close() ;
+   return exist ;
 }

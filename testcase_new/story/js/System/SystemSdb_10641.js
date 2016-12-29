@@ -47,12 +47,12 @@ SystemTest.prototype.testGetEWD = function()
 {
    this.init() ;
    
-   var InstallPath = commGetInstallPath() ;
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var WorkDir = this.system.getEWD() ;
-   if( WorkDir != InstallPath + "/bin" )
+   if( WorkDir != sdbDir[0] + "/bin" && WorkDir != sdbDir[1] + "/bin" )
    {
       throw buildException( "testGetEWD", null, "get EWD " + this, 
-                            InstallPath + "/bin", WorkDir ) ;
+            sdbDir[0] + "/bin " + sdbDir[1] + "/bin", WorkDir ) ;
    }
    
    this.release() ;
