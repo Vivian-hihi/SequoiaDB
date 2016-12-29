@@ -44,13 +44,18 @@ SystemTest.prototype.testGetUserEnv = function()
 // 测试创建用户删除用户，createDir取值为true/false
 SystemTest.prototype.testAddDelUser = function( createDir )
 {
-   // 检查cm用户是否为root
-   var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user != "root" )
+   this.init() ;
+   
+   // 检查当前用户和cm用户是否有权限
+   var currUser = this.system.getCurrentUser().toObj().user ;
+   var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
+   if( this.system == System )
    {
-      // println( user + " have no permission to create user." ) ;
-      return ;
+      if( currUser != "root" )
+         return ;
    }
+   else if( cmUser != "root" )
+      return ;
    // 检查用户组sdbadmin_group sequoiadb是否存在
    if( !isSdbadminGroupExist( this.hostname, this.svcname ) || 
        !isSequoiadbExist( this.hostname, this.svcname ) )
@@ -64,7 +69,6 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    userObj["dir"] = "/home/createUser" ;     // 用户主目录
    userObj["createDir"] = createDir ;        // 是否自动创建用户主目录
    
-   this.init() ;
    try
    {
       // 创建用户
@@ -98,15 +102,19 @@ SystemTest.prototype.testAddDelUser = function( createDir )
 // 测试创建已存在用户 sdbadmin
 SystemTest.prototype.testAddExistUser = function()
 {
-   // 检查cm用户是否为root
-   var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user != "root" )
-   {
-      // println( user + " have no permission to create user." ) ;
-      return ;
-   }
-   
    this.init() ;
+   
+   // 检查当前用户和cm用户是否有权限
+   var currUser = this.system.getCurrentUser().toObj().user ;
+   var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
+   if( this.system == System )
+   {
+      if( currUser != "root" )
+         return ;
+   }
+   else if( cmUser != "root" )
+      return ;
+   
    try
    {
       this.system.addUser( { name: "root" } ) ;
@@ -125,13 +133,18 @@ SystemTest.prototype.testAddExistUser = function()
 // 测试设置用户属性
 SystemTest.prototype.testSetUserConfigs = function()
 {
-   // 检查cm用户是否为root
-   var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user != "root" )
+   this.init() ;
+   
+   // 检查当前用户和cm用户是否有权限
+   var currUser = this.system.getCurrentUser().toObj().user ;
+   var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
+   if( this.system == System )
    {
-      // println( user + " have no permission to set user configs." ) ;
-      return ;
+      if( currUser != "root" )
+         return ;
    }
+   else if( cmUser != "root" )
+      return ;
    if( !isSdbadminGroupExist( this.hostname, this.svcname ) )
       return ;
    

@@ -12,18 +12,22 @@
 // 测试创建删除用户组
 SystemTest.prototype.testAddDelGroup = function( isUnique )
 {
-   // 检查cm用户是否为root
-   var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user != "root" )
-   {
-      // println( user + " have no permission to create group." ) ;
-      return ;
-   }
    // 检查sdbadmin_group是否存在
    if( !isSdbadminGroupExist( this.hostname, this.svcname ) )
       return ;
    
    this.init() ;
+   
+   // 检查当前用户和cm用户是否有权限
+   var currUser = this.system.getCurrentUser().toObj().user ;
+   var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
+   if( this.system == System )
+   {
+      if( currUser != "root" )
+         return ;
+   }
+   else if( cmUser != "root" )
+      return ;
    
    // 获取sdbadmin_group的gid
    var info = this.cmd.run( "cat /etc/group | grep sdbadmin_group" ).split( "\n" )[0] ;
