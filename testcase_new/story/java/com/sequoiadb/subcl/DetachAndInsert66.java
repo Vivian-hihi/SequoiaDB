@@ -58,6 +58,7 @@ public class DetachAndInsert66 extends SdbTestBase {
 	    }
 	    createCl(sdb1);
 	    attach(sdb1);
+	    insertData(sdb1);
 	}
 	
 	@AfterTest
@@ -80,47 +81,96 @@ public class DetachAndInsert66 extends SdbTestBase {
 	}
 
     @Test
-    public void test(){    	 
+    public void test(){    	
     	detach(sdb1, cl1);
-    	//检验detach后的子表能否做增删查
+    	//检验子表被detach，通过主表无法增删改查该子表中的数据
     	checkCRUD(sdb2);
-    	//检验其它子表能否做增删改查
-    	checkInsert(sdb2, 100, 300);
+    	//detach其中一张子表不影响其他子表的数据，增删改查操作功能正常
     	checkUpdate(sdb2, 100, 300);
-    	checkDelete(sdb2, 250, 150);
+    	checkDelete(sdb2, 100, 0);
+    	checkInsert(sdb2, 100, 300);
     }
     
+    private void insertData(Sequoiadb db){
+    	CollectionSpace cs = null;
+    	DBCollection maincl = null;
+		try{
+			cs = db.getCollectionSpace(SdbTestBase.csName);
+			maincl = cs.getCollection(mainclName);	
+			//检验插入
+			List <BSONObject> insertor = new ArrayList<>();
+			for(int i = 0; i < 300; i++){
+				BSONObject bson = new BasicBSONObject();
+				bson.put("age", i);
+				bson.put("name", "xiaohong");
+				bson.put("test", "test");
+				insertor.add(bson);
+			}
+			maincl.bulkInsert(insertor, DBCollection.FLG_INSERT_CONTONDUP);
+		}catch(BaseException e){
+			e.printStackTrace();
+			Assert.fail(e.getMessage());
+		}
+    }
     /**
-     * 检验detach后的子表能否做增删查
+     * 检验detach的子表后，在主表操作增删改查会不会对原子表数据有影响
      * @param db
      */
     public void checkCRUD(Sequoiadb db){
     	CollectionSpace cs = null;
-    	DBCollection  maincl = null;
+    	DBCollection maincl = null;
+    	DBCollection subcl = null;
+    	DBCursor queryCur = null;
+    	DBCursor res = null;
    	    try{
    	    	cs = db.getCollectionSpace(SdbTestBase.csName);
    	    	maincl = cs.getCollection(mainclName);
+   	    	subcl = cs.getCollection("subcl66_1");
    	    }catch(BaseException e){
    	    	e.printStackTrace();
    	    	Assert.fail("Fail to check CRUD"+e.getMessage());
    	    }
+   	    
   	    try{
   	    	maincl.insert("{age:1,name:'xiaohaong'}");   
   	    	Assert.fail("insert success");
    	    }catch(BaseException e){
    	    	Assert.assertEquals(e.getErrorCode(), -135, e.getMessage());
    	    }
+  	    
   	    try{
-  	    	maincl.query("{age:1}", null, null, null);
-  	    	Assert.fail("query success");
+  	    	//检验在主表做查该删操作，是否对子表数据有影响
+  	    	queryCur = maincl.query("{age:1}", null, null, null);
+  	    	if(queryCur.hasNext()){
+  	    		Assert.fail("query success");  	    		
+  	    	}
+  	    	maincl.update(null, "{$set:{'test':'update'}}",null);
+  	    	maincl.delete("{age:1}"); 
+			//经过在主表做增删改查后，检验子表的数据是否有改变
+  	    	List <BSONObject> insertor = new ArrayList<>();
+			for(int i = 0; i < 100; i++){
+				BSONObject bson = new BasicBSONObject();
+				bson.put("age", i);
+				bson.put("name", "xiaohong");
+				bson.put("test", "test");
+				insertor.add(bson);
+			}
+			BSONObject order = new BasicBSONObject();
+			order.put("age", 1);
+			res = subcl.query(null, null, order, null);
+			int i = 0;
+			while(res.hasNext()){
+				BSONObject dataRes = res.getNext();
+				dataRes.removeField("_id");
+				if(!insertor.get(i).equals(dataRes)){
+					Assert.fail("failed to query data ");
+				}
+				i++;
+			}
+  	    	Assert.assertEquals(100, subcl.getCount());
   	    }catch(BaseException e){
-  	    	Assert.assertEquals(e.getErrorCode(), -23, e.getMessage());
-  	    }
-  	    try{
-  	    	maincl.delete("{age:1}");  
-  	    	Assert.fail("delete success");
-  	    }catch(BaseException e){
-  	    	Assert.assertEquals(e.getErrorCode(), -23, e.getMessage());
+  	    	e.printStackTrace();
+  	    	Assert.fail(e.getMessage());
   	    }
     }
     
