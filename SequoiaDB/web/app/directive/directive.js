@@ -1484,6 +1484,7 @@
             $scope.lastScope = null ; //最后一次自己创建的scope
             $scope.Setting = {
                isShow: false,       //是否显示
+               Modal: null,
                data: null,          //父scope传来的值
                Status: 1,           //弹窗状态，1是普通，2是最大化
                Title: '',           //窗口标题
@@ -1546,7 +1547,8 @@
                            scope.lastScope.$destroy() ;
                            scope.lastScope = null ;
                         }
-                        var bodyEle = $( '> .modal2 > .body', element ) ;
+                        var modal = $( '> .modal2', element ) ;
+                        var bodyEle = $( '> .body', modal ) ;
                         if( bodyEle.length > 0 && scope.Setting.isShow == true )
                         {
                            var childScope = scope.$new();
@@ -1556,11 +1558,15 @@
                               $animate.enter( clone, bodyEle, null ) ;
                            } ) ;
                         }
+                        $( modal ).detach() ;
+                        $( document.body ).append( modal ) ;
+                        scope.Setting.Modal = modal ;
                      } ) ;
                   }
 
                   //监控数据
                   scope.$watch( rhs, function ngTable( collection ){
+                     $( element ).height( 0 ) ; //为了Ie7兼容
                      scope.Setting.data = collection ;
                   } ) ;
 
@@ -1611,6 +1617,7 @@
 
                   //打开窗口
                   scope.openWindows = function(){
+                     $( element ).height( 0 ) ; //为了Ie7兼容
                      if( scope.Setting.isShow == false )
                      {
                         $( document.body ).append( $compile( scope.Setting.Mask )( scope ) ) ;
@@ -1621,6 +1628,12 @@
 
                   //关闭窗口
                   scope.closeWindows = function(){
+                     if( scope.Setting.Modal !== null )
+                     {
+                        $( scope.Setting.Modal ).detach() ;
+                        $( element ).append( scope.Setting.Modal ) ;
+                        scope.Setting.Modal = null ;
+                     }
                      //先恢复窗口
                      scope.recoveryModal() ;
                      scope.Setting.isShow = false ;
@@ -1694,24 +1707,27 @@
 
                   //闪烁
                   scope.prompt = function(){
-                     var counter = 0 ;
-                     var modal = $( '> .modal2 ', element ) ;
-                     var timer = setInterval( function(){
-                        ++counter ;
-                        if( counter % 2 == 0 )
-                           $( modal ).css( 'box-shadow', '0px 2px 8px rgba(0,0,0,0.5)' ) ;
-                        else
-                           $( modal ).css( 'box-shadow', 'none' ) ;
-                        if( counter >= 6 )
-                           clearInterval( timer );
-                     }, 90 ) ;
+                     if( scope.Setting.Modal !== null )
+                     {
+                        var counter = 0 ;
+                        var modal = scope.Setting.Modal ;
+                        var timer = setInterval( function(){
+                           ++counter ;
+                           if( counter % 2 == 0 )
+                              $( modal ).css( 'box-shadow', '0px 2px 8px rgba(0,0,0,0.5)' ) ;
+                           else
+                              $( modal ).css( 'box-shadow', 'none' ) ;
+                           if( counter >= 6 )
+                              clearInterval( timer );
+                        }, 90 ) ;
+                     }
                   }
 
                   //移动弹窗开始
                   scope.startMove = function( event ){
-                     if( scope.Setting.Status == 1 )
+                     if( scope.Setting.Status == 1 && scope.Setting.Modal != null )
                      {
-                        var modal = $( '> .modal2', element ) ;
+                        var modal = scope.Setting.Modal ;
                         var pageX = event['pageX'] ;
                         var pageY = event['pageY'] ;
                         scope.Setting.Temp.x = pageX ;
@@ -1731,59 +1747,68 @@
 
                   //移动
                   scope.moveModal = function( event ){
-                     var modal = $( '> .modal2', element ) ;
-                     if( modal.hasClass( 'alpha' ) )
+                     if( scope.Setting.Modal != null )
                      {
-                        var bodyWidth = $( window ).width() ;
-                        var bodyHeight = $( window ).height() ;
-                        var modalWidth = scope.Setting.Windows['width'] ;
-                        var modalHeight = scope.Setting.Windows['height'] ;
-                        var x = scope.Setting.Temp.x ;
-                        var y = scope.Setting.Temp.y ;
-                        var pageX = event['pageX'] ;
-                        var pageY = event['pageY'] ;
-                        scope.Setting.Temp.x = pageX ;
-                        scope.Setting.Temp.y = pageY ;
-                        var left = scope.Setting.Windows['left'] ;
-                        var top = scope.Setting.Windows['top'] ;
-                        var offsetLeft = pageX - x ;
-                        var offsetTop = pageY - y ;
-                        top  += offsetTop ;
-                        left += offsetLeft ;
-                        if( top <= 0 ) top = 0 ;
-                        if( left <= 0 ) left = 0 ;
-                        if( top + modalHeight + 5 >= bodyHeight ) top = bodyHeight - modalHeight - 5 ;
-                        if( left + modalWidth + 5 >= bodyWidth ) left = bodyWidth - modalWidth - 5 ;
-                        scope.Setting.Temp.left = left ;
-                        scope.Setting.Temp.top = top ;
-                        scope.Setting.Windows = { 'left': left, 'top': top, 'width': modalWidth, 'height': modalHeight } ;
-                        scope.$digest() ;
+                        var modal = scope.Setting.Modal ;
+                        if( modal.hasClass( 'alpha' ) )
+                        {
+                           var bodyWidth = $( window ).width() ;
+                           var bodyHeight = $( window ).height() ;
+                           var modalWidth = scope.Setting.Windows['width'] ;
+                           var modalHeight = scope.Setting.Windows['height'] ;
+                           var x = scope.Setting.Temp.x ;
+                           var y = scope.Setting.Temp.y ;
+                           var pageX = event['pageX'] ;
+                           var pageY = event['pageY'] ;
+                           scope.Setting.Temp.x = pageX ;
+                           scope.Setting.Temp.y = pageY ;
+                           var left = scope.Setting.Windows['left'] ;
+                           var top = scope.Setting.Windows['top'] ;
+                           var offsetLeft = pageX - x ;
+                           var offsetTop = pageY - y ;
+                           top  += offsetTop ;
+                           left += offsetLeft ;
+                           if( top <= 0 ) top = 0 ;
+                           if( left <= 0 ) left = 0 ;
+                           if( top + modalHeight + 5 >= bodyHeight ) top = bodyHeight - modalHeight - 5 ;
+                           if( left + modalWidth + 5 >= bodyWidth ) left = bodyWidth - modalWidth - 5 ;
+                           scope.Setting.Temp.left = left ;
+                           scope.Setting.Temp.top = top ;
+                           scope.Setting.Windows = { 'left': left, 'top': top, 'width': modalWidth, 'height': modalHeight } ;
+                           scope.$digest() ;
+                        }
                      }
                   }
 
                   //结束移动
                   scope.endMove = function(){
-                     var modal = $( '> .modal2', element ) ;
-                     modal.removeClass( 'alpha' ) ;
-                     $( document.body ).removeClass( 'unselect' ) ;
-                     $( document ).off( 'mousemove' ) ;
-                     $( document ).off( 'mouseup' ) ;
-                     Tip.auto() ;
+                     if( scope.Setting.Modal !== null )
+                     {
+                        var modal = scope.Setting.Modal ;
+                        modal.removeClass( 'alpha' ) ;
+                        $( document.body ).removeClass( 'unselect' ) ;
+                        $( document ).off( 'mousemove' ) ;
+                        $( document ).off( 'mouseup' ) ;
+                        Tip.auto() ;
+                     }
                   }
 
                   //开始调整窗口大小
                   scope.startSetSize = function( event ){
-                     var modal = $( '> .modal2', element ) ;
-                     $( document.body ).addClass( 'unselect' ) ;
-                     //监听鼠标移动
-                     $( document ).on( 'mousemove', function( event2 ){
-                        modal.addClass( 'alpha' ) ;
-                        scope.setSize( event2 ) ;
-                     } ) ;
-                     //监听鼠标松开
-                     $( document ).on( 'mouseup', function(){
-                        scope.endSetSize() ;
-                     } ) ;
+                     if( scope.Setting.Modal !== null )
+                     {
+                        var modal = scope.Setting.Modal ;
+                        $( document.body ).addClass( 'unselect' ) ;
+                        //监听鼠标移动
+                        $( document ).on( 'mousemove', function( event2 ){
+                           modal.addClass( 'alpha' ) ;
+                           scope.setSize( event2 ) ;
+                        } ) ;
+                        //监听鼠标松开
+                        $( document ).on( 'mouseup', function(){
+                           scope.endSetSize() ;
+                        } ) ;
+                     }
                   }
 
                   //正在调整窗口大小
@@ -1808,12 +1833,15 @@
 
                   //结束调整窗口大小
                   scope.endSetSize = function( id ){
-                     var modal = $( '> .modal2', element ) ;
-                     modal.removeClass( 'alpha' ) ;
-                     $( document.body ).removeClass( 'unselect' ) ;
-                     $( document ).off( 'mousemove' ) ;
-                     $( document ).off( 'mouseup' ) ;
-                     Tip.auto() ;
+                     if( scope.Setting.Modal !== null )
+                     {
+                        var modal = scope.Setting.Modal ;
+                        modal.removeClass( 'alpha' ) ;
+                        $( document.body ).removeClass( 'unselect' ) ;
+                        $( document ).off( 'mousemove' ) ;
+                        $( document ).off( 'mouseup' ) ;
+                        Tip.auto() ;
+                     }
                   }
 
                   //最大化或恢复弹窗
@@ -3974,11 +4002,13 @@
          controller: function( $scope, $element, $attrs, $transclude ){
             $scope.lastScope = [] ;  //最后一次创建的scope
             $scope.mask = $compile( $( '<div></div>' ).attr( 'ng-mousedown', 'close()' ).addClass( 'mask-screen unalpha' ) )( $scope ) ;  //遮罩
-            $scope.ulBox = $( '<ul class="dropdown-menu"></ul>' ) ;  //下拉菜单外框
+            $scope.ulBox = $( '<ul class="dropdown-menu"></ul>' ).css( { 'position': 'relative' } ) ;  //下拉菜单外框
+            $scope.divBox = $( '<div></div>' ).css( { 'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 10000 } ) ; //下拉菜单移动框
+
             $scope.status = 0 ; //当前下拉菜单状态，1:开启  0:关闭
             $scope.btnEle = null ;
 
-            $element.append( $scope.ulBox ) ;//把下拉菜单放到制定的位置
+            $scope.divBox.append( $scope.ulBox ) ;//把下拉菜单放到制定的位置
          },
          compile: function( element, attributes, transclude ){
             return {
@@ -4006,7 +4036,7 @@
                      var ulBox = scope.ulBox ;
 
                      //设置相对位置
-                     $( element ).css( { 'position': 'fixed', 'left': 0, 'top': 0, 'z-index': 10000 } ) ;
+                     //$( element ).css( { 'position': 'fixed', 'left': 0, 'top': 0, 'z-index': 10000 } ) ;
 
                      //移除旧的
                      $( '> li', ulBox ).remove() ;
@@ -4054,7 +4084,7 @@
                      if( scope.status == 0 )
                         return ;
                      var ele        = scope.btnEle ;
-                     var menu       = $( element ) ;
+                     var menu       = scope.divBox ;
                      var ulBox      = scope.ulBox ;
                      var bodyWidth  = $( 'body' ).outerWidth() ;
                      var bodyHeight = $( 'body' ).outerHeight() ;
@@ -4101,11 +4131,13 @@
 
                   //打开下拉菜单
                   var open = function( btnEle ){
+                     $( element ).height( 0 ) ; //兼容IE7
                      if( scope.status == 0 )
                      {
                         var ulBox = scope.ulBox ;
                         scope.btnEle = $( btnEle ) ;
                         scope.status = 1 ;
+                        $( document.body ).append( scope.divBox ) ;
                         $( document.body ).append( scope.mask ) ;
                         ulBox.show() ;
                         resizeFun() ;
@@ -4119,6 +4151,7 @@
                         var ulBox = scope.ulBox ;
                         scope.status = 0 ;
                         $( scope.mask ).detach() ;
+                        $( scope.divBox ).detach() ;
                         ulBox.hide() ;
                      }
                   }                 
@@ -4134,6 +4167,7 @@
 
                   //监控数据
                   scope.$watchCollection( rhs, function( collections ){
+                     $( element ).height( 0 ) ; //兼容IE7
                      if( isArray( collections ) )  //必须是数组
                        createDropdown( collections ) ;
                   } ) ;
@@ -4659,6 +4693,7 @@
 
    */
    sacApp.directive( 'ngTable', function( $animate, $timeout, $compile, $filter, SdbFunction ){
+      var brower = SdbFunction.getBrowserInfo() ;
       var setOptionsFun = function( src, defaultVal ){
          if( !src )
             return defaultVal ;
@@ -4984,9 +5019,10 @@
                         {
                            //数字比大小
                            var input  = $( '<div></div>' ).css( { 'display': 'table', 'width': '100%' } ) ;
-                           var div1   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '30%' } ) ;
-                           var div2   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '70%' } ) ;
-                           var select = $compile( '<select class="form-control" style="border-right:0;vertical-align:top;" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][0]" ng-change="find()"><option value="gt">&gt;</option><option value="gte">&gt;=</option><option value="eq">=</option><option value="neq">!=</option><option value="lt">&lt;</option><option value="lte">&lt;=</option></select>')( scope ) ;
+                           var div1   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '35%' } ) ;
+                           var div2   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '55%' } ) ;
+                           var vertical = ( brower[0] == 'firefox' ? '' : 'vertical-align:top;' ) ;
+                           var select = $compile( '<select class="form-control" style="border-right:0;' + vertical + '" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][0]" ng-change="find()"><option value="gt">&gt;</option><option value="gte">&gt;=</option><option value="eq">=</option><option value="neq">!=</option><option value="lt">&lt;</option><option value="lte">&lt;=</option></select>')( scope ) ;
                            div1.append( select ) ;
                            var text = $compile( '<input class="form-control" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][1]" ng-change="find()">' )( scope ) ;
                            div2.append( text ) ;

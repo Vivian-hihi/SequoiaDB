@@ -11,7 +11,7 @@ function loginTransfer( $scope, SdbRest, SdbFunction ){
             SdbFunction.LocalData( 'SdbModuleMode', moduleInfo['DeployMod'] ) ;
             if( moduleInfo['BusinessType'] == 'sequoiadb' )
             {
-               window.location.href = '/#/Data/SDB-Database/Index' ;
+               window.location.href = '/#/Monitor/SDB/Index' ;
             }
             else if( moduleInfo['BusinessType'] == 'sequoiasql' )
             {

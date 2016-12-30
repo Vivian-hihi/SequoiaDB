@@ -40,6 +40,20 @@ _IndexPublic.checkEditionAndSupport = function( $scope, moduleType, modelName ){
    return rc ;
 }
 
+//用于监控页面，社区版就报警告
+_IndexPublic.checkMonitorEdition = function( $location ){
+   if( window.Config['Edition'] != 'Enterprise' && window.Config['recv'] == true )
+   {
+      $location.path( '/Monitor/Preview' ).search( { 'r': new Date().getTime() } ) ;
+   }
+   else if( window.Config['recv'] == false )
+   {
+      setTimeout( function(){
+         _IndexPublic.checkMonitorEdition( $location ) ;
+      }, 200 )
+   }
+}
+
 //创建错误弹窗
 _IndexPublic.createErrorModel = function( $scope, context ){
    $scope.Components.Confirm.type = 3 ;

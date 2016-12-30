@@ -3,7 +3,7 @@
       <div class="nav-new">
          <div ng-click="GotoNodeList()">{{autoLanguage("节点")}}</div>
          <div ng-click="GotoResources()">{{autoLanguage("资源")}}</div>
-         <div ng-click="GotoHosts()">{{autoLanguage("主机")}}</div>
+         <div ng-click="GotoHostList()">{{autoLanguage("主机")}}</div>
          <!--<div>{{autoLanguage("安全")}}</div>-->
       </div>
    </div>
@@ -23,7 +23,8 @@
                      <tr>
                         <td style="width:40%;font-weight:bold;">{{autoLanguage("主机数")}}</td>
                         <td style="width:60%;">
-                           <a class="Ellipsis linkButton" ng-click="GotoHosts()">{{HostNum}}</a>
+                           <a class="Ellipsis linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoHostList()">{{HostNum}}</a>
+                           <span ng-if="Edition != 'Enterprise'">{{HostNum}}</span>
                         </td>
                      </tr>
                      <tr>
@@ -58,6 +59,15 @@
                   <div style="float:left;width:210px;">
                      <table class="table loosen" style="width:210px;">
                         <tr>
+                           <td style="width:55%;font-weight:bold;">{{autoLanguage("版本")}}</td>
+                           <td style="width:45%;">
+                              <div class="Ellipsis">
+                                 <span ng-if="Edition == 'Enterprise'">{{autoLanguage("企业版")}}</span>
+                                 <span ng-if="Edition != 'Enterprise'">{{autoLanguage("社区版")}}</span>
+                              </div>
+                           </td>
+                        </tr>
+                        <tr>
                            <td style="width:55%;font-weight:bold;">{{autoLanguage("数据库版本")}}</td>
                            <td style="width:45%;">
                               <div class="Ellipsis">
@@ -76,40 +86,45 @@
                         <tr>
                            <td style="font-weight:bold;">{{autoLanguage("会话数")}}</td>
                            <td>
-                              <div class="Ellipsis ">
-                                 <a class="linkButton" ng-click="GotoSessions()">{{moduleInfo['sessions']}}</a>
+                              <div class="Ellipsis">
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoSessions()">{{moduleInfo['sessions']}}</a>
+                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['sessions']}}</span>
                               </div>
                            </td>
                         </tr>
                         <tr>
                            <td style="font-weight:bold;">{{autoLanguage("域数")}}</td>
                            <td>
-                              <div class="Ellipsis ">
-                                 <a class="linkButton" ng-click="GotoDomains()">{{moduleInfo['domains']}}</a>
+                              <div class="Ellipsis">
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoDomains()">{{moduleInfo['domains']}}</a>
+                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['domains']}}</span>
                               </div>
                            </td>
                         </tr>
                         <tr>
                            <td style="font-weight:bold;">{{autoLanguage("分区组数")}}</td>
                            <td>
-                              <div class="Ellipsis ">
-                                 <a class="linkButton" ng-click="GotoGroups()">{{moduleInfo['groups']}}</a>
+                              <div class="Ellipsis">
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoGroups()">{{moduleInfo['groups']}}</a>
+                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['groups']}}</span>
                               </div>
                            </td>
                         </tr>
                         <tr>
                            <td style="font-weight:bold;">{{autoLanguage("节点数")}}</td>
                            <td>
-                              <div class="Ellipsis ">
-                                 <a class="linkButton" ng-click="GotoNodeList()">{{moduleInfo['nodes']}}</a>
+                              <div class="Ellipsis">
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoNodeList()">{{moduleInfo['nodes']}}</a>
+                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['nodes']}}</span>
                               </div>
                            </td>
                         </tr>
                         <tr>
                            <td style="font-weight:bold;">{{autoLanguage("集合数")}}</td>
                            <td>
-                              <div class="Ellipsis ">
-                                 <a class="linkButton" ng-click="GotoDatabase()">{{moduleInfo['cl']}}</a>
+                              <div class="Ellipsis">
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoDatabase()">{{moduleInfo['cl']}}</a>
+                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['cl']}}</span>
                               </div>
                            </td>
                         </tr>
@@ -117,15 +132,17 @@
                            <td style="font-weight:bold;">{{autoLanguage("记录数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-click="GotoDatabase()">{{moduleInfo['records']}}</a>
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoDatabase()">{{moduleInfo['records']}}</a>
+                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['records']}}</span>
                               </div>
                            </td>
                         </tr>
                         <tr>
                            <td style="font-weight:bold;">{{autoLanguage("Lob数")}}</td>
                            <td>
-                              <div class="Ellipsis ">
-                                 <a class="linkButton" ng-click="GotoDatabase()">{{moduleInfo['lobs']}}</a>
+                              <div class="Ellipsis">
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoDatabase()">{{moduleInfo['lobs']}}</a>
+                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['lobs']}}</span>
                               </div>
                            </td>
                         </tr>

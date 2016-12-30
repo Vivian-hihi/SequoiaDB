@@ -6,6 +6,7 @@
    });
 
    window.Config = {
+      recv: false,   //还没同步数据
       Edition: 'Community',
       Version: {
       },

@@ -55,6 +55,12 @@
       $scope.partitionCLNum = 0 ;
       //右侧高度偏移量
       $scope.boxHeight = ( moduleMode == 'distribution' ) ? { 'offsetY': -291 } : { 'offsetY': -207 } ;
+      //判断如果是Firefox浏览器的话，调整右侧表格高度
+      var browser = SdbFunction.getBrowserInfo() ;
+      if( browser[0] == 'firefox' )
+      {
+         $scope.boxHeight = ( moduleMode == 'distribution' ) ? { 'offsetY': -311 } : { 'offsetY': -221 } ;
+      }
       //集合空间列表
       $scope.CsTable = {
          'title': {

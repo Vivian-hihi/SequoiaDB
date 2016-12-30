@@ -14,8 +14,9 @@
       }
 
       //初始化
-      $scope.ModuleMode = moduleMode ;
-      $scope.ModuleName = moduleName ;
+      $scope.Edition = window.Config['Edition'] ;  //数据库版本
+      $scope.ModuleMode = moduleMode ;             //集群模式
+      $scope.ModuleName = moduleName ;             //业务名
       var standaloneHostName = '' ;          //如果是单机版，则需要记录当前的节点主机和端口
       var standaloneSvcname = '' ;
       $scope.DBStatus ;                      //数据库当前健康状态， normal:正常, warning:有节点故障, error:数据库不可用
@@ -482,6 +483,11 @@
      
       //跳转至资源
       $scope.GotoResources = function(){
+         if( window.Config['Edition'] != 'Enterprise' )
+         {
+            _IndexPublic.createCommunityModel( $scope ) ;
+            return ;
+         }
          $location.path( '/Monitor/SDB-Resources/Session' ).search( { 'r': new Date().getTime() } ) ;
       } ;
 
@@ -491,7 +497,12 @@
       } ;
 
       //跳转至主机列表
-      $scope.GotoHosts = function(){
+      $scope.GotoHostList = function(){
+         if( window.Config['Edition'] != 'Enterprise' )
+         {
+            _IndexPublic.createCommunityModel( $scope ) ;
+            return ;
+         }
          $location.path( '/Monitor/SDB-Host/List/Index' ).search( { 'r': new Date().getTime() } ) ;
       } ;
 
@@ -507,6 +518,11 @@
 
       //跳转至节点列表
       $scope.GotoNodeList = function(){
+         if( window.Config['Edition'] != 'Enterprise' )
+         {
+            _IndexPublic.createCommunityModel( $scope ) ;
+            return ;
+         }
          if( moduleMode == 'distribution' )
          {
             $location.path( '/Monitor/SDB-Nodes/Nodes' ).search( { 'r': new Date().getTime() } ) ;

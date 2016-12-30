@@ -140,6 +140,7 @@
                $.each( systemInfo[0], function( key, value ){
                   window.Config[ key ] = value ;
                } ) ;
+               window.Config['recv'] = true ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -494,6 +495,7 @@
             switch( moduleType )
             {
             case 'sequoiadb':
+               /*
                if( window.Config['Edition'] == 'Enterprise' )
                {
                   $location.path( '/Monitor/SDB/Index' ).search( params ) ; break ;
@@ -502,6 +504,8 @@
                {
                   $location.path( '/Monitor/Preview' ).search( params ) ; break ;
                }
+               */
+               $location.path( '/Monitor/SDB/Index' ).search( params ) ; break ;
             default:
                break ;
             }

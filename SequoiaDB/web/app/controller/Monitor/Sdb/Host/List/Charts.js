@@ -2,9 +2,19 @@
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.HostPerformance.Index.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){
-      $scope.ClusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-      $scope.ModuleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
-      $scope.ModuleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      
+      _IndexPublic.checkMonitorEdition( $location ) ; //检测是不是企业版
+
+      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      var moduleType = SdbFunction.LocalData( 'SdbModuleType' ) ;
+      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      var moduleMode = SdbFunction.LocalData( 'SdbModuleMode' ) ;
+      if( clusterName == null || moduleType != 'sequoiadb' || moduleMode == null || moduleName == null )
+      {
+         $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
+         return ;
+      }
+
       var hostNameList = [] ;
       var cpuSum = 0 ;
       var memorySum = 0 ;
@@ -20,6 +30,7 @@
       var sumTX = [] ;
       var chartInfo = [] ;
       $scope.NewHostList = [] ;
+
       var getHostList = function(){
          var data = {
             'cmd':'query host status',
@@ -124,7 +135,7 @@
       var getModuleInfo = function(){
          var data = {
             'cmd': 'query business',
-            'filter' : JSON.stringify( { 'BusinessName': $scope.ModuleName } )
+            'filter' : JSON.stringify( { 'BusinessName': moduleName } )
          } ;
          SdbRest.OmOperation( data, {
             'success': function( moduleInfo ){
