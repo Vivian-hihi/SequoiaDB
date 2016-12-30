@@ -12,10 +12,10 @@ CmdTest.prototype.testStart = function()
    var pid = this.cmd.start( "sleep", "3" ) ;
    var command = "ps aux | awk '{print $2}' | grep " + pid ;
    var tasks = this.cmd.run( command ).split( "\n" ) ;
-   if( tasks.length != 2 )
+   if( tasks[tasks.length-2] != pid )
    {
       throw buildException( "testStart", null, "list background task " + this, 
-                            pid, tasks ) ;
+                            pid, tasks[tasks.length-2] ) ;
    }
       
    this.release() ;

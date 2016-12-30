@@ -80,7 +80,8 @@ function toolGetHosts()
 function toolGetLocalhost()
 {
    var cmd = new Cmd() ;
-   var localhost = cmd.run( "hostname" ).split( "\n" )[0] ;
+   var tmp = cmd.run( "hostname" ).split( "\n" ) ;
+   var localhost = tmp[tmp.length-2] ;
    return localhost ;
 }
 
