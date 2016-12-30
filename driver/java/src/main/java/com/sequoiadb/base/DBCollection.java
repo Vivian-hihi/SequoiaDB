@@ -671,7 +671,9 @@ public class DBCollection {
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
-     *            only return returnRows documents, return all if this parameter is -1
+     *            return the specified amount of documents, 
+     *            when returnRows is 0, return nothing, 
+     *            when returnRows is -1, return all the documents
      * @param flag
      *            the query flag, default to be 0. Please see the definition
      *            of follow flags for more detail. Usage:
@@ -863,7 +865,9 @@ public class DBCollection {
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
-     *            only return returnRows documents, return all if this parameter is -1
+     *            return the specified amount of documents, 
+     *            when returnRows is 0, return nothing, 
+     *            when returnRows is -1, return all the documents
      * @return a DBCursor instance of the result or null if no any matched document
      * @exception com.sequoiadb.exception.BaseException
      */
@@ -900,7 +904,9 @@ public class DBCollection {
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
-     *            only return returnRows documents, return all if this parameter is -1
+     *            return the specified amount of documents, 
+     *            when returnRows is 0, return nothing, 
+     *            when returnRows is -1, return all the documents
      * @return a DBCursor instance of the result or null if no any matched document
      * @exception com.sequoiadb.exception.BaseException
      */
@@ -926,7 +932,9 @@ public class DBCollection {
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
-     *            only return returnRows documents, return all if this parameter is -1
+     *            return the specified amount of documents, 
+     *            when returnRows is 0, return nothing, 
+     *            when returnRows is -1, return all the documents
      * @param flag
      *            the query flag, default to be 0. Please see the definition
      *            of follow flags for more detail. Usage:
@@ -1118,7 +1126,9 @@ public class DBCollection {
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
-     *            only return returnRows documents, return all if this parameter is -1
+     *            return the specified amount of documents, 
+     *            when returnRows is 0, return nothing, 
+     *            when returnRows is -1, return all the documents
      * @param flag
      *            the query flags, default to be 0. Please see the definition
      *            of follow flags for more detail. Usage:
@@ -1161,7 +1171,9 @@ public class DBCollection {
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
-     *            only return returnRows documents, return all if this parameter is -1
+     *            return the specified amount of documents, 
+     *            when returnRows is 0, return nothing, 
+     *            when returnRows is -1, return all the documents
      * @param flag
      *            the query flag, default to be 0. Please see the definition
      *            of follow flags for more detail. Usage:
@@ -1791,7 +1803,9 @@ public class DBCollection {
      * @param skipRows
      *            The rows to be skipped
      * @param returnRows
-     *            The rows to return
+     *            return the specified amount of documents, 
+     *            when returnRows is 0, return nothing, 
+     *            when returnRows is -1, return all the documents
      * @param flag
      *            The flag to use which form for record data
      *            0: bson stream
