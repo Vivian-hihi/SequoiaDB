@@ -8,7 +8,7 @@
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       if( clusterName == null || moduleType != 'sequoiadb' || moduleMode == null || moduleName == null )
       {
-         $location.path( '/Transfer' ) ;
+         $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
 
@@ -17,7 +17,7 @@
       var clType = SdbFunction.LocalData( 'SdbClType' ) ;
       if( csName == null || clName == null || clType == null )
       {
-         $location.path( 'Data/SDB-Operate/Index' ) ;
+         $location.path( 'Data/SDB-Operate/Index' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
 

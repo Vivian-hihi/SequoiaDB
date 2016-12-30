@@ -75,14 +75,14 @@
       var clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
       if( deployModel == null || clusterName == null || deplpyModule == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
       if( $scope.stepList['info'].length == 0 )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -341,7 +341,7 @@
          {
             $rootScope.tempData( 'Deploy', 'Index', 'host' ) ;
          }
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //下一步
@@ -370,7 +370,7 @@
                }
             } ) ;
             $rootScope.tempData( 'Deploy', 'AddHost', newHostList ) ;
-            $location.path( '/Deploy/AddHost' ) ;
+            $location.path( '/Deploy/AddHost' ).search( { 'r': new Date().getTime() } ) ;
          }
          else
          {

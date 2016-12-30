@@ -119,14 +119,21 @@
          }
          if( className === '' )
          {
-            throw new Error( '该组件无法在页面正常显示' ) ;
+            try{
+               throw new Error( '该组件无法在页面正常显示' ) ;
+            }
+            catch( e ){
+               printfDebug( e.stack ) ;
+            }
+            $( g.tipEle ).removeClass().addClass( 'tooltip right right-bottom' ).css( { 'left': mLeft + buttonW, 'top': mTop + buttonH } ) ;
+            return ;
          }
          $( g.tipEle ).removeClass().addClass( className ).css( { 'left': left, 'top': top } ) ;
       }
       g.auto = function(){
          var timeSet = null ;
          var timeSet2 = null ;
-         var showTime = 2000 ;
+         var showTime = 1500 ;
          var hideTime = 7000 ;
          var isShow = false ;
          //angular.element( $window ).bind( 'mousemove', function ( ele ) {
@@ -137,55 +144,58 @@
             function checkEleParent( element )
             {
                var isEvent = false ;
-               if( $( element ).hasClass( 'Ellipsis' ) )
+               if( element !== null )
                {
-                  isEvent = true ;
-                  var text = $( element ).text() ;
-                  text = trim( text ) ;
-                  if( text.length > 0 )
+                  if( $( element ).hasClass( 'Ellipsis' ) )
                   {
-                     if( timeSet != null )
+                     isEvent = true ;
+                     var text = $( element ).text() ;
+                     text = trim( text ) ;
+                     if( text.length > 0 )
                      {
-                        clearTimeout( timeSet ) ;
-                        timeSet = null ;
-                     }
-                     if( timeSet2 != null )
-                     {
-                        clearTimeout( timeSet2 ) ;
-                     }
-                     if( isShow == false )
-                     {
-                        timeSet = setTimeout( function(){
-                           g.show( text, pageY, pageX ) ;
+                        if( timeSet != null )
+                        {
+                           clearTimeout( timeSet ) ;
                            timeSet = null ;
-                           isShow = true ;
-                        }, showTime ) ;
-                        timeSet2 = setTimeout( function(){
-                           g.hide() ;
-                           timeSet2 = null ;
-                           isShow = false ;
-                        }, hideTime ) ;
-                     }
-                     else
-                     {
-                        g.show( text, pageY, pageX ) ;
-                        timeSet2 = setTimeout( function(){
-                           g.hide() ;
-                           timeSet2 = null ;
-                           isShow = false ;
-                        }, hideTime - showTime ) ;
+                        }
+                        if( timeSet2 != null )
+                        {
+                           clearTimeout( timeSet2 ) ;
+                        }
+                        if( isShow == false )
+                        {
+                           timeSet = setTimeout( function(){
+                              g.show( text, pageY, pageX ) ;
+                              timeSet = null ;
+                              isShow = true ;
+                           }, showTime ) ;
+                           timeSet2 = setTimeout( function(){
+                              g.hide() ;
+                              timeSet2 = null ;
+                              isShow = false ;
+                           }, hideTime ) ;
+                        }
+                        else
+                        {
+                           g.show( text, pageY, pageX ) ;
+                           timeSet2 = setTimeout( function(){
+                              g.hide() ;
+                              timeSet2 = null ;
+                              isShow = false ;
+                           }, hideTime - showTime ) ;
+                        }
                      }
                   }
-               }
-               else if( $( element ).attr( 'data-desc' ) )
-               {
-                  isEvent = true ;
-                  var text = $( element ).attr( 'data-desc' ) ;
-                  g.show( text, pageY, pageX ) ;
-               }
-               if( $( element ).get(0) !== document && $( element ).get(0).parentNode !== document.body && isEvent === false )
-               {
-                  checkEleParent( $( element ).get(0).parentNode ) ;
+                  else if( $( element ).attr( 'data-desc' ) )
+                  {
+                     isEvent = true ;
+                     var text = $( element ).attr( 'data-desc' ) ;
+                     g.show( text, pageY, pageX ) ;
+                  }
+                  if( $( element ).get(0) !== document && $( element ).get(0).parentNode !== document.body && isEvent === false )
+                  {
+                     checkEleParent( $( element ).get(0).parentNode ) ;
+                  }
                }
             }
             checkEleParent( ele ) ;

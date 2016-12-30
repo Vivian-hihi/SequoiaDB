@@ -21,35 +21,38 @@
    sacApp.filter( 'orderObjectBy', function(){
       return function( items, field, reverse ){
          var filtered = [] ;
-         angular.forEach( items, function( item ){
-            filtered.push( item ) ;
-         } ) ;
+         var fields = field.split( '.' ) ;
+         var fieldLength = fields.length ;
+         var length = items.length ;
+         var sortValue = null ;
+         for( var i = 0; i < length; ++i )
+         {
+            sortValue = items[i] ;
+            for( var k = 0; k < fieldLength; ++k )
+               sortValue = sortValue[ fields[k] ] ;
+            if( isNaN( sortValue ) )
+               sortValue = String( sortValue ) ;
+            else
+               sortValue = Number( sortValue ) ;
+            filtered.push( { 'v': sortValue, 's': items[i] } ) ;
+         }
          filtered.sort( function( a, b ){
-            var fields = field.split( '.' ) ;
-            angular.forEach( fields, function( key ){
-               a = a[key] ;
-               b = b[key] ;
-            } ) ;
-            if( typeof( a ) == 'undefined' || a == null )
-            {
-               a = '' ;
-            }
-            if( typeof( b ) == 'undefined' || b == null )
-            {
-               b = '' ;
-            }
-            if( typeof( a ) != typeof( b ) )
-            {
-               a = String( a ) ;
-               b = String( b ) ;
-            }
-            return ( a > b ? 1 : -1 ) ;
+            var t1 = typeof( a['v'] ) ;
+            var t2 = typeof( b['v'] ) ;
+            if( t1 != t2 )
+               return t1 > t2 ? 1 : -1 ;
+            return ( a['v'] > b['v'] ? 1 : -1 ) ;
          } ) ;
          if( reverse )
          {
             filtered.reverse() ;
          }
-         return filtered ;
+         var result = [] ;
+         for( var i = 0; i < length; ++i )
+         {
+            result.push( filtered[i]['s'] ) ;
+         }
+         return result ;
       } ;
    } ) ;
 }());

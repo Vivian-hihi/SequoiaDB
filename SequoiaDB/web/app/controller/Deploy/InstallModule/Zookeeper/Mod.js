@@ -39,14 +39,14 @@
       */
       if( deployType == null || clusterName == null || $scope.ModuleName == null || $scope.Configure == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployType, $scope['Url']['Action'], 'zookeeper' ) ;
       if( $scope.stepList['info'].length == 0 )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -237,7 +237,7 @@
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( '/Deploy/InstallModule' ) ;
+               $location.path( '/Deploy/InstallModule' ).search( { 'r': new Date().getTime() } ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -264,7 +264,7 @@
 
       //返回
       $scope.GotoDeploy = function(){
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
    } ) ;

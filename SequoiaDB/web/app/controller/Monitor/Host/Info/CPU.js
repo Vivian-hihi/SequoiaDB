@@ -75,10 +75,14 @@
                }
                else
                {
+
                   $scope.charts['Cpu']['value'] = [ [ 0, 100 - ( ( idleCpuOld - idleCpu ) / ( sumCpuOld - sumCpu ) ).toFixed(2) * 100, true, false ],[ 1, s, true, false ] ] ;
+
                   sumCpu = sumCpuOld ;
                   idleCpu = idleCpuOld ;
                }
+
+               //alert(( idleCpuOld/sumCpuOld ).toFixed(2) * 100)
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){

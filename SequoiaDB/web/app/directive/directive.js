@@ -1,7 +1,7 @@
 (function(){
    var sacApp = window.SdbSacManagerModule ;
 
-   //创建网格的指令(免html构造)
+   //创建网格的指令(免html构造)(准备废弃)
    sacApp.directive( 'createGrid', function( $filter, $compile, $window, $rootScope, SdbFunction ){
       var dire = {
          restrict: 'A',
@@ -494,7 +494,7 @@
       return dire ;
    });
   
-   //创建网格的指令(需要html构造)
+   //创建网格的指令(需要html构造)(准备废弃)
    sacApp.directive( 'ngGrid', function( $filter, $compile, $window, $rootScope, SdbFunction ){
       var browserInfo = SdbFunction.getBrowserInfo() ;
       var dire = {
@@ -864,7 +864,7 @@
       <div class="ToolLeft">xxxxx</div>
    </div>
    */
-   //创建网格的指令(需要html构造)
+   //创建网格的指令(需要html构造)(准备废弃)
    sacApp.directive( 'ngGrid2', function( $window, $rootScope, SdbFunction ){
       var browserInfo = SdbFunction.getBrowserInfo() ;
       var dire = {
@@ -1005,7 +1005,7 @@
       return dire ;
    } ) ;
 
-   //弹窗
+   //弹窗(准备废弃)
    sacApp.directive( 'createModal', function( $compile, $window, $rootScope, Tip ){
       var dire = {
          restrict: 'A',
@@ -1466,6 +1466,409 @@
       return dire ;
    });
 
+   /*
+   新版弹窗
+   支持命令： ng-windows         必填    *   给弹窗内容的数据，任意类型
+                  格式： newDataName as xxx， xxx代表上层scope的变量
+             windows-callback   可选    {}  弹窗接口
+   */
+   sacApp.directive( 'ngWindows', function( $animate, $compile, $timeout, SdbFunction, Tip ){
+      var dire = {
+         restrict: 'A',
+         replace: false,
+         transclude: true,
+         terminal: true,
+         scope: true,
+         templateUrl: './app/template/Component/Windows.html',
+         controller: function( $scope, $element, $attrs, $transclude ){
+            $scope.lastScope = null ; //最后一次自己创建的scope
+            $scope.Setting = {
+               isShow: false,       //是否显示
+               data: null,          //父scope传来的值
+               Status: 1,           //弹窗状态，1是普通，2是最大化
+               Title: '',           //窗口标题
+               Icon: '',            //窗口图标
+               Windows: {           //窗口容器属性
+                  'top': 100,
+                  'left': 200,
+                  'width': 600,
+                  'height': 350
+               },
+               Body: {              //body的样式
+               },
+               Button: {            //按钮
+                  OK: {
+                     'Text': $scope.autoLanguage( '确定' ),
+                     'Func': null
+                  },
+                  Close: {
+                     'Text': $scope.autoLanguage( '取消' ),
+                     'Func': function(){ return true; }
+                  }
+               },
+               Mask: $( '<div></div>' ).attr( 'ng-mousedown', 'prompt()' ).addClass( 'mask-screen unalpha' ),  //遮罩
+               Temp: {              //临时数据
+                  left: 9999,
+                  top: 9999,
+                  width: 9999,
+                  height: 9999,
+                  x: 0,
+                  y: 0
+               }
+            } ;
+         },
+         compile: function( element, attributes, transclude ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){
+
+                  scope.$on( '$destroy', function(){  //主scope释放，子的scope也要释放
+                     if( scope.lastScope !== null )
+                        scope.lastScope.$destroy() ;
+                     scope.lastScope = null ;
+                  } ) ;
+
+                  //解析表达式
+                  var expression = attributes.ngWindows;
+                  var match = expression.match(/^\s*([\s\S]+?)\s+as\s+([\s\S]+?)\s*$/) ;
+                  if( !match )
+                  {
+                     throw "Expected expression in form of '_a_ as _b_: " + expression ;
+                  }
+                  var sub = match[1] ;
+                  var rhs  = match[2] ;
+
+                  //创建内容
+                  var createBody = function(){
+                     $timeout( function(){
+                        if( scope.lastScope !== null )
+                        {
+                           scope.lastScope.$destroy() ;
+                           scope.lastScope = null ;
+                        }
+                        var bodyEle = $( '> .modal2 > .body', element ) ;
+                        if( bodyEle.length > 0 && scope.Setting.isShow == true )
+                        {
+                           var childScope = scope.$new();
+                           scope.lastScope = childScope ;
+                           childScope[ sub ] = scope.Setting.data ;
+                           transclude( childScope, function( clone ){
+                              $animate.enter( clone, bodyEle, null ) ;
+                           } ) ;
+                        }
+                     } ) ;
+                  }
+
+                  //监控数据
+                  scope.$watch( rhs, function ngTable( collection ){
+                     scope.Setting.data = collection ;
+                  } ) ;
+
+                  //最大化
+                  var maximumModal = function(){
+                     scope.Setting.Status = 2 ;
+                     var bodyWidth = $( window ).width() ;
+                     var bodyHeight = $( window ).height() ;
+                     var width = bodyWidth - 12 ;
+                     var height = bodyHeight - 16 ;
+                     if( width < 600 ) width = 600 ;
+                     if( height < 450 ) height = 450 ;
+                     var left = 6 ;
+                     var top = 6 ;
+                     scope.Setting.Windows = { 'left': left, 'top': top, 'width': width, 'height': height } ;
+                     width -= 42 ;
+                     height -= 126 ;
+                  }
+
+                  //恢复原来
+                  var recoveryModal = function(){
+                     scope.Setting.Status = 1 ;
+                     var modalWidth = scope.Setting.Temp.width ;
+                     var modalHeight = scope.Setting.Temp.height ;
+                     var left = scope.Setting.Temp.left ;
+                     var top = scope.Setting.Temp.top ;
+                     var bodyWidth = $( window ).width() ;
+                     var bodyHeight = $( window ).height() ;
+                     if( top + modalHeight + 5 >= bodyHeight || left + modalWidth + 5 >= bodyWidth )
+                     {
+                        var width = bodyWidth * 0.5 ;
+                        var height = bodyHeight * 0.5 ;
+                        if( width < 600 ) width = 600 ;
+                        if( height < 450 ) height = 450 ;
+                        left = ( bodyWidth - width ) * 0.5 ;
+                        top = ( bodyHeight - height ) * 0.5 ;
+                        scope.Setting.Temp.left = left ;
+                        scope.Setting.Temp.top = top ;
+                        scope.Setting.Temp.width = width ;
+                        scope.Setting.Temp.height = height ;
+                        scope.Setting.Windows = { 'left': left, 'top': top, 'width': width, 'height': height } ;
+                     }
+                     else
+                     {
+                        scope.Setting.Windows = { 'left': left, 'top': top, 'width': modalWidth, 'height': modalHeight } ;
+                     }
+                  }
+
+                  //打开窗口
+                  scope.openWindows = function(){
+                     if( scope.Setting.isShow == false )
+                     {
+                        $( document.body ).append( $compile( scope.Setting.Mask )( scope ) ) ;
+                     }
+                     scope.Setting.isShow = true ;
+                     createBody() ;
+                  }
+
+                  //关闭窗口
+                  scope.closeWindows = function(){
+                     //先恢复窗口
+                     scope.recoveryModal() ;
+                     scope.Setting.isShow = false ;
+                     scope.Setting.Mask.detach() ;
+                  }
+
+                  //设置确定按钮
+                  scope.setOkButton = function( text, func ){
+                     scope.Setting.Button.OK['Text'] = text ;
+                     scope.Setting.Button.OK['Func'] = func ;
+                  }
+
+                  //设置取消和关闭按钮
+                  scope.setCloseButton = function( text, func ){
+                     scope.Setting.Button.Close['Text'] = text ;
+                     scope.Setting.Button.Close['Func'] = func ;
+                  }
+
+                  //启用body的滚动条
+                  scope.enableBodyScroll = function(){
+                     scope.Setting.Body['overflow'] = 'auto' ;
+                  }
+
+                  //禁用body的滚动条
+                  scope.disableBodyScroll = function(){
+                     scope.Setting.Body['overflow'] = 'hidden' ;
+                  }
+
+                  //设置标题
+                  scope.setTitle = function( title ){
+                     scope.Setting.Title = title ;
+                  }
+
+                  //设置图标
+                  scope.setIcon = function( icon ){
+                     scope.Setting.Icon = icon ;
+                  }
+
+                  //回调函数
+                  scope.$watch( attributes.windowsCallback, function ngTable( callback ){
+                     if( typeof( callback ) == 'object' )
+                     {
+                        callback['Open']              = scope.openWindows ;
+                        callback['Close']             = scope.closeWindows ;
+                        callback['SetOkButton']       = scope.setOkButton ;
+                        callback['SetCloseButton']    = scope.setCloseButton ;
+                        callback['EnableBodyScroll']  = scope.enableBodyScroll ;
+                        callback['DisableBodyScroll'] = scope.disableBodyScroll ;
+                        callback['SetTitle']          = scope.setTitle ;
+                        callback['SetIcon']           = scope.setIcon ;
+                     }
+                  } ) ;
+
+                  //重绘函数
+                  function resizeFun()
+                  {
+                     if( scope.Setting.Status == 1 )
+                     {
+                        recoveryModal() ;
+                     }
+                     else
+                     {
+                        maximumModal() ;
+                     }
+                  }
+
+                  resizeFun() ;
+
+                  //重绘函数绑定到重绘队列
+                  SdbFunction.defer( scope, resizeFun ) ;
+
+                  //闪烁
+                  scope.prompt = function(){
+                     var counter = 0 ;
+                     var modal = $( '> .modal2 ', element ) ;
+                     var timer = setInterval( function(){
+                        ++counter ;
+                        if( counter % 2 == 0 )
+                           $( modal ).css( 'box-shadow', '0px 2px 8px rgba(0,0,0,0.5)' ) ;
+                        else
+                           $( modal ).css( 'box-shadow', 'none' ) ;
+                        if( counter >= 6 )
+                           clearInterval( timer );
+                     }, 90 ) ;
+                  }
+
+                  //移动弹窗开始
+                  scope.startMove = function( event ){
+                     if( scope.Setting.Status == 1 )
+                     {
+                        var modal = $( '> .modal2', element ) ;
+                        var pageX = event['pageX'] ;
+                        var pageY = event['pageY'] ;
+                        scope.Setting.Temp.x = pageX ;
+                        scope.Setting.Temp.y = pageY ;
+                        $( document.body ).addClass( 'unselect' ) ;
+                        //监听鼠标移动
+                        $( document ).on( 'mousemove', function( event2 ){
+                           modal.addClass( 'alpha' ) ;
+                           scope.moveModal( event2 ) ;
+                        } ) ;
+                        //监听鼠标松开
+                        $( document ).on( 'mouseup', function(){
+                           scope.endMove() ;
+                        } ) ;
+                     }
+                  }
+
+                  //移动
+                  scope.moveModal = function( event ){
+                     var modal = $( '> .modal2', element ) ;
+                     if( modal.hasClass( 'alpha' ) )
+                     {
+                        var bodyWidth = $( window ).width() ;
+                        var bodyHeight = $( window ).height() ;
+                        var modalWidth = scope.Setting.Windows['width'] ;
+                        var modalHeight = scope.Setting.Windows['height'] ;
+                        var x = scope.Setting.Temp.x ;
+                        var y = scope.Setting.Temp.y ;
+                        var pageX = event['pageX'] ;
+                        var pageY = event['pageY'] ;
+                        scope.Setting.Temp.x = pageX ;
+                        scope.Setting.Temp.y = pageY ;
+                        var left = scope.Setting.Windows['left'] ;
+                        var top = scope.Setting.Windows['top'] ;
+                        var offsetLeft = pageX - x ;
+                        var offsetTop = pageY - y ;
+                        top  += offsetTop ;
+                        left += offsetLeft ;
+                        if( top <= 0 ) top = 0 ;
+                        if( left <= 0 ) left = 0 ;
+                        if( top + modalHeight + 5 >= bodyHeight ) top = bodyHeight - modalHeight - 5 ;
+                        if( left + modalWidth + 5 >= bodyWidth ) left = bodyWidth - modalWidth - 5 ;
+                        scope.Setting.Temp.left = left ;
+                        scope.Setting.Temp.top = top ;
+                        scope.Setting.Windows = { 'left': left, 'top': top, 'width': modalWidth, 'height': modalHeight } ;
+                        scope.$digest() ;
+                     }
+                  }
+
+                  //结束移动
+                  scope.endMove = function(){
+                     var modal = $( '> .modal2', element ) ;
+                     modal.removeClass( 'alpha' ) ;
+                     $( document.body ).removeClass( 'unselect' ) ;
+                     $( document ).off( 'mousemove' ) ;
+                     $( document ).off( 'mouseup' ) ;
+                     Tip.auto() ;
+                  }
+
+                  //开始调整窗口大小
+                  scope.startSetSize = function( event ){
+                     var modal = $( '> .modal2', element ) ;
+                     $( document.body ).addClass( 'unselect' ) ;
+                     //监听鼠标移动
+                     $( document ).on( 'mousemove', function( event2 ){
+                        modal.addClass( 'alpha' ) ;
+                        scope.setSize( event2 ) ;
+                     } ) ;
+                     //监听鼠标松开
+                     $( document ).on( 'mouseup', function(){
+                        scope.endSetSize() ;
+                     } ) ;
+                  }
+
+                  //正在调整窗口大小
+                  scope.setSize = function( event ){
+                     var bodyWidth = $( window ).width() ;
+                     var bodyHeight = $( window ).height() ;
+                     var left = parseInt( scope.Setting.Temp.left ) ;
+                     var top = parseInt( scope.Setting.Temp.top ) ;
+                     var pageX = event['pageX'] + 3 ;
+                     var pageY = event['pageY'] + 5 ;
+                     var width = pageX - left ;
+                     var height = pageY - top ;
+                     if( width < 600 ) width = 600 ;
+                     if( height < 450 ) height = 450 ;
+                     if( top + height + 10 >= bodyHeight ) height = bodyHeight - top - 10 ;
+                     if( left + width + 10 >= bodyWidth ) width = bodyWidth - left - 10 ;
+                     scope.Setting.Temp.width = width ;
+                     scope.Setting.Temp.height = height ;
+                     scope.Setting.Windows = { 'left': left, 'top': top, 'width': width, 'height': height } ;
+                     scope.$digest() ;
+                  }
+
+                  //结束调整窗口大小
+                  scope.endSetSize = function( id ){
+                     var modal = $( '> .modal2', element ) ;
+                     modal.removeClass( 'alpha' ) ;
+                     $( document.body ).removeClass( 'unselect' ) ;
+                     $( document ).off( 'mousemove' ) ;
+                     $( document ).off( 'mouseup' ) ;
+                     Tip.auto() ;
+                  }
+
+                  //最大化或恢复弹窗
+                  scope.switchModalSize = function(){
+                     if( scope.Setting.Status == 2 )
+                     {
+                        scope.recoveryModal() ;
+                     }
+                     else
+                     {
+                        scope.maximumModal() ;
+                     }
+                  }
+
+                  //最大化弹窗
+                  scope.maximumModal = function(){
+                     scope.Setting.Status = 2 ;
+                     scope.bindResize() ;
+                  }
+
+                  //恢复弹窗
+                  scope.recoveryModal = function(){
+                     scope.Setting.Status = 1 ;
+                     scope.bindResize() ;
+                  }
+
+                  //确定
+                  scope.ok = function(){
+                     if( typeof( scope.Setting.Button.OK.Func ) == 'function' )
+                     {
+                        if( scope.Setting.Button.OK.Func() )
+                        {
+                           scope.closeWindows() ;
+                        }
+                     }
+                     else
+                     {
+                        scope.closeWindows() ;
+                     }
+                  }
+
+                  //关闭弹窗
+                  scope.closeModal = function(){
+                     if( scope.Setting.Button.Close.Func() )
+                     {
+                        scope.closeWindows() ;
+                     }
+                  }
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   } ) ;
+
    //Json编辑器
    sacApp.directive( 'jsonEdit', function( $rootScope ){
       var dire = {
@@ -1831,6 +2234,22 @@
                            } ) ;
                         } ) ;
                      }
+                     else if( $scope.data.inputList[index]['type'] == 'multiple' )
+                     {
+                        if( typeof( $scope.data.inputList[index]['valid'] ) == 'object' )
+                        {
+                           if( isArray( $scope.data.inputList[index]['valid']['list'] ) == true )
+                           {
+                              $scope.data.inputList[index]['value'] = [] ;
+                              $.each( $scope.data.inputList[index]['valid']['list'], function( listIndex, validInfo ){
+                                 if( validInfo['checked'] == true )
+                                 {
+                                    $scope.data.inputList[index]['value'].push( validInfo['value'] ) ;
+                                 }
+                              } ) ;
+                           }
+                        }
+                     }
                   } ) ;
                   $scope.browserInfo = SdbFunction.getBrowserInfo() ;
                   $scope.Setting = {
@@ -2072,6 +2491,13 @@
                         var error = '' ;
                         if( typeof( valid ) == 'object' )
                         {
+                           value = [] ;
+                           $.each( valid['list'], function( listIndex, validInfo ){
+                              if( validInfo['checked'] == true )
+                              {
+                                 value.push( validInfo['value'] ) ;
+                              }
+                           } ) ;
                            var min = valid.min ;
                            var max = valid.max ;
                            if( value.length == 0 && valid.empty == false )
@@ -2194,6 +2620,13 @@
                               returnValue[ inputInfo.name ] = trim( inputInfo.value ) ;
                               break ;
                            case 'multiple':
+                              inputInfo.value = [] ;
+                              $.each( inputInfo.valid['list'], function( listIndex, validInfo ){
+                                 if( validInfo['checked'] == true )
+                                 {
+                                    inputInfo.value.push( validInfo['value'] ) ;
+                                 }
+                              } ) ;
                               returnValue[ inputInfo.name ] = inputInfo.value ;
                               break ;
                            case 'select':
@@ -2813,6 +3246,23 @@
          maxheight += offsetY ;
          ele.css( { 'marginTop': marginTop, 'marginBottom': marginBottom, 'maxHeight': maxheight } ) ;
       }
+      function _renderPosition( scope, ele )
+      {
+         var top = scope.data.top ;
+         var left = scope.data.left ;
+         var right = scope.data.right ;
+         var bottom = scope.data.bottom ;
+         var position = {} ;
+         if( typeof( top ) == 'number' )
+            position['top'] = top ;
+         if( typeof( left ) == 'number' )
+            position['left'] = left ;
+         if( typeof( right ) == 'number' )
+            position['right'] = right ;
+         if( typeof( bottom ) == 'number' )
+            position['bottom'] = bottom ;
+         ele.css( position ) ;
+      }
       function _render( scope, ele, parent )
       {
          $( document.body ).css( 'overflow', 'hidden' ) ;
@@ -2875,6 +3325,7 @@
             }
             _renderHeight( scope, ele, height ) ;
          }
+         _renderPosition( scope, ele ) ;
          $( document.body ).css( 'overflow', 'auto' ) ;
       }
       function _renderAll( rootLevel )
@@ -2944,7 +3395,7 @@
                   scope.$watch( attributes.ngContainer, function ngContainerAction( data ){
                      scope.data = data ;
                      _renderAll( scope.level ) ;
-                  } ) ;
+                  }, true ) ;
                }
             } ;
          }
@@ -3509,7 +3960,199 @@
       return dire ;
    });
 
-   //下拉菜单
+   /*
+   下拉菜单（新版）
+   支持命令： ng-dropdown         必填   []   //列表数据
+             dropdown-callback   可选   {}   //定时器接口
+   */
+   sacApp.directive( 'ngDropdown', function( $compile, SdbFunction ){
+      var dire = {
+         restrict: 'A',
+         replace: false,
+         transclude: true,
+         scope: true,
+         controller: function( $scope, $element, $attrs, $transclude ){
+            $scope.lastScope = [] ;  //最后一次创建的scope
+            $scope.mask = $compile( $( '<div></div>' ).attr( 'ng-mousedown', 'close()' ).addClass( 'mask-screen unalpha' ) )( $scope ) ;  //遮罩
+            $scope.ulBox = $( '<ul class="dropdown-menu"></ul>' ) ;  //下拉菜单外框
+            $scope.status = 0 ; //当前下拉菜单状态，1:开启  0:关闭
+            $scope.btnEle = null ;
+
+            $element.append( $scope.ulBox ) ;//把下拉菜单放到制定的位置
+         },
+         compile: function( element, attributes, transclude ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){
+
+                  scope.$on( '$destroy', function(){  //主scope释放，子的scope也要释放
+                     $.each( scope.lastScope, function( index, rowScope ){
+                        rowScope.$destroy();
+                     } ) ;
+                  } ) ;
+
+                  //解析表达式
+                  var expression = attributes.ngDropdown ;
+                  var match = expression.match(/^\s*([\s\S]+?)\s+in\s+([\s\S]+?)\s*$/) ;
+                  if( !match )
+                  {
+                     throw "Expected expression in form of '_item_ in _collection_: " + expression ;
+                  }
+                  var item = match[1] ;
+                  var rhs  = match[2] ;
+
+                  //渲染下拉菜单
+                  var createDropdown = function( dataList ){
+                     var ulBox = scope.ulBox ;
+
+                     //设置相对位置
+                     $( element ).css( { 'position': 'fixed', 'left': 0, 'top': 0, 'z-index': 10000 } ) ;
+
+                     //移除旧的
+                     $( '> li', ulBox ).remove() ;
+
+                     //释放旧的scope
+                     $.each( scope.lastScope, function( index, rowScope ){
+                        rowScope.$destroy();
+                     } ) ;
+
+                     scope.lastScope = [] ;
+
+                     var length = dataList.length ;
+
+                     $.each( dataList, function( index, dataInfo ){
+
+                        var childScope = scope.$new();   //创建新的scope
+
+                        scope.lastScope.push( childScope ) ;   //存储新的scope，用来释放
+
+                        childScope['$index'] = index ;
+
+                        childScope[item] = dataList[index] ;
+
+                        transclude( childScope, function( clone ){
+
+                           $.each( clone, function( index2, col ){
+                              if( col.nodeType == 1 )
+                              {
+                                 if( $( col ).attr( 'dropdown-config' ) == 'last' && index + 1 < length ) //如果有最后的属性，就只有最后才加入
+                                 {
+                                    return true ;
+                                 }
+                                 var li = angular.element( '<li></li>' ) ;
+                                 $( li ).append( col ) ;
+                                 ulBox.append( li ) ;
+                              }
+                           } ) ;
+
+                        } ) ;
+                     } ) ;
+                  }
+
+                  //重绘
+                  var resizeFun = function(){
+                     if( scope.status == 0 )
+                        return ;
+                     var ele        = scope.btnEle ;
+                     var menu       = $( element ) ;
+                     var ulBox      = scope.ulBox ;
+                     var bodyWidth  = $( 'body' ).outerWidth() ;
+                     var bodyHeight = $( 'body' ).outerHeight() ;
+                     var eleWidth   = $( ele ).outerWidth() ;
+                     var eleHeight  = $( ele ).outerHeight() ;
+                     var menuWidth  = $( ulBox ).outerWidth() ;
+                     var menuHeight = $( ulBox ).outerHeight() ;
+                     var left = $( ele ).offset().left ;
+                     var top  = $( ele ).offset().top ;
+                     if( left + menuWidth > bodyWidth )
+                     {
+                        left = bodyWidth - menuWidth ;
+                     }
+                     left = left <= 0 ? 0 : left ;
+                     if( top + eleHeight + menuHeight > bodyHeight )
+                     {
+                        //判断按钮在页面的上面还是下面
+                        var isTop = top + parseInt( eleHeight * 0.5 ) <= ( bodyHeight * 0.5 ) ;
+                        if( isTop == true )
+                        {
+                           top = top + eleHeight ;
+                           $( ulBox ).css('overflow-y', 'auto').height( parseInt( ( bodyHeight - top - 20 ) * 0.8 ) ) ;
+                        }
+                        else
+                        {
+                           if( top - menuHeight - 3 > 0 )
+                           {
+                              top = top - menuHeight - 3 ;
+                           }
+                           else
+                           {
+                              menuHeight = parseInt( ( top - 20 ) * 0.8 ) ;
+                              $( ulBox ).css('overflow-y', 'auto').height( menuHeight ) ;
+                              top = top - menuHeight - 13 ;
+                           }
+                        }
+                     }
+                     else
+                     {
+                        top = top + eleHeight ;
+                     }
+                     $( menu ).css( { 'left': left, 'top': top } )  ;
+                  }
+
+                  //打开下拉菜单
+                  var open = function( btnEle ){
+                     if( scope.status == 0 )
+                     {
+                        var ulBox = scope.ulBox ;
+                        scope.btnEle = $( btnEle ) ;
+                        scope.status = 1 ;
+                        $( document.body ).append( scope.mask ) ;
+                        ulBox.show() ;
+                        resizeFun() ;
+                     }
+                  }
+
+                  //关闭下拉菜单
+                  var close = function(){
+                     if( scope.status == 1 )
+                     {
+                        var ulBox = scope.ulBox ;
+                        scope.status = 0 ;
+                        $( scope.mask ).detach() ;
+                        ulBox.hide() ;
+                     }
+                  }                 
+
+                  //监控回调函数
+                  scope.$watch( attributes.dropdownCallback, function( callback ){
+                     if( typeof( callback ) == 'object' )
+                     {
+                        callback['Open'] = open ;
+                        callback['Close'] = close ;
+                     }
+                  } ) ;
+
+                  //监控数据
+                  scope.$watchCollection( rhs, function( collections ){
+                     if( isArray( collections ) )  //必须是数组
+                       createDropdown( collections ) ;
+                  } ) ;
+
+                  scope.close = function(){
+                     close() ;
+                  }
+
+                  //重绘函数绑定到重绘队列
+                  SdbFunction.defer( scope, resizeFun ) ;
+
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   } ) ;
+
+   //下拉菜单(准备废弃)
    sacApp.directive( 'dropdownMenu', function( $window, $rootScope, $compile ){
       var menu = $( '<ul></ul>' ).addClass( 'dropdown-menu' ).appendTo( $( 'body' ) ) ;
       var mask = $( '<div></div>' ).addClass( 'mask-screen unalpha' ).appendTo( $( 'body' ) ).hide().on( 'click', function(){
@@ -3721,100 +4364,128 @@
       return dire ;
    });
 
-   //定时器
-   sacApp.directive( 'createTimer', function(){
+   /*
+   定时器
+   支持命令： create-timer     必填 {}    配置
+                  {
+                     'interval': 5       //每隔x秒执行回调
+                  }
+             timer-callback   可选 {}    //定时器接口
+   */
+   sacApp.directive( 'createTimer', function( $timeout, $interval ){
+      var rate = 20 ; //定时器速率
       var dire = {
          restrict: 'A',
-         scope: {
-            data: '=createTimer'
-         },
-         template: '<div ng-style="{\'width\':Setting.options.width,\'background\':Setting.options.backgroundColor,\'height\':Setting.options.height}"></div>',
-         replace: true,
+         scope: true,
+         replace: false,
          controller: function( $scope, $element ){
             $scope.Setting = {
                options: {
-                  width: '0%',
-                  height: '2px',
-                  backgroundColor: '#00B8E6'
+                  'width': '0%',
+                  'height': '2px',
+                  'backgroundColor': '#DDD'
                },
                status: 'stop',
                interval: 5000,
-               currentTimer: 0,
-               complete: false
+               func: null,
+               timer: null
             }
          },
          compile: function( element, attributes ){
             return {
-               pre: function preLink( scope, element, attributes ){},
+               pre: function preLink( scope, element, attributes ){
+                  $( element ).css( scope.Setting['options'] ) ;
+               },
                post: function postLink( scope, element, attributes ){
+
                   var timer = function(){
                      if( scope.Setting.status == 'start' )
                      {
-                        scope.Setting.currentTimer += 100 ;
-                        var percent = ( scope.Setting.currentTimer / scope.Setting.interval * 100 ) ;
-                        scope.Setting.options.width =　percent > 100 ? 100 + '%' : percent + '%' ;
-                        if( scope.Setting.currentTimer >= scope.Setting.interval )
+                        scope.Setting.currentTime += rate ;
+                        var percent = ( scope.Setting.currentTime / scope.Setting.interval * 100 ) ;
+                        percent =　percent > 100 ? 100 + '%' : percent + '%' ;
+                        $( element ).css( 'width', percent ) ;
+                        if( scope.Setting.currentTime >= scope.Setting.interval )
                         {
-                           scope.$apply() ;
-                           if( typeof( scope.data.fn ) == 'function' )
-                           {
-                              scope.data.fn() ;
-                           }
-                        }
-                        else
-                        {
-                           setTimeout( timer, 100 ) ;
+                           scope.Setting.currentTime = 0 ;
+                           scope.Setting.status = 'complete' ;
+                           $timeout( scope.Setting.func, 10, false ) ;
+                           $interval.cancel( scope.Setting.timer ) ;
+                           scope.Setting.timer = null ;
                         }
                      }
                      else
                      {
-                        scope.Setting.options.width = '0%' ;
-                        scope.Setting.currentTimer = 0 ;
+                        $( element ).css( 'width', '0%' ) ;
                      }
                   }
-                  var listener1 = scope.$watch( 'data.options', function(){
-                     if( typeof( scope.data.options ) == 'object' )
+
+                  //开始定时器
+                  var start = function( func ){
+                     if( scope.Setting.status == 'stop' || scope.Setting.status == 'complete' )
                      {
-                        scope.Setting.options = scope.data.options ;
-                     }
-                  } ) ;
-                  var listener2 = scope.$watch( 'data.interval', function(){
-                     if( isNaN( scope.data.interval ) == false && scope.data.interval >= 1 )
-                     {
-                        scope.Setting.interval = scope.data.interval * 1000 ;
-                     }
-                     else
-                     {
-                        scope.Setting.interval = 1000 ;
-                     }
-                  } ) ;
-                  var listener3 = scope.$watch( 'data.status', function(){
-                     scope.Setting.status = scope.data.status ;
-                     if( scope.Setting.status == 'start' )
-                     {
-                        scope.data.complete = false ;
-                        scope.Setting.complete = false ;
-                        scope.Setting.currentTimer = 0 ;
+                        scope.Setting.func = func ;
+                        scope.Setting.status = 'start' ;
                         scope.Setting.options.width = '0%' ;
-                        setTimeout( timer, 10 ) ;
+                        scope.Setting.currentTime = 0 ;
+                        scope.Setting.timer = $interval( timer, rate, 0, false ) ;
                      }
-                  } ) ;
-                  var listener4 = scope.$watch( 'data.complete', function(){
-                     scope.Setting.complete = scope.data.complete ;
-                     if( scope.Setting.complete == true && scope.Setting.status == 'start' )
+                  }
+
+                  //继续开始下一次
+                  var complete = function(){
+                     if( scope.Setting.status == 'stop' || scope.Setting.status == 'complete' )
                      {
-                        scope.data.complete = false ;
-                        scope.Setting.complete = false ;
-                        scope.Setting.currentTimer = 0 ;
+                        scope.Setting.status = 'start' ;
                         scope.Setting.options.width = '0%' ;
-                        setTimeout( timer, 10 ) ;
+                        scope.Setting.currentTime = 0 ;
+                        scope.Setting.timer = $interval( timer, rate, 0, false ) ;
                      }
+                  }
+
+                  //停止定时器
+                  var stop = function(){
+                     scope.Setting.status = 'stop' ;
+                     $( element ).css( { 'width': '0%' } ) ;
+                     if( scope.Setting.timer !== null )
+                        $interval.cancel( scope.Setting.timer ) ;
+                  }
+
+                  //获取定时器状态, true: 运行中， false: 停止了
+                  var getStatus = function(){
+                     return scope.Setting.status ;
+                  }
+
+                  //设置定时器时间
+                  var setTimerInterval = function( seconds ){
+                     scope.Setting['interval'] = seconds * 1000 ;
+                  }
+
+                  //获取定时器时间
+                  var getTimerInterval = function( seconds ){
+                     return scope.Setting['interval'] / 1000 ;
+                  }
+
+                  scope.$watch( attributes.timerCallback, function( callback ){
+                     callback['Start'] = start ;
+                     callback['Complete'] = complete ;
+                     callback['Stop']  = stop ;
+                     callback['GetStatus']  = getStatus ;
+                     callback['SetInterval'] = setTimerInterval ;
+                     callback['GetInterval'] = getTimerInterval ;
                   } ) ;
-                  scope.$on( '$destroy', function(){
-                     listener1() ;
-                     listener2() ;
-                     listener3() ;
-                     listener4() ;
+
+                  scope.$watch( attributes.createTimer, function( options ){
+                     $.each( scope.Setting, function( key ){
+                        if( typeof( options[key] ) != 'undefined' )
+                        {
+                           if( key == 'interval' )
+                              scope.Setting[key] = options[key] * 1000 ;
+                           else
+                              scope.Setting[key] = options[key] ;
+                        }
+                     } ) ;
+                     $( element ).css( scope.Setting['options'] ) ;
                   } ) ;
                }
             } ;
@@ -3822,6 +4493,1187 @@
       } ;
       return dire ;
    });
+
+   /*
+   ng-repeat的修改版，区别在于不加载全部，只有滚动条差不多到底部才继续加载
+   支持命令： ng-repeats  必填 []     数据
+             loadfirst   可选 正整数  第一次加载多少, 默认100
+             loadnext    可选 正整数  后续一次加载多少, 默认100
+   */
+   sacApp.directive( 'ngRepeats', function( $animate ){
+      var dire = {
+         restrict: 'A',
+         replace: false,
+         transclude: true,
+         terminal: true,
+         controller: function( $scope, $element, $attrs, $transclude ){
+            //最后一次创建的scope列表
+            $scope.lastScope = [] ;
+            //已经加载多少
+            $scope.loadNum = 0 ;
+            //总共多少
+            $scope.length = 0 ;
+            //数据
+            $scope.collection = [] ;
+            //默认渲染多少个
+            $scope.loadfirst = isNaN( $attrs.loadfirst ) ? 100 : parseInt( $attrs.loadfirst ) ;
+            //后续渲染多少个
+            $scope.loadnext = isNaN( $attrs.loadnext ) ? 100 : parseInt( $attrs.loadnext ) ;
+         },
+         compile: function( element, attributes, transclude ){
+            return {
+               pre: function preLink( scope, element, attributes ){
+               },
+               post: function postLink( scope, element, attributes ){
+
+                  scope.$on( '$destroy', function(){  //主scope释放，子的scope也要释放
+                     $.each( scope.lastScope, function( index, rowScope ){
+                        rowScope.$destroy();
+                     } ) ;
+                  } ) ;
+
+                  //解析表达式
+                  var expression = attributes.ngRepeats;
+                  var match = expression.match(/^\s*([\s\S]+?)\s+in\s+([\s\S]+?)\s*$/) ;
+                  if( !match )
+                  {
+                     throw "Expected expression in form of '_item_ in _collection_: " + expression ;
+                  }
+                  var item = match[1] ;
+                  var rhs  = match[2] ;
+
+                  //渲染内容
+                  var renderFun = function( startIndex, endIndex ){
+
+                     //释放旧的scope
+                     $.each( scope.lastScope, function( index, rowScope ){
+                        rowScope.$destroy();
+                     } ) ;
+
+                     scope.lastScope = [] ;
+
+                     for( var index = startIndex; index < endIndex; ++index )
+                     {
+                        var childScope = scope.$new();
+
+                        scope.lastScope.push( childScope ) ;
+
+                        childScope['$index'] = index ;
+
+                        childScope[ item ] = scope.collection[index] ;
+
+                        transclude( childScope, function( clone ){
+
+                           $animate.enter( clone, element, null ) ;
+
+                        } ) ;
+
+                     }
+                  }
+
+                  //监控滚动条
+                  element.bind( 'scroll', function(){
+
+                     //如果滚动条接近底部
+                     if( element[0].scrollTop + element[0].offsetHeight >= element[0].scrollHeight - 150 )
+                     {
+                        //还没加载全部
+                        if( scope.loadNum < scope.length )
+                        {
+                           var length = scope.length - scope.loadNum ;
+                           var startIndex = scope.loadNum ;
+                           var endIndex = 0 ;
+
+                           length = length > scope.loadnext ? scope.loadnext : length ;
+
+                           endIndex = length + startIndex ;
+
+                           scope.loadNum += length ;
+
+                           renderFun( startIndex, endIndex ) ;
+                        }
+                     }
+                  } ) ;
+
+                  //监控数组
+                  scope.$watchCollection( rhs, function ngTable( collection ){
+                     
+                     scope.collection = collection ;
+
+                     //移除旧的
+                     angular.forEach( element.children(), function( ele ){
+                        $animate.leave( ele );
+                     } ) ;
+
+                     //创建新的
+                     var length = collection.length ;
+
+                     scope.length = length ;
+
+                     length = length > scope.loadfirst ? scope.loadfirst : length ;
+
+                     scope.loadNum = length ;
+
+                     renderFun( 0, length ) ;
+
+                  } ) ;
+
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   } ) ;
+
+   /*
+   表格
+   支持命令： ng-table       必填 {}    表格的配置项
+                  {
+                     'width': [],      //控制表格宽度, 支持 '10px' 和 '10%', 'auto' 3种写法, 也可以混合写，默认就是auto
+                     'tools': true,    //是否开启工具栏, 如果false, 就不能开启换页功能，默认 true
+                     'max': 100        //一页最大显示多少行， 默认 100
+                     'trim': true,     //是否允许调整表格宽度, 默认开启
+                     'sort': [],       //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
+                     'filter': {}      //是否开启过滤功能，支持4种模式, key对应title的key
+                                         1. 'indexof': 模糊匹配，只要在内容找到字符串子串就匹配成功。 输入框
+                                         2. 任意字符串: 正则匹配，按照正则规则来匹配。 输入框
+                                         3. 函数:      自定义函数来匹配，函数返回true或false, true就是匹配成功，参数由2个，第一个是表格的值，第二个是过滤的值。 输入框
+                                         4. 数组:      根据数组的值匹配表格，建议数组第一个是空字符串，这样可以默认不匹配。 下拉菜单
+                                         5. 'number':  根据数值匹配，有匹配符。下拉菜单 + 输入框
+                     'default': {},    //如果开启过滤，是否要设置默认值，如果不填，默认是''
+                     'text': {
+                        'default': 'xxx' 默认显示在状态栏的文本，第一个?是当前表格行数，第二个?是总行数
+                        'filterDefault': 'xxx' 设置过滤后显示在状态栏的文本，第一个?是当前表格行数，第二个?是总行数
+                     }
+                  }
+             table-title    必填 {}    表格的标题， key是要对应该列的字段名，用于排序和过滤， 如果value是false，那么该列不显示
+             table-content  必填 []    表格的内容
+             table-callback 可选 {}    只要空对象就行，指令会把回调函数传回来
+                                       GetPageData( 指定第几页 )
+                                       GetAllData()
+                                       GetFilterPageData( 指定第几页 )
+                                       GetFilterAllData()
+                                       GetFilterStatus()
+                                       GetCurrentPageNum()
+                                       GetSumPageNum()
+
+   */
+   sacApp.directive( 'ngTable', function( $animate, $timeout, $compile, $filter, SdbFunction ){
+      var setOptionsFun = function( src, defaultVal ){
+         if( !src )
+            return defaultVal ;
+         return src ;
+      }
+      var getNextKey = function( obj, key ){
+         var nextKey = null ;
+         var isFind = false ;
+         $.each( obj, function( cKey, val ){
+            if( isFind == true && typeof( val ) == 'string' )
+            {
+               nextKey = cKey ;
+               return false ;
+            }
+            if( key == cKey )
+            {
+               isFind = true ;
+            }
+         } ) ;
+         return nextKey ;
+      }
+      var dire = {
+         restrict: 'A',
+         templateUrl: './app/template/Component/ngTable.html',
+         replace: false,
+         transclude: true,
+         scope: true,
+         controller: function( $scope, $element, $attrs, $transclude ){
+            $scope.lastScope = [] ; //最后一次自己创建的scope
+            $scope.tools = {
+               'page': 0,           //总共多少页
+               'text': '',          //工具栏右边的文字
+               'isCustom': false,   //工具栏的文字是否自定义
+               'height': 0          //工具栏高度
+            } ;
+            $scope.loadStatus = {
+               'length': 0,      //数据总共多少
+               'page': 1,        //当前在第几页, 必须 > 0
+               'tableWidth': 0,  //表格当前的宽度
+               'width': {},      //控制表格宽度, 支持 '10px' 和 '10%' 两种写法, 也可以混合写
+               'onMove': {             //调整表格宽度
+                  'isMove': false,     //鼠标是不是按下移动的状态
+                  'mouseX': 0,         //鼠标按下记录的坐标
+                  'prevWidth': null,   //上一个td的宽度
+                  'nextWidth': null,   //下一个td的宽度
+                  'key': '',           //上一个td的key
+                  'nextKey': ''        //下一个td的key
+               },
+               'onSort': {             //表格排序
+                  'status': {},        //列的状态 0:默认 1:正序 -1:反序
+                  'iconEles': {},      //列的图标dom元素
+                  'last': null         //记录最后一次排序的信息
+               },
+               'onFilter': {
+                  'dataBackup': [],    //数据备份
+                  'status': false,     //显示的内容是否过滤后的， true: 过滤的内容；false: 所有内容
+                  'isInit': true,      //是否需要初始化过滤表达式
+                  'expre': {},         //过滤的表达式
+                  'condition': {}      //过滤的条件
+               },
+               'showNum': 0            //当前显示多少记录
+            } ;
+            $scope.table = {
+               'title': {},
+               'body': [],
+               'options': {
+                  'width': {},      //控制表格宽度, 支持 '10px' 和 '10%' 两种写法, 也可以混合写(这里是作为缓存使用)
+                  'tools': true,    //是否开启工具栏, 如果false, 就不能开启换页功能
+                  'max': 100,       //一页最大显示多少行
+                  'trim': true,     //是否允许调整表格宽度
+                  'sort': [],       //是否开启排序，数组仅支持bool类型的元素，排序数组和标题数组一一对应
+                  'filter': {},     //是否开启过滤功能
+                  'default': {},    //如果开启过滤，是否要设置默认值，如果不填，默认是''
+                  'text': {
+                     'default': $scope.autoLanguage( '显示 ? 条记录，一共 ? 条' ),
+                     'filterDefault': $scope.autoLanguage( '显示 ? 条记录，符合条件的一共 ? 条' )
+                  }
+               }
+            } ;
+         },
+         compile: function( element, attributes, transclude ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){
+
+                  scope.$on( '$destroy', function(){  //主scope释放，子的scope也要释放
+                     $.each( scope.lastScope, function( index, rowScope ){
+                        rowScope.$destroy();
+                     } ) ;
+                  } ) ;
+
+                  //解析表达式
+                  var expression = attributes.tableContent ;
+                  var match = expression.match(/^\s*([\s\S]+?)\s+in\s+([\s\S]+?)\s*$/) ;
+                  if( !match )
+                  {
+                     throw "Expected expression in form of '_item_ in _collection_: " + expression ;
+                  }
+                  var item = match[1] ;
+                  var rhs  = match[2] ;
+
+                  var tableEle = $( '> .ng-table', element ) ;
+
+                  var boxEle   = angular.element( $( '.ng-table-box', tableEle ) ) ;
+
+                  var headerBox = angular.element( $( '> .ng-table-header', boxEle ) ) ;
+
+                  var titleEle = angular.element( $( '.ng-table-titles', headerBox ) ) ;
+
+                  var filterEle = angular.element( $( '.ng-table-filter', headerBox ) ) ;
+
+                  var headerTable  = angular.element( $( '> table', headerBox ) ) ;
+
+                  var bodyBox = angular.element( $( '> .ng-table-body', boxEle ) ) ;
+
+                  var bodyTable  = angular.element( $( '> table', bodyBox ) ) ;
+
+                  var bodyEle  = angular.element( $( '> tbody', bodyTable ) ) ;
+
+                  var toolEle = angular.element( $( '.ng-table-tools', tableEle ) ) ;
+
+                  //设置过滤条件
+                  var setFilter = function( key, value ){
+                     if( typeof( scope.loadStatus['onFilter']['expre'][key] ) != 'undefined' )
+                     {
+                        scope.loadStatus['onFilter']['expre'][key] = value ;
+                        scope.find() ;
+                     }
+                  }
+
+                  //设置工具栏内容
+                  var setToolText = function( text ){
+                     if( text === null )
+                     {
+                        scope.tools['isCustom'] = false ;
+                        return ;
+                     }
+                     var type = typeof( text ) ;
+                     scope.tools['isCustom'] = true ;
+                     if( type == 'string' )
+                        scope.tools['text'] = text ;
+                     else if( type == 'function' )
+                        scope.tools['text'] = text( scope.loadStatus['showNum'], scope.loadStatus['length'], scope.tools['text'] ) ;
+                  }
+
+                  //排序函数
+                  var sortFun = function( index, key, isKeep ){
+                     scope.loadStatus['onSort']['last'] = { 'index': index, 'key': key } ;
+                     //还原所有图标样式和状态
+                     $.each( scope.loadStatus['onSort']['iconEles'], function( iconKey, icon ){
+                        if( icon != null )
+                           $( icon ).removeClass() ;
+                        if( iconKey != key )
+                        {
+                           scope.loadStatus['onSort']['status'][iconKey] = 0 ;
+                           $( icon ).addClass( 'fa fa-sort' ) ;
+                        }
+                     } ) ;
+                     //排序
+                     var orderType = scope.loadStatus['onSort']['status'][key] <= 0 ; //true: 正序; false: 反序
+                     if( isKeep == true )
+                        orderType = !orderType ;
+                     scope.loadStatus['onSort']['iconEles'][key].addClass( orderType ? 'fa fa-sort-asc' : 'fa fa-sort-desc' ) ;
+                     if( isKeep == false )
+                        scope.loadStatus['onSort']['status'][key] = orderType ? 1 : -1 ;
+                     if( scope.table['body'].length > 0 )
+                     {
+                        if( typeof( key ) !== 'undefined' )
+                        {
+                           scope.table['body'] = $filter( 'orderObjectBy' )( scope.table['body'], key, !orderType ) ;
+                        }
+                     }
+                     createTableContents( scope.loadStatus['page'], false ) ;
+                  }
+
+                  //渲染排序
+                  var createTableSort = function( sortList, index, key, tdEle, divEle ){
+
+                     if( sortList[key] ) //该列开启排序
+                     {
+                        var fa = angular.element( '<i></i>' ).addClass( 'fa fa-sort' ) ;
+
+                        scope.loadStatus['onSort']['iconEles'][key] = fa ;
+
+                        divEle.append( fa ) ;
+                        divEle.append( '&nbsp;' ) ;
+
+                        tdEle.css( {
+                              'cursor': 'pointer',
+                              '-moz-user-select': 'none',
+                              '-webkit-user-select': 'none',
+                              '-ms-user-select': 'none',
+                              '-khtml-user-select': 'none',
+                              'user-select': 'none'
+                           } )
+                           .on( 'click', function(){
+                              sortFun( index, key, false ) ;
+                           } ) ;
+                     }
+                     else
+                     {
+                        scope.loadStatus['onSort']['iconEles'][key] = null ;
+                     }
+                  }
+
+                  //渲染标题
+                  var createTableTitle = function( widthList, sortList, title, index, key, isLast )
+                  {
+                     var td = angular.element( '<td></td>' ).attr( 'table-key', key ) ; ;
+                     if( typeof( widthList[key] ) != 'undefined' ) //如果有配置就设置宽度
+                     {
+                        td.css( { 'width': widthList[key] } ) ;
+                     }
+
+                     var div = angular.element( '<div></div>' ).addClass( 'Ellipsis' ) ;
+
+                     var span = angular.element( '<span></span>' ).text( title ) ;
+
+                     //创建排序
+                     createTableSort( sortList, index, key, td, div ) ;
+
+                     div.append( span ) ;
+
+                     td.append( div ) ;
+
+                     titleEle.append( td ) ;
+
+                     //创建用来调整宽度的td
+                     if( isLast == false && scope.table['options']['trim'] )
+                     {
+                        var td2 = $compile( '<td ng-mousedown="mouseDown($event)"></td>' )( scope ).addClass( 'trim' ).attr( 'table-key', key ) ;
+                        titleEle.append( td2 ) ;
+                     }
+                     else //最后一个td 或 不允许调整宽度
+                     {
+                        var td2 = angular.element( '<td></td>' ).addClass( 'trimLast' ).attr( 'table-key', key ) ;
+                        titleEle.append( td2 ) ;
+                     }
+                  }
+
+                  //字符匹配
+                  var strIndexOf = function( value, match ){
+                     var type = typeof( value ) ;
+                     if( type == 'undefined' || value === null )
+                        value = '' ;
+                     if( type != 'string' )
+                        value = String( value ) ;
+                     return ( value.toLowerCase().indexOf( match.toLowerCase() ) >= 0 ) ;
+                  }
+
+                  //数字匹配
+                  var numberCompare = function( value, match ){
+                     match = match.split( ',' ) ;
+                     var operator = match[0] ;
+                     var num      = isNaN( match[1] ) || match[1] == '' ? match[1] : Number( match[1] ) ;
+                     if( num === '' ) //没填，所以都显示
+                        return true ;
+                     if( operator == 'gt' )
+                     {
+                        return value > num ;
+                     }
+                     else if( operator == 'gte' )
+                     {
+                        return value >= num ;
+                     }
+                     else if( operator == 'eq' )
+                     {
+                        return value === num ;
+                     }
+                     else if( operator == 'neq' )
+                     {
+                        return value !== num ;
+                     }
+                     else if( operator == 'lt' )
+                     {
+                        return value < num ;
+                     }
+                     else if( operator == 'lte' )
+                     {
+                        return value <= num ;
+                     }
+                     return false ;
+                  }
+
+                  //正则匹配
+                  var strRegex = function( value, match ){
+                     var type = typeof( value ) ;
+                     if( type == 'undefined' || value === null )
+                        value = '' ;
+                     if( type != 'string' )
+                        value = String( value ) ;
+                     var patt = new RegExp( match )
+                     return patt.test( value ) ;
+                  }
+
+                  //select的匹配
+                  var selectMatch = function( value, match )
+                  {
+                     if( typeof( match ) == 'function' )
+                     {
+                        return match( value ) ;
+                     }
+                     else
+                     {
+                        return ( value == match ) ;
+                     }
+                  }
+
+                  //渲染过滤
+                  var createTableFilter = function( filterList, index, key, isLast ){
+                     var td = angular.element( '<td></td>' ) ;
+                     var type = typeof( filterList[key] ) ;
+                     if( type == 'string' )
+                     {
+                        var input = null ;
+                        if( filterList[key] == 'indexof' )
+                        {
+                           //用indexOf做匹配
+                           input = $compile( '<input class="form-control" ng-model="loadStatus.onFilter.expre[\'' + key + '\']" ng-change="find()">' )( scope ) ;
+                           scope.loadStatus['onFilter']['condition'][key] = strIndexOf ;
+                        }
+                        else if( filterList[key] == 'number' )
+                        {
+                           //数字比大小
+                           var input  = $( '<div></div>' ).css( { 'display': 'table', 'width': '100%' } ) ;
+                           var div1   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '30%' } ) ;
+                           var div2   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '70%' } ) ;
+                           var select = $compile( '<select class="form-control" style="border-right:0;vertical-align:top;" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][0]" ng-change="find()"><option value="gt">&gt;</option><option value="gte">&gt;=</option><option value="eq">=</option><option value="neq">!=</option><option value="lt">&lt;</option><option value="lte">&lt;=</option></select>')( scope ) ;
+                           div1.append( select ) ;
+                           var text = $compile( '<input class="form-control" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][1]" ng-change="find()">' )( scope ) ;
+                           div2.append( text ) ;
+                           scope.loadStatus['onFilter']['condition'][key] = numberCompare ;
+                           input.append( div1 ) ;
+                           input.append( div2 ) ;
+                        }
+                        else
+                        {
+                           //用正则做匹配
+                           input = $compile( '<input class="form-control" ng-model="loadStatus.onFilter.expre[\'' + key + '\']" ng-change="find()">' )( scope ) ;
+                           scope.loadStatus['onFilter']['condition'][key] = strRegex ;
+                        }
+                        td.append( input ) ;
+                     }
+                     else if( type == 'function' )
+                     {
+                        //函数匹配
+                        var input = $compile( '<input class="form-control" ng-model="loadStatus.onFilter.expre[\'' + key + '\']" ng-change="find()">' )( scope ) ;
+                        td.append( input ) ;
+                        scope.loadStatus['onFilter']['condition'][key] = filterList[key] ;
+                     }
+                     else if( type == 'object' && isArray( filterList[key] ) )
+                     {
+                        //下拉菜单
+                        var select = $compile( '<select class="form-control" ng-model="loadStatus.onFilter.expre[\'' + key + '\']" ng-change="find()"  ng-options="item.value as item.key for item in table.options.filter[\'' + key + '\']"></select>')( scope ) ;
+                        td.append( select ) ;
+                        scope.loadStatus['onFilter']['condition'][key] = selectMatch ;
+                     }
+                     else
+                     {
+                        scope.loadStatus['onFilter']['condition'][key] = null ;
+                     }
+                     filterEle.append( td ) ;
+                     //创建用来调整宽度的td
+                     if( isLast == false && scope.table['options']['trim'] )
+                     {
+                        var td2 = $compile( '<td ng-mousedown="mouseDown($event)"></td>' )( scope ).addClass( 'trim' ).attr( 'table-key', key ) ;
+                        filterEle.append( td2 ) ;
+                     }
+                     else //最后一个td 或 不允许调整宽度
+                     {
+                        var td2 = angular.element( '<td></td>' ).addClass( 'trimLast' ).attr( 'table-key', key ) ;
+                        filterEle.append( td2 ) ;
+                     }
+                  }
+
+                  //渲染表格头
+                  var createTableHeaders = function(){
+
+                     //移除旧的
+                     $( '> td', titleEle ).remove() ;
+                     $( '> td', filterEle ).remove() ;
+
+                     //统计标题数量
+                     var titleLength = 0 ;
+                     $.each( scope.table['title'], function( key, value ){
+                        if( typeof( value ) == 'string' )
+                           ++titleLength ;
+                     } ) ;
+
+                     //初始化图标
+                     scope.loadStatus['onSort']['iconEles'] = {} ;
+
+                     //表格宽度列表
+                     var widthList = scope.loadStatus['width'] ;
+
+                     //表格排序列表
+                     var sortList = scope.table['options']['sort'] ;
+
+                     //表格过滤列表
+                     var filterList = scope.table['options']['filter'] ;
+
+                     //创建列
+                     var index = 0 ;
+                     $.each( scope.table['title'], function( key, title ){
+                        if( title === false )
+                        {
+                           //跳过该列
+                           return true ;
+                        }
+                        var isLast = index >= titleLength - 1 ;
+
+                        if( typeof( scope.table['options']['default'][key] ) == 'undefined' )   //没有默认值
+                        {
+                           if( scope.loadStatus['onFilter']['isInit'] == true ) //只有在初始化才需要初始过滤条件
+                           {
+                              if( filterList[key] == 'number' )
+                                 scope.loadStatus['onFilter']['expre'][key] = [ 'eq', '' ] ;
+                              else
+                                 scope.loadStatus['onFilter']['expre'][key] = '' ;
+                           }
+                        }
+                        else
+                           scope.loadStatus['onFilter']['expre'][key] = scope.table['options']['default'][key] ;
+
+                        //创建标题
+                        createTableTitle( widthList, sortList, title, index, key, isLast ) ;
+
+                        if( typeof( filterList ) == 'object' && filterList !== null && getObjectSize( filterList ) > 0 )
+                           createTableFilter( filterList, index, key, isLast ) ; //创建过滤
+
+                        ++index ;
+
+                     } ) ;
+
+                     scope.table['options']['default'] = {} ;//过滤默认值，只有初始化有效
+
+                     scope.loadStatus['onFilter']['isInit'] = false ; //初始化完成
+
+                  }
+
+                  //渲染表格内容
+                  var createTableContents = function( page, isRecoveryWidth ){
+
+                     //移除旧的
+                     $( '> tr', bodyEle ).remove() ;
+
+                     //释放旧的scope
+                     $.each( scope.lastScope, function( index, rowScope ){
+                        rowScope.$destroy();
+                     } ) ;
+
+                     scope.lastScope = [] ;
+                     
+                     //统计标题数量
+                     var useTitleList = [] ;
+                     var titleLength = 0 ;
+                     $.each( scope.table['title'], function( key, value ){
+                        if( typeof( value ) == 'string' )
+                        {
+                           ++titleLength ;
+                           useTitleList.push( key ) ;
+                        }
+                     } ) ;
+
+                     //计算显示的记录范围
+                     var start = ( page - 1 ) * scope.table['options']['max'] ;
+                     var end   = start + scope.table['options']['max'] ;
+                     end = end > scope.loadStatus['length'] ? scope.loadStatus['length'] : end ;
+
+                     var widthList = scope.loadStatus['width'] ;
+                     
+                     //计算总页数
+                     scope.tools['page'] = numberCarry( scope.loadStatus['length'] / scope.table['options']['max'] ) ;
+
+                     scope.loadStatus['showNum'] = end - start ;
+                     if( scope.tools['isCustom'] == false )
+                     {
+                        scope.tools['text'] = sprintf( scope.loadStatus['onFilter']['status'] ? scope.table['options']['text']['filterDefault'] : scope.table['options']['text']['default'],
+                                                       scope.loadStatus['showNum'],
+                                                       scope.loadStatus['length'] ) ;
+                     }
+                     //在网页上使用table-key，并且不是$auto的列表
+                     var keyList = null ;
+                     for( var index1 = start; index1 < end; ++index1 )
+                     {
+                        var tr = angular.element( '<tr></tr>' ) ;
+                        var childScope = scope.$new();
+                        scope.lastScope.push( childScope ) ;
+                        childScope['$index'] = index1 ;
+                        childScope[item] = scope.table['body'][index1] ;
+                        transclude( childScope, function( clone ){
+                           var index2 = 0 ;
+                           if( keyList === null )
+                           {
+                              keyList= [] ;
+                              //获取所有table-key不是$auto的索引
+                              $.each( clone, function( index3, col ){
+                                 if( col.nodeType == 1 )
+                                 {
+                                    var tableKey = $( col ).attr( 'table-key' ) ;
+                                    if( typeof( tableKey ) == 'string' && tableKey !== '$auto' )
+                                       keyList.push( tableKey ) ;
+                                 }
+                              } ) ;
+                           }
+                           $.each( clone, function( index3, col ){
+                              if( col.nodeType == 1 )
+                              {
+                                 var tableKey = $( col ).attr( 'table-key' ) ;
+                                 if( typeof( tableKey ) != 'string' || scope.table['title'][tableKey] === false || index2 >= titleLength )
+                                 {
+                                    return true ;
+                                 }
+                                 var hasAuto = false ;
+                                 var autoHtml = '' ;
+                                 if( tableKey == '$auto' )
+                                 {
+                                    autoHtml = $( col ).prop( 'outerHTML' ) ;
+                                 }
+                                 while( true )
+                                 {
+                                    var newAutoHtml = autoHtml ;
+                                    //如果table-key属性是$auto，那么说明开发者也不知道字段名字，那么将通过标题找到对应字段
+                                    if( tableKey == '$auto' || hasAuto == true )
+                                    {
+                                       hasAuto = true ;
+                                       tableKey = useTitleList[index2] ;
+                                       if( keyList.indexOf( tableKey ) >= 0 ) //发现这个字段在后面的html有，那就不需要使用$auto了
+                                       {
+                                          break ;
+                                       }
+                                       newAutoHtml = newAutoHtml.replace( /\$autoValue/g, item + '.' + tableKey ) ;
+                                       newAutoHtml = newAutoHtml.replace( /\$auto/g, tableKey ) ;
+                                       col = $compile( newAutoHtml )( childScope ) ;
+                                    }
+                                    var td = angular.element( '<td></td>' ).attr( 'table-key', tableKey ) ; ;
+                                    if( typeof( widthList[tableKey] ) != 'undefined' )
+                                    {
+                                       td.css( { 'width': widthList[tableKey] } ) ;
+                                    }
+                                    $animate.enter( col, td, null ) ;
+                                    tr.append( td ) ;
+
+                                    //创建用来调整宽度的td
+                                    if( scope.table['options']['trim'] && index2 < titleLength - 1 )
+                                    {
+                                       var td2 = $compile( '<td ng-mousedown="mouseDown($event)"></td>' )( scope ).addClass( 'trim' ).attr( 'table-key', tableKey ) ;
+                                       tr.append( td2 ) ;
+                                    }
+                                    else
+                                    {
+                                       var td2 = angular.element( '<td></td>' ).addClass( 'trimLast' ).attr( 'table-key', tableKey ) ;
+                                       tr.append( td2 ) ;
+                                    }
+                                    ++index2 ;
+                                    if( hasAuto == false || index2 >= titleLength )
+                                    {
+                                       break ;
+                                    }
+                                 }
+                              }
+                           } ) ;
+                        } ) ;
+                        $animate.enter( tr, bodyEle, null ) ;
+                     }
+                     $timeout( function(){
+                        resizeFun( isRecoveryWidth ) ;
+                     } ) ;
+                  }
+
+                  //调整表格头的列宽
+                  var resizeTableHeaders = function(){
+                     //列宽度
+                     var widthList = scope.loadStatus['width'] ;
+                     //修改标题宽度
+                     angular.forEach( titleEle.find( 'td' ), function( ele ){
+                        var td = angular.element( ele ) ;
+                        if( td.hasClass( 'trim' ) == false &&
+                            td.hasClass( 'trimLast' ) == false ) // .trim是用来控制宽度的，所以不能修改
+                        {
+                           var tableKey = $( td ).attr( 'table-key' ) ;
+                           if( typeof( tableKey ) == 'string' && typeof( widthList[tableKey] ) == 'string' )
+                           {
+                              td.css( { 'width': widthList[tableKey] } ) ;
+                           }
+                           else
+                           {
+                              td.css( { 'width': null } ) ;
+                           }
+                        }
+                     } ) ;
+                  }
+
+                  //调整表格内容的列宽
+                  var resizeTableContents = function(){
+                     //列宽度
+                     var widthList = scope.loadStatus['width'] ;
+                     //修改内容宽度
+                     var firstTr = bodyEle.find( 'tr' ) ;
+                     if( firstTr.length > 0 )
+                     {
+                        firstTr = angular.element( firstTr[0] ) ;
+                        angular.forEach( firstTr.find( 'td' ), function( ele ){
+                           var td = angular.element( ele ) ;
+                           if( td.hasClass( 'trim' ) == false &&
+                               td.hasClass( 'trimLast' ) == false ) // .trim是用来控制宽度的，所以不能修改
+                           {
+                              var tableKey = $( td ).attr( 'table-key' ) ;
+                              if( typeof( tableKey ) == 'string' && typeof( widthList[tableKey] ) == 'string' )
+                              {
+                                 td.css( { 'width': widthList[tableKey] } ) ;
+                              }
+                              else
+                              {
+                                 td.css( { 'width': null } ) ;
+                              }
+                           }
+                        } ) ;
+                     }
+                  }
+
+                  //重绘的函数
+                  var resizeFun = function( isRecoveryWidth ){
+                     //恢复原来的比例
+                     if( isRecoveryWidth !== false )
+                     {
+                        scope.loadStatus['width'] = $.extend( true, {}, scope.table['options']['width'] ) ;
+                     }
+                     resizeTableHeaders() ;
+                     resizeTableContents() ;
+                     $timeout( function(){
+                        //表格头和表格内容宽度对齐
+                        var width = $( bodyTable ).width() ;
+                        $( headerTable ).width( width ) ;
+
+                        //记录当前表格宽度
+                        scope.loadStatus['tableWidth'] = width ;
+
+                        //预留表格工具栏的高度
+                        scope.tools['height'] = -1 * $( toolEle ).outerHeight() ;
+                     }, 0, false ) ;
+                  }
+
+                  resizeFun() ; //为了兼容ie7
+
+                  //重绘函数绑定到重绘队列
+                  SdbFunction.defer( scope, resizeFun ) ;
+
+                  //设置表格内容跟表格头的间距
+                  var resetBodyTop = function(){
+                     $timeout( function(){
+                        $( bodyBox ).css( { 'padding-top': $( headerBox ).height() + 'px' } ) ;
+                     }, 0, false ) ;
+                  } ;
+
+                  resetBodyTop() ;
+
+                  //监控配置
+                  scope.$watch( attributes.ngTable, function ngTable( options ){
+                     if( typeof( options ) == 'object' )
+                     {
+                        //复制配置
+                        $.each( scope.table['options'], function( key ){
+                           if( typeof( options[key] ) != 'undefined' )
+                           {
+                              scope.table['options'][key] = options[key] ;
+                           }
+                        } ) ;
+                        //复制列宽配置
+                        scope.loadStatus['width'] = $.extend( true, {}, scope.table['options']['width'] ) ;
+                        //初始化排序状态
+                        scope.loadStatus['onSort']['status'] = [] ;
+                        $.each( scope.table['options']['sort'], function(){
+                           scope.loadStatus['onSort']['status'].push( '0' ) ;
+                        } ) ;
+                        resizeTableHeaders() ;
+                        resizeTableContents() ;
+                     }
+                  }, true ) ;
+
+                  //监控标题
+                  scope.$watchCollection( attributes.tableTitle, function( titles ){
+                     scope.table['title'] = setOptionsFun( titles, {} ) ;
+                     createTableHeaders() ;
+                  } ) ;
+
+                  //监控内容
+                  scope.$watchCollection( rhs, function( contents ){
+                     scope.table['body'] = setOptionsFun( contents, [] ) ;
+                     scope.loadStatus['length'] = scope.table['body'].length ;
+                     createTableContents( 1, false ) ;
+                     if( scope.loadStatus['onFilter']['status'] ) //如果已经做了过滤，那么要把数据复制到备份中，不然会丢数据
+                        scope.loadStatus['onFilter']['dataBackup'] = $.extend( true, [], scope.table['body'] ) ;
+                     scope.find() ;
+                     if( scope.loadStatus['onSort']['last'] !== null ) //如果有排序，那么要做一次重新排序
+                        sortFun( scope.loadStatus['onSort']['last']['index'], scope.loadStatus['onSort']['last']['key'], true ) ;
+                  } ) ;
+
+                  //获取指定页数据
+                  var getPageData = function( pageNum ){
+                     var dataList, result = [] ;
+                     //判断过滤状态
+                     if( scope.loadStatus['onFilter']['status'] ) //已经做过过滤
+                        dataList = scope.loadStatus['onFilter']['dataBackup'] ; //取原数据
+                     else //没有过过滤
+                        dataList = scope.table['body'] ; //取当前数据
+                     var start = ( pageNum - 1 ) * scope.table['options']['max'] ;
+                     var end   = start + scope.table['options']['max'] ;
+                     end = end > scope.loadStatus['length'] ? scope.loadStatus['length'] : end ;
+                     for( var index1 = start; index1 < end; ++index1 )
+                     {
+                        result.push( dataList[index1] ) ;
+                     }
+                     return result ;
+                  }
+
+                  //获取所有数据
+                  var getAllData = function(){
+                     var dataList ;
+                     //判断过滤状态
+                     if( scope.loadStatus['onFilter']['status'] ) //已经做过过滤
+                        dataList = scope.loadStatus['onFilter']['dataBackup'] ; //取原数据
+                     else //没有过过滤
+                        dataList = scope.table['body'] ; //取当前数据
+                     return dataList ;
+                  }
+
+                  //获取过滤后指定页的数据
+                  var getFilterPageData = function( pageNum ){
+                     var dataList = scope.table['body'], result = [] ;
+                     var start = ( pageNum - 1 ) * scope.table['options']['max'] ;
+                     var end   = start + scope.table['options']['max'] ;
+                     end = end > scope.loadStatus['length'] ? scope.loadStatus['length'] : end ;
+                     for( var index1 = start; index1 < end; ++index1 )
+                     {
+                        result.push( dataList[index1] ) ;
+                     }
+                     return result ;
+                  }
+
+                  //获取过滤后所有的数据
+                  var getFilterAllData = function(){
+                     return scope.table['body'] ;
+                  }
+
+                  //获取过滤状态
+                  var getFilterStatus = function(){
+                     return scope.loadStatus['onFilter']['status'] ;
+                  }
+
+                  //获取当前页
+                  var getCurrentPageNum = function(){
+                     return scope.loadStatus['page'] ;
+                  }
+
+                  //获取总页数
+                  var getSumPageNum = function(){
+                     return scope.tools['page'] ;
+                  }
+
+                  //重绘当前页
+                  var showCurrentPage = function(){
+                     createTableContents( scope.loadStatus['page'] ) ;
+                  }
+
+                  //如果有table-callback，那么把回调的函数传给他
+                  scope.$watch( attributes.tableCallback, function ( callbackGetter ){
+                     if( typeof( callbackGetter ) == 'object' )
+                     {
+                        callbackGetter['GetPageData']       = getPageData ;
+                        callbackGetter['GetAllData']        = getAllData ;
+                        callbackGetter['GetFilterPageData'] = getFilterPageData ;
+                        callbackGetter['GetFilterAllData']  = getFilterAllData ;
+                        callbackGetter['GetFilterStatus']   = getFilterStatus ;
+                        callbackGetter['GetCurrentPageNum'] = getCurrentPageNum ;
+                        callbackGetter['GetSumPageNum']     = getSumPageNum ;
+                        callbackGetter['SetFilter']         = setFilter ;
+                        callbackGetter['SetToolText']       = setToolText ;
+                        callbackGetter['ShowCurrentPage']   = showCurrentPage ;
+                     }
+                  } ) ;
+
+                  //第一页
+                  scope.first = function(){
+                     if( scope.table['body'].length == 0 )
+                        return ;
+                     scope.loadStatus['page'] = 1 ;
+                     createTableContents( scope.loadStatus['page'], false ) ;
+                  }
+
+                  //上一页
+                  scope.previous = function(){
+                     if( scope.table['body'].length == 0 )
+                        return ;
+                     --scope.loadStatus['page'] ;
+                     if( scope.loadStatus['page'] <= 0 )
+                        scope.loadStatus['page'] = 1 ;
+                     createTableContents( scope.loadStatus['page'], false ) ;
+                  }
+
+                  //下一页
+                  scope.next = function(){
+                     if( scope.table['body'].length == 0 )
+                        return ;
+                     ++scope.loadStatus['page'] ;
+                     if( scope.loadStatus['page'] > scope.tools['page'] )
+                        scope.loadStatus['page'] = scope.tools['page'] ;
+                     createTableContents( scope.loadStatus['page'], false ) ;
+                  }
+
+                  //最后一页
+                  scope.last = function(){
+                     if( scope.table['body'].length == 0 )
+                        return ;
+                     scope.loadStatus['page'] = scope.tools['page'] ;
+                     createTableContents( scope.loadStatus['page'], false ) ;
+                  }
+
+                  //检查输入的页数格式
+                  scope.check = function(){
+                     if( typeof( scope.loadStatus['page'] ) == 'string' && scope.loadStatus['page'].length == 0 )
+                     {
+                     }
+                     else if( isNaN( scope.loadStatus['page'] ) )
+                     {
+                        scope.loadStatus['page'] = parseInt( scope.loadStatus['page'] ) ;
+                        if( scope.loadStatus['page'] <= 0 )
+                           scope.loadStatus['page'] = 1 ;
+                     }
+                     else if( scope.loadStatus['page'] > scope.tools['page'] )
+                     {
+                        scope.loadStatus['page'] = scope.tools['page'] ;
+                     }
+                     else if( scope.loadStatus['page'] <= 0 )
+                     {
+                        scope.loadStatus['page'] = 1 ;
+                     }
+                  }
+
+                  //跳转
+                  scope.jump = function( event ){
+                     if( event.keyCode == 13 )
+                     {
+                        createTableContents( scope.loadStatus['page'], false ) ;
+                     }
+                  }
+
+                  //按住
+                  scope.mouseDown = function( event ){
+                     scope.loadStatus['onMove']['isMove'] = true ;
+                     scope.loadStatus['onMove']['mouseX'] = event['pageX'] ;
+                     var trim = event.currentTarget ;
+                     scope.loadStatus['onMove']['prevWidth'] = $( trim ).prev().width() ;
+                     scope.loadStatus['onMove']['nextWidth'] = $( trim ).next().width() ;
+                     scope.loadStatus['onMove']['key'] = $( trim ).attr( 'table-key' ) ;
+                     scope.loadStatus['onMove']['nextKey'] = getNextKey( scope.table['title'], scope.loadStatus['onMove']['key'] ) ;
+                     $( tableEle ).css( { '-moz-user-select': 'none', '-webkit-user-select': 'none', '-ms-user-select': 'none', '-khtml-user-select': 'none', 'user-select': 'none' } ) ;
+                  }
+
+                  //移动
+                  scope.move = function( event ){
+                     if( scope.loadStatus['onMove']['isMove'] == true )
+                     {
+                        var minWidth = 30 ;
+                        var width = scope.loadStatus['tableWidth'] ;
+                        var offsetX = event['pageX'] - scope.loadStatus['onMove']['mouseX'] ;
+                        var key = scope.loadStatus['onMove']['key'] ;
+                        var nextKey = scope.loadStatus['onMove']['nextKey'] ;
+                        if( offsetX < 0 && scope.loadStatus['onMove']['prevWidth'] > minWidth && scope.loadStatus['onMove']['prevWidth'] + offsetX < minWidth )
+                        {
+                           offsetX = minWidth - scope.loadStatus['onMove']['prevWidth'] ;
+                        }
+                        else if( offsetX < 0 && scope.loadStatus['onMove']['prevWidth'] < minWidth )
+                        {
+                           offsetX = minWidth - scope.loadStatus['onMove']['prevWidth'] ;
+                        }
+                        else if( offsetX > 0 && scope.loadStatus['onMove']['nextWidth'] > minWidth && scope.loadStatus['onMove']['nextWidth'] - offsetX < minWidth )
+                        {
+                           offsetX = scope.loadStatus['onMove']['nextWidth'] - minWidth ;
+                        }
+                        else if( offsetX > 0 && scope.loadStatus['onMove']['nextWidth'] < minWidth )
+                        {
+                           offsetX = minWidth - scope.loadStatus['onMove']['nextWidth'] ;
+                        }
+                        scope.loadStatus['width'][key] = scope.loadStatus['onMove']['prevWidth'] + offsetX + 'px' ;
+                        scope.loadStatus['width'][nextKey] = scope.loadStatus['onMove']['nextWidth'] - offsetX + 'px' ;
+                        resizeTableHeaders() ;
+                        resizeTableContents() ;
+                     }
+                  }
+
+                  //弹起
+                  scope.mouseUp = function(){
+                     scope.loadStatus['onMove']['isMove'] = false ;
+                     $( tableEle ).css( { '-moz-user-select': 'text', '-webkit-user-select': 'text', '-ms-user-select': 'text', '-khtml-user-select': 'text', 'user-select': 'text' } ) ;
+                  }
+
+                  //字符串匹配
+                  scope.find = function(){
+
+                     //匹配的表达式
+                     var match = scope.loadStatus['onFilter']['expre'] ;
+                     //匹配的条件
+                     var condition = scope.loadStatus['onFilter']['condition'] ;
+
+                     var dataList = null ;
+                     //检查过滤条件是否全部为空
+                     var isEmpty = true ;
+                     $.each( match, function( index, matchVal ){
+                        var matchType = typeof( matchVal ) ;
+                        var isArrType = false ;
+                        if( matchType == 'object' )
+                        {
+                           isArrType = isArray( matchVal ) ;
+                           if( isArrType == false )
+                              matchVal = matchVal['value'] ;
+                        }
+                        else
+                           matchVal = String( matchVal ) ;
+                        if( isArrType )
+                        {
+                           if( isArray( matchVal ) == true && matchVal[1].length > 0 )
+                           {
+                              isEmpty = false ;
+                              return false ;
+                           }
+                        }
+                        else
+                        {
+                           if( matchVal !== null && ( typeof( matchVal ) != 'string' || matchVal.length > 0 ) )
+                           {
+                              isEmpty = false ;
+                              return false ;
+                           }
+                        }
+                     } ) ;
+                     //判断过滤状态
+                     if( scope.loadStatus['onFilter']['status'] )
+                     {
+                        //已经做过过滤
+                        if( isEmpty )
+                        {
+                           //因为没有过滤条件，所以没必要做数据复制
+                           dataList = scope.loadStatus['onFilter']['dataBackup'] ;
+                           scope.loadStatus['onFilter']['status'] = false ;
+                        }
+                        else
+                        {
+                           //有过滤条件，必须做数据复制
+                           dataList = $.extend( true, [], scope.loadStatus['onFilter']['dataBackup'] ) ;
+                        }
+                     }
+                     else
+                     {
+                        //没有做过过滤
+                        if( isEmpty )
+                        {
+                           dataList = scope.table['body'] ;
+                        }
+                        else
+                        {
+                           scope.loadStatus['onFilter']['dataBackup'] = scope.table['body'] ;
+                           dataList = $.extend( true, [], scope.table['body'] ) ;
+                           scope.loadStatus['onFilter']['status'] = true ;
+                        }
+                     }
+                     if( isEmpty )
+                     {
+                        //没用过滤条件，全部显示
+                        scope.table['body'] = dataList ;
+                        scope.loadStatus['length'] = scope.table['body'].length ;
+                     }
+                     else
+                     {
+                        //有条件，开始过滤
+                        scope.table['body'] = [] ;
+                        $.each( dataList, function( index, row ){
+                           var index2 = 0 ;
+                           var isMatch = true ;
+                           $.each( scope.table['title'], function( key, title ){
+                              if( title == false ) //如果该列是关闭状态，那么就不过滤
+                                 return true ;
+                              var matchType = typeof( match[key] ) ;
+                              var isMatchType = ( matchType == 'function' || matchType == 'boolean' ) ;
+                              var matchStr = isMatchType ? match[key] : String( match[key] ) ;
+                              if( condition[key] !== null && ( isMatchType || matchStr.length > 0 ) )
+                              {
+                                 var value = row ;
+                                 var fields = key.split( '.' ) ;
+                                 for( var y = 0; y < fields.length; ++y )
+                                 {
+                                    value = value[ fields[y] ] ;
+                                 }
+                                 isMatch = condition[key]( value, matchStr ) ;
+                                 if( isMatch == false )
+                                    return false ;
+                              }
+                              ++index2 ;
+                           } ) ;
+                           if( isMatch == true )
+                              scope.table['body'].push( row ) ;
+                        } ) ;
+                        scope.loadStatus['length'] = scope.table['body'].length ;
+                     }
+                     createTableContents( 1, false ) ;
+                     if( scope.loadStatus['onSort']['last'] !== null ) //如果有排序，那么要做一次重新排序
+                        sortFun( scope.loadStatus['onSort']['last']['index'], scope.loadStatus['onSort']['last']['key'], true ) ;
+                  }
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   } ) ;
+
 }());
 
 /*
@@ -3848,7 +5700,7 @@ sacApp.directive( 'createGrid', function(){
       replace: false,
 
       // 专用控制器
-      controller: function( $scope, $element ){
+      controller: function( $scope, $element, $attrs, $transclude ){
          $scope.data = $scope.data + "22222 ";
       },
 

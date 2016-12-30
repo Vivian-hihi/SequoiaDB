@@ -7,7 +7,7 @@
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       if( clusterName == null || moduleType != 'sequoiadb' || moduleName == null )
       {
-         $location.path( '/Transfer' ) ;
+         $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
 

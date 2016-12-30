@@ -120,6 +120,36 @@ function getObjectSize( obj )
    return len ;
 }
 
+//获取对象的属性是第几个
+function getObjectAttrIndex( obj, attr )
+{
+   var index = 0 ;
+   for( var key in obj )
+   {
+      if( key == attr )
+      {
+         return index ;
+      }
+      ++index ;
+   }
+   return -1 ;
+}
+
+//获取对象的第x个属性
+function getObjetAttrByIndex( obj, index )
+{
+   var index2 = 0 ;
+   for( var key in obj )
+   {
+      if( index == index2 )
+      {
+         return key ;
+      }
+      ++index2 ;
+   }
+   return undefined ;
+}
+
 //格式化日期
 function timeFormat( date, fmt )
 {
@@ -158,6 +188,10 @@ function trim( str )
 
 //判断是不是数组
 function isArray( object ) {
+   if( typeof( object ) == 'undefined' )
+      return false ;
+   if( object === null )
+      return false ;
    //判断length属性是否是可枚举的 对于数组 将得到false
    return object && typeof( object ) === 'object' && typeof( object.length ) === 'number' &&
             typeof( object.splice ) === 'function' && !( object.propertyIsEnumerable( 'length' ) ) ;
@@ -1473,7 +1507,10 @@ function twoDecimalPlaces( num )
 	return ( Math.round( num * 100 ) / 100 ) ;
 }
 
-//自动换算容量
+/*
+   自动换算容量
+   num 单位 MB
+*/
 function sizeConvert( num )
 {
 	var rn = '0 MB' ;
@@ -1483,7 +1520,7 @@ function sizeConvert( num )
 	}
 	if( num >= 1 && num < 1024 )
 	{
-		rn = num+ ' MB' ;
+		rn = num + ' MB' ;
 	}
 	if( num >= 1024 && num < 1048576 )
 	{
@@ -1993,4 +2030,39 @@ function convertJsonValueString( json )
 
       return str("", { "": value });
    };
+}
+
+/*
+复制指定字段
+src: 数据源(数组) [ { ... } ]
+field: 指定复制的字段(数组，元素是字符串) [ ... ]
+*/
+function copyArrayField( src, field )
+{
+   var dst = [] ;
+   var length = src.length ;
+   var cpLen  = field.length ;
+   for( var i = 0; i < length; ++i )
+   {
+      var row = {} ;
+      for( var k = 0; k < cpLen; ++k )
+      {
+         row[ field[k] ] = src[i][ field[k] ] ;
+      }
+      dst.push( row ) ;
+   }
+   return dst ;
+}
+
+/*
+   获取json的第一层字段
+   json: object的json
+*/
+function getJsonFirstKeys( json )
+{
+   var keys = [] ;
+   $.each( json, function( key ){
+      keys.push( key ) ;
+   } ) ;
+   return keys ;
 }

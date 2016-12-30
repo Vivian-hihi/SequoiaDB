@@ -38,14 +38,14 @@
       
       if( deployType == null || $scope.Configure == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployType, $scope['Url']['Action'], 'sequoiasql' ) ;
       if( $scope.stepList['info'].length == 0 )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -163,7 +163,7 @@
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( '/Deploy/InstallModule' ) ;
+               $location.path( '/Deploy/InstallModule' ).search( { 'r': new Date().getTime() } ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -198,7 +198,7 @@
 
       //上一步
       $scope.GotoConf = function(){
-         $location.path( '/Deploy/SSQL-Conf' ) ;
+         $location.path( '/Deploy/SSQL-Conf' ).search( { 'r': new Date().getTime() } ) ;
       }
 
    } ) ;

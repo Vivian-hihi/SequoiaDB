@@ -7,13 +7,13 @@
         }
       },
       //废弃
+      /*
       { path: '/Index/Index/Index',
         options: {
            templateUrl: './app/template/Index/Index/Index.html',
            resolve: resolveFun( [ './app/controller/Index/Index/Index.js' ] )
         }
       },
-      /*
       { path: '/Data/SDB-Overview/Index',
         options: {
            templateUrl: './app/template/Data/Sdb/Overview/Index.html',
@@ -106,35 +106,79 @@
         }
       },
       //监控主页
-      { path: '/Monitor/Index',
+      { path: '/Monitor/SDB/Index',
         options: {
-           templateUrl: './app/template/Monitor/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Index.js' ] )
-         }
-      },
-      { path: '/Monitor/Charts',
-        options: {
-           templateUrl: './app/template/Monitor/Charts.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Charts.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Index.js' ] )
          }
       },
       //SDB节点类
       { path: '/Monitor/SDB-Nodes/Groups',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Overview/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Index.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Node/GroupList.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/GroupList.js' ] )
          }
       },
       { path: '/Monitor/SDB-Nodes/Nodes',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Overview/Node.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/Node.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Node/NodeList.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/NodeList.js' ] )
          }
       },
       { path: '/Monitor/SDB-Nodes/Charts',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Overview/NodesCharts.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Overview/NodesCharts.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Node/Charts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Charts.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Nodes/GroupsSnapshot',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/GroupsSnapshot.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/GroupsSnapshot.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Nodes/NodesSnapshot',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/NodesSnapshot.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/NodesSnapshot.js' ] )
+         }
+      },
+      //节点-分区组
+      { path: '/Monitor/SDB-Nodes/Group/Index',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/Group/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Group/Index.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Nodes/Group/Charts',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/Group/Charts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Group/Charts.js' ] )
+         }
+      },
+      //节点-节点
+      { path: '/Monitor/SDB-Nodes/Node/Index',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/Node/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Node/Index.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Nodes/Node/Session',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/Node/Session.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Node/Session.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Nodes/Node/Context',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/Node/Context.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Node/Context.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Nodes/Node/Charts',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/Node/Charts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Node/Charts.js' ] )
          }
       },
       //SDB资源类
@@ -159,7 +203,7 @@
       { path: '/Monitor/SDB-Resources/Procedure',
         options: {
            templateUrl: './app/template/Monitor/Sdb/Resource/Procedure.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/Procedure.js' ] )
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/Procedure.js', './scripts/jsformat/jsformat.js' ] )
          }
       },
       { path: '/Monitor/SDB-Resources/Transaction',
@@ -174,40 +218,60 @@
            resolve: resolveFun( [ './app/controller/Monitor/Sdb/Resource/ResourceCharts.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Group/Index',
+      //监控-主机列表
+      { path: '/Monitor/SDB-Host/List/Index',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Group/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Group/Index.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Host/List/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/List/Index.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Group/Charts',
+      { path: '/Monitor/SDB-Host/List/Charts',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Group/Charts.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Group/Charts.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Host/List/Charts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/List/Charts.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Node/Index',
+      { path: '/Monitor/SDB-Host/List/HostsSnapshot',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Node/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Index.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Host/List/HostsSnapshot.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/List/HostsSnapshot.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Node/Session',
+      //监控-单主机
+      { path: '/Monitor/SDB-Host/Info/Index',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Node/Session.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Session.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Host/Info/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/Info/Index.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Node/Context',
+      { path: '/Monitor/SDB-Host/Info/Disk',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Node/Context.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Context.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Host/Info/Disk.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/Info/Disk.js' ] )
          }
       },
-      { path: '/Monitor/SDB-Node/Charts',
+      { path: '/Monitor/SDB-Host/Info/CPU',
         options: {
-           templateUrl: './app/template/Monitor/Sdb/Node/Charts.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/Charts.js' ] )
+           templateUrl: './app/template/Monitor/Sdb/Host/Info/CPU.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/Info/CPU.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Host/Info/Memory',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Host/Info/Memory.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/Info/Memory.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Host/Info/Network',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Host/Info/Network.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/Info/Network.js' ] )
+         }
+      },
+      { path: '/Monitor/SDB-Host/Info/Charts',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Host/Info/Charts.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Host/Info/Charts.js' ] )
          }
       },
       //SQL监控页
@@ -227,63 +291,6 @@
         options: {
            templateUrl: './app/template/Monitor/SqlModule/Analyze/Index.html',
            resolve: resolveFun( [ './app/controller/Monitor/SqlModule/Analyze/Index.js' ] )
-         }
-      },
-      //监控-主机列表
-      { path: '/Monitor/Host-List/Index',
-        options: {
-           templateUrl: './app/template/Monitor/Host/List/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/List/Index.js' ] )
-         }
-      },
-      { path: '/Monitor/Host-List/Charts',
-        options: {
-           templateUrl: './app/template/Monitor/Host/List/Charts.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/List/Charts.js' ] )
-         }
-      },
-      //监控-单主机
-      { path: '/Monitor/Host-Info/Index',
-        options: {
-           templateUrl: './app/template/Monitor/Host/Info/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Index.js' ] )
-         }
-      },
-      { path: '/Monitor/Host-Info/Disk',
-        options: {
-           templateUrl: './app/template/Monitor/Host/Info/Disk.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Disk.js' ] )
-         }
-      },
-      { path: '/Monitor/Host-Info/CPU',
-        options: {
-           templateUrl: './app/template/Monitor/Host/Info/CPU.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/Info/CPU.js' ] )
-         }
-      },
-      { path: '/Monitor/Host-Info/Memory',
-        options: {
-           templateUrl: './app/template/Monitor/Host/Info/Memory.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Memory.js' ] )
-         }
-      },
-      { path: '/Monitor/Host-Info/Network',
-        options: {
-           templateUrl: './app/template/Monitor/Host/Info/Network.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Network.js' ] )
-         }
-      },
-      { path: '/Monitor/Host-Info/Charts',
-        options: {
-           templateUrl: './app/template/Monitor/Host/Info/Charts.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/Info/Charts.js' ] )
-         }
-      },
-      //监控-主机告警
-      { path: '/Monitor/Host/Warning',
-        options: {
-           templateUrl: './app/template/Monitor/Host/Warning/Index.html',
-           resolve: resolveFun( [ './app/controller/Monitor/Host/Warning/Index.js' ] )
          }
       },
       //监控-社区版提示页面

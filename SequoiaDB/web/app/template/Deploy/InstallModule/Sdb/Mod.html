@@ -1,4 +1,14 @@
 ﻿<div ng-controller="Deploy.Sdb.Mod.Ctrl" ng-container="{}">
+   <div ng-windows="config as ConfigWindows.config" windows-callback="ConfigWindows.callback">
+      <div style="height:40px;">
+         <select class="form-control" style="width:100px;" ng-model="config.type" ng-change="BuildConfig()">
+            <option value="json">JSON</option>
+            <option value="xml">XML</option>
+         </select>
+         <button class="btn btn-primary" ng-click="DownloadConfig()">下载配置</button>
+      </div>
+      <textarea spellcheck="false" style="font-family:Consolas;font-size:15px;" class="form-control" ng-container="{offsetY:-40}" ng-model="config.text"></textarea>
+   </div>
    <div style="border-bottom:1px solid #eee;" step-chart="stepList"></div>
    <div style="padding:10px 15px;" ng-container="{offsetY:-70}">
 
@@ -15,6 +25,7 @@
 
                <div style="margin:10px 0;">
                   <button class="btn btn-default" ng-click="CreateGroupModel()"><i class="fa fa-plus"></i>&nbsp;{{autoLanguage("创建分区组")}}</button>
+                  <button class="btn btn-default" ng-click="CreateExportConfigModel()">{{autoLanguage("编辑配置")}}</button>
                </div>
 
                <div class="borderBox" style="overflow-y:auto;" ng-container="{maxHeight:'100%',offsetY:-105}">
@@ -62,62 +73,24 @@
                   <button class="btn btn-default" ng-click="CreateSetNodeConfModel(4,-1,-1,-1,true)">{{autoLanguage("批量修改节点")}}</button>
                </div>
 
-               <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-grid="NodeListOptions" ng-container="{offsetY:-70,marginTop:10}">
-                  <div class="GridHeader">
-                     <div class="GridTr">
-                        <div class="GridTd Ellipsis"></div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("服务名")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("数据路径")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("角色")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("分区组")}}</div>
-                        <div class="clear-float"></div>
-                     </div>
-                     <div class="GridTr">
-                        <div class="GridTd Ellipsis" style="height:28px;"></div>
-                        <div class="GridTd Ellipsis" style="height:28px;"><input class="form-control" type="text" ng-model="search_hostname.text"></div>
-                        <div class="GridTd Ellipsis" style="height:28px;"><input class="form-control" type="text" ng-model="search_port.text"></div>
-                        <div class="GridTd Ellipsis" style="height:28px;"><input class="form-control" type="text" ng-model="search_path.text"></div>
-                        <div class="GridTd Ellipsis" style="height:28px;">
-                           <select class="form-control" ng-model="search_role.text" ng-options="roleInfo.value as roleInfo.key for roleInfo in search_roleList">
-                              <option value="">{{autoLanguage("全部")}}</option>
-                           </select>
-                        </div>
-                        <div class="GridTd Ellipsis" style="height:28px;">
-                           <select class="form-control" ng-model="search_group.text" ng-disabled="search_group_disabled" ng-options="groupInfo.value as groupInfo.key for groupInfo in search_groupList">
-                              <option value="">{{autoLanguage("全部")}}</option>
-                           </select>
-                        </div>
-                        <div class="clear-float"></div>
-                     </div>
+               <div ng-container="{offsetY:-40,marginTop:10}" ng-table="NodeTable['options']" table-title="NodeTable['title']" table-content="nodeInfo in NodeTable['body']" table-callback="NodeTable['callback']">
+                  <div table-key="checked">
+                     <input type="checkbox" ng-model="nodeInfo.checked" />
                   </div>
-                  <div class="GridBody" style="margin-top:73px;">
-                     <div class="GridTr" ng-repeat="nodeInfo in NodeList track by $index" ng-hide="nodeInfo['show'] == false">
-                        <div class="GridTd">
-                           <input type="checkbox" ng-model="nodeInfo['checked']" />
-                        </div>
-                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index,true)">
-                           {{nodeInfo['HostName']}}
-                        </div>
-                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index,true)">
-                           {{nodeInfo['svcname']}}
-                        </div>
-                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index,true)">
-                           {{nodeInfo['dbpath']}}
-                        </div>
-                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index,true)">
-                           {{nodeInfo['role']}}
-                        </div>
-                        <div class="GridTd Ellipsis linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,$index,true)">
-                           {{nodeInfo['datagroupname']}}
-                        </div>
-                        <div class="clear-float"></div>
-                     </div>
+                  <div class="Ellipsis" table-key="HostName">
+                     <a class="linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,nodeInfo.i,true)">{{nodeInfo.HostName}}</a>
                   </div>
-               </div>
-               <div class="GridTool">
-                  <div class="ToolLeft">
-                     <span>{{NodeGridTool}}</span>
+                  <div class="Ellipsis" table-key="svcname">
+                     <a class="linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,nodeInfo.i,true)">{{nodeInfo.svcname}}</a>
+                  </div>
+                  <div class="Ellipsis" table-key="dbpath">
+                     <a class="linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,nodeInfo.i,true)">{{nodeInfo.dbpath}}</a>
+                  </div>
+                  <div class="Ellipsis" table-key="role">
+                     <a class="linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,nodeInfo.i,true)">{{nodeInfo.role}}</a>
+                  </div>
+                  <div class="Ellipsis" table-key="datagroupname">
+                     <a class="linkButton" ng-click="CreateSetNodeConfModel(3,-1,-1,nodeInfo.i,true)">{{nodeInfo.datagroupname}}</a>
                   </div>
                </div>
 

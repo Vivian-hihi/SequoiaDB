@@ -162,7 +162,7 @@ _DataOperateIndex.gotoRecord = function( $scope, $location, SdbFunction, listInd
    SdbFunction.LocalData( 'SdbCsName', csName ) ;
    SdbFunction.LocalData( 'SdbClName', clName ) ;
    SdbFunction.LocalData( 'SdbClType', clType ) ;
-   $location.path( 'Data/SDB-Operate/Record' ) ;
+   $location.path( 'Data/SDB-Operate/Record' ).search( { 'r': new Date().getTime() } ) ;
 }
 
 //lob页面跳转
@@ -178,7 +178,7 @@ _DataOperateIndex.gotoLob = function( $scope, $location, SdbFunction, listIndex 
    SdbFunction.LocalData( 'SdbCsName', csName ) ;
    SdbFunction.LocalData( 'SdbClName', clName ) ;
    SdbFunction.LocalData( 'SdbClType', clType ) ;
-   $location.path( 'Data/SDB-Operate/Lobs' ) ;
+   $location.path( 'Data/SDB-Operate/Lobs' ).search( { 'r': new Date().getTime() } ) ;
 }
 
 //上一页

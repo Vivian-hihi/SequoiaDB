@@ -19,6 +19,12 @@
       $scope.ClList = [] ;
       var nodesList = [] ;
 
+      var queryTest = function( data, success, failed, error, complete )
+      {
+         SdbRest._postTest( './test/nodeList', success, failed, error ) ;
+      }
+
+
 
       //获取节点列表
       var getNodesList = function(){

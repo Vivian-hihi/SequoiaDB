@@ -18,7 +18,7 @@
       var installTask    = $rootScope.tempData( 'Deploy', 'HostTaskID' ) ;
       if( $scope.DeployType == null || $scope.ModuleType == null || installTask == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -27,26 +27,26 @@
          $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
          if( $scope.stepList['info'].length == 0 )
          {
-            $location.path( '/Deploy/Index' ) ;
+            $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
             return ;
          }
       }
 
       //上一步
       $scope.GotoAddHost = function(){
-         $location.path( '/Deploy/AddHost' ) ;
+         $location.path( '/Deploy/AddHost' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //返回
       $scope.GotoDeploy2 = function(){
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //下一步
       $scope.GotoDeploy = function(){
          if( $scope.IsFinish == true )
          {
-            $location.path( '/Deploy/Index' ) ;
+            $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 
@@ -56,19 +56,19 @@
          {
             if( $scope.ModuleType == 'sequoiadb' )
             {
-               $location.path( '/Deploy/SDB-Conf' ) ;
+               $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
             }
             else if( $scope.ModuleType == 'sequoiasql' )
             {
-               $location.path( '/Deploy/SSQL-Conf' ) ;
+               $location.path( '/Deploy/SSQL-Conf' ).search( { 'r': new Date().getTime() } ) ;
             }
             else if( $scope.ModuleType == 'zookeeper' )
             {
-               $location.path( '/Deploy/ZKP-Mod' ) ;
+               $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
             }
             else
             {
-               $location.path( '/Deploy/Index' ) ;
+               $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
             }
          }
       }
@@ -152,14 +152,21 @@
                      {
                         $scope.TaskInfo['Progress'] = 100 ;
                         $scope.BarColor = 2 ;
+                        var errorNum = 0 ;
                         $.each( $scope.TaskInfo['ResultInfo'], function( index, hostInfo ){
                            if( $scope.TaskInfo['ResultInfo'][index]['errno'] == 0 )
                            {
                               $scope.TaskInfo['ResultInfo'][index]['errno'] = 1 ;
+                              ++errorNum ;
                            }
                            $scope.TaskInfo['ResultInfo'][index]['Status'] = 4 ;
                            $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] = 'FINISH' ;
                         } ) ;
+                        //检查如果全失败，就禁止到下一步
+                        if( errorNum >= $scope.TaskInfo['ResultInfo'].length )
+                        {
+                           $scope.IsFinish = false ;
+                        }
                      }
                   }
                   else

@@ -5,7 +5,7 @@
 
       //初始化
       var deployMode = 'distribution' ;
-      $scope.IsAllClear = true ;
+      $scope.IsAllClear = false ;
       $scope.Conf1 = {} ;
       $scope.Conf2 = {} ;
       $scope.HostList = [] ;
@@ -29,14 +29,14 @@
       $scope.ModuleName  = $rootScope.tempData( 'Deploy', 'ModuleName' ) ;
       if( $scope.DeployType == null || clusterName == null || $scope.ModuleName == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], 'sequoiadb' ) ;
       if( $scope.stepList['info'].length == 0 )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -237,12 +237,12 @@
 
       //返回
       $scope.GotoDeploy = function(){
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //上一步
       $scope.GotoScanHost = function(){
-         $location.path( '/Deploy/Install' ) ;
+         $location.path( '/Deploy/Install' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //下一步
@@ -250,7 +250,7 @@
          if( $scope.IsAllClear == true )
          {
             $rootScope.tempData( 'Deploy', 'ModuleConfig', $scope.currentTemplate ) ;
-            $location.path( '/Deploy/SDB-Mod' ) ;
+            $location.path( '/Deploy/SDB-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 

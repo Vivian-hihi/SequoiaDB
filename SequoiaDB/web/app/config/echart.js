@@ -57,10 +57,10 @@
       tooltip: {
          enterable: true,
          trigger: 'axis',
-         formatter: '{a0}: {c0}%<br>{a1}: {c1}%'
+         formatter: '{a0}: {c0}%'
       },
       legend: {
-         data: ['Used', 'Module']
+         data: ['Used']
       },
       animation: false,
       addDataAnimation: false,
@@ -87,9 +87,9 @@
       ],
       grid: {
          x: 55,
-         y: 40,
          x2: 20,
-         y2: 50,
+         y: 40,
+         y2: 40,
          borderColor: '#000'
       },
       series: [
@@ -103,13 +103,6 @@
             },
             smooth: true,
             name: 'Used',
-            type: 'line',
-            data: [0, 0, 0, 0, 0, 0, 0]
-         },
-         {
-            itemStyle: { normal: { areaStyle: { type: 'mint' } } },
-            smooth: true,
-            name: 'Module',
             type: 'line',
             data: [0, 0, 0, 0, 0, 0, 0]
          }
@@ -129,7 +122,7 @@
       tooltip: {
          enterable: true,
          trigger: 'axis',
-         formatter: '{a0}: {c0}KB<br>{a1}: {c1}KB'
+         formatter: '{a0}: {c0}MB<br>{a1}: {c1}MB'
       },
       legend: {
          data: ['Read', 'Write']
@@ -153,29 +146,29 @@
          {
             type: 'value',
             axisLabel: {
-               formatter: '{value}KB'
+               formatter: '{value}MB'
             }
          }
-         ],
-         grid: {
+      ],
+      grid: {
             x: 55,
-            y: 40,
             x2: 20,
-            y2: 50,
+            y: 40,
+            y2: 40,
             borderColor: '#000'
          },
-         series: [
+      series: [
          {
             smooth: true,
-            name: 'Write',
-            stack: 'Write',
+            name: 'Read',
+            stack: 'Read',
             type: 'line',
             data: [0, 0, 0, 0, 0, 0, 0]
          },
          {
             smooth: true,
-            name: 'Read',
-            stack: 'Read',
+            name: 'Write',
+            stack: 'Write',
             type: 'line',
             data: [0, 0, 0, 0, 0, 0, 0]
          }
@@ -195,7 +188,7 @@
       tooltip: {
          enterable: true,
          trigger: 'axis',
-         formatter: '{a0}: {c0}%<br>{a1}: {c1}%'
+         formatter: '{a0}: {c0}%'
       },
       grid: {
          x: 55,
@@ -210,7 +203,6 @@
       legend: {
          data: [
             'Used',
-            'Module Used'
          ]
       },
       xAxis: [
@@ -241,23 +233,12 @@
             smooth: true,
             name: 'Used',
             data: [0, 0, 0, 0, 0, 0, 0]
-         },
-         {
-            itemStyle: {
-               normal: {
-                  color: '#9ECCB7',
-                  lineStyle: { color: '#9ECCB7' }
-               }
-            },
-            smooth: true,
-            name: 'Module Used',
-            type: 'line',
-            data: [0, 0, 0, 0, 0, 0, 0]
          }
       ]
    } ;
 
    window.SdbSacManagerConf.MemoryLessEchart = {
+      addDataAnimation: false,
       tooltip: {
          show: false,
          trigger: 'axis',
@@ -285,34 +266,14 @@
          {
             show: false,
             type: 'category',
-            data: ['内存']
+            data: ['Memory']
          }
       ],
       series: [
          {
-            name: '系统',
+            name: 'Used',
             type: 'bar',
-            stack: '总量',
-            itemStyle: {
-               normal: {
-                  label: {
-                     show: true,
-                     position: 'insideRight',
-                     formatter: '{c0}%',
-                     textStyle: {
-                        color: '#FFF',
-                        fontSize: 16
-                     }
-                  },
-                  color: '#A47FAE'
-               }
-            },
-            data: [20]
-         },
-         {
-            name: '已使用',
-            type: 'bar',
-            stack: '总量',
+            stack: 'All',
             itemStyle: {
                normal: {
                   label: {
@@ -327,33 +288,12 @@
                   color: '#18bc9a'
                }
             },
-            data: [30]
+            data: [0, 0]
          },
          {
-            name: '缓存',
+            name: 'Free',
             type: 'bar',
-            stack: '总量',
-            itemStyle: {
-               normal: {
-                  label: {
-                     show: true,
-                     position: 'insideRight',
-                     formatter: '{c0}%',
-                     textStyle:
-                     {
-                        color: '#FFF',
-                        fontSize: 16
-                     }
-                  },
-                  color: '#FF7F50'
-               }
-            },
-            data: [8]
-         },
-         {
-            name: '空闲',
-            type: 'bar',
-            stack: '总量',
+            stack: 'All',
             itemStyle: {
                normal: {
                   label: {
@@ -368,7 +308,7 @@
                   color: '#21bbee'
                }
             },
-            data: [42]
+            data: [0, 0]
          }
       ]
    };
@@ -386,14 +326,14 @@
       tooltip: {
          enterable: true,
          trigger: 'axis',
-         formatter: '{a0}: {c0}%<br>{a1}: {c1}%'
+         formatter: '{a0}: {c0}%'
       },
       animation: false,
       addDataAnimation: false,
       color: ['rgba(39,169,227,1)'],
       legend: {
          data: [
-            'Used', 'Module Used'
+            'Used'
          ]
       },
       xAxis: [
@@ -435,13 +375,6 @@
             },
             smooth: true,
             name: 'Used',
-            type: 'line',
-            data: [0, 0, 0, 0, 0, 0, 0]
-         },
-         {
-            itemStyle: { normal: { areaStyle: { type: 'mint' } } },
-            smooth: true,
-            name: 'Module Used',
             type: 'line',
             data: [0, 0, 0, 0, 0, 0, 0]
          }
@@ -547,7 +480,7 @@
          x: 55,
          y: 40,
          x2: 20,
-         y2: 60,
+         y2: 40,
          borderColor: '#000'
       },
       series: [
@@ -565,7 +498,7 @@
    window.SdbSacManagerConf.NetwordOutEchart = {
       title: {
          show: true,
-         text: '发送流量',
+         text: 'TXByts',
          textStyle: {
             color: '#666',
             fontFamily: 'Verdana,Georgia,宋体',
@@ -604,14 +537,14 @@
          x: 55,
          y: 40,
          x2: 20,
-         y2: 60,
+         y2: 40,
          borderColor: '#000'
       },
       series: [
          {
             smooth: true,
-            name: 'Write',
-            stack: 'Write',
+            name: 'TXByts',
+            stack: 'TXByts',
             itemStyle: { normal: { areaStyle: { type: 'default' } } },
             type: 'line',
             data: [0, 0, 0, 0, 0, 0, 0]
@@ -622,7 +555,7 @@
    window.SdbSacManagerConf.NetwordInEchart = {
       title: {
          show: true,
-         text: '接收流量',
+         text: 'RXBytes',
          textStyle: {
             color: '#666',
             fontFamily: 'Verdana,Georgia,宋体',
@@ -661,14 +594,14 @@
          x: 55,
          y: 40,
          x2: 20,
-         y2: 60,
+         y2: 40,
          borderColor: '#000'
       },
       series: [
          {
             smooth: true,
-            name: 'Write',
-            stack: 'Write',
+            name: 'RXBytes',
+            stack: 'RXBytes',
             itemStyle: { normal: { areaStyle: { type: 'default' } } },
             type: 'line',
             data: [0, 0, 0, 0, 0, 0, 0]
@@ -691,7 +624,7 @@
          enterable: true,
          trigger: 'axis',
          //显示百分比和占用大小
-         formatter: '{a0}: {c0}KB,{a1}: {c1}KB'
+         formatter: '{a0}: {c0}KB<br>{a1}: {c1}KB'
       },
       legend: {
          data: ['In', 'Out']
@@ -723,7 +656,7 @@
          x: 55,
          y: 40,
          x2: 20,
-         y2: 50,
+         y2: 40,
          borderColor: '#000'
       },
       series: [
@@ -867,7 +800,7 @@
    window.SdbSacManagerConf.RecordDeleteEchart = {
       title: {
          show: true,
-         text: 'Remove',
+         text: 'Delete',
          textStyle: {
             color: '#666',
             fontFamily: 'Verdana,Georgia,宋体',
@@ -880,7 +813,7 @@
          formatter: '{a0}: {c0}/s'
       },
       legend: {
-         data: ['Record Remove']
+         data: ['Record Delete']
       },
       animation: false,
       addDataAnimation: false,
@@ -915,7 +848,7 @@
       series: [
          {
             smooth: true,
-            name: 'Record Remove',
+            name: 'Record Delete',
             type: 'line',
             data: [0, 0, 0, 0, 0, 0, 0]
          }
@@ -1147,5 +1080,234 @@
             ]
          }
       ]
-   };
+   } ;
+   
+   window.SdbSacManagerConf.TotalSessionsEchart = {
+      title: {
+         show: true,
+         text: ' Total Sessions',
+         textStyle: {
+            color: '#666',
+            fontFamily: 'Verdana,Georgia,宋体',
+            fontSize: 14
+         }
+      },
+      tooltip: {
+         enterable: true,
+         trigger: 'axis',
+         formatter: '{a0}: {c0}'
+      },
+      legend: {
+         data: ['Total Sessions']
+      },
+      animation: false,
+      addDataAnimation: false,
+      color: ['rgba(39,169,227,1)'],
+      xAxis: [
+         {
+            type: 'category',
+            boundaryGap: false,
+            data: ['0', '5', '10', '15', '20', '25', '30'],
+            splitLine: {
+               lineStyle: {
+                  color: ['#fff']
+               }
+            }
+         }
+      ],
+      yAxis: [
+      {
+         type: 'value',
+         axisLabel: {
+            formatter: '{value}'
+         }
+      }
+      ],
+      grid: {
+         x: 60,
+         y: 40,
+         x2: 30,
+         y2: 40,
+         borderColor: '#000'
+      },
+      series: [
+         {
+            smooth: true,
+            name: 'Total Sessions',
+            type: 'line',
+            data: [0, 0, 0, 0, 0, 0, 0]
+         }
+      ]
+   } ;
+   window.SdbSacManagerConf.TotalContextsEchart = {
+      title: {
+         show: true,
+         text: 'Total Contexts',
+         textStyle: {
+            color: '#666',
+            fontFamily: 'Verdana,Georgia,宋体',
+            fontSize: 14
+         }
+      },
+      tooltip: {
+         enterable: true,
+         trigger: 'axis',
+         formatter: '{a0}: {c0}'
+      },
+      legend: {
+         data: ['Total Contexts']
+      },
+      animation: false,
+      addDataAnimation: false,
+      color: ['rgba(39,169,227,1)'],
+      xAxis: [
+         {
+            type: 'category',
+            boundaryGap: false,
+            data: ['0', '5', '10', '15', '20', '25', '30'],
+            splitLine: {
+               lineStyle: {
+                  color: ['#fff']
+               }
+            }
+         }
+      ],
+      yAxis: [
+      {
+         type: 'value',
+         axisLabel: {
+            formatter: '{value}'
+         }
+      }
+      ],
+      grid: {
+         x: 60,
+         y: 40,
+         x2: 30,
+         y2: 40,
+         borderColor: '#000'
+      },
+      series: [
+         {
+            smooth: true,
+            name: 'Total Contexts',
+            type: 'line',
+            data: [0, 0, 0, 0, 0, 0, 0]
+         }
+      ]
+   } ;
+   window.SdbSacManagerConf.TotalProceduresEchart = {
+      title: {
+         show: true,
+         text: ' Total Procedures',
+         textStyle: {
+            color: '#666',
+            fontFamily: 'Verdana,Georgia,宋体',
+            fontSize: 14
+         }
+      },
+      tooltip: {
+         enterable: true,
+         trigger: 'axis',
+         formatter: '{a0}: {c0}'
+      },
+      legend: {
+         data: ['Total Procedures']
+      },
+      animation: false,
+      addDataAnimation: false,
+      color: ['rgba(39,169,227,1)'],
+      xAxis: [
+         {
+            type: 'category',
+            boundaryGap: false,
+            data: ['0', '5', '10', '15', '20', '25', '30'],
+            splitLine: {
+               lineStyle: {
+                  color: ['#fff']
+               }
+            }
+         }
+      ],
+      yAxis: [
+      {
+         type: 'value',
+         axisLabel: {
+            formatter: '{value}'
+         }
+      }
+      ],
+      grid: {
+         x: 60,
+         y: 40,
+         x2: 30,
+         y2: 40,
+         borderColor: '#000'
+      },
+      series: [
+         {
+            smooth: true,
+            name: 'Total Procedures',
+            type: 'line',
+            data: [0, 0, 0, 0, 0, 0, 0]
+         }
+      ]
+   } ;
+   window.SdbSacManagerConf.TotalTransactionsEchart = {
+      title: {
+         show: true,
+         text: ' Total Transactions',
+         textStyle: {
+            color: '#666',
+            fontFamily: 'Verdana,Georgia,宋体',
+            fontSize: 14
+         }
+      },
+      tooltip: {
+         enterable: true,
+         trigger: 'axis',
+         formatter: '{a0}: {c0}'
+      },
+      legend: {
+         data: ['Total Transactions']
+      },
+      animation: false,
+      addDataAnimation: false,
+      color: ['rgba(39,169,227,1)'],
+      xAxis: [
+         {
+            type: 'category',
+            boundaryGap: false,
+            data: ['0', '5', '10', '15', '20', '25', '30'],
+            splitLine: {
+               lineStyle: {
+                  color: ['#fff']
+               }
+            }
+         }
+      ],
+      yAxis: [
+      {
+         type: 'value',
+         axisLabel: {
+            formatter: '{value}'
+         }
+      }
+      ],
+      grid: {
+         x: 60,
+         y: 40,
+         x2: 30,
+         y2: 40,
+         borderColor: '#000'
+      },
+      series: [
+         {
+            smooth: true,
+            name: 'Total Transactions',
+            type: 'line',
+            data: [0, 0, 0, 0, 0, 0, 0]
+         }
+      ]
+   } ;
 }());

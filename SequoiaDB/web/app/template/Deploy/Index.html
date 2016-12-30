@@ -19,14 +19,25 @@
 
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
 
-            <div class="DataListBox" style="padding:15px 20px;margin-bottom:15px;" ng-repeat="moduleInfo in moduleList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == moduleInfo['ClusterName']" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[moduleInfo['Color']%4]" ng-show="clusterList.length > 0">
+            <div class="DataListBox" style="padding:15px 20px;margin-bottom:15px;position:relative;" ng-repeat="moduleInfo in moduleList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == moduleInfo['ClusterName']" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[moduleInfo['Color']%4]" ng-show="clusterList.length > 0">
 
                <div style="height:50px;">
                   <div class="pull-left" style="width:40px;height:40px;">
                      <i class="fa fa-database" style="color:#02CCAA;font-size:230%;"></i>
                   </div>
                   <div class="pull-left" ng-container="{offsetX:-100,height:40}">
-                     <div class="Ellipsis" style="font-weight:bold;height:21px;">
+                     <div class="Ellipsis2" style="font-weight:bold;height:21px;">
+                        <span ng-if="moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution'">
+                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}"  dropdown-menu="SelectMenu" ng-click="SaveBsName(moduleInfo['BusinessName'])">
+                              <i class="fa fa-lock"></i>
+                              <span>{{autoLanguage("鉴权")}} </span>
+                           </a>
+                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority'] == undefined" ng-click="SetAuthorityModel(moduleInfo['BusinessName'])" ng-attr="{'data-desc':autoLanguage('未开启鉴权，点击设置。')}">
+                              <i class="fa fa-unlock"></i>
+                              <span>{{autoLanguage("鉴权")}} </span>
+                           </a>
+                           <span style="color:#ccc;font-size:100%;font-weight:normal;">|</span>
+                        </span>
                         <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a>
                         <span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>
                      </div>

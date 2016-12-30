@@ -1,29 +1,15 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Deploy.Sdb.Mod.Ctrl', function( $scope, $compile, $location, $rootScope, SdbRest ){
-
+   sacApp.controllerProvider.register( 'Deploy.Sdb.Mod.Ctrl', function( $scope, $compile, $location, $rootScope, $interval, SdbRest, SdbFunction, Loading ){
+      
       //初始化
-      $scope.NodeListOptions = {
-         'titleWidth': [ '26px', 23, 18, 31, 10, 18 ]
-      } ;
-      $scope.GroupList          = [] ;
-      $scope.search_hostname    = { 'text': '' } ;
-      $scope.search_port        = { 'text': '' } ;
-      $scope.search_path        = { 'text': '' } ;
-      $scope.search_role        = { 'text': '' } ;
-      $scope.search_group       = { 'text': '' } ;
-      $scope.search_groupList   = [] ;
-      $scope.search_roleList    = [
-         { 'key': 'coord', 'value': 'coord' },
-         { 'key': 'catalog', 'value': 'catalog' },
-         { 'key': 'data', 'value': 'data' }
-      ] ;
-      $scope.search_group_disabled = false ;
-      $scope.NodeList           = [] ;
-      $scope.Template           = [] ;
-      $scope.installConfig      = {} ;
-      $scope.StandaloneShow     = 1 ;
+      var selectGroup        = [ { 'key': $scope.autoLanguage( '全部' ), 'value': '' } ] ;
+      $scope.GroupList       = [] ;
+      $scope.NodeList        = [] ;
+      $scope.Template        = [] ;
+      $scope.installConfig   = {} ;
+      $scope.StandaloneShow  = 1 ;
       $scope.StandaloneForm1 = {
          'keyWidth': '160px',
          'inputList': []
@@ -36,6 +22,59 @@
          'keyWidth': '160px',
          'inputList': []
       } ;
+      //编辑配置
+      $scope.ConfigWindows = {
+         'config': {
+            'type': 'json',
+            'text': ''
+         },
+         'callback': {}
+      } ;
+      //节点列表
+      $scope.NodeTable = {
+         'title': {
+            'checked':     '',
+            'HostName':    $scope.autoLanguage( '主机名' ),
+            'svcname':     $scope.autoLanguage( '服务名' ),
+            'dbpath':      $scope.autoLanguage( '数据路径' ),
+            'role':        $scope.autoLanguage( '角色' ),
+            'datagroupname':  $scope.autoLanguage( '分区组' )
+         },
+         'body': [],
+         'options': {
+            'width': {
+               'checked': '26px',
+               'HostName': '23%',
+               'svcname': '18%',
+               'dbpath': '31%',
+               'role': '10%',
+               'datagroupname': '18%'
+            },
+            'sort': {
+               'checked': false,
+               'HostName': true,
+               'svcname': true,
+               'dbpath': true,
+               'role': true,
+               'datagroupname': true
+            },
+            'max': 50,
+            'filter': {
+               'checked': null,
+               'HostName': 'indexof',
+               'svcname': 'indexof',
+               'dbpath': 'indexof',
+               'role': [
+                  { 'key': $scope.autoLanguage( '全部' ), 'value': '' },
+                  { 'key': 'coord', 'value': 'coord' },
+                  { 'key': 'catalog', 'value': 'catalog' },
+                  { 'key': 'data', 'value': 'data' }
+               ],
+               'datagroupname': selectGroup
+            }
+         },
+         'callback': {}
+      } ;
 
       $scope.Configure   = $rootScope.tempData( 'Deploy', 'ModuleConfig' ) ;
       var deployType     = $rootScope.tempData( 'Deploy', 'Model' ) ;
@@ -43,54 +82,20 @@
       $scope.ModuleName  = $rootScope.tempData( 'Deploy', 'ModuleName' ) ;
       if( deployType == null || clusterName == null || $scope.ModuleName == null || $scope.Configure == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployType, $scope['Url']['Action'], 'sequoiadb' ) ;
       if( $scope.stepList['info'].length == 0 )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       //单机模式，切换普通和高级
       $scope.SwitchParam = function( type ){
          $scope.StandaloneShow = type ;
-      }
-
-      //过滤节点列表
-      function filterNodeList()
-      {
-         if( $scope.search_role.text == 'coord' || $scope.search_role.text == 'catalog' )
-         {
-            $scope.search_group.text = '' ;
-            $scope.search_group_disabled = true ;
-         }
-         else
-         {
-            $scope.search_group_disabled = false ;
-         }
-         $.each( $scope.NodeList, function( index, nodeInfo ){
-            if( ( $scope.search_hostname.text.length > 0 && nodeInfo['HostName'].indexOf( $scope.search_hostname.text ) < 0 ) ||
-                  ( $scope.search_port.text.length > 0 && nodeInfo['svcname'].indexOf( $scope.search_port.text ) < 0 ) ||
-                  ( $scope.search_path.text.length > 0 && nodeInfo['dbpath'].indexOf( $scope.search_path.text ) < 0 ) ||
-                  ( ( $scope.search_role.text != '' && $scope.search_role.text != null ) && nodeInfo['role'] != $scope.search_role.text ) ||
-                  ( ( $scope.search_group.text != '' && $scope.search_group.text != null ) && nodeInfo['datagroupname'] != $scope.search_group.text ) )
-            {
-               $scope.NodeList[index]['show'] = false ;
-            }
-            else
-            {
-               $scope.NodeList[index]['show'] = true ;
-            }
-         } ) ;
-         if( typeof( $scope.NodeListOptions.onResize ) == 'function' )
-         {
-            setTimeout( function(){
-               $scope.NodeListOptions.onResize() ;
-            } ) ;
-         }
       }
 
       //创建 创建分区组 弹窗
@@ -140,7 +145,18 @@
          }
       }
 
-      //创建 设置节点配置 弹窗
+      /*
+      创建 设置节点配置 弹窗
+            type    0   默认配置, 创建新节点
+                    1   新建配置, 创建新节点
+                    2   加载指定节点配置, 创建新节点
+                    3   加载指定节点配置, 修改节点
+                    4   加载批量节点配置, 修改节点
+            groupIndex  分区组的索引id
+            hostIndex   主机的索引id
+            nodeIndex   节点的索引id
+            isShow      是否马上打开弹窗
+      */
       $scope.CreateSetNodeConfModel = function( type, groupIndex, hostIndex, nodeIndex, isShow ){
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '编辑节点配置' ) ;
@@ -242,7 +258,7 @@
                    key.toLowerCase() != 'datagroupname' &&
                    key.toLowerCase() != 'role' &&
                    key.toLowerCase() != 'checked' &&
-                   key.toLowerCase() != 'show' &&
+                   key.toLowerCase() != 'i' &&
                    loadName.indexOf( key.toLowerCase() ) == -1 )
                {
                   if( isFirst )
@@ -267,7 +283,7 @@
             //批量加载配置
             var sum = 0 ;
             $.each( $scope.NodeList, function( index ){
-               if( $scope.NodeList[index]['checked'] == true && $scope.NodeList[index]['show'] != false )
+               if( $scope.NodeList[index]['checked'] == true )
                {
                   ++sum ;
                }
@@ -284,7 +300,7 @@
                var value = '' ;
                var offset = null ;
                $.each( $scope.NodeList, function( index2 ){
-                  if( $scope.NodeList[index2]['checked'] == true && $scope.NodeList[index2]['show'] != false )
+                  if( $scope.NodeList[index2]['checked'] == true )
                   {
                      if( name == 'dbpath' )
                      {
@@ -349,7 +365,7 @@
                loadName.push( name.toLowerCase() ) ;
                var value = '' ;
                $.each( $scope.NodeList, function( index2 ){
-                  if( $scope.NodeList[index2]['checked'] == true && $scope.NodeList[index2]['show'] != false )
+                  if( $scope.NodeList[index2]['checked'] == true )
                   {
                      if( isFirst == true )
                      {
@@ -368,14 +384,14 @@
             //加载自定义配置项
             var customConfig = [] ;
             $.each( $scope.NodeList, function( nodeIndex ){
-               if( $scope.NodeList[nodeIndex]['checked'] == true && $scope.NodeList[nodeIndex]['show'] != false )
+               if( $scope.NodeList[nodeIndex]['checked'] == true )
                {
                   $.each( $scope.NodeList[nodeIndex], function( key, value ){
                      if( key.toLowerCase() != 'hostname' &&
                          key.toLowerCase() != 'datagroupname' &&
                          key.toLowerCase() != 'role' &&
                          key.toLowerCase() != 'checked' &&
-                         key.toLowerCase() != 'show' &&
+                         key.toLowerCase() != 'i' &&
                          loadName.indexOf( key.toLowerCase() ) == -1 &&
                          customConfig.indexOf( key.toLowerCase() ) == -1 )
                      {
@@ -389,7 +405,7 @@
                var value = '' ;
                var isFirst2 = true ;
                $.each( $scope.NodeList, function( nodeIndex ){
-                  if( $scope.NodeList[nodeIndex]['checked'] == true && $scope.NodeList[nodeIndex]['show'] != false )
+                  if( $scope.NodeList[nodeIndex]['checked'] == true )
                   {
                      if( isFirst2 == true )
                      {
@@ -468,9 +484,9 @@
                       configInfo['name'].toLowerCase() == 'datagroupname' ||
                       configInfo['name'].toLowerCase() == 'role' ||
                       configInfo['name'].toLowerCase() == 'checked' ||
-                      configInfo['name'].toLowerCase() == 'show' )
+                      configInfo['name'].toLowerCase() == 'i' )
                   {
-                     error.push( { 'name': 'other', 'error': $scope.autoLanguage( '自定义配置不能设置HostName、datagroupname、role、checked、show。' ) } ) ;
+                     error.push( { 'name': 'other', 'error': $scope.autoLanguage( '自定义配置不能设置HostName、datagroupname、role、checked、i。' ) } ) ;
                      return false ;
                   }
                } )
@@ -497,6 +513,7 @@
                   formVal['role'] = $scope.GroupList[groupIndex]['role'] ;
                   formVal['svcname'] = portEscape( formVal['svcname'], 0 ) ;
                   formVal['dbpath'] = dbpathEscape( formVal['dbpath'], formVal['HostName'], formVal['svcname'], formVal['role'], formVal['datagroupname'] ) ;
+                  formVal['i'] = $scope.NodeList.length ;
                   $scope.NodeList.push( formVal ) ;
                   if( $scope.GroupList[groupIndex]['role'] != 'coord' && $scope.GroupList[groupIndex]['nodeNum'] >= 7 )
                   {
@@ -506,8 +523,6 @@
                   {
                      $scope.GroupList[groupIndex]['DropdownMenu'][1]['disabled'] = false ;
                   }
-                  $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
-                  $scope.bindResize() ;
                }
                else if( type == 3 )
                {
@@ -519,7 +534,7 @@
                      'datagroupname': $scope.NodeList[nodeIndex]['datagroupname'],
                      'role': $scope.NodeList[nodeIndex]['role'],
                      'checked': $scope.NodeList[nodeIndex]['checked'],
-                     'show': $scope.NodeList[nodeIndex]['show']
+                     'i': $scope.NodeList[nodeIndex]['i']
                   } ;
                   $.each( formVal, function( key, value ){
                      if( key == '' )
@@ -534,7 +549,7 @@
                   //保存批量节点配置
                   var num = 0 ;
                   $.each( $scope.NodeList, function( index ){
-                     if( $scope.NodeList[index]['checked'] == true && $scope.NodeList[index]['show'] != false )
+                     if( $scope.NodeList[index]['checked'] == true )
                      {
                         //把配置复制出来
                         var newFormVal = $.extend( true, {}, formVal ) ;
@@ -552,7 +567,7 @@
                            'svcname': $scope.NodeList[index]['svcname'],
                            'role': $scope.NodeList[index]['role'],
                            'checked': $scope.NodeList[index]['checked'],
-                           'show': $scope.NodeList[index]['show']
+                           'i': $scope.NodeList[index]['i']
                         } ;
                         $.each( newFormVal, function( key, value ){
                            if( ( ( key == 'dbpath' || key == 'svcname' ) && value.length == 0 ) || key == '' )
@@ -751,7 +766,6 @@
                {
                   $scope.GroupList[index]['DropdownMenu'][1]['disabled'] = true ;
                }
-               $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
             }
             return isAllClear ;
          }
@@ -805,6 +819,11 @@
                   }
                } ) ;
                $scope.GroupList[index]['groupName'] = formVal['groupName'] ;
+               if( index >= 1 )
+               {
+                  selectGroup[ index - 1 ]['key'] = formVal['groupName'] ;
+                  selectGroup[ index - 1 ]['value'] = formVal['groupName'] ;
+               }
             }
             return isAllClear ;
          }
@@ -832,60 +851,326 @@
                }
                removeNode() ;
                $scope.GroupList.splice( index, 1 ) ;
+               if( index >= 1 )
+               {
+                  selectGroup.splice( index - 1, 1 ) ;
+               }
             } ) ;
          }
          else
          {
             $scope.GroupList.splice( index, 1 ) ;
+            if( index >= 1 )
+            {
+               selectGroup.splice( index - 1, 1 ) ;
+            }
          }
       }
 
-      $scope.$watch( 'search_hostname.text', function(){
-         filterNodeList() ;
-      } ) ;
-      $scope.$watch( 'search_port.text', function(){
-         filterNodeList() ;
-      } ) ;
-      $scope.$watch( 'search_path.text', function(){
-         filterNodeList() ;
-      } ) ;
-      $scope.$watch( 'search_role.text', function(){
-         filterNodeList() ;
-      } ) ;
-      $scope.$watch( 'search_group.text', function(){
-         filterNodeList() ;
-      } ) ;
+      //导入配置
+      var saveConfig = function(){
+         var isObject = function( val ){
+            return typeof( val ) == 'object' ;
+         }
+         //补充缺漏的配置
+         var addConfig = function( nodeInfo ){
+            if( typeof( nodeInfo['HostName'] ) == 'undefined' )
+            {
+               nodeInfo['HostName'] = 'Unknown' ;
+            }
+            $.each( $scope.Template, function( index, configInfo ){
+               if( typeof( nodeInfo[ configInfo['Name'] ] ) == 'undefined' )
+               {
+                  nodeInfo[ configInfo['Name'] ] = String( configInfo['Default'] ) ;
+               }
+            } ) ;
+         }
+         var json, data ;
+         //转成json字符串
+         if( $scope.ConfigWindows['config']['type'] == 'json' )
+         {
+            data = $scope.ConfigWindows['config']['text'] ;
+         }
+         else if( $scope.ConfigWindows['config']['type'] == 'xml' )
+         {
+            var xotree = new XML.ObjTree();
+				var dumper = new JKL.Dumper(); 
+				var tree = xotree.parseXML( $scope.ConfigWindows['config']['text'] ) ;
+				data = dumper.dump( tree ) ;
+         }
+         //解析成对象
+         try{
+            data = JSON.parse( data ) ;
+         }catch( e ){
+            alert( e.message ) ;
+            return false ;
+         }
+         //简单校验
+         if( isObject( data['Deploy'] ) == false )
+         {
+            alert( sprintf( $scope.autoLanguage( '导入失败, ?解析失败。' ), 'Deploy' ) ) ;
+            return false ;
+         }
+         var i = 0 ;
+         $scope.installConfig['Config'] = [] ;
+         //转换coord
+         if( isObject( data['Deploy']['Coord'] ) )
+         {
+            if( isArray( data['Deploy']['Coord']['Node'] ) )
+            {
+               $.each( data['Deploy']['Coord']['Node'], function( index, nodeInfo ){
+                  nodeInfo['role'] = 'coord' ;
+                  nodeInfo['datagroupname'] = '' ;
+                  nodeInfo['checked'] = false ;
+                  nodeInfo['i'] = i ;
+                  addConfig( nodeInfo ) ;
+                  $scope.installConfig['Config'].push( nodeInfo ) ;
+                  ++i ;
+               } ) ;
+            }
+            else if( isObject( data['Deploy']['Coord']['Node'] ) )
+            {
+               var nodeInfo = data['Deploy']['Coord']['Node'] ;
+               nodeInfo['role'] = 'coord' ;
+               nodeInfo['datagroupname'] = '' ;
+               nodeInfo['checked'] = false ;
+               nodeInfo['i'] = i ;
+               addConfig( nodeInfo ) ;
+               $scope.installConfig['Config'].push( nodeInfo ) ;
+               ++i ;
+            }
+         }
+         //转换catalog
+         if( isObject( data['Deploy']['Catalog'] ) )
+         {
+            if( isArray( data['Deploy']['Catalog']['Node'] ) )
+            {
+               $.each( data['Deploy']['Catalog']['Node'], function( index, nodeInfo ){
+                  nodeInfo['role'] = 'catalog' ;
+                  nodeInfo['datagroupname'] = '' ;
+                  nodeInfo['checked'] = false ;
+                  nodeInfo['i'] = i ;
+                  addConfig( nodeInfo ) ;
+                  $scope.installConfig['Config'].push( nodeInfo ) ;
+                  ++i ;
+               } ) ;
+            }
+            else if( isObject( data['Deploy']['Catalog']['Node'] ) )
+            {
+               var nodeInfo = data['Deploy']['Catalog']['Node'] ;
+               nodeInfo['role'] = 'catalog' ;
+               nodeInfo['datagroupname'] = '' ;
+               nodeInfo['checked'] = false ;
+               nodeInfo['i'] = i ;
+               addConfig( nodeInfo ) ;
+               $scope.installConfig['Config'].push( nodeInfo ) ;
+               ++i ;
+            }
+         }
+         //转换data
+         if( isObject( data['Deploy']['Data'] ) )
+         {
+            if( isArray( data['Deploy']['Data']['Group'] ) )
+            {
+               $.each( data['Deploy']['Data']['Group'], function( index, groupInfo ){
+                  if( typeof( groupInfo['GroupName'] ) == 'string' && isArray( groupInfo['Node'] ) )
+                  {
+                     $.each( groupInfo['Node'], function( index, nodeInfo ){
+                        nodeInfo['role'] = 'data' ;
+                        nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
+                        nodeInfo['checked'] = false ;
+                        nodeInfo['i'] = i ;
+                        addConfig( nodeInfo ) ;
+                        $scope.installConfig['Config'].push( nodeInfo ) ;
+                        ++i ;
+                     } ) ;
+                  }
+                  else if( typeof( groupInfo['GroupName'] ) == 'string' && isObject( groupInfo['Node'] ) )
+                  {
+                     var nodeInfo = groupInfo['Node'] ;
+                     nodeInfo['role'] = 'data' ;
+                     nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
+                     nodeInfo['checked'] = false ;
+                     nodeInfo['i'] = i ;
+                     addConfig( nodeInfo ) ;
+                     $scope.installConfig['Config'].push( nodeInfo ) ;
+                     ++i ;
+                  }
+               } ) ;
+            }
+            else if( isObject( data['Deploy']['Data']['Group'] ) )
+            {
+               var groupInfo = data['Deploy']['Data']['Group'] ;
+               if( typeof( groupInfo['GroupName'] ) == 'string' && isArray( groupInfo['Node'] ) )
+               {
+                  $.each( groupInfo['Node'], function( index, nodeInfo ){
+                     nodeInfo['role'] = 'data' ;
+                     nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
+                     nodeInfo['checked'] = false ;
+                     nodeInfo['i'] = i ;
+                     addConfig( nodeInfo ) ;
+                     $scope.installConfig['Config'].push( nodeInfo ) ;
+                     ++i ;
+                  } ) ;
+               }
+               else if( typeof( groupInfo['GroupName'] ) == 'string' && isObject( groupInfo['Node'] ) )
+               {
+                  var nodeInfo = groupInfo['Node'] ;
+                  nodeInfo['role'] = 'data' ;
+                  nodeInfo['datagroupname'] = groupInfo['GroupName'] ;
+                  nodeInfo['checked'] = false ;
+                  nodeInfo['i'] = i ;
+                  addConfig( nodeInfo ) ;
+                  $scope.installConfig['Config'].push( nodeInfo ) ;
+                  ++i ;
+               }
+            }
+         }
+         $scope.NodeList = $scope.installConfig['Config'] ;
+         $scope.GroupList = [] ;
+         selectGroup = [ { 'key': $scope.autoLanguage( '全部' ), 'value': '' } ] ;
+         $scope.NodeTable['options']['filter'][5] = selectGroup ;
+         $.each( $scope.NodeList, function( index, nodeInfo ){
+            countGroup( nodeInfo['role'], nodeInfo['datagroupname'], 1 ) ;
+         } ) ;
+         $scope.NodeTable['body'] = $scope.NodeList ;
+         return true ;
+      }
 
+      //创建 导出配置 弹窗
+      $scope.CreateExportConfigModel = function(){
+         $scope.BuildConfig() ;
+         //设置确定按钮
+         $scope.ConfigWindows['callback']['SetOkButton']( $scope.autoLanguage( '保存' ), function(){
+            return saveConfig() ;
+         } ) ;
+         //关闭窗口滚动条
+         $scope.ConfigWindows['callback']['DisableBodyScroll']() ;
+         //设置标题
+         $scope.ConfigWindows['callback']['SetTitle']( $scope.autoLanguage( '编辑配置' ) ) ;
+         //设置图标
+         $scope.ConfigWindows['callback']['SetIcon']( 'fa-edit' ) ;
+         //打开窗口
+         $scope.ConfigWindows['callback']['Open']() ;
+      }
+
+      //下载配置
+      $scope.DownloadConfig = function(){
+         var blob = new Blob( [ $scope.ConfigWindows['config']['text'] ], { type: "text/plain;charset=utf-8" } ) ;
+         if( $scope.ConfigWindows['config']['type'] == 'json' )
+         {
+            saveAs( blob, $scope.ModuleName + '.json' ) ;
+         }
+         else if( $scope.ConfigWindows['config']['type'] == 'xml' )
+         {
+            saveAs( blob, $scope.ModuleName + '.xml' ) ;
+         }
+      }
+
+      //生成对应格式的配置
+      $scope.BuildConfig = function(){
+         $scope.ConfigWindows['config']['text'] = '' ;
+         var newConfig = { 'Deploy': { 'Coord': { 'Node': [] }, 'Catalog': { 'Node': [] }, 'Data': { 'Group': [] } } } ;
+         var config = convertConfig() ;
+         if( !config )
+            return ;
+         var groupIsExist = function( groupName ){
+            var isExist = -1 ;
+            $.each( newConfig['Deploy']['Data']['Group'], function( index, groupInfo ){
+               if( groupInfo['GroupName'] == groupName )
+               {
+                  isExist = index ;
+                  return false ;
+               }
+            } ) ;
+            return isExist ;
+         }
+         if( config['DeployMod'] == 'distribution' )
+         {
+            Loading.create() ;
+            var length = config['Config'].length ;
+            var index = 0 ;
+            //定时循环转换，防止浏览器卡死
+            var timer = $interval( function(){
+               var nodeInfo = config['Config'][index] ;
+               if( nodeInfo['role'] == 'coord' )
+               {
+                  newConfig['Deploy']['Coord']['Node'].push( deleteJson( nodeInfo, [ 'datagroupname', 'role' ] ) ) ;
+               }
+               else if( nodeInfo['role'] == 'catalog' )
+               {
+                  newConfig['Deploy']['Catalog']['Node'].push( deleteJson( nodeInfo, [ 'datagroupname', 'role' ] ) ) ;
+               }
+               else if( nodeInfo['role'] == 'data' )
+               {
+                  var id = groupIsExist( nodeInfo['datagroupname'] ) ;
+                  if( id >=0 )
+                  {
+                     newConfig['Deploy']['Data']['Group'][id]['Node'].push( deleteJson( nodeInfo, [ 'datagroupname', 'role' ] ) ) ;
+                  }
+                  else
+                  {
+                     newConfig['Deploy']['Data']['Group'].push( {
+                        'GroupName': nodeInfo['datagroupname'],
+                        'Node': [ deleteJson( nodeInfo, [ 'datagroupname', 'role' ] ) ]
+                     } ) ;
+                  }
+               }
+               ++index ;
+               if( index >= length )
+               {
+                  $interval.cancel( timer ) ;
+                  timer = $interval( function(){
+                     if( $scope.ConfigWindows['config']['type'] == 'json' )
+                     {
+                        $scope.ConfigWindows['config']['text'] = JSON.stringify( newConfig, null, 3 ) ;
+                     }
+                     else if( $scope.ConfigWindows['config']['type'] == 'xml' )
+                     {
+                        var xotree = new XML.ObjTree();
+                        $scope.ConfigWindows['config']['text'] = formatXml( xotree.writeXML( newConfig ) ) ;
+                     }
+                     Loading.cancel() ;
+                     $interval.cancel( timer ) ;
+                  } ) ;
+               }
+            } ) ;
+         }
+      }
+
+      //选择分区组
       $scope.SwitchGroup = function( index ){
+         //关闭分区组列表其他组的选中状态
          $.each( $scope.GroupList, function( index2 ){
             if( index != index2 )
             {
                $scope.GroupList[index2]['checked'] = false ;
             }
          } ) ;
+         //切换分区组状态
          $scope.GroupList[index]['checked'] = !$scope.GroupList[index]['checked'] ;
          if( $scope.GroupList[index]['checked'] == true )
          {
-            $scope.search_role.text = $scope.GroupList[index]['role'] ;
+            //选中状态
+            $scope.NodeTable['callback']['SetFilter']( 'HostName', '' ) ;
+            $scope.NodeTable['callback']['SetFilter']( 'svcname', '' ) ;
+            $scope.NodeTable['callback']['SetFilter']( 'dbpath', '' ) ;
             if( $scope.GroupList[index]['role'] == 'data' )
             {
-               $scope.search_group.text = $scope.GroupList[index]['groupName'] ;
+               $scope.NodeTable['callback']['SetFilter']( 'role', $scope.GroupList[index]['role'] ) ;
+               $scope.NodeTable['callback']['SetFilter']( 'datagroupname', $scope.GroupList[index]['groupName'] ) ;
             }
             else
             {
-               $scope.search_group.text = '' ;
+               $scope.NodeTable['callback']['SetFilter']( 'role', $scope.GroupList[index]['role'] ) ;
+               $scope.NodeTable['callback']['SetFilter']( 'datagroupname', '' ) ;
             }
          }
          else
          {
-            $scope.search_role.text = '' ;
-            $scope.search_group.text = '' ;
-         }
-         if( typeof( $scope.NodeListOptions.onResize ) == 'function' )
-         {
-            setTimeout( function(){
-               $scope.NodeListOptions.onResize() ;
-            } ) ;
+            //取消选中状态
+            $scope.NodeTable['callback']['SetFilter']( 'role', '' ) ;
+            $scope.NodeTable['callback']['SetFilter']( 'datagroupname', '' ) ;
          }
       }
 
@@ -927,7 +1212,7 @@
             }
             if( role == 'data' )
             {
-               $scope.search_groupList.push( { 'key': groupName, 'value': groupName } ) ;
+               selectGroup.push( { 'key': groupName, 'value': groupName } ) ;
             }
          }
       }
@@ -940,6 +1225,10 @@
                $scope.installConfig = configure[0] ;
                $scope.Template = configure[0]['Property'] ;
                $scope.NodeList = configure[0]['Config'] ;
+               $.each( $scope.NodeList, function( index ){
+                  $scope.NodeList[index]['i'] = index ;
+               } ) ;
+               $scope.NodeTable['body'] = $scope.NodeList ;
                if( $scope.Configure['DeployMod'] == 'standalone' )
                {
                   $scope.StandaloneForm1 = {
@@ -1008,9 +1297,7 @@
                $.each( $scope.NodeList, function( index, nodeInfo ){
                   countGroup( nodeInfo['role'], nodeInfo['datagroupname'], 1 ) ;
                } ) ;
-               $scope.NodeGridTool = sprintf( $scope.autoLanguage( '一共 ? 个节点' ), $scope.NodeList.length ) ;
                $scope.$apply() ;
-               $scope.bindResize() ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -1023,6 +1310,7 @@
 
       getModuleConfig() ;
 
+      //打开帮助信息
       $scope.Helper = function(){
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '帮助' ) ;
@@ -1076,26 +1364,44 @@
          }
       }
 
+      //全选
       $scope.SelectAll = function(){
-         $.each( $scope.NodeList, function( index ){
-            if( $scope.NodeList[index]['show'] != false )
-            {
-               $scope.NodeList[index]['checked'] = true ;
-            }
+         var dataList ;
+         var isFilter = $scope.NodeTable['callback']['GetFilterStatus']() ;
+         if( isFilter )
+         {
+            //如果开了过滤，那么只修改过滤的
+            dataList = $scope.NodeTable['callback']['GetFilterAllData']() ;
+         }
+         else
+         {
+            dataList = $scope.NodeTable['callback']['GetAllData']() ;
+         }
+         $.each( dataList, function( index ){
+            dataList[index]['checked'] = true ;
          } ) ;
       }
 
+      //反选
       $scope.Unselect = function(){
-         $.each( $scope.NodeList, function( index ){
-            if( $scope.NodeList[index]['show'] != false )
-            {
-               $scope.NodeList[index]['checked'] = !$scope.NodeList[index]['checked'] ;
-            }
+         var dataList ;
+         var isFilter = $scope.NodeTable['callback']['GetFilterStatus']() ;
+         if( isFilter )
+         {
+            //如果开了过滤，那么只修改过滤的
+            dataList = $scope.NodeTable['callback']['GetFilterAllData']() ;
+         }
+         else
+         {
+            dataList = $scope.NodeTable['callback']['GetAllData']() ;
+         }
+         $.each( dataList, function( index ){
+            dataList[index]['checked'] = !dataList[index]['checked'] ;
          } ) ;
       }
 
       $scope.GotoConf = function(){
-         $location.path( '/Deploy/SDB-Conf' ) ;
+         $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       var installSdb = function( installConfig ){
@@ -1103,7 +1409,7 @@
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
                $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( '/Deploy/InstallModule' ) ;
+               $location.path( '/Deploy/InstallModule' ).search( { 'r': new Date().getTime() } ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -1114,7 +1420,7 @@
          } ) ;
       }
 
-      $scope.GotoInstall = function(){
+      var convertConfig = function(){
          var configure = {} ;
          configure['ClusterName']  = $scope.installConfig['ClusterName'] ;
          configure['BusinessType'] = $scope.installConfig['BusinessType'] ;
@@ -1124,7 +1430,7 @@
          {
             configure['Config'] = $.extend( true, [], $scope.installConfig['Config'] ) ;
             $.each( configure['Config'], function( index ){
-               configure['Config'][index] = deleteJson( configure['Config'][index], [ 'checked', 'show' ] ) ;
+               configure['Config'][index] = deleteJson( configure['Config'][index], [ 'checked', 'i' ] ) ;
                configure['Config'][index] = convertJsonValueString( configure['Config'][index] ) ;
             } ) ;
          }
@@ -1150,9 +1456,9 @@
                       configInfo['name'].toLowerCase() == 'datagroupname' ||
                       configInfo['name'].toLowerCase() == 'role' ||
                       configInfo['name'].toLowerCase() == 'checked' ||
-                      configInfo['name'].toLowerCase() == 'show' )
+                      configInfo['name'].toLowerCase() == 'i' )
                   {
-                     error.push( { 'name': 'other', 'error': $scope.autoLanguage( '自定义配置不能设置HostName、datagroupname、role、checked、show。' ) } ) ;
+                     error.push( { 'name': 'other', 'error': $scope.autoLanguage( '自定义配置不能设置HostName、datagroupname、role、checked、i。' ) } ) ;
                      return false ;
                   }
                } )
@@ -1183,7 +1489,13 @@
                return ;
             }
          }
-         installSdb( configure ) ;
+         return configure ;
+      }
+
+      $scope.GotoInstall = function(){
+         var configure = convertConfig() ;
+         if( configure )
+            installSdb( configure ) ;
       }
 
    } ) ;

@@ -7,20 +7,20 @@
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       if( clusterName == null || moduleType != 'sequoiasql' || moduleName == null )
       {
-         $location.path( '/Transfer' ) ;
+         $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
 
       var moduleInfo = SdbFunction.LocalData( 'SdbModuleInfo' ) ;
       if( moduleInfo == null )
       {
-         $location.path( 'Data/SQL-Metadata/Index' ) ;
+         $location.path( 'Data/SQL-Metadata/Index' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
       try{
          moduleInfo = JSON.parse( moduleInfo ) ;
       }catch( e ){
-         $location.path( 'Data/SQL-Metadata/Index' ) ;
+         $location.path( 'Data/SQL-Metadata/Index' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
       var appendOnly = false ;

@@ -1,0 +1,86 @@
+<div ng-controller="Monitor.HostList.HostsNature.Ctrl" ng-container="{}">
+   <div style="background:#F4F4F4;" ng-container="{height:57}">
+      <div class="nav-new">
+         <div ng-click="GotoNodes()">{{autoLanguage("节点")}}</div>
+         <div ng-click="GotoResources()">{{autoLanguage("资源")}}</div>
+         <div class="active" ng-click="GotoHosts()">{{autoLanguage("主机")}}</div>
+         <!--<div ng-click="GotoUser()">{{autoLanguage("安全")}}</div>-->
+      </div>
+   </div>
+   <div style="padding:8px 15px 10px 15px;" ng-container="{offsetY:-60}">
+      <div class="underlineTab" style="padding-top:10px;border-top:2px solid #F0F0F0;" ng-container="{height:50,marginTop:10}">
+         <ul class="left">
+            <li>
+               <a href="#/Monitor/SDB-Host/List/Index">{{autoLanguage("主机列表")}}</a>
+            </li>
+            <li>
+               <a href="#/Monitor/SDB-Host/List/Charts">{{autoLanguage("图表")}}</a>
+            </li>
+            <li class="active">
+               <a href="#/Monitor/SDB-Host/List/HostsSnapshot">{{autoLanguage("主机快照")}}</a>
+            </li>
+         </ul>
+      </div>
+      <div style="color:#606060;font-size:90%;height:30px;margin:10px 0;">
+         <button class="topBtn" ng-click="OpenBrushWindows()">{{autoLanguage("实时刷新设置")}}</button>&nbsp;
+         <button class="topBtn" ng-click="OpenShowFieldDropdown($event)">{{autoLanguage("选择显示列")}}&nbsp;<i class="fa fa-caret-down"></i></button>
+         <div ng-dropdown="config in FieldDropdown.config" dropdown-callback="FieldDropdown.callback">
+            <label class="Ellipsis" style="padding:5px 10px;display:block;"><input type="checkbox" ng-model="config.show" />&nbsp;{{config.field}}</label>
+            <button class="btn btn-primary" style="width:100%;" dropdown-config="last" ng-click="SaveField()">{{autoLanguage("确定")}}</button>
+         </div>
+      </div>
+
+      <div ng-windows="config as CreateBrush.config" windows-callback="CreateBrush.callback">
+         <div form-create para="config"></div>
+      </div>
+
+      <div create-timer="Timer.config" timer-callback="Timer.callback"></div>
+      <div ng-container="{offsetY:-112}" ng-table="HostTable['options']" table-title="HostTable['title']" table-content="hostInfo in HostTable['body']" table-callback="HostTable['callback']">
+         <div class="Ellipsis" table-key="Status">
+            <i class="fa fa-circle" ng-style="{true:{'color':'#00CC66'},false:{'color':'#D9534F'}}[hostInfo['Status']]"></i>&nbsp;
+            <span ng-if="hostInfo['Status'] == true">{{autoLanguage('正常')}}</span>
+            <span ng-if="hostInfo['Status'] == false">{{sprintf(autoLanguage('异常, 错误码: ?。'),hostInfo['Flag'])}}</span>
+         </div>
+         <div class="Ellipsis" table-key="HostName">
+            <a class="linkButton" ng-click="GotoHost(hostInfo['HostName'])">{{hostInfo['HostName']}}</a>
+         </div>
+         <div class="Ellipsis" table-key="IP">{{hostInfo['IP']}}</div>
+         <div class="Ellipsis" table-key="CPUUsed">
+            <span ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[hostInfo['CPUUsed'] == LastValue[hostInfo['i']]['CPUUsed'] ? '0' : (hostInfo['CPUUsed'] > LastValue[hostInfo['i']]['CPUUsed'] ? '1' : '-1' )]">
+               {{hostInfo['CPUUsed']}}<span ng-if="hostInfo['CPUUsed'] != '-'">%</span>
+            </span>
+         </div>
+         <div class="Ellipsis" table-key="Memory">
+            <span ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[hostInfo['Memory'] == LastValue[hostInfo['i']]['Memory'] ? '0' : (hostInfo['Memory'] > LastValue[hostInfo['i']]['Memory'] ? '1' : '-1' )]">
+               {{hostInfo['Memory']}}
+            </span>
+         </div>
+         <div class="Ellipsis" table-key="Disk">
+            <span ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[hostInfo['Disk'] == LastValue[hostInfo['i']]['Disk'] ? '0' : (hostInfo['Disk'] > LastValue[hostInfo['i']]['Disk'] ? '1' : '-1' )]">
+               {{hostInfo['Disk']}}
+            </span>
+         </div>
+         <div class="Ellipsis" table-key="NetInValue">
+            <span ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[hostInfo['NetInValue'] == LastValue[hostInfo['i']]['NetInValue'] ? '0' : (hostInfo['NetInValue'] > LastValue[hostInfo['i']]['NetInValue'] ? '1' : '-1' )]">
+               {{hostInfo['NetInValue']}}<span ng-if="hostInfo['NetInValue'] != '-'">MB</span>
+            </span>
+         </div>
+         <div class="Ellipsis" table-key="NetOutValue">
+            <span ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[hostInfo['NetOutValue'] == LastValue[hostInfo['i']]['NetOutValue'] ? '0' : (hostInfo['NetOutValue'] > LastValue[hostInfo['i']]['NetOutValue'] ? '1' : '-1' )]">
+               {{hostInfo['NetOutValue']}}<span ng-if="hostInfo['NetOutValue'] != '-'">MB</span>
+            </span>
+         </div>
+         <div class="Ellipsis" table-key="NetInPackets">
+            <span ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[hostInfo['NetInPackets'] == LastValue[hostInfo['i']]['NetInPackets'] ? '0' : (hostInfo['NetInPackets'] > LastValue[hostInfo['i']]['NetInPackets'] ? '1' : '-1' )]">
+               {{hostInfo['NetInPackets']}}
+            </span>
+         </div>
+         <div class="Ellipsis" table-key="NetOutPackets">
+            <span ng-style="{'1':{'color':'#D9534F','font-weight':'bold'},'-1':{'color':'#00CC66','font-weight':'bold'},'0':{'color':'#000','font-weight':'normal'}}[hostInfo['NetOutPackets'] == LastValue[hostInfo['i']]['NetOutPackets'] ? '0' : (hostInfo['NetOutPackets'] > LastValue[hostInfo['i']]['NetOutPackets'] ? '1' : '-1' )]">
+               {{hostInfo['NetOutPackets']}}
+            </span>
+         </div>
+      </div>
+
+   </div>
+</div>

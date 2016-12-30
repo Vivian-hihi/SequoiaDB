@@ -1,6 +1,6 @@
 (function () {
    var sacApp = window.SdbSacManagerModule;
-   sacApp.service( 'SdbFunction', function( $rootScope ) {
+   sacApp.service( 'SdbFunction', function( $rootScope, $window ) {
       var g = this;
      
       //获取json的键列表
@@ -367,5 +367,41 @@
             }
          } ) ;
       }
+
+      //监控onResize
+      var listOfResizeFun = [] ;
+      $rootScope.$watch( 'onResize', function(){
+         var length = listOfResizeFun.length ;
+         for( var i = 0; i < length; ++i )
+         {
+            listOfResizeFun[i]['fun']() ;
+         }
+      } ) ;
+
+      //解除绑定defer
+      var unbindDefer = function( scope ){
+         var length = listOfResizeFun.length ;
+         for( var i = 0; i < length; ++i )
+         {
+            if( scope['_bindDeferId'] == listOfResizeFun[i]['id'] )
+            {
+               listOfResizeFun.splice( i, 1 ) ;
+               break ;
+            }
+         }
+      }
+
+      //绑定重绘函数，并且在scope周期结束之后，销毁
+      g.defer = function( scope, resizeFun ){
+         var id = listOfResizeFun.length ;
+         scope['_bindDeferId'] = id ;
+         listOfResizeFun.push( { 'id': id, 'fun': resizeFun } ) ;
+         angular.element( $window ).bind( 'resize', resizeFun ) ;
+         scope.$on( '$destroy', function(){
+            angular.element( $window ).unbind( 'resize', resizeFun ) ;
+            unbindDefer( scope ) ;
+         } ) ;
+      }
    } ) ;
+
 }());

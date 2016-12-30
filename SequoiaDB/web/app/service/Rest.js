@@ -67,6 +67,12 @@
             if( g._queue.length > 0 )
             {
                var task = g._queue.shift() ;
+               if( task['scope'] !== false && task['scope'] !== $location.url() )
+               {
+                  //作用域不是全页面 并且 已经切换页面了
+                  setTimeout( g._run, 1 ) ;
+                  return ;
+               }
                if( typeof( task['init'] ) == 'function' )
                {
                   var value = task['init']() ;
@@ -115,11 +121,11 @@
                            g._execLoop( task, true ) ;
                         },
                         task['showLoading'], task['errJson'] ) ;
-               setTimeout( g._run, 100 ) ;
+               setTimeout( g._run, 1 ) ;
             }
             else
             {
-               setTimeout( g._run, 800 ) ;
+               setTimeout( g._run, 100 ) ;
             }
          }
          else
@@ -158,9 +164,17 @@
          type: POST,GET
          url: 路径
          data: post的数据
-         delay: 延迟多少毫秒
-         loop: 循环; 'success':执行成功时循环 'failed':执行失败时循环 true:成功失败都循环
-         scope: 作用域; false:所有页面  true:当前页面
+         event: 事件
+               init     初始化      init的返回值将会代替data的值
+               before   post前
+               success  成功
+               failed   失败
+               error    错误
+               complete 完成
+         options 选项
+               delay: 延迟多少毫秒
+               loop: 循环; 'success':执行成功时循环 'failed':执行失败时循环 true:成功失败都循环
+               scope: 作用域; false:所有页面  true:当前页面, 默认是true
       */
       g._insert = function( type, url, data, event, options, errJson ){
          if( typeof( options ) != 'object' || options === null )
@@ -352,7 +366,7 @@
             {
                try
                {
-                  before( XMLHttpRequest ) ;
+                  return before( XMLHttpRequest ) ;
                }
                catch( e )
                {

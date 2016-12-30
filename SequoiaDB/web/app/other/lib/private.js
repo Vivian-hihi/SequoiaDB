@@ -25,12 +25,14 @@ _IndexPublic.createNotSupportModel = function( $scope ){
 //检查当前操作是不是不支持的
 _IndexPublic.checkEditionAndSupport = function( $scope, moduleType, modelName ){
    var rc = true ;
+   /*
    if( window.Config['Edition'] != 'Enterprise' )
    {
       _IndexPublic.createCommunityModel( $scope ) ;
       rc = false ;
    }
-   else if( window.Config['Controller'][moduleType][modelName] == false )
+   else */
+   if( window.Config['Controller'][moduleType][modelName] == false )
    {
       _IndexPublic.createNotSupportModel( $scope ) ;
       rc = false ;
@@ -165,7 +167,7 @@ _IndexLeft.updateNav = function( $scope, $rootScope, SdbRest, callBack )
                }
             }
          } ) ;
-         $scope.$apply() ;
+         $scope.$digest() ;
          if( typeof( callBack ) == 'function' )
          {
             callBack( instanceList, $scope.Left.navMenu ) ;
@@ -236,8 +238,8 @@ var _IndexBottom = {} ;
 //获取系统时间
 _IndexBottom.getSystemTime = function( $scope )
 {
-   var times = $.now() ;
    setInterval( function(){
+      var times = $.now() ;
       $scope.$apply( function(){
          var date = new Date( times ) ;
          var year = date.getFullYear() ;
@@ -246,7 +248,6 @@ _IndexBottom.getSystemTime = function( $scope )
          var second = date.getSeconds() ;
          $scope.Bottom.year = year ;
          $scope.Bottom.nowtime = pad( hour, 2 ) + ':' + pad( minute, 2 ) + ':' + pad( second, 2 ) ;
-         times += 1000 ;
       } ) ;
    }, 1000 ) ;
 }
@@ -369,7 +370,7 @@ _IndexTop.logout = function( $location, SdbFunction ){
 var _Deploy = {} ;
 
 _Deploy.GotoStep = function( $location, action ){
-   $location.path( '/Deploy/' + action ) ;
+   $location.path( '/Deploy/' + action ).search( { 'r': new Date().getTime() } ) ;
 }
 
 //生成步骤图
@@ -617,4 +618,125 @@ _Deploy.ConvertTemplate = function( templateList, level ){
       }
    } ) ;
    return newTemplateList ;
+}
+
+/*
+   计算cpu性能百分比
+   hostList 主机性能列表
+   oldCpu   上一次汇总的cpu性能
+*/
+function getCpuUsePercent( hostList, oldCpu )
+{
+   var cpu = {
+      'Idle': {
+         'Megabit': 0, 
+         'Unit': 0
+      },
+      'Sys': {
+         'Megabit': 0, 
+         'Unit': 0
+      }, 
+      'Other': {
+         'Megabit': 0, 
+         'Unit': 0
+      }, 
+      'User': {
+         'Megabit': 0, 
+         'Unit': 0
+      }
+   } ;
+   var isError = false ;
+   //把所有主机的cpu对应属性累加
+   $.each( hostList, function( index, hostInfo ){
+      if( isNaN( hostInfo['errno'] ) == false && hostInfo['errno'] != 0 )
+      {
+         isError = true ;
+         return true ;
+      }
+      cpu['Idle']['Megabit']  += hostInfo['CPU']['Idle']['Megabit'] ;
+      cpu['Idle']['Unit']     += hostInfo['CPU']['Idle']['Unit'] ;
+      cpu['Sys']['Megabit']   += hostInfo['CPU']['Sys']['Megabit'] ;
+      cpu['Sys']['Unit']      += hostInfo['CPU']['Sys']['Unit'] ;
+      cpu['Other']['Megabit'] += hostInfo['CPU']['Other']['Megabit'] ;
+      cpu['Other']['Unit']    += hostInfo['CPU']['Other']['Unit'] ;
+      cpu['User']['Megabit']  += hostInfo['CPU']['User']['Megabit'] ;
+      cpu['User']['Unit']     += hostInfo['CPU']['User']['Unit'] ;
+   } ) ;
+   if( typeof( oldCpu ) == 'object' && oldCpu !== null )
+   {
+      //得出cpu总资源
+      var newCpuSum = {
+         'Megabit': cpu['Idle']['Megabit'] + cpu['Sys']['Megabit'] + cpu['Other']['Megabit'] + cpu['User']['Megabit'],
+         'Unit': cpu['Idle']['Unit'] + cpu['Sys']['Unit'] + cpu['Other']['Unit'] + cpu['User']['Unit']
+      } ;
+      //得出上一次的cpu总资源
+      var oldCpuSum = {
+         'Megabit': oldCpu['Idle']['Megabit'] + oldCpu['Sys']['Megabit'] + oldCpu['Other']['Megabit'] + oldCpu['User']['Megabit'],
+         'Unit': oldCpu['Idle']['Unit'] + oldCpu['Sys']['Unit'] + oldCpu['Other']['Unit'] + oldCpu['User']['Unit']
+      } ;
+      //计算出idle资源差值
+      var idleDiff = ( cpu['Idle']['Megabit'] - oldCpu['Idle']['Megabit'] ) * 1024 + ( cpu['Idle']['Unit'] - oldCpu['Idle']['Unit'] ) / 1024 ;
+      //计算出总资源差值
+      var sumDiff  = ( newCpuSum['Megabit'] - oldCpuSum['Megabit'] ) * 1024 + ( newCpuSum['Unit'] - oldCpuSum['Unit'] ) / 1024 ;
+      //计算出cpu使用率
+      var percent = fixedNumber( ( 1 - idleDiff / sumDiff ) * 100, 2 ) ;
+      oldCpu = cpu ;
+      if( isError )
+         percent = 0 ;
+      return percent ;
+   }
+   else
+   {
+      return cpu ;
+   }
+}
+
+/*
+   计算内存占用百分比
+   hostList 主机性能列表
+*/
+function getMemoryUsePercent( hostList )
+{
+   var used = 0 ;
+   var size = 0 ;
+   var hostNum = 0 ;
+   $.each( hostList, function( index, hostInfo ){
+      if( isNaN( hostInfo['errno'] ) == false && hostInfo['errno'] != 0 )
+      {
+         return true ;
+      }
+      ++hostNum ;
+      used += hostInfo['Memory']['Used'] ;
+      size += hostInfo['Memory']['Size'] ;
+   } ) ;
+   if( size == 0 )
+      return 0 ;
+   var percent = fixedNumber( used / size * 100, 2 ) ;
+   return percent ;
+}
+
+/*
+   计算硬盘占用百分比
+   hostList 主机性能列表
+*/
+function getDiskUsePercent( hostList )
+{
+   var used = 0 ;
+   var size = 0 ;
+   var diskNum = 0 ;
+   $.each( hostList, function( index, hostInfo ){
+      if( isNaN( hostInfo['errno'] ) == false && hostInfo['errno'] != 0 )
+      {
+         return true ;
+      }
+      $.each( hostInfo['Disk'], function( index2, diskInfo ){
+         ++diskNum ;
+         used += diskInfo['Size'] - diskInfo['Free'] ;
+         size += diskInfo['Size'] ;
+      } ) ;
+   } ) ;
+   if( size == 0 )
+      return 0 ;
+   var percent = fixedNumber( used / size * 100, 2 ) ;
+   return percent ;
 }

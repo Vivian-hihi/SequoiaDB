@@ -1,5 +1,5 @@
 body{ margin:0; padding:0; font-size:100%; font-family:Verdana,Georgia,宋体; }
-html,body{ width:100%; height:100%; /*overflow:hidden; */ }
+html,body{ width:100%; height:100%; }
 
 /* 置左 */
 .pull-left{ float:left !important; }
@@ -71,7 +71,7 @@ html,body{ width:100%; height:100%; /*overflow:hidden; */ }
 .modal2 > .header .tool > .close:hover{ background:url('../images/modal_tool.png') no-repeat scroll 0 -24px transparent; }
 .modal2 > .header .tool > .maximize{ float:left; background:url('../images/modal_tool.png') no-repeat scroll 0 -96px transparent; width:24px; height:24px; cursor:pointer; }
 .modal2 > .header .tool > .maximize:hover{ background:url('../images/modal_tool.png') no-repeat scroll 0 -120px transparent; }
-.modal2 > .body{ padding:20px; word-wrap:break-word; overflow-y:auto; font-size:90%; position:relative; *zoom:1; }
+.modal2 > .body{ padding:20px; word-wrap:break-word; overflow-y:auto; font-size:90%; position:relative; *zoom:1; +zoom:1; }
 .modal2 > .foot{ border-top:#E5E5E5 solid 1px; height:30px; text-align:right; padding:10px 20px 0 10px; }
 .modal2 > .foot > .btn{ height:24px; border-radius:2px; }
 .modal2 > .sizeBtn{ float:right; height:10px; width:10px; cursor:nw-resize; }
@@ -404,6 +404,38 @@ html,body{ width:100%; height:100%; /*overflow:hidden; */ }
 
 .Ellipsis{ text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
 
+/* 如果不希望自动弹出内容，就用这个 */
+.Ellipsis2{ text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+
+.Block{ display:block; }
+
+/* 表格 */
+.ng-table{ position:relative; }
+.ng-table .event{ cursor:pointer; }
+.ng-table > .ng-table-box{ overflow-y:auto; overflow-x:hidden; border:#ddd solid 1px; }
+
+.ng-table > .ng-table-box > .ng-table-header { border-bottom:#ddd solid 1px; position:absolute; color:#000; z-index:100; background:#F0F0F0; top:1px; }
+.ng-table > .ng-table-box > .ng-table-header .fa { font-size:14px; }
+.ng-table > .ng-table-box > .ng-table-header > table{ width:100%; border-collapse:collapse; word-wrap:break-word; table-layout:fixed; }
+.ng-table > .ng-table-box > .ng-table-header > table > tbody > tr > td{ padding:5px; font-weight:bold; }
+.ng-table > .ng-table-box > .ng-table-header > table > tbody > .ng-table-filter > td{ border-top:1px solid #ddd; }
+.ng-table > .ng-table-box > .ng-table-header > table > tbody > tr > .trim{ width:5px; border-right:1px solid #ddd; padding:0; margin:0; cursor:w-resize; }
+.ng-table > .ng-table-box > .ng-table-header > table > tbody > tr > .trimLast{ width:5px; border-right:1px solid #ddd; padding:0; margin:0; }
+
+.ng-table > .ng-table-box > .ng-table-body{}
+.ng-table > .ng-table-box > .ng-table-body > table{ width:100%; border-collapse:collapse; word-wrap:break-word; table-layout:fixed; }
+.ng-table > .ng-table-box > .ng-table-body > table > tbody > tr.alt{ background:#F9F9F9; }
+.ng-table > .ng-table-box > .ng-table-body > table > tbody > tr:hover{ background:#e0f7ff; }
+.ng-table > .ng-table-box > .ng-table-body > table > tbody > tr > td{ border-bottom:1px solid #ddd; padding:5px; }
+.ng-table > .ng-table-box > .ng-table-body > table > tbody > tr > .trim{ width:5px; border-right:1px solid #ddd; padding:0; margin:0; cursor:w-resize; }
+.ng-table > .ng-table-box > .ng-table-body > table > tbody > tr > .trimLast{ width:5px; border-right:1px solid #ddd; padding:0; margin:0; }
+
+.ng-table > .ng-table-tools{ background:#F0F0F0; border:#ddd solid 1px; border-top:0; padding:10px 10px 0 10px; }
+.ng-table > .ng-table-tools > ul{ +zoom:1; margin:0; padding:0; list-style:none; font-size:14px; }
+.ng-table > .ng-table-tools > ul > li{ float:left; padding:0 6px 10px 6px; }
+.ng-table > .ng-table-tools > ul > .right{ float:right; }
+.ng-table > .ng-table-tools input { text-align:center; width:100px; border:none; padding:2px 0 2px 0; color:#666B6F; }
+
 .linkButton{ color:#00BFDD; text-decoration:none; cursor:pointer; }
 .linkButton:hover{ text-decoration:underline; }
 .linkButton.disabled{ color:#AAA; }
@@ -467,11 +499,11 @@ html,body{ width:100%; height:100%; /*overflow:hidden; */ }
 .loginPwd > .error { font-size:90%; float:left; margin-left:30px; color:#D9534F; padding-top:10px; }
 
 /* 顶部工具栏按钮 */
-.topBtn { height:26px; padding:0px 20px; margin-right:3px; border:1px solid #CCC; background:#FFF; color:#666B6F; cursor:pointer; }
+.topBtn { height:26px; padding:0px 30px; margin-right:3px; border:1px solid #CCC; background:#FFF; color:#666B6F; cursor:pointer; }
 .topBtn > i{ padding-right:4px; }
 .topBtn:hover{ border:1px solid #ABC6D3; color:#FFF; background:#2DA5FA; }
-.topBtn.disabled{ color:#AAA; }
-.topBtn.disabled:hover{ border:1px solid #CCC; color:#AAA; background:#FFF; }
+.topBtn.disabled{ color:#AAA; background:#EEE; cursor:default; }
+.topBtn.disabled:hover{ border:1px solid #CCC; color:#AAA; background:#EEE; }
 
 /* loading */
 .roundLoading{ -moz-user-select:none; -webkit-user-select: none; -ms-user-select: none; -khtml-user-select:none; user-select:none; z-index:1001; position:absolute; width:135px; height:135px; text-align:center; }

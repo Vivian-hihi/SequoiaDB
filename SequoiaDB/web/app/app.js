@@ -18,5 +18,5 @@
          }
       }
    };
-   window.SdbDebug = false ;
+   window.SdbDebug = false;
 }());

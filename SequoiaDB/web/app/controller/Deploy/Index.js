@@ -33,6 +33,7 @@
       //清空Deploy域的数据
       $rootScope.tempData( 'Deploy' ) ;
 
+
       //计算每个业务的资源
       var countModule_Host = function(){
          $.each( $scope.moduleList, function( index, moduleInfo ){
@@ -103,15 +104,9 @@
       //查询主机状态
       var queryHostStatus = function(){
          var isFirstQueryHostStatus = true ;
-         var rc = true ;
          SdbRest.OmOperation( null, {
             'init': function(){
                var queryHostList = { 'HostInfo': [] } ;
-               if( $scope.HostList.length == 0 )
-               {
-                  rc = false ;
-                  return ;
-               }
                $.each( $scope.HostList, function( index, hostInfo ){
                   if( isFirstQueryHostStatus || hostInfo['ClusterName'] == $scope.clusterList[ $scope.currentCluster ]['ClusterName'] )
                   {
@@ -119,23 +114,14 @@
                   }
                } ) ;
                isFirstQueryHostStatus = false ;
-               if( queryHostList['HostInfo'].length == 0 )
-               {
-                  rc = false ;
-                  return ;
-               }
-               var data = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( queryHostList ) } ;
-               return data ;
-            },
-            'before': function(){
-               return rc ;
+               return { 'cmd': 'query host status', 'HostInfo': JSON.stringify( queryHostList ) } ;
             },
             'success': function( hostStatusList ){
                $.each( hostStatusList[0]['HostInfo'], function( index, statusInfo ){
                   var index2 = hostModuleTableIsExist( statusInfo['HostName'] ) ;
                   if( index2 >= 0 )
                   {
-                     if( statusInfo['errno'] == 0 || typeof( statusInfo['errno'] ) == 'undefined' )
+                     if( isNaN( statusInfo['errno'] ) || statusInfo['errno'] == 0  )
                      {
                         if( typeof( host_module_table[index2]['CPU'] ) == 'object' )
                         {
@@ -259,7 +245,7 @@
       } ;
 
       //获取sequoiadb业务信息
-      var getCollectionInfo = function( moduleIndex ){
+      var getCollectionInfo = function( moduleIndex, clusterIndex ){
          if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
          {
             return ;
@@ -278,7 +264,7 @@
          }
          SdbRest.Exec2( clusterName, moduleName, sql, {
             'before': function(){
-               if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
+               if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 || clusterIndex != $scope.currentCluster )
                {
                   return false ;
                }
@@ -323,7 +309,7 @@
                }
             },
             'failed': function( errorInfo ){
-               if( moduleMode == 'standalone' )
+               //if( moduleMode == 'standalone' )
                {
                   if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module cl' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
                   {
@@ -340,10 +326,32 @@
             'delay': 5000,
             'loop': true
          } ) ;
+
+         //查询是否有鉴权
+         var data = {
+            'cmd': 'query business authority',
+            'filter': JSON.stringify( { "BusinessName": moduleName } ) 
+         }
+         SdbRest.OmOperation( data, {
+            'success': function( authorityResult ){
+               if( authorityResult.length > 0 )
+               {
+                  $scope.moduleList[moduleIndex]['authority'] = authorityResult[0]['User'] ;
+               }
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  return true ;
+               } ) ;
+            }
+         }, {
+            'showLoading': false
+         } ) ;
+
       }
 
       //获取sequoiadb的错误节点信息
-      var getErrNodes = function( moduleIndex ){
+      var getErrNodes = function( moduleIndex, clusterIndex ){
          if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 )
          {
             return ;
@@ -357,6 +365,12 @@
          var moduleName = $scope.moduleList[moduleIndex]['BusinessName'] ;
          var data = { 'cmd': 'snapshot system', 'selector': JSON.stringify( { 'ErrNodes': 1 } ) } ;
          SdbRest.DataOperation2( clusterName, moduleName, data, {
+            'before': function(){
+               if( $.inArray( moduleIndex, autoQueryModuleIndex ) == -1 || clusterIndex != $scope.currentCluster )
+               {
+                  return false ;
+               }
+            },
             'success': function( errNodes ){
                errNodes = errNodes[0]['ErrNodes'] ;
                if( $scope.moduleList[moduleIndex]['Error']['Type'] == 'Module node' || $scope.moduleList[moduleIndex]['Error']['Flag'] == 0 )
@@ -442,12 +456,11 @@
                   {
                      autoQueryModuleIndex.push( index ) ;
                      getNodesList( index ) ;
-                     getCollectionInfo( index ) ;
-                     getErrNodes( index ) ;
+                     getCollectionInfo( index, $scope.currentCluster ) ;
+                     getErrNodes( index, $scope.currentCluster ) ;
                   }
                } ) ;
                $scope.SwitchCluster( $scope.currentCluster ) ;
-               queryHostStatus() ;
             },
             'failed': function( errorInfo, retryFun ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -513,7 +526,7 @@
          switch( moduleType )
          {
          case 'sequoiadb':
-            $location.path( '/Monitor/Index' ) ; break ;
+            $location.path( '/Monitor/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          default:
             break ;
          }
@@ -528,7 +541,7 @@
          switch( moduleType )
          {
          case 'sequoiadb':
-            $location.path( '/Monitor/Host-List/Index' ) ; break ;
+            $location.path( '/Monitor/SDB-Host/List/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          default:
             break ;
          }
@@ -543,15 +556,15 @@
          switch( moduleType )
          {
          case 'sequoiadb':
-            $location.path( '/Data/SDB-Database/Index' ) ; break ;
+            $location.path( '/Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'sequoiasql':
-            $location.path( '/Data/SQL-Metadata/Index' ) ; break ;
+            $location.path( '/Data/SQL-Metadata/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'hdfs':
-            $location.path( '/Data/HDFS-web/Index' ) ; break ;
+            $location.path( '/Data/HDFS-web/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'spark':
-            $location.path( '/Data/SPARK-web/Index' ) ; break ;
+            $location.path( '/Data/SPARK-web/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          case 'yarn':
-            $location.path( '/Data/YARN-web/Index' ) ; break ;
+            $location.path( '/Data/YARN-web/Index' ).search( { 'r': new Date().getTime() } ) ; break ;
          default:
             break ;
          }
@@ -568,24 +581,24 @@
          $scope.currentCluster = index ;
          if( $scope.clusterList.length > 0 )
          {
-            var clusterName = $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ;
+            var clusterName = $scope.clusterList[ index ]['ClusterName'] ;
             $scope.ModuleNum = 0 ;
             autoQueryModuleIndex = [] ;
-            $.each( $scope.moduleList, function( index, moduleInfo ){
+            $.each( $scope.moduleList, function( index2, moduleInfo ){
                if( moduleInfo['ClusterName'] == clusterName )
                {
                   ++$scope.ModuleNum ;
-                  autoQueryModuleIndex.push( index ) ;
+                  autoQueryModuleIndex.push( index2 ) ;
                   if( moduleInfo['BusinessType'] == 'sequoiadb' )
                   {
-                     getNodesList( index ) ;
-                     getCollectionInfo( index ) ;
-                     getErrNodes( index ) ;
+                     getNodesList( index2 ) ;
+                     getCollectionInfo( index2, index ) ;
+                     getErrNodes( index2, index ) ;
                   }
                }
             } ) ;
             $scope.HostNum = 0 ;
-            $.each( $scope.HostList, function( index, hostInfo ){
+            $.each( $scope.HostList, function( index2, hostInfo ){
                if( hostInfo['ClusterName'] == clusterName )
                {
                   ++$scope.HostNum ;
@@ -639,7 +652,7 @@
             $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
             $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
             $rootScope.tempData( 'Deploy', 'InstallPath', $scope.clusterList[ $scope.currentCluster ]['InstallPath'] ) ;
-            $location.path( '/Deploy/ScanHost' ) ;
+            $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 
@@ -662,7 +675,7 @@
                      $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
                      $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
                      $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo[0]['TaskID'] ) ;
-                     $location.path( '/Deploy/InstallHost' ) ;
+                     $location.path( '/Deploy/InstallHost' ).search( { 'r': new Date().getTime() } ) ;
                   },
                   'failed': function( errorInfo ){
                      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -782,7 +795,7 @@
                   $rootScope.tempData( 'Deploy', 'ClusterName', $scope.clusterList[ $scope.currentCluster ]['ClusterName'] ) ;
                   if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiadb' )
                   {
-                     $location.path( '/Deploy/SDB-Conf' ) ;
+                     $location.path( '/Deploy/SDB-Conf' ).search( { 'r': new Date().getTime() } ) ;
                   }
                   else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'sequoiasql' )
                   {
@@ -807,7 +820,7 @@
                      $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
                      $location.path( '/Deploy/SSQL-Mod' ) ;
                      */
-                     $location.path( '/Deploy/SSQL-Conf' ) ;
+                     $location.path( '/Deploy/SSQL-Conf' ).search( { 'r': new Date().getTime() } ) ;
                   }
                   else if( $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] == 'zookeeper' )
                   {
@@ -826,7 +839,7 @@
                      businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
                      businessConf['HostInfo'] = tempHostInfo ;
                      $rootScope.tempData( 'Deploy', 'ModuleConfig', businessConf ) ;
-                     $location.path( '/Deploy/ZKP-Mod' ) ;
+                     $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
                   }
                }
                return isAllClear ;
@@ -839,7 +852,7 @@
          var data = { 'cmd': 'discover business', 'ConfigInfo': JSON.stringify( configure ) } ;
          SdbRest.OmOperation( data, {
             'success': function(){
-               queryCluster() ;
+               $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
             }, 
             'failed': function( errorInfo, retryFun ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -1110,7 +1123,7 @@
                   $rootScope.tempData( 'Deploy', 'Model', 'Task' ) ;
                   $rootScope.tempData( 'Deploy', 'Module', 'None' ) ;
                   $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo[0]['TaskID'] ) ;
-                  $location.path( '/Deploy/InstallModule' ) ;
+                  $location.path( '/Deploy/InstallModule' ).search( { 'r': new Date().getTime() } ) ;
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -1125,7 +1138,7 @@
             var data = { 'cmd': 'undiscover business', 'ClusterName': $scope.moduleList[index]['ClusterName'], 'BusinessName': $scope.moduleList[index]['BusinessName'] } ;
             SdbRest.OmOperation( data, {
                'success': function(){
-                  queryCluster() ;
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -1322,7 +1335,7 @@
             {
                var formVal = $scope.Components.Modal.form.getValue() ;
                createCluster( formVal, function(){
-                  queryCluster() ;
+                  $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
                } ) ;
             }
             return isAllClear ;
@@ -1339,7 +1352,7 @@
                {
                   $scope.currentCluster = 0 ;
                }
-               queryCluster() ;
+               $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() }  ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
@@ -1567,7 +1580,7 @@
                   $rootScope.tempData( 'Deploy', 'Model', 'Deploy' ) ;
                   $rootScope.tempData( 'Deploy', 'Module', $scope.moduleType[ formVal['moduleType'] ]['BusinessType'] ) ;
                   $rootScope.tempData( 'Deploy', 'InstallPath', formVal['InstallPath'] ) ;
-                  $location.path( '/Deploy/ScanHost' ) ;
+                  $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
                } ) ;
             }
             return isAllClear ;
@@ -1781,9 +1794,135 @@
          }
       }
 
+      //设置鉴权
+      $scope.SetAuthorityModel = function( BusinessName ){
+         $scope.Components.Modal.icon = '' ;
+         $scope.Components.Modal.title = $scope.autoLanguage( '设置鉴权' ) ;
+         $scope.Components.Modal.isShow = true ;
+         $scope.Components.Modal.form = {
+            inputList:[
+               {
+                  "name": "BusinessName",
+                  "webName": $scope.autoLanguage( '业务名' ),
+                  "type": "string",
+                  "disabled": true,
+                  "value": BusinessName
+               },
+               {
+                  "name": "User",
+                  "webName": $scope.autoLanguage( '用户名' ),
+                  "type": "string",
+                  "required": true,
+                  "value": "",
+                  "valid": {
+                     "min": 1,
+                     "max": 127,
+                     "regex": '^[0-9a-zA-Z]+$'
+                  }
+               },
+               {
+                  "name": "Password",
+                  "webName": $scope.autoLanguage( '密码' ),
+                  "type": "password",
+                  "required": true,
+                  "value": "",
+                  "valid": {
+                     "min": 1,
+                     "max": 127,
+                     "regex": '^[0-9a-zA-Z]+$'
+                  }
+               }
+            ]
+         };
+         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>';
+         $scope.Components.Modal.ok = function(){
+            var isAllClear = $scope.Components.Modal.form.check() ;
+            if( isAllClear )
+            {
+               var formVal = $scope.Components.Modal.form.getValue() ;
+               var data = {
+                  'cmd': 'set business authority',
+                  'BusinessName': BusinessName,
+                  'User': formVal['User'],
+                  'Passwd': formVal['Password']
+               } ;
+               SdbRest.OmOperation( data, {
+                  'success': function( SetAuthorityResult ){
+                     queryModule() ;
+                  },
+                  'failed': function( errorInfo ){
+                     _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                        return true ;
+                     } ) ;
+                  }
+               }, {
+                  'showLoading': false
+               } ) ;
+               $scope.Components.Modal.isShow = false ;
+            }
+         }
+         
+      }
+      
+      //删除鉴权
+      $scope.DropAuthorityModel = function( BusinessName ){
+         $scope.Components.Confirm.isShow = true ;
+         $scope.Components.Confirm.type = 1 ;
+         $scope.Components.Confirm.okText = $scope.autoLanguage( '确定' ) ;
+         $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+         $scope.Components.Confirm.title = $scope.autoLanguage( '要删除该业务的鉴权吗？' ) ;
+         $scope.Components.Confirm.context = $scope.autoLanguage( '业务名' ) + ': ' + BusinessName ;
+         $scope.Components.Confirm.ok = function(){
+            var data = {
+               'cmd': 'remove business authority',
+               'BusinessName': BusinessName
+            }
+            SdbRest.OmOperation( data, {
+               'success': function( SetAuthorityResult ){
+                  queryModule() ;
+               },
+               'failed': function( errorInfo ){
+                  _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     return true ;
+                  } ) ;
+               }
+            }, {
+               'showLoading': false
+            } ) ;
+            return true ;
+         }
+      }
+
+      //保存当前选中的业务名
+      var chooseBusinessName = '' ;
+      $scope.SaveBsName = function( BusinessName )
+      {
+         chooseBusinessName = BusinessName ;
+      }
+
+      $scope.SelectMenu = [] ;
+      $scope.SelectMenu.push( 
+         {
+            'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px">' + $scope.autoLanguage( '修改鉴权' ) + '</div></label>' )( $scope ),
+            'onClick': function(){
+               $( '.dropdown-menu, .mask-screen, .unalpha' ).css( "display", "none" ) ;
+               $scope.SetAuthorityModel(chooseBusinessName) ;
+            }
+         },
+         {
+            'html': $compile( '<label><div class="Ellipsis" style="padding:5px 10px">' + $scope.autoLanguage( '删除鉴权' ) + '</div></label>' )( $scope ),
+            'onClick': function(){
+               $( '.dropdown-menu, .mask-screen, .unalpha' ).css( "display", "none" ) ;
+               $scope.DropAuthorityModel(chooseBusinessName) ;
+            }
+         }
+      ) ;
+
+
       //执行
       GetModuleType() ;
       queryCluster() ;
+      queryHostStatus() ;
 
       if( defaultShow == 'host' )
       {

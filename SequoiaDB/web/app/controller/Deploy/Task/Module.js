@@ -5,21 +5,25 @@
 
       //初始化
       $scope.ContainerBox = [ { offsetY: -70 }, { offsetY: -4 } ] ;
-      $scope.HostTaskGridOptions = { 'titleWidth': [ '24px', 30, 20, 15, 35 ] } ;
-      $scope.SdbTaskGridOptions  = { 'titleWidth': [ '24px', 25, 15, '100px', 15, 10, 35 ] } ;
-      $scope.SsqlTaskGridOptions = { 'titleWidth': [ '24px', 30, 20, 20, 30 ] } ;
-      $scope.ZkpTaskGridOptions  = { 'titleWidth': [ '24px', 15, 30, 15, 40 ] } ;
-      $scope.IsFinish            = false ;
-      $scope.IsError             = false ;
-      $scope.TimeLeft            = '' ;
-      $scope.BarColor            = 0 ;
+      $scope.IsFinish     = false ;
+      $scope.IsError      = false ;
+      $scope.TimeLeft     = '' ;
+      $scope.BarColor     = 0 ;
+      //任务表格
+      $scope.TaskTable = {
+         'title': {},
+         'options': {
+            'max': 50
+         }
+      } ;
+      $scope.TaskInfo = [] ;
 
       var installTask = $rootScope.tempData( 'Deploy', 'ModuleTaskID' ) ;
       $scope.DeployType  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       $scope.ModuleType  = $rootScope.tempData( 'Deploy', 'Module' ) ;
       if( $scope.DeployType == null || $scope.ModuleType == null || installTask == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -28,37 +32,98 @@
          $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], $scope.ModuleType ) ;
          if( $scope.DeployType != 'Task' && $scope.stepList['info'].length == 0 )
          {
-            $location.path( '/Deploy/Index' ) ;
+            $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
             return ;
          }
       }
+
+      var setTaskTable = function( moduleType ){
+         //任务表格
+         if( moduleType == 'sequoiadb' )
+         {
+            $scope.TaskTable['title'] = {
+               'Status':         '',
+               'HostName':       $scope.autoLanguage( '主机名' ),
+               'svcname':        $scope.autoLanguage( '服务名' ),
+               'role':           $scope.autoLanguage( '角色' ),
+               'datagroupname':  $scope.autoLanguage( '分区组' ),
+               'StatusDesc':     $scope.autoLanguage( '状态' ),
+               'Flow':           $scope.autoLanguage( '描述' )
+            } ;
+            $scope.TaskTable['options']['width'] = {
+               'Status': '24px',
+               'HostName': '25%',
+               'svcname': '15%',
+               'role': '100px',
+               'datagroupname': '15%',
+               'StatusDesc': '10%',
+               'Flow': '35%'
+            } ;
+         }
+         else if( moduleType == 'sequoiasql' )
+         {
+            $scope.TaskTable['title'] = {
+               'Status':         '',
+               'HostName':       $scope.autoLanguage( '主机名' ),
+               'role':           $scope.autoLanguage( '角色' ),
+               'StatusDesc':     $scope.autoLanguage( '状态' ),
+               'Flow':           $scope.autoLanguage( '描述' )
+            } ;
+            $scope.TaskTable['options']['width'] = {
+               'Status': '24px',
+               'HostName': '30%',
+               'role': '20%',
+               'StatusDesc': '20%',
+               'Flow': '30%'
+            } ;
+         }
+         else if( moduleType == 'zookeeper' )
+         {
+            $scope.TaskTable['title'] = {
+               'Status':         '',
+               'HostName':       $scope.autoLanguage( '节点Id' ),
+               'svcname':        $scope.autoLanguage( '主机名' ),
+               'StatusDesc':     $scope.autoLanguage( '状态' ),
+               'Flow':           $scope.autoLanguage( '描述' )
+            } ;
+            $scope.TaskTable['options']['width'] = {
+               'Status': '24px',
+               'HostName': '30%',
+               'svcname': '15%',
+               'StatusDesc': '15%',
+               'Flow': '40%'
+            } ;
+         }
+      }
+
+      setTaskTable( $scope.ModuleType ) ;
 
       //上一步
       $scope.GotoMod = function(){
          if( $scope.ModuleType == 'sequoiadb' )
          {
-            $location.path( '/Deploy/SDB-Mod' ) ;
+            $location.path( '/Deploy/SDB-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
          else if( $scope.ModuleType == 'sequoiasql' )
          {
-            $location.path( '/Deploy/SSQL-Mod' ) ;
+            $location.path( '/Deploy/SSQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
          else if( $scope.ModuleType == 'zookeeper' )
          {
-            $location.path( '/Deploy/ZKP-Mod' ) ;
+            $location.path( '/Deploy/ZKP-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 
       //返回
       $scope.GotoDeploy2 = function(){
-          $location.path( '/Deploy/Index' ) ;
+          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //下一步
       $scope.GotoDeploy = function(){
          if( $scope.IsFinish == true )
          {
-            $location.path( '/Deploy/Index' ) ;
+            $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 
@@ -123,6 +188,7 @@
                      {
                         $scope.ModuleType = 'zookeeper' ;
                      }
+                     setTaskTable( $scope.ModuleType ) ;
                   }
 
                   $scope.BarColor = 0 ;

@@ -8,7 +8,7 @@
       var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
       if( clusterName == null || moduleType != 'sequoiasql' || moduleName == null )
       {
-         $location.path( '/Transfer' ) ;
+         $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
          return;
       }
       
@@ -544,7 +544,7 @@
          var tbName = $scope.tableList[tableIndex]['Name'] ;
          var moduleInfo = { 'Host': $scope.dbHost, 'Port': $scope.dbPort, 'User': dbUser, 'Pwd': dbPwd, 'DbName': dbName, 'TbName': tbName } ;
          SdbFunction.LocalData( 'SdbModuleInfo', JSON.stringify( moduleInfo ) ) ;
-         $location.path( '/Data/SQL-Operate/Data' ) ;
+         $location.path( '/Data/SQL-Operate/Data' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //进入表结构页面
@@ -554,7 +554,7 @@
          var tbName = $scope.tableList[tableIndex]['Name'] ;
          var moduleInfo = { 'Host': $scope.dbHost, 'Port': $scope.dbPort, 'User': dbUser, 'Pwd': dbPwd, 'DbName': dbName, 'TbName': tbName } ;
          SdbFunction.LocalData( 'SdbModuleInfo', JSON.stringify( moduleInfo ) ) ;
-         $location.path( '/Data/SQL-Operate/Structure' ) ;
+         $location.path( '/Data/SQL-Operate/Structure' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //查询业务信息
@@ -572,7 +572,7 @@
             }
             else
             {
-               $location.path( '/Transfer' ) ;
+               $location.path( '/Transfer' ).search( { 'r': new Date().getTime() } ) ;
             }
          },
          'failed': function( errorInfo, retryFun ){

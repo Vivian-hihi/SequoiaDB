@@ -69,92 +69,45 @@
                   <div class="bar" ng-class="{'0':'blue','1':'orange','2':'red','3':'green'}[BarColor]" ng-style="{'width':TaskInfo['Progress']+'%'}"></div>
                </div>
 
-               <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-container="{offsetY:-50,marginTop:10}" ng-grid="SdbTaskGridOptions" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'sequoiadb'">
-                  <div class="GridHeader">
-                     <div class="GridTr">
-                        <div class="GridTd Ellipsis"></div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("服务名")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("角色")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("分区组")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("状态")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("描述")}}</div>
-                        <div class="clear-float"></div>
-                     </div>
+               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'sequoiadb'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in TaskInfo['ResultInfo']">
+                  <div table-key="Status">
+                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
+                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
+                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
+                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
                   </div>
-                  <div class="GridBody">
-                     <div class="GridTr" ng-repeat="installInfo in TaskInfo['ResultInfo'] track by $index">
-                        <div class="GridTd Ellipsis">
-                           <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
-                           <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
-                           <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
-                           <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
-                        </div>
-                        <div class="GridTd Ellipsis">{{installInfo['HostName']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['svcname']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['role']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['datagroupname']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['StatusDesc']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
-                        <div class="clear-float"></div>
-                     </div>
-                  </div>
+                  <div class="Ellipsis" table-key="HostName">{{installInfo['HostName']}}</div>
+                  <div class="Ellipsis" table-key="svcname">{{installInfo['svcname']}}</div>
+                  <div class="Ellipsis" table-key="role">{{installInfo['role']}}</div>
+                  <div class="Ellipsis" table-key="datagroupname">{{installInfo['datagroupname']}}</div>
+                  <div class="Ellipsis" table-key="StatusDesc">{{installInfo['StatusDesc']}}</div>
+                  <div class="Ellipsis" table-key="Flow">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
                </div>
 
-               <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-container="{offsetY:-50,marginTop:10}" ng-grid="SsqlTaskGridOptions" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'sequoiasql'">
-                  <div class="GridHeader">
-                     <div class="GridTr">
-                        <div class="GridTd Ellipsis"></div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("角色")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("状态")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("描述")}}</div>
-                        <div class="clear-float"></div>
-                     </div>
+               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'sequoiasql'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in TaskInfo['ResultInfo']">
+                  <div>
+                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
+                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
+                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
+                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
                   </div>
-                  <div class="GridBody">
-                     <div class="GridTr" ng-repeat="installInfo in TaskInfo['ResultInfo'] track by $index">
-                        <div class="GridTd Ellipsis">
-                           <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
-                           <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
-                           <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
-                           <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
-                        </div>
-                        <div class="GridTd Ellipsis">{{installInfo['HostName']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['role']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['StatusDesc']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
-                        <div class="clear-float"></div>
-                     </div>
-                  </div>
+                  <div class="GridTd Ellipsis">{{installInfo['HostName']}}</div>
+                  <div class="GridTd Ellipsis">{{installInfo['role']}}</div>
+                  <div class="GridTd Ellipsis">{{installInfo['StatusDesc']}}</div>
+                  <div class="GridTd Ellipsis">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
                </div>
 
-               <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-container="{offsetY:-50,marginTop:10}" ng-grid="ZkpTaskGridOptions" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'zookeeper'">
-                  <div class="GridHeader">
-                     <div class="GridTr">
-                        <div class="GridTd Ellipsis"></div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("节点Id")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("状态")}}</div>
-                        <div class="GridTd Ellipsis">{{autoLanguage("描述")}}</div>
-                        <div class="clear-float"></div>
-                     </div>
+               <div ng-container="{offsetY:-50,marginTop:10}" ng-if="(TaskInfo['TaskName'] == 'ADD_BUSINESS' || TaskInfo['TaskName'] == 'REMOVE_BUSINESS') && ModuleType == 'zookeeper'" ng-table="TaskTable['options']" table-title="TaskTable['title']" table-content="installInfo in TaskInfo['ResultInfo']">
+                  <div>
+                     <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
+                     <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
+                     <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
+                     <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
                   </div>
-                  <div class="GridBody">
-                     <div class="GridTr" ng-repeat="installInfo in TaskInfo['ResultInfo'] track by $index">
-                        <div class="GridTd Ellipsis">
-                           <img src="./images/loading2.gif" style="width:22px;height:22px;" ng-if="installInfo['Status'] == 1 || installInfo['Status'] == 0" />
-                           <i class="fa fa-undo" style="font-size:22px;color:#F9A937;" ng-if="installInfo['Status'] == 2"></i>
-                           <i class="fa fa-check" style="font-size:22px;color:#00CC66;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] == 0"></i>
-                           <i class="fa fa-times" style="font-size:22px;color:#D9534F;" ng-if="installInfo['Status'] == 4 && installInfo['errno'] != 0"></i>
-                        </div>
-                        <div class="GridTd Ellipsis">{{installInfo['zooid']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['HostName']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['StatusDesc']}}</div>
-                        <div class="GridTd Ellipsis">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
-                        <div class="clear-float"></div>
-                     </div>
-                  </div>
+                  <div class="GridTd Ellipsis">{{installInfo['zooid']}}</div>
+                  <div class="GridTd Ellipsis">{{installInfo['HostName']}}</div>
+                  <div class="GridTd Ellipsis">{{installInfo['StatusDesc']}}</div>
+                  <div class="GridTd Ellipsis">{{installInfo['Flow'][installInfo['Flow'].length-1]}}</div>
                </div>
 
             </div>

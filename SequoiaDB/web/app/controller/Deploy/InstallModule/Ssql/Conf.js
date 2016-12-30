@@ -28,14 +28,14 @@
 
       if( $scope.DeployType == null || clusterName == null || $scope.ModuleName == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, $scope.DeployType, $scope['Url']['Action'], 'sequoiasql' ) ;
       if( $scope.stepList['info'].length == 0 )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -111,7 +111,7 @@
 
       //返回
       $scope.GotoDeploy = function(){
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //上一步
@@ -125,7 +125,7 @@
          SdbRest.OmOperation( data, {
             'success': function(){
                $rootScope.tempData( 'Deploy', 'ModuleConfig', Configure ) ;
-               $location.path( '/Deploy/SSQL-Mod' ) ;
+               $location.path( '/Deploy/SSQL-Mod' ).search( { 'r': new Date().getTime() } ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){

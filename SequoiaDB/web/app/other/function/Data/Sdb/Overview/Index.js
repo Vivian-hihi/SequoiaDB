@@ -223,5 +223,5 @@ _DataOverviewIndex.gotoDatabase = function( $scope, $location, SdbFunction, modu
    var moduleMode = $scope.QueryModule[moduleIndex].DeployMod ;
    SdbFunction.LocalData( 'SdbModuleMode', moduleMode ) ;
    SdbFunction.LocalData( 'SdbModuleName', moduleName ) ;
-   $location.path( 'Data/Database/Index' ) ;
+   $location.path( 'Data/Database/Index' ).search( { 'r': new Date().getTime() } ) ;
 }

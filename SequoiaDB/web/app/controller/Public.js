@@ -396,8 +396,16 @@
                }
                else
                {
-                  $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
-                  $scope.Left.nav2Btn = { 'visibility': 'visible' } ;
+                  if( $scope.Left.nav2Show )
+                  {
+                     $scope.Left.nav1Btn = { 'visibility': 'hidden' } ;
+                     $scope.Left.nav2Btn = { 'visibility': 'visible' } ;
+                  }
+                  else
+                  {
+                     $scope.Left.nav1Btn = { 'visibility': 'visible' } ;
+                     $scope.Left.nav2Btn = { 'visibility': 'hidden' } ;
+                  }
                }
             }
          } ) ;
@@ -488,7 +496,7 @@
             case 'sequoiadb':
                if( window.Config['Edition'] == 'Enterprise' )
                {
-                  $location.path( '/Monitor/Index' ).search( params ) ; break ;
+                  $location.path( '/Monitor/SDB/Index' ).search( params ) ; break ;
                }
                else
                {

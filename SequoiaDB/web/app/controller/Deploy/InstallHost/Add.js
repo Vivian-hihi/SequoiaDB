@@ -27,7 +27,7 @@
       var clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
       if( deployModel == null || clusterName == null || installPath == null || deplpyModule == null || $scope.HostList == null )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
@@ -35,13 +35,13 @@
       $scope.stepList = _Deploy.BuildSdbStep( $scope, $location, deployModel, $scope['Url']['Action'], deplpyModule ) ;
       if( $scope.stepList['info'].length == 0 )
       {
-         $location.path( '/Deploy/Index' ) ;
+         $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
          return ;
       }
 
       //跳转到上一步
       $scope.GotoScanHost = function(){
-         $location.path( '/Deploy/ScanHost' ) ;
+         $location.path( '/Deploy/ScanHost' ).search( { 'r': new Date().getTime() } ) ;
       }
 
       //安装主机
@@ -50,7 +50,7 @@
          SdbRest.OmOperation( data, {
             'success': function( taskInfo ){
                $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo[0]['TaskID'] ) ;
-               $location.path( '/Deploy/InstallHost' ) ;
+               $location.path( '/Deploy/InstallHost' ).search( { 'r': new Date().getTime() } ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
