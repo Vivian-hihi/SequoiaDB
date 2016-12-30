@@ -82,7 +82,7 @@ def insert_decimal( cl, data ):
 def check_Result( cl, condition, obj, doc ):
    print( '---begin to check data' )
    cnt = cl.get_count(condition=condition)
-   rec = cl.query(condition=condition).next()
+   rec = cl.query( condition=condition).next()
    
    if( cnt != 1 ):
       print( 'get_count, expect: %d, actual: %d' % ( countNum, cnt ) )
@@ -92,7 +92,8 @@ def check_Result( cl, condition, obj, doc ):
       print( 'rec["a"], expect: %s, actual: %s' % ( obj, rec['a'] ) )    
       raise  Exception( 'CHECK_VALUE_ERROR' )
    
-   if( dumps(rec) != dumps(doc) ):
+   
+   if( dumps(rec.pop('_id')) != dumps(doc.pop('_id')) ):
       print( 'dumps(rec), expect: %s, actual: %s' % ( dumps(doc), dumps(rec) ) )
       raise  Exception( 'CHECK_JSON_ERROR' )
       
@@ -503,12 +504,9 @@ if __name__ == "__main__":
          raise  Exception( 'CHECK_VALUE_ERROR' )
       cl.delete()
       
-      #seqDB-9471,53
+      #seqDB-9471,53,to_int():python2 to long,python3 to int
       obj = Decimal( "123", None, None)
       rc = obj.to_int()
-      if( type(rc) != int ):
-         print( 'expect: int, actual: %s' % ( type(rc) ) )     
-         raise  Exception( 'CHECK_TYPE_ERROR' )
       if( obj.compare(rc) != 0 ):
          print( 'expect: 123, actual: %d' % ( rc ) )    
          raise  Exception( 'CHECK_VALUE_ERROR' )
@@ -516,9 +514,6 @@ if __name__ == "__main__":
       #54   
       obj = Decimal( "123.12", None, None)
       rc = obj.to_int()
-      if( type(rc) != int ):
-         print( 'expect: int, actual: %s' % ( type(rc) ) )    
-         raise  Exception( 'CHECK_TYPE_ERROR' )
       if( rc != 123 ):
          print( 'expect: 123, actual: %d' % ( rc ) )    
          raise  Exception( 'CHECK_VALUE_ERROR' )
@@ -526,9 +521,6 @@ if __name__ == "__main__":
       #55   
       obj = Decimal( "-9223372036854775808", None, None)
       rc = obj.to_int()
-      if( type(rc) != int ):
-         print( 'expect: int, actual: %s' % ( type(rc) ) )     
-         raise  Exception( 'CHECK_TYPE_ERROR' )
       if( rc != -9223372036854775808 ):
          print( 'expect: -9223372036854775808, actual: %d' % ( rc ) )     
          raise  Exception( 'CHECK_VALUE_ERROR' )
@@ -536,9 +528,6 @@ if __name__ == "__main__":
       #56  
       obj = Decimal( "9223372036854775807", None, None)
       rc = obj.to_int()
-      if( type(rc) != int ):
-         print( 'expect: int, actual: %s' % ( type(rc) ) )     
-         raise  Exception( 'CHECK_TYPE_ERROR' )
       if( rc != 9223372036854775807 ):
          print( 'expect: 9223372036854775807, actual: %d' % ( rc ) )     
          raise  Exception( 'CHECK_VALUE_ERROR' )
@@ -546,9 +535,6 @@ if __name__ == "__main__":
       #57   
       obj = Decimal( "-9223372036854775809", None, None)
       rc = obj.to_int()
-      if( type(rc) != int ):
-         print( 'expect: int, actual: %s' % ( type(rc) ) )     
-         raise  Exception( 'CHECK_TYPE_ERROR' )
       if( rc != 0 ):
          print( 'expect: 0, actual: %d' % ( rc ) )     
          raise  Exception( 'CHECK_VALUE_ERROR' ) 
@@ -556,9 +542,6 @@ if __name__ == "__main__":
       #58   
       obj = Decimal( "9223372036854775808", None, None)
       rc = obj.to_int()
-      if( type(rc) != int ):
-         print( 'expect: int, actual: %s' % ( type(rc) ) )    
-         raise  Exception( 'CHECK_TYPE_ERROR' )
       if( rc != 0 ):
          print( 'expect: 0, actual: %d' % ( rc ) )     
          raise  Exception( 'CHECK_VALUE_ERROR' )    
