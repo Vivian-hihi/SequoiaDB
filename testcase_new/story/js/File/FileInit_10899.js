@@ -1,6 +1,7 @@
 /******************************************************************************
 *@Description : test js object File function: init file with mode
 *               TestLink : 10899 创建file对象时指定权限
+*                          10910 远程文件对象初始化时文件名参数非法
 *@auhor       : Liang XueWang
 ******************************************************************************/
 
@@ -45,10 +46,36 @@ function testInitRemote()
       var filemode = cmd.run( command ).split( "\n" )[0] ;
       if( filemode != modeString )
       {
-         throw buildException( "testInitRemote", null, "file " + filename, 
-                               modeString, filemode ) ;
+         throw buildException( "testInitRemote", null, 
+         "file " + filename + " hostname: " + remotehost, modeString, filemode ) ;
       }
       cmd.run( "rm -rf " + filename ) ;
+   }
+}
+
+// 测试远程文件初始化时文件名参数非法
+function testInitRemoteAbnormal()
+{
+   var remotehost = toolGetRemotehost() ;
+   var remote = new Remote( remotehost, CMSVCNAME ) ;
+   
+   var errFilename = [ undefined, 123, "" ] ;
+   var errno = [ -6, -6, -4 ] ;
+   for( var i = 0;i < errFilename.length;i++ )
+   {
+      try
+      {
+         remote.getFile( errFilename[i] ) ;
+         throw "get remote file " + errFilename[i] + " should be failed" ;
+      }
+      catch( e )
+      {
+         if( e != errno[i] )
+         {
+            throw buildException( "testInitRemoteAbnormal", e, 
+                  "file " + errFilename[i] + " host " + remotehost, errno[i], e ) ;
+         }
+      }
    }
 }
 
