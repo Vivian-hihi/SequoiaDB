@@ -361,6 +361,9 @@ public class ConnectionTCPImpl implements IConnection {
     @Override
     public void sendMessage(byte[] msg, int off, int length) throws BaseException {
         logger.getInstance().debug(0, "enter sendMessage\n");
+        if (this.isClosed()) {
+        	throw new BaseException(SDBError.SDB_NOT_CONNECTED);
+        }
         if (output != null) {
             try {
                 output.write(msg, 0, length);
