@@ -58,7 +58,7 @@ SystemTest.prototype.testAddDelGroup = function( isUnique )
    }
    catch( e )
    {
-      if( e == 4 && isUnique )
+      if( ( e == 4 || e == 16 ) && isUnique )
          ;
       else
          throw buildException( "testAddDelGroup", null, 

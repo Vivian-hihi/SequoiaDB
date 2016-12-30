@@ -77,7 +77,7 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    catch( e )
    {
       throw buildException( "testAddDelUser", e, 
-                            "add user: " + user + " " + this, 0, e ) ;
+                            "add user: " + userObj.name + " " + this, 0, e ) ;
    }
    
    // 检查用户
@@ -203,15 +203,19 @@ SystemTest.prototype.testListLoginUsers = function()
       var tmp = info[i].split( " " ) ;
       var username = tmp[0] ;             // 用户名
       var tty = tmp[1] ;                  // 登录终端
-      var time = tmp[2] + " " + tmp[3] ;  // 登录时间
+      var time = tmp[2] ;                 // 登录时间
+      for( var j = 3;j < tmp.length-1;j++ )
+      {
+         time +=  " " + tmp[j] ;  
+      }
       var addr ;                          // 登录的主机名或者ip
-      if( tmp[4] == undefined )
+      if( tmp[tmp.length-1] == undefined )
       {
          addr = "" ;
       }
       else
       {
-         addr = tmp[4].slice( 1, tmp[4].length-1 ) ;
+         addr = tmp[tmp.length-1].slice( 1, tmp[4].length-1 ) ;
       }  
       if( username != userObj.user || tty != userObj.tty ||
           time != userObj.time || addr != userObj.from )
