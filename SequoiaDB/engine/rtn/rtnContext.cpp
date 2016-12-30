@@ -174,8 +174,6 @@ namespace engine
       _countOnly           = FALSE ;
       _pDpsCB              = NULL ;
       _w                   = 1 ;
-
-      _lastLsn             = DPS_INVALID_LSN_OFFSET ;
    }
 
    _rtnContextBase::~_rtnContextBase()
@@ -550,8 +548,6 @@ namespace engine
          againTry = TRUE ;
       }
 
-      _lastLsn = cb->getEndLsn() ;
-
    done:
       // inc idle
       pmdGetKRCB()->getBPSCB()->_idlePrefAgentNum.inc() ;
@@ -616,13 +612,6 @@ namespace engine
       {
          ++_prefetchID ;
       }
-
-      if ( _lastLsn != DPS_INVALID_LSN_OFFSET )
-      {
-         cb->insertLsn( _lastLsn ) ;
-         _lastLsn = DPS_INVALID_LSN_OFFSET ;
-      }
-
       // check prefetch has error
       if ( _prefetchRet && SDB_DMS_EOC != _prefetchRet )
       {
