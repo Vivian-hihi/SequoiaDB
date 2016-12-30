@@ -85,7 +85,8 @@ function main()
    testInitLocal() ;
    // 测试远程文件初始化指定权限
    testInitRemote() ;
-   
+   // 测试远程文件初始化时文件名参数非法
+   testInitRemoteAbnormal() ;
 }
 
 main()
