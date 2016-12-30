@@ -83,8 +83,8 @@ function main()
    for( var i = 0;i < cts.length;i++ )
    {
       // 测试运行指令
-      // cts[i].testRunNormal() ;
-      // cts[i].testRunAbnormal() ;
+      cts[i].testRunNormal() ;
+      cts[i].testRunAbnormal() ;
    }
 }
 
