@@ -21,6 +21,7 @@ import bson
 import pysequoiadb
 from pysequoiadb.common import const
 from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
+from collections import OrderedDict
 
 class cursor(object):
    """Cursor of SequoiaDB
@@ -92,7 +93,7 @@ class cursor(object):
             else:
                raise SDBBaseError("Failed to get next record", rc)
          else:
-            record, size = bson._bson_to_dict(bson_string, dict, False,
+            record, size = bson._bson_to_dict(bson_string, OrderedDict, False,
                                               bson.OLD_UUID_SUBTYPE, True)
       except SDBBaseError:
          raise
@@ -116,7 +117,7 @@ class cursor(object):
             else:
                raise SDBBaseError("Failed to get current record", rc)
          else:
-            record, size = bson._bson_to_dict(bson_string, dict, False,
+            record, size = bson._bson_to_dict(bson_string, OrderedDict, False,
                                            bson.OLD_UUID_SUBTYPE, True)
       except SDBBaseError:
          raise
