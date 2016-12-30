@@ -5024,7 +5024,7 @@
                            var vertical = ( brower[0] == 'firefox' ? '' : 'vertical-align:top;' ) ;
                            var select = $compile( '<select class="form-control" style="border-right:0;' + vertical + '" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][0]" ng-change="find()"><option value="gt">&gt;</option><option value="gte">&gt;=</option><option value="eq">=</option><option value="neq">!=</option><option value="lt">&lt;</option><option value="lte">&lt;=</option></select>')( scope ) ;
                            div1.append( select ) ;
-                           var text = $compile( '<input class="form-control" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][1]" ng-change="find()">' )( scope ) ;
+                           var text = $compile( '<input class="form-control" style="' + vertical + '" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][1]" ng-change="find()">' )( scope ) ;
                            div2.append( text ) ;
                            scope.loadStatus['onFilter']['condition'][key] = numberCompare ;
                            input.append( div1 ) ;
