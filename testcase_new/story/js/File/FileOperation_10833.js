@@ -19,9 +19,9 @@ FileTest.prototype.testFileOperation = function()
    this.file.mkdir( tmpDirName ) ;   // 创建目录
    checkMkdir( this.cmd, tmpDirName ) ;
    if( this.isLocal )
-      tmpFile = new File( tmpFileName ) ;
+      tmpFile = new File( tmpFileName, 0644 ) ;
    else
-      tmpFile = this.remote.getFile( tmpFileName ) ;
+      tmpFile = this.remote.getFile( tmpFileName, 0644 ) ;
       
    this.file.move( tmpFileName, tmpFileName + ".move" ) ; // 移动文件
    checkMove( this.cmd, tmpFileName, tmpFileName + ".move" ) ;
@@ -88,12 +88,17 @@ function checkCopy( cmd, srcFile, dstFile )
 {
    try
    {
-      cmd.run( "ls -al " + srcFile ) ;
-      cmd.run( "ls -al " + dstFile ) ;
+      var mode1 = cmd.run( "ls -al " + srcFile + " | awk '{print $1}'" ) ;
+      var mode2 = cmd.run( "ls -al " + dstFile + " | awk '{print $1}'" ) ;
    }
    catch( e )
    {
       throw buildException( "checkCopy", e, "check " + srcFile + " " + dstFile, 0, e ) ;
+   }
+   if( mode1 != mode2 )
+   {
+      throw buildException( "checkCopy", e, "check mode " + srcFile + " " + dstFile,
+                            mode1, mode2 ) ;
    }
 }
 
