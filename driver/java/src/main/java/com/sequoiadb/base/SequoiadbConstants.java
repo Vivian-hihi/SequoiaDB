@@ -243,7 +243,7 @@ public class SequoiadbConstants {
 
     public final static byte[] ZERO_NODEID = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    public final static int DEFAULT_VERSION = 0;
+    public final static int DEFAULT_VERSION = 1;
     public final static short DEFAULT_W = 1;
     public final static int DEFAULT_FLAGS = 0;
     public final static long DEFAULT_CONTEXTID = -1;
