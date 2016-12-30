@@ -16,6 +16,7 @@ from bson.json_util import loads
 from bson.json_util import dumps 
 import sys,getopt
 import traceback
+from collections import OrderedDict
 
 hostname=None
 service=None
@@ -83,15 +84,19 @@ def insert_boundary_max( cl ):
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":"9223372036854775807"},"_id":1}') )
    
-   condition = { "a": { "$type": 1, "$et": 18 } }
+   condition = {"a":OrderedDict([("$type",1),("$et",18)])}
    selector = { "a": "" }
    rec = cl.query(condition=condition, selector=selector).next()
+   cnt = cl.get_count(condition=condition) 
+   
+   if( cnt != 1 ):
+      print( 'get_count, expect: 1, actual: %d' % ( cnt ) )
+      raise  Exception( 'COUNT_ERROR' )
       
    if( rec['a'] != 9223372036854775807 ):
       print( 'rec["a"], expect: 9223372036854775807, actual: %d' % ( rec['a'] ) )    
       raise  Exception( 'CHECK_VALUE_ERROR' )
    
-   print(rec)
    if( dumps(rec) != '{"a": 9223372036854775807}' ):
       print( 'dumps(rec), expect: {"a": 9223372036854775807}, actual: %s' % ( dumps(rec) ) )
       raise  Exception( 'CHECK_JSON_ERROR' )
@@ -103,8 +108,9 @@ def insert_boundary_min( cl ):
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":-9223372036854775808},"_id":1}') )
    
-   condition = { "a": { "$type": 1, "$et": 18 } }
-   rec = cl.query(condition=condition).next()
+   condition = {"a":OrderedDict([("$type",1),("$et",18)])}
+   selector = { "a": "" }
+   rec = cl.query(condition=condition, selector=selector).next()
    cnt = cl.get_count(condition=condition) 
    
    if( cnt != 1 ):
@@ -115,8 +121,8 @@ def insert_boundary_min( cl ):
       print( 'rec["a"], expect: -9223372036854775808, actual: %d' % ( rec['a'] ) )    
       raise  Exception( 'CHECK_VALUE_ERROR' )
                 
-   if( dumps(rec) != '{"a": -9223372036854775808, "_id": 1}' ):
-      print( 'dumps(rec), expect: {"a": -9223372036854775808, "_id": 1}, actual: %s' % ( dumps(rec) ) )
+   if( dumps(rec) != '{"a": -9223372036854775808}' ):
+      print( 'dumps(rec), expect: {"a": -9223372036854775808}, actual: %s' % ( dumps(rec) ) )
       raise  Exception( 'CHECK_JSON_ERROR' ) 
 
 def insert_int32( cl ):    
@@ -125,14 +131,14 @@ def insert_int32( cl ):
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":-9}}') )
 
-   condition = { "a": { "$type": 1, "$et": 16 } }
+   condition = {"a":OrderedDict([("$type",1),("$et",16)])}
    cnt = cl.get_count(condition=condition)
    
    if( cnt != 1 ):
       print( 'get_count, expect: 1, actual: %d' % ( cnt ) )
       raise  Exception( 'COUNT_ERROR' )
          
-   condition = { "a": { "$type": 1, "$et": 18 } }
+   condition = {"a":OrderedDict([("$type",1),("$et",18)])}
    cnt = cl.get_count(condition=condition)
    
    if( cnt != 0 ):
@@ -145,38 +151,38 @@ def query_js_max_safe_integet( cl ):
       
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":-9007199254740992},"_id":1}') )
-      
-   rec = cl.query().next()
+    
+   rec = cl.query( selector = { "a": "" } ).next()
          
-   if( dumps(rec) != '{"a": -9007199254740992, "_id": 1}' ):
-      print( 'dumps(rec), expect: {"a": -9007199254740992, "_id": 1}, actual: %s' % ( dumps(rec) ) )
+   if( dumps(rec) != '{"a": -9007199254740992}' ):
+      print( 'dumps(rec), expect: {"a": -9007199254740992}, actual: %s' % ( dumps(rec) ) )
       raise  Exception( 'CHECK_JSON_ERROR' )
       
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":9007199254740992},"_id":1}') )
       
-   rec = cl.query().next()
+   rec = cl.query( selector = { "a": "" } ).next()
          
-   if( dumps(rec) != '{"a": 9007199254740992, "_id": 1}' ):
-      print( 'dumps(rec), expect: {"a": 9007199254740992, "_id": 1}, actual: %s' % ( dumps(rec) ) )
+   if( dumps(rec) != '{"a": 9007199254740992}' ):
+      print( 'dumps(rec), expect: {"a": 9007199254740992}, actual: %s' % ( dumps(rec) ) )
       raise  Exception( 'CHECK_JSON_ERROR' )
 
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":-9007199254740991},"_id":1}') )
       
-   rec = cl.query().next()
+   rec = cl.query( selector = { "a": "" } ).next()
          
-   if( dumps(rec) != '{"a": -9007199254740991, "_id": 1}' ):
-      print( 'dumps(rec), expect: {"a": -9007199254740991, "_id": 1}, actual: %s' % ( dumps(rec) ) )
+   if( dumps(rec) != '{"a": -9007199254740991}' ):
+      print( 'dumps(rec), expect: {"a": -9007199254740991}, actual: %s' % ( dumps(rec) ) )
       raise  Exception( 'CHECK_JSON_ERROR' )   
                
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":9007199254740991},"_id":1}') )
       
-   rec = cl.query().next()
+   rec = cl.query( selector = { "a": "" } ).next()
          
-   if( dumps(rec) != '{"a": 9007199254740991, "_id": 1}' ):
-      print( 'dumps(rec), expect: {"a": 9007199254740991, "_id": 1}, actual: %s' % (dumps(rec)) )
+   if( dumps(rec) != '{"a": 9007199254740991}' ):
+      print( 'dumps(rec), expect: {"a": 9007199254740991}, actual: %s' % (dumps(rec)) )
       raise  Exception( 'CHECK_JSON_ERROR' )
       
 def insert_out_boundary( cl ):
@@ -239,8 +245,8 @@ if __name__ == "__main__":
       pysequoiadb._print(e.detail)
       raise e  
             
-#   finally:  
-#      if( 'db' in locals() ):                    
-#         clean( cs_name )     
-#         db.disconnect()
-#         del db 
+   finally:  
+      if( 'db' in locals() ):                    
+         clean( cs_name )     
+         db.disconnect()
+         del db 
