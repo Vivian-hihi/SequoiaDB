@@ -16,6 +16,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 /**
  * 
  * FileName: DetachSub64
@@ -25,9 +26,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @date 2016年12月19日
  * @version 1.00
  * other:
- * 存在BUG,正在修正，故暂时跳过
+ * 存在的BUG已修复
  * 对应JIRA问题单：2134
- * 修正后请将本文件中@Test的enabled=false删除
  */
 public class DetachSub64 extends SdbTestBase{
 	
@@ -69,49 +69,72 @@ public class DetachSub64 extends SdbTestBase{
 		}
 	}
 	
-	@Test( invocationCount = 10, enabled = false )
-	public void attachSubcl(){	
-		Sequoiadb db = null;
-		DBCollection maincl=null;
-	
-		BSONObject attachOpt = new BasicBSONObject();
-		BSONObject lowBound = new BasicBSONObject();
-		BSONObject upBound = new BasicBSONObject();
-		lowBound.put("time", 0);
-		upBound.put("time", 100);
-		attachOpt.put("LowBound", lowBound);
-		attachOpt.put("UpBound", upBound);
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl,"","");
-			maincl = db.getCollectionSpace(csName).getCollection(mainclName);
-			maincl.attachCollection(SdbTestBase.csName+"."+subclName, attachOpt);	
-			
-		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -235, e.getMessage());
-		}finally{
-			if(db != null){
-				db.disconnect();
-			}
+	@Test
+	public void test(){
+		SdbThreadBase attachThread = new AttachThread();
+		SdbThreadBase detachThread = new DetachThread();
+		attachThread.start(10);
+		detachThread.start(10);
+		if(!attachThread.isSuccess()){
+			Assert.fail(attachThread.getErrorMsg());
 		}
+		if(!detachThread.isSuccess()){
+			Assert.fail(detachThread.getErrorMsg());
+		}	
 	}
 	
-	@Test( invocationCount = 10, enabled = false )
-	public void detachSubcl(){
-		Sequoiadb db = null;
-		DBCollection maincl = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl,"","");
-			maincl = db.getCollectionSpace(csName).getCollection(mainclName);
-			maincl.detachCollection(SdbTestBase.csName+"."+subclName);	
-			Assert.fail("detach subclName1 successfully");
-		}catch(BaseException e){
-		//在detach一个未attach的子表时，不报错，提了问题单，等到修复完成后，请下面一句的注释释放，同时加上对应的错误码
-		//	Assert.assertEquals(e.getErrorCode(), ,e.getMessage());
-		}finally{
-			if(db != null){
-				db.disconnect();
-			}
-		}	
+	class AttachThread extends SdbThreadBase{
+		
+		@Override
+		public void exec() throws BaseException {
+			Sequoiadb db = null;
+			DBCollection maincl=null;
+		
+			BSONObject attachOpt = new BasicBSONObject();
+			BSONObject lowBound = new BasicBSONObject();
+			BSONObject upBound = new BasicBSONObject();
+			lowBound.put("time", 0);
+			upBound.put("time", 100);
+			attachOpt.put("LowBound", lowBound);
+			attachOpt.put("UpBound", upBound);
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl,"","");
+				maincl = db.getCollectionSpace(csName).getCollection(mainclName);
+				maincl.attachCollection(SdbTestBase.csName+"."+subclName, attachOpt);				
+			}catch(BaseException e){
+				if(e.getErrorCode() != -235){
+					throw e;
+				}
+			}finally{
+				if(db != null){
+					db.disconnect();
+				}
+			}			
+		}
+		
+	}
+	
+	class DetachThread extends SdbThreadBase{
+
+		@Override
+		public void exec() throws Exception {
+			Sequoiadb db = null;
+			DBCollection maincl = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl,"","");
+				maincl = db.getCollectionSpace(csName).getCollection(mainclName);
+				maincl.detachCollection(SdbTestBase.csName+"."+subclName);	
+			}catch(BaseException e){
+				if(e.getErrorCode() != -242){
+					throw e;					
+				}
+			}finally{
+				if(db != null){
+					db.disconnect();
+				}
+			}	
+		}
+		
 	}
 		
 	public void createMainclAndSubcl(){
