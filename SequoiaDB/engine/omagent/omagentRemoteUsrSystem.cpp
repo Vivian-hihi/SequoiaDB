@@ -1804,8 +1804,33 @@ namespace engine
             diskBuilder.appendNumber( CMD_USR_SYSTEM_USED, ( totalBytes - freeBytes ) / ( 1024 * 1024 ) ) ;
             diskBuilder.append( CMD_USR_SYSTEM_UNIT, "MB" ) ;
             diskBuilder.append( CMD_USR_SYSTEM_MOUNT, mount ) ;
-            diskBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL,
-                                    string::npos != columns.at( 0 ).find( "/dev/", 0, 5 ) ) ;
+            BOOLEAN isLocal = ( string::npos != columns.at( 0 ).find( "/dev/", 0, 5 ) ) ;
+            BOOLEAN gotStat = FALSE ;
+            diskBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL, isLocal ) ;
+
+            if ( isLocal )
+            {
+               ossDiskIOStat ioStat ;
+               string driverName = columns.at( 0 ) ;
+
+               // only match the driver name after /dev/
+               driverName.replace(0, 5, "" ) ;
+
+               ossMemset( &ioStat, 0, sizeof( ossDiskIOStat ) ) ;
+
+               INT32 rctmp = ossGetDiskIOStat( driverName.c_str(), ioStat ) ;
+               if ( SDB_OK == rctmp )
+               {
+                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC, (INT64)ioStat.rdSectors ) ;
+                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC, (INT64)ioStat.wrSectors ) ;
+                  gotStat = TRUE ;
+               }
+            }
+            if ( !gotStat )
+            {
+               diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC, (INT64)0 ) ;
+               diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC, (INT64)0 ) ;
+            }
 
             arrBuilder << diskBuilder.obj() ;
          }
@@ -1967,6 +1992,9 @@ namespace engine
             lineBuilder.append( CMD_USR_SYSTEM_UNIT, "M" ) ;
             lineBuilder.append( CMD_USR_SYSTEM_MOUNT, mount ) ;
             lineBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL, TRUE ) ;
+            lineBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC, (INT64)0 ) ;
+            lineBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC, (INT64)0 ) ;
+
             arrBuilder << lineBuilder.obj() ;
          }
          catch ( std::exception )
@@ -4682,10 +4710,14 @@ namespace engine
             PD_LOG_MSG( PDERROR, "Failed to get user limit info" ) ;
             goto error ;
          }
-         if ( ( CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX < (UINT64)rlim.rlim_cur ) &&
-              ( -1 != rlim.rlim_cur ) )
+
+         // -1 mean unlimited
+         // if val > max exact int or val == ulimited, append as string
+         if ( CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX < (UINT64)rlim.rlim_cur &&
+              (UINT64)-1 != rlim.rlim_cur )
          {
-            builder.append( resourceName[ index ],  boost::lexical_cast<string>( rlim.rlim_cur ) ) ;
+            builder.append( resourceName[ index ],
+                            boost::lexical_cast<string>( rlim.rlim_cur ) ) ;
          }
          else
          {
@@ -4758,10 +4790,12 @@ namespace engine
       // set ulimit
       for ( UINT32 index = 0; index < CMD_RESOURCE_NUM; index++ )
       {
-         if ( configsObj[ resourceName[ index ] ].ok() )
+         char *limitItem = resourceName[ index ] ;
+         if ( configsObj[ limitItem ].ok() )
          {
-            if( FALSE == configsObj.getField( resourceName[ index ] ).isNumber() &&
-                String != configsObj.getField( resourceName[ index ] ).type() )
+            // support string type or number type
+            if( FALSE == configsObj.getField( limitItem ).isNumber() &&
+                String != configsObj.getField( limitItem ).type() )
             {
                rc = SDB_INVALIDARG ;
                PD_LOG_MSG( PDERROR, "value must be number or string" ) ;
@@ -4776,21 +4810,22 @@ namespace engine
                goto error ;
             }
 
-            if ( configsObj.getField( resourceName[ index ] ).isNumber() )
+            if ( configsObj.getField( limitItem ).isNumber() )
             {
-               rlim.rlim_cur = ( UINT64 ) configsObj.getField( resourceName[ index ] ).numberLong() ;
+               rlim.rlim_cur = (UINT64)configsObj.getField( limitItem ).numberLong() ;
             }
             else
             {
                try
                {
-                  rlim.rlim_cur = boost::lexical_cast<UINT64>( string( configsObj.getStringField( resourceName[ index ] ) ) ) ;
+                  string valStr = configsObj.getStringField( limitItem ) ;
+                  rlim.rlim_cur = boost::lexical_cast<UINT64>( valStr ) ;
                }
                catch( std::exception &e )
                {
                   rc = SDB_INVALIDARG ;
                   PD_LOG_MSG( PDERROR, "%s could not be interpreted as number",
-                              configsObj.getStringField( resourceName[ index ] ) ) ;
+                              configsObj.getStringField( limitItem ) ) ;
                   goto error ;
                }
             }
@@ -4800,7 +4835,7 @@ namespace engine
                {
                   rc = SDB_INVALIDARG ;
                   PD_LOG_MSG( PDERROR, "invalid argument: %s",
-                              resourceName[ index ] ) ;
+                              limitItem ) ;
                   goto error ;
                }
                else if ( EPERM == errno )

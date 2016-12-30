@@ -5119,10 +5119,14 @@ namespace engine
             detail = BSON( SPT_ERR << "Failed to get user limit info" ) ;
             goto error ;
          }
-         if ( ( CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX < (UINT64)rlim.rlim_cur ) &&
-              ( -1 != rlim.rlim_cur ) )
+
+         // -1 mean unlimited
+         // if val > max exact int or val == ulimited, append as string
+         if ( CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX < (UINT64)rlim.rlim_cur &&
+              (UINT64)-1 != rlim.rlim_cur )
          {
-            builder.append( resourceName[ index ],  boost::lexical_cast<string>( rlim.rlim_cur ) ) ;
+            builder.append( resourceName[ index ],
+                            boost::lexical_cast<string>( rlim.rlim_cur ) ) ;
          }
          else
          {
@@ -5176,10 +5180,12 @@ namespace engine
       // set ulimit
       for ( UINT32 index = 0; index < CMD_RESOURCE_NUM; index++ )
       {
-         if ( configsObj[ resourceName[ index ] ].ok() )
+         char *limitItem = resourceName[ index ] ;
+         if ( configsObj[ limitItem ].ok() )
          {
-            if( FALSE == configsObj.getField( resourceName[ index ] ).isNumber() &&
-                String != configsObj.getField( resourceName[ index ] ).type() )
+            // support string type or number type
+            if( FALSE == configsObj.getField( limitItem ).isNumber() &&
+                String != configsObj.getField( limitItem ).type() )
             {
                rc = SDB_INVALIDARG ;
                detail = BSON( SPT_ERR << "value must be number or string" ) ;
@@ -5194,21 +5200,22 @@ namespace engine
                goto error ;
             }
 
-            if ( configsObj.getField( resourceName[ index ] ).isNumber() )
+            if ( configsObj.getField( limitItem ).isNumber() )
             {
-               rlim.rlim_cur = ( UINT64 ) configsObj.getField( resourceName[ index ] ).numberLong() ;
+               rlim.rlim_cur = (UINT64)configsObj.getField( limitItem ).numberLong() ;
             }
             else
             {
                try
                {
-                  rlim.rlim_cur = boost::lexical_cast<UINT64>( string( configsObj.getStringField( resourceName[ index ] ) ) ) ;
+                  string valStr = configsObj.getStringField( limitItem ) ;
+                  rlim.rlim_cur = boost::lexical_cast<UINT64>( valStr ) ;
                }
                catch( std::exception &e )
                {
                   rc = SDB_INVALIDARG ;
                   stringstream ss ;
-                  ss << configsObj.getStringField( resourceName[ index ] )
+                  ss << configsObj.getStringField( limitItem )
                      << " could not be interpreted as number" ;
                   detail = BSON( SPT_ERR << ss.str().c_str() ) ;
                   goto error ;
@@ -5220,9 +5227,10 @@ namespace engine
                if ( EINVAL == errno )
                {
                   rc = SDB_INVALIDARG ;
-                  detail = BSON( SPT_ERR << "Invalid argument: " + string( resourceName[ index ] ) ) ;
+                  detail = BSON( SPT_ERR << "Invalid argument: " +
+                                 string( limitItem ) ) ;
                   PD_LOG( PDERROR, "Invalid argument, argument: %s",
-                          resourceName[ index ] ) ;
+                          limitItem ) ;
                   goto error ;
                }
                else if ( EPERM == errno )
