@@ -83,16 +83,17 @@ def insert_boundary_max( cl ):
    cl.delete()
    cl.insert( loads('{"a":{"$numberLong":"9223372036854775807"},"_id":1}') )
    
-   condition = { "a": { "$type": 1, "$et": 18 } }  
-   rec = cl.query(condition=condition).next()
+   condition = { "a": { "$type": 1, "$et": 18 } }
+   selector = { "a": "" }
+   rec = cl.query(condition=condition, selector=selector).next()
       
    if( rec['a'] != 9223372036854775807 ):
       print( 'rec["a"], expect: 9223372036854775807, actual: %d' % ( rec['a'] ) )    
       raise  Exception( 'CHECK_VALUE_ERROR' )
    
    print(rec)
-   if( dumps(rec) != '{"a": 9223372036854775807, "_id": 1}' ):
-      print( 'dumps(rec), expect: {"a": 9223372036854775807, "_id": 1}, actual: %s' % ( dumps(rec) ) )
+   if( dumps(rec) != '{"a": 9223372036854775807}' ):
+      print( 'dumps(rec), expect: {"a": 9223372036854775807}, actual: %s' % ( dumps(rec) ) )
       raise  Exception( 'CHECK_JSON_ERROR' )
  
 
