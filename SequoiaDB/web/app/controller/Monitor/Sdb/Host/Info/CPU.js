@@ -34,7 +34,6 @@
       var idleCpuOld = 0 ;
       var sumCpu = 0 ;
       var idleCpu = 0 ;
-      
 
       //获取cpu配置
       var getCpuInfo = function(){
@@ -113,27 +112,10 @@
       getCpuInfo() ;
       getChartInfo() ;
 
-
-      $scope.hostInfo = [] ;
-      var s = 0 ;
-      var d = 0 ;
       $scope.charts = {}; 
       $scope.charts['Cpu'] = {} ;
       $scope.charts['Cpu']['options'] = window.SdbSacManagerConf.CpuEchart ;
       $scope.charts['Cpu']['options']['title']['text'] = $scope.autoLanguage( 'CPU利用率' ) ;
-
-      $scope.queryList = function( data, success, failed, error, complete )
-      {
-         SdbRest._postTest( './test/hostInfo', success, failed, error ) ;
-      }
-
-      $scope.getInfo = function(){
-         $scope.queryList( {}, function( test ){
-            $scope.hostName = test[0]['HostName'] ;
-            $scope.hostInfo = test[0]['CPU'] ;
-         } ) ;
-      }
-      $scope.getInfo();
 
       //跳转至资源
       $scope.GotoResources = function(){
@@ -144,7 +126,6 @@
       $scope.GotoHosts = function(){
          $location.path( '/Monitor/SDB-Host/List/Index' ).search( { 'r': new Date().getTime() } ) ;
       } ;
-      
       
       //跳转至节点列表
       $scope.GotoNodes = function(){
