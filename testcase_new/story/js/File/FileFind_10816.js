@@ -63,13 +63,13 @@ function checkFindResult( result, cmd, commands )
    else
    {
       var findfiles = cmd.run( commands ).split( "\n" ) ;
-      for( var j = 0;j < result.length;j++ )
+      for( var i = result.length-1, j= findfiles.length-2;i >= 0;i--,j-- )
       {
-         var fileObj = JSON.parse( result[j] ) ;
+         var fileObj = JSON.parse( result[i] ) ;
          if( fileObj.pathname != findfiles[j] )
          {
             throw buildException( "checkFindResult", null, 
-                  "find files " + commands, findfiles, result ) ;
+                  "find files " + commands, findfiles, result[i] ) ;
          }    
       }
    }

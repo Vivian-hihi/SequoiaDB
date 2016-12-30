@@ -16,10 +16,10 @@ FileTest.prototype.testList = function()
    var files1 = this.file.list( option ).toArray() ;   // 枚举文件
    var command = "ls -al " + dir[0] + " | sed -n '4,$p' | awk '{print $1,$3,$9}'" ;
    var files2 = this.cmd.run( command ).split( "\n" ) ;
-   for( var i = 0;i < files1.length;i++ )
+   for( var i = files1.length-1,j = files2.length-2;i >= 0;i--,j-- )
    {
       var fileObj = JSON.parse( files1[i] ) ;
-      var tmp = files2[i].split( " " ) ;
+      var tmp = files2[j].split( " " ) ;
       var perm = tmp[0] ;   // 文件权限
       var user = tmp[1] ;   // 文件用户
       var filename = tmp[2] ;  // 文件名

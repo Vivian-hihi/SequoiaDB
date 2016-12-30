@@ -88,8 +88,11 @@ function checkCopy( cmd, srcFile, dstFile )
 {
    try
    {
-      var mode1 = cmd.run( "ls -al " + srcFile + " | awk '{print $1}'" ) ;
-      var mode2 = cmd.run( "ls -al " + dstFile + " | awk '{print $1}'" ) ;
+      var tmp ;
+      tmp = cmd.run( "ls -al " + srcFile + " | awk '{print $1}'" ).split( "\n" ) ;
+      var mode1 = tmp[tmp.length-2] ;
+      tmp = cmd.run( "ls -al " + dstFile + " | awk '{print $1}'" ).split( "\n" ) ;
+      var mode2 = tmp[tmp.length-2]
    }
    catch( e )
    {

@@ -96,7 +96,8 @@ function toolGetHosts()
 function toolGetLocalhost()
 {
    var cmd = new Cmd() ;
-   var localhost = cmd.run( "hostname" ).split( "\n" )[0] ;
+   var tmp = cmd.run( "hostname" ).split( "\n" ) ;
+   var localhost = tmp[tmp.length-2] ;
    return localhost ;
 }
 
@@ -131,7 +132,8 @@ function toolGetSdbcmUser( hostName, cmSvcName )
    var cmd = remote.getCmd() ;
    var command = "ps aux | grep sdbcm | grep -E -v 'grep|sdbcmd' |" +
                  " awk '{print $1}'" ;
-   var user = cmd.run( command ).split( "\n" )[0] ;
+   var tmp = cmd.run( command ).split( "\n" ) ;
+   var user = tmp[tmp.length-2] ;
    return user ;   
 }
 
@@ -143,7 +145,8 @@ function toolGetCurrentUser( hostName, cmSvcName )
 {
    var remote = new Remote( hostName, cmSvcName ) ;
    var cmd = remote.getCmd() ;
-   var user = cmd.run( "whoami" ).split( "\n" )[0] ;
+   var tmp = cmd.run( "whoami" ).split( "\n" ) ;
+   var user = tmp[tmp.length-2] ;
    return user ;
 }
 
@@ -159,8 +162,8 @@ function toolGetCmUserGroup( hostname, svcname )
    var remote = new Remote( hostname, svcname ) ;
    var cmd = remote.getCmd() ;
    var command = "ls -l " + file + " | awk '{print $3,$4}'" ;
-   var tmpInfo = cmd.run( command ).split( "\n" )[0] ;
-   var tmp = tmpInfo.split( " " ) ;
+   var tmpInfo = cmd.run( command ).split( "\n" ) ;
+   var tmp = tmpInfo[tmpInfo.length-2].split( " " ) ;
    var result = {} ;
    result["user"] = tmp[0] ;
    result["group"] = tmp[1] ;

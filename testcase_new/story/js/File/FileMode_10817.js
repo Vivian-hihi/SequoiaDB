@@ -19,7 +19,8 @@ FileTest.prototype.testChmod = function()
       tmpFile = this.remote.getFile( tmpFilename ) ;
    this.file.chmod( tmpFilename, 0755 ) ;    // 更改权限
    var command = "ls -l " + tmpFilename + " | awk '{print $1}'" ;
-   var mode = this.cmd.run( command ).split( "\n" )[0] ;
+   var tmp = this.cmd.run( command ).split( "\n" ) ;
+   var mode = tmp[tmp.length-2] ;
    mode = mode.slice( 0, 10 ) ;
    this.cmd.run( "rm -rf " + tmpFilename ) ;
    if( mode != "-rwxr-xr-x" )
@@ -50,7 +51,8 @@ FileTest.prototype.testChown = function()
       tmpFile = this.remote.getFile( tmpFilename ) ;
    this.file.chown( tmpFilename, { username: "root", groupname: "root" } ) ;  // 更改文件用户和用户组
    var command = "ls -l " + tmpFilename + " | awk '{print $3,$4}'" ;
-   var owner = this.cmd.run( command ).split( "\n" )[0] ;
+   var tmp = this.cmd.run( command ).split( "\n" ) ;
+   var owner = tmp[tmp.length-2] ;
    this.cmd.run( "rm -rf " + tmpFilename ) ;
    if( owner != "root root" )
    {
@@ -80,7 +82,8 @@ FileTest.prototype.testChgrp = function()
       tmpFile = this.remote.getFile( tmpFilename ) ;
    this.file.chgrp( tmpFilename, "root" ) ;   // 更改文件用户组
    var command = "ls -l " + tmpFilename + " | awk '{print $4}'"
-   var group = this.cmd.run( command ).split( "\n" )[0] ;
+   var tmp = this.cmd.run( command ).split( "\n" ) ;
+   var group = tmp[tmp.length-2] ;
    this.cmd.run( "rm -rf " + tmpFilename ) ;
    if( group != "root" )
    {

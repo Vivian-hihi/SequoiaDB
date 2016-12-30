@@ -43,7 +43,8 @@ FileTest.prototype.testMd5 = function()
    var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) 
    var fileName = sdbDir[0] + "/conf/sdbcm.conf" ;
    var md5 = this.file.md5( fileName ) ;
-   var tmpInfo = this.cmd.run( "md5sum " + fileName ).split( "\n" )[0] ;
+   var tmp = this.cmd.run( "md5sum " + fileName ).split( "\n" ) ;
+   var tmpInfo = tmp[tmp.length-2] ;
    var expect = tmpInfo.split( " " )[0] ;
    if( md5 != expect )
    {
@@ -77,7 +78,8 @@ FileTest.prototype.testStat = function()
       try
       {
          var command = "stat -c '%n|%s|%A|%U|%G|%x|%y|%z' " + files[i] ;
-         var tmp = this.cmd.run( command ).split( "\n" )[0] ;
+         var tmpInfo = this.cmd.run( command ).split( "\n" ) ;
+         var tmp = tmpInfo[tmpInfo.length-2] ;
       }
       catch( e )
       {
