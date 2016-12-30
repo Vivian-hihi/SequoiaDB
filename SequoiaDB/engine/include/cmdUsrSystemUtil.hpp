@@ -87,6 +87,8 @@ namespace engine
    #define CMD_USR_SYSTEM_USABLE             "Usable"
    #define CMD_USR_SYSTEM_UNIT               "Unit"
    #define CMD_USR_SYSTEM_FSTYPE             "FsType"
+   #define CMD_USR_SYSTEM_IO_R_SEC           "ReadSec"
+   #define CMD_USR_SYSTEM_IO_W_SEC           "WriteSec"
 
    #define CMD_USR_SYSTEM_RX_PACKETS         "RXPackets"
    #define CMD_USR_SYSTEM_RX_BYTES           "RXBytes"

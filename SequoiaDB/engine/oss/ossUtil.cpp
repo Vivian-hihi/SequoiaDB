@@ -1032,6 +1032,88 @@ error :
    goto done ;
 }
 
+#if defined (_LINUX) || defined (_AIX)
+#define OSS_DISK_IO_STAT_FILE "/proc/diskstats"
+#endif
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETDISKIOSTAT, "ossGetDiskIOStat" )
+INT32 ossGetDiskIOStat ( const CHAR *pDriverName, ossDiskIOStat &ioStat )
+{
+   INT32 rc = SDB_OK ;
+
+   PD_TRACE_ENTRY ( SDB_OSSGETDISKIOSTAT ) ;
+
+#if defined (_LINUX) || defined (_AIX)
+   INT32 ossErr = 0 ;
+   CHAR pathName[ OSS_PROC_PATH_LEN_MAX + 1 ] = {0} ;
+   CHAR lineBuffer[ OSS_PROC_PATH_LEN_MAX + 1 ] = {0} ;
+   CHAR driverName[ OSS_PROC_PATH_LEN_MAX + 1 ] = {0} ;
+   FILE *fp = NULL ;
+
+   ossSnprintf ( pathName, sizeof( pathName ), OSS_DISK_IO_STAT_FILE ) ;
+   fp = fopen ( pathName, "r" ) ;
+   if ( !fp )
+   {
+      ossErr = ossGetLastError () ;
+      PD_LOG ( PDERROR, "Failed to open disk stat file, error = %d",
+               ossErr ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   while ( fgets( lineBuffer, sizeof( lineBuffer ), fp) != NULL ) {
+      INT32 fieldRead = 0 ;
+
+      UINT32 major, minor ;
+      UINT32 ios_pgr, tot_ticks, rq_ticks, wr_ticks ;
+      UINT64 rd_ios, rd_merges_or_rd_sec, wr_ios, wr_merges ;
+      UINT64 rd_sec_or_wr_ios, wr_sec, rd_ticks_or_wr_sec ;
+      fieldRead = sscanf( lineBuffer,
+                          "%u %u %s %llu %llu %llu %llu %llu %llu %llu %u %u %u %u",
+                          &major, &minor, driverName,
+                          &rd_ios, &rd_merges_or_rd_sec, &rd_sec_or_wr_ios,
+                          &rd_ticks_or_wr_sec, &wr_ios, &wr_merges, &wr_sec,
+                          &wr_ticks, &ios_pgr, &tot_ticks, &rq_ticks) ;
+      if ( 0 != ossStrcmp( pDriverName, driverName ) )
+      {
+         continue ;
+      }
+      if ( fieldRead == 14 )
+      {
+         /* Device or partition */
+         ioStat.rdIos     = rd_ios ;
+         ioStat.rdMerges  = rd_merges_or_rd_sec ;
+         ioStat.rdSectors = rd_sec_or_wr_ios ;
+         ioStat.rdTicks   = (unsigned int) rd_ticks_or_wr_sec ;
+         ioStat.wrIos     = wr_ios ;
+         ioStat.wrMerges  = wr_merges ;
+         ioStat.wrSectors = wr_sec ;
+         ioStat.wrTicks   = wr_ticks ;
+         ioStat.iosPgr    = ios_pgr ;
+         ioStat.totTicks  = tot_ticks ;
+         ioStat.rqTicks   = rq_ticks ;
+      }
+      else if ( fieldRead == 7 ) {
+         /* Partition without extended statistics */
+         ioStat.rdIos      = rd_ios;
+         ioStat.rdSectors  = rd_merges_or_rd_sec ;
+         ioStat.wrIos      = rd_sec_or_wr_ios ;
+         ioStat.wrSectors  = rd_ticks_or_wr_sec ;
+      }
+      break ;
+   }
+
+   fclose( fp ) ;
+#endif
+
+done :
+   PD_TRACE_EXITRC ( SDB_OSSGETDISKIOSTAT, rc ) ;
+   return rc ;
+
+error :
+   goto done ;
+}
+
 #if defined (_WINDOWS)
 typedef DWORD SYSTEM_INFORMATION_CLASS ;
 #define SYSTEM_PROC_TIME 0x08

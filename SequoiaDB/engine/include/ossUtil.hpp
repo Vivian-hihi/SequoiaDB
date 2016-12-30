@@ -966,6 +966,23 @@ INT32 ossGetDiskInfo ( const CHAR *pPath,
                        INT64 &totalBytes,
                        INT64 &freeBytes ) ;
 
+typedef struct _ossDiskIOStat
+{
+   UINT64 rdSectors ;
+   UINT64 wrSectors ;
+   UINT64 rdIos ;
+   UINT64 rdMerges ;
+   UINT64 wrIos ;
+   UINT64 wrMerges ;
+   UINT32 rdTicks ;
+   UINT32 wrTicks ;
+   UINT32 iosPgr ;
+   UINT32 totTicks ;
+   UINT32 rqTicks ;
+} ossDiskIOStat ;
+
+INT32 ossGetDiskIOStat ( const CHAR *pDriverName, ossDiskIOStat &ioStat ) ;
+
 INT32 ossGetCPUInfo ( SINT64 &user, SINT64 &sys,
                       SINT64 &idle, SINT64 &other ) ;
 

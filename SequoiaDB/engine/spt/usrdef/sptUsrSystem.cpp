@@ -2009,8 +2009,34 @@ namespace engine
             diskBuilder.appendNumber( CMD_USR_SYSTEM_USED, ( totalBytes - freeBytes ) / ( 1024 * 1024 ) ) ;
             diskBuilder.append( CMD_USR_SYSTEM_UNIT, "MB" ) ;
             diskBuilder.append( CMD_USR_SYSTEM_MOUNT, mount ) ;
-            diskBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL,
-                                    string::npos != columns.at( 0 ).find( "/dev/", 0, 5 ) ) ;
+
+            BOOLEAN isLocal = ( string::npos != columns.at( 0 ).find( "/dev/", 0, 5 ) ) ;
+            BOOLEAN gotStat = FALSE ;
+            diskBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL, isLocal ) ;
+
+            if ( isLocal )
+            {
+               ossDiskIOStat ioStat ;
+               string driverName = columns.at( 0 ) ;
+
+               // only match the driver name after /dev/
+               driverName.replace(0, 5, "" ) ;
+
+               ossMemset( &ioStat, 0, sizeof( ossDiskIOStat ) ) ;
+
+               INT32 rctmp = ossGetDiskIOStat( driverName.c_str(), ioStat ) ;
+               if ( SDB_OK == rctmp )
+               {
+                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC, (INT64)ioStat.rdSectors ) ;
+                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC, (INT64)ioStat.wrSectors ) ;
+                  gotStat = TRUE ;
+               }
+            }
+            if ( !gotStat )
+            {
+               diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC, (INT64)0 ) ;
+               diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC, (INT64)0 ) ;
+            }
 
             arrBuilder << diskBuilder.obj() ;
          }
@@ -2183,6 +2209,8 @@ namespace engine
             lineBuilder.append( CMD_USR_SYSTEM_UNIT, "M" ) ;
             lineBuilder.append( CMD_USR_SYSTEM_MOUNT, mount ) ;
             lineBuilder.appendBool( CMD_USR_SYSTEM_ISLOCAL, TRUE ) ;
+            lineBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC, (INT64)0 ) ;
+            lineBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC, (INT64)0 ) ;
             arrBuilder << lineBuilder.obj() ;
          }
          catch ( std::exception )
