@@ -76,6 +76,7 @@ import base64
 import calendar
 import datetime
 import re
+from collections import OrderedDict
 
 json_lib = True
 try:
@@ -233,7 +234,7 @@ def default(obj):
         if (obj > 9007199254740991 or obj < -9007199254740991) and get_js_compatibility():
             return {"$numberLong": str(obj)}
     if isinstance(obj, Decimal):
-        return json.loads(str(obj))
+        return json.loads(str(obj), object_pairs_hook=OrderedDict)
     if isinstance(obj, DBRef):
         return _json_convert(obj.as_doc())
     if isinstance(obj, datetime.datetime):
