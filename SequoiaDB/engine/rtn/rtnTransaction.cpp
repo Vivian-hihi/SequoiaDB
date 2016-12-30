@@ -68,7 +68,7 @@ namespace engine
          cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET ) ;
          sdbGetTransCB()->addTransCB( cb->getTransID(), cb ) ;
       }
-      PD_LOG( PDEVENT, "Begin transaction operations(transID=%llu)",
+      PD_LOG( PDINFO, "Begin transaction operations(transID=%llu)",
               cb->getTransID() ) ;
       PD_TRACE_EXIT ( SDB_RTNTRANSBEGIN ) ;
 
