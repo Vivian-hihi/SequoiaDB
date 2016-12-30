@@ -1373,6 +1373,12 @@
                            "en": "resetSnapshot()"
                         },
                         {
+                           "id": 1483064748,
+                           "file": "reloadConf",
+                           "cn": "reloadConf()",
+                           "en": "reloadConf()"
+                        },
+                        {
                            "id": 1432190808,
                            "file": "setSessionAttr",
                            "cn": "setSessionAttr()",
@@ -1395,6 +1401,12 @@
                            "file": "sync",
                            "cn": "sync()",
                            "en": "sync()"
+                        },
+                        {
+                           "id": 1483064791,
+                           "file": "setPDLevel",
+                           "cn": "setPDLevel()",
+                           "en": "setPDLevel()"
                         },
                         {
                            "id": 1432190811,
