@@ -35,6 +35,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "msgDef.hpp"
 
 namespace engine
 {
@@ -331,6 +332,7 @@ namespace engine
    #define OMA_REMOTE_OMA_GET_NODE_CONFIGS        "oma get node configs"
    #define OMA_REMOTE_OMA_SET_NODE_CONFIGS        "oma set node configs"
    #define OMA_REMOTE_OMA_UPDATE_NODE_CONFIGS     "oma update node configs"
+   #define OMA_REMOTE_OMA_RELOAD_CONFIGS          CMD_NAME_RELOAD_CONFIG
 }
 
 #endif // OMAGENT_DEF_HPP__

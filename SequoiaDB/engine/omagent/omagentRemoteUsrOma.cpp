@@ -1433,4 +1433,46 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _remoteOmaReloadConfigs implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaReloadConfigs )
+
+   _remoteOmaReloadConfigs::_remoteOmaReloadConfigs()
+   {
+   }
+
+   _remoteOmaReloadConfigs::~_remoteOmaReloadConfigs()
+   {
+   }
+
+   const CHAR* _remoteOmaReloadConfigs::name()
+   {
+      return OMA_REMOTE_OMA_RELOAD_CONFIGS ;
+   }
+
+   INT32 _remoteOmaReloadConfigs::doit( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj optionObj ;
+      CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      omAgentOptions option ;
+
+      // Get current path
+      ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
+      option.init( currentPath ) ;
+      option.toBSON( optionObj ) ;
+
+      rc = sdbGetOMAgentOptions()->change( optionObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to change option" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }

@@ -272,5 +272,21 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
    } ;
 
+   /*
+      _remoteOmaReloadConfigs define
+   */
+   class _remoteOmaReloadConfigs : public _remoteExec
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _remoteOmaReloadConfigs() ;
+
+         ~_remoteOmaReloadConfigs() ;
+
+         virtual const CHAR *name() ;
+
+         virtual INT32 doit( BSONObj &retObj ) ;
+   } ;
+
 }
 #endif

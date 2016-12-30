@@ -195,7 +195,7 @@ Oma.prototype.setOmaConfigs = function( configsObj, confFile ) {
    }
 
    // run command
-   if ( undefined != confFile )
+   if ( undefined != confFile && "" != confFile )
    {
       this._runCommand( "oma set oma configs", {}, { "confFile": confFile },
                         { "configsObj": configsObj } ) ;
@@ -204,6 +204,11 @@ Oma.prototype.setOmaConfigs = function( configsObj, confFile ) {
    {
       this._runCommand( "oma set oma configs", {}, {},
                         { "configsObj": configsObj } ) ;
+   }
+
+   if ( true == isReload )
+   {
+      this.reloadConfigs() ;
    }
 }
 
@@ -380,6 +385,119 @@ Oma.prototype.updateNodeConfigs = function( svcname, configsObj ) {
    // run command
    this._runCommand( "oma update node configs", {},
                      { "svcname": svcname }, { "configsObj": configsObj } ) ;
+}
+
+Oma.prototype.startAllNodes = function( businessName ) {
+   var localNodes ;
+   if ( 'string' == typeof( businessName ) )
+   {
+      localNodes = this.listNodes( { 'type': 'db',
+                                     'expand': true,
+                                     'mode': 'local' },
+                                   { 'businessname': businessName } ).toArray() ;
+   }
+   else
+   {
+      localNodes = this.listNodes( { 'type': 'db', 'expand': true,
+                                     'mode': 'local' } ).toArray() ;
+   }
+
+   var arrObj = [] ;
+   var obj ;
+   var isSuccess = true ;
+   var total = localNodes.length ;
+   var success = 0 ;
+
+
+   for( var index in localNodes )
+   {
+      obj = JSON.parse( localNodes[ index ] ) ;
+      try
+      {
+         print( "Start sequoiadb(" + obj.svcname + "): " ) ;
+         this.startNode( obj.svcname ) ;
+         println( "Success" ) ;
+         success++ ;
+      }
+      catch( e )
+      {
+         println( "Failed, errno: " + e + ", description: " + getErr( e )
+                  + ", detail: " + getLastErrMsg() ) ;
+         if ( SDB_NETWORK == e || SDB_NETWORK_CLOSE == e )
+         {
+            println( "Total: " + total +
+                     "; Success: " + success +
+                     "; Failed: " + ( total - success ) ) ;
+            throw e ;
+         }
+         isSuccess = false ;
+      }
+   }
+   println( "Total: " + total + "; Success: " + success + "; Failed: " + ( total - success ) ) ;
+   if ( false == isSuccess )
+   {
+      setLastErrMsg( "Failed to start all nodes" ) ;
+      throw SDB_SYS ;
+   }
+}
+
+Oma.prototype.stopAllNodes = function( businessName ) {
+   var localNodes ;
+   if ( 'string' == typeof( businessName ) )
+   {
+      localNodes = this.listNodes( { 'type': 'db',
+                                     'expand': true,
+                                     'mode': "run" },
+                                   { 'businessname': businessName } ).toArray() ;
+   }
+   else
+   {
+      localNodes = this.listNodes( { 'type': 'db', 'expand': true,
+                                     'mode': 'run' } ).toArray() ;
+   }
+
+   var arrObj = [] ;
+   var obj ;
+   var isSuccess = true ;
+   var total = localNodes.length ;
+   var success = 0 ;
+
+   for( var index in localNodes )
+   {
+      obj = JSON.parse( localNodes[ index ] ) ;
+      try
+      {
+         print( "Stop sequoiadb(" + obj.svcname + "): " ) ;
+         this.stopNode( obj.svcname ) ;
+         println( "Success" ) ;
+         success++ ;
+      }
+      catch( e )
+      {
+         println( "Failed, errno: " + e + ", description: " + getErr( e )
+                  + ", detail: " + getLastErrMsg() ) ;
+         if ( SDB_NETWORK == e || SDB_NETWORK_CLOSE == e )
+         {
+            println( "Total: " + total +
+                     "; Success: " + success +
+                     "; Failed: " + ( total - success ) ) ;
+            throw e ;
+         }
+         isSuccess = false ;
+      }
+   }
+
+   println( "Total: " + total + "; Success: " + success + "; Failed: " + ( total - success ) ) ;
+   if ( false == isSuccess )
+   {
+      setLastErrMsg( "Failed to start all nodes" ) ;
+      throw SDB_SYS ;
+   }
+}
+
+Oma.prototype.reloadConfigs = function()
+{
+   this._runCommand( "reload config" ) ;
 }
 
 Oma.prototype.help = function( val ) {
