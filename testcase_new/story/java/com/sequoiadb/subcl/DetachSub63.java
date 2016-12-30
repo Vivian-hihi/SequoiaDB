@@ -22,12 +22,11 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * test content:  detach一个未挂载的子表
  * testlink case: seqDB-63
  * @author zengxianquan
- * @date 2016年12月19日
+ * @date 2016年12月30日
  * @version 1.00
  * other:
- * 存在BUG,正在修正，故暂时跳过
+ * 存在的BUG已经修复
  * 对应JIRA问题单：2134
- * 修正后请将本文件中@Test的enabled=false删除
  */
 public class DetachSub63 extends SdbTestBase{
 	
@@ -71,7 +70,7 @@ public class DetachSub63 extends SdbTestBase{
 		}
 	}
 	
-	@Test(enabled = false )
+	@Test
 	public void testDetachButNotAttach(){
 		createMainclAndSubcl();
 		try{
@@ -79,7 +78,7 @@ public class DetachSub63 extends SdbTestBase{
 			Assert.fail("detach subclName1 successfully");
 		}catch(BaseException e){
 		//在detach一个未attach的子表时，不报错，提了问题单，等到修复完成后，请下面一句的注释释放，同时加上对应的错误码
-		//	Assert.assertEquals(e.getErrorCode(), ,e.getMessage());
+			Assert.assertEquals(e.getErrorCode(),-242 ,e.getMessage());
 		}	
 		try{
 			maincl.detachCollection(SdbTestBase.csName+"."+subclName2);
