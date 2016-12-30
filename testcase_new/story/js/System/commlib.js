@@ -218,7 +218,7 @@ function isSdbadminExist( hostname, svcname )
    var exist ;
    try
    {
-      cmd.run( "cat /etc/passwd | grep '^sdbadmin'" ) ;
+      cmd.run( "grep '^sdbadmin:' /etc/passwd" ) ;
       exist = true ;
    }
    catch( e )
@@ -243,7 +243,7 @@ function isSdbadminGroupExist( hostname, svcname )
    var exist ;
    try
    {
-      cmd.run( "cat /etc/group | grep '^sdbadmin_group'" ) ;
+      cmd.run( "grep '^sdbadmin_group:' /etc/group" ) ;
       exist = true ;
    }
    catch( e )
@@ -268,7 +268,7 @@ function isSequoiadbExist( hostname, svcname )
    var exist ;
    try
    {
-      cmd.run( "cat /etc/group | grep '^sequoiadb'" ) ;
+      cmd.run( "grep '^sequoiadb:' /etc/group" ) ;
       exist = true ;
    }
    catch( e )
