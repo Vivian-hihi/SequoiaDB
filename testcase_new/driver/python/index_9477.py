@@ -7,22 +7,29 @@ from pysequoiadb import client
 from pysequoiadb import const
 from pysequoiadb.error import (SDBTypeError,
                                SDBBaseError,
-                               SDBEndOfCursor)
+                               SDBEndOfCursor,
+                               SDBError)
 
 from bson.objectid import ObjectId
+from bson.decimal import Decimal
 
-cs_name = "test"
-cl_name = "testindex"
+cs_name = "test9477"
+cl_name = "testindex9477"
 #class
 class IndexTestCase(unittest.TestCase):
    @classmethod
    def create_cl(cls):
-      cls.cs = cls.db.create_collection_space(cs_name)
-      
-      #create a cl
-      cls.cl = cls.cs.create_collection(cl_name, {"ReplSize":0})
-      print( '---create cl success---' )   
-  
+     try:
+         print( '---begin create cs---')
+         cls.cs = cls.db.create_collection_space(cs_name)            
+         
+         #create a cl
+         cls.cl = cls.cs.create_collection(cl_name, {"ReplSize":0})
+         print( '---create cl success---' )   
+     except SDBError as e:
+         pysequoiadb._print(e.detail) 
+         raise e
+         
    @classmethod   
    def insertDatas( cls ):   
       print( '---begin to insert records---' )
@@ -31,7 +38,7 @@ class IndexTestCase(unittest.TestCase):
          
    @classmethod
    def setUp(cls):
-      cls.db = client("192.168.31.2", 11810)
+      cls.db = client("192.168.31.1", 11810)      
       cls.create_cl()
       cls.insertDatas()  
 
