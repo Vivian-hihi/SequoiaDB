@@ -46,8 +46,10 @@ function DiskSnapInfo()
 {
    this.Name        = "" ;
    this.Mount       = "" ;
-   this.Size        = "" ;
-   this.Free        = "" ;
+   this.Size        = 0 ;
+   this.Free        = 0 ;
+   this.ReadSec     = 0 ;
+   this.WriteSec    = 0 ;
 }
 
 

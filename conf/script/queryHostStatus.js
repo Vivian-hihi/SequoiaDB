@@ -159,6 +159,8 @@ function snapshotDiskInfo()
             formated[Mount]   = oneDisk[Mount] ;
             formated[Size]    = oneDisk[Size] ;
             formated[Free]    = oneDisk[Size] - oneDisk[Used] ;
+            formated[ReadSec] = oneDisk[ReadSec] ;
+            formated[WriteSec] = oneDisk[WriteSec] ;
             results.push( formated ) ;
          }
       }
