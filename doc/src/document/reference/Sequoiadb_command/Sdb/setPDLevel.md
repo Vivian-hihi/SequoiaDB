@@ -45,7 +45,7 @@
 
 * 设置所有节点的日志级别为PDEVENT。
 
- ```lang-javascrip
+ ```lang-javascript
  // 连接节点
  > db = new Sdb( "localhost", 11810 )
  > db.setPDLevel( 3, {Grlobal:true} )
