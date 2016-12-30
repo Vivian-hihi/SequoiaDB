@@ -8,7 +8,7 @@
 | ------ | ------   | ------ | ------ |
 | Global | bool     | 是否在全局执行 | 否 |
 | GroupID | int 或数组 | 分区组ID | 否 |
-| GroupName | string 或数组 / [string] | 分区组名 | 否 |
+| GroupName | string 或数组 | 分区组名 | 否 |
 | NodeID | int 或数组 | 节点ID | 否 |
 | HostName | string 或数组 | 节点的主机名称 | 否 |
 | svcname | string 或数组 | 节点的服务名 | 否 |
