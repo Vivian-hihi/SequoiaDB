@@ -76,8 +76,12 @@ class cursor(object):
             raise
          self._cursor = None
 
-   def next(self):
+   def next(self, ordered = False):
       """Return the next document of current cursor, and move forward.
+
+      Parameters:
+         Name      Type  Info:
+         ordered   bool  Set true if need field-ordered records, default false.
 
       Return values:
          a dict object of record
@@ -85,6 +89,13 @@ class cursor(object):
          pysequoiadb.error.SDBBaseError
          pysequoiadb.error.SDBEndOfCursor
       """
+      if not isinstance(ordered, bool):
+         raise SDBTypeError("ordered must be an instance of bool")
+
+      as_class = dict
+      if ordered:
+         as_class = OrderedDict
+
       try:
          rc, bson_string = sdb.cr_next(self._cursor)
          if const.SDB_OK != rc:
@@ -93,15 +104,19 @@ class cursor(object):
             else:
                raise SDBBaseError("Failed to get next record", rc)
          else:
-            record, size = bson._bson_to_dict(bson_string, OrderedDict, False,
+            record, size = bson._bson_to_dict(bson_string, as_class, False,
                                               bson.OLD_UUID_SUBTYPE, True)
       except SDBBaseError:
          raise
 
       return record
 
-   def current(self):
+   def current(self, ordered = False):
       """Return the current document of cursor, and don't move.
+
+      Parameters:
+         Name      Type  Info:
+         ordered   bool  Set true if need field-ordered records, default false.
 
       Return values:
          a dict object of record
@@ -109,6 +124,13 @@ class cursor(object):
          pysequoiadb.error.SDBBaseError
          pysequoiadb.error.SDBEndOfCursor
       """
+      if not isinstance(ordered, bool):
+         raise SDBTypeError("ordered must be an instance of bool")
+
+      as_class = dict
+      if ordered:
+         as_class = OrderedDict
+
       try:
          rc, bson_string = sdb.cr_current(self._cursor)
          if const.SDB_OK != rc:
@@ -117,7 +139,7 @@ class cursor(object):
             else:
                raise SDBBaseError("Failed to get current record", rc)
          else:
-            record, size = bson._bson_to_dict(bson_string, OrderedDict, False,
+            record, size = bson._bson_to_dict(bson_string, as_class, False,
                                            bson.OLD_UUID_SUBTYPE, True)
       except SDBBaseError:
          raise
