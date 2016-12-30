@@ -22,11 +22,11 @@ class sslTestCase(unittest.TestCase):
       #create a cl
       
       cls.cl = cls.cs.create_collection(cl_name, {"ReplSize":0})
-      print '---create cl success---'   
+      print( '---create cl success---' )   
   
    @classmethod   
    def insertDatas( cls ):   
-      print '---begin to insert records---'
+      print( '---begin to insert records---' )
       cls.cl.insert({"age":23,"name":"mike10","test":[{"b":1},{"c":"test"}],"decimal":{"$decimal":"123.345"}})
    
 
@@ -46,13 +46,13 @@ class sslTestCase(unittest.TestCase):
          
          pysequoiadb._print("---Before test cl---")     
          cl = self.db.get_collection(cs_name+"."+cl_name)         
-         print "name=",cl.get_full_name()
+         print( "name=",cl.get_full_name() )
          self.assertEqual( cl.get_full_name(),cs_name+"."+cl_name) 
          self.assertEqual( cl.get_count(),1)    
-      except (SDBTypeError, SDBBaseError), e:
+      except (SDBTypeError, SDBBaseError) as e:
          assert False
          pysequoiadb._print(e)
-      except SDBBaseError, e:
+      except SDBBaseError as e:
          assert False
          pysequoiadb._print(e.detail)     
      

@@ -21,11 +21,11 @@ class IndexTestCase(unittest.TestCase):
       
       #create a cl
       cls.cl = cls.cs.create_collection(cl_name, {"ReplSize":0})
-      print '---create cl success---'   
+      print( '---create cl success---' )   
   
    @classmethod   
    def insertDatas( cls ):   
-      print '---begin to insert records---'
+      print( '---begin to insert records---' )
       for i in range(1,100):
          cls.cl.insert({"_id":i,"age":i,"name":"mike"+str(i)})
          
@@ -56,10 +56,10 @@ class IndexTestCase(unittest.TestCase):
          exprec = {"_id":4,"age":4,"name":"mike4"}
          self.assertEqual( rec,exprec) 
 
-      except (SDBTypeError, SDBBaseError), e:
+      except (SDBTypeError, SDBBaseError) as e:
          assert False
          pysequoiadb._print(e)
-      except SDBBaseError, e:
+      except SDBBaseError as e:
          assert False
          pysequoiadb._print(e.detail) 
 if __name__ == "__main__":

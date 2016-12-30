@@ -21,7 +21,7 @@ class sslTestCase(unittest.TestCase):
       #create a cl
       
       cls.cl = cls.cs.create_collection(cl_name, {"ReplSize":0})
-      print '---create cl success---'   
+      print( '---create cl success---' )  
 
   # @classmethod
    def setUp(cls):
@@ -38,12 +38,12 @@ class sslTestCase(unittest.TestCase):
          self.create_cl()         
          pysequoiadb._print("---test cl---")     
          cl = self.db.get_collection(cs_name+"."+cl_name)         
-         print "name=",cl.get_full_name()
+         print( "name=",cl.get_full_name() )
          self.assertEqual( cl.get_full_name(),cs_name+"."+cl_name)  
-      except (SDBTypeError, SDBBaseError), e:
+      except (SDBTypeError, SDBBaseError) as e:
          assert False
          pysequoiadb._print(e)
-      except SDBBaseError, e:
+      except SDBBaseError as e:
          assert False
          pysequoiadb._print(e.detail)   
       
@@ -51,11 +51,11 @@ class sslTestCase(unittest.TestCase):
       pysequoiadb._print("---test ssl connect and coord no ssl---") 
       try:
          self.db = client("192.168.31.28", 11810,"","",True)
-      except (SDBTypeError, SDBBaseError), e:
+      except (SDBTypeError, SDBBaseError) as e:
          self.assertEqual(str(e),"Network Error: Failed to connect to 192.168.31.28:11810")
          assert True
          pysequoiadb._print(e)
-      except SDBBaseError, e:
+      except SDBBaseError as e:
          assert False
          pysequoiadb._print(e.detail)            
    
