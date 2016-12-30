@@ -3,6 +3,7 @@ package com.sequoiadb.bsontypes;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -99,7 +100,7 @@ public class BasicBsonListTest10362 extends SdbTestBase{
 			list.put(0, "tlist0");
 			list.put(1, "tlist1");
 			//test interface:putAll (Map m)
-			Map<String,BSONObject> map = new HashMap<String,BSONObject>();
+			Map<String,BSONObject> map = new LinkedHashMap<String,BSONObject>();
 			BSONObject bmap = new BasicBSONObject();
 			bmap.put("map", "bmap0");
 			map.put("0", bmap);
