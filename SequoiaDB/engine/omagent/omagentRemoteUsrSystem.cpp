@@ -4713,7 +4713,7 @@ namespace engine
 
          // -1 mean unlimited
          // if val > max exact int or val == ulimited, append as string
-         if ( CMD_USR_SYSTEM_SHELL_EXACT_UINT64_MAX < (UINT64)rlim.rlim_cur &&
+         if ( OSS_SINT64_JS_MAX < (UINT64)rlim.rlim_cur &&
               (UINT64)-1 != rlim.rlim_cur )
          {
             builder.append( resourceName[ index ],
