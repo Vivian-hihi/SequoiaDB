@@ -93,8 +93,10 @@ public class IdIndex10205 extends SdbTestBase {
 			opt.put("SortBufferSize", 128);
 			clDB.createIdIndex(opt);
 		}catch(BaseException e){
-			db.disconnect();
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -43){ //-43:Failed to initialize index
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
 		}
 
 		//-----drop index-----
