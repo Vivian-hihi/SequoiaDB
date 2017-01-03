@@ -215,7 +215,7 @@ SystemTest.prototype.testListLoginUsers = function()
       }
       else
       {
-         addr = tmp[tmp.length-1].slice( 1, tmp[4].length-1 ) ;
+         addr = tmp[tmp.length-1].slice( 1, tmp[tmp.length-1].length-1 ) ;
       }  
       if( username != userObj.user || tty != userObj.tty ||
           time != userObj.time || addr != userObj.from )

@@ -21,8 +21,13 @@ SystemTest.prototype.testGetSystemConfigs = function()
       }
       catch( e )
       {
-         println( "run command " + command ) ;
-         throw buildException( "testGetSystemConfigs", e, "get " + type[i], 0, e ) ;
+         if( e == 1 && isEmptyObject( configObj ) )
+            ;
+         else
+         {
+            println( "run command " + command ) ;
+            throw buildException( "testGetSystemConfigs", e, "get " + type[i], 0, e ) ;
+         }
       }
       var obj = {} ;
       for( var i = 0;i < info.length-1;i++ )

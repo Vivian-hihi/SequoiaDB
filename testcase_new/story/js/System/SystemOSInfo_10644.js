@@ -97,11 +97,7 @@ SystemTest.prototype.testGetReleaseInfo = function()
    descript1 = descript1.replace( /[\t ]/g, '' ) ;
    var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
    var tmpInfo = this.cmd.run( command ).split( "\n" ) ;
-   var descript2 = tmpInfo[0] ;
-   if( descript2 == "No LSB modules are available." )
-   {
-       descript2 = tmpInfo[1] ; 
-   } 
+   var descript2 = tmpInfo[tmpInfo.length-2] ; 
    descript2 = descript2.replace( /[\t ]/g, '' ) ;
    if( descript1 != descript2 )
    {
@@ -111,7 +107,8 @@ SystemTest.prototype.testGetReleaseInfo = function()
    
    // 测试获取的系统位数
    var bit1 = this.system.getReleaseInfo().toObj().Bit ;
-   var bit2 = this.cmd.run( "getconf LONG_BIT" ).split( "\n" )[0] ;
+   tmpInfo = this.cmd.run( "getconf LONG_BIT" ).split( "\n" ) ;
+   var bit2 = tmpInfo[tmpInfo.length-2] ;
    if( bit1 != bit2 )
    {
       throw buildException( "testGetReleaseInfo", null, "test bit " + this, bit2, bit1 ) ;
@@ -150,7 +147,7 @@ function main()
       sts[i].testType() ;
       
       // 测试获取操作系统发行版本
-      // sts[i].testGetReleaseInfo() ;
+      sts[i].testGetReleaseInfo() ;
       
       // 测试获取防火墙信息
       sts[i].testGetIpTablesInfo() ;
