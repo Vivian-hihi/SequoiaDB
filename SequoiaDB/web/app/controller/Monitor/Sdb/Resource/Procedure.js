@@ -88,6 +88,10 @@
          try{
             eval( 'var test = ' + code ) ;
             check = true ;
+            if( hasChinese( test.getName() ) )
+            {
+               throw { 'message': 'Function name can not be Chinese.' } ;
+            }
          }
          catch( e ){
             check = false ;

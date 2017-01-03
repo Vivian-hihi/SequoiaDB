@@ -312,6 +312,7 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
                }
             } ) ;
 
+            //全部保留2位小数，增加单位（这是给列表用的, 汇总信息）
             $.each( $scope.csList, function( index, csInfo ){
                csInfo['TotalRecords']            = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
                csInfo['TotalSize']               = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
@@ -329,8 +330,30 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
                csInfo['Info']['FreeSize']        = dataSizeFmt( csInfo['Info']['FreeSize'], 'MB' ) ;
                csInfo['Info']['MaxDataCapSize']  = dataSizeFmt( csInfo['Info']['MaxDataCapSize'], 'GB' ) ;
                csInfo['Info']['MaxIndexCapSize'] = dataSizeFmt( csInfo['Info']['MaxIndexCapSize'], 'GB' ) ;
-               csInfo['Info']['MaxLobCapSize']   = dataSizeFmt( csInfo['Info']['MaxLobCapSize'], 'GB' ) ;
+                csInfo['Info']['MaxLobCapSize']   = dataSizeFmt( csInfo['Info']['MaxLobCapSize'], 'GB' ) ;
             } ) ;
+
+            //全部保留2位小数，增加单位（这是给右边的详细信息用的，没有汇总，只有单个组的）
+            $.each( $scope.csInfo, function( index, csInfo ){
+               csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
+               csInfo['TotalSize']       = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
+
+               csInfo['PageSize']        = dataSizeFmt( csInfo['PageSize'], 'KB' ) ;
+               csInfo['LobPageSize']     = dataSizeFmt( csInfo['LobPageSize'], 'KB' ) ;
+               csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
+               csInfo['TotalDataSize']   = dataSizeFmt( csInfo['TotalDataSize'], 'MB' ) ;
+               csInfo['FreeDataSize']    = dataSizeFmt( csInfo['FreeDataSize'], 'MB' ) ;
+               csInfo['TotalIndexSize']  = dataSizeFmt( csInfo['TotalIndexSize'], 'MB' ) ;
+               csInfo['FreeIndexSize']   = dataSizeFmt( csInfo['FreeIndexSize'], 'MB' ) ;
+               csInfo['TotalLobSize']    = dataSizeFmt( csInfo['TotalLobSize'], 'MB' ) ;
+               csInfo['FreeLobSize']     = dataSizeFmt( csInfo['FreeLobSize'], 'MB' ) ;
+               csInfo['TotalSize']       = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
+               csInfo['FreeSize']        = dataSizeFmt( csInfo['FreeSize'], 'MB' ) ;
+               csInfo['MaxDataCapSize']  = dataSizeFmt( csInfo['MaxDataCapSize'], 'GB' ) ;
+               csInfo['MaxIndexCapSize'] = dataSizeFmt( csInfo['MaxIndexCapSize'], 'GB' ) ;
+               csInfo['MaxLobCapSize']   = dataSizeFmt( csInfo['MaxLobCapSize'], 'GB' ) ;
+            } ) ;
+
             $scope.showCSInfo( 0 ) ;
             $scope.$apply() ;
             $scope.CsTable['body'] = $scope.csList ;

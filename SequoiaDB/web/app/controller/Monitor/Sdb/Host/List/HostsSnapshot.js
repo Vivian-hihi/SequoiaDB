@@ -133,7 +133,8 @@
                      NewHostList[index]['NetOutValue'] = 0 ;
                      NewHostList[index]['NetInPackets'] = 0 ;
                      NewHostList[index]['NetOutPackets'] = 0 ;
-                     if( isNaN( hostInfo['errno'] ) == false && hostInfo['errno'] != 0 )
+                     lastCPU.push( null ) ;
+                     if( isNaN( hostInfo['errno'] ) == false )
                      {
                         NewHostList[index]['Status'] = false ;
                         NewHostList[index]['CPUUsed'] = '-' ;
@@ -155,7 +156,7 @@
                      } ) ;
 
                      //计算CPU
-                     if( lastCPU.length < hostList[0]['HostInfo'].length )
+                     if( lastCPU[index] === null )
                      {
                         lastCPU[index] = getCpuUsePercent( [ hostInfo ] ) ;
                         NewHostList[index]['CPUUsed'] = 0 ;

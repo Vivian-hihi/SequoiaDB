@@ -2032,6 +2032,18 @@ function convertJsonValueString( json )
    };
 }
 
+//给函数对象增加一个getName的方法，用来返回函数名
+Function.prototype.getName = function(){
+    return this.name || this.toString().match(/function\s*([^(]*)\(/)[1] ;
+}
+
+//判断字符串是否含有中文
+function hasChinese( str )
+{
+   var reg = new RegExp( "[\\u4E00-\\u9FFF]+" ,"g" ) ;
+   return reg.test( str ) ;
+}
+
 /*
 复制指定字段
 src: 数据源(数组) [ { ... } ]

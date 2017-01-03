@@ -7,7 +7,11 @@ function js_beautify(js_source_text, indent_size, indent_character, indent_level
     var whitespace, wordchar, punct, parser_pos, line_starters, in_case;
     var prefix, token_type, do_block_just_closed, var_line, var_line_tainted;
 
-
+    function isChinese( val )
+    {
+       var reg = new RegExp( "[\\u4E00-\\u9FFF]+" ,"g" ) ;
+       return reg.test( val ) ;
+    }
 
     function trim_output()
     {
@@ -33,7 +37,6 @@ function js_beautify(js_source_text, indent_size, indent_character, indent_level
             output.push(indent_string);
         }
     }
-
 
 
     function print_space()
@@ -125,9 +128,9 @@ function js_beautify(js_source_text, indent_size, indent_character, indent_level
         var wanted_newline = (n_newlines === 1);
 
 
-        if (in_array(c, wordchar)) {
+        if (in_array(c, wordchar) || isChinese( c )) {
             if (parser_pos < input.length) {
-                while (in_array(input.charAt(parser_pos), wordchar)) {
+                while (in_array(input.charAt(parser_pos), wordchar)||isChinese(input.charAt(parser_pos))) {
                     c += input.charAt(parser_pos);
                     parser_pos += 1;
                     if (parser_pos === input.length) {
@@ -150,7 +153,7 @@ function js_beautify(js_source_text, indent_size, indent_character, indent_level
             }
             return [c, 'TK_WORD'];
         }
-        
+       
         if (c === '(' || c === '[') {
             return [c, 'TK_START_EXPR'];
         }
