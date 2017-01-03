@@ -60,9 +60,7 @@ public class Commlib {
         String value = "";
         try {
             md5 = MessageDigest.getInstance("MD5");
-            if (inbuff instanceof byte[] ){
-                md5.update((byte[])inbuff);
-            }else if(inbuff instanceof ByteBuffer){
+            if(inbuff instanceof ByteBuffer){
                 md5.update((ByteBuffer)inbuff);
             }else if(inbuff instanceof String){
                 md5.update(((String)inbuff).getBytes());
@@ -76,17 +74,6 @@ public class Commlib {
             throw new BaseException("fail to get md5!");
         }
         return value;
-    }
-
-    /**
-     * build a byte array of specific length, which's content is random
-     * @param length
-     * @return byte[]
-     */
-    public static byte[] getRandomBytes(int length){
-        byte[] randomBytes = new byte[length];
-        new Random().nextBytes(randomBytes);
-        return randomBytes;
     }
 
 	/**
