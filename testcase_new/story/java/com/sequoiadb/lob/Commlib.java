@@ -55,27 +55,39 @@ public class Commlib {
 	 * @return
 	 *        the MD5 value
 	 */
-	public static String getMd5(Object inbuff){
-		MessageDigest md5;
-		String value = "";
-		try {
-			md5 = MessageDigest.getInstance("MD5");
-			if (inbuff instanceof ByteBuffer){
-				md5.update((ByteBuffer)inbuff);
-			}else if(inbuff instanceof String){
-				md5.update(((String)inbuff).getBytes());
-			}else{
-				Assert.fail("invalid parameter!");
-			}			
-			
-			BigInteger bi = new BigInteger(1, md5.digest());
-			value = bi.toString(16);
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return value;
-	}
+    public static String getMd5(Object inbuff){
+        MessageDigest md5 = null;
+        String value = "";
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            if (inbuff instanceof byte[] ){
+                md5.update((byte[])inbuff);
+            }else if(inbuff instanceof ByteBuffer){
+                md5.update((ByteBuffer)inbuff);
+            }else if(inbuff instanceof String){
+                md5.update(((String)inbuff).getBytes());
+            }else{
+                throw new BaseException("invalid parameter!");
+            }
+            BigInteger bi = new BigInteger(1, md5.digest());
+            value = bi.toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            throw new BaseException("fail to get md5!");
+        }
+        return value;
+    }
+
+    /**
+     * build a byte array of specific length, which's content is random
+     * @param length
+     * @return byte[]
+     */
+    public static byte[] getRandomBytes(int length){
+        byte[] randomBytes = new byte[length];
+        new Random().nextBytes(randomBytes);
+        return randomBytes;
+    }
 
 	/**
 	 * generating byte to write lob
