@@ -143,7 +143,7 @@ function main()
       fts[i].testIsDir() ;
       
       // 测试判断是否是空目录
-      // fts[i].testIsEmptyDir() ;
+      fts[i].testIsEmptyDir() ;
 
       // 测试文件是否存在
       fts[i].testExist() ;
