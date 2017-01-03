@@ -99,7 +99,7 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    this.release() ;
 }
 
-// 测试创建已存在用户 sdbadmin
+// 测试创建已存在用户 root
 SystemTest.prototype.testAddExistUser = function()
 {
    this.init() ;
@@ -145,7 +145,8 @@ SystemTest.prototype.testSetUserConfigs = function()
    }
    else if( cmUser != "root" )
       return ;
-   if( !isSdbadminGroupExist( this.hostname, this.svcname ) )
+   if( !isSdbadminGroupExist( this.hostname, this.svcname ) ||
+       !isSequoiadbExist( this.hostname, this.svcname ) )
       return ;
    
    // 首先创建用户
