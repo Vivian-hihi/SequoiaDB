@@ -116,7 +116,8 @@ public class SubCL10180 extends SdbTestBase {
 			String tmpName = sCLName + random.nextInt(number);
 			csDB.dropCollection(tmpName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23){ 
+			if(e.getErrorCode() != -23 
+					&& e.getErrorCode() != -147){  //-147:Unable to lock
 				Assert.fail(e.getMessage());
 			}
 		}finally{
