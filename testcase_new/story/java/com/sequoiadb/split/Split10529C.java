@@ -115,7 +115,7 @@ public class Split10529C extends SdbTestBase {
 			cl.alterCollection((BSONObject) JSON.parse("{ShrdingType:'hash',Partition:2048}"));
 			Assert.fail("alter cl success");
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
+			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage() + splitThread.getErrorMsg());
 		} finally {
 			if (!splitThread.isSuccess()) {
 				Assert.fail(splitThread.getErrorMsg());

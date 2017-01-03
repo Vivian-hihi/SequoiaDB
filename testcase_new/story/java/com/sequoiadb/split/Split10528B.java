@@ -113,7 +113,7 @@ public class Split10528B extends SdbTestBase {
 				Assert.fail(splitThread.getErrorMsg());
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage() + splitThread.getErrorMsg());
 		} finally {
 			if (db != null) {
 				db.disconnect();

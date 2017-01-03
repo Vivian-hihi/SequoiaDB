@@ -39,7 +39,7 @@ public class Split10527C extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	private AtomicBoolean flag =  new AtomicBoolean(false);
+	private AtomicBoolean flag = new AtomicBoolean(false);
 
 	@BeforeClass()
 	public void setUp() {
@@ -95,24 +95,24 @@ public class Split10527C extends SdbTestBase {
 
 			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
 
-			while (dataNode.isCollectionSpaceExist(customCSName) != true&& flag.get() == false) {
-				//Thread.sleep(500);
+			while (dataNode.isCollectionSpaceExist(customCSName) != true && flag.get() == false) {
+				// Thread.sleep(500);
 			}
 			CollectionSpace cs = dataNode.getCollectionSpace(customCSName);
-			while (cs.isCollectionExist(clName) != true&& flag.get() == false) {
-				//Thread.sleep(500);
+			while (cs.isCollectionExist(clName) != true && flag.get() == false) {
+				// Thread.sleep(500);
 			}
 			DBCollection cl = dataNode.getCollectionSpace(customCSName).getCollection(clName);
-			while (cl.getCount() != 900&& flag.get() == false) {
-				//Thread.sleep(500);
+			while (cl.getCount() != 900 && flag.get() == false) {
+				// Thread.sleep(500);
 			}
 			db.dropCollectionSpace(customCSName);
 			if (!splitThread.isSuccess()) {
-				Assert.fail(splitThread.getErrorMsg());
+				Assert.fail(splitThread.getErrorMsg() + splitThread.getErrorMsg());
 			}
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
-		}  finally {
+		} finally {
 			if (db != null) {
 				db.disconnect();
 			}

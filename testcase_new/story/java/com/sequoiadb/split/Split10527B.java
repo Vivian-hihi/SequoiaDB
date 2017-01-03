@@ -1,7 +1,6 @@
 package com.sequoiadb.split;
 
 import java.text.SimpleDateFormat;
-
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,19 +27,19 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  *                       a、任务已下发还未开始执行（如执行split后，通过listTasks查看无任务，在此过程中删除cs）
  *                       b、迁移数据过程中（如直连目标组节点查看数据持续插入，可count查询数据量在增加）
  *                       c、目标组更新编目信息后删除cs（如直连目标组查看数据已迁移完成，或者直连编目节点查看cl信息中存在目标组）
- *                       4、查看切分和删除cs操作结果 备注：验证B场景
+ *                       4、查看切分和删除cs操作结果 备注：验证C场景
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class Split10527B extends SdbTestBase {
-	private String clName = "testcaseCL_10527B";
-	private String customCSName = "testcaseCS_10527B";
+public class Split10527C extends SdbTestBase {
+	private String clName = "testcaseCL_10527C";
+	private String customCSName = "testcaseCS_10527C";
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	private AtomicBoolean flag =  new AtomicBoolean(false);
+	private AtomicBoolean flag = new AtomicBoolean(false);
 
 	@BeforeClass()
 	public void setUp() {
@@ -63,10 +62,8 @@ public class Split10527B extends SdbTestBase {
 			destGroupName = groupsName.get(1);
 
 			CollectionSpace customCS = commSdb.createCollectionSpace(customCSName);
-			DBCollection cl = customCS.createCollection(clName,
-					(BSONObject) JSON
-							.parse("{ShardingKey:{'sk':1},ReplSize:3,Partition:4096,ShardingType:'hash',Group:'"
-									+ srcGroupName + "'}"));
+			DBCollection cl = customCS.createCollection(clName, (BSONObject) JSON
+					.parse("{ShardingKey:{'sk':1},ReplSize:3,ShardingType:'range',Group:'" + srcGroupName + "'}"));
 			insertData(cl);// 写入待切分的记录（1000）
 		} catch (BaseException e) {
 			if (commSdb != null) {
@@ -98,25 +95,22 @@ public class Split10527B extends SdbTestBase {
 
 			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
 
-			// 等待目标组数据上涨
 			while (dataNode.isCollectionSpaceExist(customCSName) != true && flag.get() == false) {
-			//	System.out.println(Thread.currentThread().getId());
+				// Thread.sleep(500);
 			}
 			CollectionSpace cs = dataNode.getCollectionSpace(customCSName);
-			while (cs.isCollectionExist(clName) != true &&flag.get() == false) {
-			//	System.out.println(Thread.currentThread().getId());
+			while (cs.isCollectionExist(clName) != true && flag.get() == false) {
+				// Thread.sleep(500);
 			}
 			DBCollection cl = dataNode.getCollectionSpace(customCSName).getCollection(clName);
-			while (cl.getCount() == 0 &&flag.get() == false) {
-			//	System.out.println(Thread.currentThread().getId());
+			while (cl.getCount() != 900 && flag.get() == false) {
+				// Thread.sleep(500);
 			}
-
 			db.dropCollectionSpace(customCSName);
 			if (!splitThread.isSuccess()) {
-				Assert.fail(splitThread.getErrorMsg());
+				Assert.fail(splitThread.getErrorMsg() + splitThread.getErrorMsg());
 			}
 		} catch (BaseException e) {
-			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		} finally {
 			if (db != null) {
@@ -162,6 +156,7 @@ public class Split10527B extends SdbTestBase {
 				flag.set(true);
 			}
 		}
+
 	}
 
 }

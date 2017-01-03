@@ -94,21 +94,21 @@ public class Split10528C extends SdbTestBase {
 
 			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
 
-			while (dataNode.isCollectionSpaceExist(csName) != true) {
+			while (dataNode.isCollectionSpaceExist(csName) != true && flag.get() == false) {
 				// Thread.sleep(500);
 			}
 			CollectionSpace cs = dataNode.getCollectionSpace(csName);
-			while (cs.isCollectionExist(clName) != true ) {
+			while (cs.isCollectionExist(clName) != true && flag.get() == false) {
 				// Thread.sleep(500);
 			}
 			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
-			while (cl.getCount() != 900) {
+			while (cl.getCount() != 900 && flag.get() == false) {
 				// Thread.sleep(500);
 			}
 			db.getCollectionSpace(csName).dropCollection(clName);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage() + splitThread.getErrorMsg());
 		} finally {
 			if (db != null) {
 				db.disconnect();
