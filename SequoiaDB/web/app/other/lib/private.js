@@ -694,7 +694,10 @@ function getCpuUsePercent( hostList, oldCpu )
       var sumDiff  = ( newCpuSum['Megabit'] - oldCpuSum['Megabit'] ) * 1024 + ( newCpuSum['Unit'] - oldCpuSum['Unit'] ) / 1024 ;
       //计算出cpu使用率
       var percent = fixedNumber( ( 1 - idleDiff / sumDiff ) * 100, 2 ) ;
-      oldCpu = cpu ;
+      oldCpu['Idle']  = cpu['Idle'] ;
+      oldCpu['Sys']   = cpu['Sys'] ;
+      oldCpu['Other'] = cpu['Other'] ;
+      oldCpu['User']  = cpu['User'] ;
       if( isError )
          percent = 0 ;
       return percent ;

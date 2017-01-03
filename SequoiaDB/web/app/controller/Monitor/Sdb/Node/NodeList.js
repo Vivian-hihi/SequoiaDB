@@ -67,8 +67,8 @@
                'GroupName':    'indexof',
                'IsPrimary': [
                   { 'key': $scope.autoLanguage( '全部' ), 'value': '' },
-                  { 'key': $scope.autoLanguage( '是' ), 'value': true },
-                  { 'key': $scope.autoLanguage( '否' ), 'value': false }
+                  { 'key': 'true', 'value': true },
+                  { 'key': 'false', 'value': false }
                ],
                'Role': [
                   { 'key': $scope.autoLanguage( '全部' ), 'value': '' },
@@ -376,11 +376,7 @@
          $location.path( '/Monitor/SDB-Host/Info/Index' ).search( { 'r': new Date().getTime() } ) ;
       }
 
-      //跳转至数据库操作
-      $scope.GotoDatabase = function(){
-         $location.path( '/Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ;
-      }
-
       getClList() ;
+
    } ) ;
 }());

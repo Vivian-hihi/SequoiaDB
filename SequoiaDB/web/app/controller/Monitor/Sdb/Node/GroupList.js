@@ -318,9 +318,12 @@
       } ;
 
       //跳转至节点信息
-      $scope.GotoNode = function( HostName, ServiceName ){
-         SdbFunction.LocalData( 'SdbHostName', HostName ) ;
-         SdbFunction.LocalData( 'SdbServiceName', ServiceName ) ;
+      $scope.GotoNode = function( nodeName ){
+         var temp = nodeName.split( ':' ) ;
+         var hostName = temp[0] ;
+         var serviceName = temp[1] ;
+         SdbFunction.LocalData( 'SdbHostName', hostName ) ;
+         SdbFunction.LocalData( 'SdbServiceName', serviceName ) ;
          $location.path( '/Monitor/SDB-Nodes/Node/Index' ).search( { 'r': new Date().getTime() } ) ;
       } ;
 

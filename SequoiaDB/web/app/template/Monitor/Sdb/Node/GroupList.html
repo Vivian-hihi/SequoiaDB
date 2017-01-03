@@ -142,8 +142,8 @@
                         <tr>
                            <td style="width:75px;font-weight:bold;">{{autoLanguage("主节点")}}</td>
                            <td class="Ellipsis" ng-repeat="groupInfo in GroupList track by $index" ng-if="groupInfo['Role'] == 2">
-                              <span class="linkButton" ng-click="GotoNode( nodeInfo['HostName'], nodeInfo['Service'][0]['Name'] )" ng-repeat="nodeInfo in groupInfo['Group'] track by $index" ng-if="nodeInfo['NodeID']==groupInfo['PrimaryNode']">
-                                 {{nodeInfo['HostName']}}:{{nodeInfo['Service'][0]['Name']}}
+                              <span class="linkButton" ng-click="GotoNode(groupInfo['PrimaryNodeName'] )">
+                                 {{groupInfo['PrimaryNodeName']}}
                               </span>
                            </td>
                         </tr>
@@ -160,15 +160,15 @@
                      <i class="fa fa-circle" style="color:#00CC66;" ng-attr="{'data-desc':autoLanguage('正常运行')}"></i>
                      <span>{{autoLanguage("正常运行")}}</span>
                   </div>
-                  <div ng-if="GroupInfo['Status'] == '0'">
+                  <div class="Ellipsis" ng-if="GroupInfo['Status'] == '0'">
                      <i class="fa fa-circle" style="color:#F9A937;" ng-attr="{'data-desc':autoLanguage('分区组未激活')}"></i>
                      <span>{{autoLanguage("未激活")}}</span>
                   </div>
-                  <div ng-if="GroupInfo['ErrNodes'].length < GroupInfo['Group'].length && GroupInfo['ErrNodes'].length > 0 && GroupInfo['Status'] != '0'">
+                  <div class="Ellipsis" ng-if="GroupInfo['ErrNodes'].length < GroupInfo['Group'].length && GroupInfo['ErrNodes'].length > 0 && GroupInfo['Status'] != '0'">
                      <i class="fa fa-circle" style="color:#F9A937;" ng-attr="{'data-desc':autoLanguage('节点异常')}"></i>
                      <span>{{autoLanguage("节点异常")}}</span>
                   </div>
-                  <div ng-if="GroupInfo['ErrNodes'].length == GroupInfo['Group'].length && GroupInfo['Status'] != '0'">
+                  <div class="Ellipsis" ng-if="GroupInfo['ErrNodes'].length == GroupInfo['Group'].length && GroupInfo['Status'] != '0'">
                      <i class="fa fa-circle" style="color:#D9534F;" ng-attr="{'data-desc':autoLanguage('分区组异常')}"></i>
                      <span>{{autoLanguage("分区组异常")}}</span>
                   </div>
@@ -181,7 +181,7 @@
                   <span>{{GroupInfo['Group'].length}}</span>
                </div>
                <div class="Ellipsis" table-key="PrimaryNodeName">
-                  <a class="linkButton" ng-click="GotoNode( nodeInfo['HostName'], nodeInfo['Service'][0]['Name'] )" ng-if="GroupInfo['PrimaryNodeName'] != '-'">
+                  <a class="linkButton" ng-click="GotoNode( GroupInfo['PrimaryNodeName'] )" ng-if="GroupInfo['PrimaryNodeName'] != '-'">
                      {{GroupInfo['PrimaryNodeName']}}
                   </a>
                   <span ng-if="GroupInfo['Group'].length == 0 || GroupInfo['ErrNodes'].length == GroupInfo['Group'].length">-</span>
