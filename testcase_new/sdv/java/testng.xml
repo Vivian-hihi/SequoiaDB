@@ -11,7 +11,7 @@
    <parameter name="RSRVNODEDIR"    value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR"        value="/tmp/javatest" />   
    
-   <test name="split" enabled="true" parallel="methods" thread-count="10">
+   <test name="split" enabled="true" parallel="classes">
         <packages>
             <package name="com.sequoiadb.split" />
         </packages>
