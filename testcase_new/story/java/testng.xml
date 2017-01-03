@@ -32,6 +32,7 @@
    <test name="mixed" parallel="methods" thread-count="1">
       <packages>
          <package name="com.sequoiadb.metadataConsistency.data"/>
+		 <package name="com.sequoiadb.split"/>
       </packages>    
    </test>
    
