@@ -6,7 +6,6 @@ import java.util.Date;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -38,7 +37,7 @@ public class TestServerAddress10366 extends SdbTestBase{
                 sdb.listCollections();
                 Assert.fail();
             } catch(BaseException e) {
-                Assert.assertEquals(e.getErrorCode(), -10);  
+                Assert.assertEquals(e.getErrorCode(), -64);  
             }
         } catch (UnknownHostException e) {
             e.printStackTrace();
