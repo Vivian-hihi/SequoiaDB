@@ -218,6 +218,8 @@ var LogDir                                 = "log_dir";
 var MaxConnections                         = "max_connections";
 var SharedBuffers                          = "shared_buffers";
 var IsSingle                               = "is_single";
+var ReadSec                                = "ReadSec" ;
+var WriteSec                               = "WriteSec" ;
 
 // deploy mode
 var  OMA_DEPLOY_CLUSTER                    = "distribution" ;
