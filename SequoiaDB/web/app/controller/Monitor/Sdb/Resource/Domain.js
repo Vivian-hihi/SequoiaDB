@@ -18,6 +18,7 @@
       if( moduleMode == 'standalone' )
       {
          $location.path( '/Monitor/SDB/Index').search( { 'r': new Date().getTime() } ) ;
+         return ;
       }
 
       //初始化
@@ -133,17 +134,17 @@
                         return ;
                      } ) ;
                   } ) ;
-                  $.each( domainList, function( domainIndex, domainInfo ){
-                     var groupList = [] ;
-                     domainList[domainIndex]['CLList'] = domainInfo['CLList'].length > 0 ? domainInfo['CLList'].join() : '-' ;
-                     domainList[domainIndex]['CSList'] = domainInfo['CSList'].length > 0 ? domainInfo['CSList'].join() : '-' ;
-                     $.each( domainInfo['Groups'], function( groupIndex, groupInfo ){
-                        groupList.push( groupInfo['GroupName'] ) ;
-                     } ) ;
-                     domainList[domainIndex]['GroupList'] = groupList ;
-                     domainList[domainIndex]['Groups'] = groupList.length > 0 ? groupList.join() : '-' ;
-                  } ) ;
                }
+               $.each( domainList, function( domainIndex, domainInfo ){
+                  var groupList = [] ;
+                  domainList[domainIndex]['CLList'] = domainInfo['CLList'].length > 0 ? domainInfo['CLList'].join() : '-' ;
+                  domainList[domainIndex]['CSList'] = domainInfo['CSList'].length > 0 ? domainInfo['CSList'].join() : '-' ;
+                  $.each( domainInfo['Groups'], function( groupIndex, groupInfo ){
+                     groupList.push( groupInfo['GroupName'] ) ;
+                  } ) ;
+                  domainList[domainIndex]['GroupList'] = groupList ;
+                  domainList[domainIndex]['Groups'] = groupList.length > 0 ? groupList.join() : '-' ;
+               } ) ;
                $scope.DomainTable['body'] = domainList ;
             },
             'failed': function( errorInfo ){
