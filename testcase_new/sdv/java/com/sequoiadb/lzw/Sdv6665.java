@@ -1,0 +1,143 @@
+package com.sequoiadb.lzw;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.SdbTestBase;
+/**
+ * FileName: Sdv6665
+ * test content: hash范围切分，分区键为单个字段_st.compress.03.024
+ * testlink case: SeqDB-6665
+ * @author zengxianquan
+ * @date 2016年12月30日
+ * @version 1.00
+ */
+public class Sdv6665 extends SdbTestBase{
+	private Sequoiadb sdb = null;
+    private String clName = "cl6665";
+    private List<String> dataGroupNames =null;
+    private  DBCollection cl = null;
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+    
+    @BeforeClass
+    public void setUp() {
+        System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
+        try{
+            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        }catch(BaseException e){
+            Assert.fail(e.getMessage());
+        }
+        if (Commlib.isStandAlone(sdb)){
+            throw new SkipException("is standalone skip testcase");
+        }
+        dataGroupNames = Commlib.getDataGroups(sdb);
+        createCL();
+    }
+    
+   @AfterClass
+    public void tearDown(){
+        try{
+            CollectionSpace cs = sdb.getCollectionSpace(csName);  
+            if(cs.isCollectionExist(clName)){
+                cs.dropCollection(clName);
+            }
+        }catch(BaseException e){
+            Assert.fail(e.getMessage());
+        }finally{
+            sdb.disconnect();
+            System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
+        }
+    }
+    
+    @Test
+    public void test() {
+    	
+    	String sourceGroupName = dataGroupNames.get(0);
+    	String destGroupName = dataGroupNames.get(1);
+    	try {
+	        int dataCount = 600;
+            int strLength =  1024*1024;          
+            insertData(cl, dataCount, strLength);  
+			Commlib.checkCompressed(cl, sourceGroupName);
+			split(sourceGroupName, destGroupName);
+			Commlib.checkCompressed(cl, destGroupName);
+			checkSplit(sdb, sourceGroupName, 100);
+			checkSplit(sdb, destGroupName, 100);
+		} catch (BaseException e) {
+			e.printStackTrace();
+		}
+    }
+   
+    private void createCL(){     
+        BSONObject option = new BasicBSONObject();
+        BSONObject shardingKey = new BasicBSONObject();
+        try{
+
+            option.put("Group", dataGroupNames.get(0));
+            option.put("Compressed", true);
+            option.put("CompressionType", "lzw");
+            option.put("ShardingType", "hash");
+            shardingKey.put("_id", 1);
+            option.put("ShardingKey", shardingKey);
+            
+            CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
+            cl = cs.createCollection(clName, option);
+        }catch(BaseException e){
+        	e.printStackTrace();
+            Assert.fail(e.getMessage());
+        }
+    }
+    
+    public String insertData(DBCollection cl, int dataCount, int strLength){
+    	String strRec = getRandomString(strLength);
+    	for(int i = 0; i < dataCount; i++){
+    		cl.insert("{_id:"+i+",key:'"+strRec+i+"'}");
+    	}
+    	return strRec;
+    }
+    
+    private String getRandomString(int length){
+        String base = "abc";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for(int i = 0; i < length; i++){
+            int index = random.nextInt(base.length());
+            sb.append(base.charAt(index));
+        }
+        return sb.toString();
+    }
+    
+    private void split(String sourceGroupName, String destGroupName ){
+    	try{
+    		double percent = 50;
+    		cl.split(sourceGroupName, destGroupName, percent);    		
+    	}catch(BaseException e){
+    		Assert.fail(e.getMessage());
+    	}
+    }    
+    
+    private void checkSplit(Sequoiadb db, String dataGroupName, long expectDataCount){
+    	DBCollection splitCL = null;
+    	Sequoiadb dataDB = Commlib.getDataDB(db, dataGroupName);
+    	splitCL = dataDB.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+    	int count = (int)splitCL.getCount();
+    	int offSet = (int)(0.3 * 600);
+    	if(Math.abs(count - 300) > offSet){
+             Assert.fail("the split result is wrong");
+        }
+    }   
+}
