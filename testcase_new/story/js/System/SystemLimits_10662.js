@@ -40,16 +40,28 @@ SystemTest.prototype.testSetProcUlimitConfigs = function()
    this.init() ;
    
    var oldLimits = this.system.getProcUlimitConfigs().toObj() ;
-   var oldCpuTime = oldLimits.cpu_time ;
-   oldLimits.cpu_time = 10 ;  // 将cpu_time设置为10s
-   this.system.setProcUlimitConfigs( oldLimits ) ;
-   var newLimits = this.system.getProcUlimitConfigs().toObj() ;
-   if( newLimits.cpu_time != 10 )
-   {
-      throw buildException( "testSetProcUlimitConfigs", null, 
-                            "test cpu time " + this, 10, newLimits.cpu_time ) ;
+   var oldMaxMemorySize = oldLimits.max_memory_size ;
+   
+   var maxMemSize = [ 9223372036854775808, "9223372036854775808",
+                      9223372036854775809, "9223372036854775809",
+                      -100, "-100", -1, "-1" ] ;
+   var results = [ "9223372036854775808", "9223372036854775808",
+                   "9223372036854775808", "9223372036854775809",
+                   "18446744073709551516", "18446744073709551516",
+                   -1, -1 ] ;
+   for( var i = 0;i < maxMemSize.length;i++ )
+   {                
+      oldLimits.max_memory_size = maxMemSize[i] ;
+      this.system.setProcUlimitConfigs( oldLimits ) ;
+      var newLimits = this.system.getProcUlimitConfigs().toObj() ;
+      if( newLimits.max_memory_size !== results[i] )
+      {
+         throw buildException( "testSetProcUlimitConfigs", null, 
+               "test set ulimit " + this, results[i], newLimits.max_memory_size ) ;
+      }
    }
-   oldLimits.cpu_time = oldCpuTime ;   // 重新将cpu_time设置为原来的值
+   
+   oldLimits.max_memory_size = oldMaxMemorySize ;   
    this.system.setProcUlimitConfigs( oldLimits ) ;
    
    this.release() ;
