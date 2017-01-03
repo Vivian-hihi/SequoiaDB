@@ -511,12 +511,30 @@ namespace engine
          if ( OMNODE_CRASH == pInfo->_status ||
               OMNODE_RESTART == pInfo->_status )
          {
-            PD_LOG( PDEVENT, "Detect Sequoiadb node[svcname = %s] %s, "
-                    "Begin to restart", pSvcName,
-                    OMNODE_CRASH == pInfo->_status ?
-                    "crashed" : "start failed" ) ;
-            startStartNodeJOb( pSvcName, NODE_START_MONITOR, this,
-                               NULL, FALSE ) ;
+            // if enableWatch is TRUE, start node
+            if ( sdbGetOMAgentOptions()->isEnableWatch() )
+            {
+               // if enable watch, clear state of _isDetected
+               if ( pInfo->_isDetected )
+               {
+                  pInfo->_isDetected = FALSE ;
+               }
+               PD_LOG( PDEVENT, "Detect Sequoiadb node[svcname = %s] %s, "
+                       "Begin to restart", pSvcName,
+                       OMNODE_CRASH == pInfo->_status ?
+                       "crashed" : "start failed" ) ;
+               startStartNodeJOb( pSvcName, NODE_START_MONITOR, this,
+                                  NULL, FALSE ) ;
+            }
+            else if( !pInfo->_isDetected )
+            {
+               // if the process is detected the first time, write log
+               pInfo->_isDetected = TRUE ;
+               PD_LOG( PDEVENT, "Detect Sequoiadb node[svcname = %s] %s",
+                       pSvcName,
+                       OMNODE_CRASH == pInfo->_status ?
+                       "crashed" : "start failed" ) ;
+            }
          }
       }
 
@@ -570,7 +588,7 @@ namespace engine
       len = ( ossStrlen(cfgFile) + 1 <= (UINT32)bufSize ) ?
             ossStrlen(cfgFile) + 1 : bufSize ;
       ossStrncpy( pBuffer, cfgFile, len - 1 ) ;
-      pBuffer[len] = '\0' ;      
+      pBuffer[len] = '\0' ;
 
    done:
       return rc ;
@@ -600,7 +618,7 @@ namespace engine
          pInfo->_status = OMNODE_REMOVING ;
          goto done ;
       }
-      
+
       rc = utilReadConfigureFile( cfgFile, desc, vm ) ;
       if ( rc )
       {

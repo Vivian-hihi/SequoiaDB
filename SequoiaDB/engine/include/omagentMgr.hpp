@@ -81,6 +81,7 @@ namespace engine
          INT32       getRestartInterval() const { return _restartInterval ; }
          BOOLEAN     isAutoStart() const { return _autoStart && !_useStandAlone ; }
          BOOLEAN     isGeneralAgent() const { return _isGeneralAgent && !_useStandAlone ; }
+         BOOLEAN     isEnableWatch() const { return _enableWatch ; }
          PDLEVEL     getDiagLevel() const ;
 
          vector< _pmdAddrPair > omAddrs() const
@@ -128,6 +129,8 @@ namespace engine
          CHAR                       _omAddress[ OSS_MAX_PATHSIZE + 1 ] ;
          // is general agent, default FALSE
          BOOLEAN                    _isGeneralAgent ;
+         // enable watch sequoiadb node, default TRUE
+         BOOLEAN                    _enableWatch ;
 
          CHAR                       _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _localCfgPath[ OSS_MAX_PATHSIZE + 1 ] ;

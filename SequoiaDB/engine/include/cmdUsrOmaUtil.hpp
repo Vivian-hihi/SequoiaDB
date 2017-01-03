@@ -45,6 +45,7 @@ namespace engine
       ( SDBCM_RESTART_INTERVAL, po::value<INT32>(), "" ) \
       ( SDBCM_AUTO_START, po::value<string>(), "" ) \
       ( SDBCM_DIALOG_LEVEL, po::value<INT32>(), "" ) \
+      ( SDBCM_ENABLE_WATCH, po::value<string>(), "" ) \
       ( "*", po::value<string>(), "" )
 
 }

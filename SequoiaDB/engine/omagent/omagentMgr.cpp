@@ -59,6 +59,7 @@ namespace engine
       _restartInterval     = 0 ;
       _autoStart           = FALSE ;
       _isGeneralAgent      = FALSE ;
+      _enableWatch         = TRUE ;
       _diagLevel           = PDWARNING ;
 
       ossMemset( _cfgFileName, 0, sizeof( _cfgFileName ) ) ;
@@ -131,6 +132,8 @@ namespace engine
          "OM address" )
          ( SDBCM_CONF_ISGENERAL, po::value<string>(),
          "Is general agent" )
+         ( SDBCM_ENABLE_WATCH, po::value<string>(),
+         "restart sequoiadb node when sequoiadb node crash" )
       PMD_ADD_PARAM_OPTIONS_END
 
       if ( !pRootPath )
@@ -267,6 +270,9 @@ namespace engine
       // --IsGeneral
       rdxBooleanS( pEX, SDBCM_CONF_ISGENERAL, _isGeneralAgent, FALSE,
                    FALSE, FALSE, FALSE ) ;
+      // --EnableWatch
+      rdxBooleanS( pEX, SDBCM_ENABLE_WATCH, _enableWatch, FALSE, TRUE,
+                   _enableWatch ) ;
 
       //  end map configs }}
 
