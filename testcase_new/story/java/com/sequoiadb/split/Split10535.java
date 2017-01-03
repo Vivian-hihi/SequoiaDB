@@ -1,0 +1,216 @@
+package com.sequoiadb.split;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
+import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
+
+/**
+ * @FileName:SEQDB-10535 切分过程中删除索引 1、向cl中插入数据记录，创建多个索引 2、执行split，设置切分条件
+ *                       3、切分过程中删除索引 4、查看切分和删除索引结果
+ * @author huangqiaohui
+ * @version 1.00
+ *
+ */
+
+public class Split10535 extends SdbTestBase {
+	private String clName = "testcaseCL10535";
+	private String srcGroupName;
+	private String destGroupName;
+	private Sequoiadb commSdb = null;
+	private List<BSONObject> insertedData = new ArrayList<>();
+
+	@BeforeClass()
+	public void setUp() {
+
+		try {
+			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
+					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+			commSdb = new Sequoiadb(coordUrl, "", "");
+
+			// 跳过 standAlone 和数据组不足的环境
+			CommLib commlib = new CommLib();
+			if (commlib.isStandAlone(commSdb)) {
+				throw new SkipException("skip StandAlone");
+			}
+			List<String> groupsName = commlib.getDataGroupNames(commSdb);
+			if (groupsName.size() < 2) {
+				throw new SkipException("current environment less than tow groups ");
+			}
+			srcGroupName = groupsName.get(0);
+			destGroupName = groupsName.get(1);
+
+			CollectionSpace customCS = commSdb.getCollectionSpace(csName);
+			DBCollection cl = customCS.createCollection(clName, (BSONObject) JSON
+					.parse("{ShardingKey:{'sk':1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
+			insertDataAndCreateIndex(cl);// 写入待切分的记录（1000）,创建索引
+		} catch (BaseException e) {
+			if (commSdb != null) {
+				commSdb.disconnect();
+			}
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+		}
+	}
+
+	public void insertDataAndCreateIndex(DBCollection cl) {
+		try {
+			for (int i = 0; i < 1000; i++) {
+				BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + ",index:" + i + "}");
+				cl.insert(obj);
+				insertedData.add(obj);
+			}
+			cl.createIndex("index", "{index:1}", false, false);
+		} catch (BaseException e) {
+			throw e;
+		}
+	}
+
+	@Test
+	public void delteIndex() {
+		Sequoiadb db = null;
+		Sequoiadb destDataNode = null;
+		Sequoiadb srcDataNode = null;
+		Split splitThread = new Split();
+		splitThread.start();
+		try {
+			db = new Sequoiadb(coordUrl, "", "");
+			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+			cl.dropIndex("index");
+
+			// 等待切分完成
+			// 等待切分结束
+			if (!splitThread.isSuccess()) {
+				Assert.fail(splitThread.getErrorMsg());
+			}
+			// 期望有500条符合{sk:{$gte:0,$lt:500}}的记录，并且源组中只有500条记录
+			checkGroupData(db, 500, "{sk:{$gte:0,$lt:500}}", 500, srcGroupName);
+			// 期望有500条符合条件的记录，并且目标组中只有500条记录
+			checkGroupData(db, 500, "{sk:{$gte:500,$lt:1000}}", 500, destGroupName);
+			
+			destDataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
+			DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
+			srcDataNode = db.getReplicaGroup(srcGroupName).getMaster().connect();// 获得源组主节点链接
+			DBCollection srcCL = srcDataNode.getCollectionSpace(csName).getCollection(clName);
+
+			// 分别在源，目标，coord检查索引情况
+			checkIndexNonExist(destCL);
+			checkIndexNonExist(srcCL);
+			checkIndexNonExist(cl);
+		} catch (BaseException e) {
+			Assert.fail(e.getMessage());
+		} finally {
+			if (db != null) {
+				db.disconnect();
+			}
+			if (srcDataNode != null) {
+				srcDataNode.disconnect();
+			}
+			if (destDataNode != null) {
+				destDataNode.disconnect();
+			}
+		}
+	}
+
+	@AfterClass(enabled = true)
+	public void tearDown() {
+		try {
+			CollectionSpace cs = commSdb.getCollectionSpace(csName);
+			cs.dropCollection(clName);
+		} catch (BaseException e) {
+			Assert.fail(e.getMessage());
+		} finally {
+			if (commSdb != null) {
+				commSdb.disconnect();
+			}
+			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
+					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+		}
+	}
+
+	// 检查CL是否仅存在默认生成的id，shard索引
+	public void checkIndexNonExist(DBCollection cl) {
+		DBCursor dbc = null;
+		BSONObject idIndex = (BSONObject) JSON
+				.parse("{name: \"$id\",key: {_id: 1},v: 0,unique: true,dropDups: false,enforced: true}");
+		BSONObject shardingKeyIndex = (BSONObject) JSON
+				.parse("{name: \"$shard\",key: {sk: 1},v: 0,unique: false,dropDups: false,enforced: false}");
+		ArrayList<BSONObject> expect = new ArrayList<>();
+		expect.add(idIndex);
+		expect.add(shardingKeyIndex);
+		try {
+			dbc = cl.getIndexes();
+			while (dbc.hasNext()) {
+				BSONObject actual = (BSONObject) dbc.getNext().get("IndexDef");
+				actual.removeField("_id");
+				if (expect.contains(actual)) {
+					expect.remove(actual);
+				} else {
+					Assert.fail("should not have this index:" + actual);
+				}
+			}
+			Assert.assertEquals(expect.size() == 0, true, "miss some indexes:" + expect);
+		} catch (BaseException e) {
+			throw e;
+		} finally {
+			if (dbc != null) {
+				dbc.close();
+			}
+		}
+	}
+
+	private void checkGroupData(Sequoiadb db, int expectedCount, String macher, int expectTotalCount,
+			String groupName) {
+		Sequoiadb destDataNode = null;
+		try {
+			destDataNode = db.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
+			DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
+			long count = destCL.getCount(macher);
+			Assert.assertEquals(count, expectedCount);// 目标组应当含有上述查询数据
+			Assert.assertEquals(destCL.getCount(), expectTotalCount); // 目标组应当含有的数据量
+		} catch (BaseException e) {
+			Assert.fail(e.getMessage());
+		} finally {
+			if (destDataNode != null) {
+				destDataNode.disconnect();
+			}
+		}
+	}
+
+	class Split extends SdbThreadBase {
+
+		@Override
+		public void exec() throws Exception {
+			Sequoiadb sdb = null;
+			try {
+				sdb = new Sequoiadb(coordUrl, "", "");
+				CollectionSpace cs = sdb.getCollectionSpace(csName);
+				DBCollection cl = cs.getCollection(clName);
+				cl.split(srcGroupName, destGroupName, 50);
+			} catch (BaseException e) {
+				throw e;
+			} finally {
+				if (sdb != null) {
+					sdb.disconnect();
+				}
+			}
+		}
+	}
+
+}
