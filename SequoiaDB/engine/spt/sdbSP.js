@@ -185,7 +185,7 @@ Oma.prototype.getOmaConfigs = function( confFile ) {
    return recvObj ;
 }
 
-Oma.prototype.setOmaConfigs = function( configsObj, confFile ) {
+Oma.prototype.setOmaConfigs = function( configsObj, confFile, isReload ) {
 
    // check argument
    if ( undefined == configsObj )
