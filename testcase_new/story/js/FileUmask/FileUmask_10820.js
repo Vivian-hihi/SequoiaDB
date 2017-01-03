@@ -11,7 +11,8 @@ FileTest.prototype.testGetUmask = function()
    this.init() ;
    
    var umask1 = this.file.getUmask( '8' ) ;    // 获取掩码
-   var umask2 = this.cmd.run( "umask" ).split( "\n" )[0] ;
+   var tmpInfo = this.cmd.run( "umask" ).split( "\n" ) ;
+   var umask2 = tmpInfo[tmpInfo.length-2] ;
    if( umask1 != umask2 )
    {
       throw buildException( "testGetUmask", null, 
@@ -44,7 +45,8 @@ FileTest.prototype.testSetUmask = function()
    else
       tmpFile = this.remote.getFile( tmpFilename ) ;
    var command = "ls -l " + tmpFilename + " | awk '{print $1}'" ;
-   var mode = this.cmd.run( command ).split( "\n" )[0] ;
+   var tmpInfo = this.cmd.run( command ).split( "\n" ) ;
+   var mode = tmpInfo[tmpInfo.length-2] ;
    this.cmd.run( "rm -rf " + tmpFilename ) ;
    if( mode != "-r-x------" ) // (默认权限)700 - (掩码)222 = 500
    {
@@ -104,7 +106,7 @@ function main()
    for( var i = 0; i < fts.length;i++ )
    {
       // 测试获取文件权限默认掩码
-      // fts[i].testGetUmask() ;
+      fts[i].testGetUmask() ;
       
       // 测试设置文件权限默认掩码
       fts[i].testSetUmask() ;
