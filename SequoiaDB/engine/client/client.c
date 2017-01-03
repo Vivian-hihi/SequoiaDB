@@ -7333,7 +7333,7 @@ error :
 static void sdbReleaseLob( sdbLobHandle cHandle )
 {
    INT32 rc          = SDB_OK ;
-   sdbLobStruct *lob = NULL ;
+   sdbLobStruct *lob = ( sdbLobStruct * ) cHandle ;
 
    CLIENT_UNUSED( rc ) ;
 
