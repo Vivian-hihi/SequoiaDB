@@ -38,14 +38,21 @@
     \brief C++ sdb data source
 */
 
+
 #ifndef SDB_DATA_SOURCE_HPP_
 #define SDB_DATA_SOURCE_HPP_
 
 #include "sdbDataSourceComm.hpp"
 #include <list>
+
+#ifndef SDB_CLIENT
+#define SDB_CLIENT
+#endif
+
 #include "ossLatch.hpp"
 #include "ossMem.hpp"
 #include "ossAtomic.hpp"
+
 
 /** \namespace sdbclient
     \brief SequoiaDB Driver for C++

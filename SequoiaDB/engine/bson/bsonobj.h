@@ -532,7 +532,7 @@ namespace bson {
         }
 
     private:
-        static bool _jsCompatibility;
+        SDB_EXPORT static bool _jsCompatibility;
 
 
     private:
