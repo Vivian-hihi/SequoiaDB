@@ -83,6 +83,8 @@
 #define OSS_OSTYPE_LIN64               3
 #define OSS_OSTYPE_PPCLIN64            4
 #define OSS_OSTYPE_AIX                 5
+#define OSS_OSTYPE_PPCLIN64LE          6
+#define OSS_OSTYPE_JVM                 7
 
 #if defined (_WINDOWS32)
 #define OSS_OSTYPE                     OSS_OSTYPE_WIN32
