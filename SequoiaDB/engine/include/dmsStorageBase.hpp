@@ -265,10 +265,10 @@ namespace engine
          INT32          getCollectionID() const { return _collectionID ; }
 
          /*
-            readPtr and writePtr will throw pdGeneralException 
+            readPtr and writePtr will throw pdGeneralException
             with error. Use pdGetLastError() can get the error number
 
-            If you set nothrow attribute, the both functions will return 
+            If you set nothrow attribute, the both functions will return
             NULL instead of throw pdGeneralException with error.
          */
          const CHAR*    readPtr( UINT32 offset, UINT32 len ) ;
@@ -652,7 +652,7 @@ namespace engine
       }
       UINT32 segOffset = 0 ;
       UINT32 segID = extent2Segment( extentID, &segOffset ) ;
-      if ( (INT32)segID > _maxSegID )
+      if ( segID > (UINT32)_maxSegID )
       {
          return 0 ;
       }

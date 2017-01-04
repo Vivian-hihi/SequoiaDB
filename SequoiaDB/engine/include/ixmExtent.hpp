@@ -173,6 +173,8 @@ namespace engine
       INT32 _validate ( _ixmExtentValidateLevel level,
                         const Ordering &order ) const ;
 
+      INT32 _validate( ixmIndexCB *indexCB, dmsExtentID parent ) ;
+
       INT32 _pushBack ( const dmsRecordID &rid, const ixmKey &key,
                         const Ordering &order, const dmsExtentID left ) ;
 
@@ -379,7 +381,7 @@ namespace engine
                      const Ordering &order, BOOLEAN dupAllowed,
                      ixmIndexCB *indexCB ) ;
       // wipe out everything in the extent and all child extents
-      void truncate ( ixmIndexCB *indexCB ) ;
+      void truncate ( ixmIndexCB *indexCB, dmsExtentID parent, BOOLEAN &valid) ;
       // get the total number of elements in the index node and all children
       UINT64 count() const ;
 

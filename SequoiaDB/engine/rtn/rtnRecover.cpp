@@ -348,6 +348,7 @@ namespace engine
 
       if ( !extent->validate( mbContext->mbID() ) ||
            extent->_blockSize == 0 ||
+           extent->_blockSize > _pSU->data()->segmentPages() ||
            extent->_blockSize > remainPages ||
            nextExtID == extID )
       {
@@ -724,7 +725,7 @@ namespace engine
          rc = _pSU->data()->truncateCollection( _clName.c_str(), cb, NULL,
                                                 TRUE, mbContext, FALSE,
                                                 FALSE ) ;
-         if ( rc )
+         if ( ( SDB_OK != rc ) && ( SDB_DMS_CORRUPTED_EXTENT != rc ) )
          {
             PD_LOG( PDERROR, "Truncate collection[%s] failed, rc: %d",
                     _clFullName.c_str(), rc ) ;

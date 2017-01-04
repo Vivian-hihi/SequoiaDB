@@ -1395,10 +1395,13 @@ namespace engine
       dmsExtRW lastRW ;
       dmsExtRW metaRW ;
       dmsExtRW dictRW ;
-      dmsExtentID lastExt          = DMS_INVALID_EXTENT ;
+      dmsExtentID currentExt       = DMS_INVALID_EXTENT ;
       dmsExtentID prevExt          = DMS_INVALID_EXTENT ;
       dmsMetaExtent *metaExt       = NULL ;
       dmsDictExtent *dictExt       = NULL ;
+      BOOLEAN reachLast            = FALSE ;
+      dmsExtentID nextExt          = DMS_INVALID_EXTENT ;
+      const dmsExtent *pCurrExt    = NULL ;
 
       SDB_ASSERT( context, "dms mb context can't be NULL" ) ;
 
@@ -1406,51 +1409,113 @@ namespace engine
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
-      lastExt = context->mb()->_lastExtentID ;
+      currentExt = context->mb()->_lastExtentID ;
+      // If there is only one extent, set reachLast as TRUE.
+      reachLast = ( currentExt == context->mb()->_firstExtentID ) ?
+                  TRUE : FALSE ;
+
       // reset delete list
       for ( UINT32 i = 0 ; i < dmsMB::_max ; i++ )
       {
          context->mb()->_deleteList[i].reset() ;
       }
-      // free all extent
-      while ( DMS_INVALID_EXTENT != lastExt )
+
+      // Free all extent from the end. If the system went down becuase of power
+      // cut, the file may be damanged. During the recovery, if we find any
+      // damaged extent, try to truncate from the beginning also.
+      while ( DMS_INVALID_EXTENT != currentExt )
       {
-         lastRW = extent2RW( lastExt, context->mbID() ) ;
-         const dmsExtent *pLastExt = lastRW.readPtr<dmsExtent>() ;
+         try
+         {
+            lastRW = extent2RW( currentExt, context->mbID() ) ;
+            pCurrExt = lastRW.readPtr<dmsExtent>() ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception:%s", e.what() ) ;
+            break ;
+         }
+
          // get the previous extent
-         prevExt = pLastExt->_prevExtent ;
+         prevExt = pCurrExt->_prevExtent ;
          // free the extent
-         rc = _freeExtent ( lastExt, context->mbID() ) ;
+         rc = _freeExtent ( currentExt, context->mbID() ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to free extent[%u], rc: %d", lastExt,
-                     rc ) ;
             SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" ) ;
+            PD_LOG ( PDERROR, "Failed to free extent[%u], rc: %d", currentExt,
+                     rc ) ;
+            rc = SDB_DMS_CORRUPTED_EXTENT ;
+            break ;
          }
 
          // set last to previous
-         lastExt = prevExt ;
+         currentExt = prevExt ;
          // update MB
-         context->mb()->_lastExtentID = lastExt ;
+         context->mb()->_lastExtentID = currentExt ;
+         if ( currentExt == context->mb()->_firstExtentID )
+         {
+            // Now ready to release the first(also the last for now) extent.
+            reachLast = TRUE ;
+         }
       }
+
+      if ( !reachLast )
+      {
+         // Extent error found, now try to free from the beginning.
+         currentExt = context->mb()->_firstExtentID ;
+         while ( DMS_INVALID_EXTENT != currentExt )
+         {
+            try
+            {
+               lastRW = extent2RW( currentExt, context->mbID() ) ;
+               pCurrExt = lastRW.readPtr<dmsExtent>() ;
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Occur exception:%s", e.what() ) ;
+               break ;
+            }
+
+            nextExt = pCurrExt->_nextExtent ;
+            rc = _freeExtent( currentExt, context->mbID() ) ;
+            if ( rc )
+            {
+               SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" ) ;
+               PD_LOG ( PDERROR, "Failed to free extent[%u], rc: %d", currentExt,
+                        rc ) ;
+               rc = SDB_DMS_CORRUPTED_EXTENT ;
+               break ;
+            }
+
+            currentExt = nextExt ;
+            context->mb()->_firstExtentID = currentExt ;
+            if ( currentExt == context->mb()->_lastExtentID )
+            {
+               break ;
+            }
+         }
+      }
+
       context->mb()->_firstExtentID = DMS_INVALID_EXTENT ;
+      context->mb()->_lastExtentID = DMS_INVALID_EXTENT ;
 
       // free all load extent
-      lastExt = context->mb()->_loadLastExtentID ;
-      while ( DMS_INVALID_EXTENT != lastExt )
+      currentExt = context->mb()->_loadLastExtentID ;
+      while ( DMS_INVALID_EXTENT != currentExt )
       {
-         lastRW = extent2RW( lastExt, context->mbID() ) ;
-         const dmsExtent *pLastExt = lastRW.readPtr<dmsExtent>() ;
-         prevExt = pLastExt->_prevExtent ;
-         rc = _freeExtent( lastExt, context->mbID() ) ;
+         lastRW = extent2RW( currentExt, context->mbID() ) ;
+         pCurrExt = lastRW.readPtr<dmsExtent>() ;
+         prevExt = pCurrExt->_prevExtent ;
+         rc = _freeExtent( currentExt, context->mbID() ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to free load extent[%u], rc: %d",
-                    lastExt, rc ) ;
+                    currentExt, rc ) ;
             SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" ) ;
          }
-         lastExt = prevExt ;
-         context->mb()->_loadLastExtentID = lastExt ;
+         currentExt = prevExt ;
+         context->mb()->_loadLastExtentID = currentExt ;
       }
       context->mb()->_loadFirstExtentID = DMS_INVALID_EXTENT ;
 

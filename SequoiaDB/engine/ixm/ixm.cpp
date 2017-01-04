@@ -272,7 +272,7 @@ namespace engine
    {
       return _pIndexSu->releaseExtent ( extentID ) ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMINXCB_TRUNC, "_ixmIndexCB::truncate" )
    INT32 _ixmIndexCB::truncate ( BOOLEAN removeRoot )
    {
@@ -283,9 +283,10 @@ namespace engine
       dmsExtentID root = getRoot() ;
       if ( DMS_INVALID_EXTENT != root )
       {
+         BOOLEAN valid = TRUE ;
          ixmExtent rootExtent ( root, _pIndexSu ) ;
-         rootExtent.truncate ( this ) ;
-         if ( removeRoot )
+         rootExtent.truncate ( this, DMS_INVALID_EXTENT, valid ) ;
+         if ( valid && removeRoot )
          {
             UINT16 mbID = rootExtent.getMBID() ;
             UINT16 freeSize = rootExtent.getFreeSize() ;
@@ -346,7 +347,7 @@ namespace engine
                /// it is useless to create any same defined index
                /// when an unique index exists.
                rs = TRUE ;
-               goto done ;         
+               goto done ;
             }
             else if ( lIsUnique != rIsUnique )
             {

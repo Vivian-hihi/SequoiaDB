@@ -879,6 +879,62 @@ namespace engine
    error :
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__VALIDATE2, "_ixmExtent::_validate" )
+   INT32 _ixmExtent::_validate( ixmIndexCB *indexCB, dmsExtentID parent )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__IXMEXT__VALIDATE2 ) ;
+
+      if ( _extentHead->_eyeCatcher[0] != IXM_EXTENT_EYECATCHER0 ||
+           _extentHead->_eyeCatcher[1] != IXM_EXTENT_EYECATCHER1 )
+      {
+         PD_LOG ( PDERROR, "Invalid index extent eye catcher" ) ;
+         dumpIndexExtentIntoLog () ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( _extentHead->_beginFreeOffset - sizeof(ixmExtentHead) -
+           _extentHead->_totalKeyNodeNum*sizeof(ixmKeyNode) !=
+           _extentHead->_totalFreeSize )
+      {
+         PD_LOG ( PDERROR, "Inconsistent free size" ) ;
+         dumpIndexExtentIntoLog () ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( !(_extentHead->_flag & DMS_MB_FLAG_USED) )
+      {
+         PD_LOG ( PDERROR, "Invalid flag" ) ;
+         dumpIndexExtentIntoLog () ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( DMS_INVALID_EXTENT != parent
+           && getParent() != parent )
+      {
+         PD_LOG( PDERROR, "Invalid index extent parent" ) ;
+         dumpIndexExtentIntoLog() ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( getMBID() != indexCB->getMBID() )
+      {
+         PD_LOG( PDERROR, "Invalid index extent mb id" ) ;
+         dumpIndexExtentIntoLog() ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__IXMEXT__VALIDATE2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // validate a page, there are 4 levels
    // NONE, MIN, MID, MAX
    // NONE will return SDB_OK right away
@@ -1049,7 +1105,7 @@ namespace engine
          newPos = 0xFFFF ;
       }
 
-	   PD_TRACE1 ( SDB__IXMEXT__REORG, PD_PACK_USHORT( newPos ) ) ;
+      PD_TRACE1 ( SDB__IXMEXT__REORG, PD_PACK_USHORT( newPos ) ) ;
 
       pHeader->_beginFreeOffset = beginFreeOffset ;
       pHeader->_totalKeyNodeNum = totalKeyNodeNum ;
@@ -1206,7 +1262,7 @@ namespace engine
       // otherwise let's traverse down
       else
       {
-         rc = _ixmExtent(ch, _pIndexSu)._insert( rid, key, order, dupAllowed, 
+         rc = _ixmExtent(ch, _pIndexSu)._insert( rid, key, order, dupAllowed,
                                                  lchild, rchild, indexCB ) ;
          if ( rc )
          {
@@ -1485,7 +1541,7 @@ namespace engine
    error :
       goto done ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__DELEXT, "_ixmExtent::_delExtent" )
    INT32 _ixmExtent::_delExtent ( ixmIndexCB *indexCB )
    {
@@ -1552,7 +1608,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__IXMEXT__FNDCHLDEXT, rc );
       return rc ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT__DELITNKEY, "_ixmExtent::_deleteInternalKey" )
    INT32 _ixmExtent::_deleteInternalKey ( UINT16 pos, const Ordering &order,
                                           ixmIndexCB *indexCB )
@@ -1996,28 +2052,58 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMEXT_TRUNC, "_ixmExtent::truncate" )
-   void _ixmExtent::truncate( ixmIndexCB *indexCB )
+   void _ixmExtent::truncate( ixmIndexCB *indexCB, dmsExtentID parent,
+                              BOOLEAN &valid )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT_TRUNC );
       dmsExtentID childExtentID = DMS_INVALID_EXTENT ;
       UINT16 totalFreeSize = _pageSize - 1 - sizeof(ixmExtentHead) ;
 
-      // starting from _right, until first keynode
-      for ( INT32 i = (INT32)getNumKeyNode() ; i >= 0; i-- )
+      rc = _validate( indexCB, parent ) ;
+      if ( rc )
       {
-         childExtentID = getChildExtentID ((UINT16)i) ;
-         if ( childExtentID != DMS_INVALID_EXTENT )
+         valid = FALSE ;
+         PD_LOG( PDERROR, "Invalid index extent[%d], rc: %d", _me, rc ) ;
+         return ;
+      }
+
+      // starting from _right, until first keynode
+      if ( SDB_OK == _validate( indexCB, parent ) )
+      {
+         for ( INT32 i = (INT32)getNumKeyNode() ; i >= 0; i-- )
          {
-            ixmExtent ( childExtentID, _pIndexSu ).truncate ( indexCB ) ;
-            indexCB->freeExtent ( childExtentID ) ;
-            /// truncated, the page is empty
-            _pIndexSu->decStatFreeSpace( _extentHead->_mbID, totalFreeSize ) ;
-            /*
-            * To improve performance, not change the page except root
-            */
-            if ( isRoot() )
+            BOOLEAN childValid = TRUE ;
+            childExtentID = getChildExtentID ((UINT16)i) ;
+            if ( childExtentID != DMS_INVALID_EXTENT )
             {
-               setChildExtentID ( i, DMS_INVALID_EXTENT ) ;
+               try
+               {
+                  ixmExtent( childExtentID, _pIndexSu ).truncate ( indexCB,
+                                                                   _me,
+                                                                   childValid) ;
+                  // If the child extent is invalid, its space will be lost...
+                  // This may happen during recovery after crash.
+                  if ( childValid )
+                  {
+                     indexCB->freeExtent ( childExtentID ) ;
+                  }
+               }
+               catch ( std::exception &e )
+               {
+                  PD_LOG( PDWARNING, "Occur exception:%s", e.what() ) ;
+               }
+
+               /// truncated, the page is empty
+               _pIndexSu->decStatFreeSpace( _extentHead->_mbID,
+                                            totalFreeSize ) ;
+               /*
+               * To improve performance, not change the page except root
+               */
+               if ( isRoot() )
+               {
+                  setChildExtentID ( i, DMS_INVALID_EXTENT ) ;
+               }
             }
          }
       }

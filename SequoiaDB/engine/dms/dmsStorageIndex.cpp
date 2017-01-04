@@ -166,7 +166,7 @@ namespace engine
                }
                ixmIndexCB indexCB( _pDataSu->_dmsMME->_mbList[i]._indexExtent[ j ],
                                    this, NULL ) ;
-               if ( !indexCB.isInitialized() && indexCB.unique() )
+               if ( indexCB.isInitialized() && indexCB.unique() )
                {
                   _pDataSu->_mbStatInfo[i]._uniqueIdxNum++ ;
                }
@@ -904,8 +904,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context, 
-                                          dmsExtentID indexExtentID, 
+   INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context,
+                                          dmsExtentID indexExtentID,
                                           pmdEDUCB * cb,
                                           INT32 sortBufferSize )
    {
@@ -983,7 +983,7 @@ namespace engine
       {
          PD_LOG ( PDEVENT, "Rebuilding index %d for collection %d",
                   indexID, context->mbID() ) ;
-         rc = _rebuildIndex ( context, context->mb()->_indexExtent[indexID], 
+         rc = _rebuildIndex ( context, context->mb()->_indexExtent[indexID],
                               cb, sortBufferSize ) ;
          if ( rc )
          {
