@@ -1681,8 +1681,8 @@ do                                                            \
 
       indexObj = BSON ( IXM_FIELD_NAME_KEY << indexDef <<
                         IXM_FIELD_NAME_NAME << pName <<
-                        IXM_FIELD_NAME_UNIQUE << isUnique <<
-                        IXM_FIELD_NAME_ENFORCED << isEnforced ) ;
+                        IXM_FIELD_NAME_UNIQUE << (isUnique ? true : false) <<
+                        IXM_FIELD_NAME_ENFORCED << (isEnforced ? true : false) ) ;
 
       newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName <<
                       FIELD_NAME_INDEX << indexObj ) ;
