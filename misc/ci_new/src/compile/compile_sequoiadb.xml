@@ -83,7 +83,14 @@
          <else>           
             <var name="BIN_PACKAGE" value="false" />
          </else>
-      </if> 
+      </if>
+
+      <if>
+         <isset property="UNPACK_DRIVER"/>
+         <else>           
+            <var name="UNPACK_DRIVER" value="false" />
+         </else>
+      </if>      
    </target>
        
    <target name="compile_src">
@@ -252,51 +259,81 @@
       <delete dir="${release_driver_dir}" failonerror="false"/>
       <mkdir dir="${release_driver_dir}"/>
       
-      <mkdir dir="${release_driver_dir}/hadoop"/>
-      <mkdir dir="${release_driver_dir}/java" />
-      <mkdir dir="${release_driver_dir}/CSharp"/>
-      <mkdir dir="${release_driver_dir}/include" />
-      <mkdir dir="${release_driver_dir}/lib/phplib" />
-      <mkdir dir="${release_driver_dir}/lib" />
-      <mkdir dir="${release_driver_dir}/python" />
-      <mkdir dir="${release_driver_dir}/samples" />
-      <mkdir dir="${release_driver_dir}/postgresql" />
+      <mkdir dir="${release_driver_dir}/C#"/>
+      <mkdir dir="${release_driver_dir}/C&amp;CPP"/>
+      <mkdir dir="${release_driver_dir}/Hadoop"/>
+      <mkdir dir="${release_driver_dir}/Java" /> 
+      <mkdir dir="${release_driver_dir}/PHP"/>
+      <mkdir dir="${release_driver_dir}/Postgresql" />
+      <mkdir dir="${release_driver_dir}/Python" />
       
       <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
-            tofile="${release_driver_dir}/CSharp/sequoiadb.dll" />
-      <copy file="${srccode_dir}/driver/java/${java_driver_jar}" 
-            todir="${release_driver_dir}/java" />
-            
-      <copy todir="${release_driver_dir}/hadoop" >
+            tofile="${release_driver_dir}/C#/sequoiadb.dll" />
+      
+      <copy todir="${release_driver_dir}/C&amp;CPP">
+         <fileset dir="${srccode_dir}/client" includes="include/**/*" />
+      </copy>
+      <copy todir="${release_driver_dir}/C&amp;CPP">
+         <fileset dir="${srccode_dir}/client" includes="lib/*" />
+      </copy>
+
+      <copy todir="${release_driver_dir}/Hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
       </copy>     
-      <copy todir="${release_driver_dir}/hadoop" >
+      <copy todir="${release_driver_dir}/Hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
-      </copy>         
-      <copy todir="${release_driver_dir}/lib">
-         <fileset dir="${srccode_dir}/client/lib/" includes="*" />
       </copy>
-      <copy todir="${release_driver_dir}/include">
-         <fileset dir="${srccode_dir}/client/include/" includes="**/*" />
-      </copy>
-      <copy todir="${release_driver_dir}/samples">
-         <fileset dir="${srccode_dir}/client/samples/" includes="**/*" />
-      </copy>
-      <copy todir="${release_driver_dir}/postgresql" >
-         <fileset dir="${srccode_dir}/driver/postgresql/build" includes="**/*" />
-      </copy>     
-      <chmod dir="${release_driver_dir}/postgresql" includes="*sdb_fdw.so*" perm="a+x" />
-      <copy todir="${release_driver_dir}/lib/phplib" >
+      
+      <copy todir="${release_driver_dir}/Java" 
+            file="${srccode_dir}/driver/java/${java_driver_jar}" />
+            
+      <copy todir="${release_driver_dir}/PHP" >
          <fileset dir="${srccode_dir}/driver/php5/release" includes="*.so" />
       </copy>
       
-      <copy todir="${release_driver_dir}/python" >
+      <copy todir="${release_driver_dir}/Postgresql" >
+         <fileset dir="${srccode_dir}/driver/postgresql/build" includes="**/*" />
+      </copy>     
+      <chmod dir="${release_driver_dir}/Postgresql" includes="*sdb_fdw.so*" perm="a+x" />
+      
+      <copy todir="${release_driver_dir}/Python" >
          <fileset dir="${srccode_dir}/driver/python/" includes="pysequoiadb*py*.tar.gz" />
       </copy>
       
       <tar destfile="${release_dir}/sequoiadb-driver-${sequoiadb_version}-${platform}.tar.gz" 
            longfile="gnu" compression="gzip" 
            basedir="${release_dir}" includes="driver/**/*"/>
+                 
+      <if>
+         <equals arg1="${UNPACK_DRIVER}" arg2="true" />
+         <then>
+            <move file ="${release_driver_dir}/C#" tofile="${release_driver_dir}/C#-${sequoiadb_version}-${platform}"/>
+            <move file ="${release_driver_dir}/C&amp;CPP" tofile="${release_driver_dir}/C&amp;CPP-${sequoiadb_version}-${platform}"/>
+            <move file ="${release_driver_dir}/Hadoop" tofile="${release_driver_dir}/Hadoop-${sequoiadb_version}-${platform}"/>
+            <move file ="${release_driver_dir}/Java" tofile="${release_driver_dir}/Java-${sequoiadb_version}-${platform}"/>
+            <move file ="${release_driver_dir}/PHP" tofile="${release_driver_dir}/PHP-${sequoiadb_version}-${platform}"/>
+            <move file ="${release_driver_dir}/Postgresql" tofile="${release_driver_dir}/Postgresql-${sequoiadb_version}-${platform}"/>
+            <move file ="${release_driver_dir}/Python" tofile="${release_driver_dir}/Python-${sequoiadb_version}-${platform}"/>
+            
+            <tar destfile="${release_driver_dir}/C#-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="C#-${sequoiadb_version}-${platform}/**/*"/>
+            <tar destfile="${release_driver_dir}/C&amp;CPP-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="C&amp;CPP-${sequoiadb_version}-${platform}/**/*"/>
+            <tar destfile="${release_driver_dir}/Hadoop-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="Hadoop-${sequoiadb_version}-${platform}/**/*"/>
+            <tar destfile="${release_driver_dir}/Java-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="Java-${sequoiadb_version}-${platform}/**/*"/>
+            <tar destfile="${release_driver_dir}/PHP-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="PHP-${sequoiadb_version}-${platform}/**/*"/>
+            <tar destfile="${release_driver_dir}/Postgresql-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="Postgresql-${sequoiadb_version}-${platform}/**/*"/>
+            <tar destfile="${release_driver_dir}/Python-${sequoiadb_version}-${platform}.tar.gz" compression="gzip" longfile="gnu" 
+                 basedir="${release_driver_dir}" includes="Python-${sequoiadb_version}-${platform}/**/*"/>     
+         </then>
+      </if>
+      
+      
+      
 
    </target>
    
@@ -473,8 +510,8 @@
       <if>
          <equals arg1="${BIN_PACKAGE}" arg2="true" />
          <then>
-		   <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-bin.tar.gz" compression="gzip" 
-		        basedir="${release_dir}/sequoiadb/" includes="bin/**" />
+         <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-bin.tar.gz" 
+              compression="gzip" basedir="${release_dir}/sequoiadb/" includes="bin/**" />
          </then>
       </if>  
    </target>
