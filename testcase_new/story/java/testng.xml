@@ -19,12 +19,14 @@
          <package name="com.sequoiadb.numberlong"  />
          <package name="com.sequoiadb.turnoncache" />
          <package name="com.sequoiadb.datasource" />
+         <package name="com.sequoiadb.crud.truncate" />
+         <package name="com.sequoiadb.crud.lob" />
+         <package name="com.sequoiadb.meta" />
       </packages>    
    </test>
    
    <test name="parralmethod" parallel="methods" thread-count="5">
       <packages>
-         <package name="com.sequoiadb.crud" />
          <package name="com.sequoiadb.subcl"/>
       </packages>    
    </test>
