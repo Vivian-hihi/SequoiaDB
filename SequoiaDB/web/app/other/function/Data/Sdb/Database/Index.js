@@ -314,7 +314,6 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
 
             //全部保留2位小数，增加单位（这是给列表用的, 汇总信息）
             $.each( $scope.csList, function( index, csInfo ){
-               csInfo['TotalRecords']            = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
                csInfo['TotalSize']               = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
 
                csInfo['Info']['PageSize']        = dataSizeFmt( csInfo['Info']['PageSize'], 'KB' ) ;
@@ -335,12 +334,8 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
 
             //全部保留2位小数，增加单位（这是给右边的详细信息用的，没有汇总，只有单个组的）
             $.each( $scope.csInfo, function( index, csInfo ){
-               csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
-               csInfo['TotalSize']       = dataSizeFmt( csInfo['TotalSize'], 'MB' ) ;
-
                csInfo['PageSize']        = dataSizeFmt( csInfo['PageSize'], 'KB' ) ;
                csInfo['LobPageSize']     = dataSizeFmt( csInfo['LobPageSize'], 'KB' ) ;
-               csInfo['TotalRecords']    = dataSizeFmt( csInfo['TotalRecords'], '' ) ;
                csInfo['TotalDataSize']   = dataSizeFmt( csInfo['TotalDataSize'], 'MB' ) ;
                csInfo['FreeDataSize']    = dataSizeFmt( csInfo['FreeDataSize'], 'MB' ) ;
                csInfo['TotalIndexSize']  = dataSizeFmt( csInfo['TotalIndexSize'], 'MB' ) ;
