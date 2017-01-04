@@ -13,6 +13,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  * @FileName:seqDB-174:truncate与truncate的并发
@@ -22,51 +23,68 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @Version 1.00
  */
 public class TestTruncate174 extends SdbTestBase {
-	private static Sequoiadb sdb = null;
-	private String clName = "cl_174";
-	private SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.S" );
-	
-	@BeforeClass
-	public void setUp() {
-		System.out.println( this.getClass().getName()+" begin at "+sdf.format( new Date() ) );
-		try{
-			sdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
-			DBCollection cl = Commlib.createCL( sdb, csName, clName );
-			// doing insert
-			Commlib.insertData( cl );
-		}catch(BaseException e){
-			Assert.fail( e.getMessage() );
-		}
-	}
-	
-	@AfterClass
-	public void tearDown(){
-		try{
-			CollectionSpace cs = sdb.getCollectionSpace( csName );	
-			if( cs.isCollectionExist( clName ) ){
-				cs.dropCollection( clName );
-			}
-			sdb.disconnect();
-		}catch( BaseException e ){			
-			Assert.fail( e.getMessage() );
-		}finally{
-			System.out.println( this.getClass().getName()+" end at "+sdf.format( new Date() ) );
-		}
-	}
-	
-	@Test( invocationCount = 10, threadPoolSize = 10 )
-	public void launchTruncate() {
-		Sequoiadb db = null;
-		DBCollection cl = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			cl = db.getCollectionSpace(csName).getCollection(clName);
-			// doing truncate
-			cl.truncate();
-		}catch( BaseException e ){
-			Assert.fail( e.getMessage() );
-		}finally{
-			db.disconnect();
-		}
-	}
+    private Sequoiadb sdb = null;
+    private String clName = "cl_174";
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+    
+    @BeforeClass
+    public void setUp() {
+        System.out.println(this.getClass().getName()+" begin at "+sdf.format(new Date()));
+        try{
+            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        }catch(BaseException e){
+            Assert.fail(e.getMessage());
+        }
+        try{
+            DBCollection cl = Commlib.createCL(sdb, csName, clName);
+            // doing insert
+            Commlib.insertData(cl);
+        }catch(BaseException e){
+            Assert.fail(e.getMessage());
+        }
+    }
+    
+    @AfterClass
+    public void tearDown(){
+        try{
+            CollectionSpace cs = sdb.getCollectionSpace(csName);    
+            if(cs.isCollectionExist(clName)){
+                cs.dropCollection(clName);
+            }
+        }catch(BaseException e){
+            Assert.fail(e.getMessage());
+        }finally{
+            sdb.disconnect();
+            System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
+        }
+    }
+    
+    @Test
+    public void test(){
+        TruncateThread truncateThread = new TruncateThread();
+        
+        truncateThread.start(3);
+        
+        if(!truncateThread.isSuccess()){
+            Assert.fail(truncateThread.getErrorMsg());
+        }
+    }
+    
+    private class TruncateThread extends SdbThreadBase {
+        @Override
+        public void exec() throws BaseException{
+            Sequoiadb db = null;
+            DBCollection cl = null;
+            try{
+                db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                cl = db.getCollectionSpace(csName).getCollection(clName);
+                // doing truncate
+                cl.truncate();
+            }catch(BaseException e){
+                throw e;
+            }finally{
+                db.disconnect();
+            }
+        }
+    }
 }

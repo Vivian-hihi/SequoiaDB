@@ -124,6 +124,7 @@ public class Commlib {
 			DBCursor clSnapshot = clGroupDB.getSnapshot(4, clNameBSON, null, null);
 			BasicBSONList clDetails = (BasicBSONList) clSnapshot.getNext().get("Details");
 			BSONObject clDetail = (BSONObject) clDetails.get(0);
+			clSnapshot.close();
 
 			// justify the information correctness
 			boolean dataExist = (int) clDetail.get("TotalDataPages") != 0 ? true : false;
@@ -160,6 +161,7 @@ public class Commlib {
 
 			// extract group information from snapshot
 			BasicBSONList CataInfo = (BasicBSONList) gpSnapshot.getNext().get("CataInfo");
+			gpSnapshot.close();
 			BasicBSONObject groupInfo = (BasicBSONObject) CataInfo.get(0);
 			String clGroupName = groupInfo.get("GroupName").toString();
 			return clGroupName;
