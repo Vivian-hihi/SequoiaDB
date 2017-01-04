@@ -133,7 +133,7 @@ function isPPC( hostName, cmSvcName )
    info = cmd.run( "uname -m" ).split( "\n" )[0] ;
    
    remote.close() ;
-   return ( info.indexOf( "ppc") != -1 ) ;    
+   return ( info.indexOf( "ppc" ) != -1 ) ;    
 }
 
 /******************************************************************************

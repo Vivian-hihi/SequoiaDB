@@ -207,8 +207,11 @@ function checkCpuNum( cmd, info, isppc )
          cpuNum = cmd.run( "cat /proc/cpuinfo | grep machine | uniq |" +
                            " wc -l" ).split( "\n" )[0] ;
       else
+      {
          cpuNum = cmd.run( "cat /proc/cpuinfo | grep 'physical id' | uniq |" +  
                            " wc -l" ).split( "\n" )[0] ;
+         if( cpuNum == 0 ) cpuNum = 1 ;
+      }
    }
    catch( e )
    {
