@@ -2,6 +2,10 @@
 
 这里介绍如何使用Python客户端驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全是完整的代码，只起示例性作用。可到SequoiadDB安装路径下samples/Python下获取相应的完整的代码。更多查看[Python API](api/python/html/index.html)
 
+> Note:  
+> 在Python中构造BSON时默认使用dict，dict的字段是无序的。  
+> 如果要求BSON中的字段顺序与输入顺序一致（例如，创建索引时索引键的定义），请使用collections.OrderedDict。
+
 ##数据库操作##
 
 * 数据库连接（Connecting）
@@ -101,7 +105,7 @@
 
   ```lang-javascript
   index_name = "index_name"
-  idx = { 'name':1, 'age':-1 }
+  idx = OrderedDict([('name', 1), ('age', -1)])
   cl.create_index ( idx, index_name, False, False ) ;
   ```
   
