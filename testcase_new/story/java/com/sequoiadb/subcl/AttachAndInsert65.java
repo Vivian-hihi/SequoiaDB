@@ -54,7 +54,7 @@ public class AttachAndInsert65 extends SdbTestBase {
 	    createCl(sdb1);
 }
 
-	@AfterTest
+	@AfterClass
 	public void tearDown() {
 		Sequoiadb tmpdb = null; 
 	    CollectionSpace cs = null;
