@@ -19,7 +19,7 @@ using namespace std;
 #define WEBPATH "../../client/admin/admintpl/error_"
 #define PYTHONPATH "../../driver/python/pysequoiadb/err.prop"
 #define WEBPATHSUFFIX ".php"
-#define RC_MDPATH "../../doc_new/src/document/reference/Sequoiadb_error_code.md"
+#define RC_MDPATH "../../doc/src/document/reference/Sequoiadb_error_code.md"
 // XML element
 #define CONSLIST "rclist.conslist"
 #define CODELIST "rclist.codelist"

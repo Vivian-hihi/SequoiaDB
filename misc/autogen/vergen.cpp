@@ -11,7 +11,7 @@ using namespace std ;
 
 static void genDoc()
 {
-   #define VER_DOC_PATH    "../../doc_new/config/version.json"
+   #define VER_DOC_PATH    "../../doc/config/version.json"
    ofstream fout( VER_DOC_PATH ) ;
 
    fout << "{" << endl ;
