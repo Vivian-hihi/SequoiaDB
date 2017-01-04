@@ -68,7 +68,7 @@ public class Split10500 extends SdbTestBase {
 		}
 	}
 
-	@Test(timeOut = 30 * 1000)
+	@Test
 	public void split() {
 		try {
 			insertData(0, 100);// 写入待切分的记录[sk:0,sk:100)
