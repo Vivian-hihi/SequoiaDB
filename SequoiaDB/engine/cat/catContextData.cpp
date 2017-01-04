@@ -617,8 +617,7 @@ namespace engine
    : _catCtxCLMultiTask( contextID, eduID )
    {
       _executeAfterLock = FALSE ;
-      _commitAfterExecute = TRUE ;
-      _needPreExecute = TRUE ;
+      _commitAfterExecute = FALSE ;
       _needRollback = FALSE ;
    }
 
@@ -1444,8 +1443,7 @@ namespace engine
    : _catCtxCLMultiTask( contextID, eduID )
    {
       _executeAfterLock = FALSE ;
-      _commitAfterExecute = TRUE ;
-      _needPreExecute = TRUE ;
+      _commitAfterExecute = FALSE ;
       _needRollback = FALSE ;
       _needUpdateCoord = FALSE ;
    }
