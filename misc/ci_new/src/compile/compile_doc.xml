@@ -48,12 +48,7 @@
       
       <exec executable="cmd" dir="${srccode_dir}" failonerror="true">
          <arg value="/c" />
-         <arg value='/E:ON /V:ON /T:0E /K "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd"' />
-      </exec>
-      <exec executable="cmd" dir="${srccode_dir}" failonerror="true">
-         <arg value="/c" />
-         <arg value='scons.bat' />
-         <arg value='--doc' />
+         <arg value='echo %JAVA_HOME' />
       </exec>
       
       <!--var name="cmd" value="-doc" />
