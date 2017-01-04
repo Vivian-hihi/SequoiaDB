@@ -48,7 +48,7 @@
       
       <exec executable="cmd" dir="${srccode_dir}" failonerror="true">
          <arg value="/c" />
-         <arg value='echo %JAVA_HOME' />
+         <arg value='echo %JAVA_HOME%' />
       </exec>
       
       <!--var name="cmd" value="-doc" />
