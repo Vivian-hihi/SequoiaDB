@@ -38,7 +38,7 @@ public class DetachAndInsert66 extends SdbTestBase {
     private String mainclName="maincl66";
     private List<String> addressList = null;
 
-    @BeforeClass
+    @BeforeClass(enabled = false)
 	public void setUp(){
 	    System.out.println(this.getClass().getName()+" begin at "
 	    		+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
@@ -61,7 +61,7 @@ public class DetachAndInsert66 extends SdbTestBase {
 	    insertData(sdb1);
 	}
 	
-	@AfterTest
+	@AfterClass(enabled = false)
 	public void tearDown() {
 		Sequoiadb tmpdb = null; 
 	    CollectionSpace cs = null;
