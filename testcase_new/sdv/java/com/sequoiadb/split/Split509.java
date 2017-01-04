@@ -1,4 +1,4 @@
-package com.sequoiadb.split;
+package com.sequoiadb.split2;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -179,19 +179,16 @@ public class Split509 extends SdbTestBase {
 			// 目标组落入情况
 			DBCollection destGroupCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
 			if (!MySdbTools.isCollectionContainThisJSON(destGroupCL, "{b:1,a:" + successRange.get(0) + "}")) {
-				Assert.fail("check query data not pass");
+				Assert.fail("check query data not pass(b:1)");
 			}
 
 			// 源组落入情况
-			int srcport = sdb.getReplicaGroup(srcGroupName).getMaster().getPort();
-			srcDataNode = new Sequoiadb(hostName + ":" + srcport, "", "");
-			srcDataNode.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:\"M\"}"));// 链接源数据组主节点
 			DBCollection srcGroupCL = srcDataNode.getCollectionSpace(csName).getCollection(clName);
 			if (!MySdbTools.isCollectionContainThisJSON(srcGroupCL, "{b:-1,a:" + (successRange.get(0) - 1) + "}")) {
-				Assert.fail("check query data not pass");
+				Assert.fail("check query data not pass(b:-1)");
 			}
 		} catch (BaseException e) {
-			Assert.fail();
+			Assert.fail(e.getMessage());
 		}
 
 	}
