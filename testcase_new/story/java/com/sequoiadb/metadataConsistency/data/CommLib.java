@@ -485,7 +485,7 @@ public class CommLib {
 			
 			//direct node and compare node's data
 			int failCnt = 0;
-			int maxCnt = 30;
+			int maxCnt = 100;
 			boolean checkSucc = false;
 			do{
 				ArrayList<String> allNodeData = new ArrayList<String>();

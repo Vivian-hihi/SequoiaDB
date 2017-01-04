@@ -127,7 +127,8 @@ public class IdIndex10207 extends SdbTestBase {
 			opt.put("AutoIndexId", false);
 			db.getCollectionSpace(csName).createCollection(clName, opt);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34 && e.getErrorCode() != -22){
+			if(e.getErrorCode() != -34 
+					&& e.getErrorCode() != -22){
 				Assert.fail(e.getMessage());
 			}
 		}finally{
