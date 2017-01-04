@@ -29,6 +29,11 @@
 
 *******************************************************************************/
 #include "impWorker.hpp"
+
+#ifndef SDB_CLIENT
+#define SDB_CLIENT
+#endif
+
 #include "pd.hpp"
 #include <assert.h>
 #include <iostream>
