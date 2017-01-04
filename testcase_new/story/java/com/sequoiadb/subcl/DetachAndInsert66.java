@@ -10,7 +10,7 @@ import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -28,14 +28,14 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author zengxianquan
  * @date 2016年12月27日
  * @version 1.00
- * @other 对应问题单SEQUOIADBMAINSTREAM-2198，修复后，请重新开启用例
+ *  @other 对应问题单SEQUOIADBMAINSTREAM-2198，修复后，请重新开启用例
  */
 public class DetachAndInsert66 extends SdbTestBase {
 	private Sequoiadb sdb1;
     private Sequoiadb sdb2;
-    private DBCollection  cl1;
-    private DBCollection  cl2;
-    private DBCollection  cl3;
+    private String clName1 = "subcl66_1";
+    private String clName2 = "subcl66_2";
+    private String clName3 = "subcl66_3";
     private String mainclName="maincl66";
     private List<String> addressList = null;
 
@@ -49,7 +49,9 @@ public class DetachAndInsert66 extends SdbTestBase {
 		    if (Commlib.isStandAlone( tmpdb )){
 		    	throw new SkipException("is standalone skip testcase");
 		    }            
-			addressList = Commlib.getNodeAddress(tmpdb, "SYSCoord");            
+			addressList = Commlib.getNodeAddress(tmpdb, "SYSCoord"); 
+			System.out.println(addressList.get(0));
+			System.out.println(addressList.get(1));
 			sdb1 = new Sequoiadb(addressList.get(0), "", "");
 			sdb2 = new Sequoiadb(addressList.get(1), "", "");
 	    }catch(BaseException e){
@@ -82,8 +84,9 @@ public class DetachAndInsert66 extends SdbTestBase {
 	}
 
     @Test(enabled = false)
-    public void test(){    	
-    	detach(sdb1, cl1);
+    public void test(){  
+    	//detach 子表一
+    	detach(sdb1);
     	//检验子表被detach，通过主表无法增删改查该子表中的数据
     	checkCRUD(sdb2);
     	//detach其中一张子表不影响其他子表的数据，增删改查操作功能正常
@@ -92,27 +95,6 @@ public class DetachAndInsert66 extends SdbTestBase {
     	checkInsert(sdb2, 100, 300);
     }
     
-    private void insertData(Sequoiadb db){
-    	CollectionSpace cs = null;
-    	DBCollection maincl = null;
-		try{
-			cs = db.getCollectionSpace(SdbTestBase.csName);
-			maincl = cs.getCollection(mainclName);	
-			//检验插入
-			List <BSONObject> insertor = new ArrayList<>();
-			for(int i = 0; i < 300; i++){
-				BSONObject bson = new BasicBSONObject();
-				bson.put("age", i);
-				bson.put("name", "xiaohong");
-				bson.put("test", "test");
-				insertor.add(bson);
-			}
-			maincl.bulkInsert(insertor, DBCollection.FLG_INSERT_CONTONDUP);
-		}catch(BaseException e){
-			e.printStackTrace();
-			Assert.fail(e.getMessage());
-		}
-    }
     /**
      * 检验detach的子表后，在主表操作增删改查会不会对原子表数据有影响
      * @param db
@@ -126,7 +108,7 @@ public class DetachAndInsert66 extends SdbTestBase {
    	    try{
    	    	cs = db.getCollectionSpace(SdbTestBase.csName);
    	    	maincl = cs.getCollection(mainclName);
-   	    	subcl = cs.getCollection("subcl66_1");
+   	    	subcl = cs.getCollection(clName1);
    	    }catch(BaseException e){
    	    	e.printStackTrace();
    	    	Assert.fail("Fail to check CRUD"+e.getMessage());
@@ -158,7 +140,6 @@ public class DetachAndInsert66 extends SdbTestBase {
 			}
 			BSONObject order = new BasicBSONObject();
 			order.put("age", 1);
-         //问题出现在这里，链接另一个coord节点查询数据时，有时候能查出数据，有时候查不出数据
 			res = subcl.query(null, null, order, null);
 			int i = 0;
 			while(res.hasNext()){
@@ -169,12 +150,45 @@ public class DetachAndInsert66 extends SdbTestBase {
 				}
 				i++;
 			}
-         //链接另一个coord节点查询数据时，有时候查出来的数据数量为零，有时候为100，正常情况下应该存在100条
-  	    	Assert.assertEquals(100, subcl.getCount());
+			System.out.println(i);
+			
+			System.out.println(subcl.getFullName());
+			System.out.println(subcl.getCount());
+//			try {
+//				Thread.sleep(10000);
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+			System.out.println(subcl.getCount());
+ 	    	Assert.assertEquals(100, subcl.getCount());//TODO:有问题
   	    }catch(BaseException e){
   	    	e.printStackTrace();
   	    	Assert.fail(e.getMessage());
   	    }
+    }
+    
+    
+    private void insertData(Sequoiadb db){
+    	CollectionSpace cs = null;
+    	DBCollection maincl = null;
+		try{
+			cs = db.getCollectionSpace(SdbTestBase.csName);
+			maincl = cs.getCollection(mainclName);	
+			//检验插入
+			List <BSONObject> insertor = new ArrayList<>();
+			for(int i = 0; i < 300; i++){
+				BSONObject bson = new BasicBSONObject();
+				bson.put("age", i);
+				bson.put("name", "xiaohong");
+				bson.put("test", "test");
+				insertor.add(bson);
+			}
+			maincl.bulkInsert(insertor, DBCollection.FLG_INSERT_CONTONDUP);
+		}catch(BaseException e){
+			e.printStackTrace();
+			Assert.fail(e.getMessage());
+		}
     }
     
     public void createCl(Sequoiadb db){
@@ -185,9 +199,9 @@ public class DetachAndInsert66 extends SdbTestBase {
             BSONObject subOpt=(BSONObject)JSON.parse("{ShardingKey:{age:1},ShardingType:\"hash\",Partition:1024}");
    	        cs.createCollection(mainclName, mainOpt);	
            
-   	        cl1=cs.createCollection("subcl66_1", subOpt);
-            cl2=cs.createCollection("subcl66_2", subOpt);
-            cl3=cs.createCollection("subcl66_3", subOpt);
+   	        cs.createCollection(clName1, subOpt);
+            cs.createCollection(clName2, subOpt);
+            cs.createCollection(clName3, subOpt);
    	    }catch(BaseException e){
    	    	Assert.fail("create is faild:"+e.getMessage());
    	    }
@@ -203,21 +217,21 @@ public class DetachAndInsert66 extends SdbTestBase {
             BSONObject opt1 = (BSONObject)JSON.parse("{LowBound:{age:0},UpBound:{age:100}}");
       	    BSONObject opt2 = (BSONObject)JSON.parse("{LowBound:{age:100},UpBound:{age:200}}");
       	    BSONObject opt3 = (BSONObject)JSON.parse("{LowBound:{age:200},UpBound:{age:300}}");
-      	    maincl.attachCollection(cl1.getFullName(), opt1);
-      	    maincl.attachCollection(cl2.getFullName(), opt2);
-      	    maincl.attachCollection(cl3.getFullName(), opt3);
+      	    maincl.attachCollection(SdbTestBase.csName+"."+clName1, opt1);
+      	    maincl.attachCollection(SdbTestBase.csName+"."+clName2, opt2);
+      	    maincl.attachCollection(SdbTestBase.csName+"."+clName3, opt3);
         }catch(BaseException e){
       	    Assert.fail("attach is error:"+e.getMessage());
         }
     }
     
-    public void detach(Sequoiadb db, DBCollection cl){
+    public void detach(Sequoiadb db){
     	CollectionSpace cs = null;
     	DBCollection  maincl = null;
         try{	 
         	cs = db.getCollectionSpace(SdbTestBase.csName);
         	maincl = cs.getCollection(mainclName);
-    	    maincl.detachCollection(cl.getFullName());
+    	    maincl.detachCollection(SdbTestBase.csName+"."+clName1);
     	 }catch(BaseException e){
     	    Assert.fail("detach is faild:"+e.getMessage());
     	 }
