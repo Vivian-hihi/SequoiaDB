@@ -46,7 +46,7 @@ FileTest.prototype.testSetUmask = function()
       tmpFile = this.remote.getFile( tmpFilename ) ;
    var command = "ls -l " + tmpFilename + " | awk '{print $1}'" ;
    var tmpInfo = this.cmd.run( command ).split( "\n" ) ;
-   var mode = tmpInfo[tmpInfo.length-2] ;
+   var mode = tmpInfo[tmpInfo.length-2].slice( 0, 10 ) ;
    this.cmd.run( "rm -rf " + tmpFilename ) ;
    if( mode != "-r-x------" ) // (默认权限)700 - (掩码)222 = 500
    {
