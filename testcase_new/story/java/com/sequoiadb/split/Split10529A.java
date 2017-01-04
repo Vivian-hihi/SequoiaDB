@@ -77,7 +77,7 @@ public class Split10529A extends SdbTestBase {
 
 	public void insertData(DBCollection cl) {
 		try {
-			for (int i = 0; i < 1000; i++) {
+			for (int i = 0; i < 5000; i++) {
 				BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
 				cl.insert(obj);
 				insertedData.add(obj);
@@ -87,7 +87,6 @@ public class Split10529A extends SdbTestBase {
 		}
 	}
 
-	
 	@Test
 	public void alterCL() {
 		Sequoiadb db = null;
@@ -101,11 +100,14 @@ public class Split10529A extends SdbTestBase {
 		} catch (BaseException e) {
 			Assert.assertEquals(e.getErrorCode(), -32, e.getMessage());
 		} finally {
-			if (db != null) {
-				db.disconnect();
-			}
 			if (!splitThread.isSuccess()) {
 				Assert.fail(splitThread.getErrorMsg());
+			} else {
+				checkGroupData(db, 4500, "{sk:{$gte:500,$lt:5000}}", 4500, destGroupName);
+				checkGroupData(db, 500, "{sk:{$gte:0,$lt:500}}", 500, srcGroupName);
+			}
+			if (db != null) {
+				db.disconnect();
 			}
 		}
 	}
@@ -127,7 +129,7 @@ public class Split10529A extends SdbTestBase {
 			Assert.assertEquals(count, expectedCount);// 目标组应当含有上述查询数据
 			Assert.assertEquals(cl.getCount(), expectTotalCount); // 目标组应当含有的数据量
 		} catch (BaseException e) {
-			throw e;
+			Assert.fail(e.getMessage());
 		} finally {
 			if (dataNode != null) {
 				dataNode.disconnect();
@@ -135,7 +137,7 @@ public class Split10529A extends SdbTestBase {
 		}
 	}
 
-	@AfterClass(enabled = true)
+	@AfterClass
 	public void tearDown() {
 		try {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
@@ -164,8 +166,6 @@ public class Split10529A extends SdbTestBase {
 				if (cl == null)
 					System.out.println("cl is null");
 				cl.split(srcGroupName, destGroupName, 90);
-				checkGroupData(sdb, 900, "{sk:{$gte:100,$lt:1000}}", 900, destGroupName);
-				checkGroupData(sdb, 100, "{sk:{$gte:0,$lt:100}}", 100, srcGroupName);
 			} catch (BaseException e) {
 				throw e;
 			} finally {
