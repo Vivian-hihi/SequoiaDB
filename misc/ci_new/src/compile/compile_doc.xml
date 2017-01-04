@@ -46,17 +46,17 @@
       <mkdir dir="${WORKSPACE}/release"/>
       <delete dir="${srccode_dir}/doc/build" failonerror="false" />
       
-      <echo message='"cmd /E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; cl"'/>
+      <!--echo message='"cmd /E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; cl"'/>
       <exec executable="cmd.exe" dir="${srccode_dir}" failonerror="true">
          <arg value="/c" />
          <arg value='cmd /E:ON /V:ON /T:0E /K "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd"' />
-      </exec>
+      </exec-->
       
-      <!--var name="cmd" value="-doc" />
+      <var name="cmd" value="--doc" />
       <echo message="exec cmd: scons.bat ${cmd}" />
       <exec executable="scons.bat" dir="${srccode_dir}" failonerror="true">
          <arg line="${cmd}" />
-      </exec-->
+      </exec>
       
       <copy todir="${WORKSPACE}/release" failonerror="true" >
          <fileset dir="${srccode_dir}/doc/build/output" includes="*SequoiaDB*"/>
