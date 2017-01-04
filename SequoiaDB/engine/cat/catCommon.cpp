@@ -3831,7 +3831,7 @@ namespace engine
    //       [ { GroupID: 1000, LowBound:{ "":MinKey,"":MaxKey }, UpBound:{"":MaxKey,"":MinKey} } ] }
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATBUILDCATARECORD, "catBuildCatalogRecord" )
    INT32 catBuildCatalogRecord( const catCollectionInfo &clInfo,
-                                UINT32 mask,
+                                UINT32 mask, UINT32 attribute,
                                 const std::vector<UINT32> &grpIDLst,
                                 const std::map<std::string, UINT32> &splitLst,
                                 BSONObj &catRecord )
@@ -3841,18 +3841,17 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATBUILDCATARECORD ) ;
 
       BSONObjBuilder builder ;
-      UINT32 attr = 0 ;
       CHAR szAttr[ 100 ] = { 0 } ;
 
       if ( ( mask & CAT_MASK_COMPRESSED ) && clInfo._isCompressed )
       {
-         attr |= DMS_MB_ATTR_COMPRESSED ;
+         attribute |= DMS_MB_ATTR_COMPRESSED ;
       }
       if ( ( mask & CAT_MASK_AUTOINDEXID ) && !clInfo._autoIndexId )
       {
-         attr |= DMS_MB_ATTR_NOIDINDEX ;
+         attribute |= DMS_MB_ATTR_NOIDINDEX ;
       }
-      mbAttr2String( attr, szAttr, sizeof( szAttr ) - 1 ) ;
+      mbAttr2String( attribute, szAttr, sizeof( szAttr ) - 1 ) ;
 
       if ( mask & CAT_MASK_CLNAME )
       {
@@ -3870,11 +3869,11 @@ namespace engine
          builder.append( CAT_CATALOG_W_NAME, clInfo._replSize ) ;
       }
 
-      builder.append( CAT_ATTRIBUTE_NAME, attr ) ;
+      builder.append( CAT_ATTRIBUTE_NAME, attribute ) ;
       builder.append( FIELD_NAME_ATTRIBUTE_DESC, szAttr ) ;
 
       /// only record the options specified by user.
-      if ( attr & DMS_MB_ATTR_COMPRESSED )
+      if ( ( mask & CAT_MASK_COMPRESSED ) && clInfo._isCompressed )
       {
          builder.append( CAT_COMPRESSIONTYPE, clInfo._compressorType ) ;
          builder.append( FIELD_NAME_COMPRESSIONTYPE_DESC,

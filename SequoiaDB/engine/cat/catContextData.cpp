@@ -1178,7 +1178,7 @@ namespace engine
       {
          // build new collection record for meta data.
          BSONObj boNewObj ;
-         rc = catBuildCatalogRecord ( clInfo, fieldMask,
+         rc = catBuildCatalogRecord ( clInfo, fieldMask, 0,
                                       _groupList, splitList,
                                       boNewObj ) ;
          PD_RC_CHECK( rc, PDERROR,
@@ -2088,6 +2088,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_BUILDALTERFIELD ) ;
 
+      UINT32 attribute = 0 ;
       clsCatalogSet::POSITION pos ;
       clsCatalogItem *item = NULL ;
 
@@ -2101,7 +2102,7 @@ namespace engine
 
       PD_CHECK( !( CAT_MASK_COMPRESSED & mask ),
                 SDB_OPTION_NOT_SUPPORT, error, PDERROR,
-                "can not alter attribute \"compressed\"" ) ;
+                "can not alter attribute \"Compressed\"" ) ;
 
       PD_CHECK( !( CAT_MASK_CLNAME & mask ),
                 SDB_OPTION_NOT_SUPPORT, error, PDERROR,
@@ -2130,13 +2131,13 @@ namespace engine
       item = cataSet.getNextItem( pos ) ;
       PD_CHECK ( item, SDB_SYS, error, PDERROR,
                  "Failed to get first item from catalog set" ) ;
-
+      attribute = cataSet.getAttribute() ;
       {
          std::vector<UINT32> groupLst ;
          std::map<std::string, UINT32> splitLst ;
 
          groupLst.push_back( item->getGroupID() ) ;
-         rc = catBuildCatalogRecord( alterInfo, mask,
+         rc = catBuildCatalogRecord( alterInfo, mask, attribute,
                                      groupLst, splitLst, alterObj ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to build cata record, rc: %d",

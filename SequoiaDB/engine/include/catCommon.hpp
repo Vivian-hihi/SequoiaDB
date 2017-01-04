@@ -373,6 +373,7 @@ namespace engine
    /* Build Collection record */
    INT32 catBuildCatalogRecord ( const catCollectionInfo &clInfo,
                                  UINT32 mask,
+                                 UINT32 attribute,
                                  const std::vector<UINT32> &grpIDLst,
                                  const std::map<std::string, UINT32> &splitLst,
                                  BSONObj &catRecord ) ;
