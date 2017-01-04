@@ -49,7 +49,7 @@
       <echo message='"/E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; scons --doc"'/>
       <exec executable="cmd" dir="${srccode_dir}" failonerror="true">
          <arg value="/c" />
-         <arg value='"/E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; scons --doc"' />
+         <arg value='"cmd /E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; scons --doc"' />
       </exec>
       
       <!--var name="cmd" value="-doc" />
