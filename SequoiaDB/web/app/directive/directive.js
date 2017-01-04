@@ -5115,6 +5115,16 @@
                               else
                                  scope.loadStatus['onFilter']['expre'][key] = '' ;
                            }
+                           else
+                           {
+                              if( typeof( scope.loadStatus['onFilter']['expre'][key] ) == 'undefined' )
+                              {
+                                 if( filterList[key] == 'number' )
+                                    scope.loadStatus['onFilter']['expre'][key] = [ 'eq', '' ] ;
+                                 else
+                                    scope.loadStatus['onFilter']['expre'][key] = '' ;
+                              }
+                           }
                         }
                         else
                            scope.loadStatus['onFilter']['expre'][key] = scope.table['options']['default'][key] ;

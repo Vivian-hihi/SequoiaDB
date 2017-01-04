@@ -75,6 +75,8 @@
                   { 'key': 'Catalog', 'value': 'catalog' },
                   { 'key': 'Data',    'value': 'data' }
                ],
+               'TotalRecords':            'number',
+               'TotalLobs':               'number',
                'BeginLSN.Offset':         'number',
                'BeginLSN.Version':        'number',
                'CurrentLSN.Offset':       'number',
@@ -82,7 +84,11 @@
                'CommittedLSN.Offset':     'number',
                'CommittedLSN.Version':    'number',
                'TransInfo.TotalCount':    'number',
-               'TransInfo.BeginLSN':      'number'
+               'TransInfo.BeginLSN':      'number',
+               'TotalUpdate':             'number',
+               'TotalDelete':             'number',
+               'TotalInsert':             'number',
+               'TotalRead':               'number'
             }
          },
          'callback': {}

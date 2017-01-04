@@ -53,7 +53,8 @@
             <span ng-if="groupInfo['Condition'] == 'Error'">{{autoLanguage('分区组异常')}}</span>
          </div>
          <div class="Ellipsis" table-key="GroupName">
-            <a class="linkButton" ng-click="GotoGroup(groupInfo['GroupName'])">{{groupInfo['GroupName']}}</a>
+            <a class="linkButton" ng-click="GotoGroup(groupInfo['GroupName'])" ng-if="groupInfo['Condition'] != 'Inactivity'">{{groupInfo['GroupName']}}</a>
+            <span ng-if="groupInfo['Condition'] == 'Inactivity'">{{groupInfo['GroupName']}}</span>
          </div>
          <div class="Ellipsis" table-key="Group.length">{{groupInfo['Group'].length}}</div>
          <div class="Ellipsis" table-key="$auto">
