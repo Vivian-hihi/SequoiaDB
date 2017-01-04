@@ -56,7 +56,7 @@
          <arg value='--doc' />
       </exec>
       
-      <!--var name="cmd" value="--doc" />
+      <!--var name="cmd" value="-doc" />
       <echo message="exec cmd: scons.bat ${cmd}" />
       <exec executable="scons.bat" dir="${srccode_dir}" failonerror="true">
          <arg line="${cmd}" />
