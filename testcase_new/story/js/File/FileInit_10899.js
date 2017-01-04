@@ -45,7 +45,7 @@ function testInitRemote()
    {
       var remotefile = remote.getFile( filename, modeNumber[i] ) ;
       var tmp = cmd.run( command ).split( "\n" ) ;
-      var filemode = tmp[tmp.length-2] ;
+      var filemode = tmp[tmp.length-2].slice( 0, 10 ) ;
       if( filemode != modeString )
       {
          throw buildException( "testInitRemote", null, 
