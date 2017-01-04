@@ -28,6 +28,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author zengxianquan
  * @date 2016年12月27日
  * @version 1.00
+ * @other 对应问题单SEQUOIADBMAINSTREAM-2198，修复后，请重新开启用例
  */
 public class DetachAndInsert66 extends SdbTestBase {
 	private Sequoiadb sdb1;
