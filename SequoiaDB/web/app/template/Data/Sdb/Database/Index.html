@@ -12,7 +12,7 @@
          </li>
       </ul>
    </div>
-   <div class="underlineTab" style="padding:0 15px;height:50px;" ng-if="browseMode=='cllist'||browseMode=='magnet'">
+   <div class="underlineTab" style="padding:0 15px;height:50px;" ng-if="( browseMode == 'cllist' && moduleMode == 'distribution' ) || browseMode == 'magnet' ">
       <ul class="left" style="height:45px;border:0;">
          <li style="height:32px;border:0;" ng-if="browseMode == 'magnet'">
             {{autoLanguage("搜索")}}: <input class="form-control" ng-attr="{'data-desc':autoLanguage('用于快速搜索集合空间和集合，例：foo.bar。')}" style="width:250px;" ng-init="searchName=''" ng-model="searchName" ng-change="search(searchName)" />
@@ -22,8 +22,8 @@
          </li>
       </ul>
    </div>
-   <div class="relativeBox" style="padding:0 15px 10px 15px;" ng-container="{offsetY:browseMode=='cllist'||browseMode=='magnet'?-95:-45}">
-      
+   <div class="relativeBox" style="padding:0 15px 10px 15px;" ng-container="{offsetY:( browseMode == 'cllist' && moduleMode == 'distribution') || browseMode == 'magnet' ?-95:-45}">
+
       <div class="previewLeft" style="overflow:hidden;" ng-container="{offsetX:-280}" ng-if="browseMode=='cslist' && csList.length > 0" ng-table="CsTable['options']" table-title="CsTable['title']" table-content="csInfo in CsTable['body']">
          <div class="Ellipsis" table-key="Name">
             <a class="linkButton" ng-style="{true:{'font-weight':'bold','color':'#FF7547'}}[csID == csInfo.i]" ng-click="showCSInfo(csInfo.i)">{{csInfo.Name}}</a>
@@ -57,7 +57,7 @@
                {{autoLanguage("集合空间")}}: <a class="linkButton" ng-style="{true:{'font-weight':'bold','color':'#FF7547'} }[showType == 'cs'&&csID == $index]" ng-click="showCSInfo($index)">{{csInfo.Name}}</a>
             </div>
             <div style="padding:10px 0 0 15px;">
-               <span ng-if="csInfo.GroupName.length > 0">{{sprintf(autoLanguage("一共 ? 个分区组"),csInfo.GroupName.length)}},</span>
+               <span ng-if="csInfo.GroupName.length > 0 && moduleMode == 'distribution'">{{sprintf(autoLanguage("一共 ? 个分区组"),csInfo.GroupName.length)}},</span>
                {{sprintf(autoLanguage("一共 ? 个集合"),csInfo.clNum)}}<span ng-if="csInfo.clNum > 0">:</span>
             </div>
             <div style="padding:10px 15px;font-size:90%;" ng-if="csInfo.clNum > 0">
@@ -117,7 +117,7 @@
          </div>
       </div>
       <!--<div class="previewLeft" ng-container="{offsetX:-280}">
-         
+
       </div>-->
       <div class="previewMove" ng-container="{width:10}"></div>
       <div class="previewRight" style="font-size:90%;" ng-container="{width:270}">
@@ -138,7 +138,7 @@
                         <td>Name</td>
                         <td>{{attr['Info']['Name']}}</td>
                      </tr>
-                     <tr ng-if="attr.GroupName.length > 0">
+                     <tr ng-if="attr.GroupName.length > 0 && moduleMode == 'distribution'">
                         <td>Group</td>
                         <td>
                            <select ng-if="selectGroup == null" class="form-control" ng-model="selectGroup" ng-change="showGroupInfo(selectGroup)" ng-options="selectList.value as selectList.key for selectList in attr.GroupName">

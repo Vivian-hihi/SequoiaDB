@@ -68,7 +68,7 @@
             'TotalRecords': $scope.autoLanguage( '总记录数' ),
             'TotalSize': $scope.autoLanguage( '总大小' ),
             'clNum': $scope.autoLanguage( '集合' ),
-            'GroupName.length': $scope.autoLanguage( '分区组' )
+            'GroupName.length': moduleMode == 'distribution' ? $scope.autoLanguage( '分区组' ) : false
          },
          'body': [],
          'options': {
@@ -100,8 +100,8 @@
       $scope.ClTable = {
          'title': {
             'fullName': $scope.autoLanguage( '集合' ),
-            'typeDesc': $scope.autoLanguage( '分区类型' ),
-            'MainCLName': $scope.isHideSubCl == true ? false : $scope.autoLanguage( '归属集合' ),
+            'typeDesc': moduleMode == 'standalone' ? false : $scope.autoLanguage( '分区类型' ),
+            'MainCLName': $scope.isHideSubCl == true || moduleMode == 'standalone' ? false : $scope.autoLanguage( '归属集合' ),
             'TotalLobs': $scope.autoLanguage( 'Lob数' ),
             'Record': $scope.autoLanguage( '记录数' ),
             'Index': $scope.autoLanguage( '索引数' )
@@ -140,7 +140,7 @@
       } ;
 
       var setClTableTitle = function(){
-         if( $scope.isHideSubCl == true )
+         if( $scope.isHideSubCl == true || moduleMode == 'standalone' )
          {
             $scope.ClTable['title']['MainCLName'] = false ;
          }

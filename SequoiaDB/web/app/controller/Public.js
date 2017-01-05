@@ -64,6 +64,7 @@
       $rootScope.autoLanguage = function( text ){
          return _IndexPublic.languageCtrl( $scope, text ) ;
       }
+      $rootScope.autoLanguage('确定') ;//马上调用，原因是firefox有bug，如果不调用会造成后续子页面加载后不执行代码。
       //读写临时存储
       $rootScope.tempData = function( domain, key, value ){
          if( typeof( key ) == 'undefined' && typeof( value ) == 'undefined' )

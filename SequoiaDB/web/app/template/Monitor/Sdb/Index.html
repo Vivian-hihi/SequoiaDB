@@ -96,8 +96,8 @@
                            <td style="font-weight:bold;">{{autoLanguage("域数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoDomains()">{{moduleInfo['domains']}}</a>
-                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['domains']}}</span>
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise' && ModuleMode != 'standalone'" ng-click="GotoDomains()">{{moduleInfo['domains']}}</a>
+                                 <span ng-if="Edition != 'Enterprise' || ModuleMode == 'standalone'">{{moduleInfo['domains']}}</span>
                               </div>
                            </td>
                         </tr>
@@ -105,8 +105,8 @@
                            <td style="font-weight:bold;">{{autoLanguage("分区组数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoGroups()">{{moduleInfo['groups']}}</a>
-                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['groups']}}</span>
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise' && ModuleMode != 'standalone'" ng-click="GotoGroups()">{{moduleInfo['groups']}}</a>
+                                 <span ng-if="Edition != 'Enterprise' || ModuleMode == 'standalone'">{{moduleInfo['groups']}}</span>
                               </div>
                            </td>
                         </tr>
@@ -114,8 +114,8 @@
                            <td style="font-weight:bold;">{{autoLanguage("节点数")}}</td>
                            <td>
                               <div class="Ellipsis">
-                                 <a class="linkButton" ng-if="Edition == 'Enterprise'" ng-click="GotoNodeList()">{{moduleInfo['nodes']}}</a>
-                                 <span ng-if="Edition != 'Enterprise'">{{moduleInfo['nodes']}}</span>
+                                 <a class="linkButton" ng-if="Edition == 'Enterprise' && ModuleMode != 'standalone'" ng-click="GotoNodeList()">{{moduleInfo['nodes']}}</a>
+                                 <span ng-if="Edition != 'Enterprise' || ModuleMode == 'standalone'">{{moduleInfo['nodes']}}</span>
                               </div>
                            </td>
                         </tr>
