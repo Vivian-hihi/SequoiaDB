@@ -56,6 +56,7 @@ public class TestDomain10170 extends SdbTestBase {
         if (Commlib.getDataGroups(sdb).size() < 3){
             throw new SkipException("less then 3 groups, skip testcase");
         }
+        initGroups();
         createDomain();
         createCS();
     }
@@ -106,17 +107,24 @@ public class TestDomain10170 extends SdbTestBase {
         return groupList;
     }
     
-    private void createDomain(){
+    private void initGroups(){
         try{
             ArrayList<String> dataGroupNames = null;
             dataGroupNames = getDataGroups(sdb);
             srcGroup = dataGroupNames.get(0);
             dstGroup = dataGroupNames.get(1);
             outGroup = dataGroupNames.get(2);
+        }catch(BaseException e){
+            Assert.fail(e.getMessage());
+        }
+    }
+    
+    private void createDomain(){
+        try{
             BSONObject option = new BasicBSONObject();
             BSONObject groups = new BasicBSONList();
-            groups.put("0", dataGroupNames.get(0));
-            groups.put("1", dataGroupNames.get(1));
+            groups.put("0", srcGroup);
+            groups.put("1", dstGroup);
             option.put("Groups", groups);
             sdb.createDomain(domainName, option);
         }catch(BaseException e){
