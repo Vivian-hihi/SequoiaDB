@@ -74,16 +74,21 @@ FileTest.prototype.testStat = function()
    
    for( var i = 0;i < files.length;i++ )
    {
-      var stat1 = this.file.stat( files[i] ).toObj() ;
       try
       {
+         var stat1 = this.file.stat( files[i] ).toObj() ;
          var command = "stat -c '%n|%s|%A|%U|%G|%x|%y|%z' " + files[i] ;
          var tmpInfo = this.cmd.run( command ).split( "\n" ) ;
          var tmp = tmpInfo[tmpInfo.length-2] ;
       }
       catch( e )
       {
-         println( "run command " + command ) ;
+         if( e == 1 )
+         {
+            println( files[i] + " not exist " + " " + this ) ;
+            continue ;
+         }
+         println( "run command " + command + " " + this ) ;
          throw buildException( "testStat", e ) ;
       }
       var stat2 = tmp.split( "|" ) ;
