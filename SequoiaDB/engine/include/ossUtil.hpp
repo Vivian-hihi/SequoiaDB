@@ -309,6 +309,15 @@ OSS_INLINE UINT64 ossTimeValToUint64( struct timeval & tv )
 class ossTickCore : public SDBObject
 {
 public :
+   ossTickCore()
+   {
+#if defined (_WINDOWS)
+      _value.QuadPart = 0 ;
+#else
+      _value = 0 ;
+#endif
+   }
+
 #if defined (_WINDOWS)
    LARGE_INTEGER _value ;
 #else
