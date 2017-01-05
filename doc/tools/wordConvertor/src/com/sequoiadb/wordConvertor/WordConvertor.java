@@ -32,10 +32,15 @@ public class WordConvertor {
         }
         catch(Exception e){
             e.printStackTrace();
+            throw e;
         }
         finally{
             try{
                 app.invoke("Quit", new Variant[]{});
+            }
+            catch(Exception e){
+                e.printStackTrace();
+                throw e;
             }
             finally{
                 ComThread.Release();
@@ -142,17 +147,11 @@ public class WordConvertor {
                 new Variant(1), new Variant(3));
     }
     
-    public static void main(String args[]){
-//        String input = "E:\\work\\sequoiadb\\doc_new\\build\\mid\\"
-//                + "basic_operation\\indexes.html";
-//        
-//        String output = "E:\\work\\sequoiadb\\doc_new\\build\\mid\\"
-//                + "basic_operation\\indexes.doc";
-
+    public static void main(String args[]) throws Exception{
         ConvertHelper helper = new ConvertHelper();
         int result = helper.parseArgs(args);
         if(0 != result){
-            return;
+            throw new Exception("param error");
         }
         
         String input = helper.getInput();
@@ -208,6 +207,7 @@ public class WordConvertor {
         }
         catch(Exception e){
             e.printStackTrace();
+            throw e;
         }
         finally{
             try{
@@ -217,6 +217,10 @@ public class WordConvertor {
                 }
                 
                 app.invoke("Quit", new Variant[]{});
+            }
+            catch(Exception e){
+                e.printStackTrace();
+                throw e;
             }
             finally{
                 ComThread.Release();
