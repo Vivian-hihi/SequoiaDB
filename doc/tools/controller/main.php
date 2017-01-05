@@ -70,13 +70,13 @@ $wkhtmltopdf = $os == 'windows' ? 'wkhtmltopdf.exe' : 'wkhtmltopdf' ;
 
 //2.清理旧文件
 printLog( "Clear file...", "Event" ) ;
-if( file_exists( "$root/build/mid" ) && removeDir( "$root/build/mid" ) == false )
+if( file_exists( $os == 'windows' ? "$root\build\mid" : "$root/build/mid" ) && removeDir( $os == 'windows' ? "$root\build\mid" : "$root/build/mid" ) == false )
 {
    printLog( "Failed to rm dir: $root/build/mid" ) ;
    exit( 1 ) ;
 }
 
-if( file_exists( "$root/build/output" ) && removeDir( "$root/build/output" ) == false )
+if( file_exists( $os == 'windows' ? "$root\build\output" : "$root/build/output" ) && removeDir( $os == 'windows' ? "$root\build\output" : "$root/build/output" ) == false )
 {
    printLog( "Failed to rm dir: $root/build/output" ) ;
    exit( 1 ) ;

@@ -16,7 +16,7 @@ function removeDir( $path )
    {
       if( $file != '.' && $file != '..' )
       {
-         $newPath = $path.'/'.$file ;
+         $newPath = getOSInfo() == 'windows' ? ( $path.'\\'.$file ) : ( $path.'/'.$file ) ;
          is_dir( $newPath ) ? removeDir( $newPath ) : @unlink( $newPath ) ;
       }
    }
