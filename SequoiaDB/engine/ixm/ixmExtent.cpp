@@ -2067,10 +2067,10 @@ namespace engine
          PD_LOG( PDERROR, "Invalid index extent[%d], rc: %d", _me, rc ) ;
          return ;
       }
-
-      // starting from _right, until first keynode
-      if ( SDB_OK == _validate( indexCB, parent ) )
+      else
       {
+         valid = TRUE ;
+         // starting from _right, until first keynode
          for ( INT32 i = (INT32)getNumKeyNode() ; i >= 0; i-- )
          {
             BOOLEAN childValid = TRUE ;
@@ -2082,7 +2082,10 @@ namespace engine
                   ixmExtent( childExtentID, _pIndexSu ).truncate ( indexCB,
                                                                    _me,
                                                                    childValid) ;
-                  // If the child extent is invalid, its space will be lost...
+                  // If the child extent is invalid, it's safer not to release
+                  // it, and its space will be lost...
+                  // It happend that the child extent is the index CB extent,
+                  // and finally resulted in crash.
                   // This may happen during recovery after crash.
                   if ( childValid )
                   {
