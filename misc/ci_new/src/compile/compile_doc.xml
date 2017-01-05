@@ -62,7 +62,7 @@
             message='"cmd /E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; scons --doc"' />
       <exec executable="cmd.exe" dir="${srccode_dir}" failonerror="true">
          <arg value="/c" />
-         <arg value='${srccode_dir}\compile_doc.bat' />
+         <arg value='compile_doc.bat' />
       </exec>
 
       
