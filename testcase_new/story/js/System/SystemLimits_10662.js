@@ -34,7 +34,7 @@ SystemTest.prototype.testGetProcUlimitConfigs = function()
    this.release() ;
 }
 
-// 测试设置limits信息
+// 测试设置limits信息边界值
 SystemTest.prototype.testSetProcUlimitConfigs = function()
 {
    this.init() ;
@@ -42,13 +42,12 @@ SystemTest.prototype.testSetProcUlimitConfigs = function()
    var oldLimits = this.system.getProcUlimitConfigs().toObj() ;
    var oldMaxMemorySize = oldLimits.max_memory_size ;
    
-   var maxMemSize = [ 9223372036854775808, "9223372036854775808",
-                      9223372036854775809, "9223372036854775809",
-                      -100, "-100", -1, "-1" ] ;
-   var results = [ "9223372036854775808", "9223372036854775808",
-                   "9223372036854775808", "9223372036854775809",
-                   "18446744073709551516", "18446744073709551516",
-                   -1, -1 ] ;
+   var maxMemSize = [ 9007199254740992, -9007199254740992,
+                      "18446744073709551614", "-18446744073709551615",
+                      "18446744073709551615" ] ;
+   var errMemSize = [ "18446744073709551616", "-18446744073709551616" ] ;
+   var results = [ "9007199254740992", "18437736874454810624",
+                   "18446744073709551614", 1, -1 ] ;
    for( var i = 0;i < maxMemSize.length;i++ )
    {                
       oldLimits.max_memory_size = maxMemSize[i] ;
@@ -56,8 +55,25 @@ SystemTest.prototype.testSetProcUlimitConfigs = function()
       var newLimits = this.system.getProcUlimitConfigs().toObj() ;
       if( newLimits.max_memory_size !== results[i] )
       {
-         throw buildException( "testSetProcUlimitConfigs", null, 
-               "test set ulimit " + this, results[i], newLimits.max_memory_size ) ;
+         throw buildException( "testSetProcUlimitConfigs", null, "set maxMemSize "
+           + maxMemSize[i] + " " + this, results[i], newLimits.max_memory_size ) ;
+      }
+   }
+   for( var i = 0;i < errMemSize;i++ )
+   {
+      try
+      {
+         oldLimits.max_memory_size = errMemSize[i] ;
+         this.system.setProcUlimitConfigs( oldLimits ) ;
+         throw "set max_memory_size " +  errMemSize[i] + " should be failed" ;
+      }
+      catch( e )
+      {
+         if( e != -6 )
+         {
+            throw buildException( "testSetProcUlimitConfigs", e,
+                  "set maxMemSize " + errMemSize[i] + " " + this, -6, e ) ;
+         }
       }
    }
    
@@ -81,7 +97,7 @@ function main()
    for( var i = 0;i < sts.length;i++ )
    {
       // 测试获取limits
-      // sts[i].testGetProcUlimitConfigs() ;
+      sts[i].testGetProcUlimitConfigs() ;
       
       // 测试设置limits
       sts[i].testSetProcUlimitConfigs() ;
