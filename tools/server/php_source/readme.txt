@@ -20,6 +20,9 @@ cd /opt/sequoiadb/tools/server/libxml2-2.9.0
 ./configure --prefix=/opt/sequoiadb/tools/server/php/libxml2 --with-zlib=/opt/sequoiadb/tools/server/php/zlib/lib
 make && make install
 
+PS: 如果编译PHP，make的时候报错: libtool: link: `ext/opcache/zend_accelerator_debug.o` is not a valid libtool object
+cd到php源码目录下，执行 make clean,然后执行 cp php.ini-production /etc/php.ini
+
 ##build the php tool
 tar -jxvf php-5.4.13.tar.bz2 -C /opt/sequoiadb/tools/server
 cd /opt/sequoiadb/tools/server/php-5.4.13
