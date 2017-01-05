@@ -110,6 +110,9 @@ public class TestDomain10170 extends SdbTestBase {
         try{
             ArrayList<String> dataGroupNames = null;
             dataGroupNames = getDataGroups(sdb);
+            srcGroup = dataGroupNames.get(0);
+            dstGroup = dataGroupNames.get(1);
+            outGroup = dataGroupNames.get(2);
             BSONObject option = new BasicBSONObject();
             BSONObject groups = new BasicBSONList();
             groups.put("0", dataGroupNames.get(0));
