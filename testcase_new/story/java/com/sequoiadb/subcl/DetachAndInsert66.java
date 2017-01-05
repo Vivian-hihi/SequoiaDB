@@ -72,9 +72,15 @@ public class DetachAndInsert66 extends SdbTestBase {
         try {
             tmpdb = new Sequoiadb( SdbTestBase.coordUrl, "", "" );
             cs = tmpdb.getCollectionSpace( SdbTestBase.csName );
-            cs.dropCollection( mainclName );
+            if(cs.isCollectionExist( mainclName )){
+                cs.dropCollection( mainclName );                
+            }
+            if(cs.isCollectionExist( clName1 )){
+                cs.dropCollection( clName1 );                
+            }
         } catch ( BaseException e ) {
-            Assert.assertEquals( e.getErrorCode(), -23, e.getMessage() );
+            e.printStackTrace();
+            Assert.fail(e.getMessage());
         } finally {
             sdb1.disconnect();
             sdb2.disconnect();
