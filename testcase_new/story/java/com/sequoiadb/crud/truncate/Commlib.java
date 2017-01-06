@@ -75,6 +75,7 @@ public class Commlib {
 				for (int i = 0; i < lobNum; i++) {
 					lob = cl.createLob(oidlist.get(i));
 					lob.write(randomStr.getBytes());
+					lob.close();
 				}
 			} catch (BaseException e) {
 				Assert.fail("write lob fail:" + e.getMessage());
