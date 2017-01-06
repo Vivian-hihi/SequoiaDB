@@ -202,7 +202,7 @@
       color: ['rgba(39,169,227,1)'],
       legend: {
          data: [
-            'Used',
+            'Used'
          ]
       },
       xAxis: [

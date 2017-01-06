@@ -105,7 +105,7 @@
             </div>
             <div style="font-size:90%;" ng-container="{height:'45%'}">
                <div style="font-size:110%;font-weight:bold;height:27px;padding-top:10px;">{{autoLanguage("业务信息")}}</div>
-               <div style="border:1px solid #DDD;padding:10px;overflow-y:auto;overflow-x:hidden;" ng-container={offsetY:-36}>
+               <div style="border:1px solid #DDD;padding:10px;overflow-y:auto;overflow-x:hidden;position:relative;" ng-container={offsetY:-36}>
                   <div ng-if="NodeList['coord'].length > 0">
                      <div ng-repeat="nodeInfo in NodeList['coord']">
                         <div style="float:left;margin-top:5px;width:90px;">{{autoLanguage("协调节点")}}</div>
@@ -154,7 +154,7 @@
          </div>
          <div style="float:left;" ng-container="{offsetX:-310,marginLeft:10}">
             <div style="font-size:110%;font-weight:bold;height:26px;" create-response="{max:620,min:200,len:2}">{{autoLanguage("图表")}}</div>
-            <div style="overflow-y:auto;border:1px solid #ddd;padding-top:10px;" ng-container="{offsetY:-26}">
+            <div style="overflow-y:auto;border:1px solid #ddd;padding-top:10px;position:relative;" ng-container="{offsetY:-26}">
                <!--CPU-->
                <div style="min-width:325px;min-height:210px;float:left;" ng-container="{height:'50%',width:'50%',offsetX:-20}" create-chart="charts.Cpu"></div>
                <!--内存-->

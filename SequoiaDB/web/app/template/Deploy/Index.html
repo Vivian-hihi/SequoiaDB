@@ -46,7 +46,7 @@
                   <div class="clear-float"></div>
                </div>
 
-               <div class="well Ellipsis" ng-container="{height:41}">
+               <div class="well Ellipsis" style="margin-top:10px;">
                   <i class="fa fa-circle" style="color:#00CC66;" ng-if="moduleInfo['Error']['Flag']==0"></i><i class="fa fa-circle error" ng-if="moduleInfo['Error']['Flag']!=0"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']==0">{{autoLanguage("正常运行...")}}</span><span style="font-weight:bold;color:#006699;" ng-if="moduleInfo['Error']['Flag']!=0">{{moduleInfo['Error']['Message']}}</span>
                </div>
 

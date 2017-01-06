@@ -34,7 +34,7 @@
          <select class="form-control" ng-model="info.value" ng-options="item.value as item.key for item in info.select"></select>
       </div>
 
-      <div class="well Ellipsis" style="height:40px;margin-top:10px;">
+      <div class="well Ellipsis" style="margin-top:10px;">
          <i class="fa fa-circle" ng-style="{'Normal':{'color':'#00CC66'},'Warning':{'color':'#F9A937'},'Error':{'color':'#D9534F'}}[GroupStatus]"></i>&nbsp;<span style="font-weight:bold;color:#006699;" ng-if="GroupStatus == 'Normal'">{{groupInfo['GroupName']}}</span>&nbsp;
          <span>{{ErrMsg}}</span>
       </div>

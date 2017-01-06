@@ -153,8 +153,8 @@
                         'NetInValue' : 0,
                         'NetOutValue' : 0,
                         'NetIn': [],
-                        'NetOut': [],
-                     }   
+                        'NetOut': []
+                     }
                   ) ;
                } ) ;
                getHostList() ;

@@ -38,8 +38,8 @@
             </li>
          </ul>
       </div>
-      <div class="content" style="overflow-y:auto;border: 1px solid #E3E7E8;padding:10px;" ng-container="{offsetY:-115,marginTop:10}">
-         <div style="overflow-y:auto;" class="colorfulListBox green" ng-container="{height:270,marginBottom:15,offsetX:-20}" ng-repeat="networkInfo in NetList" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
+      <div class="content" style="overflow-y:auto;border: 1px solid #E3E7E8;padding:10px;position:relative;" ng-container="{offsetY:-115,marginTop:10}">
+         <div style="overflow-y:auto;position:relative;" class="colorfulListBox green" ng-container="{height:270,marginBottom:15,offsetX:-20}" ng-repeat="networkInfo in NetList" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[$index%4]">
             <div ng-container="{height:20,offsetX:-30}" style="color:#666;font-size:100%;font-weight:bold;">{{autoLanguage("网卡")}} {{$index + 1}} - {{networkInfo['Name']}}</div>
             <div ng-container="{marginTop:15,offsetX:-30,offsetY:-35}">
                <div style="float:left;font-size:90%;color:#666;font-weight:bold;" ng-container="{width:350}">

@@ -25,7 +25,7 @@
          </ul>
       </div>
 
-      <div ng-container="{height:40,marginTop:10}" class="well Ellipsis">
+      <div class="well Ellipsis" style="margin-top:10px;">
          <i class="fa fa-circle" ng-if="nodeInfo" ng-style="{true:{'color':'#00CC66'},false:{'color':'#D9534F'}}[nodeInfo['Flag'] == 0]"></i>&nbsp;<span style="font-weight:bold;color:#006699;">{{nodeInfo['NodeName']}}</span>
       </div>
 
@@ -84,7 +84,7 @@
                </tr>
             </table>
          </div>
-         <div style="float:left;overflow-y:auto;border:1px solid #ddd;padding-top:10px;" ng-container="{offsetX:-320,offsetY:0,marginLeft:10}">
+         <div style="float:left;overflow-y:auto;border:1px solid #ddd;padding-top:10px;position:relative;" ng-container="{offsetX:-320,offsetY:0,marginLeft:10}">
             <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Insert"></div>
             <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Update"></div>
             <div style="min-width:350px;float:left;padding:10px 0 0 10px;" ng-container="{height:230,width:'50%',offsetX:-20}" create-chart="charts.Delete"></div>

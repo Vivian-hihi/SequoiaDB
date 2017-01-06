@@ -5019,8 +5019,8 @@
                         {
                            //数字比大小
                            var input  = $( '<div></div>' ).css( { 'display': 'table', 'width': '100%' } ) ;
-                           var div1   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '35%' } ) ;
-                           var div2   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '55%' } ) ;
+                           var div1   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '35%', 'float':'left' } ) ;
+                           var div2   = $( '<div></div>' ).css( { 'display': 'table-cell', 'width': '55%', 'float':'left' } ) ;
                            var vertical = ( brower[0] == 'firefox' ? '' : 'vertical-align:top;' ) ;
                            var select = $compile( '<select class="form-control" style="border-right:0;' + vertical + '" ng-model="loadStatus.onFilter.expre[\'' + key + '\'][0]" ng-change="find()"><option value="gt">&gt;</option><option value="gte">&gt;=</option><option value="eq">=</option><option value="neq">!=</option><option value="lt">&lt;</option><option value="lte">&lt;=</option></select>')( scope ) ;
                            div1.append( select ) ;
