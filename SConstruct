@@ -555,8 +555,8 @@ if guess_os == "linux":
             if debugBuild:
                 smlib_dir = join(js_dir,'lib/debug/ppclinux64/lib')
                 env.Append( CPPPATH=join(js_dir,'lib/debug/ppclinux64/include') )
-                env.Append( LIBPATH=smlib_dir )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
+                env.Append( LIBPATH=join(js_dir,'lib/debug/ppclinux64/lib') )
             else:
                 smlib_dir = join(js_dir,'lib/release/ppclinux64/lib')
                 env.Append( CPPPATH=join(js_dir,'lib/release/ppclinux64/include') )
