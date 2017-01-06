@@ -225,7 +225,7 @@ if( $param['m'] == "chm" && $os == 'windows' )
    
    file_put_contents( "$root/tools/anjian/config.ini", "[config]\r\npath=$root\\build\\output\\$outputFileName.wcp" ) ;
 
-   $chm = "start $root/tools/anjian/autoBuildCHM.exe" ;
+   $chm = "$root/tools/anjian/autoBuildCHM.exe" ;
    execCmd( $chm ) ;
    
    $log = file_get_contents( "$root/tools/anjian/anjian.log" ) ;
