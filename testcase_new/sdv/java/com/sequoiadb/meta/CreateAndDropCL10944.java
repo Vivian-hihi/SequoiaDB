@@ -12,6 +12,7 @@ import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -54,8 +55,11 @@ public class CreateAndDropCL10944 extends SdbTestBase {
 		
 		//randomly take a group name to create cl
 		CommLib commlib = new CommLib();
+		if (commlib.isStandAlone(sdb)) {
+			throw new SkipException("is standalone skip testcase");
+		}
 		ArrayList<String> groupsName = commlib.getDataGroupNames(sdb);
-		clGroupName = groupsName.get(random.nextInt(3));
+		clGroupName = groupsName.get(0);
 		//used to delete the cl
 		createPreCL();
 	}
