@@ -16,10 +16,11 @@ var installDir = initPath();    // import工具所在目录
 **************************************************** */
 function readyCL( csName, clName, optionObj, message )
 {
-   println("\n---Begin to create CL "+ message +".");
-   
+     
    if( optionObj == undefined ) { optionObj = {ReplSize:0}; }
    if( message   == undefined ) { message = ""; }
+	
+	println("\n---Begin to create CL "+ message +".");
 	
    commDropCL( db, csName, clName, true, true, 
                       "Failed to drop CL in the pre-condition." );
@@ -94,7 +95,7 @@ function initPath()
    {
       var local = cmd.run( "pwd" ).split( "\n" ) ;   //获得当前目录,cmd.run()方法返回结果会在后面加入一空行
       LocalPath = local[0] ;
-      println("LocalPath="+LocalPath);
+      //println("LocalPath="+LocalPath);
       try
       {
          // 命令返回结果为 INSTALL_DIR=/opt/sequoiadb(默认安装目录)
@@ -112,10 +113,11 @@ function initPath()
           println("catch erro in try");        
       }
       
-      println("instatllpath="+installPath);      
+          
    }
    catch( e )
    {
+      println("instatllpath="+installPath); 
       println( "failed to get global variable : cmd/LocalPath/installPath" + e ) ;
       throw e ;
    }
@@ -161,10 +163,10 @@ function checkCLData( cl,expRecs )
    if(  actRecs !== expRecs )
    {
       throw buildException( "checkCLdata", null, "[find]", 
-                        "[recs:"+ expRecs +"]", 
-                       "[recs:"+ actRecs +"]" );
+                        "[expRecs:"+ expRecs +"]", 
+                       "[actRecs:"+ actRecs +"]" );
    }
-   println( "cl records: "+ actRecs );  
+   //println( "cl records: "+ actRecs );  
 }
 
 /******************************************************
@@ -187,9 +189,9 @@ function importData( csName,clName, imprtFile,datas )
                      +' -c '+ csName +' -l '+ clName 
                      +' --type json'
                      +' --file '+ imprtFile;
-   println( imprtOption );
+   //println( imprtOption );
    var rc = cmd.run( imprtOption );
-   println( rc );  
+   //println( rc );  
    return rc;
 }
 
@@ -238,7 +240,7 @@ function checkSdbimportLog(matchInfos,expInfo)
    {
       logInfo = result ;
    }
-   println( "sdbimport.log: "+ logInfo );
+   //println( "sdbimport.log: "+ logInfo );
    
    var actLogInfo = logInfo;   
    if( expInfo !== actLogInfo )

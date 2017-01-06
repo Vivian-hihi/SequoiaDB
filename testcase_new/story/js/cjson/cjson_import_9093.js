@@ -1,8 +1,8 @@
 ﻿/************************************************************************
-*@Description:   seqDB-9091:  json类型字段名和字段值为空
+*@Description:   seqDB-9093: json类型字段名和字段值为空
 *@Author:        2016-7-20  wuyan
 ************************************************************************/
-var clName = COMMCLNAME+"_9091" ;
+var clName = COMMCLNAME+"_9093" ;
 main();
 function main()
 {  
@@ -12,7 +12,7 @@ function main()
       cmd.run( 'rm -rf ./sdbimport.log' );   
       
       //import datas          
-      var imprtFile = tmpFileDir +"9091.json";
+      var imprtFile = tmpFileDir +"9093.json";
       var srcDatas = "{:}"
       var rcInfos = importData(COMMCSNAME, clName, imprtFile,srcDatas );
       
