@@ -55,6 +55,10 @@
          <arg value='compile_doc.bat' />
       </exec>
       
+      <copy todir="${WORKSPACE}/release" failonerror="true" >
+         <fileset dir="${srccode_dir}/doc/build/output" includes="*.pdf,*.doc"/>
+      </copy>
+      
       <delete dir="${srccode_dir}/compile_chm.bat" failonerror="false" />
       <echo file="${srccode_dir}/compile_chm.bat" 
             message='"cmd /E:ON /V:ON /T:0E /K C:\SetEnv.cmd &amp;&amp; scons --chm"' />
@@ -65,7 +69,7 @@
       </exec>
  
       <copy todir="${WORKSPACE}/release" failonerror="true" >
-         <fileset dir="${srccode_dir}/doc/build/output" includes="*SequoiaDB*"/>
+         <fileset dir="${srccode_dir}/doc/build/output" includes="*.chm"/>
       </copy>
    </target>
    
