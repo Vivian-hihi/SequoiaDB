@@ -61,7 +61,7 @@ public class TestDomain10170 extends SdbTestBase {
         createCS();
     }
     
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown(){
         try{
             if(sdb.isCollectionSpaceExist(csName)){
