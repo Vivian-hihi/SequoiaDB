@@ -1,10 +1,11 @@
-package com.sequoiadb.basicoperation;
+package com.story.basicoperation;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 
 import org.bson.BSONObject;
+import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -107,7 +108,7 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 	*write lob after open lob,the result is fail
 	*/
 	//TODO:bug:SEQUOIADBMAINSTREAM-1988
-	/*public void writeAfterOpenLob(String lobSb){
+	public void writeAfterOpenLob(String lobSb){
 		DBLob lob = null;
 		DBLob rLob = null;
 		ObjectId oid = null;
@@ -120,13 +121,13 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 			rLob = cl.openLob(oid);
 			rLob.write(lobSb.getBytes());	
 		}catch(BaseException e){
-			Assert.assertTrue(false,"write lob fail:"+e.getErrorCode()+e.getMessage());
+			Assert.assertEquals(-6,e.getErrorCode(),e.getErrorCode()+e.getMessage());
 		}finally{
 			if (rLob != null){
 				rLob.close();
 			}
 		}
-	}	*/
+	}	
 	
 	/**
 	*read lob after create lob,the result is fail
@@ -153,24 +154,19 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 	/**
 	*write lob after Seek lob,the result is fail
 	*/
+	//TODO:bug:SEQUOIADBMAINSTREAM-1988
 	public void writeAfterSeekLob(String lobSb){
 		DBLob lob = null;	
-		DBLob rLob = null;
 		byte[] buff = lobSb.getBytes();
 		try{			
 			lob = cl.createLob();			
 			lob.write(buff);			
-			lob.close();
-			
-			//Do not write lob directly read
-			rLob = cl.openLob(lob.getID());			
+		
 			long pos = 0;
-			rLob.seek(pos, DBLob.SDB_LOB_SEEK_SET);
-			rLob.write(buff);
-			rLob.close();
+			lob.seek(pos, DBLob.SDB_LOB_SEEK_SET);
 		}catch(BaseException e){
-			//expected results to retrun to -269,then ignore exceptions
-			Assert.assertEquals(-269,e.getErrorCode(),e.getErrorCode()+e.getMessage());
+			//expected results to retrun to -32,then ignore exceptions
+			Assert.assertEquals(-32,e.getErrorCode(),e.getErrorCode()+e.getMessage());
 		}finally{
 			if (lob != null){
 				lob.close();
@@ -196,8 +192,8 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 		//the generating buff length is 1024k
 		String lobBytes = getRandomString(1024);
 		readAfterCreateLob(lobBytes);
-		//writeAfterSeekLob(lobBytes);
-		//writeAfterOpenLob(lobBytes);
+		writeAfterSeekLob(lobBytes);
+		writeAfterOpenLob(lobBytes);
 	}	
 	
 }
