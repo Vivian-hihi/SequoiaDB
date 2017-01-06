@@ -221,7 +221,22 @@ if( $param['m'] == "chm" && $os == 'windows' )
       exit( 1 ) ;
    }
    
-   printLog( "Finish build chm middle document, path: doc/mid", "Event" ) ;
+   printLog( "Finish build chm config, path: doc/build/output/$outputFileName.wcp", "Event" ) ;
+   
+   file_put_contents( "$root/tools/anjian/config.ini", "[config]\r\npath=$root\\build\\output\\$outputFileName.wcp" ) ;
+
+   $chm = "start $root/tools/anjian/autoBuildCHM.exe" ;
+   execCmd( $chm ) ;
+   
+   $log = file_get_contents( "$root/tools/anjian/anjian.log" ) ;
+   echo "\n".$log."\n" ;
+   if( strpos( $log, "Error" ) !== false )
+   {
+      printLog( 'Failed to build chm.' ) ;
+      exit( 1 ) ;
+   }
+
+   printLog( "Finish build chm document, path: doc/build/output/$outputFileName.chm", "Event" ) ;
 }
 
 //4. ¹ÙÍø
