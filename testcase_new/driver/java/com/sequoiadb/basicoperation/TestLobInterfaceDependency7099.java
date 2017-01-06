@@ -119,7 +119,8 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 			lob.close();
 			
 			rLob = cl.openLob(oid);
-			rLob.write(lobSb.getBytes());	
+			rLob.write(lobSb.getBytes());
+			Assert.fail("expect result need throw an error but not.");
 		}catch(BaseException e){
 			Assert.assertEquals(-6,e.getErrorCode(),e.getErrorCode()+e.getMessage());
 		}finally{
@@ -141,6 +142,7 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 			lob = cl.openLob(lob.getID());
 			lob.read(buff);	
 			lob.close();
+			Assert.fail("expect result need throw an error but not.");
 		}catch(BaseException e){
 			//expected results to retrun to -269,then ignore exceptions
 			Assert.assertEquals(-269,e.getErrorCode(),e.getErrorCode()+e.getMessage());
@@ -164,6 +166,7 @@ public class TestLobInterfaceDependency7099 extends SdbTestBase{
 		
 			long pos = 0;
 			lob.seek(pos, DBLob.SDB_LOB_SEEK_SET);
+			Assert.fail("expect result need throw an error but not.");
 		}catch(BaseException e){
 			//expected results to retrun to -32,then ignore exceptions
 			Assert.assertEquals(-32,e.getErrorCode(),e.getErrorCode()+e.getMessage());
