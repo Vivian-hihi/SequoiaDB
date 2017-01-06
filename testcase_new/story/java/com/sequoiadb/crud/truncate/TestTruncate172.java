@@ -67,7 +67,7 @@ public class TestTruncate172 extends SdbTestBase {
         }
     }
     
-    @Test
+    @Test(enabled = false)
     public void test(){
         TruncateThread truncateThread = new TruncateThread();
         BackupThread backupThread = new BackupThread();
