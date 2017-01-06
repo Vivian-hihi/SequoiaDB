@@ -1,8 +1,9 @@
 /**************************************************************
 * @Description: test case for Jira questionaire
-*				SEQUOIADBMAINSTREAM-1110
-* @Modify:      Liang xuewang Init
-*			 	2016-11-23
+*				    SEQUOIADBMAINSTREAM-1110
+*               SEQUOIADBMAINSTREAM-849
+* @Modify     : Liang xuewang Init
+*			 	    2016-11-23
 ***************************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
@@ -133,11 +134,22 @@ TEST(indexTest,createIdIndex)
 	EXPECT_STREQ(indexName,"$id")<<"fail to check index name" ;
 	sdbCloseCursor(cursor) ;
 	
-	// drop index
+	// drop id index
 	rc = sdbDropIdIndex(cl) ;
 	EXPECT_EQ(rc,SDB_OK)<<"fail to drop id index" ;
 	
+	// update after drop id index
+	bson rule ;
+	bson_init( &rule ) ;
+   bson_append_start_object ( &rule, "$inc" ) ;
+   bson_append_int ( &rule, "f1", 1 ) ;
+   bson_append_finish_object ( &rule ) ;
+   bson_finish ( &rule ) ;
+   rc = sdbUpdate( cl, &rule, NULL, NULL ) ;
+   EXPECT_EQ( rc, SDB_RTN_AUTOINDEXID_IS_FALSE ) << "fail to test update after drop id index" ;
+	
 	// destroy bson and release cursor
+	bson_destroy(&rule) ;
 	bson_destroy(&obj) ;
 	bson_destroy(&cond) ;
 	bson_destroy(&sel) ;
