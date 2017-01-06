@@ -13,7 +13,6 @@
 
    <test name="parralclass" parallel="classes" thread-count="1">
       <packages>
-         <package name="com.sequoiadb.crud.backup" />
       </packages>    
    </test>
 
