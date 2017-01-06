@@ -3664,7 +3664,7 @@ namespace engine
             {
                // 4 bytes len + compressed record
                dmsRecordSize = compressedDataSize + sizeof(UINT32) ;
-               PD_TRACE2 ( SDB__DMSSTORAGEDATA_INSERTRECORD,
+               PD_TRACE2 ( SDB__DMSSTORAGEDATA__EXTENTUPDATERECORD,
                            PD_PACK_STRING ( "size after compress" ),
                            PD_PACK_UINT ( dmsRecordSize ) ) ;
 
