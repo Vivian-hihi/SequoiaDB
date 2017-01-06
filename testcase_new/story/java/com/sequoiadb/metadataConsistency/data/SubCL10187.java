@@ -128,7 +128,8 @@ public class SubCL10187 extends SdbTestBase {
 			//check results of catalog
 			CommLib.checkCLResult(db, csName, clName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23){  //-23:Collection does not exist
+			if(e.getErrorCode() != -23 
+					&& e.getErrorCode() != -147){ //-147:unable to lock
 				Assert.fail(e.getMessage());
 			}
 		}finally{
