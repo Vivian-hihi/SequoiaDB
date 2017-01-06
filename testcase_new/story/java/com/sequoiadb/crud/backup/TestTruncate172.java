@@ -1,4 +1,4 @@
-package com.sequoiadb.crud.truncate;
+package com.sequoiadb.crud.backup;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
