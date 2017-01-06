@@ -2,24 +2,24 @@
 
 192.168.30.185 jenkins-master
 
+192.168.30.184 bl465-4
+
 #trunk g1d3
 192.168.30.112 ci-test-cent1
+192.168.20.193 ci-test-suse3
+192.168.30.103 ci-test-rhel2
+
+#trunk g3d3
+192.168.20.192 ci-test-suse2
 192.168.30.113 ci-test-cent2
-192.168.30.114 ci-test-cent3
+192.168.20.201 ubun-test2
 
 #trunk standalone
 192.168.20.191 ci-test-suse1
 
-192.168.30.184 bl465-4
-
-#trunk g3d3
-192.168.20.192 ci-test-suse2
-192.168.20.193 ci-test-suse3
-192.168.20.201 ubun-test2
-
 #null TEST-TRUNK4
 192.168.30.102 ci-test-rhel1
-192.168.30.103 ci-test-rhel2
+192.168.30.114 ci-test-cent3
 192.168.30.104 ci-test-rhel3
 
 192.168.28.121 ci-cmpl-ppc
