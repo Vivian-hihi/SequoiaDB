@@ -35,7 +35,6 @@
       <packages>
          <package name="com.sequoiadb.metadataConsistency.data"/>
 		   <package name="com.sequoiadb.split"/>
-         <package name="com.sequoiadb.split.basefunc"/>
       </packages>    
    </test>
    
