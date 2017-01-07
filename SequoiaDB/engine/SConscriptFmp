@@ -219,17 +219,17 @@ fmpEnv.StaticLibrary('pd', pdFiles)
 fmpEnv.StaticLibrary('util', utilFiles)
 #Process Model
 fmpEnv.StaticLibrary('pmd', pmdFiles)
+#fmp
+fmpEnv.StaticLibrary('fmp', fmpFiles)
 #Scripting
 fmpEnv.StaticLibrary('spt', sptFiles)
 fmpEnv.StaticLibrary('spt2', spt2Files)
 fmpEnv.StaticLibrary('ssh2', ssh2Files)
-#fmp
-fmpEnv.StaticLibrary('fmp', fmpFiles)
 #Mdocml
 fmpEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["oss","pd","util","clientc","bson","pmd","mdocml","spt","spt2", "ssh2","fmp"],
+      LIBDEPS=["oss","pd","util","clientc","fmp","bson","pmd","mdocml","spt","spt2", "ssh2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )
