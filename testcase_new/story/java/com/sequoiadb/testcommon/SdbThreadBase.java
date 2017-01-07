@@ -1,12 +1,12 @@
 package com.sequoiadb.testcommon;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-
 public abstract class SdbThreadBase implements Runnable {
-	private List<Exception> exceptionList = new ArrayList<Exception>();
+	private List<Exception> exceptionList = Collections.synchronizedList(new ArrayList<Exception>());
 	private List<Thread> threadList = new ArrayList<>();
 
 	public void start() {
@@ -29,16 +29,16 @@ public abstract class SdbThreadBase implements Runnable {
 		return exceptionList;
 	}
 
-	public String getErrorMsg(){
+	public String getErrorMsg() {
 		join();
 		String str = new String();
-		for(int i = 0;i<exceptionList.size();i++){
-			str+=exceptionList.get(i).getMessage();
-			str+="\r\n";
+		for (int i = 0; i < exceptionList.size(); i++) {
+			str += exceptionList.get(i).getMessage();
+			str += "\r\n";
 		}
 		return str;
 	}
-	
+
 	// join所有线程
 	public void join() {
 		synchronized (this) {
@@ -62,15 +62,14 @@ public abstract class SdbThreadBase implements Runnable {
 		}
 		return true;
 	}
-	
+
 	public void run() {
 		try {
 			exec();
 		} catch (Exception e) {
-			synchronized (this.getClass()) {//这里加这个锁可以吗？（不用this锁是因为会与join方法形成死锁）
-				exceptionList.add(e);
-			}
+			exceptionList.add(e);
 		}
 	}
+
 	public abstract void exec() throws Exception;
 }
