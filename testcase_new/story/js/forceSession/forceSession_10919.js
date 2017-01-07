@@ -92,13 +92,17 @@
 		}
 	}
 	// check the force session can be list
-	sleep(1000);
+	sleep( 1000 );
 	try
 	{
 		sessionList = db.list( SDB_LIST_CONTEXTS, {"SessionID" : forceSessionID} ).toArray();
-		// println( sessionList.length );
 		if ( sessionList.length != 0 ) 
 		{
+			println("====================================");
+			for (var i = 0; i < sessionList.length; i++) {
+				println( sessionList[i] );
+			}
+			println("====================================");
 			throw buildException("list session", new Error(), "list session by SessionID=oldSessionId "+JSON.stringify(param2), "count for sessionList equals 0", "count for sessionList not equals 0");
 		}
 	}

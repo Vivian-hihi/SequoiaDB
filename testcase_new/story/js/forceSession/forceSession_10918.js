@@ -73,7 +73,6 @@ function doTest(url)
  			throw buildException("forceSession", e, "force current session", "throw exception and e = -16", "throw exception, but e != -16"); 	
  	}
 
- 	sleep(1000);
  	try
  	{
  		var reconn = new Sdb( url );

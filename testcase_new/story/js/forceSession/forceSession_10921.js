@@ -27,7 +27,7 @@ function main()
 	// 获取所有系统EDU类型的session，并随机从中取得一个用于force
 	try
 	{
-		var sessionList = db.list( 2, {Global:true, Status: {$ne:"Waiting"},Type:{$nin:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}}).toArray();
+		var sessionList = db.list( 2, {Global:true, Status: {$ne:"Waiting"}, Type:{$nin:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}}).toArray();
 	}
 	catch(e)
 	{
@@ -37,9 +37,10 @@ function main()
 	var session = JSON.parse( sessionList[randomNum] );
 	sessionID = session.SessionID;
 	
+	// 加 Status: {$ne:"Waiting"}, Type:{$nin:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]} 因为通过sessionid有可能也能查到非系统EDU类型的session
 	try
 	{
-		forceBefore = db.list( 2, {Global:true, SessionID:sessionID}).toArray();
+		forceBefore = db.list( 2, {Global:true, SessionID:sessionID, Status: {$ne:"Waiting"}, Type:{$nin:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]} }).toArray();
 	}
 	catch(e)
 	{
@@ -63,7 +64,7 @@ function main()
 	// 检查forc的系统session是否都还在
 	try
 	{
-		forceAfter = db.list( 2, {Global:true, SessionID:sessionID}).toArray();
+		forceAfter = db.list( 2, {Global:true, SessionID:sessionID, Status: {$ne:"Waiting"}, Type:{$nin:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}}).toArray();
 	}
 	catch(e)
 	{

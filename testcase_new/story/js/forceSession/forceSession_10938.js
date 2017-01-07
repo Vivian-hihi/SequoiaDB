@@ -30,7 +30,7 @@ function main()
 function doTest(flag)
 {
 	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
-	var sessionList = conn.list( SDB_LIST_SESSIONS, {Global:flag, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}} ).toArray();
+	var sessionList = conn.list( SDB_LIST_SESSIONS, {Global:flag, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}} ).toArray();
 	var sessionid = JSON.parse(sessionList[Math.ceil(Math.random()*10) % sessionList.length]).SessionID;
 	try
 	{
@@ -43,9 +43,9 @@ function doTest(flag)
 			throw buildException("forceSession", e, "forceSession by sessionid and options", "forceSession success and throw exception(-16/-264)", "forceSession throw exception not is(-16/-264)" );
 		}
 	}
-	sleep(3000);
+	
 	var reconn = getConn( COORDHOSTNAME, COORDSVCNAME );
-	var sessionList = reconn.list( SDB_LIST_SESSIONS, {Global:flag, SessionID:sessionid} ).toArray();
+	var sessionList = reconn.list( SDB_LIST_SESSIONS, {Global:flag, SessionID:sessionid, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]} } ).toArray();
 	if ( sessionList.length !=0 )
 	{
 		println(sessionList.length);
