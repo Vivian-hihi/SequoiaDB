@@ -75,7 +75,7 @@ public class TestLob10422 extends SdbTestBase {
         }
     }
      
-    @Test
+    @Test(enabled = false)
     void test(){
         Sequoiadb db = null;
         DBCollection cl = null;
