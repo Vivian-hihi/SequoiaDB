@@ -13,7 +13,8 @@ gtestMainFile = [
       ]
 
 testCommonFiles = [
-        "testcommon.cpp","impWorker.cpp","./datasource/DS_thread.cpp"
+        "testcommon.cpp","impWorker.cpp",
+        "./datasource/DS_thread.cpp"
       ]
 
 testFiles1 = [ "./misc/decimal.cpp" ]
@@ -37,6 +38,7 @@ testFiles9 = [ "./datasource/DS_ChecktimeTest.cpp" ]
 testFiles10 = [ "./datasource/DS_ClTest.cpp" ]
 
 testFiles11 = [ "./datasource/DS_InvalidUsrTest.cpp" ]
+#testFiles12 = [ "./datasource/DS_CoordTest.cpp" ]
 
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
@@ -47,13 +49,14 @@ decimal        = dllBuildEnv.Program("decimal",       [testFiles1, gtestMainObj,
 numberLong     = dllBuildEnv.Program("numberLong",    [testFiles2, gtestMainObj, testCommonFiles])
 trunOncache    = dllBuildEnv.Program("trunOncache",   [testFiles3, gtestMainObj, testCommonFiles])
 time           = dllBuildEnv.Program("time",          [testFiles4, gtestMainObj, testCommonFiles])
-DS_InvalidArgTest = dllBuildEnv.Program("DS_InvalidArgTest", [testFiles5, gtestMainObj])
-DS_InvalidConnTest = dllBuildEnv.Program("DS_InvalidConnTest", [testFiles6, gtestMainObj])
-DS_ConnTest = dllBuildEnv.Program("DS_ConnTest", [testFiles7, gtestMainObj])
+DS_InvalidArgTest = dllBuildEnv.Program("DS_InvalidArgTest", [testFiles5, gtestMainObj, testCommonFiles])
+DS_InvalidConnTest = dllBuildEnv.Program("DS_InvalidConnTest", [testFiles6, gtestMainObj, testCommonFiles])
+DS_ConnTest = dllBuildEnv.Program("DS_ConnTest", [testFiles7, gtestMainObj, testCommonFiles])
 DS_ThreadTest = dllBuildEnv.Program("DS_ThreadTest", [testFiles8, gtestMainObj,testCommonFiles])
-DS_ChecktimeTest = dllBuildEnv.Program("DS_ChecktimeTest", [testFiles9, gtestMainObj])
-DS_ClTest = dllBuildEnv.Program("DS_ClTest", [testFiles10, gtestMainObj])
-DS_InvalidUsrTest = dllBuildEnv.Program("DS_InvalidUsrTest", [testFiles11, gtestMainObj])  
+DS_ChecktimeTest = dllBuildEnv.Program("DS_ChecktimeTest", [testFiles9, gtestMainObj, testCommonFiles])
+DS_ClTest = dllBuildEnv.Program("DS_ClTest", [testFiles10, gtestMainObj, testCommonFiles])
+DS_InvalidUsrTest = dllBuildEnv.Program("DS_InvalidUsrTest", [testFiles11, gtestMainObj, testCommonFiles])  
+#DS_CoordTest = dllBuildEnv.Program("DS_CoordTest", [testFiles12, gtestMainObj, testCommonFiles])  
 
 # static compile
 # dll compile
@@ -61,17 +64,19 @@ decimal.static       = staticBuildEnv.Program("decimal.static",      [testFiles1
 numberLong.static    = staticBuildEnv.Program("numberLong.static",   [testFiles2, gtestMainObj, testCommonFiles])
 trunOncache.static   = staticBuildEnv.Program("trunOncache.static",  [testFiles3, gtestMainObj, testCommonFiles])
 time.static          = staticBuildEnv.Program("time.static",         [testFiles4, gtestMainObj, testCommonFiles])
-DS_InvalidArgTest.static = staticBuildEnv.Program("DS_InvalidArgTest.static",[testFiles5, gtestMainObj])
-DS_InvalidConnTest.static = staticBuildEnv.Program("DS_InvalidConnTest.static",[testFiles6, gtestMainObj])
-DS_ConnTest.static = staticBuildEnv.Program("DS_ConnTest.static",[testFiles7, gtestMainObj])
+DS_InvalidArgTest.static = staticBuildEnv.Program("DS_InvalidArgTest.static",[testFiles5, gtestMainObj, testCommonFiles])
+DS_InvalidConnTest.static = staticBuildEnv.Program("DS_InvalidConnTest.static",[testFiles6, gtestMainObj, testCommonFiles])
+DS_ConnTest.static = staticBuildEnv.Program("DS_ConnTest.static",[testFiles7, gtestMainObj, testCommonFiles])
 DS_ThreadTest.static = staticBuildEnv.Program("DS_ThreadTest.static",[testFiles8, gtestMainObj,testCommonFiles])
-DS_ChecktimeTest.static = staticBuildEnv.Program("DS_ChecktimeTest.static",[testFiles9, gtestMainObj])
-DS_ClTest.static = staticBuildEnv.Program("DS_ClTest.static",[testFiles10, gtestMainObj])
-DS_InvalidUsrTest.static = staticBuildEnv.Program("DS_InvalidUsrTest.static",[testFiles11, gtestMainObj])
+DS_ChecktimeTest.static = staticBuildEnv.Program("DS_ChecktimeTest.static",[testFiles9, gtestMainObj, testCommonFiles])
+DS_ClTest.static = staticBuildEnv.Program("DS_ClTest.static",[testFiles10, gtestMainObj, testCommonFiles])
+DS_InvalidUsrTest.static = staticBuildEnv.Program("DS_InvalidUsrTest.static",[testFiles11, gtestMainObj, testCommonFiles])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
-							  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest ] )
+                              DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,
+                              DS_ClTest,DS_InvalidUsrTest ] )
+                             # DS_ClTest,DS_InvalidUsrTest, DS_CoordTest ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,

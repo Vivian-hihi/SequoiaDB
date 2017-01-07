@@ -15,7 +15,7 @@ TEST(InvalidArgTest,userInfo)
 	}
 	sdbDataSource ds ;
 	sdbDataSourceConf conf ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdb* conn = NULL ;
 
 	EXPECT_EQ( SDB_OK,ds.init(url,conf)) ;
@@ -28,19 +28,19 @@ TEST(InvalidArgTest,userInfo)
 	conf.setUserInfo("lxw","") ;				// 非法用户名
 	EXPECT_EQ( SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ( SDB_OK,ds.enable() ) ;
-	EXPECT_EQ( SDB_DS_NO_COORD,ds.getConnection(conn) ) ;
+	EXPECT_EQ( SDB_DS_NO_REACHABLE_COORD,ds.getConnection(conn) ) ;
 	ds.close() ;
 	
 	conf.setUserInfo("root","") ;			    // 合法用户名无密码
 	EXPECT_EQ( SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ( SDB_OK,ds.enable() ) ;
-	EXPECT_EQ( SDB_DS_NO_COORD,ds.getConnection(conn) ) ;
+	EXPECT_EQ( SDB_DS_NO_REACHABLE_COORD,ds.getConnection(conn) ) ;
 	ds.close() ;
 		
 	conf.setUserInfo("root","seq") ;			// 合法用户名非法密码
 	EXPECT_EQ( SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ( SDB_OK,ds.enable() ) ;
-	EXPECT_EQ( SDB_DS_NO_COORD,ds.getConnection(conn) ) ;
+	EXPECT_EQ( SDB_DS_NO_REACHABLE_COORD,ds.getConnection(conn) ) ;
 	ds.close() ;
 
 	conf.setUserInfo("root","sequoiadb") ;		// 最后删除用户，防止后续连接被检验用户信息

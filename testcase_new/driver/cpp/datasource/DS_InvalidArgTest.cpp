@@ -8,7 +8,7 @@
 using namespace std ;
 using namespace sdbclient ;
 
-string url_right = "localhost:11810" ;
+string url_right = COORD ;
 
 TEST(InvalidArgTest,connCntInfo)
 {

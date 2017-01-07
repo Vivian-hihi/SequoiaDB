@@ -6,20 +6,21 @@
 using namespace std ;
 using namespace sdbclient ;
 
-/*
+///*
 // 测试单个节点，所有节点正常停止，异常停止，主机异常（手动）
 TEST(coordTest,stop)
 {
-	string url1 = "192.168.31.61:11810" ;
-	string url2 = "192.168.31.61:11910" ;
-	string url3 = "192.168.31.61:11920" ;
+	string url1 = "192.168.20.165:11810" ;
+	//string url2 = "192.168.20.166:11810" ;
+	//string url3 = "192.168.20.166:50000" ;
 	vector<string> urllist ;
 	urllist.push_back(url1) ;
-	urllist.push_back(url2) ;
-	urllist.push_back(url3) ;
+	//urllist.push_back(url2) ;
+	//urllist.push_back(url3) ;
 
 	sdbDataSourceConf conf ;
-	conf.setSyncCoordInterval(0) ;
+	//conf.setSyncCoordInterval(10 * 1000) ;
+	conf.setSyncCoordInterval() ;
 	sdbDataSource ds ;
 	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
@@ -40,4 +41,4 @@ TEST(coordTest,stop)
 	}
 	ds.close() ;
 }
-*/
+//*/

@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
 #include <sdbDataSource.hpp>
+#include "DS_common.hpp"
 
 using namespace sdbclient ;
 
-string url = "localhost:11810" ;
+string url = COORD ;
 
 // 启用连接池获取及释放连接，添加及删除节点
 TEST(ConnTest,enableConn)
@@ -13,13 +14,13 @@ TEST(ConnTest,enableConn)
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.getConnection(conn)) ;
+	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
 	ds.releaseConnection(conn) ;	// 释放连接无返回值
 
-	ds.addCoord("localhost:11810") ;	//
+	ds.addCoord(url) ;	//
 	EXPECT_EQ(1,ds.getNormalCoordNum()) ;
 	ds.addCoord("localhost:11910") ;
 	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
@@ -63,7 +64,7 @@ TEST(ConnTest,disableConn)
 	EXPECT_EQ(SDB_OK,ds.disable()) ;
 
 	sdb* conn = NULL ;
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.getConnection(conn)) ;
+	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	ds.addCoord(url) ;			// 添加节点无返回值
 	ds.removeCoord(url) ;		// 删除节点无返回值
 	ds.close() ;
@@ -98,10 +99,10 @@ TEST(ConnTest,disableResourceAgain)
 	EXPECT_EQ(9,ds.getIdleConnNum()) ;
 	EXPECT_EQ(1,ds.getUsedConnNum()) ;
 	EXPECT_EQ(SDB_OK,ds.disable()) ;
-    EXPECT_EQ(0,ds.getIdleConnNum()) ;
+        EXPECT_EQ(0,ds.getIdleConnNum()) ;
 	EXPECT_EQ(0,ds.getUsedConnNum()) ;
 	EXPECT_EQ(SDB_OK,ds.disable()) ;
-    EXPECT_EQ(0,ds.getIdleConnNum()) ;
+        EXPECT_EQ(0,ds.getIdleConnNum()) ;
 	EXPECT_EQ(0,ds.getUsedConnNum()) ;
 	ds.close() ;
 }
@@ -116,11 +117,11 @@ TEST(ConnTest,close)
 	ds.close() ;
 	
 	sdb* conn ;
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.getConnection(conn)) ;	
+	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
 	ds.addCoord(url) ;  
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.enable()) ; 
+	EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
 	EXPECT_EQ(SDB_OK,ds.disable()) ; //  close后能正常调用disable
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.enable()) ; 
+	EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
 }
 
 
@@ -131,10 +132,10 @@ TEST(ConnTest,withoutInit)
 	conf.setSyncCoordInterval(false) ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
-    EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.enable()) ;	
+        EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ;	
    
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.getConnection(conn)) ;	
-	ds.addCoord("localhost:11810") ;	
+	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
+	ds.addCoord(url) ;	
 	EXPECT_EQ(SDB_OK,ds.disable()) ;		
 	ds.close() ;		
 }

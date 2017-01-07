@@ -1,13 +1,14 @@
 #include <client.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
+#include "DS_common.hpp"
 using namespace sdbclient ;
 using namespace std ;
 
 TEST(libTest,sdb)
 {
 	sdb db ;
-	EXPECT_EQ(SDB_OK,db.connect("localhost",11810)) ;
+	EXPECT_EQ(SDB_OK,db.connect(HOST, SERVER)) ;
 	sdbCollectionSpace cs ;
 	EXPECT_EQ(SDB_OK,db.createCollectionSpace("testcs",65536,cs)) ;
 	sdbCollection cl ;

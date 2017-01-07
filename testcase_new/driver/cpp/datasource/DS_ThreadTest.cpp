@@ -3,6 +3,7 @@
 #include <iostream>
 #include "../impWorker.hpp"
 #include "DS_thread.hpp"
+#include "DS_common.hpp"
 
 // 定义线程数量
 #define ThreadNum 5 
@@ -54,7 +55,7 @@ TEST(ThreadTest,init_enable)
 	if(args.getEnabled())
 		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;	
 	else
-		EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.getConnection(conn)) ;	
+		EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
 	ds.releaseConnection(conn) ;	
 	EXPECT_EQ(SDB_OK,ds.disable()) ;	
 	ds.close() ;					
@@ -141,7 +142,7 @@ TEST(ThreadTest,init_coord)
 TEST(ThreadTest,enable)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -165,7 +166,7 @@ TEST(ThreadTest,enable)
 TEST(ThreadTest,enable_disable)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -181,7 +182,7 @@ TEST(ThreadTest,enable_disable)
         delete workers[i] ;
     }
 	sdbclient::sdb *conn = NULL ;
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.getConnection(conn)) ;
+	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	ds.close() ;
 }
 
@@ -190,7 +191,7 @@ TEST(ThreadTest,enable_disable)
 TEST(ThreadTest,enable_close)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -206,7 +207,7 @@ TEST(ThreadTest,enable_close)
         delete workers[i] ;
     }
 	sdbclient::sdb *conn = NULL ;
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,ds.getConnection(conn)) ;
+	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	ds.close() ;
 }
 */
@@ -215,7 +216,7 @@ TEST(ThreadTest,enable_close)
 TEST(ThreadTest,enable_conn)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -238,7 +239,7 @@ TEST(ThreadTest,enable_conn)
 TEST(ThreadTest,enable_coord)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
@@ -262,7 +263,7 @@ TEST(ThreadTest,enable_coord)
 TEST(ThreadTest,disable)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -285,7 +286,7 @@ TEST(ThreadTest,disable)
 TEST(ThreadTest,disable_close)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -308,7 +309,7 @@ TEST(ThreadTest,disable_close)
 TEST(ThreadTest,disable_conn)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
@@ -332,7 +333,7 @@ TEST(ThreadTest,disable_conn)
 TEST(ThreadTest,disable_coord)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -355,7 +356,7 @@ TEST(ThreadTest,disable_coord)
 TEST(ThreadTest,dsclose)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
@@ -378,7 +379,7 @@ TEST(ThreadTest,dsclose)
 TEST(ThreadTest,dsclose_conn)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
@@ -402,7 +403,7 @@ TEST(ThreadTest,dsclose_conn)
 TEST(ThreadTest,dsclose_coord)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
@@ -425,7 +426,7 @@ TEST(ThreadTest,dsclose_coord)
 TEST(ThreadTest,connection)
 {
 	sdbclient::sdbDataSource ds ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
@@ -448,7 +449,7 @@ TEST(ThreadTest,connection)
 TEST(ThreadTest,connection_coord)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
@@ -472,7 +473,7 @@ TEST(ThreadTest,connection_coord)
 TEST(ThreadTest,releaseConn)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
@@ -504,7 +505,7 @@ TEST(ThreadTest,releaseConn)
 TEST(ThreadTest,releaseConn_coord)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
@@ -537,7 +538,7 @@ TEST(ThreadTest,releaseConn_coord)
 TEST(ThreadTest,addCoord)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
@@ -561,7 +562,7 @@ TEST(ThreadTest,addCoord)
 TEST(ThreadTest,addCoord_remove)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
@@ -585,12 +586,12 @@ TEST(ThreadTest,addCoord_remove)
 TEST(ThreadTest,removeCoord)
 {
 	sdbclient::sdbDataSource ds;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
-	string url2 = "localhost:11810" ;
+	string url2 = COORD ;
 	ds.addCoord(url2) ;
 	EXPECT_EQ(1,ds.getNormalCoordNum()) ;
 	DsArgs args(ds) ;

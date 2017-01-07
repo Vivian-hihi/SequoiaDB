@@ -11,12 +11,12 @@ using namespace sdbclient ;
 TEST(TimeTest,checkIntervalLong)
 {
 	sdbDataSourceConf conf ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
 	vector<sdb*> vec ;
 
-	conf.setCheckIntervalInfo(3,0) ;
+	conf.setCheckIntervalInfo(3000,0) ;
 	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 	while(vec.size() <= conf.getMaxIdleCount())
@@ -37,12 +37,12 @@ TEST(TimeTest,checkIntervalLong)
 TEST(TimeTest,checkIntervalShort)
 {
 	sdbDataSourceConf conf ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
 	vector<sdb*> vec ;
 
-	conf.setCheckIntervalInfo(3,0) ;
+	conf.setCheckIntervalInfo(3000,0) ;
 	ds.init(url,conf) ;
 	ds.enable() ;
 	while(vec.size() <= conf.getMaxIdleCount()+10)	// »ñÈ¡Á¬½ÓÊý³¬¹ýmaxIdleConnNum
@@ -66,11 +66,11 @@ TEST(TimeTest,checkIntervalShort)
 TEST(TimeTest,keepAliveTimoutZero)
 {
 	sdbDataSourceConf conf ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
 
-	conf.setCheckIntervalInfo(3,0) ;
+	conf.setCheckIntervalInfo(3000,0) ;
 	ds.init(url,conf) ;
 	ds.enable() ;
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
@@ -87,11 +87,11 @@ TEST(TimeTest,keepAliveTimoutZero)
 TEST(TimeTest,keepAliveTimoutNotZero)
 {
 	sdbDataSourceConf conf ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
 
-	conf.setCheckIntervalInfo(3,6) ;
+	conf.setCheckIntervalInfo(3000,6000) ;
 	ds.init(url,conf) ;
 	ds.enable() ;
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
@@ -108,23 +108,35 @@ TEST(TimeTest,keepAliveTimoutNotZero)
 TEST(TimeTest,keepAliveTimoutNotZeroAgain)
 {
 	sdbDataSourceConf conf ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
 	sdbCollectionSpace cs ;
 
-	conf.setCheckIntervalInfo(3,6) ;
+	conf.setCheckIntervalInfo(3000, 9000) ; // ¿aliveTime¿¿0¿¿¿¿¿¿¿interval¿¿¿¿¿¿
 	ds.init(url,conf) ;
 	ds.enable() ;
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
-	EXPECT_EQ(9,ds.getIdleConnNum()) ;
-	ossSleep(3*1000) ;
+        // ¿¿¿¿¿¿¿¿¿¿¿¿¿9¿
+	EXPECT_EQ(9, ds.getIdleConnNum()) ;
+        // ¿¿¿¿¿¿¿
+	ossSleep(3*1000) ; 
+        // ¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿9¿
+	EXPECT_EQ(9, ds.getIdleConnNum()) ;
+	ossSleep(1*1000) ; // ¿¿¿¿¿¿¿¿¿¿¿¿¿9¿
+	EXPECT_EQ(9, ds.getIdleConnNum()) ;
+	ossSleep(1*1000) ;
+	EXPECT_EQ(9, ds.getIdleConnNum()) ;// ¿¿¿¿¿¿¿¿¿¿¿¿¿9¿
+        // ¿¿¿¿¿¿¿¿¿¿¿
+	ossSleep(2*1000) ; 
+        // ¿¿¿¿¿¿¿¿¿¿¿¿¿0¿
+	EXPECT_EQ(0, ds.getIdleConnNum()) ;
 	conn->createCollectionSpace( "datasourceTestCs_lxw",SDB_PAGESIZE_4K,cs ) ;
 	conn->dropCollectionSpace( "datasourceTestCs_lxw" ) ;
-	ossSleep(3*1000) ;					// »ñÈ¡Á¬½Óºó×ÜÐÝÃßÊ±¼ä>keepAliveTimeout£¬µ«µ¥´ÎÐÝÃßÊ±¼ä<keepAliveTimeout,´ËÁ¬½ÓÎ´³¬Ê±£¬µ«ÊÇÁ¬½Ó³ØÄÚµÄÁ¬½ÓÒÑ¾­³¬Ê±ÁË
 	ds.releaseConnection(conn) ;
-	ossSleep(3*1000) ;					// ÊÍ·ÅÁ¬½ÓºóÐÝÃßÊ±¼ä>checkInterval,Á¬½Ó²»Ó¦¸Ã±»Çå³ý£¬Á¬½Ó³ØµÄ¿ÕÏÐÁ¬½ÓÎª1
 	EXPECT_EQ(1,ds.getIdleConnNum()) ;
+	ossSleep(10*1000) ;
+	EXPECT_EQ(0, ds.getIdleConnNum()) ;
 	ds.close() ;
 }
 

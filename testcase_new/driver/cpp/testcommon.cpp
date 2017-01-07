@@ -80,3 +80,25 @@ void getConf()
    cout<<"SvcName: "<<SVCNAME<<endl ;
    cout<<"CHANGEDPREFIX: "<<CHANGEDPREFIX<<endl ;
 }
+
+void ossSleep(int milliseconds)
+{
+        #if defined (_WINDOWS)
+                Sleep(milliseconds) ;
+        #else
+                usleep(milliseconds*1000) ;
+        #endif
+}
+
+bool isStandalone()
+{
+        sdb db ;
+        db.connect(HOST, SERVER) ;
+        sdbCursor cursor ;
+        int rc = db.getList(cursor,7) ;
+        if(rc == -159)
+                return true ;
+        else
+                return false ;
+}
+

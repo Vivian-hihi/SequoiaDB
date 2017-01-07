@@ -17,7 +17,7 @@ void init(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
-    std::string url = "localhost:11810" ;
+    std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 }
 
@@ -25,7 +25,7 @@ void init_enable(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
-    std::string url = "localhost:11810" ;
+    std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,arg->getDs().enable()) ;
 }
@@ -34,7 +34,7 @@ void init_disable(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
-    std::string url = "localhost:11810" ;
+    std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,arg->getDs().disable()) ;
 }
@@ -43,7 +43,7 @@ void init_close(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
-    std::string url = "localhost:11810" ;
+    std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	arg->getDs().close() ;
 }
@@ -52,7 +52,7 @@ void init_conn(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
-    std::string url = "localhost:11810" ;
+    std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,arg->getDs().enable()) ;
 	sdbclient::sdb* conn = NULL ;
@@ -64,7 +64,7 @@ void init_coord(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
-    std::string url = "localhost:11810" ;
+    std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	std::string url2 = "localhost:11910" ;
 	arg->getDs().addCoord(url2) ;
@@ -130,7 +130,7 @@ void disable_conn(DsArgs *arg)
 	ossSleep(getRand() * 100) ;
 	EXPECT_EQ(SDB_OK,arg->getDs().disable()) ;
 	sdbclient::sdb *conn = NULL ;
-	EXPECT_EQ(SDB_DS_NOTINIT_OR_DISABLED,arg->getDs().getConnection(conn)) ;
+	EXPECT_EQ(SDB_DS_NOT_ENABLE,arg->getDs().getConnection(conn)) ;
 	arg->getDs().releaseConnection(conn) ;
 }
 
@@ -234,7 +234,7 @@ void addCoord_remove(DsArgs *arg)
 void removeCoord(DsArgs *arg)
 {
 	ossSleep(getRand() * 100) ;
-	string url = "localhost:11810" ;
+	string url = COORD ;
 	arg->getDs().removeCoord(url) ;
 	EXPECT_EQ(0,arg->getDs().getNormalCoordNum()) ;
 }
