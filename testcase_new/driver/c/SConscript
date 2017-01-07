@@ -67,6 +67,8 @@ testFiles19 = [ "./ssl/sslFalse.cpp" ]
 
 testFiles20 = [ "./ssl/sslTrue.cpp" ]
 
+testFiles21 = [ "./misc/forceSession.cpp" ] 
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -81,7 +83,7 @@ numberLong     = dllBuildEnv.Program("numberLong",    [testFiles2, testCommon, g
 turnOncache    = dllBuildEnv.Program("turnOncache",   [testFiles3, testCommon, gtestMainObj])
 restAbnormal   = dllBuildEnv.Program("restAbnormal",  [testFiles4, testCommon, gtestMainObj])
 procedure      = dllBuildEnv.Program("procedure",  [testFiles5, testCommon, gtestMainObj])
-# socketMutex    = dllBuildEnv.Program("socketMutex",  [testFiles6, testCommon, gtestMainObj])
+#socketMutex    = dllBuildEnv.Program("socketMutex",  [testFiles6, testCommon, gtestMainObj])
 index          = dllBuildEnv.Program("index",  [testFiles7, testCommon, gtestMainObj])
 dropCsAndWriteLob = dllBuildEnv.Program("dropCsAndWriteLob",  [testFiles8, testCommon, gtestMainObj])
 concurrentCs   = dllBuildEnv.Program("concurrentCs",  [testFiles9, testCommon, gtestMainObj])
@@ -96,6 +98,7 @@ concurrentNode = dllBuildEnv.Program("concurrentNode",  [testFiles17, testCommon
 concurrentRg   = dllBuildEnv.Program("concurrentRg",  [testFiles18, testCommon, gtestMainObj])
 sslFalse	   = dllBuildEnv.Program("sslFalse",  [testFiles19, testCommon, gtestMainObj])
 sslTrue        = dllBuildEnv.Program("sslTrue",  [testFiles20, testCommon, gtestMainObj])
+forceSession   = dllBuildEnv.Program("forceSession",  [testFiles21, testCommon, gtestMainObj])
 
 # static compile
 
@@ -104,7 +107,7 @@ numberLong.static    = staticBuildEnv.Program("numberLong.static",   [testFiles2
 turnOncache.static   = staticBuildEnv.Program("turnOncache.static",  [testFiles3, testCommon, gtestMainObj])
 restAbnormal.static  = staticBuildEnv.Program("restAbnormal.static", [testFiles4, testCommon, gtestMainObj])
 procedure.static     = staticBuildEnv.Program("procedure.static",    [testFiles5, testCommon, gtestMainObj])
-# socketMutex.static   = staticBuildEnv.Program("socketMutex.static",    [testFiles6, testCommon, gtestMainObj])
+#socketMutex.static   = staticBuildEnv.Program("socketMutex.static",    [testFiles6, testCommon, gtestMainObj])
 index.static         = staticBuildEnv.Program("index.static",    [testFiles7, testCommon, gtestMainObj])
 dropCsAndWriteLob.static = staticBuildEnv.Program("dropCsAndWriteLob.static",    [testFiles8, testCommon, gtestMainObj])
 concurrentCs.static  = staticBuildEnv.Program("concurrentCs.static",    [testFiles9, testCommon, gtestMainObj])
@@ -119,6 +122,7 @@ concurrentNode.static    = staticBuildEnv.Program("concurrentNode.static",  [tes
 concurrentRg.static      = staticBuildEnv.Program("concurrentRg.static",  [testFiles18, testCommon, gtestMainObj])
 sslFalse.static          = staticBuildEnv.Program("sslFalse.static",  [testFiles19, testCommon, gtestMainObj])
 sslTrue.static           = staticBuildEnv.Program("sslTrue.static",  [testFiles20, testCommon, gtestMainObj])
+forceSession.static      = staticBuildEnv.Program("forceSession.static",  [testFiles21, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -136,7 +140,7 @@ env.Install( '#/build_test', [   decimal,
 								 lobAbnormal,
 								 idIndex,
 								 attachAndDetachNode,
-								 concurrentNode,concurrentRg,sslFalse,sslTrue
+								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -153,6 +157,7 @@ env.Install( '#/build_test', [   decimal.static,
 								 lobNormal.static,
 								 lobAbnormal.static,
 								 idIndex.static,
-								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static
+								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
+								 forceSession.static
                               ] )
 

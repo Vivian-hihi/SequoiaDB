@@ -5,7 +5,6 @@
 *				2016-11-10
 *****************************************************/
 
-/*
 #include <gtest/gtest.h>
 #include <client.h>
 #include "../common/impWorker.hpp"
@@ -32,6 +31,13 @@ class SocketMutexTest : public testing::Test
 void SocketMutexTest::SetUpTestCase()
 {
 	int i ;
+
+	// close cache
+	sdbClientConf config ;
+	onfig.enableCacheStrategy = 0 ;
+    config.cacheTimeInterval = 0 ;
+    rc = initClient( &config ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to init client" ;
 
 	// make CsName
     for(i=0;i<ThreadNum;++i)
@@ -347,4 +353,3 @@ TEST_F(SocketMutexTest,closeAllCursor)
         delete workers[i] ;
     }
 }
-*/
