@@ -2,6 +2,7 @@
 *@Description:	seqDB-6029:重复执行事务回滚_SD.transaction.040
                依次执行开启事务、删除、回滚、回滚操作
 *@Author:  		TingYU  2015/11/24
+               wuyan 2017/1/6(修改重复执行回滚不报错)
 ************************************************************************/
 main();
 
@@ -30,16 +31,16 @@ function main()
       try
       {   
          execTransaction( rollbackTrans );
-         throw buildException( "rollbackTrans()", "", "excute rollback after commit",
-                               -196, "did not throw any error" );
+         //throw buildException( "rollbackTrans()", "", "excute rollback after commit",
+                               //-196, "did not throw any error" );
       }
       catch(e)
       {
-         var expErr = "rollbackTrans() unknown error expect: " + -196;
-         if( e !== expErr )
-         {
+         //var expErr = "rollbackTrans() unknown error expect: " + -196;
+         //if( e !== expErr )
+        // {
             throw e;
-         }
+         //}
       }
       checkResult( cl, false, remove );
                     

@@ -2,6 +2,7 @@
 *@Description:	seqDB-6071：主子表中插入数据不在分区范围内_SD.transaction.045
                分别执行开启事务、删除、插入不在子表分区范围内的记录、提交
 *@Author:  		TingYU  2015/11/25
+               wuyan 2017/1/6(修改重复执行回滚不报错) 
 ************************************************************************/
 main();
 
@@ -49,16 +50,16 @@ function main()
       try
       {   
          execTransaction( commitTrans );
-         throw buildException( "commitTrans()", "", "excute commit after insert fail",
-                               -196, "did not throw any error" );
+        // throw buildException( "commitTrans()", "", "excute commit after insert fail",
+                              // -196, "did not throw any error" );
       }
       catch(e)
       {
-         var expErr = "commitTrans() unknown error expect: " + -196;
-         if( e !== expErr )
-         {
+        // var expErr = "commitTrans() unknown error expect: " + -196;
+        // if( e !== expErr )
+         //{
             throw e;
-         }
+         //}
       }
       checkResult( maincl, false, remove );
                     
