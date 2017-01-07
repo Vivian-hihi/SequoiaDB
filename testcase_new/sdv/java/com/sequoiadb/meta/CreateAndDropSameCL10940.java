@@ -42,12 +42,8 @@ public class CreateAndDropSameCL10940 extends SdbTestBase {
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
-		}			
-		
-		//randomly take a group name to create cl
-		CommLib commlib = new CommLib();
-		ArrayList<String> groupsName = commlib.getDataGroupNames(sdb);
-		clGroupName = groupsName.get(random.nextInt(3));
+		}		
+
 	}
 	
 	@Test
