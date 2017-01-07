@@ -6,7 +6,7 @@ from pysequoiadb import const
 from pysequoiadb.error import (SDBTypeError,
                                SDBBaseError,
                                SDBEndOfCursor)
-
+from collections import OrderedDict
 from bson.objectid import ObjectId
 
 if __name__ == "__main__":
@@ -38,7 +38,7 @@ if __name__ == "__main__":
          pysequoiadb._print(record)
 
       #create an index
-      index = {'Item':1, 'Rank':-1}
+      index = OrderedDict([('Item', 1), ('Rank', -1)])
       index_name = 'idx'
       cl.create_index(index, index_name, False, False)
 
