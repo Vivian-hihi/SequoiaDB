@@ -153,7 +153,14 @@
       
       //跳转至节点
       $scope.GotoNodes = function(){
-         $location.path( '/Monitor/SDB-Nodes/Nodes' ).search( { 'r': new Date().getTime() } ) ;
+         if( moduleMode == 'distribution' )
+         {
+            $location.path( '/Monitor/SDB-Nodes/Nodes' ).search( { 'r': new Date().getTime() } ) ;
+         }
+         else
+         {
+            $location.path( '/Monitor/SDB-Nodes/Node/Index' ).search( { 'r': new Date().getTime() } ) ;
+         }
       } ;
    } ) ;
 
