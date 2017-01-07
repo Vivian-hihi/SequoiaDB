@@ -769,6 +769,9 @@ namespace engine
                     rc ) ;
             goto error ;
          }
+         item.clearDirty() ;
+         item.unlock() ;
+         item.clearDataInfo() ;
       }
       /// release the source page
       release( item ) ;
@@ -1201,6 +1204,45 @@ namespace engine
          SDB_ASSERT( !pPage->isDirty(), "Page can't be dirty" ) ;
          _pages.erase( it ) ;
       }
+      return pPage ;
+   }
+
+   utilCachePage* _utilCacheBucket::allocPage( INT32 pageID, UINT32 size )
+   {
+      utilCachePage* pPage = NULL ;
+
+      if ( _dirtyPages >= _pages.size() )
+      {
+         goto done ;
+      }
+      else
+      {
+         MAP_BLK_PAGE::iterator it = _pages.begin() ;
+         while ( it != _pages.end() )
+         {
+            pPage = &(it->second) ;
+            if ( !pPage->isDirty() && !pPage->isLocked() &&
+                 pPage->size() >= size )
+            {
+               /// clear data info
+               pPage->clearDataInfo() ;
+               pPage->clearNewest() ;
+               utilCachePage tmpPage( *pPage ) ;
+
+               /// remove it
+               _pages.erase( it ) ;
+               /// add new page
+               utilCachePage &newPage = _pages[ pageID ] ;
+               newPage = tmpPage ;
+               pPage = &newPage ;
+               goto done ;
+            }
+            ++it ;
+         }
+         pPage = NULL ;
+      }
+
+   done:
       return pPage ;
    }
 
@@ -1743,11 +1785,20 @@ namespace engine
    /*
       Max sync pages number for once time
    */
-   #define UTIL_CACHE_SYNC_ONCE_NUM          ( 3000 )
+   #define UTIL_CACHE_SYNC_ONCE_NUM          ( 2048 )
+   #define UTIL_CACHE_SYNC_BLK_ONCE_NUM      ( 1 )
+   #define UTIL_CACHE_RECYCLE_BLK_ONCE_NUM   ( UTIL_CACHE_SYNC_BLK_ONCE_NUM * 2 )
    #define UTIL_CACHE_SYNC_TOTAL_THRESHOLD   ( 100 )
+   #define UTIL_CACHE_STAT_INTERVAL          ( 30000 )
 
    _utilCacheUnit::_utilCacheUnit()
    :_dirtySize( 0 ), _totalPage( 0 )
+#ifdef SDB_PERF_STAT
+    ,_statAllocNum( 0 ), _statAllocFromBlkNum( 0 )
+    ,_statAllocNullNum( 0 ), _statHitCacheNum( 0 )
+    ,_statSyncNum( 0 ) ,_statRecycleNum( 0 )
+    ,_lastStatTime( 0 )
+#endif //SDB_PERF_STAT
    {
       _pMgr = NULL ;
       _pCacheFile = NULL ;
@@ -1763,6 +1814,12 @@ namespace engine
       _dirtyTimeout = UTIL_CACHEUNIT_DIRTY_TIMEOUT ;
       _bgFreeRatio = UTIL_CACHEUNIT_BG_FREE_RATIO ;
       _pageTimeout = UTIL_CACHEUNIT_PAGE_TIMEOUT ;
+
+#ifdef SDB_PERF_STAT
+      ossTimestamp t ;
+      ossGetCurrentTime( t ) ;
+      _lastStatTime = t.time * 1000 + t.microtm / 1000 ;
+#endif //SDB_PERF_STAT
    }
 
    _utilCacheUnit::~_utilCacheUnit()
@@ -1895,6 +1952,7 @@ namespace engine
    {
       _dirtySize.dec() ;
       pBucket->decDirty() ;
+      SDB_ASSERT( (INT64)pBucket->dirtyPages() >= 0, "Dirty Size must >= 0" ) ;
    }
 
    void _utilCacheUnit::incDirtyPages( utilCacheBucket *pBucket )
@@ -1955,6 +2013,7 @@ namespace engine
             pBucket->lock( tmpMode ) ;
             goto reget ;
          }
+         _incAllocNum( 1 ) ;
          rc = _pMgr->alloc( size, tmpPage, _wholePage ) ;
          if ( SDB_OK == rc )
          {
@@ -1969,6 +2028,19 @@ namespace engine
                PD_LOG( PDERROR, "Alloc page[%u] failed, rc: %d",
                        size, rc ) ;
             }
+            else
+            {
+               /// get from self bucket
+               pPage = pBucket->allocPage( pageID, size ) ;
+               if ( pPage )
+               {
+                  _incAllocFromBlkNum( 1 ) ;
+               }
+               else
+               {
+                  _incAllocNullNum( 1 ) ;
+               }
+            }
             goto done ;
          }
       }
@@ -1981,6 +2053,7 @@ namespace engine
             pBucket->lock( tmpMode ) ;
             goto reget ;
          }
+         _incAllocNum( 1 ) ;
          INT32 rc = _pMgr->alloc( size, *pPage, _wholePage,
                                   pPage->isInvalid() ? FALSE : TRUE ) ;
          if ( rc )
@@ -2007,6 +2080,7 @@ namespace engine
                                pPage->isInvalid() ? FALSE : TRUE ) ;
             if ( rc )
             {
+               _incAllocNullNum( 1 ) ;
                if ( SDB_OSS_UP_TO_LIMIT != rc )
                {
                   PD_LOG( PDERROR, "Alloc page[%u] failed, rc: %d",
@@ -2028,6 +2102,10 @@ namespace engine
                goto done ;
             }
          }
+      }
+      else if ( pPage )
+      {
+         _incHitCacheNum( 1 ) ;
       }
 
    done:
@@ -2238,6 +2316,7 @@ namespace engine
       utilCacheBucket* pBucket = NULL ;
       ossTimestamp t ;
       MAP_ID_2_PAGE_PRT tmpPages ;
+      UINT32 blkSyncNum = 0 ;
 
       /// get current time
       ossGetCurrentTime( t ) ;
@@ -2249,10 +2328,12 @@ namespace engine
          {
             break ;
          }
+
          pBucket = _vecBucket[ i ] ;
          pBucket->lock( SHARED ) ;
          utilCacheBucket::MAP_BLK_PAGE* pPages = pBucket->getPages() ;
          utilCacheBucket::MAP_BLK_PAGE::iterator it = pPages->begin() ;
+         blkSyncNum = 0 ;
          while( it != pPages->end() )
          {
             utilCachePage &tmpPage = it->second ;
@@ -2268,6 +2349,12 @@ namespace engine
                       _dirtyTimeout )
             {
                tmpPages[ it->first ] = &tmpPage ;
+               ++blkSyncNum ;
+
+               if ( force && blkSyncNum >= UTIL_CACHE_SYNC_BLK_ONCE_NUM )
+               {
+                  break ;
+               }
             }
             ++it ;
          }
@@ -2282,8 +2369,9 @@ namespace engine
       }
 
       totalPages += _syncPages( tmpPages, cb ) ;
-
       PD_LOG( PDDEBUG, "Sync %d pages", totalPages ) ;
+
+      _incSyncNum( totalPages ) ;
 
       return totalPages ;
    }
@@ -2348,7 +2436,10 @@ namespace engine
                     it->first, rc ) ;
             ossPanic() ;
          }
-         totalPages += ( hasSync ? 1 : 0 ) ;
+         if ( hasSync )
+         {
+            ++totalPages ;
+         }
          ++it ;
       }
       pageMap.clear() ;
@@ -2399,9 +2490,11 @@ namespace engine
    UINT64 _utilCacheUnit::recyclePages( BOOLEAN force, INT64 exceptSize )
    {
       UINT64 totalSize = 0 ;
+      UINT32 totalPageNum = 0 ;
       ossTimestamp t ;
       utilCacheBucket* pBucket = NULL ;
       utilCacheBucket::MAP_BLK_PAGE* pPages = NULL ;
+      UINT32 blkRecycleNum = 0 ;
 
       /// get current time
       ossGetCurrentTime( t ) ;
@@ -2413,6 +2506,7 @@ namespace engine
          {
             break ;
          }
+         blkRecycleNum = 0 ;
          pBucket = _vecBucket[ i ] ;
          pBucket->lock( EXCLUSIVE ) ;
          pPages = pBucket->getPages() ;
@@ -2433,13 +2527,19 @@ namespace engine
                ++it ;
                continue ;
             }
-
             /// release the page
             totalSize += page.size() ;
             _pMgr->release( page ) ;
-            it = pPages->erase( it ) ;
+            pPages->erase( it++ ) ;
             /// update the meta
             _totalPage.dec() ;
+            ++totalPageNum ;
+
+            ++blkRecycleNum ;
+            if ( force && blkRecycleNum >= UTIL_CACHE_RECYCLE_BLK_ONCE_NUM )
+            {
+               break ;
+            }
          }
          pBucket->unlock( EXCLUSIVE ) ;
 
@@ -2450,9 +2550,76 @@ namespace engine
          }
       }
 
-      PD_LOG( PDDEBUG, "Recycled %lld bytes", totalSize ) ;
+      PD_LOG( PDDEBUG, "Recycled %lld bytes, %d pages",
+              totalSize, totalPageNum ) ;
+
+      _incRecycleNum( totalPageNum ) ;
 
       return totalSize ;
+   }
+
+   void _utilCacheUnit::dumpStatInfo()
+   {
+#ifdef SDB_PERF_STAT
+      ossTimestamp t ;
+      ossGetCurrentTime( t ) ;
+      UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
+      UINT32 diff = curTime - _lastStatTime ;
+
+      if ( diff < UTIL_CACHE_STAT_INTERVAL )
+      {
+         return ;
+      }
+
+      UINT32 statTotalPage = totalPages() ;
+      UINT32 statDirtyPage = dirtyPages() ;
+      UINT32 statAlloc = _statAllocNum.swap( 0 ) ;
+      UINT32 statAllocNull = _statAllocNullNum.swap( 0 ) ;
+      UINT32 statAllocBlk = _statAllocFromBlkNum.swap( 0 ) ;
+      UINT32 statHitCache = _statHitCacheNum.swap( 0 ) ;
+      UINT32 syncNum = _statSyncNum.swap( 0 ) ;
+      UINT32 recyclNum = _statRecycleNum.swap( 0 ) ;
+      _lastStatTime = curTime ;
+
+      CHAR text[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      ossSnprintf( text, OSS_MAX_PATHSIZE,
+                   OSS_NEWLINE
+                   "Total Time        : %u"OSS_NEWLINE
+                   "Total Page        : %u"OSS_NEWLINE
+                   "Dirty Page        : %u"OSS_NEWLINE
+                   "Alloc Num         : %u"OSS_NEWLINE
+                   "Alloc Null Num    : %u"OSS_NEWLINE
+                   "Alloc Blk Num     : %u"OSS_NEWLINE
+                   "Hit Cache Num     : %u"OSS_NEWLINE
+                   "Sync Num          : %u"OSS_NEWLINE
+                   "Recycle Num       : %u"OSS_NEWLINE
+                   "Dirty ratio       : %.2f %%"OSS_NEWLINE
+                   "Alloc Speed       : %.2f /s"OSS_NEWLINE
+                   "Alloc Null Speed  : %.2f /s"OSS_NEWLINE
+                   "Alloc Blk Speed   : %.2f /s"OSS_NEWLINE
+                   "Hit Cache Speed   : %.2f /s"OSS_NEWLINE
+                   "Sync Speed        : %.2f /s"OSS_NEWLINE
+                   "Recycle Speed     : %.2f /s"OSS_NEWLINE,
+                   diff,
+                   statTotalPage,
+                   statDirtyPage,
+                   statAlloc,
+                   statAllocNull,
+                   statAllocBlk,
+                   statHitCache,
+                   syncNum,
+                   recyclNum,
+                   (FLOAT64)statDirtyPage / statTotalPage * 100,
+                   (FLOAT64)statAlloc / diff * 1000,
+                   (FLOAT64)statAllocNull / diff * 1000,
+                   (FLOAT64)statAllocBlk / diff * 1000,
+                   (FLOAT64)statHitCache / diff * 1000,
+                   (FLOAT64)syncNum / diff * 1000,
+                   (FLOAT64)recyclNum / diff * 1000
+                   ) ;
+
+      PD_LOG( PDEVENT, text ) ;
+#endif //SDB_PERF_STAT
    }
 
 }

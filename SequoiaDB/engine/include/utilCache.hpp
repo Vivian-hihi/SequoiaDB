@@ -45,6 +45,8 @@
 
 using namespace std ;
 
+// #define SDB_PERF_STAT ;
+
 namespace engine
 {
 
@@ -410,7 +412,7 @@ namespace engine
    class _utilCacheBucket : public SDBObject
    {
       public:
-         typedef _utilMap< INT32, utilCachePage >        MAP_BLK_PAGE ;
+         typedef std::map< INT32, utilCachePage >        MAP_BLK_PAGE ;
 
          _utilCacheBucket( UINT32 blkID ) ;
          ~_utilCacheBucket() ;
@@ -430,6 +432,15 @@ namespace engine
             Caller must hold the lock
          */
          utilCachePage*    delPage( INT32 pageID ) ;
+
+         /*
+            Caller must hold the write lock
+            1. find a un-dirty and un-lock page
+            2. assign to the new pageID
+            3. make sure the page size >= size
+            4. if not found, return NULL
+         */
+         utilCachePage*    allocPage( INT32 pageID, UINT32 size ) ;
 
          void              incDirty() { ++_dirtyPages ; }
          void              decDirty() { --_dirtyPages ; }
@@ -576,6 +587,11 @@ namespace engine
          ~_utilCacheUnit() ;
 
          /*
+            Stat dump
+         */
+         void           dumpStatInfo() ;
+
+         /*
             Return the recycle total size
          */
          UINT64         recyclePages( BOOLEAN force, INT64 exceptSize = -1 ) ;
@@ -665,6 +681,16 @@ namespace engine
          UINT32         _syncPages( MAP_ID_2_PAGE_PRT &pageMap,
                                     IExecutor *cb ) ;
 
+         /*
+            For stat
+         */
+         OSS_INLINE void _incAllocNum( UINT32 num = 1 ) ;
+         OSS_INLINE void _incAllocNullNum( UINT32 num = 1 ) ;
+         OSS_INLINE void _incAllocFromBlkNum( UINT32 num = 1 ) ;
+         OSS_INLINE void _incHitCacheNum( UINT32 num = 1 ) ;
+         OSS_INLINE void _incSyncNum( UINT32 num = 1 ) ;
+         OSS_INLINE void _incRecycleNum( UINT32 num = 1 ) ;
+
       private:
          utilCacheMgr*              _pMgr ;
          utilCachFileBase*          _pCacheFile ;
@@ -694,8 +720,55 @@ namespace engine
          UINT64                     _lastSyncTime ;
          ossRWMutex                 _pageCleaner ;
 
+#ifdef SDB_PERF_STAT
+         ossAtomic32                _statAllocNum ;
+         ossAtomic32                _statAllocFromBlkNum ;
+         ossAtomic32                _statAllocNullNum ;
+         ossAtomic32                _statHitCacheNum ;
+         ossAtomic32                _statSyncNum ;
+         ossAtomic32                _statRecycleNum ;
+
+         UINT64                     _lastStatTime ;
+#endif // SDB_PERF_STAT
+
    } ;
    typedef _utilCacheUnit utilCacheUnit ;
+
+
+#ifdef SDB_PERF_STAT
+   OSS_INLINE void _utilCacheUnit::_incAllocNum( UINT32 num )
+   {
+      _statAllocNum.add( num ) ;
+   }
+   OSS_INLINE void _utilCacheUnit::_incAllocNullNum( UINT32 num )
+   {
+      _statAllocNullNum.add( num ) ;
+   }
+   OSS_INLINE void _utilCacheUnit::_incHitCacheNum( UINT32 num )
+   {
+      _statHitCacheNum.add( num ) ;
+   }
+   OSS_INLINE void _utilCacheUnit::_incAllocFromBlkNum( UINT32 num )
+   {
+      _statAllocFromBlkNum.add( num ) ;
+   }
+   OSS_INLINE void _utilCacheUnit::_incSyncNum( UINT32 num )
+   {
+      _statSyncNum.add( num ) ;
+   }
+   OSS_INLINE void _utilCacheUnit::_incRecycleNum( UINT32 num )
+   {
+      _statRecycleNum.add( num ) ;
+   }
+#else
+   OSS_INLINE void _utilCacheUnit::_incAllocNum( UINT32 num ) {}
+   OSS_INLINE void _utilCacheUnit::_incAllocNullNum( UINT32 num ) {}
+   OSS_INLINE void _utilCacheUnit::_incHitCacheNum( UINT32 num ) {}
+   OSS_INLINE void _utilCacheUnit::_incAllocFromBlkNum( UINT32 num ) {}
+   OSS_INLINE void _utilCacheUnit::_incSyncNum( UINT32 num ) {}
+   OSS_INLINE void _utilCacheUnit::_incRecycleNum( UINT32 num ) {}
+#endif //SDB_PERF_STAT
+
 
 }
 

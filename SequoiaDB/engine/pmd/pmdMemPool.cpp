@@ -325,6 +325,7 @@ namespace engine
             {
                timeout = 0 ;
                _doUnit( pUnit ) ;
+               pUnit->dumpStatInfo() ;
                /// push back
                _pBuffPool->pushBackUnit( pUnit ) ;
             }
