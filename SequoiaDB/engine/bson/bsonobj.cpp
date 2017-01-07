@@ -1660,4 +1660,4 @@ namespace bson {
         return v;
     }
 
-} // namespace mongo
+} // namespace bson

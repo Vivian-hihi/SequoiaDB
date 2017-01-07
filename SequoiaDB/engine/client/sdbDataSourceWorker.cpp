@@ -107,7 +107,7 @@ namespace sdbclient
       SDB_ASSERT( NULL != thread->func, "routine can't be NULL" ) ;
 
 
-      ret = pthread_create( &thread->thread,NULL,_threadMain,thread ) ;
+      ret = pthread_create( &thread->thread, NULL, _threadMain, thread ) ;
       if ( 0 != ret )
          return SDB_SYS ;
       return SDB_OK ;

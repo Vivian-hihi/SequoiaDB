@@ -139,14 +139,14 @@ namespace sdbclient
       INT32 getUsedConnNum()const  ;
 
       /** \fn INT32 getNormalCoordNum()const
-         \brief Get the number of normal coord nodes
-         \retval The number of normal coord nodes
+         \brief Get the number of reachable coord nodes
+         \retval The number of reachable coord nodes
       */
       INT32 getNormalCoordNum()const  ;
 
       /** \fn INT32 getAbnormalCoordNum()const
-         \brief Get the number of abnormal coord nodes
-         \retval The number of abnormal coord nodes
+         \brief Get the number of unreachable coord nodes
+         \retval The number of unreachable coord nodes
       */
       INT32 getAbnormalCoordNum() const  ;
 
@@ -182,15 +182,17 @@ namespace sdbclient
       */
       INT32 disable() ;
 
-      /** \fn INT32 getConnection(sdb*& conn, INT32 timeout = 3)
+      /** \fn INT32 getConnection(sdb*& conn, INT64 timeoutsec = 5000)
          \brief Get a connection form sdbDataSource
          \param [out] conn A connection
-         \param [in] timeout The time to wait when connection number reach to 
-         max connection number,default:3s
+         \param [in] timeoutms The time to wait when connection number reach to 
+         max connection number,default:5000ms. when timeoutms is set to 0,
+         means waiting until a connection is available. when timeoutms is less
+         than 0, set it to be 0.
          \retval SDB_OK Operation Success
          \retval Others Operation Fail
       */
-      INT32 getConnection( sdb*& conn, INT32 timeoutsec = 3 ) ;
+      INT32 getConnection( sdb*& conn, INT64 timeoutms = 5000 ) ;
 
       /** \fn INT32 releaseConnection(sdb *conn)
          \brief Give back a connection to sdbDataSource
@@ -231,11 +233,11 @@ namespace sdbclient
       // sync coord node info
       void _syncCoordNodes() ;
 
-      // check abnormal node
-      INT32 _checkAbnormalNodesCnt() ;
+      // get back the coord address from the abnormal address list
+      INT32 _retrieveAddrFromAbnormalList() ;
 
-      // check keep alive time out
-      BOOLEAN _checkKeepAliveTimeOut( sdb *conn ) ;
+      // check keep alive time out or not
+      BOOLEAN _keepAliveTimeOut( sdb *conn ) ;
 
       // check max connection number intervally
       void _checkMaxIdleConn() ;

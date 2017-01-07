@@ -46,11 +46,15 @@
 //#include <iostream>
 //#endif
 
+using std::string;
+using std::list;
+
 namespace sdbclient
 {
    // sleep time:0.1s
    #define SDB_DS_SLEEP_TIME        100
    #define SDB_DS_TRYGETCONN_TIME   3
+   #define SDB_DS_MULTIPLE          1.2
    
    void createConnFunc( void *args )
    {
@@ -75,13 +79,11 @@ namespace sdbclient
    }
    
    // init data source with url(hostname:port) and conf
-   INT32 sdbDataSource::init( // TODO: it's better to call  "init(vector, 
-                              //sdbDataSourceConf)" to realize
-                              // TODO:DONE
-      const std::string &url, 
+   INT32 sdbDataSource::init(
+      const string &url, 
       const sdbDataSourceConf &conf )
    {
-      std::vector<std::string> vUrl ;
+      std::vector<string> vUrl ;
       vUrl.push_back( url ) ;
       
       return init( vUrl, conf ) ;
@@ -89,10 +91,10 @@ namespace sdbclient
 
    // init data source with url vector and conf
    INT32 sdbDataSource::init( 
-      const std::vector<std::string> &vUrls,
+      const std::vector<string> &vUrls,
       const sdbDataSourceConf &conf )
    {
-      INT32 ret = SDB_OK ;
+      INT32 rc = SDB_OK ;
       int validUrlCnt = 0 ;
 
       if ( TRUE == _isInited )
@@ -104,16 +106,15 @@ namespace sdbclient
       // check confiture
       if ( !_conf.isValid() )
       {
-         ret = SDB_INVALIDARG ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
       
       // new strategy instance
-      ret = _buildStrategy();
-      if ( SDB_OK != _buildStrategy() ) // TODO: it's better to return rc than 
-                                        // a bool value
-                                        // TODO: DONE
+      rc = _buildStrategy();
+      if ( SDB_OK != rc )
       {
+         SAFE_OSS_DELETE(_strategy) ;
          goto error ;
       }
       
@@ -129,15 +130,14 @@ namespace sdbclient
       //if no address is valid, return SDB_INVALIDARG
       if ( 0 == validUrlCnt )
       {
-         ret = SDB_INVALIDARG ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       _isInited = TRUE ;
    done :
-      return ret  ;
+      return rc  ;
    error :
-      SAFE_OSS_DELETE(_strategy) ;
       goto done  ;
    }
    
@@ -175,7 +175,7 @@ namespace sdbclient
    }
    
    // add a coord node
-   void sdbDataSource::addCoord( const std::string &url )
+   void sdbDataSource::addCoord( const string &url )
    {
       // check address argument
       if ( _isInited && _checkAddrArg(url) )
@@ -186,7 +186,7 @@ namespace sdbclient
    }
 
    // remove a coord node
-   void sdbDataSource::removeCoord( const std::string &url )
+   void sdbDataSource::removeCoord( const string &url )
    {
       // check address argument
       if ( _isInited && _checkAddrArg(url) )
@@ -199,29 +199,35 @@ namespace sdbclient
    // enable data source, start background task
    INT32 sdbDataSource::enable()
    {
-      INT32 ret = SDB_OK ;
+      INT32 rc = SDB_OK ;
       BOOLEAN isLocked = FALSE ;
       
-      if ( _isInited )
+      if ( !_isInited )
       {
-         if ( !_isEnabled )
+         rc = SDB_DS_NOT_INIT ;
+         goto error ;
+      }
+      else
+      {
+         if ( _isEnabled )
+         {
+            goto done ;
+         }
+         else
          {
             _globalMutex.get() ;
             isLocked = TRUE ;
             if ( !_isEnabled )
             {
                _toStopWorkers = FALSE ;
-               // create init number connection
-
-               _createConnByNum( _conf.getInitConnCount() ) ; // TODO: tanzhaobo 
-                                                   //think it's apposite or not
-                                                   // TODO: DONE
+               // prepare some connections
+               _createConnByNum( _conf.getInitConnCount() ) ;
                // start create connection thread
                _createConnWorker = SDB_OSS_NEW sdbDSWorker( 
                   createConnFunc, this ) ;
                if ( NULL == _createConnWorker )
                {
-                  ret = SDB_OOM ;
+                  rc = SDB_OOM ;
                   goto error ;
                }
                // start destroy connection thread
@@ -229,33 +235,29 @@ namespace sdbclient
                                                              this ) ;
                if ( NULL == _destroyConnWorker )
                {
-                  ret = SDB_OOM ;
+                  rc = SDB_OOM ;
                   goto error ;
                }
                // start background task thread
                _bgTaskWorker= SDB_OSS_NEW sdbDSWorker( bgTaskFunc, this ) ;
                if ( NULL == _bgTaskWorker )
                {
-                  ret = SDB_OOM ;
+                  rc = SDB_OOM ;
                   goto error ;
                }
-               INT32 rc = SDB_OK ;
                rc = _createConnWorker->start() ;
                if ( SDB_OK != rc )
                {
-                  ret = rc ;
                   goto error ;
                }
                rc = _destroyConnWorker->start() ;
                if ( SDB_OK != rc )
                {
-                  ret = rc ;
                   goto error ;
                }
                rc = _bgTaskWorker->start() ;
                if ( SDB_OK != rc )
                {
-                  ret = rc ;
                   goto error ;
                }
 
@@ -263,19 +265,16 @@ namespace sdbclient
             }
          }
       }
-      else
-      {
-         ret = SDB_DS_NOTINIT_OR_DISABLED ;
-      }
+
    done :
       if ( isLocked )
       {
-         _globalMutex.release() ; // TODO: deadlock may happen, when program 
-                                  //does not come here
-                                  //TODO:DONE
+         _globalMutex.release() ;
       }
-      return ret  ;
+      return rc ;
    error :
+      // TODO: (new) should we need to stop the 
+      // background thread before we release it ?
       SAFE_OSS_DELETE(_createConnWorker) ;
       SAFE_OSS_DELETE(_destroyConnWorker) ;
       SAFE_OSS_DELETE(_bgTaskWorker) ;
@@ -288,7 +287,11 @@ namespace sdbclient
       INT32 ret = SDB_OK ;
       BOOLEAN isLocked = FALSE ;
       
-      if ( _isEnabled )
+      if ( !_isEnabled )
+      {
+         goto done ;
+      }
+      else
       {
          _globalMutex.get() ;
          isLocked = TRUE ;
@@ -298,14 +301,12 @@ namespace sdbclient
 
             INT32 rc = SDB_OK ;
             // join
-            rc = _createConnWorker->waitStop() ;// TODO: tanzhaobo, how can it 
-                                                //stop the running thread??
-                                                // TODO: DONE
+            rc = _createConnWorker->waitStop() ;
             if ( SDB_OK != rc )
             {
                ret = rc ;
-               goto error ;// TODO:tanzhaobo,  when it failed, we leave the 
-                           //other backgroup thread alone?
+               goto error ;// TODO:(new) when it failed, we leave the 
+                           //other background thread alone?
             }
             rc = _destroyConnWorker->waitStop() ;
             if ( SDB_OK != rc )
@@ -332,37 +333,29 @@ namespace sdbclient
    done :
       if ( isLocked )
       {
-         _globalMutex.release() ; // TODO: misuse
-                                  //TODO:DONE
+         _globalMutex.release() ;
       }
       return ret  ;
    error :
       goto done  ;
    }
 
-   // get a connection
-   // TODO: you do not tell people what's the unit of "timeout", maybe you can
-   // rename it like this "timeoutsec" or "seconds"
-   // TODO: DONE
-   INT32 sdbDataSource::getConnection( sdb*& conn, INT32 timeoutsec/* = 3*/ )
+   INT32 sdbDataSource::getConnection( sdb*& conn, INT64 timeoutms )
    {
-      INT32 ret = SDB_OK ;
+      INT32 rc = SDB_OK ;
       BOOLEAN isGet = FALSE ;
 
-      // TODO: need to check the input arguments? for example, conn should be 
-      // null and timeout should >= 0, and when timeout < 0, set it to be 0, 
-      // and it means no block ???
-      // TODO:DONE
-      if ( 0 > timeoutsec )
+      if ( 0 > timeoutms )
       {
-         timeoutsec = 0 ;
+         timeoutms = 0 ;
       }
       
       if ( !_isEnabled )
       {
-         ret = SDB_DS_NOTINIT_OR_DISABLED ;// TODO: before we call "close", "getConnection"
-                                // can return a connection in java,
-                                // but here, it behaves different in cpp
+         // TODO: (new) before we call "close", "getConnection"
+         // can return a connection in java,
+         // but here, the behave is different
+         rc = SDB_DS_NOT_ENABLE ;
          goto error ;
       }
       
@@ -377,11 +370,14 @@ namespace sdbclient
          else
          {
             // if reach max count, wait for timeout, try again
-            if ( ( (UINT32)_conf.getMaxCount() ) <= _busySize.peek() && 
-               timeoutsec > 0 )
+            if ( ( (UINT32)_conf.getMaxCount() ) <= _busySize.peek()) 
             {
-               INT32 timeCnt = 0 ;
-               while ( 1000*timeoutsec > timeCnt && !isGet )
+               INT64 timeCnt = 0 ;
+               if ( 0 == timeoutms )
+               {
+                  timeoutms = OSS_SINT64_MAX;
+               } 
+               while ( !isGet && 0 <= timeCnt && timeCnt < timeoutms )
                {
                   ossSleep( SDB_DS_SLEEP_TIME ) ;
                   timeCnt += SDB_DS_SLEEP_TIME ;
@@ -392,7 +388,7 @@ namespace sdbclient
                }
                if ( !isGet )
                {   
-                  ret = SDB_DRIVER_DS_RUNOUT ;
+                  rc = SDB_DRIVER_DS_RUNOUT ;
                   goto error ;
                }
             }
@@ -401,25 +397,24 @@ namespace sdbclient
             {
                if ( 0 == _strategy->getNormalCoordNum() )
                {  
-                  ret = SDB_DS_NO_COORD ;
+                  rc = SDB_DS_NO_REACHABLE_COORD ;
                   goto error ;
                }
                else
                {
-                  // TODO: when _idleSize == 0, we come here, but we create only
-                  // one conn and nobody start the backgroup thread to create 
-                  // connections.
-                  // TODO: DONE
                   INT32 createNum = _createConnByNum(1);
+                  // get lock1
                   _connMutex.get() ;
-                  if ( (0 < createNum) && (0 <  _idleSize.peek()) )
+                  if ( (0 < createNum) && (0 < _idleSize.peek()) )
                   {
-                     
                      sdb* pConn = _idleList.front() ;
+                     SDB_ASSERT(pConn, 
+                        "the connection got from idle list can't be null") ;
                      _idleList.pop_front() ;
                      _idleSize.dec() ;
                      _busyList.push_back( pConn ) ;
                      _busySize.inc() ;
+                     // release lock1
                      _connMutex.release() ;
                      conn = pConn ;
                      _strategy->sync( pConn, ADDBUSYCONN ) ;
@@ -427,24 +422,23 @@ namespace sdbclient
                   }
                   else
                   {
+                     // release lock1
                      _connMutex.release() ;
                   }
-               }
-            }
-         }
+               } // has reachable coord
+            } // not reach max count
+         } // _idleSize <= 0
+         
          // if need pre create some connection
          if ( _idleSize.peek() <= SDB_DS_TOPRECREATE_THRESHOLD )
          {
             _toCreateConn = TRUE ;
-            //ossSleep( SDB_DS_SLEEP_TIME ) ;// TODO: why we need to sleep 
-            // here??
-            // TODO: DONE
          }
       }
-   done :
-      return ret  ;
-   error :
-      goto done  ;   
+   done:
+      return rc ;
+   error:
+      goto done ;   
    }
 
    // give back a connection
@@ -455,10 +449,11 @@ namespace sdbclient
       BOOLEAN              isLock = FALSE ;
       INT32                rc = SDB_OK ;
       sdb*                 tmp = NULL ;
-      
+
+      // TODO: (new) when _isEnabled is false, what will happen??
       if ( _isEnabled )
       {
-         std::list<sdb*>::iterator iter ;
+         list<sdb*>::iterator iter ;
          _connMutex.get() ; 
          isLock = TRUE ;
          if ( _isEnabled )
@@ -471,8 +466,8 @@ namespace sdbclient
                _busyList.erase( iter ) ;
                _busySize.dec() ;
                // if check keep time out, drop it
-               if ( 0 != _conf.getKeepAliveTimeout() &&
-                  _checkKeepAliveTimeOut( tmp ) )
+               if ( _conf.getKeepAliveTimeout() > 0 &&
+                  _keepAliveTimeOut( tmp ) )
                {
                   goto error ;
                }
@@ -497,9 +492,9 @@ namespace sdbclient
                   _strategy->sync( tmp, ADDIDLECONN ) ;
                }
             }
-         }
+         } // secondly check _isEnabled
          
-      }
+      } // firstly check _isEnabled
    done :
       if ( TRUE == isLock )
       {
@@ -509,7 +504,9 @@ namespace sdbclient
    error :
       _strategy->sync( tmp, DELBUSYCONN ) ;
       if ( tmp )
+      {
          tmp->disconnect() ;
+      }
       SAFE_OSS_DELETE( tmp ) ;
       goto done ;
    }
@@ -517,24 +514,28 @@ namespace sdbclient
    // try to get a connection
    BOOLEAN sdbDataSource::_tryGetConn( sdb*& conn )
    {
-      sdb* pConn ;
+      sdb* pConn    = NULL ;
       BOOLEAN isGet = FALSE ;
-      
+
+      // get lock1
       _connMutex.get() ;
       if ( 0 == _idleSize.peek() )
       {
+         // release lock1
          _connMutex.release() ;
          goto error ;
       }
       else
       {
-         pConn = _idleList.front() ;
+         pConn = _idleList.front() ;// TODO: empty or has a null value
+         SDB_ASSERT(pConn, "the connection got from idle list can't be null") ;
          _idleList.pop_front() ;
          _idleSize.dec() ;
          _busyList.push_back( pConn ) ;
+         // release lock1
          _busySize.inc() ;
          _connMutex.release() ;
-         
+         // update strategy
          _strategy->sync( pConn, ADDBUSYCONN ) ;
       }
          
@@ -544,9 +545,10 @@ namespace sdbclient
          // if not valid, destroy it
          if ( !pConn->isValid() )
          {
-            std::list<sdb*>::iterator iter ;
-               
-            _connMutex.get() ; 
+            list<sdb*>::iterator iter ;
+
+            // get lock2
+            _connMutex.get() ;
             iter = std::find(_busyList.begin(), _busyList.end(), pConn) ;
             // if find it
             if (iter != _busyList.end())
@@ -554,16 +556,19 @@ namespace sdbclient
                _busyList.erase(iter) ;
                _busySize.dec() ;
             }
+            // release lock2
             _connMutex.release() ;
-               
+            // update strategy
             _strategy->sync( pConn, DELBUSYCONN ) ;
             if ( pConn )
+            {
                pConn->disconnect() ;
-            SAFE_OSS_DELETE( pConn ) ; // TODO: nerver use delete
-                                       // TODO: DONE
+            }
+            SAFE_OSS_DELETE( pConn ) ;
             goto error ;
          }
       }
+      // on success
       conn = pConn ;
       isGet = TRUE ;
    done :
@@ -574,13 +579,13 @@ namespace sdbclient
    }
 
    // check address arguments, if valid, add it
-   BOOLEAN sdbDataSource::_checkAddrArg( const std::string &url )
+   BOOLEAN sdbDataSource::_checkAddrArg( const string &url )
    {
       BOOLEAN rc = TRUE ;
 
       size_t pos = url.find_first_of( ":" ) ;
       size_t pos1 = url.find_last_of( ":" ) ;
-      if ( std::string::npos == pos )
+      if ( string::npos == pos )
          rc = FALSE ;
       else if ( pos != pos1 )
          rc = FALSE ;
@@ -591,7 +596,7 @@ namespace sdbclient
    // new a strategy with config
    INT32 sdbDataSource::_buildStrategy()
    {
-      INT32 ret = SDB_OK ;
+      INT32 rc = SDB_OK ;
       
       if ( _strategy )
          SAFE_OSS_DELETE( _strategy ) ;
@@ -612,32 +617,18 @@ namespace sdbclient
       }
       if (NULL == _strategy)
       {
-         ret = SDB_OOM ;
+         rc = SDB_OOM ;
       }
-      return ret ;
+      return rc ;
    }
 
 
    // clear data source
    void sdbDataSource::_clearDataSource()
-   {
-      if ( _createConnWorker )
-      {
-         SAFE_OSS_DELETE( _createConnWorker ) ;
-      }   
-      if ( _destroyConnWorker )
-      {
-         SAFE_OSS_DELETE( _destroyConnWorker ) ;
-      }   
-      if ( _bgTaskWorker )
-      {
-         SAFE_OSS_DELETE( _bgTaskWorker ) ;
-      }
-      
+   {      
       // clear connection list
-      std::list<sdbclient::sdb*>::const_iterator iter ;
-      sdbclient::sdb* conn = NULL ;// TODO: init it to be NULL
-                                   // TODO: DONE
+      list<sdbclient::sdb*>::const_iterator iter ;
+      sdbclient::sdb* conn = NULL ;
 
       for ( iter = _idleList.begin() ; iter != _idleList.end() ; ++iter )
       {
@@ -671,8 +662,23 @@ namespace sdbclient
             conn->disconnect() ;
             SAFE_OSS_DELETE( conn ) ;
          }
-     }
-      _destroyList.clear() ; 
+      }
+      _destroyList.clear() ;
+
+      // release thread worker
+      if ( _createConnWorker )
+      {
+         SAFE_OSS_DELETE( _createConnWorker ) ;
+      }   
+      if ( _destroyConnWorker )
+      {
+         SAFE_OSS_DELETE( _destroyConnWorker ) ;
+      }   
+      if ( _bgTaskWorker )
+      {
+         SAFE_OSS_DELETE( _bgTaskWorker ) ;
+      }
+     
    }
 
 
@@ -707,38 +713,77 @@ namespace sdbclient
    }
 
    // create connection by a number
+   // return the amount of connections we had created,
+   // it may less than what we expect
    INT32 sdbDataSource::_createConnByNum( INT32 num )
    {
-      INT32 i = 0 ;
-      INT32 rc = SDB_OK ; // TODO:  should init it
-      sdb* conn = NULL ;
-      while( i < num )
+      INT32 rc     = SDB_OK ;
+      INT32 crtNum = 0 ;
+      sdb* conn    = NULL ;
+      
+      while( crtNum < num )
       {
-         std::string coord ;
-         // sdb is not inherit form SDBObject
-         conn = new sdb( _conf.getUseSSL() ) ;// TODO: never use "new" in sdb
+         INT32 pos = 0 ;
+         string coord ;
+
          // if no coord can be used
-         if ( SDB_OK != _strategy->getNextCoord(coord) )
+         rc = _strategy->getNextCoord(coord) ;
+         if ( SDB_OK != rc )
          {
-            INT32  cnt = _checkAbnormalNodesCnt() ;
-            // after check, if have not a normal node
+            INT32 cnt = _retrieveAddrFromAbnormalList() ;
             if ( 0 == cnt )
             {
-               SAFE_OSS_DELETE( conn ) ;
-               break ; // TODO: 1 not out coding style; 2 memory leak 
-                       // TODO: DONE
+               // if have no any normal node, let's stop
+               break ;
+            }
+            else
+            {
+               // otherwise, let's keep working
+               continue ;
             }
          }
-         INT32 pos = coord.find_first_of( ":" ) ;
+
+         // TODO:
+         // sdb is not inherit form SDBObject
+         // so we can't use SDB_OSS_NEW. but, 
+         // let's do it later.
+         conn = new(std::nothrow) sdb( _conf.getUseSSL() ) ;
+         if ( NULL == conn ) 
+         {
+            // OOM, let's stop working
+            break ;
+         }
+         // when we get a coord address, let's build the connection
+         pos = coord.find_first_of( ":" ) ;
          rc = conn->connect( 
             coord.substr(0, pos).c_str(), 
             coord.substr(pos+1, coord.length()).c_str(), 
             _conf.getUserName().c_str(),
             _conf.getPasswd().c_str() ) ;
 
-         // if connect failed
-         if ( SDB_OK != rc )
+         if ( SDB_OK == rc )
          {
+            if ( _addNewConnSafely(conn, coord) )
+            {
+               ++crtNum ;
+               //#if defined (_DEBUG)
+               //printCreateInfo(coord) ;
+               //#endif
+            }
+            // may be reach max connection count
+            else
+            {
+               conn->disconnect();
+               SAFE_OSS_DELETE( conn ) ;
+               break ;
+            }
+            continue ;
+         } // connect success
+         else
+         {
+            // if connect failed, we will retry 3 times. on success, 
+            // let's save the connection; on error, let's discard
+            // that coord address temporarily
             INT32 retryTime = 0 ;
             BOOLEAN toBreak = FALSE ;
             while ( retryTime < SDB_DS_CREATECONN_RETRYTIME )
@@ -748,20 +793,19 @@ namespace sdbclient
                   coord.substr( pos+1, coord.length() ).c_str(), 
                   _conf.getUserName().c_str(),
                   _conf.getPasswd().c_str() ) ;
-               // retry failed
                if ( SDB_OK != rc )
                {
                   ++retryTime ;
-                  ossSleep( SDB_DS_SLEEP_TIME ) ;
+                  ossSleep( SDB_DS_SLEEP_TIME ) ; // TODO: (new) why we need to
+                                                  // sleep?
                   continue ;
-               }
-               // retry success
+               } // retry failed
                else
                {
                   // add success
                   if ( _addNewConnSafely(conn, coord) )
                   {
-                     ++i ;
+                     ++crtNum ;
                      //#if defined (_DEBUG)
                      //printCreateInfo(coord) ;
                      //#endif
@@ -769,12 +813,14 @@ namespace sdbclient
                   // fail, may be reach max connection count
                   else
                   {
+                     conn->disconnect();
                      SAFE_OSS_DELETE( conn ) ;
                      toBreak = TRUE ;
                   }
+                  // stop retrying
                   break ;
-               }
-            }
+               } // retry success
+            } // while for retry
             // after retry time, still failed
             if ( retryTime == SDB_DS_CREATECONN_RETRYTIME )
             {
@@ -785,31 +831,16 @@ namespace sdbclient
             {
                break;
             }
-         }
-         // connect success
-         else
-         {
-            if ( _addNewConnSafely(conn, coord) )
-            {
-               ++i ;
-               //#if defined (_DEBUG)
-               //printCreateInfo(coord) ;
-               //#endif
-            }
-            // may be reach max connection count
-            else
-            {
-               SAFE_OSS_DELETE( conn ) ;
-               break ;
-            }
-         }
-      }
-      return i ;
+         } // connect failed
+
+      } // while
+
+      return crtNum ;
    }
 
    // add new connection and make sure not reach max connection count
-   BOOLEAN sdbDataSource::_addNewConnSafely(sdb *conn, 
-                                            const std::string &coord )
+   BOOLEAN sdbDataSource::_addNewConnSafely( sdb *conn, 
+                                             const string &coord )
    {
       BOOLEAN ret = FALSE ;
       
@@ -831,7 +862,7 @@ namespace sdbclient
    }
 /*
 #if defined (_DEBUG)
-      void sdbDataSource::printCreateInfo(const std::string& coord)
+      void sdbDataSource::printCreateInfo(const string& coord)
       {
          std::cout << "create a connection at " << coord << std::endl ;
       }
@@ -869,34 +900,41 @@ namespace sdbclient
    // background task function
    void sdbDataSource::_bgTask()
    {
-      INT32 syncCoordInterval = _conf.getSyncCoordInterval() ;
-      INT32 ckAbnormalInterval = SDB_DS_CHECKUNNORMALCOORD_INTERVAL ;
-      INT32 ckConnInterval = _conf.getCheckInterval() ;
-      INT32 syncCoordTimeCnt = 0 ;
-      INT32 ckAbnormalTimeCnt = 0 ;
-      INT32 ckConnTimeCnt = 0 ; 
+      INT64 syncCoordInterval = _conf.getSyncCoordInterval() ;
+      INT64 ckAbnormalInterval = SDB_DS_CHECKUNNORMALCOORD_INTERVAL ;
+      INT64 ckConnInterval = _conf.getCheckInterval() ;
+      INT64 syncCoordTimeCnt = 0 ;
+      INT64 ckAbnormalTimeCnt = 0 ;
+      INT64 ckConnTimeCnt = 0 ; 
       while ( !_toStopWorkers )
       {
          ossSleep( SDB_DS_SLEEP_TIME ) ;
-         if ( 0 != syncCoordInterval )
-            ++syncCoordTimeCnt ;
-         ++ckAbnormalTimeCnt ;
-         ++ckConnTimeCnt ;
-         if ( 0 != syncCoordInterval )
+         if ( syncCoordInterval > 0 )
          {
-            if ( syncCoordInterval == syncCoordTimeCnt )
-            {
-               _syncCoordNodes() ;
-               syncCoordTimeCnt = 0 ;
-            }
+            syncCoordTimeCnt += SDB_DS_SLEEP_TIME ;
          }
-         if ( ckAbnormalInterval == ckAbnormalTimeCnt )
+         ckAbnormalTimeCnt += SDB_DS_SLEEP_TIME ;
+         ckConnTimeCnt += SDB_DS_SLEEP_TIME ;
+         // try to sync coord address
+         if ( syncCoordInterval > 0 && syncCoordTimeCnt >= syncCoordInterval )
          {
-            _checkAbnormalNodesCnt() ;
+            _syncCoordNodes() ;
+            syncCoordTimeCnt = 0 ;
+         }
+         // try to retrieve addr from abmornal addr list
+         if ( ckAbnormalTimeCnt >= ckAbnormalInterval )
+         {
+            _retrieveAddrFromAbnormalList() ;
             ckAbnormalTimeCnt = 0 ;
          }
-         if ( ckConnInterval == ckConnTimeCnt )
+         // try to check the connections in idle list
+         if ( ckConnTimeCnt >= ckConnInterval )
          {
+/*
+#if defined (_DEBUG)
+cout << "ckConnTimeCnt is: " << ckConnTimeCnt << endl ;
+#endif
+*/
             _checkMaxIdleConn() ;
             ckConnTimeCnt = 0 ;
          }
@@ -908,7 +946,7 @@ namespace sdbclient
    void sdbDataSource::_syncCoordNodes()
    {
       INT32 rc ;
-      std::string tmp ;
+      string tmp ;
       sdb conn ;
       rc = _strategy->getNextCoord( tmp ) ;
       if (SDB_OK != rc)
@@ -943,7 +981,7 @@ namespace sdbclient
          // loop through
          while( itr.more() )
          {
-            std::string newcoord ;
+            string newcoord ;
             // get host name
             bson::BSONObj hostItem  ;
             bson::BSONElement hostElement = itr.next()  ;
@@ -966,26 +1004,30 @@ namespace sdbclient
       }
    }
 
-   // check abnormal node count
-   INT32 sdbDataSource::_checkAbnormalNodesCnt()
+   // get back the coord address from the abnormal address list
+   // and return the amount of normal coord address which we
+   // have retrieved
+   INT32 sdbDataSource::_retrieveAddrFromAbnormalList()
    {
       // try abnormal coord
-      std::string tmp ;
+      INT32 rc          = SDB_OK ;
+      INT32 j           = 0 ;
+      INT32 count       = 0 ;
+      INT32 pos         = 0 ;
+      INT32 abnormalNum = 0 ;
+      string tmp ;
       sdb conn ;
-      INT32 rc ;
-      INT32 j ;
-      INT32 abnormalNum = _strategy->getAbnormalCoordNum() ;
-      INT32 count = 0 ;
+
+      abnormalNum = _strategy->getAbnormalCoordNum() ;
       for ( j = 0 ; j < abnormalNum ; ++j ) 
       {
-         if ( SDB_OK != _strategy->getNextAbnormalCoord( tmp ) )
+         if ( SDB_EOF == _strategy->getNextAbnormalCoord( tmp ) )
          {
-            break ;  // TODO: not our coding style
-                     // TODO: when error happen, it's just return zero, 
-                     // shell we tell the caller there has not abnormal nodes??
-                     // TODO: DONE
+            // when have no addresses in abnormal coord address list,
+            // let's stop
+            break ;
          }
-         INT32 pos = tmp.find_first_of( ":" ) ;
+         pos = tmp.find_first_of( ":" ) ;
          rc = conn.connect( 
             tmp.substr(0, pos).c_str(), 
             tmp.substr(pos+1, tmp.length()).c_str(), 
@@ -995,59 +1037,80 @@ namespace sdbclient
          {
             ++count ;
             _strategy->mvCoordToNormal( tmp ) ;
+            // TODO: (new) waste of time, we should try to 
+            // save this connection instead of disconnecting it
+            conn.disconnect();
          }
-         conn.disconnect() ;
       }
       return count ;
    }
 
-   // check keep alive time out
-   BOOLEAN sdbDataSource::_checkKeepAliveTimeOut( sdb *conn )
+   // check keep alive time out or not
+   BOOLEAN sdbDataSource::_keepAliveTimeOut( sdb *conn )
    {
-      BOOLEAN ret = FALSE;
+      INT32 checkInterval = _conf.getCheckInterval() ;
+      INT32 keepAlive = _conf.getKeepAliveTimeout() ;
       
       time_t nowTime ;
       time( &nowTime ) ;
-      INT32 diffTime = difftime( nowTime, conn->getLastAliveTime() ) ;
-      if ( diffTime > _conf.getKeepAliveTimeout() )
+      INT32 diffTime = difftime( nowTime, conn->getLastAliveTime() ) * 1000 ;
+      if ( 0 > diffTime || 
+           diffTime + SDB_DS_MULTIPLE * checkInterval > keepAlive )
       {
-         ret = TRUE;
+         return TRUE ;
       }
 
-      return ret;
+      return FALSE ;
    }
 
    // check max connection number intervally
    void sdbDataSource::_checkMaxIdleConn()
    {
-      INT32 maxIdleNum = _conf.getMaxIdleCount() ;
-      INT32 freeNum = 0 ;
-      INT32 aliveTime = _conf.getKeepAliveTimeout() ;
-      sdb* conn ;
+      INT32 freeNum       = 0 ;
+      sdb* conn           = NULL ;
+      INT32 maxIdleNum    = _conf.getMaxIdleCount() ;
+      INT32 aliveTime     = _conf.getKeepAliveTimeout() ;
+      INT32 checkInterval = _conf.getCheckInterval() ;
+      
       _connMutex.get() ;
-      if ( 0 != aliveTime )
+      // 1. destroy the idle connections which are out of date
+      if ( 0 < aliveTime )
       {
-         std::list<sdb*>::iterator iter ;
+         list<sdb*>::iterator iter ;
          time_t nowTime ;
          time( &nowTime ) ;
          for ( iter = _idleList.begin() ; iter != _idleList.end() ; )
          {
-            INT32 diffTime = difftime( nowTime, (*iter)->getLastAliveTime() ) ;
-            if ( diffTime > aliveTime )
+            INT32 diffTime = 
+               difftime( nowTime, (*iter)->getLastAliveTime() ) * 1000 ;
+/*
+#if defined (_DEBUG)
+cout << "aliveTime is: " << aliveTime << ", diffTime is: " << diffTime ;
+cout << ", diffTime + checkInterval * SDB_DS_MULTIPLE is:" << diffTime + checkInterval * SDB_DS_MULTIPLE << endl ;
+#endif
+*/
+            if ( 0 > diffTime ||
+               diffTime + checkInterval * SDB_DS_MULTIPLE >= aliveTime )
             {
-               conn = *iter ; ;
+               conn = *iter ;
                _idleList.erase( iter++ ) ;
                _idleSize.dec() ;
                _destroyList.push_back( conn ) ; 
-               // #if defined (_DEBUG)
-               // cout << "destroy a connection because of time out" << endl ;
-               // #endif
+/*
+#if defined (_DEBUG)
+   cout << "destroy a connection because of time out" << endl ;
+#endif
+*/
             }
             else
+            {
                ++iter ;
+            }
          }
 
       }
+
+      // 2. destroy the idle connections which is more than the idle num
       if ( (INT32)_idleSize.peek() > maxIdleNum )
       {
          freeNum = _idleSize.peek() - maxIdleNum ;

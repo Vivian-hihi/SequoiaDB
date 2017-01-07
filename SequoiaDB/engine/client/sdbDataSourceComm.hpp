@@ -45,6 +45,7 @@
 #include <string>
 #include "client.hpp"
 
+using std::string;
 /** \namespace sdbclient
     \brief SequoiaDB Driver for C++
 */
@@ -52,8 +53,8 @@ namespace sdbclient
 {
    /** to previous create threshold*/
    #define SDB_DS_TOPRECREATE_THRESHOLD                2
-   /** check unnormal coord interval, default:60s*/
-   #define SDB_DS_CHECKUNNORMALCOORD_INTERVAL          60
+   /** check unnormal coord interval, default:60 * 1000ms*/
+   #define SDB_DS_CHECKUNNORMALCOORD_INTERVAL          (60 * 1000)
    /** create connection retry time at a coord, default:3*/
    #define SDB_DS_CREATECONN_RETRYTIME                 3
 
@@ -81,17 +82,17 @@ namespace sdbclient
          _deltaIncCount(10),
          _maxIdleCount(20),
          _maxCount(500),
-         _checkInterval(60),
-         _keepAliveTimeout(0),
-         _syncCoordInterval(30),
+         _checkInterval(60 * 1000),
+         _keepAliveTimeout(0 * 1000),
+         _syncCoordInterval(0 * 1000),
          _validateConnection(FALSE),
          _connectStrategy(DS_STY_BALANCE),
          _useSSL(FALSE) {}
 
    private:
       // user info
-      std::string          _userName ;
-      std::string          _passwd ;
+      string          _userName ;
+      string          _passwd ;
       // connection number info
       INT32                _initConnCount ;
       INT32                _deltaIncCount ;
@@ -111,25 +112,25 @@ namespace sdbclient
       BOOLEAN              _useSSL ;
 
    public:
-      /** \fn void setUserInfo(const std::string& username,
-           const std::string& passwd)
+      /** \fn void setUserInfo(const string& username,
+           const string& passwd)
          \brief Set user name and password
          \param [in] username The user name
          \param [in] passwd The password
       */
       void setUserInfo( 
-         const std::string &username, 
-         const std::string &passwd ) ;
-      /** \fn std::string getUserName()
+         const string &username, 
+         const string &passwd ) ;
+      /** \fn string getUserName()
          \brief Get user name
-         \retval std::string user name
+         \retval string user name
       */
-      std::string getUserName() const { return _userName ; }
-      /** \fn std::string getPasswd()
+      string getUserName() const { return _userName ; }
+      /** \fn string getPasswd()
          \brief Get password
-         \retval std::string password
+         \retval string password
       */
-      std::string getPasswd() const { return _passwd ; }
+      string getPasswd() const { return _passwd ; }
 
       /** \fn void setConnCntInfo(INT32 initCnt,
          INT32 deltaIncCnt,
@@ -146,65 +147,75 @@ namespace sdbclient
          INT32 deltaIncCnt,
          INT32 maxIdleCnt,
          INT32 maxCnt ) ;
+      
       /** \fn INT32 getInitConnCount()
          \brief Get the initial connection number
          \retval INT32 The initial connection number
       */
       INT32 getInitConnCount() const { return _initConnCount ; }
+      
       /** \fn INT32 getDeltaIncCount()
          \brief Get the increment of connection each time
          \retval UINT32 The increment of connection each time
       */
       INT32 getDeltaIncCount() const { return _deltaIncCount ; }
+      
       /** \fn INT32 getMaxIdleCount()
          \brief Get the max idle connection number
          \retval INT32 The max idle connection number
       */
       INT32 getMaxIdleCount() const { return _maxIdleCount ; }
+      
       /** \fn INT32 getMaxCount()
          \brief Get the max connection number
          \retval INT32 The max connection number
       */
       INT32 getMaxCount() const { return _maxCount ; }
 
-      /** \fn void setCheckIntervalInfo(INT32 interval, 
-         INT32 aliveTime = 0)
-         \brief Set the interval time of check idle connection
-         \param [in] interval The interval time in seconds of check idle 
+      /** \fn void setCheckIntervalInfo(INT32 interval, INT32 aliveTime = 0)
+         \brief Set the interval time of check idle connection. And set the 
+         time in millisecond for abandoning a connection which keep alive 
+         time is up.
+         \param [in] interval The interval time in millisecond of check idle 
          connection
-         \param [in] aliveTime The alive time in seconds of a connection
-         if aliveTime > 0, connection's alive time will be checked,if greater 
-         than aliveTime, priority it will be destroyed
-         if aliveTime = 0, connection's alive time will not be checked  
+         \param [in] aliveTime If a connection has not be 
+         used(send and receive) for a long time(longer than "aliveTime"), 
+         the pool will not let it come back. The pool will also clean 
+         this kind of idle connections in the pool periodically. This value 
+         default to be 0ms. means not care about how long 
+         does a connection have not be used(send and receive).
+         \note When "aliveTime" is not set to 0, it's better to set it
+         greater than "interval" triple over. Besides, 
+         unless you know what you need, never enable this option.
       */
-      void setCheckIntervalInfo( 
-         INT32 interval, 
-         INT32 aliveTime = 0 ) ;
+      void setCheckIntervalInfo( INT32 interval, INT32 aliveTime = 0 ) ;
+      
       /** \fn INT32 getCheckInterval()
-         \brief Get the interval time in seconds of check idle connection
-         \retval INT32 the interval time in seconds of check idle connection
+         \brief Get the interval time in millisecond of check idle connection
+         \retval INT32 the interval time in millisecond of check idle connection
       */
       INT32 getCheckInterval() const { return _checkInterval ; }
+      
       /** \fn INT32 getKeepAliveTimeout()
          \brief Get the keep alive time
-         \retval INT32 the keep alive time in seconds
+         \retval INT32 the keep alive time in millisecond
       */
       INT32 getKeepAliveTimeout() const { return _keepAliveTimeout ; }
      
-      /** \fn void setSyncCoordInterval (UINT32 interval)
+      /** \fn void setSyncCoordInterval (INT64 interval)
          \brief Set the interval time in seconds of synchronize coord node
-         \param [in] interval The interval time in seconds of synchronize coord 
+         \param [in] interval The interval time in millisecond of synchronize coord 
          node
       */
       void setSyncCoordInterval ( INT32 interval ) 
       {
          _syncCoordInterval = interval ; 
       }
-      /** \fn UINT32 getSyncCoordInterval() const 
+      /** \fn INT32 getSyncCoordInterval() const 
          \brief Get the interval time in seconds of synchronize coord node
-         \retval UINT32 the interval time in seconds of synchronize coord node
+         \retval INT32 the interval time in seconds of synchronize coord node
       */
-      UINT32 getSyncCoordInterval() const { return _syncCoordInterval ; }
+      INT32 getSyncCoordInterval() const { return _syncCoordInterval ; }
 
       /** \fn void setValidateConnection(BOOLEAN bCheck)
          \brief Set whether to check the validation of a connection when it's 

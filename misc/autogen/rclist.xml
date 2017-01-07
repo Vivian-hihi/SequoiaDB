@@ -2468,16 +2468,16 @@
          </description>
       </code>
 	  <code>
-         <name>SDB_DS_NOTINIT_OR_DISABLED</name>
+         <name>SDB_DS_NOT_ENABLE</name>
          <description>
-            <en>sdbDataSource not init or disabled</en>
-            <cn>未初始化或连接池功能未启用</cn>
+            <en>data source is not enabled yet</en>
+            <cn>连接池功能未启用</cn>
          </description>
       </code>
       <code>
-         <name>SDB_DS_NO_COORD</name>
+         <name>SDB_DS_NO_REACHABLE_COORD</name>
          <description>
-            <en>sdbDataSource has no valid coord</en>
+            <en>No reachable coord notes</en>
             <cn>无可用协调节点</cn>
          </description>
       </code>
@@ -2513,5 +2513,14 @@
            <cn>复制日志未归档</cn>
         </description>
       </code>
+      
+      <code>
+        <name>SDB_DS_NOT_INIT</name>
+        <description>
+           <en>Data source has not been initialized</en>
+           <cn>连接池未初始化</cn>
+        </description>
+      </code>
+      
    </codelist>
 </rclist>

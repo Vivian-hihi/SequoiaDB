@@ -45,6 +45,11 @@
 #include <string>
 #include "client.hpp"
 
+using std::string;
+using std::vector;
+using std::map;
+using std::set;
+
 namespace sdbclient
 {
    enum SYNC_CHOICE
@@ -63,9 +68,9 @@ namespace sdbclient
       
    protected:
       // abnormal address list
-      std::vector<std::string> _abnormalCoordList ;
+      vector<string> _abnormalCoordList ;
       // normal address list
-      std::vector<std::string> _normalCoordList ;
+      vector<string> _normalCoordList ;
       // lock for addr lists
       ossSpinXLatch _coordMutex ;
       // abnormal coordlist pos ;
@@ -78,9 +83,9 @@ namespace sdbclient
 
    public:
       
-      virtual void addCoord( const std::string &coord ) ;
+      virtual void addCoord( const string &coord ) ;
 
-      virtual void removeCoord( const std::string &coord ) ;
+      virtual void removeCoord( const string &coord ) ;
       
       virtual INT32 getNormalCoordNum() ;
 
@@ -88,26 +93,26 @@ namespace sdbclient
 
       virtual INT32 getLocalCoordNum() ;
 
-      virtual INT32 getNextCoord( std::string& nCoord ) = 0 ;
+      virtual INT32 getNextCoord( string& nCoord ) = 0 ;
 
-      virtual INT32 getNextAbnormalCoord( std::string& nCoord ) ;
+      virtual INT32 getNextAbnormalCoord( string& nCoord ) ;
 
       // move coord from normal list to abnormal list
-      virtual void mvCoordToAbnormal( const std::string &coord ) ;
+      virtual void mvCoordToAbnormal( const string &coord ) ;
 
       // move coord from abnormal list to normal list
-      virtual void mvCoordToNormal( const std::string &coord ) ;
+      virtual void mvCoordToNormal( const string &coord ) ;
 
       // sync strategy
       virtual void sync( sdb *conn, SYNC_CHOICE choice ) {}
 
-      virtual void syncAddNewConn( sdb *conn, const std::string &coord ) {}
+      virtual void syncAddNewConn( sdb *conn, const string &coord ) {}
 
    protected:
       // convert hostname to ip
-      BOOLEAN _converToIP( const std::string &oldcoord, std::string& newcoord ) ;
+      BOOLEAN _converToIP( const string &oldcoord, string& newcoord ) ;
    private:
-      BOOLEAN _isLocalIP(const std::string &ipstr) ;
+      BOOLEAN _isLocalIP(const string &ipstr) ;
    } ;
 
 
@@ -123,7 +128,7 @@ namespace sdbclient
       virtual ~sdbDSSerialStrategy(){}
 
    public:
-      virtual INT32 getNextCoord( std::string& nCoord ) ;
+      virtual INT32 getNextCoord( string& nCoord ) ;
 
    private:
       INT32 _curPos ;
@@ -144,7 +149,7 @@ namespace sdbclient
       virtual ~sdbDSRandomStrategy(){}
 
    public:
-      virtual INT32 getNextCoord( std::string& nCoord ) ;
+      virtual INT32 getNextCoord( string& nCoord ) ;
    } ;
 
    class sdbDSLocalStrategy : public sdbDataSourceStrategy
@@ -163,24 +168,24 @@ namespace sdbclient
 
       virtual INT32 getLocalCoordNum() ;
 
-      virtual void addCoord( const std::string &coord ) ;
+      virtual void addCoord( const string &coord ) ;
 
-      virtual void removeCoord( const std::string &coord ) ;
+      virtual void removeCoord( const string &coord ) ;
 
-      virtual INT32 getNextCoord( std::string& nCoord ) ;
+      virtual INT32 getNextCoord( string& nCoord ) ;
 
       // move coord from normal list to abnormal list
-      virtual void mvCoordToAbnormal( const std::string &coord ) ;
+      virtual void mvCoordToAbnormal( const string &coord ) ;
 
       // move coord from abnormal list to normal list
-      virtual void mvCoordToNormal( const std::string &coord ) ;
+      virtual void mvCoordToNormal( const string &coord ) ;
 
    private:
       // check coord is local coord or not
-      BOOLEAN _isLocalCoord( const std::string &coord ) ;
+      BOOLEAN _isLocalCoord( const string &coord ) ;
 
    private:
-      std::vector<std::string> _localCoordList ;
+      vector<string> _localCoordList ;
 
    private:
       INT32 _localPos ;
@@ -192,8 +197,8 @@ namespace sdbclient
       INT32 usedNum ;
       INT32 totalNum ;
       BOOLEAN bAvailable ;
-      std::string coord ;
-      coordInfo( const std::string &c )
+      string coord ;
+      coordInfo( const string &c )
          :usedNum(0),
          totalNum(0),
          bAvailable(TRUE),
@@ -237,32 +242,32 @@ namespace sdbclient
       virtual ~sdbDSBalanceStrategy() ;
 
    public:
-      virtual void addCoord( const std::string &coord ) ;
+      virtual void addCoord( const string &coord ) ;
 
-      virtual void removeCoord( const std::string &coord ) ;
+      virtual void removeCoord( const string &coord ) ;
       
       virtual INT32 getNormalCoordNum() ;
 
       virtual INT32 getAbnormalCoordNum() ;
 
-      virtual INT32 getNextCoord( std::string& nCoord ) ;
+      virtual INT32 getNextCoord( string& nCoord ) ;
 
-      virtual INT32 getNextAbnormalCoord( std::string& nCoord ) ;
+      virtual INT32 getNextAbnormalCoord( string& nCoord ) ;
 
       // move coord from normal list to abnormal list
-      virtual void mvCoordToAbnormal( const std::string &coord ) ;
+      virtual void mvCoordToAbnormal( const string &coord ) ;
 
       // move coord from abnormal list to normal list
-      virtual void mvCoordToNormal( const std::string &coord ) ;
+      virtual void mvCoordToNormal( const string &coord ) ;
 
       // sync strategy
       virtual void sync( sdb *conn, SYNC_CHOICE choice ) ;
 
-      virtual void syncAddNewConn( sdb *conn, const std::string &coord ) ;
+      virtual void syncAddNewConn( sdb *conn, const string &coord ) ;
 
    private:
-      std::set<coordInfo*, coordInfoCmp>::const_iterator 
-         _findCoord( const std::string &coord ) const  ;
+      set<coordInfo*, coordInfoCmp>::const_iterator 
+         _findCoord( const string &coord ) const  ;
 
       // flag: TRUE get normal coord number
       // FALSE get abnormal coord number
@@ -277,8 +282,8 @@ namespace sdbclient
       void _syncAddIdleConn( sdb *conn ) ;
 
    private:
-      std::set< coordInfo*, coordInfoCmp > _coordInfoSet ;
-      std::map< sdb*, coordInfo* > _connToCoord ;
+      set< coordInfo*, coordInfoCmp > _coordInfoSet ;
+      map< sdb*, coordInfo* > _connToCoord ;
    } ;
 }
 
