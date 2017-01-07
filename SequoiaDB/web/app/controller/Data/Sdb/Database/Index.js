@@ -1461,7 +1461,7 @@
             inputList: [
                {
                   "name": "mainCL",
-                  "webName": $scope.autoLanguage( '主分区集合' ),
+                  "webName": $scope.autoLanguage( '集合' ),
                   "type": "select",
                   "value": mainCL[0]['value'],
                   "valid": mainCL,
@@ -1471,7 +1471,7 @@
                },
                {
                   "name": "childCL",
-                  "webName": $scope.autoLanguage( '子分区集合' ),
+                  "webName": $scope.autoLanguage( '分区' ),
                   "type": "select",
                   "value": '',
                   "valid": []

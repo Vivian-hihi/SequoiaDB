@@ -1490,10 +1490,10 @@
                Title: '',           //窗口标题
                Icon: '',            //窗口图标
                Windows: {           //窗口容器属性
-                  'top': 100,
-                  'left': 200,
-                  'width': 600,
-                  'height': 350
+                  'top': 0,
+                  'left': 0,
+                  'width': 0,
+                  'height': 0
                },
                Body: {              //body的样式
                },
@@ -1509,10 +1509,10 @@
                },
                Mask: $( '<div></div>' ).attr( 'ng-mousedown', 'prompt()' ).addClass( 'mask-screen unalpha' ),  //遮罩
                Temp: {              //临时数据
-                  left: 9999,
-                  top: 9999,
-                  width: 9999,
-                  height: 9999,
+                  left:    100000,
+                  top:     100000,
+                  width:   100000,
+                  height:  100000,
                   x: 0,
                   y: 0
                }
@@ -1541,6 +1541,15 @@
 
                   //创建内容
                   var createBody = function(){
+                     //初始化原始宽高和位置
+                     scope.Setting.Temp.left   = 100000 ;
+                     scope.Setting.Temp.top    = 100000 ;
+                     scope.Setting.Temp.width  = 100000 ;
+                     scope.Setting.Temp.height = 100000 ;
+                     scope.Setting.Temp.x = 0 ;
+                     scope.Setting.Temp.y = 0 ;
+                     //先恢复窗口
+                     scope.recoveryModal() ;
                      $timeout( function(){
                         if( scope.lastScope !== null )
                         {
@@ -1634,8 +1643,6 @@
                         $( element ).append( scope.Setting.Modal ) ;
                         scope.Setting.Modal = null ;
                      }
-                     //先恢复窗口
-                     scope.recoveryModal() ;
                      scope.Setting.isShow = false ;
                      scope.Setting.Mask.detach() ;
                   }

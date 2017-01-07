@@ -38,8 +38,8 @@
       </div>
       <div ng-container="{height:30,marginTop:10,marginBottom:10}">
          <button class="topBtn" ng-click="ShowCreateDomain()">{{autoLanguage("创建域")}}</button>
-         <button class="topBtn" ng-class="{true:'disabled'}[ DomainList.length == 0 ]" ng-click="ShowDeleteDomain()">{{autoLanguage("删除域")}}</button>
-         <button class="topBtn" ng-class="{true:'disabled'}[ DomainList.length == 0 ]" ng-click="ShowAlterDomain()">{{autoLanguage("编辑域")}}</button>
+         <button class="topBtn" ng-class="{true:'disabled'}[ DomainTable['body'].length == 0 ]" ng-click="ShowDeleteDomain()">{{autoLanguage("删除域")}}</button>
+         <button class="topBtn" ng-class="{true:'disabled'}[ DomainTable['body'].length == 0 ]" ng-click="ShowAlterDomain()">{{autoLanguage("编辑域")}}</button>
          <button class="topBtn" ng-click="OpenShowFieldDropdown($event)">{{autoLanguage("选择显示列")}}&nbsp;<i class="fa fa-caret-down"></i></button>
       </div>
       <div ng-dropdown="config in FieldDropdown.config" dropdown-callback="FieldDropdown.callback">

@@ -184,6 +184,7 @@
       //获取domain列表
       var getDomainList = function(){
          domainNameList = [] ;
+         $scope.DomainTable['body'] = [] ;
          domainList = [] ;
          var data = { 'cmd': 'list domains' } ;
          SdbRest.DataOperation( data, function( domains ){
@@ -334,114 +335,119 @@
 
       //打开删除domain弹窗
       $scope.ShowDeleteDomain = function(){
-         var deleteDomainForm = {
-            inputList: [
+         if( $scope.DomainTable['body'].length > 0 )
+         {
+            var deleteDomainForm = {
+               inputList: [
+                  {
+                     "name": "domainName",
+                     "webName": $scope.autoLanguage( '域名' ),
+                     "type": "select",
+                     "value": domainNameList[0]['value'],
+                     "valid": domainNameList
+                  }
+               ]
+            } ;
+            $scope.DeleteDomain['config'] = deleteDomainForm ;
+            //设置确定按钮
+            $scope.DeleteDomain['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = deleteDomainForm.check() ;
+               if( isAllClear )
                {
-                  "name": "domainName",
-                  "webName": $scope.autoLanguage( '域名' ),
-                  "type": "select",
-                  "value": domainNameList[0]['value'],
-                  "valid": domainNameList
+                  var formVal = deleteDomainForm.getValue() ;
+                  //关闭窗口
+                  $scope.DeleteDomain['callback']['Close']() ;
+                  //调用删除domain函数
+                  deleteDomain( formVal['domainName'] ) ;
                }
-            ]
-         } ;
-         $scope.DeleteDomain['config'] = deleteDomainForm ;
-         //设置确定按钮
-         $scope.DeleteDomain['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear = deleteDomainForm.check() ;
-            if( isAllClear )
-            {
-               var formVal = deleteDomainForm.getValue() ;
-               //关闭窗口
-               $scope.DeleteDomain['callback']['Close']() ;
-               //调用删除domain函数
-               deleteDomain( formVal['domainName'] ) ;
-            }
-         } ) ;
-         //设置标题
-         $scope.DeleteDomain['callback']['SetTitle']( $scope.autoLanguage( '删除域' ) ) ;
-         //设置图标
-         $scope.DeleteDomain['callback']['SetIcon']( 'fa-trash-o' ) ;
-         //打开窗口
-         $scope.DeleteDomain['callback']['Open']() ;
+            } ) ;
+            //设置标题
+            $scope.DeleteDomain['callback']['SetTitle']( $scope.autoLanguage( '删除域' ) ) ;
+            //设置图标
+            $scope.DeleteDomain['callback']['SetIcon']( 'fa-trash-o' ) ;
+            //打开窗口
+            $scope.DeleteDomain['callback']['Open']() ;
+         }
       }
       
       //编辑domain弹窗
       $scope.ShowAlterDomain = function(){
-         var setSelectGroup = function( alterDomainForm, currentGroupName ){
-            $.each( domainList, function( index, domainInfo ){
-               if( domainInfo['Name'] == currentGroupName )
-               {
-                  var groupList = domainInfo['GroupList'] ;
-                  alterDomainForm['inputList'][2]['valid']['list'] = [] ;  //初始化
+         if( $scope.DomainTable['body'].length > 0 )
+         {
+            var setSelectGroup = function( alterDomainForm, currentGroupName ){
+               $.each( domainList, function( index, domainInfo ){
+                  if( domainInfo['Name'] == currentGroupName )
+                  {
+                     var groupList = domainInfo['GroupList'] ;
+                     alterDomainForm['inputList'][2]['valid']['list'] = [] ;  //初始化
 
-                  $.each( groupNameList, function( index2, groupname ){
-                     alterDomainForm['inputList'][2]['valid']['list'].push( {
-                        'key': groupname,
-                        'value': groupname,
-                        'checked': groupList.indexOf( groupname ) >= 0
+                     $.each( groupNameList, function( index2, groupname ){
+                        alterDomainForm['inputList'][2]['valid']['list'].push( {
+                           'key': groupname,
+                           'value': groupname,
+                           'checked': groupList.indexOf( groupname ) >= 0
+                        } ) ;
                      } ) ;
-                  } ) ;
 
-                  alterDomainForm['inputList'][1]['value'] = domainInfo['AutoSplit'] ;
+                     alterDomainForm['inputList'][1]['value'] = domainInfo['AutoSplit'] ;
+                  }
+               } ) ;
+            }
+            var alterDomainForm = {
+               inputList: [
+                  {
+                     "name": "domainName",
+                     "webName": $scope.autoLanguage( '域名' ),
+                     "type": "select",
+                     "value": domainNameList[0]['value'],
+                     "valid": domainNameList,
+                     "onChange": function( name, key, value ){
+                        setSelectGroup( alterDomainForm, value ) ;
+                     }
+                  },
+                  {
+                     "name": "autoSplit",
+                     "webName": $scope.autoLanguage( '自动切分' ),
+                     "type": "select",
+                     "value": true,
+                     "valid": [
+                        { "key": "true", "value": true },
+                        { "key": "false", "value": false }   
+                     ]
+                  },
+                  {
+                     "name": "groupList",
+                     "webName": $scope.autoLanguage( '选择分区组' ),
+                     "type": "multiple",
+                     "value": [],
+                     "valid": {
+                        'min': 0,
+                        'list': []
+                     }
+                  }
+               ]
+            } ;
+            setSelectGroup( alterDomainForm, domainNameList[0]['value'] ) ;
+            $scope.AlterDomain['config'] = alterDomainForm ;
+            //设置确定按钮
+            $scope.AlterDomain['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+               var isAllClear = alterDomainForm.check() ;
+               if( isAllClear )
+               {
+                  var formVal = alterDomainForm.getValue() ;
+                  //调用编辑domain函数
+                  alterDomain( formVal['domainName'], formVal['autoSplit'], formVal['groupList'] ) ;
+                  //关闭窗口
+                  $scope.AlterDomain['callback']['Close']() ;
                }
             } ) ;
+            //设置标题
+            $scope.AlterDomain['callback']['SetTitle']( $scope.autoLanguage( '编辑域' ) ) ;
+            //设置图标
+            $scope.AlterDomain['callback']['SetIcon']( 'fa-plus' ) ;
+            //打开窗口
+            $scope.AlterDomain['callback']['Open']() ;
          }
-         var alterDomainForm = {
-            inputList: [
-               {
-                  "name": "domainName",
-                  "webName": $scope.autoLanguage( '域名' ),
-                  "type": "select",
-                  "value": domainNameList[0]['value'],
-                  "valid": domainNameList,
-                  "onChange": function( name, key, value ){
-                     setSelectGroup( alterDomainForm, value ) ;
-                  }
-               },
-               {
-                  "name": "autoSplit",
-                  "webName": $scope.autoLanguage( '自动切分' ),
-                  "type": "select",
-                  "value": true,
-                  "valid": [
-                     { "key": "true", "value": true },
-                     { "key": "false", "value": false }   
-                  ]
-               },
-               {
-                  "name": "groupList",
-                  "webName": $scope.autoLanguage( '选择分区组' ),
-                  "type": "multiple",
-                  "value": [],
-                  "valid": {
-                     'min': 0,
-                     'list': []
-                  }
-               }
-            ]
-         } ;
-         setSelectGroup( alterDomainForm, domainNameList[0]['value'] ) ;
-         $scope.AlterDomain['config'] = alterDomainForm ;
-         //设置确定按钮
-         $scope.AlterDomain['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
-            var isAllClear = alterDomainForm.check() ;
-            if( isAllClear )
-            {
-               var formVal = alterDomainForm.getValue() ;
-               //调用编辑domain函数
-               alterDomain( formVal['domainName'], formVal['autoSplit'], formVal['groupList'] ) ;
-               //关闭窗口
-               $scope.AlterDomain['callback']['Close']() ;
-            }
-         } ) ;
-         //设置标题
-         $scope.AlterDomain['callback']['SetTitle']( $scope.autoLanguage( '编辑域' ) ) ;
-         //设置图标
-         $scope.AlterDomain['callback']['SetIcon']( 'fa-plus' ) ;
-         //打开窗口
-         $scope.AlterDomain['callback']['Open']() ;
-         
       }
 
       //显示域信息弹窗
