@@ -65,7 +65,7 @@ public class DatasourceOptions implements Cloneable {
      * @brief Set the max number of the idle connection left in connection
      *        pool after periodically cleaning.
      * @param maxIdleCount Default to be 10.
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public void setMaxIdleCount(int maxIdleCount) {
         _maxIdleCount = maxIdleCount;
@@ -77,7 +77,7 @@ public class DatasourceOptions implements Cloneable {
      * @param  maxCount Default to be 500.
      * @note When maxCount is set to 0, the connection pool will be disabled.
      * @see Sequoiadb::disableDatasource()
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public void setMaxCount(int maxCount) {
         _maxCount = maxCount;
@@ -92,9 +92,9 @@ public class DatasourceOptions implements Cloneable {
      * @param keepAliveTimeout Default to be 0ms, means not care about how long does a connection
      *                         have not be used(send and receive).
      * @note When "keepAliveTimeout" is not set to 0, it's better to set it
-     *       greater than "checkInterval" twice over. Besides, unless you know what you needs,
+     *       greater than "checkInterval" triple over. Besides, unless you know what you need,
      *       never enable this option.
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public void setKeepAliveTimeout(int keepAliveTimeout) {
         _keepAliveTimeout = keepAliveTimeout;
@@ -107,8 +107,8 @@ public class DatasourceOptions implements Cloneable {
      *        and keeps the number of idle connection not more than "maxIdleCount".
      * @param checkInterval Default to be 1 * 60 * 1000ms.
      * @note When "keepAliveTimeout" is not be 0, "checkInterval" should be less than it.
-     *       It's better to set "keepAliveTimeout" greater than "checkInterval" twice over.
-     * @since v1.12.6 and 1.12.6
+     *       It's better to set "keepAliveTimeout" greater than "checkInterval" triple over.
+     * @since v1.12.6 and v2.2
      */
     public void setCheckInterval(int checkInterval) {
         _checkInterval = checkInterval;
@@ -121,7 +121,7 @@ public class DatasourceOptions implements Cloneable {
      * @note The updated coord addresses will cover the addresses in the pool.
      *       When "syncCoordInterval" is 0, the pool will stop updating coord's addresses from
      *       catalog.
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public void setSyncCoordInterval(int syncCoordInterval) {
         _syncCoordInterval = syncCoordInterval;
@@ -132,7 +132,7 @@ public class DatasourceOptions implements Cloneable {
      * @brief When a idle connection is got out of pool, we need
      *        to validate whether it can be used or not.
      * @param validateConnection Default to be false.
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public void setValidateConnection(boolean validateConnection) {
         _validateConnection = validateConnection;
@@ -148,7 +148,7 @@ public class DatasourceOptions implements Cloneable {
      *                 ConnectStrategy.BALANCE
      * @note When choosing ConnectStrategy.LOCAL, if there have no local coord address,
      *       use other address instead.
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public void setConnectStrategy(ConnectStrategy strategy) {
         _connectStrategy = strategy;
@@ -187,7 +187,7 @@ public class DatasourceOptions implements Cloneable {
      * @brief Get the setup time for abandoning a connection
      *        which has not been used for long time.
      * @return the time
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public int getKeepAliveTimeout() {
         return _keepAliveTimeout;
@@ -197,7 +197,7 @@ public class DatasourceOptions implements Cloneable {
      * @fn int getCheckInterval()
      * @brief Get the interval for checking the idle connections periodically.
      * @return the interval
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public int getCheckInterval() {
         return _checkInterval;
@@ -207,7 +207,7 @@ public class DatasourceOptions implements Cloneable {
      * @fn int getSyncCoordInterval()
      * @brief Get the interval for updating coord's addresses from catalog periodically.
      * @return the interval
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public int getSyncCoordInterval() {
         return _syncCoordInterval;
@@ -218,7 +218,7 @@ public class DatasourceOptions implements Cloneable {
      * @brief Get whether to validate a
      *        connection which is got from the pool or not.
      * @return true or false
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public boolean getValidateConnection() {
         return _validateConnection;
@@ -228,7 +228,7 @@ public class DatasourceOptions implements Cloneable {
      * @fn ConnectStrategy getConnectStrategy()
      * @brief Get the current strategy of creating connections.
      * @return the strategy
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public ConnectStrategy getConnectStrategy() {
         return _connectStrategy;
@@ -289,7 +289,7 @@ public class DatasourceOptions implements Cloneable {
      * @deprecated Does not work since v1.12.6 and v2.2.
      *             Used Sequoiadb.getConnection(int timeout) instead.
      * @see Sequoiadb.getConnection(int timeout)
-     * @since v1.12.6 and 1.12.6
+     * @since v1.12.6 and v2.2
      */
     public void setTimeout(int timeout) {
     }
