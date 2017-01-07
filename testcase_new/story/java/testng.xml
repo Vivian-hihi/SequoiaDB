@@ -27,7 +27,7 @@
    
    <test name="parralmethod" parallel="methods" thread-count="5">
       <packages>
-         <package name="com.sequoiadb.subcl"/>
+         <!--package name="com.sequoiadb.subcl"/-->
       </packages>    
    </test>
    
