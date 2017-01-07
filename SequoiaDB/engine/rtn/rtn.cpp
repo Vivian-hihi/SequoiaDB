@@ -1542,13 +1542,15 @@ namespace engine
          if ( syncSpecCS )
          {
             PD_LOG( PDEVENT, "Sync collectionspace[%s] succeed, "
-                    "cost(ms): %llu", pSpecCSName,
+                    "deep:%s, cost(ms): %llu", pSpecCSName,
+                    sync ? "true" ? "false",
                     pmdGetTickSpanTime( beginTick ) ) ;
          }
          else
          {
             PD_LOG( PDEVENT, "Sync db succeed, commit lsn[%u.%llu], "
-                    "cost(ms): %llu", commitLSN.version, commitLSN.offset,
+                    "deep: %s, cost(ms): %llu", commitLSN.version,
+                    commitLSN.offset, sync ? "true" : "false",
                     pmdGetTickSpanTime( beginTick ) ) ;
          }
       }
