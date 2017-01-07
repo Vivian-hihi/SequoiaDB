@@ -193,7 +193,7 @@ public:
       _type( type )
    {}
 
-   virtual ~_dpsDumpFilter() 
+   virtual ~_dpsDumpFilter()
    {
       _nextFilter = NULL ;
    }
@@ -259,13 +259,14 @@ FILTER_DEFINITION( Name, SDB_LOG_FILTER_NAME )
 FILTER_DEFINITION( Lsn,  SDB_LOG_FILTER_LSN  )
 FILTER_DEFINITION( None, SDB_LOG_FILTER_NONE )
 FILTER_DEFINITION( Last, SDB_LOG_FILTER_LAST )
+FILTER_DEFINITION( Meta, SDB_LOG_FILTER_META )
 
 class _dpsFilterFactory
 {
 public:
    static _dpsFilterFactory* getInstance() ;
 
-   dpsDumpFilter* createFilter( int type ) ;   
+   dpsDumpFilter* createFilter( int type ) ;
 
    void release( dpsDumpFilter *filter ) ;
 
@@ -319,7 +320,7 @@ private:
    BOOLEAN     _validCheck( const po::variables_map &vm ) ;
 
    INT32       _analysisMeta() ;
-   
+
    INT32       _metaFilte( const CHAR *filename, INT32 index,
                            dpsFileMeta& meta ) ;
    INT64       _dumpMeta( const dpsMetaData& meta,

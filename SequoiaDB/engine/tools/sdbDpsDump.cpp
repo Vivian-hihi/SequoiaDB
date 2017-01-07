@@ -111,7 +111,7 @@ do                                                                             \
 {                                                                              \
    writeLog( out, LEVEL, __FUNCTION__, __FILE__, __LINE__, fmt, __VA_ARGS__ ) ;\
 } while ( FALSE )
-   
+
 
 #define LogError( fmt, ... )                    \
    __LOG_WRAPPER( TRUE, "Error", fmt, __VA_ARGS__ )
@@ -194,11 +194,11 @@ dpsDumpFilter* _dpsFilterFactory::createFilter( int type )
          filter = SDB_OSS_NEW dpsLsnFilter() ;
          break ;
       }
-//    case SDB_LOG_FILTER_META :
-//       {
-//          filter = SDB_OSS_NEW dpsMetaFilter() ;
-//          break ;
-//       }
+    case SDB_LOG_FILTER_META :
+      {
+          filter = SDB_OSS_NEW dpsMetaFilter() ;
+          break ;
+      }
    case SDB_LOG_FILTER_NONE :
       {
          filter = SDB_OSS_NEW dpsNoneFilter() ;
@@ -321,6 +321,19 @@ done:
 
 error:
    goto done;
+}
+
+////////////////////////////////////////////////////////////////////
+///< for _dpsMetaFilter
+BOOLEAN _dpsMetaFilter::match( dpsDumper *dumper, CHAR *pRecord )
+{
+   return FALSE ;
+}
+
+INT32 _dpsMetaFilter::doFilte( dpsDumper *dumper, OSSFILE &out,
+                               const CHAR *logFilePath )
+{
+   return SDB_OK ;
 }
 
 /*
@@ -511,7 +524,7 @@ error:
 
 
 
-_dpsDumper::_dpsDumper() : _metaContent(NULL), _filter(NULL) 
+_dpsDumper::_dpsDumper() : _metaContent(NULL), _filter(NULL)
 {
 
 }
@@ -658,7 +671,6 @@ INT32 _dpsDumper::process( const po::options_description &desc,
       _filter = dpsFilterFactory::getInstance()
                 ->createFilter( SDB_LOG_FILTER_META ) ;
       CHECK_FILTER( _filter ) ;
-      goto done ;
    }
 
    if( NULL == _filter )
@@ -694,7 +706,7 @@ INT32 _dpsDumper::dump()
    INT32   rc      = SDB_OK ;
    BOOLEAN fOpened = FALSE ;
    OSSFILE fileFrom, fileTo ;
-   CHAR dstFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ; 
+   CHAR dstFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    dpsCmdData data ;
    BOOLEAN _isDir = FALSE ;
 
@@ -723,7 +735,7 @@ INT32 _dpsDumper::dump()
       if ( OSS_FILE_SEP_CHAR == dstPath[ len - 1 ] )
       {
          ossSnprintf( dstFile, OSS_MAX_PATHSIZE, "%s%s",
-                      dstPath, "tmpLog.log" ) ; 
+                      dstPath, "tmpLog.log" ) ;
       }
       else
       {
@@ -738,7 +750,7 @@ INT32 _dpsDumper::dump()
 
    if( !consolePrint )
    {
-      rc = ossOpen( dstFile, OSS_REPLACE | OSS_READWRITE, 
+      rc = ossOpen( dstFile, OSS_REPLACE | OSS_READWRITE,
                     OSS_RU | OSS_WU | OSS_RG, fileTo ) ;
       if( rc )
       {
@@ -790,7 +802,7 @@ INT32 _dpsDumper::dump()
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-	  
+
       INT32 fileCount = 0 ;
       rc = getFileCount( srcPath, fileCount ) ;
       if( SDB_OK != rc )
@@ -804,7 +816,7 @@ INT32 _dpsDumper::dump()
          rc = SDB_FNE ;
          goto error ;
       }
-	  
+
       if( 0 >= fileCount )
       {
          LogError( "Cannot find any Log files from: %s, "
@@ -1107,13 +1119,13 @@ INT32 _dpsDumper::isDir( const CHAR *path, BOOLEAN &dir )
 {
    INT32 rc = SDB_OK ;
    SDB_OSS_FILETYPE fileType = SDB_OSS_UNK ;
-   
+
    rc = ossAccess( path, R_OK ) ;
    if ( SDB_OK != rc )
    {
       goto error;
    }
-   
+
    rc = ossGetPathType( path, &fileType ) ;
    if ( SDB_OK != rc )
    {
@@ -1161,7 +1173,7 @@ INT32 _dpsDumper::sortFiles( dpsMetaData &meta )
    UINT32 begin = meta.fileBegin ;
    UINT32 work = meta.fileWork ;
    UINT32 idx = begin ;
-   /* 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 
+   /* 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
     * begin from -->|                     |
     *                         work-here-->|------------
     * ----------->|<--end here
