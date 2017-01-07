@@ -64,30 +64,17 @@ public class Commlib extends SdbTestBase {
                 actRecs.add(obj);
             }
             cursor.close();
-            if(actRecs.size() != expRecs.size()){
-                System.out.println(cl.getCount());
-                System.out.println(actRecs.size());
-                System.out.println(expRecs.size());
+            if(!actRecs.equals(expRecs)){
                 throw new BaseException("data is different");
             }
-            for(int i = 0; i < actRecs.size(); i++){
-                if(!actRecs.get(i).equals(expRecs.get(i))){
-                    System.out.println(actRecs.get(i));
-                    System.out.println(expRecs.get(i));
-                    throw new BaseException("data is different");
-                }
-            }
-/*            if(!actRecs.equals(expRecs)){
-                throw new BaseException("data is different");
-            }*/
         } catch (BaseException e) {
             throw e;
         }
     }
     
-    public static Sequoiadb getDataDB(Sequoiadb db, String dataGroupName){ 
-        int dataGroupPort = db.getReplicaGroup(dataGroupName).getMaster().getPort();
-        return new Sequoiadb(hostName + " : " + dataGroupPort, "", "");
+    public static Sequoiadb getDataDB(Sequoiadb db, String dataGroupName){
+        String url = db.getReplicaGroup(dataGroupName).getMaster().getNodeName();
+        return new Sequoiadb(url, "", "");
     }
     
     public static void checkSplitOnData(Sequoiadb dataDB, String clName, int expCnt, int offSet) {
