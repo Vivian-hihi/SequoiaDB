@@ -1543,7 +1543,7 @@ namespace engine
          {
             PD_LOG( PDEVENT, "Sync collectionspace[%s] succeed, "
                     "deep:%s, cost(ms): %llu", pSpecCSName,
-                    sync ? "true" ? "false",
+                    sync ? "true" : "false",
                     pmdGetTickSpanTime( beginTick ) ) ;
          }
          else
