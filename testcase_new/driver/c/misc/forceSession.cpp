@@ -153,6 +153,8 @@ TEST( forceSession, withOption )
     sdbConnectionHandle db = SDB_INVALID_HANDLE ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
     ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+	if( isStandalone( db ) )
+        return ;
 	SINT64 oldSessionId = -1 ;
     SINT64 newSessionId = -1 ;
 
@@ -167,7 +169,7 @@ TEST( forceSession, withOption )
     sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
     sdbNodeHandle node = SDB_INVALID_HANDLE ;
     rc = sdbGetReplicaGroup1( db, groupId, &rg ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to get SYSCoord group" ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to get SYSCatalog group" ;
     rc = sdbGetNodeSlave( rg, &node ) ;
     ASSERT_EQ( rc, SDB_OK ) << "fail to get slave node of group " ;
     rc = sdbGetNodeAddr( node, &hostName, &svcName, &nodeName, &nodeId ) ;
