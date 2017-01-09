@@ -321,7 +321,6 @@ namespace engine
 
             if ( JSVAL_IS_STRING ( valID ) )
             {
-               jsval valProp = JSVAL_VOID ;
                string idstr ;
                args.getString( 0, idstr ) ;
 
