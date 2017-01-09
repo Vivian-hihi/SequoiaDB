@@ -1454,6 +1454,10 @@ namespace engine
             PD_LOG ( PDERROR, "Block write failed, rc: %d", rc ) ;
             goto error;
          }
+         else
+         {
+            PD_LOG( PDINFO, "Block write operation succeed" ) ;
+         }
          dmsLocked = TRUE ;
       }
 
@@ -1536,6 +1540,7 @@ namespace engine
       if ( dmsLocked )
       {
          dmsCB->unblockWrite( cb ) ;
+         PD_LOG( PDINFO, "Unblock write operation succeed" ) ;
       }
       if ( SDB_OK == rc )
       {
