@@ -55,7 +55,7 @@ public class Split514 extends SdbTestBase {
 			}
 
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
-			commCS.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"a\":1},ShardingType:\"range\"}"));
+			commCS.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"a\":1},ReplSize:0,ShardingType:\"range\"}"));
 			ArrayList<String> tmp = MySdbTools.getGroupName(commSdb, csName, clName);
 			srcGroupName = tmp.get(0);
 			destGroupName = tmp.get(1);
@@ -92,8 +92,9 @@ public class Split514 extends SdbTestBase {
 		split.start();
 		try {
 			sdb = new Sequoiadb(coordUrl, "", "");
+			sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-
+			
 			// 删除a:0 - a:50 的记录
 			dbc = cl.query("{a:{$gte:0,$lt:50}}", null, null, null, 10, 50);
 			while (dbc.hasNext()) {
