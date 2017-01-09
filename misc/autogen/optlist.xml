@@ -1062,16 +1062,16 @@
       <name>PMD_OPTION_CACHE_MERGE_SIZE</name>
       <long>cachemergesz</long>
       <description>
-         <en>The merge block size of collectionspace when use cache, default:16, value range:[0,64], unit:MB</en>
-         <cn>每一个集合空间用于合并页的缓存大小，默认为16，取值范围:[0,64],单位为MB</cn>
+         <en>The merge block size of collectionspace when use cache, default:0, value range:[0,64], unit:MB</en>
+         <cn>每一个集合空间用于合并页的缓存大小，默认为0，取值范围:[0,64],单位为MB</cn>
       </description>
       <detail>
-         <en>The merge block size of collectionspace when use cache, default:16, value range:[0,64], unit:MB</en>
-         <cn>每一个集合空间用于合并页的缓存大小，默认为16，取值范围:[0,64],单位为MB</cn>
+         <en>The merge block size of collectionspace when use cache, default:0, value range:[0,64], unit:MB</en>
+         <cn>每一个集合空间用于合并页的缓存大小，默认为0，取值范围:[0,64],单位为MB</cn>
       </detail>
       <type>int</type>
       <hidden>true</hidden>
-      <default>16</default>
+      <default>0</default>
       <typeofweb>num</typeofweb>
    </opt>
 
