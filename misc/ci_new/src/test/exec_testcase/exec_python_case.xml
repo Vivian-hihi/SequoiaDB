@@ -73,12 +73,18 @@
          <switch value="@{type}">
          
             <case value="install">
-               <untar src="${pythondir}/pysequoiadb-2.8-py2.tar.gz" dest="${pythondir}" compression="gzip"/>
-               <exec executable="python" dir="${pythondir}">
+               
+               <delete dir="${pythondir}/py2" failonerror="false"/>
+               <mkdir dir="${pythondir}/py2"/>
+               <untar src="${pythondir}/pysequoiadb-2.8-py2.tar.gz" dest="${pythondir}/py2" compression="gzip"/>
+               <exec executable="python2" dir="${pythondir}/py2">
                   <arg line=" setup.py install" />
                </exec>
-               <untar src="${pythondir}/pysequoiadb-2.8-py3.tar.gz" dest="${pythondir}" compression="gzip"/>
-               <exec executable="python3" dir="${pythondir}">
+               
+               <delete dir="${pythondir}/py3" failonerror="false"/>
+               <mkdir dir="${pythondir}/py3"/>
+               <untar src="${pythondir}/pysequoiadb-2.8-py3.tar.gz" dest="${pythondir}/py3" compression="gzip"/>
+               <exec executable="python3" dir="${pythondir}/py3">
                   <arg line=" setup.py install" />
                </exec>
             </case>
@@ -146,7 +152,7 @@
             <else>
                <echo file="@{report}" 
                      append="true"
-                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}_@{pyexecutable}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;EXECUTE CMD: python ${cmd}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />             
+                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}_@{pyexecutable}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;EXECUTE CMD: @{pyexecutable} ${cmd}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />             
             </else>
          </if>
                          
