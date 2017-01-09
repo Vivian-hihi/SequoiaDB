@@ -46,7 +46,7 @@ using namespace bson ;
 
 
 /* get name have pid, add by xiaojun */
-void getUniqueName( const CHAR *modName, CHAR getName[] ) ;
+void getUniqueName( const CHAR *modName, CHAR *getName, INT32 len ) ;
 
 
 /* connect to a given database */
