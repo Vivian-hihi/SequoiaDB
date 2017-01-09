@@ -6,12 +6,14 @@ import java.util.Date;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.crud.compress.snappy.Commlib;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -37,6 +39,9 @@ public class TestLzw6642 extends SdbTestBase {
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }
+        if (Commlib.isStandAlone(sdb)){
+            throw new SkipException("is standalone skip testcase");
+        }
     }
     
     @AfterClass
@@ -54,7 +59,7 @@ public class TestLzw6642 extends SdbTestBase {
         }
     }
     
-    @Test(enabled = false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try{
