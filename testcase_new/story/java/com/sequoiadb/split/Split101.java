@@ -1,4 +1,4 @@
-package com.sequoiadb.split;
+package com.sequoiadb.subcl;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -143,9 +143,9 @@ public class Split101 extends SdbTestBase {
 			if (sdb.isCollectionSpaceExist(csName1)) {
 				sdb.dropCollectionSpace(commCS1.getName());
 			}
-			//if(sdb.isCollectionSpaceExist(domainName)){
+			if(sdb.isDomainExist(domainName)){
 			    sdb.dropDomain(domainName);
-			//}
+			}
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		} finally {
