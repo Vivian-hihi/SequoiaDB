@@ -10,6 +10,32 @@
 *@author      : Liang XueWang
 ******************************************************************************/
 
+function toolGetReleaseInfo( hostName, svcName )
+{
+   var remote = new Remote( hostName, svcName ) ;
+   var cmd = remote.getCmd() ;
+   var result = [] ;
+   
+   var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
+   var tmpInfo = cmd.run( command ).split( "\n" ) ;
+   result[0] = tmpInfo[tmpInfo.length-2] ; 
+   result[0] = result[0].replace( /[\t ]/g, '' ) ;
+   
+   command = "uname -s" ;
+   tmpInfo = cmd.run( command ).split( "\n" ) ;
+   var osType = tmpInfo[tmpInfo.length-2] ;
+   command = "uname -r" ;
+   tmpInfo = cmd.run( command ).split( "\n" ) ;
+   var release = tmpInfo[tmpInfo.length-2] ;
+   command = "uname -m" ;
+   tmpInfo = cmd.run( command ).split( "\n" ) ;
+   var machine = tmpInfo[tmpInfo.length-2] ; 
+   result[1] = osType + release + "(" + machine + ")" ;
+   
+   remote.close() ;
+   return result ;
+}
+
 // 测试获取system对象信息
 SystemTest.prototype.testGetInfo = function()
 {
@@ -95,15 +121,7 @@ SystemTest.prototype.testGetReleaseInfo = function()
    // 测试获取的系统发行版本信息
    var descript1 = this.system.getReleaseInfo().toObj().Description ;
    descript1 = descript1.replace( /[\t ]/g, '' ) ;
-   var descript2 = [] ;
-   var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
-   var tmpInfo = this.cmd.run( command ).split( "\n" ) ;
-   descript2[0] = tmpInfo[tmpInfo.length-2] ; 
-   descript2[0] = descript2.replace( /[\t ]/g, '' ) ;
-   command = "uname -srm" ;
-   tmpInfo = this.cmd.run( command ).split( "\n" ) ;
-   descript2[1] = tmpInfo[tmpInfo.length-2] ; 
-   descript2[1] = descript2.replace( /[\t ]/g, '' ) ;
+   var descript2 = toolGetReleaseInfo( this.hostname, this.svcname ) ;
    
    if( descript1 != descript2[0] &&  descript1 != descript2[1] )
    {
