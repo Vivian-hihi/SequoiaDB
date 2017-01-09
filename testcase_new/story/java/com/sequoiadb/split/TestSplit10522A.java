@@ -59,6 +59,9 @@ public class TestSplit10522A extends SdbTestBase{
             if (Util.getDataRgNames(this.sdb).size() < 2) {
                 throw new SkipException("current environment less than tow groups ");
             }
+            BSONObject options = new BasicBSONObject();
+            options.put("PreferedInstance", "M");
+            this.sdb.setSessionAttr(options);
             this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
