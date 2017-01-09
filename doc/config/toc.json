@@ -1455,6 +1455,12 @@
                            "file": "waitTasks",
                            "cn": "waitTasks()",
                            "en": "waitTasks()"
+                        },
+                        {
+                           "id": 1432190819,
+                           "file": "stopRG",
+                           "cn": "stopRG()",
+                           "en": "stopRG()"
                         }
                      ]
                   },
