@@ -1391,6 +1391,12 @@ namespace engine
          info._idxIsValid = mbStat->_idxCommitFlag.peek() ? TRUE : FALSE ;
          info._lobIsValid = mbStat->_lobCommitFlag.peek() ? TRUE : FALSE ;
 
+         if ( !_pLobSu->isOpened() )
+         {
+            info._lobCommitLSN = 0 ;
+            info._lobIsValid = TRUE ;
+         }
+
          //add
          collectionList.insert ( collection ) ;
 
