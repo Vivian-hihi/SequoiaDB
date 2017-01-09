@@ -57,6 +57,7 @@ namespace engine
       _idleAgent = 0 ;
       _maxCacheJob = PMD_MIN_CACHE_JOB ;
       _startCtrlJob = FALSE ;
+      _perfStat = FALSE ;
    }
 
    _pmdBuffPool::~_pmdBuffPool()
@@ -70,6 +71,11 @@ namespace engine
       {
          _maxCacheJob = PMD_MIN_CACHE_JOB ;
       }
+   }
+
+   void _pmdBuffPool::enablePerfStat( BOOLEAN enable )
+   {
+      _perfStat = enable ;
    }
 
    void _pmdBuffPool::exitJob( BOOLEAN isControl )
@@ -325,7 +331,11 @@ namespace engine
             {
                timeout = 0 ;
                _doUnit( pUnit ) ;
-               pUnit->dumpStatInfo() ;
+
+               if ( _pBuffPool->isEnabledPerfStat() )
+               {
+                  pUnit->dumpStatInfo() ;
+               }
                /// push back
                _pBuffPool->pushBackUnit( pUnit ) ;
             }

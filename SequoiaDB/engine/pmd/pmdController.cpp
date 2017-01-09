@@ -286,6 +286,9 @@ namespace engine
       setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
       setAuditMask( pmdGetOptionCB()->auditMask() ) ;
       initCurAuditMask( getAuditMask() ) ;
+
+      pmdGetKRCB()->getBuffPool()->enablePerfStat(
+         pmdGetOptionCB->isEnabledPerfStat() ) ;
    }
 
    void _pmdController::registerCB( SDB_ROLE dbrole )

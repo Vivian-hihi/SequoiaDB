@@ -2016,13 +2016,11 @@ namespace engine
    #define UTIL_CACHE_STAT_INTERVAL          ( 30000 )
 
    _utilCacheUnit::_utilCacheUnit()
-   :_dirtySize( 0 ), _totalPage( 0 )
-#ifdef SDB_PERF_STAT
-    ,_statAllocNum( 0 ), _statAllocFromBlkNum( 0 )
-    ,_statAllocNullNum( 0 ), _statHitCacheNum( 0 )
-    ,_statMergeNum( 0 ), _statMergeSyncNum( 0 ), _statSyncNum( 0 )
-    ,_statRecycleNum( 0 ) ,_lastStatTime( 0 )
-#endif //SDB_PERF_STAT
+   :_dirtySize( 0 ), _totalPage( 0 ),
+    _statAllocNum( 0 ), _statAllocFromBlkNum( 0 ),
+    _statAllocNullNum( 0 ), _statHitCacheNum( 0 ),
+    _statMergeNum( 0 ), _statMergeSyncNum( 0 ), _statSyncNum( 0 ),
+    _statRecycleNum( 0 ) ,_lastStatTime( 0 )
    {
       _pMgr = NULL ;
       _pCacheFile = NULL ;
@@ -2039,11 +2037,9 @@ namespace engine
       _bgFreeRatio = UTIL_CACHEUNIT_BG_FREE_RATIO ;
       _pageTimeout = UTIL_CACHEUNIT_PAGE_TIMEOUT ;
 
-#ifdef SDB_PERF_STAT
       ossTimestamp t ;
       ossGetCurrentTime( t ) ;
       _lastStatTime = t.time * 1000 + t.microtm / 1000 ;
-#endif //SDB_PERF_STAT
    }
 
    _utilCacheUnit::~_utilCacheUnit()
@@ -2860,7 +2856,6 @@ namespace engine
 
    void _utilCacheUnit::dumpStatInfo()
    {
-#ifdef SDB_PERF_STAT
       ossTimestamp t ;
       ossGetCurrentTime( t ) ;
       UINT64 curTime = t.time * 1000 + t.microtm / 1000 ;
@@ -2930,7 +2925,6 @@ namespace engine
                    ) ;
 
       PD_LOG( PDEVENT, text ) ;
-#endif //SDB_PERF_STAT
    }
 
 }

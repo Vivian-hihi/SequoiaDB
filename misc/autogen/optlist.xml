@@ -1248,5 +1248,18 @@
       <type>int</type>
       <hidden>true</hidden>
    </opt>
+
+   <opt>
+      <name>PMD_OPTION_PERF_STAT</name>
+      <long>perfstat</long>
+      <description>
+         <en>Wether enable perfermance stat or not</en>
+         <cn>是否开启性能统计</cn>
+      </description>
+      <type>boolean</type>
+      <default>false</default>
+      <hidden>true</hidden>
+   </opt>
+
 </optlist>
 

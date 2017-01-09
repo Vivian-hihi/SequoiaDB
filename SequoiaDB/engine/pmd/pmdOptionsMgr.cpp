@@ -1346,6 +1346,7 @@ namespace engine
 
       _dmsChkInterval = PMD_DFT_DMS_CHK_INTERVAL ;
       _cacheMergeSize = PMD_DFT_CACHE_MERGE_SZ ;
+      _perfStat = FALSE ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1638,6 +1639,10 @@ namespace engine
       rdxUInt( pEX, PMD_OPTION_CACHE_MERGE_SIZE, _cacheMergeSize,
                FALSE, TRUE, PMD_DFT_CACHE_MERGE_SZ, TRUE ) ;
       rdvMinMax( pEX, _cacheMergeSize, 0, 64, TRUE ) ;
+
+      // --perfstat
+      rdxBooleanS( pEX, PMD_OPTION_PERF_STAT, _perfStat, FALSE,
+                   TRUE, FALSE, TRUE ) ;
 
       // end map
 

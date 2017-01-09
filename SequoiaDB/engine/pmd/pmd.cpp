@@ -325,6 +325,7 @@ namespace engine
 
       /// Init the cache manager
       _buffPool.setMaxCacheJob( _optioncb.getMaxCacheJob() ) ;
+      _buffPool.enablePerfStat( _optioncb.isEnabledPerfStat() ) ;
       rc = _buffPool.init( _optioncb.getMaxCacheSize() ) ;
       if ( rc )
       {

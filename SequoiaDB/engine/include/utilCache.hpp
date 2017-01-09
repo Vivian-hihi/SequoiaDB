@@ -45,7 +45,6 @@
 
 using namespace std ;
 
-// #define SDB_PERF_STAT ;
 
 namespace engine
 {
@@ -778,7 +777,6 @@ namespace engine
 
          utilCacheMerge             _cacheMerge ;
 
-#ifdef SDB_PERF_STAT
          ossAtomic32                _statAllocNum ;
          ossAtomic32                _statAllocFromBlkNum ;
          ossAtomic32                _statAllocNullNum ;
@@ -789,13 +787,10 @@ namespace engine
          ossAtomic32                _statRecycleNum ;
 
          volatile UINT64            _lastStatTime ;
-#endif // SDB_PERF_STAT
 
    } ;
    typedef _utilCacheUnit utilCacheUnit ;
 
-
-#ifdef SDB_PERF_STAT
    OSS_INLINE void _utilCacheUnit::_incAllocNum( UINT32 num )
    {
       _statAllocNum.add( num ) ;
@@ -828,17 +823,6 @@ namespace engine
    {
       _statRecycleNum.add( num ) ;
    }
-#else
-   OSS_INLINE void _utilCacheUnit::_incAllocNum( UINT32 num ) {}
-   OSS_INLINE void _utilCacheUnit::_incAllocNullNum( UINT32 num ) {}
-   OSS_INLINE void _utilCacheUnit::_incHitCacheNum( UINT32 num ) {}
-   OSS_INLINE void _utilCacheUnit::_incMergeNum( UINT32 num ) {}
-   OSS_INLINE void _utilCacheUnit::_incMergeSyncNum( UINT32 num ) {}
-   OSS_INLINE void _utilCacheUnit::_incAllocFromBlkNum( UINT32 num ) {}
-   OSS_INLINE void _utilCacheUnit::_incSyncNum( UINT32 num ) {}
-   OSS_INLINE void _utilCacheUnit::_incRecycleNum( UINT32 num ) {}
-#endif //SDB_PERF_STAT
-
 
 }
 

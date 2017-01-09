@@ -58,6 +58,9 @@ namespace engine
          virtual INT32     init( UINT64 cacheSize = 0 ) ;
          virtual void      fini() ;
          void              setMaxCacheJob( UINT32 maxCacheJob ) ;
+         void              enablePerfStat( BOOLEAN enable = TRUE ) ;
+
+         BOOLEAN           isEnabledPerfStat() const { return _perfStat ; }
 
          void              exitJob( BOOLEAN isControl ) ;
 
@@ -89,6 +92,7 @@ namespace engine
          UINT32               _curAgent ;
          UINT32               _idleAgent ;
          UINT32               _maxCacheJob ;
+         BOOLEAN              _perfStat ;
 
          ossEvent             _wakeUpEvent ;
    } ;
