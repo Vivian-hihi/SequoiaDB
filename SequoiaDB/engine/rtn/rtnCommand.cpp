@@ -2802,6 +2802,10 @@ namespace engine
                  _sessionID, rc ) ;
          goto error ;
       }
+      else
+      {
+         PD_LOG( PDEVENT, "Force session[%lld] succeed", _sessionID ) ;
+      }
    done:
       return rc ;
    error:
