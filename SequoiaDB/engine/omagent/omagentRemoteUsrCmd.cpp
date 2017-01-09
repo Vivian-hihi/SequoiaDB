@@ -444,6 +444,7 @@ namespace engine
       string errmsg ;
       const sptResultVal *pRval = NULL ;
       BSONObjBuilder builder ;
+      BSONObj rval ;
 
       // run js code
       rc = _jsScope->eval( _code.c_str(), _code.size(),
@@ -457,7 +458,8 @@ namespace engine
       }
 
       // set result
-      rc = final ( pRval->toBSON(), retObj ) ;
+      rval = pRval->toBSON() ;
+      rc = final ( rval, retObj ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to extract result for command[%s], "

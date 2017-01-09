@@ -192,6 +192,7 @@ namespace engine
       BSONObjBuilder bob ;
       BSONObj detail ;
       const sptResultVal *pRval = NULL ;
+      BSONObj rval ;
 
       rc = getExcuteJsContent( _content ) ;
       if ( rc )
@@ -225,8 +226,9 @@ namespace engine
          retObj = bob.obj() ;
          goto error ;
       }
+      rval = pRval->toBSON() ;
       // 3. adapt the result
-      rc = final ( pRval->toBSON(), retObj ) ;
+      rc = final ( rval, retObj ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to extract result for command[%s], "
