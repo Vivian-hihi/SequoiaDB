@@ -288,7 +288,7 @@ namespace engine
       initCurAuditMask( getAuditMask() ) ;
 
       pmdGetKRCB()->getBuffPool()->enablePerfStat(
-         pmdGetOptionCB->isEnabledPerfStat() ) ;
+         pmdGetOptionCB.isEnabledPerfStat() ) ;
    }
 
    void _pmdController::registerCB( SDB_ROLE dbrole )
