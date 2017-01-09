@@ -53,7 +53,7 @@ INT32 getCurrentSessionId( sdbConnectionHandle db, SINT64* sessionId )
 	return SDB_OK ;
 }
 
-INT32 getNodeSessionIds( sdbConnectionHandle db, const char* nodeName, SINT64 sessionId[], int size )
+INT32 getNodeSessionIds( sdbConnectionHandle db, const char* nodeName, SINT64 sessionId[], char sessionType[1024][20], int size )
 {
 	INT32 rc = SDB_OK ;
 	// get node sessions
@@ -65,6 +65,7 @@ INT32 getNodeSessionIds( sdbConnectionHandle db, const char* nodeName, SINT64 se
     bson selector ;
     bson_init( &selector ) ;
     bson_append_string( &selector, "SessionID", "" ) ;
+	bson_append_string( &selector, "Type", "" ) ;
     bson_finish( &selector ) ;
     sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
     rc = sdbGetList( db, SDB_LIST_SESSIONS, &condition, &selector, NULL, &cursor ) ;
@@ -78,8 +79,11 @@ INT32 getNodeSessionIds( sdbConnectionHandle db, const char* nodeName, SINT64 se
     while( !( rc = sdbNext( cursor, &obj ) ) && i < size )
     {
         bson_iterator it ;
-        bson_iterator_init( &it, &obj ) ;
-        sessionId[i++] = bson_iterator_int( &it ) ;
+		bson_find( &it, &obj, "SessionID" ) ;
+        sessionId[i] = bson_iterator_int( &it ) ;
+		bson_find( &it, &obj, "Type" ) ;
+		strcpy( sessionType[i], bson_iterator_string( &it ) ) ;
+		i++ ;
         bson_destroy( &obj ) ;
         bson_init( &obj ) ;
     }
@@ -97,8 +101,7 @@ TEST( forceSession, currentSession )
 	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
     if( isStandalone( db ) )
 		return ;
-	SINT64 oldSessionId = -1 ;
-	SINT64 newSessionId = -1 ;
+	SINT64 sessionId = -1 ;
 	int groupId[] = { 1, 2, 1000 } ;   // catalogRG/coordRG/dataRG
 
 	const char* hostName = NULL ;
@@ -123,10 +126,10 @@ TEST( forceSession, currentSession )
     	rc = sdbConnect( hostName, svcName, USER, PASSWD, &db ) ;
     	ASSERT_EQ( rc, SDB_OK ) << "fail to connect node" ;
 
-    	// force catalog node current session
-    	rc = getCurrentSessionId( db, &oldSessionId ) ;
+     	// force node current session
+    	rc = getCurrentSessionId( db, &sessionId ) ;
     	ASSERT_EQ( rc, SDB_OK ) ;
-    	rc = sdbForceSession( db, oldSessionId, NULL ) ;
+    	rc = sdbForceSession( db, sessionId, NULL ) ;
     	ASSERT_EQ( rc, SDB_NETWORK_CLOSE ) << "fail to test force curent session" ;
     	
 		// reconect and check session id
@@ -134,10 +137,22 @@ TEST( forceSession, currentSession )
         sdbReleaseConnection( db ) ;
     	rc = sdbConnect( hostName, svcName, USER, PASSWD, &db ) ;
     	ASSERT_EQ( rc, SDB_OK ) << "fail to connect node after force session" ;
-    	rc = getCurrentSessionId( db, &newSessionId ) ;
+		SINT64 sessionIds[1024] ;
+    	char sessionTypes[1024][20] ;
+    	memset( sessionIds, 0, sizeof(sessionIds) ) ;
+		rc = getNodeSessionIds( db, nodeName, sessionIds, sessionTypes, 1024 ) ;
     	ASSERT_EQ( rc, SDB_OK ) ;
-    	ASSERT_NE( newSessionId, oldSessionId ) << "fail to check session id" ;
-		
+    	bool found = false ;
+    	for( int i = 0;i < 1024 && sessionIds[i] != 0;i++ )
+    	{
+        	if( sessionId == sessionIds[i] )
+        	{
+            	found = true ;
+            	break ;
+        	}
+    	}
+    	ASSERT_FALSE( found ) ;	
+	
         // reconect to coord
     	sdbDisconnect( db ) ;
     	sdbReleaseConnection( db ) ;
@@ -184,16 +199,19 @@ TEST( forceSession, withOption )
 
 	// get session ids on node	
 	SINT64 sessionIds[1024] ;
+	char sessionTypes[1024][20] ;
 	memset( sessionIds, 0, sizeof(sessionIds) ) ;
-	rc = getNodeSessionIds( db, nodeName, sessionIds, 1024 ) ;
+	rc = getNodeSessionIds( db, nodeName, sessionIds, sessionTypes, 1024 ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 
-	// get last session id to force
-	SINT64 sessionId ;
+	// get agent session id to force
+	SINT64 sessionId = -1 ;
 	for( int i = 0;i < 1024 && sessionIds[i] != 0;i++ )
 	{
-		sessionId = sessionIds[i] ;
+		if( strcmp( sessionTypes[i], "Agent" ) == 0 )
+			sessionId = sessionIds[i] ;
 	}
+	if( sessionId == -1 ) return ;
 	
 	// make option
 	bson option ;
@@ -218,7 +236,7 @@ TEST( forceSession, withOption )
 	sdbDisconnect( db ) ;
     sdbReleaseConnection( db ) ;
     rc = sdbConnect( hostName, svcName, USER, PASSWD, &db ) ;
-    rc = getNodeSessionIds( db, nodeName, sessionIds, 1024 ) ;
+    rc = getNodeSessionIds( db, nodeName, sessionIds, sessionTypes, 1024 ) ;
     ASSERT_EQ( rc, SDB_OK ) ;
 	bool found = false ;
 	for( int i = 0;i < 1024 && sessionIds[i] != 0;i++ )
