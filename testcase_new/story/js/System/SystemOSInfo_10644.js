@@ -95,11 +95,17 @@ SystemTest.prototype.testGetReleaseInfo = function()
    // 测试获取的系统发行版本信息
    var descript1 = this.system.getReleaseInfo().toObj().Description ;
    descript1 = descript1.replace( /[\t ]/g, '' ) ;
+   var descript2 = [] ;
    var command = "lsb_release -a | grep Description | awk -F ':' '{print $2}'" ;
    var tmpInfo = this.cmd.run( command ).split( "\n" ) ;
-   var descript2 = tmpInfo[tmpInfo.length-2] ; 
-   descript2 = descript2.replace( /[\t ]/g, '' ) ;
-   if( descript1 != descript2 )
+   descript2[0] = tmpInfo[tmpInfo.length-2] ; 
+   descript2[0] = descript2.replace( /[\t ]/g, '' ) ;
+   command = "uname -srm" ;
+   tmpInfo = this.cmd.run( command ).split( "\n" ) ;
+   descript2[1] = tmpInfo[tmpInfo.length-2] ; 
+   descript2[1] = descript2.replace( /[\t ]/g, '' ) ;
+   
+   if( descript1 != descript2[0] &&  descript1 != descript2[1] )
    {
       throw buildException( "testGetReleaseInfo", null, "test description " + this, 
                             descript2, descript1 ) ;
