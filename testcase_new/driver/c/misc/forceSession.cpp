@@ -50,6 +50,7 @@ INT32 getCurrentSessionId( sdbConnectionHandle db, SINT64* sessionId )
     *sessionId = bson_iterator_int( &it ) ;
 	bson_destroy( &obj ) ;	
 	sdbReleaseCursor( cursor ) ;
+	return SDB_OK ;
 }
 
 INT32 getNodeSessionIds( sdbConnectionHandle db, const char* nodeName, SINT64 sessionId[], int size )
@@ -84,6 +85,7 @@ INT32 getNodeSessionIds( sdbConnectionHandle db, const char* nodeName, SINT64 se
     }
     bson_destroy( &obj ) ;
     sdbReleaseCursor( cursor ) ;
+	return SDB_OK ;
 }
 
 TEST( forceSession, currentSession )
