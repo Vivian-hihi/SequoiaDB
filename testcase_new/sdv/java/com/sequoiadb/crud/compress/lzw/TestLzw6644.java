@@ -6,14 +6,12 @@ import java.util.Date;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.crud.compress.snappy.Commlib;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
@@ -36,9 +34,6 @@ public class TestLzw6644 extends SdbTestBase {
             sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         }catch(BaseException e){
             Assert.fail(e.getMessage());
-        }
-        if (Commlib.isStandAlone(sdb)){
-            throw new SkipException("is standalone skip testcase");
         }
     }
     
@@ -64,7 +59,7 @@ public class TestLzw6644 extends SdbTestBase {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             try{
-                cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: false, CompressionType: 'lzw'}"));
+                cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, CompressionType: 'aaa'}"));
                 throw new BaseException("cl shouldn't been created successfully");
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
