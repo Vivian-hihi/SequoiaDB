@@ -15,6 +15,10 @@
       <packages>
       </packages>    
    </test>
-
+   <test name="consistency" >
+      <packages>
+         <package name="com.sequoiadb.metadataConsistency.cluster"/>
+      </packages>
+   </test>
 </suite>
    

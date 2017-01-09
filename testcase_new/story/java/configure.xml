@@ -11,11 +11,7 @@
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
 
-   <test name="consistency" >
-         <packages>
-            <package name="com.sequoiadb.metadataConsistency.cluster"/>
-         </packages>
-   </test>
+
    
    <test name="transaction" >
          <packages>
