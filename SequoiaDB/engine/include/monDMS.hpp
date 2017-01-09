@@ -81,6 +81,14 @@ namespace engine
       UINT32 _currCompressRatio ;
       // end
 
+      /// sync info
+      UINT64 _dataCommitLSN ;
+      UINT64 _idxCommitLSN ;
+      UINT64 _lobCommitLSN ;
+      BOOLEAN _dataIsValid ;
+      BOOLEAN _idxIsValid ;
+      BOOLEAN _lobIsValid ;
+
       _detailedInfo ()
       {
          _numIndexes          = 0 ;
@@ -105,6 +113,14 @@ namespace engine
          _totalDataFreeSpace  = 0 ;
          _totalIndexFreeSpace = 0 ;
          _currCompressRatio   = 0 ;
+
+         /// sync info
+         _dataCommitLSN       = -1 ;
+         _idxCommitLSN        = -1 ;
+         _lobCommitLSN        = -1 ;
+         _dataIsValid         = FALSE ;
+         _idxIsValid          = FALSE ;
+         _lobIsValid          = FALSE ;
       }
    } ;
    typedef class _detailedInfo detailedInfo ;
@@ -214,10 +230,17 @@ namespace engine
       INT64 _freeDataSize ;
       INT64 _freeIndexSize ;
       INT64 _freeLobSize ;
-      UINT64 _dataLsn ;
-      UINT64 _lobLsn ;
-      UINT8  _committed ;
-      string _committedDesc ;
+
+      /// commit info
+      UINT64 _dataCommitLsn ;
+      UINT64 _idxCommitLsn ;
+      UINT64 _lobCommitLsn ;
+      BOOLEAN _dataIsValid ;
+      BOOLEAN _idxIsValid ;
+      BOOLEAN _lobIsValid ;
+
+      /// cache info
+      UINT32 _dirtyPage ;
 
       _monCollectionSpace ()
       {
@@ -234,9 +257,15 @@ namespace engine
          _freeDataSize = 0 ;
          _freeIndexSize = 0 ;
          _freeLobSize = 0 ;
-         _dataLsn = -1 ;
-         _lobLsn = -1 ;
-         _committed = 0 ;
+
+         _dataCommitLsn = -1 ;
+         _idxCommitLsn = -1 ;
+         _lobCommitLsn = -1 ;
+         _dataIsValid = FALSE ;
+         _idxIsValid = FALSE ;
+         _lobIsValid = FALSE ;
+
+         _dirtyPage = 0 ;
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
@@ -254,10 +283,15 @@ namespace engine
          _freeDataSize = right._freeDataSize ;
          _freeIndexSize = right._freeIndexSize ;
          _freeLobSize = right._freeLobSize ;
-         _dataLsn = right._dataLsn ;
-         _lobLsn = right._lobLsn ;
-         _committed = right._committed ;
-         _committedDesc = right._committedDesc ;
+
+         _dataCommitLsn = right._dataCommitLsn ;
+         _idxCommitLsn = right._idxCommitLsn ;
+         _lobCommitLsn = right._lobCommitLsn ;
+         _dataIsValid = right._dataIsValid ;
+         _idxIsValid = right._idxIsValid ;
+         _lobIsValid = right._lobIsValid ;
+
+         _dirtyPage = right._dirtyPage ;
       }
       ~_monCollectionSpace()
       {
@@ -284,10 +318,15 @@ namespace engine
          _freeDataSize = right._freeDataSize ;
          _freeIndexSize = right._freeIndexSize ;
          _freeLobSize = right._freeLobSize ;
-         _dataLsn = right._dataLsn ;
-         _lobLsn = right._lobLsn ;
-         _committed = right._committed ;
-         _committedDesc = right._committedDesc ;
+
+         _dataCommitLsn = right._dataCommitLsn ;
+         _idxCommitLsn = right._idxCommitLsn ;
+         _lobCommitLsn = right._lobCommitLsn ;
+         _dataIsValid = right._dataIsValid ;
+         _idxIsValid = right._idxIsValid ;
+         _lobIsValid = right._lobIsValid ;
+
+         _dirtyPage = right._dirtyPage ;
 
          return *this ;
       }

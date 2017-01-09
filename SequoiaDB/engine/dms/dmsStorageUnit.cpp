@@ -1383,6 +1383,14 @@ namespace engine
          info._lobPageSize = getLobPageSize() ;
          info._currCompressRatio = mbStat->_lastCompressRatio ;
 
+         /// sync info
+         info._dataCommitLSN = mb->_commitLSN ;
+         info._idxCommitLSN = mb->_idxCommitLSN ;
+         info._lobCommitLSN = mb->_lobCommitLSN ;
+         info._dataIsValid = mbStat->_commitFlag.peek() ? TRUE : FALSE ;
+         info._idxIsValid = mbStat->_idxCommitFlag.peek() ? TRUE : FALSE ;
+         info._lobIsValid = mbStat->_lobCommitFlag.peek() ? TRUE : FALSE ;
+
          //add
          collectionList.insert ( collection ) ;
 
@@ -1752,37 +1760,30 @@ namespace engine
              -1 : _pDataSu->getCommitLSN() ;
    }
 
+   UINT64 _dmsStorageUnit::getCurrentIdxLSN() const
+   {
+      return NULL == _pIndexSu ?
+             -1 : _pIndexSu->getCommitLSN() ;
+   }
+
    UINT64 _dmsStorageUnit::getCurrentLobLSN() const
    {
       return NULL == _pLobSu ?
              -1 : _pLobSu->getCommitLSN() ;
    }
 
-   UINT32 _dmsStorageUnit::getValidFlag() const
+   void _dmsStorageUnit::getValidFlag( BOOLEAN &dataFlag,
+                                       BOOLEAN &idxFlag,
+                                       BOOLEAN &lobFlag ) const
    {
-      UINT32 dataFlag =  NULL == _pDataSu ?
-             0 : _pDataSu->getCommitFlag() ;
-      UINT32 indexFlag = NULL == _pIndexSu ?
-             0 : _pIndexSu->getCommitFlag() ;
+      dataFlag =  NULL == _pDataSu ?
+                  TRUE : ( _pDataSu->getCommitFlag() ? TRUE : FALSE ) ;
+      idxFlag = NULL == _pIndexSu ?
+                TRUE : ( _pIndexSu->getCommitFlag() ? TRUE : FALSE ) ;
 
       /// _pLobSu may be NULL, set it as 1
-      UINT32 lobFlag = NULL == _pLobSu ?
-             1: _pLobSu->isOpened() ? _pLobSu->getCommitFlag() : 1 ;
-      return dataFlag && indexFlag && lobFlag ;
-   }
-
-   string _dmsStorageUnit::getValidFlagDesc() const
-   {
-      std::stringstream ss ;
-      UINT32 dataFlag =  ( NULL == _pDataSu ?
-                           0 : _pDataSu->getCommitFlag() ) ;
-      UINT32 indexFlag = ( NULL == _pIndexSu ?
-                           0 : _pIndexSu->getCommitFlag() ) ;
-      UINT32 lobFlag = ( NULL == _pLobSu ?
-                         1 : ( _pLobSu->isOpened() ?
-                               _pLobSu->getCommitFlag() : 1 ) ) ;
-      ss << dataFlag << indexFlag << lobFlag ;
-      return ss.str() ;
+      lobFlag = ( NULL == _pLobSu || !_pLobSu->isOpened() ) ?
+                TRUE : ( _pLobSu->getCommitFlag() : TRUE : FALSE ) ;
    }
 
 }  // namespace engine

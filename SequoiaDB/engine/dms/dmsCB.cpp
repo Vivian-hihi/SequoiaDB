@@ -1565,10 +1565,15 @@ namespace engine
          cs._totalLobSize = su->totalSize( DMS_SU_LOB ) ;
          cs._freeLobSize = totalLobFreeSize ;
 
-         cs._dataLsn = su->getCurrentDataLSN() ;
-         cs._lobLsn = su->getCurrentLobLSN() ;
-         cs._committed = su->getValidFlag() ;
-         cs._committedDesc = su->getValidFlagDesc() ;
+         /// sync info
+         cs._dataCommitLsn = su->getCurrentDataLSN() ;
+         cs._idxCommitLsn = su->getCurrentIdxLSN() ;
+         cs._lobCommitLsn = su->getCurrentLobLSN() ;
+         su->getValidFlag( cs._dataIsValid, cs._idxIsValid, cs._lobIsValid ) ;
+
+         /// cache info
+         cs._dirtyPage = su->cacheUnit()->dirtyPages() ;
+
          su->dumpInfo ( cs._collections, sys ) ;
          csList.insert ( cs ) ;
       }

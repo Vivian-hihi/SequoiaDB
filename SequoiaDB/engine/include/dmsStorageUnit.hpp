@@ -112,6 +112,7 @@ namespace engine
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }
          rtnAccessPlanManager *getAPM () { return &_apm ; }
+         utilCacheUnit     *cacheUnit() { return _pCacheUnit ; }
 
          INT32       getPageSize() const { return _storageInfo._pageSize ; }
          INT32       getLobPageSize() const { return _storageInfo._lobdPageSize ; }
@@ -146,9 +147,11 @@ namespace engine
          void        setSyncDeep( BOOLEAN syncDeep ) ;
 
          UINT64      getCurrentDataLSN() const ;
+         UINT64      getCurrentIdxLSN() const ;
          UINT64      getCurrentLobLSN() const ;
-         std::string getValidFlagDesc() const ;
-         UINT32      getValidFlag() const ;
+         void        getValidFlag( BOOLEAN &dataFlag,
+                                   BOOLEAN &idxFlag,
+                                   BOOLEAN &lobFlag ) const ;
 
       public:
          void     dumpInfo ( set<monCLSimple> &collectionList,

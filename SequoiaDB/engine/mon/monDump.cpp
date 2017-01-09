@@ -70,6 +70,8 @@ namespace engine
    #define MON_TMP_STR_SZ           ( 64 )
    #define OSS_MAX_FILE_SZ          ( 8796093022208ll )
 
+   #define MON_DUMP_DFT_BUILDER_SZ  ( 1024 )
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONGETNODENAME, "monGetNodeName" )
    static CHAR *monGetNodeName ( CHAR *nodeName,
                                  UINT32 size,
@@ -171,10 +173,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_MONAPPENDSYSTEMINFO ) ;
 
       pmdKRCB *krcb     = pmdGetKRCB() ;
-      replCB *pReplcb   = sdbGetReplCB() ;
       SDB_DPSCB *dpscb  = krcb->getDPSCB() ;
-      shardCB *pShardCB = sdbGetShardCB() ;
       dpsTransCB *transCB = krcb->getTransCB() ;
+      clsCB *pClsCB     = krcb->getClsCB() ;
 
       const CHAR *serviceName       = pmdGetOptionCB()->getServiceAddr() ;
       const CHAR *groupName         = krcb->getGroupName() ;
@@ -203,21 +204,20 @@ namespace engine
             ob.append ( FIELD_NAME_SERVICE_NAME, serviceName ) ;
          }
 
-         if ( pReplcb )
+         if ( MON_MASK_GROUP_NAME & mask )
          {
-            if ( MON_MASK_GROUP_NAME & mask )
-            {
-               ob.append ( FIELD_NAME_GROUPNAME, groupName ) ;
-            }
-            if ( MON_MASK_IS_PRIMARY & mask )
-            {
-               ob.appendBool ( FIELD_NAME_IS_PRIMARY, pReplcb->primaryIsMe() ) ;
-            }
-            if ( MON_MASK_SERVICE_STATUS & mask )
-            {
-               ob.appendBool ( FIELD_NAME_SERVICE_STATUS,
-                               PMD_IS_DB_AVAILABLE() ) ;
-            }
+            ob.append ( FIELD_NAME_GROUPNAME, groupName ) ;
+         }
+         if ( MON_MASK_IS_PRIMARY & mask )
+         {
+            ob.appendBool ( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
+         }
+         if ( MON_MASK_SERVICE_STATUS & mask )
+         {
+            ob.appendBool ( FIELD_NAME_SERVICE_STATUS,
+                            PMD_IS_DB_AVAILABLE() ) ;
+            ob.append( FIELD_NAME_GROUP_STATUS,
+                       utilDBStatusStr( krcb->getDBStatus() ) ) ;
          }
 
          if ( dpscb && ( MON_MASK_LSN_INFO & mask ) )
@@ -225,26 +225,43 @@ namespace engine
             DPS_LSN beginLSN ;
             DPS_LSN currentLSN ;
             DPS_LSN committed ;
-            dpscb->getLsnWindow( beginLSN, currentLSN, NULL, &committed ) ;
+            DPS_LSN expectLSN ;
+            dpscb->getLsnWindow( beginLSN, currentLSN, &expectLSN, &committed ) ;
 
             INT64 offset = (INT64)currentLSN.offset ;
             PD_TRACE2 ( SDB_MONAPPENDSYSTEMINFO,
                         PD_PACK_RAW ( &currentLSN, sizeof(DPS_LSN) ),
                         PD_PACK_LONG ( offset ) ) ;
-            BSONObj bsonTemp = BSON ( FIELD_NAME_LSN_OFFSET << offset <<
-                                      FIELD_NAME_LSN_VERSION <<
-                                      currentLSN.version ) ;
-            BSONObj beginLsnObj = BSON( FIELD_NAME_LSN_OFFSET <<
-                                        (INT64)beginLSN.offset <<
-                                        FIELD_NAME_LSN_VERSION <<
-                                        beginLSN.version ) ;
-            BSONObj committedLsnObj = BSON( FIELD_NAME_LSN_OFFSET <<
-                                           (INT64)committed.offset <<
-                                           FIELD_NAME_LSN_VERSION <<
-                                           committed.version ) ;
-            ob.append ( FIELD_NAME_BEGIN_LSN, beginLsnObj ) ;
-            ob.append ( FIELD_NAME_CURRENT_LSN, bsonTemp ) ;
-            ob.append ( FIELD_NAME_COMMIT_LSN, committedLsnObj ) ;
+
+            BSONObjBuilder subBegin( ob.subobjStart( FIELD_NAME_BEGIN_LSN ) ) ;
+            subBegin.append( FIELD_NAME_LSN_OFFSET, (INT64)beginLSN.offset ) ;
+            subBegin.append( FIELD_NAME_LSN_VERSION, beginLSN.version ) ;
+            subBegin.done() ;
+
+            BSONObjBuilder subCur( ob.subobjStart( FIELD_NAME_CURRENT_LSN ) ) ;
+            subCur.append( FIELD_NAME_LSN_OFFSET, offset ) ;
+            subCur.append( FIELD_NAME_LSN_VERSION, currentLSN.version ) ;
+            subCur.done() ;
+
+            BSONObjBuilder subCommit( ob.subobjStart( FIELD_NAME_COMMIT_LSN ) ) ;
+            subCommit.append( FIELD_NAME_LSN_OFFSET, (INT64)committed.offset ) ;
+            subCommit.append( FIELD_NAME_LSN_VERSION, committed.version ) ;
+            subCommit.done() ;
+
+            /// complete lsn and queue size
+            if ( pClsCB )
+            {
+               clsBucket *pBucket = pClsCB->getReplCB()->getBucket() ;
+               DPS_LSN completeLSN = pBucket->completeLSN() ;
+               UINT32 lsnQueSize = pBucket->bucketSize() ;
+
+               if ( pClsCB->isPrimary() || completeLSN.invalid() )
+               {
+                  completeLSN = expectLSN ;
+               }
+               ob.append( FIELD_NAME_COMPLETE_LSN, (INT64)completeLSN.offset ) ;
+               ob.append( FIELD_NAME_LSN_QUE_SIZE, (INT32)lsnQueSize ) ;
+            }
          }
 
          if ( transCB && ( MON_MASK_TRANSINFO & mask ) )
@@ -252,19 +269,21 @@ namespace engine
             UINT32 transCount = pmdIsPrimary() ?
                                 transCB->getTransCBSize() :
                                 (UINT32)transCB->getTransMap()->size() ;
-            BSONObj obj = BSON( FIELD_NAME_TOTAL_COUNT <<
-                                (INT32)transCount <<
-                                FIELD_NAME_BEGIN_LSN <<
-                                (INT64)transCB->getOldestBeginLsn() ) ;
-            ob.append ( FIELD_NAME_TRANS_INFO, obj ) ;
+
+            BSONObjBuilder subTrans( ob.subobjStart( FIELD_NAME_TRANS_INFO ) ) ;
+            subTrans.append( FIELD_NAME_TOTAL_COUNT, (INT32)transCount ) ;
+            subTrans.append( FIELD_NAME_BEGIN_LSN,
+                             (INT64)transCB->getOldestBeginLsn() ) ;
+            subTrans.done() ;
          }
 
-         if ( pShardCB && ( MON_MASK_NODEID & mask ) )
+         if ( MON_MASK_NODEID & mask )
          {
-            NodeID selfID = pShardCB->nodeID() ;
-            BSONArray nodeArr = BSON_ARRAY( selfID.columns.groupID <<
-                                            selfID.columns.nodeID ) ;
-            ob.appendArray( FIELD_NAME_NODEID,  nodeArr ) ;
+            NodeID selfID = pmdGetNodeID() ;
+            BSONArrayBuilder subID( ob.subarrayStart( FIELD_NAME_NODEID ) ) ;
+            subID.append( (INT32)selfID.columns.groupID ) ;
+            subID.append( (INT32)selfID.columns.nodeID ) ;
+            subID.done() ;
          }
       }
       catch ( std::exception &e )
@@ -296,15 +315,16 @@ namespace engine
                   PD_PACK_INT ( minor ),
                   PD_PACK_INT ( release ),
                   PD_PACK_STRING ( pBuild ) ) ;
-      BSONObjBuilder obVersion ;
       try
       {
+         BSONObjBuilder obVersion( ob.subobjStart( FIELD_NAME_VERSION ) ) ;
          obVersion.append ( FIELD_NAME_MAJOR, major ) ;
          obVersion.append ( FIELD_NAME_MINOR, minor ) ;
          obVersion.append ( FIELD_NAME_FIX, fix ) ;
          obVersion.append ( FIELD_NAME_RELEASE, release ) ;
          obVersion.append ( FIELD_NAME_BUILD, pBuild ) ;
-         ob.append ( FIELD_NAME_VERSION, obVersion.obj () ) ;
+         obVersion.done() ;
+
 #ifdef SDB_ENTERPRISE
          ob.append ( FIELD_NAME_EDITION, "Enterprise" ) ;
 #endif // SDB_ENTERPRISE
@@ -517,7 +537,7 @@ namespace engine
             monIndex &indexItem = (*it) ;
             BSONObj &indexObj = indexItem._indexDef ;
             BSONObj obj ;
-            BSONObjBuilder builder ;
+            BSONObjBuilder builder( MON_DUMP_DFT_BUILDER_SZ ) ;
             BSONObjBuilder ob (builder.subobjStart(IXM_FIELD_NAME_INDEX_DEF )) ;
             ob.append ( IXM_NAME_FIELD,
                         indexObj.getStringField(IXM_NAME_FIELD) ) ;
@@ -658,7 +678,7 @@ namespace engine
          try
          {
             datablockNum = 0 ;
-            BSONObjBuilder builder ;
+            BSONObjBuilder builder( MON_DUMP_DFT_BUILDER_SZ ) ;
             BSONArrayBuilder blockArrBd ;
             BSONObj obj ;
 
@@ -726,7 +746,7 @@ namespace engine
          try
          {
             indexblockNum = 0 ;
-            BSONObjBuilder builder ;
+            BSONObjBuilder builder( MON_DUMP_DFT_BUILDER_SZ ) ;
             BSONArrayBuilder blockArrBd ;
             BSONObj obj ;
 
@@ -856,8 +876,8 @@ namespace engine
          SDB_ROLE role = pKrcb->getDBRole() ;
          ob.append( FIELD_NAME_SVC_NETIN, pdbCB->svcNetIn() ) ;
          ob.append( FIELD_NAME_SVC_NETOUT, pdbCB->svcNetOut() ) ;
-         if ( SDB_ROLE_DATA == role
-            || SDB_ROLE_CATALOG == role )
+         if ( SDB_ROLE_DATA == role ||
+              SDB_ROLE_CATALOG == role )
          {
             shardCB *pShardCB = sdbGetShardCB() ;
             ob.append( FIELD_NAME_SHARD_NETIN, pShardCB->netIn() ) ;
@@ -1125,7 +1145,7 @@ namespace engine
       }
       else
       {
-         BSONObjBuilder bobEduTransInfo ;
+         BSONObjBuilder bobEduTransInfo( MON_DUMP_DFT_BUILDER_SZ ) ;
          bobEduTransInfo.appendElements( _curEduInfo ) ;
 
          BSONArrayBuilder babLockList( bobEduTransInfo.subarrayStart(
@@ -1347,7 +1367,7 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
          ossTickConversionFactor factor ;
 
          std::map<UINT64, std::set<monContextFull> >::iterator it ;
@@ -1585,7 +1605,7 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
          std::set<monEDUFull>::iterator it ;
 
          it = _setInfoDetail.begin() ;
@@ -1784,7 +1804,7 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( 512 ) ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
          std::set< monCollection >::iterator it ;
          std::map<UINT32, detailedInfo>::const_iterator itDetail ;
 
@@ -1855,6 +1875,15 @@ namespace engine
                          (long long)(detail._totalIndexFreeSpace )) ;
             sub.append ( FIELD_NAME_CURR_COMPRESS_RATIO,
                          (FLOAT64)detail._currCompressRatio / 100.0 ) ;
+
+            /// sync info
+            sub.append ( FIELD_NAME_DATA_COMMIT_LSN, (INT64)detail._dataCommitLSN ) ;
+            sub.append ( FIELD_NAME_IDX_COMMIT_LSN, (INT64)detail._idxCommitLSN ) ;
+            sub.append ( FIELD_NAME_LOB_COMMIT_LSN, (INT64)detail._lobCommitLSN ) ;
+            sub.appendBool ( FIELD_NAME_DATA_COMMITTED, detail._dataIsValid ) ;
+            sub.appendBool ( FIELD_NAME_IDX_COMMITTED, detail._idxIsValid ) ;
+            sub.appendBool ( FIELD_NAME_LOB_COMMITTED, detail._lobIsValid ) ;
+
             sub.done() ;
          }
          ba.done() ;
@@ -2025,7 +2054,7 @@ namespace engine
       {
          INT64 dataCapSize    = 0 ;
          INT64 lobCapSize     = 0 ;
-         BSONObjBuilder ob( 512 ) ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
          std::set< monCollectionSpace >::iterator it ;
          std::map<UINT32, detailedInfo>::const_iterator itDetail ;
 
@@ -2075,10 +2104,17 @@ namespace engine
          ob.append ( FIELD_NAME_FREE_IDX_SIZE, full._freeIndexSize ) ;
          ob.append ( FIELD_NAME_TOTAL_LOB_SIZE, full._totalLobSize ) ;
          ob.append ( FIELD_NAME_FREE_LOB_SIZE, full._freeLobSize ) ;
-         ob.append ( FIELD_NAME_CURRENT_LSN, ( INT64 )(full._dataLsn) ) ;
-         ob.append ( FIELD_NAME_CURRENT_LOB_LSN, ( INT64 )(full._lobLsn) ) ;
-         ob.append ( FIELD_NAME_COMMITTED_DESC, full._committedDesc ) ;
-         ob.appendBool( FIELD_NAME_COMMITTED, full._committed ) ;
+
+         /// sync info
+         ob.append ( FIELD_NAME_DATA_COMMIT_LSN, (INT64)full._dataCommitLsn ) ;
+         ob.append ( FIELD_NAME_IDX_COMMIT_LSN, (INT64)full._idxCommitLsn ) ;
+         ob.append ( FIELD_NAME_LOB_COMMIT_LSN, (INT64)full._lobCommitLsn ) ;
+         ob.appendBool ( FIELD_NAME_DATA_COMMITTED, full._dataIsValid ) ;
+         ob.appendBool ( FIELD_NAME_IDX_COMMITTED, full._idxIsValid ) ;
+         ob.appendBool ( FIELD_NAME_LOB_COMMITTED, full._lobIsValid ) ;
+
+         /// cache info
+         ob.append ( FIELD_NAME_DIRTY_PAGE, (INT32)full._dirtyPage ) ;
 
          obj = ob.obj() ;
 
@@ -2167,7 +2203,7 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( 1024 ) ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
 
          /// add system info
          monAppendSystemInfo ( ob, _addInfoMask ) ;
@@ -2325,7 +2361,7 @@ namespace engine
       // generate BSON return obj
       try
       {
-         BSONObjBuilder ob( 1024 ) ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ ) ;
 
          /// add system info
          monAppendSystemInfo ( ob, _addInfoMask ) ;
@@ -2468,7 +2504,7 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( 512 ) ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
          std::set< monStorageUnit >::iterator it ;
 
          it = _suInfo.begin() ;
@@ -2637,7 +2673,7 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( 512 ) ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
 
          const monIndex &indexItem = _indexInfo[ _pos++ ] ;
          const BSONObj &indexObj = indexItem._indexDef ;
@@ -2826,7 +2862,7 @@ namespace engine
 
       try
       {
-         BSONObjBuilder ob( 4096 ) ;
+         BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ * 4 ) ;
 
          /// add system info
          monAppendSystemInfo( ob, _addInfoMask ) ;
@@ -3021,7 +3057,7 @@ namespace engine
       {
          try
          {
-            BSONObjBuilder ob( 512 ) ;
+            BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
 
             /// add system info
             monAppendSystemInfo( ob, _addInfoMask ) ;
