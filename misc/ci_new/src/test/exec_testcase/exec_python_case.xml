@@ -30,21 +30,34 @@
                <fileset dir="@{suitfullname}" includes="*.py" excludes=""/>
             </path>
             <sequential> 
-               <markinlog casename ="@{casefullname}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
-               
                <var name="testcase_name" unset="true" />
                <basename property="testcase_name" file="@{casefullname}" suffix=".py"/>
                <var name="testsuit_name" unset="true" />
-               <basename property="testsuit_name" file="@{suitfullname}"/>
+               <basename property="testsuit_name" file="@{suitfullname}"/>              
                <hostinfo prefix="host" />
-               <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}.xml"/>
-                                 
+               
+               <markinlog casename ="@{casefullname}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
+               
+               <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}_py2.xml"/>
                <execonecase casefullname="@{casefullname}"
-                              casename="${testcase_name}"
-                              suitname="${testsuit_name}"
-                              dbdir="${INSTALL_DIR}" 
-                              report="${report_fullname}"/>
-                                            
+                            casename="${testcase_name}"
+                            suitname="${testsuit_name}"
+                            dbdir="${INSTALL_DIR}" 
+                            report="${report_fullname}"
+                            pyexecutable="python2"/>
+               
+               <markinlog casename ="@{casefullname}" marktype="end" sdbshell="${sdbshell_fullname}"/>
+               
+               <markinlog casename ="@{casefullname}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
+               
+               <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}_py3.xml"/>
+               <execonecase casefullname="@{casefullname}"
+                            casename="${testcase_name}"
+                            suitname="${testsuit_name}"
+                            dbdir="${INSTALL_DIR}" 
+                            report="${report_fullname}"
+                            pyexecutable="python3"/> 
+                            
                <markinlog casename ="@{casefullname}" marktype="end" sdbshell="${sdbshell_fullname}"/>
             </sequential>
          </for>
@@ -58,12 +71,18 @@
       <sequential>
          <var name="pythondir" value="@{dbdir}/python"/>
          <switch value="@{type}">
+         
             <case value="install">
                <untar src="${pythondir}/pysequoiadb-2.8-py2.tar.gz" dest="${pythondir}" compression="gzip"/>
                <exec executable="python" dir="${pythondir}">
                   <arg line=" setup.py install" />
                </exec>
+               <untar src="${pythondir}/pysequoiadb-2.8-py3.tar.gz" dest="${pythondir}" compression="gzip"/>
+               <exec executable="python3" dir="${pythondir}">
+                  <arg line=" setup.py install" />
+               </exec>
             </case>
+            
             <case value="uninstall">
             </case>
          </switch>
@@ -76,6 +95,7 @@
       <attribute name="report" />
       <attribute name="casename" />   
       <attribute name="suitname" />
+      <attribute name="pyexecutable" />
       <sequential>
          <var name="begin_time" unset="true"/>
          <tstamp>
@@ -86,13 +106,13 @@
          </script>
 
          <var name="cmd" value="@{casefullname} -H localhost -p ${SVCNAME}"/>   
-         <echo message="${line.separator}exec cmd: python ${cmd}"/>
+         <echo message="${line.separator}exec cmd: @{pyexecutable} ${cmd}"/>
          
          <var name="testcase_dir" unset="true"/>
          <dirname property="testcase_dir" file="@{casefullname}" />         
          <var name="screen_output" unset="true"/>
          <var name="rc" unset="true"/>
-         <exec executable="python" 
+         <exec executable="@{pyexecutable}" 
                dir="${testcase_dir}" 
                timeout="1200000" 
                outputproperty="screen_output" 
@@ -121,12 +141,12 @@
             <then>
                <echo file="@{report}" 
                      append="true" 
-                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}&quot; time=&quot;${total_time}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
+                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}_@{pyexecutable}&quot; time=&quot;${total_time}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
             </then>
             <else>
                <echo file="@{report}" 
                      append="true"
-                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;EXECUTE CMD: python ${cmd}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />             
+                     message="&lt;testcase classname=&quot;${TESTCASE_TYPE}.@{suitname}&quot; name=&quot;@{casename}_@{pyexecutable}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;EXECUTE CMD: python ${cmd}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />             
             </else>
          </if>
                          
