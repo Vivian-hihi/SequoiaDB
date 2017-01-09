@@ -1256,7 +1256,6 @@
          <en>Wether enable perfermance stat or not</en>
          <cn>是否开启性能统计</cn>
       </description>
-      <type>boolean</type>
       <default>false</default>
       <hidden>true</hidden>
    </opt>
