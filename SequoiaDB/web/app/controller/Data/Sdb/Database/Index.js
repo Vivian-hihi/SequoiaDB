@@ -54,7 +54,7 @@
       //分区表数量
       $scope.partitionCLNum = 0 ;
       //右侧高度偏移量
-      $scope.boxHeight = ( moduleMode == 'distribution' ) ? { 'offsetY': -291 } : { 'offsetY': -207 } ;
+      $scope.boxHeight = ( moduleMode == 'distribution' ) ? { 'offsetY': -281 } : { 'offsetY': -200 } ;
       //判断如果是Firefox浏览器的话，调整右侧表格高度
       var browser = SdbFunction.getBrowserInfo() ;
       if( browser[0] == 'firefox' )
@@ -2105,10 +2105,20 @@
          var indexValid = [] ; 
          var fullName = '' ;
          var indexesInfoList = [] ;
+         var clDefault = -1 ;
          $.each( $scope.clList, function( index, clInfo ){
+            if( clInfo['IsMainCL'] === true && clInfo['Info']['CataInfo'].length == 0 )
+            {
+               return true ;
+            }
             clValid.push( { 'key': clInfo['csName'] + '.' + clInfo['Name'], 'value': index } ) ;
+            if( fullName.length == 0 )
+               fullName = clInfo['csName'] + '.' + clInfo['Name'] ;
+            if( clDefault < 0 )
+               clDefault = index ;
             if( $scope.clID == index )
             {
+               clDefault = index ;
                fullName = clInfo['csName'] + '.' + clInfo['Name'] ;
             }
          } ) ;
@@ -2131,7 +2141,7 @@
                      "name": "clName",
                      "webName": $scope.autoLanguage( '集合' ),
                      "type": "select",
-                     "value": $scope.clID,
+                     "value": clDefault,
                      "valid": clValid,
                      "onChange": function( name, key, value ){
                         var data = { 'cmd': 'list indexes', 'collectionname': key } ;

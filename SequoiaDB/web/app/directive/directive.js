@@ -5363,7 +5363,7 @@
                   //设置表格内容跟表格头的间距
                   var resetBodyTop = function(){
                      $timeout( function(){
-                        $( bodyBox ).css( { 'padding-top': $( headerBox ).height() + 'px' } ) ;
+                        $( bodyBox ).css( { 'padding-top': ( $( headerBox ).height() + 1 ) + 'px' } ) ;
                      }, 0, false ) ;
                   } ;
 
