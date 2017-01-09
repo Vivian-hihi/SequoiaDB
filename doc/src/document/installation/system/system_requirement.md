@@ -125,8 +125,9 @@
          
          ```lang-javascript
          $ SuSEfirewall2 stop
-         $ chkconfig SuSEfirewall2_setup
-	     ```
+         $ chkconfig SuSEfirewall2_init off
+         $ chkconfig SuSEfirewall2_setup off
+	       ```
 
   - 对于 RedHat：
      1. 执行如下命令    
