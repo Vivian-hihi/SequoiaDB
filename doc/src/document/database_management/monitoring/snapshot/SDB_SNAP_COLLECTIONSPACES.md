@@ -32,6 +32,13 @@ SDB_SNAP_COLLECTIONSPACES
 | FreeIndexSize   | 长整型     | 集合空间索引文件空闲空间大小   |
 | TotalLobSize    | 长整型     | 集合空间大对象文件总大小       |
 | FreeLobSize     | 长整型     | 集合空间大对象文件空闲空间大小 |
+| DataCommitLSN   | 长整型     | 集合空间数据文件最后提交LSN    |
+| IndexCommitLSN  | 长整型     | 集合空间索引文件最后提交LSN    |
+| LobCommitLSN    | 长整型     | 集合空间大对象文件最后提交LSN  |
+| DataCommitted   | 布尔型     | 集合空间数据文件当前是否有效提交 |
+| IndexCommitted  | 布尔型     | 集合空间索引文件当前是否有效提交 |
+| LobCommitted    | 布尔型     | 集合空间大对象文件当前是否有效提交 |
+| DirtyPage       | 整型       | 集合空间大对象文件在开启缓存下脏页数量 |
 
 ##协调节点字段信息##
 
@@ -77,6 +84,13 @@ SDB_SNAP_COLLECTIONSPACES
   "FreeIndexSize": 134152171,
   "TotalLobSize": 352714752,
   "FreeLobSize": 140771328,
+  "DataCommitLSN": 160,
+  "IndexCommitLSN": 180,
+  "LobCommitLSN": -1,
+  "DataCommitted": false,
+  "IndexCommitted": false,
+  "LobCommitted": true,
+  "DirtyPage": 0,
   "Name": "foo"
 }
 ```

@@ -27,6 +27,12 @@ SDB_SNAP_COLLECTIONS
 | Details.TotalDataFreeSpace  | 长整型        | 集合的数据空闲空间                                      |
 | Details.TotalIndexFreeSpace | 长整型        | 集合的索引空闲空间                                      |
 | Details.CurrentCompressionRatio | 浮点型    | 集合的的压缩率                                          |
+| DataCommitLSN   | 长整型     | 集合数据文件最后提交LSN    |
+| IndexCommitLSN  | 长整型     | 集合索引文件最后提交LSN    |
+| LobCommitLSN    | 长整型     | 集合大对象文件最后提交LSN  |
+| DataCommitted   | 布尔型     | 集合数据文件当前是否有效提交 |
+| IndexCommitted  | 布尔型     | 集合索引文件当前是否有效提交 |
+| LobCommitted    | 布尔型     | 集合大对象文件当前是否有效提交 |
 
 ##协调节点字段信息##
 
@@ -65,7 +71,13 @@ SDB_SNAP_COLLECTIONS
       "TotalLobPages": 0,
       "TotalDataFreeSpace": 0,
       "TotalIndexFreeSpace": 196545,
-      "CurrentCompressionRatio": 1
+      "CurrentCompressionRatio": 1,
+      "DataCommitLSN": 160,
+      "IndexCommitLSN": 180,
+      "LobCommitLSN": -1,
+      "DataCommitted": false,
+      "IndexCommitted": false,
+      "LobCommitted": true
     }
   ]
 }
