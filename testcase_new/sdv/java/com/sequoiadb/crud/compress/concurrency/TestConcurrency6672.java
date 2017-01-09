@@ -7,6 +7,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -225,7 +226,7 @@ public class TestConcurrency6672 extends SdbTestBase {
     }
     
     private void checkDeleted(){
-        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);				
+        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);             
         BSONObject delMatcher = new BasicBSONObject();
         delMatcher.put("a", (BSONObject)JSON.parse("{$lt : 3000}"));
         if((int)cl.getCount(delMatcher) != 0){
