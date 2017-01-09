@@ -7,6 +7,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -15,6 +16,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -45,6 +47,10 @@ public class DropMainSub105 extends SdbTestBase {
 			System.out.println("the TestCase :" + this.getClass().getName()
 					+ ". the TestCase begin at:" + this.df.format(new Date()));
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			CommLib lib = new CommLib();
+			if (lib.isStandAlone(sdb)) {
+				throw new SkipException("skip standalone");
+			}
 			commCS1 = sdb.getCollectionSpace(SdbTestBase.csName);
 			commCS2 = createCS();
 			mainCl1 = createCL(mainClName1, commCS1,

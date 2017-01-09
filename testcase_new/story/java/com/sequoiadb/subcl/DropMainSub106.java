@@ -2,11 +2,13 @@ package com.sequoiadb.subcl;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import com.sequoiadb.testcommon.CommLib;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -48,6 +50,10 @@ public class DropMainSub106 extends SdbTestBase {
 			System.out.println("the TestCase :" + this.getClass().getName()
 					+ ". the TestCase begin at:" + this.df.format(new Date()));
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			CommLib lib = new CommLib();
+			if (lib.isStandAlone(sdb)) {
+				throw new SkipException("skip standalone");
+			}
 			commCS1 = sdb.getCollectionSpace(SdbTestBase.csName);
 			commCS2 = createCS(cs2Name);
 			mainCl1 = createCL(mainClName1, commCS1,
