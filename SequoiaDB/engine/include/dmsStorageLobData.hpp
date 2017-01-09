@@ -66,6 +66,15 @@ namespace engine
                            UINT32 &readLen,
                            IExecutor *cb ) ;
 
+      virtual INT64 pageID2Offset( INT32 pageID ) const
+      {
+         return getSeek( pageID, 0 ) ;
+      }
+
+      virtual INT32  writeRaw( INT64 offset, const CHAR *pData,
+                               UINT32 len, IExecutor *cb,
+                               BOOLEAN isAligned ) ;
+
    public:
       OSS_INLINE INT64 getFileSz() const
       {

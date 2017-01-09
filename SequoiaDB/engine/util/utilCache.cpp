@@ -1779,6 +1779,230 @@ namespace engine
    }
 
    /*
+      _utilCacheMerge implement
+   */
+   _utilCacheMerge::_utilCacheMerge()
+   {
+      _pCache = NULL ;
+      _cacheSize = 0 ;
+      _dataLength = 0 ;
+      _firstPageID = -1 ;
+      _lastPageID = -1 ;
+      _pageNum = 0 ;
+
+      _pageSize = 0 ;
+      _pFile = NULL ;
+      _isAlignment = FALSE ;
+   }
+
+   _utilCacheMerge::~_utilCacheMerge()
+   {
+      fini() ;
+   }
+
+   INT32 _utilCacheMerge::init( UINT32 pageSize,
+                                utilCachFileBase *pFile,
+                                BOOLEAN alignment,
+                                UINT32 cacheSize )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( pageSize > 0 && 0 == ( pageSize % 4096 ),
+                  "Page size is invalid" ) ;
+      SDB_ASSERT( cacheSize > pageSize && 0 == ( cacheSize % pageSize ),
+                  "Cache size must be multi of pageSize" ) ;
+
+      if ( _pCache || !pFile ||
+           0 == pageSize || 0 != ( pageSize % 4096 ) ||
+           cacheSize <= pageSize )
+      {
+         rc = SDB_SYS ;
+      }
+      _pageSize = pageSize ;
+      _pFile = pFile ;
+      _isAlignment = alignment ;
+      _cacheSize = ossAlignX( cacheSize, pageSize ) ;
+
+      /// allocate memory
+      if ( alignment )
+      {
+         _pCache = ( CHAR* )ossAlignedAlloc( OSS_FILE_DIRECT_IO_ALIGNMENT,
+                                             _cacheSize ) ;
+      }
+      else
+      {
+         _pCache = ( CHAR* )SDB_OSS_MALLOC( _cacheSize ) ;
+      }
+      if ( !_pCache )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Alloc memory[Alignment: %s, Size: %d] failed",
+                 alignment ? "true" : "false", _cacheSize ) ;
+         _cacheSize = 0 ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _utilCacheMerge::fini()
+   {
+      if ( _pCache )
+      {
+         if ( _isAlignment )
+         {
+            SDB_OSS_ORIGINAL_FREE( _pCache ) ;
+         }
+         else
+         {
+            SDB_OSS_FREE( _pCache ) ;
+         }
+         _pCache = NULL ;
+         _cacheSize = 0 ;
+      }
+   }
+
+   BOOLEAN _utilCacheMerge::isEmpty() const
+   {
+      return _dataLength == 0 ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _utilCacheMerge::isFull() const
+   {
+      return _dataLength == _cacheSize ? TRUE : FALSE ;
+   }
+
+   UINT32 _utilCacheMerge::freeSize() const
+   {
+      return _cacheSize - _dataLength ;
+   }
+
+   UINT32 _utilCacheMerge::capacity() const
+   {
+      return _cacheSize ;
+   }
+
+   UINT32 _utilCacheMerge::getLength() const
+   {
+      return _dataLength ;
+   }
+
+   const CHAR* _utilCacheMerge::getData() const
+   {
+      return _pCache ;
+   }
+
+   INT32 _utilCacheMerge::write( INT32 pageID, utilCachePage *pPage )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
+      UINT32 len = 0 ;
+      CHAR *pBuff = NULL ;
+      UINT32 offset = 0 ;
+      UINT32 lastLen = pPage->dirtyLength() ;
+      UINT32 alignLen = ossAlignX( lastLen, _pageSize ) ;
+
+      /// page id is not continous
+      if ( _pageNum > 0 && _lastPageID + 1 != pageID )
+      {
+         rc = SDB_IO ;
+         goto error ;
+      }
+      else if ( pPage->dirtyLength() < ( _pageSize >> 2 )  )
+      {
+         rc = SDB_IO ;
+         goto error ;
+      }
+      else if ( _dataLength + alignLen > _cacheSize ||
+                alignLen != _pageSize )
+      {
+         rc = SDB_NOSPC ;
+         goto error ;
+      }
+
+      pos = pPage->beginBlock() ;
+      while( NULL != ( pBuff = pPage->nextBlock( len, pos ) ) )
+      {
+         if ( pPage->dirtyStart() > offset + len )
+         {
+            offset += len ;
+            lastLen -= len ;
+            continue ;
+         }
+         else if ( pPage->dirtyStart() > offset )
+         {
+            UINT32 pageOffset = pPage->dirtyStart() - offset ;
+            pBuff += pageOffset ;
+            lastLen -= pageOffset ;
+            offset += pageOffset ;
+            len -= pageOffset ;
+         }
+
+         if ( lastLen < len )
+         {
+            len = lastLen ;
+         }
+         /// copy data
+         ossMemcpy( _pCache + _dataLength + offset,
+                    pBuff,
+                    len ) ;
+         offset += len ;
+         lastLen -= len ;
+         if ( 0 == lastLen )
+         {
+            break ;
+         }
+      }
+
+      _dataLength += alignLen ;
+      if ( 0 == _pageNum )
+      {
+         _firstPageID = pageID ;
+      }
+      ++_pageNum ;
+      _lastPageID = pageID ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilCacheMerge::sync( IExecutor *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _pageNum > 0 )
+      {
+         INT64 offset = _pFile->pageID2Offset( _firstPageID ) ;
+         rc = _pFile->writeRaw( offset, _pCache, _dataLength,
+                                cb, _isAlignment ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Sync dirty page[FirstID:%d, Offset: "
+                    "%llu, Len: %d] to file[%s] failed, rc: %d",
+                    _firstPageID, offset, _dataLength,
+                    _pFile->getFileName(), rc ) ;
+            goto error ;
+         }
+
+         /// clear data info
+         _pageNum = 0 ;
+         _firstPageID = -1 ;
+         _lastPageID = -1 ;
+         _dataLength = 0 ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _utilCacheUnit implement
    */
 
@@ -1796,8 +2020,8 @@ namespace engine
 #ifdef SDB_PERF_STAT
     ,_statAllocNum( 0 ), _statAllocFromBlkNum( 0 )
     ,_statAllocNullNum( 0 ), _statHitCacheNum( 0 )
-    ,_statSyncNum( 0 ) ,_statRecycleNum( 0 )
-    ,_lastStatTime( 0 )
+    ,_statMergeNum( 0 ), _statMergeSyncNum( 0 ), _statSyncNum( 0 )
+    ,_statRecycleNum( 0 ) ,_lastStatTime( 0 )
 #endif //SDB_PERF_STAT
    {
       _pMgr = NULL ;
@@ -1872,6 +2096,17 @@ namespace engine
       goto done ;
    }
 
+   INT32 _utilCacheUnit::enableMerge( BOOLEAN alignment, UINT32 cacheSize )
+   {
+      SDB_ASSERT( _pCacheFile && _pageSize > 0, "Must init first" ) ;
+      if ( _useCache && _pMgr->maxCacheSize() > cacheSize )
+      {
+         return _cacheMerge.init( _pageSize, _pCacheFile,
+                                  alignment, cacheSize ) ;
+      }
+      return SDB_OK ;
+   }
+
    void _utilCacheUnit::setDirtyConfig( UINT32 bgDirtyRatio,
                                         UINT32 dirtyTimeout )
    {
@@ -1927,6 +2162,8 @@ namespace engine
       }
       _vecBucket.clear() ;
       _bucketSize = 0 ;
+
+      _cacheMerge.fini() ;
    }
 
    UINT32 _utilCacheUnit::calcBucketID( INT32 pageID ) const
@@ -2172,7 +2409,8 @@ namespace engine
                                     utilCachePage *pPage,
                                     INT32 pageID,
                                     IExecutor *cb,
-                                    BOOLEAN *pSync )
+                                    BOOLEAN *pSync,
+                                    BOOLEAN writeMerge )
    {
       INT32 rc = SDB_OK ;
       UINT32 pos = 0 ;
@@ -2194,41 +2432,57 @@ namespace engine
          goto done ;
       }
 
-      pos = pPage->beginBlock() ;
-      while( NULL != ( pBuff = pPage->nextBlock( len, pos ) ) )
+      if ( writeMerge )
       {
-         if ( pPage->dirtyStart() > offset + len )
+         rc = _cacheMerge.write( pageID, pPage ) ;
+         if ( SDB_OK == rc )
          {
+            _incMergeNum( 1 ) ;
+         }
+         else
+         {
+            writeMerge = FALSE ;
+         }
+      }
+
+      if ( !writeMerge )
+      {
+         pos = pPage->beginBlock() ;
+         while( NULL != ( pBuff = pPage->nextBlock( len, pos ) ) )
+         {
+            if ( pPage->dirtyStart() > offset + len )
+            {
+               offset += len ;
+               lastLen -= len ;
+               continue ;
+            }
+            else if ( pPage->dirtyStart() > offset )
+            {
+               UINT32 pageOffset = pPage->dirtyStart() - offset ;
+               pBuff += pageOffset ;
+               lastLen -= pageOffset ;
+               offset += pageOffset ;
+               len -= pageOffset ;
+            }
+
+            if ( lastLen < len )
+            {
+               len = lastLen ;
+            }
+            rc = _pCacheFile->write( pageID, pBuff, len, offset, cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Sync dirty page[ID:%d,Offset:%u,Len:%u] to "
+                       "file[%s] failed, rc: %d", pageID, offset, len,
+                       _pCacheFile->getFileName(), rc ) ;
+               goto error ;
+            }
             offset += len ;
             lastLen -= len ;
-            continue ;
-         }
-         else if ( pPage->dirtyStart() > offset )
-         {
-            UINT32 pageOffset = pPage->dirtyStart() - offset ;
-            pBuff += pageOffset ;
-            lastLen -= pageOffset ;
-            offset += pageOffset ;
-            len -= pageOffset ;
-         }
-
-         if ( lastLen < len )
-         {
-            len = lastLen ;
-         }
-         rc = _pCacheFile->write( pageID, pBuff, len, offset, cb ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Sync dirty page[ID:%d,Offset:%u,Len:%u] to "
-                    "file[%s] failed, rc: %d", pageID, offset, len,
-                    _pCacheFile->getFileName(), rc ) ;
-            goto error ;
-         }
-         offset += len ;
-         lastLen -= len ;
-         if ( 0 == lastLen )
-         {
-            break ;
+            if ( 0 == lastLen )
+            {
+               break ;
+            }
          }
       }
 
@@ -2422,12 +2676,46 @@ namespace engine
       BOOLEAN hasSync = FALSE ;
       utilCacheBucket *pBucket = NULL ;
       MAP_ID_2_PAGE_PRT_IT it = pageMap.begin() ;
+      MAP_ID_2_PAGE_PRT_IT itNext ;
+      BOOLEAN write2Merge = FALSE ;
 
       while( it != pageMap.end() )
       {
+         write2Merge = TRUE ;
+         itNext =  it ;
+         ++itNext ;
+
+         if ( _cacheMerge.freeSize() < _pageSize )
+         {
+            write2Merge = FALSE ;
+         }
+         else if ( itNext != pageMap.end() &&
+                   it->first + 1 != itNext->first )
+         {
+            write2Merge = FALSE ;
+         }
+         else if ( itNext == pageMap.end() &&
+                   ( _cacheMerge.getPageNum() == 0 ||
+                     _cacheMerge.getLastPageID() + 1 != it->first ) )
+         {
+            write2Merge = FALSE ;
+         }
+
+         if ( !write2Merge && _cacheMerge.getPageNum() > 0 )
+         {
+            rc = _cacheMerge.sync( cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Sync cache merge failed, rc: %d", rc ) ;
+               ossPanic() ;
+            }
+            _incMergeSyncNum( 1 ) ;
+         }
+
          pBucket = getBucket( calcBucketID( it->first ) ) ;
          pBucket->lock( SHARED ) ;
-         rc = _syncPage( pBucket, it->second, it->first, cb, &hasSync ) ;
+         rc = _syncPage( pBucket, it->second, it->first, cb,
+                         &hasSync, write2Merge ) ;
          pBucket->unlock( SHARED ) ;
 
          if ( rc )
@@ -2442,6 +2730,18 @@ namespace engine
          }
          ++it ;
       }
+
+      if ( _cacheMerge.getPageNum() > 0 )
+      {
+         rc = _cacheMerge.sync( cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Sync cache merge failed, rc: %d", rc ) ;
+            ossPanic() ;
+         }
+         _incMergeSyncNum( 1 ) ;
+      }
+
       pageMap.clear() ;
 
       return totalPages ;
@@ -2577,8 +2877,11 @@ namespace engine
       UINT32 statAllocNull = _statAllocNullNum.swap( 0 ) ;
       UINT32 statAllocBlk = _statAllocFromBlkNum.swap( 0 ) ;
       UINT32 statHitCache = _statHitCacheNum.swap( 0 ) ;
+      UINT32 statMerge = _statMergeNum.swap( 0 ) ;
+      UINT32 statMergeSync = _statMergeSyncNum.swap( 0 ) ;
       UINT32 syncNum = _statSyncNum.swap( 0 ) ;
       UINT32 recyclNum = _statRecycleNum.swap( 0 ) ;
+
       _lastStatTime = curTime ;
 
       CHAR text[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
@@ -2591,6 +2894,8 @@ namespace engine
                    "Alloc Null Num    : %u"OSS_NEWLINE
                    "Alloc Blk Num     : %u"OSS_NEWLINE
                    "Hit Cache Num     : %u"OSS_NEWLINE
+                   "Merge Num         : %u"OSS_NEWLINE
+                   "Merge Sync        : %u"OSS_NEWLINE
                    "Sync Num          : %u"OSS_NEWLINE
                    "Recycle Num       : %u"OSS_NEWLINE
                    "Dirty ratio       : %.2f %%"OSS_NEWLINE
@@ -2598,6 +2903,8 @@ namespace engine
                    "Alloc Null Speed  : %.2f /s"OSS_NEWLINE
                    "Alloc Blk Speed   : %.2f /s"OSS_NEWLINE
                    "Hit Cache Speed   : %.2f /s"OSS_NEWLINE
+                   "Merge Speed       : %.2f /s"OSS_NEWLINE
+                   "Merge Sync Avg Len: %.2f"OSS_NEWLINE
                    "Sync Speed        : %.2f /s"OSS_NEWLINE
                    "Recycle Speed     : %.2f /s"OSS_NEWLINE,
                    diff,
@@ -2607,13 +2914,17 @@ namespace engine
                    statAllocNull,
                    statAllocBlk,
                    statHitCache,
+                   statMerge,
+                   statMergeSync,
                    syncNum,
                    recyclNum,
-                   (FLOAT64)statDirtyPage / statTotalPage * 100,
+                   (FLOAT64)statDirtyPage * 100 / ( statMergeSync == 0 ? 1 : statTotalPage ),
                    (FLOAT64)statAlloc / diff * 1000,
                    (FLOAT64)statAllocNull / diff * 1000,
                    (FLOAT64)statAllocBlk / diff * 1000,
                    (FLOAT64)statHitCache / diff * 1000,
+                   (FLOAT64)statMerge / diff * 1000,
+                   (FLOAT64)statMerge / ( statMergeSync == 0 ? 1 : statMergeSync ) ,
                    (FLOAT64)syncNum / diff * 1000,
                    (FLOAT64)recyclNum / diff * 1000
                    ) ;

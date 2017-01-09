@@ -498,6 +498,7 @@ namespace engine
          OSS_INLINE UINT32 getArchiveQuota() const { return _archiveQuota ; }
 
          OSS_INLINE UINT32 getDmsChkInterval() const { return _dmsChkInterval ; }
+         OSS_INLINE UINT32 getCacheMergeSize() const { return _cacheMergeSize << 20 ; }
 
          std::string getOmAddr() const ;
 
@@ -580,6 +581,7 @@ namespace engine
          UINT32      _archiveExpired ;
          UINT32      _archiveQuota ;
          UINT32      _dmsChkInterval ;
+         UINT32      _cacheMergeSize ;
 
 #ifdef SDB_ENTERPRISE
 

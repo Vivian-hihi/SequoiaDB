@@ -84,6 +84,7 @@ namespace engine
 
       BOOLEAN     _enableSparse ;
       BOOLEAN     _directIO ;
+      UINT32      _cacheMergeSize ;
 
       _dmsStorageInfo ()
       {
@@ -97,6 +98,7 @@ namespace engine
          _extentThreshold = 0 ;
          _enableSparse = FALSE ;
          _directIO = FALSE ;
+         _cacheMergeSize = 0 ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;

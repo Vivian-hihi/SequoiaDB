@@ -218,6 +218,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__OPENLOB ) ;
+
+      if ( _pStorageInfo->_cacheMergeSize > 0 )
+      {
+         rc = _pCacheUnit->enableMerge( _pStorageInfo->_directIO,
+                                        _pStorageInfo->_cacheMergeSize ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Enable cache merge for lob[%s] failed, rc: %d",
+                    getSuName(), rc ) ;
+            /// ignored this error
+            rc = SDB_OK ;
+         }
+      }
+
       rc = openStorage( metaPath, _pSyncMgrTmp, createNew ) ;
       if ( SDB_OK != rc )
       {
@@ -1521,7 +1535,18 @@ namespace engine
          if ( _pCacheUnit && _pCacheUnit->dirtyPages() > 0 )
          {
             _pCacheUnit->lockPageCleaner( EXCLUSIVE ) ;
-            _pCacheUnit->syncPages( pmdGetThreadEDUCB(), TRUE, FALSE ) ;
+            UINT64 beginDirtyPages = 0 ;
+            UINT32 syncPages = 0 ;
+            while( _pCacheUnit->dirtyPages() > 0 )
+            {
+               beginDirtyPages = _pCacheUnit->dirtyPages() ;
+               syncPages = _pCacheUnit->syncPages( pmdGetThreadEDUCB(),
+                                                   TRUE, FALSE ) ;
+               if ( beginDirtyPages < _pCacheUnit->dirtyPages() + syncPages )
+               {
+                  break ;
+               }
+            }
             _pCacheUnit->unlockPageCleaner( EXCLUSIVE ) ;
          }
          _data.flush() ;

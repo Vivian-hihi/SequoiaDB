@@ -87,6 +87,7 @@ namespace engine
    #define PMD_DFT_ARCHIVE_EXPIRED     (240) // 10 days
    #define PMD_DFT_ARCHIVE_QUOTA       (10)  // 10 GB
    #define PMD_DFT_DMS_CHK_INTERVAL    (0) // disable
+   #define PMD_DFT_CACHE_MERGE_SZ      (16)
 
    /*
       _pmdCfgExchange implement
@@ -1344,6 +1345,7 @@ namespace engine
       _archiveQuota = PMD_DFT_ARCHIVE_QUOTA ;
 
       _dmsChkInterval = PMD_DFT_DMS_CHK_INTERVAL ;
+      _cacheMergeSize = PMD_DFT_CACHE_MERGE_SZ ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1631,6 +1633,11 @@ namespace engine
       rdxUInt( pEX, PMD_OPTION_DMS_CHK_INTERVAL, _dmsChkInterval,
                FALSE, TRUE, PMD_DFT_DMS_CHK_INTERVAL, TRUE ) ;
       rdvMinMax( pEX, _dmsChkInterval, 0, 240, TRUE ) ;
+
+      // --cachemergesz
+      rdxUInt( pEX, PMD_OPTION_CACHE_MERGE_SIZE, _cacheMergeSize,
+               FALSE, TRUE, PMD_DFT_CACHE_MERGE_SZ, TRUE ) ;
+      rdvMinMax( pEX, _cacheMergeSize, 0, 64, TRUE ) ;
 
       // end map
 

@@ -86,6 +86,7 @@ namespace engine
       _storageInfo._extentThreshold = options->getExtendThreshold() << 20 ;
       _storageInfo._enableSparse = options->sparseFile() ;
       _storageInfo._directIO = options->useDirectIOInLob() ;
+      _storageInfo._cacheMergeSize = options->getCacheMergeSize() ;
       // make secret value
       _storageInfo._secretValue = ossPack32To64( (UINT32)time(NULL),
                                                  (UINT32)(ossRand()*239641) ) ;

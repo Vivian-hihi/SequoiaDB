@@ -565,8 +565,58 @@ namespace engine
                               UINT32 &readLen,
                               IExecutor *cb ) = 0 ;
 
+         virtual INT64  pageID2Offset( INT32 pageID ) const = 0 ;
+
+         virtual INT32  writeRaw( INT64 offset, const CHAR *pData,
+                                  UINT32 len, IExecutor *cb,
+                                  BOOLEAN isAligned ) = 0 ;
+
    } ;
    typedef _utilCachFileBase utilCachFileBase ;
+
+   /*
+      _utilCacheMerge define
+   */
+   class _utilCacheMerge : public SDBObject
+   {
+      public:
+         _utilCacheMerge() ;
+         ~_utilCacheMerge() ;
+
+         INT32       init( UINT32 pageSize,
+                           utilCachFileBase *pFile,
+                           BOOLEAN alignment,
+                           UINT32 cacheSize ) ;
+         void        fini() ;
+
+         BOOLEAN     isEmpty() const ;
+         BOOLEAN     isFull() const ;
+         UINT32      freeSize() const ;
+         UINT32      capacity() const ;
+
+         UINT32      getLength() const ;
+         const CHAR* getData() const ;
+
+         INT32       write( INT32 pageID, utilCachePage *pPage ) ;
+         INT32       sync( IExecutor *cb ) ;
+
+         UINT32      getPageNum() const { return _pageNum ; }
+         INT32       getFirstPageID() const { return _firstPageID ; }
+         INT32       getLastPageID() const { return _lastPageID ; }
+
+      private:
+         CHAR                    *_pCache ;
+         UINT32                  _cacheSize ;
+         UINT32                  _dataLength ;
+         INT32                   _firstPageID ;
+         INT32                   _lastPageID ;
+         UINT32                  _pageNum ;
+
+         UINT32                  _pageSize ;
+         utilCachFileBase        *_pFile ;
+         BOOLEAN                 _isAlignment ;
+   } ;
+   typedef _utilCacheMerge utilCacheMerge ;
 
    #define UTIL_CACHEUNIT_BUCKET_SZ                ( 2048 )
    #define UTIL_CACHEUNIT_PAGE_TIMEOUT             ( 1000 ) /// ms
@@ -616,6 +666,9 @@ namespace engine
                               BOOLEAN useCache = TRUE,
                               BOOLEAN wholePage = FALSE ) ;
          void           fini( IExecutor *cb ) ;
+
+         INT32          enableMerge( BOOLEAN alignment,
+                                     UINT32 cacheSize ) ;
 
          BOOLEAN        isClosed() const { return _closed ; }
 
@@ -676,7 +729,8 @@ namespace engine
                                    utilCachePage *pPage,
                                    INT32 pageID,
                                    IExecutor *cb,
-                                   BOOLEAN *pSync = NULL ) ;
+                                   BOOLEAN *pSync = NULL,
+                                   BOOLEAN writeMerge = FALSE ) ;
 
          UINT32         _syncPages( MAP_ID_2_PAGE_PRT &pageMap,
                                     IExecutor *cb ) ;
@@ -688,6 +742,8 @@ namespace engine
          OSS_INLINE void _incAllocNullNum( UINT32 num = 1 ) ;
          OSS_INLINE void _incAllocFromBlkNum( UINT32 num = 1 ) ;
          OSS_INLINE void _incHitCacheNum( UINT32 num = 1 ) ;
+         OSS_INLINE void _incMergeNum( UINT32 num = 1 ) ;
+         OSS_INLINE void _incMergeSyncNum( UINT32 num = 1 ) ;
          OSS_INLINE void _incSyncNum( UINT32 num = 1 ) ;
          OSS_INLINE void _incRecycleNum( UINT32 num = 1 ) ;
 
@@ -720,15 +776,19 @@ namespace engine
          UINT64                     _lastSyncTime ;
          ossRWMutex                 _pageCleaner ;
 
+         utilCacheMerge             _cacheMerge ;
+
 #ifdef SDB_PERF_STAT
          ossAtomic32                _statAllocNum ;
          ossAtomic32                _statAllocFromBlkNum ;
          ossAtomic32                _statAllocNullNum ;
          ossAtomic32                _statHitCacheNum ;
+         ossAtomic32                _statMergeNum ;
+         ossAtomic32                _statMergeSyncNum ;
          ossAtomic32                _statSyncNum ;
          ossAtomic32                _statRecycleNum ;
 
-         UINT64                     _lastStatTime ;
+         volatile UINT64            _lastStatTime ;
 #endif // SDB_PERF_STAT
 
    } ;
@@ -748,6 +808,14 @@ namespace engine
    {
       _statHitCacheNum.add( num ) ;
    }
+   OSS_INLINE void _utilCacheUnit::_incMergeNum( UINT32 num )
+   {
+      _statMergeNum.add( num ) ;
+   }
+   OSS_INLINE void _utilCacheUnit::_incMergeSyncNum( UINT32 num )
+   {
+      _statMergeSyncNum.add( num ) ;
+   }
    OSS_INLINE void _utilCacheUnit::_incAllocFromBlkNum( UINT32 num )
    {
       _statAllocFromBlkNum.add( num ) ;
@@ -764,6 +832,8 @@ namespace engine
    OSS_INLINE void _utilCacheUnit::_incAllocNum( UINT32 num ) {}
    OSS_INLINE void _utilCacheUnit::_incAllocNullNum( UINT32 num ) {}
    OSS_INLINE void _utilCacheUnit::_incHitCacheNum( UINT32 num ) {}
+   OSS_INLINE void _utilCacheUnit::_incMergeNum( UINT32 num ) {}
+   OSS_INLINE void _utilCacheUnit::_incMergeSyncNum( UINT32 num ) {}
    OSS_INLINE void _utilCacheUnit::_incAllocFromBlkNum( UINT32 num ) {}
    OSS_INLINE void _utilCacheUnit::_incSyncNum( UINT32 num ) {}
    OSS_INLINE void _utilCacheUnit::_incRecycleNum( UINT32 num ) {}
