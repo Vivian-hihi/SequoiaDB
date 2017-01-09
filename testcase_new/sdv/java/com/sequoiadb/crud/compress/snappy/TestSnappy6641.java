@@ -66,7 +66,7 @@ public class TestSnappy6641 extends SdbTestBase {
         }
     }
     
-    @AfterClass(alwaysRun = true)
+    @AfterClass
     public void tearDown(){
         try{
             if(sdb.isCollectionSpaceExist(csName)){

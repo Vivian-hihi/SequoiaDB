@@ -54,7 +54,7 @@ public class TestLzw6642 extends SdbTestBase {
         }
     }
     
-    @Test
+    @Test(enabled = false)
     public void test() {
         Sequoiadb db = null;
         try{
