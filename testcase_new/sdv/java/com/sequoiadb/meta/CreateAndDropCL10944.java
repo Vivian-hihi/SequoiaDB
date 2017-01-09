@@ -65,7 +65,7 @@ public class CreateAndDropCL10944 extends SdbTestBase {
 	}
 	
 	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void createAndDropCL10940(){
+	public void createAndDropCL10944(){
 		CreateCLThread createCLThread = new CreateCLThread();
 		DropCLThread dropCLThread = new DropCLThread();		
 		
