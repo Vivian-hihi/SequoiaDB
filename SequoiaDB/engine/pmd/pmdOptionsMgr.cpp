@@ -1544,7 +1544,7 @@ namespace engine
                    FALSE, TRUE, FALSE, FALSE ) ;
 
       rdxBooleanS( pEX, PMD_OPTION_SPARSE_FILE, _sparseFile,
-                   FALSE, TRUE, TRUE, FALSE ) ;
+                   FALSE, TRUE, FALSE, FALSE ) ;
 
       // --weight
       rdxUInt( pEX, PMD_OPTION_WEIGHT, _weight,
