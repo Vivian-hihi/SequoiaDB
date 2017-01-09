@@ -87,7 +87,7 @@ namespace engine
    #define PMD_DFT_ARCHIVE_EXPIRED     (240) // 10 days
    #define PMD_DFT_ARCHIVE_QUOTA       (10)  // 10 GB
    #define PMD_DFT_DMS_CHK_INTERVAL    (0) // disable
-   #define PMD_DFT_CACHE_MERGE_SZ      (16)
+   #define PMD_DFT_CACHE_MERGE_SZ      (0)
 
    /*
       _pmdCfgExchange implement
