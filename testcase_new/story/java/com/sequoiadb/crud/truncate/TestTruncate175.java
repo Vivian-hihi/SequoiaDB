@@ -91,8 +91,9 @@ public class TestTruncate175 extends SdbTestBase {
                 // doing truncate
                 cl.truncate();
                 // check truncate
-                Commlib.checkTruncated(db, cl, hostName);
+                Commlib.checkTruncated(db, cl);
             }catch(BaseException e){
+                e.printStackTrace();
                 throw e;
             }finally{
                 db.disconnect();
@@ -111,6 +112,7 @@ public class TestTruncate175 extends SdbTestBase {
                 // doing update
                 cl.update(null, modifier, null);
             }catch(BaseException e){
+                e.printStackTrace();
                 throw e;
             }finally{
                 db.disconnect();

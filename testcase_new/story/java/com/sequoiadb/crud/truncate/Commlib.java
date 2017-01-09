@@ -63,7 +63,6 @@ public class Commlib {
 		try {
 			ArrayList<BSONObject> records = new ArrayList<BSONObject>();
 
-			DBLob lob = null;
 			int lobNum = 100;
 			ArrayList<ObjectId> oidlist = new ArrayList<ObjectId>();
 			for (int i = 0; i < lobNum; i++) {
@@ -73,6 +72,7 @@ public class Commlib {
 			String randomStr = "a;kdjflajdfoweine3030asd.f0-:dmalsdf;";
 			try {
 				for (int i = 0; i < lobNum; i++) {
+		            DBLob lob = null;
 					lob = cl.createLob(oidlist.get(i));
 					lob.write(randomStr.getBytes());
 					lob.close();
@@ -111,38 +111,44 @@ public class Commlib {
 	 * @param cl
 	 * @throws BaseException
 	 */
-	public static void checkTruncated(Sequoiadb sdb, DBCollection cl, String hostName) throws BaseException {
-		try {
-			// get the group of the cl
-			String clGroupName = getSrcGroupName(sdb, cl);
-
-			// connect to dataGroup and get information of collection
-			int clGroupPort = sdb.getReplicaGroup(clGroupName).getMaster().getPort();
-			Sequoiadb clGroupDB = new Sequoiadb(hostName + " : " + clGroupPort, "", "");
-
-			BSONObject clNameBSON = new BasicBSONObject();
-			clNameBSON.put("Name", cl.getFullName());
-			DBCursor clSnapshot = clGroupDB.getSnapshot(4, clNameBSON, null, null);
-			BasicBSONList clDetails = (BasicBSONList) clSnapshot.getNext().get("Details");
-			BSONObject clDetail = (BSONObject) clDetails.get(0);
-			clSnapshot.close();
-
-			// justify the information correctness
-			boolean dataExist = (int) clDetail.get("TotalDataPages") != 0 ? true : false;
-			boolean lobExist = (int) clDetail.get("TotalLobPages") != 0 ? true : false;
-			if (dataExist || lobExist) {
-				String failMsg = "";
-				if (dataExist) {
-					failMsg += "data is still exist!\n";
-				}
-				if (lobExist) {
-					failMsg += "lob is still exist!\n";
-				}
-				Assert.fail(failMsg);
-			}
-		} catch (BaseException e) {
-			throw e;
-		}
+	public static void checkTruncated(Sequoiadb sdb, DBCollection cl) throws BaseException {
+	    if(!isStandAlone(sdb)){
+    		try {
+    			// get the group of the cl
+    			String clGroupName = getSrcGroupName(sdb, cl);
+    
+    			// connect to dataGroup and get information of collection
+    			String url = sdb.getReplicaGroup(clGroupName).getMaster().getNodeName();
+    			Sequoiadb clGroupDB = new Sequoiadb(url, "", "");
+    
+    			BSONObject clNameBSON = new BasicBSONObject();
+    			clNameBSON.put("Name", cl.getFullName());
+    			DBCursor clSnapshot = clGroupDB.getSnapshot(4, clNameBSON, null, null);
+    			BasicBSONList clDetails = (BasicBSONList) clSnapshot.getNext().get("Details");
+    			BSONObject clDetail = (BSONObject) clDetails.get(0);
+    			clSnapshot.close();
+    
+    			// justify the information correctness
+    			boolean dataExist = (int) clDetail.get("TotalDataPages") != 0 ? true : false;
+    			boolean lobExist = (int) clDetail.get("TotalLobPages") != 0 ? true : false;
+    			if (dataExist || lobExist) {
+    				String failMsg = "";
+    				if (dataExist) {
+    					failMsg += "data is still exist!\n";
+    				}
+    				if (lobExist) {
+    					failMsg += "lob is still exist!\n";
+    				}
+    				Assert.fail(failMsg);
+    			}
+    		} catch (BaseException e) {
+    			throw e;
+    		}
+	    } else {
+	        if(cl.getCount() != 0){
+	            Assert.fail("data is still exist!");
+	        }
+	    }
 	}
 
 	/**

@@ -98,11 +98,12 @@ public class TestTruncate171 extends SdbTestBase {
             DBCollection cl = null;
             try{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
                 cl = db.getCollectionSpace(csName).getCollection(clName);
                 // doing truncate
                 cl.truncate();
                 // check truncate
-                Commlib.checkTruncated(db, cl, hostName);
+                Commlib.checkTruncated(db, cl);
             }catch(BaseException e){
                 throw e;
             }finally{
@@ -118,6 +119,7 @@ public class TestTruncate171 extends SdbTestBase {
             DBCollection cl = null;
             try{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
                 cl = db.getCollectionSpace(csName).getCollection(clName);
                 // doing split
                 cl.split(srcGroupName, dstGroupName, 50);

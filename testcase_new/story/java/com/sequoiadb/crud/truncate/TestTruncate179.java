@@ -3,6 +3,8 @@ package com.sequoiadb.crud.truncate;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.bson.BSONObject;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -79,6 +81,7 @@ public class TestTruncate179 extends SdbTestBase {
             DBCollection cl = null;
             try{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
                 cl = db.getCollectionSpace(csName).getCollection(clName);
                 // doing truncate
                 cl.truncate();
@@ -96,6 +99,7 @@ public class TestTruncate179 extends SdbTestBase {
             Sequoiadb db = null;
             try{
                 db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+                db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
                 // doing drop CL
                 db.getCollectionSpace(csName).dropCollection(clName);
             }catch(Exception e){
