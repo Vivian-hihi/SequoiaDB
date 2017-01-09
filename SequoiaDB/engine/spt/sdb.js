@@ -881,6 +881,27 @@ Sdb.prototype.removeSpareRG  = function() {
    return this.removeRG( SDB_SPARE_GROUP_NAME ) ;
 }
 
+Sdb.prototype.stopRG = function() {
+   for( var index in arguments )
+   {
+      var rgName = arguments[ index ] ;
+      if ( "string" != typeof( rgName ) )
+      {
+         setLastErrMsg( "Sdb.stopRG(): wrong arguments" ) ;
+         throw SDB_INVALIDARG ;
+      }
+      try
+      {
+         this.getRG( rgName ).stop() ;
+      }
+      catch( e )
+      {
+         setLastErrMsg( rgName + ": " + getLastErrMsg() ) ;
+         throw e ;
+      }
+   }
+}
+
 // end Sdb
 
 function printCallStack()
