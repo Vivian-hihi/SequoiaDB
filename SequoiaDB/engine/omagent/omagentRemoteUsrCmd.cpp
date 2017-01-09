@@ -442,13 +442,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string errmsg ;
-      BSONObj rval ;
-      BSONObj detail ;
+      const sptResultVal *pRval = NULL ;
       BSONObjBuilder builder ;
 
       // run js code
       rc = _jsScope->eval( _code.c_str(), _code.size(),
-                           "", 1, SPT_EVAL_FLAG_PRINT, rval, detail ) ;
+                           "", 1, SPT_EVAL_FLAG_PRINT, &pRval ) ;
       if ( rc )
       {
          errmsg = _jsScope->getLastErrMsg() ;
@@ -458,7 +457,7 @@ namespace engine
       }
 
       // set result
-      rc = final ( rval, retObj ) ;
+      rc = final ( pRval->toBSON(), retObj ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to extract result for command[%s], "

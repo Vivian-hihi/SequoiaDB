@@ -67,6 +67,154 @@ namespace engine
    const UINT32 RUNTIME_SIZE = 32 * 1024 * 1024 ;
 
    /*
+      _sptSPResultVal implement
+   */
+   _sptSPResultVal::_sptSPResultVal()
+   :_value( JSVAL_VOID )
+   {
+      _ctx = NULL ;
+   }
+
+   _sptSPResultVal::~_sptSPResultVal()
+   {
+   }
+
+   const void* _sptSPResultVal::rawPtr() const
+   {
+      return (void*)&_value ;
+   }
+
+   bson::BSONObj _sptSPResultVal::toBSON() const
+   {
+      bson::BSONObj obj ;
+      _rval2obj( _ctx, _value, obj ) ;
+      return obj ;
+   }
+
+   void _sptSPResultVal::reset( JSContext *ctx )
+   {
+      _ctx = ctx ;
+      _errStr.clear() ;
+      _value = JSVAL_VOID ;
+   }
+
+   INT32 _sptSPResultVal::_rval2obj( JSContext *cx,
+                                     const jsval &jsrval,
+                                     bson::BSONObj &rval ) const
+   {
+      INT32 rc = SDB_OK ;
+      bson::BSONObjBuilder builder ;
+
+      if ( JSVAL_IS_VOID( jsrval ) )
+      {
+      }
+      else if ( JSVAL_IS_STRING( jsrval ) )
+      {
+         std::string v ;
+         rc = sptConvertor2::toString( cx, jsrval, v ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         builder.append( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_INT( jsrval ) )
+      {
+         int32 v = 0 ;
+         if ( !JS_ValueToInt32( cx, jsrval, &v ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         builder.append( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_DOUBLE( jsrval ) )
+      {
+         jsdouble v ;
+         if ( !JS_ValueToNumber( cx, jsrval, &v ))
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         builder.appendNumber( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_BOOLEAN( jsrval ) )
+      {
+         JSBool v ;
+         if ( !JS_ValueToBoolean( cx, jsrval, &v ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         builder.appendBool( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_OBJECT( jsrval ) )
+      {
+         JSObject *obj = JSVAL_TO_OBJECT( jsrval ) ;
+         if ( JSObjIsBsonobj( cx, obj ) )
+         {
+            CHAR *rawData = NULL ;
+            rc = getBsonRawFromBsonClass( cx, obj, &rawData ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            else if ( !rawData )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            builder.append( SPT_RVAL_KEY, bson::BSONObj( rawData ) ) ;
+         }
+         else if ( _sptBsonobj::__desc.isInstanceOf( cx, obj ) )
+         {
+            _sptBsonobj *p = (_sptBsonobj*)JS_GetPrivate( cx, obj ) ;
+            if ( NULL == p )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            builder.append( SPT_RVAL_KEY, p->getBson() ) ;
+         }
+         else if ( _sptBsonobjArray::__desc.isInstanceOf( cx, obj ) )
+         {
+            _sptBsonobjArray *p = (_sptBsonobjArray*)JS_GetPrivate( cx, obj ) ;
+            const vector<bson::BSONObj> vecObjs = p->getBsonArray() ;
+            bson::BSONArrayBuilder sub( builder.subarrayStart( SPT_RVAL_KEY ) ) ;
+            for ( UINT32 i = 0 ; i < vecObjs.size() ; ++i )
+            {
+               sub.append( vecObjs[ i ] ) ;
+            }
+            sub.done() ;
+         }
+         else if ( !JSObjIsSdbObj( cx, JSVAL_TO_OBJECT( jsrval ) ) )
+         {
+            sptConvertor2 c( cx ) ;
+            bson::BSONObj v ;
+            rc = c.toBson( JSVAL_TO_OBJECT( jsrval ), v ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            builder.append( SPT_RVAL_KEY, v ) ;
+         }
+      }
+      else
+      {
+         ossPrintf( "the type[%d] is not supported yet"OSS_NEWLINE,
+                    JS_TypeOfValue( cx, jsrval ) ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rval = builder.obj() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _sptSPScope define
    */
    _sptSPScope::_sptSPScope()
@@ -177,7 +325,7 @@ namespace engine
 
       if ( loadMask & SPT_OBJ_MASK_INNER_JS )
       {
-         rc = evalInitScripts2( this ) ;
+         rc = evalInitScripts( this ) ;
          if ( rc )
          {
             ossPrintf ( "Failed to init spt scope, rc = %d"OSS_NEWLINE, rc ) ;
@@ -416,34 +564,34 @@ namespace engine
                             const CHAR *filename,
                             UINT32 lineno,
                             INT32 flag,
-                            bson::BSONObj &rval,
-                            bson::BSONObj &detail )
+                            const sptResultVal **ppRval )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( _context && _global, "this scope has not been initilized" ) ;
       SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" ) ;
-      jsval jsrval = JSVAL_VOID ;
       jsval exception = JSVAL_VOID ;
       CHAR *print = NULL ;
+
+      _rval.reset( _context ) ;
+      jsval *pRval = ( jsval* )_rval.rawPtr() ;
 
       // set error report
       sdbSetPrintError( ( flag & SPT_EVAL_FLAG_PRINT ) ? TRUE : FALSE ) ;
       sdbSetNeedClearErrorInfo( TRUE ) ;
 
       if ( !JS_EvaluateScript( _context, _global, code,
-                               len, filename, lineno, &jsrval ) )
+                               len, filename, lineno,
+                               pRval ) )
       {
          rc = sdbGetErrno() ? sdbGetErrno() : SDB_SPT_EVAL_FAIL ;
          goto error ;
       }
 
-      _rval2obj( _context, jsrval, rval ) ;
-
       if ( flag & SPT_EVAL_FLAG_PRINT )
       {
-         if ( !JSVAL_IS_VOID ( jsrval ) )
+         if ( !JSVAL_IS_VOID ( *pRval ) )
          {
-            print = convertJsvalToString ( _context , jsrval ) ;
+            print = convertJsvalToString ( _context , *pRval ) ;
             if ( !print )
             {
                rc = SDB_SYS ;
@@ -465,13 +613,16 @@ namespace engine
       }
 
    done:
+      if ( ppRval )
+      {
+         *ppRval = &_rval ;
+      }
       SAFE_JS_FREE ( _context , print ) ;
       return rc ;
    error:
       if ( JS_IsExceptionPending( _context ) &&
            JS_GetPendingException ( _context , &exception ) )
       {
-         bson::BSONObjBuilder builder ;
          CHAR *strException = NULL ;
          JSString *jsstr = JS_ValueToString( _context, exception ) ;
          if ( NULL != jsstr )
@@ -482,121 +633,15 @@ namespace engine
          if ( NULL != strException )
          {
             std::stringstream ss ;
-            ss << "uncaught exception:" ;
+            ss << "Uncaught exception:" ;
             ss << strException ;
-            sdbReportError( NULL, 0, ss.str().c_str(), TRUE ) ;
-            //ossPrintf ( "Uncaught exception: %s\n" , strException ) ;
-            detail = BSON( "exception" << strException ) ;
+            std::string errInfo = ss.str() ;
+            _rval.setError( errInfo ) ;
+            sdbReportError( NULL, 0, errInfo.c_str(), TRUE ) ;
             SAFE_JS_FREE( _context, strException ) ;
          }
-
          JS_ClearPendingException ( _context ) ;
       }
-      goto done ;
-   }
-
-   INT32 _sptSPScope::_rval2obj( JSContext *cx,
-                                 const jsval &jsrval,
-                                 bson::BSONObj &rval )
-   {
-      INT32 rc = SDB_OK ;
-      bson::BSONObjBuilder builder ;
-
-      if ( JSVAL_IS_VOID( jsrval ) )
-      {
-      }
-      else if ( JSVAL_IS_STRING( jsrval ) )
-      {
-         std::string v ;
-         rc = sptConvertor2::toString( cx, jsrval, v ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-         builder.append( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_INT( jsrval ) )
-      {
-         int32 v = 0 ;
-         if ( !JS_ValueToInt32( cx, jsrval, &v ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         builder.append( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_DOUBLE( jsrval ) )
-      {
-         jsdouble v ;
-         if ( !JS_ValueToNumber( cx, jsrval, &v ))
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         builder.appendNumber( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_BOOLEAN( jsrval ) )
-      {
-         JSBool v ;
-         if ( !JS_ValueToBoolean( cx, jsrval, &v ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         builder.appendBool( SPT_RVAL_KEY, v ) ;
-      }
-      else if ( JSVAL_IS_OBJECT( jsrval ) )
-      {
-         JSObject *obj = JSVAL_TO_OBJECT( jsrval ) ;
-         if ( JSObjIsBsonobj( _context, obj ) )
-         {
-            CHAR *rawData = NULL ;
-            rc = getBsonRawFromBsonClass( _context, obj, &rawData ) ;
-            if ( rc )
-            {
-               goto error ;
-            }
-            else if ( !rawData )
-            {
-               rc = SDB_SYS ;
-               goto error ;
-            }
-            builder.append( SPT_RVAL_KEY, bson::BSONObj( rawData ) ) ;
-         }
-         else if ( isInstanceOf<_sptBsonobj>( _context, obj ) )
-         {
-            _sptBsonobj *p = (_sptBsonobj *)JS_GetPrivate( _context, obj ) ;
-            if ( NULL == p )
-            {
-               rc = SDB_SYS ;
-               goto error ;
-            }
-            builder.append( SPT_RVAL_KEY, p->getBson() ) ;
-         }
-         else if ( !JSObjIsSdbObj(_context, JSVAL_TO_OBJECT( jsrval ) ) )
-         {
-            sptConvertor2 c( cx ) ;
-            bson::BSONObj v ;
-            rc = c.toBson( JSVAL_TO_OBJECT( jsrval ), v ) ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-            builder.append( SPT_RVAL_KEY, v ) ;
-         }
-      }
-      else
-      {
-         ossPrintf( "the type[%d] is not supported yet"OSS_NEWLINE,
-                    JS_TypeOfValue( cx, jsrval ) ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      rval = builder.obj() ;
-   done:
-      return rc ;
-   error:
       goto done ;
    }
 

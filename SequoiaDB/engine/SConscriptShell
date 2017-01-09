@@ -10,7 +10,6 @@ Import("usesm")
 if usesm:
     Import("smlib_file")
 sptFiles = [
-      "spt/engine.cpp",
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
       "spt/sptParseTroff.cpp",

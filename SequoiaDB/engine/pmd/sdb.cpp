@@ -335,11 +335,8 @@ INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
 
    if ( content.length() > varLen )
    {
-      BSONObj rval ;
-      BSONObj detail ;
       rc = scope->eval ( content.c_str() , (UINT32)content.length() ,
-                         filename , 1, SPT_EVAL_FLAG_PRINT,
-                         rval, detail ) ;
+                         filename , 1, SPT_EVAL_FLAG_PRINT, NULL ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -372,8 +369,6 @@ INT32 enterInteractiveMode ( sptScope *scope )
    ossTimestamp tmBegin ;
    ossTimestamp tmEnd ;
    string history ;
-   BSONObj rval ;
-   BSONObj detail ;
 
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );
@@ -423,7 +418,7 @@ INT32 enterInteractiveMode ( sptScope *scope )
       // result is freed in loop_next:
       rc = scope->eval ( code , history.size(),
                          "(shell)" , 1, SPT_EVAL_FLAG_PRINT,
-                         rval, detail ) ;
+                         NULL ) ;
       ossGetCurrentTime ( tmEnd ) ;
       
       // takes time

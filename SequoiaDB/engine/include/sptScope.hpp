@@ -55,6 +55,28 @@ namespace engine
    #define SPT_OBJ_MASK_ALL                     0xFFFF
 
    /*
+      _sptResultVal define
+   */
+   class _sptResultVal : public SDBObject
+   {
+      public:
+         _sptResultVal() ;
+         virtual ~_sptResultVal() ;
+
+         virtual const void*     rawPtr() const = 0 ;
+         virtual bson::BSONObj   toBSON() const = 0 ;
+
+         BOOLEAN                 hasError() const ;
+         const CHAR*             getErrrInfo() const ;
+         void                    setError( const std::string &err ) ;
+
+      protected:
+         std::string             _errStr ;
+
+   } ;
+   typedef _sptResultVal sptResultVal ;
+
+   /*
       _sptScope define
    */
    class _sptScope : public SDBObject
@@ -79,8 +101,7 @@ namespace engine
                           const CHAR *filename,
                           UINT32 lineno,
                           INT32 flag, // SPT_EVAL_FLAG_NONE/SPT_EVAL_FLAG_PRINT
-                          bson::BSONObj &rval,
-                          bson::BSONObj &detail ) = 0 ;
+                          const sptResultVal **ppRval ) = 0 ;
 
       virtual void   getGlobalFunNames( set<string> &setFunc,
                                         BOOLEAN showHide = FALSE ) = 0 ;

@@ -39,6 +39,35 @@
 namespace engine
 {
 
+   /*
+      _sptResultVal implement
+   */
+   _sptResultVal::_sptResultVal()
+   {
+   }
+
+   _sptResultVal::~_sptResultVal()
+   {
+   }
+
+   BOOLEAN _sptResultVal::hasError() const
+   {
+      return _errStr.empty() ? FALSE : TRUE ;
+   }
+
+   const CHAR* _sptResultVal::getErrrInfo() const
+   {
+      return _errStr.c_str() ;
+   }
+
+   void _sptResultVal::setError( const  string &err )
+   {
+      _errStr = err ;
+   }
+
+   /*
+      _sptScope implement
+   */
    _sptScope::_sptScope()
    {
       _loadMask = 0 ;

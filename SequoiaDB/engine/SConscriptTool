@@ -224,7 +224,6 @@ omagentFiles = [
       ]
 
 sptFiles = [
-      "spt/engine.cpp",
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
       "spt/sptParseTroff.cpp",

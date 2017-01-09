@@ -75,8 +75,6 @@
 
 #define REPORT_RC(cond, funcName, rc)                       \
    do {                                                     \
-      engine::sdbSetErrMsg( NULL ) ;                        \
-      engine::sdbSetErrno( SDB_OK ) ;                       \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
          engine::sdbSetErrMsg( ( rc ? getErrDesp( rc ) : NULL ), FALSE ) ;\
@@ -88,8 +86,6 @@
 
 #define REPORT_RC_MSG(cond, funcName, rc, msg )             \
    do {                                                     \
-      engine::sdbSetErrMsg( NULL ) ;                        \
-      engine::sdbSetErrno( SDB_OK ) ;                       \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
          engine::sdbSetErrMsg( ( msg ? msg : getErrDesp( rc ) ), FALSE ) ;\
@@ -280,6 +276,7 @@ static JSBool bson_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_BSON_CONSTRUCTOR );
    JSBool ret = JS_TRUE ;
+   engine::sdbClearErrorInfo() ;
    // this constructor should never be called, internally or externally
    // it is here just for the sake of defining Bson.prototype
    REPORT ( JS_FALSE , "use of new Bson() is forbidden, you should use "
@@ -296,6 +293,7 @@ error :
 static JSBool bson_to_json ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_BSON_TO_JSON );
+   engine::sdbClearErrorInfo() ;
    bson *      record   = NULL ;
    char *      buf      = NULL ;
    INT32       size     = 0 ;
@@ -382,6 +380,7 @@ static JSBool cursor_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                                uintN flags , JSObject ** objp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_RESV );
+   engine::sdbClearErrorInfo() ;
    BOOLEAN  ret   = JS_TRUE ;
    jsval    val   = JSVAL_VOID ;
    jsval    valID = JSVAL_VOID ;
@@ -428,6 +427,7 @@ static JSClass cursor_class = {
 static JSBool cursor_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_CONSTRUCTOR );
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
 
    // this constructor should never be called, internally or externally
@@ -446,6 +446,7 @@ error :
 static JSBool cursor_next ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_NEXT );
+   engine::sdbClearErrorInfo() ;
    sdbCursorHandle * cursor   = NULL ;
    JSObject *        bsonObj  = NULL ;
    bson *            record   = NULL ;
@@ -529,6 +530,7 @@ error :
 static JSBool cursor_current ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_CURRENT );
+   engine::sdbClearErrorInfo() ;
    sdbCursorHandle * cursor   = NULL ;
    JSObject *        bsonObj  = NULL ;
    bson *            record   = NULL ;
@@ -580,6 +582,7 @@ error :
 static JSBool cursor_close ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_CLOSE ) ;
+   engine::sdbClearErrorInfo() ;
    sdbCursorHandle * cursor   = NULL ;
    JSBool            ret      = JS_TRUE ;
    INT32             rc       = SDB_OK ;
@@ -625,6 +628,7 @@ static JSBool count_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                                uintN flags , JSObject ** objp )
 {
    PD_TRACE_ENTRY ( SDB_COUNT_RESV );
+   engine::sdbClearErrorInfo() ;
    BOOLEAN  ret   = JS_TRUE ;
    jsval    val   = JSVAL_VOID ;
    jsval    valID = JSVAL_VOID ;
@@ -670,6 +674,7 @@ static JSClass count_class = {
 static JSBool count_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COUNT_CONSTRUCTOR );
+   engine::sdbClearErrorInfo() ;
    JSObject *  objHint        = NULL ;
    JSObject *  obj            = NULL ;
    jsval       val            = JSVAL_VOID ;
@@ -745,6 +750,7 @@ static JSBool collection_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_CONSTRUCTOR );
    JSBool ret = JS_TRUE ;
+   engine::sdbClearErrorInfo() ;
 
    // this constructor should never be called, internally or externally
    // it is here just for the sake of defining SdbCollection.prototype
@@ -762,6 +768,7 @@ error :
 static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_RAW_FND );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSObject *objCond                = NULL ;
    JSObject *objSel                 = NULL ;
@@ -999,6 +1006,7 @@ error :
 static JSBool collection_insert ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_INSERT );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSObject *           objData     = NULL ;
    bson *               bsonData    = NULL ;
@@ -1060,6 +1068,7 @@ error :
 static JSBool collection_update ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_UPDATE );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSObject *           objRule     = NULL ;
    JSObject *           objCond     = NULL ;
@@ -1105,6 +1114,7 @@ error :
 static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_UPSERT );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSObject *           objRule     = NULL ;
    JSObject *           objCond     = NULL ;
@@ -1180,6 +1190,7 @@ error :
 static JSBool collection_remove ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_REMOVE );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSObject *           objCond     = NULL ;
    JSObject *           objHint     = NULL ;
@@ -1215,6 +1226,7 @@ error :
 static JSBool collection_delete_lob( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_COLL_DELETE_LOB ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *collection = NULL ;
@@ -1250,6 +1262,7 @@ error:
 static JSBool collection_list_lobs( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_COLL_LIST_LOBS ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *collection = NULL ;
@@ -1288,6 +1301,7 @@ error:
 static JSBool collection_list_lob_pieces( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_COLL_LIST_LOBPIECES ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *collection = NULL ;
@@ -1326,6 +1340,7 @@ error:
 static JSBool collection_get_lob( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_COLL_GET_LOB ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *collection = NULL ;
@@ -1454,6 +1469,7 @@ error:
 static JSBool collection_put_lob( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_COLL_PUT_LOB ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *collection = NULL ;
@@ -1549,6 +1565,7 @@ error:
 static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_COLL_EXPLAIN ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *collection = NULL ;
@@ -1663,6 +1680,7 @@ error:
 static JSBool collection_count ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_COUNT );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSObject *           objCond     = NULL ;
    JSObject *           objHint     = NULL ;
@@ -1733,6 +1751,7 @@ error :
 static JSBool collection_split ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_SPLIT );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSBool               ret         = JS_TRUE ;
    INT32                rc          = SDB_OK ;
@@ -1834,6 +1853,7 @@ error :
 static JSBool collection_split_async ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_SPLIT_ASYNC );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSBool               ret         = JS_TRUE ;
    INT32                rc          = SDB_OK ;
@@ -1939,6 +1959,7 @@ error :
 
 static JSBool collection_alter ( JSContext *cx , uintN argc , jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSBool               ret         = JS_TRUE ;
    INT32                rc          = SDB_OK ;
@@ -1973,6 +1994,7 @@ error :
 static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_CRT_INX );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSBool               ret         = JS_TRUE ;
    INT32                rc          = SDB_OK ;
@@ -2056,6 +2078,7 @@ error :
 static JSBool collection_get_indexes ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_GET_INX );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    sdbCursorHandle *    cursor      = NULL ;
    INT32                rc          = SDB_OK ;
@@ -2118,6 +2141,7 @@ error :
 static JSBool collection_drop_index ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_DROP_INX );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -2155,6 +2179,7 @@ error :
 static JSBool collection_bulk_insert ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_BULK_INSERT );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *   collection  = NULL ;
    jsval *                 argv        = JS_ARGV ( cx , vp ) ;
    INT32                   rc          = SDB_OK ;
@@ -2264,6 +2289,7 @@ error :
 static JSBool collection_aggr ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_AGGR );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -2340,6 +2366,7 @@ error :
 static JSBool collection_attachCollection ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_ATTACHCOLLECTION );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSBool ret                       = JS_TRUE ;
    INT32 rc                         = SDB_OK ;
@@ -2401,6 +2428,7 @@ error :
 static JSBool collection_detachCollection ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_DETACHCOLLECTION );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle *collection  = NULL ;
    JSBool               ret         = JS_TRUE ;
    INT32                rc          = SDB_OK ;
@@ -2441,6 +2469,7 @@ error :
 static JSBool collection_truncate ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_TRUNCATE );
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *clHandle = NULL ;
@@ -2471,6 +2500,7 @@ error:
 static JSBool collection_crt_id_index ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_CRT_ID_IX );
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *clHandle = NULL ;
@@ -2511,6 +2541,7 @@ error:
 static JSBool collection_drop_id_index ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_DROP_ID_IX );
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *clHandle = NULL ;
@@ -2535,6 +2566,7 @@ error:
 
 static JSBool collection_get_query_meta( JSContext *cx , uintN argc , jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *collection = NULL ;
@@ -2668,6 +2700,7 @@ static JSBool query_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                               uintN flags , JSObject ** objp )
 {
    PD_TRACE_ENTRY ( SDB_QUERY_RESV );
+   engine::sdbClearErrorInfo() ;
    BOOLEAN  ret   = JS_TRUE ;
    jsval    val   = JSVAL_VOID ;
    jsval    valID = JSVAL_VOID ;
@@ -2714,6 +2747,7 @@ static JSClass query_class = {
 static JSBool query_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_QUERY_CONSTRUCTOR );
+   engine::sdbClearErrorInfo() ;
    JSObject *objSort          = NULL ;
    JSObject *objHint          = NULL ;
    int32_t skip               = 0 ;
@@ -2842,6 +2876,7 @@ static JSClass rg_class = {
 static JSBool rg_constructor ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_CONSTRUCTOR );
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
 
    // this constructor should never be called, internally or externally
@@ -2859,6 +2894,7 @@ error :
 static JSBool rg_get_master ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_GET_MST );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret               = JS_TRUE ;
    jsval                   valRG             = JSVAL_VOID ;
    jsval                   valHostName       = JSVAL_VOID ;
@@ -2944,6 +2980,7 @@ error :
 static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_GET_SLAVE );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret               = JS_TRUE ;
    jsval                   valRG             = JSVAL_VOID ;
    jsval                   valHostName       = JSVAL_VOID ;
@@ -3030,6 +3067,7 @@ error :
 static JSBool rg_start ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_START );
+   engine::sdbClearErrorInfo() ;
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
    sdbReplicaGroupHandle *rg               = NULL ;
@@ -3055,6 +3093,7 @@ error :
 static JSBool rg_stop ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_STOP );
+   engine::sdbClearErrorInfo() ;
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
    sdbReplicaGroupHandle *rg               = NULL ;
@@ -3080,6 +3119,7 @@ error :
 static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_CRT_NODE );
+   engine::sdbClearErrorInfo() ;
    sdbReplicaGroupHandle *rg                = NULL ;
    JSObject *             objConfig         = NULL ;
    JSString *             strHost           = NULL ;
@@ -3202,6 +3242,7 @@ error :
 static JSBool rg_remove_node ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_RG_RM_NODE ) ;
+   engine::sdbClearErrorInfo() ;
 
    INT32                  rc                = SDB_OK ;
    JSBool                 ret               = JS_TRUE ;
@@ -3344,6 +3385,7 @@ error:
 static JSBool rg_get_node ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_GET_NODE );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret               = JS_TRUE ;
    JSString              * strHostName       = NULL ;
    JSString              * strServiceName    = NULL ;
@@ -3413,6 +3455,7 @@ error :
 static JSBool rg_reelect ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_RG_REELECT ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_FALSE ;
    INT32 rc = SDB_OK ;
    sdbReplicaGroupHandle *rg = NULL ;
@@ -3449,6 +3492,7 @@ error :
 static JSBool rg_detach( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_RG_DETACH ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    sdbReplicaGroupHandle *rg = NULL ;
@@ -3504,6 +3548,7 @@ error :
 static JSBool rg_attach( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_RG_ATTACH ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    sdbReplicaGroupHandle *rg = NULL ;
@@ -3583,6 +3628,7 @@ static JSBool cs_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                            uintN flags , JSObject ** objp )
 {
    PD_TRACE_ENTRY ( SDB_CS_RESV );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret            = JS_TRUE ;
    jsval                   valRes         = JSVAL_VOID ;
    jsval                   valID          = JSVAL_VOID ;
@@ -3661,6 +3707,7 @@ static JSClass cs_class = {
 static JSBool cs_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    JSBool ret = JS_TRUE ;
+   engine::sdbClearErrorInfo() ;
 
    // this constructor should never be called, internally or externally
    // it is here just for the sake of defining SdbCS.prototype
@@ -3738,6 +3785,7 @@ error:
 static JSBool cs_get_cl ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CS_GET_CL );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret            = JS_TRUE ;
    JSString *              strName        = NULL ;
    CHAR *                  name           = NULL ;
@@ -3770,6 +3818,7 @@ error :
 static JSBool cs_create_cl ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SB_CS_CRT_CL );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret            = JS_TRUE ;
    JSString *              strCLName      = NULL ;
    CHAR *                  clName         = NULL ;
@@ -3851,6 +3900,7 @@ error :
 static JSBool cs_drop_cl ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CS_DROP_CL );
+   engine::sdbClearErrorInfo() ;
    sdbCSHandle *  cs                = NULL ;
    JSString *     strCollectionName = NULL ;
    CHAR *         collectionName    = NULL ;
@@ -3898,6 +3948,7 @@ error :
 static JSBool cs_rename_cl( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CS_RENAME_CL );
+   engine::sdbClearErrorInfo() ;
    sdbCSHandle *  cs                = NULL ;
    JSString *     jsStrOldName      = NULL ;
    CHAR *         pOldName          = NULL ;
@@ -3998,6 +4049,7 @@ static JSClass domain_class = {
 static JSBool domain_constructor ( JSContext *cx, uintN argc, jsval *vp )
 {
    JSBool ret = JS_TRUE ;
+   engine::sdbClearErrorInfo() ;
    // the constructor should never be called, internall yor externally
    // it is here just for the sake of defining SdbDomain.prototype
    REPORT ( JS_FALSE, "use of new SdbDomain() is forbidden, you should use "
@@ -4012,6 +4064,7 @@ error :
 static JSBool domain_alter( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DOMAIN_ALTER ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbDomainHandle *domain = NULL ;
@@ -4060,6 +4113,7 @@ static JSBool domain_list_group( JSContext *cx, uintN argc, jsval *vp )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY( SDB_DOMAIN_LIST_GROUP ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    sdbDomainHandle *domain = NULL ;
    sdbCursorHandle *handle = NULL ;
@@ -4097,6 +4151,7 @@ static JSBool domain_list_cs( JSContext *cx, uintN argc, jsval *vp )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY( SDB_DOMAIN_LIST_CS ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    sdbDomainHandle *domain = NULL ;
    sdbCursorHandle *handle = NULL ;
@@ -4134,6 +4189,7 @@ static JSBool domain_list_cl( JSContext *cx, uintN argc, jsval *vp )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY( SDB_DOMAIN_LIST_CL ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    sdbDomainHandle *domain = NULL ;
    sdbCursorHandle *handle = NULL ;
@@ -4205,6 +4261,7 @@ static JSClass dc_class = {
 static JSBool dc_constructor ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_DC_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    // the constructor should never be called, internall yor externally
    // it is here just for the sake of defining SdbDomain.prototype
@@ -4221,6 +4278,7 @@ error :
 static JSBool sdb_get_dc ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_GET_DC ) ;
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *conn = NULL ;
    sdbDCHandle *dc           = NULL ;
    INT32 rc                  = SDB_OK ;
@@ -4290,6 +4348,7 @@ error:
 static JSBool dc_createImage( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_CREATEIMAGE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4329,6 +4388,7 @@ error:
 static JSBool dc_removeImage( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_REMOVEIMAGE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4355,6 +4415,7 @@ error:
 static JSBool dc_attachGroups( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_ATTACHGROUPS ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc                = SDB_OK ;
    JSBool ret              = JS_TRUE ;
    sdbDCHandle *dc         = NULL ;
@@ -4399,6 +4460,7 @@ error:
 static JSBool dc_detachGroups( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_DETACHGROUPS ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc                = SDB_OK ;
    JSBool ret              = JS_TRUE ;
    sdbDCHandle *dc         = NULL ;
@@ -4443,6 +4505,7 @@ error:
 static JSBool dc_enableImage( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_ENABLEIMAGE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4469,6 +4532,7 @@ error:
 static JSBool dc_disableImage( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_DISABLEIMAGE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4495,6 +4559,7 @@ error:
 static JSBool dc_activate( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_ACTIVATE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4521,6 +4586,7 @@ error:
 static JSBool dc_deactivate( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_DEACTIVATE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4547,6 +4613,7 @@ error:
 static JSBool dc_enableReadonly( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_ENABLEREADONLY ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4573,6 +4640,7 @@ error:
 static JSBool dc_disableReadonly( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DC_DISABLEREADONLY ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc          = SDB_OK ;
    JSBool ret        = JS_TRUE ;
    sdbDCHandle *dc   = NULL ;
@@ -4599,6 +4667,7 @@ error:
 static JSBool dc_getDetail ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_DC_GETDETAIL );
+   engine::sdbClearErrorInfo() ;
    sdbDCHandle *dc   = NULL ;
    JSObject *bsonObj = NULL ;
    bson *record      = NULL ;
@@ -4693,6 +4762,7 @@ static void sdb_destructor ( JSContext *cx , JSObject *obj )
 static JSBool sdb_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                             uintN flags , JSObject ** objp )
 {
+   engine::sdbClearErrorInfo() ;
    PD_TRACE_ENTRY ( SDB_SDB_RESV );
    JSBool                  ret         = JS_TRUE ;
    jsval                   valRes      = JSVAL_VOID ;
@@ -5051,11 +5121,13 @@ error :
 
 static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    return _sdb_constructor ( cx , argc , vp , FALSE ) ;
 }
 
 static JSBool secure_sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    return _sdb_constructor ( cx , argc , vp , TRUE ) ;
 }
 
@@ -5064,6 +5136,7 @@ static JSBool secure_sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
 static JSBool rn_constructor ( JSContext *cx, uintN argc, jsval *vp )
 {
    JSBool ret = JS_TRUE ;
+   engine::sdbClearErrorInfo() ;
 
    // this constructor should never be called, internally or externally
    // it is here just for the sake of defining SdbNode.prototype
@@ -5079,6 +5152,7 @@ error :
 static JSBool rn_connect ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RN_CONNECT );
+   engine::sdbClearErrorInfo() ;
    JSBool ret                              = JS_TRUE ;
    sdbNodeHandle *rn                       = NULL ;
    sdbConnectionHandle     *connection     = NULL ;
@@ -5162,6 +5236,7 @@ error :
 static JSBool rn_start ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RN_START );
+   engine::sdbClearErrorInfo() ;
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
    sdbNodeHandle  *rn               = NULL ;
@@ -5187,6 +5262,7 @@ error :
 static JSBool rn_stop ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RN_STOP );
+   engine::sdbClearErrorInfo() ;
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
    sdbNodeHandle  *rn               = NULL ;
@@ -5218,6 +5294,7 @@ static JSFunctionSpec rn_functions[] = {
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_RG, "sdb_create_rg" )
 static JSBool sdb_create_rg ( JSContext *cx, uintN argc, jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    PD_TRACE_ENTRY ( SDB_SDB_CRT_RG );
    sdbConnectionHandle   *connection = NULL ;
    sdbReplicaGroupHandle *rg         = NULL ;
@@ -5282,6 +5359,7 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CREATE_DOMAIN, "sdb_create_domain" )
 static JSBool sdb_create_domain ( JSContext *cx, uintN argc, jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    INT32                  rc          = SDB_OK ;
    sdbConnectionHandle   *connection  = NULL ;
    JSBool                 ret         = JS_TRUE ;
@@ -5404,6 +5482,7 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_DROP_DOMAIN, "sdb_drop_domain" )
 static JSBool sdb_drop_domain ( JSContext *cx, uintN argc, jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    INT32                  rc          = SDB_OK ;
    sdbConnectionHandle   *connection  = NULL ;
    JSBool                 ret         = JS_TRUE ;
@@ -5433,6 +5512,7 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_GET_DOMAIN, "sdb_get_domain" )
 static JSBool sdb_get_domain ( JSContext *cx, uintN argc, jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    INT32                  rc          = SDB_OK ;
    sdbConnectionHandle   *connection  = NULL ;
    JSBool                 ret         = JS_TRUE ;
@@ -5478,6 +5558,7 @@ error :
 static JSBool sdb_list_domains ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_LIST_DOMAINS );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -5557,6 +5638,7 @@ error :
 static JSBool sdb_crt_procedure( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_PROCEDURE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle   *connection  = NULL ;
    JSBool                 ret         = JS_TRUE ;
@@ -5600,6 +5682,7 @@ error:
 static JSBool sdb_rm_procedure( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_RM_PROCEDURE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle   *connection = NULL ;
    JSBool                 ret        = JS_TRUE ;
@@ -5633,6 +5716,7 @@ error:
 static JSBool sdb_list_procedures( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_LIST_PROCEDURES ) ;
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection = NULL ;
    JSBool ret = JS_TRUE ;
    JSObject *condition = NULL ;
@@ -5682,6 +5766,7 @@ error:
 static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_EVAL ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    jsval *argv = JS_ARGV( cx, vp ) ;
@@ -5992,6 +6077,7 @@ error:
 static JSBool sdb_flush_configure( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_FLUSH_CONF ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle   *connection = NULL ;
    JSBool                 ret        = JS_TRUE ;
@@ -6030,6 +6116,7 @@ error:
 static JSBool ssdb_remove_rg ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_RM_RG );
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle   *connection = NULL ;
    JSString *             strRGName  = NULL ;
@@ -6064,6 +6151,7 @@ error:
 static JSBool sdb_create_cata_rg ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_CATA_RG ) ;
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    JSString *             strHost           = NULL ;
    JSString *             strPort           = NULL ;
@@ -6128,6 +6216,7 @@ error :
 static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_CS );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    sdbCSHandle *        cs          = NULL ;
    JSString *           strCSName   = NULL ;
@@ -6310,6 +6399,7 @@ error:
 static JSBool sdb_get_rg ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_GET_RG );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle   *connection  = NULL ;
    jsval *                argv        = JS_ARGV ( cx , vp ) ;
    UINT32                 rgID        = 0 ;
@@ -6412,6 +6502,7 @@ error:
 static JSBool sdb_get_cs ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_GET_CS );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    JSString *           strCSName   = NULL ;
    CHAR *               csName      = NULL ;
@@ -6446,6 +6537,7 @@ error :
 static JSBool sdb_drop_cs( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_DROP_CS );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    JSString *           strCSName   = NULL ;
    char *               csName      = NULL ;
@@ -6492,6 +6584,7 @@ error :
 static JSBool sdb_snapshot ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_SNAPSHOT );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -6572,6 +6665,7 @@ error :
 static JSBool sdb_reset_snapshot ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_RESET_SNAP );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -6607,6 +6701,7 @@ error :
 static JSBool sdb_list ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_LIST );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -6687,6 +6782,7 @@ error :
 static JSBool sdb_start_rg ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_START_RG );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret        = JS_TRUE ;
    INT32                   rc         = SDB_OK ;
    CHAR *                  rgName     = NULL ;
@@ -6751,6 +6847,7 @@ error:
 static JSBool sdb_create_user ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_USER );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_FALSE ;
    INT32                   rc           = SDB_OK ;
    CHAR *                  usrName      = NULL ;
@@ -6804,6 +6901,7 @@ error:
 static JSBool sdb_drop_user ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_DROP_USER );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_FALSE ;
    INT32                   rc           = SDB_OK ;
    CHAR *                  usrName      = NULL ;
@@ -6855,6 +6953,7 @@ error:
 static JSBool sdb_exec ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_EXEC );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_FALSE ;
    INT32                   rc           = SDB_OK ;
    CHAR *                  sql          = NULL ;
@@ -6912,6 +7011,7 @@ error:
 static JSBool sdb_execUpdate ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_EXECUP );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_FALSE ;
    INT32                   rc           = SDB_OK ;
    CHAR *                  sql          = NULL ;
@@ -6945,6 +7045,7 @@ error:
 static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRACE_ON );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_FALSE ;
    INT32                   rc           = SDB_OK ;
    int32_t                 bufferSize   = 0 ;
@@ -6991,6 +7092,7 @@ error :
 static JSBool sdb_trace_resume ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRACE_RESUME );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_FALSE ;
    INT32                   rc           = SDB_OK;
    sdbConnectionHandle *   connection   = NULL ;
@@ -7013,6 +7115,7 @@ error :
 static JSBool sdb_trace_off ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRACE_OFF );
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_FALSE ;
    INT32                   rc           = SDB_OK ;
    jsval *                 argv         = JS_ARGV ( cx, vp ) ;
@@ -7053,6 +7156,7 @@ error :
 
 static JSBool sdb_trace_status ( JSContext *cx, uintN argc, jsval *vp )
 {
+   engine::sdbClearErrorInfo() ;
    JSBool                  ret          = JS_TRUE ;
    INT32                   rc           = SDB_OK ;
    sdbConnectionHandle *   connection   = NULL ;
@@ -7098,6 +7202,7 @@ error:
 static JSBool sdb_trans_begin ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRANS_BEGIN );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    INT32                  rc                = SDB_OK ;
    JSBool                 ret               = JS_TRUE ;
@@ -7123,6 +7228,7 @@ error :
 static JSBool sdb_trans_commit ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRANS_COMMIT );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    INT32                  rc                = SDB_OK ;
    JSBool                 ret               = JS_TRUE ;
@@ -7147,6 +7253,7 @@ error :
 static JSBool sdb_trans_rollback ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRANS_ROLLBACK );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    INT32                  rc                = SDB_OK ;
    JSBool                 ret               = JS_TRUE ;
@@ -7172,6 +7279,7 @@ error :
 static JSBool sdb_close ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CLOSE );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    JSBool                 ret               = JS_TRUE ;
    connection = (sdbConnectionHandle *)
@@ -7208,6 +7316,7 @@ error :
 static JSBool sdb_backup_offline ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_BACKUP_OFFLINE );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    JSObject *             objConfig         = NULL ;
    bson *                 bsonConfig        = NULL ;
@@ -7246,6 +7355,7 @@ error :
 static JSBool sdb_list_backup ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_LIST_BACKUP );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -7334,6 +7444,7 @@ error :
 static JSBool sdb_remove_backup ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_REMOVE_BACKUP );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    JSObject *             objConfig         = NULL ;
    bson *                 bsonConfig        = NULL ;
@@ -7373,6 +7484,7 @@ error :
 static JSBool sdb_list_tasks ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_LIST_TASKS );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
@@ -7461,6 +7573,7 @@ error :
 static JSBool sdb_wait_tasks ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_WAIT_TASKS );
+   engine::sdbClearErrorInfo() ;
    sdbCollectionHandle   *connection        = NULL ;
    INT32                  rc                = SDB_OK ;
    JSBool                 ret               = JS_TRUE ;
@@ -7505,6 +7618,7 @@ error :
 static JSBool sdb_cancel_task ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CANCEL_TASK );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    JSBool               ret         = JS_TRUE ;
    INT32                rc          = SDB_OK ;
@@ -7548,6 +7662,7 @@ error :
 static JSBool sdb_set_session_attr ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_SET_SESSION_ATTR );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    JSBool ret                       = JS_TRUE ;
    INT32 rc                         = SDB_OK ;
@@ -7587,6 +7702,7 @@ error :
 static JSBool sdb_msg ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_MSG );
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection  = NULL ;
    CHAR *msg                        = NULL ;
    JSString *strMsg                 = NULL ;
@@ -7619,6 +7735,7 @@ error :
 static JSBool sdb_invalidate_cache( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_INVALIDATE_CACHE ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbConnectionHandle *connection = NULL ;
@@ -7655,6 +7772,7 @@ error:
 static JSBool sdb_force_session( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_FORCE_SESSION ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection = NULL ;
    SINT64 sessionID = -1 ;
@@ -7730,6 +7848,7 @@ error:
 static JSBool sdb_force_step_up( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_FORCE_STEP_UP) ;
+   engine::sdbClearErrorInfo() ;
    sdbConnectionHandle *connection = NULL ;
    BOOLEAN ret = TRUE ;
    INT32 rc = SDB_OK ;
@@ -7766,6 +7885,7 @@ error:
 static JSBool sdb_sync ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_SYNC ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection  = NULL ;
@@ -7812,6 +7932,7 @@ error:
 static JSBool sdb_load_cs ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_LOADCS ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection  = NULL ;
@@ -7866,6 +7987,7 @@ error:
 static JSBool sdb_unload_cs ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_UNLOADCS ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection  = NULL ;
@@ -7920,6 +8042,7 @@ error:
 static JSBool sdb_set_pdlevel ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_SETPDLEVEL ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection  = NULL ;
@@ -7969,6 +8092,7 @@ error:
 static JSBool sdb_reload_config ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_RELOAD_CONF ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection  = NULL ;
@@ -8016,6 +8140,7 @@ error:
 static JSBool sdb_rename_cs ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_RENAMECS ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret                    = JS_TRUE ;
    INT32 rc                      = SDB_OK ;
    sdbConnectionHandle *connection  = NULL ;
@@ -8183,6 +8308,7 @@ static JSBool objectid_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    JSBool ret = JS_TRUE ;
    PD_TRACE_ENTRY( SDB_OBJECTID_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
    JSString *jsHexStr = NULL ;
    JSString *jsOidStr = NULL ;
    CHAR *hexStr = NULL ;
@@ -8262,6 +8388,7 @@ static JSClass bindata_class = {
 static JSBool bindata_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_BINDATA_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    JSObject *jsBinObj = NULL ;
    JSString *jsBinData = NULL ;
@@ -8382,6 +8509,7 @@ static JSClass timestamp_class = {
 static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_TIMESTAMP_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    CHAR *timeStr = NULL ;
@@ -8513,6 +8641,7 @@ static JSClass regex_class = {
 static JSBool regex_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_REGEX_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
    JSBool ret = JS_TRUE ;
    JSString *jsRegex = NULL ;
    JSString *jsOption = NULL ;
@@ -8587,6 +8716,8 @@ static JSBool minkey_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    JSBool ret = JS_TRUE ;
    PD_TRACE_ENTRY( SDB_MINKEY_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
+
    JSObject *jsObj = NULL ;
 
    if ( 0 != argc )
@@ -8627,6 +8758,8 @@ static JSBool maxkey_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    JSBool ret = JS_TRUE ;
    PD_TRACE_ENTRY( SDB_MAXKEY_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
+
    JSObject *jsObj = NULL ;
 
    if ( 0 != argc )
@@ -8667,6 +8800,8 @@ static JSBool numberlong_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    JSBool ret = JS_TRUE ;
    PD_TRACE_ENTRY( SDB_NUMBERLONG_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
+
    JSObject *jsObj = NULL ;
    jsdouble v = 0 ;
    JSString *ln = NULL ;
@@ -8750,6 +8885,8 @@ static JSClass sdbdate_class = {
 static JSBool sdbdate_constructor( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDBDATE_CONSTRUCTOR ) ;
+   engine::sdbClearErrorInfo() ;
+
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
    CHAR *timeStr = NULL ;

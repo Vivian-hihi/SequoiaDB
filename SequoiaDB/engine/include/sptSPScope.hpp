@@ -38,6 +38,33 @@
 
 namespace engine
 {
+
+   /*
+      _sptSPResultVal define
+   */
+   class _sptSPResultVal : public _sptResultVal
+   {
+      public:
+         _sptSPResultVal() ;
+         virtual ~_sptSPResultVal() ;
+
+         virtual const void*     rawPtr() const ;
+         virtual bson::BSONObj   toBSON() const ;
+
+         void    reset( JSContext *ctx ) ;
+
+      protected:
+         INT32  _rval2obj( JSContext *cx,
+                           const jsval &jsrval,
+                           bson::BSONObj &rval ) const ;
+
+      protected:
+         jsval             _value ;
+         JSContext         *_ctx ;
+
+   } ;
+   typedef _sptSPResultVal sptSPResultVal ;
+
    /*
       _sptSPScope define
    */
@@ -75,8 +102,7 @@ namespace engine
                          const CHAR *filename,
                          UINT32 lineno,
                          INT32 flag,
-                         bson::BSONObj &rval,
-                         bson::BSONObj &detail ) ;
+                         const sptResultVal **ppRval ) ;
 
       virtual void   getGlobalFunNames( set<string> &setFunc,
                                         BOOLEAN showHide = FALSE ) ;
@@ -114,6 +140,7 @@ namespace engine
       JSRuntime *_runtime ;
       JSContext *_context ;
       JSObject *_global ;
+      sptSPResultVal _rval ;
 
    } ;
    typedef class _sptSPScope sptSPScope ;

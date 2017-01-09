@@ -191,7 +191,7 @@ namespace engine
       string errmsg ;
       BSONObjBuilder bob ;
       BSONObj detail ;
-      BSONObj rval ;
+      const sptResultVal *pRval = NULL ;
 
       rc = getExcuteJsContent( _content ) ;
       if ( rc )
@@ -210,7 +210,7 @@ namespace engine
       }
       // 2. execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
-                         "", 1, SPT_EVAL_FLAG_NONE, rval, detail ) ;
+                         "", 1, SPT_EVAL_FLAG_NONE, &pRval ) ;
       if ( rc )
       {
          // we come here for one of the follow reasons:
@@ -226,7 +226,7 @@ namespace engine
          goto error ;
       }
       // 3. adapt the result
-      rc = final ( rval, retObj ) ;
+      rc = final ( pRval->toBSON(), retObj ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to extract result for command[%s], "

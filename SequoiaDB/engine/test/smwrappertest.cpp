@@ -98,80 +98,8 @@ int main(int argc, char** argv)
 		printf("Syntax: %s <file name>\n", argv[0]);
 		return 0;
 	}
-	/**********************initiailize*****************************/
-	printf("** setup SMEngine\n");
-	ScriptEngine::setup();
 
-	printf("** create SMScope\n");
-	Scope* s = globalScriptEngine->getPooledScope("test");
-	
-	/***********************load script file***********************/
-	FILE *fp = fopen((char*)argv[1], "r");
-	if(!fp)
-	{
-		printf("Failed to open file %s\n", (char*)argv[1]);
-		return 0;
-	}
+   /// TODO
 
-	fseek(fp, 0, SEEK_END);
-	long filesize = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	char* pBuffer=(char*)malloc(sizeof(char)* (filesize+1));
-	fread(pBuffer, filesize, 1, fp);
-	pBuffer[filesize]=0;
-
-	printf("** Direct execute\n");
-	s->exec(pBuffer, "foo", true, true, true, 0);
-	printf("** Creating function\n");
-	ScriptingFunction func=s->createFunction(pBuffer);
-	printf("** Function address = 0x%016llx\n", func);
-	if(!s)
-	{
-		printf("failed to create function\n");
-	}
-	else
-	{
-		int rc=s->invoke(func, 0,0,0,false );
-		if(0==rc)
-		{
-			BSONObj obj = s->getObject("return");
-			cout<<obj;
-		}
-		printf("\n** rc=%d\n", rc);
-	}
-	fclose(fp);
-	free(pBuffer);
-
-
-	/********************** create native function*************************/
-	printf("** Creating gettime() native function\n");
-	
-	// injectNative takes 2 arguments
-	// 1) javascript function name, which is the function name that java script code may call
-	// 2) the C function pointer mapping that javascript function
-	if(s->injectNative("gettime", getTimeNative))
-	{
-		// call exec to run the native function
-		// 1) javascript code
-		// 2) the function name, usually it doesn't matter
-		// 3) whether print out result, if this is true, it will call cout<< to print to standard output
-		//	usually this is only useful on client side
-		// 4) reportError, if there's problem when calling JS_EvaluateScript, when this set to true, the error
-		//	will be output to standard output
-		// 5) assertOnError, if this set to true, in debug build failed executing JS_EvaluateScript will panic db
-		// 6) timeout, based on ms
-		if(!s->exec("gettime()", "callNativeFunction", true, true, true, 0))
-		{
-			printf("** Failed to call gettime() in javascript\n");
-		}
-	}
-	else
-		printf("** Failed to inject gettime() native function\n");
-
-	printf("** Done calling native function\n");
-	/*********************** clean up ***************************************/
-	printf("cleanup\n");
-	delete(s);
 	return 0;
 }

@@ -174,8 +174,6 @@ INT32 enterDaemonMode ( sptScope *scope ,
    INT32          hOutFd      = -1 ;
    //FILE *         newStdout   = NULL ;
    //CHAR *         result      = NULL ;
-   bson::BSONObj rval ;
-   bson::BSONObj detail ;
 
    OSSNPIPE f2bPipe ;
    OSSNPIPE b2fPipe ;
@@ -237,7 +235,7 @@ INT32 enterDaemonMode ( sptScope *scope ,
 
       if ( ! exit )
          scope->eval( code, ossStrlen( code ), "(sdbbp)", 1,
-                      SPT_EVAL_FLAG_PRINT, rval, detail ) ;
+                      SPT_EVAL_FLAG_PRINT, NULL ) ;
       SAFE_OSS_FREE ( code ) ;
       // shell always have errno defined
       ossPrintf ( " %d", sdbGetErrno() ) ;
