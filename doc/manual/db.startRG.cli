@@ -47,7 +47,7 @@ rg.start().
 \fBNote: \fR
 .sp 2
    *  Exception will occur when the specified replica group
-   doesn't exist or it has been started.
+   doesn't exist.
 .SH "Examples"
 
 .sp 2
