@@ -1783,7 +1783,7 @@ namespace engine
 
       /// _pLobSu may be NULL, set it as 1
       lobFlag = ( NULL == _pLobSu || !_pLobSu->isOpened() ) ?
-                TRUE : ( _pLobSu->getCommitFlag() : TRUE : FALSE ) ;
+                TRUE : ( _pLobSu->getCommitFlag() ? TRUE : FALSE ) ;
    }
 
 }  // namespace engine
