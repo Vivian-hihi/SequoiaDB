@@ -15,13 +15,12 @@ var fieldNames = ['fieldName1','fieldName2','fieldName3','fieldName4','fieldName
 
 function main()
 {
-   //var startTime = new Date();
-   //println("startTime:" + startTime.toLocaleString());
    //clean environment before test
    clearEnviron();
    
    //create main-sub cl for index scan
    var dbcl_IndexScan = createCLForIndexScan();
+   println("createCL success");
    
    //insert random numberical data
    insertRandomData( dbcl_IndexScan );
@@ -29,14 +28,12 @@ function main()
       
    //create index for index scan
    createIndex( dbcl_IndexScan );
-   println("createIndex success");
+   println("create Index success");
    
    //query use random conditon and check result
    var loopNum = 10;
    queryDataAndCheck( dbcl_IndexScan, loopNum );
    println("check result success");
-   //var endTime = new Date();
-   //println("endTime:" + endTime.toLocaleString());
 }
 main()
  
@@ -197,7 +194,11 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
 	   println("randomCondition:"+ JSON.stringify(randomConditionObj));
 		
 	   //get index scan result
+	   var endTime = new Date();
+	   println("dbcl_IndexScan startTime:" + endTime.toLocaleString());
 	   var ixScanCursor = dbcl_IndexScan.find( randomConditionObj, null ).sort( { _id: 1 } );
+	   var endTime = new Date();
+	   println("dbcl_IndexScan endTime:" + endTime.toLocaleString());
 	   
 	   //get index scan explain
 	   var ixScanExplain = dbcl_IndexScan.find(randomConditionObj,null).explain();
@@ -208,7 +209,11 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
 	   }
 	   
 	   //get table scan result
+	   var endTime = new Date();
+	   println("dbcl_TableScan startTime:" + endTime.toLocaleString());
 	   var tbScanCursor = dbcl_IndexScan.find( randomConditionObj, null ).hint({"":null}).sort( { _id: 1 } );
+	   var endTime = new Date();
+	   println("dbcl_TableScan endTime:" + endTime.toLocaleString());
 	   
 	   //get table scan explain
 	   var tbScanExplain = dbcl_IndexScan.find(randomConditionObj,null).hint({"":null}).explain();
@@ -219,14 +224,14 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
 	   }
 	   
 	   //check count
-      if( ixScanCursor.count().toString() !== tbScanCursor.count().toString() )
-      {
-         println("ixScanCursor.count():"+ixScanCursor.count());
-         println("tbScanCursor.count():"+tbScanCursor.count());
-      	println("\n\nixScanExplainRecs:"+JSON.stringify(ixScanExplainRecs));
-      	println("\n\ntbScanExplainRecs:"+JSON.stringify(tbScanExplainRecs));
-      	throw buildException("check count", null, "", ixScanCursor.count(), tbScanCursor.count());
-      }
+	   var endTime = new Date();
+	   println("checkResult startTime:" + endTime.toLocaleString());
+	   if( ixScanCursor.count().toString() !== tbScanCursor.count().toString() )
+       {
+      	 println("\n\nixScanExplainRecs:"+JSON.stringify(ixScanExplainRecs));
+      	 println("\n\ntbScanExplainRecs:"+JSON.stringify(tbScanExplainRecs));
+      	 throw buildException("check count", null, "", ixScanCursor.count(), tbScanCursor.count());
+       }
       
       //check every records every fields,tbScanRecs as compare source
       while( ixScanCursor.next() && tbScanCursor.next() )
@@ -243,5 +248,7 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
 				throw buildException("check record", null, JSON.stringify(ixScanRec),JSON.stringify(tbScanRec));
 			}
       }
+	  var endTime = new Date();
+	  println("checkResult endTime:" + endTime.toLocaleString());
    }
 }
