@@ -2,12 +2,12 @@ package com.sequoiadb.subcl;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -21,8 +21,8 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
- * 一个连接重复地创建主表、子表、attach子表、删除主表，同时另一个连接重复地插入数据 ，两个用户连不同的coord操作 testlink case:
- * seqDB95
+ * 
+ 1 一个连接重复地创建主表、子表、attach子表、删除主表，同时另一个连接重复地插入数据 testlink case: seqDB95
  * 
  * @author huangwenhua
  * @Date 2016.12.20
@@ -30,14 +30,11 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 public class DropMain95 extends SdbTestBase {
 	private Sequoiadb sdb = null;
-	private Sequoiadb sdb1 = null;
-	private Sequoiadb sdb2 = null;
 	private CollectionSpace cs;
 	private DBCollection maincl;
 	private DBCollection subcl;
 	private String mainclName = "maincl_95";
 	private String subclName = "subcl_95";
-	private List<String> hostList;
 	private SimpleDateFormat df = new SimpleDateFormat(
 			"YYYY-MM-dd HH:mm:ss.SSS");
 
@@ -47,10 +44,11 @@ public class DropMain95 extends SdbTestBase {
 			System.out.println("the TestCase : " + this.getClass().getName()
 					+ " begin at:" + df.format(new Date()));
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			// 调用CommLib中的getNodeAddress切换不同的coord
+			// 判断是否是独立模式
 			CommLib lib = new CommLib();
-			hostList = lib.getNodeAddress(sdb, "SYSCoord");
-			sdb1 = new Sequoiadb(hostList.get(0), "", "");
+			if (lib.isStandAlone(sdb)) {
+				throw new SkipException("skip standalone");
+			}
 		} catch (BaseException e) {
 			Assert.fail(" TestCase95 setUp error:" + e.getMessage());
 		}
@@ -60,10 +58,10 @@ public class DropMain95 extends SdbTestBase {
 	@Test
 	public void insertData() {
 		DropCl DropClThread = new DropCl();
-		Sequoiadb sdb2 = null;
+		Sequoiadb db2 = null;
 		try {
-			sdb2 = new Sequoiadb(hostList.get(1), "", "");
-			DBCollection cl1 = sdb2.getCollectionSpace(SdbTestBase.csName)
+			db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			DBCollection cl1 = db2.getCollectionSpace(SdbTestBase.csName)
 					.getCollection(mainclName);
 			BSONObject bson;
 			DropClThread.start();
@@ -83,8 +81,8 @@ public class DropMain95 extends SdbTestBase {
 			Assert.assertEquals(-23, e.getErrorCode(), e.getMessage());
 			return;
 		} finally {
-			if (sdb2 != null) {
-				sdb2.disconnect();
+			if (db2 != null) {
+				db2.disconnect();
 			}
 			DropClThread.join();
 		}
@@ -93,11 +91,16 @@ public class DropMain95 extends SdbTestBase {
 	class DropCl extends SdbThreadBase {
 		@Override
 		public void exec() throws Exception {
+			Sequoiadb db1 = null;
 			try {
-				sdb1.getCollectionSpace(csName)
-						.dropCollection(maincl.getName());
+				db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				db1.getCollectionSpace(csName).dropCollection(maincl.getName());
 			} catch (BaseException e) {
 				throw e;
+			} finally {
+				if (db1 != null) {
+					db1.disconnect();
+				}
 			}
 		}
 	}
@@ -120,26 +123,20 @@ public class DropMain95 extends SdbTestBase {
 			if (sdb != null) {
 				sdb.disconnect();
 			}
-			if (sdb1 != null) {
-				this.sdb1.disconnect();
-			}
-			if (sdb2 != null) {
-				this.sdb2.disconnect();
-			}
 		}
 	}
 
 	public void createCL() {
 		try {
-			if (!sdb1.isCollectionSpaceExist(SdbTestBase.csName)) {
-				sdb1.createCollectionSpace(SdbTestBase.csName);
+			if (!sdb.isCollectionSpaceExist(SdbTestBase.csName)) {
+				sdb.createCollectionSpace(SdbTestBase.csName);
 			}
 		} catch (BaseException e) {
 			// -33 CS exist,ignore exceptions
 			Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
 		}
 		try {
-			cs = sdb1.getCollectionSpace(SdbTestBase.csName);
+			cs = sdb.getCollectionSpace(SdbTestBase.csName);
 			BSONObject mainObj = (BSONObject) JSON
 					.parse("{IsMainCL:true,ShardingKey:{b:1}}");
 			BSONObject subObj = (BSONObject) JSON
