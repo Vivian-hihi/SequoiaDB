@@ -2348,7 +2348,6 @@ namespace engine
       _ossCmdRunner      runner ;
       string             outStr ;
       vector<string>     splited ;
-      vector<string>     token ;
       BSONObjBuilder     builder ;
       string             fileType ;
 
@@ -2436,79 +2435,81 @@ namespace engine
          }
       }
 
-      // output is only one row
-      if( 1 != splited.size() )
+      for( vector<string>::iterator itr = splited.begin();
+           itr != splited.end(); itr++ )
       {
-         rc = SDB_SYS ;
-         PD_LOG_MSG( PDERROR, "Failed to extract file stat" ) ;
-         goto error ;
-      }
-      try
-      {
-         boost::algorithm::split( token, splited[ 0 ], boost::is_any_of("|") ) ;
-      }
-      catch( std::exception )
-      {
-         rc = SDB_SYS ;
-         PD_LOG_MSG( PDERROR, "Failed to split result" ) ;
-         goto error ;
-      }
-      for ( vector<string>::iterator itr = token.begin();
-            itr != token.end();  )
-      {
-         if ( itr->empty() )
+         vector<string> token ;
+         try
          {
-            itr = token.erase( itr ) ;
+            boost::algorithm::split( token, *itr, boost::is_any_of( "|" ) ) ;
          }
-         else
+         catch( std::exception )
          {
-            itr++ ;
+            rc = SDB_SYS ;
+            PD_LOG_MSG( PDERROR, "Failed to split result" ) ;
+            goto error ;
          }
+         for( vector<string>::iterator itr = token.begin();
+              itr != token.end(); )
+         {
+            if ( itr->empty() )
+            {
+               itr = token.erase( itr ) ;
+            }
+            else
+            {
+               itr++ ;
+            }
+         }
+         // ignore useless info
+         if( 8 != token.size() )
+         {
+            continue ;
+         }
+
+         // get file type
+         switch( token[ 7 ][ 0 ] )
+         {
+            case '-':
+               fileType = "regular file" ;
+               break ;
+            case 'd':
+               fileType = "directory" ;
+               break ;
+            case 'c':
+               fileType = "character special file" ;
+               break ;
+            case 'b':
+               fileType = "block special file" ;
+               break ;
+            case 'l':
+               fileType = "symbolic link" ;
+               break ;
+            case 's':
+               fileType = "socket" ;
+               break ;
+            case 'p':
+               fileType = "pipe" ;
+               break ;
+            default:
+               fileType = "unknow" ;
+         }
+         builder.append( "name", token[ 0 ] ) ;
+         builder.append( "size", token[ 1 ] ) ;
+         builder.append( "mode", token[ 7 ].substr( 1 ) ) ;
+         builder.append( "user", token[ 2 ] ) ;
+         builder.append( "group", token[ 3 ] ) ;
+         builder.append( "accessTime", token[ 4 ] ) ;
+         builder.append( "modifyTime", token[ 5 ] ) ;
+         builder.append( "changeTime", token[ 6 ] ) ;
+         builder.append( "type", fileType ) ;
+         retObj = builder.obj() ;
+         goto done ;
       }
 
-      // only have 8 cols
-      if ( 8 != token.size() )
-      {
-         rc = SDB_SYS ;
-         PD_LOG_MSG( PDERROR, "Failed to build result" ) ;
-         goto error ;
-      }
-      switch( token[7][0] )
-      {
-         case '-':
-            fileType = "regular file" ;
-            break ;
-         case 'd':
-            fileType = "directory" ;
-            break ;
-         case 'c':
-            fileType = "character special file" ;
-            break ;
-         case 'b':
-            fileType = "block special file" ;
-            break ;
-         case 'l':
-            fileType = "symbolic link" ;
-            break ;
-         case 's':
-            fileType = "socket" ;
-            break ;
-         case 'p':
-            fileType = "pipe" ;
-            break ;
-         default:
-            fileType = "unknow" ;
-      }
-      builder.append( "name", token[ 0 ] ) ;
-      builder.append( "size", token[ 1 ] ) ;
-      builder.append( "mode", token[ 7 ].substr( 1 ) ) ;
-      builder.append( "user", token[ 2 ] ) ;
-      builder.append( "group", token[ 3 ] ) ;
-      builder.append( "accessTime", token[ 4 ] ) ;
-      builder.append( "modifyTime", token[ 5 ] ) ;
-      builder.append( "changeTime", token[ 6 ] ) ;
-      builder.append( "type", fileType ) ;
-      retObj = builder.obj() ;
+      rc = SDB_SYS ;
+      PD_LOG_MSG( PDERROR, "Failed to build result" ) ;
+      goto error ;
    done:
       return rc ;
    error:

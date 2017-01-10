@@ -2277,7 +2277,6 @@ JS_MAPPING_END()
       _ossCmdRunner      runner ;
       string             outStr ;
       vector<string>     splited ;
-      vector<string>     token ;
       BSONObjBuilder     builder ;
       string             fileType ;
 
@@ -2345,7 +2344,7 @@ JS_MAPPING_END()
       */
       try
       {
-         boost::algorithm::split( splited, outStr, boost::is_any_of("\r\n") ) ;
+         boost::algorithm::split( splited, outStr, boost::is_any_of( "\r\n" ) ) ;
       }
       catch( std::exception )
       {
@@ -2354,8 +2353,8 @@ JS_MAPPING_END()
          PD_LOG( PDERROR, "Failed to split result" ) ;
          goto error ;
       }
-      for ( vector<string>::iterator itr = splited.begin();
-            itr != splited.end();  )
+      for( vector<string>::iterator itr = splited.begin();
+           itr != splited.end();  )
       {
          if ( itr->empty() )
          {
@@ -2367,81 +2366,83 @@ JS_MAPPING_END()
          }
       }
 
-      // output is only one row
-      if( 1 != splited.size() )
+      for( vector<string>::iterator itr = splited.begin();
+           itr != splited.end(); itr++ )
       {
-         rc = SDB_SYS ;
-         detail = BSON( SPT_ERR << "Failed to extract file stat" ) ;
-         PD_LOG( PDERROR, "Failed to extract file stat" ) ;
-         goto error ;
-      }
-      try
-      {
-         boost::algorithm::split( token, splited[ 0 ], boost::is_any_of("|") ) ;
-      }
-      catch( std::exception )
-      {
-         rc = SDB_SYS ;
-         detail = BSON( SPT_ERR << "Failed to split result" ) ;
-         PD_LOG( PDERROR, "Failed to split result, rc" ) ;
-         goto error ;
-      }
-      for ( vector<string>::iterator itr = token.begin();
-            itr != token.end(); )
-      {
-         if ( itr->empty() )
+         vector<string> token ;
+         try
          {
-            itr = token.erase( itr ) ;
+            boost::algorithm::split( token, *itr, boost::is_any_of( "|" ) ) ;
          }
-         else
+         catch( std::exception )
          {
-            itr++ ;
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Failed to split result" ) ;
+            PD_LOG( PDERROR, "Failed to split result" ) ;
+            goto error ;
          }
+         for( vector<string>::iterator itr = token.begin();
+              itr != token.end(); )
+         {
+            if ( itr->empty() )
+            {
+               itr = token.erase( itr ) ;
+            }
+            else
+            {
+               itr++ ;
+            }
+         }
+         // ignore useless info
+         if( 8 != token.size() )
+         {
+            continue ;
+         }
+
+         // get file type
+         switch( token[ 7 ][ 0 ] )
+         {
+            case '-':
+               fileType = "regular file" ;
+               break ;
+            case 'd':
+               fileType = "directory" ;
+               break ;
+            case 'c':
+               fileType = "character special file" ;
+               break ;
+            case 'b':
+               fileType = "block special file" ;
+               break ;
+            case 'l':
+               fileType = "symbolic link" ;
+               break ;
+            case 's':
+               fileType = "socket" ;
+               break ;
+            case 'p':
+               fileType = "pipe" ;
+               break ;
+            default:
+               fileType = "unknow" ;
+         }
+         builder.append( "name", token[ 0 ] ) ;
+         builder.append( "size", token[ 1 ] ) ;
+         builder.append( "mode", token[ 7 ].substr( 1 ) ) ;
+         builder.append( "user", token[ 2 ] ) ;
+         builder.append( "group", token[ 3 ] ) ;
+         builder.append( "accessTime", token[ 4 ] ) ;
+         builder.append( "modifyTime", token[ 5 ] ) ;
+         builder.append( "changeTime", token[ 6 ] ) ;
+         builder.append( "type", fileType ) ;
+         rval.getReturnVal().setValue( builder.obj() ) ;
+         goto done ;
       }
 
-      // only have 8 cols
-      if ( 8 != token.size() )
-      {
-         rc = SDB_SYS ;
-         detail = BSON( SPT_ERR << "Failed to build result" ) ;
-         goto error ;
-      }
-      switch( token[ 7 ][ 0 ] )
-      {
-         case '-':
-            fileType = "regular file" ;
-            break ;
-         case 'd':
-            fileType = "directory" ;
-            break ;
-         case 'c':
-            fileType = "character special file" ;
-            break ;
-         case 'b':
-            fileType = "block special file" ;
-            break ;
-         case 'l':
-            fileType = "symbolic link" ;
-            break ;
-         case 's':
-            fileType = "socket" ;
-            break ;
-         case 'p':
-            fileType = "pipe" ;
-            break ;
-         default:
-            fileType = "unknow" ;
-      }
-      builder.append( "name", token[ 0 ] ) ;
-      builder.append( "size", token[ 1 ] ) ;
-      builder.append( "mode", token[ 7 ].substr( 1 ) ) ;
-      builder.append( "user", token[ 2 ] ) ;
-      builder.append( "group", token[ 3 ] ) ;
-      builder.append( "accessTime", token[ 4 ] ) ;
-      builder.append( "modifyTime", token[ 5 ] ) ;
-      builder.append( "changeTime", token[ 6 ] ) ;
-      builder.append( "type", fileType ) ;
-      rval.getReturnVal().setValue( builder.obj() ) ;
+      rc = SDB_SYS ;
+      detail = BSON( SPT_ERR << "Failed to build result" ) ;
+      goto error ;
+
    done:
       return rc ;
    error:
