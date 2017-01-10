@@ -8,6 +8,8 @@ main();
 
 function main()
 {
+   if( commIsStandalone( db ) ) return;
+
    println("\n---Begin---");
    var csName = COMMCSNAME;
    var clName = COMMCLNAME+"_6651" ;
