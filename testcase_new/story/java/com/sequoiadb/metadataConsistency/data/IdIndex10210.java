@@ -125,7 +125,8 @@ public class IdIndex10210 extends SdbTestBase {
 			opt.put("AutoIndexId", false);
 			db.getCollectionSpace(csName).createCollection(clName, opt);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34 && e.getErrorCode() != -22){
+			if(e.getErrorCode() != -34 
+					&& e.getErrorCode() != -22){
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
@@ -145,7 +146,8 @@ public class IdIndex10210 extends SdbTestBase {
 		}catch(BaseException e){
 			if(e.getErrorCode() != -248 //-248:Dropping the collection space is in progress
 					&& e.getErrorCode() != -23
-					&& e.getErrorCode() != -34){
+					&& e.getErrorCode() != -34
+					&& e.getErrorCode() != -147){ //-147:Unable to lock
 				Assert.fail(e.getMessage());
 			}
 		}finally{
