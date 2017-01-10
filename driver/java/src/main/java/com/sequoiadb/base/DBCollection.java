@@ -1547,7 +1547,7 @@ public class DBCollection {
      *            the split condition
      * @param splitEndCondition
      *            the split end condition or null
-     *            eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
+     *            eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"hash",Partition:2^10},
      *               we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, 
      *               the target group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
      *               they are in [30,max).
@@ -1637,7 +1637,7 @@ public class DBCollection {
      *            the split condition
      * @param splitEndCondition
      *            the split end condition or null
-     *            eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
+     *            eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"hash",Partition:2^10},
      *               we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, 
      *               the targe group will get the records whose age's hash values are in [30,60). If splitEndCondition is null,
      *               they are in [30,max).
