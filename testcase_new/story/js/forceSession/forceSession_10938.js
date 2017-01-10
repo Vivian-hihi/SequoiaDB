@@ -51,7 +51,7 @@ function doTest(flag)
 	var reconn = conn;
 	if (errorCode == -16)
 	{
-		reconn = getConn( COORDHOSTNAME, COORDSVCNAME );
+		reconn = getConn( COORDHOSTNAME+":"+COORDSVCNAME );
 	}
 	sleep(1000);
 	var sessionList_After = reconn.list( SDB_LIST_SESSIONS, {Global:flag, SessionID:sessionid, RelatedID:relatedID, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]} } ).toArray();

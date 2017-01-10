@@ -22,17 +22,17 @@ main();
 function main()
 {
 	if ( commIsStandalone(db) ) return;
-	
-	var currentSession = db.list( SDB_LIST_SESSIONS_CURRENT, {Global:false} ).next().toObj();
 
-	// TODO 2.a 
+	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
+	var currentSession = conn.list( SDB_LIST_SESSIONS_CURRENT, {Global:false} ).next().toObj();
+	// TODO 2.a
 	try
 	{
-		db.forceSession( currentSession.SessionID, {Host:"test"} );	
+		conn.forceSession( currentSession.SessionID, {Host:"test"} );
 	}
 	catch(e)
-	{	
-		if (e != -16) 
+	{
+		if (e != -16)
 		{
 			throw buildException( "forceSession", e, "forceSession by options is {Host:\"test\"}" );
 		}
@@ -40,13 +40,15 @@ function main()
 	
 
 	// TODO 2.b
+	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
+	var currentSession = conn.list( SDB_LIST_SESSIONS_CURRENT, {Global:false} ).next().toObj();
 	try
 	{
-		db.forceSession( currentSession.SessionID, {} );
+		conn.forceSession( currentSession.SessionID, {} );
 	}
 	catch(e)
 	{
-		if (e != -64) 
+		if (e != -16)
 		{
 			throw buildException( "forceSession", e, "forceSession by options is {}" );
 		}
@@ -64,16 +66,37 @@ function main()
 	// }
 	
 	// TODO 2.d
+	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
+	var currentSession = conn.list( SDB_LIST_SESSIONS_CURRENT, {Global:false} ).next().toObj();
 	try
 	{
-		db.forceSession( currentSession.SessionID, {NodeID:"abcd"} );
+		conn.forceSession( currentSession.SessionID, {NodeID:"abcd"} );
 	}
 	catch(e)
 	{
-		if (e != -64) 
+		if (e != -16)
 		{
 			throw buildException( "forceSession", e, "forceSession by options is {NodeID:\"abcd\"}" );
 		}
 	}
 
+}
+
+
+/**
+ * 通过url获取连接
+ * @param url 例：sdbserver01:11820
+ */
+function getConn(url)
+{
+	var conn = null;
+	try
+	{
+		conn = new Sdb(url);
+	}
+	catch(e)
+	{
+		throw buildException( "connection to sdb by url["+url+"] error", e);
+	}
+	return conn;
 }

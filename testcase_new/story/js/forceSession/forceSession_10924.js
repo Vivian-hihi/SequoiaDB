@@ -26,15 +26,23 @@
  	try
  	{
  		db.forceSession();
- 		throw buildException("forceSession", e, "forceSession but sessionid is null", "throw exception", "don't throw exception");
  	}
- 	catch(e){}
- 	
+ 	catch(e){
+		if (e != "Error: Sdb.forceSession(): wrong arguments")
+		{
+			throw buildException("forceSession", new Error(), "forceSession but sessionid is null", "throw exception", "don't throw exception");
+		}
+	}
+
  	// TODO 2.b 因为sessionid传入字符串，不报错，这里类型非法采用其他类型验证
  	try
  	{
  		db.forceSession(true);
- 		throw buildException("forceSession", e, "forceSession but sessionid type is error", "throw exception", "don't throw exception");
  	}
- 	catch(e){} 
+ 	catch(e){
+		if (e != "Error: Sdb.forceSession(): wrong arguments")
+		{
+			throw buildException("forceSession", new Error(), "forceSession but sessionid type is error", "throw exception", "don't throw exception");
+		}
+	}
  }
