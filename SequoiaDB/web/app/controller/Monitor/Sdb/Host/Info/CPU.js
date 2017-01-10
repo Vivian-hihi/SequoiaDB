@@ -34,7 +34,6 @@
       var idleCpuOld = 0 ;
       var sumCpu = 0 ;
       var idleCpu = 0 ;
-
       //获取cpu配置
       var getCpuInfo = function(){
          var data = {
@@ -56,6 +55,10 @@
                      //进程数
                      $scope.CpuList.push( cpuInfo ) ;
                   } ) ;
+               }
+               else
+               {
+                  getCpuInfo() ;
                }
             },
             'failed': function( errorInfo ){

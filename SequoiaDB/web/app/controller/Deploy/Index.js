@@ -1365,6 +1365,10 @@
 
       //创建 删除集群 弹窗
       $scope.CreateRemoveClusterModel = function(){
+         if( $scope.clusterList.length == 0 )
+         {
+            return ;
+         }
          $scope.Components.Modal.icon = '' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '删除集群' ) ;
          $scope.Components.Modal.isShow = true ;
