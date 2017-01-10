@@ -137,7 +137,7 @@ public class Split101 extends SdbTestBase {
 		}
 	}
 
-	@AfterClass(alwaysRun =true)
+	@AfterClass
 	public void tearDown() {
 		try {
 			if (sdb.isCollectionSpaceExist(csName1)) {
