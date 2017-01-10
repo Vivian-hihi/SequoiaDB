@@ -111,8 +111,9 @@ public class TestTruncate173 extends SdbTestBase {
                 // doing insert
                 cl.insert(record);
             }catch(BaseException e){
-                e.printStackTrace();
-                throw e;
+                if(e.getErrorCode() != -23){
+                    throw e;
+                }
             }finally{
                 db.disconnect();
             }

@@ -107,8 +107,9 @@ public class TestTruncate177 extends SdbTestBase {
                 // doing remove
                 cl.delete("");
             }catch(BaseException e){
-                e.printStackTrace();
-                throw e;
+                if(e.getErrorCode() != -23){
+                    throw e;
+                }
             }finally{
                 db.disconnect();
             }

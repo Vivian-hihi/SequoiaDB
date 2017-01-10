@@ -112,9 +112,10 @@ public class TestTruncate172 extends SdbTestBase {
                 db.setSessionAttr((BSONObject)JSON.parse("{PreferedInstance:'M'}"));
                 // doing backup        
                 db.backupOffline(options);
-            }catch(Exception e){
-                e.printStackTrace();
-                throw e;
+            }catch(BaseException e){
+                if(e.getErrorCode() != -23){
+                    throw e;
+                }
             }finally{
                 db.disconnect();
             }

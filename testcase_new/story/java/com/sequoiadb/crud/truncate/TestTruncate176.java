@@ -118,8 +118,9 @@ public class TestTruncate176 extends SdbTestBase {
                 // doing upsert            
                 cl.upsert(null, modifier, null);
             }catch(BaseException e){
-                e.printStackTrace();
-                throw e;
+                if(e.getErrorCode() != -23){
+                    throw e;
+                }
             }finally{
                 db.disconnect();
             }

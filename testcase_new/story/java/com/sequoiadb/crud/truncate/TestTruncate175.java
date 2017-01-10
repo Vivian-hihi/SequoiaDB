@@ -112,8 +112,9 @@ public class TestTruncate175 extends SdbTestBase {
                 // doing update
                 cl.update(null, modifier, null);
             }catch(BaseException e){
-                e.printStackTrace();
-                throw e;
+                if(e.getErrorCode() != -23){
+                    throw e;
+                }
             }finally{
                 db.disconnect();
             }
