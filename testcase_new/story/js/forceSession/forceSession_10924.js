@@ -27,7 +27,8 @@
  	{
  		db.forceSession();
  	}
- 	catch(e){
+ 	catch(e)
+	{
 		if (e != "Error: Sdb.forceSession(): wrong arguments")
 		{
 			throw buildException("forceSession", new Error(), "forceSession but sessionid is null", "throw exception", "don't throw exception");
@@ -39,7 +40,8 @@
  	{
  		db.forceSession(true);
  	}
- 	catch(e){
+ 	catch(e)
+	{
 		if (e != "Error: Sdb.forceSession(): wrong arguments")
 		{
 			throw buildException("forceSession", new Error(), "forceSession but sessionid type is error", "throw exception", "don't throw exception");

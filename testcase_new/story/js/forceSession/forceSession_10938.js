@@ -29,7 +29,7 @@ function main()
 
 function doTest(flag)
 {
-	var conn = getConn( COORDHOSTNAME+":"+COORDSVCNAME );
+	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
 	var sessionList_Before = conn.list( SDB_LIST_SESSIONS, {Global:flag, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}} ).toArray();
 	var temp = Math.ceil(Math.random()*10) % sessionList_Before.length;
 	var sessionid = JSON.parse(sessionList_Before[temp]).SessionID;

@@ -23,7 +23,7 @@ function main()
 {
 	if ( commIsStandalone(db) ) return;
 
-	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
+	var conn = getConn( COORDHOSTNAME+":"+COORDSVCNAME );
 	var currentSession = conn.list( SDB_LIST_SESSIONS_CURRENT, {Global:false} ).next().toObj();
 	// TODO 2.a
 	try
@@ -40,7 +40,7 @@ function main()
 	
 
 	// TODO 2.b
-	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
+	var conn = getConn( COORDHOSTNAME+":"+COORDSVCNAME );
 	var currentSession = conn.list( SDB_LIST_SESSIONS_CURRENT, {Global:false} ).next().toObj();
 	try
 	{
@@ -66,7 +66,7 @@ function main()
 	// }
 	
 	// TODO 2.d
-	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
+	var conn = getConn( COORDHOSTNAME+":"+COORDSVCNAME );
 	var currentSession = conn.list( SDB_LIST_SESSIONS_CURRENT, {Global:false} ).next().toObj();
 	try
 	{
