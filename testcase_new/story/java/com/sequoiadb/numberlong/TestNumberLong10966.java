@@ -91,8 +91,44 @@ public class TestNumberLong10966 extends SdbTestBase{
         id = 6;
         expected = "{ \"_id\" : "+id+" , \"b\" : { \"$numberLong\" : \"9223372036854775807\"} , \"c\" : { \"$numberLong\" : \"-9223372036854775808\"}}";
         testLong2(id, expected);
+        
+        //2的53次方9007199254740992
+        //[-(2^53-1)，2^53-1]
+        BSON.setJSCompatibility(false);
+        id = 7;
+        expected = "{ \"_id\" : "+id+" , \"a\" : 123 , \"b\" : -9007199254740991 , \"c\" : 9007199254740991}";
+        test2_53(id, expected);
+        BSON.setJSCompatibility(true);
+        id = 8;
+        expected = "{ \"_id\" : "+id+" , \"a\" : 123 , \"b\" : -9007199254740991 , \"c\" : 9007199254740991}";
+        test2_53(id, expected);
     }
-    
+
+    /**
+     * [-(2^53-1)，2^53-1]
+     * @param id
+     * @param expected
+     */
+    public void test2_53(int id, String expected) {
+        try {
+            BSONObject obj = new BasicBSONObject();
+            //整形和边界值
+            obj.put("_id", id);
+            obj.put("a", 123);
+            obj.put("b", -(9007199254740992L-1L));
+            obj.put("c", 9007199254740992L-1L);
+            this.cl.insert(obj);
+            DBCursor cursor = this.cl.query("{_id:{'$et':"+id+"}}", null, null, null);
+            BSONObject next = new BasicBSONObject();
+            while ( cursor.hasNext() ) {
+                next = cursor.getNext();
+            }
+            cursor.close();
+            Assert.assertEquals(next.toString(), expected);
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
+        }
+    }
     public void testInt(int id) {
         try {
             BSONObject obj = new BasicBSONObject();
@@ -136,7 +172,7 @@ public class TestNumberLong10966 extends SdbTestBase{
         }
     }
     
-    //大于 （2^53 - 1）小于Long.MAX的long类型的情况
+    //边界值
     public void testLong2(int id, String expected) {
         try {
             BSONObject obj = new BasicBSONObject();
