@@ -2913,7 +2913,7 @@ namespace engine
                    statMergeSync,
                    syncNum,
                    recyclNum,
-                   (FLOAT64)statDirtyPage * 100 / ( statMergeSync == 0 ? 1 : statTotalPage ),
+                   (FLOAT64)statDirtyPage * 100 / ( statTotalPage == 0 ? 1 : statTotalPage ),
                    (FLOAT64)statAlloc / diff * 1000,
                    (FLOAT64)statAllocNull / diff * 1000,
                    (FLOAT64)statAllocBlk / diff * 1000,
