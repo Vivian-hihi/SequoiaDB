@@ -31,12 +31,7 @@ import com.sequoiadb.testcommon.CommLib;
  * @version 1.00
  */
 public class Split101 extends SdbTestBase {
-	private long count1;
-	private long count2;
-	private long count3;
-	private String group1;
-	private String group2;
-	private String group3;
+	private long count;
 	private DBCollection mainCl;
 	private DBCollection subCl1;
 	private Sequoiadb sdb = null;
@@ -47,6 +42,8 @@ public class Split101 extends SdbTestBase {
 	private String mainClName1 = "mainCL101_1";
 	private String subClName1 = "subCL101_1";
 	private String csName1 = "mainCS101";
+	private List<String> groupsName;
+	private int recsCnt = 1000;
 	private BSONObject domainOption = new BasicBSONObject();
 	private ArrayList<String> replicaGroups = new ArrayList<String>();
 	private SimpleDateFormat df = new SimpleDateFormat(
@@ -63,14 +60,11 @@ public class Split101 extends SdbTestBase {
 				throw new SkipException("skip StandAlone");
 			}
 			// 源组和目标组
-			List<String> groupsName = commlib.getDataGroupNames(sdb);
+			groupsName = commlib.getDataGroupNames(sdb);
 			if (groupsName.size() < 2) {
 				throw new SkipException(
 						"current environment less than tow groups ");
 			}
-			group1 = groupsName.get(0);
-			group2 = groupsName.get(1);
-			group3 = groupsName.get(2);
 			replicaGroups = commlib.getDataGroupNames(sdb);
 			// init domain arg
 			domainOption.put("Groups", replicaGroups);
@@ -99,30 +93,17 @@ public class Split101 extends SdbTestBase {
 		Sequoiadb destDataNode = null;
 		DBCursor cursor = null;
 		try {
-			// group1组数据量检查
-			destDataNode = sdb.getReplicaGroup(group1).getMaster().connect();
-			DBCollection destCL1 = destDataNode.getCollectionSpace(csName1)
-					.getCollection(subClName1);
-			count1 = destCL1.getCount();
-			if (count1 < (330 - 330 * 0.3) || count1 > (330 + 330 * 0.3)) {
-				Assert.fail("split count error ");
-			}
-			// group2组数据量检查
-			destDataNode = sdb.getReplicaGroup(group2).getMaster().connect();
-			DBCollection destCL2 = destDataNode.getCollectionSpace(csName1)
-					.getCollection(subClName1);
-			count2 = destCL2.getCount();
-			if (count2 < (330 - 330 * 0.3) || count2 > (330 + 330 * 0.3)) {
-				Assert.fail("split count error ");
-			}
-
-			// group3组数据量检查
-			destDataNode = sdb.getReplicaGroup(group3).getMaster().connect();
-			DBCollection destCL3 = destDataNode.getCollectionSpace(csName1)
-					.getCollection(subClName1);
-			count3 = destCL3.getCount();
-			if (count3 < (330 - 330 * 0.3) || count3 > (330 + 330 * 0.3)) {
-				Assert.fail("split count error ");
+			for (int i = 0; i < groupsName.size(); i++) {
+				// group1组数据量检查
+				destDataNode = sdb.getReplicaGroup(groupsName.get(i))
+						.getMaster().connect();
+				DBCollection destCL1 = destDataNode.getCollectionSpace(csName1)
+						.getCollection(subClName1);
+				count = destCL1.getCount();
+				if (count < (recsCnt / groupsName.size() * 0.7)
+						|| count > (recsCnt / groupsName.size() * 1.3)) {
+					Assert.fail("split count error ");
+				}
 			}
 			// 检查数据是否丢失
 			cursor = this.subCl1.query(null, null, "{_id:1}", null);
@@ -143,8 +124,8 @@ public class Split101 extends SdbTestBase {
 			if (sdb.isCollectionSpaceExist(csName1)) {
 				sdb.dropCollectionSpace(commCS1.getName());
 			}
-			if(sdb.isDomainExist(domainName)){
-			    sdb.dropDomain(domainName);
+			if (sdb.isDomainExist(domainName)) {
+				sdb.dropDomain(domainName);
 			}
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
@@ -164,8 +145,7 @@ public class Split101 extends SdbTestBase {
 			if (cs.isCollectionExist(clName)) {
 				cs.dropCollection(clName);
 			}
-			Cl = cs
-					.createCollection(clName, (BSONObject) JSON.parse(option));
+			Cl = cs.createCollection(clName, (BSONObject) JSON.parse(option));
 		} catch (BaseException e) {
 			Assert.fail("createCl error" + e.getMessage());
 		}
@@ -186,7 +166,7 @@ public class Split101 extends SdbTestBase {
 	public void insertData() {
 		this.InsertRecods = new ArrayList<BSONObject>();
 		try {
-			for (int i = 0; i < 1000; i++) {
+			for (int i = 0; i < recsCnt; i++) {
 				BSONObject bson = new BasicBSONObject();
 				bson.put("a", 1);
 				mainCl.insert(bson);
