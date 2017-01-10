@@ -29,6 +29,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 public class DetachSub97 extends SdbTestBase {
 	private Sequoiadb sdb = null;
+	private Sequoiadb db1 =null;
 	private CollectionSpace cs;
 	private CollectionSpace cs1;
 	private CollectionSpace cs2;
@@ -60,7 +61,7 @@ public class DetachSub97 extends SdbTestBase {
 
 	@Test
 	public void checkAttach1() {
-		Sequoiadb db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+	    db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 		cs1 = db1.getCollectionSpace(SdbTestBase.csName);
 
 		BSONObject subObj = (BSONObject) JSON
@@ -79,6 +80,7 @@ public class DetachSub97 extends SdbTestBase {
 		} catch (BaseException e) {
 			Assert.fail("checkAttach1 error:" + e.getMessage());
 		} finally {
+			
 			CheckAttachThread.join();
 		}
 	}
@@ -104,7 +106,6 @@ public class DetachSub97 extends SdbTestBase {
 				if (db2 != null) {
 					db2.disconnect();
 				}
-				
 				throw e;
 			}
 		}
@@ -129,6 +130,9 @@ public class DetachSub97 extends SdbTestBase {
 					+ ". the TestCase end at:" + this.df.format(new Date()));
 			if (sdb != null) {
 				this.sdb.disconnect();
+			}
+			if (db1 != null) {
+				db1.disconnect();
 			}
 			
 		}
