@@ -1,4 +1,4 @@
-package com.sequoiadb.index;
+package com.sequoiadb.subcl;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -156,7 +156,7 @@ public class IdIndex6622 extends SdbTestBase {
 	public void insertData() {
 		try {
 			insertData = new ArrayList<BSONObject>();
-			for (int i = 0; i < 1000; i++) {
+			for (int i = 0; i < 5000; i++) {
 				BSONObject bson = new BasicBSONObject();
 				bson.put("age", i);
 				bson.put("name", "Json" + i);
