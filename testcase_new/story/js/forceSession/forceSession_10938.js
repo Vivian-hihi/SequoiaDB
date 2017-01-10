@@ -30,25 +30,39 @@ function main()
 function doTest(flag)
 {
 	var conn = getConn( COORDHOSTNAME, COORDSVCNAME );
-	var sessionList = conn.list( SDB_LIST_SESSIONS, {Global:flag, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}} ).toArray();
-	var sessionid = JSON.parse(sessionList[Math.ceil(Math.random()*10) % sessionList.length]).SessionID;
+	var sessionList_Before = conn.list( SDB_LIST_SESSIONS, {Global:flag, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]}} ).toArray();
+	var temp = Math.ceil(Math.random()*10) % sessionList_Before.length;
+	var sessionid = JSON.parse(sessionList_Before[temp]).SessionID;
+	var relatedID = JSON.parse(sessionList_Before[temp]).RelatedID;
+	var errorCode = null;
 	try
 	{
 		conn.forceSession( sessionid, {Global:flag} );
 	}
 	catch(e)
 	{
+		errorCode = e;
 		if ( !(e==-16 || e==-264) ) 
 		{
 			throw buildException("forceSession", e, "forceSession by sessionid and options", "forceSession success and throw exception(-16/-264)", "forceSession throw exception not is(-16/-264)" );
 		}
 	}
-	
-	var reconn = getConn( COORDHOSTNAME, COORDSVCNAME );
-	var sessionList = reconn.list( SDB_LIST_SESSIONS, {Global:flag, SessionID:sessionid, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]} } ).toArray();
-	if ( sessionList.length !=0 )
+
+	var reconn = conn;
+	if (errorCode == -16)
 	{
-		println(sessionList.length);
+		reconn = getConn( COORDHOSTNAME, COORDSVCNAME );
+	}
+	sleep(1000);
+	var sessionList_After = reconn.list( SDB_LIST_SESSIONS, {Global:flag, SessionID:sessionid, RelatedID:relatedID, Status: {$ne:"Waiting"}, Type:{$in:["Agent","ShardAgent","CoordAgent","ReplAgent","HTTPAgent"]} } ).toArray();
+	if ( sessionList_After.length !=0 )
+	{
+		println(flag);
+		println("===========================");
+		println(sessionList_Before);
+		println("===========================");
+		println(sessionList_After);
+		println("===========================");
 		throw buildException("list session", new Error(), "list by sessionid after forceSession", "result is null", "result is not null");
 	}
 }
