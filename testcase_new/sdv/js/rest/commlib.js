@@ -158,16 +158,33 @@ function checkByQuery( csName, clName, expRecs )
 	                 'name=' + csName + '.' + clName,
 	                 'sort={a:1}' ];
 	var expErrno = 0;
-	var curlInfo = runCurl( curlPara, expErrno );
-   var actRecs = curlInfo.records;  
    
-   //check count
-	if( actRecs.length !== expRecs.length )
+   var queryTimes = 0;
+   var asExpect = false;
+   while( queryTimes < 3000 )
    {
-   	throw buildException( "checkByQuery(), check count", null, curlInfo.curlCommand,
-									 expRecs.length, actRecs.length );
+      queryTimes++;
+      var curlInfo = runCurl( curlPara, expErrno );
+      var actRecs = curlInfo.records;  
+      
+      //check count
+      if( actRecs.length === expRecs.length )
+      {
+         asExpect = true;
+         break;
+      }
+      else
+      {
+         sleep(100);
+      }
    }
    
+   if( asExpect === false )
+   {
+      throw buildException( "checkByQuery(), check count by 5 minutes", null, curlInfo.curlCommand,
+                            expRecs.length, actRecs.length );
+   }
+                               
    //check every records every fields
    for( var i in expRecs )
    {
