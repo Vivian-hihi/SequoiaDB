@@ -25,6 +25,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @Author linsuqiang
  * @Date 2016-12-27
  * @Version 1.00
+ * 独立模式下没有参数校验，对应JIRA 2210，修正后请取消跳过独立模式。
  */
 public class TestLzw6643 extends SdbTestBase {
     private Sequoiadb sdb = null;
