@@ -84,7 +84,7 @@ public class Split514 extends SdbTestBase {
 	}
 
 	// 切分同时查询删除，校验结果
-	@Test(enabled = true, timeOut = 60000)
+	@Test(enabled = true)
 	public void findAndRemove() {
 		Sequoiadb sdb = null;
 		DBCursor dbc = null;
