@@ -86,8 +86,9 @@ public class DetachSub97 extends SdbTestBase {
 	class CheckAttach extends SdbThreadBase {
 		@Override
 		public void exec() throws Exception {
+			Sequoiadb db2 = null;
 			try {
-				Sequoiadb db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			    db2 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 				cs2 = db2.getCollectionSpace(SdbTestBase.csName);
 				BSONObject subObj = (BSONObject) JSON
 						.parse("{ShardingKey:{a:1},ShardingType:\"hash\"}");
@@ -100,6 +101,10 @@ public class DetachSub97 extends SdbTestBase {
 			try {
 				maincl.detachCollection(subcl2.getFullName());
 			} catch (BaseException e) {
+				if (db2 != null) {
+					db2.disconnect();
+				}
+				
 				throw e;
 			}
 		}
@@ -125,6 +130,7 @@ public class DetachSub97 extends SdbTestBase {
 			if (sdb != null) {
 				this.sdb.disconnect();
 			}
+			
 		}
 	}
 

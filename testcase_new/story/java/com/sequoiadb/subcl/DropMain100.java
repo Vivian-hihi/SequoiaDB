@@ -83,6 +83,10 @@ public class DropMain100 extends SdbTestBase {
 			}
 		} catch (BaseException e) {
 			Assert.fail("count error" + e.getMessage());
+		}finally{
+			if (db2 != null) {
+				db2.disconnect();
+			}
 		}
 	}
 
