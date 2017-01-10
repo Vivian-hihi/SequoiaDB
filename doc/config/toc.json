@@ -2735,9 +2735,41 @@
          "en": "SAC",
          "contents": [
             {
+               "id": 1483942791,
+               "dir": "runtime_env",
+               "cn": "运行环境",
+               "en": "Runtime environment"
+            },
+            {
+               "id": 1483942792,
+               "dir": "install_login",
+               "cn": "安装与登录",
+               "en": "Install and login",
+               "contents": [
+                  {
+                     "id": 1483944515,
+                     "file": "install_sac",
+                     "cn": "安装SAC",
+                     "en": "Install SAC"
+                  },
+                  {
+                     "id": 1483944516,
+                     "file": "login_sac",
+                     "cn": "登录SAC",
+                     "en": "Login SAC"
+                  },
+                  {
+                     "id": 1483944517,
+                     "file": "reset_pwd",
+                     "cn": "修改登录密码",
+                     "en": "Reset password"
+                  }
+               ]
+            },
+            {
                "id": 1483942794,
                "dir": "deployment",
-               "cn": "安装部署",
+               "cn": "部署",
                "en": "Deployment",
                "contents": [
                   {
@@ -2757,6 +2789,12 @@
                      "file": "add_module",
                      "cn": "添加业务",
                      "en": "Add module"
+                  },
+                  {
+                     "id": 1483944518,
+                     "file": "sdb_auth",
+                     "cn": "设置鉴权",
+                     "en": "Set authentication"
                   },
                   {
                      "id": 1483944503,

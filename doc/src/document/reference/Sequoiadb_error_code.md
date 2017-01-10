@@ -305,9 +305,10 @@
 | SDB_UTIL_COMPRESS_BUFF_SMALL | -305 | 压缩缓存过小 |
 | SDB_UTIL_DECOMPRESS_BUFF_SMALL | -306 | 解压缓存过小 |
 | SDB_OSS_UP_TO_LIMIT | -307 | 达到最大或最小限制 |
-| SDB_DS_NOTINIT_OR_DISABLED | -308 | 未初始化或连接池功能未启用 |
-| SDB_DS_NO_COORD | -309 | 无可用协调节点 |
+| SDB_DS_NOT_ENABLE | -308 | 连接池功能未启用 |
+| SDB_DS_NO_REACHABLE_COORD | -309 | 无可用协调节点 |
 | SDB_RULE_ID_IS_NOT_EXIST | -310 | 不存在指定ruleID的记录 |
 | SDB_STRTGY_TASK_NAME_CONFLICT | -311 | 任务名冲突 |
 | SDB_STRTGY_TASK_NOT_EXISTED | -312 | 任务不存在 |
 | SDB_DPS_LOG_NOT_ARCHIVED | -313 | 复制日志未归档 |
+| SDB_DS_NOT_INIT | -314 | 连接池未初始化 |

@@ -35,9 +35,10 @@
 |--hjbuf|--|num|哈希连接缓存大小(MB),默认值128,最小值64|
 |--syncstrategy|--|str|副本组之间数据同步控制策略,取值:none,keepnormal,keepall,默认为keepnormal。|
 |--preferedinstance|--|str|1.指定执行读请求时优先选择的实例<br/>             2.如果不指定，则默认为随机选择任意实例。<br/>             3.取值列表：<br/>                    M--可读写实例<br/>                    S--只读实例<br/>                    A--任意实例<br/>                    1-7--第n个实例|
-|--lobpath|--|str|1.指定大对象存放目录。<br/>             2.如果不指定，则默认为：数据文件路径|
+|--lobpath|--|str|1.指定大对象存放路径。<br/>             2.如果不指定，则默认为：数据文件路径|
+|--lobmetapath|--|str|1.指定大对象元数据存放路径。<br/>             2.如果不指定，则默认与'lobpath'保持一致|
 |--directioinlob|--|boolean|在大对象功能中关闭文件系统缓存，如果不指定，默认值为"false"|
-|--sparsefile|--|boolean|当扩展文件时，使用稀疏文件功能，如果不指定，默认值为"true"|
+|--sparsefile|--|boolean|当扩展文件时，使用稀疏文件功能，如果不指定，默认值为"false"|
 |--weight|--|num|节点选举权重, 默认值为10, 取值范围[1, 100]|
 |--usessl|--|boolean|允许客户端使用SSL连接（仅限企业版），默认为false|
 |--auth|--|boolean|开启鉴权功能.默认为true|
@@ -57,7 +58,7 @@
 |--archivepath|--|str|1.此参数用来指定归档日志的路径。<br/>             2.如果不指定，则默认路径为：数据文件路径/archivelog。|
 |--archivetimeout|--|num|判定未归档的超时时间(秒)，默认值：600，0表示不超时。|
 |--archiveexpired|--|num|归档日志文件的过期时间(小时)，默认值:240，0表示不过期。|
-|--archivequota|--|num|归档日志目录的配额(GB)，默认值：10，0表示没有限制。|
+|--archivequota|--|num|归档日志目录的磁盘配额(GB)，默认值：10，0表示没有限制。|
 
 >**Note:**  
 >1. SequoiaDB支持命令行方式及配置文件方式。当两种方式并存时，命令行参数将会覆盖配置文件中的相同的配置项。  

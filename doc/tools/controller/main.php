@@ -213,21 +213,21 @@ if( $param['m'] == "chm" && $os == 'windows' )
       //echo $source."\n" ;
       //echo iconv( 'utf-8', 'gb2312//IGNORE', $dest )."\n" ;
    }
-   
+
    $chm = "$root/../java/jdk_win32/bin/java.exe -jar $root/tools/chmProjectCreator/chmProjectCreator.jar -i $root/build/mid -o $root/build/output -t \"$outputFileName\" -c $root/config/toc.json" ;
    if( execCmd( $chm ) != 0 )
    {
       printLog( 'Failed to convert chm config file' ) ;
       exit( 1 ) ;
    }
-   
+
    printLog( "Finish build chm config, path: doc/build/output/$outputFileName.wcp", "Event" ) ;
-   
+
    file_put_contents( "$root/tools/anjian/config.ini", "[config]\r\npath=$root\\build\\output\\$outputFileName.wcp\r\nfile=$outputFileName.wcp" ) ;
 
    $chm = "$root/tools/anjian/autoBuildCHM.exe" ;
    execCmd( $chm ) ;
-   
+
    $log = file_get_contents( "$root/tools/anjian/anjian.log" ) ;
    echo "\n".$log."\n" ;
    if( strpos( $log, "Error" ) !== false )
