@@ -2780,15 +2780,55 @@
                   },
                   {
                      "id": 1483944501,
-                     "file": "add_host",
+                     "dir": "add_host",
                      "cn": "添加主机",
-                     "en": "Add host"
+                     "en": "Add host",
+                     "contents": [
+                        {
+                           "id": 1484036820,
+                           "file": "scan_host",
+                           "cn": "扫描主机",
+                           "en": "Scan host"
+                        },
+                        {
+                           "id": 1484036821,
+                           "file": "add_host",
+                           "cn": "添加主机",
+                           "en": "Add host"
+                        },
+                        {
+                           "id": 1484036822,
+                           "file": "install_host",
+                           "cn": "安装主机",
+                           "en": "Install host"
+                        }
+                     ]
                   },
                   {
                      "id": 1483944502,
-                     "file": "add_module",
+                     "dir": "add_module",
                      "cn": "添加业务",
-                     "en": "Add module"
+                     "en": "Add module",
+                     "contents": [
+                        {
+                           "id": 1484036823,
+                           "file": "config_module",
+                           "cn": "配置业务",
+                           "en": "Config module"
+                        },
+                        {
+                           "id": 1484036824,
+                           "file": "mod_module",
+                           "cn": "修改业务",
+                           "en": "Modify module"
+                        },
+                        {
+                           "id": 1484036825,
+                           "file": "install_host",
+                           "cn": "安装业务",
+                           "en": "Install host"
+                        }
+                     ]
                   },
                   {
                      "id": 1483944518,
