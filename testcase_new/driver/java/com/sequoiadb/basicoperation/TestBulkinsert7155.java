@@ -1,4 +1,4 @@
-package com.sequoiadb.basicoperation;
+package com.story.basicoperation;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,6 +45,7 @@ public class TestBulkinsert7155 extends SdbTestBase{
 				+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			sdb.setSessionAttr(new BasicBSONObject("PreferedInstance", "M")); 
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"connect %s failed,"+SdbTestBase.coordUrl+e.getMessage());
 		}		
@@ -148,7 +149,7 @@ public class TestBulkinsert7155 extends SdbTestBase{
 				Assert.fail("bulkInsert will interrupt when Duplicate key exist");
 			}catch(BaseException e){
 				Assert.assertEquals(e.getErrorCode(),-38,e.getMessage());
-			}
+			}			
 			long count = cl.getCount();
 			Assert.assertEquals(count,3,"the actDatas is :"+count);	 
 		}catch(BaseException e){
@@ -157,22 +158,23 @@ public class TestBulkinsert7155 extends SdbTestBase{
 	}
 	
 	/**
-	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=1/-1,return error 
+	*test bulkInsert (List< BSONObject > insertor, int flag)��set flag=1/-1,ignore flag value 
 	*/
-	/*public void bulkInsertFlagError(){
+	public void bulkInsertFlagError(){
 		List<BSONObject>list = new ArrayList<BSONObject>();				
 		BSONObject obj = new BasicBSONObject();				
 		obj.put("no", 1);				
 		list.add(obj);		
 		try{
 			cl.bulkInsert(list, 1);				
-			Assert.fail("bulkInsert will error");
+			long count = cl.getCount();
+			Assert.assertEquals(count,4,"the 3th insert actDatas is :"+count);
 		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(),-6,e.getMessage());
+			Assert.assertTrue(false,"bulkinsertFlag fail "+e.getMessage());	
 		}			
-	}*/
+	}
 	
-	@AfterClass
+	@AfterClass(alwaysRun = true)
 	public void tearDown(){
 		try{
 			if(cs.isCollectionExist(clName)){
@@ -192,7 +194,7 @@ public class TestBulkinsert7155 extends SdbTestBase{
 			bulkInsert();
 			bulkInsertDuplicateKey();	
 			//TODO:bug:SEQUOIADBMAINSTREAM-1989
-			//bulkInsertFlagError()
+			bulkInsertFlagError();
 		}catch(BaseException e){
 		   e.printStackTrace();
 		   Assert.assertTrue(false, e.getMessage());	
