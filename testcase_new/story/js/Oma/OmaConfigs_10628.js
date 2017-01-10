@@ -32,7 +32,8 @@ OmaTest.prototype.testGetOmaConfigsNormal = function()
    try
    {   
       var configs = this.oma.getOmaConfigs().toObj() ;
-      var configFileContent = cmd.run( "cat " + configFile ).split( "\n" ) ;
+      var command = "cat " + configFile + " | tr -s '\r\n' '\n'" ;
+      var configFileContent = cmd.run( command ).split( "\n" ) ;
    }
    catch( e )
    {
