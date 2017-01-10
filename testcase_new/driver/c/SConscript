@@ -67,7 +67,9 @@ testFiles19 = [ "./ssl/sslFalse.cpp" ]
 
 testFiles20 = [ "./ssl/sslTrue.cpp" ]
 
-testFiles21 = [ "./misc/forceSession.cpp" ] 
+testFiles21 = [ "./misc/forceSession.cpp" ]
+
+testFiles22 = [ "./misc/JSCompatible.cpp" ] 
 
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
@@ -99,6 +101,7 @@ concurrentRg   = dllBuildEnv.Program("concurrentRg",  [testFiles18, testCommon, 
 sslFalse	   = dllBuildEnv.Program("sslFalse",  [testFiles19, testCommon, gtestMainObj])
 sslTrue        = dllBuildEnv.Program("sslTrue",  [testFiles20, testCommon, gtestMainObj])
 forceSession   = dllBuildEnv.Program("forceSession",  [testFiles21, testCommon, gtestMainObj])
+JSCompatible   = dllBuildEnv.Program("JSCompatible",  [testFiles22, testCommon, gtestMainObj])
 
 # static compile
 
@@ -123,6 +126,7 @@ concurrentRg.static      = staticBuildEnv.Program("concurrentRg.static",  [testF
 sslFalse.static          = staticBuildEnv.Program("sslFalse.static",  [testFiles19, testCommon, gtestMainObj])
 sslTrue.static           = staticBuildEnv.Program("sslTrue.static",  [testFiles20, testCommon, gtestMainObj])
 forceSession.static      = staticBuildEnv.Program("forceSession.static",  [testFiles21, testCommon, gtestMainObj])
+JSCompatible.static      = staticBuildEnv.Program("JSCompatible.static",  [testFiles22, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -140,7 +144,7 @@ env.Install( '#/build_test', [   decimal,
 								 lobAbnormal,
 								 idIndex,
 								 attachAndDetachNode,
-								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession
+								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -158,6 +162,6 @@ env.Install( '#/build_test', [   decimal.static,
 								 lobAbnormal.static,
 								 idIndex.static,
 								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
-								 forceSession.static
+								 forceSession.static,JSCompatible.static
                               ] )
 
