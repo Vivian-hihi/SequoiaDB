@@ -72,7 +72,7 @@ public class DropMain95 extends SdbTestBase {
 			}
 			for (int i = 0; i < 1000; i++) {
 				bson = new BasicBSONObject();
-				bson.put("a", 5);
+				bson.put("b", 5);
 				bson.put("age", i);
 				cl1.insert(bson);
 			}
@@ -141,9 +141,9 @@ public class DropMain95 extends SdbTestBase {
 		try {
 			cs = sdb1.getCollectionSpace(SdbTestBase.csName);
 			BSONObject mainObj = (BSONObject) JSON
-					.parse("{IsMainCL:true,ShardingKey:{a:1}}");
+					.parse("{IsMainCL:true,ShardingKey:{b:1}}");
 			BSONObject subObj = (BSONObject) JSON
-					.parse("{ShardingKey:{a:1},ShardingType:\"hash\"}");
+					.parse("{ShardingKey:{b:1},ShardingType:\"hash\"}");
 			maincl = cs.createCollection(mainclName, mainObj);
 			subcl = cs.createCollection(subclName, subObj);
 		} catch (BaseException e) {
@@ -151,7 +151,7 @@ public class DropMain95 extends SdbTestBase {
 		}
 		try {
 			maincl.attachCollection(subcl.getFullName(),
-					(BSONObject) JSON.parse("{LowBound:{a:1},UpBound:{a:100}}"));
+					(BSONObject) JSON.parse("{LowBound:{b:1},UpBound:{b:100}}"));
 		} catch (BaseException e) {
 			Assert.fail("attach error:" + e.getMessage());
 		}
