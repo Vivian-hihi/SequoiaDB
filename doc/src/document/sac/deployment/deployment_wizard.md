@@ -9,9 +9,9 @@
 
 3. 点击 **确定** 按钮后，进入添加主机页面。
 
-4. 添加主机，[点击查看](sac/deployment/add_host.md)。
+4. 添加主机，[点击查看](sac/deployment/add_host/scan_host.md)。
 
-5. 添加业务，[点击查看](sac/deployment/add_module.md)。
+5. 添加业务，[点击查看](sac/deployment/add_module/config_module.md)。
 
 > **Note:**  
 > 首次安装建议不修改默认值，参数设置不当，可能会影响业务安装。
