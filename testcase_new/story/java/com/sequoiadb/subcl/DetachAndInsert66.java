@@ -116,6 +116,7 @@ public class DetachAndInsert66 extends SdbTestBase {
         DBCursor queryCur = null;
         DBCursor res = null;
         try {
+            db.setSessionAttr( new BasicBSONObject("PreferedInstance","M") );
             cs = db.getCollectionSpace( SdbTestBase.csName );
             maincl = cs.getCollection( mainclName );
             subcl = cs.getCollection( clName1 );
@@ -160,7 +161,7 @@ public class DetachAndInsert66 extends SdbTestBase {
                 }
                 i++;
             }
-            Assert.assertEquals( 100, subcl.getCount() );
+            Assert.assertEquals( 100, subcl.getCount(), "the data count is error" );
         } catch ( BaseException e ) {
             e.printStackTrace();
             Assert.fail( e.getMessage() );
