@@ -88,17 +88,37 @@ TEST( restAbnormal, multi_send )
    
    // recv and check returned errno 
    char recvbuf[BUFLEN];
-   memset(recvbuf, 0, BUFLEN);
-   char totalrecvbuf[BUFLEN];
-   memset(totalrecvbuf, 0, BUFLEN); 
-   while ((rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0)	
-   {	
-      strcat(totalrecvbuf, recvbuf);   
-      memset(recvbuf, 0, BUFLEN);
+   char* totalrecvbuf = (char*)malloc( sizeof(char) * BUFLEN );
+   if( !totalrecvbuf )
+   {
+        printf( "Error malloc space for totalrecvbuf.\n" );
+        return;
    }
-   printf("%s", totalrecvbuf);
+   int totalSize = BUFLEN ;
+   int availSize = BUFLEN ;
+   int pos = 0;
+   while( (rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0 )
+   {
+       if( rc > availSize )
+       {
+           char* tmp = (char*)realloc( totalrecvbuf, sizeof(char) * (totalSize + BUFLEN) ) ;
+           if( !tmp )
+           {
+               printf( "Error realloc space for totalrecvbuf.\n" ) ;
+               break ;
+           }
+           totalrecvbuf = tmp ;
+           totalSize += BUFLEN ;
+           availSize += BUFLEN ;
+        }
+        memcpy( totalrecvbuf + pos, recvbuf, rc ) ;
+        availSize -= rc ;
+        pos += rc ;
+   }
+   printf("%s\n", totalrecvbuf);
    char *p = strstr(totalrecvbuf, "\r\n\r\n{ \"errno\": 0 }{ \"Name\":");
    ASSERT_STRNE(NULL, p) << "check recieve message error";
+   free( totalrecvbuf ) ;
 
    close(sockfd); 
    
@@ -131,15 +151,35 @@ TEST( restAbnormal, post_lack_terminator )
    
    // recv 
    char recvbuf[BUFLEN];
-   memset(recvbuf, 0, BUFLEN);
-   char totalrecvbuf[BUFLEN];
-   memset(totalrecvbuf, 0, BUFLEN); 
-   while ((rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0)	
-   {	
-      strcat(totalrecvbuf, recvbuf);   
-      memset(recvbuf, 0, BUFLEN);
+   char* totalrecvbuf = (char*)malloc( sizeof(char) * BUFLEN );
+   if( !totalrecvbuf )
+   {
+        printf( "Error malloc space for totalrecvbuf.\n" );
+        return;
    }
-   printf("%s", totalrecvbuf);
+   int totalSize = BUFLEN ;
+   int availSize = BUFLEN ;
+   int pos = 0;
+   while( (rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0 )
+   {
+       if( rc > availSize )
+       {
+           char* tmp = (char*)realloc( totalrecvbuf, sizeof(char) * (totalSize + BUFLEN) ) ;
+           if( !tmp )
+           {
+               printf( "Error realloc space for totalrecvbuf.\n" ) ;
+               break ;
+           }
+           totalrecvbuf = tmp ;
+           totalSize += BUFLEN ;
+           availSize += BUFLEN ;
+        }
+        memcpy( totalrecvbuf + pos, recvbuf, rc ) ;
+        availSize -= rc ;
+        pos += rc ;
+   }
+   printf("%s\n", totalrecvbuf);
+   free( totalrecvbuf ) ;
       
    close(sockfd);    
    
@@ -169,15 +209,35 @@ TEST( restAbnormal, get_lack_terminator )
    
   // recv 
    char recvbuf[BUFLEN];
-   memset(recvbuf, 0, BUFLEN);
-   char totalrecvbuf[BUFLEN];
-   memset(totalrecvbuf, 0, BUFLEN); 
-   while ((rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0)	
-   {	
-      strcat(totalrecvbuf, recvbuf);   
-      memset(recvbuf, 0, BUFLEN);
+   char* totalrecvbuf = (char*)malloc( sizeof(char) * BUFLEN );
+   if( !totalrecvbuf )
+   {
+        printf( "Error malloc space for totalrecvbuf.\n" );
+        return;
    }
-   printf("%s", totalrecvbuf);
+   int totalSize = BUFLEN ;
+   int availSize = BUFLEN ;
+   int pos = 0;
+   while( (rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0 )
+   {
+       if( rc > availSize )
+       {
+           char* tmp = (char*)realloc( totalrecvbuf, sizeof(char) * (totalSize + BUFLEN) ) ;
+           if( !tmp )
+           {
+               printf( "Error realloc space for totalrecvbuf.\n" ) ;
+               break ;
+           }
+           totalrecvbuf = tmp ;
+           totalSize += BUFLEN ;
+           availSize += BUFLEN ;
+        }
+        memcpy( totalrecvbuf + pos, recvbuf, rc ) ;
+        availSize -= rc ;
+        pos += rc ;
+   }
+   printf("%s\n", totalrecvbuf);
+   free( totalrecvbuf ) ;
       
    close(sockfd);    
    
@@ -197,17 +257,37 @@ TEST( restAbnormal, format_not_match_protocol1 )
    rc = send(sockfd, sendbuf, strlen(sendbuf), 0);
    ASSERT_GE(rc, 0) << "send error";
    
-   // recv 
+   // recv  
    char recvbuf[BUFLEN];
-   memset(recvbuf, 0, BUFLEN);
-   char totalrecvbuf[BUFLEN];
-   memset(totalrecvbuf, 0, BUFLEN); 
-   while ((rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0)	
-   {	
-      strcat(totalrecvbuf, recvbuf);   
-      memset(recvbuf, 0, BUFLEN);
+   char* totalrecvbuf = (char*)malloc( sizeof(char) * BUFLEN );
+   if( !totalrecvbuf )
+   {
+        printf( "Error malloc space for totalrecvbuf.\n" );
+        return;
    }
-   printf("%s", totalrecvbuf);
+   int totalSize = BUFLEN ;
+   int availSize = BUFLEN ;
+   int pos = 0;
+   while( (rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0 )
+   {
+       if( rc > availSize )
+       {
+           char* tmp = (char*)realloc( totalrecvbuf, sizeof(char) * (totalSize + BUFLEN) ) ;
+           if( !tmp )
+           {
+               printf( "Error realloc space for totalrecvbuf.\n" ) ;
+               break ;
+           }
+           totalrecvbuf = tmp ;
+           totalSize += BUFLEN ;
+           availSize += BUFLEN ;
+        }
+        memcpy( totalrecvbuf + pos, recvbuf, rc ) ;
+        availSize -= rc ;
+        pos += rc ;
+   }
+   printf("%s\n", totalrecvbuf);
+   free( totalrecvbuf ) ;
       
    close(sockfd);    
    
@@ -227,17 +307,37 @@ TEST( restAbnormal, format_not_match_protocol2 )
    rc = send(sockfd, sendbuf, strlen(sendbuf), 0);
    ASSERT_GE(rc, 0) << "send error";
    
-   // recv 
+   // recv
    char recvbuf[BUFLEN];
-   memset(recvbuf, 0, BUFLEN);
-   char totalrecvbuf[BUFLEN];
-   memset(totalrecvbuf, 0, BUFLEN); 
-   while ((rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0)	
-   {	
-      strcat(totalrecvbuf, recvbuf);   
-      memset(recvbuf, 0, BUFLEN);
+   char* totalrecvbuf = (char*)malloc( sizeof(char) * BUFLEN );
+   if( !totalrecvbuf )
+   {
+        printf( "Error malloc space for totalrecvbuf.\n" );
+        return;
    }
-   printf("%s", totalrecvbuf);
+   int totalSize = BUFLEN ;
+   int availSize = BUFLEN ;
+   int pos = 0;
+   while( (rc = recv(sockfd, recvbuf, BUFLEN, 0)) > 0 )
+   {
+       if( rc > availSize )
+       {
+           char* tmp = (char*)realloc( totalrecvbuf, sizeof(char) * (totalSize + BUFLEN) ) ;
+           if( !tmp )
+           {
+               printf( "Error realloc space for totalrecvbuf.\n" ) ;
+               break ;
+           }
+           totalrecvbuf = tmp ;
+           totalSize += BUFLEN ;
+           availSize += BUFLEN ;
+        }
+        memcpy( totalrecvbuf + pos, recvbuf, rc ) ;
+        availSize -= rc ;
+        pos += rc ;
+   }
+   printf("%s\n", totalrecvbuf);
+   free( totalrecvbuf ) ;
       
    close(sockfd);    
    
