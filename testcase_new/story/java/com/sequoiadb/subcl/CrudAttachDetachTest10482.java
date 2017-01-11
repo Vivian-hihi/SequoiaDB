@@ -24,6 +24,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  * @TestName: 数据操作同时对子表进行attach/detach
@@ -94,8 +95,11 @@ public class CrudAttachDetachTest10482 extends SdbTestBase {
 	}	
 	
 	@Test
-	public void crud() {
+	public void test() {
+		AttachDetachThread attachDetach = new AttachDetachThread();
 		try {
+			attachDetach.start();
+			
 			int a = 0;
 			for (int i = 400; i < 1000; i++) {
 				a = i%200;
@@ -108,28 +112,18 @@ public class CrudAttachDetachTest10482 extends SdbTestBase {
 			for (int i = 200; i < 400; i++) {
 				maincl.delete((BSONObject) JSON.parse(" {name:'name_"+i+"'} "));
 			}
+			
+			Assert.assertEquals(attachDetach.isSuccess(), true, attachDetach.getErrorMsg());
 		} catch (BaseException e) {
 			if(e.getErrorCode() != -135) {
 				e.printStackTrace();
 				Assert.assertEquals(e.getErrorCode(), -135, "crud data faild: "+e.getMessage());
 			}
-		}
-	}
-	
-	@Test
-	public void attachDetach() {
-		try {
-			DBCollection maincl = sdb_other.getCollectionSpace(SdbTestBase.csName).getCollection(mainclName);
-			for (int i = 0; i < 30; i++) {
-				maincl.detachCollection(SdbTestBase.csName+"."+subclNames[0]);
-				maincl.attachCollection(SdbTestBase.csName+"."+subclNames[0], (BSONObject) JSON.parse("{ LowBound:{a:0},UpBound:{a:100} }"));
-				maincl.detachCollection(SdbTestBase.csName+"."+subclNames[1]);
-				maincl.attachCollection(SdbTestBase.csName+"."+subclNames[1], (BSONObject) JSON.parse("{ LowBound:{a:100},UpBound:{a:200} }"));
+		} finally {
+			if (attachDetach != null) {
+				attachDetach.join();
 			}
-		} catch (BaseException e) {
-			e.printStackTrace();
-			Assert.assertTrue(false,"attach or detach faild: "+ e.getMessage());
-		}		
+		}
 	}
 
 	@AfterClass
@@ -240,4 +234,18 @@ public class CrudAttachDetachTest10482 extends SdbTestBase {
 
 		Assert.assertTrue(flag,"check data not expected");
 	}
+	
+	class AttachDetachThread extends SdbThreadBase {
+		@Override
+		public void exec() throws Exception {
+			DBCollection maincl = sdb_other.getCollectionSpace(SdbTestBase.csName).getCollection(mainclName);
+			for (int i = 0; i < 30; i++) {
+				maincl.detachCollection(SdbTestBase.csName+"."+subclNames[0]);
+				maincl.attachCollection(SdbTestBase.csName+"."+subclNames[0], (BSONObject) JSON.parse("{ LowBound:{a:0},UpBound:{a:100} }"));
+				maincl.detachCollection(SdbTestBase.csName+"."+subclNames[1]);
+				maincl.attachCollection(SdbTestBase.csName+"."+subclNames[1], (BSONObject) JSON.parse("{ LowBound:{a:100},UpBound:{a:200} }"));
+			}
+		}
+	}
+	
 }

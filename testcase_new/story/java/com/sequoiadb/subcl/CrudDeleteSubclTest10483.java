@@ -22,8 +22,10 @@ import com.sequoiadb.base.DBQuery;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.subcl.CrudSplitTest10481.SplitTest;
 import com.sequoiadb.testcommon.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  * @TestName: 数据操作同时对子表进行删除
@@ -94,8 +96,11 @@ public class CrudDeleteSubclTest10483 extends SdbTestBase{
 	}
 	
 	@Test
-	public void crud() {
+	public void test() {
+		DeleteSubcl deleteSubcl = new DeleteSubcl();
 		try {
+			deleteSubcl.start();
+			
 			int a = 0;
 			for (int i = 600; i < 900; i++) {
 				a = i%300;
@@ -108,22 +113,18 @@ public class CrudDeleteSubclTest10483 extends SdbTestBase{
 			for (int i = 300; i < 600; i++) {
 				maincl.delete((BSONObject) JSON.parse(" {name:'name_"+i+"'} "));
 			} 
+			
+			Assert.assertEquals(deleteSubcl.isSuccess(), true, deleteSubcl.getErrorMsg());
 		} catch (BaseException e) {
 			if (e.getErrorCode() != -135 ) e.printStackTrace();
 			Assert.assertEquals(e.getErrorCode(), -135, "crud data faild: "+e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 			Assert.assertTrue(false, "crud data faild");
-		}
-	}
-	
-	@Test
-	public void deleteSubcl() {
-		try {
-			sdb_other.getCollectionSpace(csName).dropCollection(subclNames[2]);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.assertTrue(false,"delete subcl faild: "+ e.getMessage());
+		} finally {
+			if (deleteSubcl != null) {
+				deleteSubcl.join();
+			}
 		}
 	}
 	
@@ -244,6 +245,13 @@ public class CrudDeleteSubclTest10483 extends SdbTestBase{
 			Assert.assertTrue(false,"check data faild: "+e.getMessage());
 		}
 		Assert.assertTrue(flag,"check data not expected");
+	}
+	
+	class DeleteSubcl extends SdbThreadBase {
+		@Override
+		public void exec() throws Exception {
+			sdb_other.getCollectionSpace(csName).dropCollection(subclNames[2]);
+		}
 	}
 	
 }
