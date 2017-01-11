@@ -11,7 +11,7 @@
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
    
-   <test name="parralclass" parallel="classes" thread-count="5">
+   <test name="parralclass">
       <packages>
          <package name="com.sequoiadb.decimal" />
          <package name="com.sequoiadb.attachtest" />
@@ -32,7 +32,7 @@
       </packages>    
    </test>
    
-   <test name="mixed" parallel="methods" thread-count="1">
+   <test name="mixed">
       <packages>
          <package name="com.sequoiadb.metadataConsistency.data"/>
 		   <package name="com.sequoiadb.split"/>
