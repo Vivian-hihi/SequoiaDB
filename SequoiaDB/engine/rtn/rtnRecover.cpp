@@ -194,6 +194,8 @@ namespace engine
       {
          PD_LOG( PDEVENT, "Collection[%s]'s data file is valid, don't need "
                  "to rebuild", _clFullName.c_str() ) ;
+         /// change to rebuild
+         DMS_SET_MB_OFFLINE_REORG_REBUILD( mbContext->mb()->_flag ) ;
       }
 
       if ( 0 == ruInfo->_idxCommitFlag )
@@ -211,6 +213,9 @@ namespace engine
       {
          PD_LOG( PDEVENT, "Collection[%s]'s index file is valid, don't need "
                  "to rebuild", _clFullName.c_str() ) ;
+         /// Change to normal
+         DMS_SET_MB_NORMAL( mbContext->mb()->_flag ) ;
+         _pSU->data()->flushMeta( TRUE ) ;
       }
 
       if ( 0 == ruInfo->_lobCommitFlag )
