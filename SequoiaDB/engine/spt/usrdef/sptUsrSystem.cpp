@@ -39,6 +39,8 @@
 #include "ossIO.hpp"
 #include "oss.h"
 #include <set>
+#include <vector>
+#include <utility>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #if defined (_LINUX)
@@ -54,6 +56,7 @@
 #endif
 
 using namespace bson ;
+using std::pair ;
 
 namespace engine
 {
@@ -5491,8 +5494,8 @@ namespace engine
                                          BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
-      vector<string> splited ;
-
+      vector< string > splited ;
+      vector< pair< string, string > > envVec ;
       if ( NULL == buf )
       {
          rc = SDB_INVALIDARG ;
@@ -5537,6 +5540,16 @@ namespace engine
       {
          vector<string> columns ;
          string value ;
+
+         // if no contain '=', it is the part of previous row
+         if ( std::string::npos == (*itrSplit).find( "=" ) )
+         {
+            if ( envVec.size() )
+            {
+               envVec.back().second += *itrSplit ;
+            }
+            continue ;
+         }
 
          try
          {
@@ -5585,7 +5598,14 @@ namespace engine
                value += "=" + *itrCol ;
             }
          }
-         builder.append( *columns.begin(), value ) ;
+         envVec.push_back( pair< string, string >( *columns.begin(), value ) ) ;
+      }
+
+      for ( vector< pair< string, string > >::iterator itr = envVec.begin() ;
+            itr != envVec.end();
+            itr++ )
+      {
+         builder.append( itr->first, itr->second ) ;
       }
    done:
       return rc ;
