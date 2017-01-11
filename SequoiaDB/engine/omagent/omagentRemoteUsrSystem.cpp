@@ -4400,8 +4400,7 @@ namespace engine
       OSSUID             uid ;
       OSSGID             gid ;
 
-      cmd << "whoami" ;
-
+      cmd << "whoami 2>/dev/null" ;
       // run command
       rc = runner.exec( cmd.str().c_str(), exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
@@ -4438,17 +4437,19 @@ namespace engine
       rc = ossGetUserInfo( username.c_str(), uid, gid ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get gid" ) ;
-         goto error ;
+         PD_LOG( PDERROR, "Failed to get gid" ) ;
       }
-      gidStr << gid ;
+      else
+      {
+         gidStr << gid ;
+      }
 
       // get home dir
       rc = _getHomePath( homeDir ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get home path" ) ;
-         goto error ;
+         PD_LOG( PDERROR, "Failed to get home path" ) ;
+         homeDir = "" ;
       }
 
       builder.append( "user", username ) ;
