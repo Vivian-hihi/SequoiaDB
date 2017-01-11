@@ -91,6 +91,7 @@ public class TestSnappy6640 extends SdbTestBase {
             Commlib.checkCompression(dstDataDB, clName);
             checkSplit(dstDataDB);
         }catch(BaseException e){
+            e.printStackTrace();
             Assert.fail(e.getMessage());
         }finally{
             db.disconnect();
@@ -109,6 +110,7 @@ public class TestSnappy6640 extends SdbTestBase {
             srcGroup = Commlib.getDataGroups(sdb).get(0);
             dstGroup = Commlib.getDataGroups(sdb).get(1);
             option.put("Group", srcGroup);
+            option.put("ReplSize", 0);
             cl = cs.createCollection(clName, option);
         }catch(BaseException e){
             e.printStackTrace();
