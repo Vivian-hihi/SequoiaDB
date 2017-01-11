@@ -190,7 +190,14 @@ public class Split10531 extends SdbTestBase {
 			Assert.assertEquals(lobCount > 250 - (250 * 0.3) && lobCount < 250 + (250 * 0.3), true,
 					"srcGroup count:" + lobCount);
 		} catch (BaseException | UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage());
+			StringBuffer stackBuffer = new StringBuffer();
+			StackTraceElement[] stackElements = e.getStackTrace();
+			for (int i = 0; i < stackElements.length; i++) {
+				if (stackElements[i].toString().contains(this.getClass().getName())) {
+					stackBuffer.append(stackElements[i].toString()).append("\r\n");
+				}
+			}
+			Assert.fail(e.getMessage() + "\r\n" + stackBuffer);
 		} finally {
 			if (cursor != null) {
 				cursor.close();
