@@ -45,9 +45,10 @@ int initClient()
    
    // connect     
    rc = connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr));   
-   if (rc < 0)
+   if (rc == -1)
 	{
-	   printf("connect error, rc = %d", rc);  
+	   perror("connect error");
+	   return rc ;   
 	}
    
    return(sockfd);
@@ -57,7 +58,8 @@ TEST( restAbnormal, multi_send )
 {   
    int rc;
    int sockfd;
-   sockfd = initClient(); 
+   sockfd = initClient();
+   if(sockfd == -1) return ; 
    
    // send message
    char restStr[8];
@@ -129,7 +131,8 @@ TEST( restAbnormal, post_lack_terminator )
 {   
    int rc;
    int sockfd;
-   sockfd = initClient(); 
+   sockfd = initClient();
+   if(sockfd == -1) return ; 
    
    // send message
    char restStr[8];
@@ -190,7 +193,8 @@ TEST( restAbnormal, get_lack_terminator )
 {   
    int rc;
    int sockfd;
-   sockfd = initClient(); 
+   sockfd = initClient();
+   if(sockfd == -1) return ; 
    
    // send message
    char restStr[8];
@@ -248,7 +252,8 @@ TEST( restAbnormal, format_not_match_protocol1 )
 {   
    int rc;
    int sockfd;
-   sockfd = initClient(); 
+   sockfd = initClient();
+   if(sockfd == -1) return ; 
    
    // send message   
    char sendbuf[BUFLEN];
@@ -299,6 +304,7 @@ TEST( restAbnormal, format_not_match_protocol2 )
    int rc;
    int sockfd;
    sockfd = initClient(); 
+   if(sockfd == -1) return ;
    
    // send message   
    char sendbuf[BUFLEN];
