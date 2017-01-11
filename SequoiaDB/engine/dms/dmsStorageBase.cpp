@@ -758,6 +758,18 @@ namespace engine
       }
       else if ( !createNew )
       {
+         if ( _pStorageInfo->_dataIsOK && 0 == _dmsHeader->_commitFlag )
+         {
+            /// upgrade from old version( _dmsHeader->_commitLsn = 0 )
+            if ( 0 == _dmsHeader->_commitLsn )
+            {
+               ossTimestamp t ;
+               ossGetCurrentTime( t ) ;
+               _dmsHeader->_commitTime = t.time * 1000 + t.microtm / 1000 ;
+               _dmsHeader->_commitLsn = _pStorageInfo->_curLSNOnStart ;
+            }
+            _dmsHeader->_commitFlag = 1 ;
+         }
          _commitFlag = _dmsHeader->_commitFlag ;
          _isCrash = ( 0 == _commitFlag ) ? TRUE : FALSE ;
 

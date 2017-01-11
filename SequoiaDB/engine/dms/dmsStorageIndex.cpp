@@ -140,6 +140,12 @@ namespace engine
             {
                if ( 0 == _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag )
                {
+                  /// upgrade from the old version( _commitLSN = 0 )
+                  if ( 0 == _pDataSu->_dmsMME->_mbList[i]._commitLSN )
+                  {
+                     _pDataSu->_dmsMME->_mbList[i]._commitLSN =
+                        _dmsHeader->_commitLsn ;
+                  }
                   _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag = 1 ;
                   needFlushMME = TRUE ;
                }

@@ -1491,6 +1491,12 @@ namespace engine
             {
                if ( 0 == _dmsData->_dmsMME->_mbList[i]._lobCommitFlag )
                {
+                  /// upgrade from the old version( _commitLSN = 0 )
+                  if ( 0 == _dmsData->_dmsMME->_mbList[i]._commitLSN )
+                  {
+                     _dmsData->_dmsMME->_mbList[i]._commitLSN =
+                        _dmsHeader->_commitLsn ;
+                  }
                   _dmsData->_dmsMME->_mbList[i]._lobCommitFlag = 1 ;
                   needFlushMME = TRUE ;
                }

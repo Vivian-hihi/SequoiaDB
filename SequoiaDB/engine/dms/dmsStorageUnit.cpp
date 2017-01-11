@@ -43,6 +43,7 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "dmsStorageLob.hpp"
+#include "pmdStartup.hpp"
 
 namespace engine
 {
@@ -87,6 +88,8 @@ namespace engine
       _storageInfo._enableSparse = options->sparseFile() ;
       _storageInfo._directIO = options->useDirectIOInLob() ;
       _storageInfo._cacheMergeSize = options->getCacheMergeSize() ;
+      _storageInfo._dataIsOK = pmdGetStartup().isOK() ;
+      _storageInfo._curLSNOnStart = pmdGetSyncMgr()->getCompleteLSN() ;
       // make secret value
       _storageInfo._secretValue = ossPack32To64( (UINT32)time(NULL),
                                                  (UINT32)(ossRand()*239641) ) ;

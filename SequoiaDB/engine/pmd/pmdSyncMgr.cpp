@@ -58,7 +58,7 @@ namespace engine
       _syncDeep = FALSE ;
       _startCtrlJob = FALSE ;
       _pLogAccessor = NULL ;
-      _completeLSN = 0 ;
+      _completeLSN = ~0 ;
    }
 
    _pmdSyncMgr::~_pmdSyncMgr()
@@ -68,7 +68,7 @@ namespace engine
    void _pmdSyncMgr::setLogAccess( ILogAccessor *pLogAccess )
    {
       _pLogAccessor = pLogAccess ;
-      _completeLSN = _pLogAccessor->expectLsn().offset ;
+      _completeLSN = _pLogAccessor->getCurrentLsn().offset ;
    }
 
    void _pmdSyncMgr::setMainUnit( IDataSyncBase *pUnit )
@@ -115,7 +115,7 @@ namespace engine
    {
       if ( _pLogAccessor )
       {
-         _completeLSN = _pLogAccessor->expectLsn().offset ;
+         _completeLSN = _pLogAccessor->getCurrentLsn().offset ;
       }
       return _completeLSN ;
    }

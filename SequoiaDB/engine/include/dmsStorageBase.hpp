@@ -86,6 +86,10 @@ namespace engine
       BOOLEAN     _directIO ;
       UINT32      _cacheMergeSize ;
 
+      /// Data is OK
+      BOOLEAN     _dataIsOK ;
+      UINT64      _curLSNOnStart ;
+
       _dmsStorageInfo ()
       {
          _pageSize      = DMS_PAGE_SIZE_DFT ;
@@ -99,6 +103,9 @@ namespace engine
          _enableSparse = FALSE ;
          _directIO = FALSE ;
          _cacheMergeSize = 0 ;
+
+         _dataIsOK       = FALSE ;
+         _curLSNOnStart  = ~0 ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;
