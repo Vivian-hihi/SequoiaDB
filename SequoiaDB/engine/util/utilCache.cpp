@@ -2675,11 +2675,25 @@ namespace engine
       MAP_ID_2_PAGE_PRT_IT itNext ;
       BOOLEAN write2Merge = FALSE ;
 
+      UINT32 breakSize = UTIL_CACHE_SYNC_ONCE_NUM / 3 ;
+      UINT32 lastBlkID = 0 ;
+      UINT32 curBlkID = 0 ;
+
       while( it != pageMap.end() )
       {
          write2Merge = TRUE ;
          itNext =  it ;
          ++itNext ;
+
+         curBlkID = calcBucketID( it->first ) ;
+         if ( curBlkID < lastBlkID && totalPages >= breakSize )
+         {
+            break ;
+         }
+         else
+         {
+            lastBlkID = curBlkID ;
+         }
 
          if ( _cacheMerge.freeSize() < _pageSize )
          {
