@@ -36,10 +36,10 @@ public class BaseException extends RuntimeException {
      * @param e      The exception used to build exception chain.
      * @since v2.8
      */
-    public BaseException(SDBError error, String detail, Exception e) {
+    public BaseException(SDBError error, String detail, Throwable e) {
+        super(e);
         this.error = error;
         this.detail = detail;
-        this.initCause(e);
     }
 
     /**
@@ -56,7 +56,7 @@ public class BaseException extends RuntimeException {
      * @param e      The exception used to build exception chain.
      * @since v2.8
      */
-    public BaseException(SDBError error, Exception e) {
+    public BaseException(SDBError error, Throwable e) {
         this(error, null, e);
     }
 
