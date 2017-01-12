@@ -18,7 +18,7 @@ string CHANGEDPREFIX    = "sdv_cpp_test" ;
 string RSRVPORTBEGIN    = "26000" ;
 string RSRVPORTEND      = "27000" ;
 string RSRVNODEDIR      = "/opt/sequoiadb/database/" ;
-string WORKDIR          = "/tmp/ctest" ;
+string WORKDIR          = "/tmp/cpptest" ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName )
 {
