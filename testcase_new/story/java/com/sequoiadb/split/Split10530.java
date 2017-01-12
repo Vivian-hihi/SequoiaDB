@@ -36,7 +36,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 public class Split10530 extends SdbTestBase {
-	private String clName = "testcaseCL10530";
+	private String clName = "testcaseCL_10530";
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
@@ -66,7 +66,7 @@ public class Split10530 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			DBCollection cl = commCS.createCollection(clName,
 					(BSONObject) JSON
-							.parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
+							.parse("{ShardingKey:{'sk':1},ReplSize:0,Partition:4096,ShardingType:'hash',Group:'"
 									+ srcGroupName + "'}"));
 			insertData(cl);// 写入待切分的记录（500）
 		} catch (BaseException e) {
@@ -136,6 +136,7 @@ public class Split10530 extends SdbTestBase {
 		DBCursor cursor1 = null;
 		DBCursor cursor2 = null;
 		try {
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			DBCollection commCL = db.getCollectionSpace(csName).getCollection(clName);
 
 			// 将insertedData中的每一条数据作为macher(覆盖查询边界)
