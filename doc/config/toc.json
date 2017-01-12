@@ -2874,6 +2874,48 @@
                      "cn": "节点",
                      "en": "Node",
                      "contents": [
+                        {
+                           "id": 1484010525,
+                           "file": "nodes_list",
+                           "cn": "节点列表",
+                           "en": "Nodes list"
+                        },
+                        {
+                           "id": 1484010526,
+                           "file": "groups_list",
+                           "cn": "分区组列表",
+                           "en": "Groups list"
+                        },
+                        {
+                           "id": 1484010527,
+                           "file": "groups_snapshot",
+                           "cn": "分区组快照",
+                           "en": "Groups snapshot"
+                        },
+                        {
+                           "id": 1484010528,
+                           "file": "nodes_snapshot",
+                           "cn": "节点快照",
+                           "en": "Nodes snapshot"
+                        },
+                        {
+                           "id": 1484010529,
+                           "file": "group_info",
+                           "cn": "分区组信息",
+                           "en": "Group info"
+                        },
+                        {
+                           "id": 1484010530,
+                           "file": "node_info",
+                           "cn": "节点信息",
+                           "en": "Node info"
+                        },
+                        {
+                           "id": 1484010531,
+                           "file": "charts",
+                           "cn": "图表",
+                           "en": "charts"
+                        }
                      ]
                   },
                   {
@@ -2882,6 +2924,42 @@
                      "cn": "资源",
                      "en": "Resource",
                      "contents": [
+                        {
+                           "id": 1484010532,
+                           "file": "sessions_list",
+                           "cn": "会话列表",
+                           "en": "Sessions list"
+                        },
+                        {
+                           "id": 1484010533,
+                           "file": "contexts_list",
+                           "cn": "上下文列表",
+                           "en": "Contexts list"
+                        },
+                        {
+                           "id": 1484010534,
+                           "file": "domain",
+                           "cn": "域",
+                           "en": "Domain"
+                        },
+                        {
+                           "id": 1484010535,
+                           "file": "procedures",
+                           "cn": "存储过程",
+                           "en": "Procedures"
+                        },
+                        {
+                           "id": 1484010536,
+                           "file": "transactions",
+                           "cn": "事务",
+                           "en": "Transactions"
+                        },
+                        {
+                           "id": 1484010537,
+                           "file": "charts",
+                           "cn": "图表",
+                           "en": "Charts"
+                        }
                      ]
                   },
                   {
@@ -2890,6 +2968,30 @@
                      "cn": "主机",
                      "en": "Host",
                      "contents": [
+                        {
+                           "id": 1484010537,
+                           "file": "hosts_list",
+                           "cn": "主机列表",
+                           "en": "Hosts list"
+                        },
+                        {
+                           "id": 1484010538,
+                           "file": "hosts_snapshot",
+                           "cn": "主机快照",
+                           "en": "Hosts snapshot"
+                        },
+                        {
+                           "id": 1484010539,
+                           "file": "charts",
+                           "cn": "图表",
+                           "en": "Charts"
+                        },
+                        {
+                           "id": 1484010540,
+                           "file": "host_info",
+                           "cn": "主机信息",
+                           "en": "Host info"
+                        }
                      ]
                   }
                ]
