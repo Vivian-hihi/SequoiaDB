@@ -2844,15 +2844,15 @@
                   },
                   {
                      "id": 1483944504,
-                     "file": "remove_host",
-                     "cn": "删除主机",
-                     "en": "Remove host"
-                  },
-                  {
-                     "id": 1483944505,
                      "file": "uninstall_module",
                      "cn": "卸载业务",
                      "en": "Uninstall module"
+                  },
+                  {
+                     "id": 1483944505,
+                     "file": "remove_host",
+                     "cn": "删除主机",
+                     "en": "Remove host"
                   }
                ]
             },
