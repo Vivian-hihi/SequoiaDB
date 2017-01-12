@@ -418,7 +418,11 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXBASE_ROLLBACK ) ;
 
-      INT16 w = _pCatCB->majoritySize() ;
+      if ( cb->isForced() )
+      {
+         // The database is closing, do not rollback
+         goto done ;
+      }
 
       if ( !_hasUpdated )
       {
@@ -427,6 +431,8 @@ namespace engine
 
       try
       {
+         INT16 w = _pCatCB->majoritySize() ;
+
          rc = _rollbackInternal( cb, w ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed in catContext [%lld]: "
