@@ -196,29 +196,42 @@ function isEmptyObject( obj )
 ******************************************************************************/
 function toolGetSequoiadbDir( hostname, svcname )
 {
-   var remote = new Remote( hostname, svcname ) ;
-   var system = remote.getSystem() ;
    var dir = [] ;
-   var tmp = system.getEWD() ;
-   var ind = tmp.indexOf( "/bin" ) ;
-   dir[0] = tmp + "/.." ;
-   dir[1] = tmp.slice( 0, ind ) ;
-   remote.close() ;
-   return dir ;
+   var system ;
+   if( hostname == COORDHOSTNAME || hostname == toolGetLocalhost() )
+   {
+      system = System ;
+      var tmp = system.getEWD() ;
+      var ind = tmp.indexOf( "/bin" ) ;
+      dir[0] = tmp + "/.." ;
+      dir[1] = tmp.slice( 0, ind ) ;
+      return dir ;
+   }
+   else
+   {
+      var remote = new Remote( hostname, svcname ) ;
+      system = remote.getSystem() ;
+      var tmp = system.getEWD() ;
+      var ind = tmp.indexOf( "/bin" ) ;
+      dir[0] = tmp + "/.." ;
+      dir[1] = tmp.slice( 0, ind ) ;
+      remote.close() ;
+      return dir ;
+   }
 }
 
 /******************************************************************************
-*@Description : check user sdbadmin exist or not
+*@Description : check user exist or not
 *@author      : Liang XueWang              
 ******************************************************************************/
-function isSdbadminExist( hostname, svcname )
+function isUserExist( hostname, svcname, username )
 {
    var remote = new Remote( hostname, svcname ) ;
    var cmd = remote.getCmd() ;
    var exist ;
    try
    {
-      cmd.run( "grep '^sdbadmin:' /etc/passwd" ) ;
+      cmd.run( "grep '^" + username + ":' /etc/passwd" ) ;
       exist = true ;
    }
    catch( e )
@@ -226,49 +239,24 @@ function isSdbadminExist( hostname, svcname )
       if( e == 1 )
          exist = false ;
       else
-         throw buildException( "IsSdbadminExist", e ) ;
-   }
-   remote.close() ;
-   return exist ;
-}
-
-/******************************************************************************
-*@Description : check group sdbadmin_group exist or not
-*@author      : Liang XueWang              
-******************************************************************************/
-function isSdbadminGroupExist( hostname, svcname )
-{
-   var remote = new Remote( hostname, svcname ) ;
-   var cmd = remote.getCmd() ;
-   var exist ;
-   try
-   {
-      cmd.run( "grep '^sdbadmin_group:' /etc/group" ) ;
-      exist = true ;
-   }
-   catch( e )
-   {
-      if( e == 1 )
-         exist = false ;
-      else
-         throw buildException( "IsSdbadminGroupExist", e ) ;
+         throw buildException( "isUserExist", e, "check " + username, "1 0", e ) ;
    }
    remote.close() ;
    return exist ;
 }
 
 /******************************************************************************
-*@Description : check group sequoiadb exist or not
+*@Description : check group exist or not
 *@author      : Liang XueWang              
 ******************************************************************************/
-function isSequoiadbExist( hostname, svcname )
+function isGroupExist( hostname, svcname, groupname )
 {
    var remote = new Remote( hostname, svcname ) ;
    var cmd = remote.getCmd() ;
    var exist ;
    try
    {
-      cmd.run( "grep '^sequoiadb:' /etc/group" ) ;
+      cmd.run( "grep '^" + groupname + ":' /etc/group" ) ;
       exist = true ;
    }
    catch( e )
@@ -276,7 +264,8 @@ function isSequoiadbExist( hostname, svcname )
       if( e == 1 )
          exist = false ;
       else
-         throw buildException( "IsSequoiadbExist", e ) ;
+         throw buildException( "isGroupExist", e, 
+                               "check " + groupname, "1 0", e )  ;
    }
    remote.close() ;
    return exist ;

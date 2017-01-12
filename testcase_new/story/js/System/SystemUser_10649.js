@@ -57,8 +57,9 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    else if( cmUser != "root" )
       return ;
    // 检查用户组sdbadmin_group sequoiadb是否存在
-   if( !isSdbadminGroupExist( this.hostname, this.svcname ) || 
-       !isSequoiadbExist( this.hostname, this.svcname ) )
+   if( !isGroupExist( this.hostname, this.svcname, "sdbadmin_group" ) || 
+       !isGroupExist( this.hostname, this.svcname, "sequoiadb" ) ||
+       !isUserExist( this.hostname, this.svcname, "createUser" ) )
       return ;
    
    var userObj = {} ;
@@ -95,6 +96,11 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    option["name"] = userObj.name ;
    option["isRemoveDir"] = createDir ;
    this.system.delUser( option ) ;
+   if( isUserExist( this.hostname, this.svcname, userObj.name ) )
+   {
+      throw buildException( "testAddDelUser", null, "check user after del",
+            userObj.name + " should be deled", "not deled" ) ;
+   }
    
    this.release() ;
 }
@@ -145,8 +151,9 @@ SystemTest.prototype.testSetUserConfigs = function()
    }
    else if( cmUser != "root" )
       return ;
-   if( !isSdbadminGroupExist( this.hostname, this.svcname ) ||
-       !isSequoiadbExist( this.hostname, this.svcname ) )
+   if( !isGroupExist( this.hostname, this.svcname, "sdbadmin_group" ) ||
+       !isGroupExist( this.hostname, this.svcname, "sequoiadb" ) ||
+       !isUserExist( this.hostname, this.svcname, "modifyUser" ) )
       return ;
    
    // 首先创建用户
@@ -188,6 +195,11 @@ SystemTest.prototype.testSetUserConfigs = function()
    option["name"] = userObj.name ;
    option["isRemoveDir"] = true ;
    this.system.delUser( option ) ;
+   if( isUserExist( this.hostname, this.svcname, userObj.name ) )
+   {
+      throw buildException( "testSetUserConfigs", null, "check user after del",
+            userObj.name + " should be deled", "not deled" ) ;
+   }
    
    this.release() ;
 }

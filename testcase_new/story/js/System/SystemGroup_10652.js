@@ -12,8 +12,9 @@
 // 测试创建删除用户组
 SystemTest.prototype.testAddDelGroup = function( isUnique )
 {
-   // 检查sdbadmin_group是否存在
-   if( !isSdbadminGroupExist( this.hostname, this.svcname ) )
+   // 检查sdbadmin_group或testgroup是否存在
+   if( !isGroupExist( this.hostname, this.svcname, "sdbadmin_group" ) ||
+       !isGroupExist( this.hostname, this.svcname, "testGroup") )
       return ;
    
    this.init() ;
@@ -55,6 +56,8 @@ SystemTest.prototype.testAddDelGroup = function( isUnique )
       this.cmd.run( "groupmod -g " + gid + " " + groupObj.name ) ;   // 更改gid
       this.cmd.run( "usermod -g sdbadmin_group sdbadmin" ) ;         // 更改sdbadmin用户的主组
       this.system.delGroup( groupObj.name ) ;
+      if( !isGroupExist( this.hostname, this.svcname, groupObj.name ) )
+         throw ( groupObj.name + " should be deled after del" ) ;
    }
    catch( e )
    {
