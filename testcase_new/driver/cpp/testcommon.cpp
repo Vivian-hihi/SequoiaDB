@@ -12,10 +12,13 @@ using namespace std;
 using namespace sdbclient;
 using namespace bson;
 
-string HOSTNAME ;
-string SVCNAME ;
-string CHANGEDPREFIX ;
-string confFile = "driver.conf" ;
+string HOSTNAME         = "localhost" ;
+string SVCNAME          = "11810" ;
+string CHANGEDPREFIX    = "sdv_cpp_test" ;
+string RSRVPORTBEGIN    = "26000" ;
+string RSRVPORTEND      = "27000" ;
+string RSRVNODEDIR      = "/opt/sequoiadb/database/" ;
+string WORKDIR          = "/tmp/ctest" ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName )
 {
@@ -51,34 +54,37 @@ void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName )
 
 void getConf()
 {
-   ifstream ifs("driver.conf") ;
-   if( !ifs.is_open() )
-      cout<<"Error open file driver.conf!!"<<endl ;
-
-   string line ;
-   while( getline(ifs,line) )
-   {
-      int pos = line.find_first_of("=") ;
-      string str = line.substr(0,pos) ;
-      if(str == "HOSTNAME")
-      {
-         HOSTNAME = line.substr(pos+1) ;
-         continue ;
-      }
-      if(str == "SVCNAME")
-      {
-         SVCNAME = line.substr(pos+1) ;
-         continue ;
-      }
-      if(str == "CHANGEDPREFIX")
-      {
-         CHANGEDPREFIX = line.substr(pos+1) ;
-         continue ;
-      }
-   }
-   cout<<"HostName: "<<HOSTNAME<<endl ;
-   cout<<"SvcName: "<<SVCNAME<<endl ;
-   cout<<"CHANGEDPREFIX: "<<CHANGEDPREFIX<<endl ;
+    cout << "Print command args: " << endl ;
+    for( int i = 0;i < g_argvs.size();i++ )
+      cout << g_argvs[i] << " " ;
+    cout << endl ;
+    
+    for( int i = 0;i < g_argvs.size();i++ )
+    {
+      string para = g_argvs[i] ;
+      if( para == "--hostname" || para == "-n" )
+         HOSTNAME = g_argvs[i+1] ;
+      else if( para == "--svcname" || para == "-s" )
+         SVCNAME,g_argvs[i+1] ;
+      else if( para == "--changedprefix" || para == "-c" )
+         CHANGEDPREFIX = g_argvs[i+1] ;
+	  else if( para == "--rsrvportbegin" || para == "-b" )
+		   RSRVPORTBEGIN = g_argvs[i+1] ;
+	  else if( para == "--rsrvportend" || para == "-e" )
+		   RSRVPORTEND = g_argvs[i+1] ;
+	  else if( para == "--rsrvnodedir" || para == "-d" )
+		   RSRVNODEDIR = g_argvs[i+1] ;
+	  else if( para == "--workdir" || para == "-w" )
+		   WORKDIR = g_argvs[i+1] ; 
+    }
+   
+   cout << "HostName: " << HOSTNAME << endl ;
+   cout << "SvcName: " << SVCNAME << endl ;
+   cout << "CHANGEDPREFIX: " << CHANGEDPREFIX << endl ;
+   cout << "RSPVPORTBEGIN: " << RSRVPORTBEGIN << endl ;
+	cout << "RSPVPORTEND: " << RSRVPORTEND << endl ;
+	cout << "RSPVNODEDIR: " << RSRVNODEDIR << endl ;
+	cout << "WORKDIR: " << WORKDIR << endl ;
 }
 
 void ossSleep(int milliseconds)
