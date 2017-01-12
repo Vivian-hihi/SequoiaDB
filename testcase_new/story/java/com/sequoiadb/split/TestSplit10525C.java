@@ -108,37 +108,46 @@ public class TestSplit10525C extends SdbTestBase{
     public void testSrcDataSplitResult(List<String> rgNames) {
         Sequoiadb dataDb = null;
         try {
-            //连接源组从节点data验证数据
-            ReplicaGroup replicaGroup = this.sdb.getReplicaGroup(rgNames.get(0));
-            Node master = replicaGroup.getSlave();
-            String url = master.getNodeName();
-            dataDb = new Sequoiadb(url, "", "");
-            //获取cs cl
-            CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
-            DBCollection dbcl = cs.getCollection(this.clName);
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            boolean flag = false;
+            for (int j = 0; j < 100; j++) {
+              //连接源组从节点data验证数据
+                ReplicaGroup replicaGroup = this.sdb.getReplicaGroup(rgNames.get(0));
+                Node master = replicaGroup.getSlave();
+                String url = master.getNodeName();
+                dataDb = new Sequoiadb(url, "", "");
+                //获取cs cl
+                CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
+                DBCollection dbcl = cs.getCollection(this.clName);
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                //通过从节点查询数据
+                DBCursor cursor = dbcl.query(null,null,"{\"_id\":1}",null);
+                List<BSONObject> actual = new ArrayList<BSONObject>();
+                while( cursor.hasNext() ) {
+                    BSONObject obj = cursor.getNext();
+                    actual.add(obj);
+                }
+                cursor.close();
+                List<BSONObject> expected = new ArrayList<BSONObject>();
+                //切分键[0.63-0.31)
+                //期望结果[1-31],[64,100)
+                for( int i = 1; i <= 31; i++ ) {
+                    expected.add(this.insertRecods.get(i-1));
+                }
+                for( int i = 64; i < 100; i++ ) {
+                    expected.add(this.insertRecods.get(i-1));
+                }
+                if ( actual.equals(expected) ) {
+                    flag = true;
+                }
             }
-            //通过从节点查询数据
-            DBCursor cursor = dbcl.query(null,null,"{\"_id\":1}",null);
-            List<BSONObject> actual = new ArrayList<BSONObject>();
-            while( cursor.hasNext() ) {
-                BSONObject obj = cursor.getNext();
-                actual.add(obj);
+            if (!flag) {
+                Assert.fail("数据长时间未同步成功！");
             }
-            cursor.close();
-            List<BSONObject> expected = new ArrayList<BSONObject>();
-            //切分键[0.63-0.31)
-            //期望结果[1-31],[64,100)
-            for( int i = 1; i <= 31; i++ ) {
-                expected.add(this.insertRecods.get(i-1));
-            }
-            for( int i = 64; i < 100; i++ ) {
-                expected.add(this.insertRecods.get(i-1));
-            }
-            Assert.assertEquals(actual, expected);
+           // Assert.assertEquals(actual, expected);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         } finally {
@@ -150,35 +159,43 @@ public class TestSplit10525C extends SdbTestBase{
     public void testDestDataSplitResult(List<String> rgNames) {
         Sequoiadb dataDb = null;
         try {
-            //连接目标组data查询
-            ReplicaGroup replicaGroup = this.sdb.getReplicaGroup(rgNames.get(1));
-            Node master = replicaGroup.getSlave();
-            String url = master.getNodeName();
-            dataDb = new Sequoiadb(url, "", "");
-            //通过从节点获取cs cl
-            CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
-            DBCollection dbcl = cs.getCollection(this.clName);
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            boolean flag = false;
+            for (int j = 0; j < 100; j++){
+              //连接目标组data查询
+                ReplicaGroup replicaGroup = this.sdb.getReplicaGroup(rgNames.get(1));
+                Node master = replicaGroup.getSlave();
+                String url = master.getNodeName();
+                dataDb = new Sequoiadb(url, "", "");
+                //通过从节点获取cs cl
+                CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
+                DBCollection dbcl = cs.getCollection(this.clName);
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                //通过从节点查询
+                DBCursor cursor = dbcl.query(null,null,"{\"_id\":1}",null);
+                List<BSONObject> actual = new ArrayList<BSONObject>();
+                while( cursor.hasNext() ) {
+                    BSONObject obj = cursor.getNext();
+                    actual.add(obj);
+                }
+                cursor.close();
+                List<BSONObject> expected = new ArrayList<BSONObject>();
+                //切分键[0.63-0.31)
+                //期望结果[0.63-0.31)
+                for( int i = 32; i <= 63; i++ ) {
+                    expected.add(this.insertRecods.get(i-1));
+                }
+                if ( actual.equals(expected) ) {
+                    flag = true;
+                }
             }
-            //通过从节点查询
-            DBCursor cursor = dbcl.query(null,null,"{\"_id\":1}",null);
-            List<BSONObject> actual = new ArrayList<BSONObject>();
-            while( cursor.hasNext() ) {
-                BSONObject obj = cursor.getNext();
-                actual.add(obj);
+            if (!flag) {
+                Assert.fail("数据长时间未同步成功！");
             }
-            cursor.close();
-            List<BSONObject> expected = new ArrayList<BSONObject>();
-            //切分键[0.63-0.31)
-            //期望结果[0.63-0.31)
-            for( int i = 32; i <= 63; i++ ) {
-                expected.add(this.insertRecods.get(i-1));
-            }
-            
-            Assert.assertEquals(actual, expected);
+            //Assert.assertEquals(actual, expected);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         } finally {
