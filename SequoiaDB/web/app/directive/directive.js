@@ -4000,7 +4000,7 @@
    支持命令： ng-dropdown         必填   []   //列表数据
              dropdown-callback   可选   {}   //定时器接口
    */
-   sacApp.directive( 'ngDropdown', function( $compile, SdbFunction ){
+   sacApp.directive( 'ngDropdown', function( $compile, $animate, SdbFunction ){
       var dire = {
          restrict: 'A',
          replace: false,
@@ -4008,6 +4008,7 @@
          scope: true,
          controller: function( $scope, $element, $attrs, $transclude ){
             $scope.lastScope = [] ;  //最后一次创建的scope
+            $scope.lastLi = [] ;
             $scope.mask = $compile( $( '<div></div>' ).attr( 'ng-mousedown', 'close()' ).addClass( 'mask-screen unalpha' ) )( $scope ) ;  //遮罩
             $scope.ulBox = $( '<ul class="dropdown-menu"></ul>' ).css( { 'position': 'relative' } ) ;  //下拉菜单外框
             $scope.divBox = $( '<div></div>' ).css( { 'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 10000 } ) ; //下拉菜单移动框
@@ -4022,7 +4023,11 @@
                pre: function preLink( scope, element, attributes ){},
                post: function postLink( scope, element, attributes ){
 
-                  scope.$on( '$destroy', function(){  //主scope释放，子的scope也要释放
+                  scope.$on( '$destroy', function(){
+                     $.each( scope.lastLi, function( index, liEle ){
+                        $animate.leave( liEle ) ;
+                     } ) ;
+                     //主scope释放，子的scope也要释放
                      $.each( scope.lastScope, function( index, rowScope ){
                         rowScope.$destroy();
                      } ) ;
@@ -4042,11 +4047,10 @@
                   var createDropdown = function( dataList ){
                      var ulBox = scope.ulBox ;
 
-                     //设置相对位置
-                     //$( element ).css( { 'position': 'fixed', 'left': 0, 'top': 0, 'z-index': 10000 } ) ;
-
-                     //移除旧的
-                     $( '> li', ulBox ).remove() ;
+                     //删除旧的元素
+                     $.each( scope.lastLi, function( index, liEle ){
+                        $animate.leave( liEle ) ;
+                     } ) ;
 
                      //释放旧的scope
                      $.each( scope.lastScope, function( index, rowScope ){
@@ -4077,6 +4081,7 @@
                                     return true ;
                                  }
                                  var li = angular.element( '<li></li>' ) ;
+                                 scope.lastLi.push( li ) ;
                                  $( li ).append( col ) ;
                                  ulBox.append( li ) ;
                               }
@@ -4730,6 +4735,7 @@
          scope: true,
          controller: function( $scope, $element, $attrs, $transclude ){
             $scope.lastScope = [] ; //最后一次自己创建的scope
+            $scope.lastTr    = [] ; //最后一次创建的表格tr
             $scope.tools = {
                'page': 0,           //总共多少页
                'text': '',          //工具栏右边的文字
@@ -4786,7 +4792,11 @@
                pre: function preLink( scope, element, attributes ){},
                post: function postLink( scope, element, attributes ){
 
-                  scope.$on( '$destroy', function(){  //主scope释放，子的scope也要释放
+                  scope.$on( '$destroy', function(){
+                     $.each( scope.lastTr, function( index, trEle ){
+                        $animate.leave( trEle ) ;
+                     } ) ;
+                     //主scope释放，子的scope也要释放
                      $.each( scope.lastScope, function( index, rowScope ){
                         rowScope.$destroy();
                      } ) ;
@@ -5156,7 +5166,9 @@
                   var createTableContents = function( page, isRecoveryWidth ){
 
                      //移除旧的
-                     $( '> tr', bodyEle ).remove() ;
+                     $.each( scope.lastTr, function( index, trEle ){
+                        $animate.leave( trEle ) ;
+                     } ) ;
 
                      //释放旧的scope
                      $.each( scope.lastScope, function( index, rowScope ){
@@ -5164,6 +5176,7 @@
                      } ) ;
 
                      scope.lastScope = [] ;
+                     scope.lastTr = [] ;
                      
                      //统计标题数量
                      var useTitleList = [] ;
@@ -5198,6 +5211,7 @@
                      for( var index1 = start; index1 < end; ++index1 )
                      {
                         var tr = angular.element( '<tr></tr>' ) ;
+                        scope.lastTr.push( tr ) ;
                         var childScope = scope.$new();
                         scope.lastScope.push( childScope ) ;
                         childScope['$index'] = index1 ;
