@@ -18,10 +18,8 @@ function main()
    var ranStr = getRandomString();
    prepareData( ranStr );
    importData( csName, clName );
-   sleep( 10 * 1000 ); // wait for creating dictionary
    checkDictCreated( csName, clName );
    importData( csName, clName );
-   sleep( 10 * 1000 ); // wait for compression
    checkCompressed( csName, clName );
    checkCLData( cl, ranStr );
    commDropCL( db, csName, clName, true, true, "Fail to drop CL in the end" );
@@ -92,53 +90,81 @@ function importData( csName, clName )
 
 function checkDictCreated( csName, clName )
 {
-   // connect to cl data node
-   var groupNameArray = getDataGroupsName();
-   var clGroupName = groupNameArray[0];
-   var dataGroup = db.getRG( clGroupName );
-   var url = dataGroup.getMaster();
-   var dataDB = new Sdb( url );
-   // get details of snapshot
-   var snapshot = dataDB.snapshot( 4, { Name: csName + "." + clName } );
-   var detail = snapshot.next().toObj().Details[0];
-   // check whether dictionary is created
-   if( detail.DictionaryCreated != true )
+   var waitSec = 180;
+   var currSec = 0;
+   var created = false;
+   for( currSec = 0; currSec < waitSec; currSec++ )
+   {
+      // connect to cl data node
+      var groupNameArray = getDataGroupsName();
+      var clGroupName = groupNameArray[0];
+      var dataGroup = db.getRG( clGroupName );
+      var url = dataGroup.getMaster();
+      var dataDB = new Sdb( url );
+      // get details of snapshot
+      var snapshot = dataDB.snapshot( 4, { Name: csName + "." + clName } );
+      var detail = snapshot.next().toObj().Details[0];
+      // check whether dictionary is created
+      if( detail.DictionaryCreated === true )
+      {
+         created = true;
+         break;
+      }
+      sleep( 1000 ); // try again after 1 second
+   }
+   if( !created )
    {
       throw buildException( "checkDictCreated", null, "",
-                         "[ true ]",
-                         "[ false ]" );
+                            "[ true ]",
+                            "[ false ]" );
    }
 }
 
 function checkCompressed( csName, clName )
 {
-   // connect to cl data node
-   var groupNameArray = getDataGroupsName();
-   var clGroupName = groupNameArray[0];
-   var dataGroup = db.getRG( clGroupName );
-   var url = dataGroup.getMaster();
-   var dataDB = new Sdb( url );
-   // get details of snapshot
-   var snapshot = dataDB.snapshot( 4, { Name: csName + "." + clName } );
-   var detail = snapshot.next().toObj().Details[0];
-   // check whether data is compressed
-   if( detail.CurrentCompressionRatio >= 1 )
+   var tryTimes = 10;
+   var ratioRight = false;
+   var attrRight = false;
+   var typeRight = false;
+   var actRes = "";
+   for( i = 0; i < tryTimes; i++ )
    {
-      throw buildException( "checkDictCreated", null, "CurrentCompressionRatio",
-                         "1",
-                         "" + detail.CurrentCompressionRatio );
+      // connect to cl data node
+      var groupNameArray = getDataGroupsName();
+      var clGroupName = groupNameArray[0];
+      var dataGroup = db.getRG( clGroupName );
+      var url = dataGroup.getMaster();
+      var dataDB = new Sdb( url );
+      // get details of snapshot
+      var snapshot = dataDB.snapshot( 4, { Name: csName + "." + clName } );
+      var detail = snapshot.next().toObj().Details[0];
+      // check whether data is compressed
+      actRes = "";
+      if( detail.CurrentCompressionRatio < 1 )
+      {
+         ratioRight = true;
+         actRes += "CompressionRatio: " + detail.CurrentCompressionRatio + "\n";
+      }
+      if( detail.Attribute === "Compressed" )
+      {
+         attrRight = true;
+         actRes += "Attribute: " + detail.Attribute + "\n";
+      }
+      if( detail.CompressionType === "lzw" )
+      {
+         typeRight = true;
+         actRes += "CompressionType: " + detail.CompressionType + "\n";
+      }
+      if( ratioRight && attrRight && typeRight ) break;
+      sleep( 1000 ); // try again after 1 second
    }
-   if( detail.Attribute !== "Compressed" )
+   if( !( ratioRight && attrRight && typeRight ) )
    {
-      throw buildException( "checkDictCreated", null, "Compressed",
-                         "Compressed",
-                         detail.Attribute );
-   }
-   if( detail.CompressionType !== "lzw" )
-   {
-      throw buildException( "checkDictCreated", null, "CompressionType",
-                         "lzw",
-                         detail.CompressionType );
+      var expRes = "";
+      expRes += "CompressionRatio: <1\n";
+      expRes += "Attribute: Compressed\n";
+      expRes += "CompressionType: lzw\n";
+      throw buildException( "checkCompressed", null, "checkCompressed", expRes, actRes );
    }
 }
 
