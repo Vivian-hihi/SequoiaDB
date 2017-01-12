@@ -7,6 +7,10 @@
 | [添加主机](sac/deployment/add_host/add_host.md)     | 获取主机硬件和系统信息。 |
 | [安装主机](sac/deployment/add_host/install_host.md) | 执行主机安装包进行安装。 |
 
+> **Note:**  
+> ubuntu的root账号默认是被禁用的，需要手工开启。  
+> ubuntu开启root，执行命令 ```sudo passwd root```，按照提示输入root密码。
+
 1. 在 **IP地址/主机名** 输入要扫描主机的IP地址或主机名。
 
    ![扫描主机](sac/deployment/add_host/scan_host_1.jpg)

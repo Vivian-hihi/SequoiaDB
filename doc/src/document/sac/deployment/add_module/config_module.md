@@ -21,4 +21,4 @@
 
 4. 点击底部的 **下一步** 按钮，进入修改业务页面。
 
-5. 开始修改业务，[点击查看](sac/deployment/add_module/modify_module.md)。
+5. 开始修改业务，[点击查看](sac/deployment/add_module/mod_module.md)。

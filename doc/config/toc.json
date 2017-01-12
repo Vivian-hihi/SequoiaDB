@@ -2824,9 +2824,9 @@
                         },
                         {
                            "id": 1484036825,
-                           "file": "install_host",
+                           "file": "install_module",
                            "cn": "安装业务",
-                           "en": "Install host"
+                           "en": "Install module"
                         }
                      ]
                   },

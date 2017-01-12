@@ -25,7 +25,7 @@
 
 （5） 支持定义临时函数。如：`db.eval( 'function sum(x,y){return x+y;} sum(1,2)' )`
 
-（6） 全局 db 使用方式与 [createProcedure()](reference\Sequoiadb_command\Sdb\createProcedure.md) 相同。
+（6） 全局 db 使用方式与 [createProcedure()](reference/Sequoiadb_command/Sdb/createProcedure.md) 相同。
 
 ##示例##
 
