@@ -406,7 +406,7 @@ static INT32 parseLink( struct buf *ob,
                      sprintf( catIdStr, "%d", iter->second ) ;
                      sprintf( editionIdStr, "%d", _edition ) ;
                      //cout << "find: " << id << "   " << aLink << endl ;
-                     aLink = "/cn/index-cat_id-" ;
+                     aLink = "/cn/SequoiaDB-cat_id-" ;
                      aLink += catIdStr ;
                      aLink += "-edition_id-" ;
                      aLink += editionIdStr ;
