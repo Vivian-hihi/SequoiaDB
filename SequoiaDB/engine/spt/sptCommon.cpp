@@ -156,8 +156,6 @@ namespace engine
 
          /// EOO
          pObjBuff[ offset ] = 0 ;
-
-         __hasSetErrObj__ = TRUE ;
       }
 
       return pObjBuff ;
@@ -324,16 +322,20 @@ namespace engine
       }
    }
 
+   BOOLEAN sdbIsErrObjEmpty()
+   {
+      if ( __errobjSize__ < 5 || *(INT32*)__errobj__ < 5 )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
    const CHAR* sdbGetErrorObj()
    {
-      if ( __errobjSize__ >= 5 && *(INT32*)__errobj__ >= 5 &&
-           __hasSetErrObj__ )
+      if ( !sdbIsErrObjEmpty() )
       {
          return __errobj__ ;
-      }
-      else if ( SDB_OK != __errno__ )
-      {
-         return _buildObjByErrno( __errno__, __errmsg__ ) ;
       }
       return NULL ;
    }
@@ -452,6 +454,12 @@ namespace engine
             sdbSetErrMsg( msg ) ;
          }
          add = TRUE ;
+      }
+
+      if ( ( sdbIsErrObjEmpty() || !__hasSetErrObj__ ) &&
+           SDB_OK != __errno__ )
+      {
+         _buildObjByErrno( __errno__, __errmsg__ ) ;
       }
 
       if ( sdbNeedPrintError() )
