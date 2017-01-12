@@ -1495,7 +1495,7 @@ namespace engine
                   if ( 0 == _dmsData->_dmsMME->_mbList[i]._commitLSN )
                   {
                      _dmsData->_dmsMME->_mbList[i]._commitLSN =
-                        _dmsHeader->_commitLsn ;
+                        _pStorageInfo->_curLSNOnStart ;
                   }
                   _dmsData->_dmsMME->_mbList[i]._lobCommitFlag = 1 ;
                   needFlushMME = TRUE ;

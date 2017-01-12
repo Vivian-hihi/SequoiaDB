@@ -830,7 +830,8 @@ namespace engine
                   /// upgrade from the old version( _commitLSN = 0 )
                   if ( 0 == _dmsMME->_mbList[i]._commitLSN )
                   {
-                     _dmsMME->_mbList[i]._commitLSN = _dmsHeader->_commitLsn ;
+                     _dmsMME->_mbList[i]._commitLSN =
+                        _pStorageInfo->_curLSNOnStart ;
                   }
                   _dmsMME->_mbList[i]._commitFlag = 1 ;
                   needFlush = TRUE ;

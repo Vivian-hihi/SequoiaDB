@@ -144,7 +144,7 @@ namespace engine
                   if ( 0 == _pDataSu->_dmsMME->_mbList[i]._commitLSN )
                   {
                      _pDataSu->_dmsMME->_mbList[i]._commitLSN =
-                        _dmsHeader->_commitLsn ;
+                        _pStorageInfo->_curLSNOnStart ;
                   }
                   _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag = 1 ;
                   needFlushMME = TRUE ;
