@@ -65,7 +65,7 @@ void getConf()
       if( para == "--hostname" || para == "-n" )
          HOSTNAME = g_argvs[i+1] ;
       else if( para == "--svcname" || para == "-s" )
-         SVCNAME,g_argvs[i+1] ;
+         SVCNAME = g_argvs[i+1] ;
       else if( para == "--changedprefix" || para == "-c" )
          CHANGEDPREFIX = g_argvs[i+1] ;
 	  else if( para == "--rsrvportbegin" || para == "-b" )
