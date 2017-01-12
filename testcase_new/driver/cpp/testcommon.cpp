@@ -1,16 +1,16 @@
 #include "testcommon.hpp"
 #include <string>
+#include <vector>
 #include <iostream>
-#include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <gtest/gtest.h>
-#include <fstream>
-#include <sstream>
 
 using namespace std;
 using namespace sdbclient;
-using namespace bson;
+using namespace bson ;
+using testing::internal::g_argvs ;
+extern vector<testing::internal::String> g_argvs ;
 
 string HOSTNAME         = "localhost" ;
 string SVCNAME          = "11810" ;
