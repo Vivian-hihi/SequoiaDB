@@ -14,7 +14,7 @@ SDB_SNAP_SESSIONS_CURRENT
 | SessionID         | 字符串        | 会话 ID（主机名：端口号：ID）                      |
 | TID               | 整型          | 该会话所对应的系统线程 ID                          |
 | Status            | 字符串        | 会话状态<br>- Creating：创建状态<br>- Running：运行状态<br>- Waiting：等待状态<br>- Idle：线程池待机状态<br>- Destroying：销毁状态 |
-| Type              | 字符串        | [EDU 类型](SdbDoc_Cn/database_management/EDU.html) |
+| Type              | 字符串        | [EDU 类型](database_management/EDU.md) |
 | Name              | 字符串        | EDU 名，一般系统 EDU 名为空                        |
 | QueueSize         | 整型          | 等待处理请求的队列长度                             |
 | ProcessEventCount | 长整型        | 已经处理请求的数量                                 |
