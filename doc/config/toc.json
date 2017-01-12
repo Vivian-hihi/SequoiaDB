@@ -2969,25 +2969,25 @@
                      "en": "Host",
                      "contents": [
                         {
-                           "id": 1484010537,
+                           "id": 1484010538,
                            "file": "hosts_list",
                            "cn": "主机列表",
                            "en": "Hosts list"
                         },
                         {
-                           "id": 1484010538,
+                           "id": 1484010539,
                            "file": "hosts_snapshot",
                            "cn": "主机快照",
                            "en": "Hosts snapshot"
                         },
                         {
-                           "id": 1484010539,
+                           "id": 1484010540,
                            "file": "charts",
                            "cn": "图表",
                            "en": "Charts"
                         },
                         {
-                           "id": 1484010540,
+                           "id": 1484010541,
                            "file": "host_info",
                            "cn": "主机信息",
                            "en": "Host info"
