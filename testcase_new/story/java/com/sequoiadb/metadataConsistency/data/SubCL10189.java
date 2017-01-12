@@ -102,6 +102,8 @@ public class SubCL10189 extends SdbTestBase {
 				//check results of catalog
 				CommLib.checkCLResult(db, csName, clName);
 			}
+		}catch(NullPointerException e){
+				
 		}catch(BaseException e){
 			if(e.getErrorCode() != -235 //-235:Duplicated attach collection partition
 					&& e.getErrorCode() != -23

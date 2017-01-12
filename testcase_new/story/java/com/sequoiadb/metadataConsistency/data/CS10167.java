@@ -134,7 +134,8 @@ public class CS10167 extends SdbTestBase {
 			opt.put("IsMainCL", true);
 			sdb.getCollectionSpace(mCSName).createCollection(mCLName, opt);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -33){ 
+			if(e.getErrorCode() != -33 
+					&& e.getErrorCode() != -22){ 
 				Assert.fail(e.getMessage());
 			}
 		}
