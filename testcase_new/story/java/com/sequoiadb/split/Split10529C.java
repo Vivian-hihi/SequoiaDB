@@ -93,24 +93,22 @@ public class Split10529C extends SdbTestBase {
 	public void alterCL() {
 		Sequoiadb db = null;
 		Sequoiadb dataNode = null;
-		Split splitThread = new Split();
-		splitThread.start();
+		Split splitThread = null;
 		try {
-			db = new Sequoiadb(coordUrl, "", "");
-
-			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
+			// 启动切分线程
+			splitThread = new Split();
+			splitThread.start();
 
 			// 等待目标组数据迁移完成
+			db = new Sequoiadb(coordUrl, "", "");
+			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
 			while (dataNode.isCollectionSpaceExist(csName) != true && flag.get() == false) {
-				// Thread.sleep(10);
 			}
 			CollectionSpace cs = dataNode.getCollectionSpace(csName);
 			while (cs.isCollectionExist(clName) != true && flag.get() == false) {
-				// Thread.sleep(10);
 			}
 			DBCollection destCL = dataNode.getCollectionSpace(csName).getCollection(clName);
 			while (destCL.getCount() != 900 && flag.get() == false) {
-				// Thread.sleep(10);
 			}
 
 			// 修改集合
@@ -118,13 +116,23 @@ public class Split10529C extends SdbTestBase {
 			cl.alterCollection((BSONObject) JSON.parse("{ShrdingType:'hash',Partition:2048}"));
 			Assert.fail("alter cl success");
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage() + splitThread.getErrorMsg());
+			StringBuffer stackBuffer = new StringBuffer();
+			StackTraceElement[] stackElements = e.getStackTrace();
+			for (int i = 0; i < stackElements.length; i++) {
+				if (stackElements[i].toString().contains(this.getClass().getName())) {
+					stackBuffer.append(stackElements[i].toString()).append("\r\n");
+				}
+			}
+			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage()+"\r\n"+stackBuffer+"\r\n"+splitThread.getErrorMsg());
 		} finally {
-			if (!splitThread.isSuccess()) {
-				Assert.fail(splitThread.getErrorMsg());
+			if (splitThread != null) {
+				splitThread.join();
 			}
 			if (db != null) {
 				db.disconnect();
+			}
+			if (dataNode != null) {
+				dataNode.disconnect();
 			}
 		}
 	}
