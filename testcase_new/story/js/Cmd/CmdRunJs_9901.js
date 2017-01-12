@@ -20,7 +20,8 @@ CmdTest.prototype.testRunJS = function()
       else
          throw buildException( "testRunJS", e, "run js " + this, 0, e ) ;
    }
-   if( result != undefined && result != "7" )
+   if( ( this.isLocal && result != undefined ) ||
+       ( !this.isLocal && result != "7" ) )
    {
       throw buildException( "testRunJS", null, "check result " + this, 
                             "7", result ) ;
