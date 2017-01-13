@@ -156,6 +156,10 @@
                         {
                            nodesList[index]['Status'] = val ;
                         }
+                        else if( key == 'Status' )
+                        {
+                           nodesList[index]['Status'] = ( val == 'Normal' ) ;
+                        }
                         else
                         {
                            nodesList[index][key] = val ;

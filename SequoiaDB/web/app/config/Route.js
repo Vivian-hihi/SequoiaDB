@@ -36,7 +36,7 @@
       { path: '/Data/SDB-Operate/Lobs',
         options: {
            templateUrl: './app/template/Data/Sdb/Operate/Lobs.html',
-           resolve: resolveFun( [ './app/other/function/Data/Sdb/Operate/Lob.js', './app/controller/Data/Sdb/Operate/Lobs.js' ] )
+           resolve: resolveFun( [ './app/controller/Data/Sdb/Operate/Lobs.js' ] )
         }
       },
       { path: '/Data/SDB-Database/Index',

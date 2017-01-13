@@ -25,61 +25,88 @@
 
       //cs.cl
       $scope.fullName = csName + '.' + clName ;
-      //是否非条件查询
-      $scope.isNotFilter = true ;
-      //每页显示的记录数
-      $scope.limit = 30 ;
-      //Lob集合
-      $scope.lobContent = [] ;
-      //当前显示页
-      $scope.setCurrent = 1 ;
-      $scope.current = 1 ;
-      //总页数
-      $scope.total = 0 ;
-      //总记录数描述
-      $scope.recordTotal = '' ;
+      //lob表格
+      $scope.lobTable = {
+         'title': {
+            'Oid':                     '',
+            'Oid.$oid':               'Oid',
+            'CreateTime.$timestamp':  'CreateTime',
+            'Size':                   'Size',
+            'Available' :  '           Available'
+         },
+         'body': [],
+         'options': {
+            'width': {
+               'Oid': '40px',
+               'Oid.$oid': '250px'
+            },
+            'sort': {
+               'Oid':                      false,
+               'Oid.$oid':                true,
+               'CreateTime.$timestamp':   true,
+               'Size':                    true,
+               'Available':               true,
+            },
+            'max': 50,
+            'filter': {
+               'Oid.$oid':                 'indexof',
+               'CreateTime.$timestamp':    'indexof',
+               'Size':                     'number',
+               'Available':                'indexof'
+            }
+         },
+         'callback': {}
+      } ;
 
-      //上一页
-      $scope.previous = function(){
-         _DataOperateLob.previous( $scope, $compile, SdbFunction ) ;
-      }
-
-      //下一页
-      $scope.nextPage = function(){
-         _DataOperateLob.nextPage( $scope, $compile, SdbFunction ) ;
-      }
-
-      //检查输入的页数格式
-      $scope.checkCurrent = function(){
-         _DataOperateLob.checkCurrent( $scope ) ;
-      }
-
-      //跳转到指定页
-      $scope.gotoPate = function( event ){
-         _DataOperateLob.gotoPate( $scope, $compile, SdbFunction, event ) ;
-      }
+      //Lob列表
+      var lobList = [] ;
 
       //查询所有Lob
       $scope.queryAll = function(){
-         _DataOperateLob.queryAll( $scope, $compile, SdbFunction, SdbRest ) ;
-      }
-    
-      //删除Lob记录
-      $scope.LobDelete = function( index ){
-         _DataOperateLob.LobDelete( $scope, SdbRest, index ) ;
-      }
-
-      //查询lob
-      $scope.LobQuery = function(){
-         _DataOperateLob.LobQuery( $scope, $compile, SdbFunction ) ;
+         var data = { 'cmd': 'list lobs', 'name': $scope.fullName } ;
+         SdbRest.DataOperation( data, function( lobs ){
+            lobList = lobs ;
+            $scope.execResult = sprintf( $scope.autoLanguage( '? ? 执行查询成功，总计 ? 条记录' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, lobList.length ) ;
+            $scope.execRc = true ;
+            $scope.lobTable['body'] = lobs ;
+         }, function( errorInfo ){
+            $scope.execResult = sprintf( $scope.autoLanguage( '? ? 执行查询失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), $scope.fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
+            $scope.execRc = false ;
+         } ) ;
       }
       
       //显示lob的详细信息
       $scope.showLobInfo = function( oid ){
-         _DataOperateLob.showLobInfo( $scope, oid ) ;
+         $scope.Components.Modal.isShow = true ;
+         $scope.Components.Modal.icon = '' ;
+         $scope.Components.Modal.title = $scope.autoLanguage( 'Lob信息' ) ;
+         $scope.Components.Modal.Grid = {} ;
+         $.each( lobList, function( index, lob ){
+            if( lob['Oid']['$oid'] == oid )
+            {
+               $scope.Components.Modal.Grid = lob ;
+               return false ;
+            }
+         } ) ;
+         $scope.Components.Modal.Context = '\
+<table class="table loosen border">\
+<tr>\
+<td style="width:40%;background-color:#F1F4F5;"><b>Key</b></td>\
+<td style="width:60%;background-color:#F1F4F5;"><b>Value</b></td>\
+</tr>\
+<tr>\
+<td>Oid</td>\
+<td>{{data.Grid[\'Oid\'][\'$oid\']}}</td>\
+</tr>\
+<tr ng-repeat="(key, value) in data.Grid track by $index" ng-if="key != \'Oid\'">\
+<td>{{key}}</td>\
+<td ng-if="key != \'CreateTime\'">{{value}}</td>\
+<td ng-if="key == \'CreateTime\'">{{value[\'$timestamp\']}}</td>\
+</tr>\
+</table>' ;
+         $scope.Components.Modal.noOK = true ;
       }
 
-      //查询所有Lob
-      _DataOperateLob.queryAll( $scope, $compile, SdbFunction, SdbRest ) ;
+      $scope.queryAll();
    } ) ;
 }()) ;

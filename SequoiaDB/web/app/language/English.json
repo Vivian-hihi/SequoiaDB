@@ -10,6 +10,7 @@
    "? ? 删除成功": "? ? delete success",
    "? ? 删除失败，错误码: ?，?. ?": "? ? delete failed, error code: ?, ?. ?",
    "? ? 执行查询成功，显示 ? - ?，总计 ? 条记录": "? ? query success, display ? - ?, total ? records",
+   "? ? 执行查询成功，总计 ? 条记录": "? ? query success, total ? records",
    "? ? 执行查询失败，错误码: ?，?. ?": "? ? query failed, error code: ?, ?. ?",
    "? [error] - 节点错误: ?，错误码 ?。": "? [error] - Node error, Flag: ?.",
    "? [success] - 业务: ?，正常运行中。": "? [success] - Module name: ?, Working well.",

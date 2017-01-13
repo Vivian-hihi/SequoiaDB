@@ -65,7 +65,7 @@
                <td>Domain</td>
                <td>{{info['Name']}}</td>
             </tr>
-            <tr ng-repeat="(key, value) in info track by $index" ng-if="key != 'SessionID' && key != '_id'">
+            <tr ng-repeat="(key, value) in info track by $index" ng-if="key != 'Name' && key != 'GroupList'">
                <td>{{key}}</td>
                <td>{{value}}</td>
             </tr>

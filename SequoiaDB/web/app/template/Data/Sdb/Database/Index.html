@@ -26,7 +26,7 @@
 
       <div class="previewLeft" style="overflow:hidden;" ng-container="{offsetX:-280}" ng-if="browseMode=='cslist' && csList.length > 0" ng-table="CsTable['options']" table-title="CsTable['title']" table-content="csInfo in CsTable['body']">
          <div class="Ellipsis" table-key="Name">
-            <a class="linkButton" ng-style="{true:{'font-weight':'bold','color':'#FF7547'}}[csID == csInfo.i]" ng-click="showCSInfo(csInfo.i)">{{csInfo.Name}}</a>
+            <a class="linkButton" ng-style="{true:{'font-weight':'bold','color':'#FF7547'}}[showType == 'cs'&&csID == csInfo.i]" ng-click="showCSInfo(csInfo.i)">{{csInfo.Name}}</a>
          </div>
          <div class="Ellipsis" table-key="TotalRecords">{{csInfo.TotalRecords}}</div>
          <div class="Ellipsis" table-key="TotalSize">{{csInfo.TotalSize}}</div>
@@ -36,7 +36,7 @@
 
       <div class="previewLeft" style="overflow:hidden;" ng-container="{offsetX:-280}" ng-if="browseMode=='cllist' && csList.length > 0" ng-table="ClTable['options']" table-title="ClTable['title']" table-content="clInfo in ClTable['body']">
          <div class="Ellipsis" table-key="fullName">
-            <a class="linkButton" ng-click="showCLInfo(clInfo.csId,clInfo.i)" ng-style="{true:{'font-weight':'bold','color':'#FF7547'}}[clID == clInfo.i]">{{clInfo.fullName}}</a>
+            <a class="linkButton" ng-click="showCLInfo(clInfo.csId,clInfo.i)" ng-style="{true:{'font-weight':'bold','color':'#FF7547'}}[showType == 'cl'&&clID == clInfo.i]">{{clInfo.fullName}}</a>
          </div>
          <div class="Ellipsis" table-key="typeDesc">{{clInfo.typeDesc}}</div>
          <div class="Ellipsis" table-key="MainCLName">{{clInfo.MainCLName}}</div>
