@@ -2927,13 +2927,13 @@
                         {
                            "id": 1484010532,
                            "file": "sessions_list",
-                           "cn": "会话列表",
+                           "cn": "会话",
                            "en": "Sessions list"
                         },
                         {
                            "id": 1484010533,
                            "file": "contexts_list",
-                           "cn": "上下文列表",
+                           "cn": "上下文",
                            "en": "Contexts list"
                         },
                         {
