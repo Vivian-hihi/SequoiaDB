@@ -118,19 +118,24 @@ public class TestLzw6654 extends SdbTestBase {
         int actCnt = (int)cl.getCount();
         Assert.assertEquals(actCnt, expCnt, "data is different at count");
         DBCursor cursor = cl.query(null, null, "{_id:1}", null);
+        BSONObject expRec = new BasicBSONObject();
         for(int i = 0; i < 100; i++){
-            BSONObject expRec = new BasicBSONObject();
             expRec.put("_id", i);
             expRec.put("key", smallStr + expRec.get("_id"));
             BSONObject actRec = (BSONObject)cursor.getNext();
             Assert.assertEquals(actRec, expRec, "data is different");
+            // clean up expRec            
+            expRec.removeField("_id");
+            expRec.removeField("key");
         }
         for(int i = 100; i < 100 + 1 + 2; i++){
-            BSONObject expRec = new BasicBSONObject();
             expRec.put("_id", i);
             expRec.put("key", bigStr + expRec.get("_id"));
             BSONObject actRec = (BSONObject)cursor.getNext();
             Assert.assertEquals(actRec, expRec, "data is different");
+            // clean up expRec            
+            expRec.removeField("_id");
+            expRec.removeField("key");
         }
         cursor.close();
     }
