@@ -99,7 +99,10 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
    
    protected function tearDown()
    {
-      $err = $this->testdb->close();
+      if ( isset( $this->testdb ) )
+      {
+         $err = $this->testdb->close();
+      }
    }
    
    public static function tearDownAfterClass()
