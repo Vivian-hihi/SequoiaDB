@@ -6,7 +6,7 @@
 
    ![删除集合空间](sac/data_operation/collection_space/drop_cs_1.jpg)
 
-2. 点击 **删除集合空间**，在窗口点击 **确定**。
+2. 点击 **删除集合空间** 打开窗口，选择要删除的集合空间，点击 **确定**。
 
    ![删除集合空间](sac/data_operation/collection_space/drop_cs_2.jpg)
 

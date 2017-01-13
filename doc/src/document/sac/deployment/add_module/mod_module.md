@@ -33,8 +33,8 @@
 
 ####导入导出配置####
 
-v2.8 版本支持SequoiaDB集群模式下导入导出配置，支持JSON和XML格式。
+**v2.8版本**新增SequoiaDB集群模式下导入导出配置，支持JSON和XML格式。
 
-点击 **编辑配置** 按钮.
+点击 **编辑配置** 按钮，出现编辑配置的窗口。
 
 ![修改业务](sac/deployment/add_module/modify_module_4.jpg)
