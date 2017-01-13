@@ -81,8 +81,11 @@ public class IdIndex10210 extends SdbTestBase {
 				clDB = db.getCollectionSpace(csName).getCollection(clName);
 			}
 		}catch(BaseException e){
-			db.disconnect();
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -34)
+			{
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
 		}
 
 		//-----drop index-----
