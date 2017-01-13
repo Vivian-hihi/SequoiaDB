@@ -866,10 +866,11 @@ JS_MAPPING_END()
                                 BSONObj & detail )
    {
       INT32 rc = SDB_OK ;
-      CHAR* buf = NULL;
+      CHAR* buf = NULL ;
       ossPrimitiveFileOp op ;
-      ossPrimitiveFileOp::offsetType offset ;
       string name ;
+      INT32 readLen = 1024 ;
+      INT32 bufLen = readLen + 1 ;
 
       rc = arg.getString( 0, name ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -891,32 +892,57 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      // get file size
-      rc = op.getSize( &offset ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to get file's size" ) ;
-         goto error ;
-      }
-
-      // alloc enough space for file contents
-      buf = (CHAR*) SDB_OSS_MALLOC( offset.offset + 1 ) ;
+      // malloc buff
+      buf = (CHAR*) SDB_OSS_MALLOC( bufLen ) ;
       if ( NULL == buf )
       {
          rc = SDB_OOM ;
-         PD_LOG( PDERROR , "Failed to alloc memory" ) ;
+         PD_LOG( PDERROR, "Failed to malloc buff" ) ;
+         detail = BSON( SPT_ERR << "Failed to malloc buff" ) ;
          goto error ;
       }
 
-      // read all contents
-      rc = op.Read( offset.offset , buf , NULL ) ;
-      if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to read file" ) ;
-         goto error ;
-      }
+         INT32 readByte = 0 ;
+         INT32 hasRead = 0 ;
+         INT32 increaseLen = 1024 ;
+         CHAR *curPos = buf ;
+         BOOLEAN finishRead = FALSE ;
+         while( !finishRead )
+         {
+            rc = op.Read( readLen , curPos , &readByte ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to read file" ) ;
+               detail = BSON( SPT_ERR << "Failed to read file" ) ;
+               goto error ;
+            }
+            hasRead += readByte ;
 
-      buf[ offset.offset ] = '\0' ;
+            // mem not enough, need to realloc, newBuffSize = 2*oldBuffSize
+            if ( readByte == readLen )
+            {
+               bufLen += increaseLen ;
+               buf = (CHAR*) SDB_OSS_REALLOC( buf, bufLen ) ;
+               if ( NULL == buf )
+               {
+                  rc = SDB_OOM ;
+                  PD_LOG( PDERROR, "Failed to realloc buff" ) ;
+                  detail = BSON( SPT_ERR << "Failed to realloc buff" ) ;
+                  goto error ;
+               }
+               curPos = buf + hasRead ;
+               readLen = increaseLen ;
+               increaseLen *= 2 ;
+            }
+            else
+            {
+               finishRead = TRUE ;
+            }
+
+         }
+         buf[ hasRead ] = '\0' ;
+      }
       rval.getReturnVal().setValue( buf ) ;
 
    done:
