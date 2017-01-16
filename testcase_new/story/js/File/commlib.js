@@ -177,25 +177,22 @@ function toolGetCmUserGroup( hostname, svcname )
 function toolGetSequoiadbDir( hostname, svcname )
 {
    var dir = [] ;
-   var system ;
+   var remote = new Remote( hostname, svcname ) ;
+   var system = remote.getSystem() ;
+   var tmp = system.getEWD() ;
+   var ind = tmp.indexOf( "/bin" ) ;
+   dir[0] = tmp + "/.." ;
+   dir[1] = tmp.slice( 0, ind ) ;
+   remote.close() ;
+   
    if( hostname == COORDHOSTNAME || hostname == toolGetLocalhost() )
    {
       system = System ;
-      var tmp = system.getEWD() ;
-      var ind = tmp.indexOf( "/bin" ) ;
-      dir[0] = tmp + "/.." ;
-      dir[1] = tmp.slice( 0, ind ) ;
-      return dir ;
+      tmp = system.getEWD() ;
+      ind = tmp.indexOf( "/bin" ) ;
+      dir[2] = tmp + "/.." ;
+      dir[3] = tmp.slice( 0, ind ) ;
    }
-   else
-   {
-      var remote = new Remote( hostname, svcname ) ;
-      system = remote.getSystem() ;
-      var tmp = system.getEWD() ;
-      var ind = tmp.indexOf( "/bin" ) ;
-      dir[0] = tmp + "/.." ;
-      dir[1] = tmp.slice( 0, ind ) ;
-      remote.close() ;
-      return dir ;
-   }
+      
+   return dir ;
 }
