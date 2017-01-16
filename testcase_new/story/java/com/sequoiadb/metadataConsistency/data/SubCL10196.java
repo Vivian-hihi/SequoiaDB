@@ -90,6 +90,8 @@ public class SubCL10196 extends SdbTestBase {
 			}
 			
 			CommLib.checkCLResult(db, csName, clName);
+		}catch(NullPointerException e){
+			
 		}catch(BaseException e){
 			if(e.getErrorCode() != -242 //-242:Invalid collection partition
 					&& e.getErrorCode() != -34
