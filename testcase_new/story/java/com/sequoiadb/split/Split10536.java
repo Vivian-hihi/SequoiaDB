@@ -24,7 +24,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
  * @FileName:SEQDB-10536 切分过程中删除id索引 1、向cl中插入数据记录，创建ID索引 2、执行split，设置切分条件
- *                       3、切分过程中删除id索引（源组清除数据之前删除id索引） 4、查看切分和删除id索引结果 问题单：2203
+ *                       3、切分过程中删除id索引（源组清除数据之前删除id索引） 4、查看切分和删除id索引结果 
+ *                       此用例暂未开启,问题单：2203
  * @author huangqiaohui
  * @version 1.00
  *
@@ -66,7 +67,7 @@ public class Split10536 extends SdbTestBase {
 				commSdb.disconnect();
 			}
 			e.printStackTrace();
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -116,7 +117,7 @@ public class Split10536 extends SdbTestBase {
 			checkGroupData(db, 450, "{sk:{$gte:50,$lt:500}}", 450, destGroupName);
 			checkGroupData(db, 50, "{sk:{$gte:0,$lt:50}}", 50, srcGroupName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -130,7 +131,7 @@ public class Split10536 extends SdbTestBase {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -179,7 +180,7 @@ public class Split10536 extends SdbTestBase {
 			Assert.assertEquals(count, expectedCount, destDataNode.getServerAddress().toString());// 目标组应当含有上述查询数据
 			Assert.assertEquals(destCL.getCount(), expectTotalCount, destDataNode.getServerAddress().toString()); // 目标组应当含有的数据量
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (destDataNode != null) {
 				destDataNode.disconnect();

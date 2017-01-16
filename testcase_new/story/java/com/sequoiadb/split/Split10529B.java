@@ -38,7 +38,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 public class Split10529B extends SdbTestBase {
-	private String clName = "testcaseCL10529B";
+	private String clName = "testcaseCL_10529B";
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
@@ -73,7 +73,7 @@ public class Split10529B extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -127,7 +127,7 @@ public class Split10529B extends SdbTestBase {
 				stackBuffer.append(stackElements[i].toString()).append("\r\n");
 				// }
 			}
-			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage() + "\r\n" + stackBuffer);
+			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage()+"\r\n"+Utils.getKeyStack(e,this) + "\r\n" + stackBuffer);
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} finally {
 			if (splitThread != null) {
@@ -148,7 +148,7 @@ public class Split10529B extends SdbTestBase {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();

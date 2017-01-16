@@ -73,7 +73,7 @@ public class Split10530 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -124,7 +124,8 @@ public class Split10530 extends SdbTestBase {
 
 			checkCoord(db);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -166,7 +167,7 @@ public class Split10530 extends SdbTestBase {
 			}
 
 		} catch (BaseException | UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor1 != null) {
 				cursor1.close();
@@ -202,7 +203,7 @@ public class Split10530 extends SdbTestBase {
 			Assert.assertEquals(lobCount > 250 - (250 * 0.3) && lobCount < 250 + (250 * 0.3), true,
 					"srcGroup count:" + lobCount);
 		} catch (BaseException | UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -233,7 +234,7 @@ public class Split10530 extends SdbTestBase {
 					"destGroup data count:" + count);
 		} catch (BaseException e) {
 			e.printStackTrace();
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -259,7 +260,7 @@ public class Split10530 extends SdbTestBase {
 				insertedLob.add(lob.getID());
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -271,7 +272,7 @@ public class Split10530 extends SdbTestBase {
 			commCS.dropCollection(clName);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();

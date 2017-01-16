@@ -66,7 +66,7 @@ public class Split10532 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -87,21 +87,22 @@ public class Split10532 extends SdbTestBase {
 		Sequoiadb db = null;
 		Sequoiadb destDataNode = null;
 		Sequoiadb srcDataNode = null;
-		Split splitThread = new Split();
-		splitThread.start();
+		Split splitThread = null;
 		try {
+			// 切分线程启动
+			splitThread = new Split();
+			splitThread.start();
+
+			// 增加和更新数据
 			db = new Sequoiadb(coordUrl, "", "");
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-
 			for (int i = 400; i < 600; i++) {
 				cl.insert("{sk:" + i + ",alpha:1}");// 增加数据
 				cl.update("{sk:" + i + ",alpha:1}", "{$inc:{alpha:1}}", null);// 更新数据
 			}
 
-			// 等待切分线程
-			if (!splitThread.isSuccess()) {
-				Assert.fail(splitThread.getErrorMsg());
-			}
+			// 等待切分结束，并检查出错信息
+			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 
 			// 构造源组期望数据
 			List<BSONObject> srcExpect = new ArrayList<>();
@@ -127,16 +128,17 @@ public class Split10532 extends SdbTestBase {
 			// 检验目标组数据
 			checkGroupData(db, destGroupName, destExpect);
 
-			// 查询更新数据
+			// 构造更新后的期望数据
 			List<BSONObject> updateExpect = new ArrayList<>();
 			for (int i = 400; i < 600; i++) {
 				updateExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 				updateExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 			}
+			// 查询被更新的数据
 			queryUpdatedData(cl, updateExpect);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -147,6 +149,25 @@ public class Split10532 extends SdbTestBase {
 			if (destDataNode != null) {
 				destDataNode.disconnect();
 			}
+			if (splitThread != null) {
+				splitThread.join();
+			}
+		}
+	}
+
+	@AfterClass()
+	public void tearDown() {
+		try {
+			CollectionSpace cs = commSdb.getCollectionSpace(csName);
+			cs.dropCollection(clName);
+		} catch (BaseException e) {
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+		} finally {
+			if (commSdb != null) {
+				commSdb.disconnect();
+			}
+			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
+					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 		}
 	}
 
@@ -164,29 +185,13 @@ public class Split10532 extends SdbTestBase {
 			}
 			Assert.assertEquals(dataList.size(), 0, "miss some records:" + dataList);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor1 != null) {
 				cursor1.close();
 			}
 		}
 
-	}
-
-	@AfterClass()
-	public void tearDown() {
-		try {
-			CollectionSpace cs = commSdb.getCollectionSpace(csName);
-			cs.dropCollection(clName);
-		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
-		} finally {
-			if (commSdb != null) {
-				commSdb.disconnect();
-			}
-			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
-					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-		}
 	}
 
 	private void checkGroupData(Sequoiadb db, String groupName, List<BSONObject> expect) {
@@ -204,7 +209,7 @@ public class Split10532 extends SdbTestBase {
 			}
 			Assert.assertEquals(expect.equals(actual), true, "expect:" + expect + "\r\nactual:" + actual);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -227,7 +232,7 @@ public class Split10532 extends SdbTestBase {
 				subCL.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:500}"),
 						(BSONObject) JSON.parse("{sk:1000}"));
 			} catch (BaseException e) {
-				Assert.fail(e.getMessage());
+				throw e;
 			} finally {
 				if (sdb != null) {
 					sdb.disconnect();

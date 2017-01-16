@@ -36,8 +36,8 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 public class Split10539 extends SdbTestBase {
-	private String subCLName = "testcaseSubCL10539";
-	private String mainCLName = "testcaseMainCL10539";
+	private String subCLName = "testcaseSubCL_10539";
+	private String mainCLName = "testcaseMainCL_10539";
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
@@ -74,7 +74,7 @@ public class Split10539 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -95,24 +95,23 @@ public class Split10539 extends SdbTestBase {
 		Sequoiadb db = null;
 		Sequoiadb destDataNode = null;
 		Sequoiadb srcDataNode = null;
-		Split splitThread = new Split();
-		splitThread.start();
+		Split splitThread = null;
 		try {
+			// 启动切分线程
+			splitThread = new Split();
+			splitThread.start();
+
+			// 增删改
 			db = new Sequoiadb(coordUrl, "", "");
 			DBCollection mainCL = db.getCollectionSpace(csName).getCollection(mainCLName);
-
 			mainCL.delete("{sk:{$gte:400,$lt:600}}");// 删除数据
-
 			for (int i = 400; i < 600; i++) { // 增加数据
 				mainCL.insert("{sk:" + i + ",beta:1}");
 			}
 			mainCL.update("{sk:{$gte:400,$lt:600}}", "{$inc:{beta:1}}", null);// 更新数据
 
 			// 等待切分结束
-			if (!splitThread.isSuccess()) {
-				splitThread.getExceptions().get(0).printStackTrace();
-				Assert.fail(splitThread.getErrorMsg());
-			}
+			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 
 			// 构造源组期望数据
 			List<BSONObject> srcExpect = new ArrayList<>();
@@ -142,7 +141,7 @@ public class Split10539 extends SdbTestBase {
 			checkMainCL(mainCL, allInsertedData);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -152,6 +151,9 @@ public class Split10539 extends SdbTestBase {
 			}
 			if (destDataNode != null) {
 				destDataNode.disconnect();
+			}
+			if (splitThread != null) {
+				splitThread.join();
 			}
 		}
 	}
@@ -163,7 +165,7 @@ public class Split10539 extends SdbTestBase {
 			cs.dropCollection(subCLName);
 			cs.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -226,7 +228,7 @@ public class Split10539 extends SdbTestBase {
 			}
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor1 != null) {
 				cursor1.close();
@@ -259,7 +261,7 @@ public class Split10539 extends SdbTestBase {
 			}
 			Assert.assertEquals(expect.equals(actual), true, "expect:" + expect + "\r\nactual:" + actual);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -281,6 +283,7 @@ public class Split10539 extends SdbTestBase {
 				DBCollection subCL = cs.getCollection(subCLName);
 				subCL.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:500}"),
 						(BSONObject) JSON.parse("{sk:1000}"));
+
 			} catch (BaseException e) {
 				throw e;
 			} finally {

@@ -68,7 +68,7 @@ public class Split10528B extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -108,13 +108,14 @@ public class Split10528B extends SdbTestBase {
 			}
 
 			// 删除CL
-			db.getCollectionSpace(csName).dropCollection(clName);
+			cs.dropCollection(clName);
 
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} catch (BaseException e) {
+			System.out.println("in");
 			Assert.assertEquals(e.getErrorCode(), -147,
-					e.getMessage() + " \r\nSplitThread:[" + splitThread.getErrorMsg() + "]  ");
+					e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -135,7 +136,7 @@ public class Split10528B extends SdbTestBase {
 				commSdb.getCollectionSpace(csName).dropCollection(clName);
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();

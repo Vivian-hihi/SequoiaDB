@@ -39,7 +39,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 public class Split10529C extends SdbTestBase {
-	private String clName = "testcaseCL10529C";
+	private String clName = "testcaseCL_10529C";
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
@@ -74,7 +74,7 @@ public class Split10529C extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -124,15 +124,8 @@ public class Split10529C extends SdbTestBase {
 			cl.alterCollection((BSONObject) JSON.parse("{ShrdingType:'hash',Partition:2048}"));
 			Assert.fail("alter cl success");
 		} catch (BaseException e) {
-			StringBuffer stackBuffer = new StringBuffer();
-			StackTraceElement[] stackElements = e.getStackTrace();
-			for (int i = 0; i < stackElements.length; i++) {
-				if (stackElements[i].toString().contains(this.getClass().getName())) {
-					stackBuffer.append(stackElements[i].toString()).append("\r\n");
-				}
-			}
 			Assert.assertEquals(e.getErrorCode(), -6,
-					e.getMessage() + "\r\n" + stackBuffer + "\r\n" + splitThread.getErrorMsg());
+					e.getMessage()+"\r\n"+Utils.getKeyStack(e,this)+"\r\n" + splitThread.getErrorMsg());
 		} finally {
 			if (splitThread != null) {
 				splitThread.join();
@@ -152,7 +145,7 @@ public class Split10529C extends SdbTestBase {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -219,7 +212,7 @@ public class Split10529C extends SdbTestBase {
 				}
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();

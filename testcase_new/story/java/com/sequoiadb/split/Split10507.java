@@ -75,7 +75,7 @@ public class Split10507 extends SdbTestBase {
 			if (tmpSdb != null) {
 				tmpSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -91,7 +91,7 @@ public class Split10507 extends SdbTestBase {
 
 			checkCoordA();// 链接commSdbA查询源组数据目标组数据，并查询切分边界值
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -121,7 +121,7 @@ public class Split10507 extends SdbTestBase {
 					"query bound expected:" + expectedResults + " actual:" + actualResults);// 比对
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -135,7 +135,7 @@ public class Split10507 extends SdbTestBase {
 			CollectionSpace commCS = commSdbA.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdbA != null) {
 				commSdbA.disconnect();

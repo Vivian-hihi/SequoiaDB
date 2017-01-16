@@ -60,16 +60,14 @@ public class Split10533 extends SdbTestBase {
 			destGroupName = groupsName.get(1);
 
 			CollectionSpace customCS = commSdb.getCollectionSpace(csName);
-			DBCollection cl = customCS.createCollection(clName,
-					(BSONObject) JSON
-							.parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
-									+ srcGroupName + "'}"));
+			DBCollection cl = customCS.createCollection(clName, (BSONObject) JSON
+					.parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'" + srcGroupName + "'}"));
 			insertData(cl);// 写入待切分的记录（500）
 		} catch (BaseException e) {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -85,30 +83,33 @@ public class Split10533 extends SdbTestBase {
 		}
 	}
 
-	
-
 	@Test
 	public void truncateCL() {
 		Sequoiadb db = null;
-		Split splitThread = new Split();
-		splitThread.start();
+		Split splitThread = null;
 		try {
+			// 启动切分线程
+			splitThread = new Split();
+			splitThread.start();
+
+			// 执行truncate，检验结果
 			db = new Sequoiadb(coordUrl, "", "");
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 			cl.truncate();
 			Assert.assertEquals(cl.getCount(), 0, "cl not empty :" + cl.getCount());
-			
-			if (!splitThread.isSuccess()) {
-				Assert.fail(splitThread.getErrorMsg());
-			}
+
+			// 等待切分结束，检查编目
+			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 			checkCatalog(db);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
 			}
-			splitThread.join();
+			if (splitThread != null) {
+				splitThread.join();
+			}
 		}
 	}
 
@@ -118,7 +119,7 @@ public class Split10533 extends SdbTestBase {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -170,7 +171,7 @@ public class Split10533 extends SdbTestBase {
 					"srcCheckFalg:" + srcCheckFlag + " destCheckFlag:" + destCheckFlag);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();

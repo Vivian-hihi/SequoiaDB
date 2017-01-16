@@ -64,7 +64,7 @@ public class Split10500 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -87,7 +87,7 @@ public class Split10500 extends SdbTestBase {
 
 			checkCoord();// 协调节点比对已插入的数据，并查询切分边界值
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -102,7 +102,7 @@ public class Split10500 extends SdbTestBase {
 			}
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 
 		return false;
@@ -115,7 +115,7 @@ public class Split10500 extends SdbTestBase {
 			commCL.insert(obj1);
 			commCL.insert(obj2);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 		insertedData.add(obj1);
 		insertedData.add(obj2);
@@ -126,6 +126,7 @@ public class Split10500 extends SdbTestBase {
 	private void checkCoord() {
 		DBCursor cursor1 = null;
 		DBCursor cursor2 = null;
+		DBCursor cursor3 = null;
 		try {
 			// 比对所有数据
 			cursor1 = commCL.query(null, null, "{sk:1}", null);
@@ -140,10 +141,14 @@ public class Split10500 extends SdbTestBase {
 			}
 
 			// find边界sk:30,sk:60
-			cursor2 = commCL.query("{$or:[{sk:30},{sk:60}]}", "{sk:''}", "{sk:1}", null);
+			cursor2 = commCL.query("{sk:30}", "{sk:''}", "{sk:1}", null);
+			cursor3 = commCL.query("{sk:60}", "{sk:''}", "{sk:1}", null);
 			ArrayList<BSONObject> actualResults = new ArrayList<>();// 实际结果集
 			while (cursor2.hasNext()) {
 				actualResults.add(cursor2.getNext());
+			}
+			while (cursor3.hasNext()) {
+				actualResults.add(cursor3.getNext());
 			}
 			ArrayList<BSONObject> expectedResults = new ArrayList<>();// 期望结果集
 			expectedResults.add((BSONObject) JSON.parse("{sk:30}"));
@@ -153,13 +158,16 @@ public class Split10500 extends SdbTestBase {
 					"query bound expected:" + expectedResults + " actual:" + actualResults);// 比对
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor1 != null) {
 				cursor1.close();
 			}
 			if (cursor2 != null) {
 				cursor2.close();
+			}
+			if (cursor3 != null) {
+				cursor3.close();
 			}
 		}
 	}
@@ -173,7 +181,7 @@ public class Split10500 extends SdbTestBase {
 			Assert.assertEquals(count, expectedCount);// 目标组应当含有上述查询数据
 			Assert.assertEquals(destCL.getCount(), expectTotalCount); // 目标组应当含有的数据量
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (destDataNode != null) {
 				destDataNode.disconnect();
@@ -190,7 +198,7 @@ public class Split10500 extends SdbTestBase {
 			Assert.assertEquals(count, expectedCount);// 源组数据应当含有上述查询数据
 			Assert.assertEquals(srcCL.getCount(), expectTotalCount); // 源数据应当仅含有上述查询数据
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (srcDataNode != null) {
 				srcDataNode.disconnect();
@@ -204,7 +212,7 @@ public class Split10500 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();

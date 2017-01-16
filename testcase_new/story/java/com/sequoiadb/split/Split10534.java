@@ -68,7 +68,7 @@ public class Split10534 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -87,12 +87,15 @@ public class Split10534 extends SdbTestBase {
 	@Test
 	public void createIndex() {
 		Sequoiadb db = null;
-		Split splitThread = new Split();
-		splitThread.start();
+		Split splitThread = null;
 		try {
+			// 启动切分线程
+			splitThread = new Split();
+			splitThread.start();
+
+			// 建立62个索引，预期索引集合indexes
 			db = new Sequoiadb(coordUrl, "", "");
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			// 建立62个普通索引
 			for (int i = 0; i < 62; i++) {
 				String indexName = "index" + i;
 				int oder = i % 2 == 0 ? 1 : -1;
@@ -101,7 +104,8 @@ public class Split10534 extends SdbTestBase {
 						+ oder + "},v: 0,unique: false,dropDups: false,enforced: false}");
 				indexes.add(indexObj);
 			}
-			// 索引集合加入默认的id索引和shard索引
+
+			// 预期索引集合indexes加入默认的id索引和shard索引
 			BSONObject idIndex = (BSONObject) JSON
 					.parse("{name: \"$id\",key: {_id: 1},v: 0,unique: true,dropDups: false,enforced: true}");
 			BSONObject shardingKeyIndex = (BSONObject) JSON
@@ -110,10 +114,8 @@ public class Split10534 extends SdbTestBase {
 			indexes.add(shardingKeyIndex);
 
 			// 等待切分结束
-			if (!splitThread.isSuccess()) {
-				Assert.fail(splitThread.getErrorMsg());
-			}
-			
+			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
+
 			// 期望有250条符合{sk:{$gte:0,$lt:250}}的记录，并且源组中只有250条记录
 			checkDestGroup(db, 250, "{sk:{$gte:0,$lt:250}}", 250, srcGroupName);
 			// 期望有250条符合条件的记录，并且目标组中只有250条记录
@@ -126,10 +128,13 @@ public class Split10534 extends SdbTestBase {
 			// 指定索引信息查询数据（在cl中匹配{index1:34}，期望结果{sk:34,index1:34}，且为ixscan）
 			queryByIndexAndCheckExplain(cl, "{index1:34}", "{sk:34,index1:34}", "ixscan");
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
+			}
+			if (splitThread != null) {
+				splitThread.join();
 			}
 		}
 	}
@@ -140,7 +145,7 @@ public class Split10534 extends SdbTestBase {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -234,7 +239,7 @@ public class Split10534 extends SdbTestBase {
 			Assert.assertEquals(destCL.getCount(), expectTotalCount); // 目标组应当含有的数据量
 		} catch (BaseException e) {
 			e.printStackTrace();
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (destDataNode != null) {
 				destDataNode.disconnect();
@@ -251,7 +256,6 @@ public class Split10534 extends SdbTestBase {
 				sdb = new Sequoiadb(coordUrl, "", "");
 				CollectionSpace cs = sdb.getCollectionSpace(csName);
 				DBCollection cl = cs.getCollection(clName);
-		
 				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:250}"), // 切分
 						(BSONObject) JSON.parse("{sk:500}"));
 			} catch (BaseException e) {
