@@ -31,7 +31,15 @@ FileTest.prototype.testFind = function()
    
    for( var i = 0;i < options.length;i++ )
    {
-      var result = this.file.find( options[i] ).toArray() ;  // 查找文件
+      try
+      {
+         var result = this.file.find( options[i] ).toArray() ;  // 查找文件
+      }
+      catch( e )
+      {
+         throw buildException( "testFind", e, JSON.stringify( options[i]) +
+                               " " + this, 0, e ) ;
+      }
       checkFindResult( result, this.cmd, commands[i] ) ;
    }
    
