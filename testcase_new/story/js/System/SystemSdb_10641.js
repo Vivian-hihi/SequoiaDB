@@ -49,10 +49,19 @@ SystemTest.prototype.testGetEWD = function()
    
    var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var WorkDir = this.system.getEWD() ;
-   if( WorkDir != sdbDir[0] + "/bin" && WorkDir != sdbDir[1] + "/bin" )
+   var found = false ;
+   for( var i = 0;i < sdbDir.length;i++ )
+   {
+      if( sdbDir[i] + "/bin" == WorkDir )
+      {
+         found = true ;
+         break ;
+      }
+   }
+   if( found == false )
    {
       throw buildException( "testGetEWD", null, "get EWD " + this, 
-            sdbDir[0] + "/bin " + sdbDir[1] + "/bin", WorkDir ) ;
+            sdbDir, WorkDir ) ;
    }
    
    this.release() ;
