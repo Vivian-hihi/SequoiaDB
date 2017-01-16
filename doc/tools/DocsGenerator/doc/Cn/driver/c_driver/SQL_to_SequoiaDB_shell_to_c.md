@@ -1,0 +1,80 @@
+SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句，SequoiaDB shell 语句和 SequoiaDB C 驱动程序语法之间的对照。
+
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+| SQL                                                             | SequoiaDB shell                                     | C Driver                                                                         |
++=================================================================+=====================================================+==================================================================================+
+| insert into students(a,b) values(1,-1)                          | db.foo.bar.insert({a:1,b:-1})                       |                                                                                  |
+|                                                                 |                                                     | -    const char *r ="{a:1,b:-1}";                                                |
+|                                                                 |                                                     | -    jsonToBson ( &obj, r );                                                     |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    sdbInsert (collection, &obj );                                              |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄                                             |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+| select a,b from students                                        | db.foo.bar.find(null,{a:"",b:""})                   |                                                                                  |
+|                                                                 |                                                     | -    const char *r ="{a:\"\",b:\"\"}";                                           |
+|                                                                 |                                                     | -    jsonToBson ( & select, r );                                                 |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    sdbQuery ( collection, NULL, &select, NULL, NULL, 0, -1, cursor );          |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄                |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| select * from students                                          | db.foo.bar.find()                                   | -    sdbQuery ( collection, NULL, NULL, NULL, NULL, 0, -1, cursor );             |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄                |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| select * from students where age=20                             | db.foo.bar.find({age:20})                           | -    const char *r ="{age:20}";                                                  |
+|                                                                 |                                                     | -    jsonToBson ( &condition, r );                                               |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    sdbQuery ( collection, & condition, NULL, NULL, NULL, 0, -1, cursor );      |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄                |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| select * from students where age=20 order by name               | db.foo.bar.find({age:20}).sort({name:1})            | -    const char *r1 ="{age:20}";                                                 |
+|                                                                 |                                                     | -    const char *r2 ="{name:1}";                                                 |
+|                                                                 |                                                     | -    jsonToBson ( & condition, r1 );                                             |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    jsonToBson ( &orderBy, r2 );                                                |
+|                                                                 |                                                     | -    sdbQuery ( collection, & condition, NULL, & orderBy, NULL, 0, -1, cursor ); |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄                |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| select * from students where age > 20 and age < 30              | db.foo.bar.find({age:{\$gt:20,$lt:30}})             | -    const char *r ="{age:{\$gt:20,$lt:30}}" ;                                   |
+|                                                                 |                                                     | -    jsonToBson ( &condition, r );                                               |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    sdbQuery ( collection, & condition , NULL, NULL, NULL, 0, -1, cursor );     |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄                |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| create index testIndex on students(name)                        | db.foo.bar.createIndex("testIndex",{name:1},false)  | -    const char *r ="{name:1}" ;                                                 |
+|                                                                 |                                                     | -    jsonToBson ( &obj, r );                                                     | 
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    sdbCreateIndex ( collection, &obj, "testIndex", FALSE, FALSE )              |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄                                             |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| select * from students limit 20 skip 10                         | db.foo.bar.find().limit(20).skip(10)                | -    sdbQuery ( collection, NULL, NULL, NULL, NULL, 10, 20, cursor );            |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄                |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| select count(*) from students where age > 20                    | db.foo.bar.find({age:{$gt:20}}).count()             | -    const char *r ="{age:{$gt:20}}" ;                                           |
+|                                                                 |                                                     | -    jsonToBson ( &condition, r );                                               |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    sdbGetCount ( collection, &condition, &count );                             |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄，count 为返回总数                           |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| update students set a=a+2 where b=-1                            | db.foo.bar.update({$set:{a:2}},{b:-1})              | -    const char *r1 ="{$set:{a:2}}" ;                                            |
+|                                                                 |                                                     | -    const char *r2 ="{b:-1}" ;                                                  |
+|                                                                 |                                                     | -    jsonToBson ( &rule, r1 );                                                   |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    jsonToBson ( &condition, r2 );                                              |
+|                                                                 |                                                     | -    sdbUpdate (collection, &rule, &condition, NULL );                           |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄                                             |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+
+|                                                                 |                                                     |                                                                                  |
+| delete from students where a=1                                  | db.foo.bar.remove({a:1})                            | -    const char *r ="{a:1}" ;                                                    |
+|                                                                 |                                                     | -    jsonToBson ( &condition, r );                                               |
+|                                                                 |                                                     |      // jsonToBson 将一个 json 字符串转换为 bson 对象                            |
+|                                                                 |                                                     | -    sdbDelete ( collection, &condition, NULL );                                 |
+|                                                                 |                                                     |      // collection 为集合 bar 的句柄                                             |
++-----------------------------------------------------------------+-----------------------------------------------------+----------------------------------------------------------------------------------+

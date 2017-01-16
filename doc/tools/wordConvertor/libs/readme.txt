@@ -1,1 +1,0 @@
-add jacob-1.18-x64.dll & jacob-1.18-x86.dll 's path to the system path
