@@ -17,9 +17,9 @@ function main()
    var cl = createCL( csName, clName );
    var ranStr = getRandomString();
    prepareData( ranStr );
-   importData( csName, clName );
+   importData( csName, clName, "6651_1.csv" );
    checkDictCreated( csName, clName );
-   importData( csName, clName );
+   importData( csName, clName, "6651_2.csv" );
    checkCompressed( csName, clName );
    checkCLData( cl, ranStr );
    commDropCL( db, csName, clName, true, true, "Fail to drop CL in the end" );
@@ -38,11 +38,24 @@ function createCL( csName, clName )
 
 function prepareData( ranStr )
 {
-   var imprtFile = tmpFileDir +"6651.csv";
+   // records for creating dictionary
+   var imprtFile = tmpFileDir +"6651_1.csv";
    var file = fileInit( imprtFile );
    var headline = "a int, ran string\n";
    file.write( headline );
    for( i = 0; i < 150; i++ )
+   {
+      var rec = i + "," + ranStr + i + "\n";
+      file.write( rec );
+   }
+   var fileInfo = cmd.run( "cat "+ imprtFile );
+   file.close();
+   // records for testing compression
+   var imprtFile = tmpFileDir +"6651_2.csv";
+   var file = fileInit( imprtFile );
+   var headline = "a int, ran string\n";
+   file.write( headline );
+   for( i = 150; i < 160; i++ )
    {
       var rec = i + "," + ranStr + i + "\n";
       file.write( rec );
@@ -63,20 +76,28 @@ function getRandomString()
    return str;
 }
 
-function importData( csName, clName )
+function importData( csName, clName, imprtFile )
 {
    var imprtOption = installDir +'bin/sdbimprt -s '+ COORDHOSTNAME +' -p '+ COORDSVCNAME 
                      +' -c '+ csName +' -l '+ clName 
                      +' --type csv'
                      +' --headerline=true'
-                     +' --file '+ tmpFileDir;
+                     +' --file '+ tmpFileDir + imprtFile;
    println( imprtOption );
    var rc = cmd.run( imprtOption );
    println( rc );
    
    var rcObj = rc.split("\n");
-   var expParseRecords    = "parsed records: 150";
-   var expImportedRecords = "imported records: 150";
+   if( imprtFile === "6651_1.csv" )
+   {
+      var expParseRecords    = "parsed records: 150";
+      var expImportedRecords = "imported records: 150";
+   }
+   else if( imprtFile === "6651_2.csv" )
+   {
+      var expParseRecords    = "parsed records: 10";
+      var expImportedRecords = "imported records: 10";
+   }
    var actParseRecords    = rcObj[0];
    var actImportedRecords = rcObj[4];
    if( expParseRecords !== actParseRecords 
@@ -179,7 +200,7 @@ function checkCLData( cl, ranStr )
       recsArray.push( tmpRecs.toObj() );
    }
    
-   var expCnt  = 300;
+   var expCnt  = 160;
    var actCnt  = recsArray.length;
    if( actCnt !== expCnt )
    {
@@ -188,8 +209,7 @@ function checkCLData( cl, ranStr )
    
    for( i = 0; i < recsArray.length; i++ )
    {
-      var j = parseInt( i / 2 );
-      expRec = { a: j, ran: ranStr + j };
+      expRec = { a: i, ran: ranStr + i };
       if( JSON.stringify( recsArray[i] ) !== JSON.stringify( expRec ) )
       {  // show field 'a' only, because value of field 'ranStr' is too long!
          throw buildException( "checkCLdata", null, "[check " + ( i + 1 ) + "th record]", 
