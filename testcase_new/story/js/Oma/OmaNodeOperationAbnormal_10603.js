@@ -180,20 +180,31 @@ OmaTest.prototype.testCreateCoordWithNoPermit = function( svcname )
    this.testInit() ;
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user == "root" ) return ;
+   // make no permission dir
+   var remote = new Remote( this.hostname, this.svcname ) ;
+   var file = remote.getFile() ;
+   var dirName = "/tmp/noPerDir/" ;
+   file.mkdir( dirName ) ;
+   file.chmod( dirName, 0000 ) ;
+   
    try
    {
-      this.oma.createCoord( svcname, "/root/"+svcname ) ;
+      this.oma.createCoord( svcname, dirName + svcname ) ;
       throw "create coord with no permission should be failed" ;
    }
    catch( e )
    {
       if( e != -3 )
       {
-         println( "create coord " + svcname + " dbpath " + "/root/" + svcname ) ;
+         println( "create coord " + svcname + " dbpath " + dirName + svcname ) ;
          throw buildException( "testCreateCoordWithNoPermit", e, 
                                "create coord with no permit " + this, -3, e ) ;
       }
    }
+   
+   var cmd = remote.getCmd() ;
+   cmd.run( "rm -rf " + dirName ) ;
+   remote.close() ;
    this.oma.close() ;
 }
 

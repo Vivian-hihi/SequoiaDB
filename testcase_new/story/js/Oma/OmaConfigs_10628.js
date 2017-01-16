@@ -19,13 +19,20 @@ OmaTest.prototype.testGetOmaConfigsNormal = function()
    // 测试getOmaConfigFile
    var configFile = this.oma.getOmaConfigFile() ;
    var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var files = [] ;
-   files[0] = sdbDir[0] + "/conf/sdbcm.conf" ;  
-   files[1] = sdbDir[1] + "/conf/sdbcm.conf" ;   
-   if( configFile != files[0] && configFile != files[1] )
+   var found = false ;
+   for( var i = 0;i < sdbDir.length;i++ )
    {
-      throw buildException( "testGetOmaConfigsNormal", null, "get oma config file " + this, 
-                            files, configFile ) ;
+      var file = sdbDir[i] + "/conf/sdbcm.conf" ;
+      if( configFile == file )
+      {
+         found = true ;
+         break ;
+      }
+   }  
+   if( found == false )
+   {
+      throw buildException( "testGetOmaConfigsNormal", null, 
+            "get oma config file " + this, sdbDir, configFile ) ;
    }
    
    // 测试getOmaConfigs
