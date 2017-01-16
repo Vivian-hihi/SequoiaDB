@@ -10,18 +10,18 @@ CmdTest.prototype.testRunNormal = function()
 {
    this.init() ;
    
-   var result = this.cmd.run( "ls", "." ) ;
+   var result = this.cmd.run( "ls", "/tmp" ) ;
    var command = this.cmd.getCommand() ;   // 获取上次执行的命令
-   if( command != "ls ." )
+   if( command != "ls /tmp" )
    {
       throw buildException( "testRun", null, "test getCommand " + this, 
-                            "ls .", command ) ;
+                            "ls /tmp", command ) ;
    }
    var ret = this.cmd.getLastRet() ;       // 获取上次命令是否执行正常
    if( ret != 0 )
    {
       throw buildException( "testRun", null, "test getLastRet " + this, 
-                            "ls .", ret ) ;
+                            "ls /tmp", ret ) ;
    }
    var out = this.cmd.getLastOut() ;       // 获取上次命令执行的返回结果
    if( out != result )
