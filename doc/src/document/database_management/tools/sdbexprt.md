@@ -1,0 +1,131 @@
+sdbexprt 是一个实用的工具。它可以将集合从 SequoiaDB 数据库导出到 JSON 格式或者 CSV 格式的数据存储文件。sdbexprt 支持将一个集合导出到一个文件中，同时也支持将多个集合批量导出到指定目录下。
+
+##选项##
+
+###通用选项###
+
+| 选项        | 缩写 | 说明 |
+| ----------- | ---- | ---- |
+| --help      | -h   | 显示帮助信息 |
+| --version   |      | 显示版本信息 |
+| --hostname  | -s   | 主机名，默认为 localhost |
+| --svcname   | -p   | 端口号，默认为 11810 |
+| --user      | -u   | 数据库用户名 |
+| --delrecord | -r   | 记录分隔符。默认是'\\n' |
+| --type      |      | 导出数据格式，为 csv 或 json，默认为 csv |
+| --filelimit |      | 指定单个导出文件的大小上限，单位可以为 k、K、M、m、G、g、T 或 t，默认值为 16G。<br>当导出文件将超过限制时，会切分为多个文件，具有编号后缀，如 file.csv，file.csv.1，file.csv.2 |
+| --fields    |      | 导出集合的字段。该选项可以指定多次以指定多个导出集合的字段。<br>格式为 ```[csName.clName:][field1[,...]]``` ，当确定只导出一个集合时，可以仅指定字段列表 ```[field1[,...]]``` |
+| --withid    |      | 强制导出或者在配置文件中生成字段时，是否包含 _id 字段，默认为false |
+| --errorstop |      | 导出数据时遇到错误就停止，默认 false |
+| --ssl       |      | 使用 SSL 连接，默认 false |
+
+###单集合选项###
+
+| 选项     | 缩写 | 说明 |
+| -------- | ---- | ---- |
+| --csname | -c   | 导出数据的集合空间名 |
+| --clname | -l   | 导出数据的集合名 |
+| --file   |      | 导出的文件名 |
+| --select |      | 选择规则，例如：```--select '{ age:"", address:{$trim:1} }'```<br>不能和选项 --fields 同时使用 |
+| --filter |      | 导出过滤条件，例如：--filter '{ age: 18 }' |
+| --sort   |      | 导出数据排序条件，例如：```--sort '{ name: 1 }'``` |
+
+###多集合选项###
+
+| 选项          | 缩写 | 说明 |
+| ------------- | ---- | ---- |
+| --cscl        |      | 导出的若干个导出集合或集合空间，多个名称使用逗号分隔，如 ```--cscl cs1,cs2.cla``` |
+| --excludecscl |      | 不包含的集合或集合空间，类似 --cscl |
+| --dir         |      | 导出的目录。导出的每一个集合对应目录中的同名文件，如 foo.bar.csv |
+
+###CSV 选项###
+
+| 选项            | 缩写 | 说明 |
+| --------------- | ---- | ---- |
+| --delchar       | -a   | 字符分隔符，默认值为双引号'"' |
+| --delfield      | -e   | 字段分隔符，默认值为逗号',' |
+| --included      |      | 是否导出字段名到文件首行 |
+| --includebinary |      | 是否导出完整二进制数据，默认值为 false |
+| --includeregex  |      | 是否导出完整的正则表达式，默认值为 false |
+| --force         |      | 对于导出 csv 格式，每个集合必须指定对应的字段，否则不允许导出；--force 选项可以强制导出，未指定字段的集合默认为第一行记录中除了 _id 以外的字段 |
+| --kicknull      |      | 是否踢掉null值，true输出空字符，false输出null，默认为false | 
+
+###配置文件选项###
+
+| 选项        | 缩写 | 说明 |
+| ----------- | ---- | ---- |
+| --genconf   |      | 指定一个配置文件名，将当前命令行中所指定的选项和值按照“键=值”的方式写入到配置文件，不执行导出工作 |
+| --genfields |      | 生成配置文件时，是否对每一个集合生成对应的 --fields 选项，默认值为 true |
+| --conf      |      | 指定一个配置文件作为输入，如果命令中和配置文件中存在相同的选项，优先选择命令行中的值 |
+
+>   **Note:**
+>
+>   *   导出工具支持单集合导出和多集合批量导出，**单集合选项**只能用于导出一个集合，但具有更灵活的导出条件选项，如过滤、排序。
+>   *   导出多集合到 csv 格式时，必须使用 --fields 选项对每一个集合指定字段，工具提供的 --genconf 选项将每一个集合的第一行记录的字段导出到配置文件中的 --fields 选项，可以比较方便地编辑每一个集合的字段。
+>   *   --genconf 选项将当前命令行的选项写入到配置文件中，下次使用 --conf 选项指定配置文件执行即可，这提供一种多次执行相似命令的便捷方式，另外这种方式主要用于在多集合导出 csv 情况下，对每一个集合生成对应的 --fields 选项。
+>   *   导出单集合时，--select 具有和 --fields 选项一样的作用，但 --select 选项更加灵活。
+>   *   当不指定导出任何集合或者集合空间，即 -c、-l、--cscl 都不指定，则导出数据库中所有的集合。
+>   *   当使用配置文件的选项和命令行选项一样时，优先选择命令行值；而对于 --fields 选项，可以多次指定，则合并配置文件和命令行的值。
+
+##返回值##
+
+*   0：成功
+*   1：成功但有警告
+*   2：失败
+*   127：参数错误
+
+##示例##
+
+1.  导出集合“foo.bar”，导出格式为 csv，导出文件为“foo.bar.csv”，指定字段“field1”、“fieldNotExist”、“field3”，其中字段“fieldNotExist”在集合中不存在
+
+    ```lang-javascript
+    $ sdbexprt -s localhost -p 11810 --type csv --file foo.bar.csv --fields field1,fieldNotExist,field3 -c foo -l bar
+    ```
+
+    导出的foo.bar.csv的内容可能如下：
+
+    ```
+    field1, fieldNotExist, field3
+    "Jack",,"China"
+    "Mike",,"USA"
+    ```
+
+2.  导出数据库中所有的集合，排除集合空间“cs1”和集合“cs2.cla”以外，导出文件到目录“exportpath”下
+
+    ```lang-javascript
+    $ sdbexprt --type json --dir exportpath --excludecscl cs1,cs2.cla
+    ```
+
+3.  导出一个集合空间中所有的集合和另外一个集合，排除一个集合，导出 csv 格式，由于必须指定每一个集合的 --fields，使用 --force 选项强制导出
+
+    ```lang-javascript
+    $ sdbexprt --dir exportpath --cscl cs1.cla,cs2 --excludecscl cs2.cla --force true
+    ```
+
+4.  同上例，生成配置文件模板，其中配置文件中包含每一个所对应的 --fields 选项；根据需求修改配置文件之后，再执行导出
+
+    生成配置文件：
+
+    ```lang-javascript
+    $ sdbexprt --dir exportpath --cscl cs1.cla,cs2 --excludecscl cs2.cla --genconf export.conf
+    ```
+
+    配置文件文件内容可能如下：
+
+    ```
+    hostname = localhost
+    ...
+    dir = exportpath/
+    cscl = cs1.cla,cs2
+    excludecscl = cs2.cla
+    fields = cs1.cla: a1, a2, a3
+    fields = cs2.clb: b1, b2, b3
+    fields = cs2.clc: c1, c2
+    fields = cs2.cld: d1, d2, d3, d4
+    ```
+
+    执行导出：
+
+    ```lang-javascript
+    $ sdbexprt --conf export.conf
+    ```
