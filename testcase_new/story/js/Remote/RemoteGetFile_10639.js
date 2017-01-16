@@ -12,9 +12,15 @@ RemoteTest.prototype.testGetNoPermitFile = function()
    this.testInit() ;
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
    if( user == "root" ) return ;
+   // make no permission dir
+   var file = this.remote.getFile() ;
+   var dirName = "/tmp/noPerDir/" ;
+   file.mkdir( dirName ) ;
+   file.chmod( dirName, 0000 ) ;
+   
    try
    {
-      this.remote.getFile( "/root/notexist" ) ;
+      this.remote.getFile( dirName + "/test" ) ;
       throw "get no permission file should be failed" ;
    }
    catch( e )
@@ -22,10 +28,12 @@ RemoteTest.prototype.testGetNoPermitFile = function()
       if( e != -3 )
       {
          throw buildException( "testGetNoPermitFile", e, 
-                               "get no permit file " + this, -3, e ) ;
+               "get no permit file " + dirName + "/test " + this, -3, e ) ;
       }
    }
    
+   var cmd = this.remote.getCmd() ;
+   cmd.run( "rm -rf " + dirName ) ;
    this.remote.close() ;   
 }
 
