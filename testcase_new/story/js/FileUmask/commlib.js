@@ -43,7 +43,10 @@ FileTest.prototype.init = function()
 
 FileTest.prototype.release = function()
 {
-   this.cmd.run( "rm -rf " + this.filename ) ;    // 删除文件
+   if( this.filename != undefined )
+   {
+      this.cmd.run( "rm -rf " + this.filename ) ;    // 删除文件
+   }
    if( this.remote != undefined )
    {
       this.remote.close() ;    // 断开连接
