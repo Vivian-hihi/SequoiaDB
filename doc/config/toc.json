@@ -66,29 +66,9 @@
                   },
                   {
                      "id": 1447122217,
-                     "dir": "visualization_data_operation",
+                     "file": "visualization_data_operation",
                      "cn": "可视化数据操作",
-                     "en": "Visualization Data Operation",
-                     "contents": [
-                        {
-                           "id": 1447137269,
-                           "file": "instruction",
-                           "cn": "操作说明",
-                           "en": "Instruction"
-                        },
-                        {
-                           "id": 1447137279,
-                           "file": "database_operation",
-                           "cn": "数据库操作",
-                           "en": "Database Operation"
-                        },
-                        {
-                           "id": 1447137286,
-                           "file": "data_operation",
-                           "cn": "数据操作",
-                           "en": "Data Operation"
-                        }
-                     ]
+                     "en": "Visualization Data Operation"
                   }
                ]
             },
