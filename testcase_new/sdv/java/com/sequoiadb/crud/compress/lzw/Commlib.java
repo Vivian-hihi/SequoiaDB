@@ -57,7 +57,7 @@ public class Commlib extends SdbTestBase {
     
     public static void waitCreateDict(DBCollection cl, String dataGroupName){
         int passSecond = 0;
-        int waitSecond = 120;
+        int waitSecond = 300;
         for(passSecond = 0; passSecond < waitSecond; passSecond++){
             try {
                 Thread.sleep(1000);
