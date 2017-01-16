@@ -19,7 +19,6 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.MySdbTools;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -56,7 +55,7 @@ public class Split508 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.createCollection(clName,
 					(BSONObject) JSON.parse("{ShardingKey:{\"a\":1,\"b\":-1},ShardingType:\"range\"}"));
-			ArrayList<String> tmp = MySdbTools.getGroupName(commSdb, csName, clName);
+			ArrayList<String> tmp = Utils.getGroupName(commSdb, csName, clName);
 			srcGroupName = tmp.get(0);
 			destGroupName = tmp.get(1);
 			prepareData(commSdb);// 写入待切分的记录（1000）
@@ -64,7 +63,7 @@ public class Split508 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail("Split508 setUp error, error description:" + e.getMessage());
+			Assert.fail("Split508 setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -87,7 +86,7 @@ public class Split508 extends SdbTestBase {
 			// 检查目标组切分后数据的正确性
 			checkResult(sdb, aLowBound, aUpBound);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();
@@ -101,7 +100,7 @@ public class Split508 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -136,7 +135,7 @@ public class Split508 extends SdbTestBase {
 			Assert.assertEquals(destDataCount1, 0);// 目标组不含切分范围外的数据
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();
@@ -151,7 +150,7 @@ public class Split508 extends SdbTestBase {
 			for (int i = 0; i < 1000; i++) {
 				arr.add((BSONObject) JSON.parse("{a:" + i + ",b:" + i + "}"));
 			}
-			cl.bulkInsert(arr, MySdbTools.FLG_INSERT_CONTONDUP);
+			cl.bulkInsert(arr, Utils.FLG_INSERT_CONTONDUP);
 		} catch (BaseException e) {
 			throw e;
 		}

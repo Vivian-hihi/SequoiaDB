@@ -17,7 +17,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.MySdbTools;
+
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -56,7 +56,7 @@ public class Split537 extends SdbTestBase {
 			if (sdb != null) {
 				sdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -64,10 +64,10 @@ public class Split537 extends SdbTestBase {
 	@Test(enabled = true)
 	public void test() {
 		try {
-			ArrayList<String> groups = MySdbTools.getGroupName(sdb, csName, clName);
+			ArrayList<String> groups = Utils.getGroupName(sdb, csName, clName);
 			currentCL.split(groups.get(0), groups.get(1), 50);
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -296, e.getMessage());
+			Assert.assertEquals(e.getErrorCode(), -296, e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 			return;
 		}
 		Assert.fail("collection(ShardingType:range) is empty,split success");
@@ -78,7 +78,7 @@ public class Split537 extends SdbTestBase {
 		try {
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail("messqge:" + e.getMessage() + " stacktrace" + e.getStackTrace());
+			Assert.fail("messqge:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

@@ -18,7 +18,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.MySdbTools;
+
 import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
@@ -57,7 +57,7 @@ public class Split8583a extends SdbTestBase {
 
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.createCollection(clName, (BSONObject) JSON.parse("{ShardingKey:{\"a\":1},ShardingType:\"range\"}"));
-			ArrayList<String> tmp = MySdbTools.getGroupName(commSdb, csName, clName);// 获取目标组名和源组名
+			ArrayList<String> tmp = Utils.getGroupName(commSdb, csName, clName);// 获取目标组名和源组名
 			srcGroupName = tmp.get(0);
 			destGroupName = tmp.get(1);
 			prepareData(commSdb); // 准备数据
@@ -65,7 +65,7 @@ public class Split8583a extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail("TestCase8583a setUp error, error description:" + e.getMessage());
+			Assert.fail("TestCase8583a setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -76,7 +76,7 @@ public class Split8583a extends SdbTestBase {
 			for (int i = 0; i < 1000; i++) {
 				arr.add((BSONObject) JSON.parse("{a:" + i + "}"));
 			}
-			cl.bulkInsert(arr, MySdbTools.FLG_INSERT_CONTONDUP);
+			cl.bulkInsert(arr, Utils.FLG_INSERT_CONTONDUP);
 		} catch (BaseException e) {
 			throw e;
 		}
@@ -115,7 +115,7 @@ public class Split8583a extends SdbTestBase {
 			}
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();
@@ -136,7 +136,7 @@ public class Split8583a extends SdbTestBase {
 				Assert.fail("cl should not exist");
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
