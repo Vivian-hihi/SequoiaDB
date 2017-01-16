@@ -17,7 +17,6 @@
  | PageSize | 数据页大小，默认为65536B。 | PageSize: \<int32\> |
  | Domain | 所属域。 | Domain: \<string\> |
  | LobPageSize | Lob数据页大小，默认262144B。 | LobPageSize: \<int32\> |
- | IndexEngineType（社区版） | 索引存储引擎类型，默认mmap。 | IndexEngineType: \<string\> |
 
 > **Note:**
 >
@@ -28,7 +27,6 @@
 > * 所属域必须已经存在，且不能为系统域SYSDOMAIN。
 > * 为兼容较早版本接口，db.createCS( \<name\>, [PageSize] ) 同样可以工作。
 > * LobPageSize只能选填0，4096，8192，16384，32768，65536，131072，262144，524288之一，0即为默认值262144。
-> * IndexEngineType可选填mmap，rocksdb。
 
 ##返回值##
 
