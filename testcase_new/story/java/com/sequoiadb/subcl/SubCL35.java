@@ -20,7 +20,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.MySdbTools;
+
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -55,7 +55,7 @@ public class SubCL35 extends SdbTestBase {
 			subCL = commCS.createCollection(subCLName,
 					(BSONObject) JSON.parse("{ShardingKey:{\"tx_id\":1},ShardingType:\"hash\"}"));
 		} catch (BaseException e) {
-			Assert.fail("TestCase35 setUp error, error description:" + e.getMessage());
+			Assert.fail("TestCase35 setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 
 	}
@@ -74,14 +74,14 @@ public class SubCL35 extends SdbTestBase {
 			mainCL.insert(bobj);
 
 			// 比对结果
-			if (!MySdbTools.isCollectionContainThisJSON(subCL, bobj.toString())) {
+			if (!Utils.isCollectionContainThisJSON(subCL, bobj.toString())) {
 				Assert.fail("check resault not pass");
 			}
-			if (!MySdbTools.isCollectionContainThisJSON(mainCL, bobj.toString())) {
+			if (!Utils.isCollectionContainThisJSON(mainCL, bobj.toString())) {
 				Assert.fail("check resault not pass");
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();
@@ -95,7 +95,7 @@ public class SubCL35 extends SdbTestBase {
 			commCS.dropCollection(subCLName);
 			commCS.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();

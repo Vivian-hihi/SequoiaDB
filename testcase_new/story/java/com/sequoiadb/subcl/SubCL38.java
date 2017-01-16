@@ -18,7 +18,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
-import com.sequoiadb.testcommon.MySdbTools;
+
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -57,7 +57,7 @@ public class SubCL38 extends SdbTestBase {
 			subCL_2 = commCS.createCollection(subCLName_2,
 					(BSONObject) JSON.parse("{ShardingKey:{\"tx_id\":1},ShardingType:\"hash\"}"));
 		} catch (BaseException e) {
-			Assert.fail("TestCase38 setUp error, error description:" + e.getMessage());
+			Assert.fail("TestCase38 setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 
 	}
@@ -71,7 +71,7 @@ public class SubCL38 extends SdbTestBase {
 			this.mainCL.attachCollection(this.subCL_2.getFullName(),
 					(BSONObject) JSON.parse("{LowBound:{\"alph\":110},UpBound:{\"alph\":210}}"));
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 		BSONObject bobj = new BasicBSONObject();
 		bobj.put("alph", 80);
@@ -84,17 +84,17 @@ public class SubCL38 extends SdbTestBase {
 		try {
 			mainCL.insert(bobj);
 			mainCL.insert(bobj1);
-			if (!MySdbTools.isCollectionContainThisJSON(mainCL, bobj.toString())) {
+			if (!Utils.isCollectionContainThisJSON(mainCL, bobj.toString())) {
 				Assert.fail("check resault not pass");
 			}
-			if (!MySdbTools.isCollectionContainThisJSON(subCL_1, bobj.toString())) {
+			if (!Utils.isCollectionContainThisJSON(subCL_1, bobj.toString())) {
 				Assert.fail("check resault not pass");
 			}
-			if (!MySdbTools.isCollectionContainThisJSON(subCL_2, bobj1.toString())) {
+			if (!Utils.isCollectionContainThisJSON(subCL_2, bobj1.toString())) {
 				Assert.fail("check resault not pass");
 			}
 		} catch (Exception e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -107,7 +107,7 @@ public class SubCL38 extends SdbTestBase {
 			commCS.dropCollection(subCLName_2);
 			commCS.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (sdb != null) {
 				sdb.disconnect();
