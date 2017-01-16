@@ -43,8 +43,14 @@ function testOmaStart()
       throw buildException( "testOmaStart", null, 
                             "check cm after start a standalone cm", 3, num ) ;
    }
-   sleep( 5*1000 ) ;
-   num =  oma.listNodes( { type: "cm", showalone: true } ).toArray().length ;
+   var start = new Date().getTime() ;
+   while( num != 2 )
+   {
+      num = oma.listNodes( { type: "cm", showalone: true } ).toArray().length ;
+      var end = new Date().getTime() ;
+      if( end - start > 5*1000 )
+         break ;
+   }
    if( num != 2 )
    {
       throw buildException( "testOmaStart", null, 
