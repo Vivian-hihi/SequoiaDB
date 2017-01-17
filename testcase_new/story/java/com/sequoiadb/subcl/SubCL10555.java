@@ -66,7 +66,7 @@ public class SubCL10555 extends SdbTestBase {
 	// 通过主表进行切分操作，覆盖：同步切分，异步切分，检查结果
 	@Test(enabled = true)
 	public void test() {
-		ArrayList<String> resaults = new ArrayList<>(); // 定义失败结果集
+		ArrayList<String> resaults = new ArrayList<String>(); // 定义失败结果集
 		try {
 			mainCL.split(groupName1, groupName2, 50);
 			resaults.add("mainCL split success"); // 主表同步切分成功

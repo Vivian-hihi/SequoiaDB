@@ -70,7 +70,7 @@ public class SubCL10556 extends SdbTestBase {
 	// 通过主表对lob进行新增、删除、查询，检查操作结果
 	@Test(enabled = true)
 	public void test() {
-		ArrayList<String> resaults = new ArrayList<>(); // 定义失败结果集
+		ArrayList<String> resaults = new ArrayList<String>(); // 定义失败结果集
 		try {
 			DBLob lob = mainCL.createLob();
 			lob.close();

@@ -187,7 +187,7 @@ public class SubCL10552 extends SdbTestBase {
 		try {
 			// 查询，检查结果的正确性
 			dbc1 = mainCL.query(macher, null, null, null);
-			ArrayList<BSONObject> queryReaults = new ArrayList<>();
+			ArrayList<BSONObject> queryReaults = new ArrayList<BSONObject>();
 			while (dbc1.hasNext()) {
 				queryReaults.add(dbc1.getNext());
 			}
@@ -229,7 +229,7 @@ public class SubCL10552 extends SdbTestBase {
 				.parse("{name: \"shardingKeyIndex\",key: {sk: 1},v: 0,unique: false,dropDups: false,enforced: false}");
 		BSONObject commIndex = (BSONObject) JSON
 				.parse("{name: \"commIndex\",key: {num: 1},v: 0,unique: false,dropDups: false,enforced: false}");
-		ArrayList<BSONObject> expect = new ArrayList<>();
+		ArrayList<BSONObject> expect = new ArrayList<BSONObject>();
 		expect.add(idIndex);
 		expect.add(shardingKeyIndex);
 		expect.add(commIndex);
