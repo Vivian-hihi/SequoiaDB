@@ -115,7 +115,7 @@ public class Split10539 extends SdbTestBase {
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 
 			// 构造源组期望数据
-			List<BSONObject> srcExpect = new ArrayList<>();
+			List<BSONObject> srcExpect = new ArrayList<BSONObject>();
 			for (int i = 0; i < 400; i++) {
 				srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:" + i + "}"));
 			}
@@ -126,7 +126,7 @@ public class Split10539 extends SdbTestBase {
 			checkGroupData(db, srcGroupName, srcExpect);
 
 			// 构造目标组期望数据
-			List<BSONObject> destExpect = new ArrayList<>();
+			List<BSONObject> destExpect = new ArrayList<BSONObject>();
 			for (int i = 500; i < 600; i++) {
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",beta:2}"));
 			}
@@ -137,7 +137,7 @@ public class Split10539 extends SdbTestBase {
 			checkGroupData(db, destGroupName, destExpect);
 
 			// 检验主表，查询边界
-			List<BSONObject> allInsertedData = new ArrayList<>(srcExpect);
+			List<BSONObject> allInsertedData = new ArrayList<BSONObject>(srcExpect);
 			allInsertedData.addAll(destExpect);
 			checkMainCL(allInsertedData);
 
@@ -248,7 +248,7 @@ public class Split10539 extends SdbTestBase {
 		try {
 			dataNode = db.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
 			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(subCLName);
-			List<BSONObject> actual = new ArrayList<>();
+			List<BSONObject> actual = new ArrayList<BSONObject>();
 			cursor = cl.query(null, null, "{sk:1}", null);
 			while (cursor.hasNext()) {
 				BSONObject obj = cursor.getNext();

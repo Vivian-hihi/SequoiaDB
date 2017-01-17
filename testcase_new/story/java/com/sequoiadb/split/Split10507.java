@@ -37,7 +37,7 @@ public class Split10507 extends SdbTestBase {
 	private String destGroupName;
 	private Sequoiadb commSdbA = null;
 	private Sequoiadb commSdbB = null;
-	private ArrayList<BSONObject> insertedData = new ArrayList<>();// 记录所有已插入的数据
+	private ArrayList<BSONObject> insertedData = new ArrayList<BSONObject>();// 记录所有已插入的数据
 
 	@BeforeClass
 	public void setUp() {
@@ -110,11 +110,11 @@ public class Split10507 extends SdbTestBase {
 
 			// find边界sk:30,sk:60
 			cursor = commCL.query("{$or:[{sk:30},{sk:60}]}", "{sk:''}", "{sk:1}", null);
-			ArrayList<BSONObject> actualResults = new ArrayList<>();// 实际结果集
+			ArrayList<BSONObject> actualResults = new ArrayList<BSONObject>();// 实际结果集
 			while (cursor.hasNext()) {
 				actualResults.add(cursor.getNext());
 			}
-			ArrayList<BSONObject> expectedResults = new ArrayList<>();// 期望结果集
+			ArrayList<BSONObject> expectedResults = new ArrayList<BSONObject>();// 期望结果集
 			expectedResults.add((BSONObject) JSON.parse("{sk:30}"));
 			expectedResults.add((BSONObject) JSON.parse("{sk:60}"));
 			Assert.assertEquals(expectedResults.equals(actualResults), true,

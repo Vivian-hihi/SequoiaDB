@@ -105,7 +105,7 @@ public class Split10532 extends SdbTestBase {
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 
 			// 构造源组期望数据
-			List<BSONObject> srcExpect = new ArrayList<>();
+			List<BSONObject> srcExpect = new ArrayList<BSONObject>();
 			for (int i = 0; i < 400; i++) {
 				srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:1}"));
 			}
@@ -117,7 +117,7 @@ public class Split10532 extends SdbTestBase {
 			checkGroupData(db, srcGroupName, srcExpect);
 
 			// 构造目标组期望数据
-			List<BSONObject> destExpect = new ArrayList<>();
+			List<BSONObject> destExpect = new ArrayList<BSONObject>();
 			for (int i = 500; i < 600; i++) {
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 				destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
@@ -129,7 +129,7 @@ public class Split10532 extends SdbTestBase {
 			checkGroupData(db, destGroupName, destExpect);
 
 			// 构造更新后的期望数据
-			List<BSONObject> updateExpect = new ArrayList<>();
+			List<BSONObject> updateExpect = new ArrayList<BSONObject>();
 			for (int i = 400; i < 600; i++) {
 				updateExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 				updateExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
@@ -200,7 +200,7 @@ public class Split10532 extends SdbTestBase {
 		try {
 			dataNode = db.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
 			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
-			List<BSONObject> actual = new ArrayList<>();
+			List<BSONObject> actual = new ArrayList<BSONObject>();
 			cursor = cl.query(null, null, "{sk:1}", null);
 			while (cursor.hasNext()) {
 				BSONObject obj = cursor.getNext();

@@ -36,7 +36,7 @@ public class Split10536 extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	private List<BSONObject> insertedData = new ArrayList<>();
+	private List<BSONObject> insertedData = new ArrayList<BSONObject>();
 
 	@BeforeClass(enabled=false)
 	public void setUp() {
@@ -75,7 +75,7 @@ public class Split10536 extends SdbTestBase {
 		try {
 			DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
 
-			List<BSONObject> tmp = new ArrayList<>();
+			List<BSONObject> tmp = new ArrayList<BSONObject>();
 			for (int i = 0; i < 500; i++) {
 				BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
 				// cl.insert(obj);
@@ -146,7 +146,7 @@ public class Split10536 extends SdbTestBase {
 		DBCursor dbc = null;
 		BSONObject shardingKeyIndex = (BSONObject) JSON
 				.parse("{name: \"$shard\",key: {sk: 1},v: 0,unique: false,dropDups: false,enforced: false}");
-		ArrayList<BSONObject> expect = new ArrayList<>();
+		ArrayList<BSONObject> expect = new ArrayList<BSONObject>();
 		expect.add(shardingKeyIndex);
 		try {
 			dbc = cl.getIndexes();

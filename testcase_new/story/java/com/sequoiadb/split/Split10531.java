@@ -40,9 +40,9 @@ public class Split10531 extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	List<BSONObject> insertedData = new ArrayList<>();// 所有已插入的数据
-	List<ObjectId> insertedLob = new ArrayList<>(); // 所有已插入的lobid
-	List<ObjectId> deletedLob = new ArrayList<>(); // 切分过程中被删除的Lobid
+	List<BSONObject> insertedData = new ArrayList<BSONObject>();// 所有已插入的数据
+	List<ObjectId> insertedLob = new ArrayList<ObjectId>(); // 所有已插入的lobid
+	List<ObjectId> deletedLob = new ArrayList<ObjectId>(); // 切分过程中被删除的Lobid
 
 	@BeforeClass()
 	public void setUp() {

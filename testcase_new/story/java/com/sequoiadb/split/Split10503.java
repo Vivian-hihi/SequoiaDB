@@ -37,7 +37,7 @@ public class Split10503 extends SdbTestBase {
 	private Sequoiadb commSdb = null;
 	private DBCollection subCL;
 	private DBCollection mainCL;
-	private ArrayList<BSONObject> insertedData = new ArrayList<>();// 记录所有已插入的普通数据
+	private ArrayList<BSONObject> insertedData = new ArrayList<BSONObject>();// 记录所有已插入的普通数据
 
 	@BeforeClass
 	public void setUp() {
@@ -80,7 +80,7 @@ public class Split10503 extends SdbTestBase {
 					(BSONObject) JSON.parse("{Partition:4096}"));
 
 			// 校验源和目标组普通记录
-			ArrayList<BSONObject> insertedDataCopy = new ArrayList<>(insertedData);
+			ArrayList<BSONObject> insertedDataCopy = new ArrayList<BSONObject>(insertedData);
 			checkGroupData(insertedDataCopy, destGroupName);// 目标组中的数据应当是insertDataCopy的子集，校验完成后，删除insertDataCopy中属于子集的元素
 			checkGroupData(insertedDataCopy, srcGroupName);// 校验源组
 			Assert.assertEquals(insertedDataCopy.size() == 0, true, // 经过两次校验，insertDataCopy应当为空

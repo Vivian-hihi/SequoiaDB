@@ -40,8 +40,8 @@ public class Split10530 extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	List<BSONObject> insertedData = new ArrayList<>();// 所有已插入的数据
-	List<ObjectId> insertedLob = new ArrayList<>(); // 所有已插入的lobid
+	List<BSONObject> insertedData = new ArrayList<BSONObject>();// 所有已插入的数据
+	List<ObjectId> insertedLob = new ArrayList<ObjectId>(); // 所有已插入的lobid
 
 	@BeforeClass()
 	public void setUp() {
@@ -106,7 +106,7 @@ public class Split10530 extends SdbTestBase {
 			}
 			
 			// 校验源和目标组普通记录
-			ArrayList<BSONObject> insertedDataCopy = new ArrayList<>(insertedData);
+			ArrayList<BSONObject> insertedDataCopy = new ArrayList<BSONObject>(insertedData);
 			// 目标组中的数据应当是insertDataCopy的子集，校验完成后，将删除insertDataCopy中属于子集的元素
 			checkGroupData(insertedDataCopy, db, destGroupName);
 			// 源中的数据应当是insertDataCopy的子集，校验完成后，将删除insertDataCopy中属于子集的元素
@@ -116,7 +116,7 @@ public class Split10530 extends SdbTestBase {
 					"srcGroup and destGroup can not find:" + insertedDataCopy);
 
 			// 校验源和目标组LOB记录
-			ArrayList<ObjectId> insertedLobCopy = new ArrayList<>(insertedLob);
+			ArrayList<ObjectId> insertedLobCopy = new ArrayList<ObjectId>(insertedLob);
 			checkGroupLob(insertedLobCopy, db, destGroupName);
 			checkGroupLob(insertedLobCopy, db, srcGroupName);
 			Assert.assertEquals(insertedLobCopy.size() == 0, true,

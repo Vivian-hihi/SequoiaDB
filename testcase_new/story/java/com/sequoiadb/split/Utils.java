@@ -137,7 +137,7 @@ public class Utils {
 
 	public static ArrayList<String> getGroupName(Sequoiadb sdb, String csName, String clName) throws BaseException {
 		DBCursor dbc = null;
-		ArrayList<String> resault = new ArrayList<>();
+		ArrayList<String> resault = new ArrayList<String>();
 		try {
 			CommLib commlib = new CommLib();
 			ArrayList<String> groups = commlib.getDataGroupNames(sdb);

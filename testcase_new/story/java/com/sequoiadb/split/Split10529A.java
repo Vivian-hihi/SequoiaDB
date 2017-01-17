@@ -41,7 +41,7 @@ public class Split10529A extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	private List<BSONObject> insertedData = new ArrayList<>();
+	private List<BSONObject> insertedData = new ArrayList<BSONObject>();
 
 	@BeforeClass()
 	public void setUp() {

@@ -41,7 +41,7 @@ public class Split10504B extends SdbTestBase {
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
 	private DBCollection commCL;
-	private ArrayList<String> insertedLobId = new ArrayList<>();// 记录所有已插入的LOBID字串
+	private ArrayList<String> insertedLobId = new ArrayList<String>();// 记录所有已插入的LOBID字串
 
 	@BeforeClass
 	public void setUp() {
@@ -80,7 +80,7 @@ public class Split10504B extends SdbTestBase {
 			commCL.split(srcGroupName, destGroupName, 50);
 
 			// 校验源和目标组LOB记录
-			ArrayList<String> insertedLobCopy = new ArrayList<>(insertedLobId);
+			ArrayList<String> insertedLobCopy = new ArrayList<String>(insertedLobId);
 			checkGroupLob(insertedLobCopy, destGroupName);// 校验目标组
 			checkGroupLob(insertedLobCopy, srcGroupName);// 校验源组
 			Assert.assertEquals(insertedLobCopy.size() == 0, true, // 经过两次校验，insertedLobDataCopy应当为空

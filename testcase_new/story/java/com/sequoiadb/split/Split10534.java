@@ -26,8 +26,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @FileName:SEQDB-10534 切分过程中创建索引 1、向cl中插入数据记录 2、执行split，设置切分条件
  *                       3、切分过程中创建索引，分别验证如下几个场景： a、迁移数据过程中 b、清除数据过程中 创建索引覆盖如下条件：
  *                       a、索引最大数（64个索引） b、索引包含正序、逆序 4、查看切分和创建索引结果
- *                       5、带索引查询切分数据（覆盖查询切分范围边界值数据）
- *                       此用例尚未加入测试，问题单：2232
+ *                       5、带索引查询切分数据（覆盖查询切分范围边界值数据） 此用例尚未加入测试，问题单：2232
  * @author huangqiaohui
  * @version 1.00
  *
@@ -38,10 +37,10 @@ public class Split10534 extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	private List<BSONObject> insertedData = new ArrayList<>();
-	private List<BSONObject> indexes = new ArrayList<>();
+	private List<BSONObject> insertedData = new ArrayList<BSONObject>();
+	private List<BSONObject> indexes = new ArrayList<BSONObject>();
 
-	@BeforeClass(enabled=false)
+	@BeforeClass(enabled = false)
 	public void setUp() {
 
 		try {
@@ -69,7 +68,8 @@ public class Split10534 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -85,7 +85,7 @@ public class Split10534 extends SdbTestBase {
 		}
 	}
 
-	@Test(enabled=false)
+	@Test(enabled = false)
 	public void createIndex() {
 		Sequoiadb db = null;
 		Split splitThread = null;
@@ -129,7 +129,7 @@ public class Split10534 extends SdbTestBase {
 			// 指定索引信息查询数据（在cl中匹配{index1:34}，期望结果{sk:34,index1:34}，且为ixscan）
 			queryByIndexAndCheckExplain(cl, "{index1:34}", "{sk:34,index1:34}", "ixscan");
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -140,13 +140,13 @@ public class Split10534 extends SdbTestBase {
 		}
 	}
 
-	@AfterClass(enabled=false)
+	@AfterClass(enabled = false)
 	public void tearDown() {
 		try {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -165,7 +165,7 @@ public class Split10534 extends SdbTestBase {
 		try {
 			// 查询，检查结果的正确性
 			dbc1 = cl.query(macher, null, null, null);
-			ArrayList<BSONObject> queryReaults = new ArrayList<>();
+			ArrayList<BSONObject> queryReaults = new ArrayList<BSONObject>();
 			while (dbc1.hasNext()) {
 				queryReaults.add(dbc1.getNext());
 			}
@@ -201,7 +201,7 @@ public class Split10534 extends SdbTestBase {
 	// 检查是否存在test方法中设置的索引
 	public void checkIndexExist(Sequoiadb db, String groupName) {
 		DBCursor dbc = null;
-		List<BSONObject> indexesCopy = new ArrayList<>(indexes);
+		List<BSONObject> indexesCopy = new ArrayList<BSONObject>(indexes);
 		Sequoiadb dataNode = null;
 		try {
 			dataNode = db.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
@@ -240,7 +240,7 @@ public class Split10534 extends SdbTestBase {
 			Assert.assertEquals(destCL.getCount(), expectTotalCount); // 目标组应当含有的数据量
 		} catch (BaseException e) {
 			e.printStackTrace();
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (destDataNode != null) {
 				destDataNode.disconnect();

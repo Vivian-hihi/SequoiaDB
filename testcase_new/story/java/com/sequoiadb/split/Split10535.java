@@ -35,7 +35,7 @@ public class Split10535 extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-	private List<BSONObject> insertedData = new ArrayList<>();
+	private List<BSONObject> insertedData = new ArrayList<BSONObject>();
 
 	@BeforeClass()
 	public void setUp() {
@@ -155,7 +155,7 @@ public class Split10535 extends SdbTestBase {
 				.parse("{name: \"$id\",key: {_id: 1},v: 0,unique: true,dropDups: false,enforced: true}");
 		BSONObject shardingKeyIndex = (BSONObject) JSON
 				.parse("{name: \"$shard\",key: {sk: 1},v: 0,unique: false,dropDups: false,enforced: false}");
-		ArrayList<BSONObject> expect = new ArrayList<>();
+		ArrayList<BSONObject> expect = new ArrayList<BSONObject>();
 		expect.add(idIndex);
 		expect.add(shardingKeyIndex);
 		try {
