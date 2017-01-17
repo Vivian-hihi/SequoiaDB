@@ -97,7 +97,7 @@
          <var name="rc" unset="true"/> 
          <exec executable="${phpbin}" 
                dir="@{suitfullname}" 
-               timeout="1800000" 
+               timeout="3000000" 
                outputproperty="screen_output"
                resultproperty="rc" 
                failonerror="false" >
