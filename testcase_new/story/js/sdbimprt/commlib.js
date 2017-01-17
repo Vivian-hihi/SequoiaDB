@@ -22,7 +22,7 @@ function initTestCaseDir()
    
    if( typeof( TESTCASEDIR ) == "undefined" ) 
    { 
-      var testCaseDir = './testcases/hlt/js_testcases/js/sdbimprt/'; 
+      var testCaseDir = './testcase_new/story/js/sdbimprt/'; 
    }
    else
    {
