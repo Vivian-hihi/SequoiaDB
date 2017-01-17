@@ -89,7 +89,8 @@ public class Index10211 extends SdbTestBase {
 			opt.put("a", 1);
 			clDB.createIndex(idxName, opt, false, false);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -247){  //-247:Redefine index
+			if(e.getErrorCode() != -247 //-247:Redefine index
+					&& e.getErrorCode() != -43){  //-43:Failed to initialize index
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}

@@ -119,7 +119,8 @@ public class SubCL10195 extends SdbTestBase {
 		try{
 			db.createCollectionSpace(mCSName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -33){
+			if(e.getErrorCode() != -33
+					&& e.getErrorCode() != -34){  //jira-2234
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
