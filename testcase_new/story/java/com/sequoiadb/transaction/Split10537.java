@@ -65,7 +65,7 @@ public class Split10537 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage());
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		}
 	}
 
@@ -107,7 +107,7 @@ public class Split10537 extends SdbTestBase {
 			checkDestAndSrcGroup(db);
 			queryUpdateddAndDeltedData(cl);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -150,7 +150,7 @@ public class Split10537 extends SdbTestBase {
 
 	public void checkDestAndSrcGroup(Sequoiadb db) {
 		// 构造源组期望数据
-		List<BSONObject> srcExpect = new ArrayList<>();
+		List<BSONObject> srcExpect = new ArrayList<BSONObject>();
 		for (int i = 0; i < 400; i++) {
 			srcExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:" + i + "}"));
 		}
@@ -161,7 +161,7 @@ public class Split10537 extends SdbTestBase {
 		checkGroupData(db, srcGroupName, srcExpect);
 
 		// 构造目标组期望数据
-		List<BSONObject> destExpect = new ArrayList<>();
+		List<BSONObject> destExpect = new ArrayList<BSONObject>();
 		for (int i = 500; i < 600; i++) {
 			destExpect.add((BSONObject) JSON.parse("{sk:" + i + ",beta:2}"));
 		}
@@ -178,7 +178,7 @@ public class Split10537 extends SdbTestBase {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);
 			cs.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -194,7 +194,7 @@ public class Split10537 extends SdbTestBase {
 		try {
 			dataNode = db.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
 			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
-			List<BSONObject> actual = new ArrayList<>();
+			List<BSONObject> actual = new ArrayList<BSONObject>();
 			cursor = cl.query(null, null, "{sk:1}", null);
 			while (cursor.hasNext()) {
 				BSONObject obj = cursor.getNext();
@@ -203,7 +203,7 @@ public class Split10537 extends SdbTestBase {
 			}
 			Assert.assertEquals(expect.equals(actual), true, "expect:" + expect + "\r\nactual:" + actual);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
