@@ -7,7 +7,7 @@ import java.util.List;
 
 public abstract class SdbThreadBase implements Runnable {
 	private List<Exception> exceptionList = Collections.synchronizedList(new ArrayList<Exception>());
-	private List<Thread> threadList = new ArrayList<>();
+	private List<Thread> threadList = new ArrayList<Thread>();
 
 	public void start() {
 		start(1);
