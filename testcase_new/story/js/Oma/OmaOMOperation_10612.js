@@ -9,7 +9,7 @@
 OmaTest.prototype.testOMOperation = function( svcname, isOmExist )
 {
    this.testInit() ;
-   var dbpath = RSRVNODEDIR + "sms/" + svcname ;
+   var dbpath = RSRVNODEDIR + svcname ;
    if( isOmExist )
    {
       try

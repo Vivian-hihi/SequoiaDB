@@ -6,7 +6,7 @@
 ********************************************************************/
 
 // 测试使用非cm端口初始化oma后，oma创建节点失败
-OmaTest.prototype.testCreateCoordWithIllegalOma = function( svcname )
+OmaTest.prototype.testCreateDataWithIllegalOma = function( svcname )
 {
    this.testInit() ;
    
@@ -18,17 +18,17 @@ OmaTest.prototype.testCreateCoordWithIllegalOma = function( svcname )
    
    try
    {
-      var dbpath = RSRVNODEDIR + "coord/" + svcname ;
-      this.oma.createCoord( svcname, dbpath ) ;
-      throw "create coord with illegal oma should be failed" ;
+      var dbpath = RSRVNODEDIR + svcname ;
+      this.oma.createData( svcname, dbpath ) ;
+      throw "create data with illegal oma should be failed" ;
    }
    catch( e )
    {
       if(  e !== -15  )
       {
-         println( "create coord " + svcname + " dbpath " + dbpath ) ;
-         throw buildException( "testCreateCoordWithIllegalOma", e,
-               "test create coord with illegal oma " + this, "-15 -159", e ) ;
+         println( "create data " + svcname + " dbpath " + dbpath ) ;
+         throw buildException( "testCreateDataWithIllegalOma", e,
+               "test create data with illegal oma " + this, "-15", e ) ;
       }   
    }
    
@@ -56,7 +56,7 @@ function main()
    }
    
    // 测试创建节点时报错
-   ot.testCreateCoordWithIllegalOma( svcname ) ; 
+   ot.testCreateDataWithIllegalOma( svcname ) ; 
 }
 
 main()

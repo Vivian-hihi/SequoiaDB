@@ -22,7 +22,7 @@ OmaTest.prototype.testCreateExistCoord = function()
    try
    {
       var svcname = COORDSVCNAME ;
-      var dbpath = RSRVNODEDIR + "coord/" + svcname ;
+      var dbpath = RSRVNODEDIR + svcname ;
       this.oma.createCoord( svcname, dbpath ) ;
       throw "create exist coord should be failed" ;
    }
@@ -153,7 +153,7 @@ OmaTest.prototype.testCreateCoordWithWrongConf = function( svcname )
    this.testInit() ;
    try
    {
-      var dbpath = RSRVNODEDIR + "coord/" + svcname ;
+      var dbpath = RSRVNODEDIR + svcname ;
       // 不正确的配置项 role: om 配置文件自动修改为 role: coord
       this.oma.createCoord( svcname, dbpath, { role: "om" } ) ;
       this.oma.startNode( svcname ) ;

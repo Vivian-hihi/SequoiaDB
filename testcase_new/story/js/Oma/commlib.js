@@ -177,6 +177,8 @@ function checkResult( info, content, func )
       for( var j = 0;j < content.length;j++ )
       {
          content[j] = content[j].replace( / /g,"" ) ;
+         if( content[j][0] == "#" )
+            continue ;
          var ind = content[j].indexOf( i ) ;
          if( ind == -1 )
             continue ;

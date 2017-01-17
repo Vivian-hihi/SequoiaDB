@@ -11,7 +11,7 @@ OmaTest.prototype.testCoordNodeOperationNormal = function( svcname )
    this.testInit() ;
    try
    {
-      var dbpath = RSRVNODEDIR + "coord/" + svcname ;
+      var dbpath = RSRVNODEDIR + svcname ;
       this.oma.createCoord( svcname, dbpath ) ;
       this.oma.startNode( svcname ) ;
       this.oma.stopNode( svcname ) ;
@@ -32,7 +32,7 @@ OmaTest.prototype.testDataNodeOperationNormal = function( svcname )
    this.testInit() ;
    try
    {
-      var dbpath = RSRVNODEDIR + "coord/" + svcname ;
+      var dbpath = RSRVNODEDIR + svcname ;
       this.oma.createData( svcname, dbpath ) ;
       this.oma.startNode( svcname ) ;
       checkDataNodeValid( this.hostname, svcname ) ;
