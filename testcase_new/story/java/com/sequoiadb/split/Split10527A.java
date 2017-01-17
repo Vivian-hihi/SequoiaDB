@@ -137,6 +137,9 @@ public class Split10527A extends SdbTestBase {
 			try {
 				sdb = new Sequoiadb(coordUrl, "", "");
 				DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
+				if (cl == null) {// 若cl不存在，cl为空，未碰撞到测试点
+					return;
+				}
 				cl.split(srcGroupName, destGroupName, 90);
 				throw new Exception("error split sucess");
 			} catch (BaseException e) {
