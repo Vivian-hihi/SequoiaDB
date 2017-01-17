@@ -1903,9 +1903,10 @@ namespace engine
       clsCatalogSet cataSet( _targetName.c_str() );
       std::map<std::string, UINT32> splitList ;
       BSONObj tmpObj ;
+      catCtxLockMgr lockMgr ;
 
       rc = catGetAndLockCollection( _targetName, boCollection, cb,
-                                    &_lockMgr, EXCLUSIVE ) ;
+                                    &lockMgr, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to get the Collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;
@@ -1933,7 +1934,7 @@ namespace engine
                    "Failed to collect groups of collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;
 
-      rc = catLockGroups( _groupList, cb, _lockMgr, SHARED ) ;
+      rc = catLockGroups( _groupList, cb, lockMgr, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to lock groups, rc: %d", rc ) ;
 
