@@ -67,7 +67,7 @@ function main()
    for( var i = 0;i < sts.length;i++ )
    {
       // 测试获取系统配置信息
-      sts[i].testGetSystemConfigs() ;
+      // sts[i].testGetSystemConfigs() ;
    }
 }
 
