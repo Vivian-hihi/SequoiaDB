@@ -600,8 +600,8 @@ namespace engine
          INT32 doit( BSONObj &retObj ) ;
 
       private:
-         INT32 _extractSystemInfo( const CHAR *buf,
-                                   bson::BSONObjBuilder &builder ) ;
+         INT32 _getSystemInfo( std::vector< std::string > typeSplit,
+                               bson::BSONObjBuilder &builder ) ;
    } ;
 
    /*

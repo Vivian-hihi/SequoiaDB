@@ -68,7 +68,7 @@ namespace engine
       utilCatPath( tmpPath, OSS_MAX_PATHSIZE, ".." ) ;
       utilCatPath( tmpPath, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
       string filter = businessType + "*" ;
-      map< string, string> mapFiles ;
+      multimap< string, string> mapFiles ;
       rc = ossEnumFiles( tmpPath, mapFiles, filter.c_str() ) ;
       if ( SDB_OK != rc )
       {

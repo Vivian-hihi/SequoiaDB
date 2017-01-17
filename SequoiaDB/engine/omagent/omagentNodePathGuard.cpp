@@ -203,7 +203,7 @@ namespace engine {
       rc = ossAccess( path ) ;
       if ( SDB_OK == rc )
       {
-         std::map<std::string, std::string> subFiles ;
+         std::multimap<std::string, std::string> subFiles ;
          rc = ossEnumFiles( path, subFiles, filter, deep ) ;
          if ( rc )
          {

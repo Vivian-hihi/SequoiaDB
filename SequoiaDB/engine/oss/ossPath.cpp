@@ -165,7 +165,7 @@ error :
 }
 
 static INT32 _ossEnumFiles( const string &dirPath,
-                            map<string, string> &mapFiles,
+                            multimap<string, string> &mapFiles,
                             const CHAR *filter, UINT32 filterLen,
                             OSS_MATCH_TYPE type, UINT32 deep )
 {
@@ -207,7 +207,8 @@ static INT32 _ossEnumFiles( const string &dirPath,
                          0 == ossStrcmp( fileName.c_str(), filter ) )
                      )
                   {
-                     mapFiles[ fileName ] = dir_iter->path().string() ;
+                     mapFiles.insert( pair<string, string>( fileName,
+                                      dir_iter->path().string() ) );
                   }
                }
                else if ( fs::is_directory( dir_iter->path() ) && deep > 1 )
@@ -260,7 +261,7 @@ error:
 }
 
 INT32 ossEnumFiles( const string &dirPath,
-                    map< string, string > &mapFiles,
+                    multimap< string, string > &mapFiles,
                     const CHAR *filter,
                     UINT32 deep )
 {
@@ -297,7 +298,7 @@ INT32 ossEnumFiles( const string &dirPath,
 }
 
 INT32 ossEnumFiles2( const string &dirPath,
-                     map<string, string> &mapFiles,
+                     multimap<string, string> &mapFiles,
                      const CHAR *filter,
                      OSS_MATCH_TYPE type,
                      UINT32 deep )

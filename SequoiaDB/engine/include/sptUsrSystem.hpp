@@ -288,8 +288,8 @@ namespace engine
                                        bson::BSONObjBuilder &builder,
                                        BOOLEAN showDetail ) ;
 
-      static INT32 _extractSystemInfo( const CHAR *buf,
-                                       bson::BSONObjBuilder &builder ) ;
+      static INT32 _getSystemInfo( std::vector< std::string > typeSplit,
+                                   bson::BSONObjBuilder &builder ) ;
 
       static INT32 _extractEnvInfo( const CHAR *buf,
                                     bson::BSONObjBuilder &builder ) ;

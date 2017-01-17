@@ -38,6 +38,8 @@
 #include "ossSocket.hpp"
 #include "ossIO.hpp"
 #include "oss.h"
+#include "ossPath.hpp"
+#include "ossPrimitiveFileOp.hpp"
 #include <set>
 #include <vector>
 #include <utility>
@@ -4890,17 +4892,11 @@ namespace engine
 #if defined (_LINUX)
       INT32 rc           = SDB_OK ;
       BSONObjBuilder     builder ;
-      UINT32 exitCode    = 0 ;
       string             type ;
-      stringstream       cmd ;
-      _ossCmdRunner      runner ;
-      string             outStr ;
-      vector<string>     splited ;
-      string  configsType[]      = { "kernel", "vm", "fs",
-                                     "debug", "dev", "abi" } ;
+      vector<string>     typeSplit ;
+      string configsType[6] = { "kernel", "vm", "fs",
+                                "debug", "dev", "abi" } ;
 
-      // check argument and build cmd
-      cmd << "sysctl -a 2> /dev/null" ;
       if ( 0 < arg.argc() )
       {
          rc = arg.getString( 0, type) ;
@@ -4914,9 +4910,10 @@ namespace engine
          }
          PD_RC_CHECK( rc, PDERROR, "Failed to get type, rc: %d", rc ) ;
 
+         // input format: "xxx|xxxx|xxx"
          try
          {
-            boost::algorithm::split( splited, type, boost::is_any_of( " |" ) ) ;
+            boost::algorithm::split( typeSplit, type, boost::is_any_of( " |" ) ) ;
          }
          catch( std::exception )
          {
@@ -4925,60 +4922,45 @@ namespace engine
             PD_LOG( PDERROR, "Failed to split result" ) ;
             goto error ;
          }
-         if( !splited.empty() &&
-             splited.end() == find( splited.begin(), splited.end(), "all" ) )
-         {
-            string grepStr = " | grep -E '" ;
 
-            for ( UINT32 index = 0; index < 5; index++ )
+         // if specify all type, remove other type
+         if( typeSplit.end() != find( typeSplit.begin(), typeSplit.end(),
+                                      "all" ) )
+         {
+            typeSplit.clear() ;
+            typeSplit.push_back( "" ) ;
+         }
+         else
+         {
+            for( vector< string >::iterator itr = typeSplit.begin();
+                 itr != typeSplit.end(); )
             {
-               if( splited.end() != find( splited.begin(),
-                                          splited.end(),
-                                          configsType[index] ))
+               // if not required type ,erase it
+               if( configsType + 6 == find( configsType,
+                                            configsType + 6,
+                                            *itr ) )
                {
-                  grepStr += "^" + configsType[index] + ".*|" ;
+                  itr = typeSplit.erase( itr ) ;
                }
-            }
-            if ( grepStr != " | grep -E '" )
-            {
-               grepStr.erase( grepStr.size() - 1, 1 ) ;
-               grepStr += "'" ;
-               cmd << grepStr ;
+               else
+               {
+                  itr++ ;
+               }
             }
          }
       }
-
-      // run cmd
-      rc = runner.exec( cmd.str().c_str(), exitCode,
-                        FALSE, -1, FALSE, NULL, TRUE ) ;
-      if ( SDB_OK != rc )
+      else
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         stringstream ss ;
-         ss << "failed to exec cmd " << cmd.str() << ",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
+         typeSplit.push_back( "" ) ;
+      }
+
+      rc = _getSystemInfo( typeSplit, builder ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to get system info" ) ;
          goto error ;
       }
 
-      // get result
-      rc = runner.read( outStr ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
-         stringstream ss ;
-         ss << "failed to read msg from cmd \"" << cmd.str() << "\", rc:"
-            << rc ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
-
-      // extract result
-      rc = _extractSystemInfo( outStr.c_str(),
-                               builder ) ;
       rval.getReturnVal().setValue( builder.obj() ) ;
    done:
       return rc ;
@@ -4991,56 +4973,97 @@ namespace engine
 #endif
    }
 
-   INT32 _sptUsrSystem::_extractSystemInfo( const CHAR *buf,
-                                            BSONObjBuilder &builder )
+   INT32 _sptUsrSystem::_getSystemInfo( vector< string > typeSplit,
+                                        BSONObjBuilder &builder )
    {
-      INT32 rc       = SDB_OK ;
-      vector<string> splited ;
+      INT32 rc = SDB_OK ;
+      INT32 readLen = 1024 ;
+      INT32 bufLen = readLen + 1 ;
+      multimap< string, string > fileMap ;
+      vector< string > keySplit ;
+      vector< string > valueSplit ;
+      CHAR *buf = NULL ;
 
-      if ( NULL == buf )
+      buf = (CHAR*) SDB_OSS_MALLOC( bufLen ) ;
+      if( NULL == buf )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "buf can't be null, rc: %d", rc ) ;
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "buf malloc failed" ) ;
          goto error ;
       }
 
-      /* format:
-         xxx.xxx.xxxx = xx
-      */
-      try
+      for( vector< string >::iterator itr = typeSplit.begin();
+           itr != typeSplit.end(); itr++ )
       {
-         boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
-                 rc, e.what() ) ;
-         goto error ;
-      }
-      for ( vector<string>::iterator itr = splited.begin();
-            itr != splited.end();  )
-      {
-         if ( itr->empty() )
+         string searchDir = "/proc/sys/" + (*itr) ;
+         rc = ossEnumFiles( searchDir, fileMap, "", 10 ) ;
+         if ( SDB_OK != rc )
          {
-            itr = splited.erase( itr ) ;
-         }
-         else
-         {
-            itr++ ;
+            goto error ;
          }
       }
 
-      // build BsonObj
-      for ( vector<string>::iterator itrSplit = splited.begin();
-            itrSplit != splited.end(); itrSplit++ )
+      for( map< string, string >::iterator itr = fileMap.begin();
+           itr != fileMap.end();
+           itr++ )
       {
-         vector<string> columns ;
+         ossPrimitiveFileOp op ;
+         string key ;
+         string value ;
 
+         // open file
+         rc = op.Open( itr->second.c_str(), OSS_PRIMITIVE_FILE_OP_READ_ONLY ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "Can't open file: %s", itr->second.c_str() ) ;
+            continue ;
+         }
+
+         // read file content
+         {
+            INT32 readByte = 0 ;
+            INT32 hasRead = 0 ;
+            INT32 increaseLen = 1024 ;
+            CHAR *curPos = buf ;
+            BOOLEAN finishRead = FALSE ;
+            while( !finishRead )
+            {
+               rc = op.Read( readLen , curPos , &readByte ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to read file" ) ;
+                  goto error ;
+               }
+               hasRead += readByte ;
+
+               // mem not enough, need to realloc, newBuffSize = 2*oldBuffSize
+               if ( readByte == readLen )
+               {
+                  bufLen += increaseLen ;
+                  buf = (CHAR*) SDB_OSS_REALLOC( buf, bufLen ) ;
+                  if ( NULL == buf )
+                  {
+                     rc = SDB_OOM ;
+                     PD_LOG( PDERROR, "Failed to realloc buff" ) ;
+                     goto error ;
+                  }
+                  curPos = buf + hasRead ;
+                  readLen = increaseLen ;
+                  increaseLen *= 2 ;
+               }
+               else
+               {
+                  finishRead = TRUE ;
+               }
+            }
+            buf[ hasRead ] = '\0' ;
+         }
+
+         // split key
          try
          {
-            boost::algorithm::split( columns, *itrSplit,
-                                     boost::is_any_of(" = ") ) ;
+            boost::algorithm::split( keySplit, itr->second,
+                                     boost::is_any_of( "/" ) ) ;
          }
          catch( std::exception &e )
          {
@@ -5049,34 +5072,74 @@ namespace engine
                     rc, e.what() ) ;
             goto error ;
          }
-         for ( vector<string>::iterator itrCol = columns.begin();
-               itrCol != columns.end(); )
+
+         for( std::vector< string >::iterator vecItr = keySplit.begin();
+              vecItr != keySplit.end(); )
          {
-            if ( itrCol->empty() )
+            if ( vecItr->empty() )
             {
-               itrCol = columns.erase( itrCol ) ;
+               vecItr = keySplit.erase( vecItr ) ;
             }
             else
             {
-               itrCol++ ;
+               vecItr++ ;
             }
          }
-         // only contain 2 cols
-         if( columns.size() == 2 )
+
+         if ( keySplit.size() < 3 )
          {
-            for( string::iterator iterLetter = columns[ 1 ].begin();
-                 iterLetter != columns[ 1 ].end();
-                 iterLetter++ )
-            {
-               if ( *iterLetter == '\t' )
-               {
-                  *iterLetter = ',' ;
-               }
-            }
-            builder.append( columns[ 0 ], columns[ 1 ] ) ;
+            continue ;
          }
+
+         key = *( keySplit.begin()+2 );
+         for( std::vector< string >::iterator vecItr = keySplit.begin()+3;
+              vecItr != keySplit.end(); vecItr++ )
+         {
+            key += "." + ( *vecItr ) ;
+         }
+
+         // split value
+         try
+         {
+            boost::algorithm::split( valueSplit, buf,
+                                     boost::is_any_of( "\r\n" ) ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Failed to split result, rc: %d, detail: %s",
+                    rc, e.what() ) ;
+            goto error ;
+         }
+
+         for( std::vector< string >::iterator vecItr = valueSplit.begin();
+              vecItr != valueSplit.end(); )
+         {
+            if ( vecItr->empty() )
+            {
+               vecItr = valueSplit.erase( vecItr ) ;
+            }
+            else
+            {
+               boost::replace_all( *vecItr, "\t", "    " ) ;
+               vecItr++ ;
+            }
+         }
+
+         if ( 0 == valueSplit.size() )
+         {
+            continue ;
+         }
+         value = *( valueSplit.begin() ) ;
+         for( std::vector< string >::iterator vecItr = valueSplit.begin()+1;
+              vecItr != valueSplit.end(); vecItr++ )
+         {
+            value += ";" + ( *vecItr ) ;
+         }
+         builder.append( key, value ) ;
       }
    done:
+      SDB_OSS_FREE( buf ) ;
       return rc ;
    error:
       goto done ;

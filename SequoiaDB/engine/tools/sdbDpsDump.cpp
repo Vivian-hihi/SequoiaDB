@@ -1106,7 +1106,7 @@ INT32 _dpsDumper::getFileCount( const CHAR *path, INT32 &fileCount /*out*/ )
 {
    INT32 rc = SDB_OK ;
    const CHAR *filter = REPLOG_NAME_PREFIX SEP_CHAR_DOT "*" ;
-   map< string, string > mapFiles ;
+   multimap< string, string > mapFiles ;
    fileCount = 0 ;
 
    rc = ossEnumFiles( path, mapFiles, filter ) ;

@@ -241,7 +241,7 @@ OSS_NEWLINE"File:%s"OSS_NEWLINE"Message:"OSS_NEWLINE"%s"OSS_NEWLINE OSS_NEWLINE;
 
 static void _pdRemoveOutOfDataFiles( pdCfgInfo &info )
 {
-   map< string, string >  mapFiles ;
+   multimap< string, string >  mapFiles ;
    const CHAR *p = ossStrrchr( info._pdLogFile, OSS_FILE_SEP_CHAR ) ;
    if ( p )
    {
