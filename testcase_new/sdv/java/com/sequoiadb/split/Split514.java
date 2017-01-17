@@ -72,7 +72,7 @@ public class Split514 extends SdbTestBase {
 	public void prepareData(Sequoiadb db) {
 		try {
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			ArrayList<BSONObject> arr = new ArrayList<>();
+			ArrayList<BSONObject> arr = new ArrayList<BSONObject>();
 			for (int i = 0; i < 1000; i++) {
 				arr.add((BSONObject) JSON.parse("{a:" + i + "}"));
 			}
