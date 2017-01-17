@@ -51,3 +51,14 @@
 *   [集合空间列表](database_management/monitoring/list/SDB_LIST_COLLECTIONSPACES.md)
 *   [存储单元列表](database_management/monitoring/list/SDB_LIST_STORAGEUNITS.md)
 *   [分区组列表](database_management/monitoring/list/SDB_LIST_GROUPS.md)
+
+> **Note:**
+>
+> 单位说明：
+>
+> - 描述中没有标志单位时：
+>   1. 监控信息中关于存储的单位为字节。
+>   2. 监控信息中关于数量的单位为条数。
+>   3. 监控信息中关于网络的单位为字节。
+>
+> - 描述中有标志单位时，以描述为准。
