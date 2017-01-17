@@ -1942,7 +1942,10 @@ namespace engine
          }
          else
          {
-            cataInfo->getGroupByMatcher( *pQuery, groupLst ) ;
+            rc = cataInfo->getGroupByMatcher( *pQuery, groupLst ) ;
+            PD_RC_CHECK( rc, PDWARNING,
+                         "Failed to get group by matcher(rc=%d)",
+                         rc ) ;
          }
 
          if ( groupLst.size() <= 0 )
