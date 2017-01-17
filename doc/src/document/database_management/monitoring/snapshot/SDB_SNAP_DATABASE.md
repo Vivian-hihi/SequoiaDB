@@ -8,94 +8,94 @@ SDB_SNAP_DATABASE
 
 ##非协调节点字段信息##
 
-| 字段名                | 类型   | 描述                                                              |
-| --------------------- | ------ | ----------------------------------------------------------------- |
-| HostName              | 字符串 | 数据库节点所在物理节点的主机名                                    |
-| ServiceName           | 字符串 | svcname 所指定的服务名，与 HostName 共同作为一个逻辑节点的标示    |
-| NodeName              | 字符串 | 节点名，为“< HostName > : < ServiceName >”                        |
-| GroupName             | 字符串 | 该逻辑节点所属的分区组名，standalone 模式下该字段为空字符串       |
-| IsPrimary             | 布尔   | 该节点是否为主节点，standalone 模式下该字段为 false               |
-| ServiceStatus         | 布尔   | 是否为可提供服务状态。<br>一些特殊状态，例如[全量同步](infrastructure/replication/replicate.md)会使该状态为 false |
-| BeginLSN.Offset       | 长整型 | 起始 LSN 的偏移                                                   |
-| BeginLSN.Version      | 整型   | 起始 LSN 的版本号                                                 |
-| CurrentLSN.Offset     | 长整型 | 当前 LSN 的偏移                                                   |
-| CurrentLSN.Version    | 整型   | 当前 LSN 的版本号                                                 |
-| TransInfo.BeginLSN    | 长整型 | 事务起始 LSN 的偏移                                               |
+| 字段名                | 类型   | 描述                                                                            |
+| --------------------- | ------ | ------------------------------------------------------------------------------- |
+| HostName              | 字符串 | 数据库节点所在物理节点的主机名                                                  |
+| ServiceName           | 字符串 | svcname 所指定的服务名，与 HostName 共同作为一个逻辑节点的标示                  |
+| NodeName              | 字符串 | 节点名，为“< HostName > : < ServiceName >”                                      |
+| GroupName             | 字符串 | 该逻辑节点所属的分区组名，standalone 模式下该字段为空字符串                     |
+| IsPrimary             | 布尔   | 该节点是否为主节点，standalone 模式下该字段为 false                             |
+| ServiceStatus         | 布尔   | 是否为可提供服务状态。<br>一些特殊状态，例如[全量同步](infrastructure/replication/replicate.md)会使该状态为 false |              
+| BeginLSN.Offset       | 长整型 | 起始 LSN 的偏移                                                                 |
+| BeginLSN.Version      | 整型   | 起始 LSN 的版本号                                                               |
+| CurrentLSN.Offset     | 长整型 | 当前 LSN 的偏移                                                                 |
+| CurrentLSN.Version    | 整型   | 当前 LSN 的版本号                                                               |
+| TransInfo.BeginLSN    | 长整型 | 事务起始 LSN 的偏移                                                             |
 | NodeID                | 数组   | 节点的 ID，为“[ <分区组 ID>, <节点 ID> ]”<br>在 standalone 模式下，该字段为“[ 0，0 ]” |
-| Version.Major         | 整型   | 数据库主版本号                                                    |
-| Version.Minor         | 整型   | 数据库子版本号                                                    |
-| Version.Release       | 整型   | 数据库发行版本号                                                  |
-| Version.Build         | 字符串 | 数据库编译时间                                                    |
-| CurrentActiveSessions | 整型   | 当前活动会话，该数量包括用户 EDU 与系统 EDU                       |
-| CurrentIdleSessions   | 整型   | 当前非活动会话，一般来说非活动会话意味着 EDU 存在线程池中等待分配 |
-| CurrentSystemSessions | 整型   | 当前系统会话，为当前活动用户 EDU 数量                             |
-| CurrentContexts       | 整型   | 当前上下文数量                                                    |
-| ReceivedEvents        | 整型   | 当前分区接收到的事件请求总数                                      |
-| Role                  | 字符串 | 当前节点角色                                                      |
-| Disk.DatabasePath     | 字符串 | 数据库所在路径                                                    |
-| Disk.LoadPercent      | 整型   | 数据库路径磁盘占用率百分比                                        |
-| Disk.TotalSpace       | 长整型 | 数据库路径总空间（单位：字节）                                    |
+| Version.Major         | 整型   | 数据库主版本号                                                                  |
+| Version.Minor         | 整型   | 数据库子版本号                                                                  |
+| Version.Release       | 整型   | 数据库发行版本号                                                                |
+| Version.Build         | 字符串 | 数据库编译时间                                                                  |
+| CurrentActiveSessions | 整型   | 当前活动会话，该数量包括用户 EDU 与系统 EDU                                     |
+| CurrentIdleSessions   | 整型   | 当前非活动会话，一般来说非活动会话意味着 EDU 存在线程池中等待分配               |
+| CurrentSystemSessions | 整型   | 当前系统会话，为当前活动用户 EDU 数量                                           |
+| CurrentContexts       | 整型   | 当前上下文数量                                                                  |
+| ReceivedEvents        | 整型   | 当前分区接收到的事件请求总数                                                    |
+| Role                  | 字符串 | 当前节点角色                                                                    |
+| Disk.DatabasePath     | 字符串 | 数据库所在路径                                                                  |
+| Disk.LoadPercent      | 整型   | 数据库路径磁盘占用率百分比                                                      |
+| Disk.TotalSpace       | 长整型 | 数据库路径总空间（单位：字节）                                                  |
 | Disk.FreeSpace        | 长整型 | 数据库路径空闲空间（单位：字节）<br><b>重要：该字段以及以上所有字段仅在数据节点和编目节点显示，协调节点不显示</b> |
-| TotalNumConnects      | 整型   | 数据库连接请求数量                                                |
-| TotalDataRead         | 长整型 | 总数据读请求                                                      |
-| TotalIndexRead        | 长整型 | 总索引读请求                                                      |
-| TotalDataWrite        | 长整型 | 总数据写请求                                                      |
-| TotalIndexWrite       | 长整型 | 总索引写请求                                                      |
-| TotalUpdate           | 长整型 | 总更新记录数量                                                    |
-| TotalDelete           | 长整型 | 总删除记录数量                                                    |
-| TotalInsert           | 长整型 | 总插入记录数量                                                    |
-| ReplUpdate            | 长整型 | 复制更新记录数量                                                  |
-| ReplDelete            | 长整型 | 复制删除记录数量                                                  |
-| ReplInsert            | 长整型 | 复制插入记录数量                                                  |
-| TotalSelect           | 长整型 | 总选择记录数量                                                    |
-| TotalRead             | 长整型 | 总读取记录数量                                                    |
-| TotalReadTime         | 长整型 | 总读取时间（单位：毫秒）                                          |
-| TotalWriteTime        | 长整型 | 总写入时间（单位：毫秒）                                          |
-| ActivateTimestamp     | 时间戳 | 数据库节点启动时间                                                |
-| UserCPU               | 浮点数 | 用户 CPU（单位：秒）                                              |
-| SysCPU                | 浮点数 | 系统 CPU（单位：秒）                                              |
-| freeLogSpace          | 长整型 | 空闲日志空间                                                      |
-| vsize                 | 长整型 | 虚拟内存使用量                                                    |
-| rss                   | 长整型 | 物理内存使用量                                                    |
-| fault                 | 长整型 | 每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap   |
-| TotalMapped           | 长整型 | mmap 的总数据量                                                   |
-| svcNetIn              | 长整型 | 本地服务端口收到的网络流量                                        |
-| svcNetOut             | 长整型 | 本地服务端口发送的网络流量                                        |
-| shardNetIn            | 长整型 | shard 平面端口收到的网络流量                                      |
-| shardNetOut           | 长整型 | shard 平面端口发送的网络流量                                      |
-| replNetIn             | 长整型 | 数据同步平面端口收到的网络流量                                    |
-| replNetOut            | 长整型 | 数据同步平面端口发送的网络流量                                    |
+| TotalNumConnects      | 整型   | 数据库连接请求数量                                                              |
+| TotalDataRead         | 长整型 | 总数据读请求                                                                    |
+| TotalIndexRead        | 长整型 | 总索引读请求                                                                    |
+| TotalDataWrite        | 长整型 | 总数据写请求                                                                    |
+| TotalIndexWrite       | 长整型 | 总索引写请求                                                                    |
+| TotalUpdate           | 长整型 | 总更新记录数量                                                                  |
+| TotalDelete           | 长整型 | 总删除记录数量                                                                  |
+| TotalInsert           | 长整型 | 总插入记录数量                                                                  |
+| ReplUpdate            | 长整型 | 复制更新记录数量                                                                |
+| ReplDelete            | 长整型 | 复制删除记录数量                                                                |
+| ReplInsert            | 长整型 | 复制插入记录数量                                                                |
+| TotalSelect           | 长整型 | 总选择记录数量                                                                  |
+| TotalRead             | 长整型 | 总读取记录数量                                                                  |
+| TotalReadTime         | 长整型 | 总读取时间（单位：毫秒）                                                        |
+| TotalWriteTime        | 长整型 | 总写入时间（单位：毫秒）                                                        |
+| ActivateTimestamp     | 时间戳 | 数据库节点启动时间                                                              |
+| UserCPU               | 浮点数 | 用户 CPU（单位：秒）                                                            |
+| SysCPU                | 浮点数 | 系统 CPU（单位：秒）                                                            |
+| freeLogSpace          | 长整型 | 空闲日志空间                                                                    |
+| vsize                 | 长整型 | 虚拟内存使用量（单位：字节）                                                    |
+| rss                   | 长整型 | 物理内存使用量（单位：字节）                                                    |
+| fault                 | 长整型 | 每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap                 |
+| TotalMapped           | 长整型 | mmap 的总数据量                                                                 |
+| svcNetIn              | 长整型 | 本地服务端口收到的网络流量（单位：字节）                                        |
+| svcNetOut             | 长整型 | 本地服务端口发送的网络流量（单位：字节）                                        |
+| shardNetIn            | 长整型 | shard 平面端口收到的网络流量（单位：字节）                                      |
+| shardNetOut           | 长整型 | shard 平面端口发送的网络流量（单位：字节）                                      |
+| replNetIn             | 长整型 | 数据同步平面端口收到的网络流量（单位：字节）                                    |
+| replNetOut            | 长整型 | 数据同步平面端口发送的网络流量（单位：字节）                                    |
 
 ##协调节点字段信息##
 
-| 字段名            | 类型   | 描述                           |
-| ----------------- | ------ | ------------------------------ |
-| TotalNumConnects  | 整型   | 数据库连接请求数量             |
-| TotalDataRead     | 长整型 | 总数据读请求                   |
-| TotalIndexRead    | 长整型 | 总索引读请求                   |
-| TotalDataWrite    | 长整型 | 总数据写请求                   |
-| TotalIndexWrite   | 长整型 | 总索引写请求                   |
-| TotalUpdate       | 长整型 | 总更新记录数量                 |
-| TotalDelete       | 长整型 | 总删除记录数量                 |
-| TotalInsert       | 长整型 | 总插入记录数量                 |
-| ReplUpdate        | 长整型 | 复制更新记录数量               |
-| ReplDelete        | 长整型 | 复制删除记录数量               |
-| ReplInsert        | 长整型 | 复制插入记录数量               |
-| TotalSelect       | 长整型 | 总选择记录数量                 |
-| TotalRead         | 长整型 | 总读取记录数量                 |
-| TotalReadTime     | 长整型 | 总读取时间（单位：毫秒）       |
-| TotalWriteTime    | 长整型 | 总写入时间（单位：毫秒）       |
-| freeLogSpace      | 长整型 | 空闲日志空间                   |
-| vsize             | 长整型 | 虚拟内存使用量                 |
-| rss               | 长整型 | 物理内存使用量                 |
+| 字段名            | 类型   | 描述                                          |
+| ----------------- | ------ | --------------------------------------------- |
+| TotalNumConnects  | 整型   | 数据库连接请求数量                            |
+| TotalDataRead     | 长整型 | 总数据读请求                                  |
+| TotalIndexRead    | 长整型 | 总索引读请求                                  |
+| TotalDataWrite    | 长整型 | 总数据写请求                                  |
+| TotalIndexWrite   | 长整型 | 总索引写请求                                  |
+| TotalUpdate       | 长整型 | 总更新记录数量                                |
+| TotalDelete       | 长整型 | 总删除记录数量                                |
+| TotalInsert       | 长整型 | 总插入记录数量                                |
+| ReplUpdate        | 长整型 | 复制更新记录数量                              |
+| ReplDelete        | 长整型 | 复制删除记录数量                              |
+| ReplInsert        | 长整型 | 复制插入记录数量                              |
+| TotalSelect       | 长整型 | 总选择记录数量                                |
+| TotalRead         | 长整型 | 总读取记录数量                                |
+| TotalReadTime     | 长整型 | 总读取时间（单位：毫秒）                      |
+| TotalWriteTime    | 长整型 | 总写入时间（单位：毫秒）                      |
+| freeLogSpace      | 长整型 | 空闲日志空间（单位：字节）                    |
+| vsize             | 长整型 | 虚拟内存使用量（单位：字节）                  |
+| rss               | 长整型 | 物理内存使用量（单位：字节）                  |
 | fault             | 长整型 | 每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap |
-| TotalMapped       | 长整型 | mmap 的总数据量                |
-| svcNetIn          | 长整型 | 本地服务端口收到的网络流量     |
-| svcNetOut         | 长整型 | 本地服务端口发送的网络流量     |
-| shardNetIn        | 长整型 | shard 平面端口收到的网络流量   |
-| shardNetOut       | 长整型 | shard 平面端口发送的网络流量   |
-| replNetIn         | 长整型 | 数据同步平面端口收到的网络流量 |
-| replNetOut        | 长整型 | 数据同步平面端口发送的网络流量 |
+| TotalMapped       | 长整型 | mmap 的总数据量                               |
+| svcNetIn          | 长整型 | 本地服务端口收到的网络流量（单位：字节）      |
+| svcNetOut         | 长整型 | 本地服务端口发送的网络流量（单位：字节）      |
+| shardNetIn        | 长整型 | shard 平面端口收到的网络流量（单位：字节）    |
+| shardNetOut       | 长整型 | shard 平面端口发送的网络流量（单位：字节）    |
+| replNetIn         | 长整型 | 数据同步平面端口收到的网络流量（单位：字节）  |
+| replNetOut        | 长整型 | 数据同步平面端口发送的网络流量（单位：字节）  |
 | ErrNodes.NodeName | 字符串 | 返回异常节点名（主机名 + 端口）<br><b>重要：此字段仅在协调节点上并且有异常节点时显示</b> |
 | ErrNodes.Flag     | 整型   | 错误码，详细请参见：[错误码](reference/Sequoiadb_error_code.md) <br><b>重要：此字段仅在协调节点上并且有异常节点时显示</b> |
 

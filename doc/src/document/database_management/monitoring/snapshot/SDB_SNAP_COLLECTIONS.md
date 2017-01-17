@@ -48,8 +48,8 @@ SDB_SNAP_COLLECTIONS
 | Details.Group.TotalRecords        | 长整型        | 集合的记录总数                                          |
 | Details.Group.TotalDataPages      | 整型          | 集合的数据页总数                                        |
 | Details.Group.TotalIndexPages     | 整型          | 集合的索引页总数                                        |
-| Details.Group.TotalDataFreeSpace  | 长整型        | 集合的数据空闲空间                                      |
-| Details.Group.TotalIndexFreeSpace | 长整型        | 集合的索引空闲空间                                      |
+| Details.Group.TotalDataFreeSpace  | 长整型        | 集合的数据空闲空间（单位：字节）                        |
+| Details.Group.TotalIndexFreeSpace | 长整型        | 集合的索引空闲空间（单位：字节）                        |
 | Details.Group.NodeName            | 字符串        | 节点名（主机名 + 端口）                                 |
 
 ##非协调节点示例##
