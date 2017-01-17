@@ -27,6 +27,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  *                       3、切分过程中创建索引，分别验证如下几个场景： a、迁移数据过程中 b、清除数据过程中 创建索引覆盖如下条件：
  *                       a、索引最大数（64个索引） b、索引包含正序、逆序 4、查看切分和创建索引结果
  *                       5、带索引查询切分数据（覆盖查询切分范围边界值数据）
+ *                       此用例尚未加入测试，问题单：2232
  * @author huangqiaohui
  * @version 1.00
  *
@@ -40,7 +41,7 @@ public class Split10534 extends SdbTestBase {
 	private List<BSONObject> insertedData = new ArrayList<>();
 	private List<BSONObject> indexes = new ArrayList<>();
 
-	@BeforeClass()
+	@BeforeClass(enabled=false)
 	public void setUp() {
 
 		try {
@@ -84,7 +85,7 @@ public class Split10534 extends SdbTestBase {
 		}
 	}
 
-	@Test
+	@Test(enabled=false)
 	public void createIndex() {
 		Sequoiadb db = null;
 		Split splitThread = null;
@@ -139,7 +140,7 @@ public class Split10534 extends SdbTestBase {
 		}
 	}
 
-	@AfterClass
+	@AfterClass(enabled=false)
 	public void tearDown() {
 		try {
 			CollectionSpace cs = commSdb.getCollectionSpace(csName);

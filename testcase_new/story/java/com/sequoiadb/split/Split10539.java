@@ -74,7 +74,8 @@ public class Split10539 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -138,10 +139,10 @@ public class Split10539 extends SdbTestBase {
 			// 检验主表，查询边界
 			List<BSONObject> allInsertedData = new ArrayList<>(srcExpect);
 			allInsertedData.addAll(destExpect);
-			checkMainCL(mainCL, allInsertedData);
+			checkMainCL(allInsertedData);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -165,7 +166,7 @@ public class Split10539 extends SdbTestBase {
 			cs.dropCollection(subCLName);
 			cs.dropCollection(mainCLName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -175,14 +176,17 @@ public class Split10539 extends SdbTestBase {
 		}
 	}
 
-	private void checkMainCL(DBCollection cl, List<BSONObject> allInsertedData) {
+	private void checkMainCL(List<BSONObject> allInsertedData) {
 		DBCursor cursor1 = null;
 		DBCursor cursor2 = null;
 		DBCursor cursor3 = null;
 		DBCursor cursor4 = null;
-
+		Sequoiadb db = null;
 		try {
+			db = new Sequoiadb(coordUrl, "", "");
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			// 比对所有数据
+			DBCollection cl = db.getCollectionSpace(csName).getCollection(mainCLName);
 			cursor1 = cl.query(null, null, "", null);
 			while (cursor1.hasNext()) {
 				BSONObject actual = cursor1.getNext();
@@ -228,19 +232,11 @@ public class Split10539 extends SdbTestBase {
 			}
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
-			if (cursor1 != null) {
-				cursor1.close();
-			}
-			if (cursor2 != null) {
-				cursor2.close();
-			}
-			if (cursor3 != null) {
-				cursor3.close();
-			}
-			if (cursor4 != null) {
-				cursor4.close();
+			if (db != null) {
+				db.closeAllCursors();
+				db.disconnect();
 			}
 		}
 
@@ -261,7 +257,7 @@ public class Split10539 extends SdbTestBase {
 			}
 			Assert.assertEquals(expect.equals(actual), true, "expect:" + expect + "\r\nactual:" + actual);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
