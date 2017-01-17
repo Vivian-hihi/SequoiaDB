@@ -207,7 +207,8 @@ namespace engine
       if ( _flagDoOnCollection() )
       {
          rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
-                           _flagUpdateBeforeData(), &groupLst,
+                           _flagUpdateBeforeData(),
+                           _flagUseGrpLstInCoord() ? NULL : &groupLst,
                            &(pArgs->_ignoreRCList), &sucGroupLst, ppContext ) ;
       }
       else

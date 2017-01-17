@@ -95,6 +95,9 @@ namespace engine
 
       /* update catalog info before send command to Data Groups */
       virtual BOOLEAN _flagUpdateBeforeData () { return FALSE ; }
+
+      /* whether to use group in Coord cache */
+      virtual BOOLEAN _flagUseGrpLstInCoord () { return FALSE ; }
    } ;
 
    /*
@@ -282,6 +285,9 @@ namespace engine
    protected :
       /* update catalog info before send command to Data Groups */
       virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+      /* use group in Coord cache, since we only have short-term locks in Catalog */
+      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
    } ;
 
    /*
@@ -475,6 +481,9 @@ namespace engine
    protected :
       /* update catalog info before send command to Data Groups */
       virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+      /* use group in Coord cache, since we only have short-term locks in Catalog */
+      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
    } ;
 
    /*
@@ -498,6 +507,9 @@ namespace engine
    protected :
       /* update catalog info before send command to Data Groups */
       virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+      /* use group in Coord cache, since we only have short-term locks in Catalog */
+      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
    } ;
 }
 
