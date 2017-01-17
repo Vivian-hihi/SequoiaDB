@@ -5003,7 +5003,7 @@ namespace engine
          }
       }
 
-      for( map< string, string >::iterator itr = fileMap.begin();
+      for( multimap< string, string >::iterator itr = fileMap.begin();
            itr != fileMap.end();
            itr++ )
       {
