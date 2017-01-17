@@ -64,11 +64,11 @@ public class TestLzw6645 extends SdbTestBase {
         Sequoiadb db = null;
         try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            CollectionSpace cs = db.getCollectionSpace(csName);
             try{
                 DBCollection cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, CompressionType: 'lzw'}"));
                 cl.alterCollection((BSONObject)JSON.parse("{Compressed:false}"));
-                throw new BaseException("Parameter 'Compressed' shouldn't been altered successfully");
+                throw new BaseException(-10000, "Parameter 'Compressed' shouldn't been altered successfully");
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -32, e.getMessage());
             }

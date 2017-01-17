@@ -68,13 +68,13 @@ public class TestLzw6646 extends SdbTestBase {
             DBCollection cl = cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, CompressionType: 'lzw'}"));
             try{
                 cl.alterCollection((BSONObject)JSON.parse("{CompressionType: 'snappy'}"));
-                throw new BaseException("Parameter 'CompressionType' shouldn't been altered successfully");
+                throw new BaseException(-10000, "Parameter 'CompressionType' shouldn't been altered successfully");
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
             }
             try{
                 cl.alterCollection((BSONObject)JSON.parse("{Compressed: true, CompressionType: 'snappy'}"));
-                throw new BaseException("Parameter 'CompressionType' shouldn't been altered successfully");
+                throw new BaseException(-10000, "Parameter 'CompressionType' shouldn't been altered successfully");
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -32, e.getMessage());
             }

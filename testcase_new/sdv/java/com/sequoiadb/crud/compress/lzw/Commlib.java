@@ -46,7 +46,7 @@ public class Commlib extends SdbTestBase {
         DBCursor snapshot = dataDB.getSnapshot(4, nameBSON, null, null);
         if(!snapshot.hasNext()){
             CollectionSpace cs = dataDB.getCollectionSpace(csName);
-            throw new BaseException("snapshot is not exist. cl exists: " + cs.isCollectionExist(cl.getFullName()));
+            throw new BaseException(-10000, "snapshot is not exist. cl exists: " + cs.isCollectionExist(cl.getFullName()));
         }
         BasicBSONList details = (BasicBSONList) snapshot.getNext().get("Details");
         BSONObject detail = (BSONObject) details.get(0);
@@ -56,22 +56,14 @@ public class Commlib extends SdbTestBase {
     }
     
     public static void waitCreateDict(DBCollection cl, String dataGroupName){
-        int passSecond = 0;
-        int waitSecond = 300;
-        for(passSecond = 0; passSecond < waitSecond; passSecond++){
-            try {
+        try{
+            while(!Commlib.isDictExist(cl, dataGroupName)){
                 Thread.sleep(1000);
-                if(Commlib.isDictExist(cl, dataGroupName)){
-                    break;
-                }
-            }catch(BaseException e){
-                throw e;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
-        }
-        if(passSecond == waitSecond){
-            throw new BaseException("fail to create dictionary");
+        }catch(BaseException e){
+            throw e;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
     
@@ -145,7 +137,7 @@ public class Commlib extends SdbTestBase {
             }
         }
         if(!isCompressed){
-            throw new BaseException("data is not compressed");
+            throw new BaseException(-10000, "data is not compressed");
         }
     }
 }

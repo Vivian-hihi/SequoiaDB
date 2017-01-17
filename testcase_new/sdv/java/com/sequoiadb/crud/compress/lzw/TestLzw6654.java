@@ -83,6 +83,7 @@ public class TestLzw6654 extends SdbTestBase {
             // CRUD
             doAndCheckCRUD(cl);
         }catch(BaseException e){
+            e.printStackTrace();
             Assert.fail(e.getMessage());
         }finally{
             db.disconnect();
@@ -106,11 +107,13 @@ public class TestLzw6654 extends SdbTestBase {
     }
     
     private void insertData(DBCollection cl, int recSum, String str){
+        BSONObject rec = new BasicBSONObject();
         for(int i = 0; i < recSum; i++){
-            BSONObject rec = new BasicBSONObject();
             rec.put("_id", id.getAndIncrement());
             rec.put("key", str + rec.get("_id"));
             cl.insert(rec);
+            rec.removeField("_id");
+            rec.removeField("key");
         }
     }
     

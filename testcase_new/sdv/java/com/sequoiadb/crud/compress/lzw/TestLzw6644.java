@@ -60,7 +60,7 @@ public class TestLzw6644 extends SdbTestBase {
             CollectionSpace cs = sdb.getCollectionSpace(csName);
             try{
                 cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: true, CompressionType: 'aaa'}"));
-                throw new BaseException("cl shouldn't been created successfully");
+                throw new BaseException(-10000, "cl shouldn't been created successfully");
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
             }

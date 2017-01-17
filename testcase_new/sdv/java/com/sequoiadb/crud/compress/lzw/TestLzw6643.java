@@ -25,7 +25,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @Author linsuqiang
  * @Date 2016-12-27
  * @Version 1.00
- * 独立模式下没有参数校验，对应JIRA 2210，修正后请取消跳过独立模式。
  */
 public class TestLzw6643 extends SdbTestBase {
     private Sequoiadb sdb = null;
@@ -65,16 +64,16 @@ public class TestLzw6643 extends SdbTestBase {
         Sequoiadb db = null;
         try{
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            CollectionSpace cs = sdb.getCollectionSpace(csName);
+            CollectionSpace cs = db.getCollectionSpace(csName);
             try{
                 cs.createCollection(clName, (BSONObject)JSON.parse("{Compressed: false, CompressionType: 'lzw'}"));
-                throw new BaseException("cl shouldn't been created successfully");
+                throw new BaseException(-10000, "cl shouldn't been created successfully");
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
             }
             try{
                 cs.createCollection(clName, (BSONObject)JSON.parse("{Compression: 'lzw', Compressed: false}"));
-                throw new BaseException("cl shouldn't been created successfully");
+                throw new BaseException(-10000, "cl shouldn't been created successfully");
             }catch(BaseException e){
                 Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
             }
