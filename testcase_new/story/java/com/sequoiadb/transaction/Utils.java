@@ -1,4 +1,4 @@
-package com.sequoiadb.serial;
+package com.sequoiadb.transaction;
 
 import java.util.ArrayList;
 
