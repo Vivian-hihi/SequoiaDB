@@ -847,9 +847,11 @@ namespace engine
                              hint.toString().c_str(),
                              flags, flags ) ;
 
+         /*
          PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
                   "hint: %s", sessionName(), selector.toString().c_str(),
-                  updator.toString().c_str(), hint.toString().c_str() ) ;
+                  updator.toString().c_str(), hint.toString().c_str() ) ; */
+
          if ( _isMainCL )
          {
             rc = _updateToMainCL( pCollectionName, selector, updator, hint,
@@ -939,10 +941,10 @@ namespace engine
                              pCollectionName,
                              insertor.toString().c_str(),
                              recordNum, flags, flags ) ;
-
+         /*
          PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
                   sessionName(), insertor.toString().c_str(),
-                  pCollectionName ) ;
+                  pCollectionName ) ; */
 
          if ( _isMainCL )
          {
@@ -1034,9 +1036,10 @@ namespace engine
                              hint.toString().c_str(),
                              flags, flags ) ;
 
+         /*
          PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
                   sessionName(), deletor.toString().c_str(),
-                  hint.toString().c_str() ) ;
+                  hint.toString().c_str() ) ; */
 
          if ( _isMainCL )
          {
@@ -1167,10 +1170,11 @@ namespace engine
                                 numToSkip, numToReturn,
                                 flags, flags ) ;
 
+            /*
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
                      "%s\norderBy: %s\nhint:%s", sessionName(),
                      matcher.toString().c_str(), selector.toString().c_str(),
-                     orderBy.toString().c_str(), hint.toString().c_str() ) ;
+                     orderBy.toString().c_str(), hint.toString().c_str() ) ; */
 
             if ( !_isMainCL )
             {
@@ -1395,8 +1399,9 @@ namespace engine
                           "ContextID:%lld, NumToRead:%d",
                           contextID, numToRead ) ;
 
+      /*
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
-               numToRead ) ;
+               numToRead ) ; */
 
       rc = rtnGetMore ( contextID, numToRead, buffObj, _pEDUCB, _pRtnCB ) ;
 
@@ -1433,11 +1438,12 @@ namespace engine
                           "ContextNum:%d, ContextID:%lld",
                           contextNum, pContextIDs[0] ) ;
 
+      /*
       if ( contextNum > 0 )
       {
          PD_LOG ( PDDEBUG, "KillContext: contextNum:%d\ncontextID: %lld",
                   contextNum, pContextIDs[0] ) ;
-      }
+      } */
 
       rc = rtnKillContexts ( contextNum, pContextIDs, _pEDUCB, _pRtnCB ) ;
 

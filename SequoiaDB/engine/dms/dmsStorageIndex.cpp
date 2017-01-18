@@ -548,6 +548,10 @@ namespace engine
       }
       dropDps = dpscb ;
 
+      /// flush some page
+      flushPages( extentID, 1, isSyncDeep() ) ;
+      flushPages( rootExtentID, 1, isSyncDeep() ) ;
+
       // now we finished allocation part, let's get into build part
       rc = _rebuildIndex( context, extentID, cb, sortBufferSize ) ;
       if ( rc )

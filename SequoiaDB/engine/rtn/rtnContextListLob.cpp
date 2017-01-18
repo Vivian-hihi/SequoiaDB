@@ -35,6 +35,8 @@
 #include "rtnTrace.hpp"
 #include "rtnLob.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _rtnContextListLob::_rtnContextListLob( INT64 contextID, UINT64 eduID )

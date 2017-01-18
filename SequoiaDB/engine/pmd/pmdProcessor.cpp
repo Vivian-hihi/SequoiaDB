@@ -261,10 +261,11 @@ namespace engine
                              insertor.toString().c_str(),
                              count, flag, flag ) ;
 
+         /*
          PD_LOG ( PDDEBUG, "Session[%s] insert objs: %s\nObjCount: %d\n"
                   "Collection: %s\nFlag:0x%08x(%u)",
                   getSession()->sessionName(), insertor.toString().c_str(),
-                  count, pCollectionName, flag, flag ) ;
+                  count, pCollectionName, flag, flag ) ; */
 
          rc = rtnInsert( pCollectionName, insertor, count, flag, eduCB(),
                          &insertedNum, &ignoredNum ) ;
@@ -338,12 +339,13 @@ namespace engine
                                 numToSkip, numToReturn,
                                 flags, flags ) ;
 
+            /*
             PD_LOG ( PDDEBUG, "Session[%s] Query: Matcher: %s\nSelector: "
                      "%s\nOrderBy: %s\nHint:%s\nSkip: %llu\nLimit: %lld\n"
                      "Flag: 0x%08x(%u)", getSession()->sessionName(),
                      matcher.toString().c_str(), selector.toString().c_str(),
                      orderBy.toString().c_str(), hint.toString().c_str(),
-                     numToSkip, numToReturn, flags ,flags ) ;
+                     numToSkip, numToReturn, flags ,flags ) ; */
 
             rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                            hint, flags, eduCB(), numToSkip, numToReturn,
@@ -484,10 +486,11 @@ namespace engine
                              hint.toString().c_str(),
                              flags, flags ) ;
 
+         /*
          PD_LOG ( PDDEBUG, "Session[%s] Delete: Deletor: %s\nhint: %s\n"
                   "Flag: 0x%08x(%u)",
                   getSession()->sessionName(), deletor.toString().c_str(), 
-                  hint.toString().c_str(), flags, flags ) ;
+                  hint.toString().c_str(), flags, flags ) ; */
          rc = rtnDelete( pCollectionName, deletor, hint, flags, eduCB(), 
                          _pDMSCB, dpsCB, 1, &deletedNum ) ;
          /// AUDIT
@@ -527,8 +530,9 @@ namespace engine
                           "ContextID:%lld, NumToRead:%d",
                           contextID, numToRead ) ;
 
+      /*
       PD_LOG ( PDDEBUG, "Session[%s] GetMore: contextID:%lld\nnumToRead: %d",
-               getSession()->sessionName(), contextID, numToRead ) ;
+               getSession()->sessionName(), contextID, numToRead ) ; */
 
       rc = rtnGetMore ( contextID, numToRead, buffObj, eduCB(), _pRTNCB ) ;
 
@@ -556,11 +560,12 @@ namespace engine
                           "ContextNum:%d, ContextID:%lld",
                           contextNum, pContextIDs[0] ) ;
 
+      /*
       if ( contextNum > 0 )
       {
          PD_LOG ( PDDEBUG, "KillContext: contextNum:%d\ncontextID: %lld",
                   contextNum, pContextIDs[0] ) ;
-      }
+      } */
 
       rc = rtnKillContexts ( contextNum, pContextIDs, eduCB(), _pRTNCB ) ;
 
