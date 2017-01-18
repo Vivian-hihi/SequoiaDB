@@ -143,7 +143,12 @@ public class TestSeqDB6670 extends SdbTestBase {
             dataDb = new Sequoiadb(url, "", "");
             CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
             DBCollection dbcl = cs.getCollection(this.clName);
-            Assert.assertEquals(dbcl.getCount("{$and:[{_id:{$gte:0}},{_id:{$lt:115}}]}"), 115);
+            while( true ){
+                if (dbcl.getCount("{$and:[{_id:{$gte:0}},{_id:{$lt:115}}]}") == 115) {
+                    break;
+                }
+            }
+            //Assert.assertEquals(dbcl.getCount("{$and:[{_id:{$gte:0}},{_id:{$lt:115}}]}"), 115);
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         } finally {
