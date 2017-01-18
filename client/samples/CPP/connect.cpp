@@ -18,13 +18,10 @@
 *       g++ connect.cpp common.cpp -o connect -I../../include -O0 -ggdb \
 *       -Wno-deprecated -L../../lib -lsdbcpp -lm -ldl
 *    Win:
-*       cl /Foconnect.obj /c connect.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \
-*       /Z7 /TP
-*       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 
-*       /Z7 /TP
-*       link /OUT:connect.exe /LIBPATH:..\..\lib sdbcpp.lib connect.obj \ 
-*       common.obj /debug
-*       copy ..\..\lib\sdbcpp.dll . 
+*       cl /Foconnect.obj /c connect.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
+*       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
+*       link /OUT:connect.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib connect.obj common.obj /debug
+*       copy ..\..\lib\cpp\debug\dll\sdbcppd.dll . 
 *    Static Linking:
 *    Linux: g++ connect.cpp common.cpp -o connect.static -I../../include -O0
 *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -ldl -lpthread
@@ -82,7 +79,7 @@ error:
 // Display Syntax Error
 void displaySyntax ( CHAR *pCommand )
 {
-  cout<<"Syntax:"<<pCommand<<" <hostname> <servicename>\
-<username> <password>"<<endl ;
+  cout << "Syntax:" << pCommand 
+       << " <hostname> <servicename> <username> <password>" << endl ;
 }
 

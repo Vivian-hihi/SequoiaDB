@@ -22,9 +22,9 @@
  *       /Od /MDd /RTC1 /Z7 /TP
  *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \
  *       /Z7 /TP
- *       link /OUT:replicaGroup.exe /LIBPATH:..\..\lib sdbcpp.lib \ 
+ *       link /OUT:replicaGroup.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib \ 
  *       replicaGroup.obj common.obj /debug
- *       copy ..\..\lib\sdbcpp.dll .
+ *       copy ..\..\lib\cpp\debug\dll\sdbcppd.dll .
  *    Static Linking:
  *    Linux: g++ replicaGroup.cpp common.cpp -o replicaGroup.static -I../../include -O0
  *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -ldl -lpthread

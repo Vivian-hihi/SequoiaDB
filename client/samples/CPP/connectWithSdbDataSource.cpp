@@ -16,11 +16,10 @@
 *    Win:
 *       cl /FoconnectWithSdbDataSource.obj /c connectWithSdbDataSource.cpp \
 *       /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
-*       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \
-*       /Z7 /TP
-*       link /OUT:connectWithSdbDataSource.exe /LIBPATH:..\..\lib sdbcpp.lib \
-*       connectWithSdbDataSource.obj common.obj /debug
-*       copy ..\..\lib\sdbcpp.dll .
+*       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
+*       link /OUT:connectWithSdbDataSource.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib \
+*            connectWithSdbDataSource.obj common.obj /debug
+*       copy ..\..\lib\cpp\debug\dll\sdbcppd.dll .
 *    Static Linking:
 *    Linux: g++ connectWithSdbDataSource.cpp common.cpp -o \
 *    connectWithSdbDataSource.static -I../../include -O0 -ggdb -Wno-deprecated \

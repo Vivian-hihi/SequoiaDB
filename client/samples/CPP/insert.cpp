@@ -22,9 +22,9 @@
  *       /Z7 /TP
  *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 \
  *       /Z7 /TP
- *       link /OUT:insert.exe /LIBPATH:..\..\lib sdbcpp.lib insert.obj common.obj \
+ *       link /OUT:insert.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib insert.obj common.obj \
  *       /build
- *       copy ..\..\lib\sdbcpp.dll .
+ *       copy ..\..\lib\cpp\debug\dll\sdbcppd.dll .
  *    Static Linking:
  *    Linux: g++ insert.cpp common.cpp -o insert.static -I../../include -O0
  *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -ldl -lpthread
