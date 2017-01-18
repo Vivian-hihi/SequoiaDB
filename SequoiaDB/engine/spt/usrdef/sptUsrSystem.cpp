@@ -2022,18 +2022,40 @@ namespace engine
             if ( isLocal )
             {
                ossDiskIOStat ioStat ;
+               CHAR pathBuffer[ 256 ] = {0} ;
+               INT32 rctmp = SDB_OK ;
+
                string driverName = columns.at( 0 ) ;
 
-               // only match the driver name after /dev/
-               driverName.replace(0, 5, "" ) ;
+               rctmp = ossReadlink( driverName.c_str(), pathBuffer, 256 ) ;
+               if ( SDB_OK == rctmp )
+               {
+                  // only match the driver name after /dev/
+                  driverName = pathBuffer ;
+                  if ( string::npos != driverName.find( "../", 0, 3 ) )
+                  {
+                     driverName.replace(0, 3, "" ) ;
+                  }
+                  else
+                  {
+                     driverName = columns.at( 0 ) ;
+                     driverName.replace(0, 5, "" ) ;
+                  }
+               }
+               else
+               {
+                  driverName.replace(0, 5, "" ) ;
+               }
 
                ossMemset( &ioStat, 0, sizeof( ossDiskIOStat ) ) ;
 
-               INT32 rctmp = ossGetDiskIOStat( driverName.c_str(), ioStat ) ;
+               rctmp = ossGetDiskIOStat( driverName.c_str(), ioStat ) ;
                if ( SDB_OK == rctmp )
                {
-                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC, (INT64)ioStat.rdSectors ) ;
-                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC, (INT64)ioStat.wrSectors ) ;
+                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_R_SEC,
+                                            (INT64)ioStat.rdSectors ) ;
+                  diskBuilder.appendNumber( CMD_USR_SYSTEM_IO_W_SEC,
+                                            (INT64)ioStat.wrSectors ) ;
                   gotStat = TRUE ;
                }
             }

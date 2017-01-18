@@ -1032,6 +1032,30 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSREADLINK, "ossReadlink" )
+INT32 ossReadlink ( const CHAR *pPath, CHAR *pLinkedPath, INT32 maxLen )
+{
+   INT32 rc = SDB_OK ;
+
+   PD_TRACE_ENTRY ( SDB_OSSREADLINK ) ;
+
+#if defined (_LINUX) || defined (_AIX)
+   INT32 len = readlink( pPath, pLinkedPath, maxLen ) ;
+   if ( len <= 0 || len >= maxLen )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   pLinkedPath[len] = '\0' ;
+#endif
+
+done :
+   PD_TRACE_EXITRC( SDB_OSSREADLINK, rc ) ;
+   return rc ;
+error :
+   goto done ;
+}
+
 #if defined (_LINUX) || defined (_AIX)
 #define OSS_DISK_IO_STAT_FILE "/proc/diskstats"
 #endif

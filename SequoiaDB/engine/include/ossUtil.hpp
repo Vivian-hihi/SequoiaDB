@@ -990,6 +990,8 @@ typedef struct _ossDiskIOStat
    UINT32 rqTicks ;
 } ossDiskIOStat ;
 
+INT32 ossReadlink ( const CHAR *pPath, CHAR *pLinkedPath, INT32 maxLen ) ;
+
 INT32 ossGetDiskIOStat ( const CHAR *pDriverName, ossDiskIOStat &ioStat ) ;
 
 INT32 ossGetCPUInfo ( SINT64 &user, SINT64 &sys,
