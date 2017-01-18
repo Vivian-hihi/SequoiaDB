@@ -1,4 +1,4 @@
-package com.sequoiadb.subcl;
+package com.sequoiadb.serial;
 
 import java.util.ArrayList;
 
@@ -131,7 +131,11 @@ public class Utils {
 			}
 		}
 		String str = stackBuffer.toString();
-		return str.substring(0, str.length() - 2);
+		if (str.length() >= 2) {
+			return str.substring(0, str.length() - 2);
+		} else {
+			return str;
+		}
 	}
 
 	public static ArrayList<String> getGroupName(Sequoiadb sdb, String csName, String clName) throws BaseException {
