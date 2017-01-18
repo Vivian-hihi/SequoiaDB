@@ -1,4 +1,4 @@
-package com.sequoiadb.serial;
+package com.sequoiadb.split;
 
 import java.util.ArrayList;
 
