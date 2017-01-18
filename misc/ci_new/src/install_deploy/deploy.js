@@ -4,7 +4,7 @@
 @input:        mode: STANDALONE | G1D3 | G3D3
                hostList: e.g.['host1','host2','host3'], G1D3 and G3D3 need 3 hosts
                installDir: default "/opt/sequoiadb"
-               diagLevel: 0 1 2 3 4 5, default 4
+               diagLevel: 0 1 2 3 4 5, default 5
 @author:       Ting YU 2016-04-26   
 ******************************************************/
 if ( typeof(mode) === "undefined" ) 
@@ -24,7 +24,7 @@ if ( hostList.constructor !== Array )
    throw "invalid para: hostList, should be array"; 
 }
 if ( typeof(installDir) === "undefined" ) installDir = "/opt/sequoiadb";
-if ( typeof(diagLevel) === "undefined" ) diagLevel = 4;
+if ( typeof(diagLevel) === "undefined" ) diagLevel = 5;
 
 var cmPort         = 11790;
 var tmpCoordPort   = 18800;
