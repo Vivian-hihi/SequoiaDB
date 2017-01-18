@@ -46,7 +46,7 @@ var spts  = [ "error.js", "common.js", "define.js", "log.js",
               "func.js", "addHostCheckEnv.js" ] ;
 if ( SYS_LINUX == SYS_TYPE )
 {
-   progs = [ "sdb" ] ; 
+   progs = [ "sdb" ] ;
 }
 else
 {
@@ -63,7 +63,7 @@ function _init()
 {
    // 1. get task id
    task_id = getTaskID( SYS_JSON ) ;
-  
+
    // 2. specify log file's name
    try
    {
@@ -104,7 +104,7 @@ function _init()
    {
       // TODO: windows
    }
-   
+
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
             sprintf("Begin to add host[?]", host_ip) ) ;
 }
@@ -130,7 +130,7 @@ function _final()
                sprintf( "Failed to remove add host pre-check result file in localhost, rc: ?, detail: ?",
                         GETLASTERROR(), GETLASTERRMSG() ) ) ;
    }
-   
+
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
             sprintf("Finish adding host[?]", host_ip) ) ;
 }
@@ -188,7 +188,7 @@ function _needToAdd( ssh, install_packet, install_sdb_user, install_path, agentS
    var str                 = "" ;
    var retMsg              = "" ;
    var js_files            = "" ;
-   
+
    if ( SYS_LINUX == SYS_TYPE )
    {
       // set execute command run by ./sdb
@@ -254,7 +254,7 @@ function _needToAdd( ssh, install_packet, install_sdb_user, install_path, agentS
       remote_install_path = obj[INSTALL_DIR] ;
       remote_oma_service  = obj[OMA_SERVICE] ;
       isProgramExist      = obj[ISPROGRAMEXIST] ;
-      
+
       // MD5
       if ( "string" != typeof(remote_md5) || 32 != remote_md5.length )
       {
@@ -339,7 +339,7 @@ function _pushDBPacket( ssh, packet )
    var dest = "" ;
    var cmd  = "" ;
    var packetName = getPacketName( packet ) ;
-   
+
    if ( SYS_LINUX == SYS_TYPE )
    {
       try
@@ -383,7 +383,7 @@ function _startOMAgent( ssh )
    var progPath          = "" ;
    var str               = "" ;
    var str2              = "" ;
-   
+
    try
    {
       remoteOMAInfoObj  = eval( '(' + Oma.getOmaConfigs( result_file ) + ')' ) ;
@@ -452,7 +452,7 @@ function _stopOMAgent( ssh )
    var progPath          = "" ;
    var str               = "" ;
    var str2              = "" ;
-   
+
    try
    {
       remoteOMAInfoObj  = eval( '(' + Oma.getOmaConfigs( result_file ) + ')' ) ;
@@ -517,7 +517,7 @@ function _stopOMAgent( ssh )
    omagentservice[string]: the service of OM Agent
    packet[string]: the full name of the packet,
                    e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
-   path[string]: the path where the install packet is in local host, we need 
+   path[string]: the path where the install packet is in local host, we need
                  to push this packet to remote host
 @return void
 ***************************************************************************** */
@@ -542,9 +542,11 @@ function _installDBPacket( ssh, sdbuser, sdbpasswd, omagentservice, packet, path
       {
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
+         var errDetail = GETLASTERRMSG() ;
          errMsg = sprintf( "Failed to install db packet in host[?]", ssh.getPeerIP() ) ;
          PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
-                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+                  sprintf( errMsg + ", rc: ?, detail: ?", rc, errDetail ) ) ;
+
          exception_handle( rc, errMsg ) ;
       }
    }
@@ -571,7 +573,7 @@ function _uninstallDBPacket( ssh, path )
       // try to stop sdbcm
       try
       {
-         cmd = str + OMA_PROG_BIN_SDBCMTOP_L ; 
+         cmd = str + OMA_PROG_BIN_SDBCMTOP_L ;
          ssh.exec( cmd ) ;
       }
       catch ( e )
@@ -597,7 +599,7 @@ function _uninstallDBPacket( ssh, path )
 function main()
 {
    _init() ;
-   
+
    var sdbUser         = null ;
    var sdbPasswd       = null ;
    var sdbUserGroup    = null ;
@@ -623,7 +625,7 @@ function main()
       sdbUserGroup     = BUS_JSON[SdbUserGroup] ;
       installPacket    = BUS_JSON[InstallPacket] ;
       hostInfo         = BUS_JSON[HostInfo] ;
-  
+
       ip               = hostInfo[IP] ;
       RET_JSON[IP]     = ip ;
       user             = hostInfo[User] ;
@@ -658,7 +660,7 @@ function main()
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;
    }
-   
+
    // 2. judge whether it's in local host, if so, no need to install
    flag = isInLocalHost( ssh ) ;
    if ( flag )
@@ -668,16 +670,16 @@ function main()
       _final() ;
       return RET_JSON ;
    }
-   
+
    // 3. create temporary directory in remote host
    createTmpDir( ssh ) ;
-      
+
    // 4. push tool programs and js script files to target host for checking
    pushProgAndSpt( ssh, progs, spts ) ;
 
    // 5. check whether need to add current host or not
    flag = _needToAdd( ssh, installPacket, sdbUser, installPath, agentService ) ;
-   if ( false == flag ) 
+   if ( false == flag )
    {
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
                sprintf( "The same kind of SequoiaDB has been installed" +
@@ -704,7 +706,7 @@ function main()
 
    // 6. push db packet to remote host
    _pushDBPacket( ssh, installPacket ) ;
-   
+
    // 7. install db packet
    try
    {
@@ -727,10 +729,10 @@ function main()
       {}
       exception_handle( rc, errMsg ) ;
    }
-   
+
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
             sprintf( "Success to install SequoiaDB in target host[?]", ip ) ) ;
-   
+
    // 8. remove temporary directory in remote host
    try
    {
@@ -739,7 +741,7 @@ function main()
    catch( e )
    {
    }
-   
+
    _final() ;
    // return the result
    return RET_JSON ;
