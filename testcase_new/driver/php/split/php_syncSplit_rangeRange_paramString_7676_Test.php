@@ -160,7 +160,7 @@ class TestSyncSplit04 extends PHPUnit_Framework_TestCase
    
    function test_splitAsync()
    {
-      echo "\n---Begin to splitAsync[hash, percent].\n";
+      echo "\n---Begin to splitAsync[range, percent].\n";
       
       self::$dbh -> splitAsync( self::$clDB, self::$groupNames );
       $errno = self::$dbh -> getErrno();

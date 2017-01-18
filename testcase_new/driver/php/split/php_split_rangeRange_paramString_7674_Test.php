@@ -162,7 +162,7 @@ class TestSplit04 extends PHPUnit_Framework_TestCase
    
    function test_split()
    {
-      echo "\n---Begin to split[hash, percent].\n";
+      echo "\n---Begin to split[range, percent].\n";
       
       self::$dbh -> split( self::$clDB, self::$groupNames );
       $errno = self::$dbh -> getErrno();
