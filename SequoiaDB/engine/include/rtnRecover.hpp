@@ -346,6 +346,7 @@ namespace engine
          virtual ~_rtnDBCleaner() {}
 
          void     setUDFValidCLs( const vector<string> &vecValidCLs ) ;
+         const vector<string>& getUDFValidCLs() const { return _udfValidCLs ; }
 
       public:
          virtual const CHAR*  oprName() const { return "Cleanup" ; }
@@ -361,6 +362,8 @@ namespace engine
                                    dmsStorageUnitID &suID ) ;
 
          virtual void      _onSucceed( pmdEDUCB *cb ) {}
+
+         void              _removeCLsByCS( const CHAR *csName ) ;
 
       private:
          vector<string>             _udfValidCLs ;

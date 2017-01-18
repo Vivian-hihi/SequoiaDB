@@ -1792,6 +1792,17 @@ namespace engine
          }
       }
 
+      if ( !pUnit->isAllValid() && !pUnit->isAllInvalid() )
+      {
+         rc = pUnit->cleanup( cb ) ;
+         if ( rc )
+         {
+            pUnit->setAllInvalid() ;
+            /// need to clean valid collection by collectionspace
+            _removeCLsByCS( pUnit->getSU()->CSName() ) ;
+         }
+      }
+
       if ( pUnit->isAllInvalid() )
       {
          string csName = pUnit->getSU()->CSName() ;
@@ -1804,12 +1815,26 @@ namespace engine
             rc = SDB_OK ;
          }
       }
-      else if ( !pUnit->isAllValid() )
-      {
-         rc = pUnit->cleanup( cb ) ;
-      }
 
       return rc ;
+   }
+
+   void _rtnDBCleaner::_removeCLsByCS( const CHAR *csName )
+   {
+      UINT32 nameLen = ossStrlen( csName ) ;
+      vector< string >::iterator it = _udfValidCLs.begin() ;
+      while ( it != _udfValidCLs.end() )
+      {
+         if ( 0 == ossStrncmp( (*it).c_str(), csName, nameLen ) &&
+              '.' == (*it).at( nameLen ) )
+         {
+            it = _udfValidCLs.erase( it ) ;
+         }
+         else
+         {
+            ++it ;
+         }
+      }
    }
 
    void _rtnDBCleaner::setUDFValidCLs( const vector< string > &vecValidCLs )

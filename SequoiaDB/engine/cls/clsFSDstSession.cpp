@@ -1326,7 +1326,7 @@ namespace engine
             goto done ;
          }
          /// remove valid collections
-         _removeValidCLs( _validCLs ) ;
+         _removeValidCLs( cleanner.getUDFValidCLs() ) ;
       }
 
       // create empty collection space
