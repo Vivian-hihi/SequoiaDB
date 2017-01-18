@@ -109,7 +109,7 @@ public class TestSplit10525B extends SdbTestBase{
         Sequoiadb dataDb = null;
         try {
             boolean flag = false;
-            for (int j = 0; j < 100; j++) {
+            for (int j = 0; j < 1000; j++) {
                 //连接源组从节点data验证数据
                 ReplicaGroup replicaGroup = this.sdb.getReplicaGroup(rgNames.get(0));
                 Node master = replicaGroup.getSlave();
@@ -160,7 +160,7 @@ public class TestSplit10525B extends SdbTestBase{
         Sequoiadb dataDb = null;
         try {
             boolean flag = false;
-            for (int j = 0; j < 100; j++) {
+            for (int j = 0; j < 1000; j++) {
               //连接目标组data查询
                 ReplicaGroup replicaGroup = this.sdb.getReplicaGroup(rgNames.get(1));
                 Node master = replicaGroup.getSlave();
