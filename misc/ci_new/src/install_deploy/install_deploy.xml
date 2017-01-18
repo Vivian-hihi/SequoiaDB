@@ -109,7 +109,7 @@
             <var name="diagLevel" value="3"/>
          </then>
          <else>
-            <var name="diagLevel" value="4"/>
+            <var name="diagLevel" value="5"/>
          </else>
       </if>
       
