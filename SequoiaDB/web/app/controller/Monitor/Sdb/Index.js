@@ -130,6 +130,17 @@
                   ++errNodeNum ;
                   $scope.DBStatus = 'warning' ;
                   $scope.ErrorMsg = sprintf( $scope.autoLanguage( '分区组 ? 有节点异常。' ), groupStatus['GroupName'] ) ;
+
+                  if( groupStatus['NodeName'] && groupStatus['NodeName'].length > index2 &&
+                      groupStatus['Status'] && groupStatus['Status'].length > index2 )
+                  {
+                     $scope.ErrResult.push( {
+                        'info': sprintf( $scope.autoLanguage( '? [warning] - 节点 ? 正在 ?。' ),
+                                         $scope.Time,
+                                         groupStatus['NodeName'][index2],
+                                         groupStatus['Status'][index2] ),
+                        'type': 'warning' } ) ;
+                  }
                }
             } ) ;
             if( errNodeNum == groupStatus['ServiceStatus'].length )
@@ -161,7 +172,7 @@
             } ) ;
             return groupIndex ;
          }
-         var sql = 'select push(ServiceStatus) as ServiceStatus, GroupName, ErrNodes from $SNAPSHOT_DB group by GroupName order by ErrNodes asc' ;
+         var sql = 'select push(ServiceStatus) as ServiceStatus, push( Status ) as Status, push( NodeName ) as NodeName, GroupName, ErrNodes from $SNAPSHOT_DB group by GroupName order by ErrNodes asc' ;
          SdbRest.Exec( sql, {
             'before': function(){
                groupList = [] ;

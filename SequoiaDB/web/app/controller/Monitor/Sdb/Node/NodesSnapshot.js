@@ -29,7 +29,7 @@
       //节点列表的表格
       $scope.NodeTable = {
          'title': {
-            'Status':                  'Status',
+            'ServiceStatus':           'Status',
             'NodeName':                'NodeName',
             'HostName':                'HostName',
             'GroupName':               'GroupName',
@@ -53,14 +53,14 @@
          'body': [],
          'options': {
             'width': {
-               'Status':      '80px',
-               'IsPrimary':   '70px',
-               'Role':        '70px'
+               'ServiceStatus':  '80px',
+               'IsPrimary':      '70px',
+               'Role':           '70px'
             },
             'sort': {},
             'max': 50,
             'filter': {
-               'Status': [
+               'ServiceStatus': [
                   { 'key': $scope.autoLanguage( '全部' ), 'value': '' },
                   { 'key': $scope.autoLanguage( '正常' ), 'value': true },
                   { 'key': $scope.autoLanguage( '异常' ), 'value': false }
@@ -135,7 +135,8 @@
                } ) ;
             } ) ;
             $.each( nodesList, function( index, nodeInfo ){
-               nodesList[index]['Status'] = true ;
+               nodesList[index]['ServiceStatus'] = true ;
+               nodesList[index]['Status'] = 'Normal' ;
                nodesList[index]['NodeName'] = nodeInfo['HostName'] + ':' + nodeInfo['ServiceName'] ;
                nodesList[index]['IsPrimary'] = false ;
                nodesList[index]['TotalRecords'] = 0 ;
@@ -151,20 +152,7 @@
                $.each( dbList, function( index2, dbInfo ){
                   if( nodeInfo['NodeName'] == dbInfo['NodeName'] )
                   {
-                     $.each( dbInfo, function( key, val ){
-                        if( key == 'ServiceStatus' )
-                        {
-                           nodesList[index]['Status'] = val ;
-                        }
-                        else if( key == 'Status' )
-                        {
-                           nodesList[index]['Status'] = ( val == 'Normal' ) ;
-                        }
-                        else
-                        {
-                           nodesList[index][key] = val ;
-                        }
-                     } ) ;
+                     nodesList[index] = $.extend( nodesList[index], dbInfo ) ;
                      return false ;
                   }
                } ) ;
@@ -186,7 +174,8 @@
                      $.each( dbInfo['ErrNodes'], function( nodeIndex, errNodeInfo ){
                         if( nodesList[index]['NodeName'] == errNodeInfo['NodeName'] )
                         {
-                           nodesList[index]['Status'] = false ;
+                           nodesList[index]['ServiceStatus'] = false ;
+                           nodesList[index]['Status'] = '' ;
                            nodesList[index]['Flag'] = errNodeInfo['Flag'] ;
                            nodesList[index]['TotalRecords'] = '-' ;
                            nodesList[index]['TotalLobs'] = '-' ;
@@ -219,9 +208,9 @@
                         $.each( nodeInfo, function( key, val ){
                            //过滤一些不需要显示的字段
                            if( key == 'i' ||
+                               key == 'ServiceStatus' ||
                                key == 'NodeID' ||
                                key == 'ServiceName' ||
-                               key == 'ServiceStatus' ||
                                key == 'Version' ||
                                key == 'Edition' ||
                                key == 'Disk' ||
@@ -261,6 +250,8 @@
                         } ) ;
                         //构造选择列显示的下拉菜单
                         $.each( $scope.NodeTable['title'], function( key ){
+                           if( key == 'ServiceStatus' || key == 'Status' )
+                              return true ;
                            $scope.FieldDropdown['config'].push( { 'key': key, 'show': typeof( $scope.NodeTable['title'][key] ) == 'string' } ) ;
                         } ) ;
                         return false ;

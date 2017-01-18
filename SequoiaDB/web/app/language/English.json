@@ -16,6 +16,7 @@
    "? [success] - 业务: ?，正常运行中。": "? [success] - Module name: ?, Working well.",
    "? [warning] - CPU使用超过90%。": "? [warning] - The CPU usage rate more than 90%.",
    "? [warning] - 磁盘使用超过90%。": "? [warning] - The disk usage rate more than 90%.",
+   "? [warning] - 节点 ? 正在 ?。": "? [warning] - Node ? is ?.",
    "? [warning] - 内存使用超过90%。": "? [warning] - The memory usage rate more than 90%.",
    "? 执行SQL成功。": "? query success.",
    "?不能大于?。": "? cannot be more than ?.",

@@ -1349,6 +1349,8 @@
             }
             clValid.push( { 'key' : clInfo['csName'] + '.' + clInfo['Name'] , 'value' : index } );
          } ) ;
+         if( clIndex < 0 )
+            clIndex = 0 ;
          $scope.Components.Modal.icon = 'fa-trash-o' ;
          $scope.Components.Modal.title = $scope.autoLanguage( '删除集合' ) ;
          $scope.Components.Modal.isShow = true ;

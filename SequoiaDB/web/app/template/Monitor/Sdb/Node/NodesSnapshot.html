@@ -45,10 +45,11 @@
 
       <div create-timer="Timer.config" timer-callback="Timer.callback"></div>
       <div ng-container="{offsetY:-112}" ng-table="NodeTable['options']" table-title="NodeTable['title']" table-content="nodeInfo in NodeTable['body']" table-callback="NodeTable['callback']">
-         <div class="Ellipsis" table-key="Status">
-            <i class="fa fa-circle" ng-style="{true:{'color':'#00CC66'},false:{'color':'#D9534F'}}[nodeInfo['Status']]"></i>&nbsp;
-            <span ng-if="nodeInfo['Status'] == true">{{autoLanguage('正常')}}</span>
-            <span ng-if="nodeInfo['Status'] == false">{{sprintf(autoLanguage('异常, 错误码: ?。'),nodeInfo['Flag'])}}</span>
+         <div class="Ellipsis" table-key="ServiceStatus">
+            <i class="fa fa-circle" ng-style="{true:{'color':'#00CC66'},false:{'color':'#D9534F'}}[nodeInfo['ServiceStatus']]"></i>&nbsp;
+            <span ng-if="nodeInfo['ServiceStatus'] == true">{{autoLanguage('正常')}}</span>
+            <span ng-if="nodeInfo['ServiceStatus'] == false && nodeInfo['Status'].length > 0">{{nodeInfo['Status']}}</span>
+            <span ng-if="nodeInfo['ServiceStatus'] == false && nodeInfo['Status'].length == 0">{{sprintf(autoLanguage('异常, 错误码: ?。'),nodeInfo['Flag'])}}</span>
          </div>
          <div class="Ellipsis" table-key="NodeName">
             <a class="linkButton" ng-click="GotoNode(nodeInfo['HostName'],nodeInfo['ServiceName'])">{{nodeInfo['NodeName']}}</a>
