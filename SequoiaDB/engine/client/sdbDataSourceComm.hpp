@@ -91,8 +91,8 @@ namespace sdbclient
 
    private:
       // user info
-      string          _userName ;
-      string          _passwd ;
+      string               _userName ;
+      string               _passwd ;
       // connection number info
       INT32                _initConnCount ;
       INT32                _deltaIncCount ;

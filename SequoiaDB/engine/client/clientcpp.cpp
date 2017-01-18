@@ -8108,31 +8108,58 @@ error :
    error :
       goto done ;
    }
-   
+
    INT32 _sdbImpl::closeAllCursors()
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      BOOLEAN result ;
+      SINT64 contextID = 0 ;
+      std::set<ossValuePtr>::iterator it ;
+      std::set<ossValuePtr> cursors ;
+      std::set<ossValuePtr> lobs ;
 
-      // set all the cursors' status to be closed
-      while( TRUE )
+      rc = clientBuildKillAllContextsMsg( &_pSendBuffer, &_sendBufferSize, 0,
+                                          _endianConvert ) ;
+      if ( rc )
       {
-         std::set<ossValuePtr>::iterator it = _cursors.begin();
-         if ( it != _cursors.end() )
-         {
-            // for cursor.close() will unregister itself from "_cursors"
-            // so, we don't need to ++it to get next cursor
-            rc = ((_sdbCursorImpl *)(*it))->close() ;
-            if ( rc )
-            {
-               goto error ;
-            }
-         }
-         else
-         {
-            break ;
-         }
+         goto error ;
       }
+      lock () ;
+      locked = TRUE ;
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // release resource of cursors in local
+      // remember to handle cursor._connection, 
+      // cursor._collection, cursor._isClose
+      cursors = _cursors ;
+      for ( it = cursors.begin(); it != cursors.end(); ++it )
+      {
+         ((_sdbCursorImpl*)(*it))->_dropConnection () ;
+         ((_sdbCursorImpl*)(*it))->_dropCollection () ;
+         ((_sdbCursorImpl*)(*it))->_close () ;
+      }
+      _cursors.clear();
+      // release resource of lob in local
+      lobs = _lobs ;
+      for ( it = lobs.begin(); it != lobs.end(); ++it )
+      {
+         ((_sdbLobImpl*)(*it))->_dropConnection () ;
+         ((_sdbLobImpl*)(*it))->_dropCollection () ;
+         ((_sdbLobImpl*)(*it))->_cleanup () ;
+         ((_sdbLobImpl*)(*it))->_close () ;
+      }
+      _lobs.clear() ;
+
    done :
+      if ( locked )
+      {
+         unlock () ;
+      }
       return rc ;
    error :
       goto done ;

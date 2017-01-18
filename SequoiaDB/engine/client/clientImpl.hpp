@@ -64,13 +64,21 @@ namespace sdbclient
 
       INT64 _totalRead ;
       INT32 _offset ;
-      void _setConnection ( _sdb *connection ) ;
       void _killCursor () ;
       INT32 _readNextBuffer () ;
+      void _setConnection ( _sdb *connection ) ;
       void _setCollection ( _sdbCollectionImpl *collection ) ;
       void _dropConnection()
       {
          _connection = NULL ;
+      }
+      void _dropCollection()
+      {
+         _collection = NULL ;
+      }
+      void _close()
+      {
+         _isClosed = TRUE;
       }
 
       friend class _sdbCollectionImpl ;
@@ -856,12 +864,11 @@ namespace sdbclient
       const CHAR              *_dataCache ;
 
       void _setConnection( _sdb *pConnection ) ;
-      void _dropConnection()
-      {
-         _connection = NULL ;
-      }
+      void _dropConnection() { _connection = NULL ; }
       void _setCollection( _sdbCollectionImpl *pCollection ) ;
+      void _dropCollection() { _collection = NULL ; }
       void _cleanup () ;
+      void _close() { _isOpen = FALSE ; }
       BOOLEAN _dataCached() ;
       void _readInCache( void *buf, UINT32 len, UINT32 *read ) ;
       UINT32 _reviseReadLen( UINT32 needLen ) ;
