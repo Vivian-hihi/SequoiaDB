@@ -91,9 +91,9 @@ void func_rg( ThreadArg* arg )
    
    // make svcName1 2
    char svcName1[10] ;
-   sprintf( svcName1, "%d", RSRVPORTBEGIN+i*10 ) ;
+   sprintf( svcName1, "%d", atoi(RSRVPORTBEGIN)+i*10 ) ;
    char svcName2[10] ;
-   sprintf( svcName2, "%d", RSRVPORTBEGIN+i*10+5 ) ;
+   sprintf( svcName2, "%d", atoi(RSRVPORTBEGIN)+i*10+5 ) ;
    
    // make dbPath1 2
    char dbPath1[100], dbPath2[100] ;
@@ -103,24 +103,48 @@ void func_rg( ThreadArg* arg )
    // create node1 2
    int rc = SDB_OK ;
    rc = sdbCreateNode( rg, IPADDR, svcName1, dbPath1, NULL ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to create node1 in rg " << i ;
+   if( rc != SDB_OK )
+   {
+      printf( "fail to create node1 in rg %d,ip: %s,svcname: %s,dbpath: %s\n", i, IPADDR, svcName1, dbPath1 ) ;
+	  return ;
+   }
    rc = sdbCreateNode( rg, IPADDR, svcName2, dbPath2, NULL ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to create node2 in rg " << i ;
+   if( rc != SDB_OK )
+   {
+      printf( "fail to create node2 in rg %d,ip: %s,svcname: %s,dbpath: %s\n", i, IPADDR, svcName2, dbPath2 ) ;
+      return ;
+   }	
    
    // start rg
    rc = sdbStartReplicaGroup( rg ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to start rg " << i ;
+   if( rc != SDB_OK )
+   {
+      printf( "fail to start rg %d\n", i ) ;
+      return ;
+   }
    
    // stop rg
    rc = sdbStopReplicaGroup( rg ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to stop rg " << i ;
-   
+   if( rc != SDB_OK )
+   {
+      printf( "fail to stop rg %d\n", i ) ;
+      return ;
+   }  
+ 
    // remove node1 success
    // cannot remove node2 which is the only one node in rg
    rc = sdbRemoveNode( rg, IPADDR, svcName1, NULL ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to remove node1 in rg " << i ;  
+   if( rc != SDB_OK )
+   {
+      printf( "fail to remove rg %d\n", i ) ;
+      return ;
+   }
    rc = sdbRemoveNode( rg, IPADDR, svcName2, NULL ) ;
-   EXPECT_EQ( rc, SDB_CATA_RM_NODE_FORBIDDEN ) << "fail to test remove node2 in rg " << i ;
+   if( rc != SDB_CATA_RM_NODE_FORBIDDEN )
+   {
+	  printf( "fail to test remove node2 in rg %d\n", i ) ;
+	  return ;
+   }
 }
 
 TEST_F( ConcurrentTest,ReplicaGroup )
