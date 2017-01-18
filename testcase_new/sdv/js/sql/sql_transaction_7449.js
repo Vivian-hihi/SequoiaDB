@@ -108,15 +108,11 @@ function main( db )
    try
    {
       db.transRollback();   
-      throw "Error. Expect errorno: -196, actual results: success.";
    }
    catch(e)
    {
-      if( e !== -196 )
-      {
-         println("Failed to exec [db.transRollback()].");
-         throw e ;
-      }
+      println("Failed to exec [db.transRollback()].");
+      throw e ;
    }
 
    println("------Begin to exec [select] by SQL.]");
