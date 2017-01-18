@@ -124,8 +124,7 @@ TEST( restAbnormal, multi_send )
 
    close(sockfd); 
    
-   checkServer();
-   printf( "end multi send.\n" ) ;      
+   checkServer();      
 }
 
 TEST( restAbnormal, post_lack_terminator )
@@ -134,7 +133,6 @@ TEST( restAbnormal, post_lack_terminator )
    int sockfd;
    sockfd = initClient();
    if(sockfd == -1) return ; 
-   if(sockfd == -1) return ;
    
    // send message
    char restStr[8];
@@ -185,7 +183,6 @@ TEST( restAbnormal, post_lack_terminator )
    }
    printf("%s\n", totalrecvbuf);
    free( totalrecvbuf ) ;
-   free( totalrecvbuf ) ;
       
    close(sockfd);    
    
@@ -198,7 +195,6 @@ TEST( restAbnormal, get_lack_terminator )
    int sockfd;
    sockfd = initClient();
    if(sockfd == -1) return ; 
-   if(sockfd == -1) return ;
    
    // send message
    char restStr[8];
@@ -215,7 +211,7 @@ TEST( restAbnormal, get_lack_terminator )
    rc = send(sockfd, sendbuf, strlen(sendbuf), 0);
    ASSERT_GE(rc, 0) << "send error";
    
-   // recv
+  // recv 
    char recvbuf[BUFLEN];
    char* totalrecvbuf = (char*)malloc( sizeof(char) * BUFLEN );
    if( !totalrecvbuf )
@@ -246,8 +242,7 @@ TEST( restAbnormal, get_lack_terminator )
    }
    printf("%s\n", totalrecvbuf);
    free( totalrecvbuf ) ;
-   free( totalrecvbuf ) ;
- 
+      
    close(sockfd);    
    
    checkServer();      
@@ -298,8 +293,7 @@ TEST( restAbnormal, format_not_match_protocol1 )
    }
    printf("%s\n", totalrecvbuf);
    free( totalrecvbuf ) ;
-   free( totalrecvbuf ) ;	
-   
+      
    close(sockfd);    
    
    checkServer();      
@@ -350,8 +344,7 @@ TEST( restAbnormal, format_not_match_protocol2 )
    }
    printf("%s\n", totalrecvbuf);
    free( totalrecvbuf ) ;
-   free( totalrecvbuf ) ;
-
+      
    close(sockfd);    
    
    checkServer();      
