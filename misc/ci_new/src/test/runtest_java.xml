@@ -73,7 +73,7 @@
          <pathelement path="${casedir}/build" /> 
          <fileset dir="${casedir}/lib" includes="**/*.jar"/>                  
       </path>
-      <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT"/>
+      <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT.jar"/>
       <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
          <xmlfileset dir="${casedir}" includes="${xmlfile}"/>
       </testng>
