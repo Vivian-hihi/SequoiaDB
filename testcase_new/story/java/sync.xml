@@ -19,7 +19,6 @@
    <test name="consistency" >
       <packages>
          <package name="com.sequoiadb.metadataConsistency.cluster"/>
-         <package name="com.sequoiadb.crud.backup" />
       </packages>
    </test>
 </suite>
