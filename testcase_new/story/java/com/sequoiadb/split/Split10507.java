@@ -99,6 +99,7 @@ public class Split10507 extends SdbTestBase {
 		DBCursor cursor = null;
 		try {
 			// 查询目标，源组数据
+			commSdbA.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			DBCollection commCL = commSdbA.getCollectionSpace(csName).getCollection(clName);
 			long destCount = commCL.getCount("{sk:{$gte:30,$lt:60}}");
 			Assert.assertEquals(destCount, 30);
