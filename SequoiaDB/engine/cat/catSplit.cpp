@@ -427,7 +427,8 @@ namespace engine
                                         const BSONObj &splitInfo,
                                         pmdEDUCB *cb,
                                         UINT32 &srcGroupID, string &srcName,
-                                        UINT32 &dstGroupID, string &dstName )
+                                        UINT32 &dstGroupID, string &dstName,
+                                        BOOLEAN needLock )
    {
       INT32 rc = SDB_OK ;
 
@@ -444,7 +445,7 @@ namespace engine
       // Get and lock collection catalog info
       // Lock for shared, so could be split in parallel
       rc = catGetAndLockCollection( clName, boCollection, cb,
-                                    &lockMgr, SHARED ) ;
+                                    needLock ? &lockMgr : NULL, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute splitCL [%d]: "
                    "Failed to get the collection [%s]",
@@ -479,7 +480,7 @@ namespace engine
          // Lock for shared, so could be split in parallel
          // main-collection's version will be updated
          rc = catGetAndLockCollection( mainCLName, dummy, cb,
-                                       &lockMgr, SHARED ) ;
+                                       needLock ? &lockMgr : NULL, SHARED ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to split step [%d] on [%s]: "
                       "Failed to get the main collection [%s]",
@@ -539,7 +540,7 @@ namespace engine
          rc = _catCheckAndLockForSplitTask ( MSG_CAT_SPLIT_PREPARE_REQ, clName,
                                              cataSet, splitInfo, cb,
                                              srcGroupID, srcName,
-                                             dstGroupID, dstName ) ;
+                                             dstGroupID, dstName, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to check and lock collections and groups, rc: %d",
                       rc ) ;
@@ -621,7 +622,7 @@ namespace engine
          rc = _catCheckAndLockForSplitTask ( MSG_CAT_SPLIT_READY_REQ, clName,
                                              cataSet, splitInfo, cb,
                                              srcGroupID, srcName,
-                                             dstGroupID, dstName ) ;
+                                             dstGroupID, dstName, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to check and lock collections and groups, rc: %d",
                       rc ) ;
@@ -837,7 +838,7 @@ namespace engine
          rc = _catCheckAndLockForSplitTask ( MSG_CAT_SPLIT_CHGMETA_REQ, clName,
                                              cataSet, splitInfo, cb,
                                              srcGroupID, srcName,
-                                             dstGroupID, dstName ) ;
+                                             dstGroupID, dstName, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to check and lock collections and groups, rc: %d",
                       rc ) ;

@@ -262,6 +262,9 @@ namespace engine
 
       /* Send command to Data Groups with the TID of client */
       virtual BOOLEAN _flagReserveClientTID () { return TRUE ; }
+
+      /* use group in Coord cache, since we only have short-term locks in Catalog */
+      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
    } ;
 
    /*
