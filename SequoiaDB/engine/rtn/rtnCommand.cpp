@@ -2795,6 +2795,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdEDUMgr *mgr = pmdGetKRCB()->getEDUMgr() ;
+
+      if ( _sessionID == cb->getID() )
+      {
+         PD_LOG( PDDEBUG, "Force self[%lld], ignored", _sessionID ) ;
+         goto done ;
+      }
+
       rc = mgr->forceUserEDU( _sessionID ) ;
       if ( SDB_OK != rc )
       {
