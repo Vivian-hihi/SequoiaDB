@@ -205,7 +205,7 @@ public class TestSeqDB6670 extends SdbTestBase {
         }
     }
     
-    @AfterClass(alwaysRun=true)
+    @AfterClass
     public void tearDown() {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + 
