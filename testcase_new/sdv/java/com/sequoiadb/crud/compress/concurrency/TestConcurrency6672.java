@@ -51,7 +51,7 @@ public class TestConcurrency6672 extends SdbTestBase {
             insertData(cl, 9000);
             Commlib.waitCreateDict(cl, dataGroupName);
         }catch(BaseException e){
-            
+            Assert.fail(e.getMessage());
         }
     }
     
@@ -65,7 +65,9 @@ public class TestConcurrency6672 extends SdbTestBase {
         }catch(BaseException e){            
             Assert.fail(e.getMessage());
         }finally{
-            sdb.disconnect();
+            if(sdb != null){
+                sdb.disconnect();
+            }
             System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
         }
     }
@@ -122,7 +124,9 @@ public class TestConcurrency6672 extends SdbTestBase {
             }catch(BaseException e){
                 throw e;
             }finally{
-                db.disconnect();
+                if(db != null){
+                    db.disconnect();
+                }
             }
         }
     }
@@ -146,7 +150,9 @@ public class TestConcurrency6672 extends SdbTestBase {
             }catch(BaseException e){
                 throw e;
             }finally{
-                db.disconnect();
+                if(db != null){
+                    db.disconnect();
+                }
             }
         }
     }
@@ -168,7 +174,9 @@ public class TestConcurrency6672 extends SdbTestBase {
             }catch(BaseException e){
                 throw e;
             }finally{
-                db.disconnect();
+                if(db != null){
+                    db.disconnect();
+                }
             }
         }
     }
@@ -191,7 +199,9 @@ public class TestConcurrency6672 extends SdbTestBase {
             }catch(BaseException e){
                 throw e;            
             }finally{
-                db.disconnect();
+                if(db != null){
+                    db.disconnect();
+                }
             }
         }
     }

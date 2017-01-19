@@ -62,7 +62,9 @@ public class TestSnappy6635 extends SdbTestBase {
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }finally{
-            sdb.disconnect();
+            if(sdb != null){
+                sdb.disconnect();
+            }
             System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
         }
     }
@@ -85,7 +87,9 @@ public class TestSnappy6635 extends SdbTestBase {
         }catch(BaseException e){
             Assert.fail(e.getMessage());
         }finally{
-            db.disconnect();
+            if(db != null){
+                db.disconnect();
+            }
         }
     }
     
