@@ -1,7 +1,7 @@
 tdd/cpp: rg.cpp用例写死group等参数，手工跑不了，无法上ci
 
 driver/java用例：
-com.sequoiadb.auth  ----用例问题，需要修改用例（将localhost转成ip地址），责任人：陈思琴
+com.sequoiadb.auth  ----用例问题，需要修改用例（将localhost转成ip地址），责任人：陈思琴 已调整2017.1.19
 com.sequoiadb.clustermanager  ----用例问题，需要修改用例（将localhost转成ip地址） 责任人：赵育  已调整2017.1.19
 
 story/java用例：
