@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Node.NodeStatus;
 import com.sequoiadb.base.ReplicaGroup;
+import com.sequoiadb.base.ReplicaNode;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.metadata.CommLib;
@@ -38,7 +39,7 @@ public class ClusterManager7071 extends SdbTestBase{
 	private String dataRGName = "dataAddGroup7071";
 	private SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS");
 	private String coordAddr;
-	private String reservedDir;
+	private String workDir;
 	private int reservedPortBegin;
 	private String coordIP;
 	private CommLib commlib = new CommLib();
@@ -46,9 +47,8 @@ public class ClusterManager7071 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		this.coordAddr = SdbTestBase.coordUrl;
-		this.reservedDir = SdbTestBase.reservedDir;
+		this.workDir = SdbTestBase.workDir;
 		this.reservedPortBegin = SdbTestBase.reservedPortBegin;
-		this.coordIP = SdbTestBase.hostName;
 		try{
 			System.out.println("the TestCase: "+ this.getClass().getName() + 
 					" begin at:" + df.format(new Date().getTime()));
@@ -56,6 +56,8 @@ public class ClusterManager7071 extends SdbTestBase{
 			if(commlib.isStandAlone(sdb)){
 				throw new SkipException("run mode is standalone,test case skip");
 			}
+			//get hostname
+			coordIP = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
 		}catch(BaseException e){
 			Assert.fail("prepare env failed" + e.getMessage());
 		}
@@ -80,7 +82,7 @@ public class ClusterManager7071 extends SdbTestBase{
 	public void test(){
 		//set node configure
 		int dataPortAdd1 = reservedPortBegin + 710 ;
-		String dataPathAdd1 = reservedDir + "data/" + dataPortAdd1 + "/";
+		String dataPathAdd1 = workDir + dataPortAdd1 + "/";
 		BSONObject dataConfigue = null;
 		
 		//create data groups

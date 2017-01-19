@@ -33,7 +33,7 @@ public class ClusterManager7069 extends SdbTestBase{
 	private String dataRGName1 = "dataAddGroup70691";
 	private String dataRGName2 = "dataAddGroup70692";
 	private String coordAddr;
-	private String reservedDir;
+	private String workDir;
 	private int reservedPortBegin;
 	private String coordIP;
 	private CommLib commlib = new CommLib();
@@ -41,9 +41,8 @@ public class ClusterManager7069 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		this.coordAddr = SdbTestBase.coordUrl;
-		this.reservedDir = SdbTestBase.reservedDir;
+		this.workDir = SdbTestBase.workDir;
 		this.reservedPortBegin = SdbTestBase.reservedPortBegin;
-		this.coordIP = SdbTestBase.hostName;
 		try{
 			System.out.println("the TestCase: "+ this.getClass().getName() + 
 					" begin at:" + df.format(new Date().getTime()));
@@ -51,6 +50,8 @@ public class ClusterManager7069 extends SdbTestBase{
 			if(commlib.isStandAlone(sdb)){
 				throw new SkipException("run mode is standalone,test case skip");
 			}
+			//get hostname
+			coordIP = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
 		}catch(BaseException e){
 			Assert.fail("prepare env failed" + e.getMessage());
 		}
@@ -77,11 +78,11 @@ public class ClusterManager7069 extends SdbTestBase{
 	public void test(){
 		//set node configure
 		int dataPortAdd1 = reservedPortBegin + 690 ;
-		String dataPathAdd1 = reservedDir + "data/" + dataPortAdd1 + "/";
+		String dataPathAdd1 = workDir + dataPortAdd1 + "/";
 		BSONObject dataConfigue = null;
 		
 		int dataPortAdd2 = reservedPortBegin + 700 ;
-		String dataPathAdd2 = reservedDir + "data/" + dataPortAdd2 + "/";
+		String dataPathAdd2 = workDir + dataPortAdd2 + "/";
 		BSONObject dataConfigue1 = (BSONObject) JSON.parse("{KeepData:true}");
 		
 		ReplicaGroup dataRGAdd1 = null;

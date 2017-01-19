@@ -16,6 +16,7 @@ import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.metadata.CommLib;
+import com.sequoiadb.net.ServerAddress;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
@@ -37,7 +38,7 @@ public class ClusterManager7064 extends SdbTestBase{
 	private SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS");
 	private String coordIP;
 	private String coordAddr;
-	private String reservedDir;
+	private String workDir;
 	private int reservedPortBegin;
 	private int cataPortAdd;
 	private CommLib commlib = new CommLib();
@@ -45,9 +46,9 @@ public class ClusterManager7064 extends SdbTestBase{
 	@BeforeClass
 	public void setUp(){
 		this.coordAddr = SdbTestBase.coordUrl;
-		this.reservedDir = SdbTestBase.reservedDir;
+		this.workDir = SdbTestBase.workDir;
 		this.reservedPortBegin = SdbTestBase.reservedPortBegin;
-		this.coordIP = SdbTestBase.hostName;
+		//this.coordIP = SdbTestBase.hostName;
 		try{
 			System.out.println("the TestCase: "+ this.getClass().getName() + 
 					" begin at:" + df.format(new Date().getTime()));
@@ -55,6 +56,8 @@ public class ClusterManager7064 extends SdbTestBase{
 			if(commlib.isStandAlone(sdb)){
 				throw new SkipException("run mode is standalone,test case skip");
 			}
+			//get hostname
+			coordIP = sdb.getReplicaGroup(cataGroupName).getMaster().getHostName();
 		}catch(BaseException e){
 			Assert.fail("prepare env failed" + e.getMessage());
 		}
@@ -80,7 +83,7 @@ public class ClusterManager7064 extends SdbTestBase{
 	public void test(){
 		//create cata Node
 		cataPortAdd = reservedPortBegin + 640 ;
-		String cataPathAdd = reservedDir + "/cata/" + cataPortAdd + "/";
+		String cataPathAdd = workDir + cataPortAdd + "/";
 		BSONObject cataConfigue = null;
 		
 		ReplicaGroup cataGroup = null;
