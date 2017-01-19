@@ -13,6 +13,7 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
    protected static $err ;
    protected static $nodes ;
    protected $testdb ;
+   protected $testdb1 ;
 
    public static function setUpBeforeClass()
    {
@@ -52,24 +53,36 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
       $this->testdb = new Sequoiadb();
       $err = $this->testdb->connect( self::$nodes[0] );
       $this->assertEquals( 0, $err['errno'],
-                   '连接'.self::$nodes[0].'失败' ) ;
+                   '..'.self::$nodes[0].'..' ) ;
+      $this->testdb1 = new Sequoiadb() ;
+      $err = $this->testdb1->connect( self::$nodes[0] );
+      $this->assertEquals( 0, $err['errno'],
+                   '..'.self::$nodes[0].'..' ) ;
    }
-    
+
    public function testForceSession()
    {
       $sessionID = -1 ;
       $cursor = $this->testdb->list( SDB_LIST_SESSIONS_CURRENT ) ;
       $curerr = $this->testdb->getError() ;
-      $this->assertEquals( 0, $curerr['errno'], 'list( SDB_LIST_SESSIONS_CURRENT ) 失败' ) ;
+      $this->assertEquals( 0, $curerr['errno'], 'list( SDB_LIST_SESSIONS_CURRENT ) ..' ) ;
       $find = False;
       while( $record = $cursor->next() )
       {
          $sessionID = $record['SessionID'] ;
+         echo 
          $find = True;
       }
-      $this->assertEquals( $find, True, 'list(SDB_LIST_SESSIONS_CURRENT) 返回为空' ) ;
+      $this->assertEquals( $find, True, 'list(SDB_LIST_SESSIONS_CURRENT) ....' ) ;
+      #$curerr = $this->testdb->forceSession( $sessionID ) ;
+      #$this -> assertEquals( 0, $curerr['errno'], 'forceSession..' );
+      
+      
+      $curerr = $this->testdb1->forceSession( $sessionID ) ;
+      $this->assertEquals( 0, $curerr['errno'], 'forceSession failed' );
+     
       $curerr = $this->testdb->forceSession( $sessionID ) ;
-      $this -> assertEquals( -16, $curerr['errno'], 'forceSession错误' );
+      $this->assertEquals( -15, $curerr['errno'], 'is exist' );
    }
    
    public function testForceSessionWithOption()
@@ -88,12 +101,12 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
 
       if( $isFind )
       {
-         //有session
+         //.session
          $hostname = explode( ':', $nodename ) ;
          $svcname  = $hostname[1] ;
          $hostname = $hostname[0] ;
          $err = $this->testdb -> forceSession( $sessionID, array( 'HostName' => $hostname, 'svcname' => $svcname ) ) ;
-         $this -> assertEquals( -63, $err['errno'], 'forceSession错误' ) ;
+         $this -> assertEquals( -63, $err['errno'], 'forceSession..' ) ;
       }
    }
    
@@ -103,6 +116,12 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
       {
          $err = $this->testdb->close();
       }
+
+      if ( isset( $this->testdb1 ) )
+      {
+         $err = $this->testdb1->close();
+      }
+
    }
    
    public static function tearDownAfterClass()
@@ -111,4 +130,5 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
    }
 };
 ?>
+
 
