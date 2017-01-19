@@ -117,6 +117,7 @@ public class Split10527C extends SdbTestBase {
 
 			// 删除CS
 			db.dropCollectionSpace(customCSName);
+			Assert.assertEquals(db.isCollectionSpaceExist(customCSName), false);
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} catch (BaseException e) {

@@ -93,7 +93,9 @@ public class Split10528A extends SdbTestBase {
 
 			// 删除CL
 			db = new Sequoiadb(coordUrl, "", "");
-			db.getCollectionSpace(csName).dropCollection(clName);
+			CollectionSpace cs = db.getCollectionSpace(csName);
+			cs.dropCollection(clName);
+			Assert.assertEquals(cs.isCollectionExist(clName), false);
 
 			// 检测切分结果
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());

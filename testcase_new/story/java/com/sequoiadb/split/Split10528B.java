@@ -96,6 +96,7 @@ public class Split10528B extends SdbTestBase {
 
 			// 等待目标组数据上涨
 			db = new Sequoiadb(coordUrl, "", "");
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();
 			// flag为了防止split线程失败，产生死循环
 			while (dataNode.isCollectionSpaceExist(csName) != true && flag.get() == false) {
@@ -108,8 +109,9 @@ public class Split10528B extends SdbTestBase {
 			}
 
 			// 删除CL
+			CollectionSpace cs = db.getCollectionSpace(csName);
 			cs.dropCollection(clName);
-
+			Assert.assertEquals(cs.isCollectionExist(clName), false);
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} catch (BaseException e) {

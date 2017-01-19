@@ -97,6 +97,7 @@ public class Split10528C extends SdbTestBase {
 
 			// 等待目标组数据迁移完成
 			db = new Sequoiadb(coordUrl, "", "");
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			// dataNode =
 			// db.getReplicaGroup(destGroupName).getMaster().connect();
 			// // flag为了防止split线程失败，产生死循环
@@ -115,7 +116,9 @@ public class Split10528C extends SdbTestBase {
 				;
 
 			// 删除CL
-			db.getCollectionSpace(csName).dropCollection(clName);
+			CollectionSpace cs = db.getCollectionSpace(csName);
+			cs.dropCollection(clName);
+			Assert.assertEquals(cs.isCollectionExist(clName), false);
 
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
