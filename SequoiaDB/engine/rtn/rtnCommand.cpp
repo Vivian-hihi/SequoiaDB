@@ -567,52 +567,47 @@ namespace engine
 
       // Check if the compression type is specified. If yes, set the attribute.
       // Compression type can only be specified when Compressed is true.
-      ele = matcher.getField( FIELD_NAME_COMPRESSIONTYPE ) ;
-      if ( !ele.eoo() )
+      rc = rtnGetStringElement( matcher, FIELD_NAME_COMPRESSIONTYPE,
+                                &compressionType ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
       {
-         if ( !isCompressed )
-         {
-            PD_LOG( PDERROR, "Compression type is specified while Compressed "
-                    "option is false" ) ;
-            goto error ;
-         }
-
-         rtnGetStringElement ( matcher, FIELD_NAME_COMPRESSIONTYPE,
-                               &compressionType ) ;
-         if ( 0 == strcmp( compressionType, VALUE_NAME_LZW ) )
-         {
-            _compressorType = UTIL_COMPRESSOR_LZW ;
-         }
-         else if ( 0 == strcmp( compressionType, VALUE_NAME_SNAPPY ) )
+         if ( isCompressed )
          {
             _compressorType = UTIL_COMPRESSOR_SNAPPY ;
-         }
-         /*
-         else if ( 0 == strcmp( compressionType, VALUE_NAME_LZ4 ) )
-         {
-            _compressorType = UTIL_COMPRESSOR_LZ4 ;
-         }
-         else if ( 0 == strcmp( compressionType, VALUE_NAME_ZLIB ) )
-         {
-            _compressorType = UTIL_COMPRESSOR_ZLIB ;
-         }
-         */
-         else
-         {
-            PD_LOG( PDERROR, "Compression type is invalid: %s", compressionType ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
          }
       }
       else
       {
-         /*
-          * If 'Compressed' is set as true, but no 'CompressionType' is set,
-          * the 'CompressionType' is set to 'snappy' by default.
-          */
-         if ( isCompressed )
+         if ( SDB_OK == rc )
          {
-            _compressorType = UTIL_COMPRESSOR_SNAPPY ;
+            if ( !isCompressed )
+            {
+               PD_LOG( PDERROR, "Compression type is specified while "
+                       "Compressed option is false" ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            if ( 0 == ossStrcmp( compressionType, VALUE_NAME_LZW ) )
+            {
+               _compressorType = UTIL_COMPRESSOR_LZW ;
+            }
+            else if ( 0 == ossStrcmp( compressionType, VALUE_NAME_SNAPPY ) )
+            {
+               _compressorType = UTIL_COMPRESSOR_SNAPPY ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Compression type[%s] is invalid",
+                       compressionType ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to get CompressionType, rc: %d", rc ) ;
+            goto error ;
          }
       }
 
