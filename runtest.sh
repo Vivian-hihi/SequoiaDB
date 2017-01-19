@@ -18,7 +18,8 @@ coordhostname="localhost"
 
 rsrvportbegin="26000"
 rsrvportend="27000"
-rsrvnodedir="/opt/sequoiadb/database/"
+runtest_path=`pwd`
+rsrvnodedir="${runtest_path}/database_runtest/"
 
 runresult=0
 
@@ -513,7 +514,7 @@ function mainRun()
 }
 
 # ***************************************************************
-#                       run entry
+#                       run entry: main
 # ***************************************************************
 
 analyPara $*
