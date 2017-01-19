@@ -39,6 +39,7 @@ public class TestSplit10882 extends SdbTestBase{
     private List<BSONObject> insertedRecs = new ArrayList<BSONObject>();
     private BSONObject startCondition = new BasicBSONObject();
     private BSONObject endCondition = new BasicBSONObject();
+    private int recsCnt;
     private int srcExpCnt;
     private int dstExpCnt;
     private int offSet;
@@ -85,9 +86,11 @@ public class TestSplit10882 extends SdbTestBase{
             cl.split(srcGroup, dstGroup, startCondition, endCondition);
             Commlib.checkSplitOnCoord(cl, insertedRecs);
             Sequoiadb srcDB = Commlib.getDataDB(sdb, srcGroup);
-            Commlib.checkSplitOnData(srcDB, clName, srcExpCnt, offSet);
+            int srcCnt = Commlib.checkSplitOnData(srcDB, clName, srcExpCnt, offSet);
             Sequoiadb dstDB = Commlib.getDataDB(sdb, dstGroup);
-            Commlib.checkSplitOnData(dstDB, clName, dstExpCnt, offSet);
+            int dstCnt = Commlib.checkSplitOnData(dstDB, clName, dstExpCnt, offSet);
+            Assert.assertEquals(srcCnt + dstCnt, 
+                    recsCnt, "srcCnt: " + srcCnt + "dstCnt: " + dstCnt + "recsCnt:" + recsCnt);
         }catch (BaseException e) {
             e.printStackTrace();
             Assert.fail(e.getMessage());
@@ -100,7 +103,7 @@ public class TestSplit10882 extends SdbTestBase{
         srcGroup = rgNames.get(0);
         dstGroup = rgNames.get(1);
         // initialize records to insert
-        int recsCnt = 1000;
+        recsCnt = 1000;
         for(int i = 0; i < recsCnt; i++){
             String dcmlStr = i + "12345.06789123456789012345";
             BSONDecimal decimal = new BSONDecimal(dcmlStr);

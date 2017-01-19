@@ -77,7 +77,7 @@ public class Commlib extends SdbTestBase {
         return new Sequoiadb(url, "", "");
     }
     
-    public static void checkSplitOnData(Sequoiadb dataDB, String clName, int expCnt, int offSet) {
+    public static int checkSplitOnData(Sequoiadb dataDB, String clName, int expCnt, int offSet) {
         try {
             DBCollection cl = dataDB.getCollectionSpace(csName).getCollection(clName);
             int actCnt = (int)cl.getCount();
@@ -86,6 +86,7 @@ public class Commlib extends SdbTestBase {
                         + "excepted count:[" + expCnt + "]"
                         + "the split result is wrong");
             }
+            return actCnt;
         } catch (BaseException e) {
             throw e;
         } finally {
