@@ -31,12 +31,21 @@ public abstract class SdbThreadBase implements Runnable {
 
 	public String getErrorMsg() {
 		join();
-		String str = new String();
+		String reStr = new String();
 		for (int i = 0; i < exceptionList.size(); i++) {
-			str += exceptionList.get(i).getMessage();
-			str += "\r\n";
+			//errorMsg
+			reStr += exceptionList.get(i).getMessage();
+			reStr += "\r\n";
+			
+			//stackMsg
+			StringBuffer stackBuffer = new StringBuffer();
+			StackTraceElement[] stackElements = exceptionList.get(i).getStackTrace();
+			for (int j = 0; j < stackElements.length; j++) {
+					stackBuffer.append(stackElements[j].toString()).append("\r\n");
+			}
+			reStr+=stackBuffer.toString();
 		}
-		return str;
+		return reStr;
 	}
 
 	// join所有线程
