@@ -109,9 +109,9 @@ public class Split10528B extends SdbTestBase {
 			}
 
 			// 删除CL
-			CollectionSpace cs = db.getCollectionSpace(csName);
-			cs.dropCollection(clName);
-			Assert.assertEquals(cs.isCollectionExist(clName), false);
+			CollectionSpace cs2 = db.getCollectionSpace(csName);
+			cs2.dropCollection(clName);
+			Assert.assertEquals(cs2.isCollectionExist(clName), false);
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} catch (BaseException e) {
