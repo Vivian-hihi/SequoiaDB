@@ -218,7 +218,7 @@ public class CommLib {
 				List<String> nodeAddrs = CommLib.getNodeAddress(sdb, dataGroupNames.get(i));
 				//direct node and compare node's data
 				int failCnt = 0;
-				int maxCnt = 200;
+				int maxCnt = 600;
 				boolean checkSucc = false;
 				do{
 					ArrayList<String> allNodeData = new ArrayList<String>();
@@ -248,7 +248,7 @@ public class CommLib {
 							}
 							else if(++failCnt < maxCnt){
 								try {
-									Thread.sleep(10);
+									Thread.sleep(500);
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
@@ -319,7 +319,7 @@ public class CommLib {
 					List<String> nodeAddrs = CommLib.getNodeAddress(sdb, groupName);
 					//direct node and compare node's data
 					int failCnt = 0;
-					int maxCnt = 30;
+					int maxCnt = 600;
 					boolean checkSucc = false;
 					do{
 						ArrayList<String> allNodeData = new ArrayList<String>();
@@ -351,7 +351,7 @@ public class CommLib {
 								}
 								else if(++failCnt < maxCnt){
 									try {
-										Thread.sleep(10);
+										Thread.sleep(500);
 									} catch (InterruptedException e) {
 										e.printStackTrace();
 									}
@@ -485,7 +485,7 @@ public class CommLib {
 			
 			//direct node and compare node's data
 			int failCnt = 0;
-			int maxCnt = 100;
+			int maxCnt = 600;
 			boolean checkSucc = false;
 			do{
 				ArrayList<String> allNodeData = new ArrayList<String>();
@@ -514,7 +514,7 @@ public class CommLib {
 						}
 						else if(++failCnt < maxCnt){
 							try {
-								Thread.sleep(10);
+								Thread.sleep(500);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
