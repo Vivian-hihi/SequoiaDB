@@ -23,10 +23,6 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  * @Author linsuqiang
  * @Date 2016-12-06
  * @Version 1.00
- * other:
- * 存在BUG,正在修正，故暂时跳过
- * 对应JIRA问题单：2111
- * 修正后请将本文件中@Test的enabled=false删除,并添加正确的错误码
  */
 public class TestTruncate170 extends SdbTestBase {
     private Sequoiadb sdb = null;
@@ -60,8 +56,8 @@ public class TestTruncate170 extends SdbTestBase {
             System.out.println(this.getClass().getName()+" end at "+sdf.format(new Date()));
         }
     }
-    // to encounter the occasional problem, set the repeat count as 100
-    @Test(invocationCount = 100, enabled = false)
+    
+    @Test
     public void test(){
         TruncateThread truncateThread = new TruncateThread();
         QueryThread queryThread = new QueryThread();
@@ -107,8 +103,9 @@ public class TestTruncate170 extends SdbTestBase {
                 // doing query
                 cl.query();
             }catch(BaseException e){
-                // 此处应过滤错误码
-                throw e;
+                if(e.getErrorCode() != -23){
+                    throw e;
+                }
             }finally{
                 db.disconnect();
             }
