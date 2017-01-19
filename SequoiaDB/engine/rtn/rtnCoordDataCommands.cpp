@@ -1357,6 +1357,15 @@ namespace engine
       vector<BSONObj> boRecv ;
       CoordGroupList groupDstLst ;
 
+      INT32 preferedType = 0 ;
+
+      if ( cb->getCoordSession() &&
+           PREFER_REPL_MASTER != cb->getCoordSession()->getPreferReplType() )
+      {
+         preferedType = cb->getCoordSession()->getPreferReplType() ;
+         cb->getCoordSession()->setPreferReplType( PREFER_REPL_MASTER ) ;
+      }
+
       /******************************************************************
        *              PREPARE PHASE                                     *
        ******************************************************************/
@@ -1617,6 +1626,10 @@ namespace engine
       }
 
    done :
+      if ( 0 != preferedType && cb->getCoordSession() )
+      {
+         cb->getCoordSession()->setPreferReplType( preferedType ) ;
+      }
       if ( pCommandName && strName )
       {
          PD_AUDIT_COMMAND( AUDIT_DDL, pCommandName + 1, AUDIT_OBJ_CL,
