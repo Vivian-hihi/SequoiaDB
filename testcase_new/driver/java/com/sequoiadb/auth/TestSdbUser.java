@@ -6,7 +6,9 @@ import java.util.Date;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
@@ -34,7 +36,7 @@ public class TestSdbUser extends SdbTestBase{
     private String coordAddr;
     private String commCSName;
     
-    @BeforeTest
+    @BeforeClass
     public void setUp() {
         try {
             this.coordAddr = SdbTestBase.coordUrl;
@@ -42,23 +44,19 @@ public class TestSdbUser extends SdbTestBase{
             System.out.println("the TestCase Name:" + this.getClass().getName() + 
                     ". the TestCase begin at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             this.sdb = new Sequoiadb(this.coordAddr, "", "");
-            if (!this.sdb.isCollectionSpaceExist(this.commCSName)) {
-                try{
-                    this.cs = this.sdb.createCollectionSpace(this.commCSName); 
-                } catch (BaseException e) {
-                    Assert.assertEquals(-33, e.getErrorCode(), e.getMessage());
-                }
-            } else {
-                this.cs = this.sdb.getCollectionSpace(this.commCSName);
-            }
-            if (this.cs.isCollectionExist(clName)) {
-                this.cs.dropCollection(clName);
-            }
-            this.cl = this.cs.createCollection(clName);
+            this.cs = this.sdb.getCollectionSpace(this.commCSName);
+            createCL();
+            
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestSdbUser7119 setUp error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestSdbUser7119 setUp error, error description:" + e.getMessage());
         }
+    }
+    
+    public void createCL() {
+        if (this.cs.isCollectionExist(clName)) {
+            this.cs.dropCollection(clName);
+        }
+        this.cl = this.cs.createCollection(clName);
     }
     
     @Test
@@ -93,22 +91,16 @@ public class TestSdbUser extends SdbTestBase{
             }
             cursor.close();
             Assert.assertEquals(actual, bsonObject);
+            //test node.connect  disconnect
             Node node = null;
             try {
-                ReplicaGroup replicaGroup = this.sdb.getReplicaGroup("SYSCoord");
-                node = replicaGroup.getNode(this.coordAddr);
-                System.out.println("node ======= " +node); 
+                node = this.sdb.getReplicaGroup("SYSCatalogGroup").getMaster();
                 node.connect("admin", "admin");
                 node.disconnect();
             } catch (BaseException e) {
                 Assert.fail("connect or disconnect node failed, errMsg:" + e.getMessage());
             } 
-//            finally {
-//               node.disconnect();
-//            }
-            //this.sdb.removeUser("admin", "admin");
         }catch (BaseException e) {
-            System.out.println("Sequoiadb driver TestSdbUser testSdbUser error, error description:" + e.getMessage());
             Assert.fail("Sequoiadb driver TestSdbUser testSdbUser error, error description:" + e.getMessage());
         }
     }
@@ -129,23 +121,27 @@ public class TestSdbUser extends SdbTestBase{
         }
     }
     
-    @AfterTest
+    @AfterClass
     public void tearDown() {
-        if (this.cs.isCollectionExist(clName)) {
-            this.cs.dropCollection(clName);
-        }
         try {
-            this.sdb.removeUser("admin", "admin");
-            this.sdb.removeUser("admin1", "");
-        }catch (BaseException e) {
-            if (-300 !=e.getErrorCode()) {
-                Assert.assertTrue(false, "drop user, errMsg: " + e.getMessage());
+            if (this.cs.isCollectionExist(clName)) {
+                this.cs.dropCollection(clName);
             }
+            try {
+                this.sdb.removeUser("admin", "admin");
+                this.sdb.removeUser("admin1", "");
+            }catch (BaseException e) {
+                if (-300 !=e.getErrorCode()) {
+                    Assert.assertTrue(false, "drop user, errMsg: " + e.getMessage());
+                }
+            }
+            
+            this.sdb.disconnect();
+            System.out.println("the TestCase Name:" + this.getClass().getName() + 
+                    ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+        } catch (BaseException e) {
+            Assert.fail(e.getMessage());
         }
-        
-        this.sdb.disconnect();
-        System.out.println("the TestCase Name:" + this.getClass().getName() + 
-                ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
     } 
 }
  
