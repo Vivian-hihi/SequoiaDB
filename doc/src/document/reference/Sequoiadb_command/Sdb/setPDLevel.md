@@ -7,7 +7,7 @@
 
 | 参数名 | 参数类型 | 描述 | 是否必填 |
 | ------ | ------ | ------ | ------ |
-| level  | int    | 日志级别，取值 0~5，分别对应<br> 0: PDSEVERE<br> 1: PDERROR<br> 2: PDEVENT<br> 3: PDWARNING<br> 4: PDINFO<br> 5: PDDEBUG   | 是 |
+| level  | int    | 日志级别，取值 0~5，分别对应<br> 0: SEVERE<br> 1: ERROR<br> 2: EVENT<br> 3: WARNING<br> 4: INFO<br> 5: DEBUG   | 是 |
 | options | Json对象 | **[命令位置参数](reference/Sequoiadb_command/Overview/location.md)** | 否 |
 
 > **Note:**
@@ -48,5 +48,5 @@
  ```lang-javascript
  // 连接节点
  > db = new Sdb( "localhost", 11810 )
- > db.setPDLevel( 3, {Grlobal:true} )
+ > db.setPDLevel( 3, {Global:true} )
  ```

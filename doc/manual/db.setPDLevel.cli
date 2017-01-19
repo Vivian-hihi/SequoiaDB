@@ -30,12 +30,12 @@ Set the node's diagnostic level and take effect.
 \fBlevel (int)\fR
 .br
        The diagnostic level, value 0~5. value means:
-       0: PDSEVERE
-       1: PDERROR
-       2: PDEVENT
-       3: PDWARNING
-       4: PDINFO
-       5: PDDEBUG
+       0: SEVERE
+       1: ERROR
+       2: EVENT
+       3: WARNING
+       4: INFO
+       5: DEBUG
 .sp 2
 \fBoptions (json object)\fR
 .br
