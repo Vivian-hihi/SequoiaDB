@@ -1107,6 +1107,7 @@ namespace engine
          bobGroupInfo.append( FIELD_NAME_ROLE, SDB_ROLE_CATALOG );
          bobGroupInfo.append( FIELD_NAME_VERSION, CAT_VERSION_BEGIN );
          bobGroupInfo.append( FIELD_NAME_GROUP_STATUS, SDB_CAT_GRP_ACTIVE );
+         bobGroupInfo.append( FIELD_NAME_SECRETID, (INT32)ossRand() ) ;
 
          BSONObjBuilder bobNodeInfo;
          rc = _getNodeInfoByConf( boConf, bobNodeInfo );
@@ -1784,6 +1785,7 @@ namespace engine
          bobGroupInfo.append( CAT_ROLE_NAME, role ) ;
          bobGroupInfo.append( CAT_VERSION_NAME, CAT_VERSION_BEGIN ) ;
          bobGroupInfo.append( CAT_GROUP_STATUS, status ) ;
+         bobGroupInfo.append( FIELD_NAME_SECRETID, (INT32)ossRand() ) ;
          BSONObjBuilder sub( bobGroupInfo.subarrayStart( CAT_GROUP_NAME ) ) ;
          sub.done() ;
          BSONObj boGroupInfo = bobGroupInfo.obj() ;

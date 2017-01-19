@@ -65,6 +65,7 @@
 #define FIELD_NAME_GROUP                     "Group"
 #define FIELD_NAME_GROUPS                    "Groups"
 #define FIELD_NAME_VERSION                   "Version"
+#define FIELD_NAME_SECRETID                  "SecretID"
 #define FIELD_NAME_EDITION                   "Edition"
 #define FIELD_NAME_W                         "ReplSize"
 #define FIELD_NAME_PRIMARY                   "PrimaryNode"

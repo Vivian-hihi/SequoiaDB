@@ -119,7 +119,8 @@ namespace engine
       DPS_LSN                 endLsn ;
       _MsgRouteID             identity ;
       UINT8                   weight ;
-      CHAR                    pad[7] ;
+      CHAR                    pad[3] ;
+      CHAR                    hashCode[4] ;
       CLS_GROUP_VERSION       version ;
       CLS_GROUP_ROLE          role ;         // self role
       CLS_SYNC_STATUS         syncStatus ;
@@ -194,8 +195,13 @@ namespace engine
       _MsgRouteID local ;
       UINT32 localBeatID ;
       CLS_GROUP_VERSION version ;
+
+   private:
+      UINT32 _hashCode ;
+
+   public:
       _clsGroupInfo():localBeatID( CLS_BEATID_BEGIN ),
-                      version( 0 )
+                      version( 0 ), _hashCode( 0 )
       {
          local.value = 0 ;
          primary.value = 0 ;
@@ -214,6 +220,9 @@ namespace engine
          }
          return localBeatID ;
       }
+
+      void     setHashCode( UINT32 hashCode ) { _hashCode = hashCode ; }
+      UINT32   getHashCode() const { return _hashCode ; }
 
       UINT32 groupSize ()
       {

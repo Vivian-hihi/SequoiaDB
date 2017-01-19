@@ -165,14 +165,16 @@ namespace engine
                               CLS_GROUP_VERSION &version,
                               string &groupName,
                               map<UINT64, _netRouteNode> &group,
-                              UINT32 *pPrimary = NULL ) ;
+                              UINT32 *pPrimary = NULL,
+                              UINT32 *pSecID = NULL ) ;
 
    INT32 msgParseCatGroupObj( const CHAR* objdata,
                               CLS_GROUP_VERSION &version,
                               UINT32 &groupID,
                               string &groupName,
                               map<UINT64, _netRouteNode> &group,
-                              UINT32 *pPrimary = NULL ) ;
+                              UINT32 *pPrimary = NULL,
+                              UINT32 *pSecID = NULL ) ;
 
    const CHAR* getServiceName ( const bson::BSONElement &beService,
                                 INT32 serviceType ) ;

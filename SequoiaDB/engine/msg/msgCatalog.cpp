@@ -51,7 +51,8 @@ namespace engine
                               CLS_GROUP_VERSION &version,
                               string &groupName,
                               map<UINT64, _netRouteNode> &group,
-                              UINT32 *pPrimary )
+                              UINT32 *pPrimary,
+                              UINT32 *pSecID )
    {
       SDB_ASSERT( NULL != msg, "data should not be NULL" ) ;
       INT32 rc = SDB_OK ;
@@ -67,7 +68,7 @@ namespace engine
          UINT32 groupID = 0 ;
          rc = msgParseCatGroupObj( MSG_GET_INNER_REPLY_DATA( pHeader ),
                                    version, groupID, groupName,
-                                   group, pPrimary ) ;
+                                   group, pPrimary, pSecID ) ;
       }                               
    done :
       PD_TRACE_EXITRC ( SDB_MSGPASCATGRPRES, rc );
@@ -80,7 +81,8 @@ namespace engine
                               UINT32 &groupID,
                               string &groupName,
                               map<UINT64, _netRouteNode> &group,
-                              UINT32 *pPrimary )
+                              UINT32 *pPrimary,
+                              UINT32 *pSecID )
    {
       SDB_ASSERT( NULL != objdata, "data should not be NULL" ) ;
       INT32 rc = SDB_OK ;
@@ -105,6 +107,24 @@ namespace engine
          goto error ;
       }
       groupName = ele.str() ;
+
+      ele = obj.getField( FIELD_NAME_SECRETID ) ;
+      if ( ele.eoo() )
+      {
+         if ( pSecID )
+         {
+            *pSecID = 0 ;
+         }
+      }
+      else if ( NumberInt != ele.type() )
+      {
+         PD_LOG( PDWARNING, "parse field[%s] error", FIELD_NAME_SECRETID ) ;
+         goto error ;
+      }
+      else if ( pSecID )
+      {
+         *pSecID = ele.numberInt() ;
+      }
 
       ele = obj.getField( CAT_ROLE_NAME ) ;
       if ( NumberInt != ele.type() )

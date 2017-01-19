@@ -669,6 +669,7 @@ namespace engine
       map<UINT64, _netRouteNode> group ;
       string groupName ;
       BOOLEAN changeStatus = FALSE ;
+      UINT32 grpHashCode = 0 ;
 
       if ( SDB_OK != MSG_GET_INNER_REPLY_RC(pHeader) )
       {
@@ -688,7 +689,8 @@ namespace engine
          goto error ;
       }
 
-      rc = msgParseCatGroupRes( msg, version, groupName, group ) ;
+      rc = msgParseCatGroupRes( msg, version, groupName, group,
+                                NULL, &grpHashCode ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "parse MsgCatGroupRes err, rc = %d", rc ) ;
@@ -705,6 +707,8 @@ namespace engine
          }
          rc = SDB_OK ;
       }
+      /// set hash code
+      _info.setHashCode( grpHashCode ) ;
 
       if ( !changeStatus )
       {
@@ -753,6 +757,7 @@ namespace engine
          msg.beat.identity = _info.local ;
          msg.beat.endLsn = expectLSN ;
          msg.beat.version = _info.version ;
+         *(UINT32*)msg.beat.hashCode = _info.getHashCode() ;
          msg.beat.role = _vote.primaryIsMe() ?
                          CLS_GROUP_ROLE_PRIMARY : CLS_GROUP_ROLE_SECONDARY ;
          msg.beat.beatID = _info.nextBeatID() ;
@@ -903,8 +908,13 @@ namespace engine
       const _clsGroupBeat &beat = msg->beat ;
       map<UINT64, _clsSharingStatus>::iterator itr=
                      _info.info.find( beat.identity.value ) ;
-      if ( _info.info.end() == itr && beat.version <= _info.version )
+      if ( *(UINT32*)beat.hashCode != _info.getHashCode() ||
+          ( _info.info.end() == itr && beat.version <= _info.version ) )
       {
+         PD_LOG( PDINFO, "Beat hashCode[%u] is not the same with self[%u] or "
+                 "node[%s] is not found in group information",
+                 *(UINT32*)beat.hashCode, _info.getHashCode(),
+                 routeID2String( beat.identity ).c_str() ) ;
          rc = SDB_REPL_INVALID_GROUP_MEMBER ;
          goto error ;
       }
