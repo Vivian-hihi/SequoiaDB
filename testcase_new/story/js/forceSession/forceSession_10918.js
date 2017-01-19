@@ -13,7 +13,7 @@
  c、连接catalog节点
  2、通过list()获取当前集群session（如list（3,{Global:false}））
  3、指定当前节点上的sessionID,执行db.forceSession(sessionID)终止会话
- 4、查看指定session是否存在
+ 4、查看指定session是否存在[指定session依然存在，2017-01-18改了代码，本来终止当前会话是可以的]
  */
 main();
 function main() {

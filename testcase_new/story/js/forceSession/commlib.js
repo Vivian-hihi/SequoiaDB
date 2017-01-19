@@ -56,3 +56,19 @@ function InfoByNodeName(nodename) {
         return null;
     }
 }
+
+
+
+/**
+ * 通过url获取连接
+ * @param url 例：sdbserver01:11820
+ */
+function getConn(url) {
+    var conn = null;
+    try {
+        conn = new Sdb(url);
+    } catch (e) {
+        throw buildException("connection to sdb by url[" + url + "] error", e);
+    }
+    return conn;
+}
