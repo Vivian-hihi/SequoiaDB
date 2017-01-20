@@ -11,6 +11,21 @@
  $ ./configure && make && make install
  ```
 
+> **Note:**
+>
+> PostgreSQL安装需要依赖readline，如果进行忽略readline编译，则生成的psql不支持“上”、“下”、“左”、“右”光标键。
+>
+> readline安装方法示例：
+>
+> 1. 环境：Ubuntu 12.04.3
+> 2. readline库可在ubuntu下自动安装，安装代码：
+>
+>    ```lang-javascript
+>    sudo apt-get install libreadline6-dev
+>    ```
+> 3. readline库安装完成
+> 　
+
 2. 切换用户
 
  ```lang-javascript
