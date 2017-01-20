@@ -31,8 +31,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  *                       c、目标组更新编目信息后删除cs（如直连目标组查看数据已迁移完成，或者直连编目节点查看cl信息中存在目标组，
  *                       修改cl） 4、查看切分和修改cl操作结果
  *                       备注：此CALSS验证B;修改分区表Shardingtype，Partition会报-6，为合理报错，
- *                       修改副本数时不报错，但可能会与split形成死锁,此用例暂未激活
- *                       问题单：报-6错误：1697,死锁：2229
+ *                        问题单：报-6错误：1697,死锁：2229(已修复)
  * @author huangqiaohui
  * @version 1.00
  *
@@ -45,8 +44,9 @@ public class Split10529B extends SdbTestBase {
 	private Sequoiadb commSdb = null;
 	private List<BSONObject> insertedData = new ArrayList<BSONObject>();
 	private AtomicBoolean flag = new AtomicBoolean(false);
+	private String customCSName = "testcaseCS_10529B";
 
-	@BeforeClass(enabled=false)
+	@BeforeClass
 	public void setUp() {
 
 		try {
@@ -66,7 +66,7 @@ public class Split10529B extends SdbTestBase {
 			srcGroupName = groupsName.get(0);
 			destGroupName = groupsName.get(1);
 
-			CollectionSpace cs = commSdb.getCollectionSpace(csName);
+			CollectionSpace cs = commSdb.createCollectionSpace(customCSName);
 			DBCollection cl = cs.createCollection(clName, (BSONObject) JSON
 					.parse("{ShardingKey:{'sk':1},ReplSize:1,ShardingType:'range',Group:'" + srcGroupName + "'}"));
 			insertData(cl);// 写入待切分的记录（1000）
@@ -93,7 +93,7 @@ public class Split10529B extends SdbTestBase {
 
 	}
 
-	@Test(enabled=false)
+	@Test(timeOut = 30 * 60 * 1000)
 	public void alterCL() {
 		Sequoiadb db = null;
 		Sequoiadb dataNode = null;
@@ -104,33 +104,25 @@ public class Split10529B extends SdbTestBase {
 			splitThread = new Split();
 			splitThread.start();
 
-			System.out.println("1");
 			// 等待目标组数据上涨
 			db = new Sequoiadb(coordUrl, "", "");
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			CheckReplSize(db, 1);
 			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
-			while (dataNode.isCollectionSpaceExist(csName) != true && flag.get() == false) {
+			while (dataNode.isCollectionSpaceExist(customCSName) != true && flag.get() == false) {
 			}
 
-			System.out.println("2");
-			CollectionSpace cs = dataNode.getCollectionSpace(csName);
+			CollectionSpace cs = dataNode.getCollectionSpace(customCSName);
 			while (cs.isCollectionExist(clName) != true && flag.get() == false) {
 			}
-
-			System.out.println("3");
-			DBCollection destCL = dataNode.getCollectionSpace(csName).getCollection(clName);
+			DBCollection destCL = dataNode.getCollectionSpace(customCSName).getCollection(clName);
 			while (destCL.getCount() == 0 && flag.get() == false) {
 			}
-			System.out.println("4");
 			// 修改CL
-			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-			System.out.println("5");
+			DBCollection cl = db.getCollectionSpace(customCSName).getCollection(clName);
 			cl.alterCollection((BSONObject) JSON.parse("{ReplSize:3}"));
-			System.out.println("6");
 			CheckReplSize(db, 3);
-			System.out.println("7");
 		} catch (BaseException e) {
-			e.printStackTrace();
 			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} finally {
@@ -149,7 +141,7 @@ public class Split10529B extends SdbTestBase {
 	private void CheckReplSize(Sequoiadb db, int size) {
 		DBCursor cursor = null;
 		try {
-			cursor = commSdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + csName + "." + clName + "\"}", null,
+			cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + customCSName + "." + clName + "\"}", null,
 					null);
 			List<BSONObject> tmp = new ArrayList<BSONObject>();
 			while (cursor.hasNext()) {
@@ -167,11 +159,12 @@ public class Split10529B extends SdbTestBase {
 
 	}
 
-	@AfterClass(enabled=false)
+	@AfterClass
 	public void tearDown() {
 		try {
-			CollectionSpace cs = commSdb.getCollectionSpace(csName);
-			cs.dropCollection(clName);
+			if (commSdb.isCollectionSpaceExist(customCSName)) {
+				commSdb.dropCollectionSpace(customCSName);
+			}
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
@@ -190,10 +183,9 @@ public class Split10529B extends SdbTestBase {
 			Sequoiadb sdb = null;
 			try {
 				sdb = new Sequoiadb(coordUrl, "", "");
-				DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+				DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
 				cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:100}"), // 切分
 						(BSONObject) JSON.parse("{sk:1000}"));
-				System.out.println("A");
 				// 期望目标组有900条符合{sk:{$gte:100,$lt:1000}}查询条件的数据,期望目标组共有900条数据
 				checkGroupData(sdb, 900, "{sk:{$gte:100,$lt:1000}}", 900, destGroupName);
 				// 校验源组
@@ -215,7 +207,7 @@ public class Split10529B extends SdbTestBase {
 		DBCursor cusor = null;
 		try {
 			dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
-			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
+			DBCollection cl = dataNode.getCollectionSpace(customCSName).getCollection(clName);
 			cusor = cl.query();
 			while (cusor.hasNext()) {
 				BSONObject obj = cusor.getNext();

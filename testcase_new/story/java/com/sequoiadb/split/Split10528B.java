@@ -40,6 +40,7 @@ public class Split10528B extends SdbTestBase {
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
 	private AtomicBoolean flag = new AtomicBoolean(false);
+	private String customCSName = "testcaseCS_10528B";
 
 	@BeforeClass()
 	public void setUp() {
@@ -60,7 +61,7 @@ public class Split10528B extends SdbTestBase {
 			}
 			srcGroupName = groupsName.get(0);
 			destGroupName = groupsName.get(1);
-			CollectionSpace cs = commSdb.getCollectionSpace(csName);
+			CollectionSpace cs = commSdb.createCollectionSpace(customCSName);
 			DBCollection cl = cs.createCollection(clName, (BSONObject) JSON
 					.parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'" + srcGroupName + "'}"));
 			insertData(cl);// 写入待切分的记录（1000）
@@ -68,7 +69,8 @@ public class Split10528B extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -84,7 +86,7 @@ public class Split10528B extends SdbTestBase {
 
 	}
 
-	@Test(timeOut=60*60*1000)
+	@Test(timeOut = 30 * 60 * 1000)
 	public void dropCL() {
 		Sequoiadb db = null;
 		Sequoiadb dataNode = null;
@@ -99,25 +101,23 @@ public class Split10528B extends SdbTestBase {
 			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();
 			// flag为了防止split线程失败，产生死循环
-			while (dataNode.isCollectionSpaceExist(csName) != true && flag.get() == false) {
+			while (dataNode.isCollectionSpaceExist(customCSName) != true && flag.get() == false) {
 			}
-			CollectionSpace cs = dataNode.getCollectionSpace(csName);
+			CollectionSpace cs = dataNode.getCollectionSpace(customCSName);
 			while (cs.isCollectionExist(clName) != true && flag.get() == false) {
 			}
-			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
+			DBCollection cl = dataNode.getCollectionSpace(customCSName).getCollection(clName);
 			while (cl.getCount() == 0 && flag.get() == false) {
 			}
 
 			// 删除CL
-			CollectionSpace cs2 = db.getCollectionSpace(csName);
-			cs2.dropCollection(clName);
-			Assert.assertEquals(cs2.isCollectionExist(clName), false);
+			db.getCollectionSpace(customCSName).dropCollection(clName);
+			Assert.assertEquals(db.getCollectionSpace(customCSName).isCollectionExist(clName), false);
+
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} catch (BaseException e) {
-			System.out.println("in");
-			Assert.assertEquals(e.getErrorCode(), -147,
-					e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.assertEquals(e.getErrorCode(), -147, e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -134,11 +134,11 @@ public class Split10528B extends SdbTestBase {
 	@AfterClass
 	public void tearDown() {
 		try {
-			if (commSdb.getCollectionSpace(csName).isCollectionExist(clName)) {
-				commSdb.getCollectionSpace(csName).dropCollection(clName);
+			if (commSdb.isCollectionSpaceExist(customCSName)) {
+				commSdb.dropCollectionSpace(customCSName);
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -155,7 +155,7 @@ public class Split10528B extends SdbTestBase {
 			Sequoiadb sdb = null;
 			try {
 				sdb = new Sequoiadb(coordUrl, "", "");
-				DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+				DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
 				cl.split(srcGroupName, destGroupName, 90);
 			} catch (BaseException e) {
 				throw e;

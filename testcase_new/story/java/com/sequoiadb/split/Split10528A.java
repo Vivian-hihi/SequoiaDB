@@ -37,7 +37,8 @@ public class Split10528A extends SdbTestBase {
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
-
+	
+	
 	@BeforeClass()
 	public void setUp() {
 
@@ -66,7 +67,8 @@ public class Split10528A extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -93,15 +95,23 @@ public class Split10528A extends SdbTestBase {
 
 			// 删除CL
 			db = new Sequoiadb(coordUrl, "", "");
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			CollectionSpace cs = db.getCollectionSpace(csName);
 			cs.dropCollection(clName);
-			Assert.assertEquals(cs.isCollectionExist(clName), false);
+			if(cs.isCollectionExist(clName)){
+				DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+				cl.insert("{a:-99}");
+			}
+			else{
+				Assert.assertEquals(db.getCollectionSpace(csName).isCollectionExist(clName), false);
+			}
+			//Assert.assertEquals(db.getCollectionSpace(csName).isCollectionExist(clName), false);
 
 			// 检测切分结果
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -147,
-					e.getMessage()+"\r\n"+Utils.getKeyStack(e,this) + " \r\nSplitThread:[" + splitThread.getErrorMsg() + "]  ");
+			Assert.assertEquals(e.getErrorCode(), -147, e.getMessage() + "\r\n" + Utils.getKeyStack(e, this)
+					+ " \r\nSplitThread:[" + splitThread.getErrorMsg() + "]  ");
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -119,7 +129,7 @@ public class Split10528A extends SdbTestBase {
 				commSdb.getCollectionSpace(csName).dropCollection(clName);
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -141,11 +151,15 @@ public class Split10528A extends SdbTestBase {
 					return;
 				}
 				cl.split(srcGroupName, destGroupName, 90);
-				throw new Exception("error split sucess");
+				// 如果删除成功，本次测试未碰撞到测试点
 			} catch (BaseException e) {
 				if (e.getErrorCode() != -23 && e.getErrorCode() != -147) {
+					e.printStackTrace();
 					throw e;
 				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
 			} finally {
 				if (sdb != null) {
 					sdb.disconnect();

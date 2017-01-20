@@ -3,10 +3,10 @@ package com.sequoiadb.split;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bson.BSONObject;
-import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -28,6 +27,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  *                       3、切分过程中执行删除cs操作，分别在如下阶段删除CS:
  *                       a、任务已下发还未开始执行（如执行split后，通过listTasks查看无任务，在此过程中删除cs）
  *                       b、迁移数据过程中（如直连目标组节点查看数据持续插入，可count查询数据量在增加）
+ * 
  *                       c、目标组更新编目信息后删除cs（如直连目标组查看数据已迁移完成，或者直连编目节点查看cl信息中存在目标组）
  *                       4、查看切分和删除cs操作结果 备注：验证C场景
  * @author huangqiaohui
@@ -71,7 +71,8 @@ public class Split10527C extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -86,10 +87,10 @@ public class Split10527C extends SdbTestBase {
 		}
 	}
 
-	@Test
+	@Test(timeOut = 30 * 60 * 1000)
 	public void dropCS() {
 		Sequoiadb db = null;
-		//Sequoiadb dataNode = null;
+		Sequoiadb dataNode = null;
 		Split splitThread = null;
 		try {
 			// 启动切分
@@ -98,31 +99,38 @@ public class Split10527C extends SdbTestBase {
 
 			// 等待目标组数据迁移完成
 			db = new Sequoiadb(coordUrl, "", "");
-			// dataNode =
-			// db.getReplicaGroup(destGroupName).getMaster().connect();//
+			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();//
 			// 获得目标组主节点链接
-			// while (dataNode.isCollectionSpaceExist(customCSName) != true &&
-			// flag.get() == false) {
-			// }
-			// CollectionSpace cs = dataNode.getCollectionSpace(customCSName);
-			// while (cs.isCollectionExist(clName) != true && flag.get() ==
-			// false) {
-			// }
-			// DBCollection cl =
-			// dataNode.getCollectionSpace(customCSName).getCollection(clName);
-			// while (cl.getCount() != 900 && flag.get() == false) {
-			// }
-			while (checkCatalog(db) != true && flag.get()!=true)
-				;
+			while (dataNode.isCollectionSpaceExist(customCSName) != true && flag.get() == false) {
+			}
+			CollectionSpace cs = dataNode.getCollectionSpace(customCSName);
+			while (cs.isCollectionExist(clName) != true && flag.get() == false) {
+			}
+			DBCollection cl = dataNode.getCollectionSpace(customCSName).getCollection(clName);
 
-			// 删除CS
+			while (cl.getCount() != 900 && flag.get() == false) {
+			}
+
+			// while (checkCatalog(db) != true && flag.get() != true)
+			// ;
+
+			// 删除CS,fock是为了随机覆盖：1、数据迁移完成，编目未更新；2、数据迁移完成，编目已更新
+			Random rd = new Random();
+			boolean fock = rd.nextBoolean();
+			if (fock) {
+				Thread.sleep(2000);
+			}
 			db.dropCollectionSpace(customCSName);
+
 			Assert.assertEquals(db.isCollectionSpaceExist(customCSName), false);
+
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -147,
-					e.getMessage()+"\r\n"+Utils.getKeyStack(e,this) + " \r\nSplitThread:[" + splitThread.getErrorMsg() + "]  ");
+			Assert.assertEquals(e.getErrorCode(), -147, e.getMessage() + "\r\n" + Utils.getKeyStack(e, this)
+					+ " \r\nSplitThread:[" + splitThread.getErrorMsg() + "]  ");
+		} catch (InterruptedException e) {
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (db != null) {
 				db.disconnect();
@@ -140,7 +148,7 @@ public class Split10527C extends SdbTestBase {
 				commSdb.dropCollectionSpace(customCSName);
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -148,41 +156,6 @@ public class Split10527C extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 		}
-	}
-
-	private boolean checkCatalog(Sequoiadb sdb) {
-		DBCursor dbc = null;
-		try {
-			dbc = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{Name:\"" + csName + "." + clName + "\"}", null, null);
-			BasicBSONList list = null;
-			if (dbc.hasNext()) {
-				list = (BasicBSONList) dbc.getNext().get("CataInfo");
-			} else {
-				return false;
-			}
-			BSONObject expectLowBound = (BSONObject) JSON.parse("{sk:100}");
-			BSONObject expectUpBound = (BSONObject) JSON.parse("{sk:1000}");
-			for (int i = 0; i < list.size(); i++) {
-				String groupName = (String) ((BSONObject) list.get(i)).get("GroupName");
-				if (groupName.equals(destGroupName)) {
-					BSONObject actualLowBound = (BSONObject) ((BSONObject) list.get(i)).get("LowBound");
-					BSONObject actualUpBound = (BSONObject) ((BSONObject) list.get(i)).get("UpBound");
-					if (actualLowBound.equals(expectLowBound) && actualUpBound.equals(expectUpBound)) {
-						return true;
-					} else {
-						Assert.fail("check catalog fail,expect lowBound and upBound:" + expectLowBound + ","
-								+ expectUpBound + " actual:" + actualLowBound + "," + actualUpBound);
-					}
-				}
-			}
-		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
-		} finally {
-			if (dbc != null) {
-				dbc.close();
-			}
-		}
-		return false;
 	}
 
 	class Split extends SdbThreadBase {

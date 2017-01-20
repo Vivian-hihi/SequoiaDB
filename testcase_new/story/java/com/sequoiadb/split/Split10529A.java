@@ -164,7 +164,8 @@ public class Split10529A extends SdbTestBase {
 		DBCursor cusor = null;
 		try {
 			dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
-			DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
+			CollectionSpace cs = dataNode.getCollectionSpace(csName);
+			DBCollection cl = cs.getCollection(clName);
 			cusor = cl.query();
 			while (cusor.hasNext()) {
 				BSONObject obj = cusor.getNext();

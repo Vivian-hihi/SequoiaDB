@@ -85,7 +85,7 @@ public class Split10527B extends SdbTestBase {
 		}
 	}
 
-	@Test(timeOut=60*60*1000)
+	@Test(timeOut=30*60*1000)
 	public void dropCS() {
 		Sequoiadb db = null;
 		Sequoiadb dataNode = null;
@@ -98,6 +98,7 @@ public class Split10527B extends SdbTestBase {
 			// 等待目标组数据开始上涨
 			db = new Sequoiadb(coordUrl, "", "");
 			dataNode = db.getReplicaGroup(destGroupName).getMaster().connect();// 获得目标组主节点链接
+
 			// flag为了防止split线程失败，产生死循环
 			while (dataNode.isCollectionSpaceExist(customCSName) != true && flag.get() == false) {
 			}
@@ -106,10 +107,12 @@ public class Split10527B extends SdbTestBase {
 			}
 			DBCollection cl = dataNode.getCollectionSpace(customCSName).getCollection(clName);
 			while (cl.getCount() == 0 && flag.get() == false) {
+				
 			}
 
 			// 删除CS
 			db.dropCollectionSpace(customCSName);
+			
 			Assert.assertEquals(db.isCollectionSpaceExist(customCSName), false);
 			
 			// 检测切分线程
