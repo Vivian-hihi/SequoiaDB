@@ -5015,18 +5015,20 @@ error :
       {
          if ( _isOpen )
          {
-            close() ;  
+            close() ;
          }
          _connection->_unregLob ( this ) ;
          _connection = NULL ;
       }
       if ( _pSendBuffer )
       {
-         SDB_OSS_FREE ( _pSendBuffer ) ;
+         SAFE_OSS_FREE ( _pSendBuffer ) ;
+         _sendBufferSize = 0 ;
       }
       if ( _pReceiveBuffer )
       {
-         SDB_OSS_FREE ( _pReceiveBuffer ) ;
+         SAFE_OSS_FREE ( _pReceiveBuffer ) ;
+         _receiveBufferSize = 0 ;
       }
    }
 
@@ -5044,31 +5046,20 @@ error :
       _collection = collection ;
    }
 
-   void _sdbLobImpl::_cleanup()
+   void _sdbLobImpl::_close()
    {
-      // not set _connection to been NULL,
-      // we need to use it in isClose()
+      // 1. we are not going to release send/receive buffer,
+      // let destructor do it
+      // 2. we will set _connection to be null in destructor
+      // for we still need to use the lock which is kept in it
+      _isOpen = FALSE ;
       _collection = NULL ;
       _contextID = -1 ;
       _mode = -1 ;
-      _oid = bson::OID() ;
-      _createTime = -1 ;
-      _lobSize = -1 ;
       _currentOffset = 0 ;
       _cachedOffset = 0 ;
       _cachedSize = 0 ;
-      _pageSize = 0 ;
       _dataCache = NULL ;
-      if ( _pSendBuffer )
-      {
-         SAFE_OSS_FREE ( _pSendBuffer ) ;
-         _sendBufferSize = 0 ;
-      }
-      if ( _pReceiveBuffer )
-      {
-         SAFE_OSS_FREE ( _pReceiveBuffer ) ;
-         _receiveBufferSize = 0 ;
-      }
    }
 
    BOOLEAN _sdbLobImpl::_dataCached()
@@ -5122,18 +5113,18 @@ error :
 
    INT32 _sdbLobImpl::_onceRead( CHAR *buf, UINT32 len, UINT32 *read )
    {
-      INT32 rc = SDB_OK ;
-      BOOLEAN locked ;
-      UINT32 needRead = len ;
-      UINT32 totalRead = 0 ;
-      CHAR *localBuf = buf ;
-      UINT32 onceRead = 0 ;
-      const MsgOpReply *reply = NULL ;
+      INT32 rc                 = SDB_OK ;
+      BOOLEAN locked           = FALSE ;
+      UINT32 needRead          = len ;
+      UINT32 totalRead         = 0 ;
+      CHAR *localBuf           = buf ;
+      UINT32 onceRead          = 0 ;
+      const MsgOpReply *reply  = NULL ;
       const MsgLobTuple *tuple = NULL ;
-      const CHAR *body = NULL ;
-      UINT32 alignedLen = 0 ;
-      SINT64 contextID = -1 ;
-      BOOLEAN result = TRUE ;
+      const CHAR *body         = NULL ;
+      UINT32 alignedLen        = 0 ;
+      SINT64 contextID         = -1 ;
+      BOOLEAN result           = TRUE ;
 
       if ( _dataCached() )
       {
@@ -5220,7 +5211,9 @@ error :
       *read = totalRead ;
    done:
       if ( locked )
+      {
          _connection->unlock() ;
+      }
       return rc ;
    error:
       goto done ;
@@ -5233,21 +5226,17 @@ error :
       BOOLEAN result = FALSE ;
       BOOLEAN locked = FALSE ;
 
+      // check wether the lob had been close or not
+      if ( !_isOpen || -1 == _contextID )
+      {
+         goto done ;
+      }
       // check
-      if (  !_connection )
+      if ( !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error;
       }
-      // check wether lob has been open or not
-      _connection->lock() ;
-      locked = TRUE ;
-      if ( !_isOpen )
-      {
-         goto done ;
-      }
-      locked = FALSE;
-      _connection->unlock() ;
       // build msg
       rc = clientBuildCloseLobMsg( &_pSendBuffer, &_sendBufferSize,
                                    0, 1, _contextID, 0,
@@ -5274,10 +5263,9 @@ error :
       // check return msg header
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       // release the resource hold in _sdbLobImpl
-      // and cleanup data member of this object
-      _cleanup() ;
-      // set lob to be close
-      _isOpen = FALSE ;
+      // and cleanup data member of this object then
+      // set this lob to be close
+      _close() ;
 
    done:
       if ( locked )
@@ -5296,24 +5284,23 @@ error :
       CHAR *localBuf = buf ;
       UINT32 onceRead = 0 ;
       UINT32 totalRead = 0 ;
-      BOOLEAN locked = FALSE ;
-      
+
       // check
+      if ( !_connection && !_isOpen )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
       if (  !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error;
       }
-      // check wether lob has been open or not
-      _connection->lock() ;
-      locked = TRUE ;
       if ( !_isOpen )
       {
          rc = SDB_LOB_NOT_OPEN ;
          goto error ;
       }
-      locked = FALSE;
-      _connection->unlock() ;
       // check argument
       if (  NULL == buf )
       {
@@ -5366,8 +5353,6 @@ error :
 
       *read = totalRead ;
    done:
-      if ( locked )
-         _connection->unlock() ;
       return rc ;
    error:
       *read = 0 ;
@@ -5382,23 +5367,23 @@ error :
       BOOLEAN locked = FALSE ;
       UINT32 totalLen = 0 ;
       const UINT32 maxSendLen = 2 * 1024 * 1024 ;
-      
+
       // check
+      if ( !_connection && !_isOpen )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
       if (  !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error;
       }
-      // check wether lob has been open or not
-      _connection->lock() ;
-      locked = TRUE ;
       if ( !_isOpen )
       {
          rc = SDB_LOB_NOT_OPEN ;
          goto error ;
       }
-      locked = FALSE;
-      _connection->unlock() ;
       // check argument
       if ( NULL == buf )
       {
@@ -5455,7 +5440,9 @@ error :
       _lobSize += len ;
    done:
       if ( locked )
+      {
          _connection->unlock() ;
+      }
       return rc ;
    error:
       goto done ;
@@ -5467,21 +5454,21 @@ error :
       BOOLEAN locked = FALSE ;
       
       // check
+      if ( !_connection && !_isOpen )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
       if (  !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error;
       }
-      // check wether lob has been open or not
-      _connection->lock() ;
-      locked = TRUE ;
       if ( !_isOpen )
       {
          rc = SDB_LOB_NOT_OPEN ;
          goto error ;
       }
-      locked = FALSE;
-      _connection->unlock() ;
       if ( SDB_LOB_READ != _mode || -1 == _contextID )
       {
          rc = SDB_INVALIDARG ;
@@ -5522,129 +5509,53 @@ error :
          goto error ;
       }
    done:
-      if ( locked )
-         _connection->unlock() ;
       return rc ;
    error:
       goto done ;
    }
 
-    INT32 _sdbLobImpl::isClosed( BOOLEAN &flag )
+   INT32 _sdbLobImpl::isClosed( BOOLEAN &flag )
    {
-      INT32 rc = SDB_OK ;
       flag = isClosed();
-      return rc ;
+      return SDB_OK ;
    }
 
    INT32 _sdbLobImpl::getOid( bson::OID &oid )
    {
-      INT32 rc = SDB_OK ;
-
-      // check
-      if (  !_connection )
-      {
-         rc = SDB_NOT_CONNECTED ;
-         goto error;
-      }
       oid = getOid() ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
    
    INT32 _sdbLobImpl::getSize( SINT64 *size )
    {
-      INT32 rc = SDB_OK ;
-
-      // check
-      if (  !_connection )
-      {
-         rc = SDB_NOT_CONNECTED ;
-         goto error;
-      }
-      // get size
       *size = getSize() ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    INT32 _sdbLobImpl::getCreateTime ( UINT64 *millis )
    {
-      INT32 rc = SDB_OK ;
-
-      // check
-      if (  !_connection )
-      {
-         rc = SDB_NOT_CONNECTED ;
-         goto error;
-      }
       *millis = getCreateTime() ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
-    BOOLEAN _sdbLobImpl::isClosed()
+   BOOLEAN _sdbLobImpl::isClosed()
    {
-      BOOLEAN flag = TRUE ;
-      if ( NULL == _connection )
-      {
-         return flag ;
-      }
-      _connection->lock() ;
-      flag = !_isOpen ;
-      _connection->unlock() ;
-      return flag ;
+      return !_isOpen ;
    }
 
    bson::OID _sdbLobImpl::getOid()
    {
-      bson::OID oid = bson::OID() ;
-      // check
-      if (  !_connection )
-      {
-         return oid ;
-      }
-      _connection->lock() ;
-      // get oid
-      oid = _oid ;
-      _connection->unlock() ;
-      return oid ;
+      return _oid ;
    }
    
    SINT64 _sdbLobImpl::getSize()
    {
-      SINT64 size = 0 ;
-
-      // check
-      if ( !_connection )
-      {
-         return -1 ;
-      }
-      _connection->lock() ;
-      // get size
-      size = _lobSize ;
-      _connection->unlock() ;
-      return size ;
+      return _lobSize ;
    }
 
    UINT64 _sdbLobImpl::getCreateTime ()
    {
-      UINT64 millis = 0 ;
-      // check
-      if ( !_connection )
-      {
-         return -1 ;
-      }
-      _connection->lock() ;
-      // get time
-      millis = _createTime ;
-      _connection->unlock() ;
-      return millis ;
+      return _createTime ;
    }
 
    /*
@@ -8150,7 +8061,6 @@ error :
       {
          ((_sdbLobImpl*)(*it))->_dropConnection () ;
          ((_sdbLobImpl*)(*it))->_dropCollection () ;
-         ((_sdbLobImpl*)(*it))->_cleanup () ;
          ((_sdbLobImpl*)(*it))->_close () ;
       }
       _lobs.clear() ;

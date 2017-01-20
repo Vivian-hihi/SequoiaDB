@@ -867,8 +867,7 @@ namespace sdbclient
       void _dropConnection() { _connection = NULL ; }
       void _setCollection( _sdbCollectionImpl *pCollection ) ;
       void _dropCollection() { _collection = NULL ; }
-      void _cleanup () ;
-      void _close() { _isOpen = FALSE ; }
+      void _close () ;
       BOOLEAN _dataCached() ;
       void _readInCache( void *buf, UINT32 len, UINT32 *read ) ;
       UINT32 _reviseReadLen( UINT32 needLen ) ;
