@@ -385,7 +385,6 @@
       <copy todir="${release_db_dir}/doc">
          <fileset dir="${srccode_dir}/../archive/" includes="*.pdf,*.chm"/>
       </copy>
-      <mkdir dir="${release_dir}/doc/manual"/>
       <copy todir="${release_db_dir}/doc/manual">
          <fileset dir="${srccode_dir}/doc/manual" />
       </copy>
