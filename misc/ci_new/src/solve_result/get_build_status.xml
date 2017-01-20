@@ -8,13 +8,45 @@
    <target name="get_build_status">
       <property file="${basedir}/src/conf/test.conf" />
       
-      <countstr str="&lt;failure&gt;"  resultproperty="fail_begin_num"/>
-      <countstr str="&lt;/failure&gt;" resultproperty="fail_end_num"/>
-        
+      <countstr str="&lt;failure&gt;"  resultproperty="fail_begin_num">
+         <path-elements>
+            <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
+         </path-elements>
+      </countstr>
+      
+      <countstr str="&lt;/failure&gt;" resultproperty="fail_end_num">
+         <path-elements>
+            <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
+         </path-elements>
+      </countstr>
+      
+      <!--loop find report xml length , file length is 0 tag fail -->
+      <var name="is_report_null" value="false"/>
+      <for param="filename">
+         <path>
+            <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
+         </path>
+         <sequential>
+            <countstr str="&lt;/testsuite&gt;" resultproperty="testsuitenum">
+               <path-elements>
+                  <fileset file="@{filename}"/>
+               </path-elements>
+            </countstr>
+            <if>
+               <equals arg1="${testsuitenum}" arg2="0"/>
+               <then>
+                  <var name="is_report_null" unset="true"/>
+                  <var name="is_report_null" value="true"/>
+               </then>
+            </if>
+         </sequential>
+      </for>
+      
       <condition property="build_status" value="successful" else="unstable">
          <and>
             <equals arg1="${fail_begin_num}" arg2="0"/>
             <equals arg1="${fail_end_num}" arg2="0"/>
+            <equals arg1="${is_report_null}" arg2="false"/>
          </and>
       </condition>
       <echo>build status is ${build_status}</echo>
@@ -24,6 +56,7 @@
    <macrodef name="countstr">
       <attribute name="resultproperty"/>
       <attribute name="str"/>
+      <element name="path-elements"/>
       <sequential>
          <var name="@{resultproperty}" unset="true"/>
          <resourcecount property="@{resultproperty}">
@@ -34,7 +67,7 @@
                      <containsstring contains="@{str}"/>
                   </tokenfilter>
                </filterchain>
-               <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
+               <path-elements/>
             </concat>
          </tokens>
          </resourcecount>
