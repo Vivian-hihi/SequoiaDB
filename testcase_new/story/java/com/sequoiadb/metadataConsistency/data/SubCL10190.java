@@ -98,7 +98,7 @@ public class SubCL10190 extends SdbTestBase {
 			if(e.getErrorCode() != -235 //-235:Duplicated attach collection partition
 					&& e.getErrorCode() != -23 
 					&& e.getErrorCode() != -34
-					&& e.getErrorCode() != 147){ //-147:Unable to lock
+					&& e.getErrorCode() != -147){ //-147:Unable to lock
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
@@ -108,7 +108,8 @@ public class SubCL10190 extends SdbTestBase {
 		try{
 			db.dropCollectionSpace(sCSName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34){  
+			if(e.getErrorCode() != -34
+					&& e.getErrorCode() != -147){  
 				Assert.fail(e.getMessage());
 			}
 		}finally{

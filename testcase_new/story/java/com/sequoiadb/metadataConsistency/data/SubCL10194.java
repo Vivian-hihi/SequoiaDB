@@ -157,7 +157,8 @@ public class SubCL10194 extends SdbTestBase {
 			sOpt.put("ReplSize", 0);
 			sdb.getCollectionSpace(sCSName).createCollection(sCLName, sOpt);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -22){  
+			if(e.getErrorCode() != -22
+					&& e.getErrorCode() != -147){ 
 				sdb.disconnect();
 				Assert.fail(e.getMessage());
 			}

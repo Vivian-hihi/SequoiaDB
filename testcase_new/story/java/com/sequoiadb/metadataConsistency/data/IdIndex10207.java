@@ -115,7 +115,8 @@ public class IdIndex10207 extends SdbTestBase {
 		try{
 			db.createCollectionSpace(csName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -33){
+			if(e.getErrorCode() != -33
+					&& e.getErrorCode() != -34){
 				db.disconnect();
 				Assert.fail(e.getMessage());
 			}
