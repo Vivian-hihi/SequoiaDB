@@ -704,7 +704,7 @@ namespace engine
          rc = _exportByExtents( cb, mbContext, &regSU ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Shadow copyback failed, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Shadow copy failed, rc: %d", rc ) ;
             goto error ;
          }
          rc = regSU.flush() ;

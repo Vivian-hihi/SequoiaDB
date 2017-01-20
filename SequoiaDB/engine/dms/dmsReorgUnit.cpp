@@ -388,6 +388,21 @@ namespace engine
             recordData.setData( compressedData, compressedDataSize,
                                 TRUE, FALSE ) ;
          }
+         else
+         {
+            // In any case of error, leave it, and use the original data.
+            if ( SDB_UTIL_COMPRESS_ABORT == rc )
+            {
+               PD_LOG( PDINFO, "Record compression aborted. "
+                       "Insert the original data. rc: %d", rc ) ;
+            }
+            else
+            {
+               PD_LOG( PDWARNING, "Record compression failed. "
+                       "Insert the original data. rc: %d", rc ) ;
+            }
+            rc = SDB_OK ;
+         }
       }
 
       dmsrecordSize *= DMS_RECORD_OVERFLOW_RATIO ;
