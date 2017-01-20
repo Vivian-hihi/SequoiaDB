@@ -233,6 +233,10 @@ static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs )
    {
       sptConvertor convertor( cx ) ;
       rc = convertor.toBson( obj, bs ) ;
+      if( rc )
+      {
+         engine::sdbSetErrMsg( convertor.getErrorMsg(), FALSE ) ;
+      }
       VERIFY( SDB_OK == rc ) ;
    }
 

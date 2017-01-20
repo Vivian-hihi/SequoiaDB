@@ -42,6 +42,7 @@
 #include "jsapi.h"
 #include "../client/bson/bson.h"
 #include <string>
+using namespace std ;
 
 /*
    sptConvertor
@@ -50,7 +51,7 @@ class sptConvertor
 {
 public:
    sptConvertor( JSContext *cx )
-   :_cx( cx )
+   :_cx( cx ), _hasSetErrMsg( FALSE )
    {
 
    }
@@ -64,6 +65,8 @@ public:
    INT32 toBson( JSObject *obj , bson **bs ) ;
 
    INT32 toBson( JSObject *obj, bson *bs ) ;
+
+   const CHAR* getErrorMsg() ;
 
    static INT32 toString( JSContext *cx,
                           const jsval &val,
@@ -130,12 +133,15 @@ private:
    INT32 _addSdbDate( JSObject *obj,
                       const CHAR *key,
                       bson *bs) ;
+   void _setErrorMsg( const CHAR *pErrMsg, BOOLEAN isReplace ) ;
 private:
    BOOLEAN _isValidOid( const CHAR *value ) ;
    BOOLEAN _isValidNumberLong( const CHAR *value ) ;
 
 private:
+   BOOLEAN _hasSetErrMsg ;
    JSContext *_cx ;
+   string _errorMsg ;
 } ;
 
 

@@ -96,10 +96,13 @@ INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
    INT32 rc = SDB_OK ;
    SDB_ASSERT( NULL != _cx && NULL != bs, "can not be NULL" ) ;
 
+   _hasSetErrMsg = FALSE ;
+
    /// can not use SDB_OSS_MALLOC
    *bs = bson_create() ;
    if ( NULL == *bs )
    {
+      _setErrorMsg( "Failed to allocate memory", FALSE ) ;
       rc = SDB_OOM ;
       goto error ;
    }
@@ -108,12 +111,14 @@ INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
    rc = _traverse( obj, *bs ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to call traverse", FALSE ) ;
       goto error ;
    }
 
    rc = bson_finish( *bs ) ;
    if ( rc )
    {
+      _setErrorMsg( "Failed to build bson", FALSE ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -133,15 +138,20 @@ INT32 sptConvertor::toBson( JSObject *obj, bson *bs )
 {
    INT32 rc = SDB_OK ;
    SDB_ASSERT( NULL != obj && NULL != bs, "can not be NULL" ) ;
+
+   _hasSetErrMsg = FALSE ;
+
    rc = _traverse( obj, bs ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to call traverse", FALSE ) ;
       goto error ;
    }
 
    rc = bson_finish( bs ) ;
    if ( rc )
    {
+      _setErrorMsg( "Failed to build bson", FALSE ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -149,6 +159,11 @@ done:
    return rc ;
 error:
    goto done ;
+}
+
+const CHAR* sptConvertor::getErrorMsg()
+{
+   return _errorMsg.c_str() ;
 }
 
 INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
@@ -163,6 +178,7 @@ INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
    properties = JS_Enumerate( _cx, obj ) ;
    if ( NULL == properties )
    {
+      _setErrorMsg( "System error", FALSE ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -174,6 +190,7 @@ INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
       std::string name ;
       if ( !JS_IdToValue( _cx, id, &fieldName ))
       {
+         _setErrorMsg( "Failed to get object field name", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -181,11 +198,13 @@ INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
       rc = _toString( fieldName, name ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion field name", FALSE ) ;
          goto error ;
       }
 
       if ( !JS_GetProperty( _cx, obj, name.c_str(), &fieldValue ))
       {
+         _setErrorMsg( "Failed to get object field value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -193,6 +212,7 @@ INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
       rc = _appendToBson( name, fieldValue, bs ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to call appendToBson", FALSE ) ;
          goto error ;
       }
    }
@@ -215,6 +235,7 @@ INT32 sptConvertor::_addObjectId( JSObject *obj,
    jsval value ;
    if ( !_getProperty( obj, "_str", JSTYPE_STRING, value ))
    {
+      _setErrorMsg( "ObjectId argument must be a string", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -222,11 +243,13 @@ INT32 sptConvertor::_addObjectId( JSObject *obj,
    rc = _toString( value, strValue ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to conversion ObjectId property", FALSE ) ;
       goto error ;
    }
 
    if ( 24 != strValue.length() )
    {
+      _setErrorMsg( "The length of ObjectId is not equal 24", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -255,6 +278,7 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
    if ( !_getProperty( obj, "_data",
                        JSTYPE_STRING, jsBin ))
    {
+      _setErrorMsg( "BinData 1st argument must be a string", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -262,6 +286,7 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
    if ( !_getProperty( obj, "_type",
                        JSTYPE_STRING, jsType ))
    {
+      _setErrorMsg( "BinData 2nd argument must be a string", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -269,12 +294,14 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
    rc = _toString( jsBin, strBin ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to conversion BinData bindata", FALSE ) ;
       goto error ;
    }
 
    rc = _toString( jsType, strType ) ;
    if ( SDB_OK != rc || strType.empty())
    {
+      _setErrorMsg( "Failed to conversion BinData type", FALSE ) ;
       goto error ;
    }
 
@@ -283,12 +310,14 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
       binType = boost::lexical_cast<INT32>( strType.c_str() ) ;
       if ( binType > 255 )
       {
+         _setErrorMsg( "Bad type for binary", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
    }
    catch ( std::bad_cast &e )
    {
+      _setErrorMsg( "Bad type for binary", FALSE ) ;
       PD_LOG( PDERROR, "bad type for binary:%s", strType.c_str() ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -297,6 +326,7 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
    decodeSize = getDeBase64Size( strBin.c_str() ) ;
    if ( decodeSize < 0 )
    {
+      _setErrorMsg( "Invalid bindata", FALSE ) ;
       PD_LOG( PDERROR, "invalid bindata %s", strBin.c_str() ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -306,6 +336,7 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
       decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
       if ( NULL == decode )
       {
+         _setErrorMsg( "Failed to allocate memory", FALSE ) ;
          PD_LOG( PDERROR, "failed to allocate mem." ) ;
          rc = SDB_OOM ;
          goto error ;
@@ -313,6 +344,7 @@ INT32 sptConvertor::_addBinData( JSObject *obj,
       memset ( decode, 0, decodeSize ) ;
       if ( base64Decode( strBin.c_str(), decode, decodeSize ) < 0 )
       {
+         _setErrorMsg( "Failed to decode base64 code", FALSE ) ;
          PD_LOG( PDERROR, "failed to decode base64 code" ) ;
          rc = SDB_INVALIDARG ;
          SDB_OSS_FREE( decode ) ;
@@ -346,6 +378,7 @@ INT32 sptConvertor::_addTimestamp( JSObject *obj,
    bson_timestamp_t btm ;
    if ( !_getProperty( obj, "_t", JSTYPE_STRING, value ))
    {
+      _setErrorMsg( "Timestamp 1st argument must be a string", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -353,6 +386,7 @@ INT32 sptConvertor::_addTimestamp( JSObject *obj,
    rc = _toString( value, strValue ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to conversion Timestamp property", FALSE ) ;
       goto error ;
    }
 
@@ -361,6 +395,7 @@ INT32 sptConvertor::_addTimestamp( JSObject *obj,
                                &usec ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to conversion Timestamp", FALSE ) ;
       goto error ;
    }
 
@@ -388,6 +423,7 @@ INT32 sptConvertor::_addRegex( JSObject *obj,
    if ( !_getProperty( obj, "_regex",
                        JSTYPE_STRING, jsRegex ))
    {
+      _setErrorMsg( "Regex 1st argument must be a string", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -395,6 +431,7 @@ INT32 sptConvertor::_addRegex( JSObject *obj,
    if ( !_getProperty( obj, "_option",
                        JSTYPE_STRING, jsOption ))
    {
+      _setErrorMsg( "Regex 2nd argument must be a string", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -402,12 +439,14 @@ INT32 sptConvertor::_addRegex( JSObject *obj,
    rc = _toString( jsRegex, strRegex ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to conversion Regex regex", FALSE ) ;
       goto error ;
    }
 
    rc = _toString( jsOption, strOption ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to conversion Regex options", FALSE ) ;
       goto error ;
    }
 
@@ -450,6 +489,8 @@ INT32 sptConvertor::_addNumberLong( JSObject *obj,
       if ( !_getProperty( obj, "_v",
                           JSTYPE_STRING, jsV ) )
       {
+         _setErrorMsg( "NumberLong 1st argument must be a string or a number",
+                       FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -457,6 +498,7 @@ INT32 sptConvertor::_addNumberLong( JSObject *obj,
       rc = _toString( jsV, strv ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
          goto error ;
       }
 
@@ -466,6 +508,7 @@ INT32 sptConvertor::_addNumberLong( JSObject *obj,
       }
       catch ( std::bad_cast &e )
       {
+         _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -475,6 +518,7 @@ INT32 sptConvertor::_addNumberLong( JSObject *obj,
       rc = _toDouble( jsV, fv ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
          goto error ;
       }
       n = fv ;
@@ -501,6 +545,7 @@ INT32 sptConvertor::_addSdbDate( JSObject *obj,
       rc = _toString( value, strValue ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Date", FALSE ) ;
          goto error ;
       }
 
@@ -513,6 +558,7 @@ INT32 sptConvertor::_addSdbDate( JSObject *obj,
          }
          catch( boost::bad_lexical_cast &e )
          {
+            _setErrorMsg( "Failed to conversion Date", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -524,12 +570,14 @@ INT32 sptConvertor::_addSdbDate( JSObject *obj,
       rc = _toDouble( value, fv ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Date", FALSE ) ;
          goto error ;
       }
       tm = fv ;
    }
    else
    {
+      _setErrorMsg( "Date 1st argument must be a string or a number", FALSE ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -582,6 +630,7 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    }
    else
    {
+      _setErrorMsg( "Unknow js object type", FALSE ) ;
       rc = SDB_INVALIDARG ;
    }
 
@@ -634,6 +683,7 @@ INT32 sptConvertor::_getDecimalPrecision( const CHAR *precisionStr,
    rc = sscanf ( precisionStr, "%d,%d", precision, scale ) ;
    if ( 2 != rc )
    {
+      _setErrorMsg( "Invalid decimal", FALSE ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -666,6 +716,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
    std::string name ;
    if ( !JS_IdToValue( _cx, id, &fieldName ))
    {
+      _setErrorMsg( "Failed to get object field name", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -673,6 +724,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
    rc = _toString( fieldName, name ) ;
    if ( SDB_OK != rc )
    {
+      _setErrorMsg( "Failed to conversion object field name", FALSE ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -696,6 +748,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_NUMBER, value ) )
       {
+         _setErrorMsg( "MinKey value must be a number", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -708,6 +761,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_NUMBER, value ) )
       {
+         _setErrorMsg( "MaxKey value must be a number", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -721,6 +775,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
+         _setErrorMsg( "ObjectId value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -728,12 +783,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( value, strValue ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion ObjectId value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( 24 != strValue.length() || !_isValidOid( strValue.c_str() ) )
       {
+         _setErrorMsg( "The length of ObjectId is not equal 24", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -752,6 +809,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       bson_timestamp_t btm ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
+         _setErrorMsg( "Timestamp value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -759,6 +817,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( value, strValue ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Timestamp value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -767,6 +826,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
                                             tm,
                                             &usec ))
       {
+         _setErrorMsg( "Failed to conversion Timestamp", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -784,6 +844,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
+         _setErrorMsg( "NumberLong value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -791,12 +852,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( value, strValue ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion NumberLong value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( !_isValidNumberLong(strValue.c_str()) )
       {
+         _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -818,6 +881,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          rc = _toString( value, strValue ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion Date", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -831,6 +895,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             }
             catch( boost::bad_lexical_cast &e )
             {
+               _setErrorMsg( "Failed to conversion Date", FALSE ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -843,6 +908,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          jsval tmpValue ;
          if ( NULL == tmpObj )
          {
+            _setErrorMsg( "Failed to get $numberLong", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -852,6 +918,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             rc = _toString( tmpValue, strValue ) ;
             if ( SDB_OK != rc )
             {
+               _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -861,6 +928,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             }
             catch( boost::bad_lexical_cast &e )
             {
+               _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -873,12 +941,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             rc = _toDouble( tmpValue, fv ) ;
             if ( SDB_OK != rc )
             {
+               _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
                goto error ;
             }
             tm = fv ;
          }
          else
          {
+            _setErrorMsg( "$numberLong value must be a string or a number", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -890,12 +960,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          rc = _toDouble( value, fv ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion Number", FALSE ) ;
             goto error ;
          }
          tm = fv ;
       }
       else
       {
+         _setErrorMsg( "Invalid Date value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -905,6 +977,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = bson_append_date( bs, key, datet ) ;
       if ( SDB_OK !=rc )
       {
+         _setErrorMsg( "Failed to conversion Date", FALSE ) ;
          rc = SDB_DRIVER_BSON_ERROR ;
          goto  error ;
       }
@@ -920,6 +993,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
 
       if ( !JS_IdToValue( _cx, optionid, &optionValName ))
       {
+         _setErrorMsg( "Regex $options not found", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -927,12 +1001,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( optionValName, optionName ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Regex $options", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( 0 != optionName.compare( SPT_SPEOBJ_OPTION ) )
       {
+         _setErrorMsg( "Regex $options not found", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -940,6 +1016,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       if ( !_getProperty( obj, name.c_str(),
                           JSTYPE_STRING, jsRegex ))
       {
+         _setErrorMsg( "Regex $regex value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -947,6 +1024,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       if ( !_getProperty( obj, optionName.c_str(),
                           JSTYPE_STRING, jsOption ))
       {
+         _setErrorMsg( "Regex $options value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -954,6 +1032,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( jsRegex, strRegex ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Regex $regex value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -961,6 +1040,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( jsOption, strOption ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Regex $options value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -981,6 +1061,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
 
       if ( !JS_IdToValue( _cx, typeId, &typeValName ))
       {
+         _setErrorMsg( "Binary $type not found", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -988,12 +1069,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( typeValName, typeName ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Binary $type", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( 0 != typeName.compare( SPT_SPEOBJ_TYPE ) )
       {
+         _setErrorMsg( "Binary $type not found", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1001,6 +1084,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       if ( !_getProperty( obj, name.c_str(),
                           JSTYPE_STRING, jsBin ))
       {
+         _setErrorMsg( "Binary $binary value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1008,6 +1092,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       if ( !_getProperty( obj, typeName.c_str(),
                           JSTYPE_STRING, jsType ))
       {
+         _setErrorMsg( "Binary $type value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1015,6 +1100,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( jsBin, strBin ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Binary $binary", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1022,6 +1108,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( jsType, strType ) ;
       if ( SDB_OK != rc || strType.empty())
       {
+         _setErrorMsg( "Failed to conversion Binary $type", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1031,12 +1118,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          binType = boost::lexical_cast<INT32>( strType.c_str() ) ;
          if ( binType > 255 )
          {
+            _setErrorMsg( "Bad type for binary", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
       }
       catch ( std::bad_cast &e )
       {
+         _setErrorMsg( "Bad type for binary", FALSE ) ;
          PD_LOG( PDERROR, "bad type for binary:%s", strType.c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -1045,6 +1134,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       decodeSize = getDeBase64Size( strBin.c_str() ) ;
       if ( decodeSize < 0 )
       {
+         _setErrorMsg( "Invalid binary code", FALSE ) ;
          PD_LOG( PDERROR, "invalid decode %s", strBin.c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -1055,12 +1145,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
          if ( NULL == decode )
          {
+            _setErrorMsg( "Failed to allocate memory", FALSE ) ;
             PD_LOG( PDERROR, "failed to allocate mem." ) ;
             rc = SDB_OOM ;
             goto error ;
          }
          if ( base64Decode( strBin.c_str(), decode, decodeSize ) < 0 )
          {
+            _setErrorMsg( "Invalid binary code", FALSE ) ;
             PD_LOG( PDERROR, "failed to decode base64 code" ) ;
             rc = SDB_INVALIDARG ;
             SDB_OSS_FREE( decode ) ;
@@ -1088,6 +1180,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       int scale ;
       if ( 1 != properties->length && 2 != properties->length )
       {
+         _setErrorMsg( "Invalid Decimal", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1095,6 +1188,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       if ( !_getProperty( obj, name.c_str(),
                           JSTYPE_STRING, jsDecimal ))
       {
+         _setErrorMsg( "Decimal $decimal value must be a string", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1102,6 +1196,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
       rc = _toString( jsDecimal, strDecimal ) ;
       if ( SDB_OK != rc )
       {
+         _setErrorMsg( "Failed to conversion Decimal value", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1113,6 +1208,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
 
          if ( !JS_IdToValue( _cx, optionid, &optionValName ))
          {
+            _setErrorMsg( "Decimal $precision not found", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -1120,12 +1216,14 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          rc = _toString( optionValName, optionName ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion Decimal $precision", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
 
          if ( 0 != optionName.compare( SPT_SPEOBJ_PRESICION ) )
          {
+            _setErrorMsg( "Decimal $precision not found", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -1133,6 +1231,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          if ( !_getProperty( obj, optionName.c_str(),
                              JSTYPE_OBJECT, jsOption ))
          {
+            _setErrorMsg( "Decimal $precision value must be a string", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -1140,6 +1239,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          rc = _toString( jsOption, strOption ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion Decimal $precision value", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -1147,6 +1247,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          rc = _getDecimalPrecision( strOption.c_str(), &precision, &scale ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion Decimal", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -1162,6 +1263,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
 
       if ( 0 != rc )
       {
+         _setErrorMsg( "Failed to conversion Decimal", FALSE ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1205,6 +1307,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
             rc = _toInt( val, iN ) ;
             if ( SDB_OK != rc )
             {
+               _setErrorMsg( "Failed to conversion int", FALSE ) ;
                goto error ;
             }
             bson_append_int( bs, name.c_str(), iN ) ;
@@ -1215,6 +1318,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
             rc = _toDouble( val, fV ) ;
             if ( SDB_OK != rc )
             {
+               _setErrorMsg( "Failed to conversion double", FALSE ) ;
                goto error ;
             }
             bson_append_double( bs, name.c_str(), fV ) ;
@@ -1227,6 +1331,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
          rc = _toString( val, str ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion string", FALSE ) ;
             goto error ;
          }
          bson_append_string( bs, name.c_str(), str.c_str() ) ;
@@ -1238,6 +1343,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
          rc = _toBoolean( val, bL ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion boolean", FALSE ) ;
             goto error ;
          }
          bson_append_bool( bs, name.c_str(), bL ) ;
@@ -1261,6 +1367,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
                rc = _addJsonTypes( obj, name.c_str(), bs ) ;
                if ( SDB_OK != rc )
                {
+                  _setErrorMsg( "Failed to call addJsonTypes", FALSE ) ;
                   goto error ;
                }
             }
@@ -1273,6 +1380,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
 
                   if ( jsobj_is_sdbobj( _cx, obj ) )
                   {
+                     _setErrorMsg( "Can not use sdbobj", FALSE ) ;
                      rc = SDB_INVALIDARG ;
                      goto error ;
                   }
@@ -1280,6 +1388,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
                   rc = toBson( obj, &bsobj ) ;
                   if ( SDB_OK != rc )
                   {
+                     _setErrorMsg( "Failed to call toBson", FALSE ) ;
                      goto error ;
                   }
 
@@ -1296,6 +1405,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
                }
                else if ( SDB_OK != rc )
                {
+                  _setErrorMsg( "Failed to call addSpecialObj", FALSE ) ;
                   goto error ;
                }
                else
@@ -1312,6 +1422,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
          rc = _toString( val, str ) ;
          if ( SDB_OK != rc )
          {
+            _setErrorMsg( "Failed to conversion function", FALSE ) ;
             goto error ;
          }
 
@@ -1320,6 +1431,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
       }
       default :
       {
+         _setErrorMsg( "unexpected type", FALSE ) ;
          SDB_ASSERT( FALSE, "unexpected type" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -1495,3 +1607,12 @@ BOOLEAN sptConvertor::_isValidNumberLong( const CHAR *value )
    return TRUE ;
 }
 
+void sptConvertor::_setErrorMsg( const CHAR *pErrMsg, BOOLEAN isReplace )
+{
+   if( _hasSetErrMsg == TRUE && isReplace == FALSE )
+   {
+      return ;
+   }
+   _hasSetErrMsg = TRUE ;
+   _errorMsg = pErrMsg ;
+}
