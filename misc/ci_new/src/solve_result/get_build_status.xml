@@ -35,7 +35,6 @@
             <if>
                <equals arg1="${testsuitenum}" arg2="0"/>
                <then>
-                  <var name="is_report_null" unset="true"/>
                   <var name="is_report_null" value="true"/>
                </then>
             </if>
