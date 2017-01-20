@@ -114,7 +114,6 @@ public class TestSnappy6640 extends SdbTestBase {
             srcGroup = Commlib.getDataGroups(sdb).get(0);
             dstGroup = Commlib.getDataGroups(sdb).get(1);
             option.put("Group", srcGroup);
-            option.put("ReplSize", 0);
             cl = cs.createCollection(clName, option);
         }catch(BaseException e){
             e.printStackTrace();
