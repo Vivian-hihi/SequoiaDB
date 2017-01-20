@@ -1326,7 +1326,11 @@ public class Sequoiadb {
      * @param matcher The matching rule, return all the documents if null
      * @param selector The selective rule, return the whole document if null
      * @param orderBy The ordered rule, never sort if null
-     * @param hint The hint, automatically match the optimal hint if null
+     * @param hint 
+     *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
+     *            any index to scan data(table scan). when hint is null, 
+     *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listTasks(BSONObject matcher, BSONObject selector,
@@ -1350,8 +1354,7 @@ public class Sequoiadb {
     }
 
     /**
-     * @fn DBCursor waitTasks ( BSONObject condition, BSONObject selector,
-     *		                    BSONObject orderBy, BSONObject hint )
+     * @fn DBCursor waitTasks (long[] taskIDs)
      * @brief Wait the tasks to finish.
      * @param taskIDs The array of task id
      * @exception com.sequoiadb.exception.BaseException
@@ -1622,7 +1625,11 @@ public class Sequoiadb {
      * @param matcher the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy the ordered rule, never sort if null
-     * @param hint the hint, automatically match the optimal hint if null
+     * @param hint 
+     *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
+     *            any index to scan data(table scan). when hint is null, 
+     *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listDomains(BSONObject matcher, BSONObject selector,
