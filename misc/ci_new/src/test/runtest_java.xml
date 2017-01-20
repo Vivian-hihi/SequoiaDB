@@ -20,6 +20,10 @@
    <target name="run_testcase_main_target">
 
       <switch value="${TESTCASE_TYPE}">
+         <case value="driver_java">             
+            <property name="testcase_dir" value="/trunk/testcase_new/driver/java"/>
+            <property name="report_dir" value="/trunk/testcase_new/driver/java"/>
+         </case>
          <case value="tdd_java">             
             <property name="testcase_dir" value="/trunk/testcase_new/tdd/java"/>
             <property name="report_dir" value="/trunk/testcase_new/tdd/java"/>
