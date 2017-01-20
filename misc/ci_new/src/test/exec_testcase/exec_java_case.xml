@@ -19,7 +19,7 @@
    
    <target name="exec_testcase">             
       <mkdir dir="${report_dir}"/> 
-      <ant antfile="${basedir}/src/test/runtest_java.xml" target="execjavatestcase">
+      <ant antfile="${basedir}/src/test/exec_testcase/runtest_java.xml" target="execjavatestcase">
          <property name="casedir" value="${testcase_dir}"/>
          <property name="reportdir" value="${report_dir}"/>
       </ant>
