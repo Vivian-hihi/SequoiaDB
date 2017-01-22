@@ -374,7 +374,60 @@ class SequoiaDB
     * @endcode
    */
    public function isValid(){}
-   
+
+   /**
+    * Sync database which are specified.
+    *
+    * @param $options an array or the string argument. The control options:
+    *                                               @code
+    *                                               Deep              : (INT32) Flush with deep mode or not. 1 in default. 0 for non-deep mode,1 for deep mode,-1 means use the configuration with server.
+    *                                               Block             : (Bool) Flush with block mode or not. false in default.
+    *                                               CollectionSpace   : (String) Specify the collectionspace to sync. If not set, will sync all the collectionspaces and logs, otherwise, will only sync the collectionspace specified.
+    *                                               Location Elements	: (Only take effect in coordinate nodes) GroupID:INT32, GroupName:String, NodeID:INT32, HostName:String, svcname:String ...
+    *                                               @endcode
+    *
+    * @return Returns the result, default return array.
+    *
+    * @retval array   array( 'errno' => 0 )
+    * @retval string  { "errno": 0 }
+    *
+    * Example:
+    * 1. Deep persistence for all collections and logs.
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> syncDB() ;
+    * var_dump( $result ) ;
+    * @endcode
+    * 2. Deep persistence for collection space foo.
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> syncDB( array( 'CollectionSpace' => 'foo' ) ) ;
+    * var_dump( $result ) ;
+    * @endcode
+    * 3. For the data group group1 for depth and blocking persistence.
+    * @code
+    * $db = new SequoiaDB() ;
+    * $err = $db -> connect( "192.168.1.10:11810" ) ;
+    * if( $err['errno'] != 0 ) {
+    *    echo "Failed to connect database, error code: ".$err['errno'] ;
+    *    return ;
+    * }
+    * $result = $db -> syncDB( array( 'GroupName' => 'group1', 'Block' => true ) ) ;
+    * var_dump( $result ) ;
+    * @endcode
+   */
+   public function syncDB( array|string $options = null ){}
+
    /**
     * Get the snapshot.
     *

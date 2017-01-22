@@ -28,6 +28,7 @@ PHP_METHOD( SequoiaDB, getError ) ;
 PHP_METHOD( SequoiaDB, connect ) ;
 PHP_METHOD( SequoiaDB, close ) ;
 PHP_METHOD( SequoiaDB, isValid ) ;
+PHP_METHOD( SequoiaDB, syncDB ) ;
 
 //snapshot & list
 //e.g. Rename getSnapshot
