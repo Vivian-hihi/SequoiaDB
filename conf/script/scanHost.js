@@ -56,7 +56,7 @@ function _final()
 
 /* *****************************************************************************
 @discretion: scan the specified host, to check whether it can been "ping" and "ssh",
-             and try to get it's hostname or ip
+             and try to get its hostname or ip
 @author: Tanzhaobo
 @parameter
    user[string]: the user name
@@ -156,9 +156,70 @@ function _scanHost( user, passwd, hostname, sshport, ip )
             exception_handle( SDB_SYS, "Failed to get peer ip" ) ;
          retObj[IP] = removeLineBreak( tempStr ) ;
       }
-      // check info
+      PD_LOG( arguments, PDDEBUG, FILE_NAME_SCAN_HOST,
+             sprintf( "hostname is [?], ip is [?]", retObj[HostName], retObj[IP] ) ) ;
+      /// check info
+      // check ip
       if ( "127.0.0.1" == retObj[IP] )
+      {
          exception_handle( SDB_INVALIDARG, "IP can't be 127.0.0.1" ) ;
+      }
+      // check hostname
+      if ( "localhost" == retObj[HostName] )
+      {
+         exception_handle( SDB_INVALIDARG, "Hostname can't be localhost" ) ;
+      }
+      // check ip hostname mapping in /etc/hosts or not
+      var check_ip_cmd = "" ;
+      var check_hostname_cmd = "" ;
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         check_hostname_cmd = " ping " + retObj[HostName] + " -c 3 " ;
+         check_ip_cmd = " hostname -i " ;
+      }
+      else
+      {
+         exception_handle( SDB_OPTION_NOT_SUPPORT, 
+            "Not support current system" ) ;
+      }
+      try
+      {
+         tempStr = ssh.exec( check_hostname_cmd ) ;
+      }
+      finally
+      {
+         if ( 0 != ssh.getLastRet() )
+         {
+            exception_handle( SDB_INVALIDARG, 
+               sprintf( "The target host is not configured with ip[?] and hostname[?] mappings in its configured file(/etc/hosts)", 
+                  retObj[IP], retObj[HostName] ) ) ;
+         }
+      }
+      // check the ip of the hostname in /etc/hosts is the same with the one we offer or not
+      try
+      {
+         tempStr = ssh.exec( check_ip_cmd ) ;
+      }
+      finally
+      {
+         if ( 0 != ssh.getLastRet() )
+         {
+            exception_handle( SDB_INVALIDARG, 
+               sprintf( "Failed to get ip of the host[?] from its configured file(/etc/hosts)",
+                  retObj[HostName] ) ) ;
+         }
+      }
+      if ( "string" != typeof(tempStr) )
+      {
+         exception_handle( SDB_INVALIDARG, "Failed to get peer ip from its configured file(/etc/hosts)" ) ;
+      }
+      tempStr = removeLineBreak( tempStr ) ;
+      if ( tempStr != retObj[IP] )
+      {
+         exception_handle( SDB_INVALIDARG, 
+            sprintf( "IP[?] of host[?] in its configured file(/etc/hosts) is different from the one we offer[?]",
+               tempStr, retObj[HostName], retObj[IP] ) ) ;
+      }
    }
    catch( e )
    {
@@ -170,6 +231,7 @@ function _scanHost( user, passwd, hostname, sshport, ip )
               "Failed to get host[" + addr + "]'s info, rc: " + retObj[Errno] + ", detail: " + retObj[Detail] ) ;
       return retObj ;
    }
+   // everything is ok
    retObj[Status] = "finish" ;
    
    return retObj ;
