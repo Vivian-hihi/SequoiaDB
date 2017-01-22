@@ -2,3 +2,6 @@
 2.匹配符中的$type和$size格式调整，不兼容旧版本
 3.选择符占位符调整，不兼容取值为非1的情况
 4.从2.8版本开始python只支持2.7，python3，不再支持python2.6  ----2.6不支持OrderedDict
+5.Java驱动JSON.parse()解释日期类型时，得到的INT64值与通过SDBshell输入的日期类型不一致（http://jira:8080/browse/SEQUOIADBMAINSTREAM-2141）
+导致java驱动端切分条件使用如下形式时切分范围解析不正确：(BSONObject) JSON.parse("{date:{\"$date\":\"2017-02-02\"}}")
+6、rebuild过程中加载重复的数据块导致创建索引失败，最终数据主节点启动失败（http://jira:8080/browse/SEQUOIADBMAINSTREAM-2113）
