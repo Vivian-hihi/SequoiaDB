@@ -20,6 +20,9 @@
   | <hostname>_Port | 物理主机 hostname 上 sdbcm 的监听端口，若在该配置文件中找不到对应主机的参数，sdbcm 会以 defaultPort 启动。 若 defaultPort 不存在，则 sdbcm 以默认端口11790启动                                    | &lt;hostname&gt;_Port=11790 |
   | RestartCount          | 重启次数，即定义 sdbcm 对节点的最大重启次数。 该参数不存在时默认置为-1，即不断重启                  | RestartCount=5              |   
   | RestartInterval       | 重启间隔，即定义 sdbcm 的最大重启间隔，单位是分钟。该参数与 RestartCount 结合定义了重启间隔内 sdbcm 对节点的最大重启次数，超出时则不再重启。 该参数不存在时默认置为0，即不考虑重启间隔       | RestartInterval=0           |
+  | DiagLevel             | 指定诊断日志打印级别。SequoiaDB中诊断日志从0-5分别代表：SEVERE, ERROR, EVENT, WARNING, INFO, DEBUG。如果不指定，则默认为WARNING。| DiagLevel=3 |
+  | AutoStart             | sdbcm启动时是否自动拉起其他节点进程。如果不指定，则默认为false，即不自动拉起其他节点进程。    | AutoStart=TRUE |
+  | EnableWatch           | 是否监控节点，即是否重启异常节点。如果不指定，则默认为TRUE，即监控节点 | EnableWatch=TRUE |
                       
 
 - 启动 sdbcm
