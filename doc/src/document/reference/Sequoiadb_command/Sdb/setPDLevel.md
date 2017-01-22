@@ -12,7 +12,7 @@
 
 > **Note:**
 >
-> * 日志级别不正确时默认设置为 PDWARNING。
+> * 日志级别不正确时默认设置为 WARNING。
 > * 无位置参数时，缺省只对本身节点生效。
 > * 该设置参数不会被持久化。
 
@@ -27,7 +27,7 @@
 
 ##示例##
 
-* 设置当前节点的日志级别为PDDEBUG。
+* 设置当前节点的日志级别为DEBUG。
 
  ```lang-javascript
  // 连接节点
@@ -35,7 +35,7 @@
  > db.setPDLevel( 5 )
  ```
 
-* 设置节点1000的日志级别为PDINFO。
+* 设置节点1000的日志级别为INFO。
 
  ```lang-javascript
  // 连接节点
@@ -43,7 +43,7 @@
  > db.setPDLevel( 4, {NodeID:1000} )
  ```
 
-* 设置所有节点的日志级别为PDEVENT。
+* 设置所有节点的日志级别为EVENT。
 
  ```lang-javascript
  // 连接节点

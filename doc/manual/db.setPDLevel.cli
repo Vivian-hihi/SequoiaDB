@@ -102,14 +102,14 @@ Set the node's diagnostic level and take effect.
 .SH "Examples"
 
 .sp 2
-1. set all node's diagnostic level to PDWARNING.
+1. set all node's diagnostic level to WARNING.
 .sp 2
    db.setPDLevel( 4, {Global:true} )
 .sp 2
-2. set the specified node 1001 's diagnostic level to PDEVENT.
+2. set the specified node 1001 's diagnostic level to EVENT.
 .sp 2
    db.setPDLevel( 3, {NodeID:1001} )
 .sp 2
-3. set self node's diagnostic level to PDEVENT.
+3. set self node's diagnostic level to EVENT.
 .sp 2
    db.setPDLevel( 3 )
