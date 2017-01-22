@@ -29,12 +29,6 @@
 
 *******************************************************************************/
 #include "impWorker.hpp"
-
-#ifndef SDB_CLIENT
-#define SDB_CLIENT
-#endif
-
-#include "pd.hpp"
 #include <assert.h>
 #include <iostream>
 using std::cerr ;
@@ -114,7 +108,7 @@ namespace import
       sigset_t sigset;
       INT32 ret;
 
-      SDB_ASSERT(NULL != arg, "arg can't be NULL");
+      assert(NULL != arg);
 
       self = (WorkerThread*)arg;
 
@@ -122,10 +116,10 @@ namespace import
           All the signals should be delivered to main
           thread, not to worker threads. */
       ret = sigfillset(&sigset);
-      SDB_ASSERT(ret == 0, "");
+      assert(ret == 0);
 
       ret = pthread_sigmask(SIG_BLOCK, &sigset, NULL);
-      SDB_ASSERT(ret == 0, "");
+      assert(ret == 0);
 
       try
       {
@@ -133,7 +127,7 @@ namespace import
       }
       catch(std::exception &e)
       {
-         PD_LOG(PDERROR, "unexpected err happened:%s", e.what());
+         cerr<<"unexpected err happened: "<<e.what()<<endl;
       }
       return NULL;
    }
@@ -142,13 +136,13 @@ namespace import
    {
       INT32 ret;
 
-      SDB_ASSERT(NULL != thread, "thread can't be NULL");
-      SDB_ASSERT(NULL != thread->routine, "routine can't be NULL");
+      assert(NULL != thread);
+      assert(NULL != thread->routine);
 
       ret = pthread_create(&thread->thread, NULL, _threadMain, thread);
       if (0 != ret)
       {
-         PD_LOG(PDERROR, "failed to create thread");
+         cerr<<"failed to create thread"<<endl;
          return SDB_SYS;
       }
 
@@ -159,12 +153,12 @@ namespace import
    {
       INT32 ret;
 
-      SDB_ASSERT(NULL != thread, "thread can't be NULL");
+      assert(NULL != thread);
 
       ret = pthread_join(thread->thread, NULL);
       if (0 != ret)
       {
-         PD_LOG(PDERROR, "failed to join thread");
+         cerr<<"failed to join thread"<<endl;
          return SDB_SYS;
       }
 
