@@ -710,7 +710,7 @@ namespace engine
 
    UINT32 _rtnSnapshotCollectionSpaces::_addInfoMask() const
    {
-      return MON_MASK_GROUP_NAME ;
+      return MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
    }
 
    const CHAR* _rtnSnapshotCollectionSpaces::getIntrCMDName()
@@ -745,7 +745,7 @@ namespace engine
 
    UINT32 _rtnSnapshotCollectionSpacesInner::_addInfoMask() const
    {
-      return MON_MASK_GROUP_NAME ;
+      return MON_MASK_NODE_NAME | MON_MASK_GROUP_NAME ;
    }
 
 }
