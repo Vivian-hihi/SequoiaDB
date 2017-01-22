@@ -146,7 +146,13 @@
                var isEvent = false ;
                if( element !== null )
                {
-                  if( $( element ).hasClass( 'Ellipsis' ) )
+                  if( $( element ).attr( 'data-desc' ) )
+                  {
+                     isEvent = true ;
+                     var text = $( element ).attr( 'data-desc' ) ;
+                     g.show( text, pageY, pageX ) ;
+                  }
+                  else if( $( element ).hasClass( 'Ellipsis' ) )
                   {
                      isEvent = true ;
                      var text = $( element ).text() ;
@@ -185,12 +191,6 @@
                            }, hideTime - showTime ) ;
                         }
                      }
-                  }
-                  else if( $( element ).attr( 'data-desc' ) )
-                  {
-                     isEvent = true ;
-                     var text = $( element ).attr( 'data-desc' ) ;
-                     g.show( text, pageY, pageX ) ;
                   }
                   if( $( element ).get(0) !== document && $( element ).get(0).parentNode !== document.body && isEvent === false )
                   {

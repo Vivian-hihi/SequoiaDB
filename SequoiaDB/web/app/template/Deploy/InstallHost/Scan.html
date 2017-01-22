@@ -44,10 +44,10 @@
                <div class="GridBody">
                   <div class="GridTr linkButton" ng-repeat="hostInfo in HostList track by $index">
                      <div class="GridTd Ellipsis" style="word-break:break-all;">
-                        <input type="checkbox" ng-model="hostInfo['checked']" ng-click="CountCheckedHostNum();" ng-disabled="hostInfo['Status']!='success'"/>
+                        <input type="checkbox" ng-model="hostInfo['checked']" ng-click="CountCheckedHostNum();" ng-disabled="hostInfo['Errno']!=0"/>
                      </div>
-                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">
-                        <i class="fa fa-circle" ng-style="{'true':{'color':'#00CC66'},'false':{'color':'#ff4444'}}[hostInfo['Status']=='success']"></i> <span ng-if="hostInfo['Status']=='ping'">{{autoLanguage("连接主机失败")}}</span><span ng-if="hostInfo['Status']=='ssh'">{{autoLanguage("SSH鉴权失败")}}</span><span ng-if="hostInfo['Status']=='exist'">{{autoLanguage("主机已经安装")}}</span><span ng-if="hostInfo['Status']=='success'">{{autoLanguage("连接成功")}}</span>
+                     <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)" data-desc="{{hostInfo['Detail']}}">
+                        <i class="fa fa-circle" ng-style="{'true':{'color':'#00CC66'},'false':{'color':'#ff4444'}}[hostInfo['Errno']==0]"></i> <span ng-if="hostInfo['Errno']==0">{{autoLanguage("连接成功")}}</span><span ng-if="hostInfo['Errno']!=0">{{hostInfo['Detail']}}</span>
                      </div>
                      <div class="GridTd Ellipsis" style="word-break:break-all;" ng-click="ChangeHostInfo($index)">
                         {{hostInfo['HostName']}}

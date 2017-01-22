@@ -107,7 +107,7 @@
       var countSuccessHostNum = function(){
          successNum = 0 ;
          $.each( $scope.HostList, function( index2, hostInfo ){
-            if( hostInfo['Status'] == 'success' )
+            if( hostInfo['Errno'] == 0 )
             {
                ++successNum ;
             }
@@ -119,7 +119,7 @@
 
       $scope.SelectAll = function(){
          $.each( $scope.HostList, function( index ){
-            if( $scope.HostList[index]['Status'] == 'success' )
+            if( $scope.HostList[index]['Errno'] == 0 )
             {
                $scope.HostList[index]['checked'] = true ;
             }
@@ -128,7 +128,7 @@
 
       $scope.Unselected = function(){
          $.each( $scope.HostList, function( index ){
-            if( $scope.HostList[index]['Status'] == 'success' )
+            if( $scope.HostList[index]['Errno'] == 0 )
             {
                $scope.HostList[index]['checked'] = !$scope.HostList[index]['checked'] ;
             }
@@ -138,7 +138,7 @@
       $scope.ClearErrorHost = function(){
          var newHostList = [] ;
          $.each( $scope.HostList, function( index, hostInfo ){
-            if( hostInfo['Status'] == 'success' )
+            if( hostInfo['Errno'] == 0 )
             {
                newHostList.push( hostInfo ) ;
             }
@@ -192,17 +192,8 @@
                SdbRest.OmOperation( data, {
                   'success': function( hostList ){
                      $.each( hostList, function( index, hostInfo ){
-                        var Status = 'success' ;
                         var isExists = checkHostIsExist( $scope.HostList, hostInfo['HostName'], hostInfo['IP'] ) ;
-                        if( hostInfo['errno'] != 0 )
-                        {
-                           Status = hostInfo['Status'] ;
-                           if( hostInfo['errno'] == -38 )
-                           {
-                              Status = 'exist' ;
-                           }
-                        }
-                        var newHostInfo = { 'checked': ( Status == 'success' ? true : false ), 'Status': Status, 'HostName': hostInfo['HostName'], 'IP': hostInfo['IP'], 'User': formVal['user'], 'Password': formVal['password'], 'SSH': formVal['ssh'], 'Proxy': formVal['proxy']  } ;
+                        var newHostInfo = { 'checked': ( hostInfo['errno'] == 0 ? true : false ), 'Errno': hostInfo['errno'], 'Detail': hostInfo['detail'], 'HostName': hostInfo['HostName'], 'IP': hostInfo['IP'], 'User': formVal['user'], 'Password': formVal['password'], 'SSH': formVal['ssh'], 'Proxy': formVal['proxy']  } ;
                         if( isExists == -1 || isExists == -2 )
                         {
                            $scope.HostList.push( newHostInfo ) ;

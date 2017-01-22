@@ -151,6 +151,12 @@
          } ) ;
 
          //查询信息错误
+
+         if( errMsgs.length > 0 && $scope.DBStatus != 'error' )
+         {
+            $scope.DBStatus = 'error' ;
+         }
+
          $.each( errMsgs, function( index, msgInfo ){
             $scope.ErrorMsg = msgInfo['description'] ;
             $scope.ErrResult.push( { 'info': sprintf( '? [error] - ?, errno: ?。', $scope.Time, msgInfo['description'], msgInfo['errno'] ), 'type': 'error' } ) ;
