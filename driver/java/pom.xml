@@ -71,11 +71,11 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>releases</id>
+            <id>snapshot-repo</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
         <repository>
-            <id>releases</id>
+            <id>release-repo</id>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
     </distributionManagement>
@@ -98,7 +98,6 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Javadoc -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
@@ -115,7 +114,6 @@
                             <excludePackageNames>com.sequoiadb.util:org.bson.io:org.bson.util.annotations</excludePackageNames>
                         </configuration>
                     </plugin>
-                    <!-- GPG -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>

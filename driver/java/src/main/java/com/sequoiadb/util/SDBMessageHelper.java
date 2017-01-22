@@ -1119,7 +1119,6 @@ public class SDBMessageHelper {
         return buf.toByteArray();
     }
 
-    @SuppressWarnings("unused")
     public static BSONObject byteArrayToBSONObject(ByteBuffer byteBuffer)
             throws BaseException {
         if (byteBuffer == null || !byteBuffer.hasRemaining())

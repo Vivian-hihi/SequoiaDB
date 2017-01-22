@@ -653,6 +653,156 @@ public class Sequoiadb {
         removeCache(csName);
     }
 
+    /*
+     * @param csName The collection space name
+     * @param options The control options:(Only take effect in coordinate nodes, can be null)
+     *                <ul>
+     *                <li>GroupID:int</li>
+     *                <li>GroupName:String</li>
+     *                <li>NodeID:int</li>
+     *                <li>HostName:String</li>
+     *                <li>svcname:String</li>
+     *                <li>...</li>
+     *                </ul>
+     * @throws BaseException SDB_INVALIDARG, SDB_DMS_CS_NOTEXIST...
+     * @since 2.8
+     */
+    public void loadCollectionSpace(String csName, BSONObject options) throws BaseException {
+        if (csName == null || csName.length() == 0)
+            throw new BaseException(SDBError.SDB_INVALIDARG, csName);
+        if (isCollectionSpaceExist(csName))
+            throw new BaseException(SDBError.SDB_DMS_CS_EXIST, csName);
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        if (options != null) {
+            matcher.putAll(options);
+        }
+        String commandString = SequoiadbConstants.LOAD_CMD + " "
+            + SequoiadbConstants.COLSPACE;
+        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
+            null, null, null);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags);
+        }
+        upsertCache(csName);
+    }
+
+    /*
+     * @param csName The collection space name
+     * @param options The control options:(Only take effect in coordinate nodes, can be null)
+     *                <ul>
+     *                <li>GroupID:int</li>
+     *                <li>GroupName:String</li>
+     *                <li>NodeID:int</li>
+     *                <li>HostName:String</li>
+     *                <li>svcname:String</li>
+     *                <li>...</li>
+     *                </ul>
+     * @throws BaseException SDB_INVALIDARG, SDB_DMS_CS_NOTEXIST...
+     * @since 2.8
+     */
+    public void unloadCollectionSpace(String csName, BSONObject options) throws BaseException {
+        if (csName == null || csName.length() == 0)
+            throw new BaseException(SDBError.SDB_INVALIDARG, csName);
+        if (!isCollectionSpaceExist(csName))
+            throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        if (options != null) {
+            matcher.putAll(options);
+        }
+        String commandString = SequoiadbConstants.UNLOAD_CMD + " "
+            + SequoiadbConstants.COLSPACE;
+        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
+            null, null, null);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags);
+        }
+        removeCache(csName);
+    }
+
+    /*
+     * @param oldName The old collection space name
+     * @param newName The new collection space name
+     * @throws BaseException SDB_INVALIDARG, SDB_DMS_CS_NOTEXIST...
+     * @since 2.8
+     */
+    public void renameCollectionSpace(String oldName, String newName) throws BaseException {
+        if (oldName == null || oldName.length() == 0)
+            throw new BaseException(SDBError.SDB_INVALIDARG, oldName);
+        if (newName == null || newName.length() == 0)
+            throw new BaseException(SDBError.SDB_INVALIDARG, newName);
+        if (!isCollectionSpaceExist(oldName))
+            throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, oldName);
+        BSONObject matcher = new BasicBSONObject();
+        matcher.put(SequoiadbConstants.FIELD_NAME_OLDNAME, oldName);
+        matcher.put(SequoiadbConstants.FIELD_NAME_NEWNAME, newName);
+        String commandString = SequoiadbConstants.RENAME_CMD + " "
+            + SequoiadbConstants.COLSPACE;
+        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
+            null, null, null);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags);
+        }
+        removeCache(oldName);
+        upsertCache(newName);
+    }
+
+    /**
+     * @fn void sync(BSONObject options)
+     * @brief sync the database
+     * @param options The control options:(can be null)
+     *                <ul>
+     *                <li>
+     *                    Deep:int
+    Flush with deep mode or not. 1 in default.
+    0 for non-deep mode,1 for deep mode,-1 means use the configuration with server
+     *                </li>
+     *                <li>
+     *                    Block:boolean
+    Flush with block mode or not. false in default.
+     *                </li>
+     *                <li>
+     *                    CollectionSpace:String
+    Specify the collectionspace to sync.
+    If not set, will sync all the collection spaces and logs,
+    otherwise, will only sync the collection space specified.
+     *                </li>
+     *                <li>
+     *                Others:(Only take effect in coordinate nodes)
+    GroupID:int,
+    GroupName:String,
+    NodeID:int,
+    HostName:String,
+    svcname:String
+    ...
+     *                </li>
+     *                </ul>
+     * @throws BaseException
+     * @since 2.8
+     */
+    public void sync(BSONObject options) throws BaseException {
+        SDBMessage rtn = adminCommand(SequoiadbConstants.SYNC_DB_CMD, 0, 0, -1, -1,
+            options, null, null, null);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags);
+        }
+    }
+
+    /**
+     * @fn void sync()
+     * @brief sync the whole database
+     * @throws BaseException
+     * @since 2.8
+     */
+    public void sync() throws BaseException {
+        sync(null);
+    }
+
     /**
      * @fn CollectionSpace getCollectionSpace(String csName)
      * @brief Get the named collection space.

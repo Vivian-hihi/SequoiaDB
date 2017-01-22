@@ -45,6 +45,10 @@ public class SequoiadbConstants {
     public static final String TEST_CMD = "test";
     public static final String ACTIVE_CMD = "active";
     public static final String SHUTDOWN_CMD = "shutdown";
+    public static final String LOAD_CMD = "load";
+    public static final String UNLOAD_CMD = "unload";
+    public static final String RENAME_CMD = "rename";
+    public static final String SYNC_DB_CMD = "sync db";
     public final static String COLSPACES = "collectionspaces";
     public final static String COLLECTIONS = "collections";
     public final static String COLSPACE = "collectionspace";
