@@ -45,6 +45,12 @@
                            "en": "SequoiaDB Installation"
                         },
                         {
+                           "id": 148505053,
+                           "file": "planning_database_deployment",
+                           "cn": "规划数据库部署",
+                           "en": "Planning Database Deployment"
+                        },
+                        {
                            "id": 1432191001,
                            "file": "standalone",
                            "cn": "独立模式",
@@ -247,7 +253,7 @@
             {
                "id": 1432190631,
                "file": "sdbcm",
-               "cn": "数据库集群控制器",
+               "cn": "资源管理节点",
                "en": "Sdbcm"
             },
             {
@@ -411,6 +417,26 @@
                      "file": "cluster_stop",
                      "cn": "集群停止",
                      "en": "Cluster Stop"
+                  }
+               ]
+            },
+            {
+               "id": 1485051400,
+               "dir": "cluster_expansion",
+               "cn": "集群扩容",
+               "en": "Cluster Expansion",
+               "contents": [
+                  {
+                     "id": 1485051401,
+                     "file": "add_host",
+                     "cn": "新增主机",
+                     "en": "Add Host"
+                  },
+                  {
+                     "id": 1485051402,
+                     "file": "add_node",
+                     "cn": "新增节点",
+                     "en": "Add Node"
                   }
                ]
             },
