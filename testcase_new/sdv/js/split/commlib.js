@@ -394,31 +394,20 @@ function getSrcGroup( csName, clName )
 {
    try
    {
-      if( undefined == csName || undefined == clName )
+      var clFullName = csName + "." + clName;
+      var clInfo = db.snapshot( 8, {Name: clFullName} );
+      while( clInfo.next() )
       {
-         println( "cs name: " + csName + ", clName: " + clName ) ;
-         throw "cs or cl name is undefined" ;
+         var clInfoObj = clInfo.current().toObj();
+         var srcGroupName = clInfoObj.CataInfo[0].GroupName;
       }
-      var tableName = csName + "." + clName ;
-      var catadb = new Sdb(COORDHOSTNAME,CATASVCNAME) ;
-      var Group = catadb.SYSCAT.SYSCOLLECTIONS.find().toArray() ;
-      var srcGroupName ;
-      for( var i = 0 ; i < Group.length ; ++i )
-      {
-         var eachID = eval("("+Group[i]+")") ;
-         if( tableName == eachID["Name"] )
-         {
-            srcGroupName = eachID["CataInfo"][0]["GroupName"] ;
-            println( csName + "." + clName + "'s source group: " + srcGroupName );
-            break ;
-         }
-      }
-      return srcGroupName ;
+      println( csName + "." + clName + "'s source group: " + srcGroupName );
+                   
+      return srcGroupName;
    }
    catch( e )
    {
-      println( "failed to get source group, cs name: " + csName +
-               ", cl name: " + clName ) ;
+      println( "failed to get source group, cl name: " + clFullName ) ;     
       throw e ;
    }
 }
