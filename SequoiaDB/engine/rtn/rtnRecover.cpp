@@ -384,13 +384,16 @@ namespace engine
       UINT32 extentNum = 0 ;
       dmsExtentID extentID = DMS_INVALID_EXTENT ;
       dmsExtentID nextExtID = DMS_INVALID_EXTENT ;
-      dmsExtentID stopExtID = DMS_INVALID_EXTENT ;
-      dmsExtRW extRW ;
+      dmsExtentID forwardStopExt = DMS_INVALID_EXTENT ;
+      dmsExtentID backwardStopExt = DMS_INVALID_EXTENT ;
       BOOLEAN valid = TRUE ;
       BOOLEAN damaged = FALSE ;
+      BOOLEAN needBackward = TRUE ;
       UINT32 maxRemainPages = _pSU->data()->pageNum() ;
+      dmsExtentID firstExtInMB = mbContext->mb()->_firstExtentID ;
+      dmsExtentID lastExtInMB = mbContext->mb()->_lastExtentID ;
 
-      nextExtID = mbContext->mb()->_firstExtentID ;
+      nextExtID = firstExtInMB ;
       while( DMS_INVALID_EXTENT != nextExtID )
       {
          if ( cb->isInterrupted() )
@@ -407,6 +410,13 @@ namespace engine
             goto error ;
          }
 
+         // If the last extent is hit during the forward scanning, then no
+         // backward scanning is needed.
+         if ( needBackward && ( extentID == lastExtInMB ) )
+         {
+            needBackward = FALSE ;
+         }
+
          // Once an invalid extent is found, we stop the traverse.
          if ( !valid )
          {
@@ -417,20 +427,21 @@ namespace engine
          ++extentNum ;
       }
 
+      forwardStopExt = extentID ;
+
       // If we haven't reached the last extent, it means some extents at the
       // middle of the extent list are corrupted. In that case, continue to scan
       // the extents backwards in order to save as much data as possible.
-      if ( extentID != mbContext->mb()->_lastExtentID )
+      if ( needBackward )
       {
          if ( !damaged )
          {
             damaged = TRUE ;
          }
 
-         stopExtID = extentID ;
          valid = TRUE ;
 
-         nextExtID = mbContext->mb()->_lastExtentID ;
+         nextExtID = lastExtInMB ;
          while ( DMS_INVALID_EXTENT != nextExtID )
          {
             if ( cb->isInterrupted() )
@@ -454,20 +465,22 @@ namespace engine
 
             ++extentNum ;
 
-            if ( nextExtID == stopExtID )
+            if ( nextExtID == forwardStopExt )
             {
                break ;
             }
          }
+         backwardStopExt = extentID ;
       }
 
       if ( damaged )
       {
-         PD_LOG( PDWARNING, "Collection[%s]'s extent list is damaged. Last "
-                 "extent:%d, forward processed last extent:%d, backward "
-                 "processed last extent:%d. Processed extent count:%u",
-                 _clFullName.c_str(), mbContext->mb()->_lastExtentID,
-                 stopExtID, extentID, extentNum ) ;
+         PD_LOG( PDWARNING, "Collection[%s]'s extent list is damaged. First "
+                 "extent in mb:%d, last extent in mb:%d, forward processed "
+                 "last extent:%d, backward processed last extent:%d. "
+                 "Processed extent count:%u",
+                 _clFullName.c_str(), firstExtInMB, lastExtInMB,
+                 forwardStopExt, backwardStopExt, extentNum ) ;
       }
 
    done:
