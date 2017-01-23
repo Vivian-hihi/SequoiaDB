@@ -650,12 +650,12 @@ INT32 delete_space( string &dest, const CHAR *src )
 *@Modify List :
 *               2014-7-15   xiaojun Hu   Init
 *******************************************************************************/
-void getUniqueName( const CHAR *modName, CHAR getName[] )
+void getUniqueName( const CHAR *modName, CHAR *getName, INT32 len )
 {
    const CHAR *uniqName = "sdbtest_" ;
    pid_t pid ;
    pid = getpid() ;
-   sprintf( getName, "%s%s_%d", uniqName, modName, (unsigned int)pid ) ;
+   snprintf( getName, len, "%s%s_%d", uniqName, modName, (unsigned int)pid ) ;
 }
 
 BOOLEAN isCluster( sdb &db )

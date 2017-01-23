@@ -625,6 +625,7 @@ public class DBLobTest {
         
         ObjectId id     = lob.getID();
         DBLob rLob = cl.openLob(id);
+        
         int len = rLob.read(out);
         assertEquals( "len is" + len, -1, len );
         lob.close();

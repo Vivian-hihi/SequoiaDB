@@ -29,7 +29,7 @@ public class CLGetQueryMeta {
 	private static DBCollection cl ;
 	private static DBCursor cursor ;
 	private static DBCursor datacursor ;
-	private static int RECORDNUM = 100000;
+	private static int RECORDNUM = 10000;
 	
 	@BeforeClass
 	public static void setConnBeforeClass() throws Exception{

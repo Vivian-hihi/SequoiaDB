@@ -57,13 +57,13 @@ TEST( domainTest, abnormal )
    BSONObjBuilder autoObj ;
    autoObj.append( "AutoSplit",true) ;
    BSONObj options = autoObj.obj() ;
-   CHAR gtdomname[256] ;
-   CHAR domname[32] ;
+   CHAR gtdomname[512] ;
+   CHAR domname[64] ;
    CHAR notexistdom[64] ;
    // Deal with domain name
-   getUniqueName(  gtDomName, gtdomname ) ;
-   getUniqueName( domName, domname ) ;
-   getUniqueName( notExistDom, notexistdom ) ;
+   getUniqueName(  gtDomName, gtdomname, 512 ) ;
+   getUniqueName( domName, domname, 64 ) ;
+   getUniqueName( notExistDom, notexistdom, 64 ) ;
 
    // Connect to Sdb
    rc = db.connect( pHostName, pPort, pUsr, pPasswd ) ;
@@ -144,13 +144,13 @@ TEST(domainTest, normalAll )
    const CHAR *pPasswd                      = PASSWD ;
    INT32 rc                                 = SDB_OK ;
    BSONObj obj ;
-   CHAR pCS[32] ;
-   CHAR pCL[32] ;
-   CHAR pDM[16] ;
+   CHAR pCS[64] ;
+   CHAR pCL[64] ;
+   CHAR pDM[64] ;
    // Deal with name
-   getUniqueName( pCS1, pCS ) ;
-   getUniqueName( pCL1, pCL ) ;
-   getUniqueName( pDM1, pDM ) ;
+   getUniqueName( pCS1, pCS, 64 ) ;
+   getUniqueName( pCL1, pCL, 64 ) ;
+   getUniqueName( pDM1, pDM, 64 ) ;
    // initialize the work environment
    //rc = initEnv() ;
    //ASSERT_EQ( SDB_OK, rc ) ;
