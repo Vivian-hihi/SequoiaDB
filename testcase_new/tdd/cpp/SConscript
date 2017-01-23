@@ -109,10 +109,10 @@ dc.static = staticBuildEnv.Program("dc.static", [testFiles14, gtestMainObj, test
 
 # dll compile, "rg, dc" don't run in ci
 env.Install( '#/build_test',[collection,collectionspace,cursor,query,
-                             sdb,cppbson, debug, domain, lob, selectQuery, procedure, rg ] )
+                             sdb,cppbson, debug, domain, lob, selectQuery, procedure ] )
 
 # static compile, "rg, dc" don't run in ci
 env.Install( '#/build_test',[collection.static, collectionspace.static, cursor.static, query.static,
                              sdb.static, cppbson.static, debug.static, domain.static, lob.static,
-                             selectQuery.static, procedure.static, rg.static ] )
+                             selectQuery.static, procedure.static] )
 
