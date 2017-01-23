@@ -12,11 +12,9 @@
 #endif
 #include "client.h"
 
-
-
-//#define HOST                  "192.168.20.42"
 #define HOST                  "localhost"
 #define SERVER                "11810" // for coord
+//#define HOST                  "192.168.20.42"
 //#define SERVER                "50000" // for coord
 #define SERVER1               "11800" // for catalog
 #define SERVER2               "21100" // for data
@@ -173,6 +171,8 @@ BOOLEAN isCluster( sdbConnectionHandle db ) ;
 INT32 isTranOn( sdbConnectionHandle db, BOOLEAN *flag ) ;
 
 INT32 gettid() ;
+
+INT32 bson_compare(const CHAR *pStr, const bson *b) ;
 
 SDB_EXTERN_C_END
 

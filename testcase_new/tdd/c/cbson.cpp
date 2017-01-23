@@ -8,6 +8,8 @@
 #define USERDEF       "sequoiadb"
 #define PASSWDDEF     "sequoiadb"
 
+using namespace std;
+
 TEST(cbson, empty)
 {
    INT32 rc = SDB_OK ;
@@ -582,5 +584,34 @@ TEST(cbson, timestampType)
    sdbReleaseCursor ( cursor ) ;
    sdbReleaseCollection ( cl ) ;
    sdbReleaseConnection ( db ) ;
+}
+
+TEST(cbson, cbson_jsCompatibility_toString)
+{
+   const char *pExpect1 = "{ \"a\": 9223372036854775807, \"b\": -9223372036854775808, \"c\": 2147483648, \"d\": -2147483649, \"e\": 0 }";
+   const char *pExpect2 = "{ \"a\": { \"$numberLong\": \"9223372036854775807\" }, \"b\": { \"$numberLong\": \"-9223372036854775808\" }, \"c\": 2147483648, \"d\": -2147483649, \"e\": 0 }";
+   bson obj;
+   bson_init( &obj );
+   bson_append_long( &obj, "a", 9223372036854775807LL );   // max long
+   bson_append_long( &obj, "b", (-9223372036854775807LL-1) );  // min long
+   bson_append_long( &obj, "c", 2147483648LL );            // max int + 1
+   bson_append_long( &obj, "d", -2147483649LL );           // min int - 1
+   bson_append_long( &obj, "e", 0 );                       // 0
+   bson_finish( &obj );
+
+
+   cout << "disable js compatibility: " ;
+   bson_print( &obj );
+   ASSERT_EQ( 0, bson_compare(pExpect1, &obj) );
+
+   bson_set_js_compatibility( 1 );
+   cout << "enable js compatibility: " ;
+   bson_print( &obj );
+   ASSERT_EQ( 0, bson_compare(pExpect2, &obj) );
+
+   bson_set_js_compatibility( 0 );
+   cout << "disable js compatibility: " ;
+   bson_print( &obj );
+   ASSERT_EQ( 0, bson_compare(pExpect1, &obj) );
 }
 
