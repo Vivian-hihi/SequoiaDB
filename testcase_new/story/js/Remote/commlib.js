@@ -5,19 +5,19 @@
 
 function RemoteTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
 {
-   if( hostName == undefined )
+   if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
       this.hostname = hostName ;
-   if( cmSvcName == undefined )
+   if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;
-   if( isLegalHost == undefined )
+   if( isLegalHost === undefined )
       this.islegalHost = true ;
    else
       this.islegalhost = isLegalHost ;
-   if( isLegalSvc == undefined )
+   if( isLegalSvc === undefined )
       this.islegalsvc = true ;
    else
       this.islegalsvc = isLegalSvc ;
@@ -25,7 +25,7 @@ function RemoteTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
 
 RemoteTest.prototype.toString = function()
 {
-   return ( "hostname=" + this.hostname + " svcname=" + this.svcname ) ;
+   return ( "RemoteTest: hostname=" + this.hostname + " svcname=" + this.svcname ) ;
 }
 
 RemoteTest.prototype.testInit = function()
@@ -36,7 +36,7 @@ RemoteTest.prototype.testInit = function()
    }
    catch( e )
    {
-      if( ( !this.islegalhost || !this.islegalsvc ) && e == -15 )
+      if( ( !this.islegalhost || !this.islegalsvc ) && e === -15 )
          ;
       else
       {
@@ -65,11 +65,11 @@ function toolGetHosts()
    var tmpInfo = db.listReplicaGroups().toArray() ;
    for( var i = 0;i < tmpInfo.length;i++ )
    {
-      var tmpObj = db.eval( "(" + tmpInfo[i] + ")" ).toObj() ;
+      var tmpObj = JSON.parse( tmpInfo[i] ) ;
       var tmpArr = tmpObj.Group ;
       for( var j = 0;j < tmpArr.length;j++ )
       {
-         if( hosts.indexOf( tmpArr[j].HostName ) == -1 )
+         if( hosts.indexOf( tmpArr[j].HostName ) === -1 )
             hosts[k++] = tmpArr[j].HostName ;
       }
    }
@@ -100,7 +100,7 @@ function toolGetRemotehost()
    var remotehost = localhost ;
    for( var i = 0;i < hosts.length;i++ )
    {
-      if( hosts[i] != localhost )
+      if( hosts[i] !== localhost )
       {
          remotehost = hosts[i] ;
          break ;
@@ -127,7 +127,7 @@ function toolGetIdleSvcName( hostName, cmSvcName )
       }
       catch( e )
       {
-         if( e == 1 )
+         if( e === 1 )
          {
             remote.close() ;
             return svcname ;
@@ -154,7 +154,7 @@ function toolGetSequoiadbDir( hostname, svcname )
    dir[1] = tmp.slice( 0, ind ) ;
    remote.close() ;
    
-   if( hostname == COORDHOSTNAME || hostname == toolGetLocalhost() )
+   if( hostname === COORDHOSTNAME || hostname === toolGetLocalhost() )
    {
       system = System ;
       tmp = system.getEWD() ;

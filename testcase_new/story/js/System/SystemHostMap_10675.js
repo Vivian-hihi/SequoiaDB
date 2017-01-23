@@ -23,13 +23,14 @@ SystemTest.prototype.testGetHostsMap = function()
       var found = false ;
       for( var j = 0;j < hostsmap2.length;j++ )
       {
-         if( hostsmap2[j].indexOf( ip ) != -1 && hostsmap2[j].indexOf( hostname ) != -1 )
+         if( hostsmap2[j].indexOf( ip ) !== -1 && 
+             hostsmap2[j].indexOf( hostname ) !== -1 )
          {
             found = true ;
             break ;
          }   
       }
-      if( found == false )
+      if( found === false )
       {
          throw buildException( "testGetHostsMap", null, "check hostmap " + this, 
                                ip + ":" + hostname, hostmap2 ) ;
@@ -49,7 +50,7 @@ SystemTest.prototype.testGetAHostMap = function()
    var hostname = hostsmap[0].HostName ;
    var ip = hostsmap[0].Ip ;
    var res = this.system.getAHostMap( hostname ) ;
-   if( res != ip )
+   if( res !== ip )
    {
       throw buildException( "testGetAHostMap", null, "get a hostmap", ip, res ) ;
    }
@@ -62,7 +63,7 @@ SystemTest.prototype.testGetAHostMap = function()
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testGetAHostMap", e, 
                "get a not exist hostmap " + this, -6, e ) ;
@@ -75,7 +76,7 @@ SystemTest.prototype.testAddDelAHostMap = function()
 {
    // 检查cm用户是否为root
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user != "root" )
+   if( user !== "root" )
    {
       println( user + " have no permission to add del hostmap." ) ;
       return ;
@@ -112,7 +113,7 @@ function testAddAHostMapNormal( system, host, ip )
       throw buildException( "testAddAHostMapNormal", e, "add a hostmap", 0, e ) ;
    }
    var result = system.getAHostMap( host ) ;
-   if( result != ip )
+   if( result !== ip )
    {
       throw buildException( "testAddAHostMapNormal", null, 
                             "check add a hostmap", ip, result ) ;
@@ -132,7 +133,7 @@ function testAddAExistHostMapFalse( system, host, ip )
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testAddAExistHostMapFalse", e, 
                "add a existed hostmap when isReplace false", -6, e ) ;
@@ -156,7 +157,7 @@ function testAddAExistHostMapTrue( system, host, ip )
             "add a existed hostmap when isReplace true", -6, e ) ;
    }
    var result = system.getAHostMap( host ) ;
-   if( result != ip )
+   if( result !== ip )
    {
       throw buildException( "testAddAExistHostMapTrue", null, 
                             "check added hostmap", ip, result ) ;
@@ -176,7 +177,7 @@ function testAddAHostMapIllegalIp( system, host, ip )
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testAddAHostMapIllegalIp", e, 
                "add a hostmap with illegal ip " + ip, -6, e ) ;
@@ -205,7 +206,7 @@ function testDelAHostMap( system, host )
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testDelAHostMap", e, "check del a hostmap", -6, e ) ;
       }
@@ -217,20 +218,20 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
       // 测试获取hostmap
-      sts[i].testGetHostsMap() ;
+      systems[i].testGetHostsMap() ;
       
       // 测试获取特定主机的hostmap
-      sts[i].testGetAHostMap() ;
+      systems[i].testGetAHostMap() ;
       
       // 测试增加删除hostmap
-      sts[i].testAddDelAHostMap() ;
+      systems[i].testAddDelAHostMap() ;
    } 
 }
 

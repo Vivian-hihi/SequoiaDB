@@ -15,7 +15,7 @@ OmaTest.prototype.testOmaSvcName = function()
    // 测试addAOmaSvcName getAOmaSvcName   
    this.oma.addAOmaSvcName( "test", "19000" ) ;
    var result = this.oma.getAOmaSvcName( "test" ) ;
-   if( result != "19000" )
+   if( result !== "19000" )
    {
       throw buildException( "testOmaSvcName", null, "add a oma svcname " + this, 
                             "19000", result ) ;
@@ -24,7 +24,7 @@ OmaTest.prototype.testOmaSvcName = function()
    // 测试delAOmaSvcName  
    this.oma.delAOmaSvcName( "test" ) ;
    result = this.oma.getAOmaSvcName( "test" ) ;
-   if( result != "11790" )
+   if( result !== "11790" )
    {
       throw buildException( "testOmaSvcName", null, "del a oma svcname " + this, 
                             "11790", result ) ;
@@ -42,7 +42,7 @@ OmaTest.prototype.testOmaSvcNameReplace = function()
    this.oma.addAOmaSvcName( "test", "19000" ) ;
    this.oma.addAOmaSvcName( "test", "18900", true ) ;
    var result = this.oma.getAOmaSvcName( "test" ) ;
-   if( result != "18900" )
+   if( result !== "18900" )
    {
       throw buildException( "testOmaSvcNameReplace", null, 
             "get a oma svcname after replace " + this, "18900", result ) ;
@@ -56,7 +56,7 @@ OmaTest.prototype.testOmaSvcNameReplace = function()
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testOmaSvcNameReplace", e, 
                "add a exist oma svcname when isReplace is false " + this, -6, e ) ;   
@@ -72,17 +72,17 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var ot1 = new OmaTest( localhost, CMSVCNAME ) ;
-   var ot2 = new OmaTest( remotehost, CMSVCNAME ) ;
+   var localOma = new OmaTest( localhost, CMSVCNAME ) ;
+   var remoteOma = new OmaTest( remotehost, CMSVCNAME ) ;
    
-   var ots = [ ot1, ot2 ] ;
-   for( var i = 0;i < ots.length;i++ )
+   var omas = [ localOma, remoteOma ] ;
+   for( var i = 0;i < omas.length;i++ )
    {   
       // 测试增加、删除、获取Oma端口
-      ots[i].testOmaSvcName() ;
+      omas[i].testOmaSvcName() ;
       
       // 测试增加Oma端口，isReplace为true/false
-      ots[i].testOmaSvcNameReplace() ;
+      omas[i].testOmaSvcNameReplace() ;
    }
 }
 

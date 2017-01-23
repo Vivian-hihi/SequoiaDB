@@ -19,7 +19,7 @@ RemoteTest.prototype.testInitWithWrongSvc = function()
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testInitWithWrongSvc", e, 
                "check init remote with COORDSVCNAME " + this, -6, e ) ;
@@ -40,6 +40,11 @@ function main()
    
    // 获取空闲端口
    var svcname = toolGetIdleSvcName( remotehost, CMSVCNAME ) ;
+   if( svcname === undefined )
+   {
+      println( "No idle svcname between RSRVPORTBEGIN and RSRVPORTEND" ) ;
+      return ;
+   }
    
    // 测试使用不存在的端口初始化
    rt = new RemoteTest( remotehost, svcname, true, false ) ;

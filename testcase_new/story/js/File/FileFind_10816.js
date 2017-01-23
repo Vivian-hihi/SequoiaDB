@@ -52,7 +52,7 @@ FileTest.prototype.testFind = function()
 ******************************************************************************/
 function checkFindResult( result, cmd, commands )
 {
-   if( result.length == 0)
+   if( result.length === 0)
    {
       try
       {
@@ -61,7 +61,7 @@ function checkFindResult( result, cmd, commands )
       }
       catch( e )
       {
-         if( e != 1 )
+         if( e !== 1 )
          {
             throw buildException( "checkFindResult", e, 
                                   "find no file " + commands, 1, e ) ;
@@ -71,10 +71,10 @@ function checkFindResult( result, cmd, commands )
    else
    {
       var findfiles = cmd.run( commands ).split( "\n" ) ;
-      for( var i = result.length-1, j= findfiles.length-2;i >= 0;i--,j-- )
+      for( var i = result.length-1, j = findfiles.length-2;i >= 0;i--,j-- )
       {
          var fileObj = JSON.parse( result[i] ) ;
-         if( fileObj.pathname != findfiles[j] )
+         if( fileObj.pathname !== findfiles[j] )
          {
             throw buildException( "checkFindResult", null, 
                   "find files " + commands, findfiles, result[i] ) ;

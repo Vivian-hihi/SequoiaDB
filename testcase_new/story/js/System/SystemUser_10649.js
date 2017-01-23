@@ -31,7 +31,7 @@ SystemTest.prototype.testGetUserEnv = function()
    
    for( var k in tmpObj )
    {
-      if( tmpObj[k] != environ[k] )
+      if( tmpObj[k] !== environ[k] )
       {
          throw buildException( "testGetUserEnv", null, 
                "check key: " + k + " " + this, tmpObj[k], environ[k] ) ;
@@ -49,24 +49,27 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    // 检查当前用户和cm用户是否有权限
    var currUser = this.system.getCurrentUser().toObj().user ;
    var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( this.system == System )
+   if( this.system === System )
    {
-      if( currUser != "root" )
+      if( currUser !== "root" )
          return ;
    }
-   else if( cmUser != "root" )
+   else if( cmUser !== "root" )
       return ;
-   // 检查用户组sdbadmin_group sequoiadb是否存在
-   if( !isGroupExist( this.hostname, this.svcname, "sdbadmin_group" ) || 
-       !isGroupExist( this.hostname, this.svcname, "sequoiadb" ) ||
-       !isUserExist( this.hostname, this.svcname, "createUser" ) )
+   // 检查用户组tmpGroup testGroup是否存在
+   if( isGroupExist( this.hostname, this.svcname, "tmpGroup" ) || 
+       isGroupExist( this.hostname, this.svcname, "testGroup" ) ||
+       isUserExist( this.hostname, this.svcname, "createUser" ) )
       return ;
+   // 创建用户组tmpGroup testGroup
+   this.system.addGroup( { name: "tmpGroup" } ) ;
+   this.system.addGroup( { name: "testGroup" } ) ;
    
    var userObj = {} ;
    userObj["name"] = "createUser" ;          // 用户名
    userObj["passwd"] = "createUser" ;        // 用户密码
-   userObj["group"] = "sequoiadb" ;          // 用户组
-   userObj["Group"] = "sdbadmin_group" ;     // 附加用户组
+   userObj["group"] = "tmpGroup" ;           // 用户组
+   userObj["Group"] = "testGroup" ;          // 附加用户组
    userObj["dir"] = "/home/createUser" ;     // 用户主目录
    userObj["createDir"] = createDir ;        // 是否自动创建用户主目录
    
@@ -91,7 +94,7 @@ SystemTest.prototype.testAddDelUser = function( createDir )
    // 检查用户主目录
    checkDir( this.cmd, userObj.dir, createDir ) ;
    
-   // 测试完成后，删除用户
+   // 测试完成后，删除用户用户组
    var option = {} ;
    option["name"] = userObj.name ;
    option["isRemoveDir"] = createDir ;
@@ -101,6 +104,8 @@ SystemTest.prototype.testAddDelUser = function( createDir )
       throw buildException( "testAddDelUser", null, "check user after del",
             userObj.name + " should be deled", "not deled" ) ;
    }
+   this.system.delGroup( "tmpGroup" ) ;
+   this.system.delGroup( "testGroup" ) ;
    
    this.release() ;
 }
@@ -113,12 +118,12 @@ SystemTest.prototype.testAddExistUser = function()
    // 检查当前用户和cm用户是否有权限
    var currUser = this.system.getCurrentUser().toObj().user ;
    var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( this.system == System )
+   if( this.system === System )
    {
-      if( currUser != "root" )
+      if( currUser !== "root" )
          return ;
    }
-   else if( cmUser != "root" )
+   else if( cmUser !== "root" )
       return ;
    
    try
@@ -128,7 +133,7 @@ SystemTest.prototype.testAddExistUser = function()
    }
    catch( e )
    {
-      if( e != 9 )
+      if( e !== 9 )
       {
          throw buildException( "testAddExistUser", e, "add exist user " + this, 9, e ) ;
       }   
@@ -144,17 +149,20 @@ SystemTest.prototype.testSetUserConfigs = function()
    // 检查当前用户和cm用户是否有权限
    var currUser = this.system.getCurrentUser().toObj().user ;
    var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( this.system == System )
+   if( this.system === System )
    {
-      if( currUser != "root" )
+      if( currUser !== "root" )
          return ;
    }
-   else if( cmUser != "root" )
+   else if( cmUser !== "root" )
       return ;
-   if( !isGroupExist( this.hostname, this.svcname, "sdbadmin_group" ) ||
-       !isGroupExist( this.hostname, this.svcname, "sequoiadb" ) ||
-       !isUserExist( this.hostname, this.svcname, "modifyUser" ) )
+   if( isGroupExist( this.hostname, this.svcname, "tmpGroup" ) ||
+       isGroupExist( this.hostname, this.svcname, "testGroup" ) ||
+       isUserExist( this.hostname, this.svcname, "modifyUser" ) )
       return ;
+   // 创建用户组tmpGroup testGroup
+   this.system.addGroup( { name: "tmpGroup" } ) ;
+   this.system.addGroup( { name: "testGroup" } ) ;
    
    // 首先创建用户
    var userObj = {} ;
@@ -167,8 +175,8 @@ SystemTest.prototype.testSetUserConfigs = function()
    // 设置用户属性
    var option = {} ;
    option["name"] = "modifyUser" ;
-   option["group"] = "sequoiadb" ;
-   option["Group"] = "sdbadmin_group" ;
+   option["group"] = "tmpGroup" ;
+   option["Group"] = "testGroup" ;
    option["isAppend"] = true ;
    option["dir"] = "/home/modifyUser" ;
    option["isMove"] = true ;
@@ -200,6 +208,8 @@ SystemTest.prototype.testSetUserConfigs = function()
       throw buildException( "testSetUserConfigs", null, "check user after del",
             userObj.name + " should be deled", "not deled" ) ;
    }
+   this.system.delGroup( "tmpGroup" ) ;
+   this.system.delGroup( "testGroup" ) ;
    
    this.release() ;
 }
@@ -222,7 +232,7 @@ SystemTest.prototype.testListLoginUsers = function()
          time +=  " " + tmp[j] ;  
       }
       var addr ;                          // 登录的主机名或者ip
-      if( tmp[tmp.length-1] == undefined )
+      if( tmp[tmp.length-1] === undefined )
       {
          addr = "" ;
       }
@@ -230,8 +240,8 @@ SystemTest.prototype.testListLoginUsers = function()
       {
          addr = tmp[tmp.length-1].slice( 1, tmp[tmp.length-1].length-1 ) ;
       }  
-      if( username != userObj.user || tty != userObj.tty ||
-          time != userObj.time || addr != userObj.from )
+      if( username !== userObj.user || tty !== userObj.tty ||
+          time !== userObj.time || addr !== userObj.from )
       {
          throw buildException( "testListLoginUsers", null, 
                "check info " + this, tmp, JSON.stringify( userObj ) ) ;
@@ -253,7 +263,8 @@ SystemTest.prototype.testListAllUsers = function()
       var username = tmp[0] ;    // 用户名
       var groupid = tmp[3] ;     // 用户组id
       var dir = tmp[5] ;         // 用户主目录
-      if( username != userObj.user || groupid != userObj.gid || dir != userObj.dir )
+      if( username !== userObj.user || groupid !== userObj.gid || 
+          dir !== userObj.dir )
       {
          throw buildException( "testListAllUsers", null, 
                "check info " + this, tmp, JSON.stringify( userObj) ) ;
@@ -276,13 +287,14 @@ SystemTest.prototype.testGetCurrentUser = function()
       var name = tmp[0] ;      // 用户名
       var groupid = tmp[3] ;   // 用户组id
       var dir = tmp[5] ;       // 用户主目录
-      if( name == userObj.user && groupid == userObj.gid && dir == userObj.dir )
+      if( name === userObj.user && groupid === userObj.gid && 
+          dir === userObj.dir )
       {
          found = true ;
          break ;
       }
    }
-   if( found == false )
+   if( found === false )
    {
       throw buildException( "testGetCurrentUser", null, 
             "check current user " + this, info, JSON.stringify( userObj ) ) ;
@@ -296,13 +308,13 @@ SystemTest.prototype.testIsUserExist = function()
    this.init() ;
    
    var result = this.system.isUserExist( "root" ) ;
-   if( result != true )
+   if( result !== true )
    {
       throw buildException( "testIsUserExist", null, "test user root " + this, 
                             true, result ) ;
    }
    result = this.system.isUserExist( "!@#$%" ) ;
-   if( result != false )
+   if( result !== false )
    {
       throw buildException( "testIsUserExist", null, "test user !@#$% " + this, 
                             false, result ) ;
@@ -320,7 +332,7 @@ function checkUser( cmd, username )
 {
    var names = cmd.run( "cat /etc/passwd | grep -w " + username + 
                        " | awk -F : '{print $1}'").split( "\n" ) ;
-   if( names.indexOf( username ) == -1 )
+   if( names.indexOf( username ) === -1 )
    {
       throw buildException( "checkUser", null, "check user name", username, name ) ;   
    } 
@@ -333,7 +345,7 @@ function checkUser( cmd, username )
 function checkGroup( cmd, groupname, username )
 {
    var info = cmd.run( "id " + username ).split( "\n" )[0] ; 
-   if( info.indexOf( groupname ) == -1 )
+   if( info.indexOf( groupname ) === -1 )
    {
       throw buildException( "checkGroup", null, "check group: " + groupname + 
                             " of user: " + username, groupname, info ) ;
@@ -352,7 +364,7 @@ function checkDir( cmd, dir, createDir )
    }
    catch( e )
    {
-      if( !createDir && e == 2 )
+      if( !createDir && e === 2 )
          ;
       else
          throw buildException( "checkDir", null, "check user dir", 0, e ) ;
@@ -365,38 +377,38 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
       // 测试获取用户环境
-      sts[i].testGetUserEnv() ;
+      systems[i].testGetUserEnv() ;
       
       // 测试创建删除用户，自动创建删除用户主目录
-      sts[i].testAddDelUser( true ) ;
+      systems[i].testAddDelUser( true ) ;
       
       // 测试创建删除用户，不创建删除用户主目录
-      sts[i].testAddDelUser( false ) ;
+      systems[i].testAddDelUser( false ) ;
       
       // 测试创建已存在用户
-      sts[i].testAddExistUser() ;
+      systems[i].testAddExistUser() ;
       
       // 测试修改用户属性
-      sts[i].testSetUserConfigs() ;
+      systems[i].testSetUserConfigs() ;
       
       // 测试枚举登录用户
-      sts[i].testListLoginUsers() ;
+      systems[i].testListLoginUsers() ;
       
       // 测试枚举所有用户
-      sts[i].testListAllUsers() ;
+      systems[i].testListAllUsers() ;
       
       // 测试获取当前用户信息
-      sts[i].testGetCurrentUser() ;
+      systems[i].testGetCurrentUser() ;
       
       // 测试判断用户是否存在
-      sts[i].testIsUserExist() ;
+      systems[i].testIsUserExist() ;
    }
 }
    

@@ -17,20 +17,20 @@ FileTest.prototype.testReadWrite = function()
    this.file.write( content ) ;     // 写文件
    this.file.seek( 0, 'b' ) ;       
    var readPart = this.file.read( 4 ) ;   // 偏移读部分字符
-   if( readPart != "aaaa" )
+   if( readPart !== "aaaa" )
    {
       throw buildException( "testReadWrite", null, 
                             "test read part " + this, "aaaa", readPart ) ;
    }
    this.file.seek( 0, 'b' ) ;
    var readMax = this.file.read() ;       // 偏移读1024个字符
-   if( readMax != generateContent( 'a', 1024 ) )
+   if( readMax !== generateContent( 'a', 1024 ) )
    {
       throw buildException( "testReadWrite", null, 
             "test read 1024 " + this, generateContent( 'a', 1024 ), readMax ) ;
    }
    var readRest = this.file.read() ;      // 读取剩余字符
-   if( readRest !=  'a' )
+   if( readRest !==  'a' )
    {
       throw buildException( "testReadWrite", null, 
                             "test read rest " + this, 'a', readRest ) ;
@@ -52,7 +52,7 @@ FileTest.prototype.testSeekBoundary = function()
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testSeekBoundary", e, 
                                "test exceed head boundary " + this, -6, e ) ;
@@ -87,7 +87,7 @@ function checkClose( file )
    }
    catch( e )
    {
-      if( e != -1 )
+      if( e !== -1 )
       {
          throw buildException( "checkClose", e, "write after close", -1, e ) ;
       }

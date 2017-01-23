@@ -12,19 +12,19 @@ CmdTest.prototype.testRunNormal = function()
    
    var result = this.cmd.run( "ls", "/tmp" ) ;
    var command = this.cmd.getCommand() ;   // 获取上次执行的命令
-   if( command != "ls /tmp" )
+   if( command !== "ls /tmp" )
    {
       throw buildException( "testRun", null, "test getCommand " + this, 
                             "ls /tmp", command ) ;
    }
    var ret = this.cmd.getLastRet() ;       // 获取上次命令是否执行正常
-   if( ret != 0 )
+   if( ret !== 0 )
    {
       throw buildException( "testRun", null, "test getLastRet " + this, 
                             "ls /tmp", ret ) ;
    }
    var out = this.cmd.getLastOut() ;       // 获取上次命令执行的返回结果
-   if( out != result )
+   if( out !== result )
    {
       throw buildException( "testRun", null, "test getLastOut " + this, 
                             result, out ) ;
@@ -44,24 +44,24 @@ CmdTest.prototype.testRunAbnormal = function()
    }
    catch( e )
    {
-      if( e != 127 )
+      if( e !== 127 )
          throw buildException( "testRunAbnormal", e, 
                                "run abnormal command " + this, 127, e ) ;
    }
    var command = this.cmd.getCommand() ;
-   if( command != "led ." )
+   if( command !== "led ." )
    {
       throw buildException( "testRunAbnormal", null, "test getCommand " + this, 
                             "led .", command ) ;
    }
    var ret = this.cmd.getLastRet() ;
-   if( ret != 127 )
+   if( ret !== 127 )
    {
       throw buildException( "testRunAbnormal", null, "test getLastRet " + this, 
                             127, ret ) ;
    }
    var out = this.cmd.getLastOut() ;
-   if( out.indexOf( "not found" ) == -1 )
+   if( out.indexOf( "not found" ) === -1 )
    {
       throw buildException( "testRunAbnormal", null, "test getLastOut " + this, 
                             "not found", out ) ;
@@ -76,15 +76,15 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var ct1 = new CmdTest( localhost, CMSVCNAME ) ;
-   var ct2 = new CmdTest( remotehost, CMSVCNAME ) ;
-   var cts = [ ct1, ct2 ] ;
+   var localCmd = new CmdTest( localhost, CMSVCNAME ) ;
+   var remoteCmd = new CmdTest( remotehost, CMSVCNAME ) ;
+   var cmds = [ localCmd, remoteCmd ] ;
    
-   for( var i = 0;i < cts.length;i++ )
+   for( var i = 0;i < cmds.length;i++ )
    {
       // 测试运行指令
-      cts[i].testRunNormal() ;
-      cts[i].testRunAbnormal() ;
+      cmds[i].testRunNormal() ;
+      cmds[i].testRunAbnormal() ;
    }
 }
 

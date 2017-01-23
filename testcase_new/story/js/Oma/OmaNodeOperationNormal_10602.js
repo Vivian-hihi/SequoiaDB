@@ -91,19 +91,19 @@ function main()
       return ;
    }
    
-   var ot1 = new OmaTest( localhost, CMSVCNAME ) ;
-   var ot2 = new OmaTest( remotehost, CMSVCNAME ) ;
+   var localOma = new OmaTest( localhost, CMSVCNAME ) ;
+   var remoteOma = new OmaTest( remotehost, CMSVCNAME ) ;
    
-   var ots = [ ot1, ot2 ] ;
+   var omas = [ localOma, remoteOma ] ;
    var svcnames = [ svcname1, svcname2 ] ;
    
-   for( var i = 0;i < ots.length;i++ )
+   for( var i = 0;i < omas.length;i++ )
    {
       // 测试协调节点的正常操作
-      ots[i].testCoordNodeOperationNormal( svcnames[i] ) ;
+      omas[i].testCoordNodeOperationNormal( svcnames[i] ) ;
       
       // 测试数据节点的正常操作
-      ots[i].testDataNodeOperationNormal( svcnames[i] ) ;
+      omas[i].testDataNodeOperationNormal( svcnames[i] ) ;
    }
 }
 

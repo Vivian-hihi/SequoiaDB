@@ -11,7 +11,7 @@ FileTest.prototype.testGetInfo = function()
 {
    this.init() ;
    
-   if( this.file == File )   // 检查文件是否为本地File类类型
+   if( this.file === File )   // 检查文件是否为本地File类类型
    {
       // println( "File has no function getInfo." ) ;
       return ;
@@ -20,8 +20,8 @@ FileTest.prototype.testGetInfo = function()
    var info = this.file.getInfo().toObj() ;
    if( this.isLocal )       // 验证本地文件对象信息
    {
-      if( info.type != "File" || info.isRemote != false || 
-          info.filename != this.filename )
+      if( info.type !== "File" || info.isRemote !== false || 
+          info.filename !== this.filename )
       {
          throw buildException( "testGetInfo", null, "check local file info", 
                                this, JSON.stringify( info ) ) ;
@@ -46,7 +46,7 @@ FileTest.prototype.testMd5 = function()
    var tmp = this.cmd.run( "md5sum " + fileName ).split( "\n" ) ;
    var tmpInfo = tmp[tmp.length-2] ;
    var expect = tmpInfo.split( " " )[0] ;
-   if( md5 != expect )
+   if( md5 !== expect )
    {
       throw buildException( "testMd5", null, "test " + fileName + " " + this, 
                             expect, md5 ) ;
@@ -83,9 +83,9 @@ FileTest.prototype.testStat = function()
       }
       catch( e )
       {
-         if( e == 1 )
+         if( e === 1 )
          {
-            println( files[i] + " not exist " + " " + this ) ;
+            println( files[i] + " not exist " + this ) ;
             continue ;
          }
          println( "run command " + command + " " + this ) ;
@@ -118,7 +118,7 @@ function checkStat( stat1, stat2 )
    
    for( var k in stat1 )
    {
-      if( statObj[k] != stat1[k] )
+      if( statObj[k] !== stat1[k] )
       {
          throw buildException( "checkStat", 0, "check file stat",
                JSON.stringify( statObj ), JSON.stringify( stat1 ) ) ;
@@ -132,15 +132,15 @@ function checkStat( stat1, stat2 )
 ******************************************************************************/
 function checkRemoteFileInfo( info, ft )  // ft: FileTest对象
 { 
-   if( info.type != "File" || info.hostname != ft.hostname ||
-       info.svcname != ft.svcname || info.isRemote != true )
+   if( info.type !== "File" || info.hostname !== ft.hostname ||
+       info.svcname !== ft.svcname || info.isRemote !== true )
    {
       throw buildException( "checkRemoteFileInfo", 0, "check file info", 
                             ft, JSON.stringify( info ) ) ;
    }
-   if( ft.filename == undefined )
+   if( ft.filename === undefined )
    {
-      if( info.filename["$undefined"] != 1 )
+      if( info.filename["$undefined"] !== 1 )
       {
          throw buildException( "checkRemoteFileInfo", null, 
                "check file name undefined", ft, JSON.stringify( info ) ) ;         
@@ -148,7 +148,7 @@ function checkRemoteFileInfo( info, ft )  // ft: FileTest对象
    }
    else
    {
-      if( info.filename != ft.filename )
+      if( info.filename !== ft.filename )
       {
          throw buildException( "checkRemoteInfo", null, "check file name", 
                                ft, JSON.stringify( info ) ) ;

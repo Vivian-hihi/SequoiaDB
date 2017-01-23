@@ -5,11 +5,11 @@
 
 function SystemTest( hostName, cmSvcName )
 {
-   if( hostName == undefined )
+   if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
       this.hostname = hostName ;
-   if( cmSvcName == undefined )
+   if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;
@@ -25,7 +25,7 @@ SystemTest.prototype.toString = function()
 
 SystemTest.prototype.init = function()
 {
-   if( this.hostname == COORDHOSTNAME || this.hostname == toolGetLocalhost() )
+   if( this.hostname === COORDHOSTNAME || this.hostname === toolGetLocalhost() )
    {
       this.system = System ;
       this.cmd = new Cmd() ;
@@ -40,7 +40,7 @@ SystemTest.prototype.init = function()
 
 SystemTest.prototype.release = function()
 {
-   if( this.remote != undefined )
+   if( this.remote !== undefined )
       this.remote.close() ;
 }
 
@@ -75,11 +75,11 @@ function toolGetHosts()
    var tmpInfo = db.listReplicaGroups().toArray() ;
    for( var i = 0;i < tmpInfo.length;i++ )
    {
-      var tmpObj = db.eval( "(" + tmpInfo[i] + ")" ).toObj() ;
+      var tmpObj = JSON.parse( tmpInfo[i] ) ;
       var tmpArr = tmpObj.Group ;
       for( var j = 0;j < tmpArr.length;j++ )
       {
-         if( hosts.indexOf( tmpArr[j].HostName ) == -1 )
+         if( hosts.indexOf( tmpArr[j].HostName ) === -1 )
             hosts[k++] = tmpArr[j].HostName ;
       }
    }
@@ -111,7 +111,7 @@ function toolGetRemotehost()
    var remotehost = localhost ;
    for( var i = 0;i < hosts.length;i++ )
    {
-      if( hosts[i] != localhost )
+      if( hosts[i] !== localhost )
       {
          remotehost = hosts[i] ;
          break ;
@@ -154,7 +154,7 @@ function toolGetIdleSvcName( hostName, cmSvcName )
       }
       catch( e )
       {
-         if( e == 1 )
+         if( e === 1 )
          {
             remote.close() ;
             return svcname ;
@@ -205,7 +205,7 @@ function toolGetSequoiadbDir( hostname, svcname )
    dir[1] = tmp.slice( 0, ind ) ;
    remote.close() ;
    
-   if( hostname == COORDHOSTNAME || hostname == toolGetLocalhost() )
+   if( hostname === COORDHOSTNAME || hostname === toolGetLocalhost() )
    {
       system = System ;
       tmp = system.getEWD() ;
@@ -233,7 +233,7 @@ function isUserExist( hostname, svcname, username )
    }
    catch( e )
    {
-      if( e == 1 )
+      if( e === 1 )
          exist = false ;
       else
          throw buildException( "isUserExist", e, "check " + username, "1 0", e ) ;
@@ -258,7 +258,7 @@ function isGroupExist( hostname, svcname, groupname )
    }
    catch( e )
    {
-      if( e == 1 )
+      if( e === 1 )
          exist = false ;
       else
          throw buildException( "isGroupExist", e, 

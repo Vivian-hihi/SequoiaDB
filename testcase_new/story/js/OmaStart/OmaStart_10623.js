@@ -21,7 +21,7 @@ function testOmaStart()
 {
    // 获取空闲端口
    var svcname = toolGetIdleSvcName( COORDHOSTNAME, CMSVCNAME ) ;
-   if( svcname == undefined )
+   if( svcname === undefined )
    {
       println( "No idle svcname between RSRVPORTBEGIN and RSRVPORTEND" ) ;
       return ;
@@ -33,25 +33,34 @@ function testOmaStart()
    option["alivetime"] = 2 ;
    option["standalone"] = true ;
    
-   Oma.start( option ) ;
+   try
+   {
+   
+      Oma.start( option ) ;
+   }
+   catch( e )
+   {
+      throw buildException( "testOmaStart", e, "start standalone cm", 0, e ) ;
+   }
    
    // 检查cm端口及超时
    var oma = new Oma() ;
    var num = oma.listNodes( { type: "cm", showalone: true } ).toArray().length ;
-   if( num != 3 )  // cm, cmd, standalone cm
+   if( num !== 3 )  // cm, cmd, standalone cm
    {
       throw buildException( "testOmaStart", null, 
                             "check cm after start a standalone cm", 3, num ) ;
    }
    var start = new Date().getTime() ;
-   while( num != 2 )
+   while( num !== 2 )
    {
+      sleep( 1000 ) ;
       num = oma.listNodes( { type: "cm", showalone: true } ).toArray().length ;
       var end = new Date().getTime() ;
       if( end - start > 5*1000 )
          break ;
    }
-   if( num != 2 )
+   if( num !== 2 )
    {
       throw buildException( "testOmaStart", null, 
                             "check cm after standalone cm timeout", 2, num ) ;
@@ -67,27 +76,50 @@ function testOmaStart()
    option["port"] = svcname ;
    option["alivetime"] = 0 ;
    option["standalone"] = false ; 
-     
-   Oma.start( option ) ;   // 启动的cm为当前用户所有
    
-   // 检查cm端口及超时
-   oma = new Oma( COORDHOSTNAME, svcname ) ;
-   num = oma.listNodes( { type: "cm" } ).toArray().length ;
-   if( num != 2 )
-   {
-      throw buildException( "testOmaStart", 0, "check cm after start new cm", 2, num ) ;
+   try
+   {  
+      Oma.start( option ) ;   // 启动的cm为当前用户所有
    }
-   sleep( 5*1000 ) ;
-   num = oma.listNodes( { type: "cm" } ).toArray().length ;
-   if( num != 2 )
+   catch( e )
    {
-      throw buildException( "testOmaStart", 0, "check cm when alivetime is 0", 2, num ) ;
+      throw buildException( "testOmaStart", e, "start cm", 0, e ) ;
    }
-   oma.close() ;
    
-   // 测试完成后，恢复原有的cm端口
-   cmd.run( InstallPath + "/bin/sdbcmtop --I" ) ;
-   cmd.run( InstallPath + "/bin/sdbcmart" ) ;
-      
-   // windows下asport参数手工验证
+   try
+   {
+      // 检查cm端口及超时
+      oma = new Oma( COORDHOSTNAME, svcname ) ;
+      num = oma.listNodes( { type: "cm" } ).toArray().length ;
+      if( num !== 2 )
+      {
+         throw buildException( "testOmaStart", 0, 
+                               "check cm after start new cm", 2, num ) ;
+      }
+      start = new Date().getTime() ;
+      while( num === 2 )
+      {
+         sleep( 1000 ) ;
+         num = oma.listNodes( { type: "cm" } ).toArray().length ;
+         var end = new Date().getTime() ;
+         if( end - start > 5*1000 )
+            break ;
+      }
+      if( num !== 2 )
+      {
+         throw buildException( "testOmaStart", 0, 
+                               "check cm when alivetime is 0", 2, num ) ;
+      }
+      oma.close() ;
+   }
+   catch( e )
+   {
+      throw e ;
+   }
+   finally
+   {
+      // 测试完成后，恢复原有的cm端口
+      cmd.run( InstallPath + "/bin/sdbcmtop --I" ) ;
+      cmd.run( InstallPath + "/bin/sdbcmart" ) ;
+   }
 }

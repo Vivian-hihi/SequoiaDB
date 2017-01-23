@@ -22,18 +22,28 @@ FileTest.prototype.testFileOperation = function()
       tmpFile = new File( tmpFileName, 0644 ) ;
    else
       tmpFile = this.remote.getFile( tmpFileName, 0644 ) ;
+   
+   try
+   {   
+      this.file.move( tmpFileName, tmpFileName + ".move" ) ; // 移动文件
+      checkMove( this.cmd, tmpFileName, tmpFileName + ".move" ) ;
+      this.file.move( tmpFileName + ".move", tmpFileName ) ; 
       
-   this.file.move( tmpFileName, tmpFileName + ".move" ) ; // 移动文件
-   checkMove( this.cmd, tmpFileName, tmpFileName + ".move" ) ;
-   this.file.move( tmpFileName + ".move", tmpFileName ) ; 
-   
-   this.file.copy( tmpFileName, tmpFileName + ".copy" ) ;  // 拷贝文件
-   checkCopy( this.cmd, tmpFileName, tmpFileName + ".copy" ) ;
-   
-   this.file.remove( tmpFileName ) ;      // 删除文件
-   checkRemove( this.cmd, tmpFileName ) ;
-   this.file.remove( tmpFileName + ".copy" ) ;
-   this.file.remove( tmpDirName ) ; 
+      this.file.copy( tmpFileName, tmpFileName + ".copy" ) ;  // 拷贝文件
+      checkCopy( this.cmd, tmpFileName, tmpFileName + ".copy" ) ;
+      
+      this.file.remove( tmpFileName ) ;      // 删除文件
+      checkRemove( this.cmd, tmpFileName ) ;
+      this.file.remove( tmpFileName + ".copy" ) ;
+   }
+   catch( e )
+   {
+      throw e ;
+   }
+   finally
+   {
+      this.file.remove( tmpDirName ) ;
+   } 
    
    this.release() ;  
 }
@@ -47,15 +57,15 @@ FileTest.prototype.testCopyWithMode = function()
    var srcFile = sdbDir[0] + "/bin/sdb" ;      // -rwxr-xr-x
    var dstFile = sdbDir[0] + "/bin/sdb.bak" ;
    var mode = this.file.stat( srcFile ).toObj().mode.slice( 0, 10 ) ;
-   if( mode != "rwxr-xr-x" )  return ;
+   if( mode !== "rwxr-xr-x" )  return ;
    var umask = this.file.getUmask( '8' ) ;
-   if( umask != "0022" ) return ;
+   if( umask !== "0022" ) return ;
    this.cmd.run( "rm -rf " + dstFile ) ;
    
    // 测试目标文件不存在时指定权限需要与umask运算
    this.file.copy( srcFile, dstFile, false, 0733 ) ;   // 0733 - 0022 = 0711
    var dstFileMode = this.file.stat( dstFile ).toObj().mode.slice( 0, 10 ) ;
-   if( dstFileMode != "rwx--x--x" )
+   if( dstFileMode !== "rwx--x--x" )
    {
       throw buildException( "testCopyWithMode", null, "copy file when " + 
             srcfile + " not exist " + this, "rwx--x--x", dstFileMode ) ; 
@@ -64,7 +74,7 @@ FileTest.prototype.testCopyWithMode = function()
    // 测试目标文件存在时设置权限无效，保留原文件权限
    this.file.copy( srcFile, dstFile, true, 0777 ) ;   
    var dstFileMode = this.file.stat( dstFile ).toObj().mode.slice( 0, 10 ) ;
-   if( dstFileMode != "rwx--x--x" )
+   if( dstFileMode !== "rwx--x--x" )
    {
       throw buildException( "testCopyWithMode", null, "copy file when " + 
             srcfile + " exist " + this, "rwx--x--x", dstFileMode ) ; 
@@ -104,7 +114,7 @@ function checkMove( cmd, oldFile, newFile )
    }
    catch( e )
    {
-      if( e != 2 )
+      if( e !== 2 )
          throw buildException( "checkMove", e, "list " + oldFile, 2, e ) ;
    }
    try
@@ -135,7 +145,7 @@ function checkCopy( cmd, srcFile, dstFile )
    {
       throw buildException( "checkCopy", e, "check " + srcFile + " " + dstFile, 0, e ) ;
    }
-   if( mode1 != mode2 )
+   if( mode1 !== mode2 )
    {
       throw buildException( "checkCopy", null, "check mode " + srcFile + " " + dstFile,
                             mode1, mode2 ) ;
@@ -155,7 +165,7 @@ function checkRemove( cmd, fileName )
    }
    catch( e )
    {
-      if( e != 2 )
+      if( e !== 2 )
          throw buildException( "checkRemove", e ) ;
    }
 }

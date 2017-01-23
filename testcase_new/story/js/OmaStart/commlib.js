@@ -5,19 +5,19 @@
 
 function OmaTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
 {
-   if( hostName == undefined )
+   if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
       this.hostname = hostName ;
-   if( cmSvcName == undefined )
+   if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;
-   if( isLegalHost == undefined )
+   if( isLegalHost === undefined )
       this.islegalhost = true ;
    else
       this.islegalhost = isLegalHost ;
-   if( isLegalSvc == undefined )
+   if( isLegalSvc === undefined )
       this.islegalsvc = true ;
    else
       this.islegalsvc = isLegalSvc ;
@@ -42,7 +42,7 @@ OmaTest.prototype.testInit = function()
    }
    catch( e )
    {
-      if( !this.islegalhost && e == -15 )
+      if( !this.islegalhost && e === -15 )
          ;
       else
       {
@@ -69,7 +69,7 @@ function toolGetIdleSvcName( hostName, cmSvcName )
       }
       catch( e )
       {
-         if( e == 1 )
+         if( e === 1 )
          {
             remote.close() ;
             return svcname ;
@@ -102,11 +102,11 @@ function toolGetHosts()
    var tmpInfo = db.listReplicaGroups().toArray() ;
    for( var i = 0;i < tmpInfo.length;i++ )
    {
-      var tmpObj = db.eval( "(" + tmpInfo[i] + ")" ).toObj() ;
+      var tmpObj = JSON.parse( tmpInfo[i] ) ;
       var tmpArr = tmpObj.Group ;
       for( var j = 0;j < tmpArr.length;j++ )
       {
-         if( hosts.indexOf( tmpArr[j].HostName ) == -1 )
+         if( hosts.indexOf( tmpArr[j].HostName ) === -1 )
             hosts[k++] = tmpArr[j].HostName ;
       }
    }
@@ -137,56 +137,11 @@ function toolGetRemotehost()
    var remotehost = localhost ;
    for( var i = 0;i < hosts.length;i++ )
    {
-      if( hosts[i] != localhost )
+      if( hosts[i] !== localhost )
       {
          remotehost = hosts[i] ;
          break ;
       }
    }
    return remotehost ;
-}
-
-/******************************************************************************
-*@Description : check sdbom exist or not
-*@author      : Liang XueWang            
-******************************************************************************/
-function isOmExist( hostName, cmSvcName )
-{
-   var oma = new Oma( hostName, cmSvcName ) ;
-   var rc ;
-   
-   var arr = oma.listNodes( { type: "om" } ).toArray() ;
-   if( arr.length != 0 )
-      rc = true ;
-   else
-      rc = false ;
-   
-   oma.close() ;
-   return rc ;
-}
-
-/******************************************************************************
-*@Description : check getOmaInstallInfo/getOmaConfigs/getNodeConfigs result
-*@author      : Liang XueWang              
-******************************************************************************/
-function checkResult( info, content, func )
-{ 
-   for( var i in info )
-   {
-      var found = false ;
-      for( var j = 0;j < content.length;j++ )
-      {
-         content[j] = content[j].replace( / /g,"" ) ;
-         var ind = content[j].indexOf( i ) ;
-         if( ind == -1 )
-            continue ;
-         found = true ;
-         var value1 = content[j].slice( ind+i.length+1 ).toLowerCase() ;
-         var value2 = info[i].toString().toLowerCase() ;
-         if( value1 != value2 )
-            throw buildException( "checkResult", null, func + " i=" + i, value1, value2 ) ;   
-      }
-      if( found == false )
-         throw buildException( "checkResult", func + ", i=" + i ) ;   
-   }
 }

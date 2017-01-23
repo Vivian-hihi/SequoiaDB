@@ -15,13 +15,13 @@ CmdTest.prototype.testRunJS = function()
    }
    catch( e )
    {
-      if( e == -10 && this.isLocal )
+      if( e === -10 && this.isLocal )
          ;
       else
          throw buildException( "testRunJS", e, "run js " + this, 0, e ) ;
    }
-   if( ( this.isLocal && result != undefined ) ||
-       ( !this.isLocal && result != "7" ) )
+   if( ( this.isLocal && result !== undefined ) ||
+       ( !this.isLocal && result !== "7" ) )
    {
       throw buildException( "testRunJS", null, "check result " + this, 
                             "7", result ) ;
@@ -36,14 +36,14 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var ct1 = new CmdTest( localhost, CMSVCNAME ) ;
-   var ct2 = new CmdTest( remotehost, CMSVCNAME ) ;
-   var cts = [ ct1, ct2 ] ;
+   var localCmd = new CmdTest( localhost, CMSVCNAME ) ;
+   var remoteCmd = new CmdTest( remotehost, CMSVCNAME ) ;
+   var cmds = [ localCmd, remoteCmd ] ;
    
-   for( var i = 0;i < cts.length;i++ )
+   for( var i = 0;i < cmds.length;i++ )
    {
       // 测试后台运行指令
-      cts[i].testRunJS() ;
+      cmds[i].testRunJS() ;
    }
 }
 

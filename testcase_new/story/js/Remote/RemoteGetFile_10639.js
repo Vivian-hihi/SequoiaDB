@@ -11,7 +11,7 @@ RemoteTest.prototype.testGetNoPermitFile = function()
 {
    this.testInit() ;
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user == "root" ) return ;
+   if( user === "root" ) return ;
    // make no permission dir
    var file = this.remote.getFile() ;
    var dirName = "/tmp/noPerDir/" ;
@@ -25,7 +25,7 @@ RemoteTest.prototype.testGetNoPermitFile = function()
    }
    catch( e )
    {
-      if( e != -3 )
+      if( e !== -3 )
       {
          throw buildException( "testGetNoPermitFile", e, 
                "get no permit file " + dirName + "/test " + this, -3, e ) ;
@@ -43,7 +43,7 @@ RemoteTest.prototype.testGetSdbFile = function( hostname )
    this.testInit() ;
    
    var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   if( this.hostname == hostname )
+   if( this.hostname === hostname )
    {
       try
       {
@@ -52,7 +52,7 @@ RemoteTest.prototype.testGetSdbFile = function( hostname )
       }
       catch( e )
       {
-         if( e != -1 )
+         if( e !== -1 )
          {
             throw buildException( "testGetSdbFile", e, "get sdb file " + this, -1, e ) ;
          }
@@ -80,10 +80,10 @@ function main()
    var remotehost = toolGetRemotehost() ;
    
    // 测试获取无权限的文件
-   var rt1 = new RemoteTest( localhost, CMSVCNAME ) ;
-   var rt2 = new RemoteTest( remotehost, CMSVCNAME ) ;
-   rt1.testGetNoPermitFile() ;
-   rt2.testGetNoPermitFile() ;
+   var remote1 = new RemoteTest( localhost, CMSVCNAME ) ;
+   var remote2 = new RemoteTest( remotehost, CMSVCNAME ) ;
+   remote1.testGetNoPermitFile() ;
+   remote2.testGetNoPermitFile() ;
    
    // 测试获取sdb文件（当前正在使用的文件，手工验证）
    // rt1.testGetSdbFile( localhost ) ;

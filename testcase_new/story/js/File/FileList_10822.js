@@ -23,7 +23,8 @@ FileTest.prototype.testList = function()
       var perm = tmp[0] ;   // 文件权限
       var user = tmp[1] ;   // 文件用户
       var filename = tmp[2] ;  // 文件名
-      if( perm != fileObj.mode || user != fileObj.user || filename != fileObj.name )
+      if( perm !== fileObj.mode || user !== fileObj.user || 
+          filename !== fileObj.name )
       {
          throw buildException( "testList", null, 
                "test list files in " + dir + " " + this, tmp, files1[i] ) ;

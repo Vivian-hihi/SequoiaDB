@@ -9,7 +9,7 @@ function main()
    // 获取本地主机和远程主机
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
-   if( remotehost == localhost )
+   if( remotehost === localhost )
    {
       println( "The cluster has only a host.") ;
       return ;
@@ -21,7 +21,8 @@ function main()
    // 设置信赖关系
    try
    {
-      system.buildTrusty() ;    // 手工验证信赖关系的建立和解除
+      // 手工验证信赖关系的建立和解除,ssh时是否需要输入密码
+      system.buildTrusty() ;    
       system.removeTrusty() ;
    }
    catch( e )

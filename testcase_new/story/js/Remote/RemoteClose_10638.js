@@ -18,7 +18,7 @@ RemoteTest.prototype.testClose = function()
    }
    catch( e )
    {
-      if( e != -15 )
+      if( e !== -15 )
       {
          throw buildException( "testClose", e, 
                "system call type after remote close " + this, -15, e ) ;
@@ -32,7 +32,7 @@ function main()
    var remotehost = toolGetRemotehost() ;
    
    // 测试remote关闭后执行操作
-   rt = new RemoteTest( remotehost, CMSVCNAME ) ;
+   var rt = new RemoteTest( remotehost, CMSVCNAME ) ;
    rt.testClose() ;
 }
 

@@ -17,12 +17,12 @@ OmaTest.prototype.testListNodes1 = function()
    option["type"] = "db" ;
    option["role"] = "coord" ;
    option["mode"] = "run" ;
-   option["svcname"] = "" + COORDSVCNAME ;
+   option["svcname"] = COORDSVCNAME ;
    option["showalone"] = true ;
    option["expand"] = true ;
    option["displaymode"] = "obj" ;
    var filter = {} ;
-   filter["svcname"] = "" + COORDSVCNAME ;
+   filter["svcname"] = COORDSVCNAME ;
    
    var nodes = this.oma.listNodes( option, filter ) ;
    
@@ -65,14 +65,13 @@ OmaTest.prototype.testListNodes2 = function()
    
    var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
    var command = sdbDir[0] + "/bin/sdblist -t om -r om -m local" ;
-   var tmpInfo ;
    try
    {
-      tmpInfo = cmd.run( command ) ;
+      var tmpInfo = cmd.run( command ) ;
    }
    catch( e )
    {
-      if( e == 1 && !isOmExist( this.hostname, this.svcname ) )
+      if( e === 1 && !isOmExist( this.hostname, this.svcname ) )
       {
          tmpInfo = "Total: 0" ;
       }
@@ -138,7 +137,7 @@ OmaTest.prototype.testListNodesAbnormal = function()
       }
       catch( e )
       {
-         if( e != -6 )
+         if( e !== -6 )
          {
             throw buildException( "testListNodesAbnormal", e, 
                   "list nodes with " + JSON.stringify( option[i] ) + " " + this, -6, e ) ;
@@ -158,8 +157,8 @@ function checkListNodes( nodes, info )
    var num1 = nodes.toArray().length ;
    var tmpStr = "Total: " ;
    var ind = info.indexOf( tmpStr ) ;
-   var num2 = info.slice( ind + tmpStr.length ).split( "\n" )[0] ;
-   if( num1 != num2 )
+   var num2 = info.slice( ind + tmpStr.length ).split( "\n" )[0]*1 ;
+   if( num1 !== num2 )
    {
       println( "listnodes: " + JSON.stringify( nodes.toArray() ) ) ;
       println() ;
@@ -175,19 +174,19 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var ot1 = new OmaTest( localhost, CMSVCNAME ) ;
-   var ot2 = new OmaTest( remotehost, CMSVCNAME ) ;
-   var ots = [ ot1, ot2 ] ;
+   var localOma = new OmaTest( localhost, CMSVCNAME ) ;
+   var remoteOma = new OmaTest( remotehost, CMSVCNAME ) ;
+   var omas = [ localOma, remoteOma ] ;
    
-   for( var i = 0;i < ots.length;i++ )
+   for( var i = 0;i < omas.length;i++ )
    {
       // 测试枚举节点正常
-      ots[i].testListNodes1() ;
-      ots[i].testListNodes2() ;
-      ots[i].testListNodes3() ;
+      omas[i].testListNodes1() ;
+      omas[i].testListNodes2() ;
+      omas[i].testListNodes3() ;
       
       // 测试枚举节点异常
-      ots[i].testListNodesAbnormal() ;
+      omas[i].testListNodesAbnormal() ;
    }
 }
 

@@ -12,9 +12,9 @@
 // 测试创建删除用户组
 SystemTest.prototype.testAddDelGroup = function( isUnique )
 {
-   // 检查sdbadmin_group或testgroup是否存在
-   if( !isGroupExist( this.hostname, this.svcname, "sdbadmin_group" ) ||
-       !isGroupExist( this.hostname, this.svcname, "testGroup") )
+   // 检查tmpGroup或testgroup是否存在
+   if( isGroupExist( this.hostname, this.svcname, "tmpGroup" ) ||
+       isGroupExist( this.hostname, this.svcname, "testGroup") )
       return ;
    
    this.init() ;
@@ -22,50 +22,54 @@ SystemTest.prototype.testAddDelGroup = function( isUnique )
    // 检查当前用户和cm用户是否有权限
    var currUser = this.system.getCurrentUser().toObj().user ;
    var cmUser = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( this.system == System )
+   if( this.system === System )
    {
-      if( currUser != "root" )
+      if( currUser !== "root" )
          return ;
    }
-   else if( cmUser != "root" )
+   else if( cmUser !== "root" )
       return ;
-   
-   // 获取sdbadmin_group的gid
-   var info = this.cmd.run( "cat /etc/group | grep sdbadmin_group" ).split( "\n" )[0] ;
-   var tmp = info.split( ":" ) ;
-   var gid = tmp[2] ;
-   
-   var groupObj = {} ;
-   groupObj["name"] = "testGroup" ;
-   groupObj["id"] = gid ;
-   groupObj["isUnique"] = isUnique ;
-   groupObj["passwd"] = "testGroup" ;
   
    try
    {
-      // 创建用户组
+      // 创建tmpGroup
+      var gid = getIdleGID( this.cmd ) ;
+      var groupObj = {} ;
+      groupObj["name"] = "tmpGroup" ;
+      groupObj["id"] = gid ;
+      this.system.addGroup( groupObj ) ;
+      // 检查用户组
+      checkGroup( this.cmd, groupObj ) ;
+      
+      // 使用tmpGroup的gid创建testGroup
+      groupObj["name"] = "testGroup" ;
+      groupObj["id"] = gid ;
+      groupObj["isUnique"] = isUnique ;
+      groupObj["passwd"] = "testGroup" ;
       this.system.addGroup( groupObj ) ;
       if( isUnique )
       {
-         throw "create unique group with sdbadmin_group gid should be failed" ;
+         throw "create unique group with used gid should be failed" ;
       }
       // 检查用户组
       checkGroup( this.cmd, groupObj ) ;
-      // 删除用户组，需要更改gid和sdbadmin用户的主用户组
-      var gid = getIdleGID( this.cmd ) ;
-      this.cmd.run( "groupmod -g " + gid + " " + groupObj.name ) ;   // 更改gid
-      this.cmd.run( "usermod -g sdbadmin_group sdbadmin" ) ;         // 更改sdbadmin用户的主组
-      this.system.delGroup( groupObj.name ) ;
-      if( !isGroupExist( this.hostname, this.svcname, groupObj.name ) )
-         throw ( groupObj.name + " should be deled after del" ) ;
+      
+      // 删除用户组
+      this.system.delGroup( "tmpGroup" ) ;
+      this.system.delGroup( "testGroup" ) ;
+      if( isGroupExist( this.hostname, this.svcname, "tmpGroup" ) ||
+          isGroupExist( this.hostname, this.svcname, "testGroup") )
+      {
+         throw ( "tmpGroup/testGroup should be deled after del" ) ;
+      }
    }
    catch( e )
    {
-      if( ( e == 4 || e == 16 ) && isUnique )
+      if( ( e === 4 || e === 16 ) && isUnique )
          ;
       else
          throw buildException( "testAddDelGroup", null, 
-               "add del group " + this, "0 4", e ) ;
+               "add del group " + this, "0 4 16", e ) ;
    }
    
    this.release() ;
@@ -77,7 +81,8 @@ SystemTest.prototype.testListGroups = function()
    this.init() ;
    
    var groups = this.system.listGroups( { detail: true } ).toArray() ;
-   var info = this.cmd.run( "cat /etc/group | awk -F : '{print $1,$3,$4}'" ).split( "\n" ) ;
+   var command = "cat /etc/group | awk -F : '{print $1,$3,$4}'" ;
+   var info = this.cmd.run( command ).split( "\n" ) ;
    for( var i = 0;i < groups.length;i++ )
    {
       var groupObj = JSON.parse( groups[i] ) ;
@@ -85,7 +90,8 @@ SystemTest.prototype.testListGroups = function()
       var name = tmp[0] ;        // 用户组名
       var gid = tmp[1] ;         // GID
       var members = tmp[2] ;     // 用户组成员
-      if( name != groupObj.name || gid != groupObj.gid || members != groupObj.members )
+      if( name !== groupObj.name || gid !== groupObj.gid || 
+          members !== groupObj.members )
       {
          throw buildException( "testListGroups", null, 
                "test group info " + this, tmp, groups[i] ) ;
@@ -101,13 +107,13 @@ SystemTest.prototype.testIsGroupExist = function()
    this.init();
    
    var result = this.system.isGroupExist( "root" ) ;
-   if( result != true )
+   if( result !== true )
    {
       throw buildException( "testIsGroupExist", null, 
             "test root " + this, true, result ) ;
    }
    result = this.system.isGroupExist( "!@#$%" ) ;
-   if( result != false )
+   if( result !== false )
    {
       throw buildException( "testIsGroupExist", null, 
             "test !@#$% group " + this, false, result ) ;
@@ -122,11 +128,12 @@ SystemTest.prototype.testIsGroupExist = function()
 ******************************************************************************/
 function checkGroup( cmd, groupObj )
 {
-   var info = cmd.run( "cat /etc/group | grep " + groupObj.name ).split( "\n" )[0] ;
+   var command = "cat /etc/group | grep " + groupObj.name ;
+   var info = cmd.run( command ).split( "\n" )[0] ;
    var tmp = info.split( ":" ) ;
    var groupName = tmp[0] ;
    var gid = tmp[2] ;
-   if( groupName != groupObj.name || gid != groupObj.id )
+   if( groupName !== groupObj.name || gid !== groupObj.id )
    {
       throw buildException( "checkGroup", null, "check group info", 
                             tmp, JSON.stringify( groupObj ) ) ;
@@ -134,7 +141,7 @@ function checkGroup( cmd, groupObj )
 }
 
 /******************************************************************************
-*@Description : get a idle gid from 1000-
+*@Description : get a idle gid from 1000-  0-999 is ocupied by linux system
 *@author      : Liang XueWang            
 ******************************************************************************/
 function getIdleGID( cmd )
@@ -159,23 +166,23 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
       // 测试创建删除用户组，gid唯一
-      sts[i].testAddDelGroup( true ) ;
+      systems[i].testAddDelGroup( true ) ;
       
       // 测试创建删除用户组，gid不唯一
-      sts[i].testAddDelGroup( false ) ;
+      systems[i].testAddDelGroup( false ) ;
       
       // 测试枚举用户组
-      sts[i].testListGroups() ;
+      systems[i].testListGroups() ;
       
       // 测试判断用户组是否存在
-      sts[i].testIsGroupExist() ;
+      systems[i].testIsGroupExist() ;
    }
 }
    

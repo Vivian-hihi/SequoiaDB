@@ -5,11 +5,11 @@
 
 function CmdTest( hostName, cmSvcName )
 {
-   if( hostName == undefined )
+   if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
       this.hostname = hostName ;
-   if( cmSvcName == undefined )
+   if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;
@@ -22,8 +22,8 @@ CmdTest.prototype.toString = function()
 
 CmdTest.prototype.init = function()
 {
-   this.isLocal = this.hostname == COORDHOSTNAME || 
-                  this.hostname == toolGetLocalhost() ;
+   this.isLocal = this.hostname === COORDHOSTNAME || 
+                  this.hostname === toolGetLocalhost() ;
    if( this.isLocal )
    {
       this.cmd = new Cmd() ;
@@ -37,7 +37,7 @@ CmdTest.prototype.init = function()
 
 CmdTest.prototype.release = function()
 {
-   if( this.remote != undefined )
+   if( this.remote !== undefined )
       this.remote.close() ;
 }
    
@@ -61,11 +61,11 @@ function toolGetHosts()
    var tmpInfo = db.listReplicaGroups().toArray() ;
    for( var i = 0;i < tmpInfo.length;i++ )
    {
-      var tmpObj = db.eval( "(" + tmpInfo[i] + ")" ).toObj() ;
+      var tmpObj = JSON.parse( tmpInfo[i] ) ;
       var tmpArr = tmpObj.Group ;
       for( var j = 0;j < tmpArr.length;j++ )
       {
-         if( hosts.indexOf( tmpArr[j].HostName ) == -1 )
+         if( hosts.indexOf( tmpArr[j].HostName ) === -1 )
             hosts[k++] = tmpArr[j].HostName ;
       }
    }
@@ -97,7 +97,7 @@ function toolGetRemotehost()
    var remotehost = localhost ;
    for( var i = 0;i < hosts.length;i++ )
    {
-      if( hosts[i] != localhost )
+      if( hosts[i] !== localhost )
       {
          remotehost = hosts[i] ;
          break ;

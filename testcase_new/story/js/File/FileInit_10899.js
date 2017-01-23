@@ -20,7 +20,7 @@ function testInitLocal()
       var localfile = new File( filename, modeNumber[i] ) ;
       var tmp = cmd.run( command ).split( "\n" ) ;
       var filemode = tmp[tmp.length-2].slice( 0, 10 ) ;
-      if( filemode != modeString )
+      if( filemode !== modeString )
       {
          throw buildException( "testInitLocal", null, "file " + filename, 
                                modeString, filemode ) ;
@@ -46,7 +46,7 @@ function testInitRemote()
       var remotefile = remote.getFile( filename, modeNumber[i] ) ;
       var tmp = cmd.run( command ).split( "\n" ) ;
       var filemode = tmp[tmp.length-2].slice( 0, 10 ) ;
-      if( filemode != modeString )
+      if( filemode !== modeString )
       {
          throw buildException( "testInitRemote", null, 
          "file " + filename + " hostname: " + remotehost, modeString, filemode ) ;
@@ -72,7 +72,7 @@ function testInitRemoteAbnormal()
       }
       catch( e )
       {
-         if( e != errno[i] )
+         if( e !== errno[i] )
          {
             throw buildException( "testInitRemoteAbnormal", e, 
                   "file " + errFilename[i] + " host " + remotehost, errno[i], e ) ;

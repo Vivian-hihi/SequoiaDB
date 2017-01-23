@@ -37,15 +37,15 @@ OmaTest.prototype.testCreateDataWithIllegalOma = function( svcname )
 
 function main()
 {
-   var ot ;
+   var illegalOma ;
    
    // 测试Oma使用不存在的主机初始化
-   ot = new OmaTest( "IllegalHost", CMSVCNAME, false ) ;
-   ot.testInit() ;
+   illegalOma = new OmaTest( "IllegalHost", CMSVCNAME, false ) ;
+   illegalOma.testInit() ;
    
    // 测试Oma使用非cm端口初始化（初始化时不报错，创建节点时报错）
-   ot = new OmaTest( COORDHOSTNAME, COORDSVCNAME, true, false ) ;
-   ot.testInit() ;
+   illegalOma = new OmaTest( COORDHOSTNAME, COORDSVCNAME, true, false ) ;
+   illegalOma.testInit() ;
    
    // 获取一个未被占用的端口
    var svcname = toolGetIdleSvcName( COORDHOSTNAME, CMSVCNAME ) ;
@@ -56,7 +56,7 @@ function main()
    }
    
    // 测试创建节点时报错
-   ot.testCreateDataWithIllegalOma( svcname ) ; 
+   illegalOma.testCreateDataWithIllegalOma( svcname ) ; 
 }
 
 main()

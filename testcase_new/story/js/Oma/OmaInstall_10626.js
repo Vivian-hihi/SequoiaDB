@@ -14,7 +14,7 @@ OmaTest.prototype.testOmaInstall = function()
    
    // 测试getOmaInstallFile
    var file = this.oma.getOmaInstallFile() ;
-   if( file != "/etc/default/sequoiadb" )
+   if( file !== "/etc/default/sequoiadb" )
    {
       throw buildException( "testOmaInstall", null, "get oma install file " + this, 
                             "/etc/default/sequoiadb", file ) ;
@@ -29,7 +29,7 @@ OmaTest.prototype.testOmaInstall = function()
    }
    catch( e )
    {
-      if( e != -4 )
+      if( e !== -4 )
       {
          throw buildException( "testOmaInstall", e, 
                "get oma install info " + this, 0, e ) ;
@@ -55,18 +55,18 @@ function checkOmaInstallInfo( info, content )
       {
          content[j] = content[j].replace( / /g,"" ) ;
          var ind = content[j].indexOf( keys[i] ) ;
-         if( ind == -1 )
+         if( ind === -1 )
             continue ;
          found = true ;
          var value1 = content[j].slice( ind+keys[i].length+1 ).toLowerCase() ;
          var value2 = info[keys[i]].toString().toLowerCase() ;
-         if( value1 != value2 )
+         if( value1 !== value2 )
          {
             throw buildException( "checkOmaInstallInfo", null, 
                   "check key " + keys[i], value1, value2 ) ;
          }   
       }
-      if( found == false && info[keys[i]] != "" )
+      if( found === false && info[keys[i]] !== "" )
       {
          throw buildException( "checkOmaInstallInfo", null,
                "check key " + keys[i], "", info.keys[i]  ) ; 
@@ -80,14 +80,14 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var ot1 = new OmaTest( localhost, CMSVCNAME ) ;
-   var ot2 = new OmaTest( remotehost, CMSVCNAME ) ;
+   var localOma = new OmaTest( localhost, CMSVCNAME ) ;
+   var remoteOma = new OmaTest( remotehost, CMSVCNAME ) ;
    
-   var ots = [ ot1, ot2 ] ;
-   for( var i = 0;i < ots.length;i++ )
+   var omas = [ localOma, remoteOma ] ;
+   for( var i = 0;i < omas.length;i++ )
    {
       // 测试获取Oma安装文件和安装信息
-      ots[i].testOmaInstall() ;
+      omas[i].testOmaInstall() ;
    }
 }
 

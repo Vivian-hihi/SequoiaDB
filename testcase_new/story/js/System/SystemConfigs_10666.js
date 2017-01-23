@@ -21,7 +21,7 @@ SystemTest.prototype.testGetSystemConfigs = function()
       }
       catch( e )
       {
-         if( e == 1 && isEmptyObject( configObj ) )
+         if( e === 1 && isEmptyObject( configObj ) )
             ;
          else
          {
@@ -41,9 +41,9 @@ SystemTest.prototype.testGetSystemConfigs = function()
       }
       for( var k in configObj )
       {
-         if( k.indexOf( "random" ) != -1 )    // 排除随机生成值的字段
+         if( k.indexOf( "random" ) !== -1 )    // 排除随机生成值的字段
             ;
-         else if( configObj[k] != obj[k] )
+         else if( configObj[k] !== obj[k] )
          {
             throw buildException( "testGetSystemConfigs", null, 
                   "test key: " + k + " " + this, obj[k], configObj[k] ) ;
@@ -60,14 +60,14 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
       // 测试获取系统配置信息
-      // sts[i].testGetSystemConfigs() ;
+      // systems[i].testGetSystemConfigs() ;
    }
 }
 

@@ -5,11 +5,11 @@
 
 function FileTest( hostName, cmSvcName, fileName )
 {
-   if( hostName == undefined )
+   if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
       this.hostname = hostName ;   // 主机名    
-   if( cmSvcName == undefined )
+   if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
       this.svcname = cmSvcName ;   // 端口号  
@@ -19,13 +19,13 @@ function FileTest( hostName, cmSvcName, fileName )
 FileTest.prototype.init = function()
 {
    this.isLocal = false ;          // 是否连接本地cm
-   if( this.hostname == toolGetLocalhost() || this.hostname == COORDHOSTNAME )
+   if( this.hostname === toolGetLocalhost() || this.hostname === COORDHOSTNAME )
       this.isLocal = true ;
       
    if( this.isLocal )
    {
       this.cmd = new Cmd() ;       // 本地cmd对象
-      if( this.filename == undefined )
+      if( this.filename === undefined )
          this.file = File ;                           // 本地File类类型
       else
          this.file = new File( this.filename ) ;      // 本地file对象
@@ -33,7 +33,7 @@ FileTest.prototype.init = function()
    else
    {
       this.remote = new Remote( this.hostname, this.svcname ) ;
-      if( this.filename == undefined )
+      if( this.filename === undefined )
          this.file = this.remote.getFile() ;          // 远程File类类型
       else
          this.file = this.remote.getFile( this.filename ) ;  // 远程file对象
@@ -43,11 +43,11 @@ FileTest.prototype.init = function()
 
 FileTest.prototype.release = function()
 {
-   if( this.filename != undefined )
+   if( this.filename !== undefined )
    {
       this.cmd.run( "rm -rf " + this.filename ) ;    // 删除文件
    }
-   if( this.remote != undefined )
+   if( this.remote !== undefined )
    {
       this.remote.close() ;    // 断开连接
    }  
@@ -79,11 +79,11 @@ function toolGetHosts()
    var tmpInfo = db.listReplicaGroups().toArray() ;
    for( var i = 0;i < tmpInfo.length;i++ )
    {
-      var tmpObj = db.eval( "(" + tmpInfo[i] + ")" ).toObj() ;
+      var tmpObj = JSON.parse( tmpInfo[i] ) ;
       var tmpArr = tmpObj.Group ;
       for( var j = 0;j < tmpArr.length;j++ )
       {
-         if( hosts.indexOf( tmpArr[j].HostName ) == -1 )
+         if( hosts.indexOf( tmpArr[j].HostName ) === -1 )
             hosts[k++] = tmpArr[j].HostName ;
       }
    }
@@ -115,7 +115,7 @@ function toolGetRemotehost()
    var remotehost = localhost ;
    for( var i = 0;i < hosts.length;i++ )
    {
-      if( hosts[i] != localhost )
+      if( hosts[i] !== localhost )
       {
          remotehost = hosts[i] ;
          break ;

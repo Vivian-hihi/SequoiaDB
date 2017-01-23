@@ -30,28 +30,37 @@ OmaTest.prototype.testNodeConfigs = function()
    checkResult( configs, contents, "getNodeConfigs" ) ;
    
    // 测试setNodeConfigs
-   configs["tmpConf"] = "foo" ;
-   this.oma.setNodeConfigs( COORDSVCNAME, configs ) ;
-   var tmpConf = this.oma.getNodeConfigs( COORDSVCNAME ).toObj().tmpConf ;
-   if( tmpConf != "foo" )
+   try
    {
-      throw buildException( "testNodeConfigs", null, "set node configs " + this, 
-                            "foo", tmpConf ) ;
-   }
-   
-   // 测试updateNodeConfigs
-   configs["tmpConf"] = "bar" ;
-   this.oma.updateNodeConfigs( COORDSVCNAME, configs ) ;
-   tmpConf = this.oma.getNodeConfigs( COORDSVCNAME ).toObj().tmpConf ;
-   if( tmpConf != "bar" )
-   {
-      throw buildException( "testNodeConfigs", null, "update node configs " + this, 
-                            "bar", tmpConf ) ;
-   }
+      configs["tmpConf"] = "foo" ;
+      this.oma.setNodeConfigs( COORDSVCNAME, configs ) ;
+      var tmpConf = this.oma.getNodeConfigs( COORDSVCNAME ).toObj().tmpConf ;
+      if( tmpConf !== "foo" )
+      {
+         throw buildException( "testNodeConfigs", null, "set node configs " + this, 
+                               "foo", tmpConf ) ;
+      }
       
-   // 测试完成后，清除配置文件中的tmpConf
-   delete configs.tmpConf ;
-   this.oma.setNodeConfigs( COORDSVCNAME, configs ) ;
+      // 测试updateNodeConfigs
+      configs["tmpConf"] = "bar" ;
+      this.oma.updateNodeConfigs( COORDSVCNAME, configs ) ;
+      tmpConf = this.oma.getNodeConfigs( COORDSVCNAME ).toObj().tmpConf ;
+      if( tmpConf !== "bar" )
+      {
+         throw buildException( "testNodeConfigs", null, "update node configs " + this, 
+                               "bar", tmpConf ) ;
+      }
+   }
+   catch( e )
+   {
+      throw e ;
+   }
+   finally
+   {   
+      // 测试完成后，清除配置文件中的tmpConf
+      delete configs.tmpConf ;
+      this.oma.setNodeConfigs( COORDSVCNAME, configs ) ;
+   }
    
    this.oma.close() ;
    remote.close() ;
@@ -64,14 +73,14 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var ot1 = new OmaTest( localhost, CMSVCNAME ) ;
-   var ot2 = new OmaTest( remotehost, CMSVCNAME ) ;
-   var ots = [ ot1, ot2 ] ;
+   var localOma = new OmaTest( localhost, CMSVCNAME ) ;
+   var remoteOma = new OmaTest( remotehost, CMSVCNAME ) ;
+   var omas = [ localOma, remoteOma ] ;
    
-   for( var i = 0;i < ots.length;i++ )
+   for( var i = 0;i < omas.length;i++ )
    {
       // 测试获取、设置、更新节点配置
-      ots[i].testNodeConfigs() ;
+      omas[i].testNodeConfigs() ;
    }
 }
 

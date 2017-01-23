@@ -9,7 +9,8 @@
 *                          10684 System对象获取磁盘信息
 *                          10685 System对象获取磁盘快照
 *                          10686 System对象获取网卡信息
-*                          10687 System对象获取网卡快照 
+*                          10687 System对象获取网卡快照
+*                          10980:System.snapshotDiskInfo()增加磁盘IO统计信息 
 *@author      : Liang XueWang
 ******************************************************************************/
 
@@ -68,7 +69,7 @@ SystemTest.prototype.testGetMemInfo = function()
    if( !isApproEqual( size, memInfo1.Size ) || 
        !isApproEqual( used, memInfo1.Used ) || 
        !isApproEqual( free, memInfo1.Free ) || 
-       unit != memInfo1.Unit )
+       unit !== memInfo1.Unit )
    {
       throw buildException( "testGetMemInfo", null, 
             "check mem info " + this, memInfo2, JSON.stringify( memInfo1 ) ) ;
@@ -86,7 +87,7 @@ SystemTest.prototype.testSnapshotMemInfo = function()
    var memInfo2 = this.system.snapshotMemInfo().toObj() ;
    for( var k in memInfo1 )
    {
-      if( memInfo2[k] != memInfo1[k] && 
+      if( memInfo2[k] !== memInfo1[k] && 
           !isApproEqual( memInfo2[k], memInfo1[k] ) )
       {
          throw buildException( "testSnapshotMemInfo", null, 
@@ -113,6 +114,10 @@ SystemTest.prototype.testGetDiskInfo = function()
    var result = this.cmd.run( command ).split( "\n" ) ;
    checkDiskSize( diskInfo, result ) ;
    
+   // 测试磁盘ReadSec WriteSec
+   var result = getDiskIO( this.cmd ) ;
+   checkDiskIO( diskInfo, result ) ;
+   
    this.release() ;
 }
 
@@ -123,7 +128,7 @@ SystemTest.prototype.testSnapshotDiskInfo = function()
    
    var disks1 = this.system.getDiskInfo().toObj().disks ;
    var disks2 = this.system.snapshotDiskInfo().toObj().disks ;
-   if( disks1 != disks2 )
+   if( disks1 != disks2 )   // 对象比较，不使用全等
    {
       throw buildException( "testSnapshotDiskInfo", null, 
             "test disks " + this, JSON.stringify( disks1 ), JSON.stringify( disks2 ) ) ;
@@ -176,7 +181,7 @@ SystemTest.prototype.testSnapshotNetcardInfo = function()
       var TXDrops = tmp[8]*1 ;     // 发送数据包丢弃数
       
       var netcard = info1.Netcards[i] ;
-      if( Name != netcard.Name || 
+      if( Name !== netcard.Name || 
           !isApproEqual( RXBytes, netcard.RXBytes) || 
           !isApproEqual( RXPackets, netcard.RXPackets) || 
           !isApproEqual( RXErrors, netcard.RXErrors ) ||
@@ -205,19 +210,19 @@ function checkCpuNum( cmd, info, isppc )
    {
       if( isppc )
          cpuNum = cmd.run( "cat /proc/cpuinfo | grep machine | uniq |" +
-                           " wc -l" ).split( "\n" )[0] ;
+                           " wc -l" ).split( "\n" )[0]*1 ;
       else
       {
          cpuNum = cmd.run( "cat /proc/cpuinfo | grep 'physical id' | uniq |" +  
-                           " wc -l" ).split( "\n" )[0] ;
-         if( cpuNum == 0 ) cpuNum = 1 ;
+                           " wc -l" ).split( "\n" )[0]*1 ;
+         if( cpuNum === 0 ) cpuNum = 1 ;
       }
    }
    catch( e )
    {
       throw buildException( "checkCpuNum", e, "get cpu num", 0, e ) ;
    }
-   if( cpuNum != info.Cpus.length )
+   if( cpuNum !== info.Cpus.length )
    {
       throw buildException( "checkCpuNum", null, "test cpu num", 
                             cpuNum, info.Cpus.length ) ;
@@ -247,7 +252,7 @@ function checkCpuName( cmd, info, isppc )
    for( var i = 0;i < info.Cpus.length;i++ )
    {
       var cpuName = info.Cpus[i].Info ;
-      if( cpuNames.indexOf( cpuName ) == -1 )
+      if( cpuNames.indexOf( cpuName ) === -1 )
       {
          throw buildException( "checkCpuName", null, "test cpu name", 
                                cpuName, cpuNames ) ;
@@ -307,27 +312,27 @@ function checkDiskInfo( info, content )
       var found = false ;
       for( var j = 0;j < content.length;j++ )
       {
-         if( content[j].indexOf( disks[i].Filesystem ) != -1 &&   // 分区名
-             content[j].indexOf( disks[i].FsType ) != -1 &&       // 文件系统类型
-             content[j].indexOf( disks[i].Mount ) != -1 )         // 挂载点
+         if( content[j].indexOf( disks[i].Filesystem ) !== -1 &&   // 分区名
+             content[j].indexOf( disks[i].FsType ) !== -1 &&       // 文件系统类型
+             content[j].indexOf( disks[i].Mount ) !== -1 )         // 挂载点
          {
             found = true ;
             break ;
          }
       }
-      if( found == false )
+      if( found === false )
       {
          throw buildException( "checkDiskInfo", null, "check disk info", 
                                disks[i], content ) ; 
       }
-      if( disks[i].Filesystem.indexOf( "/dev" ) != -1 &&
-          disks[i].IsLocal != true )
+      if( disks[i].Filesystem.indexOf( "/dev" ) !== -1 &&
+          disks[i].IsLocal !== true )
       {
          throw buildException( "checkDiskInfo", null, "check IsLocal", 
                                disks[i].Filesystem, disks[i].IsLocal ) ;
       }
-      if( disks[i].Filesystem.indexOf( "/dev" ) == -1 &&
-          disks[i].IsLocal != false )
+      if( disks[i].Filesystem.indexOf( "/dev" ) === -1 &&
+          disks[i].IsLocal !== false )
       {
          throw buildException( "checkDiskInfo", null, "check IsLocal", 
                                disks[i].Filesystem, disks[i].IsLocal ) ;
@@ -353,21 +358,97 @@ function checkDiskSize( info, res )
       var found = false ;
       for( var j = 0;j < disks.length;j++ )
       {
-         if( fs == disks[j].Filesystem &&                    // 分区名
+         if( fs === disks[j].Filesystem &&                    // 分区名
              isApproEqual( size, disks[j].Size ) &&          // 磁盘总大小
              isApproEqual( used, disks[j].Used ) &&    // 已使用磁盘大小
-             "MB" == disks[j].Unit )
+             "MB" === disks[j].Unit )
          {
             found = true ;
             break ;
          }
       }
-      if( found == false )
+      if( found === false )
       {
          throw buildException( "checkDiskSize", null, "check disk size", 
                                res[i], JSON.stringify( disks ) ) ;   
       }
    }      
+}
+
+/******************************************************************************
+*@Description : get disk io stat  ReadSec WriteSec
+*@author      : Liang XueWang
+******************************************************************************/
+function getDiskIO( cmd )
+{
+   var command = "head -n 1 /proc/diskstats | awk '{print NF}'" ;
+   var columns = cmd.run( command ).split( "\n" )[0] ;
+   if( columns === "14" )
+   {
+      command = "cat /proc/diskstats | awk '{print $3,$6,$10}'" ;
+   }
+   else if( columns === "7" )
+   {
+      command = "cat /proc/diskstats | awk '{print $3,$5,$7}'" ;
+   }
+   else
+   {
+      throw buildException( "getDiskIO", null, "get columns in /proc/diskstats",
+                            "7 14", columns ) ;
+   }
+   var result = [] ;
+   var tmpInfo = cmd.run( command ).split( "\n" ) ;
+   for( var i = 0;i < tmpInfo.length-1;i++ )
+   {
+      var diskstats = tmpInfo[i].split( " " ) ;
+      result[i] = {} ;
+      result[i].diskName = diskstats[0] ;    // 磁盘名
+      result[i].readSec = diskstats[1] ;     // 读扇区次数
+      result[i].writeSec = diskstats[2] ;    // 写扇区次数
+   } 
+   return result ; 
+}
+
+/******************************************************************************
+*@Description : check get disk info  ReadSec WriteSec
+*@author      : Liang XueWang
+******************************************************************************/
+function checkDiskIO( info, result )
+{
+   var disks = info.Disks ;
+   for( var i = 0;i < disks.length;i++ )
+   {
+      if( disks[i].IsLocal === false )
+      {
+         if( disks[i].ReadSec !== 0 || disks[i].WriteSec !== 0 )
+         {
+            throw buildException( "checkDiskIO", null, 
+                  "check ReadSec WriteSec local false", "0,0", disks[i] ) ;
+         }
+      }
+      else
+      {
+         var found = false ;
+         for( var j = 0;j < result.length;j++ )
+         {
+            if( disks[i].Filesystem === "/dev/" + result[j].diskName )
+            {
+               found = true ;
+               if( !isApproEqual( disks[i].ReadSec, result[j].readSec) ||
+                   !isApproEqual( disks[i].WriteSec, result[j].writeSec ) )
+               {
+                  throw buildException( "checkDiskIO", null, 
+                        "check ReadSec WriteSec", result[j], disks[i] ) ;
+               }
+            }   
+         }
+         if( found === false )
+         {
+            throw buildException( "checkDiskIO", null,
+                  "check ReadSec WriteSec local true", disks[i], result ) ;  
+         } 
+      }
+   }   
 }
 
 /******************************************************************************
@@ -414,7 +495,7 @@ function getNetcards( cmd )
 ******************************************************************************/
 function checkNetcards( netcards1, netcards2 )
 {
-   if( netcards1.length != netcards2.length )
+   if( netcards1.length !== netcards2.length )
    {
       throw buildException( "checkNetcards", null, "check netcards num", 
             JSON.stringify( netcards1 ), JSON.stringify( netcards2 ) ) ;  
@@ -424,13 +505,13 @@ function checkNetcards( netcards1, netcards2 )
       var found = false ;
       for( var j = 0;j < netcards2.length;j++ )
       {
-         if( netcards1[i].toString() == netcards2[j].toString() )
+         if( netcards1[i].toString() === netcards2[j].toString() )
          {
             found = true ;
             break ;
          }
       }
-      if( found == false )
+      if( found === false )
       {
          throw buildException( "checkNetcards", 0, "check netcard info",
                JSON.stringify( netcards1[i] ), JSON.stringify( netcards2 ) ) ;   
@@ -443,27 +524,27 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
-      // sts[i].testGetCpuInfo() ;
+      systems[i].testGetCpuInfo() ;
       
-      sts[i].testSnapshotCpuInfo() ;
+      systems[i].testSnapshotCpuInfo() ;
       
-      sts[i].testGetMemInfo() ;
+      systems[i].testGetMemInfo() ;
       
-      sts[i].testSnapshotMemInfo() ;
+      systems[i].testSnapshotMemInfo() ;
       
-      sts[i].testGetDiskInfo() ;
+      systems[i].testGetDiskInfo() ;
       
-      sts[i].testSnapshotDiskInfo() ;
+      systems[i].testSnapshotDiskInfo() ;
       
-      sts[i].testGetNetcardInfo() ;
+      systems[i].testGetNetcardInfo() ;
       
-      sts[i].testSnapshotNetcardInfo() ;
+      systems[i].testSnapshotNetcardInfo() ;
    } 
 }
 

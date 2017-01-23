@@ -10,7 +10,7 @@ SystemTest.prototype.testSniffPort = function( svcname )
    
    // 测试已使用端口的状态
    var useable = this.system.sniffPort( COORDSVCNAME*1 ).toObj().Usable ;
-   if( useable != false )
+   if( useable !== false )
    {
       throw buildException( "testSniffPort", null, 
             "test sniff port " + COORDSVCNAME + " " + this, false, useable ) ;
@@ -18,7 +18,7 @@ SystemTest.prototype.testSniffPort = function( svcname )
    
    // 测试未使用端口的状态
    useable = this.system.sniffPort( svcname*1 ).toObj().Usable ;
-   if( useable != true )
+   if( useable !== true )
    {
       throw buildException( "testSniffPort", null, 
             "test sniff port " + svcname + " " + this, true, useable ) ;
@@ -35,7 +35,7 @@ SystemTest.prototype.testSniffPortBoundary = function()
    var CorrePort = [ 1, 65535, "1", "65535" ] ;  // 1是保留端口，普通用户不能占用
    var user = this.system.getCurrentUser().toObj().user ;
    var result ;
-   if( user == "root" )
+   if( user === "root" )
       result = [ true, true, true, true ] ;
    else
       result = [ false, true, false, true ] ;
@@ -49,7 +49,7 @@ SystemTest.prototype.testSniffPortBoundary = function()
       }
       catch( e )
       {
-         if( e != -6 )
+         if( e !== -6 )
          {
             throw buildException( "testSniffPortBoundary", e, 
                   "test sniff port " + ErrorPort[i] + " " + this, e, -6 ) ;
@@ -59,7 +59,7 @@ SystemTest.prototype.testSniffPortBoundary = function()
    for( var i = 0;i < CorrePort.length;i++ )
    {
       var useable = this.system.sniffPort( CorrePort[i] ).toObj().Usable ;
-      if( useable != result[i] )  
+      if( useable !== result[i] )  
       {
          throw buildException( "testSniffPortBoundary", null, 
                "test sniff port " + CorrePort[i] + " " + this, result[i], useable ) ;
@@ -75,21 +75,21 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
    // 获取空闲端口号
    var svcname1 = toolGetIdleSvcName( localhost, CMSVCNAME ) ;
    var svcname2 = toolGetIdleSvcName( remotehost, CMSVCNAME ) ;
    var svcnames = [ svcname1, svcname2 ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
       // 测试端口状态
-      sts[i].testSniffPort( svcnames[i] ) ;
+      systems[i].testSniffPort( svcnames[i] ) ;
       // 测试端口状态，端口号为边界值
-      sts[i].testSniffPortBoundary() ;
+      systems[i].testSniffPortBoundary() ;
    }
 }
    

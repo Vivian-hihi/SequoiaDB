@@ -13,12 +13,12 @@ SystemTest.prototype.testGetPID = function()
    
    var pid = this.system.getPID() ;
    var command ;
-   if( this.system == System )
+   if( this.system === System )
       command = "pgrep '^sdb$'" ;
    else
       command = "pgrep '^sdbcm$'" ;
    var pids = this.cmd.run( command ) ;
-   if( pids.indexOf( pid ) == -1 )
+   if( pids.indexOf( pid ) === -1 )
    {
       throw buildException( "testGetPID", null, "get PID " + this, pids, pid ) ;
    }
@@ -33,8 +33,9 @@ SystemTest.prototype.testGetTID = function()
    
    var pid = this.system.getPID() ;
    var tid = this.system.getTID() ;
-   var tids = this.cmd.run( "ps -T -p " + pid + " | awk '{print $2}'" ).split("\n") ;
-   if( tids.indexOf( "" + tid ) == -1 )
+   var command = "ps -T -p " + pid + " | awk '{print $2}'" ;
+   var tids = this.cmd.run( command ).split("\n") ;
+   if( tids.indexOf( "" + tid ) === -1 )
    {
       throw buildException( "testGetTID", null, "get TID " + this, tid, tids ) ;
    }
@@ -52,13 +53,13 @@ SystemTest.prototype.testGetEWD = function()
    var found = false ;
    for( var i = 0;i < sdbDir.length;i++ )
    {
-      if( sdbDir[i] + "/bin" == WorkDir )
+      if( sdbDir[i] + "/bin" === WorkDir )
       {
          found = true ;
          break ;
       }
    }
-   if( found == false )
+   if( found === false )
    {
       throw buildException( "testGetEWD", null, "get EWD " + this, 
             sdbDir, WorkDir ) ;
@@ -72,20 +73,20 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
       // 测试获取sdb进程ID
-      sts[i].testGetPID() ;
+      systems[i].testGetPID() ;
       
       // 测试获取sdb线程ID
-      sts[i].testGetTID() ;
+      systems[i].testGetTID() ;
       
       // 测试获取sdb目录
-      sts[i].testGetEWD() ;
+      systems[i].testGetEWD() ;
    }
 }
 

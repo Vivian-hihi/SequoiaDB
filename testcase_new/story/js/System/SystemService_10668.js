@@ -12,7 +12,7 @@ SystemTest.prototype.testRunServiceSSH = function()
 {
    // 检查cm用户是否为root
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user != "root" )
+   if( user !== "root" )
    {
       // println( user + " have no permission to run ssh service." ) ;
       return ;
@@ -23,7 +23,7 @@ SystemTest.prototype.testRunServiceSSH = function()
    // 获取服务状态
    this.init() ;
    var info = this.system.runService( "ssh", "status", "" ) ;
-   if( info.indexOf( "start" ) != -1 )   // 如果服务已启动，则停止再启动服务
+   if( info.indexOf( "start" ) !== -1 )   // 如果服务已启动，则停止再启动服务
    {
       this.system.runService( "ssh", "stop", "" ) ;
       var status = this.system.runService( "ssh", "status" ) ;
@@ -32,7 +32,7 @@ SystemTest.prototype.testRunServiceSSH = function()
       status = this.system.runService( "ssh", "status" ) ;
       checkStatus( status, "start" ) ;   
    }
-   else if( info.indexOf( "stop" ) != -1 )  // 如果服务已停止，则启动服务
+   else if( info.indexOf( "stop" ) !== -1 )  // 如果服务已停止，则启动服务
    {
       this.system.runService( "ssh", "start", "" ) ;
       var status = this.system.runService( "ssh", "status" ) ;
@@ -52,7 +52,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
 {
    // 检查cm用户是否为root
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user != "root" )
+   if( user !== "root" )
    {
       // println( user + " have no permission to run ssh service." ) ;
       return ;
@@ -64,7 +64,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
    this.init() ;
    var info = this.system.runService( "ssh", "status" ) ;
    var command ;
-   if( info.indexOf( "start" ) != -1 )
+   if( info.indexOf( "start" ) !== -1 )
       command = "start" ;
    else
       command = "stop" ;   
@@ -75,7 +75,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
    }
    catch( e )
    {
-      if( e != 1 )
+      if( e !== 1 )
       {
          throw buildException( "testRunServiceDuplicate", e, 
                "run service duplicate " + this, 1, e ) ;
@@ -88,7 +88,7 @@ SystemTest.prototype.testRunServiceDuplicate = function()
    }
    catch( e )
    {
-      if( e != 1 )
+      if( e !== 1 )
       {
          throw buildException( "testRunServiceDuplicate", e, 
                "test start service in the end " + this, 1, e ) ;
@@ -102,7 +102,7 @@ SystemTest.prototype.testStopSdbcm = function()
 {
    // 检查cm用户是否为root
    var user = toolGetSdbcmUser( this.hostname, this.svcname ) ;
-   if( user == "root" )
+   if( user === "root" )
    {
       // println( "Cannot stop sdbcm service owned by root." ) ;
       return ;
@@ -120,7 +120,7 @@ SystemTest.prototype.testStopSdbcm = function()
    }
    catch( e )
    {
-      if( e != -16 )
+      if( e !== -16 )
       {
          throw buildException( "testStopSdbcm", e, "stop sdbcm " + this, -16, e ) ;     
       }
@@ -134,7 +134,7 @@ SystemTest.prototype.testStopSdbcm = function()
 ******************************************************************************/
 function checkStatus( status, msg )
 {
-   if( status.indexOf( msg ) == -1 )
+   if( status.indexOf( msg ) === -1 )
    {
       throw buildException( "checkStatus", null, 
             "check service status " + msg, status, msg ) ;
@@ -148,7 +148,7 @@ function checkStatus( status, msg )
 function isSSHExist( hostname, svcname )
 {
    var remote = new Remote( hostname, svcname ) ;
-   var cmd = new Cmd() ;
+   var cmd = remote.getCmd() ;
    var exist ;
    try
    {
@@ -157,7 +157,7 @@ function isSSHExist( hostname, svcname )
    }
    catch( e )
    {
-      if( e == 1 )
+      if( e === 1 )
          exist = false ;
       else
          throw buildException( "isSSHExist", e ) ;
@@ -172,20 +172,20 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var st1 = new SystemTest( localhost, CMSVCNAME ) ;
-   var st2 = new SystemTest( remotehost, CMSVCNAME ) ;
-   var sts = [ st1, st2 ] ;
+   var localSystem = new SystemTest( localhost, CMSVCNAME ) ;
+   var remoteSystem = new SystemTest( remotehost, CMSVCNAME ) ;
+   var systems = [ localSystem, remoteSystem ] ;
    
-   for( var i = 0;i < sts.length;i++ )
+   for( var i = 0;i < systems.length;i++ )
    {
       // 测试启动停止ssh服务
-      sts[i].testRunServiceSSH() ;
+      systems[i].testRunServiceSSH() ;
       
       // 测试重复启动停止ssh服务
-      sts[i].testRunServiceDuplicate() ;
+      systems[i].testRunServiceDuplicate() ;
       
       // 测试停止sdbcm服务
-      // sts[i].testStopSdbcm() ;
+      // systems[i].testStopSdbcm() ;
    }
 }
 

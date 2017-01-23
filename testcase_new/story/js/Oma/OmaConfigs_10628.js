@@ -23,13 +23,13 @@ OmaTest.prototype.testGetOmaConfigsNormal = function()
    for( var i = 0;i < sdbDir.length;i++ )
    {
       var file = sdbDir[i] + "/conf/sdbcm.conf" ;
-      if( configFile == file )
+      if( configFile === file )
       {
          found = true ;
          break ;
       }
    }  
-   if( found == false )
+   if( found === false )
    {
       throw buildException( "testGetOmaConfigsNormal", null, 
             "get oma config file " + this, sdbDir, configFile ) ;
@@ -65,7 +65,7 @@ OmaTest.prototype.testGetOmaConfigsAbnormal = function()
    }
    catch( e )
    {
-      if( e != -4 )
+      if( e !== -4 )
       {
          throw buildException( "testGetOmaConfigsAbnormal", e, 
                "get oma configs with not exist file " + this, -4, e ) ;
@@ -80,7 +80,7 @@ OmaTest.prototype.testGetOmaConfigsAbnormal = function()
    }
    catch( e )
    {
-      if( e != -6 )
+      if( e !== -6 )
       {
          throw buildException( "testGetOmaConfigsAbnormal", e, 
                "get oma configs with sdb file " + this, -6, e ) ;
@@ -95,20 +95,29 @@ OmaTest.prototype.testSetOmaConfigs = function()
 {
    this.testInit() ;
    
-   // 测试setOmaConfigs
-   var configs = this.oma.getOmaConfigs().toObj() ;  
-   configs[ "name" ] = "lxw" ;
-   this.oma.setOmaConfigs( configs ) ;
-   var name = this.oma.getOmaConfigs().toObj().name ;
-   if( name != "lxw" )
+   try
    {
-      throw buildException( "testSetOmaConfigs", null, 
-            "check set oma configs " + this, "lxw", name ) ;
+      // 测试setOmaConfigs
+      var configs = this.oma.getOmaConfigs().toObj() ;  
+      configs[ "name" ] = "lxw" ;
+      this.oma.setOmaConfigs( configs ) ;
+      var name = this.oma.getOmaConfigs().toObj().name ;
+      if( name !== "lxw" )
+      {
+         throw buildException( "testSetOmaConfigs", null, 
+               "check set oma configs " + this, "lxw", name ) ;
+      }
    }
-   
-   // 测试完成后删除新加的配置
-   delete configs[ "name" ] ;
-   this.oma.setOmaConfigs( configs ) ;
+   catch( e )
+   {
+      throw e ;
+   }
+   finally
+   {
+      // 测试完成后删除新加的配置
+      delete configs[ "name" ] ;
+      this.oma.setOmaConfigs( configs ) ;
+   }
    
    this.oma.close() ;
 }
@@ -119,20 +128,20 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var ot1 = new OmaTest( localhost, CMSVCNAME ) ;
-   var ot2 = new OmaTest( remotehost, CMSVCNAME ) ;
+   var localOma = new OmaTest( localhost, CMSVCNAME ) ;
+   var remoteOma = new OmaTest( remotehost, CMSVCNAME ) ;
    
-   var ots = [ ot1, ot2 ] ;
-   for( var i = 0;i < ots.length;i++ )
+   var omas = [ localOma, remoteOma ] ;
+   for( var i = 0;i < omas.length;i++ )
    {
       // 测试正常获取Oma配置文件和配置信息
-      ots[i].testGetOmaConfigsNormal() ;
+      omas[i].testGetOmaConfigsNormal() ;
       
       // 测试获取Oma配置信息异常
-      ots[i].testGetOmaConfigsAbnormal() ;
+      omas[i].testGetOmaConfigsAbnormal() ;
       
       // 测试设置Oma配置信息
-      ots[i].testSetOmaConfigs() ;
+      omas[i].testSetOmaConfigs() ;
    }
 }
 
