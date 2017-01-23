@@ -32,7 +32,6 @@ public class Bug_CL_InsertOld {
 	public static void setConnBeforeClass() throws Exception{
 		// sdb
 		sdb = new Sequoiadb(Constants.COOR_NODE_CONN,"","");
-		System.out.println("connect ok!");
 		// cs
 		if(sdb.isCollectionSpaceExist(Constants.TEST_CS_NAME_1)){
 			sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
@@ -44,14 +43,12 @@ public class Bug_CL_InsertOld {
 		BSONObject conf = new BasicBSONObject();
 		conf.put("ReplSize", 0);
 		cl = cs.createCollection(Constants.TEST_CL_NAME_1, conf);
-		System.out.println("create cl ok!");
 	}
 	
 	@AfterClass
 	public static void DropConnAfterClass() throws Exception {
 		sdb.dropCollectionSpace(Constants.TEST_CS_NAME_1);
 		sdb.disconnect();
-		System.out.println("disconnect ok!");
 	}
  
 	@Before

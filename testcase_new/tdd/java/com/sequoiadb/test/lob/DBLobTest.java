@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -624,6 +625,7 @@ public class DBLobTest {
         
         ObjectId id     = lob.getID();
         DBLob rLob = cl.openLob(id);
+        
         int len = rLob.read(out);
         assertEquals( "len is" + len, -1, len );
         lob.close();
@@ -674,5 +676,177 @@ public class DBLobTest {
         }
 	}
 	
+	/*
+	 * validacate LobReadTest
+	 * */
+	@Test
+	public void testForValidicateTestCaseInCSharp()
+    {
+        DBLob lob = null;
+        DBLob lob2 = null;
+        boolean flag = false;
+        ObjectId oid1 = null; 
+        int bufSize = 1024 * 1024 * 100;
+        int readNum = 0;
+        int retNum = 0;
+        int i = 0;
+        byte[] readBuf = null;
+        byte[] buf = new byte[bufSize];
+        for (i = 0; i < bufSize; i++)
+        {
+            buf[i] = 65;
+        }
+        long lobSize = 0;
 
+        // CreateLob
+        lob = cl.createLob();
+        try {
+	        Assert.assertNotNull(lob);
+	        // GetID
+	        oid1 = lob.getID();
+	        Assert.assertTrue(null != oid1);
+	        // Write
+	        lob.write(buf);
+	        lobSize = lob.getSize();
+	        Assert.assertEquals(bufSize, lobSize);
+        } finally {
+	        // Close
+	        lob.close();
+        }
+
+        // Open lob
+        lob2 = cl.openLob(oid1);
+        try {
+	        lobSize = lob2.getSize();
+	        Assert.assertEquals(bufSize, lobSize);
+	        // Read
+	        int skipNum = 1024*1024*50;
+	        lob2.seek(skipNum, DBLob.SDB_LOB_SEEK_SET);  // after this, the offset is 1024*1024*50
+	        readNum = 1024*1024*10;
+	        readBuf = new byte[readNum];
+	        retNum = lob2.read(readBuf);  // after this, the offset is 1024*1024*60
+	        Assert.assertEquals(readNum, retNum);
+	        // check
+	        for(i = 0; i < readBuf.length; i++)
+	        {
+	            Assert.assertEquals(readBuf[i], 65);
+	        }
+	        skipNum = 1024*1024*10;
+	        lob2.seek(skipNum, DBLob.SDB_LOB_SEEK_CUR); // after this, the offset is 1024*1024*70
+	        readBuf = new byte[readNum];
+	        retNum = lob2.read(readBuf);
+	        Assert.assertEquals(readNum, retNum); // after this, the offset is 1024*1024*80
+	        // check
+	        for(i = 0; i < readBuf.length; i++)
+	        {
+	            Assert.assertEquals(readBuf[i], 65);
+	        } 
+	        skipNum = 1024*1024*20;
+	        lob2.seek(skipNum, DBLob.SDB_LOB_SEEK_END);
+	        readNum = 1024*1024*30; // will only read 1024*1024*20
+	        readBuf = new byte[readNum];
+	        retNum = lob2.read(readBuf); // after this, the offset is 1024*1024*100
+	        Assert.assertEquals(readNum, (retNum + 1024 * 1024 * 10));
+        } finally {
+	        // Close
+	        lob2.close();
+        }
+    }
+	
+    static int[] generateSequenceNumber(int Length)
+    {
+        int[] ret = new int[Length];
+        for (int i = 0; i < Length; i++)
+        {
+            ret[i] = i + 1;
+        }
+        return ret;
+    }
+	
+    public static byte[] intToBytes(int value)   
+    {   
+        byte[] byte_src = new byte[4];  
+        byte_src[3] = (byte) ((value & 0xFF000000)>>24);  
+        byte_src[2] = (byte) ((value & 0x00FF0000)>>16);  
+        byte_src[1] = (byte) ((value & 0x0000FF00)>>8);    
+        byte_src[0] = (byte) ((value & 0x000000FF));          
+        return byte_src;  
+    } 
+    
+	/*
+	 * validacate LobReadTest
+	 * */
+	@Test
+    public void LobReadWriteSequenceNumber()
+    {
+        // gen data
+        Random random = new Random();
+        int size = random.nextInt(10 * 1024 * 1024);
+        //int size = random.Next(1000000);
+        size = 8219676;
+        byte[] content_bytes = new byte[size * 4];
+        int[] content = generateSequenceNumber(size);
+        for (int i = 0; i < size; i++)
+        {
+            byte[] tmp_buf = intToBytes(content[i]);
+            System.arraycopy(tmp_buf, 0, content_bytes, i * 4, tmp_buf.length);
+        }
+        //Console.WriteLine("content_bytes is: {0}", BitConverter.ToString(content_bytes));
+        
+       
+        int end = content_bytes.length;
+        int beg = 0;
+        int len = end - beg;
+        byte[] output_bytes = new byte[content_bytes.length];
+
+        DBLob lob = null;
+        DBLob lob2 = null;
+
+        // write to lob
+        try
+        {
+            lob = cl.createLob();
+            lob.write(content_bytes, beg, len);
+        }
+        finally
+        {
+            if (lob != null) lob.close();
+        }
+
+        // read from lob
+        ObjectId id = lob.getID();
+        try
+        {
+            lob2 = cl.openLob(id);
+            lob2.read(output_bytes, beg, len);
+        }
+        finally
+        {
+            if (lob2 != null) lob2.close();
+        }
+
+        // check
+        for (int i = 0; i < beg; i++)
+        {
+        	Assert.assertEquals(0, output_bytes[i]);
+        }
+
+        for (int i = beg; i < end; i++)
+        {
+        	try {
+        		Assert.assertEquals(content_bytes[i], output_bytes[i]);
+        	} catch(Exception e) {
+        		String errmsg = String.format("expect: %d, actual: %d, beg: %d, end: %d, len: %d, i: %d", content_bytes[i], output_bytes[i], beg, end, len, i);
+        		System.out.println("errmsg is: " + errmsg);
+        		throw e;
+        	}
+        }
+
+        for (int i = end; i < output_bytes.length; i++)
+        {
+            Assert.assertEquals(0, output_bytes[i]);
+        }
+        
+    }
+	
 }
