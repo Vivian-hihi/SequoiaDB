@@ -115,7 +115,7 @@ public class Split10528C extends SdbTestBase {
 				int i = 0;
 				while (cs.isCollectionExist(clName) != true && flag.get() == false) {
 					// Thread.sleep(100);
-					System.out.println("sleep " + i++);
+					//System.out.println("sleep " + i++);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
