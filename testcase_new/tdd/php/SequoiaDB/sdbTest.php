@@ -164,6 +164,18 @@ class SequoiaDB_Test extends PHPUnit_Framework_TestCase
    /**
     * @depends test_connect
     */
+   public function test_syncDB( $db )
+   {
+      $err = $db -> syncDB() ;
+      $this -> assertEquals( 0, $err['errno'], 'syncDB错误' ) ;
+
+      $err = $db -> syncDB( array( 'Block' => true ) ) ;
+      $this -> assertEquals( 0, $err['errno'], 'syncDB设置阻塞错误' ) ;
+   }
+
+   /**
+    * @depends test_connect
+    */
    public function test_snapshot( $db )
    {
       for( $i = 0; $i < 10; ++ $i )
