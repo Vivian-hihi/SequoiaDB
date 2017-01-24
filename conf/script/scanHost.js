@@ -214,7 +214,22 @@ function _scanHost( user, passwd, hostname, sshport, ip )
          exception_handle( SDB_INVALIDARG, "Failed to get peer ip from its configured file(/etc/hosts)" ) ;
       }
       tempStr = removeLineBreak( tempStr ) ;
-      if ( tempStr != retObj[IP] )
+      var tempArr = tempStr.split( ' ' ) ;
+      var hasMatch = false ;
+      if ( tempArr.length > 1 )
+      {
+         PD_LOG( arguments, PDWARNING, FILE_NAME_SCAN_HOST,
+                 sprintf( "The ip addresses of host[?] are: [?]", retObj[HostName], tempArr.toString() ) ) ;
+      }
+      for ( var i = 0; i < tempArr.length; i++ )
+      {
+         if ( retObj[IP] == tempArr[i] )
+         {
+            hasMatch = true ;
+            break ;
+         }
+      }
+      if ( !hasMatch )
       {
          exception_handle( SDB_INVALIDARG, 
             sprintf( "IP[?] of host[?] in its configured file(/etc/hosts) is different from the one we offer[?]",
