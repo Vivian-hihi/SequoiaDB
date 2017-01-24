@@ -20,6 +20,12 @@
 
 ##错误##
 
+| 错误码 | 可能的原因 | 解决方法 |
+| ------ | ------ | ------ |
+| -204   | 尝试删除主节点 | 只能删除备节点 |
+| -206   | 尝试删除主编目节点 | 只能删除备编目节点 |
+| -79    | 删除节点主机上的CM进程不存在，<br>或者主机宕机 | 如果需要强制删除节点，可以加入 {enforced:true} 选项 |
+
 [错误码](reference/Sequoiadb_error_code.md)
 
 ## 示例##
@@ -28,6 +34,12 @@
 
 ```lang-javascript
 > var rg = db.getRG("group1")
-> rg.removeNode("vmsvr2-suse-x64",11800)
+> rg.removeNode("vmsvr2-suse-x64", 11800)
 ```
 
+强制删除 group1 分区组中的节点
+
+```lang-javascript
+> var rg = db.getRG("group1")
+> rg.removeNode("vmsvr2-suse-x64", 11800, {enforced:true})
+```
