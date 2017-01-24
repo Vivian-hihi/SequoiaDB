@@ -345,6 +345,7 @@ namespace engine
          {
             _onlyDetach = FALSE ;
             _keepData = FALSE ;
+            _force = FALSE ;
          }
 
          virtual ~_rtnCMDRemoveNodeArgs () {}
@@ -360,6 +361,9 @@ namespace engine
 
          /* Whether to keep data after remove node */
          BOOLEAN _keepData ;
+
+         /* Whether to force remove node and ignore cm */
+         BOOLEAN _force ;
       } ;
 
    protected :

@@ -1664,6 +1664,7 @@ namespace engine
          string serviceName ;
          BOOLEAN onlyDetach = FALSE ;
          BOOLEAN keepData = FALSE ;
+         BOOLEAN force = FALSE ;
 
          rc = rtnGetSTDStringElement( pSelfArgs->_boQuery,
                                       CAT_GROUPNAME_NAME, groupName ) ;
@@ -1705,11 +1706,23 @@ namespace engine
                       "Failed to %s: failed to get the field [%s] from query",
                       _getCommandName(), FIELD_NAME_KEEP_DATA ) ;
 
+         rc = rtnGetBooleanElement( pSelfArgs->_boQuery,
+                                    CMD_NAME_ENFORCED, force ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            force = FALSE ;
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to %s: failed to get the field [%s] from query",
+                      _getCommandName(), CMD_NAME_ENFORCED ) ;
+
          pSelfArgs->_targetName = groupName ;
          pSelfArgs->_hostName = hostName ;
          pSelfArgs->_serviceName = serviceName ;
          pSelfArgs->_onlyDetach = onlyDetach ;
          pSelfArgs->_keepData = keepData ;
+         pSelfArgs->_force = force ;
       }
       catch( std::exception &e )
       {
@@ -1760,6 +1773,11 @@ namespace engine
       // We need to test the sdbcm
       INT32 retCode = SDB_OK ;
       rc = rtnRemoteExec ( SDBTEST, pSelfArgs->_hostName.c_str(), &retCode ) ;
+      if ( pSelfArgs->_force && SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Remove node is forced, ignore error: %d", rc ) ;
+         rc = SDB_OK ;
+      }
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to %s on [%s]: "
                    "could not connect to sdbcm[HostName: %s], rc: %d",
@@ -1838,7 +1856,7 @@ namespace engine
          rc = rc ? rc : retCode ;
          if ( rc )
          {
-            PD_LOG( PDERROR,
+            PD_LOG( pSelfArgs->_force ? PDWARNING : PDERROR,
                     "Failed to %s on %s: "
                     "remove node[GroupName: %s, HostName: %s, SvcName: %s] failed, "
                     "rc: %d",
@@ -1854,7 +1872,7 @@ namespace engine
          rc = rc ? rc : retCode ;
          if ( rc )
          {
-            PD_LOG( PDERROR,
+            PD_LOG( pSelfArgs->_force ? PDWARNING : PDERROR,
                     "Failed to %s on %s: "
                     "Clear node[GroupName: %s, HostName: %s, SvcName: %s] failed, "
                     "rc: %d",
@@ -1862,6 +1880,13 @@ namespace engine
                     pSelfArgs->_targetName.c_str(), pSelfArgs->_hostName.c_str(),
                     pSelfArgs->_serviceName.c_str(), rc ) ;
          }
+      }
+
+      if ( pSelfArgs->_force )
+      {
+         // Ignore errors from cm
+         PD_LOG( PDWARNING, "Remove node is forced, ignore error: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
    done :
