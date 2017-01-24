@@ -184,6 +184,8 @@ public class SubCL10193 extends SdbTestBase {
 					csDB.getCollection(mCLName).attachCollection(sCSName + "." + sCLName, options);
 				}
 			}
+		}catch(NullPointerException e){
+			
 		}catch(BaseException e){
 			if(e.getErrorCode() != -235  //-235:Duplicated attach collection partition
 					&& e.getErrorCode() != -23){  
