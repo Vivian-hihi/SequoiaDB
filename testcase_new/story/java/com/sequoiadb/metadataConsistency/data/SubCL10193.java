@@ -146,7 +146,8 @@ public class SubCL10193 extends SdbTestBase {
 			mOpt.put("IsMainCL", true);
 			sdb.getCollectionSpace(mCSName).createCollection(mCLName, mOpt);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -22){  
+			if(e.getErrorCode() != -22
+					&& e.getErrorCode() != -147){  
 				sdb.disconnect();
 				Assert.fail(e.getMessage());
 			}

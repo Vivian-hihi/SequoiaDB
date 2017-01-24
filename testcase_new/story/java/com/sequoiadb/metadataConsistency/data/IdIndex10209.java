@@ -87,8 +87,10 @@ public class IdIndex10209 extends SdbTestBase {
 		try{
 			clDB.dropIdIndex();
 		}catch(BaseException e){
-			db.disconnect();
-			Assert.fail(e.getMessage());
+			if(e.getErrorCode() != -108){ //-108:Catalog version is expired on coordinator node
+				db.disconnect();
+				Assert.fail(e.getMessage());
+			}
 		}
 		
 		//-----alter cl-----
@@ -111,7 +113,8 @@ public class IdIndex10209 extends SdbTestBase {
 			clDB.createIdIndex(opt);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -147  //-147:Unable to lock
-					&& e.getErrorCode() != -43){ //-43:Failed to initialize index
+					&& e.getErrorCode() != -43 //-43:Failed to initialize index
+					&& e.getErrorCode() != -108){ 
 				Assert.fail(e.getMessage());
 			}
 		}
