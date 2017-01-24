@@ -71,6 +71,14 @@ testFiles21 = [ "./misc/forceSession.cpp" ]
 
 testFiles22 = [ "./misc/JSCompatible.cpp" ] 
 
+testFiles23 = [ "./load/loadUnloadCS.cpp"]
+
+testFiles24 = [ "./load/rename.cpp" ]
+
+testFiles25 = [ "./load/reloadConf.cpp" ]
+
+testFiles26 = [ "./load/setPDLevel.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -102,6 +110,10 @@ sslFalse	   = dllBuildEnv.Program("sslFalse",  [testFiles19, testCommon, gtestMa
 sslTrue        = dllBuildEnv.Program("sslTrue",  [testFiles20, testCommon, gtestMainObj])
 forceSession   = dllBuildEnv.Program("forceSession",  [testFiles21, testCommon, gtestMainObj])
 JSCompatible   = dllBuildEnv.Program("JSCompatible",  [testFiles22, testCommon, gtestMainObj])
+loadUnloadCS   = dllBuildEnv.Program("loadUnloadCS",  [testFiles23, testCommon, gtestMainObj])
+rename         = dllBuildEnv.Program("rename",  [testFiles24, testCommon, gtestMainObj])
+reloadConf     = dllBuildEnv.Program("reloadConf",  [testFiles25, testCommon, gtestMainObj])
+setPDLevel     = dllBuildEnv.Program("setPDLevel",  [testFiles26, testCommon, gtestMainObj])
 
 # static compile
 
@@ -127,6 +139,10 @@ sslFalse.static          = staticBuildEnv.Program("sslFalse.static",  [testFiles
 sslTrue.static           = staticBuildEnv.Program("sslTrue.static",  [testFiles20, testCommon, gtestMainObj])
 forceSession.static      = staticBuildEnv.Program("forceSession.static",  [testFiles21, testCommon, gtestMainObj])
 JSCompatible.static      = staticBuildEnv.Program("JSCompatible.static",  [testFiles22, testCommon, gtestMainObj])
+loadUnloadCS.static      = staticBuildEnv.Program("loadUnloadCS.static",  [testFiles23, testCommon, gtestMainObj])
+rename.static            = staticBuildEnv.Program("rename.static",  [testFiles24, testCommon, gtestMainObj])
+reloadConf.static        = staticBuildEnv.Program("reloadConf.static",  [testFiles25, testCommon, gtestMainObj])
+setPDLevel.static        = staticBuildEnv.Program("setPDLevel.static",  [testFiles26, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -144,7 +160,8 @@ env.Install( '#/build_test', [   decimal,
 								 lobAbnormal,
 								 idIndex,
 								 attachAndDetachNode,
-								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible
+								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible,
+								 loadUnloadCS,rename,reloadConf,setPDLevel
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -162,6 +179,7 @@ env.Install( '#/build_test', [   decimal.static,
 								 lobAbnormal.static,
 								 idIndex.static,
 								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
-								 forceSession.static,JSCompatible.static
+								 forceSession.static,JSCompatible.static,loadUnloadCS.static,rename.static,
+								 reloadConf.static,setPDLevel.static
                               ] )
 

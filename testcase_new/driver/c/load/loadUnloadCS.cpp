@@ -1,0 +1,255 @@
+/**************************************************************
+* @Description: test case for Jira questionaire Task
+*				SEQUOIADBMAINSTREAM-2165
+*				seqDB-10995:unloadCS，指定的option可生效
+*				seqDB-10996:unloadCS，指定的option不生效
+*				seqDB-10997:loadCS，指定的option可生效
+*				seqDB-10998:loadCS，指定的option不生效
+* @Modify     : Liang xuewang Init
+*			 	2017-01-22
+***************************************************************/
+#include <gtest/gtest.h>
+#include <client.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include "../common/testcommon.hpp"
+
+#define ASSERT_RC_CODE( rc, msg )\
+do\
+{\
+   if( SDB_OK != rc )\
+   {\
+      printf( "%s[%d]: %s, rc = %d\n", __FILE__, __LINE__, msg, rc ) ;\
+      exit( EXIT_FAILURE ) ; \
+   }\
+}\
+while( 0 ) ;
+
+#define CHECK_RC_CODE( rc, msg )\
+do\
+{\
+   if( SDB_OK != rc )\
+   {\
+      printf( "%s[%d]: %s, rc = %d\n", __FILE__, __LINE__, msg, rc ) ;\
+      return rc ; \
+   }\
+}\
+while( 0 ) ;
+
+sdbConnectionHandle db   = SDB_INVALID_HANDLE ;
+sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
+sdbCSHandle cs           = SDB_INVALID_HANDLE ;
+sdbCollectionHandle cl   = SDB_INVALID_HANDLE ;
+INT32 groupId         = 1000 ;
+const char* csModName = "loadUnloadCSTestCs" ;
+char csName[100]      = ""  ;
+const char* clName    = "loadUnloadCSTestCl" ;
+
+class loadUnloadCSTest : public testing::Test
+{
+	public:
+	// run before all testcase
+	static void SetUpTestCase() ;
+    // run after all testcase
+	static void TearDownTestCase() ;
+} ;
+
+void loadUnloadCSTest::SetUpTestCase()
+{
+	INT32 rc = SDB_OK ;
+
+	// connect sdb
+    getConf() ;
+    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
+    ASSERT_RC_CODE( rc, "fail to connect sdb" )
+    if( isStandalone( db ) )
+        return ;
+
+    // get data group with groupId 1000
+    rc = sdbGetReplicaGroup1( db, groupId, &rg ) ;
+    ASSERT_RC_CODE( rc, "fail to get data group" )
+	char* rgName = NULL ;
+	rc = sdbGetReplicaGroupName( rg, &rgName ) ;
+	ASSERT_RC_CODE( rc, "fail to get data group name" ) 
+    
+	// create cs
+    getUniqueName( csModName, csName ) ;
+    rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
+	ASSERT_RC_CODE( rc, "fail to create cs" )
+
+	// create cl in data group
+    bson option ;
+    bson_init( &option ) ;
+    bson_append_string( &option, "Group", rgName ) ;
+	bson_finish( &option ) ;
+	rc = sdbCreateCollection1( cs, clName, &option, &cl ) ;
+    bson_destroy( &option ) ;
+	ASSERT_RC_CODE( rc, "fail to create cl" ) 
+}
+
+void loadUnloadCSTest::TearDownTestCase()
+{
+	INT32 rc = SDB_OK ;
+	rc = sdbDropCollectionSpace( db, csName ) ;
+	ASSERT_RC_CODE( rc, "fail to drop cs" )
+	sdbDisconnect( db ) ;
+	sdbReleaseCollection( cl ) ;
+	sdbReleaseCS( cs ) ;
+	sdbReleaseReplicaGroup( rg ) ;
+	sdbReleaseConnection( db ) ;
+}
+
+INT32 checkCsExist( sdbConnectionHandle db, const char* csName, bool* exist )
+{
+	INT32 rc = SDB_OK ;
+	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+    rc = sdbListCollectionSpaces( db, &cursor ) ;
+    CHECK_RC_CODE( rc, "fail to list cs" )
+    bson obj ;
+    bson_init( &obj ) ;
+    *exist = false ;
+    while( !(rc = sdbNext( cursor, &obj)) )
+    {
+        bson_iterator it ;
+        bson_iterator_init( &it, &obj ) ;
+        const char* name = bson_iterator_string( &it ) ;
+        if( !strcmp( name, csName ) )
+		{
+            *exist = true ;
+			break ;
+		}
+        bson_destroy( &obj ) ;
+        bson_init( &obj ) ;
+    }
+    bson_destroy( &obj ) ;
+    sdbReleaseCursor( cursor ) ;
+	return SDB_OK ;
+}
+
+INT32 checkBasicOperation( sdbCollectionHandle cl )
+{
+	INT32 rc = SDB_OK ;
+	// insert
+	bson record ;
+	bson_init( &record ) ;
+	bson_append_int( &record, "a", 1 ) ;
+	bson_finish( &record ) ;
+	rc = sdbInsert( cl, &record ) ;
+	CHECK_RC_CODE( rc, "fail to insert record" )
+	// query
+	bson selector ;
+	bson_init( &selector ) ;
+	bson_append_string( &selector, "a", "" ) ;
+	bson_finish( &selector ) ;
+    sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+	rc = sdbQuery( cl, &record, &selector, NULL, NULL, 0, -1, &cursor ) ;
+	bson_destroy( &record ) ;
+	bson_destroy( &selector ) ;
+	CHECK_RC_CODE( rc, "fail to query record" )
+	// check query result
+	bson obj ;
+	bson_init( &obj ) ;
+	rc = sdbNext( cursor, &obj ) ;
+	sdbReleaseCursor( cursor ) ;
+	CHECK_RC_CODE( rc, "fail to get next in cursor" )
+	bson_iterator it ;
+	bson_iterator_init( &it, &obj ) ;
+	INT32 result = bson_iterator_int( &it ) ;
+    bson_destroy( &obj ) ;
+	if( result != 1 )
+	{
+		printf( "fail to check query result,expect: %d,actual: %d\n", 1, result ) ;
+		return SDB_DMS_RECORD_NOTEXIST ;
+	}
+	return SDB_OK ; 
+}
+
+TEST_F( loadUnloadCSTest, validOption )
+{
+    INT32 rc = SDB_OK ;
+	sdbNodeHandle node = SDB_INVALID_HANDLE ;
+	const char* hostName = NULL ;
+    const char* svcName = NULL ;
+    const char* nodeName = NULL ;
+    INT32 nodeId = -1 ;
+
+	// get node hostName and svcname
+    rc = sdbGetNodeSlave( rg, &node ) ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to get slave node of group with groupID 1000" ;
+    rc = sdbGetNodeAddr( node, &hostName, &svcName, &nodeName, &nodeId ) ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to get node addr " << nodeName  ;
+	printf( "node: hostName=%s svcName=%s nodeName=%s nodeId=%d\n", hostName, svcName, nodeName, nodeId ) ;
+
+	// unload cs on node
+	bson option ;
+	bson_init( &option ) ;
+	bson_append_string( &option, "HostName", hostName ) ;
+	bson_append_string( &option, "svcname", svcName ) ;
+	bson_finish( &option ) ;
+	rc = sdbUnloadCollectionSpace( db, csName, &option ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to unload cs on node " << nodeName ;
+
+	// check unload
+	sdbDisconnect( db ) ;
+	sdbReleaseConnection( db ) ;
+	rc = sdbConnect( hostName, svcName, USER, PASSWD, &db ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to connect to node after unload " << nodeName ;
+	bool exist ;
+	rc = checkCsExist( db, csName, &exist ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to check cs exist after unload" ;
+	ASSERT_FALSE( exist ) << "fail to check unload cs on node " << nodeName ;
+
+	// load cs on node
+	sdbDisconnect( db ) ;
+	sdbReleaseConnection( db ) ;
+	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb again" ;
+	rc = sdbLoadCollectionSpace( db, csName, &option ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to load cs on node " << nodeName ;
+
+	// check load
+	sdbDisconnect( db ) ;
+    sdbReleaseConnection( db ) ;
+    rc = sdbConnect( hostName, svcName, USER, PASSWD, &db ) ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to connect to node after load " << nodeName ;
+    rc = checkCsExist( db, csName, &exist ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to check cs exist after load" ;
+    ASSERT_TRUE( exist ) << "fail to check load cs on node " << nodeName ;
+
+	// basic operation after load
+	sdbReleaseCS( cs ) ;
+	sdbReleaseCollection( cl ) ;
+	rc = sdbGetCollectionSpace( db, csName, &cs ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to get cs" ;
+	rc = sdbGetCollection1( cs, clName, &cl ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to get cl" ;
+	rc = checkBasicOperation( cl ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to check basic operation after load" ;	
+
+	// reconnect to sdb and get cs cl
+	sdbDisconnect( db ) ;
+	sdbReleaseConnection( db ) ;
+    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the end" ;
+	sdbReleaseCS( cs ) ;
+    sdbReleaseCollection( cl ) ;
+    rc = sdbGetCollectionSpace( db, csName, &cs ) ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to get cs in the end" ;
+    rc = sdbGetCollection1( cs, clName, &cl ) ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to get cl in the end" ;
+}
+
+TEST_F( loadUnloadCSTest, invalidOption )
+{
+	INT32 rc = SDB_OK ;
+	bson option ;
+	bson_init( &option ) ;
+	bson_append_string( &option, "GroupName", "SYSCatalogGroup" ) ;
+	bson_finish( &option ) ;
+	rc = sdbUnloadCollectionSpace( db, csName, &option ) ;
+	ASSERT_EQ( rc, SDB_COORD_NOT_ALL_DONE ) << "fail to check unload cs on SYSCatalogGroup" ;
+	rc = sdbLoadCollectionSpace( db, csName, &option ) ;
+	ASSERT_EQ( rc, SDB_COORD_NOT_ALL_DONE ) << "fail to check load cs on SYSCatalogGroup" ;
+}
