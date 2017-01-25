@@ -83,6 +83,7 @@ void loadUnloadCSTest::SetUpTestCase()
     bson option ;
     bson_init( &option ) ;
     bson_append_string( &option, "Group", rgName ) ;
+	bson_append_int( &option, "ReplSize", 0 ) ;
 	bson_finish( &option ) ;
 	rc = sdbCreateCollection1( cs, clName, &option, &cl ) ;
     bson_destroy( &option ) ;
@@ -131,6 +132,11 @@ INT32 checkCsExist( sdbConnectionHandle db, const char* csName, bool* exist )
 INT32 checkBasicOperation( sdbCollectionHandle cl )
 {
 	INT32 rc = SDB_OK ;
+	// truncate
+	char clFullName[200] ;
+	sprintf( clFullName, "%s.%s", csName, clName ) ;
+	rc = sdbTruncateCollection( db, clFullName ) ;
+	CHECK_RC_CODE( rc, "fail to truncate cl" ) ;
 	// insert
 	bson record ;
 	bson_init( &record ) ;
@@ -174,6 +180,10 @@ TEST_F( loadUnloadCSTest, validOption )
     const char* svcName = NULL ;
     const char* nodeName = NULL ;
     INT32 nodeId = -1 ;
+
+	// check cl basic Operation
+	rc = checkBasicOperation( cl ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to check cl basic operation in the begining" ;
 
 	// get node hostName and svcname
     rc = sdbGetNodeSlave( rg, &node ) ;
