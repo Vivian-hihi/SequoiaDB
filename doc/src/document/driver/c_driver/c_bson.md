@@ -17,76 +17,175 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
 * 创建一个简单的 BSON 对象{age:20}。
 
   ```lang-javascript
-  INT32 rc = SDB_OK;
   bson obj;
-  bson_init(&obj);
-  bson_appent_int(obj,"age",20);
-  if ( bson_finish(obj) != SDB_OK )
-  printf("Error.") ;
-  bson_destory(obj);
+  bson_init( &obj );
+  bson_appent_int( &obj, "age", 20 );
+  if ( BSON_OK != bson_finish( &obj ) )
+  {
+      printf( "Error." ) ;
+  }
+  else
+  {
+      bson_print( &obj );
+  }
+  // never use "bson_dispose" here,
+  // for "bson_destory" is used with
+  // "bson_init"
+  bson_destory( &obj );
   ```
 
 * 创建一个复杂的 BSON 对象
 
   ```lang-javascript
   /* 创建一个包含{name:"tom",colors:["red","blue","green"], address: {city:"Toronto, province: "Ontario"}}的对象 */
-  bson_iterator bi ;
-  bson *newobj = bson_create () ;
-  bson_append_string ( newobj, "name", "tom" ) ;
-  bson_append_start_object ( newobj, "address" ) ;
-  bson_append_string ( newobj, "city", "Toronto" ) ;
-  bson_append_string ( newobj, "provice", "Ontario" ) ;
-  bson_append_start_array(newobj,"colors");
-  bson_appent_string(newobj,"0","red");
-  bson_appent_string(newobj,"1","blue");
-  bson_appent_string(newobj,"2","green");
-  bson_append_finish_object ( newobj ) ;
-  if( bson_finish ( newobj ) != BSON_OK )
-  printf("Error.") ;
+  bson *newobj = bson_create ();
+  bson_append_string ( newobj, "name", "tom" );
+  bson_append_start_array( newobj, "colors" );
+  bson_append_string( newobj, "0", "red" );
+  bson_append_string( newobj, "1", "blue" );
+  bson_append_string( newobj, "2", "green" );
+  bson_append_finish_array( newobj );
+  bson_append_start_object ( newobj, "address" );
+  bson_append_string ( newobj, "city", "Toronto" );
+  bson_append_string ( newobj, "provice", "Ontario" );
+  bson_append_finish_object ( newobj );
+  if( BSON_OK != bson_finish ( newobj ) ) 
+  {
+      printf( "Error." );
+  }
+  else
+  {
+      bson_print( newobj );
+  }
+  // never use "bson_destroy" here,
+  // for "bson_dispose" is used with
+  // "bson_create"
+  bson_dispose( newobj );
   ```
 
 ##读取对象##
 
-读取 BSON 对象使用一个 bson_iterator，对一个完整的例子，可以使用 bson_print_raw 方法来读取。但是首先得初始化 bson_iterator 对象，然后使用 bson_iterator_next 遍历每一个元素。
+* 读取 BSON 对象使用一个 bson_iterator，对一个完整的例子，可以使用 bson_print_raw 方法来读取。但是首先得初始化 bson_iterator 对象，然后使用 bson_iterator_next 遍历每一个元素。
 
-例如：
+  ```lang-javascript
+  bson newobj;
+  bson_iterator i;
+  bson_type type;
+  const char *key = NULL;
+  INT32 value     = 0;
 
-```lang-javascript
-bson_iterator i[1] ;
-bson_type type ;
-const char * key;
+  // build a bson
+  bson_init( &newobj );
+  bson_append_int( &newobj, "a", 1 );
+  bson_finish( &newobj );
 
-bson_iterator_init(i, newobj) ;
+  // init bson iterator
+  bson_iterator_init( &i, &newobj );
 
-type = bson_iterator_next (i);
-key = bson_iterator_key (i);
+  // get type and value
+  while( BSON_EOO != ( type = bson_iterator_next ( &i ) ) )
+  {
+      key = bson_iterator_key ( &i );
+      if ( BSON_INT == type )
+      {
+          value = bson_iterator_int( &i );
+          printf( "Type: %d, Key: %s, value: %d\n", type, key, value );
+      }
+  }
 
-printf( "Type: %d, Key: %s\n", type, key) ;
-```
+  // release resource
+  bson_destroy( &newobj );
+  ```
 
-对于每个 bson_iterator，使用 bson_iterator_type 函数可以得到其类型，使用 bson_iterator_string 等函数可以得到其相对应类型的数值。
+* 对于每个 bson_iterator，使用 bson_iterator_type 函数可以得到其类型，使用 bson_iterator_string 等函数可以得到其相对应类型的数值。
 
-```lang-javascript
-printf( "Value: %s, bson_iterator_string(i)) ;
-```
+  ```lang-javascript
+  bson newobj;
+  bson_iterator i;
+  bson_type type;
 
+  // build a bson
+  bson_init( &newobj );
+  bson_append_int( &newobj, "a", "hello" );
+  bson_finish( &newobj );
+
+  // init bson iterator
+  bson_iterator_init( &i, &newobj );
+
+  // get the type of the value
+  type = bson_iterator_type( &i );
+
+  // display the value
+  if ( BSON_STRING == type )
+  {
+      printf( "Value: %s, bson_iterator_string( &i ) );
+  }
+
+  // release resource
+  bson_destroy( &newobj );
+  ```
 
 * 遍历每个连续的 BSON 对象元素，可以使用 bson_find 函数直接跳转得到元素的名称。如果该元素不存在于 bson 之内，则 bson_find 函数返回 BSON_EOO。
 
   例如想得到 name 元素名可以这样使用：
 
   ```lang-javascript
-  bson_iterator i[1] ,sub[i] ;
-  bson_type type ;
+  bson newobj;
+  bson_iterator i;
 
-  bson_find ( i, newobj, "name" )
+  // build a bson
+  bson_init( &newobj );
+  bson_append_int( &newobj, "Name", "Sam" );
+  bson_finish( &newobj );
+
+
+  type = bson_find ( &i, &newobj, "Name" );
+  if ( BSON_EOO != type )
+  {
+      printf( "Name: %s, bson_iterator_string( &i ) );
+  }
+
+  // release resource
+  bson_destroy( &newobj );
   ```
 
 * 读取数组元素或嵌套对象，因为“address”是一个嵌套对象，需要特殊遍历。首先得到 address 值，再初始化一个新的 BSON 迭代器：
 
   ```lang-javascript
-  type = bson_find(i,newobj,"address");
-  bson_iterator_subiterator(i,sub);
+  bson newobj;
+  bson_iterator i;
+  bson_iterator sub;
+  bson_type type;
+  const CHAR *key   = NULL;
+  const CHAR *value = NULL;
+
+  // build a bson
+  bson_init( &newobj );
+  bson_append_start_object( &newobj, "address" );
+  bson_append_string( &newobj, "Home", "guangzhou" );
+  bson_append_string( &newobj, "WorkPlace", "shenzhen" );
+  bson_append_finish_object( &newobj );
+  bson_finish( &newobj );
+
+  // init bson iterator and display contents in the sub object
+  type = bson_find( &i, &newobj, "address" );
+  if ( BSON_EOO != type )
+  {
+      bson_iterator_subiterator( &i, &sub );
+      while ( bson_iterator_more( &sub ) )
+      {
+          type = bson_iterator_next( &sub );
+          key = bson_iterator_key( &sub );
+          value = bson_iterator_string( &sub ) ;
+          if ( BSON_STRING == type )
+          {
+              printf( "Type: %d, Key: %s, value: %s\n", type, key, value );
+          }
+      }
+  }
+
+  // release resource
+  bson_destroy( &newobj );
   ```
 
   方法 bson_iterator_subiterator 初始化迭代器 sub，并且指向子对象的开始位置，从这里开始可以遍历 sub 中的所有元素，直到子对象的结束位置。
