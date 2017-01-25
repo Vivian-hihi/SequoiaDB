@@ -10,14 +10,10 @@ SequoiaDB 数据库的 CSharp 驱动使用了第三方公司 MongoDB 提供的 C
 
 当前版本的 CSharp 驱动可在以下版本的 Visual Studio 中使用
 
--   Visual Studio 2008
-
 -   Visual Studio 2010
 
 ##.NET Framework 版本支持##
 
-当前版本的 CSharp 驱动在 .NET Framework3.5 中生成，可在以下版本的 .NET Framework 中使用
-
--   .NET Framework 3.5
+当前版本的 CSharp 驱动在 .NET Framework4.0 中生成，可在以下版本的 .NET Framework 中使用
 
 -   .NET Framework 4.0
