@@ -1052,7 +1052,7 @@ SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
                                    const CHAR *pOldName,
                                    const CHAR *pNewName,
                                    bson *options )
-    \brief Set the node's diagnostic level
+    \brief Rename collection name
     \param [in] cHandle The collection space handle
     \param [in] pOldName The old collection short name
     \param [in] pNewName The new collection short name
@@ -2565,7 +2565,7 @@ SDB_EXPORT INT32 sdbSetPDLevel( sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbReloadConfig( sdbConnectionHandle cHandle,
                                bson *options )
-    \brief Set the node's diagnostic level
+    \brief Force the node to reload configs online
     \param [in] cHandle The database connection handle
     \param [in] options The control options:(Only take effect in coordinate nodes)
                 GroupID:INT32,
@@ -2584,7 +2584,7 @@ SDB_EXPORT INT32 sdbReloadConfig( sdbConnectionHandle cHandle,
                                         const CHAR *pOldName,
                                         const CHAR *pNewName,
                                         bson *options )
-    \brief Set the node's diagnostic level
+    \brief Rename the collectionspace name
     \param [in] cHandle The database connection handle
     \param [in] pOldName The old collection space name
     \param [in] pNewName The new collection space name
