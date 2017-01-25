@@ -542,8 +542,7 @@ public class DBCollection {
         SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
         int flags = rtnSDBMessage.getFlags();
         if (flags != 0) {
-            String msg = "matcher = " + matcher +
-                    ", hint = " + hint;
+            String msg = "matcher = " + matcher + ", hint = " + hint;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
         // upsert cache
@@ -1513,8 +1512,9 @@ public class DBCollection {
         SDBMessage rtnSDBMessage = adminCommand(commandString, matcher,
                 dummyObj, dummyObj, newobj, -1, -1, 0);
         int flags = rtnSDBMessage.getFlags();
-        if (flags != 0)
-            throw new BaseException(SDBError.getSDBError(flags), "matcher = " + matcher.toString());
+        if (flags != 0) {
+            throw new BaseException(SDBError.getSDBError(flags), "matcher = " + matcher);
+        }
         // upsert cache
         sequoiadb.upsertCache(collectionFullName);
         List<BSONObject> rtn = getMoreCommand(rtnSDBMessage);
@@ -1811,8 +1811,9 @@ public class DBCollection {
     public DBCursor aggregate(List<BSONObject> obj)
             throws BaseException {
 
-        if (obj == null || obj.size() == 0)
+        if (obj == null || obj.size() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
 
         ensureInsertBuffer();
 
