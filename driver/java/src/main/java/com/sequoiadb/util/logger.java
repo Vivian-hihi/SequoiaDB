@@ -29,7 +29,6 @@ public class logger {
         InputStream in = null;
         try {
             String filepath = System.getProperty("user.dir") + "/sdbdriver.properties";
-            //System.out.println(filepath);
             File file = new File(filepath);
             if (file.exists()) {
                 in = new BufferedInputStream(new FileInputStream(filepath));
@@ -84,7 +83,6 @@ public class logger {
             String filenameSuffix = "." + Long.toString(Thread.currentThread().getId());
             String filename = logpath + "/sdbdriver";
             filename += filenameSuffix;
-            System.out.println(filename);
             File file = new File(filename);
             if (!file.exists()) {
                 file.createNewFile();
