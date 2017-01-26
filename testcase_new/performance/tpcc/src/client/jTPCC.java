@@ -65,9 +65,7 @@ public class jTPCC implements jTPCCConfig {
         // load the ini file
         ini = new Properties() ;
         try {
-            // ini.load( new FileInputStream(System.getProperty("prop")));
-            ini.load( new FileInputStream(
-                    "/data/disk2/benchmark/benchmarksql-5.0/run/props.pg" ) ) ;
+            ini.load( new FileInputStream(System.getProperty("prop")));
         } catch ( IOException e ) {
             errorMessage( "Term-00, could not load properties file" ) ;
         }
