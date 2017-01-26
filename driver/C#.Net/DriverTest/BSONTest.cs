@@ -282,5 +282,21 @@ namespace DriverTest
             Assert.AreEqual(expect5, doc5.ToString());
 
         }
+
+        /// <summary>
+        /// jira2131
+        /// </summary>
+        [TestMethod()]
+        public void BsonCodeToStringTest()
+        {
+            string code = "function abc_in_cs(x, y){return x + y ;}";
+            BsonDocument doc = new BsonDocument();
+            doc.Add("code", new BsonJavaScript(code));
+            Console.WriteLine(doc.ToString());
+            string str = "{ \"code\" : { \"$code\" : \"function abc_in_cs(x, y){return x + y ;}\" } }";
+            Assert.AreEqual(str, doc.ToString());
+        }
+
+
     }
 }
