@@ -311,6 +311,7 @@ SDB_EXPORT INT32 sdbModifyNodeConfig ( sdbConnectionHandle cHandle,
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated this API only support in java
 */
 SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
                                     bson *condition,
@@ -338,6 +339,7 @@ SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
     \param [out] handle The handle of query result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated this API only support in java
 */
 SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
                                    bson *condition,
@@ -1783,30 +1785,36 @@ SDB_EXPORT void sdbReleaseDC ( sdbDCHandle cHandle ) ;
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \code
-      INT32 rc = 0 ;
-      INT32 i = 0 ;
-      const INT32 num = 10 ;
-      bson* obj[num] ;
-      // create bson poiter array
-      for ( i = 0; i < num; i++ )
-      {
-         obj[i] = bson_create();
-         rc = bson_append_int( obj[i], "num", i ) ;
-         if ( rc != 0 )
-            printf ( "something wrong.\n" ) ;
-         rc = bson_finish ( obj[i] ) ;
-         if ( rc != 0 )
-            printf ( "something wrong.\n" ) ;
-      }
-      // TODO:
-      rc = sdbAggregate ( cl, obj, num, &cursor ) ;
-      if ( rc )
-         printf ( "something wrong, rc = %d.\n", rc ) ;
-      // free memory
-      for ( i = 0; i < num; i++ )
-      {
-         bson_dispose ( obj[i] ) ;
-      }
+        INT32 rc = 0 ;
+        INT32 i = 0 ;
+        sdbCollectionHandle cl ;
+        sdbCursorHandle cursor ;
+        const INT32 num = 2 ;
+        bson* obj[num] ;
+        const CHAR* pArr[num] = {
+          "{ $match: { $and: [ { no: { $gt: 1002 } },{ no: { $lt: 1015 } },{ dep
+  : \"IT Academy\" } ] } }",
+          "{ $project: { no: 1, \"info.name\": 1, major: 1 } }"
+        } ;
+  
+        // create bson poiter array
+        for ( i = 0; i < num; i++ )
+        {
+           obj[i] = bson_create();
+           jsonToBson ( obj[i], pArr[i] ) ;
+        }
+        // TODO: get collection handle
+        // aggregate
+        //rc = sdbAggregate ( cl, obj, num, &cursor ) ;
+        if ( rc )
+           printf ( "something wrong, rc = %d.\n", rc ) ;
+        // free memory
+        for ( i = 0; i < num; i++ )
+        {
+           bson_print( obj[i] ) ;
+           bson_dispose ( obj[i] ) ;
+        }
+        // TODO: release collection and cursor handles
    \endcode
 */
 SDB_EXPORT INT32 sdbAggregate ( sdbCollectionHandle cHandle,
@@ -2009,7 +2017,7 @@ SDB_EXPORT INT32 sdbCreateDomain ( sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbDropDomain ( sdbConnectionHandle cHandle,
                               const CHAR *pDomainName ) ;
-    \brief Create a domain.
+    \brief Drop a domain.
     \param [in] cHandle The database connection handle
     \param [in] pDomainName The name of the domain
     \retval SDB_OK Operation Success
@@ -2347,7 +2355,7 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle ) ;
 
-/** \fn INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size )
+/* \fn INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size )
     \brief Get the name of the data center
     \param [in] cHandle The data center handle
     \param [in] pBuffer The output buffer
@@ -2357,7 +2365,7 @@ SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size ) ;
 
-/** \fn INT32 sdbGetDC( sdbConnectionHandle cHandle, sdbDCHandle *handle )
+/* \fn INT32 sdbGetDC( sdbConnectionHandle cHandle, sdbDCHandle *handle )
     \brief Get the data center
     \param [in] cHandle The connection handle
     \param [out] handle The data center handle
@@ -2366,7 +2374,7 @@ SDB_EXPORT INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size ) 
 */
 SDB_EXPORT INT32 sdbGetDC( sdbConnectionHandle cHandle, sdbDCHandle *handle ) ;
 
-/** \fn INT32 sdbGetDCDetail( sdbDCHandle cHandle, bson *retInfo )
+/* \fn INT32 sdbGetDCDetail( sdbDCHandle cHandle, bson *retInfo )
     \brief Get the detail of data center
     \param [in] cHandle The connection handle
     \param [out] retInfo The the detail of data center
@@ -2375,7 +2383,7 @@ SDB_EXPORT INT32 sdbGetDC( sdbConnectionHandle cHandle, sdbDCHandle *handle ) ;
 */
 SDB_EXPORT INT32 sdbGetDCDetail( sdbDCHandle cHandle, bson *retInfo ) ;
 
-/** \fn INT32 sdbActivateDC( sdbDCHandle cHandle )
+/* \fn INT32 sdbActivateDC( sdbDCHandle cHandle )
     \brief Activate the data center
     \param [in] cHandle The data center handle
     \retval SDB_OK Operation Success
@@ -2383,7 +2391,7 @@ SDB_EXPORT INT32 sdbGetDCDetail( sdbDCHandle cHandle, bson *retInfo ) ;
 */
 SDB_EXPORT INT32 sdbActivateDC( sdbDCHandle cHandle ) ;
 
-/** \fn INT32 sdbDeactivateDC( sdbDCHandle cHandle )
+/* \fn INT32 sdbDeactivateDC( sdbDCHandle cHandle )
     \brief Deactivate the data center
     \param [in] cHandle The data center handle
     \retval SDB_OK Operation Success
@@ -2391,7 +2399,7 @@ SDB_EXPORT INT32 sdbActivateDC( sdbDCHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbDeactivateDC( sdbDCHandle cHandle ) ;
 
-/** \fn INT32 sdbEnableReadOnly( sdbDCHandle cHandle, BOOLEAN isReadOnly )
+/* \fn INT32 sdbEnableReadOnly( sdbDCHandle cHandle, BOOLEAN isReadOnly )
     \brief Enable data center works in readonly mode or not
     \param [in] cHandle The data center handle
     \param [in] isReadOnly Whether to use readonly mode or not
@@ -2400,7 +2408,7 @@ SDB_EXPORT INT32 sdbDeactivateDC( sdbDCHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbEnableReadOnly( sdbDCHandle cHandle, BOOLEAN isReadOnly ) ;
 
-/** \fn INT32 sdbCreateImage( sdbDCHandle cHandle, const CHAR *pCataAddrList )
+/* \fn INT32 sdbCreateImage( sdbDCHandle cHandle, const CHAR *pCataAddrList )
     \brief Create image in data center
     \param [in] cHandle The data center handle
     \param [in] pCataAddrList Catalog address list of remote data center, e.g. "192.168.20.165:30003",
@@ -2410,7 +2418,7 @@ SDB_EXPORT INT32 sdbEnableReadOnly( sdbDCHandle cHandle, BOOLEAN isReadOnly ) ;
 */
 SDB_EXPORT INT32 sdbCreateImage( sdbDCHandle cHandle, const CHAR *pCataAddrList ) ;
 
-/** \fn INT32 sdbRemoveImage( sdbDCHandle cHandle )
+/* \fn INT32 sdbRemoveImage( sdbDCHandle cHandle )
     \brief Remove image in data center
     \param [in] cHandle The data center handle
     \retval SDB_OK Operation Success
@@ -2418,7 +2426,7 @@ SDB_EXPORT INT32 sdbCreateImage( sdbDCHandle cHandle, const CHAR *pCataAddrList 
 */
 SDB_EXPORT INT32 sdbRemoveImage( sdbDCHandle cHandle ) ;
 
-/** \fn INT32 sdbEnableImage( sdbDCHandle cHandle )
+/* \fn INT32 sdbEnableImage( sdbDCHandle cHandle )
     \brief Enable image in data center
     \param [in] cHandle The data center handle
     \retval SDB_OK Operation Success
@@ -2426,7 +2434,7 @@ SDB_EXPORT INT32 sdbRemoveImage( sdbDCHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbEnableImage( sdbDCHandle cHandle ) ;
 
-/** \fn INT32 sdbDisableImage( sdbDCHandle cHandle )
+/* \fn INT32 sdbDisableImage( sdbDCHandle cHandle )
     \brief Disable image in data center
     \param [in] cHandle The data center handle
     \retval SDB_OK Operation Success
@@ -2434,7 +2442,7 @@ SDB_EXPORT INT32 sdbEnableImage( sdbDCHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbDisableImage( sdbDCHandle cHandle ) ;
 
-/** \fn INT32 sdbAttachGroups( sdbDCHandle cHandle, bson *info )
+/* \fn INT32 sdbAttachGroups( sdbDCHandle cHandle, bson *info )
     \brief Attach specified groups to data center
     \param [in] cHandle The data center handle
     \param [in] info The information of groups to attach, e.g. {Groups:[["group1", "group1"], ["group2", "group2"]]}
@@ -2468,7 +2476,7 @@ SDB_EXPORT INT32 sdbDisableImage( sdbDCHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbAttachGroups( sdbDCHandle cHandle, bson *info ) ;
 
-/** \fn INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info )
+/* \fn INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info )
     \brief Detach specified groups from data center
     \param [in] cHandle The data center handle
     \param [in] info The information of groups to detach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
