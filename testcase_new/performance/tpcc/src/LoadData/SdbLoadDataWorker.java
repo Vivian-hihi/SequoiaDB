@@ -97,7 +97,8 @@ public class SdbLoadDataWorker extends LoadDataWorker {
         while ( it.hasNext() ) {
             BasicBSONObject doc = new BasicBSONObject() ;
             Map.Entry< String, String > entry = it.next() ;
-            doc.put( entry.getKey(), entry.getValue() ) ;
+            doc.put( "cfg_name", entry.getKey() );
+            doc.put( "cfg_value", entry.getValue() );
             configs.add( doc ) ;
         }
         clConfig.bulkInsert( configs, 0 ) ;
@@ -113,7 +114,6 @@ public class SdbLoadDataWorker extends LoadDataWorker {
         while ( it.hasNext() ) {
             Map.Entry< String, Object > entry = it.next() ;
             doc.put( entry.getKey(), entry.getValue() ) ;
-
         }
         items.add( doc ) ;
     }
