@@ -137,6 +137,7 @@ public class Split10531 extends SdbTestBase {
 	private void queryDeletedData(Sequoiadb db) {
 		DBCursor cursor1 = null;
 		try {
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			DBCollection commCL = db.getCollectionSpace(csName).getCollection(clName);
 			// 查询被删除的普通记录（sk<500）
 			cursor1 = commCL.query("{sk:{lt:500}}", null, null, null);
@@ -147,7 +148,8 @@ public class Split10531 extends SdbTestBase {
 			// 查询被删除的Lob
 			for (int i = 0; i < deletedLob.size(); i++) {
 				try {
-					commCL.openLob(deletedLob.get(i));
+					DBLob tmp = commCL.openLob(deletedLob.get(i));
+					Assert.fail(tmp.getID().toString());
 				} catch (BaseException e) {
 					if (e.getErrorCode() != -4) {
 						e.printStackTrace();

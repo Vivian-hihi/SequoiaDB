@@ -33,7 +33,7 @@ import com.sequoiadb.testcommon.SdbThreadBase;
  */
 
 public class Split10532 extends SdbTestBase {
-	private String clName = "testcaseCL10532";
+	private String clName = "testcaseCL_10532";
 	private String srcGroupName;
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
@@ -95,6 +95,7 @@ public class Split10532 extends SdbTestBase {
 
 			// 增加和更新数据
 			db = new Sequoiadb(coordUrl, "", "");
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 			for (int i = 400; i < 600; i++) {
 				cl.insert("{sk:" + i + ",alpha:1}");// 增加数据
@@ -135,7 +136,7 @@ public class Split10532 extends SdbTestBase {
 				updateExpect.add((BSONObject) JSON.parse("{sk:" + i + ",alpha:2}"));
 			}
 			// 查询被更新的数据
-			queryUpdatedData(cl, updateExpect);
+			queryUpdatedData(db, updateExpect);
 
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
@@ -171,11 +172,11 @@ public class Split10532 extends SdbTestBase {
 		}
 	}
 
-	private void queryUpdatedData(DBCollection cl, List<BSONObject> dataList) {
+	private void queryUpdatedData(Sequoiadb db, List<BSONObject> dataList) {
 		DBCursor cursor1 = null;
-
 		try {
 			// 比对所有更新的数据
+			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 			cursor1 = cl.query("{sk:{$gte:400,$lt:600}}", null, "", null);
 			while (cursor1.hasNext()) {
 				BSONObject actual = cursor1.getNext();
