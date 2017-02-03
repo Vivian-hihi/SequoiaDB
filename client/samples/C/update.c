@@ -95,6 +95,7 @@ INT32 main ( INT32 argc, CHAR **argv )
 
    // insert
    rc = sdbInsert ( collection, &obj ) ;
+   bson_destroy( &obj ) ;
    CHECK_RC ( rc, "Failed to insert record" ) ;
 
    // query the records

@@ -155,12 +155,13 @@ INT32 main ( INT32 argc, CHAR **argv )
    CHECK_RC ( rc, "Failed to build bson" ) ;
 
    rc = sdbUpsert( collection, &rule, &condition, NULL ) ;
+   bson_destroy( &rule ) ;
+   bson_destroy( &condition ) ;
    if( rc!=SDB_OK )
    {
       printf("Failed to update the record, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   bson_destroy(&rule);
    printf("Success to update!" OSS_NEWLINE ) ;
 
 done:

@@ -147,6 +147,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
 
 done:
+   bson_destroy( &obj ) ;
    // disconnect the connection
    sdbDisconnect ( connection ) ;
    // release the local variables

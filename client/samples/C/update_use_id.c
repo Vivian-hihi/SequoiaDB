@@ -139,6 +139,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    CHECK_RC ( rc, "Failed to copy bson" ) ;
    printf("Before update, the record is:\n") ;
    bson_print( &tmp ) ;
+   bson_destroy( &tmp ) ;
    // set the update condition using "_id"
    bson_find( &it, &obj, "_id" ) ;
    bson_init( &updatecondition ) ;

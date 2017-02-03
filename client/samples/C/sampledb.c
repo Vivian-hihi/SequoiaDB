@@ -77,6 +77,8 @@ INT32 loadFromFile ( const CHAR *pFileName,
          bson_init ( &obj ) ;
       }
    }
+   bson_destroy ( &obj ) ;
+   fclose( pFile ) ;
    return SDB_OK ;
 }
 
@@ -94,7 +96,8 @@ INT32 main ( INT32 argc, CHAR **argv )
    if ( 5 != argc )
    {
       displaySyntax ( (CHAR*)argv[0] ) ;
-      exit ( 0 ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
 
    /* read argument */
@@ -109,7 +112,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    {
       printf ( "Failed to connect to database at %s:%s, rc = %d\n",
                pHostName, pServiceName, rc ) ;
-      exit ( 0 ) ;
+      goto error ;
    }
 
    rc = loadFromFile ( SAMPLE_DATA_FILE_NAME, connection ) ;
@@ -117,10 +120,15 @@ INT32 main ( INT32 argc, CHAR **argv )
    {
       printf ( "Failed to load from file %s, rc = %d\n",
                SAMPLE_DATA_FILE_NAME, rc ) ;
-      exit ( 0 ) ;
+      goto error ;
    }
 
+   sdbDisconnect( connection ) ;
+
+done:
    /* dispose connection */
    sdbReleaseConnection ( connection ) ;
-   return 0 ;
+   return rc ;
+error:
+   goto done ;
 }

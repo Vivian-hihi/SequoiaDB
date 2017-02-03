@@ -78,7 +78,8 @@ INT32 main ( INT32 argc, CHAR **argv )
    if ( 5 != argc )
    {
       displaySyntax ( (CHAR*)argv[0] ) ;
-      exit ( 0 ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
 
    // connect to database
@@ -144,7 +145,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       bson_init( &obj );
    }
    bson_destroy( &obj ) ;
-
+   sdbReleaseCursor ( cursor ) ;
 
    // execute sql insert
    printf("The operation is :\n") ;
@@ -172,19 +173,14 @@ INT32 main ( INT32 argc, CHAR **argv )
       bson_init( &obj );
    }
    bson_destroy( &obj ) ;
+   sdbReleaseCursor ( cursor ) ;
 
 done:
    // drop the specified collection space
-   rc = sdbDropCollectionSpace ( connection,COLLECTION_SPACE_NAME ) ;
-   if ( rc != SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-   }
+   sdbDropCollectionSpace ( connection,COLLECTION_SPACE_NAME ) ;
    // disconnect the connection
    sdbDisconnect ( connection ) ;
    // release the local variables
-   sdbReleaseCursor ( cursor ) ;
    sdbReleaseCollection ( collection ) ;
    sdbReleaseCS ( collectionspace ) ;
    sdbReleaseConnection ( connection ) ;
