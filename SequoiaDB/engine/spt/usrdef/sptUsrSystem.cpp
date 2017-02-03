@@ -4916,8 +4916,8 @@ namespace engine
       BSONObjBuilder     builder ;
       string             type ;
       vector<string>     typeSplit ;
-      string configsType[6] = { "kernel", "vm", "fs",
-                                "debug", "dev", "abi" } ;
+      string configsType[] = { "kernel", "vm", "fs", "debug", "dev", "abi",
+                               "net" } ;
 
       if ( 0 < arg.argc() )
       {
@@ -4958,8 +4958,8 @@ namespace engine
                  itr != typeSplit.end(); )
             {
                // if not required type ,erase it
-               if( configsType + 6 == find( configsType,
-                                            configsType + 6,
+               if( configsType + 7 == find( configsType,
+                                            configsType + 7,
                                             *itr ) )
                {
                   itr = typeSplit.erase( itr ) ;
