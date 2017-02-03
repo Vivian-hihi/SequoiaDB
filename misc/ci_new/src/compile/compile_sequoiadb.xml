@@ -102,6 +102,12 @@
       <exec executable="scons" dir="${srccode_dir}" failonerror="true">
          <arg line="${cmd}" />
       </exec>
+      
+      <chmod perm="u+x" file="${srccode_dir}/bin/sequoiadb" />
+      <exec executable="bin/sequoiadb" dir="${srccode_dir}" outputproperty="version_output" failonerror="true">
+         <arg line="--version" />
+      </exec>
+      <echo file="${release_dir}/sequoiadb.version" message="${version_output}"/>
    </target>
    
    <target name="compile_pg_connector">
