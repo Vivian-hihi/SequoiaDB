@@ -332,8 +332,10 @@ SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
     \brief Get the index blocks' or data blocks' infomations for concurrent query
     \param [in] condition The matching rule, return all the documents if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint One of the indexs in current collection, using default index to query if not provided
-                    eg:{"":"ageIndex"}
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [out] handle The handle of query result
@@ -1272,7 +1274,10 @@ SDB_EXPORT INT32 sdbGetCount ( sdbCollectionHandle cHandle,
     \brief Get the count of documents in specified collection
     \param [in] cHandle The collection handle
     \param [in] condition The matching rule, return the count of all documents if this parameter is null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [out] count The count of matching documents
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -1360,7 +1365,10 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
     \param [in] cHandle The collection handle
     \param [in] rule The updating rule, cannot be null
     \param [in] condition The matching rule, update all the documents if this parameter is null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note It won't work to update the "ShardingKey" field, but the other fields take effect
@@ -1378,7 +1386,10 @@ SDB_EXPORT INT32 sdbUpdate ( sdbCollectionHandle cHandle,
     \param [in] cHandle The collection handle
     \param [in] rule The updating rule, cannot be null
     \param [in] condition The matching rule, update all the documents if this parameter is null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note It won't work to upsert the "ShardingKey" field, but the other fields take effect
@@ -1397,7 +1408,10 @@ SDB_EXPORT INT32 sdbUpsert ( sdbCollectionHandle cHandle,
     \param [in] cHandle The collection handle
     \param [in] rule The updating rule, cannot be null
     \param [in] condition The matching rule, update all the documents if this parameter is null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -1415,7 +1429,10 @@ SDB_EXPORT INT32 sdbUpsert1 ( sdbCollectionHandle cHandle,
     \brief Delete the matching documents in current collection, never rollback if failed
     \param [in] cHandle The collection handle
     \param [in] condition The matching rule, delete all the documents if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1437,7 +1454,10 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
     \param [in] condition The matching rule, return all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
@@ -1474,7 +1494,10 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
     \param [in] condition The matching rule, return all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [out] handle The cursor handle of current query
@@ -1506,7 +1529,10 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
     \param [in] condition The matching rule, return all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [in] update The update rule, can't be null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
@@ -1547,7 +1573,10 @@ SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
     \param [in] condition The matching rule, return all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
@@ -1585,7 +1614,10 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
     \param [in] condition The matching rule, return all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [in] flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( QUERY_FORCE_HINT | QUERY_WITH_RETURNDATA ) to param flag
 
         QUERY_FORCE_HINT
@@ -1923,7 +1955,10 @@ SDB_EXPORT INT32 sdbRemoveBackup ( sdbConnectionHandle cHandle,
     \param [in] condition The matching rule, return all the documents if null
     \param [in] selector The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [out] handle The cusor handle of result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -2050,7 +2085,10 @@ SDB_EXPORT INT32 sdbGetDomain ( sdbConnectionHandle cHandle,
     \param [in] condition The matching rule, return all the documents if null
     \param [in] selector The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] hint Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+                    using index "ageIndex" to scan data(index scan); 
+                    {"":null} means table scan. when hint is null, 
+                    database automatically match the optimal index to scan data
     \param [out] handle The cusor handle of result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
