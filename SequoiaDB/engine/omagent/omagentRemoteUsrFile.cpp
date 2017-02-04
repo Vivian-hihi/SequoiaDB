@@ -905,19 +905,16 @@ namespace engine
          PD_LOG_MSG( PDERROR, "optionObj must be config") ;
          goto error ;
       }
-      if ( FALSE == _optionObj.hasField( "value" ) )
+      if ( TRUE == _optionObj.hasField( "value" ) )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "value must be config" ) ;
-         goto error ;
+         if ( String != _optionObj.getField( "value" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "value must be string" ) ;
+            goto error ;
+         }
+         value = _optionObj.getStringField( "value" ) ;
       }
-      if ( String != _optionObj.getField( "value" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "value must be string" ) ;
-         goto error ;
-      }
-      value = _optionObj.getStringField( "value" ) ;
 
       if ( TRUE == _optionObj.hasField( "mode" ) )
       {
@@ -986,7 +983,10 @@ namespace engine
          cmd << " " << pathname ;
       }
 
-      cmd << mode << " " << value ;
+      if ( FALSE == value.empty() )
+      {
+         cmd << mode << " " << value ;
+      }
 #elif defined (_WINDOWS)
       // windows only support finding file by name
       if ( " -name" != mode )

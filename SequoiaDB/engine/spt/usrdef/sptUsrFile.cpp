@@ -982,20 +982,16 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      if ( FALSE == optionObj.hasField( "value" ) )
+      if ( TRUE == optionObj.hasField( "value" ) )
       {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "value must be config" ) ;
-         goto error ;
+         if ( String != optionObj.getField( "value" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "value must be string" ) ;
+            goto error ;
+         }
+         value = optionObj.getStringField( "value" ) ;
       }
-      if ( String != optionObj.getField( "value" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "value must be string" ) ;
-         goto error ;
-      }
-
-      value = optionObj.getStringField( "value" ) ;
 
       if ( TRUE == optionObj.hasField( "mode" ) )
       {
@@ -1065,7 +1061,10 @@ JS_MAPPING_END()
          cmd << " " << pathname ;
       }
 
-      cmd << mode << " " << value ;
+      if ( FALSE == value.empty() )
+      {
+         cmd << mode << " " << value ;
+      }
 #elif defined (_WINDOWS)
       // windows only support finding file by name
       if ( " -name" != mode )
