@@ -1043,7 +1043,6 @@ namespace SequoiaDB
          *  \exception System.Exception
          *  \deprecated this API only support in java
          */
-        /*
         public DBCursor GetQueryMeta(BsonDocument query, BsonDocument orderBy, BsonDocument hint,
                                      long skipRows, long returnRows)
         {
@@ -1073,7 +1072,6 @@ namespace SequoiaDB
             sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtnSDBMessage, this);
         }
-        */
 
         /** \fn void AttachCollection (string subClFullName, BsonDocument options)
          * \brief Attach the specified collection.
