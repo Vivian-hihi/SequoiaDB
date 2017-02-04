@@ -482,8 +482,8 @@ public class DBCollection {
      *            The matching condition, delete all the documents if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      */
@@ -504,8 +504,8 @@ public class DBCollection {
      *            The matching condition, delete all the documents if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      */
@@ -572,8 +572,8 @@ public class DBCollection {
      *            The updating rule, can't be null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
@@ -594,8 +594,8 @@ public class DBCollection {
      *            The updating rule, can't be null or empty
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
@@ -626,8 +626,8 @@ public class DBCollection {
      *            The updating rule, can't be null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
@@ -649,8 +649,8 @@ public class DBCollection {
      *            The updating rule, can't be null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param setOnInsert
      *            The setOnInsert assigns the specified values to the fileds when insert
@@ -687,8 +687,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
@@ -772,8 +772,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @return a DBCursor instance of the result or null if no any matched document
      * @exception com.sequoiadb.exception.BaseException
@@ -795,8 +795,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param flag
      *            the query flag, default to be 0. Please see the definition
@@ -828,8 +828,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @return a DBCursor instance of the result or null if no any matched document
      * @exception com.sequoiadb.exception.BaseException
@@ -851,8 +851,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param flag
      *            the query flag, default to be 0. Please see the definition
@@ -896,8 +896,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
@@ -938,8 +938,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
@@ -969,8 +969,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
@@ -1048,8 +1048,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param flag
      *            the query flag, default to be 0. Please see the definition
@@ -1169,8 +1169,8 @@ public class DBCollection {
      *            the update rule, can't be null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
@@ -1217,8 +1217,8 @@ public class DBCollection {
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param skipRows
      *            skip the first numToSkip documents, never skip if this parameter is 0
@@ -1501,7 +1501,7 @@ public class DBCollection {
      * @fn long getCount(BSONObject matcher)
      * @brief Get the amount of matching documents in current collection.
      * @param matcher
-     *            The matching rule
+     *            The matching rule, when condition is null, the return amount contains all the records.
      * @return the amount of matching documents
      * @exception com.sequoiadb.exception.BaseException
      */
@@ -1525,19 +1525,19 @@ public class DBCollection {
     }
 
     /**
-     * @fn long getCount(BSONObject condition, BSONObject hint)
+     * @fn long getCount(BSONObject matcher, BSONObject hint)
      * @brief Get the count of matching BSONObject in current collection
-     * @param condition
+     * @param matcher
      *            The matching rule, when condition is null, the return amount contains all the records. 
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @return The count of matching BSONObjects
      * @exception com.sequoiadb.exception.BaseException
      */
-    public long getCount(BSONObject condition, BSONObject hint) throws BaseException {
+    public long getCount(BSONObject matcher, BSONObject hint) throws BaseException {
         String commandString = SequoiadbConstants.ADMIN_PROMPT
                 + SequoiadbConstants.GET_COUNT;
         BSONObject dummyObj = new BasicBSONObject();
@@ -1550,11 +1550,11 @@ public class DBCollection {
                 throw new BaseException(SDBError.SDB_SYS, e);
             }
         }
-        SDBMessage rtnSDBMessage = adminCommand(commandString, condition,
+        SDBMessage rtnSDBMessage = adminCommand(commandString, matcher,
                 dummyObj, dummyObj, newobj, -1, -1, 0);
         int flags = rtnSDBMessage.getFlags();
         if (flags != 0) {
-            String msg = "condition = " + condition +
+            String msg = "condition = " + matcher +
                     ", hint = " + hint;
             throw new BaseException(SDBError.getSDBError(flags), msg);
         }
@@ -1847,16 +1847,16 @@ public class DBCollection {
 
     /**
      * @fn DBCursor getQueryMeta(BSONObject matcher, BSONObject
-     *     orderBy, BSONObject hint, long skipRows, long returnRows)
-     * @brief Get index blocks' or data blocks' infomation for concurrent query
+     *     orderBy, BSONObject hint, long skipRows, long returnRows, int flag)
+     * @brief Get index blocks' or data blocks' information for concurrent query
      * @param matcher
      *            the matching rule, return all the meta information if null
      * @param orderBy
      *            the ordered rule, never sort if null
      * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @param skipRows
      *            The rows to be skipped

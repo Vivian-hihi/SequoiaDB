@@ -1478,8 +1478,8 @@ public class Sequoiadb {
      * @param orderBy The ordered rule, never sort if null
      * @param hint 
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      */
@@ -1777,8 +1777,8 @@ public class Sequoiadb {
      * @param orderBy the ordered rule, never sort if null
      * @param hint 
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
-     *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
-     *            any index to scan data(table scan). when hint is null, 
+     *            using index "ageIndex" to scan data(index scan); 
+     *            {"":null} means table scan. when hint is null, 
      *            database automatically match the optimal index to scan data.
      * @exception com.sequoiadb.exception.BaseException
      */
