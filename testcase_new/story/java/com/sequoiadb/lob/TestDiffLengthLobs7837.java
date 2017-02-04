@@ -127,7 +127,7 @@ public class TestDiffLengthLobs7837 extends SdbTestBase {
 				bytebuff.put(rbuff, 0, readLen);				
 			}			
 			bytebuff.rewind();
-		
+			
 			String curMd5 = Commlib.getMd5(bytebuff);		
 			Assert.assertEquals(prevMd5, curMd5);
 		}catch(BaseException e){
@@ -141,12 +141,13 @@ public class TestDiffLengthLobs7837 extends SdbTestBase {
 		
 	@AfterClass
 	public void tearDown(){		
-		try{
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		try{			
 			sdb.disconnect();
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}finally{
+			System.out.println(this.getClass().getName()+" end at "
+			 +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		}
 	}
 	

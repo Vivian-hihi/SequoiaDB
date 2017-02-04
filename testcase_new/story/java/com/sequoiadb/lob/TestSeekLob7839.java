@@ -108,9 +108,10 @@ public class TestSeekLob7839 extends SdbTestBase {
 		}			
 		
 		//set the seek position of the lob,the read lob
+		DBLob rLob = null;
 		try
 		{
-			DBLob rLob = cl.openLob(oid);
+			rLob = cl.openLob(oid);
 			
 			int offset = 15;        
 	        byte[] rbuff1 = new byte[offset];
@@ -139,22 +140,27 @@ public class TestSeekLob7839 extends SdbTestBase {
 	        rLob.close();
 		}catch(BaseException e){
 			Assert.assertTrue(false,"seek lob failed:"+e.getMessage()+e.getErrorCode());
-		}
+		}finally{
+			if (rLob != null){
+				rLob.close();
+			}
+		}	
 	}
 	
 
 	@AfterClass
 	public void tearDown(){
-		try{
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}			
 			sdb.disconnect();			
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}
+		}finally{
+			System.out.println(this.getClass().getName()+" end at "
+					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		}	
 	}
 }
 

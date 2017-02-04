@@ -53,11 +53,12 @@ public class Commlib {
 	 * @param inbuff
 	 *        the object of need to get the MD5
 	 * @return
-	 *        the MD5 value
+	 *        the MD5 value	
 	 */
     public static String getMd5(Object inbuff){
         MessageDigest md5 = null;
         String value = "";
+        
         try {
             md5 = MessageDigest.getInstance("MD5");
             if(inbuff instanceof ByteBuffer){
@@ -65,13 +66,13 @@ public class Commlib {
             }else if(inbuff instanceof String){
                 md5.update(((String)inbuff).getBytes());
             }else{
-                throw new BaseException("invalid parameter!");
+            	Assert.fail("invalid parameter!");
             }
             BigInteger bi = new BigInteger(1, md5.digest());
             value = bi.toString(16);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-            throw new BaseException("fail to get md5!");
+            Assert.fail("fail to get md5!"+e.getMessage());
         }
         return value;
     }

@@ -100,6 +100,10 @@ public class TestReadAndRemoveLobs7843 extends SdbTestBase {
 			if(-4 != e.getErrorCode() && -269 != e.getErrorCode() && -268 != e.getErrorCode()){
 				Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
 			}	
+		}finally{
+			if (rLob != null){
+				rLob.close();
+			}
 		}
 	}
 
@@ -120,20 +124,21 @@ public class TestReadAndRemoveLobs7843 extends SdbTestBase {
 			if( -4 != e.getErrorCode() && -269 != e.getErrorCode() && -268 != e.getErrorCode()){
 				Assert.assertTrue(false,"removeLob fail:"+e.getMessage()+e.getErrorCode());
 			}			
-		}		
+		}	
 	}
 
 	@AfterClass
 	public void tearDown(){		
-		try{
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}
 			sdb.disconnect();
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}finally{
+			System.out.println(this.getClass().getName()+" end at "
+					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		}
 	}	
 	

@@ -76,26 +76,37 @@ public class TestRemoveLobs7842 extends SdbTestBase {
 	
     @AfterClass
 	public void tearDown(){		
-		try{
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}
 			sdb.disconnect();
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
-		}
+		}finally{
+			System.out.println(this.getClass().getName()+" end at "
+					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));               
+        }
 	}
     
     @Test
 	public void removeLob(){
-    	int lobsize = random.nextInt(1048576);		
-		String lobStringBuff = Commlib.getRandomString(lobsize);
-		DBLob lob = cl.createLob();
-		lob.write(lobStringBuff.getBytes());
-		ObjectId id = lob.getID();
-		lob.close();
+    	DBLob lob = null;
+    	ObjectId id = null;
+    	int lobsize =0;
+    	try{
+    		lobsize = random.nextInt(1048576);		
+    		String lobStringBuff = Commlib.getRandomString(lobsize);
+    		lob = cl.createLob();
+    		lob.write(lobStringBuff.getBytes());
+    		id = lob.getID();    		
+    	}catch(BaseException e){
+            Assert.assertTrue(false,e.getMessage());
+        }finally{
+            if(lob != null){
+            	lob.close();            		
+            } 
+        }
 		
 		DBCursor listCursor = cl.listLobs();
 		while ( listCursor.hasNext() ) {

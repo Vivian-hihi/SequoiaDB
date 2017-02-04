@@ -141,12 +141,13 @@ public class TestLobShardingBorderValue7840 extends SdbTestBase {
 	
 	@AfterClass
 	public void tearDown(){		
-		try{
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		try{			
 			sdb.disconnect();
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}finally{
+			System.out.println(this.getClass().getName()+" end at "
+					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		}
 	}
 	

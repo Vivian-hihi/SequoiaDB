@@ -97,9 +97,10 @@ public class TestSameLobs7841 extends SdbTestBase {
 		
 	private void checkLob(ObjectId oid){
 		String curMd5 ="";
+		DBLob rLob = null;
 		try
 		{
-			DBLob rLob = cl.openLob(oid);
+			rLob = cl.openLob(oid);
 			
 			int rbuffSize = 1024;
 			byte[] rbuff = new byte[rbuffSize];
@@ -114,20 +115,25 @@ public class TestSameLobs7841 extends SdbTestBase {
 			Assert.assertEquals(curMd5, prevMd5,"the lobs md5 different");
 		}catch(BaseException e){
 			Assert.assertTrue(false,"read lob fail:"+e.getMessage()+e.getStackTrace());
+		}finally{
+			if (rLob != null){
+				rLob.close();
+			}
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){		
-		try{
-			System.out.println(this.getClass().getName()+" end at "
-					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
+		try{			
 			if(cs.isCollectionExist(clName)){
 				cs.dropCollection(clName);
 			}
 			sdb.disconnect();
 		}catch(BaseException e){			
 			Assert.assertTrue(false,"clean up failed:"+e.getMessage());
+		}finally{
+			System.out.println(this.getClass().getName()+" end at "
+					+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:S").format(new Date()));
 		}
 	}	
 	
