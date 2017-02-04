@@ -377,7 +377,8 @@ namespace SequoiaDB
 
         /** \fn void Delete(BsonDocument matcher)
          *  \brief Delete the matching document of current collection
-         *  \param matcher The matching condition
+         *  \param matcher
+         *            The matching condition, delete all the documents if null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -388,8 +389,13 @@ namespace SequoiaDB
 
         /** \fn void Delete(BsonDocument matcher, BsonDocument hint)
          *  \brief Delete the matching document of current collection
-         *  \param matcher The matching condition
-         *  \param hint Hint
+         *  \param matcher
+         *            The matching condition, delete all the documents if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -441,9 +447,15 @@ namespace SequoiaDB
 
         /** \fn void Update(BsonDocument matcher, BsonDocument modifier, BsonDocument hint)
          *  \brief Update the document of current collection
-         *  \param matcher The matching condition
-         *  \param modifier The updating rule
-         *  \param hint Hint
+         *  \param matcher
+         *            The matching condition, update all the documents if null
+         *  \param modifier
+         *            The updating rule, can't be null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          *  \note It won't work to update the "ShardingKey" field, but the other fields take effect
@@ -455,9 +467,16 @@ namespace SequoiaDB
 
         /** \fn void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint)
          *  \brief Update the document of current collection, insert if no matching
-         *  \param matcher The matching condition
-         *  \param modifier The updating rule
-         *  \param hint Hint
+         *  \param matcher
+         *            The matching condition, update all the documents 
+         *            if null(that's to say, we match all the documents)
+         *  \param modifier
+         *            The updating rule, can't be null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          *  \note It won't work to upsert the "ShardingKey" field, but the other fields take effect
@@ -469,9 +488,16 @@ namespace SequoiaDB
 
         /** \fn void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, BsonDocument setOnInsert)
          *  \brief Update the document of current collection, insert if no matching
-         *  \param matcher The matching condition
-         *  \param modifier The updating rule
-         *  \param hint Hint
+         *  \param matcher
+         *            The matching condition, update all the documents 
+         *            if null(that's to say, we match all the documents)
+         *  \param modifier
+         *            The updating rule, can't be null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
          *  \param setOnInsert The setOnInsert assigns the specified values to the fileds when insert
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -530,11 +556,17 @@ namespace SequoiaDB
 
         /** \fn DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
          *  \brief Find documents of current collection
-         *  \param query The matching condition
-         *  \param selector The selective rule
-         *  \param orderBy the ordered rule
-         *  \param hint One of the indexs in current collection, using default index to query if not provided
-         *           eg:{"":"ageIndex"}
+         *  \param query
+         *            The matching rule, return all the documents if null
+         *  \param selector
+         *            The selective rule, return the whole document if null
+         *  \param orderBy
+         *            The ordered rule, never sort if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
          *  \return The DBCursor of matching documents or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -547,13 +579,23 @@ namespace SequoiaDB
         /** \fn DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
          *                     long skipRows, long returnRows) 
          *  \brief Find documents of current collection
-         *  \param query The matching condition
-         *  \paramselector The selective rule
-         *  \param orderBy The ordered rule
-         *  \param hint One of the indexs in current collection, using default index to query if not provided
-         *           eg:{"":"ageIndex"}
-         *  \param skipRows Skip the first numToSkip documents, default is 0
-         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param query
+         *            The matching rule, return all the documents if null
+         *  \param selector
+         *            The selective rule, return the whole document if null
+         *  \param orderBy
+         *            The ordered rule, never sort if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param skipRows
+         *            Skip the first numToSkip documents, never skip if this parameter is 0
+         *  \param returnRows
+         *            Return the specified amount of documents, 
+         *            when returnRows is 0, return nothing, 
+         *            when returnRows is -1, return all the documents
          *  \return The DBCursor of matching documents or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -567,14 +609,27 @@ namespace SequoiaDB
         /** \fn DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
          *                     long skipRows, long returnRows, int flag) 
          *  \brief Find documents of current collection
-         *  \param query The matching condition
-         *  \paramselector The selective rule
-         *  \param orderBy The ordered rule
-         *  \param hint One of the indexs in current collection, using default index to query if not provided
-         *           eg:{"":"ageIndex"}
-         *  \param skipRows Skip the first numToSkip documents, default is 0
-         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
-         *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
+         *  \param query
+         *            The matching rule, return all the documents if null
+         *  \param selector
+         *            The selective rule, return the whole document if null
+         *  \param orderBy
+         *            The ordered rule, never sort if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param skipRows
+         *            Skip the first numToSkip documents, never skip if this parameter is 0
+         *  \param returnRows
+         *            Return the specified amount of documents, 
+         *            when returnRows is 0, return nothing, 
+         *            when returnRows is -1, return all the documents
+         *  \param flag
+         *            The query flag, default to be 0. Please see the definition
+         *            of follow flags for more detail. Usage:
+         *            e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
          *      DBQuery.FLG_QUERY_PARALLED
@@ -655,14 +710,24 @@ namespace SequoiaDB
         /** \fn DBCursor QueryAndUpdate(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
          *                              BsonDocument update, long skipRows, long returnRows, int flag, bool returnNew) 
          *  \brief Find documents of current collection and update
-         *  \param query The matching condition
-         *  \paramselector The selective rule
-         *  \param orderBy The ordered rule
-         *  \param hint One of the indexs in current collection, using default index to query if not provided
-         *           eg:{"":"ageIndex"}
-         *  \param update The update rule
-         *  \param skipRows Skip the first numToSkip documents, default is 0
-         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param query
+         *            The matching rule, return all the documents if null
+         *  \param selector
+         *            The selective rule, return the whole document if null
+         *  \param orderBy
+         *            The ordered rule, never sort if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param skipRows
+         *            Skip the first numToSkip documents, never skip if this parameter is 0
+         *  \param returnRows
+         *            Return the specified amount of documents, 
+         *            when returnRows is 0, return nothing, 
+         *            when returnRows is -1, return all the documents 
+         *  \param update The update rule, can't be null
          *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
@@ -683,13 +748,23 @@ namespace SequoiaDB
         /** \fn DBCursor QueryAndRemove(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
          *                              long skipRows, long returnRows, int flag) 
          *  \brief Find documents of current collection and remove
-         *  \param query The matching condition
-         *  \paramselector The selective rule
-         *  \param orderBy The ordered rule
-         *  \param hint One of the indexs in current collection, using default index to query if not provided
-         *           eg:{"":"ageIndex"}
-         *  \param skipRows Skip the first numToSkip documents, default is 0
-         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param query
+         *            The matching rule, return all the documents if null
+         *  \param selector
+         *            The selective rule, return the whole document if null
+         *  \param orderBy
+         *            The ordered rule, never sort if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param skipRows
+         *            Skip the first numToSkip documents, never skip if this parameter is 0
+         *  \param returnRows
+         *            Return the specified amount of documents, 
+         *            when returnRows is 0, return nothing, 
+         *            when returnRows is -1, return all the documents 
          *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
@@ -709,13 +784,23 @@ namespace SequoiaDB
         /** \fn DBCursor Explain(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
          *                       long skipRows, long returnRows, int flag, BsonDocument options) 
          *  \brief Find documents of current collection
-         *  \param query The matching condition
-         *  \paramselector The selective rule
-         *  \param orderBy The ordered rule
-         *  \param hint One of the indexs in current collection, using default index to query if not provided
-         *           eg:{"":"ageIndex"}
-         *  \param skipRows Skip the first numToSkip documents, default is 0
-         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param query
+         *            The matching rule, return all the documents if null
+         *  \param selector
+         *            The selective rule, return the whole document if null
+         *  \param orderBy
+         *            The ordered rule, never sort if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param skipRows
+         *            Skip the first numToSkip documents, never skip if this parameter is 0
+         *  \param returnRows
+         *            Return the specified amount of documents, 
+         *            when returnRows is 0, return nothing, 
+         *            when returnRows is -1, return all the documents 
          *  \param flag The query flag, default to be 0. Please see the definition of follow flags for more detail. Usage: e.g. set ( DBQuery.FLG_QUERY_FORCE_HINT | DBQuery.FLG_QUERY_WITH_RETURNDATA ) to param flag
          *
          *      DBQuery.FLG_QUERY_FORCE_HINT
@@ -864,22 +949,23 @@ namespace SequoiaDB
             sdb.UpsertCache(collectionFullName);
         }
 
-        /** \fn long GetCount(BsonDocument condition)
+        /** \fn long GetCount(BsonDocument matcher)
          *  \brief Get the count of matching documents in current collection
-         *  \param condition The matching rule
+         *  \param matcher
+         *            The matching rule, when condition is null, the return amount contains all the records.
          *  \return The count of matching documents
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
-        */
-        public long GetCount(BsonDocument condition)
+         */
+        public long GetCount(BsonDocument matcher)
         {
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.GET_COUNT;
             BsonDocument dummyObj = new BsonDocument();
             BsonDocument hint = new BsonDocument();
-            if (condition == null)
-                condition = dummyObj;
+            if (matcher == null)
+                matcher = dummyObj;
             hint.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
-            SDBMessage rtnSDBMessage = AdminCommand(commandString, condition, dummyObj, dummyObj, hint, 0, -1, 0);
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, matcher, dummyObj, dummyObj, hint, 0, -1, 0);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -937,17 +1023,27 @@ namespace SequoiaDB
         /** \fn DBCursor GetQueryMeta(BsonDocument query, BsonDocument orderBy, BsonDocument hint, 
          *                            long skipRows, long returnRows) 
          *  \brief Get the index blocks' or data blocks' infomations for concurrent query
-         *  \param query The matching condition, return the whole range of index blocks if not provided
-         *           eg:{"age":{"$gt":25},"age":{"$lt":75}}
-         *  \param orderBy The ordered rule, result set is unordered if not provided
-         *  \param hint hint One of the indexs in current collection, using default index to query if not provided
-         *           eg:{"":"ageIndex"}
-         *  \param skipRows Skip the first numToSkip documents, default is 0
-         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param query
+         *            the matching rule, return all the meta information if null
+         *  \param orderBy
+         *            the ordered rule, never sort if null
+         *  \param hint
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); {"":null} means not using 
+         *            any index to scan data(table scan). when hint is null, 
+         *            database automatically match the optimal index to scan data.
+         *  \param skipRows
+         *            The rows to be skipped
+         *  \param returnRows
+         *            return the specified amount of documents, 
+         *            when returnRows is 0, return nothing, 
+         *            when returnRows is -1, return all the documents  
          *  \return The DBCursor of matching infomations or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
+         *  \deprecated this API only support in java
          */
+        /*
         public DBCursor GetQueryMeta(BsonDocument query, BsonDocument orderBy, BsonDocument hint,
                                      long skipRows, long returnRows)
         {
@@ -977,6 +1073,7 @@ namespace SequoiaDB
             sdb.UpsertCache(collectionFullName);
             return new DBCursor(rtnSDBMessage, this);
         }
+        */
 
         /** \fn void AttachCollection (string subClFullName, BsonDocument options)
          * \brief Attach the specified collection.

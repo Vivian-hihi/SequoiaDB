@@ -1114,7 +1114,11 @@ namespace SequoiaDB
          *  \param matcher The matching rule, return all the documents if null
          *  \param selector The selective rule, return the whole document if null
          *  \param orderBy The ordered rule, never sort if null
-         *  \param hint The hint, automatically match the optimal hint if null
+         *  \param hint 
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -1390,11 +1394,16 @@ namespace SequoiaDB
         }
 
         /** \fn DBCursor ListDomains(BsonDocument matcher, BsonDocument selector,
-         *                           BsonDocument orderBy)
+         *                           BsonDocument orderBy, BsonDocument hint)
          *  \brief List domains.
          *  \param matcher The matching rule, return all the documents if null
          *  \param selector The selective rule, return the whole document if null
          *  \param orderBy The ordered rule, never sort if null
+         *  \param hint 
+         *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
+         *            using index "ageIndex" to scan data(index scan); 
+         *            {"":null} means table scan. when hint is null, 
+         *            database automatically match the optimal index to scan data.
          *  \return the cursor of the result.
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
