@@ -17,8 +17,11 @@
    > ubuntu-test主机是提供OM服务，不推荐在OM服务的主机上安装业务。  
    > 因为是演示环境，所以把ubuntu-test手工选上。
 
-3. 点击底部的 **下一步** 按钮，进入安装主机页面。
+3. 在 **主机配置**，可以选择磁盘，容量不足和网络盘是禁止选择的，符合条件的磁盘都会默认选中。  
+   选中的磁盘，将会在配置SequoiaDB业务时，自动分配SequoiaDB节点到磁盘上，如果不希望节点安装在某个磁盘上，在这里取消选中该磁盘即可。
+
+4. 点击底部的 **下一步** 按钮，进入安装主机页面。
 
    ![添加主机](sac/deployment/add_host/add_host_2.jpg)
 
-4. 开始安装主机，[点击查看](sac/deployment/add_host/install_host.md)。
+5. 开始安装主机，[点击查看](sac/deployment/add_host/install_host.md)。
