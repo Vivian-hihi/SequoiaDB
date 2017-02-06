@@ -31,7 +31,7 @@ public class TestSplit10525B extends SdbTestBase{
     private Sequoiadb sdb;
     private CollectionSpace cs;
     private DBCollection cl;
-    private String clName = "cl105025_1";
+    private String clName = "cl10525_1";
     private List<BSONObject> insertRecods;
     
     @BeforeClass
