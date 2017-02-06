@@ -157,6 +157,7 @@ function insertRecs( mainCL, recs, isValid, keyMsg )
 function checkResult( mainCL, validRecs )
 {
    println( "\n---Begin to check records." );
+   db.setSessionAttr( { PreferedInstance: "M" } );
    var rc = mainCL.find().sort( { _id: 1 } );
    lsqCheckRec( rc, validRecs );
 }

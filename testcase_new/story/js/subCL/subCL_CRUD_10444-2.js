@@ -160,6 +160,7 @@ function cleanUpData( mainCL )
 
 function testMatch( mainCL, option, expRes, matchName )
 {
+   db.setSessionAttr( { PreferedInstance: "M" } );
    actRes = mainCL.find( option ).sort( { _id: 1 } );
    try
    {
