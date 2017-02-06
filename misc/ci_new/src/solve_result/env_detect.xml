@@ -127,7 +127,7 @@
                   </then>
                </elseif>
                <else>
-                  <echo message="${str_count} node start exception" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
+                  <echo message="${str_count} times, node start exception" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
                </else>
             </if>
             <echo message="&#10;" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
@@ -201,7 +201,7 @@
             <fileset dir="${report_dir}/" includes="*node_core*.log"/>
          </path-elements>
       </count_str>
-
+      <var name="node_core_msg" value=""/>
       <if>
         <equals arg1="${str_count}" arg2="0"/>
         <else>
