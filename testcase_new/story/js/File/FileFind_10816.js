@@ -46,6 +46,32 @@ FileTest.prototype.testFind = function()
    this.release() ;      
 }
 
+// 测试不指定value参数时查找
+FileTest.prototype.testFindWithoutValue = function()
+{
+   this.init() ;
+   
+   var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) 
+   var path = sdbDir[0] + "/conf" ;
+   
+   var option = {} ;    // 查找选项
+   option.pathname = path ;
+   var commands = "find " + path ;  // 查找命令
+   
+   try
+   {
+      var result = this.file.find( option ).toArray() ;  // 查找文件
+   }
+   catch( e )
+   {
+      throw buildException( "testFindWithoutValue", e, JSON.stringify( option ) +
+                            " " + this, 0, e ) ;
+   }
+   checkFindResult( result, this.cmd, commands ) ;
+   
+   this.release() ;
+}
+
 /******************************************************************************
 *@Description : check find result
 *@author      : Liang XueWang            
@@ -99,8 +125,10 @@ function main()
    
    for( var i = 0; i < fts.length;i++ )
    {
-      // 测试获取file对象信息
+      // 测试查找文件
       fts[i].testFind() ;
+      // 测试不指定value查找文件
+      fts[i].testFindWithoutValue() ;
    }
 }
 
