@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
@@ -69,7 +70,8 @@ public class Split10504B extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -91,7 +93,7 @@ public class Split10504B extends SdbTestBase {
 			// 通过协调节点比对已插入所有数据
 			checkCoord();
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -121,7 +123,7 @@ public class Split10504B extends SdbTestBase {
 					"srcGroup count:" + lobCount);
 		} catch (BaseException | UnsupportedEncodingException e) {
 			e.printStackTrace();
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -175,7 +177,7 @@ public class Split10504B extends SdbTestBase {
 					"srcCheckFalg:" + srcCheckFlag + " destCheckFlag:" + destCheckFlag);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();
@@ -185,34 +187,66 @@ public class Split10504B extends SdbTestBase {
 	}
 
 	private void checkCoord() {
-		DBCursor cursor1 = null;
 		DBCursor cursor2 = null;
 		try {
 			// 比对所有LOB
 			cursor2 = commCL.listLobs();
+			List<String> actual = new ArrayList<String>();
+			ArrayList<String> insertedLobCopy = new ArrayList<String>(insertedLobId);
 			while (cursor2.hasNext()) {
 				ObjectId oid = (ObjectId) cursor2.getNext().get("Oid");
 				DBLob lob = commCL.openLob(oid);
-				Assert.assertEquals(insertedLobId.contains(lob.getID().toString()), true);
+				String lobId = lob.getID().toString();
+				actual.add(lobId);
+				Assert.assertEquals(insertedLobId.contains(lobId), true,
+						"all expected:" + insertedLobCopy + " current actual:" + actual);
 				byte[] buffer = new byte[128];
 				int length = lob.read(buffer);
 				String content = new String(buffer, 0, length, "UTF-8");
-				Assert.assertEquals(lob.getID().toString().equals(content), true);
 				lob.close();
-				insertedLobId.remove(lob.getID().toString());
+				Assert.assertEquals(lobId.equals(content), true, "ID:" + lobId + " content:" + content);
+				insertedLobId.remove(lobId);
 			}
-
+			Assert.assertEquals(insertedLobId.size(), 0, "can not find:" + insertedLobId);
 		} catch (BaseException | UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
-			if (cursor1 != null) {
-				cursor1.close();
-			}
 			if (cursor2 != null) {
 				cursor2.close();
 			}
 		}
 	}
+
+	// private void checkCoord() {
+	// DBCursor cursor1 = null;
+	// DBCursor cursor2 = null;
+	// try {
+	// // 比对所有LOB
+	// cursor2 = commCL.listLobs();
+	// while (cursor2.hasNext()) {
+	// ObjectId oid = (ObjectId) cursor2.getNext().get("Oid");
+	// DBLob lob = commCL.openLob(oid);
+	// Assert.assertEquals(insertedLobId.contains(lob.getID().toString()),
+	// true);
+	// byte[] buffer = new byte[128];
+	// int length = lob.read(buffer);
+	// String content = new String(buffer, 0, length, "UTF-8");
+	// Assert.assertEquals(lob.getID().toString().equals(content), true);
+	// lob.close();
+	// insertedLobId.remove(lob.getID().toString());
+	// }
+	//
+	// } catch (BaseException | UnsupportedEncodingException e) {
+	// Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+	// } finally {
+	// if (cursor1 != null) {
+	// cursor1.close();
+	// }
+	// if (cursor2 != null) {
+	// cursor2.close();
+	// }
+	// }
+	// }
 
 	@AfterClass
 	public void tearDown() {
@@ -220,7 +254,7 @@ public class Split10504B extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
