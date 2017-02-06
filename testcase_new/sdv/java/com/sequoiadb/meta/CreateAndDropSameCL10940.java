@@ -95,7 +95,7 @@ public class CreateAndDropSameCL10940 extends SdbTestBase {
                 db1 = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 cs1 = db1.getCollectionSpace(SdbTestBase.csName);
                 dbcl = cs1.createCollection(clName);     
-                //checkCreateCl(dbcl);
+                checkCreateCl(dbcl);
             }catch(BaseException e){
             	Assert.assertEquals(-23,e.getErrorCode(),e.getMessage());
             }finally{
