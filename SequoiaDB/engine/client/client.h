@@ -1800,7 +1800,7 @@ SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle ) ;
 */
 SDB_EXPORT void sdbReleaseDomain ( sdbDomainHandle cHandle ) ;
 
-/** \fn void sdbReleaseDC ( sdbDCHandle cHandle )
+/* \fn void sdbReleaseDC ( sdbDCHandle cHandle )
     \brief Release the data center handle
     \param [in] cHandle the data center handle
 */
