@@ -127,7 +127,7 @@ public class Split10534 extends SdbTestBase {
 			checkIndexExist(db, destGroupName);
 
 			// 指定索引信息查询数据（在cl中匹配{index1:34}，期望结果{sk:34,index1:34}，且为ixscan）
-			queryByIndexAndCheckExplain(cl, "{index1:34}", "{sk:34,index1:34}", "ixscan");
+			queryByIndexAndCheckExplain(db, "{index1:34}", "{sk:34,index1:34}", "ixscan");
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
@@ -157,13 +157,15 @@ public class Split10534 extends SdbTestBase {
 	}
 
 	// 按macher查询，结果与expectedRecord比对，检查访问计划的扫描方式是否为expectScanType
-	private void queryByIndexAndCheckExplain(DBCollection cl, String macher, String expectedRecord,
+	private void queryByIndexAndCheckExplain(Sequoiadb db, String macher, String expectedRecord,
 			String expectScanType) {
 		DBCursor dbc1 = null;
 		DBCursor dbc2 = null;
 		BSONObject expected = (BSONObject) JSON.parse(expectedRecord);
 		try {
 			// 查询，检查结果的正确性
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 			dbc1 = cl.query(macher, null, null, null);
 			ArrayList<BSONObject> queryReaults = new ArrayList<BSONObject>();
 			while (dbc1.hasNext()) {
@@ -182,7 +184,8 @@ public class Split10534 extends SdbTestBase {
 			dbc2 = cl.explain((BSONObject) JSON.parse(macher), null, null, null, 0, -1, 0, null);
 			if (dbc2.hasNext()) {
 				String scanType = (String) dbc2.getNext().get("ScanType");
-				Assert.assertEquals(scanType.equals(expectScanType), true, "scanType not " + expectScanType);
+				Assert.assertEquals(scanType.equals(expectScanType), true,
+						"scanType is " + scanType + " not" + expectScanType);
 			} else {
 				Assert.fail("mainCL explain wrong");
 			}
