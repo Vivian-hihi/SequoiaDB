@@ -97,7 +97,8 @@ public class Index10213 extends SdbTestBase {
 			opt.put("a" + i.nextInt(10000), 1);
 			clDB.createIndex(name + i.nextInt(10000), opt, false, false);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -247){  //-247:Redefine index
+			if(e.getErrorCode() != -247 //-247:Redefine index
+					&& e.getErrorCode() != -291){  //-291:Exist one index which can cover this scene
 				Assert.fail(e.getMessage());
 			}
 		}

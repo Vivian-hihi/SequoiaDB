@@ -180,7 +180,8 @@ public class SubCL10194 extends SdbTestBase {
 					attachCollection(sCSName + "." + sCLName, options);
 		}catch(BaseException e){
 			if(e.getErrorCode() != -235  //-235:Duplicated attach collection partition
-					&& e.getErrorCode() != -23){  
+					&& e.getErrorCode() != -23
+					&& e.getErrorCode() != -147){  
 				sdb.disconnect();
 				Assert.fail(e.getMessage());
 			}
