@@ -50,7 +50,7 @@ public class Split10504B extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			commSdb = new Sequoiadb(coordUrl, "", "");
-
+			//commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			// 跳过 standAlone 和数据组不足的环境
 			CommLib commlib = new CommLib();
 			if (commlib.isStandAlone(commSdb)) {
@@ -109,11 +109,13 @@ public class Split10504B extends SdbTestBase {
 			while (cursor.hasNext()) {
 				ObjectId oid = (ObjectId) cursor.getNext().get("Oid");
 				DBLob lob = destCL.openLob(oid);
-				Assert.assertEquals(insertedLob.contains(lob.getID().toString()), true);
+				Assert.assertEquals(insertedLob.contains(lob.getID().toString()), true,
+						"wrong lob:" + lob.getID().toString() + " insertedLobId:" + insertedLobId);
 				byte[] buffer = new byte[128];
 				int length = lob.read(buffer);
 				String content = new String(buffer, 0, length, "UTF-8");
-				Assert.assertEquals(lob.getID().toString().equals(content), true);
+				Assert.assertEquals(lob.getID().toString().equals(content), true,
+						"lob id:" + lob.getID().toString() + " content:" + content);
 				lob.close();
 				lobCount++;
 				insertedLob.remove(lob.getID().toString());
@@ -198,16 +200,22 @@ public class Split10504B extends SdbTestBase {
 				DBLob lob = commCL.openLob(oid);
 				String lobId = lob.getID().toString();
 				actual.add(lobId);
-				Assert.assertEquals(insertedLobId.contains(lobId), true,
-						"all expected:" + insertedLobCopy + " current actual:" + actual);
 				byte[] buffer = new byte[128];
 				int length = lob.read(buffer);
 				String content = new String(buffer, 0, length, "UTF-8");
 				lob.close();
-				Assert.assertEquals(lobId.equals(content), true, "ID:" + lobId + " content:" + content);
-				insertedLobId.remove(lobId);
+				Assert.assertEquals(lobId.equals(content), true,
+						"ID:" + lobId + " content:" + content + " insertedLobId:" + insertedLobId);
 			}
-			Assert.assertEquals(insertedLobId.size(), 0, "can not find:" + insertedLobId);
+			Assert.assertEquals(insertedLobCopy.size(), actual.size(),
+					"expected:" + insertedLobCopy + " actual" + actual);
+			for (int i = 0; i < actual.size(); i++) {
+				Assert.assertEquals(insertedLobCopy.contains(actual.get(i)), true, "can not find :" + actual.get(i)
+						+ " all inserted lobId:" + insertedLobId + " actual:" + actual);
+				insertedLobCopy.remove(actual.get(i));
+			}
+			Assert.assertEquals(insertedLobCopy.size(), 0,
+					"miss some lob:" + insertedLobCopy + " all expected:" + insertedLobId + " all actual:" + actual);
 		} catch (BaseException | UnsupportedEncodingException e) {
 			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
@@ -235,9 +243,10 @@ public class Split10504B extends SdbTestBase {
 	// lob.close();
 	// insertedLobId.remove(lob.getID().toString());
 	// }
-	//
+	// Assert.assertEquals(insertedLobId.size(), 0, "can not find:" +
+	// insertedLobId);
 	// } catch (BaseException | UnsupportedEncodingException e) {
-	// Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+	// Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 	// } finally {
 	// if (cursor1 != null) {
 	// cursor1.close();

@@ -46,7 +46,7 @@ public class Split10504A extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			commSdb = new Sequoiadb(coordUrl, "", "");
-
+			commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			// 跳过 standAlone 和数据组不足的环境
 			CommLib commlib = new CommLib();
 			if (commlib.isStandAlone(commSdb)) {
@@ -75,7 +75,7 @@ public class Split10504A extends SdbTestBase {
 		try {
 			insertData();// 写入待切分的记录[sk:0,sk:200)
 			commCL.split(srcGroupName, destGroupName, 50);
-
+			
 			// 校验源和目标组普通记录
 			ArrayList<BSONObject> insertedDataCopy = new ArrayList<BSONObject>(insertedData);
 			checkGroupData(insertedDataCopy, destGroupName);// 目标组中的数据应当是insertDataCopy的子集，校验完成后，删除insertDataCopy中属于子集的元素

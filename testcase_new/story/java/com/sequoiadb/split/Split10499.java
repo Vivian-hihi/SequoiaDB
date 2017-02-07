@@ -46,7 +46,7 @@ public class Split10499 extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			commSdb = new Sequoiadb(coordUrl, "", "");
-
+			commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			// 跳过 standAlone 和数据组不足的环境
 			CommLib commlib = new CommLib();
 			if (commlib.isStandAlone(commSdb)) {

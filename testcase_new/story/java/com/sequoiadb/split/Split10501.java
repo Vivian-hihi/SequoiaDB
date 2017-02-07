@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
@@ -50,7 +51,7 @@ public class Split10501 extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			commSdb = new Sequoiadb(coordUrl, "", "");
-
+			commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			// 跳过 standAlone 和数据组不足的环境
 			CommLib commlib = new CommLib();
 			if (commlib.isStandAlone(commSdb)) {
@@ -70,7 +71,8 @@ public class Split10501 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -102,7 +104,7 @@ public class Split10501 extends SdbTestBase {
 			// 通过协调节点比对已插入所有数据
 			checkCoord();
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -118,11 +120,13 @@ public class Split10501 extends SdbTestBase {
 			while (cursor.hasNext()) {
 				ObjectId oid = (ObjectId) cursor.getNext().get("Oid");
 				DBLob lob = destCL.openLob(oid);
-				Assert.assertEquals(insertedLob.contains(lob.getID().toString()), true);
+				Assert.assertEquals(insertedLob.contains(lob.getID().toString()), true,
+						"wrong lob:" + lob.getID().toString() + " insertedLobId:" + insertedLobId);
 				byte[] buffer = new byte[128];
 				int length = lob.read(buffer);
 				String content = new String(buffer, 0, length, "UTF-8");
-				Assert.assertEquals(lob.getID().toString().equals(content), true);
+				Assert.assertEquals(lob.getID().toString().equals(content), true,
+						"lob id:" + lob.getID().toString() + " content:" + content);
 				lob.close();
 				lobCount++;
 				insertedLob.remove(lob.getID().toString());
@@ -131,7 +135,7 @@ public class Split10501 extends SdbTestBase {
 			Assert.assertEquals(lobCount > 100 - (100 * 0.3) && lobCount < 100 + (100 * 0.3), true,
 					"srcGroup count:" + lobCount);
 		} catch (BaseException | UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -185,7 +189,7 @@ public class Split10501 extends SdbTestBase {
 					"srcCheckFalg:" + srcCheckFlag + " destCheckFlag:" + destCheckFlag);
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (dbc != null) {
 				dbc.close();
@@ -237,7 +241,7 @@ public class Split10501 extends SdbTestBase {
 			Assert.assertEquals(srcCL.getCount(srcRecord), 1, "query fail");
 
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (cursor1 != null) {
 				cursor1.close();
@@ -271,20 +275,31 @@ public class Split10501 extends SdbTestBase {
 			}
 			// 比对所有LOB
 			cursor2 = commCL.listLobs();
+			List<String> actual = new ArrayList<String>();
+			ArrayList<String> insertedLobCopy = new ArrayList<String>(insertedLobId);
 			while (cursor2.hasNext()) {
 				ObjectId oid = (ObjectId) cursor2.getNext().get("Oid");
 				DBLob lob = commCL.openLob(oid);
-				Assert.assertEquals(insertedLobId.contains(lob.getID().toString()), true);
+				String lobId = lob.getID().toString();
+				actual.add(lobId);
 				byte[] buffer = new byte[128];
 				int length = lob.read(buffer);
 				String content = new String(buffer, 0, length, "UTF-8");
-				Assert.assertEquals(lob.getID().toString().equals(content), true);
 				lob.close();
-				insertedLobId.remove(lob.getID().toString());
+				Assert.assertEquals(lobId.equals(content), true,
+						"ID:" + lobId + " content:" + content + " insertedLobId:" + insertedLobId);
 			}
-
+			Assert.assertEquals(insertedLobCopy.size(), actual.size(),
+					"expected:" + insertedLobCopy + " actual" + actual);
+			for (int i = 0; i < actual.size(); i++) {
+				Assert.assertEquals(insertedLobCopy.contains(actual.get(i)), true, "can not find :" + actual.get(i)
+						+ " all inserted lobId:" + insertedLobId + " actual:" + actual);
+				insertedLobCopy.remove(actual.get(i));
+			}
+			Assert.assertEquals(insertedLobCopy.size(), 0,
+					"miss some lob:" + insertedLobCopy + " all expected:" + insertedLobId + " all actual:" + actual);
 		} catch (BaseException | UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (cursor1 != null) {
 				cursor1.close();
@@ -314,7 +329,7 @@ public class Split10501 extends SdbTestBase {
 			Assert.assertEquals(count > 100 - (100 * 0.3) && count < 100 + (100 * 0.3), true,
 					"destGroup data count:" + count);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (cursor != null) {
 				cursor.close();
@@ -331,7 +346,7 @@ public class Split10501 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();

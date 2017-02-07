@@ -43,7 +43,7 @@ public class Split10497 extends SdbTestBase {
 			System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
 					+ new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 			commSdb = new Sequoiadb(coordUrl, "", "");
-
+			commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			// 跳过 standAlone 和数据组不足的环境
 			CommLib commlib = new CommLib();
 			if (commlib.isStandAlone(commSdb)) {
@@ -63,7 +63,8 @@ public class Split10497 extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -83,7 +84,7 @@ public class Split10497 extends SdbTestBase {
 
 			checkCoord();// 协调节点比对已插入的数据，并查询切分边界值
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -94,7 +95,7 @@ public class Split10497 extends SdbTestBase {
 			commCL.insert(obj1);
 			commCL.insert(obj2);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		}
 		insertedData.add(obj1);
 		insertedData.add(obj2);
@@ -131,7 +132,7 @@ public class Split10497 extends SdbTestBase {
 			Assert.assertEquals(expectedResults.equals(actualResults), true,
 					"query bound expected:" + expectedResults + " actual:" + actualResults);// 比对
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (cursor1 != null) {
 				cursor1.close();
@@ -151,7 +152,7 @@ public class Split10497 extends SdbTestBase {
 			Assert.assertEquals(count, expectedCount);// 目标组应当含有上述查询数据
 			Assert.assertEquals(destCL.getCount(), expectTotalCount); // 目标组应当含有的数据量
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (destDataNode != null) {
 				destDataNode.disconnect();
@@ -168,7 +169,7 @@ public class Split10497 extends SdbTestBase {
 			Assert.assertEquals(count, expectedCount);// 源组数据应当含有上述查询数据
 			Assert.assertEquals(srcCL.getCount(), expectTotalCount); // 源数据应当仅含有上述查询数据
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (srcDataNode != null) {
 				srcDataNode.disconnect();
@@ -182,7 +183,7 @@ public class Split10497 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			commCS.dropCollection(clName);
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
