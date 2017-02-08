@@ -92,7 +92,8 @@ public class CS10167 extends SdbTestBase {
 		try{
 			db.dropCollectionSpace(mCSName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34){  
+			if(e.getErrorCode() != -34
+					&& e.getErrorCode() != -147){ 
 				Assert.fail(e.getMessage());
 			}
 		}finally{
@@ -114,7 +115,8 @@ public class CS10167 extends SdbTestBase {
 		try{
 			db.getCollectionSpace(sCSName).dropCollection(sCLName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23){ 
+			if(e.getErrorCode() != -23
+					&& e.getErrorCode() != -147){ 
 				Assert.fail(e.getMessage());
 			}
 		}finally{

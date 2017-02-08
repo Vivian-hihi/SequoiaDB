@@ -75,7 +75,8 @@ public class CS10165 extends SdbTestBase {
 			//check results
 			CommLib.checkCSOfCatalog(db, csName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -33){
+			if(e.getErrorCode() != -33
+					&& e.getErrorCode() != -147){ 
 				Assert.fail(e.getMessage());
 			}
 		}finally{
@@ -93,7 +94,8 @@ public class CS10165 extends SdbTestBase {
 			//check results
 			CommLib.checkCSOfCatalog(db, csName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34){ 
+			if(e.getErrorCode() != -34
+					&& e.getErrorCode() != -147){ 
 				Assert.fail(e.getMessage());
 			}
 		}finally{

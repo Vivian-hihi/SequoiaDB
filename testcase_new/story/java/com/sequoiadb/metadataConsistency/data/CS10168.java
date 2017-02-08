@@ -92,7 +92,8 @@ public class CS10168 extends SdbTestBase {
 		try{
 			db.dropCollectionSpace(sCSName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -34){  //-34:Collection space does not exist
+			if(e.getErrorCode() != -34
+					&& e.getErrorCode() != -147){  
 				Assert.fail(e.getMessage());
 			}
 		}finally{
@@ -114,7 +115,8 @@ public class CS10168 extends SdbTestBase {
 		try{
 			db.getCollectionSpace(mCSName).dropCollection(mCLName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -23){ //-23:Collection does not exist
+			if(e.getErrorCode() != -23
+					&& e.getErrorCode() != -147){ 
 				Assert.fail(e.getMessage());
 			}
 		}finally{
