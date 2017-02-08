@@ -36,7 +36,7 @@ function setCP()
 	    cp="${cp}:../lib/*"
 	    ;;
 	postgres)
-	    cp="../lib/postgres/*:../lib/*"
+	    cp="../lib/postgres/*:../lib/*:../lib/sequoiadb/*"
 	    ;;
     esac
     myCP=".:${cp}:../dist/*"
