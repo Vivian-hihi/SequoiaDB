@@ -66,7 +66,7 @@ public class Split10530 extends SdbTestBase {
 			CollectionSpace commCS = commSdb.getCollectionSpace(csName);
 			DBCollection cl = commCS.createCollection(clName,
 					(BSONObject) JSON
-							.parse("{ShardingKey:{'sk':1},ReplSize:0,Partition:4096,ShardingType:'hash',Group:'"
+							.parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
 									+ srcGroupName + "'}"));
 			insertData(cl);// 写入待切分的记录（500）
 		} catch (BaseException e) {
