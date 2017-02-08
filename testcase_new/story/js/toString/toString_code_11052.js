@@ -7,7 +7,12 @@ main();
 function main()
 {  
    try
-   {
+   {   
+      if( commIsStandalone(db) )
+      {
+         println("\n---Deploy mode is standalone!");
+         return;
+      } 
       //ready env
       cleanEnv( true );
       
