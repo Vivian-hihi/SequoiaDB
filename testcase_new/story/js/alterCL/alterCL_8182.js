@@ -62,7 +62,7 @@ catch( e )
 	try{
 		if(groups_num>1){
 			var tarGroupIndex=-1;
-			var stepId = 10000;
+			var stepId = 1000;
 			var partId = 3;
 			var lowId = 0;
 			var highId = 0;
@@ -93,7 +93,7 @@ catch( e )
 	
 	//insert data
 	try{
-		for(var i=0;i<30000;i++){normalCL.insert({id:i-10000,b:i,c:"abcdefghijkl"+i});}
+		for(var i=0;i<3000;i++){normalCL.insert({id:i-1000,b:i,c:"abcdefghijkl"+i});}
 	}catch(e)
 	{
 		println("insert-data fail! rc="+e);
@@ -113,7 +113,7 @@ catch( e )
 			if(size>100)
 				break;
 			var ret = sel.current();
-			if(ret.toObj()['id']==1 && ret.toObj()['b']==10001 && ret.toObj()['c']=='abcdefghijkl10001')
+			if(ret.toObj()['id']==1 && ret.toObj()['b']==1001 && ret.toObj()['c']=='abcdefghijkl1001')
 				flag = true;
 		}
 		if(size!=1)
@@ -131,7 +131,7 @@ catch( e )
 		else if(e==-2)
 		{	
 			println("record not expected!");
-			println("expected:{id:1,b:10001,c:'abcdefghijkl10001'}");
+			println("expected:{id:1,b:10001,c:'abcdefghijkl1001'}");
 			println("returned:"+ret);
 		}
 		else

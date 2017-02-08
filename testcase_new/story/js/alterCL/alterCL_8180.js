@@ -3,6 +3,7 @@
 *@Modify COORDHOSTNAME :
 *               2014-07-08  pusheng Ding  Init
 *               2015-03-28  xiaojun Hu    Changed
+*               2017-02-08  zhaoyu   Changed
 ******************************************************************************/
 MAINCLNAME = CHANGEDPREFIX+"subm" ;
 SUBCL1NAME = CHANGEDPREFIX+"_sub1";
@@ -55,9 +56,9 @@ catch( e )
 	
 	//attach sub-cl
 	try{
-		mainCL.attachCL(COMMCSNAME + "." + SUBCL1NAME,{LowBound:{id:-10000},UpBound:{id:0}});
-		mainCL.attachCL(COMMCSNAME + "." + SUBCL2NAME,{LowBound:{id:0},UpBound:{id:10000}});
-		mainCL.attachCL(COMMCSNAME + "." + SUBCL3NAME,{LowBound:{id:10000},UpBound:{id:20000}});
+		mainCL.attachCL(COMMCSNAME + "." + SUBCL1NAME,{LowBound:{id:-1000},UpBound:{id:0}});
+		mainCL.attachCL(COMMCSNAME + "." + SUBCL2NAME,{LowBound:{id:0},UpBound:{id:1000}});
+		mainCL.attachCL(COMMCSNAME + "." + SUBCL3NAME,{LowBound:{id:1000},UpBound:{id:2000}});
 	}catch(e)
 	{
 		println("attach sub-CL fail!");
@@ -67,7 +68,7 @@ catch( e )
 	
 	//insert data
 	try{
-		for(var i=0;i<30000;i++){mainCL.insert({id:i-10000,b:i,c:"abcdefghijkl"+i});}
+		for(var i=0;i<3000;i++){mainCL.insert({id:i-1000,b:i,c:"abcdefghijkl"+i});}
 	}catch(e)
 	{
 		println("insert-data into mainCL fail! rc="+e);
@@ -135,7 +136,7 @@ catch( e )
 	
 	//insert data
 	try{
-		for(var i=0;i<30000;i++){mainCL.insert({id:i-10000,b:i,c:"abcdefghijkl"+i});}
+		for(var i=0;i<3000;i++){mainCL.insert({id:i-1000,b:i,c:"abcdefghijkl"+i});}
 	}catch(e)
 	{
 		println("insert-data into mainCL fail! rc="+e);

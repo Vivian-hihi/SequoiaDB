@@ -3,6 +3,7 @@
 *@Modify list :
 *               2014-07-08  pusheng Ding  Init
 *               2015-03-28  xiaojun Hu    Changed
+*               2017-02-08  zhaoyu   Changed
 ******************************************************************************/
 function main()
 {
@@ -131,7 +132,7 @@ function main()
 	
 	//insert data
 	try{
-		for(var i=0;i<30000;i++){hashCL.insert({id:i-10000,b:i,c:"abcdefghijkl"+i});}
+		for(var i=0;i<3000;i++){hashCL.insert({id:i-1000,b:i,c:"abcdefghijkl"+i});}
 	}catch(e)
 	{
 		println("insert-data into hashCL fail! rc="+e);
@@ -150,7 +151,7 @@ function main()
 			if(size>100)
 				break;
 			var ret = sel.current();
-			if(ret.toObj()['id']==1 && ret.toObj()['b']==10001 && ret.toObj()['c']=='abcdefghijkl10001')
+			if(ret.toObj()['id']==1 && ret.toObj()['b']==1001 && ret.toObj()['c']=='abcdefghijkl1001')
 				flag = true;
 		}
 		if(size!=1)
@@ -168,7 +169,7 @@ function main()
 		else if(e==-2)
 		{	
 			println("record not expected!");
-			println("expected:{id:1,b:10001,c:'abcdefghijkl10001'}");
+			println("expected:{id:1,b:1001,c:'abcdefghijkl1001'}");
 			println("returned:"+ret);
 		}
 		else
