@@ -37,7 +37,21 @@
    <macrodef name="modifytestngreport">
       <attribute name="reportdir"/>
       <attribute name="layer" />
-      <sequential> 
+      <sequential>
+         <replaceregexp match='testsuite(.*)name="com\.sequoiadb\.(.*?)\.(.*)"' 
+                        replace='testsuite\1name="\2"' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
+         <replaceregexp match='classname="com\.sequoiadb\.(.*)"' 
+                        replace='classname="@{layer}.\1"' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
          <replaceregexp match='classname="com\.sequoiadb\.(.*)"' 
                         replace='classname="@{layer}.\1"' 
                         flags="g" 
