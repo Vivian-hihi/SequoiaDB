@@ -16,7 +16,6 @@
             <package name="com.sequoiadb.split" />
             <package name="com.sequoiadb.meta" />
 			   <package name="com.sequoiadb.index" />
-            <package name="com.sequoiadb.crud.compress.lzw" />
             <package name="com.sequoiadb.crud.compress.snappy" />
             <package name="com.sequoiadb.crud.compress.concurrency" />
         </packages>
