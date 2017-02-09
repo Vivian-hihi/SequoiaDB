@@ -43,7 +43,7 @@ parser.add_option("-p", "--password",
                   action = "store",
                   type='string',
                   dest="passwd",
-                  default= 'benchmarksql',
+                  default= 'changeme',
                   help="database user's password"
                   )
 parser.add_option("-w", "--warehouses",
