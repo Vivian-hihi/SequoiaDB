@@ -31,7 +31,7 @@ function main()
    println("create Index success");
    
    //query use random conditon and check result
-   var loopNum = 10;
+   var loopNum = 1;
    queryDataAndCheck( dbcl_IndexScan, loopNum );
    println("check result success");
 }
@@ -194,11 +194,7 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
 	   println("randomCondition:"+ JSON.stringify(randomConditionObj));
 		
 	   //get index scan result
-	   var endTime = new Date();
-	   println("dbcl_IndexScan startTime:" + endTime.toLocaleString());
 	   var ixScanCursor = dbcl_IndexScan.find( randomConditionObj, null ).sort( { _id: 1 } );
-	   var endTime = new Date();
-	   println("dbcl_IndexScan endTime:" + endTime.toLocaleString());
 	   
 	   //get index scan explain
 	   var ixScanExplain = dbcl_IndexScan.find(randomConditionObj,null).explain();
@@ -209,11 +205,7 @@ function queryDataAndCheck( dbcl_IndexScan, loopNum )
 	   }
 	   
 	   //get table scan result
-	   var endTime = new Date();
-	   println("dbcl_TableScan startTime:" + endTime.toLocaleString());
 	   var tbScanCursor = dbcl_IndexScan.find( randomConditionObj, null ).hint({"":null}).sort( { _id: 1 } );
-	   var endTime = new Date();
-	   println("dbcl_TableScan endTime:" + endTime.toLocaleString());
 	   
 	   //get table scan explain
 	   var tbScanExplain = dbcl_IndexScan.find(randomConditionObj,null).hint({"":null}).explain();
