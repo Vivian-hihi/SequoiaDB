@@ -93,7 +93,7 @@ def splitCL( db, cl, groups ):
             offSet += 1
          else:
             endCondition = {'Partition': (index+1)*partitionPerGroup + offSet}
-         cl.split_async_by_condition( groups[0], groups[index], beginCondition, endCondition );
+         cl.split_by_condition( groups[0], groups[index], beginCondition, endCondition );
          index += 1
       except SDBBaseError, e:
          print "split from %s to %s failed,errmsg:%s"%(groups[0], groups[index], e.detail)
