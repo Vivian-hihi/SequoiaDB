@@ -22,6 +22,8 @@ SDB_SNAP_SYSTEM
 | CurrentLSN.Version   | 整型   | 当前 LSN 的版本号                                              |
 | CommittedLSN.Offset  | 整型   | 已提交 LSN 的偏移                                              |
 | CommittedLSN.Version | 整型   | 已提交 LSN 的版本号                                            |
+| CompleteLSN          | 整型   | 已完成 LSN 的偏移                                              |
+| LSNQueSize           | 整型   | 等待同步的LSN队列长度                                          |
 | TransInfo.TotalCount | 长整型 | 正在执行的事务数量                                             |
 | TransInfo.BeginLSN   | 长整型 | 正在执行的事务的起始 LSN 的偏移                                |
 | NodeID               | 数组   | 节点的 ID，为“[ <分区组 ID>, <节点 ID> ]”<br>在 standalone 模式下，该字段为“[ 0，0 ]” |
