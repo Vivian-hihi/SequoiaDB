@@ -110,13 +110,13 @@ class TestCL03 extends PHPUnit_Framework_TestCase
       $this -> assertEquals( 0, $errno1 ); 
       
       //the cl is not exist, $options: array
-      $options2 = array( 'ReplSize' => 0 );
+      $options2 = array( 'ReplSize' => 1 );
       self::$dbh -> selectCL( self::$csDB, self::$clName2, $options2 );
       $errno2 = self::$dbh -> getErrno();
       $this -> assertEquals( 0, $errno2 );
       
       //the cl is not exist, $options: string
-      $options3 = json_encode( array( 'ReplSize' => 0 ) );
+      $options3 = json_encode( array( 'ReplSize' => 1 ) );
       self::$dbh -> selectCL( self::$csDB, self::$clName3, $options3 );
       $errno3 = self::$dbh -> getErrno();
       $this -> assertEquals( 0, $errno3 );
@@ -135,7 +135,7 @@ class TestCL03 extends PHPUnit_Framework_TestCase
    function test_selectCLByExist()
    {
       echo "\n---Begin to select cl when cl is exist.\n";
-      $options = array( 'ReplSize' => 0 );
+      $options = array( 'ReplSize' => 1 );
       self::$dbh -> selectCL( self::$csDB, self::$clName1, $options );
       $errno = self::$dbh -> getErrno();
       $this -> assertEquals( 0, $errno, 
@@ -160,23 +160,23 @@ class TestCL03 extends PHPUnit_Framework_TestCase
          $this -> assertEquals( "", $clInfo1["AttributeDesc"] );
          $this -> assertArrayNotHasKey( "ReplSize", $clInfo1 );
          
-         //$clName2, $options = array( 'ReplSize' => 0 )
+         //$clName2, $options = array( 'ReplSize' => 1 )
          $clInfo2 = self::$dbh -> snapshotOper( self::$csName, self::$clName2 );
          $errno2 = self::$dbh -> getErrno();
          $this -> assertEquals( 0, $errno2 );
          
          $expName2 = self::$csName .'.'. self::$clName2;
          $this -> assertEquals( $expName2, $clInfo2['Name'] );
-         $this -> assertEquals( 7, $clInfo2['ReplSize'] );
+         $this -> assertEquals( 1, $clInfo2['ReplSize'] );
          
-         //$csName3, $options = json_encode( array( 'ReplSize' => 0 ) )
+         //$csName3, $options = json_encode( array( 'ReplSize' => 1 ) )
          $clInfo3 = self::$dbh -> snapshotOper( self::$csName, self::$clName3 );
          $errno3 = self::$dbh -> getErrno();
          $this -> assertEquals( 0, $errno3 );
          
          $expName3 = self::$csName .'.'. self::$clName3;
          $this -> assertEquals( $expName3, $clInfo3['Name'] );
-         $this -> assertEquals( 7, $clInfo3['ReplSize'] );
+         $this -> assertEquals( 1, $clInfo3['ReplSize'] );
       }
    }
    
