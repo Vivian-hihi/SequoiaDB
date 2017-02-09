@@ -44,6 +44,9 @@
    #define OSS_NEWLINE "\n"
    #define SDB_INVALID_FH (-1)
 #endif
+
+#define SDB_UNUSED(x)      (x)=(x)
+
 // platform dependent data types
 #ifdef TRUE
 #undef TRUE

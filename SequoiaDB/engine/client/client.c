@@ -7987,6 +7987,10 @@ SDB_EXPORT void sdbSetConnectionInterruptFunc(
                                           sdbConnectionHandle cHandle,
                                           socketInterruptFunc func )
 {
+   INT32 rc = SDB_OK ;
+
+   SDB_UNUSED( rc ) ;
+
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
    // check handle
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
