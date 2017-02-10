@@ -319,8 +319,22 @@ TEST( turnonCache, testUpdateTimeStamp)
    ASSERT_EQ(SDB_OK, getTimeOfgetCLByFullName(db1, csName, clName, diff2));
    //ASSERT_LT(diff2, diff1);
    
+   struct timeval begin, end;
+   gettimeofday(&begin, NULL);
    ASSERT_EQ(SDB_OK, dropCL(cs, clName));
-   ASSERT_EQ(SDB_OK, getTimeOfgetCLByFullName(db1, csName, clName, diff2));
+   gettimeofday(&end, NULL);
+   
+   if (end.tv_sec > begin.tv_sec){
+      diff1 = (end.tv_sec - begin.tv_sec)*1000000  + end.tv_usec - begin.tv_usec;
+   }else{
+      diff1 = end.tv_usec - begin.tv_usec;
+   }
+   
+   if ( diff1 < 3000000) {
+      ASSERT_EQ(SDB_OK, getTimeOfgetCLByFullName(db1, csName, clName, diff2)) << "drop spend" <<  diff1 << "ms";
+   }else{
+      ASSERT_EQ(-23, getTimeOfgetCLByFullName(db1, csName, clName, diff2)) << "drop spend" <<  diff1 << "ms";
+   }
    ASSERT_EQ(SDB_OK, dropCS(db, csName));
    fini(db);  
 }
