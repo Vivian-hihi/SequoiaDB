@@ -27,7 +27,9 @@ do
       echo "host $1 Unreachable"
       exit 1
    fi
+   ssh ${user}@$1 "${installPath}/bin/psql -d postgres -c \"drop user if exists benchmarksql\""
    ssh ${user}@$1 "${installPath}/bin/psql -d postgres -c \"CREATE USER benchmarksql WITH SUPERUSER ENCRYPTED PASSWORD 'changeme'\""
+   ssh ${user}@$1 "${installPath}/bin/psql -d postgres -c \"DROP DATABASE IF EXISTS benchmarksql\""
    ssh ${user}@$1 "${installPath}/bin/psql -d postgres -c \"CREATE DATABASE benchmarksql OWNER benchmarksql\""
    shift
 done
