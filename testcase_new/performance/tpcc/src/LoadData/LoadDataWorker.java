@@ -448,11 +448,13 @@ public class LoadDataWorker implements Runnable {
                 sb.setLength( 0 ) ;
                 se = se.getNextException() ;
             }
+            System.exit( 2 ) ;
         } catch ( BaseException e ) {
             fmt.format( "Worker %03d: ERROR: %d", worker, e.getErrorCode() ) ;
             System.err.println( sb.toString() ) ;
             sb.setLength( 0 ) ;
             e.printStackTrace() ;
+            System.exit( 2 ) ;
         } catch ( IOException e ) {
             fmt.format( "Worker %03d: ERROR: %s", worker, e.getMessage() ) ;
             System.err.println( sb.toString() ) ;
