@@ -2003,6 +2003,7 @@ parse_table_row(
 	for (col = 0; col < columns && i < size; ++col) {
 		size_t cell_start, cell_end;
 		struct buf *cell_work;
+		int isBackslash = 0 ;
 
 		cell_work = rndr_newbuf(rndr, BUFFER_SPAN);
 
@@ -2011,8 +2012,25 @@ parse_table_row(
 
 		cell_start = i;
 
-		while (i < size && data[i] != '|')
-			i++;
+		 while( i < size )
+   {
+      if( isBackslash == 1 )
+      {
+         isBackslash = 0 ;
+      }
+      else
+      {
+         if( data[i] == '\\' )
+         {
+            isBackslash = 1 ;
+         }
+         else if( data[i] == '|' )
+         {
+            break ;
+         }
+      }
+      i++;
+   }
 
 		cell_end = i - 1;
 
@@ -2045,13 +2063,30 @@ parse_table_header(
 	size_t *columns,
 	int **column_data)
 {
+   int isBackslash = 0 ;
 	int pipes;
 	size_t i = 0, col, header_end, under_end;
 
 	pipes = 0;
-	while (i < size && data[i] != '\n')
-		if (data[i++] == '|')
-			pipes++;
+	  while( i < size && data[i] != '\n' )
+   {
+      if( isBackslash == 1 )
+      {
+         isBackslash = 0 ;
+      }
+      else
+      {
+         if( data[i] == '\\' )
+         {
+            isBackslash = 1 ;
+         }
+         else if( isBackslash == 0 && data[i] == '|' )
+         {
+            pipes++;
+         }
+      }
+      ++i;
+   }
 
 	if (i == size || pipes == 0)
 		return 0;
