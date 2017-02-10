@@ -593,17 +593,19 @@ if guess_os == "linux":
         ssllib_dir = join(ssl_dir,'lib/ppclelinux64')
         zlib_lib_dir_platform = join(zlib_lib_dir, 'ppclelinux64')
         lz4_lib_dir_platform = join(lz4_lib_dir, 'ppclelinux64')
-        snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclelinux64')                  
-    # spider monkey
-    if usesm:
-        smlib_file = join(smlib_dir, 'libmozjs185.so')
-        env.Append( CPPDEFINES=[ "XP_UNIX" ] )
-        env.Append( LIBS=['js_static'] )
+        snappy_lib_dir_platform = join(snappy_lib_dir, 'ppclelinux64')
+
     # SSL
     env.Append( LIBS=['ssl'] )
     env.Append( LIBS=['crypto'] )
     ssllib_file = join(ssllib_dir, 'libcrypto.a')
     ssllib_file1 = join(ssllib_dir, 'libssl.a')
+ 
+    # spider monkey
+    if usesm:
+        smlib_file = join(smlib_dir, 'libmozjs185.so')
+        env.Append( CPPDEFINES=[ "XP_UNIX" ] )
+        env.Append( LIBS=['js_static'] )
 
 	# lz4, zlib and snappy
     env.Append( LIBS=['lz4'] )
@@ -799,18 +801,19 @@ elif guess_os == 'aix':
           env.Append( CPPPATH=join(js_dir,'lib/release/aix64/include') )
           env.Append( EXTRALIBPATH=[smlib_dir] )
 
-   # spider monkey
-   if usesm:
-      smlib_file = join(smlib_dir, 'libmozjs185.so')
-      env.Append( CPPDEFINES=[ "XP_UNIX" ] )
-      env.Append( LIBS=['js_static'] )
    # SSL
    ssllib_dir = join(ssl_dir,'lib/aix64')
    #env.Append( LIBS=['ssl'] )
    #env.Append( LIBS=['crypto'] )
    ssllib_file = join(ssllib_dir, 'libcrypto.a')
    ssllib_file1 = join(ssllib_dir, 'libssl.a')
-   
+
+   # spider monkey
+   if usesm:
+      smlib_file = join(smlib_dir, 'libmozjs185.so')
+      env.Append( CPPDEFINES=[ "XP_UNIX" ] )
+      env.Append( LIBS=['js_static'] )
+
    # lz4, zlib and snappy
    env.Append( LIBS=['lz4'] )
    env.Append( LIBS=['zlib'] )
