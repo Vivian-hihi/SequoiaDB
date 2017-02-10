@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.CommLib;
@@ -41,6 +42,7 @@ public class Split10527B extends SdbTestBase {
 	private String destGroupName;
 	private Sequoiadb commSdb = null;
 	private AtomicBoolean flag = new AtomicBoolean(false);
+	private AtomicBoolean errno147 = new AtomicBoolean(false);
 
 	@BeforeClass()
 	public void setUp() {
@@ -70,7 +72,8 @@ public class Split10527B extends SdbTestBase {
 			if (commSdb != null) {
 				commSdb.disconnect();
 			}
-			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
+					+ Utils.getKeyStack(e, this));
 		}
 	}
 
@@ -85,7 +88,7 @@ public class Split10527B extends SdbTestBase {
 		}
 	}
 
-	@Test(timeOut=30*60*1000)
+	@Test(timeOut = 30 * 60 * 1000)
 	public void dropCS() {
 		Sequoiadb db = null;
 		Sequoiadb dataNode = null;
@@ -107,22 +110,47 @@ public class Split10527B extends SdbTestBase {
 			}
 			DBCollection cl = dataNode.getCollectionSpace(customCSName).getCollection(clName);
 			while (cl.getCount() == 0 && flag.get() == false) {
-				
+
 			}
 
 			// 删除CS
 			db.dropCollectionSpace(customCSName);
-			
+
 			Assert.assertEquals(db.isCollectionSpaceExist(customCSName), false);
-			
+
 			// 检测切分线程
 			Assert.assertEquals(splitThread.isSuccess(), true, splitThread.getErrorMsg());
+
+			// 若切分线程-147，检测切分任务是否遗留，以下代码若切分任务存在，则重复检测10s，10s后依然遗留则判断用例失败
+			boolean isSplitTaskExist = false;
+			BSONObject taskBson = null;
+			if (errno147.get()) {
+				for (int i = 0; i < 10; i++) {
+					DBCursor cusor = db.listTasks((BSONObject) JSON.parse("{Name:'" + customCSName + "." + clName + "'}"), null,
+							null, null);
+					if (cusor.hasNext()) {
+						taskBson = cusor.getNext();
+						System.out.println("split faile(-147),but task still exist,now try check again:" + taskBson);
+						cusor.close();
+					} else {
+						isSplitTaskExist = false;
+						break;
+					}
+					Thread.sleep(1000);
+				}
+				if (isSplitTaskExist) {
+					Assert.fail("split faile(-147),but task still exist(at least 10s):"+taskBson);
+				}
+			}
 		} catch (BaseException e) {
-			Assert.assertEquals(e.getErrorCode(), -147,
-					e.getMessage()+"\r\n"+Utils.getKeyStack(e,this) + " \r\nSplitThread:[" + splitThread.getErrorMsg() + "]  ");
-	
+			Assert.assertEquals(e.getErrorCode(), -147, e.getMessage() + "\r\n" + Utils.getKeyStack(e, this)
+					+ " \r\nSplitThread:[" + splitThread.getErrorMsg() + "]  ");
+
+		} catch (InterruptedException e) {
+			Assert.fail(e.getMessage()+Utils.getKeyStack(e, this));
 		} finally {
 			if (db != null) {
+				db.closeAllCursors();
 				db.disconnect();
 			}
 			if (dataNode != null) {
@@ -141,7 +169,7 @@ public class Split10527B extends SdbTestBase {
 				commSdb.dropCollectionSpace(customCSName);
 			}
 		} catch (BaseException e) {
-			Assert.fail(e.getMessage()+"\r\n"+Utils.getKeyStack(e,this));
+			Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
 		} finally {
 			if (commSdb != null) {
 				commSdb.disconnect();
@@ -160,9 +188,12 @@ public class Split10527B extends SdbTestBase {
 				sdb = new Sequoiadb(coordUrl, "", "");
 				DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
 				cl.split(srcGroupName, destGroupName, 90);
+				throw new BaseException(-147);
 			} catch (BaseException e) {
 				if (e.getErrorCode() != -147) {
 					throw e;
+				} else {
+					errno147.set(true);
 				}
 			} finally {
 				if (sdb != null) {
