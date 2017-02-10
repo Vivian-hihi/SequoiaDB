@@ -655,4 +655,5 @@ cat >>report.html <<_EOF_
 
 _EOF_
 
+echo "${tpmC},${tpmTotal}"> tpmC.csv
 echo "OK"
