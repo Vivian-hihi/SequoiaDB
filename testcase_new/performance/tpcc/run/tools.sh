@@ -105,4 +105,4 @@ function getPostgreSQLVersion()
 {
    getSoftWareItemByName $1 "PostgreSQL"
 }
-getCoreNumPerCpu 192.168.30.90 
+
