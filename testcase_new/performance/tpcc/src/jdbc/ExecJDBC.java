@@ -24,11 +24,11 @@ public class ExecJDBC {
         } catch ( FileNotFoundException e ) {
             System.out.println( e.getMessage() ) ;
             e.printStackTrace() ;
-            return ;
+            System.exit( 1 ) ; ;
         } catch ( IOException e ) {
             System.out.println( e.getMessage() ) ;
             e.printStackTrace() ;
-            return ;
+            System.exit( 1 ) ; ;
         }
 
         try {
@@ -42,11 +42,11 @@ public class ExecJDBC {
         } catch ( ClassNotFoundException e ) {
             System.out.println( e.getMessage() ) ;
             e.printStackTrace() ;
-            return ;
+            System.exit( 1 ) ; ;
         } catch ( Exception e ) {
             System.out.println( e.getMessage() ) ;
             e.printStackTrace() ;
-            return ;
+            System.exit( 1 ) ; ;
         }
 
         final String keyConn = "conn" ;
@@ -105,10 +105,13 @@ public class ExecJDBC {
                 in.close() ;
             } catch ( IOException ie ) {
                 System.out.println( ie.getMessage() ) ;
+                System.exit( 1 ) ;
             } catch ( SQLException se ) {
                 System.out.println( se.getMessage() ) ;
+                System.exit( 1 ) ;
             } catch ( Exception e ) {
                 e.printStackTrace() ;
+                System.exit( 1 ) ;
                 // exit Cleanly
             } finally {
                 closeConn( conn ) ;
@@ -150,6 +153,7 @@ public class ExecJDBC {
         } catch ( SQLException se ) {
             System.out.println( query + ";" ) ;
             System.out.println( se.getMessage() ) ;
+            System.exit( 1 ) ;
         } // end try
     } // end execJDBCCommand
 } // end ExecJDBC Class
