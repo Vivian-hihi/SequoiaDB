@@ -161,7 +161,9 @@ public class Split10527B extends SdbTestBase {
 				DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
 				cl.split(srcGroupName, destGroupName, 90);
 			} catch (BaseException e) {
-				throw e;
+				if (e.getErrorCode() != -147) {
+					throw e;
+				}
 			} finally {
 				if (sdb != null) {
 					sdb.disconnect();
