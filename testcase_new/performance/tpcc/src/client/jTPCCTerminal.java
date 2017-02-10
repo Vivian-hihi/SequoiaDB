@@ -96,6 +96,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
             printMessage( "" ) ;
             printMessage( "An error occurred!" ) ;
             logException( e ) ;
+            System.exit( 2 ) ;
         }
 
         printMessage( "" ) ;
@@ -155,7 +156,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
                 } catch ( Exception e ) {
                     log.fatal( e.getMessage() ) ;
                     e.printStackTrace() ;
-                    System.exit( 4 ) ;
+                    System.exit( 2 ) ;
                 }
                 transactionTypeName = "Payment" ;
             } else if ( transactionType <= paymentWeight + stockLevelWeight ) {
@@ -172,7 +173,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
                 } catch ( Exception e ) {
                     log.fatal( e.getMessage() ) ;
                     e.printStackTrace() ;
-                    System.exit( 4 ) ;
+                    System.exit( 2 ) ;
                 }
                 transactionTypeName = "Stock-Level" ;
             } else if ( transactionType <= paymentWeight + stockLevelWeight
@@ -190,7 +191,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
                 } catch ( Exception e ) {
                     log.fatal( e.getMessage() ) ;
                     e.printStackTrace() ;
-                    System.exit( 4 ) ;
+                    System.exit( 2 ) ;
                 }
                 transactionTypeName = "Order-Status" ;
             } else if ( transactionType <= paymentWeight + stockLevelWeight
@@ -220,7 +221,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
                 } catch ( Exception e ) {
                     log.fatal( e.getMessage() ) ;
                     e.printStackTrace() ;
-                    System.exit( 4 ) ;
+                    System.exit( 2 ) ;
                 }
                 transactionTypeName = "Delivery" ;
             } else {
@@ -237,7 +238,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
                 } catch ( Exception e ) {
                     log.fatal( e.getMessage() ) ;
                     e.printStackTrace() ;
-                    System.exit( 4 ) ;
+                    System.exit( 2 ) ;
                 }
                 transactionTypeName = "New-Order" ;
                 newOrderCounter++ ;
