@@ -5,7 +5,7 @@
 # ----
 if [ $# -ne 2 ] ; then
     echo "usage: $(basename $0) PROPS_FILE SQL_FILE" >&2
-    exit 2
+    exit 1
 fi
 
 # ----

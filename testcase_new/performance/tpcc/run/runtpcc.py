@@ -3,6 +3,7 @@ from optparse import OptionParser
 from properties import Properties 
 from xmlparse import xmlparser 
 import subprocess
+from subprocess import CalledProcessError
 
 import os
 import sys
@@ -136,15 +137,19 @@ if options.mode:
    try:
       prop = Properties(options.propfile) 
       prop.load()
-      prop.setProp('sdburl', options.sdburl)
-      prop.setProp('conn', options.conn)
+      if options.sdburl != None:
+         prop.setProp('sdburl', options.sdburl)
+      if options.conn != None:
+         prop.setProp('conn', options.conn)
       prop.setProp('user', options.user)
       prop.setProp('password', options.passwd)
       prop.setProp('warehouses', options.warehouses)
       prop.setProp('terminals', options.terminals)
       prop.setProp('runMins', options.runMins)
-      prop.setProp('osCollectorSSHAddr', options.osCollectorSSHAddr)
-      prop.setProp('osCollectorDevices', options.osCollectorDevices)
+      if options.osCollectorSSHAddr != None:
+         prop.setProp('osCollectorSSHAddr', options.osCollectorSSHAddr)
+      if options.osCollectorDevices != None: 
+         prop.setProp('osCollectorDevices', options.osCollectorDevices)
       if options.extension:
          prop.setProp('testType', 'fdw')
       prop.save()
@@ -169,10 +174,9 @@ for step in steps:
    curpath = getParentPath()
    try:
       retcode = subprocess.check_call(['bash', curpath+"/run/"+step.text, curpath+"/run/"+step.attrib['parameter']])
-      if retcode != 0:
-         print "************************"
-         print "exec"+step.text+"failed"
-         sys.exit(1)
-   except Exception,e:
-      print e
-      sys.exit(1)
+   except CalledProcessError,e:
+      print e.returncode
+      sys.exit(e.returncode)
+
+   
+   

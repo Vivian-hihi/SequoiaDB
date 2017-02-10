@@ -2,7 +2,7 @@
 
 if [ $# -ne 1 ] ; then
     echo "usage: $(basename $0) PROPS_FILE" >&2
-    exit 2
+    exit 1
 fi
 
 SEQ_FILE="./.jTPCC_run_seq.dat"

@@ -2,7 +2,7 @@
 
 if [ $# -lt 1 ] ; then
     echo "usage: $(basename $0) PROPS [OPT VAL [...]]" >&2
-    exit 2
+    exit 1
 fi
 
 PROPS="$1"
@@ -15,7 +15,7 @@ fi
 testType="$(grep '^testType=' $PROPS | sed -e 's/^testType=//')"
 if [ "$testType" != "fdw" -a "$testType" != "original" ];then
    echo "testType is $testType,but must fdw or originalo"
-   exit 2
+   exit 1
 fi
 DB="$(grep '^db=' $PROPS | sed -e 's/^db=//')"
 
@@ -31,9 +31,10 @@ fi
 
 for step in ${BEFORE_LOAD} ; do
     ./runSQL.sh "${PROPS}" $step
-    if [ $? -ne 0 ];then
+    ret=$?
+    if [ ${ret} -ne 0 ];then
        echo "exec $step failed" 
-       exit 2
+       exit $ret
     fi
 done
 
@@ -41,21 +42,24 @@ coordAddrs="$(grep '^sdburl=' $PROPS | sed -e 's/^sdburl=//')"
 echo $coordAddrs
 if [ "$testType" = "fdw" ];then
    ./collection.py "${coordAddrs}" 0  
-   if [ $? -ne 0 ];then
+   ret=$?
+   if [ ${ret} -ne 0 ];then
       echo "create collection failed"
-      exit 2
+      exit $ret
    fi
 fi
 
 ./runLoader.sh "${PROPS}" $*
-if [ $? -ne 0 ];then
+ret=$?
+if [ ${ret} -ne 0 ];then
    echo "load failed"
-   exit 2
+   exit $ret
 fi
 
 for step in ${AFTER_LOAD} ; do
     ./runSQL.sh "${PROPS}" $step
-    if [ $? -ne 0 ];then
-       exit 2
+    ret=$?
+    if [ ${ret} -ne 0 ];then
+       exit $ret
     fi
 done

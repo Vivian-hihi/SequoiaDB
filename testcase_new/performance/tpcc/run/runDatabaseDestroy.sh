@@ -2,7 +2,7 @@
 
 if [ $# -ne 1 ] ; then
     echo "usage: $(basename $0)" >&2
-    exit 2
+    exit 1
 fi
 
 PROPS="$1"
@@ -14,7 +14,7 @@ fi
 testType="$(grep '^testType=' $PROPS | sed -e 's/^testType=//')"
 if [ "$testType" != "fdw" -a "$testType" != "original" ];then
    echo "testType is $testType,but must fdw or originalo"
-   exit 2
+   exit 1
 fi
 DB="$(grep '^db=' $PROPS | sed -e 's/^db=//')"
 

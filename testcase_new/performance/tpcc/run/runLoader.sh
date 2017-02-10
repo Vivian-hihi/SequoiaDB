@@ -2,7 +2,7 @@
 
 if [ $# -lt 1 ] ; then
     echo "usage: $(basename $0) PROPS_FILE [ARGS]" >&2
-    exit 2
+    exit 1
 fi
 
 source funcs.sh $1

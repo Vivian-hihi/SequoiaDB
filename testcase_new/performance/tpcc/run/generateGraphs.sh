@@ -8,7 +8,7 @@
 
 if [ $# -lt 1 ] ; then
     echo "usage: $(basename $0) RESULT_DIR [...]" >&2
-    exit 2
+    exit 1
 fi
 
 function generateAllGraphs()
@@ -28,7 +28,7 @@ function generateAllGraphs()
             if [ $? -ne 0 ] ; then
                 echo "ERROR"
                 echo "$out" >&2
-	        exit 3
+	        exit 1
             fi
             echo "OK"
         done
@@ -45,7 +45,7 @@ function generateAllGraphs()
 	    if [ $? -ne 0 ] ; then
 	        echo "ERROR"
 	        echo "$out" >&2
-	        exit 3
+	        exit 1
 	    fi
 	    echo "OK"
             
@@ -55,7 +55,7 @@ function generateAllGraphs()
             if [ $? -ne 0 ] ; then
 	        echo "ERROR"
 	        echo "$out" >&2
-	        exit 3
+	        exit 1
 	    fi
 	    echo "OK"
         done
@@ -72,7 +72,7 @@ function generateAllGraphs()
 	    if [ $? -ne 0 ] ; then
 	        echo "ERROR"
 	        echo "$out" >&2
-	        exit 3
+	        exit 1
 	    fi
 	    echo "OK"
 
@@ -82,7 +82,7 @@ function generateAllGraphs()
 	    if [ $? -ne 0 ] ; then
 	        echo "ERROR"
 	        echo "$out" >&2
-	        exit 3
+	        exit 1
 	    fi
 	    echo "OK"
         done
