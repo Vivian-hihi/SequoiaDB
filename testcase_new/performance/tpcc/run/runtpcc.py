@@ -16,7 +16,7 @@ parser = OptionParser("usage:%prog [options] ")
 parser.add_option("-m", "--mode",
                   action = "store_true",
                   dest="mode",
-                  help="run on ci"
+                  help="Modify the configuration and run it"
                   )
 parser.add_option("-s", "--sdburl",
                   action = "store",
@@ -73,11 +73,17 @@ parser.add_option("-a", "--osCollectorSSHAddr",
                   dest="osCollectorSSHAddr",
                   help="host address(user@host1,user@host2)"
                   )
-parser.add_option("-e", "--osCollectorDevices",
+parser.add_option("-d", "--osCollectorDevices",
                   action = "store",
                   type='string',
                   dest="osCollectorDevices",
                   help="devices(host1:net_em1 blk_sda,host2:net_em1 blk_sda)"
+                  )
+parser.add_option("-e", "--extension",
+                  action = "store_true",
+                  default=True,
+                  dest="extension",
+                  help="test foreign table"
                   )
 parser.add_option("-f", "--propfile",
                   action = "store",
@@ -139,6 +145,8 @@ if options.mode:
       prop.setProp('runMins', options.runMins)
       prop.setProp('osCollectorSSHAddr', options.osCollectorSSHAddr)
       prop.setProp('osCollectorDevices', options.osCollectorDevices)
+      if options.extension:
+         prop.setProp('testType', 'fdw')
       prop.save()
    except Exception,e:
       print e
