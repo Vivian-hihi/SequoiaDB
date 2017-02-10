@@ -331,7 +331,7 @@ public class LoadDataWorker implements Runnable {
         loadConfig() ;
         int i_id ;
         for ( i_id = 1; i_id <= 100000; i_id++ ) {
-            if ( i_id != 1 && ( i_id - 1 ) % 1000 == 0 ) {
+            if ( i_id != 1 && ( i_id - 1 ) % 10000 == 0 ) {
                 batchCommit( "item" ) ;
             }
             buildItemRecord( i_id ) ;
@@ -449,7 +449,7 @@ public class LoadDataWorker implements Runnable {
                 se = se.getNextException() ;
             }
         } catch ( BaseException e ) {
-            fmt.format( "Worker %03d: ERROR: %s", worker, e.getMessage() ) ;
+            fmt.format( "Worker %03d: ERROR: %d", worker, e.getErrorCode() ) ;
             System.err.println( sb.toString() ) ;
             sb.setLength( 0 ) ;
             e.printStackTrace() ;
