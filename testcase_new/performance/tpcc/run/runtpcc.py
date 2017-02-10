@@ -95,14 +95,14 @@ parser.add_option("-f", "--propfile",
 
 
 if options.mode:
-   if options.sdburl == None:
-      print("must provider parameter sdburl")
-      parser.print_help()
-      sys.exit(1)
-   if options.conn == None:
-      print("must provider parameter conn")
-      parser.print_help()
-      sys.exit(1)
+   #if options.sdburl == None:
+   #   print("must provider parameter sdburl")
+   #   parser.print_help()
+   #   sys.exit(1)
+   #if options.conn == None:
+   #   print("must provider parameter conn")
+   #   parser.print_help()
+   #   sys.exit(1)
    if options.user == None:
       print("must provider parameter user")   
       parser.print_help()
@@ -123,13 +123,13 @@ if options.mode:
       print("must provider runMins ") 
       parser.print_help()
       sys.exit(1)
-   if options.osCollectorSSHAddr == None:
-      print("must provider osCollectorSSHAddr ") 
-      parser.print_help()
-      sys.exit(1)
-   if options.osCollectorDevices == None:
-      print("must provider osCollectorDevices ") 
-      sys.exit(1)
+   #if options.osCollectorSSHAddr == None:
+   #   print("must provider osCollectorSSHAddr ") 
+   #   parser.print_help()
+   #   sys.exit(1)
+   #if options.osCollectorDevices == None:
+   #   print("must provider osCollectorDevices ") 
+   #   sys.exit(1)
    if options.propfile == None:
       print("must provider propfile ")
       sys.exit(1)
@@ -176,6 +176,3 @@ for step in steps:
    except Exception,e:
       print e
       sys.exit(1)
-
-   
-   
