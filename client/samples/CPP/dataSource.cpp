@@ -1,7 +1,7 @@
-﻿/******************************************************************************
+/******************************************************************************
 *
 * Name: dataSource.cpp
-* Description: This program demostrates how to connect to SequoiaDB database 
+* Description: This program demostrates how to connect to SequoiaDB database
 *              with sdbDataSource.
 *
 * Auto Compile:
@@ -14,9 +14,9 @@
 *       g++ common.cpp worker.cpp dataSource.cpp -o dataSource -I../../include -O0 -ggdb -Wno-deprecated -L../../lib -lsdbcpp -lm -ldl -lpthread
 *    Win:
 *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
-*		cl /Foworker.obj /c worker.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
-*		cl /FodataSource.obj /c dataSource.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
-*		link /OUT:dataSource.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib dataSource.obj common.obj worker.obj  /debug
+*               cl /Foworker.obj /c worker.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
+*               cl /FodataSource.obj /c dataSource.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
+*               link /OUT:dataSource.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib dataSource.obj common.obj worker.obj  /debug
 *       copy ..\..\lib\cpp\debug\dll\sdbcppd.dll .
 *    Static Linking:
 *    Linux: g++ dataSource.cpp  worker.cpp common.cpp -o dataSource.static -I../../include -O0 -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -ldl -lpthread
@@ -39,8 +39,8 @@ using namespace sample;
 
 // 函数声明
 void setDataSourceConf(sdbDataSourceConf &conf);
-INT32 initDataSource(sdbDataSource &ds, 
-    sdbDataSourceConf &conf, 
+INT32 initDataSource(sdbDataSource &ds,
+    sdbDataSourceConf &conf,
     vector<string> &addrs);
 INT32 closeDataSource(sdbDataSource &ds);
 INT32 runTasks(sdbDataSource &ds, string &csName, string &clName, int taskNum);
@@ -62,11 +62,11 @@ INT32 main(INT32 argc, CHAR **argv)
     // 检测输入参数内容
     if (argc < 2)
     {
-        cout << "Syntax:" << (CHAR*)argv[0] 
+        cout << "Syntax:" << (CHAR*)argv[0]
         << " <hostname/ip:port> [<hostname/ip:port> ...] " << endl;
         exit ( 0 );
     }
-    
+
     // 准备coord节点地址
     for(INT32 i = 1; i < argc; ++i)
     {
@@ -94,8 +94,8 @@ done:
         closeDataSource(ds);
     }
     return rc;
-error:  
-    goto done;   
+error:
+    goto done;
 }
 
 void setDataSourceConf(sdbDataSourceConf &conf)
@@ -115,20 +115,20 @@ void setDataSourceConf(sdbDataSourceConf &conf)
     // 第二个参数0，单位为毫秒。表示池中空闲连接的存活时间。
     // 0毫秒表示连接池不关心连接隔了多长时间没有收发消息。
     // 以下2个参数分别取默认值。
-    conf.setCheckIntervalInfo(60000, 0); 
+    conf.setCheckIntervalInfo(60000, 0);
     // 设置周期性从catalog节点同步coord节点地址的周期。单位毫秒。
     // 当设置为0毫秒时，表示不同步coord节点地址。默认值为0毫秒。
     conf.setSyncCoordInterval(30000);
     // 设置使用coord地址负载均衡的策略获取连接。默认值为DS_STY_BALANCE。
-    conf.setConnectStrategy(DS_STY_BALANCE); 
+    conf.setConnectStrategy(DS_STY_BALANCE);
     // 连接出池时，是否检测连接的可用性，默认值为FALSE。
     conf.setValidateConnection(FALSE);
     // 设置连接是否开启SSL功能，默认值为FALSE。
-    conf.setUseSSL(FALSE);                   
+    conf.setUseSSL(FALSE);
 }
 
-INT32 initDataSource(sdbDataSource &ds, 
-    sdbDataSourceConf &conf, 
+INT32 initDataSource(sdbDataSource &ds,
+    sdbDataSourceConf &conf,
     vector<string> &addrs)
 {
     INT32 rc = SDB_OK;
@@ -235,28 +235,28 @@ INT32 runTasks(sdbDataSource &ds, string &csName, string &clName, int taskNum)
     pCreateCLWorker->waitStop();
 
     // 启动插数据任务和查询数据任务
-    for(vector<worker*>::iterator itr = vecInsertWorkers.begin(); 
-        itr != vecInsertWorkers.end(); 
+    for(vector<worker*>::iterator itr = vecInsertWorkers.begin();
+        itr != vecInsertWorkers.end();
         ++itr)
     {
         (*itr)->start();
     }
-    for(vector<worker*>::iterator itr = vecQueryWorkers.begin(); 
-        itr != vecQueryWorkers.end(); 
+    for(vector<worker*>::iterator itr = vecQueryWorkers.begin();
+        itr != vecQueryWorkers.end();
         ++itr)
     {
         (*itr)->start();
     }
 
     // 等待任务结束
-    for(vector<worker*>::iterator itr = vecInsertWorkers.begin(); 
-        itr != vecInsertWorkers.end(); 
+    for(vector<worker*>::iterator itr = vecInsertWorkers.begin();
+        itr != vecInsertWorkers.end();
         ++itr)
     {
         (*itr)->waitStop();
     }
-    for(vector<worker*>::iterator itr = vecQueryWorkers.begin(); 
-        itr != vecQueryWorkers.end(); 
+    for(vector<worker*>::iterator itr = vecQueryWorkers.begin();
+        itr != vecQueryWorkers.end();
         ++itr)
     {
         (*itr)->waitStop();
@@ -274,26 +274,26 @@ done:
         delete pCreateCLWorker;
         pCreateCLWorker = NULL;
     }
-    for(vector<insertTask*>::iterator itr = vecInsertTasks.begin(); 
-        itr != vecInsertTasks.end(); 
+    for(vector<insertTask*>::iterator itr = vecInsertTasks.begin();
+        itr != vecInsertTasks.end();
         ++itr)
     {
         delete *itr;
     }
-    for(vector<queryTask*>::iterator itr = vecQueryTasks.begin(); 
-        itr != vecQueryTasks.end(); 
+    for(vector<queryTask*>::iterator itr = vecQueryTasks.begin();
+        itr != vecQueryTasks.end();
         ++itr)
     {
         delete *itr;
     }
-    for(vector<worker*>::iterator itr = vecInsertWorkers.begin(); 
-        itr != vecInsertWorkers.end(); 
+    for(vector<worker*>::iterator itr = vecInsertWorkers.begin();
+        itr != vecInsertWorkers.end();
         ++itr)
     {
         delete *itr;
     }
-    for(vector<worker*>::iterator itr = vecQueryWorkers.begin(); 
-        itr != vecQueryWorkers.end(); 
+    for(vector<worker*>::iterator itr = vecQueryWorkers.begin();
+        itr != vecQueryWorkers.end();
         ++itr)
     {
         delete *itr;
@@ -324,3 +324,4 @@ void runQueryTask(void *args)
     queryTask *pTask = (queryTask *)args;
     pTask->run();
 }
+

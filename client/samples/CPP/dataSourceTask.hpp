@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
 *
 * Name: dataSourceTask.hpp
 * Description: Task class defined for data source sample.
@@ -35,7 +35,7 @@ namespace sample
 
     // 类createCLTask定义
     class createCLTask: public taskBase
-    {  
+    {
     public:
         createCLTask(sdbDataSource &ds, string &csName, string &clName)
             :taskBase(ds, csName, clName)
@@ -56,7 +56,7 @@ namespace sample
             rc = _ds.getConnection(pDB);
             if (SDB_OK != rc)
             {
-                cout << "Failed to get connection to for creating collection, rc = " 
+                cout << "Failed to get connection to for creating collection, rc = "
                     << rc << endl ;
                 goto error;
             }
@@ -91,8 +91,9 @@ error:
         }
     };
 
+
     // 类insertTask定义
-    class insertTask: public taskBase 
+    class insertTask: public taskBase
     {
     private:
         INT32 _num;
@@ -123,7 +124,7 @@ error:
             rc = _ds.getConnection(pDB);
             if (SDB_OK != rc)
             {
-                cout << "Failed to get connection to for inserting recored, rc = " 
+                cout << "Failed to get connection to for inserting recored, rc = "
                     << rc << endl ;
                 goto error;
             }
@@ -133,7 +134,7 @@ error:
             rc = pDB->getCollection(clFullName.c_str(), cl);
             if (SDB_OK != rc)
             {
-                cout << "Failed to get collection for inserting num: " 
+                cout << "Failed to get collection for inserting num: "
                     << _num << ", rc = " << rc << endl;
                 goto error;
             }
@@ -141,7 +142,7 @@ error:
             rc = cl.insert(obj);
             if (SDB_OK != rc)
             {
-                cout << "Failed to insert num: " 
+                cout << "Failed to insert num: "
                     << _num << ", rc = " << rc << endl;
                 goto error;
             }
@@ -160,7 +161,7 @@ error:
     };
 
     // 类queryTask定义
-    class queryTask: public taskBase 
+    class queryTask: public taskBase
     {
     private:
         INT32 _num;
@@ -189,7 +190,7 @@ error:
             rc = _ds.getConnection(pDB);
             if (SDB_OK != rc)
             {
-                cout << "Failed to get connection for query, rc = " 
+                cout << "Failed to get connection for query, rc = "
                     << rc << endl ;
                 goto error;
             }
@@ -199,7 +200,7 @@ error:
             rc = pDB->getCollection(clFullName.c_str(), cl);
             if (SDB_OK != rc)
             {
-                cout << "Failed to get collection for querying num: " 
+                cout << "Failed to get collection for querying num: "
                     << _num << ", rc = " << rc << endl;
                 goto error;
 
@@ -242,14 +243,14 @@ error:
             }
 
 done:
-            // 业务结束后，将连接归还给连接池      
+            // 业务结束后，将连接归还给连接池
             if (TRUE == hasGet)
             {
                 _ds.releaseConnection(pDB);
             }
             return rc;
 error:
-            cout << "Failed to query num: " 
+            cout << "Failed to query num: "
                 << _num << ", rc = " << rc << endl;
             goto done;
         }
@@ -258,3 +259,4 @@ error:
 } // namespace sample
 
 #endif // DATASOURCETASK_HPP__
+

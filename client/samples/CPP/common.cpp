@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
 *
 * Name: common.cpp
 * Description: Common functions for sample programs
@@ -390,6 +390,7 @@ namespace sample
         return b.toString() ;
     }
 
+
     void displayRecord( sdbCursor &cursor )
     {
         int rc = SDB_OK ;
@@ -406,3 +407,4 @@ namespace sample
 
 
 } // namespace sample
+

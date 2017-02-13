@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
 *
 * Name: worker.hpp
 * Description: Thread API for sample programs
@@ -17,6 +17,7 @@
 #else /* POSIX */
 #include <pthread.h>
 #endif
+
 
 namespace sample
 {
@@ -58,3 +59,4 @@ namespace sample
 
 
 #endif // WORKER_HPP__
+
