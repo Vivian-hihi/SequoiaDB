@@ -43,7 +43,7 @@ class CSOperator04 extends BaseOperator
    //get csInfo by snapshot need cl, else snapshot result is null
    function createCL( $csName, $clName )
    {
-      $options = array( 'ReplSize' => 0 );
+      $options = array( 'ReplSize' => 1 );
       return $this -> commCreateCL( $csName, $clName, $options );
    }
    
