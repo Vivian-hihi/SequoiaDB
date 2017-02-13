@@ -570,9 +570,13 @@ namespace engine
          goto error ;
       }
 
+      /// 1.make sure erase must before reset the name,
+      /// because map'key is CBCB's name
+      _cscbNameMap.erase( pName ) ;
+      /// 2. then rename the CSCB's name
       ossStrncpy( pCSCB->_name, pNewName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
       pCSCB->_name[ DMS_COLLECTION_SPACE_NAME_SZ ] = 0 ;
-      _cscbNameMap.erase( pName ) ;
+      /// 3. insert new name to map
       _cscbNameMap[ pCSCB->_name ] = suID ;
 
       // log here
