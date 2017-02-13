@@ -89,6 +89,8 @@ function createCLForIndexScan()
    var dbcl_IndexScan = commCreateCLByOption( db, COMMCSNAME, indexScan_MainTable, indexScan_MainCLOption, true, true );
    
    //create subcl
+   //db.cs.cl.find( condition ).sort( { _id: 1 } );
+   //to avoid query using the sort index({_id:1}), we disable the _id's index by using AutoIndexId:false.
    var indexScan_subClOption1 = {ShardingKey:{"No":1},ShardingType:"range", ReplSize:0,AutoIndexId:false};
    commCreateCLByOption( db, COMMCSNAME, indexScan_subCL_Name1, indexScan_subClOption1, true, true );
    
