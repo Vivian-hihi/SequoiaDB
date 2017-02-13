@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
 *
 * Name: connectWithSdbDataSource.cpp
 * Description: This program demostrates how to connect to SequoiaDB database \
@@ -53,7 +53,7 @@ void queryTask( sdbDataSource &ds )
    BSONObj              obj ;
 
    // add a coord node to sdbDataSource
-   ds.addCoord( "192.168.20.53:50000" ) ;
+   ds.addCoord( "192.168.20.166:11810" ) ;
    
    // get a connection from sdbDataSource
    rc = ds.getConnection( connection ) ;
@@ -114,8 +114,8 @@ INT32 main( INT32 argc, CHAR **argv )
    conf.setUseSSL( FALSE ) ;
    // provide coord node information
    vector<string>        v ;
-   v.push_back( "192.168.20.53:11810" );
-   v.push_back( "192.168.20.53:11910" ) ;
+   v.push_back( "192.168.20.165:30000" );
+   v.push_back( "192.168.20,165:50000" ) ;
    // init sdbDataSource
    rc = ds.init( v, conf ) ;
    if ( SDB_OK != rc )
