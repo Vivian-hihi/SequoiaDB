@@ -1,16 +1,13 @@
-/******************************************************************************
-*
-* Name: common.cpp
-* Description: Common functions for sample programs
-*              This file does NOT include main function
-*
-******************************************************************************/
-///*
+/****************************************************************************
+ *
+ * Name: common.cpp
+ * Description: Common functions for sample programs
+ *              This file does NOT include main function
+ *
+ ******************************************************************************/
 #if defined (_WIN32)
 #define _CRT_RAND_S
 #endif
-//*/
-//#include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <assert.h>

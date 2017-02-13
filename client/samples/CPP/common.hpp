@@ -1,4 +1,4 @@
-/******************************************************************************
+/****************************************************************************
  *
  * Name: common.hpp
  * Description: Common functions declaration for sample programs
@@ -82,7 +82,6 @@ namespace sample
     string toJson( const BSONObj &b ) ;
 
     void displayRecord( sdbCursor &cursor ) ;
-
 
 } // namespace sample
 #endif

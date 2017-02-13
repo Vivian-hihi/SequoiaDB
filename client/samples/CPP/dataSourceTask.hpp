@@ -1,10 +1,9 @@
 /******************************************************************************
-*
-* Name: dataSourceTask.hpp
-* Description: Task class defined for data source sample.
-*
-******************************************************************************/
-
+ *
+ * Name: dataSourceTask.hpp
+ * Description: Task class defined for data source sample.
+ *
+ ******************************************************************************/
 #ifndef DATASOURCETASK_HPP__
 #define DATASOURCETASK_HPP__
 
@@ -14,7 +13,7 @@
 namespace sample
 {
 
-    // 类taskBase定义
+    /* 类taskBase定义 */
     class taskBase
     {
     protected:
@@ -33,7 +32,7 @@ namespace sample
         virtual INT32 run() = 0;
     };
 
-    // 类createCLTask定义
+    /* 类createCLTask定义 */
     class createCLTask: public taskBase
     {
     public:
@@ -52,7 +51,7 @@ namespace sample
             sdbCollectionSpace cs;
             sdbCollection cl;
 
-            // 通过连接池获取连接
+            /* 通过连接池获取连接 */
             rc = _ds.getConnection(pDB);
             if (SDB_OK != rc)
             {
@@ -62,7 +61,7 @@ namespace sample
             }
             hasGet = TRUE;
 
-            // 使用连接进行业务（创建集合业务）操作
+            /* 使用连接进行业务（创建集合业务）操作 */
             pDB->dropCollectionSpace(_csName.c_str());
 
             rc = pDB->createCollectionSpace(_csName.c_str(), SDB_PAGESIZE_4K, cs);
@@ -80,7 +79,7 @@ namespace sample
             cout << "Success to create collection: " << _csName + "." + _clName << endl;
 
 done:
-            // 业务结束后，将连接归还给连接池
+            /* 业务结束后，将连接归还给连接池 */
             if (TRUE == hasGet)
             {
                 _ds.releaseConnection(pDB);
@@ -92,7 +91,7 @@ error:
     };
 
 
-    // 类insertTask定义
+    /* 类insertTask定义 */
     class insertTask: public taskBase
     {
     private:
@@ -100,7 +99,7 @@ error:
         INT32 _delay;
 
     public:
-        // 构造函数，参数num为插入内容，参数delay为最大延迟插入的时间，单位毫秒
+        /* 构造函数，参数num为插入内容，参数delay为最大延迟插入的时间，单位毫秒 */
         insertTask(sdbDataSource &ds, string &csName, string &clName, INT32 num, INT32 delay = 6000)
             :taskBase(ds, csName, clName), _num(num), _delay(delay)
         {
@@ -117,10 +116,10 @@ error:
             BSONObj obj       = BSON("num" << _num);
             sdbCollection cl;
 
-            // 随机睡眠若干时间，来模拟不同时刻插入数据的情况
+            /* 随机睡眠若干时间，来模拟不同时刻插入数据的情况 */
             waiting(randNum() % _delay);
 
-            // 通过连接池获取连接
+            /* 通过连接池获取连接 */
             rc = _ds.getConnection(pDB);
             if (SDB_OK != rc)
             {
@@ -130,7 +129,7 @@ error:
             }
             hasGet = TRUE;
 
-            // 使用连接进行业务（插入数据业务）
+            /* 使用连接进行业务（插入数据业务） */
             rc = pDB->getCollection(clFullName.c_str(), cl);
             if (SDB_OK != rc)
             {
@@ -149,7 +148,7 @@ error:
             cout << "Success to insert record: " << obj.toString(FALSE, TRUE) << endl;
 
 done:
-            // 业务结束后，将连接归还给连接池
+            /* 业务结束后，将连接归还给连接池 */
             if (TRUE == hasGet)
             {
                 _ds.releaseConnection(pDB);
@@ -160,7 +159,7 @@ error:
         }
     };
 
-    // 类queryTask定义
+    /* 类queryTask定义 */
     class queryTask: public taskBase
     {
     private:
@@ -168,7 +167,7 @@ error:
         INT32 _timeout;
 
     public:
-        // 构造函数，参数num为要查询的内容，参数timeout为查询超时时间，单位毫秒
+        /* 构造函数，参数num为要查询的内容，参数timeout为查询超时时间，单位毫秒 */
         queryTask(sdbDataSource &ds, string &csName, string &clName, INT32 num, INT32 timeout = 10000)
             :taskBase(ds, csName, clName), _num(num), _timeout(timeout)
         {
@@ -186,7 +185,7 @@ error:
             BSONObj matcher   = BSON("num" << BSON("$et" << _num));
             sdbCollection cl;
 
-            // 通过连接池获取连接
+            /* 通过连接池获取连接 */
             rc = _ds.getConnection(pDB);
             if (SDB_OK != rc)
             {
@@ -196,7 +195,7 @@ error:
             }
             hasGet = TRUE;
 
-            // 使用连接进行业务（查询业务）
+            /* 使用连接进行业务（查询业务）*/
             rc = pDB->getCollection(clFullName.c_str(), cl);
             if (SDB_OK != rc)
             {
@@ -236,14 +235,14 @@ error:
                 }
             }
 
-            // 若查询超时，报错
+            /* 若查询超时，报错 */
             if(totalSleep >= _timeout)
             {
                 cout << "Failed to query num: " << _num << ", timeout" << endl;
             }
 
 done:
-            // 业务结束后，将连接归还给连接池
+            /* 业务结束后，将连接归还给连接池 */
             if (TRUE == hasGet)
             {
                 _ds.releaseConnection(pDB);

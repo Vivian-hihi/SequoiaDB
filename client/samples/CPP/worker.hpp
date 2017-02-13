@@ -1,10 +1,9 @@
-/******************************************************************************
-*
-* Name: worker.hpp
-* Description: Thread API for sample programs
-*
-******************************************************************************/
-
+/****************************************************************************
+ *
+ * Name: worker.hpp
+ * Description: Thread API for sample programs
+ *
+ ******************************************************************************/
 #ifndef WORKER_HPP__
 #define WORKER_HPP__
 
@@ -33,7 +32,7 @@ namespace sample
         workerFunc func;
         void*      args;
 
-        // 构造函数
+        /* 构造函数 */
         workThread(workerFunc func, void *args)
             : func(func), args(args)
         {
@@ -44,9 +43,9 @@ namespace sample
     class worker
     {
     public:
-        // 构造函数
+        /* 构造函数 */
         worker(workerFunc func, void *args);
-        // 析构函数
+        /* 析构函数 */
         ~worker();
         INT32 start();
         INT32 waitStop();
@@ -56,7 +55,6 @@ namespace sample
         BOOLEAN      _started;
     };
 }
-
 
 #endif // WORKER_HPP__
 

@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
 *
 * Name: connectWithSdbDataSource.cpp
 * Description: This program demostrates how to connect to SequoiaDB database \
