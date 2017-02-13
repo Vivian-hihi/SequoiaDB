@@ -14,9 +14,9 @@
 *       g++ common.cpp worker.cpp dataSource.cpp -o dataSource -I../../include -O0 -ggdb -Wno-deprecated -L../../lib -lsdbcpp -lm -ldl -lpthread
 *    Win:
 *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
-*               cl /Foworker.obj /c worker.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
-*               cl /FodataSource.obj /c dataSource.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
-*               link /OUT:dataSource.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib dataSource.obj common.obj worker.obj  /debug
+*       cl /Foworker.obj /c worker.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
+*       cl /FodataSource.obj /c dataSource.cpp /I..\..\include /wd4047 /Od /MDd /RTC1 /Z7 /TP
+*       link /OUT:dataSource.exe /LIBPATH:..\..\lib\cpp\debug\dll sdbcppd.lib dataSource.obj common.obj worker.obj  /debug
 *       copy ..\..\lib\cpp\debug\dll\sdbcppd.dll .
 *    Static Linking:
 *    Linux: g++ dataSource.cpp  worker.cpp common.cpp -o dataSource.static -I../../include -O0 -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -ldl -lpthread
