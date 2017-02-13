@@ -2896,6 +2896,7 @@ namespace engine
       CHAR text[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       ossSnprintf( text, OSS_MAX_PATHSIZE,
                    OSS_NEWLINE
+                   "File Name         : %s"OSS_NEWLINE
                    "Total Time        : %u"OSS_NEWLINE
                    "Total Page        : %u"OSS_NEWLINE
                    "Dirty Page        : %u"OSS_NEWLINE
@@ -2916,6 +2917,7 @@ namespace engine
                    "Merge Sync Avg Len: %.2f"OSS_NEWLINE
                    "Sync Speed        : %.2f /s"OSS_NEWLINE
                    "Recycle Speed     : %.2f /s"OSS_NEWLINE,
+                   _pCacheFile->getFileName(),
                    diff,
                    statTotalPage,
                    statDirtyPage,
