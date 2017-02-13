@@ -115,16 +115,30 @@ public class TestSplit10525B extends SdbTestBase{
                 Node master = replicaGroup.getSlave();
                 String url = master.getNodeName();
                 dataDb = new Sequoiadb(url, "", "");
-                //获取cs cl
-                CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
-                DBCollection dbcl = cs.getCollection(this.clName);
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                DBCollection dbcl = null;
+                for ( int k = 0; k < 20; k++) {
+                    //通过从节点获取cs cl
+                    try {
+                        CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
+                        dbcl = cs.getCollection(this.clName);
+                    } catch (BaseException e1) {
+                       if ( e1.getErrorCode() == -34 || e1.getErrorCode() == -23) {
+                           continue;
+                       }
+                    }
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
                 //通过从节点查询数据
-                DBCursor cursor = dbcl.query(null,null,"{\"_id\":1}",null);
+                DBCursor cursor;
+                try {
+                    cursor = dbcl.query(null,null,"{\"_id\":1}",null);
+                } catch (NullPointerException e) {
+                    continue;
+                }
                 List<BSONObject> actual = new ArrayList<BSONObject>();
                 while( cursor.hasNext() ) {
                     BSONObject obj = cursor.getNext();
