@@ -423,7 +423,8 @@ function checkDiskIO( info, result )
          if( disks[i].ReadSec !== 0 || disks[i].WriteSec !== 0 )
          {
             throw buildException( "checkDiskIO", null, 
-                  "check ReadSec WriteSec local false", "0,0", disks[i] ) ;
+                  "check ReadSec WriteSec local false", 
+                  "0,0", JSON.stringify( disks[i] ) ) ;
          }
       }
       else
@@ -438,14 +439,16 @@ function checkDiskIO( info, result )
                    !isApproEqual( disks[i].WriteSec, result[j].writeSec ) )
                {
                   throw buildException( "checkDiskIO", null, 
-                        "check ReadSec WriteSec", result[j], disks[i] ) ;
+                        "check ReadSec WriteSec", 
+                        JSON.stringify( result[j] ), JSON.stringify( disks[i] ) ) ;
                }
             }   
          }
          if( found === false )
          {
             throw buildException( "checkDiskIO", null,
-                  "check ReadSec WriteSec local true", disks[i], result ) ;  
+                  "check ReadSec WriteSec local true", 
+                  JSON.stringify( disks[i] ), JSON.stringify( result ) ) ;  
          } 
       }
    }   
