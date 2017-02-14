@@ -5048,13 +5048,17 @@ namespace engine
             INT32 increaseLen = 1024 ;
             CHAR *curPos = buf ;
             BOOLEAN finishRead = FALSE ;
+            BOOLEAN isReadSuccess = TRUE ;
+
             while( !finishRead )
             {
                rc = op.Read( readLen , curPos , &readByte ) ;
                if ( SDB_OK != rc )
                {
-                  PD_LOG( PDERROR, "Failed to read file" ) ;
-                  goto error ;
+                  PD_LOG( PDERROR, "Failed to read file: %s",
+                          itr->second.c_str() ) ;
+                  isReadSuccess = FALSE ;
+                  break ;
                }
                hasRead += readByte ;
 
@@ -5077,6 +5081,10 @@ namespace engine
                {
                   finishRead = TRUE ;
                }
+            }
+            if( FALSE == isReadSuccess )
+            {
+               continue ;
             }
             buf[ hasRead ] = '\0' ;
          }
@@ -5113,7 +5121,7 @@ namespace engine
             continue ;
          }
 
-         key = *( keySplit.begin()+2 );
+         key = *( keySplit.begin()+2 ) ;
          for( std::vector< string >::iterator vecItr = keySplit.begin()+3;
               vecItr != keySplit.end(); vecItr++ )
          {
