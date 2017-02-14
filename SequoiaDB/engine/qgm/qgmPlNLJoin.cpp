@@ -39,6 +39,8 @@
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _qgmPlNLJoin::_qgmPlNLJoin( INT32 type )
@@ -56,7 +58,7 @@ namespace engine
       SAFE_OSS_DELETE( _innerF ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__INIT, "_qgmPlNLJoin::_init" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__INIT, "_qgmPlNLJoin::_init" )
    INT32 _qgmPlNLJoin::_init()
    {
       PD_TRACE_ENTRY( SDB__QGMPLNLJOIN__INIT ) ;
@@ -97,7 +99,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__EXEC, "_qgmPlNLJoin::_execute" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__EXEC, "_qgmPlNLJoin::_execute" )
    INT32 _qgmPlNLJoin::_execute( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLNLJOIN__EXEC ) ;
@@ -124,7 +126,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__FETCHNEXT, "_qgmPlNLJoin::_fetchNext" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__FETCHNEXT, "_qgmPlNLJoin::_fetchNext" )
    INT32 _qgmPlNLJoin::_fetchNext( qgmFetchOut &next )
    {
       PD_TRACE_ENTRY( SDB__QGMPLNLJOIN__FETCHNEXT ) ;
@@ -220,7 +222,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__MODIFYINNERCONDITION, "_qgmPlNLJoin::_modifyInnerCondition" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLNLJOIN__MODIFYINNERCONDITION, "_qgmPlNLJoin::_modifyInnerCondition" )
    INT32 _qgmPlNLJoin::_modifyInnerCondition( BSONObj &obj )
    {
       PD_TRACE_ENTRY( SDB__QGMPLNLJOIN__MODIFYINNERCONDITION ) ;
