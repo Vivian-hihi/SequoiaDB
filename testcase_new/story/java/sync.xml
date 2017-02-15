@@ -19,7 +19,7 @@
    </test>
    <test name="consistency" >
       <packages>
-         <package name="com.sequoiadb.metadataConsistency.cluster"/>
+         <package name="com.sequoiadb.metadataconsistency.cluster"/>
       </packages>
    </test>
 </suite>
