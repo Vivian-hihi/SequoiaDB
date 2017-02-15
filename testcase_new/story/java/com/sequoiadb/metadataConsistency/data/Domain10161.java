@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.data;
+package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,8 +14,9 @@ import org.testng.SkipException;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * TestLink: seqDB-10161: concurrency[create domain, alter domain, drop domain]
@@ -25,17 +26,17 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class Domain10161 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private static ArrayList<String> dataGroups = null;
 	private String domainName = "dm10161";
 	private Random random = new Random();
 	private int number = 20;
+	private int msec = 500;
 	
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -44,13 +45,11 @@ public class Domain10161 extends SdbTestBase {
 				throw new SkipException("The mode is standlone, or only one group, "
 						+ "skip the testCase.");
 			}
-			//clear env
 			CommLib.clearDomain(sdb, domainName);
-			//ready env
 			dataGroups = CommLib.getDataGroupNames(sdb);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 		
 	}
@@ -58,98 +57,109 @@ public class Domain10161 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			//clear env
 			CommLib.clearDomain(sdb, domainName);
 		}catch(BaseException e){
 			Assert.fail("ErrorMsg:\n" +e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
+	}	
+	
+	@Test(invocationCount = 3, threadPoolSize = 3)
+	public void test(){
+		CreateDomain createDomain = new CreateDomain();
+		CommLib.sleep(random.nextInt(msec));
+		createDomain.start();
+		
+		AlterDomain alterDomain = new AlterDomain();
+		CommLib.sleep(random.nextInt(msec));
+		alterDomain.start();
+
+		DropDomain dropDomain = new DropDomain();
+		CommLib.sleep(random.nextInt(msec));
+		dropDomain.start();
+		
+		if( !( createDomain.isSuccess() && alterDomain.isSuccess() 
+				&& dropDomain.isSuccess()) ){
+			Assert.fail(createDomain.getErrorMsg() + alterDomain.getErrorMsg()
+				+ dropDomain.getErrorMsg() );
+		}
+
+		//check results
+		CommLib.checkDomainOfCatalog(domainName);
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testCreateDomain(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
-		
-		try
-		{
-			BSONObject opt = new BasicBSONObject();
-			opt.put( "Groups", dataGroups );
-			opt.put( "AutoSplit", false );
-			for(int i = 0; i < 10; i++){
-			    db.createDomain (domainName + "_" + random.nextInt(number), opt);
+	private class CreateDomain extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				
+				BSONObject opt = new BasicBSONObject();
+				opt.put( "Groups", dataGroups );
+				opt.put( "AutoSplit", false );
+				for(int i = 0; i < 10; i++){
+				    db.createDomain (domainName + "_" + random.nextInt(number), opt);
+				}
+			}catch(BaseException e){
+				if(e.getErrorCode() != -215){  //-215:Domain already exists
+					Assert.fail(e.getMessage());
+				}
 			}
-			//check results of catalog
-			CommLib.checkDomainOfCatalog(db, domainName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -215){  //-215:Domain already exists
-				Assert.fail(e.getMessage());
-			}
-		}
-		finally{
-			db.disconnect();
-		}
-	}
-
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testAlterDomain(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
-		
-		try{
-			BSONObject opt = new BasicBSONObject();
-			int drSize = random.nextInt(dataGroups.size());
-			opt.put( "Groups", dataGroups.get(drSize).split(",") );
-			opt.put( "AutoSplit", true );
-			for(int i = 0; i < 10; i++){
-				db.getDomain(domainName + "_" + random.nextInt(number)).alterDomain(opt);
-			}
-			//check results of catalog
-			CommLib.checkDomainOfCatalog(db, domainName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -214){  //-214:Domain does not exist
-				Assert.fail(e.getMessage());
-			}
-		}
-		finally{
-			db.disconnect();
-		}
-	}
-
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testDropDomain(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
-		
-		try{
-			for(int i = 0; i < 5; i++){
-				db.dropDomain(domainName + "_" + random.nextInt(number));
-			}
-			//check results of catalog
-			CommLib.checkDomainOfCatalog(db, domainName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -214){  //-214:Domain does not exist
+			finally{
 				db.disconnect();
-				Assert.fail(e.getMessage());
 			}
 		}
-		finally{
-			db.disconnect();
+	}
+
+	private class AlterDomain extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				
+				BSONObject opt = new BasicBSONObject();
+				int drSize = random.nextInt(dataGroups.size());
+				opt.put( "Groups", dataGroups.get(drSize).split(",") );
+				opt.put( "AutoSplit", true );
+				for(int i = 0; i < 10; i++){
+					db.getDomain(domainName + "_" + random.nextInt(number)).alterDomain(opt);
+				}
+			}catch(BaseException e){
+				if(e.getErrorCode() != -214){  //-214:Domain does not exist
+					Assert.fail(e.getMessage());
+				}
+			}
+			finally{
+				db.disconnect();
+			}
+		}
+	}
+
+	private class DropDomain extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				
+				for(int i = 0; i < 5; i++){
+					db.dropDomain(domainName + "_" + random.nextInt(number));
+				}
+			}catch(BaseException e){
+				if(e.getErrorCode() != -214){  //-214:Domain does not exist
+					db.disconnect();
+					Assert.fail(e.getMessage());
+				}
+			}
+			finally{
+				db.disconnect();
+			}
 		}
 	}
 		

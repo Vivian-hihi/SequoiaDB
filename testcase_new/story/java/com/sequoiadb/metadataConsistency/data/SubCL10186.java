@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.data;
+package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,8 +15,9 @@ import org.testng.SkipException;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * TestLink: seqDB-10186: concurrency[attachCL]
@@ -26,7 +27,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class SubCL10186 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String csName = "cs10186";
 	private String clName = "cl10186";
@@ -38,90 +38,89 @@ public class SubCL10186 extends SdbTestBase {
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
-				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+				throw new SkipException("The mode is standlone, skip the testCase.");
 			}
-			//clear env
-			CommLib.clearCL(sdb, csName, clName);
 			CommLib.clearCS(sdb, csName);
-			//ready env
-			this.readyCL();
+			
+			sdb.createCollectionSpace(csName);
+			createMainCL(sdb);
+			createSubCL(sdb);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
 		try{
-			//check results
-			CommLib.checkCLResult(sdb, csName, clName);
-			//clear env
 			CommLib.clearCL(sdb, csName, clName);
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
-			Assert.fail("ErrorMsg:\n" +e.getMessage());
+			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testAttachCL(){
-		Sequoiadb db  = null;
-		CollectionSpace csDB = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			csDB = db.getCollectionSpace(csName);
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+	@Test(invocationCount = 3, threadPoolSize = 3)
+	public void test(){
+
+		AttachCL attachCL = new AttachCL();
+		attachCL.start();
+		
+		if( !attachCL.isSuccess() ){
+			Assert.fail(attachCL.getErrorMsg());
 		}
 		
-		try
-		{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			BSONObject options = new BasicBSONObject();
-			BSONObject lowBoundObj = new BasicBSONObject();
-			BSONObject upBoundObj  = new BasicBSONObject();
-			int k = random.nextInt(10000);
-			lowBoundObj.put("a", 0 + k);
-			upBoundObj.put("a", 100 + k);
-			options.put("LowBound", lowBoundObj);
-			options.put("UpBound", upBoundObj);
-			csDB.getCollection(mCLName + random.nextInt(number)).
-					attachCollection(csName + "." + sCLName + random.nextInt(number), options);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -235 //-235:Duplicated attach collection partition
-					&& e.getErrorCode() != -237){  //-237:New boundary is conflict with the existing boundary
-				Assert.fail(e.getMessage());
-			}
-		}finally{
-			db.disconnect();
-		}
-		
+		//check results
+		CommLib.checkCLResult(csName, clName);
 	}
 	
-	public void readyCL(){
-		CollectionSpace csDB = null;
-		
-		//-----create cs-----
-		try{
-			sdb.createCollectionSpace(csName);
-			csDB = sdb.getCollectionSpace(csName);
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+	private class AttachCL extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+					
+				BSONObject options = new BasicBSONObject();
+				BSONObject lowBoundObj = new BasicBSONObject();
+				BSONObject upBoundObj  = new BasicBSONObject();
+				int k = random.nextInt(10000);
+				lowBoundObj.put("a", 0 + k);
+				upBoundObj.put("a", 100 + k);
+				options.put("LowBound", lowBoundObj);
+				options.put("UpBound", upBoundObj);
+				csDB.getCollection(mCLName + random.nextInt(number)).
+						attachCollection(csName + "." + sCLName + random.nextInt(number), options);
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -235 //-235:Duplicated attach collection partition
+						&& eCode != -237){  //-237:New boundary is conflict with the existing boundary
+					throw e;
+				}
+			}finally{
+				db.disconnect();
+			}
+			
 		}
-		
-		//-----create mainCL-----
+	}
+	
+	public void createMainCL(Sequoiadb sdb){
 		try{
+			CollectionSpace csDB = sdb.getCollectionSpace(csName);
+			
 			BSONObject mOpt = new BasicBSONObject();
 			BSONObject mSubObj = new BasicBSONObject();
 			mSubObj.put("a", 1);
@@ -132,11 +131,14 @@ public class SubCL10186 extends SdbTestBase {
 				csDB.createCollection( mCLName + i, mOpt );
 			}
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
-		
-		//-----create subCL-----
+	}
+	
+	public void createSubCL(Sequoiadb sdb){
 		try{
+			CollectionSpace csDB = sdb.getCollectionSpace(csName);
+			
 			BSONObject sOpt = new BasicBSONObject();
 			BSONObject sSubObj = new BasicBSONObject();
 			sSubObj.put("a", 1);
@@ -146,9 +148,8 @@ public class SubCL10186 extends SdbTestBase {
 				csDB.createCollection( sCLName + i, sOpt );
 			}
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
-		
 	}
 		
 }

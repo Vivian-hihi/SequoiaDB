@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.data;
+package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,8 +17,9 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * TestLink: seqDB-10182: concurrency[split]
@@ -28,76 +29,92 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class Split10182 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private static ArrayList<String> groupNames = null;
 	private String csName = "cs10182";
 	private String clName = "cl10182";
+	private Random random = new Random();
+	private int msec = 500;
 	
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode and group number
 			if(CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)){
-				throw new SkipException("The mode is standlone, or only one group, "
-						+ "skip the testCase.");
+				throw new SkipException("The mode is standlone or only one group, skip the testCase.");
 			}
-			//get groupNames
-			groupNames = CommLib.getDataGroupNames(sdb);
-			//clear env
 			CommLib.clearCS(sdb, csName);
-			//ready env
+			
+			groupNames = CommLib.getDataGroupNames(sdb);
+			
 			sdb.createCollectionSpace(csName);
 			createCL(sdb, groupNames.get(0));
+			CommLib.insertData(sdb, csName, clName);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
 		try{
-			//check result
-			CommLib.checkCLResult(sdb, csName, clName);
-			
-			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
-			Assert.fail("ErrorMsg:\n" +e.getMessage());
+			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testSplit(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			
-			DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
-			BSONObject strCond = new BasicBSONObject();
-			BSONObject endCond = new BasicBSONObject();
-			Random i = new Random();
-			int bound = i.nextInt(10000);
-			strCond.put("a", bound);
-			endCond.put("a", bound + 100);
-			clDB.split(groupNames.get(0), groupNames.get(1), strCond, endCond);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -175){ //-175:The mutex task already exist
-				Assert.fail(e.getMessage());
-			}
-		}finally{
-			db.disconnect();
+	@Test
+	public void test(){
+		
+		Split split = new Split();
+		split.start();
+		
+		CommLib.sleep(random.nextInt(msec));
+		split.start();
+		
+		if( !split.isSuccess() ){
+			Assert.fail(split.getErrorMsg());
 		}
 		
+		//check results
+		CommLib.checkCLResult(csName, clName);
+	}
+	
+	private class Split extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
+				
+				BSONObject strCond = new BasicBSONObject();
+				BSONObject endCond = new BasicBSONObject();
+				Random i = new Random();
+				int bound = i.nextInt(10000);
+				strCond.put("a", bound);
+				endCond.put("a", bound + 100);
+				clDB.split(groupNames.get(0), groupNames.get(1), strCond, endCond);
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -175 && eCode != -147){ //-175:The mutex task already exist
+					throw e;
+				}
+			}finally{
+				db.disconnect();
+			}
+		}
 	}
 	
 	private void createCL(Sequoiadb sdb, String rgName){
@@ -112,7 +129,7 @@ public class Split10182 extends SdbTestBase {
 			opt.put("ReplSize", 0);
 			csDB.createCollection(clName, opt);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
 	}
 		

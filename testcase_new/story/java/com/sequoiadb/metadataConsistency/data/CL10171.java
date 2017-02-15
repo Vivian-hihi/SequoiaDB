@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.data;
+package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,8 +15,9 @@ import org.testng.SkipException;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * TestLink: 
@@ -27,102 +28,136 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class CL10171 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String csName = "cs10171";
 	private String clName = "cl10171";
 	private Random random = new Random();
 	private int number = 20;
+	private int msec = 100;
 	
 	@BeforeClass
 	public void setUp(){
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
-				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+				throw new SkipException("The mode is standlone, skip the testCase.");
 			}
 			CommLib.clearCS(sdb, csName);
 			sdb.createCollectionSpace(csName);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
 		try{
-			//check results
-			CommLib.checkCLResult(sdb, csName, clName);
-			
-			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
-			Assert.fail("ErrorMsg:\n" +e.getMessage());
+			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testCreateCL(){
-		Sequoiadb db = null;
-		try
-		{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			CollectionSpace csDB = db.getCollectionSpace(csName);
-			csDB.createCollection(clName + "_" + random.nextInt(number));
-		}catch(BaseException e){
-			if(e.getErrorCode() != -22){   
-				Assert.fail(e.getMessage());
-			}
-		}finally{
-			db.disconnect();
-		}
-	}	
-	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testAlterCL(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			CollectionSpace csDB = db.getCollectionSpace(csName);
-			
-			BSONObject opt = new BasicBSONObject();
-			opt.put("ReplSize", 1 );
-			if(csDB.isCollectionExist(clName)){
-				csDB.getCollection(clName + "_" + random.nextInt(number)).alterCollection(opt);
-			}
-		}catch(BaseException e){
-			if(e.getErrorCode() != -23){  
-				Assert.fail(e.getMessage());
-			}
-		}finally{
-			db.disconnect();
-		}
-	}
-	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testDropCL(){
-		Sequoiadb db = null;
-		try
-		{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			CollectionSpace csDB = db.getCollectionSpace(csName);
-			
-			csDB.dropCollection(clName +"_"+ random.nextInt(number));
-		}catch(BaseException e){
-			if(e.getErrorCode() != -23){  
-				Assert.fail(e.getMessage());
-			}
-		}finally{
-			db.disconnect();
-		}
-	}
+	@Test
+	public void test(){
+
+		CreateCL createCL = new CreateCL();
+		createCL.start();
+
+		AlterCL alterCL = new AlterCL();
+		CommLib.sleep(random.nextInt(msec));
+		alterCL.start();
+
+		DropCL dropCL = new DropCL();
+		CommLib.sleep(random.nextInt(msec));
+		dropCL.start();
 		
+		if( !( createCL.isSuccess() && alterCL.isSuccess() && dropCL.isSuccess() ) ){
+			Assert.fail(createCL.getErrorMsg() + alterCL.getErrorMsg() 
+					+ dropCL.getErrorMsg());
+		}
+		
+		//check results
+		CommLib.checkCLResult(csName, clName);
+	}
+	
+	private class CreateCL extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+				
+				String tmpCLName = clName + "_" + random.nextInt(number);
+				csDB.createCollection(tmpCLName);
+				if(csDB.isCollectionExist(tmpCLName)){
+					CommLib.insertData(db, csName, tmpCLName);
+				}
+				
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -22 && eCode != -147){   
+					throw e;
+				}
+			}finally{
+				db.disconnect();
+			}
+		}	
+	}
+	
+	private class AlterCL extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+				
+				BSONObject opt = new BasicBSONObject();
+				opt.put("ReplSize", 1 );
+				if(csDB.isCollectionExist(clName)){
+					csDB.getCollection(clName + "_" + random.nextInt(number)).alterCollection(opt);
+				}
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -23 && eCode != -147 ){  
+					throw e;
+				}
+			}finally{
+				db.disconnect();
+			}
+		}
+	}
+	
+	private class DropCL extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+				
+				csDB.dropCollection(clName +"_"+ random.nextInt(number));
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -23 && eCode != -147 ){  
+					throw e;
+				}
+			}finally{
+				db.disconnect();
+			}
+		}
+	}
+			
 }

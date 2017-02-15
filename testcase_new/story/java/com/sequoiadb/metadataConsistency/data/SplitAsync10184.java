@@ -1,6 +1,7 @@
 package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 
@@ -21,20 +22,19 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* TestLink: seqDB-10187: concurrency[attachCL, drop mainCL]
+* TestLink: seqDB-10184: concurrency[splitAsync, dropCS]
 * @author xiaoni huang init
-* @Date   2016.10.11
+* @Date   2016.10.24
 */
 
-public class SubCL10187 extends SdbTestBase {
+public class SplitAsync10184 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
 	private static Sequoiadb sdb = null;
-	private String csName = "cs10187";
-	private String clName = "cl10187";
-	private String mCLName = clName + "_m";
-	private String sCLName = clName + "_s";
+	private static ArrayList<String> groupNames = null;
+	private String csName = "cs10184_splitAsync";
+	private String clName = "cl10184";
 	private Random random = new Random();
-	private int msec = 100;
+	private int msec = 300;
 	
 	@BeforeClass
 	public void setUp(){
@@ -43,15 +43,18 @@ public class SubCL10187 extends SdbTestBase {
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			//judge the mode
-			if(CommLib.isStandAlone(sdb)){
-				throw new SkipException("The mode is standlone, skip the testCase.");
+			//judge the mode and group number
+			if(CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)){
+				throw new SkipException("The mode is standlone or only one group, skip the testCase.");
 			}
+			//get groupNames
+			groupNames = CommLib.getDataGroupNames(sdb);
+			
 			CommLib.clearCS(sdb, csName);
 			
 			sdb.createCollectionSpace(csName);
-			createMainCL(sdb);
-			createSubCL(sdb);
+			createCL(sdb, groupNames.get(0));
+			CommLib.insertData(sdb, csName, clName);
 		}catch(BaseException e){
 			sdb.disconnect();
 			Assert.fail(e.getMessage());
@@ -63,7 +66,7 @@ public class SubCL10187 extends SdbTestBase {
 		try{
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			Assert.fail("ErrorMsg:\n" +e.getMessage());
 		}finally{
 			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
@@ -73,47 +76,42 @@ public class SubCL10187 extends SdbTestBase {
 	
 	@Test
 	public void test(){
+		SplitAsync splitAsync = new SplitAsync();
+		splitAsync.start();
 
-		AttachCL attachCL = new AttachCL();
-		attachCL.start();
-
-		DropMainCL dropMainCL = new DropMainCL();
+		DropCS dropCS = new DropCS();
 		CommLib.sleep(random.nextInt(msec));
-		dropMainCL.start();
+		dropCS.start();
 		
-		if( !( attachCL.isSuccess() && dropMainCL.isSuccess() ) ){
-			Assert.fail(attachCL.getErrorMsg() + dropMainCL.getErrorMsg());
+		if( !( splitAsync.isSuccess() && dropCS.isSuccess() ) ){
+			Assert.fail(splitAsync.getErrorMsg() + dropCS.getErrorMsg());
 		}
 		
 		//check results
 		CommLib.checkCLResult(csName, clName);
 	}
 	
-	private class AttachCL extends SdbThreadBase{
+	private class SplitAsync extends SdbThreadBase{
 		@Override
 		public void exec() throws BaseException{
-			Sequoiadb db  = null;
+			Sequoiadb db = null;
 			try
 			{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-				
-				BSONObject options = new BasicBSONObject();
-				BSONObject lowBoundObj = new BasicBSONObject();
-				BSONObject upBoundObj  = new BasicBSONObject();
-				lowBoundObj.put("a", 0);
-				upBoundObj.put("a", 200);
-				options.put("LowBound", lowBoundObj);
-				options.put("UpBound", upBoundObj);
-				CollectionSpace csDB = db.getCollectionSpace(csName);
-				if(csDB.isCollectionExist(mCLName)){
-					DBCollection clDB = csDB.getCollection(mCLName);
-					clDB.attachCollection(csName + "." + sCLName, options);
 					
-					CommLib.insertData(db, csName, mCLName);
+				if(db.getCollectionSpace(csName).isCollectionExist(clName)){
+					DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
+					BSONObject strCond = new BasicBSONObject();
+					BSONObject endCond = new BasicBSONObject();
+					strCond.put("a", 0);
+					endCond.put("a", 50);
+					//System.out.println("split condition: " + strCond + ", " +endCond );
+					clDB.splitAsync(groupNames.get(0), groupNames.get(1), strCond, endCond);
 				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -23 && eCode != -34){ 
+				if( eCode != -175 //-175:The mutex task already exist
+						&& eCode != -147 && eCode != -23 && eCode != -34 ){  
 					throw e;
 				}
 			}finally{
@@ -121,20 +119,18 @@ public class SubCL10187 extends SdbTestBase {
 			}
 		}
 	}
-
-	private class DropMainCL extends SdbThreadBase{
+	
+	private class DropCS extends SdbThreadBase{
 		@Override
 		public void exec() throws BaseException{
-			Sequoiadb db  = null;
+			Sequoiadb db = null;
 			try
 			{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-				CollectionSpace csDB = db.getCollectionSpace(csName);
-				
-				csDB.dropCollection(mCLName);
+				db.dropCollectionSpace(csName);
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -147){ 
+				if( eCode != -147 && eCode != -34){ 
 					throw e;
 				}
 			}finally{
@@ -143,32 +139,17 @@ public class SubCL10187 extends SdbTestBase {
 		}
 	}
 	
-	public void createMainCL(Sequoiadb sdb){
+	private void createCL(Sequoiadb sdb, String rgName){
 		try{
 			CollectionSpace csDB = sdb.getCollectionSpace(csName);
-			
-			BSONObject mOpt = new BasicBSONObject();
-			BSONObject mSubObj = new BasicBSONObject();
-			mSubObj.put("a", 1);
-			mOpt.put("ShardingKey", mSubObj); 
-			mOpt.put("ReplSize", 0);
-			mOpt.put("IsMainCL", true);
-			csDB.createCollection(mCLName, mOpt);
-		}catch(BaseException e){
-			throw e;
-		}
-	}
-	
-	public void createSubCL(Sequoiadb sdb){
-		try{
-			CollectionSpace csDB = sdb.getCollectionSpace(csName);
-			
-			BSONObject sOpt = new BasicBSONObject();
-			BSONObject sSubObj = new BasicBSONObject();
-			sSubObj.put("a", 1);
-			sOpt.put("ShardingKey", sSubObj);
-			sOpt.put("ReplSize", 0);
-			csDB.createCollection(sCLName, sOpt);
+			BSONObject opt = new BasicBSONObject();
+			BSONObject subObj = new BasicBSONObject();
+			subObj.put("a", 1);
+			opt.put("ShardingType", "range");
+			opt.put("ShardingKey", subObj);
+			opt.put("Group", rgName);
+			opt.put("ReplSize", 0);
+			csDB.createCollection(clName, opt);
 		}catch(BaseException e){
 			throw e;
 		}

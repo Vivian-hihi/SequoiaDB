@@ -1,7 +1,8 @@
-package com.sequoiadb.metadataConsistency.data;
+package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
@@ -14,28 +15,30 @@ import org.testng.SkipException;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* TestLink: seqDB-10205: concurrency[create IdIndex in subCL]
+* TestLink: seqDB-10205: concurrency[create IdIndex in subCL, drop IdIndex]
 * @author xiaoni huang init
 * @Date   2016.10.20
 */
 
 public class IdIndex10205 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String csName = "cs10205";
 	private String clName = "cs10205";
 	private String mCLName = clName + "_m";
 	private String sCLName = clName + "_s";
+	private Random random = new Random();
+	private int msec = 100;
 	
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -44,70 +47,88 @@ public class IdIndex10205 extends SdbTestBase {
 				throw new SkipException("The mode is standlone, skip the testCase.");
 			}
 			
-			//clear env
 			CommLib.clearCS(sdb, csName);
-			//create cs
-			sdb.createCollectionSpace(csName);
-			//create subCL
-			this.createMainCL(sdb);
-			this.createSubCL(sdb);
-			this.attachCL(sdb);
 			
+			sdb.createCollectionSpace(csName);
+			createMainCL(sdb);
+			createSubCL(sdb);
+			attachCL(sdb);
+			CommLib.insertData(sdb, csName, mCLName);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
 		try{
-			//check results
-			CommLib.checkIndex(sdb, csName, clName);
-			
-			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
-			Assert.fail("ErrorMsg:\n" +e.getMessage());
+			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testIdIndex10205(){
-		Sequoiadb db  = null;
-		DBCollection clDB = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			clDB = db.getCollectionSpace(csName).getCollection(mCLName);
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
+	@Test(invocationCount = 3, threadPoolSize = 3)
+	public void test(){
+		CreateIdIndex createIdIndex = new CreateIdIndex();
+		createIdIndex.start();
+
+		DropIndex dropIndex = new DropIndex();
+		CommLib.sleep(random.nextInt(msec));
+		dropIndex.start();
 		
-		//-----create index-----
-		try{
-			BSONObject opt = new BasicBSONObject();
-			opt.put("SortBufferSize", 128);
-			clDB.createIdIndex(opt);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -43){ //-43:Failed to initialize index
-				db.disconnect();
-				Assert.fail(e.getMessage());
-			}
+		if( !( createIdIndex.isSuccess() && dropIndex.isSuccess() ) ){
+			Assert.fail(createIdIndex.getErrorMsg() + dropIndex.getErrorMsg());
 		}
 
-		//-----drop index-----
-		try{
-			clDB.dropIdIndex();
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}finally{
-			db.disconnect();
+		//check results
+		CommLib.checkIndex(csName, clName);
+	}
+
+	private class CreateIdIndex extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				DBCollection clDB = db.getCollectionSpace(csName).getCollection(mCLName);
+				
+				BSONObject opt = new BasicBSONObject();
+				opt.put("SortBufferSize", 128);
+				clDB.createIdIndex(opt);
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -43 && eCode != -147 && eCode != -247 ){ //-43:Failed to initialize index
+					Assert.fail(e.getMessage());
+				}
+			}finally{
+				db.disconnect();
+			}
 		}
-		
+	}
+
+	private class DropIndex extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				DBCollection clDB = db.getCollectionSpace(csName).getCollection(mCLName);
+				clDB.dropIdIndex();
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -47 && eCode != -147 ){ 
+					Assert.fail(e.getMessage());
+				}
+			}finally{
+				db.disconnect();
+			}
+		}
 	}
 	
 	public void createMainCL(Sequoiadb sdb){
@@ -120,7 +141,7 @@ public class IdIndex10205 extends SdbTestBase {
 			opt.put("IsMainCL", true);
 			sdb.getCollectionSpace(csName).createCollection(mCLName, opt);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
 	}
 	
@@ -135,13 +156,12 @@ public class IdIndex10205 extends SdbTestBase {
 				sdb.getCollectionSpace(csName).createCollection(sCLName + i, opt);
 			}
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
 		
 	}
 	
 	public void attachCL(Sequoiadb sdb){
-		//-----attach cl-----
 		try
 		{
 			BSONObject options = new BasicBSONObject();
@@ -157,7 +177,7 @@ public class IdIndex10205 extends SdbTestBase {
 					attachCollection(csName + "." + sCLName + i, options);
 			}
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
 	}	
 }

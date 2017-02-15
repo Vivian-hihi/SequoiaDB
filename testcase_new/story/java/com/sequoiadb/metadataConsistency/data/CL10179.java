@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.data;
+package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -16,8 +16,9 @@ import org.testng.SkipException;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * TestLink: 
@@ -28,105 +29,111 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class CL10179 extends SdbTestBase{
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private static ArrayList<String> dataGroups = null;
 	private String domainName = "dm10179";
 	private String csName = "cs10179";
 	private String clName = "cl10179";
 	private Random random = new Random();
+	private int msec = 100;
 	
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode and group number
 			if(CommLib.isStandAlone(sdb) || CommLib.OneGroupMode(sdb)){
-				throw new SkipException("The mode is standlone, or only one group, "
-						+ "skip the testCase.");
+				throw new SkipException("The mode is standlone or only one group, skip the testCase.");
 			}
-			//clear env
 			CommLib.clearCS(sdb, csName);
 			CommLib.clearDomain(sdb, domainName);
-			//ready env
+			
 			dataGroups = CommLib.getDataGroupNames(sdb);
-			this.createDomain();
-			this.createCS();
+			
+			createDomain();
+			createCS();
 			sdb.getCollectionSpace(csName).createCollection(clName);
+			CommLib.insertData(sdb, csName, clName);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
 		try{
-			//check results
-			CommLib.checkCLResult(sdb, csName, clName);
-			
-			//clear env
 			CommLib.clearCS(sdb, csName);
 			CommLib.clearDomain(sdb, domainName);
 		}catch(BaseException e){
-			Assert.fail("ErrorMsg:\n" +e.getMessage());
+			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
-	}
+	}	
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testAlterCL(){
-		Sequoiadb db  = null;
-		CollectionSpace csDB = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			
-			if(!db.isCollectionSpaceExist(csName)){
-				db.createCollectionSpace(csName).createCollection(clName);
-			}
-			csDB = db.getCollectionSpace(csName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -33 && e.getErrorCode() != -34){
-				Assert.fail(e.getMessage());
-			}
-		}
+	@Test
+	public void test(){
+		AlterCL alterCL = new AlterCL();
+		alterCL.start();
 		
-		try{
-			BSONObject opt = new BasicBSONObject();
-			int i = random.nextInt(dataGroups.size());
-			opt.put("Group", dataGroups.get(i));
-			if(csDB != null){
-				csDB.getCollection(clName).alterCollection(opt);
-			}
-		}catch(NullPointerException e){
-			
-		}catch(BaseException e){
-			if(e.getErrorCode() != -23){ 
-				Assert.fail(e.getMessage());
-			} 
-		}finally{
-			db.disconnect();
+		DropCS dropCS = new DropCS();
+		CommLib.sleep(random.nextInt(msec));
+		dropCS.start();
+		
+		if( !( alterCL.isSuccess() && dropCS.isSuccess() ) ){
+			Assert.fail(alterCL.getErrorMsg() + dropCS.getErrorMsg());
 		}
+
+		//check results
+		CommLib.checkCLResult(csName, clName);
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testDropCS(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			db.dropCollectionSpace(csName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -34){ 
-				Assert.fail(e.getMessage());
+	private class AlterCL extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				
+				BSONObject opt = new BasicBSONObject();
+				int i = random.nextInt(dataGroups.size());
+				opt.put("Group", dataGroups.get(i));
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+				if(csDB != null){
+					csDB.getCollection(clName).alterCollection(opt);
+				}
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -34 && eCode != -23 && eCode != -147){ 
+					throw e;
+				} 
+			}finally{
+				db.disconnect();
 			}
-		}finally{
-			db.disconnect();
+		}
+	}
+
+	private class DropCS extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				db.dropCollectionSpace(csName);
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -147){ 
+					throw e;
+				} 
+			}finally{
+				db.disconnect();
+			}
 		}
 	}
 	
@@ -137,7 +144,7 @@ public class CL10179 extends SdbTestBase{
 			opt.put( "AutoSplit", true );
 			sdb.createDomain(domainName, opt);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
 	}
 	
@@ -147,7 +154,7 @@ public class CL10179 extends SdbTestBase{
 			opt.put( "Domain", domainName );
 			sdb.createCollectionSpace(csName, opt);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
 	}
 		

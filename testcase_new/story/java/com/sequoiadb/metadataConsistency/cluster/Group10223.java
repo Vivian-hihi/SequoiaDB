@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.cluster;
+package com.sequoiadb.metadataconsistency.cluster;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -13,31 +13,32 @@ import org.testng.annotations.AfterClass;
 import org.testng.Assert;
 import org.testng.SkipException;
 
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* TestLink: seqDB-10223
+* TestLink: seqDB-10223: concurrency[removeRG, alterDomain]
 * @author xiaoni huang init
 * @Date   2016.10.24
 */
 
 public class Group10223 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private static ArrayList<String> dataGroups = null;
 	private String rgName = "rg10223";
 	private String domainName = "dm10223";
 	private Random random = new Random();
-	private int number = 10;
+	private int msec = 100;
 	
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -46,111 +47,119 @@ public class Group10223 extends SdbTestBase {
 				throw new SkipException("The mode is standlone, or only one group, "
 						+ "skip the testCase.");
 			}
-			//clear env
 			CommLib.clearDomain(sdb, domainName);
 			CommLib.clearGroup(sdb, rgName);
-			//ready env
+
 			dataGroups = CommLib.getDataGroupNames(sdb);
-			this.createDomain(sdb);
-			this.createGroupAndNode();
+			
+			ReplicaGroup rg = sdb.createReplicaGroup(rgName);
+			createNode();
+			rg.start();
+			
+			createDomain(sdb);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
 		try{
-			//clear env
 			CommLib.clearDomain(sdb, domainName);
 			CommLib.clearGroup(sdb, rgName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -154){   //-154:Group does not exist
-				Assert.fail(e.getMessage());
-			}
+			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testDropGroup(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+	@Test
+	public void test(){
+		
+		AlterDomain alterDomain = new AlterDomain();
+		alterDomain.start();
+
+		RemoveRG removeRG = new RemoveRG();
+		CommLib.sleep(random.nextInt(msec));
+		removeRG.start();
+		
+		if( !( removeRG.isSuccess() && alterDomain.isSuccess() ) ){
+			Assert.fail(removeRG.getErrorMsg() + alterDomain.getErrorMsg());
 		}
 		
-		try
-		{
-			db.removeReplicaGroup(rgName + "_" + number);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -154){  //-154:Group does not exist
-				Assert.fail(e.getMessage());
+		//check results
+		CommLib.checkRGOfCatalog(rgName);
+		CommLib.checkDomainOfCatalog(domainName);
+	}
+
+	private class RemoveRG extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				db.removeReplicaGroup(rgName);
+			}catch(BaseException e){
+				//int eCode = e.getErrorCode();
+				throw e;
+			}finally{
+				db.disconnect();
 			}
-		}finally{
-			db.disconnect();
+		}
+	}
+
+	private class AlterDomain extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				
+				String[] groups = {dataGroups.get(0)};
+				BSONObject opt = new BasicBSONObject();
+				opt.put( "Groups", groups );
+				sdb.getDomain(domainName).alterDomain(opt);
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -154 ){
+					throw e;
+				}
+			}
+			finally{
+				db.disconnect();
+			}
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testAlterDomain(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
-		}
-		
-		try{
-			BSONObject opt = new BasicBSONObject();
-			opt.put( "Groups", dataGroups );
-			sdb.getDomain(domainName).alterDomain(opt);
-			for(int i = 0; i < 10; i++){
-				db.getDomain(domainName + "_" + random.nextInt(number)).alterDomain(opt);
-			}
-			//check results of catalog
-			CommLib.checkDomainOfCatalog(db, domainName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -214){  //-214:Domain does not exist
-				Assert.fail(e.getMessage());
-			}
-		}
-		finally{
-			db.disconnect();
-		}
-	}
-	
-	public void createGroupAndNode(){
+	public void createNode(){
 		try
 		{
-			for(int i = 0; i < number; i++){
-				String tmpName = rgName + "_" + i;
-				sdb.createReplicaGroup(tmpName);
-				CommLib.createNode(sdb, tmpName, SdbTestBase.reservedPortBegin, 
-						SdbTestBase.reservedPortEnd, SdbTestBase.reservedDir);
-				sdb.getReplicaGroup(tmpName).start();
+			for(int i = 0; i < 3; i++){
+				CommLib.createNode( sdb, rgName, 
+						   SdbTestBase.reservedPortBegin, 
+						   SdbTestBase.reservedPortEnd, 
+						   SdbTestBase.reservedDir );
 			}
 		}catch(BaseException e){
-			if(e.getErrorCode() != -153){  //Group already exist
-				Assert.fail(e.getMessage());
-			}
+			throw e;
 		}
 	}
 	
 	public void createDomain(Sequoiadb sdb){
 		try
 		{
-			ArrayList<String> dataGroupNames = CommLib.getDataGroupNames(sdb);
+			String[] rgArr = {rgName};
 			BSONObject opt = new BasicBSONObject();
-			opt.put( "Groups", dataGroupNames );
+			opt.put( "Groups", rgArr );
 			sdb.createDomain ( domainName, opt);
 		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+			throw e;
 		}
 	}
 	

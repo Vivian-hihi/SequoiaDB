@@ -2,6 +2,7 @@ package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
@@ -12,7 +13,6 @@ import org.testng.Assert;
 import org.testng.SkipException;
 
 import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.metadataconsistency.data.CommLib;
@@ -20,32 +20,35 @@ import com.sequoiadb.testcommon.SdbTestBase;
 import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
-* TestLink: seqDB-10206: concurrency[attachCL, alter cl]
+* TestLink: 
+* 		seqDB-10171: concurrency[createCL, alterCL, dropCL]
 * @author xiaoni huang init
-* @Date   2016.10.17
+* @Date   2016.10.11
 */
 
-public class IdIndex10206 extends SdbTestBase {
+public class CL10177 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
 	private static Sequoiadb sdb = null;
-	private String csName = "cs10206";
-	private String clName = "cl10206";
+	private String csName = "cs10177";
+	private String clName = "cl10177";
+	private Random random = new Random();
+	private int number = 20;
+	private int msec = 100;
 	
 	@BeforeClass
 	public void setUp(){
-		//start time
 		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
-				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+				throw new SkipException("The mode is standlone, skip the testCase.");
 			}
 			CommLib.clearCS(sdb, csName);
 			
-			createCL(csName);
-			CommLib.insertData(sdb, csName, clName);
+			sdb.createCollectionSpace(csName);
+			createCL();
 		}catch(BaseException e){
 			sdb.disconnect();
 			Assert.fail(e.getMessage());
@@ -65,73 +68,65 @@ public class IdIndex10206 extends SdbTestBase {
 		}
 	}
 	
-	@Test
+	@Test(invocationCount = 3, threadPoolSize = 3)
 	public void test(){
-		CreateIdIndex createIndex = new CreateIdIndex();
-		createIndex.start();
 		
 		AlterCL alterCL = new AlterCL();
+		CommLib.sleep(random.nextInt(msec));
 		alterCL.start();
 		
-		if( !( createIndex.isSuccess() && alterCL.isSuccess() ) ){
-			Assert.fail(createIndex.getErrorMsg() + alterCL.getErrorMsg());
+		if( !alterCL.isSuccess() ){
+			Assert.fail(alterCL.getErrorMsg());
 		}
-
+		
 		//check results
-		CommLib.checkIndex(csName, clName);
 		CommLib.checkCLResult(csName, clName);
 	}
-
-	private class CreateIdIndex extends SdbThreadBase{
+	
+	private class AlterCL extends SdbThreadBase{
 		@Override
 		public void exec() throws BaseException{
 			Sequoiadb db  = null;
+			int rep = random.nextInt(7);
 			try{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-				DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
+				CollectionSpace csDB = db.getCollectionSpace(csName);
 				
 				BSONObject opt = new BasicBSONObject();
-				opt.put("SortBufferSize", 128);
-				clDB.createIdIndex(opt);
+				opt.put("ReplSize", rep );
+				csDB.getCollection(clName + "_" + random.nextInt(number)).alterCollection(opt);
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -43 && eCode != -108){ //-43:Failed to initialize index
-					Assert.fail(e.getMessage());
+				if( eCode != -147 ){  
+					System.out.println("ReplSize:" + rep);
+					throw e;
 				}
 			}finally{
 				db.disconnect();
 			}
 		}
 	}
-
-	private class AlterCL extends SdbThreadBase{
-		@Override
-		public void exec() throws BaseException{
-			Sequoiadb db  = null;
-			try{
-				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			    DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
-			    
-				BSONObject opt = new BasicBSONObject();
-				opt.put("ReplSize", 1);
-			    clDB.alterCollection(opt);
-			}catch(BaseException e){
-				Assert.fail(e.getMessage());
-			}finally{
-				db.disconnect();
-			}
-		}
-	}
 	
-	public void createCL(String csName){
-		try{
-			CollectionSpace csDB = sdb.createCollectionSpace(csName);
+	public void createCL(){
+		try
+		{
+			CollectionSpace csDB = sdb.getCollectionSpace(csName);
 			
 			BSONObject opt = new BasicBSONObject();
-			opt.put("AutoIndexId", false);
-			csDB.createCollection(clName, opt);
+			BSONObject subObj = new BasicBSONObject();
+			subObj.put("a", 1);
+			opt.put("ShardingType", "hash");
+			opt.put("ShardingKey", subObj);
+			opt.put("ReplSize", 0);
+			opt.put("AutoSplit", true);
+			for(int i = 0; i < number; i++){
+				String tmpCLName = clName + "_" + i;
+			    csDB.createCollection(tmpCLName, opt);
+				CommLib.insertData(sdb, csName, tmpCLName);
+			}
 		}catch(BaseException e){
 			throw e;
 		}
 	}
+	
 }

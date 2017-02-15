@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.data;
+package com.sequoiadb.metadataconsistency.data;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,8 +12,9 @@ import org.testng.SkipException;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * TestLink: 
@@ -24,11 +25,11 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class CS10165 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String csName = "cs10165";
-	private Random randomInt = new Random();
+	private Random random = new Random();
 	private int number = 30;
+	private int msec = 100;
 	
 	@BeforeClass
 	public void setUp(){
@@ -39,25 +40,21 @@ public class CS10165 extends SdbTestBase {
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 			//judge the mode
 			if(CommLib.isStandAlone(sdb)){
-				throw new SkipException("The mode is standlone, " + "skip the testCase.");
+				throw new SkipException("The mode is standlone, skip the testCase.");
 			}
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 	}
 	
 	@AfterClass
 	public void tearDown(){
 		try{
-			//check results
-			CommLib.checkCSOfCatalog(sdb, csName);
-			
-			//clear env
 			CommLib.clearCS(sdb, csName);
 		}catch(BaseException e){
-			Assert.fail("ErrorMsg:\n" +e.getMessage());
+			Assert.fail(e.getMessage());
 		}finally{
 			System.out.println("End to run " + this.getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
@@ -66,40 +63,57 @@ public class CS10165 extends SdbTestBase {
 	}
 	
 	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testCreateCS(){
-		Sequoiadb db  = null;
-		try
-		{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		    db.createCollectionSpace(csName + "_" + randomInt.nextInt(number));
-			//check results
-			CommLib.checkCSOfCatalog(db, csName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -33
-					&& e.getErrorCode() != -147){ 
-				Assert.fail(e.getMessage());
+	public void test(){
+		CreateCS createCS = new CreateCS();
+		createCS.start();
+
+		DropCS dropCS = new DropCS();
+		CommLib.sleep(random.nextInt(msec));
+		dropCS.start();
+		
+		if( !( createCS.isSuccess() && dropCS.isSuccess() ) ){
+			Assert.fail(createCS.getErrorMsg() + dropCS.getErrorMsg());
+		}
+
+		//check results
+		CommLib.checkCSOfCatalog(csName);
+	}
+
+	private class CreateCS extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			    db.createCollectionSpace(csName + "_" + random.nextInt(number));
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -33 && eCode != -147){ 
+					throw e;
+				}
+			}finally{
+				db.disconnect();
 			}
-		}finally{
-			db.disconnect();
 		}
 	}
-	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testDropCS(){
-		Sequoiadb db  = null;
-		try
-		{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-			db.dropCollectionSpace(csName + "_" + randomInt.nextInt(number));
-			//check results
-			CommLib.checkCSOfCatalog(db, csName);
-		}catch(BaseException e){
-			if(e.getErrorCode() != -34
-					&& e.getErrorCode() != -147){ 
-				Assert.fail(e.getMessage());
+
+	private class DropCS extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				db.dropCollectionSpace(csName + "_" + random.nextInt(number));
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -34 && eCode != -147){ 
+					throw e;
+				}
+			}finally{
+				db.disconnect();
 			}
-		}finally{
-			db.disconnect();
 		}
 	}
 		

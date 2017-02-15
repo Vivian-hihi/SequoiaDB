@@ -1,4 +1,4 @@
-package com.sequoiadb.metadataConsistency.cluster;
+package com.sequoiadb.metadataconsistency.cluster;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,8 +12,9 @@ import org.testng.SkipException;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.metadataConsistency.data.CommLib;
+import com.sequoiadb.metadataconsistency.data.CommLib;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbThreadBase;
 
 /**
 * TestLink: seqDB-10221: concurrency[remove group]
@@ -23,16 +24,15 @@ import com.sequoiadb.testcommon.SdbTestBase;
 
 public class Group10222 extends SdbTestBase {
 	private SimpleDateFormat dateFm = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-	private CommLib CommLib = new CommLib();
 	private static Sequoiadb sdb = null;
 	private String rgName = "rg10222";
 	private Random random = new Random();
-	private int number = 30;
+	private int msec = 100;
 	
 	@BeforeClass
 	public void setUp(){
 		//start time
-		System.out.println("Begin to run " + this.getClass().getName() 
+		System.out.println("Begin to run " + getClass().getName() 
 					+ ", begin in: " + dateFm.format(new Date().getTime()));
 		try{
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -41,13 +41,11 @@ public class Group10222 extends SdbTestBase {
 				throw new SkipException("The mode is standlone, or only one group, "
 						+ "skip the testCase.");
 			}
-			//clear env
 			CommLib.clearGroup(sdb, rgName);
-			//ready env
-			this.createGroup(sdb);
+			sdb.createReplicaGroup(rgName);
 		}catch(BaseException e){
-			Assert.fail("Failed to prepare env at th begining. "
-					+ "ErrorMsg:\n" +e.getMessage());
+			sdb.disconnect();
+			Assert.fail(e.getMessage());
 		}
 		
 	}
@@ -55,46 +53,49 @@ public class Group10222 extends SdbTestBase {
 	@AfterClass
 	public void tearDown(){
 		try{
-			//clear env
 			CommLib.clearGroup(sdb, rgName);
 		}catch(BaseException e){
-			if(e.getErrorCode() != -154){ //-154:Group does not exist
-				Assert.fail(e.getMessage());
-			}
+			Assert.fail(e.getMessage());
 		}finally{
-			System.out.println("End to run " + this.getClass().getName() 
+			System.out.println("End to run " + getClass().getName() 
 						+ ", end in: " + dateFm.format(new Date().getTime()));
 			sdb.disconnect();
 		}
 	}
 	
-	@Test(invocationCount = 10, threadPoolSize = 10)
-	public void testRemoveGroup(){
-		Sequoiadb db  = null;
-		try{
-			db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
+	@Test
+	public void test(){
+		
+		RemoveRG removeRG = new RemoveRG();
+		removeRG.start();
+		
+		CommLib.sleep(random.nextInt(msec));
+		removeRG.start();
+		
+		if( !removeRG.isSuccess() ){
+			Assert.fail(removeRG.getErrorMsg());
 		}
 		
-		try
-		{
-			db.removeReplicaGroup(rgName + random.nextInt(number));
-		}catch(BaseException e){
-			if(e.getErrorCode() != -154){  //-154:Group does not exist
-				Assert.fail(e.getMessage());
-			}
-		}
+		//check results
+		CommLib.checkRGOfCatalog(rgName);
 	}
-	
-	public void createGroup(Sequoiadb sdb){
-		try
-		{
-			for(int i = 0; i < number; i++){
-				sdb.createReplicaGroup(rgName + i);
+
+	private class RemoveRG extends SdbThreadBase{
+		@Override
+		public void exec() throws BaseException{
+			Sequoiadb db  = null;
+			try
+			{
+				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+				db.removeReplicaGroup(rgName);
+			}catch(BaseException e){
+				int eCode = e.getErrorCode();
+				if( eCode != -154){ 
+					throw e;
+				}
+			}finally{
+				db.disconnect();
 			}
-		}catch(BaseException e){
-			Assert.fail(e.getMessage());
 		}
 	}
 	
