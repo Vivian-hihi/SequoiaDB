@@ -36,8 +36,8 @@ PHP_METHOD( SequoiaDB, __construct )
 {
    INT32 rc = SDB_OK ;
    INT32 argsNum     = ZEND_NUM_ARGS() ;
-   INT32 userNameLen = 0 ;
-   INT32 passwordLen = 0 ;
+   PHP_LONG userNameLen = 0 ;
+   PHP_LONG passwordLen = 0 ;
    BOOLEAN useSSL    = FALSE ;
    zval *pAddress    = NULL ;
    CHAR *pUserName   = NULL ;
@@ -98,7 +98,7 @@ PHP_METHOD( SequoiaDB, install )
                                  "install",
                                  &pValue TSRMLS_CC ) == SUCCESS )
          {
-            if( Z_TYPE_P( pValue ) != IS_BOOL )
+            if( PHP_IS_BOOLEAN( Z_TYPE_P( pValue ) ) == FALSE )
             {
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -121,7 +121,7 @@ PHP_METHOD( SequoiaDB, install )
          }
          if( Z_TYPE_P( pValue ) != IS_NULL )
          {
-            if( Z_TYPE_P( pValue ) != IS_BOOL )
+            if( PHP_IS_BOOLEAN( Z_TYPE_P( pValue ) ) == FALSE )
             {
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -154,11 +154,10 @@ error:
 PHP_METHOD( SequoiaDB, getError )
 {
    INT32 rc = SDB_OK ;
+   zval *pError = NULL ;
    zval *pThisObj = getThis() ;
-   zval *pError = zend_read_property( Z_OBJCE_P( pThisObj ),
-                                      pThisObj,
-                                      ZEND_STRL( "_error" ),
-                                      0 TSRMLS_CC ) ;
+
+   PHP_READ_VAR( pThisObj, "_error", pError ) ;
    rc = Z_LVAL_P( pError ) ;
    PHP_RETURN_AUTO_ERROR( TRUE, pThisObj, rc ) ;
 }
@@ -167,8 +166,8 @@ PHP_METHOD( SequoiaDB, getError )
 PHP_METHOD( SequoiaDB, connect )
 {
    INT32 rc = SDB_OK ;
-   INT32 userNameLen = 0 ;
-   INT32 passwordLen = 0 ;
+   PHP_LONG userNameLen = 0 ;
+   PHP_LONG passwordLen = 0 ;
    BOOLEAN useSSL    = FALSE ;
    zval *pAddress    = NULL ;
    CHAR *pUserName   = NULL ;
@@ -521,7 +520,7 @@ error:
 PHP_METHOD( SequoiaDB, selectCS )
 {
    INT32 rc = SDB_OK ;
-   INT32 csNameLen = 0 ;
+   PHP_LONG csNameLen = 0 ;
    zval *pThisObj  = getThis() ;
    zval *pOptions  = NULL ;
    CHAR *pCsName   = NULL ;
@@ -589,7 +588,7 @@ error:
 PHP_METHOD( SequoiaDB, createCS )
 {
    INT32 rc = SDB_OK ;
-   INT32 csNameLen = 0 ;
+   PHP_LONG csNameLen = 0 ;
    zval *pThisObj  = getThis() ;
    zval *pOptions  = NULL ;
    CHAR *pCsName   = NULL ;
@@ -635,7 +634,7 @@ error:
 PHP_METHOD( SequoiaDB, getCS )
 {
    INT32 rc = SDB_OK ;
-   INT32 csNameLen = 0 ;
+   PHP_LONG csNameLen = 0 ;
    zval *pThisObj  = getThis() ;
    CHAR *pCsName   = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -675,7 +674,7 @@ error:
 PHP_METHOD( SequoiaDB, dropCS )
 {
    INT32 rc = SDB_OK ;
-   INT32 csNameLen = 0 ;
+   PHP_LONG csNameLen = 0 ;
    zval *pThisObj  = getThis() ;
    CHAR *pCsName   = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -740,7 +739,7 @@ error:
 PHP_METHOD( SequoiaDB, getCL )
 {
    INT32 rc = SDB_OK ;
-   INT32 fullNameLen = 0 ;
+   PHP_LONG fullNameLen = 0 ;
    zval *pThisObj    = getThis() ;
    CHAR *pFullName   = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -779,7 +778,7 @@ error:
 PHP_METHOD( SequoiaDB, truncate )
 {
    INT32 rc = SDB_OK ;
-   INT32 fullNameLen = 0 ;
+   PHP_LONG fullNameLen = 0 ;
    zval *pThisObj    = getThis() ;
    zval *pCL         = NULL ;
    CHAR *pFullName   = NULL ;
@@ -897,7 +896,7 @@ error:
 PHP_METHOD( SequoiaDB, createDomain )
 {
    INT32 rc = SDB_OK ;
-   INT32 domainNameLen = 0 ;
+   PHP_LONG domainNameLen = 0 ;
    zval *pThisObj      = getThis() ;
    zval *pOptions      = NULL ;
    CHAR *pDomainName   = NULL ;
@@ -943,7 +942,7 @@ error:
 PHP_METHOD( SequoiaDB, getDomain )
 {
    INT32 rc = SDB_OK ;
-   INT32 domainNameLen = 0 ;
+   PHP_LONG domainNameLen = 0 ;
    zval *pThisObj      = getThis() ;
    CHAR *pDomainName   = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -982,7 +981,7 @@ error:
 PHP_METHOD( SequoiaDB, dropDomain )
 {
    INT32 rc = SDB_OK ;
-   INT32 domainNameLen = 0 ;
+   PHP_LONG domainNameLen = 0 ;
    zval *pThisObj      = getThis() ;
    CHAR *pDomainName   = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1094,7 +1093,7 @@ error:
 PHP_METHOD( SequoiaDB, getGroup )
 {
    INT32 rc = SDB_OK ;
-   INT32 groupNameLen = 0 ;
+   PHP_LONG groupNameLen = 0 ;
    zval *pThisObj     = getThis() ;
    CHAR *pGroupName   = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1135,7 +1134,7 @@ error:
 PHP_METHOD( SequoiaDB, createGroup )
 {
    INT32 rc = SDB_OK ;
-   INT32 groupNameLen  = 0 ;
+   PHP_LONG groupNameLen  = 0 ;
    zval *pThisObj      = getThis() ;
    CHAR *pGroupName    = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1170,7 +1169,7 @@ error:
 PHP_METHOD( SequoiaDB, removeGroup )
 {
    INT32 rc = SDB_OK ;
-   INT32 groupNameLen  = 0 ;
+   PHP_LONG groupNameLen  = 0 ;
    zval *pThisObj      = getThis() ;
    CHAR *pGroupName    = NULL ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1204,9 +1203,9 @@ error:
 PHP_METHOD( SequoiaDB, createCataGroup )
 {
    INT32 rc = SDB_OK ;
-   INT32 hostNameLen     = 0 ;
-   INT32 serviceNameLen  = 0 ;
-   INT32 databasePathLen = 0 ;
+   PHP_LONG hostNameLen     = 0 ;
+   PHP_LONG serviceNameLen  = 0 ;
+   PHP_LONG databasePathLen = 0 ;
    CHAR *pHostName       = NULL ;
    CHAR *pServiceName    = NULL ;
    CHAR *pDatabasePath   = NULL ;
@@ -1260,7 +1259,7 @@ error:
 PHP_METHOD( SequoiaDB, execSQL )
 {
    INT32 rc = SDB_OK ;
-   INT32 sqlLen   = 0 ;
+   PHP_LONG sqlLen = 0 ;
    CHAR *pSQL     = NULL ;
    zval *pThisObj = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1297,7 +1296,7 @@ error:
 PHP_METHOD( SequoiaDB, execUpdateSQL )
 {
    INT32 rc = SDB_OK ;
-   INT32 sqlLen   = 0 ;
+   PHP_LONG sqlLen = 0 ;
    CHAR *pSQL     = NULL ;
    zval *pThisObj = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1329,8 +1328,8 @@ error:
 PHP_METHOD( SequoiaDB, createUser )
 {
    INT32 rc = SDB_OK ;
-   INT32 userLen  = 0 ;
-   INT32 pwdLen   = 0 ;
+   PHP_LONG userLen = 0 ;
+   PHP_LONG pwdLen  = 0 ;
    CHAR *pUser    = NULL ;
    CHAR *pPwd     = NULL ;
    zval *pThisObj = getThis() ;
@@ -1367,8 +1366,8 @@ error:
 PHP_METHOD( SequoiaDB, removeUser )
 {
    INT32 rc = SDB_OK ;
-   INT32 userLen  = 0 ;
-   INT32 pwdLen   = 0 ;
+   PHP_LONG userLen = 0 ;
+   PHP_LONG pwdLen  = 0 ;
    CHAR *pUser    = NULL ;
    CHAR *pPwd     = NULL ;
    zval *pThisObj = getThis() ;
@@ -1522,7 +1521,7 @@ error:
 PHP_METHOD( SequoiaDB, createJsProcedure )
 {
    INT32 rc = SDB_OK ;
-   INT32 codeLen  = 0 ;
+   PHP_LONG codeLen = 0 ;
    CHAR *pCode    = NULL ;
    zval *pThisObj = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1553,7 +1552,7 @@ error:
 PHP_METHOD( SequoiaDB, removeProcedure )
 {
    INT32 rc = SDB_OK ;
-   INT32 nameLen  = 0 ;
+   PHP_LONG nameLen = 0 ;
    CHAR *pName    = NULL ;
    zval *pThisObj = getThis() ;
    sdbConnectionHandle connection = SDB_INVALID_HANDLE ;
@@ -1584,7 +1583,7 @@ error:
 PHP_METHOD( SequoiaDB, evalJs )
 {
    INT32 rc = SDB_OK ;
-   INT32 codeLen  = 0 ;
+   PHP_LONG codeLen = 0 ;
    SDB_SPD_RES_TYPE type = SDB_SPD_RES_TYPE_VOID ;
    CHAR *pCode    = NULL ;
    zval *pThisObj = getThis() ;
@@ -1637,7 +1636,7 @@ PHP_METHOD( SequoiaDB, evalJs )
          if( iteType == BSON_STRING )
          {
             const CHAR *pString = bson_iterator_string( &it ) ;
-            RETVAL_STRING( pString, 1 ) ;
+            PHP_RETVAL_STRING( pString, 1 ) ;
          }
          else if( iteType == BSON_INT )
          {
@@ -1789,7 +1788,7 @@ done:
    bson_destroy( &next ) ;
    return ;
 error:
-   RETVAL_STRING( pErrMsg, 1 ) ;
+   PHP_RETVAL_STRING( pErrMsg, 1 ) ;
    PHP_SET_ERROR( TRUE, pThisObj, rc ) ;
    goto done ;
 }
@@ -2152,7 +2151,7 @@ PHP_METHOD( SequoiaDB, waitTask )
          if( taskNum > 0 )
          {
             SINT32 i = 0 ;
-            zval **ppValue = NULL ;
+            zval *pValue = NULL ;
             pTaskArray = (SINT64 *)emalloc( sizeof( SINT64 ) * taskNum ) ;
             if( !pTaskArray )
             {
@@ -2161,12 +2160,12 @@ PHP_METHOD( SequoiaDB, waitTask )
             }
             PHP_ARRAY_FOREACH( pTable )
             {
-               PHP_ARRAY_FOREACH_VALUE( pTable, ppValue ) ;
+               PHP_ARRAY_FOREACH_VALUE( pTable, (&pValue) ) ;
                if( i >= taskNum )
                {
                   break ;
                }
-               rc = php_zval2Long( *ppValue,
+               rc = php_zval2Long( pValue,
                                    &pTaskArray[i] TSRMLS_CC ) ;
                if( rc )
                {

@@ -48,8 +48,13 @@ def GuessArch():
   else:
     return None
 
+def GuessVer():
+    id = platform.uname()[2]
+    return id
+
 guess_os = GuessOS()
 guess_arch = GuessArch()
+guess_ver = GuessVer()
 
 def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
 
@@ -151,11 +156,21 @@ else:
 variantDir = get_variant_dir()
 env = Environment( BUILD_DIR=variantDir )
 
+if phpedition.split( '.' )[0] == '7':
+   env.Append ( CPPDEFINES=[ "__PHP7__", "ZEND_ENABLE_LONG64" ] )
 
 env.Append ( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 env.Append ( CPPDEFINES=[ "SDB_CLIENT" ] )
-env.Append ( CPPDEFINES=[ "SDB_SSL" ] )
+# env.Append ( CPPDEFINES=[ "SDB_SSL" ] )
 if guess_os == "win32":
+
+    if guess_ver == "10":
+        env['ENV'] = dict(os.environ)
+        if guess_arch == "ia64":
+            env['ENV']['PATH'] = "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/amd64;" + env['ENV']['PATH']
+        else:
+            env['ENV']['PATH'] = "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin;" + env['ENV']['PATH']
+
     # check VC compiler
     for pathdir in env['ENV']['PATH'].split(os.pathsep):
         if os.path.exists(os.path.join(pathdir, 'cl.exe')):
@@ -165,12 +180,17 @@ if guess_os == "win32":
             #use current environment
             env['ENV'] = dict(os.environ)
 
-    env.Append( CPPDEFINES=["HAVE_SOCKLEN_T","ZEND_DEBUG=0", "WIN32", "NDEBUG","_MBCS","_USRDLL","_EXPORTS","COMPILE_DL_SEQUOIADB","ZTS=1","ZEND_WIN32","PHP_WIN32","HAVE_SEQUOIADB=1"] )
+    env.Append( CPPDEFINES=["_CRT_SECURE_NO_WARNINGS", "ZEND_WIN32_FORCE_INLINE", "HAVE_SOCKLEN_T","ZEND_DEBUG=0", "WIN32", "_MBCS","_USRDLL","_EXPORTS","COMPILE_DL_SEQUOIADB","ZTS=1","ZEND_WIN32","PHP_WIN32","HAVE_SEQUOIADB=1"] )
+    if guess_arch == "ia64":
+        env.Append( CPPDEFINES=[ "_WIN64" ] )
 
     if testBuild or clienttestBuild :
         winLibString = "ws2_32.lib kernel32.lib advapi32.lib psapi.lib dbghelp.lib user32.lib gdi32.lib winspool.lib comdlg32.lib sdbcpp.lib"
     else:
-        winLibString = "ws2_32.lib kernel32.lib advapi32.lib psapi.lib dbghelp.lib user32.lib gdi32.lib winspool.lib comdlg32.lib php5ts.lib ssleay32.lib libeay32.lib"
+        if phpedition.split( '.' )[0] == '7':
+            winLibString = "ws2_32.lib kernel32.lib advapi32.lib psapi.lib dbghelp.lib user32.lib gdi32.lib winspool.lib comdlg32.lib php7ts.lib ssleay32.lib libeay32.lib"
+        else:
+            winLibString = "ws2_32.lib kernel32.lib advapi32.lib psapi.lib dbghelp.lib user32.lib gdi32.lib winspool.lib comdlg32.lib php5ts.lib ssleay32.lib libeay32.lib"
         if guess_arch == "ia64":
             env.Append( LIBPATH=[join(lib_dir,'win64')] )
             env.Append( LIBPATH=[join(ssl_lib_dir,'win64')] )
@@ -179,6 +199,23 @@ if guess_os == "win32":
             env.Append( CPPDEFINES=[ "_USE_32BIT_TIME_T=1"])
             env.Append( LIBPATH=[join(boost_lib_dir,'win32')] )
             env.Append( LIBPATH=[join(ssl_lib_dir,'win32')] )
+
+    if guess_ver == "10":
+        env.Append( CPPPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
+                              "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt",
+                              "C:/Program Files (x86)/Windows Kits/8.1/Include/um",
+                              "C:/Program Files (x86)/Windows Kits/8.1/Include/shared",
+                              "C:/Program Files (x86)/Windows Kits/8.1/Include/winrt" ] )
+        if guess_arch == "ia64":
+            env.Append( LIBPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/lib/amd64",
+                                  "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.10240.0/ucrt/x64",
+                                  "C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x64",
+                                  "C:/Program Files (x86)/Windows Kits/NETFXSDK/4.6.1/Lib/um/x64" ] )
+        else:
+            env.Append( LIBPATH=[ "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/lib",
+                                  "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.10240.0/ucrt/x86",
+                                  "C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x86",
+                                  "C:/Program Files (x86)/Windows Kits/NETFXSDK/4.6.1/Lib/um/x86" ] )
 
     env.Append( LIBS=Split(winLibString) )
     env.Append( CPPDEFINES=[ "_CRT_RAND_S" ] )

@@ -123,9 +123,9 @@ error:
 PHP_METHOD( SequoiaCL, split )
 {
    INT32 rc = SDB_OK ;
-   INT32 sourceLen   = 0 ;
-   INT32 targetLen   = 0 ;
-   INT32 argsNum     = ZEND_NUM_ARGS() ;
+   PHP_LONG sourceLen = 0 ;
+   PHP_LONG targetLen = 0 ;
+   PHP_LONG argsNum   = ZEND_NUM_ARGS() ;
    CHAR *pSource     = NULL ;
    CHAR *pTarget     = NULL ;
    zval *pParameter1 = NULL ;
@@ -210,8 +210,8 @@ error:
 PHP_METHOD( SequoiaCL, splitAsync )
 {
    INT32 rc = SDB_OK ;
-   INT32 sourceLen   = 0 ;
-   INT32 targetLen   = 0 ;
+   PHP_LONG sourceLen = 0 ;
+   PHP_LONG targetLen = 0 ;
    INT32 argsNum     = ZEND_NUM_ARGS() ;
    SINT64 taskID     = 0 ;
    CHAR *pSource     = NULL ;
@@ -322,7 +322,7 @@ PHP_METHOD( SequoiaCL, getFullName )
    {
       goto error ;
    }
-   RETVAL_STRING( pFullName, 0 ) ;
+   PHP_RETVAL_STRING( pFullName, 0 ) ;
 done:
    return ;
 error:
@@ -355,7 +355,7 @@ PHP_METHOD( SequoiaCL, getCSName )
    {
       goto error ;
    }
-   RETVAL_STRING( pCsName, 0 ) ;
+   PHP_RETVAL_STRING( pCsName, 0 ) ;
 done:
    return ;
 error:
@@ -389,7 +389,7 @@ PHP_METHOD( SequoiaCL, getName )
    {
       goto error ;
    }
-   RETVAL_STRING( pClName, 0 ) ;
+   PHP_RETVAL_STRING( pClName, 0 ) ;
 done:
    return ;
 error:
@@ -401,7 +401,7 @@ error:
 PHP_METHOD( SequoiaCL, attachCL )
 {
    INT32 rc = SDB_OK ;
-   INT32 fullNameLen = 0 ;
+   PHP_LONG fullNameLen = 0 ;
    CHAR *pFullName   = NULL ;
    zval *pOptions    = NULL ;
    zval *pThisObj    = getThis() ;
@@ -444,7 +444,7 @@ error:
 PHP_METHOD( SequoiaCL, detachCL )
 {
    INT32 rc = SDB_OK ;
-   INT32 fullNameLen = 0 ;
+   PHP_LONG fullNameLen = 0 ;
    CHAR *pFullName   = NULL ;
    zval *pThisObj    = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
@@ -1313,7 +1313,7 @@ error:
 PHP_METHOD( SequoiaCL, createIndex )
 {
    INT32 rc = SDB_OK ;
-   INT32 indexNameLen     = 0 ;
+   PHP_LONG indexNameLen  = 0 ;
    INT32 sortBufferSize   = 64 ;
    BOOLEAN isUnique       = FALSE ;
    BOOLEAN isEnforced     = FALSE ;
@@ -1385,7 +1385,7 @@ error:
 PHP_METHOD( SequoiaCL, dropIndex )
 {
    INT32 rc = SDB_OK ;
-   INT32 indexNameLen     = 0 ;
+   PHP_LONG indexNameLen  = 0 ;
    CHAR *pIndexName       = NULL ;
    zval *pThisObj         = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
@@ -1416,7 +1416,7 @@ error:
 PHP_METHOD( SequoiaCL, getIndex )
 {
    INT32 rc = SDB_OK ;
-   INT32 indexNameLen     = 0 ;
+   PHP_LONG indexNameLen  = 0 ;
    CHAR *pIndexName       = NULL ;
    zval *pThisObj         = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
@@ -1523,11 +1523,11 @@ error:
 PHP_METHOD( SequoiaCL, openLob )
 {
    INT32 rc = SDB_OK ;
-   INT32 mode     = 0 ;
-   INT32 oidLen   = 0 ;
-   CHAR *pOid     = NULL ;
-   zval *pMode    = NULL ;
-   zval *pThisObj = getThis() ;
+   INT32 mode      = 0 ;
+   PHP_LONG oidLen = 0 ;
+   CHAR *pOid      = NULL ;
+   zval *pMode     = NULL ;
+   zval *pThisObj  = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    sdbLobHandle lob       = SDB_INVALID_HANDLE ;
    bson_oid_t bot ;
@@ -1572,9 +1572,9 @@ error:
 PHP_METHOD( SequoiaCL, removeLob )
 {
    INT32 rc = SDB_OK ;
-   INT32 oidLen   = 0 ;
-   CHAR *pOid     = NULL ;
-   zval *pThisObj = getThis() ;
+   PHP_LONG oidLen = 0 ;
+   CHAR *pOid      = NULL ;
+   zval *pThisObj  = getThis() ;
    sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
    bson_oid_t bot ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;

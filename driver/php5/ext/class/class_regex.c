@@ -60,7 +60,7 @@ PHP_METHOD( SequoiaRegex, __toString )
                 "/%s/%s",
                 Z_STRVAL_P( pRegex ),
                 Z_STRVAL_P( pOptions ) ) ;
-   RETVAL_STRING( pRegexStr, 0 ) ;
+   PHP_RETVAL_STRING( pRegexStr, 0 ) ;
 done:
    return ;
 error:

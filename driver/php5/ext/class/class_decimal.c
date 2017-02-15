@@ -120,7 +120,7 @@ PHP_METHOD( SequoiaDecimal, __toString )
    {
       goto error ;
    }
-   RETVAL_STRING( pValue, 0 ) ;
+   PHP_RETVAL_STRING( pValue, 0 ) ;
 done:
    return ;
 error:

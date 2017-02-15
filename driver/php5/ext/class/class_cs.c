@@ -96,7 +96,7 @@ PHP_METHOD( SequoiaCS, getName )
    {
       goto error ;
    }
-   RETVAL_STRING( pCsName, 0 ) ;
+   PHP_RETVAL_STRING( pCsName, 0 ) ;
 done:
    return ;
 error:
@@ -110,7 +110,7 @@ error:
 PHP_METHOD( SequoiaCS, selectCL )
 {
    INT32 rc = SDB_OK ;
-   INT32 clNameLen  = 0 ;
+   PHP_LONG clNameLen = 0 ;
    zval *pOptions   = NULL ;
    zval *pThisObj   = getThis() ;
    CHAR *pClName    = NULL ;
@@ -163,7 +163,7 @@ error:
 PHP_METHOD( SequoiaCS, createCL )
 {
    INT32 rc = SDB_OK ;
-   INT32 clNameLen  = 0 ;
+   PHP_LONG clNameLen = 0 ;
    zval *pOptions   = NULL ;
    zval *pThisObj   = getThis() ;
    CHAR *pClName    = NULL ;
@@ -208,7 +208,7 @@ error:
 PHP_METHOD( SequoiaCS, getCL )
 {
    INT32 rc = SDB_OK ;
-   INT32 clNameLen = 0 ;
+   PHP_LONG clNameLen = 0 ;
    zval *pThisObj  = getThis() ;
    CHAR *pClName   = NULL ;
    sdbCSHandle cs         = SDB_INVALID_HANDLE ;
@@ -244,7 +244,7 @@ error:
 PHP_METHOD( SequoiaCS, dropCL )
 {
    INT32 rc = SDB_OK ;
-   INT32 clNameLen = 0 ;
+   PHP_LONG clNameLen = 0 ;
    zval *pThisObj  = getThis() ;
    CHAR *pClName   = NULL ;
    sdbCSHandle cs  = SDB_INVALID_HANDLE ;

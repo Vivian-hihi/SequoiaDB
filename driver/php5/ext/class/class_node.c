@@ -31,7 +31,7 @@ PHP_METHOD( SequoiaNode, getName )
    zval *pThisObj  = getThis() ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
    PHP_READ_VAR( pThisObj, "_name", pNodeName ) ;
-   RETVAL_STRING( Z_STRVAL_P( pNodeName ), 1 ) ;
+   PHP_RETVAL_STRING( Z_STRVAL_P( pNodeName ), 1 ) ;
 }
 
 PHP_METHOD( SequoiaNode, getHostName )
@@ -47,7 +47,7 @@ PHP_METHOD( SequoiaNode, getHostName )
    {
       goto error ;
    }
-   RETVAL_STRING( pHostName, 1 ) ;
+   PHP_RETVAL_STRING( pHostName, 1 ) ;
 done:
    return ;
 error:
@@ -71,7 +71,7 @@ PHP_METHOD( SequoiaNode, getServiceName )
    }
    if( pService )
    {
-      RETVAL_STRING( pService, 1 ) ;
+      PHP_RETVAL_STRING( pService, 1 ) ;
    }
    else
    {

@@ -166,7 +166,7 @@ PHP_METHOD( SequoiaDate, __toString )
                    tmTime.tm_year + 1900,
                    tmTime.tm_mon + 1,
                    tmTime.tm_mday ) ;
-      RETVAL_STRING( pDateStr, 1 ) ;
+      PHP_RETVAL_STRING( pDateStr, 1 ) ;
    }
    else
    {
@@ -175,7 +175,7 @@ PHP_METHOD( SequoiaDate, __toString )
                    64,
                    "%lld",
                    (UINT64)pDriverDate->milli ) ;
-      RETVAL_STRING( pDateStr, 1 ) ;
+      PHP_RETVAL_STRING( pDateStr, 1 ) ;
    }
 done:
    return ;

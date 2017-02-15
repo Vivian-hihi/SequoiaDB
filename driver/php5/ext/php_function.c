@@ -109,12 +109,12 @@ INT32 php_getArrayType( zval *pArray TSRMLS_DC )
       if( pTable && zend_hash_num_elements( pTable ) > 0 )
       {
          INT32 type = PHP_INDEX_ARRAY ;
-         INT32 keyType = HASH_KEY_NON_EXISTANT ;
+         INT32 keyType = HASH_KEY_NON_EXISTENT ;
          zend_hash_internal_pointer_reset( pTable ) ;
          for( ; ; zend_hash_move_forward( pTable ) )
          {
-            keyType = zend_hash_get_current_key_type_ex( pTable, NULL ) ;
-            if( keyType == HASH_KEY_NON_EXISTANT )
+            keyType = zend_hash_get_current_key_type( pTable ) ;
+            if( keyType == HASH_KEY_NON_EXISTENT )
             {
                break ;
             }
@@ -149,7 +149,7 @@ INT32 php_assocArrayFind( zval *pArray,
    INT32 keyLength       = ossStrlen( pKey ) ;
    INT32 CursorKeyLength = 0 ;
    CHAR *pCursorKey      = NULL ;
-   zval **ppCursorVal    = NULL ;
+   zval *pCursorVal      = NULL ;
    HashTable *pTable     = HASH_OF( pArray ) ;
    pTable = HASH_OF( pArray ) ;
    PHP_ARRAY_FOREACH( pTable )
@@ -159,8 +159,8 @@ INT32 php_assocArrayFind( zval *pArray,
       if( keyLength == CursorKeyLength &&
           ossStrcmp( pKey, pCursorKey ) == 0 )
       {
-         PHP_ARRAY_FOREACH_VALUE( pTable, ppCursorVal ) ;
-         *ppValue = *ppCursorVal ;
+         PHP_ARRAY_FOREACH_VALUE( pTable, (&pCursorVal) ) ;
+         *ppValue = pCursorVal ;
          return SUCCESS ;
       }
    }
@@ -182,14 +182,16 @@ INT32 php_jsonFind( const CHAR *pStr,
    const cJson_iterator *pIter = NULL ;
    const CHAR *pJsonKey = NULL ;
    const CHAR *pString = NULL ;
+   zval *pValue = *ppValue ;
+
+   MAKE_STD_ZVAL( pValue ) ;
+   ZVAL_NULL( pValue ) ;
 
    if( pMachine == NULL )
    {
       rc = SDB_OOM ;
       goto error ;
    }
-   MAKE_STD_ZVAL( *ppValue ) ;
-   ZVAL_NULL( *ppValue ) ;
 
    cJsonInit( pMachine, CJSON_RIGOROUS_PARSE, TRUE ) ;
    if( cJsonParse( pStr, pMachine ) == FALSE )
@@ -209,32 +211,32 @@ INT32 php_jsonFind( const CHAR *pStr,
       pJsonKey = cJsonIteratorKey( pIter ) ;
       if( !strncmp( pJsonKey, pKey, keyLen ) )
       {
-         MAKE_STD_ZVAL( *ppValue ) ;
+         MAKE_STD_ZVAL( pValue ) ;
          cJsonType = cJsonIteratorType( pIter ) ;
          switch( cJsonType )
          {
          case CJSON_STRING:
             pString = cJsonIteratorString( pIter ) ;
-            ZVAL_STRING( *ppValue, pString, 1 ) ;
+            PHP_ZVAL_STRING( pValue, pString, 1 ) ;
             break ;
          case CJSON_TRUE:
-            ZVAL_BOOL( *ppValue, 1 ) ;
+            ZVAL_BOOL( pValue, 1 ) ;
             break ;
          case CJSON_FALSE:
-            ZVAL_BOOL( *ppValue, 0 ) ;
+            ZVAL_BOOL( pValue, 0 ) ;
             break ;
          case CJSON_INT32:
             intVal = cJsonIteratorInt32( pIter ) ;
-            ZVAL_LONG( *ppValue, intVal ) ;
-            return ;
+            ZVAL_LONG( pValue, intVal ) ;
+            break ;
          case CJSON_INT64:
             longVal = cJsonIteratorInt64( pIter ) ;
-            ZVAL_LONG( *ppValue, (INT32)longVal ) ;
-            return ;
+            ZVAL_LONG( pValue, (INT32)longVal ) ;
+            break ;
          case CJSON_DOUBLE:
             doubleVal = cJsonIteratorDouble( pIter ) ;
-            ZVAL_DOUBLE( *ppValue, doubleVal ) ;
-            return ;
+            ZVAL_DOUBLE( pValue, doubleVal ) ;
+            break ;
          default:
             rc = SDB_INVALIDARG ;
             break ;
@@ -291,7 +293,7 @@ INT32 php_zval2Bool( zval *pValue, BOOLEAN *pBoolValue TSRMLS_DC )
       {
          *pBoolValue = Z_STRLEN_P( pValue ) == 0 ? FALSE : TRUE ;
       }
-      else if( Z_TYPE_P( pValue ) == IS_BOOL )
+      else if( PHP_IS_BOOLEAN( Z_TYPE_P( pValue ) ) == TRUE )
       {
          *pBoolValue = Z_BVAL_P( pValue ) == FALSE ? FALSE : TRUE ;
       }
@@ -546,10 +548,10 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
    PHP_ARRAY_FOREACH( pTable )
    {
       CHAR *pKey = NULL ;
-      zval **ppValue = NULL ;
-      PHP_ARRAY_FOREACH_VALUE( pTable, ppValue ) ;
+      zval *pValue = NULL ;
+      PHP_ARRAY_FOREACH_VALUE( pTable, (&pValue) ) ;
       PHP_ARRAY_FOREACH_KEY( pTable, pKey ) ;
-      valueType = Z_TYPE_PP( ppValue ) ;
+      valueType = Z_TYPE_P( pValue ) ;
       switch( valueType )
       {
       case IS_NULL:
@@ -561,7 +563,7 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
          }
          break ;
       case IS_LONG:
-         rc = bson_append_int( pBson, pKey, Z_LVAL_PP( ppValue ) ) ;
+         rc = bson_append_int( pBson, pKey, Z_LVAL_P( pValue ) ) ;
          if( rc != BSON_OK )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
@@ -569,23 +571,42 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
          }
          break ;
       case IS_DOUBLE:
-         rc = bson_append_double( pBson, pKey, Z_DVAL_PP( ppValue ) ) ;
+         rc = bson_append_double( pBson, pKey, Z_DVAL_P( pValue ) ) ;
          if( rc != BSON_OK )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
             goto error ;
          }
          break ;
+#ifdef __PHP7__
+      case IS_TRUE:
+         rc = bson_append_bool( pBson, pKey, TRUE ) ;
+         if( rc != BSON_OK )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+         break ;
+      case IS_FALSE:
+         rc = bson_append_bool( pBson, pKey, FALSE ) ;
+         if( rc != BSON_OK )
+         {
+            rc = SDB_DRIVER_BSON_ERROR ;
+            goto error ;
+         }
+         break ;
+#else
       case IS_BOOL:
-         rc = bson_append_bool( pBson, pKey, Z_BVAL_PP( ppValue ) ) ;
+         rc = bson_append_bool( pBson, pKey, Z_BVAL_P( pValue ) ) ;
          if( rc != BSON_OK )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
             goto error ;
          }
          break ;
+#endif
       case IS_STRING:
-         rc = bson_append_string( pBson, pKey, Z_STRVAL_PP( ppValue ) ) ;
+         rc = bson_append_string( pBson, pKey, Z_STRVAL_P( pValue ) ) ;
          if( rc != BSON_OK )
          {
             rc = SDB_DRIVER_BSON_ERROR ;
@@ -593,7 +614,7 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
          }
          break ;
       case IS_ARRAY:
-         arrayType = php_getArrayType( *ppValue TSRMLS_CC ) ;
+         arrayType = php_getArrayType( pValue TSRMLS_CC ) ;
          if( arrayType == PHP_ASSOCIATIVE_ARRAY )
          {
             rc = bson_append_start_object( pBson, pKey ) ;
@@ -602,7 +623,7 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
                rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
             }
-            rc = _assocArray2Bson( *ppValue, pBson TSRMLS_CC ) ;
+            rc = _assocArray2Bson( pValue, pBson TSRMLS_CC ) ;
             if( rc )
             {
                goto error ;
@@ -622,7 +643,7 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
                rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
             }
-            rc = _assocArray2Bson( *ppValue, pBson TSRMLS_CC ) ;
+            rc = _assocArray2Bson( pValue, pBson TSRMLS_CC ) ;
             if( rc )
             {
                goto error ;
@@ -636,7 +657,7 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
          }
          break ;
       case IS_OBJECT:
-         rc = _object2Bson( pKey, *ppValue, pBson TSRMLS_CC ) ;
+         rc = _object2Bson( pKey, pValue, pBson TSRMLS_CC ) ;
          if( rc )
          {
             goto error ;
@@ -659,7 +680,7 @@ INT32 php_assocArray2BsonArray( zval *pArray,
    INT32 i           = 0 ;
    INT32 arrayType   = PHP_NOT_ARRAY ;
    HashTable *pTable = NULL ;
-   zval **ppValue = NULL ;
+   zval *pValue = NULL ;
    bson **ppBsonArray = NULL ;
    *pEleNum = 0 ;
    if( pArray )
@@ -717,12 +738,12 @@ INT32 php_assocArray2BsonArray( zval *pArray,
                   i = 0 ;
                   PHP_ARRAY_FOREACH( pTable )
                   {
-                     PHP_ARRAY_FOREACH_VALUE( pTable, ppValue ) ;
+                     PHP_ARRAY_FOREACH_VALUE( pTable, (&pValue) ) ;
                      if( i >= eleNum )
                      {
                         goto done ;
                      }
-                     rc = php_auto2Bson( *ppValue,
+                     rc = php_auto2Bson( pValue,
                                          ppBsonArray[i] TSRMLS_CC ) ;
                      if( rc )
                      {
@@ -997,6 +1018,18 @@ INT32 _bson2Array( const CHAR *pBsonBuf,
       case BSON_STRING:
          pStrVal = bson_iterator_string( &item ) ;
          FUN_CONST_STR_COPY_NEW( pStrVal, pStrVal2 ) ;
+#ifdef __PHP7__
+         if( isObj )
+         {
+            add_assoc_string( pArray,
+                              pKey,
+                              pStrVal2 ) ;
+         }
+         else
+         {
+            add_next_index_string( pArray, pStrVal2 ) ;
+         }
+#else
          if( isObj )
          {
             add_assoc_string( pArray,
@@ -1008,6 +1041,7 @@ INT32 _bson2Array( const CHAR *pBsonBuf,
          {
             add_next_index_string( pArray, pStrVal2, 0 ) ;
          }
+#endif
          break ;
       case BSON_BOOL:
          if( isObj )
@@ -1193,6 +1227,7 @@ INT32 _bson2Array( const CHAR *pBsonBuf,
          break ;
       case BSON_OBJECT:
       case BSON_ARRAY:
+      {
          MAKE_STD_ZVAL( pChild ) ;
          array_init( pChild ) ;
          rc = _bson2Array( bson_iterator_value( &item ),
@@ -1211,6 +1246,7 @@ INT32 _bson2Array( const CHAR *pBsonBuf,
             add_next_index_zval( pArray, pChild ) ;
          }
          break ;
+      }
       default:
          break ;
       }
@@ -1454,11 +1490,11 @@ INT32 driver_batch_connect( zval *pAddress,
             HashTable *pAddressArray = HASH_OF( pAddress ) ;
             PHP_ARRAY_FOREACH( pAddressArray )
             {
-               zval **ppValue = NULL ;
-               PHP_ARRAY_FOREACH_VALUE( pAddressArray, ppValue ) ;
-               if( Z_TYPE_PP( ppValue ) == IS_STRING )
+               zval *pValue = NULL ;
+               PHP_ARRAY_FOREACH_VALUE( pAddressArray, (&pValue) ) ;
+               if( Z_TYPE_P( pValue ) == IS_STRING )
                {
-                  rc = driver_connect( Z_STRVAL_PP( ppValue ),
+                  rc = driver_connect( Z_STRVAL_P( pValue ),
                                        pUserName,
                                        pPassword,
                                        useSSL,

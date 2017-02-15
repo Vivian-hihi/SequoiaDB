@@ -39,6 +39,6 @@ PHP_METHOD( SequoiaINT64, __toString )
    zval *pNumber  = NULL ;
    zval *pThisObj = getThis() ;
    PHP_READ_VAR( pThisObj, "INT64", pNumber ) ;
-   RETVAL_STRING( Z_STRVAL_P( pNumber ), 1 ) ;
+   PHP_RETVAL_STRING( Z_STRVAL_P( pNumber ), 1 ) ;
    return ;
 }

@@ -16,69 +16,69 @@
 
 #include "php_resource.h"
 
-void php_sdb_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_sdb_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbConnectionHandle connection = (sdbConnectionHandle)pRsrc->ptr ;
    sdbDisconnect( connection ) ;
    sdbReleaseConnection( connection ) ;
 }
 
-void php_cs_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_cs_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbCSHandle cs = (sdbCSHandle)pRsrc->ptr ;
    sdbReleaseCS( cs ) ;
 }
 
-void php_cl_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_cl_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbCollectionHandle cl = (sdbCollectionHandle)pRsrc->ptr ;
    sdbReleaseCollection( cl ) ;
 }
 
-void php_cursor_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_cursor_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbCursorHandle cursor = (sdbCursorHandle)pRsrc->ptr ;
    sdbCloseCursor( cursor ) ;
    sdbReleaseCursor( cursor ) ;
 }
 
-void php_group_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_group_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbReplicaGroupHandle group = (sdbCollectionHandle)pRsrc->ptr ;
    sdbReleaseReplicaGroup( group ) ;
 }
 
-void php_node_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_node_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbNodeHandle node = (sdbNodeHandle)pRsrc->ptr ;
    sdbReleaseNode( node ) ;
 }
 
-void php_domain_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_domain_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbDomainHandle domain = (sdbCursorHandle)pRsrc->ptr ;
    sdbReleaseDomain( domain ) ;
 }
 
-void php_lob_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_lob_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    sdbLobHandle lob = (sdbLobHandle)pRsrc->ptr ;
    sdbCloseLob( &lob ) ;
 }
 
-void php_date_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_date_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    struct phpDate *pDate = (struct phpDate *)pRsrc->ptr ;
    efree( pDate ) ;
 }
 
-void php_timestamp_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_timestamp_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    struct phpTimestamp *pTimestamp = (struct phpTimestamp *)pRsrc->ptr ;
    efree( pTimestamp ) ;
 }
 
-void php_decimal_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC )
+void php_decimal_destroy( zend_resource *pRsrc TSRMLS_DC )
 {
    bson_decimal *pBsonDecimal = (bson_decimal *)pRsrc->ptr ;
    if( pBsonDecimal )

@@ -88,12 +88,12 @@ error:
 PHP_METHOD( SequoiaLob, write )
 {
    INT32 rc = SDB_OK ;
-   INT32 bufferLen  = 0 ;
+   PHP_LONG bufferLen  = 0 ;
    CHAR *pBuffer    = NULL ;
    zval *pThisObj   = getThis() ;
    sdbLobHandle lob = SDB_INVALID_HANDLE ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "s", &pBuffer, &bufferLen ) == FAILURE )
+   if( PHP_GET_PARAMETERS( "s", &pBuffer, &bufferLen ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -126,7 +126,7 @@ PHP_METHOD( SequoiaLob, read )
    zval *pThisObj   = getThis() ;
    sdbLobHandle lob = SDB_INVALID_HANDLE ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "z", &pLength ) == FAILURE )
+   if( PHP_GET_PARAMETERS( "z", &pLength ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -158,7 +158,7 @@ PHP_METHOD( SequoiaLob, read )
    {
       goto error ;
    }
-   RETVAL_STRING( pBuffer, 0 ) ;
+   PHP_RETVAL_STRING( pBuffer, 0 ) ;
 done:
    return ;
 error:
@@ -177,7 +177,7 @@ PHP_METHOD( SequoiaLob, seek )
    zval *pThisObj       = getThis() ;
    sdbLobHandle lob     = SDB_INVALID_HANDLE ;
    PHP_SET_ERRNO_OK( FALSE, pThisObj ) ;
-   if ( PHP_GET_PARAMETERS( "z|z", &pOffset, &pWhence ) == FAILURE )
+   if( PHP_GET_PARAMETERS( "z|z", &pOffset, &pWhence ) == FAILURE )
    {
       rc = SDB_INVALIDARG ;
       goto error ;

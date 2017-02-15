@@ -64,7 +64,7 @@ PHP_METHOD( SequoiaGroup, getName )
    {
       goto error ;
    }
-   RETVAL_STRING( pGroupName, 0 ) ;
+   PHP_RETVAL_STRING( pGroupName, 0 ) ;
 done:
    return ;
 error:
@@ -388,7 +388,7 @@ error:
 PHP_METHOD( SequoiaGroup, getNode )
 {
    INT32 rc = SDB_OK ;
-   INT32 nodeLen   = 0 ;
+   PHP_LONG nodeLen = 0 ;
    CHAR *pNodeName = NULL ;
    zval *pThisObj  = getThis() ;
    sdbReplicaGroupHandle group = SDB_INVALID_HANDLE ;
@@ -426,9 +426,9 @@ error:
 PHP_METHOD( SequoiaGroup, createNode )
 {
    INT32 rc = SDB_OK ;
-   INT32 hostLen      = 0 ;
-   INT32 serviceLen   = 0 ;
-   INT32 pathLen      = 0 ;
+   PHP_LONG hostLen    = 0 ;
+   PHP_LONG serviceLen = 0 ;
+   PHP_LONG pathLen    = 0 ;
    CHAR *pHostName    = NULL ;
    CHAR *pServiceName = NULL ;
    CHAR *pPath        = NULL ;
@@ -481,8 +481,8 @@ error:
 PHP_METHOD( SequoiaGroup, removeNode )
 {
    INT32 rc = SDB_OK ;
-   INT32 hostLen      = 0 ;
-   INT32 serviceLen   = 0 ;
+   PHP_LONG hostLen    = 0 ;
+   PHP_LONG serviceLen = 0 ;
    CHAR *pHostName    = NULL ;
    CHAR *pServiceName = NULL ;
    zval *pConfigure   = NULL ;
@@ -531,8 +531,8 @@ error:
 PHP_METHOD( SequoiaGroup, attachNode )
 {
    INT32 rc = SDB_OK ;
-   INT32 hostLen      = 0 ;
-   INT32 serviceLen   = 0 ;
+   PHP_LONG hostLen    = 0 ;
+   PHP_LONG serviceLen = 0 ;
    CHAR *pHostName    = NULL ;
    CHAR *pServiceName = NULL ;
    zval *pConfigure   = NULL ;
@@ -581,8 +581,8 @@ error:
 PHP_METHOD( SequoiaGroup, detachNode )
 {
    INT32 rc = SDB_OK ;
-   INT32 hostLen      = 0 ;
-   INT32 serviceLen   = 0 ;
+   PHP_LONG hostLen    = 0 ;
+   PHP_LONG serviceLen = 0 ;
    CHAR *pHostName    = NULL ;
    CHAR *pServiceName = NULL ;
    zval *pConfigure   = NULL ;

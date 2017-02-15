@@ -94,6 +94,6 @@ PHP_METHOD( SequoiaID, __toString )
    zval *pObjId    = NULL ;
    zval *pThisObj  = getThis() ;
    PHP_READ_VAR( pThisObj, "$oid", pObjId ) ;
-   RETVAL_STRING( Z_STRVAL_P( pObjId ), 1 ) ;
+   PHP_RETVAL_STRING( Z_STRVAL_P( pObjId ), 1 ) ;
    return ;
 }

@@ -48,7 +48,7 @@ error:
 
 PHP_METHOD( SequoiaBinary, __toString )
 {
-   INT32 length  = 0 ;
+   PHP_LONG length  = 0 ;
    zval *pBinary    = NULL ;
    zval *pType      = NULL ;
    zval *pThisObj   = getThis() ;
@@ -67,7 +67,7 @@ PHP_METHOD( SequoiaBinary, __toString )
                 "(%d)%s",
                 Z_LVAL_P( pType ),
                 Z_STRVAL_P( pBinary ) ) ;
-   RETVAL_STRING( pBinaryStr, 0 ) ;
+   PHP_RETVAL_STRING( pBinaryStr, 0 ) ;
 done:
    return ;
 error:

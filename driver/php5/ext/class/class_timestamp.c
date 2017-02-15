@@ -152,7 +152,7 @@ PHP_METHOD( SequoiaTimestamp, __toString )
                 tmTime.tm_min,
                 tmTime.tm_sec,
                 micros ) ;
-   RETVAL_STRING( pDateStr, 1 ) ;
+   PHP_RETVAL_STRING( pDateStr, 1 ) ;
 done:
    return ;
 error:

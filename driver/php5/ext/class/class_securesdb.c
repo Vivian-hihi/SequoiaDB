@@ -22,8 +22,8 @@ PHP_METHOD( SecuresDB, __construct )
 {
    INT32 rc = SDB_OK ;
    INT32 argsNum     = ZEND_NUM_ARGS() ;
-   INT32 userNameLen = 0 ;
-   INT32 passwordLen = 0 ;
+   PHP_LONG userNameLen = 0 ;
+   PHP_LONG passwordLen = 0 ;
    zval *pAddress    = NULL ;
    CHAR *pUserName   = NULL ;
    CHAR *pPassword   = NULL ;
@@ -63,8 +63,8 @@ error:
 PHP_METHOD( SecuresDB, connect )
 {
    INT32 rc = SDB_OK ;
-   INT32 userNameLen = 0 ;
-   INT32 passwordLen = 0 ;
+   PHP_LONG userNameLen = 0 ;
+   PHP_LONG passwordLen = 0 ;
    zval *pAddress    = NULL ;
    CHAR *pUserName   = NULL ;
    CHAR *pPassword   = NULL ;

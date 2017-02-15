@@ -17,85 +17,15 @@
 #ifndef PHP_RESOURCE_H__
 #define PHP_RESOURCE_H__
 
-#include "php_driver.h"
+#ifdef __PHP7__
 
-#define PHP_REGISTER_RESOURCE( destroy, longDestroy, resourceName, resourceId )\
-{\
-   resourceId = zend_register_list_destructors_ex( destroy,\
-                                                   longDestroy,\
-                                                   resourceName,\
-                                                   module_number ) ;\
-}
+#include "php_resource_7.h"
 
-//save resource
-#define PHP_SAVE_RESOURCE( thisObj, name, resource, resourceId )\
-{\
-   zval *pZvalResource = NULL ;\
-   void *pResource = (void *)resource ;\
-   MAKE_STD_ZVAL( pZvalResource ) ;\
-   if( pResource == NULL )\
-   {\
-      ZVAL_NULL( pZvalResource ) ;\
-   }\
-   else\
-   {\
-      ZEND_REGISTER_RESOURCE( pZvalResource, pResource, resourceId ) ;\
-   }\
-   zend_update_property( Z_OBJCE_P( thisObj ),\
-                         thisObj,\
-                         ZEND_STRL( name ),\
-                         pZvalResource TSRMLS_CC ) ;\
-}
+#else
 
-//save sdb handle resource
-#define PHP_SAVE_HANDLE( thisObj, handle, resourceId )\
-{\
-   PHP_SAVE_RESOURCE( thisObj, "_handle", handle, resourceId ) ;\
-}
+#include "php_resource_5.h"
 
-//read resource
-#define PHP_READ_RESOURCE( thisObj, name, resource, resourceType, resourceName, resourceId )\
-{\
-   zval *pZvalResource = zend_read_property( Z_OBJCE_P( thisObj ),\
-                                             thisObj,\
-                                             ZEND_STRL( name ),\
-                                             0 TSRMLS_CC ) ;\
-   if( Z_TYPE_P( pZvalResource ) == IS_NULL )\
-   {\
-      resource = 0 ;\
-   }\
-   else\
-   {\
-      ZEND_FETCH_RESOURCE_NO_RETURN( resource,\
-                                     resourceType,\
-                                     &pZvalResource,\
-                                     -1,\
-                                     resourceName,\
-                                     resourceId ) ;\
-   }\
-}
-
-//delete resource
-#define PHP_DEL_RESOURCE( thisObj, name )\
-{\
-   zval *pZvalResource = zend_read_property( Z_OBJCE_P( thisObj ),\
-                                             thisObj,\
-                                             ZEND_STRL( name ),\
-                                             0 TSRMLS_CC ) ;\
-   zend_list_delete( Z_LVAL_P( pZvalResource ) ) ;\
-}
-
-//read handle resource
-#define PHP_READ_HANDLE( thisObj, handle, handleType, resourceName, resourceId )\
-{\
-   PHP_READ_RESOURCE( thisObj, "_handle", handle, handleType, resourceName, resourceId ) ;\
-}
-
-//delete handle resource
-#define PHP_DEL_HANDLE( thisObj )\
-{\
-   PHP_DEL_RESOURCE( thisObj, "_handle" ) ;\
-}
+#endif
 
 //resource name
 #define SDB_HANDLE_NAME "SequoiaDB Handle"
@@ -111,16 +41,16 @@
 #define SDB_DECIMAL_HANDLE_NAME  "SequoiaDB Decimal Handle"
 
 //resource destroy
-void php_sdb_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_cs_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_cl_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_cursor_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_group_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_node_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_domain_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_lob_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_date_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_timestamp_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
-void php_decimal_destroy( zend_rsrc_list_entry *pRsrc TSRMLS_DC ) ;
+void php_sdb_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_cs_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_cl_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_cursor_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_group_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_node_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_domain_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_lob_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_date_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_timestamp_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
+void php_decimal_destroy( zend_resource *pRsrc TSRMLS_DC ) ;
 
 #endif
