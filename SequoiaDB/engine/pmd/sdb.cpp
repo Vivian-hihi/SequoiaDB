@@ -420,13 +420,13 @@ INT32 enterInteractiveMode ( sptScope *scope )
                          "(shell)" , 1, SPT_EVAL_FLAG_PRINT,
                          NULL ) ;
       ossGetCurrentTime ( tmEnd ) ;
-      
+
       // takes time
       tkTime = ( tmEnd.time * 1000000 + tmEnd.microtm ) -
                ( tmBegin.time * 1000000 + tmBegin.microtm ) ;
       sec = tkTime/1000000 ;
       microSec = tkTime%1000000 ;
-      ossPrintf ( "Takes %lld.%llds."OSS_NEWLINE , sec, microSec ) ;
+      ossPrintf ( "Takes %lld.%06llds."OSS_NEWLINE , sec, microSec ) ;
 
    loop_next :
          SAFE_OSS_FREE ( code ) ;
@@ -683,7 +683,7 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       if ( rc )
          break ;
       //(tanzhaobo)here we use 2 buffers to receive context
-      // no mater witch buffer we are in, if the current buffer 
+      // no mater witch buffer we are in, if the current buffer
       // not full, go on receiving to current buffer
       if ( ( pCurrentReceivePtr - &receiveBuffer1[0] <
              SDB_FRONTEND_RECEIVEBUFFERSIZE-1 &&
