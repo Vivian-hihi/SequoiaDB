@@ -22,6 +22,6 @@ do
       echo "host $1 Unreachable"
       exit 1
    fi
-   ssh $1 "sync && echo 3 >/proc/sys/vm/drop_caches"
+   ssh root@$1 "sync && echo 3 >/proc/sys/vm/drop_caches"
    shift
 done
