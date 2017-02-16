@@ -1,7 +1,97 @@
 /******************************************************************************
-*@Description : common function for js object System
+*@Description : common function for js object System/Oma
 *@auhor       : Liang XueWang
 ******************************************************************************/
+
+function OmaTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
+{
+   if( hostName === undefined )
+      this.hostname = COORDHOSTNAME ;
+   else
+      this.hostname = hostName ;
+   if( cmSvcName === undefined )
+      this.svcname = CMSVCNAME ;
+   else
+      this.svcname = cmSvcName ;
+   if( isLegalHost === undefined )
+      this.islegalhost = true ;
+   else
+      this.islegalhost = isLegalHost ;
+   if( isLegalSvc === undefined )
+      this.islegalsvc = true ;
+   else
+      this.islegalsvc = isLegalSvc ;
+   if( this.islegalhost )
+   {
+      var db = new Sdb( this.hostname, COORDSVCNAME ) ;
+      this.isStandalone = commIsStandalone( db ) ;
+      db.close() ;
+   }
+}
+
+OmaTest.prototype.toString = function()
+{
+   return ( "OmaTest: hostname=" + this.hostname + " svcname=" + this.svcname ) ;
+}
+
+OmaTest.prototype.testInit = function() 
+{
+   try
+   {
+      this.oma = new Oma( this.hostname, this.svcname ) ;
+   }
+   catch( e )
+   {
+      if( !this.islegalhost && e === -15 )
+         ;
+      else
+      {
+         throw buildException( "testInit", e, "init oma " + this, "0 -15", e ) ;
+      }
+   } 
+}
+
+function RemoteTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
+{
+   if( hostName === undefined )
+      this.hostname = COORDHOSTNAME ;
+   else
+      this.hostname = hostName ;
+   if( cmSvcName === undefined )
+      this.svcname = CMSVCNAME ;
+   else
+      this.svcname = cmSvcName ;
+   if( isLegalHost === undefined )
+      this.islegalHost = true ;
+   else
+      this.islegalhost = isLegalHost ;
+   if( isLegalSvc === undefined )
+      this.islegalsvc = true ;
+   else
+      this.islegalsvc = isLegalSvc ;
+}
+
+RemoteTest.prototype.toString = function()
+{
+   return ( "hostname=" + this.hostname + " svcname=" + this.svcname ) ;
+}
+
+RemoteTest.prototype.testInit = function()
+{
+   try
+   {
+      this.remote = new Remote( this.hostname, this.svcname ) ;
+   }
+   catch( e )
+   {
+      if( ( !this.islegalhost || !this.islegalsvc ) && e === -15 )
+         ;
+      else
+      {
+         throw buildException( "testInit", e, "init remote " + this, "0 -15", e ) ;
+      }   
+   } 
+}
 
 function SystemTest( hostName, cmSvcName )
 {
@@ -44,6 +134,98 @@ SystemTest.prototype.release = function()
       this.remote.close() ;
 }
 
+function FileTest( hostName, cmSvcName, fileName )
+{
+   if( hostName === undefined )
+      this.hostname = COORDHOSTNAME ;
+   else
+      this.hostname = hostName ;   // 主机名    
+   if( cmSvcName === undefined )
+      this.svcname = CMSVCNAME ;
+   else
+      this.svcname = cmSvcName ;   // 端口号  
+   this.filename = fileName ;      // 文件名
+}
+
+FileTest.prototype.init = function()
+{
+   this.isLocal = false ;          // 是否连接本地cm
+   if( this.hostname === toolGetLocalhost() || this.hostname === COORDHOSTNAME )
+      this.isLocal = true ;
+      
+   if( this.isLocal )
+   {
+      this.cmd = new Cmd() ;       // 本地cmd对象
+      if( this.filename === undefined )
+         this.file = File ;                           // 本地File类类型
+      else
+         this.file = new File( this.filename ) ;      // 本地file对象
+   }
+   else
+   {
+      this.remote = new Remote( this.hostname, this.svcname ) ;
+      if( this.filename === undefined )
+         this.file = this.remote.getFile() ;          // 远程File类类型
+      else
+         this.file = this.remote.getFile( this.filename ) ;  // 远程file对象
+      this.cmd = this.remote.getCmd() ;   // 远程cmd对象
+   }
+}
+
+FileTest.prototype.release = function()
+{
+   if( this.filename !== undefined )
+      this.cmd.run( "rm -rf " + this.filename ) ;    // 删除文件
+   if( this.remote !== undefined )
+   {
+      this.remote.close() ;    // 断开连接
+   }  
+}
+
+FileTest.prototype.toString = function()
+{
+   return ( "FileTest: hostname=" + this.hostname + " svcname=" + this.svcname +
+            " filename=" + this.filename ) ;
+}
+
+function CmdTest( hostName, cmSvcName )
+{
+   if( hostName === undefined )
+      this.hostname = COORDHOSTNAME ;
+   else
+      this.hostname = hostName ;
+   if( cmSvcName === undefined )
+      this.svcname = CMSVCNAME ;
+   else
+      this.svcname = cmSvcName ;
+}
+
+CmdTest.prototype.toString = function()
+{
+   return ( "CmdTest: hostname=" + this.hostname + " svcname=" + this.svcname ) ;
+}
+
+CmdTest.prototype.init = function()
+{
+   this.isLocal = this.hostname === COORDHOSTNAME || 
+                  this.hostname === toolGetLocalhost() ;
+   if( this.isLocal )
+   {
+      this.cmd = new Cmd() ;
+   }
+   else
+   {
+      this.remote = new Remote( this.hostname, this.svcname ) ;
+      this.cmd = this.remote.getCmd() ;
+   } 
+}
+
+CmdTest.prototype.release = function()
+{
+   if( this.remote !== undefined )
+      this.remote.close() ;
+}
+
 /******************************************************************************
 *@Description : check two number is approximately equal to each other or not
 *@author      : Liang XueWang
@@ -51,7 +233,7 @@ SystemTest.prototype.release = function()
 function isApproEqual( n1, n2 )  // n1 n2 >= 0
 {
    var max = n1 > n2 ? n1 : n2 ;
-   var min = ( max == n1 ) ? n2 : n1 ;
+   var min = ( max === n1 ) ? n2 : n1 ;
    return min / max >= 0.85 || max - min <= 2 ;
 }
 
@@ -75,11 +257,11 @@ function toolGetHosts()
    var tmpInfo = db.listReplicaGroups().toArray() ;
    for( var i = 0;i < tmpInfo.length;i++ )
    {
-      var tmpObj = JSON.parse( tmpInfo[i] ) ;
+      var tmpObj = db.eval( "(" + tmpInfo[i] + ")" ).toObj() ;
       var tmpArr = tmpObj.Group ;
       for( var j = 0;j < tmpArr.length;j++ )
       {
-         if( hosts.indexOf( tmpArr[j].HostName ) === -1 )
+         if( hosts.indexOf( tmpArr[j].HostName ) == -1 )
             hosts[k++] = tmpArr[j].HostName ;
       }
    }
@@ -121,6 +303,53 @@ function toolGetRemotehost()
 }
 
 /******************************************************************************
+*@Description : check sdbom exist or not
+*@author      : Liang XueWang            
+******************************************************************************/
+function isOmExist( hostName, cmSvcName )
+{
+   var oma = new Oma( hostName, cmSvcName ) ;
+   var rc ;
+   
+   var arr = oma.listNodes( { type: "om" } ).toArray() ;
+   if( arr.length !== 0 )
+      rc = true ;
+   else
+      rc = false ;
+   
+   oma.close() ;
+   return rc ;
+}
+
+/******************************************************************************
+*@Description : check getOmaConfigs/getNodeConfigs result
+*@author      : Liang XueWang              
+******************************************************************************/
+function checkResult( info, content, func )
+{ 
+   for( var i in info )
+   {
+      var found = false ;
+      for( var j = 0;j < content.length;j++ )
+      {
+         content[j] = content[j].replace( / /g,"" ) ;
+         if( content[j][0] === "#" )
+            continue ;
+         var ind = content[j].indexOf( i ) ;
+         if( ind === -1 )
+            continue ;
+         found = true ;
+         var value1 = content[j].slice( ind+i.length+1 ).toLowerCase() ;
+         var value2 = info[i].toString().toLowerCase() ;
+         if( value1 !== value2 )
+            throw buildException( "checkResult", null, func + " i=" + i, value1, value2 ) ;   
+      }
+      if( found === false )
+         throw buildException( "checkResult", func + ", i=" + i ) ;   
+   }
+}
+
+/******************************************************************************
 *@Description : check machine is ppc or not
 *@author      : Liang XueWang            
 ******************************************************************************/
@@ -133,7 +362,7 @@ function isPPC( hostName, cmSvcName )
    info = cmd.run( "uname -m" ).split( "\n" )[0] ;
    
    remote.close() ;
-   return ( info.indexOf( "ppc" ) != -1 ) ;    
+   return ( info.indexOf( "ppc" ) !== -1 ) ;    
 }
 
 /******************************************************************************
@@ -177,6 +406,39 @@ function toolGetSdbcmUser( hostName, cmSvcName )
    var command = "ps aux | grep sdbcm | grep -E -v 'grep|sdbcmd' | awk '{print $1}'" ;
    var user = cmd.run( command ).split( "\n" )[0] ;
    return user ;   
+}
+
+/******************************************************************************
+*@Description : get current user whoami
+*@author      : Liang XueWang            
+******************************************************************************/
+function toolGetCurrentUser( hostName, cmSvcName )
+{
+   var remote = new Remote( hostName, cmSvcName ) ;
+   var cmd = remote.getCmd() ;
+   var tmp = cmd.run( "whoami" ).split( "\n" ) ;
+   var user = tmp[tmp.length-2] ;
+   return user ;
+}
+
+/******************************************************************************
+*@Description : get user and group  sdbcm.conf
+*@author      : Liang XueWang            
+******************************************************************************/
+function toolGetCmUserGroup( hostname, svcname )
+{
+   var sdbDir = toolGetSequoiadbDir( hostname, svcname ) ;
+   var file = sdbDir[0] + "/conf/sdbcm.conf" ;
+   
+   var remote = new Remote( hostname, svcname ) ;
+   var cmd = remote.getCmd() ;
+   var command = "ls -l " + file + " | awk '{print $3,$4}'" ;
+   var tmpInfo = cmd.run( command ).split( "\n" ) ;
+   var tmp = tmpInfo[tmpInfo.length-2].split( " " ) ;
+   var result = {} ;
+   result["user"] = tmp[0] ;
+   result["group"] = tmp[1] ;
+   return result ;
 }
 
 /******************************************************************************
