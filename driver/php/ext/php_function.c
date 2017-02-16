@@ -152,18 +152,19 @@ INT32 php_assocArrayFind( zval *pArray,
    zval *pCursorVal      = NULL ;
    HashTable *pTable     = HASH_OF( pArray ) ;
    pTable = HASH_OF( pArray ) ;
-   PHP_ARRAY_FOREACH( pTable )
+   PHP_ARRAY_FOREACH_START( pTable )
    {
       PHP_ARRAY_FOREACH_KEY( pTable, pCursorKey ) ;
       CursorKeyLength = ossStrlen( pCursorKey ) ;
       if( keyLength == CursorKeyLength &&
           ossStrcmp( pKey, pCursorKey ) == 0 )
       {
-         PHP_ARRAY_FOREACH_VALUE( pTable, (&pCursorVal) ) ;
+         PHP_ARRAY_FOREACH_VALUE( pTable, pCursorVal ) ;
          *ppValue = pCursorVal ;
          return SUCCESS ;
       }
    }
+   PHP_ARRAY_FOREACH_END()
    return FAILURE ;
 }
 
@@ -545,11 +546,11 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
    INT32 dollarType = PHP_NODOLLARCMD ;
    HashTable *pTable = NULL ;
    pTable = HASH_OF( pArray ) ;
-   PHP_ARRAY_FOREACH( pTable )
+   PHP_ARRAY_FOREACH_START( pTable )
    {
       CHAR *pKey = NULL ;
       zval *pValue = NULL ;
-      PHP_ARRAY_FOREACH_VALUE( pTable, (&pValue) ) ;
+      PHP_ARRAY_FOREACH_VALUE( pTable, pValue ) ;
       PHP_ARRAY_FOREACH_KEY( pTable, pKey ) ;
       valueType = Z_TYPE_P( pValue ) ;
       switch( valueType )
@@ -665,6 +666,7 @@ INT32 _assocArray2Bson( zval *pArray, bson *pBson TSRMLS_DC )
          break ;
       }
    }
+   PHP_ARRAY_FOREACH_END()
 done:
    return rc ;
 error:
@@ -736,9 +738,9 @@ INT32 php_assocArray2BsonArray( zval *pArray,
                      *pEleNum = i + 1 ;
                   }
                   i = 0 ;
-                  PHP_ARRAY_FOREACH( pTable )
+                  PHP_ARRAY_FOREACH_START( pTable )
                   {
-                     PHP_ARRAY_FOREACH_VALUE( pTable, (&pValue) ) ;
+                     PHP_ARRAY_FOREACH_VALUE( pTable, pValue ) ;
                      if( i >= eleNum )
                      {
                         goto done ;
@@ -752,6 +754,7 @@ INT32 php_assocArray2BsonArray( zval *pArray,
                      bson_finish( ppBsonArray[i] ) ;
                      ++i ;
                   }
+                  PHP_ARRAY_FOREACH_END()
                }
             }
          }
@@ -1488,10 +1491,10 @@ INT32 driver_batch_connect( zval *pAddress,
          if( arrayType == PHP_INDEX_ARRAY )
          {
             HashTable *pAddressArray = HASH_OF( pAddress ) ;
-            PHP_ARRAY_FOREACH( pAddressArray )
+            PHP_ARRAY_FOREACH_START( pAddressArray )
             {
                zval *pValue = NULL ;
-               PHP_ARRAY_FOREACH_VALUE( pAddressArray, (&pValue) ) ;
+               PHP_ARRAY_FOREACH_VALUE( pAddressArray, pValue ) ;
                if( Z_TYPE_P( pValue ) == IS_STRING )
                {
                   rc = driver_connect( Z_STRVAL_P( pValue ),
@@ -1510,6 +1513,7 @@ INT32 driver_batch_connect( zval *pAddress,
                   goto error ;
                }
             }
+            PHP_ARRAY_FOREACH_END()
             if( rc )
             {
                goto error ;

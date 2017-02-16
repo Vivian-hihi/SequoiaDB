@@ -2158,9 +2158,9 @@ PHP_METHOD( SequoiaDB, waitTask )
                rc = SDB_OOM ;
                goto error ;
             }
-            PHP_ARRAY_FOREACH( pTable )
+            PHP_ARRAY_FOREACH_START( pTable )
             {
-               PHP_ARRAY_FOREACH_VALUE( pTable, (&pValue) ) ;
+               PHP_ARRAY_FOREACH_VALUE( pTable, pValue ) ;
                if( i >= taskNum )
                {
                   break ;
@@ -2173,6 +2173,7 @@ PHP_METHOD( SequoiaDB, waitTask )
                }
                ++i ;
             }
+            PHP_ARRAY_FOREACH_END()
             rc = sdbWaitTasks( connection, pTaskArray, taskNum ) ;
             if( rc )
             {

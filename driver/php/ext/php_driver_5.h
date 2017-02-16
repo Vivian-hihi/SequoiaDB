@@ -551,15 +551,21 @@ zend_parse_parameters ( ZEND_NUM_ARGS() TSRMLS_CC, format, ##__VA_ARGS__ )
 
 /* ========== PHP Array ========== */
 
-#define PHP_ARRAY_FOREACH( pTable )\
+#define PHP_ARRAY_FOREACH_START( pTable )\
 for( zend_hash_internal_pointer_reset( pTable ) ; \
    HASH_KEY_NON_EXISTENT != zend_hash_get_current_key_type_ex( pTable,\
                                                                NULL ) ; \
-   zend_hash_move_forward( pTable ) )
+   zend_hash_move_forward( pTable ) ) {\
+   zval **_ppTmpValue = NULL ;\
+
+#define PHP_ARRAY_FOREACH_END()\
+}
 
 #define PHP_ARRAY_FOREACH_VALUE( pTable, value )\
 {\
-   zend_hash_get_current_data( pTable, (void**)&value ) ;\
+   _ppTmpValue = NULL ;\
+   zend_hash_get_current_data( pTable, (void**)&_ppTmpValue ) ;\
+   value = *_ppTmpValue ;\
 }
 
 #define PHP_ARRAY_FOREACH_KEY( pTable, key )\
