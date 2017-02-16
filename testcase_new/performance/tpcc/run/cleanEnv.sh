@@ -17,7 +17,7 @@ fi
 
 for((i=0; i<${hostNum}; ++i))
 do
-   ping -c 5 $1 1>>/dev/null 
+   ping -c 5 $1 1>>/dev/null
    if [ $? -ne 0 ];then
       echo "host $1 Unreachable"
       exit 1
