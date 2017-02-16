@@ -97,15 +97,18 @@ public class Split10184 extends SdbTestBase {
 			try
 			{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-					
-				if(db.getCollectionSpace(csName).isCollectionExist(clName)){
-					DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
-					BSONObject strCond = new BasicBSONObject();
-					BSONObject endCond = new BasicBSONObject();
-					strCond.put("a", 0);
-					endCond.put("a", 50);
-					//System.out.println("split condition: " + strCond + ", " +endCond );
-					clDB.split(groupNames.get(0), groupNames.get(1), strCond, endCond);
+				
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+				if(csDB != null){
+					DBCollection clDB = csDB.getCollection(clName);
+					if(clDB != null){
+						BSONObject strCond = new BasicBSONObject();
+						BSONObject endCond = new BasicBSONObject();
+						strCond.put("a", 0);
+						endCond.put("a", 50);
+						//System.out.println("split condition: " + strCond + ", " +endCond );
+						clDB.split(groupNames.get(0), groupNames.get(1), strCond, endCond);
+					}
 				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();

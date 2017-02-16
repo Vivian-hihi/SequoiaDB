@@ -11,6 +11,7 @@ import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -89,11 +90,14 @@ public class IdIndex10207 extends SdbTestBase {
 			Sequoiadb db  = null;
 			try{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-				DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
 				
-				BSONObject opt = new BasicBSONObject();
-				opt.put("SortBufferSize", 128);
-				clDB.createIdIndex(opt);
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+				if(csDB != null){
+					DBCollection clDB = csDB.getCollection(clName);
+					BSONObject opt = new BasicBSONObject();
+					opt.put("SortBufferSize", 128);
+					clDB.createIdIndex(opt);
+				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
 				if( eCode != -23 && eCode != -147 && eCode != -248){ 

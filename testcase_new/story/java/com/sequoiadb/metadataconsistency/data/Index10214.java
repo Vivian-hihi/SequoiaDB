@@ -11,6 +11,7 @@ import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -89,11 +90,13 @@ public class Index10214 extends SdbTestBase {
 			Sequoiadb db  = null;
 			try{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-				DBCollection clDB = db.getCollectionSpace(csName).getCollection(clName);
-					
-				BSONObject opt = new BasicBSONObject();
-				opt.put("a", 1);
-				clDB.createIndex(idxName, opt, false, false);
+				CollectionSpace csDB = db.getCollectionSpace(csName);
+				if(csDB != null){
+					DBCollection clDB = csDB.getCollection(clName);
+					BSONObject opt = new BasicBSONObject();
+					opt.put("a", 1);
+					clDB.createIndex(idxName, opt, false, false);
+				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
 				if( eCode != -248  //-248:Dropping the collection space is in progress

@@ -107,7 +107,7 @@ public class SubCL10180 extends SdbTestBase {
 				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -23){  
+				if( eCode != -23 && eCode != -108){  
 					throw e;
 				}
 			}finally{
