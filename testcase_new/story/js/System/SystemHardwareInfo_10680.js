@@ -116,7 +116,7 @@ SystemTest.prototype.testGetDiskInfo = function()
    
    // 测试磁盘ReadSec WriteSec
    var result = getDiskIO( this.cmd ) ;
-   checkDiskIO( diskInfo, result ) ;
+   checkDiskIO( diskInfo, result, this.cmd ) ;
    
    this.release() ;
 }
@@ -413,7 +413,7 @@ function getDiskIO( cmd )
 *@Description : check get disk info  ReadSec WriteSec
 *@author      : Liang XueWang
 ******************************************************************************/
-function checkDiskIO( info, result )
+function checkDiskIO( info, result, cmd )
 {
    var disks = info.Disks ;
    for( var i = 0;i < disks.length;i++ )
@@ -432,7 +432,9 @@ function checkDiskIO( info, result )
          var found = false ;
          for( var j = 0;j < result.length;j++ )
          {
-            if( disks[i].Filesystem === "/dev/" + result[j].diskName )
+            var fs = readlink( cmd, disks[i].Filesystem ) ;
+            if( fs === "/dev/" + result[j].diskName ||
+                fs === result[j].diskName )
             {
                found = true ;
                if( !isApproEqual( disks[i].ReadSec, result[j].readSec) ||
@@ -452,6 +454,26 @@ function checkDiskIO( info, result )
          } 
       }
    }   
+}
+
+/******************************************************************************
+*@Description : redlink disk file system
+*@author      : Liang XueWang
+******************************************************************************/
+function readlink( cmd, fs )
+{
+   var command = "readlink " + fs ;
+   try
+   {
+      var info = cmd.run( command ).split( "\n" )[0] ;
+   }
+   catch( e )
+   {
+      if( e === 1 ) return fs ;
+      else throw buildException( "readlink", e, command, "0 1", e ) ;
+   }
+   var ind = info.lastIndexOf( "/" ) ;
+   return info.slice( ind+1 ) ;   
 }
 
 /******************************************************************************
