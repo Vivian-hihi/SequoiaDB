@@ -1,6 +1,19 @@
 按照命名规范修改主机名
 
-与svn同步时间 
+0.与svn同步时间 
+
+$ vi /etc/ntp.conf 
+#server 127.127.1.0             # local clock (LCL)
+#fudge  127.127.1.0 stratum 10  # LCL is unsynchronized
+server 192.168.20.11
+$ /etc/init.d/ntp stop 
+$ /etc/init.d/ntp start
+
+定时与svn时间同步
+$ crontab -e
+* * * * * sntp 192.168.20.11 
+$ crontab -l
+$ service cron start
 
 1.创建jenkins用户和用户组
 groupadd jenkins
@@ -14,26 +27,34 @@ export JAVA_HOME=/opt/ibm-java-ppc64-71
 export PATH=$JAVA_HOME/bin:$PATH
 export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
 ln -s /usr/local/ibm-java-ppc64-71/bin/java /usr/bin/java
+ln -s /usr/local/ibm-java-ppc64-71/bin/javac /usr/bin/javac
+配置在/etc/profile ~jenkins/.bashrc
 
 3.安装ant
 拷贝ant目录
 export ANT_HOME=/opt/apache-ant-1.9.6
 export PATH=$ANT_HOME/bin:$PATH
 ln -s /opt/apache-ant-1.9.6/bin/ant /usr/bin/ant
+配置在/etc/profile和~jenkins/.bashrc
 
 4.安装staf
-拷贝staf目录
+拷贝staf目录或者安装staf
 ln -s /usr/local/staf/bin/staf /usr/bin/staf  
 配置/usr/local/staf/bin/STAF.cfg 如下：
 TRUST LEVEL 5 MACHINE 192.168.20.*
 TRUST LEVEL 5 MACHINE 192.168.28.*
 TRUST LEVEL 5 MACHINE 192.168.30.*
 配置本机的/etc/hosts，配置其他CI相关机器的/etc/hosts(加入该机的host ip)---不操作此步，会导致staf执行失败
-启动staf: ./startSTAFProc.sh 
+配置~jenkins/.bashrc
+LD_LIBRARY_PATH="/usr/local/staf/lib:${LD_LIBRARY_PATH}"
+CLASSPATH="/usr/local/staf/lib/STAFAnt.jar:${CLASSPATH}"
+source /etc/profile
+启动staf: cd /usr/local/staf/;./startSTAFProc.sh 
 
 
 加入开机自启动
 /etc/rc.d/boot.local 写入/usr/local/staf/startSTAFProc.sh
+（centos在/etc/rc.d/rc.local）
 
 5.安装builder（仅适用于编译机）
 export PATH=/opt/installbuilder-8.5.2/bin:$PATH
@@ -69,3 +90,4 @@ A、B机切换到jenkins用户下
 11.准备spark编译环境
 拷贝ivy2.tar.gz m2.tar.gz sbt.tar.gz sbt_build.tar.gz到jenkins家目录
 解压
+
