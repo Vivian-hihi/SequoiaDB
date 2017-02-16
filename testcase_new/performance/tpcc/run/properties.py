@@ -17,7 +17,8 @@ class Properties(object):
          pro_file = open(self.fileName, "Ur")
          for line in pro_file.readlines():
             line = line.strip().replace('\n', '')
-            if line.find('//') != -1:
+            pos = line.find('//')
+            if pos != -1 and pos == 0:
               continue
             if line.find('#') != -1:
                line = line[0:line.find('#')]
