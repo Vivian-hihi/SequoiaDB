@@ -29,6 +29,7 @@
 192.168.28.126 ci-test-ppc-rhel1
 192.168.28.137 ci-test-ppc-suse1
 
+#pg compile
 192.168.20.208 suse-ci004
 
 #pg test
@@ -44,6 +45,12 @@
 192.168.30.181 bl465-1
 192.168.30.182 bl465-2
 192.168.30.183 bl465-3
+
+#tpcc
+192.168.30.56 ci-test-pm1
+192.168.30.57 ci-test-pm2
+192.168.30.58 ci-test-pm3
+192.168.30.95 ci-test-pm4
 
 #branch1.12 ubuntu test
 192.168.30.108 ubuntu-ci001
