@@ -213,8 +213,9 @@ public class TestConcurrency6672 extends SdbTestBase {
             BSONObject option = new BasicBSONObject();
             dataGroupName = (Commlib.getDataGroups(sdb)).get(0);
             option.put("Group", dataGroupName);
-            option.put("Compressed", true);     
+            option.put("Compressed", true);
             option.put("CompressionType", "lzw");
+            option.put("ReplSize", 0);
             cl = cs.createCollection(clName, option);
         }catch(BaseException e){
             Assert.fail(e.getMessage());
@@ -236,7 +237,7 @@ public class TestConcurrency6672 extends SdbTestBase {
     }
     
     private void checkDeleted(){
-        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);				
+        DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);           
         BSONObject delMatcher = new BasicBSONObject();
         delMatcher.put("a", (BSONObject)JSON.parse("{$lt : 3000}"));
         if((int)cl.getCount(delMatcher) != 0){
