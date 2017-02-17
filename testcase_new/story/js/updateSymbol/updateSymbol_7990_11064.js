@@ -2,6 +2,7 @@
 *@Description: upsert any object(exist or not exist) use operator set            
 *@author:      zhaoyu
 *@createdate:  2016.5.17
+*@update:      2017.2.17/zhaoyu
 **************************************/
 function main()
 {
@@ -154,5 +155,31 @@ function main()
                     object13:[12,34,36],
                     object14:null}];
    checkResult( dbcl, null, null, expRecs3, {a:1} );
+   
+   //delete all data
+   deleteData( dbcl, null );
+   
+   //upsert use or has one condition,2017.2.17/zhaoyu/seqDB-11064
+   var upsertCondition4 = {$set:{a:1}};
+   var findCondition4 = {$or:[{b:1}]};
+   upsertData( dbcl, upsertCondition4, findCondition4 );
+   var expRecs4 = [{a:1,b:1}];
+   checkResult( dbcl, null, null, expRecs4, {a:1} );
+   
+   var upsertCondition5 = {$set:{a:2}};
+   var findCondition5 = {$or:[{b:{$et:2}}]};
+   upsertData( dbcl, upsertCondition5, findCondition5 );
+   var expRecs5 = [{a:1,b:1},
+                   {a:2,b:2}];
+   checkResult( dbcl, null, null, expRecs5, {a:1} );
+   
+   var upsertCondition6 = {$set:{a:3}};
+   var findCondition6 = {$or:[{b:{$all:[3]}}]};
+   upsertData( dbcl, upsertCondition6, findCondition6 );
+   var expRecs6 = [{a:1,b:1},
+                   {a:2,b:2},
+                   {a:3,b:[3]}];
+   checkResult( dbcl, null, null, expRecs6, {a:1} );
+   
 }
 main();
