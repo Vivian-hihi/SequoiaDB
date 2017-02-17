@@ -15,13 +15,13 @@ using namespace sdbclient ;
 
 #define CSNAME                "story_cpp_test_cs" 
 
-extern string HOSTAME ;
-extern string SVCNAME ;
-extern string CHANGEDPREFIX ;
-extern string RSRVPORTBEGIN ;
-extern string RSRVPORTEND ;
-extern string RSRVNODEDIR ;
-extern string WORKDIR ;
+extern char HOSTNAME[100] ;
+extern char SVCNAME[100] ;
+extern char CHANGEDPREFIX[100] ;
+extern char RSRVPORTBEGIN[100] ;
+extern char RSRVPORTEND[100] ;
+extern char RSRVNODEDIR[100] ;
+extern char WORKDIR[100] ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName );
 void getConf() ;

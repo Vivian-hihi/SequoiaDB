@@ -1,5 +1,5 @@
 #include "testcommon.hpp"
-#include <string>
+#include <cstring>
 #include <vector>
 #include <iostream>
 #include <sys/types.h>
@@ -12,13 +12,13 @@ using namespace bson ;
 using testing::internal::g_argvs ;
 extern vector<testing::internal::String> g_argvs ;
 
-string HOSTNAME         = "localhost" ;
-string SVCNAME          = "11810" ;
-string CHANGEDPREFIX    = "sdv_cpp_test" ;
-string RSRVPORTBEGIN    = "26000" ;
-string RSRVPORTEND      = "27000" ;
-string RSRVNODEDIR      = "/opt/sequoiadb/database/" ;
-string WORKDIR          = "/tmp/cpptest" ;
+char HOSTNAME[100]         = "localhost" ;
+char SVCNAME[100]          = "11810" ;
+char CHANGEDPREFIX[100]    = "sdv_cpp_test" ;
+char RSRVPORTBEGIN[100]    = "26000" ;
+char RSRVPORTEND[100]      = "27000" ;
+char RSRVNODEDIR[100]      = "/opt/sequoiadb/database/" ;
+char WORKDIR[100]          = "/tmp/cpptest" ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName )
 {
@@ -63,19 +63,19 @@ void getConf()
     {
       string para = g_argvs[i] ;
       if( para == "--hostname" || para == "-n" )
-         HOSTNAME = g_argvs[i+1] ;
+         strcpy( HOSTNAME,g_argvs[i+1].c_str() ) ;
       else if( para == "--svcname" || para == "-s" )
-         SVCNAME = g_argvs[i+1] ;
+         strcpy( SVCNAME,g_argvs[i+1].c_str() ) ;
       else if( para == "--changedprefix" || para == "-c" )
-         CHANGEDPREFIX = g_argvs[i+1] ;
+         strcpy( CHANGEDPREFIX,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--rsrvportbegin" || para == "-b" )
-		   RSRVPORTBEGIN = g_argvs[i+1] ;
+		   strcpy( RSRVPORTBEGIN,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--rsrvportend" || para == "-e" )
-		   RSRVPORTEND = g_argvs[i+1] ;
+		   strcpy( RSRVPORTEND,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--rsrvnodedir" || para == "-d" )
-		   RSRVNODEDIR = g_argvs[i+1] ;
+		   strcpy( RSRVNODEDIR,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--workdir" || para == "-w" )
-		   WORKDIR = g_argvs[i+1] ; 
+		   strcpy( WORKDIR,g_argvs[i+1].c_str() ) ; 
     }
    
    cout << "HostName: " << HOSTNAME << endl ;
