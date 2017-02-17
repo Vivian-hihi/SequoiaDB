@@ -76,9 +76,6 @@
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LSN_AHEAD, ",a" ), boost::program_options::value< INT32 >(), "specify the number of records to display before the lsn specified by -l/--lsn" ) \
    ( DPS_FILTER_COMMANDS_STRING( DPS_DUMP_LSN_BACK,  ",b" ), boost::program_options::value< INT32 >(), "specify the number of records to display after the lsn specified by -l/--lsn" )
 
-#define SDB_DPS_DUMP_HELP 1
-#define SDB_DPS_DUMP_VER  2
-
 struct _dpsFileMeta : public SDBObject
 {
    UINT32 index ;
@@ -125,7 +122,7 @@ typedef _dpsCmdData dpsCmdData ;
 
 
 #define DPS_LOG_REACH_HEAD 1
-#define DPS_LOG_FILE_INVALID 1
+#define DPS_LOG_FILE_INVALID 2
 #define DPS_LOG_INVALID_LSN 0xffffffffffffffff
 #define LOG_BUFFER_FORMAT_MULTIPLIER 10
 #define NONE_LSN_FILTER -1
