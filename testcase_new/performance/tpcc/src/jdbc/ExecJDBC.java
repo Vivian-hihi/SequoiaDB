@@ -131,7 +131,7 @@ public class ExecJDBC {
             sql += "\'" ;
             sql += ini.getProperty( iniKey ) ;
             sql += "\'" ;
-            sql += ");" ;
+            sql += ",preferedinstance \'M\');" ;
         }
 
         return sql ;
