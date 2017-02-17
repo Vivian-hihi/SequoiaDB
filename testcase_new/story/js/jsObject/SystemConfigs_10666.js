@@ -13,22 +13,15 @@ SystemTest.prototype.testGetSystemConfigs = function()
    // 动态变化的字段
    var except = [ "fs.dentry-state", "fs.inode-nr", "fs.inode-state",
                   "fs.file-nr" ] ;
-   var allConfig = {} ;
    for( var i = 0;i < type.length;i++ )
    {
       var configObj = this.system.getSystemConfigs( type[i] ).toObj() ;
-      var result = {} ;
-      if( type[i] !== "all" )
-      {
-         var obj = toolGetConfigs( this.cmd, type[i] ) ;
-         for( var k in obj )
-            allConfig[k] = obj[k] ;
-         result = obj ;
-      }
+      var dir ;
+      if( type[i] === "all" )
+         dir = "/proc/sys" ;
       else
-      {
-         result = allConfig ;
-      }
+         dir = "/proc/sys/" + type[i] ;
+      var result = toolGetConfigs( this.cmd, dir ) ;
       for( var k in configObj )
       {
          // 排除随机生成或动态变化的字段
@@ -48,12 +41,12 @@ SystemTest.prototype.testGetSystemConfigs = function()
 }
 
 // 获取系统配置信息，从/proc/sys目录下的文件中获取
-function toolGetConfigs( cmd, type )
+function toolGetConfigs( cmd, dir )
 {
    var configObj = {} ;
    try
    {
-      var command = "find /proc/sys/" + type + " -type f" ;
+      var command = "find " + dir + " -type f" ;
       var files = cmd.run( command ).split( "\n" ) ;
    }
    catch( e )
@@ -63,7 +56,7 @@ function toolGetConfigs( cmd, type )
       else
       {
          println( "run command " + command ) ;
-         throw buildException( "toolGetConfigs", e, "get " + type, 0, e ) ;
+         throw buildException( "toolGetConfigs", e, "get " + dir, 0, e ) ;
       }
    }
    for( var i = 0;i < files.length-1;i++ )
