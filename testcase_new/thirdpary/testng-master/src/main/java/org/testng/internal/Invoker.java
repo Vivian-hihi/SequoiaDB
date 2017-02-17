@@ -1225,7 +1225,9 @@ public class Invoker implements IInvoker {
                     result.add(registerSkippedTestResult(testMethod, instance, System.currentTimeMillis(), null));
                   }
                 }
-                if ( !lastSucces ) {
+                if ( !lastSucces
+                      && (tmpResultsIndex < 0
+                            || tmpResults.get(tmpResultsIndex).getStatus() != ITestResult.SKIP )) {
                    SuiteRunner.setTestCaseFailed();
                 }
               }// end finally
