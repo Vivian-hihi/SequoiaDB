@@ -139,46 +139,46 @@ function FileTest( hostName, cmSvcName, fileName )
    if( hostName === undefined )
       this.hostname = COORDHOSTNAME ;
    else
-      this.hostname = hostName ;   // Ö÷»úÃû    
+      this.hostname = hostName ;   // ä¸»æœºå    
    if( cmSvcName === undefined )
       this.svcname = CMSVCNAME ;
    else
-      this.svcname = cmSvcName ;   // ¶Ë¿ÚºÅ  
-   this.filename = fileName ;      // ÎÄ¼şÃû
+      this.svcname = cmSvcName ;   // ç«¯å£å·  
+   this.filename = fileName ;      // æ–‡ä»¶å
 }
 
 FileTest.prototype.init = function()
 {
-   this.isLocal = false ;          // ÊÇ·ñÁ¬½Ó±¾µØcm
+   this.isLocal = false ;          // æ˜¯å¦è¿æ¥æœ¬åœ°cm
    if( this.hostname === toolGetLocalhost() || this.hostname === COORDHOSTNAME )
       this.isLocal = true ;
       
    if( this.isLocal )
    {
-      this.cmd = new Cmd() ;       // ±¾µØcmd¶ÔÏó
+      this.cmd = new Cmd() ;       // æœ¬åœ°cmdå¯¹è±¡
       if( this.filename === undefined )
-         this.file = File ;                           // ±¾µØFileÀàÀàĞÍ
+         this.file = File ;                           // æœ¬åœ°Fileç±»ç±»å‹
       else
-         this.file = new File( this.filename ) ;      // ±¾µØfile¶ÔÏó
+         this.file = new File( this.filename ) ;      // æœ¬åœ°fileå¯¹è±¡
    }
    else
    {
       this.remote = new Remote( this.hostname, this.svcname ) ;
       if( this.filename === undefined )
-         this.file = this.remote.getFile() ;          // Ô¶³ÌFileÀàÀàĞÍ
+         this.file = this.remote.getFile() ;          // è¿œç¨‹Fileç±»ç±»å‹
       else
-         this.file = this.remote.getFile( this.filename ) ;  // Ô¶³Ìfile¶ÔÏó
-      this.cmd = this.remote.getCmd() ;   // Ô¶³Ìcmd¶ÔÏó
+         this.file = this.remote.getFile( this.filename ) ;  // è¿œç¨‹fileå¯¹è±¡
+      this.cmd = this.remote.getCmd() ;   // è¿œç¨‹cmdå¯¹è±¡
    }
 }
 
 FileTest.prototype.release = function()
 {
    if( this.filename !== undefined )
-      this.cmd.run( "rm -rf " + this.filename ) ;    // É¾³ıÎÄ¼ş
+      this.cmd.run( "rm -rf " + this.filename ) ;    // åˆ é™¤æ–‡ä»¶
    if( this.remote !== undefined )
    {
-      this.remote.close() ;    // ¶Ï¿ªÁ¬½Ó
+      this.remote.close() ;    // æ–­å¼€è¿æ¥
    }  
 }
 
