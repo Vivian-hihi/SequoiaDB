@@ -628,7 +628,8 @@ namespace engine
                              pmdEDUCB *cb,
                              SINT64 numToSkip,
                              SINT64 numToReturn,
-                             SINT64 &contextID )
+                             SINT64 &contextID,
+                             rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCATAQUERY ) ;
@@ -643,7 +644,7 @@ namespace engine
                                 numToReturn,
                                 flag,
                                 FALSE ) ;
-      rc = commandOpr.queryOnCatalog( queryOpt, cb, contextID ) ;
+      rc = commandOpr.queryOnCatalog( queryOpt, cb, contextID, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "Query[%s] on catalog failed, rc: %d",
                    queryOpt.toString().c_str(), rc ) ;
 
@@ -665,7 +666,8 @@ namespace engine
                              pmdEDUCB *cb,
                              rtnContext **ppContext,
                              const CHAR *realCLName,
-                             INT32 flag )
+                             INT32 flag,
+                             rtnContextBuf *pBuf )
    {
       INT32 rc                        = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCONODEQUERY ) ;
@@ -751,7 +753,8 @@ namespace engine
       sendOpt._useSpecialGrp = TRUE ;
 
       rc = newQuery.queryOrDoOnCL( (MsgHeader*)pBuffer, pRouteAgent, cb,
-                                   &pTmpContext, sendOpt, &queryConf ) ;
+                                   &pTmpContext, sendOpt, &queryConf,
+                                   pBuf ) ;
       PD_RC_CHECK( rc, PDERROR, "Query collection[%s] from data node "
                    "failed, rc = %d", realCLFullName, rc ) ;
 
@@ -1752,7 +1755,9 @@ namespace engine
          rtnCoordUpdateRoute( groupInfo, pRouteAgent,
                               MSG_ROUTE_SHARD_SERVCIE ) ;
 
+         pCoordcb->addGroupInfo( groupInfo ) ;
          pCoordcb->updateCatGroupInfo( groupInfo ) ;
+
          break ;
       }
 
@@ -1851,6 +1856,7 @@ namespace engine
                if ( SDB_OK == rc )
                {
                   getExpected = TRUE ;
+                  pCoordcb->addGroupInfo( groupInfo ) ;
                   pCoordcb->updateCatGroupInfo( groupInfo );
                   rc = rtnCoordUpdateRoute( groupInfo,  pRouteAgent,
                                             MSG_ROUTE_CAT_SERVICE ) ;
@@ -3847,13 +3853,17 @@ namespace engine
          ROUTE_RC_MAP::iterator iter = failedNodes.begin() ;
          while ( iter != failedNodes.end() )
          {
+            strHostName.clear() ;
+            strServiceName.clear() ;
+            strNodeName.clear() ;
+            strGroupName.clear() ;
+
             routeID.value = iter->first ;
             rc = pCoordcb->getGroupInfo( routeID.columns.groupID, groupInfo ) ;
             if ( rc )
             {
                PD_LOG( PDWARNING, "Failed to get group[%d] info, rc: %d",
                        routeID.columns.groupID, rc ) ;
-               strGroupName = "-" ;
             }
             else
             {
@@ -3866,9 +3876,6 @@ namespace engine
                {
                   PD_LOG( PDWARNING, "Failed to get node[%d] info failed, "
                           "rc: %d", routeID.columns.nodeID, rc ) ;
-                  strNodeName = "-" ;
-                  strHostName = "-" ;
-                  strServiceName = "-" ;
                }
                else
                {
@@ -3878,15 +3885,16 @@ namespace engine
 
             try
             {
-               errObj = BSON( FIELD_NAME_NODE_NAME << strNodeName <<
-                              FIELD_NAME_HOST << strHostName <<
-                              FIELD_NAME_SERVICE_NAME << strServiceName <<
-                              FIELD_NAME_GROUPNAME << strGroupName <<
-                              FIELD_NAME_NODEID << (INT32)routeID.columns.nodeID <<
-                              FIELD_NAME_GROUPID << routeID.columns.groupID <<
-                              FIELD_NAME_RCFLAG << iter->second._rc <<
-                              FIELD_NAME_ERROR_IINFO << iter->second._obj ) ;
-               arrayBD.append( errObj ) ;
+               BSONObjBuilder objBD( arrayBD.subobjStart() ) ;
+               objBD.append( FIELD_NAME_NODE_NAME, strNodeName ) ;
+               //objBD.append( FIELD_NAME_HOST, strHostName ) ;
+               //objBD.append( FIELD_NAME_SERVICE_NAME, strServiceName ) ;
+               //objBD.append( FIELD_NAME_GROUPNAME, strGroupName ) ;
+               //objBD.append( FIELD_NAME_GROUPID, routeID.columns.groupID ) ;
+               //objBD.append( FIELD_NAME_NODEID, (INT32)routeID.columns.nodeID ) ;
+               objBD.append( FIELD_NAME_RCFLAG, iter->second._rc ) ;
+               objBD.append( FIELD_NAME_ERROR_IINFO, iter->second._obj ) ;
+               objBD.done() ;
             }
             catch ( std::exception &e )
             {

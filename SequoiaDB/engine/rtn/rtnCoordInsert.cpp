@@ -167,6 +167,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOINS_EXECUTE, rc ) ;
       return rc;
    error:
+      if ( buf && nokRC.size() > 0 )
+      {
+         *buf = rtnContextBuf( rtnBuildErrorObj( rc, cb, &nokRC ) ) ;
+      }
       goto done;
    }
 

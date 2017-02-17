@@ -109,7 +109,7 @@ namespace engine
                           "ContextID:%lld, Len:%u, Offset:%llu",
                           header->contextID, len, offset ) ;
 
-      rc = rtnWriteLob( header->contextID, cb, len, data ) ;
+      rc = rtnWriteLob( header->contextID, cb, len, data, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
@@ -153,7 +153,7 @@ namespace engine
                           header->contextID, readLen, offset ) ;
 
       rc = rtnReadLob( header->contextID, cb, len,
-                       offset, &data, readLen ) ;
+                       offset, &data, readLen, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
@@ -190,7 +190,7 @@ namespace engine
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
                           "ContextID:%lld", header->contextID ) ;
 
-      rc = rtnCloseLob( header->contextID, cb ) ;
+      rc = rtnCloseLob( header->contextID, cb, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
@@ -269,6 +269,8 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "faield to truncate lob:%d", rc ) ;
+         /// get error info
+         stream.getErrorInfo( rc, cb, buf ) ;
          goto error ;
       }
 

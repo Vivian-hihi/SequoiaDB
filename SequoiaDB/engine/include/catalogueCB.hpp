@@ -162,8 +162,10 @@ namespace engine
          INT32 onSendReply ( MsgOpReply *pReply, INT32 result ) ;
 
          INT32 sendReply ( const NET_HANDLE &handle,
-                           MsgOpReply *pReply, INT32 result,
-                           void *pReplyData = NULL, UINT32 replyDataLen = 0,
+                           MsgOpReply *pReply,
+                           INT32 result,
+                           void *pReplyData = NULL,
+                           UINT32 replyDataLen = 0,
                            BOOLEAN needSync = TRUE ) ;
 
          void fillErrReply ( const MsgOpReply *pReply, MsgOpReply *pErrReply,

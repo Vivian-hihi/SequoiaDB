@@ -93,7 +93,8 @@ namespace engine
       }
 
       // 1. execute on catalog
-      rc = executeOnCataGroup( pMsg, cb, &datagroups ) ;
+      rc = executeOnCataGroup( pMsg, cb, &datagroups, NULL, TRUE,
+                               NULL, NULL, buf ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to execute %s:%s on catalog node, rc: %d",
@@ -116,11 +117,11 @@ namespace engine
            0 == ossStrcasecmp( CMD_VALUE_NAME_ACTIVATE, pAction ) ||
            0 == ossStrcasecmp( CMD_VALUE_NAME_DEACTIVATE, pAction ) )
       {
-         _executeByNodes( pMsg, cb, allgroups, pAction ) ;
+         _executeByNodes( pMsg, cb, allgroups, pAction, buf ) ;
       }
       else
       {
-         _executeByGroups( pMsg, cb, allgroups, pAction ) ;
+         _executeByGroups( pMsg, cb, allgroups, pAction, buf ) ;
       }
 
    done:
@@ -132,12 +133,13 @@ namespace engine
    INT32 rtnCoordAlterDC::_executeByGroups( MsgHeader *pMsg,
                                             pmdEDUCB *cb,
                                             CoordGroupList &groupLst,
-                                            const CHAR *pAction )
+                                            const CHAR *pAction,
+                                            rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
 
       rc = executeOnDataGroup( pMsg, cb, groupLst,
-                               TRUE, NULL, NULL, NULL ) ;
+                               TRUE, NULL, NULL, NULL, buf ) ;
       if ( rc )
       {
          PD_LOG( PDWARNING, "Failed to execute %s:%s on data groups, "
@@ -150,18 +152,13 @@ namespace engine
    INT32 rtnCoordAlterDC::_executeByNodes( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
                                            CoordGroupList &groupLst,
-                                           const CHAR *pAction )
+                                           const CHAR *pAction,
+                                           rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       ROUTE_SET nodes ;
       ROUTE_RC_MAP faileds ;
-      MsgRouteID routeID ;
-      ROUTE_RC_MAP::iterator it ;
-      BSONObjBuilder errBuild ;
       rtnCoordCtrlParam ctrlParam ;
-      BSONArrayBuilder arrayBuild( errBuild.subarrayStart(
-                                   FIELD_NAME_ERROR_NODES ) ) ;
-      BSONObj errorInfo ;
 
       rc = rtnCoordGetGroupNodes( cb, BSONObj(), NODE_SEL_ALL, groupLst,
                                   nodes, NULL ) ;
@@ -172,33 +169,18 @@ namespace engine
       }
 
       rc = executeOnNodes( pMsg, cb, nodes, faileds, NULL, NULL, NULL ) ;
-      it = faileds.begin() ;
-      while( it != faileds.end() )
-      {
-         routeID.value = it->first ;
-         BSONObj errObj = BSON( FIELD_NAME_NODEID <<
-                                (INT32)routeID.columns.nodeID <<
-                                FIELD_NAME_RCFLAG << it->second._rc ) ;
-         arrayBuild.append( errObj ) ;
-         ++it ;
-      }
-      arrayBuild.done() ;
-      errorInfo = errBuild.obj() ;
-
-      if ( rc || faileds.size() > 0 )
+      if ( rc )
       {
          PD_LOG( PDERROR, "Failed to execute %s:%s on data nodes, "
-                 "rc: %d, error: %s", COORD_CMD_ALTER_DC, pAction, rc,
-                 errorInfo.toString().c_str() ) ;
-
-         if ( SDB_OK == rc && faileds.size() > 0 )
-         {
-            rc = faileds.begin()->second._rc ;
-         }
+                 "rc: %d", COORD_CMD_ALTER_DC, pAction, rc ) ;
          goto error ;
       }
 
    done:
+      if ( ( rc || faileds.size() > 0 ) && buf )
+      {
+         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &faileds ) ) ;
+      }
       return rc ;
    error:
       goto done ;

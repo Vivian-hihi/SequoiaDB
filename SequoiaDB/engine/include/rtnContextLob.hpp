@@ -72,6 +72,10 @@ namespace engine
 
       INT32 getLobMetaData( BSONObj &meta ) ;
 
+      virtual void     getErrorInfo( INT32 rc,
+                                     pmdEDUCB *cb,
+                                     rtnContextBuf &buffObj ) ;
+
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual BOOLEAN   _canPrefetch () const { return TRUE ; }

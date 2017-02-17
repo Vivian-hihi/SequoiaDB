@@ -93,6 +93,8 @@ namespace engine
          }
          PD_LOG( PDERROR, "Failed to get more from context[%lld], rc: %d",
                  context->contextID(), rc ) ;
+         /// get detial information
+         context->getErrorInfo( rc, cb, buffObj ) ;
          goto error ;
       }
 

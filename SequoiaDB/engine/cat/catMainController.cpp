@@ -1197,11 +1197,9 @@ namespace engine
                     pMsg->routeID.columns.serviceID ) ;
             rc = SDB_UNKNOWN_MESSAGE ;
 
-            BSONObj err = utilGetErrorBson( rc, _pEDUCB->getInfo(
-                                            EDU_INFO_ERROR ) ) ;
             MsgOpReply reply ;
             reply.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode ) ;
-            reply.header.messageLength = sizeof( MsgOpReply ) + err.objsize() ;
+            reply.header.messageLength = sizeof( MsgOpReply ) ;
             reply.header.requestID = pMsg->requestID ;
             reply.header.routeID.value = 0 ;
             reply.header.TID = pMsg->TID ;
@@ -1210,8 +1208,7 @@ namespace engine
             reply.numReturned = 1 ;
             reply.startFrom = 0 ;
 
-            _pCatCB->sendReply( handle, &reply, rc,
-                                (void *)err.objdata(), err.objsize() ) ;
+            _pCatCB->sendReply( handle, &reply, rc ) ;
             break ;
          }
       }
@@ -1597,7 +1594,6 @@ namespace engine
 
       try
       {
-
          // Extract delay reply
          rc = _extractDelayReplyEvent( (MsgOpReply *)pMsg, msgType,
                                        &pReply, boEvent ) ;

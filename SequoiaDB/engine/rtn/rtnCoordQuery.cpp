@@ -475,7 +475,7 @@ namespace engine
                              flag, flag ) ;
 
          rc = queryOrDoOnCL( pMsg, pRouteAgent, cb, &pContext,
-                             sendOpt ) ;
+                             sendOpt, NULL, buf ) ;
          /// AUDIT
          PD_AUDIT_OP( ( flag & FLG_QUERY_MODIFY ? AUDIT_DML : AUDIT_DQL ),
                       MSG_BS_QUERY_REQ, AUDIT_OBJ_CL,
@@ -662,10 +662,11 @@ namespace engine
                                        pmdEDUCB *cb,
                                        rtnContextCoord **pContext,
                                        rtnSendOptions & sendOpt,
-                                       rtnQueryConf *pQueryConf )
+                                       rtnQueryConf *pQueryConf,
+                                       rtnContextBuf *buf )
    {
       return _queryOrDoOnCL( pMsg, pRouteAgent, cb, pContext,
-                             sendOpt, NULL, pQueryConf ) ;
+                             sendOpt, NULL, pQueryConf, buf ) ;
    }
 
    INT32 rtnCoordQuery::queryOrDoOnCL( MsgHeader *pMsg,
@@ -674,10 +675,11 @@ namespace engine
                                        rtnContextCoord **pContext,
                                        rtnSendOptions &sendOpt,
                                        CoordGroupList &sucGrpLst,
-                                       rtnQueryConf *pQueryConf )
+                                       rtnQueryConf *pQueryConf,
+                                       rtnContextBuf *buf )
    {
       return _queryOrDoOnCL( pMsg, pRouteAgent, cb, pContext,
-                             sendOpt, &sucGrpLst, pQueryConf ) ;
+                             sendOpt, &sucGrpLst, pQueryConf, buf ) ;
    }
 
    INT32 rtnCoordQuery::_queryOrDoOnCL( MsgHeader *pMsg,
@@ -686,7 +688,8 @@ namespace engine
                                         rtnContextCoord **pContext,
                                         rtnSendOptions &sendOpt,
                                         CoordGroupList *pSucGrpLst,
-                                        rtnQueryConf *pQueryConf )
+                                        rtnQueryConf *pQueryConf,
+                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
@@ -975,6 +978,10 @@ namespace engine
          pRtncb->contextDelete( contextID, cb ) ;
          contextID = -1 ;
          *pContext = NULL ;
+      }
+      if ( buf && nokRC.size() > 0 )
+      {
+         *buf = rtnContextBuf( rtnBuildErrorObj( rc, cb, &nokRC ) ) ;
       }
       goto done ;
    }

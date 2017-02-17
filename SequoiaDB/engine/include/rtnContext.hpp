@@ -60,6 +60,7 @@
 #include "rtnQueryModifier.hpp"
 #include "rtnFetchBase.hpp"
 #include "utilMap.hpp"
+#include "coordDef.hpp"
 
 using namespace bson ;
 
@@ -205,6 +206,11 @@ namespace engine
          virtual INT32    getMore( INT32 maxNumToReturn,
                                    rtnContextBuf &buffObj,
                                    _pmdEDUCB *cb ) ;
+
+         virtual void     getErrorInfo( INT32 rc,
+                                        pmdEDUCB *cb,
+                                        rtnContextBuf &buffObj )
+         {}
 
          OSS_INLINE BOOLEAN  isEmpty () const ;
 
@@ -665,6 +671,10 @@ namespace engine
          INT64    getLimitNum() const { return _numToReturn ; }
          void     setLimitNum( INT64 limitNum ) { _numToReturn = limitNum ; }
 
+         virtual void     getErrorInfo( INT32 rc,
+                                        pmdEDUCB *cb,
+                                        rtnContextBuf &buffObj ) ;
+
       public:
 
          virtual RTN_CONTEXT_TYPE getType () const ;
@@ -712,6 +722,8 @@ namespace engine
          _ixmIndexKeyGen            *_keyGen ;
 
          BOOLEAN                    _needReOrder ;
+         /// error info
+         ROUTE_RC_MAP               _nokRC ;
    } ;
    typedef _rtnContextCoord rtnContextCoord ;
 

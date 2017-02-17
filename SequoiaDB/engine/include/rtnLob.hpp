@@ -52,17 +52,20 @@ namespace engine
    INT32 rtnWriteLob( SINT64 contextID,
                       pmdEDUCB *cb,
                       UINT32 len,
-                      const CHAR *buf ) ;
+                      const CHAR *buf,
+                      rtnContextBuf *errBuf = NULL ) ;
 
    INT32 rtnReadLob( SINT64 contextID,
                      pmdEDUCB *cb,
                      UINT32 len,
                      SINT64 offset,
                      const CHAR **buf,
-                     UINT32 &read ) ;
+                     UINT32 &read,
+                     rtnContextBuf *errBuf = NULL ) ;
 
    INT32 rtnCloseLob( SINT64 contextID,
-                      pmdEDUCB *cb ) ;
+                      pmdEDUCB *cb,
+                      rtnContextBuf *errBuf = NULL ) ;
 
    INT32 rtnRemoveLob( const BSONObj &lob,
                        INT32 flags,

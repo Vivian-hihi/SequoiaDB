@@ -193,7 +193,7 @@ namespace engine
                {
                   processType = RTN_PROCESS_NOK ;
                   if ( SDB_CLS_COORD_NODE_CAT_VER_OLD != rcTmp ||
-                       !result.pushNokRC( routeID.value, rcTmp ) )
+                       !result.pushNokRC( routeID.value, pReply ) )
                   {
                      PD_LOG( PDERROR, "Do trans command[%d] on data node[%s] "
                              "failed, rc: %d", inMsg.opCode(),
@@ -218,7 +218,7 @@ namespace engine
                   else
                   {
                      processType = RTN_PROCESS_NOK ;
-                     if ( !result.pushNokRC( routeID.value, rcTmp ) )
+                     if ( !result.pushNokRC( routeID.value, pReply ) )
                      {
                         rc = rc ? rc : rcTmp ;
                      }
@@ -844,7 +844,6 @@ namespace engine
       CoordCB *pCoordcb = pKrcb->getCoordCB() ;
       netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent() ;
 
-      INT32 rcTmp = SDB_OK ;
       REPLY_QUE replyQue ;
 
       // fill default-reply
@@ -880,20 +879,19 @@ namespace engine
       rtnCoordSendRequestToNodes( (void*)pMsg, sendNodes, 
                                   pRouteAgent, cb, successNodes,
                                   failedNodes ) ;
-      rcTmp = rtnCoordGetReply( cb, successNodes, replyQue,
-                                MSG_BS_MSG_RES, TRUE, FALSE ) ;
-      if ( rcTmp != SDB_OK )
+      rc = rtnCoordGetReply( cb, successNodes, replyQue,
+                             MSG_BS_MSG_RES, TRUE, FALSE ) ;
+      if ( rc != SDB_OK )
       {
-         PD_LOG( PDERROR, "Failed to get the reply, rc", rcTmp ) ;
-      }
-
-      if ( failedNodes.size() != 0 )
-      {
-         rc = rcTmp ? rcTmp : failedNodes.begin()->second._rc ;
+         PD_LOG( PDERROR, "Failed to get the reply, rc", rc ) ;
          goto error ;
       }
 
    done:
+      if ( ( rc || failedNodes.size() > 0 ) && buf )
+      {
+         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &failedNodes ) ) ;
+      }
       rtnClearReplyQue( &replyQue ) ;
       return rc ;
    error:

@@ -56,12 +56,14 @@ namespace engine
          INT32       _executeByNodes( MsgHeader *pMsg,
                                       pmdEDUCB *cb,
                                       CoordGroupList &groupLst,
-                                      const CHAR *pAction ) ;
+                                      const CHAR *pAction,
+                                      rtnContextBuf *buf ) ;
 
          INT32       _executeByGroups( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
                                        CoordGroupList &groupLst,
-                                       const CHAR *pAction ) ;
+                                       const CHAR *pAction,
+                                       rtnContextBuf *buf ) ;
 
    } ;
 

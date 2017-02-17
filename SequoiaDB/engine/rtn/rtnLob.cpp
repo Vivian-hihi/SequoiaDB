@@ -231,6 +231,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to open lob context, rc:%d", rc ) ;
+         lobContext->getErrorInfo( rc, cb, buffObj ) ;
          goto error ;
       }
 
@@ -239,6 +240,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to get more from context, rc: %d", rc ) ;
+         lobContext->getErrorInfo( rc, cb, buffObj ) ;
          goto error ;
       }
 
@@ -265,7 +267,8 @@ namespace engine
                      UINT32 len,
                      SINT64 offset,
                      const CHAR **buf,
-                     UINT32 &read )
+                     UINT32 &read,
+                     rtnContextBuf *errBuf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNREADLOB ) ;
@@ -303,6 +306,10 @@ namespace engine
          if ( SDB_EOF != rc )
          {
             PD_LOG( PDERROR, "Failed to read lob, rc:%d", rc ) ;
+            if ( errBuf )
+            {
+               lobContext->getErrorInfo( rc, cb, *errBuf ) ;
+            }
          }
 
          goto error ;
@@ -312,6 +319,10 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to get more from context, rc:%d", rc ) ;
+         if ( errBuf )
+         {
+            lobContext->getErrorInfo( rc, cb, *errBuf ) ;
+         }
          goto error ;
       }
 
@@ -332,7 +343,8 @@ namespace engine
    INT32 rtnWriteLob( SINT64 contextID,
                       pmdEDUCB *cb,
                       UINT32 len,
-                      const CHAR *buf )
+                      const CHAR *buf,
+                      rtnContextBuf *errBuf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNWRITELOB ) ;
@@ -366,13 +378,14 @@ namespace engine
       rc = lobContext->write( len, buf, cb ) ;
       if ( SDB_OK != rc )
       {
-         if ( SDB_EOF != rc )
+         PD_LOG( PDERROR, "Failed to write lob, rc: %d", rc ) ;
+         if ( errBuf )
          {
-            PD_LOG( PDERROR, "Failed to write lob, rc:%d", rc ) ;
+            lobContext->getErrorInfo( rc, cb, *errBuf ) ;
          }
-
          goto error ;
-      }      
+      }
+
    done:
       PD_TRACE_EXITRC( SDB_RTNWRITELOB, rc ) ;
       return rc ;
@@ -386,7 +399,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLOSELOB, "rtnCloseLob" )
    INT32 rtnCloseLob( SINT64 contextID,
-                     pmdEDUCB *cb )
+                      pmdEDUCB *cb,
+                      rtnContextBuf *errBuf )
    {
       
       INT32 rc = SDB_OK ;
@@ -420,13 +434,14 @@ namespace engine
       rc = lobContext->close( cb ) ;
       if ( SDB_OK != rc )
       {
-         if ( SDB_EOF != rc )
+         PD_LOG( PDERROR, "Failed to close lob, rc:%d", rc ) ;
+         if ( errBuf )
          {
-            PD_LOG( PDERROR, "Failed to close lob, rc:%d", rc ) ;
+            lobContext->getErrorInfo( rc, cb, *errBuf ) ;
          }
-
          goto error ;
       }
+
    done:
       if ( -1 != contextID )
       {

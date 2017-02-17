@@ -2577,6 +2577,16 @@ namespace engine
       SAFE_OSS_DELETE( _keyGen ) ;
    }
 
+   void _rtnContextCoord::getErrorInfo( INT32 rc,
+                                        pmdEDUCB *cb,
+                                        rtnContextBuf &buffObj )
+   {
+      if ( rc && _nokRC.size() > 0 )
+      {
+         buffObj = rtnBuildErrorObj( rc, cb, &_nokRC ) ;
+      }
+   }
+
    void _rtnContextCoord::killSubContexts( pmdEDUCB * cb )
    {
       UINT32 tid = 0 ;
@@ -2750,6 +2760,7 @@ namespace engine
          return SDB_SYS ;
       }
 
+      _nokRC.clear() ;
       _resetTotalRecords( numRecords() ) ;
       _isOpened = TRUE ;
 
@@ -2859,6 +2870,8 @@ namespace engine
                            pReply->header.routeID.columns.serviceID,
                            pReply->flags ) ;
                   rc = pReply->flags ;
+                  _nokRC[ pReply->header.routeID.value ] =
+                     coordErrorInfo( pReply ) ;
                   break ;
                }
                else

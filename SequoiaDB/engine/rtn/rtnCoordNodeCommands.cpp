@@ -247,6 +247,7 @@ namespace engine
          {
             CoordGroupInfoPtr groupInfo( pEmptyGroupInfo ) ;
             sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
+            sdbGetCoordCB()->removeGroupInfo( CAT_CATALOG_GROUPID ) ;
          }
       }
       goto done ;
@@ -464,12 +465,10 @@ namespace engine
       MsgOpQuery *pCreateReq = (MsgOpQuery *)pMsg ;
       pCreateReq->header.opCode = MSG_CAT_CREATE_GROUP_REQ ;
 
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR,
-                  "Failed to execute on catalog, rc: %d",
-                  rc ) ;
+         PD_LOG ( PDERROR, "Failed to execute on catalog, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -1126,6 +1125,7 @@ namespace engine
          {
             CoordGroupInfoPtr groupInfo( pEmptyGroupInfo ) ;
             sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
+            sdbGetCoordCB()->invalidateGroupInfo() ;
          }
       }
 

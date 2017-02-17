@@ -357,7 +357,8 @@ namespace engine
       queryOptions._query = BSON( CAT_DOMAIN_NAME << domain.valuestr() ) ;
       queryOptions._fullName = CAT_COLLECTION_SPACE_COLLECTION ;
 
-      rc = queryOnCataAndPushToVec( queryOptions, cb, replyFromCata ) ; 
+      rc = queryOnCataAndPushToVec( queryOptions, cb, replyFromCata,
+                                    buf ) ; 
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to execute query on catalog:%d", rc ) ;
@@ -527,7 +528,7 @@ namespace engine
       queryConf._openEmptyContext = TRUE ;
       queryConf._allCataGroups = TRUE ;
       rc = queryOpr.queryOrDoOnCL( pMsg, pRouteAgent, cb, &context,
-                                   sendOpt, &queryConf ) ;
+                                   sendOpt, &queryConf, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "List lobs[%s] on groups failed, rc: %d",
                    queryConf._realCLName.c_str(), rc ) ;
 

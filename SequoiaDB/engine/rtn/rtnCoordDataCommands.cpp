@@ -146,7 +146,7 @@ namespace engine
 
       // Send request to catalog, and get the control of CoordContext
       rc = executeOnCataGroup( pMsg, cb, pGroupLst, pReplyObjs,
-                               TRUE, NULL, &pContext ) ;
+                               TRUE, NULL, &pContext, pArgs->_pBuf ) ;
       if ( SDB_OK != rc &&
            _flagUpdateBeforeCata() &&
            _flagDoOnCollection() )
@@ -208,13 +208,14 @@ namespace engine
          rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
                            _flagUpdateBeforeData(),
                            _flagUseGrpLstInCoord() ? NULL : &groupLst,
-                           &(pArgs->_ignoreRCList), &sucGroupLst, ppContext ) ;
+                           &(pArgs->_ignoreRCList), &sucGroupLst,
+                           ppContext, pArgs->_pBuf ) ;
       }
       else
       {
          rc = executeOnDataGroup( pMsg, cb, groupLst, TRUE,
                                   &(pArgs->_ignoreRCList), NULL,
-                                  ppContext ) ;
+                                  ppContext, pArgs->_pBuf ) ;
       }
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to %s on [%s]: "
@@ -313,12 +314,10 @@ namespace engine
 
       _printDebug ( (CHAR*)pMsg, "rtnCoordCMDCreateDomain" ) ;
 
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR,
-                  "Failed to create domain, rc: %d",
-                  rc ) ;
+         PD_LOG ( PDERROR, "Failed to create domain, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -349,12 +348,10 @@ namespace engine
 
       _printDebug ( (CHAR*)pMsg, "rtnCoordCMDDropDomain" ) ;
 
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR,
-                  "Failed to drop domain, rc: %d",
-                  rc ) ;
+         PD_LOG ( PDERROR, "Failed to drop domain, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -384,12 +381,10 @@ namespace engine
 
       _printDebug ( (CHAR*)pMsg, "rtnCoordCMDAlterDomain" ) ;
 
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR,
-                  "Failed to alter domain, rc: %d",
-                  rc ) ;
+         PD_LOG ( PDERROR, "Failed to alter domain, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -434,7 +429,7 @@ namespace engine
 
          pCreateReq->header.opCode = MSG_CAT_CREATE_COLLECTION_SPACE_REQ ;
          // execute create collection on catalog
-         rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+         rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
          /// AUDIT
          PD_AUDIT_COMMAND( AUDIT_DDL, pCollectionName + 1, AUDIT_OBJ_CS,
                            boQuery.getField(FIELD_NAME_NAME).valuestrsafe(),
@@ -698,7 +693,8 @@ namespace engine
       ignoreRC.insert( SDB_DMS_NOTEXIST ) ;
       ignoreRC.insert( SDB_DMS_CS_NOTEXIST ) ;
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
-                        TRUE, &groupLst, &ignoreRC, NULL, &pCtxForData ) ;
+                        TRUE, &groupLst, &ignoreRC, NULL,
+                        &pCtxForData, pArgs->_pBuf ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to rollback %s on [%s]: "
                    "drop collection phase 1 failed, rc: %d",
@@ -1098,7 +1094,8 @@ namespace engine
       PD_TRACE_ENTRY ( CMD_RTNCOCMDLINKCL_ROLLBACK ) ;
 
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
-                        TRUE, &groupLst, &(pArgs->_ignoreRCList), NULL ) ;
+                        TRUE, &groupLst, &(pArgs->_ignoreRCList), NULL,
+                        NULL, pArgs->_pBuf ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to rollback %s on [%s], rc: %d",
                    _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
@@ -1233,7 +1230,8 @@ namespace engine
       PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_ROLLBACK ) ;
 
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
-                        TRUE, &groupLst, &(pArgs->_ignoreRCList), NULL ) ;
+                        TRUE, &groupLst, &(pArgs->_ignoreRCList), NULL,
+                        NULL, pArgs->_pBuf ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to rollback %s on [%s], rc: %d",
                    _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
@@ -1252,7 +1250,8 @@ namespace engine
    INT32 rtnCoordCMDSplit::_getCLCount( const CHAR * clFullName,
                                        CoordGroupList & groupList,
                                        pmdEDUCB *cb,
-                                       UINT64 & count )
+                                       UINT64 & count,
+                                       rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
 
@@ -1274,7 +1273,7 @@ namespace engine
       rc = rtnCoordNodeQuery( CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
                               dummy, dummy, dummy, collectionObj,
                               0, 1, tmpGroupList, cb, &pContext,
-                              clFullName ) ;
+                              clFullName, 0, buf ) ;
 
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to get count from source node, rc: %d",
@@ -1369,7 +1368,8 @@ namespace engine
        *              PREPARE PHASE                                     *
        ******************************************************************/
       // send request to catalog
-      rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
+      rc = executeOnCataGroup ( pMsg, cb, &groupLst, NULL, TRUE,
+                                NULL, NULL, buf ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Split failed on catalog, rc: %d", rc ) ;
 
@@ -1497,7 +1497,8 @@ namespace engine
             if ( beSplitQuery.eoo())
             {
                rc = _getBoundByPercent( strName, percent, cataInfo,
-                                        groupLst, cb, boKeyStart, boKeyEnd ) ;
+                                        groupLst, cb, boKeyStart, boKeyEnd,
+                                        buf ) ;
             }
             else
             {
@@ -1509,7 +1510,8 @@ namespace engine
                                           groupLst,
                                           cb,
                                           cataInfo,
-                                          boKeyStart, boKeyEnd ) ;
+                                          boKeyStart, boKeyEnd,
+                                          buf ) ;
             }
 
             PD_RC_CHECK( rc, PDERROR, "Failed to get bound, rc: %d",
@@ -1551,7 +1553,8 @@ namespace engine
          pSplitReq->header.opCode         = MSG_CAT_SPLIT_READY_REQ ;
          pSplitReq->version               = cataInfo->getVersion() ;
 
-         rc = executeOnCataGroup ( (MsgHeader*)pSplitReq, cb, &groupDstLst, &boRecv ) ;
+         rc = executeOnCataGroup ( (MsgHeader*)pSplitReq, cb, &groupDstLst,
+                                   &boRecv, TRUE, NULL, NULL, buf ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to execute split ready on catalog, rc: %d",
                        rc ) ;
@@ -1588,7 +1591,7 @@ namespace engine
       // before sending to data node, we have to convert the request to QUERY
       pSplitReq->header.opCode = MSG_BS_QUERY_REQ ;
       rc = executeOnCL( (MsgHeader *)splitReadyBuffer, cb, strName,
-                        FALSE, &groupDstLst, NULL, NULL ) ;
+                        FALSE, &groupDstLst, NULL, NULL, NULL, buf ) ;
       // If we get error here, something big happend. We have marked ready to
       // split on catalog but data node refused to do so.
       PD_RC_CHECK( rc, PDERROR,
@@ -1669,7 +1672,7 @@ namespace engine
             // Send the request
             pSplitQuery->header.opCode = MSG_CAT_SPLIT_CANCEL_REQ ;
             tmpRC = executeOnCataGroup ( (MsgHeader*)pSplitQuery,
-                                         cb, TRUE ) ;
+                                         cb, TRUE, NULL, NULL, buf ) ;
             if ( tmpRC )
             {
                PD_LOG( PDWARNING,
@@ -1700,7 +1703,8 @@ namespace engine
                                                   CoordGroupList &groupList,
                                                   pmdEDUCB *cb,
                                                   BSONObj &shardingKey,
-                                                  BSONObj &record )
+                                                  BSONObj &record,
+                                                  rtnContextBuf *buf )
    {
       PD_TRACE_ENTRY( SDB_RTNCOCMDSP_GETBOUNDRONDATA ) ;
       INT32 rc = SDB_OK ;
@@ -1723,7 +1727,7 @@ namespace engine
       {
          rc = rtnCoordNodeQuery( cl, condition, empty, sort,
                                  hint, skip, 1, groupList,
-                                 cb, &context, NULL, flag ) ;
+                                 cb, &context, NULL, flag, buf ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to query from data group, rc: %d",
                        rc ) ;
@@ -1782,9 +1786,7 @@ namespace engine
             }
          }*/
 
-        PD_LOG ( PDINFO,
-                 "Split found key %s",
-                 record.toString().c_str() ) ;
+        PD_LOG ( PDINFO, "Split found key %s", record.toString().c_str() ) ;
      }
 
    done:
@@ -1807,7 +1809,8 @@ namespace engine
                                                  pmdEDUCB *cb,
                                                  CoordCataInfoPtr &cataInfo,
                                                  BSONObj &lowBound,
-                                                 BSONObj &upBound )
+                                                 BSONObj &upBound,
+                                                 rtnContextBuf *buf )
    {
       PD_TRACE_ENTRY( SDB_RTNCOCMDSP__GETBOUNDBYC ) ;
       INT32 rc = SDB_OK ;
@@ -1822,7 +1825,7 @@ namespace engine
 
       rc = _getBoundRecordOnData( cl, begin, BSONObj(),BSONObj(),
                                   0, 0, grpTmp, cb,
-                                  shardingKey, lowBound ) ;
+                                  shardingKey, lowBound, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR,
@@ -1836,7 +1839,7 @@ namespace engine
          grpTmp = groupList ;
          rc = _getBoundRecordOnData( cl, end, BSONObj(),BSONObj(),
                                      0, 0, grpTmp, cb,
-                                     shardingKey, upBound ) ;
+                                     shardingKey, upBound, buf ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR,
@@ -1859,7 +1862,8 @@ namespace engine
                                                CoordGroupList &groupList,
                                                pmdEDUCB *cb,
                                                BSONObj &lowBound,
-                                               BSONObj &upBound )
+                                               BSONObj &upBound,
+                                               rtnContextBuf *buf )
    {
       PD_TRACE_ENTRY( SDB_RTNCOCMDSP__GETBOUNDBYP ) ;
       INT32 rc = SDB_OK ;
@@ -1888,7 +1892,7 @@ namespace engine
          BSONObj hint ;
          while ( TRUE )
          {
-            rc = _getCLCount( cl, grpTmp, cb, totalCount ) ;
+            rc = _getCLCount( cl, grpTmp, cb, totalCount, buf ) ;
             PD_RC_CHECK( rc, PDERROR,
                          "Failed to get collection count, rc: %d",
                          rc ) ;
@@ -1907,7 +1911,7 @@ namespace engine
             /// can still match index.
             rc = _getBoundRecordOnData( cl, BSONObj(), hint, shardingKey,
                                         flag, skipCount, grpTmp,
-                                        cb, shardingKey, lowBound ) ;
+                                        cb, shardingKey, lowBound, buf ) ;
             if ( SDB_DMS_EOC == rc )
             {
                continue ;
@@ -2077,7 +2081,8 @@ namespace engine
 
       ignoreRC.insert( SDB_IXM_NOTEXIST ) ;
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
-                        FALSE, &groupLst, &ignoreRC, NULL ) ;
+                        FALSE, &groupLst, &ignoreRC, NULL,
+                        NULL, pArgs->_pBuf ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to rollback %s on [%s], rc: %d",
                    _getCommandName(), pArgs->_targetName.c_str(), rc ) ;

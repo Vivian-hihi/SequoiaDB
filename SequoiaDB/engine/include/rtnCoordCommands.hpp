@@ -69,7 +69,8 @@ namespace engine
                                  const CoordGroupList *pSpecGrpLst = NULL,
                                  SET_RC *pIgnoreRC = NULL,
                                  CoordGroupList *pSucGrpLst = NULL,
-                                 rtnContextCoord **ppContext = NULL ) ;
+                                 rtnContextCoord **ppContext = NULL,
+                                 rtnContextBuf *buf = NULL ) ;
 
       INT32         executeOnDataGroup ( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
@@ -77,13 +78,15 @@ namespace engine
                                          BOOLEAN onPrimary = TRUE,
                                          SET_RC *pIgnoreRC = NULL,
                                          CoordGroupList *pSucGrpLst = NULL,
-                                         rtnContextCoord **ppContext = NULL ) ;
+                                         rtnContextCoord **ppContext = NULL,
+                                         rtnContextBuf *buf = NULL ) ;
 
       INT32         executeOnCataGroup ( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
                                          BOOLEAN onPrimary = TRUE,
                                          SET_RC *pIgnoreRC = NULL,
-                                         rtnContextCoord **ppContext = NULL ) ;
+                                         rtnContextCoord **ppContext = NULL,
+                                         rtnContextBuf *buf = NULL ) ;
 
       INT32         executeOnCataGroup ( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
@@ -91,14 +94,16 @@ namespace engine
                                          vector<BSONObj> *pReplyObjs = NULL,
                                          BOOLEAN onPrimary = TRUE,
                                          SET_RC *pIgnoreRC = NULL,
-                                         rtnContextCoord **ppContext = NULL ) ;
+                                         rtnContextCoord **ppContext = NULL,
+                                         rtnContextBuf *buf = NULL ) ;
 
       INT32         executeOnCataCL( MsgOpQuery *pMsg,
                                      pmdEDUCB *cb,
                                      const CHAR *pCLName,
                                      BOOLEAN onPrimary = TRUE,
                                      SET_RC *pIgnoreRC = NULL,
-                                     rtnContextCoord **ppContext = NULL ) ;
+                                     rtnContextCoord **ppContext = NULL,
+                                     rtnContextBuf *buf = NULL ) ;
 
       INT32         queryOnCatalog( MsgHeader *pMsg,
                                     INT32 requestType,
@@ -108,11 +113,13 @@ namespace engine
 
       INT32         queryOnCatalog( const rtnQueryOptions &options,
                                     pmdEDUCB *cb,
-                                    SINT64 &contextID ) ;
+                                    SINT64 &contextID,
+                                    rtnContextBuf *buf ) ;
 
       INT32         queryOnCataAndPushToVec( const rtnQueryOptions &options,
                                              pmdEDUCB *cb,
-                                             vector<BSONObj> &objs ) ;
+                                             vector<BSONObj> &objs,
+                                             rtnContextBuf *buf ) ;
 
       INT32         executeOnNodes( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
@@ -164,7 +171,8 @@ namespace engine
                                BOOLEAN onPrimary = TRUE,
                                SET_RC *pIgnoreRC = NULL,
                                CoordGroupList *pSucGrpLst = NULL,
-                               rtnContextCoord **ppContext = NULL ) ;
+                               rtnContextCoord **ppContext = NULL,
+                               rtnContextBuf *buf = NULL ) ;
 
    };
 
@@ -188,7 +196,6 @@ namespace engine
    protected:
       virtual FILTER_BSON_ID  _getGroupMatherIndex () = 0 ;
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () = 0 ;
-      virtual BOOLEAN         _allowFailed () = 0 ;
       virtual BOOLEAN         _useContext () = 0 ;
       virtual UINT32          _getMask() const = 0 ;
 
@@ -199,7 +206,6 @@ namespace engine
    protected:
       virtual FILTER_BSON_ID  _getGroupMatherIndex () ;
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
-      virtual BOOLEAN         _allowFailed () ;
       virtual BOOLEAN         _useContext () ;
       virtual UINT32          _getMask() const ;
    } ;
@@ -209,7 +215,6 @@ namespace engine
    protected:
       virtual FILTER_BSON_ID  _getGroupMatherIndex () ;
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
-      virtual BOOLEAN         _allowFailed () ;
       virtual BOOLEAN         _useContext () ;
       virtual UINT32          _getMask() const ;
    } ;
@@ -629,7 +634,7 @@ namespace engine
       class _rtnCMDArguments : public SDBObject
       {
       public :
-         _rtnCMDArguments () {}
+         _rtnCMDArguments () { _pBuf = NULL ; }
 
          virtual ~_rtnCMDArguments () {}
 
@@ -641,6 +646,9 @@ namespace engine
 
          /* ignore error return codes */
          SET_RC _ignoreRCList ;
+
+         /* the return context buf pointer */
+         rtnContextBuf *_pBuf ;
       } ;
 
    public:

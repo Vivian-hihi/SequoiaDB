@@ -176,6 +176,7 @@ namespace engine
       REPLY_QUE replyQue;
       DpsTransNodeMap *pNodeMap = cb->getTransNodeLst();
       DpsTransNodeMap::iterator iterMap = pNodeMap->begin();
+      ROUTE_RC_MAP nokRC ;
 
       while( iterMap != pNodeMap->end() )
       {
@@ -209,10 +210,11 @@ namespace engine
 
          if ( rcTmp != SDB_OK )
          {
-            rc = rc ? rc : rcTmp;
+            rc = rc ? rc : rcTmp ;
             PD_LOG( PDERROR, "Data node[%s] commit transaction failed, rc: %d",
                     routeID2String( pReply->header.routeID ).c_str(),
                     rcTmp ) ;
+            nokRC[ pReply->header.routeID.value ] = coordErrorInfo( pReply ) ;
          }
          SDB_OSS_FREE( pReply ) ;
       }
@@ -224,6 +226,10 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( ( rc && nokRC.size() > 0 ) && buf )
+      {
+         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &nokRC ) ) ;
+      }
       goto done ;
    }
 

@@ -186,6 +186,16 @@ namespace engine
       goto done ;
    }
 
+   void _rtnContextLob::getErrorInfo( INT32 rc,
+                                      pmdEDUCB *cb,
+                                      rtnContextBuf &buffObj )
+   {
+      if ( _stream )
+      {
+         _stream->getErrorInfo( rc,  cb, &buffObj ) ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTLOB_READ, "_rtnContextLob::read" )
    INT32 _rtnContextLob::read( UINT32 len,
                                SINT64 offset,
@@ -240,18 +250,7 @@ namespace engine
       {
          goto done ;
       }
-/*
-      if ( -1 != _offset && _offset != _stream->curOffset() )
-      {
-         _empty() ;  /// clear data in context.
-         rc = _stream->seek( _offset, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to seek lob:%d", rc ) ;
-            goto error ;
-         }
-      }
-*/
+
       rc = _stream->read( _readLen, this, cb, read ) ;
       if ( SDB_OK != rc )
       {

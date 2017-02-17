@@ -48,6 +48,7 @@ namespace engine
    class _dmsStorageUnit ;
    class _dpsLogWrapper ;
    class _rtnContextBase ;
+   class _rtnContextBuf ;
 
    class _rtnLobStream : public SDBObject
    {
@@ -122,6 +123,12 @@ namespace engine
       OSS_INLINE BOOLEAN isReadonly() const
       {
          return SDB_LOB_MODE_R == _mode ? TRUE : FALSE ;
+      }
+
+      virtual void   getErrorInfo( INT32 rc,
+                                   _pmdEDUCB *cb,
+                                   _rtnContextBuf *buf )
+      {
       }
 
    protected:

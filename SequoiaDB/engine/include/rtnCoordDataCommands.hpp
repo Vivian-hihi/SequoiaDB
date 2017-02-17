@@ -406,8 +406,9 @@ namespace engine
 
    protected :
       INT32 _getCLCount ( const CHAR *clFullName,
-                         CoordGroupList &groupList,
-                         pmdEDUCB *cb, UINT64 &count ) ;
+                          CoordGroupList &groupList,
+                          pmdEDUCB *cb, UINT64 &count,
+                          rtnContextBuf *buf ) ;
 
       INT32 _getBoundByPercent ( const CHAR *cl,
                                  FLOAT64 percent,
@@ -415,7 +416,8 @@ namespace engine
                                  CoordGroupList &groupList,
                                  pmdEDUCB *cb,
                                  BSONObj &lowBound,
-                                 BSONObj &upBound ) ;
+                                 BSONObj &upBound,
+                                 rtnContextBuf *buf ) ;
 
       INT32 _getBoundByCondition ( const CHAR *cl,
                                    const BSONObj &begin,
@@ -424,7 +426,8 @@ namespace engine
                                    pmdEDUCB *cb,
                                    CoordCataInfoPtr &cataInfo,
                                    BSONObj &lowBound,
-                                   BSONObj &upBound ) ;
+                                   BSONObj &upBound,
+                                   rtnContextBuf *buf ) ;
 
       INT32 _getBoundRecordOnData ( const CHAR *cl,
                                     const BSONObj &condition,
@@ -435,7 +438,8 @@ namespace engine
                                     CoordGroupList &groupList,
                                     pmdEDUCB *cb,
                                     BSONObj &shardingKey,
-                                    BSONObj &record ) ;
+                                    BSONObj &record,
+                                    rtnContextBuf *buf ) ;
 
    } ;
 

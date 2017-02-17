@@ -891,15 +891,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_SENDREPLY, "sdbCatalogueCB::sendReply" )
    INT32 sdbCatalogueCB::sendReply ( const NET_HANDLE &handle,
-                                     MsgOpReply *pReply, INT32 result,
-                                     void *pReplyData, UINT32 replyDataLen,
+                                     MsgOpReply *pReply,
+                                     INT32 result,
+                                     void *pReplyData,
+                                     UINT32 replyDataLen,
                                      BOOLEAN needSync )
    {
       INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_CATALOGCB_SENDREPLY ) ;
-
       MsgOpReply errReply ;
+      PD_TRACE_ENTRY( SDB_CATALOGCB_SENDREPLY ) ;
 
       rc = onSendReply( pReply, result ) ;
       PD_RC_CHECK( rc, PDERROR, "On send reply failed, rc: %d", rc ) ;
@@ -913,9 +913,25 @@ namespace engine
    done :
       if ( !isDelayed() && pReply )
       {
+         BSONObj errInfo ;
+
          PD_LOG( PDDEBUG,
                  "Sending reply message [%d] with rc [%d]",
                  pReply->header.opCode, pReply->flags ) ;
+
+         /// when error, but has no data, fill the error obj
+         if ( pReply->flags &&
+              pReply->header.messageLength == sizeof( MsgOpReply ) )
+         {
+            pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+            errInfo = utilGetErrorBson( pReply->flags,
+                                        cb->getInfo( EDU_INFO_ERROR ) ) ;
+            pReplyData = ( void* )errInfo.objdata() ;
+            replyDataLen = (INT32)errInfo.objsize() ;
+            pReply->numReturned = 1 ;
+            pReply->header.messageLength += replyDataLen ;
+         }
+
          if ( pReplyData )
          {
             rc = netWork()->syncSend( handle, &(pReply->header),
@@ -946,8 +962,8 @@ namespace engine
             _catMainCtrl.delContextByID( contextID, TRUE ) ;
          }
 
-         if ( SDB_OK == result ||
-              SDB_DMS_EOC == result )
+         /// when org-operator is succeed
+         if ( SDB_OK == result || SDB_DMS_EOC == result )
          {
             // Replace with error reply
             fillErrReply( pReply, &errReply, rc ) ;

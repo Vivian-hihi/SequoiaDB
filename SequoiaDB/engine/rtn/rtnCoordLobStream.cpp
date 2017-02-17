@@ -82,6 +82,16 @@ namespace engine
       _closeSubStreamsWithException( cb ) ;
    }
 
+   void _rtnCoordLobStream::getErrorInfo( INT32 rc,
+                                          _pmdEDUCB *cb,
+                                          _rtnContextBuf *buf )
+   {
+      if ( rc && buf && _nokRC.size() > 0 )
+      {
+         *buf = rtnBuildErrorObj( rc, cb, &_nokRC ) ;
+      }
+   }
+
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__PREPARE, "_rtnCoordLobStream::_prepare" )
    INT32 _rtnCoordLobStream::_prepare( const CHAR *fullName,
                                        const bson::OID &oid,
@@ -1373,6 +1383,11 @@ namespace engine
          {
             tag |= ( RETRY_TAG_RETRY | RETRY_TAG_REOPEN ) ;
             flags = SDB_OK ;
+         }
+         else
+         {
+            _nokRC[ replyHeader->header.routeID.value ] =
+               coordErrorInfo( replyHeader ) ;
          }
 
          SDB_OSS_FREE( replyHeader ) ;

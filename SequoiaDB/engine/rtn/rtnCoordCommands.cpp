@@ -276,7 +276,8 @@ namespace engine
                                             BOOLEAN onPrimary,
                                             SET_RC *pIgnoreRC,
                                             CoordGroupList *pSucGrpLst,
-                                            rtnContextCoord **ppContext )
+                                            rtnContextCoord **ppContext,
+                                            rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
@@ -300,7 +301,11 @@ namespace engine
       sendOpt._pIgnoreRC = pIgnoreRC ;
 
       ROUTE_REPLY_MAP okReply ;
+      ROUTE_REPLY_MAP nokReply ;
       result._pOkReply = &okReply ;
+      result._pNokReply = &nokReply ;
+
+      ROUTE_RC_MAP nokRC ;
 
       if ( ppContext )
       {
@@ -334,6 +339,16 @@ namespace engine
       rc = doOnGroups( inMsg, sendOpt, pRouteAgent, cb, result ) ;
       /// process succeed reply msg
       rcTmp = _processSucReply( okReply, pTmpContext ) ;
+      /// build nokRC
+      if ( nokReply.size() > 0 )
+      {
+         ROUTE_REPLY_MAP::iterator itNok = nokReply.begin() ;
+         while( itNok != nokReply.end() )
+         {
+            nokRC[ itNok->first ] = coordErrorInfo( (MsgOpReply*)itNok->second ) ;
+            ++itNok ;
+         }
+      }
 
       if ( rc )
       {
@@ -361,6 +376,10 @@ namespace engine
          contextID = -1 ;
          *ppContext = NULL ;
       }
+      if ( buf && nokRC.size() > 0 )
+      {
+         *buf = rtnContextBuf( rtnBuildErrorObj( rc, cb, &nokRC ) ) ;
+      }
       goto done ;
    }
 
@@ -370,22 +389,26 @@ namespace engine
                                                BOOLEAN onPrimary,
                                                SET_RC *pIgnoreRC,
                                                CoordGroupList *pSucGrpLst,
-                                               rtnContextCoord **ppContext )
+                                               rtnContextCoord **ppContext,
+                                               rtnContextBuf *buf )
    {
       return _executeOnGroups( pMsg, cb, groupLst, MSG_ROUTE_SHARD_SERVCIE,
-                               onPrimary, pIgnoreRC, pSucGrpLst, ppContext ) ;
+                               onPrimary, pIgnoreRC, pSucGrpLst, ppContext,
+                               buf ) ;
    }
 
    INT32 rtnCoordCommand::executeOnCataGroup( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
                                               BOOLEAN onPrimary,
                                               SET_RC *pIgnoreRC,
-                                              rtnContextCoord **ppContext )
+                                              rtnContextCoord **ppContext,
+                                              rtnContextBuf *buf )
    {
       CoordGroupList grpList ;
       grpList[ CATALOG_GROUPID ] = CATALOG_GROUPID ;
       return _executeOnGroups( pMsg, cb, grpList, MSG_ROUTE_CAT_SERVICE,
-                               onPrimary, pIgnoreRC, NULL, ppContext ) ;
+                               onPrimary, pIgnoreRC, NULL, ppContext,
+                               buf ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_EXEONCATAGR, "rtnCoordCommand::executeOnCataGroup" )
@@ -395,7 +418,8 @@ namespace engine
                                                vector<BSONObj> *pReplyObjs,
                                                BOOLEAN onPrimary,
                                                SET_RC *pIgnoreRC,
-                                               rtnContextCoord **ppContext )
+                                               rtnContextCoord **ppContext,
+                                               rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCOM_EXEONCATAGR ) ;
@@ -403,7 +427,8 @@ namespace engine
       rtnContextBuf buffObj ;
       rtnContextCoord *pContext = NULL ;
 
-      rc = executeOnCataGroup( pMsg, cb, onPrimary, pIgnoreRC, &pContext ) ;
+      rc = executeOnCataGroup( pMsg, cb, onPrimary, pIgnoreRC,
+                               &pContext, buf ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute command[%d] on catalog, rc: %d",
                    pMsg->opCode, rc ) ;
@@ -478,7 +503,8 @@ namespace engine
                                            const CHAR *pCLName,
                                            BOOLEAN onPrimary,
                                            SET_RC *pIgnoreRC,
-                                           rtnContextCoord **ppContext )
+                                           rtnContextCoord **ppContext,
+                                           rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       CoordCataInfoPtr cataInfo ;
@@ -492,7 +518,7 @@ namespace engine
       pMsg->version = cataInfo->getVersion() ;
 
       rc = executeOnCataGroup( (MsgHeader*)pMsg, cb, onPrimary, pIgnoreRC,
-                               ppContext ) ;
+                               ppContext, buf ) ;
       if ( rc )
       {
          if ( rtnCoordCataReplyCheck( cb, rc, _canRetry( retryTimes ),
@@ -517,7 +543,8 @@ namespace engine
                                        const CoordGroupList *pSpecGrpLst,
                                        SET_RC *pIgnoreRC,
                                        CoordGroupList *pSucGrpLst,
-                                       rtnContextCoord **ppContext )
+                                       rtnContextCoord **ppContext,
+                                       rtnContextBuf *buf )
    {
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
@@ -543,12 +570,13 @@ namespace engine
       if ( !pSucGrpLst )
       {
          return queryOpr.queryOrDoOnCL( pMsg, pRouteAgent, cb, ppContext,
-                                        sendOpt, &queryConf ) ;
+                                        sendOpt, &queryConf, buf ) ;
       }
       else
       {
          return queryOpr.queryOrDoOnCL( pMsg, pRouteAgent, cb, ppContext,
-                                        sendOpt, *pSucGrpLst, &queryConf ) ;
+                                        sendOpt, *pSucGrpLst, &queryConf,
+                                        buf ) ;
       }
    }
 
@@ -570,7 +598,7 @@ namespace engine
       pMsg->opCode                     = requestType ;
 
       // execute query data group on catalog
-      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, &pContext ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, &pContext, buf ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Query[%d] on catalog group failed, rc = %d",
@@ -599,7 +627,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOCONTEXT, "rtnCoordCommand::queryOnCataAndPushToContext" )
    INT32 rtnCoordCommand::queryOnCatalog( const rtnQueryOptions &options,
                                           pmdEDUCB *cb,
-                                          SINT64 &contextID )
+                                          SINT64 &contextID,
+                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOCONTEXT ) ;
@@ -616,7 +645,7 @@ namespace engine
       }
 
       rc = queryOnCatalog( (MsgHeader*)msgBuf, MSG_BS_QUERY_REQ, cb,
-                           contextID, NULL ) ;
+                           contextID, buf ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Query on catalog group failed, rc: %d", rc ) ;
@@ -638,7 +667,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOVEC, "rtnCoordCommand::queryOnCataAndPushToContext" )
    INT32 rtnCoordCommand::queryOnCataAndPushToVec( const rtnQueryOptions &options,
                                                    pmdEDUCB *cb,
-                                                   vector< BSONObj > &objs )
+                                                   vector< BSONObj > &objs,
+                                                   rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOVEC ) ;
@@ -646,7 +676,7 @@ namespace engine
       rtnContextBuf bufObj ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
-      rc = queryOnCatalog( options, cb, contextID ) ;
+      rc = queryOnCatalog( options, cb, contextID, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to query on catalog:%d", rc ) ;
@@ -1077,13 +1107,12 @@ namespace engine
       {
          contextID = pContext->contextID() ;
       }
-      else if ( !_allowFailed() && failedNodes.size() > 0 )
-      {
-         rc = failedNodes.begin()->second._rc ;
-         goto error ;
-      }
 
    done:
+      if ( ( rc || failedNodes.size() > 0 ) && -1 == contextID && buf )
+      {
+         *buf = _rtnContextBuf( rtnBuildErrorObj( rc, cb, &failedNodes ) ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -1097,11 +1126,6 @@ namespace engine
    NODE_SEL_STY rtnCoordRemoveBackup::_nodeSelWhenNoFilter ()
    {
       return NODE_SEL_ALL ;
-   }
-
-   BOOLEAN rtnCoordRemoveBackup::_allowFailed ()
-   {
-      return FALSE ;
    }
 
    BOOLEAN rtnCoordRemoveBackup::_useContext ()
@@ -1122,11 +1146,6 @@ namespace engine
    NODE_SEL_STY rtnCoordBackupOffline::_nodeSelWhenNoFilter ()
    {
       return NODE_SEL_PRIMARY ;
-   }
-
-   BOOLEAN rtnCoordBackupOffline::_allowFailed ()
-   {
-      return FALSE ;
    }
 
    BOOLEAN rtnCoordBackupOffline::_useContext ()
@@ -1479,7 +1498,7 @@ namespace engine
       queryOpt._flag |= FLG_QUERY_WITH_RETURNDATA ;
 
       // query on catalog
-      rc = queryOnCatalog( queryOpt, cb, contextID ) ;
+      rc = queryOnCatalog( queryOpt, cb, contextID, buf ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Query on catalog[%s] failed, rc: %d",
@@ -1955,7 +1974,7 @@ namespace engine
             goto error ;
          }
 
-         rc = executeOnCataGroup( pMsg, cb, TRUE, &ignoreRC, &pContext ) ;
+         rc = executeOnCataGroup( pMsg, cb, TRUE, &ignoreRC, &pContext, buf ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Query task on catalog failed, rc: %d", rc ) ;
@@ -2030,13 +2049,15 @@ namespace engine
 
       pMsg->opCode                     = MSG_CAT_SPLIT_CANCEL_REQ ;
 
-      rc = executeOnCataGroup( pMsg, cb, &groupLst ) ;
+      rc = executeOnCataGroup( pMsg, cb, &groupLst, NULL, TRUE,
+                               NULL, NULL, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "Excute on catalog failed, rc: %d", rc ) ;
 
       pMsg->opCode                     = MSG_BS_QUERY_REQ ;
       // notify to data node
       rcTmp = executeOnDataGroup( pMsg, cb, groupLst,
-                                  TRUE, NULL, NULL, NULL ) ;
+                                  TRUE, NULL, NULL, NULL,
+                                  buf ) ;
       if ( rcTmp )
       {
          PD_LOG( PDWARNING, "Failed to notify to data node, rc: %d", rcTmp ) ;
@@ -2115,7 +2136,7 @@ namespace engine
       }
 
       rc = queryOpr.queryOrDoOnCL( pMsg, pRouteAgent, cb, &pContext,
-                                   sendOpt, &queryConf ) ;
+                                   sendOpt, &queryConf, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "Query failed(rc=%d)", rc ) ;
 
       // statistics the result
@@ -2529,7 +2550,7 @@ namespace engine
 
       _printDebug ( (CHAR*)pMsg, "rtnCoordCMDCrtProcedure" ) ;
 
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to crt procedures, rc = %d", rc ) ;
@@ -2667,7 +2688,7 @@ namespace engine
       MsgOpQuery *forward  = (MsgOpQuery *)pMsg ;
       forward->header.opCode = MSG_CAT_RM_PROCEDURES_REQ ;
 
-      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to rm procedures, rc = %d",
@@ -2839,7 +2860,8 @@ namespace engine
       }
 
       gpLst[gpInfo->groupID()] = gpInfo->groupID() ;
-      rc = executeOnDataGroup( pMsg, cb, gpLst, TRUE, NULL, NULL, NULL ) ;
+      rc = executeOnDataGroup( pMsg, cb, gpLst, TRUE, NULL, NULL,
+                               NULL, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to execute on group[%s], rc:%d",
@@ -2894,7 +2916,8 @@ namespace engine
          goto error;
       }
 
-      rc = executeOnCL( pMsg, cb, fullName ) ;
+      rc = executeOnCL( pMsg, cb, fullName, FALSE, NULL, NULL,
+                        NULL, NULL, buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to truncate cl:%s, rc:%d",
@@ -3186,6 +3209,7 @@ namespace engine
       PD_CHECK( pArguments,
                 SDB_SYS, error, PDERROR,
                 "Failed to allocate runtime arguments") ;
+      pArguments->_pBuf = buf ;
 
       // Extract message
       rc = _extractMsg ( pMsg, pArguments ) ;
@@ -3510,7 +3534,7 @@ namespace engine
 
       // Send request to catalog, and get the control of CoordContext
       rc = executeOnCataGroup( pMsg, cb, pGroupLst, pReplyObjs,
-                               TRUE, NULL, &pContext ) ;
+                               TRUE, NULL, &pContext, pArgs->_pBuf ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute on catalog, rc: %d",
                    rc ) ;

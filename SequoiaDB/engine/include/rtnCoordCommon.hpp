@@ -36,53 +36,11 @@
 #include "coordCB.hpp"
 #include "rtnContext.hpp"
 #include "../bson/bson.h"
-#include <vector>
-#include "utilMap.hpp"
-#include <queue>
-#include <string>
-#include <set>
 
 using namespace bson ;
 
 namespace engine
 {
-   struct coordErrorInfo
-   {
-      INT32       _rc ;
-      BSONObj     _obj ;
-
-      coordErrorInfo( INT32 rc = SDB_OK )
-      {
-         _rc = rc ;
-      }
-      coordErrorInfo( INT32 rc, const BSONObj &obj )
-      {
-         _rc = rc ;
-         _obj = obj.getOwned() ;
-      }
-      coordErrorInfo( const MsgOpReply *reply )
-      {
-         INT32 length = reply->header.messageLength -
-                        (INT32)sizeof( MsgOpReply ) ;
-         _rc = reply->flags ;
-         if ( reply->flags && length > 0 )
-         {
-            try
-            {
-               _obj = BSONObj( (const CHAR*)reply + sizeof( MsgOpReply ) ).getOwned() ;
-            }
-            catch( std::exception & )
-            {
-               /// do nothing
-            }
-         }
-      }
-   } ;
-   typedef std::queue<CHAR *>                         REPLY_QUE ;
-   typedef _utilMap< UINT64, coordErrorInfo, 20 >     ROUTE_RC_MAP ;
-   typedef _utilMap< UINT64, MsgHeader*, 20 >         ROUTE_REPLY_MAP ;
-   typedef _utilMap< UINT32, netIOVec, 20 >           GROUP_2_IOVEC ;
-   typedef std::set< INT32 >                          SET_RC ;
 
    INT32 rtnCoordGetReply ( pmdEDUCB *cb, REQUESTID_MAP &requestIdMap,
                             REPLY_QUE &replyQue, const SINT32 opCode,
@@ -98,7 +56,8 @@ namespace engine
                              pmdEDUCB *cb,
                              SINT64 numToSkip,
                              SINT64 numToReturn,
-                             SINT64 &contextID );
+                             SINT64 &contextID,
+                             rtnContextBuf *buf = NULL );
 
    INT32 getServiceName ( bson::BSONElement &beService,
                           INT32 serviceType,
@@ -114,7 +73,8 @@ namespace engine
                              pmdEDUCB *cb,
                              rtnContext **ppContext,
                              const CHAR *realCLName = NULL,
-                             INT32 flag = 0 ) ;
+                             INT32 flag = 0,
+                             rtnContextBuf *pBuf = NULL ) ;
 
    INT32 rtnCoordGetCataInfo( pmdEDUCB *cb,
                               const CHAR *pCollectionName,

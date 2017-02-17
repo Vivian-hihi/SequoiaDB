@@ -55,6 +55,10 @@ namespace engine
          return NULL ;
       }
 
+      virtual void   getErrorInfo( INT32 rc,
+                                   _pmdEDUCB *cb,
+                                   _rtnContextBuf *buf ) ;
+
    private:
       virtual INT32 _prepare( const CHAR *fullName,
                               const bson::OID &oid,
@@ -249,6 +253,8 @@ namespace engine
       UINT32            _metaGroup ;
 
       UINT32            _alignBuf ;
+      /// error info
+      ROUTE_RC_MAP      _nokRC ;
    } ;
    typedef class _rtnCoordLobStream rtnCoordLobStream ;
 }
