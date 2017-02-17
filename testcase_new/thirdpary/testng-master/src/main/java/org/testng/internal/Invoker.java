@@ -26,6 +26,7 @@ import org.testng.ITestResult;
 import org.testng.Reporter;
 import org.testng.SkipException;
 import org.testng.SuiteRunState;
+import org.testng.SuiteRunner;
 import org.testng.TestException;
 import org.testng.TestNGException;
 import org.testng.annotations.IConfigurationAnnotation;
@@ -88,7 +89,7 @@ public class Invoker implements IInvoker {
   private static final Predicate<ITestNGMethod, IClass> SAME_CLASS = new SameClassNamePredicate();
 
   private void setClassInvocationFailure(Class<?> clazz, Object instance) {
-    synchronized(this){
+    synchronized(m_classInvocationResults){
        Set<Object> instances = m_classInvocationResults.get( clazz );
        if (instances == null) {
          instances = Sets.newHashSet();
@@ -399,7 +400,7 @@ public class Invoker implements IInvoker {
    * @return true if this class or a parent class failed to initialize.
    */
   private boolean classConfigurationFailed(Class<?> cls) {
-    synchronized(this){
+    synchronized(m_classInvocationResults){
        for (Class<?> c : m_classInvocationResults.keySet()) {
          if (c == cls || c.isAssignableFrom(cls)) {
            return true;
@@ -427,7 +428,7 @@ public class Invoker implements IInvoker {
         if (! m_continueOnFailedConfiguration) {
           result = !classConfigurationFailed(cls);
         } else {
-          synchronized(this){
+          synchronized(m_classInvocationResults){
              result = !m_classInvocationResults.get(cls).contains(instance);
           }
         }
@@ -439,7 +440,7 @@ public class Invoker implements IInvoker {
         result = !m_methodInvocationResults.get(currentTestMethod).contains(getMethodInvocationToken(currentTestMethod, instance));
       }
       else if (! m_continueOnFailedConfiguration) {
-        synchronized(this){
+        synchronized(m_classInvocationResults){
            for(Class<?> clazz: m_classInvocationResults.keySet()) {
 //          if (clazz == cls) {
              if(clazz.isAssignableFrom(cls)) {
@@ -1223,6 +1224,9 @@ public class Invoker implements IInvoker {
                   while (invocationCount-- > 0) {
                     result.add(registerSkippedTestResult(testMethod, instance, System.currentTimeMillis(), null));
                   }
+                }
+                if ( !lastSucces ) {
+                   SuiteRunner.setTestCaseFailed();
                 }
               }// end finally
               parametersIndex++;
