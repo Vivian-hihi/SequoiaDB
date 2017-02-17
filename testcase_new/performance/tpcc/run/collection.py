@@ -70,7 +70,7 @@ def createCLByName( db, cs, name, option, groups ):
    if name == 'customer':
       createIndex( cl, 'customer_idx1', {'c_w_id': 1, 'c_d_id': 1, 'c_last': 1, 'c_first': 1}, False )
    elif name == 'oorder':
-      createIndex( cl, 'oorder_idx1', {'o_w_id': 1, 'o_d_id': 1, 'o_carrier_id': 1, 'o_id': 1}, True )
+      createIndex( cl, 'oorder_idx1', {'o_w_id': 1, 'o_d_id': 1, 'o_carrier_id': 1, 'o_id': 1}, False )
    return splitCL( db, cl, groups )
       
 def splitCL( db, cl, groups ):
