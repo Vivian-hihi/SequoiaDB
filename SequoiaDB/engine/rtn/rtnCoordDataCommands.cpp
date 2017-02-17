@@ -126,7 +126,6 @@ namespace engine
             // If the rc is SDB_CLS_COORD_NODE_CAT_VER_OLD, it might be caused
             // by the out-of-date mainCL cache, removed the mainCL cache and
             // try again.
-            pmdKRCB *pKrcb = pmdGetKRCB() ;
             CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
             pCoordcb->delMainCLCataInfo( pArgs->_targetName.c_str() ) ;
             goto retry_before_cata ;

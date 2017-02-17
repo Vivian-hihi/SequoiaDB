@@ -842,9 +842,20 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
       }
 
+   retry_cata :
       // get collection catalog info
       rc = rtnCoordGetCataInfo( cb, pRealCLName ? pRealCLName : pCollectionName,
                                 updateCata, cataInfo ) ;
+      if ( updateCata && SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+      {
+         // If the rc is SDB_CLS_COORD_NODE_CAT_VER_OLD, it might be caused
+         // by the out-of-date mainCL cache, removed the mainCL cache and
+         // try again.
+         CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
+         pCoordcb->delMainCLCataInfo( pRealCLName ? pRealCLName : pCollectionName ) ;
+         goto retry_cata ;
+      }
+
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to get the catalog info(collection:%s), rc: %d",
                    pRealCLName ? pRealCLName : pCollectionName, rc ) ;
