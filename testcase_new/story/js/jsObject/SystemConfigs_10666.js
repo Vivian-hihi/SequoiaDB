@@ -15,7 +15,15 @@ SystemTest.prototype.testGetSystemConfigs = function()
                   "fs.file-nr" ] ;
    for( var i = 0;i < type.length;i++ )
    {
-      var configObj = this.system.getSystemConfigs( type[i] ).toObj() ;
+      try 
+      {
+         var configObj = this.system.getSystemConfigs( type[i] ).toObj() ;
+      }
+      catch( e )
+      {
+         throw buildException( "testGetSystemConfigs", e, 
+               "get " + type[i] + " " + this, 0, e ) ;
+      }
       var dir ;
       if( type[i] === "all" )
          dir = "/proc/sys" ;
@@ -32,7 +40,8 @@ SystemTest.prototype.testGetSystemConfigs = function()
          else if( configObj[k] !== result[k] )
          {
             throw buildException( "testGetSystemConfigs", null, 
-                  "test key: " + k + " " + this, result[k], configObj[k] ) ;
+                  "test key: " + k + " " + this, "res: " + result[k], 
+                  "config: " + configObj[k] ) ;
          }   
       }
    }
