@@ -61,7 +61,8 @@ namespace exprt
       }
       else
       {
-         if( !json2bson( _cl.select.c_str(), NULL, CJSON_RIGOROUS_PARSE, FALSE, &select ) )
+         if( !json2bson( _cl.select.c_str(), NULL,
+                         CJSON_RIGOROUS_PARSE, FALSE, &select ) )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Invalid format of select : %s", 
@@ -76,7 +77,8 @@ namespace exprt
       }
       else
       {
-         if( !json2bson( _cl.filter.c_str(), NULL, CJSON_RIGOROUS_PARSE, FALSE, &condition ) )
+         if( !json2bson( _cl.filter.c_str(), NULL,
+                         CJSON_RIGOROUS_PARSE, FALSE, &condition ) )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Invalid format of filter : %s", 
@@ -91,7 +93,8 @@ namespace exprt
       }
       else
       {
-         if( !json2bson( _cl.sort.c_str(), NULL, CJSON_RIGOROUS_PARSE, FALSE, &sort ) )
+         if( !json2bson( _cl.sort.c_str(), NULL,
+                         CJSON_RIGOROUS_PARSE, FALSE, &sort ) )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Invalid format of sort : %s", 
@@ -112,8 +115,8 @@ namespace exprt
                  clFullName.c_str(), rc ) ;
          goto error ;
       }
-      
-      rc = sdbQuery ( hCL, &condition, &select, &sort, NULL, 0, -1, &hCusor ) ;
+      rc = sdbQuery ( hCL, &condition, &select, &sort, NULL,
+                      _cl.skip, _cl.limit, &hCusor ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to query the first record of %s, rc = %d",

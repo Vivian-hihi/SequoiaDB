@@ -627,6 +627,8 @@ namespace exprt
          { 
             _collections.back().sort = _options.sort() ;
          }
+         _collections.back().skip = _options.skip() ;
+         _collections.back().limit = _options.limit() ;
       }
       else if ( _collections.size() > 1 &&
                 ( !_options.select().empty() ||

@@ -88,6 +88,8 @@ namespace exprt
       inline const string &file()         const { return _file ; }
       inline const string &dir()          const { return _dir ; }
       inline UINT64  fileLimit()          const { return _fileLimit ; }
+      inline INT64   skip()               const { return _skip; }
+      inline INT64   limit()              const { return _limit; }
       inline CHAR    delChar()            const { return _delChar ; }
       inline CHAR    delField()           const { return _delField ; }
       inline BOOLEAN errorStop()          const { return _errorStop ; }
@@ -146,6 +148,8 @@ namespace exprt
       string         _filter ;
       string         _sort ;
       string         _file ;
+      INT64          _skip ;
+      INT64          _limit ;
 
       /* multi collection */
       string         _cscl ;

@@ -53,6 +53,8 @@ namespace exprt
       string select ;
       string filter ;
       string sort ;
+      INT64  skip ;
+      INT64  limit ;
 
       expCL( const string &csName_,
              const string &clName_,
@@ -61,7 +63,7 @@ namespace exprt
              const string &filter_ = "",
              const string &sort_ = "" ) : 
              csName(csName_), clName(clName_), fields(fields_),
-             select(select_), filter(filter_), sort(sort_)
+             select(select_), filter(filter_), sort(sort_), skip(0), limit(-1)
       {
       }
 

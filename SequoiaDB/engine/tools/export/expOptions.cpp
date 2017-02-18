@@ -66,6 +66,8 @@ namespace exprt
    #define OPTION_FILTER            "filter"
    #define OPTION_SORT              "sort"
    #define OPTION_FILENAME          "file"
+   #define OPTION_SKIP              "skip"
+   #define OPTION_LIMIT             "limit"
 
    // multi collection
    #define OPTION_CSCL              "cscl"
@@ -122,6 +124,8 @@ namespace exprt
    #define EXPLAIN_FILTER           "the matching rule(e.g. --filter '{ age: 18 }')"
    #define EXPLAIN_SORT             "the ordered rule(e.g. --sort '{ name: 1 }')"
    #define EXPLAIN_FILENAME         "output file name for one collection"
+   #define EXPLAIN_SKIP             "set the number of skip records, default: 0"
+   #define EXPLAIN_LIMIT            "set the number of return records, default: -1 ( all return )"
 
    // multi collection
    #define EXPLAIN_CSCL             "collection full name or collection space name to export, seperated by ','"
@@ -164,7 +168,9 @@ namespace exprt
       ( OPTION_SELECT,                 _TYPE(string),    EXPLAIN_SELECT ) \
       ( OPTION_FILTER,                 _TYPE(string),    EXPLAIN_FILTER ) \
       ( OPTION_SORT,                   _TYPE(string),    EXPLAIN_SORT ) \
-      ( OPTION_FILENAME,               _TYPE(string),    EXPLAIN_FILENAME ) 
+      ( OPTION_FILENAME,               _TYPE(string),    EXPLAIN_FILENAME ) \
+      ( OPTION_SKIP,                   _TYPE(INT64),     EXPLAIN_SKIP ) \
+      ( OPTION_LIMIT,                  _TYPE(INT64),     EXPLAIN_LIMIT ) 
 
    #define EXP_MULTI_COLLECTION_OPTIONS \
       ( OPTION_CSCL,                   _TYPE(string),    EXPLAIN_CSCL ) \
@@ -201,6 +207,20 @@ namespace exprt
          buf += ( value ? "true" : "false" ) ; \
          buf += OSS_NEWLINE ; \
       }
+
+   inline void WRITE_INT64_OPTION( string &buf, const CHAR *pOption,
+                                   INT64 value, BOOLEAN has )
+   {
+      if( has )
+      {
+         CHAR tmpBuff[32] = { 0 } ;
+         buf += pOption ;
+         buf += " = " ;
+         ossSnprintf( tmpBuff, 32, "%lld", value ) ;
+         buf += tmpBuff ;
+         buf += OSS_NEWLINE ;
+      }
+   }
 
    static const CHAR *formatNames[FORMAT_COUNT] = { "csv", "json" } ;
    INT32 formatOfName( const string & name, EXP_FILE_FORMAT &format )
@@ -269,6 +289,8 @@ namespace exprt
                               _errorStop     (FALSE),
                               _useSSL        (FALSE),
                               _fileLimit     (DEFAULT_FILELIMIT),
+                              _skip          (0),
+                              _limit         (-1),
                               _delChar       (DEFAULT_DELCHAR_CHAR),
                               _delField      (DEFAULT_DELFIELD_CHAR),
                               _headLine      (TRUE),
@@ -357,6 +379,8 @@ namespace exprt
       WRITE_STR_OPTION( writeBuf, OPTION_FILTER, _filter, _has(OPTION_FILTER) );
       WRITE_STR_OPTION( writeBuf, OPTION_SORT,   _sort, _has(OPTION_SORT) ) ;
       WRITE_STR_OPTION( writeBuf, OPTION_FILENAME, _file,_has(OPTION_FILENAME));
+      WRITE_INT64_OPTION( writeBuf, OPTION_SKIP, _skip,_has(OPTION_SKIP));
+      WRITE_INT64_OPTION( writeBuf, OPTION_LIMIT, _limit,_has(OPTION_LIMIT));
 
       // multi collection options
       WRITE_STR_OPTION( writeBuf, OPTION_CSCL, _cscl, _has(OPTION_CSCL) ) ;
@@ -822,6 +846,14 @@ namespace exprt
       if ( _has(OPTION_FILTER) )
       {
          _filter = _get<string>(OPTION_FILTER) ;
+      }
+      if( _has( OPTION_SKIP ) )
+      {
+         _skip = _get<INT64>( OPTION_SKIP ) ;
+      }
+      if( _has( OPTION_LIMIT ) )
+      {
+         _limit = _get<INT64>( OPTION_LIMIT ) ;
       }
 
       if ( _has(OPTION_CSCL) ) 
