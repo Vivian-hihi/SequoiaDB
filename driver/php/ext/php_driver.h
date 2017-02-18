@@ -27,6 +27,4 @@
 
 #endif
 
-#define PHP_LONG size_t
-
 #endif

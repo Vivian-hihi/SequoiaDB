@@ -79,6 +79,8 @@
 
 #define PHP_UINT32_MAX (4294967295)
 
+#define PHP_LONG int
+
 struct phpDate {
    //millisecond
    INT64 milli ;
