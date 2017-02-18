@@ -54,7 +54,7 @@ function deployStandalone()
       var oma = new Oma( host, cmPort );
       
       var serivce = 11810;
-      var dbPath = diskList[0] + "/standalone/" + serivce;
+      var dbPath = diskList[0] + "/database/standalone/" + serivce;
       var config = nodeConf;
       oma.createData( serivce, dbPath, config );
                       
