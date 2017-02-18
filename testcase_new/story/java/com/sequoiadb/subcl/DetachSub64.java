@@ -102,7 +102,7 @@ public class DetachSub64 extends SdbTestBase{
 				maincl = db.getCollectionSpace(csName).getCollection(mainclName);
 				maincl.attachCollection(SdbTestBase.csName+"."+subclName, attachOpt);				
 			}catch(BaseException e){
-				if(e.getErrorCode() != -235){
+				if(e.getErrorCode() != -235 && e.getErrorCode() != -147){
 					throw e;
 				}
 			}finally{
@@ -125,7 +125,7 @@ public class DetachSub64 extends SdbTestBase{
 				maincl = db.getCollectionSpace(csName).getCollection(mainclName);
 				maincl.detachCollection(SdbTestBase.csName+"."+subclName);	
 			}catch(BaseException e){
-				if(e.getErrorCode() != -242){
+				if(e.getErrorCode() != -242 && e.getErrorCode() != -147){
 					throw e;					
 				}
 			}finally{
