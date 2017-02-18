@@ -97,7 +97,7 @@
          <var name="rc" unset="true"/>
          <exec executable="python" 
                dir="${testcase_dir}"
-               timeout="1800000" 
+               timeout="36000000" 
                outputproperty="screen_output" 
                resultproperty="rc"
                failonerror="false">
