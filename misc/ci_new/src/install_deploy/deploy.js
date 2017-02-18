@@ -1,65 +1,45 @@
-/******************************************************
-@decription:   deploy cluster in CI
-
-@input:        mode: STANDALONE | G1D3 | G3D3
-               hostList: e.g.['host1','host2','host3'], G1D3 and G3D3 need 3 hosts
-               installDir: default "/opt/sequoiadb"
-               diagLevel: 0 1 2 3 4 5, default 5
-@author:       Ting YU 2016-04-26   
-******************************************************/
-if ( typeof(mode) === "undefined" ) 
-{ 
-   throw "invalid para: mode, can not be null"; 
-}
-if ( mode !== "STANDALONE" && mode !== "G1D3" && mode !== "G3D3" ) 
-{ 
-   throw "invalid para: mode, should be STANDALONE | G1D3 | G3D3"; 
-}
-if ( typeof(hostList) === "undefined" ) 
+/****************************************************************
+@decription:   deploy for performance test
+               excute cmd: bin/sdb -f 'conf/deploy_conf_TPCC.js,install_deploy/deploy_tpcc.js' 
+                           -e 'var hostList=["ci-test-pm1","ci-test-pm2","ci-test-pm3"];'
+@input:        hostList: e.g.['host1','host2','host3'], G1D3 and G3D3 need 3 hosts
+@author:       Ting YU 2017-02-06   
+****************************************************************/
+if( typeof(hostList) === "undefined" ) 
 { 
    throw "invalid para: hostList, can not be null"; 
 }
-if ( hostList.constructor !== Array ) 
+if( hostList.constructor !== Array ) 
 { 
    throw "invalid para: hostList, should be array"; 
 }
-if ( typeof(installDir) === "undefined" ) installDir = "/opt/sequoiadb";
-if ( typeof(diagLevel) === "undefined" ) diagLevel = 5;
 
-var cmPort         = 11790;
-var tmpCoordPort   = 18800;
-var cataPort       = 11800;
-var coordPort      = 11810;
-var dataPort1      = 21100;
-var dataPort2      = 22100;
-var dataPort3      = 23100;
-var STANDALONEPort = 11810;
-var databaseDir    = installDir + "/database";
-var cmd = new Cmd();
-var osArch = cmd.run('arch');
-if ( osArch === "x86_64\n" ) 
-{ 
-   var fapValue = "fapmongo";
-}
-else
-{
-   var fapValue = "";
-}
+var hostNum = hostList.length;
+var tmpCoordHost = hostList[0];
 
-switch( mode )
+main();
+
+function main()
 {
-   case "STANDALONE":
+   if( mode === "standalone" )
+   {
       deployStandalone();
-      break;
-           
-   case "G1D3":
-      deployClster( mode );
-      break;
-      
-   case "G3D3":
-      deployClster( mode );
-      break;      
-   
+   }
+   else
+   {
+      deployCluster();
+   }
+}
+
+function deployCluster()
+{
+   println("------deploy mode: H" + hostNum + "G" + datagroupNum + "D" + replSize );
+   var db = createTmpCoord();
+   createCata( db );
+   createCoord( db );
+   createData( db );
+   clean( db );
+   println("------succed to deploy");
 }
 
 function deployStandalone()
@@ -68,124 +48,181 @@ function deployStandalone()
    
    for( var i in hostList )
    {
-      var hostname = hostList[i]; 
-      println( "-----begin to create node in " + hostname );
+      var host = hostList[i]; 
+      println( "-----begin to create node in " + host );
       
-      //create node
-      var oma = new Oma( hostname, cmPort );
-      oma.createData( STANDALONEPort, 
-                      databaseDir+"/STANDALONE/"+STANDALONEPort,
-                      {diaglevel:diagLevel, fap:fapValue} );
-      oma.startNode( STANDALONEPort );     
+      var oma = new Oma( host, cmPort );
+      
+      var serivce = 11810;
+      var dbPath = diskList[0] + "/standalone/" + serivce;
+      var config = nodeConf;
+      oma.createData( serivce, dbPath, config );
+                      
+      oma.startNode( serivce );     
    }
    
    println("------succed to deploy");
 }
 
-function deployClster( mode )
+function createTmpCoord()
 {
-   println("------deploy mode: " + mode );   
-   switch( mode )
-   {              
-      case "G1D3":
-         var datargNum = 1;
-         break;         
-      case "G3D3":
-         var datargNum = 3;
-         break;            
-   }   
-   var controlHost = hostList[0];
+   println( "-----begin to create and link temp coord" );
+
+   var oma = new Oma( tmpCoordHost, cmPort );
    
-   //1 create tmp coord
-   println( "-----begin to create temp coord" );
-   var oma = new Oma( controlHost, cmPort );
-   oma.createCoord( tmpCoordPort, databaseDir+"/coord/"+tmpCoordPort );
+   var dbBasePath = diskList[0];   
+   oma.createCoord( tmpCoordPort, dbBasePath + "/database/coord/" + tmpCoordPort );
    oma.startNode( tmpCoordPort );
    
-   println("-----begin to link temp coord");
-   var db = new Sdb( controlHost, tmpCoordPort );
+   var db = new Sdb( tmpCoordHost, tmpCoordPort );
    
-   //2 create cata group
+   return db;
+}
+
+function createCata( db )
+{
    println("-----begin to create cata group");
-   var config = { diaglevel:diagLevel,
-                  sharingbreak:30000,
-                  diagnum:30,
-                  optimeout:60000,
-                  fap:fapValue,
-                  transactionon:true
-                };
-   db.createCataRG( controlHost, cataPort, 
-                    databaseDir+"/cata/"+cataPort,
-                    config  ); 
-                                     
-   for(var i = 0; i < 600; i++ )  //wait for cata group to select primary node 
+   var cataBasePort = 13800;
+   
+   //create first catalog node
+   var host = hostList[0];
+   var service = cataBasePort;
+   var dbPath = diskList[0] + "/database/cata/" + service;
+   var config = cataConf;
+   var rg = db.createCataRG( host, service, dbPath, config );
+   
+   //wait for cata group to select primary node
+   for(var i = 0; i < 600; i++ )   
    {  
       try
       {
          sleep(100); 
-         var cataRG = db.getRG("SYSCatalogGroup"); 
+         var rg = db.getRG("SYSCatalogGroup"); 
          break;       
       } 
       catch(e)
       {
          if( e !== -71 ) throw e;         
       }   
-   }                                              
+   }
    
-   var node1 = cataRG.createNode( hostList[1], cataPort, 
-                                  databaseDir+"/cata/"+cataPort,
-                                  config );
-   var node2 = cataRG.createNode( hostList[2], cataPort, 
-                                  databaseDir+"/cata/"+cataPort,
-                                  config );
-   node1.start();
-   node2.start();
+   //create other catalog nodes
+   var i = 0;
+   while( i < cataNum )
+   {  
+      if( i === 0 )  
+      {
+         i++;
+         continue;      //first cata node has been already created
+      }
+         
+      var host = hostList[ i % hostNum ];
+      var service = cataBasePort + parseInt( i / hostNum ) * 10;
+      var dbPath = diskList[0] + "/database/cata/" + service;
+      var config = cataConf;
+      rg.createNode( host, service, dbPath, config );
+      
+      i++;
+   }
    
-   //3 create coord group
+   //start other nodes
+   var i = 0;
+   while( i < cataNum )
+   {  
+      if( i === 0 )  
+      {
+         i++;
+         continue;      //first cata node has been already started
+      }
+         
+      var host = hostList[ i % hostNum ];
+      var service = cataBasePort + parseInt( i / hostNum ) * 10;
+      rg.getNode( host, service ).start();
+
+      i++;
+   }
+}
+
+function createCoord( db )
+{
    println("-----begin to create coord group");
-   var coordRG = db.createCoordRG();
+   var coordBasePort = 11810;
+   var dbBasePath = diskList[0];
+   
+   var rg = db.createCoordRG();
+   
    for( var i in hostList )
    {
-      var config = {  diaglevel:diagLevel,                      
-                      diagnum:30,
-                      optimeout:60000,
-                      fap:fapValue 
-                   };
-      coordRG.createNode( hostList[i], coordPort, 
-                          databaseDir+"/coord/"+coordPort,
-                          config );
-   }
-   coordRG.start();  
-   
-   //4 create data groups
-   for( var n = 1; n <= datargNum; n++ )
-   {
-      var datargName = "group" + n;
-      var dataPort = eval( "dataPort" + n );
-      println( "-----begin to create data group: " + datargName );
-      
-      var dataRG = db.createRG( datargName );
-      
-      // random array
-      var tmpHostList = hostList.sort(function(){return 0.5-Math.random()});
-      
-      for( var i in tmpHostList )
+      for( var j = 0; j < coordnumPerhost; j++ )
       {
-         var config = { diaglevel:diagLevel,
-                        sharingbreak:30000,
-                        diagnum:30,
-                        optimeout:60000,
-                        fap:fapValue
-                      };
-         dataRG.createNode( tmpHostList[i], dataPort, 
-                            databaseDir+"/data/"+dataPort,
-                            config );
+         var host = hostList[i];
+         var service = coordBasePort + j * 10;
+         var dbPath = dbBasePath + "/database/coord/" + service;
+         var config = coordConf;
+         rg.createNode( host, service, dbPath, config );
       }
-      dataRG.start();
-   } 
+      
+   }
    
-   println("-----begin to remove temp coord");
-   oma.removeCoord(18800); 
+   rg.start();  
+}
+
+function createData( db )
+{
+   var dataBasePort = 20000;
    
-   println("------succed to deploy");
+   for( var n = 0; n < datagroupNum; n++ )
+   {
+      //create group
+      var datargName = "group" + ( n + 1 );
+      println( "-----begin to create data group: " + datargName );
+      var rg = db.createRG( datargName );
+      
+      //create node
+      var dataRgBasePort = dataBasePort + ( n + 1 ) * 100;
+      if( n === 0 ) 
+      {
+         var randomHostList = hostList;
+      }
+      else
+      {
+         var randomHostList = randomArray( randomHostList );
+      }
+      
+      var i = 0;
+      while( i < replSize )
+      {   
+         var host = randomHostList[ i % hostNum ];
+         var service = dataRgBasePort + parseInt( i / hostNum ) * 10;
+         if( diskList.length === 1 )
+         {
+            var dbPath = diskList[0] + "/database/data/" + service;
+         }
+         else
+         {
+            var dbPath = diskList[ n + 1 ] + "/database/data/" + service;
+         }
+         var config = dataConf;
+         rg.createNode( host, service, dbPath, config );
+
+         i++;
+      }
+   
+      //start node
+      rg.start();
+   }
+}
+
+function randomArray( arr ) // [1, 2, 3]--> [2, 3, 1]
+{
+   var firEle = arr.shift();
+   arr.push( firEle );
+   return arr;
+}
+
+function clean( db )
+{
+   println( "-----begin to remove temp coord" );
+   var oma = new Oma( tmpCoordHost, cmPort );
+   oma.removeCoord( tmpCoordPort );
 }

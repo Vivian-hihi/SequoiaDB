@@ -1,6 +1,8 @@
 <!-- ============================================================================
-@description:  install and deploy
+@description:  install and deploy sequoiadb
 @parameter:    DEPLOY_MODE: G1D3|G3D3|STANDALONE, from jenkins configure page
+               TEST_TYPE: from build.xml
+               testhost_list: from build.xml
 @author:       Ting YU 2016-10-19
 ============================================================================= -->
 
@@ -13,8 +15,7 @@
    </taskdef>
    <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF"/>     
    
-   <target name="main">
-      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />    
+   <target name="main">  
       <antcall target="uninstall"/>
       <antcallback target="ready_package" return="package_name"/><!--variable package_name used in target install--> 
       <antcall target="install"/>
@@ -30,15 +31,27 @@
             <staf location="@{testhost}" service="FS"
                   request="DELETE ENTRY ${INSTALL_DIR} RECURSE CONFIRM"
                   throwBuildException=""/>
+            <if>
+               <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
+               <then>
+                  <for list="${TPCC_DBPATH_LIST}" param="dbpath" parallel="false">
+                     <sequential>
+                        <staf location="@{testhost}" service="FS"
+                              request="DELETE ENTRY @{dbpath} RECURSE CONFIRM"
+                              throwBuildException=""/>
+                     </sequential>
+                  </for>
+               </then>
+            </if>
          </sequential>
       </for>
    </target>
    
    <target name="ready_package" depends="">
       <!--get run package name-->
-      <property name="package_dir" location="${WORKSPACE}/archive" />
+      <property name="package_dir" location="${WORKSPACE}/archive/current" />
       <first id="package_fullname">
-         <fileset dir="${package_dir}" includes="*.run" />
+         <fileset dir="${package_dir}" includes="sequoiadb*.run" />
       </first>
       <property name="package_fullname" location="${toString:package_fullname}" />
       <basename property="package_name_part" file="${package_fullname}" suffix=".run"/>
@@ -102,32 +115,67 @@
       </if>
       <var name="testhost_jsarr" value="['${testhost_jsarr}']"/>
       
+      <!--create dbPath-->
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
+         <then>
+            <for list="${testhost_list}" param="testhost" parallel="true">
+               <sequential>
+                  <for list="${TPCC_DBPATH_LIST}" param="dbpath" parallel="false">
+                     <sequential>
+                        <staf location="@{testhost}" service="FS"
+                              request="CREATE DIRECTORY @{dbpath}"
+                              throwBuildException="1"/>
+                        <staf location="@{testhost}" service="PROCESS"
+                              request="START SHELL COMMAND chown sdbadmin:sdbadmin_group @{dbpath} WAIT 1m"
+                              throwBuildException="1"/>     
+                     </sequential>
+                  </for>
+               </sequential>
+            </for>
+         </then>
+      </if>
+      
+      <!--copy sdb shell to localhost-->
+      <delete dir="${CI_WORK_DIR}" failonerror="false"/>
+      <mkdir dir="${CI_WORK_DIR}"/>
+      <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
+      <staf location="${firsthost}" service="FS"
+            request="COPY FILE ${INSTALL_DIR}/bin/sdb TODIRECTORY ${CI_WORK_DIR}"
+            throwBuildException="1"/>
+      <staf location="local" service="PROCESS"
+            request="START SHELL COMMAND chmod a+x ${CI_WORK_DIR}/sdb WAIT 1m"
+            throwBuildException="1"/> 
+
       <!--exec deploy.js-->
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="NORMALTEST" />
+         <then>
+            <var name="diagLevel" value="5"/>
+         </then>
+      </if>
       <if>
          <equals arg1="${TEST_TYPE}" arg2="LARGEDATATEST" />
          <then>
             <var name="diagLevel" value="3"/>
          </then>
-         <else>
-            <var name="diagLevel" value="5"/>
-         </else>
       </if>
-      
-      <property name="sdb_shell" value="${INSTALL_DIR}/bin/sdb"/>
-      <property name="deploy_cmd1" value="-f ${basedir}/src/install_deploy/deploy.js" />
-      <property name="deploy_cmd2" value="-e &quot;var hostList=${testhost_jsarr};var mode='${DEPLOY_MODE}';var diagLevel=${diagLevel};&quot;" />
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
+         <then>
+            <var name="diagLevel" value="3"/>
+            <var name="DEPLOY_MODE" value="TPCC"/>
+         </then>
+      </if>
+            
+      <property name="sdb_shell" value="${CI_WORK_DIR}/sdb"/>
+      <property name="deploy_cmd1" value="-f '${basedir}/src/conf/deploy_conf_${DEPLOY_MODE}.js,${basedir}/src/install_deploy/deploy.js'" />
+      <property name="deploy_cmd2" value="-e &quot;var hostList=${testhost_jsarr};var diagLevel=${diagLevel};&quot;" />
       <echo message="exec cmd: ${sdb_shell} ${deploy_cmd1} ${deploy_cmd2}"/>
-      <exec executable="${sdb_shell}" timeout="600000" failonerror="true">                                   
+      <exec executable="${sdb_shell}" timeout="600000" outputproperty="deploy_out" failonerror="true">                                   
          <arg line="${deploy_cmd1} ${deploy_cmd2}" />
       </exec>
+      <echo message="${deploy_out}"/>
    </target>
-   
-   
 
-   
-
-  
-   
-
-   
 </project>
