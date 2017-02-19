@@ -66,6 +66,7 @@
       <var name="TEST_TYPE" value="LARGEDATATEST"/>
       <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
       <getplatform resultProperty="plat_form"/>
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       
       <if>
          <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
