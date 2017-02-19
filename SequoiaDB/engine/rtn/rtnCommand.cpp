@@ -800,7 +800,8 @@ namespace engine
 
       if ( hint.hasField( IXM_FIELD_NAME_SORT_BUFFER_SIZE ) )
       {
-         rc = rtnGetIntElement( hint, IXM_FIELD_NAME_SORT_BUFFER_SIZE, _sortBufferSize ) ;
+         rc = rtnGetIntElement( hint, IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+                                _sortBufferSize ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Failed to get index sort buffer, hint: %s",
@@ -831,8 +832,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_DOIT ) ;
 
+      BOOLEAN isSys = FALSE ;
+      if ( !pmdGetOptionCB()->authEnabled() )
+      {
+         isSys = TRUE ;
+      }
+
       rc = rtnCreateIndexCommand ( _collectionName, _index, cb,
-                                   dmsCB, dpsCB, FALSE, _sortBufferSize ) ;
+                                   dmsCB, dpsCB, isSys, _sortBufferSize ) ;
 
       if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {
@@ -1084,9 +1091,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNDROPINDEX_DOIT ) ;
+      BOOLEAN isSys = FALSE ;
       BSONElement ele = _index.firstElement() ;
-      rc = rtnDropIndexCommand ( _collectionName, ele, cb, dmsCB, dpsCB ) ;
 
+      if ( !pmdGetOptionCB()->authEnabled() )
+      {
+         isSys = TRUE ;
+      }
+      rc = rtnDropIndexCommand ( _collectionName, ele, cb, dmsCB,
+                                 dpsCB, isSys ) ;
       if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {
          /// AUDIT
@@ -1432,7 +1445,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNRENAMECL_DOIT ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
-      SDB_DMSCB *pDmsCB = pmdGetKRCB()->getDMSCB() ;
       BOOLEAN dmsLock = FALSE ;
 
       rc = dmsCB->writable ( cb ) ;
@@ -1442,7 +1454,7 @@ namespace engine
       }
       dmsLock = TRUE ;
 
-      rc = rtnCollectionSpaceLock ( _csName, pDmsCB, FALSE, &su, suID ) ;
+      rc = rtnCollectionSpaceLock ( _csName, dmsCB, FALSE, &su, suID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to get collection space:%s", _csName ) ;
@@ -1474,7 +1486,7 @@ namespace engine
    done:
       if ( suID != DMS_INVALID_CS )
       {
-         pDmsCB->suUnlock ( suID ) ;
+         dmsCB->suUnlock ( suID ) ;
       }
       if ( dmsLock )
       {
@@ -1554,7 +1566,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNRENAMECS_DOIT ) ;
-      SDB_DMSCB *pDmsCB = pmdGetKRCB()->getDMSCB() ;
       BOOLEAN dmsLock = FALSE ;
 
       rc = dmsCB->writable ( cb ) ;

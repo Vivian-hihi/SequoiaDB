@@ -1563,7 +1563,7 @@ namespace engine
 #endif /* SDB_ENTERPRISE */
       // --auth
       rdxBooleanS( pEX, PMD_OPTION_AUTH, _auth,
-                   FALSE, FALSE, TRUE, FALSE ) ;
+                   FALSE, TRUE, TRUE, FALSE ) ;
       // --planbuckets
       rdxUInt( pEX, PMD_OPTION_PLAN_BUCKETS, _planBucketNum,
                FALSE, TRUE, 500, FALSE ) ;
