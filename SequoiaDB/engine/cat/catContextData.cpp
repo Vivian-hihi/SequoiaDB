@@ -42,6 +42,8 @@
 #include "pmdCB.hpp"
 #include "rtn.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    /*
@@ -2048,7 +2050,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATCTXALTERCL_EXECUTE_ALTERCL ) ;
 
-      rc = catAlterCLStep( _targetName, _boTarget, cb, _pDmsCB, _pDpsCB, w) ;
+      rc = catAlterCLStep( _targetName, _boTarget, cb, _pDmsCB, _pDpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to alter collection [%s], rc: %d",
                    _targetName.c_str(), rc ) ;

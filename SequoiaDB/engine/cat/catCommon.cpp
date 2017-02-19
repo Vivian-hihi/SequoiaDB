@@ -2855,8 +2855,6 @@ namespace engine
             while( iterSubCL != subCLLst.end() )
             {
                const std::string &subCLName = (*iterSubCL) ;
-               std::vector<std::string> subGroupNameList ;
-               std::vector<UINT32> subGroupIDList ;
                BSONObj boSubCL ;
 
                rc = catGetCollection( subCLName, boSubCL, cb ) ;
@@ -3978,11 +3976,12 @@ namespace engine
             {
                Ordering order = Ordering::make( clInfo._shardingKey ) ;
                rc = _catBuildInitBound ( clInfo._shardingKey, order ,
-                                      lowBound, upBound ) ;
+                                         lowBound, upBound ) ;
             }
             else
             {
-               rc = _catBuildHashBound( lowBound, upBound, clInfo._shardPartition ) ;
+               rc = _catBuildHashBound( lowBound, upBound,
+                                        clInfo._shardPartition ) ;
             }
             PD_RC_CHECK( rc, PDWARNING,
                          "Failed to build cata info bound, rc: %d",

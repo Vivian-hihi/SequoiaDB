@@ -42,6 +42,8 @@
 #include "catLevelLock.hpp"
 #include "catalogueCB.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    /*
