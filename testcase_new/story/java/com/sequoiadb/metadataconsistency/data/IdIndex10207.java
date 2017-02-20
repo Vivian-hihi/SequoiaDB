@@ -100,7 +100,8 @@ public class IdIndex10207 extends SdbTestBase {
 				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -23 && eCode != -147 && eCode != -248){ 
+				if( eCode != -23 && eCode != -34 
+						&& eCode != -147 && eCode != -248){ 
 					throw e;
 				}
 			}finally{
