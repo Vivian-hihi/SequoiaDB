@@ -228,8 +228,23 @@ INT32 ossClose ( OSSFILE& pFile ) ;
  * SDB_PERM (permission denied)
  * SDB_FE (dir already exist)
  */
-INT32 ossMkdir(const CHAR   *pPathName,
+INT32 ossMkdir( const CHAR   *pPathName,
                 UINT32 iPermission = OSS_DEFAULTDIR ) ;
+
+/*
+   * Get current working directory
+   * pPath   : output
+   * maxSize : the path size
+   * Return  : SDB_OK ( succeed ), otherwise failed
+*/
+INT32 ossGetCWD( CHAR *pPath, UINT32 maxSize ) ;
+
+/*
+   * Change the current directory to pPath
+   * pPath   : input
+   * Return  : SDB_OK ( succeed ), otherwise failed
+*/
+INT32 ossChDir( const CHAR *pPath ) ;
 
 /*
  * Delete a file or directory
@@ -265,7 +280,13 @@ INT32 ossFileCopy( const CHAR *pSrcFile,
                    UINT32      iPermission = OSS_DEFAULTFILE,
                    BOOLEAN     isReplace = TRUE ) ;
 
-INT32 ossAccess ( const CHAR  *pPathName, int flags = 0 ) ;
+#define  OSS_MODE_ACCESS         00       /// F_OK
+#define  OSS_MODE_EXCUSIVE       01       /// X_OK
+#define  OSS_MODE_WRITE          02       /// W_OK
+#define  OSS_MODE_READ           04       /// R_OK
+#define  OSS_MODE_READWRITE      ( OSS_MODE_WRITE | OSS_MODE_READ )
+
+INT32 ossAccess ( const CHAR  *pPathName, int flags = OSS_MODE_ACCESS ) ;
 
 /*
  * Read a file from current file descriptor location
