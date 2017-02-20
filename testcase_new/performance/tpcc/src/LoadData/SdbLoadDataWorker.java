@@ -177,7 +177,7 @@ public class SdbLoadDataWorker extends LoadDataWorker {
 
     protected void buildHistoryRecord( int c_id, int d_id, int w_id )
             throws SQLException, BaseException, IOException {
-        Map< String, Object > record = getHistory( c_id, d_id, w_id ) ;
+        Map< String, Object > record = getHistory( w_id, c_id, d_id ) ;
 
         BasicBSONObject doc = new BasicBSONObject() ;
         Iterator< Map.Entry< String, Object >> it = record.entrySet()

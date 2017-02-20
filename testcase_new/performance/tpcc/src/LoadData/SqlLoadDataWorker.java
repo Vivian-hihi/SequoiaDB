@@ -183,7 +183,7 @@ public class SqlLoadDataWorker extends LoadDataWorker {
         stmtCustomer.setString( 11, ( String ) record.get( "c_zip" ) ) ;
         stmtCustomer.setString( 12, ( String ) record.get( "c_phone" ) ) ;
         stmtCustomer.setTimestamp( 13,
-                ( java.sql.Timestamp ) record.get( "c_since" ) ) ;
+                new java.sql.Timestamp((long)record.get( "c_since" )) ) ;
         stmtCustomer.setString( 14, ( String ) record.get( "c_credit" ) ) ;
         stmtCustomer.setDouble( 15, ( double ) record.get( "c_credit_lim" ) ) ;
         stmtCustomer.setDouble( 16, ( double ) record.get( "c_discount" ) ) ;
@@ -198,7 +198,7 @@ public class SqlLoadDataWorker extends LoadDataWorker {
 
     protected void buildHistoryRecord( int c_id, int d_id, int w_id )
             throws SQLException, BaseException, IOException {
-        Map< String, Object > records = getHistory( c_id, d_id, w_id ) ;
+        Map< String, Object > records = getHistory( w_id, c_id, d_id ) ;
         stmtHistory.setInt( 1, ( int ) records.get( "hist_id" ) ) ;
         stmtHistory.setInt( 2, ( int ) records.get( "h_c_id" ) ) ;
         stmtHistory.setInt( 3, ( int ) records.get( "h_c_d_id" ) ) ;
@@ -206,7 +206,7 @@ public class SqlLoadDataWorker extends LoadDataWorker {
         stmtHistory.setInt( 5, ( int ) records.get( "h_d_id" ) ) ;
         stmtHistory.setInt( 6, ( int ) records.get( "h_w_id" ) ) ;
         stmtHistory.setTimestamp( 7,
-                ( java.sql.Timestamp ) records.get( "h_date" ) ) ;
+                new java.sql.Timestamp((long) records.get( "h_date" ) ) ) ;
         stmtHistory.setDouble( 8, ( double ) records.get( "h_amount" ) ) ;
         stmtHistory.setString( 9, ( String ) records.get( "h_data" ) ) ;
 
@@ -221,8 +221,12 @@ public class SqlLoadDataWorker extends LoadDataWorker {
         stmtOrder.setInt( 3, ( int ) record.get( "o_w_id" ) ) ;
         stmtOrder.setInt( 4, ( int ) record.get( "o_c_id" ) ) ;
         stmtOrder.setTimestamp( 5,
-                ( java.sql.Timestamp ) record.get( "o_entry_d" ) ) ;
-        stmtOrder.setNull( 6, ( int ) record.get( "o_carrier_id" ) ) ;
+                new java.sql.Timestamp( (long)record.get( "o_entry_d" ) ) ) ;
+        if ( (int) record.get( "o_carrier_id" ) == java.sql.Types.INTEGER ){
+           stmtOrder.setNull( 6, java.sql.Types.INTEGER );
+        }else{
+           stmtOrder.setInt( 6, ( int ) record.get( "o_carrier_id" ) ) ;
+        }
         stmtOrder.setInt( 7, ( int ) record.get( "o_ol_cnt" ) ) ;
         stmtOrder.setInt( 8, ( int ) record.get( "o_all_local" ) ) ;
 
@@ -239,7 +243,11 @@ public class SqlLoadDataWorker extends LoadDataWorker {
         stmtOrderLine.setInt( 4, ( int ) record.get( "ol_number" ) ) ;
         stmtOrderLine.setInt( 5, ( int ) record.get( "ol_i_id" ) ) ;
         stmtOrderLine.setInt( 6, ( int ) record.get( "ol_supply_w_id" ) ) ;
-        stmtOrderLine.setNull( 7, ( int ) record.get( "ol_delivery_d" ) ) ;
+        if ( record.get( "ol_delivery_d" ) == java.sql.Types.TIMESTAMP ){
+           stmtOrderLine.setNull( 7, java.sql.Types.TIMESTAMP ) ;
+        }else{
+           stmtOrderLine.setTimestamp(7, new java.sql.Timestamp((long)record.get( "ol_delivery_d" )) );
+        }
         stmtOrderLine.setInt( 8, ( int ) record.get( "ol_quantity" ) ) ;
         stmtOrderLine.setDouble( 9, ( double ) record.get( "ol_amount" ) ) ;
         stmtOrderLine.setString( 10, ( String ) record.get( "ol_dist_info" ) ) ;

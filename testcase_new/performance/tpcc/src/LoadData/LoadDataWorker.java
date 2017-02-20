@@ -148,7 +148,7 @@ public class LoadDataWorker implements Runnable {
         customer.put( "c_zip", rnd.getNString( 4, 4 ) + "11111" ) ;
         customer.put( "c_phone", rnd.getNString( 16, 16 ) ) ;
         customer.put( "c_since",
-                new java.sql.Timestamp( System.currentTimeMillis() ) ) ;
+                             System.currentTimeMillis() ) ;
         if ( rnd.nextInt( 1, 100 ) <= 90 ) {
             customer.put( "c_credit", "GC" ) ;
         } else {
@@ -177,7 +177,7 @@ public class LoadDataWorker implements Runnable {
         history.put( "h_d_id", d_id ) ;
         history.put( "h_w_id", w_id ) ;
         history.put( "h_date",
-                new java.sql.Timestamp( System.currentTimeMillis() ) ) ;
+                 System.currentTimeMillis() ) ;
         history.put( "h_amount", 10.00 ) ;
         history.put( "h_data", rnd.getAString( 12, 24 ) ) ;
         return history ;
@@ -212,7 +212,7 @@ public class LoadDataWorker implements Runnable {
         order.put( "o_w_id", w_id ) ;
         order.put( "o_c_id", randomCID[o_id - 1] ) ;
         order.put( "o_entry_d",
-                new java.sql.Timestamp( System.currentTimeMillis() ) ) ;
+                 System.currentTimeMillis() ) ;
         if ( o_id < 2101 ) {
             order.put( "o_carrier_id", rnd.nextInt( 1, 10 ) ) ;
         } else {
@@ -235,7 +235,7 @@ public class LoadDataWorker implements Runnable {
         orderLine.put( "ol_supply_w_id", w_id ) ;
         if ( o_id < 2101 )
             orderLine.put( "ol_delivery_d",
-                    new java.sql.Timestamp( System.currentTimeMillis() ) ) ;
+                     System.currentTimeMillis()) ;
         else
             orderLine.put( "ol_delivery_d", java.sql.Types.TIMESTAMP ) ;
         orderLine.put( "ol_quantity", 5 ) ;
@@ -442,6 +442,7 @@ public class LoadDataWorker implements Runnable {
             thrdCnt.incrementAndGet() ;
             load() ;
         } catch ( SQLException se ) {
+            se.printStackTrace() ;
             while ( se != null ) {
                 fmt.format( "Worker %03d: ERROR: %s", worker, se.getMessage() ) ;
                 System.err.println( sb.toString() ) ;
@@ -460,6 +461,7 @@ public class LoadDataWorker implements Runnable {
             System.err.println( sb.toString() ) ;
             sb.setLength( 0 ) ;
             e.printStackTrace() ;
+			System.exit( 2 ) ;
         }
         fini() ;
         return ;

@@ -151,7 +151,7 @@ public class CsvLoadDataWorker extends LoadDataWorker {
 
     protected void buildHistoryRecord( int c_id, int d_id, int w_id )
             throws SQLException, BaseException, IOException {
-        Map< String, Object > records = getHistory( c_id, d_id, w_id ) ;
+        Map< String, Object > records = getHistory( w_id, c_id, d_id ) ;
 
         fmtHistory.format( "%d,%d,%d,%d,%d,%d,%s,%.2f,%s\n",
                 ( int ) records.get( "hist_id" ),
