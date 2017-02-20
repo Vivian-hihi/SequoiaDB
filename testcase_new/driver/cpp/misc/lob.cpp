@@ -88,7 +88,9 @@ TEST_F( LobTest, create )
 
 	// close lob
 	rc = lob.close() ;
-  	ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
+  	ASSERT_EQ( rc, SDB_OK ) << "fail to close lob" ;
+	rc = lob.close() ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to close lob again" ;
    	BOOLEAN flag = FALSE ;
    	rc = lob.isClosed( flag ) ;
    	ASSERT_EQ( TRUE, flag ) ;
@@ -152,6 +154,7 @@ TEST_F( LobTest, write )
     ASSERT_EQ( size1, size2 ) ;
 }
 
+// read lob then close all cursors
 TEST_F( LobTest, read )
 {
 	INT32 rc = SDB_OK ;
@@ -207,4 +210,25 @@ TEST_F( LobTest, read )
     ASSERT_EQ( 0, oid1.compare( oid2 ) ) ;
     ASSERT_EQ( time1, time2 ) ;
     ASSERT_EQ( size1, size2 ) ;
+}
+
+// query then close all cursors
+TEST_F( LobTest, query )
+{
+	INT32 rc = SDB_OK ;
+    // insert and query
+	BSONObj obj = BSON( "a" << "1" ) ;
+	rc = cl.insert( obj ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to insert obj" ;
+	BSONObj sel = BSON( "a" << "" ) ;
+	sdbCursor cursor ;
+	rc = cl.query( cursor, obj, sel ) ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+	// close all cursors
+	rc = db.closeAllCursors() ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to close all cursors" ;
+	// check cursor is closed
+	BSONObj res ;
+	rc = cursor.next( res ) ;
+	ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check cursor after close all cursors" ;
 }
