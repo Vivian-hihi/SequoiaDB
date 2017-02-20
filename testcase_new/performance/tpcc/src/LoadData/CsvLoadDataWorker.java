@@ -144,7 +144,7 @@ public class CsvLoadDataWorker extends LoadDataWorker {
                 ( String ) record.get( "c_state" ),
                 ( String ) record.get( "c_zip" ),
                 ( String ) record.get( "c_phone" ),
-                ( ( java.sql.Timestamp ) record.get( "c_since" ) ).toString(),
+                ( new java.sql.Timestamp ((long) record.get( "c_since" ) )).toString(),
                 ( String ) record.get( "c_middle" ),
                 ( String ) record.get( "c_data" ) ) ;
     }
@@ -160,7 +160,7 @@ public class CsvLoadDataWorker extends LoadDataWorker {
                 ( int ) records.get( "h_c_w_id" ),
                 ( int ) records.get( "h_d_id" ),
                 ( int ) records.get( "h_w_id" ),
-                ( ( java.sql.Timestamp ) records.get( "h_date" ) ).toString(),
+                ( new java.sql.Timestamp ((long) records.get( "h_date" ) )).toString(),
                 ( double ) records.get( "h_amount" ),
                 ( String ) records.get( "h_data" ) ) ;
     }
@@ -175,7 +175,7 @@ public class CsvLoadDataWorker extends LoadDataWorker {
                 ( o_id < 2101 ) ? ( int ) record.get( "o_carrier_id" )
                         : csvNull, ( int ) record.get( "o_ol_cnt" ),
                 ( int ) record.get( "o_all_local" ),
-                ( ( java.sql.Timestamp ) record.get( "o_entry_d" ) ).toString() ) ;
+                ( new java.sql.Timestamp((long) record.get( "o_entry_d" ) )).toString() ) ;
     }
 
     protected void buildOrderLineRecord( int w_id, int d_id, int o_id,
@@ -189,8 +189,8 @@ public class CsvLoadDataWorker extends LoadDataWorker {
                 ( int ) record.get( "ol_o_id" ),
                 ( int ) record.get( "ol_number" ),
                 ( int ) record.get( "ol_i_id" ),
-                ( o_id < 2101 ) ? ( ( java.sql.Timestamp ) record
-                        .get( "ol_delivery_d" ) ).toString() : csvNull,
+                ( o_id < 2101 ) ? ( new java.sql.Timestamp ((long) record
+                        .get( "ol_delivery_d" ) ) ).toString() : csvNull,
                 ( double ) record.get( "ol_amount" ), ( int ) record
                         .get( "ol_supply_w_id" ), ( int ) record
                         .get( "ol_quantity" ), ( String ) record

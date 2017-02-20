@@ -169,7 +169,11 @@ public class SdbLoadDataWorker extends LoadDataWorker {
                 .iterator() ;
         while ( it.hasNext() ) {
             Map.Entry< String, Object > entry = it.next() ;
-            doc.put( entry.getKey(), entry.getValue() ) ;
+            if (entry.getKey().equals("c_since")) {
+               doc.put( entry.getKey(), new java.sql.Timestamp((long) entry.getValue()));
+            }else{
+               doc.put( entry.getKey(), entry.getValue() ) ;
+            }
 
         }
         customers.add( doc ) ;
@@ -184,7 +188,11 @@ public class SdbLoadDataWorker extends LoadDataWorker {
                 .iterator() ;
         while ( it.hasNext() ) {
             Map.Entry< String, Object > entry = it.next() ;
-            doc.put( entry.getKey(), entry.getValue() ) ;
+            if (entry.getKey().equals("h_date")) {
+               doc.put( entry.getKey(), new java.sql.Timestamp((long) entry.getValue() ) );
+            }else{
+               doc.put( entry.getKey(), entry.getValue() ) ;
+            }
 
         }
         historys.add( doc ) ;
@@ -199,7 +207,13 @@ public class SdbLoadDataWorker extends LoadDataWorker {
                 .iterator() ;
         while ( it.hasNext() ) {
             Map.Entry< String, Object > entry = it.next() ;
-            doc.put( entry.getKey(), entry.getValue() ) ;
+            if ( entry.getKey().equals("o_entry_d") ){
+               doc.put( entry.getKey(), new java.sql.Timestamp((long)entry.getValue()) ) ;
+            }else if ( entry.getKey().equals("o_carrier_id") && entry.getValue() == java.sql.Types.INTEGER ){
+               continue ;
+            }else{
+               doc.put( entry.getKey(), entry.getValue() ) ;
+            }
         }
         orders.add( doc ) ;
     }
@@ -213,7 +227,13 @@ public class SdbLoadDataWorker extends LoadDataWorker {
                 .iterator() ;
         while ( it.hasNext() ) {
             Map.Entry< String, Object > entry = it.next() ;
-            doc.put( entry.getKey(), entry.getValue() ) ;
+            if ( entry.getKey().equals("ol_delivery_d") && entry.getValue() == java.sql.Types.TIMESTAMP ) {
+               continue ;
+            }else if ( entry.getKey().equals("ol_delivery_d") ) {
+               doc.put( entry.getKey(), new java.sql.Timestamp((long)entry.getValue()) ) ;
+            }else{
+               doc.put( entry.getKey(), entry.getValue() ) ;
+            }
         }
         orderlines.add( doc ) ;
     }
