@@ -57,10 +57,20 @@
 #if defined (_LINUX)
    #include <sys/statfs.h>
    #include <pwd.h>
+   #include <unistd.h>
+
+   #define  _ossGetCWD  getcwd
+   #define  _ossChDir   chdir
+   #define  _ossAccess  access
 #endif
 
 #ifdef _WINDOWS
    #include "io.h"
+   #include <direct.h>
+
+   #define _ossGetCWD   _getcwd
+   #define _ossChDir    _chdir
+   #define _ossAccess   _access
 #endif
 
 #define MAX_OPEN_RETRY     10
@@ -554,6 +564,83 @@ error :
    goto done ;
 }
 
+INT32 ossGetCWD( CHAR *pPath, UINT32 maxSize )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( NULL == pPath || 0 == maxSize )
+   {
+      rc = SDB_INVALIDARG ;
+   }
+   else
+   {
+      if ( NULL == _ossGetCWD( pPath, maxSize ) )
+      {
+         INT32 err = errno ;
+         PD_LOG ( PDINFO, "Failed to getcwd, errno: %d", err ) ;
+         switch ( err )
+         {
+         case EINVAL:
+         case ERANGE:
+            rc = SDB_INVALIDARG ;
+            break ;
+         case EACCES:
+         case EPERM:
+            rc = SDB_PERM ;
+            break ;
+         default:
+            rc = SDB_SYS ;
+            break ;
+         }
+      }
+   }
+
+   return rc ;
+}
+
+INT32 ossChDir( const CHAR *pPath )
+{
+   INT32 rc = SDB_OK ;
+
+   /*rc = ossAccess( pPath ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
+   if ( 0 != _ossChDir( pPath ) )
+   {
+      INT32 err = errno ;
+      PD_LOG( PDINFO, "Failed to chdir(%s), errno: %d", pPath, err ) ;
+      switch ( err )
+      {
+      case ENOENT:
+         rc = SDB_FNE ;
+         break ;
+      case ENOTDIR:
+      case EINVAL:
+         rc = SDB_INVALIDARG ;
+         break ;
+      case EACCES:
+      case EPERM:
+         rc = SDB_PERM ;
+         break ;
+      case EIO:
+         rc = SDB_IO ;
+         break ;
+      default:
+         rc = SDB_SYS ;
+         break ;
+      }
+      goto error ;
+   }*/
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 /*
  * Delete a directory
  * Input
@@ -733,42 +820,50 @@ error:
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSACCESS, "ossAccess" )
-INT32 ossAccess ( const CHAR * pPathName, int flags )
+INT32 ossAccess ( const CHAR *pPathName, int flags )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSACCESS );
-#ifdef _WINDOWS
-   rc =  _access ( pPathName, flags ) ;
-#else
-   rc = access ( pPathName, flags ) ;
-#endif
-   if ( rc )
+
+   if ( NULL == pPathName )
    {
-      rc = ossGetLastError () ;
-      switch ( rc )
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( 0 != _ossAccess( pPathName, flags ) )
+   {
+      INT32 err = errno ;
+      PD_LOG( PDINFO, "Failed to access(%s,%d), errno: %d",
+              pPathName, flags, err ) ;
+      switch ( err )
       {
-#if defined (_WINDOWS)
-      case ERROR_FILE_NOT_FOUND:
-      case ERROR_PATH_NOT_FOUND:
-#elif defined (_LINUX)
       case ENOENT:
-#endif
          rc = SDB_FNE ;
          break ;
-#if defined (_WINDOWS)
-      case ERROR_ACCESS_DENIED:
-#elif defined (_LINUX)
       case EACCES:
-#endif
+      case EPERM:
          rc = SDB_PERM ;
+         break ;
+      case ENOTDIR:
+      case EINVAL:
+         rc = SDB_INVALIDARG ;
+         break ;
+      case EIO:
+         rc = SDB_IO ;
          break ;
       default :
          rc = SDB_SYS ;
          break ;
       }
+      goto error ;
    }
+
+done:
    PD_TRACE_EXITRC ( SDB_OSSACCESS, rc );
    return rc ;
+error:
+   goto done ;
 }
 
 /*
@@ -857,9 +952,7 @@ INT32 ossRead( OSSFILE* pFile,
    {
       err = ossGetLastError() ;
       // handle errors
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to read() : %x, Error: %d",
-              pFile->fd, err ) ;
+      PD_LOG ( PDERROR, "Failed to read() : %x, Error: %d", pFile->fd, err ) ;
       switch ( err )
       {
       case EINTR:
@@ -2014,7 +2107,7 @@ CHAR  *ossGetRealPath( const CHAR  *pPath,
          break ;
       }
       // search from right for the next /
-      CHAR *pNewPos = ossStrrchr ( pathBuffer, OSS_PATH_SEP_CHAR ) ;
+      CHAR *pNewPos = ossStrrchr ( pathBuffer, OSS_FILE_SEP_CHAR ) ;
       // if we can find /, let's set it to '\0' and continue get realpath
       if ( pNewPos )
       {
@@ -2033,13 +2126,13 @@ CHAR  *ossGetRealPath( const CHAR  *pPath,
       if ( pPos )
       {
          // if we have previously set / to '\0', let's restore the /
-         *pPos = OSS_PATH_SEP_CHAR ;
+         *pPos = OSS_FILE_SEP_CHAR ;
       }
       pPos = pNewPos ;
    }
    if ( ret && pPos )
    {
-      *pPos = OSS_PATH_SEP_CHAR ;
+      *pPos = OSS_FILE_SEP_CHAR ;
       ossStrncat ( resolvedPath, pPos, length - ossStrlen(resolvedPath) ) ;
    }
    PD_TRACE_EXIT ( SDB_OSSGETREALPATH );

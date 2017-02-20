@@ -53,11 +53,12 @@ INT32 getWaitPipeName ( const OSSPID & ppid , CHAR * buf , UINT32 bufSize )
 {
    INT32          nWritten    = 0 ;
    INT32          rc          = SDB_OK ;
-   const CHAR *   waitFormat  = "sdb-shell-wait-%u" ;
 
    SDB_ASSERT ( buf && bufSize > 0 , "invalid argument" ) ;
 
-   nWritten = ossSnprintf ( buf , bufSize , waitFormat , ppid ) ;
+   nWritten = ossSnprintf ( buf, bufSize,
+                            SDB_SHELL_WAIT_PIPE_PREFIX"%u",
+                            ppid ) ;
    SH_VERIFY_COND ( nWritten >= 0 , SDB_SYS ) ;
    SH_VERIFY_COND ( (UINT32) nWritten < bufSize , SDB_INVALIDSIZE ) ;
 
@@ -72,17 +73,19 @@ INT32 getPipeNames( const OSSPID & ppid , CHAR * f2bName , UINT32 f2bSize ,
 {
    INT32          rc          = SDB_OK ;
    INT32          nWritten    = 0 ;
-   const CHAR *   f2bFormat   = "sdb-shell-f2b-%u" ;
-   const CHAR *   b2fFormat   = "sdb-shell-b2f-%u" ;
 
    SDB_ASSERT ( f2bName && b2fName && f2bSize > 0 && b2fSize > 0 ,
                 "Invalid arguments" ) ;
 
-   nWritten = ossSnprintf ( f2bName , f2bSize , f2bFormat , ppid ) ;
+   nWritten = ossSnprintf ( f2bName, f2bSize,
+                            SDB_SHELL_F2B_PIPE_PREFIX"%u",
+                            ppid ) ;
    SH_VERIFY_COND ( nWritten >= 0 , SDB_SYS ) ;
    SH_VERIFY_COND ( (UINT32) nWritten < f2bSize , SDB_INVALIDSIZE ) ;
 
-   nWritten = ossSnprintf ( b2fName , b2fSize , b2fFormat , ppid ) ;
+   nWritten = ossSnprintf ( b2fName, b2fSize,
+                            SDB_SHELL_B2F_PIPE_PREFIX"%u",
+                            ppid ) ;
    SH_VERIFY_COND ( nWritten >= 0 , SDB_SYS ) ;
    SH_VERIFY_COND ( (UINT32) nWritten < b2fSize , SDB_INVALIDSIZE ) ;
 
@@ -99,17 +102,18 @@ INT32 getPipeNames2( const OSSPID & ppid , const OSSPID & pid ,
    INT32          rc          = SDB_OK ;
    INT32          nWritten    = 0 ;
 
-   const CHAR *   f2bFormat   = "sdb-shell-f2b-%u-%u" ;
-   const CHAR *   b2fFormat   = "sdb-shell-b2f-%u-%u" ;
-
    SDB_ASSERT ( f2bName && b2fName && f2bSize > 0 && b2fSize > 0 ,
                 "Invalid arguments" ) ;
 
-   nWritten = ossSnprintf ( f2bName , f2bSize , f2bFormat , ppid , pid ) ;
+   nWritten = ossSnprintf ( f2bName, f2bSize,
+                            SDB_SHELL_F2B_PIPE_PREFIX"%u-%u",
+                            ppid, pid ) ;
    SH_VERIFY_COND ( nWritten >= 0 , SDB_SYS ) ;
    SH_VERIFY_COND ( (UINT32) nWritten < f2bSize , SDB_INVALIDSIZE ) ;
 
-   nWritten = ossSnprintf ( b2fName , b2fSize , b2fFormat , ppid , pid ) ;
+   nWritten = ossSnprintf ( b2fName, b2fSize,
+                            SDB_SHELL_B2F_PIPE_PREFIX"%u-%u",
+                            ppid, pid ) ;
    SH_VERIFY_COND ( nWritten >= 0 , SDB_SYS ) ;
    SH_VERIFY_COND ( (UINT32) nWritten < b2fSize , SDB_INVALIDSIZE ) ;
 

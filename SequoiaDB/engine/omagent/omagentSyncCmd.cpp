@@ -35,7 +35,6 @@
 #include "omagentHelper.hpp"
 #include "ossProc.hpp"
 #include "utilPath.hpp"
-#include "ossPath.h"
 #include "omagentJob.hpp"
 #include "omagentMgr.hpp"
 

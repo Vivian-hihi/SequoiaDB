@@ -280,9 +280,9 @@ int main ( int argc , const char * argv[] )
    INT32             rc       = SDB_OK ;
    OSSPID            shpid    = OSS_INVALID_PID ;
    OSSPID            bppid    = OSS_INVALID_PID ;
-   CHAR waitName[128] ;
-   CHAR f2bName[128] ;
-   CHAR b2fName[128] ;
+   CHAR waitName[128]         = { 0 } ;
+   CHAR f2bName[128]          = { 0 } ;
+   CHAR b2fName[128]          = { 0 } ;
    engine::sptContainer container ;
    engine::sptScope *scope = NULL ;
 

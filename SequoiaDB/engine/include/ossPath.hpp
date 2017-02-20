@@ -36,7 +36,6 @@
 #ifndef OSSPATH_HPP__
 #define OSSPATH_HPP__
 
-#include "ossPath.h"
 #include <string>
 #include <map>
 #include <vector>

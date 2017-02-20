@@ -146,6 +146,8 @@ namespace engine
          std::cout << "Get current path failed: " << rc << std::endl ;
          goto error ;
       }
+      /// set current path
+      ossChDir( currentPath ) ;
 
       // 2. enable dialog
       rc = utilBuildFullPath( currentPath, SDBCM_LOG_PATH,

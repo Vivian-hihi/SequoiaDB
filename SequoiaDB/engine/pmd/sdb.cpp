@@ -41,7 +41,6 @@
 #include "ossMem.hpp"
 #include "utilLinenoiseWrapper.hpp"
 #include "oss.h"
-#include "ossPath.h"
 #include "pd.hpp"
 #include "ossPrimitiveFileOp.hpp"
 #include "ossTypes.h"
@@ -60,6 +59,7 @@
 #include "utilPipe.hpp"
 #include "sptContainer.hpp"
 #include "ossSignal.hpp"
+#include "ossIO.hpp"
 
 using namespace bson ;
 
@@ -77,6 +77,12 @@ po::variables_map vm ;
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
 #endif
+
+#if defined (_WINDOWS)
+   #define SDB_PB_PROGRAM_NAME         "sdbbp.exe"
+#else
+   #define SDB_PB_PROGRAM_NAME         "sdbbp"
+#endif // _WINDOWS
 
 enum RunMode
 {
@@ -487,7 +493,7 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_CREATEDAEMONPROC, "createDaemonProcess" )
 INT32 createDaemonProcess ( const CHAR * program , const OSSPID & ppid ,
-                             CHAR * f2dbuf , CHAR * d2fbuf )
+                            CHAR * f2dbuf , CHAR * d2fbuf )
 {
    CHAR *         args     = NULL ;
    INT32          rc       = SDB_OK ;
@@ -506,8 +512,20 @@ INT32 createDaemonProcess ( const CHAR * program , const OSSPID & ppid ,
 
    SDB_ASSERT ( program && program[0] != '\0' , "Invalid argument" ) ;
 
+   /// make sure the prgram exist
+   rc = ossAccess( program ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "The program[%s] is not exist, rc: %d",
+              program, rc ) ;
+      goto error ;
+   }
+
    rc = getWaitPipeName ( ppid ,  waitName , sizeof ( waitName ) ) ;
    SH_VERIFY_RC
+
+   // clear the name pipe fd in windows
+   clearDirtyShellPipe( SDB_SHELL_WAIT_PIPE_PREFIX ) ;
 
    // waitPipe is deleted in done:
    rc = ossCreateNamedPipe ( waitName , 0 , 0 , OSS_NPIPE_INBOUND ,
@@ -556,7 +574,6 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
    OSSNPIPE d2fPipe ;
    CHAR     f2dName[128]          = {0} ;
    CHAR     d2fName[128]          = {0} ;
-   CHAR     bpName[128]           = {0} ;
    CHAR     bpf2dName[128]        = {0} ;
    CHAR     bpd2fName[128]        = {0} ;
    CHAR     receiveBuffer1[SDB_FRONTEND_RECEIVEBUFFERSIZE]   = {0} ;
@@ -566,15 +583,10 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
    CHAR *   p           = NULL ;
    INT32    id          = 0 ;
    INT32    retCode     = SDB_OK ;
+   CHAR     pbFullPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    ossMemset ( &f2dPipe , 0 , sizeof ( f2dPipe ) ) ;
    ossMemset ( &d2fPipe , 0 , sizeof ( d2fPipe ) ) ;
-
-   ossMemset ( f2dName , 0 , sizeof ( f2dName ) ) ;
-   ossMemset ( d2fName , 0 , sizeof ( d2fName ) ) ;
-   ossMemset ( bpName , 0 , sizeof ( bpName ) ) ;
-   ossMemset ( bpf2dName , 0 , sizeof ( bpf2dName ) ) ;
-   ossMemset ( bpd2fName , 0 , sizeof ( bpd2fName ) ) ;
 
    SDB_ASSERT ( program && program[0] != '\0' , "invalid argument" ) ;
    if ( !cmd || cmd[0] == '\0' )
@@ -582,9 +594,33 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       goto done ;
    }
 
+   /// prepare the fullpath
+   rc = ossGetEWD( pbFullPath, OSS_MAX_PATHSIZE ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Get current path failed, rc: %d", rc ) ;
+      goto error ;
+   }
+   else
+   {
+      UINT32 strLen = ossStrlen( pbFullPath ) ;
+      if ( strLen + ossStrlen( SDB_PB_PROGRAM_NAME ) + 2 > OSS_MAX_PATHSIZE )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Path[%s] is to long", pbFullPath ) ;
+         goto error ;
+      }
+      else if ( strLen > 0 && pbFullPath[strLen-1] != OSS_FILE_SEP_CHAR )
+      {
+         ossStrncat( pbFullPath, OSS_FILE_SEP, 1 ) ;
+      }
+      ossStrncat( pbFullPath, SDB_PB_PROGRAM_NAME,
+                  ossStrlen( SDB_PB_PROGRAM_NAME ) ) ;
+   }
+
    // clear the name pipe fd in windows
-   clearDirtyShellPipe( "sdb-shell-f2b-" ) ;
-   clearDirtyShellPipe( "sdb-shell-b2f-" ) ;
+   clearDirtyShellPipe( SDB_SHELL_F2B_PIPE_PREFIX ) ;
+   clearDirtyShellPipe( SDB_SHELL_B2F_PIPE_PREFIX ) ;
 
    // get current process id
    ppid = ossGetParentProcessID () ;
@@ -629,11 +665,7 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
          rc = ossCleanNamedPipeByName ( bpd2fName ) ;
          SH_VERIFY_RC
 
-         // which will create those named pipes
-         rc = ossLocateExecutable ( program , "sdbbp" , bpName , sizeof(bpName) ) ;
-         SH_VERIFY_RC
-
-         rc = createDaemonProcess ( bpName , ppid , bpf2dName , bpd2fName ) ;
+         rc = createDaemonProcess ( pbFullPath, ppid, bpf2dName, bpd2fName ) ;
          SH_VERIFY_RC
 
          rc = ossOpenNamedPipe ( bpf2dName , OSS_NPIPE_OUTBOUND , 0 , f2dPipe ) ;
@@ -645,12 +677,8 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       // named pipe does not exist, so we need to create the daemon process
       // which will create those named pipes
 
-      // get the full path of sdbbp according to current program'name
-      rc = ossLocateExecutable ( program , "sdbbp" , bpName , sizeof(bpName) ) ;
-      SH_VERIFY_RC
-
       // create a process which will create two name pipe
-      rc = createDaemonProcess ( bpName , ppid , bpf2dName , bpd2fName ) ;
+      rc = createDaemonProcess ( pbFullPath, ppid, bpf2dName, bpd2fName ) ;
       SH_VERIFY_RC
 
       rc = ossOpenNamedPipe ( bpf2dName , OSS_NPIPE_OUTBOUND , 0 , f2dPipe ) ;
@@ -824,12 +852,20 @@ int main ( int argc , CHAR **argv )
    INT32             rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDB_MAIN );
    ArgInfo           argInfo ;
+   CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
 #if defined( _LINUX )
    signal( SIGCHLD, SIG_IGN ) ;
 #endif // _LINUX
    //
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
+
+   rc = ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
+   if ( rc )
+   {
+      std::cout << "Get current path failed: " << rc << std::endl ;
+      goto error ;
+   }
 
    rc = container.init() ;
    SH_VERIFY_RC
