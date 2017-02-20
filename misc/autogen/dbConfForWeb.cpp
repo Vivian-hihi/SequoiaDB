@@ -314,10 +314,13 @@ string OptGenForWeb::genOptions ()
 
     for ( it = optlist.begin(); it != optlist.end(); it++ )
     {
+        string detail = replace_all( (*it)->detailtag, "\n", "<br/>" );
+        detail = replace_all( detail, "|", "\\|" );
+
         oss << "|" << (*it)->longtag
             << "|" << (*it)->shorttag
             << "|" << (*it)->typeofwebtag
-            << "|" << replace_all( (*it)->detailtag, "\n", "<br/>" )
+            << "|" << detail
             << "|" << endl ;
     }
     oss << endl ;
