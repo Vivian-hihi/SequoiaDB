@@ -294,7 +294,7 @@
             file="${srccode_dir}/driver/java/${java_driver_jar}" />
             
       <copy todir="${release_driver_dir}/PHP" >
-         <fileset dir="${srccode_dir}/driver/php5/release" includes="*.so" />
+         <fileset dir="${srccode_dir}/driver/php/release" includes="*.so" />
       </copy>
       
       <copy todir="${release_driver_dir}/Postgresql" >
