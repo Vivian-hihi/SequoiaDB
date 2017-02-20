@@ -21,13 +21,23 @@ SystemTest.prototype.testGetUserEnv = function()
    var environ = this.system.getUserEnv().toObj() ;
    var tmpInfo = this.cmd.run( "env" ).split( "\n" ) ;
    var tmpObj = {} ;
+   var keys = [] ;
+   var values = [] ;
+   var j ;
    for( var i = 0;i < tmpInfo.length-1;i++ )
    {
-      var index = tmpInfo[i].indexOf( "=" ) ;
-      var key = tmpInfo[i].slice( 0, index ) ;
-      var value = tmpInfo[i].slice( index + 1 ) ;
-      tmpObj[key] = value ;   
+      var index = tmpInfo[i].indexOf( "=" ) ;   
+      if( index === -1 )
+      {
+         values[j] += tmpInfo[i] ;
+         continue ;
+      }
+      keys[i] = tmpInfo[i].slice( 0, index ) ;
+      values[i] = tmpInfo[i].slice( index + 1 ) ;
+      j = i ;   
    }
+   for( i = 0;i < keys.length;i++ )
+      tmpObj[keys[i]] = values[i] ;
    
    for( var k in tmpObj )
    {
@@ -226,19 +236,15 @@ SystemTest.prototype.testListLoginUsers = function()
       var tmp = info[i].split( " " ) ;
       var username = tmp[0] ;             // 用户名
       var tty = tmp[1] ;                  // 登录终端
-      var time = tmp[2] ;                 // 登录时间
-      for( var j = 3;j < tmp.length-1;j++ )
-      {
-         time +=  " " + tmp[j] ;  
-      }
+      var time = tmp[2] + " " + tmp[3];   // 登录时间
       var addr ;                          // 登录的主机名或者ip
-      if( tmp[tmp.length-1] === undefined )
+      if( tmp[4] === undefined )
       {
          addr = "" ;
       }
       else
       {
-         addr = tmp[tmp.length-1].slice( 1, tmp[tmp.length-1].length-1 ) ;
+         addr = tmp[4].slice( 1, tmp[4].length-1 ) ;
       }  
       if( username !== userObj.user || tty !== userObj.tty ||
           time !== userObj.time || addr !== userObj.from )
