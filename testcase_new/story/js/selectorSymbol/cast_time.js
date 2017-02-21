@@ -17,25 +17,26 @@ function main()
 	var doc = [{a:-2147483648},
 	           {a:2147483647},
 	           {a:0},
-	           {a:{$numberLong:"-2147483647"}},
-	           {a:{$numberLong:"2147483647"}},
-	           {a:{$decimal:"-2147483647"}},
-	           {a:{$decimal:"2147483647"}},
-	           {a:-2147483648.48},
-	           {a:2147483647.48}];;
+	           {a:{$numberLong:"-2147483647000"}},
+	           {a:{$numberLong:"2147483647000"}},
+	           {a:{$decimal:"-2147483647000"}},
+	           {a:{$decimal:"2147483647000"}},
+	           {a:-2147483648000.48},
+	           {a:2147483647000.48}];;
 	insertData(dbcl, doc);
    
    //source type:all,destination type:all,for string express,lower letters
-   var selectCondition1 = {a:{$cast:"timestamp"}};                                               
-   var expRecs1 = [{a:-2147483},
-	                {a:2147483},
+   var selectCondition1 = {a:{$cast:"timestamp"}};       
+   var expRecs1 = [{a:-2147483648},
+                   {a:2147483647},
 	                {a:0},
-	                {a:-2147483},
-	                {a:2147483},
-	                {a:-2147483},
-	                {a:2147483},
-	                {a:-2147483},
-	                {a:2147483}];
+	                {a:-2147483647},
+	                {a:2147483647},
+	                {a:-2147483647},
+	                {a:2147483647},
+	                {a:-2147483648},
+	                {a:2147483647}];
+
    var timeStampexpRecs1 = castNumbericToTimeStamp(expRecs1);
    checkResult( dbcl, null, selectCondition1, timeStampexpRecs1, {_id:1} );
 }
