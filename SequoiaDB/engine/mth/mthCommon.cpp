@@ -35,6 +35,7 @@
 
 *******************************************************************************/
 #include "core.hpp"
+#include "ossTypes.h"
 #include "mthCommon.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
@@ -328,8 +329,36 @@ namespace engine
          UINT64 tm = 0 ;
          if ( e.isNumber() )
          {
-            Date_t d( e.numberLong() ) ;
-            builder.appendDate( fieldName, d ) ;
+            if ( NumberInt == e.type() )
+            {
+               Date_t d( e.numberInt() * 1000LL ) ;
+               builder.appendDate( fieldName, d ) ;
+            }
+            else
+            {
+               BOOLEAN hasAppend = FALSE ;
+               if ( NumberDecimal == e.type() )
+               {
+                  bsonDecimal original = e.Decimal() ;
+                  bsonDecimal l_min ;
+                  bsonDecimal l_max ;
+                  l_min.init() ;
+                  l_max.init() ;
+                  l_min.fromLong( OSS_SINT64_MIN ) ;
+                  l_max.fromLong( OSS_SINT64_MAX ) ;
+                  if ( original.compare( l_min ) < 0 || 
+                       original.compare( l_max ) > 0 )
+                  {
+                     builder.appendNull( fieldName ) ;
+                     hasAppend = TRUE ;
+                  }
+               }
+               if ( FALSE == hasAppend )
+               {
+                  Date_t d( e.numberLong() ) ;
+                  builder.appendDate( fieldName, d ) ;
+               }
+            }
          }
          else if ( String == e.type() &&
                    SDB_OK == utilStr2Date( e.valuestr(), tm ))
@@ -358,14 +387,33 @@ namespace engine
       {
          if ( Date == e.type() )
          {
-            builder.appendNumber( fieldName,
-                                  ( INT32 )( e.date().millis ) ) ;
+            INT32 sec = 0 ;
+            INT64 l   = ( ( INT64 )( e.date().millis ) ) / 1000 ;
+            if ( l > OSS_SINT32_MAX || l < OSS_SINT32_MIN )
+            {
+               sec = 0 ;
+            }
+            else
+            {
+               sec = ( INT32 )l ;
+            }
+            builder.appendNumber( fieldName, sec ) ;
          }
          else if ( Timestamp == e.type() )
          {
-            UINT64 l = e.timestampTime().millis ;
-            l += e.timestampInc() / 1000 ;
-            builder.appendNumber( fieldName, ( INT32 )l ) ;
+            INT32 sec = 0 ;
+            INT64 l = ( INT64 )( e.timestampTime().millis ) ;
+            l      += ( INT64 )( ((INT32)(e.timestampInc())) / 1000 ) ;
+            l       = l / 1000; // seconds
+            if ( l > OSS_SINT32_MAX || l < OSS_SINT32_MIN )
+            {
+               sec = 0 ;
+            }
+            else
+            {
+               sec = (INT32)l ;
+            }
+            builder.appendNumber( fieldName, sec ) ;
          }
          else if ( Bool == e.type() )
          {
@@ -376,7 +424,7 @@ namespace engine
          {
             INT32 i = 0 ;
             INT64 l = e.numberLong() ;
-            if ( l > 2147483647LL || l < -2147483648LL )
+            if ( l > OSS_SINT32_MAX_LL || l < OSS_SINT32_MIN_LL )
             {
                i = 0 ;
             }
@@ -391,7 +439,7 @@ namespace engine
             INT32 i = 0 ;
             INT64 l = 0 ;
             e.numberDecimal().toLong( &l) ;
-            if ( l > 2147483647LL || l < -2147483648LL )
+            if ( l > OSS_SINT32_MAX_LL || l < OSS_SINT32_MIN_LL )
             {
                i = 0 ;
             }
@@ -399,14 +447,13 @@ namespace engine
             {
                i = ( INT32 )l ;
             }
-
             builder.appendNumber( fieldName, i ) ;
          }
          else if ( NumberDouble == e.type() )
          {
             INT32 i = 0 ;
             double d = e.Double() ;
-            if ( d > 2147483647.0 || d < -2147483648.0 )
+            if ( d > OSS_SINT32_MAX_D || d < OSS_SINT32_MIN_D )
             {
                i = 0 ;
             }
@@ -427,7 +474,7 @@ namespace engine
                INT32 i = 0 ;
                double v = 0 ;
                v = boost::lexical_cast<double>( e.valuestr () ) ;
-               if ( v > 2147483647.0 || v < -2147483648.0 )
+               if ( v > OSS_SINT32_MAX_D || v < OSS_SINT32_MIN_D )
                {
                   i = 0 ;
                }
@@ -450,9 +497,53 @@ namespace engine
          UINT64 usec = 0 ;
          if ( e.isNumber() )
          {
-            /// millis
-            OpTime t( (unsigned) (e.numberLong() / 1000) , 0 );
-            builder.appendTimestamp( fieldName, t.asDate() ) ;
+            if ( NumberInt == e.type() )
+            {
+               INT32 sec = ( INT32 )( e.numberInt() ) ; // take it as seconds
+               OpTime t( (unsigned) (sec), 0 ) ;
+               builder.appendTimestamp( fieldName, t.asDate() ) ;
+            }
+            else
+            {
+               BOOLEAN hasAppend = FALSE ;
+               if ( NumberDecimal == e.type() )
+               {
+                  bsonDecimal original = e.Decimal() ;
+                  bsonDecimal l_min ;
+                  bsonDecimal l_max ;
+                  l_min.init() ;
+                  l_max.init() ;
+                  l_min.fromLong( OSS_SINT64_MIN ) ;
+                  l_max.fromLong( OSS_SINT64_MAX ) ;
+                  if ( original.compare( l_min ) < 0 || 
+                       original.compare( l_max ) > 0 )
+                  {
+                     builder.appendNull( fieldName ) ;
+                     hasAppend = TRUE ;
+                  }
+               }
+               if ( FALSE == hasAppend )
+               {
+                  INT64 varLong = ( INT64 )( e.numberLong() ) ;
+                  INT64 sec     = varLong / 1000 ;
+                  INT64 us      = ( varLong % 1000 ) * 1000 ; // microseconds
+                  if ( us < 0 )
+                  {
+                     // move 1s from sec to us
+                     sec--;
+                     us += 1000000;
+                  }
+                  if ( sec > OSS_SINT32_MAX_LL || sec < OSS_SINT32_MIN_LL )
+                  {
+                     builder.appendNull( fieldName ) ;
+                  }
+                  else
+                  {
+                     OpTime t( (unsigned) (sec), (unsigned) (us) ) ;
+                     builder.appendTimestamp( fieldName, t.asDate() ) ;
+                  }
+               }
+            }
          }
          else if ( String == e.type() &&
                    SDB_OK == engine::utilStr2TimeT( e.valuestr(),
@@ -464,7 +555,18 @@ namespace engine
          }
          else if ( Date == e.type() )
          {
-            builder.appendTimestamp( fieldName, e.date().millis, 0 ) ;
+            // when date is large than the max value of timestamp,
+            // return null
+            INT64 sec = ( ( INT64 )( e.date().millis ) ) / 1000 ;
+            if ( sec > OSS_SINT32_MAX_LL || sec < OSS_SINT32_MIN_LL )
+            {
+               builder.appendNull( fieldName ) ;
+            }
+            else
+            {
+               OpTime t( (unsigned) (sec), 0 ) ;
+               builder.appendTimestamp( fieldName, t.asDate() ) ;
+            }
          }
          else
          {
@@ -481,9 +583,9 @@ namespace engine
          }
          else if ( Timestamp == e.type() )
          {
-            UINT64 l = e.timestampTime().millis ;
-            l += e.timestampInc() / 1000 ;
-            builder.appendNumber( fieldName, ( INT64 )l ) ;
+            INT64 l = ( INT64 )( e.timestampTime().millis ) ;
+            l += ( INT64 )( e.timestampInc() / 1000 ) ;
+            builder.appendNumber( fieldName, l ) ;
          }
          else if ( Bool == e.type() )
          {
@@ -494,11 +596,11 @@ namespace engine
          {
             INT64 l = 0 ;
             double d = e.Double() ;
-            if ( d >= 0 && d < 9223372036854775808.0 )
+            if ( d >= 0 && d < (OSS_SINT64_MAX_D + 1) )
             {
                l = (INT64)d ;
             }
-            else if ( d < 0 && d >= -9223372036854775808.0 )
+            else if ( d < 0 && d >= OSS_SINT64_MIN_D )
             {
                l = (INT64)d ;
             }
@@ -520,11 +622,11 @@ namespace engine
                   double d = 0  ;
                   INT64 l = 0 ;
                   d = boost::lexical_cast<double>( e.valuestr () ) ;
-                  if ( d >= 0 && d < 9223372036854775808.0 )
+                  if ( d >= 0 && d < (OSS_SINT64_MAX_D + 1) )
                   {
                      l = (INT64)d ;
                   }
-                  else if ( d < 0 && d >= -9223372036854775808.0 )
+                  else if ( d < 0 && d >= OSS_SINT64_MIN_D )
                   {
                      l = (INT64)d ;
                   }
@@ -556,11 +658,10 @@ namespace engine
          else if ( Timestamp == e.type() )
          {
             bsonDecimal decimal ;
-            UINT64 l = e.timestampTime().millis ;
-            l        += e.timestampInc() / 1000 ;
-
+            INT64 l = ( INT64 )( e.timestampTime().millis ) ;
+            l      += ( INT64 )( ( (INT32)(e.timestampInc()) ) / 1000 ) ;
             decimal.init() ;
-            decimal.fromLong( ( INT64 )l ) ;
+            decimal.fromLong( l ) ;
             builder.append( fieldName, decimal ) ;
          }
          else if ( Bool == e.type() )

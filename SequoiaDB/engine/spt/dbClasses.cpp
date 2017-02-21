@@ -8565,7 +8565,7 @@ static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
    {
       struct tm localTm ;
       time_t t ;
-      UINT32 inc = 0 ;
+      INT32 inc = 0 ;
       CHAR buf[128] ;
 
       if ( !JSVAL_IS_INT( argv[0]) ||
@@ -8576,6 +8576,11 @@ static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
 
       t = JSVAL_TO_INT( argv[0] ) ;
       inc = JSVAL_TO_INT( argv[1] ) ;
+      if ( inc < 0 )
+      {
+         t -= 1; // sec
+         inc += 1000000; // us
+      }
       ossLocalTime( t, localTm ) ;
       ossSnprintf( buf, 127,
                    "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
