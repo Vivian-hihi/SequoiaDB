@@ -1,13 +1,14 @@
 ##语法##
 
 ```
-{ <字段名>: { $cast: <类型> } }
+{ <字段名>: { $cast: <目标类型> } }
 ```
 
 ##说明##
-
-将字段转化为指定类型。原始值为数组类型时对每个数组元素执行该操作。
-其中指定的类型可以使用字符串表示(大小写不敏感)，也可以使用数字表示，如下表：
+将字段名对应的内容转化为目标类型的内容。
+当原始内容为数组时，对数组中每个元素执行该操作。
+可通过字符串（大小写不敏感）或数字的方式指定目标类型。  
+目标类型如下表所示：
 
 | 目标类型  | 字符串表示  | 数字表示 |
 | --------- | ----------- | -------- |
@@ -37,115 +38,144 @@
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | String   | 数字字符串: 对应的数值，其他: 0.0 | 0.0 |
-  | Bool     | true: 1.0，false: 0.0 | 0.0 |
-  | Int32    | | 0.0 |
-  | Int64    | | 0.0 |
-  | Decimal  | | 0.0 |
+  | String   | 将数字字符串转换为Double类型对应的数字 | 0.0 |
+  | Bool     | true: 1.0；false: 0.0 | 无 |
+  | Int32    | 将Int32类型的数字强转为Double类型对应的数字 | 无 |
+  | Int64    | 将Int64类型的数字强转为Double类型对应的数字 | 无 |
+  | Decimal  | 将Decimal类型的数字强转为Double类型对应的数字 | 0.0 |
+  > **Note:**  
+  > 1. 将非数字字符串转为Double类型，转换将异常返回0.0。  
+  > 2. 将超过Double类型范围的数字字符串转为Double类型，转换将异常返回0.0。  
+  > 3. 将Int64/Decimal类型的值转为Double类型时，可能会发生精度的丢失。  
+  > 4. 将超过Double类型范围的Decimal类型的值转为Double类型，转换将异常返回0.0。
 
 * String
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | Int32    | | null |
-  | Int64    | | null |
-  | Double   | | null |
-  | Decimal  | | null |
-  | Date     | | null |
-  | Timestamp| | null |
-  | Oid      | | null |
-  | Object   | | null |
-  | Array    | | null |
-  | Bool     | | null |
+  | Int32    | 将Int32类型的数字转换为字符串 | 无 |
+  | Int64    | 将Int64类型的数字转换为字符串 | 无 |
+  | Double   | 将Double类型的数字转换为字符串 | 无 |
+  | Decimal  | 将Decimal类型的数字转换为字符串 | 无 |
+  | Date     | 将Date类型的内容转换为字符串 | 无 |
+  | Timestamp| 将Timestamp类型的内容转换为字符串 | 无 |
+  | ObjectId | 将ObjectId类型的内容转换为字符串 | 无 |
+  | Object   | 将Object类型的内容转换为Json格式的字符串 | 无 |
+  | Array    | 将数组中每个元素都转换为对应内容的字符串 | 无 |
+  | Bool     | 将Bool类型的内容转换为字符串 | 无 |
 
 * Object
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | String   | 标准Json     | null     |
+  | String   | 将标准Json字符串转为Object类型 | null     |
+  > **Note:**  
+  > 1. 当字符串为非标准Json格式时，转换将异常返回null。  
 
 * ObjectId
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | String   | 24个16进制字符组成 | null |
+  | String   | 将由24个16进制字符组成的字符串（带字符串结束符共25个字符）转为ObjectId类型 | null |
+  > **Note:**  
+  > 1. 当字符串表示的内容有误，转换将异常返回null。
 
 * Bool
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | Int32    | 0: false, 其他: true | 无 |
-  | Int64    | 0: false, 其他: true | 无 |
-  | Double   | 0: false, 其他: true | 无 |
-  | Decimal  | 0: false, 其他: true | 无 |
+  | Int32    | Int32类型的数值为0表示false, 其他表示true | 无 |
+  | Int64    | Int64类型的数值为0表示false, 其他表示true | 无 |
+  | Double   | Double类型的数值为0表示false, 其他表示true | 无 |
+  | Decimal  | Decimal类型的数值为0表示false, 其他表示true | 无 |
 
 * Date
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | Int32    | 绝对毫秒 | null |
-  | Int64    | 绝对毫秒 | null |
-  | Double   | 绝对毫秒 | null |
-  | Decimal  | 绝对毫秒 | null |
-  | String   | 形如“2015-08-19” | null |
-  | Timestamp| | null |
-
+  | Int32    | Int32类型的数字理解为绝对秒数。将绝对秒数转换为Date类型对应的时间 | 无 |
+  | Int64    | Int64类型的数字理解为绝对毫秒。将绝对毫秒转换为Date类型对应的时间 | 无 |
+  | Double   | Double类型的数字理解为绝对毫秒。将绝对毫秒转换为Date类型对应的时间 | 无 |
+  | Decimal  | Decimal类型的数字理解为绝对毫秒。将绝对毫秒转换为Date类型对应的时间 | null |
+  | String   | 将形如“2015-08-19”格式的字符串转换为Date类型对应的时间，支持范围为["1900-01-01","9999-12-31"] | null |
+  | Timestamp| 将Timestamp类型的日期部分转换为Date类型对应的时间 | 无 |
   > **Note:**  
-  > Date 类型字段转换为Int32类型可能会发生溢出。
+  > 1. 绝对秒数：距离格林威治时间1970年01月01日00时00分00秒的总秒数。
+  > 当Int32类型的值为负数时，转换结果为该时间点之前的Date类型的值，如：1969-12-31。  
+  > 2. 绝对毫秒：距离格林威治时间1970年01月01日00时00分00秒的总毫秒数。
+  > 当Int64类型的值为负数时，转换结果为该时间点之前的Date类型的值，如：1969-12-31。  
+  > 3. 将Double/Decimal类型的转为Date类型，可能会发生精度丢失。因为转换过程是先由Double/Decimal类型转为Int64类型（此处可能发生精度丢失），
+  > 然后再将Int64类型表示的绝对毫秒转换为Date类型对应的时间。  
+  > 4. 当Decimal类型的值超出Int64类型范围时，转换将异常返回null。  
+  > 5. 将不在["1900-01-01","9999-12-31"]范围的字符串日期转换为Date类型，转换将异常返回null。
 
 * Null
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | ALL      | | 无 |
+  | ALL      | 任何类型都能转换成Null | 无 |
 
 * Int32
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | String   | | 0 |
-  | Bool     | | 0 |
-  | Int64    | | 0 |
-  | Double   | | 0 |
-  | Decimal  | | 0 |
-  | Timestamp| 绝对毫秒 | 0 |
-  | Date     | 绝对毫秒 | 0 |
+  | String   | 将数字字符串转换为In32类型对应的数字 | 0 |
+  | Bool     | true:1；false:0 | 无 |
+  | Int64    | 将Int64类型的值转为Int32对应的数字 | 0 |
+  | Double   | 将Double类型的值转为Int32对应的数字 | 0 |
+  | Decimal  | 将Decimal类型的值转为Int32对应的数字 | 0 |
+  | Timestamp| 将Timestamp类型的值表示的绝对秒数转为Int32类型对应的数字 | 0 |
+  | Date     | 将Date类型的值表示的绝对秒数转为Int32类型对应的数字 | 0 |
+  > **Note:**  
+  > 1. 将非数字类型的字符串转为Int32类型，转换将异常返回0。  
+  > 2. 将超过Int32类型范围的数字字符串转为Int32类型，转换将异常返回0。  
+  > 3. 当Int64/Double/Decimal类型的值超出Int32类型范围时，转换将异常返回0。  
+  > 4. 当Timestamp/Date类型的值表示的绝对秒数超出Int32类型范围时，转换将异常返回0。
 
 * Timestamp
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | Int32    | 绝对毫秒 | null |
-  | Int64    | 绝对毫秒 | null |
-  | Double   | 绝对毫秒 | null |
-  | Decimal  | 绝对毫秒 | null |
-  | String   | 形如“2015-08-19-17.59.05.918488” | null |
-  | Date     | | null |
-
+  | Int32    | Int32类型的数字理解为绝对秒数。将绝对秒数转换为Timestamp类型对应的时间 | 无 |
+  | Int64    | Int64类型的数字理解为绝对毫秒。将绝对毫秒转换为Timestamp类型对应的时间 | null |
+  | Double   | Double类型的数字理解为绝对毫秒。将Double类型的值强转为Int64类型的值，再将绝对毫秒转换为Timestamp类型对应的时间 | null |
+  | Decimal  | Double类型的数字理解为绝对毫秒。将Decimal类型的值强转为Int64类型的值，再将绝对毫秒转换为Timestamp类型对应的时间 | null |
+  | String   | 将形如“2015-08-19-17.59.05.918488”格式的字符串转换为Timestamp类型，支持范围为["1902-01-01 00:00:00.000000", "2037-12-31 23:59:59.999999"] | null |
+  | Date     | 将Date类型的内容转换为Timestamp类型对应的时间 | null |
   > **Note:**  
-  > Timestamp 类型字段转换为Int32类型可能会发生溢出。
+  > 1. 由于Int64/Double/Decimal类型表示的绝对毫秒能表示的时间范围比Timestamp类型的广，在这些类型转为Timestamp类型过程，
+  >    若转换结果超出Timestamp类型能表示的范围，转换将异常返回null。  
+  > 2. 由于Date类型能表示的时间范围比Timestamp类型的广，在Date类型转为Timestamp类型过程，
+  >    若转换结果超出Timestamp类型能表示的范围，转换将异常返回null。
 
 * Int64
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | String   | | 0 |
-  | Bool     | | 0 |
-  | Int32    | | 0 |
-  | Double   | | 0 |
-  | Decimal  | | 0 |
-  | Timestamp| 绝对毫秒 | 0 |
-  | Date     | 绝对毫秒 | 0 |
+  | String   | 将数字字符串转换为In64类型对应的数字 | 0 |
+  | Bool     | true:1；false:0 | 无 |
+  | Int32    | 将Int32类型的值转为Int64类型的数字 | 无 |
+  | Double   | 将Double类型的值转为Int64类型的数字 | 无 |
+  | Decimal  | 将Decimal类型的值转为Int64类型的数字 | 0 |
+  | Timestamp| 将Timestamp类型的值表示的绝对毫秒转为Int64类型的数字 | 无 |
+  | Date     | 将Date类型的值表示的绝对毫秒转为Int64类型的数字 | 无 |
+  > 1. 将非数字字符串转为Int64类型，转换将异常返回0。  
+  > 2. 将超过Int64类型范围的数字字符串转为Int64类型，转换将异常返回0。
+  > 3. 当Decimal类型的值超出Int64类型范围时，转换将异常返回0。
 
 * Decimal
 
   | 源类型   | 转换格式备注 | 异常返回 |
   | -------- | ------------ | -------- |
-  | String   | 数字字符串: 对应的数值，其他: 0 | 0 |
-  | Bool     | true: 1, false: 0 | 0 |
-  | Int32    | | 0 |
-  | Int64    | | 0 |
-  | Double   | | 0 |
+  | String   | 将数字字符串转换为Decimal类型对应的数字 | 0 |
+  | Bool     | true: 1, false: 0 | 无 |
+  | Int32    | 将Int32类型的值转为Decimal类型对应的数字 | 无 |
+  | Int64    | 将Int64类型的值转为Decimal类型对应的数字 | 无 |
+  | Double   | 将Double类型的值转为Decimal类型对应的数字 | 无 |
+  | Timestamp| 将Timestamp类型的值表示的绝对毫秒转为Decimal类型对应的数字 | 无 |
+  | Date     | 将Date类型的值表示的绝对毫秒转为Decimal类型对应的数字 | 无 |
+  > 1. 将非数字字符串转为Decimal类型，转换将异常返回0。  
+  > 2. 将超过Decimal类型范围的数字字符串转为Decimal类型，转换将异常返回0。
 
 * MaxKey
 
@@ -155,18 +185,13 @@
 
 ##示例##
 
-在集合 foo.bar 插入1条记录：
+* 集合 foo.bar 存在如下记录：
 
-```lang-javascript 
-> db.foo.bar.insert( { "a": "123" } )
-```
+   ```lang-javascript 
+   { "a": "123" }
+   ```
 
-> **Note:**  
-> 字段“a”的值是字符串
-
-SequoiaDB shell 运行如下：
-
-* 作为选择符使用，返回字段“a”转换“int32”类型之后的记录：
+* “$cast”单独作为选择符使用。返回字段“a”转换“int32”类型之后的记录如下：
 
   ```lang-javascript
   > db.foo.bar.find( {}, { "a": { "$cast": "int32" } } )
@@ -178,11 +203,9 @@ SequoiaDB shell 运行如下：
   }
   Return 1 row(s).
   ```
+  该查询返回的结果为int32类型。
 
-  > **Note:**  
-  > 返回的结果为int32类型。
-
-* 与匹配符配合使用，匹配字段“a”转换为“int32”之后值为123的记录：
+* “$cast”与匹配符配合使用。匹配字段“a”转换为“int32”之后值为123的记录：
 
   ```lang-javascript
   > db.foo.bar.find( { a: { $cast: "int32", $et: 123 } } )
@@ -190,13 +213,11 @@ SequoiaDB shell 运行如下：
       "_id": {
         "$oid": "582527402b4c38286d000019"
       },
-      "a": 123
+      "a": "123"
   }
   Return 1 row(s).
   ```
-
-  > **Note:**  
-  > 返回原始记录，字段“a”的值是字符串类型。
+  该查询返回原始记录，字段“a”的值是字符串类型。
 
 
 
