@@ -66,7 +66,7 @@ public class TestProcedure7121 extends SdbTestBase{
             return ;
         }
         testJSProcedure();
-        testRMProcedure();
+       // testRMProcedure();
     }
     
     public void testJSProcedure() {
@@ -80,14 +80,15 @@ public class TestProcedure7121 extends SdbTestBase{
             this.sdb.crtJSProcedure(code);
             DBCursor cursor =  this.sdb.listProcedures((BSONObject) JSON.parse("{\"name\":\"sum_7121\"}"));
             BSONObject actual = new BasicBSONObject();
-            BSONObject expected = new BasicBSONObject();
-            expected.put("name", "sum_7121");
+            String expected = "{ \"name\" : \"sum_7121\" , \"func\" : { \"$code\" : \"function sum_7121(x, y){return x/y;}\"}}";
+            //expected.put("func", rcfunc);
             while(cursor.hasNext()) {
                 actual = cursor.getNext();
                 actual.removeField("_id");
                 actual.removeField("funcType");
-                actual.removeField("func");
-                Assert.assertEquals(actual, expected);
+                Assert.assertEquals(actual.toString(), expected);
+                //actual.removeField("func");
+               // Assert.assertEquals(actual, expected);
                 break;
             }
             cursor.close();
