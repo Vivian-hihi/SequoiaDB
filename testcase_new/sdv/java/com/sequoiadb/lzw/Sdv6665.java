@@ -2,10 +2,12 @@ package com.sequoiadb.lzw;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -14,36 +16,41 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
- * FileName: Sdv6661 test content: query查询记录_st.compress.03.020 testlink case:
- * SeqDB-6661
+ * FileName: Sdv6665 test content: hash范围切分，分区键为单个字段_st.compress.03.024 testlink
+ * case: SeqDB-6665
  * 
  * @author zengxianquan
- * @date 2016年12月29日
+ * @date 2016年12月30日
  * @version 1.00
  */
-public class Sdv6661 extends SdbTestBase {
+public class Sdv6665 extends SdbTestBase {
 	private Sequoiadb sdb = null;
-	private String clName = "cl6661";
-	private String dataGroupName = null;
+	private String clName = "cl6665";
+	private List<String> dataGroupNames = null;
+	private DBCollection cl = null;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+	private String sourceGroupName;
+	private String destGroupName;
 
 	@BeforeClass
 	public void setUp() {
 		System.out.println(this.getClass().getName() + " begin at " + sdf.format(new Date()));
 		try {
 			sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+			sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		}
 		if (Commlib.isStandAlone(sdb)) {
 			throw new SkipException("is standalone skip testcase");
 		}
+		dataGroupNames = Commlib.getDataGroups(sdb);
+		createCL();
 	}
 
 	@AfterClass
@@ -63,32 +70,43 @@ public class Sdv6661 extends SdbTestBase {
 
 	@Test
 	public void test() {
+
+		sourceGroupName = dataGroupNames.get(0);
+		destGroupName = dataGroupNames.get(1);
 		try {
-			DBCollection cl = createCL();
 			int dataCount = 600;
-			int strLength = 512 * 1024;
-			String rec = insertData(cl, dataCount, strLength);
-			Commlib.checkCompressed(cl, dataGroupName);
-			checkQuery(dataCount, rec);
+			int strLength = 1024 * 1024;
+			insertData(cl, dataCount, strLength);
+			Commlib.checkCompressed(cl, sourceGroupName);
+			split(sourceGroupName, destGroupName);
+			Commlib.waitCreateDict(cl, destGroupName); // 等待压缩字典的建立,最多等待60分钟
+			insertDataAgain(cl, 50, strLength);
+			Commlib.checkCompressed(cl, destGroupName);
+			checkSplit(sdb, sourceGroupName, 100);
+			checkSplit(sdb, destGroupName, 100);
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		}
 	}
 
-	private DBCollection createCL() {
-		DBCollection cl = null;
+	private void createCL() {
 		BSONObject option = new BasicBSONObject();
+		BSONObject shardingKey = new BasicBSONObject();
 		try {
-			dataGroupName = Commlib.getDataGroups(sdb).get(0);
-			option.put("Group", dataGroupName);
+
+			option.put("Group", dataGroupNames.get(0));
 			option.put("Compressed", true);
 			option.put("CompressionType", "lzw");
-			CollectionSpace cs = sdb.getCollectionSpace(csName);
+			option.put("ShardingType", "hash");
+			shardingKey.put("_id", 1);
+			option.put("ShardingKey", shardingKey);
+
+			CollectionSpace cs = sdb.getCollectionSpace(SdbTestBase.csName);
 			cl = cs.createCollection(clName, option);
 		} catch (BaseException e) {
+			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		}
-		return cl;
 	}
 
 	public String insertData(DBCollection cl, int dataCount, int strLength) {
@@ -96,10 +114,18 @@ public class Sdv6661 extends SdbTestBase {
 		for (int i = 0; i < dataCount / 2; i++) {
 			cl.insert("{_id:" + i + ",key:'" + strRec + i + "'}");
 		}
-		
-		Commlib.waitCreateDict(cl, dataGroupName);  //等待压缩字典的建立,最多等待60分钟
-		
+
+		Commlib.waitCreateDict(cl, sourceGroupName); // 等待压缩字典的建立,最多等待60分钟
+
 		for (int i = dataCount / 2; i < dataCount; i++) {
+			cl.insert("{_id:" + i + ",key:'" + strRec + i + "'}");
+		}
+		return strRec;
+	}
+
+	public String insertDataAgain(DBCollection cl, int dataCount, int strLength) {
+		String strRec = getRandomString(strLength);
+		for (int i = 600; i < 600+dataCount; i++) {
 			cl.insert("{_id:" + i + ",key:'" + strRec + i + "'}");
 		}
 		return strRec;
@@ -116,26 +142,23 @@ public class Sdv6661 extends SdbTestBase {
 		return sb.toString();
 	}
 
-	private void checkQuery(int dataCount, String strRec) {
-		DBCursor cursor = null;
+	private void split(String sourceGroupName, String destGroupName) {
 		try {
-			DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-			cursor = cl.query(null, null, "{_id:1}", null, 10, 10);
-			int i = 10;
-			while (cursor.hasNext()) {
-				String actRec = cursor.getNext().toString();
-				String exptRec = "{ \"_id\" : " + i + " , \"key\" : \"" + strRec + i + "\"}";
-				if (!exptRec.equals(actRec)) {
-					Assert.fail("The data is error");
-				}
-				i++;
-			}
+			double percent = 50;
+			cl.split(sourceGroupName, destGroupName, percent);
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
-		} finally {
-			if (cursor != null) {
-				cursor.close();
-			}
+		}
+	}
+
+	private void checkSplit(Sequoiadb db, String dataGroupName, long expectDataCount) {
+		DBCollection splitCL = null;
+		Sequoiadb dataDB = db.getReplicaGroup(dataGroupName).getMaster().connect();
+		splitCL = dataDB.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+		int count = (int) splitCL.getCount();
+		int offSet = (int) (0.3 * 600);
+		if (Math.abs(count - 300) > offSet) {
+			Assert.fail("the split result is wrong:" + count);
 		}
 	}
 }
