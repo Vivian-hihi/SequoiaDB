@@ -31,7 +31,7 @@ class TransRollback extends BaseOperator
       echo "\n---Begin to judge transaction.\n";
 	  
       $this -> db -> transactionBegin();
-      $clDB -> remove();
+      $clDB -> remove( '{a: "no" }' );
       $errno = $this -> getErrno();
       if( $errno === -253 )
       {
