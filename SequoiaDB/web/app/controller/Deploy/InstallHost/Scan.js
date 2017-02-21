@@ -214,7 +214,7 @@
                   },
                   'failed': function( errorInfo ){
                      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                        $scope.scanHost() ;
+                        $scope.ScanHost() ;
                         return true ;
                      } ) ;
                   }
