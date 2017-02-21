@@ -5450,9 +5450,24 @@ namespace engine
 
       /// wait all collection's task finished
       cb->writingDB( FALSE ) ;
-      while( pTaskMgr->taskCountByCL( _collectionName ) > 0 )
+
       {
-         pTaskMgr->waitTaskEvent() ;
+         UINT32 waitCnt = 0 ;
+         while( pTaskMgr->taskCountByCL( _collectionName ) > 0 )
+         {
+            pTaskMgr->waitTaskEvent() ;
+            waitCnt ++ ;
+#ifdef _DEBUG
+            // Log the task list after waiting over 6 minutes
+            if ( waitCnt > 600 )
+            {
+               PD_LOG( PDDEBUG, "Drop collection [%s] wait for split tasks [%s]",
+                       _collectionName,
+                       pTaskMgr->dumpTasks( CLS_TASK_SPLIT ).c_str() ) ;
+               waitCnt = 0 ;
+            }
+#endif
+         }
       }
 
    done:

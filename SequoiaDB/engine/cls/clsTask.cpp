@@ -245,6 +245,28 @@ namespace engine
       }
    }
 
+   string _clsTaskMgr::dumpTasks( CLS_TASK_TYPE type )
+   {
+      string taskStr ;
+
+      ossScopedLock lock ( &_taskLatch, SHARED ) ;
+
+      std::map<UINT64, _clsTask*>::iterator it = _taskMap.begin() ;
+      while ( it != _taskMap.end() )
+      {
+         clsTask *pTask = it->second ;
+         if ( type == pTask->taskType() )
+         {
+            taskStr += "[" ;
+            taskStr += pTask->collectionName() ;
+            taskStr += "]," ;
+         }
+         ++it ;
+      }
+
+      return taskStr ;
+   }
+
    void _clsTaskMgr::regCollection( const string & clName )
    {
       ossScopedLock lock( &_regLatch, EXCLUSIVE ) ;

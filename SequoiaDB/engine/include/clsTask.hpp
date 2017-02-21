@@ -141,6 +141,8 @@ namespace engine
          UINT32      getRegCount( const string &clName,
                                   BOOLEAN noLatch = FALSE ) ;
 
+         string      dumpTasks( CLS_TASK_TYPE type ) ;
+
       private:
          std::map<UINT64, _clsTask*>         _taskMap ;
          ossSpinSLatch                       _taskLatch ;
