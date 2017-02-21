@@ -69,19 +69,19 @@ void getConf()
       else if( para == "--changedprefix" || para == "-c" )
          strcpy( CHANGEDPREFIX,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--rsrvportbegin" || para == "-b" )
-		   strcpy( RSRVPORTBEGIN,g_argvs[i+1].c_str() ) ;
+		 strcpy( RSRVPORTBEGIN,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--rsrvportend" || para == "-e" )
-		   strcpy( RSRVPORTEND,g_argvs[i+1].c_str() ) ;
+		 strcpy( RSRVPORTEND,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--rsrvnodedir" || para == "-d" )
-		   strcpy( RSRVNODEDIR,g_argvs[i+1].c_str() ) ;
+		 strcpy( RSRVNODEDIR,g_argvs[i+1].c_str() ) ;
 	  else if( para == "--workdir" || para == "-w" )
-		   strcpy( WORKDIR,g_argvs[i+1].c_str() ) ; 
+		 strcpy( WORKDIR,g_argvs[i+1].c_str() ) ; 
     }
    
-   cout << "HostName: " << HOSTNAME << endl ;
-   cout << "SvcName: " << SVCNAME << endl ;
-   cout << "CHANGEDPREFIX: " << CHANGEDPREFIX << endl ;
-   cout << "RSPVPORTBEGIN: " << RSRVPORTBEGIN << endl ;
+    cout << "HostName: " << HOSTNAME << endl ;
+    cout << "SvcName: " << SVCNAME << endl ;
+    cout << "CHANGEDPREFIX: " << CHANGEDPREFIX << endl ;
+    cout << "RSPVPORTBEGIN: " << RSRVPORTBEGIN << endl ;
 	cout << "RSPVPORTEND: " << RSRVPORTEND << endl ;
 	cout << "RSPVNODEDIR: " << RSRVNODEDIR << endl ;
 	cout << "WORKDIR: " << WORKDIR << endl ;
@@ -108,3 +108,12 @@ bool isStandalone()
                 return false ;
 }
 
+bool IsStandalone( sdb& db )
+{
+	sdbCursor cursor ;
+	int rc = db.getList( cursor, 7 ) ;
+	if( rc == -159 )
+		return true ;
+	else
+		return false ;
+}

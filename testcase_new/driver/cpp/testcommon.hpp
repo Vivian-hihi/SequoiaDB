@@ -28,7 +28,6 @@ void getConf() ;
 
 void ossSleep(int milliseconds) ;
 bool isStandalone() ;
-
-
+bool IsStandalone( sdb& db ) ;
 
 #endif
