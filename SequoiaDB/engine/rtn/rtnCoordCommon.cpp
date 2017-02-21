@@ -3889,7 +3889,7 @@ namespace engine
                objBD.append( FIELD_NAME_NODE_NAME, strNodeName ) ;
                //objBD.append( FIELD_NAME_HOST, strHostName ) ;
                //objBD.append( FIELD_NAME_SERVICE_NAME, strServiceName ) ;
-               //objBD.append( FIELD_NAME_GROUPNAME, strGroupName ) ;
+               objBD.append( FIELD_NAME_GROUPNAME, strGroupName ) ;
                //objBD.append( FIELD_NAME_GROUPID, routeID.columns.groupID ) ;
                //objBD.append( FIELD_NAME_NODEID, (INT32)routeID.columns.nodeID ) ;
                objBD.append( FIELD_NAME_RCFLAG, iter->second._rc ) ;
