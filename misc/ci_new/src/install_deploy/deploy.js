@@ -117,7 +117,7 @@ function createCata( db )
       }
          
       var host = hostList[ i % hostNum ];
-      var service = cataBasePort + parseInt( i / hostNum ) * 10;
+      var service = cataBasePort + parseInt( i / hostNum ) * 20;
       var dbPath = diskList[0] + "/database/cata/" + service;
       var config = cataConf;
       rg.createNode( host, service, dbPath, config );
@@ -136,7 +136,7 @@ function createCata( db )
       }
          
       var host = hostList[ i % hostNum ];
-      var service = cataBasePort + parseInt( i / hostNum ) * 10;
+      var service = cataBasePort + parseInt( i / hostNum ) * 20;
       rg.getNode( host, service ).start();
 
       i++;
@@ -156,7 +156,7 @@ function createCoord( db )
       for( var j = 0; j < coordnumPerhost; j++ )
       {
          var host = hostList[i];
-         var service = coordBasePort + j * 10;
+         var service = coordBasePort + j * 20;
          var dbPath = dbBasePath + "/database/coord/" + service;
          var config = coordConf;
          rg.createNode( host, service, dbPath, config );
