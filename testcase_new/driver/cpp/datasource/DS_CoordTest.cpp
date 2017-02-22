@@ -6,7 +6,7 @@
 using namespace std ;
 using namespace sdbclient ;
 
-///*
+/*
 // 测试单个节点，所有节点正常停止，异常停止，主机异常（手动）
 TEST(coordTest,stop)
 {
@@ -20,7 +20,7 @@ TEST(coordTest,stop)
 
 	sdbDataSourceConf conf ;
 	//conf.setSyncCoordInterval(10 * 1000) ;
-	conf.setSyncCoordInterval() ;
+	conf.setSyncCoordInterval( 0 ) ;
 	sdbDataSource ds ;
 	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
@@ -41,4 +41,4 @@ TEST(coordTest,stop)
 	}
 	ds.close() ;
 }
-//*/
+*/
