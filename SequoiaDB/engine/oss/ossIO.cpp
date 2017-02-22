@@ -602,7 +602,7 @@ INT32 ossChDir( const CHAR *pPath )
 {
    INT32 rc = SDB_OK ;
 
-   /*rc = ossAccess( pPath ) ;
+   rc = ossAccess( pPath ) ;
    if ( rc )
    {
       goto error ;
@@ -633,7 +633,7 @@ INT32 ossChDir( const CHAR *pPath )
          break ;
       }
       goto error ;
-   }*/
+   }
 
 done:
    return rc ;
