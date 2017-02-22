@@ -6,18 +6,21 @@
 ****************************************************/
 <?php
 define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/lib/ReplicaGroup.php';
+include_once Cur_Path.'/lib/ReplicaGroupMgr.php';
 include_once Cur_Path.'/../global.php';
 
 class cataLogGroupTest extends PHPUnit_Framework_TestCase 
 {
-   private $db;
-   public function setUp()
+   private static $db;
+   private static $groupMgr;
+   private static $skipTestCase = false;
+   
+   public static function setUpBeforeClass()
    {
       $coordHostName = globalParameter::getHostName();
       $coordPort = globalParameter::getHostName();
-      $this->db = new Sequoiadb();
-      $err = $this->db -> connect(globalParameter::getHostName(), 
+      self::$db = new Sequoiadb();
+      $err = self::$db -> connect(globalParameter::getHostName().':'. 
                                   globalParameter::getCoordPort()) ;
       if ( $err['errno'] != 0 )
       {
@@ -25,18 +28,39 @@ class cataLogGroupTest extends PHPUnit_Framework_TestCase
          self::$skipTestCase = true ;
          return;
       } 
-      $this->assertEquals( 0, $err['errno'] ) ;
+      
+      self::$groupMgr = new ReplicaGroupMgr(self::$db);
+      $err = self::$groupMgr->getError();
+      if ( $err['errno'] != 0 )
+      {
+         echo "Failed to listGroup, error code: ".$err['errno'] ;
+         self::$skipTestCase = true ;
+         return;
+      }
+   }
+   
+   public function setUp()
+   {
+      if( self::$skipTestCase === true )
+      {
+         $this -> markTestSkipped( "init failed" );
+      }
    }
    
    public function testSelectParameter()
    {
-      if (mt_rand(0,1) == 0)
+      $random = mt_rand(0,2);
+      if ( $random == 0)
       {
          return array('auth'=> true);
       }
-      else
+      else if ($random == 1)
       {
          return json_encode(array('auth'=> true));
+      }
+      else
+      {
+         return NULL;
       }
       
    }
@@ -48,16 +72,19 @@ class cataLogGroupTest extends PHPUnit_Framework_TestCase
    public function testCreateByfullParameters($options)
    {
       echo "testCreateByfullParameters";
-      $group = new ReplicaGroup($this->db, "SYSCatalogGroup");
-      $err = $group->create('r520-2', '30000', '/opt/sequoiadb/database/catalog/30000', $options);
+      $hosts = self::$groupMgr->getAllHostNamesOfDeploy() ;
+   
+      $hostName = $hosts[mt_rand(0,count($hosts)-1)] ;
+      $port = mt_rand(globalParameter::getSpareportStart(), globalParameter::getSpareportStop()) ;
+      $group = self::$groupMgr->addCatalogGroup($hostName, $port, globalParameter::getDbPathPrefix().'/'.$port,$options);
+    
+      $this->assertEquals( 0, self::$groupMgr->getError() ) ;
+      if ( self::$groupMgr->getGroupNum() > 1) return;
       
-      $this->assertEquals( 0, $err ) ;
-      
-      $nodes = $group->getNodes();
-      $this->assertEquals( 1,  count($nodes) ) ;
+      $node = $group->getNode($hostName, $port);
       $node = $nodes[0];
-      $this->assertEquals( 'r520-2',  $node->getHostName()) ;
-      $this->assertEquals( '30000',  $node->getServiceName()) ;
+      $this->assertEquals( $hostName,  $node->getHostName()) ;
+      $this->assertEquals( $port,  $node->getServiceName()) ;
       
       $totalSleepTime = 20;
       $alreadySleepTime = 0;
@@ -82,45 +109,18 @@ class cataLogGroupTest extends PHPUnit_Framework_TestCase
       
       $nodedb = $node->connect();
       $this->assertEquals( true,  !empty($nodedb)) ;
-      
-      $err = $group->drop();
-      $this->assertEquals( $err,  0) ;
-      
-      $tmp = $this->db->getGroup("SYSCatalogGroup");
-      $err = $this->db->getError();
-      $this->assertEquals( $err['errno'],  -180) ;
-      
-   }
-   
-   public function testCreateBymustParameters()
-   {
-      echo "testCreateBymustParameters";
-      $group = new ReplicaGroup($this->db, "SYSCatalogGroup");
-      $err = $group->create('r520-2', '11820', '/opt/sequoiadb/database/catalog/11820');
-      $this->assertEquals( 0, $err ) ;
-      
-      $nodes = $group->getNodes();
-      $this->assertEquals( 1,  count($nodes)) ;
-      $node = $nodes[0];
-      $this->assertEquals( 'r520-2',  $node->getHostName()) ;
-      $this->assertEquals( '11820',  $node->getServiceName()) ;
-      
-      $nodedb = $node->connect();
-      $this->assertEquals( true,  !empty($nodedb)) ;
-      
-      $this->assertEquals(true,  $group->isCataLog()) ;
-      $err = $group->drop();
-      $this->assertEquals( $err,  0) ;
+       
    }
    
    protected function tearDown()
    {
-      $groupObj = $this->db->getGroup("SYSCatalogGroup");
-      if (!empty($groupObj)){
-         $this->db->removeGroup("SYSCatalogGroup");
+      if (isset(self::$groupMgr) == true && self::$groupMgr->getGroupNum() == 1)
+      {
+         self::$groupMgr->removeGroup("SYSCatalogGroup");
       }
-      $err = $this->db->close();
+      $err = self::$db->close();
       $this->assertEquals( 0, $err['errno'] ) ;
    }
 }
 ?>
+

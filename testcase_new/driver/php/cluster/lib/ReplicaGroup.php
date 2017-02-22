@@ -24,85 +24,99 @@ class ReplicaGroup
     {
        $this->db = $sdb ;
        $this->name = $groupName ;
+       $this->err = 0 ;
        $this->nodes= array() ;
-       if ( strlen( $groupName ) ){
-          var_dump( $groupName ) ;
-          $this->group = $this->db->getGroup( $groupName ) ;
-          if( empty( $this->group ) ) {
-             $this->err = $this->db -> getError() ;
-             echo "Failed to call getGroup, error code: ".$this->err['errno'] ;
-             return ;
-          }
-       }
+       $this->init() ;
     }
     
     public function __destruct()
     {
     }
     
+    private function init()
+    {
+       if ( strlen( $this->name ) )
+       {
+          $this->group = $this->db->getGroup( $this->name ) ;
+          if( empty( $this->group ) ) 
+          {
+             $error = $this->db -> getError() ;
+             
+             $this->err = $error['errno'];
+          }
+          else
+          {
+             $this->getNodes() ;
+          }
+       }
+       else
+       {
+          $this->err = -154 ;
+       }
+       
+       return $this->err ;
+    }
+    
     public function isCataLog()
     {
+       if ( isset($this->group) )
+       {
+          $this->init();
+       }
+       
+       if ($this->err != 0)
+       {
+          return ;
+       }
+       
        $ret = $this->group->isCatalog();
-       return $ret;
+       return $ret ;
     }
     
     public function getName()
     {
-        $name = $this->group->getName();
-        if ( $name == $this->name )
-        {
-           return $name;
-        }
-        else
-        {
-           return "";
-        }
+        return $this->name;
     }
     
     public function reelect( $options = NULL )
     {
         $err = $this->group->reelect( $options );
+        $this->err = $err['errno'] ;
         return $err['errno'];
     }
     
     public function getNodeNum()
     {
+       if (isset($this->nodes) == false) 
+       {
+          return 0 ;
+       }
        return count( $this->nodes );
-       // return $this->group->getNodeNum(0);
     }
     
     public function getNodes()
     {
         $detail = $this->group->getDetail();
-        var_dump( $detail );
-        $this->err = $this->db -> getError();
-        if ($this->err['errno'] != 0 ) return NULL;
-        
-        $groupName = $detail['GroupName'];
-        if ( $groupName != $this->name )
-        {
-           return NULL;
-        }
-        echo "&&&&&&&&&&&&&&&&&&&&&&&&"; 
+        $this->err = $this->db -> getError()['errno'];
+        if ($this->err != 0 ) return;
         $nodesOfGroup = $detail['Group'];
         if ( array_key_exists('PrimaryNode', $detail) )
         {
            $this->PrimaryNode = $detail['PrimaryNode'];
         }
+        
         for ( $i=0; $i<count($nodesOfGroup); ++$i )
         {
            $tmp = $nodesOfGroup[$i];
-           $repliNode = new ReplicaNode($this->db,
-                                        $this->group, 
-                                        $tmp['HostName'], 
-                                        $tmp['Service'][0]['Name'],
-                                        $tmp['dbpath'] );
-           if ( $repliNode->getError()['errno'] != 0 )
+           $node = $this->group->getNode($tmp['HostName'].":".$tmp['Service'][0]['Name']);
+           $this->err = $this->db->getError()['errno']; 
+           if ( $this->err != 0 )
            {
-              $this->err = $repliNode->getError() ;
               unset( $this->nodes ) ;
-              return NULL ;
+              return ;
            }
+           $repliNode = new ReplicaNode($node, $tmp['dbpath'] );
+           
            array_push($this->nodes, $repliNode) ;
         }
         
@@ -154,39 +168,7 @@ class ReplicaGroup
            return NULL;
         }
     }
-    
-    public function create($hostName='' , $serviceName='', $dbpath='', $cfg = NULL )
-    {
-        if (!empty($this->group)) return;
-        if (0 === strcmp("SYSCatalogGroup", $this->name))
-        {
-           $err = $this->db->createCataGroup($hostName, $serviceName, $dbpath, $cfg);
-        }
-        else 
-        {
-           $err = $this->db->createGroup($this->name);
-        }
-        
-        echo "create.................\n";
-        var_dump($err); 
-        if (0 == $err['errno'])
-        {
-           $this->group = $this->db->getGroup($this->name) ;
-           if (empty($this->group))
-           {
-              $err = $this->db->getError();
-              return $err['errno'];
-           }
-        }
-        return $err['errno'];
-    }
-    
-    public function drop()
-    {
-       $err = $this->db->removeGroup($this->name);
-       return $err['errno'];
-    }
-    
+   
     public function start()
     {
        $err = $this->group->start();
@@ -205,79 +187,145 @@ class ReplicaGroup
         {
            $repliNode = $this->nodes[$i];
            if ($repliNode->getName() == $name){
+              var_dump($repliNode);
               return $repliNode;
            }
         }
-
-        $token = strtok($name, ":");
-        $hostName = $token;
-        $port = '11810';
-        if ($token !== false)
-        {
-            $token = strtok($name, ":");
-            if ($token !== false)
-            {
-                $port = $token;
-            }
-        }
-
-        $node = $this->group->getNode( $name );
-        if( empty( $node ) )
-        {
-           return NULL;
-        }
-        $repliNode = new ReplicaNode( $this->group, $node->getHostName(), 
-                                     $node->getServiceName(),NULL, $node );
         
-        return $repliNode;
+        return;
     }
     
     public function addNode( $hostName, $serviceName, $dbpath, $cfg = NULL )
     {
         echo "addNode***************8";
-        var_dump( $this->group );
-        $repliNode = new ReplicaNode( $this->db, $this->group, $hostName, $serviceName,
-                                     $dbpath, $cfg );
-        $err = $repliNode->create();
-        if ($err == 0)
+        $err = $this->group->createNode( $hostName, $serviceName,
+                                        $dbpath, $cfg );
+                                        
+        if ($err['errno'] == 0)
         {
-           array_push( $this->nodes, $repliNode );
+           $node = $this->group->getNode( $hostName.":".$serviceName );
+           if ( empty( $node ) )
+           {
+              //$err = $this->
+              echo "empty node\n";
+           }
+           else
+           {    
+              $repliNode = new ReplicaNode($node, $dbpath);
+              array_push( $this->nodes, $repliNode );
+           }
         }
-        return $err;
+        
+        return $err['errno'];
     }
     
-    public function removeNode( $hostName, $serviceName )
+    private function removeWrapNode( $hostName, $serviceName )
     {
-        for ( $i=0; $i <count( $this->nodes ); ++$i )
+        $exist = false ;
+        for ( $i = 0; $i < count( $this->nodes ); ++$i )
         {
            $node = $this->nodes[$i];
-           if ( $node->getHostName() == $hostName &&
-               $node->getServiceName() == $serviceName )
+           if ( strcmp($node->getHostName(), $hostName ) == 0 &&
+               strcmp($node->getServiceName(),$serviceName) == 0 )
            {
+              $exist = true;
               break;
            }
         }
-        $err = $node->drop();
-        if ($err == 0)
+       
+        for(; $i<count($this->nodes) - 1;++$i)
         {
+            $this->nodes[$i] = $this->nodes[$i+1];
+            
+        }
+
+        if ($exist)
+        {
+           array_pop($this->nodes) ;   
+           var_dump( $this->nodes) ;
+        }
+    }
+
+    public function removeNode( $hostName, $serviceName )
+    {
+        if (isset($this->nodes) == false) return 0;
+        $exist = false;
+        for ( $i = 0; $i < count( $this->nodes ); ++$i )
+        {
+           $node = $this->nodes[$i];
+           if ( strcmp($node->getHostName(), $hostName ) == 0 &&
+               strcmp($node->getServiceName(),$serviceName) == 0 )
+           {
+              $exist = true;
+              break;
+           }
+        }
+        
+        if ($exist == false) return 0;
+        if ( empty( $this->cfg ) )
+        {
+           $err = $this->group->removeNode( $node->getHostName(), $node->getServiceName() );
+        }
+        else
+        {
+           $err = $this->group->removeNode( $node->getHostName(), $node->getServiceName(), $this->cfg );
+        }
+        
+        if ($err['errno'] == 0)
+        {
+           
            for(; $i<count($this->nodes) - 1;++$i)
            {
               $this->nodes[$i] = $this->nodes[$i+1];
            }
+           
+           array_pop($this->nodes) ;
         }
-        return $err;
+        return $err['errno'];
     }
     
     public function attachNode( $node, $options=NULL )
     {
         $err = $this->group->attachNode( $node->getHostName(), $node->getServiceName(), $options );
+        
+        if (0 == $err['errno'])
+        {
+           array_push($this->nodes, $node) ;
+        }
         return $err['errno'];
     }
     
     public function detachNode( $node, $options=NULL )
     {
+        echo "detachNode:";
         $err = $this->group->detachNode( $node->getHostName(), $node->getServiceName(), $options );
+        if (0 == $err['errno'])
+        {
+           $this->removeWrapNode( $node->getHostName(), $node->getServiceName()) ;
+        }
         return $err['errno'];
+    }
+    
+    public function getHostNameOfDeploy()
+    {
+       $hosts = array() ;
+       for ($i = 0; $i < count($this->nodes); ++$i)
+       {
+          for ($k = 0; $k < count($hosts); ++$k)
+          {
+             if (strcmp($hosts[$k], $this->nodes[$i]->getHostName()) == 0)
+             {
+                break;
+             }
+          }
+          if ($k == count($hosts))
+          {
+             array_push($hosts, $this->nodes[$i]->getHostName()) ;
+          }
+       }
+       
+       return $hosts;
     }
 }
 ?>
+

@@ -6,17 +6,19 @@
 ****************************************************/
 <?php
 define('Cur_Path', dirname(__FILE__));
-include_once Cur_Path.'/lib/ReplicaGroup.php';
+include_once Cur_Path.'/lib/ReplicaGroupMgr.php';
 include_once Cur_Path.'/../global.php';
 class dataGroupTest extends PHPUnit_Framework_TestCase
 {
    private static $db;
+   private static $groupMgr;
    private static $catagroup;
    
+   private static $skipTestCase = false;
    public static function setUpBeforeClass()
    {
       self::$db = new Sequoiadb();
-      $err = self::$db -> connect(globalParameter::getHostName(), 
+      $err = self::$db -> connect(globalParameter::getHostName().':'. 
                                   globalParameter::getCoordPort()) ;
       if ( $err['errno'] != 0 )
       {
@@ -25,23 +27,37 @@ class dataGroupTest extends PHPUnit_Framework_TestCase
          return;
       } 
       
-      self::$catagroup=new ReplicaGroup(self::$db, "SYSCatalogGroup");
-      $err = self::$catagroup->create('r520-2', '30000', '/opt/sequoiadb/database/catalog/30000');
+      self::$groupMgr = new ReplicaGroupMgr(self::$db);
+      if ( self::$groupMgr->getError() != 0 )
+      {
+         echo "Failed to connect database, error code: ".$err['errno'] ;
+         self::$skipTestCase = true ;
+         return;
+      } 
       
+      if (self::$groupMgr->getGroupNum() < 1)
+      {
+         self::$skipTestCase = true ;
+         return;
+      } 
+   }
+   
+   public function setUp()
+   {
+      if( self::$skipTestCase === true )
+      {
+         $this -> markTestSkipped( "init failed" );
+      }
    }
    
    public function testCreate()
    {
-      $group = new ReplicaGroup(self::$db, "db1");
-      $err = $group->create();
+      $group = self::$groupMgr->addDataGroup('db'.getmypid());
+      $err = self::$groupMgr->getError();
       $this->assertEquals( 0, $err['errno'] ) ;
       $name = $group->getName();
-      $this->assertEquals( $name, "db1" ) ;
+      $this->assertEquals( $name, 'db'.getmypid() ) ;
       
-      $groupObj = self::$db->getGroup("db1");
-      $this->assertEquals( true, !empty($groupObj) ) ;
-      $getName = $groupObj->getName();
-      $this->assertEquals( $getName, $group->getName()) ;
       return $group;
    }
    
@@ -64,9 +80,15 @@ class dataGroupTest extends PHPUnit_Framework_TestCase
     */
    public function testAddNode($group, $options)
    {
-      $ret = $group->addNode('r520-2', '11830', '/opt/sequoiadb/database/data/11830', $options);
+      $hosts = self::$groupMgr->getAllHostNamesOfDeploy() ;
+      $hostName = $hosts[mt_rand(0,count($hosts)-1)] ;
+      $port = mt_rand(globalParameter::getSpareportStart(), globalParameter::getSpareportStop()) ;
+      
+      var_dump($hostName);
+      var_dump($port);
+      $ret = $group->addNode($hostName, $port,globalParameter::getDbPathPrefix()."/".$port, $options);
       $this->assertEquals(0, $ret ) ;
-      $node = $group->getNode('r520-2:11830');
+      $node = $group->getNode($hostName.":".$port);
       $err = $node->start();
       $this->assertEquals($err, 0);
       
@@ -74,16 +96,18 @@ class dataGroupTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(true, !empty($nodedb));
       $cursor = $nodedb->list(SDB_LIST_CONTEXTS_CURRENT);
       $this->assertEquals(true, !empty($cursor));
+      while( $record = $cursor -> next() ) ;
       return $node;
    }
    
    /**
+    * @depends testCreate
     * @depends testAddNode
     */
-   public function testAddNodeRepeat($node)
+   public function testAddNodeRepeat($group, $node)
    {
-      $err = $node->create();
-      $this->assertEquals($err, -157);
+      $ret = $group->addNode($node->getHostName(), $node->getServiceName(),globalParameter::getDbPathPrefix().'/'.$node->getServiceName() );
+      $this->assertEquals($ret, -157);
    }
    
    /**
@@ -95,25 +119,21 @@ class dataGroupTest extends PHPUnit_Framework_TestCase
       $err = $node->stop();
       $nodedb = $node->connect();
       $this->assertEquals(true, empty($nodedb)); 
-      $err = $node->drop();
-      $this->assertEquals($err, -204); 
+      $err = $group->removeNode($node->getHostName(), $node->getServiceName());
+      $this->assertEquals($err, -204 ); 
       $tmpNode = $group->getNode($node->getHostName().":".$node->getServiceName());
       $this->assertEquals(true, !empty($tmpNode));  
    }
   
    public static function tearDownAfterClass()
    {
-      $cursor = self::$db->listGroup() ;
-      while($record = $cursor->next()){
-         
-         if (strcmp($record["GroupName"],"SYSCatalogGroup") )
-         {
-            self::$db->removeGroup($record["GroupName"]);
-         }
+      if ( isset(self::$groupMgr) && self::$groupMgr->getGroupNum() > 1)
+      {
+         self::$groupMgr->removeGroup('db'.getmypid());
       }
-      $err = self::$catagroup->drop();
       //$this->assertEquals( 0, $err ) ;
-      $err = self::$db->close();
+      self::$db->close();
    }
 }
 ?>
+

@@ -12,37 +12,45 @@
 class spareRGTest extends PHPUnit_Framework_TestCase
 {
    private static $db;
-   private static $group;
+   private static $groupMgr;
+   private static $group ;
    private static $node;
    private static $skipTestCase = false;
+
    public static function setUpBeforeClass()
    {
-      echo "enter setUpBeforeClass\n";
       self::$db = new Sequoiadb();
-      $err = self::$db -> connect(globalParameter::getHostName(), 
-                                  globalParameter::getCoordPort()) ;
+      $err = self::$db->connect(globalParameter::getHostName().":". 
+                                globalParameter::getCoordPort()) ;
       if ( $err['errno'] != 0 )
       {
-         echo "Failed to connect database, error code: ".$err['errno'] ;
+         echo "Failed to connect database, error code: ".$err['errno']. "\n" ;
          self::$skipTestCase = true ;
          return;
       } 
+
       self::$db->setSessionAttr(array('PreferedInstance' => 'm' )) ; 
-      self::$group = new ReplicaGroup(self::$db, 'SYSSpare' );
-      if ( self::$group->getError()['errno'] != 0 )
+      self::$groupMgr = new ReplicaGroupMgr(self::$db);
+      if ( self::$groupMgr->getError()['errno'] != 0 )
       {
-         echo "Failed to getGroup, error code: ".$err['errno'] ;
+         echo "Failed to listGroup, error code: ".$err['errno'] ;
          self::$skipTestCase = true ;
          return;
       }
-      echo "leave setUpBeforeClass\n";
+      
+      if (self::$groupMgr->getGroupNum() < 1)
+      {
+         echo "cluster is empty" ;
+         self::$skipTestCase = true ;
+         return;
+      }
    }
    
    public function setUp()
    {
       if( self::$skipTestCase === true )
       {
-         $this -> markTestSkipped( "connect failed" );
+         $this -> markTestSkipped( "init failed" );
       }
    }
    
@@ -81,13 +89,16 @@ class spareRGTest extends PHPUnit_Framework_TestCase
     */
    public function testDetachNode($options)
    {
-      echo "enter testDetachNode \n";
-      $err = self::$group->create();
+      self::$group = self::$groupMgr->addDataGroup('SYSSpare') ;
+      $err = self::$groupMgr->getError() ;
       $this->assertEquals($err, 0) ;
-      $err = self::$group->addNode("r520-2", "26070", '/data/disk1/sequoiadb/database/data/26070');
+      $hosts = self::$groupMgr->getAllHostNamesOfDeploy() ;
+   
+      $hostName = $hosts[mt_rand(0, count($hosts) -1 )] ;
+      $port = mt_rand(globalParameter::getSpareportStart(), globalParameter::getSpareportStop()) ;
+      $err = self::$group->addNode($hostName, $port, globalParameter::getDbPathPrefix().'/'.$port);
       $this->assertEquals($err, 0) ;
-      echo "addNode successful\n"; 
-      self::$node = self::$group->getNode("r520-2:26070");
+      self::$node = self::$group->getNode($hostName.":".$port );
       $this->assertEquals(true, !empty(self::$node)) ;
       
       $err = self::$node->start();
@@ -97,7 +108,8 @@ class spareRGTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($err, 0) ;
       
       sleep(5);
-      $nodes = self::$group->getNodes();
+      $tmpNode = self::$group->getNode(self::$node->getName()) ;
+      $this->assertEquals(false, isset($tmpNode));
       //$this->assertEquals($this->findNode($nodes, self::$node), false); 
       
     
@@ -111,9 +123,8 @@ class spareRGTest extends PHPUnit_Framework_TestCase
     */
    public function testAttachNode($options, $node)
    {
-      echo "enter testAttachNode\n";
-      $groupMgr = new ReplicaGroupMgr(self::$db);
-      $groups = $groupMgr->getDataGroups();
+      
+      $groups = self::$groupMgr->getDataGroups();
       
       $pos = mt_rand(0,count($groups)-1);
       
@@ -122,17 +133,26 @@ class spareRGTest extends PHPUnit_Framework_TestCase
       
       $err = $group->attachNode($node, $options);
       $this->assertEquals($err, 0) ;
-      //$this->assertEquals($nodeNum+1, $group->getNodeNum());
-      $nodes = $group->getNodes();
-      $this->assertEquals($this->findNode($nodes, $node), true);
+      $this->assertEquals($nodeNum+1, $group->getNodeNum());
+      $node = $group->getNode($node->getName());
+      $this->assertEquals(isset($node), true);
       
    }
 
    public static function tearDownAfterClass()
    {
-      //$err = self::$node->drop();
+      if (isset(self::$groupMgr) == true) 
+      {
+         $err = self::$groupMgr->removeGroup("SYSSpare");
+      }
+
+      if (isset(self::$group) == true && isset(self::$node) == true)
+      {
+         $err = self::$group->removeNode(self::$node->getHostName(), self::$node->getServiceName()) ;
+      }
       //$err = self::$group->drop();
       $err = self::$db->close();
    }
 }
 ?>
+

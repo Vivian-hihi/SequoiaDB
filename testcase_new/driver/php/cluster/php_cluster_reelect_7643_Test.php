@@ -19,7 +19,7 @@ class reelectTest extends PHPUnit_Framework_TestCase
    {
       echo "enter setUp\n" ;
       self::$db = new Sequoiadb() ;
-      $err = self::$db -> connect(globalParameter::getHostName(), 
+      $err = self::$db -> connect(globalParameter::getHostName().':'. 
                                   globalParameter::getCoordPort()) ;
        if ( $err['errno'] != 0 )
        {
