@@ -1868,7 +1868,7 @@ public class DBCollection {
      *            The flag to use which form for record data
      *            0: bson stream
      *            1: binary data stream, form: col1|col2|col3
-     * @return DBCursor of datas
+     * @return DBCursor of data
      * @exception com.sequoiadb.exception.BaseException
      *
      */
