@@ -17,11 +17,15 @@
 #trunk standalone
 192.168.20.191 ci-test-suse1
 
-#null TEST-TRUNK4
+#sync test
 192.168.30.102 ci-test-rhel1
 192.168.30.114 ci-test-cent3
+192.168.20.200 ubun-test1
+
+#null
 192.168.30.104 ci-test-rhel3
 
+#compile power
 192.168.28.121 ci-cmpl-ppc
 
 #ppc test 

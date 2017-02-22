@@ -8,10 +8,12 @@ subtype: trunk branch
 
    机器命名：                       
    ci-cmpl-[arch][number]              eg: ci-cmpl-ppc1
-     
+   
+   
    slave节点名称：
    COMPILE-[ARCH]                      eg: COMPILE-PPC
-     
+   TEST-TRUNK1
+   
    工程名称：
    compile_[product]_[arch]_[subtype]  eg: compile_db_ppc_trunk
       
@@ -19,15 +21,36 @@ subtype: trunk branch
 测试：
 
    机器命名：
-   ci-test-[arch]-[os][number]         eg: ci-test-ppc-suse2
+   ci-test-[os][number]                eg: ci-test-suse2
       
    slave节点名称：
-   TEST-[ARCH]-[OS]                    eg: TEST-X86-SUSE
+   TEST-[ARCH][number]                 eg: TEST-X861
       
    工程名称：
-   test_[product]_[arch]_[subtype]     eg: test_db_ppc_trunk 
+   test_[product]_[branch/trunk]_[test_type]_[deploy_mode]_[arch]    
+                                       eg: test_db_trunk_ppc     
+                                       _[arch]不填表示为x86
 
 
 备注：
-   1 编译机os都为suse, 所以命名中不需要加入OS一项   
+   1 编译机os都为suse, 所以命名中不需要加入OS一项  
+   
    2 arch均为64位，所以ppc64简写为ppc
+   
+   3 修改主机名  
+   
+      suse：
+      $ export HOSTNAME=myname
+      $ echo $HOSTNAME>/etc/HOSTNAME
+      $ /etc/rc.d/boot.localnet start
+
+      centos：
+      $ vi /etc/sysconfig/network
+      HOSTNAME=ci-test-cent3
+      $ reboot
+      
+      ubuntu:
+      $ vi /etc/hostname
+      $ reboot
+   
+   
