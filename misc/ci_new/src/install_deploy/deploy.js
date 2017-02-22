@@ -82,7 +82,7 @@ function createTmpCoord()
 function createCata( db )
 {
    println("-----begin to create cata group");
-   var cataBasePort = 13800;
+   var cataBasePort = 11800;
    
    //create first catalog node
    var host = hostList[0];
