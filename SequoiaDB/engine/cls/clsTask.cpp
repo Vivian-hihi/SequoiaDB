@@ -255,13 +255,20 @@ namespace engine
       while ( it != _taskMap.end() )
       {
          clsTask *pTask = it->second ;
-         if ( type == pTask->taskType() )
+         if ( CLS_TASK_UNKNOW == type ||
+              type == pTask->taskType() )
          {
-            taskStr += "[" ;
-            taskStr += pTask->collectionName() ;
-            taskStr += "]," ;
+            taskStr += "[ taskName: " ;
+            taskStr += pTask->taskName() ? pTask->taskName() : "" ;
+            taskStr += " collectionName: " ;
+            taskStr += pTask->collectionName() ? pTask->collectionName() : "" ;
+            taskStr += " ]" ;
          }
          ++it ;
+         if ( it != _taskMap.end() )
+         {
+            taskStr += "\n" ;
+         }
       }
 
       return taskStr ;
