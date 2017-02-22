@@ -39,7 +39,7 @@ testFiles10 = [ "./datasource/DS_ClTest.cpp" ]
 
 testFiles11 = [ "./datasource/DS_InvalidUsrTest.cpp" ]
 
-testFiles12 = [ "./datasource/DS_CoordTest.cpp" ]
+#testFiles12 = [ "./datasource/DS_CoordTest.cpp" ]
 
 testFiles13 = [ "./misc/lob.cpp" ]
 
@@ -61,7 +61,7 @@ DS_ThreadTest      = dllBuildEnv.Program("DS_ThreadTest", [testFiles8, gtestMain
 DS_ChecktimeTest   = dllBuildEnv.Program("DS_ChecktimeTest", [testFiles9, gtestMainObj, testCommonFiles])
 DS_ClTest          = dllBuildEnv.Program("DS_ClTest", [testFiles10, gtestMainObj, testCommonFiles])
 DS_InvalidUsrTest  = dllBuildEnv.Program("DS_InvalidUsrTest", [testFiles11, gtestMainObj, testCommonFiles])  
-DS_CoordTest       = dllBuildEnv.Program("DS_CoordTest", [testFiles12, gtestMainObj, testCommonFiles])    
+#DS_CoordTest       = dllBuildEnv.Program("DS_CoordTest", [testFiles12, gtestMainObj, testCommonFiles])    
 lob                = dllBuildEnv.Program("lob", [testFiles13, gtestMainObj, testCommonFiles])
 code               = dllBuildEnv.Program("code", [testFiles14, gtestMainObj, testCommonFiles])
 
@@ -84,7 +84,7 @@ code.static               = staticBuildEnv.Program("code.static",[testFiles14, g
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
 			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
-                              DS_CoordTest,lob,code ] )
+                              lob,code ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
