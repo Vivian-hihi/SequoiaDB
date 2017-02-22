@@ -369,15 +369,11 @@
             <name>has_om</name>
         </setInstallerVariableFromScriptOutput>
         <runProgram>
-            <customErrorMessage>${msg(Upgrade.ErrorMsg.StartOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
             <programArguments>${project.installationType} "${installdir}" "${installer_pathname}"</programArguments>          
             <ruleList>
                 <isTrue value="${has_om}"/>
             </ruleList>
-            <onErrorActionList>
-                <consoleWrite text="&#xA;error message:&#xA;${program_stdout}&#xA;"/>
-            </onErrorActionList>
         </runProgram> 
         <changeOwnerAndGroup>
             <files>${installdir}/packet;${installdir}/packet/${installerFilename}</files>
