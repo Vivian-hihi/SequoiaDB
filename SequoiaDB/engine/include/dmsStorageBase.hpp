@@ -355,7 +355,6 @@ namespace engine
 
          virtual INT32        sync( BOOLEAN force,
                                     BOOLEAN sync,
-                                    UINT64 lastLSN,
                                     IExecutor* cb ) ;
 
          virtual void         lock() ;
@@ -435,7 +434,7 @@ namespace engine
          INT32 openStorage ( const CHAR *pPath,
                              IDataSyncManager *pSyncMgr,
                              BOOLEAN createNew = TRUE ) ;
-         void  closeStorage ( UINT64 lastLSN ) ;
+         void  closeStorage () ;
          INT32 removeStorage() ;
 
          INT32 renameStorage( const CHAR *csName,
@@ -483,7 +482,7 @@ namespace engine
             return SDB_OK ;
          }
 
-         virtual INT32  _onMarkHeaderValid( UINT64 lastLSN,
+         virtual INT32  _onMarkHeaderValid( UINT64 &lastLSN,
                                             BOOLEAN sync,
                                             UINT64 lastTime )
          {
@@ -513,9 +512,9 @@ namespace engine
          INT32    _writeFile( OSSFILE *file, const CHAR *pData,
                               INT64 dataLen ) ;
 
-         INT32    _markHeaderValid( UINT64 lastLSN,
-                                    BOOLEAN sync,
+         INT32    _markHeaderValid( BOOLEAN sync,
                                     BOOLEAN force,
+                                    BOOLEAN hasFlushedData = TRUE,
                                     UINT64 lastTime = 0 ) ;
 
          void     _markHeaderInvalid( INT32 collectionID,

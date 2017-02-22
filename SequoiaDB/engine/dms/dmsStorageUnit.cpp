@@ -265,16 +265,6 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_CLOSE ) ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-      UINT64 lastLSN = 0 ;
-
-      if ( cb && cb->getLsnCount() > 0 )
-      {
-         lastLSN = cb->getEndLsn() ;
-      }
-      else
-      {
-         lastLSN = pmdGetSyncMgr()->getCompleteLSN() ;
-      }
 
       /// The order is:
       /// cacheUnit -> lob -> index -> data( must be in last )
@@ -284,15 +274,15 @@ namespace engine
       }
       if ( _pLobSu )
       {
-         _pLobSu->closeStorage( lastLSN ) ;
+         _pLobSu->closeStorage() ;
       }
       if ( _pIndexSu )
       {
-         _pIndexSu->closeStorage( lastLSN ) ;
+         _pIndexSu->closeStorage() ;
       }
       if ( _pDataSu )
       {
-         _pDataSu->closeStorage( lastLSN ) ;
+         _pDataSu->closeStorage() ;
       }
       PD_TRACE_EXIT ( SDB__DMSSU_CLOSE ) ;
    }
@@ -1711,7 +1701,6 @@ namespace engine
    }
 
    INT32 _dmsStorageUnit::sync( BOOLEAN sync,
-                                UINT64 lastLSN,
                                 IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
@@ -1720,7 +1709,7 @@ namespace engine
       if ( NULL != _pLobSu && _pLobSu->isOpened() )
       {
          _pLobSu->lock() ;
-         rcTmp = _pLobSu->sync( TRUE, sync, lastLSN, cb ) ;
+         rcTmp = _pLobSu->sync( TRUE, sync, cb ) ;
          _pLobSu->unlock() ;
          if ( rcTmp )
          {
@@ -1734,7 +1723,7 @@ namespace engine
       if ( NULL != _pIndexSu )
       {
          _pIndexSu->lock() ;
-         rcTmp = _pIndexSu->sync( TRUE, sync, lastLSN, cb ) ;
+         rcTmp = _pIndexSu->sync( TRUE, sync, cb ) ;
          _pIndexSu->unlock() ;
          if ( rcTmp )
          {
@@ -1749,7 +1738,7 @@ namespace engine
       if ( NULL != _pDataSu )
       {
          _pDataSu->lock() ;
-         rc = _pDataSu->sync( TRUE, sync, lastLSN, cb ) ;
+         rc = _pDataSu->sync( TRUE, sync, cb ) ;
          _pDataSu->unlock() ;
          if ( rcTmp )
          {

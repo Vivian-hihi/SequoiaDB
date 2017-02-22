@@ -1510,7 +1510,7 @@ namespace engine
          }
 
          /// sync
-         rc = su->sync( sync, commitLSN.offset, cb ) ;
+         rc = su->sync( sync, cb ) ;
          if ( rc )
          {
             PD_LOG( PDWARNING, "Sync collectionspace[%s] to file failed, "

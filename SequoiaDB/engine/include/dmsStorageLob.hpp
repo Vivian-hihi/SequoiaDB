@@ -178,7 +178,7 @@ namespace engine
       /// flush callback:  SDB_OK: continue, no SDB_OK: stop
       virtual INT32  _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
 
-      virtual INT32  _onMarkHeaderValid( UINT64 lastLSN,
+      virtual INT32  _onMarkHeaderValid( UINT64 &lastLSN,
                                          BOOLEAN sync,
                                          UINT64 lastTime ) ;
 

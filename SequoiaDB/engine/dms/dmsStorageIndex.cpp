@@ -202,25 +202,39 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _dmsStorageIndex::_onMarkHeaderValid( UINT64 lastLSN,
+   INT32 _dmsStorageIndex::_onMarkHeaderValid( UINT64 &lastLSN,
                                                BOOLEAN sync,
                                                UINT64 lastTime )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN needFlush = FALSE ;
+      UINT64 tmpLSN = 0 ;
+      UINT32 tmpCommitFlag = 0 ;
 
       for ( UINT16 i = 0 ; i < DMS_MME_SLOTS ; ++i )
       {
          if ( DMS_IS_MB_INUSE ( _pDataSu->_dmsMME->_mbList[i]._flag ) &&
               _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() )
          {
-            _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN =
-               _pDataSu->_mbStatInfo[i]._idxLastLSN.peek() ;
-            _pDataSu->_dmsMME->_mbList[i]._idxCommitTime = lastTime ;
-            _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag =
-               _pDataSu->_mbStatInfo[i]._idxIsCrash ?
+            tmpLSN = _pDataSu->_mbStatInfo[i]._idxLastLSN.peek() ;
+            tmpCommitFlag = _pDataSu->_mbStatInfo[i]._idxIsCrash ?
                0 : _pDataSu->_mbStatInfo[i]._idxCommitFlag.peek() ;
-            needFlush = TRUE ;
+
+            if ( tmpLSN != _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN ||
+                 tmpCommitFlag != _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag )
+            {
+               _pDataSu->_dmsMME->_mbList[i]._idxCommitLSN = tmpLSN ;
+               _pDataSu->_dmsMME->_mbList[i]._idxCommitTime = lastTime ;
+               _pDataSu->_dmsMME->_mbList[i]._idxCommitFlag = tmpCommitFlag ;
+               needFlush = TRUE ;
+            }
+
+            /// update last lsn
+            if ( ~0 == lastLSN ||
+                 ( ~0 != tmpLSN && lastLSN < tmpLSN ) )
+            {
+               lastLSN = tmpLSN ;
+            }
          }
       }
 

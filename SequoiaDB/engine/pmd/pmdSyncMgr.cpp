@@ -326,7 +326,6 @@ namespace engine
                  _pMgr->getMainUnit()->canSync( force ) )
             {
                _pMgr->getMainUnit()->sync( force, _pMgr->isSyncDeep(),
-                                           _pMgr->syncAndGetLastLSN(),
                                            eduCB() ) ;
                eduCB()->incEventCount( 1 ) ;
             }
@@ -383,9 +382,7 @@ namespace engine
 
       if ( pUnit->canSync( force ) )
       {
-         pUnit->sync( force, _pMgr->isSyncDeep(),
-                      _pMgr->getCompleteLSN(), eduCB() ) ;
-
+         pUnit->sync( force, _pMgr->isSyncDeep(), eduCB() ) ;
          eduCB()->incEventCount( 1 ) ;
       }
 

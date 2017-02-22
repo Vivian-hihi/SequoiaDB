@@ -397,7 +397,7 @@ namespace engine
    {
       SDB_ASSERT( !ossMmapFile::_opened, "Must Call closeStorage before "
                   "delete the object" ) ;
-      closeStorage( ~(UINT64)0 ) ;
+      closeStorage() ;
       _pStorageInfo = NULL ;
       _dirtyList.destory() ;
    }
@@ -572,7 +572,6 @@ namespace engine
 
    INT32 _dmsStorageBase::sync( BOOLEAN force,
                                 BOOLEAN sync,
-                                UINT64 lastLSN,
                                 IExecutor *cb )
    {
       INT32 rc = SDB_OK ;
@@ -595,6 +594,7 @@ namespace engine
 
       if ( _dirtyList.isFullDirty() )
       {
+         num = 1 ;
          rc = flushAll( sync ) ;
          PD_LOG( PDDEBUG, "Flushed all pages to file[%s], rc: %d",
                  _suFileName, rc ) ;
@@ -610,7 +610,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _markHeaderValid( lastLSN, sync, force, _lastSyncTime ) ;
+      rc = _markHeaderValid( sync, force, num > 0 ? TRUE : FALSE,
+                             _lastSyncTime ) ;
       if ( rc )
       {
          goto error ;
@@ -944,7 +945,7 @@ namespace engine
       goto done ;
    }
 
-   void _dmsStorageBase::closeStorage ( UINT64 lastLSN )
+   void _dmsStorageBase::closeStorage ()
    {
       // set closed flag
       _isClosed = TRUE ;
@@ -975,7 +976,7 @@ namespace engine
          /// set commit flag valid
          _commitFlag = 1 ;
          /// make header valid
-         _markHeaderValid( lastLSN, _syncDeep, TRUE, 0 ) ;
+         _markHeaderValid( _syncDeep, TRUE, TRUE, 0 ) ;
          /// close file
          ossMmapFile::close() ;
 
@@ -998,7 +999,7 @@ namespace engine
       _dirtyList.cleanAll() ;
 
       // close
-      closeStorage( 0 ) ;
+      closeStorage() ;
 
       rc = ossDelete( _fullPathName ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to remove storeage unit file: %s, "
@@ -1046,9 +1047,8 @@ namespace engine
 
       {
          IDataSyncManager *pSyncMgr = _pSyncMgr ;
-         UINT64 lasLSN = _dmsHeader->_commitLsn ;
          /// close
-         closeStorage( lasLSN ) ;
+         closeStorage() ;
 
          /// rename
          rc = ossRenamePath( _fullPathName, tmpPathFile ) ;
@@ -1870,9 +1870,9 @@ namespace engine
       }
    }
 
-   INT32 _dmsStorageBase::_markHeaderValid( UINT64 lastLSN,
-                                            BOOLEAN sync,
+   INT32 _dmsStorageBase::_markHeaderValid( BOOLEAN sync,
                                             BOOLEAN force,
+                                            BOOLEAN hasFlushedData,
                                             UINT64 lastTime )
    {
       INT32 rc = SDB_OK ;
@@ -1888,16 +1888,24 @@ namespace engine
 
          if ( _commitFlag || force )
          {
+            UINT64 lastLSN = ~0 ;
+            UINT32 tmpCommitFlag = 0 ;
             ossScopedLock lock( &_commitLatch ) ;
             if ( _commitFlag || force )
             {
                _onMarkHeaderValid( lastLSN, sync, lastTime ) ;
 
-               _dmsHeader->_commitFlag = _isCrash ? 0 : _commitFlag ;
-               _dmsHeader->_commitLsn = lastLSN ;
-               _dmsHeader->_commitTime = lastTime ;
-
-               rc = flushHeader( sync ) ;
+               tmpCommitFlag = _isCrash ? 0 : _commitFlag ;
+               if ( hasFlushedData ||
+                    tmpCommitFlag != _dmsHeader->_commitFlag ||
+                    lastLSN != _dmsHeader->_commitLsn )
+               {
+                  _dmsHeader->_commitFlag = tmpCommitFlag ;
+                  _dmsHeader->_commitLsn = lastLSN ;
+                  _dmsHeader->_commitTime = lastTime ;
+                  /// flush header
+                  rc = flushHeader( sync ) ;
+               }
             }
          }
       }

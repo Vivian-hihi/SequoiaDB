@@ -58,7 +58,6 @@ namespace engine
 
          virtual INT32        sync( BOOLEAN force,
                                     BOOLEAN sync,
-                                    UINT64 lastLSN,
                                     IExecutor* cb ) = 0 ;
 
          virtual void         lock() = 0 ;

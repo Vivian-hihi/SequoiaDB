@@ -542,7 +542,6 @@ namespace engine
 
    INT32 _dpsLogWrapper::sync( BOOLEAN force,
                                BOOLEAN sync,
-                               UINT64 lastLSN,
                                IExecutor *cb )
    {
       return commit( sync, NULL ) ;

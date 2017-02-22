@@ -135,7 +135,6 @@ namespace engine
          void        getStatInfo( dmsStorageUnitStat &statInfo ) ;
 
          INT32       sync( BOOLEAN sync,
-                           UINT64 lastLSN,
                            IExecutor* cb ) ;
 
          void        enableSync( BOOLEAN enable ) ;
