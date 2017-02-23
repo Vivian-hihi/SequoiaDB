@@ -655,6 +655,6 @@ cat >>report.html <<_EOF_
 
 _EOF_
 
-echo "tpmC, tmpTotal" > tmpC.csv
+echo "tpmC, tmpTotal" > tpmC.csv
 echo "${tpmC},${tpmTotal}">> tpmC.csv
 echo "OK"
