@@ -285,7 +285,7 @@ struct phpTimestamp {
 
 //get php function parameters
 #define PHP_GET_PARAMETERS( format, ... ) \
-zend_parse_parameters ( ZEND_NUM_ARGS() TSRMLS_CC, format, ##__VA_ARGS__ )
+zend_parse_parameters ( ZEND_NUM_ARGS(), format, ##__VA_ARGS__ )
 
 //SequoiaDB class and other class
 
