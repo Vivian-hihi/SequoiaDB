@@ -234,17 +234,24 @@ SystemTest.prototype.testListLoginUsers = function()
    {
       var userObj = JSON.parse( users[i] ) ;
       var tmp = info[i].split( " " ) ;
+      var len = tmp.length ;
       var username = tmp[0] ;             // 用户名
       var tty = tmp[1] ;                  // 登录终端
-      var time = tmp[2] + " " + tmp[3];   // 登录时间
+      var time = tmp[2] ;                 // 登录时间
+      for( var j = 3;j < len;j++ )
+      {
+         if( tmp[j].indexOf( "(" ) !== -1 )
+            break ;
+         time += " " + tmp[j] ;   
+      }
       var addr ;                          // 登录的主机名或者ip
-      if( tmp[4] === undefined )
+      if( tmp[j] === undefined )
       {
          addr = "" ;
       }
       else
       {
-         addr = tmp[4].slice( 1, tmp[4].length-1 ) ;
+         addr = tmp[j].slice( 1, tmp[j].length-1 ) ;
       }  
       if( username !== userObj.user || tty !== userObj.tty ||
           time !== userObj.time || addr !== userObj.from )
