@@ -44,6 +44,8 @@ OmaTest.prototype.testInit = function()
    {
       if( !this.islegalhost && e === -15 )
          ;
+      else if( !this.islegalsvc && e === -6 )
+         ;
       else
       {
          throw buildException( "testInit", e, "init oma " + this, "0 -15", e ) ;
