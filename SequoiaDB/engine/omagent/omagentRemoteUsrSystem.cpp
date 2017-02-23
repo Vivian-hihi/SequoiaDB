@@ -5012,6 +5012,12 @@ namespace engine
            itr != typeSplit.end(); itr++ )
       {
          string searchDir = "/proc/sys/" + (*itr) ;
+         rc = ossAccess( searchDir.c_str() ) ;
+         if( SDB_OK != rc )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
          rc = ossEnumFiles( searchDir, fileMap, "", 10 ) ;
          if ( SDB_OK != rc )
          {
