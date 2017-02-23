@@ -4,15 +4,15 @@
 
 192.168.30.184 bl465-4
 
-#trunk g1d3
-192.168.30.112 ci-test-cent1
-192.168.20.193 ci-test-suse3
-192.168.30.103 ci-test-rhel2
-
 #trunk g3d3
 192.168.20.192 ci-test-suse2
 192.168.30.113 ci-test-cent2
 192.168.20.201 ubun-test2
+
+#trunk g1d3
+192.168.30.112 ci-test-cent1
+192.168.20.193 ci-test-suse3
+192.168.30.103 ci-test-rhel2
 
 #trunk standalone
 192.168.20.191 ci-test-suse1
