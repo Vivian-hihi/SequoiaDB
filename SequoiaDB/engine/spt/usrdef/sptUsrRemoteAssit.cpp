@@ -79,7 +79,6 @@ namespace engine
                        SDB_OMA_USERPASSWD, &_handle ) ;
       PD_RC_CHECK( rc, PDERROR, "Connect to %s:%s failed, rc: %d",
                    pHostName, pServiceName, rc ) ;
-
    done:
       return rc ;
    error:
@@ -102,18 +101,21 @@ namespace engine
    INT32 _sptUsrRemoteAssit::runCommand( string command,
                                          const CHAR *arg1,
                                          CHAR **ppRetBuffer,
-                                         INT32 &retCode )
+                                         INT32 &retCode,
+                                         BOOLEAN needRecv )
    {
-      INT32 rc          = SDB_OK ;
+      INT32 rc = SDB_OK ;
 
       if ( 0 == _handle )
       {
          rc = SDB_NETWORK ;
          goto error ;
       }
-      rc = _remote.runCommand( _handle, ( CMD_ADMIN_PREFIX + command ).c_str(),
+      rc = _remote.runCommand( _handle,
+                               ( CMD_ADMIN_PREFIX + command ).c_str(),
                                0, 0, -1, -1,
-                               arg1, NULL, NULL, NULL, ppRetBuffer, retCode ) ;
+                               arg1, NULL, NULL, NULL,
+                               ppRetBuffer, retCode, needRecv ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to run command: %s, rc: %d",

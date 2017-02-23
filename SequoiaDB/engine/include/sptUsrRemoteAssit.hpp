@@ -60,7 +60,13 @@ namespace engine
          INT32       runCommand( string command,
                                  const CHAR* arg1,
                                  CHAR **ppRetBuffer,
-                                 INT32 &retCode ) ;
+                                 INT32 &retCode,
+                                 BOOLEAN needRecv = TRUE ) ;
+         inline ossValuePtr getHandle()
+         {
+            return _handle ;
+         } ;
+
       private:
          ossValuePtr _handle ;
          sptRemote   _remote ;

@@ -288,5 +288,20 @@ namespace engine
          virtual INT32 doit( BSONObj &retObj ) ;
    } ;
 
+   /*
+      _remoteOmaTest define
+   */
+   class _remoteOmaTest : public _remoteExec
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _remoteOmaTest() ;
+
+         ~_remoteOmaTest() ;
+
+         virtual const CHAR *name() ;
+
+         virtual INT32 doit( BSONObj &retObj ) ;
+   } ;
 }
 #endif

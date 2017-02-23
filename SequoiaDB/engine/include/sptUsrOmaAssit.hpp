@@ -34,7 +34,7 @@
 #define SPT_USROMA_ASSIT_HPP__
 
 #include "oss.hpp"
-#include "sptRemote.hpp"
+#include "sptUsrRemoteAssit.hpp"
 #include <string>
 using std::string ;
 
@@ -44,7 +44,7 @@ namespace engine
    /*
       sptUsrOmaAssit define
    */
-   class _sptUsrOmaAssit : public SDBObject
+   class _sptUsrOmaAssit : public _sptUsrRemoteAssit
    {
       public:
          _sptUsrOmaAssit() ;
@@ -66,12 +66,7 @@ namespace engine
 
          INT32       stopNode( const CHAR *pSvcName ) ;
 
-         INT32       runCommand( string command, const CHAR *arg1,
-                                 CHAR **ppRetBuffer, INT32 &retCode,
-                                 BOOLEAN needRecv = TRUE ) ;
-
       protected:
-
          INT32       _getNodeHandle( const CHAR *pSvcName,
                                      ossValuePtr &handle ) ;
          void        _releaseNodeHandle( ossValuePtr handle ) ;
@@ -81,9 +76,7 @@ namespace engine
          INT32       _regSocket( ossValuePtr pSock ) ;
 
       private:
-         ossValuePtr          _handle ;
          ossValuePtr          _groupHandle ;
-         sptRemote            _omaRemote ;
    } ;
    typedef _sptUsrOmaAssit sptUsrOmaAssit ;
 

@@ -86,7 +86,8 @@ namespace engine
                                    BSONObj & detail)
    {
       INT32 rc = SDB_OK ;
-
+      INT32 retCode = SDB_OK ;
+      CHAR* retBuf = NULL ;
       // get hostname
       if ( arg.argc() >= 1 )
       {
@@ -125,7 +126,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
       }
 
-
       rc = _assit.connect( _hostname.c_str(), _svcname.c_str() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to connect %s:%s, rc: %d",
                    _hostname.c_str(), _svcname.c_str(), rc ) ;
@@ -133,9 +133,23 @@ namespace engine
       rval.addSelfProperty( "_host" )->setValue( _hostname ) ;
       rval.addSelfProperty( "_svcname" )->setValue( _svcname ) ;
 
+      rc = _assit.runCommand( "oma test", NULL, &retBuf, retCode ) ;
+      sdbClearErrorInfo() ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to check target server info" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != retCode )
+      {
+         rc = retCode ;
+         detail = BSON( SPT_ERR << "Target server must be sdbcm" ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
+      _assit.disconnect() ;
       goto done ;
    }
 
@@ -171,6 +185,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 retCode = SDB_OK ;
       CHAR *retBuffer = NULL ;
+      INT32 needRecv = TRUE ;
       BSONObj mergeObj ;
       BSONObj recvObj ;
       string command ;
@@ -184,9 +199,20 @@ namespace engine
          goto error ;
       }
 
+      // get argument needRecv
+      if ( arg.argc() >= 5 )
+      {
+         rc = arg.getNative( 4, &needRecv, SPT_NATIVE_INT32 ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "needRecv must be bool" ) ;
+            goto error ;
+         }
+      }
+
       // run command and get retrun BSONObj
       rc = _assit.runCommand( command, mergeObj.objdata(),
-                              &retBuffer, retCode ) ;
+                              &retBuffer, retCode, needRecv ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << getErrDesp( rc ) ) ;
@@ -194,32 +220,35 @@ namespace engine
          goto error ;
       }
 
-      // build recvObj
-      SDB_ASSERT( retBuffer, "retBuffer can't be null" ) ;
-      try
+      // if need recv, need to build recvObj ;
+      if ( needRecv )
       {
-         recvObj.init( retBuffer ) ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         detail = BSON( SPT_ERR << "Failed to build recvObj" ) ;
-         PD_LOG( PDERROR, "Failed to build recvObj, rc: %d, detail: %s",
-                 rc, e.what() ) ;
-         goto error ;
-      }
+         // build recvObj
+         SDB_ASSERT( retBuffer, "retBuffer can't be null" ) ;
+         try
+         {
+            recvObj.init( retBuffer ) ;
+         }
+         catch( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            detail = BSON( SPT_ERR << "Failed to build recvObj" ) ;
+            PD_LOG( PDERROR, "Failed to build recvObj, rc: %d, detail: %s",
+                    rc, e.what() ) ;
+            goto error ;
+         }
 
-      // check remote result
-      if ( SDB_OK != retCode )
-      {
-         rc = retCode ;
-         detail = BSON( SPT_ERR << recvObj.getStringField( OP_ERR_DETAIL ) ) ;
-         PD_LOG( PDERROR, "Failed to run command in remote sdbcm, "
-                          "rc: %d", rc ) ;
-         goto error ;
+         // check remote result
+         if ( SDB_OK != retCode )
+         {
+            rc = retCode ;
+            detail = BSON( SPT_ERR << recvObj.getStringField( OP_ERR_DETAIL ) ) ;
+            PD_LOG( PDERROR, "Failed to run command in remote sdbcm, "
+                             "rc: %d", rc ) ;
+            goto error ;
+         }
+         rval.getReturnVal().setValue( recvObj ) ;
       }
-
-      rval.getReturnVal().setValue( recvObj ) ;
    done:
       return rc ;
    error:

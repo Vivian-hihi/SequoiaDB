@@ -1475,4 +1475,26 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _remoteOmaTest implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteOmaTest )
+
+   _remoteOmaTest::_remoteOmaTest()
+   {
+   }
+
+   _remoteOmaTest::~_remoteOmaTest()
+   {
+   }
+
+   const CHAR * _remoteOmaTest::name()
+   {
+      return OMA_REMOTE_OMA_TEST ;
+   }
+
+   INT32 _remoteOmaTest::doit( BSONObj &retObj )
+   {
+      return SDB_OK ;
+   }
 }

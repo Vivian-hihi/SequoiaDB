@@ -127,6 +127,8 @@ namespace engine
                                 BSONObj & detail )
    {
       INT32 rc = SDB_OK ;
+      INT32 retCode = SDB_OK ;
+      CHAR* retBuf = NULL ;
 
       if ( arg.argc() >= 1 )
       {
@@ -168,9 +170,26 @@ namespace engine
       rval.addSelfProperty( "_host" )->setValue( _hostname ) ;
       rval.addSelfProperty( "_svcname" )->setValue( _svcname ) ;
 
+      // check remote info
+      rc = _assit.runCommand( "oma test", NULL, &retBuf, retCode ) ;
+      sdbClearErrorInfo() ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to check target server info" ) ;
+         goto error ;
+      }
+
+      if( SDB_OK != retCode )
+      {
+         rc = retCode ;
+         detail = BSON( SPT_ERR << "Target server must be sdbcm" ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
+      _assit.disconnect() ;
       goto done ;
    }
 
