@@ -1132,9 +1132,9 @@
                      }
                      Loading.cancel() ;
                      $interval.cancel( timer ) ;
-                  } ) ;
+                  }, 1 ) ;
                }
-            } ) ;
+            }, 1 ) ;
          }
       }
 
