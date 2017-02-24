@@ -41,7 +41,7 @@ public class Ssh {
      * @param host
      * @param username
      * @param password
-     * @throws CommException
+     * @throws ReliabilityException
      */
     public Ssh( String host, String username, String password )
             throws ReliabilityException {
@@ -55,7 +55,7 @@ public class Ssh {
      * @param username
      * @param password
      * @param port
-     * @throws CommException
+     * @throws ReliabilityException
      */
     public Ssh( String host, String username, String password, int port )
             throws ReliabilityException {
@@ -83,7 +83,7 @@ public class Ssh {
      * 
      * @param localPath
      * @param remotePath
-     * @throws CommException
+     * @throws ReliabilityException
      */
     public void scpTo( String localPath, String remotePath )
             throws ReliabilityException {
@@ -106,7 +106,7 @@ public class Ssh {
      * 
      * @param localPath
      * @param remotePath
-     * @throws CommException
+     * @throws ReliabilityException
      */
     public void scpFrom( String localPath, String remotePath )
             throws ReliabilityException {
@@ -130,7 +130,7 @@ public class Ssh {
      * 
      * @param command
      * @return exitStatus
-     * @throws CommException
+     * @throws ReliabilityException
      */
     public void exec( String command ) throws ReliabilityException {
         Channel channel = null ;
