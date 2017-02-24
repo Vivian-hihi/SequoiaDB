@@ -15,6 +15,7 @@ import java.util.Calendar ;
 import java.util.Date ;
 import java.util.List ;
 
+import com.sequoiadb.exception.ReliabilityException ;
 import com.sequoiadb.task.OperateTask ;
 
 public class FaultWrapper extends Fault {
@@ -44,7 +45,7 @@ public class FaultWrapper extends Fault {
         taskSet.add( task ) ;
     }
 
-    public void make() {
+    public void make() throws ReliabilityException{
         Date date = Calendar.getInstance().getTime() ;
         SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" ) ;
         System.out.println( "make " + instance.getName() + "at"
@@ -58,7 +59,7 @@ public class FaultWrapper extends Fault {
 
     }
 
-    public boolean checkMakeResult() {
+    public boolean checkMakeResult() throws ReliabilityException{
         boolean checkResult = false ;
         if ( status != OperateTask.faultStatus.EXCEPTION ) {
             status = OperateTask.faultStatus.MAKEFAILURE ;
@@ -78,7 +79,7 @@ public class FaultWrapper extends Fault {
         return true ;
     }
 
-    public void restore() {
+    public void restore() throws ReliabilityException {
         Date date = Calendar.getInstance().getTime() ;
         SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" ) ;
         System.out.println( "restore " + instance.getName() + "at"
@@ -91,7 +92,7 @@ public class FaultWrapper extends Fault {
 
     }
 
-    public boolean checkRestoreResult() {
+    public boolean checkRestoreResult() throws ReliabilityException{
         boolean checkResult = false ;
         if ( status != OperateTask.faultStatus.EXCEPTION ) {
             OperateTask.faultStatus status = OperateTask.faultStatus.RESTOREFAILURE ;

@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.CommException;
+import com.sequoiadb.exception.ReliabilityException ;
 
 public class DiskFull extends Fault {
 	private String hostName;
@@ -28,10 +29,14 @@ public class DiskFull extends Fault {
 
 	@Test
 	public static void test() {
-		DiskFull df = new DiskFull("192.168.31.31", "root", "sequoiadb", "/tmp");
-		df.make();
-		System.out.println("make over");
-		df.restore();
+	    try{
+	        DiskFull df = new DiskFull("192.168.31.31", "root", "sequoiadb", "/tmp");
+	        df.make();
+	        System.out.println("make over");
+	        df.restore();
+	    }catch(ReliabilityException e){
+	        
+	    }
 	}
 
 	public DiskFull(String hostName, String user, String passwd, String path) {
@@ -43,7 +48,7 @@ public class DiskFull extends Fault {
 		this.hashCode = this.hashCode();
 	}
 
-    public void make() {
+    public void make() throws ReliabilityException{
 
 		fillUpDisk(100);
 		/*
@@ -64,7 +69,7 @@ public class DiskFull extends Fault {
 		 */
 	}
 
-	public boolean checkMakeResult() {
+	public boolean checkMakeResult() throws ReliabilityException{
 		Ssh ssh = new Ssh(hostName, user, passwd);
 		ssh.exec("df "+path+" | sed '1d' |awk '{print $4}'");
 		ssh.close();
@@ -80,7 +85,7 @@ public class DiskFull extends Fault {
 		}
 	}
 
-	public void restore() {
+	public void restore() throws ReliabilityException{
 		Ssh ssh = new Ssh(hostName, user, passwd);
 		for (int i = 0; i < padFileList.size(); i++) {
 			ssh.exec("rm -rf " + padFileList.get(i));
@@ -93,7 +98,7 @@ public class DiskFull extends Fault {
 		return true;
 	}
 
-	public void fillUpDisk(float percent) {
+	public void fillUpDisk(float percent) throws ReliabilityException{
 		Ssh ssh = null;
 		String getAvailCMD = "df -l " + path + " |sed '1d' | awk '{print $3,$4,$5}'";
 		ssh = new Ssh(hostName, user, passwd);

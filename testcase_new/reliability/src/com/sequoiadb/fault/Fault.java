@@ -9,6 +9,8 @@
  */
 package com.sequoiadb.fault ;
 
+import com.sequoiadb.exception.ReliabilityException ;
+
 public abstract class Fault {
     private String name ;
 
@@ -20,11 +22,11 @@ public abstract class Fault {
         return name ;
     }
 
-    public abstract void make() ;
+    public abstract void make() throws ReliabilityException;
 
-    public abstract boolean checkMakeResult() ;
+    public abstract boolean checkMakeResult() throws ReliabilityException;
 
-    public abstract void restore() ;
+    public abstract void restore() throws ReliabilityException;
 
-    public abstract boolean checkRestoreResult() ;
+    public abstract boolean checkRestoreResult() throws ReliabilityException;
 }

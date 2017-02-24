@@ -10,6 +10,7 @@
 package com.sequoiadb.fault ;
 
 import com.sequoiadb.commlib.NodeWrapper ;
+import com.sequoiadb.exception.ReliabilityException ;
 
 public class NodeRestart extends Fault {
     private NodeWrapper node ;
@@ -22,19 +23,19 @@ public class NodeRestart extends Fault {
 
     }
 
-    public void make() {
+    public void make() throws ReliabilityException{
         this.node.stop() ;
     }
 
-    public boolean checkMakeResult() {
+    public boolean checkMakeResult() throws ReliabilityException{
         return this.node.isNodeActive() != true ;
     }
 
-    public void restore() {
+    public void restore() throws ReliabilityException{
         this.node.start() ;
     }
 
-    public boolean checkRestoreResult() {
+    public boolean checkRestoreResult() throws ReliabilityException{
         return this.node.isNodeActive() == true ;
     }
 }

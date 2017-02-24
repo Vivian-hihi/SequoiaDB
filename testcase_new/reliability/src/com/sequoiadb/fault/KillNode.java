@@ -2,6 +2,7 @@ package com.sequoiadb.fault ;
 
 import com.sequoiadb.commlib.Ssh ;
 import com.sequoiadb.exception.CommException ;
+import com.sequoiadb.exception.ReliabilityException ;
 
 public class KillNode extends Fault {
 
@@ -20,7 +21,7 @@ public class KillNode extends Fault {
     }
 
     @Override
-    public void make() {
+    public void make() throws ReliabilityException{
         Ssh ssh = new Ssh( hostName, user, passwd ) ;
 
         ssh.exec( "lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'" ) ;
@@ -36,7 +37,7 @@ public class KillNode extends Fault {
     }
 
     @Override
-    public boolean checkMakeResult() {
+    public boolean checkMakeResult() throws ReliabilityException{
         if ( pid == -1 ) {
             System.out.println( "pid -1" ) ;
             return false ;
@@ -60,13 +61,13 @@ public class KillNode extends Fault {
     }
 
     @Override
-    public void restore() {
+    public void restore() throws ReliabilityException {
 
         // TODO:如果节点没有异常重启，需要去启动这个节点吗？
     }
 
     @Override
-    public boolean checkRestoreResult() {
+    public boolean checkRestoreResult() throws ReliabilityException {
         // TODO:
         return true ;
     }

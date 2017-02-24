@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.CommException;
+import com.sequoiadb.exception.ReliabilityException ;
 
 public class BrokenNetwork extends Fault {
 
@@ -35,7 +36,7 @@ public class BrokenNetwork extends Fault {
 		this.duration = duration;
 	}
 
-	public void make() {
+	public void make() throws ReliabilityException{
 		// TODO: 这个脚本好像有问题
 		/**
 		 * #!/bin/bash ifconfig eth0 down sleep $1 ifconfig eth0 up
