@@ -11,6 +11,8 @@ package com.sequoiadb.task ;
 
 import java.util.List ;
 import java.util.Random ;
+
+import com.sequoiadb.exception.ReliabilityException ;
 import com.sequoiadb.fault.Fault ;
 import com.sequoiadb.fault.FaultWrapper ;
 
@@ -35,10 +37,12 @@ public class FaultMakeTask extends Task {
         } catch ( InterruptedException e ) {
             // TODO Auto-generated catch block
         }
-        
+        try{
         faultInstance.make() ;
         faultInstance.checkMakeResult() ;
-        
+        }catch(ReliabilityException e){
+            
+        }
         try {
             Thread.currentThread().sleep(
                     random.nextInt( super.randomStartMaxDuration
@@ -46,9 +50,12 @@ public class FaultMakeTask extends Task {
         } catch ( InterruptedException e ) {
             // TODO Auto-generated catch block
         }
-        
+        try{
         faultInstance.restore() ;
         faultInstance.checkRestoreResult() ;
+        }catch(ReliabilityException e ){
+            
+        }
         
     }
 
