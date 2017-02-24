@@ -18,6 +18,7 @@ import com.sequoiadb.commlib.NodeWrapper ;
 import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.exception.BaseException ;
 import com.sequoiadb.exception.CommException ;
+import com.sequoiadb.exception.ReliabilityException ;
 import com.sequoiadb.fault.DiskFull ;
 import com.sequoiadb.fault.KillNode ;
 import com.sequoiadb.task.FaultMakeTask ;
@@ -85,7 +86,7 @@ public class TestCase extends SdbTestBase {
             manager.addTask( split ) ;
             manager.addTask( faultMaker ) ;
             manager.init() ;
-        } catch ( BaseException e ) {
+        } catch ( ReliabilityException e ) {
             throw new SkipException( "group number less than 2" ) ;
         }
     }
