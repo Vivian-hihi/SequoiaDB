@@ -447,7 +447,7 @@ namespace engine
          {
             const CHAR *cl = NULL ;
             UINT32 attribute = 0 ;
-            UINT8 compType = DMS_INVALID_COMPRESSOR_TYPE ;
+            UINT8 compType = UTIL_COMPRESSOR_INVALID ;
             rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, attribute,
                                   compType ) ;
             if ( SDB_OK != rc )
@@ -867,7 +867,7 @@ namespace engine
          {
             const CHAR *fullname = NULL ;
             UINT32 attribute = 0 ;
-            UINT8 compType = DMS_INVALID_COMPRESSOR_TYPE ;
+            UINT8 compType = UTIL_COMPRESSOR_INVALID ;
             rc = dpsRecord2CLCrt( (const CHAR *)recordHeader,
                                   &fullname, attribute, compType) ;
             if ( SDB_OK != rc )

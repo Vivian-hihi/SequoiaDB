@@ -106,7 +106,7 @@ namespace engine
           */
          rc = _checkAndCreateDictForCL( job ) ;
          if ( ( SDB_OK != rc ) && ( SDB_DMS_CS_NOTEXIST != rc )
-              && ( SDB_DMS_NOTEXIST != rc ) )
+              && ( SDB_DMS_NOTEXIST != rc ) && ( SDB_SYS != rc ) )
          {
             dmsCB->pushDictJob( job ) ;
          }

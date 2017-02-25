@@ -1087,7 +1087,7 @@ namespace engine
    }
 
    void _SDB_DMSCB::suUnlock ( dmsStorageUnitID suID,
-                              OSS_LATCH_MODE lockType )
+                               OSS_LATCH_MODE lockType )
    {
       _CSCBRelease( suID, lockType ) ;
    }
