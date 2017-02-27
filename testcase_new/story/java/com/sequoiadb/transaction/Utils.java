@@ -131,11 +131,7 @@ public class Utils {
 			}
 		}
 		String str = stackBuffer.toString();
-		if (str.length() >= 2) {
-			return str.substring(0, str.length() - 2);
-		} else {
-			return str;
-		}
+		return str.substring(0, str.length() - 2);
 	}
 
 	public static ArrayList<String> getGroupName(Sequoiadb sdb, String csName, String clName) throws BaseException {

@@ -92,6 +92,7 @@ public class Split10537 extends SdbTestBase {
 
 			// 事务
 			db = new Sequoiadb(coordUrl, "", "");
+			db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
 			db.beginTransaction();
 			DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
 			cl.delete("{sk:{$gte:400,$lt:600}}");// 删除数据
