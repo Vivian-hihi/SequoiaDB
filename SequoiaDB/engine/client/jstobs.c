@@ -18,6 +18,7 @@
 #include "cJSON_ext.h"
 #include "base64c.h"
 #include "timestamp.h"
+#include "oss.h"
 
 #define INT_NUM_SIZE 32
 
@@ -156,18 +157,9 @@ SDB_EXPORT BOOLEAN json2bson( const CHAR *pJson,
 {
    BOOLEAN flag = TRUE ;
    BOOLEAN isOwn = FALSE ;
-   static BOOLEAN isInit = FALSE ;
    const cJson_iterator *pIter = NULL ;
 
-   if( isInit == FALSE )
-   {
-      if( cJsonExtAppendFunction() == FALSE )
-      {
-         JSON_PRINTF_LOG( "Failed to append extend function" ) ;
-         goto error ;
-      }
-      isInit = TRUE ;
-   }
+   cJsonExtAppendFunction() ;
 
    if( pMachine == NULL )
    {
