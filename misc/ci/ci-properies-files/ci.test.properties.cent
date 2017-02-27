@@ -26,8 +26,8 @@ all.spare.port.stop=29000
 jenkins_master=centos-ci001
 trunk_machine=centos-ci004,centos-ci003,centos-ci002
 trunk_machine_control=centos-ci004
-branch_machine=centos-ci007,centos-ci006,centos-ci005
-branch_machine_control=centos-ci007
+branch_machine=centos-ci001,centos-ci006,centos-ci005
+branch_machine_control=centos-ci001
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
 deploy.tar.file.name=deploy.tar.gz
