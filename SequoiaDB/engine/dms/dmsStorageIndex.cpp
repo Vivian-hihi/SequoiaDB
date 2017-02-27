@@ -230,8 +230,8 @@ namespace engine
             }
 
             /// update last lsn
-            if ( ~0 == lastLSN ||
-                 ( ~0 != tmpLSN && lastLSN < tmpLSN ) )
+            if ( (UINT64)~0 == lastLSN ||
+                 ( (UINT64)~0 != tmpLSN && lastLSN < tmpLSN ) )
             {
                lastLSN = tmpLSN ;
             }
