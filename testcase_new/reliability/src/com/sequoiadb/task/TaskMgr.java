@@ -18,9 +18,10 @@ import com.sequoiadb.exception.CommException ;
 
 public class TaskMgr {
     private Map< String, Task > taskSet = new HashMap< String, Task >() ;
-
-    public TaskMgr() {
-
+    FaultMakeTask faultMakeTask ;
+    public TaskMgr(FaultMakeTask faultMakeTask) {
+        this.faultMakeTask = faultMakeTask;
+        addTask( faultMakeTask ) ;
     }
 
     /**
@@ -31,6 +32,12 @@ public class TaskMgr {
         if ( !taskSet.containsKey( task.getName() ) ) {
             taskSet.put( task.getName(), task ) ;
         }
+        
+        if (task.getClass().equals( FaultMakeTask.class )){
+            if (task.getClass().equals( FaultMakeTask.class )){
+                faultMakeTask.addDependsTask( (OperateTask)task );
+            }
+        }
     }
 
     /**
@@ -40,6 +47,10 @@ public class TaskMgr {
     public void removeTask( Task task ) {
         if ( taskSet.containsKey( task.getName() ) ) {
             taskSet.remove( task.getName() ) ;
+        }
+        
+        if (task.getClass().equals( FaultMakeTask.class )){
+            faultMakeTask.removeDependsTask( (OperateTask)task );
         }
     }
 

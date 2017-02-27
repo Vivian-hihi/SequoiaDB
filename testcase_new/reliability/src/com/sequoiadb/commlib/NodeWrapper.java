@@ -11,6 +11,7 @@ package com.sequoiadb.commlib ;
 
 import org.bson.BSONObject ;
 import org.bson.BasicBSONObject ;
+import org.bson.types.BasicBSONList ;
 
 import com.sequoiadb.base.DBCursor ;
 import com.sequoiadb.base.Node ;
@@ -26,11 +27,11 @@ public class NodeWrapper {
 
     private NodeStatus status ;
     private Node node ;
-    private String dbPath ;
+    private BasicBSONObject nodeInfo ;
 
-    public NodeWrapper( Node node, String dbPath ) {
+    public NodeWrapper( Node node, BasicBSONObject nodeInfo ) {
         this.node = node ;
-        this.dbPath = dbPath ;
+        this.nodeInfo = nodeInfo ;
     }
 
     private BasicBSONObject getDataBaseSnapshot() throws ReliabilityException {
@@ -119,15 +120,20 @@ public class NodeWrapper {
     }
 
     public String hostName() {
-        return node.getHostName() ;
+        return nodeInfo.getString( "HostName" );
+    }
+    
+    public int nodeID() {
+        return nodeInfo.getInt( "NodeID" );
     }
 
     public String svcName() {
-        return Integer.toString( node.getPort() ) ;
+        return ( ( BasicBSONObject ) ( ( BasicBSONList ) nodeInfo
+                .get( "Service" ) ).get( 0 ) ).getString( "Name" );
     }
 
     public String dbPath() {
-        return this.dbPath ;
+        return nodeInfo.getString( "dbpath" ) ;
     }
 
     public boolean isMaster() throws ReliabilityException{
@@ -137,5 +143,30 @@ public class NodeWrapper {
         }
 
         return false ;
+    }
+    
+    public NodeCheckResult checkBusiness( ){
+        NodeCheckResult checkResult = new NodeCheckResult();
+        checkResult.hostName = hostName() ;
+        checkResult.nodeID = nodeID() ;
+        checkResult.svcName = svcName() ;
+        
+        int svcPort = Integer.parseInt( checkResult.svcName ) ;
+        if (svcPort >= SdbTestBase.reservedPortBegin && svcPort <= SdbTestBase.reservedPortEnd) {
+            checkResult.isInDeploy = false;
+        }
+        
+        try{
+            BasicBSONObject obj = getDataBaseSnapshot() ;
+            checkResult.serviceStatus = obj.getBoolean( "ServiceStatus" ) ;
+            checkResult.connect = true;
+            checkResult.LSN = ((BasicBSONObject)obj.get("CurrentLSN")).getLong( "Offset" );
+            checkResult.isPrimary = obj.getBoolean( "IsPrimary" ) ;
+            checkResult.freeSpace = ((BasicBSONObject)obj.get("Disk")).getLong( "FreeSpace" );
+        }catch(ReliabilityException e){
+            checkResult.connect = false ;
+        }
+        
+        return checkResult;
     }
 }

@@ -140,7 +140,7 @@ public class Ssh {
             channel.connect() ;
             getResult( channel ) ;
             if ( exitStatus != 0 ) {
-                throw new OperateException( "executing commond '" + command + "':"
+                throw new OperateException( "ssh executing commond '" + command + "':"
                         + stderr + " errcode: " +  exitStatus) ;
             }
         } catch ( Exception e ) {
@@ -228,57 +228,9 @@ public class Ssh {
     }
 
     private void getResult( Channel channel ) throws IOException {
-        StringBuffer stdoutBf = new StringBuffer() ;
-        StringBuffer stderrBf = new StringBuffer() ;
-
-        InputStream er = ( ( ChannelExec ) channel ).getErrStream() ;
-        InputStream in = channel.getInputStream() ;
-        byte[] tmp = new byte[ 1024 ] ;
-        while ( true ) {
-            while ( in.available() > 0 ) {
-                int i = in.read( tmp, 0, 1024 ) ;
-                if ( i < 0 ) {
-                    break ;
-                }
-                stdoutBf.append( new String( tmp, 0, i ) ) ;
-
-            }
-            if ( channel.isClosed() ) {
-                if ( in.available() > 0 ) {
-                    continue ;
-                }
-                break ;
-            }
-            try {
-                Thread.sleep( 200 ) ;
-            } catch ( Exception e ) {
-                // ignore
-            }
-        }
-
-        while ( true ) {
-            while ( er.available() > 0 ) {
-                int i = er.read( tmp, 0, 1024 ) ;
-                if ( i < 0 )
-                    break ;
-                stderrBf.append( new String( tmp, 0, i ) ) ;
-            }
-            if ( channel.isClosed() ) {
-                if ( er.available() > 0 )
-                    continue ;
-                break ;
-            }
-            try {
-                Thread.sleep( 200 ) ;
-            } catch ( Exception e ) {
-                // ignore
-            }
-        }
-        stdout = stdoutBf.toString() ;
-        stderr = stderrBf.toString() ;
-        exitStatus = channel.getExitStatus() ;
+        getResult(channel, Integer.MAX_VALUE) ;
     }
-
+    
     private void getResult( Channel channel, int timeOut ) throws IOException {
         StringBuffer stdoutBf = new StringBuffer() ;
         StringBuffer stderrBf = new StringBuffer() ;
@@ -288,7 +240,6 @@ public class Ssh {
         byte[] tmp = new byte[ 1024 ] ;
 
         long timer = System.currentTimeMillis() ;
-
         while ( true ) {
             while ( in.available() > 0 ) {
                 int i = in.read( tmp, 0, 1024 ) ;
@@ -358,21 +309,5 @@ public class Ssh {
 
     public int getExitStatus() {
         return exitStatus ;
-    }
-
-    public int getPort() {
-        return port ;
-    }
-
-    public String getPassword() {
-        return password ;
-    }
-
-    public String getUsername() {
-        return username ;
-    }
-
-    public String getHost() {
-        return host ;
     }
 }

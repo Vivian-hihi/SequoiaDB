@@ -9,18 +9,18 @@ import com.sequoiadb.base.Sequoiadb ;
 import com.sequoiadb.exception.BaseException ;
 
 public class SdbTestBase {
-    protected static String coordUrl ;
-    protected static String hostName ;
-    protected static String serviceName ;
-    protected static String csName ;
-    protected static int reservedPortBegin ;
-    protected static int reservedPortEnd ;
-    protected static String reservedDir ;
-    protected static String workDir ;
-    protected static String userRoot ;
-    protected static String rootPwd ;
-    protected static String otherUser ;
-    protected static String otherPwd ;
+    public static String coordUrl ;
+    public static String hostName ;
+    public static String serviceName ;
+    public static String csName ;
+    public static int reservedPortBegin ;
+    public static int reservedPortEnd ;
+    public static String reservedDir ;
+    public static String workDir ;
+    public static String userRoot ;
+    public static String rootPwd ;
+    public static String otherUser ;
+    public static String otherPwd ;
 
     @Parameters( { "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN",
             "RSRVPORTEND", "RSRVNODEDIR", "WORKDIR" } )

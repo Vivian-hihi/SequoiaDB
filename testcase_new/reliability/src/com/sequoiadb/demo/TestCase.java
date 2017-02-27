@@ -33,6 +33,14 @@ public class TestCase extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
+        try {
+            if (!GroupMgr.getInstance().checkBusiness()){
+                throw new SkipException("cluster check failed") ; 
+            }
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         prepare() ;
         System.out.println( "setup complete" ) ;
     }
@@ -55,7 +63,6 @@ public class TestCase extends SdbTestBase {
 
     private void prepare() {
         try {
-            GroupMgr groupMgr = GroupMgr.getInstance() ;
             List< String > groupNames = GroupMgr.getInstance()
                     .getAllDataGroupName() ;
             if ( groupNames.size() < 2 ) {
@@ -77,11 +84,7 @@ public class TestCase extends SdbTestBase {
             OperateTask split = new Split( SdbTestBase.coordUrl, 2 ) ;
             OperateTask insert = new Insert( SdbTestBase.coordUrl, 2 ) ;
 
-            // 加入依赖
-            faultMaker.addDependsTask( split ) ;
-            faultMaker.addDependsTask( insert ) ;
-
-            TaskMgr manager = new TaskMgr() ;
+            TaskMgr manager = new TaskMgr(faultMaker) ;
             manager.addTask( insert ) ;
             manager.addTask( split ) ;
             manager.addTask( faultMaker ) ;

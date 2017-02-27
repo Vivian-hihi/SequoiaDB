@@ -39,7 +39,6 @@ public class FaultMakeTask extends Task {
         }
         try{
         faultInstance.make() ;
-        faultInstance.checkMakeResult() ;
         }catch(ReliabilityException e){
             
         }
@@ -52,7 +51,6 @@ public class FaultMakeTask extends Task {
         }
         try{
         faultInstance.restore() ;
-        faultInstance.checkRestoreResult() ;
         }catch(ReliabilityException e ){
             
         }
@@ -61,6 +59,10 @@ public class FaultMakeTask extends Task {
 
     public void addDependsTask( OperateTask task ) {
         faultInstance.addDependsTask( task ) ;
+    }
+    
+    public void removeDependsTask( OperateTask task ){
+        faultInstance.removeDependsTask( task ) ;
     }
 
     @Override

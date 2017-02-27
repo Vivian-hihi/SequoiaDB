@@ -35,23 +35,22 @@ public class GroupMgr {
     }
 
     public void init() throws ReliabilityException {
-        try{
-        BSONObject nullObj = null ;
-        DBCursor cursor = sdb.getList( Sequoiadb.SDB_LIST_GROUPS, nullObj,
-                nullObj, nullObj ) ;
-        while ( cursor.hasNext() ) {
-            BasicBSONObject obj = ( BasicBSONObject ) cursor.getNext() ;
-            String groupName = obj.getString( "GroupName" ) ;
-            int groupId = obj.getInt( "GroupID" ) ;
-            GroupWrapper group = new GroupWrapper( groupName,
-                    sdb.getReplicaGroup( groupName ) ) ;
-            group.init() ;
-            name2group.put( groupName, group ) ;
-            id2group.put( groupId, group ) ;
-        }
-        cursor.close() ;
-        }catch(BaseException e){
-            throw new OperateException(e);
+        try {
+            BSONObject nullObj = null ;
+            DBCursor cursor = sdb.getList( Sequoiadb.SDB_LIST_GROUPS, nullObj,
+                    nullObj, nullObj ) ;
+            while ( cursor.hasNext() ) {
+                BasicBSONObject obj = ( BasicBSONObject ) cursor.getNext() ;
+                String groupName = obj.getString( "GroupName" ) ;
+                GroupWrapper group = new GroupWrapper( obj,
+                        sdb.getReplicaGroup( groupName ) ) ;
+                group.init() ;
+                name2group.put( groupName, group ) ;
+                id2group.put( group.getGroupID(), group ) ;
+            }
+            cursor.close() ;
+        } catch ( BaseException e ) {
+            throw new OperateException( e ) ;
         }
     }
 
@@ -103,5 +102,53 @@ public class GroupMgr {
             mgr.init() ;
         }
         return mgr ;
+    }
+
+    public boolean checkBusiness() {
+        ArrayList< GroupCheckResult > results = new ArrayList< GroupCheckResult >() ;
+        for ( Entry< String, GroupWrapper > entry : name2group.entrySet() ) {
+            results.add( entry.getValue().checkBusiness() ) ;
+        }
+
+        boolean ret = true ;
+        for ( GroupCheckResult result : results ) {
+            ret = result.check() ;
+            if ( ret == false ) {
+                System.out.println( result.toString() ) ;
+            }
+        }
+        return ret ;
+    }
+    
+    public boolean checkBusinessWithLSN() {
+        ArrayList< GroupCheckResult > results = new ArrayList< GroupCheckResult >() ;
+        for ( Entry< String, GroupWrapper > entry : name2group.entrySet() ) {
+            results.add( entry.getValue().checkBusiness() ) ;
+        }
+
+        boolean ret = true ;
+        for ( GroupCheckResult result : results ) {
+            ret = result.checkWithLSN();
+            if ( ret == false ) {
+                System.out.println( result.toString() ) ;
+            }
+        }
+        return ret ;
+    }
+    
+    public boolean checkBusinessWithLSNAndDisk() {
+        ArrayList< GroupCheckResult > results = new ArrayList< GroupCheckResult >() ;
+        for ( Entry< String, GroupWrapper > entry : name2group.entrySet() ) {
+            results.add( entry.getValue().checkBusiness() ) ;
+        }
+
+        boolean ret = true ;
+        for ( GroupCheckResult result : results ) {
+            ret = result.checkWithLSNAndDiskThreshold();
+            if ( ret == false ) {
+                System.out.println( result.toString() ) ;
+            }
+        }
+        return ret ;
     }
 }

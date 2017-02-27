@@ -44,6 +44,16 @@ public class FaultWrapper extends Fault {
     public void addDependsTask( OperateTask task ) {
         taskSet.add( task ) ;
     }
+    
+    public void removeDependsTask( OperateTask task ){
+        int pos = 0 ;
+        for (; pos < taskSet.size(); ++pos){
+            if (task.getName().equals( taskSet.get(pos).getName() )){
+                break ;
+            }
+        }
+        taskSet.remove( pos ) ;
+    }
 
     public void make() throws ReliabilityException{
         Date date = Calendar.getInstance().getTime() ;
@@ -53,6 +63,7 @@ public class FaultWrapper extends Fault {
 
         try {
             instance.make() ;
+            checkMakeResult() ;
         } catch ( Exception e ) {
             handleException( e ) ;
         }
@@ -86,6 +97,7 @@ public class FaultWrapper extends Fault {
                 + sdf.format( date ) ) ;
         try {
             instance.restore() ;
+            checkRestoreResult() ;
         } catch ( Exception e ) {
             handleException( e ) ;
         }
