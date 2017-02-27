@@ -291,26 +291,14 @@ SystemTest.prototype.testGetCurrentUser = function()
 {
    this.init() ;
    var userObj = this.system.getCurrentUser().toObj() ;
-   var username = userObj.user ;
-   var info = this.cmd.run( "cat /etc/passwd | grep -w " + username ).split( "\n" ) ;
-   var found = false ;
-   for( var i = 0;i < info.length-1;i++ )
+   var name = this.cmd.run( "whoami 2>/dev/null" ).split( "\n" )[0] ;
+   var gid = this.cmd.run( "id -g " + name + " 2>/dev/null" ).split( "\n" )[0] ;
+   var dir = this.cmd.run( "echo ~" ).split( "\n" )[0] ;
+   if( name !== userObj.user || gid !== userObj.gid ||
+       dir !== userObj.dir )
    {
-      var tmp = info[i].split( ":" ) ;
-      var name = tmp[0] ;      // 用户名
-      var groupid = tmp[3] ;   // 用户组id
-      var dir = tmp[5] ;       // 用户主目录
-      if( name === userObj.user && groupid === userObj.gid && 
-          dir === userObj.dir )
-      {
-         found = true ;
-         break ;
-      }
-   }
-   if( found === false )
-   {
-      throw buildException( "testGetCurrentUser", null, 
-            "check current user " + this, info, JSON.stringify( userObj ) ) ;
+      throw buildException( "testGetCurrentUser", null,
+            "check current user " + this, name + " " + gid + " " + dir, JSON.stringify( userObj ) ) ;
    }
    this.release() ; 
 }

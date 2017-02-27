@@ -4,7 +4,7 @@
 *               TestLink : 10645 System对象枚举进程如sdbcm
 *                          10646 System对象判断进程是否存在
 *                          10647 System对象判断进程是否存在，type取值name/pid，与value不匹配
-*                          10648 System对象杀死进程如协调节点11810
+*                          10648 System对象杀死进程
 *@author      : Liang XueWang
 ******************************************************************************/
 
@@ -22,7 +22,7 @@ SystemTest.prototype.testListProcess = function()
       throw buildException( "testListProcess", null, 
                             "list sdbcm process " + this, 1, cmProcs.length ) ;
    }
-   var command = "ps aux | grep 'sdbcm(" + CMSVCNAME + ")' | grep -v grep | " +
+   var command = "ps aux 2>/dev/null | grep 'sdbcm(" + CMSVCNAME + ")' | grep -v grep | " +
                  "awk '{print $1,$2,$8,$11}'" ;
    var result = this.cmd.run( command ).split( "\n" )[0].split( " " ) ;
    var user = result[0] ;     // 进程用户
