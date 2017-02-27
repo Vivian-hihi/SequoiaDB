@@ -447,10 +447,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                                   >> SQL_BLANK
                                   >> as_lower_d[str_p("by")]]]
                       >> SQL_BLANK
-                      >> (oFields
-                           % ( SQL_BLANKORNO
-                               >> no_node_d[comma]
-                               >> SQL_BLANKORNO)) ;
+                      >> oFields ;
 
             splitby = root_node_d[leaf_node_d[as_lower_d[str_p("split")]
                                   >> SQL_BLANK
@@ -638,8 +635,10 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                      >> !( SQL_BLANK >> groupby )
                      >> !( SQL_BLANK >> splitby )
                      >> !( SQL_BLANK >> orderby )
-                     >> !( SQL_BLANK >> limit )
-                     >> !( SQL_BLANK >> offset )
+                     >> (
+                          ( SQL_BLANK >> limit >> !( SQL_BLANK >> offset ) )
+                         |( !( SQL_BLANK >> offset ) >> !( SQL_BLANK >> limit ) )
+                        )
                      >> !( SQL_BLANK >> hint ) ;
 
             insert = no_node_d[as_lower_d[str_p("insert")]]
