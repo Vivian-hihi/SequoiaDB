@@ -8,53 +8,79 @@
  *  @version 1.00
  */
 package com.sequoiadb.fault;
+
+import java.io.IOException;
+
 import org.testng.annotations.Test;
 
+import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
-import com.sequoiadb.exception.CommException;
-import com.sequoiadb.exception.ReliabilityException ;
+import com.sequoiadb.exception.OperateException;
+import com.sequoiadb.exception.ReliabilityException;
 
 public class BrokenNetwork extends Fault {
-
-    private String hostName ;
-    private String user ;
-    private String passwd ;
-    private int duration ;
+	private String hostName;
+	private String user;
+	private String passwd;
+	private int duration;
+	private int port = 22;
+	private String remotePath;
+	private Ssh ssh;
+	private long brokenTime;
+	private final String localScriptPath = "./script";
+	private final String scriptName = "brokenNetwork.sh";
 
 	@Test
-	public static void test() {
-		BrokenNetwork bn = new BrokenNetwork("192.168.31.31", "root", "sequoiadb", 3);
-		for (int i = 0; i < 10; i++)
-			bn.ping();
+	public static void test() throws ReliabilityException {
+		BrokenNetwork bn = new BrokenNetwork("192.168.31.31", 22, "root", "sequoiadb", "/tmp", 15);
+		bn.init();
+		for (int i = 0; i < 3; i++)
+			System.out.println(bn.ping());
+		try {
+			bn.make();
+		} catch (ReliabilityException e) {
+			e.printStackTrace();
+		}
+		for (int i = 0; i < 3; i++)
+			System.out.println(bn.ping());
+		System.out.println("make:" + bn.checkMakeResult());
+
+		bn.restore();
+		System.out.println("restore:" + bn.checkRestoreResult());
+		bn.fini();
 	}
 
-	public BrokenNetwork(String hostName, String user, String passwd, int duration) {
+	/**
+	 * 
+	 * @param hostName
+	 * @param user
+	 * @param passwd
+	 * @param remotePath
+	 * @param duration
+	 */
+	public BrokenNetwork(String hostName, int duration) {
+		this(hostName, 22, "root", SdbTestBase.rootPwd, SdbTestBase.workDir, duration);
+	}
+
+	public BrokenNetwork(String hostName, int port, String user, String passwd, String remotePath, int duration) {
 		super("brokenNetwork");
 		this.hostName = hostName;
 		this.user = user;
 		this.passwd = passwd;
 		this.duration = duration;
+		this.remotePath = remotePath;
+		this.port = port;
 	}
 
-	public void make() throws ReliabilityException{
-		// TODO: 这个脚本好像有问题
-		/**
-		 * #!/bin/bash ifconfig eth0 down sleep $1 ifconfig eth0 up
-		 * /etc/init.d/networking restart
-		 */
-		String shell = "#!/bin/bash\nifconfig eth0 down\nsleep \\$1\nifconfig eth0 up\n/etc/init.d/networking restart";
-		Ssh ssh = new Ssh(hostName, user, passwd);
-		ssh.exec("echo -e \"" + shell + "\" > /tmp/cutnet.sh");
-		ssh.exec("chmod 777 /tmp/cutnet.sh");
-		ssh.execBackground("/tmp/cutnet.sh " + duration);
-		ssh.close();
+	public void make() throws ReliabilityException {
+		ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration + " &");
+		brokenTime = System.currentTimeMillis();
 	}
 
-	public boolean checkMakeResult() {
-		// TODO:checkTime
+	public boolean checkMakeResult() throws OperateException {
 		int checkTime = 3;
 		for (int i = 0; i < checkTime; i++) {
-			if (!ping()) {
+			if (ping() == false) {
 				return true;
 			}
 		}
@@ -62,16 +88,18 @@ public class BrokenNetwork extends Fault {
 	}
 
 	public void restore() {
-		// denpend on cunet.sh,sleep???
-		try {
-			Thread.sleep(duration * 1000);
-		} catch (InterruptedException e) {
-			// TODO ignore??
+		long diff = System.currentTimeMillis() - brokenTime;
+		if (diff < duration * 1000) {
+			try {
+				Thread.sleep(duration * 1000 - diff);
+			} catch (InterruptedException e) {
+
+			}
 		}
+
 	}
 
-	public boolean checkRestoreResult() {
-		// TODO:checkTime
+	public boolean checkRestoreResult() throws OperateException {
 		int checkTime = 3;
 		for (int i = 0; i < checkTime; i++) {
 			if (ping()) {
@@ -81,7 +109,7 @@ public class BrokenNetwork extends Fault {
 		return false;
 	}
 
-	public boolean ping() {
+	public boolean ping() throws OperateException {
 		String os = System.getProperties().getProperty("os.name");
 		String cmd;
 		if (os.startsWith("win") || os.startsWith("Win")) {
@@ -100,10 +128,31 @@ public class BrokenNetwork extends Fault {
 			} else {
 				return false;
 			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			throw new CommException(e);
+		} catch (InterruptedException | IOException e) {
+			throw new OperateException(e);
 		}
+	}
+
+	@Override
+	public boolean init() throws ReliabilityException {
+		if (ssh == null) {
+			ssh = new Ssh(hostName, user, passwd, port);
+		}
+		ssh.scpTo(localScriptPath + "/" + scriptName, remotePath);
+		ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
+		return true;
+	}
+
+	@Override
+	public boolean fini() throws ReliabilityException {
+		if (ssh != null) {
+			try {
+				ssh.exec("rm -rf " + remotePath + "/" + scriptName);
+			} finally {
+				ssh.close();
+			}
+		}
+		return true;
 	}
 
 }

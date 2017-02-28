@@ -123,4 +123,14 @@ public class FaultWrapper extends Fault {
         return true ;
     }
 
+	@Override
+	public boolean init() throws ReliabilityException {
+		return instance.init();
+	}
+
+	@Override
+	public boolean fini() throws ReliabilityException {
+		return instance.fini();
+	}
+
 }
