@@ -463,6 +463,7 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
                   {
                      clInfo['CompressionTypeDesc'] = cataInfo['CompressionTypeDesc'] ;
                   }
+                  return false ;
                }
             } ) ;
          }
