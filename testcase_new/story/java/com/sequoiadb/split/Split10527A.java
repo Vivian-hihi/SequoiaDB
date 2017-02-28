@@ -144,7 +144,6 @@ public class Split10527A extends SdbTestBase {
 					return;
 				}
 				cl.split(srcGroupName, destGroupName, 90);
-				throw new Exception("error split sucess");
 			} catch (BaseException e) {
 				if (e.getErrorCode() != -23 && e.getErrorCode() != -147 && e.getErrorCode() != -34) {
 					throw e;

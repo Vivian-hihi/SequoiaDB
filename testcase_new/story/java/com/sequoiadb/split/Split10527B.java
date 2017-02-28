@@ -188,7 +188,6 @@ public class Split10527B extends SdbTestBase {
 				sdb = new Sequoiadb(coordUrl, "", "");
 				DBCollection cl = sdb.getCollectionSpace(customCSName).getCollection(clName);
 				cl.split(srcGroupName, destGroupName, 90);
-				throw new BaseException(-147);
 			} catch (BaseException e) {
 				if (e.getErrorCode() != -147) {
 					throw e;
