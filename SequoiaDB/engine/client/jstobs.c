@@ -18,7 +18,6 @@
 #include "cJSON_ext.h"
 #include "base64c.h"
 #include "timestamp.h"
-#include "oss.h"
 
 #define INT_NUM_SIZE 32
 

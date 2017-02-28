@@ -18,6 +18,7 @@
 #include "ossUtil.h"
 #include "cJSON_ext.h"
 #include "bson/bson.h"
+#include "oss.h"
 
 static const CHAR* readBinary( const CHAR *pStr,
                                const CJSON_MACHINE *pMachine,
