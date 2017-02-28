@@ -92,10 +92,13 @@ public class Index10214 extends SdbTestBase {
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 				CollectionSpace csDB = db.getCollectionSpace(csName);
 				if(csDB != null){
-					DBCollection clDB = csDB.getCollection(clName);
 					BSONObject opt = new BasicBSONObject();
 					opt.put("a", 1);
-					clDB.createIndex(idxName, opt, false, false);
+					
+					DBCollection clDB = csDB.getCollection(clName);
+					if(clDB != null){
+						clDB.createIndex(idxName, opt, false, false);
+					}
 				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
