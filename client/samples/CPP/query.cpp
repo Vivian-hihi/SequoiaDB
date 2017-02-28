@@ -36,6 +36,7 @@
 
 using namespace std ;
 using namespace sdbclient ;
+using namespace sample ;
 
 #define NUM_RECORD 5
 
@@ -109,7 +110,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
 
    // create record list using objList
-   createRecordList ( objList, NUM_RECORD ) ;
+   sample::createRecordList ( objList, NUM_RECORD ) ;
    // insert obj and free memory that allocated by createRecordList
    for ( count = 0; count < NUM_RECORD; count++ )
    {
