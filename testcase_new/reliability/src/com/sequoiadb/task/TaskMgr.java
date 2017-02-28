@@ -15,6 +15,7 @@ import java.util.Map ;
 import java.util.Map.Entry ;
 
 import com.sequoiadb.exception.CommException ;
+import com.sequoiadb.exception.ReliabilityException;
 
 public class TaskMgr {
     private Map< String, Task > taskSet = new HashMap< String, Task >() ;
@@ -56,8 +57,9 @@ public class TaskMgr {
 
     /**
      * @return 所有任务初始化成功，返回true，任一任务初始化失败，则返回false
+     * @throws ReliabilityException 
      */
-    public boolean init() {
+    public boolean init() throws ReliabilityException {
         for ( Map.Entry< String, Task > entry : taskSet.entrySet() ) {
             if ( !entry.getValue().init() )
                 return false ;
@@ -68,8 +70,9 @@ public class TaskMgr {
 
     /**
      * @return 所有任务反初始化成功，返回true，任一任务反初始化失败，则返回false
+     * @throws ReliabilityException 
      */
-    public boolean fini() {
+    public boolean fini() throws ReliabilityException {
         for ( Map.Entry< String, Task > entry : taskSet.entrySet() ) {
             if ( !entry.getValue().fini() )
                 return false ;
