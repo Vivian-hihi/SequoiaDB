@@ -11,6 +11,7 @@ import org.testng.Assert;
 import org.testng.SkipException;
 
 import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.metadataconsistency.data.CommLib;
@@ -89,8 +90,8 @@ public class CL10173 extends SdbTestBase {
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 				CollectionSpace csDB = db.getCollectionSpace(csName);
 				
-				csDB.createCollection(clName);
-				if(csDB.isCollectionExist(clName)){
+				DBCollection clDB = csDB.createCollection(clName);
+				if(csDB != null && clDB != null){
 					CommLib.insertData(db, csName, clName);
 				}
 			}catch(BaseException e){
