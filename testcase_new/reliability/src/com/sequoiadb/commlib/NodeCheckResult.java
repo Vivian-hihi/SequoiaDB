@@ -48,24 +48,15 @@ public class NodeCheckResult {
             result.deployCheck = false ;
         }
     }
-    
-    public String toString(){
-        return String.format( "{\nHostName:\"%s\", " +
-        		               "\nsvcname:\"%s\", " +
-        		               "\nNodeID:%d," +
-        		               "\nConnect:%s," +
-        		               "\nIsPrimary:%s," +
-        		               "\nLSN:%d," +
-        		               "\nServiceStatus:%s," +
-        		               "\nFressSpace:%d," +
-        		               "\nisInDeploy:%s\n}", 
-        		               hostName, svcName, nodeID,
-        		               Boolean.toString(connect), 
-        		               Boolean.toString(isPrimary), 
-        		               LSN,
-        		               Boolean.toString(serviceStatus ), 
-        		               freeSpace,
-        		               Boolean.toString( isInDeploy ))  ;
+
+    public String toString() {
+        return String.format( "{\nHostName:\"%s\", " + "\nsvcname:\"%s\", "
+                + "\nNodeID:%d," + "\nConnect:%s," + "\nIsPrimary:%s,"
+                + "\nLSN:%d," + "\nServiceStatus:%s," + "\nFressSpace:%d,"
+                + "\nisInDeploy:%s\n}", hostName, svcName, nodeID,
+                Boolean.toString( connect ), Boolean.toString( isPrimary ),
+                LSN, Boolean.toString( serviceStatus ), freeSpace,
+                Boolean.toString( isInDeploy ) ) ;
     }
-    
+
 }

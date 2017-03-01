@@ -11,9 +11,11 @@ package com.sequoiadb.commlib ;
 
 import java.util.ArrayList ;
 import java.util.HashMap ;
+import java.util.HashSet ;
 import java.util.List ;
 import java.util.Map ;
 import java.util.Map.Entry ;
+import java.util.Set ;
 
 import org.bson.BSONObject ;
 import org.bson.BasicBSONObject ;
@@ -50,8 +52,9 @@ public class GroupMgr {
             }
             cursor.close() ;
         } catch ( BaseException e ) {
-            throw new OperateException( e ) ;
+            throw new ReliabilityException( e ) ;
         }
+
     }
 
     public List< GroupWrapper > getAllDataGroup() {
@@ -78,6 +81,16 @@ public class GroupMgr {
         }
 
         return names ;
+    }
+
+    public Set< String > getAllHosts() {
+        Set< String > hosts = new HashSet< String >() ;
+        for ( Entry< String, GroupWrapper > entry : name2group.entrySet() ) {
+            Set< String > hostsPerGroup = entry.getValue().getAllHosts() ;
+            hosts.addAll( hostsPerGroup ) ;
+        }
+
+        return hosts ;
     }
 
     public GroupWrapper getGroupByName( String name ) {
@@ -119,7 +132,7 @@ public class GroupMgr {
         }
         return ret ;
     }
-    
+
     public boolean checkBusinessWithLSN() {
         ArrayList< GroupCheckResult > results = new ArrayList< GroupCheckResult >() ;
         for ( Entry< String, GroupWrapper > entry : name2group.entrySet() ) {
@@ -128,14 +141,14 @@ public class GroupMgr {
 
         boolean ret = true ;
         for ( GroupCheckResult result : results ) {
-            ret = result.checkWithLSN();
+            ret = result.checkWithLSN() ;
             if ( ret == false ) {
                 System.out.println( result.toString() ) ;
             }
         }
         return ret ;
     }
-    
+
     public boolean checkBusinessWithLSNAndDisk() {
         ArrayList< GroupCheckResult > results = new ArrayList< GroupCheckResult >() ;
         for ( Entry< String, GroupWrapper > entry : name2group.entrySet() ) {
@@ -144,11 +157,54 @@ public class GroupMgr {
 
         boolean ret = true ;
         for ( GroupCheckResult result : results ) {
-            ret = result.checkWithLSNAndDiskThreshold();
+            ret = result.checkWithLSNAndDiskThreshold() ;
             if ( ret == false ) {
                 System.out.println( result.toString() ) ;
             }
         }
         return ret ;
     }
+
+    public boolean checkResidu() {
+        boolean checkRet = true ;
+        Set< String > hosts = getAllHosts() ;
+        for ( String host : hosts ) {
+            try {
+                Ssh remote = new Ssh( host, "root", SdbTestBase.rootPwd ) ;
+                remote.scpTo( "./script/checkPortOccupied.sh",
+                        SdbTestBase.workDir ) ;
+                remote.scpTo( "./script/checkPortOccupied.sh",
+                        SdbTestBase.workDir ) ;
+                remote.scpTo( "./script/checkPortOccupied.sh",
+                        SdbTestBase.workDir ) ;
+
+                remote.exec( SdbTestBase.workDir + "/checkPortOccupied.sh" ) ;
+                if ( remote.getExitStatus() != 0 ) {
+                    System.out.println( String.format( "%s used port:%s", host,
+                            remote.getStdout() ) ) ;
+                    checkRet = false ;
+                }
+                remote.exec( SdbTestBase.workDir + "/checkPortOccupied.sh" ) ;
+                if ( remote.getExitStatus() != 0 ) {
+                    System.out.println( String.format( "%s residu config:%s",
+                            host, remote.getStdout() ) ) ;
+                    checkRet = false ;
+                }
+                remote.exec( SdbTestBase.workDir + "/checkPortOccupied.sh" ) ;
+                if ( remote.getExitStatus() != 0 ) {
+                    System.out.println( String.format( "%s residu data:%s",
+                            host, remote.getStdout() ) ) ;
+                    checkRet = false ;
+                }
+            } catch ( ReliabilityException e ) {
+                // TODO Auto-generated catch block
+                e.printStackTrace() ;
+                return false ;
+            } finally {
+
+            }
+        }
+        return checkRet ;
+    }
+
 }

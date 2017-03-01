@@ -10,8 +10,10 @@
 package com.sequoiadb.commlib ;
 
 import java.util.ArrayList ;
+import java.util.HashSet ;
 import java.util.List ;
 import java.util.Random ;
+import java.util.Set ;
 
 import org.bson.BasicBSONObject ;
 import org.bson.types.BasicBSONList ;
@@ -43,19 +45,20 @@ public class GroupWrapper {
 
     public void init() throws ReliabilityException {
         try {
-            BasicBSONList nodesinfo = (BasicBSONList)groupInfo.get( "Group" ) ;
-            for (int i = 0; i < nodesinfo.size(); ++i){
-                BasicBSONObject nodeinfo = ( BasicBSONObject ) nodesinfo.get( i );
+            BasicBSONList nodesinfo = ( BasicBSONList ) groupInfo.get( "Group" ) ;
+            for ( int i = 0; i < nodesinfo.size(); ++i ) {
+                BasicBSONObject nodeinfo = ( BasicBSONObject ) nodesinfo
+                        .get( i ) ;
                 String hostName = nodeinfo.getString( "HostName" ) ;
                 String port = ( ( BasicBSONObject ) ( ( BasicBSONList ) nodeinfo
                         .get( "Service" ) ).get( 0 ) ).getString( "Name" ) ;
-                
+
                 NodeWrapper node = new NodeWrapper( this.group.getNode(
                         hostName, Integer.parseInt( port ) ), nodeinfo ) ;
                 nodes.add( node ) ;
             }
         } catch ( BaseException e ) {
-            throw new OperateException( e ) ;
+            throw new ReliabilityException( e ) ;
         }
     }
 
@@ -90,16 +93,24 @@ public class GroupWrapper {
     }
 
     public GroupCheckResult checkBusiness() {
-        GroupCheckResult checkRes = new GroupCheckResult();
-        checkRes.groupName = getGroupName();
-        checkRes.groupID = getGroupID();
+        GroupCheckResult checkRes = new GroupCheckResult() ;
+        checkRes.groupName = getGroupName() ;
+        checkRes.groupID = getGroupID() ;
         checkRes.primaryNode = groupInfo.getInt( "PrimaryNode" ) ;
-    
+
         for ( NodeWrapper node : nodes ) {
-            NodeCheckResult res = node.checkBusiness();
-            checkRes.addNodeCheckResult( res );
+            NodeCheckResult res = node.checkBusiness() ;
+            checkRes.addNodeCheckResult( res ) ;
         }
-        
-        return checkRes;
+
+        return checkRes ;
+    }
+
+    public Set< String > getAllHosts() {
+        Set< String > hosts = new HashSet< String >() ;
+        for ( NodeWrapper node : nodes ) {
+            hosts.add( node.hostName() ) ;
+        }
+        return hosts ;
     }
 }

@@ -13,7 +13,6 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import com.sequoiadb.exception.OperateException;
 import com.sequoiadb.exception.ReliabilityException;
 
 /**
@@ -88,7 +87,7 @@ public class Ssh {
 			if (session != null) {
 				session.disconnect();
 			}
-			throw new OperateException(e);
+			throw new ReliabilityException(e);
 		}
 	}
 
@@ -106,7 +105,7 @@ public class Ssh {
 			channel.connect();
 			channel.put(localPath, remotePath);
 		} catch (Exception e) {
-			throw new OperateException(e);
+			throw new ReliabilityException(e);
 		} finally {
 			if (channel != null) {
 				channel.disconnect();
@@ -128,7 +127,7 @@ public class Ssh {
 			channel.connect();
 			channel.get(remotePath, localPath);
 		} catch (Exception e) {
-			throw new OperateException(e);
+			throw new ReliabilityException(e);
 		} finally {
 			if (channel != null) {
 				channel.disconnect();
@@ -152,11 +151,11 @@ public class Ssh {
 			channel.connect();
 			getResult(channel, Integer.MAX_VALUE);
 			if (exitStatus != 0) {
-				throw new OperateException(
+				throw new ReliabilityException(
 						"ssh executing commond '" + command + "':" + stderr + " errcode: " + exitStatus);
 			}
 		} catch (Exception e) {
-			throw new OperateException(e);
+			throw new ReliabilityException(e);
 		} finally {
 			if (channel != null) {
 				channel.disconnect();
@@ -184,7 +183,7 @@ public class Ssh {
 			if (channel != null) {
 				channel.disconnect();
 			}
-			throw new OperateException(e);
+			throw new ReliabilityException(e);
 		}
 	}
 
@@ -211,13 +210,13 @@ public class Ssh {
 	public void waitBackgroudCMDDown(int channelId, int timeOutSecond) throws ReliabilityException {
 		Channel channel = backgroundCMD.get(channelId);
 		if (channel == null) {
-			throw new OperateException("ssh can not find this channel id(can not check channel id twice)");
+			throw new ReliabilityException("ssh can not find this channel id(can not check channel id twice)");
 		}
 		backgroundCMD.remove(channelId);
 		try {
 			getResult(channel, timeOutSecond);
 		} catch (IOException e) {
-			throw new OperateException(e);
+			throw new ReliabilityException(e);
 		} finally {
 			channel.disconnect();
 		}
