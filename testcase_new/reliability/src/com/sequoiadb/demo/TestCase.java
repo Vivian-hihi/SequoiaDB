@@ -5,25 +5,22 @@ import java.util.concurrent.atomic.AtomicBoolean ;
 
 import org.bson.BSONObject ;
 import org.bson.util.JSON ;
+import org.testng.Assert ;
 import org.testng.SkipException ;
 import org.testng.annotations.AfterClass ;
 import org.testng.annotations.BeforeClass ;
 import org.testng.annotations.Test ;
 
 import com.sequoiadb.base.DBCollection ;
-import com.sequoiadb.base.Node ;
 import com.sequoiadb.base.Sequoiadb ;
 import com.sequoiadb.commlib.GroupMgr ;
 import com.sequoiadb.commlib.NodeWrapper ;
 import com.sequoiadb.commlib.SdbTestBase ;
 import com.sequoiadb.exception.BaseException ;
-import com.sequoiadb.exception.CommException ;
 import com.sequoiadb.exception.ReliabilityException ;
-import com.sequoiadb.fault.DiskFull ;
 import com.sequoiadb.fault.KillNode ;
 import com.sequoiadb.task.FaultMakeTask ;
 import com.sequoiadb.task.OperateTask ;
-import com.sequoiadb.task.Task ;
 import com.sequoiadb.task.TaskMgr ;
 
 public class TestCase extends SdbTestBase {
@@ -34,14 +31,22 @@ public class TestCase extends SdbTestBase {
     @BeforeClass
     public void setUp() {
         try {
-            if (!GroupMgr.getInstance().checkBusiness()){
-                throw new SkipException("cluster check failed") ; 
+            if ( !GroupMgr.getInstance().checkBusiness() ) {
+                throw new SkipException( "cluster check failed" ) ;
             }
+
+            List< String > groupNames = GroupMgr.getInstance()
+                    .getAllDataGroupName() ;
+            if ( groupNames.size() < 2 ) {
+                throw new SkipException( "group number less than 2" ) ;
+            }
+            srcGroupName = groupNames.get( 0 ) ;
+            destGroupName = groupNames.get( 1 ) ;
+            prepare() ;
         } catch ( ReliabilityException e ) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace() ;
         }
-        prepare() ;
         System.out.println( "setup complete" ) ;
     }
 
@@ -51,7 +56,14 @@ public class TestCase extends SdbTestBase {
         // taskManager
         manager.start() ;
         manager.join() ;
-        manager.fini() ;
+        Assert.assertTrue( manager.getExceptions().isEmpty() , manager.getErrorMsg());
+        try {
+            manager.fini() ;
+        } catch ( ReliabilityException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace() ;
+            Assert.fail( e.getMessage() ) ;
+        }
         System.out.println( "child thread over:" + manager.getErrorMsg() ) ;
 
         check() ;
@@ -61,37 +73,20 @@ public class TestCase extends SdbTestBase {
 
     }
 
-    private void prepare() {
-        try {
-            List< String > groupNames = GroupMgr.getInstance()
-                    .getAllDataGroupName() ;
-            if ( groupNames.size() < 2 ) {
-                throw new SkipException( "group number less than 2" ) ;
-            }
-            srcGroupName = groupNames.get( 0 ) ;
-            destGroupName = groupNames.get( 1 ) ;
+    private void prepare() throws ReliabilityException {
+        NodeWrapper node = GroupMgr.getInstance()
+                .getGroupByName( "SYSCatalogGroup" ).getMaster() ;
+        System.out.println( "destNode " + node.hostName() + ":"
+                + node.svcName() ) ;
 
-            NodeWrapper node = GroupMgr.getInstance()
-                    .getGroupByName( "SYSCatalogGroup" ).getMaster() ;
-            System.out.println( "destNode " + node.hostName() + ":"
-                    + node.svcName() ) ;
+        KillNode killnode = new KillNode( node.hostName(), node.hostName() ) ;
+        FaultMakeTask faultMaker = new FaultMakeTask( killnode, 6, 30 ) ;
 
-            KillNode killnode = new KillNode( node.hostName(), node.hostName()
-                    + "", SdbTestBase.otherUser, SdbTestBase.otherPwd ) ;
-            FaultMakeTask faultMaker = new FaultMakeTask( killnode, 6, 30 ) ;
-
-            // OperateTask(insert,split)
-            OperateTask split = new Split( SdbTestBase.coordUrl, 2 ) ;
-            OperateTask insert = new Insert( SdbTestBase.coordUrl, 2 ) ;
-
-            TaskMgr manager = new TaskMgr(faultMaker) ;
-            manager.addTask( insert ) ;
-            manager.addTask( split ) ;
-            manager.addTask( faultMaker ) ;
-            manager.init() ;
-        } catch ( ReliabilityException e ) {
-            throw new SkipException( "group number less than 2" ) ;
-        }
+        // OperateTask(insert,split)
+        TaskMgr manager = new TaskMgr( faultMaker ) ;
+        manager.addTask( "com.sequoiadb.demo.TestCase.Insert" ) ;
+        manager.addTask( "com.sequoiadb.demo.TestCase.Split" ) ;
+        manager.init() ;
     }
 
     @AfterClass
@@ -109,9 +104,9 @@ public class TestCase extends SdbTestBase {
         private int sk = 0 ;
         private String coordUrl ;
 
-        public Insert( String coordUrl, int maxDuration ) {
-            super( "insert", maxDuration ) ;
-            this.coordUrl = coordUrl ;
+        public Insert() {
+            super( "insert" ) ;
+            this.coordUrl = SdbTestBase.coordUrl ;
             // TODO Auto-generated constructor stub
         }
 
@@ -204,9 +199,9 @@ public class TestCase extends SdbTestBase {
         private Sequoiadb db = null ;
         private String coordUrl ;
 
-        public Split( String coordUrl, int maxDuration ) {
-            super( "split", maxDuration ) ;
-            this.coordUrl = coordUrl ;
+        public Split() {
+            super( "split" ) ;
+            this.coordUrl = SdbTestBase.coordUrl ;
             // TODO Auto-generated constructor stub
         }
 
