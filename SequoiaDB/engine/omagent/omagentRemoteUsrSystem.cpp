@@ -4993,12 +4993,12 @@ namespace engine
                                                         bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
-      INT32 readLen = 1024 ;
-      INT32 bufLen = readLen + 1 ;
+      INT32 bufLen = 1024 + 1 ;
       multimap< string, string > fileMap ;
       vector< string > keySplit ;
       vector< string > valueSplit ;
       CHAR *buf = NULL ;
+      INT32 increaseLen = 1024 ;
 
       buf = (CHAR*) SDB_OSS_MALLOC( bufLen ) ;
       if( NULL == buf )
@@ -5032,6 +5032,8 @@ namespace engine
          ossPrimitiveFileOp op ;
          string key ;
          string value ;
+         keySplit.clear() ;
+         valueSplit.clear() ;
 
          // open file
          rc = op.Open( itr->second.c_str(), OSS_PRIMITIVE_FILE_OP_READ_ONLY ) ;
@@ -5045,15 +5047,15 @@ namespace engine
          {
             INT32 readByte = 0 ;
             INT32 hasRead = 0 ;
-            INT32 increaseLen = 1024 ;
+            INT32 readLen = bufLen-1 ;
             CHAR *curPos = buf ;
             BOOLEAN finishRead = FALSE ;
             BOOLEAN isReadSuccess = TRUE ;
 
             while( !finishRead )
             {
-               rc = op.Read( readLen , curPos , &readByte ) ;
-               if ( SDB_OK != rc )
+               rc = op.Read( readLen, curPos , &readByte ) ;
+               if( SDB_OK != rc || 0 > readByte )
                {
                   PD_LOG( PDERROR, "Failed to read file: %s",
                           itr->second.c_str() ) ;
@@ -5061,7 +5063,7 @@ namespace engine
                   break ;
                }
                hasRead += readByte ;
-
+               curPos = buf + hasRead ;
                // mem not enough, need to realloc, newBuffSize = 2*oldBuffSize
                if ( readByte == readLen )
                {
@@ -5073,7 +5075,6 @@ namespace engine
                      PD_LOG( PDERROR, "Failed to realloc buff" ) ;
                      goto error ;
                   }
-                  curPos = buf + hasRead ;
                   readLen = increaseLen ;
                   increaseLen *= 2 ;
                }
