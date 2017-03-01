@@ -88,21 +88,21 @@
          </tstamp>       
 
          <if>
-            <equals arg1="@{phpver}" arg2="php5.4" />
+            <equals arg1="@{phpver}" arg2="php5dot4" />
             <then>
                <var name="php_exe" value="${INSTALL_DIR}/tools/server/php/bin/php-bin"/>
                <var name="ini_cmd" value=""/>
             </then>
          </if>
          <if>
-            <equals arg1="@{phpver}" arg2="php5.5" />
+            <equals arg1="@{phpver}" arg2="php5dot5" />
             <then>
                <var name="php_exe" value="/opt/php_5.5.0/bin/php"/>
                <var name="ini_cmd" value="-c /opt/php_5.5.0/lib/php.ini"/>
             </then>
          </if>
          <if>
-            <equals arg1="@{phpver}" arg2="php5.6" />
+            <equals arg1="@{phpver}" arg2="php5dot6" />
             <then>
                <var name="php_exe" value="/opt/php_5.6.0/bin/php"/>
                <var name="ini_cmd" value="-c /opt/php_5.6.0/lib/php.ini"/>
