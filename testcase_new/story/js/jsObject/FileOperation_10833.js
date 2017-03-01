@@ -6,7 +6,6 @@
 *                          10833 删除文件
 *@auhor       : Liang XueWang
 ******************************************************************************/
-
 // 测试创建目录，移动文件，拷贝文件，删除文件
 FileTest.prototype.testFileOperation = function()
 {
@@ -176,7 +175,7 @@ function main()
    var localhost = toolGetLocalhost() ;
    var remotehost = toolGetRemotehost() ;
    
-   var filename = "/tmp/testfile.txt" ;
+   var filename = "/tmp/testFileOperation10833.txt" ;
    var ft1 = new FileTest( localhost, CMSVCNAME ) ;     // 本地File类类型
    var ft2 = new FileTest( localhost, CMSVCNAME, filename ) ;  // 本地file对象
    var ft3 = new FileTest( remotehost, CMSVCNAME ) ;    // 远程File类类型
