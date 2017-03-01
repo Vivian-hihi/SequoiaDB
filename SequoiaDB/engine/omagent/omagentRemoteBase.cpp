@@ -656,6 +656,7 @@ namespace engine
                                               string &errMsg,
                                               BOOLEAN allowNotExist )
    {
+
       INT32 rc = SDB_OK ;
       po::options_description desc ;
       po ::variables_map vm ;
@@ -745,7 +746,7 @@ namespace engine
       string             outStr ;
 
 #if defined (_LINUX)
-      cmd = "whoami" ;
+      cmd = "whoami 2>/dev/null" ;
 #elif defined (_WINDOWS)
       cmd = "cmd /C set HOMEPATH" ;
 #endif
@@ -781,8 +782,20 @@ namespace engine
       {
          OSSUID uid = 0 ;
          OSSGID gid = 0 ;
-         ossGetUserInfo( outStr.c_str(), uid, gid ) ;
-         struct passwd *pw = getpwuid( uid ) ;
+         struct passwd *pw = NULL ;
+         rc = ossGetUserInfo( outStr.c_str(), uid, gid ) ;
+         if( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get user info" ) ;
+            goto error ;
+         }
+
+         pw = getpwuid( uid ) ;
+         if( NULL == pw )
+         {
+            PD_LOG( PDERROR, "Failed to getpwuid" ) ;
+            goto error ;
+         }
          homePath = pw->pw_dir ;
       }
 #elif defined (_WINDOWS)
