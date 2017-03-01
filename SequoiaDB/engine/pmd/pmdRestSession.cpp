@@ -179,6 +179,7 @@ namespace engine
             }
             else
             {
+               rc = SDB_OK ;
                break ;
             }
          }
