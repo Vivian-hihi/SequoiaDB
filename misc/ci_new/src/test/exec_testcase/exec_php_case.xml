@@ -31,9 +31,9 @@
          </then>
       </if>
       
-      <execallcase phpversion="php5.4"/>
-      <execallcase phpversion="php5.5"/>
-      <execallcase phpversion="php5.6"/>
+      <execallcase phpversion="php5dot4"/>
+      <execallcase phpversion="php5dot5"/>
+      <execallcase phpversion="php5dot6"/>
    </target>   
    
    <macrodef name="execallcase">       
