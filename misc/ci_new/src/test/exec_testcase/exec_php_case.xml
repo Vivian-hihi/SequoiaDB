@@ -6,7 +6,7 @@
 @author:       Ting YU 2016-10-31
 ============================================================================= -->
 
-<project default="exec_testcase" basedir="../../../">     
+<project default="main" basedir="../../../">     
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
          <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
@@ -14,7 +14,7 @@
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
    
-   <target name="exec_testcase">
+   <target name="main">
       <property file="${basedir}/src/conf/test.conf" />
       <property name="sdbdir" value="${INSTALL_DIR}/bin/sdb" />            
       
@@ -29,8 +29,17 @@
                            byline="true" 
                            encoding="utf-8"/>
          </then>
-      </if>    
-            
+      </if>
+      
+      <execallcase phpversion="php5.4"/>
+      <execallcase phpversion="php5.5"/>
+      <execallcase phpversion="php5.6"/>
+   </target>   
+   
+   <macrodef name="execallcase">       
+      <attribute name="phpversion"/>
+      <sequential>
+      <echo>${line.separator}***********begin to execute php testcases by @{phpversion}***********</echo>
       <for param="testsuit">
          <path>
             <dirset dir="${testcase_dir}" includes="*" excludes="tools"/>
@@ -45,31 +54,31 @@
             <if>
                <equals arg1="${testcase_num}" arg2="0"/>
                <else>
-                  <markinlog casename ="@{testsuit}" marktype="begin" sdbshell="${sdbdir}"/>
+                  <markinlog casename="@{testsuit}_@{phpversion}" marktype="begin" sdbshell="${sdbdir}"/>
                   
                   <var name="testsuite_name" unset="true" />
                   <basename property="testsuite_name" file="@{testsuit}" />
+                  <var name="testsuite_name" value="${testsuite_name}_@{phpversion}"/>
                   <hostinfo prefix="host" />
-                  <var name="report_filename" value="${testsuite_name}_${host.NAME}.xml"/>
-                  <var name="report_fullname" value="${report_dir}/${report_filename}"/>
+                  <var name="report_fullname" value="${report_dir}/${testsuite_name}_${host.NAME}.xml"/>
 
                   <execonesuit suitfullname="@{testsuit}" 
-                                 dbdir="${INSTALL_DIR}" 
-                                 report="${report_fullname}"/>
+                               phpver="@{phpversion}" 
+                               report="${report_fullname}"/>
                   <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testsuite_name}" />
                   
-                  <markinlog casename ="@{testsuit}" marktype="end" sdbshell="${sdbdir}"/>
+                  <markinlog casename="@{testsuit}_@{phpversion}" marktype="end" sdbshell="${sdbdir}"/>
                </else>
             </if>
                       
          </sequential>
-      </for>         
-        
-   </target>   
+      </for>
+      </sequential>
+   </macrodef>      
 
    
    <macrodef name="execonesuit">
-      <attribute name="dbdir"/>
+      <attribute name="phpver"/>
       <attribute name="suitfullname" />
       <attribute name="report" />
       <sequential> 
@@ -79,6 +88,28 @@
          </tstamp>       
 
          <if>
+            <equals arg1="@{phpver}" arg2="php5.4" />
+            <then>
+               <var name="php_exe" value="${INSTALL_DIR}/tools/server/php/bin/php-bin"/>
+               <var name="ini_cmd" value=""/>
+            </then>
+         </if>
+         <if>
+            <equals arg1="@{phpver}" arg2="php5.5" />
+            <then>
+               <var name="php_exe" value="/opt/php_5.5.0/bin/php"/>
+               <var name="ini_cmd" value="-c /opt/php_5.5.0/lib/php.ini"/>
+            </then>
+         </if>
+         <if>
+            <equals arg1="@{phpver}" arg2="php5.6" />
+            <then>
+               <var name="php_exe" value="/opt/php_5.6.0/bin/php"/>
+               <var name="ini_cmd" value="-c /opt/php_5.6.0/lib/php.ini"/>
+            </then>
+         </if>
+         
+         <if>
             <available file="@{suitfullname}/../phpunit.xml"/>
             <then>
                <var name="conf_cmd" value="-c @{suitfullname}/../phpunit.xml"/>
@@ -87,15 +118,15 @@
                <var name="conf_cmd" value=""/>
             </else>
          </if>
-         <var name="phpbin" value="@{dbdir}/tools/server/php/bin/php-bin"/>
+            
          <var name="phpunit" value="@{suitfullname}/../tools/phpunit.phar"/>
-         <var name="cmd" value="${phpunit} ${conf_cmd} --log-junit @{report} @{suitfullname}"/>
-         <echo message="exec cmd: ${phpbin} ${cmd}"/>
+         <var name="cmd" value="${ini_cmd} ${phpunit} ${conf_cmd} --log-junit @{report} @{suitfullname}"/>
+         <echo message="exec cmd: ${php_exe} ${cmd}"/>
          <echo message="exec dir: @{suitfullname}"/>
          
          <var name="screen_output" unset="true"/> 
          <var name="rc" unset="true"/> 
-         <exec executable="${phpbin}" 
+         <exec executable="${php_exe}" 
                dir="@{suitfullname}" 
                timeout="1800000" 
                outputproperty="screen_output"
