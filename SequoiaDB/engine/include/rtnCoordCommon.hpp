@@ -330,7 +330,8 @@ namespace engine
 
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb, const BSONObj &obj,
                                  CoordGroupList &groupList,
-                                 BSONObj *pNewObj = NULL ) ;
+                                 BSONObj *pNewObj = NULL,
+                                 BOOLEAN strictCheck = FALSE ) ;
 
    enum FILTER_BSON_ID
    {
@@ -345,7 +346,8 @@ namespace engine
 
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb, MsgOpQuery *pMsg,
                                  FILTER_BSON_ID filterObjID,
-                                 CoordGroupList &groupList ) ;
+                                 CoordGroupList &groupList,
+                                 BOOLEAN strictCheck = FALSE ) ;
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, GROUP_VEC &groupLst,
                                   const BSONObj *query = NULL,
@@ -377,7 +379,8 @@ namespace engine
    INT32 rtnCoordGetGroupNodes( pmdEDUCB *cb, const BSONObj &filterObj,
                                 NODE_SEL_STY emptyFilterSel,
                                 CoordGroupList &groupList, ROUTE_SET &nodes,
-                                BSONObj *pNewObj = NULL ) ;
+                                BSONObj *pNewObj = NULL,
+                                BOOLEAN strictCheck = FALSE ) ;
 
    void  rtnCoordGetNodePos( INT32 preferReplicaType,
                              clsGroupItem *groupItem,
@@ -475,7 +478,8 @@ namespace engine
    INT32 rtnCoordParseControlParam( const BSONObj &obj,
                                     rtnCoordCtrlParam &param,
                                     UINT32 mask,
-                                    BSONObj *pNewObj = NULL ) ;
+                                    BSONObj *pNewObj = NULL,
+                                    BOOLEAN strictCheck = FALSE ) ;
 
    BOOLEAN rtnCoordCanRetry( UINT32 retryTimes ) ;
 

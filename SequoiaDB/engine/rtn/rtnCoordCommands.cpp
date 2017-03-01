@@ -851,7 +851,7 @@ namespace engine
       pSrcFilterObjData = pFilterObj->objdata() ;
       /// 3. parse control param
       rc = rtnCoordParseControlParam( *pFilterObj, ctrlParam, mask,
-                                      &newFilterObj ) ;
+                                      &newFilterObj, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "prase control param failed, rc: %d", rc ) ;
       *pFilterObj = newFilterObj ;
 
@@ -882,7 +882,8 @@ namespace engine
       if ( !pFilterObj->isEmpty() )
       {
          rc = rtnCoordParseGroupList( cb, *pFilterObj, groupLst,
-                                      &newFilterObj ) ;
+                                      &newFilterObj,
+                                      ppContext ? FALSE : TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse groups, rc: %d", rc  ) ;
          if ( pFilterObj->objdata() != newFilterObj.objdata() )
          {
@@ -912,7 +913,8 @@ namespace engine
       rc = rtnCoordGetGroupNodes( cb, *pFilterObj, ctrlParam._emptyFilterSel,
                                   ( 0 == groupLst.size() ? ( hasParseRetry ?
                                   expectGrpLst : allGroupLst ) : groupLst ),
-                                  sendNodes, &newFilterObj ) ;
+                                  sendNodes, &newFilterObj,
+                                  ppContext ? FALSE : TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
       if ( sendNodes.size() == 0 && !hasParseRetry )
       {
@@ -1352,7 +1354,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Extract command failed, rc: %d", rc ) ;
 
       rc = rtnCoordParseControlParam( queryOption._query, ctrlParam,
-                                      RTN_CTRL_MASK_RAWDATA ) ;
+                                      RTN_CTRL_MASK_RAWDATA, NULL, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse control param failed, rc: %d", rc ) ;
 
       rc = parseUserAggr( queryOption._hint, vecUserAggr ) ;

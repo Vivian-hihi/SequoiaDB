@@ -2947,7 +2947,8 @@ namespace engine
    static INT32 _rtnCoordParseGroupsInfo( const BSONObj &obj,
                                           vector< INT32 > &vecID,
                                           vector< const CHAR* > &vecName,
-                                          BSONObj *pNewObj )
+                                          BSONObj *pNewObj,
+                                          BOOLEAN strictCheck )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
@@ -2979,7 +2980,8 @@ namespace engine
                {
                   BSONObj tmpObj = tmpE.embeddedObject() ;
                   rc = _rtnCoordParseGroupsInfo( tmpObj, vecID, vecName,
-                                                 pNewObj ? &tmpNew : NULL ) ;
+                                                 pNewObj ? &tmpNew : NULL,
+                                                 strictCheck ) ;
                   PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] groups failed",
                                obj.toString().c_str() ) ;
                   if ( pNewObj )
@@ -2999,21 +3001,42 @@ namespace engine
             sub.done() ;
          } /// end $and
          // group id
-         else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) &&
-                   SDB_OK == _rtnCoordParseInt( ele, vecID,
-                                                RTN_COORD_PARSE_MASK_ALL ) )
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) )
          {
-            isModify = TRUE ;
+            rc = _rtnCoordParseInt( ele, vecID, RTN_COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
          }
          // group name
          else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
                                        FIELD_NAME_GROUPNAME ) ||
                      0 == ossStrcasecmp( ele.fieldName(),
-                                       FIELD_NAME_GROUPS ) ) &&
-                    SDB_OK == _rtnCoordParseString( ele, vecName,
-                                                    RTN_COORD_PARSE_MASK_ALL ) )
+                                       FIELD_NAME_GROUPS ) ) )
          {
-            isModify = TRUE ;
+            rc = _rtnCoordParseString( ele, vecName,
+                                       RTN_COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
          }
          else if ( pNewObj )
          {
@@ -3042,7 +3065,8 @@ namespace engine
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb,
                                  const BSONObj &obj,
                                  CoordGroupList &groupList,
-                                 BSONObj *pNewObj )
+                                 BSONObj *pNewObj,
+                                 BOOLEAN strictCheck )
    {
       INT32 rc = SDB_OK ;
       CoordGroupInfoPtr grpPtr ;
@@ -3050,7 +3074,8 @@ namespace engine
       vector< const CHAR* > tmpVecStr ;
       UINT32 i = 0 ;
 
-      rc = _rtnCoordParseGroupsInfo( obj, tmpVecInt, tmpVecStr, pNewObj ) ;
+      rc = _rtnCoordParseGroupsInfo( obj, tmpVecInt, tmpVecStr, pNewObj,
+                                     strictCheck ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse object[%s] group list failed, rc: %d",
                    obj.toString().c_str(), rc ) ;
 
@@ -3099,7 +3124,8 @@ namespace engine
 
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb, MsgOpQuery *pMsg,
                                  FILTER_BSON_ID filterObjID,
-                                 CoordGroupList &groupList )
+                                 CoordGroupList &groupList,
+                                 BOOLEAN strictCheck )
    {
       INT32 rc = SDB_OK ;
       rtnQueryOptions queryOption ;
@@ -3113,7 +3139,8 @@ namespace engine
       {
          if ( !pFilterObj->isEmpty() )
          {
-            rc = rtnCoordParseGroupList( cb, *pFilterObj, groupList ) ;
+            rc = rtnCoordParseGroupList( cb, *pFilterObj, groupList,
+                                         NULL, strictCheck ) ;
             if ( rc )
             {
                goto error ;
@@ -3210,7 +3237,8 @@ namespace engine
                                          vector< INT32 > &vecNodeID,
                                          vector< const CHAR* > &vecHostName,
                                          vector< const CHAR* > &vecSvcName,
-                                         BSONObj *pNewObj )
+                                         BSONObj *pNewObj,
+                                         BOOLEAN strictCheck )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
@@ -3243,7 +3271,8 @@ namespace engine
                   BSONObj tmpObj = tmpE.embeddedObject() ;
                   rc = _rtnCoordParseNodesInfo( tmpObj, vecNodeID,
                                                 vecHostName, vecSvcName,
-                                                pNewObj ? &tmpNew : NULL ) ;
+                                                pNewObj ? &tmpNew : NULL,
+                                                strictCheck ) ;
                   PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes failed ",
                                obj.toString().c_str() ) ;
                   if ( pNewObj )
@@ -3262,26 +3291,59 @@ namespace engine
             }
             sub.done() ;
          } /// end $and
-         else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) &&
-                   SDB_OK == _rtnCoordParseInt( ele, vecNodeID,
-                                                RTN_COORD_PARSE_MASK_ALL ) )
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) )
          {
-            isModify = TRUE ;
+            rc = _rtnCoordParseInt( ele, vecNodeID,
+                                    RTN_COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
          }
-         else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) &&
-                   SDB_OK == _rtnCoordParseString( ele, vecHostName,
-                                                   RTN_COORD_PARSE_MASK_ALL ) )
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) )
          {
-            isModify = TRUE ;
+            rc = _rtnCoordParseString( ele, vecHostName,
+                                       RTN_COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
          }
          else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
                                          FIELD_NAME_SERVICE_NAME ) ||
                      0 == ossStrcasecmp( ele.fieldName(),
-                                         PMD_OPTION_SVCNAME ) ) &&
-                    SDB_OK == _rtnCoordParseString( ele, vecSvcName,
-                                                    RTN_COORD_PARSE_MASK_ALL ) )
+                                         PMD_OPTION_SVCNAME ) ) )
          {
-            isModify = TRUE ;
+            rc = _rtnCoordParseString( ele, vecSvcName,
+                                       RTN_COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
          }
          else if ( pNewObj )
          {
@@ -3310,7 +3372,8 @@ namespace engine
    INT32 rtnCoordGetGroupNodes( pmdEDUCB *cb, const BSONObj &filterObj,
                                 NODE_SEL_STY emptyFilterSel,
                                 CoordGroupList &groupList, ROUTE_SET &nodes,
-                                BSONObj *pNewObj )
+                                BSONObj *pNewObj,
+                                BOOLEAN strictCheck )
    {
       INT32 rc = SDB_OK ;
       CoordGroupInfoPtr ptr ;
@@ -3329,7 +3392,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Group ids to group info failed, rc: %d", rc ) ;
 
       rc = _rtnCoordParseNodesInfo( filterObj, vecNodeID, vecHostName,
-                                    vecSvcName, pNewObj ) ;
+                                    vecSvcName, pNewObj, strictCheck ) ;
       PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes info failed, rc: %d",
                    filterObj.toString().c_str(), rc ) ;
 
@@ -3664,7 +3727,8 @@ namespace engine
    INT32 rtnCoordParseControlParam( const BSONObj &obj,
                                     rtnCoordCtrlParam &param,
                                     UINT32 mask,
-                                    BSONObj *pNewObj )
+                                    BSONObj *pNewObj,
+                                    BOOLEAN strictCheck )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN modify = FALSE ;
@@ -3698,7 +3762,8 @@ namespace engine
                {
                   BSONObj tmpObj = tmpE.embeddedObject() ;
                   rc = rtnCoordParseControlParam( tmpObj, param, mask,
-                                                  pNewObj ? &tmpNew : NULL ) ;
+                                                  pNewObj ? &tmpNew : NULL,
+                                                  strictCheck ) ;
                   PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] conrtol param "
                                "failed", obj.toString().c_str() ) ;
                   if ( pNewObj )
@@ -3718,12 +3783,23 @@ namespace engine
             sub.done() ;
          } /// end $and
          else if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
-                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) &&
-                   SDB_OK == _rtnCoordParseBoolean( e, param._isGlobal,
-                                                    RTN_COORD_PARSE_MASK_ET ) )
+                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
          {
-            modify = TRUE ;
-            param._parseMask |= RTN_CTRL_MASK_GLOBAL ;
+            rc = _rtnCoordParseBoolean( e, param._isGlobal,
+                                        RTN_COORD_PARSE_MASK_ET ) ;
+            if ( SDB_OK == rc )
+            {
+               modify = TRUE ;
+               param._parseMask |= RTN_CTRL_MASK_GLOBAL ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
          }
          else if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
                    e.isNull() &&
@@ -3741,68 +3817,122 @@ namespace engine
          }
          else if ( ( mask & RTN_CTRL_MASK_NODE_SELECT ) &&
                    0 == ossStrcasecmp( e.fieldName(),
-                                       FIELD_NAME_NODE_SELECT ) &&
-                   SDB_OK == _rtnCoordParseString( e, tmpStr,
-                                                   RTN_COORD_PARSE_MASK_ET ) )
+                                       FIELD_NAME_NODE_SELECT ) )
          {
-            modify = TRUE ;
-            param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
-            if ( 0 == ossStrcasecmp( tmpStr, "primary" ) ||
-                 0 == ossStrcasecmp( tmpStr, "master" ) ||
-                 0 == ossStrcasecmp( tmpStr, "m" ) ||
-                 0 == ossStrcasecmp( tmpStr, "p" ) )
+            rc = _rtnCoordParseString( e, tmpStr, RTN_COORD_PARSE_MASK_ET ) ;
+            if ( SDB_OK == rc )
             {
-               param._emptyFilterSel = NODE_SEL_PRIMARY ;
+               if ( 0 == ossStrcasecmp( tmpStr, "primary" ) ||
+                    0 == ossStrcasecmp( tmpStr, "master" ) ||
+                    0 == ossStrcasecmp( tmpStr, "m" ) ||
+                    0 == ossStrcasecmp( tmpStr, "p" ) )
+               {
+                  param._emptyFilterSel = NODE_SEL_PRIMARY ;
+               }
+               else if ( 0 == ossStrcasecmp( tmpStr, "any" ) ||
+                         0 == ossStrcasecmp( tmpStr, "a" ) )
+               {
+                  param._emptyFilterSel = NODE_SEL_ANY ;
+               }
+               else if ( 0 == ossStrcasecmp( tmpStr, "secondary" ) ||
+                         0 == ossStrcasecmp( tmpStr, "s" ) )
+               {
+                  param._emptyFilterSel = NODE_SEL_SECONDARY ;
+               }
+               else if ( 0 == ossStrcasecmp( tmpStr, "all" ) )
+               {
+                  param._emptyFilterSel = NODE_SEL_ALL ;
+               }
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+               }
             }
-            else if ( 0 == ossStrcasecmp( tmpStr, "any" ) ||
-                      0 == ossStrcasecmp( tmpStr, "a" ) )
+
+            if ( SDB_OK == rc )
             {
-               param._emptyFilterSel = NODE_SEL_ANY ;
+               modify = TRUE ;
+               param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
             }
-            else if ( 0 == ossStrcasecmp( tmpStr, "secondary" ) ||
-                      0 == ossStrcasecmp( tmpStr, "s" ) )
+            else if ( strictCheck )
             {
-               param._emptyFilterSel = NODE_SEL_SECONDARY ;
+               goto error ;
             }
             else
             {
-               param._emptyFilterSel = NODE_SEL_ALL ;
+               rc = SDB_OK ;
             }
          }
          else if ( ( mask & RTN_CTRL_MASK_ROLE ) &&
                    0 == ossStrcasecmp( e.fieldName(),
-                                       FIELD_NAME_ROLE ) &&
-                   SDB_OK == _rtnCoordParseString( e, tmpVecStr,
-                                                   RTN_COORD_PARSE_MASK_ALL ) )
+                                       FIELD_NAME_ROLE ) )
          {
-            ossMemset( &param._role, 0, sizeof( param._role ) ) ;
-            modify = TRUE ;
-            param._parseMask |= RTN_CTRL_MASK_ROLE ;
-
-            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
+            INT32 tmpRole[ SDB_ROLE_MAX ] = { 0 } ;
+            rc = _rtnCoordParseString( e, tmpVecStr,
+                                       RTN_COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
             {
-               if ( 0 == ossStrcasecmp( tmpVecStr[i], "all" ) )
+               for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
                {
-                  for ( UINT32 k = 0 ; k < (UINT32)SDB_ROLE_MAX ; ++k )
+                  if ( 0 == ossStrcasecmp( tmpVecStr[i], "all" ) )
                   {
-                     param._role[ k ] = 1 ;
+                     for ( UINT32 k = 0 ; k < (UINT32)SDB_ROLE_MAX ; ++k )
+                     {
+                        tmpRole[ k ] = 1 ;
+                     }
+                     break ;
                   }
-                  break ;
+                  if ( SDB_ROLE_MAX != utilGetRoleEnum( tmpVecStr[ i ] ) )
+                  {
+                     tmpRole[ utilGetRoleEnum( tmpVecStr[ i ] ) ] = 1 ;
+                  }
+                  else
+                  {
+                     rc = SDB_INVALIDARG ;
+                     break ;
+                  }
                }
-               if ( SDB_ROLE_MAX != utilGetRoleEnum( tmpVecStr[ i ] ) )
+            }
+
+            if ( SDB_OK == rc )
+            {
+               modify = TRUE ;
+               param._parseMask |= RTN_CTRL_MASK_ROLE ;
+               ossMemcpy( param._role, tmpRole, sizeof( tmpRole ) ) ;
+
+               if ( mask & RTN_CTRL_MASK_GLOBAL )
                {
-                  param._role[ utilGetRoleEnum( tmpVecStr[ i ] ) ] = 1 ;
+                  param._isGlobal = TRUE ;
                }
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
             }
             tmpVecStr.clear() ;
          }
          else if ( ( mask & RTN_CTRL_MASK_RAWDATA ) &&
-                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_RAWDATA ) &&
-                   SDB_OK == _rtnCoordParseBoolean( e, param._rawData,
-                                                    RTN_COORD_PARSE_MASK_ET ) )
+                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_RAWDATA ) )
          {
-            modify = TRUE ;
-            param._parseMask |= RTN_CTRL_MASK_RAWDATA ;
+            rc = _rtnCoordParseBoolean( e, param._rawData,
+                                        RTN_COORD_PARSE_MASK_ET ) ;
+            if ( SDB_OK == rc )
+            {
+               modify = TRUE ;
+               param._parseMask |= RTN_CTRL_MASK_RAWDATA ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
          }
          else if ( pNewObj )
          {
@@ -3823,7 +3953,7 @@ namespace engine
       }
 
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       goto done ;
    }
