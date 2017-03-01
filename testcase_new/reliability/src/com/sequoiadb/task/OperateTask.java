@@ -9,16 +9,24 @@
  */
 package com.sequoiadb.task ;
 
+import com.sequoiadb.exception.ReliabilityException ;
+
 public abstract class OperateTask extends Task {
     public enum faultStatus {
         INIT, MAKESUCCESS, MAKEFAILURE, RESTORESUCESS, RESTOREFAILURE, EXCEPTION
     } ;
 
-    private TaskMgr mgr ;
+    private TaskMgr mgr = null ;
+    private static final int defaultDuration = 5 ;
 
-    public OperateTask( String name, int maxDuration ) {
-        super( name, maxDuration ) ;
+    public OperateTask( String name ) {
+        super( name, defaultDuration ) ;
+
         // TODO Auto-generated constructor stub
+    }
+
+    public void setMgr( TaskMgr mgr ) {
+        this.mgr = mgr ;
     }
 
     public abstract void faultMakeNotify( faultStatus status ) ;
@@ -36,15 +44,18 @@ public abstract class OperateTask extends Task {
                 setStatus( Task.TaskStatus.TASKINTERRUPT ) ;
             } else {
                 setStatus( Task.TaskStatus.TASKTHROWEXCEPTION ) ;
+                exception = ( ReliabilityException ) e ;
             }
-            exceptionList.add( e ) ;
+            // exceptionList.add( e ) ;
         }
-        setStatus( Task.TaskStatus.TASKSTOP ) ;
+        if ( exception == null ) {
+            setStatus( Task.TaskStatus.TASKSTOP ) ;
+        }
         mgr.Done( this ) ;
     }
-    
-    public Task getTaskByName(String name){
-        return mgr.getTaskByName( name );
+
+    public Task getTaskByName( String name ) {
+        return mgr.getTaskByName( name ) ;
     }
 
 }

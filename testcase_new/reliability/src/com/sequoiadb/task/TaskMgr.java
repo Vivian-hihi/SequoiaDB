@@ -14,30 +14,31 @@ import java.util.List ;
 import java.util.Map ;
 import java.util.Map.Entry ;
 
-import com.sequoiadb.exception.CommException ;
 import com.sequoiadb.exception.ReliabilityException;
 
 public class TaskMgr {
     private Map< String, Task > taskSet = new HashMap< String, Task >() ;
     FaultMakeTask faultMakeTask ;
-    public TaskMgr(FaultMakeTask faultMakeTask) {
-        this.faultMakeTask = faultMakeTask;
-        addTask( faultMakeTask ) ;
+
+    public TaskMgr( FaultMakeTask faultMakeTask ) {
+        this.faultMakeTask = faultMakeTask ;
+        taskSet.put( faultMakeTask.getName(), faultMakeTask ) ;
     }
 
     /**
      * @param task
      *            任务
      */
-    public void addTask( Task task ) {
+    public void addTask( String taskClassName ) {
+        OperateTask task = OperateTaskFactory.newTask( taskClassName, this ) ;
+        if ( task == null ) {
+            return ;
+        }
         if ( !taskSet.containsKey( task.getName() ) ) {
             taskSet.put( task.getName(), task ) ;
         }
-        
-        if (task.getClass().equals( FaultMakeTask.class )){
-            if (task.getClass().equals( FaultMakeTask.class )){
-                faultMakeTask.addDependsTask( (OperateTask)task );
-            }
+        if ( faultMakeTask != null ) {
+            faultMakeTask.addDependsTask( ( OperateTask ) task ) ;
         }
     }
 
@@ -49,9 +50,9 @@ public class TaskMgr {
         if ( taskSet.containsKey( task.getName() ) ) {
             taskSet.remove( task.getName() ) ;
         }
-        
-        if (task.getClass().equals( FaultMakeTask.class )){
-            faultMakeTask.removeDependsTask( (OperateTask)task );
+
+        if ( faultMakeTask != null ) {
+            faultMakeTask.removeDependsTask( ( OperateTask ) task ) ;
         }
     }
 
@@ -93,7 +94,7 @@ public class TaskMgr {
                 entry.getValue().join() ;
             } catch ( InterruptedException e ) {
                 // TODO Auto-generated catch block
-                throw new CommException( e ) ;
+
             }
         }
     }
@@ -118,19 +119,18 @@ public class TaskMgr {
     public void Done( Task task ) {
         if ( task.getStatus() == Task.TaskStatus.TASKTHROWEXCEPTION ) {
             for ( Entry< String, Task > entry : taskSet.entrySet() ) {
-                if ( !task.getName().equals( entry.getKey() ) ||
-                      task.getClass().equals( FaultMakeTask.class )) {
+                if ( !task.getName().equals( entry.getKey() )
+                        || task.getClass().equals( FaultMakeTask.class ) ) {
                     entry.getValue().interrupt() ;
                 }
             }
         }
     }
 
-    public Map< String, List< Exception >> getExceptions() {
-        join() ;
-        HashMap< String, List< Exception >> map = new HashMap< String, List< Exception >>() ;
+    public Map< String, ReliabilityException > getExceptions() {
+        HashMap< String, ReliabilityException > map = new HashMap< String, ReliabilityException >() ;
         for ( Map.Entry< String, Task > entry : taskSet.entrySet() ) {
-            map.put( entry.getKey(), entry.getValue().getExceptionList() ) ;
+            map.put( entry.getKey(), entry.getValue().getException() ) ;
         }
         return map ;
     }
@@ -138,10 +138,7 @@ public class TaskMgr {
     public String getErrorMsg() {
         String reStr = new String() ;
         for ( Map.Entry< String, Task > entry : taskSet.entrySet() ) {
-            if ( !entry.getValue().isSuccess() ) {
-                reStr += "Thread " + entry.getKey() + " ErrorMsg:\r\n" ;
-                reStr += entry.getValue().getErrorMsg() ;
-            }
+            reStr += entry.getValue().getErrorMsg() ;
         }
         return reStr ;
     }

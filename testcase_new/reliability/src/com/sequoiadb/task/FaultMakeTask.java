@@ -7,67 +7,71 @@
  * Date:2017-2-21下午4:54:48
  *  @version 1.00
  */
-package com.sequoiadb.task;
+package com.sequoiadb.task ;
 
-import java.util.List;
-import java.util.Random;
+import java.util.List ;
+import java.util.Random ;
 
-import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.fault.Fault;
-import com.sequoiadb.fault.FaultWrapper;
+import com.sequoiadb.exception.ReliabilityException ;
+import com.sequoiadb.fault.Fault ;
+import com.sequoiadb.fault.FaultWrapper ;
 
 public class FaultMakeTask extends Task {
 
-	private FaultWrapper faultInstance;
-	private final int MilliSecondsPerSecond = 1000;
+    private FaultWrapper faultInstance ;
+    private final int MilliSecondsPerSecond = 1000 ;
 
-	public FaultMakeTask(Fault instance, int maxDuration, int checkTimes) {
-		super(instance.getName(), maxDuration);
-		// TODO Auto-generated constructor stub
-		faultInstance = new FaultWrapper(instance, checkTimes);
-	}
+    public FaultMakeTask( Fault instance, int maxDuration, int checkTimes ) {
+        super( instance.getName(), maxDuration ) ;
+        // TODO Auto-generated constructor stub
+        faultInstance = new FaultWrapper( instance, checkTimes ) ;
+    }
 
-	@SuppressWarnings("static-access")
-	public void run() {
-		Random random = new Random();
-		try {
-			Thread.currentThread().sleep(random.nextInt(super.randomStartMaxDuration * MilliSecondsPerSecond));
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-		}
-		try {
-			faultInstance.make();
-		} catch (ReliabilityException e) {
+    @SuppressWarnings( "static-access" )
+    public void run() {
+        Random random = new Random() ;
+        try {
+            Thread.currentThread().sleep(
+                    random.nextInt( super.randomStartMaxDuration
+                            * MilliSecondsPerSecond ) ) ;
+        } catch ( InterruptedException e ) {
+            // TODO Auto-generated catch block
+        }
+        try {
+            faultInstance.make() ;
+        } catch ( ReliabilityException e ) {
+            exception = e;
+        }
+        try {
+            Thread.currentThread().sleep(
+                    random.nextInt( super.randomStartMaxDuration
+                            * MilliSecondsPerSecond ) ) ;
+        } catch ( InterruptedException e ) {
+            // TODO Auto-generated catch block
+        }
+        try {
+            faultInstance.restore() ;
+        } catch ( ReliabilityException e ) {
+            exception = e;
+        }
 
-		}
-		try {
-			Thread.currentThread().sleep(random.nextInt(super.randomStartMaxDuration * MilliSecondsPerSecond));
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-		}
-		try {
-			faultInstance.restore();
-		} catch (ReliabilityException e) {
+    }
 
-		}
+    public void addDependsTask( OperateTask task ) {
+        faultInstance.addDependsTask( task ) ;
+    }
 
-	}
+    public void removeDependsTask( OperateTask task ) {
+        faultInstance.removeDependsTask( task ) ;
+    }
 
-	public void addDependsTask(OperateTask task) {
-		faultInstance.addDependsTask(task);
-	}
+    @Override
+    public boolean init() throws ReliabilityException {
+        return faultInstance.init() ;
+    }
 
-	public void removeDependsTask(OperateTask task) {
-		faultInstance.removeDependsTask(task);
-	}
-
-	@Override
-	public boolean init() throws ReliabilityException {
-		return faultInstance.init();
-	}
-
-	@Override
-	public boolean fini() throws ReliabilityException {
-		return faultInstance.fini();
-	}
+    @Override
+    public boolean fini() throws ReliabilityException {
+        return faultInstance.fini() ;
+    }
 }
