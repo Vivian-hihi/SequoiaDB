@@ -135,6 +135,23 @@ size_t ossSnprintf(char* pBuffer, size_t iLength, const char* pFormat, ...)
    return n;
 }
 
+BOOLEAN ossIsInteger( const CHAR *pStr )
+{
+   UINT32 i = 0 ;
+   while( pStr[i] )
+   {
+      if ( pStr[i] < '0' || pStr[i] > '9' )
+      {
+         if ( 0 != i || ( '-' != pStr[i] && '+' != pStr[i] ) )
+         {
+            return FALSE ;
+         }
+      }
+      ++i ;
+   }
+   return TRUE ;
+}
+
 BOOLEAN ossIsUTF8 ( CHAR *pzInfo )
 {
 #if defined (_WINDOWS)

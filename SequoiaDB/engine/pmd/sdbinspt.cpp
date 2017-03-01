@@ -279,23 +279,6 @@ void displayArg ( po::options_description &desc )
    std::cout << desc << std::endl ;
 }
 
-BOOLEAN pmdUtilIsNum( const CHAR *str )
-{
-   UINT32 i = 0 ;
-   while( str[i] )
-   {
-      if ( str[i] < '0' || str[i] > '9' )
-      {
-         if ( 0 != i || ( '-' != str[i] && '+' != str[i] ) )
-         {
-            return FALSE ;
-         }
-      }
-      ++i ;
-   }
-   return TRUE ;
-}
-
 INT32 parseRepaireString( const std::string &str )
 {
    const CHAR *pin = str.c_str() ;
@@ -329,7 +312,7 @@ INT32 parseRepaireString( const std::string &str )
       pmdAddrPair &aItem = items[ i ] ;
 
       /// must be nubmer
-      if ( !pmdUtilIsNum( aItem._service ) )
+      if ( !ossIsInteger( aItem._service ) )
       {
          ossPrintf( "Field[%s]'s value is not number[%s]"OSS_NEWLINE,
                     aItem._host, aItem._service ) ;
