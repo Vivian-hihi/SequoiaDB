@@ -473,14 +473,11 @@ INT32 sptConvertor::_addMaxKey( JSObject *obj,
    return SDB_OK ;
 }
 
-INT32 sptConvertor::_addNumberLong( JSObject *obj,
-                                    const CHAR *key,
-                                    bson *bs )
+INT32 sptConvertor::_getNumberLongValue( JSObject *obj, INT64 &value )
 {
    INT32 rc = SDB_OK ;
    jsval jsV = JSVAL_VOID ;
    FLOAT64 fv = 0 ;
-   INT64 n = 0 ;
    string strv ;
 
    if ( !_getProperty( obj, "_v",
@@ -504,7 +501,7 @@ INT32 sptConvertor::_addNumberLong( JSObject *obj,
 
       try
       {
-         n = boost::lexical_cast<INT64>( strv ) ;
+         value = boost::lexical_cast<INT64>( strv ) ;
       }
       catch ( std::bad_cast &e )
       {
@@ -521,9 +518,27 @@ INT32 sptConvertor::_addNumberLong( JSObject *obj,
          _setErrorMsg( "Failed to conversion NumberLong", FALSE ) ;
          goto error ;
       }
-      n = fv ;
+      value = fv ;
    }
 
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 sptConvertor::_addNumberLong( JSObject *obj,
+                                    const CHAR *key,
+                                    bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   INT64 n = 0 ;
+
+   rc = _getNumberLongValue( obj, n ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
    bson_append_long( bs, key, n ) ;
 done:
    return rc ;
@@ -946,9 +961,19 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
             }
             tm = fv ;
          }
+         else if ( is_numberlong( _cx, tmpObj ) )
+         {
+            INT64 value = 0 ;
+            rc = _getNumberLongValue( tmpObj, value ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            tm = value ;
+         }
          else
          {
-            _setErrorMsg( "$numberLong value must be a string or a number", FALSE ) ;
+            _setErrorMsg( "$date 's value object is not support", FALSE ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }

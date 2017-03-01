@@ -126,6 +126,9 @@ private:
                      const CHAR *key,
                      bson *bs ) ;
 
+   INT32 _getNumberLongValue( JSObject *obj,
+                              INT64 &value ) ;
+
    INT32 _addNumberLong( JSObject *obj,
                          const CHAR *key,
                          bson *bs) ;
