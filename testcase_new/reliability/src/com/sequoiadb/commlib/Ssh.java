@@ -1,12 +1,11 @@
 package com.sequoiadb.commlib;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.testng.annotations.Test;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -14,7 +13,6 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
 import com.sequoiadb.exception.OperateException;
 import com.sequoiadb.exception.ReliabilityException;
 
@@ -35,8 +33,26 @@ public class Ssh {
 	// ssh建立的后台命令集合（key：Channel id ，value：Channel）
 	private Map<Integer, Channel> backgroundCMD = new HashMap<Integer, Channel>();
 
+	@Test
+	public static void test() {
+		Ssh ssh = null;
+		try {
+			ssh = new Ssh("192.168.31.31", "root", "sequoiadb");
+			int id = ssh.execBackground("ping 192.168.31.31 -w 25");
+			ssh.waitBackgroudCMDDown(id,5);
+			ssh.waitBackgroudCMDDown(id);
+			System.out.println(ssh.getStdout());
+		} catch (ReliabilityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			ssh.close();
+		}
+
+	}
+
 	/**
-	 * 使用给定参数及22端口创建ssh对象，建立session
+	 * 使用给定参数及22端口创建ssh对象
 	 * 
 	 * @param host
 	 * @param username
@@ -48,7 +64,7 @@ public class Ssh {
 	}
 
 	/**
-	 * 使用给定参数创建ssh对象，建立session
+	 * 使用给定参数创建ssh对象
 	 * 
 	 * @param host
 	 * @param username
@@ -122,7 +138,7 @@ public class Ssh {
 
 	/**
 	 * 在远程主机上执行命令，并等待其执行结果，标准输出存入stdout，标准出错存入stderr,返回值存入exitStatus(注意：
-	 * 每一次调用exec都将覆盖上一次的执行结果)
+	 * 每一次调用exec都将覆盖上一次的执行结果,返回值不为零将抛出异常)
 	 * 
 	 * @param command
 	 * @return exitStatus
@@ -134,7 +150,7 @@ public class Ssh {
 			channel = session.openChannel("exec");
 			((ChannelExec) channel).setCommand(command);
 			channel.connect();
-			getResult(channel);
+			getResult(channel, Integer.MAX_VALUE);
 			if (exitStatus != 0) {
 				throw new OperateException(
 						"ssh executing commond '" + command + "':" + stderr + " errcode: " + exitStatus);
@@ -181,31 +197,30 @@ public class Ssh {
 	 * @throws Exception
 	 */
 	public void waitBackgroudCMDDown(int channelId) throws ReliabilityException {
-		Channel channel = backgroundCMD.get(channelId);
-		if (channel == null) {
-			throw new OperateException("ssh dose not executed this command or this command already be checked");
-		}
-
-		try {
-			getResult(channel);
-		} catch (IOException e) {
-			throw new OperateException(e);
-		}
-		channel.disconnect();
+		waitBackgroudCMDDown(channelId, Integer.MAX_VALUE);
 	}
 
-	public void waitBackgroudCMDDown(int channelId, int timeOut) throws ReliabilityException {
+	/**
+	 * 等待给定channelId所执行的命令结束，覆盖stdout，stderr，exitstatus保存结果
+	 * 
+	 * @param timeOutSecond
+	 * @param channelId
+	 * @return
+	 * @throws ReliabilityException
+	 */
+	public void waitBackgroudCMDDown(int channelId, int timeOutSecond) throws ReliabilityException {
 		Channel channel = backgroundCMD.get(channelId);
 		if (channel == null) {
-			throw new OperateException("ssh dose not executed this command or this command already be checked");
+			throw new OperateException("ssh can not find this channel id(can not check channel id twice)");
 		}
-
+		backgroundCMD.remove(channelId);
 		try {
-			getResult(channel, timeOut);
+			getResult(channel, timeOutSecond);
 		} catch (IOException e) {
 			throw new OperateException(e);
+		} finally {
+			channel.disconnect();
 		}
-		channel.disconnect();
 	}
 
 	/**
@@ -220,7 +235,7 @@ public class Ssh {
 		}
 	}
 
-	private void getResult(Channel channel, int timeOut) throws IOException {
+	private void getResult(Channel channel, long timeOut) throws IOException {
 		StringBuffer stdoutBf = new StringBuffer();
 		StringBuffer stderrBf = new StringBuffer();
 
@@ -288,58 +303,6 @@ public class Ssh {
 		exitStatus = channel.getExitStatus();
 	}
 
-	private void getResult(Channel channel) throws IOException {
-		StringBuffer stdoutBf = new StringBuffer();
-		StringBuffer stderrBf = new StringBuffer();
-
-		InputStream er = ((ChannelExec) channel).getErrStream();
-		InputStream in = channel.getInputStream();
-		byte[] tmp = new byte[1024];
-		while (true) {
-			while (in.available() > 0) {
-				int i = in.read(tmp, 0, 1024);
-				if (i < 0) {
-					break;
-				}
-				stdoutBf.append(new String(tmp, 0, i));
-
-			}
-			if (channel.isClosed()) {
-				if (in.available() > 0) {
-					continue;
-				}
-				break;
-			}
-			try {
-				Thread.sleep(200);
-			} catch (Exception e) {
-				// ignore
-			}
-		}
-
-		while (true) {
-			while (er.available() > 0) {
-				int i = er.read(tmp, 0, 1024);
-				if (i < 0)
-					break;
-				stderrBf.append(new String(tmp, 0, i));
-			}
-			if (channel.isClosed()) {
-				if (er.available() > 0)
-					continue;
-				break;
-			}
-			try {
-				Thread.sleep(200);
-			} catch (Exception e) {
-				// ignore
-			}
-		}
-		stdout = stdoutBf.toString();
-		stderr = stderrBf.toString();
-		exitStatus = channel.getExitStatus();
-	}
-	
 	public String getStdout() {
 		return stdout;
 	}
