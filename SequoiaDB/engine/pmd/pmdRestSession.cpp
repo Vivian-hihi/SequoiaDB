@@ -3185,17 +3185,23 @@ namespace engine
                      FIELD_NAME_NAME ) ;
          goto error ;
       }
-      
+
+      // options
       pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOptions ) ;
-      if( NULL != pOptions )
+      if ( NULL == pOptions )
       {
-         rc = fromjson( pOptions, options, 0 ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "field's format error:field=%s, "
-                        "value=%s", FIELD_NAME_OPTIONS, pOptions ) ;
-            goto error ;
-         }
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     FIELD_NAME_OPTIONS ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pOptions, options, 0 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                     FIELD_NAME_OPTIONS, pOptions ) ;
+         goto error ;
       }
 
       try
@@ -3271,7 +3277,7 @@ namespace engine
       INT32 buffSize        = 0 ;
       CHAR *pBuff           = NULL ;
       const CHAR *pName     = NULL ;
-      const CHAR *pOption   = NULL ;
+      const CHAR *pOptions  = NULL ;
       const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_CREATE_DOMAIN ;
       BSONObj query ;
       BSONObj options ;
@@ -3286,29 +3292,24 @@ namespace engine
          goto error ;
       }
 
-      // options
-      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOption ) ;
-      if ( NULL == pOption )
+      //options
+      pAdaptor->getQuery( _restSession, FIELD_NAME_OPTIONS, &pOptions ) ;
+      if( NULL != pOptions )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
-                     FIELD_NAME_OPTIONS ) ;
-         goto error ;
-      }
-
-      rc = fromjson( pOption, options, 0 ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                     FIELD_NAME_OPTIONS, pOption ) ;
-         goto error ;
+         rc = fromjson( pOptions, options, 0 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, "
+                        "value=%s", FIELD_NAME_OPTIONS, pOptions ) ;
+            goto error ;
+         }
       }
 
       try
       {
          BSONObjBuilder ob ;
          ob.append ( FIELD_NAME_NAME, pName ) ;
-         if( NULL != pOption )
+         if( pOptions != NULL )
          {
             ob.append ( FIELD_NAME_OPTIONS, options ) ;
          }
