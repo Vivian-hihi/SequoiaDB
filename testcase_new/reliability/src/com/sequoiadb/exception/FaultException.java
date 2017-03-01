@@ -9,8 +9,6 @@
  */
 package com.sequoiadb.exception ;
 
-import com.jcraft.jsch.JSchException ;
-
 public class FaultException extends ReliabilityException {
     /**
      * 
@@ -27,12 +25,6 @@ public class FaultException extends ReliabilityException {
 
     public FaultException( String message, Throwable cause ) {
         super( message, cause ) ;
-
-        if ( cause instanceof BaseException ) {
-            super.setDBException() ;
-        } else if ( cause instanceof JSchException ) {
-            super.setSSHException() ;
-        }
     }
 
     public FaultException( Throwable cause ) {
