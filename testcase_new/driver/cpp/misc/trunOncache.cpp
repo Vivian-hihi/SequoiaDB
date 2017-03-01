@@ -330,7 +330,7 @@ TEST( turnonCache, testUpdateTimeStamp)
       diff1 = end.tv_usec - begin.tv_usec;
    }
    
-   if ( 3000000 - diff1 >  1000000) {
+   if ( 3000000 - diff1 >  2000000) {
       ASSERT_EQ(SDB_OK, getTimeOfgetCLByFullName(db1, csName, clName, diff2)) << "drop spend" <<  diff1 << "ms";
    }else{
       ASSERT_EQ(-23, getTimeOfgetCLByFullName(db1, csName, clName, diff2)) << "drop spend" <<  diff1 << "ms";
