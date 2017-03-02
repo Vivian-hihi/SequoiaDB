@@ -47,6 +47,8 @@
    </target>
    
    <target name="execjavatestcase"> 
+      <copy file="${WORKSPACE}/sequoiadb/testcase/thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" 
+            todir="${casedir}/lib" overwrite="true" />
       <var name="begin_time" unset="true"/>
       <tstamp>
          <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
