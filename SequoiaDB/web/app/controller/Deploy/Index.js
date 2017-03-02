@@ -1127,7 +1127,7 @@
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                     uninstallModule( moduleName ) ;
+                     uninstallModule( index ) ;
                      return true ;
                   } ) ;
                }
@@ -1142,7 +1142,7 @@
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                     uninstallModule( moduleName ) ;
+                     uninstallModule( index ) ;
                      return true ;
                   } ) ;
                }
@@ -1209,7 +1209,7 @@
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  createCluster( clusterInfo ) ;
+                  createCluster( clusterInfo, success ) ;
                   return true ;
                } ) ;
             }
@@ -1856,6 +1856,7 @@
                   },
                   'failed': function( errorInfo ){
                      _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                        $scope.SetAuthorityModel( BusinessName ) ;
                         return true ;
                      } ) ;
                   }
@@ -1887,6 +1888,7 @@
                },
                'failed': function( errorInfo ){
                   _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                     $scope.DropAuthorityModel( BusinessName ) ;
                      return true ;
                   } ) ;
                }
