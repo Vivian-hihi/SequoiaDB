@@ -12,6 +12,8 @@
          <delete dir="@{srcdir}/build" failonerror="false" />
          <mkdir dir="@{srcdir}/build"/>
          <copy file="@{dbdir}/java/sequoiadb.jar" todir="@{srcdir}/lib" overwrite="true" />
+         <copy file="${WORKSPACE}/sequoiadb/testcase/thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" 
+               todir="@{srcdir}/lib" overwrite="true" />
          <javac executable="@{dbdir}/java/jdk/bin/javac" 
                 srcdir="@{srcdir}" 
                 destdir="@{srcdir}/build"
