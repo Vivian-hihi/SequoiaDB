@@ -43,6 +43,8 @@
   | Int32    | 将Int32类型的数字强转为Double类型对应的数字 | 无 |
   | Int64    | 将Int64类型的数字强转为Double类型对应的数字 | 无 |
   | Decimal  | 将Decimal类型的数字强转为Double类型对应的数字 | 0.0 |
+  | Timestamp| 将Timestamp类型的值表示的绝对毫秒转为Double类型的数字 | 无 |
+  | Date     | 将Date类型的值表示的绝对毫秒转为Double类型的数字 | 无 |
   > **Note:**  
   > 1. 将非数字字符串转为Double类型，转换将异常返回0.0。  
   > 2. 将超过Double类型范围的数字字符串转为Double类型，转换将异常返回0.0。  
