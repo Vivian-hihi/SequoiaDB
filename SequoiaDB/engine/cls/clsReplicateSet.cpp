@@ -266,6 +266,10 @@ namespace engine
       {
          getBucket()->enforceMaxReplSync( pmdGetOptionCB()->maxReplSync() ) ;
       }
+      if ( g_startShiftTime >= 0 )
+      {
+         g_startShiftTime = (INT32)pmdGetOptionCB()->startShiftTime() ;
+      }
    }
 
    void _clsReplicateSet::ntyPrimaryChange( BOOLEAN primary,
