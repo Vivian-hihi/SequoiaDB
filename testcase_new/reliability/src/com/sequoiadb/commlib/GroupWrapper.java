@@ -99,17 +99,23 @@ public class GroupWrapper {
 		return nodes.size();
 	}
 
-	public boolean changePrimary() throws ReliabilityException {
+	public boolean changePrimary(int times) throws ReliabilityException {
 		if (getGroupName().equals("SYSCoord")) {
 			return false;
 		}
 		String groupName = getGroupName();
 		int priNode = getMaster().nodeID();
 		Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
-		ssh.exec("sdb -s \"var db = new Sdb;var rg = db.getRG('" + groupName + "');rg.reelect();\"");
-		refresh();
-		if (priNode != getMaster().nodeID()) {
-			return true;
+		try {
+			for (int i = 0; i < times; i++) {
+				ssh.exec("sdb -s \"var db = new Sdb;var rg = db.getRG('" + groupName + "');rg.reelect();\"");
+				refresh();
+				if (priNode != getMaster().nodeID()) {
+					return true;
+				}
+			}
+		} finally {
+			ssh.close();
 		}
 		return false;
 	}
@@ -137,5 +143,39 @@ public class GroupWrapper {
 			hosts.add(node.hostName());
 		}
 		return hosts;
+	}
+
+	public boolean checkInspect(int checktime, int intervelSecond) throws ReliabilityException {
+		for (int i = 0; i < checktime; i++) {
+			if (inspect()) {
+				return true;
+			}
+			try {
+				Thread.sleep(intervelSecond*1000);
+			} catch (InterruptedException e) {
+
+			}
+			
+		}
+		return false;
+
+	}
+
+	public boolean inspect() throws ReliabilityException {
+		String stdout = getInspectStdout();
+		String[] res = stdout.split("\n");
+		if (res.length != 8) {
+			throw new ReliabilityException("analyze inspectStdout faile:" + stdout);
+		}
+		if (res[7].equals("Reason for exit : exit with no records different")) {
+			return true;
+		}
+		return false;
+	}
+
+	public String getInspectStdout() throws ReliabilityException {
+		Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
+		ssh.exec("sdbinspect -g " + getGroupName());
+		return ssh.getStdout();
 	}
 }

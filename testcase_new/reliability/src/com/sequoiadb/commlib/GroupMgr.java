@@ -19,8 +19,6 @@ import java.util.Set;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.testng.annotations.Test;
-
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -31,18 +29,6 @@ public class GroupMgr {
 	private Map<Integer, GroupWrapper> id2group = new HashMap<Integer, GroupWrapper>();
 	private Sequoiadb sdb = null;
 	private static GroupMgr mgr = null;
-
-	@Test
-	public static void test() {
-		try {
-			GroupMgr mgr = GroupMgr.getInstance();
-			GroupWrapper g1 = mgr.getGroupByName("group1");
-			System.out.println(g1.changePrimary());
-		} catch (ReliabilityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
 	private GroupMgr() {
 		this.sdb = new Sequoiadb("192.168.31.31:11810", "", "");
