@@ -101,7 +101,7 @@ public class FaultWrapper extends Fault {
 				break;
 			}
 		}
-		return true;
+		return checkResult;
 	}
 
 	public void restore() throws FaultException {
