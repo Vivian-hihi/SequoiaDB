@@ -47,7 +47,7 @@ function main()
       
       //crud  
       insertRecs( cl, rawData );
-      findAndCheckResult( cl, rawData );
+      findAndCheckResult( cl, rawData, t1 );
       updateAndCheckResult( cl, rawData );
       removeAndCheckResult( cl, rawData );
    
@@ -66,7 +66,7 @@ function insertRecs( cl, rawData )
    cl.insert( rawData );
 }
 
-function findAndCheckResult( cl, rawData )
+function findAndCheckResult( cl, rawData, t1 )
 {
    println("\n---Begin to find and check result.");
    
@@ -82,7 +82,8 @@ function findAndCheckResult( cl, rawData )
    }
    
    //check result
-   var expRecs = '[{"a":0,"b":{"$date":"2017-03-01"}},{"a":1,"b":{"$date":"1901-01-01"}},{"a":2,"b":{"$date":"9999-12-31"}},{"a":3,"b":{"$date":-62135596800000}},{"a":4,"b":{"$date":-2209075200000}},{"a":5,"b":{"$date":"1900-01-01"}},{"a":6,"b":{"$date":"9999-12-31"}},{"a":7,"b":{"$date":-62135625600000}},{"a":8,"b":{"$date":-2209104000000}},{"a":9,"b":{"$date":"1900-01-01"}},{"a":10,"b":{"$date":"9999-12-31"}},{"a":11,"b":{"$date":-9223372036854776000}},{"a":12,"b":{"$date":-9223372036854776000}},{"a":13,"b":{"$date":-62135625957000}},{"a":14,"b":{"$date":"1900-01-01"}},{"a":15,"b":{"$date":"9999-12-31"}},{"a":16,"b":{"$date":-9223372036854776000}},{"a":17,"b":{"$date":-9223372036854776000}},{"a":18,"b":{"$date":-9223372036854776000}},{"a":19,"b":{"$date":-9223372036854776000}},{"a":20,"b":{"$date":-62135625957000}},{"a":21,"b":{"$date":"1900-01-01"}},{"a":22,"b":{"$date":"9999-12-31"}}]' ;
+   var currentDate = cmdRun('date "+%Y-%m-%d"');
+   var expRecs = '[{"a":0,"b":{"$date":"'+ currentDate +'"}},{"a":1,"b":{"$date":"1901-01-01"}},{"a":2,"b":{"$date":"9999-12-31"}},{"a":3,"b":{"$date":-62135596800000}},{"a":4,"b":{"$date":-2209075200000}},{"a":5,"b":{"$date":"1900-01-01"}},{"a":6,"b":{"$date":"9999-12-31"}},{"a":7,"b":{"$date":-62135625600000}},{"a":8,"b":{"$date":-2209104000000}},{"a":9,"b":{"$date":"1900-01-01"}},{"a":10,"b":{"$date":"9999-12-31"}},{"a":11,"b":{"$date":-9223372036854776000}},{"a":12,"b":{"$date":-9223372036854776000}},{"a":13,"b":{"$date":'+ Number( t1 ) +'}},{"a":14,"b":{"$date":"1900-01-01"}},{"a":15,"b":{"$date":"9999-12-31"}},{"a":16,"b":{"$date":-9223372036854776000}},{"a":17,"b":{"$date":-9223372036854776000}},{"a":18,"b":{"$date":-9223372036854776000}},{"a":19,"b":{"$date":-9223372036854776000}},{"a":20,"b":{"$date":'+ Number( t1 ) +'}},{"a":21,"b":{"$date":"1900-01-01"}},{"a":22,"b":{"$date":"9999-12-31"}}]' ;
    var actRecs = JSON.stringify( rcData ) ;
    if( expRecs !== actRecs )
    {
