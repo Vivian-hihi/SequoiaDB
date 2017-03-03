@@ -7,63 +7,82 @@
  * Date:2017-2-21下午4:54:48
  *  @version 1.00
  */
-package com.sequoiadb.fault ;
+package com.sequoiadb.fault;
 
-import com.sequoiadb.commlib.NodeWrapper ;
+import com.sequoiadb.commlib.NodeWrapper;
 
-import com.sequoiadb.exception.FaultException ;
-import com.sequoiadb.exception.ReliabilityException ;
+import com.sequoiadb.exception.FaultException;
+import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.task.FaultMakeTask;
 
 public class NodeRestart extends Fault {
-    private NodeWrapper node ;
+	private NodeWrapper node;
 
-    public NodeRestart( NodeWrapper node ) {
-        super( "nodeRestart" ) ;
-        // TODO Auto-generated constructor stub
+	public NodeRestart(NodeWrapper node) {
+		super("nodeRestart");
+		// TODO Auto-generated constructor stub
 
-        this.node = node ;
+		this.node = node;
 
-    }
+	}
 
-    public void make() throws FaultException {
-        try {
-            this.node.stop() ;
-        } catch ( ReliabilityException e ) {
-            throw new FaultException( e ) ;
-        }
-    }
+	public void make() throws FaultException {
+		try {
+			this.node.stop();
+		} catch (ReliabilityException e) {
+			throw new FaultException(e);
+		}
+	}
 
-    public boolean checkMakeResult() throws FaultException {
-        try {
-            return this.node.isNodeActive() != true ;
-        } catch ( ReliabilityException e ) {
-            throw new FaultException( e ) ;
-        }
-    }
+	public boolean checkMakeResult() throws FaultException {
+		try {
+			return this.node.isNodeActive() != true;
+		} catch (ReliabilityException e) {
+			throw new FaultException(e);
+		}
+	}
 
-    public void restore() throws FaultException {
-        try {
-            this.node.start() ;
-        } catch ( ReliabilityException e ) {
-            throw new FaultException( e ) ;
-        }
-    }
+	public void restore() throws FaultException {
+		try {
+			this.node.start();
+		} catch (ReliabilityException e) {
+			throw new FaultException(e);
+		}
+	}
 
-    public boolean checkRestoreResult() throws FaultException {
-        try {
-            return this.node.isNodeActive() == true ;
-        } catch ( ReliabilityException e ) {
-            throw new FaultException( e ) ;
-        }
-    }
+	public boolean checkRestoreResult() throws FaultException {
+		try {
+			return this.node.isNodeActive() == true;
+		} catch (ReliabilityException e) {
+			throw new FaultException(e);
+		}
+	}
 
-    @Override
-    public boolean init() throws FaultException {
-        return true ;
-    }
+	@Override
+	public boolean init() throws FaultException {
+		return true;
+	}
 
-    @Override
-    public boolean fini() throws FaultException {
-        return true ;
-    }
+	@Override
+	public boolean fini() throws FaultException {
+		return true;
+	}
+
+	/**
+	 * 
+	 * @param node
+	 * @param maxDelay
+	 *            最大延迟启动时间s
+	 * @param duration
+	 *            持续时间s
+	 * @param checkTimes
+	 *            检查构造成功与否的检测次数
+	 * @return
+	 */
+	public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay, int duration, int checkTimes) {
+		FaultMakeTask task = null;
+		NodeRestart nr = new NodeRestart(node);
+		task = new FaultMakeTask(nr, maxDelay, duration, checkTimes);
+		return task;
+	}
 }
