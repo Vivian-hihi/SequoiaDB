@@ -5,8 +5,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.testng.annotations.Test;
-
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
@@ -31,24 +29,6 @@ public class Ssh {
 	private Session session = null;
 	// ssh建立的后台命令集合（key：Channel id ，value：Channel）
 	private Map<Integer, Channel> backgroundCMD = new HashMap<Integer, Channel>();
-
-	@Test
-	public static void test() {
-		Ssh ssh = null;
-		try {
-			ssh = new Ssh("192.168.31.31", "root", "sequoiadb");
-			int id = ssh.execBackground("ping 192.168.31.31 -w 25");
-			ssh.waitBackgroudCMDDown(id,5);
-			ssh.waitBackgroudCMDDown(id);
-			System.out.println(ssh.getStdout());
-		} catch (ReliabilityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			ssh.close();
-		}
-
-	}
 
 	/**
 	 * 使用给定参数及22端口创建ssh对象
@@ -154,7 +134,7 @@ public class Ssh {
 				throw new ReliabilityException(
 						"ssh executing commond '" + command + "':" + stderr + " errcode: " + exitStatus);
 			}
-		} catch (Exception e) {
+		} catch (IOException | JSchException e) {
 			throw new ReliabilityException(e);
 		} finally {
 			if (channel != null) {
@@ -192,8 +172,7 @@ public class Ssh {
 	 * 
 	 * @param channelId
 	 * @return
-	 * @throws JSchException
-	 * @throws Exception
+	 * @throws waitBackgroudCMDDown
 	 */
 	public void waitBackgroudCMDDown(int channelId) throws ReliabilityException {
 		waitBackgroudCMDDown(channelId, Integer.MAX_VALUE);
@@ -313,4 +292,25 @@ public class Ssh {
 	public int getExitStatus() {
 		return exitStatus;
 	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public Session getSession() {
+		return session;
+	}
+
 }
