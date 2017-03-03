@@ -141,7 +141,18 @@ namespace engine
          break ;
       case NumberDouble :
       {
-         if ( Bool == e.type() )
+         if ( Date == e.type() )
+         {
+            builder.appendNumber( fieldName,
+                                  (FLOAT64)( ( INT64 )( e.date().millis ) ) ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            INT64 l = ( INT64 )( e.timestampTime().millis ) ;
+            l += ( INT64 )( e.timestampInc() / 1000 ) ;
+            builder.appendNumber( fieldName, (FLOAT64)l ) ;
+         }
+         else if ( Bool == e.type() )
          {
             FLOAT64 f = e.Bool() ? 1.0 : 0.0 ;
             builder.appendNumber( fieldName, f ) ;
