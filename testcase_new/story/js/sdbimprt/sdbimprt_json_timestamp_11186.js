@@ -78,15 +78,22 @@ function checkCLData( cl )
 {
    println("\n---Begin to check cl data.");
    
-   var rc = cl.find({$and:[{b:{$type:1,$et:17}},{a:{$ne:3}},{a:{$ne:5}},{a:{$ne:20}},{a:{$ne:23}},{a:{$ne:25}}]},{_id:{$include:0}}).sort({a:1}); //except '{ a:20, b: Timestamp() }'
+   var rc = cl.find({$and:[{b:{$type:1,$et:17}},{a:{$ne:5}},{a:{$ne:20}},{a:{$ne:25}}]},{_id:{$include:0}}).sort({a:1}); //except '{ a:20, b: Timestamp() }'
    var recsArray = [];
    while( tmpRecs = rc.next() )
    {
       recsArray.push( tmpRecs.toObj() );
    }
    
-   var expCnt  = 13;  
-   var expRecs = '[{"a":0,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":1,"b":{"$timestamp":"1970-01-01-00.00.00.000000"}},{"a":2,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":4,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":6,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":21,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":22,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":24,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":26,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":27,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":28,"b":{"$timestamp":"2037-12-31-23.59.59.000000"}},{"a":29,"b":{"$timestamp":"1901-12-14-04.45.52.000000"}},{"a":30,"b":{"$timestamp":"2038-01-19-11.14.07.000000"}}]';
+   //a:3 a:23
+   var localtime1 = turnLocaltime( '1901-12-31T15:54:03.000Z', '%Y-%m-%d-%H.%M.%S.000000' );
+   //a:27
+   var localtime2 = cmd.run( 'date -d@"-2145945600" "+%Y-%m-%d-%H.%M.%S.000000"' ).split( "\n" )[0];
+   //a:29
+   var localtime3 = cmd.run( 'date -d@"-2147483648" "+%Y-%m-%d-%H.%M.%S.000000"' ).split( "\n" )[0];
+   
+   var expCnt  = 15;  
+   var expRecs = '[{"a":0,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":1,"b":{"$timestamp":"1970-01-01-00.00.00.000000"}},{"a":2,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":3,"b":{"$timestamp":"'+ localtime1 +'"}},{"a":4,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":6,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":21,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":22,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":23,"b":{"$timestamp":"'+ localtime1 +'"}},{"a":24,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":26,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":27,"b":{"$timestamp":"'+ localtime2 +'"}},{"a":28,"b":{"$timestamp":"2037-12-31-23.59.59.000000"}},{"a":29,"b":{"$timestamp":"'+ localtime3 +'"}},{"a":30,"b":{"$timestamp":"2038-01-19-11.14.07.000000"}}]';
    var actCnt  = recsArray.length;
    var actRecs = JSON.stringify( recsArray );
    if( actCnt !== expCnt || actRecs !== expRecs )
