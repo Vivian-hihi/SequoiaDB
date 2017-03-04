@@ -14,6 +14,7 @@ FileTest.prototype.testGetInfo = function()
    if( this.file === File )   // 检查文件是否为本地File类类型
    {
       // println( "File has no function getInfo." ) ;
+      this.release() ;
       return ;
    }
    

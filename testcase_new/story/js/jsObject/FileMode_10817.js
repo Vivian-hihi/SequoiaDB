@@ -42,10 +42,16 @@ FileTest.prototype.testChown = function()
    if( this.isLocal )
    {
       if( currUser !== "root" )
+      {
+         this.release() ;
          return ;
+      }
    }
    else if( cmUser !== "root" )
+   {
+      this.release() ;
       return ;
+   }
 
    var tmpFilename = "/tmp/testOwn.txt" ;
    var tmpFile ;   
@@ -77,10 +83,16 @@ FileTest.prototype.testChgrp = function()
    if( this.isLocal )
    {
       if( currUser !== "root" )
+      {
+         this.release() ;
          return ;
+      }
    }
    else if( cmUser !== "root" )
+   {
+      this.release() ;
       return ;
+   }
    
    var tmpFilename = "/tmp/testGrp.txt" ;
    var tmpFile ;   
