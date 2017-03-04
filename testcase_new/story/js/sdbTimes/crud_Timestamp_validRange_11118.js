@@ -34,7 +34,7 @@ function main()
       
       //crud  
       insertRecs( cl, rawData );
-      findAndCheckResult( cl, rawData );
+      findAndCheckResult( cl, rawData, t1 );
       updateAndCheckResult( cl, rawData );
       removeAndCheckResult( cl, rawData );
    
@@ -53,7 +53,7 @@ function insertRecs( cl, rawData )
    cl.insert( rawData );
 }
 
-function findAndCheckResult( cl, rawData )
+function findAndCheckResult( cl, rawData, t1 )
 {
    println("\n---Begin to find and check result.");
    
@@ -61,7 +61,7 @@ function findAndCheckResult( cl, rawData )
    var rcData = [];
    for( i = 1; i < rawData.length; i++ )
    {
-      var cursor = cl.find( { $and:[ rawData[i], {a:{$ne:3}}, {a:{$ne:5}} ]}, {_id:{$include:0}} ).sort({a:1});
+      var cursor = cl.find( {$and :[ rawData[i], {a:{$ne:5}} ] }, {_id:{$include:0}} ).sort({a:1});
       while( tmpRec = cursor.next() )
       {
          rcData.push( tmpRec.toObj() );
@@ -69,7 +69,11 @@ function findAndCheckResult( cl, rawData )
    }
    
    //check result
-   var expRecs = '[{"a":1,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":2,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":4,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":6,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":7,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":8,"b":{"$timestamp":"2037-12-31-23.59.59.000000"}},{"a":9,"b":{"$timestamp":"1901-12-14-04.45.52.000000"}},{"a":10,"b":{"$timestamp":"2038-01-19-11.14.07.000000"}}]' ;
+   var localtime1 = turnLocaltime( '1901-12-31T15:54:03.000Z', '%Y-%m-%d-%H.%M.%S.000000' );
+   var localtime2 = cmdRun( 'date -d@"'+ t1 +'" "+%Y-%m-%d-%H.%M.%S.000000"' );
+   var localtime3 = cmdRun( 'date -d@"-2147483648" "+%Y-%m-%d-%H.%M.%S.000000"' );
+   
+   var expRecs = '[{"a":1,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":2,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":3,"b":{"$timestamp":"'+ localtime1 +'"}},{"a":4,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":6,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":7,"b":{"$timestamp":"'+ localtime2 +'"}},{"a":8,"b":{"$timestamp":"2037-12-31-23.59.59.000000"}},{"a":9,"b":{"$timestamp":"'+ localtime3 +'"}},{"a":10,"b":{"$timestamp":"2038-01-19-11.14.07.000000"}}]' ;
    var actRecs = JSON.stringify( rcData ) ;
    if( expRecs !== actRecs )
    {

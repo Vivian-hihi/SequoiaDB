@@ -52,7 +52,7 @@ function findAndCheckResult( cl, rawData )
    var rcData = [];
    for( i = 0; i < rawData.length; i++ )
    {
-      var cursor = cl.find( rawData[i], {_id:{$include:0}} ).sort({a:1});
+      var cursor = cl.find( {$and:[ rawData[i], {a:{$ne:5}} ]}, {_id:{$include:0}} ).sort({a:1});
       while( tmpRec = cursor.next() )
       {
          rcData.push( tmpRec.toObj() );
@@ -60,7 +60,8 @@ function findAndCheckResult( cl, rawData )
    }
    
    //check result
-   var expRecs = '[{"a":0,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":1,"b":{"$timestamp":"1970-01-01-00.00.00.000000"}},{"a":2,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":3,"b":{"$timestamp":"1901-12-31-23.54.03.000000"}},{"a":4,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":5,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":6,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}}]' ;
+   var localtime1 = turnLocaltime( '1901-12-31T15:54:03.000Z', '%Y-%m-%d-%H.%M.%S.000000' );
+   var expRecs = '[{"a":0,"b":{"$timestamp":"1902-01-01-00.00.00.000000"}},{"a":1,"b":{"$timestamp":"1970-01-01-00.00.00.000000"}},{"a":2,"b":{"$timestamp":"2037-12-31-23.59.59.999999"}},{"a":3,"b":{"$timestamp":"'+ localtime1 +'"}},{"a":4,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}},{"a":6,"b":{"$timestamp":"2037-12-31-23.59.59.999000"}}]' ;
    var actRecs = JSON.stringify( rcData ) ;
    if( expRecs !== actRecs )
    {
@@ -143,3 +144,4 @@ function removeAndCheckResult( cl, rawData )
    }
    
 }
+
