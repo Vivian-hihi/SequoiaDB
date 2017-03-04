@@ -161,7 +161,7 @@ public class GroupWrapper {
 
 	}
 
-	public boolean inspect() throws ReliabilityException {
+	private boolean inspect() throws ReliabilityException {
 		String stdout = getInspectStdout();
 		String[] res = stdout.split("\n");
 		if (res.length != 8) {
