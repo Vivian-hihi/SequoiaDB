@@ -211,6 +211,26 @@ error:
    goto done ;
 }
 
+static CHAR _precision[16] = "%.16g" ;
+
+void setJsonPrecision( INT32 precision )
+{
+   if( precision <= 0 || precision > 16 )
+   {
+      _precision[0] = '%' ;
+      _precision[1] = 'g' ;
+      _precision[2] = 0 ;
+   }
+   else
+   {
+#ifdef WIN32
+      _snprintf( _precision, 16, "%%.%dg", precision ) ;
+#else
+      snprintf ( _precision, 16, "%%.%dg", precision ) ;
+#endif
+   }
+}
+
 /*
  * bson convert json interface
  * buffer : output bson convert json string
@@ -1446,11 +1466,11 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
 #ifdef WIN32
             _snprintf ( temp,
                         BSON_TEMP_SIZE_512,
-                        "%.16g", bson_iterator_double( &i ) ) ;
+                        _precision, bson_iterator_double( &i ) ) ;
 #else
             snprintf ( temp,
                        BSON_TEMP_SIZE_512,
-                       "%.16g", bson_iterator_double( &i ) ) ;
+                       _precision, bson_iterator_double( &i ) ) ;
 #endif
             bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
             CHECK_LEFT ( left )
