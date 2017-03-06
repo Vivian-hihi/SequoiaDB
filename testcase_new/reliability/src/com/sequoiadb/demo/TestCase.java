@@ -83,7 +83,7 @@ public class TestCase extends SdbTestBase {
         FaultMakeTask faultMaker = new FaultMakeTask( killnode, 6, 30 ) ;
 
         // OperateTask(insert,split)
-        TaskMgr manager = new TaskMgr( faultMaker ) ;
+		  manager = new TaskMgr( faultMaker ) ;
         manager.addTask( "com.sequoiadb.demo.TestCase.Insert" ) ;
         manager.addTask( "com.sequoiadb.demo.TestCase.Split" ) ;
         manager.init() ;
