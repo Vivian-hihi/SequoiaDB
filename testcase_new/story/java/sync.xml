@@ -2,7 +2,7 @@
 <!--this xml is for ci, please don't modify it-->
 <!--sync testcase, which should be excute serially-->
 
-<suite name="driver" verbose="1"> 
+<suite name="driver" verbose="1" stop-all-when-occur-failure="false"> 
    <parameter name="HOSTNAME" value="localhost" />
    <parameter name="SVCNAME" value="11810" />
    <parameter name="CHANGEDPREFIX" value="story_java_test" />
@@ -11,7 +11,7 @@
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
 
-   <test name="parralclass" parallel="classes" thread-count="1">
+   <test name="parralclass">
       <packages>
          <package name="com.sequoiadb.crud.backup" />
 		 <package name="com.sequoiadb.serial" />
