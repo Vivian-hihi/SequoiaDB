@@ -55,7 +55,7 @@ public class SdbTestBase {
         }
     }
 
-    @AfterSuite( enabled = false )
+    @AfterSuite
     public static void finiSuite() {
         Sequoiadb db = null ;
         System.out.println( "finiSuite" ) ;
