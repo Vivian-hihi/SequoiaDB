@@ -79,8 +79,8 @@ public class TestCase extends SdbTestBase {
         System.out.println( "destNode " + node.hostName() + ":"
                 + node.svcName() ) ;
 
-        KillNode killnode = new KillNode( node.hostName(), node.hostName() ) ;
-        FaultMakeTask faultMaker = new FaultMakeTask( killnode, 6, 30 ) ;
+       
+        FaultMakeTask faultMaker = KillNode.getFaultMakeTask(node.hostName(), node.svcName(), 2, 30);
 
         // OperateTask(insert,split)
 		  manager = new TaskMgr( faultMaker ) ;
@@ -110,27 +110,10 @@ public class TestCase extends SdbTestBase {
             // TODO Auto-generated constructor stub
         }
 
-        @Override
-        public void faultMakeNotify( faultStatus status ) {
-            System.out.println( super.getName() + " MakeNotify:" + status ) ;
-            this.status = status ;
-            makeFalg.set( true ) ;
-            if ( status != faultStatus.MAKESUCCESS ) {
-                isExist = true ;
-            }
-        }
+      
 
         @Override
-        public void faultRestoreNotify( faultStatus status ) {
-            System.out.println( super.getName() + " Restore:" + status ) ;
-            this.status = status ;
-            restoreFalg.set( true ) ;
-            isExist = true ;
-
-        }
-
-        @Override
-        public void Do() throws Exception {
+        public void exec() throws Exception {
             try {
                 System.out.println( "isnert start" ) ;
                 while ( !isExist ) {
@@ -190,6 +173,14 @@ public class TestCase extends SdbTestBase {
             return true ;
         }
 
+		@Override
+		public void faultNotify(BSONObject status) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		
+
     }
 
     public class Split extends OperateTask {
@@ -205,23 +196,9 @@ public class TestCase extends SdbTestBase {
             // TODO Auto-generated constructor stub
         }
 
+      
         @Override
-        public void faultMakeNotify( faultStatus status ) {
-            System.out.println( super.getName() + " MakeNotify:" + status ) ;
-            this.status = status ;
-            makeFalg.set( true ) ;
-
-        }
-
-        @Override
-        public void faultRestoreNotify( faultStatus status ) {
-            System.out.println( super.getName() + " Restore:" + status ) ;
-            this.status = status ;
-            restoreFalg.set( true ) ;
-        }
-
-        @Override
-        public void Do() {
+        public void exec() {
             try {
                 System.out.println( "split start" ) ;
                 DBCollection cl = db.getCollectionSpace( "testcs" )
@@ -259,6 +236,13 @@ public class TestCase extends SdbTestBase {
             }
             return true ;
         }
+
+
+		@Override
+		public void faultNotify(BSONObject status) {
+			// TODO Auto-generated method stub
+			
+		}
 
     }
 
