@@ -1,0 +1,90 @@
+
+TaskMgr:
+	整个框架通过TaskMgr管理线程：
+		TaskMgr(FaultMakeTask faultMakeTask) TaskMgr对象通过传入一个故障线程对象构建
+		addTask(Task task) 向TaskMgr传入需要统一管理的线程对象，task为用例继承OperateTask构建所得的对象
+		init（） 初始化TaskMgr中的线程对象，此处通常是初始化FaultMakeTask线程对象，若用例实现的OperateTask子类重写了init方法，在此处会被调用，初始化失败会返回false
+		start（） 启动线程
+		join（）结合线程
+		fini（） 反初始化，此处通常是反初始化FaultMakeTask线程对象，若用例实现的OperateTask子类重写了fini方法，在此处会被调用
+		isAllSuccess（） 判断所有线程运行完毕后是否存在异常
+		getErrorMsg（） 获取所有线程的异常信息，若不存在异常，返回""
+		getException() 获取线程产生的异常对象；
+	
+FaultMakeTask extend Task
+	故障线程对象：
+		该对象通过具体故障类的静态方法获取。如断网故障的线程通过Fault包的BrokenNetwork获取：BrokenNetwork.getFaultMakeTask（arg）
+
+OperateTask extend Task
+	用例自定义线程所要继承的类：
+		public abstract void exec() throws Exception;线程任务函数
+		public abstract void faultNotify(BSONObject status);
+			status的Key值有两个可能，FaultMakeTask.MAKE_RESULT , faultMakeTask.RESTORE_RESULT
+					  value：OperateTaksk.faultStatus 
+			当FaultMakeTask完成故障构造，会调用此方法通知用例线程构造结果，此时传递过来的status 是{FaultMakeTask.MAKE_RESULT：OperateTaksk.faultStatus.MAKESUCCESS}
+			当FaultMakeTask完成故障恢复，会调用此方法通知用例线程构造结果，此时传递过来的status 是{FaultMakeTask.RESTORE_RESULT：OperateTaksk.faultStatus.RESTORESUCESS}
+			当故障构造失败或出现异常，value值会是相应的MAKEFAILURE，RESTOREFAILURE，EXCEPTION。
+			用例应该要关注到故障构造失败的情况
+			
+		init（），fini（）方法继承自Task，若用例重写了这两个方法，在TaskMgr的init（），fini（）方法中会被调用
+		
+
+Commlib包下主要是对组，节点的一些再封装：
+	通常由GroupMgr的对象来获得该包下对与组，节点操作的所有支持：
+			GroupMgr对象通过GroupMgr.getInstance获取，或通过new获取
+			init（） 当获得一个GroupMgr对象后，但随后集群信息发生了改变，如重新选举，GroupMgr对象保存的信息此时已经是过时的，可以通过调用init方法更新对象持有的信息
+			getAllDataGroup（） 返回所有数据组的GroupWrapper的对象
+			getAllDataGroupName() 返回所有数据组的名字
+			getALLHosts 集群主机名
+			getGroupByName(String) 对应组的GroupWrapper的对象
+			checkBusiness()			检查当前集群的状态，组内是否有主，可连接，ServiceStatus
+			checkBusinessWithLSN()	在checkBusiness()基础上加上LSN的校验
+			checkBusinessWithLSNAndDisk()在checkBusinessWithLSN()基础上节点磁盘剩余的校验
+			checkResidu() 检测节点配置文件残留
+	
+	GroupWrapper 对某一个数据组的包装类，包含数据组常用操作
+			getaMaster(),getSlave();获取主备节点的NodeWrapper对象
+			changePrimary();切主
+			checkInspect();组内一致性校验
+			getInspectStdout();获取对该组的sdbinspect的输出
+			fresh();更新对象持有的信息
+			
+	NodeWrapper 对某一个节点的包装类
+			具备一些简单的节点启停，备份备份日志的操作
+	
+	
+	Ssh
+		Ssh连接类，具有收发文件，执行命令的方法。
+	
+			
+一个可能的用例实现：
+	clas Test{
+		@Test
+		public test(){
+			//prepare 断网前利用GroupMgr做一些切主操作
+			
+			FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(arg);
+			TaskMgr mg = new TaskMgr(faultTask);
+			mg.addTask(new Insert("insert"));
+			mg.addTask(new Split("Split"));
+			mg.init（）;
+			mg.start（）;
+			mg.join（);
+			mg.fini（）;
+			Assert.assertequals(mg.isAllSuccess（）,true,mg.getErrorMsg（）);
+			
+			//down
+		}
+	}
+	
+	class Split extend OperateTask{
+		public exec ....
+		public abstract void faultNotify(BSONObject status);
+	}
+	
+	class Insert extend OperateTaksk{
+		public exec ...
+		public abstract void faultNotify(BSONObject status);
+	}
+		
+		
