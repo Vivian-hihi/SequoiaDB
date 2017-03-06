@@ -2,7 +2,7 @@
 <!--this xml is for ci, please don't modify it-->
 <!--sync testcase, which should be excute serially-->
 
-<suite name = "driver" verbose="1"> 
+<suite name = "driver" verbose="1" stop-all-when-occur-failure="false"> 
    <parameter name="HOSTNAME"       value="localhost" />
    <parameter name="SVCNAME"        value="11810" />
    <parameter name="CHANGEDPREFIX"  value="story_java_test" />
