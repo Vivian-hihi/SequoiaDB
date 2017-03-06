@@ -30,8 +30,9 @@ public class GroupMgr {
 	private Sequoiadb sdb = null;
 	private static GroupMgr mgr = null;
 
-	private GroupMgr() {
-		this.sdb = new Sequoiadb("192.168.31.31:11810", "", "");
+	public GroupMgr() throws ReliabilityException {
+		this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+		this.init();
 	}
 
 	public void init() throws ReliabilityException {
@@ -107,7 +108,7 @@ public class GroupMgr {
 
 	public static GroupMgr getInstance() throws ReliabilityException {
 		mgr = new GroupMgr();
-		mgr.init();
+		//mgr.init();
 		return mgr;
 	}
 
@@ -121,9 +122,9 @@ public class GroupMgr {
 
 		boolean ret = true;
 		for (GroupCheckResult result : results) {
-			ret = result.check();
-			if (ret == false) {
+			if (!result.check()) {
 				System.out.println(result.toString());
+				ret = false;
 			}
 		}
 		return ret;
