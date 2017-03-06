@@ -90,9 +90,11 @@ public class CL10173 extends SdbTestBase {
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 				CollectionSpace csDB = db.getCollectionSpace(csName);
 				
-				DBCollection clDB = csDB.createCollection(clName);
-				if(csDB != null && clDB != null){
-					CommLib.insertData(db, csName, clName);
+				if(csDB != null ){
+					DBCollection clDB = csDB.createCollection(clName);
+					if(clDB != null){
+						CommLib.insertData(db, csName, clName);
+					}
 				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
