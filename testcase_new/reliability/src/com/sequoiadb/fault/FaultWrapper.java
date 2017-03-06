@@ -150,7 +150,7 @@ public class FaultWrapper extends Fault {
 				break;
 			}
 		}
-		return true;
+		return checkResult;
 	}
 
 	@Override
