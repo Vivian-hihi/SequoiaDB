@@ -17,8 +17,7 @@ function main()
       var cl = readyCL( clName );
       cl.createIndex( idxName, {a:-1} );
       insertRecs( cl );
-      var rc = queryRecs( cl, idxName );
-      checkResult( rc );
+      queryRecs( cl, idxName );  //query and check result
    
       cleanCL( clName );
    }
@@ -42,21 +41,18 @@ function queryRecs( cl, idxName )
 {
    println("\n---Begin to exec[query.hint.count].");
    
-   var rc = cl.find({b:{$gte:10}}).hint({"": idxName }).sort({a:1}).skip(10).limit(20).count();
+   var cnt1 = cl.find({b:{$gte:10}}).hint({"":"" }).sort({a:1}).skip(10).limit(20).count();
+   var cnt2 = cl.find({b:{$gte:10}}).hint({"": idxName }).sort({a:1}).skip(10).limit(20).count();
    
-   return rc ;
-}
-
-function checkResult( rc )
-{
-   println("\n---Begin to check result.");
-   
+   //check result
    var expCnt = 40;
-   var actCnt = Number( rc );
-   if( expCnt !== actCnt )
+   var actCnt1 = Number( cnt1 );
+   var actCnt2 = Number( cnt2 );
+   if( expCnt !== actCnt1 && actCnt1 !== actCnt2 )
    {
       throw buildException("checkResult", null, "[compare the records]", 
-                          "[count:"+ expCnt +"]",
-                          "[count:"+ actCnt +"]");
+                          "[count1:"+ expCnt  +", count2:"+ expCnt  +"]",
+                          "[count1:"+ actCnt1 +", count2:"+ actCnt2 +"]");
    }
+   
 }
