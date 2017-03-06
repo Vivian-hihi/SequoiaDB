@@ -57,7 +57,7 @@
 		</copy>
 		<copy file="${SCRIPT_DIR}/ci.test.properties" todir="${deploy_dir}" />
 		<copy todir="${deploy_dir}">
-			<fileset dir="${SCRIPT_DIR}/exec-testcases" includes="exec*.xml" />
+			<fileset dir="${SCRIPT_DIR}/exec-testcases" includes="*.xml" />
 		</copy>
 	</target>
 
