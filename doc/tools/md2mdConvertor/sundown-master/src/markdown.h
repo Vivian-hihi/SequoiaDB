@@ -95,8 +95,15 @@ struct sd_callbacks {
 	void (*normal_text)(struct buf *ob, const struct buf *text, void *opaque);
 
 	/* header and footer */
-	void (*doc_header)(struct buf *ob, void *opaque);
+	void (*doc_header)(struct buf *ob, const struct buf *text, void *opaque);
 	void (*doc_footer)(struct buf *ob, void *opaque);
+
+   /* user defined */
+   void (*liststart)();
+   void (*listfinish)();
+
+   /* use to control the behavior */
+   int flags ;
 };
 
 struct sd_markdown;

@@ -41,6 +41,11 @@
 #define GPERF_CASE_STRNCMP 1
 #include "html_blocks.h"
 
+/******************************
+ * Define global value for list
+ ******************************/
+
+
 /***************
  * LOCAL TYPES *
  ***************/
@@ -701,8 +706,12 @@ char_escape(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offs
 			work.data = data + 1;
 			work.size = 1;
 			rndr->cb.normal_text(ob, &work, rndr->opaque);
+		} else {
+		   // for "\\>", i don't need to use both of them,
+		   // so just let it output directly
+		   bufputc(ob, data[0]);
+		   bufputc(ob, data[1]);
 		}
-		else bufputc(ob, data[1]);
 	} else if (size == 1) {
 		bufputc(ob, data[0]);
 	}
@@ -1534,6 +1543,11 @@ parse_paragraph(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t 
 		rndr_popbuf(rndr, BUFFER_SPAN);
 	}
 
+   if (2 <= end && '\n' == data[end -1] && '\n' == data[end - 2]) {
+      // for a paragraph finish by a new line, so we need to keep a new line
+      end--;
+   }
+
 	return end;
 }
 
@@ -1631,6 +1645,7 @@ parse_listitem(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t s
 	struct buf *work = 0, *inter = 0;
 	size_t beg = 0, end, pre, sublist = 0, orgpre = 0, i;
 	int in_empty = 0, has_inside_empty = 0, in_fence = 0;
+   size_t blank_num = 0;
 
 	/* keeping track of the first indentation prefix */
 	while (orgpre < 3 && orgpre < size && data[orgpre] == ' ')
@@ -1669,8 +1684,19 @@ parse_listitem(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t s
 		if (is_empty(data + beg, end - beg)) {
 			in_empty = 1;
 			beg = end;
+			bufputc(work, '\n');
 			continue;
 		}
+
+      /* put the blank space to output */
+      blank_num = 0 ;
+      i = 0;
+      while (beg + i < end && data[beg + i] == ' ') {
+         // TODO:
+         bufputc(work, ' ');
+         i++;
+      }
+      blank_num = i;
 
 		/* calculating the indentation */
 		i = 0;
@@ -1707,8 +1733,9 @@ parse_listitem(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t s
 			if (pre == orgpre) /* the following item must have */
 				break;             /* the same indentation */
 
-			if (!sublist)
-				sublist = work->size;
+			if (!sublist) {
+				sublist = work->size - blank_num;
+			}
 		}
 		/* joining only indented stuff after empty lines;
 		 * note that now we only require 1 space of indentation
@@ -1718,7 +1745,8 @@ parse_listitem(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t s
 			break;
 		}
 		else if (in_empty) {
-			bufputc(work, '\n');
+         // i had add it when i found it was a empty line
+			//bufputc(work, '\n');
 			has_inside_empty = 1;
 		}
 
@@ -1760,7 +1788,6 @@ parse_listitem(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t s
 	return beg;
 }
 
-
 /* parse_list • parsing ordered or unordered list block */
 static size_t
 parse_list(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, int flags)
@@ -1769,6 +1796,9 @@ parse_list(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size,
 	size_t i = 0, j;
 
 	work = rndr_newbuf(rndr, BUFFER_BLOCK);
+
+   // TODO:
+   rndr->cb.liststart() ;
 
 	while (i < size) {
 		j = parse_listitem(work, rndr, data + i, size - i, &flags);
@@ -1780,6 +1810,10 @@ parse_list(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size,
 
 	if (rndr->cb.list)
 		rndr->cb.list(ob, work, flags, rndr->opaque);
+
+   // TODO:
+   rndr->cb.listfinish() ;
+   
 	rndr_popbuf(rndr, BUFFER_BLOCK);
 	return i;
 }
@@ -2206,8 +2240,10 @@ parse_block(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size
 				(i = parse_htmlblock(ob, rndr, txt_data, end, 1)) != 0)
 			beg += i;
 
-		else if ((i = is_empty(txt_data, end)) != 0)
+		else if ((i = is_empty(txt_data, end)) != 0) {
 			beg += i;
+         bufputc(ob, '\n');
+		}
 
 		else if (is_hrule(txt_data, end)) {
 			if (rndr->cb.hrule)
@@ -2230,8 +2266,19 @@ parse_block(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size
 		else if (prefix_quote(txt_data, end))
 			beg += parse_blockquote(ob, rndr, txt_data, end);
 
-		else if (prefix_code(txt_data, end))
-			beg += parse_blockcode(ob, rndr, txt_data, end);
+		else if (prefix_code(txt_data, end)) {
+         if ((4 + 3) < end && 
+             '`' == txt_data[4] &&
+             '`' == txt_data[5] &&
+             '`' == txt_data[6]) {
+            // when the format is "    ```some code```"
+            // take it as blockcode
+			   beg += parse_blockcode(ob, rndr, txt_data, end);
+         } else {
+         // otherwise, take it as paragraph
+            beg += parse_paragraph(ob, rndr, txt_data, end);
+         }
+      }
 
 		else if (prefix_uli(txt_data, end))
 			beg += parse_list(ob, rndr, txt_data, end, 0);
@@ -2506,8 +2553,10 @@ sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, str
 	bufgrow(ob, MARKDOWN_GROW(text->size));
 
 	/* second pass: actual rendering */
-	if (md->cb.doc_header)
-		md->cb.doc_header(ob, md->opaque);
+	if (md->cb.doc_header) {
+      // set the header of man page
+		md->cb.doc_header(ob, text, md->opaque);
+	}
 
 	if (text->size) {
 		/* adding a final newline if not already present */

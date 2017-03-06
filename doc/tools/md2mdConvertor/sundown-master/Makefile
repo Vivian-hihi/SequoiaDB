@@ -19,7 +19,11 @@ DEPDIR=depends
 # "Machine-dependant" options
 #MFLAGS=-fPIC
 
-CFLAGS=-c -g -O3 -fPIC -Wall -Werror -Wsign-compare -Isrc -Ihtml
+#CFLAGS=-c -g -O0 -fPIC -Wall -Werror -Wsign-compare -Isrc -Ihtml
+INCLUDE_DIR=\
+        /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/include
+
+CFLAGS=-c -g -O0 -fPIC -Wall -Wsign-compare -Isrc -Ihtml -I$(INCLUDE_DIR)
 LDFLAGS=-g -O3 -Wall -Werror 
 CC=gcc
 
@@ -29,43 +33,37 @@ SUNDOWN_SRC=\
 	src/stack.o \
 	src/buffer.o \
 	src/autolink.o \
-	html/html.o \
-	html/html_smartypants.o \
-	html/houdini_html_e.o \
-	html/houdini_href_e.o
+	html/pandoc.o
 
-all:		libsundown.so sundown smartypants html_blocks
+all:		libpandoc_markdown.so pandoc_markdown
 
 .PHONY:		all clean
 
 # libraries
 
-libsundown.so:	libsundown.so.1
+libpandoc_markdown.so:	libpandocmarkdown.so.1
 	ln -f -s $^ $@
 
-libsundown.so.1: $(SUNDOWN_SRC)
+libpandocmarkdown.so.1: $(SUNDOWN_SRC)
 	$(CC) $(LDFLAGS) -shared -Wl $^ -o $@
 
 # executables
 
-sundown:	examples/sundown.o $(SUNDOWN_SRC)
+pandoc_markdown:	examples/pandoc_markdown.o $(SUNDOWN_SRC)
 	$(CC) $(LDFLAGS) $^ -o $@
 
-smartypants: examples/smartypants.o $(SUNDOWN_SRC)
-	$(CC) $(LDFLAGS) $^ -o $@
-
-# perfect hashing
-html_blocks: src/html_blocks.h
-
-src/html_blocks.h: html_block_names.txt
-	gperf -N find_block_tag -H hash_block_tag -C -c -E --ignore-case $^ > $@
+## perfect hashing
+#html_blocks: src/html_blocks.h
+#
+#src/html_blocks.h: html_block_names.txt
+#	gperf -N find_block_tag -H hash_block_tag -C -c -E --ignore-case $^ > $@
 
 
 # housekeeping
 clean:
 	rm -f src/*.o html/*.o examples/*.o
-	rm -f libsundown.so libsundown.so.1 sundown smartypants
-	rm -f sundown.exe smartypants.exe
+	rm -f libpandoc_markdown.so libpandoc_markdown.so.1 pandoc_markdown
+	rm -f pandoc_markdown.exe
 	rm -rf $(DEPDIR)
 
 
