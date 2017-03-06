@@ -94,9 +94,12 @@ public class IdIndex10207 extends SdbTestBase {
 				CollectionSpace csDB = db.getCollectionSpace(csName);
 				if(csDB != null){
 					DBCollection clDB = csDB.getCollection(clName);
+					
 					BSONObject opt = new BasicBSONObject();
 					opt.put("SortBufferSize", 128);
-					clDB.createIdIndex(opt);
+					if(clDB != null){
+						clDB.createIdIndex(opt);
+					}
 				}
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();

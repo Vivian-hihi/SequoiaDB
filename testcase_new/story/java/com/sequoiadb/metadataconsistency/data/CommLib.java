@@ -739,7 +739,9 @@ public class CommLib extends SdbTestBase {
 				record.put("a", i);
 				records.add(record);
 			}
-			clDB.bulkInsert(records, 0);
+			if( clDB != null ){
+				clDB.bulkInsert(records, 0);
+			}
 		}catch(BaseException e){
 			throw e;
 		}
