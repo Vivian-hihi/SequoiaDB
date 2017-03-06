@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from collections import OrderedDict
 from pysequoiadb import client
 from pysequoiadb.error import SDBBaseError
 from pysequoiadb.error import SDBEndOfCursor 
@@ -68,9 +69,24 @@ def createCLByName( db, cs, name, option, groups ):
       return False
    
    if name == 'customer':
-      createIndex( cl, 'customer_idx1', {'c_w_id': 1, 'c_d_id': 1, 'c_last': 1, 'c_first': 1}, False )
+      key = OrderedDict()
+      key['c_w_id'] = 1
+      key['c_d_id'] = 1
+      key['c_last'] = 1
+      key['c_first'] = 1
+      createIndex( cl,'customer_idx1', key, False )
    elif name == 'oorder':
-      createIndex( cl, 'oorder_idx1', {'o_w_id': 1, 'o_d_id': 1, 'o_carrier_id': 1, 'o_id': 1}, False )
+      key = OrderedDict()
+      key['o_w_id'] = 1
+      key['o_d_id'] = 1
+      key['o_carrier_id'] = 1
+      key['o_id'] = 1
+      createIndex( cl, 'oorder_idx1', key, False )
+      key = OrderedDict()
+      key['o_w_id'] = 1
+      key['o_d_id'] = 1
+      key['o_c_id'] = 1
+      createIndex( cl, 'o_customer_fkey', key, False )
    return splitCL( db, cl, groups )
       
 def splitCL( db, cl, groups ):
@@ -102,49 +118,55 @@ def splitCL( db, cl, groups ):
    return True
       
 def createAllCL( db, cs, groups ):
-   option = {'ShardingType': 'hash', 'ShardingKey': {'cfg_name': 1}}
-   option['Group'] = groups[0]
+   option = OrderedDict()
+   option['ShardingType'] = 'hash'
+   option['ShardingKey'] = OrderedDict()
+   option['ShardingKey']['cfg_name'] = 1
+   option['Compressed'] = True
+   option['CompressionType'] = 'lzw'
+   #option = {'ShardingType': 'hash', 'ShardingKey': {'cfg_name': 1}}
+   option['Group'] = groups[0] 
    if not createCLByName(db, cs, 'config', option, groups ):
       return False
 
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['w_id'] = 1  
    if not createCLByName( db, cs, 'warehouse', option, groups ):
       return False
 
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['d_w_id'] = 1
    option['ShardingKey']['d_id'] = 1
    if not createCLByName( db, cs, 'district', option, groups ):
       return False
    
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['c_w_id'] = 1
    option['ShardingKey']['c_d_id'] = 1
    option['ShardingKey']['c_id'] = 1
    if not createCLByName( db, cs, 'customer', option, groups ):
       return False
       
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['hist_id'] = 1
    if not createCLByName( db, cs, 'history', option, groups ):
       return False
       
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['no_w_id'] = 1
    option['ShardingKey']['no_d_id'] = 1
    option['ShardingKey']['no_o_id'] = 1
    if not createCLByName( db, cs, 'new_order', option, groups ):
       return False
       
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['o_w_id'] = 1
    option['ShardingKey']['o_d_id'] = 1
    option['ShardingKey']['o_id'] = 1
    if not createCLByName( db, cs, 'oorder', option, groups ):
      return False
       
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['ol_w_id'] = 1
    option['ShardingKey']['ol_d_id'] = 1
    option['ShardingKey']['ol_o_id'] = 1
@@ -152,12 +174,12 @@ def createAllCL( db, cs, groups ):
    if not createCLByName( db, cs, 'order_line', option, groups ):
       return False
       
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['i_id'] = 1
    if not createCLByName( db, cs, 'item', option, groups ):
       return False
       
-   option['ShardingKey'] = {}
+   option['ShardingKey'] = OrderedDict()
    option['ShardingKey']['s_w_id'] = 1
    option['ShardingKey']['s_i_id'] = 1
    if not createCLByName( db, cs, 'stock', option, groups ):
