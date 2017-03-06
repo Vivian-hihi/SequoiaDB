@@ -106,14 +106,12 @@ public class GroupMgr {
 	}
 
 	public static GroupMgr getInstance() throws ReliabilityException {
-		if (mgr == null) {
-			mgr = new GroupMgr();
-			mgr.init();
-		}
+		mgr = new GroupMgr();
+		mgr.init();
 		return mgr;
 	}
 
-	public boolean checkBusiness() {
+	public boolean checkBusiness() throws ReliabilityException {
 		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
 		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
 			if (!entry.getKey().equals("SYSCoord")) {
@@ -131,7 +129,7 @@ public class GroupMgr {
 		return ret;
 	}
 
-	public boolean checkBusinessWithLSN() {
+	public boolean checkBusinessWithLSN() throws ReliabilityException {
 		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
 		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
 			if (!entry.getKey().equals("SYSCoord")) {
@@ -149,7 +147,7 @@ public class GroupMgr {
 		return ret;
 	}
 
-	public boolean checkBusinessWithLSNAndDisk() {
+	public boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
 		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
 		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
 			if (!entry.getKey().equals("SYSCoord")) {
