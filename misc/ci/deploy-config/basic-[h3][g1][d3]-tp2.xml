@@ -207,7 +207,7 @@
       <ant antfile="exec_env_detect.xml" dir="${test.machine.deploy.path}/deploy" inheritAll="true" useNativeBaseDir="true" >
          <property name="ci.properties.path" value="${test.machine.software.path}/deploy/ci.test.properties"/>
          <property name="antTask.jar.path" value="${test.machine.deploy.path}/deploy"/>
-         <property name="test.log.path" value="${test.reports.path}/${test.log}" />
+         <property name="test.log.path" value="${test.reports.path}" />
       </ant>
 		<if>
 			<equals arg1="${BACKUP_LOG}" arg2="true" />
