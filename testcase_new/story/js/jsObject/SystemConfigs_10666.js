@@ -136,7 +136,7 @@ function main()
    for( var i = 0;i < systems.length;i++ )
    {
       // 测试获取系统配置信息
-      // systems[i].testGetSystemConfigs() ;
+      systems[i].testGetSystemConfigs() ;
    }
 }
 
