@@ -117,10 +117,11 @@ public class FaultWrapper extends Fault {
 			instance.restore();
 			if (status != OperateTask.faultStatus.EXCEPTION) {
 				if (checkRestoreResult()) {
-					status = OperateTask.faultStatus.RESTOREFAILURE;
 					date = Calendar.getInstance().getTime();
 					sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					System.out.println("restore " + instance.getName() + " success at " + sdf.format(date));
+				}else{
+					status = OperateTask.faultStatus.RESTOREFAILURE;
 				}
 			}
 		} catch (FaultException e) {
