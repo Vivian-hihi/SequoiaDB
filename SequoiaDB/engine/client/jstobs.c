@@ -870,19 +870,51 @@ static BOOLEAN jsonConvertBson( const CJSON_MACHINE *pMachine,
          }
          else if( arg1.valType == CJSON_STRING )
          {
-            INT32 micros = 0 ;
-            time_t timestamp = 0 ;
-            if( date2Time( arg1.pValStr,
-                           CJSON_DATE,
-                           &timestamp,
-                           &micros ) == FALSE )
+            INT32 valInt = 0 ;
+            FLOAT64 valDouble = 0 ;
+            INT64 valInt64 = 0 ;
+            CJSON_VALUE_TYPE type = CJSON_NONE ;
+            if( cJsonParseNumber( arg1.pValStr,
+                                  arg1.length,
+                                  &valInt,
+                                  &valDouble,
+                                  &valInt64,
+                                  &type ) == TRUE )
             {
-               JSON_PRINTF_LOG( "Failed to convert '%s' date, "
-                                "date format is YYYY-MM-DD", pKey ) ;
-               goto error ;
+
+               if( type == CJSON_INT32 )
+               {
+                  dateTime = (bson_date_t)valInt ;
+               }
+               else if( type == CJSON_INT64 )
+               {
+                  dateTime = (bson_date_t)valInt64 ;
+               }
+               else
+               {
+                  JSON_PRINTF_LOG( "Failed to read date, the '%.*s' "
+                                   "is out of the range of date time",
+                                   arg1.length,
+                                   arg1.pValStr ) ;
+                  goto error ;
+               }
             }
-            dateTime = (bson_date_t)timestamp * 1000 ;
-            dateTime += (bson_date_t)( micros / 1000 ) ;
+            else
+            {
+               INT32 micros = 0 ;
+               time_t timestamp = 0 ;
+               if( date2Time( arg1.pValStr,
+                              CJSON_DATE,
+                              &timestamp,
+                              &micros ) == FALSE )
+               {
+                  JSON_PRINTF_LOG( "Failed to convert '%s' date, "
+                                   "date format is YYYY-MM-DD", pKey ) ;
+                  goto error ;
+               }
+               dateTime = (bson_date_t)timestamp * 1000 ;
+               dateTime += (bson_date_t)( micros / 1000 ) ;
+            }
          }
          if( bson_append_date( pBson, pKey, dateTime ) == BSON_ERROR )
          {
