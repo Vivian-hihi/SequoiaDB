@@ -238,11 +238,16 @@ namespace engine
    */
    class _pmdRemoteSession : public SDBObject
    {
-      friend class _pmdRemoteSessionMgr ;
       friend class _pmdRemoteSessionSite ;
 
       public:
          virtual ~_pmdRemoteSession() ;
+         _pmdRemoteSession( netRouteAgent *pAgent,
+                            UINT64 sessionID,
+                            _pmdRemoteSessionSite *pSite,
+                            INT64 timeout = -1,
+                            IRemoteSessionHandler *pHandle = NULL ) ;
+         _pmdRemoteSession() ;
 
          _pmdEDUCB* getEDUCB() { return _pEDUCB ; }
          UINT64     sessionID() const { return _sessionID ; }
@@ -324,11 +329,6 @@ namespace engine
          void     addPending( pmdSubSession *pSubSession ) ;
 
       private:
-         _pmdRemoteSession( netRouteAgent *pAgent,
-                            UINT64 sessionID,
-                            _pmdRemoteSessionSite *pSite,
-                            INT64 timeout = -1,
-                            IRemoteSessionHandler *pHandle = NULL ) ;
          void attachCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
          void detachCB() { _pEDUCB = NULL ; }
          void reset( UINT64 sessionID,
@@ -358,30 +358,44 @@ namespace engine
    */
    class _pmdRemoteSessionSite : public SDBObject
    {
+      friend class _pmdRemoteSessionMgr ;
+      friend class _pmdRemoteSession ;
+
+      typedef map< UINT64, pmdRemoteSession >         MAP_REMOTE_SESSION ;
+      typedef MAP_REMOTE_SESSION::iterator            MAP_REMOTE_SESSION_IT ;
+
       struct posAndNode
       {
          INT16    _pos ;
          UINT16   _nodeID ;
       } ;
 
-      friend class _pmdRemoteSession ;
-      public:
-         _pmdRemoteSessionSite() ;
-         ~_pmdRemoteSessionSite() ;
-
+      private:
          void setEduCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
          void setRouteAgent( netRouteAgent *pAgent ) { _pAgent = pAgent ; }
 
-         _pmdEDUCB* eduCB() { return _pEDUCB ; }
-
          void     handleClose( const NET_HANDLE &handle,
                                const _MsgRouteID &id ) ;
+
+      public:
+         ~_pmdRemoteSessionSite() ;
+         _pmdRemoteSessionSite() ;
+         _pmdEDUCB* eduCB() { return _pEDUCB ; }
 
          void     interruptAllSubSession() ;
          void     disconnectAllSubSession() ;
 
          const MAP_NODE2NET& getAllNodesMap() { return _mapNode2Net ; }
          const MAP_NODE2NET* getAddNodesMapPtr() { return &_mapNode2Net ; }
+
+      public:
+
+         pmdRemoteSession* addSession( INT64 timeout = -1, // ms
+                                       IRemoteSessionHandler *pHandle = NULL ) ;
+         pmdRemoteSession* getSession( UINT64 sessionID ) ;
+         void              removeSession( UINT64 sessionID ) ;
+         void              removeSession( pmdRemoteSession *pSession ) ;
+         UINT32            sessionCount() ;
 
       protected:
          INT32    processEvent( pmdEDUEvent &event,
@@ -410,6 +424,11 @@ namespace engine
          posAndNode           _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE + 1 ] ;
          UINT32               _nodeBuffSize ;
 
+         UINT32               _sessionHWNum ;
+         MAP_REMOTE_SESSION   _mapSession ;
+         pmdRemoteSession     _curSession ;
+         INT32                _curPos ;
+
    } ;
    typedef _pmdRemoteSessionSite pmdRemoteSessionSite ;
 
@@ -433,9 +452,11 @@ namespace engine
          INT32       init( netRouteAgent *pAgent ) ;
          INT32       fini() ;
 
-         void        registerEDU( _pmdEDUCB *cb ) ;
-         void        unregEUD( _pmdEDUCB *cb ) ;
-         pmdRemoteSessionSite* getSite( _pmdEDUCB *cb ) ;
+         pmdRemoteSessionSite*   registerEDU( _pmdEDUCB *cb ) ;
+         void                    unregEUD( _pmdEDUCB *cb ) ;
+
+         pmdRemoteSessionSite*   getSite( _pmdEDUCB *cb ) ;
+         pmdRemoteSessionSite*   getSite( UINT32 tid ) ;
 
          INT32       pushMessage( const NET_HANDLE &handle,
                                   const MsgHeader *pMsg ) ;
@@ -457,11 +478,6 @@ namespace engine
 
       private:
          netRouteAgent              *_pAgent ;
-         UINT64                     _sessionHWNum ;
-         MAP_REMOTE_SESSION         _mapSessions ;
-         ossSpinSLatch              _mapLatch ;
-         VEC_REMOTE_SESSION         _idleSessions ;
-
          MAP_TID_2_EDU              _mapTID2EDU ;
          ossSpinSLatch              _edusLatch ;
 

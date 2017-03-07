@@ -321,6 +321,19 @@ namespace engine
       setTimeout( timeout ) ;
    }
 
+   _pmdRemoteSession::_pmdRemoteSession()
+   {
+      _pAgent        = NULL ;
+      _pHandle       = NULL ;
+      _pEDUCB        = NULL ;
+      _sessionID     = 0 ;
+      _pSite         = NULL ;
+      _sessionChange = FALSE ;
+      _userData      = 0 ;
+
+      setTimeout( -1 ) ;
+   }
+
    _pmdRemoteSession::~_pmdRemoteSession()
    {
       _pAgent        = NULL ;
@@ -1065,10 +1078,14 @@ namespace engine
          _assitNodeBuff[ i ]._pos = i + 1 ;
       }
       _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE - 1 ]._pos = -1 ;
+
+      _sessionHWNum = 1 ;
+      _curPos = -1 ;
    }
 
    _pmdRemoteSessionSite::~_pmdRemoteSessionSite()
    {
+      SDB_ASSERT( 0 == _mapSession.size(), "Has session not removed" ) ;
       _pEDUCB = NULL ;
    }
 
@@ -1358,38 +1375,94 @@ namespace engine
       goto done ;
    }
 
+   pmdRemoteSession* _pmdRemoteSessionSite::addSession( INT64 timeout,
+                                                        IRemoteSessionHandler *pHandle )
+   {
+      pmdRemoteSession *pSession = NULL ;
+      UINT64 sessionID = 0 ;
+
+      sessionID = ( ( (UINT64)_pEDUCB->getTID() ) << 32 ) | _sessionHWNum ;
+      ++_sessionHWNum ;
+
+      if ( _curPos < 0 )
+      {
+         _curSession.clear() ;
+         _curPos = 0 ;
+         pSession = &_curSession ;
+      }
+      else
+      {
+         pmdRemoteSession &tmpSession = _mapSession[ sessionID ] ;
+         pSession = &tmpSession ;
+      }
+
+      pSession->reset( sessionID, this, timeout, pHandle ) ;
+      pSession->attachCB( _pEDUCB ) ;
+
+      return pSession ;
+   }
+
+   pmdRemoteSession* _pmdRemoteSessionSite::getSession( UINT64 sessionID )
+   {
+      pmdRemoteSession *pSession = NULL ;
+
+      if ( 0 == _curPos && sessionID == _curSession.sessionID() )
+      {
+         pSession = &_curSession ;
+      }
+      else
+      {
+         MAP_REMOTE_SESSION_IT it = _mapSession.find( sessionID ) ;
+         if ( it != _mapSession.end() )
+         {
+            pSession = &(it->second) ;
+         }
+      }
+
+      return pSession ;
+   }
+
+   void _pmdRemoteSessionSite::removeSession( UINT64 sessionID )
+   {
+      if ( 0 == _curPos && sessionID == _curSession.sessionID() )
+      {
+         _curPos = -1 ;
+         _curSession.clear() ;
+      }
+      else
+      {
+         _mapSession.erase( sessionID ) ;
+      }
+   }
+
+   void _pmdRemoteSessionSite::removeSession( pmdRemoteSession *pSession )
+   {
+      removeSession( pSession->sessionID() ) ;
+   }
+
+   UINT32 _pmdRemoteSessionSite::sessionCount()
+   {
+      UINT32 num = 0 ;
+      if ( 0 == _curPos )
+      {
+         ++num ;
+      }
+      num += _mapSession.size() ;
+      return num ;
+   }
+
    /*
       _pmdRemoteSessionMgr implement
    */
    _pmdRemoteSessionMgr::_pmdRemoteSessionMgr()
    {
       _pAgent = NULL ;
-      _sessionHWNum = 1 ;
    }
 
    _pmdRemoteSessionMgr::~_pmdRemoteSessionMgr()
    {
-      SDB_ASSERT( _mapSessions.size() == 0, "Session must be Zero" ) ;
-
       // clear euds
       _mapTID2EDU.clear() ;
-
-      // release idle sessions
-      for ( UINT32 i = 0 ; i < _idleSessions.size() ; ++i )
-      {
-         SDB_OSS_DEL _idleSessions[ i ] ;
-      }
-      _idleSessions.clear() ;
-
-      // release session
-      MAP_REMOTE_SESSION_IT it = _mapSessions.begin() ;
-      while ( it != _mapSessions.end() )
-      {
-         SDB_OSS_DEL it->second ;
-         ++it ;
-      }
-      _mapSessions.clear() ;
-
       _pAgent = NULL ;
    }
 
@@ -1406,18 +1479,18 @@ namespace engine
 
    INT32 _pmdRemoteSessionMgr::fini()
    {
-      SDB_ASSERT( _mapSessions.size() == 0, "Session must be Zero" ) ;
       SDB_ASSERT( _mapTID2EDU.size() == 0, "EDU must be Zero" ) ;
 
       return SDB_OK ;
    }
 
-   void _pmdRemoteSessionMgr::registerEDU( _pmdEDUCB * cb )
+   pmdRemoteSessionSite* _pmdRemoteSessionMgr::registerEDU( _pmdEDUCB * cb )
    {
       ossScopedLock lock( &_edusLatch, EXCLUSIVE ) ;
       pmdRemoteSessionSite &site = _mapTID2EDU[ cb->getTID() ] ;
       site.setEduCB( cb ) ;
       site.setRouteAgent( _pAgent ) ;
+      return &site ;
    }
 
    void _pmdRemoteSessionMgr::unregEUD( _pmdEDUCB * cb )
@@ -1434,11 +1507,16 @@ namespace engine
       }
    }
 
-   pmdRemoteSessionSite* _pmdRemoteSessionMgr::getSite( _pmdEDUCB * cb )
+   pmdRemoteSessionSite* _pmdRemoteSessionMgr::getSite( _pmdEDUCB *cb )
+   {
+      return getSite( cb->getTID() ) ;
+   }
+
+   pmdRemoteSessionSite* _pmdRemoteSessionMgr::getSite( UINT32 tid )
    {
       pmdRemoteSessionSite *pSite = NULL ;
       ossScopedLock lock( &_edusLatch, SHARED ) ;
-      MAP_TID_2_EDU_IT it = _mapTID2EDU.find( cb->getTID() ) ;
+      MAP_TID_2_EDU_IT it = _mapTID2EDU.find( tid ) ;
       if ( it != _mapTID2EDU.end() )
       {
          pSite = &(it->second) ;
@@ -1519,8 +1597,6 @@ namespace engine
                                                         INT64 timeout,
                                                         IRemoteSessionHandler *pHandle )
    {
-      pmdRemoteSession *pSession = NULL ;
-      UINT64 sessionID = 0 ;
       pmdRemoteSessionSite *pSite = getSite( cb ) ;
       if ( !pSite )
       {
@@ -1528,73 +1604,34 @@ namespace engine
                  cb->toString().c_str() ) ;
          return NULL ;
       }
-
-      ossScopedLock lock( &_mapLatch, EXCLUSIVE ) ;
-
-      sessionID = _sessionHWNum++ ;
-
-      // if idle session not empty
-      if ( !_idleSessions.empty() )
-      {
-         pSession = _idleSessions.back() ;
-         pSession->reset( sessionID, pSite, timeout, pHandle ) ;
-         _idleSessions.pop_back() ;
-      }
-      else
-      {
-         pSession = SDB_OSS_NEW _pmdRemoteSession( _pAgent, sessionID, pSite,
-                                                   timeout, pHandle ) ;
-         if ( !pSession )
-         {
-            --_sessionHWNum ;
-            PD_LOG( PDERROR, "Failed to alloc remote session" ) ;
-            goto error ;
-         }
-      }
-
-      pSession->attachCB( cb ) ;
-      _mapSessions[ sessionID ] = pSession ;
-
-   done:
-      return pSession ;
-   error:
-      goto done ;
+      return pSite->addSession( timeout, pHandle ) ;
    }
 
    pmdRemoteSession* _pmdRemoteSessionMgr::getSession( UINT64 sessionID )
    {
-      pmdRemoteSession *pSession = NULL ;
-      MAP_REMOTE_SESSION_IT it ;
-
-      ossScopedLock lock( &_mapLatch, SHARED ) ;
-      it = _mapSessions.find( sessionID ) ;
-      if ( it != _mapSessions.end() )
+      UINT32 tid = (UINT32)( sessionID >> 32 ) ;
+      pmdRemoteSessionSite *pSite = getSite( tid ) ;
+      if ( !pSite )
       {
-         pSession = it->second ;
+         PD_LOG( PDERROR, "Session[%u] is not registered for remote session",
+                 tid ) ;
+         return NULL ;
       }
-
-      return pSession ;
+      return pSite->getSession( sessionID ) ;
    }
 
    void _pmdRemoteSessionMgr::removeSession( UINT64 sessionID )
    {
-      ossScopedLock lock( &_mapLatch, EXCLUSIVE ) ;
-      MAP_REMOTE_SESSION_IT it = _mapSessions.find( sessionID ) ;
-      if ( it != _mapSessions.end() )
+      UINT32 tid = (UINT32)( sessionID >> 32 ) ;
+      pmdRemoteSessionSite *pSite = getSite( tid ) ;
+      if ( !pSite )
       {
-         it->second->detachCB() ;
-         it->second->clear() ;
-
-         if ( _idleSessions.size() < PMD_MAX_IDLE_REMOTE_SESSIONS )
-         {
-            // add to idle vector
-            _idleSessions.push_back( it->second ) ;
-         }
-         else
-         {
-            SDB_OSS_DEL it->second ;
-         }
-         _mapSessions.erase( it ) ;
+         PD_LOG( PDERROR, "Session[%u] is not registered for remote session",
+                 tid ) ;
+      }
+      else
+      {
+         pSite->removeSession( sessionID ) ;
       }
    }
 
@@ -1605,8 +1642,15 @@ namespace engine
 
    UINT32 _pmdRemoteSessionMgr::sessionCount()
    {
-      ossScopedLock lock( &_mapLatch, SHARED ) ;
-      return (UINT32)_mapSessions.size() ;
+      UINT32 num = 0 ;
+      ossScopedLock lock( &_edusLatch, SHARED ) ;
+      MAP_TID_2_EDU_IT it = _mapTID2EDU.begin() ;
+      while ( it != _mapTID2EDU.end() )
+      {
+         num += it->second.sessionCount() ;
+         ++it ;
+      }
+      return num ;
    }
 
 }
