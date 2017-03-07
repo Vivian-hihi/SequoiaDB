@@ -66,7 +66,7 @@ FileTest.prototype.testIsEmptyDir = function()
    this.init() ;
    
    var sdbDir = toolGetSequoiadbDir( this.hostname, this.svcname ) ;
-   var emptyDir = "/tmp/lxw/emptydir" ;
+   var emptyDir = "/tmp/emptydir" ;
    this.cmd.run( "mkdir -p " + emptyDir ) ;
    var fileName = sdbDir[0] + "/conf/sdbcm.conf" ;
 
