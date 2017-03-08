@@ -14,19 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "markdown.h"
-#include "pandoc.h"
-#include "buffer.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#if defined (_WIN32)
+#include "getopt.h"
+#else
 #include <unistd.h>
+#endif
+#include "markdown.h"
+#include "renderer.h"
+#include "buffer.h"
 
 
-#if defined (_WINDOWS)
+#if defined (_WIN32)
 #define NEW_LINE         "\r\n"
 #else
 #define NEW_LINE         "\n"
@@ -42,7 +45,7 @@
 static void _usage()
 {
     fprintf(stderr,
-        "usage: ./proc -i input_file -o output_file [-d]"NEW_LINE);
+        "usage: ./md2md -i input_file -o output_file [-d]"NEW_LINE);
     exit(1);
 }
 

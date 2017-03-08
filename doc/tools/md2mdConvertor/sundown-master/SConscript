@@ -1,0 +1,32 @@
+import os
+Import("env")
+Import("bin_dir")
+Import("guess_os")
+
+# build
+if guess_os == "win32":
+   sundownFiles = [
+      "src/autolink.c",
+      "src/buffer.c",
+      "src/markdown.c",
+      "src/stack.c",
+      "src/renderer.c",
+      "src/main.c",
+      "win/getopt.c"
+      ]
+else:
+   sundownFiles = [
+      "src/autolink.c",
+      "src/buffer.c",
+      "src/markdown.c",
+      "src/stack.c",
+      "src/renderer.c",
+      "src/main.c"
+      ]
+      
+#md2md convertor executable
+md2md = env.Program("md2md", sundownFiles,
+                    _LIBDEPS='$_LIBDEPS_OBJS' )
+
+env.Install( bin_dir, md2md )
+

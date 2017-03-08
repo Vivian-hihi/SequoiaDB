@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Natacha Port茅
+ * Copyright (c) 2009, Natacha Porte
  * Copyright (c) 2011, Vicent Marti
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,13 +17,17 @@
 
 #include "markdown.h"
 #include "ossVer.h"
-#include "pandoc.h"
+#include "renderer.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
+
+#if defined (_WINDOWS)
+#define snprintf _snprintf
+#endif
 
 
 /* block level callbacks - NULL skips the block */
@@ -74,36 +78,39 @@ int sequence = 0 ;
 
 void _get_build_time( char *buf, int size )
 {
-   assert( buf && size > 0 ) ;
    const char *build = SDB_ENGINE_BUILD_CURRENT ;
-   char *pos = NULL ;
+   int len           = 0 ;
+   char *pos         = NULL ;
    
+   assert( buf && size > 0 ) ;
    memset( buf, 0, size ) ;
-   // get build time 
+   
+   // get build time
    pos = strrchr( build, '-' ) ;
    if ( pos ) {
       int len = pos - build ;
-      strncpy( buf, build, len < size ? len : size - 1 ) ;
+      len = len < size ? len : size - 1 ;
+      strncpy( buf, build, len ) ;
    } else {
-      strncpy( buf, DEFAULT_BUILD_TIME, size - 1 )  ;
+      len = strlen(DEFAULT_BUILD_TIME) ;
+      len = len < size ? len : size - 1 ;
+      strncpy( buf, DEFAULT_BUILD_TIME, len )  ;
    }
-   buf[size] = '\0' ;
+   buf[len] = '\0' ;
 }
 
 void _get_version( char *buf, int size )
 {
-   assert( buf && size > 4 ) ;   
+   assert( buf && size > 4 ) ;
    memset( buf, 0, size ) ;
+   
    snprintf( buf, size, "%d.%d", 
              SDB_ENGINE_VERISON_CURRENT, 
              SDB_ENGINE_SUBVERSION_CURRENT ) ;
-   buf[size] = '\0' ;
 }
 
 void _get_func_name( const struct buf *text, char *buf, int size )
-{
-   assert( buf && size > 0 ) ;
-   
+{   
    const char *beg = NULL ;
    const char *end = NULL ;
    int len = 0, len2 = 0 ;
@@ -111,6 +118,7 @@ void _get_func_name( const struct buf *text, char *buf, int size )
    int i = 0 ;
    char *p = NULL ;
 
+   assert( buf && size > 0 ) ;
    memset( buf, 0, size ) ;
    if ( !text || !text->data || 0 == text->size ) {
       strncpy( buf, DEFAULT_FUNC_NAME, size - 1 ) ;
@@ -146,12 +154,13 @@ void _get_func_name( const struct buf *text, char *buf, int size )
    }
    memset( p, 0, len + 1 ) ;
    len2 = text->size - (beg - (const char *)text->data) ;
-   strncpy( p, beg, (len < len2) ? len : len2 ) ;
+   len = (len < len2) ? len : len2 ;
+   strncpy( p, beg, len ) ;
    p[len] = '\0' ;
    // trim useless characters
    for ( i = 0; i < len; i++ ) {
       if ( '\n' == p[0] || '\r' == p[0] || ' ' == p[0] ) {
-         memcpy( p, p + 1, strlen(p + 1) + 1 ) ;
+         memmove( p, p + 1, strlen(p + 1) + 1 ) ;
          continue ;
       } else {
          break ;
@@ -160,8 +169,9 @@ void _get_func_name( const struct buf *text, char *buf, int size )
    // get out of the function name
    beg = p ;
    end = strchr( beg, ' ' ) ;
-   strncpy( buf, beg, end - beg < size ? end - beg : size - 1 ) ;
-   buf[size] = '\0' ;
+   len = end - beg < size ? end - beg : size - 1 ;
+   strncpy( buf, beg, len ) ;
+   buf[len] = '\0' ;
    
 done:
    if ( p ) {
@@ -174,9 +184,10 @@ int _handle_specified_chars( struct buf *buf,
                              const char *src, int len, 
                              const char *chars, int num )
 {
-   assert( src && len > 0 ) ;
    int i = 0 ;
    int j = 0 ;
+   
+   assert( src && len > 0 ) ;
    // for 'len' does not contain '\0', so we use "i <= len"
    for ( i = 0; i < len; i++ ) 
    {
@@ -195,10 +206,10 @@ int _handle_specified_chars( struct buf *buf,
 
 int _has_fenced_chars( const char *src, int len )
 {
-   assert( src && len > 0 ) ;
    int i = 0, n = 0;
    char c;
-
+   
+   assert( src && len > 0 ) ;
    /* skipping initial spaces */
    for( i = 0; i < len && src[i] == ' '; i++ ) {}
    /* looking at the hrule uint8_t */
@@ -221,10 +232,10 @@ int _has_fenced_chars( const char *src, int len )
 int _remove_fenced_chars( struct buf *buf, 
                           const char *src, int len )
 {
-   assert( src && len > 0 ) ;
    int beg = 0, end = 0;
    int i = 0;
 
+   assert( src && len > 0 ) ;
    while ( beg < len ) {
       for ( end = beg + 1; end < len && src[end - 1] != '\n'; end++ ) {}
       i = _has_fenced_chars( src + beg, end - beg ) ;
@@ -239,9 +250,9 @@ int _remove_fenced_chars( struct buf *buf,
 int _handle_linebreak_in_quote( struct buf *buf, 
                        const char *src, int len )
 {
-    assert( src && len > 0 );
     int beg = 0, end = 0;
 
+    assert( src && len > 0 );
     while ( beg < len ) {
         // skipping to the next line
         end = beg;
@@ -285,10 +296,10 @@ static void rndr_blockcode(struct buf *ob, const struct buf *text,
    struct buf *tmp_buf1 = NULL ;
    struct buf *tmp_buf2 = NULL ;
    struct buf *tmp_buf3 = NULL ;
+   const char chars[] = { '>' } ;
    tmp_buf1 = bufnew( 64 ) ;
    tmp_buf2 = bufnew( 64 ) ;
    tmp_buf3 = bufnew( 64 ) ;
-   const char chars[] = { '>' } ;
 
    _handle_specified_chars( tmp_buf1, 
                             (const char*)(text->data), 
@@ -329,9 +340,10 @@ static void rndr_blockquote(struct buf *ob, const struct buf *text, void *opaque
 static void rndr_header(struct buf *ob, const struct buf *text, 
                         int level, void *opaque)
 {
-   assert(level >= 1 && level <= 6) ;
    int i = 0 ;
    int num = level > 1 ? level - 1 : level ;
+   	
+   assert(level >= 1 && level <= 6) ;
    for(i = 0; i < num; i++) 
    {
       bufputc(ob, '#') ;
@@ -431,17 +443,22 @@ static int rndr_link(struct buf *ob, const struct buf *link,
 // 25: header need by pandoc to gem the header of man page
 void doc_header(struct buf *ob, const struct buf *text, void *opaque)
 {
-   const int buf_len = 64 ;
-   const int buf_len2 = 128 ;
-   char build_time[buf_len] ;
-   char func_name[buf_len] ;
-   char version[buf_len] ;
-   char header[buf_len2] ;
+#define BUF_LEN  64
+#define BUF_LEN2 128
+   char func_name[BUF_LEN] ;
+   char build_time[BUF_LEN] ;
+   char version[BUF_LEN] ;
+   char header[BUF_LEN2] ;
 
-   _get_func_name( text, func_name, buf_len ) ;
-   _get_build_time( build_time, buf_len ) ;
-   _get_version( version, buf_len ) ;
-   snprintf( header, buf_len2,
+   memset(build_time, 0, BUF_LEN);
+   memset(func_name, 0, BUF_LEN);
+   memset(version, 0, BUF_LEN);
+   memset(header, 0, BUF_LEN2);
+
+   _get_func_name( text, func_name, BUF_LEN ) ;
+   _get_build_time( build_time, BUF_LEN ) ;
+   _get_version( version, BUF_LEN ) ;
+   snprintf( header, BUF_LEN2,
              "%% %s(1) SequoiaDB User Manuals | Version %s\n\n",
             func_name, version ) ;
    bufputs( ob, header ) ;

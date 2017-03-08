@@ -33,7 +33,7 @@ SUNDOWN_SRC=\
 	src/stack.o \
 	src/buffer.o \
 	src/autolink.o \
-	html/pandoc.o
+	src/pandoc.o
 
 all:		libpandoc_markdown.so pandoc_markdown
 
@@ -49,7 +49,7 @@ libpandocmarkdown.so.1: $(SUNDOWN_SRC)
 
 # executables
 
-pandoc_markdown:	examples/pandoc_markdown.o $(SUNDOWN_SRC)
+pandoc_markdown:	src/pandoc_markdown.o $(SUNDOWN_SRC)
 	$(CC) $(LDFLAGS) $^ -o $@
 
 ## perfect hashing

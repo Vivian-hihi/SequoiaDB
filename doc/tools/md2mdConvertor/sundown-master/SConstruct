@@ -1,0 +1,49 @@
+EnsureSConsVersion( 1, 1, 0 )
+
+import platform
+import os
+import sys
+from os.path import join, dirname, abspath
+
+# defined  help function
+def GuessOS():
+   id = platform.system()
+   if id == 'Linux':
+      return 'linux'
+   elif id == 'Windows' or id == 'Microsoft':
+      return 'win32'
+   elif id == 'AIX':
+      return 'aix'
+   else:
+      return None
+
+# defined global var
+guess_os               = GuessOS()
+root_dir               = dirname(File('SConstruct').rfile().abspath)
+if guess_os == "win32":
+   db_include_dir      = join(root_dir, '../../../../Sequoiadb/engine/include')
+else:
+   db_include_dir      = join(root_dir, '../../sequoiadb2.8/SequoiaDB/engine/include/')
+sundown_src_dir        = join(root_dir, 'src')
+sundown_win_dir        = join(root_dir, 'win')
+build_dir              = join(root_dir, 'build')
+bin_dir                = join(root_dir, 'bin')
+
+# build environment
+env = Environment( BUILD_DIR=build_dir,
+                   PYSYSPLATFORM=os.sys.platform )
+env["BUILD_DIR"] = build_dir
+
+# append
+if guess_os == "win32":
+   env.Append( CPPPATH=[db_include_dir, sundown_src_dir, sundown_win_dir] )
+   env.Append( CPPFLAGS="/O2 /EHsc" )
+else:
+   env.Append( CPPPATH=[db_include_dir, sundown_src_dir] )
+   env.Append( CPPFLAGS="-c -g -O0 -fPIC -Wall -Wsign-compare" )
+
+Export("env")
+Export("bin_dir")
+Export("guess_os")
+
+env.SConscript ( 'SConscript', variant_dir=build_dir, duplicate=False )

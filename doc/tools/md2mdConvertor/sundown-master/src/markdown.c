@@ -1225,8 +1225,8 @@ is_codefence(uint8_t *data, size_t size, struct buf *syntax)
 		if (i == size || data[i] != '}')
 			return 0;
 
-		/* strip all whitespace at the beginning and the end
-		 * of the {} block */
+        /* strip all whitespace at the beginning and the end
+         * of the {} block */
 		while (syn_len > 0 && _isspace(syn_start[0])) {
 			syn_start++; syn_len--;
 		}
