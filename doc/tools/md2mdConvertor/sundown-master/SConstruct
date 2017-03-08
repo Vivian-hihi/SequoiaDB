@@ -20,10 +20,7 @@ def GuessOS():
 # defined global var
 guess_os               = GuessOS()
 root_dir               = dirname(File('SConstruct').rfile().abspath)
-if guess_os == "win32":
-   db_include_dir      = join(root_dir, '../../../../Sequoiadb/engine/include')
-else:
-   db_include_dir      = join(root_dir, '../../sequoiadb2.8/SequoiaDB/engine/include/')
+db_include_dir         = join(root_dir, '../../../../SequoiaDB/engine/include')
 sundown_src_dir        = join(root_dir, 'src')
 sundown_win_dir        = join(root_dir, 'win')
 build_dir              = join(root_dir, 'build')

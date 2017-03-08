@@ -20,8 +20,7 @@ DEPDIR=depends
 #MFLAGS=-fPIC
 
 #CFLAGS=-c -g -O0 -fPIC -Wall -Werror -Wsign-compare -Isrc -Ihtml
-INCLUDE_DIR=\
-        /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/include
+INCLUDE_DIR=../../../../SequoiaDB/engine/include
 
 CFLAGS=-c -g -O0 -fPIC -Wall -Wsign-compare -Isrc -Ihtml -I$(INCLUDE_DIR)
 LDFLAGS=-g -O3 -Wall -Werror 
@@ -33,39 +32,24 @@ SUNDOWN_SRC=\
 	src/stack.o \
 	src/buffer.o \
 	src/autolink.o \
-	src/pandoc.o
+    src/renderer.o \
+	src/main.o
 
-all:		libpandoc_markdown.so pandoc_markdown
+all:		md2md
 
 .PHONY:		all clean
 
-# libraries
-
-libpandoc_markdown.so:	libpandocmarkdown.so.1
-	ln -f -s $^ $@
-
-libpandocmarkdown.so.1: $(SUNDOWN_SRC)
-	$(CC) $(LDFLAGS) -shared -Wl $^ -o $@
-
 # executables
 
-pandoc_markdown:	src/pandoc_markdown.o $(SUNDOWN_SRC)
+md2md:	$(SUNDOWN_SRC)
 	$(CC) $(LDFLAGS) $^ -o $@
-
-## perfect hashing
-#html_blocks: src/html_blocks.h
-#
-#src/html_blocks.h: html_block_names.txt
-#	gperf -N find_block_tag -H hash_block_tag -C -c -E --ignore-case $^ > $@
-
 
 # housekeeping
 clean:
 	rm -f src/*.o html/*.o examples/*.o
-	rm -f libpandoc_markdown.so libpandoc_markdown.so.1 pandoc_markdown
-	rm -f pandoc_markdown.exe
+	rm -f libmd2md.so libmd2md.so.1 md2md
+	rm -f md2md.exe
 	rm -rf $(DEPDIR)
-
 
 # dependencies
 
