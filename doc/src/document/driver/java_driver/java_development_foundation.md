@@ -5,6 +5,7 @@
 * 连接数据库：Connecting 如下是一个连接数据库，并列出所有集合信息的一个例子：
 
   ```lang-javascript
+  package com.sequoiadb.samples;
   import com.sequoiadb.base.DBCursor;
   import com.sequoiadb.base.Sequoiadb;
   import com.sequoiadb.exception.BaseException;

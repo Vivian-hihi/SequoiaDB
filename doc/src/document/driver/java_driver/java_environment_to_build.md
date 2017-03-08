@@ -16,7 +16,7 @@
 
 ![](driver/java_driver/eclipse.jpg)
 
-（6） 点击“Add JARs..”按钮，选择添加 sequoiadb.jar 到工程中；
+（6） 点击“Add External JARs..”按钮，选择添加 sequoiadb.jar 到工程中；
 
 （7） 点击“OK”完成环境配置。
 
