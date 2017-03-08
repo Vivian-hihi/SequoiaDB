@@ -331,7 +331,8 @@ namespace engine
       private:
          void attachCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
          void detachCB() { _pEDUCB = NULL ; }
-         void reset( UINT64 sessionID,
+         void reset( netRouteAgent *pAgent,
+                     UINT64 sessionID,
                      _pmdRemoteSessionSite *pSite,
                      INT64 timeout = -1,
                      IRemoteSessionHandler *pHandle = NULL ) ;

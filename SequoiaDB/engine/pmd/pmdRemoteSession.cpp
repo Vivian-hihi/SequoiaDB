@@ -348,11 +348,13 @@ namespace engine
       _pSite            = NULL ;
    }
 
-   void _pmdRemoteSession::reset( UINT64 sessionID,
+   void _pmdRemoteSession::reset( netRouteAgent *pAgent,
+                                  UINT64 sessionID,
                                   _pmdRemoteSessionSite *pSite,
                                   INT64 timeout ,
                                   IRemoteSessionHandler *pHandle )
    {
+      _pAgent           = pAgent ;
       _sessionID        = sessionID ;
       _pSite            = pSite ;
       _pHandle          = pHandle ;
@@ -1396,7 +1398,7 @@ namespace engine
          pSession = &tmpSession ;
       }
 
-      pSession->reset( sessionID, this, timeout, pHandle ) ;
+      pSession->reset( _pAgent, sessionID, this, timeout, pHandle ) ;
       pSession->attachCB( _pEDUCB ) ;
 
       return pSession ;
