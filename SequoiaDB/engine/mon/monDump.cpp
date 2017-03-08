@@ -1131,9 +1131,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 lockNum = 0 ;
       BOOLEAN hitThisEnd = FALSE ;
-      UINT32 csLockNum = 0 ;
-      UINT32 clLockNum = 0 ;
-      UINT32 recordLockNum = 0 ;
 
       if ( _hitEnd )
       {
@@ -1164,33 +1161,10 @@ namespace engine
                ++_pos ;
                continue ;
             }
-            const dpsTransLockId &lockID = _pos->first ;
-            if ( ~0 != lockID._logicCSID )
-            {
-               if ( DMS_INVALID_MBID == lockID._collectionID )
-               {
-                  ++csLockNum ;
-               }
-               else if ( DMS_INVALID_EXTENT == lockID._recordExtentID )
-               {
-                  ++clLockNum ;
-               }
-               else
-               {
-                  ++recordLockNum ;
-               }
-            }
-            babLockList.append( lockID.toBson() ) ;
+            babLockList.append( _pos->first.toBson() ) ;
             ++_pos ;
          }
          babLockList.done() ;
-
-         bobEduTransInfo.append( FIELD_NAME_TRANS_CS_LOCK_NUM,
-                                 (INT32)csLockNum ) ;
-         bobEduTransInfo.append( FIELD_NAME_TRANS_CL_LOCK_NUM,
-                                 (INT32)clLockNum ) ;
-         bobEduTransInfo.append( FIELD_NAME_TRANS_RECORD_LOCK_NUM,
-                                 (INT32)recordLockNum ) ;
 
          if ( _pos == _curTransInfo._lockList.end() )
          {

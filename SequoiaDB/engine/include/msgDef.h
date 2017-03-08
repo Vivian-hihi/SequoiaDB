@@ -277,9 +277,6 @@
 #define FIELD_NAME_TRANS_LOCKS               "GotLocks"
 #define FIELD_NAME_TRANS_WAIT_LOCK           "WaitLock"
 #define FIELD_NAME_SLICE                     "Slice"
-#define FIELD_NAME_TRANS_CS_LOCK_NUM         "CSLockNum"
-#define FIELD_NAME_TRANS_CL_LOCK_NUM         "CLLockNum"
-#define FIELD_NAME_TRANS_RECORD_LOCK_NUM     "RecordLockNum"
 #define FIELD_NAME_REMOTE_IP                 "RemoteIP"
 #define FIELD_NAME_REMOTE_PORT               "RemotePort"
 
