@@ -40,10 +40,6 @@ using namespace bson ;
 
 namespace engine
 {
-   /*
-      DEFINES
-   */
-   #define PMD_MAX_IDLE_REMOTE_SESSIONS         ( 200 )
 
    /*
       pmdSubSession implement
