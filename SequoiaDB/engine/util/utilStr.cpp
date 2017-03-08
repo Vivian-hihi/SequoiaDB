@@ -307,6 +307,7 @@ namespace engine
       INT32 minute = 0 ;
       INT32 second = 0 ;
       INT32 micros = 0 ;
+      BOOLEAN hasColon = FALSE ;
 
       if( ossStrchr( str, 'T' ) || ossStrchr( str, 't' ) )
       {
@@ -335,8 +336,13 @@ namespace engine
             goto error ;
          }
 
+         if( ossStrchr( str, ':' ) )
+         {
+            hasColon = TRUE ;
+         }
+
          if ( !sscanf ( str,
-                        "%d-%d-%d-%d.%d.%d.%d",
+                        hasColon ? "%d-%d-%d-%d:%d:%d.%d" : "%d-%d-%d-%d.%d.%d.%d",
                         &year   ,
                         &month  ,
                         &day    ,

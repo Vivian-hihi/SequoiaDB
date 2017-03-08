@@ -37,8 +37,9 @@
 #define LONG_JS_MIN (-9007199254740991LL)
 #define LONG_JS_MAX  (9007199254740991LL)
 
-#define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
-#define DATE_FORMAT "%d-%d-%d"
+#define TIME_FORMAT  "%d-%d-%d-%d.%d.%d.%d"
+#define TIME_FORMAT2 "%d-%d-%d-%d:%d:%d.%d"
+#define DATE_FORMAT  "%d-%d-%d"
 
 #define DATE_OUTPUT_CSV_FORMAT "%04d-%02d-%02d"
 #define DATE_OUTPUT_FORMAT "{ \"$date\": \"" DATE_OUTPUT_CSV_FORMAT "\" }"
@@ -302,8 +303,14 @@ static BOOLEAN date2Time( const CHAR *pDate,
       if( valType == CJSON_TIMESTAMP )
       {
          /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
+         BOOLEAN hasColon = FALSE ;
+         if( ossStrchr( pDate, ':' ) )
+         {
+            hasColon = TRUE ;
+         }
+
          if( !sscanf ( pDate,
-                       TIME_FORMAT,
+                       hasColon ? TIME_FORMAT2 : TIME_FORMAT,
                        &year,
                        &month,
                        &day,
