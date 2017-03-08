@@ -5,7 +5,7 @@
 字段类型覆盖：pg支持的所有类型
 
 1.创建外表
-create foreign table test (smallint smallint, integer integer,bigint bigint,real real,double double precision,numeric numeric,decimal decimal,text text,char char,varchar varchar,bytea bytea,date date,timestamp timestamp,boolean boolean) server sdb_server options ( collectionspace 'cs', collection 'cl',decimal 'on') ;
+create foreign table test (smallint smallint, integer integer,bigint bigint,real real,double double precision,numeric numeric,decimal decimal,text text,char char,varchar varchar,bytea bytea,date date,timestamp timestamp,boolean boolean,array1 smallint[],array2 integer[],array3 bigint[],array4 real[],array5 double precision[],array6 numeric[],array7 decimal[],array8 text[],array9 char[],array10 varchar[],array11 bytea[],array12 date[],array13 timestamp[],array14 boolean[]) server sdb_server options ( collectionspace 'cs', collection 'cl',decimal 'on') ;
 
 2.pg端开启debug日志
 vi /opt/SequoiaSQL/pg_data/postgresql.conf 
@@ -42,6 +42,8 @@ select * from test where bytea='a';
 select * from test where date='20160101';
 select * from test where timestamp='20160101';
 select * from test where boolean='false';
+数组：测试array1-array14
+select * from test where array1[1]=1;
 
 5.in、not in
 select * from test where smallint in (1,2,3);
@@ -58,6 +60,8 @@ select * from test where bytea in ('aa','bb','cc');
 select * from test where date in ('20160101','20160102','20160103');
 select * from test where timestamp in ('20160101','20160102','20160103');
 select * from test where boolean in (false,true);
+数组：测试array1-array14
+select * from test where array1[1] in (1,2,3);
 
 6.is null、is not null
 select * from test where smallint is null;
@@ -74,6 +78,8 @@ select * from test where bytea is null;
 select * from test where date is null;
 select * from test where timestamp is null;
 select * from test where boolean is null;
+数组：测试array1-array14
+select * from test where array1[1] is null;
 
 7.字段1=字段2
 select * from test where smallint = smallint;
@@ -90,11 +96,15 @@ select * from test where bytea = bytea;
 select * from test where date = date;
 select * from test where timestamp = timestamp;
 select * from test where boolean = boolean;
+数组：测试array1-array14
+select * from test where array1[1]=array1[2];
 
 8.like（针对like中包含 '_', '%' 及 数字、大小写字母的情况，其余不下压）
 select * from test where text like '_Aaaa%123';
 select * from test where char like '_Aaaa%123';
 select * from test where varchar like '_Aaaa%123';
+数组：测试array8-array11
+select * from test where array8[1] like '_Aaaa%123';
 
 9.组合查询(单条件已验证数据类型及下压的匹配符，组合情况不再考虑)
 一层
