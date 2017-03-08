@@ -108,22 +108,28 @@ public class GroupMgr {
 
 	public static GroupMgr getInstance() throws ReliabilityException {
 		mgr = new GroupMgr();
-		//mgr.init();
+		// mgr.init();
 		return mgr;
 	}
 
 	public boolean checkBusiness() throws ReliabilityException {
+		return checkBusiness(true);
+	}
+
+	public boolean checkBusiness(boolean printRes) throws ReliabilityException {
 		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
 		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
 			if (!entry.getKey().equals("SYSCoord")) {
-				results.add(entry.getValue().checkBusiness());
+				results.add(entry.getValue().checkBusiness(printRes));
 			}
 		}
 
 		boolean ret = true;
 		for (GroupCheckResult result : results) {
 			if (!result.check()) {
-				System.out.println(result.toString());
+				if (printRes) {
+					System.out.println(result.toString());
+				}
 				ret = false;
 			}
 		}
@@ -131,10 +137,14 @@ public class GroupMgr {
 	}
 
 	public boolean checkBusinessWithLSN() throws ReliabilityException {
+		return checkBusinessWithLSN(true);
+	}
+
+	public boolean checkBusinessWithLSN(boolean printRes) throws ReliabilityException {
 		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
 		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
 			if (!entry.getKey().equals("SYSCoord")) {
-				results.add(entry.getValue().checkBusiness());
+				results.add(entry.getValue().checkBusiness(printRes));
 			}
 		}
 
@@ -149,10 +159,14 @@ public class GroupMgr {
 	}
 
 	public boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
+		return checkBusinessWithLSNAndDisk(true);
+	}
+
+	public boolean checkBusinessWithLSNAndDisk(boolean printRes) throws ReliabilityException {
 		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
 		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
 			if (!entry.getKey().equals("SYSCoord")) {
-				results.add(entry.getValue().checkBusiness());
+				results.add(entry.getValue().checkBusiness(printRes));
 			}
 		}
 
@@ -172,21 +186,21 @@ public class GroupMgr {
 		for (String host : hosts) {
 			try {
 				Ssh remote = new Ssh(host, "root", SdbTestBase.rootPwd);
+				remote.scpTo("./script/checkCfgResidu.sh", SdbTestBase.workDir);
 				remote.scpTo("./script/checkPortOccupied.sh", SdbTestBase.workDir);
-				remote.scpTo("./script/checkPortOccupied.sh", SdbTestBase.workDir);
-				remote.scpTo("./script/checkPortOccupied.sh", SdbTestBase.workDir);
+				remote.scpTo("./script/checkDataResidu.sh", SdbTestBase.workDir);
 
 				remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh");
 				if (remote.getExitStatus() != 0) {
 					System.out.println(String.format("%s used port:%s", host, remote.getStdout()));
 					checkRet = false;
 				}
-				remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh");
+				remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh");
 				if (remote.getExitStatus() != 0) {
 					System.out.println(String.format("%s residu config:%s", host, remote.getStdout()));
 					checkRet = false;
 				}
-				remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh");
+				remote.exec(SdbTestBase.workDir + "/checkDataResidu.sh");
 				if (remote.getExitStatus() != 0) {
 					System.out.println(String.format("%s residu data:%s", host, remote.getStdout()));
 					checkRet = false;

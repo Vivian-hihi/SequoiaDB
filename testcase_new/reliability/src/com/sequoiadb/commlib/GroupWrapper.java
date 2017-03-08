@@ -108,6 +108,7 @@ public class GroupWrapper {
 		Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
 		try {
 			for (int i = 0; i < times; i++) {
+
 				ssh.exec("sdb -s \"var db = new Sdb;var rg = db.getRG('" + groupName + "');rg.reelect();\"");
 				refresh();
 				if (priNode != getMaster().nodeID()) {
@@ -120,7 +121,8 @@ public class GroupWrapper {
 		return false;
 	}
 
-	public GroupCheckResult checkBusiness() {
+	public GroupCheckResult checkBusiness(boolean printRes) throws ReliabilityException {
+		refresh();
 		GroupCheckResult checkRes = new GroupCheckResult();
 		if (getGroupName().equals("SYSCoord")) {
 			return checkRes;
@@ -130,10 +132,9 @@ public class GroupWrapper {
 		checkRes.primaryNode = groupInfo.getInt("PrimaryNode");
 
 		for (NodeWrapper node : nodes) {
-			NodeCheckResult res = node.checkBusiness();
+			NodeCheckResult res = node.checkBusiness(printRes);
 			checkRes.addNodeCheckResult(res);
 		}
-
 		return checkRes;
 	}
 
@@ -145,17 +146,25 @@ public class GroupWrapper {
 		return hosts;
 	}
 
+	public List<String> getAllUrls() {
+		List<String> urls = new ArrayList<String>();
+		for (NodeWrapper node : nodes) {
+			urls.add(node.hostName() + ":" + node.svcName());
+		}
+		return urls;
+	}
+
 	public boolean checkInspect(int checktime, int intervelSecond) throws ReliabilityException {
 		for (int i = 0; i < checktime; i++) {
 			if (inspect()) {
 				return true;
 			}
 			try {
-				Thread.sleep(intervelSecond*1000);
+				Thread.sleep(intervelSecond * 1000);
 			} catch (InterruptedException e) {
 
 			}
-			
+
 		}
 		return false;
 
@@ -175,7 +184,11 @@ public class GroupWrapper {
 
 	public String getInspectStdout() throws ReliabilityException {
 		Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
-		ssh.exec("sdbinspect -g " + getGroupName());
+		try {
+			ssh.exec("sdbinspect -g " + getGroupName());
+		} finally {
+			ssh.close();
+		}
 		return ssh.getStdout();
 	}
 }

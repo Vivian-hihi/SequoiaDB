@@ -67,7 +67,9 @@ public class Ssh {
 			if (session != null) {
 				session.disconnect();
 			}
-			throw new ReliabilityException(e);
+			ReliabilityException e1 = new ReliabilityException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 	}
 
@@ -85,7 +87,9 @@ public class Ssh {
 			channel.connect();
 			channel.put(localPath, remotePath);
 		} catch (Exception e) {
-			throw new ReliabilityException(e);
+			ReliabilityException e1 = new ReliabilityException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		} finally {
 			if (channel != null) {
 				channel.disconnect();
@@ -107,7 +111,9 @@ public class Ssh {
 			channel.connect();
 			channel.get(remotePath, localPath);
 		} catch (Exception e) {
-			throw new ReliabilityException(e);
+			ReliabilityException e1 = new ReliabilityException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		} finally {
 			if (channel != null) {
 				channel.disconnect();
@@ -135,7 +141,9 @@ public class Ssh {
 						"ssh executing commond '" + command + "':" + stderr + " errcode: " + exitStatus);
 			}
 		} catch (IOException | JSchException e) {
-			throw new ReliabilityException(e);
+			ReliabilityException e1 = new ReliabilityException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		} finally {
 			if (channel != null) {
 				channel.disconnect();
@@ -163,7 +171,9 @@ public class Ssh {
 			if (channel != null) {
 				channel.disconnect();
 			}
-			throw new ReliabilityException(e);
+			ReliabilityException e1 = new ReliabilityException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 	}
 
@@ -195,7 +205,9 @@ public class Ssh {
 		try {
 			getResult(channel, timeOutSecond);
 		} catch (IOException e) {
-			throw new ReliabilityException(e);
+			ReliabilityException e1 = new ReliabilityException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		} finally {
 			channel.disconnect();
 		}
