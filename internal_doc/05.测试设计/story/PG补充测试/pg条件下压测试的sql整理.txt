@@ -1,5 +1,6 @@
 条件下压sql语句
-查询条件覆盖：>、>=、<、<=、=、<> between and、in、not in、is null、is not null、字段1=字段，
+查询条件覆盖：>、>=、<、<=、=、<> between and、in、not in、is null、is not null、字段1=字段2
+操作符部分场景下压：like（针对like中包含 '_', '%' 及 数字、大小写字母的情况，其余不下压）
 组合条件：or、and、not （多层）
 字段类型覆盖：pg支持的所有类型
 
@@ -12,7 +13,7 @@ vi /opt/SequoiaSQL/pg_data/postgresql.conf
 client_min_messages = debug1 
 log_min_messages = debug1
 
-3.执行查询，检查查询条件是否下压(下压条件在bson value中，如果未下压则为空)
+3.执行查询，检查查询条件是否下压(下压条件在bson value中，如果未下压则为空，bson value={})
 select * from test where smallint>1;
 foo=# select * from test where smallint>1;
 DEBUG:  hostName=192.168.31.49:11810,192.168.31.50:11810,192.168.31.51:11810,service=11810
@@ -90,7 +91,12 @@ select * from test where date = date;
 select * from test where timestamp = timestamp;
 select * from test where boolean = boolean;
 
-8.组合查询(单条件已验证数据类型及下压的匹配符，组合情况不再考虑)
+8.like（针对like中包含 '_', '%' 及 数字、大小写字母的情况，其余不下压）
+select * from test where text like '_Aaaa%123';
+select * from test where char like '_Aaaa%123';
+select * from test where varchar like '_Aaaa%123';
+
+9.组合查询(单条件已验证数据类型及下压的匹配符，组合情况不再考虑)
 一层
 select * from test where smallint = 1 and boolean >=false;
 select * from test where integer <> 1 or timestamp <='20160101';
@@ -137,7 +143,7 @@ select * from test where integer <> 1 or timestamp <='20160101' or bigint < 1 an
 or-or-or
 select * from test where integer <> 1 or timestamp <='20160101' or bigint < 1 or timestamp <='20160101';
 
-9.部分条件下压
+10.部分条件下压
 create foreign table test (name text, a int,b int) server sdb_server options ( collectionspace 'cs', collection 'cl' ) ;
 
 一层
