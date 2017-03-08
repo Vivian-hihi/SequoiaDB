@@ -153,4 +153,9 @@ public class TaskMgr {
 		}
 		return reStr;
 	}
+
+	public void clear() {
+		taskSet.clear();
+	}
+
 }

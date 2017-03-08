@@ -55,6 +55,7 @@ public abstract class OperateTask extends Task {
 			} else {
 				setStatus(Task.TaskStatus.TASKTHROWEXCEPTION);
 				exception = new ReliabilityException(e);
+				exception.setStackTrace(e.getStackTrace());
 			}
 		}
 		if (exception == null) {
