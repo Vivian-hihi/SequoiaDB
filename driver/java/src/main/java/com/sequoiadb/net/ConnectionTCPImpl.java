@@ -18,7 +18,6 @@ package com.sequoiadb.net;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.util.Helper;
-import com.sequoiadb.util.logger;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -115,9 +114,6 @@ public class ConnectionTCPImpl implements IConnection {
     }
 
     private void connect() throws BaseException {
-        logger.getInstance().debug(0, "enter connect\n");
-        String objectidentity = Integer.toString(hashCode());
-        logger.getInstance().debug(0, "objidentity:" + objectidentity + "\n");
         if (clientSocket != null) {
             return;
         }
@@ -140,7 +136,6 @@ public class ConnectionTCPImpl implements IConnection {
                 clientSocket.setSoTimeout(options.getSocketTimeout());
                 input = new BufferedInputStream(clientSocket.getInputStream());
                 output = clientSocket.getOutputStream();
-                logger.getInstance().debug(0, "leave connect\n");
                 return;
             } catch (IOException ioe) {
                 lastError = new BaseException(SDBError.SDB_NETWORK, ioe);
@@ -164,13 +159,11 @@ public class ConnectionTCPImpl implements IConnection {
     }
 
     public void close() {
-        logger.getInstance().debug(0, "enter close\n");
-        String trace = logger.getInstance().getStackMsg();
-        logger.getInstance().debug(0, trace);
         if (clientSocket != null) {
             try {
                 clientSocket.close();
             } catch (Exception e) {
+                // ignore
             } finally {
                 receive_buffer = null;
                 REAL_BUFFER_LENGTH = 0;
@@ -179,14 +172,13 @@ public class ConnectionTCPImpl implements IConnection {
                 clientSocket = null;
             }
         }
-        logger.getInstance().debug(0, "leave close\n");
-        logger.getInstance().save();
     }
 
     @Override
     public boolean isClosed() {
-        if (clientSocket == null)
+        if (clientSocket == null) {
             return true;
+        }
         return clientSocket.isClosed();
     }
 
@@ -198,11 +190,9 @@ public class ConnectionTCPImpl implements IConnection {
      */
     @Override
     public void changeConfigOptions(ConfigOptions opts) throws BaseException {
-        logger.getInstance().debug(0, "enter changeConfigOptions\n");
         this.options = opts;
         close();
         connect();
-        logger.getInstance().debug(0, "leave changeConfigOptions\n");
     }
 
 
@@ -214,7 +204,6 @@ public class ConnectionTCPImpl implements IConnection {
     @Override
     public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException {
         lastUseTime = System.currentTimeMillis();
-        logger.getInstance().debug(0, "enter receiveMessage\n");
         try {
             // before use, check the buffer
             if (REAL_BUFFER_LENGTH < DEF_BUFFER_LENGTH) {
@@ -282,22 +271,14 @@ public class ConnectionTCPImpl implements IConnection {
                 // is in big-endian
                 byteBuffer.order(ByteOrder.BIG_ENDIAN);
             }
-            logger.getInstance().debug(0, "leave receiveMessage\n");
             return byteBuffer;
-
         } catch (IOException e) {
-            throw new BaseException(SDBError.SDB_NETWORK, e);
-        } catch (NullPointerException e) {
-            // we can remove this case of exception now, the bug has been fix
-            logger.getInstance().error("objidentity:" + Integer.toString(hashCode()) + "\n");
-            logger.getInstance().error("thread id:" + Long.toString(Thread.currentThread().getId()) + "\n");
             throw new BaseException(SDBError.SDB_NETWORK, e);
         }
     }
 
     @Override
     public byte[] receiveSysInfoMsg(int msgSize) throws BaseException {
-        logger.getInstance().debug(0, "enter receiveSysInfoMsg\n");
         byte[] buf = new byte[msgSize];
 
         try {
@@ -322,12 +303,7 @@ public class ConnectionTCPImpl implements IConnection {
             }
         } catch (IOException e) {
             throw new BaseException(SDBError.SDB_NETWORK, e);
-        } catch (NullPointerException e) {
-            logger.getInstance().error("objidentity:" + Integer.toString(hashCode()) + "\n");
-            logger.getInstance().error("thread id:" + Long.toString(Thread.currentThread().getId()) + "\n");
-            throw new BaseException(SDBError.SDB_NETWORK, e);
         }
-        logger.getInstance().debug(0, "leave receiveSysInfoMsg\n");
         return buf;
     }
 
@@ -360,7 +336,6 @@ public class ConnectionTCPImpl implements IConnection {
 
     @Override
     public void sendMessage(byte[] msg, int off, int length) throws BaseException {
-        logger.getInstance().debug(0, "enter sendMessage\n");
         if (this.isClosed()) {
         	throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
@@ -373,7 +348,6 @@ public class ConnectionTCPImpl implements IConnection {
         } else {
             throw new BaseException(SDBError.SDB_SYS, "output stream is null");
         }
-        logger.getInstance().debug(0, "leave sendMessage\n");
     }
 
     public void shrinkBuffer() {
