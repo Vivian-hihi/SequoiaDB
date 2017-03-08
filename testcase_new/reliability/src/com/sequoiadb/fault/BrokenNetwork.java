@@ -52,7 +52,9 @@ public class BrokenNetwork extends Fault {
 			ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration + " &");
 			brokenTime = System.currentTimeMillis();
 		} catch (ReliabilityException e) {
-			throw new FaultException(e);
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 	}
 
@@ -115,30 +117,38 @@ public class BrokenNetwork extends Fault {
 	@Override
 	public boolean init() throws FaultException {
 		try {
-			if (ssh == null) {
-				ssh = new Ssh(hostName, user, passwd, port);
+			ssh = new Ssh(hostName, user, passwd, port);
+			try {
+				ssh.exec("mkdir " + SdbTestBase.workDir);
+			} catch (Exception e) {
 			}
 			ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
 			ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
 		} catch (ReliabilityException e) {
-			throw new FaultException(e);
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 		return true;
 	}
 
 	@Override
 	public boolean fini() throws FaultException {
-		if (ssh != null) {
-			try {
-				ssh.close();
-				ssh = new Ssh(hostName, user, passwd);
-				ssh.exec("rm -rf " + remotePath + "/" + scriptName);
-			} catch (ReliabilityException e) {
-				throw new FaultException(e);
-			} finally {
+
+		try {
+			if (ssh != null) {
 				ssh.close();
 			}
+			ssh = new Ssh(hostName, user, passwd);
+			ssh.exec("rm -rf " + remotePath + "/" + scriptName);
+		} catch (ReliabilityException e) {
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
+		} finally {
+			ssh.close();
 		}
+
 		return true;
 	}
 

@@ -34,7 +34,9 @@ public class KillNode extends Fault {
 			ssh.exec(remotePath + "/" + scriptName + " " + svcName);
 			pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
 		} catch (ReliabilityException e) {
-			throw new FaultException(e);
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 	}
 
@@ -56,7 +58,9 @@ public class KillNode extends Fault {
 				return false;
 			}
 		} catch (ReliabilityException e) {
-			throw new FaultException(e);
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 	}
 
@@ -75,20 +79,26 @@ public class KillNode extends Fault {
 			}
 			return true;
 		} catch (ReliabilityException e) {
-			throw new FaultException(e);
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 	}
 
 	@Override
 	public boolean init() throws FaultException {
 		try {
-			if (ssh == null) {
-				ssh = new Ssh(hostName, user, passwd, port);
+			ssh = new Ssh(hostName, user, passwd, port);
+			try {
+				ssh.exec("mkdir " + SdbTestBase.workDir);
+			} catch (Exception e) {
 			}
 			ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
 			ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
 		} catch (ReliabilityException e) {
-			throw new FaultException(e);
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 		return true;
 	}
@@ -101,7 +111,9 @@ public class KillNode extends Fault {
 				ssh.close();
 			}
 		} catch (ReliabilityException e) {
-			throw new FaultException(e);
+			FaultException e1 = new FaultException(e);
+			e1.setStackTrace(e.getStackTrace());
+			throw e1;
 		}
 		return true;
 	}
