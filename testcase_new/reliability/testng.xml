@@ -1,27 +1,30 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<!--This xml is for ci.-->
-<!--Testcases for reliability test, except disk-full testcases.-->
+<!--This xml is for ci. -->
+<!--Testcases for reliability test, except disk-full testcases. -->
 
-<suite name="reliability" verbose="1"> 
-   <parameter name="HOSTNAME"       value="localhost" />
-   <parameter name="SVCNAME"        value="11810" />
-   <parameter name="CHANGEDPREFIX"  value="reliability_test" />
-   <parameter name="RSRVPORTBEGIN"  value="26000" />
-   <parameter name="RSRVPORTEND"    value="27000" />
-   <parameter name="RSRVNODEDIR"    value="/data/sequoiadb/cidatabase" />
-   <parameter name="WORKDIR"        value="/tmp/ci_reliability" />
-   <parameter name="ROOTPASSWD"     value="jenkins" />
-   <parameter name="REMOTEUSER"     value="sdbadmin" />
-   <parameter name="REMOTEPASSWD"   value="sdbadmin" />
-   
-   <test name="netsplit">
-      <classes>
-         <class name="com.sequoiadb.netsplit.NetSplit2568" />
-         <class name="com.sequoiadb.netsplit.NetSplit2569" />
-         <class name="com.sequoiadb.netsplit.NetSplit2570" />
-         <class name="com.sequoiadb.netsplit.NetSplit2571" />
-         <class name="com.sequoiadb.netsplit.NetSplit2572" />
-   </classes>
-   </test>
+<suite name="reliability" verbose="1">
+	<parameter name="HOSTNAME" value="192.168.31.31" />
+	<parameter name="SVCNAME" value="11810" />
+	<parameter name="CHANGEDPREFIX" value="reliability_test" />
+	<parameter name="RSRVPORTBEGIN" value="26000" />
+	<parameter name="RSRVPORTEND" value="27000" />
+	<parameter name="RSRVNODEDIR" value="/data/sequoiadb/cidatabase" />
+	<parameter name="WORKDIR" value="/tmp/ci_reliability" />
+	<parameter name="ROOTPASSWD" value="sequoiadb" />
+	<parameter name="REMOTEUSER" value="sdbadmin" />
+	<parameter name="REMOTEPASSWD" value="sdbadmin" />
+	<parameter name="SDBINSTALLDIR" value="/opt/sequoiadb" />
+	<test name="mixaed" enabled="true" parallel="classes"
+		thread-count="1">
+		<classes>
+			<class name="com.sequoiadb.netsplit.NetSplit2568" />
+			<class name="com.sequoiadb.netsplit.NetSplit2569" />
+			<class name="com.sequoiadb.netsplit.NetSplit2570" />
+			<class name="com.sequoiadb.netsplit.NetSplit2571" />
+			<class name="com.sequoiadb.netsplit.NetSplit2572" />
+		</classes>
+	</test>
+
+
 </suite>
    
