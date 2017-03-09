@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.testng.annotations.Test;
+
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
@@ -19,310 +21,357 @@ import com.sequoiadb.exception.ReliabilityException;
  * 
  */
 public class Ssh {
-	private String host;
-	private String username;
-	private String password;
-	private int port;
-	private String stdout;
-	private String stderr;
-	private int exitStatus;
-	private Session session = null;
-	// ssh建立的后台命令集合（key：Channel id ，value：Channel）
-	private Map<Integer, Channel> backgroundCMD = new HashMap<Integer, Channel>();
+    private String host;
+    private String username;
+    private String password;
+    private int port;
+    private String stdout;
+    private String stderr;
+    private int exitStatus;
+    private Session session = null;
+    // ssh建立的后台命令集合（key：Channel id ，value：Channel）
+    private Map<Integer, Channel> backgroundCMD = new HashMap<Integer, Channel>();
 
-	/**
-	 * 使用给定参数及22端口创建ssh对象
-	 * 
-	 * @param host
-	 * @param username
-	 * @param password
-	 * @throws ReliabilityException
-	 */
-	public Ssh(String host, String username, String password) throws ReliabilityException {
-		this(host, username, password, 22);
-	}
+    @Test
+    public static void test() {
+        Ssh ssh;
+        try {
+            ssh = new Ssh("192.168.31.31", "sdbadmin", "sdbadmin");
+            System.out.println(ssh.getSdbInstallDir());
+        }
+        catch (ReliabilityException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
-	/**
-	 * 使用给定参数创建ssh对象
-	 * 
-	 * @param host
-	 * @param username
-	 * @param password
-	 * @param port
-	 * @throws ReliabilityException
-	 */
-	public Ssh(String host, String username, String password, int port) throws ReliabilityException {
-		super();
-		this.host = host;
-		this.username = username;
-		this.password = password;
-		this.port = port;
-		JSch jsch = new JSch();
-		try {
-			session = jsch.getSession(username, host, port);
-			session.setPassword(password);
-			session.setConfig("StrictHostKeyChecking", "no");
-			session.connect();
-		} catch (JSchException e) {
-			if (session != null) {
-				session.disconnect();
-			}
-			ReliabilityException e1 = new ReliabilityException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		}
-	}
+    }
 
-	/**
-	 * 本地发送文件至远程主机
-	 * 
-	 * @param localPath
-	 * @param remotePath
-	 * @throws ReliabilityException
-	 */
-	public void scpTo(String localPath, String remotePath) throws ReliabilityException {
-		ChannelSftp channel = null;
-		try {
-			channel = (ChannelSftp) session.openChannel("sftp");
-			channel.connect();
-			channel.put(localPath, remotePath);
-		} catch (Exception e) {
-			ReliabilityException e1 = new ReliabilityException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		} finally {
-			if (channel != null) {
-				channel.disconnect();
-			}
-		}
-	}
+    /**
+     * 使用给定参数及22端口创建ssh对象
+     * 
+     * @param host
+     * @param username
+     * @param password
+     * @throws ReliabilityException
+     */
+    public Ssh(String host, String username, String password) throws ReliabilityException {
+        this(host, username, password, 22);
+    }
 
-	/**
-	 * 下载远程主机文件至本地
-	 * 
-	 * @param localPath
-	 * @param remotePath
-	 * @throws ReliabilityException
-	 */
-	public void scpFrom(String localPath, String remotePath) throws ReliabilityException {
-		ChannelSftp channel = null;
-		try {
-			channel = (ChannelSftp) session.openChannel("sftp");
-			channel.connect();
-			channel.get(remotePath, localPath);
-		} catch (Exception e) {
-			ReliabilityException e1 = new ReliabilityException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		} finally {
-			if (channel != null) {
-				channel.disconnect();
-			}
-		}
-	}
+    /**
+     * 使用给定参数创建ssh对象
+     * 
+     * @param host
+     * @param username
+     * @param password
+     * @param port
+     * @throws ReliabilityException
+     */
+    public Ssh(String host, String username, String password, int port)
+            throws ReliabilityException {
+        super();
+        this.host = host;
+        this.username = username;
+        this.password = password;
+        this.port = port;
+        JSch jsch = new JSch();
+        try {
+            session = jsch.getSession(username, host, port);
+            session.setPassword(password);
+            session.setConfig("StrictHostKeyChecking", "no");
+            session.connect();
+        }
+        catch (JSchException e) {
+            if (session != null) {
+                session.disconnect();
+            }
+            ReliabilityException e1 = new ReliabilityException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+    }
 
-	/**
-	 * 在远程主机上执行命令，并等待其执行结果，标准输出存入stdout，标准出错存入stderr,返回值存入exitStatus(注意：
-	 * 每一次调用exec都将覆盖上一次的执行结果,返回值不为零将抛出异常)
-	 * 
-	 * @param command
-	 * @return exitStatus
-	 * @throws ReliabilityException
-	 */
-	public void exec(String command) throws ReliabilityException {
-		Channel channel = null;
-		try {
-			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand(command);
-			channel.connect();
-			getResult(channel, Integer.MAX_VALUE);
-			if (exitStatus != 0) {
-				throw new ReliabilityException(
-						"ssh executing commond '" + command + "':" + stderr + " errcode: " + exitStatus);
-			}
-		} catch (IOException | JSchException e) {
-			ReliabilityException e1 = new ReliabilityException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		} finally {
-			if (channel != null) {
-				channel.disconnect();
-			}
-		}
-	}
+    /**
+     * 本地发送文件至远程主机
+     * 
+     * @param localPath
+     * @param remotePath
+     * @throws ReliabilityException
+     */
+    public void scpTo(String localPath, String remotePath) throws ReliabilityException {
+        ChannelSftp channel = null;
+        try {
+            channel = (ChannelSftp) session.openChannel("sftp");
+            channel.connect();
+            channel.put(localPath, remotePath);
+        }
+        catch (Exception e) {
+            ReliabilityException e1 = new ReliabilityException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+        finally {
+            if (channel != null) {
+                channel.disconnect();
+            }
+        }
+    }
 
-	/**
-	 * 将命令发送至远程主机，返回当前命令的channelId，backgroundCMD将会记录执行本条命令的ChannelId及其Channel对象，
-	 * waitBackgroudCMDDown方法可以根据channelid检测命令的执行结果
-	 * 
-	 * @param command
-	 * @throws JSchException
-	 * @return channelID
-	 */
-	public int execBackground(String command) throws ReliabilityException {
-		Channel channel = null;
-		try {
-			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand(command);
-			channel.connect();
-			backgroundCMD.put(channel.getId(), channel);
-			return channel.getId();
-		} catch (JSchException e) {
-			if (channel != null) {
-				channel.disconnect();
-			}
-			ReliabilityException e1 = new ReliabilityException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		}
-	}
+    /**
+     * 下载远程主机文件至本地
+     * 
+     * @param localPath
+     * @param remotePath
+     * @throws ReliabilityException
+     */
+    public void scpFrom(String localPath, String remotePath) throws ReliabilityException {
+        ChannelSftp channel = null;
+        try {
+            channel = (ChannelSftp) session.openChannel("sftp");
+            channel.connect();
+            channel.get(remotePath, localPath);
+        }
+        catch (Exception e) {
+            ReliabilityException e1 = new ReliabilityException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+        finally {
+            if (channel != null) {
+                channel.disconnect();
+            }
+        }
+    }
 
-	/**
-	 * 等待给定channelId所执行的命令结束，覆盖stdout，stderr，exitstatus保存结果
-	 * 
-	 * @param channelId
-	 * @return
-	 * @throws waitBackgroudCMDDown
-	 */
-	public void waitBackgroudCMDDown(int channelId) throws ReliabilityException {
-		waitBackgroudCMDDown(channelId, Integer.MAX_VALUE);
-	}
+    /**
+     * 在远程主机上执行命令，并等待其执行结果，标准输出存入stdout，标准出错存入stderr,返回值存入exitStatus(注意：
+     * 每一次调用exec都将覆盖上一次的执行结果,返回值不为零将抛出异常)
+     * 
+     * @param command
+     * @return exitStatus
+     * @throws ReliabilityException
+     */
+    public void exec(String command) throws ReliabilityException {
+        Channel channel = null;
+        try {
+            channel = session.openChannel("exec");
+            ((ChannelExec) channel).setCommand(command);
+            channel.connect();
+            getResult(channel, Integer.MAX_VALUE);
+            if (exitStatus != 0) {
+                throw new ReliabilityException("ssh executing commond '" + command + "':" + stderr
+                        + " errcode: " + exitStatus);
+            }
+        }
+        catch (IOException | JSchException e) {
+            ReliabilityException e1 = new ReliabilityException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+        finally {
+            if (channel != null) {
+                channel.disconnect();
+            }
+        }
+    }
 
-	/**
-	 * 等待给定channelId所执行的命令结束，覆盖stdout，stderr，exitstatus保存结果
-	 * 
-	 * @param timeOutSecond
-	 * @param channelId
-	 * @return
-	 * @throws ReliabilityException
-	 */
-	public void waitBackgroudCMDDown(int channelId, int timeOutSecond) throws ReliabilityException {
-		Channel channel = backgroundCMD.get(channelId);
-		if (channel == null) {
-			throw new ReliabilityException("ssh can not find this channel id(can not check channel id twice)");
-		}
-		backgroundCMD.remove(channelId);
-		try {
-			getResult(channel, timeOutSecond);
-		} catch (IOException e) {
-			ReliabilityException e1 = new ReliabilityException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		} finally {
-			channel.disconnect();
-		}
-	}
+    /**
+     * 将命令发送至远程主机，返回当前命令的channelId，backgroundCMD将会记录执行本条命令的ChannelId及其Channel对象，
+     * waitBackgroudCMDDown方法可以根据channelid检测命令的执行结果
+     * 
+     * @param command
+     * @throws JSchException
+     * @return channelID
+     */
+    public int execBackground(String command) throws ReliabilityException {
+        Channel channel = null;
+        try {
+            channel = session.openChannel("exec");
+            ((ChannelExec) channel).setCommand(command);
+            channel.connect();
+            backgroundCMD.put(channel.getId(), channel);
+            return channel.getId();
+        }
+        catch (JSchException e) {
+            if (channel != null) {
+                channel.disconnect();
+            }
+            ReliabilityException e1 = new ReliabilityException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+    }
 
-	/**
-	 * 关闭Session，关闭backgroundCMD中的Channel（但这些未结束的后台命令可能仍会在远程主机正常执行）
-	 */
-	public void close() {
-		for (Channel channel : backgroundCMD.values()) {
-			channel.disconnect();
-		}
-		if (this.session != null) {
-			this.session.disconnect();
-		}
-	}
+    /**
+     * 等待给定channelId所执行的命令结束，覆盖stdout，stderr，exitstatus保存结果
+     * 
+     * @param channelId
+     * @return
+     * @throws waitBackgroudCMDDown
+     */
+    public void waitBackgroudCMDDown(int channelId) throws ReliabilityException {
+        waitBackgroudCMDDown(channelId, Integer.MAX_VALUE);
+    }
 
-	private void getResult(Channel channel, long timeOut) throws IOException {
-		StringBuffer stdoutBf = new StringBuffer();
-		StringBuffer stderrBf = new StringBuffer();
+    /**
+     * 等待给定channelId所执行的命令结束，覆盖stdout，stderr，exitstatus保存结果
+     * 
+     * @param timeOutSecond
+     * @param channelId
+     * @return
+     * @throws ReliabilityException
+     */
+    public void waitBackgroudCMDDown(int channelId, int timeOutSecond) throws ReliabilityException {
+        Channel channel = backgroundCMD.get(channelId);
+        if (channel == null) {
+            throw new ReliabilityException(
+                    "ssh can not find this channel id(can not check channel id twice)");
+        }
+        backgroundCMD.remove(channelId);
+        try {
+            getResult(channel, timeOutSecond);
+        }
+        catch (IOException e) {
+            ReliabilityException e1 = new ReliabilityException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+        finally {
+            channel.disconnect();
+        }
+    }
 
-		InputStream er = ((ChannelExec) channel).getErrStream();
-		InputStream in = channel.getInputStream();
-		byte[] tmp = new byte[1024];
+    /**
+     * 关闭Session，关闭backgroundCMD中的Channel（但这些未结束的后台命令可能仍会在远程主机正常执行）
+     */
+    public void close() {
+        for (Channel channel : backgroundCMD.values()) {
+            channel.disconnect();
+        }
+        if (this.session != null) {
+            this.session.disconnect();
+        }
+    }
 
-		long timer = System.currentTimeMillis();
-		while (true) {
-			while (in.available() > 0) {
-				int i = in.read(tmp, 0, 1024);
-				if (i < 0) {
-					break;
-				}
-				stdoutBf.append(new String(tmp, 0, i));
-				if (System.currentTimeMillis() - timer > timeOut * 1000) {
-					break;
-				}
-			}
-			if (channel.isClosed()) {
-				if (in.available() > 0) {
-					continue;
-				}
-				break;
-			}
+    public String getSdbInstallDir() throws ReliabilityException {
+        Ssh ssh = new Ssh(host, username, password);
+        String dir = null;
+        try {
+            ssh.exec("cat /etc/default/sequoiadb |grep INSTALL_DIR");
+            String str = ssh.getStdout();
+            if (str.length() <= 0) {
+                throw new ReliabilityException(
+                        "exec command:cat /etc/default/sequoiadb |grep INSTALL_DIR can not find sequoiadb install dir");
+            }
+            dir = str.substring(str.indexOf("=") + 1, str.length() - 1);
+        }
+        finally {
+            ssh.close();
+        }
+        return dir;
 
-			try {
-				Thread.sleep(200);
-			} catch (Exception e) {
-				// ignore
-			}
+    }
 
-			if (System.currentTimeMillis() - timer > timeOut * 1000) {
-				break;
-			}
-		}
+    private void getResult(Channel channel, long timeOut) throws IOException {
+        StringBuffer stdoutBf = new StringBuffer();
+        StringBuffer stderrBf = new StringBuffer();
 
-		while (true) {
-			while (er.available() > 0) {
-				int i = er.read(tmp, 0, 1024);
-				if (i < 0)
-					break;
-				stderrBf.append(new String(tmp, 0, i));
-				if (System.currentTimeMillis() - timer > timeOut * 1000) {
-					break;
-				}
-			}
-			if (channel.isClosed()) {
-				if (er.available() > 0)
-					continue;
-				break;
-			}
-			try {
-				Thread.sleep(200);
-			} catch (Exception e) {
-				// ignore
-			}
+        InputStream er = ((ChannelExec) channel).getErrStream();
+        InputStream in = channel.getInputStream();
+        byte[] tmp = new byte[1024];
 
-			if (System.currentTimeMillis() - timer > timeOut * 1000) {
-				break;
-			}
-		}
-		stdout = stdoutBf.toString();
-		stderr = stderrBf.toString();
-		exitStatus = channel.getExitStatus();
-	}
+        long timer = System.currentTimeMillis();
+        while (true) {
+            while (in.available() > 0) {
+                int i = in.read(tmp, 0, 1024);
+                if (i < 0) {
+                    break;
+                }
+                stdoutBf.append(new String(tmp, 0, i));
+                if (System.currentTimeMillis() - timer > timeOut * 1000) {
+                    break;
+                }
+            }
+            if (channel.isClosed()) {
+                if (in.available() > 0) {
+                    continue;
+                }
+                break;
+            }
 
-	public String getStdout() {
-		return stdout;
-	}
+            try {
+                Thread.sleep(200);
+            }
+            catch (Exception e) {
+                // ignore
+            }
 
-	public String getStderr() {
-		return stderr;
-	}
+            if (System.currentTimeMillis() - timer > timeOut * 1000) {
+                break;
+            }
+        }
 
-	public int getExitStatus() {
-		return exitStatus;
-	}
+        while (true) {
+            while (er.available() > 0) {
+                int i = er.read(tmp, 0, 1024);
+                if (i < 0)
+                    break;
+                stderrBf.append(new String(tmp, 0, i));
+                if (System.currentTimeMillis() - timer > timeOut * 1000) {
+                    break;
+                }
+            }
+            if (channel.isClosed()) {
+                if (er.available() > 0)
+                    continue;
+                break;
+            }
+            try {
+                Thread.sleep(200);
+            }
+            catch (Exception e) {
+                // ignore
+            }
 
-	public String getHost() {
-		return host;
-	}
+            if (System.currentTimeMillis() - timer > timeOut * 1000) {
+                break;
+            }
+        }
+        stdout = stdoutBf.toString();
+        stderr = stderrBf.toString();
+        exitStatus = channel.getExitStatus();
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getStdout() {
+        return stdout;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public String getStderr() {
+        return stderr;
+    }
 
-	public int getPort() {
-		return port;
-	}
+    public int getExitStatus() {
+        return exitStatus;
+    }
 
-	public Session getSession() {
-		return session;
-	}
+    public String getHost() {
+        return host;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public Session getSession() {
+        return session;
+    }
 
 }
