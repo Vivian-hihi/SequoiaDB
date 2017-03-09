@@ -13,14 +13,15 @@
    <parameter name="ROOTPASSWD"     value="jenkins" />
    <parameter name="REMOTEUSER"     value="sdbadmin" />
    <parameter name="REMOTEPASSWD"   value="sdbadmin" />
-	
-	<classes>
-			<class name="com.sequoiadb.demo.NetSplit2568" />
-			<class name="com.sequoiadb.demo.NetSplit2569" />
-			<class name="com.sequoiadb.demo.NetSplit2570" />
-			<class name="com.sequoiadb.demo.NetSplit2571" />
-			<class name="com.sequoiadb.demo.NetSplit2572" />		
-	</classes>
-
+   
+   <test name="netsplit">
+      <classes>
+         <class name="com.sequoiadb.demo.NetSplit2568" />
+         <class name="com.sequoiadb.demo.NetSplit2569" />
+         <class name="com.sequoiadb.demo.NetSplit2570" />
+         <class name="com.sequoiadb.demo.NetSplit2571" />
+         <class name="com.sequoiadb.demo.NetSplit2572" />
+   </classes>
+   </test>
 </suite>
    
