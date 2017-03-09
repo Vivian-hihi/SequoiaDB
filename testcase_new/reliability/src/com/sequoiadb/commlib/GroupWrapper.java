@@ -109,7 +109,7 @@ public class GroupWrapper {
 		try {
 			for (int i = 0; i < times; i++) {
 
-				ssh.exec("sdb -s \"var db = new Sdb;var rg = db.getRG('" + groupName + "');rg.reelect();\"");
+				ssh.exec(SdbTestBase.installDir+"/bin/sdb -s \"var db = new Sdb;var rg = db.getRG('" + groupName + "');rg.reelect();\"");
 				refresh();
 				if (priNode != getMaster().nodeID()) {
 					return true;
@@ -185,7 +185,7 @@ public class GroupWrapper {
 	public String getInspectStdout() throws ReliabilityException {
 		Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
 		try {
-			ssh.exec("sdbinspect -g " + getGroupName());
+			ssh.exec(SdbTestBase.installDir+"/bin/sdbinspect -g " + getGroupName());
 		} finally {
 			ssh.close();
 		}
