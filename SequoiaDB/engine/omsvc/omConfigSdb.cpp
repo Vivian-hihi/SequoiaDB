@@ -940,13 +940,16 @@ namespace engine
             INT32 coordNum = 0 ;
             INT32 cataNum = 0 ;
             INT32 dataNum = 0 ;
-            string transaction ;
+            map<string, string> groupTransMap ;
+            map<string, string>::iterator groupIter ;
 
             for ( OmNodes::ConstIterator it = nodes.begin() ;
                it != nodes.end() ; it++ )
             {
                OmSdbNode* node = dynamic_cast<OmSdbNode*>( *it ) ;
                string role = node->getRole() ;
+               string groupName = node->getGroupName() ;
+               string transaction = node->getTransaction() ;
 
                if ( OM_NODE_ROLE_STANDALONE == role )
                {
@@ -967,23 +970,24 @@ namespace engine
                else if ( role == OM_NODE_ROLE_DATA )
                {
                   dataNum++ ;
-               }
-
-               if ( it == nodes.begin() )
-               {
-                  transaction = node->getTransaction();
-               }
-               else
-               {
-                  if ( transaction != node->getTransaction() )
+                  groupIter = groupTransMap.find( groupName ) ;
+                  if( groupIter == groupTransMap.end() )
                   {
-                     rc = SDB_INVALIDARG ;
-                     PD_LOG_MSG( PDERROR, "transaction exist conflict value:"
-                                 "host=%s, svcname=%s, transaction=%s",
-                                 node->getHostName().c_str(),
-                                 node->getServiceName().c_str(),
-                                 transaction.c_str() ) ;
-                     goto error ;
+                     groupTransMap.insert(
+                           pair<string, string>( groupName, transaction ) ) ;
+                  }
+                  else
+                  {
+                     if( groupIter->second != transaction )
+                     {
+                        rc = SDB_INVALIDARG ;
+                        PD_LOG_MSG( PDERROR, "transaction exist conflict value:"
+                                    "host=%s, svcname=%s, transactionon=%s",
+                                    node->getHostName().c_str(),
+                                    node->getServiceName().c_str(),
+                                    transaction.c_str() ) ;
+                        goto error ;
+                     }
                   }
                }
             }
