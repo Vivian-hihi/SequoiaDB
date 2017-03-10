@@ -1,11 +1,8 @@
 /**
- * Copyright (c) 2017, SequoiaDB Ltd.
- * File Name:GroupMgr.java
- * 类的详细描述
+ * Copyright (c) 2017, SequoiaDB Ltd. File Name:GroupMgr.java 类的详细描述
  *
- *  @author wenjingwang
- * Date:2017-2-23上午10:19:55
- *  @version 1.00
+ * @author wenjingwang Date:2017-2-23上午10:19:55
+ * @version 1.00
  */
 package com.sequoiadb.commlib;
 
@@ -25,195 +22,208 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 
 public class GroupMgr {
-	private Map<String, GroupWrapper> name2group = new HashMap<String, GroupWrapper>();
-	private Map<Integer, GroupWrapper> id2group = new HashMap<Integer, GroupWrapper>();
-	private Sequoiadb sdb = null;
-	private static GroupMgr mgr = null;
+    private Map<String, GroupWrapper> name2group = new HashMap<String, GroupWrapper>();
+    private Map<Integer, GroupWrapper> id2group = new HashMap<Integer, GroupWrapper>();
+    private Sequoiadb sdb = null;
+    private static GroupMgr mgr = null;
 
-	public GroupMgr() throws ReliabilityException {
-		this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-		this.init();
-	}
+    public GroupMgr() throws ReliabilityException {
+        this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        this.init();
+    }
 
-	public void init() throws ReliabilityException {
-		try {
-			BSONObject nullObj = null;
-			DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, nullObj, nullObj, nullObj);
-			while (cursor.hasNext()) {
-				BasicBSONObject obj = (BasicBSONObject) cursor.getNext();
+    public void init() throws ReliabilityException {
+        try {
+            BSONObject nullObj = null;
+            DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, nullObj, nullObj, nullObj);
+            while (cursor.hasNext()) {
+                BasicBSONObject obj = (BasicBSONObject) cursor.getNext();
 
-				String groupName = obj.getString("GroupName");
+                String groupName = obj.getString("GroupName");
 
-				GroupWrapper group = new GroupWrapper(obj, sdb.getReplicaGroup(groupName));
-				group.init();
-				name2group.put(groupName, group);
-				id2group.put(group.getGroupID(), group);
-			}
-			cursor.close();
-		} catch (BaseException e) {
-			throw new ReliabilityException(e);
-		}
+                GroupWrapper group = new GroupWrapper(obj, sdb.getReplicaGroup(groupName));
+                group.init();
+                name2group.put(groupName, group);
+                id2group.put(group.getGroupID(), group);
+            }
+            cursor.close();
+        }
+        catch (BaseException e) {
+            throw new ReliabilityException(e);
+        }
 
-	}
+    }
 
-	public List<GroupWrapper> getAllDataGroup() {
-		List<GroupWrapper> dataGroups = new ArrayList<GroupWrapper>();
-		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-			if (!entry.getKey().equals("SYSSpare") && !entry.getKey().equals("SYSCatalogGroup")
-					&& !entry.getKey().equals("SYSCoord")) {
-				dataGroups.add(entry.getValue());
-			}
-		}
+    public List<GroupWrapper> getAllDataGroup() {
+        List<GroupWrapper> dataGroups = new ArrayList<GroupWrapper>();
+        for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
+            if (!entry.getKey().equals("SYSSpare") && !entry.getKey().equals("SYSCatalogGroup")
+                    && !entry.getKey().equals("SYSCoord")) {
+                dataGroups.add(entry.getValue());
+            }
+        }
 
-		return dataGroups;
-	}
+        return dataGroups;
+    }
 
-	public List<String> getAllDataGroupName() {
-		List<String> names = new ArrayList<String>();
-		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-			if (!entry.getKey().equals("SYSSpare") && !entry.getKey().equals("SYSCatalogGroup")
-					&& !entry.getKey().equals("SYSCoord")) {
-				names.add(entry.getKey());
-			}
-		}
+    public List<String> getAllDataGroupName() {
+        List<String> names = new ArrayList<String>();
+        for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
+            if (!entry.getKey().equals("SYSSpare") && !entry.getKey().equals("SYSCatalogGroup")
+                    && !entry.getKey().equals("SYSCoord")) {
+                names.add(entry.getKey());
+            }
+        }
 
-		return names;
-	}
+        return names;
+    }
 
-	public Set<String> getAllHosts() {
-		Set<String> hosts = new HashSet<String>();
-		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-			Set<String> hostsPerGroup = entry.getValue().getAllHosts();
-			hosts.addAll(hostsPerGroup);
-		}
+    public Set<String> getAllHosts() {
+        Set<String> hosts = new HashSet<String>();
+        for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
+            Set<String> hostsPerGroup = entry.getValue().getAllHosts();
+            hosts.addAll(hostsPerGroup);
+        }
 
-		return hosts;
-	}
+        return hosts;
+    }
 
-	public GroupWrapper getGroupByName(String name) {
-		if (name2group.containsKey(name)) {
-			return name2group.get(name);
-		} else {
-			return null;
-		}
-	}
+    public GroupWrapper getGroupByName(String name) {
+        if (name2group.containsKey(name)) {
+            return name2group.get(name);
+        }
+        else {
+            return null;
+        }
+    }
 
-	public GroupWrapper getGroupById(int id) {
-		if (id2group.containsKey(id)) {
-			return id2group.get(id);
-		} else {
-			return null;
-		}
-	}
+    public GroupWrapper getGroupById(int id) {
+        if (id2group.containsKey(id)) {
+            return id2group.get(id);
+        }
+        else {
+            return null;
+        }
+    }
 
-	public static GroupMgr getInstance() throws ReliabilityException {
-		mgr = new GroupMgr();
-		// mgr.init();
-		return mgr;
-	}
+    public static GroupMgr getInstance() throws ReliabilityException {
+        mgr = new GroupMgr();
+        // mgr.init();
+        return mgr;
+    }
 
-	public boolean checkBusiness() throws ReliabilityException {
-		return checkBusiness(true);
-	}
+    public boolean checkBusiness() throws ReliabilityException {
+        return checkBusiness(true);
+    }
 
-	public boolean checkBusiness(boolean printRes) throws ReliabilityException {
-		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
-		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-			if (!entry.getKey().equals("SYSCoord")) {
-				results.add(entry.getValue().checkBusiness(printRes));
-			}
-		}
+    public boolean checkBusiness(boolean printAndTrowAllException) throws ReliabilityException {
+        ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
+        for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
+            if (!entry.getKey().equals("SYSCoord")) {
+                try {
+                    results.add(entry.getValue().checkBusiness(printAndTrowAllException));
+                }
+                catch (Exception e) {
+                    if (printAndTrowAllException) {
+                        throw e;
+                    }
+                    return false;
+                }
+            }
+        }
 
-		boolean ret = true;
-		for (GroupCheckResult result : results) {
-			if (!result.check()) {
-				if (printRes) {
-					System.out.println(result.toString());
-				}
-				ret = false;
-			}
-		}
-		return ret;
-	}
+        boolean ret = true;
+        for (GroupCheckResult result : results) {
+            if (!result.check() && printAndTrowAllException) {
+                System.out.println(result.toString());
+                ret = false;
+            }
+        }
+        return ret;
+    }
 
-	public boolean checkBusinessWithLSN() throws ReliabilityException {
-		return checkBusinessWithLSN(true);
-	}
+    public boolean checkBusinessWithLSN() throws ReliabilityException {
+        return checkBusinessWithLSN(true);
+    }
 
-	public boolean checkBusinessWithLSN(boolean printRes) throws ReliabilityException {
-		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
-		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-			if (!entry.getKey().equals("SYSCoord")) {
-				results.add(entry.getValue().checkBusiness(printRes));
-			}
-		}
+    public boolean checkBusinessWithLSN(boolean printRes) throws ReliabilityException {
+        ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
+        for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
+            if (!entry.getKey().equals("SYSCoord")) {
+                results.add(entry.getValue().checkBusiness(printRes));
+            }
+        }
 
-		boolean ret = true;
-		for (GroupCheckResult result : results) {
-			ret = result.checkWithLSN();
-			if (ret == false) {
-				System.out.println(result.toString());
-			}
-		}
-		return ret;
-	}
+        boolean ret = true;
+        for (GroupCheckResult result : results) {
+            ret = result.checkWithLSN();
+            if (ret == false) {
+                System.out.println(result.toString());
+            }
+        }
+        return ret;
+    }
 
-	public boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
-		return checkBusinessWithLSNAndDisk(true);
-	}
+    public boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
+        return checkBusinessWithLSNAndDisk(true);
+    }
 
-	public boolean checkBusinessWithLSNAndDisk(boolean printRes) throws ReliabilityException {
-		ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
-		for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-			if (!entry.getKey().equals("SYSCoord")) {
-				results.add(entry.getValue().checkBusiness(printRes));
-			}
-		}
+    public boolean checkBusinessWithLSNAndDisk(boolean printRes) throws ReliabilityException {
+        ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
+        for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
+            if (!entry.getKey().equals("SYSCoord")) {
+                results.add(entry.getValue().checkBusiness(printRes));
+            }
+        }
 
-		boolean ret = true;
-		for (GroupCheckResult result : results) {
-			ret = result.checkWithLSNAndDiskThreshold();
-			if (ret == false) {
-				System.out.println(result.toString());
-			}
-		}
-		return ret;
-	}
+        boolean ret = true;
+        for (GroupCheckResult result : results) {
+            ret = result.checkWithLSNAndDiskThreshold();
+            if (ret == false) {
+                System.out.println(result.toString());
+            }
+        }
+        return ret;
+    }
 
-	public boolean checkResidu() {
-		boolean checkRet = true;
-		Set<String> hosts = getAllHosts();
-		for (String host : hosts) {
-			try {
-				Ssh remote = new Ssh(host, "root", SdbTestBase.rootPwd);
-				remote.scpTo("./script/checkCfgResidu.sh", SdbTestBase.workDir);
-				remote.scpTo("./script/checkPortOccupied.sh", SdbTestBase.workDir);
-				remote.scpTo("./script/checkDataResidu.sh", SdbTestBase.workDir);
+    public boolean checkResidu() {
+        boolean checkRet = true;
+        Set<String> hosts = getAllHosts();
+        for (String host : hosts) {
+            try {
+                Ssh remote = new Ssh(host, "root", SdbTestBase.rootPwd);
+                remote.scpTo("./script/checkCfgResidu.sh", SdbTestBase.workDir);
+                remote.scpTo("./script/checkPortOccupied.sh", SdbTestBase.workDir);
+                remote.scpTo("./script/checkDataResidu.sh", SdbTestBase.workDir);
 
-				remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh");
-				if (remote.getExitStatus() != 0) {
-					System.out.println(String.format("%s used port:%s", host, remote.getStdout()));
-					checkRet = false;
-				}
-				remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh");
-				if (remote.getExitStatus() != 0) {
-					System.out.println(String.format("%s residu config:%s", host, remote.getStdout()));
-					checkRet = false;
-				}
-				remote.exec(SdbTestBase.workDir + "/checkDataResidu.sh");
-				if (remote.getExitStatus() != 0) {
-					System.out.println(String.format("%s residu data:%s", host, remote.getStdout()));
-					checkRet = false;
-				}
-			} catch (ReliabilityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return false;
-			} finally {
+                remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh");
+                if (remote.getExitStatus() != 0) {
+                    System.out.println(String.format("%s used port:%s", host, remote.getStdout()));
+                    checkRet = false;
+                }
+                remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh");
+                if (remote.getExitStatus() != 0) {
+                    System.out.println(
+                            String.format("%s residu config:%s", host, remote.getStdout()));
+                    checkRet = false;
+                }
+                remote.exec(SdbTestBase.workDir + "/checkDataResidu.sh");
+                if (remote.getExitStatus() != 0) {
+                    System.out
+                            .println(String.format("%s residu data:%s", host, remote.getStdout()));
+                    checkRet = false;
+                }
+            }
+            catch (ReliabilityException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return false;
+            }
+            finally {
 
-			}
-		}
-		return checkRet;
-	}
+            }
+        }
+        return checkRet;
+    }
 
 }

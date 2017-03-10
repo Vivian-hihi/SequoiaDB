@@ -45,14 +45,19 @@ public class GroupWrapper {
 
     public void refresh() throws ReliabilityException {
         Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS,
-                (BSONObject) JSON.parse("{GroupName:'" + getGroupName() + "'}"), null, null);
-        while (cursor.hasNext()) {
-            this.groupInfo = (BasicBSONObject) cursor.getNext();
+        try {
+            DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS,
+                    (BSONObject) JSON.parse("{GroupName:'" + getGroupName() + "'}"), null, null);
+            while (cursor.hasNext()) {
+                this.groupInfo = (BasicBSONObject) cursor.getNext();
+            }
+            nodes.clear();
+            init();
         }
-        init();
-        cursor.close();
-        sdb.disconnect();
+        finally {
+            sdb.closeAllCursors();
+            sdb.disconnect();
+        }
     }
 
     public void init() throws ReliabilityException {
