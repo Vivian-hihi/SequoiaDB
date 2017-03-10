@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <gtest/gtest.h>
 #include <string>
@@ -173,10 +174,11 @@ void getLocalIpAddr()
 
 void getHost()
 {
-	FILE *fp = fopen("/etc/hostname","r") ;
-	if(fp == NULL)
-		printf("Error open /etc/hostname") ;
-	fscanf(fp,"%s",HOST) ;
-	fclose(fp) ;
-	printf("Host: %s\n",HOST) ;
+	int rc = gethostname( HOST, sizeof(HOST)-1 ) ;
+	if( rc != 0 )
+	{
+	   printf( "fail to gethostname, rc = %d\n", rc ) ;
+	   exit( EXIT_FAILURE ) ;
+	}
+	printf( "Host: %s\n", HOST ) ;
 }
