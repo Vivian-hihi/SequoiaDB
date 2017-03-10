@@ -21,6 +21,7 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
@@ -267,8 +268,15 @@ public class NetSplit2572 extends SdbTestBase {
         }
 
         @Override
-        public void faultNotify(BSONObject status) {
-
+        public void faultNotify(BSONObject status) throws FaultException {
+            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
+            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
+            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
+                throw new FaultException(mk.toString());
+            }
+            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
+               throw new FaultException(rt.toString());
+            }
         }
 
     }
