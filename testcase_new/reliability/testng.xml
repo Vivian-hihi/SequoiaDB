@@ -13,7 +13,6 @@
 	<parameter name="ROOTPASSWD" value="sequoiadb" />
 	<parameter name="REMOTEUSER" value="sdbadmin" />
 	<parameter name="REMOTEPASSWD" value="sdbadmin" />
-	<parameter name="SDBINSTALLDIR" value="/opt/sequoiadb" />
 	<test name="mixaed" enabled="true" parallel="classes"
 		thread-count="1">
 		<classes>
