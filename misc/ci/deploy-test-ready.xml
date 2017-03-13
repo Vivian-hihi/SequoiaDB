@@ -12,7 +12,7 @@
 		NULL
 -->
 
-<project default="Check-Version">
+<project default="Copy-Software-Package">
 	<hostinfo prefix="local" />
 	<property environment="env" />
 	<property name="build_dir" value="${WORKSPACE}/release" />
@@ -67,32 +67,6 @@
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The old SequoiaDB version is ${BUILD.NUMBER.LOCAL} and the new SequoiaDB version is ${BUILD.NUMBER}."/>
 		<echo message="**************************************************************************************************************************************************************" />
-		<if>
-			<equals arg1="${BUILD.NUMBER}" arg2="${BUILD.NUMBER.LOCAL}" />
-			<then>
-				<available property="driver_exist" file="${build_dir}/driver" type="dir" />
-				<if>
-					<equals arg1="${driver_exist}" arg2="true" />
-					<then>
-						<echo message="@ The folder &lt;${build_dir}/driver&gt; is exist." />
-						<!-- <antcall target="3.Copy-Software-Package" inheritAll="true" /> -->
-					</then>
-					<else>
-						<echo message="@ The folder &lt;${build_dir}/driver&gt; is not exist." />
-						<antcall target="Copy-Software-Package" inheritAll="true" />
-					</else>
-				</if>
-			</then>
-			<else>
-				<antcall target="Copy-Software-Package" inheritAll="true" />
-			</else>
-		</if>
-		<!-- <if>
-			<equals arg1="${isSQLTest}" arg2="true" />
-			<then>
-				<antcall target="Check-PG-Version" inheritAll="true" />
-			</then>
-		</if> -->
 	</target>
 
 	<target name="Check-PG-Version" depends="">
@@ -147,7 +121,7 @@
 		</if>
 	</target>
 
-	<target name="Clean-Last-Software" depends="">
+	<target name="Clean-Last-Software" depends="Check-Version">
 		<echo level="info" message="Step1 : Rebuild the folder &lt;${build_dir}&gt;." />
 		<delete dir="${build_dir}" failonerror="false" />
 		<mkdir dir="${build_dir}" />
