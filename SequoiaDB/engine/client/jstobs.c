@@ -212,23 +212,16 @@ error:
    goto done ;
 }
 
-static CHAR _precision[16] = "%.16g" ;
+static CHAR _precision[20] = "%.16g" ;
 
-void setJsonPrecision( INT32 precision )
+void setJsonPrecision( const CHAR *pFloatFmt )
 {
-   if( precision <= 0 || precision > 16 )
+   if( pFloatFmt != NULL )
    {
-      _precision[0] = '%' ;
-      _precision[1] = 'g' ;
-      _precision[2] = 0 ;
-   }
-   else
-   {
-#ifdef WIN32
-      _snprintf( _precision, 16, "%%.%dg", precision ) ;
-#else
-      snprintf ( _precision, 16, "%%.%dg", precision ) ;
-#endif
+      INT32 length = strlen( pFloatFmt ) ;
+      length = length > 16 ? 16 : length ;
+      strncpy( _precision, pFloatFmt, length ) ;
+      _precision[ length ] = 0 ;
    }
 }
 
