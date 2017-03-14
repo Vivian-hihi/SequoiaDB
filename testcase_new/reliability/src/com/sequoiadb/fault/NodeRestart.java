@@ -7,14 +7,11 @@
  */
 package com.sequoiadb.fault;
 
-import javax.security.auth.login.Configuration;
 
-import org.testng.annotations.Test;
 
-import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.NodeWrapper;
-import com.sequoiadb.commlib.SdbTestBase;
+
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
@@ -23,27 +20,6 @@ import com.sequoiadb.task.FaultMakeTask;
 
 public class NodeRestart extends Fault {
     private NodeWrapper node;
-
-    @Test
-    public static void test() {
-
-        // GroupMgr m = new GroupMgr();
-        // NodeWrapper n = m.getGroupByName("group1").getMaster();
-        // NodeRestart nr = new NodeRestart(n);
-        // nr.init();
-        // nr.make();
-        // System.out.println("make");
-        // Thread.sleep(10000);
-        // nr.restore();
-        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        Node node = sdb.getReplicaGroup("group1").getMaster();
-        System.out.println(node.getStatus().toString());
-        node.stop();
-        System.out.println(node.getStatus().toString());
-        node.start();
-        System.out.println(node.getStatus().toString());
-
-    }
 
     public NodeRestart(NodeWrapper node) {
         super("nodeRestart");
