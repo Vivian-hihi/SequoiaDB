@@ -197,7 +197,6 @@
             <fileset dir="${casedir}/lib" includes="**/*.jar"/>                  
          </path>
          <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT.jar"/>
-         <echo message="csq : @{xmlfile}"/>
          <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath" failureProperty="rc">
             <xmlfileset dir="${testcase_dir}" includes="@{xmlfile}"/>
          </testng>
