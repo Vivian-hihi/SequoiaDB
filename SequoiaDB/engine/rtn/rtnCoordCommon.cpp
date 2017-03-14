@@ -2398,7 +2398,6 @@ namespace engine
                             UINT32 random,
                             UINT32 &pos )
    {
-      PD_TRACE_ENTRY ( SDB_RTNCOGETNODEPOS ) ;
       UINT32 posTmp = 0 ;
 
       switch( preferReplicaType )
