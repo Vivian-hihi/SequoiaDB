@@ -116,15 +116,15 @@ public class GroupMgr {
         return checkBusiness(true);
     }
 
-    public boolean checkBusiness(boolean printAndTrowAllException) throws ReliabilityException {
+    public boolean checkBusiness(boolean printAndThrowAllException) throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             if (!entry.getKey().equals("SYSCoord")) {
                 try {
-                    results.add(entry.getValue().checkBusiness(printAndTrowAllException));
+                    results.add(entry.getValue().checkBusiness(printAndThrowAllException));
                 }
                 catch (Exception e) {
-                    if (printAndTrowAllException) {
+                    if (printAndThrowAllException) {
                         throw e;
                     }
                     return false;
@@ -134,7 +134,7 @@ public class GroupMgr {
 
         boolean ret = true;
         for (GroupCheckResult result : results) {
-            if (!result.check() && printAndTrowAllException) {
+            if (!result.check() && printAndThrowAllException) {
                 System.out.println(result.toString());
                 ret = false;
             }
@@ -146,18 +146,27 @@ public class GroupMgr {
         return checkBusinessWithLSN(true);
     }
 
-    public boolean checkBusinessWithLSN(boolean printRes) throws ReliabilityException {
+    public boolean checkBusinessWithLSN(boolean printAndThrowAllException)
+            throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             if (!entry.getKey().equals("SYSCoord")) {
-                results.add(entry.getValue().checkBusiness(printRes));
+                try {
+                    results.add(entry.getValue().checkBusiness(printAndThrowAllException));
+                }
+                catch (Exception e) {
+                    if (printAndThrowAllException) {
+                        throw e;
+                    }
+                    return false;
+                }
             }
         }
 
         boolean ret = true;
         for (GroupCheckResult result : results) {
             ret = result.checkWithLSN();
-            if (ret == false) {
+            if (ret == false && printAndThrowAllException) {
                 System.out.println(result.toString());
             }
         }
@@ -168,18 +177,27 @@ public class GroupMgr {
         return checkBusinessWithLSNAndDisk(true);
     }
 
-    public boolean checkBusinessWithLSNAndDisk(boolean printRes) throws ReliabilityException {
+    public boolean checkBusinessWithLSNAndDisk(boolean printAndThrowAllException)
+            throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             if (!entry.getKey().equals("SYSCoord")) {
-                results.add(entry.getValue().checkBusiness(printRes));
+                try {
+                    results.add(entry.getValue().checkBusiness(printAndThrowAllException));
+                }
+                catch (Exception e) {
+                    if (printAndThrowAllException) {
+                        throw e;
+                    }
+                    return false;
+                }
             }
         }
 
         boolean ret = true;
         for (GroupCheckResult result : results) {
             ret = result.checkWithLSNAndDiskThreshold();
-            if (ret == false) {
+            if (ret == false && printAndThrowAllException) {
                 System.out.println(result.toString());
             }
         }
