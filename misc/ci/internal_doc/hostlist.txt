@@ -77,7 +77,7 @@
 192.168.20.202 ubun-test3
 
 #reliability test
-192.168.20.31 susesp2-ly ci-test-suse5
+192.168.20.31 susesp2-ly
 192.168.20.240 sequoiadb-virtual-machine
 192.168.30.107 rh-ci007
 192.168.30.117 centos-ci007
