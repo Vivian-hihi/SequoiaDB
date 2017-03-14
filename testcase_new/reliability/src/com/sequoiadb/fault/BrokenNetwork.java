@@ -94,9 +94,9 @@ public class BrokenNetwork extends Fault {
 		String os = System.getProperties().getProperty("os.name");
 		String cmd;
 		if (os.startsWith("win") || os.startsWith("Win")) {
-			cmd = "ping " + hostName + " -n 1 -w 1";
+			cmd = "ping " + hostName + " -n 2 -w 2";
 		} else {
-			cmd = "ping " + hostName + " -c 1 -w 1";
+			cmd = "ping " + hostName + " -c 2 -w 2";
 		}
 		Runtime rt = Runtime.getRuntime();
 		try {
