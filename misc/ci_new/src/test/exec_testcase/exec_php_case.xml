@@ -40,6 +40,7 @@
       <attribute name="phpversion"/>
       <sequential>
       <echo>${line.separator}***********begin to execute php testcases by @{phpversion}***********</echo>
+      <var name="processrc" value="0"/>
       <for param="testsuit">
          <path>
             <dirset dir="${testcase_dir}" includes="*" excludes="tools"/>
@@ -54,33 +55,100 @@
             <if>
                <equals arg1="${testcase_num}" arg2="0"/>
                <else>
-                  <markinlog casename="@{testsuit}_@{phpversion}" marktype="begin" sdbshell="${sdbdir}"/>
-                  
-                  <var name="testsuite_name" unset="true" />
-                  <basename property="testsuite_name" file="@{testsuit}" />
-                  <var name="testsuite_name" value="${testsuite_name}_@{phpversion}"/>
-                  <hostinfo prefix="host" />
-                  <var name="report_fullname" value="${report_dir}/${testsuite_name}_${host.NAME}.xml"/>
-
-                  <execonesuit suitfullname="@{testsuit}" 
-                               phpver="@{phpversion}" 
-                               report="${report_fullname}"/>
-                  <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testsuite_name}" />
-                  
-                  <markinlog casename="@{testsuit}_@{phpversion}" marktype="end" sdbshell="${sdbdir}"/>
+                  <var name="is_continue_exec" unset="true"/>
+                  <condition property="is_continue_exec" value="true" else="false">
+                     <or>
+                        <equals arg1="${BREAK_ON_FAILURE}" arg2="false"/>
+                        <and>
+                           <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+                           <equals arg1="${processrc}" arg2="0"/>
+                        </and>
+                     </or>
+                  </condition>
+                  <if>
+                     <equals arg1="${is_continue_exec}" arg2="true"/>
+                     <then>
+                        <processonecase reportdir="${report_dir}" 
+                                        pcsrc="processrc" 
+                                        testsuit="@{testsuit}"
+                                        phpversion="@{phpversion}"/>
+                     </then>
+                  </if>
                </else>
             </if>
                       
          </sequential>
       </for>
+      <if>
+         <equals arg1="${is_continue_exec}" arg2="false"/>
+         <then>
+            <touch file="${report_dir}/.TESTCASE_FAIL"/>
+         </then>
+      </if>
+      
       </sequential>
    </macrodef>      
 
+   <macrodef name="processonecase">
+      <attribute name="pcsrc"/>
+      <attribute name="reportdir"/>
+      <attribute name="testsuit" /> 
+      <attribute name="phpversion"/>      
+      <sequential>
+         <var name="testcase_name" unset="true" />
+         <basename property="testcase_name" file="@{testsuit}"/>
+         
+         <detectenv envisok="envrc" output="env_output" />
+         
+         <if>
+            <and>
+               <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+               <not>
+                  <equals arg1="${envrc}" arg2="0"/>
+               </not>
+            </and>
+            <then>
+               <var name="report_fullname" value="@{reportdir}/before_${testcase_type}_${testcase_name}.xml"/>
+               <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_fullname}"/>
+               <replace file="${report_fullname}" token="ERROR_MESSAGE" value="${env_output}"/>
+               <replace file="${report_fullname}" token="TESTSUIT_NAME" value="detect_env"/>
+               <replace file="${report_fullname}" token="TESTCASE_TYPE" value="detect_cluster"/>
+               <replace file="${report_fullname}" token="TESTCASE_NAME" value="before_${testcase_type}_${testcase_name}"/>
+            </then>
+            <else>
+               <markinlog casename="@{testsuit}_@{phpversion}" marktype="begin" sdbshell="${sdbdir}"/>
+               
+               <var name="testsuite_name" unset="true" />
+               <basename property="testsuite_name" file="@{testsuit}" />
+               <var name="testsuite_name" value="${testsuite_name}_@{phpversion}"/>
+               <hostinfo prefix="host" />
+               <var name="report_fullname" value="@{reportdir}/${testsuite_name}_${host.NAME}.xml"/>
+
+               <execonesuit suitfullname="@{testsuit}" 
+                            phpver="@{phpversion}" 
+                            report="${report_fullname}"
+                            rc="caserc"/>
+               <modifyreport report="${report_fullname}" layer="${testcase_type}.${testsuite_name}" />
+               
+               <markinlog casename="@{testsuit}_@{phpversion}" marktype="end" sdbshell="${sdbdir}"/>
+            </else>
+         </if>
+         
+         <var name="@{pcsrc}" unset="true"/>
+         <condition property="@{pcsrc}" value="0" else="1">
+            <and>
+               <equals arg1="${envrc}" arg2="0"/>
+               <equals arg1="${caserc}" arg2="0"/>
+            </and>
+         </condition>
+      </sequential>
+   </macrodef>
    
    <macrodef name="execonesuit">
       <attribute name="phpver"/>
       <attribute name="suitfullname" />
       <attribute name="report" />
+      <attribute name="rc" />
       <sequential> 
          <var name="begin_time" unset="true"/>
          <tstamp>

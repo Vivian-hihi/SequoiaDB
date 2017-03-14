@@ -51,4 +51,34 @@
       </sequential>
    </macrodef>   
    
+   <macrodef name="detectenv">
+      <attribute name="envisok" />
+      <attribute name="output"/>
+      <sequential>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+         <then>
+            <property file="${basedir}/src/conf/test.conf" /> 
+            <var name="sdbshell" value="${INSTALL_DIR}/bin/sdb"/>
+            <var name="cmd1" value="-f &quot;${basedir}/src/test/exec_testcase/lib/func.js,${basedir}/src/test/exec_testcase/lib/detect_cluster.js&quot;" />
+            <var name="cmd2" value="-e &quot;var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost'&quot;" />
+            <echo message="exec cmd: ${sdbshell} ${cmd1} ${cmd2}"/>
+            <var name="@{output}" unset="true"/>
+            <var name="@{envisok}" unset="true"/>
+            <exec executable="${sdbshell}" 
+                  timeout="1800000" 
+                  outputproperty="@{output}" 
+                  resultproperty="@{envisok}"
+                  failonerror="false">
+               <arg line="${cmd1} ${cmd2}" />
+            </exec>
+            <echo message="${@{output}}"/>
+         </then>
+         <else>
+            <var name="@{envisok}" value="0"/>
+         </else>
+      </if>
+      </sequential>
+   </macrodef>
+   
 </project>

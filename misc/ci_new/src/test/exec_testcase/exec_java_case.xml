@@ -19,19 +19,61 @@
    
    <target name="exec_testcase">             
       <mkdir dir="${report_dir}"/> 
-      <ant antfile="${basedir}/src/test/exec_testcase/runtest_java.xml" target="execjavatestcase">
-         <property name="casedir" value="${testcase_dir}"/>
-         <property name="reportdir" value="${report_dir}"/>
-      </ant>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         <then>
+            <ant antfile="${basedir}/src/test/exec_testcase/runtest_java.xml" target="execjavatestcase">
+               <property name="casedir" value="${testcase_dir}"/>
+               <property name="reportdir" value="${report_dir}"/>
+               <property name="sdb_version" value="${sdb_version}"/>
+               <property name="serial_number" value="${serial_number}"/>
+            </ant>
+         </then>
+         <else>
+            <if>
+               <and>
+                  <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+                  <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+               </and>
+               <then>
+                  <replace file="${testcase_dir}/sync.xml" 
+                           token="stop-all-when-occur-failure=&quot;false&quot;" 
+                           value="stop-all-when-occur-failure=&quot;true&quot;"/>
+               </then>
+            </if>
+            <ant antfile="${basedir}/src/test/exec_testcase/runtest_java.xml" target="execjavatestcase">
+               <property name="casedir" value="${testcase_dir}"/>
+               <property name="reportdir" value="${report_dir}"/>
+            </ant>
+         </else>
+      </if>
       <if>
          <available file="${testcase_dir}/output/junitreports" type="dir"/>
          <then>
             <copy todir="${report_dir}">
                <fileset dir="${testcase_dir}/output/junitreports"/>
             </copy> 
-            <modifytestngreport reportdir="${report_dir}" layer="${TESTCASE_TYPE}"/>
+            <modifytestngreport reportdir="${report_dir}" layer="${testcase_type}"/>
          </then>
       </if>
+      
+      <countstr str="&lt;/failure&gt;" resultproperty="fail_end_num">
+         <path-elements>
+            <fileset dir="${testcase_dir}/output/junitreports" includes="**/*.xml"/>
+         </path-elements>
+      </countstr>
+
+      <if>
+         <and>
+            <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+            <not>
+               <equals arg1="${fail_end_num}" arg2="0"/>
+            </not>
+         </and>
+         <then>
+            <touch file="${report_dir}/.TESTCASE_FAIL"/>
+         </then>
+      </if>   
    </target>
  
    <macrodef name="modifytestngreport">
@@ -69,4 +111,24 @@
       </sequential>
    </macrodef>
    
+   <macrodef name="countstr">
+      <attribute name="resultproperty"/>
+      <attribute name="str"/>
+      <element name="path-elements"/>
+      <sequential>
+         <var name="@{resultproperty}" unset="true"/>
+         <resourcecount property="@{resultproperty}">
+         <tokens>
+            <concat>
+               <filterchain>
+                  <tokenfilter>
+                     <containsstring contains="@{str}"/>
+                  </tokenfilter>
+               </filterchain>
+               <path-elements/>
+            </concat>
+         </tokens>
+         </resourcecount>
+      </sequential>
+   </macrodef>
 </project>

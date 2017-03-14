@@ -47,41 +47,108 @@
    </target>
    
    <target name="execjavatestcase"> 
-
       <var name="begin_time" unset="true"/>
       <tstamp>
          <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
       </tstamp>
       <property name="tmp_report_dir" value="${casedir}/output" />
       <mkdir dir="${tmp_report_dir}"/>
+      <!--get src xml-->
       <switch value="${TEST_TYPE}">
          <case value="NORMALTEST">
-            <var name="xmlfile" value="testng.xml"/>
+            <var name="srcxmlfile" value="testng.xml"/>
          </case>
          <case value="LARGEDATATEST">
-            <var name="xmlfile" value="largedata.xml"/>
+            <var name="srcxmlfile" value="largedata.xml"/>
+         </case>
+         <case value="SYNCTEST">
+            <var name="srcxmlfile" value="sync.xml"/>
+         </case>
+         <case value="RELIABILITYTEST">
+            <if>
+               <contains string="${sdb_version}" substring="Enterprise-Debug"/>
+               <then>
+                  <var name="srcxmlfile" value="testng.xml"/>
+               </then>
+               <elseif>
+                  <equals arg1="${serial_number}" arg2="2"/>
+                  <then>
+                    <var name="srcxmlfile" value="testng_release.xml"/>
+                  </then>
+               </elseif>
+               <else>
+                  <var name="srcxmlfile" value="testng.xml,testng_release.xml"/>
+               </else>
+            </if>
          </case>
          <default/>
       </switch>
-      <delete file="${casedir}/proxyxml.xml"/>
-      <copyfile src="${casedir}/${xmlfile}" dest="${casedir}/proxyxml.xml"/>
-      <var name="xmlfile" value="proxyxml.xml"/>
-      <if>
-         <not>
-            <isset property="TEST_LEVEL_TYPE"/>
-         </not>
-         <else>
-            <generatexml/>
-         </else>
-      </if>
-      <path id="testcasecalsspath">
-         <pathelement path="${casedir}/build" /> 
-         <fileset dir="${casedir}/lib" includes="**/*.jar"/>                  
-      </path>
-      <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT.jar"/>
-      <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
-         <xmlfileset dir="${casedir}" includes="${xmlfile}"/>
-      </testng>
+      
+      <!--get proxy xml-->
+      <switch value="${TEST_TYPE}">
+         <case value="SYNCTEST">
+            <delete file="${casedir}/proxyxml.xml"/>
+            <copyfile src="${casedir}/${srcxmlfile}" dest="${casedir}/proxyxml.xml"/>
+            <var name="xmlfile" value="proxyxml.xml"/>
+            <if>
+               <not>
+                  <isset property="TEST_LEVEL_TYPE"/>
+               </not>
+               <else>
+                  <generatexml filename="${xmlfile}"/>
+               </else>
+            </if>
+            <execsynctest xmlfile="${xmlfile}" reportdir="${reportdir}"/>
+         </case>
+         <case value="RELIABILITYTEST">
+            <delete file="${casedir}/proxyxml.xml"/>
+            <delete file="${casedir}/proxyxml_release.xml"/>
+            
+            <for list="${srcxmlfile}" param="onexml">
+               <sequential>
+                  <if>
+                     <equals arg1="@{onexml}" arg2="testng.xml"/>
+                     <then>
+                        <copyfile src="${casedir}/@{onexml}" dest="${casedir}/proxyxml.xml"/>
+                     </then>
+                     <else>
+                        <copyfile src="${casedir}/@{onexml}" dest="${casedir}/proxyxml_release.xml"/>
+                     </else>
+                  </if>
+               </sequential>
+            </for>
+    
+            <var name="xmlfile" value="proxyxml.xml,proxyxml_release.xml"/>
+            <if>
+               <not>
+                  <isset property="TEST_LEVEL_TYPE"/>
+               </not>
+               <else>
+                  <for list="${srcxmlfile}" param="onexml">
+                     <sequential>
+                        <generatexml filename="@{onexml}"/>
+                     </sequential>
+                  </for>
+               </else>
+            </if>
+            <execreliabilitytest xmlfile="${xmlfile}"/>
+         </case>
+         <default>
+            <delete file="${casedir}/proxyxml.xml"/>
+            <copyfile src="${casedir}/${srcxmlfile}" dest="${casedir}/proxyxml.xml"/>
+            <var name="xmlfile" value="proxyxml.xml"/>
+            <if>
+               <not>
+                  <isset property="TEST_LEVEL_TYPE"/>
+               </not>
+               <else>
+                  <generatexml filename="${xmlfile}"/>
+               </else>
+            </if>
+            <execnormalandlargedatatest xmlfile="${xmlfile}"/>
+         </default>
+      </switch>
+
       <var name="end_time" unset="true"/>
       <tstamp>
          <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
@@ -89,37 +156,87 @@
       <echo message="begin at ${begin_time}, end at ${end_time}" />           
    </target>
    
+   <macrodef name="execreliabilitytest">
+      <attribute name="xmlfile"/>
+      <sequential>
+         <path id="testcasecalsspath">
+            <pathelement path="${casedir}/build" /> 
+            <fileset dir="${casedir}/lib" includes="**/*.jar"/>                  
+         </path>
+         <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT.jar"/>
+         <for list="@{xmlfile}" param="xmlname">
+            <sequential>
+               <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
+                  <xmlfileset dir="${casedir}" includes="@{xmlname}"/>
+               </testng>
+            </sequential>
+         </for>
+      </sequential>
+   </macrodef>
+   
+   <macrodef name="execnormalandlargedatatest">
+      <attribute name="xmlfile"/>
+      <sequential>
+         <path id="testcasecalsspath">
+            <pathelement path="${casedir}/build" /> 
+            <fileset dir="${casedir}/lib" includes="**/*.jar"/>                  
+         </path>
+         <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT.jar"/>
+         <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
+            <xmlfileset dir="${casedir}" includes="@{xmlfile}"/>
+         </testng>
+      </sequential>
+   </macrodef>
+   
+   <macrodef name="execsynctest">
+      <attribute name="xmlfile"/>
+      <attribute name="reportdir"/>
+      <sequential>
+         <path id="testcasecalsspath">
+            <pathelement path="${casedir}/build" /> 
+            <fileset dir="${casedir}/lib" includes="**/*.jar"/>                  
+         </path>
+         <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT.jar"/>
+         <echo message="csq : @{xmlfile}"/>
+         <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath" failureProperty="rc">
+            <xmlfileset dir="${testcase_dir}" includes="@{xmlfile}"/>
+         </testng>
+      
+      </sequential>
+   </macrodef>
+
    
    <macrodef name="generatexml">
       <!--judge TEST_LEVEL_TYPE=PACKAGE or CLASS-->
+      <attribute name="filename"/>
       <sequential>
       <if>
          <equals arg1="${TEST_LEVEL_TYPE}" arg2="PACKAGE"/>
          <then>
             <!--tag contains class line #-->
-            <markContainsStrline strValue="class"/>
+            <markContainsStrline strValue="class" filename="@{filename}"/>
             <!--delete contains # line-->
-            <delContainsStrline/>
+            <delContainsStrline filename="@{filename}"/>
             <!--tag contains package line #-->
-            <markContainsStrline strValue="package"/>
+            <markContainsStrline strValue="package" filename="@{filename}"/>
             <!--remove comtains some char line #-->
-            <removeMarkWhoContainsStr/>
+            <removeMarkWhoContainsStr filename="@{filename}"/>
             <!--delete contains # line-->
-            <delContainsStrline/>
+            <delContainsStrline filename="@{filename}"/>
          </then>
          <elseif>
             <equals arg1="${TEST_LEVEL_TYPE}" arg2="CLASS"/>
             <then>
                <!--tag contains package line #-->
-               <markContainsStrline strValue="package"/>
+               <markContainsStrline strValue="package" filename="@{filename}"/>
                <!--delete contains # line-->
-               <delContainsStrline/>
+               <delContainsStrline filename="@{filename}"/>
                <!--tag contains class line #-->
-               <markContainsStrline strValue="class"/>
+               <markContainsStrline strValue="class" filename="@{filename}"/>
                <!--remove comtains some char line #-->
-               <removeMarkWhoContainsStr/>
+               <removeMarkWhoContainsStr filename="@{filename}"/>
                <!--delete contains # line-->
-               <delContainsStrline/>
+               <delContainsStrline filename="@{filename}"/>
             </then>
          </elseif>
          <else>
@@ -131,28 +248,31 @@
    
    <macrodef name="markContainsStrline">
       <attribute name="strValue"/>
+      <attribute name="filename"/>
       <sequential>
          <exec executable="sed">
             <arg value="-i"/>
-            <arg line="'/@{strValue} / s/^/#/' ${testcase_dir}/proxyxml.xml"/>
+            <arg line="'/@{strValue} / s/^/#/' ${testcase_dir}/@{filename}"/>
          </exec>
       </sequential>
    </macrodef>
    
    <macrodef name="delContainsStrline">
+      <attribute name="filename"/>
       <sequential>
          <exec executable="sed">
             <arg value="-i"/>
-            <arg line="'/#/d' ${testcase_dir}/proxyxml.xml"/>
+            <arg line="'/#/d' ${testcase_dir}/@{filename}"/>
          </exec>
       </sequential>
    </macrodef>
    
    <macrodef name="removeMarkWhoContainsStr">
+      <attribute name="filename"/>
       <sequential>
          <exec executable="sed">
             <arg value="-i"/>
-            <arg line="'/${EXEC_TESTCASE_NAME}/ s/^#//' ${testcase_dir}/proxyxml.xml"/>
+            <arg line="'/${EXEC_TESTCASE_NAME}/ s/^#//' ${testcase_dir}/@{filename}"/>
          </exec>
       </sequential>
    </macrodef>
@@ -164,6 +284,7 @@
          <delete dir="@{srcdir}/build" failonerror="false" />
          <mkdir dir="@{srcdir}/build"/>
          <!--copy file="@{dbdir}/java/lib/sequoiadb.jar" todir="@{srcdir}/lib" overwrite="true" /-->
+         <copy file="${basedir}../../../testcase_new/thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" todir="@{srcdir}/lib" overwrite="true" />
          <javac executable="javac" 
                 srcdir="@{srcdir}" 
                 destdir="@{srcdir}/build"
@@ -180,4 +301,5 @@
       </sequential>
    </macrodef>
    
-</project>
+
+   </project>

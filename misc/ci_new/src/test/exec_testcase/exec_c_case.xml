@@ -1,6 +1,6 @@
 <!-- ============================================================================
 @description:  exec c or cpp testcase
-@parameter:    TESTCASE_TYPE          eg: tdd_c
+@parameter:    caserc          eg: tdd_c
                testcase_dir           eg: /tmp/ci/testcase/tdd/c
                report_dir             eg：/tmp/ci/report/tdd_c
 @author:       Ting YU 2016-11-1
@@ -22,35 +22,106 @@
       <mkdir dir="${report_dir}"/>
       <chmod dir="${testcase_dir}" perm="u+x" includes="*" />
 
+      <if>
+         <isset property="BREAK_ON_FAILURE"/>
+         <else>
+            <var name="BREAK_ON_FAILURE" value="false"/>
+         </else>
+      </if>
+      
+      <var name="processrc" value="0"/>
       <for param="casefullname">
          <path>
             <fileset dir="${testcase_dir}" includes="*" excludes=""/>
          </path>
-         <sequential> 
-            <markinlog casename ="@{casefullname}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
-            
-            <var name="testcase_name" unset="true" />
-            <basename property="testcase_name" file="@{casefullname}"/>
-            <propertyregex property="testcase_name" input="${testcase_name}" defaultValue="${testcase_name}"
-                           regexp="\." replace="_" override="true"/>           
-            <hostinfo prefix="host" />
-            <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}.xml"/>
-            
-            <execonecase casefullname="@{casefullname}"
-                           dbdir="${INSTALL_DIR}" 
-                           report="${report_fullname}"/>
-            <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}" />
-            
-            <markinlog casename ="@{casefullname}" marktype="end" sdbshell="${sdbshell_fullname}"/>
+         <sequential>            
+            <var name="is_continue_exec" unset="true"/>
+            <condition property="is_continue_exec" value="true" else="false">
+               <or>
+                  <equals arg1="${BREAK_ON_FAILURE}" arg2="false"/>
+                  <and>
+                     <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+                     <equals arg1="${processrc}" arg2="0"/>
+                  </and>
+               </or>
+            </condition>
+            <if>
+               <equals arg1="${is_continue_exec}" arg2="true"/>
+               <then>
+                  <processonecase reportdir="${report_dir}" 
+                                  pcsrc="processrc" 
+                                  casefullname="@{casefullname}"/>
+               </then>
+            </if>
+
          </sequential>
       </for>
+      <if>
+         <equals arg1="${is_continue_exec}" arg2="false"/>
+         <then>
+            <touch file="${report_dir}/.TESTCASE_FAIL"/>
+         </then>
+      </if>
       
    </target>
+   
+   <macrodef name="processonecase">
+      <attribute name="pcsrc"/>
+      <attribute name="reportdir"/>
+      <attribute name="casefullname" />   
+      <sequential>
+         <var name="testcase_name" unset="true" />
+         <basename property="testcase_name" file="@{casefullname}"/>
+         
+         <detectenv envisok="envrc" output="env_output" />
+         
+         <if>
+            <and>
+               <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+               <not>
+                  <equals arg1="${envrc}" arg2="0"/>
+               </not>
+            </and>
+            <then>
+               <var name="report_fullname" value="@{reportdir}/before_${testcase_type}_${testcase_name}.xml"/>
+               <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_fullname}"/>
+               <replace file="${report_fullname}" token="ERROR_MESSAGE" value="${env_output}"/>
+               <replace file="${report_fullname}" token="TESTSUIT_NAME" value="detect_env"/>
+               <replace file="${report_fullname}" token="TESTCASE_TYPE" value="detect_cluster"/>
+               <replace file="${report_fullname}" token="TESTCASE_NAME" value="before_${testcase_type}_${testcase_name}"/>
+            </then>
+            <else>
+               <markinlog casename ="@{casefullname}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
+               
+               <propertyregex property="testcase_name" input="${testcase_name}" defaultValue="${testcase_name}"
+                              regexp="\." replace="_" override="true"/>           
+               <hostinfo prefix="host" />
+               <var name="report_fullname" value="@{reportdir}/${testcase_name}_${host.NAME}.xml"/>
+               <execonecase casefullname="@{casefullname}"
+                            dbdir="${INSTALL_DIR}" 
+                            report="${report_fullname}"
+                            rc="caserc"/>
+               <modifyreport report="${report_fullname}" layer="${testcase_type}.${testcase_name}" />
+               
+               <markinlog casename ="@{casefullname}" marktype="end" sdbshell="${sdbshell_fullname}"/>
+            </else>
+         </if>
+         
+         <var name="@{pcsrc}" unset="true"/>
+         <condition property="@{pcsrc}" value="0" else="1">
+            <and>
+               <equals arg1="${envrc}" arg2="0"/>
+               <equals arg1="${caserc}" arg2="0"/>
+            </and>
+         </condition>
+      </sequential>
+   </macrodef>
    
    <macrodef name="execonecase">
       <attribute name="dbdir"/>
       <attribute name="casefullname" />   
       <attribute name="report" />
+      <attribute name="rc"/>
       <sequential>
          <var name="begin_time" unset="true"/>
          <tstamp>
@@ -63,12 +134,12 @@
          <var name="testcase_dir" unset="true"/>
          <dirname property="testcase_dir" file="@{casefullname}" />         
          <var name="screen_output" unset="true"/>
-         <var name="rc" unset="true"/>
+         <var name="@{rc}" unset="true"/>
          <exec executable="@{casefullname}" 
                dir="${testcase_dir}" 
                timeout="1200000" 
                outputproperty="screen_output" 
-               resultproperty="rc" 
+               resultproperty="@{rc}" 
                failonerror="false" >
             <arg line="${cmd}"/>
             <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:@{dbdir}/lib" />
@@ -84,11 +155,10 @@
       </sequential>
    </macrodef>
 
- 
    <macrodef name="modifyreport">
       <attribute name="report"/>
       <attribute name="layer" />
-      <sequential>                
+      <sequential>
          <replaceregexp file="@{report}"
                         match='classname="(.*)"' 
                         replace='classname="@{layer}"' 
