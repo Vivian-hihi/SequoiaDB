@@ -400,7 +400,7 @@
                   
                   <ant antfile="${exec_file}" inheritAll="false">
                      <property name="TEST_TYPE" value="${TEST_TYPE}"/>
-                     <property name="TESTCASE_TYPE" value="${testcase_type}"/>
+                     <property name="testcase_type" value="${testcase_type}"/>
                      <property name="testcase_dir" value="@{casesubtype}"/>
                      <property name="report_dir" value="${report_basedir}/${testcase_type}" />
                   </ant>
