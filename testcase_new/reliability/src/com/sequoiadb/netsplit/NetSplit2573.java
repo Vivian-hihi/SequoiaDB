@@ -3,6 +3,7 @@ package com.sequoiadb.netsplit;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
@@ -15,6 +16,7 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
@@ -28,35 +30,39 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName:SEQDB-2570 指定hash分区，按范围切分数据，切分时目标组备节点断网
+ * @FileName:SEQDB-2573 对hash分区组进行百分比切分，切分时源主节点断网
+ *                      备注：断网时，若在lob.close()发生异常，将产生一个不可用的lob
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class NetSplit2570 extends SdbTestBase {
-    private String clName = "testcaseCL2570";
+public class NetSplit2573 extends SdbTestBase {
+    private String clName = "testcaseCL2573";
     private String srcGroupName;
     private String destGroupName;
     private GroupMgr groupMgr = null;
-    private int clTotalCount;
+    private int recordCount;
+    private int lobCount;
     private String connectUrl;
     private boolean clearFlag = false;
 
     @BeforeClass()
     public void setUp() {
-        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        Sequoiadb sdb = new Sequoiadb(coordUrl, "", "");
         try {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = GroupMgr.getInstance();
 
+            // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
             if (!groupMgr.checkBusiness(true)) {
                 throw new SkipException("checkBusiness faile");
             }
-            List<GroupWrapper> glist = groupMgr.getAllDataGroup();
 
+            // 确定切分的源和目标组
+            List<GroupWrapper> glist = groupMgr.getAllDataGroup();
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
 
@@ -65,7 +71,8 @@ public class NetSplit2570 extends SdbTestBase {
                     (BSONObject) JSON
                             .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
                                     + srcGroupName + "'}"));
-            insertData(cl, 0, 1000);// 写入待切分的记录（1000普通记录）
+            // 准备切分的数据
+            insertData(cl, 0, 1000);
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
@@ -80,8 +87,13 @@ public class NetSplit2570 extends SdbTestBase {
         for (int i = begin; i < end; i++) {
             BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
             cl.insert(obj);
+            DBLob lob = cl.createLob();
+            String id = lob.getID().toString();
+            lob.write(id.getBytes());
+            lob.close();
         }
-        clTotalCount = clTotalCount + (end - begin);
+        recordCount = recordCount + end - begin;
+        lobCount = lobCount + end - begin;
     }
 
     @Test
@@ -93,19 +105,21 @@ public class NetSplit2570 extends SdbTestBase {
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String srcPriHost = srcGroup.getMaster().hostName();
-            String destSlaHost = destGroup.getSlave().hostName();
+            String destPriHost = destGroup.getMaster().hostName();
             String cataPriHost = cataGroup.getMaster().hostName();
-            if (destSlaHost.equals(srcPriHost) && !srcGroup.changePrimary(10)) {
-                throw new SkipException(srcGroupName + " reelect faile");
+            // srcSlaHost为断网主机，若目标组主节点，catalog主节点在这台机上，changePrimary将尝试至多10次的切主操作
+            if (srcPriHost.equals(destPriHost) && !destGroup.changePrimary(10)) {
+                throw new SkipException(destGroup.getGroupName() + " reelect faile");
             }
-            if (destSlaHost.equals(cataPriHost) && !cataGroup.changePrimary(10)) {
+            if (srcPriHost.equals(cataPriHost) && !cataGroup.changePrimary(10)) {
                 throw new SkipException("SYSCataLogGroup reelect faile");
             }
 
-            connectUrl = Utils.getDiffHostWithSvc(destSlaHost, groupMgr.getAllHosts());
+            // 得到一个非断网主机的coordurl
+            connectUrl = Utils.getDiffHostWithSvc(srcPriHost, groupMgr.getAllHosts());
 
             // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(destSlaHost, 2, 10, 15);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(srcPriHost, 2, 10, 15);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split("Split"));
             mgr.addTask(new Insert("insert"));
@@ -114,34 +128,38 @@ public class NetSplit2570 extends SdbTestBase {
             mgr.join();
             mgr.fini();
 
+            // TaskMgr检查线程异常
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的环境恢复
-            Assert.assertEquals(Utils.checkBusinessWithTimeout(groupMgr, 1200), true,
+            // 最长等待20分钟的集群环境恢复
+            Assert.assertEquals(Utils.checkBusinessWithTimeout(groupMgr, 20 * 60), true,
                     "wait restore business faile");
 
             // 再次插入数据
             db = new Sequoiadb(connectUrl, "", "");
             db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 3000, 4000);
+            insertData(cl, 1000000, 1001000);
 
-            // 结果校验
+            // 源和目标数据量比对
+            long destCount = checkGroupData(db, destGroupName);
+            long srcCount = checkGroupData(db, srcGroupName);
+            Assert.assertEquals(srcCount + destCount, recordCount);
+            destCount = checkGroupLob(db, destGroupName);
+            srcCount = checkGroupLob(db, srcGroupName);
+            Assert.assertEquals(srcCount + destCount, lobCount);
+            // 组间一致性校验，尝试至多60次，每次间隔1秒
             if (!destGroup.checkInspect(60, 1)) {
                 Assert.fail(destGroup.getInspectStdout());
             }
             if (!srcGroup.checkInspect(60, 1)) {
                 Assert.fail(srcGroup.getInspectStdout());
             }
-            long destCount = checkGroupData(db, destGroupName);
-            long srcCount = checkGroupData(db, srcGroupName);
-            Assert.assertEquals(destCount + srcCount, clTotalCount);
 
             clearFlag = true;
         }
         catch (ReliabilityException e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
+            Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
             if (db != null) {
@@ -151,17 +169,51 @@ public class NetSplit2570 extends SdbTestBase {
 
     }
 
+    private long checkGroupLob(Sequoiadb sdb, String destGroupName) {
+        Sequoiadb destDataNode = null;
+        DBCursor cursor = null;
+        try {
+            destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect();// 获得源主节点链接
+            DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
+
+            cursor = destCL.listLobs();
+            int lobCount = 0;
+            while (cursor.hasNext()) {
+                cursor.getNext();
+                lobCount++;
+            }
+            // 数据量应在totalCount / 2条左右（切分范围2048-4096）
+            Assert.assertEquals(
+                    lobCount > recordCount / 2 - (recordCount / 2 * 0.3)
+                            && lobCount < recordCount / 2 + (recordCount / 2 * 0.3),
+                    true, "srcGroup count:" + lobCount);
+            return lobCount;
+        }
+        catch (BaseException e) {
+            Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
+        }
+        finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (destDataNode != null) {
+                destDataNode.disconnect();
+            }
+        }
+        return 0;
+    }
+
     private long checkGroupData(Sequoiadb sdb, String groupName) {
         Sequoiadb dataNode = null;
         DBCursor cursor = null;
         try {
-            dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();
+            dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
             DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
             long count = cl.getCount();
-            // 组的数据量应该在clTotalCount / 2条左右（切分范围2048-4096）
+            // 组的数据量应该在totalCount / 2条左右（切分范围2048-4096）
             Assert.assertEquals(
-                    count > clTotalCount / 2 - (clTotalCount / 2 * 0.3)
-                            && count < clTotalCount / 2 + (clTotalCount / 2 * 0.3),
+                    count > recordCount / 2 - (recordCount / 2 * 0.3)
+                            && count < recordCount / 2 + (recordCount / 2 * 0.3),
                     true, "destGroup data count:" + count);
             return count;
         }
@@ -201,6 +253,7 @@ public class NetSplit2570 extends SdbTestBase {
     }
 
     class Insert extends OperateTask {
+        private AtomicBoolean isCutnet = new AtomicBoolean(false);
 
         public Insert(String name) {
             super(name);
@@ -211,19 +264,69 @@ public class NetSplit2570 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = new Sequoiadb(connectUrl, "", "");
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 1000, 6000);
+            insertDataForThread(cl);
+        }
+
+        private void insertDataForThread(DBCollection cl) {
+            int record = 0;
+            int lob = 0;
+            for (int i = 1000; i < 20000; i++) {
+                BSONObject obj = (BSONObject) JSON.parse("{sk:" + i + "}");
+                try {
+                    cl.insert(obj);
+                }
+                catch (BaseException e) {
+                    if (isCutnet.get()) {
+                        System.out.println("insertThread insert record:{sk:" + i + "} :"
+                                + e.getMessage() + Utils.getStackString(e));
+                        break;
+                    }
+                    throw e;
+                }
+                record++;
+                String id = null;
+                try {
+                    DBLob dblob = cl.createLob();
+                    id = dblob.getID().toString();
+                    dblob.write(id.getBytes());
+                    dblob.close();
+                }
+                catch (BaseException e) {
+                    if (isCutnet.get()) {
+                        System.out.println("insertThread create lobNum:" + i + ",lobID:" + id + " "
+                                + e.getMessage() + "\r\n" + Utils.getStackString(e));
+                        break;
+                    }
+                    throw e;
+                }
+                lob++;
+            }
+            recordCount += record;
+            lobCount += lob;
+
         }
 
         @Override
-        public void faultNotify(BSONObject status) {
-            // TODO Auto-generated method stub
-
+        public void faultNotify(BSONObject status) throws FaultException {
+            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
+            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
+            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
+                throw new FaultException(mk.toString());
+            }
+            if (mk == OperateTask.faultStatus.MAKESUCCESS) {
+                isCutnet.set(true);
+                return;
+            }
+            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
+                throw new FaultException(rt.toString());
+            }
         }
     }
 
     class Split extends OperateTask {
+        public Split(String name)
 
-        public Split(String name) {
+        {
             super(name);
         }
 
@@ -234,8 +337,7 @@ public class NetSplit2570 extends SdbTestBase {
                 sdb = new Sequoiadb(connectUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{Partition:2048}"), // 切分
-                        (BSONObject) JSON.parse("{Partition:4096}"));
+                cl.split(srcGroupName, destGroupName, 50);
             }
             catch (BaseException e) {
                 throw e;
@@ -248,17 +350,9 @@ public class NetSplit2570 extends SdbTestBase {
         }
 
         @Override
-        public void faultNotify(BSONObject status) throws FaultException {
-            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
-            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
-            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
-                throw new FaultException(mk.toString());
-            }
-            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
-                throw new FaultException(rt.toString());
-            }
-        }
+        public void faultNotify(BSONObject status) {
 
+        }
     }
 
 }
