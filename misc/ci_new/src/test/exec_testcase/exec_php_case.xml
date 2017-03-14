@@ -30,7 +30,12 @@
                            encoding="utf-8"/>
          </then>
       </if>
-      
+      <if>
+         <isset property="BREAK_ON_FAILURE"/>
+         <else>
+            <var name="BREAK_ON_FAILURE" value="false"/>
+         </else>
+      </if>
       <execallcase phpversion="php5dot4"/>
       <execallcase phpversion="php5dot5"/>
       <execallcase phpversion="php5dot6"/>

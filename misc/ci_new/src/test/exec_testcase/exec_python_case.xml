@@ -18,6 +18,12 @@
       <property file="${basedir}/src/conf/test.conf" />
       <property name="sdbshell_fullname" value="${INSTALL_DIR}/bin/sdb" />      
 
+      <if>
+         <isset property="BREAK_ON_FAILURE"/>
+         <else>
+            <var name="BREAK_ON_FAILURE" value="false"/>
+         </else>
+      </if>
       <pythondriver type="install" dbdir="${INSTALL_DIR}"/>
       <var name="processrc" value="0"/>
       <for param="suitfullname">

@@ -17,7 +17,12 @@
    <target name="exec_testcase">
       <property file="${basedir}/src/conf/test.conf" /> 
       <var name="sdbdir" value="${INSTALL_DIR}/bin/sdb" />
-      
+      <if>
+         <isset property="BREAK_ON_FAILURE"/>
+         <else>
+            <var name="BREAK_ON_FAILURE" value="false"/>
+         </else>
+      </if>
       <prefix resultproperty="prefix"/>
       <detectenv detectfile="${testcase_dir}/lib/all_prepare.js" prefix="${prefix}" sdbshell="${sdbdir}" envisok="envrc_param"/>   
       <var name="is_continue_exec" value="true"/>      
