@@ -91,6 +91,7 @@ public class DiskFull extends Fault {
             }
             int padSize = Integer.parseInt(stdOut.substring(0, stdOut.length() - 1));
             if (padSize > 0) {
+                this.fillUpDisk(100);
                 return false;
             }
             else {
