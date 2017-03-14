@@ -2456,8 +2456,7 @@ namespace engine
             tmpPos = ( curPos + 1 ) % groupItem->nodeCount() ;
          }
 
-         if ( PREFER_REPL_ANYONE != preferReplicaType &&
-              PREFER_REPL_MASTER != preferReplicaType )
+         if ( PREFER_REPL_SLAVE == preferReplicaType )
          {
             UINT32 pimaryPos = groupItem->getPrimaryPos() ;
 
