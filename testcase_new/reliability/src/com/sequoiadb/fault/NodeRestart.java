@@ -1,88 +1,135 @@
 /**
- * Copyright (c) 2017, SequoiaDB Ltd.
- * File Name:NodeRestart.java
+ * Copyright (c) 2017, SequoiaDB Ltd. File Name:NodeRestart.java
  * 
  *
- *  @author wenjingwang
- * Date:2017-2-21下午4:54:48
- *  @version 1.00
+ * @author wenjingwang Date:2017-2-21下午4:54:48
+ * @version 1.00
  */
 package com.sequoiadb.fault;
 
-import com.sequoiadb.commlib.NodeWrapper;
+import javax.security.auth.login.Configuration;
 
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.Node;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.task.FaultMakeTask;
 
 public class NodeRestart extends Fault {
-	private NodeWrapper node;
+    private NodeWrapper node;
 
-	public NodeRestart(NodeWrapper node) {
-		super("nodeRestart");
-		// TODO Auto-generated constructor stub
+    @Test
+    public static void test() {
 
-		this.node = node;
+        // GroupMgr m = new GroupMgr();
+        // NodeWrapper n = m.getGroupByName("group1").getMaster();
+        // NodeRestart nr = new NodeRestart(n);
+        // nr.init();
+        // nr.make();
+        // System.out.println("make");
+        // Thread.sleep(10000);
+        // nr.restore();
+        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        Node node = sdb.getReplicaGroup("group1").getMaster();
+        System.out.println(node.getStatus().toString());
+        node.stop();
+        System.out.println(node.getStatus().toString());
+        node.start();
+        System.out.println(node.getStatus().toString());
 
-	}
+    }
 
-	public void make() throws FaultException {
-		try {
-			this.node.stop();
-		} catch (ReliabilityException e) {
-			throw new FaultException(e);
-		}
-	}
+    public NodeRestart(NodeWrapper node) {
+        super("nodeRestart");
+        // TODO Auto-generated constructor stub
 
-	public boolean checkMakeResult() throws FaultException {
-		try {
-			return this.node.isNodeActive() != true;
-		} catch (ReliabilityException e) {
-			throw new FaultException(e);
-		}
-	}
+        this.node = node;
 
-	public void restore() throws FaultException {
-		try {
-			this.node.start();
-		} catch (ReliabilityException e) {
-			throw new FaultException(e);
-		}
-	}
+    }
 
-	public boolean checkRestoreResult() throws FaultException {
-		try {
-			return this.node.isNodeActive() == true;
-		} catch (ReliabilityException e) {
-			throw new FaultException(e);
-		}
-	}
+    public void make() throws FaultException {
+        try {
+            this.node.stop();
+        }
+        catch (ReliabilityException e) {
+            throw new FaultException(e);
+        }
+    }
 
-	@Override
-	public boolean init() throws FaultException {
-		return true;
-	}
+    public boolean checkMakeResult() throws FaultException {
+        Sequoiadb db = null;
+        try {
+            ConfigOptions conf = new ConfigOptions();
+            conf.setConnectTimeout(1000);
+            conf.setMaxAutoConnectRetryTime(1000);
+            db = new Sequoiadb(node.hostName() + ":" + node.svcName(), "", "", conf);
+            return false;
+        }
+        catch (BaseException e) {
+            if (e.getErrorCode() == -15) {
+                return true;
+            }
+            else {
+                throw new FaultException(e);
+            }
+        }
+        finally {
+            if (db != null) {
+                db.disconnect();
+            }
+        }
+    }
 
-	@Override
-	public boolean fini() throws FaultException {
-		return true;
-	}
+    public void restore() throws FaultException {
+        try {
+            this.node.start();
+        }
+        catch (ReliabilityException e) {
+            throw new FaultException(e);
+        }
+    }
 
-	/**
-	 * 
-	 * @param node
-	 * @param maxDelay
-	 *            最大延迟启动时间s
-	 * @param duration
-	 *            持续时间s
-	 * @param checkTimes
-	 *            检查构造成功与否的检测次数
-	 * @return
-	 */
-	public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay, int duration, int checkTimes) {
-		FaultMakeTask task = null;
-		NodeRestart nr = new NodeRestart(node);
-		task = new FaultMakeTask(nr, maxDelay, duration, checkTimes);
-		return task;
-	}
+    public boolean checkRestoreResult() throws FaultException {
+        try {
+            return this.node.isNodeActive() == true;
+        }
+        catch (ReliabilityException e) {
+            throw new FaultException(e);
+        }
+    }
+
+    @Override
+    public boolean init() throws FaultException {
+        return true;
+    }
+
+    @Override
+    public boolean fini() throws FaultException {
+        return true;
+    }
+
+    /**
+     * 
+     * @param node
+     * @param maxDelay
+     *            最大延迟启动时间s
+     * @param duration
+     *            持续时间s
+     * @param checkTimes
+     *            检查构造成功与否的检测次数
+     * @return
+     */
+    public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay, int duration,
+            int checkTimes) {
+        FaultMakeTask task = null;
+        NodeRestart nr = new NodeRestart(node);
+        task = new FaultMakeTask(nr, maxDelay, duration, checkTimes);
+        return task;
+    }
 }
