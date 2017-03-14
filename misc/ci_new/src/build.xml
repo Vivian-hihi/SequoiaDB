@@ -109,6 +109,126 @@
    
    </target>
    
+   <target name="sync_test_build">
+      <var name="TEST_TYPE" value="SYNCTEST"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, BREAK_ON_FAILURE"/>
+      <getplatform resultProperty="plat_form"/>
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+      <if>
+         <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
+         <then>
+            <ant antfile="install_deploy.xml" dir="src/install_deploy" inheritAll="true" useNativeBaseDir="true" >
+               <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+               <property name="plat_form" value="${plat_form}"/>
+            </ant>
+         </then>
+      </if>
+     
+      <ant antfile="sync_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
+         <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+         <property name="plat_form" value="${plat_form}"/>
+      </ant>
+      
+      <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
+         <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="plat_form" value="${plat_form}"/>
+      </ant>
+   
+      <antcallback target="status_file.get_build_status" return="build_status"/>
+
+      <if>
+         <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
+         <then>
+            <if>
+               <equals arg1="${build_status}" arg2="unstable" />
+               <then>
+                  <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                     <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                     <property name="plat_form" value="${plat_form}"/>
+                  </ant>
+               </then>
+            </if>
+         </then>
+      </if>
+   
+   </target>
+  
+   <target name="reliability_test_build">
+      <for list="1,2" param="serialnumber">
+         <sequential>
+            <var name="isbuild" value="true"/>
+            <if>
+               <equals arg1="@{serialnumber}" arg2="2"/>
+               <then>
+                  <chmod perm="u+x" file="${srccode_dir}/bin/sequoiadb" />
+                  <exec executable="bin/sequoiadb" dir="${srccode_dir}" outputproperty="sdb_version" failonerror="true">
+                     <arg line="--version" />
+                  </exec>
+                  <if>
+                     <contains string="${sdb_version}" substring="Enterprise-Debug"/>
+                     <else>
+                        <var name="isbuild" unset="true"/>
+                        <var name="isbuild" value="false"/>
+                     </else>
+                  </if>
+               </then>
+            </if>
+            <if>
+               <equals arg1="${isbuild}" arg2="true"/>
+               <then>
+                  <var name="TEST_TYPE" value="RELIABILITYTEST"/>
+                  <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
+                  <getplatform resultProperty="plat_form"/>
+                  <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+                  
+                  <if>
+                     <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
+                     <then>
+                        <ant antfile="install_deploy.xml" dir="src/install_deploy" inheritAll="true" useNativeBaseDir="true" >
+                           <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                           <property name="testhost_list" value="${testhost_list}"/>
+                        </ant>
+                     </then>
+                  </if>
+                 
+                  <ant antfile="reliability_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                     <property name="plat_form" value="${plat_form}"/>
+                     <property name="serial_number" value="@{serialnumber}"/>
+                     <property name="sdb_version" value="${sdb_version}"/>
+                  </ant>
+                  
+                  <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
+                     <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                     <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                     <property name="plat_form" value="${plat_form}"/>
+                  </ant>
+               
+                  <antcallback target="status_file.get_build_status" return="build_status"/>
+
+                  <if>
+                     <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
+                     <then>
+                        <if>
+                           <equals arg1="${build_status}" arg2="unstable" />
+                           <then>
+                              <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                                 <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                                 <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                                 <property name="testhost_list" value="${testhost_list}"/>
+                              </ant>
+                           </then>
+                        </if>
+                     </then>
+                  </if>
+               </then>
+            </if>
+         </sequential>
+      </for>   
+   </target>
+   
    <target name="performance_tpcc_test_build">
       <antcallback target="check_parameter" return="UPDATE_DB_PACKAGE, UPDATE_PG_PACKAGE, 
                                                     SELECT_DB_PACKAGE, SELECT_PG_PACKAGE,
