@@ -4,7 +4,7 @@ used=$(echo $all | awk '{print $1}')
 available=$(echo $all | awk '{print $2}')
 percent=$(echo $all | awk '{print $3}')
 percent=${percent%%\%}
-if [ $percent -ge $2 ]
+if [ "$percent" -gt "$2" ]
 then
   echo "NothingToDo"
   exit 0
