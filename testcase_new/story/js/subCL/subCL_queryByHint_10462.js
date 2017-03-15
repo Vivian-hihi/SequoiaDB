@@ -122,11 +122,19 @@ function queryByHint(queryCond,res) {
 	try {
 		var query_res = mainCl.find(queryCond).next().toObj();
 		delete query_res["_id"];
-		if(!compare(query_res,res)) flag_1 = false;
+		
+		var actA = query_res["a"];
+		var actB = query_res["b"];
+		var tmpStr = JSON.stringify(queryCond);
+		var tmpObj = eval( '('+ tmpStr +')' );
+		var expA = tmpObj["a"];
+		var expB = tmpObj["b"];
+		if( actA !== expA || actB !== expB ) flag_1 = false;
 	} catch(e) {
 		throw buildException("failed to find by queryCond", e, "queryByHint", "query operator success", "query operator error" );	
 	}
-
+	
+   //println("--"+flag_0 +"\n--"+ flag_1);
 	if (! (flag_0 && flag_1)) {
 		throw buildException( "queryByHint", new Error(), "queryByHint", "query result is true and by index", "query result is false or not by index" ) ;
 	}

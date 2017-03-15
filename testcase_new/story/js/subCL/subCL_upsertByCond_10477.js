@@ -81,7 +81,17 @@ function main(){
 	var obj_upsert_a150 = mainCl.find( upsertNotExistsData_a150 ).next().toObj();
 	delete obj_upsert_a50["_id"];
 	delete obj_upsert_a150["_id"];
- 	if ( !compare(obj_upsert_a50,upsertNotExistsData_a50) || !compare(obj_upsert_a150,upsertNotExistsData_a150) ) {
+	
+	var actName1 = obj_upsert_a50["name"];
+	var actA1    = obj_upsert_a50["a"];
+	var actB1    = obj_upsert_a50["b"];
+	
+	var actName2 = obj_upsert_a150["name"];
+	var actA2    = obj_upsert_a150["a"];
+	var actB2    = obj_upsert_a150["b"];
+	
+ 	if ( actName1 !== "upsertName_a50"  || actA1 !== 50  || actB1 !== 500 
+ 	  || actName2 !== "upsertName_a150" || actA2 !== 150 || actB2 !== 500) {
  		println("upsertTest ERROR");
  		throw buildException( "failed to upsert", new Error(), "upsert", "upsert success", "upsert error") ;
  	}
@@ -90,4 +100,6 @@ function main(){
 	commDropCL( db, COMMCSNAME, subClNames[0], true, true, "clean sub collection" );
 	commDropCL( db, COMMCSNAME, subClNames[1], true, true, "clean sub collection" );
 	commDropCL( db, COMMCSNAME, mainClName, true, true, "clean main collection" );
+	
+	println("---run end.");
 }
