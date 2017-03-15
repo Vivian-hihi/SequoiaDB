@@ -134,8 +134,10 @@ public class GroupMgr {
 
         boolean ret = true;
         for (GroupCheckResult result : results) {
-            if (!result.check() && printAndThrowAllException) {
-                System.out.println(result.toString());
+            if (!result.check()) {
+                if (printAndThrowAllException) {
+                    System.out.println(result.toString());
+                }
                 ret = false;
             }
         }
@@ -165,9 +167,11 @@ public class GroupMgr {
 
         boolean ret = true;
         for (GroupCheckResult result : results) {
-            ret = result.checkWithLSN();
-            if (ret == false && printAndThrowAllException) {
-                System.out.println(result.toString());
+            if (!result.checkWithLSN()) {
+                if (printAndThrowAllException) {
+                    System.out.println(result.toString());
+                }
+                ret = false;
             }
         }
         return ret;
@@ -196,9 +200,11 @@ public class GroupMgr {
 
         boolean ret = true;
         for (GroupCheckResult result : results) {
-            ret = result.checkWithLSNAndDiskThreshold();
-            if (ret == false && printAndThrowAllException) {
-                System.out.println(result.toString());
+            if (!result.checkWithLSNAndDiskThreshold()) {
+                if (printAndThrowAllException) {
+                    System.out.println(result.toString());
+                }
+                ret = false;
             }
         }
         return ret;
