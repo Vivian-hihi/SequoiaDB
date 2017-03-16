@@ -29,8 +29,8 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.test.common.*;
 import com.sequoiadb.testdata.*;
-//import com.sun.swing.internal.plaf.basic.resources.basic;
 
+import static org.junit.Assert.*;
 
 /**
  * @author qiushanggao
@@ -156,7 +156,7 @@ public class testCollectionSaveAndAs {
 		HaveMapPropClass asBasicObj = bsonObj.as(HaveMapPropClass.class);
 //		System.out.println(asBasicObj.toString());
 
-		assert (asBasicObj.equals(basicObj));
+		assertEquals(asBasicObj, basicObj);
 
 		cl.save(basicObj);
 		DBCursor cursor = cl.query();
@@ -218,7 +218,7 @@ public class testCollectionSaveAndAs {
 		HaveMapPropClass asBasicObj = bsonObj.as(HaveMapPropClass.class);
 //		System.out.println(asBasicObj.toString());
 
-		assert (asBasicObj.equals(basicObj));
+		assertEquals(asBasicObj, basicObj);
 		// save one record first
 		cl.save(basicObj);
 		// prepare to save another one

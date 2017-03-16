@@ -52,11 +52,11 @@ public class CollectionSpaceTest {
 	public void testCreateCL1() {
 	    BSONObject conf = new BasicBSONObject();
         conf.put("ReplSize", 0);
+		if (!cs.isCollectionExist(Constants.TEST_CL_NAME_2)) {
+			cs.createCollection(Constants.TEST_CL_NAME_2, conf);
+		}
+
 		DBCollection dbc = cs.getCollection(Constants.TEST_CL_NAME_2);
-		if (dbc == null)
-			dbc = cs.createCollection(Constants.TEST_CL_NAME_2, conf);
-		
-		dbc = cs.getCollection(Constants.TEST_CL_NAME_2);
 		assertNotNull(dbc);
 		assertTrue(cs.isCollectionExist(Constants.TEST_CL_NAME_2));
 	}
