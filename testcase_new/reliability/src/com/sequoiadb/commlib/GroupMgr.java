@@ -217,21 +217,26 @@ public class GroupMgr {
             try {
                 Ssh remote = new Ssh(host, "root", SdbTestBase.rootPwd);
                 remote.scpTo("./script/checkCfgResidu.sh", SdbTestBase.workDir);
+                remote.exec("chmod 777 " + SdbTestBase.workDir + "/checkCfgResidu.sh");
                 remote.scpTo("./script/checkPortOccupied.sh", SdbTestBase.workDir);
+                remote.exec("chmod 777 " + SdbTestBase.workDir + "/checkPortOccupied.sh");
                 remote.scpTo("./script/checkDataResidu.sh", SdbTestBase.workDir);
+                remote.exec("chmod 777 " + SdbTestBase.workDir + "/checkDataResidu.sh");
 
-                remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh");
+                remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh "
+                        + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
                 if (remote.getExitStatus() != 0) {
                     System.out.println(String.format("%s used port:%s", host, remote.getStdout()));
                     checkRet = false;
                 }
-                remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh");
+                remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh "
+                        + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
                 if (remote.getExitStatus() != 0) {
                     System.out.println(
                             String.format("%s residu config:%s", host, remote.getStdout()));
                     checkRet = false;
                 }
-                remote.exec(SdbTestBase.workDir + "/checkDataResidu.sh");
+                remote.exec(SdbTestBase.workDir + "/checkDataResidu.sh " + SdbTestBase.reservedDir);
                 if (remote.getExitStatus() != 0) {
                     System.out
                             .println(String.format("%s residu data:%s", host, remote.getStdout()));

@@ -85,9 +85,7 @@ public class Ssh {
             if (session != null) {
                 session.disconnect();
             }
-            ReliabilityException e1 = new ReliabilityException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new ReliabilityException(e);
         }
     }
 
@@ -106,9 +104,7 @@ public class Ssh {
             channel.put(localPath, remotePath);
         }
         catch (Exception e) {
-            ReliabilityException e1 = new ReliabilityException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new ReliabilityException(e);
         }
         finally {
             if (channel != null) {
@@ -132,9 +128,7 @@ public class Ssh {
             channel.get(remotePath, localPath);
         }
         catch (Exception e) {
-            ReliabilityException e1 = new ReliabilityException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new ReliabilityException(e);
         }
         finally {
             if (channel != null) {
@@ -164,9 +158,7 @@ public class Ssh {
             }
         }
         catch (IOException | JSchException e) {
-            ReliabilityException e1 = new ReliabilityException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new ReliabilityException(e);
         }
         finally {
             if (channel != null) {
@@ -196,9 +188,7 @@ public class Ssh {
             if (channel != null) {
                 channel.disconnect();
             }
-            ReliabilityException e1 = new ReliabilityException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new ReliabilityException(e);
         }
     }
 
@@ -232,9 +222,7 @@ public class Ssh {
             getResult(channel, timeOutSecond);
         }
         catch (IOException e) {
-            ReliabilityException e1 = new ReliabilityException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new ReliabilityException(e);
         }
         finally {
             channel.disconnect();
