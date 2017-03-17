@@ -122,7 +122,6 @@ public class ConfigOptions {
      * @return boolean
      * @fn boolean getUseSSL()
      * @brief Get whether use the SSL or not
-     * @author David Li
      * @since 1.12
      */
     public boolean getUseSSL() {
@@ -133,7 +132,6 @@ public class ConfigOptions {
      * @param useSSL(boolean)
      * @fn void setUseSSL(boolean useSSL)
      * @brief Set whether use the SSL or not
-     * @author David Li
      * @since 1.12
      */
     public void setUseSSL(boolean useSSL) {

@@ -21,7 +21,6 @@ import java.nio.ByteOrder;
 
 /*
  * Auto-expand ByteBuffer
- * @author: David Li
  */
 public class IOBuffer {
     private ByteBuffer buf;
