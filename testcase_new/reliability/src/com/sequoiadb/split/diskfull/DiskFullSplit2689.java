@@ -1,0 +1,232 @@
+package com.sequoiadb.split.diskfull;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.bson.BSONObject;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.GroupWrapper;
+import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.FaultException;
+import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.fault.DiskFull;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
+
+/**
+ * @FileName:SEQDB-2689 对hash分区组进行范围切分，切分时目标组主节点所在服务器磁盘耗尽
+ * @author huangqiaohui
+ * @version 1.00
+ *
+ */
+
+public class DiskFullSplit2689 extends SdbTestBase {
+    private String clName = "testcaseCL2689";
+    private String srcGroupName;
+    private String destGroupName;
+    private Sequoiadb commSdb = null;
+    private GroupMgr groupMgr = null;
+    private int totalCount;
+    private boolean clearFlag = false;
+
+    @BeforeClass()
+    public void setUp() {
+        try {
+            System.out.println(
+                    "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
+                            + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+            commSdb = new Sequoiadb(coordUrl, "", "");
+            groupMgr = GroupMgr.getInstance();
+
+            if (!groupMgr.checkBusiness(true)) {
+                throw new SkipException("checkBusiness faile");
+            }
+            List<GroupWrapper> glist = groupMgr.getAllDataGroup();
+
+            srcGroupName = glist.get(0).getGroupName();
+            destGroupName = glist.get(1).getGroupName();
+
+            CollectionSpace commCS = commSdb.getCollectionSpace(csName);
+            DBCollection cl = commCS.createCollection(clName,
+                    (BSONObject) JSON
+                            .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
+                                    + srcGroupName + "'}"));
+            insertData(cl, 256);// 写入待切分的LOB（135M）
+        }
+        catch (ReliabilityException e) {
+            if (commSdb != null) {
+                commSdb.disconnect();
+            }
+            Assert.fail(this.getClass().getName() + " setUp error, error description:"
+                    + e.getMessage() + "\r\n" + Utils.getStackString(e));
+        }
+    }
+
+    public void insertData(DBCollection cl, int count) {
+        for (int i = 0; i < count; i++) {
+            DBLob lob = cl.createLob();
+            String idStr = lob.getID().toString();
+            StringBuffer sb = new StringBuffer();
+
+            for (int j = 0; j < 1024 * 44; j++) {// 单条lob大小为12*1024*44 = 540kB
+                sb.append(idStr);
+            }
+            lob.write(sb.toString().getBytes());
+            lob.close();
+        }
+        totalCount += count;
+
+    }
+
+    @Test
+    public void test() {
+        try {
+            // 得到源和目标组的GroupWrapper对象
+            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
+            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
+
+            // 建立并行任务
+            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(destGroup.getMaster().hostName(),
+                    SdbTestBase.workDir, 0, 10, 97);
+            TaskMgr mgr = new TaskMgr(faultTask);
+            mgr.addTask(new Split("Split"));
+            mgr.init();
+            mgr.start();
+            mgr.join();
+            mgr.fini();
+
+            Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
+
+            commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+            DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
+            insertData(cl, 10);
+
+            // 结果校验
+            if (!destGroup.checkInspect(60, 1)) {
+                Assert.fail(destGroup.getInspectStdout());
+            }
+            if (!srcGroup.checkInspect(60, 1)) {
+                Assert.fail(srcGroup.getInspectStdout());
+            }
+            long destCount = checkGroupLob(commSdb, destGroupName);
+            long srcCount = checkGroupLob(commSdb, srcGroupName);
+            Assert.assertEquals(destCount + srcCount, totalCount);
+            clearFlag = true;
+        }
+        catch (ReliabilityException e) {
+            e.printStackTrace();
+            Assert.fail(e.getMessage());
+        }
+
+    }
+
+    private long checkGroupLob(Sequoiadb sdb, String destGroupName) {
+        Sequoiadb destDataNode = null;
+        DBCursor cursor = null;
+        try {
+            destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect();// 获得源主节点链接
+            DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
+
+            cursor = destCL.listLobs();
+            int lobCount = 0;
+            while (cursor.hasNext()) {
+                cursor.getNext();
+                lobCount++;
+            }
+            // 数据量应在totalCount / 2条左右（切分范围2048-4096）
+            Assert.assertEquals(
+                    lobCount > totalCount / 2 - (totalCount / 2 * 0.3)
+                            && lobCount < totalCount / 2 + (totalCount / 2 * 0.3),
+                    true, "srcGroup count:" + lobCount);
+            return lobCount;
+        }
+        catch (BaseException e) {
+            Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
+        }
+        finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (destDataNode != null) {
+                destDataNode.disconnect();
+            }
+        }
+        return 0;
+    }
+
+    @AfterClass
+    public void tearDown() {
+        try {
+            if (clearFlag) {
+                CollectionSpace commCS = commSdb.getCollectionSpace(csName);
+                commCS.dropCollection(clName);
+            }
+        }
+        catch (BaseException e) {
+            Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
+        }
+        finally {
+            if (commSdb != null) {
+                commSdb.disconnect();
+            }
+            System.out.println(
+                    "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
+                            + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
+        }
+    }
+
+    class Split extends OperateTask {
+
+        public Split(String name) {
+            super(name);
+        }
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb sdb = null;
+            try {
+                sdb = new Sequoiadb(coordUrl, "", "");
+                sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
+                cl.split(srcGroupName, destGroupName, 50);
+            }
+            catch (BaseException e) {
+                throw e;
+            }
+            finally {
+                if (sdb != null) {
+                    sdb.disconnect();
+                }
+            }
+        }
+
+        @Override
+        public void faultNotify(BSONObject status) throws FaultException {
+            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
+            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
+            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
+                throw new FaultException(mk.toString());
+            }
+            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
+                throw new FaultException(rt.toString());
+            }
+        }
+
+    }
+
+}
