@@ -40,7 +40,7 @@ $netstat -lnpt | grep 8080
 5）启动tomcat服务器
 
 ```lang-javascript
-$./usr/local/apache-tomcat-7.0.68/bin/startup.sh
+$/usr/local/apache-tomcat-7.0.68/bin/startup.sh
 ```
 
 >**Note:** 
@@ -74,7 +74,8 @@ $./usr/local/apache-tomcat-7.0.68/bin/startup.sh
 3. 重启tomcat使配置参数生效
 
 ```lang-javascript
-$./usr/local/apache-tomcat-7.0.68/bin/startup.sh
+$ /usr/local/apache-tomcat-7.0.68/bin/shutdown.sh
+$ /usr/local/apache-tomcat-7.0.68/bin/startup.sh
 ```
 
 >**Note:** 
