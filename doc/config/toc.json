@@ -3162,13 +3162,13 @@
                "id": 1489720081,
                "dir": "websphere",
                "cn": "WebSphere",
-               "en": "websphere",
+               "en": "websphere"
             },
             {
                "id": 1489720188,
                "dir": "tomcat",
                "cn": "Tomcat",
-               "en": "tomcat",
+               "en": "tomcat"
             }
          ]
       },
