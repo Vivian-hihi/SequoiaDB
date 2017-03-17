@@ -70,7 +70,7 @@ public class ExceptionTest {
 			ConfigOptions opt = new ConfigOptions();
 			opt.setMaxAutoConnectRetryTime(0);
 			opt.setConnectTimeout(100);
-			Sequoiadb db = new Sequoiadb("123","","", opt);
+			Sequoiadb db = new Sequoiadb("123:1234","","", opt);
 			Assert.fail();
 		} catch(BaseException e) {
 			System.out.println("case 1's result:");
