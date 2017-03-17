@@ -6,8 +6,6 @@
 >数据库与服务器的对接，其实就是在服务器上配置数据源，在早期JDBC还未流行时，Java提供的JNDI在服务器数据源配置方面很发挥了很大的作用，JIDI用来作为配置数据源的工具，可以减少客户端对数据库驱动的依赖。Jboss作为一个web容器，它支持配置多个数据源，用户可以根据自己的需求来使用数据源。在Jboss上配置数据源的方式无非就是修改配置文件或是傻瓜式的用web界面增加或删除数据源，在分布式环境中用户可以考虑使用JNDI来配置数据源的访问接口，这样有助于系统的分布式环境系统的设计，能够降低多个数据源之间交互的复杂度，有利于整个系统性能的提高。
 >
 
-
-
 --
 
     下载软件：
@@ -92,6 +90,10 @@ $ vim standalone.xml
 > **Note:**
 >之所以将所有的127.0.0.1改成192.168.31.8是由于Jboss作为一个Web容器，不仅自身实现一些Java EE的规范，比如JMX，JMS ,JTA，EJB等。它的主要作用是对外提供服务，比如OSGI功能等。所以建议将所有的地址配置在非127的网段里，而且一般情况下，在生产环境中我们不会经常接触到运行Jboss的服务器，一般用的最多的是Jboss的web管理的功能。所以最好将所有的地址设置为网卡的地址。
 
+
+
+
+
 3). 启动数据库
 
 进入Jboss安装目录下的bin里，执行standalone\.sh文件
@@ -153,7 +155,7 @@ $ ls /opt/jboss/standalone/deployments/
 
 >**note:**
 >
->   1 打开浏览器，地址为jboos绑定的IP，访问端口默认9990。
+>   1 打开浏览器，地址为jboss绑定的IP，访问端口默认9990。
 >
 >    例如 http://192.168.31.8:9990
 
@@ -215,14 +217,15 @@ $ ls /opt/jboss/standalone/deployments/
 --
 5-启用postDS数据源
 
-点击 Enable就可以启动数据源
+点击 **Enable**就可以启动数据源
 
 ![image](webserverapp/jboss/ds-6.png)
 
 --
 
 6-部署成功
- 在selection下的 connection中点击 test connnection,可以测试数据源是否成功配。
+
+ 在 **selection**下的  **connection**中点击 **test connnection**,可以测试数据源是否成功配。
 ![pic](webserverapp/jboss/ds-7.png)
 
 -----
@@ -239,7 +242,7 @@ $ ls /opt/jboss/standalone/deployments/
 
 --
 
-3.项目上传到Jboss服务器后,启用HelloEJB 点击 Enable
+3.项目上传到Jboss服务器后,启用HelloEJB 点击 **Enable**
 
 ![image](webserverapp/jboss/web-3.png)
 
