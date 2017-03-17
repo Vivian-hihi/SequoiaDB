@@ -1,14 +1,11 @@
 ##环境准备##
 
-数据库与服务器的对接，其实就是在服务器上配置数据源，在早期JDBC还未流行时，Java提供的JNDI在服务器数据源配置方面很发挥了很大的作用，JIDI用来作为配置数据源的工具，可以减少客户端对数据库驱动的依赖。JBoss作为一个web容器，它支持配置多个数据源，用户可以根据自己的需求来使用数据源。在JBoss上配置数据源的方式无非就是修改配置文件或是傻瓜式的用web界面增加或删除数据源，在分布式环境中用户可以考虑使用JNDI来配置数据源的访问接口，这样有助于系统的分布式环境系统的设计，能够降低多个数据源之间交互的复杂度，有利于整个系统性能的提高。
-
-
 首先，下载需要的安装包，对应版本参考如下：
 
 软件| 版本
 ---|---
 [postgresql]( https://www.postgresql.org/download/) | Postgresql9.3.4.tar.gz
-[postgresql-JDBC]( https://jdbc.postgresql.org//) | postgresql-42.0.0.jre7.jar
+[postgresql-JDBC]( https://jdbc.postgresql.org/) | postgresql-42.0.0.jre7.jar
 [jboss](http://jbossas.jboss.org/downloads/) | jboss-as-7.1.1.Final.zip
 [JDK](https://www.oracle.com/index.html/) | JDK1.7
 
@@ -81,7 +78,7 @@
      ```
     > **Note:**
     >
-    >JBoss作为一个Web容器，不仅自身实现一些Java EE的规范，比如JMX，JMS ,JTA，EJB等。它的主要作用还是对外提供服务，比如OSGI功能等。所以建议将所有的地址配置在非127的网段里。
+    >JBoss作为一个Web容器，不仅自身实现一些Java EE的规范，比如JMX，JMS，JTA，EJB等。它的主要作用是对外提供服务，比如OSGI功能等。所以建议将所有的地址配置在非127的网段里。
 
     4. 启动数据库
 
@@ -94,7 +91,7 @@
 
      >**Note:**
      >
-     >执行standalone.sh脚本启动JBoss，所有的日志信息会输出到屏幕上；建议配置日志文件，根据日志的级别来选择日志是持久化还是重定向到/dev/null中。本次安装选择直接启动standalone .sh,目的是安装过程中能够及时的发现错误，启动成功后可以根据自己需求来处理日志。
+     >执行standalone.sh脚本启动JBoss，所有的日志信息会输出到屏幕上；建议配置日志文件，根据日志的级别来选择日志是持久化还是重定向到/dev/null中。本次安装选择直接启动standalone .sh,目的是安装过程中能够及时查看信息，环境安装成功后可以根据自己需求来处理日志。
 
 4. 添加JBoss后台访问用户
 

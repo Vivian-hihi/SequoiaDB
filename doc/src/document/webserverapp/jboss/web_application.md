@@ -5,7 +5,7 @@
    ![eclipse中创建Java web项目](webserverapp/jboss/web-0.png)
 
 
-2. 进入 **Runtime** 的 **Deployments**界面中，点击 **Manage eployments**，点击 **Add Content**从本地选择HelloEJB的war包上传到jboss服务器
+2. 进入 **Runtime** 的 **Deployments**界面中，点击 **Manage eployments**，点击 **Add Content**从本地选择HelloEJB.war包上传到jboss服务器
 
    ![上传war到jboss服务](webserverapp/jboss/web-2.png)
 
