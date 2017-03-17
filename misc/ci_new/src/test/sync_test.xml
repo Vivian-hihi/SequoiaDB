@@ -164,6 +164,8 @@
          </sequential>
       </for>
       
+      <delete dir="${WORKSPACE}/report"/>
+      
       <!--execute testcase in remote host-->
       <var name="test_remote_cmd" value="ant -f ${testscript_dir}/sync_test.xml exec_remote_testcase -DTEST_TYPE=${TEST_TYPE} -DTESTCASE_TYPE=${TESTCASE_TYPE} 
                                         -DBREAK_ON_FAILURE=${BREAK_ON_FAILURE} -DWORKSPACE=${WORKSPACE} -DCI_WORK_DIR=${CI_WORK_DIR}" />
@@ -189,16 +191,16 @@
                      </else>
                   </if>
                   
-                  <!--staf location="@{testhost}" service="FS"
+                  <staf location="@{testhost}" service="FS"
                         request="GET FILE ${testscript_log} TEXT"
-                        throwBuildException="1"/-->
+                        throwBuildException="1"/>
                </then>
             </if>            
          </sequential>
       </for>
       
       <!--send report to control host-->
-      <delete dir="${WORKSPACE}/report"/>
+      
       <for list="${testhost_list}" param="testhost" parallel="false">
          <sequential>                        
             <hostinfo prefix="host" />
@@ -331,6 +333,9 @@
          </sequential>
       </for>
 
+      <staf location="@{testhost}" service="FS"
+            request="COPY DIRECTORY ${CI_WORK_DIR}/report TODIRECTORY ${WORKSPACE}/report TOMACHINE ${host.NAME} RECURSE"
+            throwBuildException="1"/>   
 
    </target>
    
