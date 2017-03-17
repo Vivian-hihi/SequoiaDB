@@ -1,31 +1,25 @@
-/**
- * Copyright (C) 2012 SequoiaDB Inc.
- * <p>
+/*
+ * Copyright 2017 SequoiaDB Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * @package com.sequoiadb.base;
- * @brief SequoiaDB Driver for Java
- * @author Tanzhaobo
- */
-/**
- * @package com.sequoiadb.base;
- * @brief SequoiaDB Driver for Java
- * @author Tanzhaobo
- */
+*/
+
 package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.message.request.AdminRequest;
+import com.sequoiadb.message.response.SdbReply;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -87,19 +81,20 @@ public class Domain {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void alterDomain(BSONObject options) throws BaseException {
-        if (null == options)
+        if (null == options) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
-        // append argument
+        }
+
         BSONObject newObj = new BasicBSONObject();
         newObj.put(SequoiadbConstants.FIELD_NAME_NAME, this.name);
         newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
-        // run command
-        SDBMessage rtn = this.sequoiadb.adminCommand(SequoiadbConstants.CMD_NAME_ALTER_DOMAIN,
-                0, 0, 0, -1, newObj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.ALTER_DOMAIN, newObj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 

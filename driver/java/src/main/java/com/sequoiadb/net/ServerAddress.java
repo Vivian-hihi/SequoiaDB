@@ -24,7 +24,6 @@ import java.net.UnknownHostException;
 
 /**
  * @author Jacky Zhang
- *
  */
 public class ServerAddress {
     private final static String DEFAULT_HOST = "127.0.0.1";

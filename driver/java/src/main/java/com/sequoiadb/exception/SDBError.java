@@ -326,17 +326,18 @@ public enum SDBError {
     SDB_UTIL_COMPRESS_BUFF_SMALL(-305, "Buffer for compression is too small"),
     SDB_UTIL_DECOMPRESS_BUFF_SMALL(-306, "Buffer for decompression is too small"),
     SDB_OSS_UP_TO_LIMIT(-307, "Up to the limit"),
-    SDB_DS_NOTINIT_OR_DISABLED(-308, "sdbDataSource not init or disabled"),
-    SDB_DS_NO_COORD(-309, "sdbDataSource has no valid coord"),
+    SDB_DS_NOT_ENABLE(-308, "data source is not enabled yet"),
+    SDB_DS_NO_REACHABLE_COORD(-309, "No reachable coord notes"),
     SDB_RULE_ID_IS_NOT_EXIST(-310, "the record which exclusive ruleID is not exist"),
     SDB_STRTGY_TASK_NAME_CONFLICT(-311, "Task name conflict"),
     SDB_STRTGY_TASK_NOT_EXISTED(-312, "The task is not existed"),
-    SDB_DPS_LOG_NOT_ARCHIVED(-313, "Replica log is not archived");
+    SDB_DPS_LOG_NOT_ARCHIVED(-313, "Replica log is not archived"),
+    SDB_DS_NOT_INIT(-314, "Data source has not been initialized");
 
     private int code;
     private String desc;
 
-    SDBError(int code, String desc) {
+    private SDBError(int code, String desc) {
         this.code = code;
         this.desc = desc;
     }
@@ -975,9 +976,9 @@ public enum SDBError {
             case -307:
                 return SDB_OSS_UP_TO_LIMIT;
             case -308:
-                return SDB_DS_NOTINIT_OR_DISABLED;
+                return SDB_DS_NOT_ENABLE;
             case -309:
-                return SDB_DS_NO_COORD;
+                return SDB_DS_NO_REACHABLE_COORD;
             case -310:
                 return SDB_RULE_ID_IS_NOT_EXIST;
             case -311:
@@ -986,6 +987,8 @@ public enum SDBError {
                 return SDB_STRTGY_TASK_NOT_EXISTED;
             case -313:
                 return SDB_DPS_LOG_NOT_ARCHIVED;
+            case -314:
+                return SDB_DS_NOT_INIT;
             default:
                 return null;
         }

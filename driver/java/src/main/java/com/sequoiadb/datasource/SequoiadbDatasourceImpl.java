@@ -176,7 +176,7 @@ public class SequoiadbDatasourceImpl {
                     while (itr.hasNext()) {
                         Pair pair = itr.next();
                         Sequoiadb sdb = pair.second();
-                        lastTime = sdb.getConnection().getLastUseTime();
+                        lastTime = sdb.getLastUseTime();
                         if (currentTime - lastTime + MULTIPLE * _dsOpt.getCheckInterval() >= _dsOpt.getKeepAliveTimeout()) {
                             list.add(pair);
                         }
@@ -1295,7 +1295,7 @@ public class SequoiadbDatasourceImpl {
     private boolean _connIsValid(ConnItem item, Sequoiadb sdb) {
         // check timeout or not
         if (0 != _dsOpt.getKeepAliveTimeout()) {
-            long lastTime = sdb.getConnection().getLastUseTime();
+            long lastTime = sdb.getLastUseTime();
             long currentTime = System.currentTimeMillis();
             if ((currentTime - lastTime) + MULTIPLE * _dsOpt.getCheckInterval() >= _dsOpt.getKeepAliveTimeout())
                 return false;

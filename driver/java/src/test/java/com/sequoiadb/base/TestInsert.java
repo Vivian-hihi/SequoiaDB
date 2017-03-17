@@ -1,5 +1,6 @@
 package com.sequoiadb.base;
 
+import com.sequoiadb.message.MsgUtil;
 import com.sequoiadb.test.SingleCSCLTestCase;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -65,18 +66,30 @@ public class TestInsert extends SingleCSCLTestCase {
         BSONObject orderby = new BasicBSONObject();
         orderby.put("id", 1);
 
-        List<BSONObject> res = new ArrayList<BSONObject>(n);
-        DBCursor cursor = cl.query(null, null, orderby, null);
-        for (int i = 0; i < n; i++) {
-            assertTrue(cursor.hasNext());
-            BSONObject obj = cursor.getNext();
-            res.add(obj);
+        List<BSONObject> res = new ArrayList<>(n);
+        try (DBCursor cursor = cl.query(null, null, orderby, null)) {
+            for (int i = 0; i < n; i++) {
+                assertTrue(cursor.hasNext());
+                BSONObject obj;
+                if (i % 2 == 0) {
+                    obj = cursor.getNext();
+                } else {
+                    byte[] bytes = cursor.getNextRaw();
+                    obj = MsgUtil.decodeBSONBytes(bytes);
+                }
+                res.add(obj);
+
+                BSONObject curObj = cursor.getCurrent();
+                assertEquals(obj, curObj);
+            }
+            assertFalse(cursor.hasNext());
         }
-        assertFalse(cursor.hasNext());
-        cursor.close();
 
         for (int i = 0; i < n; i++) {
             assertEquals(objs.get(i), res.get(i));
         }
+
+        cl.truncate();
+        assertEquals(0, cl.getCount());
     }
 }

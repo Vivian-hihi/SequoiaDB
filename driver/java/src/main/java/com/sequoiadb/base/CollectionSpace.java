@@ -1,38 +1,28 @@
-/**
- * Copyright (C) 2012 SequoiaDB Inc.
- * <p>
+/*
+ * Copyright 2017 SequoiaDB Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * @package com.sequoiadb.base;
- * @brief SequoiaDB Driver for Java
- * @author Jacky Zhang
- */
-/**
- * @package com.sequoiadb.base;
- * @brief SequoiaDB Driver for Java
- * @author Jacky Zhang
- */
+*/
+
 package com.sequoiadb.base;
 
-import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.net.IConnection;
-import com.sequoiadb.util.SDBMessageHelper;
+import com.sequoiadb.message.request.AdminRequest;
+import com.sequoiadb.message.response.SdbReply;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,21 +74,19 @@ public class CollectionSpace {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCollection getCollection(String collectionName)
-            throws BaseException {
+        throws BaseException {
         // get cl from cache
         String collectionFullName = name + "." + collectionName;
         if (sequoiadb.fetchCache(collectionFullName)) {
             return new DBCollection(sequoiadb, this, collectionName);
         }
+
         // no need to upsert/remove cache here,
         // for "isCollectionExist" has do that
-        // get cl from database
         if (isCollectionExist(collectionName)) {
             return new DBCollection(sequoiadb, this, collectionName);
         } else {
-            // TODO:
-            //throw new BaseException("SDB_DMS_NOTEXIST", collectionName);
-            return null;
+            throw new BaseException(SDBError.SDB_DMS_NOTEXIST, collectionName);
         }
     }
 
@@ -111,22 +99,23 @@ public class CollectionSpace {
      * @throws com.sequoiadb.exception.BaseException
      */
     public boolean isCollectionExist(String colName) throws BaseException {
-        String commandString = SequoiadbConstants.ADMIN_PROMPT
-                + SequoiadbConstants.TEST_CMD + " "
-                + SequoiadbConstants.COLLECTION;
         String collectionFullName = name + "." + colName;
+
         BSONObject obj = new BasicBSONObject();
         obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        SDBMessage rtn = adminCommand(commandString, obj, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags == 0) {
+
+        AdminRequest request = new AdminRequest(AdminCommand.TEST_CL, obj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag == 0) {
             sequoiadb.upsertCache(collectionFullName);
             return true;
-        } else if (flags == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
+        } else if (flag == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
             sequoiadb.removeCache(collectionFullName);
             return false;
         } else
-            throw new BaseException(flags);
+            throw new BaseException(flag);
     }
 
     /**
@@ -156,22 +145,8 @@ public class CollectionSpace {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCollection createCollection(String collectionName)
-            throws BaseException {
-        if (isCollectionExist(collectionName)) {
-            throw new BaseException(SDBError.SDB_DMS_EXIST, collectionName);
-        }
-        String commandString = SequoiadbConstants.ADMIN_PROMPT
-                + SequoiadbConstants.CREATE_CMD + " "
-                + SequoiadbConstants.COLLECTION;
-        String collectionFullName = name + "." + collectionName;
-        BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        SDBMessage rtn = adminCommand(commandString, obj, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags, collectionName);
-        }
-        return getCollection(collectionName);
+        throws BaseException {
+        return createCollection(collectionName, null);
     }
 
     /**
@@ -189,20 +164,26 @@ public class CollectionSpace {
      */
     public DBCollection createCollection(String collectionName,
                                          BSONObject options) {
-        String commandString = SequoiadbConstants.ADMIN_PROMPT
-                + SequoiadbConstants.CREATE_CMD + " "
-                + SequoiadbConstants.COLLECTION;
+        if (isCollectionExist(collectionName)) {
+            throw new BaseException(SDBError.SDB_DMS_EXIST, collectionName);
+        }
+
         String collectionFullName = name + "." + collectionName;
+
         BSONObject obj = new BasicBSONObject();
         obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        if (options != null)
+        if (options != null) {
             obj.putAll(options);
-        SDBMessage rtn = adminCommand(commandString, obj, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
+        }
+
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_CL, obj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
             String msg = "collection = " + collectionFullName +
-                    ", options = " + options;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+                ", options = " + options;
+            throw new BaseException(SDBError.getSDBError(flag), msg);
         }
         sequoiadb.upsertCache(collectionFullName);
         return new DBCollection(sequoiadb, this, collectionName);
@@ -231,50 +212,20 @@ public class CollectionSpace {
         if (!isCollectionExist(collectionName)) {
             throw new BaseException(SDBError.SDB_DMS_NOTEXIST, collectionName);
         }
-        String commandString = SequoiadbConstants.ADMIN_PROMPT
-                + SequoiadbConstants.DROP_CMD + " "
-                + SequoiadbConstants.COLLECTION;
+
         String collectionFullName = name + "." + collectionName;
+
         BSONObject obj = new BasicBSONObject();
         obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        SDBMessage rtn = adminCommand(commandString, obj, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags, collectionName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.DROP_CL, obj);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag, collectionName);
         }
-        // remove cache
+
         sequoiadb.removeCache(collectionFullName);
-    }
-
-    private SDBMessage adminCommand(String commandString, BSONObject arg1,
-                                    BSONObject arg2, BSONObject arg3, BSONObject arg4)
-            throws BaseException {
-        IConnection connection = sequoiadb.getConnection();
-        // Admin command request
-        // long reqId = 0;
-        BSONObject dummyObj = new BasicBSONObject();
-        SDBMessage sdbMessage = new SDBMessage();
-        sdbMessage.setMatcher(arg1);
-        sdbMessage.setCollectionFullName(commandString);
-        sdbMessage.setFlags(0);
-        sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        // sdbMessage.setResponseTo(reqId);
-        // reqId++;
-        sdbMessage.setRequestID(sequoiadb.getNextRequstID());
-        sdbMessage.setSkipRowsCount(-1);
-        sdbMessage.setReturnRowsCount(-1);
-        sdbMessage.setSelector(dummyObj);
-        sdbMessage.setOrderBy(dummyObj);
-        sdbMessage.setHint(dummyObj);
-        sdbMessage.setOperationCode(Operation.OP_QUERY);
-
-        byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage, sequoiadb.endianConvert);
-        connection.sendMessage(request);
-
-        ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
-
-        SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
-        SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
-        return rtnSDBMessage;
     }
 }

@@ -1,23 +1,23 @@
-/**
- * Copyright (C) 2012 SequoiaDB Inc.
- * <p>
+/*
+ * Copyright 2017 SequoiaDB Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+*/
+
 package com.sequoiadb.net;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.util.Helper;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -29,55 +29,27 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-/**
- * @author Jacky Zhang
- *
- */
 public class ConnectionTCPImpl implements IConnection {
-
-    private Socket clientSocket;
+    private Socket socket;
     private InputStream input;
     private OutputStream output;
     private ConfigOptions options;
     private ServerAddress hostAddress;
-    private boolean endianConvert;
-    private byte[] receive_buffer;
-    final static private int DEF_BUFFER_LENGTH = 64 * 1024;
-    private int REAL_BUFFER_LENGTH;
-    private long lastUseTime;
-
-    @Override
-    public void setEndianConvert(boolean endianConvert) {
-        this.endianConvert = endianConvert;
-    }
-
-    @Override
-    public boolean isEndianConvert() {
-        return endianConvert;
-    }
-
-    public long getLastUseTime() {
-        return lastUseTime;
-    }
 
     public ConnectionTCPImpl(ServerAddress addr, ConfigOptions options) {
         this.hostAddress = addr;
         this.options = options;
-        endianConvert = false;
-        receive_buffer = new byte[DEF_BUFFER_LENGTH];
-        REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH;
     }
 
-    static class SSLContextHelper {
+    private static class SSLContextHelper {
         private volatile static SSLContext sslContext = null;
 
-        public static SSLContext getSSLContext() throws BaseException {
+        static SSLContext getSSLContext() throws BaseException {
             if (sslContext == null) {
                 // init SSLContext with a TrustManager which doesn't check certificate
                 synchronized (SSLContextHelper.class) {
@@ -90,11 +62,11 @@ public class ConnectionTCPImpl implements IConnection {
                                 }
 
                                 public void checkClientTrusted(X509Certificate[] arg0, String arg1)
-                                        throws CertificateException {
+                                    throws CertificateException {
                                 }
 
                                 public void checkServerTrusted(X509Certificate[] arg0, String arg1)
-                                        throws CertificateException {
+                                    throws CertificateException {
                                 }
                             };
                             SSLContext ctx = SSLContext.getInstance("SSL");
@@ -113,8 +85,14 @@ public class ConnectionTCPImpl implements IConnection {
         }
     }
 
-    private void connect() throws BaseException {
-        if (clientSocket != null) {
+    /*
+     * (non-Javadoc)
+     *
+     * @see com.sequoiadb.net.IConnection#connect()
+     */
+    @Override
+    public void connect() throws BaseException {
+        if (socket != null) {
             return;
         }
 
@@ -122,33 +100,36 @@ public class ConnectionTCPImpl implements IConnection {
         long maxAutoConnectRetryTime = options.getMaxAutoConnectRetryTime();
         long start = System.currentTimeMillis();
         while (true) {
-            BaseException lastError = null;
+            BaseException lastError;
             InetSocketAddress addr = hostAddress.getHostAddress();
             try {
                 if (options.getUseSSL()) {
-                    clientSocket = SSLContextHelper.getSSLContext().getSocketFactory().createSocket();
+                    socket = SSLContextHelper.getSSLContext().getSocketFactory().createSocket();
                 } else {
-                    clientSocket = new Socket();
+                    socket = new Socket();
                 }
-                clientSocket.connect(addr, options.getConnectTimeout());
-                clientSocket.setTcpNoDelay(!options.getUseNagle());
-                clientSocket.setKeepAlive(options.getSocketKeepAlive());
-                clientSocket.setSoTimeout(options.getSocketTimeout());
-                input = new BufferedInputStream(clientSocket.getInputStream());
-                output = clientSocket.getOutputStream();
+                socket.connect(addr, options.getConnectTimeout());
+                socket.setTcpNoDelay(!options.getUseNagle());
+                socket.setKeepAlive(options.getSocketKeepAlive());
+                socket.setSoTimeout(options.getSocketTimeout());
+                input = new BufferedInputStream(socket.getInputStream());
+                output = socket.getOutputStream();
                 return;
             } catch (IOException ioe) {
                 lastError = new BaseException(SDBError.SDB_NETWORK, ioe);
                 close();
             }
+
             // when we come here, it means network error, let's try until
             // maxAutoConnectRetryTime run out
             long executedTime = System.currentTimeMillis() - start;
-            if (executedTime >= maxAutoConnectRetryTime)
+            if (executedTime >= maxAutoConnectRetryTime) {
                 throw lastError;
+            }
 
-            if (sleepTime + executedTime > maxAutoConnectRetryTime)
+            if (sleepTime + executedTime > maxAutoConnectRetryTime) {
                 sleepTime = maxAutoConnectRetryTime - executedTime;
+            }
 
             try {
                 Thread.sleep(sleepTime);
@@ -159,201 +140,98 @@ public class ConnectionTCPImpl implements IConnection {
     }
 
     public void close() {
-        if (clientSocket != null) {
+        if (socket != null) {
             try {
-                clientSocket.close();
+                socket.close();
             } catch (Exception e) {
                 // ignore
             } finally {
-                receive_buffer = null;
-                REAL_BUFFER_LENGTH = 0;
-                input = null;
-                output = null;
-                clientSocket = null;
+                socket = null;
             }
         }
     }
 
     @Override
     public boolean isClosed() {
-        if (clientSocket == null) {
+        if (socket == null) {
             return true;
         }
-        return clientSocket.isClosed();
+        return socket.isClosed();
     }
 
     /*
      * (non-Javadoc)
      *
-     * @see com.sequoiadb.net.IConnection#changeConfigOptions(com.sequoiadb.net.
+     * @see com.sequoiadb.net.IConnection#changeConnectionOptions(com.sequoiadb.net.
      * ConfigOptions)
      */
     @Override
-    public void changeConfigOptions(ConfigOptions opts) throws BaseException {
+    public void changeConnectionOptions(ConfigOptions opts) throws BaseException {
         this.options = opts;
         close();
         connect();
     }
 
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.sequoiadb.net.IConnection#receiveMessage()
-     */
     @Override
-    public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException {
-        lastUseTime = System.currentTimeMillis();
-        try {
-            // before use, check the buffer
-            if (REAL_BUFFER_LENGTH < DEF_BUFFER_LENGTH) {
-                receive_buffer = new byte[DEF_BUFFER_LENGTH];
-                REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH;
-            }
-            input.mark(4);
-            int rtn = 0;
-            while (rtn < 4) {
-                int retSize = input.read(receive_buffer, rtn, 4 - rtn);
-                if (retSize == -1) {
-                    close();
-                    throw new BaseException(SDBError.SDB_NETWORK);
-                }
-                rtn += retSize;
-            }
-            /*
-			int rtn = input.read(MESSAGE_BUFFER, 0, 4);
-			if (rtn != 4) {
-				close();
-				throw new BaseException("SDB_NETWORK");
-			}
-			*/
-            int msgSize = Helper.byteToInt(receive_buffer, endianConvert);
-            if (msgSize > REAL_BUFFER_LENGTH) {
-                receive_buffer = new byte[msgSize];
-                REAL_BUFFER_LENGTH = msgSize;
-            }
-            input.reset();
-            rtn = 0;
-            int retSize = 0;
-            while (rtn < msgSize) {
-                retSize = input.read(receive_buffer, rtn, msgSize - rtn);
-                if (-1 == retSize) {
-                    close();
-                    throw new BaseException(SDBError.SDB_NETWORK);
-                }
-                rtn += retSize;
-            }
-
-            // if the byte count we read is not equal with the massege length
-            // throw error
-            if (rtn != msgSize) {
-                close();
-                throw new BaseException(SDBError.SDB_NETWORK);
-            }
-/*
-			if (rtn != msgSize) {
-				StringBuffer bbf = new StringBuffer();
-				for (byte by : MESSAGE_BUFFER) {
-					bbf.append(String.format("%02x", by));
-				}
-				close();
-				throw new BaseException("SDB_INVALIDARG");
-			}
-*/
-            // wrap the receive byte into a byteBuffer and then return it back
-            ByteBuffer byteBuffer = ByteBuffer.wrap(receive_buffer, 0, msgSize);
-            if (endianConvert) {
-                // "endianConvert == true" means the bytes in byteBuffer
-                // is in little-endian
-                byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-            } else {
-                // "endianConvert == false" means the bytes in byteBuffer
-                // is in big-endian
-                byteBuffer.order(ByteOrder.BIG_ENDIAN);
-            }
-            return byteBuffer;
-        } catch (IOException e) {
-            throw new BaseException(SDBError.SDB_NETWORK, e);
-        }
-    }
-
-    @Override
-    public byte[] receiveSysInfoMsg(int msgSize) throws BaseException {
-        byte[] buf = new byte[msgSize];
-
-        try {
-            int rtn = 0;
-            int retSize = 0;
-            while (rtn < msgSize) {
-                retSize = input.read(buf, rtn, msgSize - rtn);
-                if (-1 == retSize) {
-                    close();
-                    throw new BaseException(SDBError.SDB_NETWORK);
-                }
-                rtn += retSize;
-            }
-
-            if (rtn != msgSize) {
-                StringBuffer bbf = new StringBuffer();
-                for (byte by : buf) {
-                    bbf.append(String.format("%02x", by));
-                }
-                close();
-                throw new BaseException(SDBError.SDB_INVALIDARG);
-            }
-        } catch (IOException e) {
-            throw new BaseException(SDBError.SDB_NETWORK, e);
-        }
+    public byte[] receive(int length) throws BaseException {
+        byte[] buf = new byte[length];
+        receive(buf, 0, length);
         return buf;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.sequoiadb.net.IConnection#initialize()
-     */
     @Override
-    public void initialize() throws BaseException {
-        connect();
+    public void receive(byte[] buf, int off, int length) throws BaseException {
+        if (this.isClosed()) {
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
+        }
+
+        try {
+            int size = 0;
+            while (size < length) {
+                int retSize = input.read(buf, off + size, length - size);
+                if (-1 == retSize) {
+                    break; // EOF
+                }
+                size += retSize;
+            }
+
+            if (size != length) {
+                close();
+                throw new BaseException(SDBError.SDB_NETWORK,
+                    String.format("Required %d bytes, but only read %s bytes", length, size));
+            }
+        } catch (IOException e) {
+            throw new BaseException(SDBError.SDB_NETWORK, e);
+        }
     }
 
     @Override
-    public void sendMessage(ByteBuffer buffer) throws BaseException {
+    public void send(ByteBuffer buffer) throws BaseException {
         if (buffer == null) {
-            throw new BaseException(SDBError.SDB_SYS, "send ByteBuffer is null");
+            throw new BaseException(SDBError.SDB_SYS, "ByteBuffer is null");
         }
         if (buffer.hasArray()) {
-            sendMessage(buffer.array());
+            send(buffer.array());
         } else {
-            throw new BaseException(SDBError.SDB_SYS, "send ByteBuffer is not ok");
+            throw new BaseException(SDBError.SDB_SYS, "ByteBuffer has no array");
         }
     }
 
     @Override
-    public void sendMessage(byte[] msg) throws BaseException {
-        sendMessage(msg, 0, msg.length);
+    public void send(byte[] msg) throws BaseException {
+        send(msg, 0, msg.length);
     }
 
     @Override
-    public void sendMessage(byte[] msg, int off, int length) throws BaseException {
+    public void send(byte[] msg, int off, int length) throws BaseException {
         if (this.isClosed()) {
-        	throw new BaseException(SDBError.SDB_NOT_CONNECTED);
+            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
         }
-        if (output != null) {
-            try {
-                output.write(msg, 0, length);
-            } catch (IOException e) {
-                throw new BaseException(SDBError.SDB_NETWORK, e);
-            }
-        } else {
-            throw new BaseException(SDBError.SDB_SYS, "output stream is null");
-        }
-    }
 
-    public void shrinkBuffer() {
-        if (REAL_BUFFER_LENGTH != DEF_BUFFER_LENGTH) {
-            receive_buffer = new byte[DEF_BUFFER_LENGTH];
-            REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH;
+        try {
+            output.write(msg, off, length);
+        } catch (IOException e) {
+            throw new BaseException(SDBError.SDB_NETWORK, e);
         }
     }
 }

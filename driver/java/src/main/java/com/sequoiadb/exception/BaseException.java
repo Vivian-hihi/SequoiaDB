@@ -1,18 +1,19 @@
-/**
- * Copyright (C) 2012 SequoiaDB Inc.
- * <p>
+/*
+ * Copyright 2017 SequoiaDB Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+*/
+
 package com.sequoiadb.exception;
 
 
@@ -20,7 +21,6 @@ import java.util.Arrays;
 
 /**
  * @author tanzhaobo
- *
  */
 public class BaseException extends RuntimeException {
 
@@ -52,8 +52,8 @@ public class BaseException extends RuntimeException {
     }
 
     /**
-     * @param error  The enumeration object of sequoiadb error.
-     * @param e      The exception used to build exception chain.
+     * @param error The enumeration object of sequoiadb error.
+     * @param e     The exception used to build exception chain.
      * @since v2.8
      */
     public BaseException(SDBError error, Throwable e) {
@@ -61,7 +61,7 @@ public class BaseException extends RuntimeException {
     }
 
     /**
-     * @param error  The enumeration object of sequoiadb error.
+     * @param error The enumeration object of sequoiadb error.
      * @since v2.8
      */
     public BaseException(SDBError error) {
@@ -102,7 +102,6 @@ public class BaseException extends RuntimeException {
     }
 
     /**
-     *
      * @param errorCode The error code return by engine.
      * @deprecated since v2.8
      */
@@ -112,8 +111,8 @@ public class BaseException extends RuntimeException {
 
 
     /**
-     * @brief Get the error message.
      * @return The error message.
+     * @brief Get the error message.
      */
     @Override
     public String getMessage() {
@@ -131,16 +130,16 @@ public class BaseException extends RuntimeException {
     }
 
     /**
-     * @brief Get the error type.
      * @return The error type.
+     * @brief Get the error type.
      */
     public String getErrorType() {
         return error != null ? error.getErrorType() : "Unknown Type";
     }
 
     /**
-     * @brief Get the error code.
      * @return The error code.
+     * @brief Get the error code.
      */
     public int getErrorCode() {
         return error != null ? error.getErrorCode() : 0;

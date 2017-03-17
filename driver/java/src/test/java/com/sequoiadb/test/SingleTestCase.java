@@ -17,11 +17,11 @@ public abstract class SingleTestCase extends TestCase {
         ConfigOptions options = new ConfigOptions();
         options.setConnectTimeout(3000);
         sdb = new Sequoiadb(
-                TestConfig.getSingleHost(),
-                Integer.valueOf(TestConfig.getSinglePort()),
-                TestConfig.getSingleUsername(),
-                TestConfig.getSinglePassword(),
-                options);
+            TestConfig.getSingleHost(),
+            Integer.valueOf(TestConfig.getSinglePort()),
+            TestConfig.getSingleUsername(),
+            TestConfig.getSinglePassword(),
+            options);
     }
 
     @AfterClass

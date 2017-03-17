@@ -1,94 +1,54 @@
+/*
+ * Copyright 2017 SequoiaDB Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package com.sequoiadb.base;
 
-import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.net.IConnection;
-import com.sequoiadb.util.SDBMessageHelper;
+import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.message.ResultSet;
+import com.sequoiadb.message.request.GetMoreRequest;
+import com.sequoiadb.message.request.KillContextRequest;
+import com.sequoiadb.message.response.SdbReply;
 import org.bson.BSONObject;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Closeable;
 
 /**
  * @class DBCursor
  * @brief Database operation interfaces of cursor.
  */
-public class DBCursor {
-    private long reqId;
-    private SDBMessage sdbMessage;
-    private DBCollection dbc;
-    private IConnection connection;
-    private BSONObject current = null;
-    private List<BSONObject> list;
-
-    private byte[] currentRaw;
-    private List<byte[]> listRaw;
-    private int index;
-    private boolean hasMore;
-    private byte times;
-    private long contextId;
-    boolean endianConvert;
+public class DBCursor implements Closeable {
     private Sequoiadb sequoiadb;
+    private long contextId;
+    private ResultSet resultSet;
+    private boolean isClosed;
+    private boolean isEOC;
+    private boolean isStarted;
+    private byte[] currentRaw;
+    private BSONObject currentObj;
 
-    DBCursor() {
-        hasMore = false;
-        sdbMessage = null;
-        connection = null;
-        dbc = null;
-        list = null;
-        listRaw = null;
-        index = -1;
-        reqId = 0;
-        contextId = -1;
-        endianConvert = false;
-        sequoiadb = null;
+    DBCursor(Sequoiadb sequoiadb, long contextId, ResultSet resultSet) {
+        this.sequoiadb = sequoiadb;
+        this.contextId = contextId;
+        this.resultSet = resultSet;
     }
 
-    DBCursor(SDBMessage rtnSDBMessage, DBCollection dbc) {
-        this.dbc = dbc;
-        sequoiadb = dbc.getSequoiadb();
-        endianConvert = sequoiadb.endianConvert;
-        connection = dbc.getConnection();
-        sdbMessage = rtnSDBMessage;
-        sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        sdbMessage.setNumReturned(-1); // return data count
-        list = new ArrayList<BSONObject>();
-        listRaw = new ArrayList<byte[]>();
-        reqId = rtnSDBMessage.getRequestID();
-        contextId = rtnSDBMessage.getContextIDList().get(0);
-        hasMore = false;
-        current = null;
-        times = 0;
-        index = -1;
-
-        List<BSONObject> tmpList = sdbMessage.getObjectList();
-        if (null != tmpList && tmpList.size() != 0) {
-            list = tmpList;
-        }
-    }
-
-    DBCursor(SDBMessage rtnSDBMessage, Sequoiadb sdb) {
-        this.connection = sdb.getConnection();
-        sequoiadb = sdb;
-        sdbMessage = rtnSDBMessage;
-        sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        sdbMessage.setNumReturned(-1); // return data count
-        list = new ArrayList<BSONObject>();
-        listRaw = new ArrayList<byte[]>();
-        reqId = rtnSDBMessage.getRequestID();
-        contextId = rtnSDBMessage.getContextIDList().get(0);
-        hasMore = false;
-        current = null;
-        times = 0;
-        index = -1;
-        endianConvert = sdb.endianConvert;
-
-        List<BSONObject> tmpList = sdbMessage.getObjectList();
-        if (null != tmpList && tmpList.size() != 0) {
-            list = tmpList;
-        }
+    DBCursor(SdbReply response, Sequoiadb sequoiadb) {
+        this(sequoiadb, response.getContextId(), response.getResultSet());
     }
 
     /**
@@ -98,21 +58,24 @@ public class DBCursor {
      * @brief Judge whether the next document exists or not.
      */
     public boolean hasNext() throws BaseException {
-        if (connection == null)
-            return hasMore;
-        if (times > 0 || sdbMessage == null)
-            return hasMore;
-        if (list == null || index >= (list.size() - 1)) {
-            getListFromDB(true);
-            index = -1;
+        if (isClosed || isEOC) {
+            return false;
         }
-        if (list == null || list.size() == 0) {
-            hasMore = false;
-        } else {
-            hasMore = true;
+
+        isStarted = true;
+
+        if (resultSet != null && resultSet.hasNext()) {
+            return true;
         }
-        ++times;
-        return hasMore;
+
+        if (contextId != -1) {
+            resultSet = getResultSetFromServer();
+            if (resultSet != null && resultSet.hasNext()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /*
@@ -120,23 +83,11 @@ public class DBCursor {
      * @brief Judge whether next raw data exists.
      * @return true for next raw data exists while false for not
      * @exception com.sequoiadb.exception.BaseException
+     * @deprecated always use DBCursor.hasNext()
      */
+    @Deprecated
     public boolean hasNextRaw() throws BaseException {
-        if (connection == null)
-            return hasMore;
-        if (times > 0 || sdbMessage == null)
-            return hasMore;
-        if (listRaw == null || index >= (listRaw.size() - 1)) {
-            getListFromDB(false);
-            index = -1;
-        }
-        if (listRaw == null || listRaw.size() == 0) {
-            hasMore = false;
-        } else {
-            hasMore = true;
-        }
-        ++times;
-        return hasMore;
+        return hasNext();
     }
 
     /**
@@ -149,17 +100,13 @@ public class DBCursor {
      * will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
      */
     public BSONObject getNext() throws BaseException {
-        if (connection == null)
-            throw new BaseException(SDBError.SDB_RTN_CONTEXT_NOTEXIST, "connection is null");
-        if (times == 0)
-            hasNext();
-        if (hasMore) {
-            ++index;
-            current = list.get(index);
-            times = 0;
-            return current;
+        if (hasNext()) {
+            currentObj = resultSet.getNext();
+            currentRaw = null;
+            return currentObj;
+        } else {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -172,17 +119,13 @@ public class DBCursor {
      * will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
      */
     public byte[] getNextRaw() throws BaseException {
-        if (connection == null)
-            throw new BaseException(SDBError.SDB_RTN_CONTEXT_NOTEXIST, "connection is null");
-        if (times == 0)
-            hasNextRaw();
-        if (hasMore) {
-            ++index;
-            currentRaw = listRaw.get(index);
-            times = 0;
+        if (hasNext()) {
+            currentRaw = resultSet.getNextRaw();
+            currentObj = null;
             return currentRaw;
+        } else {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -194,51 +137,38 @@ public class DBCursor {
      * will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
      */
     public BSONObject getCurrent() throws BaseException {
-        if (connection == null)
-            throw new BaseException(SDBError.SDB_RTN_CONTEXT_NOTEXIST);
-        // in case the first time we get date
-        if (index == -1)
+        if (!isStarted) {
             return getNext();
-        else
-            return list.get(index);
+        }
+
+        if (currentObj != null) {
+            return currentObj;
+        }
+
+        if (currentRaw != null) {
+            currentObj = MsgUtil.decodeBSONBytes(currentRaw);
+            return currentObj;
+        }
+
+        return null;
     }
 
-    /**
-     * @fn void updateCurrent(BSONObject modifier, BSONObject hint)
-     * @brief update current document.
-     * @param modifier
-     *            the modify rule
-     * @param hint
-     *            update by hint
-     * @exception com.sequoiadb.exception.BaseException
-     */
-    /*
-	public void updateCurrent(BSONObject modifier, BSONObject hint)
-			throws BaseException {
-		if (dbc != null && current != null) {
-			BSONObject query = new BasicBSONObject();
-			query.put("_id", (ObjectId) current.get("_id"));
-			dbc.update(query, modifier, hint);
-			DBCursor cursor = dbc.query(query, null, null, hint);
-			current = cursor.getNext();
-		}
-	}*/
+    private ResultSet getResultSetFromServer() {
+        GetMoreRequest request = new GetMoreRequest(contextId, -1);
+        SdbReply response = sequoiadb.requestAndResponse(request);
 
-	/*
-	 * @fn void deleteCurrent()
-	 * @brief delete current data in DB
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	/*
-	public void deleteCurrent() throws BaseException {
-		if (dbc != null && current != null) {
-			BSONObject query = new BasicBSONObject();
-			query.put("_id", (ObjectId) current.get("_id"));
-			dbc.delete(query);
-		}
-		current = null;
-	}
-	*/
+        int flag = response.getFlag();
+        if (flag != 0) {
+            if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
+                isEOC = true;
+                return null;
+            }
+
+            throw new BaseException(flag);
+        }
+
+        return response.getResultSet();
+    }
 
     /**
      * @return void
@@ -246,89 +176,28 @@ public class DBCursor {
      * @fn void close()
      * @brief Close the cursor.
      */
+    @Override
     public void close() throws BaseException {
-        killCursor();
-        sdbMessage = null;
-        dbc = null;
-        hasMore = false;
-        current = null;
-        list = null;
-        listRaw = null;
+        if (!isClosed) {
+            killContext();
+            isClosed = true;
+        }
     }
 
-    private void getListFromDB(boolean decode) {
-        if (connection == null)
-            throw new BaseException(SDBError.SDB_NOT_CONNECTED);
-
+    private void killContext() {
         if (contextId == -1) {
-            hasMore = false;
-            index = -1;
-            current = null;
-            list = null;
-            listRaw = null;
             return;
         }
 
-        if (decode) {
-            list.clear();
-        } else {
-            listRaw.clear();
-        }
-
-        sdbMessage.setRequestID(reqId);
-        sdbMessage.setOperationCode(Operation.OP_GETMORE);
-        byte[] request = SDBMessageHelper.buildGetMoreRequest(sdbMessage,
-                endianConvert);
-        connection.sendMessage(request);
-
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtnSDBMessage = null;
-
-        if (decode) {
-            rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
-        } else {
-            rtnSDBMessage = SDBMessageHelper.msgExtractReplyRaw(byteBuffer);
-        }
-
-        if (rtnSDBMessage.getOperationCode() != Operation.OP_GETMORE_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtnSDBMessage.getOperationCode().toString());
-        }
-
-        int flags = rtnSDBMessage.getFlags();
-        if (flags == SequoiadbConstants.SDB_DMS_EOC // in case end of collection or wrong contextId
-                || contextId != rtnSDBMessage.getContextIDList().get(0)) {
-            hasMore = false;
-            index = -1;
-            current = null;
-            list = null;
-            listRaw = null;
-        } else if (flags != 0) { // in case one of the other errors happen
-            throw new BaseException(flags);
-        } else { // in case nornal, get the data
-            reqId = rtnSDBMessage.getRequestID();
-            if (decode) {
-                list = rtnSDBMessage.getObjectList();
-            } else {
-                listRaw = rtnSDBMessage.getObjectListRaw();
-            }
-        }
-    }
-
-    private void killCursor() {
-        if (connection == null && contextId == -1)
-            return;
         long[] contextIds = new long[]{contextId};
-        byte[] request = SDBMessageHelper.buildKillCursorMsg(
-                sequoiadb.getNextRequstID(), contextIds, endianConvert);
-        connection.sendMessage(request);
+        KillContextRequest request = new KillContextRequest(contextIds);
+        SdbReply response = sequoiadb.requestAndResponse(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
-        assert (rtnSDBMessage.getOperationCode() == Operation.OP_KILL_CONTEXT_RES);
-        assert (rtnSDBMessage.getFlags() == 0);
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
+        }
 
-        connection = null;
         contextId = -1;
     }
 }

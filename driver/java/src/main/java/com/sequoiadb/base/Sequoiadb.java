@@ -1,63 +1,59 @@
-/**
- * Copyright (C) 2012 SequoiaDB Inc.
- * <p>
+/*
+ * Copyright 2017 SequoiaDB Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * @package com.sequoiadb.base;
- * @brief SequoiaDB Driver for Java
- * @author Jacky Zhang
- */
-/**
- * @package com.sequoiadb.base;
- * @brief SequoiaDB Driver for Java
- * @author Jacky Zhang
- */
+*/
+
 package com.sequoiadb.base;
 
-import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.base.SequoiadbConstants.PreferInstanceType;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.message.MsgOpCode;
+import com.sequoiadb.message.request.*;
+import com.sequoiadb.message.response.*;
 import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.net.ConnectionTCPImpl;
 import com.sequoiadb.net.IConnection;
 import com.sequoiadb.net.ServerAddress;
-import com.sequoiadb.util.SDBMessageHelper;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Code;
 import org.bson.util.JSON;
 
+import java.io.Closeable;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @class Sequoiadb
  * @brief Database operation interfaces of admin.
  */
-public class Sequoiadb {
+public class Sequoiadb implements Closeable {
     private ServerAddress serverAddress;
     private IConnection connection;
     private String userName;
     private String password;
-    boolean endianConvert;
-    private long requestID = 0;
+    private ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
+    private long requestId;
+    private long lastUseTime;
 
-    /// for caching cs/cl name
-    private Map<String, Long> nameCache = new HashMap<String, Long>();
+    // cache cs/cl name
+    private Map<String, Long> nameCache = new HashMap<>();
     private static boolean enableCache = true;
     private static long cacheInterval = 300 * 1000;
 
@@ -176,15 +172,6 @@ public class Sequoiadb {
     }
 
     /**
-     * @fn IConnection getConnection()
-     * @brief Get the current connection to remote server.
-     * @return IConnection
-     */
-    public IConnection getConnection() {
-        return connection;
-    }
-
-    /**
      * @fn ServerAddress getServerAddress()
      * @brief Get the address of remote server.
      * @return ServerAddress
@@ -209,7 +196,11 @@ public class Sequoiadb {
      * @return Big-Endian for true while Little-Endian for false
      */
     public boolean isEndianConvert() {
-        return endianConvert;
+        return byteOrder == ByteOrder.BIG_ENDIAN;
+    }
+
+    public long getLastUseTime() {
+        return lastUseTime;
     }
 
     /**
@@ -221,6 +212,7 @@ public class Sequoiadb {
      *            "SDB_NETWORK" means network error,
      *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
      */
+    @Deprecated
     public Sequoiadb(String username, String password) throws BaseException {
         // connect used default address
         serverAddress = new ServerAddress();
@@ -244,24 +236,7 @@ public class Sequoiadb {
      *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
      */
     public Sequoiadb(String connString, String username, String password)
-            throws BaseException {
-        /*
-		try
-		{
-			// connect
-			serverAddress = new ServerAddress(connString);
-			ConfigOptions opts = new ConfigOptions();
-			initConnection(opts);
-		}
-		catch (UnknownHostException e)
-		{
-			throw new BaseException("SDB_NETWORK", connString);
-		}
-		// authentication
-		this.userName = username;
-		this.password = password;
-		auth();
-		*/
+        throws BaseException {
         this(connString, username, password, null);
     }
 
@@ -311,8 +286,9 @@ public class Sequoiadb {
     public Sequoiadb(List<String> connStrings, String username, String password,
                      ConfigOptions options) throws BaseException {
         ConfigOptions opts = options;
-        if (options == null)
+        if (options == null) {
             opts = new ConfigOptions();
+        }
 
         Iterator<String> tmpIter = connStrings.iterator();
         while (tmpIter.hasNext()) {
@@ -355,9 +331,9 @@ public class Sequoiadb {
     }
 
     /**
-     * @fn Sequoiadb(String addr, int port, String username, String password)
+     * @fn Sequoiadb(String host, int port, String username, String password)
      * @brief Constructor.
-     * @param addr the address of coord
+     * @param host the address of coord
      * @param port the port of coord
      * @param username the user's name of the account
      * @param password the password  of the account
@@ -365,30 +341,16 @@ public class Sequoiadb {
      *            "SDB_NETWORK" means network error,
      *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
      */
-    public Sequoiadb(String addr, int port, String username, String password)
-            throws BaseException {
-		/*
-		try {
-			// connect
-			serverAddress = new ServerAddress(addr, port);
-			ConfigOptions opts = new ConfigOptions();
-			initConnection(opts);
-		} catch (UnknownHostException e) {
-			throw new BaseException("SDB_NETWORK", addr, port);
-		}
-		// authentication
-		this.userName = username;
-		this.password = password;
-		auth();
-		*/
-        this(addr, port, username, password, null);
+    public Sequoiadb(String host, int port, String username, String password)
+        throws BaseException {
+        this(host, port, username, password, null);
     }
 
     /**
-     * @fn Sequoiadb(String addr, int port, String username,
+     * @fn Sequoiadb(String host, int port, String username,
      *String password, ConfigOptions options)
      * @brief Constructor.
-     * @param addr the address of coord
+     * @param host the address of coord
      * @param port the port of coord
      * @param username the user's name of the account
      * @param password the password of the account
@@ -396,20 +358,19 @@ public class Sequoiadb {
      *            "SDB_NETWORK" means network error,
      *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
      */
-    public Sequoiadb(String addr, int port,
+    public Sequoiadb(String host, int port,
                      String username, String password,
                      ConfigOptions options) throws BaseException {
-        ConfigOptions opts = options;
-        if (options == null)
-            opts = new ConfigOptions();
-        try {
-            // connect
-            serverAddress = new ServerAddress(addr, port);
-            initConnection(opts);
-        } catch (UnknownHostException e) {
-            throw new BaseException(SDBError.SDB_NETWORK, addr + ":" + port, e);
+        if (options == null) {
+            options = new ConfigOptions();
         }
-        // authentication
+        try {
+            serverAddress = new ServerAddress(host, port);
+            initConnection(options);
+        } catch (UnknownHostException e) {
+            throw new BaseException(SDBError.SDB_NETWORK, host + ":" + port, e);
+        }
+
         this.userName = username;
         this.password = password;
         auth();
@@ -420,21 +381,15 @@ public class Sequoiadb {
      * @brief authentication
      */
     private void auth() {
-        endianConvert = requestSysInfo();
-        byte[] request = SDBMessageHelper.buildAuthMsg(userName, password,
-                getNextRequstID(), (byte) 0, endianConvert);
-        connection.sendMessage(request);
+        byteOrder = getSysInfo();
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.MSG_AUTH_VERIFY_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
-        }
-        int flags = rtn.getFlags();
-        if (flags != 0) {
+        AuthRequest request = new AuthRequest(userName, password, AuthRequest.AuthType.Verify);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
             connection.close();
-            throw new BaseException(SDBError.getSDBError(flags), "failed to auth, user is" + userName);
+            throw new BaseException(SDBError.getSDBError(flag), "failed to auth, user is" + userName);
         }
     }
 
@@ -447,22 +402,16 @@ public class Sequoiadb {
      *            The connection password
      */
     public void createUser(String username, String password) throws BaseException {
-        if (username == null || password == null) {
+        if (username == null || username.length() == 0 || password == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
-        byte[] request = SDBMessageHelper.buildAuthMsg(username, password,
-                getNextRequstID(), (byte) 1, endianConvert);
-        connection.sendMessage(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.MSG_AUTH_CRTUSR_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
-        }
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(SDBError.getSDBError(flags), "failed to create user " + username);
+        AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.CreateUser);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(SDBError.getSDBError(flag), "failed to create user " + username);
         }
     }
 
@@ -475,19 +424,12 @@ public class Sequoiadb {
      *            The connection password
      */
     public void removeUser(String username, String password) throws BaseException {
-        byte[] request = SDBMessageHelper.buildAuthMsg(username, password,
-                getNextRequstID(), (byte) 2, endianConvert);
-        connection.sendMessage(request);
+        AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.DeleteUser);
+        SdbReply response = requestAndResponse(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.MSG_AUTH_DELUSR_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
-        }
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(SDBError.getSDBError(flags), "failed to remove user " + username);
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(SDBError.getSDBError(flag), "failed to remove user " + username);
         }
     }
 
@@ -502,9 +444,9 @@ public class Sequoiadb {
             return;
         }
         try {
-            byte[] request = SDBMessageHelper.buildDisconnectRequest(endianConvert);
             releaseResource();
-            connection.sendMessage(request);
+            DisconnectRequest request = new DisconnectRequest();
+            sendRequest(request);
         } finally {
             connection.close();
         }
@@ -520,7 +462,6 @@ public class Sequoiadb {
     public void releaseResource() {
         // let the receive buffer shrink to default value
         closeAllCursors();
-        connection.shrinkBuffer();
     }
 
     /**
@@ -547,7 +488,7 @@ public class Sequoiadb {
         if (connection == null || connection.isClosed())
             return false;
         try {
-            sendKillContextMsg();
+            killContext();
         } catch (BaseException e) {
             return false;
         }
@@ -562,8 +503,8 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void changeConnectionOptions(ConfigOptions opts)
-            throws BaseException {
-        connection.changeConfigOptions(opts);
+        throws BaseException {
+        connection.changeConnectionOptions(opts);
         auth();
     }
 
@@ -575,7 +516,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public CollectionSpace createCollectionSpace(String csName)
-            throws BaseException {
+        throws BaseException {
         return createCollectionSpace(csName, SDB_PAGESIZE_DEFAULT);
     }
 
@@ -596,7 +537,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public CollectionSpace createCollectionSpace(String csName, int pageSize)
-            throws BaseException {
+        throws BaseException {
         BSONObject options = new BasicBSONObject();
         options.put("PageSize", pageSize);
         return createCollectionSpace(csName, options);
@@ -615,15 +556,26 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public CollectionSpace createCollectionSpace(String csName, BSONObject options)
-            throws BaseException {
-        if (csName == null || csName == "")
+        throws BaseException {
+        if (csName == null || csName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, csName);
-        if (isCollectionSpaceExist(csName))
+        }
+        if (isCollectionSpaceExist(csName)) {
             throw new BaseException(SDBError.SDB_DMS_CS_EXIST, csName);
-        SDBMessage rtnSDBMessage = createCS(csName, options);
-        int flags = rtnSDBMessage.getFlags();
-        if (flags != 0)
-            throw new BaseException(flags);
+        }
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        if (null != options) {
+            obj.putAll(options);
+        }
+
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_CS, obj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0)
+            throw new BaseException(flag);
         upsertCache(csName);
         return new CollectionSpace(this, csName);
     }
@@ -639,17 +591,18 @@ public class Sequoiadb {
         if (!isCollectionSpaceExist(csName)) {
             throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
         }
-        BSONObject matcher = new BasicBSONObject();
-        matcher.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
-        String commandString = SequoiadbConstants.DROP_CMD + " "
-                + SequoiadbConstants.COLSPACE;
-        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        BSONObject options = new BasicBSONObject();
+        options.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.DROP_CS, options);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
-        // remove cache
+
         removeCache(csName);
     }
 
@@ -668,23 +621,27 @@ public class Sequoiadb {
      * @since 2.8
      */
     public void loadCollectionSpace(String csName, BSONObject options) throws BaseException {
-        if (csName == null || csName.length() == 0)
+        if (csName == null || csName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, csName);
-        if (isCollectionSpaceExist(csName))
+        }
+        if (isCollectionSpaceExist(csName)) {
             throw new BaseException(SDBError.SDB_DMS_CS_EXIST, csName);
-        BSONObject matcher = new BasicBSONObject();
-        matcher.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        }
+
+        BSONObject newOptions = new BasicBSONObject();
+        newOptions.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
         if (options != null) {
-            matcher.putAll(options);
+            newOptions.putAll(options);
         }
-        String commandString = SequoiadbConstants.LOAD_CMD + " "
-            + SequoiadbConstants.COLSPACE;
-        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
-            null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.LOAD_CS, newOptions);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
+
         upsertCache(csName);
     }
 
@@ -703,23 +660,26 @@ public class Sequoiadb {
      * @since 2.8
      */
     public void unloadCollectionSpace(String csName, BSONObject options) throws BaseException {
-        if (csName == null || csName.length() == 0)
+        if (csName == null || csName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, csName);
-        if (!isCollectionSpaceExist(csName))
+        }
+        if (!isCollectionSpaceExist(csName)) {
             throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, csName);
-        BSONObject matcher = new BasicBSONObject();
-        matcher.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        }
+
+        BSONObject newOptions = new BasicBSONObject();
+        newOptions.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
         if (options != null) {
-            matcher.putAll(options);
+            newOptions.putAll(options);
         }
-        String commandString = SequoiadbConstants.UNLOAD_CMD + " "
-            + SequoiadbConstants.COLSPACE;
-        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
-            null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.UNLOAD_CS, newOptions);
+        SdbReply response = requestAndResponse(request);
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
+
         removeCache(csName);
     }
 
@@ -730,23 +690,28 @@ public class Sequoiadb {
      * @since 2.8
      */
     public void renameCollectionSpace(String oldName, String newName) throws BaseException {
-        if (oldName == null || oldName.length() == 0)
+        if (oldName == null || oldName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, oldName);
-        if (newName == null || newName.length() == 0)
+        }
+        if (newName == null || newName.length() == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, newName);
-        if (!isCollectionSpaceExist(oldName))
+        }
+        if (!isCollectionSpaceExist(oldName)) {
             throw new BaseException(SDBError.SDB_DMS_CS_NOTEXIST, oldName);
+        }
+
         BSONObject matcher = new BasicBSONObject();
         matcher.put(SequoiadbConstants.FIELD_NAME_OLDNAME, oldName);
         matcher.put(SequoiadbConstants.FIELD_NAME_NEWNAME, newName);
-        String commandString = SequoiadbConstants.RENAME_CMD + " "
-            + SequoiadbConstants.COLSPACE;
-        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
-            null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.RENAME_CS, matcher);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
+
         removeCache(oldName);
         upsertCache(newName);
     }
@@ -785,11 +750,11 @@ public class Sequoiadb {
      * @since 2.8
      */
     public void sync(BSONObject options) throws BaseException {
-        SDBMessage rtn = adminCommand(SequoiadbConstants.SYNC_DB_CMD, 0, 0, -1, -1,
-            options, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+        AdminRequest request = new AdminRequest(AdminCommand.SYNC_DB, options);
+        SdbReply response = requestAndResponse(request);
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -813,7 +778,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public CollectionSpace getCollectionSpace(String csName)
-            throws BaseException {
+        throws BaseException {
         // get cs object from cache
         if (fetchCache(csName)) {
             return new CollectionSpace(this, csName);
@@ -837,21 +802,21 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public boolean isCollectionSpaceExist(String csName) throws BaseException {
-        String commandString = SequoiadbConstants.TEST_CMD + " "
-                + SequoiadbConstants.COLSPACE;
-        BSONObject matcher = new BasicBSONObject();
-        matcher.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
-        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, matcher,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags == 0) {
+        BSONObject options = new BasicBSONObject();
+        options.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.TEST_CS, options);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag == 0) {
             upsertCache(csName);
             return true;
-        } else if (flags == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()) {
+        } else if (flag == SDBError.SDB_DMS_CS_NOTEXIST.getErrorCode()) {
             removeCache(csName);
             return false;
         } else {
-            throw new BaseException(flags, csName);
+            throw new BaseException(flag, csName);
         }
     }
 
@@ -862,8 +827,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listCollectionSpaces() throws BaseException {
-        return getList(SDB_LIST_COLLECTIONSPACES, 0, 0, -1, -1, null, null,
-                null, null);
+        return getList(SDB_LIST_COLLECTIONSPACES, null, null, null);
     }
 
     /**
@@ -873,10 +837,10 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public ArrayList<String> getCollectionSpaceNames() throws BaseException {
-        DBCursor cursor = getList(SDB_LIST_COLLECTIONSPACES, 0, 0, -1, -1,
-                null, null, null, null);
-        if (cursor == null)
+        DBCursor cursor = getList(SDB_LIST_COLLECTIONSPACES, null, null, null);
+        if (cursor == null) {
             return null;
+        }
         ArrayList<String> colList = new ArrayList<String>();
         while (cursor.hasNext()) {
             colList.add(cursor.getNext().get("Name").toString());
@@ -891,8 +855,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listCollections() throws BaseException {
-        return getList(SDB_LIST_COLLECTIONS, 0, 0, 0, -1, null, null, null,
-                null);
+        return getList(SDB_LIST_COLLECTIONS, null, null, null);
     }
 
     /**
@@ -902,10 +865,10 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public ArrayList<String> getCollectionNames() throws BaseException {
-        DBCursor cursor = getList(SDB_LIST_COLLECTIONS, 0, 0, 0, -1, null,
-                null, null, null);
-        if (cursor == null)
+        DBCursor cursor = getList(SDB_LIST_COLLECTIONS, null, null, null);
+        if (cursor == null) {
             return null;
+        }
         ArrayList<String> colList = new ArrayList<String>();
         while (cursor.hasNext()) {
             colList.add(cursor.getNext().get("Name").toString());
@@ -920,8 +883,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public ArrayList<String> getStorageUnits() throws BaseException {
-        DBCursor cursor = getList(SDB_LIST_STORAGEUNITS, 0, 0, -1, -1, null,
-                null, null, null);
+        DBCursor cursor = getList(SDB_LIST_STORAGEUNITS, null, null, null);
         ArrayList<String> colList = new ArrayList<String>();
         while (cursor.hasNext()) {
             colList.add(cursor.getNext().get("Name").toString());
@@ -936,13 +898,12 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void resetSnapshot() throws BaseException {
-        String commandString = SequoiadbConstants.SNAP_CMD + " "
-                + SequoiadbConstants.RESET;
-        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, null, null,
-                null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+        AdminRequest request = new AdminRequest(AdminCommand.RESET_SNAPSHOT);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -970,24 +931,41 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor getList(int listType, BSONObject query, BSONObject selector, BSONObject orderBy) throws BaseException {
-        return getList(listType, 0, 0, 0, -1, query, selector, orderBy, null);
+        String command = getListCommand(listType);
+        AdminRequest request = new AdminRequest(command, query, selector, orderBy, null);
+        SdbReply response = requestAndResponse(request);
+
+        int flags = response.getFlag();
+        if (flags != 0) {
+            if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
+                return null;
+            } else {
+                String msg = "query = " + query +
+                    ", selector = " + selector +
+                    ", orderBy = " + orderBy;
+                throw new BaseException(SDBError.getSDBError(flags), msg);
+            }
+        }
+
+        return new DBCursor(response, this);
     }
 
     /**
      * @fn void flushConfigure(BSONObject param)
      * @brief Flush the options to configuration file
-     * @param param
+     * @param options
      *            The param of flush, pass {"Global":true} or {"Global":false}
      *            In cluster environment, passing {"Global":true} will flush data's and catalog's configuration file,
      *            while passing {"Global":false} will flush coord's configuration file
      *            In stand-alone environment, both them have the same behaviour
      * @exception com.sequoiadb.exception.BaseException
      */
-    public void flushConfigure(BSONObject param) throws BaseException {
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_EXPORT_CONFIG, 0, 0, 0, -1, param, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+    public void flushConfigure(BSONObject options) throws BaseException {
+        AdminRequest request = new AdminRequest(AdminCommand.EXPORT_CONFIG, options);
+        SdbReply response = requestAndResponse(request);
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -998,21 +976,12 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void execUpdate(String sql) throws BaseException {
-        SDBMessage sdb = new SDBMessage();
-        sdb.setRequestID(getNextRequstID());
-        sdb.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        byte[] request = SDBMessageHelper.buildSqlMsg(sdb, sql, endianConvert);
-        connection.sendMessage(request);
+        SQLRequest request = new SQLRequest(sql);
+        SdbReply response = requestAndResponse(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.MSG_BS_SQL_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
-        }
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags, sql);
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag, sql);
         }
     }
 
@@ -1024,27 +993,19 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor exec(String sql) throws BaseException {
-        SDBMessage sdb = new SDBMessage();
-        sdb.setRequestID(getNextRequstID());
-        sdb.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        byte[] request = SDBMessageHelper.buildSqlMsg(sdb, sql, endianConvert);
-        connection.sendMessage(request);
+        SQLRequest request = new SQLRequest(sql);
+        SdbReply response = requestAndResponse(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.MSG_BS_SQL_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
-        }
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            if (flags == SequoiadbConstants.SDB_DMS_EOC)
+        int flag = response.getFlag();
+        if (flag != 0) {
+            if (flag == SDBError.SDB_DMS_EOC.getErrorCode())
                 return null;
             else {
-                throw new BaseException(flags, sql);
+                throw new BaseException(flag, sql);
             }
         }
-        return new DBCursor(rtn, this);
+
+        return new DBCursor(response, this);
     }
 
     /**
@@ -1079,12 +1040,15 @@ public class Sequoiadb {
         BSONObject ma = null;
         BSONObject se = null;
         BSONObject or = null;
-        if (matcher != null)
+        if (matcher != null) {
             ma = (BSONObject) JSON.parse(matcher);
-        if (selector != null)
+        }
+        if (selector != null) {
             se = (BSONObject) JSON.parse(selector);
-        if (orderBy != null)
+        }
+        if (orderBy != null) {
             or = (BSONObject) JSON.parse(orderBy);
+        }
 
         return getSnapshot(snapType, ma, se, or);
     }
@@ -1118,54 +1082,49 @@ public class Sequoiadb {
      */
     public DBCursor getSnapshot(int snapType, BSONObject matcher,
                                 BSONObject selector, BSONObject orderBy) throws BaseException {
-        String command = SequoiadbConstants.SNAP_CMD;
-        switch (snapType) {
-            case SDB_SNAP_CONTEXTS:
-                command += " " + SequoiadbConstants.CONTEXTS;
-                break;
-            case SDB_SNAP_CONTEXTS_CURRENT:
-                command += " " + SequoiadbConstants.CONTEXTS_CUR;
-                break;
-            case SDB_SNAP_SESSIONS:
-                command += " " + SequoiadbConstants.SESSIONS;
-                break;
-            case SDB_SNAP_SESSIONS_CURRENT:
-                command += " " + SequoiadbConstants.SESSIONS_CUR;
-                break;
-            case SDB_SNAP_COLLECTIONS:
-                command += " " + SequoiadbConstants.COLLECTIONS;
-                break;
-            case SDB_SNAP_COLLECTIONSPACES:
-                command += " " + SequoiadbConstants.COLSPACES;
-                break;
-            case SDB_SNAP_DATABASE:
-                command += " " + SequoiadbConstants.DATABASE;
-                break;
-            case SDB_SNAP_SYSTEM:
-                command += " " + SequoiadbConstants.SYSTEM;
-                break;
-            case SDB_SNAP_CATALOG:
-                command += " " + SequoiadbConstants.CATA;
-                break;
-            default:
-                throw new BaseException(SDBError.SDB_INVALIDARG);
-        }
+        String command = getSnapshotCommand(snapType);
 
-        SDBMessage rtn = adminCommand(command, 0, 0, -1, -1, matcher, selector,
-                orderBy, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            if (flags == SequoiadbConstants.SDB_DMS_EOC) {
+        AdminRequest request = new AdminRequest(command, matcher, selector, orderBy, null);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
                 String msg = "matcher = " + matcher +
-                        ", selector = " + selector +
-                        ", orderBy = " + orderBy;
-                throw new BaseException(SDBError.getSDBError(flags), msg);
+                    ", selector = " + selector +
+                    ", orderBy = " + orderBy;
+                throw new BaseException(SDBError.getSDBError(flag), msg);
             }
         }
-        return new DBCursor(rtn, this);
 
+        return new DBCursor(response, this);
+    }
+
+    private String getSnapshotCommand(int snapType) {
+        switch (snapType) {
+            case SDB_SNAP_CONTEXTS:
+                return AdminCommand.SNAP_CONTEXTS;
+            case SDB_SNAP_CONTEXTS_CURRENT:
+                return AdminCommand.SNAP_CONTEXTS_CURRENT;
+            case SDB_SNAP_SESSIONS:
+                return AdminCommand.SNAP_SESSIONS;
+            case SDB_SNAP_SESSIONS_CURRENT:
+                return AdminCommand.SNAP_SESSIONS_CURRENT;
+            case SDB_SNAP_COLLECTIONS:
+                return AdminCommand.SNAP_COLLECTIONS;
+            case SDB_SNAP_COLLECTIONSPACES:
+                return AdminCommand.SNAP_COLLECTIONSPACES;
+            case SDB_SNAP_DATABASE:
+                return AdminCommand.SNAP_DATABASE;
+            case SDB_SNAP_SYSTEM:
+                return AdminCommand.SNAP_SYSTEM;
+            case SDB_SNAP_CATALOG:
+                return AdminCommand.SNAP_CATALOG;
+            default:
+                throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid snapshot type: %d", snapType));
+        }
     }
 
     /**
@@ -1175,20 +1134,13 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void beginTransaction() throws BaseException {
-        byte[] request = SDBMessageHelper.buildTransactionRequest(
-                SequoiadbConstants.Operation.TRANS_BEGIN_REQ, getNextRequstID(),
-                endianConvert);
-        connection.sendMessage(request);
+        TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Begin);
+        SdbReply response = requestAndResponse(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.TRANS_BEGIN_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
-        int flags = rtn.getFlags();
-        if (flags != 0)
-            throw new BaseException(flags);
     }
 
     /**
@@ -1198,20 +1150,13 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void commit() throws BaseException {
-        byte[] request = SDBMessageHelper.buildTransactionRequest(
-                SequoiadbConstants.Operation.TRANS_COMMIT_REQ,
-                getNextRequstID(), endianConvert);
-        connection.sendMessage(request);
+        TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Commit);
+        SdbReply response = requestAndResponse(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.TRANS_COMMIT_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
-        int flags = rtn.getFlags();
-        if (flags != 0)
-            throw new BaseException(flags);
     }
 
     /**
@@ -1221,20 +1166,13 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void rollback() throws BaseException {
-        byte[] request = SDBMessageHelper.buildTransactionRequest(
-                SequoiadbConstants.Operation.TRANS_ROLLBACK_REQ,
-                getNextRequstID(), endianConvert);
-        connection.sendMessage(request);
+        TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Rollback);
+        SdbReply response = requestAndResponse(request);
 
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtn.getOperationCode() != Operation.TRANS_ROLLBACK_RES) {
-            throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtn.getOperationCode().toString());
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
-        int flags = rtn.getFlags();
-        if (flags != 0)
-            throw new BaseException(flags);
     }
 
     /**
@@ -1244,22 +1182,21 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void crtJSProcedure(String code) throws BaseException {
-        // check the argument
         if (null == code || code.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, code);
         }
-        // build code type bson
-        BSONObject newobj = new BasicBSONObject();
-        Code codeObj = new Code(code);
-        newobj.put(SequoiadbConstants.FIELD_NAME_FUNC, codeObj);
-        newobj.put(SequoiadbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
 
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CRT_PROCEDURE,
-                0, 0, 0, -1, newobj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+        BSONObject options = new BasicBSONObject();
+        Code codeObj = new Code(code);
+        options.put(SequoiadbConstants.FIELD_NAME_FUNC, codeObj);
+        options.put(SequoiadbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
+
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_PROCEDURE, options);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -1270,20 +1207,20 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void rmProcedure(String name) throws BaseException {
-        // check the argument
         if (null == name || name.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, name);
         }
-        // append the name to a bson
-        BSONObject newobj = new BasicBSONObject();
-        newobj.put(SequoiadbConstants.FIELD_NAME_FUNC, name);
 
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_RM_PROCEDURE,
-                0, 0, 0, -1, newobj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0)
-            throw new BaseException(flags);
+        BSONObject options = new BasicBSONObject();
+        options.put(SequoiadbConstants.FIELD_NAME_FUNC, name);
+
+        AdminRequest request = new AdminRequest(AdminCommand.REMOVE_PROCEDURE, options);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
+        }
     }
 
     /**
@@ -1293,8 +1230,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listProcedures(BSONObject condition) throws BaseException {
-        return getList(SDB_LIST_STOREPROCEDURES, 0, 0, 0,
-                -1, condition, null, null, null);
+        return getList(SDB_LIST_STOREPROCEDURES, condition, null, null);
     }
 
     /**
@@ -1309,37 +1245,36 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public Sequoiadb.SptEvalResult evalJS(String code) throws BaseException {
-        // check the argument
         if (code == null || code.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
+
         SptEvalResult evalResult = new Sequoiadb.SptEvalResult();
-        // build code type bson
+
         BSONObject newObj = new BasicBSONObject();
         Code codeObj = new Code(code);
         newObj.put(SequoiadbConstants.FIELD_NAME_FUNC, codeObj);
         newObj.put(SequoiadbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
 
-        SDBMessage rtn = adminCommandEval(SequoiadbConstants.CMD_NAME_EVAL,
-                0, 0, 0, -1, newObj,
-                null, null, null);
-        // get error code
-        int flags = rtn.getFlags();
+        AdminRequest request = new AdminRequest(AdminCommand.EVAL, newObj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
         // if something wrong with the eval operation, not throws exception here
-        if (flags != 0) {
-            // get error message
-            List<BSONObject> objList = rtn.getObjectList();
-            if (objList.size() > 0) {
-                evalResult.errmsg = rtn.getObjectList().get(0);
+        if (flag != 0) {
+            if (response.getReturnedNum() > 0) {
+                evalResult.errmsg = response.getResultSet().getNext();
             }
             return evalResult;
         } else {
             // get the return type of eval result
-            List<BSONObject> objList = rtn.getObjectList();
-            int typeValue = (Integer) objList.get(0).get(SequoiadbConstants.FIELD_NAME_RETYE);
-            evalResult.returnType = Sequoiadb.SptReturnType.getTypeByValue(typeValue);
+            if (response.getReturnedNum() > 0) {
+                BSONObject obj = response.getResultSet().getNext();
+                int typeValue = (Integer) obj.get(SequoiadbConstants.FIELD_NAME_RETYE);
+                evalResult.returnType = Sequoiadb.SptReturnType.getTypeByValue(typeValue);
+            }
             // set the return cursor
-            evalResult.cursor = new DBCursor(rtn, this);
+            evalResult.cursor = new DBCursor(response, this);
             return evalResult;
         }
     }
@@ -1371,10 +1306,10 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void backupOffline(BSONObject options) throws BaseException {
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_BACKUP_OFFLINE,
-                0, 0, 0, -1, options,
-                null, null, null);
-        int flags = rtn.getFlags();
+        AdminRequest request = new AdminRequest(AdminCommand.BACKUP_OFFLINE, options);
+        SdbReply response = requestAndResponse(request);
+
+        int flags = response.getFlag();
         if (flags != 0) {
             throw new BaseException(flags);
         }
@@ -1400,12 +1335,11 @@ public class Sequoiadb {
      */
     public DBCursor listBackup(BSONObject options, BSONObject matcher,
                                BSONObject selector, BSONObject orderBy) throws BaseException {
-        // check the optional argument
         if (null != options) {
             for (String key : options.keySet()) {
                 if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
-                        || key.equals(SequoiadbConstants.FIELD_NAME_NAME)
-                        || key.equals(SequoiadbConstants.FIELD_NAME_PATH)) {
+                    || key.equals(SequoiadbConstants.FIELD_NAME_NAME)
+                    || key.equals(SequoiadbConstants.FIELD_NAME_PATH)) {
                     continue;
                 } else {
                     throw new BaseException(SDBError.SDB_INVALIDARG, key);
@@ -1413,23 +1347,23 @@ public class Sequoiadb {
             }
         }
 
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_LIST_BACKUP,
-                0, 0, 0, -1, matcher,
-                selector, orderBy, options);
-        DBCursor cursor = null;
-        int flags = rtn.getFlags();
+        AdminRequest request = new AdminRequest(AdminCommand.LIST_BACKUP, matcher, selector, orderBy, options);
+        SdbReply response = requestAndResponse(request);
+
+        int flags = response.getFlag();
         if (flags != 0) {
-            if (flags == SequoiadbConstants.SDB_DMS_EOC) {
-                return cursor;
+            if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
+                return null;
             } else {
                 String msg = "matcher = " + matcher +
-                        ", selector = " + selector +
-                        ", orderBy = " + orderBy +
-                        ", options = " + options;
+                    ", selector = " + selector +
+                    ", orderBy = " + orderBy +
+                    ", options = " + options;
                 throw new BaseException(SDBError.getSDBError(flags), msg);
             }
         }
-        cursor = new DBCursor(rtn, this);
+
+        DBCursor cursor = new DBCursor(response, this);
         return cursor;
     }
 
@@ -1447,12 +1381,11 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void removeBackup(BSONObject options) throws BaseException {
-        // check the optional argument
         if (null != options) {
             for (String key : options.keySet()) {
                 if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
-                        || key.equals(SequoiadbConstants.FIELD_NAME_NAME)
-                        || key.equals(SequoiadbConstants.FIELD_NAME_PATH)) {
+                    || key.equals(SequoiadbConstants.FIELD_NAME_NAME)
+                    || key.equals(SequoiadbConstants.FIELD_NAME_PATH)) {
                     continue;
                 } else {
                     throw new BaseException(SDBError.SDB_INVALIDARG);
@@ -1460,12 +1393,12 @@ public class Sequoiadb {
             }
         }
 
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_REMOVE_BACKUP,
-                0, 0, 0, -1, options,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+        AdminRequest request = new AdminRequest(AdminCommand.REMOVE_BACKUP, options);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -1476,7 +1409,7 @@ public class Sequoiadb {
      * @param matcher The matching rule, return all the documents if null
      * @param selector The selective rule, return the whole document if null
      * @param orderBy The ordered rule, never sort if null
-     * @param hint 
+     * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
      *            using index "ageIndex" to scan data(index scan); 
      *            {"":null} means table scan. when hint is null, 
@@ -1485,22 +1418,7 @@ public class Sequoiadb {
      */
     public DBCursor listTasks(BSONObject matcher, BSONObject selector,
                               BSONObject orderBy, BSONObject hint) throws BaseException {
-
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_LIST_TASK,
-                0, 0, 0, -1, matcher,
-                selector, orderBy, hint);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            String msg = "matcher = " + matcher +
-                    ", selector = " + selector +
-                    ", orderBy = " + orderBy +
-                    ", hint = " + hint;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
-        }
-        // return the result by cursor
-        DBCursor cursor = null;
-        cursor = new DBCursor(rtn, this);
-        return cursor;
+        return getList(SDB_LIST_TASKS, matcher, selector, orderBy);
     }
 
     /**
@@ -1510,9 +1428,10 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void waitTasks(long[] taskIDs) throws BaseException {
-        // check argument
-        if (taskIDs == null || taskIDs.length == 0)
+        if (taskIDs == null || taskIDs.length == 0) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "taskIDs is empty or null");
+        }
+
         // append argument:{ "TaskID": { "$in": [ 1, 2, 3 ] } }
         BSONObject newObj = new BasicBSONObject();
         BSONObject subObj = new BasicBSONObject();
@@ -1523,12 +1442,12 @@ public class Sequoiadb {
         subObj.put("$in", list);
         newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, subObj);
 
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_WAITTASK,
-                0, 0, 0, -1, newObj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+        AdminRequest request = new AdminRequest(AdminCommand.WAIT_TASK, newObj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -1541,22 +1460,21 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void cancelTask(long taskID, boolean isAsync) throws BaseException {
-        // check argument
         if (taskID <= 0) {
             String msg = "taskID = " + taskID + ", isAsync = " + isAsync;
             throw new BaseException(SDBError.SDB_INVALIDARG, msg);
         }
-        // append argument
+
         BSONObject newObj = new BasicBSONObject();
         newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, taskID);
         newObj.put(SequoiadbConstants.FIELD_NAME_ASYNC, isAsync);
-        // run command
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CANCEL_TASK,
-                0, 0, 0, -1, newObj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.CANCEL_TASK, newObj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -1604,43 +1522,42 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void setSessionAttr(BSONObject options) throws BaseException {
-        // check argument
         if (null == options || options.isEmpty()) {
             return;
         }
-
-        if (!options.containsField(
-                SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE)) {
+        if (!options.containsField(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE)) {
             throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
         }
-        // build obj
+
         BSONObject newObj = new BasicBSONObject();
         Object value = options.get(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE);
-        int v = PreferInstanceType.INS_SLAVE.getCode();
+        int v;
         if (value instanceof Integer) {
             v = (Integer) value;
-            if (v < 1 || v > 7)
+            if (v < 1 || v > 7) {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+            }
         } else if (value instanceof String) {
-            if (value.equals("M") || value.equals("m"))
+            if (value.equals("M") || value.equals("m")) {
                 v = PreferInstanceType.INS_MASTER.getCode();
-            else if (value.equals("S") || value.equals("s"))
+            } else if (value.equals("S") || value.equals("s")) {
                 v = PreferInstanceType.INS_SLAVE.getCode();
-            else if (value.equals("A") || value.equals("a"))
+            } else if (value.equals("A") || value.equals("a")) {
                 v = PreferInstanceType.INS_ANYONE.getCode();
-            else
+            } else {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
+            }
         } else {
             throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
         }
         newObj.put(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE, v);
-        // command
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_SETSESS_ATTR,
-                0, 0, 0, -1, newObj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.SET_SESSION_ATTRIBUTE, newObj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -1652,10 +1569,8 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void closeAllCursors() throws BaseException {
-        byte[] request = SDBMessageHelper.buildTransactionRequest(
-                SequoiadbConstants.Operation.MSG_BS_INTERRUPTE,
-                getNextRequstID(), endianConvert);
-        connection.sendMessage(request);
+        InterruptRequest request = new InterruptRequest();
+        sendRequest(request);
     }
 
     /**
@@ -1665,8 +1580,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listReplicaGroups() throws BaseException {
-        return getList(SDB_LIST_GROUPS, 0, 0, -1, -1, null, null,
-                null, null);
+        return getList(SDB_LIST_GROUPS, null, null, null);
     }
 
     /**
@@ -1677,15 +1591,15 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public boolean isDomainExist(String domainName) throws BaseException {
-        if (null == domainName || domainName.equals(""))
+        if (null == domainName || domainName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, domainName);
+        }
+
         BSONObject matcher = new BasicBSONObject();
         matcher.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
+
         DBCursor cursor = getList(SDB_LIST_DOMAINS, matcher, null, null);
-        if (null != cursor && cursor.hasNext())
-            return true;
-        else
-            return false;
+        return (null != cursor && cursor.hasNext());
     }
 
     /**
@@ -1717,16 +1631,15 @@ public class Sequoiadb {
         if (null != options) {
             newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
         }
-        // command
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CREATE_DOMAIN,
-                0, 0, 0, -1, newObj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_DOMAIN, newObj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
         return new Domain(this, domainName);
-
     }
 
     /**
@@ -1736,18 +1649,19 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void dropDomain(String domainName) throws BaseException {
-        if (null == domainName || domainName.equals(""))
+        if (null == domainName || domainName.equals("")) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "domain name is empty or null");
+        }
 
         BSONObject newObj = new BasicBSONObject();
         newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
-        // command
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_DROP_DOMAIN,
-                0, 0, 0, -1, newObj,
-                null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.DROP_DOMAIN, newObj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
@@ -1759,8 +1673,7 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      *            If the domain not exit, throw BaseException with the error type "SDB_CAT_DOMAIN_NOT_EXIST"
      */
-    public Domain getDomain(String domainName)
-            throws BaseException {
+    public Domain getDomain(String domainName) throws BaseException {
         if (isDomainExist(domainName)) {
             return new Domain(this, domainName);
         } else {
@@ -1775,7 +1688,7 @@ public class Sequoiadb {
      * @param matcher the matching rule, return all the documents if null
      * @param selector the selective rule, return the whole document if null
      * @param orderBy the ordered rule, never sort if null
-     * @param hint 
+     * @param hint
      *            Specified the index used to scan data. e.g. {"":"ageIndex"} means 
      *            using index "ageIndex" to scan data(index scan); 
      *            {"":null} means table scan. when hint is null, 
@@ -1784,7 +1697,7 @@ public class Sequoiadb {
      */
     public DBCursor listDomains(BSONObject matcher, BSONObject selector,
                                 BSONObject orderBy, BSONObject hint) throws BaseException {
-        return getList(SDB_LIST_DOMAINS, 0, 0, 0, -1, matcher, selector, orderBy, hint);
+        return getList(SDB_LIST_DOMAINS, matcher, selector, orderBy);
     }
 
     /**
@@ -1794,10 +1707,10 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public ArrayList<String> getReplicaGroupNames() throws BaseException {
-        DBCursor cursor = getList(SDB_LIST_GROUPS, 0, 0, -1, -1,
-                null, null, null, null);
-        if (cursor == null)
+        DBCursor cursor = getList(SDB_LIST_GROUPS, null, null, null);
+        if (cursor == null) {
             return null;
+        }
         ArrayList<String> colList = new ArrayList<String>();
         while (cursor.hasNext()) {
             colList.add(cursor.getNext().get("GroupName").toString());
@@ -1812,10 +1725,10 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public ArrayList<String> getReplicaGroupsInfo() throws BaseException {
-        DBCursor cursor = getList(SDB_LIST_GROUPS, 0, 0, -1, -1, null, null,
-                null, null);
-        if (cursor == null)
+        DBCursor cursor = getList(SDB_LIST_GROUPS, null, null, null);
+        if (cursor == null) {
             return null;
+        }
         ArrayList<String> colList = new ArrayList<String>();
         while (cursor.hasNext()) {
             colList.add(cursor.getNext().toString());
@@ -1832,10 +1745,11 @@ public class Sequoiadb {
      * @exception com.sequoiadb.exception.BaseException
      */
     public ReplicaGroup getReplicaGroup(String rgName)
-            throws BaseException {
+        throws BaseException {
         BSONObject rg = getDetailByName(rgName);
-        if (rg == null)
+        if (rg == null) {
             return null;
+        }
         return new ReplicaGroup(this, rgName);
     }
 
@@ -1849,8 +1763,9 @@ public class Sequoiadb {
      */
     public ReplicaGroup getReplicaGroup(int rgId) throws BaseException {
         BSONObject rg = getDetailById(rgId);
-        if (rg == null)
+        if (rg == null) {
             return null;
+        }
         return new ReplicaGroup(this, rgId);
     }
 
@@ -1862,15 +1777,16 @@ public class Sequoiadb {
      * @return A replica group object.
      * @exception com.sequoiadb.exception.BaseException
      */
-    public ReplicaGroup createReplicaGroup(String rgName)
-            throws BaseException {
+    public ReplicaGroup createReplicaGroup(String rgName) throws BaseException {
         BSONObject rg = new BasicBSONObject();
         rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CREATE_GROUP,
-                0, 0, -1, -1, rg, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags, rgName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_GROUP, rg);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag, rgName);
         }
         return getReplicaGroup(rgName);
     }
@@ -1882,20 +1798,21 @@ public class Sequoiadb {
      *            replica group's name
      * @exception com.sequoiadb.exception.BaseException
      */
-    public void removeReplicaGroup(String rgName)
-            throws BaseException {
+    public void removeReplicaGroup(String rgName) throws BaseException {
         BSONObject rg = new BasicBSONObject();
         rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_REMOVE_GROUP,
-                0, 0, -1, -1, rg, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags, rgName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.REMOVE_GROUP, rg);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag, rgName);
         }
     }
 
-    long getNextRequstID() {
-        return requestID++;
+    private long getNextRequestId() {
+        return requestId++;
     }
 
     /**
@@ -1905,15 +1822,16 @@ public class Sequoiadb {
      *            replica group name
      * @exception com.sequoiadb.exception.BaseException
      */
-    public void activateReplicaGroup(String rgName)
-            throws BaseException {
+    public void activateReplicaGroup(String rgName) throws BaseException {
         BSONObject rg = new BasicBSONObject();
         rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
-        SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_ACTIVE_GROUP,
-                0, 0, -1, -1, rg, null, null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags, rgName);
+
+        AdminRequest request = new AdminRequest(AdminCommand.ACTIVE_GROUP, rg);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag, rgName);
         }
     }
 
@@ -1933,7 +1851,6 @@ public class Sequoiadb {
      */
     public void createReplicaCataGroup(String hostName, int port,
                                        String dbPath, Map<String, String> configure) {
-        String commandString = SequoiadbConstants.CMD_NAME_CREATE_CATA_GROUP;
         BSONObject obj = new BasicBSONObject();
         obj.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
         obj.put(SequoiadbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
@@ -1941,84 +1858,54 @@ public class Sequoiadb {
         if (configure != null) {
             for (String key : configure.keySet()) {
                 if (key.equals(SequoiadbConstants.FIELD_NAME_HOST)
-                        || key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME)
-                        || key.equals(SequoiadbConstants.PMD_OPTION_DBPATH)) {
+                    || key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME)
+                    || key.equals(SequoiadbConstants.PMD_OPTION_DBPATH)) {
                     continue;
                 }
-                obj.put(key, configure.get(key).toString());
+                obj.put(key, configure.get(key));
             }
         }
-        SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, obj, null,
-                null, null);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+
+        AdminRequest request = new AdminRequest(AdminCommand.CREATE_CATALOG_GROUP, obj);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
         }
     }
 
-    DBCursor getList(int listType, int flag, long reqID, long skipNum,
-                     long returnNum, BSONObject query, BSONObject selector,
-                     BSONObject order, BSONObject hint) throws BaseException {
-        String command = "";
+    private String getListCommand(int listType) {
         switch (listType) {
             case SDB_LIST_CONTEXTS:
-                command = SequoiadbConstants.CMD_NAME_LIST_CONTEXTS;
-                break;
+                return AdminCommand.LIST_CONTEXTS;
             case SDB_LIST_CONTEXTS_CURRENT:
-                command = SequoiadbConstants.CMD_NAME_LIST_CONTEXTS_CURRENT;
-                break;
+                return AdminCommand.LIST_CONTEXTS_CURRENT;
             case SDB_LIST_SESSIONS:
-                command = SequoiadbConstants.CMD_NAME_LIST_SESSIONS;
-                break;
+                return AdminCommand.LIST_SESSIONS;
             case SDB_LIST_SESSIONS_CURRENT:
-                command = SequoiadbConstants.CMD_NAME_LIST_SESSIONS_CURRENT;
-                break;
+                return AdminCommand.LIST_SESSIONS_CURRENT;
             case SDB_LIST_COLLECTIONS:
-                command = SequoiadbConstants.CMD_NAME_LIST_COLLECTIONS;
-                break;
+                return AdminCommand.LIST_COLLECTIONS;
             case SDB_LIST_COLLECTIONSPACES:
-                command = SequoiadbConstants.CMD_NAME_LIST_COLLECTIONSPACES;
-                break;
+                return AdminCommand.LIST_COLLECTIONSPACES;
             case SDB_LIST_STORAGEUNITS:
-                command = SequoiadbConstants.CMD_NAME_LIST_STORAGEUNITS;
-                break;
+                return AdminCommand.LIST_STORAGEUNITS;
             case SDB_LIST_GROUPS:
-                command = SequoiadbConstants.CMD_NAME_LIST_GROUPS;
-                break;
+                return AdminCommand.LIST_GROUPS;
             case SDB_LIST_STOREPROCEDURES:
-                command = SequoiadbConstants.CMD_NAME_LIST_PROCEDURES;
-                break;
+                return AdminCommand.LIST_PROCEDURES;
             case SDB_LIST_DOMAINS:
-                command = SequoiadbConstants.CMD_NAME_LIST_DOMAINS;
-                break;
+                return AdminCommand.LIST_DOMAINS;
             case SDB_LIST_TASKS:
-                command = SequoiadbConstants.CMD_NAME_LIST_TASKS;
-                break;
+                return AdminCommand.LIST_TASKS;
             case SDB_LIST_CS_IN_DOMAIN:
-                command = SequoiadbConstants.CMD_NAME_LIST_CS_IN_DOMAIN;
-                break;
+                return AdminCommand.LIST_CS_IN_DOMAIN;
             case SDB_LIST_CL_IN_DOMAIN:
-                command = SequoiadbConstants.CMD_NAME_LIST_CL_IN_DOMAIN;
-                break;
+                return AdminCommand.LIST_CL_IN_DOMAIN;
             default:
-                throw new BaseException(SDBError.SDB_INVALIDARG);
+                throw new BaseException(SDBError.SDB_INVALIDARG, String.format("Invalid list type: %d", listType));
         }
-
-        SDBMessage rtn = adminCommand(command, flag, reqID, skipNum, returnNum,
-                query, selector, order, hint);
-        int flags = rtn.getFlags();
-        if (flags != 0) {
-            if (flags == SequoiadbConstants.SDB_DMS_EOC) {
-                return null;
-            } else {
-                String msg = "query = " + query +
-                        ", selector = " + selector +
-                        ", order = " + order +
-                        ", hint = " + hint;
-                throw new BaseException(SDBError.getSDBError(flags), msg);
-            }
-        }
-        return new DBCursor(rtn, this);
     }
 
     String getUserName() {
@@ -2032,211 +1919,128 @@ public class Sequoiadb {
     BSONObject getDetailByName(String name) throws BaseException {
         BSONObject condition = new BasicBSONObject();
         condition.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
-        DBCursor shardsCursor = getList(Sequoiadb.SDB_LIST_GROUPS, 0, 0, -1,
-                -1, condition, null, null, null);
-        if (shardsCursor == null || !shardsCursor.hasNext())
+
+        DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
+        if (cursor == null || !cursor.hasNext()) {
             return null;
-        return shardsCursor.getNext();
+        }
+        return cursor.getNext();
     }
 
     BSONObject getDetailById(int id) throws BaseException {
         BSONObject condition = new BasicBSONObject();
         condition.put(SequoiadbConstants.FIELD_NAME_GROUPID, id);
-        DBCursor shardsCursor = getList(Sequoiadb.SDB_LIST_GROUPS, 0, 0, -1,
-                -1, condition, null, null, null);
-        if (shardsCursor == null || !shardsCursor.hasNext())
+
+        DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
+        if (cursor == null || !cursor.hasNext()) {
             return null;
-        return shardsCursor.getNext();
+        }
+        return cursor.getNext();
     }
 
     private void initConnection(ConfigOptions options) throws BaseException {
-        if (options == null)
-            throw new BaseException(SDBError.SDB_INVALIDARG);
+        if (options == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        }
         connection = new ConnectionTCPImpl(serverAddress, options);
-        connection.initialize();
+        connection.connect();
     }
 
-    SDBMessage adminCommand(String commandString, int flag, long reqID,
-                            long skipNum, long returnNum, BSONObject query,
-                            BSONObject selector, BSONObject order, BSONObject hint)
-            throws BaseException {
-        // Admin command request
-        // int reqId = 0;
-        BSONObject dummyObj = new BasicBSONObject();
-        SDBMessage sdbMessage = new SDBMessage();
-
-        if (query == null)
-            sdbMessage.setMatcher(dummyObj);
-        else
-            sdbMessage.setMatcher(query);
-        if (selector == null)
-            sdbMessage.setSelector(dummyObj);
-        else
-            sdbMessage.setSelector(selector);
-        if (order == null)
-            sdbMessage.setOrderBy(dummyObj);
-        else
-            sdbMessage.setOrderBy(order);
-        if (hint == null)
-            sdbMessage.setHint(dummyObj);
-        else
-            sdbMessage.setHint(hint);
-
-        sdbMessage.setCollectionFullName(SequoiadbConstants.ADMIN_PROMPT
-                + commandString);
-
-        sdbMessage.setVersion(1);
-        sdbMessage.setW((short) 0);
-        sdbMessage.setPadding((short) 0);
-        sdbMessage.setFlags(flag);
-        sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        // sdbMessage.setResponseTo(reqId);
-        // reqId++;
-        if (0 == reqID) {
-            reqID = getNextRequstID();
-        }
-        sdbMessage.setRequestID(reqID);
-        sdbMessage.setSkipRowsCount(skipNum);
-        sdbMessage.setReturnRowsCount(returnNum);
-        sdbMessage.setOperationCode(Operation.OP_QUERY);
-
-        byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
-                endianConvert);
-        connection.sendMessage(request);
-
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
-        SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
-
-        return rtnSDBMessage;
+    private SysInfoResponse receiveSysInfoResponse() {
+        SysInfoResponse response = new SysInfoResponse();
+        byte[] lengthBytes = connection.receive(response.length());
+        ByteBuffer buffer = ByteBuffer.wrap(lengthBytes);
+        response.decode(buffer);
+        return response;
     }
 
-    private SDBMessage adminCommandEval(String commandString, int flag, long reqID,
-                                        long skipNum, long returnNum, BSONObject query,
-                                        BSONObject selector, BSONObject order, BSONObject hint)
-            throws BaseException {
-        // Admin command request
-        // int reqId = 0;
-        BSONObject dummyObj = new BasicBSONObject();
-        SDBMessage sdbMessage = new SDBMessage();
+    private ByteBuffer receiveSdbResponse() {
+        byte[] lengthBytes = connection.receive(4);
+        int length = ByteBuffer.wrap(lengthBytes).order(byteOrder).getInt();
 
-        if (query == null)
-            sdbMessage.setMatcher(dummyObj);
-        else
-            sdbMessage.setMatcher(query);
-        if (selector == null)
-            sdbMessage.setSelector(dummyObj);
-        else
-            sdbMessage.setSelector(selector);
-        if (order == null)
-            sdbMessage.setOrderBy(dummyObj);
-        else
-            sdbMessage.setOrderBy(order);
-        if (hint == null)
-            sdbMessage.setHint(dummyObj);
-        else
-            sdbMessage.setHint(hint);
-
-        sdbMessage.setCollectionFullName(SequoiadbConstants.ADMIN_PROMPT
-                + commandString);
-
-        sdbMessage.setVersion(1);
-        sdbMessage.setW((short) 0);
-        sdbMessage.setPadding((short) 0);
-        sdbMessage.setFlags(flag);
-        sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        // sdbMessage.setResponseTo(reqId);
-        // reqId++;
-        if (0 == reqID) {
-            reqID = getNextRequstID();
-        }
-        sdbMessage.setRequestID(reqID);
-        sdbMessage.setSkipRowsCount(skipNum);
-        sdbMessage.setReturnRowsCount(returnNum);
-        sdbMessage.setOperationCode(Operation.OP_QUERY);
-
-        byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
-                endianConvert);
-        connection.sendMessage(request);
-
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
-        //SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractEvalReply(byteBuffer);
-        SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
-
-        return rtnSDBMessage;
+        byte[] bytes = new byte[length];
+        System.arraycopy(lengthBytes, 0, bytes, 0, lengthBytes.length);
+        connection.receive(bytes, 4, length - 4);
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(byteOrder);
+        return buffer;
     }
 
-    private SDBMessage createCS(String csName, BSONObject options)
-            throws BaseException {
-        String commandString = SequoiadbConstants.ADMIN_PROMPT
-                + SequoiadbConstants.CREATE_CMD + " "
-                + SequoiadbConstants.COLSPACE;
-        BSONObject cObj = new BasicBSONObject();
-        BSONObject dummyObj = new BasicBSONObject();
-        SDBMessage sdbMessage = new SDBMessage();
-
-        cObj.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
-        if (null != options)
-            cObj.putAll(options);
-        sdbMessage.setMatcher(cObj);
-        sdbMessage.setCollectionFullName(commandString);
-
-        sdbMessage.setVersion(1);
-        sdbMessage.setW((short) 0);
-        sdbMessage.setPadding((short) 0);
-        sdbMessage.setFlags(0);
-        sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-        sdbMessage.setRequestID(getNextRequstID());
-        sdbMessage.setSkipRowsCount(-1);
-        sdbMessage.setReturnRowsCount(-1);
-        sdbMessage.setSelector(dummyObj);
-        sdbMessage.setOrderBy(dummyObj);
-        sdbMessage.setHint(dummyObj);
-        sdbMessage.setOperationCode(Operation.OP_QUERY);
-
-        byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
-                endianConvert);
-        connection.sendMessage(request);
-
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        if (endianConvert) {
-            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        } else {
-            byteBuffer.order(ByteOrder.BIG_ENDIAN);
-        }
-        SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
-        SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
-
-        return rtnSDBMessage;
-    }
-
-    private boolean requestSysInfo() {
-        byte[] request = SDBMessageHelper.buildSysInfoRequest();
-        connection.sendMessage(request);
-        boolean endianConvert = SDBMessageHelper
-                .msgExtractSysInfoReply(connection.receiveSysInfoMsg(128));
-        return endianConvert;
-    }
-
-    private void sendKillContextMsg() {
-        if (connection == null)
-            throw new BaseException(SDBError.SDB_NETWORK);
-        long[] contextIds = new long[]{-1};
-        byte[] request = SDBMessageHelper.buildKillCursorMsg(0, contextIds,
-                endianConvert);
-        connection.sendMessage(request);
-
-        ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-        SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
-        if (rtnSDBMessage.getOperationCode() != Operation.OP_KILL_CONTEXT_RES) {
+    private void checkResponse(SdbRequest request, SdbResponse response) {
+        if ((request.opCode() | MsgOpCode.RESP_MASK) != response.opCode()) {
             throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
-                    rtnSDBMessage.getOperationCode().toString());
+                ("request=" + request.opCode() + " response=" + response.opCode()));
         }
-        int flags = rtnSDBMessage.getFlags();
-        if (flags != 0) {
-            throw new BaseException(flags);
+    }
+
+    private ByteBuffer encodeRequest(Request request) {
+        ByteBuffer buffer = ByteBuffer.allocate(request.length());
+        buffer.order(byteOrder);
+        request.setRequestId(getNextRequestId());
+        request.encode(buffer);
+        return buffer;
+    }
+
+    private void sendRequest(Request request) {
+        ByteBuffer buffer = encodeRequest(request);
+        connection.send(buffer);
+    }
+
+    private <T extends SdbResponse> T decodeResponse(ByteBuffer buffer, Class<T> tClass) {
+        T response;
+        try {
+            response = tClass.newInstance();
+        } catch (Exception e) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
+        response.decode(buffer);
+        return response;
+    }
+
+    private ByteBuffer sendAndReceive(ByteBuffer request) {
+        connection.send(request);
+        lastUseTime = System.currentTimeMillis();
+        return receiveSdbResponse();
+    }
+
+    <T extends SdbResponse> T requestAndResponse(SdbRequest request, Class<T> tClass) {
+        ByteBuffer out = encodeRequest(request);
+        ByteBuffer in = sendAndReceive(out);
+        T response = decodeResponse(in, tClass);
+        checkResponse(request, response);
+        return response;
+    }
+
+    SdbReply requestAndResponse(SdbRequest request) {
+        return requestAndResponse(request, SdbReply.class);
+    }
+
+    private ByteOrder getSysInfo() {
+        SysInfoRequest request = new SysInfoRequest();
+        sendRequest(request);
+
+        SysInfoResponse response = receiveSysInfoResponse();
+
+        return response.byteOrder();
+    }
+
+    private void killContext() {
+        if (connection == null) {
+            throw new BaseException(SDBError.SDB_NETWORK);
+        }
+
+        long[] contextIds = new long[]{-1};
+        KillContextRequest request = new KillContextRequest(contextIds);
+        SdbReply response = requestAndResponse(request);
+
+        int flag = response.getFlag();
+        if (flag != 0) {
+            throw new BaseException(flag);
+        }
+    }
+
+    @Override
+    public void close() throws BaseException {
+        disconnect();
     }
 
     /**
@@ -2321,7 +2125,7 @@ public class Sequoiadb {
 
         private int typeValue;
 
-        private SptReturnType(int typeValue) {
+        SptReturnType(int typeValue) {
             this.typeValue = typeValue;
         }
 
@@ -2339,16 +2143,5 @@ public class Sequoiadb {
             }
             return retType;
         }
-    }
-
-    /**
-     * @fn DBDataCenter getDataCenter()
-     * @brief get the datacenter
-     * @return DBDataCenter
-     * @exception com.sequoiadb.exception.BaseException
-     */
-    public DBDataCenter getDataCenter() throws BaseException {
-        DBDataCenter dc = new DBDataCenterConcrete(this);
-        return dc;
     }
 }
