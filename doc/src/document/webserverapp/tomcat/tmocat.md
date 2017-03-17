@@ -6,41 +6,49 @@
 ##安装配置##
 
   
-  1.下载tomcat安装包
+  1.下载[tomcat](http://tomcat.apache.org/download-70.cgi)安装包
 
-  2.登录root用户，解压安装包、拷贝到/usr/local下
-
-```lang-javascript
-$tar -zxvf apache-tomcat-7.0.68.tar.gz
-```
-```lang-javascript
-$cp -R /opt/apache-tomcat-7.0.68 /usr/local/
-```
-
-  3.修改/usr/local/apache-tomcat-7.0.68/bin/catalina.sh下配置文件，增加配置项： JAVA_OPTS="-server -Xms800m -Xmx800m -XX:PermSize=64M -XX:MaxNewSize=256m -XX:MaxPermSize=128m -Djava.awt.headless=true "配置内存大小（可根据项目实际需求进行修改），修改完成后保存配置
+  2.使用root用户，将tomcat安装包放在/opt目录下，并解压安装包
 
 ```lang-javascript
-$vim /usr/local/apache-tomcat-7.0.68/bin/catalina.sh
+#tar -zxvf apache-tomcat-7.0.68.tar.gz
 ```
-
-  4.查看端口被占用（tomcat默认端口号是8080）
+将解压后的文件拷贝到/usr/local下
 
 ```lang-javascript
-$netstat -lnpt | grep 8080
+#cp -R /opt/apache-tomcat-7.0.68 /usr/local/
 ```
 
-  5.如果端口被占用，可修改conf目录下的server.xml的port值，如下图：
-
- ![](webserverapp/tomcat/tomcatserver.jpg)
-
-
-  6.启动tomcat服务器
+  3.打开/usr/local/apache-tomcat-7.0.68/bin/catalina.sh文件，增加如下配置项配置内存大小（根据项目实际需求进行修改）： 
 
 ```lang-javascript
-$/usr/local/apache-tomcat-7.0.68/bin/startup.sh
+#vim /usr/local/apache-tomcat-7.0.68/bin/catalina.sh
+```
+```
+JAVA_OPTS="-server -Xms800m -Xmx800m -XX:PermSize=64M -XX:MaxNewSize=256m -XX:MaxPermSize=128m -Djava.awt.headless=true"
 ```
 
-  7.验证tmocat服务是否启动成功，访问http://ip:port,启动成功页面显示如下：
+  4.查看tomcat端口是否被占用（默认是8080）
+
+```lang-javascript
+#netstat -lnpt | grep 8080
+```
+如果端口被占用，可修改/usr/local/apache-tomcat-7.0.68/conf/server.xml文件的port参数的值，如下：
+
+ ```
+<Connector port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" />
+```
+
+
+  5.启动tomcat服务器
+
+```lang-javascript
+#/usr/local/apache-tomcat-7.0.68/bin/startup.sh
+```
+
+  6.验证tmocat服务是否启动成功，访问http://ip:port,启动成功页面显示如下：
 
 
 ![tomcathome](webserverapp/tomcat/tomcathome.jpg)
@@ -50,7 +58,7 @@ $/usr/local/apache-tomcat-7.0.68/bin/startup.sh
 
   1.部署web应用使用的JNDI数据源，将pg对应的驱动jar包放到tomcat服务器的/usr/local/apache-tomcat-7.0.68/lib目录下，可以去官网下载对应版本 [http://jdbc.postgresql.org/download.html](http://jdbc.postgresql.org/download.html)
 
-  2.配置JNDI,在/usr/local/apache-tomcat-7.0.68/conf下的context.xml文件中新增如下：
+  2.配置JNDI,在/usr/local/apache-tomcat-7.0.68/conf/context.xml文件中新增内容如下：
 
 ```
 <Resource 
@@ -82,13 +90,13 @@ $/usr/local/apache-tomcat-7.0.68/bin/startup.sh
  3.重启tomcat使配置参数生效
 
 ```lang-javascript
-$ /usr/local/apache-tomcat-7.0.68/bin/shutdown.sh
-$ /usr/local/apache-tomcat-7.0.68/bin/startup.sh
+#/usr/local/apache-tomcat-7.0.68/bin/shutdown.sh
+#/usr/local/apache-tomcat-7.0.68/bin/startup.sh
 ```
 
 
 ##安装Web应用##
 
 
-1. 将待发布的web应用war包放入tomcat服务器的/usr/local/apache-tomcat-7.0.68/webapps目录下。
+1. 将待发布的web应用war包放入tomcat服务器的/usr/local/apache-tomcat-7.0.68/webapps目录下
 
