@@ -87,7 +87,7 @@ b.配置standalone的配置文件standlone.xml ，将所有的127.0.0.1修改成
 $ cd /opt/jboss/standalone/configuration/
 $ vim standalone.xml
 
-:%s/127.0.0.1/192.168.31.8/g
+:%s/127.0.0.1/192.168.31.8/g		# 在vim的命令行模式下输入
 ```
 > **Note:**
 >之所以将所有的127.0.0.1改成192.168.31.8是由于Jboss作为一个Web容器，不仅自身实现一些Java EE的规范，比如JMX，JMS ,JTA，EJB等。它的主要作用是对外提供服务，比如OSGI功能等。所以建议将所有的地址配置在非127的网段里，而且一般情况下，在生产环境中我们不会经常接触到运行Jboss的服务器，一般用的最多的是Jboss的web管理的功能。所以最好将所有的地址设置为网卡的地址。
@@ -157,7 +157,7 @@ $ ls /opt/jboss/standalone/deployments/
 >
 >    例如 http://192.168.31.8:9990
 
->    登录用户名默认是前面创建的Jboss创后台用户
+>    登录用户名默认是前面创建的Jboss后台用户
 
 >    点击 登录 按钮
 
@@ -246,7 +246,7 @@ $ ls /opt/jboss/standalone/deployments/
 --
 4.浏览器中访问HelloEJB
 
-![image](driver/jboss/web-6.png)
+![image](webserverapp/jboss/web-6.png)
 
 --
 
