@@ -1,5 +1,7 @@
 package com.sequoiadb.testdata;
 
+import java.util.Objects;
+
 public class Student {
     public int age;
     public String name;
@@ -35,4 +37,22 @@ public class Student {
         return "Student [age=" + age + ", name=" + name + "]";
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(age, name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Student) {
+            if (this == obj) {
+                return true;
+            }
+
+            Student other = (Student) obj;
+            return this.age == other.age && this.name.equals(other.name);
+        } else {
+            return false;
+        }
+    }
 }

@@ -22,7 +22,7 @@ public class SdbSetSessionAttr {
     private static boolean isCluster = true;
 
 	/*
-	@BeforeClass
+    @BeforeClass
 	public static void setConnBeforeClass() throws Exception{
 		isCluster = Constants.isCluster();
 		try{

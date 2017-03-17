@@ -68,7 +68,7 @@ public class SdbJSProcedures {
                 return;
             }
         }
-		/* crtJSProcedure */
+        /* crtJSProcedure */
         String code = "function sum_in_java(x, y){return x + y ;}";
         BSONObject option1 = new BasicBSONObject();
         option1.put("GroupName", Constants.BACKUPGROUPNAME);
@@ -84,7 +84,7 @@ public class SdbJSProcedures {
             System.out.println("Error message is: " + e.getMessage() + e.getErrorCode());
             assertTrue(false);
         }
-		/* listProcedure */
+        /* listProcedure */
         BSONObject cond = new BasicBSONObject();
         cond.put("name", "sum_in_java");
         try {

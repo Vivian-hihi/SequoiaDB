@@ -186,7 +186,7 @@ public class DBClientCache {
     // 手工测试，需要在getCollectionSpace中添加(new Exception()).printStackTrace();
     // 来打印调用堆栈：
     /*
-	public CollectionSpace getCollectionSpace(String csName)
+    public CollectionSpace getCollectionSpace(String csName)
 			throws BaseException {
 		// get cs object from cache
 		if (fetchCache(csName)) {

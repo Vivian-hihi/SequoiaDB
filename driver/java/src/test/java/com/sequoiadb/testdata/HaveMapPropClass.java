@@ -2,6 +2,7 @@ package com.sequoiadb.testdata;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class HaveMapPropClass {
     private Map<String, String> mapProp = null;
@@ -33,4 +34,22 @@ public class HaveMapPropClass {
             + "]";
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(mapProp, userMap);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof HaveMapPropClass) {
+            if (this == obj) {
+                return true;
+            }
+
+            HaveMapPropClass other = (HaveMapPropClass) obj;
+            return this.mapProp.equals(other.mapProp) && this.userMap.equals(other.userMap);
+        } else {
+            return false;
+        }
+    }
 }
