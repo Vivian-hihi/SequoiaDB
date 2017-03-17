@@ -167,6 +167,12 @@
          </then>
       </if>
       <if>
+         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST" />
+         <then>
+            <var name="diagLevel" value="3"/>
+         </then>
+      </if>
+      <if>
          <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
          <then>
             <var name="diagLevel" value="3"/>
