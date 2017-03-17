@@ -1,28 +1,20 @@
 package com.sequoiadb.test.cl;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-
-import junit.framework.Assert;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.BSONDecimal;
-import org.bson.types.BasicBSONList;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.test.common.*;
-import com.sequoiadb.testdata.*;
+import com.sequoiadb.test.common.Constants;
+import com.sequoiadb.testdata.ArrayListBean;
+import com.sequoiadb.testdata.DecimalBean;
+import com.sequoiadb.testdata.ListBean;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.BSONDecimal;
+import org.bson.types.BasicBSONList;
+import org.junit.*;
+
+import java.math.BigDecimal;
 
 
 public class CLSaveAndAs {

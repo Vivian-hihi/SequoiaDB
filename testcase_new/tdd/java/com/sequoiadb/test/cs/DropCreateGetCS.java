@@ -6,6 +6,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sequoiadb.exception.SDBError;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -92,7 +93,7 @@ public class DropCreateGetCS {
 			cs2 = sdb.createCollectionSpace(Constants.TEST_CS_NAME_1);
 		}catch(BaseException e){
 			int errono = e.getErrorCode();
-			assertEquals(new BaseException("SDB_DMS_CS_EXIST").getErrorCode(), errono);
+			assertEquals(SDBError.SDB_DMS_CS_EXIST.getErrorCode(), errono);
 			return ;
 		}
 	}

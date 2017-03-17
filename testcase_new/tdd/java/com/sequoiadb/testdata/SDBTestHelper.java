@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONCallback;
 import org.bson.BSONDecoder;
 import org.bson.BSONObject;
@@ -33,7 +34,7 @@ public class SDBTestHelper {
         DBCursor cursor = cl.getIndex(indexName);
         while ((cursor == null || !cursor.hasNext())) {
             if (i > count) {
-                throw new BaseException(
+                throw new RuntimeException(
                         ("wait index create failed:" + indexName));
             }
             i++;
@@ -56,7 +57,7 @@ public class SDBTestHelper {
         DBCursor cursor = cl.getIndex(indexName);
         while ((cursor != null && cursor.hasNext())) {
             if (i > count) {
-                throw new BaseException(("wait index drop failed:" + indexName));
+                throw new RuntimeException(("wait index drop failed:" + indexName));
             }
             i++;
             try {
@@ -85,7 +86,7 @@ public class SDBTestHelper {
             return o1;
         }
         catch (IOException e) {
-            throw new BaseException("SDB_INVALIDARG", e);
+            throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
     }
 

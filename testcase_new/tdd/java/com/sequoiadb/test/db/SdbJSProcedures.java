@@ -1,28 +1,18 @@
 package com.sequoiadb.test.db;
 
-import static org.junit.Assert.*;
-
-import java.util.List;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.ObjectId;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.SequoiadbConstants;
-import com.sequoiadb.base.Sequoiadb.SptEvalResult;
-import com.sequoiadb.base.Sequoiadb.SptReturnType;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.test.common.*;
+import com.sequoiadb.exception.SDBError;
+import com.sequoiadb.test.common.Constants;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.junit.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class SdbJSProcedures {
 	private static Sequoiadb sdb ;
@@ -73,7 +63,7 @@ public class SdbJSProcedures {
 			sdb.listReplicaGroups();
 		}catch(BaseException e){
 			int errno = e.getErrorCode();
-			if (new BaseException("SDB_RTN_COORD_ONLY").getErrorCode() == errno){
+			if (SDBError.SDB_RTN_COORD_ONLY.getErrorCode() == errno){
 				System.out.println("This test is for cluster environment only.");
 				return;
 			}
@@ -161,7 +151,7 @@ public class SdbJSProcedures {
 			sdb.listReplicaGroups();
 		}catch(BaseException e){
 			int errno = e.getErrorCode();
-			if (new BaseException("SDB_RTN_COORD_ONLY").getErrorCode() == errno){
+			if (SDBError.SDB_RTN_COORD_ONLY.getErrorCode() == errno){
 				System.out.println("This test is for cluster environment only.");
 				return;
 			}

@@ -130,7 +130,7 @@ public class CursorTest {
 		cursor = cl.query(record, null, null, null);
 		byte[] arr = null;
 		int i = 0;
-		while(cursor.hasNextRaw()){
+		while(cursor.hasNext()){
 			arr = cursor.getNextRaw();
 			i++;
 			if(i>(totalNum+1))

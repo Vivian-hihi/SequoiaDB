@@ -3,6 +3,7 @@ package com.sequoiadb.test.common;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -155,8 +156,9 @@ public class ConstantsInsert {
 	public  static void insertRecords(DBCollection cl, int num) throws BaseException {
 		try {
 			// check arg
-            if ( null == cl || num <= 0 )
-            	throw new BaseException("SDB_INVALIDARG", cl, num);
+            if ( null == cl || num <= 0 ) {
+                throw new BaseException(SDBError.SDB_INVALIDARG);
+            }
 			// TO DO
 			cl.bulkInsert(createRecordList( num ), DBCollection.FLG_INSERT_CONTONDUP);
 		} catch (Exception e) {
@@ -168,8 +170,9 @@ public class ConstantsInsert {
 	public  static void insertLongRecords(DBCollection cl, int length, int num) throws BaseException {
 		try {
 			// check arg
-            if ( null == cl || num <= 0 || length <=0 )
-            	throw new BaseException("SDB_INVALIDARG", cl, num, length);
+            if ( null == cl || num <= 0 || length <=0 ) {
+				throw new BaseException(SDBError.SDB_INVALIDARG);
+			}
 			// TO DO
             BSONObject obj = new BasicBSONObject();
             long sum = length * num;

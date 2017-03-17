@@ -50,12 +50,13 @@ public class Constants {
 
 	// domain
 	public final static String TEST_DOMAIN_NAME            = "domain_java";
-	
-	
-	private static Sequoiadb sdb;
-	
+
+    public final static String IXM_INDEXDEF = "IndexDef";
+    public final static String IXM_NAME = "name";
+    public final static String OID = "_id";
+
 	public static boolean isCluster(){
-	 sdb = new Sequoiadb(HOST+":"+SERVER, "", "");
+		Sequoiadb sdb = new Sequoiadb(HOST + ":" + SERVER, "", "");
 	 try{
 		 BSONObject empty = new BasicBSONObject();
 		 sdb.getList(7, empty, empty, empty);

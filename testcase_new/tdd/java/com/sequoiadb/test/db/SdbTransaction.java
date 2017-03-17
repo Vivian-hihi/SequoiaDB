@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 
 import java.util.List;
 
+import com.sequoiadb.exception.SDBError;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -40,7 +41,7 @@ public class SdbTransaction {
 		   return true ;
 		}
 		catch(BaseException e){
-			if (e.getErrorCode() == new BaseException("SDB_DPS_TRANS_DIABLED").getErrorCode()){
+			if (e.getErrorCode() == SDBError.SDB_DPS_TRANS_DIABLED.getErrorCode()){
 				return false ;	
 			}else{
 				throw e;

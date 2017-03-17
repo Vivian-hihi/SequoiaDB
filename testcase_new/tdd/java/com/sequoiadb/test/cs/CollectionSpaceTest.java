@@ -92,7 +92,7 @@ public class CollectionSpaceTest {
 
 	@Test
 	public void testDrop() throws Exception {
-		cs.drop();
+		sdb.dropCollectionSpace(cs.getName());
 		Thread.sleep(1000);
 		assertFalse(sdb.isCollectionSpaceExist(Constants.TEST_CS_NAME_1));
 	}

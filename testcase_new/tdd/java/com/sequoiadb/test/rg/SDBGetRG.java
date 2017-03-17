@@ -2,6 +2,7 @@ package com.sequoiadb.test.rg;
 
 import static org.junit.Assert.*;
 
+import com.sequoiadb.exception.SDBError;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -107,7 +108,7 @@ public class SDBGetRG {
 			groupName = "SYSCatalogGroupForTest" ;
 			rg = sdb.createReplicaGroup(groupName);
 		}catch(BaseException e){
-			assertEquals(new BaseException("SDB_INVALIDARG").getErrorCode(),
+			assertEquals(SDBError.SDB_INVALIDARG.getErrorCode(),
 					     e.getErrorCode());
 			return ;
 		}

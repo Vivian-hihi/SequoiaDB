@@ -1,30 +1,17 @@
 package com.sequoiadb.test.datasource;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
+import com.sequoiadb.base.*;
+import com.sequoiadb.datasource.DatasourceOptions;
+import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.test.common.Constants;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.bson.types.ObjectId;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBLob;
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.SequoiadbConstants;
-import com.sequoiadb.base.SequoiadbDatasource;
-import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.testdata.SDBTestHelper;
-import com.sequoiadb.test.common.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class SequoiadbDatasourceTest {
     private SequoiadbDatasource ds;
@@ -45,7 +32,7 @@ public class SequoiadbDatasourceTest {
         coords.add(Constants.COOR_NODE_CONN);
 
         try{
-            ds  = new SequoiadbDatasource(coords, "", "", null, null);
+            ds  = new SequoiadbDatasource(coords, "", "", null, (DatasourceOptions) null);
         }
         catch( Exception e) {
             e.printStackTrace();

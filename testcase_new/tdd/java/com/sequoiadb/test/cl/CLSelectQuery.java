@@ -121,7 +121,7 @@ public class CLSelectQuery {
       DBCursor cursor = cl.query();
       int i = 0;
       BSONObject obj = null;
-      while (cursor.hasNextRaw()) {
+      while (cursor.hasNext()) {
          byte[] bytes = cursor.getNextRaw();
          obj = SDBTestHelper.byteArrayToBSONObject(bytes);
          System.out.println(obj.toString());
@@ -146,7 +146,7 @@ public class CLSelectQuery {
       DBCursor cursor = cl.query(matchObj, selectObj, orderObj, hintObj);
       int i = 0;
       BSONObject obj = null;
-      while (cursor.hasNextRaw()) {
+      while (cursor.hasNext()) {
          byte[] bytes = cursor.getNextRaw();
          obj = SDBTestHelper.byteArrayToBSONObject(bytes);
          System.out.println(obj.toString());
@@ -171,7 +171,7 @@ public class CLSelectQuery {
       DBCursor cursor = cl.query(matchObj, selectObj, orderObj, hintObj);
       int i = 0;
       BSONObject obj = null;
-      while (cursor.hasNextRaw()) {
+      while (cursor.hasNext()) {
          byte[] bytes = cursor.getNextRaw();
          obj = SDBTestHelper.byteArrayToBSONObject(bytes);
          System.out.println(obj.toString());
@@ -197,7 +197,7 @@ public class CLSelectQuery {
       DBCursor cursor = cl.query(matchObj, selectObj, orderObj, hintObj);
       int i = 0;
       BSONObject obj = null;
-      while (cursor.hasNextRaw()) {
+      while (cursor.hasNext()) {
          byte[] bytes = cursor.getNextRaw();
          obj = SDBTestHelper.byteArrayToBSONObject(bytes);
          System.out.println(obj.toString());
@@ -220,7 +220,7 @@ public class CLSelectQuery {
       DBCursor cursor = cl.query(matchObj, selectObj, orderObj, hintObj);
       int i = 0;
       BSONObject obj = null;
-      while (cursor.hasNextRaw()) {
+      while (cursor.hasNext()) {
          byte[] bytes = cursor.getNextRaw();
          obj = SDBTestHelper.byteArrayToBSONObject(bytes);
          System.out.println(obj.toString());
@@ -243,7 +243,7 @@ public class CLSelectQuery {
       DBCursor cursor = cl.query(matchObj, selectObj, orderObj, hintObj);
       int i = 0;
       BSONObject obj = null;
-      while (cursor.hasNextRaw()) {
+      while (cursor.hasNext()) {
          byte[] bytes = cursor.getNextRaw();
          obj = SDBTestHelper.byteArrayToBSONObject(bytes);
          System.out.println(obj.toString());

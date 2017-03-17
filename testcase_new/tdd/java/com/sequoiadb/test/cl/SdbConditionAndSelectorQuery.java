@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
