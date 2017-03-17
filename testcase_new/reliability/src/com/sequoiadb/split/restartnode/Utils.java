@@ -50,7 +50,7 @@ public class Utils {
         }
     }
 
-    //获取异常的堆栈信息字串
+    // 获取异常的堆栈信息字串
     public static String getStackString(Exception e) {
         StringBuffer stackBuffer = new StringBuffer();
         StackTraceElement[] stackElements = e.getStackTrace();
@@ -66,13 +66,13 @@ public class Utils {
         }
     }
 
-    //调用GroupMgr的checkBusiness（false）检测环境，超时后打印当前环境信息,并可能抛出异常
-    public static boolean checkBusinessWithTimeout(GroupMgr mgr, int timeSecond)
+    // 调用GroupMgr的checkBusiness（false）检测环境，超时后打印当前环境信息,并可能抛出异常
+    public static boolean checkBusinessLSNWithTimeout(GroupMgr mgr, int timeSecond)
             throws ReliabilityException {
         long timestamp = System.currentTimeMillis();
         while (!mgr.checkBusiness(false)) {
             if (System.currentTimeMillis() - timestamp > timeSecond * 1000) {
-                return mgr.checkBusiness();
+                return mgr.checkBusinessWithLSN();
             }
             try {
                 Thread.sleep(1000);

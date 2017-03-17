@@ -125,7 +125,7 @@ public class NetSplit2586 extends SdbTestBase {
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             // 最长等待20分钟的集群环境恢复
-            Assert.assertEquals(Utils.checkBusinessWithTimeout(groupMgr, 20 * 60), true,
+            Assert.assertEquals(Utils.checkBusinessLSNWithTimeout(groupMgr, 20 * 60), true,
                     "wait restore business faile");
 
             // 再次插入数据
