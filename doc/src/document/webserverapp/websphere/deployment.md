@@ -18,7 +18,7 @@ suse113-1:/opt/web/packet/WAS # ./install
 
    ![](webserverapp/websphere/install_1.jpg)
 
-3. 选择 **I accept both the IBM and the non-IBM terms**，单击 **Next**
+3. 选择 **I accept both the IBM and the non-IBM terms**，点击 **Next**
 
    ![](webserverapp/websphere/install_2.jpg)
 
