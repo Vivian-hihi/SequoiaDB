@@ -198,17 +198,6 @@
             </if>            
          </sequential>
       </for>
-      
-      <!--send report to control host-->
-      
-      <for list="${testhost_list}" param="testhost" parallel="false">
-         <sequential>                        
-            <hostinfo prefix="host" />
-            <staf location="@{testhost}" service="FS"
-                  request="COPY DIRECTORY ${CI_WORK_DIR}/report TODIRECTORY ${WORKSPACE}/report TOMACHINE ${host.NAME} RECURSE"
-                  throwBuildException="1"/>           
-         </sequential>
-      </for>
    </target>
    
    <target name="exec_remote_testcase">
@@ -333,9 +322,9 @@
          </sequential>
       </for>
 
-      <staf location="@{testhost}" service="FS"
-            request="COPY DIRECTORY ${CI_WORK_DIR}/report TODIRECTORY ${WORKSPACE}/report TOMACHINE ${host.NAME} RECURSE"
-            throwBuildException="1"/>   
+      <copy todir="${WORKSPACE}/report">
+         <fileset dir="${report_basedir}" includes="**/*"/>
+      </copy>  
 
    </target>
    
