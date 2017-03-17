@@ -252,5 +252,3 @@ $ ls /opt/jboss/standalone/deployments/
 
 网页上输出数据库的主板本号说明成功部署。
 
-# 5. 样例源码
-该样例用来输出数据库的主板本号
