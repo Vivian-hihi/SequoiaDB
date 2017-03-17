@@ -1,11 +1,13 @@
-##环境准备##
+##部署##
+
+###环境准备###
 
 安装pg，参考[pg部署](connector\postgresql\deployment.md)
 
-##安装配置##
+###安装配置###
 
   
-  1.下载[tomcat](http://tomcat.apache.org/download-70.cgi)安装包
+  1.在官网下载[tomcat](http://tomcat.apache.org/download-70.cgi)安装包
 
   2.使用root用户，将tomcat安装包放在/opt目录下，并解压安装包
 

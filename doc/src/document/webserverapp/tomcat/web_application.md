@@ -1,4 +1,4 @@
-##安装Web应用##
+##Web应用##
 
 
 1.将待发布的web应用war包放入tomcat服务器的/usr/local/apache-tomcat-7.0.68/webapps目录下，例如将实现连接pg获取pg版本的test应用打成test.war放入该目录下
