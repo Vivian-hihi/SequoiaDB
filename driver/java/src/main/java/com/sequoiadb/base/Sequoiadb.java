@@ -23,7 +23,6 @@ import com.sequoiadb.message.request.*;
 import com.sequoiadb.message.response.SdbReply;
 import com.sequoiadb.message.response.SdbResponse;
 import com.sequoiadb.message.response.SysInfoResponse;
-import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.net.IConnection;
 import com.sequoiadb.net.ServerAddress;
 import com.sequoiadb.net.TCPConnection;
@@ -243,7 +242,7 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * @param connString remote server address "IP : Port" or "IP"(port is 50000)
+     * @param connString remote server address "Host:Port"
      * @param username   the user's name of the account
      * @param password   the password of the account
      * @throws com.sequoiadb.exception.BaseException "SDB_NETWORK" means network error,
@@ -257,7 +256,7 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * @param connString remote server address "IP : Port" or "IP"(port is 11810)
+     * @param connString remote server address "Host:Port"
      * @param username   the user's name of the account
      * @param password   the password of the account
      * @param options    the options for connection
@@ -391,7 +390,7 @@ public class Sequoiadb implements Closeable {
             host = tmp[0].trim();
             port = Integer.parseInt(tmp[1].trim());
         } else {
-            host = connString;
+            host = connString.trim();
             port = DEFAULT_PORT;
         }
 

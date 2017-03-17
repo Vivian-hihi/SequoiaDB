@@ -19,7 +19,6 @@ package com.sequoiadb.base;
 import com.sequoiadb.datasource.DatasourceOptions;
 import com.sequoiadb.datasource.SequoiadbDatasourceImpl;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.net.ConfigOptions;
 
 import java.util.List;
 

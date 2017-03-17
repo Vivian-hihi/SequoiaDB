@@ -16,11 +16,11 @@
 
 package com.sequoiadb.datasource;
 
+import com.sequoiadb.base.ConfigOptions;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.net.ConfigOptions;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;

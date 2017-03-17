@@ -2,7 +2,6 @@ package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.test.TestCase;
 import com.sequoiadb.test.TestConfig;
 import org.junit.Test;

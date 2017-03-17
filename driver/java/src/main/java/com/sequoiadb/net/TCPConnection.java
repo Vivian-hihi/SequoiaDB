@@ -16,6 +16,7 @@
 
 package com.sequoiadb.net;
 
+import com.sequoiadb.base.ConfigOptions;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 
