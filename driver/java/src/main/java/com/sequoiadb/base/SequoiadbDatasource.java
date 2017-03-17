@@ -22,9 +22,9 @@ import com.sequoiadb.exception.BaseException;
 import java.util.List;
 
 /**
- * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
  * @class SequoiadbDatasource
  * @brief SequoiaDB Data Source
+ * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
  */
 @Deprecated
 public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatasource {

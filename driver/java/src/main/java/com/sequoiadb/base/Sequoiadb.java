@@ -385,13 +385,14 @@ public class Sequoiadb implements Closeable {
         if (connString.indexOf(":") > 0) {
             String[] tmp = connString.split(":");
             if (tmp.length != 2) {
-                throw new BaseException(SDBError.SDB_INVALIDARG, "connString is invalid");
+                throw new BaseException(SDBError.SDB_INVALIDARG,
+                    String.format("Invalid connString: %s", connString));
             }
             host = tmp[0].trim();
             port = Integer.parseInt(tmp[1].trim());
         } else {
-            host = connString.trim();
-            port = DEFAULT_PORT;
+            throw new BaseException(SDBError.SDB_INVALIDARG,
+                String.format("Invalid connString: %s", connString));
         }
 
         init(host, port, username, password, options);
