@@ -1,7 +1,7 @@
 package com.sequoiadb.base;
 
-import com.sequoiadb.message.MsgUtil;
 import com.sequoiadb.test.SingleCSCLTestCase;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.junit.Test;
@@ -75,7 +75,7 @@ public class TestInsert extends SingleCSCLTestCase {
                     obj = cursor.getNext();
                 } else {
                     byte[] bytes = cursor.getNextRaw();
-                    obj = MsgUtil.decodeBSONBytes(bytes);
+                    obj = Helper.decodeBSONBytes(bytes);
                 }
                 res.add(obj);
 

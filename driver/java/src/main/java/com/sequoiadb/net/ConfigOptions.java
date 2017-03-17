@@ -29,99 +29,99 @@ public class ConfigOptions {
     private boolean useSSL = false;
 
     /**
+     * @return the socket timeout(milliseconds)(int)
      * @fn int getSocketTimeout()
      * @brief Get the socket timeout(milliseconds)
-     * @return the socket timeout(milliseconds)(int)
      */
     public int getSocketTimeout() {
         return socketTimeout;
     }
 
     /**
+     * @param socketTimeout(int)
      * @fn void setSocketTimeout(int socketTimeout)
      * @brief Set the socket timeout(milliseconds)
-     * @param socketTimeout(int)
      */
     public void setSocketTimeout(int socketTimeout) {
         this.socketTimeout = socketTimeout;
     }
 
     /**
+     * @return the status(boolean)
      * @fn boolean getSocketKeepAlive()
      * @brief Get whether the socket keeps alive or not
-     * @return the status(boolean)
      */
     public boolean getSocketKeepAlive() {
         return socketKeepAlive;
     }
 
     /**
+     * @param socketKeepAlive the the status of socket(boolean)
      * @fn void setSocketKeepAlive(boolean socketKeepAlive)
      * @brief Set the status of socket
-     * @param socketKeepAlive the the status of socket(boolean)
      */
     public void setSocketKeepAlive(boolean socketKeepAlive) {
         this.socketKeepAlive = socketKeepAlive;
     }
 
     /**
+     * @return boolean
      * @fn boolean getUseNagle()
      * @brief Get whether use the Nagle Algorithm or not
-     * @return boolean
      */
     public boolean getUseNagle() {
         return useNagle;
     }
 
     /**
+     * @param useNagle(boolean)
      * @fn void setUseNagle(boolean useNagle)
      * @brief Set whether use the Nagle Algorithm or not
-     * @param useNagle(boolean)
      */
     public void setUseNagle(boolean useNagle) {
         this.useNagle = useNagle;
     }
 
     /**
+     * @return the connect timeout(int)
      * @fn int getConnectTimeout()
      * @brief Get the connect timeout(milliseconds)
-     * @return the connect timeout(int)
      */
     public int getConnectTimeout() {
         return connectTimeout;
     }
 
     /**
+     * @param connectTimeout(int)
      * @fn void setConnectTimeout(int connectTimeout)
      * @brief Set the connect timeout(milliseconds)
-     * @param connectTimeout(int)
      */
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
     }
 
     /**
+     * @return the max auto connect retry time(long)
      * @fn long getMaxAutoConnectRetryTime()
      * @brief Get the max auto connect retry time(milliseconds)
-     * @return the max auto connect retry time(long)
      */
     public long getMaxAutoConnectRetryTime() {
         return maxAutoConnectRetryTime;
     }
 
     /**
+     * @param maxAutoConnectRetryTime(long)
      * @fn void setMaxAutoConnectRetryTime(long maxAutoConnectRetryTime)
      * @brief Set the max auto connect retry time(milliseconds)
-     * @param maxAutoConnectRetryTime(long)
      */
     public void setMaxAutoConnectRetryTime(long maxAutoConnectRetryTime) {
         this.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
     }
 
     /**
+     * @return boolean
      * @fn boolean getUseSSL()
      * @brief Get whether use the SSL or not
-     * @return boolean
      * @author David Li
      * @since 1.12
      */
@@ -130,9 +130,9 @@ public class ConfigOptions {
     }
 
     /**
+     * @param useSSL(boolean)
      * @fn void setUseSSL(boolean useSSL)
      * @brief Set whether use the SSL or not
-     * @param useSSL(boolean)
      * @author David Li
      * @since 1.12
      */

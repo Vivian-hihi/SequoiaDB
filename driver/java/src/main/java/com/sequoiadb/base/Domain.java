@@ -32,30 +32,28 @@ public class Domain {
     private Sequoiadb sequoiadb;
 
     /**
+     * @return The name of current domain
      * @fn String getName()
      * @brief Return the name of current domain.
-     * @return The name of current domain
      */
     public String getName() {
         return name;
     }
 
     /**
+     * @return Sequoiadb connection instance
      * @fn Sequoiadb getSequoiadb()
      * @brief Return the Sequoiadb connection instance of current domain belong to.
-     * @return Sequoiadb connection instance
      */
     public Sequoiadb getSequoiadb() {
         return sequoiadb;
     }
 
     /**
+     * @param sequoiadb Sequoiadb connection instance
+     * @param name      the name for the created domain
      * @fn Domain(Sequoiadb sequoiadb, String name)
      * @brief Constructor
-     * @param sequoiadb
-     *            Sequoiadb connection instance
-     * @param name
-     *            the name for the created domain
      */
     Domain(Sequoiadb sequoiadb, String name) {
         this.name = name;
@@ -63,22 +61,22 @@ public class Domain {
     }
 
     /**
+     * @param options the options user wants to alter:
+     *                <ul>
+     *                <li>Groups:    The list of replica groups' names which the domain is going to contain.
+     *                eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+     *                changes to contain "group1", "group2" and "group3".
+     *                We can add or remove groups in current domain. However, if a group has data
+     *                in it, remove it out of domain will be failing.
+     *                <li>AutoSplit: Alter current domain to have the ability of automatically split or not.
+     *                If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+     *                the data of this collection will be split(hash split) into all the groups in this domain automatically.
+     *                However, it won't automatically split data into those groups which were add into this domain later.
+     *                eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+     *                </ul>
+     * @throws com.sequoiadb.exception.BaseException
      * @fn void alterDomain(BSONObject options)
      * @brief Alter the current domain.
-     * @param options the options user wants to alter:
-     *<ul>
-     *<li>Groups:    The list of replica groups' names which the domain is going to contain.
-     *               eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
-     *               changes to contain "group1", "group2" and "group3".
-     *               We can add or remove groups in current domain. However, if a group has data
-     *               in it, remove it out of domain will be failing.
-     *<li>AutoSplit: Alter current domain to have the ability of automatically split or not. 
-     *               If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
-     *               the data of this collection will be split(hash split) into all the groups in this domain automatically.
-     *               However, it won't automatically split data into those groups which were add into this domain later.
-     *               eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
-     *</ul>
-     * @exception com.sequoiadb.exception.BaseException
      */
     public void alterDomain(BSONObject options) throws BaseException {
         if (null == options) {
@@ -99,20 +97,20 @@ public class Domain {
     }
 
     /**
+     * @return the cursor of result
+     * @throws com.sequoiadb.exception.BaseException
      * @fn DBCursor listCSInDomain()
      * @brief List all the collection spaces in current domain.
-     * @return the cursor of result
-     * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listCSInDomain() throws BaseException {
         return listCSCL(Sequoiadb.SDB_LIST_CS_IN_DOMAIN);
     }
 
     /**
+     * @return the cursor of result
+     * @throws com.sequoiadb.exception.BaseException
      * @fn DBCursor listCLInDomain()
      * @brief List all the collections in current domain.
-     * @return the cursor of result
-     * @exception com.sequoiadb.exception.BaseException
      */
     public DBCursor listCLInDomain() throws BaseException {
         return listCSCL(Sequoiadb.SDB_LIST_CL_IN_DOMAIN);

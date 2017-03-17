@@ -19,7 +19,7 @@ package com.sequoiadb.message.request;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
-import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -28,8 +28,8 @@ import java.nio.ByteBuffer;
 
 public class UpdateRequest extends SdbRequest {
     private static final int FIXED_LENGTH = 44;
-    private static final byte[] EMPTY_BSON_BYTES = MsgUtil.encodeBSONObj(new BasicBSONObject());
-    private static final int ALIGNED_EMPTY_BSON_LENGTH = MsgUtil.alignedSize(EMPTY_BSON_BYTES.length);
+    private static final byte[] EMPTY_BSON_BYTES = Helper.encodeBSONObj(new BasicBSONObject());
+    private static final int ALIGNED_EMPTY_BSON_LENGTH = Helper.alignedSize(EMPTY_BSON_BYTES.length);
     private static final int version = 1;
     private static final short w = 0;
     private static final short padding = 0;
@@ -48,30 +48,30 @@ public class UpdateRequest extends SdbRequest {
         }
 
         this.collectionName = collectionName;
-        length += MsgUtil.alignedSize(collectionName.length() + 1);
+        length += Helper.alignedSize(collectionName.length() + 1);
 
         if (matcher == null) {
             matcherBytes = EMPTY_BSON_BYTES.clone();
             length += ALIGNED_EMPTY_BSON_LENGTH;
         } else {
-            matcherBytes = MsgUtil.encodeBSONObj(matcher);
-            length += MsgUtil.alignedSize(matcherBytes.length);
+            matcherBytes = Helper.encodeBSONObj(matcher);
+            length += Helper.alignedSize(matcherBytes.length);
         }
 
         if (modifier == null) {
             modifierBytes = EMPTY_BSON_BYTES.clone();
             length += ALIGNED_EMPTY_BSON_LENGTH;
         } else {
-            modifierBytes = MsgUtil.encodeBSONObj(modifier);
-            length += MsgUtil.alignedSize(modifierBytes.length);
+            modifierBytes = Helper.encodeBSONObj(modifier);
+            length += Helper.alignedSize(modifierBytes.length);
         }
 
         if (hint == null) {
             hintBytes = EMPTY_BSON_BYTES.clone();
             length += ALIGNED_EMPTY_BSON_LENGTH;
         } else {
-            hintBytes = MsgUtil.encodeBSONObj(hint);
-            length += MsgUtil.alignedSize(hintBytes.length);
+            hintBytes = Helper.encodeBSONObj(hint);
+            length += Helper.alignedSize(hintBytes.length);
         }
 
         this.flag = flag;
@@ -88,7 +88,7 @@ public class UpdateRequest extends SdbRequest {
             out.put(collectionName.getBytes("UTF-8"));
             out.put((byte) 0);
             int length = collectionName.length() + 1;
-            int paddingLen = MsgUtil.alignedSize(length) - length;
+            int paddingLen = Helper.alignedSize(length) - length;
             if (paddingLen > 0) {
                 out.put(new byte[paddingLen]);
             }

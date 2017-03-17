@@ -38,14 +38,14 @@ public class DBQuery {
     /**
      * @memberof FLG_QUERY_STRINGOUT 0x00000001
      * @brief Normally, query return bson object,
-     *        when this flag is added, query return binary data stream
+     * when this flag is added, query return binary data stream
      */
     public static final int FLG_QUERY_STRINGOUT = 0x00000001;
 
     /**
      * @memberof FLG_QUERY_FORCE_HINT 0x00000080
      * @brief Force to use specified hint to query,
-     *        if database have no index assigned by the hint, fail to query.
+     * if database have no index assigned by the hint, fail to query.
      */
     public static final int FLG_QUERY_FORCE_HINT = 0x00000080;
 
@@ -94,135 +94,135 @@ public class DBQuery {
     }
 
     /**
+     * @return The modified rule BSONObject
      * @fn BSONObject getModifier()
      * @brief Get modified rule
-     * @return The modified rule BSONObject
      */
     public BSONObject getModifier() {
         return modifier;
     }
 
     /**
+     * @param Modifier The modified rule BSONObject
      * @fn void setModifier(BSONObject modifier)
      * @brief Set modified rule
-     * @param Modifier The modified rule BSONObject
      */
     public void setModifier(BSONObject modifier) {
         this.modifier = modifier;
     }
 
     /**
+     * @return The selective rule BSONObject
      * @fn BSONObject getSelector()
      * @brief Get selective rule
-     * @return The selective rule BSONObject
      */
     public BSONObject getSelector() {
         return selector;
     }
 
     /**
+     * @param Selector The selective rule BSONObject
      * @fn void setSelector(BSONObject selector)
      * @brief Set selective rule
-     * @param Selector The selective rule BSONObject
      */
     public void setSelector(BSONObject selector) {
         this.selector = selector;
     }
 
     /**
+     * @return The matching rule BSONObject
      * @fn BSONObject getMatcher()
      * @brief Get matching rule
-     * @return The matching rule BSONObject
      */
     public BSONObject getMatcher() {
         return matcher;
     }
 
     /**
+     * @param Matcher The matching rule BSONObject
      * @fn void setMatcher(BSONObject matcher)
      * @brief Set matching rule
-     * @param Matcher The matching rule BSONObject
      */
     public void setMatcher(BSONObject matcher) {
         this.matcher = matcher;
     }
 
     /**
+     * @return The ordered rule BSONObject
      * @fn BSONObject getOrderBy()
      * @brief Get ordered rule
-     * @return The ordered rule BSONObject
      */
     public BSONObject getOrderBy() {
         return orderBy;
     }
 
     /**
+     * @param OrderBy The ordered rule BSONObject
      * @fn void setOrderBy(BSONObject orderBy)
      * @brief Set ordered rule
-     * @param OrderBy The ordered rule BSONObject
      */
     public void setOrderBy(BSONObject orderBy) {
         this.orderBy = orderBy;
     }
 
     /**
+     * @return The sepecified access plan BSONObject
      * @fn BSONObject getHint()
      * @brief Get sepecified access plan
-     * @return The sepecified access plan BSONObject
      */
     public BSONObject getHint() {
         return hint;
     }
 
     /**
+     * @param Hint The sepecified access plan BSONObject
      * @fn void setHint(BSONObject hint)
      * @brief Set sepecified access plan
-     * @param Hint The sepecified access plan BSONObject
      */
     public void setHint(BSONObject hint) {
         this.hint = hint;
     }
 
     /**
+     * @return The count of BSONObjects to skip
      * @fn Long getSkipRowsCount()
      * @brief Get the count of BSONObjects to skip
-     * @return The count of BSONObjects to skip
      */
     public Long getSkipRowsCount() {
         return skipRowsCount;
     }
 
     /**
+     * @param SkipRowsCount The count of BSONObjects to skip
      * @fn void setSkipRowsCount(Long skipRowsCount)
      * @brief Set the count of BSONObjects to skip
-     * @param SkipRowsCount The count of BSONObjects to skip
      */
     public void setSkipRowsCount(Long skipRowsCount) {
         this.skipRowsCount = skipRowsCount;
     }
 
     /**
+     * @return The count of BSONObjects to return
      * @fn Long getReturnRowsCount()
      * @brief Get the count of BSONObjects to return
-     * @return The count of BSONObjects to return
      */
     public Long getReturnRowsCount() {
         return returnRowsCount;
     }
 
     /**
+     * @param ReturnRowsCount The count of BSONObjects to return
      * @fn void setReturnRowsCount(Long returnRowsCount)
      * @brief Set the count of BSONObjects to return
-     * @param ReturnRowsCount The count of BSONObjects to return
      */
     public void setReturnRowsCount(Long returnRowsCount) {
         this.returnRowsCount = returnRowsCount;
     }
 
     /**
+     * @return The query flag
      * @fn int getFlag()
      * @brief Get the query
-     * @return The query flag
      * @see com.sequoiadb.base.DBCollection.query
      */
     public int getFlag() {
@@ -230,13 +230,13 @@ public class DBQuery {
     }
 
     /**
+     * @param The query flag as below:
+     *            DBQuery.FLG_QUERY_STRINGOUT
+     *            DBQuery.FLG_QUERY_FORCE_HINT
+     *            DBQuery.LG_QUERY_PARALLED
+     *            DBQuery.FLG_QUERY_WITH_RETURNDATA
      * @fn void setFlag(int flag)
      * @brief Set the query flag
-     * @param The query flag as below:
-     *  	  DBQuery.FLG_QUERY_STRINGOUT
-     *        DBQuery.FLG_QUERY_FORCE_HINT
-     *        DBQuery.LG_QUERY_PARALLED
-     *        DBQuery.FLG_QUERY_WITH_RETURNDATA  
      * @see com.sequoiadb.base.DBCollection.query
      */
     public void setFlag(int flag) {

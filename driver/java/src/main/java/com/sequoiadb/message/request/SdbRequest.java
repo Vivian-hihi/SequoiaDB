@@ -16,8 +16,8 @@
 
 package com.sequoiadb.message.request;
 
-import com.sequoiadb.message.MsgUtil;
 import com.sequoiadb.message.SdbMsgHeader;
+import com.sequoiadb.util.Helper;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -66,7 +66,7 @@ public abstract class SdbRequest extends SdbMsgHeader implements Request {
         }
         out.put(objBytes);
 
-        int paddingLen = MsgUtil.alignedSize(objBytes.length) - objBytes.length;
+        int paddingLen = Helper.alignedSize(objBytes.length) - objBytes.length;
         if (paddingLen > 0) {
             out.put(new byte[paddingLen]);
         }

@@ -18,7 +18,6 @@ package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.message.MsgUtil;
 import com.sequoiadb.message.request.LobCloseRequest;
 import com.sequoiadb.message.request.LobOpenRequest;
 import com.sequoiadb.message.request.LobReadRequest;
@@ -26,6 +25,7 @@ import com.sequoiadb.message.request.LobWriteRequest;
 import com.sequoiadb.message.response.LobOpenResponse;
 import com.sequoiadb.message.response.LobReadResponse;
 import com.sequoiadb.message.response.SdbReply;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -444,7 +444,7 @@ class DBLobImpl implements DBLob {
         // about this, because before we finish using the cached data,
         // we won't come here, at that moment, "alignedLen" will be not be less
         // than "needLen"
-        int alignedLen = MsgUtil.alignedSize(needLen, SDB_LOB_ALIGNED_LEN);
+        int alignedLen = Helper.alignedSize(needLen, SDB_LOB_ALIGNED_LEN);
         if (alignedLen < needLen) {
             alignedLen = SDB_LOB_ALIGNED_LEN;
         }

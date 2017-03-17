@@ -18,11 +18,11 @@ package com.sequoiadb.base;
 
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
-import com.sequoiadb.message.MsgUtil;
 import com.sequoiadb.message.ResultSet;
 import com.sequoiadb.message.request.GetMoreRequest;
 import com.sequoiadb.message.request.KillContextRequest;
 import com.sequoiadb.message.response.SdbReply;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 
 import java.io.Closeable;
@@ -146,7 +146,7 @@ public class DBCursor implements Closeable {
         }
 
         if (currentRaw != null) {
-            currentObj = MsgUtil.decodeBSONBytes(currentRaw);
+            currentObj = Helper.decodeBSONBytes(currentRaw);
             return currentObj;
         }
 

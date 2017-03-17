@@ -19,7 +19,7 @@ package com.sequoiadb.message.request;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
-import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 
 import java.nio.ByteBuffer;
@@ -34,9 +34,9 @@ public class LobRemoveRequest extends LobRequest {
             throw new BaseException(SDBError.SDB_INVALIDARG, "obj is null");
         }
 
-        bsonBytes = MsgUtil.encodeBSONObj(obj);
+        bsonBytes = Helper.encodeBSONObj(obj);
         bsonLength = bsonBytes.length;
-        length += MsgUtil.alignedSize(bsonBytes.length);
+        length += Helper.alignedSize(bsonBytes.length);
     }
 
     @Override

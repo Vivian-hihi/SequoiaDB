@@ -19,7 +19,7 @@ package com.sequoiadb.message.request;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
-import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
@@ -47,7 +47,7 @@ public class InsertRequest extends SdbRequest {
         }
 
         this.collectionName = collectionName;
-        length += MsgUtil.alignedSize(collectionName.length() + 1);
+        length += Helper.alignedSize(collectionName.length() + 1);
     }
 
     public InsertRequest(String collectionName, BSONObject doc) {
@@ -58,9 +58,9 @@ public class InsertRequest extends SdbRequest {
         }
 
         docsBytes = new ArrayList<>(1);
-        byte[] docBytes = MsgUtil.encodeBSONObj(doc);
+        byte[] docBytes = Helper.encodeBSONObj(doc);
         docsBytes.add(docBytes);
-        length += MsgUtil.alignedSize(docBytes.length);
+        length += Helper.alignedSize(docBytes.length);
     }
 
     public InsertRequest(String collectionName, List<BSONObject> docs, int flag, boolean ensureOID) {
@@ -77,9 +77,9 @@ public class InsertRequest extends SdbRequest {
             if (ensureOID && !doc.containsField(OID)) {
                 doc.put(OID, ObjectId.get());
             }
-            byte[] docBytes = MsgUtil.encodeBSONObj(doc);
+            byte[] docBytes = Helper.encodeBSONObj(doc);
             docsBytes.add(docBytes);
-            length += MsgUtil.alignedSize(docBytes.length);
+            length += Helper.alignedSize(docBytes.length);
         }
     }
 
@@ -94,7 +94,7 @@ public class InsertRequest extends SdbRequest {
             out.put(collectionName.getBytes("UTF-8"));
             out.put((byte) 0); // end of string
             int length = collectionName.length() + 1;
-            int paddingLen = MsgUtil.alignedSize(length) - length;
+            int paddingLen = Helper.alignedSize(length) - length;
             if (paddingLen > 0) {
                 out.put(new byte[paddingLen]);
             }

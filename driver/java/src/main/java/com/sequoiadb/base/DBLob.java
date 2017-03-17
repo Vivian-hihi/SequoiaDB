@@ -29,126 +29,126 @@ import java.io.OutputStream;
 public interface DBLob {
     /**
      * @memberof SDB_LOB_SEEK_SET 0
-     * @brief Change the position from the beginning of lob 
+     * @brief Change the position from the beginning of lob
      */
     int SDB_LOB_SEEK_SET = 0;
 
     /**
      * @memberof SDB_LOB_SEEK_CUR 1
-     * @brief Change the position from the current position of lob 
+     * @brief Change the position from the current position of lob
      */
     int SDB_LOB_SEEK_CUR = 1;
 
     /**
      * @memberof SDB_LOB_SEEK_END 2
-     * @brief Change the position from the end of lob 
+     * @brief Change the position from the end of lob
      */
     int SDB_LOB_SEEK_END = 2;
 
     /**
+     * @return the lob's id
      * @fn ObjectId getID()
      * @brief get the lob's id
-     * @return the lob's id
      */
     ObjectId getID();
 
     /**
+     * @return the lob's size
      * @fn long getSize()
      * @brief get the size of lob
-     * @return the lob's size
      */
     long getSize();
 
     /**
+     * @return the lob's create time
      * @fn long getCreateTime()
      * @brief get the create time of lob
-     * @return the lob's create time
      */
     long getCreateTime();
 
     /**
+     * @param in the input stream.
+     * @throws com.sequoiadb.exception.BaseException
      * @fn void write( InputStream in )
      * @brief Writes bytes from the input stream to this lob.
-     * @param       in   the input stream.
-     * @exception com.sequoiadb.exception.BaseException
      * @note user need to close the input stream
      */
     void write(InputStream in) throws BaseException;
 
     /**
+     * @param b the data.
+     * @throws com.sequoiadb.exception.BaseException
      * @fn void write( byte[] b )
      * @brief Writes <code>b.length</code> bytes from the specified
-     *              byte array to this lob. 
-     * @param       b   the data.
-     * @exception com.sequoiadb.exception.BaseException
+     * byte array to this lob.
      */
     void write(byte[] b) throws BaseException;
 
     /**
+     * @param b   the data.
+     * @param off the start offset in the data.
+     * @param len the number of bytes to write.
+     * @throws com.sequoiadb.exception.BaseException
      * @fn void write( byte[] b, int off, int len )
      * @brief Writes <code>len</code> bytes from the specified
-     *              byte array starting at offset <code>off</code> to this lob. 
-     * @param       b   the data.
-     * @param       off the start offset in the data.
-     * @param       len the number of bytes to write.
-     * @exception com.sequoiadb.exception.BaseException
+     * byte array starting at offset <code>off</code> to this lob.
      */
     void write(byte[] b, int off, int len) throws BaseException;
 
     /**
+     * @param out the output stream.
+     * @throws com.sequoiadb.exception.BaseException
      * @fn void read( OutputStream out )
      * @brief Reads the content to the output stream.
-     * @param       out   the output stream.
-     * @exception com.sequoiadb.exception.BaseException
      * @note user need to close the output stream
      */
     void read(OutputStream out) throws BaseException;
 
     /**
+     * @param b the buffer into which the data is read.
+     * @return the total number of bytes read into the buffer, or <code>-1</code> if
+     * there is no more data because the end of the file has been
+     * reached, or <code>0</code> if <code>b.length</code> is Zero.
+     * @throws com.sequoiadb.exception.BaseException
      * @fn int read( byte[] b )
      * @brief Reads up to <code>b.length</code> bytes of data from this lob into
-     *              an array of bytes. 
-     * @param       b   the buffer into which the data is read.
-     * @return the total number of bytes read into the buffer, or <code>-1</code> if
-     *              there is no more data because the end of the file has been 
-     *              reached, or <code>0</code> if <code>b.length</code> is Zero.
-     * @exception com.sequoiadb.exception.BaseException
+     * an array of bytes.
      */
     int read(byte[] b) throws BaseException;
 
     /**
+     * @param b   the buffer into which the data is read.
+     * @param off the start offset in the destination array <code>b</code>.
+     * @param len the maximum number of bytes read.
+     * @return the total number of bytes read into the buffer, or <code>-1</code> if
+     * there is no more data because the end of the file has been
+     * reached, or <code>0</code> if <code>len</code> is Zero.
+     * @throws com.sequoiadb.exception.BaseException
      * @fn int read( byte[] b, int off, int len )
      * @brief Reads up to <code>len</code> bytes of data from this lob into
-     *              an array of bytes.
-     * @param       b   the buffer into which the data is read.
-     * @param       off the start offset in the destination array <code>b</code>.
-     * @param       len the maximum number of bytes read.
-     * @return the total number of bytes read into the buffer, or <code>-1</code> if
-     *              there is no more data because the end of the file has been 
-     *              reached, or <code>0</code> if <code>len</code> is Zero.
-     * @exception com.sequoiadb.exception.BaseException
+     * an array of bytes.
      */
     int read(byte[] b, int off, int len) throws BaseException;
 
     /**
+     * @param size     the adding size.
+     * @param seekType SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
+     * @throws com.sequoiadb.exception.BaseException.
      * @fn seek(long size, int seekType)
      * @brief change the read position of the lob. The new position is
-     *              obtained by adding size to the position specified by 
-     *              seekType. If seekType is set to SDB_LOB_SEEK_SET, 
-     *              SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, the offset is 
-     *              relative to the start of the lob, the current position 
-     *              of lob, or the end of lob.
-     * @param       size the adding size.
-     * @param       seekType  SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
-     * @exception com.sequoiadb.exception.BaseException.
+     * obtained by adding size to the position specified by
+     * seekType. If seekType is set to SDB_LOB_SEEK_SET,
+     * SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, the offset is
+     * relative to the start of the lob, the current position
+     * of lob, or the end of lob.
      */
     void seek(long size, int seekType) throws BaseException;
 
     /**
+     * @param null
+     * @throws com.sequoiadb.exception.BaseException
      * @fn close()
      * @brief close the lob
-     * @param       null
-     * @exception com.sequoiadb.exception.BaseException
      */
     void close() throws BaseException;
 }

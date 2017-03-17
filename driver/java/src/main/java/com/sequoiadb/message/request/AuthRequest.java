@@ -19,7 +19,7 @@ package com.sequoiadb.message.request;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
-import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
@@ -54,13 +54,13 @@ public class AuthRequest extends SdbRequest {
 
         String md5 = null;
         if (password != null) {
-            md5 = MsgUtil.md5(password);
+            md5 = Helper.md5(password);
         }
         BSONObject obj = new BasicBSONObject();
         obj.put(AUTH_USER, userName);
         obj.put(AUTH_PASSWD, md5);
-        bsonBytes = MsgUtil.encodeBSONObj(obj);
-        length += MsgUtil.alignedSize(bsonBytes.length);
+        bsonBytes = Helper.encodeBSONObj(obj);
+        length += Helper.alignedSize(bsonBytes.length);
     }
 
     @Override

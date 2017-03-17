@@ -16,6 +16,7 @@
 
 package com.sequoiadb.message;
 
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 
 import java.nio.ByteBuffer;
@@ -48,7 +49,7 @@ public final class ResultSet {
     public BSONObject getNext() {
         if (hasNext()) {
             index++;
-            return MsgUtil.decodeBSONObject(buffer);
+            return Helper.decodeBSONObject(buffer);
         } else {
             return null;
         }
@@ -57,7 +58,7 @@ public final class ResultSet {
     public byte[] getNextRaw() {
         if (hasNext()) {
             index++;
-            return MsgUtil.decodeBSONBytes(buffer);
+            return Helper.decodeBSONBytes(buffer);
         } else {
             return null;
         }

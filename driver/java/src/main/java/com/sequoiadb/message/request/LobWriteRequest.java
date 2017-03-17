@@ -19,7 +19,7 @@ package com.sequoiadb.message.request;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
-import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.util.Helper;
 
 import java.nio.ByteBuffer;
 
@@ -44,7 +44,7 @@ public class LobWriteRequest extends LobRequest {
         this.contextId = contextId;
         bufLen = len;
         buffer = ByteBuffer.wrap(buf, off, len);
-        length += MsgUtil.alignedSize(len);
+        length += Helper.alignedSize(len);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class LobWriteRequest extends LobRequest {
         out.putInt(sequence);
         out.putLong(offset);
         out.put(buffer);
-        int paddingSize = MsgUtil.alignedSize(bufLen) - bufLen;
+        int paddingSize = Helper.alignedSize(bufLen) - bufLen;
         if (paddingSize > 0) {
             out.put(new byte[paddingSize]);
         }

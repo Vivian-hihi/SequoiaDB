@@ -16,7 +16,7 @@
 
 package com.sequoiadb.message.response;
 
-import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 
 import java.nio.ByteBuffer;
@@ -39,7 +39,7 @@ public class LobOpenResponse extends CommonResponse {
     @Override
     protected void decodeCommonBody(ByteBuffer in) {
         if (in.hasRemaining()) {
-            metaInfo = MsgUtil.decodeBSONObject(in);
+            metaInfo = Helper.decodeBSONObject(in);
         }
 
         if (flag == 0 && in.hasRemaining()) {

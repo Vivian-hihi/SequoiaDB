@@ -19,7 +19,7 @@ package com.sequoiadb.message.request;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
-import com.sequoiadb.message.MsgUtil;
+import com.sequoiadb.util.Helper;
 import org.bson.BSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -49,13 +49,13 @@ public class AggregateRequest extends SdbRequest {
         }
 
         this.collectionName = collectionName;
-        length += MsgUtil.alignedSize(collectionName.length() + 1);
+        length += Helper.alignedSize(collectionName.length() + 1);
 
         objsBytes = new ArrayList<>(objects.size());
         for (BSONObject obj : objects) {
-            byte[] objBytes = MsgUtil.encodeBSONObj(obj);
+            byte[] objBytes = Helper.encodeBSONObj(obj);
             objsBytes.add(objBytes);
-            length += MsgUtil.alignedSize(objBytes.length);
+            length += Helper.alignedSize(objBytes.length);
         }
     }
 
@@ -70,7 +70,7 @@ public class AggregateRequest extends SdbRequest {
             out.put(collectionName.getBytes("UTF-8"));
             out.put((byte) 0); // end of string
             int length = collectionName.length() + 1;
-            int paddingLen = MsgUtil.alignedSize(length) - length;
+            int paddingLen = Helper.alignedSize(length) - length;
             if (paddingLen > 0) {
                 out.put(new byte[paddingLen]);
             }
