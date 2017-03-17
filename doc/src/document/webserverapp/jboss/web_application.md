@@ -10,7 +10,7 @@
    ![上传war到jboss服务](webserverapp/jboss/web-2.png)
 
 
-3. 项目上传到Jboss服务器后，选择HelloEJB点击 **Enable**启用
+3. 项目上传到JBoss服务器后，选择HelloEJB点击 **Enable**启用
 
    ![启用war](webserverapp/jboss/web-3.png)
 
