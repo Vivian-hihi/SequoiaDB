@@ -27,8 +27,6 @@ public interface IConnection {
 
     boolean isClosed();
 
-    void changeConnectionOptions(ConfigOptions opts) throws BaseException;
-
     void send(ByteBuffer buffer) throws BaseException;
 
     void send(byte[] msg) throws BaseException;

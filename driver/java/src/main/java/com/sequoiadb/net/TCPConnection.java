@@ -34,15 +34,21 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-public class ConnectionTCPImpl implements IConnection {
+public class TCPConnection implements IConnection {
+    private InetSocketAddress address;
+    private ConfigOptions options;
     private Socket socket;
     private InputStream input;
     private OutputStream output;
-    private ConfigOptions options;
-    private ServerAddress hostAddress;
 
-    public ConnectionTCPImpl(ServerAddress addr, ConfigOptions options) {
-        this.hostAddress = addr;
+    public TCPConnection(InetSocketAddress address, ConfigOptions options) {
+        if (address == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "address is null");
+        }
+        if (options == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        }
+        this.address = address;
         this.options = options;
     }
 
@@ -101,14 +107,13 @@ public class ConnectionTCPImpl implements IConnection {
         long start = System.currentTimeMillis();
         while (true) {
             BaseException lastError;
-            InetSocketAddress addr = hostAddress.getHostAddress();
             try {
                 if (options.getUseSSL()) {
                     socket = SSLContextHelper.getSSLContext().getSocketFactory().createSocket();
                 } else {
                     socket = new Socket();
                 }
-                socket.connect(addr, options.getConnectTimeout());
+                socket.connect(address, options.getConnectTimeout());
                 socket.setTcpNoDelay(!options.getUseNagle());
                 socket.setKeepAlive(options.getSocketKeepAlive());
                 socket.setSoTimeout(options.getSocketTimeout());
@@ -157,19 +162,6 @@ public class ConnectionTCPImpl implements IConnection {
             return true;
         }
         return socket.isClosed();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.sequoiadb.net.IConnection#changeConnectionOptions(com.sequoiadb.net.
-     * ConfigOptions)
-     */
-    @Override
-    public void changeConnectionOptions(ConfigOptions opts) throws BaseException {
-        this.options = opts;
-        close();
-        connect();
     }
 
     @Override

@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 /**
  * @author Jacky Zhang
  */
+@Deprecated
 public class ServerAddress {
     private final static String DEFAULT_HOST = "127.0.0.1";
     private final static int DEFAULT_PORT = 11810;
@@ -66,7 +67,7 @@ public class ServerAddress {
      * @throws UnknownHostException
      */
     public ServerAddress(String host, int port) throws UnknownHostException {
-        hostAddress = new InetSocketAddress(InetAddress.getByName(host).toString().split("/")[1], port);
+        hostAddress = new InetSocketAddress(InetAddress.getByName(host), port);
         this.host = host;
         this.port = port;
     }

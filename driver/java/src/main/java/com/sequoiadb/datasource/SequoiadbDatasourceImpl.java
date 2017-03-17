@@ -759,7 +759,7 @@ public class SequoiadbDatasourceImpl {
                             // should never come here
                             throw new BaseException(SDBError.SDB_SYS, "point 2: error happen for getting connection");
                         }
-                        connItem.setAddr(sdb.getServerAddress().toString());
+                        connItem.setAddr(String.format("%s:%d", sdb.getHost(), sdb.getPort()));
                         synchronized (_createConnSingal) {
                             _createConnSingal.notify();
                         }

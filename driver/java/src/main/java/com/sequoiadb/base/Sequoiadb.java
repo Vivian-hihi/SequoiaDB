@@ -24,9 +24,9 @@ import com.sequoiadb.message.response.SdbReply;
 import com.sequoiadb.message.response.SdbResponse;
 import com.sequoiadb.message.response.SysInfoResponse;
 import com.sequoiadb.net.ConfigOptions;
-import com.sequoiadb.net.ConnectionTCPImpl;
 import com.sequoiadb.net.IConnection;
 import com.sequoiadb.net.ServerAddress;
+import com.sequoiadb.net.TCPConnection;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
@@ -34,7 +34,7 @@ import org.bson.types.Code;
 import org.bson.util.JSON;
 
 import java.io.Closeable;
-import java.net.UnknownHostException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
@@ -44,7 +44,7 @@ import java.util.*;
  * @brief Database operation interfaces of admin.
  */
 public class Sequoiadb implements Closeable {
-    private ServerAddress serverAddress;
+    private InetSocketAddress socketAddress;
     private IConnection connection;
     private String userName;
     private String password;
@@ -56,6 +56,9 @@ public class Sequoiadb implements Closeable {
     private Map<String, Long> nameCache = new HashMap<>();
     private static boolean enableCache = true;
     private static long cacheInterval = 300 * 1000;
+
+    private final static String DEFAULT_HOST = "127.0.0.1";
+    private final static int DEFAULT_PORT = 11810;
 
     public final static int SDB_PAGESIZE_4K = 4096;
     public final static int SDB_PAGESIZE_8K = 8192;
@@ -177,27 +180,48 @@ public class Sequoiadb implements Closeable {
      * @return ServerAddress
      * @fn ServerAddress getServerAddress()
      * @brief Get the address of remote server.
+     * @deprecated Use Sequoiadb.getHost() and Sequoiadb.getPort() instead.
      */
+    @Deprecated
     public ServerAddress getServerAddress() {
-        return serverAddress;
+        return new ServerAddress(socketAddress);
     }
 
     /**
-     * @param serverAddress the serverAddress object of remote server
-     * @fn void setServerAddress(ServerAddress serverAddress)
-     * @brief Set the address of remote server.
+     * @return Host of SequoiaDB server.
      */
-    public void setServerAddress(ServerAddress serverAddress) {
-        this.serverAddress = serverAddress;
+    public String getHost() {
+        return socketAddress.getHostString();
+    }
+
+    /**
+     * @return Service port of SequoiaDB server.
+     */
+    public int getPort() {
+        return socketAddress.getPort();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s:%d", getHost(), getPort());
     }
 
     /**
      * @return Big-Endian for true while Little-Endian for false
      * @fn boolean isEndianConvert()
      * @brief Judge the endian of the physical computer
+     * @deprecated Use getByteOrder() instead.
      */
+    @Deprecated
     public boolean isEndianConvert() {
         return byteOrder == ByteOrder.BIG_ENDIAN;
+    }
+
+    /**
+     * @return ByteOrder of SequoiaDB server.
+     */
+    public ByteOrder getByteOrder() {
+        return byteOrder;
     }
 
     public long getLastUseTime() {
@@ -211,17 +235,11 @@ public class Sequoiadb implements Closeable {
      *                                               "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
      * @fn Sequoiadb(String username, String password)
      * @brief Constructor. The server address is "127.0.0.1 : 11810".
+     * @deprecated do not use this Constructor, should provide server address explicitly
      */
     @Deprecated
     public Sequoiadb(String username, String password) throws BaseException {
-        // connect used default address
-        serverAddress = new ServerAddress();
-        ConfigOptions opts = new ConfigOptions();
-        initConnection(opts);
-        // authentication
-        this.userName = username;
-        this.password = password;
-        auth();
+        this(DEFAULT_HOST, DEFAULT_PORT, username, password, null);
     }
 
     /**
@@ -251,20 +269,7 @@ public class Sequoiadb implements Closeable {
      */
     public Sequoiadb(String connString, String username, String password,
                      ConfigOptions options) throws BaseException {
-        ConfigOptions opts = options;
-        if (null == options)
-            opts = new ConfigOptions();
-        try {
-            // connect
-            serverAddress = new ServerAddress(connString);
-            initConnection(opts);
-        } catch (UnknownHostException e) {
-            throw new BaseException(SDBError.SDB_NETWORK, connString, e);
-        }
-        // authentication
-        this.userName = username;
-        this.password = password;
-        auth();
+        init(connString, username, password, options);
     }
 
     /**
@@ -280,49 +285,38 @@ public class Sequoiadb implements Closeable {
      */
     public Sequoiadb(List<String> connStrings, String username, String password,
                      ConfigOptions options) throws BaseException {
-        ConfigOptions opts = options;
+        if (connStrings == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "connStrings is null");
+        }
+
+        List<String> list = new ArrayList<>();
+        for (String str : connStrings) {
+            if (str != null && !str.isEmpty()) {
+                list.add(str);
+            }
+        }
+
+        if (0 == list.size()) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "Address list has no valid address");
+        }
+
         if (options == null) {
-            opts = new ConfigOptions();
+            options = new ConfigOptions();
         }
 
-        Iterator<String> tmpIter = connStrings.iterator();
-        while (tmpIter.hasNext()) {
-            String tmpStr = tmpIter.next();
-            if (null == tmpStr) {
-                tmpIter.remove();
-            }
-        }
-
-        int size = connStrings.size();
-        if (0 == size) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "Address list is empty");
-        }
         Random random = new Random();
-        int count = random.nextInt(size);
-        int mark = count;
-        do {
-            count = ++count % size;
-            String str = connStrings.get(count);
+        while (list.size() > 0) {
+            int index = random.nextInt(list.size());
+            String str = list.get(index);
             try {
-                // connect
-                try {
-                    serverAddress = new ServerAddress(str);
-                    initConnection(opts);
-                } catch (UnknownHostException e) {
-                    throw new BaseException(SDBError.SDB_NETWORK, str);
-                }
-                // authentication
-                this.userName = username;
-                this.password = password;
-                auth();
+                init(str, username, password, options);
+                return;
             } catch (BaseException e) {
-                if (mark == count) {
-                    throw new BaseException(SDBError.SDB_NET_CANNOT_CONNECT);
-                }
-                continue;
+                list.remove(index);
             }
-            break;
-        } while (mark != count);
+        }
+
+        throw new BaseException(SDBError.SDB_INVALIDARG, "No valid address");
     }
 
     /**
@@ -354,35 +348,64 @@ public class Sequoiadb implements Closeable {
     public Sequoiadb(String host, int port,
                      String username, String password,
                      ConfigOptions options) throws BaseException {
+        init(host, port, username, password, options);
+    }
+
+    private void init(String host, int port,
+                      String username, String password,
+                      ConfigOptions options) throws BaseException {
+        if (host == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "host is null");
+        }
+
         if (options == null) {
             options = new ConfigOptions();
         }
-        try {
-            serverAddress = new ServerAddress(host, port);
-            initConnection(options);
-        } catch (UnknownHostException e) {
-            throw new BaseException(SDBError.SDB_NETWORK, host + ":" + port, e);
-        }
 
+        InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+        connection = new TCPConnection(socketAddress, options);
+        connection.connect();
+
+        byteOrder = getSysInfo();
+        authenticate(username, password);
+
+        this.socketAddress = socketAddress;
         this.userName = username;
         this.password = password;
-        auth();
     }
 
-    /**
-     * @fn auth()
-     * @brief authentication
-     */
-    private void auth() {
-        byteOrder = getSysInfo();
+    private void init(String connString, String username, String password,
+                      ConfigOptions options) {
+        if (connString == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "connString is null");
+        }
 
-        AuthRequest request = new AuthRequest(userName, password, AuthRequest.AuthType.Verify);
+        String host;
+        int port;
+
+        if (connString.indexOf(":") > 0) {
+            String[] tmp = connString.split(":");
+            if (tmp.length != 2) {
+                throw new BaseException(SDBError.SDB_INVALIDARG, "connString is invalid");
+            }
+            host = tmp[0].trim();
+            port = Integer.parseInt(tmp[1].trim());
+        } else {
+            host = connString;
+            port = DEFAULT_PORT;
+        }
+
+        init(host, port, username, password, options);
+    }
+
+    private void authenticate(String username, String password) {
+        AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.Verify);
         SdbReply response = requestAndResponse(request);
 
         int flag = response.getFlag();
         if (flag != 0) {
             connection.close();
-            throw new BaseException(SDBError.getSDBError(flag), "failed to auth, user is" + userName);
+            throw new BaseException(SDBError.getSDBError(flag), "failed to authenticate, user is" + userName);
         }
     }
 
@@ -426,19 +449,10 @@ public class Sequoiadb implements Closeable {
      * @return void
      * @throws com.sequoiadb.exception.BaseException
      * @fn void disconnect()
-     * @brief Disconnect from the remote server.
+     * @brief Disconnect from the server.
      */
     public void disconnect() throws BaseException {
-        if (connection == null || connection.isClosed()) {
-            return;
-        }
-        try {
-            releaseResource();
-            DisconnectRequest request = new DisconnectRequest();
-            sendRequest(request);
-        } finally {
-            connection.close();
-        }
+        close();
     }
 
     /**
@@ -460,8 +474,9 @@ public class Sequoiadb implements Closeable {
      * @since 2.2
      */
     public boolean isClosed() {
-        if (connection == null)
+        if (connection == null) {
             return true;
+        }
         return connection.isClosed();
     }
 
@@ -474,8 +489,10 @@ public class Sequoiadb implements Closeable {
     public boolean isValid() throws BaseException {
         // client not connect to database or client
         // disconnect from database
-        if (connection == null || connection.isClosed())
+        if (connection == null || connection.isClosed()) {
             return false;
+        }
+
         try {
             killContext();
         } catch (BaseException e) {
@@ -485,15 +502,20 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * @param opts The connection options
+     * @param options The connection options
      * @throws com.sequoiadb.exception.BaseException
      * @fn void changeConnectionOptions(ConfigOptions opts)
      * @brief Change the connection options.
+     * @deprecated Create a new Sequoiadb instance instead..
      */
-    public void changeConnectionOptions(ConfigOptions opts)
+    @Deprecated
+    public void changeConnectionOptions(ConfigOptions options)
         throws BaseException {
-        connection.changeConnectionOptions(opts);
-        auth();
+        if (options == null) {
+            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
+        }
+        connection.close();
+        init(getHost(), getPort(), userName, password, options);
     }
 
     /**
@@ -1901,14 +1923,6 @@ public class Sequoiadb implements Closeable {
         return cursor.getNext();
     }
 
-    private void initConnection(ConfigOptions options) throws BaseException {
-        if (options == null) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
-        }
-        connection = new ConnectionTCPImpl(serverAddress, options);
-        connection.connect();
-    }
-
     private SysInfoResponse receiveSysInfoResponse() {
         SysInfoResponse response = new SysInfoResponse();
         byte[] lengthBytes = connection.receive(response.length());
@@ -2003,7 +2017,16 @@ public class Sequoiadb implements Closeable {
 
     @Override
     public void close() throws BaseException {
-        disconnect();
+        if (connection == null || connection.isClosed()) {
+            return;
+        }
+        try {
+            releaseResource();
+            DisconnectRequest request = new DisconnectRequest();
+            sendRequest(request);
+        } finally {
+            connection.close();
+        }
     }
 
     /**
