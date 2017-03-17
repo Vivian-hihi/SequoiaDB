@@ -3162,13 +3162,25 @@
                "id": 1489720081,
                "dir": "websphere",
                "cn": "WebSphere",
-               "en": "websphere",
+               "en": "WebSphere",
                "contents": [
                   {
-                     "id": 1489731601,
-                     "file": "installation",
+                     "id": 1489720082,
+                     "file": "deployment",
                      "cn": "deployment",
                      "en": "部署"
+                  },
+                  {
+                     "id": 1489720083,
+                     "file": "connection",
+                     "cn": "connection",
+                     "en": "连接"
+                  },
+                  {
+                     "id": 1489720084,
+                     "file": "web_application",
+                     "cn": "web application",
+                     "en": "web应用"
                   }
                ]
             },
@@ -3176,7 +3188,7 @@
                "id": 1489720188,
                "dir": "tomcat",
                "cn": "Tomcat",
-               "en": "tomcat",
+               "en": "Tomcat",
                "contents": [
                   {
                      "id": 1489731602,
@@ -3192,6 +3204,32 @@
                   },
                   {
                      "id": 1489731925,
+                     "file": "web_application",
+                     "cn": "web application",
+                     "en": "web应用"
+                  }
+               ]
+            },
+            {
+               "id": 1489742184,
+               "dir": "jboss",
+               "cn": "JBoss",
+               "en": "JBoss",
+               "contents": [
+                  {
+                     "id": 1489742185,
+                     "file": "deployment",
+                     "cn": "deployment",
+                     "en": "部署"
+                  },
+                  {
+                     "id": 1489742186,
+                     "file": "connection",
+                     "cn": "connection",
+                     "en": "连接"
+                  },
+                  {
+                     "id": 1489742187,
                      "file": "web_application",
                      "cn": "web application",
                      "en": "web应用"
