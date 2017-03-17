@@ -107,6 +107,6 @@ JAVA_OPTS="-server -Xms800m -Xmx800m -XX:PermSize=64M -XX:MaxNewSize=256m -XX:Ma
 #/usr/local/apache-tomcat-7.0.68/bin/startup.sh
 ```
 
-2.输入http://localhost:8080/test(http://ip:port/项目名)，验证web应用是否发布成功，例如test应用发布成功时界面会显示pg数据库版本信息，如下图：
+3.输入http://localhost:8080/test(http://ip:port/项目名)，验证web应用是否发布成功，例如test应用发布成功时界面会显示pg数据库版本信息，如下图：
 ![](webserverapp/tomcat/webtest.jpg)
 
