@@ -8,11 +8,11 @@
 ![](webserverapp/websphere/ds_2.jpg)
 2. 单击“新建”
 ![](webserverapp/websphere/ds_3.jpg)
-3. 步骤1：创建新的JDBC提供程序中，数据库类型选择“用户定义的”；实现类名输入“org.postgresql.jdbc2.optional.ConnectionPool”，名称修改为“sdb JDBC Provider”，单击“下一步”
+3. 数据库类型选择“用户定义的”；实现类名输入“org.postgresql.jdbc2.optional.ConnectionPool”，名称修改为“sdb JDBC Provider”，单击“下一步”
 ![](webserverapp/websphere/ds_4.jpg)
-4. 步骤2：输入数据库类路径信息中输入 “/opt/postgresql-9.3-1102.jdbc41.jar”，在服务器的/opt目录下必须存在该文件，单击“下一步”
+4. 输入 “/opt/postgresql-9.3-1102.jdbc41.jar”(在服务器的/opt目录下必须存在该文件)，单击“下一步”
 ![](webserverapp/websphere/ds_5.jpg)
-5. 步骤3：摘要中，单击“完成”
+5. 单击“完成”
 ![](webserverapp/websphere/ds_6.jpg)
 
 ##创建数据源##
@@ -22,13 +22,13 @@
 ![](webserverapp/websphere/ds_8.jpg)
 3. 进入数据源页面，单击“新建”
 ![](webserverapp/websphere/ds_9.jpg)
-4. 步骤1：输入基本数据源信息，数据源名填入“sdb DataSource”； JNDI名称中输入“jdbc/sdb DataSource”，单击“下一步”
+4. 数据源名填入“sdb DataSource”； JNDI名称中输入“jdbc/sdb DataSource”，单击“下一步”
 ![](webserverapp/websphere/ds_10.jpg)
-5. 步骤2：输入数据源的特定于数据库的属性，单击“下一步”
+5. 单击“下一步”
 ![](webserverapp/websphere/ds_11.jpg)
-6. 步骤3：设置安全性别名，单击“下一步”
+6. 单击“下一步”
 ![](webserverapp/websphere/ds_12.jpg)
-7. 步骤4：摘要，单击“完成”
+7. 单击“完成”
 ![](webserverapp/websphere/ds_13.jpg)
 8. 单击“sdb DataSource”，进入“sdb DataSource”页面”
 ![](webserverapp/websphere/ds_14.jpg)
