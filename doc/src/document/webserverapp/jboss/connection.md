@@ -22,26 +22,26 @@ $ ls /opt/jboss/standalone/deployments/
 
 >**note:**
 >
->   1 打开浏览器，地址为jboss绑定的IP，访问端口默认9990。
+>   打开浏览器，地址为jboss绑定的IP，访问端口默认9990。
 >
 >    例如 http://192.168.31.8:9990
-
+>
 >    登录用户名默认是前面创建的Jboss后台用户
-
+>
 >    点击 登录 按钮
 
 
 
-  进入 **Runtime** 的 **deployments**界面中，可以看到部署了但未启用的驱动，手动点击驱动后的 **enable** 启用。
+  进入 **Runtime** 的 **Deployments**界面中，可以看到部署了但未启用的驱动，手动点击驱动后的 **enable** 启用。
 
-![image](webserverapp/jboss/web-3.png)
+![登录后台管理界面](webserverapp/jboss/web-3.png)
 
  --
 
 
 1-新增数驱动
 点击 **Add content**添加数据库 点击 **Enable**启用数据库驱动，
-![image](webserverapp/jboss/web-3.png)
+![新增数驱动](webserverapp/jboss/web-3.png)
 
 
 --
@@ -50,49 +50,47 @@ $ ls /opt/jboss/standalone/deployments/
 
 进入Profile下的DataSource点击 **Add** 创建JNDI
 
-![image](webserverapp/jboss/ds-2.png)
-![image](webserverapp/jboss/ds-3.png)
+![创建JNDI](webserverapp/jboss/ds-2.png)
+![创建JNDI](webserverapp/jboss/ds-3.png)
 
 >**note:**
 
 >在Jboss中JNDI的名字要以Java:jboss/ 开头
-
+> 
+>JNDI是一种由sun公司提供的Java命名系统接口，通过将名字与服务建立逻辑关联，从而通过不同的名字访问不同的服务。
+>
 --
 
 3-选择驱动
 
 如果选择的驱动有多个，那根据自己的需求去选择,本次安装采用的是postgresql-42.0.0.jre7.jar
 
-![image](webserverapp/jboss/ds-4.png)
-
-
+![选择驱动](webserverapp/jboss/ds-4.png)
 
 --
 
 
-
-
 4-创建数据源地址
 
-![image](webserverapp/jboss/ds-5.png)
+![创建数据源地址](webserverapp/jboss/ds-5.png)
 
 >**note:**
 >
 >Connectiion url的格式为jdbc:postgresql://host:port/DBName
-用户一定要严格按照此格式书写，该例中的foo可能不存在，所以用户要查看自己的数据库后写相应的数据库名字和数据库访问的账号和密码，后续的步骤中修改账号密码或是数据库名，本例就是在后续的步骤中修改数据库名字。
+用户一定要严格按照此格式书写，该例中的foo可能不存在，所以用户要查看自己的数据库后写相应的数据库名字和数据库访问的账号和密码，在后续的步骤中也可以修改账号 密码或是数据库名，本例就是在后续的步骤中修改数据库名字。
 
 --
 5-启用postDS数据源
 
 点击 **Enable**就可以启动数据源
 
-![image](webserverapp/jboss/ds-6.png)
+![启用postDS数据源](webserverapp/jboss/ds-6.png)
 
 --
 
 6-部署成功
 
- 在 **selection**下的  **connection**中点击 **test connnection**,可以测试数据源是否成功配。
-![pic](webserverapp/jboss/ds-7.png)
+ 在 **Selection**下的  **Connection**中点击 **test connnection**,可以测试数据源是否成功配置。
+![部署成功](webserverapp/jboss/ds-7.png)
 
 -----
