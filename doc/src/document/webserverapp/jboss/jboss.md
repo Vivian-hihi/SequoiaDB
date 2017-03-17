@@ -23,14 +23,14 @@
 
 软件| 版本
 ---|---
-postgresql | [Postgresql9.3.4.tar.gz]( https://www.postgresql.org/download/)
-postgresql-JDBC |[ postgresql-42.0.0.jre7.jar]( https://jdbc.postgresql.org//)
-jboss | [JBoss-7.1.1.Final.zip](http://jbossas.jboss.org/downloads/)
-JDK |[ JDK1.7](https://www.oracle.com/index.html/)
+[postgresql]( https://www.postgresql.org/download/) | Postgresql9.3.4.tar.gz
+[postgresql-JDBC]( https://jdbc.postgresql.org//) | postgresql-42.0.0.jre7.jar
+[jboss](http://jbossas.jboss.org/downloads/) | JBoss-as-7.1.1.Final.zip
+[JDK](https://www.oracle.com/index.html/) | JDK1.7
 
 ---
 
-# 2. 安装配置
+安装配置
 
  1.postgresql 的安装部署
 
@@ -131,7 +131,7 @@ Re-enter Password :					# 重复输入新创建用户的密码
  
 ```
 --
-# 3.连接
+# 2.连接
 
 >**Note:**
 >Jboss中数据连接配置其实就是配置数据源，在Jboss中配置数据源的方式有两种 A:根据创建模型来创建数据源 B,通过热部署来创建数据源(和部署web应用相似)，本次配置数据源用的方法就是热部署。因为此方法方便快捷，且比较灵活。
@@ -229,7 +229,7 @@ $ ls /opt/jboss/standalone/deployments/
 ![pic](webserverapp/jboss/ds-7.png)
 
 -----
-# 4. web应用
+# 3. web应用
 
 1.eclipse中创建Java web项目 HelloEJB
 
