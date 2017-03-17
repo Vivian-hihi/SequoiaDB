@@ -1,0 +1,131 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = coordResource.hpp
+
+   Descriptive Name =
+
+   When/how to use:
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          03/14/2017  XJH Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef COORD_RESOURCE_HPP__
+#define COORD_RESOURCE_HPP__
+
+#include "coordDef.hpp"
+
+namespace engine
+{
+
+   class _pmdEDUCB ;
+   class _netRouteAgent ;
+
+   /*
+      _coordResource define
+   */
+   class _coordResource : public SDBObject
+   {
+      typedef std::map< UINT32, CoordGroupInfoPtr >   MAP_GROUP_INFO ;
+      typedef MAP_GROUP_INFO::iterator                MAP_GROUP_INFO_IT ;
+
+      typedef std::map<std::string, UINT32>           MAP_GROUP_NAME ;
+      typedef MAP_GROUP_NAME::iterator                MAP_GROUP_NAME_IT ;
+
+      public:
+         _coordResource() ;
+         virtual ~_coordResource() ;
+
+         INT32       init( _netRouteAgent *pAgent ) ;
+
+      public:
+
+         INT32       getGroupInfo( UINT32 groupID,
+                                   CoordGroupInfoPtr &groupPtr ) ;
+         INT32       getGroupInfo( const CHAR *groupName,
+                                   CoordGroupInfoPtr &groupPtr ) ;
+
+         INT32       updateGroupInfo( UINT32 groupID,
+                                      CoordGroupInfoPtr &groupPtr,
+                                      _pmdEDUCB *cb ) ;
+         INT32       updateGroupInfo( const CHAR *groupName,
+                                      CoordGroupInfoPtr &groupPtr,
+                                      _pmdEDUCB *cb ) ;
+
+         void        removeGroupInfo( UINT32 groupID ) ;
+         void        removeGroupInfo( const CHAR *groupName ) ;
+         void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
+
+         CoordGroupInfoPtr    getCataGroupInfo() ;
+         void                 setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
+         INT32                updateCataGroupInfo( CoordGroupInfoPtr &groupPtr,
+                                                   _pmdEDUCB *cb ) ;
+
+         INT32       groupID2Name ( UINT32 id, std::string &name ) ;
+         INT32       groupName2ID ( const CHAR* name, UINT32 &id ) ;
+
+         void        getCataNodeAddrList( CoordVecNodeInfo &vecCata ) ;
+
+      protected:
+
+         void        _clearGroupName( UINT32 groupID ) ;
+         void        _addGroupName( const std::string &name, UINT32 id ) ;
+
+         INT32       _updateCataGroupInfoByAddr( _pmdEDUCB *cb,
+                                                 CoordGroupInfoPtr &groupPtr ) ;
+         INT32       _updateCataGroupInfo( _pmdEDUCB *cb,
+                                           const CoordGroupInfoPtr &cataGroupPtr,
+                                           CoordGroupInfoPtr &groupPtr ) ;
+
+         INT32       _processGroupReply( MsgHeader *pMsg,
+                                         CoordGroupInfoPtr &groupPtr ) ;
+
+         INT32       _updateRouteInfo( const CoordGroupInfoPtr &groupPtr,
+                                       MSG_ROUTE_SERVICE_TYPE type ) ;
+
+         INT32       _updateGroupInfo( MsgHeader *pMsg,
+                                       _pmdEDUCB *cb,
+                                       MSG_ROUTE_SERVICE_TYPE type,
+                                       CoordGroupInfoPtr &groupPtr ) ;
+
+      private:
+         MAP_GROUP_INFO                   _mapGroupInfo ;
+         MAP_GROUP_NAME                   _mapGroupName ;
+         ossSpinSLatch                    _nodeMutex ;
+
+         CoordGroupInfoPtr                _cataGroupInfo ;
+
+         UINT64                           _upGrpIndentify ;
+         CoordVecNodeInfo                 _cataNodeAddrList ;
+
+         _netRouteAgent                   *_pAgent ;
+
+   } ;
+   typedef _coordResource coordResource ;
+
+}
+
+#endif // COORD_RESOURCE_HPP__
