@@ -45,6 +45,12 @@
                            "en": "SequoiaDB Installation"
                         },
                         {
+                           "id": 148505053,
+                           "file": "planning_database_deployment",
+                           "cn": "规划数据库部署",
+                           "en": "Planning Database Deployment"
+                        },
+                        {
                            "id": 1432191001,
                            "file": "standalone",
                            "cn": "独立模式",
@@ -66,29 +72,9 @@
                   },
                   {
                      "id": 1447122217,
-                     "dir": "visualization_data_operation",
+                     "file": "visualization_data_operation",
                      "cn": "可视化数据操作",
-                     "en": "Visualization Data Operation",
-                     "contents": [
-                        {
-                           "id": 1447137269,
-                           "file": "instruction",
-                           "cn": "操作说明",
-                           "en": "Instruction"
-                        },
-                        {
-                           "id": 1447137279,
-                           "file": "database_operation",
-                           "cn": "数据库操作",
-                           "en": "Database Operation"
-                        },
-                        {
-                           "id": 1447137286,
-                           "file": "data_operation",
-                           "cn": "数据操作",
-                           "en": "Data Operation"
-                        }
-                     ]
+                     "en": "Visualization Data Operation"
                   }
                ]
             },
@@ -267,7 +253,7 @@
             {
                "id": 1432190631,
                "file": "sdbcm",
-               "cn": "数据库集群控制器",
+               "cn": "资源管理节点",
                "en": "Sdbcm"
             },
             {
@@ -435,6 +421,26 @@
                ]
             },
             {
+               "id": 1485051400,
+               "dir": "cluster_expansion",
+               "cn": "集群扩容",
+               "en": "Cluster Expansion",
+               "contents": [
+                  {
+                     "id": 1485051401,
+                     "file": "add_host",
+                     "cn": "新增主机",
+                     "en": "Add Host"
+                  },
+                  {
+                     "id": 1485051402,
+                     "file": "add_node",
+                     "cn": "新增节点",
+                     "en": "Add Node"
+                  }
+               ]
+            },
+            {
                "id": 1432190663,
                "dir": "backup_and_recovery",
                "cn": "备份恢复",
@@ -557,6 +563,18 @@
                            "file": "SDB_SNAP_CATALOG",
                            "cn": "编目信息快照",
                            "en": "SDB_SNAP_CATALOG"
+                        },
+                        {
+                           "id": 1479173720,
+                           "file": "SDB_SNAP_TRANSACTION",
+                           "cn": "事务快照",
+                           "en": "SDB_SNAP_TRANSACTION"
+                        },
+                        {
+                           "id": 1479173721,
+                           "file": "SDB_SNAP_TRANSACTION_CURRENT",
+                           "cn": "当前事务快照",
+                           "en": "SDB_SNAP_TRANSACTION_CURRENT"
                         }
                      ]
                   },
@@ -1075,10 +1093,18 @@
                "en": "SequoiaDB Shell Method List",
                "contents": [
                   {
-                     "id": 1440658251,
-                     "file": "SecureSdb",
-                     "cn": "SecureSdb",
-                     "en": "SecureSdb"
+                     "id": 1482317421,
+                     "dir": "Overview",
+                     "cn": "概述",
+                     "en": "Overview",
+                     "contents": [
+                        {
+                           "id": 1482314609,
+                           "file": "location",
+                           "cn": "命令位置参数",
+                           "en": "location"
+                        }
+                     ]
                   },
                   {
                      "id": 1432190765,
@@ -1103,6 +1129,12 @@
                            "file": "getLastErrMsg",
                            "cn": "getLastErrMsg()",
                            "en": "getLastErrMsg()"
+                        },
+                        {
+                           "id": 1482317447,
+                           "file": "getLastErrObj",
+                           "cn": "getLastErrObj()",
+                           "en": "getLastErrObj()"
                         }
                      ]
                   },
@@ -1347,6 +1379,12 @@
                            "en": "resetSnapshot()"
                         },
                         {
+                           "id": 1483064748,
+                           "file": "reloadConf",
+                           "cn": "reloadConf()",
+                           "en": "reloadConf()"
+                        },
+                        {
                            "id": 1432190808,
                            "file": "setSessionAttr",
                            "cn": "setSessionAttr()",
@@ -1363,6 +1401,18 @@
                            "file": "startRG",
                            "cn": "startRG()",
                            "en": "startRG()"
+                        },
+                        {
+                           "id": 1482329455,
+                           "file": "sync",
+                           "cn": "sync()",
+                           "en": "sync()"
+                        },
+                        {
+                           "id": 1483064791,
+                           "file": "setPDLevel",
+                           "cn": "setPDLevel()",
+                           "en": "setPDLevel()"
                         },
                         {
                            "id": 1432190811,
@@ -1411,8 +1461,20 @@
                            "file": "waitTasks",
                            "cn": "waitTasks()",
                            "en": "waitTasks()"
+                        },
+                        {
+                           "id": 1432190819,
+                           "file": "stopRG",
+                           "cn": "stopRG()",
+                           "en": "stopRG()"
                         }
                      ]
+                  },
+                  {
+                     "id": 1440658251,
+                     "file": "SecureSdb",
+                     "cn": "SecureSdb",
+                     "en": "SecureSdb"
                   },
                   {
                      "id": 1432190820,
@@ -2293,6 +2355,12 @@
                      "en": "Update Operator",
                      "contents": [
                         {
+                           "id": 1479713933,
+                           "file": "overview",
+                           "cn": "概述",
+                           "en": "Overview"
+                        },
+                        {
                            "id": 1432190923,
                            "file": "inc",
                            "cn": "$inc",
@@ -2667,22 +2735,420 @@
          ]
       },
       {
-         "id": 1489719425,
-         "dir": "webserverapp",
-         "cn": "Web应用",
-         "en": "web server",
+         "id": 1483942793,
+         "dir": "sac",
+         "cn": "SAC",
+         "en": "SAC",
          "contents": [
             {
-               "id": 1489720081,
-               "dir": "websphere",
-               "cn": "WebSphere",
-               "en": "websphere",
+               "id": 1483942791,
+               "file": "runtime_env",
+               "cn": "运行环境",
+               "en": "Runtime environment"
             },
             {
-               "id": 1489720188,
-               "dir": "tomcat",
-               "cn": "Tomcat",
-               "en": "tomcat",
+               "id": 1483942792,
+               "dir": "install_login",
+               "cn": "安装与登录",
+               "en": "Install and login",
+               "contents": [
+                  {
+                     "id": 1483944515,
+                     "file": "install_sac",
+                     "cn": "安装SAC",
+                     "en": "Install SAC"
+                  },
+                  {
+                     "id": 1483944516,
+                     "file": "login_sac",
+                     "cn": "登录SAC",
+                     "en": "Login SAC"
+                  },
+                  {
+                     "id": 1483944517,
+                     "file": "reset_pwd",
+                     "cn": "修改登录密码",
+                     "en": "Reset password"
+                  }
+               ]
+            },
+            {
+               "id": 1483942794,
+               "dir": "deployment",
+               "cn": "部署",
+               "en": "Deployment",
+               "contents": [
+                  {
+                     "id": 1483944500,
+                     "file": "deployment_wizard",
+                     "cn": "一键部署",
+                     "en": "Deployment wizard"
+                  },
+                  {
+                     "id": 1483944501,
+                     "dir": "add_host",
+                     "cn": "添加主机",
+                     "en": "Add host",
+                     "contents": [
+                        {
+                           "id": 1484036820,
+                           "file": "scan_host",
+                           "cn": "扫描主机",
+                           "en": "Scan host"
+                        },
+                        {
+                           "id": 1484036821,
+                           "file": "add_host",
+                           "cn": "添加主机",
+                           "en": "Add host"
+                        },
+                        {
+                           "id": 1484036822,
+                           "file": "install_host",
+                           "cn": "安装主机",
+                           "en": "Install host"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944502,
+                     "dir": "add_module",
+                     "cn": "添加业务",
+                     "en": "Add module",
+                     "contents": [
+                        {
+                           "id": 1484036823,
+                           "file": "config_module",
+                           "cn": "配置业务",
+                           "en": "Config module"
+                        },
+                        {
+                           "id": 1484036824,
+                           "file": "mod_module",
+                           "cn": "修改业务",
+                           "en": "Modify module"
+                        },
+                        {
+                           "id": 1484036825,
+                           "file": "install_module",
+                           "cn": "安装业务",
+                           "en": "Install module"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944518,
+                     "file": "sdb_auth",
+                     "cn": "设置鉴权",
+                     "en": "Set authentication"
+                  },
+                  {
+                     "id": 1483944503,
+                     "file": "update_host_info",
+                     "cn": "更新主机信息",
+                     "en": "Update host information"
+                  },
+                  {
+                     "id": 1483944504,
+                     "file": "uninstall_module",
+                     "cn": "卸载业务",
+                     "en": "Uninstall module"
+                  },
+                  {
+                     "id": 1483944505,
+                     "file": "remove_host",
+                     "cn": "删除主机",
+                     "en": "Remove host"
+                  }
+               ]
+            },
+            {
+               "id": 1483942795,
+               "dir": "monitor",
+               "cn": "监控",
+               "en": "Monitor",
+               "contents": [
+                  {
+                     "id": 1483944514,
+                     "file": "overview",
+                     "cn": "总览",
+                     "en": "Overview"
+                  },
+                  {
+                     "id": 1483944506,
+                     "dir": "node",
+                     "cn": "节点",
+                     "en": "Node",
+                     "contents": [
+                        {
+                           "id": 1484010525,
+                           "file": "nodes_list",
+                           "cn": "节点列表",
+                           "en": "Nodes list"
+                        },
+                        {
+                           "id": 1484010526,
+                           "file": "groups_list",
+                           "cn": "分区组列表",
+                           "en": "Groups list"
+                        },
+                        {
+                           "id": 1484010527,
+                           "file": "groups_snapshot",
+                           "cn": "分区组快照",
+                           "en": "Groups snapshot"
+                        },
+                        {
+                           "id": 1484010528,
+                           "file": "nodes_snapshot",
+                           "cn": "节点快照",
+                           "en": "Nodes snapshot"
+                        },
+                        {
+                           "id": 1484010529,
+                           "file": "group_info",
+                           "cn": "分区组信息",
+                           "en": "Group info"
+                        },
+                        {
+                           "id": 1484010530,
+                           "file": "node_info",
+                           "cn": "节点信息",
+                           "en": "Node info"
+                        },
+                        {
+                           "id": 1484010531,
+                           "file": "charts",
+                           "cn": "图表",
+                           "en": "charts"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944507,
+                     "dir": "resource",
+                     "cn": "资源",
+                     "en": "Resource",
+                     "contents": [
+                        {
+                           "id": 1484010532,
+                           "file": "sessions_list",
+                           "cn": "会话",
+                           "en": "Sessions list"
+                        },
+                        {
+                           "id": 1484010533,
+                           "file": "contexts_list",
+                           "cn": "上下文",
+                           "en": "Contexts list"
+                        },
+                        {
+                           "id": 1484010534,
+                           "file": "domain",
+                           "cn": "域",
+                           "en": "Domain"
+                        },
+                        {
+                           "id": 1484010535,
+                           "file": "procedures",
+                           "cn": "存储过程",
+                           "en": "Procedures"
+                        },
+                        {
+                           "id": 1484010536,
+                           "file": "transactions",
+                           "cn": "事务",
+                           "en": "Transactions"
+                        },
+                        {
+                           "id": 1484010537,
+                           "file": "charts",
+                           "cn": "图表",
+                           "en": "Charts"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944508,
+                     "dir": "host",
+                     "cn": "主机",
+                     "en": "Host",
+                     "contents": [
+                        {
+                           "id": 1484010538,
+                           "file": "hosts_list",
+                           "cn": "主机列表",
+                           "en": "Hosts list"
+                        },
+                        {
+                           "id": 1484010539,
+                           "file": "hosts_snapshot",
+                           "cn": "主机快照",
+                           "en": "Hosts snapshot"
+                        },
+                        {
+                           "id": 1484010540,
+                           "file": "charts",
+                           "cn": "图表",
+                           "en": "Charts"
+                        },
+                        {
+                           "id": 1484010541,
+                           "file": "host_info",
+                           "cn": "主机信息",
+                           "en": "Host info"
+                        }
+                     ]
+                  }
+               ]
+            },
+            {
+               "id": 1483942796,
+               "dir": "data_operation",
+               "cn": "数据操作",
+               "en": "Data Operation",
+               "contents": [
+                  {
+                     "id": 1483944509,
+                     "dir": "collection_space",
+                     "cn": "集合空间",
+                     "en": "Collection Space",
+                     "contents": [
+                        {
+                           "id": 1483949700,
+                           "file": "attribute",
+                           "cn": "集合空间属性",
+                           "en": "Attribute"
+                        },
+                        {
+                           "id": 1483949701,
+                           "file": "create_cs",
+                           "cn": "创建集合空间",
+                           "en": "Create collection space"
+                        },
+                        {
+                           "id": 1483949702,
+                           "file": "drop_cs",
+                           "cn": "删除集合空间",
+                           "en": "Drop collection space"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944510,
+                     "dir": "collection",
+                     "cn": "集合",
+                     "en": "Collection",
+                     "contents": [
+                        {
+                           "id": 1483949703,
+                           "file": "attribute",
+                           "cn": "集合属性",
+                           "en": "Attribute"
+                        },
+                        {
+                           "id": 1483949704,
+                           "file": "create_cl",
+                           "cn": "创建集合",
+                           "en": "Create collection"
+                        },
+                        {
+                           "id": 1483949705,
+                           "file": "drop_cl",
+                           "cn": "删除集合",
+                           "en": "Drop collection"
+                        },
+                        {
+                           "id": 1483949706,
+                           "file": "attach_cl",
+                           "cn": "挂载集合",
+                           "en": "Attach collection"
+                        },
+                        {
+                           "id": 1483949707,
+                           "file": "detach_cl",
+                           "cn": "分离集合",
+                           "en": "Detach collection"
+                        },
+                        {
+                           "id": 1483949708,
+                           "file": "split",
+                           "cn": "切分数据",
+                           "en": "Split"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944511,
+                     "dir": "index",
+                     "cn": "索引",
+                     "en": "Index",
+                     "contents": [
+                        {
+                           "id": 1483949709,
+                           "file": "attribute",
+                           "cn": "索引属性",
+                           "en": "Attribute"
+                        },
+                        {
+                           "id": 1483949710,
+                           "file": "create_index",
+                           "cn": "创建索引",
+                           "en": "Create index"
+                        },
+                        {
+                           "id": 1483949711,
+                           "file": "drop_index",
+                           "cn": "删除索引",
+                           "en": "Drop index"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944512,
+                     "dir": "record",
+                     "cn": "记录",
+                     "en": "Record",
+                     "contents": [
+                        {
+                           "id": 1483949712,
+                           "file": "query",
+                           "cn": "查询",
+                           "en": "Query"
+                        },
+                        {
+                           "id": 1483949713,
+                           "file": "insert",
+                           "cn": "插入",
+                           "en": "Insert"
+                        },
+                        {
+                           "id": 1483949714,
+                           "file": "update",
+                           "cn": "更新",
+                           "en": "Update"
+                        },
+                        {
+                           "id": 1483949715,
+                           "file": "delete",
+                           "cn": "删除",
+                           "en": "Delete"
+                        },
+                        {
+                           "id": 1483949716,
+                           "file": "display_mode",
+                           "cn": "显示模式",
+                           "en": "Display mode"
+                        }
+                     ]
+                  },
+                  {
+                     "id": 1483944513,
+                     "file": "lob",
+                     "cn": "Lob",
+                     "en": "Lob"
+                  }
+               ]
             }
          ]
       },
@@ -2691,7 +3157,6 @@
          "file": "release_note",
          "cn": "版本信息",
          "en": "Release Note"
-      },
-      
+      }
    ]
 }
