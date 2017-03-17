@@ -100,7 +100,7 @@ public class SdbJSProcedures {
             count++;
         }
         assertEquals(1, count);
-		/* evalJS with right name */
+        /* evalJS with right name */
         String code1 = "sum_in_java(1, 2)";
         SptEvalResult evalResult1 = null;
         try {

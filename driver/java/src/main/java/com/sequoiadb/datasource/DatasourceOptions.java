@@ -19,7 +19,7 @@ package com.sequoiadb.datasource;
 /**
  * @class DatasourceOptions
  * @brief the options of data source
- * @since v1.12.6 & v2.2
+ * @since 2.2
  */
 public class DatasourceOptions implements Cloneable {
     private int _deltaIncCount = 10;

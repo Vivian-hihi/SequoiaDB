@@ -2,7 +2,6 @@ package com.sequoiadb.test.db;
 
 import com.sequoiadb.base.*;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.base.ConfigOptions;
 import com.sequoiadb.test.common.Constants;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;

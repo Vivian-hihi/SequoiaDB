@@ -33,11 +33,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * @class SequoiadbDatasourceImpl
+ * @class SequoiadbDatasource
  * @brief The implements for SequoiaDB data source
- * @since v1.12.6 & v2.2
+ * @since 2.2
  */
-public class SequoiadbDatasourceImpl {
+public class SequoiadbDatasource {
     // for coord address
     private List<String> _normalAddrs = Collections.synchronizedList(new ArrayList<String>());
     private ConcurrentSkipListSet<String> _abnormalAddrs = new ConcurrentSkipListSet<String>();
@@ -370,8 +370,8 @@ public class SequoiadbDatasourceImpl {
      * @param password the password for logging sequoiadb
      * @param nwOpt    the options for connection
      * @param dsOpt    the options for connection pool
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn SequoiadbDatasourceImpl(List<String> urls, String username, String password,
+     * @throws BaseException
+     * @fn SequoiadbDatasource(List<String> urls, String username, String password,
      *ConfigOptions nwOpt, DatasourceOptions dsOpt)
      * @brief constructor.
      * @note When offer several addresses for connection pool to use, if
@@ -384,8 +384,8 @@ public class SequoiadbDatasourceImpl {
      * @see ConfigOptions
      * @see DatasourceOptions
      */
-    public SequoiadbDatasourceImpl(List<String> urls, String username, String password,
-                                   ConfigOptions nwOpt, DatasourceOptions dsOpt) throws BaseException {
+    public SequoiadbDatasource(List<String> urls, String username, String password,
+                               ConfigOptions nwOpt, DatasourceOptions dsOpt) throws BaseException {
         if (null == urls || 0 == urls.size())
             throw new BaseException(SDBError.SDB_INVALIDARG, "coord addresses can't be empty or null");
 
@@ -398,13 +398,13 @@ public class SequoiadbDatasourceImpl {
      * @param username the user name for logging sequoiadb
      * @param password the password for logging sequoiadb
      * @param dsOpt    the options for connection pool
-     * @throws com.sequoiadb.exception.BaseException
-     * @fn SequoiadbDatasourceImpl(String url, String username, String password,
+     * @throws BaseException
+     * @fn SequoiadbDatasource(String url, String username, String password,
      *DatasourceOptions dsOpt)
      * @brief Constructor.
      */
-    public SequoiadbDatasourceImpl(String url, String username, String password,
-                                   DatasourceOptions dsOpt) throws BaseException {
+    public SequoiadbDatasource(String url, String username, String password,
+                               DatasourceOptions dsOpt) throws BaseException {
         if (null == url || "" == url)
             throw new BaseException(SDBError.SDB_INVALIDARG, "coord address can't be empty or null");
         ArrayList<String> urls = new ArrayList<String>();
