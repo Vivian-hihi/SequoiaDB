@@ -106,8 +106,8 @@ public class DBCollectionTest {
             BSONObject obj = cursor.getNext();
             if (obj != null) {
                 assertEquals(
-                    ((BSONObject) obj.get(SequoiadbConstants.IXM_INDEXDEF))
-                        .get(SequoiadbConstants.IXM_NAME),
+                    ((BSONObject) obj.get(Constants.IXM_INDEXDEF))
+                        .get(Constants.IXM_NAME),
                     Constants.TEST_INDEX_NAME);
             } else
                 assertTrue(false);
@@ -292,8 +292,8 @@ public class DBCollectionTest {
         BSONObject idx = cl.getIndex(Constants.TEST_INDEX_NAME)
             .getNext();
         BSONObject def = (BSONObject) idx
-            .get(SequoiadbConstants.IXM_INDEXDEF);
-        assertEquals(def.get(SequoiadbConstants.IXM_NAME),
+            .get(Constants.IXM_INDEXDEF);
+        assertEquals(def.get(Constants.IXM_NAME),
             Constants.TEST_INDEX_NAME);
     }
 

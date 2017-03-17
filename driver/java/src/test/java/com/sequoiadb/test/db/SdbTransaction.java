@@ -5,6 +5,7 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.test.common.Constants;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -30,7 +31,7 @@ public class SdbTransaction {
             sdb1.rollback();
             return true;
         } catch (BaseException e) {
-            if (e.getErrorCode() == new BaseException("SDB_DPS_TRANS_DIABLED").getErrorCode()) {
+            if (e.getErrorCode() == SDBError.SDB_DPS_TRANS_DIABLED.getErrorCode()) {
                 return false;
             } else {
                 throw e;

@@ -76,7 +76,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * can change both of the default value.
      * @see ConfigOptions
      * @see DatasourceOptions
-     * @deprecated
+     * @deprecated use DatasourceOptions instead of SequoiadbOption
      */
     public SequoiadbDatasource(List<String> urls, String username, String password,
                                ConfigOptions nwOpt, SequoiadbOption dsOpt) throws BaseException {

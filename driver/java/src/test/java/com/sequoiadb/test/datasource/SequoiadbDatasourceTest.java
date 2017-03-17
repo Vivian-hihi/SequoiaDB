@@ -1,6 +1,7 @@
 package com.sequoiadb.test.datasource;
 
 import com.sequoiadb.base.*;
+import com.sequoiadb.datasource.DatasourceOptions;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.test.common.Constants;
 import org.bson.BSONObject;
@@ -31,7 +32,7 @@ public class SequoiadbDatasourceTest {
         coords.add(Constants.COOR_NODE_CONN);
 
         try {
-            ds = new SequoiadbDatasource(coords, "", "", null, null);
+            ds = new SequoiadbDatasource(coords, "", "", null, (DatasourceOptions) null);
         } catch (Exception e) {
             e.printStackTrace();
         }

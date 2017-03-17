@@ -8,7 +8,7 @@ import com.sequoiadb.test.common.Constants;
 import com.sequoiadb.testdata.ArrayListBean;
 import com.sequoiadb.testdata.DecimalBean;
 import com.sequoiadb.testdata.ListBean;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONDecimal;

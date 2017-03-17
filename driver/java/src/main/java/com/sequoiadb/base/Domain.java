@@ -84,8 +84,8 @@ public class Domain {
         }
 
         BSONObject newObj = new BasicBSONObject();
-        newObj.put(SequoiadbConstants.FIELD_NAME_NAME, this.name);
-        newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+        newObj.put(SdbConstants.FIELD_NAME_NAME, this.name);
+        newObj.put(SdbConstants.FIELD_NAME_OPTIONS, options);
 
         AdminRequest request = new AdminRequest(AdminCommand.ALTER_DOMAIN, newObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -120,8 +120,8 @@ public class Domain {
         // append argument
         BSONObject matcher = new BasicBSONObject();
         BSONObject selector = new BasicBSONObject();
-        matcher.put(SequoiadbConstants.FIELD_NAME_DOMAIN, this.name);
-        selector.put(SequoiadbConstants.FIELD_NAME_NAME, null);
+        matcher.put(SdbConstants.FIELD_NAME_DOMAIN, this.name);
+        selector.put(SdbConstants.FIELD_NAME_NAME, null);
         // get cs or cl in current domain
         DBCursor cursor = this.sequoiadb.getList(type, matcher, selector, null);
         return cursor;

@@ -200,10 +200,8 @@ public class testCollectionSaveAndAs {
 
 
         BSONObject bsonObj = BasicBSONObject.typeToBson(basicObj);
-//		System.out.println(bsonObj.toString());
 
         HaveMapPropClass asBasicObj = bsonObj.as(HaveMapPropClass.class);
-//		System.out.println(asBasicObj.toString());
 
         assertEquals(asBasicObj, basicObj);
         // save one record first

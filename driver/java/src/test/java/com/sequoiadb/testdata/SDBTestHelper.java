@@ -3,6 +3,7 @@ package com.sequoiadb.testdata;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.SDBError;
 import org.bson.*;
 
 import java.io.ByteArrayInputStream;
@@ -29,7 +30,7 @@ public class SDBTestHelper {
         DBCursor cursor = cl.getIndex(indexName);
         while ((cursor == null || !cursor.hasNext())) {
             if (i > count) {
-                throw new BaseException(
+                throw new RuntimeException(
                     ("wait index create failed:" + indexName));
             }
             i++;
@@ -51,7 +52,7 @@ public class SDBTestHelper {
         DBCursor cursor = cl.getIndex(indexName);
         while ((cursor != null && cursor.hasNext())) {
             if (i > count) {
-                throw new BaseException(("wait index drop failed:" + indexName));
+                throw new RuntimeException(("wait index drop failed:" + indexName));
             }
             i++;
             try {
@@ -78,7 +79,7 @@ public class SDBTestHelper {
             BSONObject o1 = (BSONObject) cb.get();
             return o1;
         } catch (IOException e) {
-            throw new BaseException("SDB_INVALIDARG", e);
+            throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
     }
 

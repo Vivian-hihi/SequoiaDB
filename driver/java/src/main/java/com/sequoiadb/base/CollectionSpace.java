@@ -98,7 +98,7 @@ public class CollectionSpace {
         String collectionFullName = name + "." + colName;
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
 
         AdminRequest request = new AdminRequest(AdminCommand.TEST_CL, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -164,7 +164,7 @@ public class CollectionSpace {
         String collectionFullName = name + "." + collectionName;
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
         if (options != null) {
             obj.putAll(options);
         }
@@ -208,7 +208,7 @@ public class CollectionSpace {
         String collectionFullName = name + "." + collectionName;
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_CL, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);

@@ -414,7 +414,7 @@ public class CLQuery {
         String expect = "{ \"\" : \"1\"}";
         int i = 0;
         BSONObject obj = null;
-        while (cursor.hasNextRaw()) {
+        while (cursor.hasNext()) {
             byte[] bytes = cursor.getNextRaw();
             obj = SDBTestHelper.byteArrayToBSONObject(bytes);
             System.out.println(obj.toString());

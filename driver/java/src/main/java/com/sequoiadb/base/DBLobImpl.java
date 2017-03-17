@@ -147,7 +147,7 @@ class DBLobImpl implements DBLob {
 
     private void _open() throws BaseException {
         BSONObject openLob = new BasicBSONObject();
-        openLob.put(SequoiadbConstants.FIELD_COLLECTION, _cl.getFullName());
+        openLob.put(SdbConstants.FIELD_COLLECTION, _cl.getFullName());
         openLob.put(FIELD_NAME_LOB_OID, _id);
         openLob.put(FIELD_NAME_LOB_OPEN_MODE, _mode);
 

@@ -170,8 +170,8 @@ public class Node {
      */
     public NodeStatus getStatus() throws BaseException {
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_GROUPID, rg.getId());
-        obj.put(SequoiadbConstants.FIELD_NAME_NODEID, id);
+        obj.put(SdbConstants.FIELD_NAME_GROUPID, rg.getId());
+        obj.put(SdbConstants.FIELD_NAME_NODEID, id);
 
         AdminRequest request = new AdminRequest(AdminCommand.SNAP_DATABASE, obj);
         SdbReply response = ddb.requestAndResponse(request);
@@ -212,8 +212,8 @@ public class Node {
 
     private void startStop(boolean start) {
         BSONObject config = new BasicBSONObject();
-        config.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
-        config.put(SequoiadbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
+        config.put(SdbConstants.FIELD_NAME_HOST, hostName);
+        config.put(SdbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
 
         String cmd = start ? AdminCommand.STARTUP_NODE : AdminCommand.SHUTDOWN_NODE;
         AdminRequest request = new AdminRequest(cmd, config);

@@ -16,7 +16,6 @@
 
 package com.sequoiadb.base;
 
-import com.sequoiadb.base.SequoiadbConstants.PreferInstanceType;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
@@ -553,7 +552,7 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        obj.put(SdbConstants.FIELD_NAME_NAME, csName);
         if (null != options) {
             obj.putAll(options);
         }
@@ -580,7 +579,7 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject options = new BasicBSONObject();
-        options.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        options.put(SdbConstants.FIELD_NAME_NAME, csName);
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_CS, options);
         SdbReply response = requestAndResponse(request);
@@ -616,7 +615,7 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject newOptions = new BasicBSONObject();
-        newOptions.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        newOptions.put(SdbConstants.FIELD_NAME_NAME, csName);
         if (options != null) {
             newOptions.putAll(options);
         }
@@ -655,7 +654,7 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject newOptions = new BasicBSONObject();
-        newOptions.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        newOptions.put(SdbConstants.FIELD_NAME_NAME, csName);
         if (options != null) {
             newOptions.putAll(options);
         }
@@ -688,8 +687,8 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject matcher = new BasicBSONObject();
-        matcher.put(SequoiadbConstants.FIELD_NAME_OLDNAME, oldName);
-        matcher.put(SequoiadbConstants.FIELD_NAME_NEWNAME, newName);
+        matcher.put(SdbConstants.FIELD_NAME_OLDNAME, oldName);
+        matcher.put(SdbConstants.FIELD_NAME_NEWNAME, newName);
 
         AdminRequest request = new AdminRequest(AdminCommand.RENAME_CS, matcher);
         SdbReply response = requestAndResponse(request);
@@ -788,7 +787,7 @@ public class Sequoiadb implements Closeable {
      */
     public boolean isCollectionSpaceExist(String csName) throws BaseException {
         BSONObject options = new BasicBSONObject();
-        options.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
+        options.put(SdbConstants.FIELD_NAME_NAME, csName);
 
         AdminRequest request = new AdminRequest(AdminCommand.TEST_CS, options);
         SdbReply response = requestAndResponse(request);
@@ -1166,8 +1165,8 @@ public class Sequoiadb implements Closeable {
 
         BSONObject options = new BasicBSONObject();
         Code codeObj = new Code(code);
-        options.put(SequoiadbConstants.FIELD_NAME_FUNC, codeObj);
-        options.put(SequoiadbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
+        options.put(SdbConstants.FIELD_NAME_FUNC, codeObj);
+        options.put(SdbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_PROCEDURE, options);
         SdbReply response = requestAndResponse(request);
@@ -1190,7 +1189,7 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject options = new BasicBSONObject();
-        options.put(SequoiadbConstants.FIELD_NAME_FUNC, name);
+        options.put(SdbConstants.FIELD_NAME_FUNC, name);
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_PROCEDURE, options);
         SdbReply response = requestAndResponse(request);
@@ -1231,8 +1230,8 @@ public class Sequoiadb implements Closeable {
 
         BSONObject newObj = new BasicBSONObject();
         Code codeObj = new Code(code);
-        newObj.put(SequoiadbConstants.FIELD_NAME_FUNC, codeObj);
-        newObj.put(SequoiadbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
+        newObj.put(SdbConstants.FIELD_NAME_FUNC, codeObj);
+        newObj.put(SdbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
 
         AdminRequest request = new AdminRequest(AdminCommand.EVAL, newObj);
         SdbReply response = requestAndResponse(request);
@@ -1248,7 +1247,7 @@ public class Sequoiadb implements Closeable {
             // get the return type of eval result
             if (response.getReturnedNum() > 0) {
                 BSONObject obj = response.getResultSet().getNext();
-                int typeValue = (Integer) obj.get(SequoiadbConstants.FIELD_NAME_RETYE);
+                int typeValue = (Integer) obj.get(SdbConstants.FIELD_NAME_RETYE);
                 evalResult.returnType = Sequoiadb.SptReturnType.getTypeByValue(typeValue);
             }
             // set the return cursor
@@ -1315,9 +1314,9 @@ public class Sequoiadb implements Closeable {
                                BSONObject selector, BSONObject orderBy) throws BaseException {
         if (null != options) {
             for (String key : options.keySet()) {
-                if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SequoiadbConstants.FIELD_NAME_NAME)
-                    || key.equals(SequoiadbConstants.FIELD_NAME_PATH)) {
+                if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
+                    || key.equals(SdbConstants.FIELD_NAME_NAME)
+                    || key.equals(SdbConstants.FIELD_NAME_PATH)) {
                     continue;
                 } else {
                     throw new BaseException(SDBError.SDB_INVALIDARG, key);
@@ -1361,9 +1360,9 @@ public class Sequoiadb implements Closeable {
     public void removeBackup(BSONObject options) throws BaseException {
         if (null != options) {
             for (String key : options.keySet()) {
-                if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SequoiadbConstants.FIELD_NAME_NAME)
-                    || key.equals(SequoiadbConstants.FIELD_NAME_PATH)) {
+                if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
+                    || key.equals(SdbConstants.FIELD_NAME_NAME)
+                    || key.equals(SdbConstants.FIELD_NAME_PATH)) {
                     continue;
                 } else {
                     throw new BaseException(SDBError.SDB_INVALIDARG);
@@ -1417,7 +1416,7 @@ public class Sequoiadb implements Closeable {
             list.put(Integer.toString(i), taskIDs[i]);
         }
         subObj.put("$in", list);
-        newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, subObj);
+        newObj.put(SdbConstants.FIELD_NAME_TASKID, subObj);
 
         AdminRequest request = new AdminRequest(AdminCommand.WAIT_TASK, newObj);
         SdbReply response = requestAndResponse(request);
@@ -1443,8 +1442,8 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject newObj = new BasicBSONObject();
-        newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, taskID);
-        newObj.put(SequoiadbConstants.FIELD_NAME_ASYNC, isAsync);
+        newObj.put(SdbConstants.FIELD_NAME_TASKID, taskID);
+        newObj.put(SdbConstants.FIELD_NAME_ASYNC, isAsync);
 
         AdminRequest request = new AdminRequest(AdminCommand.CANCEL_TASK, newObj);
         SdbReply response = requestAndResponse(request);
@@ -1500,32 +1499,32 @@ public class Sequoiadb implements Closeable {
         if (null == options || options.isEmpty()) {
             return;
         }
-        if (!options.containsField(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE)) {
+        if (!options.containsField(SdbConstants.FIELD_NAME_PREFERED_INSTANCE)) {
             throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
         }
 
         BSONObject newObj = new BasicBSONObject();
-        Object value = options.get(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE);
+        Object value = options.get(SdbConstants.FIELD_NAME_PREFERED_INSTANCE);
         int v;
         if (value instanceof Integer) {
             v = (Integer) value;
-            if (v < 1 || v > 7) {
+            if (v < PreferInstance.MIN || v > PreferInstance.MAX) {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
             }
         } else if (value instanceof String) {
             if (value.equals("M") || value.equals("m")) {
-                v = PreferInstanceType.INS_MASTER.getCode();
+                v = PreferInstance.MASTER;
             } else if (value.equals("S") || value.equals("s")) {
-                v = PreferInstanceType.INS_SLAVE.getCode();
+                v = PreferInstance.SLAVE;
             } else if (value.equals("A") || value.equals("a")) {
-                v = PreferInstanceType.INS_ANYONE.getCode();
+                v = PreferInstance.ANYONE;
             } else {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
             }
         } else {
             throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
         }
-        newObj.put(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE, v);
+        newObj.put(SdbConstants.FIELD_NAME_PREFERED_INSTANCE, v);
 
         AdminRequest request = new AdminRequest(AdminCommand.SET_SESSION_ATTRIBUTE, newObj);
         SdbReply response = requestAndResponse(request);
@@ -1571,7 +1570,7 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject matcher = new BasicBSONObject();
-        matcher.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
+        matcher.put(SdbConstants.FIELD_NAME_NAME, domainName);
 
         DBCursor cursor = getList(SDB_LIST_DOMAINS, matcher, null, null);
         return (null != cursor && cursor.hasNext());
@@ -1602,9 +1601,9 @@ public class Sequoiadb implements Closeable {
             throw new BaseException(SDBError.SDB_CAT_DOMAIN_EXIST, domainName);
 
         BSONObject newObj = new BasicBSONObject();
-        newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
+        newObj.put(SdbConstants.FIELD_NAME_NAME, domainName);
         if (null != options) {
-            newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+            newObj.put(SdbConstants.FIELD_NAME_OPTIONS, options);
         }
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_DOMAIN, newObj);
@@ -1629,7 +1628,7 @@ public class Sequoiadb implements Closeable {
         }
 
         BSONObject newObj = new BasicBSONObject();
-        newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
+        newObj.put(SdbConstants.FIELD_NAME_NAME, domainName);
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_DOMAIN, newObj);
         SdbReply response = requestAndResponse(request);
@@ -1749,7 +1748,7 @@ public class Sequoiadb implements Closeable {
      */
     public ReplicaGroup createReplicaGroup(String rgName) throws BaseException {
         BSONObject rg = new BasicBSONObject();
-        rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
+        rg.put(SdbConstants.FIELD_NAME_GROUPNAME, rgName);
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
@@ -1769,7 +1768,7 @@ public class Sequoiadb implements Closeable {
      */
     public void removeReplicaGroup(String rgName) throws BaseException {
         BSONObject rg = new BasicBSONObject();
-        rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
+        rg.put(SdbConstants.FIELD_NAME_GROUPNAME, rgName);
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
@@ -1792,7 +1791,7 @@ public class Sequoiadb implements Closeable {
      */
     public void activateReplicaGroup(String rgName) throws BaseException {
         BSONObject rg = new BasicBSONObject();
-        rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
+        rg.put(SdbConstants.FIELD_NAME_GROUPNAME, rgName);
 
         AdminRequest request = new AdminRequest(AdminCommand.ACTIVE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
@@ -1816,14 +1815,14 @@ public class Sequoiadb implements Closeable {
     public void createReplicaCataGroup(String hostName, int port,
                                        String dbPath, Map<String, String> configure) {
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
-        obj.put(SequoiadbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
-        obj.put(SequoiadbConstants.PMD_OPTION_DBPATH, dbPath);
+        obj.put(SdbConstants.FIELD_NAME_HOST, hostName);
+        obj.put(SdbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
+        obj.put(SdbConstants.PMD_OPTION_DBPATH, dbPath);
         if (configure != null) {
             for (String key : configure.keySet()) {
-                if (key.equals(SequoiadbConstants.FIELD_NAME_HOST)
-                    || key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME)
-                    || key.equals(SequoiadbConstants.PMD_OPTION_DBPATH)) {
+                if (key.equals(SdbConstants.FIELD_NAME_HOST)
+                    || key.equals(SdbConstants.PMD_OPTION_SVCNAME)
+                    || key.equals(SdbConstants.PMD_OPTION_DBPATH)) {
                     continue;
                 }
                 obj.put(key, configure.get(key));
@@ -1882,7 +1881,7 @@ public class Sequoiadb implements Closeable {
 
     BSONObject getDetailByName(String name) throws BaseException {
         BSONObject condition = new BasicBSONObject();
-        condition.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
+        condition.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
 
         DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
         if (cursor == null || !cursor.hasNext()) {
@@ -1893,7 +1892,7 @@ public class Sequoiadb implements Closeable {
 
     BSONObject getDetailById(int id) throws BaseException {
         BSONObject condition = new BasicBSONObject();
-        condition.put(SequoiadbConstants.FIELD_NAME_GROUPID, id);
+        condition.put(SdbConstants.FIELD_NAME_GROUPID, id);
 
         DBCursor cursor = getList(Sequoiadb.SDB_LIST_GROUPS, condition, null, null);
         if (cursor == null || !cursor.hasNext()) {

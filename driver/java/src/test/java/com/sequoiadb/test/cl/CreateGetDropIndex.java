@@ -63,8 +63,8 @@ public class CreateGetDropIndex {
             BSONObject obj = cursor.getNext();
             if (obj != null) {
                 assertEquals(
-                    ((BSONObject) obj.get(SequoiadbConstants.IXM_INDEXDEF))
-                        .get(SequoiadbConstants.IXM_NAME),
+                    ((BSONObject) obj.get(Constants.IXM_INDEXDEF))
+                        .get(Constants.IXM_NAME),
                     Constants.TEST_INDEX_NAME);
             } else
                 assertTrue(false);
@@ -91,8 +91,8 @@ public class CreateGetDropIndex {
         cl.createIndex(Constants.TEST_INDEX_NAME, index, false, false);
         SDBTestHelper.waitIndexCreateFinish(cl, Constants.TEST_INDEX_NAME, 100);
         BSONObject ret = cl.getIndex(Constants.TEST_INDEX_NAME).getNext();
-        BSONObject def = (BSONObject) ret.get(SequoiadbConstants.IXM_INDEXDEF);
-        assertEquals(def.get(SequoiadbConstants.IXM_NAME), Constants.TEST_INDEX_NAME);
+        BSONObject def = (BSONObject) ret.get(Constants.IXM_INDEXDEF);
+        assertEquals(def.get(Constants.IXM_NAME), Constants.TEST_INDEX_NAME);
     }
 
     @Test
@@ -230,8 +230,8 @@ public class CreateGetDropIndex {
         assertEquals(100, size);
 
         BSONObject index_name = cl.getIndex("unique_index_id").getNext();
-        BSONObject def = (BSONObject) index_name.get(SequoiadbConstants.IXM_INDEXDEF);
-        assertEquals(def.get(SequoiadbConstants.IXM_NAME), "unique_index_id");
+        BSONObject def = (BSONObject) index_name.get(Constants.IXM_INDEXDEF);
+        assertEquals(def.get(Constants.IXM_NAME), "unique_index_id");
 
         BSONObject matcher3 = new BasicBSONObject();
         BSONObject con = new BasicBSONObject();

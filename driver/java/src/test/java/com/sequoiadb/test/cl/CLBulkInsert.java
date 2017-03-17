@@ -101,7 +101,7 @@ public class CLBulkInsert {
         assertEquals(2, i);
         for (i = 0; i < list.size(); i++) {
             record = list.get(i);
-            if (null != record.get(SequoiadbConstants.OID)) {
+            if (null != record.get(Constants.OID)) {
                 assertTrue("Record should not contain oid add by bulk insert", false);
             }
         }
@@ -125,7 +125,7 @@ public class CLBulkInsert {
         assertEquals(4, i);
         for (i = 0; i < list.size(); i++) {
             record = list.get(i);
-            if (null == record.get(SequoiadbConstants.OID)) {
+            if (null == record.get(Constants.OID)) {
                 assertTrue("Record has no oid add by bulk insert", false);
             }
         }
@@ -135,11 +135,11 @@ public class CLBulkInsert {
         BSONObject obj1 = new BasicBSONObject();
         BSONObject obj2 = new BasicBSONObject();
         ObjectId oid = ObjectId.get();
-        obj.put(SequoiadbConstants.OID, oid);
+        obj.put(Constants.OID, oid);
         obj.put("a", 1);
-        obj1.put(SequoiadbConstants.OID, "2");
+        obj1.put(Constants.OID, "2");
         obj1.put("b", 2);
-        obj2.put(SequoiadbConstants.OID, 3);
+        obj2.put(Constants.OID, 3);
         obj2.put("c", 3);
         list = ConstantsInsert.createRecordList(1);
         list.add(obj);
@@ -157,23 +157,23 @@ public class CLBulkInsert {
         assertEquals(8, i);
         for (i = 0; i < list.size(); i++) {
             record = list.get(i);
-            if (null == record.get(SequoiadbConstants.OID)) {
+            if (null == record.get(Constants.OID)) {
                 assertTrue("Record has no oid add by bulk insert", false);
             }
             if (null != record.get("a")) {
-                ObjectId id = (ObjectId) record.get(SequoiadbConstants.OID);
+                ObjectId id = (ObjectId) record.get(Constants.OID);
                 if (false == id.toString().endsWith(oid.toString())) {
                     assertTrue("Record's oid should not be changed by bulk insert", false);
                 }
             }
             if (null != record.get("b")) {
-                String id = (String) record.get(SequoiadbConstants.OID);
+                String id = (String) record.get(Constants.OID);
                 if (false == id.toString().equals("2")) {
                     assertTrue("Record's oid should not be changed by bulk insert", false);
                 }
             }
             if (null != record.get("c")) {
-                int id = (Integer) record.get(SequoiadbConstants.OID);
+                int id = (Integer) record.get(Constants.OID);
                 if (3 != id) {
                     assertTrue("Record's oid should not be changed by bulk insert", false);
                 }

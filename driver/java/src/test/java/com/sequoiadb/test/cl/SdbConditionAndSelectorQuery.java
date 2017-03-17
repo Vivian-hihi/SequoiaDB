@@ -6,7 +6,6 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.test.common.Constants;
 import com.sequoiadb.test.common.ConstantsInsert;
-import junit.framework.Assert;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.junit.*;

@@ -146,10 +146,10 @@ public class DBCollection {
             throw new BaseException(SDBError.SDB_INVALIDARG);
         }
 
-        Object retObj = insertor.get(SequoiadbConstants.OID);
+        Object retObj = insertor.get(SdbConstants.OID);
         if (retObj == null) {
             ObjectId objId = ObjectId.get();
-            insertor.put(SequoiadbConstants.OID, objId);
+            insertor.put(SdbConstants.OID, objId);
             retObj = objId;
         }
 
@@ -206,14 +206,14 @@ public class DBCollection {
         BSONObject modifer = new BasicBSONObject();
         // if user don't specify main keys, use default one "_id"
         if (mainKeys.isEmpty()) {
-            Object id = obj.get(SequoiadbConstants.OID);
+            Object id = obj.get(SdbConstants.OID);
             if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew())) {
                 if (id != null && id instanceof ObjectId)
                     ((ObjectId) id).notNew();
                 insert(obj);
             } else {
                 // build condtion
-                matcher.put(SequoiadbConstants.OID, id);
+                matcher.put(SdbConstants.OID, id);
                 // build rule
                 modifer.put("$set", obj);
                 upsert(matcher, modifer, null);
@@ -287,14 +287,14 @@ public class DBCollection {
         if (mainKeys.isEmpty()) {
             while (ite != null && ite.hasNext()) {
                 obj = ite.next();
-                Object id = obj.get(SequoiadbConstants.OID);
+                Object id = obj.get(SdbConstants.OID);
                 if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew())) {
                     if (id != null && id instanceof ObjectId)
                         ((ObjectId) id).notNew();
                     insert(obj);
                 } else {
                     // build condtion
-                    matcher.put(SequoiadbConstants.OID, id);
+                    matcher.put(SdbConstants.OID, id);
                     // build rule
                     modifer.put("$set", obj);
                     upsert(matcher, modifer, null);
@@ -525,7 +525,7 @@ public class DBCollection {
      */
     public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint)
         throws BaseException {
-        _update(SequoiadbConstants.FLG_UPDATE_UPSERT, matcher, modifier, hint);
+        _update(SdbConstants.FLG_UPDATE_UPSERT, matcher, modifier, hint);
     }
 
     /**
@@ -552,7 +552,7 @@ public class DBCollection {
             if (hint != null) {
                 newHint.putAll(hint);
             }
-            newHint.put(SequoiadbConstants.FIELD_NAME_SET_ON_INSERT, setOnInsert);
+            newHint.put(SdbConstants.FIELD_NAME_SET_ON_INSERT, setOnInsert);
         } else {
             newHint = hint;
         }
@@ -600,11 +600,11 @@ public class DBCollection {
         flag |= DBQuery.FLG_QUERY_EXPLAIN;
         BSONObject innerHint = new BasicBSONObject();
         if (null != hint) {
-            innerHint.put(SequoiadbConstants.FIELD_NAME_HINT, hint);
+            innerHint.put(SdbConstants.FIELD_NAME_HINT, hint);
         }
 
         if (null != options) {
-            innerHint.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+            innerHint.put(SdbConstants.FIELD_NAME_OPTIONS, options);
         }
 
         return query(matcher, selector, orderBy, innerHint, skipRows,
@@ -928,7 +928,7 @@ public class DBCollection {
      */
     public DBCursor getIndexes() throws BaseException {
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+        obj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
 
         AdminRequest request = new AdminRequest(AdminCommand.GET_INDEXES, null, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -960,21 +960,21 @@ public class DBCollection {
                 throw new BaseException(SDBError.SDB_INVALIDARG, "update can't be empty");
             }
 
-            modify.put(SequoiadbConstants.FIELD_NAME_OP,
-                SequoiadbConstants.FIELD_OP_VALUE_UPDATE);
-            modify.put(SequoiadbConstants.FIELD_NAME_OP_UPDATE, update);
-            modify.put(SequoiadbConstants.FIELD_NAME_RETURNNEW, returnNew);
+            modify.put(SdbConstants.FIELD_NAME_OP,
+                SdbConstants.FIELD_OP_VALUE_UPDATE);
+            modify.put(SdbConstants.FIELD_NAME_OP_UPDATE, update);
+            modify.put(SdbConstants.FIELD_NAME_RETURNNEW, returnNew);
         } else {
-            modify.put(SequoiadbConstants.FIELD_NAME_OP,
-                SequoiadbConstants.FIELD_OP_VALUE_REMOVE);
-            modify.put(SequoiadbConstants.FIELD_NAME_OP_REMOVE, true);
+            modify.put(SdbConstants.FIELD_NAME_OP,
+                SdbConstants.FIELD_OP_VALUE_REMOVE);
+            modify.put(SdbConstants.FIELD_NAME_OP_REMOVE, true);
         }
 
         BSONObject newHint = new BasicBSONObject();
         if (hint != null) {
             newHint.putAll(hint);
         }
-        newHint.put(SequoiadbConstants.FIELD_NAME_MODIFY, modify);
+        newHint.put(SdbConstants.FIELD_NAME_MODIFY, modify);
 
         flag |= DBQuery.FLG_QUERY_MODIFY;
         return query(matcher, selector, orderBy, newHint,
@@ -1075,11 +1075,11 @@ public class DBCollection {
         }
 
         BSONObject condition = new BasicBSONObject();
-        condition.put(SequoiadbConstants.IXM_INDEXDEF + "."
-            + SequoiadbConstants.IXM_NAME, name);
+        condition.put(SdbConstants.IXM_INDEXDEF + "."
+            + SdbConstants.IXM_NAME, name);
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+        obj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
 
         AdminRequest request = new AdminRequest(AdminCommand.GET_INDEXES, condition, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -1116,17 +1116,17 @@ public class DBCollection {
         }
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.IXM_KEY, key);
-        obj.put(SequoiadbConstants.IXM_NAME, name);
-        obj.put(SequoiadbConstants.IXM_UNIQUE, isUnique);
-        obj.put(SequoiadbConstants.IXM_ENFORCED, enforced);
+        obj.put(SdbConstants.IXM_KEY, key);
+        obj.put(SdbConstants.IXM_NAME, name);
+        obj.put(SdbConstants.IXM_UNIQUE, isUnique);
+        obj.put(SdbConstants.IXM_ENFORCED, enforced);
 
         BSONObject createObj = new BasicBSONObject();
-        createObj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
-        createObj.put(SequoiadbConstants.FIELD_INDEX, obj);
+        createObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
+        createObj.put(SdbConstants.FIELD_INDEX, obj);
 
         BSONObject hint = new BasicBSONObject();
-        hint.put(SequoiadbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE,
+        hint.put(SdbConstants.IXM_FIELD_NAME_SORT_BUFFER_SIZE,
             sortBufferSize);
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_INDEX, createObj, hint);
@@ -1179,7 +1179,7 @@ public class DBCollection {
     public void createIndex(String name, BSONObject key, boolean isUnique,
                             boolean enforced) throws BaseException {
         createIndex(name, key, isUnique, enforced,
-            SequoiadbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
+            SdbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
     }
 
     /**
@@ -1200,7 +1200,7 @@ public class DBCollection {
             k = (BSONObject) JSON.parse(key);
         }
         createIndex(name, k, isUnique, enforced,
-            SequoiadbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
+            SdbConstants.IXM_SORT_BUFFER_DEFAULT_SIZE);
     }
 
     /**
@@ -1211,17 +1211,17 @@ public class DBCollection {
      */
     public void createIdIndex(BSONObject options) throws BaseException {
         BSONObject tmp = new BasicBSONObject();
-        tmp.put(SequoiadbConstants.FIELD_NAME_NAME,
-            SequoiadbConstants.SDB_ALTER_CRT_ID_INDEX);
+        tmp.put(SdbConstants.FIELD_NAME_NAME,
+            SdbConstants.SDB_ALTER_CRT_ID_INDEX);
         if (options == null || options.isEmpty()) {
-            tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, null);
+            tmp.put(SdbConstants.FIELD_NAME_ARGS, null);
         } else {
-            tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, options);
+            tmp.put(SdbConstants.FIELD_NAME_ARGS, options);
         }
 
 
         BSONObject innerOptions = new BasicBSONObject();
-        innerOptions.put(SequoiadbConstants.FIELD_NAME_ALTER, tmp);
+        innerOptions.put(SdbConstants.FIELD_NAME_ALTER, tmp);
         alterCollection(innerOptions);
     }
 
@@ -1233,12 +1233,12 @@ public class DBCollection {
      */
     public void dropIdIndex() throws BaseException {
         BSONObject tmp = new BasicBSONObject();
-        tmp.put(SequoiadbConstants.FIELD_NAME_NAME,
-            SequoiadbConstants.SDB_ALTER_DROP_ID_INDEX);
-        tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, null);
+        tmp.put(SdbConstants.FIELD_NAME_NAME,
+            SdbConstants.SDB_ALTER_DROP_ID_INDEX);
+        tmp.put(SdbConstants.FIELD_NAME_ARGS, null);
 
         BSONObject options = new BasicBSONObject();
-        options.put(SequoiadbConstants.FIELD_NAME_ALTER, tmp);
+        options.put(SdbConstants.FIELD_NAME_ALTER, tmp);
         alterCollection(options);
     }
 
@@ -1253,8 +1253,8 @@ public class DBCollection {
         index.put("", name);
 
         BSONObject dropObj = new BasicBSONObject();
-        dropObj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
-        dropObj.put(SequoiadbConstants.FIELD_INDEX, index);
+        dropObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
+        dropObj.put(SdbConstants.FIELD_INDEX, index);
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_INDEX, dropObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -1316,9 +1316,9 @@ public class DBCollection {
      */
     public long getCount(BSONObject matcher, BSONObject hint) throws BaseException {
         BSONObject newHint = new BasicBSONObject();
-        newHint.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+        newHint.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
         if (null != hint) {
-            newHint.put(SequoiadbConstants.FIELD_NAME_HINT, hint);
+            newHint.put(SdbConstants.FIELD_NAME_HINT, hint);
         }
 
         AdminRequest request = new AdminRequest(AdminCommand.GET_COUNT, matcher, newHint);
@@ -1335,7 +1335,7 @@ public class DBCollection {
 
         DBCursor cursor = new DBCursor(response, sequoiadb);
         BSONObject object = cursor.getNext();
-        return (Long) object.get(SequoiadbConstants.FIELD_TOTAL);
+        return (Long) object.get(SdbConstants.FIELD_TOTAL);
     }
 
     /**
@@ -1361,12 +1361,12 @@ public class DBCollection {
         }
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_TARGET, destGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_SPLITQUERY, splitCondition);
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+        obj.put(SdbConstants.FIELD_NAME_SOURCE, sourceGroupName);
+        obj.put(SdbConstants.FIELD_NAME_TARGET, destGroupName);
+        obj.put(SdbConstants.FIELD_NAME_SPLITQUERY, splitCondition);
         if (null != splitEndCondition) {
-            obj.put(SequoiadbConstants.FIELD_NAME_SPLITENDQUERY, splitEndCondition);
+            obj.put(SdbConstants.FIELD_NAME_SPLITENDQUERY, splitEndCondition);
         }
 
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
@@ -1401,10 +1401,10 @@ public class DBCollection {
         }
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_TARGET, destGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_SPLITPERCENT, percent);
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+        obj.put(SdbConstants.FIELD_NAME_SOURCE, sourceGroupName);
+        obj.put(SdbConstants.FIELD_NAME_TARGET, destGroupName);
+        obj.put(SdbConstants.FIELD_NAME_SPLITPERCENT, percent);
 
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -1447,13 +1447,13 @@ public class DBCollection {
         }
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        obj.put(SequoiadbConstants.FIELD_NAME_ASYNC, true);
-        obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_TARGET, destGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_SPLITQUERY, splitCondition);
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+        obj.put(SdbConstants.FIELD_NAME_ASYNC, true);
+        obj.put(SdbConstants.FIELD_NAME_SOURCE, sourceGroupName);
+        obj.put(SdbConstants.FIELD_NAME_TARGET, destGroupName);
+        obj.put(SdbConstants.FIELD_NAME_SPLITQUERY, splitCondition);
         if (null != splitEndCondition) {
-            obj.put(SequoiadbConstants.FIELD_NAME_SPLITENDQUERY, splitEndCondition);
+            obj.put(SdbConstants.FIELD_NAME_SPLITENDQUERY, splitEndCondition);
         }
 
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
@@ -1474,13 +1474,13 @@ public class DBCollection {
         }
 
         BSONObject result = cursor.getNext();
-        boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
+        boolean flag = result.containsField(SdbConstants.FIELD_NAME_TASKID);
         if (!flag) {
             throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
         }
 
         sequoiadb.upsertCache(collectionFullName);
-        long taskid = (Long) result.get(SequoiadbConstants.FIELD_NAME_TASKID);
+        long taskid = (Long) result.get(SdbConstants.FIELD_NAME_TASKID);
         return taskid;
     }
 
@@ -1502,11 +1502,11 @@ public class DBCollection {
         }
 
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        obj.put(SequoiadbConstants.FIELD_NAME_ASYNC, true);
-        obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_TARGET, destGroupName);
-        obj.put(SequoiadbConstants.FIELD_NAME_SPLITPERCENT, percent);
+        obj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+        obj.put(SdbConstants.FIELD_NAME_ASYNC, true);
+        obj.put(SdbConstants.FIELD_NAME_SOURCE, sourceGroupName);
+        obj.put(SdbConstants.FIELD_NAME_TARGET, destGroupName);
+        obj.put(SdbConstants.FIELD_NAME_SPLITPERCENT, percent);
 
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -1525,14 +1525,14 @@ public class DBCollection {
         }
 
         BSONObject result = cursor.getNext();
-        boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
+        boolean flag = result.containsField(SdbConstants.FIELD_NAME_TASKID);
         if (!flag) {
             throw new BaseException(SDBError.SDB_CAT_TASK_NOTFOUND);
         }
 
         sequoiadb.upsertCache(collectionFullName);
 
-        long taskid = (Long) result.get(SequoiadbConstants.FIELD_NAME_TASKID);
+        long taskid = (Long) result.get(SdbConstants.FIELD_NAME_TASKID);
         return taskid;
     }
 
@@ -1632,8 +1632,8 @@ public class DBCollection {
         }
 
         BSONObject newOptions = new BasicBSONObject();
-        newOptions.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        newOptions.put(SequoiadbConstants.FIELD_NAME_SUBCLNAME, subClFullName);
+        newOptions.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+        newOptions.put(SdbConstants.FIELD_NAME_SUBCLNAME, subClFullName);
         newOptions.putAll(options);
 
         AdminRequest request = new AdminRequest(AdminCommand.ATTACH_CL, newOptions);
@@ -1662,8 +1662,8 @@ public class DBCollection {
         }
 
         BSONObject options = new BasicBSONObject();
-        options.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-        options.put(SequoiadbConstants.FIELD_NAME_SUBCLNAME, subClFullName);
+        options.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+        options.put(SdbConstants.FIELD_NAME_SUBCLNAME, subClFullName);
 
         AdminRequest request = new AdminRequest(AdminCommand.DETACH_CL, options);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -1697,26 +1697,26 @@ public class DBCollection {
         }
 
         BSONObject newObj = new BasicBSONObject();
-        if (!options.containsField(SequoiadbConstants.FIELD_NAME_ALTER)) {
-            newObj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-            newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+        if (!options.containsField(SdbConstants.FIELD_NAME_ALTER)) {
+            newObj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
+            newObj.put(SdbConstants.FIELD_NAME_OPTIONS, options);
         } else {
-            Object tmpAlter = options.get(SequoiadbConstants.FIELD_NAME_ALTER);
+            Object tmpAlter = options.get(SdbConstants.FIELD_NAME_ALTER);
             if (tmpAlter instanceof BasicBSONObject) {
-                newObj.put(SequoiadbConstants.FIELD_NAME_ALTER, tmpAlter);
+                newObj.put(SdbConstants.FIELD_NAME_ALTER, tmpAlter);
             } else {
                 throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
             }
-            newObj.put(SequoiadbConstants.FIELD_NAME_ALTER_TYPE,
-                SequoiadbConstants.SDB_ALTER_CL);
-            newObj.put(SequoiadbConstants.FIELD_NAME_VERSION,
-                SequoiadbConstants.SDB_ALTER_VERSION);
-            newObj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+            newObj.put(SdbConstants.FIELD_NAME_ALTER_TYPE,
+                SdbConstants.SDB_ALTER_CL);
+            newObj.put(SdbConstants.FIELD_NAME_VERSION,
+                SdbConstants.SDB_ALTER_VERSION);
+            newObj.put(SdbConstants.FIELD_NAME_NAME, collectionFullName);
 
-            if (options.containsField(SequoiadbConstants.FIELD_NAME_OPTIONS)) {
-                Object tmpOptions = options.get(SequoiadbConstants.FIELD_NAME_OPTIONS);
+            if (options.containsField(SdbConstants.FIELD_NAME_OPTIONS)) {
+                Object tmpOptions = options.get(SdbConstants.FIELD_NAME_OPTIONS);
                 if (tmpOptions instanceof BasicBSONObject) {
-                    newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, tmpOptions);
+                    newObj.put(SdbConstants.FIELD_NAME_OPTIONS, tmpOptions);
                 } else {
                     throw new BaseException(SDBError.SDB_INVALIDARG, options.toString());
                 }
@@ -1759,7 +1759,7 @@ public class DBCollection {
      */
     public DBCursor listLobs() throws BaseException {
         BSONObject obj = new BasicBSONObject();
-        obj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+        obj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
 
         AdminRequest request = new AdminRequest(AdminCommand.LIST_LOBS, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
@@ -1828,7 +1828,7 @@ public class DBCollection {
      */
     public void removeLob(ObjectId lobId) throws BaseException {
         BSONObject removeObj = new BasicBSONObject();
-        removeObj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+        removeObj.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
         removeObj.put(DBLobImpl.FIELD_NAME_LOB_OID, lobId);
 
         LobRemoveRequest request = new LobRemoveRequest(removeObj);
@@ -1850,7 +1850,7 @@ public class DBCollection {
      */
     public void truncate() throws BaseException {
         BSONObject query = new BasicBSONObject();
-        query.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+        query.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
 
         AdminRequest request = new AdminRequest(AdminCommand.TRUNCATE, query);
         SdbReply response = sequoiadb.requestAndResponse(request);
