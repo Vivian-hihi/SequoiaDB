@@ -230,7 +230,7 @@ public class CursorTest {
 		}
 		try{
 			arr = cursor2.getNextRaw();
-			assertTrue(arr == null);
+			assertNotNull(arr);
 		}catch(BaseException e){
 			System.out.println("3:" + e.getErrorCode());
 			assertTrue(e.getErrorType().equals("SDB_RTN_CONTEXT_NOTEXIST"));
