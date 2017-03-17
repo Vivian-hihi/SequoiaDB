@@ -138,7 +138,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * @note this API works only when the pool is enabled and the connect
      * strategy is ConnectStrategy.LOCAL,
      * otherwise, return 0.
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public int getLocalAddrNum() {
         return super.getLocalAddrNum();
@@ -156,7 +156,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
     /**
      * @fn void removeCoord(String url)
      * @brief Remove coord address with the format "hostname:port" or "ip:port".
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public void removeCoord(String url) throws BaseException {
         super.removeCoord(url);
@@ -167,7 +167,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * @throws BaseException
      * @fn DatasourceOptions getDatasourceOptions()
      * @brief Get a copy of the connection pool options
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public DatasourceOptions getDatasourceOptions() throws BaseException {
         return super.getDatasourceOptions();
@@ -178,7 +178,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * @throws com.sequoiadb.Exception.BaseException
      * @fn void updateDatasourceOptions(DatasourceOptions dsOpt)
      * @brief Update connection pool options.
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public void updateDatasourceOptions(DatasourceOptions dsOpt) throws BaseException {
         super.updateDatasourceOptions(dsOpt);
@@ -191,7 +191,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * @fn void enableDatasource()
      * @brief Enable data source.
      * @note When maxCount is 0, set it to be the default value(500).
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public void enableDatasource() {
         super.enableDatasource();
@@ -207,7 +207,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * the connections again. When a getting request comes,
      * the pool build and return a connection; When a connection
      * is put back, the pool disconnect it directly.
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public void disableDatasource() {
         super.disableDatasource();
@@ -234,7 +234,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * @throws InterruptedException                  Actually, nothing happen. Throw this for compatibility reason.
      * @fn Sequoiadb getConnection(long timeout)
      * @brief Get a connection from current connection pool.
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public Sequoiadb getConnection(long timeout) throws BaseException, InterruptedException {
         return super.getConnection(timeout);
@@ -248,7 +248,7 @@ public class SequoiadbDatasource extends SequoiadbDatasourceImpl {
      * @note When the data source is enable, we can't double release
      * one connection, and we can't offer a connection which is
      * not belong to the pool.
-     * @since v1.12.6 & v2.2
+     * @since 2.2
      */
     public void releaseConnection(Sequoiadb sdb) throws BaseException {
         super.releaseConnection(sdb);

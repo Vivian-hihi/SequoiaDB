@@ -446,7 +446,7 @@ public class Sequoiadb implements Closeable {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void releaseResource()
      * @brief Release the resource of the connection.
-     * @since v1.2.6 && v2.2
+     * @since 2.2
      */
     public void releaseResource() {
         // let the receive buffer shrink to default value
@@ -457,7 +457,7 @@ public class Sequoiadb implements Closeable {
      * @return return true when the socket has been
      * @fn boolean isClosed()
      * @brief Whether the socket has been closed or not.
-     * @since v1.2.6 && v2.2
+     * @since 2.2
      */
     public boolean isClosed() {
         if (connection == null)
