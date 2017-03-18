@@ -1,6 +1,4 @@
-##连接##
-
-  1.部署web应用使用的JNDI数据源，将pg对应的驱动jar包放到tomcat服务器的/usr/local/apache-tomcat-7.0.68/lib目录下，可以去官网下载对应版本 [http://jdbc.postgresql.org/download.html](http://jdbc.postgresql.org/download.html)
+1.部署web应用使用的JNDI数据源，将pg对应的驱动jar包放到tomcat服务器的/usr/local/apache-tomcat-7.0.68/lib目录下，可以去官网下载对应版本 [http://jdbc.postgresql.org/download.html](http://jdbc.postgresql.org/download.html)
 
   2.配置JNDI,在/usr/local/apache-tomcat-7.0.68/conf/context.xml文件中新增内容如下：
 
@@ -24,7 +22,7 @@
   auth：由容器进行授权及管理，指的用户名和密码是否可以在容器上生效。<br/>
   type：此名称所代表的类型，现在为javax.sql.DataSource。<br/>
   maxActive：表示一个数据库在此服务器上所能打开的最大连接数。<br/>
-  maxIdle：表示一个数据库在此服务器上维持的最小连接数。<br/>
+  maxId：表示一个数据库在此服务器上维持的最小连接数。<br/>
   maxWait：最大等待时间。10000毫秒。<br/>
   username：数据库连接的用户名。<br/>
   password：数据库连接的密码。<br/>
