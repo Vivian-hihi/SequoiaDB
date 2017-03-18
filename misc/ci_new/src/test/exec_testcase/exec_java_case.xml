@@ -57,11 +57,16 @@
          </then>
       </if>
       
-      <countstr str="&lt;/failure&gt;" resultproperty="fail_end_num">
-         <path-elements>
-            <fileset dir="${testcase_dir}/output/junitreports" includes="**/*.xml"/>
-         </path-elements>
-      </countstr>
+      <if>
+         <available file="${testcase_dir}/output/junitreports" type="dir"/>
+         <then>
+            <countstr str="&lt;/failure&gt;" resultproperty="fail_end_num">
+               <path-elements>
+                  <fileset dir="${testcase_dir}/output/junitreports" includes="**/*.xml"/>
+               </path-elements>
+            </countstr>
+         </then>
+      </if>
 
       <if>
          <and>
