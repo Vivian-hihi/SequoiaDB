@@ -95,7 +95,7 @@
 
 4. 添加JBoss后台访问用户
 
-    进入bin目录执行add_user.sh
+    进入bin目录执行add-user.sh
 
     ```lang-javascript
     $ cd /opt/jboss/bin
