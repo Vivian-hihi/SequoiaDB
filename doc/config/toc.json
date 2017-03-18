@@ -3160,17 +3160,9 @@
          "contents": [
             {
                "id": 1489720079,
-               "dir": "overview",
+               "file": "overview",
                "cn": "概述",
-               "en": "overview",
-               "contents": [
-                  {
-                     "id": 1489720080,
-                     "file": "overview",
-                     "cn": "概述",
-                     "en": "overview"
-                  }
-               ]
+               "en": "overview"
             },
             {
                "id": 1489720081,
