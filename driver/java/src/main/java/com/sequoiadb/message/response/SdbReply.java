@@ -29,7 +29,7 @@ public class SdbReply extends CommonResponse {
 
     @Override
     protected void decodeCommonBody(ByteBuffer in) {
-        if (in.hasRemaining()) {
+        if (flag == 0 && in.hasRemaining()) {
             resultSet = new ResultSet(in, returnedNum);
         }
     }

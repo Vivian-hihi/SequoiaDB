@@ -20,6 +20,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.SDBError;
 import com.sequoiadb.message.MsgOpCode;
 import com.sequoiadb.message.request.*;
+import com.sequoiadb.message.response.CommonResponse;
 import com.sequoiadb.message.response.SdbReply;
 import com.sequoiadb.message.response.SdbResponse;
 import com.sequoiadb.message.response.SysInfoResponse;
@@ -402,10 +403,11 @@ public class Sequoiadb implements Closeable {
         AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.Verify);
         SdbReply response = requestAndResponse(request);
 
-        int flag = response.getFlag();
-        if (flag != 0) {
+        try {
+            reportIfError(response, userName);
+        } catch (Exception e){
             connection.close();
-            throw new BaseException(SDBError.getSDBError(flag), "failed to authenticate, user is" + userName);
+            throw e;
         }
     }
 
@@ -422,11 +424,7 @@ public class Sequoiadb implements Closeable {
 
         AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.CreateUser);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(SDBError.getSDBError(flag), "failed to create user " + username);
-        }
+        reportIfError(response, username);
     }
 
     /**
@@ -438,11 +436,7 @@ public class Sequoiadb implements Closeable {
     public void removeUser(String username, String password) throws BaseException {
         AuthRequest request = new AuthRequest(username, password, AuthRequest.AuthType.DeleteUser);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(SDBError.getSDBError(flag), "failed to remove user " + username);
-        }
+        reportIfError(response, username);
     }
 
     /**
@@ -581,10 +575,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_CS, obj);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0)
-            throw new BaseException(flag);
+        reportIfError(response);
         upsertCache(csName);
         return new CollectionSpace(this, csName);
     }
@@ -605,12 +596,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_CS, options);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
-
+        reportIfError(response);
         removeCache(csName);
     }
 
@@ -644,12 +630,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.LOAD_CS, newOptions);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
-
+        reportIfError(response);
         upsertCache(csName);
     }
 
@@ -683,11 +664,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.UNLOAD_CS, newOptions);
         SdbReply response = requestAndResponse(request);
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
-
+        reportIfError(response);
         removeCache(csName);
     }
 
@@ -714,12 +691,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.RENAME_CS, matcher);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
-
+        reportIfError(response);
         removeCache(oldName);
         upsertCache(newName);
     }
@@ -760,10 +732,7 @@ public class Sequoiadb implements Closeable {
     public void sync(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.SYNC_DB, options);
         SdbReply response = requestAndResponse(request);
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -822,7 +791,8 @@ public class Sequoiadb implements Closeable {
             removeCache(csName);
             return false;
         } else {
-            throw new BaseException(flag, csName);
+            reportIfError(response, csName);
+            return false; // make compiler happy
         }
     }
 
@@ -906,11 +876,7 @@ public class Sequoiadb implements Closeable {
     public void resetSnapshot() throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.RESET_SNAPSHOT);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -949,7 +915,7 @@ public class Sequoiadb implements Closeable {
                 String msg = "query = " + query +
                     ", selector = " + selector +
                     ", orderBy = " + orderBy;
-                throw new BaseException(SDBError.getSDBError(flags), msg);
+                reportIfError(response, msg);
             }
         }
 
@@ -968,10 +934,7 @@ public class Sequoiadb implements Closeable {
     public void flushConfigure(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.EXPORT_CONFIG, options);
         SdbReply response = requestAndResponse(request);
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -983,11 +946,7 @@ public class Sequoiadb implements Closeable {
     public void execUpdate(String sql) throws BaseException {
         SQLRequest request = new SQLRequest(sql);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag, sql);
-        }
+        reportIfError(response, sql);
     }
 
     /**
@@ -1003,10 +962,10 @@ public class Sequoiadb implements Closeable {
 
         int flag = response.getFlag();
         if (flag != 0) {
-            if (flag == SDBError.SDB_DMS_EOC.getErrorCode())
+            if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
-            else {
-                throw new BaseException(flag, sql);
+            } else {
+                reportIfError(response, sql);
             }
         }
 
@@ -1094,7 +1053,7 @@ public class Sequoiadb implements Closeable {
                 String msg = "matcher = " + matcher +
                     ", selector = " + selector +
                     ", orderBy = " + orderBy;
-                throw new BaseException(SDBError.getSDBError(flag), msg);
+                reportIfError(response, msg);
             }
         }
 
@@ -1135,11 +1094,7 @@ public class Sequoiadb implements Closeable {
     public void beginTransaction() throws BaseException {
         TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Begin);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1151,11 +1106,7 @@ public class Sequoiadb implements Closeable {
     public void commit() throws BaseException {
         TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Commit);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1167,11 +1118,7 @@ public class Sequoiadb implements Closeable {
     public void rollback() throws BaseException {
         TransactionRequest request = new TransactionRequest(TransactionRequest.TransactionType.Rollback);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1192,11 +1139,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_PROCEDURE, options);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1215,11 +1158,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_PROCEDURE, options);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1261,8 +1200,8 @@ public class Sequoiadb implements Closeable {
         int flag = response.getFlag();
         // if something wrong with the eval operation, not throws exception here
         if (flag != 0) {
-            if (response.getReturnedNum() > 0) {
-                evalResult.errmsg = response.getResultSet().getNext();
+            if (response.getErrorObj() != null) {
+                evalResult.errmsg = response.getErrorObj();
             }
             return evalResult;
         } else {
@@ -1307,11 +1246,7 @@ public class Sequoiadb implements Closeable {
     public void backupOffline(BSONObject options) throws BaseException {
         AdminRequest request = new AdminRequest(AdminCommand.BACKUP_OFFLINE, options);
         SdbReply response = requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (flags != 0) {
-            throw new BaseException(flags);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1358,7 +1293,7 @@ public class Sequoiadb implements Closeable {
                     ", selector = " + selector +
                     ", orderBy = " + orderBy +
                     ", options = " + options;
-                throw new BaseException(SDBError.getSDBError(flags), msg);
+                reportIfError(response, msg);
             }
         }
 
@@ -1394,11 +1329,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_BACKUP, options);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1442,11 +1373,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.WAIT_TASK, newObj);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1469,11 +1396,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CANCEL_TASK, newObj);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1550,11 +1473,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.SET_SESSION_ATTRIBUTE, newObj);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1630,11 +1549,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_DOMAIN, newObj);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
         return new Domain(this, domainName);
     }
 
@@ -1654,11 +1569,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_DOMAIN, newObj);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     /**
@@ -1774,11 +1685,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag, rgName);
-        }
+        reportIfError(response, rgName);
         return getReplicaGroup(rgName);
     }
 
@@ -1794,11 +1701,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag, rgName);
-        }
+        reportIfError(response, rgName);
     }
 
     private long getNextRequestId() {
@@ -1817,11 +1720,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.ACTIVE_GROUP, rg);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag, rgName);
-        }
+        reportIfError(response, rgName);
     }
 
     /**
@@ -1853,11 +1752,7 @@ public class Sequoiadb implements Closeable {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_CATALOG_GROUP, obj);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     private String getListCommand(int listType) {
@@ -1942,7 +1837,7 @@ public class Sequoiadb implements Closeable {
         return buffer;
     }
 
-    private void checkResponse(SdbRequest request, SdbResponse response) {
+    private void validateResponse(SdbRequest request, SdbResponse response) {
         if ((request.opCode() | MsgOpCode.RESP_MASK) != response.opCode()) {
             throw new BaseException(SDBError.SDB_UNKNOWN_MESSAGE,
                 ("request=" + request.opCode() + " response=" + response.opCode()));
@@ -1983,12 +1878,59 @@ public class Sequoiadb implements Closeable {
         ByteBuffer out = encodeRequest(request);
         ByteBuffer in = sendAndReceive(out);
         T response = decodeResponse(in, tClass);
-        checkResponse(request, response);
+        validateResponse(request, response);
         return response;
     }
 
     SdbReply requestAndResponse(SdbRequest request) {
         return requestAndResponse(request, SdbReply.class);
+    }
+
+    private String getErrorDetail(BSONObject errorObj, Object errorMsg) {
+        String detail = null;
+
+        if (errorObj != null) {
+            String serverDetail = (String) errorObj.get("detail");
+            if (serverDetail != null && !serverDetail.isEmpty()) {
+                detail = serverDetail;
+            }
+        }
+
+        if (errorMsg != null) {
+            if (detail != null && !detail.isEmpty()) {
+                detail += ", " + errorMsg.toString();
+            } else {
+                detail = errorMsg.toString();
+            }
+        }
+
+        return detail;
+    }
+
+    // errorMsg Object to avoid unnecessary toString() invoke when no error happened
+    void reportIfError(CommonResponse response, Object errorMsg) throws BaseException {
+        if (response.getFlag() != 0) {
+            BSONObject errorObj = response.getErrorObj();
+            String detail = getErrorDetail(errorObj, errorMsg);
+            if (detail != null && !detail.isEmpty()) {
+                throw new BaseException(response.getFlag(), detail);
+            } else {
+                throw new BaseException(response.getFlag());
+            }
+        }
+    }
+
+    // dependent implementation but not invoke reportIfError(r,o) to avoid duplicate stack trace
+    void reportIfError(CommonResponse response) throws BaseException {
+        if (response.getFlag() != 0) {
+            BSONObject errorObj = response.getErrorObj();
+            String detail = getErrorDetail(errorObj, null);
+            if (detail != null && !detail.isEmpty()) {
+                throw new BaseException(response.getFlag(), detail);
+            } else {
+                throw new BaseException(response.getFlag());
+            }
+        }
     }
 
     private ByteOrder getSysInfo() {
@@ -2008,11 +1950,7 @@ public class Sequoiadb implements Closeable {
         long[] contextIds = new long[]{-1};
         KillContextRequest request = new KillContextRequest(contextIds);
         SdbReply response = requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
+        reportIfError(response);
     }
 
     @Override

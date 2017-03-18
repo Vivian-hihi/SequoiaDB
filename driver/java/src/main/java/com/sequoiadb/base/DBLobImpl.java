@@ -155,11 +155,7 @@ class DBLobImpl implements DBLob {
 
         LobOpenRequest request = new LobOpenRequest(openLob, flags);
         LobOpenResponse response = _sdb.requestAndResponse(request, LobOpenResponse.class);
-
-        int flag = response.getFlag();
-        if (0 != flag) {
-            throw new BaseException(SDBError.getSDBError(flag), openLob.toString());
-        }
+        _sdb.reportIfError(response, openLob);
 
         BSONObject obj = response.getMetaInfo();
         _size = (Long) obj.get(FIELD_NAME_LOB_SIZE);
@@ -216,12 +212,7 @@ class DBLobImpl implements DBLob {
 
         LobCloseRequest request = new LobCloseRequest(_contextID);
         SdbReply response = _sdb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag);
-        }
-
+        _sdb.reportIfError(response);
         _isOpened = false;
     }
 
@@ -513,11 +504,10 @@ class DBLobImpl implements DBLob {
         LobReadResponse response = _sdb.requestAndResponse(request, LobReadResponse.class);
 
         int rc = response.getFlag();
-        // meet the end of the lob
         if (rc == SDBError.SDB_EOF.getErrorCode()) {
-            return -1;
+            return -1; // meet the end of the lob
         } else if (rc != 0) {
-            throw new BaseException(rc);
+            _sdb.reportIfError(response);
         }
 
         long offsetInEngine = response.getOffset();

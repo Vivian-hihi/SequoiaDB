@@ -338,14 +338,8 @@ public class ReplicaGroup {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            String msg = "node = " + hostName + ":" + port +
-                ", configure = " + configure;
-            throw new BaseException(SDBError.getSDBError(flag), msg);
-        }
-
+        String msg = "node = " + hostName + ":" + port + ", configure = " + configure;
+        sequoiadb.reportIfError(response, msg);
         return getNode(hostName, port);
     }
 
@@ -382,13 +376,8 @@ public class ReplicaGroup {
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            String msg = "node = " + hostName + ":" + port +
-                ", configure = " + configure;
-            throw new BaseException(SDBError.getSDBError(flag), msg);
-        }
+        String msg = "node = " + hostName + ":" + port + ", configure = " + configure;
+        sequoiadb.reportIfError(response, msg);
     }
 
     /**
@@ -422,14 +411,10 @@ public class ReplicaGroup {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            String msg = "node = " + hostName + ":" + port +
-                ", dbPath = " + dbPath +
-                ", configure = " + configure;
-            throw new BaseException(SDBError.getSDBError(flag), msg);
-        }
+        String msg = "node = " + hostName + ":" + port +
+            ", dbPath = " + dbPath +
+            ", configure = " + configure;
+        sequoiadb.reportIfError(response, msg);
         return getNode(hostName, port);
     }
 
@@ -465,14 +450,10 @@ public class ReplicaGroup {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            String msg = "node = " + hostName + ":" + port +
-                ", dbPath = " + dbPath +
-                ", configure = " + configure;
-            throw new BaseException(SDBError.getSDBError(flag), msg);
-        }
+        String msg = "node = " + hostName + ":" + port +
+            ", dbPath = " + dbPath +
+            ", configure = " + configure;
+        sequoiadb.reportIfError(response, msg);
         return getNode(hostName, port);
     }
 
@@ -505,13 +486,9 @@ public class ReplicaGroup {
 
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_NODE, config);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            String msg = "node = " + hostName + ":" + port +
-                ", configure = " + configure;
-            throw new BaseException(SDBError.getSDBError(flag), msg);
-        }
+        String msg = "node = " + hostName + ":" + port +
+            ", configure = " + configure;
+        sequoiadb.reportIfError(response, msg);
     }
 
     /**
@@ -522,15 +499,11 @@ public class ReplicaGroup {
      */
     public void start() throws BaseException {
         BSONObject groupName = new BasicBSONObject();
-        groupName.put(SdbConstants.FIELD_NAME_GROUPNAME, this.name);
+        groupName.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
 
         AdminRequest request = new AdminRequest(AdminCommand.ACTIVE_GROUP, groupName);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag, this.name);
-        }
+        sequoiadb.reportIfError(response, name);
     }
 
     /**
@@ -541,15 +514,11 @@ public class ReplicaGroup {
      */
     public void stop() throws BaseException {
         BSONObject groupName = new BasicBSONObject();
-        groupName.put(SdbConstants.FIELD_NAME_GROUPNAME, this.name);
+        groupName.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
 
         AdminRequest request = new AdminRequest(AdminCommand.SHUTDOWN_GROUP, groupName);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag, this.name);
-        }
+        sequoiadb.reportIfError(response, name);
     }
 
     /**

@@ -16,6 +16,9 @@
 
 package com.sequoiadb.message.response;
 
+import com.sequoiadb.util.Helper;
+import org.bson.BSONObject;
+
 import java.nio.ByteBuffer;
 
 public abstract class CommonResponse extends SdbResponse {
@@ -24,6 +27,7 @@ public abstract class CommonResponse extends SdbResponse {
     protected int flag;
     protected int startFrom;
     protected int returnedNum;
+    private BSONObject errorObj;
 
     protected CommonResponse() {
         length = FIXED_LENGTH;
@@ -45,13 +49,23 @@ public abstract class CommonResponse extends SdbResponse {
         return returnedNum;
     }
 
+    public BSONObject getErrorObj() {
+        return errorObj;
+    }
+
     @Override
     protected void decodeBody(ByteBuffer in) {
         contextId = in.getLong();
         flag = in.getInt();
         startFrom = in.getInt();
         returnedNum = in.getInt();
-        decodeCommonBody(in);
+        if (flag == 0) {
+            decodeCommonBody(in);
+        } else {
+            if (in.hasRemaining()) {
+                errorObj = Helper.decodeBSONObject(in);
+            }
+        }
     }
 
     protected abstract void decodeCommonBody(ByteBuffer in);

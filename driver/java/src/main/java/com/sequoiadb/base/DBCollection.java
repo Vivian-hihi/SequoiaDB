@@ -155,12 +155,7 @@ public class DBCollection {
 
         InsertRequest request = new InsertRequest(collectionFullName, insertor);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (flags != 0) {
-            throw new BaseException(flags, insertor.toString());
-        }
-
+        sequoiadb.reportIfError(response, insertor);
         sequoiadb.upsertCache(collectionFullName);
         return retObj;
     }
@@ -366,12 +361,7 @@ public class DBCollection {
 
         InsertRequest request = new InsertRequest(collectionFullName, insertor, flag, ensureOID);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (flags != 0) {
-            throw new BaseException(SDBError.getSDBError(flags), insertor.toString());
-        }
-
+        sequoiadb.reportIfError(response, insertor);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -435,13 +425,10 @@ public class DBCollection {
         throws BaseException {
         DeleteRequest request = new DeleteRequest(collectionFullName, matcher, hint);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "matcher = " + matcher + ", hint = " + hint;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
-
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -869,7 +856,7 @@ public class DBCollection {
                     ", hint = " + hint +
                     ", skipRows = " + skipRows +
                     ", returnRows = " + returnRows;
-                throw new BaseException(SDBError.getSDBError(flags), msg);
+                sequoiadb.reportIfError(response, msg);
             }
         }
 
@@ -938,7 +925,7 @@ public class DBCollection {
             if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                throw new BaseException(flags);
+                sequoiadb.reportIfError(response);
             }
         }
 
@@ -1089,7 +1076,7 @@ public class DBCollection {
             if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                throw new BaseException(flags);
+                sequoiadb.reportIfError(response);
             }
         }
         sequoiadb.upsertCache(collectionFullName);
@@ -1132,12 +1119,11 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_INDEX, createObj, hint);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "name = " + name +
                 ", key = " + key +
                 ", isUnique = " + isUnique;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1258,12 +1244,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_INDEX, dropObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (flags != 0) {
-            throw new BaseException(flags, name);
-        }
-
+        sequoiadb.reportIfError(response, name);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1324,11 +1305,10 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.GET_COUNT, matcher, newHint);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "condition = " + matcher +
                 ", hint = " + hint;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1372,13 +1352,12 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
                 ", destGroupName = " + destGroupName +
                 ", splitCondition = " + splitCondition +
                 ", splitEndCondition = " + splitEndCondition;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1409,12 +1388,11 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
                 ", destGroupName = " + destGroupName +
                 ", percent = " + percent;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1459,13 +1437,12 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
                 ", destGroupName = " + destGroupName +
                 ", splitCondition = " + splitCondition +
                 ", splitEndCondition = " + splitEndCondition;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         DBCursor cursor = new DBCursor(response, sequoiadb);
@@ -1511,12 +1488,11 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.SPLIT, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "sourceGroupName = " + sourceGroupName +
                 ", destGroupName = " + destGroupName +
                 ", percent = " + percent;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         DBCursor cursor = new DBCursor(response, sequoiadb);
@@ -1556,7 +1532,7 @@ public class DBCollection {
             if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                throw new BaseException(SDBError.getSDBError(flags), objs.toString());
+                sequoiadb.reportIfError(response, objs);
             }
         }
 
@@ -1606,7 +1582,7 @@ public class DBCollection {
                     ", orderBy = " + orderBy +
                     ", skipRows = " + skipRows +
                     ", returnRows = " + returnRows;
-                throw new BaseException(SDBError.getSDBError(flags), msg);
+                sequoiadb.reportIfError(response, msg);
             }
         }
 
@@ -1639,11 +1615,10 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.ATTACH_CL, newOptions);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (0 != flags) {
+        if (response.getFlag() != 0) {
             String msg = "subCollectionName = " + subClFullName +
                 ", options = " + options;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1667,12 +1642,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.DETACH_CL, options);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (0 != flags) {
-            throw new BaseException(flags, subClFullName);
-        }
-
+        sequoiadb.reportIfError(response, subClFullName);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1726,12 +1696,7 @@ public class DBCollection {
 
         AdminRequest request = new AdminRequest(AdminCommand.ALTER_COLLECTION, newObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (0 != flags) {
-            throw new BaseException(SDBError.getSDBError(flags), options.toString());
-        }
-
+        sequoiadb.reportIfError(response, options);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1740,12 +1705,11 @@ public class DBCollection {
         UpdateRequest request = new UpdateRequest(collectionFullName, matcher, modifier, hint, flag);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
+        if (response.getFlag() != 0) {
             String msg = "matcher = " + matcher +
                 ", modifier = " + modifier +
                 ", hint = " + hint;
-            throw new BaseException(SDBError.getSDBError(flags), msg);
+            sequoiadb.reportIfError(response, msg);
         }
 
         sequoiadb.upsertCache(collectionFullName);
@@ -1764,12 +1728,12 @@ public class DBCollection {
         AdminRequest request = new AdminRequest(AdminCommand.LIST_LOBS, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
 
-        int flags = response.getFlag();
-        if (flags != 0) {
-            if (flags == SDBError.SDB_DMS_EOC.getErrorCode()) {
+        int flag = response.getFlag();
+        if (flag != 0) {
+            if (flag == SDBError.SDB_DMS_EOC.getErrorCode()) {
                 return null;
             } else {
-                throw new BaseException(flags);
+                sequoiadb.reportIfError(response);
             }
         }
 
@@ -1833,12 +1797,7 @@ public class DBCollection {
 
         LobRemoveRequest request = new LobRemoveRequest(removeObj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (0 != flag) {
-            throw new BaseException(SDBError.getSDBError(flag), removeObj.toString());
-        }
-
+        sequoiadb.reportIfError(response, removeObj);
         sequoiadb.upsertCache(collectionFullName);
     }
 
@@ -1849,17 +1808,12 @@ public class DBCollection {
      * @brief truncate the collection
      */
     public void truncate() throws BaseException {
-        BSONObject query = new BasicBSONObject();
-        query.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
+        BSONObject options = new BasicBSONObject();
+        options.put(SdbConstants.FIELD_COLLECTION, collectionFullName);
 
-        AdminRequest request = new AdminRequest(AdminCommand.TRUNCATE, query);
+        AdminRequest request = new AdminRequest(AdminCommand.TRUNCATE, options);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flags = response.getFlag();
-        if (flags != 0) {
-            throw new BaseException(SDBError.getSDBError(flags), query.toString());
-        }
-
+        sequoiadb.reportIfError(response, options);
         sequoiadb.upsertCache(collectionFullName);
     }
 }

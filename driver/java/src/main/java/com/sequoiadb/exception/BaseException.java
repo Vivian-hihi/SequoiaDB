@@ -16,7 +16,6 @@
 
 package com.sequoiadb.exception;
 
-
 import java.util.Arrays;
 
 public class BaseException extends RuntimeException {
@@ -31,7 +30,7 @@ public class BaseException extends RuntimeException {
      * @param error  The enumeration object of sequoiadb error.
      * @param detail The error detail.
      * @param e      The exception used to build exception chain.
-     * @since v2.8
+     * @since 2.8
      */
     public BaseException(SDBError error, String detail, Throwable e) {
         super(e);
@@ -42,7 +41,7 @@ public class BaseException extends RuntimeException {
     /**
      * @param error  The enumeration object of sequoiadb error.
      * @param detail The error detail.
-     * @since v2.8
+     * @since 2.8
      */
     public BaseException(SDBError error, String detail) {
         this(error, detail, null);
@@ -51,7 +50,7 @@ public class BaseException extends RuntimeException {
     /**
      * @param error The enumeration object of sequoiadb error.
      * @param e     The exception used to build exception chain.
-     * @since v2.8
+     * @since 2.8
      */
     public BaseException(SDBError error, Throwable e) {
         this(error, null, e);
@@ -59,7 +58,7 @@ public class BaseException extends RuntimeException {
 
     /**
      * @param error The enumeration object of sequoiadb error.
-     * @since v2.8
+     * @since 2.8
      */
     public BaseException(SDBError error) {
         this(error, null, null);
@@ -68,7 +67,7 @@ public class BaseException extends RuntimeException {
 
     /**
      * @param errCode The error code return by engine.
-     * @since v2.8
+     * @since 2.8
      */
     public BaseException(int errCode) {
         this(SDBError.getSDBError(errCode));
@@ -78,7 +77,7 @@ public class BaseException extends RuntimeException {
     /**
      * @param errCode The error code return by engine.
      * @param detail  The error detail.
-     * @since v2.8
+     * @since 2.8
      */
     public BaseException(int errCode, String detail) {
         this(SDBError.getSDBError(errCode), detail, null);
@@ -86,7 +85,7 @@ public class BaseException extends RuntimeException {
 
     /**
      * @param errorType The error type.
-     * @deprecated since v2.8
+     * @deprecated
      */
     public BaseException(String errorType, Object... objs) {
         try {
@@ -100,7 +99,7 @@ public class BaseException extends RuntimeException {
 
     /**
      * @param errorCode The error code return by engine.
-     * @deprecated since v2.8
+     * @deprecated
      */
     public BaseException(int errorCode, Object... objs) {
         this(SDBError.getSDBError(errorCode), Arrays.toString(objs));
@@ -113,7 +112,7 @@ public class BaseException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        if (detail != null && detail != "") {
+        if (detail != null && !detail.isEmpty()) {
             if (error != null) {
                 return error.toString() + ", detail: " + detail;
             } else {

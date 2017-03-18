@@ -26,8 +26,10 @@ public abstract class SingleTestCase extends TestCase {
 
     @AfterClass
     public static void tearDownTestCase() {
-        sdb.disconnect();
-        sdb = null;
+        if (sdb != null) {
+            sdb.disconnect();
+            sdb = null;
+        }
         TestCase.tearDownTestCase();
     }
 }

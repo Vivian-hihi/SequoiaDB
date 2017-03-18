@@ -110,8 +110,10 @@ public class CollectionSpace {
         } else if (flag == SDBError.SDB_DMS_NOTEXIST.getErrorCode()) {
             sequoiadb.removeCache(collectionFullName);
             return false;
-        } else
-            throw new BaseException(flag);
+        } else {
+            sequoiadb.reportIfError(response);
+            return false; // make compiler happy
+        }
     }
 
     /**
@@ -171,13 +173,8 @@ public class CollectionSpace {
 
         AdminRequest request = new AdminRequest(AdminCommand.CREATE_CL, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            String msg = "collection = " + collectionFullName +
-                ", options = " + options;
-            throw new BaseException(SDBError.getSDBError(flag), msg);
-        }
+        String msg = "collection = " + collectionFullName + ", options = " + options;
+        sequoiadb.reportIfError(response, msg);
         sequoiadb.upsertCache(collectionFullName);
         return new DBCollection(sequoiadb, this, collectionName);
     }
@@ -212,12 +209,7 @@ public class CollectionSpace {
 
         AdminRequest request = new AdminRequest(AdminCommand.DROP_CL, obj);
         SdbReply response = sequoiadb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            throw new BaseException(flag, collectionName);
-        }
-
+        sequoiadb.reportIfError(response, collectionName);
         sequoiadb.removeCache(collectionFullName);
     }
 }

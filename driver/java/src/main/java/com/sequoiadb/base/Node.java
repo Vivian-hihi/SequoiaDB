@@ -33,7 +33,7 @@ public class Node {
     private String nodeName;
     private int id;
     private ReplicaGroup rg;
-    private Sequoiadb ddb;
+    private Sequoiadb sequoiadb;
 
     Node(String hostName, int port, int nodeId, ReplicaGroup rg) {
         this.rg = rg;
@@ -98,7 +98,7 @@ public class Node {
      * @brief Disconnect from current node.
      */
     public void disconnect() throws BaseException {
-        ddb.disconnect();
+        sequoiadb.disconnect();
     }
 
     /**
@@ -108,9 +108,9 @@ public class Node {
      * @brief Connect to current node with the same username and password.
      */
     public Sequoiadb connect() throws BaseException {
-        ddb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
+        sequoiadb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
             rg.getSequoiadb().getPassword());
-        return ddb;
+        return sequoiadb;
     }
 
     /**
@@ -122,8 +122,8 @@ public class Node {
      * @brief Connect to current node with username and password.
      */
     public Sequoiadb connect(String username, String password) throws BaseException {
-        ddb = new Sequoiadb(hostName, port, username, password);
-        return ddb;
+        sequoiadb = new Sequoiadb(hostName, port, username, password);
+        return sequoiadb;
     }
 
     /**
@@ -132,7 +132,7 @@ public class Node {
      * @brief Get the Sequoiadb of current node.
      */
     public Sequoiadb getSdb() {
-        return ddb;
+        return sequoiadb;
     }
 
     /**
@@ -174,20 +174,17 @@ public class Node {
         obj.put(SdbConstants.FIELD_NAME_NODEID, id);
 
         AdminRequest request = new AdminRequest(AdminCommand.SNAP_DATABASE, obj);
-        SdbReply response = ddb.requestAndResponse(request);
+        SdbReply response = sequoiadb.requestAndResponse(request);
 
         int flag = response.getFlag();
-        NodeStatus status;
         if (flag != 0) {
             if (flag == SDBError.SDB_NET_CANNOT_CONNECT.getErrorCode()) {
-                status = NodeStatus.SDB_NODE_INACTIVE;
-                return status;
+                return NodeStatus.SDB_NODE_INACTIVE;
             } else {
-                throw new BaseException(flag);
+                sequoiadb.reportIfError(response);
             }
         }
-        status = NodeStatus.SDB_NODE_ACTIVE;
-        return status;
+        return NodeStatus.SDB_NODE_ACTIVE;
     }
 
     /**
@@ -217,12 +214,8 @@ public class Node {
 
         String cmd = start ? AdminCommand.STARTUP_NODE : AdminCommand.SHUTDOWN_NODE;
         AdminRequest request = new AdminRequest(cmd, config);
-        SdbReply response = ddb.requestAndResponse(request);
-
-        int flag = response.getFlag();
-        if (flag != 0) {
-            String msg = "node = " + hostName + ":" + port;
-            throw new BaseException(SDBError.getSDBError(flag), msg);
-        }
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        String msg = "node = " + hostName + ":" + port;
+        sequoiadb.reportIfError(response, msg);
     }
 }
