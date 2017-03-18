@@ -17,9 +17,9 @@
 
 ##安装配置##
 
-1. postgresql 的安装部署
+1. postgresql的安装部署
 
- 参照[Postgresql部署](connector\postgresql\deployment.md)
+ 参照[Postgresql部署](connector/postgresql/deployment.md)
 
 2. 配置JDK环境变量
 
