@@ -4,10 +4,12 @@
 
 ##安装配置##
 
-从IBM官网下载 WebSphere 的试用版，将下载的安装包 was.cd.70011.trial.base.opt.linux.ia32.tar.gz 拷贝到安装服务器上。
->**Note:**  
->1）WebSphere安装包所在路径以 /opt/web/packet 为例；  
->2）WebSphere安装目录以 /opt/IBM/WebSphere/AppServer 为例；
+从IBM官网下载 WebSphere 的试用版，将下载的安装包拷贝到安装服务器上。
+
+   >**Note:**  
+   >1）以WebSphere试用版 **was.cd.70011.trial.base.opt.linux.ia32.tar.gz** 为例；  
+   >2）WebSphere安装包所在路径以 /opt/web/packet 为例；  
+   >3）WebSphere安装目录以 /opt/IBM/WebSphere/AppServer 为例；
 
 1. 解压并安装
 
