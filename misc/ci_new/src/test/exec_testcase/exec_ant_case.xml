@@ -108,7 +108,7 @@
             </else>
          </if>
          
-         <replace file="@{report}" token='TESTCASE_TYPE' value='${TESTCASE_TYPE}'/>
+         <replace file="@{report}" token='TESTCASE_TYPE' value='${testcase_type}'/>
          <replace file="@{report}" token='TESTSUIT_NAME' value='${suitname}'/>
          <replace file="@{report}" token='TESTCASE_NAME' value='${casename}'/>
          <replace file="@{report}" token='0000' value='${total_time}'/>
