@@ -1,4 +1,3 @@
-#安装web应用#
 ##新建应用程序##
 
 1. 选择 **应用程序**，点击 **新建应用程序**，点击 **新建企业应用程序**
@@ -6,8 +5,10 @@
    ![](webserverapp/websphere/app_1.jpg)
 
 2. 选择本地的war包，点击 **下一步**
-   >**Note:**   
-   >此处的war包文件来自打开浏览器的客户机  
+
+   > **Note:**   
+   > 此处的war包文件来自打开浏览器的客户机 
+ 
    ![](webserverapp/websphere/app_2.jpg)
 
 3. 点击 **下一步**
@@ -49,8 +50,9 @@
    ![](webserverapp/websphere/app_11.jpg)
 
 3. 输入应用程序对应的URL，确认结果
-   >**Note:**   
-   >该示例从SequoiaSQL中获取当前实例中的所有数据库名
+
+   > **Note:**   
+   > 该示例从SequoiaSQL中获取当前实例中的所有数据库名
 
    ![](webserverapp/websphere/app_12.jpg)
 

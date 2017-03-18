@@ -1,6 +1,9 @@
-#环境准备#
+##环境准备##
+
 请参考[WebSphere Application Server detailed system requirements](http://www-01.ibm.com/support/docview.wss?rs=180&uid=swg27006921)，检查是否满足WebSphere安装的软硬件要求。
-#安装配置#
+
+##安装配置##
+
 从IBM官网下载 WebSphere 的试用版，将下载的安装包 was.cd.70011.trial.base.opt.linux.ia32.tar.gz 拷贝到安装服务器上。
 >**Note:**  
 >1）WebSphere安装包所在路径以 /opt/web/packet 为例；  
@@ -62,6 +65,6 @@ suse113-1:/opt/web/packet/WAS # ./install
 
   ![](webserverapp/websphere/install_12.jpg)
 
-14. 服务自启动，并且提示安装校验完成，表示完成安装（可关闭窗口）
+14. 服务自启动，并且提示安装校验完成，表示完成安装（完成后窗口可关闭）
 
   ![](webserverapp/websphere/install_13.jpg)

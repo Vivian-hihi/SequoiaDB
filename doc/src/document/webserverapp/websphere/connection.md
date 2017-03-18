@@ -1,4 +1,4 @@
-#数据库连接配置
+##数据库连接配置##
 服务启动成功后，通过浏览器登录控制台，输入 **用户标识** 和 **密码**，点击 **登录**
 
    > **Note:**  
@@ -18,7 +18,7 @@
 
    ![](webserverapp/websphere/ds_3.jpg)
 
-3. 数据库类型选择 **用户定义的**， **实现类名**输入“org.postgresql.jdbc2.optional.ConnectionPool”， **名称**输入“sdb JDBC Provider”，点击 **下一步**
+3.  **数据库类型**选择“用户定义的”， **实现类名**输入“org.postgresql.jdbc2.optional.ConnectionPool”， **名称**输入“sdb JDBC Provider”，点击 **下一步**
 
    ![](webserverapp/websphere/ds_4.jpg)
 
