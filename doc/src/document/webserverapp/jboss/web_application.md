@@ -1,4 +1,3 @@
-##web应用##
 
 1. eclipse中创建Java web项目(如HelloEJB)，导出war包
 
@@ -16,7 +15,7 @@
 
 
 4. 在浏览器上输入http://ip:port/项目名，如http://192.168.31.8:8080/HelloEJB/，
-网页上输出数据库的主板本号说明成功部署。
+网页上输出数据库的主版本号说明成功部署。
 
    ![查看运行效果](webserverapp/jboss/web-6.png)
 
