@@ -361,7 +361,7 @@ public class DBCollection {
 
         InsertRequest request = new InsertRequest(collectionFullName, insertor, flag, ensureOID);
         SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response, insertor);
+        sequoiadb.reportIfError(response);
         sequoiadb.upsertCache(collectionFullName);
     }
 
