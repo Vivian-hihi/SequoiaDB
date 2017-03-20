@@ -11,6 +11,11 @@
          <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
       </classpath>
    </taskdef>
+   <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF" >
+      <classpath>
+         <pathelement location="${basedir}/lib/STAFAnt.jar" />
+      </classpath>
+   </taskdef>
    <include file="${basedir}/src/solve_result/get_build_status.xml" as="status_file"/>
    <property file="${basedir}/src/conf/test.conf" />
    
@@ -156,18 +161,38 @@
    </target>
   
    <target name="reliability_test_build">
+      <var name="TEST_TYPE" value="RELIABILITYTEST"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/> 
+      <getplatform resultProperty="plat_form"/>
+
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+      <!--ready in remote host-->
+      <for list="${testhost_list}" param="testhost" parallel="true">
+         <sequential>            
+            <staf location="local" service="FS"
+                  request="COPY DIRECTORY ${basedir} TODIRECTORY ${CI_WORK_DIR}/script TOMACHINE @{testhost} RECURSE "
+                  throwBuildException="1"/>
+            <staf location="@{testhost}" service="FS"
+                  request="DELETE ENTRY ${testscript_log} CONFIRM"/>
+         </sequential>
+      </for>
+      
       <for list="1,2" param="serialnumber">
-         <sequential>
+         <sequential>      
+            <delete file="${WORKSPACE}/.SDBDEBUGVERSION" failonerror="false"/>         
+            <antcall target="get_sdb_version_type" />        
             <var name="isbuild" value="true"/>
+            <!--var name="sdb_version" value="Enterprise"/-->
             <if>
                <equals arg1="@{serialnumber}" arg2="2"/>
                <then>
-                  <chmod perm="u+x" file="${srccode_dir}/bin/sequoiadb" />
-                  <exec executable="bin/sequoiadb" dir="${srccode_dir}" outputproperty="sdb_version" failonerror="true">
-                     <arg line="--version" />
-                  </exec>
+                        
                   <if>
-                     <contains string="${sdb_version}" substring="Enterprise-Debug"/>
+                     <available file="${WORKSPACE}/.SDBDEBUGVERSION" type="file"/>
+                     <then>
+                        <var name="sdb_version" unset="true"/>
+                        <var name="sdb_version" value="Enterprise-Debug"/>
+                     </then>
                      <else>
                         <var name="isbuild" unset="true"/>
                         <var name="isbuild" value="false"/>
@@ -177,12 +202,7 @@
             </if>
             <if>
                <equals arg1="${isbuild}" arg2="true"/>
-               <then>
-                  <var name="TEST_TYPE" value="RELIABILITYTEST"/>
-                  <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
-                  <getplatform resultProperty="plat_form"/>
-                  <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
-                  
+               <then>                                 
                   <if>
                      <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
                      <then>
@@ -358,6 +378,67 @@
       </sequential>
    </macrodef>
    
+   <target name="get_sdb_version_type">
+      <hostinfo prefix="host" />
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />  
+      <var name="test_remote_cmd" value="ant -f ${CI_WORK_DIR}/script/src/build.xml get_remote_sdb_version_type -DINSTALL_DIR=${INSTALL_DIR} -DWORKSPACE=${WORKSPACE} -Dcontrol_host=${host.NAME} "/>
+      <var name="iterator" value="0"/>
+      <for list="${testhost_list}" param="testhost" parallel="false">
+         <sequential>
+            <if>
+               <equals arg1="${iterator}" arg2="0"/>
+               <then>
+                  <var name="iterator" unset="true"/>
+                  <var name="iterator" value="1"/>
+                  <staf location="@{testhost}" service="PROCESS"                  
+                        request="START SHELL COMMAND  ${test_remote_cmd}, in host: @{testhost}  WAIT 10m"
+                        throwBuildException="1"/>
+                        
+                  <staf location="@{testhost}" service="PROCESS"
+                        resultPrefix="remote_exec1"
+                        request="START SHELL COMMAND ${test_remote_cmd} WAIT STDERRTOSTDOUT RETURNSTDOUT"
+                        throwBuildException="1"/>
+                  <propertyregex property="remote_exec_rc1" input="${remote_exec1.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
+                  <if>
+                     <equals arg1="${remote_exec_rc1}" arg2="0" />
+                     <else>
+                        <fail message="exec: ${test_remote_cmd}, in host: @{testhost}, return code: not 0"/>
+                     </else>
+                  </if>
+               </then>
+            </if>
+            
+         </sequential>
+      </for>
+   </target>
+   
+   <target name="get_remote_sdb_version_type">
+      <!--deafult debug get sdbversiondebug file-->
+      <if>
+          <available file="${INSTALL_DIR}/bin/sequoiadb" type="file"/>
+          <then>
+            <chmod perm="u+x" file="${INSTALL_DIR}/bin/sequoiadb" />
+            <exec executable="bin/sequoiadb" dir="${INSTALL_DIR}" outputproperty="sdb_version" failonerror="true">
+               <arg line="--version" />
+            </exec>
+            <if>
+               <contains string="${sdb_version}" substring="Enterprise-Debug"/>
+               <then>
+                  <delete file="${INSTALL_DIR}/.SDBDEBUGVERSION" failonerror="false"/>
+                  <touch file="${INSTALL_DIR}/.SDBDEBUGVERSION"/>
+                  <staf location="local" service="FS"
+                     request="COPY FILE ${INSTALL_DIR}/.SDBDEBUGVERSION TODIRECTORY ${WORKSPACE}/ TOMACHINE ${control_host}"
+                     throwBuildException="1"/>
+                  <!--delete file="${INSTALL_DIR}/.SDBDEBUGVERSION" failonerror="false"/-->
+               </then>
+            </if>
+          </then>
+          <else>
+             
+          </else>
+      </if>
+
+   </target>
 
 </project>
 
