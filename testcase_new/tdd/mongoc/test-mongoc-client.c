@@ -123,7 +123,6 @@ test_mongoc_client_authenticate (void)
    database = mongoc_client_get_database (client, "test");
    //r = mongoc_database_remove_all_users (database, &error);
    r = mongoc_database_remove_user(database, username, &error);
-   MONGOC_ERROR("remove users:\"%s\"", error.message);
    ASSERT_CMPINT(r, ==, true);
    mongoc_database_destroy (database);
 
@@ -134,29 +133,25 @@ test_mongoc_client_authenticate (void)
    bson_free (uri);
 }
 
-static bool createUser(char *username)
+static bool createUser(mongoc_client_t **client, char *username)
 {
    bool r ;
    mongoc_database_t *database;
-   mongoc_client_t *client;
    bson_error_t error;
-   client = mongoc_client_new(gTestUri);
-   database = mongoc_client_get_database(client, "test");
+   *client = mongoc_client_new(gTestUri);
+   database = mongoc_client_get_database(*client, "test");
    mongoc_database_remove_user (database, username, &error);
    r = mongoc_database_add_user(database, username, "testpass", NULL, NULL, &error);
    
    mongoc_database_destroy(database);
-   mongoc_client_destroy(client);
    return r;
 }
 
-static bool dropUser(char *username)
+static bool dropUser(mongoc_client_t *client, char *username)
 {
    bool r ;
    mongoc_database_t *database;
-   mongoc_client_t *client;
    bson_error_t error;
-   client = mongoc_client_new(gTestUri);
    database = mongoc_client_get_database(client, "test");
    r = mongoc_database_remove_user(database, username, &error);
    mongoc_database_destroy(database);
@@ -170,6 +165,7 @@ test_mongoc_client_authenticate_failure (void)
    
    mongoc_collection_t *collection;
    mongoc_cursor_t *cursor;
+   mongoc_client_t *initclient;
    mongoc_client_t *client;
    const bson_t *doc;
    bson_error_t error;
@@ -179,7 +175,7 @@ test_mongoc_client_authenticate_failure (void)
    bson_t empty = BSON_INITIALIZER;
 
    username = gen_test_user ();
-   r = createUser(username);
+   r = createUser( &initclient, username);
    if (r == false) return ;
    /*
     * Try authenticating with that user.
@@ -217,7 +213,7 @@ test_mongoc_client_authenticate_failure (void)
 
    mongoc_collection_destroy(collection);
    mongoc_client_destroy(client);
-   r = dropUser(username);
+   r = dropUser(initclient,username);
    ASSERT_CMPINT (r, ==, true);
 }
 
