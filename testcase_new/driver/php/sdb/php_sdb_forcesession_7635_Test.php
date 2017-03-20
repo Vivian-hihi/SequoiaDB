@@ -70,7 +70,6 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
       while( $record = $cursor->next() )
       {
          $sessionID = $record['SessionID'] ;
-         echo 
          $find = True;
       }
       $this->assertEquals( $find, True, 'list(SDB_LIST_SESSIONS_CURRENT) ....' ) ;
@@ -82,7 +81,8 @@ class forceSessionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals( 0, $curerr['errno'], 'forceSession failed' );
      
       $curerr = $this->testdb->forceSession( $sessionID ) ;
-      $this->assertEquals( -15, $curerr['errno'], 'is exist' );
+      $ret = ( $curerr['errno'] == -16 || $curerr['errno'] == -15 ) ;
+      $this->assertEquals( True, $ret, 'is exist' );
    }
    
    public function testForceSessionWithOption()
