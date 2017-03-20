@@ -36,6 +36,15 @@
    <target name="detect_remote_env">
       <property file="${basedir}/src/conf/test.conf" />
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         <then>
+            <var name="host.NAME" value="${control_host}"/>
+         </then>
+         <else>
+            <hostinfo prefix="host" />
+         </else>
+      </if>
       <hostinfo prefix="host" />
 
       <property name="remote_cmd1" 
@@ -165,12 +174,22 @@
       <if>
          <equals arg1="${control_host}" arg2="${host.NAME}" />
          <else>
-            <staf location="local" service="FS"
-                  request="COPY FILE ${backup_fullname} TODIRECTORY ${backup_dir} TOMACHINE ${control_host}"
-                  throwBuildException="1"/>
-            <staf location="local" service="FS"
-                  request="COPY FILE ${backup_fullname2} TODIRECTORY ${backup_dir} TOMACHINE ${control_host}"
-                  throwBuildException="1"/>
+            <if>
+               <available file="${backup_fullname}" type="file"/>
+               <then>
+                  <staf location="local" service="FS"
+                        request="COPY FILE ${backup_fullname} TODIRECTORY ${backup_dir} TOMACHINE ${control_host}"
+                        throwBuildException="1"/>
+               </then>
+            </if>
+            <if>
+               <available file="${backup_fullname2}" type="file"/>
+               <then>
+                  <staf location="local" service="FS"
+                        request="COPY FILE ${backup_fullname2} TODIRECTORY ${backup_dir} TOMACHINE ${control_host}"
+                        throwBuildException="1"/>
+               </then>
+            </if>
          </else>
       </if>
    </target>
