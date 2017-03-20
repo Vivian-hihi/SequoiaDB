@@ -406,7 +406,7 @@ public class Sequoiadb implements Closeable {
         try {
             reportIfError(response, userName);
         } catch (Exception e){
-            connection.close();
+            close();
             throw e;
         }
     }
@@ -483,7 +483,7 @@ public class Sequoiadb implements Closeable {
     public boolean isValid() throws BaseException {
         // client not connect to database or client
         // disconnect from database
-        if (connection == null || connection.isClosed()) {
+        if (isClosed()) {
             return false;
         }
 
@@ -508,7 +508,7 @@ public class Sequoiadb implements Closeable {
         if (options == null) {
             throw new BaseException(SDBError.SDB_INVALIDARG, "options is null");
         }
-        connection.close();
+        close();
         init(getHost(), getPort(), userName, password, options);
     }
 
@@ -1484,6 +1484,9 @@ public class Sequoiadb implements Closeable {
      * data again.
      */
     public void closeAllCursors() throws BaseException {
+        if (isClosed()) {
+            return;
+        }
         InterruptRequest request = new InterruptRequest();
         sendRequest(request);
     }
@@ -1854,7 +1857,11 @@ public class Sequoiadb implements Closeable {
 
     private void sendRequest(Request request) {
         ByteBuffer buffer = encodeRequest(request);
-        connection.send(buffer);
+        if (!isClosed()) {
+            connection.send(buffer);
+        } else {
+            throw new BaseException(SDBError.SDB_NET_NOT_CONNECT);
+        }
     }
 
     private <T extends SdbResponse> T decodeResponse(ByteBuffer buffer, Class<T> tClass) {
@@ -1869,9 +1876,13 @@ public class Sequoiadb implements Closeable {
     }
 
     private ByteBuffer sendAndReceive(ByteBuffer request) {
-        connection.send(request);
-        lastUseTime = System.currentTimeMillis();
-        return receiveSdbResponse();
+        if (!isClosed()) {
+            connection.send(request);
+            lastUseTime = System.currentTimeMillis();
+            return receiveSdbResponse();
+        } else {
+            throw new BaseException(SDBError.SDB_NET_NOT_CONNECT);
+        }
     }
 
     <T extends SdbResponse> T requestAndResponse(SdbRequest request, Class<T> tClass) {
@@ -1943,8 +1954,8 @@ public class Sequoiadb implements Closeable {
     }
 
     private void killContext() {
-        if (connection == null) {
-            throw new BaseException(SDBError.SDB_NETWORK);
+        if (isClosed()) {
+            throw new BaseException(SDBError.SDB_NET_NOT_CONNECT);
         }
 
         long[] contextIds = new long[]{-1};
@@ -1955,7 +1966,7 @@ public class Sequoiadb implements Closeable {
 
     @Override
     public void close() throws BaseException {
-        if (connection == null || connection.isClosed()) {
+        if (isClosed()) {
             return;
         }
         try {

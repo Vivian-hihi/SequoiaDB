@@ -108,6 +108,9 @@ public class Node {
      * @brief Connect to current node with the same username and password.
      */
     public Sequoiadb connect() throws BaseException {
+        if (sequoiadb != null && !sequoiadb.isClosed()) {
+            sequoiadb.close();
+        }
         sequoiadb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
             rg.getSequoiadb().getPassword());
         return sequoiadb;
@@ -122,6 +125,9 @@ public class Node {
      * @brief Connect to current node with username and password.
      */
     public Sequoiadb connect(String username, String password) throws BaseException {
+        if (sequoiadb != null && !sequoiadb.isClosed()) {
+            sequoiadb.close();
+        }
         sequoiadb = new Sequoiadb(hostName, port, username, password);
         return sequoiadb;
     }
@@ -174,14 +180,14 @@ public class Node {
         obj.put(SdbConstants.FIELD_NAME_NODEID, id);
 
         AdminRequest request = new AdminRequest(AdminCommand.SNAP_DATABASE, obj);
-        SdbReply response = sequoiadb.requestAndResponse(request);
+        SdbReply response = rg.getSequoiadb().requestAndResponse(request);
 
         int flag = response.getFlag();
         if (flag != 0) {
             if (flag == SDBError.SDB_NET_CANNOT_CONNECT.getErrorCode()) {
                 return NodeStatus.SDB_NODE_INACTIVE;
             } else {
-                sequoiadb.reportIfError(response);
+                rg.getSequoiadb().reportIfError(response);
             }
         }
         return NodeStatus.SDB_NODE_ACTIVE;
@@ -214,8 +220,8 @@ public class Node {
 
         String cmd = start ? AdminCommand.STARTUP_NODE : AdminCommand.SHUTDOWN_NODE;
         AdminRequest request = new AdminRequest(cmd, config);
-        SdbReply response = sequoiadb.requestAndResponse(request);
+        SdbReply response = rg.getSequoiadb().requestAndResponse(request);
         String msg = "node = " + hostName + ":" + port;
-        sequoiadb.reportIfError(response, msg);
+        rg.getSequoiadb().reportIfError(response, msg);
     }
 }

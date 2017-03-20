@@ -58,9 +58,8 @@ public class Bug_JIRA_ {
         mydb.disconnect();
         try {
             mydb.closeAllCursors();
-            Assert.fail();
         } catch (BaseException e) {
-            Assert.assertEquals(SDBError.SDB_NOT_CONNECTED.getErrorCode(), e.getErrorCode());
+            Assert.fail(e.toString());
         }
     }
 
