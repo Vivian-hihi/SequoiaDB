@@ -410,7 +410,7 @@ TestSuite_RunTest (TestSuite *suite,       /* IN */
       _Clock_Subtract (&ts3, &ts2, &ts1);
 
       Mutex_Lock (mutex);
-      if (suite->outfile &&
+      if (suite->outfile &&o
           suite->generatexmlreport){
           char *content = malloc(sizeof(char) * 1024);
           snprintf (content, 1024, "<testcase name=\"%s\" status=\"%s\" time=\"%u.%09u\"/>",
@@ -713,6 +713,10 @@ TestSuite_RunParallel (TestSuite *suite) /* IN */
    Mutex_Init (&mutex);
 
    for (test = suite->tests; test; test = test->next) {
+      if (0 == strncmp(test->name, "Client_authenticate", strlen(test->name)) ||
+          0 == strncmp(test->name, "Client_authenticate_failure", strlen(test->name))){
+          continue ;
+      }
       count++;
    }
 
@@ -721,6 +725,10 @@ TestSuite_RunParallel (TestSuite *suite) /* IN */
    Memory_Barrier ();
 
    for (test = suite->tests, i = 0; test; test = test->next, i++) {
+      if (0 == strncmp(test->name, "Client_authenticate", strlen(test->name)) ||
+          0 == strncmp(test->name, "Client_authenticate_failure", strlen(test->name))){
+          continue ;
+      }
       info = calloc (1, sizeof *info);
       info->suite = suite;
       info->test = test;

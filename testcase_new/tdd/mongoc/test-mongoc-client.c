@@ -709,8 +709,8 @@ test_client_install (TestSuite *suite)
       /* try to validate ipv6 too */
       TestSuite_Add (suite, "Client_ipv6", test_mongoc_client_ipv6);
    }
-   // TestSuite_Add (suite, "Client_authenticate", test_mongoc_client_authenticate);
-   //TestSuite_Add (suite, "Client_authenticate_failure", test_mongoc_client_authenticate_failure);
+   TestSuite_Add (suite, "Client_authenticate", test_mongoc_client_authenticate);
+   TestSuite_Add (suite, "Client_authenticate_failure", test_mongoc_client_authenticate_failure);
    TestSuite_Add (suite, "Client_command", test_mongoc_client_command);
    //TestSuite_Add (suite, "Client_command_secondary", test_mongoc_client_command_secondary);
    TestSuite_Add (suite, "Client_preselect", test_mongoc_client_preselect);
