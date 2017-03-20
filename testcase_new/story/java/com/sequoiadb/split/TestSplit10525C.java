@@ -117,7 +117,16 @@ public class TestSplit10525C extends SdbTestBase{
                 dataDb = new Sequoiadb(url, "", "");
                 //获取cs cl
                 CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
-                DBCollection dbcl = cs.getCollection(this.clName);
+                DBCollection dbcl = null;
+                try {
+                    dbcl = cs.getCollection(this.clName);
+                } catch (BaseException e1) {
+                   if(e1.getErrorCode() == -23) {
+                       continue;
+                   } else {
+                       Assert.fail(e1.getMessage());
+                   }
+                }
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
@@ -125,11 +134,7 @@ public class TestSplit10525C extends SdbTestBase{
                 }
                 //通过从节点查询数据
                 DBCursor cursor;
-                try {
-                    cursor = dbcl.query(null,null,"{\"_id\":1}",null);
-                } catch (NullPointerException e) {
-                    continue;
-                }
+                cursor = dbcl.query(null,null,"{\"_id\":1}",null);
                 List<BSONObject> actual = new ArrayList<BSONObject>();
                 while( cursor.hasNext() ) {
                     BSONObject obj = cursor.getNext();
