@@ -20,7 +20,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
-
+import com.sequoiadb.testcommon.SdbConfigTestBase;
 
 /**
  * 1、CL压缩类型为lzw，开启事务，对CL做增删改查数据 
@@ -29,7 +29,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @author chensiqin
  * @Date 2016-12-16
  */
-public class TestCompress6668 extends SdbTestBase {
+public class TestCompress6668 extends SdbConfigTestBase {
     private Sequoiadb sdb;
     private CollectionSpace cs;
     private DBCollection cl;
