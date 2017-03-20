@@ -106,13 +106,6 @@
          </sequential>
       </for>
 
-            
-      <!--copy todir="${client_dir}/include">
-         <fileset dir="${INSTALL_DIR}/include" includes="**/*"/>
-      </copy>
-      <copy todir="${client_dir}/lib">
-         <fileset dir="${INSTALL_DIR}/lib" includes="*.so,*.a"/>
-      </copy-->
       
    </target>
    
@@ -120,15 +113,7 @@
       <property file="${CI_WORK_DIR}/src/conf/test.conf" />
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" /> 
       <property name="client_dir" location="${WORKSPACE}/sequoiadb/client" />
-      <!--staf location="local" service="FS"
-            request="COPY DIRECTORY ${INSTALL_DIR}/include TODIRECTORY ${client_dir}/include TOMACHINE ${control_host}"
-            throwBuildException="1"/>
-      <staf location="local" service="FS"
-            request="COPY DIRECTORY ${INSTALL_DIR}/include/ TODIRECTORY ${client_dir}/include TOMACHINE ${control_host}"
-            throwBuildException="1"/-->
-      <!--staf location="local" service="FS"
-            request="COPY DIRECTORY ${INSTALL_DIR}/lib TODIRECTORY ${client_dir}/lib TOMACHINE ${control_host}"
-            throwBuildException="1"/-->
+
       <delete dir="${CI_WORK_DIR}/java" failonerror="false"/>
       <mkdir dir="${CI_WORK_DIR}/java"/>
       <copy todir="${CI_WORK_DIR}/java">
@@ -137,9 +122,7 @@
       <staf location="local" service="FS"
             request="COPY DIRECTORY ${INSTALL_DIR}/java TODIRECTORY ${WORKSPACE}/sequoiadb/java TOMACHINE ${control_host} RECURSE"
             throwBuildException="1"/>
-      <!--staf location="local" service="FS"
-            request="COPY FILE ${INSTALL_DIR}/java/sequoiadb.jar TODIRECTORY ${WORKSPACE}/sequoiadb/java TOMACHINE ${control_host}"
-            throwBuildException="1"/-->
+
 
    </target>
    
@@ -162,7 +145,7 @@
       <delete dir="${CI_WORK_DIR}/testcase" failonerror="false" />
       <mkdir dir="${CI_WORK_DIR}/testcase"/>
       
-      <delete dir="${CI_WORK_DIR}/report" failonerror="false" />
+      <!--delete dir="${CI_WORK_DIR}/report" failonerror="false" /-->
       <mkdir dir="${CI_WORK_DIR}/report"/>
       
       <delete dir="${CI_WORK_DIR}/report/env_detect" failonerror="false" />
@@ -172,10 +155,6 @@
          <fileset dir="${case_basedir}" includes="reliability/**/**"/>
       </copy>
       
-      <!--mkdir /tmp/ci_reliability for testcase-->
-      <delete dir="${WORKDIR}"/>
-      <mkdir dir="${WORKDIR}"/>
-      
    </target>
    
    
@@ -183,16 +162,6 @@
       <var name="testscript_dir" value="${CI_WORK_DIR}/script/src/test" />     
       <var name="testscript_log" value="${testscript_dir}/sync_test.log" />
       
-      <!--ready in remote host-->
-      <for list="${testhost_list}" param="testhost" parallel="true">
-         <sequential>            
-            <staf location="local" service="FS"
-                  request="COPY DIRECTORY ${basedir} TODIRECTORY ${CI_WORK_DIR}/script TOMACHINE @{testhost} RECURSE"
-                  throwBuildException="1"/>
-            <staf location="@{testhost}" service="FS"
-                  request="DELETE ENTRY ${testscript_log} CONFIRM"/>
-         </sequential>
-      </for>
       
       <hostinfo prefix="host" />
       <for list="${testhost_list}" param="tmphost" parallel="false">
@@ -207,23 +176,23 @@
             </if>
          </sequential> 
       </for>
-      
-      <var name="test_remote_cmd" value="ant -f ${CI_WORK_DIR}/script/src/test/reliability_test.xml exec_remote_testcase -DTEST_TYPE=${TEST_TYPE} -DCI_WORK_DIR=${CI_WORK_DIR} -Dsdb_version=${sdb_version} -Dserial_number=${serial_number} -DTEST_TYPE=${TEST_TYPE}" />
-      <var name="iteator" value="0"/>
+
+      <var name="test_remote_cmd" value="ant -f ${CI_WORK_DIR}/script/src/test/reliability_test.xml exec_remote_testcase -DWORKDIR=${WORKDIR} -Dcontrol_host=${host.NAME} -DWORKSPACE=${WORKSPACE} -DTEST_TYPE=${TEST_TYPE} -DCI_WORK_DIR=${CI_WORK_DIR} -Dsdb_version=${sdb_version} -Dserial_number=${serial_number} -DTEST_TYPE=${TEST_TYPE}" />
+      <var name="iterator" value="0"/>
       <for list="${testhost_list}" param="testhost" parallel="false">
          <sequential>
             <if>
-               <equals arg1="${iteator}" arg2="0"/>
+               <equals arg1="${iterator}" arg2="0"/>
                <then>
-                  <var name="iteator" unset="true"/>
-                  <var name="iteator" value="1"/>
+                  <var name="iterator" unset="true"/>
+                  <var name="iterator" value="1"/>
                   <staf location="@{testhost}" service="PROCESS"                  
                         request="START SHELL COMMAND echo 'exec: ${test_remote_cmd}, in host: @{testhost}' >> ${testscript_log}  WAIT 10m"
                         throwBuildException="1"/>
                               
                   <staf location="@{testhost}" service="PROCESS"
                         resultPrefix="remote_exec"
-                        request="START SHELL COMMAND ${test_remote_cmd} STDOUTAPPEND ${testscript_log} STDERRTOSTDOUT WAIT"
+                        request="START SHELL COMMAND ${test_remote_cmd} in host: @{testhost}  WAIT 10m"
                         throwBuildException="1"/>
                   <propertyregex property="remote_exec_rc" input="${remote_exec.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>      
                   <if>
@@ -249,7 +218,9 @@
       <property name="report_basedir" value="${CI_WORK_DIR}/report" />
       <delete dir="${report_basedir}"/>
       <mkdir dir="${report_basedir}"/>
-   
+      <!--mkdir /tmp/ci_reliability for testcase-->
+      <delete dir="${WORKDIR}"/>
+      <mkdir dir="${WORKDIR}"/>
       <!--testcase/reliability testng.xml testng_release.xml-->
       <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
       
@@ -261,6 +232,11 @@
          <property name="sdb_version" value="${sdb_version}"/>
          <property name="serial_number" value="${serial_number}"/>
       </ant>
+      
+      <staf location="local" service="FS"
+            request="COPY DIRECTORY ${report_basedir} TODIRECTORY ${WORKSPACE}/report TOMACHINE ${control_host}"
+            throwBuildException="1"/>
+      
    </target>
    
 </project>
