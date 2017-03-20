@@ -20,6 +20,7 @@ import com.sequoiadb.base.DBQuery;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbConfigTestBase;
 
 /**
  * @FileName:TestTransaction7116
@@ -28,7 +29,7 @@ import com.sequoiadb.testcommon.SdbTestBase;
  * @Date 2016-09-19
  * @version 1.00
  */
-public class TestTransaction7116 extends SdbTestBase{
+public class TestTransaction7116 extends SdbConfigTestBase{
     private Sequoiadb sdb;
     private CollectionSpace cs;
     private DBCollection cl;

@@ -10,7 +10,8 @@
    <parameter name="RSRVPORTEND" value="27000" />
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
-   
+   <parameter name="CONFTOOL" value="/home/jenkins/workspace/test/sequoiadb/misc/ci_new/src/test/exec_testcase/changeConf.js" />
+      
    <test name="transaction">
      <packages> 
          <package name="com.sequoiadb.transaction"/>
