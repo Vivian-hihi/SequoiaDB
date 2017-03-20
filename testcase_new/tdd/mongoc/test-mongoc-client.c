@@ -121,7 +121,9 @@ test_mongoc_client_authenticate (void)
     * Remove all test users.
     */
    database = mongoc_client_get_database (client, "test");
-   r = mongoc_database_remove_all_users (database, &error);
+   //r = mongoc_database_remove_all_users (database, &error);
+   r = mongoc_database_remove_user(database, username, &error);
+   MONGOC_ERROR("remove users:\"%s\"", error.message);
    ASSERT_CMPINT(r, ==, true);
    mongoc_database_destroy (database);
 

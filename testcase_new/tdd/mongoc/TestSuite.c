@@ -375,7 +375,7 @@ TestSuite_RunTest (TestSuite *suite,       /* IN */
    char buf[256];
    int status;
 
-   snprintf (name, sizeof name, "%s%s", suite->name, test->name);
+   snprintf (name, sizeof name, "****%s%s", suite->name, test->name);
    name [sizeof name - 1] = '\0';
    suite->starttime = malloc(sizeof(struct timespec));
    _Clock_GetMonotonic (&ts1);
