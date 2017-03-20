@@ -1,6 +1,6 @@
 ﻿1.部署web应用使用的JNDI数据源，将pg对应的驱动jar包放到tomcat服务器的/usr/local/apache-tomcat-7.0.68/lib目录下，可以去官网下载对应版本 [http://jdbc.postgresql.org/download.html](http://jdbc.postgresql.org/download.html)
 
-  2.配置JNDI,在/usr/local/apache-tomcat-7.0.68/conf/context.xml和server.xml文件中新增内容如下：
+  2.配置JNDI,在/usr/local/apache-tomcat-7.0.68/conf/context.xml文件中新增内容如下：
 
 ```
 <Resource 
