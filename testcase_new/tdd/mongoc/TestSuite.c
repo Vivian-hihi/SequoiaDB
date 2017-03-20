@@ -410,7 +410,7 @@ TestSuite_RunTest (TestSuite *suite,       /* IN */
       _Clock_Subtract (&ts3, &ts2, &ts1);
 
       Mutex_Lock (mutex);
-      if (suite->outfile &&o
+      if (suite->outfile &&
           suite->generatexmlreport){
           char *content = malloc(sizeof(char) * 1024);
           snprintf (content, 1024, "<testcase name=\"%s\" status=\"%s\" time=\"%u.%09u\"/>",
