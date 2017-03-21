@@ -50,9 +50,17 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
      * can change both of the default value.
      * @see ConfigOptions
      * @see DatasourceOptions
+     * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
      */
+    @Deprecated
     public SequoiadbDatasource(List<String> urls, String username, String password,
                                ConfigOptions nwOpt, DatasourceOptions dsOpt) throws BaseException {
+        super(urls, username, password, nwOpt, dsOpt);
+    }
+
+    @Deprecated
+    public SequoiadbDatasource(List<String> urls, String username, String password,
+                               com.sequoiadb.net.ConfigOptions nwOpt, DatasourceOptions dsOpt) throws BaseException {
         super(urls, username, password, nwOpt, dsOpt);
     }
 
@@ -76,11 +84,17 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
      * can change both of the default value.
      * @see ConfigOptions
      * @see DatasourceOptions
-     * @deprecated use DatasourceOptions instead of SequoiadbOption
+     * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
      */
     @Deprecated
     public SequoiadbDatasource(List<String> urls, String username, String password,
                                ConfigOptions nwOpt, SequoiadbOption dsOpt) throws BaseException {
+        super(urls, username, password, nwOpt, dsOpt);
+    }
+
+    @Deprecated
+    public SequoiadbDatasource(List<String> urls, String username, String password,
+                               com.sequoiadb.net.ConfigOptions nwOpt, SequoiadbOption dsOpt) throws BaseException {
         super(urls, username, password, nwOpt, dsOpt);
     }
 
@@ -93,7 +107,9 @@ public class SequoiadbDatasource extends com.sequoiadb.datasource.SequoiadbDatas
      * @fn SequoiadbDatasource(String url, String username, String password,
      *DatasourceOptions dsOpt)
      * @brief Constructor.
+     * @deprecated Use com.sequoiadb.datasource.SequoiadbDatasource instead.
      */
+    @Deprecated
     public SequoiadbDatasource(String url, String username, String password,
                                DatasourceOptions dsOpt) throws BaseException {
         super(url, username, password, dsOpt);

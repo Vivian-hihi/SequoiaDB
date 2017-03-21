@@ -394,6 +394,15 @@ public class SequoiadbDatasource {
     }
 
     /**
+     * @deprecated use com.sequoiadb.base.ConfigOptions instead
+     */
+    @Deprecated
+    public SequoiadbDatasource(List<String> urls, String username, String password,
+                               com.sequoiadb.net.ConfigOptions nwOpt, DatasourceOptions dsOpt) throws BaseException {
+        this(urls, username, password, (ConfigOptions) nwOpt, dsOpt);
+    }
+
+    /**
      * @param url      the address of coord, can't be empty or null, e.g."ubuntu1:11810"
      * @param username the user name for logging sequoiadb
      * @param password the password for logging sequoiadb
@@ -911,8 +920,8 @@ public class SequoiadbDatasource {
      * @note When the data source is enable, we can't double release
      * one connection, and we can't offer a connection which is
      * not belong to the pool.
-     * @see releaseConnection, use releaseConnection instead
-     * @deprecated
+     * @see releaseConnection
+     * @deprecated use releaseConnection instead
      */
     public void close(Sequoiadb sdb) throws BaseException {
         releaseConnection(sdb);

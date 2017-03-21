@@ -253,7 +253,7 @@ public class Sequoiadb implements Closeable {
      */
     public Sequoiadb(String connString, String username, String password)
         throws BaseException {
-        this(connString, username, password, null);
+        this(connString, username, password, (ConfigOptions) null);
     }
 
     /**
@@ -270,6 +270,15 @@ public class Sequoiadb implements Closeable {
     public Sequoiadb(String connString, String username, String password,
                      ConfigOptions options) throws BaseException {
         init(connString, username, password, options);
+    }
+
+    /**
+     * @deprecated use com.sequoiadb.base.ConfigOptions instead
+     */
+    @Deprecated
+    public Sequoiadb(String connString, String username, String password,
+                     com.sequoiadb.net.ConfigOptions options) throws BaseException {
+        this(connString, username, password, (ConfigOptions) options);
     }
 
     /**
@@ -320,6 +329,15 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
+     * @deprecated use com.sequoiadb.base.ConfigOptions instead
+     */
+    @Deprecated
+    public Sequoiadb(List<String> connStrings, String username, String password,
+                     com.sequoiadb.net.ConfigOptions options) throws BaseException {
+        this(connStrings, username, password, (ConfigOptions) options);
+    }
+
+    /**
      * @param host     the address of coord
      * @param port     the port of coord
      * @param username the user's name of the account
@@ -349,6 +367,16 @@ public class Sequoiadb implements Closeable {
                      String username, String password,
                      ConfigOptions options) throws BaseException {
         init(host, port, username, password, options);
+    }
+
+    /**
+     * @deprecated use com.sequoiadb.base.ConfigOptions instead
+     */
+    @Deprecated
+    public Sequoiadb(String host, int port,
+                     String username, String password,
+                     com.sequoiadb.net.ConfigOptions options) throws BaseException {
+        this(host, port, username, password, (ConfigOptions) options);
     }
 
     private void init(String host, int port,
