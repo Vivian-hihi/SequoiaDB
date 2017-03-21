@@ -104,15 +104,7 @@
    
    <target name="deploy" depends="">
       <!--format host list-->
-      <if>
-         <contains string="${testhost_list}" substring=","/>
-         <then>
-            <propertyregex property="testhost_jsarr" input="${testhost_list}" regexp="," replace="','"/>
-         </then>
-         <else>
-            <var name="testhost_jsarr" value="${testhost_list}"/>
-         </else>
-      </if>
+      <propertyregex property="testhost_jsarr" input="${testhost_list}" regexp="," replace="','" defaultValue="${testhost_list}"/>
       <var name="testhost_jsarr" value="['${testhost_jsarr}']"/>
       
       <!--create dbPath-->
@@ -163,13 +155,19 @@
       <if>
          <equals arg1="${TEST_TYPE}" arg2="SYNCTEST" />
          <then>
-            <var name="diagLevel" value="3"/>
+            <var name="diagLevel" value="5"/>
+         </then>
+      </if>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="CONFIGURETEST" />
+         <then>
+            <var name="diagLevel" value="5"/>
          </then>
       </if>
       <if>
          <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST" />
          <then>
-            <var name="diagLevel" value="3"/>
+            <var name="diagLevel" value="5"/>
          </then>
       </if>
       <if>

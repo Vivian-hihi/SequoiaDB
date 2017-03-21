@@ -1,6 +1,7 @@
 <!-- ============================================================================
 @description:  exec php testcase
-@parameter:    TESTCASE_TYPE          eg: tdd_php
+@parameter:    TEST_TYPE              eg: CONFIGURETEST
+               testcase_type          eg: tdd_php
                testcase_dir           eg: /tmp/ci/testcase/tdd/php
                report_dir             eg：/tmp/ci/report/tdd_php
 @author:       Ting YU 2016-10-31
@@ -16,8 +17,8 @@
    
    <target name="main">
       <property file="${basedir}/src/conf/test.conf" />
-      <property name="sdbdir" value="${INSTALL_DIR}/bin/sdb" />            
       
+      <!--init-->
       <if>
          <available file="${testcase_dir}/phpunit.xml"/>
          <then>
@@ -36,74 +37,96 @@
             <var name="BREAK_ON_FAILURE" value="false"/>
          </else>
       </if>
-      <execallcase phpversion="php5dot4"/>
-      <execallcase phpversion="php5dot5"/>
-      <execallcase phpversion="php5dot6"/>
+      <delemptysuit testcasedir="${testcase_dir}" />
+      
+      <!--execute-->
+      <var name="processrc" value="0"/>
+      <execallcase phpversion="php5dot4" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
+      <execallcase phpversion="php5dot5" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
+      <execallcase phpversion="php5dot6" testcasedir="${testcase_dir}" reportdir="${report_dir}"/>
    </target>   
+   
+   <macrodef name="delemptysuit">       
+      <attribute name="testcasedir"/>
+      <sequential>
+         <for param="testsuit">
+            <path>
+               <dirset dir="@{testcasedir}" includes="*" excludes="tools"/>
+            </path>
+            <sequential>  
+               <var name="testcase_num" unset="true"/>
+               <resourcecount property="testcase_num">
+                  <fileset dir="@{testsuit}/" includes="*.php" />
+               </resourcecount>
+               
+               <if>
+                  <equals arg1="${testcase_num}" arg2="0"/>
+                  <then>
+                     <delete dir="@{testsuit}" failonerror="true"/>
+                  </then>
+               </if>
+            </sequential>
+         </for>
+      </sequential>
+   </macrodef>
    
    <macrodef name="execallcase">       
       <attribute name="phpversion"/>
+      <attribute name="testcasedir"/>
+      <attribute name="reportdir"/>
       <sequential>
-      <echo>${line.separator}***********begin to execute php testcases by @{phpversion}***********</echo>
-      <var name="processrc" value="0"/>
       <for param="testsuit">
          <path>
-            <dirset dir="${testcase_dir}" includes="*" excludes="tools"/>
+            <dirset dir="@{testcasedir}" includes="*" excludes="tools"/>
          </path>
-         <sequential>  
-         
-            <var name="testcase_num" unset="true"/>
-            <resourcecount property="testcase_num">
-               <fileset dir="@{testsuit}/" includes="*.php" />
-            </resourcecount>
+         <sequential>
+
+            <var name="is_continue_exec" unset="true"/>
+            <condition property="is_continue_exec" value="true" else="false">
+               <or>
+                  <equals arg1="${BREAK_ON_FAILURE}" arg2="false"/>
+                  <and>
+                     <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+                     <equals arg1="${processrc}" arg2="0"/>
+                  </and>
+               </or>
+            </condition>
             
             <if>
-               <equals arg1="${testcase_num}" arg2="0"/>
-               <else>
-                  <var name="is_continue_exec" unset="true"/>
-                  <condition property="is_continue_exec" value="true" else="false">
-                     <or>
-                        <equals arg1="${BREAK_ON_FAILURE}" arg2="false"/>
-                        <and>
-                           <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
-                           <equals arg1="${processrc}" arg2="0"/>
-                        </and>
-                     </or>
-                  </condition>
-                  <if>
-                     <equals arg1="${is_continue_exec}" arg2="true"/>
-                     <then>
-                        <processonecase reportdir="${report_dir}" 
-                                        pcsrc="processrc" 
-                                        testsuit="@{testsuit}"
-                                        phpversion="@{phpversion}"/>
-                     </then>
-                  </if>
-               </else>
+               <equals arg1="${is_continue_exec}" arg2="true"/>
+               <then>
+                  <echo>${line.separator}***********begin to execute php testcases by @{phpversion}***********</echo>
+                  <processonesuit reportdir="@{reportdir}" 
+                                  pcsrc="processrc" 
+                                  testsuit="@{testsuit}"
+                                  phpversion="@{phpversion}"/>
+               </then>
             </if>
-                      
+             
          </sequential>
       </for>
+      
       <if>
          <equals arg1="${is_continue_exec}" arg2="false"/>
          <then>
-            <touch file="${report_dir}/.TESTCASE_FAIL"/>
+            <touch file="@{reportdir}/.TESTCASE_FAIL"/>
          </then>
       </if>
-      
       </sequential>
    </macrodef>      
 
-   <macrodef name="processonecase">
+   <macrodef name="processonesuit">
       <attribute name="pcsrc"/>
       <attribute name="reportdir"/>
       <attribute name="testsuit" /> 
       <attribute name="phpversion"/>      
       <sequential>
-         <var name="testcase_name" unset="true" />
-         <basename property="testcase_name" file="@{testsuit}"/>
+         <var name="testsuit_name" unset="true" />
+         <basename property="testsuit_name" file="@{testsuit}"/>
+         <var name="testsuit_name" value="${testsuit_name}_@{phpversion}"/>
          
-         <detectenv envisok="envrc" output="env_output" />
+         <detectenv envisok="envrc" casetype="${testcase_type}" casename="${testsuit_name}"
+                    rptfullname="@{reportdir}/before_${testcase_type}_${testsuit_name}.xml" />
          
          <if>
             <and>
@@ -112,30 +135,28 @@
                   <equals arg1="${envrc}" arg2="0"/>
                </not>
             </and>
-            <then>
-               <var name="report_fullname" value="@{reportdir}/before_${testcase_type}_${testcase_name}.xml"/>
-               <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="${report_fullname}"/>
-               <replace file="${report_fullname}" token="ERROR_MESSAGE" value="${env_output}"/>
-               <replace file="${report_fullname}" token="TESTSUIT_NAME" value="detect_env"/>
-               <replace file="${report_fullname}" token="TESTCASE_TYPE" value="detect_cluster"/>
-               <replace file="${report_fullname}" token="TESTCASE_NAME" value="before_${testcase_type}_${testcase_name}"/>
-            </then>
             <else>
-               <markinlog casename="@{testsuit}_@{phpversion}" marktype="begin" sdbshell="${sdbdir}"/>
-               
-               <var name="testsuite_name" unset="true" />
-               <basename property="testsuite_name" file="@{testsuit}" />
-               <var name="testsuite_name" value="${testsuite_name}_@{phpversion}"/>
-               <hostinfo prefix="host" />
-               <var name="report_fullname" value="@{reportdir}/${testsuite_name}_${host.NAME}.xml"/>
+               <changeconf mode="before" conffullname="@{testsuit}/node.conf" 
+                           rc="conf_rc1" casetype="${testcase_type}" 
+                           rptfullname="@{reportdir}/configure_before_${testsuit_name}.xml" />
 
-               <execonesuit suitfullname="@{testsuit}" 
-                            phpver="@{phpversion}" 
-                            report="${report_fullname}"
-                            rc="caserc"/>
-               <modifyreport report="${report_fullname}" layer="${testcase_type}.${testsuite_name}" />
-               
-               <markinlog casename="@{testsuit}_@{phpversion}" marktype="end" sdbshell="${sdbdir}"/>
+               <if>
+                  <equals arg1="${conf_rc1}" arg2="0" />
+                  <then>                                  
+                     <hostinfo prefix="host" />
+                     <runonesuit  suitfullname="@{testsuit}" 
+                                  suitname="${testsuit_name}"
+                                  phpver="@{phpversion}" 
+                                  report="@{reportdir}/${testsuit_name}_${host.NAME}.xml"
+                                  casetype="${testcase_type}" 
+                                  rc="caserc"/>
+                  </then>
+               </if>
+
+               <changeconf mode="after" conffullname="@{testsuit}/node.conf.ini" 
+                           rc="conf_rc2" casetype="${testcase_type}" 
+                           rptfullname="@{reportdir}/configure_after_${testsuit_name}.xml"/>
+            
             </else>
          </if>
          
@@ -149,17 +170,23 @@
       </sequential>
    </macrodef>
    
-   <macrodef name="execonesuit">
+   <macrodef name="runonesuit">
       <attribute name="phpver"/>
       <attribute name="suitfullname" />
+      <attribute name="suitname" />
+      <attribute name="casetype" />
       <attribute name="report" />
       <attribute name="rc" />
-      <sequential> 
+      <sequential>
+         <!--before-->
          <var name="begin_time" unset="true"/>
          <tstamp>
             <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>       
 
+         <markinlog casename="@{testsuit}_@{phpversion}" marktype="begin" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+         
+         <!--execute-->
          <if>
             <equals arg1="@{phpver}" arg2="php5dot4" />
             <then>
@@ -202,30 +229,28 @@
          <echo>export LD_LIBRARY_PATH=${libxml2_dir}:${LD_LIBRARY_PATH}</echo>
          
          <var name="screen_output" unset="true"/> 
-         <var name="rc" unset="true"/> 
+         <var name="@{rc}" unset="true"/> 
          <exec executable="${php_exe}" 
                dir="@{suitfullname}" 
                timeout="1800000" 
                outputproperty="screen_output"
-               resultproperty="rc" 
+               resultproperty="@{rc}" 
                failonerror="false" >
             <arg line="${cmd}"/>
             <env key="LD_LIBRARY_PATH" path="${libxml2_dir}:${LD_LIBRARY_PATH}" /> 
          </exec>
          <echo message="${screen_output}" />
-              
+         
+         <!--after-->
+         <markinlog casename="@{testsuit}_@{phpversion}" marktype="end" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+         
          <var name="end_time" unset="true"/>
          <tstamp>
             <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
          <echo message="begin at ${begin_time}, end at ${end_time}" />
-      </sequential>
-   </macrodef>
-
-   <macrodef name="modifyreport">
-      <attribute name="report"/>
-      <attribute name="layer" />
-      <sequential>         
+         
+         <!--modify report-->
          <replaceregexp file="@{report}"
                         match='&lt;testcase name="(.*)" class="(.*)" file' 
                         replace='&lt;testcase name="\2.\1" class="\2" file' 
@@ -234,10 +259,11 @@
                         encoding="utf-8"/>            
          <replaceregexp file="@{report}"
                         match='&lt;testcase n' 
-                        replace='&lt;testcase classname="@{layer}" n' 
+                        replace='&lt;testcase classname="@{casetype}.@{suitname}" n' 
                         flags="g" 
                         byline="true" 
                         encoding="utf-8"/>
       </sequential>
    </macrodef>
+
 </project>

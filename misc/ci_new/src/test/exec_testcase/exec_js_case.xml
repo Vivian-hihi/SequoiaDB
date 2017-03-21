@@ -6,7 +6,7 @@
 @author:       Ting YU 2016-11-1
 ============================================================================= -->
 
-<project default="exec_testcase" basedir="../../../">     
+<project default="main" basedir="../../../">     
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
          <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
@@ -14,140 +14,184 @@
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
    
-   <target name="exec_testcase">
+   <target name="main">
       <property file="${basedir}/src/conf/test.conf" /> 
-      <var name="sdbdir" value="${INSTALL_DIR}/bin/sdb" />
+      
       <if>
          <isset property="BREAK_ON_FAILURE"/>
          <else>
             <var name="BREAK_ON_FAILURE" value="false"/>
          </else>
       </if>
+      
       <prefix resultproperty="prefix"/>
-      <detectenv detectfile="${testcase_dir}/lib/all_prepare.js" prefix="${prefix}" sdbshell="${sdbdir}" envisok="envrc_param"/>   
-      <var name="is_continue_exec" value="true"/>      
-      <for param="testsuit">
+      <detectenv detectfile="${testcase_dir}/lib/all_prepare.js" prefix="${prefix}" envisok="envrc"/>   
+      
+      <var name="processrc" value="0"/>    
+      <for param="suitfullname">
          <path>
             <dirset dir="${testcase_dir}" includes="*" excludes="lib"/>
          </path>
          <sequential>
-            <for param="testcase">
-               <path>
-                  <fileset dir="@{testsuit}" includes="*.js" excludes="commlib.js"/>
-               </path>
-               <sequential>
-                  <detectenv detectfile="${testcase_dir}/lib/before_usecase.js" prefix="${prefix}" 
-                             sdbshell="${sdbdir}" output="before_output" envisok="envrc_param"/>
-                  <if>
-                     <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
-                     <then>
-                        <condition property="is_continue_exec" value="true" else="false">
-                           <or>
-                              <equals arg1="${BREAK_ON_FAILURE}" arg2="false"/>
-                              <and>
-                                 <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
-                                 <equals arg1="${envrc_param}" arg2="true"/>
-                                 <not>
-                                    <equals arg1="${rc_param}" arg2="false"/>
-                                 </not>
-                              </and>
-                           </or>
-                        </condition>
-                     </then>
-                  </if>
-                  
-                  <markinlog casename ="@{testcase}" marktype="begin" sdbshell="${sdbdir}"/>
-                  
-                  <var name="testcase_name" unset="true"/>
-                  <basename property="testcase_name" file="@{testcase}" suffix=".js"/>
-                  <hostinfo prefix="host" />
-                  <var name="report_fullname" value="${report_dir}/${testcase_name}_${host.NAME}.xml"/>
-                  <if>
-                     <equals arg1="${is_continue_exec}" arg2="true"/>
-                     <then>
-                        <if>
-                           <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
-                           <then>
-                              <var name="rc_param" unset="true"/>
-                              <var name="is_continue_exec" unset="true"/>
-                           </then>
-                        </if>
-                        <execonecase jsfile="@{testcase}" prefix="${prefix}" sdbshell="${sdbdir}" report="${report_fullname}" 
-                                     beforeoutput="${before_output}" testrc="rc_param"/>
-                        
-                        <markinlog casename ="@{testcase}" marktype="end" sdbshell="${sdbdir}"/>
-                     </then>
-                  </if>
-                  <detectenv detectfile="${testcase_dir}/lib/after_usecase.js" prefix="${prefix}" sdbshell="${sdbdir}" envisok="envrc_param"/>                                  
-                  
-               </sequential>
-            </for>
-         </sequential>
-      </for>
-      <detectenv detectfile="${testcase_dir}/lib/all_clean.js" prefix="${prefix}" sdbshell="${sdbdir}" envisok="envrc_param"/>   
-      <if>
-         <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
-         <then>
+            <var name="testsuit_name" unset="true" />
+            <basename property="testsuit_name" file="@{suitfullname}"/>
+            
+            <changeconf mode="before" conffullname="@{suitfullname}/node.conf" 
+                        rc="conf_rc1" casetype="${testcase_type}" 
+                        rptfullname="${report_dir}/configure_before_${testsuit_name}.xml" />
+            
             <if>
-               <not>
-                  <equals arg1="${is_continue_exec}" arg2="true"/>
-               </not>
-               <then>
-                  <touch file="${report_dir}/.TESTCASE_FAIL"/>
+               <equals arg1="${conf_rc1}" arg2="0" />
+               <then>                                  
+                  <processonesuit suitfullname="@{suitfullname}"
+                                  prefix="${prefix}"
+                                  reportdir="${report_dir}"/>
                </then>
             </if>
-         </then>
-      </if>      
-   </target>   
 
+            <changeconf mode="after" conffullname="@{suitfullname}/node.conf.ini" 
+                        rc="conf_rc2" casetype="${testcase_type}" 
+                        rptfullname="${report_dir}/configure_after_${testsuit_name}.xml"/>
+         
+         </sequential>
+      </for>
+      
+      <detectenv detectfile="${testcase_dir}/lib/all_clean.js" prefix="${prefix}" envisok="envrc"/>   
+           
+   </target>
+
+   
 
    <macrodef name="detectenv">
-         <attribute name="sdbshell"/>
-         <attribute name="detectfile" />
-         <attribute name="prefix" />
-         <attribute name="output" default="screen_output"/>
-         <attribute name="envisok" />
-         <sequential>
-            <var name="jsdir" unset="true"/>
-            <dirname property="jsdir" file="@{detectfile}" />
-            
-            <var name="func_exist" unset="true"/>                             
-            <available property="func_exist" file="${jsdir}/func.js" /> 
-            <if>
-               <isset property="func_exist" />
-               <then>               
-                  <var name="func_option" value="${jsdir}/func.js," />
-               </then>
-               <else>
-                  <var name="func_option" value="" />
-               </else>
-            </if>          
-                    
-            <var name="cmd1" value="-f &quot;${func_option}@{detectfile}&quot;" />
-            <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='@{prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost'&quot;" />
-            <echo message="exec cmd: @{sdbshell} ${cmd1} ${cmd2}"/>      
-            <var name="@{output}" unset="true"/>
-            <var name="@{envisok}" unset="true"/>
-            <exec executable="@{sdbshell}" 
-                  timeout="1800000" 
-                  outputproperty="@{output}" 
-                  resultproperty="@{envisok}"
-                  failonerror="false">
-               <arg line="${cmd1} ${cmd2}" />
-            </exec>
-            <echo message="${@{output}}" />       
-         </sequential>
+      <attribute name="detectfile" />
+      <attribute name="prefix" />
+      <attribute name="output" default="screen_output"/>
+      <attribute name="envisok" />
+      <sequential>
+         <var name="jsdir" unset="true"/>
+         <dirname property="jsdir" file="@{detectfile}" />
+         
+         <var name="func_exist" unset="true"/>                             
+         <available property="func_exist" file="${jsdir}/func.js" /> 
+         <if>
+            <isset property="func_exist" />
+            <then>               
+               <var name="func_option" value="${jsdir}/func.js," />
+            </then>
+            <else>
+               <var name="func_option" value="" />
+            </else>
+         </if>          
+                 
+         <var name="cmd1" value="-f &quot;${func_option}@{detectfile}&quot;" />
+         <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='@{prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost'&quot;" />
+         <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}"/>      
+         <var name="@{output}" unset="true"/>
+         <var name="@{envisok}" unset="true"/>
+         <exec executable="${INSTALL_DIR}/bin/sdb" 
+               timeout="1800000" 
+               outputproperty="@{output}" 
+               resultproperty="@{envisok}"
+               failonerror="false">
+            <arg line="${cmd1} ${cmd2}" />
+         </exec>
+         <echo message="${@{output}}" />       
+      </sequential>
    </macrodef>
 
-
-   <macrodef name="execonecase">
-      <attribute name="sdbshell"/>
+   <macrodef name="processonesuit">
+      <attribute name="suitfullname"/>
+      <attribute name="reportdir"/>
+      <attribute name="prefix"/>
+      <sequential>
+      <for param="casefullname">
+         <path>
+            <fileset dir="@{suitfullname}" includes="*.js" excludes="commlib.js"/>
+         </path>
+         <sequential> 
+         
+         <var name="is_continue_exec" unset="true"/>
+         <condition property="is_continue_exec" value="true" else="false">
+            <or>
+               <equals arg1="${BREAK_ON_FAILURE}" arg2="false"/>
+               <and>
+                  <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+                  <equals arg1="${processrc}" arg2="0"/>
+               </and>
+            </or>
+         </condition>
+         
+         <if>
+            <equals arg1="${is_continue_exec}" arg2="true"/>
+            <then>
+               <processonecase reportdir="@{reportdir}" 
+                               pcsrc="processrc" 
+                               prefix="@{prefix}"
+                               casefullname="@{casefullname}"/>
+            </then>
+         </if>
+         </sequential>
+      </for>
+      
+      <if>
+         <equals arg1="${is_continue_exec}" arg2="false"/>
+         <then>
+            <touch file="@{reportdir}/.TESTCASE_FAIL"/>
+         </then>
+      </if>
+      
+      </sequential>
+   </macrodef>
+   
+   <macrodef name="processonecase">
+      <attribute name="pcsrc"/>
+      <attribute name="reportdir"/>
+      <attribute name="prefix"/>
+      <attribute name="casefullname" />   
+      <sequential>
+         <var name="testcase_name" unset="true" />
+         <basename property="testcase_name" file="@{casefullname}" suffix=".js"/>
+         
+         <detectenv detectfile="${testcase_dir}/lib/before_usecase.js" prefix="${prefix}" 
+                    output="before_output" envisok="envrc"/>
+                    
+         <if>
+            <and>
+               <equals arg1="${BREAK_ON_FAILURE}" arg2="true"/>
+               <not>
+                  <equals arg1="${envrc}" arg2="0"/>
+               </not>
+            </and>
+            <else>
+               <runonecase jsfile="@{casefullname}"
+                           prefix="${prefix}" 
+                           beforeoutput="${before_output}"
+                           report="@{reportdir}/${testcase_name}.xml"
+                           rc="caserc" />
+               
+               <detectenv detectfile="${testcase_dir}/lib/after_usecase.js" prefix="${prefix}" envisok="envrc"/>                                  
+                  
+            </else>
+         </if>
+         
+         <var name="@{pcsrc}" unset="true"/>
+         <condition property="@{pcsrc}" value="0" else="1">
+            <and>
+               <equals arg1="${envrc}" arg2="0"/>
+               <equals arg1="${caserc}" arg2="0"/>
+            </and>
+         </condition>
+      </sequential>
+   </macrodef>
+   
+   <macrodef name="runonecase">
       <attribute name="jsfile" />
       <attribute name="prefix" />
       <attribute name="report" />
       <attribute name="beforeoutput" />
-      <attribute name="testrc"/>
-      <sequential>       
+      <attribute name="rc"/>
+      <sequential>
+         <!--before-->
          <var name="jsdir" unset="true"/>
          <var name="casename" unset="true"/>
          <var name="suitname" unset="true"/>
@@ -155,7 +199,17 @@
          <basename property="casename" file="@{jsfile}" suffix=".js"/>
          <basename property="suitname" file="${jsdir}" />
          
+         <var name="begin_time" unset="true"/>
+         <tstamp>
+            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
+         </tstamp>       
+         <script language="javascript">
+            project.setProperty('start_ms', new Date().getTime());
+         </script>
 
+         <markinlog casename="@{jsfile}" marktype="begin" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+         
+         <!--execute-->
          <var name="func_exist" unset="true"/>
          <available property="func_exist" file="${jsdir}/../lib/func.js" />       
          <if>
@@ -192,26 +246,22 @@
          
          <var name="cmd1" value="-f &quot;${func_option}${commlib_option}@{jsfile}&quot;" />
          <var name="cmd2" value="-e &quot;var CHANGEDPREFIX='${prefix}';var COORDSVCNAME='${SVCNAME}';var COORDHOSTNAME='localhost';var TESTCASEDIR='${jsdir}';&quot;" />
-         <echo message="exec cmd: @{sdbshell} ${cmd1} ${cmd2}"/>      
+         <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}"/>      
          
-         <var name="begin_time" unset="true"/>
-         <tstamp>
-            <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
-         </tstamp>       
-         <script language="javascript">
-            project.setProperty('start_ms', new Date().getTime());
-         </script>
-
          <var name="screen_output" unset="true"/>
-         <var name="@{testrc}" unset="true"/>
-         <exec executable="@{sdbshell}" 
+         <var name="@{rc}" unset="true"/>
+         <exec executable="${INSTALL_DIR}/bin/sdb" 
                dir="${jsdir}" 
                timeout="${timelimit}" 
                outputproperty="screen_output" 
-               resultproperty="@{testrc}"
+               resultproperty="@{rc}"
                failonerror="false">
             <arg line="${cmd1} ${cmd2}" />
          </exec>
+         <echo message="${screen_output}" />
+         
+         <!--after-->
+         <markinlog casename="@{jsfile}" marktype="end" sdbshell="${INSTALL_DIR}/bin/sdb"/>
          
          <var name="end_time" unset="true"/>
          <tstamp>
@@ -220,31 +270,36 @@
          <script language="javascript">
             project.setProperty('total_time', ( new Date().getTime() - start_ms ) / 1000 );
          </script>
-      
-         <echo message="${screen_output}" />
          <echo message="the result code is ${rc}, begin at ${begin_time}, end at ${end_time}" />
          
-         <!--report-->
-         <hostinfo prefix="host" />
-         <echo file="@{report}" 
-               message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${suitname}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
-
+         <!--generate report-->
          <if>
-            <equals arg1="${rc}" arg2="0" />
+            <equals arg1="${@{rc}}" arg2="0" />
             <then>
-               <echo file="@{report}" 
-                     append="true" 
-                     message="&lt;testcase classname=&quot;${testcase_type}.${suitname}&quot; name=&quot;${casename}&quot; time=&quot;${total_time}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
+               <copy file="${basedir}/src/test/exec_testcase/report_succ_temple.xml" tofile="@{report}"/>
             </then>
             <else>
-               <echo file="@{report}" 
-                     append="true" 
-                     message="&lt;testcase classname=&quot;${testcase_type}.${suitname}&quot; name=&quot;${casename}&quot; time=&quot;${total_time}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;EXECUTE CMD:&#10;@{sdbshell} ${cmd1} ${cmd2}&#10;RETURN CODE: ${rc}&#10;OUTPUT MESSAGE:&#10;${screen_output}&#10;&#10;EXCUTE before_usecase.js OUTPUT MESSAGE:&#10;@{beforeoutput}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" /> 
+               <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="@{report}"/>            
             </else>
          </if>
-
-         <echo file="@{report}" message="&lt;/testsuite&gt;&#10;" append="true" />
-
+         
+         <replace file="@{report}" token='TESTCASE_TYPE' value='${testcase_type}'/>
+         <replace file="@{report}" token='TESTSUIT_NAME' value='${suitname}'/>
+         <replace file="@{report}" token='TESTCASE_NAME' value='${casename}'/>
+         <replace file="@{report}" token='0000' value='${total_time}'/>
+         
+         <if>
+            <equals arg1="${@{rc}}" arg2="0" />            
+            <else>
+               <hostinfo prefix="host" />
+               <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
+               <var name="ms2" value="EXECUTE CMD:&#10;${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}&#10;"/>
+               <var name="ms3" value="RETURN CODE: ${@{rc}}&#10;"/>
+               <var name="ms4" value="OUTPUT MESSAGE:&#10;${screen_output}&#10;&#10;"/>
+               <var name="ms5" value="EXCUTE before_usecase.js OUTPUT MESSAGE:&#10;@{beforeoutput}&#10;"/>
+               <replace file="@{report}" token="ERROR_MESSAGE" value="${ms1}${ms2}${ms3}${ms4}${ms5}"/>
+            </else>
+         </if>
       </sequential>
    </macrodef>
 

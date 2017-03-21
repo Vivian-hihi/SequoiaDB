@@ -61,6 +61,9 @@
          <case value="LARGEDATATEST">
             <var name="srcxmlfile" value="largedata.xml"/>
          </case>
+         <case value="CONFIGURETEST">
+            <var name="srcxmlfile" value="configure.xml"/>
+         </case>
          <case value="SYNCTEST">
             <var name="srcxmlfile" value="sync.xml"/>
          </case>
@@ -297,6 +300,9 @@
                <fileset dir="@{srcdir}/lib" includes="**/*.jar"/>               
             </classpath>
          </javac>
+         <copy todir="@{srcdir}/build">
+            <fileset dir="@{srcdir}" includes="**/node.conf"/>
+         </copy>
       </sequential>
    </macrodef>
    

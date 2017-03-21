@@ -7,14 +7,13 @@
    
    <macrodef name="compilejavacase">
       <attribute name="srcdir"/>
-      <attribute name="dbdir"/>
       <sequential>
          <delete dir="@{srcdir}/build" failonerror="false" />
          <mkdir dir="@{srcdir}/build"/>
-         <copy file="@{dbdir}/java/sequoiadb.jar" todir="@{srcdir}/lib" overwrite="true" />
+         <copy file="${INSTALL_DIR}/java/sequoiadb.jar" todir="@{srcdir}/lib" overwrite="true" />
          <copy file="${WORKSPACE}/sequoiadb/testcase/thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" 
                todir="@{srcdir}/lib" overwrite="true" />
-         <javac executable="@{dbdir}/java/jdk/bin/javac" 
+         <javac executable="${INSTALL_DIR}/java/jdk/bin/javac" 
                 srcdir="@{srcdir}" 
                 destdir="@{srcdir}/build"
                 encoding="UTF-8"
@@ -32,7 +31,6 @@
 
    <macrodef name="compileccase">
       <attribute name="srcdir"/>
-      <attribute name="dbdir"/>
       <sequential>         
          <property name="scons_cmd" value="--dd " />         
          <echo message="exec cmd: scons ${scons_cmd}"/>
@@ -41,17 +39,26 @@
             <arg line="${scons_cmd}" />
          </exec>
          <delete includeemptydirs="true" failonerror="true">
-            <fileset dir="@{srcdir}" includes="**/*" excludes="build_test/**/*,testcase.conf"/>
+            <fileset dir="@{srcdir}" includes="**/*" excludes="build_test/**/*,testcase.conf,*node.conf"/>
          </delete>
          <move todir="@{srcdir}">
             <fileset dir="@{srcdir}/build_test" />
          </move>
+         <for param="conffile">
+            <path>
+               <fileset dir="@{srcdir}" includes="*.node.conf" excludes=""/>
+            </path>
+            <sequential>
+               <var name="case_name" unset="true"/>
+               <basename property="case_name" file="@{conffile}" suffix=".node.conf"/>
+               <copy file="@{conffile}" tofile="@{srcdir}/${case_name}.static.node.conf"/>
+            </sequential>
+         </for>
       </sequential>
    </macrodef>
    
    <macrodef name="compilemongoccase">
       <attribute name="srcdir"/>
-      <attribute name="dbdir"/>
       <sequential>         
          <property name="scons_cmd" value="--dd " />         
          <echo message="exec cmd: scons ${scons_cmd}"/>
@@ -75,16 +82,16 @@
       <sequential>
          <switch value="@{type}">
             <case value="java">
-               <compilejavacase srcdir="@{srcdir}" dbdir="@{dbdir}"/>
+               <compilejavacase srcdir="@{srcdir}" />
             </case>
             <case value="c">
-               <compileccase srcdir="@{srcdir}" dbdir="@{dbdir}"/>
+               <compileccase srcdir="@{srcdir}" />
             </case>
             <case value="cpp">
-               <compileccase srcdir="@{srcdir}" dbdir="@{dbdir}"/>
+               <compileccase srcdir="@{srcdir}" />
             </case>
             <case value="mongoc">
-               <compilemongoccase srcdir="@{srcdir}" dbdir="@{dbdir}"/>
+               <compilemongoccase srcdir="@{srcdir}" />
             </case>
             <default/>
          </switch>        

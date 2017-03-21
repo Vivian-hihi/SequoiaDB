@@ -40,42 +40,43 @@
                   <var name="excludelist" value="" />
                   <for list="${large_data_list}" param="feature">
                      <sequential>
-                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
                         <var name="excludelist" value="${excludelist},${excludepathfile}"/>
                      </sequential>
                   </for>
                   <for list="${common_list}" param="feature">
                      <sequential>
-                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
                         <var name="excludelist" value="${excludelist},${excludepathfile}"/>
                      </sequential>
                   </for>
                   <delete includeEmptyDirs="true">
-                     <fileset dir="@{casedir}" excludes="testcase.conf,${excludelist}"/>
+                     <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist}"/>
+                  </delete>
+               </case>
+               
+               <case value="configure_test">
+                  <var name="excludelist" unset="true" />
+                  <var name="excludelist" value="" />
+                  <for list="${configure_list}" param="feature">
+                     <sequential>
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
+                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
+                     </sequential>
+                  </for>
+                  <for list="${common_list}" param="feature">
+                     <sequential>
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
+                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
+                     </sequential>
+                  </for>
+                  <delete includeEmptyDirs="true">
+                     <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist}"/>
                   </delete>
                </case>
 
-               <case value="sync_test">
-                  <var name="excludelist" unset="true" />
-                  <var name="excludelist" value="" />
-                  <for list="${sync_list}" param="feature">
-                     <sequential>
-                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
-                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
-                     </sequential>
-                  </for>
-                  <for list="${common_list}" param="feature">
-                     <sequential>
-                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
-                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
-                     </sequential>
-                  </for>
-                  <delete includeEmptyDirs="true">
-                     <fileset dir="@{casedir}" excludes="testcase.conf,${excludelist}"/>
-                  </delete>
-               </case>
                <default/>
-               
+
             </switch>
             
             <delete includeEmptyDirs="true" failonerror="false"><!--java directory did not have testcase.conf  tmp-->

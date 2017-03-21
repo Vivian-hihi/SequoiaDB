@@ -1,7 +1,7 @@
 <project name="test" default="main_target" basedir="../../">
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF" >
@@ -124,19 +124,19 @@
                   <fileset refid="matches"/>
                 </path-elements>
             </count_str>
+            <countstr str="restart by tool"  resultproperty="start_cnt_by_tool">
+               <path-elements>
+                  <fileset dir="@{dirname}" includes=".RESTART_BY_CHANGECONF"/>
+               </path-elements>
+            </countstr>
+            <math result="expect_cnt" operand1="${start_cnt_by_tool}" operation="+" operand2="1" datatype="int"/>
             <if>
-               <equals arg1="${str_count}" arg2="0"/>
+               <isgreaterthan arg1="${str_count}" arg2="${expect_cnt}"/>
                <then>
-                  <echo message="${str_count} " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
-               </then>
-               <elseif>
-                  <equals arg1="${str_count}" arg2="1"/>
-                  <then>
-                     <echo message="${str_count} " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
-                  </then>
-               </elseif>
-               <else>
                   <echo message="${str_count} times, node start exception" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
+               </then>
+               <else>
+                  <echo message="${str_count} " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
                </else>
             </if>
             <echo message="&#10;" file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
@@ -144,6 +144,27 @@
          </sequential>
       </for>
    </target>
+   
+   <macrodef name="countstr">
+      <attribute name="resultproperty"/>
+      <attribute name="str"/>
+      <element name="path-elements"/>
+      <sequential>
+         <var name="@{resultproperty}" unset="true"/>
+         <resourcecount property="@{resultproperty}">
+         <tokens>
+            <concat>
+               <filterchain>
+                  <tokenfilter>
+                     <containsstring contains="@{str}"/>
+                  </tokenfilter>
+               </filterchain>
+               <path-elements/>
+            </concat>
+         </tokens>
+         </resourcecount>
+      </sequential>
+   </macrodef>
    
    <macrodef name="count_str">
       <attribute name="searchstring"/>
@@ -340,7 +361,7 @@
       <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
       <hostinfo prefix="host" />
       <resourcecount property="corefilenum">
-         <fileset dir="${CI_WORK_DIR}/testcase/" includes="**/*core*" excludes="**/*core*.jar"/>
+         <fileset dir="${CI_WORK_DIR}" includes="testcase/**/*core*" excludes="testcase/**/*core*.jar"/>
       </resourcecount>
       <touch file="${report_dir}/${host.NAME}_testcase_core.log"/>
       <if>
