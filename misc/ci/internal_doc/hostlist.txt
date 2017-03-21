@@ -1,7 +1,11 @@
-192.168.20.200 ubun-test1
 
+#jenkins master
 192.168.30.185 jenkins-master
 
+#old jenkins master
+192.168.20.200 ubun-test1
+
+#x86 compile
 192.168.30.184 bl465-4
 
 #trunk g3d3
@@ -22,6 +26,28 @@
 192.168.30.114 ci-test-cent3
 192.168.20.200 ubun-test1
 
+#configure test
+192.168.30.102 ci-test-rhel1
+192.168.30.114 ci-test-cent3
+192.168.20.200 ubun-test1
+
+#large data
+192.168.30.181 bl465-1
+192.168.30.182 bl465-2
+192.168.30.183 bl465-3
+
+#reliability test
+192.168.20.31 susesp2-ly
+192.168.20.240 sequoiadb-virtual-machine
+192.168.30.107 rh-ci007
+192.168.30.117 centos-ci007
+
+#tpcc
+192.168.30.56 ci-test-pm1
+192.168.30.57 ci-test-pm2
+192.168.30.58 ci-test-pm3
+192.168.30.95 ci-test-pm4
+
 #null
 192.168.30.104 ci-test-rhel3
 
@@ -41,20 +67,11 @@
 192.168.20.184 suse-stest2
 192.168.20.185 suse-stest3
 
+#pg compile
 192.168.28.139 ci-cmpl-ppc3
 
+#doc compile
 192.168.10.200 ci-cmpl-doc
-
-#large data
-192.168.30.181 bl465-1
-192.168.30.182 bl465-2
-192.168.30.183 bl465-3
-
-#tpcc
-192.168.30.56 ci-test-pm1
-192.168.30.57 ci-test-pm2
-192.168.30.58 ci-test-pm3
-192.168.30.95 ci-test-pm4
 
 #branch1.12 ubuntu test
 192.168.30.108 ubuntu-ci001
@@ -75,10 +92,4 @@
 192.168.20.190 suse-test1
 192.168.30.186 ci-test-suse4
 192.168.20.202 ubun-test3
-
-#reliability test
-192.168.20.31 susesp2-ly
-192.168.20.240 sequoiadb-virtual-machine
-192.168.30.107 rh-ci007
-192.168.30.117 centos-ci007
 
