@@ -8,7 +8,7 @@
 <project default="normal_test_build" basedir="../">
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <include file="${basedir}/src/solve_result/get_build_status.xml" as="status_file"/>

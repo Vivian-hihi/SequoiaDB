@@ -10,14 +10,14 @@
 @author:       CSQ 2016-12-09
 ============================================================================= -->
 
-<project basedir="../../../" default="run_testcase_main_target">
+<project basedir="../../../" default="main_target">
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    
-   <target name="run_testcase_main_target">
+   <target name="main_target">
 
       <switch value="${TESTCASE_TYPE}">
          <case value="driver_java">             
@@ -38,15 +38,15 @@
          </default>
       </switch>
       <mkdir dir="${report_dir}"/>
-      <compilejavacase srcdir="${testcase_dir}"/>
-      <!--execjavatestcase casedir="${testcase_dir}" reportdir="${report_dir}" /-->
-      <antcall target="execjavatestcase">
+      <compilecase srcdir="${testcase_dir}"/>
+      <!--exec_testcase casedir="${testcase_dir}" reportdir="${report_dir}" /-->
+      <antcall target="exec_testcase">
          <param name="casedir" value="${testcase_dir}"/>
          <param name="reportdir" value="${report_dir}"/>
       </antcall>
    </target>
    
-   <target name="execjavatestcase"> 
+   <target name="exec_testcase"> 
       <var name="begin_time" unset="true"/>
       <tstamp>
          <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
@@ -279,7 +279,7 @@
       </sequential>
    </macrodef>
    
-   <macrodef name="compilejavacase">
+   <macrodef name="compilecase">
       <attribute name="srcdir"/>
 
       <sequential>

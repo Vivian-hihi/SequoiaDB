@@ -1,20 +1,21 @@
 <!-- ============================================================================
 @description:  exec ant testcase
-@parameter:    TESTCASE_TYPE          eg: story_js
-               testcase_dir           eg: /tmp/ci/testcase/story/ant
-               report_dir             eg：/tmp/ci/report/story_ant
+@parameter:    TEST_TYPE              eg: CONFIGURETEST
+               testcase_type          eg: tdd_c
+               testcase_dir           eg: /tmp/ci/testcase/tdd/c
+               report_dir             eg：/tmp/ci/report/tdd_c
 @author:       Ting YU 2016-12-6
 ============================================================================= -->
 
-<project default="exec_testcase" basedir="../../../">     
+<project default="exec_ant_testcase" basedir="../../../">     
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
    
-   <target name="exec_testcase">
+   <target name="exec_ant_testcase">
       <property file="${basedir}/src/conf/test.conf" /> 
       
       <prefix resultproperty="prefix"/>
@@ -29,7 +30,7 @@
                </path>
                <sequential>
                   
-                  <markinlog casename ="@{testcase}" marktype="begin" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+                  <markinlog casename ="@{testcase}" marktype="begin"/>
                   
                   <var name="testcase_name" unset="true"/>
                   <basename property="testcase_name" file="@{testcase}" suffix=".js"/>
@@ -40,7 +41,7 @@
                                prefix="${prefix}" 
                                report="${report_fullname}" />
                   
-                  <markinlog casename ="@{testcase}" marktype="end" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+                  <markinlog casename ="@{testcase}" marktype="end"/>
                   
                   <echo></echo>
                </sequential>

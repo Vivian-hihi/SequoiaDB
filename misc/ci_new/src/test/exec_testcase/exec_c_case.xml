@@ -7,15 +7,15 @@
 @author:       Ting YU 2016-11-1
 ============================================================================= -->
 
-<project default="exec_testcase" basedir="../../../">     
+<project default="exec_c_testcase" basedir="../../../">     
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
    
-   <target name="exec_testcase">
+   <target name="exec_c_testcase">
       <property file="${basedir}/src/conf/test.conf" />
       <property name="sdbshell_fullname" value="${INSTALL_DIR}/bin/sdb" /> 
       <if>
@@ -131,7 +131,7 @@
             <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>
          
-         <markinlog casename="@{casefullname}" marktype="begin" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+         <markinlog casename="@{casefullname}" marktype="begin"/>
          
          <hostinfo prefix="host" />
          <var name="report_fullname" value="@{reportdir}/@{casename}_${host.NAME}.xml"/>
@@ -154,7 +154,7 @@
          </exec>
          <echo message="${screen_output}" />
          
-         <markinlog casename="@{casefullname}" marktype="end" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+         <markinlog casename="@{casefullname}" marktype="end"/>
          
          <var name="end_time" unset="true"/>
          <tstamp>

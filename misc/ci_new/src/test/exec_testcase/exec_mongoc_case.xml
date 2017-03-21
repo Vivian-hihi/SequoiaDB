@@ -1,20 +1,21 @@
 <!-- ============================================================================
 @description:  execute mongoc testcase
-@parameter:    testcase_dir
-               report_dir
-               TESTCASE_TYPE
+@parameter:    TEST_TYPE              eg: CONFIGURETEST
+               testcase_type          eg: tdd_c
+               testcase_dir           eg: /tmp/ci/testcase/tdd/c
+               report_dir             eg：/tmp/ci/report/tdd_c
 @author:       Ting YU 2016-12-21
 ============================================================================= -->
 
-<project default="exec_testcase" basedir="../../../">     
+<project default="exec_mongoc_testcase" basedir="../../../">     
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
    
-   <target name="exec_testcase">
+   <target name="exec_mongoc_testcase">
       <property file="${basedir}/src/conf/test.conf" />
       <property name="sdbshell_fullname" value="${INSTALL_DIR}/bin/sdb" /> 
       
@@ -57,7 +58,7 @@
       </tstamp>
       <echo message="begin at ${begin_time}, end at ${end_time}" />
       
-      <modifyreport report="${report_fullname}" layer="${TESTCASE_TYPE}.${testcase_name}_parallel" />
+      <modifyreport report="${report_fullname}" layer="${testcase_type}.${testcase_name}_parallel" />
    </target>
     
    <macrodef name="modifyreport">

@@ -1,7 +1,7 @@
 <project basedir="../../">
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    
@@ -26,6 +26,9 @@
                <fileset dir="@{srcdir}/lib" includes="**/*.jar"/>               
             </classpath>
          </javac>
+         <copy todir="@{srcdir}/build">
+            <fileset dir="@{srcdir}" includes="**/node.conf"/>
+         </copy>
       </sequential>
    </macrodef>
 

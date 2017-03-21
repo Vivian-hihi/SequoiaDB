@@ -10,7 +10,7 @@
 <project default="main" basedir="../../">     
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF" >
@@ -53,7 +53,7 @@
          <if>
             <equals arg1="${remote_exec_rc1}" arg2="0" />
             <else>
-               <fail message="exec: ${remote_cmd1}, in host: @{testhost}, return code: not 0"/>
+               <fail message="exec: ${remote_cmd1}, in host: @{testhost}, return code: ${remote_exec_rc1}"/>
             </else>
          </if>        
          </sequential>
@@ -154,13 +154,12 @@
       <if>
          <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
          <else>
-            <echo>enter toollog ${TEST_TYPE}</echo>
             <delete dir="${backup_basedir}/${backup_reltdir}/toollog" failonerror="false"/>
             <mkdir dir="${backup_basedir}/${backup_reltdir}/toollog"/>
             <copy todir="${backup_basedir}/${backup_reltdir}/toollog" >
-               <fileset dir="${CI_WORK_DIR}/testcase/">
-                  <include name="**/*.log"/>
-                  <include name="**/*.rec"/>
+               <fileset dir="${CI_WORK_DIR}">
+                  <include name="testcase/**/*.log"/>
+                  <include name="testcase/**/*.rec"/>
                </fileset>
             </copy>
          </else>

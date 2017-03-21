@@ -5,7 +5,7 @@
 <project default="main" basedir="../../">       
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF" >

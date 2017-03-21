@@ -1,20 +1,21 @@
 <!-- ============================================================================
 @description:  exec python testcase
-@parameter:    TESTCASE_TYPE          eg: tdd_python
-               testcase_dir           eg: /tmp/ci/testcase/tdd/python
-               report_dir             eg：/tmp/ci/report/tdd_python
+@parameter:    TEST_TYPE              eg: CONFIGURETEST
+               testcase_type          eg: tdd_c
+               testcase_dir           eg: /tmp/ci/testcase/tdd/c
+               report_dir             eg：/tmp/ci/report/tdd_c
 @author:       Ting YU 2016-11-1
 ============================================================================= -->
 
-<project default="main" basedir="../../../">     
+<project default="exec_python_testcase" basedir="../../../">     
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b3.jar" />
+         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
    
-   <target name="main">
+   <target name="exec_python_testcase">
       <property file="${basedir}/src/conf/test.conf" />
       
       <!--init-->
@@ -175,7 +176,7 @@
             project.setProperty('start_ms', new Date().getTime());
          </script>
 
-         <markinlog casename="@{casefullname}" marktype="begin" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+         <markinlog casename="@{casefullname}" marktype="begin"/>
          
          <!--execute-->
          <var name="cmd" value="@{casefullname} -H localhost -p ${SVCNAME}"/>   
@@ -196,7 +197,7 @@
          <echo message="${screen_output}" />
          
          <!--after-->
-         <markinlog casename ="@{casefullname}" marktype="end" sdbshell="${INSTALL_DIR}/bin/sdb"/>
+         <markinlog casename ="@{casefullname}" marktype="end"/>
          
          <var name="end_time" unset="true"/> 
          <tstamp>
