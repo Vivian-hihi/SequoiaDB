@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <!--this xml is for ci, please don't modify it-->
-<!--sync testcase, which should be excute serially-->
+<!--configure testcase, which needs to change node configure-->
 
 <suite name="driver" verbose="1" stop-all-when-occur-failure="false"> 
    <parameter name="HOSTNAME" value="localhost" />
