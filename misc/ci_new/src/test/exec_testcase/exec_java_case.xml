@@ -14,11 +14,20 @@
       </classpath>
    </taskdef>
    <import file="${basedir}/src/test/exec_testcase/common.xml" />
-   <property name="testcase_dir" value="/trunk/testcase_new/sdv/java"/>
-   <property name="report_dir" value="/trunk/testcase_new/report/sdv_java"/>
    
    <target name="exec_testcase">             
-      <mkdir dir="${report_dir}"/> 
+      <mkdir dir="${report_dir}"/>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="CONFIGURETEST"/>
+         <then>
+            <replaceregexp file="${testcase_dir}/configure.xml"
+                           match='"CONFTOOL" value="(.*)"' 
+                           replace='"CONFTOOL" value="${basedir}/src/test/exec_testcase/changeConf.js"' 
+                           flags="g" 
+                           byline="true" 
+                           encoding="utf-8"/>
+         </then>
+      </if>
       <if>
          <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
          <then>
