@@ -35,9 +35,8 @@ public class TestSdb10961 extends SdbTestBase{
         try {
             this.sdb.disconnect();
             this.sdb.closeAllCursors();
-            Assert.fail("after sdb disconnect, sdb.closeAllCursor no throw exception ");
         } catch (BaseException e) {
-            Assert.assertEquals(e.getErrorCode(), -64);
+            Assert.fail(e.getMessage());
         } finally {
             System.out.println("the TestCase Name:" + this.getClass().getName() + 
                     ". the TestCase end at:" + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
