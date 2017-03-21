@@ -177,6 +177,43 @@ public class DBCollection {
     }
 
     /**
+     * @param insertor The Bson object of insertor list, can't be null
+     * @param flag     available value is FLG_INSERT_CONTONDUP or 0.
+     *                 if flag = FLG_INSERT_CONTONDUP, bulkInsert will continue when Duplicate
+     *                 key exist.(the duplicate record will be ignored);
+     *                 if flag = 0, bulkInsert will interrupt when Duplicate key exist.
+     * @throws com.sequoiadb.exception.BaseException
+     * @fn void insert(List<BSONObject> insertor, int flag)
+     * @brief Insert a bulk of bson objects into current collection
+     * @since 2.9
+     */
+    public void insert(List<BSONObject> insertor, int flag) throws BaseException {
+        if (flag != 0 && flag != FLG_INSERT_CONTONDUP) {
+            throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
+        if (insertor == null || insertor.size() == 0) {
+            throw new BaseException(SDBError.SDB_INVALIDARG);
+        }
+
+        InsertRequest request = new InsertRequest(collectionFullName, insertor, flag, ensureOID);
+        SdbReply response = sequoiadb.requestAndResponse(request);
+        sequoiadb.reportIfError(response);
+        sequoiadb.upsertCache(collectionFullName);
+    }
+
+    /**
+     * @param insertor The Bson object of insertor list, can't be null.
+     *                 insert will interrupt when Duplicate key exist.
+     * @throws com.sequoiadb.exception.BaseException
+     * @fn void insert(List<BSONObject> insertor, int flag)
+     * @brief Insert a bulk of bson objects into current collection
+     * @since 2.9
+     */
+    public void insert(List<BSONObject> insertor) throws BaseException {
+        insert(insertor, 0);
+    }
+
+    /**
      * @param type            The object of insertor, can't be null
      * @param ignoreNullValue true:if type's inner value is null, it will not save to collection;
      *                        false:if type's inner value is null, it will save to collection too.
@@ -350,19 +387,11 @@ public class DBCollection {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void bulkInsert(List<BSONObject> insertor, int flag)
      * @brief Insert a bulk of bson objects into current collection
+     * @deprecated use insert(List<BSONObject> insertor, int flag) instead
      */
+    @Deprecated
     public void bulkInsert(List<BSONObject> insertor, int flag) throws BaseException {
-        if (flag != 0 && flag != FLG_INSERT_CONTONDUP) {
-            throw new BaseException(SDBError.SDB_INVALIDARG);
-        }
-        if (insertor == null || insertor.size() == 0) {
-            throw new BaseException(SDBError.SDB_INVALIDARG);
-        }
-
-        InsertRequest request = new InsertRequest(collectionFullName, insertor, flag, ensureOID);
-        SdbReply response = sequoiadb.requestAndResponse(request);
-        sequoiadb.reportIfError(response);
-        sequoiadb.upsertCache(collectionFullName);
+        insert(insertor, flag);
     }
 
     /**
