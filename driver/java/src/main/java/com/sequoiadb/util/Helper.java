@@ -117,11 +117,9 @@ public final class Helper {
         byte[] bytes = new byte[length];
         in.get(bytes);
 
-        if (length < in.remaining()) {
+        if (in.remaining() > 0) {
             int alignedSize = alignedSize(length);
             in.position(alignedSize + position);
-        } else {
-            in.position(length + position);
         }
 
         return bytes;
