@@ -8,16 +8,17 @@
 package com.sequoiadb.commlib;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
@@ -28,6 +29,12 @@ public class GroupWrapper {
     private ReplicaGroup group;
     private List<NodeWrapper> nodes = new ArrayList<NodeWrapper>();
     private BasicBSONObject groupInfo;
+    private final String CATA_RG_NAME = "SYSCatalogGroup";
+    private final String SYSCAT = "SYSCAT";
+    private final String SYSCOLLECTIONS = "SYSCOLLECTIONS";
+    private final String SYSCOLLECTIONSPACES = "SYSCOLLECTIONSPACES";
+    private final String SYSDOMAINS = "SYSDOMAINS";
+    private final String SYSNODES = "SYSNODES";
 
     public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group) {
 
@@ -43,8 +50,8 @@ public class GroupWrapper {
         return this.groupInfo.getInt("GroupID");
     }
 
-    public void refresh() throws ReliabilityException {
-        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    public void refresh(String coordUrl) throws ReliabilityException {
+        Sequoiadb sdb = new Sequoiadb(coordUrl, "", "");
         try {
             DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS,
                     (BSONObject) JSON.parse("{GroupName:'" + getGroupName() + "'}"), null, null);
@@ -58,6 +65,10 @@ public class GroupWrapper {
             sdb.closeAllCursors();
             sdb.disconnect();
         }
+    }
+
+    public void refresh() throws ReliabilityException {
+        refresh(SdbTestBase.coordUrl);
     }
 
     public void init() throws ReliabilityException {
@@ -107,6 +118,24 @@ public class GroupWrapper {
         return nodes.size();
     }
 
+    /**
+     * 至多尝试10次的切主操作（rg.reelect()），若失败则返回false
+     * 
+     * @param times
+     * @return
+     * @throws ReliabilityException
+     */
+    public boolean changePrimary() throws ReliabilityException {
+        return changePrimary(10);
+    }
+
+    /**
+     * 至多尝试times的切主操作（rg.reelect()），若失败则返回false
+     * 
+     * @param times
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean changePrimary(int times) throws ReliabilityException {
         if (getGroupName().equals("SYSCoord")) {
             return false;
@@ -149,8 +178,8 @@ public class GroupWrapper {
         return checkRes;
     }
 
-    public Set<String> getAllHosts() {
-        Set<String> hosts = new HashSet<String>();
+    public List<String> getAllHosts() {
+        List<String> hosts = new ArrayList<String>();
         for (NodeWrapper node : nodes) {
             hosts.add(node.hostName());
         }
@@ -165,7 +194,28 @@ public class GroupWrapper {
         return urls;
     }
 
+    /**
+     * 检查组间节点一致性，若在checkTimes次数（每次间隔两秒）内仍未检查通过则返回false，并打印对该组执行sdbinspect的输出
+     * 
+     * @param checkTimes
+     * @return
+     * @throws ReliabilityException
+     */
+    public boolean checkInspect(int checkTimes) throws ReliabilityException {
+        return checkInspect(checkTimes, 2);
+    }
+
+    /**
+     * 检查组间节点一致性，若在checkTimes次数（每次间隔intervelSecond秒）内仍未检查通过则返回false，
+     * 并打印对该组执行sdbinspect的输出
+     * 
+     * @param checkTimes
+     * @param intervelSecond
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean checkInspect(int checktime, int intervelSecond) throws ReliabilityException {
+        this.refresh();
         for (int i = 0; i < checktime; i++) {
             if (inspect()) {
                 return true;
@@ -176,13 +226,20 @@ public class GroupWrapper {
             catch (InterruptedException e) {
 
             }
-
         }
-        return false;
-
+        if (this.getGroupName().equals(CATA_RG_NAME)) {
+            return inspectCata(true);
+        }
+        else {
+            System.out.println(getInspectStdout());
+            return false;
+        }
     }
 
     private boolean inspect() throws ReliabilityException {
+        if (this.getGroupName().equals(CATA_RG_NAME)) {
+            return inspectCata(false);
+        }
         String stdout = getInspectStdout();
         String[] res = stdout.split("\n");
         if (res.length != 8) {
@@ -194,6 +251,49 @@ public class GroupWrapper {
         return false;
     }
 
+    private boolean inspectCata(boolean printIncompatibility) {
+        boolean clFlag = inspectCataCL(SYSCOLLECTIONS, printIncompatibility);
+        boolean csFlag = inspectCataCL(SYSCOLLECTIONSPACES, printIncompatibility);
+        boolean domainFlag = inspectCataCL(SYSDOMAINS, printIncompatibility);
+        boolean nodeFlag = inspectCataCL(SYSNODES, printIncompatibility);
+        return nodeFlag && clFlag && csFlag && domainFlag;
+    }
+
+    private boolean inspectCataCL(String clName, boolean printIncompatibility) {
+        List<String> urls = this.getAllUrls();
+        Map<String, List<BSONObject>> res = new HashMap<String, List<BSONObject>>();
+        for (String url : urls) {
+            List<BSONObject> tmp = new ArrayList<BSONObject>();
+            Sequoiadb db = new Sequoiadb(url, "", "");
+            try {
+                DBCollection cl = db.getCollectionSpace(SYSCAT).getCollection(clName);
+                DBCursor cursor = cl.query(null, null, "{_id:1}", null);
+                while (cursor.hasNext()) {
+                    tmp.add(cursor.getNext());
+                }
+            }
+            finally {
+                db.closeAllCursors();
+                db.disconnect();
+            }
+            res.put(url + ":" + clName, tmp);
+        }
+        Map.Entry<String, List<BSONObject>> tmp2 = null;
+        String forPrint = new String();
+        boolean ret = true;
+        for (Map.Entry<String, List<BSONObject>> entry : res.entrySet()) {
+            if (tmp2 != null && !entry.getValue().equals(tmp2.getValue())) {
+                ret = false;
+            }
+            tmp2 = entry;
+            forPrint = forPrint + tmp2.toString() + "\r\n";
+        }
+        if (!ret && printIncompatibility) {
+            System.out.println(clName + " incompatible:\r\n" + forPrint);
+        }
+        return ret;
+    }
+
     public String getInspectStdout() throws ReliabilityException {
         Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
         try {
@@ -203,5 +303,9 @@ public class GroupWrapper {
             ssh.close();
         }
         return ssh.getStdout();
+    }
+    
+    public List<NodeWrapper> getNodes() {
+        return nodes;
     }
 }

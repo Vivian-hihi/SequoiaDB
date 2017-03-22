@@ -8,14 +8,13 @@ package com.sequoiadb.commlib;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -28,12 +27,15 @@ public class GroupMgr {
     private static GroupMgr mgr = null;
 
     public GroupMgr() throws ReliabilityException {
-        this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        this.init();
+        this.refresh();
     }
 
-    public void init() throws ReliabilityException {
+    public void refresh() throws ReliabilityException {
         try {
+            if (sdb != null) {
+                sdb.disconnect();
+            }
+            this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             BSONObject nullObj = null;
             DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, nullObj, nullObj, nullObj);
             while (cursor.hasNext()) {
@@ -78,10 +80,10 @@ public class GroupMgr {
         return names;
     }
 
-    public Set<String> getAllHosts() {
-        Set<String> hosts = new HashSet<String>();
+    public List<String> getAllHosts() {
+        List<String> hosts = new ArrayList<String>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
-            Set<String> hostsPerGroup = entry.getValue().getAllHosts();
+            List<String> hostsPerGroup = entry.getValue().getAllHosts();
             hosts.addAll(hostsPerGroup);
         }
 
@@ -108,14 +110,53 @@ public class GroupMgr {
 
     public static GroupMgr getInstance() throws ReliabilityException {
         mgr = new GroupMgr();
-        // mgr.init();
         return mgr;
     }
 
+    /**
+     * 持续检测集群当前的状态（组内是否有主，各节点可连接，ServiceStatus），若在timeOutSecond时间内检测仍不通过，
+     * 则会打印当前集群状态信息（也可能会抛出异常，如-104，网络错误等等），并返回false
+     * Assert.assertEquals(checkBusiness(120), true, "Message");
+     * 
+     * @param timeOutSecond
+     *            建议>120（秒）
+     * @return
+     * @throws ReliabilityException
+     */
+    public boolean checkBusiness(int timeOutSecond) throws ReliabilityException {
+        long timestamp = System.currentTimeMillis();
+        while (!mgr.checkBusiness(false)) {
+            if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
+                return mgr.checkBusiness();
+            }
+            try {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus），失败则打印集群信息，并返回false
+     * 
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean checkBusiness() throws ReliabilityException {
         return checkBusiness(true);
     }
 
+    /**
+     * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus），
+     * 失败则根据变量printAndThrowAllException决定是否打印集群信息，是否屏蔽检测过程中发生的异常，并返回false
+     * 
+     * @param printAndThrowAllException
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean checkBusiness(boolean printAndThrowAllException) throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
@@ -144,10 +185,50 @@ public class GroupMgr {
         return ret;
     }
 
+    /**
+     * 持续检测集群当前的状态（组内是否有主，各节点可连接，ServiceStatus,LSN一致），若在timeOutSecond时间内检测仍不通过，
+     * 则会打印当前集群状态信息（也可能会抛出异常，如-104，网络错误等等），并返回false
+     * Assert.assertEquals(checkBusiness(120), true, "Message");
+     * 
+     * @param timeOutSecond
+     *            建议>120（秒）
+     * @return
+     * @throws ReliabilityException
+     */
+    public boolean checkBusinessWithLSN(int timeOutSecond) throws ReliabilityException {
+        long timestamp = System.currentTimeMillis();
+        while (!mgr.checkBusinessWithLSN(false)) {
+            if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
+                return mgr.checkBusinessWithLSN();
+            }
+            try {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus,组内LSN一致），失败则打印集群信息，并返回false
+     * 
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean checkBusinessWithLSN() throws ReliabilityException {
         return checkBusinessWithLSN(true);
     }
 
+    /**
+     * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus,组内LSN一致），
+     * 失败则根据变量printAndThrowAllException决定是否打印集群信息，是否屏蔽检测过程中发生的异常，并返回false
+     * 
+     * @param printAndThrowAllException
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean checkBusinessWithLSN(boolean printAndThrowAllException)
             throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
@@ -177,10 +258,51 @@ public class GroupMgr {
         return ret;
     }
 
+    /**
+     * 持续检测集群当前的状态（组内是否有主，各节点可连接，ServiceStatus,LSN一致，节点所在磁盘剩余空间大于128M），
+     * 若在timeOutSecond时间内检测仍不通过， 则会打印当前集群状态信息（也可能会抛出异常，如-104，网络错误等等），并返回false
+     * Assert.assertEquals(checkBusiness(120), true, "Message");
+     * 
+     * @param timeOutSecond
+     *            建议>120（秒）
+     * @return
+     * @throws ReliabilityException
+     */
+    public boolean checkBusinessWithLSNAndDisk(int timeOutSecond) throws ReliabilityException {
+        long timestamp = System.currentTimeMillis();
+        while (!mgr.checkBusinessWithLSNAndDisk(false)) {
+            if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
+                return mgr.checkBusinessWithLSNAndDisk();
+            }
+            try {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus,组内LSN一致,节点所在磁盘剩余空间大于128M），失败则打印集群信息，
+     * 并返回false
+     * 
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
         return checkBusinessWithLSNAndDisk(true);
     }
 
+    /**
+     * 检测集群状态（组内有主，各节点可连接，ServiceStatus,组内LSN一致,节点所在磁盘剩余空间大于128M），
+     * 失败则根据变量printAndThrowAllException决定是否打印集群信息，是否屏蔽检测过程中发生的异常，并返回false
+     * 
+     * @param printAndThrowAllException
+     * @return
+     * @throws ReliabilityException
+     */
     public boolean checkBusinessWithLSNAndDisk(boolean printAndThrowAllException)
             throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
@@ -210,9 +332,16 @@ public class GroupMgr {
         return ret;
     }
 
+    /**
+     * 检测端口SdbTestBase.reservedPortBegin-SdbTestBase.reservedPortEnd是否有残留占用
+     * 检测目录SdbTestBase.reservedDir下是否有数据文件残留,检测安装目录下是否有用例节点配置文件残留
+     * 以上检测针对集群所有主机，检测不通过返回false，并打印检测信息
+     * 
+     * @return
+     */
     public boolean checkResidu() {
         boolean checkRet = true;
-        Set<String> hosts = getAllHosts();
+        List<String> hosts = getAllHosts();
         for (String host : hosts) {
             try {
                 Ssh remote = new Ssh(host, "root", SdbTestBase.rootPwd);
