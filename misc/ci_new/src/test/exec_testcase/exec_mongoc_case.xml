@@ -17,14 +17,13 @@
    
    <target name="exec_mongoc_testcase">
       <property file="${basedir}/src/conf/test.conf" />
-      <property name="sdbshell_fullname" value="${INSTALL_DIR}/bin/sdb" /> 
       
       <mkdir dir="${report_dir}"/>
       <chmod dir="${testcase_dir}" perm="u+x" includes="*" />
       <var name="testcase_name" value="test-mongo"/>
       
       <!--before excute-->
-      <markinlog casename ="${testcase_dir}/${testcase_name}" marktype="begin" sdbshell="${sdbshell_fullname}"/>
+      <markinlog casename ="${testcase_dir}/${testcase_name}" marktype="begin" "/>
       <var name="begin_time" unset="true"/>
       <tstamp>
          <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
@@ -51,7 +50,7 @@
       <echo message="${screen_output}" />
 
       <!--after excute-->
-      <markinlog casename ="${testcase_dir}/test-mongo" marktype="end" sdbshell="${sdbshell_fullname}"/>
+      <markinlog casename ="${testcase_dir}/test-mongo" marktype="end"/>
       <var name="end_time" unset="true"/>
       <tstamp>
          <format property="end_time" pattern="yyyy-MM-dd_HH:mm:ss" />
