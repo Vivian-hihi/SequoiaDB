@@ -1,5 +1,9 @@
 <!-- ============================================================================
 @description:  daily build, except largedata, sync, reliable, configure test
+               WORKSPACE, from jenkins build-in variable
+               TEST_TYPE, from jenkins configure page
+               TESTCASE_TYPE, from jenkins user page
+               plat_form, from buil.xml
 @author:       Ting YU 2016-10-19
 ============================================================================= -->
 
@@ -217,6 +221,15 @@
          </then>
       </if>
       
+      <!--copy tools-->
+      <for list="${testhost_list}" param="testhost" parallel="false">
+         <sequential>
+            <copy todir="${testcase_outdir}/testcase_@{testhost}">
+               <fileset dir="${case_basedir}" includes="tools/**/*"/>
+            </copy>
+         </sequential>
+      </for>
+      
    </target>
    
    <target name="distribute_testcase">     
@@ -323,7 +336,7 @@
       <mkdir dir="${CI_WORK_DIR}/testcase"/>
       <for param="casetype">
          <path>
-            <dirset dir="${CI_WORK_DIR}/testcase" includes="*"/>
+            <dirset dir="${CI_WORK_DIR}/testcase" includes="*" excludes="tools"/>
          </path>
          <sequential>
             <for param="casesubtype">

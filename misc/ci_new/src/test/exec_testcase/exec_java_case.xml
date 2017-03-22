@@ -22,7 +22,7 @@
          <then>
             <replaceregexp file="${testcase_dir}/configure.xml"
                            match='"CONFTOOL" value="(.*)"' 
-                           replace='"CONFTOOL" value="${basedir}/src/test/exec_testcase/changeConf.js"' 
+                           replace='"CONFTOOL" value="${testcase_dir}/../../tools/changeConf.js"' 
                            flags="g" 
                            byline="true" 
                            encoding="utf-8"/>
@@ -31,7 +31,7 @@
       <if>
          <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
          <then>
-            <ant antfile="${basedir}/src/test/exec_testcase/runtest_java.xml" target="exec_testcase">
+            <ant antfile="${testcase_dir}/../../tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
                <property name="reportdir" value="${report_dir}"/>
                <property name="sdb_version" value="${sdb_version}"/>
@@ -50,7 +50,7 @@
                            value="stop-all-when-occur-failure=&quot;true&quot;"/>
                </then>
             </if>
-            <ant antfile="${basedir}/src/test/exec_testcase/runtest_java.xml" target="exec_testcase">
+            <ant antfile="${testcase_dir}/../../tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
                <property name="reportdir" value="${report_dir}"/>
             </ant>

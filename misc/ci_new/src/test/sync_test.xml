@@ -31,7 +31,7 @@
 
       <antcall target="filter_testcase" />
       
-      <antcall target="divide_testcase"/>
+      <antcall target="distribute_testcase"/>
       
       <antcall target="execute_testcase"/>
       
@@ -124,9 +124,8 @@
       </for>
    </target>
       
-   <target name="divide_testcase">
+   <target name="distribute_testcase">
       <delete dir="${CI_WORK_DIR}/testcase" failonerror="false" />
-      <hostinfo prefix="host" />
       
       <for list="${testhost_list}" param="tmphost" parallel="false">
          <sequential> 
@@ -198,7 +197,7 @@
    
       <for param="casetype">
          <path>
-            <dirset dir="${CI_WORK_DIR}/testcase" includes="*"/>
+            <dirset dir="${CI_WORK_DIR}/testcase" includes="*" excludes="tools"/>
          </path>
          <sequential>
             <for param="casesubtype">
