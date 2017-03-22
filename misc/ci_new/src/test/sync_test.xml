@@ -126,19 +126,7 @@
       
    <target name="divide_testcase">
       <delete dir="${CI_WORK_DIR}/testcase" failonerror="false" />
-      <var name="testscript_dir" value="${CI_WORK_DIR}/script/src/test" />     
-      <var name="testscript_log" value="${testscript_dir}/sync_test.log" />
       <hostinfo prefix="host" />
-      <!--ready in remote host-->
-      <for list="${testhost_list}" param="testhost" parallel="false">
-         <sequential>            
-            <staf location="local" service="FS"
-                  request="COPY DIRECTORY ${basedir} TODIRECTORY ${CI_WORK_DIR}/script TOMACHINE @{testhost} RECURSE"
-                  throwBuildException="1"/>
-            <staf location="@{testhost}" service="FS"
-                  request="DELETE ENTRY ${testscript_log} CONFIRM"/>
-         </sequential>
-      </for>
       
       <for list="${testhost_list}" param="tmphost" parallel="false">
          <sequential> 
