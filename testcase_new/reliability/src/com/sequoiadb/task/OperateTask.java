@@ -26,10 +26,16 @@ public abstract class OperateTask extends Task {
     };
 
     private TaskMgr mgr = null;
+
+    // 暂时未使用
     private static final int defaultDuration = 5;
 
     public OperateTask(String name) {
         super(name, defaultDuration);
+    }
+
+    public OperateTask() {
+        this.setName(this.getClass().getSimpleName());
     }
 
     public void setMgr(TaskMgr mgr) {
@@ -37,13 +43,23 @@ public abstract class OperateTask extends Task {
     }
 
     /**
-     * 当故障make或restore完毕将会调用此函数，通知结果
+     * 当故障make或restore完毕将会调用此函数，若OperateTask子类需要覆盖该方法时，应该要首先调用父类faultNotify方法，
+     * 父类的faultNotify实现了当故障构造或恢复失败抛出异常，使TaskMgr感知到故障线程执行失败
      * 
      * @param status
      *            key:FaultMakeTask.MAKE_RESULT,FaultMakeTask.RESTORE_RESULT
      *            value:OperateTask.status
      */
-    public abstract void faultNotify(BSONObject status) throws FaultException;
+    public void faultNotify(BSONObject status) throws FaultException {
+        OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
+        OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
+        if (mk == OperateTask.faultStatus.MAKEFAILURE) {
+            throw new FaultException(mk.toString());
+        }
+        if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
+            throw new FaultException(rt.toString());
+        }
+    }
 
     public abstract void exec() throws Exception;
 
