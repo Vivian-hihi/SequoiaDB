@@ -86,7 +86,7 @@ public class KillNode extends Fault {
 	}
 
 	@Override
-	public boolean init() throws FaultException {
+	public void init() throws FaultException {
 		try {
 			ssh = new Ssh(hostName, user, passwd, port);
 			try {
@@ -99,12 +99,11 @@ public class KillNode extends Fault {
 			FaultException e1 = new FaultException(e);
 			e1.setStackTrace(e.getStackTrace());
 			throw e1;
-		}
-		return true;
+		}		
 	}
 
 	@Override
-	public boolean fini() throws FaultException {
+	public void fini() throws FaultException {
 		try {
 			if (ssh != null) {
 				ssh.exec("rm -rf " + remotePath + "/" + scriptName);
@@ -115,7 +114,6 @@ public class KillNode extends Fault {
 			e1.setStackTrace(e.getStackTrace());
 			throw e1;
 		}
-		return true;
 	}
 
 	/**

@@ -7,8 +7,6 @@
  */
 package com.sequoiadb.fault;
 
-
-
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.NodeWrapper;
 
@@ -81,13 +79,13 @@ public class NodeRestart extends Fault {
     }
 
     @Override
-    public boolean init() throws FaultException {
-        return true;
+    public void init() throws FaultException {
+
     }
 
     @Override
-    public boolean fini() throws FaultException {
-        return true;
+    public void fini() throws FaultException {
+
     }
 
     /**
