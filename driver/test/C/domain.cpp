@@ -34,7 +34,7 @@ TEST( sdbDomainTest, abnormal )
    const CHAR *pDomName2          = "NULLHandle" ;
    const CHAR *getDomName1        = "NoCreateDomainName" ;
    const CHAR *altDomName1        = "AlterCorrectDomainName" ;
-   CHAR pDomainName[256] ;
+   CHAR pDomainName[512] ;
    CHAR pDomName1[50] ;
    CHAR getDomName[50] ;
    CHAR altDomName[50] ;
