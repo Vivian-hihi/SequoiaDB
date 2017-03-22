@@ -2,7 +2,8 @@
 
 | SQL                                      | SequoiaDB                |
 | ---------------------------------------- | ------------------------ |
-| database                                 | collection space         |
+| database                                 | database                 |
+| tableSpace                               | collection space         |
 | table                                    | collection               |
 | row                                      | document / BSON document |
 | column                                   | field                    |
