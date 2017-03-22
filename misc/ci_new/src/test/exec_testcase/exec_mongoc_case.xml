@@ -23,7 +23,7 @@
       <var name="testcase_name" value="test-mongo"/>
       
       <!--before excute-->
-      <markinlog casename ="${testcase_dir}/${testcase_name}" marktype="begin" "/>
+      <markinlog casename ="${testcase_dir}/${testcase_name}" marktype="begin"/>
       <var name="begin_time" unset="true"/>
       <tstamp>
          <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
