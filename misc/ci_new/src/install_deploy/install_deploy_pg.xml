@@ -116,7 +116,7 @@
             <if>
                <equals arg1="${install_rc}" arg2="0" />
                <else>
-                  <fail message="exec: ${CI_WORK_DIR}/${package_name} --mode unattended, return code is not 0"/>
+                  <fail message="exec: ${CI_WORK_DIR}/${package_name} --mode unattended, return code: ${install_rc}"/>
                </else>
             </if>
          </sequential>         
@@ -156,7 +156,7 @@
             <if>
                <equals arg1="${remote_exec_rc}" arg2="0" />
                <else>
-                  <fail message="exec: ${deploy_remote_cmd}, in host: @{testhost}, return code: not 0"/>
+                  <fail message="exec: ${deploy_remote_cmd}, in host: @{testhost}, return code: ${remote_exec_rc}"/>
                </else>
             </if>
 

@@ -194,17 +194,18 @@
                         resultPrefix="remote_exec"
                         request="START SHELL COMMAND ${test_remote_cmd} in host: @{testhost}  WAIT 10m"
                         throwBuildException="1"/>
+                  <staf location="@{testhost}" service="FS"
+                        request="GET FILE ${testscript_log} TEXT"
+                        throwBuildException="1"/>
+                        
                   <propertyregex property="remote_exec_rc" input="${remote_exec.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>      
                   <if>
                      <equals arg1="${remote_exec_rc}" arg2="0" />
                      <else>
-                        <fail message="exec: ${test_remote_cmd}, in host: @{testhost}, return code: not 0"/>
+                        <fail message="exec: ${test_remote_cmd}, in host: @{testhost}, return code: ${remote_exec_rc}"/>
                      </else>
                   </if>
-                  
-                  <staf location="@{testhost}" service="FS"
-                        request="GET FILE ${testscript_log} TEXT"
-                        throwBuildException="1"/>
+
                </then>
             </if>
             

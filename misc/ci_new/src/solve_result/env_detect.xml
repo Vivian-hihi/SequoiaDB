@@ -60,7 +60,7 @@
          <if>
             <equals arg1="${remote_exec_rc1}" arg2="0" />
             <else>
-               <fail message="exec: ${remote_cmd1}, in host: @{testhost}, return code: not 0"/>
+               <fail message="exec: ${remote_cmd1}, in host: @{testhost}, return code: ${remote_exec_rc1}"/>
             </else>
          </if>        
          </sequential>
@@ -79,7 +79,7 @@
          <if>
             <equals arg1="${remote_exec_rc2}" arg2="0" />
             <else>
-               <fail message="exec: ${remote_cmd2}, in host: @{testhost}, return code: not 0"/>
+               <fail message="exec: ${remote_cmd2}, in host: @{testhost}, return code: ${remote_exec_rc2}"/>
             </else>
          </if>        
          </sequential>

@@ -61,8 +61,6 @@
            
    </target>
 
-   
-
    <macrodef name="detectenv">
       <attribute name="detectfile" />
       <attribute name="prefix" />
