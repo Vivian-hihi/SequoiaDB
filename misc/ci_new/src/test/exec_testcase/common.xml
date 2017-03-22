@@ -88,12 +88,17 @@
          </and>
          <then>
             <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="@{rptfullname}"/>
-            <replace file="@{rptfullname}" token="ERROR_MESSAGE" value="${output}"/>
-            <replace file="@{rptfullname}" token="TESTSUIT_NAME" value="detect_env"/>
-            <replace file="@{rptfullname}" token="TESTCASE_TYPE" value="${casetype}"/>
+            <replace file="@{rptfullname}" token="TESTCASE_TYPE" value="detect_env"/>
+            <replace file="@{rptfullname}" token="TESTSUIT_NAME" value="@{casetype}"/>
             <propertyregex property="casename" input="@{casename}" defaultValue="@{casename}"
                            regexp="\." replace="_" override="true"/> 
             <replace file="@{rptfullname}" token="TESTCASE_NAME" value="before_${casename}"/>
+            <hostinfo prefix="host" />
+            <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
+            <var name="ms2" value="EXECUTE CMD:&#10;${sdbshell} ${cmd1} ${cmd2}&#10;"/>
+            <var name="ms3" value="RETURN CODE: ${@{envisok}}&#10;"/>
+            <var name="ms4" value="OUTPUT MESSAGE:&#10;${output}&#10;"/>
+            <replace file="@{rptfullname}" token="ERROR_MESSAGE" value="${ms1}${ms2}${ms3}${ms4}"/>
          </then>
       </if>
       </sequential>
