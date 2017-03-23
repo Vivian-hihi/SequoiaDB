@@ -127,7 +127,7 @@ public class BrokenNetwork extends Fault {
                         group.refresh(allHosts.get(0));
                         break;
                     }
-                    catch (BaseException e) {
+                    catch (Exception e) {
                         try {
                             Thread.sleep(1000);
                         }
