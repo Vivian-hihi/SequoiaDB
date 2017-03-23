@@ -69,18 +69,11 @@ public class SDBTestHelper {
 
     public static BSONObject byteArrayToBSONObject(byte[] array)
         throws BaseException {
-        if (array == null || array.length == 0)
+        if (array == null || array.length == 0) {
             return null;
-
-        BSONDecoder d = new BasicBSONDecoder();
-        BSONCallback cb = new BasicBSONCallback();
-        try {
-            d.decode(new ByteArrayInputStream(array, 0, array.length), cb);
-            BSONObject o1 = (BSONObject) cb.get();
-            return o1;
-        } catch (IOException e) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, e);
         }
+
+        return BSON.decode(array);
     }
 
     public static void displayByteBuffer(ByteBuffer buffer) {

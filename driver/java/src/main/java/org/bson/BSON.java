@@ -18,27 +18,15 @@
 
 package org.bson;
 
+import org.bson.types.*;
+import org.bson.util.ClassMap;
+
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import org.bson.types.BSONDecimal;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.CodeWScope;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
-import org.bson.util.ClassMap;
 
 public class BSON {
 
@@ -313,7 +301,7 @@ public class BSON {
 
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
 
-    // ----- static encode/decode -----
+    // ----- static encode/_decode -----
 
     public static byte[] encode( BSONObject o ){
         BSONEncoder e = _staticEncoder.get();
@@ -330,6 +318,11 @@ public class BSON {
         return d.readObject( b );
     }
 
+    public static BSONObject decode(byte[] b, int offset) {
+        BSONDecoder d = _staticDecoder.get();
+        return d.readObject(b, offset);
+    }
+
     static ThreadLocal<BSONEncoder> _staticEncoder = new ThreadLocal<BSONEncoder>(){
         protected BSONEncoder initialValue(){
             return new BasicBSONEncoder();
@@ -338,7 +331,7 @@ public class BSON {
 
     static ThreadLocal<BSONDecoder> _staticDecoder = new ThreadLocal<BSONDecoder>(){
         protected BSONDecoder initialValue(){
-            return new BasicBSONDecoder();
+            return new NewBSONDecoder();
         }
     };
 

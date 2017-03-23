@@ -71,13 +71,11 @@ public final class Helper {
     }
 
     public static byte[] encodeBSONObj(BSONObject obj) {
-        BSONEncoder encoder = new BasicBSONEncoder();
-        return encoder.encode(obj);
+        return BSON.encode(obj);
     }
 
     public static BSONObject decodeBSONBytes(byte[] bytes) {
-        BSONDecoder decoder = new BasicBSONDecoder();
-        return decoder.readObject(bytes);
+        return BSON.decode(bytes);
     }
 
     public static BSONObject decodeBSONObject(ByteBuffer in) {
@@ -88,13 +86,7 @@ public final class Helper {
             bsonEndianConvert(in.array(), position, length, false);
         }
 
-        BSONObject obj;
-        try {
-            BSONDecoder decoder = new BasicBSONDecoder();
-            obj = decoder.readObject(new ByteArrayInputStream(in.array(), position, length));
-        } catch (IOException e) {
-            throw new BaseException(SDBError.SDB_INVALIDARG, e);
-        }
+        BSONObject obj = BSON.decode(in.array(), position);
 
         if (length < in.remaining()) {
             int alignedSize = alignedSize(length);
