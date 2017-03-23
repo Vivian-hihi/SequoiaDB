@@ -82,7 +82,7 @@ public class BrokenNetwork extends Fault {
         try {
             if (group == null) {
                 ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration
-                        + "> /tmp/brokenNet.log &");
+                        + " > /tmp/brokenNet.log &");
                 brokenTime = System.currentTimeMillis();
             }
             else {
