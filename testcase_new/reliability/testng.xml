@@ -13,15 +13,11 @@
 	<parameter name="ROOTPASSWD" value="sequoiadb" />
 	<parameter name="REMOTEUSER" value="sdbadmin" />
 	<parameter name="REMOTEPASSWD" value="sdbadmin" />
-	<test name="mixaed" enabled="true" parallel="classes"
+	<test name="split" enabled="true" parallel="classes"
 		thread-count="1">
-		<classes>
-			<class name="com.sequoiadb.netsplit.NetSplit2568" />
-			<class name="com.sequoiadb.netsplit.NetSplit2569" />
-			<class name="com.sequoiadb.netsplit.NetSplit2570" />
-			<class name="com.sequoiadb.netsplit.NetSplit2571" />
-			<class name="com.sequoiadb.netsplit.NetSplit2572" />
-		</classes>
+		<packages>
+			<package name="com.sequoiadb.split.brokennetwork"></package>
+		</packages>
 	</test>
 
 
