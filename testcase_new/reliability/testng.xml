@@ -3,7 +3,7 @@
 <!--Testcases for reliability test, except disk-full testcases. -->
 
 <suite name="reliability" verbose="1">
-	<parameter name="HOSTNAME" value="192.168.31.31" />
+	<parameter name="HOSTNAME" value="localhost" />
 	<parameter name="SVCNAME" value="11810" />
 	<parameter name="CHANGEDPREFIX" value="reliability_test" />
 	<parameter name="RSRVPORTBEGIN" value="26000" />
