@@ -13,6 +13,7 @@ import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
 
 public class CommLib {
 	/**
@@ -675,4 +676,37 @@ public class CommLib {
 			}
 		}
 	}
+	
+	/**
+	 * 获取一个除开brokenNetHost的主机名
+	 * @param brokenNetHost
+	 *             
+	 * @return
+	 * @throws ReliabilityException
+	 */
+	public static String getSafeHost(String brokenNetHost) throws ReliabilityException{
+	    List<String> allHost = GroupMgr.getInstance().getAllHosts();
+	    for (String entry : allHost) {
+            if (!entry.equals(brokenNetHost)) {
+                return entry ;
+            }
+        }
+        return null;
+	}
+	
+	/**
+	 * 获取一个除开brokenNetHost主机的coordUrl
+	 * @param brokenNetHost
+	 * @return
+	 * @throws ReliabilityException
+	 */
+	public static String getSafeHostWithSVC(String brokenNetHost) throws ReliabilityException{
+        List<String> allHost = GroupMgr.getInstance().getAllHosts();
+        for (String entry : allHost) {
+            if (!entry.equals(brokenNetHost)) {
+                return entry +":"+SdbTestBase.serviceName;
+            }
+        }
+        return null;
+    }
 }
