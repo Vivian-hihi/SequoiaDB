@@ -18,15 +18,21 @@ import com.sequoiadb.base.DBQuery;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbConfigTestBase;
+import com.sequoiadb.testcommon.SdbConfTestBase;
 
-public class TestTransaction7118 extends SdbConfigTestBase{
+public class TestTransaction7118 extends SdbConfTestBase{
     private Sequoiadb sdb;
     private Sequoiadb sdb2;
     private CollectionSpace cs;
     private DBCollection cl;
     private String clName = "cl7118";
     private String commCSName;
+    
+    @Override
+    protected void setNodeConf(){
+        dataConf.put("transactionon", true);
+        stdalnConf.put("transactionon", true);
+    }
     
     @BeforeTest
     public void setUp() {

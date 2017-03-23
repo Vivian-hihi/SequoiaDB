@@ -1,6 +1,7 @@
 package com.sequoiadb.testcommon;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.File;
@@ -9,14 +10,24 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
 
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 
-public class SdbConfigTestBase extends SdbTestBase{
+public class SdbConfTestBase extends SdbTestBase{
     protected static String toolFullName;
-        
+    protected BSONObject cataConf       = new BasicBSONObject();
+    protected BSONObject cataDynaConf   = new BasicBSONObject();
+    protected BSONObject coordConf      = new BasicBSONObject();
+    protected BSONObject coordDynaConf  = new BasicBSONObject();
+    protected BSONObject dataConf       = new BasicBSONObject();
+    protected BSONObject dataDynaConf   = new BasicBSONObject();
+    protected BSONObject stdalnConf     = new BasicBSONObject();
+    protected BSONObject stdalnDynaConf = new BasicBSONObject();
+    
     @Parameters({"CONFTOOL"})
     
     @BeforeTest( alwaysRun = true )
@@ -100,5 +111,43 @@ public class SdbConfigTestBase extends SdbTestBase{
             Assert.fail("get configure command failed");
         }       
         return cmd ;
+    }
+    
+    public SdbConfTestBase(){
+        setNodeConf();
+        createConfFile();
+    }
+    
+    
+    protected void setNodeConf(){
+        /* override by subclass, configure as below
+        dataConf.put("transactionon", true);
+        stdalnConf.put("transactionon", true);
+        */
+    }
+    
+    protected void createConfFile(){
+        try{
+            String confPath = this.getClass().getResource("").getPath() 
+                              + "/node.conf";
+            
+            FileWriter f = new FileWriter( confPath );
+            f.write( "catalogConf = "     + cataConf       + ";\n" );
+            f.write( "catalogDynaConf = " + cataDynaConf   + ";\n" );
+            f.write( "coordConf = "       + coordConf      + ";\n" );
+            f.write( "coordDynaConf = "   + coordDynaConf  + ";\n" );
+            f.write( "dataConf = "        + dataConf       + ";\n" );
+            f.write( "dataDynaConf = "    + dataDynaConf   + ";\n" );
+            f.write( "standaloneConf = "  + stdalnConf     + ";\n" );
+            f.write( "standaloneConf = "  + stdalnDynaConf + ";\n" );
+            f.flush();
+            f.close();
+            
+            System.out.println("create file: " + confPath );
+        }catch( Exception e ){
+            e.printStackTrace();
+            Assert.fail( "generate node.conf file failed" );
+        }
+        
     }
 }
