@@ -246,26 +246,33 @@
          <switch value="@{type}">
          
             <case value="install">
+               <for param="pytarfullname">
+                  <path>
+                     <fileset  dir="${pythondir}" includes="pysequoiadb*.tar.gz"/>
+                  </path>
+                  <sequential>
+                  
+                     <var name="py_version" unset="true"/>
+                     <propertyregex property="py_version" input="@{pytarfullname}" 
+                                    regexp="${pythondir}/pysequoiadb-(.*)-py(.*).tar.gz" select="\2" casesensitive="false"/>
+                                    
+                     <delete dir="${pythondir}/py${py_version}" failonerror="false"/>
+                     <mkdir dir="${pythondir}/py${py_version}"/>
+                     <untar src="@{pytarfullname}" dest="${pythondir}/py${py_version}" compression="gzip"/>
+                     <exec executable="python${py_version}" dir="${pythondir}/py${py_version}">
+                        <arg line=" setup.py install" />
+                     </exec>
+                     
+                  </sequential>
+               </for>
                
-               <delete dir="${pythondir}/py2" failonerror="false"/>
-               <mkdir dir="${pythondir}/py2"/>
-               <untar src="${pythondir}/pysequoiadb-2.8-py2.tar.gz" dest="${pythondir}/py2" compression="gzip"/>
-               <exec executable="python2" dir="${pythondir}/py2">
-                  <arg line=" setup.py install" />
-               </exec>
-               
-               <delete dir="${pythondir}/py3" failonerror="false"/>
-               <mkdir dir="${pythondir}/py3"/>
-               <untar src="${pythondir}/pysequoiadb-2.8-py3.tar.gz" dest="${pythondir}/py3" compression="gzip"/>
-               <exec executable="python3" dir="${pythondir}/py3">
-                  <arg line=" setup.py install" />
-               </exec>
             </case>
             
             <case value="uninstall">
+               <!--delete dir="${pythondir}/py*" failonerror="false"/-->
             </case>
          </switch>
       </sequential>
    </macrodef>
-   
+
 </project>
