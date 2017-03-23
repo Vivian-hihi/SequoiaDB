@@ -7,130 +7,154 @@ import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
 
 public class KillNode extends Fault {
-	private String hostName;
-	private String svcName;
-	private String user;
-	private String passwd;
-	private String pid = "-1";
-	private Ssh ssh;
-	private String remotePath;
-	private int port;
-	private final String localScriptPath = "./script";
-	private final String scriptName = "killNode.sh";
+    private String hostName;
+    private String svcName;
+    private String user;
+    private String passwd;
+    private String pid = "-1";
+    private Ssh ssh;
+    private String remotePath;
+    private int port;
+    private final String localScriptPath = "./script";
+    private final String scriptName = "killNode.sh";
 
-	public KillNode(String hostName, String svcName) {
-		super("killNode");
-		this.hostName = hostName;
-		this.svcName = svcName;
-		this.user = "root";
-		this.passwd = SdbTestBase.rootPwd;
-		this.remotePath = SdbTestBase.workDir;
-		this.port = 22;
-	}
+    public KillNode(String hostName, String svcName) {
+        super("killNode");
+        this.hostName = hostName;
+        this.svcName = svcName;
+        this.user = "root";
+        this.passwd = SdbTestBase.rootPwd;
+        this.remotePath = SdbTestBase.workDir;
+        this.port = 22;
+    }
 
-	@Override
-	public void make() throws FaultException {
-		try {
-			ssh.exec(remotePath + "/" + scriptName + " " + svcName);
-			pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
-		} catch (ReliabilityException e) {
-			FaultException e1 = new FaultException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		}
-	}
+    @Override
+    public void make() throws FaultException {
+        try {
+            ssh.exec(remotePath + "/" + scriptName + " " + svcName);
+            pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
+        }
+        catch (ReliabilityException e) {
+            FaultException e1 = new FaultException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+    }
 
-	@Override
-	public boolean checkMakeResult() throws FaultException {
-		if (pid.equals("-1")) {
-			return false;
-		}
-		try {
-			ssh.exec("lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'");
-			if (ssh.getStdout().length() <= 0) {
-				return false;
-			}
-			String currentPid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
-			if (!pid.equals(currentPid)) {
-				pid = currentPid;
-				return true;
-			} else {
-				return false;
-			}
-		} catch (ReliabilityException e) {
-			FaultException e1 = new FaultException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		}
-	}
+    @Override
+    public boolean checkMakeResult() throws FaultException {
+        if (pid.equals("-1")) {
+            return false;
+        }
+        try {
+            ssh.exec("lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'");
+            if (ssh.getStdout().length() <= 0) {
+                return false;
+            }
+            String currentPid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
+            if (!pid.equals(currentPid)) {
+                pid = currentPid;
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (ReliabilityException e) {
+            FaultException e1 = new FaultException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+    }
 
-	@Override
-	public void restore() throws FaultException {
+    @Override
+    public void restore() throws FaultException {
 
-		// nothing to do
-	}
+        // nothing to do
+    }
 
-	@Override
-	public boolean checkRestoreResult() throws FaultException {
-		try {
-			ssh.exec("lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'");
-			if (ssh.getStdout().length() <= 0) {
-				return false;
-			}
-			return true;
-		} catch (ReliabilityException e) {
-			FaultException e1 = new FaultException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		}
-	}
+    @Override
+    public boolean checkRestoreResult() throws FaultException {
+        try {
+            ssh.exec("lsof -i:" + svcName + " | sed '1d' | awk '{print $2}'");
+            if (ssh.getStdout().length() <= 0) {
+                return false;
+            }
+            return true;
+        }
+        catch (ReliabilityException e) {
+            FaultException e1 = new FaultException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+    }
 
-	@Override
-	public void init() throws FaultException {
-		try {
-			ssh = new Ssh(hostName, user, passwd, port);
-			try {
-				ssh.exec("mkdir " + SdbTestBase.workDir);
-			} catch (Exception e) {
-			}
-			ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
-			ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
-		} catch (ReliabilityException e) {
-			FaultException e1 = new FaultException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		}		
-	}
+    @Override
+    public void init() throws FaultException {
+        try {
+            ssh = new Ssh(hostName, user, passwd, port);
+            try {
+                ssh.exec("mkdir " + SdbTestBase.workDir);
+            }
+            catch (Exception e) {
+            }
+            ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
+            ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
+        }
+        catch (ReliabilityException e) {
+            FaultException e1 = new FaultException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+    }
 
-	@Override
-	public void fini() throws FaultException {
-		try {
-			if (ssh != null) {
-				ssh.exec("rm -rf " + remotePath + "/" + scriptName);
-				ssh.close();
-			}
-		} catch (ReliabilityException e) {
-			FaultException e1 = new FaultException(e);
-			e1.setStackTrace(e.getStackTrace());
-			throw e1;
-		}
-	}
+    @Override
+    public void fini() throws FaultException {
+        try {
+            if (ssh != null) {
+                ssh.exec("rm -rf " + remotePath + "/" + scriptName);
+                ssh.close();
+            }
+        }
+        catch (ReliabilityException e) {
+            FaultException e1 = new FaultException(e);
+            e1.setStackTrace(e.getStackTrace());
+            throw e1;
+        }
+    }
 
-	/**
-	 * 
-	 * @param hostName
-	 * @param svcName
-	 * @param maxDelay
-	 *            最大延迟启动时间s
-	 * @param checkTimes
-	 *            构造成功与否的检查次数（20）
-	 * @return
-	 */
-	public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay, int checkTimes) {
-		FaultMakeTask task = null;
-		KillNode kn = new KillNode(hostName, svcName);
-		task = new FaultMakeTask(kn, maxDelay, 3, checkTimes);
-		return task;
-	}
+    /**
+     * 
+     * @param hostName
+     * @param svcName
+     * @param maxDelay
+     *            最大延迟启动时间s
+     * @param checkTimes
+     *            构造成功与否的检查次数（20）
+     * @return
+     */
+    public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay,
+            int checkTimes) {
+        FaultMakeTask task = null;
+        KillNode kn = new KillNode(hostName, svcName);
+        task = new FaultMakeTask(kn, maxDelay, 3, checkTimes);
+        return task;
+    }
+
+    /**
+     * 
+     * 
+     * @param hostName
+     * @param svcName
+     * @param maxDelay
+     *            最大延迟启动时间s
+     * @return
+     */
+    public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay) {
+        FaultMakeTask task = null;
+        KillNode kn = new KillNode(hostName, svcName);
+        task = new FaultMakeTask(kn, maxDelay, 3, 30);
+        return task;
+    }
 
 }

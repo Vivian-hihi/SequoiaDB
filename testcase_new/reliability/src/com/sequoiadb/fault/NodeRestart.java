@@ -106,4 +106,20 @@ public class NodeRestart extends Fault {
         task = new FaultMakeTask(nr, maxDelay, duration, checkTimes);
         return task;
     }
+
+    /**
+     * 
+     * @param node
+     * @param maxDelay
+     *            最大延迟启动时间s
+     * @param duration
+     *            持续时间s
+     * @return
+     */
+    public static FaultMakeTask getFaultMakeTask(NodeWrapper node, int maxDelay, int duration) {
+        FaultMakeTask task = null;
+        NodeRestart nr = new NodeRestart(node);
+        task = new FaultMakeTask(nr, maxDelay, duration, 10);
+        return task;
+    }
 }
