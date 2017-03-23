@@ -21,8 +21,8 @@
          <equals arg1="${TEST_TYPE}" arg2="CONFIGURETEST"/>
          <then>
             <replaceregexp file="${testcase_dir}/configure.xml"
-                           match='"CONFTOOL" value="(.*)"' 
-                           replace='"CONFTOOL" value="${testcase_dir}/../../tools/changeConf.js"' 
+                           match='"CONFTOOL"(.*)value="(.*)"' 
+                           replace='"CONFTOOL"\1value="${testcase_dir}/../../tools/changeConf.js"' 
                            flags="g" 
                            byline="true" 
                            encoding="utf-8"/>
