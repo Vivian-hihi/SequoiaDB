@@ -42,7 +42,7 @@ public class BrokenNetwork extends Fault {
         GroupMgr mgr = new GroupMgr();
         GroupWrapper data = mgr.getGroupByName("group2");
 
-        FaultMakeTask ft = BrokenNetwork.geFaultMakeTask(data, 10, 0);
+        FaultMakeTask ft = BrokenNetwork.getFaultMakeTask(data, 10, 0);
         TaskMgr tmgr = new TaskMgr(ft);
         tmgr.execute();
 
@@ -332,7 +332,7 @@ public class BrokenNetwork extends Fault {
      *            延迟启动时间
      * @return
      */
-    public static FaultMakeTask geFaultMakeTask(GroupWrapper group, int times, int maxDelay) {
+    public static FaultMakeTask getFaultMakeTask(GroupWrapper group, int times, int maxDelay) {
         FaultMakeTask task = null;
         BrokenNetwork bn = new BrokenNetwork(group, times);
         task = new FaultMakeTask(bn, maxDelay, 0, 15);
