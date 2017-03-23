@@ -2,8 +2,11 @@ package com.sequoiadb.subcl.brokennetwork;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -15,13 +18,14 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
-import com.sequoiadb.subcl.commlib.Utils;
+import com.sequoiadb.subcl.brokennetwork.commlib.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -42,6 +46,8 @@ import com.sequoiadb.task.TaskMgr;
 public class Upsert2187 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private boolean runSuccess = false;
+    private String domainName = "domain_2187";
+    private String csName = "cs_2187";
     private String mclName = "cl_2187";
     private String clGroup = null;
     private static final int SCLNUM = Utils.SCLNUM;
@@ -49,28 +55,27 @@ public class Upsert2187 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        Sequoiadb sdb = null;
+        Sequoiadb db = null;
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            sdb = new Sequoiadb(coordUrl, "", "");
-            groupMgr = GroupMgr.getInstance();
 
+            groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
-            // 创建主表和子表
+            db = new Sequoiadb(coordUrl, "", "");
+            createDomainAndCs(db, groupMgr.getAllDataGroupName());
             clGroup = groupMgr.getAllDataGroupName().get(0);
-            Utils.createMclAndScl(sdb, mclName, clGroup);
-            // 挂载所有子表
-            Utils.attachAllScl(sdb, mclName);
+            createMclAndScl(db);
+            attachAllScl(db);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + Utils.getKeyStack(e, this));
         } finally {
-            if (sdb != null) {
-                sdb.disconnect();
+            if (db != null) {
+                db.disconnect();
             }
         }
     }
@@ -79,34 +84,27 @@ public class Upsert2187 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            // 调整断网主机上的主节点
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
             String dataSlvHost = dataGroup.getSlave().hostName();
-            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary(10)) {
+            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
                 throw new SkipException(cataGroup.getGroupName() + " reelect fail");
             }
             
-            // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 0, 10, 10);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 0, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
-            String safeUrl = Utils.getDiffHostWithSvc(dataSlvHost, groupMgr.getAllHosts());
-            UpsertTask iTask = new UpsertTask("upsert", safeUrl);
+            String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
+            UpsertTask iTask = new UpsertTask(safeUrl);
             mgr.addTask(iTask);
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
-
-            // 检验任务结果
+            mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 等待集群恢复
-            while (groupMgr.checkBusinessWithLSN(false) != true) {}
+            if (!groupMgr.checkBusinessWithLSN(300)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             
-            // 检查用例结果
-            dataGroup.checkInspect(10, 1);
+            if (!dataGroup.checkInspect(1)) {
+                Assert.fail();
+            }
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             checkUpserted(db, iTask.getInsertedCnt());
             checkUsable(db);
@@ -124,15 +122,15 @@ public class Upsert2187 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         if (!runSuccess) { throw new SkipException("to save environment"); }
-        Sequoiadb sdb = null;
+        Sequoiadb db = null;
         try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            Utils.dropMclAndScl(sdb, mclName);
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            dropDomainAndCs(db);
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
-            if (sdb != null) {
-                sdb.disconnect();
+            if (db != null) {
+                db.disconnect();
             }
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -144,8 +142,7 @@ public class Upsert2187 extends SdbTestBase {
         private String safeUrl = null;
         private static final int RECORD_TOTAL = 10000;
         
-        public UpsertTask(String name, String safeUrl) {
-            super(name);
+        public UpsertTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
 
@@ -166,10 +163,6 @@ public class Upsert2187 extends SdbTestBase {
                     insertedCnt++;
                 }
             } catch (BaseException e) {
-                // -104 SDB_CLS_NOT_PRIMARY 非主节点
-                if (e.getErrorCode() != -104) {
-                    throw e;
-                }
             } finally {
                 if (db != null) {
                     db.disconnect();
@@ -180,16 +173,44 @@ public class Upsert2187 extends SdbTestBase {
         public int getInsertedCnt() {
             return insertedCnt;
         }
-
-        // 这是几乎通用的，建议抽出。
-        @Override
-        public void faultNotify(BSONObject status) {
-            if (status.get(FaultMakeTask.MAKE_RESULT) == OperateTask.faultStatus.MAKEFAILURE) {
-                Assert.fail("fail to make fault");
-            }
-            if (status.get(FaultMakeTask.RESTORE_RESULT) == OperateTask.faultStatus.RESTOREFAILURE) {
-                Assert.fail("fail to restore fault");
-            }
+    }
+    
+    private void createDomainAndCs(Sequoiadb db, List<String> dataRGNames) {
+        BSONObject domainOpt = new BasicBSONObject();
+        BSONObject groups = new BasicBSONList();
+        for (int i = 0; i < dataRGNames.size(); i++) {
+            groups.put("" + i, dataRGNames.get(i));
+        }
+        domainOpt.put("Groups", groups);
+        domainOpt.put("AutoSplit", false);
+        db.createDomain(domainName, domainOpt);
+        
+        BSONObject csOpt = new BasicBSONObject();
+        csOpt.put("Domain", domainName);
+        db.createCollectionSpace(csName, csOpt);
+    }
+    
+    private void createMclAndScl(Sequoiadb db) {
+        CollectionSpace cs = db.getCollectionSpace(csName);
+        cs.createCollection(mclName, (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, "
+                + "ShardingType: 'range', IsMainCL: true, Group: '" + clGroup + "', ReplSize: 0 }"));
+        BSONObject sclOpt = (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, "
+                + "ShardingType: 'hash', Group: '" + clGroup + "', ReplSize: 0 }");
+        for (int i = 0; i < SCLNUM; i++) {
+            String sclName = mclName + "_" + i;
+            cs.createCollection(sclName, sclOpt);
+        }
+    }
+    
+    private void attachAllScl(Sequoiadb db) {
+        DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
+        int rangeStart = 0;
+        for (int i = 0; i < SCLNUM; i++) {
+            int rangeEnd = rangeStart + RANGE_WIDTH;
+            String sclFullName = csName + "." + mclName + "_" + i;
+            mcl.attachCollection(sclFullName, (BSONObject) JSON
+                    .parse("{ LowBound: { a: " + rangeStart + " }, " + "UpBound: { a: " + rangeEnd + " } }"));
+            rangeStart += RANGE_WIDTH;
         }
     }
     
@@ -234,5 +255,10 @@ public class Upsert2187 extends SdbTestBase {
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         }
+    }
+    
+    private void dropDomainAndCs(Sequoiadb db) {
+        db.dropCollectionSpace(csName);
+        db.dropDomain(domainName);
     }
 }

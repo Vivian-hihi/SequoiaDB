@@ -14,31 +14,31 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
-import com.sequoiadb.subcl.commlib.Utils;
+import com.sequoiadb.subcl.brokennetwork.commlib.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-2182: 在主表insert大量数据时dataRG主节点断网
+ * @FileName seqDB-2182: 插入16M大小的数据时dataRG主节点断网
  * @Author linsuqiang
- * @Date 2017-03-15
+ * @Date 2017-03-20
  * @Version 1.00
  */
 
 /*
- * 1、创建主表和子表 
- * 2、在主表插入大量数据（如每个子表插入10万条数据），
- *    插入数据过程中将cl所在dataRG主节点网络断掉（如：使用cutnet.sh工具，命令格式为nohup ./cutnet.sh &），
- *    检查insert执行结果
+ * 1、创建主表和子表
+ * 2、在主表插入多条插入16M大小的数据，插入数据过程中将dataRG主节点网络断掉
+ *   （如：使用cutnet.sh工具，命令格式为nohup ./cutnet.sh &），检查insert执行结果 
  * 3、将dataRG主节点网络恢复，检查dataRG各节点数据是否完整一致； 
- * 4、对原操作的主表重新插入数据，检查返回结果
+ * 4、对原操作的主表重新插入数据，检查返回结果 
  */
 
 public class Insert2182 extends SdbTestBase {
@@ -51,28 +51,26 @@ public class Insert2182 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        Sequoiadb sdb = null;
+        Sequoiadb db = null;
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            sdb = new Sequoiadb(coordUrl, "", "");
-            groupMgr = GroupMgr.getInstance();
 
+            groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
-            // 创建主表和子表
+            db = new Sequoiadb(coordUrl, "", "");
             clGroup = groupMgr.getAllDataGroupName().get(0);
-            Utils.createMclAndScl(sdb, mclName, clGroup);
-            // 挂载所有子表
-            Utils.attachAllScl(sdb, mclName);
+            Utils.createMclAndScl(db, mclName, clGroup);
+            Utils.attachAllScl(db, mclName);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + Utils.getKeyStack(e, this));
         } finally {
-            if (sdb != null) {
-                sdb.disconnect();
+            if (db != null) {
+                db.disconnect();
             }
         }
     }
@@ -81,38 +79,27 @@ public class Insert2182 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            // 调整断网主机上的主节点
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
             String dataPriHost = dataGroup.getMaster().hostName();
-            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary(10)) {
+            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
                 throw new SkipException(cataGroup.getGroupName() + " reelect fail");
             }
-            // debug start
-            System.out.println(clGroup);
-            System.out.println(dataPriHost);
-            // debug end
-            
-            // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 0, 18, 10);
-            TaskMgr mgr = new TaskMgr(faultTask);
-            String safeUrl = Utils.getDiffHostWithSvc(dataPriHost, groupMgr.getAllHosts());
-            InsertTask iTask = new InsertTask("insert", safeUrl);
-            mgr.addTask(iTask);
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
 
-            // 检验任务结果
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 0, 18);
+            TaskMgr mgr = new TaskMgr(faultTask);
+            String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
+            InsertTask iTask = new InsertTask(safeUrl);
+            mgr.addTask(iTask);
+            mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 等待集群恢复
-            while (groupMgr.checkBusinessWithLSN(false) != true) {}
+            if (!groupMgr.checkBusinessWithLSN(300)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             
-            // 检查用例结果
-            dataGroup.checkInspect(10, 1);
+            if (!dataGroup.checkInspect(1)) {
+                Assert.fail("data is different on " + dataGroup.getGroupName());
+            }
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             checkInserted(db, iTask.getInsertedCnt());
             checkUsable(db);
@@ -130,15 +117,15 @@ public class Insert2182 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         if (!runSuccess) { throw new SkipException("to save environment"); }
-        Sequoiadb sdb = null;
+        Sequoiadb db = null;
         try {
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            Utils.dropMclAndScl(sdb, mclName);
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            Utils.dropMclAndScl(db, mclName);
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
-            if (sdb != null) {
-                sdb.disconnect();
+            if (db != null) {
+                db.disconnect();
             }
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -150,12 +137,8 @@ public class Insert2182 extends SdbTestBase {
         private String safeUrl = null;
         private static final int RECORD_TOTAL = 100000;
         
-        public InsertTask(String name, String safeUrl) {
-            super(name);
+        public InsertTask(String safeUrl) {
             this.safeUrl = safeUrl;
-            // debug start
-            System.out.println(safeUrl);
-            // debug end
         }
 
         @Override
@@ -172,10 +155,6 @@ public class Insert2182 extends SdbTestBase {
                     insertedCnt++;
                 }
             } catch (BaseException e) {
-                // -104 SDB_CLS_NOT_PRIMARY 非主节点
-                if (e.getErrorCode() != -104) {
-                    throw e;
-                }
             } finally {
                 if (db != null) {
                     db.disconnect();
@@ -186,25 +165,13 @@ public class Insert2182 extends SdbTestBase {
         public int getInsertedCnt() {
             return insertedCnt;
         }
-
-        // 这是几乎通用的，建议抽出。
-        @Override
-        public void faultNotify(BSONObject status) {
-            if (status.get(FaultMakeTask.MAKE_RESULT) == OperateTask.faultStatus.MAKEFAILURE) {
-                Assert.fail("fail to make fault");
-            }
-            if (status.get(FaultMakeTask.RESTORE_RESULT) == OperateTask.faultStatus.RESTOREFAILURE) {
-                Assert.fail("fail to restore fault");
-            }
-        }
     }
     
     private void checkInserted(Sequoiadb db, int insertedCnt) {
-        // debug start
-        System.out.println("insertedCnt: " + insertedCnt);
-        // debug end
         DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
         if (mcl.getCount() < insertedCnt) {
+            System.out.println("expected: " + insertedCnt);
+            System.out.println("actual: " + mcl.getCount());
             Assert.fail("records count is less then the expected.");
         }
         DBCursor cursor = mcl.query(null, null, "{ _id: 1 }", null);

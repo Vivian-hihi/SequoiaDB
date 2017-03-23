@@ -2,12 +2,10 @@ package com.sequoiadb.subcl.brokennetwork;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
+import java.util.Random;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
-import org.bson.types.BasicBSONList;
-import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -31,30 +29,30 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-2183: 在主表insert大量数据时dataRG主节点连续降备
+ * @FileName seqDB-2182: 在主表insert大量数据时dataRG主节点断网
  * @Author linsuqiang
  * @Date 2017-03-15
  * @Version 1.00
  */
 
 /*
- * 1、创建主表和子表（分区方式：主表range，子表hash，AutoSplit：true,多个分区键） 
+ * 1、创建主表和子表 
  * 2、在主表插入大量数据（如每个子表插入10万条数据），
- * 3、插入数据过程中将dataRG主节点网络断掉（如：使用cutnet.sh工具，命令格式为nohup ./cutnet.sh &），检查insert执行结果 
- * 4、dataRG重新选主后立即将新主的网络断掉
- * 5、重复步骤4两道三遍 
- * 6、将dataRG备节点网络恢复，查询原操作对应主表数据是否完整一致，并重新对主表做基本操作（如insert） 
+ *    插入数据过程中将cl所在dataRG主节点网络断掉（如：使用cutnet.sh工具，命令格式为nohup ./cutnet.sh &），
+ *    检查insert执行结果
+ * 3、将dataRG主节点网络恢复，检查dataRG各节点数据是否完整一致； 
+ * 4、对原操作的主表重新插入数据，检查返回结果
  */
 
-public class Insert2183 extends SdbTestBase {
+public class Insert2191 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private boolean runSuccess = false;
-    private String domainName = "domain_2183";
-    private String csName = "cs_2183";
-    private String mclName = "cl_2183";
+    private String mclName = "cl_2182";
     private String clGroup = null;
+    private String bigRecord = getRandomString(15 * 1024 * 1024);
     private static final int SCLNUM = Utils.SCLNUM;
     private static final int RANGE_WIDTH = Utils.RANGE_WIDTH;
+    private static final int TOTAL_COUNT = 20;
 
     @BeforeClass
     public void setUp() {
@@ -69,11 +67,10 @@ public class Insert2183 extends SdbTestBase {
             }
 
             db = new Sequoiadb(coordUrl, "", "");
-            createDomainAndCs(db, groupMgr.getAllDataGroupName());
             clGroup = groupMgr.getAllDataGroupName().get(0);
-            createMclAndScl(db);
-            attachAllScl(db);
-        } catch (Exception e) {
+            Utils.createMclAndScl(db, mclName, clGroup);
+            Utils.attachAllScl(db, mclName);
+        } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + Utils.getKeyStack(e, this));
         } finally {
@@ -95,7 +92,7 @@ public class Insert2183 extends SdbTestBase {
                 throw new SkipException(cataGroup.getGroupName() + " reelect fail");
             }
             
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataGroup, 3, 1);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 1, 18);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
             InsertTask iTask = new InsertTask(safeUrl);
@@ -128,7 +125,7 @@ public class Insert2183 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            dropDomainAndCs(db);
+            Utils.dropMclAndScl(db, mclName);
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
@@ -143,25 +140,23 @@ public class Insert2183 extends SdbTestBase {
     class InsertTask extends OperateTask {
         private int insertedCnt = 0;
         private String safeUrl = null;
-        private static final int RECORD_TOTAL = 100000;
         
         public InsertTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
 
         @Override
-        public void exec() {
+        public void exec() throws Exception {
             Sequoiadb db = null;
             try {
                 db = new Sequoiadb(safeUrl, "", "");
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 DBCollection mcl = cs.getCollection(mclName);
-                int mclRange = SCLNUM * RANGE_WIDTH;
-                for (int i = 0; i < RECORD_TOTAL; i++) {
-                    int valueInRange = i % mclRange;
-                    mcl.insert("{ a: " + valueInRange + ","
-                               + "b: " + valueInRange + ","
-                               + "c: " + valueInRange + " }");
+                for (int i = 0; i < TOTAL_COUNT; i++) {
+                    BSONObject rec = new BasicBSONObject();
+                    rec.put("a", i);
+                    rec.put("bigRec", bigRecord);
+                    mcl.insert(rec);
                     insertedCnt++;
                 }
             } catch (BaseException e) {
@@ -177,48 +172,15 @@ public class Insert2183 extends SdbTestBase {
         }
     }
     
-    private void createDomainAndCs(Sequoiadb db, List<String> dataRGNames) {
-        BSONObject domainOpt = new BasicBSONObject();
-        BSONObject groups = new BasicBSONList();
-        for (int i = 0; i < dataRGNames.size(); i++) {
-            groups.put("" + i, dataRGNames.get(i));
-        }
-        domainOpt.put("Groups", groups);
-        domainOpt.put("AutoSplit", true);
-        db.createDomain(domainName, domainOpt);
-        
-        BSONObject csOpt = new BasicBSONObject();
-        csOpt.put("Domain", domainName);
-        db.createCollectionSpace(csName, csOpt);
-    }
-    
-    private void createMclAndScl(Sequoiadb db) {
-        CollectionSpace cs = db.getCollectionSpace(csName);
-        cs.createCollection(mclName, (BSONObject)JSON.parse("{ ShardingKey: { a: 1, b: 1, c: 1 }, "
-                + "ShardingType: 'range', IsMainCL: true, Group: '" + clGroup + "', ReplSize: 0 }"));
-        BSONObject sclOpt = (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, "
-                + "ShardingType: 'hash', Group: '" + clGroup + "', ReplSize: 0 }");
-        for (int i = 0; i < SCLNUM; i++) {
-            String sclName = mclName + "_" + i;
-            cs.createCollection(sclName, sclOpt);
-        }
-    }
-    
-    private void attachAllScl(Sequoiadb db) {
-        DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
-        int rangeStart = 0;
-        for (int i = 0; i < SCLNUM; i++) {
-            int rangeEnd = rangeStart + RANGE_WIDTH;
-            String sclFullName = csName + "." + mclName + "_" + i;
-            mcl.attachCollection(sclFullName, (BSONObject) JSON
-                    .parse("{ LowBound: { a: " + rangeStart + ","
-                                       + "b: " + rangeStart + ","
-                                       + "c: " + rangeStart + " }, "
-                            + "UpBound: { a: " + rangeEnd + ","
-                                       + "b: " + rangeEnd + ","
-                                       + "c: " + rangeEnd + " } }"));
-            rangeStart += RANGE_WIDTH;
-        }
+    private String getRandomString(int length){
+        String base = "abcdefahijklmnopqrstuvwxyz0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer(); 
+        for (int i = 0; i < length; ++i){
+            char ch = base.charAt(random.nextInt(base.length()));
+            sb.append(ch);
+        }    
+        return sb.toString();
     }
     
     private void checkInserted(Sequoiadb db, int insertedCnt) {
@@ -227,13 +189,10 @@ public class Insert2183 extends SdbTestBase {
             Assert.fail("records count is less then the expected.");
         }
         DBCursor cursor = mcl.query(null, null, "{ _id: 1 }", null);
-        int mclRange = SCLNUM * RANGE_WIDTH;
         for (int i = 0; i < insertedCnt; i++) {
             BSONObject res = cursor.getNext();
-            int expValue = i % mclRange;
-            int actValue = (int)res.get("a");
-            if (actValue != expValue) {
-                Assert.fail("fail to checkInserted. expected: " + expValue + " but found: " + actValue);
+            if ((int)res.get("a") != i || !res.get("bigRec").equals(bigRecord)) {
+                Assert.fail("fail to checkInserted. expected: " + (int)res.get("a") + " but found: " + i);
             }
         }
         cursor.close();
@@ -245,24 +204,14 @@ public class Insert2183 extends SdbTestBase {
             for (int i = 0; i < SCLNUM; i++) {
                 int lowBound = i * RANGE_WIDTH;
                 int upBound = (i + 1) * RANGE_WIDTH - 1;
-                mcl.insert("{ a: " + lowBound + ", "
-                           + "b: " + lowBound + ", "
-                           + "c: " + lowBound + ", "
-                           + "s: " + i + " }");
-                mcl.insert("{ a: " + upBound + ", "
-                           + "b: " + upBound + ", "
-                           + "c: " + upBound + ", "
-                           + "s: " + i + " }");
-                if (mcl.getCount("{ s: " + i + " }") != 2) {
+                mcl.insert("{ a: " + lowBound + ", b: " + i + " }");
+                mcl.insert("{ a: " + upBound + ", b: " + i + " }");
+                if (mcl.getCount("{ b: " + i + " }") != 2) {
                     Assert.fail("scl " + i + " is not usable");
                 }
             }
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         }
-    }
-    
-    private void dropDomainAndCs(Sequoiadb db) {
-        db.dropCollectionSpace(csName);
     }
 }

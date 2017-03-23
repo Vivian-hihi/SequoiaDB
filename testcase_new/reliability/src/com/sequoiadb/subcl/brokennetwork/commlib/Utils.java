@@ -3,7 +3,6 @@ package com.sequoiadb.subcl.brokennetwork.commlib;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import org.bson.BSONObject;
 import org.bson.util.JSON;
@@ -40,7 +39,7 @@ public class Utils {
     public static void createMclAndScl(Sequoiadb db, String mclName, String clGroup) {
         CollectionSpace commCS = db.getCollectionSpace(SdbTestBase.csName);
         commCS.createCollection(mclName, (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, ShardingType: 'range', "
-                + "IsMainCL: true, Group: '" + clGroup + "' }"));
+                + "IsMainCL: true, Group: '" + clGroup + "', ReplSize: 0 }"));
         for (int i = 0; i < SCLNUM; i++) {
             String sclName = mclName + "_" + i;
             commCS.createCollection(sclName, (BSONObject)JSON.parse("{ Group: '" + clGroup + "', ReplSize: 0 }"));
@@ -177,14 +176,5 @@ public class Utils {
         } else {
             return str;
         }
-    }
-
-    public static String getDiffHostWithSvc(String host, Set<String> allHost) {
-        for (String entry : allHost) {
-            if (!entry.equals(host)) {
-                return entry + ":" + SdbTestBase.serviceName;
-            }
-        }
-        return null;
     }
 }

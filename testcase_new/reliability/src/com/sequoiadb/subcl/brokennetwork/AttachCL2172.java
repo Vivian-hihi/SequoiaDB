@@ -10,14 +10,15 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
-import com.sequoiadb.subcl.commlib.AttachCLTask;
-import com.sequoiadb.subcl.commlib.Utils;
+import com.sequoiadb.subcl.brokennetwork.commlib.AttachCLTask;
+import com.sequoiadb.subcl.brokennetwork.commlib.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
 
@@ -43,26 +44,25 @@ public class AttachCL2172 extends SdbTestBase {
 
     @BeforeClass
     public void setUp() {
-        Sequoiadb sdb = null;
+        Sequoiadb db = null;
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            sdb = new Sequoiadb(coordUrl, "", "");
-            groupMgr = GroupMgr.getInstance();
 
+            groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
-            // 创建主表和子表
+            db = new Sequoiadb(coordUrl, "", "");
             clGroup = groupMgr.getAllDataGroupName().get(0);
-            Utils.createMclAndScl(sdb, mclName, clGroup);
+            Utils.createMclAndScl(db, mclName, clGroup);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + Utils.getKeyStack(e, this));
         } finally {
-            if (sdb != null) {
-                sdb.disconnect();
+            if (db != null) {
+                db.disconnect();
             }
         }
     }
@@ -71,35 +71,24 @@ public class AttachCL2172 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            // 调整断网主机上的主节点
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
             String dataPriHost = dataGroup.getMaster().hostName();
-            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary(10)) {
+            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
                 throw new SkipException(cataGroup.getGroupName() + " reelect fail");
             }
 
-            // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 1, 10, 10);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
-            String safeUrl = Utils.getDiffHostWithSvc(dataPriHost, groupMgr.getAllHosts());
-            // -104 SDB_CLS_NOT_PRIMARY 非主节点
-            int[] expErrCodes = {-104};
-            AttachCLTask aTask = new AttachCLTask("attachCL", mclName, safeUrl, expErrCodes);
+            String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
+            AttachCLTask aTask = new AttachCLTask(mclName, safeUrl);
             mgr.addTask(aTask);
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
-
-            // 检验任务结果
+            mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 等待集群恢复
-            while (groupMgr.checkBusinessWithLSN(false) != true) {}
+            if (!groupMgr.checkBusinessWithLSN(300)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             
-            // 检查用例结果
             Utils.checkConsistency(cataGroup);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);

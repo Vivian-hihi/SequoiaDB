@@ -1,27 +1,20 @@
 package com.sequoiadb.subcl.brokennetwork.commlib;
 
-import org.bson.BSONObject;
-import org.testng.Assert;
-
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 
 public class DetachCLTask extends OperateTask {
     private int detachedSclCnt = 0;
     private String safeUrl = null;
     private String mclName = null;
-    private int[] expErrCodes = null;
     
-    public DetachCLTask(String name, String mclName, String safeUrl, int[] expErrCodes) {
-        super(name);
+    public DetachCLTask(String mclName, String safeUrl) {
         this.mclName = mclName;
         this.safeUrl = safeUrl;
-        this.expErrCodes = expErrCodes;
     }
 
     @Override
@@ -37,15 +30,6 @@ public class DetachCLTask extends OperateTask {
                 detachedSclCnt++;
             }
         } catch (BaseException e) {
-            int actErrCode = e.getErrorCode();
-            boolean isExpected = false;
-            for (int i = 0; i < expErrCodes.length; i++) {
-                if (actErrCode == expErrCodes[i]) {
-                    isExpected = true;
-                    break;
-                }
-            }
-            if (!isExpected) { throw e; }
         } finally {
             if (db != null) {
                 db.disconnect();
@@ -55,16 +39,5 @@ public class DetachCLTask extends OperateTask {
     
     public int getDetachedSclCnt() {
         return detachedSclCnt;
-    }
-
-    // 这是几乎通用的，建议抽出。
-    @Override
-    public void faultNotify(BSONObject status) {
-        if (status.get(FaultMakeTask.MAKE_RESULT) == OperateTask.faultStatus.MAKEFAILURE) {
-            Assert.fail("fail to make fault");
-        }
-        if (status.get(FaultMakeTask.RESTORE_RESULT) == OperateTask.faultStatus.RESTOREFAILURE) {
-            Assert.fail("fail to restore fault");
-        }
     }
 }  

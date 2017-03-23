@@ -10,14 +10,15 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
-import com.sequoiadb.subcl.commlib.AttachCLTask;
-import com.sequoiadb.subcl.commlib.Utils;
+import com.sequoiadb.subcl.brokennetwork.commlib.AttachCLTask;
+import com.sequoiadb.subcl.brokennetwork.commlib.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
 
@@ -47,14 +48,13 @@ public class AttachCL2170 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            db = new Sequoiadb(coordUrl, "", "");
-            groupMgr = GroupMgr.getInstance();
 
+            groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
-            // 创建主表和子表
+            db = new Sequoiadb(coordUrl, "", "");
             Utils.createMclAndScl(db, mclName);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
@@ -73,25 +73,16 @@ public class AttachCL2170 extends SdbTestBase {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataSlvHost = cataGroup.getSlave().hostName();
 
-            // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataSlvHost, 1, 10, 10);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataSlvHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
-            String safeUrl = Utils.getDiffHostWithSvc(cataSlvHost, groupMgr.getAllHosts());
-            int[] expErrCodes = {};
-            AttachCLTask aTask = new AttachCLTask("attachCL", mclName, safeUrl, expErrCodes);
+            String safeUrl = CommLib.getSafeCoordUrl(cataSlvHost);
+            AttachCLTask aTask = new AttachCLTask(mclName, safeUrl);
             mgr.addTask(aTask);
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
-
-            // 检验任务结果
+            mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 等待集群恢复
-            while (groupMgr.checkBusinessWithLSN(false) != true) {}
+            if (!groupMgr.checkBusinessWithLSN(300)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             
-            // 检查用例结果
             Utils.checkConsistency(cataGroup);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
