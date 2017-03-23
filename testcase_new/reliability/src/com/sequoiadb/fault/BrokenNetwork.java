@@ -18,9 +18,11 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
+import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.TaskMgr;
 
 public class BrokenNetwork extends Fault {
     private String hostName;
@@ -39,8 +41,13 @@ public class BrokenNetwork extends Fault {
     public static void test() throws ReliabilityException {
         GroupMgr mgr = new GroupMgr();
         GroupWrapper data = mgr.getGroupByName("group2");
-        BrokenNetwork bn = new BrokenNetwork(data);
-        bn.continuouslyMakeOnPri();
+
+        FaultMakeTask ft = BrokenNetwork.geFaultMakeTask(data, 10, 0);
+        TaskMgr tmgr = new TaskMgr(ft);
+        tmgr.execute();
+
+        System.out.println(tmgr.getErrorMsg());
+
     }
 
     /**
@@ -61,20 +68,26 @@ public class BrokenNetwork extends Fault {
         this.port = 22;
     }
 
-    public BrokenNetwork(GroupWrapper group) {
+    public BrokenNetwork(GroupWrapper group, int times) {
         super("brokenNetwork");
         this.user = "root";
         this.passwd = SdbTestBase.rootPwd;
         this.remotePath = SdbTestBase.workDir;
         this.port = 22;
         this.group = group;
+        this.duration = times;
     }
 
     public void make() throws FaultException {
         try {
-            ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration
-                    + "> /tmp/brokenNet.log &");
-            brokenTime = System.currentTimeMillis();
+            if (group == null) {
+                ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration
+                        + "> /tmp/brokenNet.log &");
+                brokenTime = System.currentTimeMillis();
+            }
+            else {
+                continuouslyMakeOnPri();
+            }
         }
         catch (ReliabilityException e) {
             FaultException e1 = new FaultException(e);
@@ -88,7 +101,8 @@ public class BrokenNetwork extends Fault {
         List<String> allHosts = group.getAllHosts();
         List<String> brokenHost = new ArrayList<String>();
         String host = group.getMaster().hostName();
-        for (int i = 0; i < 3; i++) {
+        System.out.println("Begin ContinuouslyMakeBrokenNetOnPri:" + group.getGroupName());
+        for (int i = 0; i < duration; i++) {
             ssh = new Ssh(host, user, passwd, port);
             try {
                 ssh.exec("mkdir " + SdbTestBase.workDir);
@@ -98,19 +112,35 @@ public class BrokenNetwork extends Fault {
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
             ssh.execBackground(
-                    "nohup " + remotePath + "/" + scriptName + " 8 > /tmp/brokenNet.log &");
+                    "nohup " + remotePath + "/" + scriptName + " 10 > /tmp/brokenNet.log &");
             ssh.close();
             brokenHost.add(host);
+            System.out.println("Broken network:" + host + ",Watting group reelcte....");
             while (true) {
                 allHosts.removeAll(brokenHost);
                 if (allHosts.size() <= 0) {
-                    return;
+                    allHosts.addAll(brokenHost);
+                    brokenHost.clear();
                 }
-                group.refresh(allHosts.get(0));
+                while (true) {
+                    try {
+                        group.refresh(allHosts.get(0));
+                        break;
+                    }
+                    catch (BaseException e) {
+                        try {
+                            Thread.sleep(1000);
+                        }
+                        catch (InterruptedException e1) {
+                            // ignore
+                        }
+                        continue;
+                    }
+                }
                 boolean breakFlag = false;
                 for (NodeWrapper node : group.getNodes()) {
                     try {
-                        if (node.isMaster()) {
+                        if (node.isMaster(false)) {
                             host = node.hostName();
                             breakFlag = true;
                             break;
@@ -123,10 +153,14 @@ public class BrokenNetwork extends Fault {
                     break;
                 }
             }
+            System.out.println("reelect success,the host:" + host);
         }
     }
 
     public boolean checkMakeResult() throws FaultException {
+        if (group != null) {
+            return true;
+        }
         int checkTime = 3;
         for (int i = 0; i < checkTime; i++) {
             if (ping() == false) {
@@ -137,6 +171,9 @@ public class BrokenNetwork extends Fault {
     }
 
     public void restore() throws FaultException {
+        if (group != null) {
+            return;
+        }
         long diff = System.currentTimeMillis() - brokenTime;
         if (diff < duration * 1000) {
             try {
@@ -151,6 +188,17 @@ public class BrokenNetwork extends Fault {
 
     public boolean checkRestoreResult() throws FaultException {
         int checkTime = 3;
+        if (group != null) {
+            List<String> hosts = group.getAllHosts();
+            for (String host : hosts) {
+                for (int i = 0; i < checkTime; i++) {
+                    if (ping(host)) {
+                        return true;
+                    }
+                }
+            }
+            return true;
+        }
         for (int i = 0; i < checkTime; i++) {
             if (ping()) {
                 return true;
@@ -160,13 +208,17 @@ public class BrokenNetwork extends Fault {
     }
 
     public boolean ping() throws FaultException {
+        return ping(hostName);
+    }
+
+    public boolean ping(String host) throws FaultException {
         String os = System.getProperties().getProperty("os.name");
         String cmd;
         if (os.startsWith("win") || os.startsWith("Win")) {
-            cmd = "ping " + hostName + " -n 2 -w 2";
+            cmd = "ping " + host + " -n 2 -w 2";
         }
         else {
-            cmd = "ping " + hostName + " -c 2 -w 2";
+            cmd = "ping " + host + " -c 2 -w 2";
         }
         Runtime rt = Runtime.getRuntime();
         try {
@@ -188,6 +240,9 @@ public class BrokenNetwork extends Fault {
 
     @Override
     public void init() throws FaultException {
+        if (group != null) {
+            return;
+        }
         try {
             ssh = new Ssh(hostName, user, passwd, port);
             try {
@@ -207,7 +262,9 @@ public class BrokenNetwork extends Fault {
 
     @Override
     public void fini() throws FaultException {
-
+        if (group != null) {
+            return;
+        }
         try {
             if (ssh != null) {
                 ssh.close();
@@ -229,6 +286,7 @@ public class BrokenNetwork extends Fault {
     }
 
     /**
+     * 对主机单次断网
      * 
      * @param hostName
      * @param maxDelay
@@ -248,6 +306,7 @@ public class BrokenNetwork extends Fault {
     }
 
     /**
+     * 对主机单次断网
      * 
      * @param hostName
      * @param maxDelay
@@ -260,6 +319,23 @@ public class BrokenNetwork extends Fault {
         FaultMakeTask task = null;
         BrokenNetwork bn = new BrokenNetwork(hostName, duration);
         task = new FaultMakeTask(bn, maxDelay, duration, 15);
+        return task;
+    }
+
+    /**
+     * 对group的主节点做连续断网操作
+     * 
+     * @param group
+     * @param times
+     *            断网次数（3-4）耗时大概1分钟
+     * @param maxDelay
+     *            延迟启动时间
+     * @return
+     */
+    public static FaultMakeTask geFaultMakeTask(GroupWrapper group, int times, int maxDelay) {
+        FaultMakeTask task = null;
+        BrokenNetwork bn = new BrokenNetwork(group, times);
+        task = new FaultMakeTask(bn, maxDelay, 0, 15);
         return task;
     }
 
