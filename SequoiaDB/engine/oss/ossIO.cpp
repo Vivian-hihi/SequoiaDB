@@ -834,8 +834,6 @@ INT32 ossAccess ( const CHAR *pPathName, int flags )
    if ( 0 != _ossAccess( pPathName, flags ) )
    {
       INT32 err = errno ;
-      PD_LOG( PDINFO, "Failed to access(%s,%d), errno: %d",
-              pPathName, flags, err ) ;
       switch ( err )
       {
       case ENOENT:
