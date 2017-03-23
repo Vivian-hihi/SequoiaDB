@@ -250,8 +250,11 @@
    </target>
 
    <target name="compile_python_driver" >
-      <var name="src_dir" value="${srccode_dir}/driver/python" /> 
+      <var name="src_dir" value="${srccode_dir}/driver/python" />
       
+      <delete>
+         <fileset dir="${src_dir}" includes="pysequoiadb*.tar.gz" />
+      </delete>
       <exec executable="scons" dir="${src_dir}" failonerror="true">
          <arg line="${cmd_debug}" />
       </exec>
