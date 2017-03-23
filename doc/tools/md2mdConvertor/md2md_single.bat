@@ -1,7 +1,7 @@
 @echo off&setlocal enabledelayedexpansion
 
 set SCRIPTPATH=%~dp0
-set PROGPATH=!SCRIPTPATH!\sundown-master\bin\md2md.exe
+set PROGPATH=!SCRIPTPATH!\sundown-master\bin\md2TroffTool.exe
 ::set OUTPUTPATH=!SCRIPTPATH!..\..\manual\
 
 set INPUTFILE=
@@ -50,7 +50,7 @@ goto :END
 :: 4) TODO: post-processing the troff file
 
 :: 4.1) remove the middle file
-if EXIST "%MIDDLEFILE%" del "%MIDDLEFILE%"
+:: if EXIST "%MIDDLEFILE%" del "%MIDDLEFILE%"
 
 :: 4.2) reduce indent in #sample#
 
