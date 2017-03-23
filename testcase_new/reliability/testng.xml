@@ -16,7 +16,7 @@
 	<test name="split" enabled="true" parallel="classes"
 		thread-count="1">
 		<packages>
-			<package name="com.sequoiadb.split.brokennetwork"></package>
+			<package name="com.sequoiadb.split.brokennetwork"/>
 		</packages>
 	</test>
 
