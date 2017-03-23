@@ -160,6 +160,8 @@
    
    <target name="compile_java_driver">
       <var name="src_dir" value="${srccode_dir}/driver/java" />
+      
+      <delete dir="${src_dir}/build" failonerror="false"/>
       <exec executable="scons" dir="${src_dir}" failonerror="true">
          <arg line="${cmd_debug}" />
       </exec>
@@ -171,7 +173,7 @@
       <property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
       <property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
             
-      <ant antfile="${src_dir}//build.xml">
+      <ant antfile="${src_dir}/build.xml">
          <property name="java.driver.jar" value="${srccode_dir}/driver/java/${java_driver_jar}"/>
          <property name="javac.base.dir" value="${srccode_dir}"/>
          <property name="root.dir" value="${src_dir}"/>
@@ -255,6 +257,8 @@
       <delete>
          <fileset dir="${src_dir}" includes="pysequoiadb*.tar.gz" />
       </delete>
+      <delete dir="${src_dir}/build" failonerror="false" />
+      
       <exec executable="scons" dir="${src_dir}" failonerror="true">
          <arg line="${cmd_debug}" />
       </exec>
