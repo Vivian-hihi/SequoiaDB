@@ -243,7 +243,7 @@ public class GroupWrapper {
         String stdout = getInspectStdout();
         String[] res = stdout.split("\n");
         if (res.length != 8) {
-            throw new ReliabilityException("analyze inspectStdout faile:" + stdout);
+            return false;
         }
         if (res[7].equals("Reason for exit : exit with no records different")) {
             return true;
@@ -304,7 +304,7 @@ public class GroupWrapper {
         }
         return ssh.getStdout();
     }
-    
+
     public List<NodeWrapper> getNodes() {
         return nodes;
     }
