@@ -700,7 +700,7 @@ public class CommLib {
 	 * @return
 	 * @throws ReliabilityException
 	 */
-	public static String getSafeHostWithSVC(String brokenNetHost) throws ReliabilityException{
+	public static String getSafeCoordUrl(String brokenNetHost) throws ReliabilityException{
         List<String> allHost = GroupMgr.getInstance().getAllHosts();
         for (String entry : allHost) {
             if (!entry.equals(brokenNetHost)) {
