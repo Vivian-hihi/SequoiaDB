@@ -165,6 +165,25 @@
          </else>
       </if> 
       
+      <!--backup core file : node core or testcase core-->
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
+         <else>
+            <delete dir="${backup_basedir}/${backup_reltdir}/corefile" failonerror="false"/>
+            <mkdir dir="${backup_basedir}/${backup_reltdir}/corefile"/>
+            <copy todir="${backup_basedir}/${backup_reltdir}/corefile" >
+               <fileset dir="${CI_WORK_DIR}">
+                  <include name="testcase/**/*core*"/>
+               </fileset>
+            </copy>
+            <copy todir="${backup_basedir}/${backup_reltdir}/corefile" >
+               <fileset dir="${INSTALL_DIR}">
+                  <include name="database/**/*core*"/>
+               </fileset>
+            </copy>
+         </else>
+      </if> 
+      
       <!--compress-->
       <tar destfile="${backup_fullname}" longfile="gnu" compression="gzip" 
            basedir="${backup_basedir}" includes="${backup_reltdir}/**/*"/>
