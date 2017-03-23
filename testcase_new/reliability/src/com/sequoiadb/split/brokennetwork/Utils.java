@@ -1,13 +1,16 @@
 package com.sequoiadb.split.brokennetwork;
 
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.util.JSON;
+import org.testng.SkipException;
+
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 
@@ -20,6 +23,8 @@ import com.sequoiadb.exception.ReliabilityException;
  */
 
 public class Utils {
+
+    public static final String CATA_RG_NAME = "SYSCatalogGroup";
 
     // 检查某集合是否仅含一个dest记录
     public static boolean isCollectionContainThisJSON(DBCollection cl, String dest)
@@ -66,31 +71,27 @@ public class Utils {
         }
     }
 
-    // 调用GroupMgr的checkBusiness（false）检测环境，超时后打印当前环境信息,并可能抛出异常
-    public static boolean checkBusinessLSNWithTimeout(GroupMgr mgr, int timeSecond)
+    public static void reelect(String destHost, String groupName1, String groupName2)
             throws ReliabilityException {
-        long timestamp = System.currentTimeMillis();
-        while (!mgr.checkBusinessWithLSN(false)) {
-            if (System.currentTimeMillis() - timestamp > timeSecond * 1000) {
-                return mgr.checkBusinessWithLSN();
-            }
-            try {
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-                // ignore
-            }
-        }
-        return true;
+        List<GroupWrapper> groups = new ArrayList<GroupWrapper>();
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName1));
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName2));
+        reelect(destHost, groups);
     }
 
-    public static String getDiffHostWithSvc(String host, Set<String> allHost) {
-        for (String entry : allHost) {
-            if (!entry.equals(host)) {
-                return entry + ":" + SdbTestBase.serviceName;
+    public static void reelect(String destHost, String groupName) throws ReliabilityException {
+        List<GroupWrapper> groups = new ArrayList<GroupWrapper>();
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName));
+        reelect(destHost, groups);
+    }
+
+    public static void reelect(String destHost, List<GroupWrapper> groups)
+            throws ReliabilityException {
+        for (GroupWrapper group : groups) {
+            if (destHost.equals(group.getMaster().hostName()) && !group.changePrimary()) {
+                throw new SkipException(group.getGroupName() + " failed to reelect");
             }
         }
-        return null;
     }
 
 }

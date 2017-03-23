@@ -19,6 +19,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
@@ -46,10 +47,11 @@ public class NetSplit2585 extends SdbTestBase {
     private String connectUrl;
     private boolean clearFlag = false;
     private int exceptionRecNum;
+    private String brokenNetHost;
 
     @BeforeClass()
     public void setUp() {
-        Sequoiadb sdb = new Sequoiadb(coordUrl, "", "");
+        Sequoiadb sdb = null;
         try {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
@@ -58,8 +60,9 @@ public class NetSplit2585 extends SdbTestBase {
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
             if (!groupMgr.checkBusiness(true)) {
-                throw new SkipException("checkBusiness faile");
+                throw new SkipException("checkBusiness return false");
             }
+            sdb = new Sequoiadb(coordUrl, "", "");
 
             // 确定切分的源和目标组
             List<GroupWrapper> glist = groupMgr.getAllDataGroup();
@@ -73,6 +76,12 @@ public class NetSplit2585 extends SdbTestBase {
                                     + srcGroupName + "'}"));
             // 准备切分的数据
             insertData(cl, 0, 5000);
+
+            // 调整主机
+            brokenNetHost = groupMgr.getGroupByName(srcGroupName).getMaster().hostName();
+            Utils.reelect(brokenNetHost, Utils.CATA_RG_NAME, destGroupName);
+            connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
+            groupMgr.refresh();
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
@@ -94,41 +103,19 @@ public class NetSplit2585 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            // 调整断网主机上的主节点
-            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
-            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String srcPriHost = srcGroup.getMaster().hostName();
-            String destPriHost = destGroup.getMaster().hostName();
-            String cataPriHost = cataGroup.getMaster().hostName();
-            // srcPriHost为断网主机，若目标组主节点，catalog主节点在这台机上，changePrimary将尝试至多10次的切主操作
-            if (srcPriHost.equals(destPriHost) && !destGroup.changePrimary(10)) {
-                throw new SkipException(destGroup.getGroupName() + " reelect faile");
-            }
-            if (srcPriHost.equals(cataPriHost) && !cataGroup.changePrimary(10)) {
-                throw new SkipException("SYSCataLogGroup reelect faile");
-            }
-
-            // 得到一个非断网主机的coordurl
-            connectUrl = Utils.getDiffHostWithSvc(srcPriHost, groupMgr.getAllHosts());
-
             // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(srcPriHost, 5, 15, 25);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(brokenNetHost, 5, 15, 25);
 
             TaskMgr mgr = new TaskMgr(faultTask);
-            mgr.addTask(new Split("Split"));
-            mgr.addTask(new Insert("insert"));
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
+            mgr.addTask(new Split());
+            mgr.addTask(new Insert());
+            mgr.execute();
 
             // TaskMgr检查线程异常
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             // 最长等待20分钟的集群环境恢复
-            Assert.assertEquals(Utils.checkBusinessLSNWithTimeout(groupMgr, 20 * 60), true,
-                    "wait restore business faile");
+            Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
             db = new Sequoiadb(connectUrl, "", "");
@@ -138,18 +125,17 @@ public class NetSplit2585 extends SdbTestBase {
 
             // 源和目标数据量比对
             int bound = getBound(db);
-            //exceptionRecNum + 5000 + 1000 - bound :插入线程插入的数据+setUp插入的数据+所有线程结束后插入的数据-切分至源组的数据 = 目标组数据量
+            // exceptionRecNum + 5000 + 1000 - bound
+            // :插入线程插入的数据+setUp插入的数据+所有线程结束后插入的数据-切分至源组的数据 = 目标组数据量
             checkGroupData(db, destGroupName, "{sk:{$gte:" + bound + "}}",
                     exceptionRecNum + 5000 + 1000 - bound);
             checkGroupData(db, srcGroupName, "{sk:{$lt:" + bound + "}}", bound);
 
-            // 组间一致性校验，尝试至多60次，每次间隔1秒
-            if (!destGroup.checkInspect(60, 1)) {
-                Assert.fail(destGroup.getInspectStdout());
-            }
-            if (!srcGroup.checkInspect(60, 1)) {
-                Assert.fail(srcGroup.getInspectStdout());
-            }
+            // 组间一致性校验，尝试至多30次，每次间隔1秒
+            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
+            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
+            Assert.assertEquals(srcGroup.checkInspect(30), true);
+            Assert.assertEquals(destGroup.checkInspect(30), true);
 
             clearFlag = true;
         }
@@ -256,11 +242,6 @@ public class NetSplit2585 extends SdbTestBase {
     class Insert extends OperateTask {
         private AtomicBoolean isCutnet = new AtomicBoolean(false);
 
-        public Insert(String name) {
-            super(name);
-            // TODO Auto-generated constructor stub
-        }
-
         @Override
         public void exec() throws Exception {
             Sequoiadb db = new Sequoiadb(connectUrl, "", "");
@@ -289,28 +270,17 @@ public class NetSplit2585 extends SdbTestBase {
 
         @Override
         public void faultNotify(BSONObject status) throws FaultException {
+            super.faultNotify(status);
             OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
-            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
-            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
-                throw new FaultException(mk.toString());
-            }
             if (mk == OperateTask.faultStatus.MAKESUCCESS) {
                 isCutnet.set(true);
                 return;
             }
-            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
-                throw new FaultException(rt.toString());
-            }
+
         }
     }
 
     class Split extends OperateTask {
-        public Split(String name)
-
-        {
-            super(name);
-        }
-
         @Override
         public void exec() throws Exception {
             Sequoiadb sdb = null;
@@ -328,11 +298,6 @@ public class NetSplit2585 extends SdbTestBase {
                     sdb.disconnect();
                 }
             }
-        }
-
-        @Override
-        public void faultNotify(BSONObject status) {
-
         }
     }
 

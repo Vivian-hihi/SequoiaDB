@@ -1,7 +1,6 @@
 package com.sequoiadb.split.brokennetwork;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,11 +16,11 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
@@ -43,10 +42,11 @@ public class NetSplit2571 extends SdbTestBase {
     private int clTotalCount;
     private String connectUrl;
     private boolean clearFlag = false;
+    private String brokenNetHost;
 
     @BeforeClass()
     public void setUp() {
-        Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        Sequoiadb sdb = null;
         try {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
@@ -54,8 +54,9 @@ public class NetSplit2571 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             if (!groupMgr.checkBusiness(true)) {
-                throw new SkipException("checkBusiness faile");
+                throw new SkipException("checkBusiness return false");
             }
+            sdb = new Sequoiadb(coordUrl, "", "");
             List<GroupWrapper> glist = groupMgr.getAllDataGroup();
 
             srcGroupName = glist.get(0).getGroupName();
@@ -67,6 +68,11 @@ public class NetSplit2571 extends SdbTestBase {
                             .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
                                     + srcGroupName + "'}"));
             insertData(cl, 0, 2000);
+            // 调整主机
+            brokenNetHost = groupMgr.getGroupByName(Utils.CATA_RG_NAME).getMaster().hostName();
+            Utils.reelect(brokenNetHost, srcGroupName, destGroupName);
+            connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
+            groupMgr.refresh();
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
@@ -89,37 +95,17 @@ public class NetSplit2571 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            // 调整断网主机上的主节点
-            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
-            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String srcPriHost = srcGroup.getMaster().hostName();
-            String destPriHost = destGroup.getMaster().hostName();
-            String cataPriHost = cataGroup.getMaster().hostName();
-            if (cataPriHost.equals(srcPriHost) && !srcGroup.changePrimary(10)) {
-                throw new SkipException(srcGroupName + " reelect faile");
-            }
-            if (cataPriHost.equals(destPriHost) && !destGroup.changePrimary(10)) {
-                throw new SkipException(destGroupName + " reelect faile");
-            }
-
-            connectUrl = Utils.getDiffHostWithSvc(cataPriHost, groupMgr.getAllHosts());
-
             // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 2, 10, 15);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(brokenNetHost, 2, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
-            mgr.addTask(new Split("Split"));
-            mgr.addTask(new Insert("insert"));
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
+            mgr.addTask(new Split());
+            mgr.addTask(new Insert());
+            mgr.execute();
 
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             // 最长等待20分钟的环境恢复
-            Assert.assertEquals(Utils.checkBusinessLSNWithTimeout(groupMgr, 1200), true,
-                    "wait restore business faile");
+            Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
             db = new Sequoiadb(connectUrl, "", "");
@@ -128,26 +114,19 @@ public class NetSplit2571 extends SdbTestBase {
             insertData(cl, 8000, 10000);
 
             // 结果校验
-            if (!destGroup.checkInspect(60, 1)) {
-                Assert.fail(destGroup.getInspectStdout());
-            }
-            if (!srcGroup.checkInspect(60, 1)) {
-                Assert.fail(srcGroup.getInspectStdout());
-            }
+            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
+            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            Assert.assertEquals(srcGroup.checkInspect(30), true);
+            Assert.assertEquals(destGroup.checkInspect(30), true);
+            Assert.assertEquals(cataGroup.checkInspect(30), true);
 
             long destCount = checkGroupData(db, destGroupName);
             long srcCount = checkGroupData(db, srcGroupName);
             Assert.assertEquals(destCount + srcCount, clTotalCount);
-            for (int i = 0; i < 10; i++) {
-                if (CheckCatalog(cataGroup)) {
-                    clearFlag = true;
-                    return;
-                }
-                Thread.sleep(5000);
-            }
-            Assert.fail("wait catalog synchronize timeout");
+            clearFlag = true;
         }
-        catch (ReliabilityException | InterruptedException e) {
+        catch (ReliabilityException e) {
             e.printStackTrace();
             Assert.fail(e.getMessage());
         }
@@ -157,34 +136,6 @@ public class NetSplit2571 extends SdbTestBase {
             }
         }
 
-    }
-
-    private boolean CheckCatalog(GroupWrapper cataGroup) throws ReliabilityException {
-        cataGroup.refresh();
-        List<String> urls = cataGroup.getAllUrls();
-        ArrayList<BSONObject> res = new ArrayList<BSONObject>();
-        for (String url : urls) {
-            Sequoiadb db = new Sequoiadb(url, "", "");
-            DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
-            DBCursor cursor = cl.query(
-                    (BSONObject) JSON.parse("{Name:'" + csName + "." + clName + "'}"), null, null,
-                    null);
-            if (cursor.hasNext()) {
-                res.add(cursor.getNext());
-                if (cursor.hasNext()) {
-                    Assert.fail(cursor.getNext() + " " + res.toString());
-                }
-            }
-            else {
-                return false;
-            }
-        }
-        for (BSONObject obj : res) {
-            if (!res.get(0).equals(obj)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private long checkGroupData(Sequoiadb sdb, String groupName) {
@@ -238,31 +189,15 @@ public class NetSplit2571 extends SdbTestBase {
 
     class Insert extends OperateTask {
 
-        public Insert(String name) {
-            super(name);
-            // TODO Auto-generated constructor stub
-        }
-
         @Override
         public void exec() throws Exception {
             Sequoiadb db = new Sequoiadb(connectUrl, "", "");
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 2000, 10000);
         }
-
-        @Override
-        public void faultNotify(BSONObject status) {
-            // TODO Auto-generated method stub
-
-        }
     }
 
     class Split extends OperateTask {
-
-        public Split(String name) {
-            super(name);
-        }
-
         @Override
         public void exec() throws Exception {
             Sequoiadb sdb = null;
@@ -282,19 +217,6 @@ public class NetSplit2571 extends SdbTestBase {
                 }
             }
         }
-
-        @Override
-        public void faultNotify(BSONObject status) throws FaultException {
-            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
-            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
-            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
-                throw new FaultException(mk.toString());
-            }
-            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
-                throw new FaultException(rt.toString());
-            }
-        }
-
     }
 
 }
