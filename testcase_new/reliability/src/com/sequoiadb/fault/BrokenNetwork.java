@@ -115,7 +115,7 @@ public class BrokenNetwork extends Fault {
                     "nohup " + remotePath + "/" + scriptName + " 10 > /tmp/brokenNet.log &");
             ssh.close();
             brokenHost.add(host);
-            System.out.println("Broken network:" + host + ",Watting group reelcte....");
+            System.out.println("Broken network:" + host + ",Waitting group reelect....");
             while (true) {
                 allHosts.removeAll(brokenHost);
                 if (allHosts.size() <= 0) {
