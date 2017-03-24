@@ -17,9 +17,9 @@
 #ifndef UPSKIRT_PANDOC_H
 #define UPSKIRT_PANDOC_H
 
+#include <stdlib.h>
 #include "markdown.h"
 #include "buffer.h"
-#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

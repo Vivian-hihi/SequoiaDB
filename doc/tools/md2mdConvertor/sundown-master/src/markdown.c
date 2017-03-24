@@ -17,13 +17,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "markdown.h"
-#include "stack.h"
-
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <sstream>
+
+#include "stack.h"
+#include "table.hpp"
+#include "markdown.h"
+
+using std::stringstream;
 
 #if defined(_WIN32)
 #define strncasecmp	_strnicmp
@@ -136,7 +140,7 @@ rndr_newbuf(struct sd_markdown *rndr, int type)
 
 	if (pool->size < pool->asize &&
 		pool->item[pool->size] != NULL) {
-		work = pool->item[pool->size++];
+		work = (struct buf *)(pool->item[pool->size++]);
 		work->size = 0;
 	} else {
 		work = bufnew(buf_size[type]);
@@ -189,7 +193,7 @@ add_link_ref(
 	struct link_ref **references,
 	const uint8_t *name, size_t name_size)
 {
-	struct link_ref *ref = calloc(1, sizeof(struct link_ref));
+	struct link_ref *ref = (struct link_ref *)calloc(1, sizeof(struct link_ref));
 
 	if (!ref)
 		return NULL;
@@ -1221,10 +1225,9 @@ is_codefence(uint8_t *data, size_t size, struct buf *syntax)
 		while (i < size && data[i] != '}' && data[i] != '\n') {
 			syn_len++; i++;
 		}
-
-		if (i == size || data[i] != '}')
-			return 0;
-
+        if (i == size || data[i] != '}')
+            return 0;
+        
         /* strip all whitespace at the beginning and the end
          * of the {} block */
 		while (syn_len > 0 && _isspace(syn_start[0])) {
@@ -1391,7 +1394,6 @@ prefix_uli(uint8_t *data, size_t size)
 static void parse_block(struct buf *ob, struct sd_markdown *rndr,
 			uint8_t *data, size_t size);
 
-
 /* parse_blockquote • handles parsing of a blockquote fragment */
 static size_t
 parse_blockquote(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
@@ -1543,10 +1545,10 @@ parse_paragraph(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t 
 		rndr_popbuf(rndr, BUFFER_SPAN);
 	}
 
-   if (2 <= end && '\n' == data[end -1] && '\n' == data[end - 2]) {
-      // for a paragraph finish by a new line, so we need to keep a new line
-      end--;
-   }
+    if (2 <= end && '\n' == data[end -1] && '\n' == data[end - 2]) {
+        // for a paragraph finish by a new line, so we need to keep a new line
+        end--;
+    }
 
 	return end;
 }
@@ -2102,7 +2104,7 @@ parse_table_header(
 		pipes--;
 
 	*columns = pipes + 1;
-	*column_data = calloc(*columns, sizeof(int));
+	*column_data = (int *)calloc(*columns, sizeof(int));
 
 	/* Parse the header underline */
 	i++;
@@ -2217,6 +2219,208 @@ parse_table(
 	return i;
 }
 
+static size_t _filter_header(struct buf *ob, struct sd_markdown *rndr, 
+               uint8_t *data, size_t size)
+{
+	size_t level = 0;
+	size_t i, end, skip;
+
+	while (level < size && level < 6 && data[level] == '#')
+		level++;
+
+	for (i = level; i < size && data[i] == ' '; i++);
+
+	for (end = i; end < size && data[end] != '\n'; end++);
+	skip = end;
+
+	while (end && data[end - 1] == '#')
+		end--;
+
+	while (end && data[end - 1] == ' ')
+		end--;
+
+	if (end > i) {
+		struct buf work = { data + i, end - i, 0, 0 };
+		if (rndr->cb.header)
+			rndr->cb.header(ob, &work, (int)level, rndr->opaque);
+	}
+
+	return skip;
+}
+
+static void _handle_header(struct buf *text, struct sd_markdown *rndr,
+			uint8_t *data, size_t size)
+{
+    uint8_t *txt_data = NULL;
+    size_t beg = 0, end = 0, i = 0;
+
+    while(beg < size) 
+    {
+    	// txt_data is poit to the head of a line
+    	txt_data = data + beg;
+    	end = size - beg;
+
+    	// when a line is start with "#", take this line to be a title,
+    	// and put the filter title to the contents buffer
+    	if (txt_data[0] == '#') 
+        {
+    		beg += _filter_header(text, rndr, txt_data, end);
+    	} 
+        else 
+        { // if it's not a title, put the current line to the contents buffer
+    		i = 0;
+    		while(txt_data[i] != '\n') i++;
+    		bufput(text, txt_data, i + 1);
+    		beg += i + 1;
+    	}
+    } // while
+}
+
+static uint8_t _is_table(uint8_t *data)
+{
+    const uint8_t *pos = NULL;
+    size_t dist = 0;
+
+    if (data[0] != '|') return 0;
+    pos = (const uint8_t *)strchr((const char*)data, '\n');
+    if (NULL == pos) return 0;
+    dist = pos - data;
+    while(dist > 0)
+    {
+        if (data[dist] == '|' && (dist > 1 && data[dist - 1] != '\\')) return 1;
+        dist--;
+    }
+    return 0;
+}
+
+static uint8_t _is_table_separator_line(uint8_t *data)
+{
+    const uint8_t *pos = NULL;
+    size_t dist = 0;
+    
+    pos = (const uint8_t *)strchr((const char*)data, '\n');
+    if (NULL == pos) return 0;
+    dist = pos - data;
+    while(dist-- > 0)
+    {
+        if (data[dist] != '|' &&
+            data[dist] != ' ' && 
+            data[dist] != '-')
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void _handle_table(struct buf *text, struct sd_markdown *rndr,
+			uint8_t *data, size_t size)
+{
+    uint8_t *txt_data = NULL;
+    uint8_t *txt_mark = NULL;
+    size_t beg = 0;
+    size_t i = 0, j = 0, pos = 0;
+    size_t line_no = 0;
+    string line;
+    stringstream ss;
+    vector<string> vec;
+    vector<string>::iterator it;
+
+    while(beg < size)
+    {
+    	// txt_data is poit to the head of a line
+    	txt_data = data + beg;
+        
+    	// when a line is start with "|", take this line to be a table
+    	i = 0;
+        while(i < size && txt_data[i] == ' ') i++;
+        pos = i;
+        txt_mark = txt_data + pos;
+        while(i < size && txt_data[i] != '\n') i++;
+        beg += i + 1;     
+
+        if (_is_table(txt_mark)) // if it's a table
+        {
+            ss.str("");
+            vec.clear();
+            if (!_is_table_separator_line(txt_mark))
+            {
+                ss << "| " << line_no++ << " ";
+                ss << string((const char *)txt_mark, i - pos);
+                line = ss.str();
+                // handle the table
+                convert_table(line, vec);
+            }
+            else
+            {
+                ss << "| --- " ;
+                ss << string((const char *)txt_mark, i - pos);
+                line = ss.str();
+                vec.push_back(line);
+            }
+            // append to output buffer
+            for(it = vec.begin(); it != vec.end(); it++)
+            {
+                for(j = 0; j < pos; j++) bufputc(text, ' ');
+                bufput(text, it->c_str(), it->length());
+                bufputc(text, '\n');
+            }
+        }
+        else
+        {
+            line_no = 0;
+            // append to output buffer
+            bufput(text, txt_data, i + 1);
+        }
+    } // while
+}
+
+/* filter the contents we don't need */
+void _handle_contents(struct buf *ob, struct sd_markdown *rndr,
+			uint8_t *data, size_t size)
+{
+	struct buf *tmp_buf1 = NULL;
+	struct buf *tmp_buf2 = NULL;
+
+    
+	// malloc tmp buffers
+	tmp_buf1 = bufnew(64);
+	tmp_buf2 = bufnew(64);
+
+	if (!tmp_buf1 || !tmp_buf2)
+	{
+        goto error;
+    }
+	bufgrow(tmp_buf1, size);
+	bufgrow(tmp_buf2, size);
+
+	// 1. handle the header
+    _handle_header(tmp_buf1, rndr, data, size);
+	
+	// 2. handle the link
+	parse_inline(tmp_buf2, rndr, tmp_buf1->data, tmp_buf1->size);
+
+    // 3. handle the table, and 
+    // copy the contents out to the ob buf
+    _handle_table(ob, rndr, tmp_buf2->data, tmp_buf2->size);
+    
+
+done:
+    // release the tmp buffer
+    if (tmp_buf1)
+    {
+        bufrelease(tmp_buf1);
+    }
+    if (tmp_buf2)
+    {
+        bufrelease(tmp_buf2);
+    }
+    return;
+error:
+    goto done;
+}
+
+
 /* parse_block • parsing of one block, returning next uint8_t to parse */
 static void
 parse_block(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
@@ -2288,10 +2492,8 @@ parse_block(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size
 
 		else
 			beg += parse_paragraph(ob, rndr, txt_data, end);
-	}
+    }
 }
-
-
 
 /*********************
  * REFERENCE PARSING *
@@ -2451,7 +2653,7 @@ sd_markdown_new(
 
 	assert(max_nesting > 0 && callbacks);
 
-	md = malloc(sizeof(struct sd_markdown));
+	md = (struct sd_markdown *)malloc(sizeof(struct sd_markdown));
 	if (!md)
 		return NULL;
 
@@ -2461,7 +2663,9 @@ sd_markdown_new(
 	stack_init(&md->work_bufs[BUFFER_SPAN], 8);
 
 	memset(md->active_char, 0x0, 256);
-
+	if (md->cb.link)
+		md->active_char['['] = MD_CHAR_LINK;
+/*
 	if (md->cb.emphasis || md->cb.double_emphasis || md->cb.triple_emphasis) {
 		md->active_char['*'] = MD_CHAR_EMPHASIS;
 		md->active_char['_'] = MD_CHAR_EMPHASIS;
@@ -2490,7 +2694,7 @@ sd_markdown_new(
 
 	if (extensions & MKDEXT_SUPERSCRIPT)
 		md->active_char['^'] = MD_CHAR_SUPERSCRIPT;
-
+*/
 	/* Extension data */
 	md->ext_flags = extensions;
 	md->opaque = opaque;
@@ -2562,8 +2766,7 @@ sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, str
 		/* adding a final newline if not already present */
 		if (text->data[text->size - 1] != '\n' &&  text->data[text->size - 1] != '\r')
 			bufputc(text, '\n');
-
-		parse_block(ob, md, text->data, text->size);
+		_handle_contents(ob, md, text->data, text->size);
 	}
 
 	if (md->cb.doc_footer)
@@ -2583,10 +2786,10 @@ sd_markdown_free(struct sd_markdown *md)
 	size_t i;
 
 	for (i = 0; i < (size_t)md->work_bufs[BUFFER_SPAN].asize; ++i)
-		bufrelease(md->work_bufs[BUFFER_SPAN].item[i]);
+		bufrelease((struct buf *)(md->work_bufs[BUFFER_SPAN].item[i]));
 
 	for (i = 0; i < (size_t)md->work_bufs[BUFFER_BLOCK].asize; ++i)
-		bufrelease(md->work_bufs[BUFFER_BLOCK].item[i]);
+		bufrelease((struct buf *)(md->work_bufs[BUFFER_BLOCK].item[i]));
 
 	stack_free(&md->work_bufs[BUFFER_SPAN]);
 	stack_free(&md->work_bufs[BUFFER_BLOCK]);

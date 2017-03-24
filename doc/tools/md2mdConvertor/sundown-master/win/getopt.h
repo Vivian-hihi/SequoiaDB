@@ -10,6 +10,7 @@
  * warranties of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef __GETOPT_H__
 #define __GETOPT_H__
 
 /* All the headers include this file. */
@@ -93,3 +94,4 @@ extern int getopt_long_only(int nargc, char * const *nargv, const char *options,
 #endif
 
 #endif /* !defined(__UNISTD_H_SOURCED__) && !defined(__GETOPT_LONG_H__) */
+#endif // _GET_OPT_H__

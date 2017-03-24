@@ -15,15 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "markdown.h"
-#include "ossVer.h"
-#include "renderer.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
+
+#include "markdown.h"
+#include "ossVer.h"
+#include "renderer.h"
+
 
 #if defined (_WINDOWS)
 #define snprintf _snprintf
@@ -80,7 +81,7 @@ void _get_build_time( char *buf, int size )
 {
    const char *build = SDB_ENGINE_BUILD_CURRENT ;
    int len           = 0 ;
-   char *pos         = NULL ;
+   const char *pos         = NULL ;
    
    assert( buf && size > 0 ) ;
    memset( buf, 0, size ) ;

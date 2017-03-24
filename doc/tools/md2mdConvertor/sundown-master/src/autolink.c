@@ -14,13 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "buffer.h"
-#include "autolink.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+
+#include "buffer.h"
+#include "autolink.h"
 
 #if defined(_WIN32)
 #define strncasecmp	_strnicmp

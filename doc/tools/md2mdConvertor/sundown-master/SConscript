@@ -11,6 +11,7 @@ if guess_os == "win32":
       "src/markdown.c",
       "src/stack.c",
       "src/renderer.c",
+      "src/table.cpp",
       "src/main.c",
       "win/getopt.c"
       ]
@@ -21,12 +22,13 @@ else:
       "src/markdown.c",
       "src/stack.c",
       "src/renderer.c",
+      "src/table.cpp",
       "src/main.c"
       ]
       
-#md2md convertor executable
-md2md = env.Program("md2md", sundownFiles,
+#md2TroffTool convertor executable
+md2TroffTool = env.Program("md2TroffTool", sundownFiles,
                     _LIBDEPS='$_LIBDEPS_OBJS' )
 
-env.Install( bin_dir, md2md )
+env.Install( bin_dir, md2TroffTool )
 

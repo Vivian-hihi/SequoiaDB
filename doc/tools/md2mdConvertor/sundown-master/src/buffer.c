@@ -17,12 +17,13 @@
 
 #define BUFFER_MAX_ALLOC_SIZE (1024 * 1024 * 16) //16mb
 
-#include "buffer.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
+#include "buffer.h"
+
 
 /* MSVC compat */
 #if defined(_MSC_VER)
@@ -71,7 +72,7 @@ bufgrow(struct buf *buf, size_t neosz)
 	if (!neodata)
 		return BUF_ENOMEM;
 
-	buf->data = neodata;
+	buf->data = (uint8_t *)neodata;
 	buf->asize = neoasz;
 	return BUF_OK;
 }
@@ -82,7 +83,7 @@ struct buf *
 bufnew(size_t unit)
 {
 	struct buf *ret;
-	ret = malloc(sizeof (struct buf));
+	ret = (struct buf *)malloc(sizeof (struct buf));
 
 	if (ret) {
 		ret->data = 0;

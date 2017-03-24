@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <locale.h>
 #if defined (_WIN32)
 #include "getopt.h"
 #else
@@ -28,62 +28,71 @@
 #include "renderer.h"
 #include "buffer.h"
 
-
 #if defined (_WIN32)
-#define NEW_LINE         "\r\n"
+#define NEW_LINE                      "\r\n"
 #else
-#define NEW_LINE         "\n"
+#define NEW_LINE                      "\n"
 #endif
 
-#define EXCLUDE_BEGIN    "<!--manpage_exclude_begin-->"
-#define EXCLUDE_END      "<!--manpage_exclude_end-->"
+#define MD_EXCLUDE_BEGIN              "<!--manpage_exclude_begin-->"
+#define MD_EXCLUDE_END                "<!--manpage_exclude_end-->"
+#define TROFF_INDENT_BEGEIN_W         ".RS 4\r\n.IP\r\n"
+#define TROFF_INDENT_END_W            TROFF_INDENT_BEGEIN_W
+#define TROFF_INDENT_BEGEIN_L         ".RS 4\n.IP\n"
+#define TROFF_INDENT_END_L            TROFF_INDENT_BEGEIN_L
 
-#define FINE_NAME_LEN    128
-#define READ_UNIT        1024
-#define OUTPUT_UNIT      64
+#define FINE_NAME_LEN                 128
+#define READ_UNIT                     1024
+#define OUTPUT_UNIT                   64
 
 static void _usage()
 {
     fprintf(stderr,
-        "usage: ./md2md -i input_file -o output_file [-d]"NEW_LINE);
-    exit(1);
+        "usage: ./md2TroffTool -i input_file -o output_file [-d] [-p]"NEW_LINE);
+    exit(-1);
 }
 
-static int _filterContent(struct buf *b)
+static void _writeFile(const struct buf *b, const char *fileName)
+{
+    FILE *file_fd = NULL;
+    file_fd = fopen(fileName, "w");
+    fwrite(b->data, 1, b->size, file_fd);
+    fclose(file_fd);
+}
+
+static int _filterContents(struct buf *b, const char *pBegin, const char *pEnd)
 {
     int rc    = 0;
-    char *f   = NULL;
-    char *e   = NULL;
+    const char *f   = NULL;
+    const char *e   = NULL;
 
 retry:
     f = NULL, e = NULL;
-    f = strstr((const char*)(b->data), EXCLUDE_BEGIN);
-    e = strstr((const char*)(b->data), EXCLUDE_END);
+    f = (const char *)strstr((const char*)(b->data), pBegin);
+    e = (const char *)strstr((const char*)(b->data), pEnd);
     if (NULL == f && NULL == e)
     {
         goto done;
     }
     else if (NULL !=f && NULL == e)
     {
-        fprintf(stderr,"Error: Lack %s in the source file"NEW_LINE, 
-            EXCLUDE_END);
+        fprintf(stderr,"Error: Lack %s in the source file"NEW_LINE, pEnd);
         rc = -1; 
         goto error;
     }
     else if (NULL == f && NULL != e)
     {
-        fprintf(stderr,"Error: Lack %s in the source file"NEW_LINE, 
-            EXCLUDE_BEGIN);
+        fprintf(stderr,"Error: Lack %s in the source file"NEW_LINE, pBegin);
         rc = -1; 
         goto error;
     }
-    e += strlen(EXCLUDE_END);
+    e += strlen(pEnd);
     /* we get both positions, let's filter the content */
     {
         int len = e - f;
         int size = b->size - (e - (const char*)(b->data));
-        memmove(f, e, size);
-        memset(f + size, 0, len);
+        memmove((void *)f, e, size);
+        memset((void *)(f + size), 0, len);
         b->size -= len;
         goto retry;
     }
@@ -99,20 +108,19 @@ int main(int argc, char **argv)
     struct buf *ib   = NULL;
     struct buf *ob   = NULL;
     FILE *in         = NULL;
-    FILE *out        = NULL;
+    int rc           = 0;
     int ret          = -1;
     int debug        = 0;
+    int handle_troff = 0;
     int show_usage   = 0;
     int c            = -1;
     char in_file[FINE_NAME_LEN]  = { 0 };
     char out_file[FINE_NAME_LEN] = { 0 };
-    char tmp_file[FINE_NAME_LEN] = { 0 };
-
 
     struct sd_callbacks callbacks;
     struct sd_markdown *markdown = NULL;
 
-    while (-1  != (c = getopt(argc, argv, "i:o:d")))
+    while (-1  != (c = getopt(argc, argv, "i:o:dp")))
     {
         switch(c)
         {
@@ -126,6 +134,9 @@ int main(int argc, char **argv)
             break;
         case 'd':
             debug = 1;
+            break;
+        case 'p':
+            handle_troff = 1;
             break;
         default:
             show_usage |= 4;
@@ -145,67 +156,62 @@ int main(int argc, char **argv)
     if (!in) {
         fprintf(stderr,"Unable to open input file \"%s\": %s"NEW_LINE, 
                 in_file, strerror(errno));
-        return 1;
+        rc = -1;
+        goto error;
     }
 
-    out = fopen(out_file, "w");
-    if (!out) {
-        fprintf(stderr,"Unable to open output file \"%s\": %s"NEW_LINE, 
-                out_file, strerror(errno));
-        return 1;
-    }
-
-    /* reading everything */
+    /* reading everything from input */
     ib = bufnew(READ_UNIT);
     bufgrow(ib, READ_UNIT);
     while ((ret = fread(ib->data + ib->size, 1, ib->asize - ib->size, in)) > 0) {
         ib->size += ret;
         bufgrow(ib, ib->size + READ_UNIT);
     }
-    /* close input file handle */
     fclose(in);
 
+    if (handle_troff)
+    {
+        /* filter content */
+        _filterContents(ib, TROFF_INDENT_BEGEIN_W, TROFF_INDENT_END_W);
+        _filterContents(ib, TROFF_INDENT_BEGEIN_L, TROFF_INDENT_END_L);
+        _writeFile(ib, out_file);
+        goto done;
+    }
+
     /* filter content */
-    _filterContent(ib);
+    _filterContents(ib, MD_EXCLUDE_BEGIN, MD_EXCLUDE_END);
 
     /* show the filtered file contents*/
     if (debug)
     {
-        FILE *tmp_file_fd = NULL;
-        int len = (strlen(out_file) <= (FINE_NAME_LEN - 8)) ? 
-            strlen(out_file) : (FINE_NAME_LEN - 8);
+        char tmp_file[FINE_NAME_LEN] = { 0 };
+        int len = (strlen(out_file) <= (FINE_NAME_LEN - 7)) ? 
+            strlen(out_file) : (FINE_NAME_LEN - 7);
         strncpy(tmp_file, out_file, len);
-        strncpy(tmp_file + len, ".source", 8);
-        tmp_file_fd = fopen(tmp_file, "w");
-        fwrite(ib->data, 1, ib->size, tmp_file_fd);
-        fclose(tmp_file_fd);
+        strncpy(tmp_file + len, ".debug", 7);
+        _writeFile(ib, tmp_file);
     }
 
     /* performing markdown parsing */
     ob = bufnew(OUTPUT_UNIT);
 
-//  sdhtml_renderer(&callbacks, &options, 0); // TODO:
-//  markdown = sd_markdown_new(0, 16, &callbacks, &options);
-
     pandoc_markdown_renderer(&callbacks);
-    markdown = sd_markdown_new(MKDEXT_TABLES | MKDEXT_FENCED_CODE, 
-                               16, &callbacks, NULL);
+    markdown = sd_markdown_new(0, 16, &callbacks, NULL);
 
-    /**/
+    /* convert from github's markdown to pandoc's markdown */
     sd_markdown_render(ob, ib->data, ib->size, markdown);
     sd_markdown_free(markdown);
 
-    /* writing the result to stdout */
-    ret = fwrite(ob->data, 1, ob->size, out);
+    /* flush the result to file */
+    _writeFile(ob, out_file);
     
-    /* close output file handle */
-    fclose(out);
-
+done:
     /* cleanup */
-    bufrelease(ib);
-    bufrelease(ob);
-
-    return (ret < 0) ? -1 : 0;
+    if (NULL != ib) bufrelease(ib);
+    if (NULL != ob) bufrelease(ob);
+    return rc;
+error:
+    goto done;
 }
 
 /* vim: set filetype=c: */

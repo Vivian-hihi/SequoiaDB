@@ -2,6 +2,13 @@
 /* Command-line: gperf -N find_block_tag -H hash_block_tag -C -c -E --ignore-case html_block_names.txt  */
 /* Computed positions: -k'1-2' */
 
+#ifndef HTML_BLOCKS_H__
+#define HTML_BLOCKS_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
       && ('%' == 37) && ('&' == 38) && ('\'' == 39) && ('(' == 40) \
       && (')' == 41) && ('*' == 42) && ('+' == 43) && (',' == 44) \
@@ -87,9 +94,9 @@ inline
 #endif
 #endif
 static unsigned int
-hash_block_tag (str, len)
-     register const char *str;
-     register unsigned int len;
+hash_block_tag (const char *str, unsigned int len)
+//     register const char *str;
+//     register unsigned int len;
 {
   static const unsigned char asso_values[] =
     {
@@ -141,9 +148,9 @@ __attribute__ ((__gnu_inline__))
 #endif
 #endif
 const char *
-find_block_tag (str, len)
-     register const char *str;
-     register unsigned int len;
+find_block_tag (const char * str, unsigned int len)
+//     register const char *str;
+//     register unsigned int len;
 {
   enum
     {
@@ -204,3 +211,10 @@ find_block_tag (str, len)
     }
   return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // HTML_BLOCKS_H__
+

@@ -33,9 +33,11 @@ env["BUILD_DIR"] = build_dir
 
 # append
 if guess_os == "win32":
+   env['CC'] = "cl"
    env.Append( CPPPATH=[db_include_dir, sundown_src_dir, sundown_win_dir] )
-   env.Append( CPPFLAGS="/O2 /EHsc" )
+   env.Append( CPPFLAGS="/Od /EHsc /RTC1 /Z7 /TP" )
 else:
+   env['CC'] = "g++"
    env.Append( CPPPATH=[db_include_dir, sundown_src_dir] )
    env.Append( CPPFLAGS="-c -g -O0 -fPIC -Wall -Wsign-compare" )
 
