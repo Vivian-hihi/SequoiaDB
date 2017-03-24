@@ -119,12 +119,12 @@
             </fileset>
             <echo message="${host.NAME}   ${host.ADDR4}   @{dirname}   " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
            
-            <count_str searchstring="Start sequoiadb">
+            <countstr searchstring="Start sequoiadb" resultproperty="str_count">
                 <path-elements>
                   <fileset refid="matches"/>
                 </path-elements>
-            </count_str>
-            <countstr str="restart by tool"  resultproperty="start_cnt_by_tool">
+            </countstr>
+            <countstr str="restart by tool" resultproperty="start_cnt_by_tool">
                <path-elements>
                   <fileset dir="@{dirname}" includes=".RESTART_BY_CHANGECONF"/>
                </path-elements>
@@ -162,25 +162,6 @@
                <path-elements/>
             </concat>
          </tokens>
-         </resourcecount>
-      </sequential>
-   </macrodef>
-   
-   <macrodef name="count_str">
-      <attribute name="searchstring"/>
-      <element name="path-elements"/>
-      <sequential>
-         <resourcecount property="str_count">
-           <tokens>
-              <concat>
-                 <filterchain>
-                    <tokenfilter>
-                       <containsstring contains="@{searchstring}"/>
-                    </tokenfilter>
-                 </filterchain>
-                 <path-elements/>
-              </concat>
-           </tokens>
          </resourcecount>
       </sequential>
    </macrodef>
@@ -236,11 +217,11 @@
       <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
       <property name="exception_flag" value="false"/>
       <!--count core-->
-      <count_str searchstring="core">
+      <countstr searchstring="core" resultproperty="str_count">
          <path-elements>
             <fileset dir="${report_dir}/" includes="*node_core*.log"/>
          </path-elements>
-      </count_str>
+      </countstr>
       <var name="node_core_msg" value=""/>
       <if>
         <equals arg1="${str_count}" arg2="0"/>
@@ -252,11 +233,11 @@
       <var name="str_count" unset="true"/>
       
       <!--judge node start log contains node start exception-->
-      <count_str searchstring="node start exception">
+      <countstr searchstring="node start exception" resultproperty="str_count">
          <path-elements>
             <fileset dir="${report_dir}/" includes="*node_start*.log"/>
          </path-elements>
-      </count_str>
+      </countstr>
       
       <if>
         <equals arg1="${str_count}" arg2="0"/>
@@ -318,11 +299,11 @@
    <target name="generate_testcase_core_report">
       <property file="${basedir}/src/conf/test.conf" />
       <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
-      <count_str searchstring="core">
+      <countstr searchstring="core" resultproperty="str_count">
          <path-elements>
             <fileset dir="${report_dir}/" includes="*testcase_core*.log"/>
          </path-elements>
-      </count_str>
+      </countstr>
       
       <if>
          <equals arg1="${str_count}" arg2="0"/>
