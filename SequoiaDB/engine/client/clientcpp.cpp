@@ -5823,7 +5823,7 @@ error :
          goto error ;
       }
       // calculate the start position
-      i = rand() % arrSize ;
+      i = _sdbRand() % arrSize ;
       mark = i ;
 
       // get host and port
