@@ -68,6 +68,7 @@ public class NetSplit2585 extends SdbTestBase {
             List<GroupWrapper> glist = groupMgr.getAllDataGroup();
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
+            System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = sdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName,
@@ -82,6 +83,7 @@ public class NetSplit2585 extends SdbTestBase {
             Utils.reelect(brokenNetHost, Utils.CATA_RG_NAME, destGroupName);
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
+            System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
@@ -127,9 +129,14 @@ public class NetSplit2585 extends SdbTestBase {
             int bound = getBound(db);
             // exceptionRecNum + 5000 + 1000 - bound
             // :插入线程插入的数据+setUp插入的数据+所有线程结束后插入的数据-切分至源组的数据 = 目标组数据量
-            checkGroupData(db, destGroupName, "{sk:{$gte:" + bound + "}}",
-                    exceptionRecNum + 5000 + 1000 - bound);
-            checkGroupData(db, srcGroupName, "{sk:{$lt:" + bound + "}}", bound);
+            long count = checkGroupData(db, destGroupName, "{sk:{$gte:" + bound + "}}");
+            if (count != exceptionRecNum + 5000 + 1000 - bound
+                    && count != exceptionRecNum + 5000 + 1000 - bound + 1) {
+                Assert.fail(
+                        "count:" + count + " exptionRecNum:" + exceptionRecNum + " bound:" + bound);
+            }
+            Assert.assertEquals(checkGroupData(db, srcGroupName, "{sk:{$lt:" + bound + "}}"),
+                    bound);
 
             // 组间一致性校验，尝试至多30次，每次间隔1秒
             GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
@@ -192,7 +199,7 @@ public class NetSplit2585 extends SdbTestBase {
 
     }
 
-    private void checkGroupData(Sequoiadb sdb, String groupName, String macher, int expectCount) {
+    private long checkGroupData(Sequoiadb sdb, String groupName, String macher) {
         Sequoiadb dataNode = null;
         DBCursor cursor = null;
         try {
@@ -200,10 +207,9 @@ public class NetSplit2585 extends SdbTestBase {
             DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
             long macherCount = cl.getCount(macher);
             long count = cl.getCount();
-            Assert.assertEquals(macherCount == count && count == expectCount, true,
-                    destGroupName + " count:" + count + " macherCount:" + macherCount
-                            + " expectCount:" + expectCount);
-            ;
+            Assert.assertEquals(macherCount == count, true,
+                    destGroupName + " count:" + count + " macherCount:" + macherCount);
+            return count;
         }
         catch (BaseException e) {
             e.printStackTrace();
@@ -217,6 +223,8 @@ public class NetSplit2585 extends SdbTestBase {
                 dataNode.disconnect();
             }
         }
+        return 0;
+
     }
 
     @AfterClass

@@ -63,6 +63,7 @@ public class NetSplit2569 extends SdbTestBase {
 
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
+            System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = sdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName,
@@ -76,13 +77,16 @@ public class NetSplit2569 extends SdbTestBase {
             Utils.reelect(brokenNetHost, srcGroupName, Utils.CATA_RG_NAME);
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
+            System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
+            }
         }
     }
 
@@ -110,19 +114,18 @@ public class NetSplit2569 extends SdbTestBase {
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             // 最长等待20分钟的环境恢复
-            Assert.assertEquals(groupMgr.checkBusiness(120), true,
-                    "failed to restore business");
+            Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             db = new Sequoiadb(connectUrl, "", "");
             db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 3000, 4000);
 
-            // 结果校验
-            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
-            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            Assert.assertEquals(srcGroup.checkInspect(60), true);
-            Assert.assertEquals(destGroup.checkInspect(60), true);
+            // 百分比切分覆盖
+            // GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
+            // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
+            // Assert.assertEquals(srcGroup.checkInspect(60), true);
+            // Assert.assertEquals(destGroup.checkInspect(60), true);
 
             long destCount = checkGroupLob(db, destGroupName);
             long srcCount = checkGroupLob(db, srcGroupName);

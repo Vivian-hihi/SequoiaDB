@@ -68,6 +68,7 @@ public class NetSplit2573 extends SdbTestBase {
             List<GroupWrapper> glist = groupMgr.getAllDataGroup();
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
+            System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = sdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName,
@@ -81,13 +82,16 @@ public class NetSplit2573 extends SdbTestBase {
             Utils.reelect(brokenNetHost, Utils.CATA_RG_NAME, destGroupName);
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
+            System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
+            }
         }
     }
 
@@ -133,12 +137,16 @@ public class NetSplit2573 extends SdbTestBase {
             Assert.assertEquals(srcCount + destCount, recordCount);
             destCount = checkGroupLob(db, destGroupName);
             srcCount = checkGroupLob(db, srcGroupName);
-            Assert.assertEquals(srcCount + destCount, lobCount);
+            if (srcCount + destCount != lobCount && srcCount + destCount != lobCount + 1) {
+                Assert.fail("srcCount:" + srcCount + " destCount:" + destCount + " lobCount:"
+                        + lobCount);
+            }
 
-            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
-            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            Assert.assertEquals(srcGroup.checkInspect(30), true);
-            Assert.assertEquals(destGroup.checkInspect(30), true);
+            // 已在范围切分覆盖
+            // GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
+            // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
+            // Assert.assertEquals(srcGroup.checkInspect(30), true);
+            // Assert.assertEquals(destGroup.checkInspect(30), true);
 
             clearFlag = true;
         }

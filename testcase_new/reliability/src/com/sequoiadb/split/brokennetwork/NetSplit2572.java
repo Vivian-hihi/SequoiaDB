@@ -60,6 +60,7 @@ public class NetSplit2572 extends SdbTestBase {
 
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
+            System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = sdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName,
@@ -73,13 +74,16 @@ public class NetSplit2572 extends SdbTestBase {
             Utils.reelect(brokenNetHost, srcGroupName, destGroupName);
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
+            System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
+            }
         }
     }
 
@@ -106,8 +110,7 @@ public class NetSplit2572 extends SdbTestBase {
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             // 最长等待20分钟的环境恢复
-            Assert.assertEquals(groupMgr.checkBusiness(120), true,
-                    "failed to restore business");
+            Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
             db = new Sequoiadb(connectUrl, "", "");
@@ -125,7 +128,7 @@ public class NetSplit2572 extends SdbTestBase {
             Assert.assertEquals(srcGroup.checkInspect(30), true);
             Assert.assertEquals(cataGroup.checkInspect(30), true);
             Assert.assertEquals(destGroup.checkInspect(30), true);
-            
+
             clearFlag = true;
         }
         catch (ReliabilityException e) {

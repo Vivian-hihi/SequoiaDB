@@ -61,6 +61,7 @@ public class NetSplit2575 extends SdbTestBase {
 
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
+            System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = commSdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName,
@@ -74,13 +75,16 @@ public class NetSplit2575 extends SdbTestBase {
             Utils.reelect(brokenNetHost, Utils.CATA_RG_NAME, srcGroupName);
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
+            System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            commSdb.disconnect();
+            if (commSdb != null) {
+                commSdb.disconnect();
+            }
         }
     }
 
@@ -121,7 +125,7 @@ public class NetSplit2575 extends SdbTestBase {
             long destCount = checkGroupData(db, destGroupName);
             long srcCount = checkGroupData(db, srcGroupName);
             Assert.assertEquals(destCount + srcCount, totalCount);
-            
+
             clearFlag = true;
         }
         catch (ReliabilityException e) {

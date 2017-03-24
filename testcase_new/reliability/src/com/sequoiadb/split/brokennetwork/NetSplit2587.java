@@ -64,6 +64,7 @@ public class NetSplit2587 extends SdbTestBase {
             List<GroupWrapper> glist = groupMgr.getAllDataGroup();
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
+            System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = sdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName, (BSONObject) JSON.parse(
@@ -76,6 +77,7 @@ public class NetSplit2587 extends SdbTestBase {
             Utils.reelect(brokenNetHost, Utils.CATA_RG_NAME, srcGroupName);
             connectUrl = CommLib.getSafeCoordUrl(brokenNetHost);
             groupMgr.refresh();
+            System.out.println("brokenHost:" + brokenNetHost + " connectUrl:" + connectUrl);
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
