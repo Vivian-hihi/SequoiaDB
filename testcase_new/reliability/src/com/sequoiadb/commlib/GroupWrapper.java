@@ -143,12 +143,17 @@ public class GroupWrapper {
         String groupName = getGroupName();
         int priNode = getMaster().nodeID();
         Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
+        GroupMgr groupMgr = GroupMgr.getInstance();
         try {
             for (int i = 0; i < times; i++) {
 
                 ssh.exec(ssh.getSdbInstallDir()
                         + "/bin/sdb -s \"var db = new Sdb;var rg = db.getRG('" + groupName
                         + "');rg.reelect();\"");
+                if (!groupMgr.checkBusiness(120)) {
+                    throw new ReliabilityException(
+                            "After execute reelect,check business have an error");
+                }
                 refresh();
                 if (priNode != getMaster().nodeID()) {
                     return true;
