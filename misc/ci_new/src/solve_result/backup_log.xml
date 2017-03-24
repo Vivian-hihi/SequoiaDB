@@ -174,11 +174,13 @@
             <copy todir="${backup_basedir}/${backup_reltdir}/corefile" >
                <fileset dir="${CI_WORK_DIR}">
                   <include name="testcase/**/*core*"/>
+                  <exclude name="testcase/**/hamcrest-core-1.3.jar"/>
                </fileset>
             </copy>
             <copy todir="${backup_basedir}/${backup_reltdir}/corefile" >
                <fileset dir="${INSTALL_DIR}">
                   <include name="database/**/*core*"/>
+                  <exclude name="database/**/hamcrest-core-1.3.jar"/>
                </fileset>
             </copy>
          </else>
