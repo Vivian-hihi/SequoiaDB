@@ -251,6 +251,15 @@
          <echo message="begin at ${begin_time}, end at ${end_time}" />
          
          <!--modify report-->
+         <hostinfo prefix="host" />
+         <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>      
+         <replaceregexp file="@{report}" 
+                        match='&lt;\!\[CDATA\[' 
+                        replace='&lt;\!\[CDATA\[${ms1}' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8"/>
+         
          <replaceregexp file="@{report}"
                         match='&lt;testcase name="(.*)" class="(.*)" file' 
                         replace='&lt;testcase name="\2.\1" class="\2" file' 

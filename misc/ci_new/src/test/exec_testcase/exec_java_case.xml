@@ -34,7 +34,6 @@
             <ant antfile="${testcase_dir}/../../tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
                <property name="reportdir" value="${report_dir}"/>
-               <property name="sdb_version" value="${sdb_version}"/>
                <property name="serial_number" value="${serial_number}"/>
             </ant>
          </then>
@@ -94,6 +93,14 @@
       <attribute name="reportdir"/>
       <attribute name="layer" />
       <sequential>
+      <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>      
+         <replaceregexp match='&lt;\!\[CDATA\[' 
+                        replace='&lt;\!\[CDATA\[${ms1}' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
          <replaceregexp match='testsuite(.*)name="com\.sequoiadb\.(.*?)\.(.*)"' 
                         replace='testsuite\1name="\2"' 
                         flags="g" 

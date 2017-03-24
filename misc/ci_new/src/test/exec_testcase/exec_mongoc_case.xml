@@ -63,7 +63,15 @@
    <macrodef name="modifyreport">
       <attribute name="report"/>
       <attribute name="layer" />
-      <sequential>                
+      <sequential>  
+      <hostinfo prefix="host" />
+      <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>      
+      <replaceregexp file="@{report}" 
+                     match='&lt;\!\[CDATA\[' 
+                     replace='&lt;\!\[CDATA\[${ms1}' 
+                     flags="g" 
+                     byline="true" 
+                     encoding="utf-8"/>
          <replaceregexp file="@{report}" 
                         match='testcase name' 
                         replace='testcase classname="@{layer}" name'  
