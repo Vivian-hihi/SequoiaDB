@@ -12,10 +12,16 @@
    <parameter name="WORKDIR"        value="/tmp/javatest" />
    <parameter name="CONFTOOL"       value="trunk/misc/ci_new/src/test/exec_testcase/changeConf.js" />
    
-   <test name="lzwtransaction">
-      <packages>
-          <package name="com.sequoiadb.lzwtransaction"/>
-      </packages>
+   <test name="lzwtransaction1">
+      <classes>
+          <class name="com.sequoiadb.lzwtransaction.TestCompress6668"/>
+          <class name="com.sequoiadb.lzwtransaction.TestCompress6669"/>
+      </classes>
+   </test>
+   <test name="lzwtransaction2">
+      <classes>
+          <class name="com.sequoiadb.lzwtransaction.TestSeqDB6670"/>
+      </classes>
    </test>
 
 </suite>

@@ -39,7 +39,9 @@ public class TestSeqDB6670 extends SdbConfTestBase {
     @Override
     protected void setNodeConf(){
         dataConf.put("transactionon", true);
+        dataConf.put("logfilenum", 5);
         stdalnConf.put("transactionon", true);
+        stdalnConf.put("logfilenum", 5);
     }
     
     @BeforeClass
