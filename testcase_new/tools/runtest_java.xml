@@ -4,16 +4,15 @@
                TEST_LEVEL_TYPE        eg: PACKAGE or CLASS
                EXEC_TESTCASE_NAME     eg: com.story.sdb or com.story.sdb.testADD
                TESTCASE_TYPE          eg: tdd_java
-               JDK_HOME               eg:/usr/java/jdk1.7.0_67
                testcase_dir           eg: /tmp/ci/testcase/tdd/java
                report_dir             eg：/tmp/ci/report/tdd_java
 @author:       CSQ 2016-12-09
 ============================================================================= -->
 
-<project basedir="../../../" default="main_target">
+<project basedir="./" default="main_target">
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
+         <pathelement location="${basedir}/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    
@@ -286,7 +285,7 @@
          <delete dir="@{srcdir}/build" failonerror="false" />
          <mkdir dir="@{srcdir}/build"/>
          <!--copy file="@{dbdir}/java/lib/sequoiadb.jar" todir="@{srcdir}/lib" overwrite="true" /-->
-         <copy file="${basedir}../../../testcase_new/thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" todir="@{srcdir}/lib" overwrite="true" />
+         <copy file="${basedir}../thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" todir="@{srcdir}/lib" overwrite="true" />
          <javac executable="javac" 
                 srcdir="@{srcdir}" 
                 destdir="@{srcdir}/build"
