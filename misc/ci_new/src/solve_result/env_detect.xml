@@ -119,7 +119,7 @@
             </fileset>
             <echo message="${host.NAME}   ${host.ADDR4}   @{dirname}   " file="${report_dir}/${host.NAME}_node_start.log" append="true"/>
            
-            <countstr searchstring="Start sequoiadb" resultproperty="str_count">
+            <countstr str="Start sequoiadb" resultproperty="str_count">
                 <path-elements>
                   <fileset refid="matches"/>
                 </path-elements>
@@ -217,7 +217,7 @@
       <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
       <property name="exception_flag" value="false"/>
       <!--count core-->
-      <countstr searchstring="core" resultproperty="str_count">
+      <countstr str="core" resultproperty="str_count">
          <path-elements>
             <fileset dir="${report_dir}/" includes="*node_core*.log"/>
          </path-elements>
@@ -233,7 +233,7 @@
       <var name="str_count" unset="true"/>
       
       <!--judge node start log contains node start exception-->
-      <countstr searchstring="node start exception" resultproperty="str_count">
+      <countstr str="node start exception" resultproperty="str_count">
          <path-elements>
             <fileset dir="${report_dir}/" includes="*node_start*.log"/>
          </path-elements>
@@ -299,7 +299,7 @@
    <target name="generate_testcase_core_report">
       <property file="${basedir}/src/conf/test.conf" />
       <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
-      <countstr searchstring="core" resultproperty="str_count">
+      <countstr str="core" resultproperty="str_count">
          <path-elements>
             <fileset dir="${report_dir}/" includes="*testcase_core*.log"/>
          </path-elements>
