@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Node.NodeStatus;
 import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.ReplicaNode;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.metadata.CommLib;
