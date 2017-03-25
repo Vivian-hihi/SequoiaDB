@@ -93,7 +93,17 @@
       <attribute name="reportdir"/>
       <attribute name="layer" />
       <sequential>
-      <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>      
+         <property file="${basedir}/src/conf/test.conf" />
+         <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>      
+         <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}"/>
+         <var name="download_url" value="Download the test log :&#10;http://192.168.30.185:8080$/${BACKLOG_DIR}/{backup_reltdir}&#10;" />
+         <replaceregexp match='\]\]&gt;' 
+                        replace='${download_url}\]\]&gt;' 
+                        flags="g" 
+                        byline="true" 
+                        encoding="utf-8">
+            <fileset dir="@{reportdir}" includes="**/*"/>
+         </replaceregexp>
          <replaceregexp match='&lt;\!\[CDATA\[' 
                         replace='&lt;\!\[CDATA\[${ms1}' 
                         flags="g" 

@@ -291,12 +291,14 @@
             <equals arg1="${@{rc}}" arg2="0" />            
             <else>
                <hostinfo prefix="host" />
+               <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}"/>
+               <var name="download_url" value="Download the test log :&#10;http://192.168.30.185:8080$/${BACKLOG_DIR}/{backup_reltdir}&#10;" />
                <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
                <var name="ms2" value="EXECUTE CMD:&#10;${INSTALL_DIR}/bin/sdb ${cmd1} ${cmd2}&#10;"/>
                <var name="ms3" value="RETURN CODE: ${@{rc}}&#10;"/>
                <var name="ms4" value="OUTPUT MESSAGE:&#10;${screen_output}&#10;&#10;"/>
                <var name="ms5" value="EXCUTE before_usecase.js OUTPUT MESSAGE:&#10;@{beforeoutput}&#10;"/>
-               <replace file="@{report}" token="ERROR_MESSAGE" value="${ms1}${ms2}${ms3}${ms4}${ms5}"/>
+               <replace file="@{report}" token="ERROR_MESSAGE" value="${ms1}${ms2}${ms3}${ms4}${ms5}${download_url}"/>
             </else>
          </if>
       </sequential>
