@@ -75,6 +75,25 @@
                   </delete>
                </case>
 
+               <case value="sync_test">
+                  <var name="excludelist" unset="true" />
+                  <var name="excludelist" value="" />
+                  <for list="${sync_list}" param="feature">
+                     <sequential>
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
+                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
+                     </sequential>
+                  </for>
+                  <for list="${common_list}" param="feature">
+                     <sequential>
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
+                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
+                     </sequential>
+                  </for>
+                  <delete includeEmptyDirs="true">
+                     <fileset dir="@{casedir}" excludes="${excludelist}"/>
+                  </delete>
+               </case>
                <default/>
 
             </switch>
