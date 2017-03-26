@@ -68,10 +68,10 @@ namespace engine
       {
          std::cerr << "Failed to open config file: "
                    <<( std::string ) file << std::endl ;
-         rc = ossAccess( file ) ;
+         rc = ossAccess( file, OSS_MODE_READ ) ;
          if ( SDB_OK == rc )
          {
-            rc = SDB_PERM ;
+            rc = SDB_TOO_MANY_OPEN_FD ;
          }
          goto error ;
       }

@@ -73,9 +73,35 @@ namespace engine
          // and it's only held at first time into the loop
          rc = pListerner->accept ( &s, NULL, NULL ) ;
          // if we don't get anything for a period of time, let's loop
-         if ( SDB_TIMEOUT == rc || SDB_TOO_MANY_OPEN_FD == rc )
+         if ( SDB_TIMEOUT == rc )
          {
             rc = SDB_OK ;
+            continue ;
+         }
+         else if ( SDB_TOO_MANY_OPEN_FD == rc )
+         {
+            pListerner->close() ;
+            PD_LOG( PDERROR, "Can not accept more connections because of "
+                    "open files upto limits, restart listening" ) ;
+
+            while( PMD_IS_DB_UP() )
+            {
+               pListerner->close() ;
+               ossSleep( 2 * OSS_ONE_SEC ) ;
+               rc = pListerner->initSocket() ;
+               if ( rc )
+               {
+                  continue ;
+               }
+               rc = pListerner->bind_listen() ;
+               if ( rc )
+               {
+                  continue ;
+               }
+               PD_LOG( PDEVENT, "Restart listening on port[%d] succeed",
+                       pListerner->getLocalPort() ) ;
+               break ;
+            }
             continue ;
          }
          // if we receive error due to database down, we finish

@@ -49,6 +49,65 @@ using namespace boost::asio::ip ;
 
 namespace engine
 {
+   #define NET_INNER_TIMER_INTERVAL       ( 2000 )
+   /*
+      _netInnerTimeHandle implement
+   */
+   _netInnerTimeHandle::_netInnerTimeHandle( _netFrame *pFrame )
+   {
+      _pFrame = pFrame ;
+      _timeID = 0 ;
+   }
+
+   _netInnerTimeHandle::~_netInnerTimeHandle()
+   {
+   }
+
+   void _netInnerTimeHandle::handleTimeout( const UINT32 &millisec,
+                                            const UINT32 &id )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _pFrame->listen( _hostName.c_str(),
+                            _svcName.c_str() ) ;
+      if ( SDB_OK == rc || SDB_NET_ALREADY_LISTENED == rc )
+      {
+         _pFrame->removeTimer( _timeID ) ;
+
+         if ( SDB_OK == rc )
+         {
+            _pFrame->_asyncAccept() ;
+         }
+         PD_LOG( PDEVENT, "Restart listening on %s:%s succeed",
+                 _hostName.c_str(), _svcName.c_str() ) ;
+      }
+   }
+
+   void _netInnerTimeHandle::setInfo( const CHAR *pHostName,
+                                      const CHAR *pSvcName )
+   {
+      if ( _hostName.empty() )
+      {
+         _hostName = pHostName ;
+      }
+      if ( _svcName.empty() )
+      {
+         _svcName = pSvcName ;
+      }
+   }
+
+   void _netInnerTimeHandle::startTimer()
+   {
+      INT32 rc = _pFrame->addTimer( NET_INNER_TIMER_INTERVAL,
+                                    this, _timeID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDSEVERE, "Restore listen error when open files upto "
+                 "limit, stop network, rc: %d", rc ) ;
+         _pFrame->stop() ;
+      }
+   }
+
    #define NET_INSERT_OPPO( a )\
            _opposite.insert(make_pair( a->handle(), a))
    #define NET_INSERT_ROUTE( a )\
@@ -63,7 +122,8 @@ namespace engine
                          _handle(1),
                          _timerID( NET_INVALID_TIMER_ID ),
                          _netOut(0),
-                         _netIn(0)
+                         _netIn(0),
+                         _innerTimeHandle(this)
    {
       _local.value = MSG_INVALID_ROUTEID ;
       _beatInterval = NET_HEARTBEAT_INTERVAL ;
@@ -322,6 +382,9 @@ namespace engine
          rc = SDB_NET_CANNOT_LISTEN ;
          goto error ;
       }
+      /// set info
+      _innerTimeHandle.setInfo( hostName, serviceName ) ;
+
       PD_LOG( PDDEBUG, "listening on port %s", serviceName ) ;
 
    done:
@@ -940,7 +1003,6 @@ namespace engine
    void _netFrame::handleClose( NET_EH eh , _MsgRouteID id)
    {
       _handler->handleClose( eh->handle(), id ) ;
-      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ADDRT, "_netFrame::_addRoute" )
@@ -965,19 +1027,32 @@ namespace engine
                                          handler,
                                          boost::asio::placeholders::error)) ;
       PD_TRACE_EXIT ( SDB__NETFRAME__ASYNCAPT );
-      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__APTCALLBCK, "_netFrame::_acceptCallback" )
    void _netFrame::_acceptCallback( NET_EH eh,
-                                    const boost::system::error_code &
-                                    error )
+                                    const boost::system::error_code &error )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__APTCALLBCK );
       if ( error )
       {
-         PD_LOG ( PDERROR, "Error received when handling accept" ) ;
-         return ;
+         PD_LOG ( PDERROR, "Error received when handling accept: %s, %d",
+                  error.message().c_str(), error.value() ) ;
+
+         if ( boost::system::errc::too_many_files_open == error.value() ||
+              boost::system::errc::too_many_files_open_in_system ==
+              error.value() )
+         {
+            closeListen() ;
+            PD_LOG( PDERROR, "Can not accept more connections because of "
+                    "open files upto limits, restart listening" ) ;
+            _innerTimeHandle.startTimer() ;
+         }
+         else
+         {
+            _asyncAccept() ;
+         }
+         goto done ;
       }
 
       eh->setOpt() ;
@@ -988,7 +1063,9 @@ namespace engine
       _handler->handleConnect( eh->handle(), eh->id(), FALSE ) ;
       _asyncAccept() ;
       eh->asyncRead() ;
-      PD_TRACE_EXIT ( SDB__NETFRAME__APTCALLBCK );
+
+   done:
+      PD_TRACE_EXIT ( SDB__NETFRAME__APTCALLBCK ) ;
       return ;
    }
 
@@ -997,8 +1074,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ERASE );
       _mtx.get() ;
-      map<NET_HANDLE, NET_EH>::iterator itr =
-                                _opposite.find( handle ) ;
+      map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
       if ( _opposite.end() == itr )
       {
          goto done ;
@@ -1006,12 +1082,9 @@ namespace engine
       {
       pair<MULTI_ITR, MULTI_ITR> pitr = _route.equal_range(
                                         itr->second->id().value) ;
-      for ( MULTI_ITR mitr=pitr.first;
-            mitr != pitr.second;
-            mitr++ )
+      for ( MULTI_ITR mitr=pitr.first ; mitr != pitr.second ; mitr++ )
       {
-         if ( mitr->second->handle() ==
-              handle )
+         if ( mitr->second->handle() == handle )
          {
             _route.erase( mitr ) ;
             break ;
