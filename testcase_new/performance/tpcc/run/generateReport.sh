@@ -252,6 +252,8 @@ if [ $pos -ne 0 ];then
 _EOF_
 fi 
 
+groupNames=$(getAllGroupName $1/deploy)
+nodeNumOfGroupPerHost=$(getNodeNumOfGroupPerHost $1/deploy)
 cat >>report.html <<_EOF_
   <h2>
   SequoiaDB deploy
@@ -259,62 +261,30 @@ cat >>report.html <<_EOF_
   <p>
     <table width="1100px" border="2">
     <tr>
-      <th rowspan="5" width="25%"><b>host1</b></th>
-      <th width="25%"><b>coord</b></th>
-      <th width="50%"><b>11810</b></th>
+      <th><b>host</b></th>
+_EOF_
+for ((i=0; i <${#groupNames[*]};++i))
+do
+cat >><th colspan="${nodeNumOfGroupPerHost[$i]}"><b>${groupNames[$i]}</b></th>
     </tr>
+_EOF_
+for host in ${hosts}
+do
+cat >>report.html <<_EOF_
     <tr>
-      <th rowspan="1" width="25%"><b>catalog</b></th>
-      <th rowspan="1" width="50%"><b>11820</b></th>
+      <td>$host</td>
+_EOF_
+for((i=0; i <${#groupNames[*]};++i))
+do
+file=$(getFileByHost ${host})
+nodes=$(getNodesOfGroup ${file})
+cat >>report.html <<_EOF_
+for ((j=0; j <${#nodes[*]};++j))
+      <td colspans=1>${nodes[$j]}</td>
     </tr>
-    <tr>
-      <th rowspan="3" width="25%"><b>data</b></th>
-      <th rowspan="1" width="50%"><b>11830</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="50%"><b>11840</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="50%"><b>11850</b></th>
-    </tr>
-    <tr>
-      <th rowspan="5" width="25%"><b>host2</b></th>
-      <th rowspan="1" width="25%"><b>coord</b></th>
-      <th rowspan="1" width="50%"><b>11810</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="25%"><b>catalog</b></th>
-      <th rowspan="1" width="50%"><b>11820</b></th>
-    </tr>
-    <tr>
-      <th rowspan="3" width="25%"><b>data</b></th>
-      <th rowspan="1" width="50%"><b>11830</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="50%"><b>11840</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="50%"><b>11850</b></th>
-    </tr>
-    <tr>
-      <th rowspan="5" width="25%"><b>host3</b></th>
-      <th width="25%"><b>coord</b></th>
-      <th width="50%"><b>11810</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="25%"><b>catalog</b></th>
-      <th rowspan="1" width="50%"><b>11820</b></th>
-    </tr>
-    <tr>
-      <th rowspan="3" width="25%"><b>data</b></th>
-      <th rowspan="1" width="50%"><b>11830</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="50%"><b>11840</b></th>
-    </tr>
-    <tr>
-      <th rowspan="1" width="75%"><b>11850</b></th>
-    </tr>
+_EOF_
+done
+cat >>report.html <<_EOF_
     </table>
   </p>
 _EOF_
