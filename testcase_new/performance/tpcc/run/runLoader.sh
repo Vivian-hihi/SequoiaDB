@@ -10,4 +10,5 @@ shift
 
 setCP || exit 1
 
-java -cp "$myCP" -Dprop=$PROPS LoadData $*
+#java -cp "$myCP" -Dprop=$PROPS LoadData $*
+java -cp "$myCP" -Dprop=$PROPS CopyData $*
