@@ -6,8 +6,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -17,6 +15,7 @@ import org.testng.annotations.Test;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
@@ -31,28 +30,26 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-2189: 在主表remove大量数据时dataRG备节点断网
+ * @FileName seqDB-2189: 在主表做aggregate时dataRG主节点断网
  * @Author linsuqiang
  * @Date 2017-03-20
  * @Version 1.00
  */
 
 /* 
- * 1、创建主表和子表（分区方式：主表range，子表hash，AutoSplit：false） 
- * 2、在主表删除大量数据，删除数据过程中将dataRG备节点网络断掉（如：使用cutnet.sh工具，命令格式为nohup ./cutnet.sh &），检查remove/truncate执行结果 
- * 3、将dataRG备节点网络恢复，查询dataRG备节点数据是否完整一致 
+ * 1、创建主表和子表 
+ * 2、在主表使用aggregate查询数据（使用多个聚集符组合查询），
+ *    聚集操作过程中将dataRG主节点网络断掉（如：使用cutnet.sh工具，命令格式为nohup ./cutnet.sh &），检查聚集操作结果
+ * 3、将dataRG主节点网络恢复，检查dataRG各节点数据是否完整一致，并在此做聚集操作，检查返回结果 
  */
 
-public class Remove2189 extends SdbTestBase {
+public class Aggregate2190 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private boolean runSuccess = false;
-    private String domainName = "domain_2189";
-    private String csName = "cs_2189";
     private String mclName = "cl_2189";
     private String clGroup = null;
     private static final int SCLNUM = Utils.SCLNUM;
     private static final int RANGE_WIDTH = Utils.RANGE_WIDTH;
-    private static final int TOTAL_REC_CNT = 1000000;
 
     @BeforeClass
     public void setUp() {
@@ -60,17 +57,16 @@ public class Remove2189 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-
+            
             groupMgr = GroupMgr.getInstance();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
-
+            
             db = new Sequoiadb(coordUrl, "", "");
-            createDomainAndCs(db, groupMgr.getAllDataGroupName());
             clGroup = groupMgr.getAllDataGroupName().get(0);
-            createMclAndScl(db);
-            attachAllScl(db);
+            Utils.createMclAndScl(db, mclName, clGroup);
+            Utils.attachAllScl(db, mclName);
             insertData(db);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
@@ -89,16 +85,16 @@ public class Remove2189 extends SdbTestBase {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
-            String dataSlvHost = dataGroup.getSlave().hostName();
-            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
+            String dataPriHost = dataGroup.getMaster().hostName();
+            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
                 throw new SkipException(cataGroup.getGroupName() + " reelect fail");
             }
             
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 0, 10);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 0, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
-            String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
-            RemoveTask rTask = new RemoveTask(safeUrl);
-            mgr.addTask(rTask);
+            String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
+            AggregateTask iTask = new AggregateTask(safeUrl);
+            mgr.addTask(iTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
@@ -108,7 +104,7 @@ public class Remove2189 extends SdbTestBase {
                 Assert.fail("data is different on " + dataGroup.getGroupName());
             }
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            checkRemoved(db);
+            checkAggregate(db);
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();
@@ -126,7 +122,7 @@ public class Remove2189 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            dropDomainAndCs(db);
+            Utils.dropMclAndScl(db, mclName);
         } catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
@@ -138,10 +134,10 @@ public class Remove2189 extends SdbTestBase {
         }
     }
 
-    class RemoveTask extends OperateTask {
+    private class AggregateTask extends OperateTask {
         private String safeUrl = null;
         
-        public RemoveTask(String safeUrl) {
+        public AggregateTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
 
@@ -152,8 +148,18 @@ public class Remove2189 extends SdbTestBase {
                 db = new Sequoiadb(safeUrl, "", "");
                 CollectionSpace cs = db.getCollectionSpace(csName);
                 DBCollection mcl = cs.getCollection(mclName);
-                mcl.delete("{}");
+                List<BSONObject> obj = new ArrayList<BSONObject>();
+                BSONObject match = (BSONObject)JSON.parse("{ $match: {} }");
+                obj.add(match);
+                BSONObject groupAndAvg = (BSONObject)JSON.parse("{ $group: { _id: '$a', avg_val: { $avg: '$i' }, a: { $first: '$a' } } }");
+                obj.add(groupAndAvg);
+                BSONObject sort = (BSONObject)JSON.parse("{ $sort: { a: -1 } }");
+                obj.add(sort);
+                DBCursor cursor = mcl.aggregate(obj);
+                // TODO
+                cursor.close();
             } catch (BaseException e) {
+                throw e;
             } finally {
                 if (db != null) {
                     db.disconnect();
@@ -162,64 +168,29 @@ public class Remove2189 extends SdbTestBase {
         }
     }
     
-    private void createDomainAndCs(Sequoiadb db, List<String> dataRGNames) {
-        BSONObject domainOpt = new BasicBSONObject();
-        BSONObject groups = new BasicBSONList();
-        for (int i = 0; i < dataRGNames.size(); i++) {
-            groups.put("" + i, dataRGNames.get(i));
-        }
-        domainOpt.put("Groups", groups);
-        domainOpt.put("AutoSplit", false);
-        db.createDomain(domainName, domainOpt);
-        
-        BSONObject csOpt = new BasicBSONObject();
-        csOpt.put("Domain", domainName);
-        db.createCollectionSpace(csName, csOpt);
-    }
-    
-    private void createMclAndScl(Sequoiadb db) {
-        CollectionSpace cs = db.getCollectionSpace(csName);
-        cs.createCollection(mclName, (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, "
-                + "ShardingType: 'range', IsMainCL: true, Group: '" + clGroup + "', ReplSize: 1 }"));
-        BSONObject sclOpt = (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, "
-                + "ShardingType: 'hash', Group: '" + clGroup + "', ReplSize: 1 }");
-        for (int i = 0; i < SCLNUM; i++) {
-            String sclName = mclName + "_" + i;
-            cs.createCollection(sclName, sclOpt);
-        }
-    }
-    
-    private void attachAllScl(Sequoiadb db) {
-        DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
-        int rangeStart = 0;
-        for (int i = 0; i < SCLNUM; i++) {
-            int rangeEnd = rangeStart + RANGE_WIDTH;
-            String sclFullName = csName + "." + mclName + "_" + i;
-            mcl.attachCollection(sclFullName, (BSONObject) JSON
-                    .parse("{ LowBound: { a: " + rangeStart + " }, " + "UpBound: { a: " + rangeEnd + " } }"));
-            rangeStart += RANGE_WIDTH;
-        }
-    }
-    
     private void insertData(Sequoiadb db) {
         DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
         int mclRange = SCLNUM * RANGE_WIDTH;
         List<BSONObject> recs = new ArrayList<BSONObject>();
-        for (int i = 0; i < TOTAL_REC_CNT; i++) {
+        int recTotal = 1000000;
+        for (int i = 0; i < recTotal; i++) {
             int valueInRange = i % mclRange;
             recs.add((BSONObject)JSON.parse("{ i: " + i + ", a: " + valueInRange + " }"));
         }
         mcl.bulkInsert(recs, DBCollection.FLG_INSERT_CONTONDUP);
     }
     
-    private void checkRemoved(Sequoiadb db) {
+    private void checkAggregate(Sequoiadb db) {
         DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
-        long leftRecCnt = mcl.getCount();
-        Assert.assertEquals(leftRecCnt, 0, "data is not removed");
-    }
-    
-    private void dropDomainAndCs(Sequoiadb db) {
-        db.dropCollectionSpace(csName);
-        db.dropDomain(domainName);
+        List<BSONObject> obj = new ArrayList<BSONObject>();
+        BSONObject match = (BSONObject)JSON.parse("{ $match: {} }");
+        obj.add(match);
+        BSONObject group = (BSONObject)JSON.parse("{ $group: { _id: '$a', avg_val: { $avg: '$i' }, a: { $first: '$a' } } }");
+        obj.add(group);
+        BSONObject sort = (BSONObject)JSON.parse("{ $sort: { a: -1 } }");
+        obj.add(sort);
+        DBCursor cursor = mcl.aggregate(obj);
+        // TODO
+        cursor.close();
     }
 }
