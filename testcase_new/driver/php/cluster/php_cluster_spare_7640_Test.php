@@ -128,13 +128,13 @@ class spareRGTest extends PHPUnit_Framework_TestCase
       
       $pos = mt_rand(0,count($groups)-1);
       
-      $group = $groups[$pos];
+      self::$group = $groups[$pos];
       $nodeNum = $group->getNodeNum();
       
-      $err = $group->attachNode($node, $options);
+      $err = self::$group->attachNode($node, $options);
       $this->assertEquals($err, 0) ;
       $this->assertEquals($nodeNum+1, $group->getNodeNum());
-      $node = $group->getNode($node->getName());
+      $node = self::$group->getNode($node->getName());
       $this->assertEquals(isset($node), true);
       
    }
