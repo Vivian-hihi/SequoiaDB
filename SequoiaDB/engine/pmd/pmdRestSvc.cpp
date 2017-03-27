@@ -66,7 +66,7 @@ namespace engine
          goto error ;
       }
 
-      while ( !cb->isDisconnected() )
+      while ( !cb->isDisconnected() && !pListerner->isClosed() )
       {
          SOCKET s ;
          rc = pListerner->accept ( &s, NULL, NULL ) ;
@@ -82,7 +82,7 @@ namespace engine
             PD_LOG( PDERROR, "Can not accept more connections because of "
                     "open files upto limits, restart listening" ) ;
 
-            while( PMD_IS_DB_UP() )
+            while( !cb->isDisconnected() )
             {
                pListerner->close() ;
                ossSleep( 2 * OSS_ONE_SEC ) ;
