@@ -118,7 +118,7 @@
             <equals arg1="${rc}" arg2="0" />            
             <else>
                <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}"/>
-               <var name="download_url" value="http://192.168.30.185:8080$/${BACKLOG_DIR}/{backup_reltdir}" />
+               <var name="download_url" value="http://192.168.30.185:8080${BACKLOG_DIR}/${backup_reltdir}" />
                <hostinfo prefix="host" />
                <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
                <var name="ms2" value="EXECUTE CMD:&#10;ant ${cmd1} ${cmd2}&#10;"/>
