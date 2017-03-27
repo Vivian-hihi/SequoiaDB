@@ -106,3 +106,80 @@ function getPostgreSQLVersion()
    getSoftWareItemByName $1 "PostgreSQL"
 }
 
+function getFileByHost()
+{
+   for file in `ls $1`;
+   do
+      if [ $file == $1 ];then
+         echo $file
+         break
+      fi
+
+      IPAddr=$(grep IP $file|awk -F ':' '{print $2}'|tr -d ' ')
+      if [ $IPAddr'M' == $2'M' ];then
+         echo $file
+         break
+      fi
+   done
+}
+
+function getAllGroupName()
+{
+   maxNum=0
+   for file in `ls ${1}`
+   do
+      lineNum=$(wc -l ${file}|awk '{print $1}')
+      if [ $maxNum -lt $lineNum ];then
+         usedFile=${file}
+         maxNum=${lineNum}
+      fi
+   done
+
+   for((i=2; i <=${maxNum}; ++i))
+   do
+      groupName=(${groupName[@]} $(sed -n "${i}p" ${usedFile}|awk -F ":" '{print $1}'))
+   done
+   echo ${groupName[@]}
+}
+
+function getNodeNumOfGroupPerHost()
+{
+   maxNum=0
+   for file in `ls ${1}`
+   do
+      lineNum=$(wc -l ${file}|awk '{print $1}')
+      if [ $maxNum -lt $lineNum ];then
+         usedFile=${file}
+         maxNum=${lineNum}
+      fi
+   done
+   
+   for((i=2; i <=${maxNum}; ++i))
+   do
+      nodes=($(getNodesOfGroup $i $usedFile))
+      nodesNumofGroup=(${nodesNumofGroup[@]} ${#nodes[*]})
+   done
+   echo ${nodesNumofGroup[@]}  
+}
+
+function getNodesOfGroup()
+{
+   OIFS=$IFS
+   IFS=','
+   echo $(sed -n "${1}p" ${2}|awk -F ':' '{print $2}')
+   IFS=$OIFS
+}
+
+function getGroupName()
+{
+   echo $(sed -n "${1}p" ${2}|awk -F ':' '{print $1}')
+}
+
+function getNodesOfGroup()
+{
+   OIFS=$IFS
+   IFS=','
+   echo $(sed -n "${1}p" ${2}|awk -F ':' '{print $2}')
+   IFS=$OIFS
+}
+
