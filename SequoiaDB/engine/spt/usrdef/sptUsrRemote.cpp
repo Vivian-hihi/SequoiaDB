@@ -170,7 +170,6 @@ namespace engine
       return SDB_OK ;
    }
 
-
    INT32 _sptUsrRemote::close( const _sptArguments &arg,
                                _sptReturnVal &rval,
                                BSONObj &detail )
@@ -183,131 +182,13 @@ namespace engine
                                     BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      INT32 retCode = SDB_OK ;
-      CHAR *retBuffer = NULL ;
       INT32 needRecv = TRUE ;
-      BSONObj mergeObj ;
-      BSONObj recvObj ;
-      string command ;
-
-      // merge arg
-      rc = _mergeArg( arg, detail, command, &mergeObj ) ;
-      if ( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << "Failed to mergeArg" ) ;
-         PD_LOG( PDERROR, "Failed to merge arg, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      // get argument needRecv
-      if ( arg.argc() >= 5 )
-      {
-         rc = arg.getNative( 4, &needRecv, SPT_NATIVE_INT32 ) ;
-         if ( SDB_OK != rc )
-         {
-            detail = BSON( SPT_ERR << "needRecv must be bool" ) ;
-            goto error ;
-         }
-      }
-
-      // run command and get retrun BSONObj
-      rc = _assit.runCommand( command, mergeObj.objdata(),
-                              &retBuffer, retCode, needRecv ) ;
-      if ( SDB_OK != rc )
-      {
-         detail = BSON( SPT_ERR << getErrDesp( rc ) ) ;
-         PD_LOG( PDERROR, "Failed to run command in client, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      // if need recv, need to build recvObj ;
-      if ( needRecv )
-      {
-         // build recvObj
-         SDB_ASSERT( retBuffer, "retBuffer can't be null" ) ;
-         try
-         {
-            recvObj.init( retBuffer ) ;
-         }
-         catch( std::exception &e )
-         {
-            rc = SDB_SYS ;
-            detail = BSON( SPT_ERR << "Failed to build recvObj" ) ;
-            PD_LOG( PDERROR, "Failed to build recvObj, rc: %d, detail: %s",
-                    rc, e.what() ) ;
-            goto error ;
-         }
-
-         // check remote result
-         if ( SDB_OK != retCode )
-         {
-            rc = retCode ;
-            detail = BSON( SPT_ERR << recvObj.getStringField( OP_ERR_DETAIL ) ) ;
-            PD_LOG( PDERROR, "Failed to run command in remote sdbcm, "
-                             "rc: %d", rc ) ;
-            goto error ;
-         }
-         rval.getReturnVal().setValue( recvObj ) ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _sptUsrRemote::getInfo( const _sptArguments &arg,
-                                 _sptReturnVal &rval,
-                                 BSONObj &detail )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
-
-      builder.append( "hostname", _hostname ) ;
-      builder.append( "svcname", _svcname ) ;
-
-      rval.getReturnVal().setValue( builder.obj() ) ;
-
-      return rc ;
-   }
-
-   INT32 _sptUsrRemote::staticHelp( const _sptArguments &arg,
-                              _sptReturnVal &rval,
-                              BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "Remote functions:" << endl
-         << "var remote = new Remote( [hostname], [svcname] )" << endl
-         << "   getSystem()" << endl
-         << "   getFile( [filename], [mode] )" << endl
-         << "   getCmd()" << endl
-         << "   close()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
-
-   INT32 _sptUsrRemote::memberHelp( const _sptArguments &arg,
-                                    _sptReturnVal &rval,
-                                    BSONObj &detail )
-   {
-      stringstream ss ;
-      ss << "Remote member functions:" << endl
-         << "   getSystem()" << endl
-         << "   getFile( [filename], [mode] )" << endl
-         << "   getCmd()" << endl
-         << "   close()" << endl ;
-      rval.getReturnVal().setValue( ss.str() ) ;
-      return SDB_OK ;
-   }
-
-   INT32 _sptUsrRemote::_mergeArg( const _sptArguments &arg,
-                                   bson::BSONObj &detail,
-                                   string &command,
-                                   BSONObj *mergeObj )
-   {
-      INT32 rc = SDB_OK ;
       BSONObj optionObj ;
       BSONObj matchObj ;
       BSONObj valueObj ;
+      BSONObjBuilder builder ;
+      BSONObj recvObj ;
+      string command ;
 
       // get command
       rc = arg.getString( 0, command ) ;
@@ -367,13 +248,164 @@ namespace engine
          }
       }
 
-      // merge argument
+      // get argument needRecv
+      if ( arg.argc() >= 5 )
       {
-         BSONObjBuilder builder ;
-         builder.append( "$optionObj", optionObj ) ;
-         builder.append( "$matchObj", matchObj ) ;
-         builder.append( "$valueObj", valueObj ) ;
-         *mergeObj = builder.obj() ;
+         rc = arg.getNative( 4, &needRecv, SPT_NATIVE_INT32 ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "needRecv must be bool" ) ;
+            goto error ;
+         }
+      }
+
+      rc = runCommand( command, optionObj, matchObj, valueObj, detail,
+                       recvObj, needRecv ) ;
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rval.getReturnVal().setValue( recvObj ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrRemote::runCommand( const string &command,
+                                    const BSONObj &optionObj,
+                                    const BSONObj &matchObj,
+                                    const BSONObj &valueObj,
+                                    BSONObj &errDetail, BSONObj &retObj,
+                                    BOOLEAN needRecv )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 retCode = SDB_OK ;
+      CHAR *retBuffer = NULL ;
+      BSONObjBuilder builder ;
+
+      // merge arg
+      rc = _mergeArg( optionObj, matchObj, valueObj, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         errDetail = BSON( SPT_ERR << "Failed to mergeArg" ) ;
+         PD_LOG( PDERROR, "Failed to merge arg, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // run command and get retrun BSONObj
+      rc = _assit.runCommand( command, builder.obj().objdata(),
+                              &retBuffer, retCode, needRecv ) ;
+      if ( SDB_OK != rc )
+      {
+         errDetail = BSON( SPT_ERR << getErrDesp( rc ) ) ;
+         PD_LOG( PDERROR, "Failed to run command in client, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // if need recv, need to build recvObj ;
+      if ( needRecv )
+      {
+         // build recvObj
+         SDB_ASSERT( retBuffer, "retBuffer can't be null" ) ;
+         rc = _initBSONObj( retObj, retBuffer ) ;
+         if( SDB_OK != rc )
+         {
+            errDetail= BSON( SPT_ERR << "Failed to build recvObj" ) ;
+            goto error ;
+         }
+
+         // check remote result
+         if ( SDB_OK != retCode )
+         {
+            rc = retCode ;
+            errDetail = BSON( SPT_ERR << retObj.getStringField( OP_ERR_DETAIL ) ) ;
+            PD_LOG( PDERROR, "Failed to run command in remote sdbcm, "
+                             "rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrRemote::getInfo( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+
+      builder.append( "hostname", _hostname ) ;
+      builder.append( "svcname", _svcname ) ;
+
+      rval.getReturnVal().setValue( builder.obj() ) ;
+
+      return rc ;
+   }
+
+   INT32 _sptUsrRemote::staticHelp( const _sptArguments &arg,
+                              _sptReturnVal &rval,
+                              BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "Remote functions:" << endl
+         << "var remote = new Remote( [hostname], [svcname] )" << endl
+         << "   getSystem()" << endl
+         << "   getFile( [filename], [mode] )" << endl
+         << "   getCmd()" << endl
+         << "   close()" << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrRemote::memberHelp( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    BSONObj &detail )
+   {
+      stringstream ss ;
+      ss << "Remote member functions:" << endl
+         << "   getSystem()" << endl
+         << "   getFile( [filename], [mode] )" << endl
+         << "   getCmd()" << endl
+         << "   close()" << endl ;
+      rval.getReturnVal().setValue( ss.str() ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrRemote::_mergeArg( const bson::BSONObj& optionObj,
+                                   const bson::BSONObj& matchObj,
+                                   const bson::BSONObj& valueObj,
+                                   bson::BSONObjBuilder& builder )
+   {
+      INT32 rc = SDB_OK ;
+
+      builder.append( "$optionObj", optionObj ) ;
+      builder.append( "$matchObj", matchObj ) ;
+      builder.append( "$valueObj", valueObj ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrRemote::_initBSONObj( BSONObj &recvObj, const CHAR* buf )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         recvObj.init( buf ) ;
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to build recvObj, rc: %d, detail: %s",
+                 rc, e.what() ) ;
+         goto error ;
       }
    done:
       return rc ;

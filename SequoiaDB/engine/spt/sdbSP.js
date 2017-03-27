@@ -1,3 +1,14 @@
+// File open option define
+var SDB_FILE_CREATEONLY =    0x00000001 ;
+var SDB_FILE_REPLACE =       0x00000002 ;
+var SDB_FILE_CREATE =        SDB_FILE_CREATEONLY | SDB_FILE_REPLACE ;
+var SDB_FILE_READONLY =      0x00000004 ;
+var SDB_FILE_WRITEONLY =     0x00000008 ;
+var SDB_FILE_READWRITE =     SDB_FILE_READONLY | SDB_FILE_WRITEONLY ;
+var SDB_FILE_SHAREREAD =     0x00000010 ;
+var SDB_FILE_SHAREWROTE =    SDB_FILE_SHAREREAD | 0x00000020 ;
+var SDB_FILE_WRITETHROUGH =  0x00000040 ;
+var SDB_FILE_DIRECTIO =      0x00000080 ;
 
 // BSONObj
 BSONObj.prototype.toObj = function() {
@@ -521,7 +532,7 @@ Remote.prototype.getSystem = function() {
    return system ;
 }
 
-Remote.prototype.getFile = function( filename, mode ) {
+Remote.prototype.getFile = function( filename, permission, openMode ) {
    var file = File._getFileObj() ;
    file._remote = this ;
 
@@ -533,15 +544,23 @@ Remote.prototype.getFile = function( filename, mode ) {
          throw SDB_INVALIDARG ;
       }
 
-      if ( undefined != mode )
+      if( undefined != permission )
       {
-         this._runCommand( "file open",{ "mode": mode }, {},
-                           { "filename": filename } ) ;
+         if( undefined != openMode )
+         {
+            this._runCommand( "file open",
+                              { "permission": permission, "mode": openMode },
+                              {}, { "filename": filename } ) ;
+         }
+         else
+         {
+            this._runCommand( "file open", { "permission": permission }, {},
+                              { "filename": filename } ) ;
+         }
       }
       else
       {
-         this._runCommand( "file open",{}, {},
-                           { "filename": filename } ) ;
+         this._runCommand( "file open", {}, {}, { "filename": filename } ) ;
       }
       file._filename = filename ;
       file._location = 0 ;
@@ -2192,6 +2211,134 @@ File.getUmask = function( base ) {
    return umask ;
 }
 
+File.scp = function( src, dst, mode, isReplace ) {
+
+   if( undefined == src )
+   {
+      setLastErrMsg( "src must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if( "string" != typeof( src ) )
+   {
+      setLastErrMsg( "src must be string" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if( undefined == dst )
+   {
+      setLastErrMsg( "dst must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   if( "string" != typeof( dst ) )
+   {
+      setLastErrMsg( "dst must be string" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   var srcFile ;
+   var dstFile ;
+   var COPY_UNIT = 4*1024*1024 ;
+   var srcArr = src.split( "@" ) ;
+   if( srcArr.length > 1 )
+   {
+      var hostPortSplit = srcArr[0].split( ":" ) ;
+      var remote = new Remote( hostPortSplit[0], hostPortSplit[1] ) ;
+      var fileMgr = remote.getFile() ;
+
+      if( false == fileMgr.exist( srcArr[1] ) )
+      {
+         setLastErrMsg( "src not exist" ) ;
+         throw SDB_FNE ;
+      }
+      if( undefined == mode )
+      {
+         mode = fileMgr._getPermission( srcArr[1] ) ;
+      }
+      srcFile = remote.getFile( srcArr[1] ) ;
+   }
+   else
+   {
+      if( false == File.exist( srcArr[0] ) )
+      {
+         setLastErrMsg( "src not exist" ) ;
+         throw SDB_FNE ;
+      }
+      if( undefined == mode )
+      {
+         mode = File._getPermission( srcArr[0] ) ;
+      }
+      srcFile = new File( srcArr[0] ) ;
+   }
+
+   var dstArr = dst.split( "@" ) ;
+   if( dstArr.length > 1 )
+   {
+      var hostPortSplit = dstArr[0].split( ":" ) ;
+      var remote = new Remote( hostPortSplit[0], hostPortSplit[1] ) ;
+      var fileMgr = remote.getFile() ;
+
+      if( true == fileMgr.exist( dstArr[1] ) )
+      {
+         if( false == isReplace )
+         {
+            setLastErrMsg( "dst exist" ) ;
+            throw SDB_FE ;
+         }
+         else
+         {
+            dstFile = remote.getFile( dstArr[1], mode,
+                                      SDB_FILE_REPLACE| SDB_FILE_READWRITE ) ;
+         }
+      }
+      else
+      {
+         dstFile = remote.getFile( dstArr[1], mode,
+                                   SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
+      }
+   }
+   else
+   {
+      if( true == File.exist( dstArr[0] ) )
+      {
+         if( false == isReplace )
+         {
+            setLastErrMsg( "dst exist" ) ;
+            throw SDB_FE ;
+         }
+         else
+         {
+            dstFile = new File( dstArr[0], mode,
+                                SDB_FILE_REPLACE | SDB_FILE_READWRITE ) ;
+         }
+      }
+      else
+      {
+         dstFile = new File( dstArr[0], mode,
+                              SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
+      }
+   }
+
+   try
+   {
+      while( true )
+      {
+         var fileContent = srcFile.readContent( COPY_UNIT ) ;
+         dstFile.writeContent( fileContent ) ;
+      }
+   }
+   catch( e )
+   {
+      if( -9 == e )
+      {
+         println( "Success to copy file from " + src + " to " + dst ) ;
+      }
+      else
+      {
+         throw e ;
+      }
+   }
+}
+
 // File member function
 File.prototype.getInfo = function() {
    var result ;
@@ -2226,19 +2373,20 @@ File.prototype.read = function( size ) {
       var retObj ;
       if ( undefined != size )
       {
-         retObj= this._remote._runCommand( "file read",{}, {},
-                                          { "size":size,
-                                            "filename": this._filename,
-                                            "location": this._location } ) ;
+         retObj = this._remote._runCommand( "file read",{}, {},
+                                           { "size":size,
+                                             "filename": this._filename,
+                                             "location": this._location } ) ;
       }
       else
       {
-         retObj= this._remote._runCommand( "file read",{}, {},
-                                          { "filename": this._filename,
-                                            "location": this._location } ) ;
+         retObj = this._remote._runCommand( "file read",{}, {},
+                                           { "filename": this._filename,
+                                             "location": this._location } ) ;
       }
-      str = retObj.toObj().readStr ;
-      this._location += str.length ;
+      var recvObj = retObj.toObj ;
+      str = recvObj.readContent ;
+      this._location += recvObj.readLen ;
    }
    else
    {
@@ -2252,6 +2400,37 @@ File.prototype.read = function( size ) {
       }
    }
    return str ;
+}
+
+File.prototype.readContent = function( size )
+{
+   var retObj ;
+   if ( undefined != this._remote )
+   {
+      if( undefined != size )
+      {
+         retObj = this._readContent( this._remote, this._filename,
+                                     this._location, size ) ;
+      }
+      else
+      {
+         retObj = this._readContent( this._remote, this._filename,
+                                     this._location ) ;
+      }
+      this._location += retObj.getLength() ;
+   }
+   else
+   {
+      if( undefined != size )
+      {
+         retObj = this._readContent( size ) ;
+      }
+      else
+      {
+         retObj = this._readContent() ;
+      }
+   }
+   return retObj ;
 }
 
 File.prototype.write = function( content ){
@@ -2273,6 +2452,21 @@ File.prototype.write = function( content ){
    else
    {
       this._write( content ) ;
+   }
+}
+
+File.prototype.writeContent = function( content )
+{
+   if( undefined != this._remote )
+   {
+      this._writeContent( this._remote, this._filename,
+                          this._location, content ) ;
+      this._location += content.getLength() ;
+
+   }
+   else
+   {
+      this._writeContent( content ) ;
    }
 }
 
@@ -2891,5 +3085,30 @@ File.prototype.md5 = function( filename ) {
    }
    return result ;
 
+}
+
+File.prototype._getPermission = function( pathname ) {
+
+   if( undefined == pathname )
+   {
+      setLastErrMsg( "pathname must be config" ) ;
+      throw SDB_OUT_OF_BOUND ;
+   }
+   else if( "string" != typeof( pathname ) )
+   {
+      setLastErrMsg( "pathname must be string" ) ;
+      throw SDB_INVALIDARG ;
+   }
+
+   if( undefined != this._remote )
+   {
+      var retObj = this._remote._runCommand( "file get permission", {}, {},
+                                             { "pathname": pathname } ).toObj() ;
+      return retObj.permission ;
+   }
+   else
+   {
+      return File._getPermission( pathname ) ;
+   }
 }
 // end File

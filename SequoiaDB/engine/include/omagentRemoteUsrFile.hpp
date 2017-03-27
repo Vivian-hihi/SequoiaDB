@@ -76,8 +76,8 @@ namespace engine
 
       private:
          string _filename ;
-         UINT32 _location ;
-         UINT32 _size ;
+         SINT64 _location ;
+         SINT64 _size ;
    } ;
 
    /*
@@ -99,9 +99,9 @@ namespace engine
 
       private:
          string _filename ;
-         UINT32 _location ;
-         UINT32 _size ;
-         string _content ;
+         SINT64 _location ;
+         SINT64 _size ;
+         const CHAR* _content ;
    } ;
 
    /*
@@ -375,6 +375,22 @@ namespace engine
          _remoteFileGetContentSize() ;
 
          ~_remoteFileGetContentSize() ;
+
+         const CHAR *name() ;
+
+         INT32 doit( BSONObj &retObj ) ;
+   } ;
+
+   /*
+      _remoteFileGetPermission define
+   */
+   class _remoteFileGetPermission : public _remoteExec
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _remoteFileGetPermission() ;
+
+         ~_remoteFileGetPermission() ;
 
          const CHAR *name() ;
 

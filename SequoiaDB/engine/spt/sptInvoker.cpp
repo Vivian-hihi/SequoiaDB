@@ -133,10 +133,28 @@ namespace engine
             goto error ;
          }
 
-         JS_SetPrivate( cx, jsObj, rpro.getValue() ) ;
+         if( !JS_SetPrivate( cx, jsObj, rpro.getValue() ) )
+         {
+            PD_LOG( PDERROR, "failed to set object to js object" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         /*
+            Add the fixed property
+         */
+         rval.addReturnValProperty( SPT_OBJ_CNAME_PROPNAME,
+                                    SPT_PROP_READONLY|
+                                    SPT_PROP_PERMANENT )->setValue(
+                                    rpro.getObjDesc()->getJSClassName() ) ;
+         rval.addReturnValProperty( SPT_OBJ_ID_PROPNAME,
+                                    SPT_PROP_READONLY|
+                                    SPT_PROP_PERMANENT )->setValue(
+                                    sdbGetGlobalID() ) ;
 
          /// need to take over the object
          rpro.takeoverObject() ;
+
          /// set the return val's properties
          if ( !rval.getReturnValProperties().empty() )
          {

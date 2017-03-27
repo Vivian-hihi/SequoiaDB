@@ -71,6 +71,7 @@ namespace engine
       string filename ;
       INT32 mode ;
       OSSFILE file ;
+      UINT32 iMode = OSS_READWRITE | OSS_CREATE ;
 
       // get argument
       if ( FALSE == _valueObj.hasField( "filename" ) )
@@ -87,15 +88,15 @@ namespace engine
       }
       filename = _valueObj.getStringField( "filename" ) ;
 
-      if ( TRUE == _optionObj.hasField( "mode" ) )
+      if ( TRUE == _optionObj.hasField( "permission" ) )
       {
-         if( NumberInt != _optionObj.getField( "mode" ).type() )
+         if( NumberInt != _optionObj.getField( "permission" ).type() )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "mode must be INT32" );
+            PD_LOG_MSG( PDERROR, "permission must be INT32" );
             goto error ;
          }
-         mode = _optionObj.getIntField( "mode" ) ;
+         mode = _optionObj.getIntField( "permission" ) ;
 
          permission = 0 ;
 
@@ -137,9 +138,19 @@ namespace engine
          }
       }
 
+      if( _optionObj.hasField( "mode") )
+      {
+         if( NumberInt != _optionObj.getField( "mode" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "mode must be int" ) ;
+            goto error ;
+         }
+         iMode = _optionObj.getIntField( "mode" ) ;
+      }
       // open file
       rc = ossOpen( filename.c_str(),
-                    OSS_READWRITE | OSS_CREATE,
+                    iMode,
                     permission,
                     file ) ;
 
@@ -199,30 +210,28 @@ namespace engine
          PD_LOG_MSG( PDERROR, "location must be config" ) ;
          goto error ;
       }
-      if ( NumberInt != _valueObj.getField( "location" ).type() )
+      if ( NumberLong != _valueObj.getField( "location" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be int" ) ;
+         PD_LOG_MSG( PDERROR, "location must be numberLong" ) ;
          goto error ;
       }
       _location = _valueObj.getIntField( "location" ) ;
-
 
       if ( FALSE == _valueObj.hasField( "size" ) )
       {
          _size = SPT_READ_LEN ;
       }
-      else if ( NumberInt != _valueObj.getField( "size" ).type() )
+      else if ( NumberLong != _valueObj.getField( "size" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "size must be int" ) ;
+         PD_LOG_MSG( PDERROR, "size must be numberLong" ) ;
          goto error ;
       }
       else
       {
          _size = _valueObj.getIntField( "size" ) ;
       }
-
    done:
       return rc ;
    error:
@@ -241,15 +250,16 @@ namespace engine
       CHAR stackBuf[SPT_READ_LEN + 1] = { 0 } ;
       CHAR *buf = NULL ;
       SINT64 read = 0 ;
+      BSONObjBuilder builder ;
 
       // open file
       rc = ossOpen( _filename.c_str(),
-                    OSS_READWRITE | OSS_CREATE,
+                    OSS_READWRITE,
                     OSS_RWXU,
                     file ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "failed to open file:%s, rc:%d",
+         PD_LOG_MSG( PDERROR, "Failed to open file:%s, rc:%d",
                      _filename.c_str(), rc ) ;
          goto error ;
       }
@@ -257,7 +267,7 @@ namespace engine
       rc = ossSeek( &file, _location, OSS_SEEK_SET ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to seek:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to seek:%d", rc ) ;
          goto error ;
       }
 
@@ -267,7 +277,7 @@ namespace engine
          buf = ( CHAR * )SDB_OSS_MALLOC( _size + 1 ) ;
          if ( NULL == buf )
          {
-            PD_LOG_MSG( PDERROR, "failed to allocate mem." ) ;
+            PD_LOG_MSG( PDERROR, "Failed to allocate mem." ) ;
             rc = SDB_OOM ;
             goto error ;
          }
@@ -281,12 +291,15 @@ namespace engine
       rc = ossReadN( &file, _size, buf, read ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read file:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to read file:%d", rc ) ;
          goto error ;
       }
       buf[read] = '\0' ;
 
-      retObj = BSON( "readStr" << buf ) ;
+      builder.append( "readContent", buf, read ) ;
+      builder.append( "readLen", read ) ;
+
+      retObj = builder.obj() ;
    done:
       if ( SPT_READ_LEN < _size && NULL != buf )
       {
@@ -309,6 +322,9 @@ namespace engine
 
    _remoteFileWrite::_remoteFileWrite()
    {
+      _location = 0 ;
+      _size = 0 ;
+      _content = NULL ;
    }
 
    _remoteFileWrite::~_remoteFileWrite()
@@ -321,6 +337,8 @@ namespace engine
 
       rc = _remoteExec::init( pInfomation ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get argument, rc: %d", rc ) ;
+
+      _content = _valueObj.getStringField( "content" ) ;
 
       if ( FALSE == _valueObj.hasField( "filename" ) )
       {
@@ -338,18 +356,34 @@ namespace engine
 
       if ( FALSE == _valueObj.hasField( "location" ) )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be config" ) ;
-         goto error ;
+         _location = 0 ;
       }
-      if ( NumberInt != _valueObj.getField( "location" ).type() )
+      else if ( NumberLong != _valueObj.getField( "location" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be int" ) ;
+         PD_LOG_MSG( PDERROR, "location must be NumberLong" ) ;
          goto error ;
       }
-      _location = _valueObj.getIntField( "location" ) ;
-      _content = _valueObj.getStringField( "content" ) ;
+      else
+      {
+         _location = _valueObj.getIntField( "location" ) ;
+      }
+
+      if( FALSE == _valueObj.hasField( "size" ) )
+      {
+         _size = ossStrlen( _content ) ;
+      }
+      else if( NumberLong != _valueObj.getField( "size" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "size must be NumberLong" ) ;
+         goto error ;
+      }
+      else
+      {
+         _size = _valueObj.getIntField( "size" ) ;
+      }
+
    done:
       return rc ;
    error:
@@ -368,12 +402,12 @@ namespace engine
 
       // open file
       rc = ossOpen( _filename.c_str(),
-                    OSS_READWRITE | OSS_CREATE,
+                    OSS_READWRITE,
                     OSS_RWXU,
                     file ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "failed to open file:%s, rc:%d",
+         PD_LOG_MSG( PDERROR, "Failed to open file:%s, rc:%d",
                      _filename.c_str(), rc ) ;
          goto error ;
       }
@@ -381,15 +415,15 @@ namespace engine
       rc = ossSeek( &file, _location, OSS_SEEK_SET ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to seek:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to seek:%d", rc ) ;
          goto error ;
       }
 
       // write content
-      rc = ossWriteN( &file, _content.c_str(), _content.size() ) ;
+      rc = ossWriteN( &file, _content, _size ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to write to file:%d", rc ) ;
          goto error ;
       }
    done:
@@ -2746,5 +2780,101 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+    /*
+      _remoteFileGetPermission implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _remoteFileGetPermission )
+
+   _remoteFileGetPermission::_remoteFileGetPermission()
+   {
+   }
+
+   _remoteFileGetPermission::~_remoteFileGetPermission()
+   {
+   }
+
+   const CHAR* _remoteFileGetPermission::name()
+   {
+      return OMA_REMOTE_FILE_GET_PERMISSION ;
+   }
+
+   INT32 _remoteFileGetPermission::doit( BSONObj &retObj )
+   {
+#if defined( _LINUX )
+      INT32 rc = SDB_OK ;
+      string pathname ;
+      struct stat fileStat ;
+      mode_t fileMode ;
+      INT32 permission = 0 ;
+
+      // get pathname
+      if( FALSE == _valueObj.hasField( "pathname" ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         PD_LOG_MSG( PDERROR, "pathname must be config" ) ;
+         goto error ;
+      }
+      else if( String != _valueObj.getField( "pathname" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "pathname must be string" ) ;
+         goto error ;
+      }
+      pathname = _valueObj.getStringField( "pathname" ) ;
+
+      permission = 0 ;
+      if ( stat( pathname.c_str(), &fileStat ) )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Failed to get src file stat" ) ;
+         goto error ;
+      }
+      fileMode = fileStat.st_mode ;
+      if ( fileMode & S_IRUSR )
+      {
+         permission |= OSS_RU ;
+      }
+      if ( fileMode & S_IWUSR )
+      {
+         permission |= OSS_WU ;
+      }
+      if ( fileMode & S_IXUSR )
+      {
+         permission |= OSS_XU ;
+      }
+      if ( fileMode & S_IRGRP )
+      {
+         permission |= OSS_RG ;
+      }
+      if ( fileMode & S_IWGRP )
+      {
+         permission |= OSS_WG ;
+      }
+      if ( fileMode & S_IXGRP )
+      {
+         permission |= OSS_XG ;
+      }
+      if ( fileMode & S_IROTH )
+      {
+         permission |= OSS_RO ;
+      }
+      if ( fileMode & S_IWOTH )
+      {
+         permission |= OSS_WO ;
+      }
+      if ( fileMode & S_IXOTH )
+      {
+         permission |= OSS_XO ;
+      }
+      retObj = BSON( "permission" << permission ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+#elif defined( _WINDOWS )
+      return SDB_OK ;
+#endif
    }
 }

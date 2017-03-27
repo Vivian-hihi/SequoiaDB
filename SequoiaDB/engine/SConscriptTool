@@ -257,7 +257,8 @@ spt2Files = [
       "spt/usrdef/sptUsrSdbTool.cpp",
       "spt/usrdef/sptUsrRemote.cpp",
       "spt/usrdef/sptUsrRemoteAssit.cpp",
-      "spt/usrdef/sptUsrFilter.cpp"
+      "spt/usrdef/sptUsrFilter.cpp",
+      "spt/usrdef/sptUsrFileContent.cpp"
       ]
 
 ssh2Files = [

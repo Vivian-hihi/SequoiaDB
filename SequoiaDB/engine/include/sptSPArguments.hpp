@@ -50,6 +50,10 @@ namespace engine
       virtual INT32 getString( UINT32 pos, std::string &value,
                                BOOLEAN strict = TRUE ) const ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const ;
+
+      virtual INT32 getUserObj( UINT32 pos, const std::string &className,
+                                const void** value ) const ;
+
       virtual UINT32 argc() const
       {
          return _argc ;
@@ -63,7 +67,9 @@ namespace engine
       virtual BOOLEAN isObject( UINT32 pos ) const ;
       virtual BOOLEAN isNull( UINT32 pos ) const ;
       virtual BOOLEAN isVoid( UINT32 pos ) const ;
-
+      virtual BOOLEAN isUserObj( UINT32 pos,
+                                 const std::string &className ) const ;
+      virtual string getUserObjClassName( UINT32 pos ) const ;
    private:
       jsval *_getValAtPos( UINT32 pos ) const ;
 

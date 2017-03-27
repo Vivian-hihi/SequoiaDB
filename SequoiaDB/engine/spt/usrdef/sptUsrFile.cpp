@@ -35,6 +35,9 @@
 #include "ossMem.hpp"
 #include "ossPrimitiveFileOp.hpp"
 #include "ossCmdRunner.hpp"
+#include "omagentDef.hpp"
+#include "sptUsrFileContent.hpp"
+#include "sptUsrRemote.hpp"
 #include <boost/algorithm/string.hpp>
 #include "../bson/lib/md5.hpp"
 
@@ -53,6 +56,8 @@ namespace engine
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, write )
+JS_MEMBER_FUNC_DEFINE( _sptUsrFile, readContent )
+JS_MEMBER_FUNC_DEFINE( _sptUsrFile, writeContent )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, close )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, getInfo )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, toString )
@@ -78,10 +83,13 @@ JS_STATIC_FUNC_DEFINE( _sptUsrFile, getUmask )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, setUmask )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, isEmptyDir )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, getStat )
+JS_STATIC_FUNC_DEFINE( _sptUsrFile, getPermission )
 
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_read", read, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_write", write, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_readContent", readContent, 0 )
+   JS_ADD_MEMBER_FUNC_WITHATTR( "_writeContent", writeContent, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_close", close, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_seek", seek, 0 )
    JS_ADD_MEMBER_FUNC_WITHATTR( "_getInfo", getInfo, 0 )
@@ -105,6 +113,7 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_STATIC_FUNC( "isEmptyDir", isEmptyDir )
    JS_ADD_STATIC_FUNC( "stat", getStat )
    JS_ADD_STATIC_FUNC( "md5", md5 )
+   JS_ADD_STATIC_FUNC( "_getPermission", getPermission )
    JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
@@ -116,7 +125,7 @@ JS_MAPPING_END()
 
    _sptUsrFile::~_sptUsrFile()
    {
-      if ( _file.isOpened() )
+      if( _file.isOpened() )
       {
          ossClose( _file ) ;
       }
@@ -128,6 +137,7 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       UINT32 permission = OSS_RWXU ;
+      UINT32 iMode = OSS_READWRITE | OSS_CREATE ;
 
       // get filename
       rc = arg.getString( 0, _filename ) ;
@@ -148,7 +158,7 @@ JS_MAPPING_END()
          rc = arg.getNative( 1, (void*)&mode, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
-            detail = BSON( SPT_ERR << "mode must be INT32" ) ;
+            detail = BSON( SPT_ERR << "permission must be INT32" ) ;
             goto error ;
          }
          permission = 0 ;
@@ -191,9 +201,19 @@ JS_MAPPING_END()
          }
       }
 
+      if( arg.argc() > 2 )
+      {
+         rc = arg.getNative( 2, &iMode, SPT_NATIVE_INT32 ) ;
+         if( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "mode must be int" ) ;
+            goto error ;
+         }
+      }
+
       // open file
       rc = ossOpen( _filename.c_str(),
-                    OSS_READWRITE | OSS_CREATE,
+                    iMode,
                     permission,
                     _file ) ;
       if ( SDB_OK != rc )
@@ -217,7 +237,7 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
 
       // new File Object and set return value
-      _sptUsrFile * fileObj = _sptUsrFile::crtInstance() ;
+      _sptUsrFile * fileObj = SDB_OSS_NEW _sptUsrFile() ;
       if ( !fileObj )
       {
          rc = SDB_OOM ;
@@ -227,7 +247,10 @@ JS_MAPPING_END()
       {
          rval.setUsrObjectVal<_sptUsrFile>( fileObj ) ;
       }
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrFile::destruct()
@@ -243,55 +266,18 @@ JS_MAPPING_END()
                             _sptReturnVal &rval,
                             bson::BSONObj &detail )
    {
-      INT32 rc = SDB_OK ;
-#define SPT_READ_LEN 1024
-      SINT64 len = SPT_READ_LEN ;
-      CHAR stackBuf[ SPT_READ_LEN + 1 ] = { 0 } ;
+     INT32 rc = SDB_OK ;
+      SINT64 len = 0 ;
       CHAR *buf = NULL ;
-      SINT64 read = 0 ;
 
-      if ( !_file.isOpened() )
+      rc = _readContentLocal( arg, detail, &buf, len ) ;
+      if( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "the file is not opened." ) ;
-         detail = BSON( SPT_ERR << "file is not opened" ) ;
-         rc = SDB_IO ;
          goto error ;
       }
-
-      //get read length
-      rc = arg.getNative( 0, &len, SPT_NATIVE_INT64 ) ;
-      if ( rc && SDB_OUT_OF_BOUND != rc )
-      {
-         detail = BSON( SPT_ERR << "size must be native type" ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get size, rc: %d", rc ) ;
-      }
-
-      if ( SPT_READ_LEN < len )
-      {
-         buf = ( CHAR * )SDB_OSS_MALLOC( len + 1 ) ;
-         if ( NULL == buf )
-         {
-            PD_LOG( PDERROR, "failed to allocate mem." ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-      }
-      else
-      {
-         buf = ( CHAR * )stackBuf ;
-      }
-
-      rc = ossReadN( &_file, len, buf, read ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read file:%d", rc ) ;
-         goto error ;
-      }
-      buf[ read ] = '\0' ;
-
       rval.getReturnVal().setValue( buf ) ;
    done:
-      if ( SPT_READ_LEN < len && NULL != buf )
+      if ( NULL != buf )
       {
          SDB_OSS_FREE( buf ) ;
       }
@@ -331,6 +317,341 @@ JS_MAPPING_END()
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::readContent( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 len = 0 ;
+      CHAR *buf = NULL ;
+      sptUsrFileContent *fileContent = NULL ;
+
+      if( arg.isUserObj( 0, "Remote" ) )
+      {
+         rc = _readContentRemote( arg, detail, &buf, len ) ;
+      }
+      else
+      {
+         rc = _readContentLocal( arg, detail, &buf, len ) ;
+      }
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      fileContent = SDB_OSS_NEW sptUsrFileContent() ;
+      fileContent->init( buf, len ) ;
+
+      rval.setUsrObjectVal<sptUsrFileContent>( fileContent ) ;
+   done:
+      if( NULL != buf )
+      {
+         SDB_OSS_FREE( buf ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::writeContent( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+
+      if( arg.isUserObj( 0, "Remote" ) )
+      {
+         rc = _writeContentRemote( arg, detail ) ;
+      }
+      else
+      {
+         rc = _writeContentLocal( arg, detail ) ;
+      }
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::_readContentLocal( const _sptArguments &arg,
+                                         bson::BSONObj &detail,
+                                         CHAR** buf, SINT64 &len )
+   {
+      INT32 rc = SDB_OK ;
+#define SPT_READ_LEN 1024
+      SINT64 readLen = SPT_READ_LEN ;
+
+      if ( !_file.isOpened() )
+      {
+         PD_LOG( PDERROR, "the file is not opened." ) ;
+         detail = BSON( SPT_ERR << "file is not opened" ) ;
+         rc = SDB_IO ;
+         goto error ;
+      }
+
+      //get read length
+      rc = arg.getNative( 0, &readLen, SPT_NATIVE_INT64 ) ;
+      if ( rc && SDB_OUT_OF_BOUND != rc )
+      {
+         detail = BSON( SPT_ERR << "size must be native type" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get size, rc: %d", rc ) ;
+      }
+
+      *buf = ( CHAR* )SDB_OSS_MALLOC( readLen + 1 ) ;
+      if ( NULL == *buf )
+      {
+         PD_LOG( PDERROR, "Failed to allocate mem." ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      rc = ossReadN( &_file, readLen, *buf, len ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to read file:%d", rc ) ;
+         goto error ;
+      }
+      (*buf)[ len ] = '\0' ;
+   done:
+      return rc ;
+   error:
+      if( *buf )
+      {
+         SDB_OSS_FREE( *buf ) ;
+         *buf = NULL ;
+      }
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::_readContentRemote( const _sptArguments &arg,
+                                          bson::BSONObj &detail,
+                                          CHAR** buf, SINT64 &len )
+   {
+      INT32 rc = SDB_OK ;
+      _sptUsrRemote *pRemote = NULL ;
+      string filename ;
+      SINT64 location = 0 ;
+      SINT64 size = 0 ;
+      BSONObjBuilder builder ;
+      BSONObj retObj ;
+      const CHAR* retBuf = NULL ;
+
+      rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "remoteObj must be config" ) ;
+         goto error ;
+      }
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "remoteObj must be Remote" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 1, filename ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         goto error ;
+      }
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         goto error ;
+      }
+      builder.append( "filename", filename ) ;
+
+      rc = arg.getNative( 2, (void*)&location, SPT_NATIVE_INT64 ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "location must be config" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "location must be int" ) ;
+         goto error ;
+      }
+      builder.append( "location", location ) ;
+
+      rc = arg.getNative( 3, (void*)&size, SPT_NATIVE_INT64 ) ;
+      if( SDB_OK == rc )
+      {
+         builder.append( "size", size ) ;
+      }
+      else if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      {
+         detail = BSON( SPT_ERR << "size must be int" ) ;
+         goto error ;
+      }
+
+      rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, BSONObj(), BSONObj(),
+                                builder.obj(), detail, retObj ) ;
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      if( FALSE == retObj.hasField( "readContent" ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         detail = BSON( SPT_ERR << "retObj must has field: 'readContent'" ) ;
+         goto error ;
+      }
+      if( String != retObj.getField( "readContent" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "readContent must be string" ) ;
+         goto error ;
+      }
+      retBuf = retObj.getStringField( "readContent" ) ;
+
+      if( FALSE == retObj.hasField( "readLen" ) )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         detail = BSON( SPT_ERR << "retObj must has field: 'readLen'" ) ;
+         goto error ;
+      }
+      if( NumberLong != retObj.getField( "readLen" ).type() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "readLen must be NumberLong" ) ;
+         goto error ;
+      }
+      len = retObj.getIntField( "readLen" ) ;
+
+      *buf = ( CHAR* )SDB_OSS_MALLOC( len+1 ) ;
+      if( NULL == *buf )
+      {
+         rc = SDB_OOM ;
+         detail = BSON( SPT_ERR << "Failed to alloc buff" ) ;
+         goto error ;
+      }
+      ossMemcpy( *buf, retBuf, len ) ;
+      (*buf)[len] = '\0' ;
+
+   done:
+      return rc ;
+   error:
+      if( *buf )
+      {
+         SDB_OSS_FREE( buf ) ;
+         *buf = NULL ;
+      }
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::_writeContentLocal( const _sptArguments &arg,
+                                          bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      sptUsrFileContent *pFileContent = NULL ;
+
+      rc = arg.getUserObj( 0, "FileContent", (const void**)&pFileContent ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "FileContent must be config" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "fileContent must be FileContent" ) ;
+         goto error ;
+      }
+
+      rc = ossWriteN( &_file, pFileContent->getBuf(),
+                      pFileContent->getLength() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to write fileContent to file:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::_writeContentRemote( const _sptArguments &arg,
+                                           bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      _sptUsrRemote *pRemote = NULL ;
+      sptUsrFileContent *pFileContent = NULL ;
+      BSONObjBuilder builder ;
+      string filename ;
+      SINT64 location = 0 ;
+      BSONObj retObj ;
+
+      rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "remoteObj must be config" ) ;
+         goto error ;
+      }
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "remoteObj must be Remote" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 1, filename ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "filename must be config" ) ;
+         goto error ;
+      }
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "filename must be string" ) ;
+         goto error ;
+      }
+      builder.append( "filename", filename ) ;
+
+      rc = arg.getNative( 2, (void*)&location, SPT_NATIVE_INT64 ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "location must be config" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "location must be int" ) ;
+         goto error ;
+      }
+      builder.append( "location", location ) ;
+
+      rc = arg.getUserObj( 3, "FileContent", (const void**)&pFileContent ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "fileContent must be config" ) ;
+         goto error ;
+      }
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "fileContent must be FileContent" ) ;
+         goto error ;
+      }
+      builder.append( "content", pFileContent->getBuf(),
+                      pFileContent->getLength() ) ;
+      builder.append( "size", pFileContent->getLength() ) ;
+
+      rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, BSONObj(), BSONObj(),
+                                builder.obj(), detail, retObj ) ;
+      if( SDB_OK != rc )
+      {
          goto error ;
       }
    done:
@@ -2186,6 +2507,83 @@ JS_MAPPING_END()
       goto done ;
    }
 
+   INT32 _sptUsrFile::getPermission( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail )
+   {
+#if defined( _LINUX )
+      INT32 rc = SDB_OK ;
+      string pathname ;
+      struct stat fileStat ;
+      mode_t fileMode ;
+      INT32 permission = 0 ;
+
+      // get pathname
+      rc = arg.getString( 0, pathname ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "pathname must be config" ) ;
+         goto error ;
+      }
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "pathname must be string" ) ;
+         goto error ;
+      }
+
+      permission = 0 ;
+      if ( stat( pathname.c_str(), &fileStat ) )
+      {
+         rc = SDB_SYS ;
+         detail = BSON( SPT_ERR << "Failed to get src file stat" ) ;
+         goto error ;
+      }
+      fileMode = fileStat.st_mode ;
+      if ( fileMode & S_IRUSR )
+      {
+         permission |= OSS_RU ;
+      }
+      if ( fileMode & S_IWUSR )
+      {
+         permission |= OSS_WU ;
+      }
+      if ( fileMode & S_IXUSR )
+      {
+         permission |= OSS_XU ;
+      }
+      if ( fileMode & S_IRGRP )
+      {
+         permission |= OSS_RG ;
+      }
+      if ( fileMode & S_IWGRP )
+      {
+         permission |= OSS_WG ;
+      }
+      if ( fileMode & S_IXGRP )
+      {
+         permission |= OSS_XG ;
+      }
+      if ( fileMode & S_IROTH )
+      {
+         permission |= OSS_RO ;
+      }
+      if ( fileMode & S_IWOTH )
+      {
+         permission |= OSS_WO ;
+      }
+      if ( fileMode & S_IXOTH )
+      {
+         permission |= OSS_XO ;
+      }
+      rval.getReturnVal().setValue( permission ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+#elif defined( _WINDOWS )
+      return SDB_OK ;
+#endif
+   }
 
    INT32 _sptUsrFile::isEmptyDir( const _sptArguments &arg,
                                   _sptReturnVal &rval,
