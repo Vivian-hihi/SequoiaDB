@@ -22,7 +22,6 @@ import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
-import com.sequoiadb.testcommon.SdbConfTestBase;
 
 
 /**
@@ -30,19 +29,11 @@ import com.sequoiadb.testcommon.SdbConfTestBase;
  * @author chensiqin
  * @Date 2016-12-16
  */
-public class TestSeqDB6670 extends SdbConfTestBase {
+public class TestSeqDB6670 extends SdbTestBase {
     private Sequoiadb sdb;
     private CollectionSpace cs;
     private DBCollection cl;
     private String clName = "cl6670";
-    
-    @Override
-    protected void setNodeConf(){
-        dataConf.put("transactionon", true);
-        dataConf.put("logfilenum", 5);
-        stdalnConf.put("transactionon", true);
-        stdalnConf.put("logfilenum", 5);
-    }
     
     @BeforeClass
     public void setUp() {
