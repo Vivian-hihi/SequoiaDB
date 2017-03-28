@@ -11,5 +11,10 @@
    <parameter name="RSRVNODEDIR"    value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR"        value="/tmp/javatest" />
 
+   <test name="lzwtransaction">
+      <classes>
+          <class name="com.sequoiadb.lzwtransaction.TestSeqDB6670"/>
+      </classes>
+   </test>
 </suite>
    
