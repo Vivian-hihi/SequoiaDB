@@ -367,7 +367,9 @@ namespace engine
    {
       sdbSetErrorObj( pErrorObj, objSize ) ;
       sdbSetErrno( flag, FALSE ) ;
-      if ( 0 != ossStrcmp( pDescription, pDetail ) )
+
+      if ( pDescription && pDetail &&
+           0 != ossStrcmp( pDescription, pDetail ) )
       {
          sdbSetErrMsgWithDetail( pDescription, pDetail, FALSE ) ;
       }
