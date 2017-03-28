@@ -74,6 +74,9 @@
                </path-elements>
             </countstr>
          </then>
+         <else>
+            <var name="fail_end_num" value="0"/>
+         </else>
       </if>
 
       <if>
