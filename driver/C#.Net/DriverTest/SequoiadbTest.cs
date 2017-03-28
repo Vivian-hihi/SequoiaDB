@@ -947,6 +947,18 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void Sync_DB_Test()
+        {
+            BsonDocument options = new BsonDocument();
+            options.Add("Deep", 1);
+            options.Add("Block", true);
+            coll.Insert(new BsonDocument("a", 1));
+            sdb.Sync(options);
+            coll.Insert(new BsonDocument("b", 1));
+            sdb.Sync();
+        }
+
+        [TestMethod()]
         [Ignore]
         public void KeepAlive_Test()
         {
@@ -960,6 +972,8 @@ namespace DriverTest
             node = rg.GetNode("ubuntu-hs03", 11840);
             node.Start();
         }
+
+
 
     }
 }

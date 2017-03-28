@@ -1644,6 +1644,53 @@ namespace SequoiaDB
             return dc;
         }
 
+        /** \fn void Sync(BsonDocument options)
+         *  \brief Sync the current database.
+         *  \param [in] options The control options:
+         *
+         *      Deep: (INT32) Flush with deep mode or not. 1 in default.
+         *              0 for non-deep mode,1 for deep mode,-1 means use the configuration with server
+         *      Block: (Bool) Flush with block mode or not. false in default.
+         *      CollectionSpace: (String) Specify the collectionspace to sync.
+         *                      If not set, will sync all the collectionspaces and logs,
+         *                      otherwise, will only sync the collectionspace specified.
+         *      Some of other options are as below:(only take effect in coordinate nodes, 
+         *                      please visit the official website to search "sync" 
+         *                      or "Location Elements" for more detail.)
+         *      GroupID:INT32,
+         *      GroupName:String,
+         *      NodeID:INT32,
+         *      HostName:String,
+         *      svcname:String,
+         *      ...
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void Sync(BsonDocument options)
+        {
+            // build cmd
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_VALUE_NAME_SYNC_DB;
+            // run command
+            SDBMessage rtn = AdminCommand(command, options, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn void Sync()
+         *  \brief Sync the current database.
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void Sync()
+        {
+            Sync(new BsonDocument());
+        }
+
         private SDBMessage CreateCS(string csName, BsonDocument options)
         {
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " " + SequoiadbConstants.COLSPACE;
