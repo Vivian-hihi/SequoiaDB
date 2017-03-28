@@ -191,6 +191,7 @@ public class GroupMgr {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
                 return testCatalogSync(printAndThrowAllException);
             }
+				return false;
         }
         return ret;
     }
@@ -345,6 +346,7 @@ public class GroupMgr {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
                 return testCatalogSync(printAndThrowAllException);
             }
+				return false;
         }
         return ret;
     }
@@ -427,6 +429,7 @@ public class GroupMgr {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
                 return testCatalogSync(printAndThrowAllException);
             }
+				return false;
         }
         return ret;
     }
