@@ -1167,6 +1167,34 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(sdb_sync)
+{
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_option       = NULL ;
+   sdb *client                 = NULL ;
+   const bson::BSONObj *option = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
+
+   rc = client->syncDB( *option ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( option ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 __METHOD_IMP(sdb_get_datacenter)
 {
    INT32 rc               = 0 ;
@@ -3717,6 +3745,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_is_valid",                    sdb_is_valid,                    METH_VARARGS},
    {"sdb_get_version",                 sdb_get_version,                 METH_VARARGS},
    {"sdb_init_client",                 sdb_init_client,                 METH_VARARGS},
+   {"sdb_sync",                        sdb_sync,                        METH_VARARGS},
    {"sdb_get_datacenter",              sdb_get_datacenter,              METH_VARARGS},
    
    /** cs */

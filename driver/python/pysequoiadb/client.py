@@ -1445,6 +1445,44 @@ class client(object):
 
       return valid
 
+   def sync(self, options = None):
+      """Sync database which are specified.
+
+      Parameters:
+         Name         Type     Info:
+         options      dict     The control options:
+                               Deep:
+                                   (INT32) Flush with deep mode or not. 1 in default.
+                                   0 for non-deep mode,1 for deep mode,-1 means use the configuration with server
+                               Block:
+                                   (Bool) Flush with block mode or not. false in default.
+                               CollectionSpace:
+                                   (String) Specify the collectionspace to sync.
+                                   If not set, will sync all the collectionspaces and logs,
+                                   otherwise, will only sync the collectionspace specified.
+                               Others:(Only take effect in coordinate nodes)
+                                   GroupID:INT32,
+                                   GroupName:String,
+                                   NodeID:INT32,
+                                   HostName:String,
+                                   svcname:String
+                                   ...
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      bson_options = None
+      if options is not None:
+         if not isinstance(options, dict):
+            raise SDBTypeError("options must be an instance of dict")
+         bson_options = bson.BSON.encode(options)
+
+      try:
+         rc = sdb.sdb_sync(self._client, bson_options)
+         pysequoiadb._raise_if_error("Failed to sync", rc)
+      except SDBBaseError:
+         raise
+
    def get_datacenter(self):
       """get data center
 

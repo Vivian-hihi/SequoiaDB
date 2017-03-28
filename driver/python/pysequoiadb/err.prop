@@ -306,9 +306,10 @@
 -305 = Buffer for compression is too small
 -306 = Buffer for decompression is too small
 -307 = Up to the limit
--308 = sdbDataSource not init or disabled
--309 = sdbDataSource has no valid coord
+-308 = data source is not enabled yet
+-309 = No reachable coord notes
 -310 = the record which exclusive ruleID is not exist
 -311 = Task name conflict
 -312 = The task is not existed
 -313 = Replica log is not archived
+-314 = Data source has not been initialized
