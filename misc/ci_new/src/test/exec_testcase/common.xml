@@ -90,7 +90,7 @@
             <copy file="${basedir}/src/test/exec_testcase/report_fail_temple.xml" tofile="@{rptfullname}"/>
             <replace file="@{rptfullname}" token="ERROR_MESSAGE" value="${output}"/>
             <replace file="@{rptfullname}" token="TESTSUIT_NAME" value="detect_env"/>
-            <replace file="@{rptfullname}" token="TESTCASE_TYPE" value="${casetype}"/>
+            <replace file="@{rptfullname}" token="TESTCASE_TYPE" value="@{casetype}"/>
             <propertyregex property="casename" input="@{casename}" defaultValue="@{casename}"
                            regexp="\." replace="_" override="true"/> 
             <replace file="@{rptfullname}" token="TESTCASE_NAME" value="before_${casename}"/>
