@@ -445,12 +445,15 @@ namespace engine
          {
             if ( e.code().value() == boost::system::errc::interrupted )
             {
-               PD_LOG( PDDEBUG, "Send message interrupted" ) ;
+               PD_LOG( PDDEBUG, "Send message interrupted: %d",
+                       e.code().value() ) ;
                continue ;
             }
-            if ( e.code().value() == boost::system::errc::timed_out )
+            if ( e.code().value() == boost::system::errc::timed_out ||
+                 e.code().value() == boost::system::errc::resource_unavailable_try_again )
             {
-               PD_LOG( PDDEBUG, "Send message timeout" ) ;
+               PD_LOG( PDDEBUG, "Send message timeout: %d",
+                       e.code().value() ) ;
                continue ;
             }
 
@@ -499,15 +502,24 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND__RDCALLBK, "_netEventHandler::_readCallback" )
-   void _netEventHandler::_readCallback( const boost::system::error_code &
-                                         error )
+   void _netEventHandler::_readCallback( const boost::system::error_code &error )
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND__RDCALLBK ) ;
 
       if ( error )
       {
-         if ( error.value() == boost::system::errc::operation_canceled ||
-              error.value() == boost::system::errc::no_such_file_or_directory )
+         if ( error.value() == boost::system::errc::timed_out ||
+              error.value() == boost::system::errc::resource_unavailable_try_again )
+         {
+            PD_LOG( PDDEBUG, "Connect timeout with node[%d,%d,%d]: %s,%d",
+                    _id.columns.groupID, _id.columns.nodeID,
+                    _id.columns.serviceID, error.message().c_str(),
+                    error.value() ) ;
+            asyncRead() ;
+            goto done ;
+         }
+         else if ( error.value() == boost::system::errc::operation_canceled ||
+                   error.value() == boost::system::errc::no_such_file_or_directory )
          {
             PD_LOG ( PDINFO, "connection aborted with node[%d,%d,%d]: %s, %d",
                      _id.columns.groupID, _id.columns.nodeID,
