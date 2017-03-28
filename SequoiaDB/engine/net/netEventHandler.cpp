@@ -356,7 +356,7 @@ namespace engine
       {
          if ( !_isConnected )
          {
-            PD_LOG( PDWARNING, "Connection[routeID: %u,%u,%u; Handel: %u] "
+            PD_LOG( PDWARNING, "Connection[routeID: %u,%u,%u; Handle: %u] "
                     "already closed", _id.columns.groupID, _id.columns.nodeID,
                     _id.columns.serviceID, _handle ) ;
             goto error ;
@@ -398,7 +398,7 @@ namespace engine
 
          if ( !_isConnected )
          {
-            PD_LOG( PDWARNING, "Connection[routeID: %u,%u,%u; Handel: %u] "
+            PD_LOG( PDWARNING, "Connection[routeID: %u,%u,%u; Handle: %u] "
                     "already closed", _id.columns.groupID, _id.columns.nodeID,
                     _id.columns.serviceID, _handle ) ;
             goto error ;
@@ -511,7 +511,8 @@ namespace engine
          if ( error.value() == boost::system::errc::timed_out ||
               error.value() == boost::system::errc::resource_unavailable_try_again )
          {
-            PD_LOG( PDDEBUG, "Connect timeout with node[%d,%d,%d]: %s,%d",
+            PD_LOG( PDDEBUG, "Connection[Handle:%d] timeout with "
+                    "node[%d,%d,%d]: %s,%d", _handle,
                     _id.columns.groupID, _id.columns.nodeID,
                     _id.columns.serviceID, error.message().c_str(),
                     error.value() ) ;
@@ -521,14 +522,16 @@ namespace engine
          else if ( error.value() == boost::system::errc::operation_canceled ||
                    error.value() == boost::system::errc::no_such_file_or_directory )
          {
-            PD_LOG ( PDINFO, "connection aborted with node[%d,%d,%d]: %s, %d",
+            PD_LOG ( PDINFO, "Connection[Handle:%d] aborted with "
+                     "node[%d,%d,%d]: %s, %d", _handle,
                      _id.columns.groupID, _id.columns.nodeID,
                      _id.columns.serviceID, error.message().c_str(),
                      error.value() ) ;
          }
          else
          {
-            PD_LOG ( PDERROR, "Error received with node[%d,%d,%d]: %s, %d",
+            PD_LOG ( PDERROR, "Connection[Handle:%d] with node[%d,%d,%d] "
+                     "occur error: %s, %d", _handle,
                      _id.columns.groupID, _id.columns.nodeID,
                      _id.columns.serviceID, error.message().c_str(),
                      error.value() ) ;
@@ -582,12 +585,13 @@ namespace engine
 
             PD_LOG( PDDEBUG, "msg header: [len:%d], [opCode: [%d]%d], "
                              "[TID:%d], [groupID:%d], [nodeID:%d], "
-                             "[ADDR:%s], [PORT:%d]",
+                             "[ADDR:%s], [PORT:%d], [Handle:%u]",
                     _header.messageLength, IS_REPLY_TYPE(_header.opCode)?1:0,
                     GET_REQUEST_TYPE(_header.opCode),
                     _header.TID, _header.routeID.columns.groupID,
                     _header.routeID.columns.nodeID,
-                    remoteAddr().c_str(), remotePort() ) ;
+                    remoteAddr().c_str(), remotePort(),
+                    _handle ) ;
             /// add to route table
             if ( MSG_INVALID_ROUTEID == _id.value )
             {
