@@ -14,7 +14,10 @@ import java.util.Map.Entry;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.util.JSON;
 
+import com.sequoiadb.base.CollectionSpace;
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -182,7 +185,87 @@ public class GroupMgr {
                 ret = false;
             }
         }
+        if (ret == true) {
+            // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+            if (createTestCollection(printAndThrowAllException)) {
+                // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
+                return testCatalogSync(printAndThrowAllException);
+            }
+        }
         return ret;
+    }
+
+    private boolean testCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
+        GroupWrapper catagroup = GroupMgr.getInstance().getGroupByName("SYSCatalogGroup");
+        List<NodeWrapper> nodes = catagroup.getNodes();
+        boolean ret = true;
+        for (NodeWrapper node : nodes) {
+            Sequoiadb db = node.connect();
+            try {
+                DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
+                long count = cl.getCount(
+                        "{Name:'" + SdbTestBase.csName + ".clForTestBusiness_reliability'}");
+                if (count == 0) {
+                    ret = false;
+                }
+            }
+            catch (BaseException e) {
+                if (printAndThrowAllException) {
+                    System.out.println(
+                            "Check business:failed to query test collection(clForTestBusiness_reliability) on SYSCatalogGroup:"
+                                    + e.getErrorCode());
+                    throw new ReliabilityException(e);
+                }
+                ret = false;
+            }
+            finally {
+                db.disconnect();
+            }
+        }
+        Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        try {
+            db.getCollectionSpace(SdbTestBase.csName)
+                    .dropCollection("clForTestBusiness_reliability");
+        }
+        catch (BaseException e) {
+            System.out.println("Check business:failed to drop test collection:" + e.getErrorCode());
+            throw new ReliabilityException(e);
+        }
+        finally {
+            db.disconnect();
+        }
+        return ret;
+    }
+
+    private boolean createTestCollection(boolean printAndThrowAllException)
+            throws ReliabilityException {
+        Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
+        List<String> groupNames = GroupMgr.getInstance().getAllDataGroupName();
+        int index = 0;
+        try {
+            for (index = 0; index < groupNames.size(); index++) {
+                cs.createCollection("clForTestBusiness_reliability", (BSONObject) JSON
+                        .parse("{ReplSize:3,Group:'" + groupNames.get(index) + "'}"));
+                if (index != groupNames.size() - 1) {
+                    cs.dropCollection("clForTestBusiness_reliability");
+                }
+            }
+
+        }
+        catch (BaseException e) {
+            if (printAndThrowAllException) {
+                System.out.println(
+                        "Check business:failed to create test collection(clForTestBusiness_reliability) on "
+                                + groupNames.get(index) + ":" + e.getErrorCode());
+                throw new ReliabilityException(e);
+            }
+            return false;
+        }
+        finally {
+            db.disconnect();
+        }
+        return true;
     }
 
     /**
@@ -253,6 +336,14 @@ public class GroupMgr {
                     System.out.println(result.toString());
                 }
                 ret = false;
+            }
+        }
+
+        if (ret == true) {
+            // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+            if (createTestCollection(printAndThrowAllException)) {
+                // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
+                return testCatalogSync(printAndThrowAllException);
             }
         }
         return ret;
@@ -329,6 +420,14 @@ public class GroupMgr {
                 ret = false;
             }
         }
+
+        if (ret == true) {
+            // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+            if (createTestCollection(printAndThrowAllException)) {
+                // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
+                return testCatalogSync(printAndThrowAllException);
+            }
+        }
         return ret;
     }
 
@@ -373,7 +472,6 @@ public class GroupMgr {
                 }
             }
             catch (ReliabilityException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
                 return false;
             }

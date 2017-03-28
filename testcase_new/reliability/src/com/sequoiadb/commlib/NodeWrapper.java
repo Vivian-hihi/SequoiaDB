@@ -191,4 +191,9 @@ public class NodeWrapper {
                     "stdout:" + remote.getStdout() + "\nstderr:" + remote.getStderr());
         }
     }
+
+    public Sequoiadb connect() {
+        Sequoiadb db = new Sequoiadb(hostName() + ":" + svcName(), "", "");
+        return db;
+    }
 }
