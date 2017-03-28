@@ -170,9 +170,12 @@
    <target name="compile_hive_connector">
       <var name="src_dir" value="${srccode_dir}/driver/hadoop/hive" />
       
+      <delete dir="${src_dir}/build" failonerror="false"/>
+      <delete dir="${src_dir}/build_cdh" failonerror="false"/>
+      <delete dir="${src_dir}/build_open_source" failonerror="false"/>
+      
       <property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
-      <property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
-            
+      <property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />     
       <ant antfile="${src_dir}/build.xml">
          <property name="java.driver.jar" value="${srccode_dir}/driver/java/${java_driver_jar}"/>
          <property name="javac.base.dir" value="${srccode_dir}"/>
@@ -182,7 +185,6 @@
       </ant>
       
       <!--copy to build directory-->
-      <delete dir="${src_dir}/build" failonerror="false"/>
       <mkdir dir="${src_dir}/build"/>
       <copy file="${src_dir}/${cdh.hive_connector.filename}"         todir="${src_dir}/build" />
       <copy file="${src_dir}/${open.source.hive_connector.filename}" todir="${src_dir}/build" />
