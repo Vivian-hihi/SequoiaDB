@@ -5451,7 +5451,6 @@ error :
    INT32 _sdbLobImpl::seek ( SINT64 size, SDB_LOB_SEEK whence )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
       
       // check
       if ( !_connection && !_isOpen )
@@ -8026,8 +8025,6 @@ error :
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      BOOLEAN result ;
-      SINT64 contextID = 0 ;
       std::set<ossValuePtr>::iterator it ;
       std::set<ossValuePtr> cursors ;
       std::set<ossValuePtr> lobs ;
@@ -8352,6 +8349,23 @@ error :
       {
          delete pDC ;
       }
+      goto done ;
+   }
+
+   INT32 _sdbImpl::syncDB( const bson::BSONObj &options )
+   {
+      INT32 rc                  = SDB_OK ;
+      const CHAR *pCommand      = CMD_ADMIN_PREFIX CMD_NAME_SYNC_DB ;
+
+      // run command
+      rc = _runCommand( pCommand, &options ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done :
+      return rc ;
+   error :
       goto done ;
    }
 

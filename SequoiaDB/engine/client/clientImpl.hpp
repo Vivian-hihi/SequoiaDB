@@ -1420,6 +1420,8 @@ namespace sdbclient
       // get last alive time
       UINT64 getLastAliveTime() const { return _lastAliveTime.time; }
 
+      INT32 syncDB( const bson::BSONObj &options = _sdbStaticObject );
+
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;
 
