@@ -2527,22 +2527,22 @@ SDB_EXPORT INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info ) ;
     \brief sync database which are specified
     \param [in] cHandle The database connection handle
     \param [in] options The control options:
-                Deep:
-                  (INT32) Flush with deep mode or not. 1 in default.
-                  0 for non-deep mode,1 for deep mode,-1 means use the configuration with server
-                Block:
-                  (Bool) Flush with block mode or not. false in default.
-                CollectionSpace:
-                  (String) Specify the collectionspace to sync.
-                  If not set, will sync all the collectionspaces and logs,
-                  otherwise, will only sync the collectionspace specified.
-                Others:(Only take effect in coordinate nodes)
-                  GroupID:INT32,
-                  GroupName:String,
-                  NodeID:INT32,
-                  HostName:String,
-                  svcname:String
-                  ...
+    
+        Deep: (INT32) Flush with deep mode or not. 1 in default.
+              0 for non-deep mode,1 for deep mode,-1 means use the configuration with server
+        Block: (Bool) Flush with block mode or not. false in default.
+        CollectionSpace: (String) Specify the collectionspace to sync.
+                         If not set, will sync all the collectionspaces and logs,
+                         otherwise, will only sync the collectionspace specified.
+        Some of other options are as below:(only take effect in coordinate nodes, 
+                       please visit the official website to search "sync" or 
+                       "Location Elements" for more detail.)
+        GroupID:INT32,
+        GroupName:String,
+        NodeID:INT32,
+        HostName:String,
+        svcname:String,
+        ...
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
