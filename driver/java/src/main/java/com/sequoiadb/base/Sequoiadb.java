@@ -743,7 +743,9 @@ public class Sequoiadb implements Closeable {
      *                otherwise, will only sync the collection space specified.
      *                </li>
      *                <li>
-     *                Others:(Only take effect in coordinate nodes)
+     *                Some of other options are as below:(only take effect in coordinate nodes,
+     *                please visit the official website to search "sync" or
+     *                "Location Elements" for more detail.)
      *                GroupID:int,
      *                GroupName:String,
      *                NodeID:int,
