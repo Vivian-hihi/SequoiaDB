@@ -114,18 +114,28 @@
          <replace file="@{report}" token='TESTCASE_NAME' value='${casename}'/>
          <replace file="@{report}" token='0000' value='${total_time}'/>
          
+         <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+         <var name="cluster_host_info" value=""/>
+         <for list="${testhost_list}" param="testhost">
+            <sequential>
+               <hostinfo prefix="a" host="@{testhost}"/>
+               <var name="cluster_host_info" value="${cluster_host_info}  @{testhost}/${a.ADDR4}"/>
+            </sequential>
+         </for>
+         
          <if>
             <equals arg1="${rc}" arg2="0" />            
             <else>
                <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}.tar.gz"/>
                <var name="download_url" value="http://192.168.30.185:8081/${backup_reltdir}" />
                <hostinfo prefix="host" />
-               <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
+               <var name="ms0" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
+               <var name="ms1" value="CLUSTER HOST: ${cluster_host_info}&#10;&#10;"/>
                <var name="ms2" value="EXECUTE CMD:&#10;ant ${cmd1} ${cmd2}&#10;"/>
                <var name="ms3" value="RETURN CODE: ${rc}&#10;"/>
                <var name="ms4" value="OUTPUT MESSAGE:&#10;${screen_output}&#10;"/>
-               <var name="ms5" value="Download the test log :&#10;${download_url}&#10;"/>
-               <replace file="@{report}" token="ERROR_MESSAGE" value="${ms1}${ms2}${ms3}${ms4}${ms5}"/>
+               <var name="ms5" value="DOWNLOAD DIAGLOG :&#10;${download_url}&#10;"/>
+               <replace file="@{report}" token="ERROR_MESSAGE" value="${ms0}${ms1}${ms2}${ms3}${ms4}${ms5}"/>
             </else>
          </if>
          

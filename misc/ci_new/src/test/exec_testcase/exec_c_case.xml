@@ -162,14 +162,24 @@
          </tstamp>
          <echo message="begin at ${begin_time}, end at ${end_time}" />
          
+         <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+         <var name="cluster_host_info" value=""/>
+         <for list="${testhost_list}" param="testhost">
+            <sequential>
+               <hostinfo prefix="a" host="@{testhost}"/>
+               <var name="cluster_host_info" value="${cluster_host_info}  @{testhost}/${a.ADDR4}"/>
+            </sequential>
+         </for>
+         
          <!--modify report-->
          <hostinfo prefix="host" />
          <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}.tar.gz"/>
-         <var name="download_url" value="Download the test log :&#10;http://192.168.30.185:8081/${backup_reltdir}&#10;" />
-         <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>      
+         <var name="download_url" value="DOWNLOAD DIAGLOG :&#10;http://192.168.30.185:8081/${backup_reltdir}&#10;" />
+         <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>  
+         <var name="ms2" value="CLUSTER HOST: ${cluster_host_info}&#10;&#10;"/>         
          <replaceregexp file="${report_fullname}" 
                         match='&lt;\!\[CDATA\[' 
-                        replace='&lt;\!\[CDATA\[${ms1}' 
+                        replace='&lt;\!\[CDATA\[${ms1}${ms2}' 
                         flags="g" 
                         byline="true" 
                         encoding="utf-8"/>
