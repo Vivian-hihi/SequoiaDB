@@ -569,9 +569,10 @@ namespace engine
          else if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength ||
                    SDB_MAX_MSG_LENGTH < (UINT32)_header.messageLength )
          {
-            PD_LOG( PDERROR, "Connection[Handle:%d] recieved invalid "
+            PD_LOG( PDERROR, "Connection[Handle:%d, Node:%s] recieved invalid "
                     "message[%s] from %s:%d", _handle,
-                    msg2String( &_header ).c_str(),
+                    routeID2String( _id ).c_str(),
+                    msg2String( &_header, MSG_MASK_ALL, 0 ).c_str(),
                     remoteAddr().c_str(), remotePort() ) ;
             goto error_close ;
          }
@@ -587,8 +588,10 @@ namespace engine
                goto done ;
             }
 
-            PD_LOG( PDDEBUG, "Connection[Handle:%d] recieved message[%s] "
-                    "from %s:%d", _handle, msg2String( &_header ).c_str(),
+            PD_LOG( PDDEBUG, "Connection[Handle:%d, Node:%s] recieved "
+                    "message[%s] from %s:%d", _handle,
+                    routeID2String( _id ).c_str(),
+                    msg2String( &_header, MSG_MASK_ALL, 0 ).c_str(),
                     remoteAddr().c_str(), remotePort() ) ;
 
             /// add to route table
