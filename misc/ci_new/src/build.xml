@@ -34,6 +34,8 @@
       <ant antfile="normal_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
          <property name="plat_form" value="${plat_form}"/>
+         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
       </ant>
             
        <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
@@ -81,6 +83,8 @@
       <ant antfile="largedata_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
          <property name="plat_form" value="${plat_form}"/>
+         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
       </ant>
       
       <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
@@ -127,6 +131,8 @@
       <ant antfile="sync_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
          <property name="plat_form" value="${plat_form}"/>
+         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
       </ant>
       
       <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
@@ -193,6 +199,8 @@
          <property name="CONCURRENT_NUM" value="${CONCURRENT_NUM}"/>
          <property name="RUN_TIME" value="${RUN_TIME}"/>
          <property name="testhost_list" value="${testhost_list}"/>
+         <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
       </ant>
       
       <antcallback target="status_file.get_build_status" return="build_status"/>
@@ -236,6 +244,7 @@
          <property name="TEST_TYPE" value="${TEST_TYPE}"/>
          <property name="plat_form" value="${plat_form}"/>
          <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+         <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
       </ant>
 
       <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
