@@ -240,7 +240,6 @@ static UINT32 _sdbRand ()
  *** note: internal function's parmeters don't check     ***
  ***       because interface function already check it   ***
  ***********************************************************/
-//#define SDB_CLIENT_DFT_NETWORK_TIMEOUT 1000000
 #define SDB_CLIENT_DFT_NETWORK_TIMEOUT -1
 static INT32 _setRGName ( sdbReplicaGroupHandle handle,
                           const CHAR *pGroupName )
