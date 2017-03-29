@@ -347,6 +347,8 @@
                      <property name="TESTCASE_TYPE" value="${testcase_type}"/>
                      <property name="testcase_dir" value="@{casesubtype}"/>
                      <property name="report_dir" value="${report_basedir}/${testcase_type}" />
+                     <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                     <property name="BUILD_NUMBER" value="${BUILD_NUMBER}"/>
                   </ant>
                </sequential>
             </for>           
