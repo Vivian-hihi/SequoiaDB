@@ -193,11 +193,10 @@
       <!--change owner-->
       <echo>*****************begin to change owner to sdbadmin***********************</echo>
       <mkdir dir="${INSTALL_PG_DIR}/pg_data"/>
-      <chown owner="sdbadmin:sdbadmin_group" verbose="true">
-         <fileset dir="${INSTALL_PG_DIR}"/>
-         <dirset dir="${INSTALL_PG_DIR}"/>
-      </chown>
-      
+      <exec executable="chown" failonerror="true">
+         <arg line='-hR sdbadmin:sdbadmin_group ${INSTALL_PG_DIR}' />
+      </exec>
+            
       <!--init pg_data-->
       <echo>*****************begin to init db***********************</echo>
       <exec executable="su" spawn="false">
@@ -227,7 +226,7 @@
       <!--start pg-->
       <echo>*****************begin to start pg***********************</echo>
       <exec executable="su" spawn="false">
-         <arg line=" - sdbadmin -c '${INSTALL_PG_DIR}/bin/postgres -D ${INSTALL_PG_DIR}/pg_data/ >> logfile 2>&amp;1 &amp;'" />
+         <arg line=" - sdbadmin -c '${INSTALL_PG_DIR}/bin/postgres -D ${INSTALL_PG_DIR}/pg_data/ >> ${INSTALL_PG_DIR}/logfile 2>&amp;1 &amp;'" />
       </exec>
    </target>
    
