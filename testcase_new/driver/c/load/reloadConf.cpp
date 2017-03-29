@@ -77,22 +77,13 @@ INT32 isMasterNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node, bool* res )
 	return rc ;
 }
 
-INT32 isLocalNode( sdbNodeHandle& node, bool* res )
+bool isLocalHost( const char* host )
 {
-	INT32 rc = SDB_OK ;
-
-    const char *host, *svc, *nodename ;
-    INT32 nodeId ;
-    rc = sdbGetNodeAddr( node, &host, &svc, &nodename, &nodeId ) ;
-    CHECK_RC_CODE( rc, "fail to get slave node addr in function isLocalNode" ) ;
-
 	getHost() ;
-    if( strcmp(host, HOSTNAME) != 0 && strcmp(host, HOST) != 0 )
-    	*res = false ;
+    if( strcmp(host, "localhost") != 0 && strcmp(host, HOST) != 0 )
+    	return false ;
 	else
-		*res = true ;
-
-	return rc ;
+		return true ;
 }
 
 INT32 restartNode( sdbNodeHandle& node )
@@ -122,10 +113,10 @@ INT32 printNode( sdbNodeHandle& node )
 }
 
 // get a slave data node which is on the same machine with coord
-INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node, bool* found )
+INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
 {
 	INT32 rc = SDB_OK ;
-	bool isLocal = false ;
+	bool found = false ;
 	
 	// list rg
 	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
@@ -135,45 +126,67 @@ INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node, bool* found 
 	bson_init( &obj ) ;
 	while( sdbNext( cursor, &obj ) == SDB_OK )
 	{
-		bson_iterator i ;
-		bson_find( &i, &obj, "GroupName" ) ;
-		const char* rgname = bson_iterator_string( &i ) ;
+		bson_iterator it ;
+		bson_find( &it, &obj, "GroupName" ) ;
+		const char* rgname = bson_iterator_string( &it ) ;
 		if( strcmp(rgname, "SYSCoord") == 0 || strcmp(rgname, "SYSCatalogGroup") == 0 )
 		{
 			bson_destroy( &obj ) ;
 			bson_init( &obj ) ;
 			continue ;
 		}
-		rc = sdbGetReplicaGroup( db, rgname, &rg ) ;
-		CHECK_RC_CODE( rc, "fail to get rg" ) ;
+		bson_find( &it, &obj, "Group" ) ;
+		bson_print( &obj ) ;
 
-		// check slave node is local or not
-		rc = sdbGetNodeSlave( rg, &node ) ;
-		CHECK_RC_CODE( rc, "fail to get slave node" ) ;
-        rc = isLocalNode( node, &isLocal ) ;
-        CHECK_RC_CODE( rc, "fail to check slave node is local or not" ) ;
-        if( isLocal )
-        {
-            bson_destroy( &obj ) ;
-            bson_init( &obj ) ;
-			*found = true ;
-            break ;
-        }
+		bson_iterator sub_it ;
+		bson_iterator_subiterator( &it, &sub_it ) ;
+		while( bson_iterator_next( &sub_it ) )
+		{
+			bson sub_obj ;
+			bson_init( &sub_obj ) ;
+			bson_iterator_subobject( &sub_it, &sub_obj ) ;
+			bson_print( &sub_obj ) ;
+   
+			bson_iterator sub_sub_it ;
+			bson_find( &sub_sub_it, &sub_obj, "HostName" ) ;
+			const char* host = bson_iterator_string( &sub_sub_it ) ;
+			if( !isLocalHost( host ) )
+			{
+				bson_destroy( &sub_obj ) ;
+				continue ;
+			}
 
-		// check master node is local or not
-		rc = sdbGetNodeMaster( rg, &node ) ;
-        CHECK_RC_CODE( rc, "fail to get master node" ) ;
-        rc = isLocalNode( node, &isLocal ) ;
-        CHECK_RC_CODE( rc, "fail to check master node is local or not" ) ;
-        if( isLocal )
-        {
-            bson_destroy( &obj ) ;
-            bson_init( &obj ) ;
-			*found = true ;
-			rc = restartNode( node ) ;
-			CHECK_RC_CODE( rc, "fail to restart master node" ) ;
-            break ;
-        }
+			bson_find( &sub_sub_it, &sub_obj, "Service" ) ;
+			bson_iterator tmp ;
+			bson_iterator_subiterator( &sub_sub_it, &tmp ) ;
+			bson_iterator_next( &tmp ) ;
+			bson b ;
+			bson_init( &b ) ;
+			bson_iterator_subobject( &tmp, &b ) ;
+			bson_find( &tmp, &b, "Name" ) ;
+			bson_print( &b ) ;
+			const char* svc = bson_iterator_string( &tmp ) ;
+
+			rc = sdbGetReplicaGroup( db, rgname, &rg ) ;
+        	CHECK_RC_CODE( rc, "fail to get rg" ) ;			
+			rc = sdbGetNodeByHost( rg, host, svc, &node ) ;	
+			CHECK_RC_CODE( rc, "fail to get node" ) ;		
+	
+			bson_destroy( &b ) ;
+			bson_destroy( &sub_obj ) ;
+			found = true ;
+			break ;
+		}
+		if( found ) break ;
+	}
+	
+	bool isMaster = false ;
+	rc = isMasterNode( rg, node, &isMaster ) ;
+	CHECK_RC_CODE( rc, "fail to check master node in function getSlaveNode" ) ;
+	if( isMaster )
+	{		
+	    rc = restartNode( node ) ;
+	    CHECK_RC_CODE( rc, "fail to restart master node" ) ;
 	}
 
 	rc = printNode( node ) ;
@@ -243,14 +256,8 @@ TEST( reloadConf, weight )
 	// get slave node
 	sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
 	sdbNodeHandle node = SDB_INVALID_HANDLE ;
-	bool found = false ;
-	rc = getSlaveNode( rg, node, &found ) ;
+	rc = getSlaveNode( rg, node ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
-	if( found == false )
-	{
-		printf( "Slave node not found\n" ) ;
-		return ;
-	}
 	
 	// change slave node weight to 20
 	rc = changeNodeConf( node, "weight", 20 ) ;
