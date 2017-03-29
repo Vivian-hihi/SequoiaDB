@@ -43,6 +43,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
+#include "msgMessageFormat.hpp"
 #include <boost/bind.hpp>
 #if defined (_WINDOWS)
 #include <mstcpip.h>
