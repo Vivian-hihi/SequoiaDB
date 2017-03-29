@@ -41,6 +41,7 @@
 #include "msgDef.h"
 #include "pmdEnv.hpp"
 #include "pd.hpp"
+#include "msgMessageFormat.hpp"
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
 #include <boost/bind.hpp>
@@ -260,10 +261,10 @@ namespace engine
               spanTime >= timeout )
          {
             routeid = eh->id() ;
-            PD_LOG( PDERROR, "Connection[Handle: %d, GroupID: %d, NodeID: %d, "
-                    "Service: %d] is broken[BrokenTime: %lld(ms)]",
-                    handle, routeid.columns.groupID, routeid.columns.nodeID,
-                    routeid.columns.serviceID, spanTime ) ;
+            PD_LOG( PDERROR, "Connection[Handle:%d, Node:%s] is "
+                    "broken[BrokenTime: %lld(ms)]",
+                    handle, routeID2String( routeid ).c_str(),
+                    spanTime ) ;
             eh->close() ;
          }
       }
@@ -377,7 +378,7 @@ namespace engine
       }
       catch ( boost::system::system_error &e )
       {
-         PD_LOG ( PDERROR, "Failed to listen  %s: %s: %s", hostName,
+         PD_LOG ( PDERROR, "Failed to listen on %s:%s, error:%s", hostName,
                   serviceName, e.what() ) ;
          rc = SDB_NET_CANNOT_LISTEN ;
          goto error ;
@@ -930,8 +931,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_REMTIMER );
       _mtx.get() ;
-      map<UINT32, NET_TH>::iterator itr=
-                                 _timers.find( id ) ;
+      map<UINT32, NET_TH>::iterator itr = _timers.find( id ) ;
       if ( _timers.end() == itr )
       {
          rc = SDB_NET_TIMER_ID_NOT_FOUND ;
@@ -978,10 +978,9 @@ namespace engine
          MsgOpReply *pReply = ( MsgOpReply* )pMsg ;
          if ( SDB_OK != pReply->flags )
          {
-            PD_LOG( PDERROR, "Connection[Handle:%d, GroupID:%d, NodeID:%d, "
-                    "Service:%d] is broken because of node is abnormal[%d]",
-                    eh->handle(), eh->id().columns.groupID,
-                    eh->id().columns.nodeID, eh->id().columns.serviceID,
+            PD_LOG( PDERROR, "Connection[Handle:%d, Node:%s] is broken "
+                    "because of node is abnormal[%d]",
+                    eh->handle(), routeID2String( eh->id() ).c_str(),
                     pReply->flags ) ;
             eh->close() ;
          }
@@ -1036,7 +1035,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__NETFRAME__APTCALLBCK );
       if ( error )
       {
-         PD_LOG ( PDERROR, "Error received when handling accept: %s, %d",
+         PD_LOG ( PDERROR, "Accept connection occur exception: %s, %d",
                   error.message().c_str(), error.value() ) ;
 
          if ( boost::system::errc::too_many_files_open == error.value() ||
