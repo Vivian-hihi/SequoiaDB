@@ -472,7 +472,9 @@ public class Sequoiadb implements Closeable {
      * @throws com.sequoiadb.exception.BaseException
      * @fn void disconnect()
      * @brief Disconnect from the server.
+     * @deprecated Use close() instead.
      */
+    @Deprecated
     public void disconnect() throws BaseException {
         close();
     }
