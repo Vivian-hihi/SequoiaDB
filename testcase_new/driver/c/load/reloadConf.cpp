@@ -95,6 +95,18 @@ INT32 isLocalNode( sdbNodeHandle& node, bool* res )
 	return rc ;
 }
 
+INT32 restartNode( sdbNodeHandle& node )
+{
+	INT32 rc = SDB_OK ;
+	
+	rc = sdbStopNode( node ) ;
+    CHECK_RC_CODE( rc, "fail to stop node" ) ;
+    rc = sdbStartNode( node ) ;
+    CHECK_RC_CODE( rc, "fail to start node" ) ;	
+
+	return rc ;
+}
+
 INT32 printNode( sdbNodeHandle& node )
 {
 	INT32 rc = SDB_OK ;
@@ -110,9 +122,10 @@ INT32 printNode( sdbNodeHandle& node )
 }
 
 // get a slave data node which is on the same machine with coord
-INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
+INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node, bool* found )
 {
 	INT32 rc = SDB_OK ;
+	bool isLocal = false ;
 	
 	// list rg
 	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
@@ -134,33 +147,37 @@ INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
 		rc = sdbGetReplicaGroup( db, rgname, &rg ) ;
 		CHECK_RC_CODE( rc, "fail to get rg" ) ;
 
+		// check slave node is local or not
 		rc = sdbGetNodeSlave( rg, &node ) ;
 		CHECK_RC_CODE( rc, "fail to get slave node" ) ;
+        rc = isLocalNode( node, &isLocal ) ;
+        CHECK_RC_CODE( rc, "fail to check slave node is local or not" ) ;
+        if( isLocal )
+        {
+            bson_destroy( &obj ) ;
+            bson_init( &obj ) ;
+			*found = true ;
+            break ;
+        }
 
-		bool isMaster = false ;
-		rc = isMasterNode( rg, node, &isMaster ) ;
-		CHECK_RC_CODE( rc, "fail to check slave node is master node or not" ) ;
-		if( isMaster )
-		{
-			bson_destroy( &obj ) ;
-			bson_init( &obj ) ;
-			continue ;
-		}
-
-		bool isLocal = false ;
-		rc = isLocalNode( node, &isLocal ) ;
-		CHECK_RC_CODE( rc, "fail to check slave node is local or not" ) ;	
-		if( !isLocal )
-		{
-			bson_destroy( &obj ) ;
-			bson_init( &obj ) ;
-			continue ;
-		}
-		
-		rc = printNode( node ) ;
-		CHECK_RC_CODE( rc, "fail to print node" ) ;
-		break ;
+		// check master node is local or not
+		rc = sdbGetNodeMaster( rg, &node ) ;
+        CHECK_RC_CODE( rc, "fail to get master node" ) ;
+        rc = isLocalNode( node, &isLocal ) ;
+        CHECK_RC_CODE( rc, "fail to check master node is local or not" ) ;
+        if( isLocal )
+        {
+            bson_destroy( &obj ) ;
+            bson_init( &obj ) ;
+			*found = true ;
+			rc = restartNode( node ) ;
+			CHECK_RC_CODE( rc, "fail to restart master node" ) ;
+            break ;
+        }
 	}
+
+	rc = printNode( node ) ;
+    CHECK_RC_CODE( rc, "fail to print node" ) ;
 
 	bson_destroy( &obj ) ;
 	sdbReleaseCursor( cursor ) ;
@@ -226,10 +243,15 @@ TEST( reloadConf, weight )
 	// get slave node
 	sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
 	sdbNodeHandle node = SDB_INVALID_HANDLE ;
-	rc = getSlaveNode( rg, node ) ;
+	bool found = false ;
+	rc = getSlaveNode( rg, node, &found ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
+	if( found == false )
+	{
+		printf( "Slave node not found\n" ) ;
+		return ;
+	}
 	
-
 	// change slave node weight to 20
 	rc = changeNodeConf( node, "weight", 20 ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
