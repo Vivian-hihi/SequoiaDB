@@ -192,7 +192,7 @@ namespace engine
 
       if ( FALSE == _valueObj.hasField( "filename" ) )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_OUT_OF_BOUND ;
          PD_LOG_MSG( PDERROR, "filename must be config" ) ;
          goto error;
       }
@@ -206,26 +206,29 @@ namespace engine
 
       if ( FALSE == _valueObj.hasField( "location" ) )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be config" ) ;
-         goto error ;
+         _location = 0 ;
       }
-      if ( NumberLong != _valueObj.getField( "location" ).type() )
+      else if ( NumberInt != _valueObj.getField( "location" ).type() &&
+                NumberLong != _valueObj.getField( "location" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be numberLong" ) ;
+         PD_LOG_MSG( PDERROR, "location must be number" ) ;
          goto error ;
       }
-      _location = _valueObj.getIntField( "location" ) ;
+      else
+      {
+         _location = _valueObj.getIntField( "location" ) ;
+      }
 
       if ( FALSE == _valueObj.hasField( "size" ) )
       {
          _size = SPT_READ_LEN ;
       }
-      else if ( NumberLong != _valueObj.getField( "size" ).type() )
+      else if ( NumberInt != _valueObj.getField( "size" ).type() &&
+                NumberLong != _valueObj.getField( "size" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "size must be numberLong" ) ;
+         PD_LOG_MSG( PDERROR, "size must be number" ) ;
          goto error ;
       }
       else
@@ -295,8 +298,7 @@ namespace engine
          goto error ;
       }
       buf[read] = '\0' ;
-
-      builder.append( "readContent", buf, read ) ;
+      builder.append( "readContent", buf, read+1 ) ;
       builder.append( "readLen", read ) ;
 
       retObj = builder.obj() ;
@@ -342,7 +344,7 @@ namespace engine
 
       if ( FALSE == _valueObj.hasField( "filename" ) )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_OUT_OF_BOUND ;
          PD_LOG_MSG( PDERROR, "filename must be config" ) ;
          goto error;
       }
@@ -358,10 +360,11 @@ namespace engine
       {
          _location = 0 ;
       }
-      else if ( NumberLong != _valueObj.getField( "location" ).type() )
+      else if ( NumberInt != _valueObj.getField( "location" ).type() &&
+                NumberLong != _valueObj.getField( "location" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be NumberLong" ) ;
+         PD_LOG_MSG( PDERROR, "location must be number" ) ;
          goto error ;
       }
       else
@@ -373,10 +376,11 @@ namespace engine
       {
          _size = ossStrlen( _content ) ;
       }
-      else if( NumberLong != _valueObj.getField( "size" ).type() )
+      else if( NumberInt != _valueObj.getField( "size" ).type() &&
+               NumberLong != _valueObj.getField( "size" ).type() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "size must be NumberLong" ) ;
+         PD_LOG_MSG( PDERROR, "size must be number" ) ;
          goto error ;
       }
       else

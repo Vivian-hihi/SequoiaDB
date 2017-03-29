@@ -2384,7 +2384,7 @@ File.prototype.read = function( size ) {
                                            { "filename": this._filename,
                                              "location": this._location } ) ;
       }
-      var recvObj = retObj.toObj ;
+      var recvObj = retObj.toObj() ;
       str = recvObj.readContent ;
       this._location += recvObj.readLen ;
    }
