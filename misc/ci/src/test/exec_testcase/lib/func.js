@@ -1304,7 +1304,7 @@ function commCheckBusiness( groups, checkLSN, diskThreshold )
          tmpCheckGrp[ grpindex ][ndindex].LSN = tmpSysInfoObj.CurrentLSN.Offset ;
          if ( checkLSN && j > 1 && tmpCheckGrp[ grpindex ][ndindex].LSN != tmpCheckGrp[ grpindex ][1].LSN  )
          {
-            error = true ;
+           // error = true ;
             tmpCheckGrp[ grpindex ][0].LSNCheck = false ;
          }
          
