@@ -39,7 +39,7 @@
 #reliability test
 192.168.20.31 ci-test-suse5
 192.168.30.107 ci-test-rhel4
-192.168.20.240 ci-test-ubuntu1
+192.168.20.240 ci-test-ubun1
 192.168.30.117 ci-test-cent4
 
 #tpcc
