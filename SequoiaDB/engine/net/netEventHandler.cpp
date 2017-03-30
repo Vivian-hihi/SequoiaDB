@@ -69,6 +69,7 @@ namespace engine
       _lastRecvTick  = pmdGetDBTick() ;
       _lastBeatTick  = pmdGetDBTick() ;
       _msgid         = 0 ;
+      _waitReplyNum  = 0 ;
    }
 
    _netEventHandler::~_netEventHandler()
@@ -148,6 +149,11 @@ namespace engine
    void _netEventHandler::syncLastBeatTick()
    {
       _lastBeatTick = pmdGetDBTick() ;
+   }
+
+   void _netEventHandler::syncLastRecvTick()
+   {
+      _lastRecvTick = pmdGetDBTick() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SETOPT, "_netEventHandler::setOpt" )

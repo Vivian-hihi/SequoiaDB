@@ -42,6 +42,9 @@
 #define MAKE_REPLY_TYPE(type)       (INT32)((UINT32)type | 0x80000000)
 #define IS_REPLY_TYPE(type)         (INT32)((UINT32)type >> 31 )
 #define GET_REQUEST_TYPE(type)      (INT32)((UINT32)type & 0x7FFFFFFF)
+#define MSG_NEED_REPLY(type)        ( MSG_BS_DISCONNECT != (type) &&\
+                                      MSG_BS_INTERRUPTE != (type) &&\
+                                      MSG_BS_INTERRUPTE_SELF != (type) )
 
 /// Reserved for cata delay event
 #define CAT_DELAY_EVENT_TYPE        ( MAKE_REPLY_TYPE( 0 ) )

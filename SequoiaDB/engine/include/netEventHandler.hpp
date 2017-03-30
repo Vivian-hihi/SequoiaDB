@@ -112,6 +112,22 @@ namespace engine
          {
             return _state ;
          }
+         OSS_INLINE void incWaitReply()
+         {
+            ++_waitReplyNum ;
+         }
+         OSS_INLINE void decWaitReply()
+         {
+            SDB_ASSERT( _waitReplyNum > 0, "_waitReplyNum must > 0" ) ;
+            if ( _waitReplyNum > 0 )
+            {
+               --_waitReplyNum ;
+            }
+         }
+         OSS_INLINE BOOLEAN isWaitReply() const
+         {
+            return _waitReplyNum > 0 ? TRUE : FALSE ;
+         }
 
          void  close() ;
 
@@ -120,6 +136,7 @@ namespace engine
          UINT64 getLastBeatTick() const { return _lastBeatTick ; }
 
          void   syncLastBeatTick() ;
+         void   syncLastRecvTick() ;
 
       public:
          void asyncRead() ;
@@ -161,6 +178,7 @@ namespace engine
          UINT64                           _lastRecvTick ;
          UINT64                           _lastBeatTick ;
          UINT64                           _msgid ;
+         UINT32                           _waitReplyNum ;
 
    };
 

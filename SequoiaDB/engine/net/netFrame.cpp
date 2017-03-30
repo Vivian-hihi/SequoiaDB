@@ -51,6 +51,23 @@ using namespace boost::asio::ip ;
 namespace engine
 {
    #define NET_INNER_TIMER_INTERVAL       ( 2000 )
+
+   #define NET_UPDATE_EVENTHANDLE( pHandle, pMsg ) \
+      do \
+      { \
+         if ( ( UINT32 )MSG_SYSTEM_INFO_LEN != (UINT32)pMsg->messageLength ) \
+         { \
+            if ( IS_REPLY_TYPE(pMsg->opCode) ) \
+            { \
+               pHandle->decWaitReply() ; \
+            } \
+            else if ( MSG_NEED_REPLY(pMsg->opCode) ) \
+            { \
+               pHandle->incWaitReply() ; \
+            } \
+         } \
+      } while( 0 )
+
    /*
       _netInnerTimeHandle implement
    */
@@ -210,6 +227,19 @@ namespace engine
       {
          _mtx.get_shared() ;
          itr = _opposite.upper_bound( handle ) ;
+         while( itr != _opposite.end() )
+         {
+            if ( !itr->second->isWaitReply() )
+            {
+               itr->second->syncLastBeatTick() ;
+               itr->second->syncLastRecvTick() ;
+               ++itr ;
+            }
+            else
+            {
+               break ;
+            }
+         }
          if ( itr == _opposite.end() )
          {
             _mtx.release_shared() ;
@@ -446,8 +476,10 @@ namespace engine
       SDB_ASSERT( MSG_INVALID_ROUTEID != id.value,
                   "id.value should not be zero" ) ;
       INT32 rc = SDB_OK ;
+      MsgHeader *msgHeader = NULL ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND );
       NET_EH eh;
+
       _mtx.get_shared() ;
       MULTI_ITR itr =  _route.find( id.value ) ;
       if ( _route.end() == itr )
@@ -458,13 +490,14 @@ namespace engine
       }
       eh = itr->second ;
       _mtx.release_shared() ;
-      {
-      _MsgHeader *msgHeader = ( _MsgHeader * )header ;
+
+      msgHeader = ( MsgHeader* )header ;
       if ( MSG_INVALID_ROUTEID == msgHeader->routeID.value )
       {
          msgHeader->routeID = _local ;
       }
       eh->mtx().get() ;
+      NET_UPDATE_EVENTHANDLE( eh, msgHeader ) ;
       rc = eh->syncSend( msgHeader, msgHeader->messageLength ) ;
       if ( pHandle )
       {
@@ -477,7 +510,7 @@ namespace engine
          goto error ;
       }
       _netOut.add( msgHeader->messageLength ) ;
-      }
+
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNCSEND, rc );
       return rc ;
@@ -493,11 +526,12 @@ namespace engine
       SDB_ASSERT( NET_INVALID_HANDLE != handle,
                   "handle should not be invalid" ) ;
       INT32 rc = SDB_OK ;
+      MsgHeader *msgHeader = NULL ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND2 );
       NET_EH eh ;
+
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr =
-                                _opposite.find( handle ) ;
+      map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
       if ( _opposite.end() == itr )
       {
          _mtx.release_shared() ;
@@ -506,13 +540,14 @@ namespace engine
       }
       eh = itr->second ;
       _mtx.release_shared() ;
-      {
-      _MsgHeader *msgHeader = ( _MsgHeader * )header ;
+
+      msgHeader = ( MsgHeader * )header ;
       if ( MSG_INVALID_ROUTEID == msgHeader->routeID.value )
       {
          msgHeader->routeID = _local ;
       }
       eh->mtx().get() ;
+      NET_UPDATE_EVENTHANDLE( eh, msgHeader ) ;
       rc = eh->syncSend( msgHeader, msgHeader->messageLength ) ;
       eh->mtx().release() ;
       if ( SDB_OK != rc )
@@ -521,7 +556,7 @@ namespace engine
          goto error ;
       }
       _netOut.add( msgHeader->messageLength ) ;
-      }
+
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNCSEND2, rc );
       return rc ;
@@ -596,6 +631,7 @@ namespace engine
          header->routeID = _local ;
       }
       eh->mtx().get() ;
+      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       /// header len should be computed. can not get sizeof(MsgHeader)
       rc = eh->syncSend( header, headLen ) ;
       if ( SDB_OK != rc )
@@ -655,6 +691,7 @@ namespace engine
       _mtx.release_shared() ;
 
       eh->mtx().get() ;
+      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       rc = eh->syncSend( header, sizeof(MsgHeader) ) ;
       if ( SDB_OK != rc )
       {
@@ -723,6 +760,7 @@ namespace engine
       {
          *pHandle = eh->handle() ;
       }
+      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       rc = eh->syncSend( header, headLen ) ;
       if ( SDB_OK != rc )
       {
@@ -757,6 +795,8 @@ namespace engine
                   "id.value should not be zero" ) ;
       PD_TRACE_ENTRY( SDB__NETFRAME_SYNCSENDV ) ;
       INT32 rc = SDB_OK ;
+      NET_EH eh ;
+      MULTI_ITR itr ;
 
       header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
       if ( header->messageLength > SDB_MAX_MSG_LENGTH )
@@ -770,10 +810,8 @@ namespace engine
          header->routeID = _local ;
       }
 
-      {
-      NET_EH eh;
       _mtx.get_shared() ;
-      MULTI_ITR itr =  _route.find( id.value ) ;
+      itr = _route.find( id.value ) ;
       if ( _route.end() == itr )
       {
          _mtx.release_shared() ;
@@ -788,6 +826,7 @@ namespace engine
       {
          *pHandle = eh->handle() ;
       }
+      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       rc = eh->syncSend( header, sizeof(MsgHeader) ) ;
       if ( SDB_OK != rc )
       {
@@ -815,9 +854,8 @@ namespace engine
             _netOut.add( itr->iovLen ) ;
          }
       }
-
       eh->mtx().release() ;
-      }
+
    done:
       PD_TRACE_EXITRC( SDB__NETFRAME_SYNCSENDV, rc ) ;
       return rc ;
@@ -987,6 +1025,8 @@ namespace engine
       }
       else
       {
+         NET_UPDATE_EVENTHANDLE( eh, pMsg ) ;
+
          rc = _handler->handleMsg( eh->handle(), pMsg, eh->msg() ) ;
          _netIn.add( pMsg->messageLength ) ;
          if ( SDB_NET_BROKEN_MSG == rc )
