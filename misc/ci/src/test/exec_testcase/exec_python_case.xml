@@ -229,7 +229,7 @@
          <for list="${testhost_list}" param="testhost">
             <sequential>
                <hostinfo prefix="a" host="@{testhost}"/>
-               <var name="cluster_host_info" value="${cluster_host_info}  @{testhost}/${a.ADDR4}"/>
+               <var name="cluster_host_info" value="${cluster_host_info} @{testhost}/${a.ADDR4}"/>
             </sequential>
          </for>
          
@@ -241,8 +241,8 @@
                <var name="backup_reltdir" value="${TEST_TYPE}_${DEPLOY_MODE}_${BUILD_NUMBER}.tar.gz"/>
                <var name="download_url" value="http://192.168.30.185:8081/${backup_reltdir}" />
                
-               <var name="ms0" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>
-               <var name="ms1" value="CLUSTER HOST: ${cluster_host_info}&#10;&#10;"/>   
+               <var name="ms0" value="EXECUTE HOST: ${host.NAME}/${host.ADDR4}&#10;&#10;"/>
+               <var name="ms1" value="CLUSTER HOST:${cluster_host_info}&#10;&#10;"/>   
                <var name="ms2" value="EXECUTE CMD:&#10;@{pyexecutable} ${cmd}&#10;"/>
                <var name="ms3" value="RETURN CODE: ${@{rc}}&#10;"/>
                <var name="ms4" value="OUTPUT MESSAGE:&#10;${screen_output}&#10;"/>

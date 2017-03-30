@@ -70,13 +70,13 @@
          <for list="${testhost_list}" param="testhost">
             <sequential>
                <hostinfo prefix="a" host="@{testhost}"/>
-               <var name="cluster_host_info" value="${cluster_host_info}  @{testhost}/${a.ADDR4}"/>
+               <var name="cluster_host_info" value="${cluster_host_info} @{testhost}/${a.ADDR4}"/>
             </sequential>
          </for>
       
          <hostinfo prefix="host" />
-         <var name="ms1" value="EXECUTE HOST: ${host.NAME} ${host.ADDR4}&#10;&#10;"/>      
-         <var name="ms2" value="CLUSTER HOST: ${cluster_host_info}&#10;&#10;"/> 
+         <var name="ms1" value="EXECUTE HOST: ${host.NAME}/${host.ADDR4}&#10;&#10;"/>      
+         <var name="ms2" value="CLUSTER HOST:${cluster_host_info}&#10;&#10;"/> 
          <replaceregexp file="@{report}" 
                         match='&lt;\!\[CDATA\[' 
                         replace='&lt;\!\[CDATA\[${ms1}${ms2}' 
