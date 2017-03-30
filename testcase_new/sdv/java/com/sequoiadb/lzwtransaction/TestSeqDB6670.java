@@ -3,7 +3,9 @@ package com.sequoiadb.lzwtransaction;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -22,6 +24,7 @@ import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
+import com.sequoiadb.testcommon.SdbConfTestBase;
 
 
 /**
@@ -34,7 +37,10 @@ public class TestSeqDB6670 extends SdbTestBase {
     private CollectionSpace cs;
     private DBCollection cl;
     private String clName = "cl6670";
-    
+    private String rgName = "rg6670";
+    private int port1  ;
+    private int port2 ;
+    private int port3 ;
     @BeforeClass
     public void setUp() {
         try{
@@ -50,6 +56,9 @@ public class TestSeqDB6670 extends SdbTestBase {
                 throw new SkipException("current environment less than tow groups ");
             }
             this.cs = this.sdb.getCollectionSpace(SdbTestBase.csName); 
+            this.port1 = SdbTestBase.reservedPortBegin + 670;
+            this.port2 = SdbTestBase.reservedPortBegin + 680;
+            this.port3 = SdbTestBase.reservedPortBegin + 690;
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         }
@@ -63,6 +72,7 @@ public class TestSeqDB6670 extends SdbTestBase {
     @Test
     public void test() {
         try {
+            createDataGroup();
             createCL();
             //插入数据，使cl存在已被压缩的记录
             Util util = new Util();
@@ -137,7 +147,7 @@ public class TestSeqDB6670 extends SdbTestBase {
         try {
             //连接源组data验证数据
             List<String> rgNames = Util.getDataRgNames( this.sdb );
-            ReplicaGroup replicaGroup = sdb.getReplicaGroup(rgNames.get(0));
+            ReplicaGroup replicaGroup = sdb.getReplicaGroup(this.rgName);
             Node slave = replicaGroup.getSlave();
             String url = slave.getNodeName();
             dataDb = new Sequoiadb(url, "", "");
@@ -161,7 +171,7 @@ public class TestSeqDB6670 extends SdbTestBase {
         try {
             //连接源组data验证数据
             List<String> rgNames = Util.getDataRgNames( this.sdb );
-            String url = Util.getGroupIPByGroupName(this.sdb, rgNames.get(0));
+            String url = Util.getGroupIPByGroupName(this.sdb, this.rgName);
             dataDb = new Sequoiadb(url, "", "");
             CollectionSpace cs = dataDb.getCollectionSpace(SdbTestBase.csName);
             DBCollection dbcl = cs.getCollection(this.clName);
@@ -179,7 +189,7 @@ public class TestSeqDB6670 extends SdbTestBase {
         try {
             detail = new BasicBSONObject();
             List<String> rgNames = Util.getDataRgNames( this.sdb );
-            String url = Util.getGroupIPByGroupName(this.sdb, rgNames.get(0));
+            String url = Util.getGroupIPByGroupName(this.sdb, this.rgName);
             dataDB = new Sequoiadb(url, "", "");
             // get details of snapshot
             BSONObject nameBSON = new BasicBSONObject();
@@ -192,16 +202,42 @@ public class TestSeqDB6670 extends SdbTestBase {
         } finally {
             if(dataDB != null) {
                 dataDB.disconnect();
+  
             }
         }
         return detail;
+    }
+    
+    public void createDataGroup() {
+        try {
+
+            
+            BSONObject configure = new BasicBSONObject();
+            configure.put("logfilenum", 5);
+            configure.put("transactionon", true);
+            String hostName = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
+            ReplicaGroup rg = sdb.getReplicaGroup(this.rgName);
+            if(rg != null){
+                sdb.removeReplicaGroup(this.rgName);
+            }
+            rg = this.sdb.createReplicaGroup(this.rgName);
+            System.out.println(this.port1 + ":" + this.port2 + ":" + this.port3);
+            Node node1 = rg.createNode(hostName, this.port1, SdbTestBase.workDir + port1 + "/", configure );
+            Node node2 = rg.createNode(hostName, this.port2, SdbTestBase.workDir + port2 + "/", configure );
+            Node node3 = rg.createNode(hostName, this.port3, SdbTestBase.workDir + port3 + "/", configure );
+            this.sdb.activateReplicaGroup(this.rgName);
+        } catch (BaseException e) {
+            e.printStackTrace();
+            Assert.fail(e.getMessage());
+        }
     }
     
     public void createCL(){
         try{
             List<String> rgNames = Util.getDataRgNames( this.sdb );
             BSONObject option = new BasicBSONObject();
-            option.put("Group", rgNames.get(0));
+            //自己创建组
+            option.put("Group", this.rgName);
             option.put("Compressed", true);
             option.put("CompressionType", "lzw");
             this.cl = Util.createCL(this.cs, this.clName, option);
@@ -218,6 +254,15 @@ public class TestSeqDB6670 extends SdbTestBase {
             if (this.cs.isCollectionExist(this.clName)) {
                 this.cs.dropCollection(this.clName);
             }
+            ReplicaGroup rg = sdb.getReplicaGroup(this.rgName);
+            String hostName = sdb.getReplicaGroup("SYSCatalogGroup").getMaster().getHostName();
+            BSONObject configure = new BasicBSONObject();
+            configure.put("logfilenum", 5);
+            configure.put("transactionon", true);
+            if(rg != null){
+                sdb.removeReplicaGroup(this.rgName);
+            }
+
         } catch (BaseException e) {
             Assert.fail(e.getMessage());
         } finally {
