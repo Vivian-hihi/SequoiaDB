@@ -40,6 +40,8 @@
 namespace engine
 {
 
+   #define COORD_OPR_MAX_RETRY_TIME_DFT         ( 3 )
+
    /*
       _coordSessionPropSite implement
    */
@@ -93,7 +95,8 @@ namespace engine
    void _coordSessionPropSite::delLastNode( UINT32 groupID, UINT64 nodeID )
    {
       MAP_GROUP_2_NODE_IT it = _mapLastNodes.find( groupID ) ;
-      if ( it != _mapLastNodes.end() && it->second == nodeID )
+      if ( it != _mapLastNodes.end() &&
+           ( it->second >> 16 ) == ( nodeID >> 16 ) )
       {
          _mapLastNodes.erase( it ) ;
       }
@@ -235,6 +238,24 @@ namespace engine
       _lastNodeID.value = MSG_INVALID_ROUTEID ;
    }
 
+   void _coordGroupSel::addGroupPtr2Map( CoordGroupInfoPtr &groupPtr )
+   {
+      _mapGroupPtr[ groupPtr->groupID() ] = groupPtr ;
+   }
+
+   BOOLEAN _coordGroupSel::getGroupPtrFromMap( UINT32 groupID,
+                                               CoordGroupInfoPtr &groupPtr )
+   {
+      BOOLEAN bGet = FALSE ;
+      CoordGroupMap::iterator it = _mapGroupPtr.find( groupID ) ;
+      if ( it != _mapGroupPtr.end() )
+      {
+         groupPtr = it->second ;
+         bGet = TRUE ;
+      }
+      return bGet ;
+   }
+
    INT32 _coordGroupSel::selBegin( UINT32 groupID, MsgRouteID &nodeID )
    {
       INT32 rc = SDB_OK ;
@@ -242,18 +263,22 @@ namespace engine
 
       _resetStatus() ;
 
-      rc = _pResource->getGroupInfo( groupID, _groupPtr ) ;
-      if ( rc && !_hasUpdate )
+      if ( !getGroupPtrFromMap( groupID, _groupPtr ) )
       {
-         _hasUpdate = TRUE ;
-         rc = _pResource->updateGroupInfo( groupID, _groupPtr,
-                                           _pPropSite->getEDUCB() ) ;
-      }
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Get or update group[%u] info failed, rc: %d",
-                 groupID, rc ) ;
-         goto error ;
+         rc = _pResource->getGroupInfo( groupID, _groupPtr ) ;
+         if ( rc && !_hasUpdate )
+         {
+            _hasUpdate = TRUE ;
+            rc = _pResource->updateGroupInfo( groupID, _groupPtr,
+                                              _pPropSite->getEDUCB() ) ;
+         }
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get or update group[%u] info failed, rc: %d",
+                    groupID, rc ) ;
+            goto error ;
+         }
+         addGroupPtr2Map( _groupPtr ) ;
       }
 
       _pPropSite->getEDUCB()->getTransNodeRouteID( groupID, nodeID ) ;
@@ -526,14 +551,26 @@ namespace engine
                                               _pPropSite->getEDUCB() ) ;
             if ( rc )
             {
-               PD_LOG( PDERROR, "Update group[%u] info failed, rc: %d",
-                       groupID, rc ) ;
+               if ( _ignoredNum > 0 )
+               {
+                  PD_LOG( PDWARNING, "Update group[%u] info failed, rc: %d",
+                          groupID, rc ) ;
+                  groupPtr->clearNodesStat() ;
+                  rc = SDB_OK ;
+               }
+               else
+               {
+                  PD_LOG( PDERROR, "Update group[%u] info failed, rc: %d",
+                          groupID, rc ) ;
+               }
             }
          }
 
          if ( SDB_OK == rc )
          {
             _resetStatus() ;
+            /// need set update to TRUE
+            _hasUpdate = TRUE ;
             rc = _selOtherBegin( nodeID ) ;
          }
          if ( rc )
@@ -582,10 +619,33 @@ namespace engine
    _coordGroupSessionCtrl::_coordGroupSessionCtrl()
    {
       _retryTime = 0 ;
+      _maxRetryTime = COORD_OPR_MAX_RETRY_TIME_DFT ;
+      _pResource = NULL ;
+      _pPropSite = NULL ;
+      _pGroupSel = NULL ;
    }
 
    _coordGroupSessionCtrl::~_coordGroupSessionCtrl()
    {
+   }
+
+   void _coordGroupSessionCtrl::setMaxRetryTimes( UINT32 maxRetryTimes )
+   {
+      _maxRetryTime = maxRetryTimes ;
+   }
+
+   BOOLEAN _coordGroupSessionCtrl::_canRetry() const
+   {
+      return _retryTime < _maxRetryTime ? TRUE : FALSE ;
+   }
+
+   void _coordGroupSessionCtrl::init( coordResource *pResource,
+                                      coordSessionPropSite *pPropSite,
+                                      coordGroupSel *pGroupSel )
+   {
+      _pResource = pResource ;
+      _pPropSite = pPropSite ;
+      _pGroupSel = pGroupSel ;
    }
 
    void _coordGroupSessionCtrl::incRetry()
@@ -599,8 +659,103 @@ namespace engine
                                              BOOLEAN isReadCmd,
                                              BOOLEAN canUpdate )
    {
-      /// TODO:XUJIANHUI
-      return FALSE ;
+      BOOLEAN bRetry = FALSE ;
+      CoordGroupInfoPtr groupPtr ;
+      _pmdEDUCB *cb = NULL ;
+
+      cb = _pPropSite->getEDUCB() ;
+
+      /// remove last node
+      _pPropSite->delLastNode( nodeID.columns.groupID, nodeID.value ) ;
+
+      if ( !_pGroupSel ||
+           !_pGroupSel->getGroupPtrFromMap( nodeID.columns.groupID,
+                                            groupPtr ) )
+      {
+         goto done ;
+      }
+
+      bRetry = _canRetry() ;
+
+      if ( SDB_CLS_NOT_PRIMARY == flag && 0 != newPrimaryID )
+      {
+         INT32 preStat = NET_NODE_STAT_NORMAL ;
+         MsgRouteID primaryNodeID ;
+         primaryNodeID.value = nodeID.value ;
+         primaryNodeID.columns.nodeID = newPrimaryID ;
+
+         if ( SDB_OK == groupPtr->updatePrimary( primaryNodeID,
+                                                 TRUE, &preStat ) )
+         {
+            /// when primay's crash has not discoverd by other nodes,
+            /// new primary's nodeid may still be old one. 
+            /// To avoid send msg to crashed node frequently,
+            /// sleep some times.
+            if ( NET_NODE_STAT_NORMAL != preStat )
+            {
+               groupPtr->cancelPrimary() ;
+               PD_LOG( PDWARNING, "Primary node[%d.%d] is crashed, sleep "
+                       "%d seconds", primaryNodeID.columns.groupID,
+                       primaryNodeID.columns.nodeID,
+                       NET_NODE_FAULTUP_MIN_TIME ) ;
+               ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
+            }
+            goto done ;
+         }
+      }
+
+      if ( !bRetry )
+      {
+         goto done ;
+      }
+
+      if ( SDB_CLS_NOT_PRIMARY == flag )
+      {
+         if ( groupPtr.get() )
+         {
+            groupPtr->updatePrimary( nodeID, FALSE ) ;
+         }
+
+         if ( canUpdate )
+         {
+            UINT32 groupID = nodeID.columns.groupID ;
+            INT32 rc = _pResource->updateGroupInfo( groupID, groupPtr, cb ) ;
+            if ( SDB_OK == rc )
+            {
+               _pGroupSel->addGroupPtr2Map( groupPtr ) ;
+            }
+            else
+            {
+               PD_LOG( PDWARNING, "Update group info[%u] from remote failed, "
+                       "rc: %d", groupID, rc ) ;
+               bRetry = FALSE ;
+            }
+         }
+      }
+      // [SDB_COORD_REMOTE_DISC] can't use in write command,
+      // because when some insert/update opr do partibal,
+      // if retry, data will repeat. The code can't update status,
+      // because it maybe occured in long time ago
+      else if ( ( isReadCmd && SDB_COORD_REMOTE_DISC == flag ) ||
+                SDB_CLS_NODE_NOT_ENOUGH == flag )
+      {
+         /// do nothing
+      }
+      else if ( SDB_CLS_FULL_SYNC == flag || SDB_RTN_IN_REBUILD == flag )
+      {
+         if( groupPtr.get() )
+         {
+            groupPtr->updateNodeStat( nodeID.columns.nodeID,
+                                      netResult2Status( flag ) ) ;
+         }
+      }
+      else
+      {
+         bRetry = FALSE ;
+      }
+
+   done:
+      return bRetry ;
    }
 
    /*
@@ -661,6 +816,7 @@ namespace engine
          goto error ;
       }
       _groupSel.init( pResource, _pPropSite ) ;
+      _groupCtrl.init( pResource, _pPropSite, &_groupSel ) ;
 
       if ( 0 == timeout )
       {

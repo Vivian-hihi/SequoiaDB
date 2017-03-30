@@ -78,7 +78,7 @@ namespace engine
 
    void _coordResource::setCataGroupInfo( CoordGroupInfoPtr &groupPtr )
    {
-      /// TODO:XUJIANHUI
+      // TODO:XUJIANHUI
    }
 
    INT32 _coordResource::getGroupInfo( UINT32 groupID,

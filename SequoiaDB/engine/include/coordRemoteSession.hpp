@@ -141,6 +141,11 @@ namespace engine
 
          void     updateStat( const MsgRouteID &nodeID, INT32 rc ) ;
 
+         BOOLEAN  getGroupPtrFromMap( UINT32 groupID,
+                                      CoordGroupInfoPtr &groupPtr ) ;
+
+         void     addGroupPtr2Map( CoordGroupInfoPtr &groupPtr ) ;
+
       protected:
          INT32    _selPrimaryBegin( MsgRouteID &nodeID ) ;
          INT32    _selOtherBegin( MsgRouteID &nodeID ) ;
@@ -169,6 +174,7 @@ namespace engine
          UINT32                  _ignoredNum ;
          MsgRouteID              _lastNodeID ;
 
+         CoordGroupMap           _mapGroupPtr ;
    } ;
    typedef _coordGroupSel coordGroupSel ;
 
@@ -181,7 +187,9 @@ namespace engine
          _coordGroupSessionCtrl() ;
          ~_coordGroupSessionCtrl() ;
 
-         void        init( coordResource *pResource ) ;
+         void        init( coordResource *pResource,
+                           coordSessionPropSite *pPropSite,
+                           coordGroupSel *pGroupSel ) ;
 
          BOOLEAN     canRetry( INT32 flag,
                                const MsgRouteID &nodeID,
@@ -191,8 +199,17 @@ namespace engine
 
          void        incRetry() ;
 
+         void        setMaxRetryTimes( UINT32 maxRetryTimes ) ;
+
       private:
-         UINT32      _retryTime ;
+         BOOLEAN     _canRetry() const ;
+
+      private:
+         UINT32                  _retryTime ;
+         UINT32                  _maxRetryTime ;
+         coordResource           *_pResource ;
+         coordSessionPropSite    *_pPropSite ;
+         coordGroupSel           *_pGroupSel ;
 
    } ;
    typedef _coordGroupSessionCtrl coordGroupSessionCtrl ;
