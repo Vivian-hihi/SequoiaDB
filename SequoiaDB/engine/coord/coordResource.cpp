@@ -388,6 +388,12 @@ namespace engine
                continue ;
             }
 
+            sock.disableNagle() ;
+            // set keep alive
+            sock.setKeepAlive( 1, OSS_SOCKET_KEEP_IDLE,
+                               OSS_SOCKET_KEEP_INTERVAL,
+                               OSS_SOCKET_KEEP_CONTER ) ;
+
             /// send and recv message
             rc = pmdSyncSendMsg( ( const MsgHeader* )&msgGroupReq, &pReply,
                                  &sock, cb, TRUE, OSS_SOCKET_DFT_TIMEOUT,
@@ -534,7 +540,22 @@ namespace engine
       SDB_ASSERT( groupItem && groupItem->nodeCount() > 0,
                   "Group item's node count must grater than zero" ) ;
 
-      /// prepare nodes
+      /// prepare nodes.
+      /// 1.Primary first
+      UINT32 primaryPos = groupItem->getPrimaryPos() ;
+      if ( CLS_RG_NODE_POS_INVALID != primaryPos &&
+           SDB_OK == groupItem->getNodeID( primaryPos, nodeID,
+                                           MSG_ROUTE_CAT_SERVICE ) &&
+           SDB_OK == groupItem->getNodeInfo( primaryPos, status ) &&
+           NET_NODE_STAT_NORMAL == status )
+      {
+         nodes.append( nodeID.value ) ;
+      }
+      else
+      {
+         primaryPos = CLS_RG_NODE_POS_INVALID ;
+      }
+      /// 2. Other nodes
       beginPos = ossRand() % groupItem->nodeCount() ;
       while( sendTimes < groupItem->nodeCount() )
       {
@@ -548,7 +569,11 @@ namespace engine
          {
             goto error ;
          }
-         if ( NET_NODE_STAT_NORMAL == status )
+         if ( primaryPos == beginPos )
+         {
+            /// ignore the primary node
+         }
+         else if ( NET_NODE_STAT_NORMAL == status )
          {
             nodes.append( nodeID.value ) ;
          }
