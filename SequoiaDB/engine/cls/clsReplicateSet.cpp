@@ -987,6 +987,7 @@ namespace engine
       {
          _alive( beat.identity ) ;
          _MsgClsBeatRes res ;
+         res.header.header.requestID = msg->header.requestID ;
          res.identity = _info.local ;
          _agent->syncSend( msg->header.routeID, &res ) ;
       }
