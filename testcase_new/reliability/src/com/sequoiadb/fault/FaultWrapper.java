@@ -104,6 +104,12 @@ public class FaultWrapper extends Fault {
                 status = OperateTask.faultStatus.MAKESUCCESS;
                 break;
             }
+            try {
+                Thread.sleep(500);
+            }
+            catch (Exception e) {
+                // ignore
+            }
         }
         return checkResult;
     }
