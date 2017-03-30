@@ -1,7 +1,9 @@
-arch:    ppc ppcle x86
-os:      rhel suse ubun cent
-product: db pg
-subtype: trunk branch
+
+Àı–¥£∫
+   arch:    ppc ppcle x86
+   os:      rhel suse ubun cent
+   product: db pg
+   subtype: trunk branch1.12 branch2.6
 
 
 ±‡“Î£∫
