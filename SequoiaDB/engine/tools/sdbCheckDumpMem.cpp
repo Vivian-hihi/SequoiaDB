@@ -386,7 +386,9 @@ namespace engine
       UINT32 line = 0 ;
       INT64 writeLen = 0 ;
 
-      ossSnprintf( g_textBuff, sizeof(g_textBuff)-1, "\n\nStat:\n" ) ;
+      ossSnprintf( g_textBuff, sizeof(g_textBuff)-1,
+                   "\n\nStat Info:\n"
+                   "FileCode : Line ---- Counter\n\n") ;
       if ( g_openOutFile )
       {
          ossWrite( &g_pOutFile, g_textBuff, ossStrlen(g_textBuff), &writeLen ) ;
@@ -433,6 +435,7 @@ namespace engine
    INT32 mastMain( int argc, char **argv )
    {
       INT32 rc = SDB_OK ;
+      CHAR    titleStr[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       rc = resolveArguments( argc, argv ) ;
       if ( rc )
@@ -443,6 +446,19 @@ namespace engine
       if ( rc )
       {
          goto error ;
+      }
+
+      /// print title
+      ossSnprintf( titleStr, OSS_MAX_PATHSIZE,
+                   "Memory Info List:\n"
+                   "--Address               Size      FileCode      Line--\n\n" ) ;
+      if ( g_openOutFile )
+      {
+         ossWriteN( &g_openOutFile, titleStr, ossStrlen( titleStr ) ) ;
+      }
+      else
+      {
+         ossPrintf( "%s", titleStr ) ;
       }
 
       while ( SDB_OK == getNextBlock() )
