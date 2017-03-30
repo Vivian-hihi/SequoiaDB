@@ -37,10 +37,10 @@
 192.168.30.183 bl465-3
 
 #reliability test
-192.168.20.31 susesp2-ly
-192.168.20.240 sequoiadb-virtual-machine
-192.168.30.107 rh-ci007
-192.168.30.117 centos-ci007
+192.168.20.31 ci-test-suse5
+192.168.30.107 ci-test-rhel4
+192.168.20.240 ci-test-ubuntu1
+192.168.30.117 ci-test-cent4
 
 #tpcc
 192.168.30.56 ci-test-pm1
