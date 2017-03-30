@@ -454,7 +454,7 @@ namespace engine
                    "--Address               Size      FileCode      Line--\n\n" ) ;
       if ( g_openOutFile )
       {
-         ossWriteN( &g_openOutFile, titleStr, ossStrlen( titleStr ) ) ;
+         ossWriteN( &g_pOutFile, titleStr, ossStrlen( titleStr ) ) ;
       }
       else
       {
