@@ -118,8 +118,8 @@
          <var name="cluster_host_info" value=""/>
          <for list="${testhost_list}" param="testhost">
             <sequential>
-               <hostinfo prefix="a" host="@{testhost}"/>
-               <var name="cluster_host_info" value="${cluster_host_info} @{testhost}/${a.ADDR4}"/>
+               <hostinfo prefix="prefixhost" host="@{testhost}"/>
+               <var name="cluster_host_info" value="${cluster_host_info} @{testhost}/${prefixhost.ADDR4}"/>
             </sequential>
          </for>
          
