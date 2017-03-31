@@ -185,7 +185,7 @@ public class DiskFull extends Fault {
      * @param duration
      *            持续时间s
      * @param presetPercent
-     *            线程启动之前，希望磁盘占用率达到的数值
+     *            线程启动之前，希望磁盘占用率达到的数值(<98)
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
