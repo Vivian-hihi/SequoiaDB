@@ -15,7 +15,6 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.DBLob;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
@@ -28,15 +27,15 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName:SEQDB-2689 对hash分区组进行范围切分，切分时目标组主节点所在服务器磁盘耗尽
+ * @FileName:SEQDB-2695 对range分区组进行范围切分，切分时源组主节点所在服务器磁盘耗尽
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class DiskFullSplit2689 extends SdbTestBase {
-    private String clName = "testcaseCL2689";
-    private String csName = "testcaseCL2689_cs";
+public class DiskFullSplit2695 extends SdbTestBase {
+    private String clName = "testcaseCL2695";
+    private String csName = "testcaseCL2695_cs";
     private String srcGroupName;
     private String destGroupName;
     private Sequoiadb commSdb = null;
@@ -63,14 +62,12 @@ public class DiskFullSplit2689 extends SdbTestBase {
             System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             CollectionSpace commCS = commSdb.createCollectionSpace(csName);
-            DBCollection cl = commCS.createCollection(clName,
-                    (BSONObject) JSON
-                            .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
-                                    + srcGroupName + "'}"));
-            insertData(cl, 300);// 写入待切分的LOB（~300M）
+            DBCollection cl = commCS.createCollection(clName, (BSONObject) JSON.parse(
+                    "{ShardingKey:{'sk':1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
+            insertData(cl, 0, 5000);
             // 调整主机
-            fillUpDiskHost = groupMgr.getGroupByName(destGroupName).getMaster().hostName();
-            Utils.reelect(fillUpDiskHost, Utils.CATA_RG_NAME, srcGroupName);
+            fillUpDiskHost = groupMgr.getGroupByName(srcGroupName).getMaster().hostName();
+            Utils.reelect(fillUpDiskHost, Utils.CATA_RG_NAME, destGroupName);
             groupMgr.refresh();
             System.out.println("fillUpDiskHost:" + fillUpDiskHost);
 
@@ -84,15 +81,11 @@ public class DiskFullSplit2689 extends SdbTestBase {
         }
     }
 
-    public void insertData(DBCollection cl, int count) {
-        String padStr = Utils.getString(1024 * 1024);
-        for (int i = 0; i < count; i++) {
-            DBLob lob = cl.createLob();
-            lob.write(padStr.getBytes());
-            lob.close();
+    public void insertData(DBCollection cl, int begin, int end) {
+        for (int i = begin; i < end; i++) {
+            cl.insert("{sk:" + i + "}");
         }
-        totalCount += count;
-
+        totalCount = totalCount + end - begin;
     }
 
     @Test
@@ -112,14 +105,15 @@ public class DiskFullSplit2689 extends SdbTestBase {
 
             commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 10);
+            insertData(cl, 5000, 6000);
 
             Assert.assertEquals(destGroup.checkInspect(120), true);
             Assert.assertEquals(srcGroup.checkInspect(60), true);
 
-            long destCount = checkGroupLob(commSdb, destGroupName);
-            long srcCount = checkGroupLob(commSdb, srcGroupName);
-            Assert.assertEquals(destCount + srcCount, totalCount);
+            checkGroupData(commSdb, destGroupName);
+            checkGroupData(commSdb, srcGroupName);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), totalCount);
+
             clearFlag = true;
         }
         catch (ReliabilityException e) {
@@ -129,25 +123,15 @@ public class DiskFullSplit2689 extends SdbTestBase {
 
     }
 
-    private long checkGroupLob(Sequoiadb sdb, String destGroupName) {
+    private void checkGroupData(Sequoiadb sdb, String destGroupName) {
         Sequoiadb destDataNode = null;
         DBCursor cursor = null;
         try {
             destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect();// 获得源主节点链接
             DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
-
-            cursor = destCL.listLobs();
-            int lobCount = 0;
-            while (cursor.hasNext()) {
-                cursor.getNext();
-                lobCount++;
-            }
-            // 数据量应在totalCount / 2条左右（切分范围2048-4096）
-            Assert.assertEquals(
-                    lobCount > totalCount / 2 - (totalCount / 2 * 0.3)
-                            && lobCount < totalCount / 2 + (totalCount / 2 * 0.3),
-                    true, "srcGroup count:" + lobCount);
-            return lobCount;
+            long recCount = destCL.getCount();
+            // 数据量应在totalCount / 2条
+            Assert.assertEquals(recCount, totalCount / 2, "srcGroup count:" + recCount);
         }
         catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
@@ -160,7 +144,6 @@ public class DiskFullSplit2689 extends SdbTestBase {
                 destDataNode.disconnect();
             }
         }
-        return 0;
     }
 
     @AfterClass
@@ -191,8 +174,8 @@ public class DiskFullSplit2689 extends SdbTestBase {
                 sdb = new Sequoiadb(coordUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{Partition:2048}"),
-                        (BSONObject) JSON.parse("{Partition:4096}"));
+                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:0}"),
+                        (BSONObject) JSON.parse("{sk:3000}"));
             }
             catch (BaseException e) {
                 throw e;
