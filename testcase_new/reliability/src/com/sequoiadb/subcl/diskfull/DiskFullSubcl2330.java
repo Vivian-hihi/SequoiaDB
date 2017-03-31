@@ -22,10 +22,10 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.DiskFull;
 import com.sequoiadb.task.OperateTask;
+import com.sequoiadb.task.TaskMgr;
 
 /**
  * @FileName:SEQDB-2330 detachCL过程中catalog备节点所在服务器磁盘满
@@ -58,8 +58,8 @@ public class DiskFullSubcl2330 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
             cataSlave = groupMgr.getGroupByName("SYSCatalogGroup").getSlave();
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness(true)) {
-                throw new SkipException("checkBusiness faile");
+            if (!groupMgr.checkBusiness(20)) {
+                throw new SkipException("checkBusiness return false");
             }
 
             commSdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -125,7 +125,7 @@ public class DiskFullSubcl2330 extends SdbTestBase {
     public void test() throws Exception {
         // 磁盘满
         GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-        System.out.println(cataSlave.hostName());
+        System.out.println("fillUpHost:" + cataSlave.hostName());
         DiskFull df = new DiskFull(cataSlave.hostName(), SdbTestBase.workDir);
         df.init();
         df.make();
@@ -136,26 +136,28 @@ public class DiskFullSubcl2330 extends SdbTestBase {
         fillUpCatalogSYSCL("pad_K", pad_K);
 
         // 启动attach的线程，及填充SYSCAT.SYSCOLLECTIONS的线程（每条记录512字节）
-        Detach attach = new Detach("detach");
-        InsertToCataCL insert = new InsertToCataCL("insert");
-        insert.start();
-        attach.start();
-        insert.join();
-        attach.join();
+        TaskMgr mgr = new TaskMgr();
+        mgr.addTask(new InsertToCataCL());
+        mgr.addTask(new Detach());
+        mgr.execute();
+        Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
         // 磁盘恢复
         df.restore();
         df.fini();
-
-        Assert.assertEquals(attach.isSuccess(), true, attach.getErrorMsg());
-        Assert.assertEquals(insert.isSuccess(), true, insert.getErrorMsg());
+        // cataLog恢复
+        Sequoiadb cataDb = new Sequoiadb(cataSlave.hostName() + ":" + cataSlave.svcName(), "", "");
+        try {
+            DBCollection catacl = cataDb.getCollectionSpace("SYSCAT")
+                    .getCollection("SYSCOLLECTIONS");
+            catacl.delete("{deleteFlag:1}");
+        }
+        catch (BaseException e) {
+            cataDb.disconnect();
+        }
 
         // 检测CATALOG组数据一致
-        Utils.checkBusinessLSNWithTimeout(groupMgr, 60 * 20);
-        CheckCatalog(cataGroup, mainClName);
-        for (String subName : subClNames) {
-            CheckCatalog(cataGroup, subName);
-        }
+        Assert.assertEquals(cataGroup.checkInspect(60), true);
 
         // 向子表插入数据，查询
         insertSubCLAndQuery();
@@ -190,36 +192,8 @@ public class DiskFullSubcl2330 extends SdbTestBase {
         }
     }
 
-    private void CheckCatalog(GroupWrapper cataGroup, String clName) throws ReliabilityException {
-        cataGroup.refresh();
-        List<String> urls = cataGroup.getAllUrls();
-        ArrayList<BSONObject> res = new ArrayList<BSONObject>();
-        for (String url : urls) {
-            Sequoiadb db = new Sequoiadb(url, "", "");
-            DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
-            DBCursor cursor = cl.query(
-                    (BSONObject) JSON.parse("{Name:'" + csName + "." + clName + "'}"), null, null,
-                    null);
-            if (cursor.hasNext()) {
-                res.add(cursor.getNext());
-                if (cursor.hasNext()) {
-                    Assert.fail(clName + " " + cursor.getNext() + " " + res.toString());
-                }
-            }
-            else {
-                Assert.fail(clName + "query faile");
-            }
-        }
-        for (BSONObject obj : res) {
-            if (!res.get(0).equals(obj)) {
-                Assert.fail(clName + ":" + obj + " not equal res.get(0),res:" + res);
-            }
-        }
-    }
-
     @AfterClass
     public void tearDown() {
-        Sequoiadb cataDb = null;
         try {
             if (clearFlag) {
                 for (String subClName : subClNames) {
@@ -227,10 +201,7 @@ public class DiskFullSubcl2330 extends SdbTestBase {
                 }
                 commCS.dropCollection(mainClName);
             }
-            cataDb = new Sequoiadb(cataSlave.hostName() + ":" + cataSlave.svcName(), "", "");
-            DBCollection catacl = cataDb.getCollectionSpace("SYSCAT")
-                    .getCollection("SYSCOLLECTIONS");
-            catacl.delete("{deleteFlag:1}");
+
         }
         catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
@@ -239,9 +210,6 @@ public class DiskFullSubcl2330 extends SdbTestBase {
             if (commSdb != null) {
                 commSdb.disconnect();
             }
-            if (cataDb != null) {
-                cataDb.disconnect();
-            }
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -249,11 +217,6 @@ public class DiskFullSubcl2330 extends SdbTestBase {
     }
 
     class Detach extends OperateTask {
-
-        public Detach(String name) {
-            super(name);
-        }
-
         @Override
         public void exec() throws Exception {
             Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -268,24 +231,9 @@ public class DiskFullSubcl2330 extends SdbTestBase {
                 }
             }
         }
-
-        @Override
-        public void faultNotify(BSONObject status) throws FaultException {
-
-        }
     }
 
     class InsertToCataCL extends OperateTask {
-
-        public InsertToCataCL(String name) {
-            super(name);
-        }
-
-        @Override
-        public void faultNotify(BSONObject status) throws FaultException {
-            // TODO Auto-generated method stub
-        }
-
         @Override
         public void exec() throws Exception {
             fillUpCatalogSYSCL("PAD", pad_HK);

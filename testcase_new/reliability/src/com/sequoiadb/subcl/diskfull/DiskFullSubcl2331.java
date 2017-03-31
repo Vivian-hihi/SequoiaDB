@@ -3,7 +3,6 @@ package com.sequoiadb.subcl.diskfull;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 import org.testng.Assert;
@@ -21,7 +20,6 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.DiskFull;
 import com.sequoiadb.task.FaultMakeTask;
@@ -38,6 +36,7 @@ import com.sequoiadb.task.TaskMgr;
 public class DiskFullSubcl2331 extends SdbTestBase {
     private String mainClName = "testcaseCL2331_main";
     private String subClName = "testcaseCL2331_sub";
+    private String csName = "testcaseCL2331_CS";
     private String subClGroupName;
     private CollectionSpace commCS;
     private DBCollection mainCL;
@@ -56,14 +55,14 @@ public class DiskFullSubcl2331 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness(true)) {
-                throw new SkipException("checkBusiness faile");
+            if (!groupMgr.checkBusiness(20)) {
+                throw new SkipException("checkBusiness return false");
             }
             subClGroupName = groupMgr.getAllDataGroup().get(0).getGroupName();
 
             commSdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-            commCS = commSdb.getCollectionSpace(csName);
+            commCS = commSdb.createCollectionSpace(csName);
             mainCL = commCS.createCollection(mainClName, (BSONObject) JSON
                     .parse("{ShardingKey:{'sk':1},ShardingType:'range',IsMainCL:true}"));
             subCL = commCS.createCollection(subClName, (BSONObject) JSON.parse(
@@ -86,23 +85,19 @@ public class DiskFullSubcl2331 extends SdbTestBase {
         try {
             GroupWrapper subGroup = groupMgr.getGroupByName(subClGroupName);
             NodeWrapper subCLGroupMaster = subGroup.getMaster();
+            System.out.println("fillUpDisk:" + subCLGroupMaster.hostName() + "subCLGroupName"
+                    + subClGroupName);
+
             FaultMakeTask faultMakeTask = DiskFull.getFaultMakeTask(subCLGroupMaster.hostName(),
                     SdbTestBase.workDir, 1, 10, 96);
-
             TaskMgr taskMgr = new TaskMgr(faultMakeTask);
-            taskMgr.addTask(new Insert("insert"));
-            taskMgr.init();
-            taskMgr.start();
-            taskMgr.join();
-            taskMgr.fini();
+            taskMgr.addTask(new Insert());
+            taskMgr.execute();
             Assert.assertEquals(taskMgr.isAllSuccess(), true, taskMgr.getErrorMsg());
 
             checkAndInsert();
 
-            if (!subGroup.checkInspect(120, 2)) {
-                Assert.fail(subGroup.getInspectStdout());
-            }
-
+            Assert.assertEquals(subGroup.checkInspect(120), true);
             clearFlag = true;
         }
         catch (ReliabilityException e) {
@@ -136,9 +131,7 @@ public class DiskFullSubcl2331 extends SdbTestBase {
     public void tearDown() {
         try {
             if (clearFlag) {
-                CollectionSpace commCS = commSdb.getCollectionSpace(csName);
-                commCS.dropCollection(subClName);
-                commCS.dropCollection(mainClName);
+                commSdb.dropCollectionSpace(csName);
             }
         }
         catch (BaseException e) {
@@ -155,11 +148,6 @@ public class DiskFullSubcl2331 extends SdbTestBase {
     }
 
     class Insert extends OperateTask {
-
-        public Insert(String name) {
-            super(name);
-        }
-
         @Override
         public void exec() throws Exception {
             String padStr = Utils.getString(1024 * 1024);
@@ -171,22 +159,8 @@ public class DiskFullSubcl2331 extends SdbTestBase {
                 }
             }
             catch (BaseException e) {
-                System.out.println(insertCount);
-                if (e.getErrorCode() != -11) {
-                    throw e;
-                }
-            }
-        }
-
-        @Override
-        public void faultNotify(BSONObject status) throws FaultException {
-            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
-            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
-            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
-                throw new FaultException(mk.toString());
-            }
-            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
-                throw new FaultException(rt.toString());
+                System.out.println(
+                        "InsertException:" + e.getErrorCode() + " InserCount:" + insertCount);
             }
         }
     }
