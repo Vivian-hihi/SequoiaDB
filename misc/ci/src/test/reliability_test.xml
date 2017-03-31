@@ -27,13 +27,13 @@
       
       <antcall target="ready_testcase"/>
       
-      <antcall target="ready_lib"/>
+      <antcall target="ready_jdk"/>
       
       <antcall target="compile_testcase" />
       
       <antcall target="prepare_before_testcase"/>
       
-      <antcall target="execute_testcase" />
+      <antcall target="exec_testcase" />
       
    </target>
    
@@ -62,166 +62,87 @@
       </if>
    </target>
    
-   <target name="ready_lib">
-      <property name="client_dir" location="${WORKSPACE}/sequoiadb/client" />
-      
-      <delete dir="${client_dir}/include" failonerror="false" />
-      <delete dir="${client_dir}/lib" failonerror="false" />
-      <delete dir="${WORKSPACE}/sequoiadb/java" failonerror="false" />
-      <mkdir dir="${client_dir}/include"/>
-      <mkdir dir="${client_dir}/lib"/>
-      <mkdir dir="${WORKSPACE}/sequoiadb/java"/>
+   <target name="ready_jdk">
+
+      <staf location="local" service="PROCESS"
+            request="START SHELL COMMAND rm -rf ${INSTALL_DIR} WAIT 1m"
+            throwBuildException="1"/> 
+      <staf location="local" service="PROCESS"
+            request="START SHELL COMMAND mkdir ${INSTALL_DIR} WAIT 1m"
+            throwBuildException="1"/>  
      
       <hostinfo prefix="host" />
-
-      <var name="testscript_dir" value="${CI_WORK_DIR}/script/src/test" />     
-      <var name="testscript_log" value="${testscript_dir}/reliability_test.log" />
-      <!--ready in remote host-->
-      <for list="${testhost_list}" param="testhost" parallel="false">
-         <sequential>            
-            <staf location="local" service="FS"
-                  request="COPY DIRECTORY ${basedir} TODIRECTORY ${CI_WORK_DIR}/script TOMACHINE @{testhost} RECURSE"
-                  throwBuildException="1"/>
-            <staf location="@{testhost}" service="FS"
-                  request="DELETE ENTRY ${testscript_log} CONFIRM"/>
-         </sequential>
-      </for>
       
-      <var name="iteator" value="0"/>
-      <for list="${testhost_list}" param="testhost">
-         <sequential>
-            <if>
-               <equals arg1="${iteator}" arg2="0"/>
-               <then>
-                  <var name="iteator" unset="true"/>
-                  <var name="iteator" value="1"/>
-                  <property name="remote_cmd2" 
-                     value="ant -f ${CI_WORK_DIR}/script/src/test/reliability_test.xml collect_remote_include -Dcontrol_host=${host.NAME} -DWORKSPACE=${WORKSPACE} -Dplat_form=${plat_form} -DTEST_TYPE=${TEST_TYPE} -DDEPLOY_MODE=${DEPLOY_MODE} -DCI_WORK_DIR=${CI_WORK_DIR}" />
-                  <staf location="@{testhost}" service="PROCESS"
-                        resultPrefix="remote_exec2"
-                        request="START SHELL COMMAND ${remote_cmd2} WAIT STDERRTOSTDOUT RETURNSTDOUT"
-                        throwBuildException="1"/>
-               </then>
-            </if>
-         </sequential>
-      </for>
-
-      
+      <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
+      <staf location="${firsthost}" service="FS"
+         request="COPY DIRECTORY ${INSTALL_DIR}/java TODIRECTORY ${INSTALL_DIR}/java TOMACHINE ${host.NAME} RECURSE"
+         throwBuildException="1"/>
+         
+      <staf location="local" service="PROCESS"
+            request="START SHELL COMMAND chown -R jenkins:jenkins ${INSTALL_DIR}/java WAIT 1m"
+            throwBuildException="1"/>
+            
+      <property name="remote_chmod_exec" value="chmod a+rwx,u+rwx,g+rwx ${INSTALL_DIR}/java -R"/>
+      <staf location="local" service="PROCESS"
+            request="START SHELL COMMAND ${remote_chmod_exec} WAIT 1m"
+            throwBuildException="1"/>      
    </target>
    
-   <target name="collect_remote_include">
-      <property file="${CI_WORK_DIR}/src/conf/test.conf" />
-      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" /> 
-      <property name="client_dir" location="${WORKSPACE}/sequoiadb/client" />
-
-      <delete dir="${CI_WORK_DIR}/java" failonerror="false"/>
-      <mkdir dir="${CI_WORK_DIR}/java"/>
-      <copy todir="${CI_WORK_DIR}/java">
-         <fileset dir="${INSTALL_DIR}" includes="java/**/*"/>
-      </copy>
-      <staf location="local" service="FS"
-            request="COPY DIRECTORY ${INSTALL_DIR}/java TODIRECTORY ${WORKSPACE}/sequoiadb/java TOMACHINE ${control_host} RECURSE"
-            throwBuildException="1"/>
-
-
-   </target>
    
    <target name="compile_testcase">      
-      <for list="reliability" param="casetype" trim="true" parallel="false">
-         <sequential>
-         <echo>******begin to compile @{casetype} testcase******</echo>
-         <switch value="@{casetype}">
-            <case value="reliability">
-               <compilecase type="java"   srcdir="${case_basedir}/@{casetype}" dbdir="${WORKSPACE}/sequoiadb"/>
-            </case>            
-            <default/>
-         </switch>
-         </sequential>
-      </for>
+      <echo>******begin to compile reliability testcase******</echo>
+
+      <compilecase type="java"   srcdir="${case_basedir}/reliability" />
    </target>
    
    <target name="prepare_before_testcase">
-      <!--move testcase-->
-      <delete dir="${CI_WORK_DIR}/testcase" failonerror="false" />
-      <mkdir dir="${CI_WORK_DIR}/testcase"/>
       
-      <!--delete dir="${CI_WORK_DIR}/report" failonerror="false" /-->
+      <hostinfo prefix="host" />
+
+      <!--ready script in remote host-->
+      <for list="${testhost_list},${host.NAME}" param="testhost" parallel="false">
+         <sequential> 
+            <staf location="@{testhost}" service="FS"
+                        request="DELETE ENTRY ${CI_WORK_DIR} RECURSE CONFIRM"
+                        throwBuildException=""/>
+            <staf location="@{testhost}" service="FS"
+                        request="CREATE DIRECTORY ${CI_WORK_DIR} FULLPATH"
+                        throwBuildException="1"/>
+            <staf location="@{testhost}" service="FS"
+                        request="CREATE DIRECTORY ${CI_WORK_DIR}/script FULLPATH"
+                        throwBuildException="1"/>
+            <staf location="local" service="FS"
+                  request="COPY DIRECTORY ${basedir} TODIRECTORY ${CI_WORK_DIR}/script TOMACHINE @{testhost} RECURSE"
+                  throwBuildException="1"/>
+         </sequential>
+      </for>
+      
       <mkdir dir="${CI_WORK_DIR}/report"/>
       
-      <delete dir="${CI_WORK_DIR}/report/env_detect" failonerror="false" />
-      <mkdir dir="${CI_WORK_DIR}/report/env_detect"/>
-
+      <!--mkdir /tmp/ci_reliability for testcase-->
+      <for list="${testhost_list}" param="testhost" parallel="false">
+         <sequential>
+            <staf location="@{testhost}" service="FS"
+                  request="DELETE ENTRY ${RELIABILITY_TESTCASE_WORK_DIR} RECURSE CONFIRM"
+                  throwBuildException=""/>  
+            <staf location="@{testhost}" service="FS"
+                  request="CREATE DIRECTORY ${RELIABILITY_TESTCASE_WORK_DIR} FULLPATH"
+                  throwBuildException="1"/>  
+         </sequential>
+      </for>
+      
+      <mkdir dir="${CI_WORK_DIR}/testcase"/>
       <copy todir="${CI_WORK_DIR}/testcase">
          <fileset dir="${case_basedir}" includes="reliability/**/**"/>
       </copy>
       
    </target>
-   
-   
-   <target name="execute_testcase">
-      <var name="testscript_dir" value="${CI_WORK_DIR}/script/src/test" />     
-      <var name="testscript_log" value="${testscript_dir}/sync_test.log" />
-      
-      
-      <hostinfo prefix="host" />
-      <for list="${testhost_list}" param="tmphost" parallel="false">
-         <sequential> 
-            <if>
-               <equals arg1="@{tmphost}" arg2="${host.NAME}" />
-               <else>
-                  <staf location="local" service="FS"
-                        request="COPY DIRECTORY ${case_basedir} TODIRECTORY ${CI_WORK_DIR}/testcase TOMACHINE @{tmphost} RECURSE"
-                        throwBuildException="1"/>
-               </else>
-            </if>
-         </sequential> 
-      </for>
 
-      <var name="test_remote_cmd" value="ant -f ${CI_WORK_DIR}/script/src/test/reliability_test.xml exec_remote_testcase -DWORKDIR=${WORKDIR} -Dcontrol_host=${host.NAME} -DWORKSPACE=${WORKSPACE} -DTEST_TYPE=${TEST_TYPE} -DCI_WORK_DIR=${CI_WORK_DIR} -Dsdb_version=${sdb_version} -Dserial_number=${serial_number} -DTEST_TYPE=${TEST_TYPE}" />
-      <var name="iterator" value="0"/>
-      <for list="${testhost_list}" param="testhost" parallel="false">
-         <sequential>
-            <if>
-               <equals arg1="${iterator}" arg2="0"/>
-               <then>
-                  <var name="iterator" unset="true"/>
-                  <var name="iterator" value="1"/>
-                  <staf location="@{testhost}" service="PROCESS"                  
-                        request="START SHELL COMMAND echo 'exec: ${test_remote_cmd}, in host: @{testhost}' >> ${testscript_log}  WAIT 10m"
-                        throwBuildException="1"/>
-                              
-                  <staf location="@{testhost}" service="PROCESS"
-                        resultPrefix="remote_exec"
-                        request="START SHELL COMMAND ${test_remote_cmd} in host: @{testhost}  WAIT 10m"
-                        throwBuildException="1"/>
-                  <staf location="@{testhost}" service="FS"
-                        request="GET FILE ${testscript_log} TEXT"
-                        throwBuildException="1"/>
-                        
-                  <propertyregex property="remote_exec_rc" input="${remote_exec.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>      
-                  <if>
-                     <equals arg1="${remote_exec_rc}" arg2="0" />
-                     <else>
-                        <fail message="exec: ${test_remote_cmd}, in host: @{testhost}, return code: ${remote_exec_rc}"/>
-                     </else>
-                  </if>
-
-               </then>
-            </if>
-            
-         </sequential>
-      </for>
-
-   </target>
-   
-   <target name="exec_remote_testcase">
+   <target name="exec_testcase">
       
       <property name="report_basedir" value="${CI_WORK_DIR}/report" />
       <delete dir="${report_basedir}"/>
       <mkdir dir="${report_basedir}"/>
-      <!--mkdir /tmp/ci_reliability for testcase-->
-      <delete dir="${WORKDIR}"/>
-      <mkdir dir="${WORKDIR}"/>
       <!--testcase/reliability testng.xml testng_release.xml-->
       <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
       
@@ -230,12 +151,12 @@
          <property name="testcase_type" value="reliability"/>
          <property name="testcase_dir" value="${CI_WORK_DIR}/testcase/reliability"/>
          <property name="report_dir" value="${report_basedir}/reliability" />
-         <property name="sdb_version" value="${sdb_version}"/>
          <property name="serial_number" value="${serial_number}"/>
+         <property name="testhost_list" value="${testhost_list}"/>
       </ant>
-      
+      <hostinfo prefix="host" />
       <staf location="local" service="FS"
-            request="COPY DIRECTORY ${report_basedir} TODIRECTORY ${WORKSPACE}/report TOMACHINE ${control_host}"
+            request="COPY DIRECTORY ${report_basedir} TODIRECTORY ${WORKSPACE}/report TOMACHINE ${host.NAME} RECURSE"
             throwBuildException="1"/>
       
    </target>
