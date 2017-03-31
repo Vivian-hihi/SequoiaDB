@@ -80,7 +80,6 @@
    
    <macrodef name="compilecase">
       <attribute name="srcdir"/>
-      <attribute name="dbdir"/>
       <attribute name="type"/>
       <sequential>
          <switch value="@{type}">
