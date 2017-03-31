@@ -514,6 +514,7 @@ function _stopOMAgent( ssh )
    ssh[object]: Ssh object
    sdbuser[string]: the user to be add for running sequoiadb program
    sdbpasswd[string]: the password of sdbuser
+   sdbgroup[string]: the group of user
    omagentservice[string]: the service of OM Agent
    packet[string]: the full name of the packet,
                    e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
@@ -521,12 +522,13 @@ function _stopOMAgent( ssh )
                  to push this packet to remote host
 @return void
 ***************************************************************************** */
-function _installDBPacket( ssh, sdbuser, sdbpasswd, omagentservice, packet, path )
+function _installDBPacket( ssh, sdbuser, sdbpasswd, sdbgroup, omagentservice, packet, path )
 {
    var cmd = "" ;
    var option = "" ;
    option += " --mode unattended " + " --prefix " + path ;
    option += " --username " + sdbuser + " --userpasswd " + sdbpasswd ;
+   option += " --groupname " + sdbgroup ;
    option += " --port " + omagentservice ;
    var packetName = getPacketName( packet ) ;
    if ( SYS_LINUX == SYS_TYPE )
@@ -710,7 +712,7 @@ function main()
    // 7. install db packet
    try
    {
-      _installDBPacket( ssh, sdbUser, sdbPasswd, agentService,
+      _installDBPacket( ssh, sdbUser, sdbPasswd, sdbUserGroup, agentService,
                         installPacket, installPath ) ;
    }
    catch ( e )
