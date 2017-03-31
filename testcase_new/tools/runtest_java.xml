@@ -51,6 +51,7 @@
          <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
       </tstamp>
       <property name="tmp_report_dir" value="${casedir}/output" />
+      <delete dir="${tmp_report_dir}" failonerror="false"/>
       <mkdir dir="${tmp_report_dir}"/>
       <!--get src xml-->
       <switch value="${TEST_TYPE}">
@@ -68,7 +69,7 @@
          </case>
          <case value="RELIABILITYTEST">
             <if>
-               <contains string="${sdb_version}" substring="Enterprise-Debug"/>
+               <equals arg1="${serial_number}" arg2="1"/>
                <then>
                   <var name="srcxmlfile" value="testng.xml"/>
                </then>
@@ -112,15 +113,16 @@
                      <equals arg1="@{onexml}" arg2="testng.xml"/>
                      <then>
                         <copyfile src="${casedir}/@{onexml}" dest="${casedir}/proxyxml.xml"/>
+                        <var name="xmlfile" value="proxyxml.xml"/>
                      </then>
                      <else>
                         <copyfile src="${casedir}/@{onexml}" dest="${casedir}/proxyxml_release.xml"/>
+                        <var name="xmlfile" value="${xmlfile},proxyxml_release.xml"/>
                      </else>
                   </if>
                </sequential>
             </for>
-    
-            <var name="xmlfile" value="proxyxml.xml,proxyxml_release.xml"/>
+  
             <if>
                <not>
                   <isset property="TEST_LEVEL_TYPE"/>
@@ -168,9 +170,26 @@
          <taskdef resource="testngtasks" classpath="${casedir}/lib/testng-6.10.1-SNAPSHOT.jar"/>
          <for list="@{xmlfile}" param="xmlname">
             <sequential>
-               <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
-                  <xmlfileset dir="${casedir}" includes="@{xmlname}"/>
-               </testng>
+               <!--如果有失败的则中断-->
+               <var name="fail_num" value="0"/>
+               <if>
+                  <available file="${tmp_report_dir}/junitreports" type="dir"/>
+                  <then>
+                     <countstr str="&lt;failure&gt;"  resultproperty="fail_num">
+                        <path-elements>
+                           <fileset dir="${WORKSPACE}/report" includes="**/*.xml"/>
+                        </path-elements>
+                     </countstr>
+                  </then>
+               </if>
+               <if>
+                  <equals arg1="${fail_num}" arg2="0"/>
+                  <then>
+                     <testng outputDir="${tmp_report_dir}" classpathref="testcasecalsspath">
+                        <xmlfileset dir="${casedir}" includes="@{xmlname}"/>
+                     </testng>
+                  </then>
+               </if>
             </sequential>
          </for>
       </sequential>
@@ -305,5 +324,24 @@
       </sequential>
    </macrodef>
    
-
-   </project>
+   <macrodef name="countstr">
+      <attribute name="resultproperty"/>
+      <attribute name="str"/>
+      <element name="path-elements"/>
+      <sequential>
+         <var name="@{resultproperty}" unset="true"/>
+         <resourcecount property="@{resultproperty}">
+         <tokens>
+            <concat>
+               <filterchain>
+                  <tokenfilter>
+                     <containsstring contains="@{str}"/>
+                  </tokenfilter>
+               </filterchain>
+               <path-elements/>
+            </concat>
+         </tokens>
+         </resourcecount>
+      </sequential>
+   </macrodef>
+</project>
