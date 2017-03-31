@@ -18,7 +18,6 @@ import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
@@ -115,7 +114,7 @@ public class BrokenNetwork extends Fault {
                     "nohup " + remotePath + "/" + scriptName + " 10 > /tmp/brokenNet.log &");
             ssh.close();
             brokenHost.add(host);
-            System.out.println("Broken network:" + host + ",Waiting group re-election...");
+            System.out.println("Broken network:" + host + ",Waitting group reelect....");
             while (true) {
                 allHosts.removeAll(brokenHost);
                 if (allHosts.size() <= 0) {
