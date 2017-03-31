@@ -58,7 +58,7 @@ public class NetSplit2579 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness(true)) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             sdb = new Sequoiadb(coordUrl, "", "");
@@ -137,8 +137,8 @@ public class NetSplit2579 extends SdbTestBase {
             // 百分切分覆盖
             // GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            // Assert.assertEquals(srcGroup.checkInspect(30), true);
-            // Assert.assertEquals(destGroup.checkInspect(30), true);
+            // Assert.assertEquals(srcGroup.checkInspect(60), true);
+            // Assert.assertEquals(destGroup.checkInspect(60), true);
 
             clearFlag = true;
         }

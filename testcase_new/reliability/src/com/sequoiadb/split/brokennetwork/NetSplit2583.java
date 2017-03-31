@@ -52,7 +52,7 @@ public class NetSplit2583 extends SdbTestBase {
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = GroupMgr.getInstance();
 
-            if (!groupMgr.checkBusiness(true)) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             sdb = new Sequoiadb(coordUrl, "", "");
@@ -79,7 +79,9 @@ public class NetSplit2583 extends SdbTestBase {
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
+            }
         }
     }
 
@@ -117,12 +119,13 @@ public class NetSplit2583 extends SdbTestBase {
             // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
             // GroupWrapper cataGroup =
             // groupMgr.getGroupByName(Utils.CATA_RG_NAME);
-            // Assert.assertEquals(srcGroup.checkInspect(30), true);
-            // Assert.assertEquals(destGroup.checkInspect(30), true);
-            // Assert.assertEquals(cataGroup.checkInspect(30), true);
+            // Assert.assertEquals(srcGroup.checkInspect(60), true);
+            // Assert.assertEquals(destGroup.checkInspect(60), true);
+            // Assert.assertEquals(cataGroup.checkInspect(60), true);
 
             checkGroupData(db, destGroupName, "{sk:{$gte:2500,$lt:7500}}", 5000);
             checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:7500}},{sk:{$lt:2500}}]}", 5000);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), 10000);
 
             clearFlag = true;
         }

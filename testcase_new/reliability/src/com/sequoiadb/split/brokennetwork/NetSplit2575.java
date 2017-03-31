@@ -53,7 +53,7 @@ public class NetSplit2575 extends SdbTestBase {
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = GroupMgr.getInstance();
 
-            if (!groupMgr.checkBusiness(true)) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             commSdb = new Sequoiadb(coordUrl, "", "");
@@ -120,11 +120,12 @@ public class NetSplit2575 extends SdbTestBase {
             // 结果校验
             GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            Assert.assertEquals(srcGroup.checkInspect(30), true);
-            Assert.assertEquals(destGroup.checkInspect(30), true);
+            Assert.assertEquals(srcGroup.checkInspect(60), true);
+            Assert.assertEquals(destGroup.checkInspect(60), true);
             long destCount = checkGroupData(db, destGroupName);
             long srcCount = checkGroupData(db, srcGroupName);
             Assert.assertEquals(destCount + srcCount, totalCount);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:9000}}"), totalCount);
 
             clearFlag = true;
         }

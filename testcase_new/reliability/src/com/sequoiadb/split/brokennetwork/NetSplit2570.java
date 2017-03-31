@@ -53,7 +53,7 @@ public class NetSplit2570 extends SdbTestBase {
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = GroupMgr.getInstance();
 
-            if (!groupMgr.checkBusiness()) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             sdb = new Sequoiadb(coordUrl, "", "");
@@ -116,19 +116,19 @@ public class NetSplit2570 extends SdbTestBase {
             // 再次插入数据
             db = new Sequoiadb(connectUrl, "", "");
             db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-            db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 3000, 4000);
+            insertData(cl, 6000, 8000);
 
             // 在百分比切分覆盖
             // GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            // Assert.assertEquals(srcGroup.checkInspect(30), true);
-            // Assert.assertEquals(destGroup.checkInspect(30), true);
+            // Assert.assertEquals(srcGroup.checkInspect(60), true);
+            // Assert.assertEquals(destGroup.checkInspect(60), true);
 
             long destCount = checkGroupData(db, destGroupName);
             long srcCount = checkGroupData(db, srcGroupName);
             Assert.assertEquals(destCount + srcCount, clTotalCount);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:8000}}"), clTotalCount);
 
             clearFlag = true;
         }

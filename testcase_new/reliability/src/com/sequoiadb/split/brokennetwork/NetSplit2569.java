@@ -55,7 +55,7 @@ public class NetSplit2569 extends SdbTestBase {
 
             groupMgr = GroupMgr.getInstance();
 
-            if (!groupMgr.checkBusiness()) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             sdb = new Sequoiadb(coordUrl, "", "");

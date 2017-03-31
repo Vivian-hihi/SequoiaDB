@@ -53,7 +53,7 @@ public class NetSplit2584 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness(true)) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
 
@@ -83,7 +83,9 @@ public class NetSplit2584 extends SdbTestBase {
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
+            }
         }
     }
 
@@ -120,15 +122,16 @@ public class NetSplit2584 extends SdbTestBase {
             // 源和目标数据量比对
             checkGroupData(db, destGroupName, "{sk:{$gte:2500,$lt:7500}}", 5000);
             checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:7500}},{sk:{$lt:2500}}]}", 5000);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), 10000);
 
             // 百分比切分覆盖
             // GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
             // GroupWrapper cataGroup =
             // groupMgr.getGroupByName(Utils.CATA_RG_NAME);
-            // Assert.assertEquals(srcGroup.checkInspect(30), true);
-            // Assert.assertEquals(destGroup.checkInspect(30), true);
-            // Assert.assertEquals(cataGroup.checkInspect(30), true);
+            // Assert.assertEquals(srcGroup.checkInspect(60), true);
+            // Assert.assertEquals(destGroup.checkInspect(60), true);
+            // Assert.assertEquals(cataGroup.checkInspect(60), true);
 
             clearFlag = true;
         }

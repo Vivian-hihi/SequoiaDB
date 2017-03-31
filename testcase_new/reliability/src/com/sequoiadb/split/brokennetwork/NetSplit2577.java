@@ -53,7 +53,7 @@ public class NetSplit2577 extends SdbTestBase {
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             groupMgr = GroupMgr.getInstance();
 
-            if (!groupMgr.checkBusiness(true)) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             sdb = new Sequoiadb(coordUrl, "", "");
@@ -66,7 +66,7 @@ public class NetSplit2577 extends SdbTestBase {
             CollectionSpace commCS = sdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName,
                     (BSONObject) JSON
-                            .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
+                            .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',ReplSize:2,Group:'"
                                     + srcGroupName + "'}"));
             insertData(cl, 0, 2000);
 
@@ -119,16 +119,21 @@ public class NetSplit2577 extends SdbTestBase {
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 8000, 10000);
 
+            // 等待切分任务的结束（由于cata断网，同步切分返回不一定在目标组建立了集合）
+            Utils.waitSplit(db, cl.getFullName());
+
             // 结果校验
             GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
             GroupWrapper cataGroup = groupMgr.getGroupByName(Utils.CATA_RG_NAME);
-            Assert.assertEquals(srcGroup.checkInspect(30), true);
-            Assert.assertEquals(destGroup.checkInspect(30), true);
-            Assert.assertEquals(cataGroup.checkInspect(30), true);
+            Assert.assertEquals(srcGroup.checkInspect(60), true);
+            Assert.assertEquals(destGroup.checkInspect(60), true);
+            Assert.assertEquals(cataGroup.checkInspect(60), true);
+
             long destCount = checkGroupData(db, destGroupName);
             long srcCount = checkGroupData(db, srcGroupName);
             Assert.assertEquals(destCount + srcCount, clTotalCount);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), clTotalCount);
 
             clearFlag = true;
         }
@@ -198,7 +203,7 @@ public class NetSplit2577 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = new Sequoiadb(connectUrl, "", "");
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 2000, 10000);
+            insertData(cl, 2000, 8000);
         }
     }
 

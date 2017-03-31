@@ -55,7 +55,7 @@ public class NetSplit2587 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness(true)) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
             sdb = new Sequoiadb(coordUrl, "", "");
@@ -84,7 +84,9 @@ public class NetSplit2587 extends SdbTestBase {
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            if (sdb != null) {
+                sdb.disconnect();
+            }
         }
     }
 
@@ -118,6 +120,9 @@ public class NetSplit2587 extends SdbTestBase {
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 10000, 11000);
 
+            // 等待切分任务的结束（由于cata断网，同步切分返回不一定在目标组建立了集合）
+            Utils.waitSplit(db, cl.getFullName());
+
             // 源和目标数据量比对
             int bound = getBound(db);
             // 5000 + 5000 + 1000 - bound :插入线程插入的数据 + setUp插入的数据 + 所有线程结束后插入的数据
@@ -125,12 +130,13 @@ public class NetSplit2587 extends SdbTestBase {
             checkGroupData(db, destGroupName, "{sk:{$gte:" + bound + "}}",
                     5000 + 5000 + 1000 - bound);
             checkGroupData(db, srcGroupName, "{sk:{$lt:" + bound + "}}", bound);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:11000}}"), 11000);
 
             // 组间一致性校验，尝试至多60次，每次间隔1秒
             GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            Assert.assertEquals(srcGroup.checkInspect(30), true);
-            Assert.assertEquals(destGroup.checkInspect(30), true);
+            Assert.assertEquals(srcGroup.checkInspect(60), true);
+            Assert.assertEquals(destGroup.checkInspect(60), true);
 
             clearFlag = true;
         }

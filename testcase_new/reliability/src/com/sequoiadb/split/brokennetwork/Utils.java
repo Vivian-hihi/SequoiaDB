@@ -9,6 +9,7 @@ import org.testng.SkipException;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.BaseException;
@@ -90,6 +91,22 @@ public class Utils {
         for (GroupWrapper group : groups) {
             if (destHost.equals(group.getMaster().hostName()) && !group.changePrimary()) {
                 throw new SkipException(group.getGroupName() + " failed to reelect");
+            }
+        }
+    }
+
+    public static void waitSplit(Sequoiadb db, String clFullName) {
+        DBCursor cursor = null;
+        while (true) {
+            try {
+                cursor = db.getList(Sequoiadb.SDB_LIST_TASKS,
+                        (BSONObject) JSON.parse("{Name:'" + clFullName + "'}"), null, null);
+                if (!cursor.hasNext()) {
+                    break;
+                }
+            }
+            finally {
+                cursor.close();
             }
         }
     }

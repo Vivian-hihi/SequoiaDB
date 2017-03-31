@@ -55,7 +55,7 @@ public class NetSplit2568 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness()) {
+            if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
 
@@ -135,6 +135,7 @@ public class NetSplit2568 extends SdbTestBase {
             destCount = checkGroupLob(db, destGroupName);
             srcCount = checkGroupLob(db, srcGroupName);
             Assert.assertEquals(srcCount + destCount, totalCount);
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), totalCount);
             // 组间一致性校验，尝试至多60次
             GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
@@ -242,7 +243,7 @@ public class NetSplit2568 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = new Sequoiadb(connectUrl, "", "");
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 1000, 5000);
+            insertData(cl, 800, 5000);
         }
     }
 
