@@ -42,6 +42,7 @@
 #include "oss.hpp"
 #include "netDef.hpp"
 #include "ossLatch.hpp"
+#include "ossAtomic.hpp"
 
 #include <string>
 #include <boost/enable_shared_from_this.hpp>
@@ -114,19 +115,20 @@ namespace engine
          }
          OSS_INLINE void incWaitReply()
          {
-            ++_waitReplyNum ;
+            _waitReplyNum.inc() ;
          }
          OSS_INLINE void decWaitReply()
          {
-            SDB_ASSERT( _waitReplyNum > 0, "_waitReplyNum must > 0" ) ;
-            if ( _waitReplyNum > 0 )
+            INT32 orgValue = _waitReplyNum.dec() ;
+            SDB_ASSERT( orgValue > 0, "_waitReplyNum must > 0" ) ;
+            if ( orgValue <= 0 )
             {
-               --_waitReplyNum ;
+               _waitReplyNum.swapGreaterThan( 0 ) ;
             }
          }
-         OSS_INLINE BOOLEAN isWaitReply() const
+         OSS_INLINE BOOLEAN isWaitReply()
          {
-            return _waitReplyNum > 0 ? TRUE : FALSE ;
+            return _waitReplyNum.peek() > 0 ? TRUE : FALSE ;
          }
 
          void  close() ;
@@ -178,7 +180,7 @@ namespace engine
          UINT64                           _lastRecvTick ;
          UINT64                           _lastBeatTick ;
          UINT64                           _msgid ;
-         UINT32                           _waitReplyNum ;
+         ossAtomicSigned32                _waitReplyNum ;
 
    };
 

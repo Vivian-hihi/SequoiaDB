@@ -60,7 +60,8 @@ namespace engine
                                        _bufLen(0),
                                        _state(NET_EVENT_HANDLER_STATE_HEADER),
                                        _frame(frame),
-                                       _handle(_frame->allocateHandle())
+                                       _handle(_frame->allocateHandle()),
+                                       _waitReplyNum(0)
    {
       _id.value      = MSG_INVALID_ROUTEID ;
       _isConnected   = FALSE ;
@@ -69,7 +70,6 @@ namespace engine
       _lastRecvTick  = pmdGetDBTick() ;
       _lastBeatTick  = pmdGetDBTick() ;
       _msgid         = 0 ;
-      _waitReplyNum  = 0 ;
    }
 
    _netEventHandler::~_netEventHandler()
