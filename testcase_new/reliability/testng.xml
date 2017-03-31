@@ -10,7 +10,7 @@
 	<parameter name="RSRVPORTEND" value="27000" />
 	<parameter name="RSRVNODEDIR" value="/data/sequoiadb/cidatabase" />
 	<parameter name="WORKDIR" value="/tmp/ci_reliability" />
-	<parameter name="ROOTPASSWD" value="sequoiadb" />
+	<parameter name="ROOTPASSWD" value="jenkins" />
 	<parameter name="REMOTEUSER" value="sdbadmin" />
 	<parameter name="REMOTEPASSWD" value="sdbadmin" />
 	<test name="reliability">
@@ -18,10 +18,9 @@
 			<package name="com.sequoiadb.subcl.brokennetwork" />
 			<package name="com.sequoiadb.subcl.killnode"></package>
 			<package name="com.sequoiadb.subcl.restartnode"></package>
-			<package name="com.sequoiadb.subcl.diskfull"></package>
+		
 			<package name="com.sequoiadb.clsmgr.brokennetwork"></package>
 			<package name="com.sequoiadb.split.killnode"></package>
-			<package name="com.sequoiadb.split.diskfull"></package>
 			<package name="com.sequoiadb.split.restartnode"></package>
 			<package name="com.sequoiadb.split.brokennetwork"/>
 		</packages>
