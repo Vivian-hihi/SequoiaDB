@@ -191,7 +191,9 @@ public class GroupMgr {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
                 return testCatalogSync(printAndThrowAllException);
             }
-				return false;
+            else {
+                return false;
+            }
         }
         return ret;
     }
@@ -204,6 +206,13 @@ public class GroupMgr {
             Sequoiadb db = node.connect();
             try {
                 DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
+                if (cl == null) {
+                    if (printAndThrowAllException) {
+                        System.out.println(
+                                "Check business:failed to query test collection(clForTestBusiness_reliability) on SYSCatalogGroup:Can not find SYSCAT.SYSCOLLECTIONS");
+                    }
+                    ret = false;
+                }
                 long count = cl.getCount(
                         "{Name:'" + SdbTestBase.csName + ".clForTestBusiness_reliability'}");
                 if (count == 0) {
@@ -248,6 +257,7 @@ public class GroupMgr {
             for (index = 0; index < groupNames.size(); index++) {
                 cs.createCollection("clForTestBusiness_reliability", (BSONObject) JSON
                         .parse("{ReplSize:3,Group:'" + groupNames.get(index) + "'}"));
+
                 if (index != groupNames.size() - 1) {
                     cs.dropCollection("clForTestBusiness_reliability");
                 }
@@ -346,7 +356,6 @@ public class GroupMgr {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
                 return testCatalogSync(printAndThrowAllException);
             }
-				return false;
         }
         return ret;
     }
@@ -429,7 +438,6 @@ public class GroupMgr {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
                 return testCatalogSync(printAndThrowAllException);
             }
-				return false;
         }
         return ret;
     }

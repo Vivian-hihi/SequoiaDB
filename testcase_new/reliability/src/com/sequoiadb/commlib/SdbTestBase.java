@@ -1,5 +1,7 @@
 package com.sequoiadb.commlib;
 
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -7,19 +9,20 @@ import org.testng.annotations.Parameters;
 
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.exception.ReliabilityException;
 
 public class SdbTestBase {
-    public static String coordUrl = "192.168.31.31:11810";
-    public static String hostName = "192.168.31.31";
-    public static String serviceName = "11810";
-    public static String csName = "reliability_test";
-    public static int reservedPortBegin = 26000;
-    public static int reservedPortEnd = 27000;
-    public static String reservedDir = "/data/sequoiadb/cidatabase";
-    public static String workDir = "/tmp/ci_reliability";
-    public static String rootPwd = "sequoiadb";
-    public static String remoteUser = "sdbadmin";
-    public static String remotePwd = "sdbadmin";
+    public static String coordUrl;
+    public static String hostName;
+    public static String serviceName;
+    public static String csName;
+    public static int reservedPortBegin;
+    public static int reservedPortEnd;
+    public static String reservedDir;
+    public static String workDir;
+    public static String rootPwd;
+    public static String remoteUser;
+    public static String remotePwd;
 
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
             "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD" })
@@ -43,6 +46,8 @@ public class SdbTestBase {
             db = new Sequoiadb(coordUrl, "", "");
             boolean ret = createCommonCS(db);
             Assert.assertTrue(ret);
+            // TODO: createWorkDir(db);
+            // TODO: createReserveDir(db);
         }
         catch (BaseException e) {
             Assert.fail("connect " + coordUrl + ": " + e.getErrorCode());
@@ -54,7 +59,48 @@ public class SdbTestBase {
         }
     }
 
-    @AfterSuite
+    private static void createReserveDir(Sequoiadb db) {
+        try {
+            GroupMgr mgr = GroupMgr.getInstance();
+            List<String> hosts = mgr.getAllHosts();
+            for (String host : hosts) {
+                Ssh ssh = new Ssh(host, SdbTestBase.remoteUser, SdbTestBase.rootPwd);
+                try {
+                    ssh.exec("mkdir -p " + SdbTestBase.reservedDir);
+                    ssh.exec("chown " + SdbTestBase.remoteUser + " " + SdbTestBase.reservedDir);
+                }
+                finally {
+                    ssh.close();
+                }
+            }
+        }
+        catch (ReliabilityException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private static void createWorkDir(Sequoiadb db) {
+        try {
+            GroupMgr mgr = GroupMgr.getInstance();
+            List<String> hosts = mgr.getAllHosts();
+            for (String host : hosts) {
+                Ssh ssh = new Ssh(host, SdbTestBase.remoteUser, SdbTestBase.rootPwd);
+                try {
+                    ssh.exec("mkdir -p " + SdbTestBase.workDir);
+                }
+                finally {
+                    ssh.close();
+                }
+            }
+        }
+        catch (ReliabilityException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @AfterSuite(enabled = false)
     public static void finiSuite() {
         Sequoiadb db = null;
         try {
