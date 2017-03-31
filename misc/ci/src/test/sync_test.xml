@@ -76,34 +76,34 @@
          <switch value="@{casetype}">
          
             <case value="tdd_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             <case value="story_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             <case value="sdv_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             <case value="driver_java">
-               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="java"   srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             
             <case value="tdd_c">
-               <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             <case value="driver_c">
-               <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="c"      srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             
             <case value="tdd_mongoc">
-               <compilecase type="mongoc" srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="mongoc" srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             
             <case value="tdd_cpp">
-               <compilecase type="cpp"    srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="cpp"    srcdir="${case_basedir}/${case_reltdir}"/>
             </case>            
             <case value="driver_cpp">
-               <compilecase type="cpp"    srcdir="${case_basedir}/${case_reltdir}" dbdir="${INSTALL_DIR}"/>
+               <compilecase type="cpp"    srcdir="${case_basedir}/${case_reltdir}"/>
             </case>
             
             <default/>
