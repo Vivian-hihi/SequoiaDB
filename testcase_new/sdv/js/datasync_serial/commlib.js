@@ -1247,8 +1247,8 @@ function isPortUsed(port)
 // only valid at the host that is run script 
 function allocPort()
 {
-   var port = parseInt(RSRVPORTBEGIN);
-   for (; port < parseInt(RSRVPORTEND); port +=10)
+   var port = parseInt(SPAREPORTSTART);
+   for (; port < parseInt(SPAREPORTSTOP); port +=10)
    {
       if (!isPortUsed(port))
       {
