@@ -16,6 +16,13 @@
 	<test name="reliability">
 		<packages>
 			<package name="com.sequoiadb.subcl.brokennetwork" />
+			<package name="com.sequoiadb.subcl.killnode"></package>
+			<package name="com.sequoiadb.subcl.restartnode"></package>
+			<package name="com.sequoiadb.subcl.diskfull"></package>
+			<package name="com.sequoiadb.clsmgr.brokennetwork"></package>
+			<package name="com.sequoiadb.split.killnode"></package>
+			<package name="com.sequoiadb.split.diskfull"></package>
+			<package name="com.sequoiadb.split.restartnode"></package>
 			<package name="com.sequoiadb.split.brokennetwork"/>
 		</packages>
 	</test>
