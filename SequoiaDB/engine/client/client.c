@@ -248,6 +248,7 @@ static INT32 _setRGName ( sdbReplicaGroupHandle handle,
    INT32 len      = 0 ;
    sdbRGStruct *r = (sdbRGStruct*)handle ;
 
+   HANDLE_CHECK( handle, r, SDB_HANDLE_TYPE_REPLICAGROUP );
    if ( ( len = ossStrlen ( pGroupName ) ) > CLIENT_RG_NAMESZ )
    {
       rc = SDB_INVALIDARG ;
@@ -263,13 +264,14 @@ error :
    goto done ;
 }
 
-static INT32 _setCSName ( sdbCSHandle handle,
+static INT32 _setCSName ( sdbCSHandle cHandle,
                           const CHAR *pCollectionSpaceName )
 {
    INT32 rc       = SDB_OK ;
    INT32 len      = 0 ;
-   sdbCSStruct *s = (sdbCSStruct*)handle ;
+   sdbCSStruct *s = (sdbCSStruct*)cHandle ;
 
+   HANDLE_CHECK( cHandle, s, SDB_HANDLE_TYPE_CS );
    if ( ( len = ossStrlen ( pCollectionSpaceName) ) > CLIENT_CS_NAMESZ )
    {
       rc = SDB_INVALIDARG ;
@@ -285,7 +287,7 @@ error :
 }
 
 #define CL_FULLNAME_LEN (CLIENT_CS_NAMESZ + CLIENT_COLLECTION_NAMESZ +1)
-static INT32 _setCollectionName ( sdbCollectionHandle handle,
+static INT32 _setCollectionName ( sdbCollectionHandle cHandle,
                                   const CHAR *pCollectionFullName )
 {
    INT32 rc                 = SDB_OK ;
@@ -295,8 +297,9 @@ static INT32 _setCollectionName ( sdbCollectionHandle handle,
    CHAR *pDot               = NULL ;
    CHAR *pDot1              = NULL ;
    CHAR collectionFullName [ CL_FULLNAME_LEN  + 1 ] = {0} ;
-   sdbCollectionStruct *s  = (sdbCollectionStruct*)handle ;
+   sdbCollectionStruct *s   = (sdbCollectionStruct*)cHandle ;
 
+   HANDLE_CHECK( cHandle, s, SDB_HANDLE_TYPE_COLLECTION );
    ossMemset ( s->_CSName, 0, sizeof ( s->_CSName ) );
    ossMemset ( s->_collectionName, 0, sizeof ( s->_collectionName ) ) ;
    ossMemset ( s->_collectionFullName, 0, sizeof ( s->_collectionFullName ) ) ;
@@ -1293,10 +1296,12 @@ static INT32 __sdbUpdate ( sdbCollectionHandle cHandle,
                            bson *condition,
                            bson *hint )
 {
-   INT32 rc                = SDB_OK ;
-   SINT64 contextID        = -1 ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = -1 ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION );
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
    rc = clientBuildUpdateMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                                 cs->_collectionFullName, flag, 0, condition,
@@ -1343,10 +1348,11 @@ static INT32 _sdbStartStopNode ( sdbNodeHandle cHandle,
                                  BOOLEAN start )
 {
    INT32 rc         = SDB_OK ;
-   bson configuration ;
    BOOLEAN bsoninit = FALSE ;
+   bson configuration ;
    sdbRNStruct *r   = (sdbRNStruct*)cHandle ;
 
+   HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICANODE);
    BSON_INIT( configuration ) ;
    BSON_APPEND( configuration, CAT_HOST_FIELD_NAME,
                 r->_hostName, string ) ;
@@ -1425,8 +1431,6 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
    INT32 rc                        = SDB_OK ;
    sdbCursorStruct *cursor         = NULL ;
    SINT64 contextID                = -1 ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
-
    static char *pcmd[] = {
       CMD_ADMIN_PREFIX CMD_NAME_LIST_CONTEXTS         ,
       CMD_ADMIN_PREFIX CMD_NAME_LIST_CONTEXTS_CURRENT ,
@@ -1443,7 +1447,9 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
       CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN ,
 
    } ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = clientBuildQueryMsg ( &connection->_pSendBuffer,
                               &connection->_sendBufferSize,
                               pcmd[listType], 0, 0, 0, -1, condition, selector, orderBy,
@@ -1542,13 +1548,14 @@ static INT32 _sdbGetReplicaGroup( sdbConnectionHandle cHandle,
                                   bson condition,
                                   sdbReplicaGroupHandle *handle )
 {
-   INT32 rc                 = SDB_OK;
-   sdbCursorHandle cursor   = SDB_INVALID_HANDLE ;
-   sdbRGStruct *r           = NULL ;
    bson result ;
-   BOOLEAN bsoninit         = FALSE ;
+   INT32 rc                        = SDB_OK;
+   sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
+   sdbRGStruct *r                  = NULL ;
+   BOOLEAN bsoninit                = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = sdbGetList ( cHandle, SDB_LIST_GROUPS, &condition, NULL, NULL,
                      &cursor ) ;
    if ( SDB_OK != rc )
@@ -1641,7 +1648,6 @@ SDB_EXPORT INT32 __sdbSetReserveSpace1 ( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    connection->reserveSpace1 = space ;
 done :
    return rc ;
@@ -1879,13 +1885,12 @@ SDB_EXPORT INT32 sdbSecureConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
 
 void _sdbDisconnect_inner ( sdbConnectionHandle handle )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc                        = SDB_OK ;
+   Node *cursors                   = NULL ;
+   Node *sockets                   = NULL ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)handle ;
-   Node *cursors  = NULL ;
-   Node *sockets  = NULL ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( handle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // if we had disconnected
    if ( NULL == connection->_sock )
@@ -1929,9 +1934,7 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle cHandle )
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    ossMutexLock( &connection->_sockMutex );
    hasLock = TRUE ;
 
@@ -2017,13 +2020,14 @@ SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
                                     sdbCursorHandle *handle )
 {
    INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
    CHAR *p                         = CMD_ADMIN_PREFIX CMD_NAME_GET_DATABLOCKS ;
    sdbCursorStruct *cursor         = NULL ;
-   SINT64 contextID                = 0 ;
+   sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] || !handle )
    {
       rc = SDB_INVALIDARG ;
@@ -2095,16 +2099,17 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
                                    INT64 numToReturn,
                                    sdbCursorHandle *handle )
 {
+   bson hint1 ;
    INT32 rc                        = SDB_OK ;
    CHAR *p                         = CMD_ADMIN_PREFIX CMD_NAME_GET_QUERYMETA ;
    sdbCursorStruct *cursor         = NULL ;
    SINT64 contextID                = 0 ;
-   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
+   sdbConnectionStruct *connection = NULL ;
    BOOLEAN bsoninit                = FALSE ;
-   bson hint1 ;
-
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] || !handle )
    {
       rc = SDB_INVALIDARG ;
@@ -2185,7 +2190,6 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
    INT32 rc                        = SDB_OK ;
    sdbCursorStruct *cursor         = NULL ;
    SINT64 contextID                = -1 ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
    static char *pcmd[] = {
       CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ,
       CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ,
@@ -2199,6 +2203,7 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
       CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS_CUR ,
       CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_TRANSACTIONS
    } ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( snapType >= SDB_SNAP_END || snapType < SDB_SNAP_CONTEXTS )
@@ -2272,9 +2277,9 @@ SDB_EXPORT INT32 sdbCreateUsr( sdbConnectionHandle cHandle,
                               const CHAR *pUsrName,
                                const CHAR *pPasswd )
 {
-   INT32 rc                   = SDB_OK ;
-   CHAR md5[ENCRYTED_STR_LEN] = {0};
-   SINT64 contextID           = 0 ;
+   INT32 rc                        = SDB_OK ;
+   CHAR md5[ENCRYTED_STR_LEN]      = {0};
+   SINT64 contextID                = 0 ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION );
@@ -2394,7 +2399,6 @@ SDB_EXPORT INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    rc = _runCommand ( cHandle, connection->_sock, &connection->_pSendBuffer,
                       &connection->_sendBufferSize,
                       &connection->_pReceiveBuffer,
@@ -2466,8 +2470,8 @@ SDB_EXPORT INT32 sdbGetCollection ( sdbConnectionHandle cHandle,
    CHAR *pTestCollection  = CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION ;
    CHAR *pName            = FIELD_NAME_NAME ;
    sdbCollectionStruct *s = NULL ;
-   bson newObj ;
    BOOLEAN bsoninit       = FALSE ;
+   bson newObj ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
@@ -2537,11 +2541,11 @@ SDB_EXPORT INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
                                          const CHAR *pCollectionSpaceName,
                                          sdbCSHandle *handle )
 {
-   INT32 rc               = SDB_OK ;
-   BOOLEAN bsoninit       = FALSE ;
-   CHAR *pTestCollection  = CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTIONSPACE ;
-   CHAR *pName            = FIELD_NAME_NAME ;
-   sdbCSStruct *s         = NULL ;
+   INT32 rc              = SDB_OK ;
+   BOOLEAN bsoninit      = FALSE ;
+   CHAR *pTestCollection = CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTIONSPACE ;
+   CHAR *pName           = FIELD_NAME_NAME ;
+   sdbCSStruct *s        = NULL ;
    bson newObj ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
@@ -2612,10 +2616,10 @@ SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
                                       const CHAR *pGroupName,
                                       sdbReplicaGroupHandle *handle )
 {
-   INT32 rc                 = SDB_OK ;
-   CHAR *pName              = CAT_GROUPNAME_NAME ;
+   INT32 rc                        = SDB_OK ;
+   CHAR *pName                     = CAT_GROUPNAME_NAME ;
+   BOOLEAN bsoninit                = FALSE ;
    bson newObj ;
-   BOOLEAN bsoninit         = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
@@ -2649,10 +2653,10 @@ SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
                                        UINT32 id,
                                        sdbReplicaGroupHandle *handle )
 {
-   INT32 rc                 = SDB_OK ;
-   CHAR *pName              = CAT_GROUPID_NAME ;
+   INT32 rc                        = SDB_OK ;
+   CHAR *pName                     = CAT_GROUPID_NAME ;
+   BOOLEAN bsoninit                = FALSE ;
    bson newObj ;
-   BOOLEAN bsoninit         = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
@@ -2683,11 +2687,10 @@ error :
 SDB_EXPORT INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
                                           CHAR **ppRGName )
 {
-   INT32 rc                 = SDB_OK ;
-   sdbRGStruct *r           = (sdbRGStruct*)cHandle ;
+   INT32 rc       = SDB_OK ;
+   sdbRGStruct *r = (sdbRGStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
-
    if ( ppRGName )
    {
       *ppRGName = r->_replicaGroupName ;
@@ -2701,9 +2704,9 @@ error :
 SDB_EXPORT INT32 sdbGetRGName ( sdbReplicaGroupHandle cHandle,
                                 CHAR *pBuffer, INT32 size )
 {
-   INT32 rc                 = SDB_OK ;
-   INT32 name_len           = 0 ;
-   sdbRGStruct *r           = (sdbRGStruct*)cHandle ;
+   INT32 rc       = SDB_OK ;
+   INT32 name_len = 0 ;
+   sdbRGStruct *r = (sdbRGStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    if ( NULL == pBuffer )
@@ -2734,14 +2737,12 @@ error :
 
 SDB_EXPORT BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle )
 {
-   INT32 rc = SDB_OK ;
-   sdbRGStruct *r    = (sdbRGStruct*)cHandle ;
+   INT32 rc          = SDB_OK ;
    BOOLEAN isCatalog = FALSE ;
-
+   sdbRGStruct *r    = (sdbRGStruct*)cHandle ;
+   
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
-
    isCatalog = r->_isCatalog ;
 done :
    return isCatalog ;
@@ -2756,7 +2757,7 @@ SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
                                              bson *configure )
 {
    INT32 rc         = SDB_OK ;
-   CHAR *pCataRG = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
+   CHAR *pCataRG    = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
    BOOLEAN bsoninit = FALSE ;
    bson configuration ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -2822,11 +2823,10 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
                                  bson *configure )
 {
    INT32 rc = SDB_OK ;
-
-   CHAR *pCreateNode = CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE ;
-   sdbRGStruct *r    = (sdbRGStruct*)cHandle ;
    BOOLEAN bsoninit  = FALSE ;
+   CHAR *pCreateNode = CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE ;
    bson configuration ;
+   sdbRGStruct *r    = (sdbRGStruct*)cHandle ;  
 
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    if ( !pHostName || !pServiceName || !pDatabasePath )
@@ -2897,11 +2897,11 @@ SDB_EXPORT INT32 sdbRemoveNode ( sdbReplicaGroupHandle cHandle,
                                  bson *configure )
 {
    INT32 rc          = SDB_OK ;
-   CHAR *pRemoveNode = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE ;
-   sdbRGStruct *r    = (sdbRGStruct*)cHandle ;
    BOOLEAN bsoninit  = FALSE ;
+   CHAR *pRemoveNode = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE ;
    bson removeInfo ;
-
+   sdbRGStruct *r    = (sdbRGStruct*)cHandle ;
+   
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    if ( !pHostName || !pServiceName )
    {
@@ -2966,10 +2966,10 @@ SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
                                               bson *options,
                                               sdbCSHandle *handle )
 {
-   INT32 rc                 = SDB_OK ;
-   CHAR *pCreateCollection  = CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE ;
-   sdbCSStruct *s           = NULL ;
-   BOOLEAN bsoninit         = FALSE ;
+   INT32 rc                = SDB_OK ;
+   CHAR *pCreateCollection = CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE ;
+   sdbCSStruct *s          = NULL ;
+   BOOLEAN bsoninit        = FALSE ;
    bson newObj ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
@@ -3260,8 +3260,8 @@ SDB_EXPORT INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle )
    sdbRGStruct *r   = (sdbRGStruct*)cHandle ;
    BOOLEAN bsoninit = FALSE ;
    bson configuration ;
-   HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
 
+   HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    BSON_INIT( configuration );
    BSON_APPEND( configuration,
                 FIELD_NAME_GROUPNAME, r->_replicaGroupName, string ) ;
@@ -3303,6 +3303,7 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    BOOLEAN bsoninit        = FALSE ;
    bson_iterator it ;
    bson result ;
+
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    if ( !handle )
    {
@@ -3600,6 +3601,7 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
    bson result ;
    bson_iterator it ;
    sdbRGStruct *r          = (sdbRGStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    if ( !pHostName || !pServiceName || !handle )
    {
@@ -3681,7 +3683,6 @@ SDB_EXPORT INT32 sdbGetNodeAddr ( sdbNodeHandle cHandle,
    sdbRNStruct *r = (sdbRNStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICANODE ) ;
-
    if ( ppHostName )
    {
       *ppHostName = r->_hostName ;
@@ -3738,11 +3739,11 @@ SDB_EXPORT INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbFlushConfigure( sdbConnectionHandle cHandle,
                                     bson *options )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc         = SDB_OK ;
    SINT64 contextID = 0 ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = clientBuildQueryMsg( &(connection->_pSendBuffer),
                              &(connection->_sendBufferSize),
                              (CMD_ADMIN_PREFIX CMD_NAME_EXPORT_CONFIG),
@@ -3787,11 +3788,12 @@ error:
 SDB_EXPORT INT32 sdbCrtJSProcedure( sdbConnectionHandle cHandle,
                                     const CHAR *code )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc         = SDB_OK ;
    SINT64 contextID = 0 ;
-   bson bs ;
    BOOLEAN bsoninit = FALSE ;
+   bson bs ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( !code )
    {
@@ -3855,6 +3857,7 @@ SDB_EXPORT INT32 sdbRmProcedure( sdbConnectionHandle cHandle,
    bson bs ;
    BOOLEAN bsoninit = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( !spName )
    {
@@ -3922,13 +3925,14 @@ SDB_EXPORT INT32 sdbEvalJS(sdbConnectionHandle cHandle,
                            sdbCursorHandle *handle,
                            bson *errmsg )
 {
-   INT32 rc = SDB_OK ;
-   BOOLEAN r ;
-   bson bs ;
-   SINT64 contextID = 0 ;
+   INT32 rc                = SDB_OK ;
+   SINT64 contextID        = 0 ;
    sdbCursorStruct *cursor = NULL ;
-   BOOLEAN bsoninit = FALSE;
+   BOOLEAN bsoninit        = FALSE ;
+   BOOLEAN r               = FALSE ;
+   bson bs ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( !code || !handle )
    {
@@ -4018,12 +4022,13 @@ SDB_EXPORT INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
    BOOLEAN bsoninit                = FALSE ;
    CHAR *pTestCollection           = CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION ;
    CHAR *pName                     = FIELD_NAME_NAME ;
-   sdbCollectionStruct *s          = NULL ;
-   sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
-   sdbConnectionStruct *connection = ( sdbConnectionStruct *)(cs->_connection) ;
    CHAR fullCollectionName [ CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 2 ] = {0};
-
+   sdbCollectionStruct *s          = NULL ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
+   connection                      = ( sdbConnectionStruct *)(cs->_connection) ;
+
    if ( !pCollectionName || !handle ||
         ossStrlen ( pCollectionName) > CLIENT_COLLECTION_NAMESZ )
    {
@@ -4100,13 +4105,14 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
    BOOLEAN bsoninit                = FALSE ;
    CHAR *pTestCollection           = CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION ;
    CHAR *pName                     = FIELD_NAME_NAME ;
-   sdbCollectionStruct *s          = NULL ;
-   sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)(cs->_connection) ;
-
    bson_iterator it ;
    CHAR fullCollectionName [ CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 2 ] = {0};
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
+   sdbCollectionStruct *s          = NULL ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;   
+   connection                      = (sdbConnectionStruct *)(cs->_connection) ;
+
    if ( !pCollectionName || !handle ||
         ossStrlen ( pCollectionName) > CLIENT_COLLECTION_NAMESZ )
    {
@@ -4187,9 +4193,11 @@ static INT32 _sdbAlterCollectionV1 ( sdbCollectionHandle cHandle,
    bson newObj ;
    SINT64 contextID                = 0 ;
    BOOLEAN bsoninit                = FALSE ;
+   sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)(cs->_connection) ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection              = (sdbConnectionStruct *)(cs->_connection) ;
+
    if ( !options ||
         !cs->_collectionFullName[0] )
    {
@@ -4255,9 +4263,10 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
    bson obj ;
    bson_iterator itr ;
    SINT64 contextID = -1 ;
+   sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection              = (sdbConnectionStruct*)(cs->_connection) ;
 
    if ( NULL == options )
    {
@@ -4380,12 +4389,14 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
    INT32 rc                        = SDB_OK ;
    CHAR *pTestCollection           = CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTION ;
    CHAR *pName                     = FIELD_NAME_NAME ;
-   sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
    CHAR fullCollectionName [ CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 2 ] = {0};
    bson newObj ;
    BOOLEAN bsoninit = FALSE ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !pCollectionName ||
         ossStrlen ( pCollectionName) > CLIENT_COLLECTION_NAMESZ )
    {
@@ -4431,6 +4442,7 @@ SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
    INT32 rc                        = SDB_OK ;
    INT32 name_len                  = 0 ;
    sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
    if ( NULL == pBuffer )
    {
@@ -4464,14 +4476,13 @@ SDB_EXPORT INT32 sdbRenameCollection( sdbCSHandle cHandle,
                                       bson *options )
 {
    INT32 rc                        = SDB_OK ;
+   bson query ;
+   BOOLEAN bsoninit                = FALSE ;
+   CHAR fullCollectionName [ CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 2 ] = {0};
    sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
    sdbConnectionStruct *connection = NULL ;
-   CHAR fullCollectionName [ CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 2 ] = {0};
 
-   bson query ;
-   BOOLEAN bsoninit = FALSE ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
-
    if ( !pOldName || !*pOldName || !pNewName || !*pNewName )
    {
       rc = SDB_INVALIDARG ;
@@ -4539,6 +4550,7 @@ SDB_EXPORT INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
    INT32 rc                        = SDB_OK ;
    INT32 name_len                  = 0 ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION) ;
    if ( NULL == pBuffer )
    {
@@ -4572,6 +4584,7 @@ SDB_EXPORT INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
    INT32 rc                        = SDB_OK ;
    INT32 name_len                  = 0 ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION) ;
    if ( NULL == pBuffer )
    {
@@ -4605,13 +4618,15 @@ SDB_EXPORT INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
                                       const bson *pSplitCondition,
                                       const bson *pSplitEndCondition )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
    bson newObj ;
-   BOOLEAN bsoninit = FALSE ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
+   BOOLEAN bsoninit                = FALSE ;
+   sdbConnectionStruct *connection = NULL;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !pSourceGroup || !pTargetGroup || !pSplitCondition ||
         !cs->_collectionFullName[0] )
    {
@@ -4683,17 +4698,18 @@ SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
                                    const bson *pSplitEndCondition,
                                    SINT64 *taskID )
 {
-   INT32 rc            = SDB_OK ;
-   SINT64 contextID    = 0 ;
-   BOOLEAN bsoninit    = FALSE ;
+   INT32 rc                = SDB_OK ;
+   SINT64 contextID        = 0 ;
+   BOOLEAN bsoninit        = FALSE ;
    sdbCursorStruct *cursor = NULL ;
    bson_iterator it ;
    bson newObj ;
    bson retObj ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct *)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)(cs->_connection) ;
-   // check handle
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct *)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct *)(cs->_connection) ;
+
    // check arguments
    if ( !pSourceGroup || !pTargetGroup || !pSplitCondition || !taskID ||
         !cs->_collectionFullName[0] )
@@ -4797,13 +4813,15 @@ SDB_EXPORT INT32 sdbSplitCollectionByPercent( sdbCollectionHandle cHandle,
                                               const CHAR * pTargetGroup,
                                               double percent )
 {
-   INT32 rc = SDB_OK ;
-   SINT64 contextID = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
    bson newObj ;
-   BOOLEAN bsoninit = FALSE;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
+   BOOLEAN bsoninit                = FALSE;
+   sdbConnectionStruct *connection = NULL;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( percent <= 0.0 || percent > 100.0 )
    {
       rc = SDB_INVALIDARG ;
@@ -4866,23 +4884,24 @@ error :
    goto done ;
 }
 
-
 SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
                                             const CHAR *pSourceGroup,
                                             const CHAR *pTargetGroup,
                                             FLOAT64 percent,
                                             SINT64 *taskID )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
+   bson_iterator it ;
    bson newObj ;
    bson retObj ;
-   BOOLEAN bsoninit = FALSE;
-   sdbCursorStruct *cursor = NULL;
-   bson_iterator it ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct *)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)(cs->_connection) ;
+   BOOLEAN bsoninit                = FALSE;
+   sdbCursorStruct *cursor         = NULL;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct *)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct *)(cs->_connection) ;
+
    if ( percent <= 0.0 || percent > 100.0 )
    {
       rc = SDB_INVALIDARG ;
@@ -4978,18 +4997,20 @@ static INT32 _sdbCreateIndex( sdbCollectionHandle cHandle,
                               BOOLEAN isEnforced,
                               INT32 sortBufferSize )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
    bson indexObj ;
    bson newObj ;
    bson hintObj ;
-   bson* hint = NULL ;
-   BOOLEAN indexInit = FALSE;
-   BOOLEAN newInit = FALSE ;
-   BOOLEAN hintInit = FALSE ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
+   bson* hint                      = NULL ;
+   BOOLEAN indexInit               = FALSE;
+   BOOLEAN newInit                 = FALSE ;
+   BOOLEAN hintInit                = FALSE ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] || !indexDef ||
         !pIndexName )
    {
@@ -5093,15 +5114,17 @@ SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
                                  const CHAR *pIndexName,
                                  sdbCursorHandle *handle )
 {
-   INT32 rc = SDB_OK ;
-   SINT64 contextID = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
    bson queryCond ;
    bson newObj ;
-   BOOLEAN bsoninit = FALSE ;
-   sdbCursorStruct *cursor = NULL ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
+   BOOLEAN bsoninit                = FALSE ;
+   sdbCursorStruct *cursor         = NULL ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !handle )
    {
       rc = SDB_CLT_INVALID_HANDLE ;
@@ -5194,14 +5217,16 @@ error :
 SDB_EXPORT INT32 sdbDropIndex ( sdbCollectionHandle cHandle,
                                 const CHAR *pIndexName )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
    bson indexObj ;
    bson newObj ;
-   BOOLEAN bsoninit = FALSE ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
+   BOOLEAN bsoninit                = FALSE ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] ||
         !pIndexName )
    {
@@ -5274,17 +5299,18 @@ SDB_EXPORT INT32 sdbGetCount1 ( sdbCollectionHandle cHandle,
                                 bson *hint,
                                 SINT64 *count )
 {
-   INT32 rc                = SDB_OK ;
-   sdbCursorHandle cursor  = SDB_INVALID_HANDLE ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-   bson_iterator it ;
    bson newObj ;
    bson retObj ;
+   bson_iterator it ;
+   INT32 rc                        = SDB_OK ;
+   sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    bson_init( &newObj ) ;
    bson_init( &retObj ) ;
-
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    if ( !count )
    {
       rc = SDB_INVALIDARG ;
@@ -5369,12 +5395,14 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                               bson *obj, bson_iterator *id )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
    bson_iterator tempid ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)(cs->_connection) ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct *)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] || !obj )
    {
       rc = SDB_INVALIDARG ;
@@ -5434,13 +5462,14 @@ error :
 SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                  SINT32 flags, bson **obj, SINT32 num )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
-   SINT32 count     = 0 ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
+   SINT32 count                    = 0 ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] || !obj )
    {
       rc = SDB_INVALIDARG ;
@@ -5657,12 +5686,13 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
                              bson *condition,
                              bson *hint )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct *)(cs->_connection) ;
-
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct *)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] )
    {
       rc = SDB_INVALIDARG ;
@@ -5725,8 +5755,8 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
    bson newObj ;
    BOOLEAN bsoninit = FALSE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    if ( !cs->_collectionFullName[0] )
    {
       rc = SDB_INVALIDARG ;
@@ -5784,13 +5814,14 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
                              INT32 flag,
                              sdbCursorHandle *handle )
 {
-   INT32 rc                = SDB_OK ;
-   INT32 newFlags          = flag ;
-   sdbCursorHandle cursor  = SDB_INVALID_HANDLE ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-
+   INT32 rc                        = SDB_OK ;
+   INT32 newFlags                  = flag ;
+   sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !cs->_collectionFullName[0] || !handle )
    {
       rc = SDB_INVALIDARG ;
@@ -5978,10 +6009,10 @@ SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbNext ( sdbCursorHandle cHandle,
                            bson *obj )
 {
-   INT32 rc = SDB_OK ;
-   MsgOpReply *pReply = NULL ;
+   INT32 rc            = SDB_OK ;
+   MsgOpReply *pReply  = NULL ;
+   BOOLEAN bsoninit    = FALSE;
    bson localobj ;
-   BOOLEAN bsoninit = FALSE;
    sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
@@ -6078,9 +6109,10 @@ SDB_EXPORT INT32 sdbCurrent ( sdbCursorHandle cHandle,
 {
    INT32 rc            = SDB_OK ;
    MsgOpReply *pReply  = NULL ;
+   BOOLEAN bsoninit    = FALSE;
    bson localobj ;
-   BOOLEAN bsoninit = FALSE;
    sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
    // check whether the cursor had been close
    if ( cs->_isClosed )
@@ -6444,11 +6476,11 @@ error :
 
 SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = -1 ;
+   INT32 rc            = SDB_OK ;
+   SINT64 contextID    = -1 ;
    sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
 
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
    // check whether the cursor had been close
    if ( cs->_isClosed )
    {
@@ -6511,8 +6543,8 @@ SDB_EXPORT INT32 sdbCloseAllCursors ( sdbConnectionHandle cHandle )
    Node *cursorHandles = NULL ;
    Node *p             = NULL ;
    sdbConnectionStruct *cs = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CONNECTION ) ;
    cursorHandles = cs->_cursors ;
    while ( cursorHandles )
    {
@@ -6540,8 +6572,8 @@ SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
    fd_set fds ;
    struct timeval maxSelectTime = { 0, 1000 };
    sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // check argument
    if ( !result )
    {
@@ -6612,12 +6644,12 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
                                  CHAR * comp,
                                  CHAR * breakPoint )
 {
-   INT32 rc       = SDB_OK ;
-   bson obj ;
+   INT32 rc         = SDB_OK ;
    BOOLEAN bsoninit = FALSE ;
+   bson obj ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // init obj
    BSON_INIT( obj );
    BSON_APPEND( obj, FIELD_NAME_SIZE, (INT64)traceBufferSize, long ) ;
@@ -6687,8 +6719,8 @@ SDB_EXPORT INT32 sdbTraceResume ( sdbConnectionHandle cHandle )
 {
    INT32 rc       = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = _runCommand ( cHandle, connection->_sock, &connection->_pSendBuffer,
                       &connection->_sendBufferSize,
                       &connection->_pReceiveBuffer,
@@ -6709,12 +6741,12 @@ error :
 SDB_EXPORT INT32 sdbTraceStop ( sdbConnectionHandle cHandle,
                                 const CHAR *pDumpFileName )
 {
-   INT32 rc       = SDB_OK ;
-   bson obj ;
+   INT32 rc         = SDB_OK ;
    BOOLEAN bsoninit = FALSE;
+   bson obj ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    BSON_INIT( obj ) ;
    if ( pDumpFileName )
    {
@@ -6742,10 +6774,11 @@ error :
 SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
                                   sdbCursorHandle *handle )
 {
-   INT32 rc         = SDB_OK ;
-   SINT64 contextID = 0 ;
+   INT32 rc                = SDB_OK ;
+   SINT64 contextID        = 0 ;
    sdbCursorStruct *cursor = NULL;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( !handle )
    {
@@ -6876,6 +6909,7 @@ SDB_EXPORT INT32 sdbExec( sdbConnectionHandle cHandle,
    SINT64 contextID        = 0 ;
    sdbCursorStruct *cursor = NULL ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( !result || !sql )
    {
@@ -6952,7 +6986,6 @@ SDB_EXPORT INT32 sdbTransactionBegin( sdbConnectionHandle cHandle )
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    rc = clientBuildTransactionBegMsg( &connection->_pSendBuffer,
                                       &connection->_sendBufferSize,
                                       0, connection->_endianConvert ) ;
@@ -6996,8 +7029,8 @@ SDB_EXPORT INT32 sdbTransactionCommit( sdbConnectionHandle cHandle )
    INT32 rc         = SDB_OK ;
    SINT64 contextID = 0 ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = clientBuildTransactionCommitMsg( &connection->_pSendBuffer,
                                          &connection->_sendBufferSize,
                                          0, connection->_endianConvert ) ;
@@ -7041,8 +7074,8 @@ SDB_EXPORT INT32 sdbTransactionRollback( sdbConnectionHandle cHandle )
    INT32 rc         = SDB_OK ;
    SINT64 contextID = 0 ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = clientBuildTransactionRollbackMsg( &connection->_pSendBuffer,
                                            &connection->_sendBufferSize,
                                            0, connection->_endianConvert ) ;
@@ -7087,9 +7120,7 @@ SDB_EXPORT void sdbReleaseConnection ( sdbConnectionHandle cHandle )
    sdbConnectionStruct *cs = (sdbConnectionStruct*)cHandle ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    if ( cs->_pSendBuffer )
    {
       SDB_OSS_FREE ( cs->_pSendBuffer ) ;
@@ -7119,7 +7150,6 @@ SDB_EXPORT void sdbReleaseCollection ( sdbCollectionHandle cHandle )
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
    _unregSocket( cs->_connection, &cs->_sock ) ;
@@ -7146,10 +7176,9 @@ SDB_EXPORT void sdbReleaseCS ( sdbCSHandle cHandle )
 {
    INT32 rc = SDB_OK ;
    sdbCSStruct *cs = (sdbCSStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
 
    CLIENT_UNUSED( rc ) ;
-
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
    _unregSocket( cs->_connection, &cs->_sock ) ;
 
    if ( cs->_pSendBuffer )
@@ -7173,10 +7202,9 @@ SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
 {
    INT32 rc = SDB_OK ;
    sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
 
    CLIENT_UNUSED( rc ) ;
-
+   HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
    _unregSocket( rg->_connection, &rg->_sock ) ;
 
    if ( rg->_pSendBuffer )
@@ -7200,10 +7228,9 @@ SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle )
 {
    INT32 rc = SDB_OK ;
    sdbRNStruct *rn = (sdbRNStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, rn, SDB_HANDLE_TYPE_REPLICANODE ) ;
 
    CLIENT_UNUSED( rc ) ;
-
+   HANDLE_CHECK( cHandle, rn, SDB_HANDLE_TYPE_REPLICANODE ) ;
    _unregSocket( rn->_connection, &rn->_sock ) ;
 
    if ( rn->_pSendBuffer )
@@ -7229,9 +7256,7 @@ SDB_EXPORT void sdbReleaseDomain ( sdbDomainHandle cHandle )
    sdbDomainStruct *s = (sdbDomainStruct*)cHandle ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, s, SDB_HANDLE_TYPE_DOMAIN ) ;
-
    _unregSocket( s->_connection, &s->_sock ) ;
 
    if ( s->_pSendBuffer )
@@ -7257,9 +7282,7 @@ SDB_EXPORT void sdbReleaseCursor ( sdbCursorHandle cHandle )
    sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
-
    sdbCloseCursor( cHandle ) ;
 
    if ( !cs->_isClosed )
@@ -7304,9 +7327,7 @@ SDB_EXPORT void sdbReleaseDC ( sdbDCHandle cHandle )
    sdbDCStruct *s = (sdbDCStruct*)cHandle ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, s, SDB_HANDLE_TYPE_DC ) ;
-
    _unregSocket( s->_connection, &s->_sock ) ;
 
    if ( s->_pSendBuffer )
@@ -7335,9 +7356,7 @@ static void sdbReleaseLob( sdbLobHandle cHandle )
    sdbLobStruct *lob = ( sdbLobStruct * ) cHandle ;
 
    CLIENT_UNUSED( rc ) ;
-
    HANDLE_CHECK( cHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
-
    _unregSocket( lob->_connection, &lob->_sock ) ;
 
    if ( lob->_pSendBuffer )
@@ -7363,14 +7382,15 @@ SDB_EXPORT INT32 sdbAggregate ( sdbCollectionHandle cHandle,
                                 bson **obj, SINT32 num,
                                 sdbCursorHandle *handle )
 {
-   INT32 rc                = SDB_OK ;
-   SINT64 contextID        = -1 ;
-   SINT32 count            = 0 ;
-   sdbCursorStruct *cursor = NULL ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = -1 ;
+   SINT32 count                    = 0 ;
+   sdbCursorStruct *cursor         = NULL ;
+   sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs = (sdbCollectionStruct *)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection              = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !obj || num <=0 || !handle || !cs->_collectionFullName[0] )
    {
       rc = SDB_INVALIDARG ;
@@ -7454,15 +7474,16 @@ SDB_EXPORT INT32 sdbAttachCollection ( sdbCollectionHandle cHandle,
                                        const CHAR *subClFullName,
                                        bson *options )
 {
-   INT32 rc                      = SDB_OK ;
-   SINT64 contextID              = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
+   BOOLEAN bsoninit                = TRUE ;
    bson newObj ;
-   BOOLEAN bsoninit              = TRUE ;
    bson_iterator it ;
-   sdbCollectionStruct *cs       = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !subClFullName || !options ||
         ossStrlen ( subClFullName) > CLIENT_COLLECTION_NAMESZ ||
         !cs->_collectionFullName[0] )
@@ -7528,14 +7549,15 @@ error :
 SDB_EXPORT INT32 sdbDetachCollection( sdbCollectionHandle cHandle,
                                       const CHAR *subClFullName)
 {
-   INT32 rc                      = SDB_OK ;
-   SINT64 contextID              = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = 0 ;
+   BOOLEAN bsoninit                = FALSE ;
    bson newObj ;
-   BOOLEAN bsoninit              = FALSE ;
-   sdbCollectionStruct *cs       = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct* connection = (sdbConnectionStruct*)(cs->_connection) ;
-
+   sdbConnectionStruct* connection = NULL ;   
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+
    if ( !subClFullName ||
         ossStrlen ( subClFullName) > CLIENT_COLLECTION_NAMESZ ||
         !cs->_collectionFullName[0] )
@@ -7604,7 +7626,6 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    BSON_INIT( newObj ) ;
    // options is optional
    if ( options )
@@ -7757,8 +7778,8 @@ SDB_EXPORT INT32 sdbRemoveBackup ( sdbConnectionHandle cHandle,
    BOOLEAN bsoninit              = FALSE ;
    bson_iterator it ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    BSON_INIT( newObj ) ;
    // options is optional
    if ( options )
@@ -7834,6 +7855,7 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
    bson newObj ;
    BOOLEAN bsoninit              = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
+
    // check handle
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // check argument
@@ -7927,6 +7949,7 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
    bson newObj ;
    BOOLEAN bsoninit              = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
+
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // check argument
    if ( taskID <= 0 )
@@ -7987,7 +8010,6 @@ SDB_EXPORT void sdbSetConnectionInterruptFunc(
                                           socketInterruptFunc func )
 {
    INT32 rc = SDB_OK ;
-
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
 
    SDB_UNUSED( rc ) ;
@@ -8015,6 +8037,7 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
    bson_iterator it ;
    BOOLEAN bsoninit      = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
+
    // check handle
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // check argument
@@ -8119,6 +8142,7 @@ SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg )
    INT32 rc              = SDB_OK ;
    SINT64 contextID      = 0 ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
+
    // check handle
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // check argument
@@ -8187,6 +8211,7 @@ SDB_EXPORT INT32 sdbCreateDomain ( sdbConnectionHandle cHandle,
    bson newObj ;
    BOOLEAN bsoninit             = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
    // sanity check for connection
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // sanity check for input variables
@@ -8575,24 +8600,25 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
                              INT32 mode,
                              sdbLobHandle* lobHandle )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = -1 ;
+   SINT32 flags                    = 0;
+   sdbLobStruct *lobStruct         = NULL ;
+   const CHAR *bsonBuf             = NULL ;
+   bson_type bType                 = BSON_EOO ;
    bson obj ;
-   SINT64 contextID = -1 ;
-   SINT32 flags = 0;
-   sdbLobStruct *lobStruct = NULL ;
-   const CHAR *bsonBuf = NULL ;
    bson_iterator bsonItr ;
-   bson_type bType = BSON_EOO ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-   bson_init( &obj ) ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
 
+   bson_init( &obj ) ;
    if ( NULL == oid )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
    if ( !cs->_collectionFullName[0] || NULL == lobHandle )
    {
@@ -8799,7 +8825,6 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
    const UINT32 maxSendLen = 2 * 1024 * 1024 ;
 
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
-
    if ( NULL == buf )
    {
       rc = SDB_INVALIDARG ;
@@ -9057,7 +9082,6 @@ SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
    UINT32 totalRead = 0 ;
 
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
-
    if (  NULL == buf )
    {
       rc = SDB_INVALIDARG ;
@@ -9180,19 +9204,20 @@ error:
 SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
                                const bson_oid_t *oid )
 {
-   INT32 rc = SDB_OK ;
-   SINT64 contextID = -1 ;
+   INT32 rc                        = SDB_OK ;
+   SINT64 contextID                = -1 ;
    bson meta ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-   bson_init( &meta ) ;
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
+   bson_init( &meta ) ;
    if ( NULL == oid )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
    if ( !cs->_collectionFullName[0] || NULL == oid )
    {
@@ -9365,8 +9390,8 @@ static INT32 _sdbRunCmdOfLob( sdbCollectionHandle cHandle,
    SINT64 contextID = -1 ;
    sdbCursorStruct *cursor = NULL ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                               cmd,
                               0, 0, -1, -1, obj,
@@ -9425,12 +9450,12 @@ error:
 SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
                               sdbCursorHandle *cursor )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc                        = SDB_OK ;
    bson obj ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
    if ( NULL == cursor )
    {
@@ -9477,12 +9502,12 @@ error:
 SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
                                    sdbCursorHandle *cursor )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc                        = SDB_OK ;
    bson obj ;
-   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   sdbConnectionStruct *connection = (sdbConnectionStruct*)(cs->_connection) ;
-
+   sdbConnectionStruct *connection = NULL ;
+   sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
    if ( NULL == cursor )
    {
@@ -9536,8 +9561,8 @@ error:
 SDB_EXPORT INT32 sdbReelect( sdbReplicaGroupHandle cHandle,
                              const bson *options )
 {
-   INT32 rc = SDB_OK ;
-   sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
+   INT32 rc         = SDB_OK ;
+   sdbRGStruct *rg  = (sdbRGStruct*)cHandle ;
    SINT64 contextID = -1 ;
    bson ops ;
    bson_iterator itr ;
@@ -9666,8 +9691,8 @@ SDB_EXPORT INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
    bson option ;
    BOOLEAN bsoninit = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( NULL == fullName ||
         0 == ossStrlen( fullName ) )
    {
@@ -9704,7 +9729,7 @@ SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
                                 const CHAR *serviceName,
                                 const bson *options )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc         = SDB_OK ;
    BOOLEAN bsoninit = FALSE ;
    bson obj ;
    sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
@@ -9765,7 +9790,7 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
                                 const CHAR *serviceName,
                                 const bson *options )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc         = SDB_OK ;
    BOOLEAN bsoninit = FALSE ;
    bson obj ;
    sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
@@ -9830,8 +9855,8 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
    bson_iterator itr ;
    BOOLEAN bsoninit = FALSE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    BSON_INIT( obj ) ;
    rc = bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
    if ( SDB_OK != rc )
@@ -9906,8 +9931,8 @@ SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
    bson obj ;
    BOOLEAN bsoninit = FALSE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    BSON_INIT( obj ) ;
    rc = bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
    if ( SDB_OK != rc )
@@ -9963,7 +9988,6 @@ static INT32 _setDCName ( sdbDCHandle cHandle,
    sdbDCStruct *s   = (sdbDCStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, s, SDB_HANDLE_TYPE_DC ) ;
-
    if ( ( len = ossStrlen(pClusterName) +
                 ossStrlen(pBusinessName) + 1 ) > CLIENT_DC_NAMESZ )
    {
@@ -9987,6 +10011,7 @@ SDB_EXPORT INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size )
    INT32 rc                        = SDB_OK ;
    INT32 name_len                  = 0 ;
    sdbDCStruct *dc                 = (sdbDCStruct*)cHandle ;
+
    HANDLE_CHECK( cHandle, dc, SDB_HANDLE_TYPE_DC ) ;
    if ( NULL == pBuffer )
    {
@@ -10264,8 +10289,8 @@ SDB_EXPORT INT32 sdbSyncDB( sdbConnectionHandle cHandle,
 {
    INT32 rc = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = _runCommand2( cHandle, &connection->_pSendBuffer,
                       &connection->_sendBufferSize,
                       &connection->_pReceiveBuffer,
@@ -10294,7 +10319,6 @@ SDB_EXPORT INT32 sdbLoadCollectionSpace( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    BSON_INIT( query ) ;
    BSON_APPEND( query, FIELD_NAME_NAME, csName, string ) ;
    if ( options )
@@ -10346,7 +10370,6 @@ SDB_EXPORT INT32 sdbUnloadCollectionSpace( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    if ( !csName || !*csName )
    {
       rc = SDB_INVALIDARG ;
@@ -10404,7 +10427,6 @@ SDB_EXPORT INT32 sdbSetPDLevel( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    BSON_INIT( query ) ;
    BSON_APPEND( query, FIELD_NAME_PDLEVEL, pdLevel, int ) ;
    if ( options )
@@ -10450,10 +10472,9 @@ SDB_EXPORT INT32 sdbReloadConfig( sdbConnectionHandle cHandle,
                                   bson *options )
 {
    INT32 rc = SDB_OK ;
-
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
 
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    rc = _runCommand2( cHandle, &connection->_pSendBuffer,
                       &connection->_sendBufferSize,
                       &connection->_pReceiveBuffer,
@@ -10477,13 +10498,12 @@ SDB_EXPORT INT32 sdbRenameCollectionSpace( sdbConnectionHandle cHandle,
                                            const CHAR *pNewName,
                                            bson *options )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc         = SDB_OK ;
    BOOLEAN bsoninit = FALSE ;
    bson query ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-
    if ( !pOldName || !*pOldName || !pNewName || !*pNewName )
    {
       rc = SDB_INVALIDARG ;
