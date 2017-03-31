@@ -165,6 +165,20 @@
          </else>
       </if> 
       
+            
+      <!--backup /tmp/ci_realibility-->
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         <then>
+            <delete dir="${backup_basedir}/${backup_reltdir}/reliabilitytest" failonerror="false"/>
+            <mkdir dir="${backup_basedir}/${backup_reltdir}/reliabilitytest"/>
+            <copy todir="${backup_basedir}/${backup_reltdir}/reliabilitytest" >
+               <fileset dir="${RELIABILITY_TESTCASE_WORK_DIR}">
+                  <include name="backup_*/**/*"/>
+               </fileset>
+            </copy>
+         </then>
+      </if>
       <!--backup core file : node core or testcase core-->
       <if>
          <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
