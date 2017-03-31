@@ -31,6 +31,10 @@
       <if>
          <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
          <then>
+            <!--change testng.xml and testng_release.xml-->
+            <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
+            <replaceregexp file="${basedir}../../../testcase/reliability/testng.xml" match='localhost' replace='${firsthost}'/> 
+            <replaceregexp file="${basedir}../../../testcase/reliability/testng_release.xml" match='localhost' replace='${firsthost}'/> 
             <ant antfile="${testcase_dir}/../../tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
                <property name="reportdir" value="${report_dir}"/>
