@@ -88,7 +88,7 @@ function createCata( db )
    var host = hostList[0];
    var service = cataBasePort;
    var dbPath = diskList[0] + "/database/cata/" + service;
-   var config = cataConf;
+   var config = updateDeployConfig( cataConf, service );
    var rg = db.createCataRG( host, service, dbPath, config );
    
    //wait for cata group to select primary node
@@ -119,7 +119,7 @@ function createCata( db )
       var host = hostList[ i % hostNum ];
       var service = cataBasePort + parseInt( i / hostNum ) * 20;
       var dbPath = diskList[0] + "/database/cata/" + service;
-      var config = cataConf;
+      var config = updateDeployConfig( cataConf, service );
       rg.createNode( host, service, dbPath, config );
       
       i++;
@@ -158,7 +158,7 @@ function createCoord( db )
          var host = hostList[i];
          var service = coordBasePort + j * 20;
          var dbPath = dbBasePath + "/database/coord/" + service;
-         var config = coordConf;
+         var config = updateDeployConfig( coordConf, service );
          rg.createNode( host, service, dbPath, config );
       }
       
@@ -202,7 +202,7 @@ function createData( db )
          {
             var dbPath = diskList[ n + 1 ] + "/database/data/" + service;
          }
-         var config = dataConf;
+         var config = updateDeployConfig( dataConf, service );
          rg.createNode( host, service, dbPath, config );
 
          i++;
@@ -211,6 +211,12 @@ function createData( db )
       //start node
       rg.start();
    }
+}
+
+function updateDeployConfig( conf, service ) 
+{
+   var config = JSON.stringify(conf).replace( "[svcname]", service );
+   return JSON.parse(config);
 }
 
 function randomArray( arr ) // [1, 2, 3]--> [2, 3, 1]

@@ -42,6 +42,18 @@
                      </sequential>
                   </for>
                </then>
+               <elseif>
+                  <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+                  <then>
+                     <for list="${RELIABILITYTEST_DBPATH_LIST}" param="dbpath" parallel="false">
+                        <sequential>
+                           <staf location="@{testhost}" service="FS"
+                                 request="DELETE ENTRY @{dbpath} RECURSE CONFIRM"
+                                 throwBuildException=""/>
+                        </sequential>
+                     </for>
+                  </then>
+               </elseif>
             </if>
          </sequential>
       </for>
@@ -126,6 +138,25 @@
                </sequential>
             </for>
          </then>
+         <elseif>
+            <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+            <then>
+               <for list="${testhost_list}" param="testhost" parallel="true">
+                  <sequential>
+                     <for list="${RELIABILITYTEST_DBPATH_LIST}" param="dbpath" parallel="false">
+                        <sequential>
+                           <staf location="@{testhost}" service="FS"
+                                 request="CREATE DIRECTORY @{dbpath}"
+                                 throwBuildException="1"/>
+                           <staf location="@{testhost}" service="PROCESS"
+                                 request="START SHELL COMMAND chown sdbadmin:sdbadmin_group @{dbpath} WAIT 1m"
+                                 throwBuildException="1"/>     
+                        </sequential>
+                     </for>
+                  </sequential>
+               </for>
+            </then>
+         </elseif>
       </if>
       
       <!--copy sdb shell to localhost-->
@@ -168,6 +199,7 @@
          <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST" />
          <then>
             <var name="diagLevel" value="5"/>
+            <var name="DEPLOY_MODE" value="RELIABILITY"/>
          </then>
       </if>
       <if>
