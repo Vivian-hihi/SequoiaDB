@@ -968,9 +968,6 @@ function(coll)
          {
             return true;
          }
-         {
-            return true;
-         }
          else
          {
             //println("sdbinspect exec result:" + result )
