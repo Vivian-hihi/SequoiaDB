@@ -46,8 +46,8 @@ public class SdbTestBase {
             db = new Sequoiadb(coordUrl, "", "");
             boolean ret = createCommonCS(db);
             Assert.assertTrue(ret);
-            // TODO: createWorkDir(db);
-            // TODO: createReserveDir(db);
+            createWorkDir();
+            createReserveDir();
         }
         catch (BaseException e) {
             Assert.fail("connect " + coordUrl + ": " + e.getErrorCode());
@@ -59,12 +59,12 @@ public class SdbTestBase {
         }
     }
 
-    private static void createReserveDir(Sequoiadb db) {
+    private static void createReserveDir() {
         try {
             GroupMgr mgr = GroupMgr.getInstance();
             List<String> hosts = mgr.getAllHosts();
             for (String host : hosts) {
-                Ssh ssh = new Ssh(host, SdbTestBase.remoteUser, SdbTestBase.rootPwd);
+                Ssh ssh = new Ssh(host, "root", SdbTestBase.rootPwd);
                 try {
                     ssh.exec("mkdir -p " + SdbTestBase.reservedDir);
                     ssh.exec("chown " + SdbTestBase.remoteUser + " " + SdbTestBase.reservedDir);
@@ -75,17 +75,17 @@ public class SdbTestBase {
             }
         }
         catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
+            Assert.fail(e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private static void createWorkDir(Sequoiadb db) {
+    private static void createWorkDir() {
         try {
             GroupMgr mgr = GroupMgr.getInstance();
             List<String> hosts = mgr.getAllHosts();
             for (String host : hosts) {
-                Ssh ssh = new Ssh(host, SdbTestBase.remoteUser, SdbTestBase.rootPwd);
+                Ssh ssh = new Ssh(host, "root", SdbTestBase.rootPwd);
                 try {
                     ssh.exec("mkdir -p " + SdbTestBase.workDir);
                 }
@@ -95,7 +95,7 @@ public class SdbTestBase {
             }
         }
         catch (ReliabilityException e) {
-            // TODO Auto-generated catch block
+            Assert.fail(e.getMessage());
             e.printStackTrace();
         }
     }
