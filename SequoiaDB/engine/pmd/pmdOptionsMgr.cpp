@@ -460,10 +460,14 @@ namespace engine
    INT32 _pmdCfgRecord::restore( const BSONObj & objData,
                                  po::variables_map *pVMCMD )
    {
+      INT32 rc = SDB_OK ;
       MAP_K2V mapKeyValue ;
       MAP_K2V::iterator it ;
       pmdCfgExchange ex( objData, TRUE, PMD_CFG_STEP_INIT ) ;
-      INT32 rc = doDataExchange( &ex ) ;
+
+      ossScopedLock lock( &_mutex ) ;
+
+      rc = doDataExchange( &ex ) ;
       if ( rc )
       {
          goto error ;
@@ -513,11 +517,16 @@ namespace engine
       BSONObj oldCfg ;
       MAP_K2V mapKeyField ;
       MAP_K2V::iterator it ;
+      BOOLEAN locked = FALSE ;
       pmdCfgExchange ex( objData, TRUE, PMD_CFG_STEP_CHG ) ;
 
       // save old cfg
       rc = toBSON( oldCfg ) ;
       PD_RC_CHECK( rc, PDERROR, "Save old config failed, rc: %d", rc ) ;
+
+      _mutex.get() ;
+      locked = TRUE ;
+
       // update new cfg
       rc = doDataExchange( &ex ) ;
       if ( rc )
@@ -546,10 +555,19 @@ namespace engine
       }
 
    done:
+      if ( locked )
+      {
+         _mutex.release() ;
+      }
       return rc ;
    error:
       goto done ;
    restore:
+      if ( locked )
+      {
+         _mutex.release() ;
+         locked = FALSE ;
+      }
       restore( oldCfg, NULL ) ;
       goto done ;
    }
@@ -557,8 +575,12 @@ namespace engine
    INT32 _pmdCfgRecord::init( po::variables_map *pVMFile,
                               po::variables_map *pVMCMD )
    {
+      INT32 rc = SDB_OK ;
       pmdCfgExchange ex( pVMCMD, pVMFile, TRUE, PMD_CFG_STEP_INIT ) ;
-      INT32 rc = doDataExchange( &ex ) ;
+
+      ossScopedLock lock( &_mutex ) ;
+
+      rc = doDataExchange( &ex ) ;
       if ( rc )
       {
          goto error ;
@@ -589,7 +611,11 @@ namespace engine
 
    INT32 _pmdCfgRecord::toBSON( BSONObj & objData )
    {
-      INT32 rc = preSaving() ;
+      INT32 rc = SDB_OK ;
+
+      ossScopedLock lock( &_mutex ) ;
+
+      rc = preSaving() ;
       if ( SDB_OK == rc )
       {
          pmdCfgExchange ex( BSONObj(), FALSE, PMD_CFG_STEP_INIT ) ;
@@ -614,7 +640,11 @@ namespace engine
 
    INT32 _pmdCfgRecord::toString( string & str )
    {
-      INT32 rc = preSaving() ;
+      INT32 rc = SDB_OK ;
+
+      ossScopedLock lock( &_mutex ) ;
+
+      rc = preSaving() ;
       if ( SDB_OK == rc )
       {
          pmdCfgExchange ex( NULL, NULL, FALSE, PMD_CFG_STEP_INIT ) ;
@@ -2424,14 +2454,18 @@ namespace engine
          goto error;
       }
 
-      rc = utilWriteConfigFile( conf, line.c_str(), FALSE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
-                   conf, rc ) ;
-
-      // save notify
-      if ( getConfigHandler() )
       {
-         getConfigHandler()->onConfigSave() ;
+         ossScopedLock lock( &_mutex ) ;
+
+         rc = utilWriteConfigFile( conf, line.c_str(), FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
+                      conf, rc ) ;
+
+         // save notify
+         if ( getConfigHandler() )
+         {
+            getConfigHandler()->onConfigSave() ;
+         }
       }
 
    done:

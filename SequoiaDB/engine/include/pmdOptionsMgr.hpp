@@ -301,6 +301,8 @@ namespace engine
          IConfigHandle                       *_pConfigHander ;
 
          MAP_K2V                             _mapKeyValue ;
+      protected:
+         ossSpinXLatch                       _mutex ;
 
    } ;
    typedef _pmdCfgRecord pmdCfgRecord ;
