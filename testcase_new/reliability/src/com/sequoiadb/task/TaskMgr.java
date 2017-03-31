@@ -21,6 +21,10 @@ public class TaskMgr {
         taskSet.put(faultMakeTask.getName(), faultMakeTask);
     }
 
+    public TaskMgr() {
+
+    }
+
     /**
      * @param task
      *            任务
