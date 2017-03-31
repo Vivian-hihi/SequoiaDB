@@ -1,7 +1,7 @@
 /**************************************
  * @author: ouyangzhongnan 
  * @coverTestcace: 
- *       seqDB-10162:hint指定索引查询
+ *       seqDB-10462:hint指定索引查询
  * @RunDemo:
  * /opt/sequoiadb/bin/sdb -f "func.js,commlib.js,subCL_queryByHint_10462.js" -e "var CHANGEDPREFIX='prefix';var COORDHOSTNAME='sdbserver01';var COORDSVCNAME='11810'"
  **************************************/
@@ -100,14 +100,15 @@ function queryByHint(queryCond,res) {
 	//先判断是不是走索引
 	var flag_0 = true;
 	try {
-		var explainArr = mainCl.find(queryCond).explain().toArray();
+		var explainArr = mainCl.find(queryCond).hint({"":indexName}).explain().toArray();
 		var explainObjArr = [];
 		for (var i = 0; i < explainArr.length; i++) {
 			explainObjArr.push(JSON.parse(explainArr[i]));
 		}
 		for (var i = 0; i < explainObjArr.length; i++) {
 			for (var j = 0; j < explainObjArr[i].SubCollections.length; j++) {
-				if (explainObjArr[i].SubCollections[j].ScanType !== "ixscan") {
+				if (explainObjArr[i].SubCollections[j].ScanType  !== "ixscan"
+				 || explainObjArr[i].SubCollections[j].IndexName !== indexName) {
 					flag_0 = false;
 					break;
 				}
