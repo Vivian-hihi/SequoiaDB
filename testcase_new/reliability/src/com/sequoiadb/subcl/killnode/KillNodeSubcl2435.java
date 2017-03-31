@@ -29,21 +29,22 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName:SEQDB-2433 attachCL过程中catalog主节点异常重启
+ * @FileName:SEQDB-2435 attachCL过程中dataRG主节点异常重启
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class KillNodeSubcl2433 extends SdbTestBase {
-    private String mainClName = "testcaseCL2433";
+public class KillNodeSubcl2435 extends SdbTestBase {
+    private String mainClName = "testcaseCL2435";
     private List<String> subClName = new ArrayList<String>();
     private CollectionSpace commCS;
     private DBCollection mainCL;
     private GroupMgr groupMgr = null;
     private Sequoiadb commSdb;
     private boolean clearFlag = false;
-    private int bound = 0;
+    private String subClGroupName;
+    private int bound;
 
     @BeforeClass()
     public void setUp() {
@@ -57,6 +58,7 @@ public class KillNodeSubcl2433 extends SdbTestBase {
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }
+            subClGroupName = groupMgr.getAllDataGroupName().get(0);
 
             commSdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             commCS = commSdb.getCollectionSpace(csName);
@@ -75,7 +77,8 @@ public class KillNodeSubcl2433 extends SdbTestBase {
 
     private void createSubCL(int subClCount) {
         for (int i = 0; i < subClCount; i++) {
-            DBCollection cl = commCS.createCollection(mainClName + "_sub_" + i);
+            DBCollection cl = commCS.createCollection(mainClName + "_sub_" + i,
+                    (BSONObject) JSON.parse("{Group:'" + subClGroupName + "'}"));
             subClName.add(cl.getFullName());
         }
     }
@@ -84,22 +87,21 @@ public class KillNodeSubcl2433 extends SdbTestBase {
     public void test() {
         try {
             GroupMgr groupMgr = new GroupMgr();
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            NodeWrapper cataMaster = cataGroup.getMaster();
-            System.out.println("Kill node:" + cataMaster.hostName() + ":" + cataMaster.svcName());
+            GroupWrapper subClDataGroup = groupMgr.getGroupByName(subClGroupName);
+            NodeWrapper dataMaster = subClDataGroup.getMaster();
 
             // 建立并行任务
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataMaster.hostName(),
-                    cataMaster.svcName(), 0, 100);
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(dataMaster.hostName(),
+                    dataMaster.svcName(), 0, 100);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Attach());
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             Assert.assertEquals(groupMgr.checkBusiness(120), true);
-            Assert.assertEquals(cataGroup.checkInspect(60), true);
+
             // 插入数据
-            for (int i = 0; i < bound; i += 100) {
+            for (int i = 0; i < bound; i++) {
                 mainCL.insert("{sk:" + i + "}");
             }
             DBCursor cusor = mainCL.query(null, "{sk:1}", "{sk:1}", null);
@@ -107,7 +109,7 @@ public class KillNodeSubcl2433 extends SdbTestBase {
             // 查询
             while (cusor.hasNext()) {
                 Assert.assertEquals(cusor.getNext(), (BSONObject) JSON.parse("{sk:" + count + "}"));
-                count += 100;
+                count++;
             }
             Assert.assertEquals(count, bound);
             clearFlag = true;
@@ -159,11 +161,11 @@ public class KillNodeSubcl2433 extends SdbTestBase {
                 }
             }
             catch (BaseException e) {
-                System.out.println("Attach Thread Exception:" + e.getErrorCode());
+                System.out.println("Attach exception bound:" + e.getErrorCode());
             }
 
             finally {
-                System.out.println("bound:" + bound);
+                System.out.println("Attach bound:" + bound);
                 if (sdb != null) {
                     sdb.disconnect();
                 }
