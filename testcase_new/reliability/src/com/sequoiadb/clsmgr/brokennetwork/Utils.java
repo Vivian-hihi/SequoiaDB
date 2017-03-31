@@ -1,9 +1,11 @@
 package com.sequoiadb.clsmgr.brokennetwork;
 
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
+
 import org.bson.BSONObject;
 import org.bson.util.JSON;
+
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.commlib.GroupMgr;
@@ -84,7 +86,7 @@ public class Utils {
         return true;
     }
 
-    public static String getDiffHostWithSvc(String host, Set<String> allHost) {
+    public static String getDiffHostWithSvc(String host, List<String> allHost) {
         for (String entry : allHost) {
             if (!entry.equals(host)) {
                 return entry + ":" + SdbTestBase.serviceName;

@@ -3,7 +3,6 @@ package com.sequoiadb.clsmgr.brokennetwork;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -14,11 +13,11 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
@@ -49,8 +48,8 @@ public class NetDeleteNode6201 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness()) {
-                throw new SkipException("checkBusiness faile");
+            if (!groupMgr.checkBusiness(20)) {
+                throw new SkipException("checkBusiness fail");
             }
 
         }
@@ -71,8 +70,11 @@ public class NetDeleteNode6201 extends SdbTestBase {
             String cataPriHost = cataGroup.getMaster().hostName();
 
             // 得到一个非断网主机的coordurl
-            connectUrl = Utils.getDiffHostWithSvc(cataPriHost, groupMgr.getAllHosts());
+            connectUrl = CommLib.getSafeCoordUrl(cataPriHost);
 
+            System.out.println("brokenNetHost:" + cataPriHost + " connectUrl" + connectUrl);
+
+            // 建立一个COORD节点
             db = new Sequoiadb(connectUrl, "", "");
             ReplicaGroup coordGroup = db.getReplicaGroup("SYSCoord");
             Node coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
@@ -80,20 +82,15 @@ public class NetDeleteNode6201 extends SdbTestBase {
             coordNode.start();
 
             // 建立并行任务
-            System.out.println("cata:" + cataPriHost);
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 1, 10, 15);
             TaskMgr mgr = new TaskMgr(faultTask);
-            mgr.addTask(new RemoveCoord("removeCoord"));
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
+            mgr.addTask(new RemoveCoord());
+            mgr.execute();
             // TaskMgr检查线程异常
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
             // 最长等待20分钟的集群环境恢复
-            Assert.assertEquals(Utils.checkBusinessWithTimeout(groupMgr, 1200), true,
-                    "wait restore business faile");
+            Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             if (deleteFlag) {
                 Assert.assertEquals(groupMgr.checkResidu(), true);
@@ -135,14 +132,8 @@ public class NetDeleteNode6201 extends SdbTestBase {
     }
 
     class RemoveCoord extends OperateTask {
-        public RemoveCoord(String name) {
-            super(name);
-            // TODO Auto-generated constructor stub
-        }
-
         @Override
         public void exec() throws Exception {
-            System.out.println("thread:" + connectUrl);
             try {
                 Sequoiadb db = new Sequoiadb(connectUrl, "", "");
                 ReplicaGroup coordGroup = db.getReplicaGroup("SYSCoord");
@@ -151,21 +142,6 @@ public class NetDeleteNode6201 extends SdbTestBase {
             }
             catch (BaseException e) {
                 System.out.println(e.getMessage());
-                if (e.getErrorCode() != -134) {
-                    throw e;
-                }
-            }
-        }
-
-        @Override
-        public void faultNotify(BSONObject status) throws FaultException {
-            OperateTask.faultStatus mk = (faultStatus) status.get(FaultMakeTask.MAKE_RESULT);
-            OperateTask.faultStatus rt = (faultStatus) status.get(FaultMakeTask.RESTORE_RESULT);
-            if (mk == OperateTask.faultStatus.MAKEFAILURE) {
-                throw new FaultException(mk.toString());
-            }
-            if (rt == OperateTask.faultStatus.RESTOREFAILURE) {
-                throw new FaultException(rt.toString());
             }
         }
     }
