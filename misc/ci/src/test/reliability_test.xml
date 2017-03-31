@@ -133,7 +133,7 @@
       
       <mkdir dir="${CI_WORK_DIR}/testcase"/>
       <copy todir="${CI_WORK_DIR}/testcase">
-         <fileset dir="${case_basedir}" includes="reliability/**/**"/>
+         <fileset dir="${case_basedir}" includes="**/*"/>
       </copy>
       
    </target>
