@@ -273,6 +273,53 @@
   
    </target>
    
+   <target name="reliability_test_build">
+      <var name="TEST_TYPE" value="RELIABILITYTEST"/>
+      <antcallback target="check_parameter" return="DEPLOY_MODE"/> 
+      <getplatform resultProperty="plat_form"/>
+      <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+      <if>
+         <resourcecontains resource="${WORKSPACE}/archive/compile_db_trunk/sequoiadb.version" substring="Debug"/>
+         <then>
+            <delete file="${WORKSPACE}/archive/current/*" failonerror="false"/>
+            <copy todir="${WORKSPACE}/archive/current">
+               <fileset dir="${WORKSPACE}/archive/compile_db_trunk">
+                  <include name="sequoiadb*.run"/>
+                  <include name="sequoiadb*.version"/>
+               </fileset>
+            </copy>
+            <exec_reliability serialnumber="1" buildstatus="build_status"/>
+            <!--判断：第一次有用例失败时不做第二次测试-->
+            <if>
+               <equals arg1="${build_status}" arg2="successful"/>
+               <then>
+                  <delete file="${WORKSPACE}/archive/current/*" failonerror="false"/>
+                  <copy todir="${WORKSPACE}/archive/current">
+                     <fileset dir="${WORKSPACE}/archive/compile_db_trunk_release">
+                        <include name="sequoiadb*.run"/>
+                        <include name="sequoiadb*.version"/>
+                     </fileset>
+                  </copy>
+                  <exec_reliability serialnumber="2" buildstatus="build_status"/>
+               </then>
+            </if>
+             
+         </then>
+         <else>
+            <!--ready_package-->
+            <delete file="${WORKSPACE}/archive/current/*" failonerror="false"/>
+            <copy todir="${WORKSPACE}/archive/current">
+               <fileset dir="${WORKSPACE}/archive/compile_db_trunk">
+                  <include name="sequoiadb*.run"/>
+                  <include name="sequoiadb*.version"/>
+               </fileset>
+            </copy>
+            <exec_reliability serialnumber="3" buildstatus="build_status"/>
+         </else>
+      </if>
+   </target>
+   
+   
    <target name="compile_build">
       <getplatform resultProperty="plat_form"/>
       <ant antfile="compile_sequoiadb.xml" dir="src/compile" inheritAll="true" useNativeBaseDir="true" />
@@ -343,7 +390,40 @@
       </sequential>
    </macrodef>
    
-
+   <macrodef name="exec_reliability">
+      <attribute name="serialnumber"/>
+      <attribute name="buildstatus"/>
+      <sequential>      
+         <ant antfile="install_deploy.xml" dir="src/install_deploy" inheritAll="true" useNativeBaseDir="true" >
+            <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+            <property name="testhost_list" value="${testhost_list}"/>
+         </ant>
+         <ant antfile="reliability_test.xml" dir="src/test" inheritAll="true" useNativeBaseDir="true" >
+            <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+            <property name="plat_form" value="${plat_form}"/>
+            <property name="serial_number" value="@{serialnumber}"/>
+         </ant>
+         <ant antfile="env_detect.xml" dir="${basedir}/src/solve_result" useNativeBaseDir="true">
+            <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+            <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+            <property name="plat_form" value="${plat_form}"/>
+         </ant>
+        
+         <antcallback target="status_file.get_build_status" return="@{buildstatus}"/>
+         <if>
+            <equals arg1="${@{buildstatus}}" arg2="unstable" />
+            <then>
+               <ant antfile="backup_log.xml" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                  <property name="TEST_TYPE" value="${TEST_TYPE}"/>
+                  <property name="DEPLOY_MODE" value="${DEPLOY_MODE}"/>
+                  <property name="testhost_list" value="${testhost_list}"/>
+               </ant>
+            </then>
+         </if>
+         <ant antfile="count_testcase_skip.xml" target="detect_testcase_skip" inheritAll="true" useNativeBaseDir="true"/> 
+      </sequential>
+   </macrodef>
+   
 </project>
 
 
