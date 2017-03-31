@@ -14,7 +14,6 @@
       <property file="${basedir}/src/conf/test.conf" />
       <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
       
-      
       <delete dir="${report_dir}" failonerror="false"/> 
       <mkdir dir="${report_dir}"/>
       <antcall target="detect_remote_env">
@@ -39,15 +38,7 @@
    <target name="detect_remote_env">
       <property file="${basedir}/src/conf/test.conf" />
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
-      <if>
-         <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
-         <then>
-            <var name="host.NAME" value="${control_host}"/>
-         </then>
-         <else>
-            <hostinfo prefix="host" />
-         </else>
-      </if>
+
       <hostinfo prefix="host" />
 
       <property name="remote_cmd1" 
