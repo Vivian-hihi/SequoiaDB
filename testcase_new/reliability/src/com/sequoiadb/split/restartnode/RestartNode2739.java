@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.testng.Assert;
 import org.testng.SkipException;
@@ -23,19 +24,20 @@ import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
+import com.sequoiadb.split.brokennetwork.Utils;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName:SEQDB-2735 range分区组进行范围切分，切分时目标组主节点正常重启
+ * @FileName:SEQDB-2739 对range分区组进行百分比切分，切分时源备节点正常重启
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class RestartNode2735 extends SdbTestBase {
-    private String clName = "testcaseCL2735";
+public class RestartNode2739 extends SdbTestBase {
+    private String clName = "testcaseCL2739";
     private String srcGroupName;
     private String destGroupName;
     private GroupMgr groupMgr = null;
@@ -92,13 +94,12 @@ public class RestartNode2735 extends SdbTestBase {
             // 获取源和目标组的GroupWrapper对象
             GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            NodeWrapper destMaster = destGroup.getMaster();
+            NodeWrapper srcMaster = srcGroup.getSlave();
 
-            System.out
-                    .println("restart Node:" + destMaster.hostName() + ":" + destMaster.svcName());
+            System.out.println("restart Node:" + srcMaster.hostName() + ":" + srcMaster.svcName());
 
             // 建立并行任务
-            FaultMakeTask faultTask = NodeRestart.getFaultMakeTask(destMaster, 1, 10, 10);
+            FaultMakeTask faultTask = NodeRestart.getFaultMakeTask(srcMaster, 1, 10, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split());
             mgr.execute();
@@ -118,8 +119,14 @@ public class RestartNode2735 extends SdbTestBase {
             Assert.assertEquals(srcGroup.checkInspect(60), true);
 
             // 源和目标数据量比对
-            long destCount = checkGroupData(commSdb, destGroupName);
-            long srcCount = checkGroupData(commSdb, srcGroupName);
+            int splitBound = getBound(commSdb);
+
+            long destCount = getGroupData(commSdb, destGroupName);
+            Assert.assertEquals(destCount, 6000 - splitBound);
+
+            long srcCount = getGroupData(commSdb, srcGroupName);
+            Assert.assertEquals(srcCount, splitBound);
+
             Assert.assertEquals(srcCount + destCount, totalCount);
             Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), 6000);
             clearFlag = true;
@@ -129,15 +136,13 @@ public class RestartNode2735 extends SdbTestBase {
         }
     }
 
-    private long checkGroupData(Sequoiadb sdb, String groupName) {
+    private long getGroupData(Sequoiadb sdb, String groupName) {
         Sequoiadb dataNode = null;
         DBCursor cursor = null;
         try {
             dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
             DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
             long count = cl.getCount();
-            // 组的数据量应该是totalCount / 2
-            Assert.assertEquals(count, totalCount / 2, groupName + " data count:" + count);
             return count;
         }
         catch (BaseException e) {
@@ -153,6 +158,48 @@ public class RestartNode2735 extends SdbTestBase {
             }
         }
         return 0;
+    }
+
+    private int getBound(Sequoiadb commSdb) {
+        DBCursor cursor = null;
+        BSONObject lowBound = null;
+        BSONObject upBound = null;
+        try {
+            cursor = commSdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG,
+                    "{Name:\"" + csName + "." + clName + "\"}", null, null);
+            BasicBSONList list = null;
+            if (cursor.hasNext()) {
+                list = (BasicBSONList) cursor.getNext().get("CataInfo");
+            }
+            else {
+                Assert.fail(clName + " collection catalog not found");
+            }
+            for (int i = 0; i < list.size(); i++) {
+                String groupName = (String) ((BSONObject) list.get(i)).get("GroupName");
+                if (groupName.equals(destGroupName)) {
+                    lowBound = (BSONObject) ((BSONObject) list.get(i)).get("LowBound");
+
+                }
+                if (groupName.equals(srcGroupName)) {
+                    upBound = (BSONObject) ((BSONObject) list.get(i)).get("UpBound");
+
+                }
+            }
+            if (!upBound.equals(lowBound)) {
+                Assert.fail("get lowbound upbound fail:" + list);
+            }
+            return (int) upBound.get("sk");
+        }
+        catch (BaseException e) {
+            Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
+        }
+        finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return (int) upBound.get("UpBound");
+
     }
 
     @AfterClass
@@ -184,8 +231,7 @@ public class RestartNode2735 extends SdbTestBase {
                 sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:0}"), // 切分
-                        (BSONObject) JSON.parse("{sk:3000}"));
+                cl.split(srcGroupName, destGroupName, 50);
             }
             catch (BaseException e) {
                 throw e;

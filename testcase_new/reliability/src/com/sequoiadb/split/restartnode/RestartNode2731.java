@@ -28,14 +28,14 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName:SEQDB-2735 range分区组进行范围切分，切分时目标组主节点正常重启
+ * @FileName:SEQDB-2731 对hash分区组进行百分比切分，切分时目标主节点正常重启
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class RestartNode2735 extends SdbTestBase {
-    private String clName = "testcaseCL2735";
+public class RestartNode2731 extends SdbTestBase {
+    private String clName = "testcaseCL2731";
     private String srcGroupName;
     private String destGroupName;
     private GroupMgr groupMgr = null;
@@ -64,8 +64,10 @@ public class RestartNode2735 extends SdbTestBase {
 
             commSdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace commCS = commSdb.getCollectionSpace(csName);
-            DBCollection cl = commCS.createCollection(clName, (BSONObject) JSON.parse(
-                    "{ShardingKey:{'sk':1},ShardingType:'range',Group:'" + srcGroupName + "'}"));
+            DBCollection cl = commCS.createCollection(clName,
+                    (BSONObject) JSON
+                            .parse("{ShardingKey:{'sk':1},ShardingType:'hash',Partition:4096,Group:'"
+                                    + srcGroupName + "'}"));
             // 准备切分的数据
             insertData(cl, 0, 5000);
         }
@@ -90,7 +92,7 @@ public class RestartNode2735 extends SdbTestBase {
     public void test() {
         try {
             // 获取源和目标组的GroupWrapper对象
-            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
+
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
             NodeWrapper destMaster = destGroup.getMaster();
 
@@ -114,8 +116,9 @@ public class RestartNode2735 extends SdbTestBase {
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 5000, 6000);
 
-            Assert.assertEquals(destGroup.checkInspect(60), true);
-            Assert.assertEquals(srcGroup.checkInspect(60), true);
+            // 范围切分覆盖
+            // Assert.assertEquals(destGroup.checkInspect(60), true);
+            // Assert.assertEquals(srcGroup.checkInspect(60), true);
 
             // 源和目标数据量比对
             long destCount = checkGroupData(commSdb, destGroupName);
@@ -136,8 +139,11 @@ public class RestartNode2735 extends SdbTestBase {
             dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
             DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
             long count = cl.getCount();
-            // 组的数据量应该是totalCount / 2
-            Assert.assertEquals(count, totalCount / 2, groupName + " data count:" + count);
+            // 组的数据量应该在totalCount / 2条左右（切分范围2048-4096）
+            Assert.assertEquals(
+                    count > totalCount / 2 - (totalCount / 2 * 0.3)
+                            && count < totalCount / 2 + (totalCount / 2 * 0.3),
+                    true, "destGroup data count:" + count);
             return count;
         }
         catch (BaseException e) {
@@ -184,8 +190,7 @@ public class RestartNode2735 extends SdbTestBase {
                 sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:0}"), // 切分
-                        (BSONObject) JSON.parse("{sk:3000}"));
+                cl.split(srcGroupName, destGroupName, 50);
             }
             catch (BaseException e) {
                 throw e;

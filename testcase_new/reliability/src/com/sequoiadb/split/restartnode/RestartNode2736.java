@@ -28,14 +28,14 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName:SEQDB-2735 range分区组进行范围切分，切分时目标组主节点正常重启
+ * @FileName:SEQDB-2736 range分区组进行范围切分，切分时目标组备节点正常重启
  * @author huangqiaohui
  * @version 1.00
  *
  */
 
-public class RestartNode2735 extends SdbTestBase {
-    private String clName = "testcaseCL2735";
+public class RestartNode2736 extends SdbTestBase {
+    private String clName = "testcaseCL2736";
     private String srcGroupName;
     private String destGroupName;
     private GroupMgr groupMgr = null;
@@ -92,13 +92,13 @@ public class RestartNode2735 extends SdbTestBase {
             // 获取源和目标组的GroupWrapper对象
             GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            NodeWrapper destMaster = destGroup.getMaster();
+            NodeWrapper destSlave = destGroup.getSlave();
 
             System.out
-                    .println("restart Node:" + destMaster.hostName() + ":" + destMaster.svcName());
+                    .println("restart Node:" + destSlave.hostName() + ":" + destSlave.svcName());
 
             // 建立并行任务
-            FaultMakeTask faultTask = NodeRestart.getFaultMakeTask(destMaster, 1, 10, 10);
+            FaultMakeTask faultTask = NodeRestart.getFaultMakeTask(destSlave, 1, 10, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split());
             mgr.execute();
