@@ -103,11 +103,6 @@ public class BrokenNetwork extends Fault {
         System.out.println("Begin ContinuouslyMakeBrokenNetOnPri:" + group.getGroupName());
         for (int i = 0; i < duration; i++) {
             ssh = new Ssh(host, user, passwd, port);
-            try {
-                ssh.exec("mkdir " + SdbTestBase.workDir);
-            }
-            catch (Exception e) {
-            }
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
             ssh.execBackground(
@@ -244,11 +239,6 @@ public class BrokenNetwork extends Fault {
         }
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-            try {
-                ssh.exec("mkdir " + SdbTestBase.workDir);
-            }
-            catch (Exception e) {
-            }
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
         }
@@ -334,7 +324,7 @@ public class BrokenNetwork extends Fault {
     public static FaultMakeTask getFaultMakeTask(GroupWrapper group, int times, int maxDelay) {
         FaultMakeTask task = null;
         BrokenNetwork bn = new BrokenNetwork(group, times);
-        task = new FaultMakeTask(bn, maxDelay, 0, 15);
+        task = new FaultMakeTask(bn, maxDelay, 0, 100);
         return task;
     }
 

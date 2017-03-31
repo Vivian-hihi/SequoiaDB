@@ -142,12 +142,7 @@ public class DiskFull extends Fault {
     public void init() throws FaultException {
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-            try {
-                ssh.exec("mkdir " + SdbTestBase.workDir);
-            }
-            catch (Exception e) {
-                // Ignore exception
-            }
+            
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
             fillUpDisk(presetPercent);

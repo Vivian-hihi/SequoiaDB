@@ -93,11 +93,7 @@ public class KillNode extends Fault {
     public void init() throws FaultException {
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-            try {
-                ssh.exec("mkdir " + SdbTestBase.workDir);
-            }
-            catch (Exception e) {
-            }
+            
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
         }
@@ -153,7 +149,7 @@ public class KillNode extends Fault {
     public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay) {
         FaultMakeTask task = null;
         KillNode kn = new KillNode(hostName, svcName);
-        task = new FaultMakeTask(kn, maxDelay, 3, 30);
+        task = new FaultMakeTask(kn, maxDelay, 3, 100);
         return task;
     }
 
