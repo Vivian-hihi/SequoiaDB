@@ -1,13 +1,19 @@
 package com.sequoiadb.split.killnode;
 
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
+
 import org.bson.BSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
-import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 
@@ -20,6 +26,8 @@ import com.sequoiadb.exception.ReliabilityException;
  */
 
 public class Utils {
+
+    public static final String CATA_RG_NAME = "SYSCatalogGroup";
 
     // 检查某集合是否仅含一个dest记录
     public static boolean isCollectionContainThisJSON(DBCollection cl, String dest)
@@ -66,31 +74,86 @@ public class Utils {
         }
     }
 
-    // 调用GroupMgr的checkBusiness（false）检测环境，超时后打印当前环境信息,并可能抛出异常
-    public static boolean checkBusinessLSNWithTimeout(GroupMgr mgr, int timeSecond)
+    public static void reelect(String destHost, String groupName1, String groupName2)
             throws ReliabilityException {
-        long timestamp = System.currentTimeMillis();
-        while (!mgr.checkBusinessWithLSN(false)) {
-            if (System.currentTimeMillis() - timestamp > timeSecond * 1000) {
-                return mgr.checkBusinessWithLSN();
-            }
-            try {
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-                // ignore
-            }
-        }
-        return true;
+        List<GroupWrapper> groups = new ArrayList<GroupWrapper>();
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName1));
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName2));
+        reelect(destHost, groups);
     }
 
-    public static String getDiffHostWithSvc(String host, Set<String> allHost) {
-        for (String entry : allHost) {
-            if (!entry.equals(host)) {
-                return entry + ":" + SdbTestBase.serviceName;
+    public static void reelect(String destHost, String groupName) throws ReliabilityException {
+        List<GroupWrapper> groups = new ArrayList<GroupWrapper>();
+        groups.add(GroupMgr.getInstance().getGroupByName(groupName));
+        reelect(destHost, groups);
+    }
+
+    public static void reelect(String destHost, List<GroupWrapper> groups)
+            throws ReliabilityException {
+        for (GroupWrapper group : groups) {
+            if (destHost.equals(group.getMaster().hostName()) && !group.changePrimary()) {
+                throw new SkipException(group.getGroupName() + " failed to reelect");
             }
         }
-        return null;
+    }
+
+    public static void waitSplit(Sequoiadb db, String clFullName) {
+        DBCursor cursor = null;
+        while (true) {
+            try {
+                cursor = db.getList(Sequoiadb.SDB_LIST_TASKS,
+                        (BSONObject) JSON.parse("{Name:'" + clFullName + "'}"), null, null);
+                if (!cursor.hasNext()) {
+                    break;
+                }
+            }
+            finally {
+                cursor.close();
+            }
+        }
+    }
+
+    public static int getBound(Sequoiadb commSdb, String clFullName, String srcGroupName,
+            String destGroupName) {
+        DBCursor cursor = null;
+        BSONObject lowBound = null;
+        BSONObject upBound = null;
+        try {
+            cursor = commSdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG,
+                    "{Name:\"" + clFullName + "\"}", null, null);
+            BasicBSONList list = null;
+            if (cursor.hasNext()) {
+                list = (BasicBSONList) cursor.getNext().get("CataInfo");
+            }
+            else {
+                Assert.fail(clFullName + " collection catalog not found");
+            }
+            for (int i = 0; i < list.size(); i++) {
+                String groupName = (String) ((BSONObject) list.get(i)).get("GroupName");
+                if (groupName.equals(destGroupName)) {
+                    lowBound = (BSONObject) ((BSONObject) list.get(i)).get("LowBound");
+
+                }
+                if (groupName.equals(srcGroupName)) {
+                    upBound = (BSONObject) ((BSONObject) list.get(i)).get("UpBound");
+
+                }
+            }
+            if (!upBound.equals(lowBound)) {
+                Assert.fail("get lowbound upbound fail:" + list);
+            }
+            return (int) upBound.get("sk");
+        }
+        catch (BaseException e) {
+            Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
+        }
+        finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return (int) upBound.get("UpBound");
+
     }
 
 }

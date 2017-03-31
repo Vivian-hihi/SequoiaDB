@@ -51,14 +51,15 @@ public class KillNodeSplit2757 extends SdbTestBase {
             groupMgr = GroupMgr.getInstance();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
-            if (!groupMgr.checkBusiness(true)) {
-                throw new SkipException("checkBusiness faile");
+            if (!groupMgr.checkBusiness(20)) {
+                throw new SkipException("checkBusiness return false");
             }
 
             // 确定切分的源和目标组
             List<GroupWrapper> glist = groupMgr.getAllDataGroup();
             srcGroupName = glist.get(0).getGroupName();
             destGroupName = glist.get(1).getGroupName();
+            System.out.println("split srcRG:" + srcGroupName + " destRG:" + destGroupName);
 
             commSdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace commCS = commSdb.getCollectionSpace(csName);
@@ -67,7 +68,7 @@ public class KillNodeSplit2757 extends SdbTestBase {
                             .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
                                     + srcGroupName + "'}"));
             // 准备切分的数据
-            insertData(cl, 0, 10000);
+            insertData(cl, 0, 5000);
         }
         catch (ReliabilityException e) {
             if (commSdb != null) {
@@ -97,37 +98,31 @@ public class KillNodeSplit2757 extends SdbTestBase {
             System.out.println("KillNode:" + srcPriHost + ":" + srcSvcName);
 
             // 建立并行任务
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(srcPriHost, srcSvcName, 1, 30);
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(srcPriHost, srcSvcName, 1, 50);
             TaskMgr mgr = new TaskMgr(faultTask);
-            mgr.addTask(new Split("Split"));
-            mgr.init();
-            mgr.start();
-            mgr.join();
-            mgr.fini();
+            mgr.addTask(new Split());
+            mgr.execute();
 
             // TaskMgr检查线程异常
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的集群环境恢复
-            Assert.assertEquals(Utils.checkBusinessLSNWithTimeout(groupMgr, 1200), true,
-                    "wait restore business faile");
+            // 最长等待2分钟的集群环境恢复
+            Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
             commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 10000, 11000);
+            insertData(cl, 5000,5100);
+
+            Assert.assertEquals(destGroup.checkInspect(60), true);
+            Assert.assertEquals(srcGroup.checkInspect(60), true);
 
             // 源和目标数据量比对
             long destCount = checkGroupData(commSdb, destGroupName);
             long srcCount = checkGroupData(commSdb, srcGroupName);
             Assert.assertEquals(srcCount + destCount, totalCount);
-            // 组间一致性校验，尝试至多60次，每次间隔1秒
-            if (!destGroup.checkInspect(60, 1)) {
-                Assert.fail(destGroup.getInspectStdout());
-            }
-            if (!srcGroup.checkInspect(60, 1)) {
-                Assert.fail(srcGroup.getInspectStdout());
-            }
+            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:5100}}"), 5100);
+
             clearFlag = true;
         }
         catch (ReliabilityException e) {
@@ -186,11 +181,6 @@ public class KillNodeSplit2757 extends SdbTestBase {
     }
 
     class Split extends OperateTask {
-
-        public Split(String name) {
-            super(name);
-        }
-
         @Override
         public void exec() throws Exception {
             Sequoiadb sdb = null;
@@ -210,12 +200,6 @@ public class KillNodeSplit2757 extends SdbTestBase {
                 }
             }
         }
-
-        @Override
-        public void faultNotify(BSONObject status) {
-
-        }
-
     }
 
 }
