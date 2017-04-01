@@ -184,7 +184,7 @@
             <format property="begin_time" pattern="yyyy-MM-dd_HH:mm:ss" />
          </tstamp>       
 
-         <markinlog casename="@{testsuit}_@{phpversion}" marktype="begin"/>
+         <markinlog casename="@{suitfullname}_@{phpver}" marktype="begin"/>
          
          <!--execute-->
          <if>
@@ -242,7 +242,7 @@
          <echo message="${screen_output}" />
          
          <!--after-->
-         <markinlog casename="@{testsuit}_@{phpversion}" marktype="end"/>
+         <markinlog casename="@{suitfullname}_@{phpver}" marktype="end"/>
          
          <var name="end_time" unset="true"/>
          <tstamp>
