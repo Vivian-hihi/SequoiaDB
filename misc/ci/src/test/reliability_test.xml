@@ -135,7 +135,9 @@
       <copy todir="${CI_WORK_DIR}/testcase">
          <fileset dir="${case_basedir}" includes="**/*"/>
       </copy>
-      
+      <copy todir="${WORKSPACE}/sequoiadb/misc/ci/src">
+         <fileset dir="${case_basedir}" includes="script/**/*"/>
+      </copy>
    </target>
 
    <target name="exec_testcase">
