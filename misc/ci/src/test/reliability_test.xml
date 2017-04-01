@@ -136,7 +136,7 @@
          <fileset dir="${case_basedir}" includes="**/*"/>
       </copy>
       <copy todir="${WORKSPACE}/sequoiadb/misc/ci/src">
-         <fileset dir="${case_basedir}" includes="script/**/*"/>
+         <fileset dir="${case_basedir}/reliability" includes="script/**/*"/>
       </copy>
    </target>
 
