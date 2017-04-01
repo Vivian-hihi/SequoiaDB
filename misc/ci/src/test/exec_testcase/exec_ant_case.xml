@@ -134,7 +134,7 @@
                <var name="ms2" value="EXECUTE CMD:&#10;ant ${cmd1} ${cmd2}&#10;"/>
                <var name="ms3" value="RETURN CODE: ${rc}&#10;"/>
                <var name="ms4" value="OUTPUT MESSAGE:&#10;${screen_output}&#10;"/>
-               <var name="ms5" value="DOWNLOAD DIAGLOG :&#10;${download_url}&#10;"/>
+               <var name="ms5" value="&#10;DOWNLOAD DIAGLOG :&#10;${download_url}&#10;"/>
                <replace file="@{report}" token="ERROR_MESSAGE" value="${ms0}${ms1}${ms2}${ms3}${ms4}${ms5}"/>
             </else>
          </if>
