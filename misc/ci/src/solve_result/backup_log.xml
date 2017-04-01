@@ -208,7 +208,7 @@
             <delete dir="${backup_basedir}/${backup_reltdir}/sdbcmlog" failonerror="false"/>
             <mkdir dir="${backup_basedir}/${backup_reltdir}/sdbcmlog"/>
             <copy todir="${backup_basedir}/${backup_reltdir}/sdbcmlog" >
-               <fileset dir="${CI_WORK_DIR}/conf">
+               <fileset dir="${INSTALL_DIR}/conf">
                   <include name="log/**/*"/>
                </fileset>
             </copy>
