@@ -74,9 +74,7 @@ public class NodeRestart extends Fault {
             return this.node.isNodeActive() == true;
         }
         catch (ReliabilityException e) {
-            FaultException fe = new FaultException(e);
-            fe.setStackTrace(e.getStackTrace());
-            throw fe;
+            throw new FaultException(e);
         }
     }
 

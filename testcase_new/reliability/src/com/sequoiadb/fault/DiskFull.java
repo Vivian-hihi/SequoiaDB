@@ -26,8 +26,7 @@ public class DiskFull extends Fault {
     private Ssh ssh;
     private String remotePath;
     private int presetPercent;
-
-    private final String localScriptPath = "./script";
+    private final String localScriptPath = SdbTestBase.scriptDir;
     private final String scriptName = "fillUpDisk.sh";
 
     /**
@@ -99,9 +98,7 @@ public class DiskFull extends Fault {
             }
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -132,9 +129,7 @@ public class DiskFull extends Fault {
             }
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -148,9 +143,7 @@ public class DiskFull extends Fault {
             fillUpDisk(presetPercent);
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -164,9 +157,7 @@ public class DiskFull extends Fault {
             }
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 

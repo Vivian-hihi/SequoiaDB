@@ -99,7 +99,14 @@ public class FaultWrapper extends Fault {
         boolean checkResult = false;
         status = OperateTask.faultStatus.MAKEFAILURE;
         for (int i = 0; i < checkTimes; ++i) {
-            checkResult = instance.checkMakeResult();
+            try {
+                checkResult = instance.checkMakeResult();
+            }
+            catch (FaultException e) {
+                if (i >= checkTimes - 1) {
+                    throw e;
+                }
+            }
             if (checkResult) {
                 status = OperateTask.faultStatus.MAKESUCCESS;
                 break;

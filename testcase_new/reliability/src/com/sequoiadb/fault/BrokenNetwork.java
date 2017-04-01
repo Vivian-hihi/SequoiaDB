@@ -33,7 +33,7 @@ public class BrokenNetwork extends Fault {
     private Ssh ssh;
     private long brokenTime;
     private GroupWrapper group = null;;
-    private final String localScriptPath = "./script";
+    private final String localScriptPath = SdbTestBase.scriptDir;
     private final String scriptName = "brokenNetwork.sh";
 
     @Test
@@ -89,9 +89,7 @@ public class BrokenNetwork extends Fault {
             }
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -243,9 +241,7 @@ public class BrokenNetwork extends Fault {
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -264,9 +260,7 @@ public class BrokenNetwork extends Fault {
             }
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
         finally {
             ssh.close();
@@ -307,7 +301,7 @@ public class BrokenNetwork extends Fault {
     public static FaultMakeTask getFaultMakeTask(String hostName, int maxDelay, int duration) {
         FaultMakeTask task = null;
         BrokenNetwork bn = new BrokenNetwork(hostName, duration);
-        task = new FaultMakeTask(bn, maxDelay, duration, 15);
+        task = new FaultMakeTask(bn, maxDelay, duration, 50);
         return task;
     }
 

@@ -15,7 +15,7 @@ public class KillNode extends Fault {
     private Ssh ssh;
     private String remotePath;
     private int port;
-    private final String localScriptPath = "./script";
+    private final String localScriptPath = SdbTestBase.scriptDir;
     private final String scriptName = "killNode.sh";
 
     public KillNode(String hostName, String svcName) {
@@ -35,9 +35,7 @@ public class KillNode extends Fault {
             pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -61,9 +59,7 @@ public class KillNode extends Fault {
             }
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -83,9 +79,7 @@ public class KillNode extends Fault {
             return true;
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -93,14 +87,12 @@ public class KillNode extends Fault {
     public void init() throws FaultException {
         try {
             ssh = new Ssh(hostName, user, passwd, port);
-            
+
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
@@ -113,9 +105,7 @@ public class KillNode extends Fault {
             }
         }
         catch (ReliabilityException e) {
-            FaultException e1 = new FaultException(e);
-            e1.setStackTrace(e.getStackTrace());
-            throw e1;
+            throw new FaultException(e);
         }
     }
 
