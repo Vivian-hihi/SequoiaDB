@@ -269,7 +269,7 @@
          <script language="javascript">
             project.setProperty('total_time', ( new Date().getTime() - start_ms ) / 1000 );
          </script>
-         <echo message="the result code is ${rc}, begin at ${begin_time}, end at ${end_time}" />
+         <echo message="the result code is ${@{rc}}, begin at ${begin_time}, end at ${end_time}" />
          
          <!--generate report-->
          <if>
