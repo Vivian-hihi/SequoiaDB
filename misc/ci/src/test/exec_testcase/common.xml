@@ -30,6 +30,8 @@
                <var name="mark_cmd" value="-s &quot;db=new Sdb('localhost',${SVCNAME}); db.msg('End testcase[@{casename}]'); db.close();&quot;" />
             </case>
          </switch>
+         <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${mark_cmd}"/>
+         
          <var name="mark_output" unset="true"/>
          <var name="mark_rc" unset="true"/>
          <exec executable="${INSTALL_DIR}/bin/sdb" 
@@ -39,13 +41,7 @@
                failonerror="false">
             <arg line="${mark_cmd}" />
          </exec>
-         <if>
-            <equals arg1="${mark_rc}" arg2="0" />           
-            <else>
-               <echo message="exec cmd: ${INSTALL_DIR}/bin/sdb ${mark_cmd}"/>
-               <echo message="${mark_output}" />
-            </else>
-         </if>
+         <echo message="${mark_output}" />
       </sequential>
    </macrodef>   
    
