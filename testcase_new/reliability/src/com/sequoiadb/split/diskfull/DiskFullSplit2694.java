@@ -129,7 +129,7 @@ public class DiskFullSplit2694 extends SdbTestBase {
             GroupWrapper cataGroup = groupMgr.getGroupByName(Utils.CATA_RG_NAME);
             NodeWrapper cataMaster = cataGroup.getMaster();
 
-            diskFull = new DiskFull(cataMaster.hostName(), SdbTestBase.workDir);
+            diskFull = new DiskFull(cataMaster.hostName(), SdbTestBase.reservedDir);
             diskFull.init();
             diskFull.make();
 
