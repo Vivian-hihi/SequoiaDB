@@ -13,7 +13,7 @@
    <parameter name="ROOTPASSWD"     value="jenkins" />
    <parameter name="REMOTEUSER"     value="sdbadmin" />
    <parameter name="REMOTEPASSWD"   value="sdbadmin" />
-   <parameter name="SCRIPDIR"       value="/trunk/testcase_new/reliability/script" />
+   <parameter name="SCRIPTDIR"       value="/trunk/testcase_new/reliability/script" />
 
 </suite>
    
