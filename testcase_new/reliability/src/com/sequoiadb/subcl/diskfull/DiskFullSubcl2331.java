@@ -89,7 +89,7 @@ public class DiskFullSubcl2331 extends SdbTestBase {
                     + subClGroupName);
 
             FaultMakeTask faultMakeTask = DiskFull.getFaultMakeTask(subCLGroupMaster.hostName(),
-                    SdbTestBase.workDir, 1, 10, 96);
+                    SdbTestBase.reservedDir, 1, 10, 96);
             TaskMgr taskMgr = new TaskMgr(faultMakeTask);
             taskMgr.addTask(new Insert());
             taskMgr.execute();

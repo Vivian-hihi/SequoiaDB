@@ -126,7 +126,7 @@ public class DiskFullSubcl2330 extends SdbTestBase {
         // 磁盘满
         GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
         System.out.println("fillUpHost:" + cataSlave.hostName());
-        DiskFull df = new DiskFull(cataSlave.hostName(), SdbTestBase.workDir);
+        DiskFull df = new DiskFull(cataSlave.hostName(), SdbTestBase.reservedDir);
         df.init();
         df.make();
 
