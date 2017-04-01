@@ -278,6 +278,10 @@ TEST( reloadConf, weight )
 	// change slave node weight to 10(default) after test
 	rc = changeNodeConf( node, "weight", 10 ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
+	
+	// reload conf again
+    rc = sdbReloadConfig( db, NULL ) ;
+    ASSERT_EQ( rc, SDB_OK ) << "fail to reload conf again" ;
 
 	// disconnect and release
 	sdbDisconnect( db ) ;
