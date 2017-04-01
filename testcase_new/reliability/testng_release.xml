@@ -2,7 +2,7 @@
 <!--This xml is for ci.-->
 <!--These testcases can be excuted only in sequoiadb release version, eg: disk-full testcase.-->
 
-<suite name="reliability" verbose="1"> 
+<suite name="reliability" verbose="1" stop-all-when-occur-failure="true"> 
    <parameter name="HOSTNAME"       value="localhost" />
    <parameter name="SVCNAME"        value="11810" />
    <parameter name="CHANGEDPREFIX"  value="reliability_test" />
@@ -13,6 +13,7 @@
    <parameter name="ROOTPASSWD"     value="jenkins" />
    <parameter name="REMOTEUSER"     value="sdbadmin" />
    <parameter name="REMOTEPASSWD"   value="sdbadmin" />
+   <parameter name="SCRIPDIR"       value="/trunk/testcase_new/reliability/script" />
 
 </suite>
    
