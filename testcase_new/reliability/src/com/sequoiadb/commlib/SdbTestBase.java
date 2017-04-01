@@ -23,13 +23,14 @@ public class SdbTestBase {
     public static String rootPwd;
     public static String remoteUser;
     public static String remotePwd;
+    public static String scriptDir;
 
     @Parameters({ "HOSTNAME", "SVCNAME", "CHANGEDPREFIX", "RSRVPORTBEGIN", "RSRVPORTEND",
-            "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD" })
+            "RSRVNODEDIR", "WORKDIR", "ROOTPASSWD", "REMOTEUSER", "REMOTEPASSWD", "SCRIPTDIR" })
     @BeforeSuite
     public static void initSuite(String HOSTNAME, String SVCNAME, String COMMCSNAME,
             int RSRVPORTBEGIN, int RSRVPORTEND, String RSRVNODEDIR, String WORKDIR,
-            String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD) {
+            String ROOTPASSWD, String REMOTEUSER, String REMOTEPASSWD, String SCRIPTDIR) {
         hostName = HOSTNAME;
         serviceName = SVCNAME;
         csName = COMMCSNAME;
@@ -41,6 +42,7 @@ public class SdbTestBase {
         rootPwd = ROOTPASSWD;
         remoteUser = REMOTEUSER;
         remotePwd = REMOTEPASSWD;
+        scriptDir = SCRIPTDIR;
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(coordUrl, "", "");
@@ -100,8 +102,9 @@ public class SdbTestBase {
         }
     }
 
-    @AfterSuite(enabled = false)
+    @AfterSuite(enabled = true)
     public static void finiSuite() {
+        System.out.println("finisuit");
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(coordUrl, "", "");
