@@ -420,7 +420,7 @@
                </ant>
             </then>
          </if>
-         <ant antfile="count_testcase_skip.xml" target="detect_testcase_skip" inheritAll="true" useNativeBaseDir="true"/> 
+         <ant antfile="count_testcase_skip.xml" dir="src/solve_result" target="detect_testcase_skip" inheritAll="true" useNativeBaseDir="true"/> 
       </sequential>
    </macrodef>
    
