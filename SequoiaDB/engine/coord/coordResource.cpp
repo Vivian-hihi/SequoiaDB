@@ -988,5 +988,31 @@ namespace engine
       goto done ;
    }
 
+   INT32 _coordResource::getCataInfo( const CHAR *collectionName,
+                                      CoordCataInfoPtr &cataPtr )
+   {
+      INT32 rc = SDB_CAT_NO_MATCH_CATALOG ;
+      MAP_CATA_INFO_IT it ;
+
+      ossScopedLock lock( &_cataMutex, SHARED ) ;
+
+      if ( !collectionName || !(*collectionName) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      it = _mapCataInfo.find( collectionName ) ;
+      if ( it != _mapCataInfo.end() )
+      {
+         cataPtr = it->second ;
+         rc = SDB_OK ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

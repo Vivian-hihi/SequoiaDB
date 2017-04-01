@@ -36,6 +36,7 @@
 #include "coordRemoteHandle.hpp"
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
+#include "msgMessageFormat.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -198,7 +199,7 @@ namespace engine
       }
 
       /// process result
-      pReply = pSub->getRspMsg( FALSE ) ;
+      pReply = ( MsgOpReply* )pSub->getRspMsg( FALSE ) ;
       if ( !pReply )
       {
          PD_LOG( PDERROR, "Session init reply message is null in node[%s]",

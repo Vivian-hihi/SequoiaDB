@@ -50,11 +50,28 @@ namespace engine
    */
    class _coordResource : public SDBObject
    {
+      struct cmp_str
+      {
+         bool operator() ( const char *a, const char *b )
+         {
+            return ossStrcmp( a, b ) < 0 ;
+         }
+      } ;
+
       typedef std::map< UINT32, CoordGroupInfoPtr >   MAP_GROUP_INFO ;
       typedef MAP_GROUP_INFO::iterator                MAP_GROUP_INFO_IT ;
 
       typedef std::map<std::string, UINT32>           MAP_GROUP_NAME ;
       typedef MAP_GROUP_NAME::iterator                MAP_GROUP_NAME_IT ;
+
+      typedef std::map<const CHAR*, CoordCataInfoPtr, cmp_str> MAP_CATA_INFO ;
+#if defined (_WINDOWS)
+      typedef MAP_CATA_INFO::iterator                 MAP_CATA_INFO_IT ;
+      typedef MAP_CATA_INFO::const_iterator           MAP_CATA_INFO_CIT ;
+#else
+      typedef std::map<const CHAR*, CoordCataInfoPtr>::iterator         MAP_CATA_INFO_IT ;
+      typedef std::map<const CHAR*, CoordCataInfoPtr>::const_iterator   MAP_CATA_INFO_CIT ;
+#endif // _WINDOWS
 
       public:
          _coordResource() ;
@@ -90,6 +107,15 @@ namespace engine
          void        getCataNodeAddrList( CoordVecNodeInfo &vecCata ) ;
          INT32       syncAddress2Options( BOOLEAN flush = TRUE,
                                           BOOLEAN force = FALSE ) ;
+
+      public:
+
+         INT32       getCataInfo( const CHAR *collectionName,
+                                  CoordCataInfoPtr &cataPtr ) ;
+
+         INT32       updateCataInfo( const CHAR *collectionName,
+                                     CoordCataInfoPtr &cataPtr,
+                                     _pmdEDUCB *cb ) ;
 
       protected:
          void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
@@ -134,6 +160,9 @@ namespace engine
          UINT64                           _upGrpIndentify ;
          CoordVecNodeInfo                 _cataNodeAddrList ;
          BOOLEAN                          _cataAddrChanged ;
+
+         MAP_CATA_INFO                    _mapCataInfo ;
+         ossSpinSLatch                    _cataMutex ;
 
          _netRouteAgent                   *_pAgent ;
          pmdOptionsCB                     *_pOptionsCB ;
