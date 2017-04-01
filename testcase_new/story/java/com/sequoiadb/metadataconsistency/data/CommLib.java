@@ -713,14 +713,22 @@ public class CommLib extends SdbTestBase {
 				nodePath = path + "data/" + String.valueOf(svnName); 
 				hostName = hostNames.get(random.nextInt(hostNames.size()));
 				try{
-					rg.createNode(hostName, svnName, nodePath, rgConf);
-					checkSucc = true;
-					break;
+					if( rg != null ){
+						rg.createNode(hostName, svnName, nodePath, rgConf);
+						checkSucc = true;
+						break;
+					}else if( rg == null ){
+						System.out.println("DataRG is not exist.");
+						break;
+					}
 				}catch(BaseException e){
 					int eCode = e.getErrorCode();
 					if( eCode == -157  //-157:Invalid node configuration(Port is occupied)
 							|| eCode == -145){  //-145:Node already exists
 						svnName = svnName + 10;
+					}else if( eCode == -154 ){
+						System.out.println("DataRG is not exist.");
+						break;
 					}
 				}
 			}while(!checkSucc && svnName < portStop);
