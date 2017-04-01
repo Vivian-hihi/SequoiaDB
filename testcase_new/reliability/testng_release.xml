@@ -15,5 +15,12 @@
    <parameter name="REMOTEPASSWD"   value="sdbadmin" />
    <parameter name="SCRIPTDIR"       value="/trunk/testcase_new/reliability/script" />
 
+	<test name="reliability">
+		<packages>			
+			<package name="com.sequoiadb.subcl.diskfull"></package>		
+			<package name="com.sequoiadb.split.diskfull"></package>
+		</packages>
+	</test>
+	
 </suite>
    
