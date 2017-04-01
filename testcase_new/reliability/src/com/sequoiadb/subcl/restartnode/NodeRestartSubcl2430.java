@@ -60,8 +60,9 @@ public class NodeRestartSubcl2430 extends SdbTestBase {
             commCS = commSdb.getCollectionSpace(csName);
             mainCL = commCS.createCollection(mainClName, (BSONObject) JSON
                     .parse("{ShardingKey:{sk1:1,sk2:1},ShardingType:'range',IsMainCL:true}"));
-            DBCollection cl = commCS.createCollection(mainClName + "_subcl", (BSONObject) JSON
-                    .parse("{ShardingType:'hash',ShardingKey:{sk1:1,sk2:1},AutoSplit:true}"));
+            DBCollection cl = commCS.createCollection(mainClName + "_subcl",
+                    (BSONObject) JSON.parse("{ShardingType:'hash',Group:'" + subClGroupName
+                            + "',ShardingKey:{sk1:1,sk2:1}}"));
             mainCL.attachCollection(cl.getFullName(), (BSONObject) JSON
                     .parse("{LowBound:{sk1:0,sk2:0},UpBound:{sk1:50000,sk2:50000}}"));
             insertData();
