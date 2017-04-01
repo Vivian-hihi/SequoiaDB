@@ -34,6 +34,11 @@
 *******************************************************************************/
 
 #include "coordRemoteHandle.hpp"
+#include "pmdEDU.hpp"
+#include "pmdEnv.hpp"
+#include "../bson/bson.h"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -53,8 +58,7 @@ namespace engine
                                                _pmdSubSession **ppSub,
                                                INT32 flag )
    {
-      /// TODO:XUJIANHUI
-      return SDB_OK ;
+      return flag ;
    }
 
    void _coordRemoteHandleBase::onReply( _pmdRemoteSession *pSession,
@@ -62,17 +66,164 @@ namespace engine
                                          const MsgHeader *pReply,
                                          BOOLEAN isPending )
    {
-      /// TODO:XUJIANHUI
+      /// do nothing
    }
 
    INT32 _coordRemoteHandleBase::onSendConnect( _pmdSubSession *pSub,
                                                 const MsgHeader *pReq,
                                                 BOOLEAN isFirst )
    {
-      /// TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = NULL ;
+      pmdRemoteSessionSite* pSite = NULL ;
+      pmdRemoteSession *pInitSession = NULL ;
+
+      cb = pSub->parent()->getEDUCB() ;
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+
+      pInitSession = pSite->addSession( -1, NULL ) ;
+      if ( !pInitSession )
+      {
+         PD_LOG( PDERROR, "Create init remote session failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      rc = _sessionInit( pInitSession, pSub->getNodeID(), cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      if ( pInitSession )
+      {
+         pSite->removeSession( pInitSession ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
+   INT32 _coordRemoteHandleBase::_sessionInit( _pmdRemoteSession *pSession,
+                                               const MsgRouteID &nodeID,
+                                               _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      pmdSubSession *pSub = NULL ;
+      MsgOpReply *pReply = NULL ;
+
+      BSONObj objInfo ;
+      CHAR *pBuff = NULL ;
+      MsgComSessionInitReq *pInitReq = NULL ;
+      UINT32 msgLength = sizeof( MsgComSessionInitReq ) ;
+
+      const CHAR *pRemoteIP = "" ;
+      UINT16 remotePort = 0 ;
+
+      if ( cb->getSession() )
+      {
+         IClient *pClient = cb->getSession()->getClient() ;
+         if ( pClient )
+         {
+            pRemoteIP = pClient->getFromIPAddr() ;
+            remotePort = pClient->getFromPort() ;
+         }
+      }
+
+      /// construct info
+      try
+      {
+         objInfo = BSON( SDB_AUTH_USER << cb->getUserName() <<
+                         SDB_AUTH_PASSWD << cb->getPassword() <<
+                         FIELD_NAME_HOST << pmdGetKRCB()->getHostName() <<
+                         PMD_OPTION_SVCNAME << pmdGetOptionCB()->getServiceAddr() <<
+                         FIELD_NAME_REMOTE_IP << pRemoteIP <<
+                         FIELD_NAME_REMOTE_PORT << (INT32)remotePort ) ;
+         msgLength += objInfo.objsize() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      /// allocate memory
+      rc = cb->allocBuff( msgLength, &pBuff, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Alloc memory failed, size: %u, rc: %d",
+                 msgLength, rc ) ;
+         goto error ;
+      }
+      pInitReq = (MsgComSessionInitReq*)pBuff ;
+
+      /// init message
+      pInitReq->header.messageLength = msgLength ;
+      pInitReq->header.opCode = MSG_COM_SESSION_INIT_REQ ;
+      pInitReq->header.requestID = 0 ;
+      pInitReq->header.routeID.value = 0 ;
+      pInitReq->header.TID = cb->getTID() ;
+      pInitReq->dstRouteID.value = nodeID.value ;
+      pInitReq->srcRouteID.value = pmdGetNodeID().value ;
+      pInitReq->localIP = _netFrame::getLocalAddress() ;
+      pInitReq->peerIP = 0 ;
+      pInitReq->localPort = pmdGetLocalPort() ;
+      pInitReq->peerPort = 0 ;
+      pInitReq->localTID = cb->getTID() ;
+      pInitReq->localSessionID = cb->getID() ;
+      ossMemset( pInitReq->reserved, 0, sizeof( pInitReq->reserved ) ) ;
+      ossMemcpy( pInitReq->data, objInfo.objdata(), objInfo.objsize() ) ;
+
+      /// send message to peer
+      pSub = pSession->addSubSession( nodeID.value ) ;
+      pSub->setReqMsg( ( MsgHeader* )pInitReq, PMD_EDU_MEM_NONE ) ;
+
+      rc = pSession->sendMsg( pSub ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Send session init request to node[%s] failed, "
+                 "rc: %d", routeID2String( nodeID ).c_str(), rc ) ;
+         goto error ;
+      }
+
+      /// get reply
+      rc = pSession->waitReply1( TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Wait session init response from node[%s] failed, "
+                 "rc: %d", routeID2String( nodeID ).c_str(), rc ) ;
+         goto error ;
+      }
+
+      /// process result
+      pReply = pSub->getRspMsg( FALSE ) ;
+      if ( !pReply )
+      {
+         PD_LOG( PDERROR, "Session init reply message is null in node[%s]",
+                 routeID2String( nodeID ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      rc = pReply->flags ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Session init with node[%s] failed, rc: %d",
+                 routeID2String( nodeID ).c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+         pBuff = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
 
 }
 

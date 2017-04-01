@@ -37,6 +37,7 @@
 #define COORD_RESOURCE_HPP__
 
 #include "coordDef.hpp"
+#include "pmdOptionsMgr.hpp"
 
 namespace engine
 {
@@ -57,9 +58,10 @@ namespace engine
 
       public:
          _coordResource() ;
-         virtual ~_coordResource() ;
+         ~_coordResource() ;
 
-         INT32       init( _netRouteAgent *pAgent ) ;
+         INT32       init( _netRouteAgent *pAgent,
+                           pmdOptionsCB *pOptionsCB ) ;
 
       public:
 
@@ -77,10 +79,8 @@ namespace engine
 
          void        removeGroupInfo( UINT32 groupID ) ;
          void        removeGroupInfo( const CHAR *groupName ) ;
-         void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
 
          CoordGroupInfoPtr    getCataGroupInfo() ;
-         void                 setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
          INT32                updateCataGroupInfo( CoordGroupInfoPtr &groupPtr,
                                                    _pmdEDUCB *cb ) ;
 
@@ -88,6 +88,12 @@ namespace engine
          INT32       groupName2ID ( const CHAR* name, UINT32 &id ) ;
 
          void        getCataNodeAddrList( CoordVecNodeInfo &vecCata ) ;
+         INT32       syncAddress2Options( BOOLEAN flush = TRUE,
+                                          BOOLEAN force = FALSE ) ;
+
+      protected:
+         void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
+         void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
 
       protected:
 
@@ -111,6 +117,13 @@ namespace engine
                                        MSG_ROUTE_SERVICE_TYPE type,
                                        CoordGroupInfoPtr &groupPtr ) ;
 
+         void        _addCataAddrNode( const MsgRouteID &id,
+                                       const CHAR *pHostName,
+                                       const CHAR *pSvcName,
+                                       CoordVecNodeInfo &vecAddr ) ;
+
+         void        _initAddressFromOption( CoordVecNodeInfo &vecAddr ) ;
+
       private:
          MAP_GROUP_INFO                   _mapGroupInfo ;
          MAP_GROUP_NAME                   _mapGroupName ;
@@ -120,8 +133,10 @@ namespace engine
 
          UINT64                           _upGrpIndentify ;
          CoordVecNodeInfo                 _cataNodeAddrList ;
+         BOOLEAN                          _cataAddrChanged ;
 
          _netRouteAgent                   *_pAgent ;
+         pmdOptionsCB                     *_pOptionsCB ;
 
    } ;
    typedef _coordResource coordResource ;

@@ -54,31 +54,195 @@ namespace engine
    typedef _utilArray< UINT64, CLS_REPLSET_MAX_NODE_SIZE >     NODE_ARRAY ;
 
    /*
+      cmpNodeInfo define and implement
+   */
+   struct cmpNodeInfo
+   {
+      bool operator()( const clsNodeItem &left,
+                       const clsNodeItem &right )
+      {
+         INT32 comp = ossStrcmp( left._host, right._host ) ;
+         if ( 0 == comp )
+         {
+            comp = ossStrcmp( left._service[MSG_ROUTE_CAT_SERVICE].c_str(),
+                              right._service[MSG_ROUTE_CAT_SERVICE].c_str() ) ;
+         }
+         return comp < 0 ? true : false ;
+      }
+   } ;
+
+   static BOOLEAN _isCataAddrSame( const CoordVecNodeInfo &left,
+                                   const CoordVecNodeInfo &right )
+   {
+      if ( left.size() != right.size() )
+      {
+         return FALSE ;
+      }
+      for ( UINT32 i = 0 ; i < left.size() ; ++i )
+      {
+         const clsNodeItem &leftItem = left[i] ;
+         const clsNodeItem &rightItem = right[i] ;
+
+         if ( 0 != ossStrcmp( leftItem._host, rightItem._host ) ||
+              0 != ossStrcmp( leftItem._service[MSG_ROUTE_CAT_SERVICE].c_str(),
+                              rightItem._service[MSG_ROUTE_CAT_SERVICE].c_str() ) )
+         {
+            return FALSE ;
+         }
+      }
+      return TRUE ;
+   }
+
+   /*
       _coordResource implement
    */
    _coordResource::_coordResource()
    {
       _upGrpIndentify = 1 ;
+      _cataAddrChanged = FALSE ;
       _pAgent = NULL ;
+      _pOptionsCB = NULL ;
    }
 
    _coordResource::~_coordResource()
    {
    }
 
-   INT32 _coordResource::init( _netRouteAgent *pAgent )
+   INT32 _coordResource::init( _netRouteAgent *pAgent,
+                               pmdOptionsCB *pOptionsCB )
    {
       INT32 rc = SDB_OK ;
-      /// TODO:XUJIANHUI
+      CoordGroupInfo *pCataGroup = NULL ;
+
+      if ( !pAgent || !pOptionsCB )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Agent or option is NULL" ) ;
+         goto error ;
+      }
+      _pAgent = pAgent ;
+      _pOptionsCB = pOptionsCB ;
+
+      pCataGroup = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
+      if ( !pCataGroup )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Allocate catalog group info failed" ) ;
+         goto error ;
+      }
+      _cataGroupInfo = CoordGroupInfoPtr( pCataGroup ) ;
+
+      _initAddressFromOption( _cataNodeAddrList ) ;
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
+   void _coordResource::_initAddressFromOption( CoordVecNodeInfo &vecAddr )
+   {
+      vector< _pmdAddrPair > catAddrs = _pOptionsCB->catAddrs() ;
+      MsgRouteID routeID ;
+      routeID.value = MSG_INVALID_ROUTEID ;
+      /// init node address
+      for ( UINT32 i = 0 ; i < catAddrs.size() ; ++i )
+      {
+         if ( 0 == catAddrs[i]._host[ 0 ] )
+         {
+            break ;
+         }
+         _addCataAddrNode( routeID, catAddrs[i]._host,
+                           catAddrs[i]._service,
+                           vecAddr ) ;
+      }
+      std::sort( vecAddr.begin(), vecAddr.end(), cmpNodeInfo() ) ;
+   }
+
+   void _coordResource::_addCataAddrNode( const MsgRouteID &id,
+                                          const CHAR *pHostName,
+                                          const CHAR *pSvcName,
+                                          CoordVecNodeInfo &vecAddr )
+   {
+      CoordNodeInfo nodeInfo ;
+      nodeInfo._id.value = id.value ;
+      ossStrncpy( nodeInfo._host, pHostName, OSS_MAX_HOSTNAME );
+      nodeInfo._host[OSS_MAX_HOSTNAME] = 0 ;
+      nodeInfo._service[MSG_ROUTE_CAT_SERVICE] = pSvcName ;
+
+      vecAddr.push_back( nodeInfo ) ;
+   }
+
    void _coordResource::setCataGroupInfo( CoordGroupInfoPtr &groupPtr )
    {
-      // TODO:XUJIANHUI
+      ossScopedLock lock( &_nodeMutex, EXCLUSIVE ) ;
+
+      if ( _cataGroupInfo->groupVersion() != groupPtr->groupVersion() )
+      {
+         /// clear node address list
+         _cataNodeAddrList.clear() ;
+         _cataAddrChanged = TRUE ;
+
+         UINT32 pos = 0 ;
+         MsgRouteID id ;
+         string hostName ;
+         string svcName ;
+         while ( SDB_OK == groupPtr->getNodeInfo( pos, id, hostName, svcName,
+                                                  MSG_ROUTE_CAT_SERVICE ) )
+         {
+            _addCataAddrNode( id, hostName.c_str(), svcName.c_str(),
+                              _cataNodeAddrList ) ;
+            ++pos ;
+         }
+      }
+      _cataGroupInfo = groupPtr ;
+   }
+
+   INT32 _coordResource::syncAddress2Options( BOOLEAN flush, BOOLEAN force )
+   {
+      INT32 rc = SDB_OK ;
+      CoordVecNodeInfo vecNodes ;
+      BOOLEAN bSame = FALSE ;
+
+      ossScopedLock lock( &_nodeMutex, EXCLUSIVE ) ;
+
+      if ( !force && !_cataAddrChanged )
+      {
+         /// do nothing
+         goto done ;
+      }
+
+      _cataAddrChanged = FALSE ;
+      _initAddressFromOption( vecNodes ) ;
+      bSame = _isCataAddrSame( vecNodes, _cataNodeAddrList ) ;
+
+      if ( !force && bSame )
+      {
+         /// the same, do nothing
+         goto done ;
+      }
+
+      _pOptionsCB->clearCatAddr() ;
+      for ( UINT32 i = 0 ; i < _cataNodeAddrList.size() ; ++i )
+      {
+         const clsNodeItem &item = _cataNodeAddrList[i] ;
+         _pOptionsCB->setCatAddr( item._host,
+                                  item._service[MSG_ROUTE_CAT_SERVICE].c_str() ) ;
+      }
+
+      if ( flush )
+      {
+         rc = _pOptionsCB->reflush2File() ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _coordResource::getGroupInfo( UINT32 groupID,
@@ -710,6 +874,7 @@ namespace engine
       /// add to group info
       addGroupInfo( groupPtr ) ;
       setCataGroupInfo( groupPtr ) ;
+      syncAddress2Options( TRUE, FALSE) ;
 
    done:
       return rc ;

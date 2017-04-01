@@ -70,6 +70,12 @@ namespace engine
          virtual INT32  onSendConnect( _pmdSubSession *pSub,
                                        const MsgHeader *pReq,
                                        BOOLEAN isFirst ) ;
+
+      protected:
+
+         INT32          _sessionInit( _pmdRemoteSession *pSession,
+                                      const MsgRouteID &nodeID,
+                                      _pmdEDUCB *cb ) ;
    } ;
    typedef _coordRemoteHandleBase coordRemoteHandleBase ;
 
