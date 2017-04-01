@@ -88,7 +88,7 @@
          <var name="@{output}" unset="true"/>
          <var name="@{envisok}" unset="true"/>
          <exec executable="${INSTALL_DIR}/bin/sdb" 
-               timeout="1800000" 
+               timeout="300000" 
                outputproperty="@{output}" 
                resultproperty="@{envisok}"
                failonerror="false">
