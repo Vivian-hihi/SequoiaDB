@@ -179,6 +179,7 @@
             </copy>
          </then>
       </if>
+      
       <!--backup core file : node core or testcase core-->
       <if>
          <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
@@ -199,6 +200,21 @@
             </copy>
          </else>
       </if> 
+      
+      <!--backup sdbcmlog-->
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="PERFORMANCETEST_TPCC" />
+         <else>
+            <delete dir="${backup_basedir}/${backup_reltdir}/sdbcmlog" failonerror="false"/>
+            <mkdir dir="${backup_basedir}/${backup_reltdir}/sdbcmlog"/>
+            <copy todir="${backup_basedir}/${backup_reltdir}/sdbcmlog" >
+               <fileset dir="${CI_WORK_DIR}/conf">
+                  <include name="log/**/*"/>
+               </fileset>
+            </copy>
+         </else>
+      </if> 
+
       
       <!--compress-->
       <tar destfile="${backup_fullname}" longfile="gnu" compression="gzip" 
