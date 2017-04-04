@@ -30,11 +30,21 @@
       </if>
       <if>
          <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
-         <then>
+         <then>        
             <!--change testng.xml and testng_release.xml-->
             <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
-            <replaceregexp file="${testcase_dir}/../../testcase/reliability/testng.xml" match='localhost' replace='${firsthost}'/> 
-            <replaceregexp file="${testcase_dir}/../../testcase/reliability/testng_release.xml" match='localhost' replace='${firsthost}'/> 
+            <replaceregexp file="${testcase_dir}/../../testcase/reliability/testng.xml"
+                           match="(.*)&lt;parameter name=&quot;HOSTNAME&quot;(.* )value=&quot;(.*)&quot; /&gt;" 
+                           replace="\1&lt;parameter name=&quot;HOSTNAME&quot;\2value=&quot;${firsthost}&quot; /&gt;"/>
+            <replaceregexp file="${testcase_dir}/../../testcase/reliability/testng_release.xml"
+                           match="(.*)&lt;parameter name=&quot;HOSTNAME&quot;(.* )value=&quot;(.*)&quot; /&gt;" 
+                           replace="\1&lt;parameter name=&quot;HOSTNAME&quot;\2value=&quot;${firsthost}&quot; /&gt;"/>
+            <replaceregexp file="${testcase_dir}/../../testcase/reliability/testng.xml"
+                           match="(.*)&lt;parameter name=&quot;SCRIPTDIR&quot;(.* )value=&quot;(.*)&quot; /&gt;" 
+                           replace="\1&lt;parameter name=&quot;SCRIPTDIR&quot;\2value=&quot;${testcase_dir}/../../script&quot; /&gt;"/>
+            <replaceregexp file="${testcase_dir}/../../testcase/reliability/testng_release.xml"
+                           match="(.*)&lt;parameter name=&quot;SCRIPTDIR&quot;(.* )value=&quot;(.*)&quot; /&gt;" 
+                           replace="\1&lt;parameter name=&quot;SCRIPTDIR&quot;\2value=&quot;${testcase_dir}/../../script&quot; /&gt;"/>
             <ant antfile="${testcase_dir}/../../testcase/tools/runtest_java.xml" target="exec_testcase">
                <property name="casedir" value="${testcase_dir}"/>
                <property name="reportdir" value="${report_dir}"/>
