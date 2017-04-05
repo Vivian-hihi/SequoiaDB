@@ -83,6 +83,9 @@ namespace engine
          INT32       init( _netRouteAgent *pAgent,
                            pmdOptionsCB *pOptionsCB ) ;
 
+         void        invalidateCataInfo() ;
+         void        invalidateGroupInfo( UINT64 identify = 0 ) ;
+
       public:
 
          INT32       getGroupInfo( UINT32 groupID,
@@ -117,6 +120,8 @@ namespace engine
                                   CoordCataInfoPtr &cataPtr ) ;
 
          void        removeCataInfo( const CHAR *collectionName ) ;
+         void        removeCataInfoByCS( const CHAR *csName,
+                                         vector< string > *pRelatedCLs = NULL ) ;
 
          INT32       updateCataInfo( const CHAR *collectionName,
                                      CoordCataInfoPtr &cataPtr,

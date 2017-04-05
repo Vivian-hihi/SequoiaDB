@@ -1000,6 +1000,61 @@ namespace engine
       _cataMutex.release() ;
    }
 
+   void _coordResource::removeCataInfoByCS( const CHAR *csName,
+                                            vector < string > *pRelatedCLs )
+   {
+      UINT32 len = 0 ;
+      clsCatalogSet *pCatSet = NULL ;
+      const CHAR *pCLName = NULL ;
+      MAP_CATA_INFO_IT it ;
+      BOOLEAN locked = FALSE ;
+
+      if ( !csName || !( *csName ) )
+      {
+         goto done ;
+      }
+      len = ossStrlen( csName ) ;
+
+      _cataMutex.get() ;
+      locked = TRUE ;
+
+      it = _mapCataInfo.begin() ;
+
+      while( it != _mapCataInfo.end() )
+      {
+         pCatSet = it->second->getCatalogSet() ;
+         pCLName = it->first ;
+
+         if ( pRelatedCLs && len > 0 && pCatSet )
+         {
+            string strMainCL = pCatSet->getMainCLName() ;
+
+            if ( 0 == ossStrncmp( strMainCL.c_str(), csName, len ) &&
+                 '.' == strMainCL.at( len ) )
+            {
+               pRelatedCLs->push_back( it->first ) ;
+            }
+         }
+
+         if ( 0 == ossStrncmp( pCLName, csName, len ) &&
+              '.' == pCLName[ len ] )
+         {
+            _mapCataInfo.erase( it++ ) ;
+         }
+         else
+         {
+            ++it ;
+         }
+      }
+
+   done:
+      if ( locked )
+      {
+         _cataMutex.release() ;
+      }
+      return ;
+   }
+
    void _coordResource::addCataInfo( CoordCataInfoPtr &cataPtr )
    {
       _cataMutex.get() ;
@@ -1034,6 +1089,47 @@ namespace engine
       return count ;
    }
 
+   void _coordResource::invalidateCataInfo()
+   {
+      _cataMutex.get() ;
+      _mapCataInfo.clear() ;
+      _cataMutex.release() ;
+   }
+
+   void _coordResource::invalidateGroupInfo( UINT64 identify )
+   {
+      ossScopedLock _lock( &_nodeMutex, EXCLUSIVE ) ;
+
+      if ( 0 == identify )
+      {
+         _mapGroupInfo.clear() ;
+         _mapGroupName.clear() ;
+      }
+      else
+      {
+         MAP_GROUP_INFO_IT it = _mapGroupInfo.begin() ;
+         while( it != _mapGroupInfo.end() )
+         {
+            if ( it->second->getIdentify() <= identify )
+            {
+               /// first erase the name map
+               MAP_GROUP_NAME_IT itName =
+                  _mapGroupName.find( it->second->groupName() ) ;
+               if ( itName != _mapGroupName.end() )
+               {
+                  _mapGroupName.erase( itName ) ;
+               }
+               /// erase
+               _mapGroupInfo.erase( it++ ) ;
+            }
+            else
+            {
+               ++it ;
+            }
+         }
+      }
+   }
+
    INT32 _coordResource::updateCataInfo( const CHAR *collectionName,
                                          CoordCataInfoPtr &cataPtr,
                                          _pmdEDUCB *cb )
@@ -1058,11 +1154,14 @@ namespace engine
          PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
                  "rc: %d", collectionName, rc ) ;
 
-         if ( ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc ) &&
-              checkAndRemoveCataInfoBySub( collectionName ) > 0 )
+         if ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc )
          {
-            /// change the error
-            rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+            if ( checkAndRemoveCataInfoBySub( collectionName ) > 0 )
+            {
+               /// change the error
+               rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+            }
+            removeCataInfo( collectionName ) ;
          }
          goto error ;
       }
@@ -1217,7 +1316,7 @@ namespace engine
             ++objNum ;
 
             /// init catalog info
-            rc = coordICataPtrFromObj( obj, tmpPtr ) ;
+            rc = coordInitCataPtrFromObj( obj, tmpPtr ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Init catalog info from obj[%s] failed, "

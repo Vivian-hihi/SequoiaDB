@@ -41,8 +41,8 @@ using namespace bson ;
 namespace engine
 {
 
-   INT32 coordICataPtrFromObj( const BSONObj &obj,
-                               CoordCataInfoPtr & cataPtr)
+   INT32 coordInitCataPtrFromObj( const BSONObj &obj,
+                                  CoordCataInfoPtr & cataPtr)
    {
       INT32 rc = SDB_OK ;
       CoordCataInfo *pCataInfoTmp = NULL ;
