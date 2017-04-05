@@ -30,6 +30,8 @@ function main()
 			return;
 		}
 		
+		db.setSessionAttr( { PreferedInstance: "M" } );
+		
       var noCSName  = COMMCSNAME+"_no" ;
       var lzwCSName = COMMCSNAME+"_lzw" ;     
       var noCLName  = COMMCLNAME+"_no" ;
