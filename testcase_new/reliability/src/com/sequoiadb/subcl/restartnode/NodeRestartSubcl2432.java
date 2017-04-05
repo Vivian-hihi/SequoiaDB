@@ -141,7 +141,7 @@ public class NodeRestartSubcl2432 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+            sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'S'}"));
             DBCursor cusor = null;
             try {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(mainClName);
