@@ -40,6 +40,7 @@
 #include "msgMessage.hpp"
 #include "coordRemoteHandle.hpp"
 #include "coordRemoteSession.hpp"
+#include "coordCommon.hpp"
 #include "../bson/bson.h"
 #include "utilArray.hpp"
 
@@ -70,28 +71,6 @@ namespace engine
          return comp < 0 ? true : false ;
       }
    } ;
-
-   static BOOLEAN _isCataAddrSame( const CoordVecNodeInfo &left,
-                                   const CoordVecNodeInfo &right )
-   {
-      if ( left.size() != right.size() )
-      {
-         return FALSE ;
-      }
-      for ( UINT32 i = 0 ; i < left.size() ; ++i )
-      {
-         const clsNodeItem &leftItem = left[i] ;
-         const clsNodeItem &rightItem = right[i] ;
-
-         if ( 0 != ossStrcmp( leftItem._host, rightItem._host ) ||
-              0 != ossStrcmp( leftItem._service[MSG_ROUTE_CAT_SERVICE].c_str(),
-                              rightItem._service[MSG_ROUTE_CAT_SERVICE].c_str() ) )
-         {
-            return FALSE ;
-         }
-      }
-      return TRUE ;
-   }
 
    /*
       _coordResource implement
@@ -214,7 +193,7 @@ namespace engine
 
       _cataAddrChanged = FALSE ;
       _initAddressFromOption( vecNodes ) ;
-      bSame = _isCataAddrSame( vecNodes, _cataNodeAddrList ) ;
+      bSame = coordIsCataAddrSame( vecNodes, _cataNodeAddrList ) ;
 
       if ( !force && bSame )
       {
@@ -1006,6 +985,273 @@ namespace engine
       {
          cataPtr = it->second ;
          rc = SDB_OK ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _coordResource::removeCataInfo( const CHAR *collectionName )
+   {
+      _cataMutex.get() ;
+      _mapCataInfo.erase( collectionName ) ;
+      _cataMutex.release() ;
+   }
+
+   void _coordResource::addCataInfo( CoordCataInfoPtr &cataPtr )
+   {
+      _cataMutex.get() ;
+      _mapCataInfo[ cataPtr->getName() ] = cataPtr ;
+      _cataMutex.release() ;
+   }
+
+   UINT32 _coordResource::checkAndRemoveCataInfoBySub( const CHAR *collectionName )
+   {
+      string strSubCLName = collectionName ;
+      MAP_CATA_INFO_IT it ;
+      clsCatalogSet *pCatSet = NULL ;
+      UINT32 count = 0 ;
+
+      ossScopedLock _lock( &_cataMutex, EXCLUSIVE ) ;
+      it = _mapCataInfo.begin() ;
+      while( it != _mapCataInfo.end() )
+      {
+         pCatSet = it->second->getCatalogSet() ;
+         if ( !pCatSet || !pCatSet->isMainCL() )
+         {
+            /// do nothing
+         }
+         else if ( pCatSet->isContainSubCL( strSubCLName ) )
+         {
+            _mapCataInfo.erase( it++ ) ;
+            ++count ;
+            continue ;
+         }
+         ++it ;
+      }
+      return count ;
+   }
+
+   INT32 _coordResource::updateCataInfo( const CHAR *collectionName,
+                                         CoordCataInfoPtr &cataPtr,
+                                         _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+
+      try
+      {
+         obj = BSON( CAT_CATALOGNAME_NAME << collectionName ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = _updateCataInfo( obj, collectionName, cataPtr, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
+                 "rc: %d", collectionName, rc ) ;
+
+         if ( ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc ) &&
+              checkAndRemoveCataInfoBySub( collectionName ) > 0 )
+         {
+            /// change the error
+            rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+         }
+         goto error ;
+      }
+
+      /// When collecton is main-cl, need to update all's sub-collections
+      if ( cataPtr->isMainCL() && cataPtr->getSubCLCount() > 0 )
+      {
+         CoordCataInfoPtr tmpPtr ;
+         try
+         {
+            obj = BSON( CAT_MAINCL_NAME << collectionName ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         rc = _updateCataInfo( obj, "", tmpPtr, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update collection[%s]'s all sub-collections "
+                    "catalog info failed, rc: %d", collectionName, rc ) ;
+            /// remove main-cl's cataloginfo
+            removeCataInfo( collectionName ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordResource::_updateCataInfo( const BSONObj &obj,
+                                          const CHAR *collectionName,
+                                          CoordCataInfoPtr &cataPtr,
+                                          _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      coordGroupSession session ;
+      pmdSubSession *pSub = NULL ;
+      MsgHeader *pReply = NULL ;
+
+      CHAR *pBuffer = NULL ;
+      INT32 bufferSize = 0 ;
+
+      rc = session.init( this, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init coord remote session failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      session.getGroupSel()->setPrimary( TRUE ) ;
+      session.getGroupSel()->setServiceType( MSG_ROUTE_CAT_SERVICE ) ;
+
+      rc = msgBuildQueryCatalogReqMsg ( &pBuffer, &bufferSize,
+                                        0, 0, 0, -1, cb->getTID(),
+                                        &obj, NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Build query catalog request failed, rc: %d",
+                  rc ) ;
+         goto error ;
+      }
+
+   retry:
+      session.getSession()->clearSubSession() ;
+      rc = session.sendMsg( (MsgHeader*)pBuffer, CATALOG_GROUPID, NULL, &pSub ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// recv reply
+      rc = session.getSession()->waitReply1( TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Wait reply from catalog group failed, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
+
+      /// process reply
+      pReply = pSub->getRspMsg() ;
+      rc = _processCatalogReply( pReply, collectionName, cataPtr ) ;
+      if ( rc )
+      {
+         coordGroupSessionCtrl *pGroupCtrl = session.getGroupCtrl() ;
+         UINT32 primaryID = ((MsgOpReply*)pReply)->startFrom ;
+
+         if ( pGroupCtrl->canRetry( rc, pReply->routeID,
+                                    primaryID, TRUE, TRUE ) )
+         {
+            pGroupCtrl->incRetry() ;
+            goto retry ;
+         }
+      }
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to process catalog info reply, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( pBuffer )
+      {
+         SDB_OSS_FREE( pBuffer ) ;
+         bufferSize = 0 ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordResource::_processCatalogReply( MsgHeader *pMsg,
+                                               const CHAR *collectionName,
+                                               CoordCataInfoPtr &cataPtr )
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpReply *pReply = ( MsgOpReply* )pMsg ;
+      INT32 offset = 0 ;
+      UINT32 objNum = 0 ;
+      BOOLEAN isSpec = FALSE ;
+
+      SDB_ASSERT( -1 == pReply->contextID, "ContextID must be -1" ) ;
+
+      if ( collectionName && *collectionName )
+      {
+         isSpec = TRUE ;
+      }
+
+      rc = pReply->flags ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Recieved unexpected reply for catalog info "
+                 "request from node[%s], flag: %d",
+                 routeID2String( pMsg->requestID ).c_str(), rc ) ;
+         goto error ;
+      }
+
+      offset = ossRoundUpToMultipleX ( sizeof ( MsgOpReply ), 4 ) ;
+      while ( offset < pMsg->messageLength )
+      {
+         CoordCataInfoPtr tmpPtr ;
+         try
+         {
+            BSONObj obj( (CHAR*)pMsg + offset ) ;
+            offset += ossRoundUpToMultipleX ( obj.objsize(), 4 ) ;
+            ++objNum ;
+
+            /// init catalog info
+            rc = coordICataPtrFromObj( obj, tmpPtr ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Init catalog info from obj[%s] failed, "
+                       "rc: %d", obj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+            /// add to catalog map
+            addCataInfo( tmpPtr ) ;
+            /// set return
+            if ( isSpec && 
+                 0 == ossStrcmp( collectionName, tmpPtr->getName() ) )
+            {
+               cataPtr = tmpPtr ;
+               isSpec = FALSE ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      SDB_ASSERT( objNum == pReply->numReturned,
+                  "Return number is invalid" ) ;
+
+      if ( objNum < 1 || isSpec )
+      {
+         PD_LOG( PDERROR, "Recieved unexpect reply for catalog info from "
+                 "node[%s]: no spec object in the all objects[%d]",
+                 routeID2String( pMsg->routeID ).c_str(), objNum ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
    done:

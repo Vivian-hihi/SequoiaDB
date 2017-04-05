@@ -38,6 +38,9 @@
 
 #include "coordDef.hpp"
 #include "pmdOptionsMgr.hpp"
+#include "../bson/bson.h"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -113,6 +116,8 @@ namespace engine
          INT32       getCataInfo( const CHAR *collectionName,
                                   CoordCataInfoPtr &cataPtr ) ;
 
+         void        removeCataInfo( const CHAR *collectionName ) ;
+
          INT32       updateCataInfo( const CHAR *collectionName,
                                      CoordCataInfoPtr &cataPtr,
                                      _pmdEDUCB *cb ) ;
@@ -120,6 +125,9 @@ namespace engine
       protected:
          void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
          void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
+
+         void        addCataInfo( CoordCataInfoPtr &cataPtr ) ;
+         UINT32      checkAndRemoveCataInfoBySub( const CHAR *collectionName ) ;
 
       protected:
 
@@ -149,6 +157,15 @@ namespace engine
                                        CoordVecNodeInfo &vecAddr ) ;
 
          void        _initAddressFromOption( CoordVecNodeInfo &vecAddr ) ;
+
+         INT32       _updateCataInfo( const BSONObj &obj,
+                                      const CHAR *collectionName,
+                                      CoordCataInfoPtr &cataPtr,
+                                      _pmdEDUCB *cb ) ;
+
+         INT32       _processCatalogReply( MsgHeader *pMsg,
+                                           const CHAR *collectionName,
+                                           CoordCataInfoPtr &cataPtr ) ;
 
       private:
          MAP_GROUP_INFO                   _mapGroupInfo ;
