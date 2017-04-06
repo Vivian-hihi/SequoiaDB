@@ -42,6 +42,7 @@ public class NetSplit2581 extends SdbTestBase {
     private String connectUrl;
     private boolean clearFlag = false;
     private String brokenNetHost;
+    private boolean isSplitSuccess = false;
 
     @BeforeClass()
     public void setUp() {
@@ -119,9 +120,11 @@ public class NetSplit2581 extends SdbTestBase {
             // Assert.assertEquals(srcGroup.checkInspect(60), true);
             // Assert.assertEquals(destGroup.checkInspect(60), true);
 
-            Utils.waitSplit(db, cl.getFullName());
-            checkGroupData(db, destGroupName, "{sk:{$gte:4000,$lt:9000}}", 5000);
-            checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:9000}},{sk:{$lt:4000}}]}", 5000);
+            if (isSplitSuccess) {
+                Utils.waitSplit(db, cl.getFullName());
+                checkGroupData(db, destGroupName, "{sk:{$gte:4000,$lt:9000}}", 5000);
+                checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:9000}},{sk:{$lt:4000}}]}", 5000);
+            }
             Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), 10000);
             clearFlag = true;
         }
@@ -202,10 +205,16 @@ public class NetSplit2581 extends SdbTestBase {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
                 cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:4000}"),
                         (BSONObject) JSON.parse("{sk:9000}"));
-
+                isSplitSuccess = true;
             }
             catch (BaseException e) {
-                throw e;
+                if (e.getErrorCode() == 104) {
+                    System.out.println("split -104");
+                }
+                else {
+                    throw e;
+                }
+
             }
             finally {
                 if (sdb != null) {
