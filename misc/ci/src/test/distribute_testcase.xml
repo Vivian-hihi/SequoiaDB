@@ -80,27 +80,34 @@
                   <var name="excludelist" value="" />
                   <for list="${sync_list}" param="feature">
                      <sequential>
-                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
                         <var name="excludelist" value="${excludelist},${excludepathfile}"/>
                      </sequential>
                   </for>
                   <for list="${common_list}" param="feature">
                      <sequential>
-                        <var name="excludepathfile" value="@{feature}/**/*,@{feature}" />
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
                         <var name="excludelist" value="${excludelist},${excludepathfile}"/>
                      </sequential>
                   </for>
                   <delete includeEmptyDirs="true">
-                     <fileset dir="@{casedir}" excludes="${excludelist}"/>
+                     <fileset dir="@{casedir}" excludes="lib/**/*,test-mongo,testcase.conf,${excludelist}"/>
                   </delete>
                </case>
+     
                <default/>
 
             </switch>
             
-            <delete includeEmptyDirs="true" failonerror="false"><!--java directory did not have testcase.conf  tmp-->
-               <fileset dir="@{casedir}" includes="testcase.conf"/>
-            </delete>
+            <if>
+               <equals arg1="@{testtype}" arg2="sync_test"/>
+               <else>
+                  <delete includeEmptyDirs="true" failonerror="false"><!--java directory did not have testcase.conf  tmp-->
+                     <fileset dir="@{casedir}" includes="testcase.conf"/>
+                  </delete>
+               </else>
+            </if>
+
             <delete includeEmptyDirs="true" failonerror="false"><!--delete empty directory-->
                <fileset dir="@{casedir}" >
                   <and>
