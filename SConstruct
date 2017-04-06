@@ -249,6 +249,9 @@ add_option("gprof", "enable gprofile for sequoiadb", 0, False)
 #aix xlc
 add_option("xlc", "use xlc in AIX", 0, False)
 
+#coverage option
+add_option( "cov" , "generate coverage information" , 0, False )
+
 # don't run configure if user calls --help
 if GetOption('help'):
     Return()
@@ -299,6 +302,14 @@ elif release and debugBuild:
    release = False
    debugBuild = True
 
+cov = False
+
+cov = has_option( "cov" )
+
+# do not generate coverage info when release
+if not debugBuild and cov:
+   cov = False
+   
 env = Environment( BUILD_DIR=variantDir,
                    tools=["default", "gch", "mergelib" ],
                    PYSYSPLATFORM=os.sys.platform,
@@ -851,6 +862,10 @@ if nix:
         env.Append( CPPFLAGS=" -D_DEBUG" )
     else:
         env.Append( CPPFLAGS=" -O3 " )
+        
+    if cov:
+        env.Append( CPPFLAGS=" -fprofile-arcs -ftest-coverage " )
+        env.Append( LINKFLAGS=" -fprofile-arcs " )
 
 try:
     umask = os.umask(022)
@@ -991,6 +1006,7 @@ Export("mergeStaticLibrary")
 Export("hasSSL")
 Export("release")
 Export("debugBuild")
+Export("cov")
 
 # Generating Versioning information
 # In order to change the file location, we have to modify both win32 and linux
