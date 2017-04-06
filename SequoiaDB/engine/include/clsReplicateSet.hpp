@@ -281,7 +281,7 @@ namespace engine
 
          INT32 _alive( const _MsgRouteID &id ) ;
 
-         INT32 _handleSharingBeat( const _MsgClsBeat *msg ) ;
+         INT32 _handleSharingBeat( NET_HANDLE handle, const _MsgClsBeat *msg ) ;
 
          INT32 _handleSharingBeatRes( const _MsgClsBeatRes *msg ) ;
 

@@ -601,7 +601,7 @@ namespace engine
          case MSG_CLS_BEAT :
          {
             CLS_REPL_ACTIVE_CHECK( rc ) ;
-            rc = _handleSharingBeat( ( const _MsgClsBeat *)msg ) ;
+            rc = _handleSharingBeat( handle, ( const _MsgClsBeat *)msg ) ;
             break ;
          }
          case MSG_CAT_PAIMARY_CHANGE_RES:
@@ -904,7 +904,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__HNDSHRBEAT, "_clsReplicateSet::_handleSharingBeat" )
-   INT32 _clsReplicateSet::_handleSharingBeat( const _MsgClsBeat *msg )
+   INT32 _clsReplicateSet::_handleSharingBeat( NET_HANDLE handle,
+                                               const _MsgClsBeat *msg )
    {
       SDB_ASSERT( NULL != msg, "msg should not be NULL" ) ;
       INT32 rc = SDB_OK ;
@@ -989,7 +990,7 @@ namespace engine
          _MsgClsBeatRes res ;
          res.header.header.requestID = msg->header.requestID ;
          res.identity = _info.local ;
-         _agent->syncSend( msg->header.routeID, &res ) ;
+         _agent->syncSend( handle, &res ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__HNDSHRBEAT, rc );
