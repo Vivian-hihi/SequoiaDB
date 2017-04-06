@@ -16,7 +16,7 @@
       <property name="release_dir" location="${WORKSPACE}/release" />    
       <property name="java_driver_jar" value="sequoiadb.jar" />             
 
-      <antcallback target="check_parameter" return="cmd_debug, cmd_etp, SPARK_VERSION, BIN_PACKAGE"/>
+      <antcallback target="check_parameter" return="cmd_debug, cmd_etp, SPARK_VERSION, BIN_PACKAGE, COVERAGE, cmd_cov"/>
       
       <delete dir="${release_dir}" failonerror="false"/>
       <mkdir dir="${release_dir}"/>
@@ -36,6 +36,7 @@
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
       <antcall target="build_bin_package"/>
+      <antcall target="build_cov_package"/>
    </target>
 
    <target name="check_parameter">  
@@ -48,10 +49,10 @@
       <if>
          <equals arg1="${IS_DEBUG}" arg2="true" />
          <then>          
-            <property name="cmd_debug" value="--dd" />           
+            <var name="cmd_debug" value="--dd" />           
          </then>
          <else>
-            <property name="cmd_debug" value="" />
+            <var name="cmd_debug" value="" />
          </else>
       </if>
       
@@ -64,10 +65,10 @@
       <if>
          <equals arg1="${IS_ENTERPRISE}" arg2="true" />
          <then>          
-            <property name="cmd_etp" value="--enterprise" />           
+            <var name="cmd_etp" value="--enterprise" />           
          </then>
          <else>
-            <property name="cmd_etp" value="" />
+            <var name="cmd_etp" value="" />
          </else>
       </if>
       
@@ -90,14 +91,37 @@
          <else>           
             <var name="UNPACK_DRIVER" value="false" />
          </else>
-      </if>      
+      </if>  
+
+      <if>
+         <isset property="COVERAGE"/>
+         <else>           
+            <var name="COVERAGE" value="false" />
+         </else>
+      </if>
+      <if>
+         <equals arg1="${IS_DEBUG}" arg2="false" />
+         <then>
+            <var name="COVERAGE" unset="true" />
+            <var name="COVERAGE" value="false" />
+         </then>
+      </if>
+      <if>
+         <equals arg1="${COVERAGE}" arg2="true" />
+         <then>          
+            <var name="cmd_cov" value="--cov" />           
+         </then>
+         <else>
+            <var name="cmd_cov" value="" />
+         </else>
+      </if>
    </target>
        
    <target name="compile_src">
       <delete dir="${srccode_dir}/bin"  failonerror="false" />
       <delete dir="${srccode_dir}/build" failonerror="false" />
       
-      <var name="cmd" value="${cmd_debug} ${cmd_etp} --all -j 4" />
+      <var name="cmd" value="${cmd_debug} ${cmd_etp} ${cmd_cov} --all -j 4" />
       <echo message="exec cmd: scons ${cmd}" />
       <exec executable="scons" dir="${srccode_dir}" failonerror="true">
          <arg line="${cmd}" />
@@ -528,6 +552,19 @@
               compression="gzip" basedir="${release_dir}/sequoiadb/" includes="bin/**" />
          </then>
       </if>  
+   </target>
+   
+   <target name="build_cov_package"> 
+      <if>
+         <equals arg1="${COVERAGE}" arg2="true" />
+         <then>
+            <tar destfile="${release_dir}/coverage_srccode.tar.gz" 
+                 compression="gzip" 
+                 basedir="${srccode_dir}" 
+                 includes="SequoiaDB/engine/**/*,build/*/dd/**/*.gcno" />
+            <echo file="${release_dir}/coverage.info" message="source_code_dir=${srccode_dir}"/>
+         </then>
+      </if>
    </target>
    
    <macrodef name="dbversion">
