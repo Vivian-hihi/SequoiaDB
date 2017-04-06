@@ -86,12 +86,20 @@ bool isLocalHost( const char* host )
 		return true ;
 }
 
-INT32 restartNode( sdbNodeHandle& node )
+INT32 restartNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
 {
 	INT32 rc = SDB_OK ;
 	
 	rc = sdbStopNode( node ) ;
     CHECK_RC_CODE( rc, "fail to stop node" ) ;
+
+	do    
+	{
+		sdbNodeHandle node = SDB_INVALID_HANDLE ;
+		rc = sdbGetNodeMaster( rg, &node ) ;
+		sdbReleaseNode( node ) ;
+	}while( rc != SDB_OK ) ;   // wait for primary change 
+
     rc = sdbStartNode( node ) ;
     CHECK_RC_CODE( rc, "fail to start node" ) ;	
 
@@ -185,7 +193,7 @@ INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
 	CHECK_RC_CODE( rc, "fail to check master node in function getSlaveNode" ) ;
 	if( isMaster )
 	{		
-	    rc = restartNode( node ) ;
+	    rc = restartNode( rg, node ) ;
 	    CHECK_RC_CODE( rc, "fail to restart master node" ) ;
 	}
 
