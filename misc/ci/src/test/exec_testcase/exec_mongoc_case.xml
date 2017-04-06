@@ -184,8 +184,8 @@
          <var name="ms1" value="EXECUTE HOST: ${host.NAME}/${host.ADDR4}&#10;&#10;"/>      
          <var name="ms2" value="CLUSTER HOST:${cluster_host_info}&#10;&#10;"/> 
          <replaceregexp file="@{report}" 
-                        match='&lt;failure&gt;' 
-                        replace='&lt;failure&gt;&#10;${ms1}${ms2}' 
+                        match='&lt;failure(.*)&gt;' 
+                        replace='&lt;failure\1&gt;&#10;${ms1}${ms2}' 
                         flags="g" 
                         byline="true" 
                         encoding="utf-8"/>
