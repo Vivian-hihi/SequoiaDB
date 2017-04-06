@@ -192,39 +192,55 @@ public class DropIndex3224 extends SdbTestBase {
     }
     
     private void checkConsistency(GroupWrapper dataGroup) {
-        List<String> dataUrls = dataGroup.getAllUrls();
-        List<List<BSONObject>> results = new ArrayList<List<BSONObject>>();
-        for (String dataUrl : dataUrls) {
-            Sequoiadb dataDB = new Sequoiadb(dataUrl, "", "");
-            List<BSONObject> result = new ArrayList<BSONObject>();
-            for (int i = 0; i < CL_NUM; i++) {
-                String clName = clNameBase + "_" + i;
-                DBCollection cl = dataDB.getCollectionSpace(csName).getCollection(clName);
-                DBCursor cursor = cl.getIndexes();
-                while (cursor.hasNext()) {
-                    result.add(cursor.getNext());
+        boolean checkOk = false;
+        int checkTimes = 10;
+        int checkInterval = 1000; // 1s
+        for (int j = 0; j < checkTimes; j++) {
+            List<String> dataUrls = dataGroup.getAllUrls();
+            List<List<BSONObject>> results = new ArrayList<List<BSONObject>>();
+            for (String dataUrl : dataUrls) {
+                Sequoiadb dataDB = new Sequoiadb(dataUrl, "", "");
+                List<BSONObject> result = new ArrayList<BSONObject>();
+                for (int i = 0; i < CL_NUM; i++) {
+                    String clName = clNameBase + "_" + i;
+                    DBCollection cl = dataDB.getCollectionSpace(csName).getCollection(clName);
+                    DBCursor cursor = cl.getIndexes();
+                    while (cursor.hasNext()) {
+                        result.add(cursor.getNext());
+                    }
+                    cursor.close();
                 }
-                cursor.close();
+                results.add(result);
+                dataDB.disconnect();
             }
-            results.add(result);
-            dataDB.disconnect();
+            
+            List<BSONObject> compareA = results.get(0);
+            sortByName(compareA);
+            removeUnconcerned(compareA);
+            checkOk = true;
+            for (int i = 1; i < results.size(); i++) {
+                List<BSONObject> compareB = results.get(i);
+                sortByName(compareB);
+                removeUnconcerned(compareB);
+                if (!compareA.equals(compareB)) {
+                    System.out.println(dataUrls.get(0));
+                    System.out.println(compareA);
+                    System.out.println(dataUrls.get(i));
+                    System.out.println(compareB);
+                    checkOk = false;
+                }
+            }
+            
+            if (checkOk) { break; }
+            
+            try {
+                Thread.sleep(checkInterval);
+            } catch (InterruptedException e) {
+                // ignore
+            }
         }
         
-        List<BSONObject> compareA = results.get(0);
-        sortByName(compareA);
-        removeUnconcerned(compareA);
-        for (int i = 1; i < results.size(); i++) {
-            List<BSONObject> compareB = results.get(i);
-            sortByName(compareB);
-            removeUnconcerned(compareB);
-            if (!compareA.equals(compareB)) {
-                System.out.println(dataUrls.get(0));
-                System.out.println(compareA);
-                System.out.println(dataUrls.get(i));
-                System.out.println(compareB);
-                Assert.fail("data is different. see the detail in console");
-            }
-        }
+        Assert.assertTrue(checkOk, "data is different. see the detail in console");
     }
     
     private void sortByName(List<BSONObject> list) {
