@@ -202,7 +202,7 @@ public class DropIndex2936 extends SdbTestBase {
     
     private void checkConsistency(GroupWrapper dataGroup) {
         boolean checkOk = false;
-        int checkTimes = 10;
+        int checkTimes = 30;
         int checkInterval = 1000; // 1s
         for (int j = 0; j < checkTimes; j++) {
             List<String> dataUrls = dataGroup.getAllUrls();
