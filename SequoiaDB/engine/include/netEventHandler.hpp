@@ -113,23 +113,6 @@ namespace engine
          {
             return _state ;
          }
-         OSS_INLINE void incWaitReply()
-         {
-            _waitReplyNum.inc() ;
-         }
-         OSS_INLINE void decWaitReply()
-         {
-            INT32 orgValue = _waitReplyNum.dec() ;
-            SDB_ASSERT( orgValue > 0, "_waitReplyNum must > 0" ) ;
-            if ( orgValue <= 0 )
-            {
-               _waitReplyNum.swapGreaterThan( 0 ) ;
-            }
-         }
-         OSS_INLINE BOOLEAN isWaitReply()
-         {
-            return _waitReplyNum.peek() > 0 ? TRUE : FALSE ;
-         }
 
          void  close() ;
 
@@ -138,7 +121,6 @@ namespace engine
          UINT64 getLastBeatTick() const { return _lastBeatTick ; }
 
          void   syncLastBeatTick() ;
-         void   syncLastRecvTick() ;
 
       public:
          void asyncRead() ;
@@ -180,7 +162,6 @@ namespace engine
          UINT64                           _lastRecvTick ;
          UINT64                           _lastBeatTick ;
          UINT64                           _msgid ;
-         ossAtomicSigned32                _waitReplyNum ;
 
    };
 

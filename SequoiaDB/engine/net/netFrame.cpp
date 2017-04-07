@@ -52,22 +52,6 @@ namespace engine
 {
    #define NET_INNER_TIMER_INTERVAL       ( 2000 )
 
-   #define NET_UPDATE_EVENTHANDLE( pHandle, pMsg ) \
-      do \
-      { \
-         if ( ( UINT32 )MSG_SYSTEM_INFO_LEN != (UINT32)pMsg->messageLength ) \
-         { \
-            if ( IS_REPLY_TYPE(pMsg->opCode) ) \
-            { \
-               pHandle->decWaitReply() ; \
-            } \
-            else if ( MSG_NEED_REPLY(pMsg->opCode) ) \
-            { \
-               pHandle->incWaitReply() ; \
-            } \
-         } \
-      } while( 0 )
-
    /*
       _netInnerTimeHandle implement
    */
@@ -227,19 +211,6 @@ namespace engine
       {
          _mtx.get_shared() ;
          itr = _opposite.upper_bound( handle ) ;
-         while( itr != _opposite.end() )
-         {
-            if ( !itr->second->isWaitReply() )
-            {
-               itr->second->syncLastBeatTick() ;
-               itr->second->syncLastRecvTick() ;
-               ++itr ;
-            }
-            else
-            {
-               break ;
-            }
-         }
          if ( itr == _opposite.end() )
          {
             _mtx.release_shared() ;
@@ -497,7 +468,6 @@ namespace engine
          msgHeader->routeID = _local ;
       }
       eh->mtx().get() ;
-      NET_UPDATE_EVENTHANDLE( eh, msgHeader ) ;
       rc = eh->syncSend( msgHeader, msgHeader->messageLength ) ;
       if ( pHandle )
       {
@@ -547,7 +517,6 @@ namespace engine
          msgHeader->routeID = _local ;
       }
       eh->mtx().get() ;
-      NET_UPDATE_EVENTHANDLE( eh, msgHeader ) ;
       rc = eh->syncSend( msgHeader, msgHeader->messageLength ) ;
       eh->mtx().release() ;
       if ( SDB_OK != rc )
@@ -631,7 +600,6 @@ namespace engine
          header->routeID = _local ;
       }
       eh->mtx().get() ;
-      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       /// header len should be computed. can not get sizeof(MsgHeader)
       rc = eh->syncSend( header, headLen ) ;
       if ( SDB_OK != rc )
@@ -691,7 +659,6 @@ namespace engine
       _mtx.release_shared() ;
 
       eh->mtx().get() ;
-      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       rc = eh->syncSend( header, sizeof(MsgHeader) ) ;
       if ( SDB_OK != rc )
       {
@@ -760,7 +727,6 @@ namespace engine
       {
          *pHandle = eh->handle() ;
       }
-      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       rc = eh->syncSend( header, headLen ) ;
       if ( SDB_OK != rc )
       {
@@ -826,7 +792,6 @@ namespace engine
       {
          *pHandle = eh->handle() ;
       }
-      NET_UPDATE_EVENTHANDLE( eh, header ) ;
       rc = eh->syncSend( header, sizeof(MsgHeader) ) ;
       if ( SDB_OK != rc )
       {
@@ -1025,8 +990,6 @@ namespace engine
       }
       else
       {
-         NET_UPDATE_EVENTHANDLE( eh, pMsg ) ;
-
          rc = _handler->handleMsg( eh->handle(), pMsg, eh->msg() ) ;
          _netIn.add( pMsg->messageLength ) ;
          if ( SDB_NET_BROKEN_MSG == rc )
