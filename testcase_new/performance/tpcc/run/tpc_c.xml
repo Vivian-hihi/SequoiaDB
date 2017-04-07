@@ -1,7 +1,4 @@
 <tpc-c>
-<step exec="0" parameter="deploy_parameters.xml">createdeployxml.py</step>
-<step exec="0" parameter="tpcc_parameters.xml">createcfgfile.py</step>
-<step exec="0" parameter="deploy.xml">deploy.py</step>
 <step exec="1" parameter="props.pg">runDatabaseBuild.sh</step>
 <step exec="1" parameter="props.pg">runBenchmark.sh</step>
 <step exec="0" parameter="props.pg">runDatabaseDestroy.sh</step>
