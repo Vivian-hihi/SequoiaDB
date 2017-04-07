@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Copyright (c) 2017, SequoiaDB Ltd. File Name:RemoteExecuter.java ÀàµÄÏêÏ¸ÃèÊö
- * 
- * @author wangwenjing Date:2017-3-27ÉÏÎç10:00:28
+ * Copyright (c) 2017, SequoiaDB Ltd.
+ * File Name:RemoteExecuter.java
+ * @author wangwenjing Date:2017-3-27 10:00:28
  * @version 1.00
  */
 
@@ -28,6 +28,7 @@ public class RemoteExecuter implements Runnable {
         String sshAddress = String.format( "%s@%s", user, address );
         cmdLine.add( sshAddress );
         cmdLine.add( "python" );
+        cmdLine.add( "-" ) ;
 
         for ( int i = 0; i < parameters.size(); ++i ) {
             cmdLine.add( parameters.get( i ) );
@@ -58,6 +59,29 @@ public class RemoteExecuter implements Runnable {
             e.printStackTrace();
             System.exit( 1 );
         }
+    }
+
+    public String getResult() {
+        if ( remoteProc != null && remoteProc.getErrorStream() != null){
+        BufferedReader errReader = new BufferedReader( new InputStreamReader(
+                remoteProc.getErrorStream() ) );
+        try {
+            String prevLine = "";
+            while ( true ){
+               String line = errReader.readLine();
+               if ( line == null )
+                  break;
+               System.out.println( line );
+               prevLine = line;
+            }
+            return prevLine;
+        } catch ( IOException e ) {
+
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+       }
+        return "";
     }
 
     @Override

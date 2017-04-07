@@ -2,14 +2,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Copyright (c) 2017, SequoiaDB Ltd. File Name:CopyData.java ¿‡µƒœÍœ∏√Ë ˆ
- * 
- * @author wangwenjing Date:2017-3-27…œŒÁ9:49:18
+ * Copyright (c) 2017, SequoiaDB Ltd.
+ * File Name:CopyData.java
+ * @author wangwenjing Date:2017-3-27 9:49:18
  * @version 1.00
  */
 
@@ -37,7 +40,7 @@ public class CopyData {
         }
 
         String url = ini.getProperty( sdbUrl );
-        List< String > hosts = new ArrayList< String >();
+        Set< String > hosts = new HashSet< String >();
 
         String[] urls = url.split( "," );
         for ( int i = 0; i < urls.length; ++i ) {
@@ -49,11 +52,17 @@ public class CopyData {
         ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
         List< String > paras = new ArrayList< String >();
         paras.add( ini.getProperty( warehouses ) );
-        for ( int j = 0; j < hosts.size(); ++j ) {
-            cachedThreadPool.execute( new RemoteExecuter( "./misc/copyData.py",
-                    hosts.get( j ), "sdbadmin", paras ) );
-        }
 
+        List<RemoteExecuter> rs = new ArrayList<RemoteExecuter> ();
+        for ( Iterator< String > it = hosts.iterator(); it.hasNext(); ) {
+            RemoteExecuter r = new RemoteExecuter( "./misc/copyData.py",
+                    it.next(), "sdbadmin", paras );
+            cachedThreadPool.execute( r );
+            rs.add(r); 
+        }
         cachedThreadPool.shutdown();
+        for ( RemoteExecuter r:rs){
+           r.getResult(); 
+        }
     }
 }
