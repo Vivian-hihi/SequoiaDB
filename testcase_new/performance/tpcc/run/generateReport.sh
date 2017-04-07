@@ -251,9 +251,10 @@ if [ $pos -ne 0 ];then
   </p>
 _EOF_
 fi 
-
-groupNames=$(getAllGroupName $1/deploy)
-nodeNumOfGroupPerHost=$(getNodeNumOfGroupPerHost $1/deploy)
+if [ -d $1/deploy ];then
+groupNames=$(getAllGroupName "$1/deploy")
+nodeNumOfGroupPerHost=$(getNodeNumOfGroupPerHost "$1/deploy")
+dbhosts=$(getHostsBySdbUrl $2)
 cat >>report.html <<_EOF_
   <h2>
   SequoiaDB deploy
@@ -265,10 +266,13 @@ cat >>report.html <<_EOF_
 _EOF_
 for ((i=0; i <${#groupNames[*]};++i))
 do
-cat >><th colspan="${nodeNumOfGroupPerHost[$i]}"><b>${groupNames[$i]}</b></th>
+cat >>report.html <<_EOF_
+    <th colspan="${nodeNumOfGroupPerHost[$i]}"><b>${groupNames[$i]}</b></th>
     </tr>
 _EOF_
-for host in ${hosts}
+done
+
+for host in ${dbhosts}
 do
 cat >>report.html <<_EOF_
     <tr>
@@ -278,16 +282,20 @@ for((i=0; i <${#groupNames[*]};++i))
 do
 file=$(getFileByHost ${host})
 nodes=$(getNodesOfGroup ${file})
-cat >>report.html <<_EOF_
 for ((j=0; j <${#nodes[*]};++j))
+do
+cat >>report.html <<_EOF_
       <td colspans=1>${nodes[$j]}</td>
     </tr>
 _EOF_
+done
+done
 done
 cat >>report.html <<_EOF_
     </table>
   </p>
 _EOF_
+fi
 # ----
 # Show the result summary.
 # ----

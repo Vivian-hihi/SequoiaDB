@@ -26,3 +26,4 @@ sdburl=192.168.30.56:11810,192.168.30.57:11810,192.168.30.58:11810,192.168.30.56
 loadWorkers=50
 testType=fdw
 //fileLocation=./data/5times
+load=True

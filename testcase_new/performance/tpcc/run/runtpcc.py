@@ -92,6 +92,12 @@ parser.add_option("-f", "--propfile",
                   dest="propfile",
                   help="provider propfile"
                   )
+parser.add_option("-l", "--load",
+                  action = "store_true",
+                  default=False,
+                  dest="load",
+                  help="load data"
+                  )
 (options, args) = parser.parse_args()
 
 
@@ -146,6 +152,7 @@ if options.mode:
       prop.setProp('warehouses', options.warehouses)
       prop.setProp('terminals', options.terminals)
       prop.setProp('runMins', options.runMins)
+      prop.setProp('load', options.load)
       if options.osCollectorSSHAddr != None:
          prop.setProp('osCollectorSSHAddr', options.osCollectorSSHAddr)
       if options.osCollectorDevices != None: 

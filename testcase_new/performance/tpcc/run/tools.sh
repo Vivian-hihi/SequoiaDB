@@ -115,7 +115,7 @@ function getFileByHost()
          break
       fi
 
-      IPAddr=$(grep IP $file|awk -F ':' '{print $2}'|tr -d ' ')
+      IPAddr=$(grep IP ${1}/$file|awk -F ':' '{print $2}'|tr -d ' ')
       if [ $IPAddr'M' == $2'M' ];then
          echo $file
          break
@@ -128,9 +128,9 @@ function getAllGroupName()
    maxNum=0
    for file in `ls ${1}`
    do
-      lineNum=$(wc -l ${file}|awk '{print $1}')
+      lineNum=$(wc -l ${1}/${file}|awk '{print $1}')
       if [ $maxNum -lt $lineNum ];then
-         usedFile=${file}
+         usedFile=${1}/${file}
          maxNum=${lineNum}
       fi
    done
@@ -147,9 +147,9 @@ function getNodeNumOfGroupPerHost()
    maxNum=0
    for file in `ls ${1}`
    do
-      lineNum=$(wc -l ${file}|awk '{print $1}')
+      lineNum=$(wc -l ${1}/${file}|awk '{print $1}')
       if [ $maxNum -lt $lineNum ];then
-         usedFile=${file}
+         usedFile=${1}/${file}
          maxNum=${lineNum}
       fi
    done
@@ -175,11 +175,28 @@ function getGroupName()
    echo $(sed -n "${1}p" ${2}|awk -F ':' '{print $1}')
 }
 
-function getNodesOfGroup()
+function getHostsBySdbUrl()
 {
-   OIFS=$IFS
-   IFS=','
-   echo $(sed -n "${1}p" ${2}|awk -F ':' '{print $2}')
-   IFS=$OIFS
+    hosts=()
+    OIFS=$IFS
+    IFS=','
+    addrs=$(grep sdburl $1 |awk -F '=' '{print $2}')
+    for ((i=0; i < ${#addrs[*]};++i))
+    do
+       host=$(echo ${addrs[$i]}|awk -F ':' '{print $1}')
+       find=0
+       for ((j=0; j <${#hosts[*]};++j))
+       do
+         if [ ${hosts[$j]} == ${host} ];then
+            find=1
+            break
+         fi
+       done
+       if [ ${find} -eq 0 ];then
+          hosts=(${hosts[@]} ${host})
+       fi
+    done
+    IFS=$OIFS
+    echo ${hosts[@]}
 }
 

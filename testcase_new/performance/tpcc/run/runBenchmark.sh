@@ -19,4 +19,8 @@ setCP || exit 1
 myOPTS="-Dprop=$1 -DrunID=${SEQ}"
 
 java -cp "$myCP" $myOPTS jTPCC
+if [ $? -ne 0 ];then
+   exit 1
+fi
 python ./misc/getDeploy.py $1
+exit $?

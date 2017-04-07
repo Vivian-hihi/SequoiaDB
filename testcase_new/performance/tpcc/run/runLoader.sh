@@ -10,5 +10,9 @@ shift
 
 setCP || exit 1
 
-#java -cp "$myCP" -Dprop=$PROPS LoadData $*
-java -cp "$myCP" -Dprop=$PROPS CopyData $*
+load="$(grep '^load=' $PROPS | sed -e 's/^load=//')"
+if [ "$load" == "True" ];then
+   java -cp "$myCP" -Dprop=$PROPS LoadData $*
+else
+   java -cp "$myCP" -Dprop=$PROPS CopyData $*
+fi
