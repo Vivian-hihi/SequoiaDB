@@ -863,9 +863,6 @@ if nix:
     else:
         env.Append( CPPFLAGS=" -O3 " )
         
-    if cov:
-        env.Append( CPPFLAGS=" -fprofile-arcs -ftest-coverage " )
-        env.Append( LINKFLAGS=" -fprofile-arcs " )
 
 try:
     umask = os.umask(022)
@@ -971,6 +968,18 @@ if fmpEnv is not None:
 if fapEnv is not None:
     fapEnv['INSTALL_DIR'] = installDir
 
+if cov:
+   env.Append( CPPFLAGS=" -fprofile-arcs -ftest-coverage " )
+   env.Append( LINKFLAGS=" -fprofile-arcs " )
+   shellEnv.Append( CPPFLAGS=" -fprofile-arcs -ftest-coverage " )
+   shellEnv.Append( LINKFLAGS=" -fprofile-arcs " )
+   toolEnv.Append( CPPFLAGS=" -fprofile-arcs -ftest-coverage " )
+   toolEnv.Append( LINKFLAGS=" -fprofile-arcs " )
+   fmpEnv.Append( CPPFLAGS=" -fprofile-arcs -ftest-coverage " )
+   fmpEnv.Append( LINKFLAGS=" -fprofile-arcs " )
+   fapEnv.Append( CPPFLAGS=" -fprofile-arcs -ftest-coverage " )
+   fapEnv.Append( LINKFLAGS=" -fprofile-arcs " )
+   
 # The following symbols are exported for use in subordinate SConscript files.
 # Ideally, the SConscript files would be purely declarative.  They would only
 # import build environment objects, and would contain few or no conditional
