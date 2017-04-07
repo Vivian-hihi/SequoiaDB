@@ -53,6 +53,14 @@ def main():
    if len(sys.argv) != 2:
       print '%s <warehouses 2000|6000>'%sys.argv[0]
       sys.exit(1)  
+   try:
+      if int(sys.argv[1]) != 2000 and int(sys.argv[1]) != 6000:
+         print 'input error'
+         sys.exit(1)
+   except ValueError,e:
+      print 'input error '
+      print '%s <warehouses 2000|6000>'%sys.argv[0]
+      sys.exit(1)
    datasize = '100g'
    if sys.argv[1] == 6000:
       datasize = '300g'
@@ -62,8 +70,13 @@ def main():
    binPath = os.path.join(installPath, 'bin')
    sdbList = os.path.join(binPath, 'sdblist')
    
+   if not os.access( sdbList, os.F_OK) :
+      print "%s not exist"%sdbList
+      sys.exit(1)
+
    (status,output) = commands.getstatusoutput(sdbList + ' -l -r data|sed \'1d;$d\'|awk \'{print $10}\'')
    if status != 0:
+      print "list failed!!!";
       sys.exit(1)
 
    threads = []
@@ -75,7 +88,7 @@ def main():
       threads.append(t) 
    stopSdbcm()
    for t in threads:
-      t.setDaemon(True)
+      #t.setDaemon(True)
       t.start()
    for t in threads:
       t.join()
