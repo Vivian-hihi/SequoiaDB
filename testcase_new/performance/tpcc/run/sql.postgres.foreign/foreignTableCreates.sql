@@ -1,7 +1,7 @@
 --DROP EXTENSION IF EXISTS sdb_test_fdw CASCADE;
 CREATE EXTENSION IF NOT EXISTS sdb_fdw;
 DROP SERVER IF EXISTS sdb_test_server CASCADE;
-CREATE SERVER sdb_test_server FOREIGN DATA WRAPPER sdb_fdw options(preferedinstance 'M', address coordAddrs);
+CREATE SERVER sdb_test_server FOREIGN DATA WRAPPER sdb_fdw options(address coordAddrs);
 
 drop foreign table IF EXISTS bmsql_config;
 create foreign table IF NOT EXISTS bmsql_config (
