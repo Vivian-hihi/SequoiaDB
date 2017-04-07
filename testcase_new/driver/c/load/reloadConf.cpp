@@ -19,9 +19,7 @@ if( rc != SDB_OK ) \
 	return rc ; \
 }
 
-sdbConnectionHandle db = SDB_INVALID_HANDLE ;
-
-char* getInstallPath( char* path )
+void getInstallPath( char* path )
 {
 	const char* installFile = "/etc/default/sequoiadb" ;
 	FILE* fp = fopen( installFile, "r" ) ;
@@ -47,18 +45,11 @@ char* getInstallPath( char* path )
 		printf( "fail to get install path\n" ) ;
 		exit(1) ;
 	}
-	
-	return path ;
 }
 
-INT32 isMasterNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node, bool* res )
+INT32 isMasterNode( sdbReplicaGroupHandle& rg, const char* host, const char* svc, bool* res )
 {
 	INT32 rc = SDB_OK ;
-
-    const char *host, *svc, *nodename ;
-    INT32 nodeId ;
-    rc = sdbGetNodeAddr( node, &host, &svc, &nodename, &nodeId ) ;
-    CHECK_RC_CODE( rc, "fail to get slave node addr in function isMasterNode" ) ;
 
     sdbNodeHandle master ;
     rc = sdbGetNodeMaster( rg, &master ) ;
@@ -77,54 +68,11 @@ INT32 isMasterNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node, bool* res )
 	return rc ;
 }
 
-bool isLocalHost( const char* host )
-{
-	getHost() ;
-    if( strcmp(host, "localhost") != 0 && strcmp(host, HOST) != 0 )
-    	return false ;
-	else
-		return true ;
-}
-
-INT32 restartNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
-{
-	INT32 rc = SDB_OK ;
-	
-	rc = sdbStopNode( node ) ;
-    CHECK_RC_CODE( rc, "fail to stop node" ) ;
-
-	do    
-	{
-		sdbNodeHandle node = SDB_INVALID_HANDLE ;
-		rc = sdbGetNodeMaster( rg, &node ) ;
-		sdbReleaseNode( node ) ;
-	}while( rc != SDB_OK ) ;   // wait for primary change 
-
-    rc = sdbStartNode( node ) ;
-    CHECK_RC_CODE( rc, "fail to start node" ) ;	
-
-	return rc ;
-}
-
-INT32 printNode( sdbNodeHandle& node )
-{
-	INT32 rc = SDB_OK ;
-
-    const char *host, *svc, *nodename ;
-    INT32 nodeId ;
-    rc = sdbGetNodeAddr( node, &host, &svc, &nodename, &nodeId ) ;
-    CHECK_RC_CODE( rc, "fail to get slave node addr in function printNode" ) ;
-
-	printf( "node: name %s,svc %s,nodename %s,nodeId %d\n", host, svc, nodename, nodeId ) ;
-
-    return rc ;
-}
-
 // get a slave data node which is on the same machine with coord
-INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
+INT32 createSlaveNode( sdbConnectionHandle& db, sdbReplicaGroupHandle& rg, sdbNodeHandle& node, 
+					   const char** host, const char** svc, const char** nodename, INT32* nodeId )
 {
 	INT32 rc = SDB_OK ;
-	bool found = false ;
 	
 	// list rg
 	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
@@ -143,79 +91,105 @@ INT32 getSlaveNode( sdbReplicaGroupHandle& rg, sdbNodeHandle& node )
 			bson_init( &obj ) ;
 			continue ;
 		}
-		bson_find( &it, &obj, "Group" ) ;
-		bson_print( &obj ) ;
 
-		bson_iterator sub_it ;
-		bson_iterator_subiterator( &it, &sub_it ) ;
-		while( bson_iterator_next( &sub_it ) )
-		{
-			bson sub_obj ;
-			bson_init( &sub_obj ) ;
-			bson_iterator_subobject( &sub_it, &sub_obj ) ;
-			bson_print( &sub_obj ) ;
-   
-			bson_iterator sub_sub_it ;
-			bson_find( &sub_sub_it, &sub_obj, "HostName" ) ;
-			const char* host = bson_iterator_string( &sub_sub_it ) ;
-			if( !isLocalHost( host ) )
-			{
-				bson_destroy( &sub_obj ) ;
-				continue ;
-			}
-
-			bson_find( &sub_sub_it, &sub_obj, "Service" ) ;
-			bson_iterator tmp ;
-			bson_iterator_subiterator( &sub_sub_it, &tmp ) ;
-			bson_iterator_next( &tmp ) ;
-			bson b ;
-			bson_init( &b ) ;
-			bson_iterator_subobject( &tmp, &b ) ;
-			bson_find( &tmp, &b, "Name" ) ;
-			bson_print( &b ) ;
-			const char* svc = bson_iterator_string( &tmp ) ;
-
-			rc = sdbGetReplicaGroup( db, rgname, &rg ) ;
-        	CHECK_RC_CODE( rc, "fail to get rg" ) ;			
-			rc = sdbGetNodeByHost( rg, host, svc, &node ) ;	
-			CHECK_RC_CODE( rc, "fail to get node" ) ;		
-	
-			bson_destroy( &b ) ;
-			bson_destroy( &sub_obj ) ;
-			found = true ;
-			break ;
-		}
-		if( found ) break ;
+		rc = sdbGetReplicaGroup( db, rgname, &rg ) ;
+        CHECK_RC_CODE( rc, "fail to get rg" ) ;
+		break ;			
 	}
 	
-	bool isMaster = false ;
-	rc = isMasterNode( rg, node, &isMaster ) ;
-	CHECK_RC_CODE( rc, "fail to check master node in function getSlaveNode" ) ;
-	if( isMaster )
-	{		
-	    rc = restartNode( rg, node ) ;
-	    CHECK_RC_CODE( rc, "fail to restart master node" ) ;
-	}
-
-	rc = printNode( node ) ;
-    CHECK_RC_CODE( rc, "fail to print node" ) ;
+	getHost() ;  // get local hostname
+	char installPath[20], dbpath[50], port[10] ;
+	getInstallPath( installPath ) ;
+	getIdlePort( port ) ;
+	printf( "idle port: %s\n", port ) ;
+	sprintf( dbpath, "%s%s%s", installPath, "/database/data/", port ) ;
+	rc = sdbCreateNode( rg, HOST, port, dbpath, NULL ) ;
+	CHECK_RC_CODE( rc, "fail to create a slave node" ) ;
+	rc = sdbGetNodeByHost( rg, HOST, port, &node ) ;
+	CHECK_RC_CODE( rc, "fail to get a slave node" ) ;
+	rc = sdbGetNodeAddr( node, host, svc, nodename, nodeId ) ;
+	CHECK_RC_CODE( rc, "fail to get node addr" ) ;	
 
 	bson_destroy( &obj ) ;
 	sdbReleaseCursor( cursor ) ;
 	return rc ;
 }
 
-INT32 changeNodeConf( sdbNodeHandle& node, const char* conf, int value )
+INT32 getLSN( sdbConnectionHandle& db, int64_t* offset, int* version )
+{
+	INT32 rc = SDB_OK ;
+	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+	
+	bson sel; 
+	bson_init( &sel ); 
+	bson_append_string( &sel, "CurrentLSN", "" ) ;
+	bson_finish( &sel ) ; 
+	rc = sdbGetSnapshot( db, SDB_SNAP_DATABASE, NULL, &sel, NULL, &cursor ) ;
+	bson_destroy( &sel ) ;
+	CHECK_RC_CODE( rc, "fail to get snapshot database" ) ;
+	
+	bson obj ;
+	bson_init( &obj ) ;
+	rc = sdbNext( cursor, &obj ) ;
+	CHECK_RC_CODE( rc, "fail to get next in snapshot database" ) ;
+
+	bson_iterator it, sub_it ;
+	bson_find( &it, &obj, "CurrentLSN" ) ;
+	// bson_print( &obj ) ;
+	bson_iterator_subiterator( &it, &sub_it ) ;
+	bson_iterator_next( &sub_it ) ;
+	*offset = bson_iterator_long( &sub_it ) ;
+	bson_iterator_next( &sub_it ) ;
+    *version = bson_iterator_int( &sub_it ) ;
+
+	bson_destroy( &obj ) ;
+	sdbReleaseCursor( cursor ) ;
+	return SDB_OK ;
+} 
+
+// wait sync finish, lsn is equal
+INT32 waitSync( sdbReplicaGroupHandle& rg, const char* host, const char* svc )
+{
+	INT32 rc = SDB_OK ;
+	sdbConnectionHandle db, db1 ;
+	sdbNodeHandle master ;
+
+    rc = sdbGetNodeMaster( rg, &master ) ;
+    CHECK_RC_CODE( rc, "fail to get master node in function isMasterNode" ) ;
+    const char *host1, *svc1, *nodename1 ;
+    INT32 nodeId1 ;
+    rc = sdbGetNodeAddr( master, &host1, &svc1, &nodename1, &nodeId1 ) ;
+    CHECK_RC_CODE( rc, "fail to get master node addr in function isMasterNode" ) ;
+
+	rc = sdbConnect( host, svc, USER, PASSWD, &db ) ;
+	CHECK_RC_CODE( rc, "fail to connect node" ) ;
+	rc = sdbConnect( host1, svc1, USER, PASSWD, &db1 ) ;
+	CHECK_RC_CODE( rc, "fail to connect master node" ) ;
+	int64_t offset, offset1 ;
+	int version, version1 ;
+	do
+	{
+		rc = getLSN( db, &offset, &version ) ;
+		CHECK_RC_CODE( rc, "fail to get lsn of node" ) ;
+		rc = getLSN( db1, &offset1, &version1 ) ;
+		CHECK_RC_CODE( rc, "fail to get lsn of master node" ) ;
+	} while( offset != offset1 || version != version1 ) ;
+	printf( "node offset: %ld,version: %d\n", offset, version ) ;
+	printf( "master node offset: %ld,version: %d\n", offset1, version1 ) ; 
+
+	sdbDisconnect( db ) ;
+	sdbDisconnect( db1 ) ;
+	sdbReleaseConnection( db ) ;
+	sdbReleaseConnection( db1 ) ;
+	return SDB_OK ;
+}
+
+INT32 changeNodeConf( const char* svc, const char* conf, int value )
 {
 	INT32 rc = SDB_OK ;
 
 	char installPath[20] ;
 	getInstallPath( installPath ) ;
-
-	const char *host, *svc, *nodename ;
-	INT32 nodeId ;
-	rc = sdbGetNodeAddr( node, &host, &svc, &nodename, &nodeId ) ;
-	CHECK_RC_CODE( rc, "fail to get node addr" ) ;
 	
 	char confFile[100] ;
 	sprintf( confFile, "%s%s%s%s", installPath, "/conf/local/", svc, "/sdb.conf" ) ;
@@ -254,6 +228,7 @@ INT32 changeNodeConf( sdbNodeHandle& node, const char* conf, int value )
 TEST( reloadConf, weight )
 {
 	INT32 rc = SDB_OK ;
+	sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 
     // connect to sdb
 	getConf() ;
@@ -261,14 +236,23 @@ TEST( reloadConf, weight )
 	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
 	if( isStandalone(db) ) return ;
 
-	// get slave node
+	// create a slave node
 	sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
 	sdbNodeHandle node = SDB_INVALID_HANDLE ;
-	rc = getSlaveNode( rg, node ) ;
+	const char *host, *svc, *nodename ;
+    INT32 nodeId ;
+	rc = createSlaveNode( db, rg, node, &host, &svc, &nodename, &nodeId ) ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+	printf( "node: name %s,svc %s,nodename %s,nodeId %d\n", host, svc, nodename, nodeId ) ;
+
+	// start node and wait sync finish
+	rc = sdbStartNode( node ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to start node" ;
+	rc = waitSync( rg, host, svc ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 	
 	// change slave node weight to 20
-	rc = changeNodeConf( node, "weight", 20 ) ;
+	rc = changeNodeConf( svc, "weight", 20 ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 
  	// reload conf
@@ -279,17 +263,20 @@ TEST( reloadConf, weight )
 	rc = sdbReelect( rg, NULL ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to reelect in rg" ;
 	bool isMaster = false ;
-	rc = isMasterNode( rg, node, &isMaster ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to check node is master node or not" ;
+	rc = isMasterNode( rg, host, svc, &isMaster ) ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 	ASSERT_TRUE( isMaster ) << "fail to check node to be master after reelect" ;	
 
-	// change slave node weight to 10(default) after test
-	rc = changeNodeConf( node, "weight", 10 ) ;
-	ASSERT_EQ( rc, SDB_OK ) ;
-	
-	// reload conf again
-    rc = sdbReloadConfig( db, NULL ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to reload conf again" ;
+	// stop and remove node
+	rc = sdbStopNode( node ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to stop node after test" ;
+	do
+	{
+		rc = isMasterNode( rg, host, svc, &isMaster ) ;
+		ASSERT_EQ( rc, SDB_OK ) << "fail to check node is master node or not" ;
+	} while( isMaster ) ;
+	rc = sdbRemoveNode( rg, host, svc, NULL ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to remove node after test" ;
 
 	// disconnect and release
 	sdbDisconnect( db ) ;
