@@ -136,7 +136,7 @@
             <fileset dir="@{reportdir}" includes="**/*"/>
          </replaceregexp>
          <replaceregexp match='&lt;failure(.*)&gt;' 
-                        replace='&lt;failure\1&gt;${ms1}      ${ms2}' 
+                        replace='&lt;failure\1&gt;      ${ms1}      ${ms2}' 
                         flags="g" 
                         byline="true" 
                         encoding="utf-8">
