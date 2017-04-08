@@ -15,7 +15,7 @@
    <property file="${basedir}/src/conf/test.conf" />
    
    <target name="normal_test_build">
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, COVERAGE"/>
       
       <var name="TEST_TYPE" value="NORMALTEST"/>
       <getplatform resultProperty="plat_form"/>
@@ -28,6 +28,14 @@
                <property name="TEST_TYPE" value="${TEST_TYPE}"/>
                <property name="testhost_list" value="${testhost_list}"/>
             </ant>
+            <if>
+               <equals arg1="${COVERAGE}" arg2="true" />
+               <then>
+                  <ant antfile="get_coverage.xml" target="ready_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="testhost_list" value="${testhost_list}"/>
+                  </ant>
+               </then>
+            </if>
          </then>
       </if>
      
@@ -45,7 +53,16 @@
       </ant>
    
       <antcallback target="status_file.get_build_status" return="build_status"/>
-
+      
+      <if>
+         <equals arg1="${COVERAGE}" arg2="true" />
+         <then>
+            <ant antfile="get_coverage.xml" target="get_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+               <property name="testhost_list" value="${testhost_list}"/>
+            </ant>
+         </then>
+      </if>
+            
       <if>
          <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
@@ -334,6 +351,12 @@
          <isset property="NEED_INSTALL_DEPLOY"/>
          <else>           
             <var name="NEED_INSTALL_DEPLOY" value="true" />
+         </else>
+      </if>
+      <if>
+         <isset property="COVERAGE"/>
+         <else>           
+            <var name="COVERAGE" value="false" />
          </else>
       </if>
       <if>
