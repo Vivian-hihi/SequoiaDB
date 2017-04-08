@@ -5299,18 +5299,19 @@ SDB_EXPORT INT32 sdbGetCount1 ( sdbCollectionHandle cHandle,
                                 bson *hint,
                                 SINT64 *count )
 {
+   INT32 rc                        = SDB_OK ;
+   bson_iterator it ;
    bson newObj ;
    bson retObj ;
-   bson_iterator it ;
-   INT32 rc                        = SDB_OK ;
    sdbCursorHandle cursor          = SDB_INVALID_HANDLE ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
    bson_init( &newObj ) ;
    bson_init( &retObj ) ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
+   
    if ( !count )
    {
       rc = SDB_INVALIDARG ;
@@ -7477,12 +7478,14 @@ SDB_EXPORT INT32 sdbAttachCollection ( sdbCollectionHandle cHandle,
    INT32 rc                        = SDB_OK ;
    SINT64 contextID                = 0 ;
    BOOLEAN bsoninit                = TRUE ;
-   bson newObj ;
    bson_iterator it ;
+   bson newObj ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+
+   BSON_INIT( newObj );
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
+   connection = (sdbConnectionStruct*)(cs->_connection) ;
 
    if ( !subClFullName || !options ||
         ossStrlen ( subClFullName) > CLIENT_COLLECTION_NAMESZ ||
@@ -7492,7 +7495,6 @@ SDB_EXPORT INT32 sdbAttachCollection ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   BSON_INIT( newObj );
    BSON_APPEND( newObj, FIELD_NAME_NAME, cs->_collectionFullName, string ) ;
    BSON_APPEND( newObj, FIELD_NAME_SUBCLNAME, subClFullName, string ) ;
 
@@ -8610,10 +8612,10 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    bson_iterator bsonItr ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   
+   bson_init( &obj ) ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    connection = (sdbConnectionStruct*)(cs->_connection) ;
-
-   bson_init( &obj ) ;
    if ( NULL == oid )
    {
       rc = SDB_INVALIDARG ;
@@ -9209,10 +9211,10 @@ SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
    bson meta ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
-   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
    bson_init( &meta ) ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   connection                      = (sdbConnectionStruct*)(cs->_connection) ;
    if ( NULL == oid )
    {
       rc = SDB_INVALIDARG ;
@@ -9454,6 +9456,8 @@ SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
    bson obj ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   
+   bson_init( &obj ) ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
@@ -9463,7 +9467,6 @@ SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   bson_init( &obj ) ;
    rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
@@ -9506,6 +9509,8 @@ SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
    bson obj ;
    sdbConnectionStruct *connection = NULL ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
+   
+   bson_init( &obj ) ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    connection                      = (sdbConnectionStruct*)(cs->_connection) ;
 
@@ -9515,7 +9520,6 @@ SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   bson_init( &obj ) ;
    rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
    if ( SDB_OK != rc )
    {
