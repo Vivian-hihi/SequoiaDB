@@ -104,7 +104,7 @@ public class DropIndex2945 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(300)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
 
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             checkConsistency(dataGroup);
@@ -207,6 +207,7 @@ public class DropIndex2945 extends SdbTestBase {
         boolean checkOk = false;
         int checkTimes = 30;
         int checkInterval = 1000; // 1s
+        String lastCompareInfo = "";
         for (int j = 0; j < checkTimes; j++) {
             List<String> dataUrls = dataGroup.getAllUrls();
             List<List<BSONObject>> results = new ArrayList<List<BSONObject>>();
@@ -235,10 +236,11 @@ public class DropIndex2945 extends SdbTestBase {
                 sortByName(compareB);
                 removeUnconcerned(compareB);
                 if (!compareA.equals(compareB)) {
-                    System.out.println(dataUrls.get(0));
-                    System.out.println(compareA);
-                    System.out.println(dataUrls.get(i));
-                    System.out.println(compareB);
+                    lastCompareInfo = "";
+                    lastCompareInfo += dataUrls.get(0) + "\n";
+                    lastCompareInfo += compareA + "\n";
+                    lastCompareInfo += dataUrls.get(i) + "\n";
+                    lastCompareInfo += compareB + "\n";
                     checkOk = false;
                 }
             }
@@ -252,7 +254,10 @@ public class DropIndex2945 extends SdbTestBase {
             }
         }
         
-        Assert.assertTrue(checkOk, "data is different. see the detail in console");
+        if (!checkOk) {
+            System.out.println(lastCompareInfo);
+            Assert.fail("data is different. see the detail in console");
+        }
     }
     
     private void sortByName(List<BSONObject> list) {

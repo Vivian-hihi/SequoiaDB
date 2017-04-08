@@ -119,7 +119,7 @@ public class CRUDAndAddNode2948 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!Utils.checkBusinessForExNode(groupMgr, 300)) { Assert.fail("checkBusiness occurs time out"); }
+            if (!Utils.checkBusinessForExNode(groupMgr, 600)) { Assert.fail("checkBusiness occurs time out"); }
 
             db = new Sequoiadb(coordUrl, "", "");
             checkLob(db);

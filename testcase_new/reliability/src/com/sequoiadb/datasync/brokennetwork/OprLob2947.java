@@ -101,7 +101,7 @@ public class OprLob2947 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
             
-            if (!groupMgr.checkBusiness(300)) { Assert.fail("checkBusiness occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusiness occurs timeout"); }
             
             dataGroup.checkInspect(1);
             runSuccess = true;

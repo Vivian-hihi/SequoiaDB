@@ -23,6 +23,7 @@ public class Utils {
      * @throws ReliabilityException 
      */
     public static boolean checkBusinessForExNode(GroupMgr groupMgr, int timeOutSecond) throws ReliabilityException {
+        String lastCheckInfo = "";
         for (int i = 0; i < timeOutSecond; i++) {
             List<String> groupNames = groupMgr.getAllDataGroupName();
             groupNames.remove("SYSCoord");
@@ -36,6 +37,7 @@ public class Utils {
                             && grpRes.primaryCheck 
                             && grpRes.serviceCheck
                             && grpRes.LSNCheck)) {
+                        lastCheckInfo = grpRes.toString();
                         ok = false;
                     }
                 }
@@ -50,6 +52,7 @@ public class Utils {
             } catch (InterruptedException e) {
             }
         }
+        System.out.println(lastCheckInfo);
         return false;
     }
     

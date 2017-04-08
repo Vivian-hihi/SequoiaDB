@@ -83,7 +83,7 @@ public class Insert2183 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {
@@ -103,7 +103,7 @@ public class Insert2183 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(300)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail("data is different on " + dataGroup.getGroupName());
@@ -264,5 +264,6 @@ public class Insert2183 extends SdbTestBase {
     
     private void dropDomainAndCs(Sequoiadb db) {
         db.dropCollectionSpace(csName);
+        db.dropDomain(domainName);
     }
 }

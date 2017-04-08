@@ -98,7 +98,7 @@ public class Aggregate2190 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(300)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail("data is different on " + dataGroup.getGroupName());
