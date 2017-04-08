@@ -561,7 +561,7 @@
             <tar destfile="${release_dir}/coverage_srccode.tar.gz" 
                  compression="gzip" 
                  basedir="${srccode_dir}" 
-                 includes="SequoiaDB/engine/**/*,build/*/dd/**/*.gcno" />
+                 includes="SequoiaDB/engine/**/*,thirdparty/boost/boost/**/*,build/*/dd/**/*.gcno" />
             <echo file="${release_dir}/coverage.info" message="source_code_dir=${srccode_dir}"/>
          </then>
       </if>
