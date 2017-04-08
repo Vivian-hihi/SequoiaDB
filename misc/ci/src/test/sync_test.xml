@@ -306,10 +306,7 @@
                               <copy todir="${WORKSPACE}/report/${testcase_type}">
                                  <fileset dir="${report_basedir}/${testcase_type}" includes="**/*"/>
                               </copy>
-                              <!--备份各节点的sdb.conf-->
-                              <copy todir="${WORKSPACE}/report/${testcase_type}">
-                                 <fileset dir="/opt/sequoiadb/conf" includes="local/**/*"/>  
-                              </copy>
+
                            </then>
                         </if>
                      </then>
