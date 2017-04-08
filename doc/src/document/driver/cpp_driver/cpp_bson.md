@@ -62,7 +62,7 @@ C++ BSON 用到4个类：
   // OID
   obj = BSON( GENOID ) ;
   // bool
-  obj = BSON( "flag" << true"ret" << false ) ;
+  obj = BSON( "flag" << true << "ret" << false ) ;
   // object
   obj = BSON( "d" << BSON("e" << "hi!") ) ;
   // array
