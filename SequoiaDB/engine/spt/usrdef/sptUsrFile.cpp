@@ -780,6 +780,8 @@ JS_MAPPING_END()
       ss << "File functions:" << endl
          << "   read( [size] )" << endl
          << "   write( content )" << endl
+         << "   readContent( [size] )" << endl
+         << "   writeContent( fileContent )" << endl
          << "   seek( offset, [where] ) " << endl
          << "   close()" << endl
          << "   remove( filepath )" << endl
@@ -3033,6 +3035,8 @@ JS_MAPPING_END()
          << "File functions:" << endl
          << "   read( [size] )" << endl
          << "   write( content )" << endl
+         << "   readContent( [size] )" << endl
+         << "   writeContent( fileContent )" << endl
          << "   seek( offset, [where] ) " << endl
          << "   close()" << endl
          << " File.remove( filepath )" << endl
@@ -3053,7 +3057,8 @@ JS_MAPPING_END()
          << " File.isDir( pathname )" << endl
          << " File.isEmptyDir( dirName )" << endl
          << " File.stat( filename )" << endl
-         << " File.md5( filename )" << endl ;
+         << " File.md5( filename )" << endl
+         << " File.scp( srcFile, dstFile, [isReplace], [mode] )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
