@@ -62,7 +62,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
         }
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() {
         Sequoiadb db = null;
         try {
