@@ -16,10 +16,17 @@
       
       <delete dir="${report_dir}" failonerror="false"/> 
       <mkdir dir="${report_dir}"/>
-      <antcall target="detect_remote_env">
-         <param name="detect_target_name" value="dectect_node_status"/>
-         <param name="collect_remote_log_target_name" value="collect_remote_node_status_log"/>
-      </antcall>
+      <!--SYNCTEST do not detect sequoiadb start-->
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+         <else>
+            <antcall target="detect_remote_env">
+               <param name="detect_target_name" value="dectect_node_status"/>
+               <param name="collect_remote_log_target_name" value="collect_remote_node_status_log"/>
+            </antcall>
+         </else>
+      <if>
+
       <antcall target="detect_remote_env">
          <param name="detect_target_name" value="dectect_testcase_core"/>
          <param name="collect_remote_log_target_name" value="collect_remote_testcase_core_log"/>
@@ -27,7 +34,13 @@
       <!-- testcase core dump report xml -->
       <antcall target="generate_testcase_core_report"/>
       <!-- node exception report xml -->
-      <antcall target="generate_node_start_report"/>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+         <else>
+            <antcall target="generate_node_start_report"/>
+         </else>
+      </if>
+      
       <!-- cp report to ${WORKSPACE}/report-->
       <delete dir="${WORKSPACE}/report/env_detect"/>
       <copy todir="${WORKSPACE}/report/env_detect">
