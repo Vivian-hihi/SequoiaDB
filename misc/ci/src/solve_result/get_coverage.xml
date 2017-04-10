@@ -143,10 +143,17 @@
    <target name="ready_coverage">
       <for list="${testhost_list}" param="testhost" parallel="false">
          <sequential>
-            <!--ready source code-->
+            <!--ready tar package-->
+            <staf location="@{testhost}" service="FS"
+                  request="DELETE ENTRY ${CI_WORK_DIR}/coverage RECURSE CONFIRM"
+                  throwBuildException=""/>
+            <staf location="@{testhost}" service="FS"
+                  request="CREATE DIRECTORY ${CI_WORK_DIR}/coverage FULLPATH"
+                  throwBuildException="1"/>
             <staf location="local" service="FS"
                   request="COPY FILE ${WORKSPACE}/archive/current/coverage_srccode.tar.gz TODIRECTORY ${CI_WORK_DIR}/coverage TOMACHINE @{testhost}"
                   throwBuildException="1"/>
+            <!--untar-->
             <staf location="@{testhost}" service="FS"
                   request="DELETE ENTRY ${source_code_dir} RECURSE CONFIRM"
                   throwBuildException=""/>
