@@ -100,7 +100,7 @@
             </if>
             
             <staf location="@{testhost}" service="PROCESS"
-                  request="START SHELL COMMAND ${CI_WORK_DIR}/${package_name} --mode unattended WAIT 10m STDERRTOSTDOUT RETURNSTDOUT"
+                  request="START SHELL COMMAND ${CI_WORK_DIR}/${package_name} --mode unattended WAIT 20m STDERRTOSTDOUT RETURNSTDOUT"
                   resultPrefix="install"
                   throwBuildException="1"/>
             <propertyregex property="install_rc" input="${install.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
