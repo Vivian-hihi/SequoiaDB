@@ -83,7 +83,7 @@
    
    <target name="largedata_test_build">
       <var name="TEST_TYPE" value="LARGEDATATEST"/>
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, COVERAGE"/>
       <getplatform resultProperty="plat_form"/>
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
       
@@ -94,6 +94,14 @@
                <property name="TEST_TYPE" value="${TEST_TYPE}"/>
                <property name="testhost_list" value="${testhost_list}"/>
             </ant>
+            <if>
+               <equals arg1="${COVERAGE}" arg2="true" />
+               <then>
+                  <ant antfile="get_coverage.xml" target="ready_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="testhost_list" value="${testhost_list}"/>
+                  </ant>
+               </then>
+            </if>
          </then>
       </if>
      
@@ -112,6 +120,15 @@
    
       <antcallback target="status_file.get_build_status" return="build_status"/>
 
+      <if>
+         <equals arg1="${COVERAGE}" arg2="true" />
+         <then>
+            <ant antfile="get_coverage.xml" target="get_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+               <property name="testhost_list" value="${testhost_list}"/>
+            </ant>
+         </then>
+      </if>
+      
       <if>
          <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
@@ -240,7 +257,7 @@
    </target>
    
    <target name="configure_test_build">
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, TESTCASE_TYPE, BACKUP_LOG_WHEN_FAIL"/>
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, TESTCASE_TYPE, BACKUP_LOG_WHEN_FAIL, COVERAGE"/>
       
       <var name="TEST_TYPE" value="CONFIGURETEST"/>
       <getplatform resultProperty="plat_form"/>
@@ -254,6 +271,14 @@
                <property name="TEST_TYPE" value="${TEST_TYPE}"/>
                <property name="testhost_list" value="${testhost_list}"/>
             </ant>
+            <if>
+               <equals arg1="${COVERAGE}" arg2="true" />
+               <then>
+                  <ant antfile="get_coverage.xml" target="ready_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="testhost_list" value="${testhost_list}"/>
+                  </ant>
+               </then>
+            </if>
          </then>
       </if>
 
@@ -272,6 +297,15 @@
    
       <antcallback target="status_file.get_build_status" return="build_status"/>
 
+      <if>
+         <equals arg1="${COVERAGE}" arg2="true" />
+         <then>
+            <ant antfile="get_coverage.xml" target="get_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+               <property name="testhost_list" value="${testhost_list}"/>
+            </ant>
+         </then>
+      </if>
+      
       <if>
          <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
