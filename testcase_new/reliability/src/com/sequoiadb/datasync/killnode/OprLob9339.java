@@ -93,7 +93,9 @@ public class OprLob9339 extends SdbTestBase {
             
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusiness occurs timeout"); }
             
-            dataGroup.checkInspect(1);
+            if (!dataGroup.checkInspect(1)) {
+                Assert.fail("data is different on " + dataGroup.getGroupName());
+            }
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();

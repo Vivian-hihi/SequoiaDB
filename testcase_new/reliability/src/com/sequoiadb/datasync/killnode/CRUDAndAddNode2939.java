@@ -114,7 +114,9 @@ public class CRUDAndAddNode2939 extends SdbTestBase {
 
             db = new Sequoiadb(coordUrl, "", "");
             checkLob(db);
-            dataGroup.checkInspect(1);
+            if (!dataGroup.checkInspect(1)) {
+                Assert.fail("data is different on " + dataGroup.getGroupName());
+            }
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();
