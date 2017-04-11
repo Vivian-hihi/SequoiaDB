@@ -2288,8 +2288,10 @@ namespace engine
 
    BOOLEAN _mthMatchTree::hasExpand()
    {
-      SDB_ASSERT( _hasExpand ? NULL != _attrFieldName : NULL == _attrFieldName,
-                  "impossible" ) ;
+      // $expand or $returnMatch could set the _attrFieldName
+      SDB_ASSERT( ( _hasExpand || _hasReturnMatch ) ? NULL != _attrFieldName :
+                                                      NULL == _attrFieldName,
+                    "impossible" ) ;
       return _hasExpand ;
    }
 
