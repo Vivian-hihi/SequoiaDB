@@ -34,7 +34,7 @@ import com.sequoiadb.task.TaskMgr;
 public class NetDeleteNode6201 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private int coordPort = 26666;
-    private String coordDbPath = SdbTestBase.reservedDir;
+    private String coordDbPath = null;
     private String connectUrl;
     private boolean deleteFlag = false;
 
@@ -51,7 +51,8 @@ public class NetDeleteNode6201 extends SdbTestBase {
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness fail");
             }
-
+            
+            coordDbPath = SdbTestBase.reservedDir;
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
@@ -62,7 +63,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {
@@ -96,11 +97,20 @@ public class NetDeleteNode6201 extends SdbTestBase {
                 Assert.assertEquals(groupMgr.checkResidu(), true);
             }
             else {
-                coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
-                        coordDbPath + "/" + coordPort, new BasicBSONObject());
-                coordNode.start();
-                coordNode.connect().disconnect();
-                coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
+                try {
+                    coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
+                            coordDbPath + "/" + coordPort, new BasicBSONObject());
+                    coordNode.start();
+                    coordNode.connect().disconnect();
+                    coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
+                } catch (BaseException e) {
+                    // if cata master has not been changed, -147 occurs 
+                    // which is because the new node is being dropped
+                    // -147 SDB_LOCK_FAILED
+                    if (e.getErrorCode() != -147) {
+                        throw e;
+                    }
+                }
             }
         }
         catch (ReliabilityException e) {
