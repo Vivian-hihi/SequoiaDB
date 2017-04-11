@@ -15,6 +15,7 @@
    <test name="transaction">
      <packages> 
          <package name="com.sequoiadb.transaction"/>
+         <package name="com.sequoiadb.ssl"/>
      </packages>  
    </test>
 
