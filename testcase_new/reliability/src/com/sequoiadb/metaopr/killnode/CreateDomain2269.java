@@ -88,12 +88,14 @@ public class CreateDomain2269 extends SdbTestBase {
             mgr.addTask(cTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-
+            
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-
+            
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             createDomainAgain(db);
             operateOnDomain(db);
+
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             checkListDomain(db);
             Utils.checkConsistency(cataGroup);
             runSuccess = true;

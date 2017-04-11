@@ -87,12 +87,14 @@ public class CreateCL2279 extends SdbTestBase {
             mgr.addTask(cTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-
+            
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-
+            
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             createCLAgain(db);
             operateOnCL(db);
+
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             checkListCL(db);
             Utils.checkConsistency(cataGroup);
             runSuccess = true;

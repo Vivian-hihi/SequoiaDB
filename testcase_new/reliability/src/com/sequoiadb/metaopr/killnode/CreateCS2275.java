@@ -89,12 +89,14 @@ public class CreateCS2275 extends SdbTestBase {
             mgr.addTask(cTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-
+            
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-
+            
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             createCSAgain(db);
             operateOnCS(db);
+
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             checkListCS(db);
             Utils.checkConsistency(cataGroup);
             runSuccess = true;

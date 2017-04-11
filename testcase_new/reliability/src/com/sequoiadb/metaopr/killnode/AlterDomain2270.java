@@ -93,12 +93,14 @@ public class AlterDomain2270 extends SdbTestBase {
             mgr.addTask(aTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-
+            
             if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-
+                        
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             alterDomainAgain(db);
             checkGroupsByCreateCL(db);
+
+            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
             checkListDomain(db);
             Utils.checkConsistency(cataGroup);
             runSuccess = true;
