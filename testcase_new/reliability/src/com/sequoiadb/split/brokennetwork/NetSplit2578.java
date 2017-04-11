@@ -66,7 +66,7 @@ public class NetSplit2578 extends SdbTestBase {
             DBCollection cl = commCS.createCollection(clName,
                     (BSONObject) JSON
                             .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
-                                    + srcGroupName + "'}"));
+                                    + srcGroupName + "', ReplSize: -1}"));
             insertData(cl, 0, 1000);// 写入待切分的记录（1000普通记录）
 
             // 调整主机
