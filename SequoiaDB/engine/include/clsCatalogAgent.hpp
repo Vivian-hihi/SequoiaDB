@@ -96,24 +96,26 @@ namespace engine
    {
       public:
          _clsCatalogItem ( BOOLEAN saveName = TRUE,
-                           BOOLEAN isSubCl = FALSE ) ;
+                           BOOLEAN hasSubCl = FALSE ) ;
          ~_clsCatalogItem () ;
 
       public:
          UINT32    getID() const { return _ID ; }
          UINT32    getGroupID () const ;
-         const string &getGroupName() const { return _groupName ;}
          BSONObj&  getLowBound () ;
          BSONObj&  getUpBound () ;
 
          clsCataItemKey getLowBoundKey ( const Ordering* ordering ) ;
          clsCataItemKey getUpBoundKey ( const Ordering* ordering ) ;
 
-         INT32    updateItem ( const BSONObj &obj, BOOLEAN isSharding,
+         INT32    updateItem ( const BSONObj &obj,
+                               BOOLEAN isSharding,
                                BOOLEAN isHash ) ;
          BSONObj  toBson () ;
-         std::string getSubClName(){ return _subCLName; } ;
          BOOLEAN  isLast() const { return _isLast ; }
+
+         const string&  getGroupName() const { return _groupName ; }
+         const string&  getSubClName() const { return _subCLName ; }
 
       private:
          BSONObj           _lowBound ;
@@ -123,7 +125,7 @@ namespace engine
          BOOLEAN           _saveName ;
          string            _groupName ;
          string            _subCLName ;
-         BOOLEAN           _isSubCl ;
+         BOOLEAN           _hasSubCl ;
          UINT32            _ID ;
 
          BOOLEAN           _isLast ;
@@ -155,6 +157,9 @@ namespace engine
 
    class _clsShardingKeySite ;
 
+   /*
+      _clsCatalogSet define
+   */
    class _clsCatalogSet : public SDBObject
    {
       friend class _clsCatalogAgent ;
@@ -197,14 +202,16 @@ namespace engine
          INT32             findGroupIDS ( const BSONObj &matcher,
                                           VEC_GROUP_ID &vecGroup );
          INT32             findSubCLName ( const BSONObj &obj,
-                                           std::string &subCLName );
-         INT32             findSubCLNames( const bson::BSONObj &matcher,
-                                           std::vector< std::string > &subCLList,
+                                           string &subCLName ) ;
+         INT32             findSubCLNames( const BSONObj &matcher,
+                                           vector< string > &subCLList,
                                            CLS_SUBCL_SORT_TYPE sortType =
                                            SUBCL_SORT_BY_ID );
 
-         INT32             getGroupLowBound( UINT32 groupID, BSONObj &lowBound ) const;
-         INT32             getGroupUpBound( UINT32 groupID, BSONObj &upBound ) const;
+         INT32             getGroupLowBound( UINT32 groupID,
+                                             BSONObj &lowBound ) const;
+         INT32             getGroupUpBound( UINT32 groupID,
+                                            BSONObj &upBound ) const;
 
          INT32             updateCatSet ( const BSONObj & catSet,
                                           UINT32 groupID = 0 ) ;

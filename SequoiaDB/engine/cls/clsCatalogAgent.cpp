@@ -199,12 +199,12 @@ namespace engine
    note: _clsCatalogItem implement
    */
    _clsCatalogItem::_clsCatalogItem ( BOOLEAN saveName,
-                                      BOOLEAN isSubCl )
+                                      BOOLEAN hasSubCl )
    {
       _groupID = 0 ;
       _saveName = saveName ;
       _isHash  = FALSE ;
-      _isSubCl = isSubCl ;
+      _hasSubCl = hasSubCl ;
       _isLast  = FALSE ;
       _ID      = 0 ;
    }
@@ -253,7 +253,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTIM_UDIM, "_clsCatalogItem::updateItem" )
-   INT32 _clsCatalogItem::updateItem( const BSONObj & obj, BOOLEAN isSharding,
+   INT32 _clsCatalogItem::updateItem( const BSONObj & obj,
+                                      BOOLEAN isSharding,
                                       BOOLEAN isHash )
    {
       INT32 rc = SDB_OK ;
@@ -272,7 +273,7 @@ namespace engine
             _ID = (UINT32)idEle.numberInt() ;
          }
 
-         if ( _isSubCl )
+         if ( _hasSubCl )
          {
             BSONElement eleSubCLName = obj.getField( CAT_SUBCL_NAME );
             if ( eleSubCLName.type() == String )
@@ -351,7 +352,7 @@ namespace engine
    {
       try
       {
-         if ( !_isSubCl )
+         if ( !_hasSubCl )
          {
             if ( !_saveName )
             {
@@ -550,33 +551,32 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISINSDKEY, "_clsCatalogSet::isIncludeShardingKey" )
-   BOOLEAN _clsCatalogSet::isIncludeShardingKey( const bson::BSONObj &record ) const
+   BOOLEAN _clsCatalogSet::isIncludeShardingKey( const BSONObj &record ) const
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_ISINSDKEY ) ;
-      BOOLEAN isInclude = FALSE;
+      BOOLEAN isInclude = FALSE ;
       try
       {
-         BSONObjIterator iterKey(_shardingKey);
+         BSONObjIterator iterKey( _shardingKey ) ;
          while ( iterKey.more() )
          {
-            BSONElement beKeyField = iterKey.next();
-            BSONElement beTmp = record.getField( beKeyField.fieldName() );
+            BSONElement beKeyField = iterKey.next() ;
+            BSONElement beTmp = record.getField( beKeyField.fieldName() ) ;
             if ( !beTmp.eoo() )
             {
-               isInclude = TRUE;
-               break;
+               isInclude = TRUE ;
+               break ;
             }
          }
       }
       catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR,
-                  "failed to analyze the record if include sharding-key,\
-                  occured unexpected error:%s",
-                  e.what() );
+         PD_LOG ( PDERROR, "Occur exception when analyze record whether "
+                  "include sharding key or not: %s", e.what() ) ;
       }
+
       PD_TRACE_EXIT ( SDB__CLSCTSET_ISINSDKEY ) ;
-      return isInclude;
+      return isInclude ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__CLEAR, "_clsCatalogSet::_clear" )
@@ -865,12 +865,13 @@ namespace engine
                                         VEC_GROUP_ID &vecGroup )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_FINDGPIDS ) ;
-      INT32 rc = SDB_OK;
-      BOOLEAN result = FALSE;
-      MAP_CAT_ITEM::iterator iter;
-      clsCatalogMatcher clsMatcher( _shardingKey );
+      INT32 rc = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      MAP_CAT_ITEM::iterator iter ;
+
       PD_CHECK ( !_mapItems.empty(), SDB_SYS, error, PDERROR,
-               "the collection[%s] cataItem is empty", name() );
+                 "The collection[%s]'s cataItem is empty", name() ) ;
+
       if ( !isSharding() || 1 == _groupCount )
       {
          iter = _mapItems.begin();
@@ -886,23 +887,21 @@ namespace engine
       {
          if ( CAT_INTERNAL_VERSION_2 <= getInternalV() )
          {
-            clsCataHashMatcher hashMatcher( _shardingKey );
-            rc = hashMatcher.loadPattern( matcher, _square, getInternalV() );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to load match-info(rc=%d)",
-                        rc );
+            clsCataHashMatcher hashMatcher( _shardingKey ) ;
+            rc = hashMatcher.loadPattern( matcher, _square, getInternalV() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Load matcher failed, rc: %d", rc ) ;
+
             iter = _mapItems.begin();
             while( iter != _mapItems.end() )
             {
                rc = hashMatcher.matches( iter->second, result );
-               PD_RC_CHECK( rc, PDERROR,
-                            "failed to match sharding-key(rc=%d)",
+               PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d",
                             rc ) ;
                if ( result )
                {
                   vecGroup.push_back( iter->second->getGroupID() );
                }
-               ++iter;
+               ++iter ;
             }
          }
          else
@@ -916,24 +915,26 @@ namespace engine
          }
          goto done ;
       }
-
-      rc = clsMatcher.loadPattern( matcher );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to match sharding-key(rc=%d)",
-                  rc );
-      iter = _mapItems.begin();
-      while( iter != _mapItems.end() )
+      else
       {
-         rc = clsMatcher.matches( iter->second, result );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to match sharding-key(rc=%d)",
-                     rc );
-         if ( result )
+         clsCatalogMatcher clsMatcher( _shardingKey ) ;
+         rc = clsMatcher.loadPattern( matcher );
+         PD_RC_CHECK( rc, PDERROR, "Load matcher failed, rc: %d", rc ) ;
+
+         iter = _mapItems.begin();
+         while( iter != _mapItems.end() )
          {
-            vecGroup.push_back( iter->second->getGroupID() );
+            rc = clsMatcher.matches( iter->second, result );
+            PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d",
+                         rc ) ;
+            if ( result )
+            {
+               vecGroup.push_back( iter->second->getGroupID() );
+            }
+            ++iter ;
          }
-         ++iter;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSCTSET_FINDGPIDS, rc ) ;
       return rc;
@@ -941,7 +942,8 @@ namespace engine
       goto done;
    }
 
-   INT32 _clsCatalogSet::getGroupLowBound( UINT32 groupID, BSONObj & lowBound )const
+   INT32 _clsCatalogSet::getGroupLowBound( UINT32 groupID,
+                                           BSONObj &lowBound )const
    {
       clsCatalogItem *item = NULL ;
       MAP_CAT_ITEM::const_iterator it = _mapItems.begin() ;
@@ -958,7 +960,8 @@ namespace engine
       return SDB_CAT_NO_MATCH_CATALOG ;
    }
 
-   INT32 _clsCatalogSet::getGroupUpBound( UINT32 groupID, BSONObj & upBound )const
+   INT32 _clsCatalogSet::getGroupUpBound( UINT32 groupID,
+                                          BSONObj &upBound )const
    {
       clsCatalogItem *item = NULL ;
       MAP_CAT_ITEM::const_reverse_iterator rit = _mapItems.rbegin() ;
@@ -1660,8 +1663,8 @@ namespace engine
             _ensureShardingIndex = ele.boolean() ;
          }
 
-         /// register to sharding key site
-         if ( _pSite )
+         /// register to sharding key site when it's sub-collection
+         if ( _pSite && !_mainCLName.empty() )
          {
             _skSiteID = _pSite->registerKey( _shardingKey ) ;
          }
@@ -2109,7 +2112,7 @@ namespace engine
    }
 
    INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj,
-                                         std::string &subCLName )
+                                         string &subCLName )
    {
       INT32 rc = SDB_OK;
 
@@ -2126,18 +2129,28 @@ namespace engine
       goto done;
    }
 
-   INT32 _clsCatalogSet::findSubCLNames( const bson::BSONObj &matcher,
-                                         std::vector< std::string > &subCLList,
+   INT32 _clsCatalogSet::findSubCLNames( const BSONObj &matcher,
+                                         vector< string > &subCLList,
                                          CLS_SUBCL_SORT_TYPE sortType )
    {
       INT32 rc = SDB_OK;
       BOOLEAN result = FALSE;
       std::multimap<UINT32, clsCatalogItem* > mapSubItem ;
       MAP_CAT_ITEM::iterator iter;
-      clsCatalogMatcher clsMatcher( _shardingKey );
 
-      PD_CHECK ( !_mapItems.empty(), SDB_CAT_NO_MATCH_CATALOG, error, PDERROR,
-               "the collection[%s] cataItem is empty", name() );
+      if ( !isMainCL() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "The collection[%s] is not collection-partitioned",
+                 name() ) ;
+         goto error ;
+      }
+      else if ( _mapItems.empty() )
+      {
+         PD_LOG( PDERROR, "The collection[%s]'s cataItem is empty", name() ) ;
+         rc = SDB_CAT_NO_MATCH_CATALOG ;
+         goto error ;
+      }
 
       subCLList.clear() ;
 
@@ -2155,46 +2168,47 @@ namespace engine
             {
                subCLList.push_back( iter->second->getSubClName() ) ;
             }
-            ++iter;
+            ++iter ;
          }
          goto done ;
       }
-
-      rc = clsMatcher.loadPattern( matcher );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to match sharding-key(rc=%d)",
-                  rc );
-      iter = _mapItems.begin();
-      while( iter != _mapItems.end() )
-      {
-         rc = clsMatcher.matches( iter->second, result );
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to match sharding-key(rc=%d)",
-                      rc ) ;
-         if ( result )
-         {
-            if ( SUBCL_SORT_BY_ID == sortType )
-            {
-               mapSubItem.insert( std::make_pair( iter->second->getID(),
-                                                  iter->second ) ) ;
-            }
-            else
-            {
-               subCLList.push_back( iter->second->getSubClName() ) ;
-            }
-         }
-         ++iter;
-      }
-
-      if ( SUBCL_SORT_BY_ID == sortType )
-      {
-         PD_CHECK( mapSubItem.size() != 0, SDB_CAT_NO_MATCH_CATALOG,
-                   error, PDERROR, "couldn't find the match catalog" ) ;
-      }
       else
       {
-         PD_CHECK( subCLList.size() != 0, SDB_CAT_NO_MATCH_CATALOG,
-                   error, PDERROR, "couldn't find the match catalog" ) ;
+         clsCatalogMatcher clsMatcher( _shardingKey ) ;
+         rc = clsMatcher.loadPattern( matcher );
+         PD_RC_CHECK( rc, PDERROR, "Load matcher failed, rc: %d", rc ) ;
+
+         iter = _mapItems.begin() ;
+         while( iter != _mapItems.end() )
+         {
+            rc = clsMatcher.matches( iter->second, result );
+            PD_RC_CHECK( rc, PDERROR, "Match catalog item failed, rc: %d",
+                         rc ) ;
+            if ( result )
+            {
+               if ( SUBCL_SORT_BY_ID == sortType )
+               {
+                  mapSubItem.insert( std::make_pair( iter->second->getID(),
+                                                     iter->second ) ) ;
+               }
+               else
+               {
+                  subCLList.push_back( iter->second->getSubClName() ) ;
+               }
+            }
+            ++iter;
+         }
+
+         if ( SUBCL_SORT_BY_ID == sortType )
+         {
+            PD_CHECK( mapSubItem.size() != 0, SDB_CAT_NO_MATCH_CATALOG,
+                      error, PDERROR, "couldn't find the match catalog" ) ;
+         }
+         else
+         {
+            PD_CHECK( subCLList.size() != 0, SDB_CAT_NO_MATCH_CATALOG,
+                      error, PDERROR, "couldn't find the match catalog" ) ;
+         }
       }
 
    done:
