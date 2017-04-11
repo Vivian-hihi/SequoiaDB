@@ -33,7 +33,7 @@
             <class name="com.sequoiadb.test.cl.CLSaveAndAs"/>
             <class name="com.sequoiadb.test.cl.CLSaveWithListArg"/>
             <class name="com.sequoiadb.test.cl.CLSelectQuery"/>
-            <class name="com.sequoiadb.test.cl.CLSplit"/>
+            <!--class name="com.sequoiadb.test.cl.CLSplit"/-->
             <class name="com.sequoiadb.test.cl.CreateGetDropIndex"/>
             <class name="com.sequoiadb.test.cl.DBCollectionTest"/>
             <class name="com.sequoiadb.test.cl.SdbConditionAndSelectorQuery"/>
