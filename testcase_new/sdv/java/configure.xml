@@ -12,6 +12,7 @@
    <parameter name="WORKDIR"        value="/tmp/javatest" />
    <parameter name="CONFTOOL"       value="trunk/misc/ci_new/src/test/exec_testcase/changeConf.js" />
    
+   <!--The testcases of different configure should be placed in different <test> -->
    <test name="lzwtransaction">
       <classes>
           <class name="com.sequoiadb.lzwtransaction.TestCompress6668"/>
