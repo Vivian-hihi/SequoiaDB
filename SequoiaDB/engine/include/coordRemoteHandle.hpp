@@ -37,18 +37,19 @@
 #define COORD_REMOTE_HANDLE_HPP__
 
 #include "pmdRemoteSession.hpp"
+#include "coordDef.hpp"
 
 namespace engine
 {
 
    /*
-      _coordRemoteHandleBase define
+      _coordRemoteHandlerBase define
    */
-   class _coordRemoteHandleBase : public _IRemoteSessionHandler
+   class _coordRemoteHandlerBase : public _IRemoteSessionHandler
    {
       public:
-         _coordRemoteHandleBase() ;
-         virtual ~_coordRemoteHandleBase() ;
+         _coordRemoteHandlerBase() ;
+         virtual ~_coordRemoteHandlerBase() ;
 
       public:
          virtual INT32  onSendFailed( _pmdRemoteSession *pSession,
@@ -77,7 +78,36 @@ namespace engine
                                       const MsgRouteID &nodeID,
                                       _pmdEDUCB *cb ) ;
    } ;
-   typedef _coordRemoteHandleBase coordRemoteHandleBase ;
+   typedef _coordRemoteHandlerBase coordRemoteHandlerBase ;
+
+   /*
+      _coordRemoteHandler define
+   */
+   class _coordRemoteHandler : public _coordRemoteHandlerBase
+   {
+      public:
+         _coordRemoteHandler() ;
+         virtual ~_coordRemoteHandler() ;
+
+         void     enableInterruptWhenFailed( BOOLEAN enable,
+                                             const SET_RC *pIgnoreRC = NULL ) ;
+
+      public:
+
+         /*
+            include disconnect: MSG_BS_DISCONNECT or isDisconnect()
+         */
+         virtual void   onReply( _pmdRemoteSession *pSession,
+                                 _pmdSubSession **ppSub,
+                                 const MsgHeader *pReply,
+                                 BOOLEAN isPending ) ;
+
+      protected:
+         BOOLEAN        _interruptWhenFailed ;
+         SET_RC         _ignoreRC ;
+
+   } ;
+   typedef _coordRemoteHandler coordRemoteHandler ;
 
 }
 

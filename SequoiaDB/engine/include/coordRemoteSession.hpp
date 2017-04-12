@@ -40,10 +40,30 @@
 #include "pmdRemoteSession.hpp"
 #include "coordRemoteHandle.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
    class _coordSessionPropMgr ;
+   class _coordGroupSel ;
+   class _coordGroupSessionCtrl ;
+
+   /*
+      _IGroupSessionHandler define
+   */
+   class _IGroupSessionHandler
+   {
+      public:
+         _IGroupSessionHandler() {}
+         virtual ~_IGroupSessionHandler() {}
+
+      public:
+         virtual void   prepareForSend( pmdSubSession *pSub,
+                                        _coordGroupSel *pSel,
+                                        _coordGroupSessionCtrl *pCtrl ) = 0 ;
+   } ;
+   typedef _IGroupSessionHandler IGroupSessionHandler ;
 
    /*
       _coordSessionPropSite define
@@ -135,6 +155,9 @@ namespace engine
          void     setPrimary( BOOLEAN primary ) ;
          void     setServiceType( MSG_ROUTE_SERVICE_TYPE svcType ) ;
 
+         BOOLEAN  isPrimary() const ;
+         BOOLEAN  isPreferedPrimary() const ;
+
          INT32    selBegin( UINT32 groupID, MsgRouteID &nodeID ) ;
          INT32    selNext( MsgRouteID &nodeID ) ;
          void     selDone() ;
@@ -179,6 +202,52 @@ namespace engine
    typedef _coordGroupSel coordGroupSel ;
 
    /*
+      _coordCataSel define
+   */
+   class _coordCataSel : public SDBObject
+   {
+      public:
+         _coordCataSel() ;
+         ~_coordCataSel() ;
+
+         INT32    bind( coordResource *pResource,
+                        const CHAR *pCollectionName,
+                        _pmdEDUCB *cb ) ;
+
+         INT32    bind( coordResource *pResource,
+                        const CoordCataInfoPtr &cataPtr,
+                        BOOLEAN hasUpdated = FALSE ) ;
+
+         void     clear() ;
+         void     setUpdated( BOOLEAN updated ) ;
+         BOOLEAN  hasUpdated() const ;
+
+         CoordCataInfoPtr  getCataPtr() const ;
+
+         INT32    getGroupLst( _pmdEDUCB *cb,
+                               const CoordGroupList &exceptGrpLst,
+                               CoordGroupList &groupLst,
+                               const BSONObj *pQuery = NULL ) ;
+
+         /*
+            This function only used when the collection is table-partitioned,
+            and valid when called after getGroupLst
+         */
+         CoordGroupSubCLMap& getGroup2SubsMap() ;
+
+         INT32    updateCataInfo( const CHAR *pCollectionName,
+                                  _pmdEDUCB *cb ) ;
+
+      private:
+         coordResource        *_pResource ;
+         BOOLEAN              _hasUpdate ;
+         CoordCataInfoPtr     _cataPtr ;
+         CoordGroupSubCLMap   _mapGrp2subs ;
+
+   } ;
+   typedef _coordCataSel coordCataSel ;
+
+   /*
       _coordGroupSessionCtrl define
    */
    class _coordGroupSessionCtrl : public SDBObject
@@ -197,7 +266,12 @@ namespace engine
                                BOOLEAN isReadCmd,
                                BOOLEAN canUpdate = TRUE ) ;
 
+         BOOLEAN     canRetry( INT32 flag,
+                               coordCataSel &cataSel,
+                               BOOLEAN canUpdate = TRUE ) ;
+
          void        incRetry() ;
+         UINT32      getRetryTimes() const ;
 
          void        setMaxRetryTimes( UINT32 maxRetryTimes ) ;
 
@@ -205,8 +279,8 @@ namespace engine
          BOOLEAN     _canRetry() const ;
 
       private:
-         UINT32                  _retryTime ;
-         UINT32                  _maxRetryTime ;
+         UINT32                  _retryTimes ;
+         UINT32                  _maxRetryTimes ;
          coordResource           *_pResource ;
          coordSessionPropSite    *_pPropSite ;
          coordGroupSel           *_pGroupSel ;
@@ -230,7 +304,8 @@ namespace engine
          INT32             init( coordResource *pResource,
                                  _pmdEDUCB *cb,
                                  INT64 timeout = 0,
-                                 IRemoteSessionHandler *pHandle = NULL ) ;
+                                 IRemoteSessionHandler *pHandle = NULL,
+                                 IGroupSessionHandler *pGroupHandle = NULL ) ;
 
          void              clear() ;
 
@@ -251,7 +326,7 @@ namespace engine
          coordGroupSel*          getGroupSel() ;
          coordSessionPropSite*   getPropSite() ;
          coordGroupSessionCtrl*  getGroupCtrl() ;
-         coordRemoteHandleBase*  getBaseHandle() ;
+         coordRemoteHandlerBase* getBaseHandle() ;
 
       protected:
 
@@ -266,7 +341,9 @@ namespace engine
          pmdRemoteSession              *_pSession ;
          coordGroupSel                 _groupSel ;
          coordGroupSessionCtrl         _groupCtrl ;
-         coordRemoteHandleBase         _baseHandle ;
+         coordRemoteHandlerBase        _baseHandle ;
+
+         IGroupSessionHandler          *_pGroupHandle ;
 
    } ;
    typedef _coordGroupSession coordGroupSession ;

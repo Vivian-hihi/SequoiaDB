@@ -44,11 +44,13 @@ using namespace bson ;
 namespace engine
 {
 
-   INT32 coordInitCataPtrFromObj( const BSONObj &obj,
-                                  CoordCataInfoPtr &cataPtr ) ;
+   INT32    coordInitCataPtrFromObj( const BSONObj &obj,
+                                     CoordCataInfoPtr &cataPtr ) ;
 
-   BOOLEAN coordIsCataAddrSame( const CoordVecNodeInfo &left,
-                                const CoordVecNodeInfo &right ) ;
+   BOOLEAN  coordIsCataAddrSame( const CoordVecNodeInfo &left,
+                                 const CoordVecNodeInfo &right ) ;
+
+   BOOLEAN  coordCataCheckFlag( INT32 flag ) ;
 
 }
 

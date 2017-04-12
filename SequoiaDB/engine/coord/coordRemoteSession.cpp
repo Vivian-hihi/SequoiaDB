@@ -37,10 +37,12 @@
 #include "msgMessageFormat.hpp"
 #include "pmdEDU.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
-   #define COORD_OPR_MAX_RETRY_TIME_DFT         ( 3 )
+   #define COORD_OPR_MAX_RETRY_TIMES_DFT        ( 3 )
 
    /*
       _coordSessionPropSite implement
@@ -222,6 +224,21 @@ namespace engine
    void _coordGroupSel::setPrimary( BOOLEAN primary )
    {
       _primary          = primary ;
+   }
+
+   BOOLEAN _coordGroupSel::isPrimary() const
+   {
+      return _primary ;
+   }
+
+   BOOLEAN _coordGroupSel::isPreferedPrimary() const
+   {
+      if ( _pPropSite &&
+           PREFER_REPL_MASTER == _pPropSite->getPreferInstype() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
    void _coordGroupSel::setServiceType( MSG_ROUTE_SERVICE_TYPE svcType )
@@ -614,12 +631,243 @@ namespace engine
    }
 
    /*
+      _coordCataSel implement
+   */
+   _coordCataSel::_coordCataSel()
+   {
+      _pResource = NULL ;
+      _hasUpdate = FALSE ;
+   }
+
+   _coordCataSel::~_coordCataSel()
+   {
+   }
+
+   INT32 _coordCataSel::updateCataInfo( const CHAR *pCollectionName,
+                                        _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !pCollectionName || !(*pCollectionName) )
+      {
+         if ( _cataPtr.get() )
+         {
+            pCollectionName = _cataPtr->getName() ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Collection name is null or empty" ) ;
+            goto error ;
+         }
+      }
+
+      _hasUpdate = TRUE ;
+      rc = _pResource->updateCataInfo( pCollectionName, _cataPtr, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCataSel::bind( coordResource *pResource,
+                              const CHAR *pCollectionName,
+                              _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      _pResource = pResource ;
+
+      rc = _pResource->getCataInfo( pCollectionName, _cataPtr ) ;
+      if ( rc && !_hasUpdate )
+      {
+         rc = updateCataInfo( pCollectionName, cb ) ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCataSel::bind( coordResource *pResource,
+                              const CoordCataInfoPtr &cataPtr,
+                              BOOLEAN hasUpdated )
+   {
+      _pResource = pResource ;
+      _cataPtr = cataPtr ;
+      _hasUpdate = hasUpdated ;
+
+      return SDB_OK ;
+   }
+
+   void _coordCataSel::clear()
+   {
+      _hasUpdate = FALSE ;
+      _cataPtr = CoordCataInfoPtr() ;
+      _mapGrp2subs.clear() ;
+   }
+
+   void _coordCataSel::setUpdated( BOOLEAN updated )
+   {
+      _hasUpdate = updated ;
+   }
+
+   BOOLEAN _coordCataSel::hasUpdated() const
+   {
+      return _hasUpdate ;
+   }
+
+   CoordCataInfoPtr _coordCataSel::getCataPtr() const
+   {
+      return _cataPtr ;
+   }
+
+   CoordGroupSubCLMap& _coordCataSel::getGroup2SubsMap()
+   {
+      return _mapGrp2subs ;
+   }
+
+   INT32 _coordCataSel::getGroupLst( _pmdEDUCB *cb,
+                                     const CoordGroupList &exceptGrpLst,
+                                     CoordGroupList &groupLst,
+                                     const BSONObj *pQuery )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_cataPtr->isMainCL() )
+      {
+         // normal collection or sub-collection
+         if ( NULL == pQuery || pQuery->isEmpty() )
+         {
+            _cataPtr->getGroupLst( groupLst ) ;
+         }
+         else
+         {
+            rc = _cataPtr->getGroupByMatcher( *pQuery, groupLst ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get group by matcher failed, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+
+         if ( groupLst.size() <= 0 )
+         {
+            if ( pQuery )
+            {
+               PD_LOG( PDWARNING, "Failed to get groups for obj[%s] from "
+                       "catalog info[%s]", pQuery->toString().c_str(),
+                       _cataPtr->getCatalogSet()->toCataInfoBson(
+                       ).toString().c_str() ) ;
+            }
+         }
+         else
+         {
+            //don't resend to the node which reply ok
+            CoordGroupList::const_iterator iter = exceptGrpLst.begin();
+            while( iter != exceptGrpLst.end() )
+            {
+               groupLst.erase( iter->first ) ;
+               ++iter ;
+            }
+         }
+      }
+      else
+      {
+         // main-collection
+         vector< string > subCLLst ;
+         vector< string >::iterator iterCL ;
+         _mapGrp2subs.clear() ;
+
+      retry:
+         if ( NULL == pQuery || pQuery->isEmpty() )
+         {
+            rc = _cataPtr->getSubCLList( subCLLst ) ;
+         }
+         else
+         {
+            rc = _cataPtr->getMatchSubCLs( *pQuery, subCLLst ) ;
+         }
+         if ( SDB_CAT_NO_MATCH_CATALOG == rc )
+         {
+            rc = SDB_OK ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Get matched sub collections failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
+         if ( 0 == subCLLst.size() && !hasUpdated() )
+         {
+            if ( SDB_OK == updateCataInfo( NULL, cb ) )
+            {
+               goto retry ;
+            }
+         }
+
+         iterCL = subCLLst.begin() ;
+         while( iterCL != subCLLst.end() )
+         {
+            static const CoordGroupList s_emptyGrpLst ;
+            CoordGroupList subGrpLst ;
+            CoordGroupList::iterator subGrpItr ;
+            _coordCataSel subSel ;
+
+            rc = subSel.bind( _pResource, (*iterCL).c_str(), cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get collectoin[%s]'s catalog failed, rc: %d",
+                       (*iterCL).c_str(), rc ) ;
+               goto error ;
+            }
+
+            rc = subSel.getGroupLst( cb, s_emptyGrpLst, subGrpLst, pQuery ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get sub-collection[%s]'s group list failed, "
+                       "rc: %d", (*iterCL).c_str(), rc ) ;
+               goto error ;
+            }
+
+            subGrpItr = subGrpLst.begin() ;
+            while ( subGrpItr != subGrpLst.end() )
+            {
+               if ( exceptGrpLst.end() ==
+                    exceptGrpLst.find( subGrpItr->first ) )
+               {
+                  _mapGrp2subs[ subGrpItr->first ].push_back( *iterCL ) ;
+                  groupLst[ subGrpItr->first ] = subGrpItr->second ;
+               }
+               ++subGrpItr ;
+            }
+            ++iterCL ;
+         } /// end while
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
       _coordGroupSessionCtrl implement
    */
    _coordGroupSessionCtrl::_coordGroupSessionCtrl()
    {
-      _retryTime = 0 ;
-      _maxRetryTime = COORD_OPR_MAX_RETRY_TIME_DFT ;
+      _retryTimes = 0 ;
+      _maxRetryTimes = COORD_OPR_MAX_RETRY_TIMES_DFT ;
       _pResource = NULL ;
       _pPropSite = NULL ;
       _pGroupSel = NULL ;
@@ -631,12 +879,12 @@ namespace engine
 
    void _coordGroupSessionCtrl::setMaxRetryTimes( UINT32 maxRetryTimes )
    {
-      _maxRetryTime = maxRetryTimes ;
+      _maxRetryTimes = maxRetryTimes ;
    }
 
    BOOLEAN _coordGroupSessionCtrl::_canRetry() const
    {
-      return _retryTime < _maxRetryTime ? TRUE : FALSE ;
+      return _retryTimes < _maxRetryTimes ? TRUE : FALSE ;
    }
 
    void _coordGroupSessionCtrl::init( coordResource *pResource,
@@ -650,7 +898,12 @@ namespace engine
 
    void _coordGroupSessionCtrl::incRetry()
    {
-      ++_retryTime ;
+      ++_retryTimes ;
+   }
+
+   UINT32 _coordGroupSessionCtrl::getRetryTimes() const
+   {
+      return _retryTimes ;
    }
 
    BOOLEAN _coordGroupSessionCtrl::canRetry( INT32 flag,
@@ -758,6 +1011,27 @@ namespace engine
       return bRetry ;
    }
 
+   BOOLEAN _coordGroupSessionCtrl::canRetry( INT32 flag,
+                                             coordCataSel &cataSel,
+                                             BOOLEAN canUpdate )
+   {
+      BOOLEAN bRetry = FALSE ;
+      _pmdEDUCB *cb = _pPropSite->getEDUCB() ;
+
+      if ( _canRetry() && coordCataCheckFlag( flag ) )
+      {
+         bRetry = TRUE ;
+
+         if ( canUpdate && !cataSel.hasUpdated() &&
+              SDB_OK != cataSel.updateCataInfo( NULL, cb ) )
+         {
+            bRetry = FALSE ;
+         }
+      }
+
+      return bRetry ;
+   }
+
    /*
       _coordGroupSession implement
    */
@@ -766,6 +1040,7 @@ namespace engine
       _pSite      = NULL ;
       _pPropSite  = NULL ;
       _pSession   = NULL ;
+      _pGroupHandle = NULL ;
    }
 
    _coordGroupSession::~_coordGroupSession()
@@ -777,12 +1052,14 @@ namespace engine
       _pSite      = NULL ;
       _pPropSite  = NULL ;
       _pSession   = NULL ;
+      _pGroupHandle = NULL ;
    }
 
    INT32 _coordGroupSession::init( coordResource *pResource,
                                    _pmdEDUCB *cb,
                                    INT64 timeout,
-                                   IRemoteSessionHandler *pHandle )
+                                   IRemoteSessionHandler *pHandle,
+                                   IGroupSessionHandler *pGroupHandle )
    {
       INT32 rc = SDB_OK ;
 
@@ -799,6 +1076,7 @@ namespace engine
          goto error ;
       }
 
+      _pGroupHandle = pGroupHandle ;
       _pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
       if ( !_pSite )
       {
@@ -864,7 +1142,7 @@ namespace engine
       return &_groupCtrl ;
    }
 
-   coordRemoteHandleBase* _coordGroupSession::getBaseHandle()
+   coordRemoteHandlerBase* _coordGroupSession::getBaseHandle()
    {
       return &_baseHandle ;
    }
@@ -991,6 +1269,11 @@ namespace engine
          if ( pIov )
          {
             pSub->addIODatas( *pIov ) ;
+         }
+
+         if ( _pGroupHandle )
+         {
+            _pGroupHandle->prepareForSend( pSub, &_groupSel, &_groupCtrl ) ;
          }
 
          rc = _pSession->sendMsg( pSub ) ;

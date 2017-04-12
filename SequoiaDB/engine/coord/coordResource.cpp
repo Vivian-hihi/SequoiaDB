@@ -660,7 +660,7 @@ namespace engine
       pmdRemoteSessionSite *pSite = NULL ;
       pmdRemoteSession *pRSession = NULL ;
       pmdSubSession *pSubSession = NULL ;
-      coordRemoteHandleBase baseHandle ;
+      coordRemoteHandlerBase baseHandle ;
 
       clsGroupItem *groupItem = NULL ;
       NODE_ARRAY nodes ;
@@ -946,9 +946,7 @@ namespace engine
             pGroupCtrl->incRetry() ;
             goto retry ;
          }
-      }
-      if ( rc )
-      {
+
          PD_LOG( PDERROR, "Failed to process group reply, rc: %d", rc ) ;
          goto error ;
       }
@@ -1136,6 +1134,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
+      CoordCataInfoPtr tmpCataPtr ;
 
       try
       {
@@ -1148,7 +1147,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _updateCataInfo( obj, collectionName, cataPtr, cb ) ;
+      rc = _updateCataInfo( obj, collectionName, tmpCataPtr, cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
@@ -1167,7 +1166,7 @@ namespace engine
       }
 
       /// When collecton is main-cl, need to update all's sub-collections
-      if ( cataPtr->isMainCL() && cataPtr->getSubCLCount() > 0 )
+      if ( tmpCataPtr->isMainCL() && tmpCataPtr->getSubCLCount() > 0 )
       {
          CoordCataInfoPtr tmpPtr ;
          try
@@ -1190,6 +1189,9 @@ namespace engine
             goto error ;
          }
       }
+
+      /// last set return cataPtr
+      cataPtr = tmpCataPtr ;
 
    done:
       return rc ;
@@ -1231,7 +1233,8 @@ namespace engine
 
    retry:
       session.getSession()->clearSubSession() ;
-      rc = session.sendMsg( (MsgHeader*)pBuffer, CATALOG_GROUPID, NULL, &pSub ) ;
+      rc = session.sendMsg( (MsgHeader*)pBuffer, CATALOG_GROUPID,
+                            NULL, &pSub ) ;
       if ( rc )
       {
          goto error ;
@@ -1260,9 +1263,7 @@ namespace engine
             pGroupCtrl->incRetry() ;
             goto retry ;
          }
-      }
-      if ( rc )
-      {
+
          PD_LOG( PDERROR, "Failed to process catalog info reply, rc: %d",
                  rc ) ;
          goto error ;

@@ -45,34 +45,34 @@ namespace engine
 {
 
    /*
-      _coordRemoteHandleBase implement
+      _coordRemoteHandlerBase implement
    */
-   _coordRemoteHandleBase::_coordRemoteHandleBase()
+   _coordRemoteHandlerBase::_coordRemoteHandlerBase()
    {
    }
 
-   _coordRemoteHandleBase::~_coordRemoteHandleBase()
+   _coordRemoteHandlerBase::~_coordRemoteHandlerBase()
    {
    }
 
-   INT32 _coordRemoteHandleBase::onSendFailed( _pmdRemoteSession *pSession,
-                                               _pmdSubSession **ppSub,
-                                               INT32 flag )
+   INT32 _coordRemoteHandlerBase::onSendFailed( _pmdRemoteSession *pSession,
+                                                _pmdSubSession **ppSub,
+                                                INT32 flag )
    {
       return flag ;
    }
 
-   void _coordRemoteHandleBase::onReply( _pmdRemoteSession *pSession,
-                                         _pmdSubSession **ppSub,
-                                         const MsgHeader *pReply,
-                                         BOOLEAN isPending )
+   void _coordRemoteHandlerBase::onReply( _pmdRemoteSession *pSession,
+                                          _pmdSubSession **ppSub,
+                                          const MsgHeader *pReply,
+                                          BOOLEAN isPending )
    {
       /// do nothing
    }
 
-   INT32 _coordRemoteHandleBase::onSendConnect( _pmdSubSession *pSub,
-                                                const MsgHeader *pReq,
-                                                BOOLEAN isFirst )
+   INT32 _coordRemoteHandlerBase::onSendConnect( _pmdSubSession *pSub,
+                                                 const MsgHeader *pReq,
+                                                 BOOLEAN isFirst )
    {
       INT32 rc = SDB_OK ;
       pmdEDUCB *cb = NULL ;
@@ -106,9 +106,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordRemoteHandleBase::_sessionInit( _pmdRemoteSession *pSession,
-                                               const MsgRouteID &nodeID,
-                                               _pmdEDUCB *cb )
+   INT32 _coordRemoteHandlerBase::_sessionInit( _pmdRemoteSession *pSession,
+                                                const MsgRouteID &nodeID,
+                                                _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       pmdSubSession *pSub = NULL ;
@@ -224,6 +224,54 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   /*
+      _coordRemoteHandler implement
+   */
+   _coordRemoteHandler::_coordRemoteHandler()
+   {
+      _interruptWhenFailed = FALSE ;
+   }
+
+   _coordRemoteHandler::~_coordRemoteHandler()
+   {
+   }
+
+   void _coordRemoteHandler::enableInterruptWhenFailed( BOOLEAN enable,
+                                                        const SET_RC *pIgnoreRC )
+   {
+      _interruptWhenFailed = enable ;
+      if ( pIgnoreRC )
+      {
+         _ignoreRC = *pIgnoreRC ;
+      }
+      else
+      {
+         _ignoreRC.clear() ;
+      }
+   }
+
+   void _coordRemoteHandler::onReply( _pmdRemoteSession *pSession,
+                                      _pmdSubSession **ppSub,
+                                      const MsgHeader *pReply,
+                                      BOOLEAN isPending )
+   {
+      if ( _interruptWhenFailed )
+      {
+         MsgOpReply *pOpReply = ( MsgOpReply* )pReply ;
+         /// When not ok and not in ignored rc set
+         if ( SDB_OK != pOpReply->flags &&
+              _ignoreRC.find( pOpReply->flags ) == _ignoreRC.end() )
+         {
+            PD_LOG( PDWARNING, "Session[%s]: Sub-session[%s] recieved "
+                    "invalid reply with flag[%d], stop other sub-sessions",
+                    pSession->getEDUCB()->toString().c_str(),
+                    routeID2String( pReply->routeID ).c_str(),
+                    pOpReply->flags ) ;
+            pSession->stopSubSession() ;
+         }
+      }
    }
 
 }
