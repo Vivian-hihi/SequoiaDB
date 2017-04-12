@@ -32,7 +32,6 @@ public class KillNode extends Fault {
     public void make() throws FaultException {
         try {
             ssh.exec(remotePath + "/" + scriptName + " " + svcName);
-            pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
         }
         catch (ReliabilityException e) {
             throw new FaultException(e);
@@ -90,6 +89,8 @@ public class KillNode extends Fault {
 
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
+            
+            pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);
         }
         catch (ReliabilityException e) {
             throw new FaultException(e);
