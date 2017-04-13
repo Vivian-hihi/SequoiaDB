@@ -123,12 +123,12 @@
       
       <var name="cmd" value="${cmd_debug} ${cmd_etp} ${cmd_cov} --all -j 4" />
       <echo message="exec cmd: scons ${cmd}" />
-      <exec executable="scons" dir="${srccode_dir}" failonerror="true">
+      <exec executable="scons" dir="${srccode_dir}" failonerror="true" logError="true">
          <arg line="${cmd}" />
       </exec>
       
       <chmod perm="u+x" file="${srccode_dir}/bin/sequoiadb" />
-      <exec executable="bin/sequoiadb" dir="${srccode_dir}" outputproperty="version_output" failonerror="true">
+      <exec executable="bin/sequoiadb" dir="${srccode_dir}" outputproperty="version_output" failonerror="true" logError="true">
          <arg line="--version" />
       </exec>
       <echo file="${release_dir}/sequoiadb.version" message="${version_output}"/>
@@ -138,13 +138,13 @@
       <var name="src_dir" value="${srccode_dir}/driver/postgresql" />
       
       <!--compile--> 
-      <exec executable="make" dir="${src_dir}" failonerror="true">
+      <exec executable="make" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="clean" />
       </exec>
-      <exec executable="make" dir="${src_dir}" failonerror="true">
+      <exec executable="make" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="local" />
       </exec>
-      <exec executable="make" dir="${src_dir}" failonerror="true">
+      <exec executable="make" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="all" />
       </exec>
       
@@ -186,7 +186,7 @@
       <var name="src_dir" value="${srccode_dir}/driver/java" />
       
       <delete dir="${src_dir}/build" failonerror="false"/>
-      <exec executable="scons" dir="${src_dir}" failonerror="true">
+      <exec executable="scons" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="${cmd_debug}" />
       </exec>
    </target>
@@ -265,11 +265,11 @@
       <for list="${php_version_list}" param="phpversion">
          <sequential>
             <chmod perm="u+x" file="${srccode_dir}/thirdparty/php/linux/retriConfig.sh" />
-            <exec executable="${srccode_dir}/thirdparty/php/linux/retriConfig.sh" failonerror="true">
+            <exec executable="${srccode_dir}/thirdparty/php/linux/retriConfig.sh" failonerror="true" logError="true">
                <arg line="@{phpversion} " />
             </exec>
             <echo>exec cmd: scons ${cmd_debug} --phpversion=@{phpversion}, in dir: ${src_dir}</echo>
-            <exec executable="scons" dir="${src_dir}" failonerror="true">
+            <exec executable="scons" dir="${src_dir}" failonerror="true" logError="true">
                <arg line="${cmd_debug} --phpversion=@{phpversion}" />
             </exec>
             <copy file="${build_dir}/libsdbphp-@{phpversion}.so" todir="${src_dir}/release" />
@@ -285,10 +285,10 @@
       </delete>
       <delete dir="${src_dir}/build" failonerror="false" />
       
-      <exec executable="scons" dir="${src_dir}" failonerror="true">
+      <exec executable="scons" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="${cmd_debug}" />
       </exec>
-      <exec executable="scons" dir="${src_dir}" failonerror="true">
+      <exec executable="scons" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="${cmd_debug} --py3" />
       </exec>
    </target>
@@ -529,7 +529,7 @@
       <var name="cmd" value="build sequoiadb_server.xml --setvars project.version=${sequoiadb_version} --setvars platform=${platform} --setvars enterpriseversion=${editon_str} --setvars project.outputDirectory=${release_dir}"/>
       <echo>exec cmd: builder ${cmd}</echo>
       <echo>exec in dir: ${release_dir}</echo>
-      <exec executable="builder" dir="${release_dir}" failonerror="true">
+      <exec executable="builder" dir="${release_dir}" failonerror="true" logError="true">
          <arg line="${cmd}" />
       </exec>
            
@@ -572,11 +572,11 @@
       <attribute name="version"/>
       <sequential>
          <var name="tools_dir" value="@{srccodedir}/misc/ci/src/compile"/>
-         <exec executable="gcc" dir="${tools_dir}" failonerror="true">
+         <exec executable="gcc" dir="${tools_dir}" failonerror="true" logError="true">
             <arg line="${tools_dir}/print_version.c -o ${tools_dir}/print_version -I@{srccodedir}/SequoiaDB/engine/include" />
          </exec>
          <var name="@{version}" unset="true"/>
-         <exec executable="${tools_dir}/print_version" outputproperty="@{version}" failonerror="true" />
+         <exec executable="${tools_dir}/print_version" outputproperty="@{version}" failonerror="true" logError="true" />
       </sequential>
    </macrodef>
    
@@ -585,7 +585,7 @@
       <attribute name="version"/>
       <sequential>
          <var name="@{verison}" unset="true"/>
-         <exec executable="bash" dir="@{dir}" outputproperty="@{version}" failonerror="true" >
+         <exec executable="bash" dir="@{dir}" outputproperty="@{version}" failonerror="true" logError="true" >
             <arg value="-c" />
             <arg line="&quot;svn info | grep Revision | awk '{print $2}'&quot;" />
          </exec>
@@ -595,7 +595,7 @@
    <macrodef name="getplatform">
       <attribute name="resultProperty"/>
       <sequential>
-         <exec executable="uname" outputproperty="uname" failonerror="true" >
+         <exec executable="uname" outputproperty="uname" failonerror="true" logError="true" >
             <arg line="-i" />
          </exec>
          <var name="@{resultProperty}" value="unknown" unset="true"/>

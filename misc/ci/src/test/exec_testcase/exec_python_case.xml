@@ -274,7 +274,7 @@
                      <delete dir="${pythondir}/py${py_version}" failonerror="false"/>
                      <mkdir dir="${pythondir}/py${py_version}"/>
                      <untar src="@{pytarfullname}" dest="${pythondir}/py${py_version}" compression="gzip"/>
-                     <exec executable="python${py_version}" dir="${pythondir}/py${py_version}">
+                     <exec executable="python${py_version}" dir="${pythondir}/py${py_version}" failonerror="true" logError="true">
                         <arg line=" setup.py install" />
                      </exec>
                      

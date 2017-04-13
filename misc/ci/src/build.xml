@@ -434,7 +434,7 @@
    <macrodef name="getplatform">
       <attribute name="resultProperty"/>
       <sequential>
-         <exec executable="uname" outputproperty="uname" failonerror="true" >
+         <exec executable="uname" outputproperty="uname" failonerror="true" logError="true">
             <arg line="-i" />
          </exec>
          <var name="@{resultProperty}" value="unknown" unset="true"/>

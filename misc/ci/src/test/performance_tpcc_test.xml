@@ -54,7 +54,7 @@
       <propertyregex property="testhost_shellarr" input="${testhost_list}" regexp="," replace=" "/>
       <arraylen array="${testhost_list}" len="host_num"/>
       <echo>${line.separator}exec cmd: ./createDatabase.sh sdbadmin ${INSTALL_PG_DIR} ${host_num} ${testhost_shellarr}, in dir: ${testcase_dir}</echo>
-      <exec executable="./createDatabase.sh" dir="${testcase_dir}" failonerror="true">
+      <exec executable="./createDatabase.sh" dir="${testcase_dir}" failonerror="true" logError="true">
          <arg line="sdbadmin ${INSTALL_PG_DIR} ${host_num} ${testhost_shellarr}" />
       </exec>
       
@@ -77,7 +77,7 @@
          <!--clean environment-->
          <delete dir="${testcase_dir}/tpc_result" failonerror="false"/>
          <echo>${line.separator}exec cmd: ./cleanEnv.sh ${host_num} ${testhost_shellarr}, in dir: ${testcase_dir}</echo>
-         <exec executable="./cleanEnv.sh" dir="${testcase_dir}" failonerror="true">
+         <exec executable="./cleanEnv.sh" dir="${testcase_dir}" failonerror="true" logError="true">
             <arg line="${host_num} ${testhost_shellarr}" />
          </exec>
          

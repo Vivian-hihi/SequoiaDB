@@ -168,7 +168,7 @@
       <!--set env variable-->
       <echo>*****************begin to set env variable***********************</echo>
       <var name="export_str" value="export LD_LIBRARY_PATH=${INSTALL_PG_DIR}/lib:${LD_LIBRARY_PATH}"/>
-      <exec executable="bash" outputproperty="sdbadmin_home" failonerror="true">
+      <exec executable="bash" outputproperty="sdbadmin_home" failonerror="true" logError="true">
          <arg value="-c" />
          <arg line="&quot;echo ~sdbadmin&quot;" />
       </exec>
@@ -193,13 +193,13 @@
       <!--change owner-->
       <echo>*****************begin to change owner to sdbadmin***********************</echo>
       <mkdir dir="${INSTALL_PG_DIR}/pg_data"/>
-      <exec executable="chown" failonerror="true">
+      <exec executable="chown" failonerror="true" logError="true">
          <arg line='-hR sdbadmin:sdbadmin_group ${INSTALL_PG_DIR}' />
       </exec>
             
       <!--init pg_data-->
       <echo>*****************begin to init db***********************</echo>
-      <exec executable="su" spawn="false">
+      <exec executable="su" spawn="false" failonerror="true" logError="true">
          <arg line=" - sdbadmin -c '${INSTALL_PG_DIR}/bin/initdb -D ${INSTALL_PG_DIR}/pg_data'" />
       </exec>
       
@@ -225,7 +225,7 @@
       
       <!--start pg-->
       <echo>*****************begin to start pg***********************</echo>
-      <exec executable="su" spawn="false">
+      <exec executable="su" spawn="false" failonerror="true" logError="true">
          <arg line=" - sdbadmin -c '${INSTALL_PG_DIR}/bin/postgres -D ${INSTALL_PG_DIR}/pg_data/ >> ${INSTALL_PG_DIR}/logfile 2>&amp;1 &amp;'" />
       </exec>
    </target>

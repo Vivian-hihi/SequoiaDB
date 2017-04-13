@@ -112,6 +112,7 @@
             <exec executable="lcov" 
                   dir="${CI_WORK_DIR}/coverage" 
                   outputproperty="total_output" 
+                  logError="true"
                   failonerror="true" >
                <arg line="${total_cmd}"/>
             </exec>
@@ -129,6 +130,7 @@
       <exec executable="genhtml" 
             dir="${CI_WORK_DIR}/coverage" 
             outputproperty="html_output" 
+            logError="true"
             failonerror="true" >
          <arg line="${html_cmd}"/>
       </exec>
