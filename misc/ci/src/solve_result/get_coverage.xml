@@ -16,7 +16,7 @@
       </classpath>
    </taskdef>
    <property file="${basedir}/src/conf/test.conf" />
-   <property file="${WORKSPACE}/archive/current/coverage.info" />
+   <property file="${WORKSPACE}/archive/current/coverage.conf" />
    
    <target name="get_coverage">
       <antcall target="gene_each_cov" />

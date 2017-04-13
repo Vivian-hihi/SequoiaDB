@@ -562,7 +562,7 @@
                  compression="gzip" 
                  basedir="${srccode_dir}" 
                  includes="SequoiaDB/engine/**/*,thirdparty/boost/boost/**/*,build/*/dd/**/*.gcno" />
-            <echo file="${release_dir}/coverage.info" message="source_code_dir=${srccode_dir}"/>
+            <echo file="${release_dir}/coverage.conf" message="source_code_dir=${srccode_dir}"/>
          </then>
       </if>
    </target>
