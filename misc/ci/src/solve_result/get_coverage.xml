@@ -160,6 +160,9 @@
             <staf location="@{testhost}" service="FS"
                   request="CREATE DIRECTORY ${source_code_dir} FULLPATH"
                   throwBuildException="1"/>
+            <staf location="@{testhost}" service="PROCESS"
+                  request="START SHELL COMMAND chmod 755 /home/jenkins WAIT 1m RETURNSTDERR"
+                  throwBuildException="1"/>
             <var name="tar_cmd" value="tar zxvf ${CI_WORK_DIR}/coverage/coverage_srccode.tar.gz -C ${source_code_dir}"/>
             <staf location="@{testhost}" service="PROCESS"
                   request="START SHELL COMMAND ${tar_cmd} WAIT 5m RETURNSTDERR"
