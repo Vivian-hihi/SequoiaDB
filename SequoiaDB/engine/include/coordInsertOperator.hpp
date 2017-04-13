@@ -129,11 +129,11 @@ namespace engine
                                     pmdEDUCB *cb,
                                     coordProcessResult &result ) ;
 
-         INT32    _doneMainCLOp( coordCataSel &cataSel,
-                                 coordSendMsgIn &inMsg,
-                                 coordSendOptions &options,
-                                 pmdEDUCB *cb,
-                                 coordProcessResult &result ) ;
+         void    _doneMainCLOp( coordCataSel &cataSel,
+                                coordSendMsgIn &inMsg,
+                                coordSendOptions &options,
+                                pmdEDUCB *cb,
+                                coordProcessResult &result ) ;
 
          INT32    _prepareUnMainCLOp( coordCataSel &cataSel,
                                       coordSendMsgIn &inMsg,
@@ -141,11 +141,11 @@ namespace engine
                                       pmdEDUCB *cb,
                                       coordProcessResult &result ) ;
 
-         INT32    _doneUnMainCLOp( coordCataSel &cataSel,
-                                   coordSendMsgIn &inMsg,
-                                   coordSendOptions &options,
-                                   pmdEDUCB *cb,
-                                   coordProcessResult &result ) ;
+         void    _doneUnMainCLOp( coordCataSel &cataSel,
+                                  coordSendMsgIn &inMsg,
+                                  coordSendOptions &options,
+                                  pmdEDUCB *cb,
+                                  coordProcessResult &result ) ;
 
       private:
          UINT32         _insertedNum ;
