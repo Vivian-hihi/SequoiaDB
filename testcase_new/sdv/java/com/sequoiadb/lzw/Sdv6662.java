@@ -67,8 +67,8 @@ public class Sdv6662 extends SdbTestBase {
 			DBCollection cl = createCL();
 			boolean isUnique = false;
 			createIndex(isUnique);
-			int dataCount = 600;
-			int strLength = 512 * 1024;
+			int dataCount = 1200;
+			int strLength = 128 * 1024;
 			String rec = insertData(cl, dataCount, strLength);
 			Commlib.checkCompressed(cl, dataGroupName);
 			checkQuery(dataCount, rec);
