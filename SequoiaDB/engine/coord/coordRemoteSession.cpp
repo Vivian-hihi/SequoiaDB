@@ -35,6 +35,7 @@
 
 #include "coordRemoteSession.hpp"
 #include "msgMessageFormat.hpp"
+#include "coordCommon.hpp"
 #include "pmdEDU.hpp"
 
 using namespace bson ;
