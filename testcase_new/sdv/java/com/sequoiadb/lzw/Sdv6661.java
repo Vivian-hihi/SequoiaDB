@@ -65,8 +65,8 @@ public class Sdv6661 extends SdbTestBase {
 	public void test() {
 		try {
 			DBCollection cl = createCL();
-			int dataCount = 600;
-			int strLength = 512 * 1024;
+			int dataCount = 1200;
+			int strLength = 128 * 1024;
 			String rec = insertData(cl, dataCount, strLength);
 			Commlib.checkCompressed(cl, dataGroupName);
 			checkQuery(dataCount, rec);

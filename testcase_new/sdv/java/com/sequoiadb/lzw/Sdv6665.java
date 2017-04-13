@@ -74,8 +74,8 @@ public class Sdv6665 extends SdbTestBase {
 		sourceGroupName = dataGroupNames.get(0);
 		destGroupName = dataGroupNames.get(1);
 		try {
-			int dataCount = 600;
-			int strLength = 1024 * 1024;
+			int dataCount = 1200;
+			int strLength = 128 * 1024;
 			insertData(cl, dataCount, strLength);
 			Commlib.checkCompressed(cl, sourceGroupName);
 			split(sourceGroupName, destGroupName);
@@ -125,7 +125,7 @@ public class Sdv6665 extends SdbTestBase {
 
 	public String insertDataAgain(DBCollection cl, int dataCount, int strLength) {
 		String strRec = getRandomString(strLength);
-		for (int i = 600; i < 600+dataCount; i++) {
+		for (int i = 1200; i < 1200+dataCount; i++) {
 			cl.insert("{_id:" + i + ",key:'" + strRec + i + "'}");
 		}
 		return strRec;
@@ -156,8 +156,8 @@ public class Sdv6665 extends SdbTestBase {
 		Sequoiadb dataDB = db.getReplicaGroup(dataGroupName).getMaster().connect();
 		splitCL = dataDB.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		int count = (int) splitCL.getCount();
-		int offSet = (int) (0.3 * 600);
-		if (Math.abs(count - 300) > offSet) {
+		int offSet = (int) (0.3 * 1200);
+		if (Math.abs(count - 600) > offSet) {
 			Assert.fail("the split result is wrong:" + count);
 		}
 	}
