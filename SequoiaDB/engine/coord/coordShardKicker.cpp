@@ -35,6 +35,7 @@
 *******************************************************************************/
 
 #include "coordShardKicker.hpp"
+#include "pmdEDU.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -304,23 +305,20 @@ namespace engine
       INT32 rc = SDB_OK ;
       CoordCataInfoPtr cataPtr ;
 
-      rc = _pResource->getCataInfo( collectionName.c_str(), cataPtr ) ;
-      if ( rc )
+      rc = _pResource->getOrUpdateCataInfo( collectionName.c_str(),
+                                            cataPtr,
+                                            cb ) ;
+      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
       {
-         rc = _pResource->updateCataInfo( collectionName.c_str(),
-                                          cataPtr, cb ) ;
-         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
-         {
-            /// When the main-collection is old, ignored
-            rc = SDB_OK ;
-            goto done ;
-         }
-         else if ( rc )
-         {
-            PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
-                    "rc: %d", collectionName.c_str(), rc ) ;
-            goto error ;
-         }
+         /// When the main-collection is old, ignored
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
+                 "rc: %d", collectionName.c_str(), rc ) ;
+         goto error ;
       }
 
       rc = _kickShardingKey( cataPtr, updator, newUpdator, hasShardingKey ) ;

@@ -36,7 +36,7 @@
 #ifndef COORD_SHARD_KICKER_HPP__
 #define COORD_SHARD_KICKER_HPP__
 
-#include "coordResource.hpp.hpp"
+#include "coordResource.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -87,7 +87,7 @@ namespace engine
       INT32    kickShardingKey( const BSONObj &updator,
                                 BSONObj &newUpdator,
                                 BOOLEAN &hasShardingKey,
-                                pmdEDUCB *cb,
+                                _pmdEDUCB *cb,
                                 const BSONObj &matcher = BSONObj() ) ;
 
    protected:
@@ -103,7 +103,7 @@ namespace engine
                                     const BSONObj &updator, 
                                     BSONObj &newUpdator,
                                     BOOLEAN &hasShardingKey,
-                                    pmdEDUCB *cb ) ;
+                                    _pmdEDUCB *cb ) ;
 
    private:
       set< UINT32 >              _skSiteIDs ;

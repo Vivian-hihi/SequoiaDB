@@ -127,6 +127,10 @@ namespace engine
                                      CoordCataInfoPtr &cataPtr,
                                      _pmdEDUCB *cb ) ;
 
+         INT32       getOrUpdateCataInfo( const CHAR *collectionName,
+                                          CoordCataInfoPtr &cataPtr,
+                                          _pmdEDUCB *cb ) ;
+
       protected:
          void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
          void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;

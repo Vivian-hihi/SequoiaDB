@@ -727,7 +727,7 @@ namespace engine
       return _hasUpdate ;
    }
 
-   CoordCataInfoPtr _coordCataSel::getCataPtr() const
+   CoordCataInfoPtr& _coordCataSel::getCataPtr()
    {
       return _cataPtr ;
    }
@@ -743,6 +743,8 @@ namespace engine
                                      const BSONObj *pQuery )
    {
       INT32 rc = SDB_OK ;
+
+      _mapGrp2subs.clear() ;
 
       if ( !_cataPtr->isMainCL() )
       {
@@ -787,7 +789,6 @@ namespace engine
          // main-collection
          vector< string > subCLLst ;
          vector< string >::iterator iterCL ;
-         _mapGrp2subs.clear() ;
 
       retry:
          if ( NULL == pQuery || pQuery->isEmpty() )

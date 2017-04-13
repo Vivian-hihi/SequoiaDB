@@ -1199,6 +1199,20 @@ namespace engine
       goto done ;
    }
 
+   INT32 _coordResource::getOrUpdateCataInfo( const CHAR *collectionName,
+                                              CoordCataInfoPtr &cataPtr,
+                                              _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = getCataInfo( collectionName, cataPtr ) ;
+      if ( rc )
+      {
+         rc = updateCataInfo( collectionName, cataPtr, cb ) ;
+      }
+      return rc ;
+   }
+
    INT32 _coordResource::_updateCataInfo( const BSONObj &obj,
                                           const CHAR *collectionName,
                                           CoordCataInfoPtr &cataPtr,

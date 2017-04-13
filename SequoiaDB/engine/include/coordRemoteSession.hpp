@@ -222,7 +222,7 @@ namespace engine
          void     setUpdated( BOOLEAN updated ) ;
          BOOLEAN  hasUpdated() const ;
 
-         CoordCataInfoPtr  getCataPtr() const ;
+         CoordCataInfoPtr&  getCataPtr() ;
 
          INT32    getGroupLst( _pmdEDUCB *cb,
                                const CoordGroupList &exceptGrpLst,
