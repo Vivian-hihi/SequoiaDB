@@ -26,21 +26,22 @@ import com.sequoiadb.exception.ReliabilityException;
 public class GroupMgr {
     private Map<String, GroupWrapper> name2group = new HashMap<String, GroupWrapper>();
     private Map<Integer, GroupWrapper> id2group = new HashMap<Integer, GroupWrapper>();
-    private Sequoiadb sdb = null;
     private static GroupMgr mgr = null;
+    private Sequoiadb sdb = null;
 
     public GroupMgr() throws ReliabilityException {
         this.refresh();
     }
 
     public void refresh() throws ReliabilityException {
+        DBCursor cursor = null;
         try {
             if (sdb != null) {
                 sdb.disconnect();
             }
-            this.sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             BSONObject nullObj = null;
-            DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, nullObj, nullObj, nullObj);
+            cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, nullObj, nullObj, nullObj);
             while (cursor.hasNext()) {
                 BasicBSONObject obj = (BasicBSONObject) cursor.getNext();
 
@@ -51,12 +52,15 @@ public class GroupMgr {
                 name2group.put(groupName, group);
                 id2group.put(group.getGroupID(), group);
             }
-            cursor.close();
         }
         catch (BaseException e) {
             throw new ReliabilityException(e);
         }
-
+        finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     public List<GroupWrapper> getAllDataGroup() {
@@ -79,7 +83,6 @@ public class GroupMgr {
                 names.add(entry.getKey());
             }
         }
-
         return names;
     }
 
@@ -189,7 +192,7 @@ public class GroupMgr {
             // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
             if (createTestCollection(printAndThrowAllException)) {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
-                return testCatalogSync(printAndThrowAllException);
+                return checkCatalogSync(printAndThrowAllException);
             }
             else {
                 return false;
@@ -198,7 +201,8 @@ public class GroupMgr {
         return ret;
     }
 
-    private boolean testCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
+    private boolean checkCatalogSync(boolean printAndThrowAllException)
+            throws ReliabilityException {
         GroupWrapper catagroup = GroupMgr.getInstance().getGroupByName("SYSCatalogGroup");
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
@@ -216,6 +220,10 @@ public class GroupMgr {
                 long count = cl.getCount(
                         "{Name:'" + SdbTestBase.csName + ".clForTestBusiness_reliability'}");
                 if (count == 0) {
+                    if (printAndThrowAllException) {
+                        System.out.println(
+                                "Check business:failed to query test collection(clForTestBusiness_reliability) on SYSCatalogGroup:Can not find clForTestBusiness_reliability");
+                    }
                     ret = false;
                 }
             }
@@ -354,7 +362,7 @@ public class GroupMgr {
             // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
             if (createTestCollection(printAndThrowAllException)) {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
-                return testCatalogSync(printAndThrowAllException);
+                return checkCatalogSync(printAndThrowAllException);
             }
         }
         return ret;
@@ -436,7 +444,7 @@ public class GroupMgr {
             // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
             if (createTestCollection(printAndThrowAllException)) {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
-                return testCatalogSync(printAndThrowAllException);
+                return checkCatalogSync(printAndThrowAllException);
             }
         }
         return ret;
@@ -491,6 +499,12 @@ public class GroupMgr {
             }
         }
         return checkRet;
+    }
+
+    public void close() {
+        if (sdb != null) {
+            sdb.disconnect();
+        }
     }
 
 }
