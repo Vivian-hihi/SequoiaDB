@@ -16,6 +16,9 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 
 public class CommLib {
+
+    private static long fillupMethodBase = 0;
+
     /**
      * Judge the mode
      * 
@@ -741,5 +744,67 @@ public class CommLib {
             }
         }
         return null;
+    }
+
+    /**
+     * 向指定集合持续填充指定大小的记录，发生-11错误后返回,使用 cl.delete("{deleteFlag:1}")删除这些填充的记录
+     * 例子：切分时cata组主节点所在服务器磁盘耗尽: 1、磁盘满 ;2、fillUpCL（SYSCAT.SYSCOLLECTIONS,256）;
+     * 3、切分和fillUpCL（SYSCAT.SYSCOLLECTIONS,128）并发;4、磁盘恢复，执行cl.delete(
+     * "{deleteFlag:1}");5、结果检验. 步骤2是为了让步骤3的fillUpCL快速返回，以达到SYSCL无法写入记录与切分并发的目的
+     * 
+     * @param cl
+     *            SYSCOLLECTIONS，SYSCOLLECTIONSPACES，SYSDOMAINS（不支持SYSNODES）
+     * @param recordSizeByte
+     *            插入单条记录的大小(1024*1024Byte,512*1024Byte,1024Byte,512Byte,256Byte,
+     *            128Byte)
+     * 
+     */
+    public static void fillUpCL(DBCollection cl, int recordSizeByte) {
+        if (recordSizeByte <= 1024 * 1024) {
+            _fillUpCL(cl, 1024 * 1024);
+        }
+        if (recordSizeByte <= 512 * 1024) {
+            _fillUpCL(cl, 512 * 1024);
+        }
+        if (recordSizeByte <= 1024) {
+            _fillUpCL(cl, 1024);
+        }
+        if (recordSizeByte <= 512) {
+            _fillUpCL(cl, 512);
+        }
+        if (recordSizeByte <= 256) {
+            _fillUpCL(cl, 256);
+        }
+        _fillUpCL(cl, recordSizeByte);
+        System.out.println("fillUpCL " + cl.getName() + " complete,sizeByte:" + recordSizeByte);
+    }
+
+    private static void _fillUpCL(DBCollection cl, int size) {
+        String padStr = getString(size);
+        int i = 0;
+        try {
+            while (true) {
+                cl.insert("{Name:'autoName_" + fillupMethodBase + "_" + i + "',pad:'" + padStr + i
+                        + "',deleteFlag:1}");
+                i++;
+            }
+        }
+        catch (BaseException e) {
+            if (e.getErrorCode() != -11) {
+                throw e;
+            }
+        }
+        finally {
+            fillupMethodBase++;
+        }
+
+    }
+
+    public static String getString(int length) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < length / 16; i++) {
+            sb.append("SeedSeedSeedSeed");
+        }
+        return sb.toString();
     }
 }
