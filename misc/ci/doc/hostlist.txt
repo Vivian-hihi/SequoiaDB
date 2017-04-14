@@ -1,4 +1,3 @@
-
 #jenkins master
 192.168.30.185 jenkins-master
 
@@ -48,7 +47,6 @@
 192.168.30.57 ci-test-pm2
 192.168.30.58 ci-test-pm3
 
-
 #null
 192.168.30.104 ci-test-rhel3
 
@@ -71,8 +69,11 @@
 #pg compile
 192.168.28.139 ci-cmpl-ppc3
 
-#doc compile
+#trunk doc compile
 192.168.10.200 ci-cmpl-doc
+
+#branch2.6/1.12 doc compile
+192.168.20.240 ci-test-ubun1
 
 #branch1.12 ubuntu test
 192.168.30.108 ci-test-ubun2
