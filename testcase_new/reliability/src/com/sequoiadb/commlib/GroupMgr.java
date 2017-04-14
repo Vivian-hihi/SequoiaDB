@@ -151,7 +151,8 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusiness() throws ReliabilityException {
+    //TODO:可被替代，屏蔽
+    private boolean checkBusiness() throws ReliabilityException {
         return checkBusiness(true);
     }
 
@@ -163,7 +164,8 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusiness(boolean printAndThrowAllException) throws ReliabilityException {
+    //TODO:可被替代，屏蔽
+    private boolean checkBusiness(boolean printAndThrowAllException) throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
             if (!entry.getKey().equals("SYSCoord")) {
@@ -192,7 +194,7 @@ public class GroupMgr {
             // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
             if (createTestCollection(printAndThrowAllException)) {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
-                return checkCatalogSync(printAndThrowAllException);
+                return testCatalogSync(printAndThrowAllException);
             }
             else {
                 return false;
@@ -201,8 +203,7 @@ public class GroupMgr {
         return ret;
     }
 
-    private boolean checkCatalogSync(boolean printAndThrowAllException)
-            throws ReliabilityException {
+    private boolean testCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
         GroupWrapper catagroup = GroupMgr.getInstance().getGroupByName("SYSCatalogGroup");
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
@@ -319,7 +320,8 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusinessWithLSN() throws ReliabilityException {
+    //TODO:可被替代，屏蔽
+    private boolean checkBusinessWithLSN() throws ReliabilityException {
         return checkBusinessWithLSN(true);
     }
 
@@ -331,7 +333,8 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusinessWithLSN(boolean printAndThrowAllException)
+    //TODO:可被替代，屏蔽
+    private boolean checkBusinessWithLSN(boolean printAndThrowAllException)
             throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
@@ -362,7 +365,7 @@ public class GroupMgr {
             // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
             if (createTestCollection(printAndThrowAllException)) {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
-                return checkCatalogSync(printAndThrowAllException);
+                return testCatalogSync(printAndThrowAllException);
             }
         }
         return ret;
@@ -401,7 +404,8 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    public boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
+    //可被替代，屏蔽
+    private boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
         return checkBusinessWithLSNAndDisk(true);
     }
 
@@ -413,6 +417,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
+    //TODO:可被替代，屏蔽
     public boolean checkBusinessWithLSNAndDisk(boolean printAndThrowAllException)
             throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
@@ -444,7 +449,7 @@ public class GroupMgr {
             // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
             if (createTestCollection(printAndThrowAllException)) {
                 // 检查所有编目节点是否可以查询到建立的测试集合（检测所有编目节点是否Alive）
-                return checkCatalogSync(printAndThrowAllException);
+                return testCatalogSync(printAndThrowAllException);
             }
         }
         return ret;
