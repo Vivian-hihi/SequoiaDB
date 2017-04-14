@@ -44,6 +44,14 @@ using namespace bson ;
 namespace engine
 {
 
+   /*
+      Common define
+   */
+   #define COORD_SUBCL_NAME_DFT_LEN          ( 40 )
+
+   /*
+      Common functions
+   */
    INT32    coordInitCataPtrFromObj( const BSONObj &obj,
                                      CoordCataInfoPtr &cataPtr ) ;
 

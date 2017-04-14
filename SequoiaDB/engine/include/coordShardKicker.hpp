@@ -90,6 +90,11 @@ namespace engine
                                 _pmdEDUCB *cb,
                                 const BSONObj &matcher = BSONObj() ) ;
 
+      INT32    checkShardingKey( const BSONObj &updator,
+                                 BOOLEAN &hasInclude,
+                                 _pmdEDUCB *cb,
+                                 const BSONObj &matcher = BSONObj() ) ;
+
    protected:
       BOOLEAN     _isUpdateReplace( const BSONObj &updator ) ;
       UINT32      _addKeys( const BSONObj &objKey ) ;
@@ -104,6 +109,15 @@ namespace engine
                                     BSONObj &newUpdator,
                                     BOOLEAN &hasShardingKey,
                                     _pmdEDUCB *cb ) ;
+
+      INT32       _checkShardingKey( const CoordCataInfoPtr &cataInfo,
+                                     const BSONObj &updator,
+                                     BOOLEAN &hasInclude ) ;
+
+      INT32       _checkShardingKey( const string &collectionName,
+                                     const BSONObj &updator, 
+                                     BOOLEAN &hasInclude,
+                                     _pmdEDUCB *cb ) ;
 
    private:
       set< UINT32 >              _skSiteIDs ;

@@ -16,7 +16,7 @@
 
    Source File Name = coordOperator.cpp
 
-   Descriptive Name = Runtime Coord Operator
+   Descriptive Name = Coord Operator
 
    When/how to use: this program may be used on binary and text-formatted
    versions of runtime component. This file contains code logic for
@@ -101,6 +101,11 @@ namespace engine
 
    _coordOperator::~_coordOperator()
    {
+   }
+
+   INT64 _coordOperator::getTimeout() const
+   {
+      return _groupSession.getTimeout() ;
    }
 
    BOOLEAN _coordOperator::isReadOnly() const
@@ -323,14 +328,28 @@ namespace engine
       }
 
       // construct msg
-      rc = _prepareCLOp( cataSel, inMsg, options, cb, result ) ;
+      if ( cataSel.getCataPtr()->isMainCL() )
+      {
+         rc = _prepareMainCLOp( cataSel, inMsg, options, cb, result ) ;
+      }
+      else
+      {
+         rc = _prepareCLOp( cataSel, inMsg, options, cb, result ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Prepare collection operation failed, "
                    "rc: %d", rc ) ;
 
       // do
       rc = doOnGroups( inMsg, options, cb, result ) ;
 
-      _doneCLOp( cataSel, inMsg, options, cb, result ) ;
+      if ( cataSel.getCataPtr()->isMainCL() )
+      {
+         _doneMainCLOp( cataSel, inMsg, options, cb, result ) ;
+      }
+      else
+      {
+         _doneCLOp( cataSel, inMsg, options, cb, result ) ;
+      }
 
       PD_RC_CHECK( rc, PDERROR, "Do command[%d] on groups failed, rc: %d",
                    inMsg.opCode(), rc ) ;
@@ -425,6 +444,23 @@ namespace engine
                                    coordSendOptions &options,
                                    pmdEDUCB *cb,
                                    coordProcessResult &result )
+   {
+   }
+
+   INT32 _coordOperator::_prepareMainCLOp( coordCataSel &cataSel,
+                                           coordSendMsgIn &inMsg,
+                                           coordSendOptions &options,
+                                           pmdEDUCB *cb,
+                                           coordProcessResult &result )
+   {
+      return SDB_OK ;
+   }
+
+   void _coordOperator::_doneMainCLOp( coordCataSel &cataSel,
+                                       coordSendMsgIn &inMsg,
+                                       coordSendOptions &options,
+                                       pmdEDUCB *cb,
+                                       coordProcessResult &result )
    {
    }
 

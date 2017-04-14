@@ -1237,7 +1237,8 @@ namespace engine
 
       rc = msgBuildQueryCatalogReqMsg ( &pBuffer, &bufferSize,
                                         0, 0, 0, -1, cb->getTID(),
-                                        &obj, NULL, NULL, NULL ) ;
+                                        &obj, NULL, NULL, NULL,
+                                        cb ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Build query catalog request failed, rc: %d",
@@ -1286,7 +1287,7 @@ namespace engine
    done:
       if ( pBuffer )
       {
-         SDB_OSS_FREE( pBuffer ) ;
+         cb->releaseBuff( pBuffer ) ;
          bufferSize = 0 ;
       }
       return rc ;

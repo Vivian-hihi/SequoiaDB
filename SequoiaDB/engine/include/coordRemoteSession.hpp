@@ -297,6 +297,8 @@ namespace engine
          _coordGroupSession() ;
          ~_coordGroupSession() ;
 
+         INT64             getTimeout() const ;
+
          /*
             timeout : 0 , will use the session's timeout attribute
                       otherwise, use the specified timeout value
@@ -344,6 +346,8 @@ namespace engine
          coordRemoteHandlerBase        _baseHandle ;
 
          IGroupSessionHandler          *_pGroupHandle ;
+
+         INT64                         _timeout ;
 
    } ;
    typedef _coordGroupSession coordGroupSession ;

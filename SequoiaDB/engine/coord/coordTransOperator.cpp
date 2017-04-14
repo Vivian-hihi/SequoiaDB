@@ -16,7 +16,7 @@
 
    Source File Name = coordTransOperator.cpp
 
-   Descriptive Name = Runtime Coord Operator
+   Descriptive Name = Coord Operator
 
    When/how to use: this program may be used on binary and text-formatted
    versions of runtime component. This file contains code logic for

@@ -56,12 +56,16 @@ namespace engine
          _coordInsertOperator() ;
          virtual ~_coordInsertOperator() ;
 
-         virtual INT32 execute( MsgHeader *pMsg,
-                                pmdEDUCB *cb,
-                                INT64 &contextID,
-                                rtnContextBuf *buf ) ;
+         virtual INT32  execute( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 INT64 &contextID,
+                                 rtnContextBuf *buf ) ;
 
          virtual BOOLEAN      isReadOnly() const ;
+
+         UINT32         getInsertedNum() const ;
+         UINT32         getIgnoredNum() const ;
+         void           clearStat() ;
 
       private:
          INT32 shardDataByGroup( CoordCataInfoPtr &cataInfo,
@@ -114,6 +118,18 @@ namespace engine
                                                pmdEDUCB *cb,
                                                coordProcessResult &result ) ;
 
+         virtual INT32              _prepareMainCLOp( coordCataSel &cataSel,
+                                                      coordSendMsgIn &inMsg,
+                                                      coordSendOptions &options,
+                                                      pmdEDUCB *cb,
+                                                      coordProcessResult &result ) ;
+
+         virtual void               _doneMainCLOp( coordCataSel &cataSel,
+                                                   coordSendMsgIn &inMsg,
+                                                   coordSendOptions &options,
+                                                   pmdEDUCB *cb,
+                                                   coordProcessResult &result ) ;
+
          virtual void               _prepareForTrans( pmdEDUCB *cb,
                                                       MsgHeader *pMsg ) ;
 
@@ -121,31 +137,6 @@ namespace engine
                                                   MsgOpReply *pReply,
                                                   pmdEDUCB *cb,
                                                   coordSendMsgIn &inMsg ) ;
-
-      private:
-         INT32    _prepareMainCLOp( coordCataSel &cataSel,
-                                    coordSendMsgIn &inMsg,
-                                    coordSendOptions &options,
-                                    pmdEDUCB *cb,
-                                    coordProcessResult &result ) ;
-
-         void    _doneMainCLOp( coordCataSel &cataSel,
-                                coordSendMsgIn &inMsg,
-                                coordSendOptions &options,
-                                pmdEDUCB *cb,
-                                coordProcessResult &result ) ;
-
-         INT32    _prepareUnMainCLOp( coordCataSel &cataSel,
-                                      coordSendMsgIn &inMsg,
-                                      coordSendOptions &options,
-                                      pmdEDUCB *cb,
-                                      coordProcessResult &result ) ;
-
-         void    _doneUnMainCLOp( coordCataSel &cataSel,
-                                  coordSendMsgIn &inMsg,
-                                  coordSendOptions &options,
-                                  pmdEDUCB *cb,
-                                  coordProcessResult &result ) ;
 
       private:
          UINT32         _insertedNum ;

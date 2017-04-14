@@ -218,7 +218,7 @@ namespace engine
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,"Failed to check the record is include sharding-key,"
+         PD_LOG ( PDERROR,"Failed to kick sharding key from the record,"
                   "occured unexpected error: %s", e.what() ) ;
          goto error;
       }
@@ -322,6 +322,217 @@ namespace engine
       }
 
       rc = _kickShardingKey( cataPtr, updator, newUpdator, hasShardingKey ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordShardKicker::checkShardingKey( const BSONObj &updator,
+                                              BOOLEAN &hasInclude,
+                                              _pmdEDUCB *cb,
+                                              const BSONObj &matcher )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_cataPtr.get() || !_cataPtr->isSharded() )
+      {
+         goto done ;
+      }
+
+      /// clear
+      _skSiteIDs.clear() ;
+      _setKeys.clear() ;
+
+      rc = _checkShardingKey( _cataPtr, updator, hasInclude ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Check sharding key failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      if ( hasInclude )
+      {
+         goto done ;
+      }
+
+      /// When is main collection, need to check all sub-collection's
+      /// sharding key
+      if ( _cataPtr->isMainCL() )
+      {
+         vector< string > subCLLst ;
+         vector< string >::iterator iterCL ;
+
+         rc = _cataPtr->getMatchSubCLs( matcher, subCLLst ) ;
+         if ( SDB_CAT_NO_MATCH_CATALOG == rc )
+         {
+            rc = SDB_OK ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Get matched sub collections failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+
+         iterCL = subCLLst.begin() ;
+         while( iterCL != subCLLst.end() )
+         {
+            rc = _checkShardingKey( *iterCL, updator, hasInclude, cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Check sharding key for sub-collection[%s] "
+                       "failed, rc: %d", (*iterCL).c_str(), rc ) ;
+               goto error ;
+            }
+            if ( hasInclude )
+            {
+               goto done ;
+            }
+            ++iterCL ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordShardKicker::_checkShardingKey( const CoordCataInfoPtr &cataInfo,
+                                               const BSONObj &updator,
+                                               BOOLEAN &hasInclude )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 skSiteID = cataInfo->getShardingKeySiteID() ;
+
+      if ( skSiteID > 0 )
+      {
+         /// if is the same sharding key
+         if ( _skSiteIDs.count( skSiteID ) > 0 )
+         {
+            goto done ;
+         }
+         _skSiteIDs.insert( skSiteID ) ;
+      }
+
+      try
+      {
+         BSONObjBuilder bobNewUpdator( updator.objsize() ) ;
+         BSONObj boShardingKey ;
+         BSONObj subObj ;
+
+         BOOLEAN isReplace = _isUpdateReplace( updator ) ;
+         cataInfo->getShardingKey( boShardingKey ) ;
+
+         BSONObjIterator iter( updator ) ;
+         while ( iter.more() )
+         {
+            BSONElement beTmp = iter.next() ;
+            if ( beTmp.type() != Object )
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG( PDERROR, "updator's element must be an Object type:"
+                       "updator=%s", updator.toString().c_str() ) ;
+               goto error ;
+            }
+
+            subObj = beTmp.embeddedObject() ;
+            //if replace. leave the keep
+            if ( isReplace &&
+                 0 == ossStrcmp( beTmp.fieldName(),
+                                 CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP ) )
+            {
+               _addKeys( subObj ) ;
+               continue ;
+            }
+
+            BSONObjIterator iterField( subObj ) ;
+            while( iterField.more() )
+            {
+               BSONElement beField = iterField.next() ;
+               BSONObjIterator iterKey( boShardingKey ) ;
+               BOOLEAN isKey = FALSE ;
+               while( iterKey.more() )
+               {
+                  BSONElement beKey = iterKey.next() ;
+                  const CHAR *pKey = beKey.fieldName() ;
+                  const CHAR *pField = beField.fieldName() ;
+                  while( *pKey == *pField && *pKey != '\0' )
+                  {
+                     ++pKey ;
+                     ++pField ;
+                  }
+
+                  // shardingkey_fieldName == updator_fieldName
+                  /// key: { a:1 }  field : { a:1 } or { "a.b":1 }
+                  /// key: { "a.b":1 } field: { a:1 } or { "a.b":1 } or
+                  ///                         { "a.b.c":1 }
+                  if ( *pKey == *pField ||
+                       ( '\0' == *pKey && '.' == *pField ) ||
+                       ( '.' == *pKey && '\0' == *pField ) )
+                  {
+                     isKey = TRUE ;
+                     break ;
+                  }
+               }
+               if ( isKey )
+               {
+                  hasInclude = TRUE ;
+                  goto done ;
+               }
+            } // while( iterField.more() )
+         } // while ( iter.more() )
+
+         if ( isReplace && _addKeys( boShardingKey ) > 0 )
+         {
+            hasInclude = TRUE ;
+            goto done ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG ( PDERROR,"Failed to check the record is include sharding-key,"
+                  "occured unexpected error: %s", e.what() ) ;
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _coordShardKicker::_checkShardingKey( const string &collectionName,
+                                               const BSONObj &updator,
+                                               BOOLEAN &hasInclude,
+                                               _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      CoordCataInfoPtr cataPtr ;
+
+      rc = _pResource->getOrUpdateCataInfo( collectionName.c_str(),
+                                            cataPtr,
+                                            cb ) ;
+      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+      {
+         /// When the main-collection is old, ignored
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
+                 "rc: %d", collectionName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = _checkShardingKey( cataPtr, updator, hasInclude ) ;
       if ( rc )
       {
          goto error ;

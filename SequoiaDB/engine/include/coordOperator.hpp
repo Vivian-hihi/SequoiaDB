@@ -262,6 +262,8 @@ namespace engine
                                     _pmdEDUCB *cb,
                                     INT64 timeout = 0 ) ;
 
+         INT64                getTimeout() const ;
+
       public:
          virtual BOOLEAN      isReadOnly() const ;
          virtual BOOLEAN      needRollback() const ;
@@ -309,6 +311,18 @@ namespace engine
                                                coordSendOptions &options,
                                                pmdEDUCB *cb,
                                                coordProcessResult &result ) ;
+
+         virtual INT32              _prepareMainCLOp( coordCataSel &cataSel,
+                                                      coordSendMsgIn &inMsg,
+                                                      coordSendOptions &options,
+                                                      pmdEDUCB *cb,
+                                                      coordProcessResult &result ) ;
+
+         virtual void               _doneMainCLOp( coordCataSel &cataSel,
+                                                   coordSendMsgIn &inMsg,
+                                                   coordSendOptions &options,
+                                                   pmdEDUCB *cb,
+                                                   coordProcessResult &result ) ;
 
       protected:
          /*

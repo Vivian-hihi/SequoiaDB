@@ -1043,6 +1043,7 @@ namespace engine
       _pPropSite  = NULL ;
       _pSession   = NULL ;
       _pGroupHandle = NULL ;
+      _timeout    = 0 ;
    }
 
    _coordGroupSession::~_coordGroupSession()
@@ -1057,6 +1058,11 @@ namespace engine
       _pGroupHandle = NULL ;
    }
 
+   INT64 _coordGroupSession::getTimeout() const
+   {
+      return _timeout ;
+   }
+
    INT32 _coordGroupSession::init( coordResource *pResource,
                                    _pmdEDUCB *cb,
                                    INT64 timeout,
@@ -1064,6 +1070,7 @@ namespace engine
                                    IGroupSessionHandler *pGroupHandle )
    {
       INT32 rc = SDB_OK ;
+      _timeout = timeout ;
 
       if ( !pResource || !cb )
       {
@@ -1098,15 +1105,15 @@ namespace engine
       _groupSel.init( pResource, _pPropSite ) ;
       _groupCtrl.init( pResource, _pPropSite, &_groupSel ) ;
 
-      if ( 0 == timeout )
+      if ( 0 == _timeout )
       {
-         timeout = _pPropSite->getOprTimeout() ;
+         _timeout = _pPropSite->getOprTimeout() ;
       }
       if ( !pHandle )
       {
          pHandle = &_baseHandle ;
       }
-      _pSession = _pSite->addSession( timeout, pHandle ) ;
+      _pSession = _pSite->addSession( _timeout, pHandle ) ;
       if ( !_pSession )
       {
          rc = SDB_SYS ;

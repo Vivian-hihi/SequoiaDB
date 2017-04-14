@@ -16,7 +16,7 @@
 
    Source File Name = coordInsertOperator.cpp
 
-   Descriptive Name = Runtime Coord Insert
+   Descriptive Name = Coord Insert
 
    When/how to use: this program may be used on binary and text-formatted
    versions of runtime component. This file contains code logic for
@@ -63,6 +63,22 @@ namespace engine
    BOOLEAN _coordInsertOperator::isReadOnly() const
    {
       return FALSE ;
+   }
+
+   UINT32 _coordInsertOperator::getInsertedNum() const
+   {
+      return _insertedNum ;
+   }
+
+   UINT32 _coordInsertOperator::getIgnoredNum() const
+   {
+      return _ignoredNum ;
+   }
+
+   void _coordInsertOperator::clearStat()
+   {
+      _insertedNum = 0 ;
+      _ignoredNum = 0 ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_INSERTOPR_EXE, "_coordInsertOperator::execute" )
@@ -178,40 +194,6 @@ namespace engine
                                              coordProcessResult &result )
    {
       INT32 rc = SDB_OK ;
-      if ( cataSel.getCataPtr()->isMainCL() )
-      {
-         rc = _prepareMainCLOp( cataSel, inMsg, options, cb, result ) ;
-      }
-      else
-      {
-         rc = _prepareUnMainCLOp( cataSel, inMsg, options, cb, result ) ;
-      }
-      return rc ;
-   }
-
-   void _coordInsertOperator::_doneCLOp( coordCataSel &cataSel,
-                                         coordSendMsgIn &inMsg,
-                                         coordSendOptions &options,
-                                         pmdEDUCB *cb,
-                                         coordProcessResult &result )
-   {
-      if ( cataSel.getCataPtr()->isMainCL() )
-      {
-         _doneMainCLOp( cataSel, inMsg, options, cb, result ) ;
-      }
-      else
-      {
-         _doneUnMainCLOp( cataSel, inMsg, options, cb, result ) ;
-      }
-   }
-
-   INT32 _coordInsertOperator::_prepareUnMainCLOp( coordCataSel &cataSel,
-                                                   coordSendMsgIn &inMsg,
-                                                   coordSendOptions &options,
-                                                   pmdEDUCB *cb,
-                                                   coordProcessResult &result )
-   {
-      INT32 rc = SDB_OK ;
       MsgOpInsert *pInsertMsg = ( MsgOpInsert* )inMsg.msg() ;
       netIOV fixed( ( CHAR*)inMsg.msg() + sizeof( MsgHeader ),
                     ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
@@ -285,11 +267,11 @@ namespace engine
       goto done ;
    }
 
-   void _coordInsertOperator::_doneUnMainCLOp( coordCataSel &cataSel,
-                                               coordSendMsgIn &inMsg,
-                                               coordSendOptions &options,
-                                               pmdEDUCB *cb,
-                                               coordProcessResult &result )
+   void _coordInsertOperator::_doneCLOp( coordCataSel &cataSel,
+                                         coordSendMsgIn &inMsg,
+                                         coordSendOptions &options,
+                                         pmdEDUCB *cb,
+                                         coordProcessResult &result )
    {
       // remove the datas by succeed group
       if ( inMsg._datas.size() > 0 )
@@ -551,6 +533,7 @@ namespace engine
    done:
       return rc ;
    error:
+      _vecObject.clear() ;
       goto done ;
    }
 
