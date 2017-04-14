@@ -139,7 +139,7 @@ public class KillNode extends Fault {
     public static FaultMakeTask getFaultMakeTask(String hostName, String svcName, int maxDelay) {
         FaultMakeTask task = null;
         KillNode kn = new KillNode(hostName, svcName);
-        task = new FaultMakeTask(kn, maxDelay, 3, 100);
+        task = new FaultMakeTask(kn, maxDelay, 3, 1000);//TODO:1000 checkTimes jira:2383
         return task;
     }
 
