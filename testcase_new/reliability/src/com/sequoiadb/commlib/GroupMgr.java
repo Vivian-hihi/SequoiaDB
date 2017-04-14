@@ -146,14 +146,15 @@ public class GroupMgr {
     }
 
     /**
-     * 检测集群状态（组内是否有主，各节点可连接，ServiceStatus），失败则打印集群信息，并返回false
+     * 持续检测集群当前的状态120秒（组内是否有主，各节点可连接，ServiceStatus），若在timeOutSecond时间内检测仍不通过，
+     * 则会打印当前集群状态信息（也可能会抛出异常，如-104，网络错误等等），并返回false
+     * Assert.assertEquals(checkBusiness(), true, "Message");
      * 
      * @return
      * @throws ReliabilityException
      */
-    //TODO:可被替代，屏蔽
-    private boolean checkBusiness() throws ReliabilityException {
-        return checkBusiness(true);
+    public boolean checkBusiness() throws ReliabilityException {
+        return checkBusiness(120);
     }
 
     /**
@@ -164,7 +165,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    //TODO:可被替代，屏蔽
+    // TODO:可被替代，屏蔽
     private boolean checkBusiness(boolean printAndThrowAllException) throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
         for (Entry<String, GroupWrapper> entry : name2group.entrySet()) {
@@ -320,7 +321,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    //TODO:可被替代，屏蔽
+    // TODO:可被替代，屏蔽
     private boolean checkBusinessWithLSN() throws ReliabilityException {
         return checkBusinessWithLSN(true);
     }
@@ -333,7 +334,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    //TODO:可被替代，屏蔽
+    // TODO:可被替代，屏蔽
     private boolean checkBusinessWithLSN(boolean printAndThrowAllException)
             throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
@@ -404,7 +405,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    //可被替代，屏蔽
+    // 可被替代，屏蔽
     private boolean checkBusinessWithLSNAndDisk() throws ReliabilityException {
         return checkBusinessWithLSNAndDisk(true);
     }
@@ -417,7 +418,7 @@ public class GroupMgr {
      * @return
      * @throws ReliabilityException
      */
-    //TODO:可被替代，屏蔽
+    // TODO:可被替代，屏蔽
     public boolean checkBusinessWithLSNAndDisk(boolean printAndThrowAllException)
             throws ReliabilityException {
         ArrayList<GroupCheckResult> results = new ArrayList<GroupCheckResult>();
