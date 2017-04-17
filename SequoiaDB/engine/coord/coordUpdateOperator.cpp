@@ -329,7 +329,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      _mthMatchTree matcher ;
+      _mthMatchTree matcherTree ;
       mthModifier modifier ;
       CHAR *pBuff = NULL ;
       INT32 buffSize = 0 ;
@@ -342,11 +342,11 @@ namespace engine
 
          coordInsertOperator insertOpr ;
 
-         rc = matcher.loadPattern ( matcher ) ;
+         rc = matcherTree.loadPattern ( matcher ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to load matcher[%s], rc: %d",
                        matcher.toString().c_str(), rc ) ;
 
-         source = matcher.getEqualityQueryObject() ;
+         source = matcherTree.getEqualityQueryObject() ;
 
          rc = modifier.loadPattern( updator ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to load updator[%s], rc: %d",
@@ -398,6 +398,12 @@ namespace engine
             goto error ;
          }
          insertNum += insertOpr.getInsertedNum() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception when upsert: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
    done:
