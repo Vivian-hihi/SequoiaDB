@@ -94,8 +94,7 @@ public class RestartNode2736 extends SdbTestBase {
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
             NodeWrapper destSlave = destGroup.getSlave();
 
-            System.out
-                    .println("restart Node:" + destSlave.hostName() + ":" + destSlave.svcName());
+            System.out.println("restart Node:" + destSlave.hostName() + ":" + destSlave.svcName());
 
             // 建立并行任务
             FaultMakeTask faultTask = NodeRestart.getFaultMakeTask(destSlave, 1, 10, 10);
@@ -158,6 +157,7 @@ public class RestartNode2736 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);
