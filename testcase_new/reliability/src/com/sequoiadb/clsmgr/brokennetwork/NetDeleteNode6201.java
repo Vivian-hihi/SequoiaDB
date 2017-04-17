@@ -34,7 +34,7 @@ import com.sequoiadb.task.TaskMgr;
 public class NetDeleteNode6201 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private int coordPort = 26666;
-    private String coordDbPath = null;
+    private String coordDbPath = SdbTestBase.reservedDir;
     private String connectUrl;
     private boolean deleteFlag = false;
 
@@ -51,8 +51,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness fail");
             }
-            
-            coordDbPath = SdbTestBase.reservedDir;
+
         }
         catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
@@ -90,27 +89,18 @@ public class NetDeleteNode6201 extends SdbTestBase {
             // TaskMgr检查线程异常
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的集群环境恢复
+            // 最长等待2分钟的集群环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             if (deleteFlag) {
                 Assert.assertEquals(groupMgr.checkResidu(), true);
             }
             else {
-                try {
-                    coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
-                            coordDbPath + "/" + coordPort, new BasicBSONObject());
-                    coordNode.start();
-                    coordNode.connect().disconnect();
-                    coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
-                } catch (BaseException e) {
-                    // if cata master has not been changed, -147 occurs 
-                    // which is because the new node is being dropped
-                    // -147 SDB_LOCK_FAILED
-                    if (e.getErrorCode() != -147) {
-                        throw e;
-                    }
-                }
+                coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
+                        coordDbPath + "/" + coordPort, new BasicBSONObject());
+                coordNode.start();
+                coordNode.connect().disconnect();
+                coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
             }
         }
         catch (ReliabilityException e) {
