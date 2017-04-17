@@ -111,7 +111,7 @@ public class KillNodeSplit2769 extends SdbTestBase {
             // 再次插入数据
             commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 5000,5100);
+            insertData(cl, 5000, 5100);
 
             // 范围切分覆盖
             // Assert.assertEquals(destGroup.checkInspect(60), true);
@@ -120,7 +120,7 @@ public class KillNodeSplit2769 extends SdbTestBase {
             // 源和目标数据量比对
             int bound = Utils.getBound(commSdb, csName + "." + clName, srcGroupName, destGroupName);
             long destCount = checkGroupData(commSdb, destGroupName);
-            Assert.assertEquals(destCount, 5100- bound);
+            Assert.assertEquals(destCount, 5100 - bound);
             long srcCount = checkGroupData(commSdb, srcGroupName);
             Assert.assertEquals(srcCount, bound);
             Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:5100}}"), 5100);
@@ -159,6 +159,7 @@ public class KillNodeSplit2769 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);

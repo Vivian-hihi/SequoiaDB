@@ -110,14 +110,14 @@ public class KillNodeSplit2764 extends SdbTestBase {
             // 再次插入数据
             commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 5000,5100);
+            insertData(cl, 5000, 5100);
 
             Assert.assertEquals(destGroup.checkInspect(60), true);
             Assert.assertEquals(srcGroup.checkInspect(60), true);
 
             // 源和目标数据量比对
             checkGroupData(commSdb, destGroupName);
-            checkGroupData(commSdb, srcGroupName);           
+            checkGroupData(commSdb, srcGroupName);
             Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:5100}}"), 5100);
 
             clearFlag = true;
@@ -154,6 +154,7 @@ public class KillNodeSplit2764 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);
