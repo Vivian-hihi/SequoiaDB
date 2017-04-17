@@ -81,7 +81,8 @@ public class NodeRestartSubcl2429 extends SdbTestBase {
             GroupWrapper cataGroup = groupMgr.getGroupByName(Utils.CATA_RG_NAME);
             GroupWrapper subCLGroup = groupMgr.getGroupByName(subClGroupName);
             NodeWrapper cataMaster = cataGroup.getMaster();
-            System.out.println("Restart Node:" + cataMaster.hostName() + ":" + cataMaster.svcName());
+            System.out
+                    .println("Restart Node:" + cataMaster.hostName() + ":" + cataMaster.svcName());
 
             // 建立并行任务
             FaultMakeTask faultTask = NodeRestart.getFaultMakeTask(cataMaster, 0, 10);
@@ -117,6 +118,7 @@ public class NodeRestartSubcl2429 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(mainClName);
