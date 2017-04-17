@@ -27,7 +27,7 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName:SEQDB-2692 对hash分区组进行范围切分，切分时源组备节点所在服务器磁盘耗尽
+ * @FileName:SEQDB-2692 对hash分区组进行百分比切分，切分时源组备节点所在服务器磁盘耗尽
  * @author huangqiaohui
  * @version 1.00
  *
@@ -100,8 +100,8 @@ public class DiskFullSplit2692 extends SdbTestBase {
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
 
             // 建立并行任务
-            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(fillUpDiskHost, SdbTestBase.reservedDir,
-                    0, 10, 97);
+            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(fillUpDiskHost,
+                    SdbTestBase.reservedDir, 0, 10, 97);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split());
             mgr.execute();
@@ -158,6 +158,7 @@ public class DiskFullSplit2692 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 commSdb.dropCollectionSpace(csName);
             }

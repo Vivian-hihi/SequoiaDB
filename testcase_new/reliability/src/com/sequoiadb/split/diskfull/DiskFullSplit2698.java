@@ -16,6 +16,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -44,6 +45,7 @@ public class DiskFullSplit2698 extends SdbTestBase {
     private boolean clearFlag = false;
     private String fillUpDiskHost;
     private DiskFull diskFull;
+    private boolean splitComplete = true;
 
     @BeforeClass()
     public void setUp() {
@@ -131,12 +133,17 @@ public class DiskFullSplit2698 extends SdbTestBase {
             diskFull.init();
             diskFull.make();
 
-            // 分别以每条记录1m，512K,1k,512B,256B的大小填充SYSCAT.SYSCOLLECTIONS至-11错误
-            fillUpCatalogSYSCL("pad_M", Utils.getString(1024 * 1024), cataMaster);
-            fillUpCatalogSYSCL("pad_HM", Utils.getString(512 * 1024), cataMaster);
-            fillUpCatalogSYSCL("pad_K", Utils.getString(1024), cataMaster);
-            fillUpCatalogSYSCL("pad_HK", Utils.getString(512), cataMaster);
-            fillUpCatalogSYSCL("pad_HHK", Utils.getString(256), cataMaster);
+            // // 分别以每条记录1m，512K,1k,512B,256B的大小填充SYSCAT.SYSCOLLECTIONS至-11错误
+            // fillUpCatalogSYSCL("pad_M", Utils.getString(1024 * 1024),
+            // cataMaster);
+            // fillUpCatalogSYSCL("pad_HM", Utils.getString(512 * 1024),
+            // cataMaster);
+            // fillUpCatalogSYSCL("pad_K", Utils.getString(1024), cataMaster);
+            // fillUpCatalogSYSCL("pad_HK", Utils.getString(512), cataMaster);
+            // fillUpCatalogSYSCL("pad_HHK", Utils.getString(256), cataMaster);
+            DBCollection sysCL = cataMaster.connect().getCollectionSpace("SYSCAT")
+                    .getCollection("SYSCOLLECTIONS");
+            CommLib.fillUpCL(sysCL, 256);
 
             // 启动Split的线程，及填充SYSCAT.SYSCOLLECTIONS的线程（每条记录~128字节）
             TaskMgr mgr = new TaskMgr();
@@ -151,11 +158,13 @@ public class DiskFullSplit2698 extends SdbTestBase {
             DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 5000, 6000);
 
-            Assert.assertEquals(destGroup.checkInspect(240), true);
             Assert.assertEquals(srcGroup.checkInspect(60), true);
+            if (splitComplete) {
+                Assert.assertEquals(destGroup.checkInspect(240), true);
 
-            checkGroupData(commSdb, destGroupName);
-            checkGroupData(commSdb, srcGroupName);
+                checkGroupData(commSdb, destGroupName);
+                checkGroupData(commSdb, srcGroupName);
+            }
             Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), totalCount);
             clearFlag = true;
         }
@@ -193,6 +202,7 @@ public class DiskFullSplit2698 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 commSdb.dropCollectionSpace(csName);
             }
@@ -217,15 +227,18 @@ public class DiskFullSplit2698 extends SdbTestBase {
             try {
                 NodeWrapper cataMaster = GroupMgr.getInstance().getGroupByName(Utils.CATA_RG_NAME)
                         .getMaster();
+                db = cataMaster.connect();
+                DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
                 // 分别以每条记录128字节的大小填充SYSCAT.SYSCOLLECTIONS至-11错误
-                fillUpCatalogSYSCL("pad_HHHK", Utils.getString(128), cataMaster);
+                // fillUpCatalogSYSCL("pad_HHHK", Utils.getString(128),
+                // cataMaster);
+                CommLib.fillUpCL(cl, 128);
 
                 // 使故障持续10秒
                 Thread.sleep(10000);
 
                 // 清除填充至SYSCAT.SYSCOLLECTIONS的数据
-                db = cataMaster.connect();
-                DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
+
                 cl.delete("{deleteFlag:1}");
             }
             finally {
@@ -250,7 +263,10 @@ public class DiskFullSplit2698 extends SdbTestBase {
                         (BSONObject) JSON.parse("{sk:3000}"));
             }
             catch (BaseException e) {
-                throw e;
+                if (e.getErrorCode() != -11) {
+                    throw e;
+                }
+                splitComplete = false;
             }
             finally {
                 if (sdb != null) {

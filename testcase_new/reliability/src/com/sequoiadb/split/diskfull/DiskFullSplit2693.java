@@ -100,8 +100,8 @@ public class DiskFullSplit2693 extends SdbTestBase {
             GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
 
             // 建立并行任务
-            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(fillUpDiskHost, SdbTestBase.reservedDir,
-                    0, 10, 97);
+            FaultMakeTask faultTask = DiskFull.getFaultMakeTask(fillUpDiskHost,
+                    SdbTestBase.reservedDir, 0, 10, 97);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split());
             mgr.execute();
@@ -158,6 +158,7 @@ public class DiskFullSplit2693 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 commSdb.dropCollectionSpace(csName);
             }
