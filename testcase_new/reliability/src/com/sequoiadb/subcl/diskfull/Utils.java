@@ -6,10 +6,8 @@ import org.bson.BSONObject;
 import org.bson.util.JSON;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.exception.ReliabilityException;
 
 /**
  * 
@@ -64,42 +62,6 @@ public class Utils {
         else {
             return str;
         }
-    }
-
-    // 调用GroupMgr的checkBusiness（false）检测环境，超时后打印当前环境信息,并可能抛出异常
-    public static boolean checkBusinessWithTimeout(GroupMgr mgr, int timeSecond)
-            throws ReliabilityException {
-        long timestamp = System.currentTimeMillis();
-        while (!mgr.checkBusiness(false)) {
-            if (System.currentTimeMillis() - timestamp > timeSecond * 1000) {
-                return mgr.checkBusiness();
-            }
-            try {
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-                // ignore
-            }
-        }
-        return true;
-    }
-
-    // 调用GroupMgr的checkBusinessLSN（false）检测环境，超时后打印当前环境信息,并可能抛出异常
-    public static boolean checkBusinessLSNWithTimeout(GroupMgr mgr, int timeSecond)
-            throws ReliabilityException {
-        long timestamp = System.currentTimeMillis();
-        while (!mgr.checkBusinessWithLSN(false)) {
-            if (System.currentTimeMillis() - timestamp > timeSecond * 1000) {
-                return mgr.checkBusiness();
-            }
-            try {
-                Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-                // ignore
-            }
-        }
-        return true;
     }
 
     public static String getDiffHostWithSvc(String host, Set<String> allHost) {

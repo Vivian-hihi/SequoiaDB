@@ -175,8 +175,9 @@ public class DiskFullSubcl2327 extends SdbTestBase {
     }
 
     @AfterClass
-    public void tearDown() {       
+    public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 for (String subClName : subClNames) {
                     commCS.dropCollection(subClName);
@@ -190,7 +191,7 @@ public class DiskFullSubcl2327 extends SdbTestBase {
         finally {
             if (commSdb != null) {
                 commSdb.disconnect();
-            }         
+            }
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
