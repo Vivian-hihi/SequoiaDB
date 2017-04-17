@@ -80,10 +80,10 @@ public class Sdv6665 extends SdbTestBase {
 			Commlib.checkCompressed(cl, sourceGroupName);
 			split(sourceGroupName, destGroupName);
 			Commlib.waitCreateDict(cl, destGroupName); // 等待压缩字典的建立,最多等待60分钟
-			insertDataAgain(cl, 50, strLength);
+			insertDataAgain(cl, 1000, strLength);
 			Commlib.checkCompressed(cl, destGroupName);
-			checkSplit(sdb, sourceGroupName, 100);
-			checkSplit(sdb, destGroupName, 100);
+			checkSplit(sdb, sourceGroupName, 1100);
+			checkSplit(sdb, destGroupName, 1100);
 		} catch (BaseException e) {
 			Assert.fail(e.getMessage());
 		}
@@ -112,13 +112,13 @@ public class Sdv6665 extends SdbTestBase {
 	public String insertData(DBCollection cl, int dataCount, int strLength) {
 		String strRec = getRandomString(strLength);
 		for (int i = 0; i < dataCount / 2; i++) {
-			cl.insert("{_id:" + i + ",key:'" + strRec + i + "'}");
+			cl.insert("{_id:" + i + ",key:'" + strRec  + "'}");
 		}
 
 		Commlib.waitCreateDict(cl, sourceGroupName); // 等待压缩字典的建立,最多等待60分钟
 
 		for (int i = dataCount / 2; i < dataCount; i++) {
-			cl.insert("{_id:" + i + ",key:'" + strRec + i + "'}");
+			cl.insert("{_id:" + i + ",key:'" + strRec  + "'}");
 		}
 		return strRec;
 	}
@@ -126,7 +126,7 @@ public class Sdv6665 extends SdbTestBase {
 	public String insertDataAgain(DBCollection cl, int dataCount, int strLength) {
 		String strRec = getRandomString(strLength);
 		for (int i = 1200; i < 1200+dataCount; i++) {
-			cl.insert("{_id:" + i + ",key:'" + strRec + i + "'}");
+			cl.insert("{_id:" + i + ",key:'" + strRec + "'}");
 		}
 		return strRec;
 	}
@@ -156,8 +156,8 @@ public class Sdv6665 extends SdbTestBase {
 		Sequoiadb dataDB = db.getReplicaGroup(dataGroupName).getMaster().connect();
 		splitCL = dataDB.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
 		int count = (int) splitCL.getCount();
-		int offSet = (int) (0.3 * 1200);
-		if (Math.abs(count - 600) > offSet) {
+		int offSet = (int) (0.3 * expectDataCount);
+		if (Math.abs(count - expectDataCount) > offSet) {
 			Assert.fail("the split result is wrong:" + count);
 		}
 	}
