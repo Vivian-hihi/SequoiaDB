@@ -96,7 +96,7 @@ public class KillNodeSubcl2442 extends SdbTestBase {
 
             // 建立并行任务
             FaultMakeTask faultTask = KillNode.getFaultMakeTask(subCLGroupMaster.hostName(),
-                    subCLGroupMaster.svcName(), 0, 50);
+                    subCLGroupMaster.svcName(), 0);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Aggregate());
             mgr.execute();
@@ -120,6 +120,7 @@ public class KillNodeSubcl2442 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 commCS.dropCollection(mainClName);
@@ -142,7 +143,7 @@ public class KillNodeSubcl2442 extends SdbTestBase {
         @Override
         public void exec() throws Exception {
             Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+            sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'S'}"));
             DBCursor cusor = null;
             try {
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(mainClName);

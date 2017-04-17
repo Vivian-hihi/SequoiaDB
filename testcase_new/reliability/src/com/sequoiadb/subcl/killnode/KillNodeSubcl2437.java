@@ -93,7 +93,7 @@ public class KillNodeSubcl2437 extends SdbTestBase {
 
             // 建立并行任务
             FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataSlave.hostName(),
-                    cataSlave.svcName(), 0, 100);
+                    cataSlave.svcName(), 0);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Detach());
             mgr.execute();
@@ -124,6 +124,7 @@ public class KillNodeSubcl2437 extends SdbTestBase {
     @AfterClass
     public void tearDown() {
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = commSdb.getCollectionSpace(csName);
                 for (int i = 0; i < subClName.size(); i++) {
