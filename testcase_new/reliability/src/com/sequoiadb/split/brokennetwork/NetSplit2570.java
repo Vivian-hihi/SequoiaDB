@@ -110,7 +110,7 @@ public class NetSplit2570 extends SdbTestBase {
 
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的环境恢复
+            // 最长等待2分钟的环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
@@ -147,16 +147,17 @@ public class NetSplit2570 extends SdbTestBase {
     private long checkGroupData(Sequoiadb sdb, String groupName) {
         Sequoiadb dataNode = null;
         DBCursor cursor = null;
+        long count = 0;
         try {
             dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();
             DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
-            long count = cl.getCount();
+            count = cl.getCount();
             // 组的数据量应该在clTotalCount / 2条左右（切分范围2048-4096）
             Assert.assertEquals(
                     count > clTotalCount / 2 - (clTotalCount / 2 * 0.3)
                             && count < clTotalCount / 2 + (clTotalCount / 2 * 0.3),
                     true, "destGroup data count:" + count);
-            return count;
+
         }
         catch (BaseException e) {
             e.printStackTrace();
@@ -170,13 +171,14 @@ public class NetSplit2570 extends SdbTestBase {
                 dataNode.disconnect();
             }
         }
-        return 0;
+        return count;
     }
 
     @AfterClass
     public void tearDown() {
         Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = sdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);

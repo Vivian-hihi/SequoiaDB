@@ -101,7 +101,7 @@ public class NetSplit2584 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             // 建立并行任务
-            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(brokenNetHost, 0, 10, 15);
+            FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(brokenNetHost, 0, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split());
             mgr.addTask(new Insert());
@@ -110,7 +110,7 @@ public class NetSplit2584 extends SdbTestBase {
             // TaskMgr检查线程异常
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的集群环境恢复
+            // 最长等待2分钟的集群环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
@@ -176,6 +176,7 @@ public class NetSplit2584 extends SdbTestBase {
     public void tearDown() {
         Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = sdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);

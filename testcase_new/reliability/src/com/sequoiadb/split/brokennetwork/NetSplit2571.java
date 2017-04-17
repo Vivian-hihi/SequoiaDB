@@ -108,7 +108,7 @@ public class NetSplit2571 extends SdbTestBase {
 
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的环境恢复
+            // 最长等待2分钟的环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
@@ -180,6 +180,7 @@ public class NetSplit2571 extends SdbTestBase {
     public void tearDown() {
         Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = db.getCollectionSpace(csName);
                 commCS.dropCollection(clName);

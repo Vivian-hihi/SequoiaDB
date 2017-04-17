@@ -119,7 +119,7 @@ public class NetSplit2568 extends SdbTestBase {
             // TaskMgr检查线程异常
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的集群环境恢复
+            // 最长等待2分钟的集群环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
@@ -158,12 +158,13 @@ public class NetSplit2568 extends SdbTestBase {
     private long checkGroupLob(Sequoiadb sdb, String destGroupName) {
         Sequoiadb destDataNode = null;
         DBCursor cursor = null;
+        int lobCount = 0;
         try {
             destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect();// 获得源主节点链接
             DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
 
             cursor = destCL.listLobs();
-            int lobCount = 0;
+
             while (cursor.hasNext()) {
                 cursor.getNext();
                 lobCount++;
@@ -173,7 +174,6 @@ public class NetSplit2568 extends SdbTestBase {
                     lobCount > totalCount / 2 - (totalCount / 2 * 0.3)
                             && lobCount < totalCount / 2 + (totalCount / 2 * 0.3),
                     true, "srcGroup count:" + lobCount);
-            return lobCount;
         }
         catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
@@ -186,22 +186,22 @@ public class NetSplit2568 extends SdbTestBase {
                 destDataNode.disconnect();
             }
         }
-        return 0;
+        return lobCount;
     }
 
     private long checkGroupData(Sequoiadb sdb, String groupName) {
         Sequoiadb dataNode = null;
         DBCursor cursor = null;
+        long count = 0;
         try {
             dataNode = sdb.getReplicaGroup(groupName).getMaster().connect();// 获得目标组主节点链接
             DBCollection cl = dataNode.getCollectionSpace(csName).getCollection(clName);
-            long count = cl.getCount();
+            count = cl.getCount();
             // 组的数据量应该在totalCount / 2条左右（切分范围2048-4096）
             Assert.assertEquals(
                     count > totalCount / 2 - (totalCount / 2 * 0.3)
                             && count < totalCount / 2 + (totalCount / 2 * 0.3),
                     true, "destGroup data count:" + count);
-            return count;
         }
         catch (BaseException e) {
             e.printStackTrace();
@@ -215,13 +215,14 @@ public class NetSplit2568 extends SdbTestBase {
                 dataNode.disconnect();
             }
         }
-        return 0;
+        return count;
     }
 
     @AfterClass
     public void tearDown() {
         Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = sdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);

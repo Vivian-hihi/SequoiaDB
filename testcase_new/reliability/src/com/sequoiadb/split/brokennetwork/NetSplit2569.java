@@ -113,7 +113,7 @@ public class NetSplit2569 extends SdbTestBase {
 
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            // 最长等待20分钟的环境恢复
+            // 最长等待2分钟的环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             db = new Sequoiadb(connectUrl, "", "");
@@ -148,12 +148,13 @@ public class NetSplit2569 extends SdbTestBase {
     private long checkGroupLob(Sequoiadb sdb, String destGroupName) {
         Sequoiadb destDataNode = null;
         DBCursor cursor = null;
+        int lobCount = 0;
         try {
             destDataNode = sdb.getReplicaGroup(destGroupName).getMaster().connect();// 获得源主节点链接
             DBCollection destCL = destDataNode.getCollectionSpace(csName).getCollection(clName);
 
             cursor = destCL.listLobs();
-            int lobCount = 0;
+
             while (cursor.hasNext()) {
                 cursor.getNext();
                 lobCount++;
@@ -163,7 +164,7 @@ public class NetSplit2569 extends SdbTestBase {
                     lobCount > totalCount / 2 - (totalCount / 2 * 0.3)
                             && lobCount < totalCount / 2 + (totalCount / 2 * 0.3),
                     true, "srcGroup count:" + lobCount);
-            return lobCount;
+
         }
         catch (BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
@@ -176,13 +177,14 @@ public class NetSplit2569 extends SdbTestBase {
                 destDataNode.disconnect();
             }
         }
-        return 0;
+        return lobCount;
     }
 
     @AfterClass
     public void tearDown() {
         Sequoiadb sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         try {
+            groupMgr.close();
             if (clearFlag) {
                 CollectionSpace commCS = sdb.getCollectionSpace(csName);
                 commCS.dropCollection(clName);
@@ -217,8 +219,8 @@ public class NetSplit2569 extends SdbTestBase {
                 sdb = new Sequoiadb(connectUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, 50);
-
+                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{Partition:2048}"), // 切分
+                        (BSONObject) JSON.parse("{Partition:4096}"));
             }
             catch (BaseException e) {
                 throw e;
