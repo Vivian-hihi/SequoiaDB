@@ -5,7 +5,12 @@
 <!--@param #{WORKSPACE} : default value = /var/lib/jenkins/workspace/compile_db_x86_trunk -->
 
 <project name="sdb" default="jar" basedir=".">
-
+   <taskdef resource="net/sf/antcontrib/antlib.xml">
+      <classpath>
+         <pathelement location="${basedir}/antlib/ant-contrib-1.0b2.jar" />
+      </classpath>
+   </taskdef>
+   
    <property name="root.dir" value="/var/lib/jenkins/workspace/compile_db_x86_trunk/sequoiadb/driver/spark" />
    <property name="target.dir" value="${root.dir}/target" />
    <property name="SCALA_VERSION" value="2.11" />
