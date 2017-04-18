@@ -36,6 +36,7 @@ public class Sdv6665 extends SdbTestBase {
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 	private String sourceGroupName;
 	private String destGroupName;
+    private String strRec;
 
 	@BeforeClass
 	public void setUp() {
@@ -110,7 +111,7 @@ public class Sdv6665 extends SdbTestBase {
 	}
 
 	public String insertData(DBCollection cl, int dataCount, int strLength) {
-		String strRec = getRandomString(strLength);
+		strRec = getRandomString(strLength);
 		for (int i = 0; i < dataCount / 2; i++) {
 			cl.insert("{_id:" + i + ",key:'" + strRec  + "'}");
 		}
@@ -124,7 +125,6 @@ public class Sdv6665 extends SdbTestBase {
 	}
 
 	public String insertDataAgain(DBCollection cl, int dataCount, int strLength) {
-		String strRec = getRandomString(strLength);
 		for (int i = 1200; i < 1200+dataCount; i++) {
 			cl.insert("{_id:" + i + ",key:'" + strRec + "'}");
 		}
