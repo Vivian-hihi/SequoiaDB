@@ -3880,6 +3880,11 @@ namespace engine
                      }
                      break ;
                   }
+                  else if ( 0 == *(tmpVecStr[i]) )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     break ;
+                  }
                   if ( SDB_ROLE_MAX != utilGetRoleEnum( tmpVecStr[ i ] ) )
                   {
                      tmpRole[ utilGetRoleEnum( tmpVecStr[ i ] ) ] = 1 ;
