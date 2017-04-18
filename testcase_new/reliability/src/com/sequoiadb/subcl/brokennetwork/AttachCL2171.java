@@ -104,8 +104,8 @@ public class AttachCL2171 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            Utils.dropMclAndScl(db, mclName);
-        } catch (BaseException e) {
+            dropCLRepeatly(db);
+        } catch (ReliabilityException | BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
@@ -114,5 +114,27 @@ public class AttachCL2171 extends SdbTestBase {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
+    }
+    
+    private void dropCLRepeatly(Sequoiadb db) throws ReliabilityException {
+        int timeout = 300000; // 5min
+        int checkInterval = 15000; // 15s
+        int checkTimes = timeout / checkInterval;
+        for (int i = 0; i < checkTimes; ++i) {
+            try {
+                Utils.dropMclAndScl(db, mclName);
+                return ;
+            } catch(BaseException e) {
+                if (e.getErrorCode() != -147) {
+                    throw new ReliabilityException("fail to drop cl ", e);
+                }
+            }
+            
+            try {
+                Thread.sleep(checkInterval);
+            } catch (InterruptedException e) {
+            }
+        }
+        throw new ReliabilityException("dropCLRepeatly occurs timeout");
     }
 }

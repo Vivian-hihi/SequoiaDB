@@ -3,12 +3,14 @@ package com.sequoiadb.subcl.brokennetwork;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.bson.types.BasicBSONList;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
@@ -41,6 +43,7 @@ public class AttachCL2169 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private boolean runSuccess = false;
     private String mclName = "cl_2169";
+    private boolean isPriChanged = true;
 
     @BeforeClass
     public void setUp() {
@@ -72,6 +75,7 @@ public class AttachCL2169 extends SdbTestBase {
         try {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
+            String cataPriHostBefore = cataPriHost;
 
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
@@ -87,6 +91,10 @@ public class AttachCL2169 extends SdbTestBase {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
             Utils.checkAttached(db, mclName, aTask.getAttachedSclCnt());
+            checkAttachCata(db, aTask.getAttachedSclCnt());
+            
+            String cataPriHostAfter = cataGroup.getMaster().hostName();
+            if (cataPriHostBefore.equals(cataPriHostAfter)) { isPriChanged = false; }
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();
@@ -104,8 +112,12 @@ public class AttachCL2169 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            Utils.dropMclAndScl(db, mclName);
-        } catch (BaseException e) {
+            if (isPriChanged) {
+                Utils.dropMclAndScl(db, mclName);
+            } else {
+                dropCLRepeatly(db);
+            }
+        } catch (ReliabilityException | BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
@@ -114,5 +126,52 @@ public class AttachCL2169 extends SdbTestBase {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
+    }
+    
+    private void checkAttachCata(Sequoiadb db, int attachedSclCnt) {
+        int suspectedCLNo = attachedSclCnt;
+        String sclName = mclName + "_" + suspectedCLNo;
+        
+        String mclFullName = csName + "." + mclName;
+        String sclFullName = csName + "." + sclName;
+        
+        // check mcl catalog
+        DBCursor mclCursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{ Name: '" + mclFullName + "' }", null, null);
+        BasicBSONList cataInfo = (BasicBSONList)mclCursor.getNext().get("CataInfo");
+        mclCursor.close();
+        boolean mclCataOk = !cataInfo.isEmpty();
+        
+        // check scl catalog
+        DBCursor sclCursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{ Name: '" + sclFullName + "' }", null, null);
+        boolean hasMainCL = sclCursor.getNext().containsField("MainCLName");
+        sclCursor.close();
+        boolean sclCataOk = hasMainCL;
+        
+        if ((!mclCataOk && sclCataOk) || (mclCataOk && !sclCataOk)) {
+            System.out.println("mclCataOk: " + mclCataOk + " sclCataOk: " + sclCataOk);
+            Assert.fail("catalog is inconsistent between mcl and scl!");
+        }
+    }
+    
+    private void dropCLRepeatly(Sequoiadb db) throws ReliabilityException {
+        int timeout = 300000; // 5min
+        int checkInterval = 15000; // 15s
+        int checkTimes = timeout / checkInterval;
+        for (int i = 0; i < checkTimes; ++i) {
+            try {
+                Utils.dropMclAndScl(db, mclName);
+                return ;
+            } catch(BaseException e) {
+                if (e.getErrorCode() != -147) {
+                    throw new ReliabilityException("fail to drop cl ", e);
+                }
+            }
+            
+            try {
+                Thread.sleep(checkInterval);
+            } catch (InterruptedException e) {
+            }
+        }
+        throw new ReliabilityException("dropCLRepeatly occurs timeout");
     }
 }

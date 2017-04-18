@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.bson.BSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.util.JSON;
 import org.testng.Assert;
 
@@ -161,6 +162,29 @@ public class Utils {
             }
         }
     }
+    
+//    public static void killRemainContext(Sequoiadb db) {
+//        String cataPriNodeName = db.getReplicaGroup("SYSCatalogGroup").getMaster().getNodeName();
+//        DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CONTEXTS, "{ NodeName: '" + cataPriNodeName + "' }", null, null);
+//        while (cursor.hasNext()) {
+//            System.out.println(cursor.getNext());
+//            boolean isRemainSession = false;
+//            BasicBSONList contexts = (BasicBSONList)(cursor.getNext().get("Contexts"));
+//            for (int i = 0; i < contexts.size(); ++i) {
+//                BSONObject context = (BSONObject)contexts.get(i);
+//                if (!((String)context.get("Type")).equals("DUMP")) {
+//                    isRemainSession = true;
+//                } else {
+//                    System.out.println(context.get("Type"));
+//                }
+//            }
+//            
+//            if (isRemainSession) {
+//                db.forceSession(); // no such interface named "forceSession"
+//            }
+//        }
+//        cursor.close();
+//    }
 
     public static String getKeyStack(Exception e, Object classObj) {
         StringBuffer stackBuffer = new StringBuffer();

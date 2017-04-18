@@ -41,6 +41,7 @@ public class DetachCL2175 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private boolean runSuccess = false;
     private String mclName = "cl_2175";
+    private boolean isPriChanged = true;
 
     @BeforeClass
     public void setUp() {
@@ -73,6 +74,7 @@ public class DetachCL2175 extends SdbTestBase {
         try {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
+            String cataPriHostBefore = cataPriHost;
 
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataPriHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
@@ -88,6 +90,9 @@ public class DetachCL2175 extends SdbTestBase {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
             Utils.checkDetached(db, mclName, aTask.getDetachedSclCnt());
+            
+            String cataPriHostAfter = cataGroup.getMaster().hostName();
+            if (cataPriHostBefore.equals(cataPriHostAfter)) { isPriChanged = false; }
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();
@@ -105,8 +110,12 @@ public class DetachCL2175 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-            Utils.dropMclAndScl(db, mclName);
-        } catch (BaseException e) {
+            if (isPriChanged) {
+                Utils.dropMclAndScl(db, mclName);
+            } else {
+                dropCLRepeatly(db);
+            }
+        } catch (ReliabilityException | BaseException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
@@ -115,5 +124,27 @@ public class DetachCL2175 extends SdbTestBase {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
+    }
+    
+    private void dropCLRepeatly(Sequoiadb db) throws ReliabilityException {
+        int timeout = 300000; // 5min
+        int checkInterval = 15000; // 15s
+        int checkTimes = timeout / checkInterval;
+        for (int i = 0; i < checkTimes; ++i) {
+            try {
+                Utils.dropMclAndScl(db, mclName);
+                return ;
+            } catch(BaseException e) {
+                if (e.getErrorCode() != -147) {
+                    throw new ReliabilityException("fail to drop cl ", e);
+                }
+            }
+            
+            try {
+                Thread.sleep(checkInterval);
+            } catch (InterruptedException e) {
+            }
+        }
+        throw new ReliabilityException("dropCLRepeatly occurs timeout");
     }
 }
