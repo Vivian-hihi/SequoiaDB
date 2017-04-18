@@ -645,7 +645,8 @@ namespace engine
    }
 
    INT32 _coordCataSel::updateCataInfo( const CHAR *pCollectionName,
-                                        _pmdEDUCB *cb )
+                                        _pmdEDUCB *cb,
+                                        BOOLEAN isRoot )
    {
       INT32 rc = SDB_OK ;
 
@@ -667,6 +668,11 @@ namespace engine
       rc = _pResource->updateCataInfo( pCollectionName, _cataPtr, cb ) ;
       if ( rc )
       {
+         /// Restore the rc when changed by updateCataInfo
+         if ( isRoot && SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+         {
+            rc = SDB_DMS_NOTEXIST ;
+         }
          goto error ;
       }
 
@@ -678,15 +684,25 @@ namespace engine
 
    INT32 _coordCataSel::bind( coordResource *pResource,
                               const CHAR *pCollectionName,
-                              _pmdEDUCB *cb )
+                              _pmdEDUCB *cb,
+                              BOOLEAN forceUpdate,
+                              BOOLEAN isRoot )
    {
       INT32 rc = SDB_OK ;
       _pResource = pResource ;
 
-      rc = _pResource->getCataInfo( pCollectionName, _cataPtr ) ;
+      if ( !forceUpdate )
+      {
+         rc = _pResource->getCataInfo( pCollectionName, _cataPtr ) ;
+      }
+      else
+      {
+         _hasUpdate = FALSE ;
+         rc = SDB_DMS_NOTEXIST ;
+      }
       if ( rc && !_hasUpdate )
       {
-         rc = updateCataInfo( pCollectionName, cb ) ;
+         rc = updateCataInfo( pCollectionName, cb, isRoot ) ;
       }
       if ( rc )
       {

@@ -212,7 +212,9 @@ namespace engine
 
          INT32    bind( coordResource *pResource,
                         const CHAR *pCollectionName,
-                        _pmdEDUCB *cb ) ;
+                        _pmdEDUCB *cb,
+                        BOOLEAN forceUpdate = FALSE,
+                        BOOLEAN isRoot = FALSE ) ;
 
          INT32    bind( coordResource *pResource,
                         const CoordCataInfoPtr &cataPtr,
@@ -236,7 +238,8 @@ namespace engine
          CoordGroupSubCLMap& getGroup2SubsMap() ;
 
          INT32    updateCataInfo( const CHAR *pCollectionName,
-                                  _pmdEDUCB *cb ) ;
+                                  _pmdEDUCB *cb,
+                                  BOOLEAN isRoot = FALSE ) ;
 
       private:
          coordResource        *_pResource ;

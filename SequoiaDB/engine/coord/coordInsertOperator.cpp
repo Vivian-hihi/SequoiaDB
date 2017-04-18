@@ -130,7 +130,7 @@ namespace engine
                           BSONObj(pInsertor).toString().c_str(),
                           count, oldFlag, oldFlag ) ;
 
-      rc = cataSel.bind( _pResource, pCollectionName, cb ) ;
+      rc = cataSel.bind( _pResource, pCollectionName, cb, FALSE, TRUE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Get or update collection[%s]'s catalog info "
