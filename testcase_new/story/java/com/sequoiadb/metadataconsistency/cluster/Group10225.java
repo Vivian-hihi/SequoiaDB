@@ -10,7 +10,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.Assert;
 import org.testng.SkipException;
 
-import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.metadataconsistency.data.CommLib;
@@ -67,7 +66,7 @@ public class Group10225 extends SdbTestBase {
 		
 		CreateRG createRG = new CreateRG();
 		createRG.start();
-
+		
 		RemoveRG removeRG = new RemoveRG();
 		CommLib.sleep(random.nextInt(msec));
 		removeRG.start();
@@ -107,13 +106,10 @@ public class Group10225 extends SdbTestBase {
 			{
 				db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
 				String rgName2 = rgName + "_"  + random.nextInt(number);
-				ReplicaGroup rg = db.getReplicaGroup(rgName2);
-				if(rg != null){
-					db.removeReplicaGroup(rgName2);
-				}
+				db.removeReplicaGroup(rgName2);
 			}catch(BaseException e){
 				int eCode = e.getErrorCode();
-				if( eCode != -154 && e != null){
+				if( eCode != -154){
 					throw e;
 				}
 			}finally{
