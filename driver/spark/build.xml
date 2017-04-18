@@ -7,7 +7,7 @@
 <project name="sdb" default="jar" basedir=".">
    <taskdef resource="net/sf/antcontrib/antlib.xml">
       <classpath>
-         <pathelement location="${basedir}/antlib/ant-contrib-1.0b2.jar" />
+         <pathelement location="${root.dir}/../../misc/ci/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
    
@@ -82,7 +82,7 @@
    
    <trycatch>
    <try>
-      <copy file="${root.dir}/../../misc/ci/exec-tools/print_version.c" todir="${target.dir}/" />
+      <copy file="${root.dir}/../../misc/ci/src/compile/print_version.c" todir="${target.dir}/" />
          <echo>
             /usr/bin/gcc  ${target.dir}/print_version.c -o ${target.dir}/print_version -I${root.dir}/../../SequoiaDB/engine/include
          </echo>
