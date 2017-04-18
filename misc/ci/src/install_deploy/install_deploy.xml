@@ -193,6 +193,7 @@
          <equals arg1="${TEST_TYPE}" arg2="CONFIGURETEST" />
          <then>
             <var name="diagLevel" value="5"/>
+            <var name="DEPLOY_MODE" value="CONFIGURE"/>
          </then>
       </if>
       <if>
