@@ -35,7 +35,11 @@
 *******************************************************************************/
 
 #include "coordQueryOperator.hpp"
+#include "msgMessage.hpp"
 #include "msgMessageFormat.hpp"
+#include "coordCommon.hpp"
+#include "coordShardKicker.hpp"
+#include "coordUtil.hpp"
 #include "rtnCB.hpp"
 #include "rtn.hpp"
 #include "pmd.hpp"
@@ -430,7 +434,7 @@ namespace engine
       }
       else
       {
-         rtnSendOptions sendOpt ;
+         coordSendOptions sendOpt ;
 
          // add last op info
          MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,

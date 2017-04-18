@@ -919,6 +919,11 @@ namespace engine
       ++_retryTimes ;
    }
 
+   void _coordGroupSessionCtrl::resetRetry()
+   {
+      _retryTimes = 0 ;
+   }
+
    UINT32 _coordGroupSessionCtrl::getRetryTimes() const
    {
       return _retryTimes ;
