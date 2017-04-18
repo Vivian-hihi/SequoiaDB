@@ -153,9 +153,8 @@ namespace engine
          rc = sdbGetOMManager()->authenticate( authObj, _pEDUCB ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s, "
-                    "passwd: %s], rc: %d", clientName(), user.valuestrsafe(),
-                    pass.valuestrsafe(), rc ) ;
+            PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
+                    "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
             goto error ;
          }
          _isAuthed = TRUE ;
@@ -183,9 +182,8 @@ namespace engine
          }
          else if ( rc )
          {
-            PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s, "
-                    "passwd: %s], rc: %d", clientName(),
-                    user.valuestrsafe(), pass.valuestrsafe(), rc ) ;
+            PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
+                    "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
             goto error ;
          }
          else
@@ -249,9 +247,8 @@ namespace engine
             }
             else if ( rc )
             {
-               PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s, "
-                       "passwd: %s], rc: %d", clientName(),
-                       user.valuestrsafe(), pass.valuestrsafe(), rc ) ;
+               PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s], "
+                       "rc: %d", clientName(), user.valuestrsafe(), rc ) ;
                goto error ;
             }
             else
