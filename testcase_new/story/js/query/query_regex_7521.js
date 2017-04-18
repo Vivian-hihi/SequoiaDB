@@ -45,6 +45,7 @@ function main( db )
    try
    {
       var clName = COMMCSNAME + "." + COMMCLNAME ;
+      db.setSessionAttr( { PreferedInstance: "M" } );
       var idxRead1 = queryGetCurrentSessions( db, clName ) ;
       // cannot query data
       var queryNum = cl.find( {"regex":{"$regex":"^abcdefg*Q",
@@ -85,6 +86,7 @@ function main( db )
       // query many record
       var queryNum2 = cl.find( {"regex":{"$regex":"\\AabcdefgG"}}).toArray() ;
       var idxRead4 = queryGetCurrentSessions( db, clName ) ;
+      
       if( 1 != queryNum2.length )
       {
          println( "the number of query by using regex : " + queryNum2.length ) ;
@@ -103,6 +105,7 @@ function main( db )
       var queryNum3 = cl.find( {"$or":[{"regex":{"$gt":"abcdefgG"}},
                                        {"regex":{"$regex":"\\AabcdefgG"}}]}).toArray() ;
       var idxRead5 = queryGetCurrentSessions( db, clName ) ;
+      
       if( 20 != queryNum3.length )
       {
          println( "the number of query by using regex : " + queryNum3.length ) ;
@@ -131,10 +134,10 @@ function main( db )
 try
 {
    commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
-               "clear collection in the beginning" ) ;
+              "clear collection in the beginning" ) ;
    main( db ) ;
    commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-               "clear collection in the end, correct way" ) ;
+              "clear collection in the end, correct way" ) ;
    db.close() ;
 }
 catch( e )
