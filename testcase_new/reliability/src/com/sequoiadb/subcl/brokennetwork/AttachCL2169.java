@@ -128,7 +128,11 @@ public class AttachCL2169 extends SdbTestBase {
         }
     }
     
+    // test for JIRA: 1017
     private void checkAttachCata(Sequoiadb db, int attachedSclCnt) {
+        if (attachedSclCnt == Utils.SCLNUM) {
+            return ;
+        }
         int suspectedCLNo = attachedSclCnt;
         String sclName = mclName + "_" + suspectedCLNo;
         
