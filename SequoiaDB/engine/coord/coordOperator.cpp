@@ -96,6 +96,7 @@ namespace engine
    */
    _coordOperator::_coordOperator()
    {
+      _isReadOnly = FALSE ;
       _pResource = NULL ;
    }
 
@@ -110,7 +111,22 @@ namespace engine
 
    BOOLEAN _coordOperator::isReadOnly() const
    {
-      return FALSE ;
+      return _isReadOnly ;
+   }
+
+   const CHAR* _coordOperator::getName() const
+   {
+      return _strName.c_str() ;
+   }
+
+   void _coordOperator::setName( const string &name )
+   {
+      _strName = name ;
+   }
+
+   void _coordOperator::setReadOnly( BOOLEAN isReadOnly )
+   {
+      _isReadOnly = isReadOnly ;
    }
 
    BOOLEAN _coordOperator::needRollback() const

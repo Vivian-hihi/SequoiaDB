@@ -47,14 +47,17 @@ namespace engine
 {
    class _pmdEDUCB ;
 
-   void coordBuildFailedNodeReply( coordResource *pResource,
-                                   ROUTE_RC_MAP &failedNodes,
-                                   BSONObjBuilder &builder ) ;
+   void  coordBuildFailedNodeReply( coordResource *pResource,
+                                    ROUTE_RC_MAP &failedNodes,
+                                    BSONObjBuilder &builder ) ;
 
    BSONObj coordBuildErrorObj( coordResource *pResource,
                                INT32 &flag,
                                _pmdEDUCB *cb,
                                ROUTE_RC_MAP *pFailedNodes ) ;
+
+   INT32 coordGetGroupsFromObj( const BSONObj &obj,
+                                CoordGroupList &groupLst ) ;
 
 }
 

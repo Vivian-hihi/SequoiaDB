@@ -99,13 +99,13 @@ namespace engine
 
       public:
          INT32          create( const CHAR *pCmdName,
-                                coordOperator *&pOperator ) ;
+                                coordOperator &*pOperator ) ;
          void           release( coordOperator *pOperator ) ;
 
       protected:
-         INT32          register( const CHAR *pCmdName,
-                                  BOOLEAN isReadOnly,
-                                  COORD_NEW_OPERATOR pFunc ) ;
+         INT32          _register( const CHAR *pCmdName,
+                                   BOOLEAN isReadOnly,
+                                   COORD_NEW_OPERATOR pFunc ) ;
 
       private:
          MAP_COMMAND          _mapCommand ;

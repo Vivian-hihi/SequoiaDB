@@ -53,21 +53,17 @@ namespace engine
    /*
       _coordQueryOperator implement
    */
-   _coordQueryOperator::_coordQueryOperator()
+   _coordQueryOperator::_coordQueryOperator( BOOLEAN readOnly )
    {
       _pContext = NULL ;
       _processRet = SDB_OK ;
+      setReadOnly( readOnly ) ;
    }
 
    _coordQueryOperator::~_coordQueryOperator()
    {
       SDB_ASSERT( NULL == _pContext, "Context must be NULL" ) ;
       SDB_ASSERT( 0 == _vecBlock.size(), "Block must be empty" ) ;
-   }
-
-   BOOLEAN _coordQueryOperator::isReadOnly() const
-   {
-      return TRUE ;
    }
 
    INT32 _coordQueryOperator::_checkQueryModify( coordSendMsgIn &inMsg,

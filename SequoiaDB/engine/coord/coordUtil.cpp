@@ -36,6 +36,7 @@
 
 #include "coordUtil.hpp"
 #include "msgDef.h"
+#include "msgCatalogDef.h"
 #include "pmdEDU.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
@@ -150,6 +151,62 @@ namespace engine
       }
 
       return builder.obj() ;
+   }
+
+   INT32 coordGetGroupsFromObj( const BSONObj &obj,
+                                CoordGroupList &groupLst )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONElement beGroupArr = obj.getField( CAT_GROUP_NAME ) ;
+         if ( beGroupArr.eoo() || beGroupArr.type() != Array )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "Failed to get the field(%s) from obj[%s]",
+                     CAT_GROUP_NAME, obj.toString().c_str() ) ;
+            goto error ;
+         }
+         BSONObjIterator i( beGroupArr.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            BSONObj boGroupInfo ;
+            BSONElement beTmp = i.next() ;
+            if ( Object != beTmp.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Group info in obj[%s] must be object",
+                       obj.toString().c_str() ) ;
+               goto error ;
+            }
+            boGroupInfo = beTmp.embeddedObject() ;
+            beTmp = boGroupInfo.getField( CAT_GROUPID_NAME ) ;
+            if ( beTmp.eoo() || !beTmp.isNumber() )
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG ( PDERROR, "Failed to get the field(%s) from obj[%s]",
+                        CAT_GROUPID_NAME, obj.toString().c_str() );
+               goto error ;
+            }
+
+            // add to group list
+            groupLst[ beTmp.numberInt() ] = beTmp.numberInt() ;
+            PD_LOG( PDDEBUG, "Get group[%d] into list", beTmp.numberInt() ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Parse catalog reply object occur exception: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 }

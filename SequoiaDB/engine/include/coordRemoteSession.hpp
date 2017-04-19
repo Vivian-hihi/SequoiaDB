@@ -274,6 +274,7 @@ namespace engine
                                BOOLEAN canUpdate = TRUE ) ;
 
          void        incRetry() ;
+         void        resetRetry() ;
          UINT32      getRetryTimes() const ;
 
          void        setMaxRetryTimes( UINT32 maxRetryTimes ) ;

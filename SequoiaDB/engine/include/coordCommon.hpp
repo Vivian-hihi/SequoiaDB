@@ -37,6 +37,7 @@
 #define COORD_COMMON_HPP__
 
 #include "coordDef.hpp"
+#include "rtnQueryOptions.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -60,6 +61,94 @@ namespace engine
 
    BOOLEAN  coordCataCheckFlag( INT32 flag ) ;
 
+   /*
+      FILTER_BSON_ID define
+   */
+   enum FILTER_BSON_ID
+   {
+      FILTER_ID_MATCHER    = 1,
+      FILTER_ID_SELECTOR,
+      FILTER_ID_ORDERBY,
+      FILTER_ID_HINT
+   } ;
+
+   /*
+      NODE_SEL_STY define
+   */
+   enum NODE_SEL_STY
+   {
+      NODE_SEL_ALL         = 1,
+      NODE_SEL_PRIMARY,
+      NODE_SEL_SECONDARY,
+      NODE_SEL_ANY
+   } ;
+
+   #define COORD_CTRL_MASK_GLOBAL         0x00000001
+   #define COORD_CTRL_MASK_NODE_SELECT    0x00000002
+   #define COORD_CTRL_MASK_ROLE           0x00000004
+   #define COORD_CTRL_MASK_RAWDATA        0x00000008
+
+   #define COORD_CTRL_MASK_ALL            0xFFFFFFFF
+   /*
+      _coordCtrlParam define
+   */
+   struct _coordCtrlParam
+   {
+      BOOLEAN           _isGlobal ;             // COORD_CTRL_MASK_GLOBAL
+      FILTER_BSON_ID    _filterID ;
+      NODE_SEL_STY      _emptyFilterSel ;       // COORD_CTRL_MASK_NODE_SELECT
+      INT32             _role[ SDB_ROLE_MAX ] ; // COORD_CTRL_MASK_ROLE
+      BOOLEAN           _rawData ;              // COORD_CTRL_MASK_RAWDATA
+
+      UINT32            _parseMask ;
+
+      /*
+         Specila group and nodes
+      */
+      CoordGroupList    _specialGrps ;
+      BOOLEAN           _useSpecialGrp ;
+      SET_ROUTEID       _specialNodes ;
+      BOOLEAN           _useSpecialNode ;
+
+      _coordCtrlParam()
+      {
+         _isGlobal = TRUE ;
+         _filterID = FILTER_ID_MATCHER ;
+         _emptyFilterSel = NODE_SEL_ALL ;
+         ossMemset( (void*)_role, 0, sizeof( _role ) ) ;
+         _role[ SDB_ROLE_DATA ] = 1 ;
+         _role[ SDB_ROLE_CATALOG ] = 1 ;
+         _rawData = FALSE ;
+         _parseMask = 0 ;
+
+         _useSpecialGrp = FALSE ;
+         _useSpecialNode = FALSE ;
+      }
+
+      void resetRole()
+      {
+         ossMemset( (void*)_role, 0, sizeof( _role ) ) ;
+      }
+      void setAllRole()
+      {
+         for ( INT32 i = 0 ; i < SDB_ROLE_MAX ; ++i )
+         {
+            _role[ i ] = 1 ;
+         }
+      }
+   } ;
+   typedef _coordCtrlParam coordCtrlParam ;
+
+   BSONObj* coordGetFilterByID( FILTER_BSON_ID filterID,
+                                rtnQueryOptions &queryOption ) ;
+
+   INT32    coordParseControlParam( const BSONObj &obj,
+                                    coordCtrlParam &param,
+                                    UINT32 mask,
+                                    BSONObj *pNewObj,
+                                    BOOLEAN strictCheck ) ;
+
 }
 
 #endif // COORD_COMMON_HPP__
+

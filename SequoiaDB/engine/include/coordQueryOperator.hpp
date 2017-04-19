@@ -71,15 +71,13 @@ namespace engine
    class _coordQueryOperator : public _coordOperator
    {
       public:
-         _coordQueryOperator() ;
+         _coordQueryOperator( BOOLEAN readOnly = TRUE ) ;
          virtual ~_coordQueryOperator() ;
 
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
-
-         virtual BOOLEAN      isReadOnly() const ;
 
       public:
 
@@ -168,6 +166,7 @@ namespace engine
          rtnContextCoord            *_pContext ;
          INT32                      _processRet ;
          vector<CHAR*>              _vecBlock ;
+         BOOLEAN                    _readOnly ;
 
    } ;
    typedef _coordQueryOperator coordQueryOperator ;

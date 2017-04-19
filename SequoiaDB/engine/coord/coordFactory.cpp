@@ -55,7 +55,7 @@ namespace engine
    }
 
    INT32 _coordCommandFactory::create( const CHAR *pCmdName,
-                                       coordOperator *&pOperator )
+                                       coordOperator &*pOperator )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL == pOperator, "Operator must be NULL" ) ;
@@ -64,7 +64,7 @@ namespace engine
       if ( it != _mapCommand.end() )
       {
          coordFactoryItem &item = it->second ;
-         pOperator = (*item->_pFunc)() ;
+         pOperator = (*item._pFunc)() ;
          if ( !pOperator )
          {
             rc = SDB_OOM ;
@@ -91,9 +91,9 @@ namespace engine
       }
    }
 
-   INT32 _coordCommandFactory::register( const CHAR *pCmdName,
-                                         BOOLEAN isReadOnly,
-                                         COORD_NEW_OPERATOR pFunc )
+   INT32 _coordCommandFactory::_register( const CHAR *pCmdName,
+                                          BOOLEAN isReadOnly,
+                                          COORD_NEW_OPERATOR pFunc )
    {
       INT32 rc = SDB_OK ;
 
@@ -139,9 +139,9 @@ namespace engine
       coordOperator *pOperator = (*pFunc)() ;
       if ( pOperator )
       {
-         coordGetFactory()->register( pOperator->getName(),
-                                      pOperator->isReadOnly(),
-                                      pFunc ) ;
+         coordGetFactory()->_register( pOperator->getName(),
+                                       pOperator->isReadOnly(),
+                                       pFunc ) ;
          SDB_OSS_DEL pOperator ;
       }
       else

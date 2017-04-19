@@ -254,6 +254,8 @@ namespace engine
    */
    class _coordOperator : public SDBObject
    {
+      friend class _coordCommandFactory ;
+
       public:
          _coordOperator() ;
          virtual ~_coordOperator() ;
@@ -266,6 +268,7 @@ namespace engine
 
       public:
          virtual BOOLEAN      isReadOnly() const ;
+         virtual const CHAR*  getName() const ;
          virtual BOOLEAN      needRollback() const ;
 
       public:
@@ -336,6 +339,14 @@ namespace engine
                                                   INT32 &errRC,
                                                   MsgRouteID *pNodeID = NULL,
                                                   BOOLEAN canUpdate = TRUE ) ;
+
+      protected:
+         void                 setReadOnly( BOOLEAN isReadOnly ) ;
+         void                 setName( const string &name ) ;
+
+      private:
+         BOOLEAN              _isReadOnly ;
+         string               _strName ;
 
       protected:
          coordResource              *_pResource ;
