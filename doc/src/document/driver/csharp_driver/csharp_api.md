@@ -15,6 +15,15 @@
 
 	* 增加sync方法控制数据持久化。
 
+2. SequoiaDB::ReplicaGroup接口变更：
+
+	* 废弃GetNodeNum接口，该接口描述的节点状态信息不准确。
+
+3. SequoiaDB::Node接口变更：
+
+	* 废弃GetStatus接口，该接口描述的节点状态信息不准确。
+
+
 **Version 1.12**
 
 1. 添加使用SSL连接数据库的接口
