@@ -1582,6 +1582,8 @@ namespace sdbclient
 /** \fn sdbNodeStatus getStatus ()
     \brief Get status of the current node.
     \return  The status of current node.
+    \deprecated Since v2.8, the status of node are invalid, 
+                nerver use this api again.
 */
       sdbNodeStatus getStatus ()
       {
@@ -1773,6 +1775,8 @@ namespace sdbclient
     \param [out] num The count of node.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated Since v2.8, the status of node are invalid, 
+                nerver use this api again.
 */
       INT32 getNodeNum ( sdbNodeStatus status, INT32 *num )
       {
@@ -1929,6 +1933,7 @@ namespace sdbclient
     \param [in] configure The configurations for the node
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated we have override this api by passing a "BSONObj" instead of a "map"
 */
       INT32 createNode ( const CHAR *pHostName,
                          const CHAR *pServiceName,
