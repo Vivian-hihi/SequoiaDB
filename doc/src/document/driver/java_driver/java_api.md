@@ -11,16 +11,16 @@
 
 1. com.sequoiadb.base.Sequoiadb接口变更： 
 
-	* 删除getConnection方法，IConnection是内部网络通信接口，不再对外开放。
+    * 删除getConnection方法，IConnection是内部网络通信接口，不再对外开放。
 	* 删除getDataCenter方法。
 	* 删除setServerAddress方法，该方法无意义。
 	* 废弃getServerAddress方法，增加getHost、getPort方法。
 	* 废弃changeConnectionOptions方法。
 	* 废弃disconnect方法。
-	* 废弃com.sequoiadb.net.ConfigOptions相关的构造方法，增加	  	        	  com.sequoiadb.base.ConfigOptions相关的构造方法。
+	* 废弃com.sequoiadb.net.ConfigOptions相关的构造方法，增加com.sequoiadb.base.ConfigOptions相关的构造方法。
 	* 废弃isEndianConvert方法，增加getByteOrder方法。
 	* closeAllCursors方法在连接已关闭时不再报错。
-	* 实现java.io.Closeable接口，增加close方法，在JDK1.7上支持资源自动释放。         新增的close方法取代disconnect接口。
+	* 实现java.io.Closeable接口，增加close方法，在JDK1.7上支持资源自动释放。新增的close方法取代disconnect接口。
 	* 增加getLastUseTime方法，该接口主要被数据源使用。
 	* 增加close方法取代原来disconnect的功能。
 	* 增加sync方法控制数据持久化。
@@ -35,7 +35,7 @@
 	* getNext和getNextRaw方法可以混合交替使用。
 	* 废弃hasNextRaw接口，可使用hasNext取代该接口。
 
-4. 废弃com.sequoiadb.base.SequoiadbDatasource类，增加	      com.sequoiadb.datasource.SequoiadbDatasource类。
+4. 废弃com.sequoiadb.base.SequoiadbDatasource类，增加com.sequoiadb.datasource.SequoiadbDatasource类。
 
 5. com.sequoiadb.base.ReplicaGroup接口变更：
 
