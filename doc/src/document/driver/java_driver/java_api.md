@@ -33,10 +33,19 @@
 
 	* 实现java.io.Closeable接口，在JDK1.7上支持资源自动释放。
 	* getNext和getNextRaw方法可以混合交替使用。
+	* 废弃hasNextRaw接口，可使用hasNext取代该接口。
 
 4. 废弃com.sequoiadb.base.SequoiadbDatasource类，增加	      com.sequoiadb.datasource.SequoiadbDatasource类。
 
-5. 删除DataCenter接口，待相关功能发布之后再提供接口。
+5. com.sequoiadb.base.ReplicaGroup接口变更：
+
+	* 废弃getNodeNum接口，该接口描述的节点状态信息不准确。
+
+6. com.sequoiadb.base.Node接口变更：
+
+	* 废弃getStatus接口，该接口描述的节点状态信息不准确。
+
+7. 删除DataCenter接口，待相关功能发布之后再提供接口。
 
 **Version 1.10**
 
