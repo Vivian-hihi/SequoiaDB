@@ -164,34 +164,16 @@ namespace SequoiaDB
          *  \return The Node object
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
+         *  \deprecated we override this api by passing a "BsonDocument" instead of a "Dictionary"
          */
         public Node CreateNode(string hostName, int port, string dbpath,
                                Dictionary<string, string> map)
         {
-            if (hostName == null || port < 0 || port > 65535 ||
-                dbpath == null )
-            throw new BaseException("SDB_INVALIDARG");
-            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
-                             + SequoiadbConstants.NODE;
-            BsonDocument configuration = new BsonDocument();
-            configuration.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
-            map.Remove(SequoiadbConstants.FIELD_GROUPNAME);
-            configuration.Add(SequoiadbConstants.FIELD_HOSTNAME, hostName);
-            map.Remove(SequoiadbConstants.FIELD_HOSTNAME);
-            configuration.Add(SequoiadbConstants.SVCNAME, port.ToString());
-            map.Remove(SequoiadbConstants.SVCNAME);
-            configuration.Add(SequoiadbConstants.DBPATH, dbpath);
-            map.Remove(SequoiadbConstants.DBPATH);
+            BsonDocument obj = new BsonDocument();
             Dictionary<string, string>.Enumerator it = map.GetEnumerator();
             while (it.MoveNext())
-                configuration.Add(it.Current.Key, it.Current.Value);
-            BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtn = AdminCommand(command, configuration, dummyObj, dummyObj, dummyObj);
-            int flags = rtn.Flags;
-            if (flags != 0)
-                throw new BaseException(flags);
-            else
-                return GetNode(hostName, port);
+                obj.Add(it.Current.Key, it.Current.Value);
+            return CreateNode(hostName, port, dbpath, obj);
         }
 
         /** \fn Node CreateNode(string hostName, int port, string dbpath,

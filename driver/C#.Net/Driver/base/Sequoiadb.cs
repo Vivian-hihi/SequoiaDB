@@ -1576,7 +1576,7 @@ namespace SequoiaDB
                          e.Name == SequoiadbConstants.SVCNAME ||
                          e.Name == SequoiadbConstants.DBPATH)
                         continue;
-                    condition.Add(e.Name, e.Value.AsString);
+                    condition.Add(e.Name, e.Value);
                 }
             }
 
@@ -1812,7 +1812,7 @@ namespace SequoiaDB
 
             byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
             if(connection == null)
-                throw new BaseException("SDB_NETWORK");
+                throw new BaseException("SDB_NOT_CONNECTED");
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);

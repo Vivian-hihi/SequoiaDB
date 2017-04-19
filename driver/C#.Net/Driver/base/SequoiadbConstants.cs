@@ -94,6 +94,7 @@ namespace SequoiaDB
         public const string CMD_VALUE_NAME_DEACTIVATE = "deactivate";
         public const string CMD_VALUE_NAME_ENABLE_READONLY = "enable readonly";
         public const string CMD_VALUE_NAME_DISABLE_READONLY = "disable readonly";
+        public const string CMD_VALUE_NAME_SYNC_DB = "sync db";
 
         public const string OID = "_id";
         public const string CLIENT_RECORD_ID_INDEX = "$id";

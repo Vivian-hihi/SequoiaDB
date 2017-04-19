@@ -48,6 +48,7 @@ namespace DriverTest
         [ClassInitialize()]
         public static void SequoiadbInitialize(TestContext testContext)
         {
+/*
             if ( config == null )
                 config = new Config();
             sdb = new Sequoiadb(config.conf.Coord.Address);
@@ -106,11 +107,13 @@ namespace DriverTest
             Assert.IsNotNull(node);
             node.Start();
             create_node_flag = true;
+ */
         }
         //使用 SequoiadbCleamUp 在运行完类中的所有测试后再运行代码
         [ClassCleanup()]
         public static void SequoiadbCleamUp()
         {
+/*
             // check whether it is in the cluster environment or not
             if (!Constants.isClusterEnv(sdb))
             {
@@ -154,11 +157,13 @@ namespace DriverTest
             create_node2_flag = false;
             // disconnect
             sdb.Disconnect();
+ */
         }
         //使用 TestInitialize 在运行每个测试前先运行代码
         [TestInitialize()]
         public void MyTestInitialize()
         {
+/*
             // check whether it is in the cluster environment or not
             if (!Constants.isClusterEnv(sdb))
             {
@@ -181,11 +186,13 @@ namespace DriverTest
             node2 = group.CreateNode(hostName2, port2, dbpath2, options);
             Assert.IsNotNull(node2);
             node2.Start();
+ */
         }
         //使用 TestCleanup 在运行完每个测试后运行代码
         [TestCleanup()]
         public void MyTestCleanup()
         {
+/*
             // check whether it is in the cluster environment or not
             if (false == Constants.isClusterEnv(sdb))
             {
@@ -197,6 +204,7 @@ namespace DriverTest
                 group.RemoveNode(hostName2, port2, null);
             }
             create_node2_flag = false;
+ */
         }
         #endregion
 
@@ -309,6 +317,33 @@ namespace DriverTest
             // check
             data_node = group.GetNode(hostName2, port2);
             Assert.IsNotNull(data_node);
+        }
+
+        [TestMethod()]
+        [Ignore]
+        public void createRG()
+        {
+            // 1. prepare a empty coord by manually
+
+            // 2. get connection
+            Sequoiadb db = new Sequoiadb("192.168.20.165", 11810);
+            db.Connect();
+            //db.ListCollections();
+
+            // 3. create catalog group
+            Dictionary<string, string> map = new Dictionary<String, String>();
+            map.Add("businessname", "abc");
+            map.Add("diaglevel", "5");
+            map.Add("omaddr", "susetzb:11830");
+            //    	db.createReplicaCataGroup("192.168.20.165", 11820, "/opt/sequoiadb/database/cata/11820", map);
+            BsonDocument obj = new BsonDocument();
+            obj.Add("businessname", "abc");
+            obj.Add("diaglevel", 5);
+            obj.Add("omaddr", "susetzb:12345");
+            db.CreateReplicaCataGroup("192.168.20.165", 11820, "/opt/sequoiadb/database/cata/11820", obj);
+            ReplicaGroup rg = db.GetReplicaGroup("SYSCatalogGroup");
+            SequoiaDB.Node node = rg.CreateNode("192.168.20.165", 11830, "/opt/sequoiadb/database/cata/11830", map);
+            node.Start();
         }
 
     }
