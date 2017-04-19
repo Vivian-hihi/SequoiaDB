@@ -5683,6 +5683,7 @@ namespace engine
     _explained( FALSE )
    {
       _needRun = FALSE ;
+      _needDetail = FALSE ;
       _beginUsrCpu = 0.0 ;
       _beginSysCpu = 0.0 ;
       _endUsrCpu = 0.0 ;
@@ -5736,6 +5737,24 @@ namespace engine
          else
          {
             _needRun = FALSE ;
+         }
+
+         e = explainOptions.getField( FIELD_NAME_DETAIL ) ;
+         if ( e.eoo() )
+         {
+            _needDetail = FALSE ;
+         }
+         else if ( e.isNumber() )
+         {
+            _needDetail = e.numberInt() == 0 ? FALSE : TRUE ;
+         }
+         else if ( e.isBoolean() )
+         {
+            _needDetail = e.booleanSafe() ;
+         }
+         else
+         {
+            _needDetail = FALSE ;
          }
       }
       catch( std::exception &e )
@@ -5868,6 +5887,13 @@ namespace engine
       ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
       _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;
       _builder.append( FIELD_NAME_GROUPNAME, pmdGetKRCB()->getGroupName() ) ;
+
+      if ( _needDetail )
+      {
+         BSONObjBuilder subBuilder( _builder.subobjStart( FIELD_NAME_DETAIL ) ) ;
+         plan->toBSON( subBuilder ) ;
+         subBuilder.done() ;
+      }
 
       /// get some info before explain
       _beginMon = *cb->getMonAppCB() ;

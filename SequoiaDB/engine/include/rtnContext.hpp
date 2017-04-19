@@ -1043,6 +1043,7 @@ namespace engine
       _rtnQueryOptions _options ;
       INT64 _queryContextID ;
       BOOLEAN _needRun ;
+      BOOLEAN _needDetail ;
 
       /// info before explain
       monAppCB _beginMon ;
