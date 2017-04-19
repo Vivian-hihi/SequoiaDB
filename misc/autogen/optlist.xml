@@ -1260,5 +1260,17 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_OPT_EST_CACHE_SIZE</name>
+      <long>optestcachesize</long>
+      <description>
+         <en>The optimizer estimates a number of data pages are in memory, and ignore their IO cost when estimating access plans, default: 10, 0 means to estimate IO cost always, -1 means never to estimate IO cost</en>
+         <cn>查询优化器忽略IO影响的最小的页数，数据页数大于阈值时，估算查询计划代价时需要计算IO的代价，默认值：10，0表示一直需要计算IO代价，-1表示从不计算IO代价</cn>
+      </description>
+      <type>int</type>
+      <default>10</default>
+      <hidden>true</hidden>
+   </opt>
+
 </optlist>
 

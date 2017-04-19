@@ -502,6 +502,7 @@ namespace engine
          OSS_INLINE UINT32 getDmsChkInterval() const { return _dmsChkInterval ; }
          OSS_INLINE UINT32 getCacheMergeSize() const { return _cacheMergeSize << 20 ; }
          OSS_INLINE BOOLEAN isEnabledPerfStat() const { return _perfStat ; }
+         OSS_INLINE INT32 getOptEstCacheSize() const { return _optEstCacheSize ; }
 
          std::string getOmAddr() const ;
 
@@ -586,6 +587,7 @@ namespace engine
          UINT32      _dmsChkInterval ;
          UINT32      _cacheMergeSize ;
          BOOLEAN     _perfStat ;
+         INT32       _optEstCacheSize ;
 
 #ifdef SDB_ENTERPRISE
 

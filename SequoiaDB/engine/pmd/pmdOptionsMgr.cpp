@@ -88,6 +88,7 @@ namespace engine
    #define PMD_DFT_ARCHIVE_QUOTA       (10)  // 10 GB
    #define PMD_DFT_DMS_CHK_INTERVAL    (0) // disable
    #define PMD_DFT_CACHE_MERGE_SZ      (0)
+   #define PMD_DFT_OPT_EST_CACHE_SIZE  (10)
 
    /*
       _pmdCfgExchange implement
@@ -1377,6 +1378,7 @@ namespace engine
       _dmsChkInterval = PMD_DFT_DMS_CHK_INTERVAL ;
       _cacheMergeSize = PMD_DFT_CACHE_MERGE_SZ ;
       _perfStat = FALSE ;
+      _optEstCacheSize = PMD_DFT_OPT_EST_CACHE_SIZE ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1673,6 +1675,11 @@ namespace engine
       // --perfstat
       rdxBooleanS( pEX, PMD_OPTION_PERF_STAT, _perfStat, FALSE,
                    TRUE, FALSE, TRUE ) ;
+
+      // --optestcachesize
+      rdxInt( pEX, PMD_OPTION_OPT_EST_CACHE_SIZE, _optEstCacheSize, FALSE,
+              TRUE, PMD_DFT_OPT_EST_CACHE_SIZE, TRUE ) ;
+      rdvMinMax( pEX, _optEstCacheSize, -1, INT_MAX, TRUE ) ;
 
       // end map
 
