@@ -7,7 +7,7 @@
 function main(){
    //get path
    var cmd = new Cmd();
-   var localInstallPath = commGetInstallPath( cmd );
+   var localInstallPath = commGetInstallPath();
    var readFileName = localInstallPath + "/bin/sdbdmsdump";
    println("read file name :" + readFileName);
    

@@ -20,7 +20,7 @@ function main(){
    }
    
    var localCmd = new Cmd();
-   var localInstallPath = commGetInstallPath( localCmd );
+   var localInstallPath = commGetInstallPath();
    var localSrcFileName = localInstallPath + "/bin/sdbdmsdump";
    println( "local source file name :" + localhost + ":" + localSrcFileName );
    var localDstFileName = WORKDIR + "/dstFile_11338";
@@ -30,7 +30,7 @@ function main(){
    }
    
    var remoteCmd = remote.getCmd();
-   var remoteInstallPath = commGetInstallPath( remoteCmd );
+   var remoteInstallPath = commGetInstallPath();
    var remoteSrcFileName = remoteInstallPath + "/bin/sdbdmsdump";
    println( "remote source file name :" + remotehost + ":" + remoteSrcFileName );
    var remoteDstFileName = WORKDIR + "/dstFile_11338";
@@ -49,6 +49,7 @@ function main(){
    scpTest(localSrcFileName, 
            remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 
            localFile, remoteFile);
+   println("check scp from source to destination success");
    
    //seqDB-11339      
    try{
