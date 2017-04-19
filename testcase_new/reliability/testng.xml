@@ -28,6 +28,7 @@
 			
 		  <package name="com.sequoiadb.datasync.killnode" />
 			<package name="com.sequoiadb.metaopr.killnode" />
+			<package name="com.sequoiadb.metaopr.diskfull" />
 			<package name="com.sequoiadb.datasync.brokennetwork" />
 		</packages>
 	</test>
