@@ -31,6 +31,7 @@
 *******************************************************************************/
 
 #include "coordAuthCrtOperator.hpp"
+#include "msgMessageFormat.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 

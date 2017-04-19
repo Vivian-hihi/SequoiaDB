@@ -32,6 +32,7 @@
 
 #include "coordAuthBase.hpp"
 #include "msgAuth.hpp"
+#include "msgMessage.hpp"
 #include "msgMessageFormat.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
