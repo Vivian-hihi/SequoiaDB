@@ -10,6 +10,7 @@ package com.sequoiadb.fault;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.commlib.SdbTestBase;
 import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.FaultException;
@@ -172,13 +173,34 @@ public class DiskFull extends Fault {
      *            持续时间s
      * @param presetPercent
      *            线程启动之前，希望磁盘占用率达到的数值(<98)
+     * @param sysCataCL
+     *            待填满的系统编目表（SYSCOLLECTIONS,SYSDOMAINS...）
+     *            备注：当填充catalog节点时，单纯通过创建domain/cs/cl增加编目信息很难填满磁盘，
+     *            如果填写该参数，则可以通过特意插入记录来填满该编目表的空间。
+     *            缺省，则不做此特殊处理。
      * @return
      */
     public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
-            int duration, int presetPercent) {
+            int duration, DBCollection sysCataCL, int presetPercent) {
         FaultMakeTask task = null;
-        DiskFull df = new DiskFull(hostName, padPath, presetPercent);
-        task = new FaultMakeTask(df, maxDelay, duration, 3);
+        if (sysCataCL != null) {
+            DiskFullForCata df = new DiskFullForCata(hostName, padPath, presetPercent, sysCataCL);
+            task = new FaultMakeTask(df, maxDelay, duration, 3);
+        } else  {
+            DiskFull df = new DiskFull(hostName, padPath, presetPercent);
+            task = new FaultMakeTask(df, maxDelay, duration, 3);
+        }
         return task;
+    }
+    
+    public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
+            int duration, DBCollection sysCataCL) {
+        int defaultPercent = 97;
+        return getFaultMakeTask(hostName, padPath, maxDelay, duration, null, defaultPercent);
+    }
+    
+    public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
+            int duration) {
+        return getFaultMakeTask(hostName, padPath, maxDelay, duration, null);
     }
 }
