@@ -91,7 +91,7 @@ public class ReplicaGroup {
      * @throws com.sequoiadb.exception.BaseException
      * @fn int getNodeNum(Node.NodeStatus status)
      * @brief Get the amount of the nodes with the specified status.
-     * @deprecated Since v2.8, the status of node are invalid, nerver use this api again.
+     * @deprecated Since v2.8, the status of node are invalid, never use this api again.
      */
     public int getNodeNum(Node.NodeStatus status) throws BaseException {
         BSONObject group = sequoiadb.getDetailById(id);
