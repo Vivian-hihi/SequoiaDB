@@ -54,7 +54,7 @@ function testIsUniqueEnforced( cl, indexName )
       if( undefined == indexName ) { throw "no index name"; }
       var funcName = "testIsUniqueEnforced";
       cl.createIndex( indexName, {a:1}, true, true );
-      var query = cl.find({a:{$lt:10}}).explain({Run: true}).toArray();
+      var query = cl.find({a:{$lt:10}}).hint({'':''}).explain({Run: true}).toArray();
       var queryObj = eval( "(" + query[0] + ")");
       if( "ixscan" != queryObj["ScanType"] || 2 != queryObj["ReturnNum"] )
       {

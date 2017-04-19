@@ -119,7 +119,7 @@ function findRecs( cl )
                      {"tmp1.$1":2}, 
                      {tmp2:{$size:1, $et:2}}, 
                      {tmp3:{$field:"a"}} ]};
-   var rc = cl.find( cond, {_id:{$include:0}} ).sort({a:1});
+   var rc = cl.find( cond, {_id:{$include:0}} ).sort({a:1}).hint({'':''});
    return rc ;
 }
 

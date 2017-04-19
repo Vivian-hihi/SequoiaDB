@@ -49,7 +49,7 @@ function explain( cl )
    var rc = [];
    var rc0 = cl.find().explain({Run:true}).current().toObj();
    var rc1 = cl.find({a:2}).explain({Run:true}).current().toObj();
-   var rc2 = cl.find({"$and":[ {"a": {"$gte": 1}},{b:2} ]}).explain({Run:true}).current().toObj();
+   var rc2 = cl.find({"$and":[ {"a": {"$gte": 1}},{b:2} ]}).hint({'':''}).explain({Run:true}).current().toObj();
    rc.push( rc0 );
    rc.push( rc1 );
    rc.push( rc2 );

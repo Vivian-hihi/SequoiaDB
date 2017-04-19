@@ -117,7 +117,7 @@ function main( db )
                             "TotalDataRead":1 }) ) ;
       // query1. {Index Name : "idIndex"}
       println( "==>query1. {Index Name : 'idIndex'}" ) ;
-      println( cl.find({id:{$lt:1000},name:"mike10index10"}).next() ) ;
+      println( cl.find({id:1000}).next() ) ;
       var snapInfo2 = getCurrentRead( db, _clName ) ;
       var dataRead2 = snapInfo2[0] ;
       var indexRead2 = snapInfo2[1] ;
@@ -138,7 +138,7 @@ function main( db )
 
       // query2. {Index Name : "idpidIndex"}
       println( "==>query2. {Index Name : 'idpidIndex'}" ) ;
-      println( cl.find({id:{$lt:5000},pid:{$gt:10}}).next() ) ;
+      println( cl.find({id:{$lt:5000, $gt:2000},pid:10}).next() ) ;
       //sleep(5000);
       var snapInfo3 = getCurrentRead( db, _clName ) ;
       var dataRead3 = snapInfo3[0] ;

@@ -38,12 +38,12 @@ function main()
    checkResult( dbcl, findCondition1, null, expRecs1, {No:1} );
    
    explainExpRecs1 = [{Name:COMMCSNAME+"."+COMMCLNAME,
-                       ScanType:"ixscan",
-                       IndexName:"a",
+                       ScanType:"tbscan",
+                       IndexName:"",
                        UseExtSort:false,
                        Query:{$and:[{a:{$gt:5}}]},
-                       IXBound:{a:[[5,{$maxElement:1}]]},
-                       NeedMatch:false}];
+                       IXBound:null,
+                       NeedMatch:true}];
    checkExplainResult( dbcl, findCondition1, null, null, explainExpRecs1 );
    
    //seqDB-9210
@@ -55,12 +55,12 @@ function main()
    checkResult( dbcl, findCondition2, null, expRecs2, {No:1} );
    
    explainExpRecs2 = [{Name:COMMCSNAME+"."+COMMCLNAME,
-                       ScanType:"ixscan",
-                       IndexName:"a",
+                       ScanType:"tbscan",
+                       IndexName:"",
                        UseExtSort:false,
                        Query:{$and:[{a:{$lt:5}}]},
-                       IXBound:{a:[[{$minElement:1},5]]},
-                       NeedMatch:false}];
+                       IXBound:null,
+                       NeedMatch:true}];
    checkExplainResult( dbcl, findCondition2, null, null, explainExpRecs2 );
    
    var findCondition3 = {$not:[{a:{$ne:5}}]};

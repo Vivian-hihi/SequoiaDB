@@ -127,10 +127,10 @@ function main()
    checkResult( dbcl, findCondition9, null, expRecs9, {_id:1} );
    
    var explainRecs9 = [{Name:COMMCSNAME + "." + COMMCLNAME,
-	                    ScanType:"ixscan",
-	                    IndexName:"a",
+	                    ScanType:"tbscan",
+	                    IndexName:"",
 	                    Query:{$and:[{a:{$returnMatch:[1,3],$mod:[2,0]}}]},
-	                    IXBound:{a:[[-Infinity,Infinity]]},
+	                    IXBound:null,
 	                    NeedMatch:true}];
    checkExplainResult( dbcl, findCondition9, null, {No:1}, explainRecs9 );
    
@@ -140,10 +140,10 @@ function main()
    checkResult( dbcl, findCondition10, null, expRecs10, {_id:1} );
    
    var explainRecs10 = [{Name:COMMCSNAME + "." + COMMCLNAME,
-	                    ScanType:"ixscan",
-	                    IndexName:"a",
+	                    ScanType:"tbscan",
+	                    IndexName:"",
 	                    Query:{$and:[{a:{$expand:1,$mod:[5,4]}}]},
-	                    IXBound:{a:[[-Infinity,Infinity]]},
+	                    IXBound:null,
 	                    NeedMatch:true}];
    checkExplainResult( dbcl, findCondition10, null, {No:1}, explainRecs10 );
    
@@ -153,10 +153,10 @@ function main()
    checkResult( dbcl, findCondition11, null, expRecs11, {_id:1} );
    
    var explainRecs11 = [{Name:COMMCSNAME + "." + COMMCLNAME,
-	                    ScanType:"ixscan",
-	                    IndexName:"a",
+	                    ScanType:"tbscan",
+	                    IndexName:"",
 	                    Query:{$and:[{a:{$returnMatch:[0,-1],$gt:10}}]},
-	                    IXBound:{a:[[10,{$maxElement:1}]]},
+	                    IXBound:null,
 	                    NeedMatch:true}];
    checkExplainResult( dbcl, findCondition11, null, {No:1}, explainRecs11 );
    
@@ -166,10 +166,10 @@ function main()
    checkResult( dbcl, findCondition12, null, expRecs12, {_id:1} );
    
    var explainRecs12 = [{Name:COMMCSNAME + "." + COMMCLNAME,
-	                    ScanType:"ixscan",
-	                    IndexName:"a",
+	                    ScanType:"tbscan",
+	                    IndexName:"",
 	                    Query:{$and:[{a:{$expand:1,$gt:10}}]},
-	                    IXBound:{a:[[10,{$maxElement:1}]]},
+	                    IXBound:null,
 	                    NeedMatch:true}];
    checkExplainResult( dbcl, findCondition12, null, {No:1}, explainRecs12 );
 }

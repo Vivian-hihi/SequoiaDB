@@ -55,7 +55,7 @@ function main()
       
       println("---begin to: cl.find({sk:{$gt:-1}}).explain()");
       var rc = cl.find({sk:{$gt:-1}}).explain();
-      var expOpt = {ScanType:"ixscan", IndexName:sdIdxName, Query:{"$and":[{"sk":{"$gt":-1}}]}, 
+      var expOpt = {ScanType:"tbscan", IndexName:"", Query:{"$and":[{"sk":{"$gt":-1}}]}, 
                     groupList:groupList, subclList:subclList};
       checkExplain( rc, expOpt );
       
@@ -73,9 +73,9 @@ function main()
       
       cl.createIndex( indexName, {b:1} );
       
-      println("---begin to: cl.find({b:{$gt:1}}).explain()");
-      var rc = cl.find({b:{$gt:1}}).explain();
-      var expOpt = {ScanType:"ixscan", IndexName:indexName, Query:{"$and":[{"b":{"$gt":1}}]},
+      println("---begin to: cl.find({b:{$et:1}}).explain()");
+      var rc = cl.find({b:{$et:1}}).explain();
+      var expOpt = {ScanType:"ixscan", IndexName:indexName, Query:{"$and":[{"b":{"$et":1}}]},
                     groupList:groupList, subclList:subclList};
       checkExplain( rc, expOpt );
       

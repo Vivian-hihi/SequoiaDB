@@ -22,16 +22,16 @@ function main()
       var expOpt = {ScanType:"tbscan", IndexName:"", Query:{"$and":[]}, groupList:groupList};
       checkExplain( rc, expOpt );
       
-      println("---begin to: cl.find({a:{$gt:1}}).explain()");
-      var rc = cl.find({a:{$gt:1}}).explain();
-      var expOpt = {ScanType:"tbscan", IndexName:"", Query:{"$and":[{"a":{"$gt":1}}]}, groupList:groupList};
+      println("---begin to: cl.find({a:{$et:1}}).explain()");
+      var rc = cl.find({a:{$et:1}}).explain();
+      var expOpt = {ScanType:"tbscan", IndexName:"", Query:{"$and":[{"a":{"$et":1}}]}, groupList:groupList};
       checkExplain( rc, expOpt );
       
       cl.createIndex( indexName, {a:1} );
       
-      println("---begin to: cl.find({a:{$gt:1}}).explain()");
-      var rc = cl.find({a:{$gt:1}}).explain();
-      var expOpt = {ScanType:"ixscan", IndexName:indexName, Query:{"$and":[{"a":{"$gt":1}}]}, groupList:groupList};
+      println("---begin to: cl.find({a:{$et:1}}).explain()");
+      var rc = cl.find({a:{$et:1}}).explain();
+      var expOpt = {ScanType:"ixscan", IndexName:indexName, Query:{"$and":[{"a":{"$et":1}}]}, groupList:groupList};
       checkExplain( rc, expOpt );
       
       println("---begin to: cl.find().sort({a:1}).explain()");

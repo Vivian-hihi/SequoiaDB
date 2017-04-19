@@ -16,7 +16,9 @@ function main()
    
    //create index
    commCreateIndex( dbcl, "a1", {"a.0":1});
-   
+
+   hintCondition = { '':'' } ;
+
    //insert data 
 	var doc = [{No:1,a:[1]},
 	           {No:2,a:[2]},

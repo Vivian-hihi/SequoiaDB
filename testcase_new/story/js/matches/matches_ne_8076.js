@@ -82,14 +82,25 @@ function checkResult( cl, findRecsArray, dataType, indexName )
    println("\n---Begin to check index.");
    
    //compare scanType
-   var rc = cl.find( {b:{$ne: null}} ).sort({a:1}).explain().current().toObj();
+   var rc = cl.find( {b:{$ne: null}} ).sort({a:1}).hint({'':''}).explain().current().toObj();
    if( rc["ScanType"] !== "ixscan" || rc["IndexName"] !== indexName )
    {
       throw buildException("checkResult", null, "[compare index]", 
                            "[ScanType:ixscan,IndexName:"+ indexName +"]", 
                            "[ScanType:"+ rc["ScanType"] +",IndexName:"+ rc["IndexName"] +"]");
    }
-   
+
+   println("\n---Begin to check tblscan.");
+
+   //compare scanType
+   var rc = cl.find( {b:{$ne: null}} ).sort({a:1}).explain().current().toObj();
+   if( rc["ScanType"] !== "tbscan" )
+   {
+      throw buildException("checkResult", null, "[compare tbscan]",
+                           "[ScanType:tbscan]",
+                           "[ScanType:"+ rc["ScanType"] +",IndexName:"+ rc["IndexName"] +"]");
+   }
+
    //-------------------check records----------------------------
    println("\n---Begin to check results.");
    

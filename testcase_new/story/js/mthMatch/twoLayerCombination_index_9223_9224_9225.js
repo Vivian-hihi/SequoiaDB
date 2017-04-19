@@ -14,7 +14,9 @@ function main()
    
    //create index
    commCreateIndex( dbcl, "age", {age:-1});
-   
+
+   hintCondition = { '':'' } ;
+
    //insert data 
 	var doc = [{No:1,name:{firstName:"zhang",lastName:"san"},age:18,addr:["guangdong","shenzhen1","xiasha1","yuehubuilding5",1710]},
 	           {No:2,name:{firstName:"zhang",lastName:"san1"},age:19,addr:["guangdong","shenzhen2","xiasha1","yuehubuilding5",1711]},

@@ -89,7 +89,7 @@ function main( db )
    checkExplain( idxCL, {floatNum:123e+50} );
    checkExplain( idxCL, {string:"field_value"} );
    checkExplain( idxCL, {objectOID:{"$oid":"123abcd00ef12358902300ef"}} );
-   checkExplain( idxCL, {bool:true} );
+   //checkExplain( idxCL, {bool:true} );
    checkExplain( idxCL, {date:{"$date":"2014-5-21"}} );
    checkExplain( idxCL, {timestamp:{"$timestamp":"2014-5-21-9.17.30.111111"}} );
    checkExplain( idxCL, {binary:{"$binary":"aGVsbG8gd29ybGQ=", "$type":"1"}} );

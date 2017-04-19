@@ -70,7 +70,7 @@ function findRecs( cl, rawData, dataType )
    {
       tmpValue.push( rawData[i][dataType[i]] );
    }
-   var rc = cl.find( {b:{$in: tmpValue }} ).sort({a:1});
+   var rc = cl.find( {b:{$in: tmpValue }} ).sort({a:1}).hint({'':''});
    
    return rc ;
 }

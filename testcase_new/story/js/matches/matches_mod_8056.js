@@ -52,16 +52,16 @@ function findRecs( cl, div, rem )
 
 function checkResult( rc1, rc2, rawData, indexName )
 {
-   println("\n---Begin to check index.");
-   
-   //compare scanType
-   var tmpExp = rc1.explain().current().toObj();
-   if( tmpExp["ScanType"] !== "ixscan" || tmpExp["IndexName"] !== indexName )
-   {
-      throw buildException("checkResult", null, "[compare index]", 
-                           "[ScanType:ixscan,IndexName:"+ indexName +"]", 
-                           "[ScanType:"+ tmpExp["ScanType"] +",IndexName:"+ tmpExp["IndexName"] +"]");
-   }
+   //println("\n---Begin to check index.");
+   //
+   ////compare scanType
+   //var tmpExp = rc1.explain().current().toObj();
+   //if( tmpExp["ScanType"] !== "ixscan" || tmpExp["IndexName"] !== indexName )
+   //{
+   //   throw buildException("checkResult", null, "[compare index]", 
+   //                        "[ScanType:ixscan,IndexName:"+ indexName +"]", 
+   //                        "[ScanType:"+ tmpExp["ScanType"] +",IndexName:"+ tmpExp["IndexName"] +"]");
+   //}
    
    //-----------------------check result for $mod[-2147483648, 2147483647]---------------------
    println("\n---Begin to check result for find by $mod[-2147483648, 2147483647].");

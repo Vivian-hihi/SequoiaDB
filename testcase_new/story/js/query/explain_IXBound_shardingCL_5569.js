@@ -113,7 +113,7 @@ function checkResult( rc )
    
    //var expQuery     = '[{"$and":[{"b":{"$et":2}},{"a":{"$gte":1}}]}]';
    var expQuery     = '[{"b":{"$et":2}},{"a":{"$gte":1}}]';
-   var expIXBound   = '{"a":[[1,{"$maxElement":1}]]}';
+   var expIXBound   = '{"b":[[2,2]]}';
    var expNeedMatch = true ;
    if( Query !== expQuery || IXBound !== expIXBound 
     || NeedMatch !== expNeedMatch )

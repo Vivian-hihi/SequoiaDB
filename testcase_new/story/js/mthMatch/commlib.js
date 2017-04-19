@@ -43,7 +43,15 @@ function sortFindData(dbcl, findCondition1, findCondition2, sortCondition )
 {
    try
    {
-      var sortResult = dbcl.find( findCondition1, findCondition2 ).sort( sortCondition );
+      var sortResult ;
+      if ( typeof hintCondition == "undefined" )
+      {
+         sortResult = dbcl.find( findCondition1, findCondition2 ).sort( sortCondition );
+      }
+      else
+      {
+         sortResult = dbcl.find( findCondition1, findCondition2 ).sort( sortCondition ).hint( hintCondition );
+      }
    }
    catch(e)
    {
@@ -61,7 +69,11 @@ function explainFindData(dbcl, findCondition1, findCondition2, sortCondition )
 {
    try
    {
-      var explainResult = dbcl.find( findCondition1, findCondition2 ).sort( sortCondition ).explain();
+      var explainResult
+      if ( typeof hintCondition == "undefined" )
+         explainResult = dbcl.find( findCondition1, findCondition2 ).sort( sortCondition ).explain();
+      else
+         explainResult = dbcl.find( findCondition1, findCondition2 ).sort( sortCondition ).hint( hintCondition ).explain();
    }
    catch(e)
    {
