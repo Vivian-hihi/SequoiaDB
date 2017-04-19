@@ -7,7 +7,8 @@
 function main(){
    var localhost = toolGetLocalhost();
    println("localhost:" + localhost);
-   localFile = new File("/etc/default/sequoiadb");
+   var localFileName = "/tmp/test_11338";
+   localFile = new File(localFileName , 0777);
    
    var remotehost = toolGetRemotehost();
    println( "remotehost:" + remotehost );
@@ -131,7 +132,8 @@ function main(){
    scpTest(localSrcFileName, 
            remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 
            localFile, remoteFile, 0755, "a");
-   
+		 
+	File.remove(localFileName);
 }
 main();
 
