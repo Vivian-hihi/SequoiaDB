@@ -566,6 +566,7 @@ namespace engine
             for ( UINT32 i = 0 ; i < _eleSize ; ++i )
             {
                _pSet->insert( _staticBuf[ i ] ) ;
+               _staticBuf[ i ] = T() ;
             }
             _eleSize = 0 ;
          }
