@@ -1905,7 +1905,8 @@ namespace engine
 
             skipCount = (INT64)(totalCount * ( ( 100 - percent ) / 100 ) ) ;
             hint = BSON( "" << "" ) ;
-            flag = FLG_QUERY_FORCE_HINT ;
+            // Must use sorted index for query
+            flag = FLG_QUERY_WITHOUT_SORT ;
 
             /// sort by shardingKey that if $shard index does not exist
             /// can still match index.

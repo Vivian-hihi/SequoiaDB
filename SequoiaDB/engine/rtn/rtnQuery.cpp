@@ -373,7 +373,7 @@ namespace engine
       BOOLEAN writable = FALSE ;
 
       BSONObj hintTmp = hint ;
-      BSONObj blockObj ;
+      BSONObj blockObj, emptyObj ;
       BSONObj *pBlockObj = NULL ;
       const CHAR *indexName = NULL ;
       const CHAR *scanType  = NULL ;
@@ -403,7 +403,7 @@ namespace engine
          }
       }
 
-      if ( FLG_QUERY_MODIFY & flags )
+      if ( OSS_BIT_TEST( flags, FLG_QUERY_MODIFY ) )
       {
          rc = _rtnParseQueryModify( hintTmp, &queryModifier ) ;
          if ( SDB_OK != rc )
@@ -476,9 +476,13 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
-      rc = apm->getPlan ( matcher,
-                          orderBy, // orderBy
-                          hintTmp, // hint
+      // selector, numToSkip and numToReturn are not considered in plan cache
+      // now, so put dummy ones to find the plan
+      rc = apm->getPlan ( emptyObj,
+                          matcher,
+                          orderBy,  // orderBy
+                          hintTmp,  // hint
+                          flags, 0, -1, // flags, numToSkip, numToReturn
                           pCollectionShortName,
                           &plan ) ;
       if ( rc )
@@ -688,8 +692,9 @@ namespace engine
                        e.what() ) ;
       }
 
-      plan = SDB_OSS_NEW optAccessPlan( su, pCollectionShortName, dummy,
-                                        dummy, hint ) ;
+      plan = SDB_OSS_NEW optAccessPlan( su, pCollectionShortName,
+                                        dummy, dummy, dummy, hint,
+                                        0, 0, -1 ) ;
       if ( !plan )
       {
          rc = SDB_OOM ;
@@ -835,11 +840,18 @@ namespace engine
       }
 
       /// clear explain flag.
+      SINT32 explainFlags = flags ;
+      if ( OSS_BIT_TEST( flags, FLG_QUERY_MODIFY ) && !orderBy.isEmpty() )
+      {
+         OSS_BIT_SET( explainFlags, FLG_QUERY_WITHOUT_SORT ) ;
+      }
+      OSS_BIT_CLEAR( explainFlags, FLG_QUERY_EXPLAIN | FLG_QUERY_MODIFY ) ;
+
       rtnQueryOptions options( matcher, selector,
                                orderBy, realHint,
                                pCollectionName,
                                numToSkip, numToReturn,
-                               OSS_BIT_CLEAR( flags, FLG_QUERY_EXPLAIN | FLG_QUERY_MODIFY ),
+                               explainFlags,
                                FALSE ) ;
 
       rtnContextExplain *context = NULL ;

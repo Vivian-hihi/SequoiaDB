@@ -44,14 +44,18 @@ namespace engine
 {
    static INT32 createNewPlan( _dmsStorageUnit *su,
                                const CHAR *name,
-                               const BSONObj &query,
+                               const BSONObj &selector,
+                               const BSONObj &matcher,
                                const BSONObj &orderBy,
                                const BSONObj &hint,
+                               SINT32 flags,
+                               SINT64 numToSkip, SINT64 numToReturn,
                                optAccessPlan **out )
    {
       INT32 rc = SDB_OK ;
-      *out = SDB_OSS_NEW optAccessPlan ( su, name, query,
-                                         orderBy, hint ) ;
+      *out = SDB_OSS_NEW optAccessPlan ( su, name,
+                                         selector, matcher, orderBy, hint,
+                                         flags, numToSkip, numToReturn ) ;
       if ( !(*out) )
       {
          PD_LOG ( PDERROR, "Not able to allocate memory for new plan" ) ;
@@ -63,7 +67,7 @@ namespace engine
       rc = (*out)->optimize() ;
       PD_RC_CHECK ( rc, (SDB_RTN_INVALID_PREDICATES==rc)?PDINFO:PDERROR,
                     "Failed to optimize plan, query: %s\norder %s\nhint %s",
-                    query.toString().c_str(),
+                    matcher.toString().c_str(),
                     orderBy.toString().c_str(),
                     hint.toString().c_str() ) ;
    done:
@@ -107,9 +111,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNACCESSPL_GETPLAN, "_rtnAccessPlanList::getPlan" )
-   INT32 _rtnAccessPlanList::getPlan ( const BSONObj &query,
+   INT32 _rtnAccessPlanList::getPlan ( const BSONObj &selector,
+                                       const BSONObj &matcher,
                                        const BSONObj &orderBy,
                                        const BSONObj &hint,
+                                       SINT32 flags,
+                                       SINT64 numToSkip,
+                                       SINT64 numToReturn,
                                        optAccessPlan **out,
                                        SINT32 &incCount )
    {
@@ -125,7 +133,7 @@ namespace engine
          // check if the plan is in the list
          for ( it = _plans.begin(); it != _plans.end(); ++it )
          {
-            if ( (*it)->Reusable ( query, orderBy, hint )  )
+            if ( (*it)->Reusable ( matcher, orderBy, hint, flags )  )
             {
                // we found one plan match, then let's delete the plan we just
                // created and return the existing one
@@ -145,7 +153,8 @@ namespace engine
       }
 
       rc = createNewPlan( _su, _collectionName,
-                          query, orderBy, hint,
+                          selector, matcher, orderBy, hint,
+                          flags, numToSkip, numToReturn,
                           out ) ;
       if ( SDB_OK != rc )
       {
@@ -284,15 +293,19 @@ namespace engine
    }
    
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNACCESSPS_GETPLAN, "_rtnAccessPlanSet::getPlan" )
-   INT32 _rtnAccessPlanSet::getPlan ( const BSONObj &query,
+   INT32 _rtnAccessPlanSet::getPlan ( const BSONObj &selector,
+                                      const BSONObj &matcher,
                                       const BSONObj &orderBy,
                                       const BSONObj &hint,
+                                      SINT32 flags,
+                                      SINT64 numToSkip,
+                                      SINT64 numToReturn,
                                       optAccessPlan **out,
                                       SINT32 &incCount )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNACCESSPS_GETPLAN );
-      UINT32 hash = optAccessPlan::hash ( query, orderBy, hint ) ;
+      UINT32 hash = optAccessPlan::hash ( matcher, orderBy, hint ) ;
       SINT32 inc = 0 ;
       {
          RTNAPS_SLOCK
@@ -303,7 +316,8 @@ namespace engine
          {
             rtnAccessPlanList *planList = itr->second ;
             // if the hash already exist, then let's get in and see
-            rc = planList->getPlan ( query, orderBy, hint,
+            rc = planList->getPlan ( selector, matcher, orderBy, hint,
+                                     flags, numToSkip, numToReturn,
                                      out, tmp ) ;
             if ( rc )
             {
@@ -340,7 +354,9 @@ namespace engine
          }
          rtnAccessPlanList *planlist = _planLists[hash] ;
          SDB_ASSERT( planlist, "not able to find the planlist" ) ;
-         rc = planlist->getPlan ( query, orderBy, hint, out, tmp ) ;
+         rc = planlist->getPlan ( selector, matcher, orderBy, hint,
+                                  flags, numToSkip, numToReturn,
+                                  out, tmp ) ;
          if ( rc )
          {
             // let's delete the newly created list
@@ -471,9 +487,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNACCESSPLMAN, "_rtnAccessPlanManager::getPlan" )
-   INT32 _rtnAccessPlanManager::getPlan ( const BSONObj &query,
+   INT32 _rtnAccessPlanManager::getPlan ( const BSONObj &selector,
+                                          const BSONObj &matcher,
                                           const BSONObj &orderBy,
                                           const BSONObj &hint,
+                                          SINT32 flags,
+                                          SINT64 numToSkip,
+                                          SINT64 numToReturn,
                                           const CHAR *collectionName,
                                           optAccessPlan **out )
    {
@@ -486,8 +506,9 @@ namespace engine
       if ( 0 == _bucketsNum )
       {
          rc = createNewPlan( _su, collectionName,
-                             query, orderBy,
-                             hint, out ) ;
+                             selector, matcher, orderBy, hint,
+                             flags, numToSkip, numToReturn,
+                             out ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to create new plan:%d", rc ) ;
@@ -503,8 +524,9 @@ namespace engine
          {
             _rtnAccessPlanSet *plan = itr->second ;
             // if we are able to find the collection name
-            rc = plan->getPlan ( query, orderBy,
-                                 hint, out, incCount ) ;
+            rc = plan->getPlan ( selector, matcher, orderBy, hint,
+                                 flags, numToSkip, numToReturn,
+                                 out, incCount ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to get plan, rc = %d", rc ) ;
@@ -543,7 +565,9 @@ namespace engine
          }
          rtnAccessPlanSet *planset = _planSets[collectionName] ;
          SDB_ASSERT ( planset, "not able to find the planset" ) ;
-         rc = planset->getPlan ( query, orderBy, hint, out, incCount ) ;
+         rc = planset->getPlan ( selector, matcher, orderBy, hint,
+                                 flags, numToSkip, numToReturn,
+                                 out, incCount ) ;
          if ( rc )
          {
             // clean up the currently allocated set

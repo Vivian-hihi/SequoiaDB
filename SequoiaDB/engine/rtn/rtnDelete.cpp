@@ -134,9 +134,11 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
-      rc = apm->getPlan ( deletor,
+      rc = apm->getPlan ( emptyObj,
+                          deletor,
                           emptyObj, // orderBy
-                          hint, // hint
+                          hint,     // hint
+                          0, 0, -1, // flags, numToSkip, numToReturn
                           pCollectionShortName,
                           &plan ) ;
       if ( rc )
@@ -284,8 +286,9 @@ namespace engine
                        e.what() ) ;
       }
 
-      plan = SDB_OSS_NEW optAccessPlan( su, pCollectionShortName, dummy,
-                                        dummy, hint ) ;
+      plan = SDB_OSS_NEW optAccessPlan( su, pCollectionShortName,
+                                        dummy, dummy, dummy, hint,
+                                        0, 0, -1 ) ;
       if ( !plan )
       {
          rc = SDB_OOM ;

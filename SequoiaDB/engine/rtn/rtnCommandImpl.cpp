@@ -623,6 +623,7 @@ namespace engine
       dmsMBContext *mbContext = NULL ;
       rtnAccessPlanManager *apm = NULL ;
       optAccessPlan *plan = NULL ;
+      BSONObj emptyObj ;
 
       // This prevents other sessions drop the collectionspace during accessing
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
@@ -637,9 +638,11 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
-      rc = apm->getPlan ( match,
-                          orderby, // orderBy
-                          hint, // hint
+      rc = apm->getPlan ( emptyObj,
+                          match,
+                          orderby,  // orderBy
+                          hint,     // hint
+                          0, 0, -1, // flags, numToSkip, numToReturn
                           pCollectionShortName,
                           &plan ) ;
       if ( rc )

@@ -90,9 +90,15 @@ namespace engine
       }
 
       void invalidate ( UINT32 &cleanNum ) ;
-      INT32 getPlan ( const BSONObj &query, const BSONObj &orderBy,
-                      const BSONObj &hint, optAccessPlan **out,
-                      SINT32 &incSize ) ;
+      INT32 getPlan ( const BSONObj &selector,
+                      const BSONObj &matcher,
+                      const BSONObj &orderBy,
+                      const BSONObj &hint,
+                      SINT32 flags,
+                      SINT64 numToSkip,
+                      SINT64 numToReturn,
+                      optAccessPlan **out,
+                      SINT32 &incCount ) ;
 
       void releasePlan ( optAccessPlan *plan ) ;
 
@@ -153,9 +159,15 @@ namespace engine
          _planLists.clear() ;
       }
       void invalidate ( UINT32 &cleanNum ) ;
-      INT32 getPlan ( const BSONObj &query, const BSONObj &orderBy,
-                      const BSONObj &hint, optAccessPlan **out,
-                      SINT32 &incSize ) ;
+      INT32 getPlan ( const BSONObj &selector,
+                      const BSONObj &matcher,
+                      const BSONObj &orderBy,
+                      const BSONObj &hint,
+                      SINT32 flags,
+                      SINT64 numToSkip,
+                      SINT64 numToReturn,
+                      optAccessPlan **out,
+                      SINT32 &incCount ) ;
 
       void releasePlan ( optAccessPlan *plan ) ;
 
@@ -225,8 +237,14 @@ namespace engine
          _planSets.clear() ;
       }
       void invalidatePlans ( const CHAR *collectionName ) ;
-      INT32 getPlan ( const BSONObj &query, const BSONObj &orderBy,
-                      const BSONObj &hint, const CHAR *collectionName,
+      INT32 getPlan ( const BSONObj &selector,
+                      const BSONObj &matcher,
+                      const BSONObj &orderBy,
+                      const BSONObj &hint,
+                      SINT32 flags,
+                      SINT64 numToSkip,
+                      SINT64 numToReturn,
+                      const CHAR *collectionName,
                       optAccessPlan **out ) ;
       void releasePlan ( optAccessPlan *plan ) ;
       INT32 size()

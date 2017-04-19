@@ -460,8 +460,8 @@ while ( true )
    }
    BSONObj emptyObj ;
    optAccessPlan *plan ;
-   rc = apm.getPlan ( inputObj, emptyObj, emptyObj,
-                      BIG_COLLECTION_NAME, &plan ) ;
+   rc = apm.getPlan ( emptyObj, inputObj, emptyObj, emptyObj,
+                      0, 0, -1, BIG_COLLECTION_NAME, &plan ) ;
    if ( rc )
    {
       printf("Failed to get plan\n") ;

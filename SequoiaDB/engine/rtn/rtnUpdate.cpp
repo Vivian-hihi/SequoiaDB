@@ -158,9 +158,11 @@ namespace engine
       SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
-      rc = apm->getPlan ( selector,
+      rc = apm->getPlan ( emptyObj,
+                          selector,
                           emptyObj, // orderBy
-                          hint, // hint
+                          hint,     // hint
+                          0, 0, -1, // flags, numToSkip, numToReturn
                           pCollectionShortName,
                           &plan ) ;
       if ( rc )
