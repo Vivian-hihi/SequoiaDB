@@ -26,8 +26,10 @@ static void genPython()
    ofstream fout( VER_PY_PATH ) ;
 
    fout << "# auto-generated, do not edit!!!" << endl;
-   fout << "version = '" 
-        << SDB_ENGINE_VERISON_CURRENT << "." << SDB_ENGINE_SUBVERSION_CURRENT
+   fout << "version = '"
+        << SDB_ENGINE_VERISON_CURRENT
+        << "." << SDB_ENGINE_SUBVERSION_CURRENT
+        << "." << SDB_ENGINE_FIXVERSION_CURRENT
         << "'" << endl;
 }
 
