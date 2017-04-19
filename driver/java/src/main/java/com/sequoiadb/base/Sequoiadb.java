@@ -1762,32 +1762,55 @@ public class Sequoiadb implements Closeable {
      * @param hostName  The host name
      * @param port      The port
      * @param dbpath    The database path
+     * @param options The configure options
+     * @throws com.sequoiadb.exception.BaseException
+     * @fn void createReplicaCataGroup(String hostName, int port, String dbPath,
+     * BSONObject options)
+     * @brief Create the replica Catalog group with the given options.
+     */
+    public void createReplicaCataGroup(String hostName, int port, String dbPath, 
+    		BSONObject options) {
+    		BSONObject obj = new BasicBSONObject();
+    		obj.put(SdbConstants.FIELD_NAME_HOST, hostName);
+    		obj.put(SdbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
+    		obj.put(SdbConstants.PMD_OPTION_DBPATH, dbPath);
+    		if (options != null) {
+    			for (String key : options.keySet()) {
+    				if (key.equals(SdbConstants.FIELD_NAME_HOST)
+    						|| key.equals(SdbConstants.PMD_OPTION_SVCNAME)
+    						|| key.equals(SdbConstants.PMD_OPTION_DBPATH)) {
+    					continue;
+    				}
+    				obj.put(key, options.get(key));
+    			}
+    		}
+
+    		AdminRequest request = new AdminRequest(AdminCommand.CREATE_CATALOG_GROUP, obj);
+    		SdbReply response = requestAndResponse(request);
+    		reportIfError(response);
+    }
+    
+    /**
+     * @param hostName  The host name
+     * @param port      The port
+     * @param dbpath    The database path
      * @param configure The configure options
      * @throws com.sequoiadb.exception.BaseException
      * @fn void createReplicaCataGroup(String hostName, int port, String dbPath,
-     * BSONObject configuration)
+     * Map<String, String> configuration)
      * @brief Create the replica Catalog group with the given options.
+     * @deprecated use "void createReplicaCataGroup(String hostName, int port, String dbPath, 
+    		final BSONObject options)" instead.
      */
     public void createReplicaCataGroup(String hostName, int port,
                                        String dbPath, Map<String, String> configure) {
         BSONObject obj = new BasicBSONObject();
-        obj.put(SdbConstants.FIELD_NAME_HOST, hostName);
-        obj.put(SdbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
-        obj.put(SdbConstants.PMD_OPTION_DBPATH, dbPath);
         if (configure != null) {
             for (String key : configure.keySet()) {
-                if (key.equals(SdbConstants.FIELD_NAME_HOST)
-                    || key.equals(SdbConstants.PMD_OPTION_SVCNAME)
-                    || key.equals(SdbConstants.PMD_OPTION_DBPATH)) {
-                    continue;
-                }
                 obj.put(key, configure.get(key));
             }
         }
-
-        AdminRequest request = new AdminRequest(AdminCommand.CREATE_CATALOG_GROUP, obj);
-        SdbReply response = requestAndResponse(request);
-        reportIfError(response);
+        createReplicaCataGroup(hostName, port, dbPath, obj);
     }
 
     private String getListCommand(int listType) {

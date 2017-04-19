@@ -91,6 +91,7 @@ public class ReplicaGroup {
      * @throws com.sequoiadb.exception.BaseException
      * @fn int getNodeNum(Node.NodeStatus status)
      * @brief Get the amount of the nodes with the specified status.
+     * @deprecated Since v2.8, the status of node are invalid, nerver use this api again.
      */
     public int getNodeNum(Node.NodeStatus status) throws BaseException {
         BSONObject group = sequoiadb.getDetailById(id);
@@ -411,32 +412,17 @@ public class ReplicaGroup {
      * @fn Node createNode(String hostName, int port, String dbPath,
      * Map<String, String> configure)
      * @brief Create node.
+     * @deprecated we have override this api by passing a "BSONObject" instead of a "Map"
      */
     public Node createNode(String hostName, int port, String dbPath,
                            Map<String, String> configure) throws BaseException {
-        BSONObject config = new BasicBSONObject();
-        config.put(SdbConstants.FIELD_NAME_GROUPNAME, name);
-        config.put(SdbConstants.FIELD_NAME_HOST, hostName);
-        config.put(SdbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
-        config.put(SdbConstants.PMD_OPTION_DBPATH, dbPath);
-        if (configure != null && !configure.isEmpty()) {
+        BSONObject obj = new BasicBSONObject();
+        if (configure != null) {
             for (String key : configure.keySet()) {
-                if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_HOST)
-                    || key.equals(SdbConstants.PMD_OPTION_SVCNAME)) {
-                    continue;
-                }
-                config.put(key, configure.get(key));
+                obj.put(key, configure.get(key));
             }
         }
-
-        AdminRequest request = new AdminRequest(AdminCommand.CREATE_NODE, config);
-        SdbReply response = sequoiadb.requestAndResponse(request);
-        String msg = "node = " + hostName + ":" + port +
-            ", dbPath = " + dbPath +
-            ", configure = " + configure;
-        sequoiadb.reportIfError(response, msg);
-        return getNode(hostName, port);
+    	return createNode(hostName, port, dbPath, obj);
     }
 
     /**

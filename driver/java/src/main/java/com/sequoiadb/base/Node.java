@@ -173,6 +173,7 @@ public class Node {
      * @throws com.sequoiadb.exception.BaseException
      * @fn NodeStatus getStatus()
      * @brief Get the status of current node.
+     * @deprecated Since v2.8, the status of node are invalid, nerver use this api again.
      */
     public NodeStatus getStatus() throws BaseException {
         BSONObject obj = new BasicBSONObject();
