@@ -20,7 +20,7 @@
 	* 废弃com.sequoiadb.net.ConfigOptions相关的构造方法，增加	  	        	  com.sequoiadb.base.ConfigOptions相关的构造方法。
 	* 废弃isEndianConvert方法，增加getByteOrder方法。
 	* closeAllCursors方法在连接已关闭时不再报错。
-	* 实现java.io.Closeable接口，增加close方法，在JDK1.7上支持资源自动释放。
+	* 实现java.io.Closeable接口，增加close方法，在JDK1.7上支持资源自动释放。         新增的close方法取代disconnect接口。
 	* 增加getLastUseTime方法，该接口主要被数据源使用。
 	* 增加close方法取代原来disconnect的功能。
 	* 增加sync方法控制数据持久化。
