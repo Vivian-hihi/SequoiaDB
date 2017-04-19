@@ -18,7 +18,7 @@
 	* sdbListLobs，列出集合中的所有lob。
 	* sdbOpenLob，创建或打开一个lob。
 	* sdbCloseLob，关闭一个lob。
-	* sdbRemoveLob， 删除一个lob。
+	* sdbRemoveLob，删除一个lob。
 	* sdbSeekLob，设置读起始位置，该版本中，seek只用于读操作。
 	* sdbReadLob，从lob中读取数据。
 	* sdbWriteLob，把数据写入lob。
