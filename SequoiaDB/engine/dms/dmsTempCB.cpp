@@ -54,10 +54,8 @@ namespace fs = boost::filesystem ;
 
 namespace engine
 {
-   _dmsTempCB::_dmsTempCB ( SDB_DMSCB *dmsCB ) :
-   _dmsCB(dmsCB)
+   _dmsTempCB::_dmsTempCB ( SDB_DMSCB *dmsCB ) : _dmsSysCB( dmsCB )
    {
-      _su   = NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_INIT, "_dmsTempCB::init" )
@@ -74,7 +72,7 @@ namespace engine
 
       // exclusive lock temp cb. this function should be called during process
       // initialization, so it shouldn't be called in parallel by agents
-      DMSTEMPCB_XLOCK
+      DMSSYSCB_XLOCK
 
       // first to load collection space
       rc = rtnCollectionSpaceLock( SDB_DMSTEMP_NAME, _dmsCB, TRUE,
@@ -194,7 +192,7 @@ namespace engine
       }
 
       {
-         DMSTEMPCB_XLOCK
+         DMSSYSCB_XLOCK
          if ( 0 == _freeCollections.size() )
          {
             rc = SDB_DMS_NO_MORE_TEMP ;

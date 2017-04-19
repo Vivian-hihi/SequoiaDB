@@ -173,6 +173,12 @@ namespace engine
    private:
       BOOLEAN _isInitialized ;
       vector<BSONObj> _objData ;
+
+      INT32 _equalFlag ;
+      BOOLEAN _evaluated ; // _equalFlag == 1 means is equal operation
+      BOOLEAN _allRange ;
+      double _selectivity ;
+
       // this is used when creating new bsonobject in the class
       BSONObj addObj ( const BSONObj &o )
       {
@@ -243,10 +249,14 @@ namespace engine
          }
          return FALSE ;
       }
-      BOOLEAN isEquality () const
+      BOOLEAN isEquality ()
       {
-         return !isEmpty() && min().woCompare(max(), FALSE)== 0 &&
-                 maxInclusive() && minInclusive() ;
+         if ( -1 == _equalFlag )
+         {
+            _equalFlag = ( !isEmpty() && min().woCompare(max(), FALSE)== 0 &&
+                           maxInclusive() && minInclusive() ) ? 1 : 0 ;
+         }
+         return _equalFlag == 1 ;
       }
       BOOLEAN isEmpty() const
       {
@@ -263,7 +273,32 @@ namespace engine
                  _startStopKeys[0]._stopKey._bound == maxKey.firstElement() ;
       }
       string toString() const ;
+
+      OSS_INLINE BOOLEAN isEvaluated () const
+      {
+         return _evaluated ;
+      }
+
+      OSS_INLINE BOOLEAN isAllRange () const
+      {
+         return _allRange ;
+      }
+
+      OSS_INLINE double getSelectivity () const
+      {
+         return _selectivity ;
+      }
+
+      OSS_INLINE void setSelectivity ( double selectivity,
+                                       BOOLEAN allRange )
+      {
+         _evaluated = TRUE ;
+         _allRange = allRange ;
+         _selectivity = selectivity ;
+      }
    } ;
+
+   typedef map< string, rtnPredicate > RTN_PREDICATE_MAP ;
 
    // This set is created when receiving a query. It contains user search
    // condition predicates from user input for all fields
@@ -271,10 +306,12 @@ namespace engine
    {
    public:
       const rtnPredicate &predicate ( const CHAR *fieldName ) const ;
-      const map<string, rtnPredicate> &predicates() const { return _predicates ; }
+      const RTN_PREDICATE_MAP &predicates() const { return _predicates ; }
+      RTN_PREDICATE_MAP &predicates() { return _predicates ; }
       INT32 matchLevelForIndex ( const BSONObj &keyPattern ) const ;
       INT32 addPredicate ( const CHAR *fieldName, const BSONElement &e,
                            BOOLEAN isNot ) ;
+      UINT32 getSize () const { return _predicates.size() ; }
       void clear()
       {
          _predicates.clear() ;
@@ -284,7 +321,7 @@ namespace engine
       BSONObj toBson() const ;
 
    private:
-      map<string, rtnPredicate> _predicates ;
+      RTN_PREDICATE_MAP _predicates ;
    } ;
    typedef class _rtnPredicateSet rtnPredicateSet ;
 

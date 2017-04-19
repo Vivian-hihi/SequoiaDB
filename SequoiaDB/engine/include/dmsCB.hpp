@@ -46,6 +46,7 @@
 #include "ossLatch.hpp"
 #include "monDMS.hpp"
 #include "dmsTempCB.hpp"
+#include "dmsStatCB.hpp"
 #include "ossAtomic.hpp"
 #include "ossRWMutex.hpp"
 #include "dpsLogWrapper.hpp"
@@ -165,6 +166,7 @@ namespace engine
       UINT32                  _logicalSUID ;
 
       dmsTempCB               _tempCB ;
+      dmsStatCB               _statCB ;
 
       dmsIxmKeySorterCreator* _ixmKeySorterCreator ;
 
@@ -261,6 +263,8 @@ namespace engine
       void dumpInfo ( INT64 &totalFileSize );
 
       dmsTempCB *getTempCB () ;
+
+      dmsStatCB *getStatCB () ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );

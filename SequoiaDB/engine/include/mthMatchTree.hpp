@@ -107,6 +107,7 @@ namespace engine
          BOOLEAN  isInitialized() ;
          BOOLEAN  isMatchesAll() ;
          const rtnPredicateSet &getPredicateSet() ;
+         RTN_PREDICATE_MAP &getPredicates () ;
          BSONObj& getMatchPattern() ;
          BOOLEAN  hasDollarFieldName() ;
          BOOLEAN  totallyConverted() const ;
@@ -118,6 +119,9 @@ namespace engine
          BOOLEAN hasExpand() ;
          BOOLEAN hasReturnMatch() ;
          const CHAR *getAttrFieldName() ;
+
+         void getEstimation ( const rtnCollectionStat *pCollectionStat,
+                              double &estSelectivity, UINT32 &estCPUCost ) ;
 
       private:
          INT32    _matches( const BSONObj &matchTarget, BOOLEAN &result,
@@ -192,6 +196,8 @@ namespace engine
 
          INT32    _adjustReturnMatchIndex( _mthMatchTreeContext &context ) ;
 
+         void     _evalEstimation ( const rtnCollectionStat *pCollectionStat ) ;
+
       private:
          _mthMatchNode     *_root ;
          BSONObj           _matchPattern ;
@@ -209,6 +215,10 @@ namespace engine
          _mthNodeAllocator _allocator ;
 
          vector< BSONObjBuilder* > _builderVec ;
+
+         BOOLEAN           _isEstimated ;
+         double            _estSelectivity ;
+         UINT32            _estCPUCost ;
    } ;
 
    class _mthRecordGenerator

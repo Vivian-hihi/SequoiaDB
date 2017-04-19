@@ -42,6 +42,7 @@
 #include "rtnTrace.hpp"
 #include <sstream>
 #include "mthCommon.hpp"
+#include "optCommon.hpp"
 #include "../bson/util/builder.h"
 #include <boost/noncopyable.hpp>
 
@@ -898,6 +899,10 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_RTNPRED ) ;
       _isInitialized = FALSE ;
+      _equalFlag = -1 ;
+      _evaluated = FALSE ;
+      _allRange = TRUE ;
+      _selectivity = OPT_PRED_DEFAULT_SELECTIVITY ;
       INT32 op = e.getGtLtOp() ;
       if ( ( !isNot && !e.eoo() && e.type() != RegEx && op == BSONObj::opIN ) )
       {
@@ -1244,7 +1249,7 @@ namespace engine
    {
       StringBuilder buf ;
       buf << "[ " ;
-      map<string, rtnPredicate>::const_iterator it = _predicates.begin() ;
+      RTN_PREDICATE_MAP::const_iterator it = _predicates.begin() ;
       while ( it != _predicates.end() )
       {
          buf << it->first << ":" << it->second.toString() << " " ;
@@ -1257,7 +1262,7 @@ namespace engine
    BSONObj _rtnPredicateSet::toBson() const
    {
       BSONObjBuilder builder ;
-      map<string, rtnPredicate>::const_iterator it = _predicates.begin() ;
+      RTN_PREDICATE_MAP::const_iterator it = _predicates.begin() ;
       for ( ; it != _predicates.end(); ++it )
       {
          BSONArrayBuilder sub( builder.subarrayStart( it->first ) ) ;
@@ -1277,7 +1282,7 @@ namespace engine
    const rtnPredicate &_rtnPredicateSet::predicate (const CHAR *fieldName) const
    {
       PD_TRACE_ENTRY ( SDB__RTNPRED_PRED ) ;
-      map<string, rtnPredicate>::const_iterator f = _predicates.find(fieldName);
+      RTN_PREDICATE_MAP::const_iterator f = _predicates.find(fieldName);
       if ( _predicates.end() == f )
       {
          // we assign rtnPredicate object to a static pointer
@@ -1316,7 +1321,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNPREDSET_ADDPRED ) ;
-      std::pair<map<string, rtnPredicate>::iterator, BOOLEAN> ret ;
+      std::pair< RTN_PREDICATE_MAP::iterator, BOOLEAN > ret ;
       rtnPredicate pred ( e, isNot ) ;
       if ( !pred.isInit() )
       {

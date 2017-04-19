@@ -15,13 +15,13 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = dmsTempCB.hpp
+   Source File Name = dmsSysCB.hpp
 
-   Descriptive Name = Data Management Service Temp Control Block Header
+   Descriptive Name = Data Management Service Sys Control Block Header
 
    When/how to use: this program may be used on binary and text-formatted
    versions of data management component. This file contains structure for
-   DMS Temporary Table Control Block.
+   DMS System Table Control Block.
 
    Dependencies: N/A
 
@@ -30,19 +30,17 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          09/14/2012  TW  Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
-#ifndef DMSTEMPCB_HPP__
-#define DMSTEMPCB_HPP__
+#ifndef DMSSYSCB_HPP__
+#define DMSSYSCB_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossLatch.hpp"
 #include "dms.hpp"
-#include "dmsSysCB.hpp"
 #include <queue>
 #include <map>
 
@@ -51,35 +49,47 @@ using namespace std ;
 namespace engine
 {
 
+   class _SDB_DMSCB ;
+   class _dmsStorageUnit ;
+   class _dmsMBContext ;
+
    /*
-      _dmsTempCB define
+      _dmsSysCB define
    */
-   class _dmsTempCB : public _dmsSysCB
+   class _dmsSysCB : public SDBObject
    {
-   private :
-      // fifo queue, reserve operation always reserve the first one
-      queue<UINT16>        _freeCollections ;
-      // a reserved temp table will be stored in this map, with their EDU ID
-      map<UINT16, UINT64>  _occupiedCollections ;
+      public :
+         _dmsSysCB ( _SDB_DMSCB *dmsCB )
+         : _dmsCB( dmsCB )
+         {
+            _su = NULL ;
+         }
 
-   public :
-      _dmsTempCB ( _SDB_DMSCB *dmsCB ) ;
+         virtual ~_dmsSysCB () {}
 
-      // this function verify whether SYSTEMP collection space exist. If it
-      // is not exist then create one. And then reset all temp collections
-      INT32 init() ;
+         _dmsStorageUnit *getSU ()
+         {
+            return _su ;
+         }
 
-      INT32 release ( _dmsMBContext *&context ) ;
+      protected :
+      #ifdef DMSSYSCB_XLOCK
+      #undef DMSSYSCB_XLOCK
+      #endif
+      #define DMSSYSCB_XLOCK ossScopedLock _lock(&_mutex, EXCLUSIVE);
 
-      INT32 reserve ( _dmsMBContext **ppContext, UINT64 eduID ) ;
+      #ifdef DMSSYSCB_SLOCK
+      #undef DMSSYSCB_SLOCK
+      #endif
+      #define DMSSYSCB_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
 
-   private:
-      INT32 _initTmpPath() ;
-
+         ossSpinSLatch        _mutex ;
+         _dmsStorageUnit      *_su ;
+         _SDB_DMSCB           *_dmsCB ;
    } ;
-   typedef class _dmsTempCB dmsTempCB ;
+
 
 }
 
-#endif //DMSTEMPCB_HPP__
+#endif //DMSSYSCB_HPP__
 

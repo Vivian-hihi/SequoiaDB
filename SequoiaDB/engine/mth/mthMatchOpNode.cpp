@@ -1744,6 +1744,7 @@ namespace engine
       _hasExpand          = FALSE ;
       _offset             = 0 ;
       _len                = 0 ;
+      _addedToPred        = FALSE ;
    }
 
    _mthMatchOpNode::~_mthMatchOpNode()
@@ -1810,6 +1811,24 @@ namespace engine
       return ;
    }
 
+   UINT32 _mthMatchOpNode::_evalFuncCPUCost ()
+   {
+      if ( _funcList.empty() )
+      {
+         return 0 ;
+      }
+
+      UINT32 cpuCost = 0 ;
+      MTH_FUNC_LIST::iterator iter = _funcList.begin() ;
+      while ( iter != _funcList.end() )
+      {
+         _mthMatchFunc *func = *iter ;
+         cpuCost += func->getEvalCPUCost() ;
+         iter++ ;
+      }
+      return cpuCost ;
+   }
+
    void _mthMatchOpNode::clear()
    {
       _clear() ;
@@ -1836,6 +1855,32 @@ namespace engine
    void _mthMatchOpNode::setWeight( UINT32 weight )
    {
       SDB_ASSERT( FALSE, "no need to setWeight in _mthMatchOpNode" ) ;
+   }
+
+   void _mthMatchOpNode::evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                          double &selectivity,
+                                          UINT32 &cpuCost )
+   {
+
+      if ( _addedToPred )
+      {
+         _evalEstimation( NULL, selectivity, cpuCost ) ;
+         // Already in the predicates, no need to be calculated
+         selectivity = 1.0 ;
+      }
+      else
+      {
+         _evalEstimation( pCollectionStat, selectivity, cpuCost ) ;
+      }
+   }
+
+   void _mthMatchOpNode::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                           double &selectivity,
+                                           UINT32 &cpuCost )
+   {
+      // Simply estimate
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST ;
    }
 
    INT32 _mthMatchOpNode::calcPredicate( _rtnPredicateSet &predicateSet )
@@ -1908,8 +1953,11 @@ namespace engine
 
       PD_LOG( PDDEBUG, "add preicate[%s] to predicates set",
               rebuildName ? buf : fieldName ) ;
-      predicateSet.addPredicate ( rebuildName ? buf : fieldName,
-                                  _toMatch, _isUnderLogicNot ) ;
+      if ( SDB_OK == predicateSet.addPredicate ( rebuildName ? buf : fieldName,
+                                                 _toMatch, _isUnderLogicNot ) )
+      {
+         _addedToPred = TRUE ;
+      }
 
    done:
       if ( buf != staticBuf && NULL != buf )
@@ -2632,6 +2680,20 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeET::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                             double &selectivity,
+                                             UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+
+      if ( _funcList.empty() && pCollectionStat )
+      {
+         selectivity = pCollectionStat->evalETOpterator( _fieldName.getFieldName() ,
+                                                         _toMatch ) ;
+      }
+   }
+
    //**************_mthMatchOpNodeNE********************************
    _mthMatchOpNodeNE::_mthMatchOpNodeNE( _mthNodeAllocator *allocator )
                      :_mthMatchOpNodeET( allocator )
@@ -2696,6 +2758,22 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeNE::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                             double &selectivity,
+                                             UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+
+      if ( _funcList.empty() && pCollectionStat )
+      {
+         selectivity = pCollectionStat->evalETOpterator( _fieldName.getFieldName() ,
+                                                         _toMatch ) ;
+      }
+
+      selectivity = 1.0 - selectivity ;
+   }
+
    //**************_mthMatchOpNodeLT********************************
    _mthMatchOpNodeLT::_mthMatchOpNodeLT( _mthNodeAllocator *allocator )
                      :_mthMatchOpNode( allocator )
@@ -2754,6 +2832,21 @@ namespace engine
       else
       {
          delete this ;
+      }
+   }
+
+   void _mthMatchOpNodeLT::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                             double &selectivity,
+                                             UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+
+      if ( _funcList.empty() && pCollectionStat )
+      {
+         selectivity = pCollectionStat->evalLTOpterator( _fieldName.getFieldName() ,
+                                                         _toMatch,
+                                                         FALSE ) ;
       }
    }
 
@@ -2818,6 +2911,21 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeLTE::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                              double &selectivity,
+                                              UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+
+      if ( _funcList.empty() && pCollectionStat )
+      {
+         selectivity = pCollectionStat->evalLTOpterator( _fieldName.getFieldName() ,
+                                                       _toMatch,
+                                                       TRUE ) ;
+      }
+   }
+
    //**************_mthMatchOpNodeGT*****************************
    _mthMatchOpNodeGT::_mthMatchOpNodeGT( _mthNodeAllocator *allocator )
                      :_mthMatchOpNode( allocator )
@@ -2879,6 +2987,21 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeGT::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                             double &selectivity,
+                                             UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+
+      if ( _funcList.empty() && pCollectionStat )
+      {
+         selectivity = pCollectionStat->evalGTOpterator( _fieldName.getFieldName() ,
+                                                         _toMatch,
+                                                         FALSE ) ;
+      }
+   }
+
    //**************_mthMatchOpNodeGTE*****************************
    _mthMatchOpNodeGTE::_mthMatchOpNodeGTE( _mthNodeAllocator *allocator )
                       :_mthMatchOpNode( allocator )
@@ -2937,6 +3060,21 @@ namespace engine
       else
       {
          delete this ;
+      }
+   }
+
+   void _mthMatchOpNodeGTE::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                              double &selectivity,
+                                              UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + _evalFuncCPUCost() ;
+
+      if ( _funcList.empty() && pCollectionStat )
+      {
+         selectivity = pCollectionStat->evalGTOpterator( _fieldName.getFieldName() ,
+                                                         _toMatch,
+                                                         TRUE ) ;
       }
    }
 
@@ -3159,6 +3297,22 @@ namespace engine
       else
       {
          delete this ;
+      }
+   }
+
+   void _mthMatchOpNodeIN::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                             double &selectivity,
+                                             UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      if ( _valueSet.empty() && _regexVector.empty() )
+      {
+         cpuCost = OPT_MTH_OPTR_BASE_CPU_COST ;
+      }
+      else
+      {
+         cpuCost = OPT_MTH_OPTR_BASE_CPU_COST *
+                   ( _valueSet.size() + _regexVector.size() ) ;
       }
    }
 
@@ -4139,6 +4293,23 @@ namespace engine
       }
    }
 
+   void _mthMatchOpNodeELEMMATCH::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                                    double &selectivity,
+                                                    UINT32 &cpuCost )
+   {
+      double tempSelectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      UINT32 tempCPUCost = OPT_MTH_OPTR_BASE_CPU_COST ;
+
+      if ( _subTree )
+      {
+         // The fields in _subTree is not the root level
+         _subTree->getEstimation( NULL, tempSelectivity, tempCPUCost ) ;
+      }
+
+      selectivity = OPT_ROUND_SELECTIVITY( tempSelectivity ) ;
+      cpuCost = OPT_MTH_OPTR_BASE_CPU_COST + tempCPUCost ;
+   }
+
    //**************_mthMatchOpNodeRegex*****************************
    _mthMatchOpNodeRegex::_mthMatchOpNodeRegex( _mthNodeAllocator *allocator )
                         :_mthMatchOpNode( allocator )
@@ -4389,6 +4560,14 @@ namespace engine
       {
          delete this ;
       }
+   }
+
+   void _mthMatchOpNodeRegex::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                                double &selectivity,
+                                                UINT32 &cpuCost )
+   {
+      selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
+      cpuCost = OPT_MTH_REGEX_CPU_COST ;
    }
 }
 

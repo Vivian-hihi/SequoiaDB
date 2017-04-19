@@ -251,7 +251,9 @@ rtnFiles = [
       "rtn/rtnAlterRunner.cpp",
       "rtn/rtnAlterJob.cpp",
       "rtn/rtnIxmKeySorter.cpp",
-      "rtn/rtnDictCreatorJob.cpp"
+      "rtn/rtnDictCreatorJob.cpp",
+      "rtn/rtnStatObj.cpp",
+      "rtn/rtnStatMgr.cpp"
       ]
 
 msgFiles = [
@@ -285,7 +287,9 @@ dmsFiles = [
       "dms/dmsLobDirectInBuffer.cpp",
       "dms/dmsLobDirectOutBuffer.cpp",
       "dms/dmsIndexBuilder.cpp",
-      "dms/dmsIndexBuilderImpl.cpp"
+      "dms/dmsIndexBuilderImpl.cpp",
+      "dms/dmsStatObj.cpp",
+      "dms/dmsStatCB.cpp"
       ]
 
 ixmFiles = [
@@ -324,7 +328,9 @@ optFiles = [
       "opt/optAccessPlan.cpp",
       "opt/optQgmStrategy.cpp",
       "opt/optQgmSpecStrategy.cpp",
-      "opt/optQgmOptimizer.cpp"
+      "opt/optQgmOptimizer.cpp",
+      "opt/optCommon.cpp",
+      "opt/optPlanPath.cpp"
       ]
 
 monFiles = [

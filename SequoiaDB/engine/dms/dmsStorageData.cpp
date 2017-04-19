@@ -465,7 +465,8 @@ namespace engine
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA, "_dmsStorageData::_dmsStorageData" )
    _dmsStorageData::_dmsStorageData ( const CHAR *pSuFileName,
-                                      dmsStorageInfo *pInfo )
+                                      dmsStorageInfo *pInfo,
+                                      rtnStatMgr *pStatMgr )
    :_dmsStorageBase( pSuFileName, pInfo )
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA ) ;
@@ -475,6 +476,7 @@ namespace engine
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
       _mmeSegID         = 0 ;
+      _pStatMgr         = pStatMgr ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 
@@ -1418,7 +1420,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION, "_dmsStorageData::_truncateCollection" )
    INT32 _dmsStorageData::_truncateCollection( dmsMBContext *context,
-                                               BOOLEAN needChangeCLID )
+                                               BOOLEAN needChangeCLID,
+                                               SDB_DPSCB *dpsCB )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtRW lastRW ;
@@ -1437,6 +1440,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION ) ;
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+
+      // Ignore errors
+      _pStatMgr->onDropCollection( context->mbID(), pmdGetThreadEDUCB(), dpsCB ) ;
 
       currentExt = context->mb()->_lastExtentID ;
       // If there is only one extent, set reachLast as TRUE.
@@ -2291,7 +2297,7 @@ namespace engine
       // truncate the collection
       _rmCompressor( context ) ;
 
-      rc = _truncateCollection( context ) ;
+      rc = _truncateCollection( context, TRUE, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to truncate the collection[%s], rc: %d",
                    pName, rc ) ;
 
@@ -2338,6 +2344,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLDel record to log, rc: "
                       "%d", rc ) ;
       }
+
       PD_LOG( PDEVENT, "Drop collection[%s] succeed", fullName ) ;
 
    done:
@@ -2482,7 +2489,7 @@ namespace engine
       {
          _rmCompressor( context ) ;
       }
-      rc = _truncateCollection( context, needChangeCLID ) ;
+      rc = _truncateCollection( context, needChangeCLID, dpscb ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] data failed, rc: %d",
                    pName, rc ) ;
 
@@ -2641,6 +2648,9 @@ namespace engine
          rc = SDB_DMS_EXIST ;
          goto error ;
       }
+
+      // Ignore errors
+      _pStatMgr->onRenameCollection( mbID, oldName, newName, cb, dpscb ) ;
 
       _collectionNameRemove ( oldName ) ;
       _collectionNameInsert ( newName, mbID ) ;

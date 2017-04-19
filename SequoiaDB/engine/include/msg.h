@@ -517,6 +517,8 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 #define FLG_QUERY_PRIMARY             0x00000800
 // query and modify
 #define FLG_QUERY_MODIFY              0x00001000
+// query without sort
+#define FLG_QUERY_WITHOUT_SORT        0x00002000
 
 // For query takes 4 document
 // Query + returnFieldSelector + orderBy + hint

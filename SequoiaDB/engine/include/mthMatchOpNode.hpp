@@ -87,6 +87,11 @@ namespace engine
          virtual INT32 adjustIndexForReturnMatch( _utilArray< INT32 > &in,
                                                   _utilArray< INT32 > &out ) ;
 
+         virtual UINT32 getEvalCPUCost () const
+         {
+            return OPT_MTH_FUNC_DEF_CPU_COST ;
+         }
+
       protected:
          virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &ele ) = 0 ;
@@ -495,6 +500,9 @@ namespace engine
 
          virtual void setWeight( UINT32 weight ) ;
 
+         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                       double &selectivity, UINT32 &cpuCost ) ;
+
          virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
 
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
@@ -524,6 +532,11 @@ namespace engine
          virtual INT32 _init( const CHAR *fieldName,
                               const BSONElement &element) ;
          virtual void _clear() ;
+
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
+
+         UINT32 _evalFuncCPUCost () ;
 
       protected:
          INT32 _execute( const CHAR *pFieldName, const BSONObj &obj,
@@ -559,6 +572,8 @@ namespace engine
          BOOLEAN _hasExpand ;
          INT32 _offset ;
          INT32 _len ;
+
+         BOOLEAN _addedToPred ;
    } ;
 
    class _mthMatchOpNodeET : public _mthMatchOpNode
@@ -580,6 +595,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchOpNodeNE : public _mthMatchOpNodeET
@@ -597,6 +614,10 @@ namespace engine
                                 _mthMatchTreeContext &context,
                                 BOOLEAN &result ) ;
          virtual void release() ;
+
+      protected :
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchOpNodeLT : public _mthMatchOpNode
@@ -617,6 +638,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchOpNodeLTE : public _mthMatchOpNode
@@ -637,6 +660,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchOpNodeGT : public _mthMatchOpNode
@@ -657,6 +682,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchOpNodeGTE : public _mthMatchOpNode
@@ -677,6 +704,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchOpNodeRegex ;
@@ -702,6 +731,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
       protected:
          BOOLEAN _isMatch( const BSONElement &ele ) ;
 
@@ -901,6 +932,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
 
       protected:
          _mthMatchTree *_subTree ;
@@ -937,6 +970,8 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                        double &selectivity, UINT32 &cpuCost ) ;
 
       private:
          pcrecpp::RE_Options _flags2options( const char* options ) ;

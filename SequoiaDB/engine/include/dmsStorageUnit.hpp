@@ -43,6 +43,7 @@
 #include "dmsStorageIndex.hpp"
 #include "dmsStorageLob.hpp"
 #include "rtnAPM.hpp"
+#include "rtnStatMgr.hpp"
 #include "monDMS.hpp"
 #include "utilCache.hpp"
 
@@ -112,6 +113,7 @@ namespace engine
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }
          rtnAccessPlanManager *getAPM () { return &_apm ; }
+         rtnStatMgr        *getStatMgr () { return &_statMgr ; }
          utilCacheUnit     *cacheUnit() { return _pCacheUnit ; }
 
          INT32       getPageSize() const { return _storageInfo._pageSize ; }
@@ -275,6 +277,7 @@ namespace engine
 
       private :
          rtnAccessPlanManager                _apm ;
+         rtnStatMgr                          _statMgr ;
 
          dmsStorageData                      *_pDataSu ;
          dmsStorageIndex                     *_pIndexSu ;

@@ -123,8 +123,7 @@ namespace engine
       try
       {
          const CHAR *pFirstKeyName = _shardingKey.firstElementFieldName() ;
-         const map<string, rtnPredicate> &mapPredicate =
-            _predicateSet.predicates() ;
+         const RTN_PREDICATE_MAP &mapPredicate = _predicateSet.predicates() ;
 
          if ( _logicType != CLS_CATA_LOGIC_AND ||
               mapPredicate.size() == 0 ||
@@ -234,8 +233,8 @@ namespace engine
       BSONElement lowBound ;
       BSONElement upBound ;
       BSONElement beShardingKey ;
-      const map<string,rtnPredicate> &predicates = _predicateSet.predicates() ;
-      map<string, rtnPredicate>::const_iterator itr ;
+      const RTN_PREDICATE_MAP &predicates = _predicateSet.predicates() ;
+      RTN_PREDICATE_MAP::const_iterator itr ;
 
       if ( !itrSK.more() )
       {

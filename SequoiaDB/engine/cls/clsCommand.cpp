@@ -417,6 +417,9 @@ namespace engine
       sdbGetShardCB()->getNodeMgrAgent()->clearAll() ;
       sdbGetShardCB()->getNodeMgrAgent()->release_w() ;
 
+      // FIXME: remove from this api
+      sdbGetDMSCB()->getStatCB()->reloadStats( cb ) ;
+
       return  SDB_OK ;
    }
 

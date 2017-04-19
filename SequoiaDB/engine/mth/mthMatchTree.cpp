@@ -367,6 +367,10 @@ namespace engine
       _hasReturnMatch      = FALSE ;
       _attrFieldName       = NULL ;
       _returnMatchNode     = NULL ;
+
+      _isEstimated         = FALSE ;
+      _estSelectivity      = 1.0 ;
+      _estCPUCost          = 0 ;
    }
 
    _mthMatchTree::~_mthMatchTree()
@@ -1597,6 +1601,10 @@ namespace engine
 
       _isInitialized = TRUE ;
 
+      _isEstimated         = FALSE ;
+      _estSelectivity      = 1.0 ;
+      _estCPUCost          = 0 ;
+
    done :
       PD_TRACE_EXITRC( SDB__MTHMATCHTREE_LOADPATTERN, rc ) ;
       return rc ;
@@ -2218,6 +2226,11 @@ namespace engine
       return _predicateSet ;
    }
 
+   RTN_PREDICATE_MAP &_mthMatchTree::getPredicates()
+   {
+      return _predicateSet.predicates() ;
+   }
+
    BSONObj& _mthMatchTree::getMatchPattern()
    {
       return _matchPattern ;
@@ -2305,6 +2318,45 @@ namespace engine
    const CHAR* _mthMatchTree::getAttrFieldName()
    {
       return _attrFieldName ;
+   }
+
+   void _mthMatchTree::_evalEstimation ( const rtnCollectionStat *pCollectionStat )
+   {
+      double tmpSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
+      UINT32 tmpCPUCost = OPT_MTH_DEFAULT_CPU_COST ;
+
+      if ( _isInitialized && _root )
+      {
+         _root->evalEstimation( pCollectionStat, tmpSelectivity, tmpCPUCost ) ;
+         RTN_PREDICATE_MAP predicates = _predicateSet.predicates() ;
+         for ( RTN_PREDICATE_MAP::iterator iterPred = predicates.begin() ;
+               iterPred != predicates.end();
+               iterPred ++ )
+         {
+            BOOLEAN isAllRange = FALSE ;
+            double curSelectivity = 1.0 ;
+            curSelectivity = pCollectionStat->evalPredicate( iterPred->first.c_str(),
+                                                             iterPred->second,
+                                                             isAllRange ) ;
+            tmpSelectivity *= curSelectivity ;
+         }
+      }
+
+      _estSelectivity = OPT_ROUND_SELECTIVITY( tmpSelectivity ) ;
+      _estCPUCost = tmpCPUCost ;
+      _isEstimated = TRUE ;
+   }
+
+   void _mthMatchTree::getEstimation ( const rtnCollectionStat *pCollectionStat,
+                                       double &estSelectivity,
+                                       UINT32 &estCPUCost )
+   {
+      if ( !_isEstimated )
+      {
+         _evalEstimation( pCollectionStat ) ;
+      }
+      estSelectivity = _estSelectivity ;
+      estCPUCost = _estCPUCost ;
    }
 
    //**********************_mthRecordGenerator***********************

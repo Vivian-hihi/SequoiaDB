@@ -680,6 +680,11 @@ namespace engine
          if ( indexOID == oid )
          {
             found = TRUE ;
+
+            // Ignore errors
+            _pDataSu->_pStatMgr->onDropIndex( context->mbID(), indexCB.getName(),
+                                              cb, dpscb ) ;
+
             rc = dropIndex ( context, indexID, indexCB.getLogicalID(),
                              cb, dpscb, isSys ) ;
             if ( rc )
@@ -738,6 +743,11 @@ namespace engine
                                 IXM_INDEX_NAME_SIZE ) )
          {
             found = TRUE ;
+
+            // Ignore errors
+            _pDataSu->_pStatMgr->onDropIndex( context->mbID(), indexName,
+                                              cb, dpscb ) ;
+
             rc = dropIndex ( context, indexID, indexCB.getLogicalID(),
                              cb, dpscb, isSys ) ;
             if ( rc )

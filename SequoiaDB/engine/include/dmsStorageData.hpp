@@ -42,6 +42,7 @@
 #include "dmsExtent.hpp"
 #include "dpsLogWrapper.hpp"
 #include "dmsCompress.hpp"
+#include "rtnStatMgr.hpp"
 
 #include <map>
 
@@ -767,7 +768,8 @@ namespace engine
 
       public:
          _dmsStorageData ( const CHAR *pSuFileName,
-                           dmsStorageInfo *pInfo ) ;
+                           dmsStorageInfo *pInfo,
+                           rtnStatMgr *pStatMgr ) ;
          virtual ~_dmsStorageData () ;
 
          virtual void  syncMemToMmap() ;
@@ -973,7 +975,8 @@ namespace engine
                                                  _pmdEDUCB *cb ) ;
 
          INT32          _truncateCollection ( dmsMBContext *context,
-                                              BOOLEAN needChangeCLID = TRUE ) ;
+                                              BOOLEAN needChangeCLID = TRUE,
+                                              SDB_DPSCB *dpsCB = NULL ) ;
 
          INT32          _truncateCollectionLoads( dmsMBContext *context ) ;
 
@@ -1029,6 +1032,8 @@ namespace engine
          _dmsStorageLob                      *_pLobSU ;
 
          _dmsCompressorEntry                 _compressorEntry[ DMS_MME_SLOTS ] ;
+
+         rtnStatMgr                          *_pStatMgr ;
 
    };
    typedef _dmsStorageData dmsStorageData ;

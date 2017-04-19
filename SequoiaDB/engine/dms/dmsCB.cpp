@@ -85,6 +85,7 @@ namespace engine
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
     _tempCB(this),
+    _statCB( this ),
     _ixmKeySorterCreator( NULL )
    {
       for ( UINT32 i = 0 ; i< DMS_MAX_CS_NUM ; ++i )
@@ -132,6 +133,13 @@ namespace engine
       // 2. init temp cb
       rc = _tempCB.init() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init temp cb, rc: %d", rc ) ;
+
+      // 3. init stat cb
+      if ( SDB_ROLE_DATA == pmdGetDBRole() )
+      {
+         rc = _statCB.init() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to init stat cb, rc: %d", rc ) ;
+      }
 
    done:
       return rc ;
@@ -561,6 +569,10 @@ namespace engine
 
       SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
       csLID = pCSCB->_su->LogicalCSID() ;
+
+      // Ignore errors
+      pCSCB->_su->getStatMgr()->onRenameCollectionSpace( pName, pNewName,
+                                                         cb, dpsCB ) ;
 
       rc = pCSCB->_su->renameCS( pNewName ) ;
       if ( rc )
@@ -1215,6 +1227,9 @@ namespace engine
          goto error ;
       }
 
+      // Ignore errors
+      pCSCB->_su->getStatMgr()->onDropCollectionSpace( cb, dpsCB ) ;
+
       if ( removeFile )
       {
          rc = pCSCB->_su->remove() ;
@@ -1651,6 +1666,11 @@ namespace engine
    dmsTempCB *_SDB_DMSCB::getTempCB ()
    {
       return &_tempCB ;
+   }
+
+   dmsStatCB *_SDB_DMSCB::getStatCB ()
+   {
+      return &_statCB ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )

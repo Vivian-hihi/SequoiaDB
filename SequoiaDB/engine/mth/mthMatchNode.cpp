@@ -396,39 +396,6 @@ namespace engine
       return result.str() ;
    }
 
-   //********************** _mthNodeAllocator ***************************
-   _mthNodeAllocator::_mthNodeAllocator()
-   {
-      _offset = 0 ;
-   }
-
-   _mthNodeAllocator::~_mthNodeAllocator()
-   {
-      _offset = 0 ;
-   }
-
-   void* _mthNodeAllocator::allocate( size_t size )
-   {
-      void *p = NULL ;
-      if ( _offset + size <= MTH_ALLOCATOR_SIZE )
-      {
-         p = _mem + _offset ;
-         _offset += size ;
-      }
-
-      return p ;
-   }
-
-   BOOLEAN _mthNodeAllocator::isAllocatedByme( void *p )
-   {
-      if ( p >= _mem && p < _mem + MTH_ALLOCATOR_SIZE )
-      {
-         return TRUE ;
-      }
-
-      return FALSE ;
-   }
-
    //********************** _mthMatchNodeIterator ***************************
    _mthMatchNodeIterator::_mthMatchNodeIterator( _mthMatchNode *node )
    {

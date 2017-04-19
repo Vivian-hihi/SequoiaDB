@@ -88,6 +88,8 @@ namespace engine
                                 BOOLEAN &result ) ;
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
+         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                       double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchLogicOrNode : public _mthMatchLogicNode
@@ -105,6 +107,8 @@ namespace engine
          virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
          virtual void release() ;
+         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                       double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
    class _mthMatchLogicNotNode : public _mthMatchLogicAndNode
@@ -123,6 +127,8 @@ namespace engine
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
+         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                       double &selectivity, UINT32 &cpuCost ) ;
    } ;
 }
 

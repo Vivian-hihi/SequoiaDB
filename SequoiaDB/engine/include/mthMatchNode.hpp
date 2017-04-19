@@ -45,6 +45,9 @@
 #include "../bson/bson.hpp"
 #include "utilArray.hpp"
 #include "rtnPredicate.hpp"
+#include "optCommon.hpp"
+#include "rtnStatObj.hpp"
+#include "utilAllocator.hpp"
 #include <vector>
 
 using namespace bson ;
@@ -340,20 +343,7 @@ namespace engine
          UINT32 _index ;
    } ;
 
-   class _mthNodeAllocator
-   {
-      public:
-         _mthNodeAllocator() ;
-         ~_mthNodeAllocator() ;
-
-      public:
-         void* allocate( size_t size ) ;
-         BOOLEAN isAllocatedByme( void *p ) ;
-
-      private:
-         char _mem[ MTH_ALLOCATOR_SIZE ] ;
-         INT32 _offset ;
-   } ;
+   typedef _utilAllocator<MTH_ALLOCATOR_SIZE> _mthNodeAllocator ;
 
    class _mthMatchNode
    {
@@ -390,6 +380,9 @@ namespace engine
          virtual void setWeight( UINT32 weight ) = 0 ;
 
          virtual UINT32 getWeight() = 0 ;
+
+         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+                                       double &selectivity, UINT32 &cpuCost ) = 0 ;
 
          virtual BOOLEAN isTotalConverted() = 0 ;
 
