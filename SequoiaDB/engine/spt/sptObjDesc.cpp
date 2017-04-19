@@ -399,7 +399,7 @@ namespace engine
    }
 
    void _sptObjFactory::_sortAndAssert( SPT_VEC_OBJDESC &vecObj,
-                                         const sptObjDesc *desc )
+                                        const sptObjDesc *desc )
    {
       /// no name
       if ( desc->isIgnoredName() )
