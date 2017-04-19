@@ -98,6 +98,7 @@ namespace SequoiaDB
          *  \return The count of node
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
+         *  \deprecated Since v2.8, the status of node are invalid, never use this api again.
          */
         public int GetNodeNum( SDBConst.NodeStatus status)
         {
