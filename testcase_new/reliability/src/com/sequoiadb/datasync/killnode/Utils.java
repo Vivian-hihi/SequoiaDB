@@ -22,7 +22,7 @@ public class Utils {
      * @param timeOutSecond
      * @throws ReliabilityException 
      */
-    public static boolean checkBusinessForExNode(GroupMgr groupMgr, int timeOutSecond) throws ReliabilityException {
+    public static boolean checkBusinessWithExNode(GroupMgr groupMgr, int timeOutSecond) throws ReliabilityException {
         for (int i = 0; i < timeOutSecond; i++) {
             List<String> groupNames = groupMgr.getAllDataGroupName();
             groupNames.remove("SYSCoord");
