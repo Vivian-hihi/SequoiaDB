@@ -1583,7 +1583,7 @@ namespace sdbclient
     \brief Get status of the current node.
     \return  The status of current node.
     \deprecated Since v2.8, the status of node are invalid, 
-                nerver use this api again.
+                never use this api again.
 */
       sdbNodeStatus getStatus ()
       {
@@ -1776,7 +1776,7 @@ namespace sdbclient
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \deprecated Since v2.8, the status of node are invalid, 
-                nerver use this api again.
+                never use this api again.
 */
       INT32 getNodeNum ( sdbNodeStatus status, INT32 *num )
       {
