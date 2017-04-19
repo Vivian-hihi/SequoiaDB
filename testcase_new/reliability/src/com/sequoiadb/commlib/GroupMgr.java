@@ -133,7 +133,7 @@ public class GroupMgr {
         long timestamp = System.currentTimeMillis();
         while (!mgr.checkBusiness(false)) {
             if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
-                return mgr.checkBusiness();
+                return mgr.checkBusiness(true);
             }
             try {
                 Thread.sleep(1000);
