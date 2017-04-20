@@ -29,6 +29,14 @@ public class GroupMgr {
     private static GroupMgr mgr = null;
     private Sequoiadb sdb = null;
     private String coordUrl = null;
+    
+    static {
+        try {
+            mgr = new GroupMgr();
+        } catch (ReliabilityException e) {
+            e.printStackTrace();
+        }
+    }
 
     public GroupMgr() throws ReliabilityException {
         this.refresh();
