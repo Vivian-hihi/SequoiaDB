@@ -69,7 +69,7 @@ public class Ssh {
         }
         catch (JSchException e) {
             if (session != null) {
-                session.close();
+                session.disconnect();
             }
             throw new FaultException(e);
         }
@@ -94,7 +94,7 @@ public class Ssh {
         }
         finally {
             if (channel != null) {
-                channel.close();
+                channel.disconnect();
             }
         }
     }
@@ -118,7 +118,7 @@ public class Ssh {
         }
         finally {
             if (channel != null) {
-                channel.close();
+                channel.disconnect();
             }
         }
     }
@@ -148,7 +148,7 @@ public class Ssh {
         }
         finally {
             if (channel != null) {
-                channel.close();
+                channel.disconnect();
             }
         }
     }
@@ -172,7 +172,7 @@ public class Ssh {
         }
         catch (JSchException e) {
             if (channel != null) {
-                channel.close();
+                channel.disconnect();
             }
             throw new FaultException(e);
         }
@@ -211,19 +211,19 @@ public class Ssh {
             throw new FaultException(e);
         }
         finally {
-            channel.close();
+            channel.disconnect();
         }
     }
 
     /**
      * 关闭Session，关闭backgroundCMD中的Channel（但这些未结束的后台命令可能仍会在远程主机正常执行）
      */
-    public void close() {
+    public void disconnect() {
         for (Channel channel : backgroundCMD.values()) {
-            channel.close();
+            channel.disconnect();
         }
         if (this.session != null) {
-            this.session.close();
+            this.session.disconnect();
         }
     }
 
@@ -240,7 +240,7 @@ public class Ssh {
             dir = str.substring(str.indexOf("=") + 1, str.length() - 1);
         }
         finally {
-            ssh.close();
+            ssh.disconnect();
         }
         return dir;
 

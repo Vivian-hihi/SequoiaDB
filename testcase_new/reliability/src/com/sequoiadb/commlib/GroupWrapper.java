@@ -16,7 +16,6 @@ import java.util.Random;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
-import org.bson.util.JSON;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
@@ -139,7 +138,7 @@ public class GroupWrapper {
         String groupName = getGroupName();
         int priNode = getMaster().nodeID();
         Ssh ssh = new Ssh(SdbTestBase.hostName, SdbTestBase.remoteUser, SdbTestBase.remotePwd);
-        GroupMgr groupMgr = GroupMgr.getInstance();
+        GroupMgr groupMgr = new GroupMgr();
         try {
             for (int i = 0; i < times; i++) {
 
@@ -157,7 +156,7 @@ public class GroupWrapper {
             }
         }
         finally {
-            ssh.close();
+            ssh.disconnect();
         }
         return false;
     }
@@ -278,7 +277,7 @@ public class GroupWrapper {
             }
             finally {
                 db.closeAllCursors();
-                db.disconnect();
+                db.close();
             }
             res.put(url + ":" + clName, tmp);
         }
@@ -304,7 +303,7 @@ public class GroupWrapper {
             ssh.exec(ssh.getSdbInstallDir() + "/bin/sdbinspect -g " + getGroupName());
         }
         finally {
-            ssh.close();
+            ssh.disconnect();
         }
         return ssh.getStdout();
     }

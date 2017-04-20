@@ -426,11 +426,15 @@ public class CommLib {
                         while (cur.hasNext()) {
                             String name = (String) cur.getNext().get("Name");
                             if (name.isEmpty()) {
+                                cataDB.close();
+                                dataDB.close();
                                 return false;
                             }
                         }
+                        cataDB.close();
                     }
                 }
+                dataDB.close();
             }
         }
         catch (BaseException e) {
@@ -462,9 +466,11 @@ public class CommLib {
                                 .getNodeName();
                         Sequoiadb dataDB = new Sequoiadb(dataMAddr, "", "");
                         dataDB.getCollectionSpace(csName).getCollection(tmpCLName);
+                        dataDB.close();
                     }
                 }
             }
+            cataDB.close();
         }
         catch (BaseException e) {
             if (e.getErrorCode() == -23) { // -23:Collection does not exist
@@ -720,7 +726,7 @@ public class CommLib {
      * @throws ReliabilityException
      */
     public static String getSafeHost(String brokenNetHost) throws ReliabilityException {
-        List<String> allHost = GroupMgr.getInstance().getAllHosts();
+        List<String> allHost = new GroupMgr().getAllHosts();
         for (String entry : allHost) {
             if (!entry.equals(brokenNetHost)) {
                 return entry;
@@ -737,7 +743,7 @@ public class CommLib {
      * @throws ReliabilityException
      */
     public static String getSafeCoordUrl(String brokenNetHost) throws ReliabilityException {
-        List<String> allHost = GroupMgr.getInstance().getAllHosts();
+        List<String> allHost = new GroupMgr().getAllHosts();
         for (String entry : allHost) {
             if (!entry.equals(brokenNetHost)) {
                 return entry + ":" + SdbTestBase.serviceName;
