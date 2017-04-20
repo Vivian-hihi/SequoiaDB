@@ -63,7 +63,7 @@ public class CreateIndex2944 extends SdbTestBase {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             
-            groupMgr = GroupMgr.getInstance();
+            groupMgr = new GroupMgr();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
@@ -266,6 +266,7 @@ public class CreateIndex2944 extends SdbTestBase {
                     Assert.fail(idxName + " does not work");
                 }
             }
+            dataDB.close();
         }
     }
     
