@@ -57,6 +57,8 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
     private String clGroupName = null;
     private String randomHost = null;
     private int randomPort;
+    private GroupWrapper dataGroup = null;
+    private String dataPriHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -64,7 +66,6 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            db = new Sequoiadb(coordUrl, "", "");
             groupMgr = new GroupMgr();
 
             if (!groupMgr.checkBusiness()) {
@@ -72,6 +73,15 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
             }
 
             clGroupName = groupMgr.getAllDataGroupName().get(0);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            dataGroup = groupMgr.getGroupByName(clGroupName);
+            dataPriHost = dataGroup.getMaster().hostName();
+            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
+            
+            db = new Sequoiadb(coordUrl, "", "");
             DBCollection cl = createCL(db);
             putLobs(cl); // prepare data for sync
             
@@ -94,14 +104,6 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
-            String dataPriHost = dataGroup.getMaster().hostName();
-            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-            
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 0, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);

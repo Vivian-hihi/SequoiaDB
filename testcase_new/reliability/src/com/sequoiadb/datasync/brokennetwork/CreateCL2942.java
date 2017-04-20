@@ -57,6 +57,8 @@ public class CreateCL2942 extends SdbTestBase {
     private String clNameBase = "cl_2942";
     private String clGroupName = null;
     private static final int CL_NUM = 500;
+    private GroupWrapper dataGroup = null;
+    private String dataSlvHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -64,14 +66,20 @@ public class CreateCL2942 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            
+
             groupMgr = new GroupMgr();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
-            db = new Sequoiadb(coordUrl, "", "");
             clGroupName = groupMgr.getAllDataGroupName().get(0);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            dataGroup = groupMgr.getGroupByName(clGroupName);
+            dataSlvHost = dataGroup.getSlave().hostName();
+            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + Utils.getKeyStack(e, this));
@@ -86,14 +94,6 @@ public class CreateCL2942 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
-            String dataSlvHost = dataGroup.getSlave().hostName();
-            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
@@ -102,7 +102,9 @@ public class CreateCL2942 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
 
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             checkConsistency(dataGroup);
@@ -120,7 +122,9 @@ public class CreateCL2942 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -135,10 +139,10 @@ public class CreateCL2942 extends SdbTestBase {
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
     }
-    
+
     private class CreateCLTask extends OperateTask {
         private String safeUrl = null;
-        
+
         public CreateCLTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -151,17 +155,10 @@ public class CreateCL2942 extends SdbTestBase {
                 CollectionSpace commCS = db.getCollectionSpace(csName);
                 for (int i = 0; i < CL_NUM; i++) {
                     String clName = clNameBase + "_" + i;
-                    BSONObject option = (BSONObject)JSON.parse("{ ShardingKey: { a: 1 },"
-                            + "ShardingType: 'hash', "
-                            + "Partition: 2048, "
-                            + "ReplSize: 2, "
-                            + "Compressed: true, "
-                            + "CompressionType: 'lzw',"
-                            + "IsMainCL: false, "
-                            + "AutoSplit: false, "
-                            + "Group: '" + clGroupName + "', "
-                            + "AutoIndexId: true, "
-                            + "EnsureShardingIndex: true }");
+                    BSONObject option = (BSONObject) JSON.parse("{ ShardingKey: { a: 1 }," + "ShardingType: 'hash', "
+                            + "Partition: 2048, " + "ReplSize: 2, " + "Compressed: true, " + "CompressionType: 'lzw',"
+                            + "IsMainCL: false, " + "AutoSplit: false, " + "Group: '" + clGroupName + "', "
+                            + "AutoIndexId: true, " + "EnsureShardingIndex: true }");
                     commCS.createCollection(clName, option);
                 }
             } catch (BaseException e) {
@@ -173,7 +170,7 @@ public class CreateCL2942 extends SdbTestBase {
             }
         }
     }
-    
+
     private void checkConsistency(GroupWrapper dataGroup) {
         List<String> dataUrls = dataGroup.getAllUrls();
         List<List<BSONObject>> results = new ArrayList<List<BSONObject>>();
@@ -188,7 +185,7 @@ public class CreateCL2942 extends SdbTestBase {
             cursor.close();
             dataDB.close();
         }
-        
+
         List<BSONObject> compareA = results.get(0);
         sortByName(compareA);
         for (int i = 1; i < results.size(); i++) {
@@ -203,17 +200,17 @@ public class CreateCL2942 extends SdbTestBase {
             }
         }
     }
-    
+
     private void sortByName(List<BSONObject> list) {
         Collections.sort(list, new Comparator<BSONObject>() {
             public int compare(BSONObject a, BSONObject b) {
-                String aName = (String)a.get("Name");
-                String bName = (String)b.get("Name");
+                String aName = (String) a.get("Name");
+                String bName = (String) b.get("Name");
                 return aName.compareTo(bName);
             }
         });
     }
-    
+
     private void checkUsable(Sequoiadb db) {
         for (int i = 0; i < CL_NUM; i++) {
             String clName = clNameBase + "_" + i;
@@ -222,7 +219,7 @@ public class CreateCL2942 extends SdbTestBase {
             cl.insert("{ a: 1 }");
         }
     }
-    
+
     private void dropCLs(Sequoiadb db) {
         CollectionSpace commCS = db.getCollectionSpace(csName);
         for (int i = 0; i < CL_NUM; i++) {

@@ -53,6 +53,8 @@ public class CRUD2946 extends SdbTestBase {
     private boolean runSuccess = false;
     private String clName = "cl_2946";
     private String clGroupName = null;
+    private GroupWrapper dataGroup = null;
+    private String dataSlvHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -60,14 +62,22 @@ public class CRUD2946 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            
+
             groupMgr = new GroupMgr();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
-            db = new Sequoiadb(coordUrl, "", "");
             clGroupName = groupMgr.getAllDataGroupName().get(0);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            dataGroup = groupMgr.getGroupByName(clGroupName);
+            dataSlvHost = dataGroup.getSlave().hostName();
+            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
+
+            db = new Sequoiadb(coordUrl, "", "");
             createCL(db);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
@@ -83,14 +93,6 @@ public class CRUD2946 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
-            String dataSlvHost = dataGroup.getSlave().hostName();
-            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
@@ -99,7 +101,9 @@ public class CRUD2946 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
 
             db = new Sequoiadb(coordUrl, "", "");
             Utils.testLob(db, clName);
@@ -119,7 +123,9 @@ public class CRUD2946 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -135,16 +141,16 @@ public class CRUD2946 extends SdbTestBase {
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
     }
-    
+
     private DBCollection createCL(Sequoiadb db) {
         CollectionSpace commCS = db.getCollectionSpace(csName);
-        BSONObject option = (BSONObject)JSON.parse("{ Group: '" + clGroupName + "', ReplSize: 1 }");
+        BSONObject option = (BSONObject) JSON.parse("{ Group: '" + clGroupName + "', ReplSize: 1 }");
         return commCS.createCollection(clName, option);
     }
-    
+
     public class CRUDTask extends OperateTask {
         private String safeUrl = null;
-        
+
         public CRUDTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -157,9 +163,9 @@ public class CRUD2946 extends SdbTestBase {
                 DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
                 int repeatTimes = 10000;
                 for (int i = 0; i < repeatTimes; i++) {
-                    BSONObject rec = (BSONObject)JSON.parse("{ a: " + i + " }");
+                    BSONObject rec = (BSONObject) JSON.parse("{ a: " + i + " }");
                     cl.insert(rec);
-                    BSONObject modifier = (BSONObject)JSON.parse("{ $set: { b: 1 } }");
+                    BSONObject modifier = (BSONObject) JSON.parse("{ $set: { b: 1 } }");
                     cl.update(rec, modifier, null);
                     cl.delete(rec);
                 }

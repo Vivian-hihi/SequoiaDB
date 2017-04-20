@@ -57,6 +57,8 @@ public class DropIndex2945 extends SdbTestBase {
     private String clGroupName = null;
     private static int CL_NUM = 100;
     private static int IDX_NUM = 60;
+    private GroupWrapper dataGroup = null;
+    private String dataSlvHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -64,14 +66,22 @@ public class DropIndex2945 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            
+
             groupMgr = new GroupMgr();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
-            db = new Sequoiadb(coordUrl, "", "");
             clGroupName = groupMgr.getAllDataGroupName().get(0);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            dataGroup = groupMgr.getGroupByName(clGroupName);
+            dataSlvHost = dataGroup.getSlave().hostName();
+            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
+
+            db = new Sequoiadb(coordUrl, "", "");
             createCLs(db);
             createIndexes(db);
         } catch (ReliabilityException e) {
@@ -88,14 +98,6 @@ public class DropIndex2945 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
-            String dataSlvHost = dataGroup.getSlave().hostName();
-            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 1, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
@@ -104,7 +106,9 @@ public class DropIndex2945 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
 
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             checkConsistency(dataGroup);
@@ -121,7 +125,9 @@ public class DropIndex2945 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -136,16 +142,16 @@ public class DropIndex2945 extends SdbTestBase {
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
     }
-    
+
     private void createCLs(Sequoiadb db) {
         CollectionSpace commCS = db.getCollectionSpace(csName);
         for (int i = 0; i < CL_NUM; i++) {
             String clName = clNameBase + "_" + i;
-            BSONObject option = (BSONObject)JSON.parse("{ Group: '" + clGroupName + "', ReplSize: 2 }");
+            BSONObject option = (BSONObject) JSON.parse("{ Group: '" + clGroupName + "', ReplSize: 2 }");
             commCS.createCollection(clName, option);
         }
     }
-    
+
     private void createIndexes(Sequoiadb db) {
         CollectionSpace commCS = db.getCollectionSpace(csName);
         for (int i = 0; i < CL_NUM; i++) {
@@ -153,7 +159,7 @@ public class DropIndex2945 extends SdbTestBase {
             DBCollection cl = commCS.getCollection(clName);
             for (int j = 0; j < IDX_NUM; j++) {
                 String idxName = "idx_" + j;
-                BSONObject key = (BSONObject)JSON.parse("{ a" + j + ": 1 }");
+                BSONObject key = (BSONObject) JSON.parse("{ a" + j + ": 1 }");
                 boolean isUnique = j % 2 == 0 ? true : false;
                 boolean enforced = false;
                 int sortBufferSize = j * 2;
@@ -161,7 +167,7 @@ public class DropIndex2945 extends SdbTestBase {
             }
         }
     }
-    
+
     private void dropCLs(Sequoiadb db) {
         CollectionSpace commCS = db.getCollectionSpace(csName);
         for (int i = 0; i < CL_NUM; i++) {
@@ -169,10 +175,10 @@ public class DropIndex2945 extends SdbTestBase {
             commCS.dropCollection(clName);
         }
     }
-    
+
     private class DropIdxTask extends OperateTask {
         private String safeUrl = null;
-        
+
         public DropIdxTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -202,7 +208,7 @@ public class DropIndex2945 extends SdbTestBase {
             }
         }
     }
-    
+
     private void checkConsistency(GroupWrapper dataGroup) {
         boolean checkOk = false;
         int checkTimes = 30;
@@ -226,7 +232,7 @@ public class DropIndex2945 extends SdbTestBase {
                 results.add(result);
                 dataDB.close();
             }
-            
+
             List<BSONObject> compareA = results.get(0);
             sortByName(compareA);
             removeUnconcerned(compareA);
@@ -244,36 +250,38 @@ public class DropIndex2945 extends SdbTestBase {
                     checkOk = false;
                 }
             }
-            
-            if (checkOk) { break; }
-            
+
+            if (checkOk) {
+                break;
+            }
+
             try {
                 Thread.sleep(checkInterval);
             } catch (InterruptedException e) {
                 // ignore
             }
         }
-        
+
         if (!checkOk) {
             System.out.println(lastCompareInfo);
             Assert.fail("data is different. see the detail in console");
         }
     }
-    
+
     private void sortByName(List<BSONObject> list) {
         Collections.sort(list, new Comparator<BSONObject>() {
             public int compare(BSONObject a, BSONObject b) {
-                String aName = (String)((BSONObject)a.get("IndexDef")).get("name");
-                String bName = (String)((BSONObject)b.get("IndexDef")).get("name");
+                String aName = (String) ((BSONObject) a.get("IndexDef")).get("name");
+                String bName = (String) ((BSONObject) b.get("IndexDef")).get("name");
                 return aName.compareTo(bName);
             }
         });
     }
-    
+
     private void removeUnconcerned(List<BSONObject> list) {
         for (BSONObject obj : list) {
             obj.removeField("IndexFlag");
-            ((BSONObject)obj.get("IndexDef")).removeField("_id");
+            ((BSONObject) obj.get("IndexDef")).removeField("_id");
         }
     }
 }

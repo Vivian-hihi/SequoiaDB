@@ -54,6 +54,8 @@ public class OprLob2947 extends SdbTestBase {
     private boolean runSuccess = false;
     private String clName = "cl_2947";
     private String clGroupName = null;
+    private GroupWrapper dataGroup = null;
+    private String dataSlvHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -61,14 +63,22 @@ public class OprLob2947 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            db = new Sequoiadb(coordUrl, "", "");
-            groupMgr = new GroupMgr();
 
+            groupMgr = new GroupMgr();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
             }
 
             clGroupName = groupMgr.getAllDataGroupName().get(0);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            dataGroup = groupMgr.getGroupByName(clGroupName);
+            dataSlvHost = dataGroup.getSlave().hostName();
+            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
+
+            db = new Sequoiadb(coordUrl, "", "");
             DBCollection cl = createCL(db);
             putLobs(cl); // prepare data for sync
         } catch (ReliabilityException e) {
@@ -85,14 +95,6 @@ public class OprLob2947 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
-            String dataSlvHost = dataGroup.getSlave().hostName();
-            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-            
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 0, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
@@ -100,9 +102,11 @@ public class OprLob2947 extends SdbTestBase {
             mgr.addTask(oTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-            
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusiness occurs timeout"); }
-            
+
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusiness occurs timeout");
+            }
+
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail("data is different on " + dataGroup.getGroupName());
             }
@@ -119,7 +123,9 @@ public class OprLob2947 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -138,7 +144,7 @@ public class OprLob2947 extends SdbTestBase {
 
     private class OprLobTask extends OperateTask {
         private String safeUrl = null;
-        
+
         public OprLobTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -152,19 +158,19 @@ public class OprLob2947 extends SdbTestBase {
                 int lobSize = 1 * 1024 * 1024;
                 byte[] lobBytes = new byte[lobSize];
                 new Random().nextBytes(lobBytes);
-                
+
                 int repeatTimes = 100;
                 for (int i = 0; i < repeatTimes; i++) {
                     DBLob wLob = cl.createLob();
                     wLob.write(lobBytes);
                     ObjectId oid = wLob.getID();
                     wLob.close();
-                    
+
                     DBLob rLob = cl.openLob(oid);
                     byte[] rLobBytes = new byte[lobSize];
                     rLob.read(rLobBytes);
                     rLob.close();
-                    
+
                     cl.removeLob(oid);
                 }
             } catch (BaseException e) {
@@ -175,18 +181,18 @@ public class OprLob2947 extends SdbTestBase {
             }
         }
     }
-    
+
     private DBCollection createCL(Sequoiadb db) {
-        BSONObject option = (BSONObject)JSON.parse("{ ReplSize: 2, Group: '" + clGroupName + "' }");
+        BSONObject option = (BSONObject) JSON.parse("{ ReplSize: 2, Group: '" + clGroupName + "' }");
         CollectionSpace cs = db.getCollectionSpace(csName);
         return cs.createCollection(clName, option);
     }
-    
+
     private void putLobs(DBCollection cl) {
         int lobSize = 1 * 1024 * 1024;
         byte[] lobBytes = new byte[lobSize];
         new Random().nextBytes(lobBytes);
-        
+
         int lobNum = 100;
         for (int i = 0; i < lobNum; i++) {
             DBLob lob = cl.createLob();
