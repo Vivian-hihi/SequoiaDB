@@ -55,9 +55,9 @@ namespace engine
 #define STAT_COLLECTION_MBID           "CollectionMBID"
 #define STAT_VERSION                   "Version"
 #define STAT_SAMPLE_RECORDS            "SampleRecords"
-#define STAT_TOTAL_RECORDS             "TotalRecords"
+#define STAT_TOTAL_RECORDS             FIELD_NAME_TOTAL_RECORDS
 
-#define STAT_CL_TOTAL_DATA_LEN         "TotalDataLen"
+#define STAT_CL_TOTAL_DATA_LEN         FIELD_NAME_TOTAL_DATA_SIZE
 #define STAT_CL_AVG_NUM_FIELDS         "AvgNumFields"
 
 #define STAT_IDX_INDEX                 "Index"
