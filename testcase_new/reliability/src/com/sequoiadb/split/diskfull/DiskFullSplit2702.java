@@ -52,7 +52,7 @@ public class DiskFullSplit2702 extends SdbTestBase {
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             commSdb = new Sequoiadb(coordUrl, "", "");
-            groupMgr = GroupMgr.getInstance();
+            groupMgr = new GroupMgr();
 
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
@@ -220,7 +220,7 @@ public class DiskFullSplit2702 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             try {
-                NodeWrapper cataMaster = GroupMgr.getInstance().getGroupByName(Utils.CATA_RG_NAME)
+                NodeWrapper cataMaster = new GroupMgr().getGroupByName(Utils.CATA_RG_NAME)
                         .getMaster();
                 // 分别以每条记录128字节的大小填充SYSCAT.SYSCOLLECTIONS至-11错误
                 fillUpCatalogSYSCL("pad_HHHK", Utils.getString(128), cataMaster);

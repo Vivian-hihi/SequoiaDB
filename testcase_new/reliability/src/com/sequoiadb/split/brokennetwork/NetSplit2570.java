@@ -51,7 +51,7 @@ public class NetSplit2570 extends SdbTestBase {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            groupMgr = GroupMgr.getInstance();
+            groupMgr = new GroupMgr();
 
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
@@ -202,6 +202,7 @@ public class NetSplit2570 extends SdbTestBase {
             Sequoiadb db = new Sequoiadb(connectUrl, "", "");
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 1000, 6000);
+            db.close();
         }
     }
 

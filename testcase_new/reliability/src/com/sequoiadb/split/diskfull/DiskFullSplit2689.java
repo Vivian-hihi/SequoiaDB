@@ -52,7 +52,7 @@ public class DiskFullSplit2689 extends SdbTestBase {
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             commSdb = new Sequoiadb(coordUrl, "", "");
-            groupMgr = GroupMgr.getInstance();
+            groupMgr = new GroupMgr();
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
             }

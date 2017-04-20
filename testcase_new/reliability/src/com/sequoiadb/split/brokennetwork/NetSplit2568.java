@@ -52,7 +52,7 @@ public class NetSplit2568 extends SdbTestBase {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            groupMgr = GroupMgr.getInstance();
+            groupMgr = new GroupMgr();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
             if (!groupMgr.checkBusiness(20)) {
@@ -245,6 +245,7 @@ public class NetSplit2568 extends SdbTestBase {
             Sequoiadb db = new Sequoiadb(connectUrl, "", "");
             DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
             insertData(cl, 800, 5000);
+            db.close();
         }
     }
 

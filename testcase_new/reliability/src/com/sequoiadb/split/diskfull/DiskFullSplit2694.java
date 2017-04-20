@@ -54,7 +54,7 @@ public class DiskFullSplit2694 extends SdbTestBase {
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
             commSdb = new Sequoiadb(coordUrl, "", "");
-            groupMgr = GroupMgr.getInstance();
+            groupMgr = new GroupMgr();
 
             if (!groupMgr.checkBusiness(20)) {
                 throw new SkipException("checkBusiness return false");
@@ -95,32 +95,32 @@ public class DiskFullSplit2694 extends SdbTestBase {
         totalCount = totalCount + end - begin;
     }
 
-    private void fillUpCatalogSYSCL(String name, String padStr, NodeWrapper master) {
-        Sequoiadb db = null;
-        try {
-            System.out.println("strlen:" + padStr.length());
-            db = new Sequoiadb(master.hostName() + ":" + master.svcName(), "", "");
-            DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
-            int i = 0;
-            try {
-                while (true) {
-                    cl.insert("{Name:'" + name + i + "',pad:'" + padStr + i + "',deleteFlag:1}");
-                    i++;
-                }
-            }
-            catch (BaseException e) {
-                System.out.println("fillUpCataSYSCL:" + e.getErrorCode());
-                if (e.getErrorCode() != -11) {
-                    throw e;
-                }
-            }
-        }
-        finally {
-            if (db != null) {
-                db.close();
-            }
-        }
-    }
+//    private void fillUpCatalogSYSCL(String name, String padStr, NodeWrapper master) {
+//        Sequoiadb db = null;
+//        try {
+//            System.out.println("strlen:" + padStr.length());
+//            db = new Sequoiadb(master.hostName() + ":" + master.svcName(), "", "");
+//            DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
+//            int i = 0;
+//            try {
+//                while (true) {
+//                    cl.insert("{Name:'" + name + i + "',pad:'" + padStr + i + "',deleteFlag:1}");
+//                    i++;
+//                }
+//            }
+//            catch (BaseException e) {
+//                System.out.println("fillUpCataSYSCL:" + e.getErrorCode());
+//                if (e.getErrorCode() != -11) {
+//                    throw e;
+//                }
+//            }
+//        }
+//        finally {
+//            if (db != null) {
+//                db.close();
+//            }
+//        }
+//    }
 
     @Test
     public void test() {
@@ -234,7 +234,7 @@ public class DiskFullSplit2694 extends SdbTestBase {
         public void exec() throws Exception {
             Sequoiadb db = null;
             try {
-                NodeWrapper cataMaster = GroupMgr.getInstance().getGroupByName(Utils.CATA_RG_NAME)
+                NodeWrapper cataMaster = new GroupMgr().getGroupByName(Utils.CATA_RG_NAME)
                         .getMaster();
                 db = cataMaster.connect();
                 DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
