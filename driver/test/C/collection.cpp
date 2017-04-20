@@ -1958,9 +1958,10 @@ TEST( collection, sdbQueryAndUpdate )
    bson_append_bson( &condition, pField1, &tmp ) ;
    bson_finish( &condition ) ;
 
+   // The optimizer is able to find index2
    rc = sdbQueryAndUpdate( cl, &condition, &selector, &orderBy, NULL,
                            &update, 0, -1, 0, TRUE, &cursor ) ;
-   ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    /// in case: use selector orderBy with hint
    bson_init( &hint ) ;

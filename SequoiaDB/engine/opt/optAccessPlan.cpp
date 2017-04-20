@@ -233,6 +233,8 @@ namespace engine
             ( OSS_BIT_TEST( _queryFlags, FLG_QUERY_MODIFY ) ||
               OSS_BIT_TEST( _queryFlags, FLG_QUERY_WITHOUT_SORT ) ) ;
 
+      UINT32 validHints = 0 ;
+
       PD_LOG( PDDEBUG,
               "Optimizer: Creating plan %s selector %s matcher %s order by %s hint %s",
               _collectionFullName,
@@ -276,6 +278,8 @@ namespace engine
                              _collectionFullName, pIndexName, rc ) ;
                      break ;
                   }
+
+                  validHints ++ ;
 
                   rc = _estimateIxScanPlan( collectionStat, indexCBExtent,
                                             priority, sortBufferSize,
@@ -327,6 +331,9 @@ namespace engine
                           _collectionFullName, indexOID.toString().c_str(), rc ) ;
                   break ;
                }
+
+               validHints ++ ;
+
                rc = _estimateIxScanPlan( collectionStat, indexCBExtent,
                                          priority, sortBufferSize, estCacheSize,
                                          ixScanPath ) ;
@@ -350,6 +357,8 @@ namespace engine
                optScanPath tbScanPath( &_planAllocator ) ;
 
                PD_LOG ( PDDEBUG, "Use Collection Scan by Hint" ) ;
+
+               validHints ++ ;
 
                // if we use null in the hint, we use tbscan
                rc = _estimateTbScanPlan( collectionStat, sortBufferSize,
@@ -382,7 +391,7 @@ namespace engine
          }
       }
 
-      if ( sortedIdxRequired )
+      if ( sortedIdxRequired && validHints > 0 )
       {
          // Report the sort required earlier
          PD_CHECK ( DMS_INVALID_EXTENT != bestPath.getIndexExtID(),
@@ -660,10 +669,21 @@ namespace engine
 
       rc = SDB_OK ;
 
-      if ( _hint.isEmpty() ||
-           SDB_OK != _estimateHintPlans( mbContext ) )
+      if ( _hint.isEmpty() )
       {
          rc = _estimatePlans( mbContext ) ;
+      }
+      else
+      {
+         // Evaluate hints first
+         rc = _estimateHintPlans( mbContext ) ;
+         if ( SDB_OK != rc &&
+              SDB_RTN_QUERYMODIFY_SORT_NO_IDX != rc )
+         {
+            // Hint failed, could evaluate with all candidate plans again
+            // Without sorted index should be reported
+            rc = _estimatePlans( mbContext ) ;
+         }
       }
 
       PD_RC_CHECK( rc, PDERROR, "Failed to create candidate plans, rc: %d", rc ) ;
