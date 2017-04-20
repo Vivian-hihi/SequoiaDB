@@ -42,17 +42,7 @@ using namespace bson ;
 namespace engine
 {
 
-   #define COORD_PARSE_MASK_ET_DFT           0x00000001
-   #define COORD_PARSE_MASK_IN_DFT           0x00000002
-   #define COORD_PARSE_MASK_ET_OPR           0x00000004
-   #define COORD_PARSE_MASK_IN_OPR           0x00000008
-
-   #define COORD_PARSE_MASK_ET               ( COORD_PARSE_MASK_ET_DFT|\
-                                               COORD_PARSE_MASK_ET_OPR )
-   #define COORD_PARSE_MASK_ALL              0xFFFFFFFF
-
-   static INT32 _coordParseBoolean( BSONElement &e, BOOLEAN &value,
-                                    UINT32 mask )
+   INT32 coordParseBoolean( BSONElement &e, BOOLEAN &value, UINT32 mask )
    {
       INT32 rc = SDB_INVALIDARG ;
       /// a:true
@@ -75,14 +65,14 @@ namespace engine
          if ( 1 == obj.nFields() &&
               0 == ossStrcmp( "$et", tmpE.fieldName() ) )
          {
-            rc = _coordParseBoolean( tmpE, value,
-                                     COORD_PARSE_MASK_ET_DFT ) ;
+            rc = coordParseBoolean( tmpE, value,
+                                    COORD_PARSE_MASK_ET_DFT ) ;
          }
       }
       return rc ;
    }
 
-   static INT32 _coordParseInt( BSONElement &e, INT32 &value, UINT32 mask )
+   INT32 coordParseInt( BSONElement &e, INT32 &value, UINT32 mask )
    {
       INT32 rc = SDB_INVALIDARG ;
       /// a:1
@@ -99,15 +89,14 @@ namespace engine
          if ( 1 == obj.nFields() &&
               0 == ossStrcmp( "$et", tmpE.fieldName() ) )
          {
-            rc = _coordParseInt( tmpE, value,
-                                 COORD_PARSE_MASK_ET_DFT ) ;
+            rc = coordParseInt( tmpE, value,
+                                COORD_PARSE_MASK_ET_DFT ) ;
          }
       }
       return rc ;
    }
 
-   static INT32 _coordParseInt( BSONElement &e, vector<INT32> &vecValue,
-                                UINT32 mask )
+   INT32 coordParseInt( BSONElement &e, vector<INT32> &vecValue, UINT32 mask )
    {
       INT32 rc = SDB_INVALIDARG ;
       INT32 value = 0 ;
@@ -118,7 +107,7 @@ namespace engine
                              "$et") ) &&
            ( mask & COORD_PARSE_MASK_ET ) )
       {
-         rc = _coordParseInt( e, value, mask ) ;
+         rc = coordParseInt( e, value, mask ) ;
          if ( SDB_OK == rc )
          {
             vecValue.push_back( value ) ;
@@ -131,8 +120,8 @@ namespace engine
          while ( it.more() )
          {
             BSONElement tmpE = it.next() ;
-            rc = _coordParseInt( tmpE, value,
-                                 COORD_PARSE_MASK_ET_DFT ) ;
+            rc = coordParseInt( tmpE, value,
+                                COORD_PARSE_MASK_ET_DFT ) ;
             if ( rc )
             {
                break ;
@@ -150,15 +139,15 @@ namespace engine
          BSONElement tmpE = obj.firstElement() ;
          if ( 1 == obj.nFields() )
          {
-            rc = _coordParseInt( tmpE, vecValue,
-                                 COORD_PARSE_MASK_IN_DFT ) ;
+            rc = coordParseInt( tmpE, vecValue,
+                                COORD_PARSE_MASK_IN_DFT ) ;
          }
       }
       return rc ;
    }
 
-   static INT32 _coordParseString( BSONElement &e, const CHAR *&value,
-                                   UINT32 mask )
+   static INT32 coordParseString( BSONElement &e, const CHAR *&value,
+                                  UINT32 mask )
    {
       INT32 rc = SDB_INVALIDARG ;
       /// a:"xxx"
@@ -175,16 +164,16 @@ namespace engine
          if ( 1 == obj.nFields() &&
               0 == ossStrcmp( "$et", tmpE.fieldName() ) )
          {
-            rc = _coordParseString( tmpE, value,
-                                    COORD_PARSE_MASK_ET_DFT ) ;
+            rc = coordParseString( tmpE, value,
+                                   COORD_PARSE_MASK_ET_DFT ) ;
          }
       }
       return rc ;
    }
 
-   static INT32 _coordParseString( BSONElement &e,
-                                   vector<const CHAR*> &vecValue,
-                                   UINT32 mask )
+   static INT32 coordParseString( BSONElement &e,
+                                  vector<const CHAR*> &vecValue,
+                                  UINT32 mask )
    {
       INT32 rc = SDB_INVALIDARG ;
       const CHAR *value = NULL ;
@@ -195,7 +184,7 @@ namespace engine
                              "$et") ) &&
            ( mask & COORD_PARSE_MASK_ET ) )
       {
-         rc = _coordParseString( e, value, mask ) ;
+         rc = coordParseString( e, value, mask ) ;
          if ( SDB_OK == rc )
          {
             vecValue.push_back( value ) ;
@@ -208,8 +197,8 @@ namespace engine
          while ( it.more() )
          {
             BSONElement tmpE = it.next() ;
-            rc = _coordParseString( tmpE, value,
-                                    COORD_PARSE_MASK_ET_DFT ) ;
+            rc = coordParseString( tmpE, value,
+                                   COORD_PARSE_MASK_ET_DFT ) ;
             if ( rc )
             {
                break ;
@@ -227,8 +216,8 @@ namespace engine
          BSONElement tmpE = obj.firstElement() ;
          if ( 1 == obj.nFields() )
          {
-            rc = _coordParseString( tmpE, vecValue,
-                                    COORD_PARSE_MASK_IN_DFT ) ;
+            rc = coordParseString( tmpE, vecValue,
+                                   COORD_PARSE_MASK_IN_DFT ) ;
          }
       }
       return rc ;
@@ -408,8 +397,8 @@ namespace engine
          else if ( ( mask & COORD_CTRL_MASK_GLOBAL ) &&
                    0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
          {
-            rc = _coordParseBoolean( e, param._isGlobal,
-                                     COORD_PARSE_MASK_ET ) ;
+            rc = coordParseBoolean( e, param._isGlobal,
+                                    COORD_PARSE_MASK_ET ) ;
             if ( SDB_OK == rc )
             {
                modify = TRUE ;
@@ -442,7 +431,7 @@ namespace engine
                    0 == ossStrcasecmp( e.fieldName(),
                                        FIELD_NAME_NODE_SELECT ) )
          {
-            rc = _coordParseString( e, tmpStr, COORD_PARSE_MASK_ET ) ;
+            rc = coordParseString( e, tmpStr, COORD_PARSE_MASK_ET ) ;
             if ( SDB_OK == rc )
             {
                if ( 0 == ossStrcasecmp( tmpStr, "primary" ) ||
@@ -491,8 +480,8 @@ namespace engine
                                        FIELD_NAME_ROLE ) )
          {
             INT32 tmpRole[ SDB_ROLE_MAX ] = { 0 } ;
-            rc = _coordParseString( e, tmpVecStr,
-                                    COORD_PARSE_MASK_ALL ) ;
+            rc = coordParseString( e, tmpVecStr,
+                                   COORD_PARSE_MASK_ALL ) ;
             if ( SDB_OK == rc )
             {
                for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
@@ -546,8 +535,8 @@ namespace engine
          else if ( ( mask & COORD_CTRL_MASK_RAWDATA ) &&
                    0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_RAWDATA ) )
          {
-            rc = _coordParseBoolean( e, param._rawData,
-                                     COORD_PARSE_MASK_ET ) ;
+            rc = coordParseBoolean( e, param._rawData,
+                                    COORD_PARSE_MASK_ET ) ;
             if ( SDB_OK == rc )
             {
                modify = TRUE ;
@@ -586,14 +575,14 @@ namespace engine
       goto done ;
    }
 
-   static INT32 _coordParseGroupsInfo( const BSONObj &obj,
-                                       vector< INT32 > &vecID,
-                                       vector< const CHAR* > &vecName,
-                                       BSONObj *pNewObj,
-                                       BOOLEAN strictCheck )
+   INT32 coordParseGroupsInfo( const BSONObj &obj,
+                               vector< INT32 > &vecID,
+                               vector< const CHAR* > &vecName,
+                               BSONObj *pNewObj,
+                               BOOLEAN strictCheck )
    {
       INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
+      BSONObjBuilder builder( obj.objsize() ) ;
       BOOLEAN isModify = FALSE ;
 
       BSONObjIterator it( obj ) ;
@@ -621,9 +610,9 @@ namespace engine
                else
                {
                   BSONObj tmpObj = tmpE.embeddedObject() ;
-                  rc = _coordParseGroupsInfo( tmpObj, vecID, vecName,
-                                              pNewObj ? &tmpNew : NULL,
-                                              strictCheck ) ;
+                  rc = coordParseGroupsInfo( tmpObj, vecID, vecName,
+                                             pNewObj ? &tmpNew : NULL,
+                                             strictCheck ) ;
                   PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] groups failed",
                                obj.toString().c_str() ) ;
                   if ( pNewObj )
@@ -645,7 +634,7 @@ namespace engine
          // group id
          else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) )
          {
-            rc = _coordParseInt( ele, vecID, COORD_PARSE_MASK_ALL ) ;
+            rc = coordParseInt( ele, vecID, COORD_PARSE_MASK_ALL ) ;
             if ( SDB_OK == rc )
             {
                isModify = TRUE ;
@@ -661,12 +650,12 @@ namespace engine
          }
          // group name
          else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
-                                       FIELD_NAME_GROUPNAME ) ||
+                                         FIELD_NAME_GROUPNAME ) ||
                      0 == ossStrcasecmp( ele.fieldName(),
-                                       FIELD_NAME_GROUPS ) ) )
+                                         FIELD_NAME_GROUPS ) ) )
          {
-            rc = _coordParseString( ele, vecName,
-                                    COORD_PARSE_MASK_ALL ) ;
+            rc = coordParseString( ele, vecName,
+                                   COORD_PARSE_MASK_ALL ) ;
             if ( SDB_OK == rc )
             {
                isModify = TRUE ;
@@ -685,6 +674,142 @@ namespace engine
             builder.append( ele ) ;
          }
       }
+
+      if ( pNewObj )
+      {
+         if ( isModify )
+         {
+            *pNewObj = builder.obj() ;
+         }
+         else
+         {
+            *pNewObj = obj ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 coordParseNodesInfo( const BSONObj &obj,
+                              vector< INT32 > &vecNodeID,
+                              vector< const CHAR* > &vecHostName,
+                              vector< const CHAR* > &vecSvcName,
+                              BSONObj *pNewObj,
+                              BOOLEAN strictCheck )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder( obj.objsize() ) ;
+      BOOLEAN isModify = FALSE ;
+
+      BSONObjIterator itr( obj ) ;
+      while( itr.more() )
+      {
+         BSONElement ele = itr.next() ;
+
+         // $and:[{NodeID:1001, HostName:"xxxx" }]
+         if ( Array == ele.type() &&
+              0 == ossStrcmp( ele.fieldName(), "$and" ) )
+         {
+            BSONArrayBuilder sub( builder.subarrayStart( ele.fieldName() ) ) ;
+            BSONObj tmpNew ;
+            BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+            while ( tmpItr.more() )
+            {
+               BSONElement tmpE = tmpItr.next() ;
+               if ( Object != tmpE.type() )
+               {
+                  PD_LOG( PDERROR, "Parse obj[%s] nodes failed: "
+                          "invalid $and", obj.toString().c_str() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               else
+               {
+                  BSONObj tmpObj = tmpE.embeddedObject() ;
+                  rc = coordParseNodesInfo( tmpObj, vecNodeID,
+                                            vecHostName, vecSvcName,
+                                            pNewObj ? &tmpNew : NULL,
+                                            strictCheck ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes failed ",
+                               obj.toString().c_str() ) ;
+                  if ( pNewObj )
+                  {
+                     if ( tmpNew.objdata() != tmpObj.objdata() )
+                     {
+                        isModify = TRUE ;
+                        sub.append( tmpNew ) ;
+                     }
+                     else
+                     {
+                        sub.append( tmpObj ) ;
+                     }
+                  }
+               }
+            }
+            sub.done() ;
+         } /// end $and
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) )
+         {
+            rc = coordParseInt( ele, vecNodeID,
+                                COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
+         }
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) )
+         {
+            rc = coordParseString( ele, vecHostName,
+                                   COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
+         }
+         else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
+                                         FIELD_NAME_SERVICE_NAME ) ||
+                     0 == ossStrcasecmp( ele.fieldName(),
+                                         PMD_OPTION_SVCNAME ) ) )
+         {
+            rc = coordParseString( ele, vecSvcName,
+                                   COORD_PARSE_MASK_ALL ) ;
+            if ( SDB_OK == rc )
+            {
+               isModify = TRUE ;
+            }
+            else if ( strictCheck )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_OK ;
+            }
+         }
+         else if ( pNewObj )
+         {
+            builder.append( ele ) ;
+         } // end if
+      } // end while
 
       if ( pNewObj )
       {

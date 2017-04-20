@@ -106,7 +106,6 @@ namespace engine
    {
       BOOLEAN                    _primary ;
       MSG_ROUTE_SERVICE_TYPE     _svcType ;
-      BOOLEAN                    _interruptWhenFailed ;
 
       CoordGroupList             _groupLst ;
       BOOLEAN                    _useSpecialGrp ;  // use the specila group of _groupLst
@@ -118,7 +117,6 @@ namespace engine
       {
          _primary    = primary ;
          _svcType    = type ;
-         _interruptWhenFailed = FALSE ;
          _pIgnoreRC  = NULL ;
          _useSpecialGrp = FALSE ;
       }
@@ -326,6 +324,12 @@ namespace engine
                                                    coordSendOptions &options,
                                                    pmdEDUCB *cb,
                                                    coordProcessResult &result ) ;
+
+         /*
+            Whether or not to interrupted all other sub sessions 
+            when a sub session failed( send failed or returned failed )
+         */
+         virtual BOOLEAN            _interruptWhenFailed() const ;
 
       protected:
          /*

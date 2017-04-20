@@ -55,29 +55,36 @@ namespace engine
    }
 
    INT32 _coordCommandFactory::create( const CHAR *pCmdName,
-                                       coordOperator &*pOperator )
+                                       coordOperator *&pOperator )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL == pOperator, "Operator must be NULL" ) ;
 
-      MAP_COMMAND_IT it = _mapCommand.find( pCmdName ) ;
-      if ( it != _mapCommand.end() )
+      if ( !pCmdName || !(*pCmdName) )
       {
-         coordFactoryItem &item = it->second ;
-         pOperator = (*item._pFunc)() ;
-         if ( !pOperator )
-         {
-            rc = SDB_OOM ;
-         }
-         else
-         {
-            pOperator->setReadOnly( item._isReadOnly ) ;
-            pOperator->setName( it->first ) ;
-         }
+         rc = SDB_INVALIDARG ;
       }
       else
       {
-         rc = SDB_COORD_UNKNOWN_OP_REQ ;
+         MAP_COMMAND_IT it = _mapCommand.find( pCmdName ) ;
+         if ( it != _mapCommand.end() )
+         {
+            coordFactoryItem &item = it->second ;
+            pOperator = (*item._pFunc)() ;
+            if ( !pOperator )
+            {
+               rc = SDB_OOM ;
+            }
+            else
+            {
+               pOperator->setReadOnly( item._isReadOnly ) ;
+               pOperator->setName( it->first ) ;
+            }
+         }
+         else
+         {
+            rc = SDB_COORD_UNKNOWN_OP_REQ ;
+         }
       }
       return rc ;
    }
@@ -131,7 +138,7 @@ namespace engine
                                            BOOLEAN isReadOnly,
                                            COORD_NEW_OPERATOR pFunc )
    {
-      coordGetFactory()->register( pCmdName, isReadOnly, pFunc ) ;
+      coordGetFactory()->_register( pCmdName, isReadOnly, pFunc ) ;
    }
 
    _coordCommandAssit::_coordCommandAssit( COORD_NEW_OPERATOR pFunc )

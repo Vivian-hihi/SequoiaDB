@@ -38,6 +38,7 @@
 #include "msgDef.h"
 #include "msgCatalogDef.h"
 #include "pmdEDU.hpp"
+#include "rtnQueryOptions.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -201,6 +202,273 @@ namespace engine
          PD_LOG ( PDERROR, "Parse catalog reply object occur exception: %s",
                   e.what() ) ;
          goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 coordParseGroupList( coordResource *pResource,
+                              pmdEDUCB *cb,
+                              const BSONObj &obj,
+                              CoordGroupList &groupList,
+                              BSONObj *pNewObj,
+                              BOOLEAN strictCheck )
+   {
+      INT32 rc = SDB_OK ;
+      CoordGroupInfoPtr grpPtr ;
+      vector< INT32 > tmpVecInt ;
+      vector< const CHAR* > tmpVecStr ;
+      UINT32 i = 0 ;
+
+      rc = coordParseGroupsInfo( obj, tmpVecInt, tmpVecStr,
+                                 pNewObj, strictCheck ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse object[%s] group list failed, rc: %d",
+                   obj.toString().c_str(), rc ) ;
+
+      /// group id
+      for ( i = 0 ; i < tmpVecInt.size() ; ++i )
+      {
+         groupList[(UINT32)tmpVecInt[i]] = (UINT32)tmpVecInt[i] ;
+      }
+
+      /// group name
+      for ( i = 0 ; i < tmpVecStr.size() ; ++i )
+      {
+         rc = pResource->getGroupInfo( tmpVecStr[i], grpPtr ) ;
+         if ( rc )
+         {
+            rc = pResource->updateGroupInfo( tmpVecStr[i], grpPtr, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Update group[%s] info failed, rc: %d",
+                         tmpVecStr[i], rc ) ;
+         }
+         groupList[ grpPtr->groupID() ] = grpPtr->groupID() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 coordParseGroupList( coordResource *pResource,
+                              pmdEDUCB *cb,
+                              MsgOpQuery *pMsg,
+                              FILTER_BSON_ID filterObjID,
+                              CoordGroupList &groupList,
+                              BOOLEAN strictCheck )
+   {
+      INT32 rc = SDB_OK ;
+      rtnQueryOptions queryOption ;
+      BSONObj *pFilterObj = NULL ;
+
+      rc = queryOption.fromQueryMsg( (CHAR *)pMsg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract query msg failed, rc: %d", rc ) ;
+
+      pFilterObj = coordGetFilterByID( filterObjID, queryOption ) ;
+      try
+      {
+         if ( !pFilterObj->isEmpty() )
+         {
+            rc = coordParseGroupList( pResource, cb, *pFilterObj,
+                                      groupList, NULL, strictCheck ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 coordGroupList2GroupPtr( coordResource *pResource,
+                                  pmdEDUCB *cb,
+                                  CoordGroupList &groupList,
+                                  GROUP_VEC & groupPtrs )
+   {
+      INT32 rc = SDB_OK ;
+      groupPtrs.clear() ;
+      CoordGroupInfoPtr ptr ;
+
+      CoordGroupList::iterator it = groupList.begin() ;
+      while ( it != groupList.end() )
+      {
+         rc = pResource->getGroupInfo( it->second, ptr ) ;
+         if ( rc )
+         {
+            rc = pResource->updateGroupInfo( it->second, ptr, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Update group[%d] info failed, rc: %d",
+                         it->second, rc ) ;
+         }
+         groupPtrs.push_back( ptr ) ;
+         ++it ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void coordGroupPtr2GroupList( GROUP_VEC &groupPtrs,
+                                 CoordGroupList &groupList )
+   {
+      groupList.clear() ;
+
+      GROUP_VEC::iterator it = groupPtrs.begin() ;
+      while ( it != groupPtrs.end() )
+      {
+         CoordGroupInfoPtr &ptr = *it ;
+         groupList[ ptr->groupID() ] = ptr->groupID() ;
+         ++it ;
+      }
+   }
+
+   INT32 coordGetGroupNodes( coordResource *pResource,
+                             pmdEDUCB *cb,
+                             const BSONObj &filterObj,
+                             NODE_SEL_STY emptyFilterSel,
+                             CoordGroupList &groupList,
+                             SET_ROUTEID &nodes,
+                             BSONObj *pNewObj,
+                             BOOLEAN strictCheck )
+   {
+      INT32 rc = SDB_OK ;
+      CoordGroupInfoPtr ptr ;
+      MsgRouteID routeID ;
+      GROUP_VEC groupPtrs ;
+      GROUP_VEC::iterator it ;
+
+      vector< INT32 > vecNodeID ;
+      vector< const CHAR* > vecHostName ;
+      vector< const CHAR* > vecSvcName ;
+      BOOLEAN emptyFilter = TRUE ;
+
+      nodes.clear() ;
+
+      rc = coordGroupList2GroupPtr( pResource, cb, groupList, groupPtrs ) ;
+      PD_RC_CHECK( rc, PDERROR, "Group ids to group info failed, rc: %d", rc ) ;
+
+      rc = coordParseNodesInfo( filterObj, vecNodeID, vecHostName,
+                                vecSvcName, pNewObj, strictCheck ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes info failed, rc: %d",
+                   filterObj.toString().c_str(), rc ) ;
+
+      if ( vecNodeID.size() > 0 || vecHostName.size() > 0 ||
+           vecSvcName.size() > 0 )
+      {
+         emptyFilter = FALSE ;
+      }
+
+      /// parse nodes
+      it = groupPtrs.begin() ;
+      while ( it != groupPtrs.end() )
+      {
+         UINT32 calTimes = 0 ;
+         UINT32 randNum = ossRand() ;
+         ptr = *it ;
+
+         routeID.value = MSG_INVALID_ROUTEID ;
+         clsGroupItem *grp = ptr.get() ;
+         if ( grp->nodeCount() > 0 )
+         {
+            randNum %= grp->nodeCount() ;
+         }
+
+         /// calc pos
+         while ( calTimes++ < grp->nodeCount() )
+         {
+            if ( NODE_SEL_SECONDARY == emptyFilterSel &&
+                 randNum == grp->getPrimaryPos() )
+            {
+               randNum = ( randNum + 1 ) % grp->nodeCount() ;
+               continue ;
+            }
+            else if ( NODE_SEL_PRIMARY == emptyFilterSel &&
+                      CLS_RG_NODE_POS_INVALID != grp->getPrimaryPos() )
+            {
+               randNum = grp->getPrimaryPos() ;
+            }
+            break ;
+         }
+
+         routeID.columns.groupID = grp->groupID() ;
+         const VEC_NODE_INFO *nodesInfo = grp->getNodes() ;
+         for ( VEC_NODE_INFO::const_iterator itrn = nodesInfo->begin() ;
+               itrn != nodesInfo->end();
+               ++itrn, --randNum )
+         {
+            if ( FALSE == emptyFilter )
+            {
+               BOOLEAN findNode = FALSE ;
+               UINT32 index = 0 ;
+               /// check node id
+               for ( index = 0 ; index < vecNodeID.size() ; ++index )
+               {
+                  if ( (UINT16)vecNodeID[ index ] == itrn->_id.columns.nodeID )
+                  {
+                     findNode = TRUE ;
+                     break ;
+                  }
+               }
+               if ( index > 0 && !findNode )
+               {
+                  continue ;
+               }
+
+               findNode = FALSE ;
+               /// check host name
+               for ( index = 0 ; index < vecHostName.size() ; ++index )
+               {
+                  if ( 0 == ossStrcmp( vecHostName[ index ],
+                                       itrn->_host ) )
+                  {
+                     findNode = TRUE ;
+                     break ;
+                  }
+               }
+               if ( index > 0 && !findNode )
+               {
+                  continue ;
+               }
+
+               findNode = FALSE ;
+               /// check svcname
+               for ( index = 0 ; index < vecSvcName.size() ; ++index )
+               {
+                  if ( 0 == ossStrcmp( vecSvcName[ index ],
+                                       itrn->_service[MSG_ROUTE_LOCAL_SERVICE].c_str() ) )
+                  {
+                     findNode = TRUE ;
+                     break ;
+                  }
+               }
+               if ( index > 0 && !findNode )
+               {
+                  continue ;
+               }
+            }
+            else if ( NODE_SEL_ALL != emptyFilterSel && 0 != randNum )
+            {
+               continue ;
+            }
+            routeID.columns.nodeID = itrn->_id.columns.nodeID ;
+            routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
+            nodes.insert( routeID.value ) ;
+         }
+         ++it ;
       }
 
    done:

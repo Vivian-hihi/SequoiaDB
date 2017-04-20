@@ -41,6 +41,10 @@
 #include "coordRemoteHandle.hpp"
 #include "coordRemoteSession.hpp"
 #include "coordCommon.hpp"
+#include "coordFactory.hpp"
+#include "pmd.hpp"
+#include "rtnCB.hpp"
+#include "rtn.hpp"
 #include "../bson/bson.h"
 #include "utilArray.hpp"
 
@@ -267,6 +271,64 @@ namespace engine
       return rc ;
    }
 
+   UINT32 _coordResource::getGroupsInfo( GROUP_VEC &vecGroupPtr,
+                                         BOOLEAN exceptCata,
+                                         BOOLEAN exceptCoord )
+   {
+      UINT32 count = 0 ;
+      MAP_GROUP_INFO_IT it ;
+      ossScopedLock lock( &_nodeMutex, SHARED ) ;
+
+      it = _mapGroupInfo.begin() ;
+      while( it != _mapGroupInfo.end() )
+      {
+         if ( CATALOG_GROUPID == it->first && exceptCata )
+         {
+            ++it ;
+            continue ;
+         }
+         else if ( COORD_GROUPID == it->first && exceptCoord )
+         {
+            ++it ;
+            continue ;
+         }
+         vecGroupPtr.push_back( it->second ) ;
+         ++count ;
+         ++it ;
+      }
+
+      return count ;
+   }
+
+   UINT32 _coordResource::getGroupList( CoordGroupList &groupList,
+                                        BOOLEAN exceptCata,
+                                        BOOLEAN exceptCoord )
+   {
+      UINT32 count = 0 ;
+      MAP_GROUP_INFO_IT it ;
+      ossScopedLock lock( &_nodeMutex, SHARED ) ;
+
+      it = _mapGroupInfo.begin() ;
+      while( it != _mapGroupInfo.end() )
+      {
+         if ( CATALOG_GROUPID == it->first && exceptCata )
+         {
+            ++it ;
+            continue ;
+         }
+         else if ( COORD_GROUPID == it->first && exceptCoord )
+         {
+            ++it ;
+            continue ;
+         }
+         groupList[ it->first ] = it->first ;
+         ++count ;
+         ++it ;
+      }
+
+      return count ;
+   }
+
    INT32 _coordResource::updateGroupInfo( UINT32 groupID,
                                           CoordGroupInfoPtr &groupPtr,
                                           _pmdEDUCB *cb )
@@ -359,6 +421,171 @@ namespace engine
       {
          cb->releaseBuff( pBuf ) ;
       }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordResource::updateGroupsInfo( GROUP_VEC &vecGroupPtr,
+                                           _pmdEDUCB *cb,
+                                           const BSONObj *pCondObj,
+                                           BOOLEAN exceptCata,
+                                           BOOLEAN exceptCoord )
+   {
+      INT32 rc = SDB_OK ;
+      coordCommandFactory *pFactory = coordGetFactory() ;
+      coordOperator *pOperator = NULL ;
+
+      INT64 contextID = -1 ;
+      rtnContextBuf buf ;
+      CHAR *pBuffer = NULL ;
+      INT32 buffSize = 0 ;
+
+      UINT64 identify = 0 ;
+      GROUP_VEC vecGroupPtrTmp ;
+
+      if ( !pCondObj || pCondObj->isEmpty() )
+      {
+         _nodeMutex.get() ;
+         identify = ++_upGrpIndentify ;
+         _nodeMutex.release() ;
+      }
+
+      rc = pFactory->create( CMD_NAME_LIST_GROUPS, pOperator ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                 CMD_NAME_LIST_GROUPS, rc ) ;
+         goto error ;
+      }
+      rc = pOperator->init( this, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                 pOperator->getName(), rc ) ;
+         goto error ;
+      }
+      /// build message
+      rc = msgBuildQueryMsg( &pBuffer, &buffSize,
+                             CMD_ADMIN_PREFIX CMD_NAME_LIST_GROUPS,
+                             0, 0, 0, -1,
+                             pCondObj, NULL, NULL, NULL,
+                             cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Builder query message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = pOperator->execute( ( MsgHeader* )pBuffer, cb, contextID, &buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                 pOperator->getName(), rc ) ;
+         goto error ;
+      }
+      /// process result
+      rc = _processGroupContextReply( contextID, vecGroupPtrTmp, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Process groups result failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      for ( UINT32 i = 0 ; i < vecGroupPtrTmp.size() ; ++i )
+      {
+         CoordGroupInfoPtr &groupPtr = vecGroupPtrTmp[ i ] ;
+
+         if ( CATALOG_GROUPID == groupPtr->groupID() )
+         {
+            if ( !exceptCata )
+            {
+               vecGroupPtr.push_back( groupPtr ) ;
+            }
+         }
+         else if ( COORD_GROUPID == groupPtr->groupID() )
+         {
+            if ( !exceptCoord )
+            {
+               vecGroupPtr.push_back( groupPtr ) ;
+            }
+         }
+         else
+         {
+            vecGroupPtr.push_back( groupPtr ) ;
+         }
+
+         /// update route info and add to local groups
+         _updateRouteInfo( groupPtr, MSG_ROUTE_SHARD_SERVCIE ) ;
+         addGroupInfo( groupPtr ) ;
+
+         if ( CATALOG_GROUPID == groupPtr->groupID() )
+         {
+            _updateRouteInfo( groupPtr, MSG_ROUTE_CAT_SERVICE ) ;
+            setCataGroupInfo( groupPtr ) ;
+            syncAddress2Options( TRUE, FALSE) ;
+         }
+      }
+
+      /// clear the out-of-date group info
+      if ( identify > 0 )
+      {
+         invalidateGroupInfo( identify ) ;
+      }
+
+   done:
+      if ( pOperator )
+      {
+         pFactory->release( pOperator ) ;
+      }
+      if ( pBuffer )
+      {
+         msgReleaseBuffer( pBuffer, cb ) ;
+      }
+      if ( -1 != contextID )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordResource::updateGroupList( CoordGroupList &groupList,
+                                          _pmdEDUCB *cb,
+                                          const BSONObj *pCondObj,
+                                          BOOLEAN exceptCata,
+                                          BOOLEAN exceptCoord,
+                                          BOOLEAN useLocalWhenFailed )
+   {
+      INT32 rc = SDB_OK ;
+      GROUP_VEC vecGroupPtr ;
+
+      rc = updateGroupsInfo( vecGroupPtr, cb, pCondObj,
+                             exceptCata, exceptCoord ) ;
+      if ( rc )
+      {
+         if ( useLocalWhenFailed )
+         {
+            getGroupList( groupList, exceptCata, exceptCoord ) ;
+            rc = SDB_OK ;
+         }
+         else
+         {
+            goto error ;
+         }
+      }
+      else
+      {
+         GROUP_VEC::iterator it = vecGroupPtr.begin() ;
+         while ( it != vecGroupPtr.end() )
+         {
+            CoordGroupInfoPtr &ptr = *it ;
+            groupList[ ptr->groupID() ] = ptr->groupID() ;
+            ++it ;
+         }
+      }
+
+   done:
       return rc ;
    error:
       goto done ;
@@ -646,6 +873,76 @@ namespace engine
          SDB_OSS_DEL pGroupInfo ;
          pGroupInfo = NULL ;
       }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordResource::_processGroupContextReply( INT64 &contextID,
+                                                    GROUP_VEC &vecGroupPtr,
+                                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextBuf buffObj ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      CoordGroupInfo *pGroupInfo = NULL ;
+      CoordGroupInfoPtr groupPtr ;
+
+      while ( TRUE )
+      {
+         rc = rtnGetMore( contextID, 1, buffObj, cb, rtnCB ) ;
+         if ( rc )
+         {
+            contextID = -1 ;
+            if ( SDB_DMS_EOC != rc )
+            {
+               PD_LOG( PDERROR, "Get more from context[%lld] failed, rc: %d",
+                       contextID ) ;
+               goto error ;
+            }
+            rc = SDB_OK ;
+            break ;
+         }
+
+         try
+         {
+            BSONObj boGroupInfo( buffObj.data() ) ;
+            BSONElement beGroupID = boGroupInfo.getField( CAT_GROUPID_NAME ) ;
+            if ( beGroupID.eoo() || !beGroupID.isNumber() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG ( PDERROR, "Reply object[%s] is invalid",
+                        boGroupInfo.toString().c_str() ) ;
+               goto error ;
+            }
+            pGroupInfo = SDB_OSS_NEW CoordGroupInfo( beGroupID.number() ) ;
+            if ( NULL == pGroupInfo )
+            {
+               rc = SDB_OOM ;
+               PD_LOG ( PDERROR, "Alloc group info failed" ) ;
+               goto error ;
+            }
+            groupPtr = CoordGroupInfoPtr( pGroupInfo ) ;
+
+            rc = groupPtr->updateGroupItem( boGroupInfo ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Update group info from bson[%s] failed, "
+                       "rc: %d", boGroupInfo.toString().c_str(), rc ) ;
+               goto error ;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
+            goto error ;
+         }
+
+         vecGroupPtr.push_back( groupPtr ) ;
+      }
+
+   done:
       return rc ;
    error:
       goto done ;

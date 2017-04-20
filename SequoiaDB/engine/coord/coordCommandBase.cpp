@@ -38,6 +38,9 @@
 #include "coordUtil.hpp"
 #include "pmd.hpp"
 #include "rtnCB.hpp"
+#include "rtn.hpp"
+#include "pdTrace.hpp"
+#include "coordTrace.hpp"
 
 using namespace bson ;
 
@@ -54,8 +57,8 @@ namespace engine
    {
    }
 
-   INT32 rtnCoordCommand::_processSucReply( ROUTE_REPLY_MAP &okReply,
-                                            rtnContextCoord *pContext )
+   INT32 _coordCommandBase::_processSucReply( ROUTE_REPLY_MAP &okReply,
+                                              rtnContextCoord *pContext )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
@@ -112,7 +115,7 @@ namespace engine
                                                 ROUTE_RC_MAP &faileds,
                                                 rtnContextCoord *pContext,
                                                 SET_RC *pIgnoreRC,
-                                                ROUTE_SET *pSucNodes )
+                                                SET_ROUTEID *pSucNodes )
    {
       INT32 rc = SDB_OK ;
 
@@ -178,8 +181,8 @@ namespace engine
       return rc ;
    }
 
-   INT32 rtnCoordCommand::_buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
-                                                 rtnContextCoord *pContext )
+   INT32 _coordCommandBase::_buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
+                                                   rtnContextCoord *pContext )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
@@ -187,7 +190,7 @@ namespace engine
       if ( failedNodes.size() > 0 )
       {
          BSONObjBuilder builder ;
-         rtnBuildFailedNodeReply( failedNodes, builder ) ;
+         coordBuildFailedNodeReply( _pResource, failedNodes, builder ) ;
 
          rc = pContext->append( builder.obj() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
@@ -199,27 +202,25 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordCommand::_executeOnGroups( MsgHeader *pMsg,
-                                            pmdEDUCB *cb,
-                                            const CoordGroupList &groupLst,
-                                            MSG_ROUTE_SERVICE_TYPE type,
-                                            BOOLEAN onPrimary,
-                                            SET_RC *pIgnoreRC,
-                                            CoordGroupList *pSucGrpLst,
-                                            rtnContextCoord **ppContext,
-                                            rtnContextBuf *buf )
+   INT32 _coordCommandBase::_executeOnGroups( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              const CoordGroupList &groupLst,
+                                              MSG_ROUTE_SERVICE_TYPE type,
+                                              BOOLEAN onPrimary,
+                                              SET_RC *pIgnoreRC,
+                                              CoordGroupList *pSucGrpLst,
+                                              rtnContextCoord **ppContext,
+                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
 
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
+      pmdKRCB *pKrcb                   = pmdGetKRCB() ;
+      SDB_RTNCB *pRtncb                = pKrcb->getRTNCB() ;
 
-      rtnSendMsgIn inMsg( pMsg ) ;
-      rtnSendOptions sendOpt ;
-      rtnProcessResult result ;
+      coordSendMsgIn inMsg( pMsg ) ;
+      coordSendOptions sendOpt ;
+      coordProcessResult result ;
       rtnContextCoord *pTmpContext = NULL ;
       INT64 contextID = -1 ;
 
@@ -266,7 +267,7 @@ namespace engine
          }
       }
 
-      rc = doOnGroups( inMsg, sendOpt, pRouteAgent, cb, result ) ;
+      rc = doOnGroups( inMsg, sendOpt, cb, result ) ;
       /// process succeed reply msg
       rcTmp = _processSucReply( okReply, pTmpContext ) ;
       /// build nokRC
@@ -308,7 +309,8 @@ namespace engine
       }
       if ( buf && nokRC.size() > 0 )
       {
-         *buf = rtnContextBuf( rtnBuildErrorObj( rc, cb, &nokRC ) ) ;
+         *buf = rtnContextBuf( coordBuildErrorObj( _pResource, rc,
+                                                   cb, &nokRC ) ) ;
       }
       goto done ;
    }
@@ -669,9 +671,9 @@ namespace engine
 
    INT32 _coordCommandBase::executeOnNodes( MsgHeader *pMsg,
                                             pmdEDUCB *cb,
-                                            ROUTE_SET &nodes,
+                                            SET_ROUTEID &nodes,
                                             ROUTE_RC_MAP &faileds,
-                                            ROUTE_SET *pSucNodes,
+                                            SET_ROUTEID *pSucNodes,
                                             SET_RC *pIgnoreRC,
                                             rtnContextCoord *pContext )
    {
@@ -679,7 +681,7 @@ namespace engine
       INT32 rcTmp                   = SDB_OK ;
       pmdRemoteSession *pRemote     = _groupSession.getSession() ;
       pmdSubSession *pSub           = NULL ;
-      ROUTE_SET::iterator it ;
+      SET_ROUTEID::iterator it ;
 
       /// clear
       _groupSession.clear() ;
@@ -723,7 +725,7 @@ namespace engine
                                             rtnContextCoord **ppContext,
                                             BOOLEAN openEmptyContext,
                                             SET_RC *pIgnoreRC,
-                                            ROUTE_SET *pSucNodes )
+                                            SET_ROUTEID *pSucNodes )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *pKrcb = pmdGetKRCB() ;
@@ -737,7 +739,7 @@ namespace engine
       CoordGroupList allGroupLst ;
       CoordGroupList expectGrpLst ;
       CoordGroupList groupLst ;
-      ROUTE_SET sendNodes ;
+      SET_ROUTEID sendNodes ;
       BSONObj newFilterObj ;
       BOOLEAN hasParseRetry = FALSE ;
 
@@ -760,7 +762,8 @@ namespace engine
       *pFilterObj = newFilterObj ;
 
       /// 4. parse groups
-      rc = rtnCoordGetAllGroupList( cb, allGroupLst, NULL, FALSE, FALSE ) ;
+      rc = _pResource->updateGroupList( allGroupLst, cb, NULL,
+                                        FALSE, FALSE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d",
                    rc ) ;
       {
@@ -785,9 +788,9 @@ namespace engine
 
       if ( !pFilterObj->isEmpty() )
       {
-         rc = rtnCoordParseGroupList( cb, *pFilterObj, groupLst,
-                                      &newFilterObj,
-                                      ppContext ? FALSE : TRUE ) ;
+         rc = coordParseGroupList( _pResource, cb, *pFilterObj,
+                                   groupLst, &newFilterObj,
+                                   ppContext ? FALSE : TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse groups, rc: %d", rc  ) ;
          if ( pFilterObj->objdata() != newFilterObj.objdata() )
          {
@@ -814,11 +817,12 @@ namespace engine
 
    parseNode:
       /// 5. parse nodes
-      rc = rtnCoordGetGroupNodes( cb, *pFilterObj, ctrlParam._emptyFilterSel,
-                                  ( 0 == groupLst.size() ? ( hasParseRetry ?
-                                  expectGrpLst : allGroupLst ) : groupLst ),
-                                  sendNodes, &newFilterObj,
-                                  ppContext ? FALSE : TRUE ) ;
+      rc = coordGetGroupNodes( _pResource, cb, *pFilterObj,
+                               ctrlParam._emptyFilterSel,
+                               ( 0 == groupLst.size() ? ( hasParseRetry ?
+                                 expectGrpLst : allGroupLst ) : groupLst ),
+                               sendNodes, &newFilterObj,
+                               ppContext ? FALSE : TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
       if ( sendNodes.size() == 0 && !hasParseRetry )
       {
@@ -929,7 +933,7 @@ namespace engine
       }
       else
       {
-         rc = queryOption.toQueryMsg( &pNewMsg, newMsgSize ) ;
+         rc = queryOption.toQueryMsg( &pNewMsg, newMsgSize, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Build new query message failed, rc: %d",
                       rc ) ;
       }
@@ -951,7 +955,7 @@ namespace engine
    done:
       if ( pNewMsg != (CHAR*)pMsg )
       {
-         SDB_OSS_FREE( pNewMsg ) ;
+         cb->releaseBuff( pNewMsg ) ;
          pNewMsg = NULL ;
          newMsgSize = 0 ;
       }

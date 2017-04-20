@@ -185,7 +185,7 @@ namespace engine
       BOOLEAN needRetry = FALSE ;
 
       /// set options
-      _remoteHandler.enableInterruptWhenFailed( options._interruptWhenFailed,
+      _remoteHandler.enableInterruptWhenFailed( _interruptWhenFailed(),
                                                 options._pIgnoreRC ) ;
       pGroupSel->setPrimary( options._primary ) ;
       pGroupSel->setServiceType( options._svcType ) ;
@@ -213,7 +213,7 @@ namespace engine
          /// don't goto error, need to process the reply
          rc = rc ? rc : rcTmp ;
 
-         if ( options._interruptWhenFailed )
+         if ( _interruptWhenFailed() )
          {
             pRemoteSession->stopSubSession() ;
          }
@@ -478,6 +478,11 @@ namespace engine
                                        pmdEDUCB *cb,
                                        coordProcessResult &result )
    {
+   }
+
+   BOOLEAN _coordOperator::_interruptWhenFailed() const
+   {
+      return FALSE ;
    }
 
    BOOLEAN _coordOperator::_isTrans( pmdEDUCB *cb, MsgHeader *pMsg )

@@ -99,7 +99,7 @@ namespace engine
 
       public:
          INT32          create( const CHAR *pCmdName,
-                                coordOperator &*pOperator ) ;
+                                coordOperator *&pOperator ) ;
          void           release( coordOperator *pOperator ) ;
 
       protected:

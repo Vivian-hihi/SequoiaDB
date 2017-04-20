@@ -62,6 +62,30 @@ namespace engine
    BOOLEAN  coordCataCheckFlag( INT32 flag ) ;
 
    /*
+      Coord parse mask define
+   */
+   #define  COORD_PARSE_MASK_ET_DFT          0x00000001
+   #define  COORD_PARSE_MASK_IN_DFT          0x00000002
+   #define  COORD_PARSE_MASK_ET_OPR          0x00000004
+   #define  COORD_PARSE_MASK_IN_OPR          0x00000008
+
+   #define  COORD_PARSE_MASK_ET              ( COORD_PARSE_MASK_ET_DFT|\
+                                               COORD_PARSE_MASK_ET_OPR )
+   #define  COORD_PARSE_MASK_ALL             0xFFFFFFFF
+
+   INT32    coordParseBoolean( BSONElement &e, BOOLEAN &value, UINT32 mask ) ;
+   INT32    coordParseInt( BSONElement &e, INT32 &value, UINT32 mask ) ;
+   INT32    coordParseInt( BSONElement &e,
+                           vector<INT32> &vecValue,
+                           UINT32 mask ) ;
+   INT32    coordParseString( BSONElement &e,
+                              const CHAR *&value,
+                              UINT32 mask ) ;
+   INT32    coordParseString( BSONElement &e,
+                              vector<const CHAR*> &vecValue,
+                              UINT32 mask ) ;
+
+   /*
       FILTER_BSON_ID define
    */
    enum FILTER_BSON_ID
@@ -147,6 +171,19 @@ namespace engine
                                     UINT32 mask,
                                     BSONObj *pNewObj,
                                     BOOLEAN strictCheck ) ;
+
+   INT32    coordParseGroupsInfo( const BSONObj &obj,
+                                  vector< INT32 > &vecID,
+                                  vector< const CHAR* > &vecName,
+                                  BSONObj *pNewObj = NULL,
+                                  BOOLEAN strictCheck = FALSE ) ;
+
+   INT32    coordParseNodesInfo( const BSONObj &obj,
+                                 vector< INT32 > &vecNodeID,
+                                 vector< const CHAR* > &vecHostName,
+                                 vector< const CHAR* > &vecSvcName,
+                                 BSONObj *pNewObj = NULL,
+                                 BOOLEAN strictCheck = FALSE ) ;
 
 }
 

@@ -59,6 +59,38 @@ namespace engine
    INT32 coordGetGroupsFromObj( const BSONObj &obj,
                                 CoordGroupList &groupLst ) ;
 
+   INT32 coordParseGroupList( coordResource *pResource,
+                              _pmdEDUCB *cb,
+                              const BSONObj &obj,
+                              CoordGroupList &groupList,
+                              BSONObj *pNewObj = NULL,
+                              BOOLEAN strictCheck = FALSE ) ;
+
+   INT32 coordParseGroupList( coordResource *pResource,
+                              _pmdEDUCB *cb,
+                              MsgOpQuery *pMsg,
+                              FILTER_BSON_ID filterObjID,
+                              CoordGroupList &groupList,
+                              BOOLEAN strictCheck = FALSE ) ;
+
+   INT32 coordGroupList2GroupPtr( coordResource *pResource,
+                                  pmdEDUCB *cb,
+                                  CoordGroupList &groupList,
+                                  GROUP_VEC & groupPtrs ) ;
+
+   void  coordGroupPtr2GroupList( GROUP_VEC &groupPtrs,
+                                  CoordGroupList &groupList ) ;
+
+   INT32 coordGetGroupNodes( coordResource *pResource,
+                             _pmdEDUCB *cb,
+                             const BSONObj &filterObj,
+                             NODE_SEL_STY emptyFilterSel,
+                             CoordGroupList &groupList,
+                             SET_ROUTEID &nodes,
+                             BSONObj *pNewObj = NULL,
+                             BOOLEAN strictCheck = FALSE ) ;
+
 }
 
 #endif // COORD_UTIL_HPP__
+

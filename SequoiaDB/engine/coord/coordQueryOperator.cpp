@@ -40,6 +40,7 @@
 #include "coordCommon.hpp"
 #include "coordShardKicker.hpp"
 #include "coordUtil.hpp"
+#include "coordFactory.hpp"
 #include "rtnCB.hpp"
 #include "rtn.hpp"
 #include "pmd.hpp"
@@ -376,6 +377,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       rtnContextCoord *pContext        = NULL ;
+      coordCommandFactory *pFactory    = NULL ;
+      coordOperator *pOperator         = NULL ;
 
       // fill default-reply(query success)
       contextID                        = -1 ;
@@ -402,15 +405,14 @@ namespace engine
       // process command
       if ( pCollectionName != NULL && '$' == pCollectionName[0] )
       {
-         /// TODO: XUJIANHUI
-
-         /*rtnCoordCommand *pCmdProcesser = NULL;
-         rtnCoordProcesserFactory *pProcesserFactory
-                  = pCoordcb->getProcesserFactory();
-         pCmdProcesser = pProcesserFactory->getCommandProcesser(
-                                             pCollectionName ) ;
-         PD_CHECK( pCmdProcesser != NULL, SDB_INVALIDARG, error, PDERROR,
-                  "unknown command:%s", pCollectionName ) ;
+         pFactory = coordGetFactory() ;
+         rc = pFactory->create( &pCollectionName[1], pOperator ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                    pCollectionName, rc ) ;
+            goto error ;
+         }
 
          // add last op info
          MON_SAVE_CMD_DETAIL( cb->getMonAppCB(), CMD_UNKNOW - 1,
@@ -424,9 +426,20 @@ namespace engine
                               BSONObj(pHint).toString().c_str(),
                               numToSkip, numToReturn, flag, flag ) ;
 
-         rc = pCmdProcesser->execute( pMsg, cb, contextID, buf ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to execute the command[%s], "
-                      "rc: %d", pCollectionName, rc ) ;*/
+         rc = pOperator->init( _pResource, cb, getTimeout() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    pOperator->getName(), rc ) ;
+            goto error ;
+         }
+         rc = pOperator->execute( pMsg, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    pOperator->getName(), rc ) ;
+            goto error ;
+         }
       }
       else
       {
@@ -465,6 +478,10 @@ namespace engine
       }
 
    done:
+      if ( pOperator )
+      {
+         pFactory->release( pOperator ) ;
+      }
       return rc ;
    error:
       goto done ;

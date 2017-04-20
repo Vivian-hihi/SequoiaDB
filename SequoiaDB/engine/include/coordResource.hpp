@@ -93,12 +93,33 @@ namespace engine
          INT32       getGroupInfo( const CHAR *groupName,
                                    CoordGroupInfoPtr &groupPtr ) ;
 
+         UINT32      getGroupsInfo( GROUP_VEC &vecGroupPtr,
+                                    BOOLEAN exceptCata,
+                                    BOOLEAN exceptCoord ) ;
+
+         UINT32      getGroupList( CoordGroupList &groupList,
+                                   BOOLEAN exceptCata,
+                                   BOOLEAN exceptCoord ) ;
+
          INT32       updateGroupInfo( UINT32 groupID,
                                       CoordGroupInfoPtr &groupPtr,
                                       _pmdEDUCB *cb ) ;
          INT32       updateGroupInfo( const CHAR *groupName,
                                       CoordGroupInfoPtr &groupPtr,
                                       _pmdEDUCB *cb ) ;
+
+         INT32       updateGroupsInfo( GROUP_VEC &vecGroupPtr,
+                                       _pmdEDUCB *cb,
+                                       const BSONObj *pCondObj = NULL,
+                                       BOOLEAN exceptCata = FALSE,
+                                       BOOLEAN exceptCoord = FALSE ) ;
+
+         INT32       updateGroupList( CoordGroupList &groupList,
+                                      _pmdEDUCB *cb,
+                                      const BSONObj *pCondObj = NULL,
+                                      BOOLEAN exceptCata = FALSE,
+                                      BOOLEAN exceptCoord = FALSE,
+                                      BOOLEAN useLocalWhenFailed = TRUE ) ;
 
          void        removeGroupInfo( UINT32 groupID ) ;
          void        removeGroupInfo( const CHAR *groupName ) ;
@@ -152,6 +173,10 @@ namespace engine
          INT32       _processGroupReply( MsgHeader *pMsg,
                                          CoordGroupInfoPtr &groupPtr ) ;
 
+         INT32       _processGroupContextReply( INT64 &contextID,
+                                                GROUP_VEC &vecGroupPtr,
+                                                _pmdEDUCB *cb ) ;
+
          INT32       _updateRouteInfo( const CoordGroupInfoPtr &groupPtr,
                                        MSG_ROUTE_SERVICE_TYPE type ) ;
 
@@ -199,3 +224,4 @@ namespace engine
 }
 
 #endif // COORD_RESOURCE_HPP__
+
