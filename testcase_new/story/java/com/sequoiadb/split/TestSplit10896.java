@@ -32,7 +32,7 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.testcommon.SdbTestBase;
 
 /**
- *  hash分区表指定分区键为多种数据类型，执行切分 ,比较类型
+ *   hash分区表指定分区键为多种数据类型，执行切分 ,比较类型
  *   1、创建cl，分区类型为“range”
  *   2、向cl中插入数据，其中分区键字段数据类型包含sequoiadb支持的所有数据类型
  *   （long、int、double、decimal、string、OID、bool、date、timestamp、binary、正则表达式、对象、数组、空、minKey、maxKey）
@@ -129,11 +129,11 @@ public class TestSplit10896 extends SdbTestBase{
     private void testDataWithCondition() {
         try {
             BSONObject o = new BasicBSONObject();
-            o.put("$gt", true);
+            o.put("$gt", 1);
             BSONObject matcher = new BasicBSONObject();
             matcher.put("type", o);
             DBCursor cursor = this.cl.query(matcher, null, 
-                    null, null);
+                    (BSONObject)JSON.parse("{\"_id\":1}"), null);
             List<BSONObject> actual = new ArrayList<BSONObject>();
             List<BSONObject> expected = new ArrayList<BSONObject>();
             while( cursor.hasNext() ) {
@@ -142,10 +142,10 @@ public class TestSplit10896 extends SdbTestBase{
             }
             cursor.close();
             //期望结果
-            expected.add(this.insertRecords.get(8-1));
-            expected.add(this.insertRecords.get(9-1));
-            expected.add(this.insertRecords.get(11-1));
-            expected.add(this.insertRecords.get(16-1));
+            expected.add(this.insertRecords.get(1-1));
+            expected.add(this.insertRecords.get(2-1));
+            expected.add(this.insertRecords.get(3-1));
+            expected.add(this.insertRecords.get(4-1));
             Assert.assertEqualsNoOrder(actual.toArray(), expected.toArray());
         }catch (BaseException e) {
             Assert.fail(e.getMessage());
