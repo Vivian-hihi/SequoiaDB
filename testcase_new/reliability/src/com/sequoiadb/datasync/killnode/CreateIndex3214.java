@@ -76,7 +76,7 @@ public class CreateIndex3214 extends SdbTestBase {
                     + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -105,7 +105,7 @@ public class CreateIndex3214 extends SdbTestBase {
             Assert.fail(e.getMessage());
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -122,7 +122,7 @@ public class CreateIndex3214 extends SdbTestBase {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -143,7 +143,7 @@ public class CreateIndex3214 extends SdbTestBase {
             BSONObject rec = (BSONObject)JSON.parse("{ a" + i + ": " + i + " }");
             recs.add(rec);
         }
-        cl.bulkInsert(recs, DBCollection.FLG_INSERT_CONTONDUP);
+        cl.insert(recs, DBCollection.FLG_INSERT_CONTONDUP);
     }
     
     private class CreateIdxTask extends OperateTask {
@@ -164,7 +164,7 @@ public class CreateIndex3214 extends SdbTestBase {
             } catch (BaseException e) {
             } finally {
                 if (db != null) {
-                    db.disconnect();
+                    db.close();
                 }
             }
         }
@@ -188,7 +188,7 @@ public class CreateIndex3214 extends SdbTestBase {
                 }
                 results.add(result);
                 cursor.close();
-                dataDB.disconnect();
+                dataDB.close();
             }
             
             List<BSONObject> compareA = results.get(0);

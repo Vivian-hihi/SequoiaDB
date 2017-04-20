@@ -58,7 +58,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            sdb.close();
         }
     }
 
@@ -99,7 +99,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
                 coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
                         coordDbPath + "/" + coordPort, new BasicBSONObject());
                 coordNode.start();
-                coordNode.connect().disconnect();
+                coordNode.connect().close();
                 coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
             }
         }
@@ -108,7 +108,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
         }
         finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
 
@@ -124,7 +124,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            sdb.close();
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));

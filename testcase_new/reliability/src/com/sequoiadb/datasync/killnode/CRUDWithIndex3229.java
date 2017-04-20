@@ -87,7 +87,7 @@ public class CRUDWithIndex3229 extends SdbTestBase {
                     + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -121,7 +121,7 @@ public class CRUDWithIndex3229 extends SdbTestBase {
             Assert.fail(e.getMessage());
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -139,7 +139,7 @@ public class CRUDWithIndex3229 extends SdbTestBase {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -164,7 +164,7 @@ public class CRUDWithIndex3229 extends SdbTestBase {
             } catch (BaseException e) {
             } finally {
                 if (db != null) {
-                    db.disconnect();
+                    db.close();
                 }
             }
         }
@@ -180,7 +180,7 @@ public class CRUDWithIndex3229 extends SdbTestBase {
             String nodePath = SdbTestBase.reservedDir + "/data/" + randomPort;
             Node newNode = randomGroup.createNode(randomHost, randomPort, nodePath, (BSONObject)null);
             newNode.start();
-            db.disconnect();
+            db.close();
         }
         
         @Override

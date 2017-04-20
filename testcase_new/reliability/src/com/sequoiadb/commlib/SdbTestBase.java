@@ -56,7 +56,7 @@ public class SdbTestBase {
         }
         finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -117,7 +117,7 @@ public class SdbTestBase {
         }
         finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }

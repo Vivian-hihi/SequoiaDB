@@ -77,7 +77,7 @@ public class DiskFullSubcl2326 extends SdbTestBase {
         }
         catch (ReliabilityException e) {
             if (commSdb != null) {
-                commSdb.disconnect();
+                commSdb.close();
             }
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
@@ -106,7 +106,7 @@ public class DiskFullSubcl2326 extends SdbTestBase {
         }
         finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -152,7 +152,7 @@ public class DiskFullSubcl2326 extends SdbTestBase {
             catacl.delete("{deleteFlag:1}");
         }
         catch (BaseException e) {
-            cataDb.disconnect();
+            cataDb.close();
         }
 
         // 检测CATALOG组数据一致
@@ -190,7 +190,7 @@ public class DiskFullSubcl2326 extends SdbTestBase {
         }
         finally {
             if (commSdb != null) {
-                commSdb.disconnect();
+                commSdb.close();
             }
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
@@ -217,7 +217,7 @@ public class DiskFullSubcl2326 extends SdbTestBase {
             finally {
                 System.out.println("attach bound:" + bound);
                 if (sdb != null) {
-                    sdb.disconnect();
+                    sdb.close();
                 }
             }
         }

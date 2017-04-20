@@ -89,7 +89,7 @@ public class CRUDAndAddNode2939 extends SdbTestBase {
                     + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -129,7 +129,7 @@ public class CRUDAndAddNode2939 extends SdbTestBase {
             Assert.fail(e.getMessage());
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -147,7 +147,7 @@ public class CRUDAndAddNode2939 extends SdbTestBase {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -167,7 +167,7 @@ public class CRUDAndAddNode2939 extends SdbTestBase {
             BSONObject rec = (BSONObject)JSON.parse("{ a: 1 }");
             recs.add(rec);
         }
-        cl.bulkInsert(recs, DBCollection.FLG_INSERT_CONTONDUP);
+        cl.insert(recs, DBCollection.FLG_INSERT_CONTONDUP);
     }
     
     private void checkLob(Sequoiadb db) {

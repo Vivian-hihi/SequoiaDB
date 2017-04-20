@@ -84,7 +84,7 @@ public class NetSplit2590 extends SdbTestBase {
         }
         finally {
             if (sdb != null) {
-                sdb.disconnect();
+                sdb.close();
             }
         }
     }
@@ -142,7 +142,7 @@ public class NetSplit2590 extends SdbTestBase {
         }
         finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
 
@@ -212,7 +212,7 @@ public class NetSplit2590 extends SdbTestBase {
                 cursor.close();
             }
             if (dataNode != null) {
-                dataNode.disconnect();
+                dataNode.close();
             }
         }
     }
@@ -231,7 +231,7 @@ public class NetSplit2590 extends SdbTestBase {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
         }
         finally {
-            sdb.disconnect();
+            sdb.close();
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -262,7 +262,7 @@ public class NetSplit2590 extends SdbTestBase {
             }
             finally {
                 if (sdb != null) {
-                    sdb.disconnect();
+                    sdb.close();
                 }
             }
         }

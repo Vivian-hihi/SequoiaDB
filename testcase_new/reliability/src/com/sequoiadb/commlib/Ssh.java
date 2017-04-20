@@ -69,7 +69,7 @@ public class Ssh {
         }
         catch (JSchException e) {
             if (session != null) {
-                session.disconnect();
+                session.close();
             }
             throw new FaultException(e);
         }
@@ -94,7 +94,7 @@ public class Ssh {
         }
         finally {
             if (channel != null) {
-                channel.disconnect();
+                channel.close();
             }
         }
     }
@@ -118,7 +118,7 @@ public class Ssh {
         }
         finally {
             if (channel != null) {
-                channel.disconnect();
+                channel.close();
             }
         }
     }
@@ -148,7 +148,7 @@ public class Ssh {
         }
         finally {
             if (channel != null) {
-                channel.disconnect();
+                channel.close();
             }
         }
     }
@@ -172,7 +172,7 @@ public class Ssh {
         }
         catch (JSchException e) {
             if (channel != null) {
-                channel.disconnect();
+                channel.close();
             }
             throw new FaultException(e);
         }
@@ -211,7 +211,7 @@ public class Ssh {
             throw new FaultException(e);
         }
         finally {
-            channel.disconnect();
+            channel.close();
         }
     }
 
@@ -220,10 +220,10 @@ public class Ssh {
      */
     public void close() {
         for (Channel channel : backgroundCMD.values()) {
-            channel.disconnect();
+            channel.close();
         }
         if (this.session != null) {
-            this.session.disconnect();
+            this.session.close();
         }
     }
 

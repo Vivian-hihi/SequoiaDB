@@ -76,7 +76,7 @@ public class OprLob2947 extends SdbTestBase {
                     + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -112,7 +112,7 @@ public class OprLob2947 extends SdbTestBase {
             Assert.fail(e.getMessage());
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
         }
     }
@@ -129,7 +129,7 @@ public class OprLob2947 extends SdbTestBase {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getKeyStack(e, this));
         } finally {
             if (db != null) {
-                db.disconnect();
+                db.close();
             }
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
@@ -170,7 +170,7 @@ public class OprLob2947 extends SdbTestBase {
             } catch (BaseException e) {
             } finally {
                 if (db != null) {
-                    db.disconnect();
+                    db.close();
                 }
             }
         }

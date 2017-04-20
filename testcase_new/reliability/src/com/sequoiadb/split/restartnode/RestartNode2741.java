@@ -73,7 +73,7 @@ public class RestartNode2741 extends SdbTestBase {
         }
         catch (ReliabilityException e) {
             if (commSdb != null) {
-                commSdb.disconnect();
+                commSdb.close();
             }
             Assert.fail(this.getClass().getName() + " setUp error, error description:"
                     + e.getMessage() + "\r\n" + Utils.getStackString(e));
@@ -155,7 +155,7 @@ public class RestartNode2741 extends SdbTestBase {
                 cursor.close();
             }
             if (dataNode != null) {
-                dataNode.disconnect();
+                dataNode.close();
             }
         }
         return 0;
@@ -217,7 +217,7 @@ public class RestartNode2741 extends SdbTestBase {
         }
         finally {
             if (commSdb != null) {
-                commSdb.disconnect();
+                commSdb.close();
             }
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase end at:"
@@ -240,7 +240,7 @@ public class RestartNode2741 extends SdbTestBase {
             }
             finally {
                 if (sdb != null) {
-                    sdb.disconnect();
+                    sdb.close();
                 }
             }
         }

@@ -250,7 +250,7 @@ public class CommLib {
                             }
                         }
                         cursor.close();
-                        dataDB.disconnect();
+                        dataDB.close();
                         // all node data within the group
                         allNodeData.add(j, oneNodeData.toString());
 
@@ -351,7 +351,7 @@ public class CommLib {
                                 oneNodeData.add(idxList);
                             }
                             cur.close();
-                            dataDB.disconnect();
+                            dataDB.close();
                             // all node data within the group
                             allNodeData.add(j, oneNodeData.toString());
 
@@ -509,7 +509,7 @@ public class CommLib {
                         oneNodeData.add(csInfo);
                     }
                     cursor.close();
-                    dataDB.disconnect();
+                    dataDB.close();
                     // all node data within the group
                     allNodeData.add(i, oneNodeData.toString());
 
