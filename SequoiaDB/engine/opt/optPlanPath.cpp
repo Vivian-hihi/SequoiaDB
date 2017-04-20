@@ -229,7 +229,7 @@ namespace engine
       _totalCost = _startCost + _runCost ;
 
       _outputRecords = OPT_ROUND_NUM(
-                       (UINT64)( (double)_inputRecords * _mthSelectivity ) ) ;
+                       (UINT64)ceil( (double)_inputRecords * _mthSelectivity ) ) ;
 
       _evalOutRecordSize() ;
    }
@@ -343,16 +343,16 @@ namespace engine
       // Number of index pages and records will be read ( based on _scanSelectivity )
       // From the first start key to the last stop key of the predicates
       UINT32 idxReadPages = OPT_ROUND_NUM(
-                            (UINT32)( (double)_indexPages * _scanSelectivity ) ) ;
+                            (UINT32)ceil( (double)_indexPages * _scanSelectivity ) ) ;
       _idxReadRecords = OPT_ROUND_NUM(
-                        (UINT64)( (double)_inputRecords * _scanSelectivity ) ) ;
+                        (UINT64)ceil( (double)_inputRecords * _scanSelectivity ) ) ;
 
       // Number of data pages and records will be read ( based on _predSelectivity )
       // Evaluated by each start and stop key-pairs in predicates
       UINT32 dataReadPages = OPT_ROUND_NUM(
-                             (UINT32)( (double)_inputPages * _predSelectivity ) ) ;
+                             (UINT32)ceil( (double)_inputPages * _predSelectivity ) ) ;
       _idxOutRecords = OPT_ROUND_NUM(
-                       (UINT64)( (double)_inputRecords * _predSelectivity ) ) ;
+                       (UINT64)ceil( (double)_inputRecords * _predSelectivity ) ) ;
 
       if ( _estCacheSize >= 0 && _inputPages > (UINT32)_estCacheSize )
       {
@@ -382,12 +382,12 @@ namespace engine
       if ( _predSelectivity < _mthSelectivity )
       {
          _outputRecords = OPT_ROUND_NUM(
-                          (UINT64)( (double)_inputRecords * _predSelectivity ) ) ;
+                          (UINT64)ceil( (double)_inputRecords * _predSelectivity ) ) ;
       }
       else
       {
          _outputRecords = OPT_ROUND_NUM(
-                          (UINT64)( (double)_inputRecords * _mthSelectivity ) ) ;
+                          (UINT64)ceil( (double)_inputRecords * _mthSelectivity ) ) ;
       }
 
       _evalOutRecordSize() ;
