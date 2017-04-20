@@ -45,7 +45,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             System.out.println(
                     "the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                             + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            groupMgr = GroupMgr.getInstance();
+            groupMgr = new GroupMgr();
 
             // CheckBusiness(true),检测当前集群环境，若存在异常返回false，
             if (!groupMgr.checkBusiness(20)) {
@@ -139,6 +139,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
                 ReplicaGroup coordGroup = db.getReplicaGroup("SYSCoord");
                 coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
                 deleteFlag = true;
+                db.close();
             }
             catch (BaseException e) {
                 System.out.println(e.getMessage());
