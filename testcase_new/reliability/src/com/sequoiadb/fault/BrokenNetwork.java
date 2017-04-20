@@ -105,7 +105,7 @@ public class BrokenNetwork extends Fault {
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
             ssh.execBackground(
                     "nohup " + remotePath + "/" + scriptName + " 10 > /tmp/brokenNet.log &");
-            ssh.close();
+            ssh.disconnect();
             brokenHost.add(host);
             System.out.println("Broken network:" + host + ",Waitting group reelect....");
             while (true) {
@@ -252,7 +252,7 @@ public class BrokenNetwork extends Fault {
         }
         try {
             if (ssh != null) {
-                ssh.close();
+                ssh.disconnect();
             }
             if (checkRestoreResult()) {
                 ssh = new Ssh(hostName, user, passwd);
@@ -263,7 +263,7 @@ public class BrokenNetwork extends Fault {
             throw new FaultException(e);
         }
         finally {
-            ssh.close();
+            ssh.disconnect();
         }
 
     }

@@ -153,7 +153,7 @@ public class DiskFull extends Fault {
         try {
             if (ssh != null) {
                 ssh.exec("rm -rf " + remotePath + "/" + scriptName);
-                ssh.close();
+                ssh.disconnect();
                 ssh = null;
             }
         }

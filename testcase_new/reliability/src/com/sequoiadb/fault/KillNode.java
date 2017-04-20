@@ -101,7 +101,7 @@ public class KillNode extends Fault {
         try {
             if (ssh != null) {
                 ssh.exec("rm -rf " + remotePath + "/" + scriptName);
-                ssh.close();
+                ssh.disconnect();
             }
         }
         catch (ReliabilityException e) {
