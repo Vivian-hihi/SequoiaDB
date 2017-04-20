@@ -28,18 +28,24 @@ public class GroupMgr {
     private Map<Integer, GroupWrapper> id2group = new HashMap<Integer, GroupWrapper>();
     private static GroupMgr mgr = null;
     private Sequoiadb sdb = null;
+    private String coordUrl = null;
 
     public GroupMgr() throws ReliabilityException {
         this.refresh();
     }
 
-    public void refresh() throws ReliabilityException {
+    public GroupMgr(String coordUrl) throws ReliabilityException {
+        this.coordUrl = coordUrl;
+        this.refresh(coordUrl);
+    }
+
+    public void refresh(String coordUrl) throws ReliabilityException {
         DBCursor cursor = null;
         try {
             if (sdb != null) {
                 sdb.disconnect();
             }
-            sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            sdb = new Sequoiadb(coordUrl, "", "");
             BSONObject nullObj = null;
             cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS, nullObj, nullObj, nullObj);
             while (cursor.hasNext()) {
@@ -47,7 +53,7 @@ public class GroupMgr {
 
                 String groupName = obj.getString("GroupName");
 
-                GroupWrapper group = new GroupWrapper(obj, sdb.getReplicaGroup(groupName));
+                GroupWrapper group = new GroupWrapper(obj, sdb.getReplicaGroup(groupName),this);
                 group.init();
                 name2group.put(groupName, group);
                 id2group.put(group.getGroupID(), group);
@@ -60,6 +66,15 @@ public class GroupMgr {
             if (cursor != null) {
                 cursor.close();
             }
+        }
+    }
+
+    public void refresh() throws ReliabilityException {
+        if (coordUrl == null) {
+            refresh(SdbTestBase.coordUrl);
+        }
+        else {
+            refresh(coordUrl);
         }
     }
 
@@ -114,6 +129,7 @@ public class GroupMgr {
         }
     }
 
+    @Deprecated
     public static GroupMgr getInstance() throws ReliabilityException {
         mgr = new GroupMgr();
         return mgr;

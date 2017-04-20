@@ -35,11 +35,12 @@ public class GroupWrapper {
     private final String SYSCOLLECTIONSPACES = "SYSCOLLECTIONSPACES";
     private final String SYSDOMAINS = "SYSDOMAINS";
     private final String SYSNODES = "SYSNODES";
+    private GroupMgr mgr;
 
-    public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group) {
-
+    public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group,GroupMgr mgr) {
         this.groupInfo = groupInfo;
         this.group = group;
+        this.mgr = mgr;
     }
 
     public String getGroupName() {
@@ -51,20 +52,10 @@ public class GroupWrapper {
     }
 
     public void refresh(String coordUrl) throws ReliabilityException {
-        Sequoiadb sdb = new Sequoiadb(coordUrl, "", "");
-        try {
-            DBCursor cursor = sdb.getList(Sequoiadb.SDB_LIST_GROUPS,
-                    (BSONObject) JSON.parse("{GroupName:'" + getGroupName() + "'}"), null, null);
-            while (cursor.hasNext()) {
-                this.groupInfo = (BasicBSONObject) cursor.getNext();
-            }
-            nodes.clear();
-            init();
-        }
-        finally {
-            sdb.closeAllCursors();
-            sdb.disconnect();
-        }
+        mgr.refresh(coordUrl);
+        this.group = mgr.getGroupByName(getGroupName()).getGroup();
+        this.groupInfo = mgr.getGroupByName(getGroupName()).getGroupInfo();
+        init();
     }
 
     public void refresh() throws ReliabilityException {
@@ -72,20 +63,25 @@ public class GroupWrapper {
     }
 
     public void init() throws ReliabilityException {
+        String hostName =null;
+        String port = null;
         try {
             BasicBSONList nodesinfo = (BasicBSONList) groupInfo.get("Group");
             for (int i = 0; i < nodesinfo.size(); ++i) {
                 BasicBSONObject nodeinfo = (BasicBSONObject) nodesinfo.get(i);
-                String hostName = nodeinfo.getString("HostName");
-                String port = ((BasicBSONObject) ((BasicBSONList) nodeinfo.get("Service")).get(0))
+                hostName = nodeinfo.getString("HostName");
+                port = ((BasicBSONObject) ((BasicBSONList) nodeinfo.get("Service")).get(0))
                         .getString("Name");
 
+                
                 NodeWrapper node = new NodeWrapper(
                         this.group.getNode(hostName, Integer.parseInt(port)), nodeinfo);
                 nodes.add(node);
             }
         }
         catch (BaseException e) {
+            System.out.println("hostName:"+hostName+" error:"+e.getErrorCode());
+            System.out.println("port:"+port);
             throw new ReliabilityException(e);
         }
     }
@@ -172,6 +168,9 @@ public class GroupWrapper {
         if (getGroupName().equals("SYSCoord")) {
             return checkRes;
         }
+        
+        
+        
         checkRes.groupName = getGroupName();
         checkRes.groupID = getGroupID();
         checkRes.primaryNode = groupInfo.getInt("PrimaryNode");
@@ -313,4 +312,13 @@ public class GroupWrapper {
     public List<NodeWrapper> getNodes() {
         return nodes;
     }
+    
+    public ReplicaGroup getGroup() {
+        return group;
+    }
+
+    public BasicBSONObject getGroupInfo() {
+        return groupInfo;
+    }
+    
 }
