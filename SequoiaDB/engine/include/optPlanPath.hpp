@@ -52,10 +52,12 @@ using namespace bson ;
 namespace engine
 {
 
+#define OPT_NODE_FIELD_NAME            "Operator"
 #define OPT_NODE_FIELD_INPUT           "Input"
 #define OPT_NODE_FIELD_OUTPUT          "Output"
 #define OPT_NODE_FIELD_INDEX_FILTER    "IndexFilter"
 #define OPT_NODE_FIELD_ESTIMATE        "Estimate"
+#define OPT_NODE_FIELD_CHILDNODES      "ChildOperators"
 
 #define OPT_NODE_FIELD_COLLECTION      FIELD_NAME_COLLECTION
 #define OPT_NODE_FIELD_INDEX           FIELD_NAME_INDEX
@@ -172,7 +174,7 @@ namespace engine
             return _sorted ;
          }
 
-         virtual void toBSON ( BSONObjBuilder &builder, UINT32 idx ) const ;
+         virtual void toBSON ( BSONObjBuilder &builder ) const ;
 
          virtual OPT_PLAN_NODE_TYPE getType () const = 0 ;
 
@@ -619,7 +621,7 @@ namespace engine
          {
             if ( _pRootNode )
             {
-               _pRootNode->toBSON( builder, 0 ) ;
+               _pRootNode->toBSON( builder ) ;
             }
          }
 

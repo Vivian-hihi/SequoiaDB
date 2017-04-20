@@ -67,25 +67,35 @@ namespace engine
       _sorted = FALSE ;
    }
 
-   void _optPlanNode::toBSON ( BSONObjBuilder &builder, UINT32 idx ) const
+   void _optPlanNode::toBSON ( BSONObjBuilder &builder ) const
    {
-      CHAR nodeName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
-      ossSnprintf( nodeName, DMS_COLLECTION_FULL_NAME_SZ, "%s[%u]",
-                   getName(), idx ) ;
-
-      BSONObjBuilder subBuilder( builder.subobjStart( nodeName ) ) ;
-      _toBSON ( subBuilder ) ;
+      builder.append( OPT_NODE_FIELD_NAME, getName() ) ;
+      _toBSON ( builder ) ;
 
       if ( _pLNode )
       {
-         _pLNode->toBSON( subBuilder, idx + 1 ) ;
-      }
-      if ( _pRNode )
-      {
-         _pRNode->toBSON( subBuilder, idx + 2 ) ;
-      }
+         BSONArrayBuilder childBuilder( builder.subarrayStart( OPT_NODE_FIELD_CHILDNODES ) ) ;
 
-      subBuilder.done () ;
+         if ( _pLNode )
+         {
+            BSONObjBuilder subBuilder( childBuilder.subobjStart( 0 ) ) ;
+            _pLNode->toBSON( subBuilder ) ;
+            subBuilder.done() ;
+         }
+         else
+         {
+            childBuilder.appendNull() ;
+         }
+
+         if ( _pRNode )
+         {
+            BSONObjBuilder subBuilder( childBuilder.subobjStart( 1 ) ) ;
+            _pRNode->toBSON( subBuilder ) ;
+            subBuilder.done() ;
+         }
+
+         childBuilder.done() ;
+      }
    }
 
    void _optPlanNode::_toOutputBSON ( BSONObjBuilder &builder ) const
