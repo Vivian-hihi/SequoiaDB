@@ -2345,8 +2345,6 @@ namespace engine
                       "%d", rc ) ;
       }
 
-      PD_LOG( PDEVENT, "Drop collection[%s] succeed", fullName ) ;
-
    done:
       if ( metalocked )
       {
