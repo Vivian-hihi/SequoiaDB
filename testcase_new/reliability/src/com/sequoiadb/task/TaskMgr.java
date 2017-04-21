@@ -26,6 +26,16 @@ public class TaskMgr {
     }
 
     /**
+     * add by jt.
+     * @param faultMakeTask
+     * @return
+     */
+    public static TaskMgr getTaskMgrWithFaultMakeTask(FaultMakeTask faultMakeTask){
+        TaskMgr taskMgr=new TaskMgr(faultMakeTask);
+        return taskMgr;
+    }
+
+    /**
      * @param task
      *            任务
      */
