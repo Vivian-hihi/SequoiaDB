@@ -75,10 +75,17 @@
       <if>
          <isset property="SPARK_VERSION"/>
          <else>           
-            <var name="SPARK_VERSION" value="1.6.1" />
+            <var name="SPARK_VERSION" value="2.0.0" />
          </else>
       </if>
   
+      <if>
+         <isset property="SCALA_VERSION"/>
+         <else>           
+            <var name="SCALA_VERSION" value="2.11" />
+         </else>
+      </if>
+      
       <if>
          <isset property="BIN_PACKAGE"/>
          <else>           
