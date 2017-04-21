@@ -105,8 +105,8 @@ public class Split10507 extends SdbTestBase {
 			Assert.assertEquals(destCount, 30);
 
 			// commCL.getCount("{$or:[{sk:{$gte:{$minKey:1},$lt:30}},{sk:{$gte:60,$lt:{$maxKey:1}}}]}");
-			long srcCount1 = commCL.getCount("{sk:{$gte:60,$lt:{$maxKey:1}}}");
-			long srcCount2 = commCL.getCount("{sk:{$gte:{$minKey:1},$lt:30}}");
+			long srcCount1 = commCL.getCount("{sk:{$gte:60}}");
+			long srcCount2 = commCL.getCount("{sk:{$lt:30}}");
 			Assert.assertEquals(srcCount2 + srcCount1, 70);
 
 			// find边界sk:30,sk:60
