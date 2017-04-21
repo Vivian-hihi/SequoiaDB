@@ -2,7 +2,7 @@
 <!--This xml is for ci. -->
 <!--Testcases for reliability test, except disk-full testcases. -->
 
-<suite name="reliability" verbose="1" stop-all-when-occur-failure="true">
+<suite name="reliability" verbose="1" stop-all-when-occur-failure="true" preserve-order="true">
 	<parameter name="HOSTNAME"       value="localhost" />
 	<parameter name="SVCNAME"        value="11810" />
 	<parameter name="CHANGEDPREFIX"  value="reliability_test" />
@@ -15,24 +15,24 @@
 	<parameter name="REMOTEPASSWD"   value="sdbadmin" />
    <parameter name="SCRIPTDIR"       value="/trunk/testcase_new/reliability/script" />
    
-	<test name="reliability">
+	<test name="reliability_normal">
 		<packages>
 			<package name="com.sequoiadb.subcl.brokennetwork" />
 			<package name="com.sequoiadb.subcl.killnode"></package>
 			<package name="com.sequoiadb.subcl.restartnode"></package>
-		
 			<package name="com.sequoiadb.clsmgr.brokennetwork"></package>
 			<package name="com.sequoiadb.split.killnode"></package>
 			<package name="com.sequoiadb.split.restartnode"></package>
 			<package name="com.sequoiadb.split.brokennetwork"/>
-			
-		  <package name="com.sequoiadb.datasync.killnode" />
 			<package name="com.sequoiadb.metaopr.killnode" />
 			<package name="com.sequoiadb.metaopr.diskfull" />
-			<package name="com.sequoiadb.datasync.brokennetwork" />
 		</packages>
 	</test>
-
+	
+	<test name="reliability_fullSync">
+		  <package name="com.sequoiadb.datasync.brokennetwork" />
+			<package name="com.sequoiadb.datasync.killnode" />
+	</test>
 
 </suite>
    
