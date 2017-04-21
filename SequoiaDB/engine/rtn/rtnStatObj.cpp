@@ -454,7 +454,8 @@ namespace engine
          }
          else
          {
-            selectivity = _evalStartStopKeys( beStart, beStop ) ;
+            selectivity = _evalStartStopKeys( beStart, startIncluded,
+                                              beStop, stopIncluded ) ;
          }
       }
 
@@ -510,7 +511,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          // Failed to use field statistics, evaluate by default
-         selectivity = _evalGTOperator( beValue ) ;
+         selectivity = _evalGTOperator( beValue, included ) ;
       }
 
       return selectivity ;
@@ -533,20 +534,23 @@ namespace engine
       if ( SDB_OK != rc )
       {
          // Failed to use field statistics, evaluate by default
-         selectivity = _evalLTOperator( beValue ) ;
+         selectivity = _evalLTOperator( beValue, included ) ;
       }
 
       return selectivity ;
    }
 
    double _rtnCollectionStat::_evalStartStopKeys ( const BSONElement &startKey,
-                                                   const BSONElement &stopKey ) const
+                                                   BOOLEAN startIncluded,
+                                                   const BSONElement &stopKey,
+                                                   BOOLEAN stopIncluded ) const
    {
       double selectivity = OPT_PRED_DEF_SELECTIVITY ;
 
       if ( startKey.type() == stopKey.type() )
       {
-         selectivity = _evalRangeOperator( startKey, stopKey ) ;
+         selectivity = _evalRangeOperator( startKey, startIncluded,
+                                           stopKey, stopIncluded ) ;
       }
       else if ( startKey.type() == MinKey &&
                 stopKey.type() == MaxKey )
@@ -556,11 +560,11 @@ namespace engine
       }
       else if ( stopKey.type() == MaxKey )
       {
-         selectivity = _evalGTOperator( startKey ) ;
+         selectivity = _evalGTOperator( startKey, startIncluded ) ;
       }
       else if ( startKey.type() == MinKey )
       {
-         selectivity = _evalLTOperator( stopKey ) ;
+         selectivity = _evalLTOperator( stopKey, stopIncluded ) ;
       }
 
       return selectivity ;
@@ -581,7 +585,9 @@ namespace engine
    }
 
    double _rtnCollectionStat::_evalRangeOperator ( const BSONElement &beStart,
-                                                   const BSONElement &beStop ) const
+                                                   BOOLEAN startIncluded,
+                                                   const BSONElement &beStop,
+                                                   BOOLEAN stopIncluded ) const
    {
       double selectivity = OPT_PRED_RANGE_DEF_SELECTIVITY ;
 
@@ -591,8 +597,21 @@ namespace engine
          {
             case Bool :
             {
-               // [ true, false ] is all range
-               selectivity = 1.0 ;
+               if ( startIncluded && stopIncluded )
+               {
+                  // [ true, false ] is all range
+                  selectivity = 1.0 ;
+               }
+               else if ( startIncluded || stopIncluded )
+               {
+                  // Either true or false
+                  selectivity = 0.5 ;
+               }
+               else
+               {
+                  // No matched
+                  selectivity = 0.0 ;
+               }
                break ;
             }
             case NumberDouble :
@@ -649,7 +668,8 @@ namespace engine
       return OPT_ROUND_SELECTIVITY( selectivity ) ;
    }
 
-   double _rtnCollectionStat::_evalGTOperator ( const BSONElement &beStart ) const
+   double _rtnCollectionStat::_evalGTOperator ( const BSONElement &beStart,
+                                                BOOLEAN startIncluded ) const
    {
       double selectivity = OPT_PRED_DEF_SELECTIVITY ;
 
@@ -657,8 +677,32 @@ namespace engine
       {
          case Bool :
          {
-            // Either true or false
-            selectivity = 0.5 ;
+            if ( beStart.boolean() )
+            {
+               if ( startIncluded )
+               {
+                  // >= true
+                  selectivity = 0.5 ;
+               }
+               else
+               {
+                  // > true
+                  selectivity = 0.0 ;
+               }
+            }
+            else
+            {
+               if ( startIncluded )
+               {
+                  // >= false
+                  selectivity = 1.0 ;
+               }
+               else
+               {
+                  // > false
+                  selectivity = 0.5 ;
+               }
+            }
             break ;
          }
          case NumberDouble :
@@ -699,7 +743,8 @@ namespace engine
       return OPT_ROUND_SELECTIVITY( selectivity ) ;
    }
 
-   double _rtnCollectionStat::_evalLTOperator ( const BSONElement &beStop ) const
+   double _rtnCollectionStat::_evalLTOperator ( const BSONElement &beStop,
+                                                BOOLEAN stopIncluded ) const
    {
       double selectivity = OPT_PRED_DEF_SELECTIVITY ;
 
@@ -707,8 +752,32 @@ namespace engine
       {
          case Bool :
          {
-            // Either true or false
-            selectivity = 0.5 ;
+            if ( beStop.boolean() )
+            {
+               if ( stopIncluded )
+               {
+                  // <= true
+                  selectivity = 1.0 ;
+               }
+               else
+               {
+                  // < true
+                  selectivity = 0.5 ;
+               }
+            }
+            else
+            {
+               if ( stopIncluded )
+               {
+                  // <= false
+                  selectivity = 0.5 ;
+               }
+               else
+               {
+                  // < false
+                  selectivity = 0.0 ;
+               }
+            }
             break ;
          }
          case NumberDouble :

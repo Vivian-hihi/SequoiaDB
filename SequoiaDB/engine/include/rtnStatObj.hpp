@@ -269,16 +269,22 @@ namespace engine
 
       protected :
          double _evalStartStopKeys ( const BSONElement &startKey,
-                                     const BSONElement &stopKey ) const ;
+                                     BOOLEAN startIncluded,
+                                     const BSONElement &stopKey,
+                                     BOOLEAN stopIncluded ) const ;
 
          double _evalETOperator ( const BSONElement &beValue ) const ;
 
          double _evalRangeOperator ( const BSONElement &beStart,
-                                     const BSONElement &beStop ) const ;
+                                     BOOLEAN startIncluded,
+                                     const BSONElement &beStop,
+                                     BOOLEAN stopIncluded ) const ;
 
-         double _evalGTOperator ( const BSONElement &beStart ) const ;
+         double _evalGTOperator ( const BSONElement &beStart,
+                                  BOOLEAN startIncluded ) const ;
 
-         double _evalLTOperator ( const BSONElement &beStop ) const ;
+         double _evalLTOperator ( const BSONElement &beStop,
+                                  BOOLEAN stopIncluded ) const ;
 
       protected :
          /* Init from dmsMBContext */
