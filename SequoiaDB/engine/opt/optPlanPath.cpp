@@ -512,11 +512,8 @@ namespace engine
                                                                  curPredicate,
                                                                  curIsAllRange ) ;
 
-               if ( !curIsAllRange )
-               {
-                  tempSelectivity *= curSelectivity ;
-                  matchedFields ++ ;
-               }
+               tempSelectivity *= curSelectivity ;
+               matchedFields ++ ;
 
                if ( iterIdx == 0 )
                {
