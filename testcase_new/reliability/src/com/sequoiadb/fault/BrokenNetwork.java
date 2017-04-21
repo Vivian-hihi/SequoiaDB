@@ -11,9 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.testng.annotations.Test;
 
-import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
@@ -21,7 +19,7 @@ import com.sequoiadb.commlib.Ssh;
 import com.sequoiadb.exception.FaultException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.task.FaultMakeTask;
-import com.sequoiadb.task.TaskMgr;
+
 
 public class BrokenNetwork extends Fault {
     private String hostName;
@@ -35,19 +33,6 @@ public class BrokenNetwork extends Fault {
     private GroupWrapper group = null;;
     private final String localScriptPath = SdbTestBase.scriptDir;
     private final String scriptName = "brokenNetwork.sh";
-
-    @Test
-    public static void test() throws ReliabilityException {
-        GroupMgr mgr = new GroupMgr();
-        GroupWrapper data = mgr.getGroupByName("group2");
-
-        FaultMakeTask ft = BrokenNetwork.getFaultMakeTask(data, 10, 0);
-        TaskMgr tmgr = new TaskMgr(ft);
-        tmgr.execute();
-
-        System.out.println(tmgr.getErrorMsg());
-
-    }
 
     /**
      * 
@@ -75,6 +60,7 @@ public class BrokenNetwork extends Fault {
         this.port = 22;
         this.group = group;
         this.duration = times;
+
     }
 
     public void make() throws FaultException {
@@ -96,53 +82,71 @@ public class BrokenNetwork extends Fault {
     public void continuouslyMakeOnPri() throws ReliabilityException {
         group.refresh();
         List<String> allHosts = group.getAllHosts();
+        System.out.println(allHosts);
         List<String> brokenHost = new ArrayList<String>();
         String host = group.getMaster().hostName();
+        System.out.println("1:" + host);
         System.out.println("Begin ContinuouslyMakeBrokenNetOnPri:" + group.getGroupName());
         for (int i = 0; i < duration; i++) {
             ssh = new Ssh(host, user, passwd, port);
             ssh.scpTo(localScriptPath + "/" + scriptName, remotePath + "/");
             ssh.exec("chmod 777 " + remotePath + "/" + scriptName);
             ssh.execBackground(
-                    "nohup " + remotePath + "/" + scriptName + " 10 > /tmp/brokenNet.log &");
+                    "nohup " + remotePath + "/" + scriptName + " 15 > /tmp/brokenNet.log &");
             ssh.disconnect();
+
+            while (true) {
+                if (!ping(host)) {
+                    break;
+                }
+            }
+
             brokenHost.add(host);
             System.out.println("Broken network:" + host + ",Waitting group reelect....");
+            allHosts.removeAll(brokenHost);
+            if (allHosts.size() <= 0) {
+                allHosts.addAll(brokenHost);
+                brokenHost.clear();
+            }
+            boolean breakFlag = false;
+            Exception exception1 =new Exception();
+            Exception exception2 = new Exception();
             while (true) {
-                allHosts.removeAll(brokenHost);
-                if (allHosts.size() <= 0) {
-                    allHosts.addAll(brokenHost);
-                    brokenHost.clear();
-                }
-                while (true) {
-                    try {
-                        group.refresh(allHosts.get(0));
+                try {
+                    group.refresh(allHosts.get(0) + ":" + SdbTestBase.serviceName);
+                    for (NodeWrapper node : group.getNodes()) {
+                        // System.out.println(node.hostName());
+                        try {
+                            if (node.isMaster(false)) {
+                                host = node.hostName();
+                                breakFlag = true;
+                                break;
+                            }
+                        }
+                        catch (Exception e) {
+                            if(!e.getMessage().equals(exception1.getMessage())){
+                                System.out.println("ignore some exceptions:"+e.getMessage());
+                                exception1 = e;
+                            }
+                            continue;
+                        }
+                    }
+                    if (breakFlag) {
                         break;
                     }
-                    catch (Exception e) {
-                        try {
-                            Thread.sleep(1000);
-                        }
-                        catch (InterruptedException e1) {
-                            // ignore
-                        }
-                        continue;
-                    }
                 }
-                boolean breakFlag = false;
-                for (NodeWrapper node : group.getNodes()) {
+                catch (Exception e) {
+                    if(!e.getMessage().equals(exception2.getMessage())){
+                        System.out.println("ignore some exceptions:"+e.getMessage());
+                        exception2 = e;
+                    }
                     try {
-                        if (node.isMaster(false)) {
-                            host = node.hostName();
-                            breakFlag = true;
-                            break;
-                        }
+                        Thread.sleep(1000);
                     }
-                    catch (Exception e) {
+                    catch (InterruptedException e1) {
+                        // ignore
                     }
-                }
-                if (breakFlag) {
-                    break;
+                    continue;
                 }
             }
             System.out.println("reelect success,the host:" + host);
