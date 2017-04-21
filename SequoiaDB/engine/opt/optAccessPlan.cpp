@@ -144,6 +144,10 @@ namespace engine
                 "Index [%d] in collection [%s] is invalid",
                 indexCBExtent, _collectionFullName ) ;
 
+      PD_CHECK( indexCB.getFlag() == IXM_INDEX_FLAG_NORMAL,
+                SDB_IXM_UNEXPECTED_STATUS, error, PDDEBUG,
+                "Index is not normal status, skip" ) ;
+
       try
       {
          rtnIndexStat indexStat( collectionStat, indexCB ) ;
@@ -505,17 +509,26 @@ namespace engine
                rc = SDB_OK ;
                break ;
             }
-
-            PD_RC_CHECK( rc, PDWARNING, "Failed to get index extent ID from "
-                         "collection [%s], index [%d], rc: %d",
-                         _collectionFullName, idx, rc ) ;
+            if ( SDB_OK != rc )
+            {
+               // Continue to evaluate the rest of indexes
+               PD_LOG( PDWARNING, "Failed to get index extent ID from "
+                       "collection [%s], index [%d], rc: %d",
+                       _collectionFullName, idx, rc ) ;
+               continue ;
+            }
 
             rc = _estimateIxScanPlan( collectionStat, indexCBExtent,
                                       priority, sortBufferSize, estCacheSize,
                                       ixScanPath ) ;
-            PD_RC_CHECK( rc, PDWARNING, "Failed to estimate index scan for "
-                         "collection [%s], index [%d], rc: %d",
-                         _collectionFullName, idx, rc ) ;
+            if ( SDB_OK != rc )
+            {
+               // Continue to evaluate the rest of indexes
+               PD_LOG( PDWARNING, "Failed to estimate index scan for "
+                       "collection [%s], index [%d], rc: %d",
+                       _collectionFullName, idx, rc ) ;
+               continue ;
+            }
             if ( ixScanPath.isCandidate() &&
                  ixScanPath.getTotalCost() < bestEstimateCost )
             {
