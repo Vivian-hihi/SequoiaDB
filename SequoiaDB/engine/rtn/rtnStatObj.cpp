@@ -109,6 +109,96 @@ namespace engine
       return selectivity ;
    }
 
+   INT32 _rtnStatBase::_evalStartStopKeys ( const dmsIndexStat *pIndexStat,
+                                            rtnStatPredList::iterator &predIter,
+                                            dmsStatListKey &startKeys,
+                                            BOOLEAN startIncluded,
+                                            dmsStatListKey &stopKeys,
+                                            BOOLEAN stopIncluded,
+                                            BOOLEAN isEqual,
+                                            double &selectivity ) const
+   {
+      SDB_ASSERT( isValid(), "Should not be invalid" ) ;
+
+      INT32 rc = SDB_OK ;
+      rtnStatPredList::iterator curPred = predIter ;
+      rtnStatPredList::iterator nextPred = ++ predIter ;
+      if ( curPred == nextPred )
+      {
+         if ( isEqual )
+         {
+            rc = pIndexStat->evalETOperator( startKeys, selectivity ) ;
+         }
+         else
+         {
+            rc = pIndexStat->evalRangeOperator( startKeys, startIncluded,
+                                                stopKeys, stopIncluded,
+                                                selectivity ) ;
+         }
+      }
+      else
+      {
+         rtnPredicate *pPredicate = *curPred ;
+
+         if ( pPredicate )
+         {
+            double tempSelectivity = 0.0 ;
+            for ( vector<rtnStartStopKey>::const_iterator iterSSKey = pPredicate->_startStopKeys.begin();
+                  iterSSKey != pPredicate->_startStopKeys.end() ;
+                  iterSSKey ++ )
+            {
+               const rtnKeyBoundary &startKey = iterSSKey->_startKey ;
+               const rtnKeyBoundary &stopKey = iterSSKey->_stopKey ;
+
+               const BSONElement &beStart = startKey._bound ;
+               const BSONElement &beStop = stopKey._bound ;
+
+               BOOLEAN subStartIncluded = startIncluded && startKey._inclusive ;
+               BOOLEAN subStopIncluded = stopIncluded && stopKey._inclusive ;
+               BOOLEAN subIsEqual = isEqual && iterSSKey->isEquality() ;
+
+               double subSelectivity = 1.0 ;
+
+               startKeys.push_back( beStart ) ;
+               stopKeys.push_back( beStop ) ;
+
+               rc = _evalStartStopKeys( pIndexStat, nextPred,
+                                        startKeys, subStartIncluded,
+                                        stopKeys, subStopIncluded,
+                                        subIsEqual, subSelectivity ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+
+               tempSelectivity += subSelectivity ;
+
+               startKeys.pop_back() ;
+               stopKeys.pop_back() ;
+            }
+            selectivity = OPT_ROUND_SELECTIVITY( tempSelectivity ) ;
+         }
+         else
+         {
+            startKeys.push_back( minKey.firstElement() ) ;
+            stopKeys.push_back( maxKey.firstElement() ) ;
+
+            rc = _evalStartStopKeys( pIndexStat, nextPred,
+                                     startKeys, startIncluded,
+                                     stopKeys, stopIncluded,
+                                     FALSE, selectivity ) ;
+
+            startKeys.pop_back() ;
+            stopKeys.pop_back() ;
+         }
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    /*
       _rtnIndexStat implement
     */
@@ -133,11 +223,12 @@ namespace engine
       }
    }
 
-   void _rtnIndexStat::evalPredicateList ( const CHAR *pFirstFieldName,
-                                           rtnStatPredList &predList,
-                                           double &selectivity ) const
+   double _rtnIndexStat::evalPredicateList ( const CHAR *pFirstFieldName,
+                                             rtnStatPredList &predList ) const
    {
       INT32 rc = SDB_INVALIDARG ;
+
+      double selectivity = 1.0 ;
 
       if ( predList.size() == 0 )
       {
@@ -147,9 +238,9 @@ namespace engine
       {
          rtnStatPredList::iterator predIter = predList.begin() ;
          dmsStatListKey startKeys, stopKeys ;
-         rc = _evalStartStopKeys( predIter,
+         rc = _evalStartStopKeys( _pIndexStat, predIter,
                                   startKeys, TRUE, stopKeys, TRUE,
-                                  TRUE, selectivity ) ;
+                                  FALSE, selectivity ) ;
       }
 
       if ( SDB_OK != rc )
@@ -166,6 +257,8 @@ namespace engine
             selectivity = 1.0 ;
          }
       }
+
+      return selectivity ;
    }
 
    double _rtnIndexStat::evalStartStopKeys ( const CHAR *pFieldName,
@@ -202,93 +295,6 @@ namespace engine
       }
 
       return selectivity ;
-   }
-
-   INT32 _rtnIndexStat::_evalStartStopKeys ( rtnStatPredList::iterator &predIter,
-                                             dmsStatListKey &startKeys, BOOLEAN startIncluded,
-                                             dmsStatListKey &stopKeys, BOOLEAN stopIncluded,
-                                             BOOLEAN isEqual,
-                                             double &selectivity ) const
-   {
-      SDB_ASSERT( isValid(), "Should not be invalid" ) ;
-
-      INT32 rc = SDB_OK ;
-      rtnStatPredList::iterator curPred = predIter ;
-      rtnStatPredList::iterator nextPred = ++ predIter ;
-      if ( curPred == nextPred )
-      {
-         if ( isEqual )
-         {
-            rc = _pIndexStat->evalETOperator( startKeys, selectivity ) ;
-         }
-         else
-         {
-            rc = _pIndexStat->evalRangeOperator( startKeys, startIncluded,
-                                                 stopKeys, stopIncluded,
-                                                 selectivity ) ;
-         }
-      }
-      else
-      {
-         rtnPredicate *pPredicate = *curPred ;
-
-         if ( pPredicate )
-         {
-            double tempSelectivity = 0.0 ;
-            for ( vector<rtnStartStopKey>::const_iterator iterSSKey = pPredicate->_startStopKeys.begin();
-                  iterSSKey != pPredicate->_startStopKeys.end() ;
-                  iterSSKey ++ )
-            {
-               const rtnKeyBoundary &startKey = iterSSKey->_startKey ;
-               const rtnKeyBoundary &stopKey = iterSSKey->_stopKey ;
-
-               const BSONElement &beStart = startKey._bound ;
-               const BSONElement &beStop = stopKey._bound ;
-
-               BOOLEAN subStartIncluded = startIncluded && startKey._inclusive ;
-               BOOLEAN subStopIncluded = stopIncluded && stopKey._inclusive ;
-               BOOLEAN subIsEqual = isEqual && iterSSKey->isEquality() ;
-
-               double subSelectivity = 1.0 ;
-
-               startKeys.push_back( beStart ) ;
-               stopKeys.push_back( beStop ) ;
-
-               rc = _evalStartStopKeys( nextPred,
-                                        startKeys, subStartIncluded,
-                                        stopKeys, subStopIncluded,
-                                        subIsEqual, subSelectivity ) ;
-               if ( SDB_OK != rc )
-               {
-                  goto error ;
-               }
-
-               tempSelectivity += subSelectivity ;
-
-               startKeys.pop_back() ;
-               stopKeys.pop_back() ;
-            }
-            selectivity = OPT_ROUND_SELECTIVITY( tempSelectivity ) ;
-         }
-         else
-         {
-            startKeys.push_back( minKey.firstElement() ) ;
-            stopKeys.push_back( maxKey.firstElement() ) ;
-
-            rc = _evalStartStopKeys( nextPred,
-                                     startKeys, startIncluded,
-                                     stopKeys, stopIncluded,
-                                     FALSE, selectivity ) ;
-
-            startKeys.pop_back() ;
-            stopKeys.pop_back() ;
-         }
-      }
-
-   done :
-      return rc ;
-   error :
-      goto done ;
    }
 
    /*
@@ -339,6 +345,70 @@ namespace engine
 
       PD_TRACE_EXITRC( SDB_RTNCLSTAT_INITCURSTAT, rc ) ;
       return rc ;
+   }
+
+   double _rtnCollectionStat::evalPredicateSet ( rtnPredicateSet &predicateSet ) const
+   {
+      RTN_PREDICATE_MAP predicates = predicateSet.predicates() ;
+      const dmsIndexStat *pIndexStat = NULL ;
+      double selectivity = 1.0 ;
+
+      if ( predicates.size() == 0 )
+      {
+         return 1.0 ;
+      }
+
+      if ( isValid() )
+      {
+         pIndexStat = _pCollectionStat->getMatchedIndex( predicateSet ) ;
+      }
+
+      if ( pIndexStat )
+      {
+         rtnStatPredList predicateList ;
+         BSONObjIterator iterKey( pIndexStat->getKeyPattern() ) ;
+         while ( iterKey.more() )
+         {
+            BSONElement beKey = iterKey.next() ;
+            const CHAR *pFieldName = beKey.fieldName() ;
+            RTN_PREDICATE_MAP::iterator iterPred = predicates.find( pFieldName ) ;
+            if ( iterPred == predicates.end() || iterPred->second.isEmpty() )
+            {
+               predicateList.push_back( NULL ) ;
+            }
+            else
+            {
+               predicateList.push_back( &( iterPred->second ) ) ;
+            }
+         }
+         rtnStatPredList::iterator predIter = predicateList.begin() ;
+         dmsStatListKey startKeys, stopKeys ;
+         INT32 rc = _rtnStatBase::_evalStartStopKeys ( pIndexStat, predIter,
+                                                       startKeys, TRUE,
+                                                       stopKeys, TRUE,
+                                                       FALSE, selectivity ) ;
+
+         if ( SDB_OK == rc )
+         {
+            return selectivity ;
+         }
+      }
+
+      // Need to evaluate one by one
+      selectivity = 1.0 ;
+      for ( RTN_PREDICATE_MAP::iterator iterPred = predicates.begin() ;
+            iterPred != predicates.end();
+            iterPred ++ )
+      {
+         BOOLEAN isAllRange = FALSE ;
+         const CHAR *pFieldName = iterPred->first.c_str() ;
+         rtnPredicate &predicate = iterPred->second ;
+
+         double curSelectivity = 1.0 ;
+         curSelectivity = evalPredicate( pFieldName, predicate, isAllRange ) ;
+         selectivity *= curSelectivity ;
+      }
+      return selectivity ;
    }
 
    double _rtnCollectionStat::evalStartStopKeys ( const CHAR *pFieldName,

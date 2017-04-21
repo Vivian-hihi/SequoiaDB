@@ -900,6 +900,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNPRED_RTNPRED ) ;
       _isInitialized = FALSE ;
       _equalFlag = -1 ;
+      _allEqualFlag = -1 ;
       _evaluated = FALSE ;
       _allRange = TRUE ;
       _selectivity = OPT_PRED_DEFAULT_SELECTIVITY ;

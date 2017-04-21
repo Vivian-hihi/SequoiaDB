@@ -41,7 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ixm.hpp"
-
+#include "rtnPredicate.hpp"
 #include "utilMap.hpp"
 #include "utilList.hpp"
 
@@ -547,6 +547,8 @@ namespace engine
          const dmsIndexStat *getIndexStat ( const CHAR *pIndexName ) const ;
 
          const dmsIndexStat *getFieldStat ( const CHAR *pFieldName ) const ;
+
+         const dmsIndexStat *getMatchedIndex ( rtnPredicateSet &predicates ) const ;
 
          BOOLEAN addIndexStat ( dmsIndexStat *pIndexStat,
                                 BOOLEAN ignoreVersion ) ;

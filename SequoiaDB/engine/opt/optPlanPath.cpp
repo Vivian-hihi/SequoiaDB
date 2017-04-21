@@ -562,8 +562,8 @@ namespace engine
          {
             // The predicates contain multiple start stop key-pairs, evaluate
             // each of them
-            indexStat.evalPredicateList( pFirstField, predicateList,
-                                         tempSelectivity ) ;
+            tempSelectivity = indexStat.evalPredicateList( pFirstField,
+                                                           predicateList ) ;
          }
          else
          {

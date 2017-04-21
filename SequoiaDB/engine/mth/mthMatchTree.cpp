@@ -2327,19 +2327,9 @@ namespace engine
 
       if ( _isInitialized && _root )
       {
+         double predSelectivity = pCollectionStat->evalPredicateSet( _predicateSet ) ;
          _root->evalEstimation( pCollectionStat, tmpSelectivity, tmpCPUCost ) ;
-         RTN_PREDICATE_MAP predicates = _predicateSet.predicates() ;
-         for ( RTN_PREDICATE_MAP::iterator iterPred = predicates.begin() ;
-               iterPred != predicates.end();
-               iterPred ++ )
-         {
-            BOOLEAN isAllRange = FALSE ;
-            double curSelectivity = 1.0 ;
-            curSelectivity = pCollectionStat->evalPredicate( iterPred->first.c_str(),
-                                                             iterPred->second,
-                                                             isAllRange ) ;
-            tmpSelectivity *= curSelectivity ;
-         }
+         tmpSelectivity *= predSelectivity ;
       }
 
       _estSelectivity = OPT_ROUND_SELECTIVITY( tmpSelectivity ) ;

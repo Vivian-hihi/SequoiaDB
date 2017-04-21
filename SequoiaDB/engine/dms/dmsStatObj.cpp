@@ -1208,6 +1208,91 @@ namespace engine
       return pFieldStat ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_GETMATCHEDIDX, "_dmsCollectionStat::getMatchedIndex" )
+   const dmsIndexStat * _dmsCollectionStat::getMatchedIndex ( rtnPredicateSet &predicateSet ) const
+   {
+      PD_TRACE_ENTRY( SDB_DMSCLSTAT_GETMATCHEDIDX ) ;
+
+      RTN_PREDICATE_MAP &predicates = predicateSet.predicates() ;
+
+      if ( predicates.size() == 0 )
+      {
+         return NULL ;
+      }
+      else if ( predicates.size() == 1 )
+      {
+         RTN_PREDICATE_MAP::const_iterator iterPred = predicates.begin() ;
+         return getFieldStat( iterPred->first.c_str() ) ;
+      }
+
+      const dmsIndexStat *pBestIndexStat = NULL ;
+
+      for ( INDEX_STAT_CONST_ITERATOR iter = _indexStats.begin() ;
+            iter != _indexStats.end() ;
+            ++ iter )
+      {
+         const dmsIndexStat *pIndexStat = iter->second ;
+
+         if ( pIndexStat->getNumKeys() < predicates.size() )
+         {
+            continue ;
+         }
+
+         BSONObjIterator iterKey( pIndexStat->getKeyPattern() ) ;
+         UINT32 matchedCount = 0 ;
+         while ( iterKey.more() )
+         {
+            BSONElement beKey = iterKey.next() ;
+            RTN_PREDICATE_MAP::iterator iterPred = predicates.find( beKey.fieldName() ) ;
+            if ( iterPred == predicates.end() ||
+                 iterPred->second.isEmpty() )
+            {
+               break ;
+            }
+            rtnPredicate &predicate = iterPred->second ;
+            if ( predicate._startStopKeys.size() == 1 &&
+                 predicate.isEquality() )
+            {
+               // Equal operator
+               matchedCount ++ ;
+            }
+            else if ( matchedCount == predicates.size() - 1 )
+            {
+               // Last one, on matters
+               matchedCount ++ ;
+            }
+            else if ( predicate.isAllEqual() )
+            {
+               matchedCount ++ ;
+            }
+         }
+
+         if ( matchedCount == predicates.size() )
+         {
+            if ( matchedCount == pIndexStat->getNumKeys() )
+            {
+               return pIndexStat ;
+            }
+
+            if ( pBestIndexStat )
+            {
+               if ( pIndexStat->getNumKeys() < pBestIndexStat->getNumKeys() )
+               {
+                  pBestIndexStat = pIndexStat ;
+               }
+            }
+            else
+            {
+               pBestIndexStat = pIndexStat ;
+            }
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_DMSCLSTAT_GETMATCHEDIDX ) ;
+
+      return pBestIndexStat ;
+   }
+
    void _dmsCollectionStat::clearStats ()
    {
       INDEX_STAT_ITERATOR iter ;

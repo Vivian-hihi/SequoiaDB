@@ -175,6 +175,7 @@ namespace engine
       vector<BSONObj> _objData ;
 
       INT32 _equalFlag ;
+      INT32 _allEqualFlag ;
       BOOLEAN _evaluated ; // _equalFlag == 1 means is equal operation
       BOOLEAN _allRange ;
       double _selectivity ;
@@ -257,6 +258,29 @@ namespace engine
                            maxInclusive() && minInclusive() ) ? 1 : 0 ;
          }
          return _equalFlag == 1 ;
+      }
+      BOOLEAN isAllEqual ()
+      {
+         if ( -1 == _allEqualFlag )
+         {
+            UINT32 equalCount = 0 ;
+            for ( vector<rtnStartStopKey>::iterator iterSSKey = _startStopKeys.begin();
+                  iterSSKey != _startStopKeys.end() ;
+                  iterSSKey ++ )
+            {
+               if ( iterSSKey->isEquality() )
+               {
+                  equalCount ++ ;
+               }
+               else
+               {
+                  break ;
+               }
+            }
+            // All equal operators
+            _allEqualFlag = ( equalCount == _startStopKeys.size() ) ? 1 : 0 ;
+         }
+         return _allEqualFlag == 1 ;
       }
       BOOLEAN isEmpty() const
       {

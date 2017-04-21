@@ -90,6 +90,17 @@ namespace engine
                                             BOOLEAN stopIncluded,
                                             BOOLEAN isEqual ) const = 0 ;
 
+         virtual BOOLEAN isValid () const = 0 ;
+
+      protected :
+         INT32 _evalStartStopKeys ( const dmsIndexStat *pIndexStat,
+                                    rtnStatPredList::iterator &predIter,
+                                    dmsStatListKey &statKeys,
+                                    BOOLEAN startIncluded,
+                                    dmsStatListKey &stopKeys,
+                                    BOOLEAN endIncluded,
+                                    BOOLEAN isEqual, double &selectivity ) const ;
+
       protected :
          const CHAR *   _pCollectionName ;
          UINT64         _totalRecords ;
@@ -127,14 +138,13 @@ namespace engine
                                  STAT_DEF_IDX_LEVELS ;
          }
 
-         OSS_INLINE BOOLEAN isValid () const
+         OSS_INLINE virtual BOOLEAN isValid () const
          {
             return ( _pIndexStat && _pIndexStat->isValid() ) ;
          }
 
-         void evalPredicateList ( const CHAR *pFieldName,
-                                  rtnStatPredList &predList,
-                                  double &selectivity ) const ;
+         double evalPredicateList ( const CHAR *pFieldName,
+                                    rtnStatPredList &predList ) const ;
 
          virtual double evalStartStopKeys ( const CHAR *pFieldName,
                                             dmsStatKey &startKey,
@@ -142,12 +152,6 @@ namespace engine
                                             dmsStatKey &stopKey,
                                             BOOLEAN stopIncluded,
                                             BOOLEAN isEqual ) const ;
-
-      protected :
-         INT32 _evalStartStopKeys ( rtnStatPredList::iterator &predIter,
-                                    dmsStatListKey &statKeys, BOOLEAN startIncluded,
-                                    dmsStatListKey &stopKeys, BOOLEAN endIncluded,
-                                    BOOLEAN isEqual, double &selectivity ) const ;
 
       protected :
          const rtnCollectionStat &_collectionStat ;
@@ -236,12 +240,14 @@ namespace engine
                                       STAT_DEF_AVG_NUM_FIELDS ;
          }
 
-         OSS_INLINE BOOLEAN isValid () const
+         OSS_INLINE virtual BOOLEAN isValid () const
          {
             return ( _pCollectionStat != NULL ) ;
          }
 
          INT32 initCurStat ( _dmsMBContext *mbContext ) ;
+
+         double evalPredicateSet ( rtnPredicateSet &predicateSet ) const ;
 
          virtual double evalStartStopKeys ( const CHAR *pFieldName,
                                             dmsStatKey &startKey,
@@ -268,7 +274,7 @@ namespace engine
          double _evalETOperator ( const BSONElement &beValue ) const ;
 
          double _evalRangeOperator ( const BSONElement &beStart,
-                                      const BSONElement &beStop ) const ;
+                                     const BSONElement &beStop ) const ;
 
          double _evalGTOperator ( const BSONElement &beStart ) const ;
 
