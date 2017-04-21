@@ -70,7 +70,7 @@ public class DetachCL2179 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {

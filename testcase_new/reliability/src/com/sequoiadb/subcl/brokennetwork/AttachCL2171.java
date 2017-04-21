@@ -66,7 +66,7 @@ public class AttachCL2171 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {

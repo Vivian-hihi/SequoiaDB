@@ -83,7 +83,7 @@ public class Insert2183 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {

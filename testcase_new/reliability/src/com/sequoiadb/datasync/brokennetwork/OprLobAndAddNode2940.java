@@ -80,11 +80,11 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
             if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
                 throw new SkipException(cataGroup.getGroupName() + " reelect fail");
             }
-            
+
             db = new Sequoiadb(coordUrl, "", "");
             DBCollection cl = createCL(db);
             putLobs(cl); // prepare data for sync
-            
+
             // node info, which will be used at AddNodeTask and teardown
             Random ran = new Random();
             List<String> hosts = groupMgr.getAllHosts();
@@ -113,9 +113,11 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
             mgr.addTask(aTask);
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
-            
-            if (!Utils.checkBusinessForExNode(groupMgr, 600)) { Assert.fail("checkBusiness occurs timeout"); }
-            
+
+            if (!Utils.checkBusinessForExNode(groupMgr, 600)) {
+                Assert.fail("checkBusiness occurs timeout");
+            }
+
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail("data is different on " + dataGroup.getGroupName());
             }
@@ -132,7 +134,9 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -152,7 +156,7 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
 
     private class OprLobTask extends OperateTask {
         private String safeUrl = null;
-        
+
         public OprLobTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -166,19 +170,19 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
                 int lobSize = 1 * 1024 * 1024;
                 byte[] lobBytes = new byte[lobSize];
                 new Random().nextBytes(lobBytes);
-                
+
                 int repeatTimes = 100;
                 for (int i = 0; i < repeatTimes; i++) {
                     DBLob wLob = cl.createLob();
                     wLob.write(lobBytes);
                     ObjectId oid = wLob.getID();
                     wLob.close();
-                    
+
                     DBLob rLob = cl.openLob(oid);
                     byte[] rLobBytes = new byte[lobSize];
                     rLob.read(rLobBytes);
                     rLob.close();
-                    
+
                     cl.removeLob(oid);
                 }
             } catch (BaseException e) {
@@ -189,18 +193,18 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
             }
         }
     }
-    
+
     private DBCollection createCL(Sequoiadb db) {
-        BSONObject option = (BSONObject)JSON.parse("{ ReplSize: 1, Group: '" + clGroupName + "' }");
+        BSONObject option = (BSONObject) JSON.parse("{ ReplSize: 1, Group: '" + clGroupName + "' }");
         CollectionSpace cs = db.getCollectionSpace(csName);
         return cs.createCollection(clName, option);
     }
-    
+
     private void putLobs(DBCollection cl) {
         int lobSize = 1 * 1024 * 1024;
         byte[] lobBytes = new byte[lobSize];
         new Random().nextBytes(lobBytes);
-        
+
         int lobNum = 100;
         for (int i = 0; i < lobNum; i++) {
             DBLob lob = cl.createLob();
@@ -208,9 +212,9 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
             lob.close();
         }
     }
-    
+
     private void removeNewNode(Sequoiadb db) {
         ReplicaGroup clGroup = db.getReplicaGroup(clGroupName);
-        clGroup.removeNode(randomHost, randomPort, (BSONObject)null);
+        clGroup.removeNode(randomHost, randomPort, (BSONObject) null);
     }
 }
