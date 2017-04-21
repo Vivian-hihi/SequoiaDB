@@ -42,16 +42,16 @@
             </if>
          
             <var name="cmd1" value="cd ${source_code_dir}"/>
-            <var name="cmd2" value="lcov -c -q --rc lcov_branch_coverage=1 --no-external -b SequoiaDB/ -d build/ -o @{testhost}.info"/>
+            <var name="@{testhost}cmd2" value="lcov -c -q --rc lcov_branch_coverage=1 --no-external -b SequoiaDB/ -d build/ -o @{testhost}.info"/>
             <staf location="@{testhost}" service="PROCESS"
-                  request="START SHELL COMMAND ${cmd1};${cmd2} WAIT 25m RETURNSTDERR"
+                  request="START SHELL COMMAND ${cmd1};${@{testhost}cmd2} WAIT 25m RETURNSTDERR"
                   resultPrefix="remote_exec2" 
                   throwBuildException="1"/>
             <propertyregex property="remote_exec_rc2" input="${remote_exec2.result}" regexp="Return\ Code:\ (.*)\n" select="\1"/>
             <if>
                <equals arg1="${remote_exec_rc2}" arg2="0" />
                <else>
-                  <fail message="exec: ${cmd1};${cmd2}, in host: @{testhost}, return code: ${remote_exec_rc2}"/>
+                  <fail message="exec: ${cmd1};${@{testhost}cmd2}, in host: @{testhost}, return code: ${remote_exec_rc2}"/>
                </else>
             </if>
             
