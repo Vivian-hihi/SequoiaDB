@@ -51,7 +51,7 @@ public class AttachCL2169 extends SdbTestBase {
         try {
             System.out.println("the TestCase Name:" + this.getClass().getName() + ". the TestCase begin at:"
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
-            
+
             groupMgr = new GroupMgr();
             if (!groupMgr.checkBusiness()) {
                 throw new SkipException("checkBusiness failed");
@@ -85,16 +85,20 @@ public class AttachCL2169 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-            
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
+
             Utils.checkConsistency(cataGroup);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
             Utils.checkAttached(db, mclName, aTask.getAttachedSclCnt());
             checkAttachCata(db, aTask.getAttachedSclCnt());
-            
+
             String cataPriHostAfter = cataGroup.getMaster().hostName();
-            if (cataPriHostBefore.equals(cataPriHostAfter)) { isPriChanged = false; }
+            if (cataPriHostBefore.equals(cataPriHostAfter)) {
+                isPriChanged = false;
+            }
             runSuccess = true;
         } catch (ReliabilityException e) {
             e.printStackTrace();
@@ -108,7 +112,9 @@ public class AttachCL2169 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -127,36 +133,36 @@ public class AttachCL2169 extends SdbTestBase {
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
     }
-    
+
     // test for JIRA: 1017
     private void checkAttachCata(Sequoiadb db, int attachedSclCnt) {
         if (attachedSclCnt == Utils.SCLNUM) {
-            return ;
+            return;
         }
         int suspectedCLNo = attachedSclCnt;
         String sclName = mclName + "_" + suspectedCLNo;
-        
+
         String mclFullName = csName + "." + mclName;
         String sclFullName = csName + "." + sclName;
-        
+
         // check mcl catalog
         DBCursor mclCursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{ Name: '" + mclFullName + "' }", null, null);
-        BasicBSONList cataInfo = (BasicBSONList)mclCursor.getNext().get("CataInfo");
+        BasicBSONList cataInfo = (BasicBSONList) mclCursor.getNext().get("CataInfo");
         mclCursor.close();
-        boolean mclCataOk = !cataInfo.isEmpty();
-        
+        boolean mclCataOk = (cataInfo.size() == (attachedSclCnt + 1)); // that means the suspected scl is attached.
+
         // check scl catalog
         DBCursor sclCursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG, "{ Name: '" + sclFullName + "' }", null, null);
         boolean hasMainCL = sclCursor.getNext().containsField("MainCLName");
         sclCursor.close();
         boolean sclCataOk = hasMainCL;
-        
+
         if ((!mclCataOk && sclCataOk) || (mclCataOk && !sclCataOk)) {
             System.out.println("mclCataOk: " + mclCataOk + " sclCataOk: " + sclCataOk);
             Assert.fail("catalog is inconsistent between mcl and scl!");
         }
     }
-    
+
     private void dropCLRepeatly(Sequoiadb db) throws ReliabilityException {
         int timeout = 300000; // 5min
         int checkInterval = 15000; // 15s
@@ -164,13 +170,13 @@ public class AttachCL2169 extends SdbTestBase {
         for (int i = 0; i < checkTimes; ++i) {
             try {
                 Utils.dropMclAndScl(db, mclName);
-                return ;
-            } catch(BaseException e) {
+                return;
+            } catch (BaseException e) {
                 if (e.getErrorCode() != -147) {
                     throw new ReliabilityException("fail to drop cl ", e);
                 }
             }
-            
+
             try {
                 Thread.sleep(checkInterval);
             } catch (InterruptedException e) {
