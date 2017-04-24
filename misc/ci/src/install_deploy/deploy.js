@@ -28,6 +28,25 @@ function main()
    else
    {
       deployCluster();
+      try
+      {
+         var errorInfo1 = "";
+         var errorInfo2 = "";
+         errorInfo1 = errorInfo1 + detectPrimary( ) 
+         if ( errorInfo1 != "" )
+         {
+            sleep(8000);
+            errorInfo2 = errorInfo2 + detectPrimary( ) ;
+         }
+         if ( errorInfo2 != "" ) 
+         {
+            throw errorInfo1 + errorInfo2;
+         }
+      }
+      catch( e )
+      {
+         println( "Cluster failed : \n" + e ) ;
+      }
    }
 }
 
@@ -217,6 +236,58 @@ function updateDeployConfig( conf, service )
 {
    var config = JSON.stringify(conf).replace( "[svcname]", service );
    return JSON.parse(config);
+}
+
+function detectPrimary(  ) 
+{
+   var db = new Sdb( "localhost", 11810 ) ;
+   var tmpArray = new Array() ;
+   var tmpInfo ;
+   var primaryID;
+   var errorInfo = "";
+   try
+   {
+      tmpInfo = db.listReplicaGroups().toArray() ;
+   }
+   catch( e )
+   {
+      if( e != -159 )
+      {
+         
+      }
+      else
+      {
+         println( " listReplicaGroups  failed: " + e ) ;
+         throw e;
+      }
+   }
+   for ( var i = 0 ; i < tmpInfo.length; ++i )
+   {
+      var tmpObj = eval( "(" + tmpInfo[i] + ")" ) ;
+      var isPrimary = false;
+      if ( tmpObj.GroupName == "SYSCoord")
+      {
+         
+      }
+      else 
+      {
+         primaryID = tmpObj.PrimaryNode;
+         var tmpGroupObj = tmpObj.Group ;
+         for ( var j = 0 ; j < tmpGroupObj.length; ++j )
+         {
+            var tmpNodeObj = tmpGroupObj[j] ;
+            if ( primaryID == tmpNodeObj.NodeID )
+            {
+               isPrimary = true;
+            }
+         }
+         if ( isPrimary == false )
+         {
+            errorInfo = errorInfo + tmpObj.GroupName + " have no PrimaryNode ! \n";
+         }
+      }
+   }
+   return errorInfo;
 }
 
 function randomArray( arr ) // [1, 2, 3]--> [2, 3, 1]
