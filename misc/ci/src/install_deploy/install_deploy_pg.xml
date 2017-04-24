@@ -11,7 +11,11 @@
          <pathelement location="${basedir}/lib/ant-contrib-1.0b2.jar" />
       </classpath>
    </taskdef>
-   <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF"/>     
+   <taskdef name="staf" classname="com.ibm.staf.ant.taskdef.STAF">
+      <classpath>
+            <pathelement location="${basedir}/lib/STAFAnt.jar" />
+      </classpath>
+   </taskdef>
    
    <target name="main">
       <if>
