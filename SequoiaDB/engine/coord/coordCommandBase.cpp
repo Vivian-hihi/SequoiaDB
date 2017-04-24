@@ -34,11 +34,14 @@
 
 *******************************************************************************/
 
-#include "coordCommandBase.h"
+#include "coordCommandBase.hpp"
 #include "coordUtil.hpp"
+#include "msgMessage.hpp"
+#include "msgMessageFormat.hpp"
 #include "pmd.hpp"
 #include "rtnCB.hpp"
 #include "rtn.hpp"
+#include "coordQueryOperator.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -457,7 +460,7 @@ namespace engine
                                ppContext, buf ) ;
       if ( rc )
       {
-         if ( checkRetryForCLOpr( rc, NULL, cataSel, pMsg,
+         if ( checkRetryForCLOpr( rc, NULL, cataSel, &(pMsg->header),
                                   cb, rc, NULL, TRUE ) )
          {
             _groupSession.getGroupCtrl()->incRetry() ;
@@ -658,14 +661,14 @@ namespace engine
       goto done ;
    }
 
-   void _coordCommandBase::_printDebug ( CHAR *pReceiveBuffer,
+   void _coordCommandBase::_printDebug ( const CHAR *pReceiveBuffer,
                                          const CHAR *pFuncName )
    {
    #if defined (_DEBUG)
       PD_LOG( PDDEBUG, "%s: %s", pFuncName,
               msg2String( (const MsgHeader*)pReceiveBuffer,
                           MSG_MASK_ALL,
-                          MSG_MASK_ALL ).toString().c_str() ) ;
+                          MSG_MASK_ALL ).c_str() ) ;
    #endif // _DEBUG
    }
 

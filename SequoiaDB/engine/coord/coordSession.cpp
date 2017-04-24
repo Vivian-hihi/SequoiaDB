@@ -64,9 +64,8 @@ namespace engine
            type != _preferReplType )
       {
          _preferReplType = type;
-         _lastNodeMap.clear() ;
       }
-      return ;
+      _lastNodeMap.clear() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_DISCONN, "CoordSession::disConnect" )

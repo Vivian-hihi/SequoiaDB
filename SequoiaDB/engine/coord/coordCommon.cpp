@@ -36,6 +36,9 @@
 #include "coordCommon.hpp"
 #include "msgCatalogDef.h"
 #include "utilCommon.hpp"
+#include "pmdOptions.h"
+#include "pdTrace.hpp"
+#include "coordTrace.hpp"
 
 using namespace bson ;
 

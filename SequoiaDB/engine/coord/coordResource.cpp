@@ -1510,6 +1510,34 @@ namespace engine
       return rc ;
    }
 
+   INT32 _coordResource::getOrUpdateGroupInfo( UINT32 groupID,
+                                               CoordGroupInfoPtr &groupPtr,
+                                               _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = getGroupInfo( groupID, groupPtr ) ;
+      if ( rc )
+      {
+         rc = updateGroupInfo( groupID, groupPtr, cb ) ;
+      }
+      return rc ;
+   }
+
+   INT32 _coordResource::getOrUpdateGroupInfo( const CHAR *groupName,
+                                               CoordGroupInfoPtr &groupPtr,
+                                               _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = getGroupInfo( groupName, groupPtr ) ;
+      if ( rc )
+      {
+         rc = updateGroupInfo( groupName, groupPtr, cb ) ;
+      }
+      return rc ;
+   }
+
    INT32 _coordResource::_updateCataInfo( const BSONObj &obj,
                                           const CHAR *collectionName,
                                           CoordCataInfoPtr &cataPtr,
