@@ -108,6 +108,14 @@ namespace engine
                                       CoordGroupInfoPtr &groupPtr,
                                       _pmdEDUCB *cb ) ;
 
+         INT32       getOrUpdateGroupInfo( const CHAR *groupName,
+                                           CoordGroupInfoPtr &groupPtr,
+                                           _pmdEDUCB *cb ) ;
+
+         INT32       getOrUpdateGroupInfo( UINT32 groupID,
+                                           CoordGroupInfoPtr &groupPtr,
+                                           _pmdEDUCB *cb ) ;
+
          INT32       updateGroupsInfo( GROUP_VEC &vecGroupPtr,
                                        _pmdEDUCB *cb,
                                        const BSONObj *pCondObj = NULL,

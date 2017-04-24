@@ -74,7 +74,7 @@ namespace engine
                               BOOLEAN strictCheck = FALSE ) ;
 
    INT32 coordGroupList2GroupPtr( coordResource *pResource,
-                                  pmdEDUCB *cb,
+                                  _pmdEDUCB *cb,
                                   CoordGroupList &groupList,
                                   GROUP_VEC & groupPtrs ) ;
 

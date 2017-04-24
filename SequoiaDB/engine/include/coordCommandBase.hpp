@@ -118,9 +118,9 @@ namespace engine
 
          INT32         executeOnNodes( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
-                                       ROUTE_SET &nodes,
+                                       SET_ROUTEID &nodes,
                                        ROUTE_RC_MAP &faileds,
-                                       ROUTE_SET *pSucNodes = NULL,
+                                       SET_ROUTEID *pSucNodes = NULL,
                                        SET_RC *pIgnoreRC = NULL,
                                        rtnContextCoord *pContext = NULL ) ;
 
@@ -132,10 +132,10 @@ namespace engine
                                        rtnContextCoord **ppContext = NULL,
                                        BOOLEAN openEmptyContext = FALSE,
                                        SET_RC *pIgnoreRC = NULL,
-                                       ROUTE_SET *pSucNodes = NULL ) ;
+                                       SET_ROUTEID *pSucNodes = NULL ) ;
 
       protected:
-         virtual void _printDebug ( CHAR *pReceiveBuffer,
+         virtual void _printDebug ( const CHAR *pReceiveBuffer,
                                     const CHAR *pFuncName ) ;
 
          /* Enable preRead in Coord context (send GetMore in advanced) */
@@ -150,7 +150,7 @@ namespace engine
                                    ROUTE_RC_MAP &faileds,
                                    rtnContextCoord *pContext = NULL,
                                    SET_RC *pIgnoreRC = NULL,
-                                   ROUTE_SET *pSucNodes = NULL ) ;
+                                   SET_ROUTEID *pSucNodes = NULL ) ;
 
          INT32 _buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
                                       rtnContextCoord *pContext ) ;
