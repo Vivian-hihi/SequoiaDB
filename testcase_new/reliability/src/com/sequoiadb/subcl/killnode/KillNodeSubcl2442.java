@@ -69,6 +69,7 @@ public class KillNodeSubcl2442 extends SdbTestBase {
             mainCL.attachCollection(cl.getFullName(),
                     (BSONObject) JSON.parse("{LowBound:{sk:0},UpBound:{sk:5000}}"));
             insertData();
+				groupMgr.checkBusinessWithLSN(120);
         }
         catch (ReliabilityException e) {
             if (commSdb != null) {
@@ -151,6 +152,7 @@ public class KillNodeSubcl2442 extends SdbTestBase {
                 list.add((BSONObject) JSON.parse("{$match:{sk:{$gte:1000}}}"));
                 list.add((BSONObject) JSON.parse("{$project:{sk:1}}"));
                 list.add((BSONObject) JSON.parse("{$limit:4000}"));
+					 list.add((BSONObject) JSON.parse("{$sort:{sk:1}}"));
                 cusor = cl.aggregate(list);
                 int count = 1000;
                 while (cusor.hasNext()) {
