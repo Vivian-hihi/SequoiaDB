@@ -148,10 +148,12 @@
    </target>
    
    <target name="sync_test_build">
+      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, BREAK_ON_FAILURE, COVERAGE"/>
+      
       <var name="TEST_TYPE" value="SYNCTEST"/>
-      <antcallback target="check_parameter" return="NEED_INSTALL_DEPLOY, DEPLOY_MODE, BREAK_ON_FAILURE"/>
       <getplatform resultProperty="plat_form"/>
       <propertycopy name="testhost_list" from="${plat_form}_${TEST_TYPE}_${DEPLOY_MODE}_HOST" />
+      
       <if>
          <equals arg1="${NEED_INSTALL_DEPLOY}" arg2="true" />
          <then>
@@ -159,6 +161,14 @@
                <property name="TEST_TYPE" value="${TEST_TYPE}"/>
                <property name="plat_form" value="${plat_form}"/>
             </ant>
+            <if>
+               <equals arg1="${COVERAGE}" arg2="true" />
+               <then>
+                  <ant antfile="get_coverage.xml" target="ready_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+                     <property name="testhost_list" value="${testhost_list}"/>
+                  </ant>
+               </then>
+            </if>
          </then>
       </if>
      
@@ -177,6 +187,15 @@
    
       <antcallback target="status_file.get_build_status" return="build_status"/>
 
+      <if>
+         <equals arg1="${COVERAGE}" arg2="true" />
+         <then>
+            <ant antfile="get_coverage.xml" target="get_coverage" dir="src/solve_result" inheritAll="true" useNativeBaseDir="true" >
+               <property name="testhost_list" value="${testhost_list}"/>
+            </ant>
+         </then>
+      </if>
+      
       <if>
          <equals arg1="${BACKUP_LOG_WHEN_FAIL}" arg2="true" />
          <then>
