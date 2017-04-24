@@ -28,25 +28,6 @@ function main()
    else
    {
       deployCluster();
-      try
-      {
-         var errorInfo1 = "";
-         var errorInfo2 = "";
-         errorInfo1 = errorInfo1 + detectPrimary( ) 
-         if ( errorInfo1 != "" )
-         {
-            sleep(8000);
-            errorInfo2 = errorInfo2 + detectPrimary( ) ;
-         }
-         if ( errorInfo2 != "" ) 
-         {
-            throw errorInfo1 + errorInfo2;
-         }
-      }
-      catch( e )
-      {
-         println( "Cluster failed : \n" + e ) ;
-      }
    }
 }
 
@@ -160,6 +141,7 @@ function createCata( db )
 
       i++;
    }
+   detectPrimary( db, "SYSCatalogGroup" );
 }
 
 function createCoord( db )
@@ -229,6 +211,7 @@ function createData( db )
    
       //start node
       rg.start();
+      detectPrimary( db, datargName );
    }
 }
 
@@ -238,56 +221,32 @@ function updateDeployConfig( conf, service )
    return JSON.parse(config);
 }
 
-function detectPrimary(  ) 
+
+function detectPrimary( db, rgname )
 {
-   var db = new Sdb( "localhost", 11810 ) ;
-   var tmpArray = new Array() ;
-   var tmpInfo ;
-   var primaryID;
-   var errorInfo = "";
-   try
-   {
-      tmpInfo = db.listReplicaGroups().toArray() ;
-   }
-   catch( e )
-   {
-      if( e != -159 )
+   var hasPrimary = false;                                 
+   for(var i = 0; i < 5*600; i++ )  //wait for cata group to select primary node 
+   {  
+      try
       {
-         
-      }
-      else
+         sleep(100); 
+         var cataRG = db.getRG(rgname); 
+         hasPrimary = true;
+         break;       
+      } 
+      catch(e)
       {
-         println( " listReplicaGroups  failed: " + e ) ;
-         throw e;
-      }
-   }
-   for ( var i = 0 ; i < tmpInfo.length; ++i )
-   {
-      var tmpObj = eval( "(" + tmpInfo[i] + ")" ) ;
-      var isPrimary = false;
-      if ( tmpObj.GroupName == "SYSCoord")
-      {
-         
-      }
-      else 
-      {
-         primaryID = tmpObj.PrimaryNode;
-         var tmpGroupObj = tmpObj.Group ;
-         for ( var j = 0 ; j < tmpGroupObj.length; ++j )
+         if( e !== -71 ) 
          {
-            var tmpNodeObj = tmpGroupObj[j] ;
-            if ( primaryID == tmpNodeObj.NodeID )
-            {
-               isPrimary = true;
-            }
-         }
-         if ( isPrimary == false )
-         {
-            errorInfo = errorInfo + tmpObj.GroupName + " have no PrimaryNode ! \n";
-         }
-      }
+            println("excute: db.getRG('" + rgname + "')");
+            throw e;
+         }            
+      }   
    }
-   return errorInfo;
+   if( hasPrimary === false )
+   {
+      throw rgname + "fail to select primary node after 5 minute";
+   }
 }
 
 function randomArray( arr ) // [1, 2, 3]--> [2, 3, 1]
