@@ -4193,11 +4193,6 @@ namespace import
       INT32 fieldDefNum = _fieldVec.size();
       INT32 fieldCount = 0;
 
-      CSVField* field = NULL;
-      CSVFieldData fieldData;
-      INT32 valueLength = 0;
-      BOOLEAN fieldEnd = FALSE;
-
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
@@ -4222,14 +4217,17 @@ namespace import
 
       while (len > 0 && fieldCount < fieldDefNum)
       {
+         CSVFieldData fieldData;
+         INT32 valueLength = 0;
+         BOOLEAN fieldEnd = FALSE;
+
          _skipSpace(&str, len);
          if (len == 0)
          {
             break;
          }
 
-         field = _fieldVec[fieldCount];
-         fieldData.reset();
+         CSVField* field = _fieldVec[fieldCount];
          fieldData.type = field->type;
          fieldData.subType = field->subType;
 
@@ -4282,8 +4280,8 @@ namespace import
          {
             while (fieldCount < fieldDefNum)
             {
-               field = _fieldVec[fieldCount];
-               fieldData.reset();
+               CSVFieldData fieldData;
+               CSVField* field = _fieldVec[fieldCount];
                fieldData.type = CSV_TYPE_NULL;
 
                rc = _bsonAppendField(obj, *field, fieldData);
@@ -4306,13 +4304,15 @@ namespace import
 
             while (len > 0)
             {
+               CSVFieldData fieldData;
+               INT32 valueLength = 0;
+               BOOLEAN fieldEnd = FALSE;
+
                _skipSpace(&str, len);
                if (len == 0)
                {
                   break;
                }
-
-               fieldData.reset();
 
                rc = _parseFieldValue(str, len,
                                      fieldDel, fieldDelLen,
