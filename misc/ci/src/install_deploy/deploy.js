@@ -141,7 +141,7 @@ function createCata( db )
 
       i++;
    }
-   detectPrimary( db, "SYSCatalogGroup" );
+   checkeCataPrimary( db, "SYSCatalogGroup" );
 }
 
 function createCoord( db )
@@ -211,7 +211,7 @@ function createData( db )
    
       //start node
       rg.start();
-      detectPrimary( db, datargName );
+      checkeDataPrimary( db, datargName );
    }
 }
 
@@ -221,8 +221,7 @@ function updateDeployConfig( conf, service )
    return JSON.parse(config);
 }
 
-
-function detectPrimary( db, rgname )
+function checkeCataPrimary( db, rgname )
 {
    var hasPrimary = false;                                 
    for(var i = 0; i < 5*600; i++ )  //wait for cata group to select primary node 
@@ -230,7 +229,7 @@ function detectPrimary( db, rgname )
       try
       {
          sleep(100); 
-         var cataRG = db.getRG(rgname); 
+         var cataRG = db.getRG("SYSCatalogGroup"); 
          hasPrimary = true;
          break;       
       } 
@@ -238,14 +237,41 @@ function detectPrimary( db, rgname )
       {
          if( e !== -71 ) 
          {
-            println("excute: db.getRG('" + rgname + "')");
+            println("excute: db.getRG('SYSCatalogGroup')");
             throw e;
          }            
       }   
    }
    if( hasPrimary === false )
    {
-      throw rgname + "fail to select primary node after 5 minute";
+      throw "fail to select primary node after 5 minute";
+   }    
+}
+
+function checkeDataPrimary( db, rgname )
+{
+   var hasPrimary = false;
+   for(var i = 0; i < 5*600; i++ )  //wait for data group to select primary node 
+   {  
+      try
+      {
+         sleep(100); 
+         db.getRG(rgname).getMaster(); 
+         hasPrimary = true;
+         break;       
+      } 
+      catch(e)
+      {
+         if( e !== -155 ) 
+         {
+            println("excute: db.getRG(" + rgname + ").getMaster()");
+            throw e;  
+         }          
+      }   
+   }
+   if( hasPrimary === false )
+   {
+      throw "fail to select primary node after 5 minute";
    }
 }
 
