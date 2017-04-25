@@ -35,6 +35,7 @@
       <antcall target="build_driver_package"/>
       <antcall target="copy_package_file"/>
       <antcall target="build_run_package"/>
+      <antcall target="build_tar_package"/>
       <antcall target="build_bin_package"/>
       <antcall target="build_cov_package"/>
    </target>
@@ -545,6 +546,21 @@
       </exec>
            
    </target>   
+   
+   <target name="build_tar_package">
+      <if>
+        <equals arg1="${IS_ENTERPRISE}" arg2="true" />
+        <then>
+           <property name="enterprise_str" value="-enterprise" />
+        </then>
+        <else>          
+           <property name="enterprise_str" value="" />
+        </else>
+      </if>
+      <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-installer.tar.gz" 
+           longfile="gnu" compression="gzip" 
+           basedir="${release_dir}" includes="sequoiadb-${sequoiadb_version}-${platform}*installer.run"/>
+   </target>
    
    <target name="build_bin_package"> 
       <if>
