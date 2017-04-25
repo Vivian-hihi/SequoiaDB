@@ -33,6 +33,9 @@ typedef struct
    const char *pImg ;
 } Config ;
 
+#define MDCONFIG_MD  "src/document"
+#define MDCONFIG_IMG "src/images"
+
 Config _Config ;
 
 const char *_pRootPath ;
@@ -58,7 +61,11 @@ static int handler( void *pCtrl, const char *pSection, const char *pKey, const c
 void init_ini( const char *pRootPath )
 {
    _pRootPath = pRootPath ;
-   ini_parse("markdownEditor.ini", handler, &_Config ) ;
+   if( ini_parse( "markdownEditor.ini", handler, &_Config ) != 0 )
+   {
+      _Config.pMd  = MDCONFIG_MD ;
+      _Config.pImg = MDCONFIG_IMG ;
+   }
 }
 
 #define USE_XHTML(opt) (opt->flags & HTML_USE_XHTML)
