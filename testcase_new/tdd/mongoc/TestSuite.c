@@ -604,7 +604,7 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
    struct timespec ts1 = {0,0};
    struct timespec ts2;
    struct timespec ts3;
- 
+   
    fprintf (stream, "<testsuites tests=\"%d\" failures=\"%d\" errors=\"%d\" name=\"%s\">\n",
                       suite->testcasesnum,
                       suite->failurenum,
@@ -646,6 +646,11 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
          if (iter != NULL)
          {
             continue;
+         }
+         
+         if (0 == strncmp(test->name, "Client_authenticate", strlen(test->name)) ||
+             0 == strncmp(test->name, "Client_authenticate_failure", strlen(test->name))){
+            continue ;
          }
 	  if (NULL != test->starttime){
             ts1 = *((struct timespec*)test->starttime);
