@@ -549,17 +549,22 @@
    
    <target name="build_tar_package">
       <if>
-        <equals arg1="${IS_ENTERPRISE}" arg2="true" />
-        <then>
-           <property name="enterprise_str" value="-enterprise" />
-        </then>
-        <else>          
-           <property name="enterprise_str" value="" />
-        </else>
+         <equals arg1="${TAR_PACKAGE}" arg2="true"/>
+         <then>
+            <if>
+              <equals arg1="${IS_ENTERPRISE}" arg2="true" />
+              <then>
+                 <property name="enterprise_str" value="-enterprise" />
+              </then>
+              <else>          
+                 <property name="enterprise_str" value="" />
+              </else>
+            </if>
+            <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-installer.tar.gz" 
+                 longfile="gnu" compression="gzip" 
+                 basedir="${release_dir}" includes="sequoiadb-${sequoiadb_version}-${platform}*installer.run"/>
+         </then>
       </if>
-      <tar destfile="${release_dir}/sequoiadb-${sequoiadb_version}-${platform}${enterprise_str}-installer.tar.gz" 
-           longfile="gnu" compression="gzip" 
-           basedir="${release_dir}" includes="sequoiadb-${sequoiadb_version}-${platform}*installer.run"/>
    </target>
    
    <target name="build_bin_package"> 
