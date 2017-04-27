@@ -29,14 +29,6 @@ public class GroupMgr {
     private static GroupMgr mgr = null;
     private Sequoiadb sdb = null;
     private String coordUrl = null;
-    
-    static {
-        try {
-            mgr = new GroupMgr();
-        } catch (ReliabilityException e) {
-            e.printStackTrace();
-        }
-    }
 
     public GroupMgr() throws ReliabilityException {
         this.refresh();
@@ -51,7 +43,7 @@ public class GroupMgr {
         DBCursor cursor = null;
         try {
             if (sdb != null) {
-                sdb.close();
+                sdb.disconnect();
             }
             sdb = new Sequoiadb(coordUrl, "", "");
             BSONObject nullObj = null;
@@ -61,7 +53,7 @@ public class GroupMgr {
 
                 String groupName = obj.getString("GroupName");
 
-                GroupWrapper group = new GroupWrapper(obj, sdb.getReplicaGroup(groupName),this);
+                GroupWrapper group = new GroupWrapper(obj, sdb.getReplicaGroup(groupName), this);
                 group.init();
                 name2group.put(groupName, group);
                 id2group.put(group.getGroupID(), group);
@@ -229,7 +221,7 @@ public class GroupMgr {
     }
 
     private boolean testCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
-        GroupWrapper catagroup = new GroupMgr().getGroupByName("SYSCatalogGroup");
+        GroupWrapper catagroup = GroupMgr.getInstance().getGroupByName("SYSCatalogGroup");
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
         for (NodeWrapper node : nodes) {
@@ -263,7 +255,7 @@ public class GroupMgr {
                 ret = false;
             }
             finally {
-                db.close();
+                db.disconnect();
             }
         }
         Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -276,7 +268,7 @@ public class GroupMgr {
             throw new ReliabilityException(e);
         }
         finally {
-            db.close();
+            db.disconnect();
         }
         return ret;
     }
@@ -285,7 +277,7 @@ public class GroupMgr {
             throws ReliabilityException {
         Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
         CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
-        List<String> groupNames = new GroupMgr().getAllDataGroupName();
+        List<String> groupNames = GroupMgr.getInstance().getAllDataGroupName();
         int index = 0;
         try {
             for (index = 0; index < groupNames.size(); index++) {
@@ -308,7 +300,7 @@ public class GroupMgr {
             return false;
         }
         finally {
-            db.close();
+            db.disconnect();
         }
         return true;
     }
@@ -500,23 +492,48 @@ public class GroupMgr {
                 remote.scpTo("./script/checkDataResidu.sh", SdbTestBase.workDir);
                 remote.exec("chmod 777 " + SdbTestBase.workDir + "/checkDataResidu.sh");
 
-                remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh "
-                        + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
+                try {
+                    remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh "
+                            + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
+                }
+                catch (ReliabilityException e) {
+
+                }
                 if (remote.getExitStatus() != 0) {
                     System.out.println(String.format("%s used port:%s", host, remote.getStdout()));
+                    if(remote.getStderr().length()!=0){
+                        System.out.println("StdErr:"+remote.getStderr());
+                    }
                     checkRet = false;
                 }
-                remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh "
-                        + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
+                try {
+                    remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh "
+                            + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
+                }
+                catch (ReliabilityException e) {
+
+                }
                 if (remote.getExitStatus() != 0) {
                     System.out.println(
                             String.format("%s residu config:%s", host, remote.getStdout()));
+                    if(remote.getStderr().length()!=0){
+                        System.out.println("StdErr:"+remote.getStderr());
+                    }
                     checkRet = false;
                 }
-                remote.exec(SdbTestBase.workDir + "/checkDataResidu.sh " + SdbTestBase.reservedDir);
+                try {
+                    remote.exec(
+                            SdbTestBase.workDir + "/checkDataResidu.sh " + SdbTestBase.reservedDir);
+                }
+                catch (ReliabilityException e) {
+
+                }
                 if (remote.getExitStatus() != 0) {
                     System.out
                             .println(String.format("%s residu data:%s", host, remote.getStdout()));
+                    if(remote.getStderr().length()!=0){
+                        System.out.println("StdErr:"+remote.getStderr());
+                    }
                     checkRet = false;
                 }
             }
@@ -533,7 +550,7 @@ public class GroupMgr {
 
     public void close() {
         if (sdb != null) {
-            sdb.close();
+            sdb.disconnect();
         }
     }
 
