@@ -2467,5 +2467,84 @@ namespace engine
       return hostname + ":" + svcname ;
    }
 
+   /*
+      _coordCMDReelection implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDReelection,
+                                      CMD_NAME_REELECT,
+                                      TRUE ) ;
+   _coordCMDReelection::_coordCMDReelection()
+   {
+   }
+
+   _coordCMDReelection::~_coordCMDReelection()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_REELECT_EXE, "_coordCMDReelection::execute" )
+   INT32 _coordCMDReelection::execute( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
+                                       rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_REELECT_EXE ) ;
+      CHAR *pQuery = NULL ;
+      const CHAR *gpName = NULL ;
+      CoordGroupInfoPtr gpInfo ;
+      CoordGroupList gpLst ;
+
+      contextID = -1 ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
+                            NULL, NULL, &pQuery,
+                            NULL, NULL, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse the message, rc: %d", rc ) ;
+
+      try
+      {
+         BSONObj query( pQuery ) ;
+         BSONElement ele = query.getField( FIELD_NAME_GROUPNAME ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "Invalid reelection msg:%s",
+                    query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         gpName = ele.valuestr() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         goto error ;
+      }
+
+      rc = _pResource->getOrUpdateGroupInfo( gpName, gpInfo, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Update group info by name[%s] failed, rc: %d",
+                 gpName, rc ) ;
+         goto error ;
+      }
+
+      gpLst[gpInfo->groupID()] = gpInfo->groupID() ;
+      rc = executeOnDataGroup( pMsg, cb, gpLst, TRUE, NULL, NULL,
+                               NULL, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to execute on group[%s], rc: %d",
+                 gpName, rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_REELECT_EXE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

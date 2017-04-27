@@ -549,6 +549,23 @@ namespace engine
    } ;
    typedef _coordCMDRemoveNode coordCMDRemoveNode ;
 
+   /*
+      _coordCMDReelection define
+   */
+   class _coordCMDReelection : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDReelection() ;
+         virtual ~_coordCMDReelection() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDReelection coordCMDReelection ;
+
 }
 
 #endif // COORD_COMMAND_NODE_HPP__
