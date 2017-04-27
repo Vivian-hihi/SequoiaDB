@@ -92,13 +92,16 @@ public class NetDeleteNode6201 extends SdbTestBase {
             // 最长等待2分钟的集群环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
-            if (deleteFlag) {
-                Assert.assertEquals(groupMgr.checkResidu(), true);
-            }
-            else {
-                coordNode = coordGroup.getNode(connectUrl.split(":")[0], coordPort);
-                coordNode.connect().disconnect();
-                coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
+            if (!groupMgr.checkResidu()) {
+                Sequoiadb tmpDb = null;
+                try {
+                    tmpDb = new Sequoiadb(connectUrl.split(":")[0] + ":" + coordUrl, "", "");
+                }
+                finally {
+                    if (tmpDb != null) {
+                        tmpDb.close();
+                    }
+                }
             }
         }
         catch (ReliabilityException e) {
