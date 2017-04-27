@@ -30,7 +30,7 @@ public class TaskMgr {
      * @param operateTasks
      */
     public TaskMgr(FaultMakeTask faultMakeTask, OperateTask... operateTasks) {
-        this.faultMakeTask = faultMakeTask;
+        this(faultMakeTask);
         for (OperateTask task : operateTasks) {
             addTask(task);
         }
@@ -100,6 +100,12 @@ public class TaskMgr {
         }
     }
 
+    public void start() {
+        for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
+            entry.getValue().start();
+        }
+    }
+
     /**
      * @return 所有任务反初始化成功，返回true，任一任务反初始化失败，则返回false
      * @throws ReliabilityException
@@ -111,12 +117,6 @@ public class TaskMgr {
         }
 
         return true;
-    }
-
-    public void start() {
-        for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
-            entry.getValue().start();
-        }
     }
 
     public void join() {
