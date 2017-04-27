@@ -500,23 +500,41 @@ public class GroupMgr {
                 remote.scpTo("./script/checkDataResidu.sh", SdbTestBase.workDir);
                 remote.exec("chmod 777 " + SdbTestBase.workDir + "/checkDataResidu.sh");
 
-                remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh "
-                        + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
-                if (remote.getExitStatus() != 0) {
+                try {
+                    remote.exec(SdbTestBase.workDir + "/checkPortOccupied.sh "
+                            + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
+                }
+                catch (ReliabilityException e) {
                     System.out.println(String.format("%s used port:%s", host, remote.getStdout()));
+                    if (remote.getStderr().length() != 0) {
+                        System.out.println("StdErr:" + remote.getStderr());
+                    }
                     checkRet = false;
                 }
-                remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh "
-                        + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
-                if (remote.getExitStatus() != 0) {
+               
+                try {
+                    remote.exec(SdbTestBase.workDir + "/checkCfgResidu.sh "
+                            + SdbTestBase.reservedPortBegin + " " + SdbTestBase.reservedPortEnd);
+                }
+                catch (ReliabilityException e) {
                     System.out.println(
                             String.format("%s residu config:%s", host, remote.getStdout()));
+                    if (remote.getStderr().length() != 0) {
+                        System.out.println("StdErr:" + remote.getStderr());
+                    }
                     checkRet = false;
                 }
-                remote.exec(SdbTestBase.workDir + "/checkDataResidu.sh " + SdbTestBase.reservedDir);
-                if (remote.getExitStatus() != 0) {
+                
+                try {
+                    remote.exec(
+                            SdbTestBase.workDir + "/checkDataResidu.sh " + SdbTestBase.reservedDir);
+                }
+                catch (ReliabilityException e) {
                     System.out
                             .println(String.format("%s residu data:%s", host, remote.getStdout()));
+                    if (remote.getStderr().length() != 0) {
+                        System.out.println("StdErr:" + remote.getStderr());
+                    }
                     checkRet = false;
                 }
             }
