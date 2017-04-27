@@ -95,7 +95,7 @@ public class NetDeleteNode6201 extends SdbTestBase {
             if (!groupMgr.checkResidu()) {
                 Sequoiadb tmpDb = null;
                 try {
-                    tmpDb = new Sequoiadb(connectUrl.split(":")[0] + ":" + coordUrl, "", "");
+                    tmpDb = new Sequoiadb(connectUrl.split(":")[0] + ":" + coordPort, "", "");
                     coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
                 }
                 finally {
