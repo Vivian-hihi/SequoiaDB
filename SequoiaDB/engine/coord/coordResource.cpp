@@ -114,6 +114,7 @@ namespace engine
          goto error ;
       }
       _cataGroupInfo = CoordGroupInfoPtr( pCataGroup ) ;
+      _emptyGroupPtr = _cataGroupInfo ;
 
       _initAddressFromOption( _cataNodeAddrList ) ;
 
@@ -154,6 +155,45 @@ namespace engine
       nodeInfo._service[MSG_ROUTE_CAT_SERVICE] = pSvcName ;
 
       vecAddr.push_back( nodeInfo ) ;
+   }
+
+   void _coordResource::clearCataNodeAddrList()
+   {
+      ossScopedLock lock( &_nodeMutex, EXCLUSIVE ) ;
+
+      if ( !_cataNodeAddrList.empty() )
+      {
+         _cataAddrChanged = TRUE ;
+         _cataNodeAddrList.clear() ;
+      }
+      _cataGroupInfo = _emptyGroupPtr ;
+
+      /// remote group info
+      _mapGroupInfo.erase( CATALOG_GROUPID ) ;
+      _clearGroupName( CATALOG_GROUPID ) ;
+   }
+
+   BOOLEAN _coordResource::addCataNodeAddrWhenEmpty( const CHAR *pHostName,
+                                                     const CHAR *pSvcName )
+   {
+      BOOLEAN add = FALSE ;
+      MsgRouteID routeID ;
+
+      ossScopedLock lock( &_nodeMutex, EXCLUSIVE ) ;
+
+      if ( !_cataNodeAddrList.empty() )
+      {
+         goto done ;
+      }
+
+      routeID.value = MSG_INVALID_ROUTEID ;
+      _addCataAddrNode( routeID, pHostName, pSvcName, _cataNodeAddrList ) ;
+
+      _cataAddrChanged = TRUE ;
+      add = TRUE ;
+
+   done:
+      return add ;
    }
 
    void _coordResource::setCataGroupInfo( CoordGroupInfoPtr &groupPtr )

@@ -89,7 +89,6 @@ namespace engine
                                             vector<BSONObj> *pReplyObjs = NULL,
                                             BOOLEAN onPrimary = TRUE,
                                             SET_RC *pIgnoreRC = NULL,
-                                            rtnContextCoord **ppContext = NULL,
                                             rtnContextBuf *buf = NULL ) ;
 
          INT32         executeOnCataCL( MsgOpQuery *pMsg,

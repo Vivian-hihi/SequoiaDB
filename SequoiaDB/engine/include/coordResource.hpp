@@ -143,6 +143,10 @@ namespace engine
          INT32       syncAddress2Options( BOOLEAN flush = TRUE,
                                           BOOLEAN force = FALSE ) ;
 
+         void        clearCataNodeAddrList() ;
+         BOOLEAN     addCataNodeAddrWhenEmpty( const CHAR *pHostName,
+                                               const CHAR *pSvcName ) ;
+
       public:
 
          INT32       getCataInfo( const CHAR *collectionName,
@@ -225,6 +229,7 @@ namespace engine
 
          _netRouteAgent                   *_pAgent ;
          pmdOptionsCB                     *_pOptionsCB ;
+         CoordGroupInfoPtr                _emptyGroupPtr ;
 
    } ;
    typedef _coordResource coordResource ;

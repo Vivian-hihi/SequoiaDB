@@ -344,10 +344,8 @@ namespace engine
    /*
       _coordCmdUnloadCS implement
    */
-   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCmdUnloadCS,
-                                      CMD_NAME_UNLOAD_COLLECTIONSPACE,
-                                      FALSE ) ;
-
+   _coordCommandAssit _coordCmdUnloadCSAssit ( CMD_NAME_UNLOAD_COLLECTIONSPACE,
+      FALSE, (COORD_NEW_OPERATOR)_coordCmdUnloadCS::newThis ) ;
 
    /*
       _coordForceSession implement

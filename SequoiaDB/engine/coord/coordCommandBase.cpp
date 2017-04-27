@@ -353,7 +353,6 @@ namespace engine
                                                  vector<BSONObj> *pReplyObjs,
                                                  BOOLEAN onPrimary,
                                                  SET_RC *pIgnoreRC,
-                                                 rtnContextCoord **ppContext,
                                                  rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
@@ -364,9 +363,8 @@ namespace engine
 
       rc = executeOnCataGroup( pMsg, cb, onPrimary, pIgnoreRC,
                                &pContext, buf ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute command[%d] on catalog, rc: %d",
-                   pMsg->opCode, rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to execute command[%d] on "
+                   "catalog, rc: %d", pMsg->opCode, rc ) ;
 
       while ( pContext )
       {
@@ -378,8 +376,7 @@ namespace engine
          }
          else if ( rc )
          {
-            PD_LOG( PDERROR,
-                    "Failed to get more from context [%lld], rc: %d",
+            PD_LOG( PDERROR, "Failed to get more from context [%lld], rc: %d",
                     pContext->contextID(), rc ) ;
             goto error ;
          }
@@ -391,10 +388,9 @@ namespace engine
             if ( pGroupList )
             {
                rc = coordGetGroupsFromObj( obj, *pGroupList ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to get groups from catalog reply [%s], "
-                            "rc: %d",
-                            obj.toString().c_str(), rc ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to get groups from catalog "
+                            "reply [%s], rc: %d", obj.toString().c_str(),
+                            rc ) ;
             }
 
             if ( pReplyObjs )
@@ -408,14 +404,6 @@ namespace engine
                     e.what() ) ;
             rc = SDB_SYS ;
             goto error ;
-         }
-
-         if ( ppContext )
-         {
-            // If we need the control of the context for further steps, set
-            // the pointers and break the loop
-            (*ppContext) = pContext ;
-            pContext = NULL ;
          }
       }
 
