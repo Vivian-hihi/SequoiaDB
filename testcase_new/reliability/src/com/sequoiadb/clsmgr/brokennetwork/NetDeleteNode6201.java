@@ -96,10 +96,8 @@ public class NetDeleteNode6201 extends SdbTestBase {
                 Assert.assertEquals(groupMgr.checkResidu(), true);
             }
             else {
-                coordNode = coordGroup.createNode(connectUrl.split(":")[0], coordPort,
-                        coordDbPath + "/" + coordPort, new BasicBSONObject());
-                coordNode.start();
-                coordNode.connect().close();
+                coordNode = coordGroup.getNode(connectUrl.split(":")[0], coordPort);
+                coordNode.connect().disconnect();
                 coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
             }
         }
@@ -134,8 +132,9 @@ public class NetDeleteNode6201 extends SdbTestBase {
     class RemoveCoord extends OperateTask {
         @Override
         public void exec() throws Exception {
+			  Sequoiadb db = null;
             try {
-                Sequoiadb db = new Sequoiadb(connectUrl, "", "");
+                db = new Sequoiadb(connectUrl, "", "");
                 ReplicaGroup coordGroup = db.getReplicaGroup("SYSCoord");
                 coordGroup.removeNode(connectUrl.split(":")[0], coordPort, null);
                 deleteFlag = true;
@@ -143,6 +142,10 @@ public class NetDeleteNode6201 extends SdbTestBase {
             }
             catch (BaseException e) {
                 System.out.println(e.getMessage());
+            }finally {
+               if(db!=null){
+                   db.close();
+               }
             }
         }
     }
