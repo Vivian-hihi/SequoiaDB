@@ -40,6 +40,10 @@
 #include "pmdOptionsMgr.hpp"
 #include "pmd.hpp"
 #include "coordUtil.hpp"
+#include "msgMessage.hpp"
+#include "rtnRemoteExec.hpp"
+#include "omagentDef.hpp"
+#include "msgReplicator.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -103,7 +107,7 @@ namespace engine
          PD_AUDIT_COMMAND( AUDIT_CLUSTER, getName(),
                            _getAuditObjectType(),
                            _getAuditObjectName( pArgs ).c_str(),
-                           rc, _getAuditDesp().c_str() ) ;
+                           rc, _getAuditDesp( pArgs ).c_str() ) ;
       }
 
       PD_TRACE_EXIT ( COORD_NODECMD2PHASE_DOAUDIT );
@@ -116,12 +120,12 @@ namespace engine
       return AUDIT_OBJ_GROUP ;
    }
 
-   string _coordNodeCMD2Phase::_getAuditObjectName( coordCMDArguments *pArgs )
+   string _coordNodeCMD2Phase::_getAuditObjectName( coordCMDArguments *pArgs ) const
    {
       return pArgs->_targetName ;
    }
 
-   string _coordNodeCMD2Phase::_getAuditDesp( coordCMDArguments *pArgs )
+   string _coordNodeCMD2Phase::_getAuditDesp( coordCMDArguments *pArgs ) const
    {
       return "" ;
    }
@@ -556,7 +560,7 @@ namespace engine
       {
          while ( pos < vecNodes.size() )
          {
-            clsNodeItem &item = vecNodes[ pos ] ;
+            const clsNodeItem &item = vecNodes[ pos ] ;
             ++pos ;
 
             svcName = item._service[ MSG_ROUTE_LOCAL_SERVICE ] ;
@@ -1215,7 +1219,7 @@ namespace engine
          if ( String != ele.type() )
          {
             PD_LOG( PDERROR, "Get field[%s] failed from obj[%s]",
-                    FIELD_NAME_GROUPNAME, obj.toString().c_str() ;
+                    FIELD_NAME_GROUPNAME, obj.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -1380,7 +1384,8 @@ namespace engine
       {
          CoordGroupInfoPtr groupPtr ;
          rc = _pResource->getOrUpdateGroupInfo( pArgs->_targetName.c_str(),
-                                                groupPtr ) ;
+                                                groupPtr,
+                                                cb ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Get group info failed on command[%s, targe:%s], "
@@ -1388,7 +1393,7 @@ namespace engine
             goto error ;
          }
          // For catalog group
-         rc = _opOnCataNodes( opList, groupPtr->get(), dataObjs ) ;
+         rc = _opOnCataNodes( opList, groupPtr.get(), dataObjs ) ;
       }
 
       if ( SDB_OK != rc )

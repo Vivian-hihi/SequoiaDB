@@ -293,6 +293,7 @@ namespace engine
    class _coordCMDActiveGroup : public _coordNodeCMD2Phase,
                                 public _coordCMDOpOnGroup
    {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:
          _coordCMDActiveGroup() ;
          virtual ~_coordCMDActiveGroup() ;
@@ -372,11 +373,6 @@ namespace engine
                                    pmdEDUCB * cb,
                                    rtnContextCoord **ppContext,
                                    coordCMDArguments *pArgs ) ;
-
-      private:
-         virtual AUDIT_OBJ_TYPE     _getAuditObjectType() const ;
-         virtual string _getAuditObjectName( coordCMDArguments *pArgs ) const ;
-         virtual string _getAuditDesp( coordCMDArguments *pArgs ) const ;
 
    } ;
    typedef _coordCMDShutdownGroup coordCMDShutdownGroup ;
