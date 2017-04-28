@@ -387,8 +387,13 @@ namespace engine
          BSONObj boNodeList ;
          rc = rtnGetArrayElement( boGroupInfo, FIELD_NAME_GROUP,
                                   boNodeList ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get the field [%s], rc: %d",
-                      FIELD_NAME_GROUP, rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get feild[%s] failed, rc: %d",
+                    FIELD_NAME_GROUP, rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
 
          BSONObjIterator i( boNodeList ) ;
          while ( i.more() )
@@ -400,8 +405,13 @@ namespace engine
             BSONObj boExecArg ;
 
             rc = rtnGetSTDStringElement( boNode, FIELD_NAME_HOST, hostName ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get the field [%s], rc: %d",
-                         FIELD_NAME_HOST, rc ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get field[%s] failed, rc: %d",
+                       FIELD_NAME_HOST, rc ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
 
             beService = boNode.getField( FIELD_NAME_SERVICE ) ;
             if ( Array != beService.type() )
@@ -1280,8 +1290,13 @@ namespace engine
          string groupName ;
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_GROUPNAME_NAME,
                                       groupName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] for command[%s], "
-                      "rc: %d", CAT_GROUPNAME_NAME, getName(), rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_GROUPNAME_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
          pArgs->_targetName = groupName ;
       }
       catch( std::exception &e )
@@ -1443,8 +1458,13 @@ namespace engine
          string groupName ;
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_GROUPNAME_NAME,
                                       groupName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] for command[%s], "
-                      "rc: %d", CAT_GROUPNAME_NAME, getName(), rc );
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[s], rc: %d",
+                    CAT_GROUPNAME_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
 
          pArgs->_targetName = groupName ;
       }
@@ -1574,8 +1594,13 @@ namespace engine
          string groupName ;
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_GROUPNAME_NAME,
                                       groupName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] for command[%s], "
-                      "rc: %d", CAT_GROUPNAME_NAME, getName(), rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_GROUPNAME_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
          pArgs->_targetName = groupName ;
 
          /// get enforce
@@ -1587,8 +1612,9 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", CMD_NAME_ENFORCED, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
       }
@@ -1795,13 +1821,19 @@ namespace engine
          BSONElement ele ;
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_GROUPNAME_NAME,
                                       pArgs->_targetName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] for command[%s], "
-                      "rc: %d", CAT_GROUPNAME_NAME, getName(), rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_GROUPNAME_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
 
          ele = pArgs->_boQuery.getField( CAT_HOST_FIELD_NAME ) ;
          if ( String != ele.type() )
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", CAT_HOST_FIELD_NAME, getName(), rc ) ;
             goto error ;
          }
@@ -1815,8 +1847,9 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", FIELD_NAME_ONLY_ATTACH, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
 
@@ -1824,7 +1857,8 @@ namespace engine
          ele = pArgs->_boQuery.getField( PMD_OPTION_SVCNAME ) ;
          if ( String != ele.type() )
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", PMD_OPTION_SVCNAME, getName(), rc ) ;
             goto error ;
          }
@@ -1849,8 +1883,9 @@ namespace engine
             }
             else
             {
-               PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+               PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                        "rc: %d", FIELD_NAME_KEEP_DATA, getName(), rc ) ;
+               rc = SDB_INVALIDARG ;
                goto error ;
             }
          }
@@ -1860,7 +1895,8 @@ namespace engine
             ele = pArgs->_boQuery.getField( PMD_OPTION_DBPATH ) ;
             if ( String != ele.type() )
             {
-               PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                        "rc: %d", PMD_OPTION_DBPATH, getName(), rc ) ;
                goto error ;
             }
@@ -2137,13 +2173,19 @@ namespace engine
          BSONElement ele ;
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_GROUPNAME_NAME,
                                       pArgs->_targetName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s] for command[%s], "
-                      "rc: %d", CAT_GROUPNAME_NAME, getName(), rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_GROUPNAME_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
 
          ele = pArgs->_boQuery.getField( CAT_HOST_FIELD_NAME ) ;
          if ( String != ele.type() )
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", CAT_HOST_FIELD_NAME, getName(), rc ) ;
             goto error ;
          }
@@ -2157,8 +2199,9 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", FIELD_NAME_ONLY_DETACH, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
 
@@ -2171,8 +2214,9 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", CMD_NAME_ENFORCED, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
 
@@ -2180,7 +2224,8 @@ namespace engine
          ele = pArgs->_boQuery.getField( PMD_OPTION_SVCNAME ) ;
          if ( String != ele.type() )
          {
-            PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", PMD_OPTION_SVCNAME, getName(), rc ) ;
             goto error ;
          }
@@ -2205,8 +2250,9 @@ namespace engine
             }
             else
             {
-               PD_LOG( PDERROR, "Failed to get field[%s] for command[%s], "
+               PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                        "rc: %d", FIELD_NAME_KEEP_DATA, getName(), rc ) ;
+               rc = SDB_INVALIDARG ;
                goto error ;
             }
          }

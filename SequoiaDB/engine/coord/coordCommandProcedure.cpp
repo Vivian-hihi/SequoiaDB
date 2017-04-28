@@ -39,6 +39,9 @@
 #include "rtnCB.hpp"
 #include "utilCommon.hpp"
 #include "spdSession.hpp"
+#include "spdCoordDownloader.hpp"
+#include "msgMessage.hpp"
+#include "fmpDef.h"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 

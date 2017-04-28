@@ -1335,6 +1335,50 @@ namespace engine
       _cataMutex.release() ;
    }
 
+   void _coordResource::removeCataInfoWithMain( const CHAR *collectionName )
+   {
+
+      string strSubCLName = collectionName ;
+      MAP_CATA_INFO_IT it ;
+      clsCatalogSet *pCatSet = NULL ;
+
+      ossScopedLock _lock( &_cataMutex, EXCLUSIVE ) ;
+
+      it = _mapCataInfo.find( collectionName ) ;
+      if ( it != _mapCataInfo.end() )
+      {
+         string mainCL ;
+         pCatSet = it->second->getCatalogSet() ;
+         mainCL = pCatSet->getMainCLName() ;
+
+         _mapCataInfo.erase( it ) ;
+         if ( !mainCL.empty() )
+         {
+            _mapCataInfo.erase( mainCL.c_str() ) ;
+         }
+      }
+      /// not found
+      else
+      {
+         /// remove main collections
+         it = _mapCataInfo.begin() ;
+         while( it != _mapCataInfo.end() )
+         {
+            pCatSet = it->second->getCatalogSet() ;
+            if ( !pCatSet || !pCatSet->isMainCL() )
+            {
+               /// do nothing
+            }
+            else if ( pCatSet->isContainSubCL( strSubCLName ) )
+            {
+               _mapCataInfo.erase( it++ ) ;
+               continue ;
+            }
+            ++it ;
+         }
+      }
+   }
+
    void _coordResource::removeCataInfoByCS( const CHAR *csName,
                                             vector < string > *pRelatedCLs )
    {

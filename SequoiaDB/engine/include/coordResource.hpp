@@ -149,10 +149,14 @@ namespace engine
 
       public:
 
+         void        addCataInfo( CoordCataInfoPtr &cataPtr ) ;
+
          INT32       getCataInfo( const CHAR *collectionName,
                                   CoordCataInfoPtr &cataPtr ) ;
 
          void        removeCataInfo( const CHAR *collectionName ) ;
+         void        removeCataInfoWithMain( const CHAR *collectionName ) ;
+
          void        removeCataInfoByCS( const CHAR *csName,
                                          vector< string > *pRelatedCLs = NULL ) ;
 
@@ -168,7 +172,6 @@ namespace engine
          void        setCataGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
          void        addGroupInfo( CoordGroupInfoPtr &groupPtr ) ;
 
-         void        addCataInfo( CoordCataInfoPtr &cataPtr ) ;
          UINT32      checkAndRemoveCataInfoBySub( const CHAR *collectionName ) ;
 
       protected:

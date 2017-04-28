@@ -1,0 +1,616 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = coordCommandData.hpp
+
+   Descriptive Name = Coord Commands for Data Manager
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of runtime component. This file contains code logic for
+   common functions for coordinator node.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/27/2017  XJH Init
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef COORD_COMMAND_DATA_HPP__
+#define COORD_COMMAND_DATA_HPP__
+
+#include "coordCommand2Phase.hpp"
+
+using namespace bson ;
+
+namespace engine
+{
+   /*
+      _coordDataCMD2Phase define
+   */
+   class _coordDataCMD2Phase : public _coordCMD2Phase
+   {
+      public:
+         _coordDataCMD2Phase() ;
+         virtual ~_coordDataCMD2Phase() ;
+      protected :
+         virtual INT32 _generateDataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          const vector<BSONObj> &cataObjs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseDataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                  pmdEDUCB *cb,
+                                                  coordCMDArguments *pArgs,
+                                                  CHAR **ppMsgBuf,
+                                                  INT32 *pBufSize ) ;
+
+         virtual void  _releaseRollbackDataMsg( CHAR *pMsgBuf,
+                                                INT32 bufSize,
+                                                pmdEDUCB *cb ) ;
+
+         virtual INT32 _doOnCataGroup ( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        rtnContextCoord **ppContext,
+                                        coordCMDArguments *pArgs,
+                                        CoordGroupList *pGroupLst,
+                                        vector<BSONObj> *pReplyObjs ) ;
+
+         virtual INT32 _doOnDataGroup ( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        rtnContextCoord **ppContext,
+                                        coordCMDArguments *pArgs,
+                                        const CoordGroupList &groupLst,
+                                        const vector<BSONObj> &cataObjs,
+                                        CoordGroupList &sucGroupLst ) ;
+
+         virtual INT32 _doAudit ( coordCMDArguments *pArgs, INT32 rc ) ;
+
+      protected :
+         /*
+            Get list of Data Groups from Catalog with the P1 catalog command
+         */
+         virtual BOOLEAN _flagGetGrpLstFromCata () { return TRUE ; }
+
+         /*
+            command on collection
+         */
+         virtual BOOLEAN _flagDoOnCollection () { return TRUE ; }
+
+         /*
+            update catalog info before send command to Catalog
+         */
+         virtual BOOLEAN _flagUpdateBeforeCata () { return FALSE ; }
+
+         /*
+            update catalog info before send command to Data Groups
+         */
+         virtual BOOLEAN _flagUpdateBeforeData () { return FALSE ; }
+
+         /*
+            whether to use group in Coord cache
+         */
+         virtual BOOLEAN _flagUseGrpLstInCoord () { return FALSE ; }
+   } ;
+   typedef _coordDataCMD2Phase coordDataCMD2Phase ;
+
+   /*
+      _coordDataCMD3Phase define
+   */
+   class _coordDataCMD3Phase : public _coordDataCMD2Phase
+   {
+      public:
+         _coordDataCMD3Phase() ;
+         virtual ~_coordDataCMD3Phase() ;
+      protected :
+         virtual INT32 _doOnCataGroupP2 ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          rtnContextCoord **ppContext,
+                                          coordCMDArguments *pArgs,
+                                          const CoordGroupList &pGroupLst ) ;
+
+         virtual INT32 _doOnDataGroupP2 ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          rtnContextCoord **ppContext,
+                                          coordCMDArguments *pArgs,
+                                          const CoordGroupList &groupLst,
+                                          const vector<BSONObj> &cataObjs ) ;
+   } ;
+   typedef _coordDataCMD3Phase coordDataCMD3Phase ;
+
+   /*
+      _coordCMDCreateDomain define
+   */
+   class _coordCMDCreateDomain : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDCreateDomain() ;
+         virtual ~_coordCMDCreateDomain() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDCreateDomain coordCMDCreateDomain ;
+
+   /*
+      _coordCMDDropDomain define
+   */
+   class _coordCMDDropDomain : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDDropDomain() ;
+         virtual ~_coordCMDDropDomain() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDDropDomain coordCMDDropDomain ;
+
+   /*
+      _coordCMDAlterDomain define
+   */
+   class _coordCMDAlterDomain : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDAlterDomain() ;
+         virtual ~_coordCMDAlterDomain() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDAlterDomain coordCMDAlterDomain ;
+
+   /*
+      _coordCMDCreateCollectionSpace define
+   */
+   class _coordCMDCreateCollectionSpace : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDCreateCollectionSpace() ;
+         virtual ~_coordCMDCreateCollectionSpace() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDCreateCollectionSpace coordCMDCreateCollectionSpace ;
+
+   /*
+      _coordCMDDropCollectionSpace define
+   */
+   class _coordCMDDropCollectionSpace : public _coordDataCMD3Phase
+   {
+      public:
+         _coordCMDDropCollectionSpace() ;
+         virtual ~_coordCMDDropCollectionSpace() ;
+      protected :
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _doComplete ( MsgHeader *pMsg,
+                                     pmdEDUCB * cb,
+                                     coordCMDArguments *pArgs ) ;
+
+      protected :
+         /*
+            command on collection
+         */
+         virtual BOOLEAN _flagDoOnCollection () { return FALSE ; }
+
+   } ;
+   typedef _coordCMDDropCollectionSpace coordCMDDropCollectionSpace ;
+
+   /*
+      _coordCMDCreateCollection define
+   */
+   class _coordCMDCreateCollection : public _coordDataCMD2Phase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDCreateCollection() ;
+         virtual ~_coordCMDCreateCollection() ;
+
+      protected :
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                  pmdEDUCB *cb,
+                                                  coordCMDArguments *pArgs,
+                                                  CHAR **ppMsgBuf,
+                                                  INT32 *pBufSize ) ;
+
+         virtual void  _releaseRollbackDataMsg( CHAR *pMsgBuf,
+                                                INT32 bufSize,
+                                                pmdEDUCB *cb ) ;
+
+         virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              coordCMDArguments *pArgs,
+                                              const CoordGroupList &groupLst ) ;
+      protected :
+         /*
+            Commit on Catalog when rollback on Data groups failed
+         */
+         virtual BOOLEAN _flagCommitOnRollbackFailed () { return TRUE ; }
+
+   } ;
+   typedef _coordCMDCreateCollection coordCMDCreateCollection ;
+
+   /*
+      _coordCMDDropCollection define
+   */
+   class _coordCMDDropCollection : public _coordDataCMD3Phase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDDropCollection() ;
+         virtual ~_coordCMDDropCollection() ;
+      protected :
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _generateDataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          const vector<BSONObj> &cataObjs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseDataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _doComplete ( MsgHeader *pMsg,
+                                     pmdEDUCB * cb,
+                                     coordCMDArguments *pArgs ) ;
+
+         /*
+            use coord cache but not use group list, because split
+            will change the version and groups without lock
+         */
+         virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
+
+   } ;
+   typedef _coordCMDDropCollection coordCMDDropCollection ;
+
+   /*
+      _coordCMDAlterCollection define
+   */
+   class _coordCMDAlterCollection : public _coordDataCMD2Phase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDAlterCollection() ;
+         virtual ~_coordCMDAlterCollection() ;
+      protected :
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+      protected :
+         /*
+            update catalog info before send command to Data Groups
+         */
+         virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+         /*
+            use group in Coord cache, since we only have short-term
+            locks in Catalog
+         */
+         virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
+
+   } ;
+   typedef _coordCMDAlterCollection coordCMDAlterCollection ;
+
+   /*
+      _coordCMDLinkCollection define
+   */
+   class _coordCMDLinkCollection : public _coordDataCMD2Phase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDLinkCollection() ;
+         virtual ~_coordCMDLinkCollection() ;
+
+      protected :
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                  pmdEDUCB *cb,
+                                                  coordCMDArguments *pArgs,
+                                                  CHAR **ppMsgBuf,
+                                                  INT32 *pBufSize ) ;
+
+         virtual void  _releaseRollbackDataMsg( CHAR *pMsgBuf,
+                                                INT32 bufSize,
+                                                pmdEDUCB *cb ) ;
+
+         virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              coordCMDArguments *pArgs,
+                                              const CoordGroupList &groupLst ) ;
+
+      protected :
+         /*
+            update catalog info before send command to Data Groups
+         */
+         virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+         /*
+            Rollback on Catalog before rollback on Data groups
+         */
+         virtual BOOLEAN _flagRollbackCataBeforeData () { return TRUE ; }
+
+      private:
+         string            _subCLName ;
+   } ;
+   typedef _coordCMDLinkCollection coordCMDLinkCollection ;
+
+   /*
+      _coordCMDUnlinkCollection define
+   */
+   class _coordCMDUnlinkCollection : public _coordDataCMD2Phase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDUnlinkCollection() ;
+         virtual ~_coordCMDUnlinkCollection() ;
+
+      protected :
+
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
+
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
+
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
+
+         virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                  pmdEDUCB *cb,
+                                                  coordCMDArguments *pArgs,
+                                                  CHAR **ppMsgBuf,
+                                                  INT32 *pBufSize ) ;
+
+         virtual void  _releaseRollbackDataMsg( CHAR *pMsgBuf,
+                                                INT32 bufSize,
+                                                pmdEDUCB *cb ) ;
+
+         virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              coordCMDArguments *pArgs,
+                                              const CoordGroupList &groupLst ) ;
+
+      protected :
+         /*
+            update catalog info before send command to Data Groups
+         */
+         virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+         /*
+            Rollback on Catalog before rollback on Data groups
+         */
+         virtual BOOLEAN _flagRollbackCataBeforeData () { return TRUE ; }
+
+   } ;
+   typedef _coordCMDUnlinkCollection coordCMDUnlinkCollection ;
+
+   /*
+    * rtnCoordCMDSplit define
+    */
+   class rtnCoordCMDSplit : public rtnCoordCommand
+   {
+   public :
+      virtual INT32 execute ( MsgHeader *pMsg,
+                              pmdEDUCB *cb,
+                              INT64 &contextID,
+                              rtnContextBuf *buf ) ;
+
+   protected :
+      INT32 _getCLCount ( const CHAR *clFullName,
+                          CoordGroupList &groupList,
+                          pmdEDUCB *cb, UINT64 &count,
+                          rtnContextBuf *buf ) ;
+
+      INT32 _getBoundByPercent ( const CHAR *cl,
+                                 FLOAT64 percent,
+                                 CoordCataInfoPtr &cataInfo,
+                                 CoordGroupList &groupList,
+                                 pmdEDUCB *cb,
+                                 BSONObj &lowBound,
+                                 BSONObj &upBound,
+                                 rtnContextBuf *buf ) ;
+
+      INT32 _getBoundByCondition ( const CHAR *cl,
+                                   const BSONObj &begin,
+                                   const BSONObj &end,
+                                   CoordGroupList &groupList,
+                                   pmdEDUCB *cb,
+                                   CoordCataInfoPtr &cataInfo,
+                                   BSONObj &lowBound,
+                                   BSONObj &upBound,
+                                   rtnContextBuf *buf ) ;
+
+      INT32 _getBoundRecordOnData ( const CHAR *cl,
+                                    const BSONObj &condition,
+                                    const BSONObj &hint,
+                                    const BSONObj &sort,
+                                    INT32 flag,
+                                    INT64 skip,
+                                    CoordGroupList &groupList,
+                                    pmdEDUCB *cb,
+                                    BSONObj &shardingKey,
+                                    BSONObj &record,
+                                    rtnContextBuf *buf ) ;
+
+   } ;
+
+   /*
+    * rtnCoordCMDCreateIndex define
+    */
+   class rtnCoordCMDCreateIndex : public rtnCoordDataCMD2Phase
+   {
+   protected :
+      class _rtnCMDCreateIndexArgs : public _rtnCMDArguments
+      {
+      public :
+         _rtnCMDCreateIndexArgs () {}
+
+         virtual ~_rtnCMDCreateIndexArgs () {}
+
+         /* Name of the index, used by createIdx */
+         string _indexName ;
+      } ;
+
+   protected :
+      virtual _rtnCMDArguments *_generateArguments () ;
+
+      virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                _rtnCMDArguments *pArgs ) ;
+
+      virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       _rtnCMDArguments *pArgs,
+                                       CHAR **ppMsgBuf,
+                                       MsgHeader **ppCataMsg ) ;
+
+      virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                               _rtnCMDArguments *pArgs,
+                                               CHAR **ppMsgBuf,
+                                               MsgHeader **ppRollbackMsg ) ;
+
+      virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           _rtnCMDArguments *pArgs,
+                                           const CoordGroupList &groupLst ) ;
+
+      virtual const CHAR *_getCommandName () const
+      { return CMD_NAME_CREATE_INDEX ; }
+
+   protected :
+      /* update catalog info before send command to Data Groups */
+      virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+      /* use group in Coord cache, since we only have short-term locks in Catalog */
+      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
+   } ;
+
+   /*
+    * rtnCoordCMDDropIndex define
+    */
+   class rtnCoordCMDDropIndex : public rtnCoordDataCMD2Phase
+   {
+   protected :
+      virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                _rtnCMDArguments *pArgs ) ;
+
+      virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       _rtnCMDArguments *pArgs,
+                                       CHAR **ppMsgBuf,
+                                       MsgHeader **ppCataMsg ) ;
+
+      virtual const CHAR *_getCommandName () const
+      { return CMD_NAME_DROP_INDEX ; }
+
+   protected :
+      /* update catalog info before send command to Data Groups */
+      virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+
+      /* use group in Coord cache, since we only have short-term locks in Catalog */
+      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
+   } ;
+}
+
+#endif // COORD_COMMAND_DATA_HPP__

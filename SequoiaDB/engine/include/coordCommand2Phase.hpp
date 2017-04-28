@@ -96,7 +96,7 @@ namespace engine
                                           pmdEDUCB *cb,
                                           coordCMDArguments *pArgs,
                                           CHAR **ppMsgBuf,
-                                          INT32 *pBufSize ) = 0;
+                                          INT32 *pBufSize ) = 0 ;
 
          virtual void  _releaseCataMsg( CHAR *pMsgBuf,
                                         INT32 bufSize,
@@ -137,7 +137,7 @@ namespace engine
                                         coordCMDArguments *pArgs,
                                         const CoordGroupList &groupLst,
                                         const vector<BSONObj> &cataObjs,
-                                        CoordGroupList &sucGroupLst ) = 0;
+                                        CoordGroupList &sucGroupLst ) = 0 ;
 
          virtual INT32 _doOnCataGroupP2 ( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
