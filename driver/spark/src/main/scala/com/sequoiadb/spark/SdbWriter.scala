@@ -1,0 +1,72 @@
+package com.sequoiadb.spark
+
+import java.util
+
+import com.sequoiadb.base.Sequoiadb
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.StructType
+import org.bson.BSONObject
+
+import scala.collection.JavaConversions._
+
+/**
+  * SequoiaDB writer.
+  * Used for saving a bunch of sequoiadb objects
+  * into specified collectionspace and collection
+  *
+  * @param config Configuration parameters (host,collectionspace,collection,...)
+  */
+private[spark] class SdbWriter(config: SdbConfig) extends Serializable {
+
+    /**
+      * Storing a bunch of SequoiaDB objects.
+      *
+      * @param it Iterator of SequoiaDB objects.
+      */
+    private def write[T](it: Iterator[T], convert: T => BSONObject): Unit = {
+        val sdb = new Sequoiadb(config.host, config.username, config.password, null)
+
+        try {
+            val cs = if (sdb.isCollectionSpaceExist(config.collectionSpace)) {
+                sdb.getCollectionSpace(config.collectionSpace)
+            } else {
+                throw new SdbException(s"Collection space is not existing: ${config.collectionSpace}")
+            }
+
+            val cl = if (cs.isCollectionExist(config.collection)) {
+                cs.getCollection(config.collection)
+            } else {
+                throw new SdbException(s"Collection is not existing: " +
+                    s"${config.collectionSpace}.${config.collection}")
+            }
+
+            val bulk = new util.ArrayList[BSONObject](config.bulkSize)
+
+            while (it.hasNext) {
+                val row = it.next()
+                val obj = convert(row)
+                bulk.add(obj)
+
+                if (bulk.size() > config.bulkSize) {
+                    cl.bulkInsert(bulk, 0)
+                    bulk.clear()
+                }
+            }
+
+            if (bulk.size() > 0) {
+                cl.bulkInsert(bulk, 0)
+                bulk.clear()
+            }
+        } finally {
+            sdb.disconnect()
+        }
+    }
+
+    def write(it: Iterator[Row], schema: StructType): Unit = {
+        write(it, (v: Row) => BSONConverter.rowToBson(v, schema))
+    }
+
+    def write(it: Iterator[BSONObject]): Unit = {
+        write(it, (v: BSONObject) => v)
+    }
+}

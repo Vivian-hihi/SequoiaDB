@@ -1,0 +1,183 @@
+/*
+ * Copyright 2017 SequoiaDB Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+package com.sequoiadb.spark
+
+/**
+  * SequoiaDB configurations
+  *
+  * @param properties configurations in Map
+  */
+class SdbConfig(val properties: Map[String, String]) extends Serializable {
+    private def notFound(name: String): Nothing = {
+        throw new SdbException(s"Parameter $name is not specified")
+    }
+
+    private def invalidConfigValue(name: String, value: Any): Nothing = {
+        throw new SdbException(s"Invalid value of parameter $name: $value")
+    }
+
+    require(
+        SdbConfig.RequiredProperties.forall(properties.isDefinedAt),
+        s"Not all required properties are defined! : ${
+            SdbConfig.RequiredProperties.diff(
+                properties.keys.toList.intersect(SdbConfig.RequiredProperties))
+        }")
+
+    // don't show password
+    override def toString: String = (properties -- Seq(SdbConfig.Password)).toString()
+
+    val host: List[String] = properties
+        .getOrElse(SdbConfig.Host, notFound(SdbConfig.Host))
+        .split(",").toList
+
+    val collectionSpace: String = properties
+        .getOrElse(SdbConfig.CollectionSpace, notFound(SdbConfig.CollectionSpace))
+
+    val collection: String = properties
+        .getOrElse(SdbConfig.Collection, notFound(SdbConfig.Collection))
+
+    val username: String = properties
+        .getOrElse(SdbConfig.Username, SdbConfig.DefaultUsername)
+
+    val password: String = properties
+        .getOrElse(SdbConfig.Password, SdbConfig.DefaultPassword)
+
+    val samplingRatio: Double = properties.get(SdbConfig.SamplingRatio)
+        .map(_.toDouble).getOrElse(SdbConfig.DefaultSamplingRatio)
+
+    if (samplingRatio <= 0) {
+        invalidConfigValue(SdbConfig.SamplingRatio, samplingRatio)
+    }
+
+    val samplingNum: Long = properties.get(SdbConfig.SamplingNum)
+        .map(_.toLong).getOrElse(SdbConfig.DefaultSamplingNum)
+
+    if (samplingNum <= 0) {
+        invalidConfigValue(SdbConfig.SamplingNum, samplingNum)
+    }
+
+    /**
+      * sample _id for schema if true, ignore _id if false.
+      */
+    val samplingWithId: Boolean = properties.get(SdbConfig.SamplingWithId)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultSamplingWithId)
+
+    /**
+      * bulk size when insert into SequoiaDB collection
+      */
+    val bulkSize: Int = properties.get(SdbConfig.BulkSize)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultBulkSize)
+
+    if (bulkSize <= 0) {
+        invalidConfigValue(SdbConfig.BulkSize, bulkSize)
+    }
+
+    val cursorType: String = properties
+        .getOrElse(SdbConfig.CursorType, SdbConfig.DefaultCursorType)
+
+    cursorType.toLowerCase match {
+        case SdbConfig.CURSOR_TYPE_FAST =>
+        case SdbConfig.CURSOR_TYPE_NORMAL =>
+        case _ =>
+            invalidConfigValue(SdbConfig.CursorType, cursorType)
+    }
+
+    val partitionMode: String = properties
+        .getOrElse(SdbConfig.PartitionMode, SdbConfig.DefaultPartitionMode)
+
+    partitionMode.toLowerCase match {
+        case SdbConfig.PARTITION_MODE_SINGLE =>
+        case SdbConfig.PARTITION_MODE_SHARDING =>
+        case SdbConfig.PARTITION_MODE_DATABLOCK =>
+        case SdbConfig.PARTITION_MODE_AUTO =>
+        case _ =>
+            invalidConfigValue(SdbConfig.PartitionMode, partitionMode)
+    }
+
+    val partitionBlockNum: Int = properties.get(SdbConfig.PartitionBlockNum)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultPartitionBlockNum)
+
+    if (partitionBlockNum <= 0) {
+        invalidConfigValue(SdbConfig.PartitionBlockNum, partitionBlockNum)
+    }
+
+    val preferredLocation: Boolean = properties.get(SdbConfig.PreferredLocation)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultPreferredLocation)
+}
+
+object SdbConfig {
+    //  Parameter names
+    val Host = "host"
+    val CollectionSpace = "collectionspace"
+    val Collection = "collection"
+    val Username = "username"
+    val Password = "password"
+    val SamplingRatio = "samplingRatio"
+    val SamplingNum = "samplingNum"
+    val SamplingWithId = "samplingWithId"
+    val BulkSize = "bulkSize"
+    val CursorType = "cursorType"
+    // fast, normal
+    val PartitionMode = "partitionMode"
+    // single, sharding, datablock, auto
+    val PartitionBlockNum = "partitionBlockNum"
+    val PreferredLocation = "preferredLocation"
+
+    val CURSOR_TYPE_FAST = "fast"
+    val CURSOR_TYPE_NORMAL = "normal"
+
+    val PARTITION_MODE_SINGLE = "single"
+    val PARTITION_MODE_SHARDING = "sharding"
+    val PARTITION_MODE_DATABLOCK = "datablock"
+    val PARTITION_MODE_AUTO = "auto"
+
+    val AllProperties = List(
+        Host,
+        CollectionSpace,
+        Collection,
+        Username,
+        Password,
+        SamplingRatio,
+        SamplingNum,
+        SamplingWithId,
+        BulkSize,
+        CursorType,
+        PartitionMode,
+        PartitionBlockNum,
+        PreferredLocation
+    )
+
+    val RequiredProperties = List(
+        Host,
+        CollectionSpace,
+        Collection
+    )
+
+    //  Default values
+    val DefaultUsername = ""
+    val DefaultPassword = ""
+    val DefaultSamplingRatio = 1.0
+    val DefaultSamplingNum = 1000L
+    val DefaultSamplingWithId = false
+    val DefaultBulkSize = 500
+    val DefaultCursorType = "fast"
+    val DefaultPartitionMode = "auto"
+    val DefaultPartitionBlockNum = 4
+    val DefaultPreferredLocation = false
+
+    def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
+}
