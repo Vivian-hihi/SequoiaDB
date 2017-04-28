@@ -99,7 +99,7 @@ public class KillNodeSplit2763 extends SdbTestBase {
             System.out.println("KillNode:" + cataPriHost + ":" + cataSvcName);
 
             // 建立并行任务
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataPriHost, cataSvcName, 1, 50);
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(cataPriHost, cataSvcName, 1);
             TaskMgr mgr = new TaskMgr(faultTask);
             mgr.addTask(new Split());
             mgr.execute();
