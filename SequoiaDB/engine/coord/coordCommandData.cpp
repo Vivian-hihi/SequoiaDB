@@ -268,137 +268,407 @@ namespace engine
    }
 
    /*
-      _coordCMDCreateDomain implement
+      _coordCMDTestCollectionSpace implement
    */
-   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDCreateDomain,
-                                      CMD_NAME_CREATE_DOMAIN,
-                                      FALSE ) ;
-   _coordCMDCreateDomain::_coordCMDCreateDomain()
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDTestCollectionSpace,
+                                      CMD_NAME_TEST_COLLECTIONSPACE,
+                                      TRUE ) ;
+   _coordCMDTestCollectionSpace::_coordCMDTestCollectionSpace()
    {
    }
 
-   _coordCMDCreateDomain::~_coordCMDCreateDomain()
+   _coordCMDTestCollectionSpace::~_coordCMDTestCollectionSpace()
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( COORD_CREATEDOMAIN_EXE, "_coordCMDCreateDomain::execute" )
-   INT32 _coordCMDCreateDomain::execute( MsgHeader *pMsg,
-                                         pmdEDUCB *cb,
-                                         INT64 &contextID,
-                                         rtnContextBuf *buf )
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_CMD_TESTCS_EXE, "_coordCMDTestCollectionSpace::execute" )
+   INT32 _coordCMDTestCollectionSpace::execute( MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                INT64 &contextID,
+                                                rtnContextBuf *buf )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( COORD_CREATEDOMAIN_EXE ) ;
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( COORD_CMD_TESTCS_EXE ) ;
+      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
+      coordCommandFactory *pFactory = coordGetFactory() ;
+      coordOperator *pOperator = NULL ;
+      rtnContextBuf buffObj ;
 
       contextID = -1 ;
 
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
-      forward->header.opCode = MSG_CAT_CREATE_DOMAIN_REQ ;
-
-      _printDebug ( (const CHAR*)pMsg, getName() ) ;
-
-      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
+      rc = pFactory->create( CMD_NAME_LIST_COLLECTIONSPACES, pOperator ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Execute on catalog failed in command[%s], "
-                  "rc: %d", getName(), rc ) ;
+         PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                 CMD_NAME_LIST_COLLECTIONSPACES, rc ) ;
+         goto error ;
+      }
+      rc = pOperator->init( _pResource, cb, getTimeout() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init operator failed[%s], rc: %d",
+                 pOperator->getName(), rc ) ;
+         goto error ;
+      }
+      rc = pOperator->execute( pMsg, cb, contextID, buf ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "Execute operator[%s] failed, rc: %d",
+                  pOperator->getName(), rc ) ;
          goto error ;
       }
 
-   done :
-      PD_TRACE_EXITRC ( COORD_CREATEDOMAIN_EXE, rc ) ;
+      /// get more
+      rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
+      if ( rc )
+      {
+         contextID = -1 ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_DMS_CS_NOTEXIST ;
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "getmore failed, rc: %d", rc ) ;
+         }
+      }
+
+   done:
+      if ( contextID >= 0 )
+      {
+         pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      if ( pOperator )
+      {
+         pFactory->release( pOperator ) ;
+      }
+      PD_TRACE_EXITRC ( COORD_CMD_TESTCS_EXE, rc ) ;
       return rc ;
-   error :
+   error:
       goto done ;
    }
 
    /*
-      _coordCMDDropDomain implement
+      _coordCMDTestCollection implement
    */
-   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDDropDomain,
-                                      CMD_NAME_DROP_DOMAIN,
-                                      FALSE ) ;
-   _coordCMDDropDomain::_coordCMDDropDomain()
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDTestCollection,
+                                      CMD_NAME_TEST_COLLECTION,
+                                      TRUE ) ;
+   _coordCMDTestCollection::_coordCMDTestCollection()
    {
    }
 
-   _coordCMDDropDomain::~_coordCMDDropDomain()
+   _coordCMDTestCollection::~_coordCMDTestCollection()
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( COORD_DROPDOMAIN_EXE, "_coordCMDDropDomain::execute" )
-   INT32 _coordCMDDropDomain::execute( MsgHeader *pMsg,
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_CMD_TESTCL_EXE, "_coordCMDTestCollection::execute" )
+   INT32 _coordCMDTestCollection::execute( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           INT64 &contextID,
+                                           rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_CMD_TESTCL_EXE ) ;
+      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
+      coordCommandFactory *pFactory = coordGetFactory() ;
+      coordOperator *pOperator = NULL ;
+      rtnContextBuf buffObj ;
+
+      contextID                        = -1 ;
+
+      rc = pFactory->create( CMD_NAME_LIST_COLLECTIONS, pOperator ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                 CMD_NAME_LIST_COLLECTIONS, rc ) ;
+         goto error ;
+      }
+      rc = pOperator->init( _pResource, cb, getTimeout() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init operator failed[%s], rc: %d",
+                 pOperator->getName(), rc ) ;
+         goto error ;
+      }
+      rc = pOperator->execute( pMsg, cb, contextID, buf ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "Execute operator[%s] failed, rc: %d",
+                  pOperator->getName(), rc ) ;
+         goto error ;
+      }
+
+      rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
+      if ( rc )
+      {
+         contextID = -1 ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_DMS_NOTEXIST ;
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "Getmore failed, rc: %d", rc ) ;
+         }
+      }
+
+   done:
+      if ( contextID >= 0 )
+      {
+         pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      if ( pOperator )
+      {
+         pFactory->release( pOperator ) ;
+      }
+      PD_TRACE_EXITRC ( COORD_CMD_TESTCL_EXE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _coordCmdWaitTask implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCmdWaitTask,
+                                      CMD_NAME_WAITTASK,
+                                      TRUE ) ;
+   _coordCmdWaitTask::_coordCmdWaitTask()
+   {
+   }
+
+   _coordCmdWaitTask::~_coordCmdWaitTask()
+   {
+   }
+
+   INT32 _coordCmdWaitTask::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
+                                     rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      SET_RC ignoreRC ;
+      rtnContextCoord *pContext        = NULL ;
+      rtnContextBuf buffObj ;
+      pmdKRCB *pKRCB                   = pmdGetKRCB() ;
+      contextID                        = -1 ;
+      pMsg->opCode                     = MSG_CAT_QUERY_TASK_REQ ;
+      pMsg->TID                        = cb->getTID() ;
+
+      ignoreRC.insert( SDB_DMS_EOC ) ;
+      ignoreRC.insert( SDB_CAT_TASK_NOTFOUND ) ;
+
+      while ( TRUE )
+      {
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         rc = executeOnCataGroup( pMsg, cb, TRUE, &ignoreRC, &pContext, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Query task on catalog failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = pContext->getMore( -1, buffObj, cb ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Get more failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         pKRCB->getRTNCB()->contextDelete( pContext->contextID(), cb ) ;
+         pContext = NULL ;
+         ossSleep( OSS_ONE_SEC ) ;
+      }
+
+   done:
+      if ( pContext )
+      {
+         pKRCB->getRTNCB()->contextDelete( pContext->contextID(),  cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _coordCmdCancelTask implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCmdCancelTask,
+                                      CMD_NAME_CANCEL_TASK,
+                                      TRUE ) ;
+   _coordCmdCancelTask::_coordCmdCancelTask()
+   {
+   }
+
+   _coordCmdCancelTask::~_coordCmdCancelTask()
+   {
+   }
+
+   INT32 _coordCmdCancelTask::execute( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
                                        INT64 &contextID,
                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( COORD_DROPDOMAIN_EXE ) ;
+      coordCommandFactory *pFactory    = NULL ;
+      coordOperator *pOperator         = NULL ;
+      BOOLEAN async                    = FALSE ;
 
-      contextID = -1 ;
+      contextID                        = -1 ;
 
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg ;
-      forward->header.opCode = MSG_CAT_DROP_DOMAIN_REQ ;
+      CoordGroupList groupLst ;
+      INT32 rcTmp = SDB_OK ;
 
-      _printDebug ( (const CHAR*)pMsg, getName() ) ;
+      // extract msg
+      CHAR *pQueryBuf = NULL ;
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL, &pQueryBuf,
+                            NULL, NULL, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
 
-      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
-      if ( rc )
+      try
       {
-         PD_LOG ( PDERROR, "Execute on catalog failed in command[%s], "
-                  "rc: %d", getName(), rc ) ;
+         BSONObj matcher( pQueryBuf ) ;
+         rc = rtnGetBooleanElement( matcher, FIELD_NAME_ASYNC, async ) ;
+         if ( SDB_FIELD_NOT_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                      FIELD_NAME_ASYNC, rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-   done :
-      PD_TRACE_EXITRC ( COORD_DROPDOMAIN_EXE, rc ) ;
+      pMsg->opCode                     = MSG_CAT_SPLIT_CANCEL_REQ ;
+
+      rc = executeOnCataGroup( pMsg, cb, &groupLst, NULL, TRUE,
+                               NULL, buf ) ;
+      PD_RC_CHECK( rc, PDERROR, "Excute on catalog failed, rc: %d", rc ) ;
+
+      pMsg->opCode                     = MSG_BS_QUERY_REQ ;
+      // notify to data node
+      rcTmp = executeOnDataGroup( pMsg, cb, groupLst,
+                                  TRUE, NULL, NULL, NULL,
+                                  buf ) ;
+      if ( rcTmp )
+      {
+         PD_LOG( PDWARNING, "Failed to notify to data node, rc: %d", rcTmp ) ;
+      }
+
+      // if sync
+      if ( !async )
+      {
+         pFactory = coordGetFactory() ;
+         rc = pFactory->create( CMD_NAME_WAITTASK, pOperator ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create operator by name[%s] failed, rc: %d",
+                      CMD_NAME_WAITTASK, rc ) ;
+         rc = pOperator->init( _pResource, cb, getTimeout() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                      pOperator->getName(), rc ) ;
+         rc = pOperator->execute( pMsg, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      if ( pOperator )
+      {
+         pFactory->release( pOperator ) ;
+      }
       return rc ;
-   error :
+   error:
       goto done ;
    }
 
    /*
-      _coordCMDAlterDomain implement
+      _coordCMDTruncate implement
    */
-   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDAlterDomain,
-                                      CMD_NAME_ALTER_DOMAIN,
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDTruncate,
+                                      CMD_NAME_TRUNCATE,
                                       FALSE ) ;
-   _coordCMDAlterDomain::_coordCMDAlterDomain()
+   _coordCMDTruncate::_coordCMDTruncate()
    {
    }
 
-   _coordCMDAlterDomain::~_coordCMDAlterDomain()
+   _coordCMDTruncate::~_coordCMDTruncate()
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( COORD_ALTERDOMAIN_EXE, "_coordCMDAlterDomain::execute" )
-   INT32 _coordCMDAlterDomain::execute( MsgHeader *pMsg,
-                                        pmdEDUCB *cb,
-                                        INT64 &contextID,
-                                        rtnContextBuf *buf )
+   // PD_TRACE_DECLARE_FUNCTION( COORD_TRUNCATE_EXE, "_coordCMDTruncate::execute" )
+   INT32 _coordCMDTruncate::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
+                                     rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( COORD_ALTERDOMAIN_EXE ) ;
-
-      contextID = -1 ;
-
-      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
-      forward->header.opCode = MSG_CAT_ALTER_DOMAIN_REQ;
-
-      _printDebug ( (const CHAR*)pMsg, getName() ) ;
-
-      rc = executeOnCataGroup ( pMsg, cb, TRUE, NULL, NULL, buf ) ;
-      if ( rc )
+      PD_TRACE_ENTRY( COORD_TRUNCATE_EXE ) ;
+      CHAR *option = NULL;
+      BSONObj boQuery ;
+      const CHAR *fullName = NULL ;
+      rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
+                            NULL, NULL, &option, NULL,
+                            NULL, NULL );
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Execute on catalog failed in command[%s], "
-                  "rc: %d", getName(), rc ) ;
+         PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
          goto error ;
       }
 
+      try
+      {
+         boQuery = BSONObj( option );
+         BSONElement e = boQuery.getField( FIELD_NAME_COLLECTION );
+         if ( String != e.type() )
+         {
+            PD_LOG( PDERROR, "invalid truncate msg:%s",
+                    boQuery.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         fullName = e.valuestr() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error;
+      }
+
+      rc = executeOnCL( pMsg, cb, fullName, FALSE, NULL, NULL,
+                        NULL, NULL, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to truncate cl:%s, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
    done:
-      PD_TRACE_EXITRC ( COORD_ALTERDOMAIN_EXE, rc ) ;
+      if ( fullName )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, CMD_NAME_TRUNCATE, AUDIT_OBJ_CL,
+                           fullName, rc, "" ) ;
+      }
+      PD_TRACE_EXITRC( COORD_TRUNCATE_EXE, rc ) ;
       return rc ;
-   error :
+   error:
       goto done ;
    }
 
@@ -2109,7 +2379,7 @@ namespace engine
 
       // product split key
       {
-         PD_LOG ( PDINFO, "Split found record: %s", obj.toString().c_str() ) ;
+         PD_LOG( PDINFO, "Split found record: %s", obj.toString().c_str() ) ;
 
          // we need to compare with boShardingKey and extract the partition key
          ixmIndexKeyGen keyGen ( shardingKey ) ;
@@ -2134,11 +2404,12 @@ namespace engine
             goto error ;
          }
 
-         keyIter = keys.begin () ;
-         record = (*keyIter).copy() ;
+         keyIter = keys.begin() ;
+         record = (*keyIter).getOwned() ;
 
          // validate key does not contains Undefined
-         /*{
+         /*
+         {
             BSONObjIterator iter ( record ) ;
             while ( iter.more () )
             {
@@ -2150,7 +2421,8 @@ namespace engine
                           shardingKey.toString().c_str(),
                           record.toString().c_str() ) ;
             }
-         }*/
+         }
+         */
 
         PD_LOG ( PDINFO, "Split found key: %s", record.toString().c_str() ) ;
      }
@@ -2297,55 +2569,71 @@ namespace engine
    }
 
    /*
-    * rtnCoordCMDCreateIndex implement
-    */
-   rtnCoordCMD2Phase::_rtnCMDArguments *rtnCoordCMDCreateIndex::_generateArguments ()
+      _coordCMDCreateIndex implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDCreateIndex,
+                                      CMD_NAME_CREATE_INDEX,
+                                      FALSE ) ;
+   _coordCMDCreateIndex::_coordCMDCreateIndex()
    {
-      return SDB_OSS_NEW _rtnCMDCreateIndexArgs () ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDCREATEIDX_PARSEMSG, "rtnCoordCMDCreateIndex::_parseMsg" )
-   INT32 rtnCoordCMDCreateIndex::_parseMsg ( MsgHeader *pMsg,
-                                             _rtnCMDArguments *pArgs )
+   _coordCMDCreateIndex::~_coordCMDCreateIndex()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_CRTIDX_PARSEMSG, "_coordCMDCreateIndex::_parseMsg" )
+   INT32 _coordCMDCreateIndex::_parseMsg ( MsgHeader *pMsg,
+                                           coordCMDArguments *pArgs )
    {
       INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDCREATEIDX_PARSEMSG ) ;
-
-      _rtnCMDCreateIndexArgs *pSelfArgs = ( _rtnCMDCreateIndexArgs * )pArgs ;
+      PD_TRACE_ENTRY ( COORD_CRTIDX_PARSEMSG ) ;
 
       try
       {
-         string clName, idxName ;
          BSONObj boIndex ;
 
-         rc = rtnGetSTDStringElement( pSelfArgs->_boQuery, CAT_COLLECTION,
-                                      clName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s: failed to get the field [%s] from query",
-                      _getCommandName(), CAT_COLLECTION ) ;
-         PD_CHECK( !clName.empty(),
-                   SDB_INVALIDARG, error, PDERROR,
-                   "Failed to %s: collection name can't be empty!",
-                   _getCommandName() ) ;
+         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION,
+                                      pArgs->_targetName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_COLLECTION, getName(), rc ) ;
+            goto error ;
+         }
+         if ( pArgs->_targetName.empty() )
+         {
+            PD_LOG( PDERROR, "Collection name is empty in command[%s]",
+                    getName() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
 
-         rc = rtnGetObjElement( pSelfArgs->_boQuery, FIELD_NAME_INDEX, boIndex ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s: failed to get the field [%s] from query",
-                      _getCommandName(), FIELD_NAME_INDEX ) ;
+         rc = rtnGetObjElement( pArgs->_boQuery, FIELD_NAME_INDEX,
+                                boIndex ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    FIELD_NAME_INDEX, getName(), rc ) ;
+            goto error ;
+         }
 
          // get embedded index name
-         rc = rtnGetSTDStringElement( boIndex, IXM_FIELD_NAME_NAME, idxName );
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to %s: failed to get the field [%s] from query",
-                       _getCommandName(), IXM_FIELD_NAME_NAME ) ;
-         PD_CHECK( !idxName.empty(),
-                   SDB_INVALIDARG, error, PDERROR,
-                   "Failed to %s: index name can't be empty!",
-                   _getCommandName() ) ;
-
-         pSelfArgs->_targetName = clName ;
-         pSelfArgs->_indexName = idxName ;
+         rc = rtnGetSTDStringElement( boIndex, IXM_FIELD_NAME_NAME,
+                                      _indexName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    IXM_FIELD_NAME_NAME, getName(), rc ) ;
+            goto error ;
+         }
+         if ( _indexName.empty() )
+         {
+            PD_LOG( PDERROR, "Index name is empty in command[%s]",
+                    getName() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       catch( std::exception &e )
       {
@@ -2355,127 +2643,159 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( CMD_RTNCOCMDCREATEIDX_PARSEMSG, rc ) ;
+      PD_TRACE_EXITRC ( COORD_CRTIDX_PARSEMSG, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDCREATEIDX_GENCATAMSG, "rtnCoordCMDCreateIndex::_generateCataMsg" )
-   INT32 rtnCoordCMDCreateIndex::_generateCataMsg( MsgHeader *pMsg,
-                                                   pmdEDUCB *cb,
-                                                   _rtnCMDArguments *pArgs,
-                                                   CHAR **ppMsgBuf,
-                                                   MsgHeader **ppCataMsg )
+   INT32 _coordCMDCreateIndex::_generateCataMsg( MsgHeader *pMsg,
+                                                 pmdEDUCB *cb,
+                                                 coordCMDArguments *pArgs,
+                                                 CHAR **ppMsgBuf,
+                                                 INT32 *pBufSize )
    {
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDCREATEIDX_GENCATAMSG ) ;
-
       pMsg->opCode = MSG_CAT_CREATE_IDX_REQ ;
-      (*ppCataMsg) = pMsg ;
-
-      PD_TRACE_EXIT ( CMD_RTNCOCMDCREATEIDX_GENCATAMSG ) ;
-
+      *ppMsgBuf = pMsg ;
+      *pBufSize = pMsg->messageLength ;
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDCREATEIDX_GENROLLBACKMSG, "rtnCoordCMDCreateIndex::_generateRollbackDataMsg" )
-   INT32 rtnCoordCMDCreateIndex::_generateRollbackDataMsg ( MsgHeader *pMsg,
-                                                            _rtnCMDArguments *pArgs,
-                                                            CHAR **ppMsgBuf,
-                                                            MsgHeader **ppRollbackMsg )
+   void _coordCMDCreateIndex::_releaseCataMsg( CHAR *pMsgBuf,
+                                               INT32 bufSize,
+                                               pmdEDUCB *cb )
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_CRTIDX_GENROLLBACKMSG, "_coordCMDCreateIndex::_generateRollbackDataMsg" )
+   INT32 _coordCMDCreateIndex::_generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                          pmdEDUCB *cb,
+                                                          coordCMDArguments *pArgs,
+                                                          CHAR **ppMsgBuf,
+                                                          INT32 *pBufSize )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_CRTIDX_GENROLLBACKMSG ) ;
 
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDCREATEIDX_GENROLLBACKMSG ) ;
-
-      INT32 bufSize = 0 ;
-
-      _rtnCMDCreateIndexArgs *pSelfArgs = ( _rtnCMDCreateIndexArgs * ) pArgs ;
-
-      rc = msgBuildDropIndexMsg( ppMsgBuf, &bufSize,
-                                 pSelfArgs->_targetName.c_str(),
-                                 pSelfArgs->_indexName.c_str(), 0 ) ;
-      PD_RC_CHECK ( rc, PDWARNING,
-                    "Failed to rollback %s on [%s]: "
-                    "failed to build drop index message, rc: %d",
-                    _getCommandName(), pSelfArgs->_targetName.c_str(), rc ) ;
-
-      (*ppRollbackMsg) = (MsgHeader *)(*ppMsgBuf) ;
+      rc = msgBuildDropIndexMsg( ppMsgBuf, pBufSize,
+                                 pArgs->_targetName.c_str(),
+                                 _indexName.c_str(), 0,
+                                 cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build rollback message on "
+                 "command[%s, target:%s, IndexName:%s] failed, rc: %d",
+                 getName(), pArgs->_targetName.c_str(),
+                 _indexName.c_str(), rc ) ;
+         goto error ;
+      }
 
    done :
-      PD_TRACE_EXITRC ( CMD_RTNCOCMDCREATEIDX_GENROLLBACKMSG, rc ) ;
+      PD_TRACE_EXITRC ( COORD_CRTIDX_GENROLLBACKMSG, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDCREATEIDX_ROLLBACK, "rtnCoordCMDCreateIndex::_rollbackOnDataGroup" )
-   INT32 rtnCoordCMDCreateIndex::_rollbackOnDataGroup ( MsgHeader *pMsg,
-                                                        pmdEDUCB *cb,
-                                                        _rtnCMDArguments *pArgs,
-                                                        const CoordGroupList &groupLst )
+   void _coordCMDCreateIndex::_releaseRollbackDataMsg( CHAR *pMsgBuf,
+                                                       INT32 bufSize,
+                                                       pmdEDUCB *cb )
+   {
+      if ( pMsgBuf )
+      {
+         msgReleaseBuffer( pMsgBuf, cb ) ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_CRTIDX_ROLLBACKONDATA, "_coordCMDCreateIndex::_rollbackOnDataGroup" )
+   INT32 _coordCMDCreateIndex::_rollbackOnDataGroup ( MsgHeader *pMsg,
+                                                      pmdEDUCB *cb,
+                                                      coordCMDArguments *pArgs,
+                                                      const CoordGroupList &groupLst )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_CRTIDX_ROLLBACKONDATA ) ;
 
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDCREATEIDX_ROLLBACK ) ;
-
-      CoordCataInfoPtr cataInfo ;
+      CoordCataInfoPtr cataPtr ;
       SET_RC ignoreRC ;
 
-      // let's get most current version again
-      rc = rtnCoordGetCataInfo( cb, pArgs->_targetName.c_str(), FALSE, cataInfo ) ;
-      PD_RC_CHECK( rc, PDWARNING,
-                   "Failed to rollback %s on [%s]: "
-                   "catalog info for collection[%s] failed, rc: %d)",
-                   _getCommandName(), pArgs->_targetName.c_str(),
-                   pArgs->_targetName.c_str(), rc ) ;
-      PD_CHECK( !cataInfo->isMainCL(),
-                SDB_OK, error, PDWARNING,
-                "Failed to rollback %s on [%s]:"
-                "main-collection create index failed and will not rollback",
-                _getCommandName(), pArgs->_targetName.c_str() ) ;
+      rc = _pResource->getOrUpdateCataInfo( pArgs->_targetName.c_str(),
+                                            cataPtr, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Get or update collection[%s]'s catalog info "
+                 "failed on command[%s, IndexName:%s], rc: %d",
+                 pArgs->_targetName.c_str(), getName(),
+                 _indexName.c_str(), rc ) ;
+         goto error ;
+      }
 
+      if ( cataPtr->isMainCL() )
+      {
+         PD_LOG( PDWARNING, "Main collection[%s] create index[%s] failed "
+                 "but not rollback", pArgs->_targetName.c_str(),
+                 _indexName.c_str() ) ;
+         goto done ;
+      }
+
+      /// rollback
       ignoreRC.insert( SDB_IXM_NOTEXIST ) ;
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
                         FALSE, &groupLst, &ignoreRC, NULL,
                         NULL, pArgs->_pBuf ) ;
-      PD_RC_CHECK( rc, PDWARNING,
-                   "Failed to rollback %s on [%s], rc: %d",
-                   _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rollback command[%s, target:%s, Index:%s] failed, "
+                 "rc: %d", getName(), pArgs->_targetName.c_str(),
+                 _indexName.c_str(), rc ) ;
+         goto error ;
+      }
 
    done :
-      PD_TRACE_EXITRC ( CMD_RTNCOCMDCREATEIDX_ROLLBACK, rc ) ;
+      PD_TRACE_EXITRC ( COORD_CRTIDX_ROLLBACKONDATA, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
    /*
-    * rtnCoordCMDDropIndex define
-    */
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDDROPIDX_PARSEMSG, "rtnCoordCMDDropIndex::_parseMsg" )
-   INT32 rtnCoordCMDDropIndex::_parseMsg ( MsgHeader *pMsg,
-                                           _rtnCMDArguments *pArgs )
+      _coordCMDDropIndex define
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDDropIndex,
+                                      CMD_NAME_DROP_INDEX,
+                                      FALSE ) ;
+   _coordCMDDropIndex::_coordCMDDropIndex()
+   {
+   }
+
+   _coordCMDDropIndex::~_coordCMDDropIndex()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_DROPIDX_PARSEMSG, "_coordCMDDropIndex::_parseMsg" )
+   INT32 _coordCMDDropIndex::_parseMsg ( MsgHeader *pMsg,
+                                         coordCMDArguments *pArgs )
    {
       INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDDROPIDX_PARSEMSG ) ;
+      PD_TRACE_ENTRY ( COORD_DROPIDX_PARSEMSG ) ;
 
       try
       {
-         string clName ;
-
          rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION,
-                                      clName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s: failed to get the field [%s] from query",
-                      _getCommandName(), CAT_COLLECTION ) ;
-         PD_CHECK( !clName.empty(),
-                   SDB_INVALIDARG, error, PDERROR,
-                   "Failed to %s: collection name can't be empty!",
-                   _getCommandName() ) ;
-
-         pArgs->_targetName = clName ;
+                                      pArgs->_targetName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_COLLECTION, getName(), rc ) ;
+            goto error ;
+         }
+         if ( pArgs->_targetName.empty() )
+         {
+            PD_LOG( PDERROR, "Collection name is empty in command[%s]",
+                    getName() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       catch( std::exception &e )
       {
@@ -2485,26 +2805,31 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( CMD_RTNCOCMDDROPIDX_PARSEMSG, rc ) ;
+      PD_TRACE_EXITRC ( COORD_DROPIDX_PARSEMSG, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDDROPIDX_GENCATAMSG, "rtnCoordCMDDropIndex::_generateCataMsg" )
-   INT32 rtnCoordCMDDropIndex::_generateCataMsg( MsgHeader *pMsg,
-                                                 pmdEDUCB *cb,
-                                                 _rtnCMDArguments *pArgs,
-                                                 CHAR **ppMsgBuf,
-                                                 MsgHeader **ppCataMsg )
+   INT32 _coordCMDDropIndex::_generateCataMsg( MsgHeader *pMsg,
+                                               pmdEDUCB *cb,
+                                               coordCMDArguments *pArgs,
+                                               CHAR **ppMsgBuf,
+                                               INT32 *pBufSize )
    {
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDDROPIDX_GENCATAMSG ) ;
-
       pMsg->opCode = MSG_CAT_DROP_IDX_REQ ;
-      (*ppCataMsg) = pMsg ;
-
-      PD_TRACE_EXIT ( CMD_RTNCOCMDDROPIDX_GENCATAMSG ) ;
+      *ppMsgBuf = (CHAR*)pMsg ;
+      *pBufSize = pMsg->messageLength ;
 
       return SDB_OK ;
    }
+
+   void _coordCMDDropIndex::_releaseCataMsg( CHAR *pMsgBuf,
+                                             INT32 bufSize,
+                                             pmdEDUCB *cb )
+   {
+   }
+
 }
+
+

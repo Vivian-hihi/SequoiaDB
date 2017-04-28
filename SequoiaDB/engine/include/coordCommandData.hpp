@@ -143,55 +143,88 @@ namespace engine
    typedef _coordDataCMD3Phase coordDataCMD3Phase ;
 
    /*
-      _coordCMDCreateDomain define
+      _coordCMDTestCollectionSpace define
    */
-   class _coordCMDCreateDomain : public _coordCommandBase
+   class _coordCMDTestCollectionSpace : public _coordCommandBase
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:
-         _coordCMDCreateDomain() ;
-         virtual ~_coordCMDCreateDomain() ;
+         _coordCMDTestCollectionSpace() ;
+         virtual ~_coordCMDTestCollectionSpace() ;
 
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
    } ;
-   typedef _coordCMDCreateDomain coordCMDCreateDomain ;
+   typedef _coordCMDTestCollectionSpace coordCMDTestCollectionSpace ;
 
    /*
-      _coordCMDDropDomain define
+      _coordCMDTestCollection define
    */
-   class _coordCMDDropDomain : public _coordCommandBase
+   class _coordCMDTestCollection : public _coordCommandBase
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:
-         _coordCMDDropDomain() ;
-         virtual ~_coordCMDDropDomain() ;
+         _coordCMDTestCollection() ;
+         virtual ~_coordCMDTestCollection() ;
 
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
    } ;
-   typedef _coordCMDDropDomain coordCMDDropDomain ;
+   typedef _coordCMDTestCollection coordCMDTestCollection ;
 
    /*
-      _coordCMDAlterDomain define
+      _coordCmdWaitTask define
    */
-   class _coordCMDAlterDomain : public _coordCommandBase
+   class _coordCmdWaitTask : public _coordCommandBase
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:
-         _coordCMDAlterDomain() ;
-         virtual ~_coordCMDAlterDomain() ;
+         _coordCmdWaitTask() ;
+         virtual ~_coordCmdWaitTask() ;
 
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
    } ;
-   typedef _coordCMDAlterDomain coordCMDAlterDomain ;
+   typedef _coordCmdWaitTask coordCmdWaitTask ;
+
+   /*
+      _coordCmdCancelTask define
+   */
+   class _coordCmdCancelTask : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCmdCancelTask() ;
+         virtual ~_coordCmdCancelTask() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCmdCancelTask coordCmdCancelTask ;
+
+   /*
+      _coordCMDTruncate define
+   */
+   class _coordCMDTruncate : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDTruncate() ;
+         virtual ~_coordCMDTruncate() ;
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDTruncate coordCMDTruncate ;
 
    /*
       _coordCMDCreateCollectionSpace define
@@ -586,80 +619,100 @@ namespace engine
    typedef _coordCMDSplit coordCMDSplit ;
 
    /*
-    * rtnCoordCMDCreateIndex define
-    */
-   class rtnCoordCMDCreateIndex : public rtnCoordDataCMD2Phase
+      _coordCMDCreateIndex define
+   */
+   class _coordCMDCreateIndex : public _coordDataCMD2Phase
    {
-   protected :
-      class _rtnCMDCreateIndexArgs : public _rtnCMDArguments
-      {
-      public :
-         _rtnCMDCreateIndexArgs () {}
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDCreateIndex() ;
+         virtual ~_coordCMDCreateIndex() ;
 
-         virtual ~_rtnCMDCreateIndexArgs () {}
+      protected :
 
-         /* Name of the index, used by createIdx */
-         string _indexName ;
-      } ;
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
 
-   protected :
-      virtual _rtnCMDArguments *_generateArguments () ;
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
 
-      virtual INT32 _parseMsg ( MsgHeader *pMsg,
-                                _rtnCMDArguments *pArgs ) ;
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
 
-      virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
-                                       pmdEDUCB *cb,
-                                       _rtnCMDArguments *pArgs,
-                                       CHAR **ppMsgBuf,
-                                       MsgHeader **ppCataMsg ) ;
+         virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                  pmdEDUCB *cb,
+                                                  coordCMDArguments *pArgs,
+                                                  CHAR **ppMsgBuf,
+                                                  INT32 *pBufSize ) ;
 
-      virtual INT32 _generateRollbackDataMsg ( MsgHeader *pMsg,
-                                               _rtnCMDArguments *pArgs,
-                                               CHAR **ppMsgBuf,
-                                               MsgHeader **ppRollbackMsg ) ;
+         virtual void  _releaseRollbackDataMsg( CHAR *pMsgBuf,
+                                                INT32 bufSize,
+                                                pmdEDUCB *cb ) ;
 
-      virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
-                                           pmdEDUCB *cb,
-                                           _rtnCMDArguments *pArgs,
-                                           const CoordGroupList &groupLst ) ;
+         virtual INT32 _rollbackOnDataGroup ( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              coordCMDArguments *pArgs,
+                                              const CoordGroupList &groupLst ) ;
 
-      virtual const CHAR *_getCommandName () const
-      { return CMD_NAME_CREATE_INDEX ; }
+      protected :
+         /*
+            update catalog info before send command to Data Groups
+         */
+         virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
 
-   protected :
-      /* update catalog info before send command to Data Groups */
-      virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+         /*
+            use group in Coord cache, since we only have short-term
+            locks in Catalog
+         */
+         virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
 
-      /* use group in Coord cache, since we only have short-term locks in Catalog */
-      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
+      protected:
+         string                  _indexName ;
    } ;
+   typedef _coordCMDCreateIndex coordCMDCreateIndex ;
 
    /*
-    * rtnCoordCMDDropIndex define
-    */
-   class rtnCoordCMDDropIndex : public rtnCoordDataCMD2Phase
+      _coordCMDDropIndex define
+   */
+   class _coordCMDDropIndex : public _coordDataCMD2Phase
    {
-   protected :
-      virtual INT32 _parseMsg ( MsgHeader *pMsg,
-                                _rtnCMDArguments *pArgs ) ;
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDDropIndex() ;
+         virtual ~_coordCMDDropIndex() ;
+      protected :
+         virtual INT32 _parseMsg ( MsgHeader *pMsg,
+                                   coordCMDArguments *pArgs ) ;
 
-      virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
-                                       pmdEDUCB *cb,
-                                       _rtnCMDArguments *pArgs,
-                                       CHAR **ppMsgBuf,
-                                       MsgHeader **ppCataMsg ) ;
+         virtual INT32 _generateCataMsg ( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          coordCMDArguments *pArgs,
+                                          CHAR **ppMsgBuf,
+                                          INT32 *pBufSize ) ;
 
-      virtual const CHAR *_getCommandName () const
-      { return CMD_NAME_DROP_INDEX ; }
+         virtual void  _releaseCataMsg( CHAR *pMsgBuf,
+                                        INT32 bufSize,
+                                        pmdEDUCB *cb ) ;
 
-   protected :
-      /* update catalog info before send command to Data Groups */
-      virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
+      protected :
+         /*
+            update catalog info before send command to Data Groups
+         */
+         virtual BOOLEAN _flagUpdateBeforeData () { return TRUE ; }
 
-      /* use group in Coord cache, since we only have short-term locks in Catalog */
-      virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
+         /*
+            use group in Coord cache, since we only have short-term
+            locks in Catalog
+         */
+         virtual BOOLEAN _flagUseGrpLstInCoord () { return TRUE ; }
+
    } ;
+   typedef _coordCMDDropIndex coordCMDDropIndex ;
+
 }
 
 #endif // COORD_COMMAND_DATA_HPP__

@@ -14,9 +14,9 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = coordCommands.hpp
+   Source File Name = coordCommandDomain.hpp
 
-   Descriptive Name = Coord Commands
+   Descriptive Name = Coord Commands for Data Manager
 
    When/how to use: this program may be used on binary and text-formatted
    versions of runtime component. This file contains code logic for
@@ -29,16 +29,15 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          04/20/2017  XJH Init
+          04/27/2017  XJH Init
    Last Changed =
 
 *******************************************************************************/
 
-#ifndef COORD_COMMANDS_HPP__
-#define COORD_COMMANDS_HPP__
+#ifndef COORD_COMMAND_DOMAIN_HPP__
+#define COORD_COMMAND_DOMAIN_HPP__
 
 #include "coordCommandBase.hpp"
-#include "coordFactory.hpp"
 
 using namespace bson ;
 
@@ -46,22 +45,56 @@ namespace engine
 {
 
    /*
-      _coordCMDSetSessionAttr define
+      _coordCMDCreateDomain define
    */
-   class _coordCMDSetSessionAttr : public _coordCommandBase
+   class _coordCMDCreateDomain : public _coordCommandBase
    {
       COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:
-         _coordCMDSetSessionAttr() ;
-         virtual ~_coordCMDSetSessionAttr() ;
+         _coordCMDCreateDomain() ;
+         virtual ~_coordCMDCreateDomain() ;
 
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
    } ;
-   typedef _coordCMDSetSessionAttr coordCMDSetSessionAttr ;
+   typedef _coordCMDCreateDomain coordCMDCreateDomain ;
+
+   /*
+      _coordCMDDropDomain define
+   */
+   class _coordCMDDropDomain : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDDropDomain() ;
+         virtual ~_coordCMDDropDomain() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDDropDomain coordCMDDropDomain ;
+
+   /*
+      _coordCMDAlterDomain define
+   */
+   class _coordCMDAlterDomain : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDAlterDomain() ;
+         virtual ~_coordCMDAlterDomain() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDAlterDomain coordCMDAlterDomain ;
 
 }
 
-#endif // COORD_COMMANDS_HPP__
+#endif // COORD_COMMAND_DOMAIN_HPP__
