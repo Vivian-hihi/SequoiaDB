@@ -1248,42 +1248,46 @@ namespace engine
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDUNLINKCL_PARSEMSG, "rtnCoordCMDUnlinkCollection::_parseMsg" )
-   INT32 rtnCoordCMDUnlinkCollection::_parseMsg ( MsgHeader *pMsg,
-                                                  _rtnCMDArguments *pArgs )
+   // PD_TRACE_DECLARE_FUNCTION( COORD_UNLINKCL_PARSEMSG, "_coordCMDUnlinkCollection::_parseMsg" )
+   INT32 _coordCMDUnlinkCollection::_parseMsg ( MsgHeader *pMsg,
+                                                coordCMDArguments *pArgs )
    {
       INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_PARSEMSG ) ;
-
-      _rtnCMDUnlinkCLArgs *pSelfArgs = ( _rtnCMDUnlinkCLArgs * )pArgs ;
+      PD_TRACE_ENTRY ( COORD_UNLINKCL_PARSEMSG ) ;
 
       try
       {
-         string mainCLName, subCLName ;
+         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_SUBCL_NAME,
+                                      _subCLName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_SUBCL_NAME, getName(), rc ) ;
+            goto error ;
+         }
+         if ( _subCLName.empty() )
+         {
+            PD_LOG( PDERROR, "Sub collection name is empty in command[%s]",
+                    getName() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
 
-         rc = rtnGetSTDStringElement( pSelfArgs->_boQuery, CAT_SUBCL_NAME,
-                                      subCLName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s: failed to get the field [%s] from query",
-                      _getCommandName(), CAT_SUBCL_NAME ) ;
-         PD_CHECK( !subCLName.empty(),
-                   SDB_INVALIDARG, error, PDERROR,
-                   "Failed to %s: sub-collection name can't be empty!",
-                   _getCommandName() ) ;
-
-         rc = rtnGetSTDStringElement( pSelfArgs->_boQuery, CAT_COLLECTION_NAME,
-                                      mainCLName ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to %s: failed to get the field [%s] from query",
-                      _getCommandName(), CAT_COLLECTION_NAME ) ;
-         PD_CHECK( !mainCLName.empty(),
-                   SDB_INVALIDARG, error, PDERROR,
-                   "Failed to %s: main-collection name can't be empty!",
-                   _getCommandName() ) ;
-
-         pSelfArgs->_targetName = mainCLName ;
-         pSelfArgs->_subCLName = subCLName ;
+         rc = rtnGetSTDStringElement( pArgs->_boQuery, CAT_COLLECTION_NAME,
+                                      pArgs->_targetName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
+                    CAT_COLLECTION_NAME, getName(), rc ) ;
+            goto error ;
+         }
+         if ( pArgs->_targetName.empty() )
+         {
+            PD_LOG( PDERROR, "Collection name is empty in command[%s]",
+                    getName() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       catch( std::exception &e )
       {
@@ -1293,143 +1297,179 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( CMD_RTNCOCMDUNLINKCL_PARSEMSG, rc ) ;
+      PD_TRACE_EXITRC ( COORD_UNLINKCL_PARSEMSG, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDUNLINKCL_GENCATAMSG, "rtnCoordCMDUnlinkCollection::_generateCataMsg" )
-   INT32 rtnCoordCMDUnlinkCollection::_generateCataMsg ( MsgHeader *pMsg,
-                                                         pmdEDUCB *cb,
-                                                         _rtnCMDArguments *pArgs,
-                                                         CHAR **ppMsgBuf,
-                                                         MsgHeader **ppCataMsg )
+   INT32 _coordCMDUnlinkCollection::_generateCataMsg ( MsgHeader *pMsg,
+                                                       pmdEDUCB *cb,
+                                                       coordCMDArguments *pArgs,
+                                                       CHAR **ppMsgBuf,
+                                                       INT32 *pBufSize )
    {
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_GENCATAMSG ) ;
-
       pMsg->opCode = MSG_CAT_UNLINK_CL_REQ ;
-      (*ppCataMsg) = pMsg ;
-
-      PD_TRACE_EXIT ( CMD_RTNCOCMDUNLINKCL_GENCATAMSG ) ;
+      *ppMsgBuf = (CHAR*)pMsg ;
+      *pBufSize = pMsg->messageLength ;
 
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDUNLINKCL_GENROLLBACKMSG, "rtnCoordCMDUnlinkCollection::_generateRollbackDataMsg" )
-   INT32 rtnCoordCMDUnlinkCollection::_generateRollbackDataMsg ( MsgHeader *pMsg,
-                                                                 _rtnCMDArguments *pArgs,
-                                                                 CHAR **ppMsgBuf,
-                                                                 MsgHeader **ppRollbackMsg )
+   void _coordCMDUnlinkCollection::_releaseCataMsg( CHAR *pMsgBuf,
+                                                    INT32 bufSize,
+                                                    pmdEDUCB *cb )
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_UNLINKCL_GENROLLBACKMSG, "_coordCMDUnlinkCollection::_generateRollbackDataMsg" )
+   INT32 _coordCMDUnlinkCollection::_generateRollbackDataMsg ( MsgHeader *pMsg,
+                                                               pmdEDUCB *cb,
+                                                               coordCMDArguments *pArgs,
+                                                               CHAR **ppMsgBuf,
+                                                               INT32 *pBufSize  )
    {
       INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_GENROLLBACKMSG ) ;
-
-      INT32 bufSize = 0 ;
-
-      _rtnCMDUnlinkCLArgs *pSelfArgs = ( _rtnCMDUnlinkCLArgs * )pArgs ;
+      PD_TRACE_ENTRY ( COORD_UNLINKCL_GENROLLBACKMSG ) ;
 
       // The Data Group doesn't care about lowBound and upBound
-      rc = msgBuildLinkCLMsg( ppMsgBuf, &bufSize,
-                              pSelfArgs->_targetName.c_str(),
-                              pSelfArgs->_subCLName.c_str(),
-                              NULL, NULL, 0 ) ;
-      PD_RC_CHECK ( rc, PDWARNING,
-                    "Failed to rollback %s on [%s/%s]: "
-                    "failed to build link message, rc: %d",
-                    _getCommandName(),
-                    pSelfArgs->_targetName.c_str(),
-                    pSelfArgs->_subCLName.c_str(),
-                    rc ) ;
-
-      (*ppRollbackMsg) = (MsgHeader *)(*ppMsgBuf) ;
+      rc = msgBuildLinkCLMsg( ppMsgBuf, &pBufSize,
+                              pArgs->_targetName.c_str(),
+                              _subCLName.c_str(),
+                              NULL, NULL, 0, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build rollback message on "
+                 "command[%s, target:%s, sub:%s] failed, rc: %d",
+                 getName(), pArgs->_targetName.c_str(),
+                 _subCLName.c_str(), rc ) ;
+         goto error ;
+      }
 
    done :
-      PD_TRACE_EXITRC ( CMD_RTNCOCMDUNLINKCL_GENROLLBACKMSG, rc ) ;
+      PD_TRACE_EXITRC ( COORD_UNLINKCL_GENROLLBACKMSG, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDUNLINKCL_ROLLBACK, "rtnCoordCMDUnlinkCollection::_rollbackOnDataGroup" )
-   INT32 rtnCoordCMDUnlinkCollection::_rollbackOnDataGroup ( MsgHeader *pMsg,
-                                                             pmdEDUCB *cb,
-                                                             _rtnCMDArguments *pArgs,
-                                                             const CoordGroupList &groupLst )
+   void _coordCMDUnlinkCollection::_releaseRollbackDataMsg( CHAR *pMsgBuf,
+                                                            INT32 bufSize,
+                                                            pmdEDUCB *cb )
+   {
+      if ( pMsgBuf )
+      {
+         msgReleaseBuffer( pMsgBuf, cb ) ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_UNLINKCL_ROLLBACKONDATA, "_coordCMDUnlinkCollection::_rollbackOnDataGroup" )
+   INT32 _coordCMDUnlinkCollection::_rollbackOnDataGroup ( MsgHeader *pMsg,
+                                                           pmdEDUCB *cb,
+                                                           coordCMDArguments *pArgs,
+                                                           const CoordGroupList &groupLst )
    {
       INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY ( CMD_RTNCOCMDUNLINKCL_ROLLBACK ) ;
+      PD_TRACE_ENTRY ( COORD_UNLINKCL_ROLLBACKONDATA ) ;
 
       rc = executeOnCL( pMsg, cb, pArgs->_targetName.c_str(),
                         TRUE, &groupLst, &(pArgs->_ignoreRCList), NULL,
                         NULL, pArgs->_pBuf ) ;
-      PD_RC_CHECK( rc, PDWARNING,
-                   "Failed to rollback %s on [%s], rc: %d",
-                   _getCommandName(), pArgs->_targetName.c_str(), rc ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Rollback command[%s, target:%s, sub:%s] on data "
+                 "group failed, rc: %d", getName(),
+                 pArgs->_targetName.c_str(),
+                 _subCLName.c_str(), rc ) ;
+         goto error ;
+      }
 
    done :
-      PD_TRACE_EXITRC ( CMD_RTNCOCMDUNLINKCL_ROLLBACK, rc ) ;
+      PD_TRACE_EXITRC ( COORD_UNLINKCL_ROLLBACKONDATA, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
    /*
-    * rtnCoordCMDSplit implement
-    */
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP_GETCLCOUNT, "rtnCoordCMDSplit::_getCLCount" )
-   INT32 rtnCoordCMDSplit::_getCLCount( const CHAR * clFullName,
-                                       CoordGroupList & groupList,
-                                       pmdEDUCB *cb,
-                                       UINT64 & count,
-                                       rtnContextBuf *buf )
+      _coordCMDSplit implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSplit,
+                                      CMD_NAME_SPLIT,
+                                      FALSE ) ;
+   _coordCMDSplit::_coordCMDSplit()
+   {
+      _async = FALSE ;
+      _percent = 0.0 ;
+   }
+
+   _coordCMDSplit::~_coordCMDSplit()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_SPLIT_GETCOUNT, "_coordCMDSplit::_getCLCount" )
+   INT32 _coordCMDSplit::_getCLCount( const CHAR *clFullName,
+                                      const CoordGroupList &groupList,
+                                      pmdEDUCB *cb,
+                                      UINT64 &count,
+                                      rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_SPLIT_GETCOUNT ) ;
 
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSP_GETCLCOUNT ) ;
-
-      pmdKRCB *pKRCB = pmdGetKRCB () ;
-      SDB_RTNCB *pRtncb = pKRCB->getRTNCB() ;
-      rtnContext *pContext = NULL ;
-      count = 0 ;
-      CoordGroupList tmpGroupList = groupList ;
-
+      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
+      rtnContextCoord *pContext = NULL ;
       BSONObj collectionObj ;
       BSONObj dummy ;
       rtnContextBuf buffObj ;
 
+      CHAR *pMsg = NULL ;
+      INT32 bufSize = 0 ;
+
+      count = 0 ;
+
       collectionObj = BSON( FIELD_NAME_COLLECTION << clFullName ) ;
+      rtnQueryOptions queryOption( dummy, dummy, dummy, collectionObj,
+                                   CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
+                                   0, 1, FLG_QUERY_WITH_RETURNDATA ) ;
 
-      // send getcount to node
-      rc = rtnCoordNodeQuery( CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
-                              dummy, dummy, dummy, collectionObj,
-                              0, 1, tmpGroupList, cb, &pContext,
-                              clFullName, 0, buf ) ;
+      rc = queryOption->toQueryMsg( &pMsg, &bufSize, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build get count message failed in command[%s], "
+                 "rc: %d", getName(), rc ) ;
+         goto error ;
+      }
 
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to get count from source node, rc: %d",
-                    rc ) ;
+      rc = queryOnCL( (MsgHeader*)pMsg, cb, clFullName, &pContext,
+                      FALSE, &groupList, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Get count from source node failed, collection:%s, "
+                 "rc: %d", clFullName, rc ) ;
+         goto error ;
+      }
 
       rc = pContext->getMore( -1, buffObj, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR,
-                 "Failed to get count from source node: get-more failed, rc: %d",
-                 rc ) ;
+         PD_LOG( PDERROR, "Get more from context[%lld] failed, rc: %d",
+                 pContext->contextID(), rc ) ;
          goto error ;
       }
       else
       {
          // get count data
          BSONObj countObj ( buffObj.data() ) ;
-         BSONElement beTotal = countObj.getField( FIELD_NAME_TOTAL );
-         PD_CHECK( beTotal.isNumber(), SDB_INVALIDARG, error,
-                   PDERROR,
-                   "Failed to get count from source node, "
-                   "failed to get the field [%s]",
-                   FIELD_NAME_TOTAL ) ;
+         BSONElement beTotal = countObj.getField( FIELD_NAME_TOTAL ) ;
+         if ( !beTotal.isNumber() )
+         {
+            PD_LOG( PDERROR, "Parse get count result[%s] failed, "
+                    "the field[%s] is not number",
+                    countObj.toString().c_str(), FIELD_NAME_TOTAL ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
          count = beTotal.numberLong() ;
       }
 
@@ -1439,418 +1479,594 @@ namespace engine
          SINT64 contextID = pContext->contextID() ;
          pRtncb->contextDelete ( contextID, cb ) ;
       }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSP_GETCLCOUNT, rc ) ;
+      if ( pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+      PD_TRACE_EXITRC ( COORD_SPLIT_GETCOUNT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP_EXE, "rtnCoordCMDSplit::execute" )
-   INT32 rtnCoordCMDSplit::execute( MsgHeader *pMsg,
-                                    pmdEDUCB *cb,
-                                    INT64 &contextID,
-                                    rtnContextBuf *buf )
+   INT32 _coordCMDSplit::_splitPrepare( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        INT64 &contextID,
+                                        rtnContextBuf *buf )
    {
-      INT32 rc                         = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSP_EXE ) ;
-      pmdKRCB *pKRCB                   = pmdGetKRCB () ;
-      SDB_RTNCB *pRtncb                = pKRCB->getRTNCB() ;
-      CoordCB *pCoordcb                = pKRCB->getCoordCB () ;
-      contextID                        = -1 ;
-
-      CHAR *pCommandName               = NULL ;
-      CHAR *pQuery                     = NULL ;
-
-      CHAR szSource [ OSS_MAX_GROUPNAME_SIZE + 1 ] = {0} ;
-      CHAR szTarget [ OSS_MAX_GROUPNAME_SIZE + 1 ] = {0} ;
-      const CHAR *strName              = NULL ;
-      CHAR *splitReadyBuffer           = NULL ;
-      INT32 splitReadyBufferSz         = 0 ;
-      CHAR *splitQueryBuffer           = NULL ;
-      INT32 splitQueryBufferSz         = 0 ;
-      MsgOpQuery *pSplitQuery          = NULL ;
-      UINT64 taskID                    = CLS_INVALID_TASKID ;
-      BOOLEAN async                    = FALSE ;
-      BSONObj taskInfoObj ;
-
-      BSONObj boShardingKey ;
-      CoordCataInfoPtr cataInfo ;
-      BSONObj boKeyStart ;
-      BSONObj boKeyEnd ;
-      FLOAT64 percent = 0.0 ;
+      INT32 rc = SDB_OK ;
+      CHAR *pQuery = NULL ;
+      CoordGroupList &srcGrpLst ;
 
       // first round we perform prepare, so catalog node is able to do sanity
       // check for collection name and nodes
       MsgOpQuery *pSplitReq            = (MsgOpQuery *)pMsg ;
       pSplitReq->header.opCode         = MSG_CAT_SPLIT_PREPARE_REQ ;
 
-      CoordGroupList groupLst ;
-      vector<BSONObj> boRecv ;
-      CoordGroupList groupDstLst ;
-
-      INT32 preferedType = 0 ;
-
-      if ( cb->getCoordSession() &&
-           PREFER_REPL_MASTER != cb->getCoordSession()->getPreferReplType() )
+      rc = executeOnCataGroup ( pMsg, cb, &srcGrpLst, NULL, TRUE,
+                                NULL, buf ) ;
+      if ( rc )
       {
-         preferedType = cb->getCoordSession()->getPreferReplType() ;
-         cb->getCoordSession()->setPreferReplType( PREFER_REPL_MASTER ) ;
+         PD_LOG( PDERROR, "Split prepare on catalog failed, rc: %d", rc ) ;
+         goto error ;
       }
 
-      /******************************************************************
-       *              PREPARE PHASE                                     *
-       ******************************************************************/
-      // send request to catalog
-      rc = executeOnCataGroup ( pMsg, cb, &groupLst, NULL, TRUE,
-                                NULL, NULL, buf ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Split failed on catalog, rc: %d", rc ) ;
-
-      // here, in groupLst there should be one and only one group, for SOURCE
-      // send request to data-node to find the partitioning key
-      // Extract the SplitQuery Field and build a query request to send to data
-      // node
-      rc = msgExtractQuery ( (CHAR*)pSplitReq, NULL, &pCommandName,
+      rc = msgExtractQuery ( (CHAR*)pMsg, NULL, NULL,
                              NULL, NULL, &pQuery,
                              NULL, NULL, NULL ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to extract query, rc: %d", rc ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Extract split message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
       try
       {
-         /***************************************************************
-          *             DO SOME VALIDATION HERE                         *
-          ***************************************************************/
-         BSONObj boQuery ( pQuery ) ;
-
-         // get collection name and query
-         BSONElement beName = boQuery.getField ( CAT_COLLECTION_NAME ) ;
-         BSONElement beSplitQuery =
-               boQuery.getField ( CAT_SPLITQUERY_NAME ) ;
-         BSONElement beSplitEndQuery ;
-         BSONElement beSource = boQuery.getField ( CAT_SOURCE_NAME ) ;
-         BSONElement beTarget = boQuery.getField ( CAT_TARGET_NAME ) ;
-         BSONElement beAsync  = boQuery.getField ( FIELD_NAME_ASYNC ) ;
-         percent = boQuery.getField( CAT_SPLITPERCENT_NAME ).numberDouble() ;
-         // collection name verify
-         PD_CHECK ( !beName.eoo() && beName.type () == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "Failed to process split prepare, unable to find "
-                    "collection name field" ) ;
-         // now strName is the name of collection
-         strName = beName.valuestr() ;
-         // get source group name
-         PD_CHECK ( !beSource.eoo() && beSource.type() == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "Unable to find source field" ) ;
-         rc = catGroupNameValidate ( beSource.valuestr() ) ;
-         PD_CHECK ( SDB_OK == rc, SDB_INVALIDARG, error, PDERROR,
-                    "Source name is not valid: %s",
-                    beSource.valuestr() ) ;
-         ossStrncpy ( szSource, beSource.valuestr(), sizeof(szSource) ) ;
-
-         // get target group name
-         PD_CHECK ( !beTarget.eoo() && beTarget.type() == String,
-                    SDB_INVALIDARG, error, PDERROR,
-                    "Unable to find target field" ) ;
-         rc = catGroupNameValidate ( beTarget.valuestr() ) ;
-         PD_CHECK ( SDB_OK == rc, SDB_INVALIDARG, error, PDERROR,
-                    "Target name is not valid: %s",
-                    beTarget.valuestr() ) ;
-         ossStrncpy ( szTarget, beTarget.valuestr(), sizeof(szTarget) ) ;
-
-         // async check
-         if ( Bool == beAsync.type() )
+         BSONObj obj( pQuery ) ;
+         rc = _splitParamCheck( obj, cb ) ;
+         if ( rc )
          {
-            async = beAsync.Bool() ? TRUE : FALSE ;
+            goto error ;
          }
-         else if ( !beAsync.eoo() )
+
+         rc = _makeSplitRange( cb, srcGrpLst, buf ) ;
+         if ( rc )
          {
-            PD_LOG( PDERROR, "Field[%s] type[%d] error", FIELD_NAME_ASYNC,
-                    beAsync.type() ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDSplit::_splitParamCheck( const BSONObj &obj,
+                                           pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONElement ele ;
+
+      ele = obj.getField ( CAT_COLLECTION_NAME ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG( PDERROR, "Collection name is invalid in object[%s]",
+                 obj.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _clName = ele.valuestr() ;
+
+      _eleSplitQuery = obj.getField ( CAT_SPLITQUERY_NAME ) ;
+
+      /// source group
+      ele = obj.getField ( CAT_SOURCE_NAME ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG( PDERROR, "Field[%s] is invalid in object[%s]",
+                 CAT_SOURCE_NAME, obj.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      rc = catGroupNameValidate ( ele.valuestr() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Source group name[%s] is invalid, rc: %d",
+                 ele.valuestr(), rc ) ;
+         goto error ;
+      }
+      _srcGroup = ele.valuestr() ;
+
+      /// target group
+      ele = obj.getField ( CAT_TARGET_NAME ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG( PDERROR, "Field[%s] is invalid in object[%s]",
+                 CAT_TARGET_NAME, obj.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      rc = catGroupNameValidate ( ele.valuestr() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Target group name[%s] is invalid, rc: %d",
+                 ele.valuestr(), rc ) ;
+         goto error ;
+      }
+      _dstGroup = ele.valuestr() ;
+
+      /// async
+      ele = obj.getField ( FIELD_NAME_ASYNC ) ;
+      if ( Bool == ele.type() )
+      {
+         _async = ele.Bool() ? TRUE : FALSE ;
+      }
+      else if ( !ele.eoo() )
+      {
+         PD_LOG( PDERROR, "Field[%s] type[%d] error", FIELD_NAME_ASYNC,
+                 ele.type() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      /// percent
+      ele = obj.getField( CAT_SPLITPERCENT_NAME ) ;
+      _percent = ele.numberDouble() ;
+
+      // make sure we have either split value or split query
+      if ( !_eleSplitQuery.eoo() )
+      {
+         if ( Object != _eleSplitQuery.type() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in object[%s]",
+                    CAT_SPLITQUERY_NAME, obj.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
 
-         // make sure we have either split value or split query
-         if ( !beSplitQuery.eoo() )
+         _eleSplitEndQuery = obj.getField ( CAT_SPLITENDQUERY_NAME ) ;
+         if ( !_eleSplitEndQuery.eoo() )
          {
-            PD_CHECK ( beSplitQuery.type() == Object,
-                       SDB_INVALIDARG, error, PDERROR,
-                       "Split is not defined or not valid" ) ;
-            beSplitEndQuery = boQuery.getField ( CAT_SPLITENDQUERY_NAME ) ;
-            if ( !beSplitEndQuery.eoo() )
+            if ( Object != _eleSplitQuery.type() )
             {
-               PD_CHECK ( beSplitEndQuery.type() == Object,
-                          SDB_INVALIDARG, error, PDERROR,
-                          "Split is not defined or not valid" ) ;
+               PD_LOG( PDERROR, "Field[%s] is invalid in object[%s]",
+                       CAT_SPLITENDQUERY_NAME, obj.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
             }
-         }
-         else
-         {
-            PD_CHECK( percent > 0.0 && percent <= 100.0,
-                      SDB_INVALIDARG, error, PDERROR,
-                      "Split percent value is error" ) ;
-         }
-
-         // get sharding key, always get the newest version from catalog
-         rc = rtnCoordGetCataInfo ( cb, strName, TRUE, cataInfo ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to get cata info for collection %s, rc: %d",
-                       strName, rc ) ;
-         // sharding key must exist, we should NEVER hit this check because the
-         // check already done in catalog in PREPARE phase
-         cataInfo->getShardingKey ( boShardingKey ) ;
-         PD_CHECK ( !boShardingKey.isEmpty(),
-                    SDB_COLLECTION_NOTSHARD, error, PDWARNING,
-                    "Collection must be sharded: %s",
-                    strName ) ;
-
-         /*********************************************************************
-          *           GET THE SHARDING KEY VALUE FROM SOURCE                  *
-          *********************************************************************/
-         if ( cataInfo->getCatalogSet()->isHashSharding() )
-         {
-            if ( !beSplitQuery.eoo() )
-            {
-               BSONObj tmpStart = beSplitQuery.embeddedObject() ;
-               BSONObjBuilder tmpStartBuilder ;
-               tmpStartBuilder.appendElementsWithoutName( tmpStart ) ;
-               boKeyStart = tmpStartBuilder.obj() ;
-               if ( !beSplitEndQuery.eoo() )
-               {
-                  BSONObj tmpEnd = beSplitEndQuery.embeddedObject() ;
-                  BSONObjBuilder tmpEndBuilder ;
-                  tmpEndBuilder.appendElementsWithoutName( tmpEnd ) ;
-                  boKeyEnd = tmpEndBuilder.obj() ;
-               }
-            }
-         }
-         else
-         {
-            if ( beSplitQuery.eoo())
-            {
-               rc = _getBoundByPercent( strName, percent, cataInfo,
-                                        groupLst, cb, boKeyStart, boKeyEnd,
-                                        buf ) ;
-            }
-            else
-            {
-               rc = _getBoundByCondition( strName,
-                                          beSplitQuery.embeddedObject(),
-                                          beSplitEndQuery.eoo() ?
-                                          BSONObj():
-                                          beSplitEndQuery.embeddedObject(),
-                                          groupLst,
-                                          cb,
-                                          cataInfo,
-                                          boKeyStart, boKeyEnd,
-                                          buf ) ;
-            }
-
-            PD_RC_CHECK( rc, PDERROR, "Failed to get bound, rc: %d",
-                         rc ) ;
          }
       }
-      catch ( std::exception &e )
+      else
       {
-         PD_RC_CHECK ( SDB_SYS, PDERROR,
-                       "Exception when query from remote node: %s",
-                       e.what() ) ;
+         if ( _percent <= 0.0 || _percent > 100.0 )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in object[%s]",
+                    CAT_SPLITPERCENT_NAME, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
 
-      /************************************************************************
-       *         SHARDING READY REQUEST                                       *
-       ************************************************************************/
-      // now boKeyStart contains the key we want to split, let's construct a new
-      // request for split ready
+      rc = _cataSel.bind( _pResource, _clName.c_str(), cb, TRUE, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Update collection[%s]'s catalog info failed, "
+                 "rc: %d", _clName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      _cataSel.getCataPtr()->getShardingKey( _shardkingKey ) ;
+      if ( !_cataSel.getCataPtr()->isSharded() ||
+           _shardkingKey.isEmpty() )
+      {
+         PD_LOG( PDERROR, "Collection[%s] is not shared", _clName.c_str() ) ;
+         rc = SDB_COLLECTION_NOTSHARD ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDSplit::_makeSplitRange( pmdEDUCB *cb,
+                                          const CoordGroupList &srcGrpLst,
+                                          rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      clsCatalogSet *pSet = _cataSel.getCataPtr()->getCatalogSet() ;
+
+      /// hash sharding
+      if ( pSet->isHashSharding() )
+      {
+         if ( !_eleSplitQuery.eoo() )
+         {
+            BSONObj tmpStart = _eleSplitQuery.embeddedObject() ;
+            BSONObjBuilder tmpStartBuilder ;
+            tmpStartBuilder.appendElementsWithoutName( tmpStart ) ;
+            _lowBound = tmpStartBuilder.obj() ;
+
+            if ( !_eleSplitEndQuery.eoo() )
+            {
+               BSONObj tmpEnd = _eleSplitEndQuery.embeddedObject() ;
+               BSONObjBuilder tmpEndBuilder ;
+               tmpEndBuilder.appendElementsWithoutName( tmpEnd ) ;
+               _upBound = tmpEndBuilder.obj() ;
+            }
+         }
+      }
+      else
+      {
+         if ( _eleSplitQuery.eoo() )
+         {
+            rc = _getBoundByPercent( _clName.c_str(), _percent,
+                                     _cataSel.getCataPtr(), srcGrpLst,
+                                     cb, _lowBound, _upBound,
+                                     buf ) ;
+         }
+         else
+         {
+            rc = _getBoundByCondition( _clName.c_str(),
+                                       _eleSplitQuery.embeddedObject(),
+                                       _eleSplitEndQuery.eoo() ?
+                                       BSONObj() :
+                                       _eleSplitEndQuery.embeddedObject(),
+                                       srcGrpLst, cb,
+                                       _lowBound, _upBound,
+                                       buf ) ;
+         }
+
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Make bound failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDSplit::_splitReady( pmdEDUCB *cb,
+                                      INT64 &contextID,
+                                      rtnContextBuf *buf,
+                                      CoordGroupList &dstGrpLst,
+                                      UINT64 &taskID,
+                                      BSONObj &taskInfoObj )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pReadyMsg = NULL ;
+      INT32 readyMsgSize = 0 ;
+      MsgOpQuery *pSplitReadyMsg = NULL ;
+      vector< BSONObj > vecObjs ;
+
       try
       {
          BSONObj boSend ;
-
          // construct the record that we are going to send to catalog
-         boSend = BSON ( CAT_COLLECTION_NAME << strName <<
-                         CAT_SOURCE_NAME << szSource <<
-                         CAT_TARGET_NAME << szTarget <<
-                         CAT_SPLITPERCENT_NAME << percent <<
-                         CAT_SPLITVALUE_NAME << boKeyStart <<
-                         CAT_SPLITENDVALUE_NAME << boKeyEnd <<
-                         CAT_TASKID_NAME << (long long)taskID ) ;
+         boSend = BSON ( CAT_COLLECTION_NAME << _clName<<
+                         CAT_SOURCE_NAME << _srcGroup <<
+                         CAT_TARGET_NAME << _dstGroup <<
+                         CAT_SPLITPERCENT_NAME << _percent <<
+                         CAT_SPLITVALUE_NAME << _lowBound <<
+                         CAT_SPLITENDVALUE_NAME << _upBound ) ;
          taskInfoObj = boSend ;
-         rc = msgBuildQueryMsg ( &splitReadyBuffer, &splitReadyBufferSz,
-                                 CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
-                                 0, 0, -1, &boSend, NULL,
-                                 NULL, NULL ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to build query message, rc: %d",
-                       rc ) ;
-         pSplitReq                        = (MsgOpQuery *)splitReadyBuffer ;
-         pSplitReq->header.opCode         = MSG_CAT_SPLIT_READY_REQ ;
-         pSplitReq->version               = cataInfo->getVersion() ;
 
-         rc = executeOnCataGroup ( (MsgHeader*)pSplitReq, cb, &groupDstLst,
-                                   &boRecv, TRUE, NULL, NULL, buf ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to execute split ready on catalog, rc: %d",
-                       rc ) ;
-
-         // Get task ID
-         if ( boRecv.empty() )
+         rc = msgBuildQueryMsg( &pReadyMsg, &readyMsgSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                0, 0, 0, -1,
+                                &boSend, NULL, NULL, NULL,
+                                cb ) ;
+         if ( rc )
          {
-            PD_LOG( PDERROR, "Failed to get task id from result msg" ) ;
+            PD_LOG( PDERROR, "Build split ready message failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      pSplitReadyMsg = (MsgOpQuery *)pReadyMsg ;
+      pSplitReadyMsg->header.opCode = MSG_CAT_SPLIT_READY_REQ ;
+      pSplitReadyMsg->version = _cataSel.getCataPtr()->getVersion() ;
+
+      rc = executeOnCataGroup ( (MsgHeader*)pReadyMsg, cb, &dstGrpLst,
+                                &vecObjs, TRUE, NULL, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute split ready on catalog failed, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
+
+      // Get task ID
+      if ( vecObjs.empty() )
+      {
+         PD_LOG( PDERROR, "Failed to get task id from result msg" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj resultObj = vecObjs[0] ;
+         BSONElement ele = resultObj.getField( CAT_TASKID_NAME ) ;
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "Get taskid from split result object[%s] "
+                    "failed", resultObj.toString().c_str() ) ;
             rc = SDB_SYS ;
             goto error ;
          }
-         taskID = (UINT64)(boRecv.at(0).getField( CAT_TASKID_NAME ).numberLong()) ;
-
-         // Construct split query request to destination Data group
-         boSend = BSON( CAT_TASKID_NAME << (long long)taskID ) ;
-         rc = msgBuildQueryMsg( &splitQueryBuffer, &splitQueryBufferSz,
-                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
-                                0, 0, -1, &boSend, NULL,
-                                NULL, NULL ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build query message, rc: %d",
-                      rc ) ;
-         pSplitQuery                      = (MsgOpQuery *)splitQueryBuffer ;
-         pSplitQuery->version             = cataInfo->getVersion() ;
+         taskID = ele.numberLong() ;
       }
-      catch ( std::exception &e )
+      catch( std::exception &e )
       {
-         PD_RC_CHECK ( SDB_SYS, PDERROR,
-                       "Exception when building split ready message: %s",
-                       e.what() ) ;
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc =  SDB_SYS ;
+         goto error ;
       }
-      /************************************************************************
-       *           SHARDING START REQUEST                                     *
-       ************************************************************************/
-      // before sending to data node, we have to convert the request to QUERY
-      pSplitReq->header.opCode = MSG_BS_QUERY_REQ ;
-      rc = executeOnCL( (MsgHeader *)splitReadyBuffer, cb, strName,
-                        FALSE, &groupDstLst, NULL, NULL, NULL, buf ) ;
-      // If we get error here, something big happend. We have marked ready to
-      // split on catalog but data node refused to do so.
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to execute split on data node, rc: %d",
-                   rc ) ;
 
-      // if sync, need to wait task finished
-      if ( !async )
+   done:
+      if ( pReadyMsg )
       {
-         rtnCoordProcesserFactory *pFactory = pCoordcb->getProcesserFactory() ;
-         rtnCoordCommand *pCmd = pFactory->getCommandProcesser(
-                                 COORD_CMD_WAITTASK ) ;
-         SDB_ASSERT( pCmd, "wait task command not found" ) ;
-         rc = pCmd->execute( (MsgHeader*)splitQueryBuffer, cb,
-                             contextID, buf ) ;
+         msgReleaseBuffer( pReadyMsg, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDSplit::_splitNotify( const CoordGroupList &dstGrpLst,
+                                       UINT64 taskID,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
+                                       rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pNotifyMsg = NULL ;
+      INT32 msgSize = 0 ;
+      MsgOpQuery *pSplitNtyMsg = NULL ;
+      coordCommandFactory *pFactory = NULL ;
+      coordOperator *pOperator = NULL ;
+      rtnContextDump *pContext ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      BOOLEAN canRollback = TRUE ;
+
+      try
+      {
+         BSONObj boSend = BSON( CAT_TASKID_NAME << (long long)taskID ) ;
+         rc = msgBuildQueryMsg( &pNotifyMsg, &msgSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                0, 0, 0, -1,
+                                &boSend, NULL, NULL, NULL,
+                                cb ) ;
          if ( rc )
          {
-            PD_LOG( PDWARNING,
-                    "Wait task [%lld] failed, rc: %d",
-                    taskID, rc ) ;
+            PD_LOG( PDERROR, "Build split notify message failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      pSplitNtyMsg = (MsgOpQuery *)pNotifyMsg ;
+      pSplitNtyMsg->header.opCode = MSG_BS_QUERY_REQ ;
+      pSplitNtyMsg->version = _cataSel.getCataPtr()->getVersion() ;
+
+      rc = executeOnCL( (MsgHeader *)pNotifyMsg, cb, _clName.c_str(),
+                        FALSE, &dstGrpLst, NULL, NULL, NULL, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute split on data node failed, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
+
+      /// can't rollback
+      canRollback = FALSE ;
+
+      // if sync, need to wait task finished
+      if ( !_async )
+      {
+         pFactory = coordGetFactory() ;
+         pOperator = NULL ;
+
+         rc = pFactory->create( CMD_NAME_WAITTASK, pOperator ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Create operator[%s] failed, rc: %d",
+                    CMD_NAME_WAITTASK, rc ) ;
+            /// ignored the error
             rc = SDB_OK ;
-            /// can not report error, because split already created
+            goto done ;
+         }
+
+         rc = pOperator->execute( (MsgHeader *)pNotifyMsg, cb,
+                                  contextID, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Wait task[%lld] failed, rc: %d",
+                    taskID, rc ) ;
+            /// ignored the error
+            rc = SDB_OK ;
+            goto done ;
          }
       }
       else // return taskid to client
       {
-         rtnContextDump *pContext = NULL ;
-         rc = pRtncb->contextNew( RTN_CONTEXT_DUMP, (rtnContext**)&pContext,
-                                  contextID, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to create context, rc: %d", rc ) ;
+         rc = rtnCB->contextNew( RTN_CONTEXT_DUMP,
+                                 (rtnContext**)&pContext,
+                                 contextID, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Create context failed, rc: %d", rc ) ;
+            goto error ;
+         }
          rc = pContext->open( BSONObj(), BSONObj(), 1, 0 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to open context, rc: %d", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
+            goto error ;
+         }
          pContext->append( BSON( CAT_TASKID_NAME << (long long)taskID ) ) ;
       }
 
-   done :
-      if ( 0 != preferedType && cb->getCoordSession() )
+   done:
+      if ( pNotifyMsg )
       {
-         cb->getCoordSession()->setPreferReplType( preferedType ) ;
+         msgReleaseBuffer( pNotifyMsg, cb ) ;
       }
-      if ( pCommandName && strName )
+      if ( pOperator )
       {
-         PD_AUDIT_COMMAND( AUDIT_DDL, pCommandName + 1, AUDIT_OBJ_CL,
-                           strName, rc, "Option:%s, TaskID:%llu",
+         pFactory->release( pOperator ) ;
+      }
+      return rc ;
+   error:
+      /// rollback
+      if ( pSplitNtyMsg && canRollback )
+      {
+         pSplitNtyMsg->header.opCode = MSG_CAT_SPLIT_CANCEL_REQ ;
+         INT32 tmpRC = executeOnCataGroup ( (MsgHeader*)pSplitNtyMsg,
+                                            cb, TRUE, NULL, NULL, buf ) ;
+         if ( tmpRC )
+         {
+            PD_LOG( PDWARNING, "Execute split cancel on catalog failed, "
+                    "rc: %d", tmpRC ) ;
+         }
+      }
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_SPLIT_EXE, "_coordCMDSplit::execute" )
+   INT32 _coordCMDSplit::execute( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  INT64 &contextID,
+                                  rtnContextBuf *buf )
+   {
+      INT32 rc                         = SDB_OK ;
+      PD_TRACE_ENTRY ( COORD_SPLIT_EXE ) ;
+      coordSessionPropSite *pSiteProp  = NULL ;
+      CoordGroupList dstGrpLst ;
+      UINT64 taskID = CLS_INVALID_TASKID ;
+      BSONObj taskInfoObj ;
+      INT32 preferedType = 0 ;
+
+      contextID                        = -1 ;
+
+      if ( cb->getRemoteSite() )
+      {
+         pmdRemoteSessionSite *pSite = NULL ;
+         pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+         pSiteProp = (coordSessionPropSite*)pSite->getUserData() ;
+      }
+
+      if ( pSiteProp &&
+           PREFER_REPL_MASTER != pSiteProp->getPreferInstype() )
+      {
+         preferedType = pSiteProp->getPreferInstype() ;
+         pSiteProp->setPreferInsType( PREFER_REPL_MASTER ) ;
+      }
+
+      /// prepare
+      rc = _splitPrepare( pMsg, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// ready
+      rc = _splitReady( cb, contextID, buf, dstGrpLst, taskID, taskInfoObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// notify and wait
+      rc = _splitNotify( dstGrpLst, taskID, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      /// restore
+      if ( 0 != preferedType && pSiteProp )
+      {
+         pSiteProp->setPreferInsType( preferedType ) ;
+      }
+      if ( !_clName.empty() )
+      {
+         PD_AUDIT_COMMAND( AUDIT_DDL, getName(), AUDIT_OBJ_CL,
+                           _clName.c_str(), rc, "Option:%s, TaskID:%llu",
                            taskInfoObj.toString().c_str(), taskID ) ;
       }
-      SAFE_OSS_FREE( splitReadyBuffer ) ;
-      SAFE_OSS_FREE( splitQueryBuffer ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSP_EXE, rc ) ;
+      PD_TRACE_EXITRC ( COORD_SPLIT_EXE, rc ) ;
       return rc ;
    error :
-      if ( CLS_INVALID_TASKID != taskID )
-      {
-         // Need to delete catContext allocated with taskID, send the cancel
-         // request anyway
-         INT32 tmpRC = SDB_OK ;
-         if ( !pSplitQuery )
-         {
-            // Construct the cancel request with task ID
-            BSONObj boCancel = BSON( CAT_TASKID_NAME << (long long)taskID ) ;
-            tmpRC = msgBuildQueryMsg( &splitQueryBuffer, &splitQueryBufferSz,
-                                      CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
-                                      0, 0, -1, &boCancel, NULL,
-                                      NULL, NULL ) ;
-            if ( SDB_OK == tmpRC )
-            {
-               pSplitQuery = (MsgOpQuery *)splitQueryBuffer ;
-            }
-            else
-            {
-               PD_LOG( PDWARNING,
-                       "Failed to execute split cancel on catalog, rc: %d",
-                       tmpRC ) ;
-            }
-         }
-         if ( pSplitQuery )
-         {
-            // Send the request
-            pSplitQuery->header.opCode = MSG_CAT_SPLIT_CANCEL_REQ ;
-            tmpRC = executeOnCataGroup ( (MsgHeader*)pSplitQuery,
-                                         cb, TRUE, NULL, NULL, buf ) ;
-            if ( tmpRC )
-            {
-               PD_LOG( PDWARNING,
-                       "Failed to execute split cancel on catalog, rc: %d",
-                       tmpRC ) ;
-            }
-         }
-      }
       if ( SDB_RTN_INVALID_HINT == rc )
       {
          rc = SDB_COORD_SPLIT_NO_SHDIDX ;
       }
       if ( -1 != contextID )
       {
-         pRtncb->contextDelete( contextID, cb ) ;
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
          contextID = -1 ;
       }
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP_GETBOUNDRONDATA, "rtnCoordCMDSplit::_getBoundRecordOnData" )
-   INT32 rtnCoordCMDSplit::_getBoundRecordOnData( const CHAR *cl,
-                                                  const BSONObj &condition,
-                                                  const BSONObj &hint,
-                                                  const BSONObj &sort,
-                                                  INT32 flag,
-                                                  INT64 skip,
-                                                  CoordGroupList &groupList,
-                                                  pmdEDUCB *cb,
-                                                  BSONObj &shardingKey,
-                                                  BSONObj &record,
-                                                  rtnContextBuf *buf )
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_SPLIT_GETBOUNDRECORDONDATA, "_coordCMDSplit::_getBoundRecordOnData" )
+   INT32 _coordCMDSplit::_getBoundRecordOnData( const CHAR *cl,
+                                                const BSONObj &condition,
+                                                const BSONObj &hint,
+                                                const BSONObj &sort,
+                                                INT32 flag,
+                                                INT64 skip,
+                                                const CoordGroupList &groupList,
+                                                pmdEDUCB *cb,
+                                                const BSONObj &shardingKey,
+                                                BSONObj &record,
+                                                rtnContextBuf *buf )
    {
-      PD_TRACE_ENTRY( SDB_RTNCOCMDSP_GETBOUNDRONDATA ) ;
+      PD_TRACE_ENTRY( COORD_SPLIT_GETBOUNDRECORDONDATA ) ;
       INT32 rc = SDB_OK ;
-      BSONObj empty ;
-      rtnContext *context = NULL ;
-      rtnContextBuf buffObj ;
+      rtnContextCoord *pContext = NULL ;
       BSONObj obj ;
+
+      CHAR *pMsg = NULL ;
+      INT32 msgSize = 0 ;
 
       // check condition has invalid fileds
       if ( !condition.okForStorage() )
       {
-         PD_LOG( PDERROR,
-                 "Condition [%s] has invalid field name",
+         PD_LOG( PDERROR, "Condition[%s] has invalid field name",
                  condition.toString().c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -1858,13 +2074,25 @@ namespace engine
 
       if ( condition.isEmpty() )
       {
-         rc = rtnCoordNodeQuery( cl, condition, empty, sort,
-                                 hint, skip, 1, groupList,
-                                 cb, &context, NULL, flag, buf ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to query from data group, rc: %d",
-                       rc ) ;
-         rc = context->getMore( -1, buffObj, cb ) ;
+         BSONObj empty ;
+         rtnContextBuf buffObj ;
+         rtnQueryOptions queryOption( condition, empty, sort, hint, cl,
+                                      skip, 1, flag ) ;
+         rc = queryOption.toQueryMsg( &pMsg, msgSize, cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Build query message failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = queryOnCL( (MsgHeader*)pMsg, cb, NULL, &pContext,
+                         FALSE, &groupList, buf ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Query on data group failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         rc = pContext->getMore( -1, buffObj, cb ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -1881,25 +2109,30 @@ namespace engine
 
       // product split key
       {
-         PD_LOG ( PDINFO,
-                  "Split found record %s",
-                  obj.toString().c_str() ) ;
+         PD_LOG ( PDINFO, "Split found record: %s", obj.toString().c_str() ) ;
+
          // we need to compare with boShardingKey and extract the partition key
          ixmIndexKeyGen keyGen ( shardingKey ) ;
          BSONObjSet keys ;
          BSONObjSet::iterator keyIter ;
          rc = keyGen.getKeys ( obj, keys, NULL, TRUE ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to extract keys\nkeyDef: %s\n"
-                       "record: %s\nrc: %d", shardingKey.toString().c_str(),
-                       obj.toString().c_str(), rc ) ;
-         // make sure there is one and only one element in the keys
-         PD_CHECK ( keys.size() == 1,
-                    SDB_INVALID_SHARDINGKEY, error, PDWARNING,
-                    "There must be a single key generate for "
-                    "sharding\nkeyDef = %s\nrecord = %s\n",
-                    shardingKey.toString().c_str(),
-                    obj.toString().c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Gen key failed, rc: %d"OSS_NEWLINE
+                    "record: %s"OSS_NEWLINE"keyDef: %s", rc,
+                    obj.toString().c_str(),
+                    shardingKey.toString().c_str() ) ;
+            goto error ;
+         }
+         if ( 1 != keys.size() )
+         {
+            PD_LOG( PDERROR, "There must be a single key generate for "
+                    "sharding"OSS_NEWLINE"record: %s"OSS_NEWLINE"keyDef: %s",
+                    obj.toString().c_str(),
+                    shardingKey.toString().c_str() ) ;
+            rc = SDB_INVALID_SHARDINGKEY ;
+            goto error ;
+         }
 
          keyIter = keys.begin () ;
          record = (*keyIter).copy() ;
@@ -1919,141 +2152,131 @@ namespace engine
             }
          }*/
 
-        PD_LOG ( PDINFO, "Split found key %s", record.toString().c_str() ) ;
+        PD_LOG ( PDINFO, "Split found key: %s", record.toString().c_str() ) ;
      }
 
    done:
-      if ( NULL != context )
+      if ( NULL != pContext )
       {
-         SINT64 contextID = context->contextID() ;
+         SINT64 contextID = pContext->contextID() ;
          pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
       }
-      PD_TRACE_EXITRC( SDB_RTNCOCMDSP_GETBOUNDRONDATA, rc ) ;
+      if ( pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+      PD_TRACE_EXITRC( COORD_SPLIT_GETBOUNDRECORDONDATA, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP__GETBOUNDBYC, "rtnCoordCMDSplit::_getBoundByCondition" )
-   INT32 rtnCoordCMDSplit::_getBoundByCondition( const CHAR *cl,
-                                                 const BSONObj &begin,
-                                                 const BSONObj &end,
-                                                 CoordGroupList &groupList,
-                                                 pmdEDUCB *cb,
-                                                 CoordCataInfoPtr &cataInfo,
-                                                 BSONObj &lowBound,
-                                                 BSONObj &upBound,
-                                                 rtnContextBuf *buf )
-   {
-      PD_TRACE_ENTRY( SDB_RTNCOCMDSP__GETBOUNDBYC ) ;
-      INT32 rc = SDB_OK ;
-      /// coord send will clear group list.
-      CoordGroupList grpTmp = groupList ;
-      BSONObj shardingKey ;
-      cataInfo->getShardingKey( shardingKey ) ;
-      PD_CHECK ( !shardingKey.isEmpty(),
-                 SDB_COLLECTION_NOTSHARD, error, PDWARNING,
-                 "Collection must be sharded: %s",
-                 cl ) ;
-
-      rc = _getBoundRecordOnData( cl, begin, BSONObj(),BSONObj(),
-                                  0, 0, grpTmp, cb,
-                                  shardingKey, lowBound, buf ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR,
-                 "Failed to get begin bound, rc: %d",
-                 rc ) ;
-         goto error ;
-      }
-
-      if ( !end.isEmpty() )
-      {
-         grpTmp = groupList ;
-         rc = _getBoundRecordOnData( cl, end, BSONObj(),BSONObj(),
-                                     0, 0, grpTmp, cb,
-                                     shardingKey, upBound, buf ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR,
-                    "Failed to get end bound, rc: %d",
-                    rc ) ;
-            goto error ;
-         }
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDSP__GETBOUNDBYC, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP__GETBOUNDBYP, "rtnCoordCMDSplit::_getBoundByPercent" )
-   INT32 rtnCoordCMDSplit::_getBoundByPercent( const CHAR *cl,
-                                               FLOAT64 percent,
-                                               CoordCataInfoPtr &cataInfo,
-                                               CoordGroupList &groupList,
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_SPLIT_GETBOUNDBYCOND, "_coordCMDSplit::_getBoundByCondition" )
+   INT32 _coordCMDSplit::_getBoundByCondition( const CHAR *cl,
+                                               const BSONObj &begin,
+                                               const BSONObj &end,
+                                               const CoordGroupList &groupList,
                                                pmdEDUCB *cb,
                                                BSONObj &lowBound,
                                                BSONObj &upBound,
                                                rtnContextBuf *buf )
    {
-      PD_TRACE_ENTRY( SDB_RTNCOCMDSP__GETBOUNDBYP ) ;
+      PD_TRACE_ENTRY( COORD_SPLIT_GETBOUNDBYCOND ) ;
       INT32 rc = SDB_OK ;
-      BSONObj shardingKey ;
-      cataInfo->getShardingKey ( shardingKey ) ;
-      CoordGroupList grpTmp = groupList ;
-      PD_CHECK ( !shardingKey.isEmpty(),
-                 SDB_COLLECTION_NOTSHARD, error, PDWARNING,
-                 "Collection must be sharded: %s",
-                 cl ) ;
+
+      rc = _getBoundRecordOnData( cl, begin, BSONObj(), BSONObj(),
+                                  FLG_QUERY_WITH_RETURNDATA, 0,
+                                  groupList, cb, _shardkingKey,
+                                  lowBound, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Get low bound failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      if ( !end.isEmpty() )
+      {
+         rc = _getBoundRecordOnData( cl, end, BSONObj(),BSONObj(),
+                                     FLG_QUERY_WITH_RETURNDATA, 0,
+                                     groupList, cb, _shardkingKey,
+                                     upBound, buf ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Get up bound failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      PD_TRACE_EXITRC( COORD_SPLIT_GETBOUNDBYCOND, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( COORD_SPLIT_GETBOUNDBYPERCENT, "_coordCMDSplit::_getBoundByPercent" )
+   INT32 _coordCMDSplit::_getBoundByPercent( const CHAR *cl,
+                                             FLOAT64 percent,
+                                             const CoordCataInfoPtr &cataInfo,
+                                             const CoordGroupList &groupList,
+                                             pmdEDUCB *cb,
+                                             BSONObj &lowBound,
+                                             BSONObj &upBound,
+                                             rtnContextBuf *buf )
+   {
+      PD_TRACE_ENTRY( COORD_SPLIT_GETBOUNDBYPERCENT ) ;
+      INT32 rc = SDB_OK ;
 
       // if split percent is 100.0%, get the group low bound
       if ( 100.0 - percent < OSS_EPSILON )
       {
-         rc = cataInfo->getGroupLowBound( grpTmp.begin()->second,
+         rc = cataInfo->getGroupLowBound( groupList.begin()->second,
                                           lowBound ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to get group [%d] low bound, rc: %d",
-                      grpTmp.begin()->second, rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get group[%d]'s low bound failed, rc: %d",
+                    groupList.begin()->second, rc ) ;
+            goto error ;
+         }
       }
       else
       {
-         UINT64 totalCount = 0 ;
-         INT64 skipCount = 0 ;
-         INT32 flag = 0 ;
-         BSONObj hint ;
+         UINT64 totalCount    = 0 ;
+         INT64 skipCount      = 0 ;
+         INT32 flag = FLG_QUERY_WITHOUT_SORT | FLG_QUERY_WITH_RETURNDATA ;
+         BSONObj hint = BSON( "" << "" ) ;
+
          while ( TRUE )
          {
-            rc = _getCLCount( cl, grpTmp, cb, totalCount, buf ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to get collection count, rc: %d",
-                         rc ) ;
+            rc = _getCLCount( cl, groupList, cb, totalCount, buf ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get count from collection[%s] failed, rc: %d",
+                       cl, rc ) ;
+               goto error ;
+            }
+
             if ( 0 == totalCount )
             {
                rc = SDB_DMS_EMPTY_COLLECTION ;
-               PD_LOG( PDDEBUG, "collection [%s] is empty", cl ) ;
+               PD_LOG( PDDEBUG, "Collection[%s] is empty", cl ) ;
                break ;
             }
 
             skipCount = (INT64)(totalCount * ( ( 100 - percent ) / 100 ) ) ;
-            hint = BSON( "" << "" ) ;
-            // Must use sorted index for query
-            flag = FLG_QUERY_WITHOUT_SORT ;
 
             /// sort by shardingKey that if $shard index does not exist
             /// can still match index.
-            rc = _getBoundRecordOnData( cl, BSONObj(), hint, shardingKey,
-                                        flag, skipCount, grpTmp,
-                                        cb, shardingKey, lowBound, buf ) ;
+            rc = _getBoundRecordOnData( cl, BSONObj(), hint, _shardkingKey,
+                                        flag, skipCount, groupList,
+                                        cb, _shardkingKey, lowBound, buf ) ;
             if ( SDB_DMS_EOC == rc )
             {
                continue ;
             }
             else if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR,
-                       "Failed to get bound from data, rc: %d",
+               PD_LOG( PDERROR, "Failed to get bound from data, rc: %d",
                        rc ) ;
                goto error ;
             }
@@ -2067,12 +2290,11 @@ namespace engine
       /// upbound always be empty.
       upBound = BSONObj() ;
    done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDSP__GETBOUNDBYP, rc ) ;
+      PD_TRACE_EXITRC( COORD_SPLIT_GETBOUNDBYPERCENT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
-
 
    /*
     * rtnCoordCMDCreateIndex implement

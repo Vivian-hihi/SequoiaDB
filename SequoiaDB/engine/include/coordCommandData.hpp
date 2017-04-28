@@ -483,58 +483,107 @@ namespace engine
          */
          virtual BOOLEAN _flagRollbackCataBeforeData () { return TRUE ; }
 
+      protected:
+         string            _subCLName ;
+
    } ;
    typedef _coordCMDUnlinkCollection coordCMDUnlinkCollection ;
 
    /*
-    * rtnCoordCMDSplit define
-    */
-   class rtnCoordCMDSplit : public rtnCoordCommand
+      _coordCMDSplit define
+   */
+   class _coordCMDSplit : public _coordCommandBase
    {
-   public :
-      virtual INT32 execute ( MsgHeader *pMsg,
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public :
+         _coordCMDSplit() ;
+         virtual ~_coordCMDSplit() ;
+
+         virtual INT32 execute ( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 INT64 &contextID,
+                                 rtnContextBuf *buf ) ;
+
+      protected :
+         INT32 _getCLCount ( const CHAR *clFullName,
+                             const CoordGroupList &groupList,
+                             pmdEDUCB *cb,
+                             UINT64 &count,
+                             rtnContextBuf *buf ) ;
+
+         INT32 _splitPrepare( MsgHeader *pMsg,
                               pmdEDUCB *cb,
                               INT64 &contextID,
                               rtnContextBuf *buf ) ;
 
-   protected :
-      INT32 _getCLCount ( const CHAR *clFullName,
-                          CoordGroupList &groupList,
-                          pmdEDUCB *cb, UINT64 &count,
-                          rtnContextBuf *buf ) ;
+         INT32 _splitReady( pmdEDUCB *cb,
+                            INT64 &contextID,
+                            rtnContextBuf *buf,
+                            CoordGroupList &dstGrpLst,
+                            UINT64 &taskID,
+                            BSONObj &taskInfoObj ) ;
 
-      INT32 _getBoundByPercent ( const CHAR *cl,
-                                 FLOAT64 percent,
-                                 CoordCataInfoPtr &cataInfo,
-                                 CoordGroupList &groupList,
-                                 pmdEDUCB *cb,
-                                 BSONObj &lowBound,
-                                 BSONObj &upBound,
-                                 rtnContextBuf *buf ) ;
+         INT32 _splitNotify( const CoordGroupList &dstGrpLst,
+                             UINT64 taskID,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
+                             rtnContextBuf *buf ) ;
 
-      INT32 _getBoundByCondition ( const CHAR *cl,
-                                   const BSONObj &begin,
-                                   const BSONObj &end,
-                                   CoordGroupList &groupList,
-                                   pmdEDUCB *cb,
-                                   CoordCataInfoPtr &cataInfo,
-                                   BSONObj &lowBound,
-                                   BSONObj &upBound,
-                                   rtnContextBuf *buf ) ;
+         INT32 _splitParamCheck( const BSONObj &obj,
+                                 pmdEDUCB *cb ) ;
 
-      INT32 _getBoundRecordOnData ( const CHAR *cl,
-                                    const BSONObj &condition,
-                                    const BSONObj &hint,
-                                    const BSONObj &sort,
-                                    INT32 flag,
-                                    INT64 skip,
-                                    CoordGroupList &groupList,
+         INT32 _makeSplitRange( pmdEDUCB *cb,
+                                const CoordGroupList &srcGrpLst,
+                                rtnContextBuf *buf ) ;
+
+         INT32 _getBoundByPercent ( const CHAR *cl,
+                                    FLOAT64 percent,
+                                    const CoordCataInfoPtr &cataInfo,
+                                    const CoordGroupList &groupList,
                                     pmdEDUCB *cb,
-                                    BSONObj &shardingKey,
-                                    BSONObj &record,
+                                    BSONObj &lowBound,
+                                    BSONObj &upBound,
                                     rtnContextBuf *buf ) ;
 
+         INT32 _getBoundByCondition ( const CHAR *cl,
+                                      const BSONObj &begin,
+                                      const BSONObj &end,
+                                      const CoordGroupList &groupList,
+                                      pmdEDUCB *cb,
+                                      BSONObj &lowBound,
+                                      BSONObj &upBound,
+                                      rtnContextBuf *buf ) ;
+
+         INT32 _getBoundRecordOnData ( const CHAR *cl,
+                                       const BSONObj &condition,
+                                       const BSONObj &hint,
+                                       const BSONObj &sort,
+                                       INT32 flag,
+                                       INT64 skip,
+                                       const CoordGroupList &groupList,
+                                       pmdEDUCB *cb,
+                                       const BSONObj &shardingKey,
+                                       BSONObj &record,
+                                       rtnContextBuf *buf ) ;
+
+      protected:
+         string               _clName ;
+         string               _srcGroup ;
+         string               _dstGroup ;
+         BOOLEAN              _async ;
+         FLOAT64              _percent ;
+
+         BSONElement          _eleSplitQuery ;
+         BSONElement          _eleSplitEndQuery ;
+
+         BSONObj              _lowBound ;
+         BSONObj              _upBound ;
+
+         coordCataSel         _cataSel ;
+         BSONObj              _shardkingKey ;
+
    } ;
+   typedef _coordCMDSplit coordCMDSplit ;
 
    /*
     * rtnCoordCMDCreateIndex define

@@ -67,6 +67,14 @@ namespace engine
                                     rtnContextCoord **ppContext = NULL,
                                     rtnContextBuf *buf = NULL ) ;
 
+         INT32         queryOnCL( MsgHeader *pMsg,
+                                  pmdEDUCB *cb,
+                                  const CHAR *pCLName,
+                                  rtnContextCoord **ppContext,
+                                  BOOLEAN onPrimary = FALSE,
+                                  const CoordGroupList *pSpecGrpLst = NULL,
+                                  rtnContextBuf *buf = NULL ) ;
+
          INT32         executeOnDataGroup ( MsgHeader *pMsg,
                                             pmdEDUCB *cb,
                                             const CoordGroupList &groupLst,

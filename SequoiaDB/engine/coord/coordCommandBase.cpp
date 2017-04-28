@@ -503,6 +503,31 @@ namespace engine
       }
    }
 
+   INT32 _coordCommandBase::queryOnCL( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       const CHAR *pCLName,
+                                       rtnContextCoord **ppContext,
+                                       BOOLEAN onPrimary,
+                                       const CoordGroupList *pSpecGrpLst,
+                                       rtnContextBuf *buf )
+   {
+      coordQueryOperator queryOpr( FALSE ) ;
+      coordQueryConf queryConf ;
+      coordSendOptions sendOpt ;
+
+      queryConf._realCLName = pCLName ;
+
+      sendOpt._primary = onPrimary ;
+      if ( pSpecGrpLst )
+      {
+         sendOpt._groupLst = *pSpecGrpLst ;
+         sendOpt._useSpecialGrp = TRUE ;
+      }
+
+      return queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
+                                     sendOpt, &queryConf, buf ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( COORD_CMDBASE_QUERYONCATA, "_coordCommandBase::queryOnCatalog" )
    INT32 _coordCommandBase::queryOnCatalog( MsgHeader *pMsg,
                                             INT32 requestType,
