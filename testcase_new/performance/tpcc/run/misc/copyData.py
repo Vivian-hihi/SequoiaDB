@@ -19,16 +19,23 @@ def copyData(dir, size):
 
 def stopSdbcm():
    print "stop sdbcm ..."
-   return
-   (status,output) = commands.getstatusoutput('service sdbcm stop')
+   installPath = getInstallPath()
+   binPath = os.path.join(installPath, 'bin')
+   sdbStop = os.path.join(binPath, 'sdbstop')
+   (status,output) = commands.getstatusoutput(sdbStop)
+   # (status,output) = commands.getstatusoutput(SDBSTOP)
    if status != 0:
       print output
       sys.exit(1)
 
 def startSdbcm():
    print "start sdbcm..." 
-   return 
-   (status,output) = commands.getstatusoutput('service sdbcm start')
+   installPath = getInstallPath()
+   binPath = os.path.join(installPath, 'bin')
+   sdbStart = os.path.join(binPath, 'sdbstart')
+
+   (status,output) = commands.getstatusoutput(sdbStart)
+   #(status,output) = commands.getstatusoutput(SDBSTART)
    if status != 0:
       print output
       sys.exit(1)
@@ -62,7 +69,7 @@ def main():
       print '%s <warehouses 2000|6000>'%sys.argv[0]
       sys.exit(1)
    datasize = '100g'
-   if sys.argv[1] == 6000:
+   if int(sys.argv[1]) == 6000:
       datasize = '300g'
 
    installPath = getInstallPath()
