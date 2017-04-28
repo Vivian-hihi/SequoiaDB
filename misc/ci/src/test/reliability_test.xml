@@ -143,8 +143,10 @@
    <target name="exec_testcase">
       
       <property name="report_basedir" value="${CI_WORK_DIR}/report" />
-      <delete dir="${report_basedir}"/>
+      <delete dir="${report_basedir}" failonerror="false"/>
       <mkdir dir="${report_basedir}"/>
+      <delete dir="${WORKSPACE}/report" failonerror="false"/>
+      <mkdir dir="${WORKSPACE}/report"/>
       <!--testcase/reliability testng.xml testng_release.xml-->
       <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
       
