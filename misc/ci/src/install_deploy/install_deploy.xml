@@ -20,10 +20,79 @@
    </taskdef>    
    
    <target name="main">  
-      <antcall target="uninstall"/>
-      <antcallback target="ready_package" return="package_name"/><!--variable package_name used in target install--> 
-      <antcall target="install"/>
-      <antcall target="deploy"/>    
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="SMOKETEST"/>
+         <then>
+            <antcall target="clear_cluster"/>
+            <antcall target="ready_bin_and_conf"/>
+            <antcall target="ready_cm"/>
+         </then>
+         <else>
+            <antcall target="uninstall"/>
+            <antcallback target="ready_package" return="package_name"/><!--variable package_name used in target install--> 
+            <antcall target="install"/>
+         </else>
+      </if>  
+      <antcall target="deploy"/> 
+   </target>
+   
+   <target name="clear_cluster">
+      <var name="cmd_clear_cluster" 
+           value="${INSTALL_DIR}/bin/sdbcmtop;${INSTALL_DIR}/bin/sdbstop -t all;rm -rf ${INSTALL_DIR} "/>
+      <for list="${testhost_list}" param="testhost" parallel="true">
+         <sequential> 
+            <staf location="@{testhost}" service="PROCESS"
+                  request="START SHELL COMMAND ${cmd_clear_cluster} WAIT 10m RETURNSTDOUT RETURNSTDERR"
+                  throwBuildException=""/>
+         </sequential>
+      </for>
+   </target>
+   
+   <target name="ready_bin_and_conf">
+      <for list="${testhost_list}" param="testhost" parallel="true">
+         <sequential> 
+            <staf location="@{testhost}" service="FS"
+                  request="CREATE DIRECTORY ${INSTALL_DIR} FULLPATH"
+                  throwBuildException="1"/>
+                  
+            <for param="fullfilename">
+               <path>
+                  <fileset dir="${WORKSPACE}/release" includes="*.tar.gz"/>
+               </path>
+               <sequential>
+                  <staf location="local" service="FS"
+                        request="COPY FILE @{fullfilename} TODIRECTORY ${INSTALL_DIR} TOMACHINE @{testhost}"
+                        throwBuildException="1"/>
+                  <local name="tarname"/>
+                  <propertyregex property="tarname" input="@{fullfilename}" regexp="${WORKSPACE}/release/(.*.tar.gz)" select="\1" casesensitive="false"/>
+                  <!--untar-->
+                  <staf location="@{testhost}" service="PROCESS"
+                        request="START SHELL COMMAND tar zxvf ${INSTALL_DIR}/${tarname} -C ${INSTALL_DIR} WAIT 10m RETURNSTDERR"
+                        throwBuildException="1"/>
+                        
+                  <!--clear tar.gz-->
+                  <staf location="@{testhost}" service="FS"
+                        request="DELETE ENTRY ${INSTALL_DIR}/${tarname} RECURSE CONFIRM"
+                        throwBuildException=""/>
+               </sequential>
+            </for>
+         </sequential>
+      </for>
+   </target>
+   
+   <target name="ready_cm">
+      <var name="cmd_start_cm" 
+           value="${INSTALL_DIR}/bin/sdbcmart"/>
+      <for list="${testhost_list}" param="testhost" parallel="true">
+         <sequential> 
+            <staf location="@{testhost}" service="PROCESS"
+                  request="START SHELL COMMAND chmod 777 ${INSTALL_DIR}/bin -R WAIT 10m RETURNSTDOUT RETURNSTDERR"
+                  throwBuildException=""/>
+            <staf location="@{testhost}" service="PROCESS"
+                  request="START SHELL COMMAND ${cmd_start_cm} WAIT 10m RETURNSTDOUT RETURNSTDERR"
+                  throwBuildException=""/>
+         </sequential>
+      </for>
    </target>
    
    <target name="uninstall" depends="">    
@@ -205,6 +274,12 @@
          <then>
             <var name="diagLevel" value="5"/>
             <var name="DEPLOY_MODE" value="RELIABILITY"/>
+         </then>
+      </if>
+      <if>
+         <equals arg1="${TEST_TYPE}" arg2="SMOKETEST" />
+         <then>
+            <var name="diagLevel" value="5"/>
          </then>
       </if>
       <if>

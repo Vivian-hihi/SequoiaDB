@@ -20,6 +20,7 @@
             <var name="sync_list" unset="true"/>
             <var name="configure_list" unset="true"/> 
             <var name="reliability_list" unset="true"/>
+            <var name="smoke_list" unset="true"/>
             <var name="common_list" unset="true"/>         
             <property file="@{casedir}/testcase.conf"/>
 
@@ -94,6 +95,27 @@
                      <fileset dir="@{casedir}" excludes="lib/**/*,test-mongo,testcase.conf,${excludelist}"/>
                   </delete>
                </case>
+           
+               <case value="smoke_test">
+                  <var name="excludelist" unset="true" />
+                  <var name="excludelist" value="" />
+                  <for list="${smoke_list}" param="feature">
+                     <sequential>
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
+                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
+                     </sequential>
+                  </for>
+                  <for list="${common_list}" param="feature">
+                     <sequential>
+                        <var name="excludepathfile" value="@{feature}/**/*,@{feature},@{feature}.static" />
+                        <var name="excludelist" value="${excludelist},${excludepathfile}"/>
+                     </sequential>
+                  </for>
+               
+                  <delete includeEmptyDirs="true">
+                     <fileset dir="@{casedir}" excludes="testcase.conf,*node.conf,${excludelist}"/>
+                  </delete>
+               </case>
      
                <default/>
 
@@ -154,7 +176,7 @@
          <resourcecount property="total_filenum">
             <path refid="divided_path" />
          </resourcecount>
-
+         <var name="part_filenum" unset="true"/>
          <math result="part_filenum" 
                operand1="${total_filenum}" 
                operation="/" 

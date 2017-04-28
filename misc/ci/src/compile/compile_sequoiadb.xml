@@ -33,11 +33,18 @@
       <antcall target="compile_hadoop_connector"/>
       <antcall target="compile_spark_connector"/>
       <antcall target="build_driver_package"/>
-      <antcall target="copy_package_file"/>
-      <antcall target="build_run_package"/>
-      <antcall target="build_tar_package"/>
-      <antcall target="build_bin_package"/>
-      <antcall target="build_cov_package"/>
+      <if>
+         <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
+         <then>
+            <antcall target="tar_commit_tool_package"/>
+         </then>
+         <else>
+            <antcall target="copy_package_file"/>
+            <antcall target="build_run_package"/>
+            <antcall target="build_bin_package"/>
+            <antcall target="build_cov_package"/>
+         </else>
+      </if>
    </target>
 
    <target name="check_parameter">  
@@ -126,8 +133,13 @@
    </target>
        
    <target name="compile_src">
-      <delete dir="${srccode_dir}/bin"  failonerror="false" />
-      <delete dir="${srccode_dir}/build" failonerror="false" />
+      <if>
+         <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
+         <else>
+            <delete dir="${srccode_dir}/bin"  failonerror="false" />
+            <delete dir="${srccode_dir}/build" failonerror="false" />
+         </else>
+      </if>
       
       <var name="cmd" value="${cmd_debug} ${cmd_etp} ${cmd_cov} --all -j 4" />
       <echo message="exec cmd: scons ${cmd}" />
@@ -192,8 +204,13 @@
    
    <target name="compile_java_driver">
       <var name="src_dir" value="${srccode_dir}/driver/java" />
-      
-      <delete dir="${src_dir}/build" failonerror="false"/>
+      <if>
+         <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
+         <else>
+            <delete dir="${src_dir}/build" failonerror="false"/>
+         </else>
+      </if>
+
       <exec executable="scons" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="${cmd_debug}" />
       </exec>
@@ -201,10 +218,15 @@
    
    <target name="compile_hive_connector">
       <var name="src_dir" value="${srccode_dir}/driver/hadoop/hive" />
-      
-      <delete dir="${src_dir}/build" failonerror="false"/>
-      <delete dir="${src_dir}/build_cdh" failonerror="false"/>
-      <delete dir="${src_dir}/build_open_source" failonerror="false"/>
+      <if>
+         <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
+         <else>
+            <delete dir="${src_dir}/build" failonerror="false"/>
+            <delete dir="${src_dir}/build_cdh" failonerror="false"/>
+            <delete dir="${src_dir}/build_open_source" failonerror="false"/>
+         </else>
+      </if>
+
       
       <property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
       <property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />     
@@ -262,7 +284,13 @@
       
       <delete dir="${src_dir}/release" failonerror="false"/>
       <mkdir dir="${src_dir}/release" />
-      <delete dir="${src_dir}/build" failonerror="false"/>
+      <if>
+         <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
+         <else>
+            <delete dir="${src_dir}/build" failonerror="false"/>
+         </else>
+      </if>
+      
       
       <if>
          <equals arg1="${cmd_debug}" arg2="--dd" />
@@ -295,8 +323,13 @@
       <delete>
          <fileset dir="${src_dir}" includes="pysequoiadb*.tar.gz" />
       </delete>
-      <delete dir="${src_dir}/build" failonerror="false" />
-      
+      <if>
+         <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
+         <else>
+            <delete dir="${src_dir}/build" failonerror="false" />
+         </else>
+      </if>
+           
       <exec executable="scons" dir="${src_dir}" failonerror="true" logError="true">
          <arg line="${cmd_debug}" />
       </exec>
@@ -386,6 +419,12 @@
       
       
 
+   </target>
+   
+   <target name="tar_commit_tool_package">
+      <!--conf,bin,jdk -->
+      <tar destfile="${release_dir}/sequoiadb-commit-build-tools.tar.gz" 
+           compression="gzip" longfile="gnu" basedir="${srccode_dir}" includes="conf/**/*,bin/**/*,java/jdk_linux64/**/*" />
    </target>
    
    <target name="copy_package_file" >
