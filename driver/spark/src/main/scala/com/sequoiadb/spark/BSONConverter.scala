@@ -30,6 +30,7 @@ import org.bson.{BSONObject, BasicBSONObject}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
+import scala.math.min
 
 private[spark] object BSONConverter {
 
@@ -148,7 +149,8 @@ private[spark] object BSONConverter {
                     throw new SdbException(s"Unsupported data type conversion [${value.getClass}}, $desiredType]")
             }
         } catch {
-            case _: Exception => null
+            case sdbEx: SdbException => throw sdbEx
+            case e: Exception => throw new SdbException(e)
         }
     }
 
@@ -532,9 +534,18 @@ private[spark] object BSONConverter {
         case _: Int => IntegerType
         case _: Long => LongType
         // DecimalType can only support precision up to 38
-        case _: java.math.BigInteger => DecimalType.SYSTEM_DEFAULT
-        case _: java.math.BigDecimal => DecimalType.SYSTEM_DEFAULT
-        case _: BSONDecimal => DecimalType.SYSTEM_DEFAULT
+        case _: java.math.BigInteger => BigIntDecimal
+        case d: java.math.BigDecimal =>
+            DecimalType(
+                min(d.precision, DecimalType.MAX_PRECISION),
+                min(d.scale, DecimalType.MAX_SCALE)
+            )
+        case b: BSONDecimal =>
+            val d = b.toBigDecimal
+            DecimalType(
+                min(d.precision, DecimalType.MAX_PRECISION),
+                min(d.scale, DecimalType.MAX_SCALE)
+            )
         case _: BSONTimestamp => TimestampType
         case _: java.util.Date => DateType
         case _: String => StringType

@@ -90,9 +90,9 @@ public class TestBSONConverter {
         assertEquals(SparkShortType, BSONConverter.typeOfData(shortVal));
         assertEquals(SparkIntType, BSONConverter.typeOfData(intVal));
         assertEquals(SparkLongType, BSONConverter.typeOfData(longVal));
-        assertEquals(SparkDecimalType.SYSTEM_DEFAULT(), BSONConverter.typeOfData(bigIntVal));
-        assertEquals(SparkDecimalType.SYSTEM_DEFAULT(), BSONConverter.typeOfData(bigDecimalVal));
-        assertEquals(SparkDecimalType.SYSTEM_DEFAULT(), BSONConverter.typeOfData(bsonDecimalVal));
+        assertEquals(new DecimalType(38, 0), BSONConverter.typeOfData(bigIntVal));
+        assertEquals(new DecimalType(38, 9), BSONConverter.typeOfData(bigDecimalVal));
+        assertEquals(new DecimalType(38, 9), BSONConverter.typeOfData(bsonDecimalVal));
         assertEquals(SparkTimestampType, BSONConverter.typeOfData(bsonTimestampVal));
         assertEquals(SparkDateType, BSONConverter.typeOfData(dateVal));
         assertEquals(SparkStringType, BSONConverter.typeOfData(strVal));
@@ -126,7 +126,7 @@ public class TestBSONConverter {
 
         array.put(0, bsonDecimalVal);
         array.put(1, null);
-        assertEquals(new ArrayType(SparkDecimalType.SYSTEM_DEFAULT(), true),
+        assertEquals(new ArrayType(new DecimalType(38, 9), true),
             BSONConverter.typeOfArray(JavaConversions.asScalaBuffer(array)));
         array.clear();
 
@@ -161,7 +161,7 @@ public class TestBSONConverter {
         StructField f5 = new StructField("long", SparkLongType, true, Metadata.empty());
         StructField f6 = new StructField("float", SparkFloatType, true, Metadata.empty());
         StructField f7 = new StructField("double", SparkDoubleType, true, Metadata.empty());
-        StructField f8 = new StructField("decimal", SparkDecimalType.SYSTEM_DEFAULT(), true, Metadata.empty());
+        StructField f8 = new StructField("decimal", new DecimalType(38, 9), true, Metadata.empty());
         StructField f9 = new StructField("null", SparkNullType, true, Metadata.empty());
         StructField f10 = new StructField("string", SparkStringType, true, Metadata.empty());
         StructField f11 = new StructField("date", SparkDateType, true, Metadata.empty());
