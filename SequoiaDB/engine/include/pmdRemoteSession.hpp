@@ -37,7 +37,7 @@
 #include "oss.hpp"
 #include "msg.h"
 #include "pmdDef.hpp"
-#include "sdbinterface.hpp"
+#include "sdbInterface.hpp"
 #include "netRouteAgent.hpp"
 
 #include <map>
