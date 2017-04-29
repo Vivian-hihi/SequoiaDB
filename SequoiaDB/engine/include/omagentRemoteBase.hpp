@@ -57,6 +57,8 @@ namespace engine
 
          virtual const CHAR * name() = 0 ;
 
+         virtual BOOLEAN needCheckBusiness() const { return FALSE ; }
+
       protected:
          BSONObj _optionObj ;
          BSONObj _matchObj ;
