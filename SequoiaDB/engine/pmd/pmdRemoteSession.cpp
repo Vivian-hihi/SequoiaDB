@@ -1572,10 +1572,9 @@ namespace engine
          {
             _pHandle->onUnreg( pSite, cb ) ;
          }
+         pSite->setEduCB( NULL ) ;
          _mapTID2EDU.erase( cb->getTID() ) ;
          _edusLatch.release() ;
-
-         pSite->setEduCB( NULL ) ;
       }
 
       cb->detachRemoteSite() ;
