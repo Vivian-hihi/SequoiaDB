@@ -268,15 +268,22 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "Query failed(rc=%d)!", rc ) ;
       rc = rtnGetMore( contextID, 1, buffObj, cb, m_pRtnCB ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Getmore failed(rc=%d)!", rc ) ;
-      rc = buffObj.nextObj( recordObj ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get the record(rc=%d)!", rc ) ;
-   done:
-      if ( rc != SDB_DMS_EOC && contextID != -1 )
+      if ( rc )
       {
-         rtnKillContexts(1, &contextID, cb, m_pRtnCB ) ;
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Get more failed, rc: %d", rc ) ;
+         }
+         contextID = -1 ;
+         goto error ;
+      }
+      rc = buffObj.nextObj( recordObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the record, rc: %d", rc ) ;
+
+   done:
+      if ( contextID != -1 )
+      {
+         m_pRtnCB->contextDelete( contextID, cb ) ;
       }
       return rc ;
    error:
