@@ -44,7 +44,8 @@
 #include "msgTrace.hpp"
 #include <stddef.h>
 
-using namespace engine;
+using namespace engine ;
+using namespace bson ;
 
 #define MSG_CHECK_BSON_LENGTH( x )                                  \
    do {                                                             \
@@ -58,16 +59,18 @@ using namespace engine;
    } while ( FALSE )
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGCHKBUFF, "msgCheckBuffer" )
-INT32 msgCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
-                       INT32 packetLength )
+INT32 msgCheckBuffer ( CHAR **ppBuffer,
+                       INT32 *bufferSize,
+                       INT32 packetLength,
+                       IExecutor *cb )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_MSGCHKBUFF );
+   PD_TRACE_ENTRY ( SDB_MSGCHKBUFF ) ;
    PD_TRACE2 ( SDB_MSGCHKBUFF, PD_PACK_INT(*bufferSize),
-               PD_PACK_INT(packetLength) );
+               PD_PACK_INT(packetLength) ) ;
+
    if ( packetLength > *bufferSize )
    {
-      CHAR *pOrigMem = *ppBuffer ;
       INT32 newSize = ossRoundUpToMultipleX ( packetLength, SDB_PAGE_SIZE ) ;
       if ( newSize < 0 )
       {
@@ -75,24 +78,47 @@ INT32 msgCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      *ppBuffer = (CHAR*)SDB_OSS_REALLOC ( *ppBuffer, sizeof(CHAR)*(newSize)) ;
-      if ( !*ppBuffer )
+      if ( cb )
       {
-         PD_LOG ( PDERROR, "Failed to allocate %d bytes send buffer",
-                  newSize ) ;
-         rc = SDB_OOM ;
-         // realloc does NOT free original memory if it fails, so we have to
-         // assign pointer to original
-         *ppBuffer = pOrigMem ;
-         goto error ;
+         rc = cb->reallocBuff( newSize, ppBuffer, (UINT32*)bufferSize ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to allocate %d bytes buffer, "
+                      "rc: %d", newSize, rc ) ;
       }
-      *bufferSize = newSize ;
+      else
+      {
+         CHAR *pOrigMem = *ppBuffer ;
+         *ppBuffer = (CHAR*)SDB_OSS_REALLOC ( *ppBuffer, newSize ) ;
+         if ( !*ppBuffer )
+         {
+            PD_LOG ( PDERROR, "Failed to allocate %d bytes buffer", newSize ) ;
+            rc = SDB_OOM ;
+            // realloc does NOT free original memory if it fails, so we have to
+            // assign pointer to original
+            *ppBuffer = pOrigMem ;
+            goto error ;
+         }
+         *bufferSize = newSize ;
+      }
    }
+
 done :
-   PD_TRACE_EXITRC ( SDB_MSGCHKBUFF, rc );
+   PD_TRACE_EXITRC ( SDB_MSGCHKBUFF, rc ) ;
    return rc ;
 error :
    goto done ;
+}
+
+void msgReleaseBuffer( CHAR *pBuffer,
+                       IExecutor *cb )
+{
+   if ( cb )
+   {
+      cb->releaseBuff( pBuffer ) ;
+   }
+   else if ( pBuffer )
+   {
+      SDB_OSS_FREE( pBuffer ) ;
+   }
 }
 
 BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg )
@@ -112,20 +138,29 @@ BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg )
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDUPMSG, "msgBuildUpdateMsg" )
 INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
+                          const CHAR *CollectionName,
+                          SINT32 flag, UINT64 reqID,
                           const BSONObj *selector,
                           const BSONObj *updator,
-                          const BSONObj *hint )
+                          const BSONObj *hint,
+                          IExecutor *cb )
 {
    PD_TRACE_ENTRY ( SDB_MSGBLDUPMSG );
    PD_TRACE1 ( SDB_MSGBLDUPMSG, PD_PACK_STRING(CollectionName) );
    const BSONObj emptyObj ;
+
    if ( !selector )
+   {
       selector = &emptyObj ;
+   }
    if ( !updator )
+   {
       updator = &emptyObj ;
+   }
    if ( !hint )
+   {
       hint = &emptyObj ;
+   }
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
                 selector && updator && hint, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
@@ -144,7 +179,7 @@ INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG( PDERROR, "Failed to check buffer" ) ;
@@ -185,7 +220,7 @@ INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       goto error ;
    }
 done :
-   PD_TRACE_EXITRC ( SDB_MSGBLDUPMSG, rc );
+   PD_TRACE_EXITRC ( SDB_MSGBLDUPMSG, rc ) ;
    return rc ;
 error :
    goto done ;
@@ -261,7 +296,8 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDINSERTMSG, "msgBuildInsertMsg" )
 INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
-                          const BSONObj *insertor )
+                          const BSONObj *insertor,
+                          IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
                 insertor, "Invalid input" ) ;
@@ -281,7 +317,7 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -326,7 +362,8 @@ error :
 INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
                           void *pFiller, std::vector< CHAR * > &ObjQueue,
-                          netIOVec &ioVec )
+                          netIOVec &ioVec,
+                          IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName && pFiller,
                 "Invalid input" ) ;
@@ -337,22 +374,22 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    INT32 headLength = ossRoundUpToMultipleX(offsetof(MsgOpInsert, name) +
                                               ossStrlen ( CollectionName ) + 1,
                                               4 );
-   INT32 packetLength = headLength;
-   UINT32 i = 0;
-   ioVec.clear();
-   netIOV ioHead;
-   ioHead.iovBase = NULL; // we will fill the address after malloc;
+   INT32 packetLength = headLength ;
+   UINT32 i = 0 ;
+   ioVec.clear() ;
+   netIOV ioHead ;
+   ioHead.iovBase = NULL ; // we will fill the address after malloc;
    ioHead.iovLen = headLength - sizeof( MsgHeader );
-   ioVec.push_back( ioHead );
+   ioVec.push_back( ioHead ) ;
    for ( ; i < ObjQueue.size(); i++ )
    {
       try
       {
-         bson::BSONObj boInsertor( ObjQueue[i] );
+         BSONObj boInsertor( ObjQueue[i] ) ;
          netIOV ioObj;
          ioObj.iovBase = ObjQueue[i];
          ioObj.iovLen = boInsertor.objsize();
-         ioVec.push_back( ioObj );
+         ioVec.push_back( ioObj ) ;
 
          INT32 usedLength = ossRoundUpToMultipleX( boInsertor.objsize(), 4 );
          INT32 fillLength = usedLength - boInsertor.objsize();
@@ -363,7 +400,7 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
             ioFiller.iovLen = fillLength;
             ioVec.push_back( ioFiller );
          }
-         packetLength += usedLength;
+         packetLength += usedLength ;
       }
       catch ( std::exception &e )
       {
@@ -378,7 +415,7 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, headLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, headLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -399,22 +436,18 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // copy collection name
    ossStrncpy ( pInsert->name, CollectionName, pInsert->nameLength ) ;
    pInsert->name[pInsert->nameLength]=0 ;
-   ioVec[0].iovBase = (void *)((CHAR *)pInsert + sizeof( MsgHeader ) );
+   ioVec[0].iovBase = (void *)((CHAR *)pInsert + sizeof( MsgHeader ) ) ;
 done :
    PD_TRACE_EXITRC ( SDB_MSGBLDINSERTMSG2, rc );
    return rc ;
 error :
-   if ( NULL != *ppBuffer )
-   {
-      SDB_OSS_FREE( *ppBuffer );
-      *ppBuffer = NULL;
-   }
    goto done ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGAPDINSERTMSG, "msgAppendInsertMsg" )
 INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                           const BSONObj *insertor )
+                           const BSONObj *insertor,
+                           IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize &&
                 insertor, "Invalid input" ) ;
@@ -436,7 +469,7 @@ INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -518,19 +551,29 @@ INT32 msgBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                           const BSONObj *query,
                           const BSONObj *fieldSelector,
                           const BSONObj *orderBy,
-                          const BSONObj *hint )
+                          const BSONObj *hint,
+                          IExecutor *cb )
 {
-   PD_TRACE_ENTRY ( SDB_MSGBLDQRYMSG );
-   PD_TRACE1 ( SDB_MSGBLDQRYMSG, PD_PACK_STRING(CollectionName) );
+   PD_TRACE_ENTRY ( SDB_MSGBLDQRYMSG ) ;
+   PD_TRACE1 ( SDB_MSGBLDQRYMSG, PD_PACK_STRING(CollectionName) ) ;
    const BSONObj emptyObj ;
+
    if ( !query )
+   {
       query = &emptyObj ;
+   }
    if ( !fieldSelector )
+   {
       fieldSelector = &emptyObj ;
+   }
    if ( !orderBy )
+   {
       orderBy = &emptyObj ;
+   }
    if ( !hint )
+   {
       hint = &emptyObj ;
+   }
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
                 query && fieldSelector && orderBy && hint, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
@@ -550,7 +593,7 @@ INT32 msgBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -600,7 +643,7 @@ INT32 msgBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
       goto error ;
    }
 done :
-   PD_TRACE_EXITRC ( SDB_MSGBLDQRYMSG, rc );
+   PD_TRACE_EXITRC ( SDB_MSGBLDQRYMSG, rc ) ;
    return rc ;
 error :
    goto done ;
@@ -735,7 +778,8 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDGETMOREMSG, "msgBuildGetMoreMsg" )
 INT32 msgBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                            SINT32 numToReturn,
-                           SINT64 contextID, UINT64 reqID )
+                           SINT64 contextID, UINT64 reqID,
+                           IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
    INT32 rc               = SDB_OK ;
@@ -751,7 +795,7 @@ INT32 msgBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -809,15 +853,20 @@ void msgFillGetMoreMsg ( MsgOpGetMore &getMoreMsg, const UINT32 tid,
 INT32 msgBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
                           const BSONObj *deletor,
-                          const BSONObj *hint )
+                          const BSONObj *hint,
+                          engine::IExecutor *cb )
 {
    PD_TRACE_ENTRY ( SDB_MSGBLDDELMSG );
    PD_TRACE1 ( SDB_MSGBLDDELMSG, PD_PACK_STRING(CollectionName) );
    const BSONObj emptyObj ;
    if ( !deletor )
+   {
       deletor = &emptyObj ;
+   }
    if ( !hint )
+   {
       hint = &emptyObj ;
+   }
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
                 deletor && hint, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
@@ -835,7 +884,7 @@ INT32 msgBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -946,7 +995,8 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDKILLCONTXMSG, "msgBuildKillContextsMsg" )
 INT32 msgBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                UINT64 reqID,
-                               SINT32 numContexts, SINT64 *pContextIDs )
+                               SINT32 numContexts, SINT64 *pContextIDs,
+                               engine::IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize && pContextIDs, "Invalid input" ) ;
    SDB_ASSERT ( numContexts > 0, "Invalid input" ) ;
@@ -964,7 +1014,7 @@ INT32 msgBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -1017,7 +1067,8 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDMSGMSG, "msgBuildMsgMsg" )
 INT32 msgBuildMsgMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                       UINT64 reqID, CHAR *pMsgStr )
+                       UINT64 reqID, CHAR *pMsgStr,
+                       IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize && pMsgStr, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
@@ -1034,7 +1085,7 @@ INT32 msgBuildMsgMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -1077,13 +1128,13 @@ done :
 error :
    goto done ;
 }
-// max 16MB delta increment
-#define MSG_MAX_DELTA_BUFFER_SZ 16777216
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDREPLYMSG, "msgBuildReplyMsg" )
 INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
                          SINT32 flag, SINT64 contextID, SINT32 startFrom,
                          SINT32 numReturned, UINT64 reqID,
-                         vector<BSONObj> *objList )
+                         vector<BSONObj> *objList,
+                         IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize && objList, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
@@ -1103,7 +1154,8 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
       objSize = (*objList)[i].objsize() ;
       packetLength = ossRoundUpToMultipleX( packetLength, 4 ) ;
       rc = msgCheckBuffer ( ppBuffer, bufferSize, 
-                            packetLength + objSize ) ;
+                            packetLength + objSize,
+                            cb ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -1135,7 +1187,8 @@ error :
 INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
                          SINT32 flag, SINT64 contextID, SINT32 startFrom,
                          SINT32 numReturned, UINT64 reqID,
-                         const BSONObj *bsonobj )
+                         const BSONObj *bsonobj,
+                         IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
    INT32 rc           = SDB_OK ;
@@ -1144,7 +1197,9 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
    MsgOpReply *pReply = NULL ;
    INT32 packetLength = ossRoundUpToMultipleX ( sizeof ( MsgOpReply ), 4 ) ;
    if ( numReturned != 0 )
+   {
       packetLength += ossRoundUpToMultipleX ( bsonobj->objsize(), 4 ) ;
+   }
    PD_TRACE1 ( SDB_MSGBLDREPLYMSG2, PD_PACK_INT(packetLength) );
    if ( packetLength < 0 )
    {
@@ -1152,7 +1207,7 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer, rc: %d", rc ) ;
@@ -1229,7 +1284,8 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDISCONNMSG, "msgBuildDisconnectMsg" )
 INT32 msgBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                              UINT64 reqID )
+                              UINT64 reqID,
+                              IExecutor *cb )
 {
    SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
    INT32 rc                     = SDB_OK ;
@@ -1242,7 +1298,7 @@ INT32 msgBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -1301,49 +1357,50 @@ INT32 msgBuildQueryCatalogReqMsg ( CHAR **ppBuffer, INT32 *pBufferSize,
                                    const BSONObj *query,
                                    const BSONObj *fieldSelector,
                                    const BSONObj *orderBy,
-                                   const BSONObj *hint )
+                                   const BSONObj *hint,
+                                   IExecutor *cb )
 {
-#define QUERY_CAT_CMD_NAME ""
-   INT32 rc = SDB_OK;
-   PD_TRACE_ENTRY ( SDB_MSGBLDQRYCATREQMSG );
-   rc = msgBuildQueryMsg ( ppBuffer, pBufferSize, QUERY_CAT_CMD_NAME, flag,
-                           reqID, numToSkip, numToReturn, query, fieldSelector,
-                           orderBy, hint );
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_MSGBLDQRYCATREQMSG ) ;
+
+   rc = msgBuildQueryMsg ( ppBuffer, pBufferSize, "", flag, reqID,
+                           numToSkip, numToReturn, query, fieldSelector,
+                           orderBy, hint, cb ) ;
    if ( SDB_OK == rc )
    {
-      MsgHeader *pHead = (MsgHeader *)(*ppBuffer);
-      pHead->opCode = MSG_CAT_QUERY_CATALOG_REQ;
-      pHead->routeID.value = 0;
-      pHead->TID = TID;
+      MsgHeader *pHead = (MsgHeader *)(*ppBuffer) ;
+      pHead->opCode = MSG_CAT_QUERY_CATALOG_REQ ;
+      pHead->routeID.value = 0 ;
+      pHead->TID = TID ;
    }
-   PD_TRACE_EXITRC ( SDB_MSGBLDQRYCATREQMSG, rc );
-   return rc;
+   PD_TRACE_EXITRC ( SDB_MSGBLDQRYCATREQMSG, rc ) ;
+   return rc ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYSPCREQMSG, "msgBuildQuerySpaceReqMsg" )
 INT32 msgBuildQuerySpaceReqMsg ( CHAR **ppBuffer, INT32 *pBufferSize,
-                              SINT32 flag, UINT64 reqID, SINT64 numToSkip,
-                              SINT64 numToReturn, UINT32 TID,
-                              const BSONObj *query,
-                              const BSONObj *fieldSelector,
-                              const BSONObj *orderBy,
-                              const BSONObj *hint )
+                                 SINT32 flag, UINT64 reqID, SINT64 numToSkip,
+                                 SINT64 numToReturn, UINT32 TID,
+                                 const BSONObj *query,
+                                 const BSONObj *fieldSelector,
+                                 const BSONObj *orderBy,
+                                 const BSONObj *hint,
+                                 IExecutor *cb )
 {
-#define QUERY_SPACE_CMD_NAME ""
    PD_TRACE_ENTRY ( SDB_MSGBLDQRYSPCREQMSG );
    INT32 rc = SDB_OK;
-   rc = msgBuildQueryMsg ( ppBuffer, pBufferSize, QUERY_SPACE_CMD_NAME, flag,
-                           reqID, numToSkip, numToReturn, query, fieldSelector,
-                           orderBy, hint );
+   rc = msgBuildQueryMsg ( ppBuffer, pBufferSize, "", flag, reqID,
+                           numToSkip, numToReturn, query, fieldSelector,
+                           orderBy, hint, cb ) ;
    if ( SDB_OK == rc )
    {
-      MsgHeader *pHead = (MsgHeader *)(*ppBuffer);
-      pHead->opCode = MSG_CAT_QUERY_SPACEINFO_REQ;
-      pHead->routeID.value = 0;
-      pHead->TID = TID;
+      MsgHeader *pHead = (MsgHeader *)(*ppBuffer) ;
+      pHead->opCode = MSG_CAT_QUERY_SPACEINFO_REQ ;
+      pHead->routeID.value = 0 ;
+      pHead->TID = TID ;
    }
-   PD_TRACE_EXITRC ( SDB_MSGBLDQRYSPCREQMSG, rc );
-   return rc;
+   PD_TRACE_EXITRC ( SDB_MSGBLDQRYSPCREQMSG, rc ) ;
+   return rc ;
 }
 
 INT32 msgExtractQueryCatalogMsg ( CHAR *pBuffer, INT32 *pFlag, SINT64 *pNumToSkip,
@@ -1381,19 +1438,28 @@ INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize,
                           const BSONObj *arg1,
                           const BSONObj *arg2,
                           const BSONObj *arg3,
-                          const BSONObj *arg4 )
+                          const BSONObj *arg4,
+                          IExecutor *cb )
 {
    PD_TRACE_ENTRY ( SDB_MSGBLDCMREQ );
    PD_TRACE1 ( SDB_MSGBLDCMREQ, PD_PACK_INT(remoCode) );
    const BSONObj emptyObj ;
    if ( !arg1 )
+   {
       arg1 = &emptyObj ;
+   }
    if ( !arg2 )
+   {
       arg2 = &emptyObj ;
+   }
    if ( !arg3 )
+   {
       arg3 = &emptyObj ;
+   }
    if ( !arg4 )
+   {
       arg4 = &emptyObj ;
+   }
    SDB_ASSERT ( ppBuffer && pBufferSize, "Invalid input" ) ;
    INT32 rc                 = SDB_OK ;
    MsgCMRequest *pCMRequest = NULL ;
@@ -1411,7 +1477,7 @@ INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, pBufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, pBufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
@@ -1546,7 +1612,8 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDROPCLMSG, "msgBuildDropCLMsg" )
 INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, UINT64 reqID )
+                          const CHAR *CollectionName, UINT64 reqID,
+                          IExecutor *cb )
 {
    PD_TRACE_ENTRY ( SDB_MSGBLDDROPCLMSG );
    const bson::BSONObj emptyObj ;
@@ -1588,7 +1655,7 @@ INT32 msgBuildDropCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR,
@@ -1647,7 +1714,8 @@ INT32 msgBuildLinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName,
                           const CHAR *subCollectionName,
                           const BSONObj *lowBound, const BSONObj *upBound,
-                          UINT64 reqID )
+                          UINT64 reqID,
+                          IExecutor *cb )
 {
    INT32 rc = SDB_OK ;
 
@@ -1708,11 +1776,10 @@ INT32 msgBuildLinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR,
-              "Failed to check buffer" ) ;
+      PD_LOG ( PDERROR, "Failed to check buffer" ) ;
       goto error ;
    }
    // now the buffer is large enough
@@ -1766,7 +1833,8 @@ error :
 INT32 msgBuildUnlinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                             const CHAR *CollectionName,
                             const CHAR *subCollectionName,
-                            UINT64 reqID )
+                            UINT64 reqID,
+                            IExecutor *cb )
 {
    INT32 rc = SDB_OK ;
 
@@ -1810,12 +1878,11 @@ INT32 msgBuildUnlinkCLMsg ( CHAR **ppBuffer, INT32 *bufferSize,
 
    if ( packetLength < 0 )
    {
-      PD_LOG ( PDERROR,
-              "Packet size overflow" ) ;
+      PD_LOG ( PDERROR, "Packet size overflow" ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR,
@@ -1873,7 +1940,8 @@ error :
 INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                               const CHAR *CollectionName,
                               const CHAR *IndexName,
-                              UINT64 reqID )
+                              UINT64 reqID,
+                              IExecutor *cb )
 {
    PD_TRACE_ENTRY ( SDB_MSGBLDDROPINXMSG );
    const bson::BSONObj emptyObj ;
@@ -1915,16 +1983,14 @@ INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    PD_TRACE1 ( SDB_MSGBLDDROPINXMSG, PD_PACK_INT(packetLength) );
    if ( packetLength < 0 )
    {
-      PD_LOG ( PDERROR,
-              "Packet size overflow" ) ;
+      PD_LOG ( PDERROR, "Packet size overflow" ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
+   rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength, cb ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR,
-              "Failed to check buffer" ) ;
+      PD_LOG ( PDERROR, "Failed to check buffer" ) ;
       goto error ;
    }
    // now the buffer is large enough
@@ -1991,7 +2057,8 @@ INT32 msgExtractSql( CHAR *pBuffer, CHAR **sql )
    return rc ;
 }
 
-INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize )
+INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                                  IExecutor *cb )
 {
    SDB_ASSERT( ppBuffer, "invalid input" ) ;
    INT32 rc = SDB_OK;
@@ -2000,7 +2067,7 @@ INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize )
             = ossRoundUpToMultipleX( sizeof( MsgOpTransCommitPre ), 4 );
    PD_CHECK( (packetLength > 0), SDB_INVALIDARG, error, PDERROR,
             "Packet size overflow" );
-   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength );
+   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength, cb ) ;
    PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
    pMsg = (MsgOpTransCommitPre *)(*ppBuffer);
    pMsg->header.messageLength = packetLength;
@@ -2008,12 +2075,13 @@ INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize )
    pMsg->header.routeID.value = 0;
 
 done:
-   return rc;
+   return rc ;
 error:
-   goto done;
+   goto done ;
 }
 
-INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize )
+INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                               IExecutor *cb )
 {
    SDB_ASSERT( ppBuffer, "invalid input" ) ;
    INT32 rc = SDB_OK;
@@ -2022,7 +2090,7 @@ INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize )
             = ossRoundUpToMultipleX( sizeof( MsgOpTransCommit ), 4 );
    PD_CHECK( (packetLength > 0), SDB_INVALIDARG, error, PDERROR,
             "Packet size overflow" );
-   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength );
+   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength, cb ) ;
    PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
    pMsg = (MsgOpTransCommit *)(*ppBuffer);
    pMsg->header.messageLength = packetLength;
@@ -2035,7 +2103,8 @@ error:
    goto done;
 }
 
-INT32 msgBuildTransRollbackMsg ( CHAR **ppBuffer, INT32 *bufferSize )
+INT32 msgBuildTransRollbackMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                                 IExecutor *cb )
 {
    SDB_ASSERT( ppBuffer, "invalid input" ) ;
    INT32 rc = SDB_OK;
@@ -2044,7 +2113,7 @@ INT32 msgBuildTransRollbackMsg ( CHAR **ppBuffer, INT32 *bufferSize )
             = ossRoundUpToMultipleX( sizeof( MsgOpTransRollback ), 4 );
    PD_CHECK( (packetLength > 0), SDB_INVALIDARG, error, PDERROR,
             "Packet size overflow" );
-   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength );
+   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength, cb ) ;
    PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
    pMsg = (MsgOpTransRollback *)(*ppBuffer);
    pMsg->header.messageLength = packetLength;
@@ -2058,14 +2127,16 @@ error:
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDSYSINFOREQUEST, "msgBuildSysInfoRequest" )
-INT32 msgBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize )
+INT32 msgBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize,
+                               IExecutor *cb )
 {
    SDB_ASSERT( NULL != ppBuffer &&
                NULL != pBufferSize, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
    MsgSysInfoRequest *request = NULL ;
    PD_TRACE_ENTRY ( SDB_MSGBUILDSYSINFOREQUEST ) ;
-   rc = msgCheckBuffer ( ppBuffer, pBufferSize, sizeof(MsgSysInfoRequest) ) ;
+   rc = msgCheckBuffer ( ppBuffer, pBufferSize,
+                         sizeof(MsgSysInfoRequest), cb ) ;
    PD_RC_CHECK ( rc, PDERROR, "Failed to check buffer" ) ;
    request                                   = (MsgSysInfoRequest*)(*ppBuffer) ;
    request->header.specialSysInfoLen         = MSG_SYSTEM_INFO_LEN ;
@@ -2109,14 +2180,15 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDSYSINFOREPLY, "msgBuildSysInfoReply" )
-INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize )
+INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize,
+                             IExecutor *cb )
 {
    SDB_ASSERT ( NULL != ppBuffer &&
                 NULL != pBufferSize, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
    MsgSysInfoReply *reply = NULL ;
    PD_TRACE_ENTRY ( SDB_MSGBUILDSYSINFOREPLY ) ;
-   rc = msgCheckBuffer ( ppBuffer, pBufferSize, sizeof(MsgSysInfoReply) ) ;
+   rc = msgCheckBuffer ( ppBuffer, pBufferSize, sizeof(MsgSysInfoReply), cb ) ;
    PD_RC_CHECK ( rc, PDERROR, "Failed to check buffer, rc = %d", rc ) ;
    reply                                     = (MsgSysInfoReply*)(*ppBuffer) ;
    reply->header.specialSysInfoLen           = MSG_SYSTEM_INFO_LEN ;

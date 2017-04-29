@@ -40,6 +40,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "sdbInterface.hpp"
 #include "../bson/bson.hpp"
 #include <string>
 
@@ -55,8 +56,7 @@ namespace engine
        _fullNameBuf( NULL ),
        _skip( 0 ),
        _limit( -1 ),
-       _flag( 0 ),
-       _enablePrefetch( FALSE )
+       _flag( 0 )
       {
 
       }
@@ -68,8 +68,7 @@ namespace engine
                         const CHAR *fullName,
                         SINT64 skip,
                         SINT64 limit,
-                        INT32 flag,
-                        BOOLEAN enablePrefetch )
+                        INT32 flag )
       :_query( query ),
        _selector( selector ),
        _orderBy( orderBy ),
@@ -78,8 +77,7 @@ namespace engine
        _fullNameBuf( NULL ),
        _skip( skip ),
        _limit( limit ),
-       _flag( flag ),
-       _enablePrefetch( enablePrefetch )
+       _flag( flag )
       {
 
       }
@@ -91,8 +89,7 @@ namespace engine
                         const CHAR *fullName,
                         SINT64 skip,
                         SINT64 limit,
-                        INT32 flag,
-                        BOOLEAN enablePrefetch )
+                        INT32 flag )
       :_query( query ),
        _selector( selector ),
        _orderBy( orderBy ),
@@ -101,8 +98,7 @@ namespace engine
        _fullNameBuf( NULL ),
        _skip( skip ),
        _limit( limit ),
-       _flag( flag ),
-       _enablePrefetch( enablePrefetch )
+       _flag( flag )
       {
 
       }
@@ -116,8 +112,7 @@ namespace engine
        _fullNameBuf( NULL ),
        _skip( o._skip ),
        _limit( o._limit ),
-       _flag( o._flag ),
-       _enablePrefetch( o._enablePrefetch )
+       _flag( o._flag )
       {
 
       }
@@ -127,7 +122,9 @@ namespace engine
       virtual ~_rtnQueryOptions() ;
 
       INT32 fromQueryMsg( CHAR *pMsg ) ;
-      INT32 toQueryMsg( CHAR **ppMsg, INT32 &buffSize ) const ;
+      INT32 toQueryMsg( CHAR **ppMsg,
+                        INT32 &buffSize,
+                        IExecutor *cb = NULL ) const ;
 
       INT32 getOwned() ;
 
@@ -143,7 +140,6 @@ namespace engine
       SINT64 _skip ;
       SINT64 _limit ;
       INT32 _flag ;
-      BOOLEAN _enablePrefetch ;
 
    } ;
    typedef class _rtnQueryOptions rtnQueryOptions ;

@@ -100,7 +100,6 @@ namespace engine
       _skip = o._skip ;
       _limit = o._limit ;
       _flag = o._flag ;
-      _enablePrefetch = o._enablePrefetch ;
       return *this ;
    }
 
@@ -160,7 +159,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnQueryOptions::toQueryMsg( CHAR **ppMsg, INT32 &buffSize ) const
+   INT32 _rtnQueryOptions::toQueryMsg( CHAR **ppMsg,
+                                       INT32 &buffSize,
+                                       IExecutor *cb ) const
    {
       INT32 rc = SDB_OK ;
 
@@ -168,7 +169,7 @@ namespace engine
 
       rc = msgBuildQueryMsg( ppMsg, &buffSize, _fullName, _flag, 0,
                              _skip, _limit, &_query, &_selector, &_orderBy,
-                             &_hint ) ;
+                             &_hint, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Build query msg failed, rc: %d", rc ) ;
 
    done:

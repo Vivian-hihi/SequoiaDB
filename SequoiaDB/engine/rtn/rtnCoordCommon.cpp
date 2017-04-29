@@ -642,8 +642,7 @@ namespace engine
                                 pCollectionName,
                                 numToSkip,
                                 numToReturn,
-                                flag,
-                                FALSE ) ;
+                                flag ) ;
       rc = commandOpr.queryOnCatalog( queryOpt, cb, contextID, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "Query[%s] on catalog failed, rc: %d",
                    queryOpt.toString().c_str(), rc ) ;

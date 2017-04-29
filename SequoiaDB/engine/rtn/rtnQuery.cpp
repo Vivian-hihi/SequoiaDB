@@ -851,8 +851,7 @@ namespace engine
                                orderBy, realHint,
                                pCollectionName,
                                numToSkip, numToReturn,
-                               explainFlags,
-                               FALSE ) ;
+                               explainFlags ) ;
 
       rtnContextExplain *context = NULL ;
       rc = rtnCB->contextNew( RTN_CONTEXT_EXPLAIN,

@@ -1837,7 +1837,7 @@ namespace engine
                                 0 : numToSkip,
                                 ( FLG_QUERY_EXPLAIN & flags ) ?
                                 -1 : numToReturn,
-                                flags, FALSE ) ;
+                                flags ) ;
 
       SDB_ASSERT( pCollectionName, "collection name can't be NULL!" ) ;
       SDB_ASSERT( cb, "educb can't be NULL!" );

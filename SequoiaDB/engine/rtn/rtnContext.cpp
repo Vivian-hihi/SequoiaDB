@@ -729,6 +729,11 @@ namespace engine
       goto done ;
    }
 
+   UINT32 _rtnContextBase::getCachedRecordNum()
+   {
+      return _bufferNumRecords ;
+   }
+
    /*
       _rtnContextData implement
    */
@@ -2585,6 +2590,28 @@ namespace engine
       {
          buffObj = rtnBuildErrorObj( rc, cb, &_nokRC ) ;
       }
+   }
+
+   UINT32 _rtnContextCoord::getCachedRecordNum()
+   {
+      UINT32 recordNum = 0 ;
+      SUB_CONTEXT_MAP::iterator it = _subContextMap.begin() ;
+      while( it != _subContextMap.end() )
+      {
+         coordSubContext *pSub = it->second ;
+         recordNum += pSub->getRecordNum() ;
+         ++it ;
+      }
+      if ( _numToSkip > recordNum )
+      {
+         recordNum = 0 ;
+      }
+      else if ( _numToSkip > 0 )
+      {
+         recordNum -= _numToSkip ;
+      }
+
+      return recordNum + _rtnContextBase::getCachedRecordNum() ;
    }
 
    void _rtnContextCoord::killSubContexts( pmdEDUCB * cb )
