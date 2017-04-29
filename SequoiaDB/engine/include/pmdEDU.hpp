@@ -123,6 +123,7 @@ namespace engine
             Session Related
          */
          virtual ISession* getSession() { return _pSession ; }
+         virtual IRemoteSite* getRemoteSite() { return _pRemoteSite ; }
 
          /*
             Status and Control
@@ -211,6 +212,9 @@ namespace engine
    public :
       void        attachSession( ISession *pSession ) ;
       void        detachSession() ;
+
+      void        attachRemoteSite( IRemoteSite *pSite ) ;
+      void        detachRemoteSite() ;
 
       void        restoreBuffs( CATCH_MAP &catchMap ) ;
       void        saveBuffs( CATCH_MAP &catchMap ) ;
@@ -397,8 +401,8 @@ namespace engine
       void     clearLockList() ;
       INT32    createTransaction() ;
       void     delTransaction() ;
-      void     addTransNode( MsgRouteID &routeID ) ;
-      void     delTransNode( MsgRouteID &routeID ) ;
+      void     addTransNode( const MsgRouteID &routeID ) ;
+      void     delTransNode( const MsgRouteID &routeID ) ;
       void     getTransNodeRouteID( UINT32 groupID, MsgRouteID &routeID ) ;
       DpsTransNodeMap *getTransNodeLst() ;
       BOOLEAN  isTransaction() ;
@@ -492,6 +496,7 @@ namespace engine
       EDUID                   _eduID ;
       UINT32                  _tid ;
       ISession                *_pSession ;
+      IRemoteSite             *_pRemoteSite ;
 
       UINT64                  _beginLsn ;
       UINT64                  _endLsn ;

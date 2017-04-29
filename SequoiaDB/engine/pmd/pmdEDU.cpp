@@ -154,6 +154,7 @@ namespace engine
       ossMemset( _name, 0, sizeof( _name ) ) ;
       _threadHdl        = 0 ;
       _pSession         = NULL ;
+      _pRemoteSite      = NULL ;
       _pCompressBuff    = NULL ;
       _compressBuffLen  = 0 ;
       _pUncompressBuff  = NULL ;
@@ -317,6 +318,16 @@ namespace engine
    void _pmdEDUCB::detachSession()
    {
       _pSession = NULL ;
+   }
+
+   void _pmdEDUCB::attachRemoteSite( IRemoteSite *pSite )
+   {
+      _pRemoteSite = pSite ;
+   }
+
+   void _pmdEDUCB::detachRemoteSite()
+   {
+      _pRemoteSite = NULL ;
    }
 
    void _pmdEDUCB::setType ( EDU_TYPES type )
@@ -1087,7 +1098,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ADDTRANSNODE, "_pmdEDUCB::addTransNode" )
-   void _pmdEDUCB::addTransNode( MsgRouteID &routeID )
+   void _pmdEDUCB::addTransNode( const MsgRouteID &routeID )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ADDTRANSNODE );
       if ( _pTransNodeMap )
@@ -1097,7 +1108,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_ADDTRANSNODE );
    }
 
-   void _pmdEDUCB::delTransNode( MsgRouteID &routeID )
+   void _pmdEDUCB::delTransNode( const MsgRouteID &routeID )
    {
       if ( _pTransNodeMap )
       {

@@ -332,6 +332,21 @@ namespace engine
    } ;
 
    /*
+      _IRemoteSite define
+   */
+   class _IRemoteSite : public SDBObject
+   {
+      public:
+         _IRemoteSite() {}
+         virtual ~_IRemoteSite() {}
+
+      public:
+         virtual  UINT64   getUserData() const = 0 ;
+
+   } ;
+   typedef _IRemoteSite IRemoteSite ;
+
+   /*
       _IExecutor define
    */
    class _IExecutor : public SDBObject
@@ -352,6 +367,7 @@ namespace engine
             Session Related
          */
          virtual ISession* getSession() = 0 ;
+         virtual IRemoteSite* getRemoteSite() = 0 ;
 
          /*
             Status and Control
