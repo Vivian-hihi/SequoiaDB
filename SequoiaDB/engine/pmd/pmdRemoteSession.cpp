@@ -203,6 +203,12 @@ namespace engine
    /*
       _pmdSubSessionItr implement
    */
+   _pmdSubSessionItr::_pmdSubSessionItr()
+   {
+      _pSessions = NULL ;
+      _filter = PMD_SSITR_ALL ;
+   }
+
    _pmdSubSessionItr::_pmdSubSessionItr( MAP_SUB_SESSION *pSessions,
                                          PMD_SSITR_FILTER filter )
    :_pSessions( pSessions ), _filter( filter )
@@ -376,8 +382,10 @@ namespace engine
       {
          if ( it->second.isNeedToDel() )
          {
+            stopSubSession( &(it->second) ) ;
             _pSite->delSubSession( it->second.getReqID() ) ;
-            _pSite->removeAssitNode( it->second.getAddPos() ) ;
+            _pSite->removeAssitNode( it->second.getAddPos(),
+                                     it->second.getNodeID().columns.nodeID ) ;
          }
          _mapSubSession.erase( it ) ;
       }
@@ -387,13 +395,16 @@ namespace engine
    {
       _mapPendingSubSession.clear() ;
 
+      stopSubSession() ;
+
       MAP_SUB_SESSION_IT it = _mapSubSession.begin() ;
       while ( it != _mapSubSession.end() )
       {
          if ( it->second.isNeedToDel() )
          {
             _pSite->delSubSession( it->second.getReqID() ) ;
-            _pSite->removeAssitNode( it->second.getAddPos() ) ;
+            _pSite->removeAssitNode( it->second.getAddPos(),
+                                     it->second.getNodeID().columns.nodeID ) ;
          }
          ++it ;
       }
@@ -420,6 +431,22 @@ namespace engine
          if ( SDB_OK == rc )
          {
             pSubSession->setStop( TRUE ) ;
+         }
+      }
+   }
+
+   void _pmdRemoteSession::stopSubSession( pmdSubSession *pSub )
+   {
+      if ( pSub->isSend() && !pSub->hasReply() && !pSub->hasStop() )
+      {
+         INT32 rc = SDB_OK ;
+         MsgHeader interruptMsg ;
+         interruptMsg.messageLength = sizeof( MsgHeader ) ;
+         interruptMsg.opCode = MSG_BS_INTERRUPTE_SELF ;
+         rc = postMsg( &interruptMsg, pSub ) ;
+         if ( rc )
+         {
+            pSub->setStop( TRUE ) ;
          }
       }
    }
@@ -849,8 +876,10 @@ namespace engine
 
       if ( pSub->isNeedToDel() )
       {
+         stopSubSession( pSub ) ;
          _pSite->delSubSession( oldReqID ) ;
-         _pSite->removeAssitNode( &oldAddPos ) ;
+         _pSite->removeAssitNode( &oldAddPos,
+                                  pSub->getNodeID().columns.nodeID ) ;
       }
       _sessionChange = TRUE ;
       pSub->setSendResult( TRUE ) ;
@@ -862,7 +891,8 @@ namespace engine
    error:
       if ( pSub )
       {
-         _pSite->removeAssitNode( pSub->getAddPos() ) ;
+         _pSite->removeAssitNode( pSub->getAddPos(),
+                                  pSub->getNodeID().columns.nodeID ) ;
       }
       goto done ;
    }
@@ -1068,7 +1098,6 @@ namespace engine
       _pAgent = NULL ;
 
       ossMemset( _assitNodeBuff, 0, sizeof( _assitNodeBuff ) ) ;
-      _nodeBuffSize = 0 ;
 
       _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos = 0 ;
       for ( UINT32 i = 0 ; i < PMD_SITE_NODEID_BUFF_SIZE ; ++i )
@@ -1079,11 +1108,14 @@ namespace engine
 
       _sessionHWNum = 1 ;
       _curPos = -1 ;
+
+      _userData = 0 ;
    }
 
    _pmdRemoteSessionSite::~_pmdRemoteSessionSite()
    {
       SDB_ASSERT( 0 == _mapSession.size(), "Has session not removed" ) ;
+      SDB_ASSERT( NULL == _pEDUCB, "EDU is not NULL" ) ;
       _pEDUCB = NULL ;
    }
 
@@ -1123,16 +1155,19 @@ namespace engine
       INT32 pos = -1 ;
       if ( -1 != _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos )
       {
-         ++_nodeBuffSize ;
          pos = _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos ;
          _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos =
             _assitNodeBuff[ pos ]._pos ;
          _assitNodeBuff[ pos ]._nodeID = nodeID ;
       }
+      else
+      {
+         _assitNodes.insert( nodeID ) ;
+      }
       return pos ;
    }
 
-   void _pmdRemoteSessionSite::removeAssitNode( INT32 *pos )
+   void _pmdRemoteSessionSite::removeAssitNode( INT32 *pos, UINT16 nodeID )
    {
       if ( *pos >= 0 && *pos < PMD_SITE_NODEID_BUFF_SIZE )
       {
@@ -1140,8 +1175,11 @@ namespace engine
          _assitNodeBuff[ *pos ]._pos =
             _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos ;
          _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos = *pos ;
-         --_nodeBuffSize ;
          *pos = -1 ;
+      }
+      else
+      {
+         _assitNodes.erase( nodeID ) ;
       }
    }
 
@@ -1154,16 +1192,18 @@ namespace engine
             return TRUE ;
          }
       }
+      if ( _assitNodes.count( nodeID ) > 0 )
+      {
+         return TRUE ;
+      }
       return FALSE ;
    }
 
    void _pmdRemoteSessionSite::handleClose( const NET_HANDLE & handle,
                                             const _MsgRouteID & id )
    {
-      // if assit node is not full and can't find the nodeID
-      // not to send disconnect
-      if ( getAssitNodeSize() < PMD_SITE_NODEID_BUFF_SIZE &&
-           FALSE == existNode( id.columns.nodeID ) )
+      // if assit node can't find the nodeID not to send disconnect
+      if ( FALSE == existNode( id.columns.nodeID ) )
       {
          goto done ;
       }
@@ -1228,6 +1268,19 @@ namespace engine
       }
    }
 
+   UINT32 _pmdRemoteSessionSite::getAllNodeID( SET_NODEID &setNodes )
+   {
+      UINT32 count = 0 ;
+      MAP_NODE2NET::iterator it = _mapNode2Net.begin() ;
+      while( it != _mapNode2Net.end() )
+      {
+         setNodes.insert( it->first ) ;
+         ++it ;
+         ++count ;
+      }
+      return count ;
+   }
+
    INT32 _pmdRemoteSessionSite::processEvent( pmdEDUEvent &event,
                                               MAP_SUB_SESSION &mapSessions,
                                               pmdSubSession **ppSub,
@@ -1283,7 +1336,8 @@ namespace engine
                }
                // remove from request id map
                _mapReq2SubSession.erase( itPtr++ ) ;
-               removeAssitNode( pSubSession->getAddPos() ) ;
+               removeAssitNode( pSubSession->getAddPos(),
+                                pSubSession->getNodeID().columns.nodeID ) ;
 
                if ( pHandle )
                {
@@ -1337,7 +1391,8 @@ namespace engine
             }
             // remove from request id map
             _mapReq2SubSession.erase( itPtr ) ;
-            removeAssitNode( pSubSession->getAddPos() ) ;
+            removeAssitNode( pSubSession->getAddPos(),
+                             pSubSession->getNodeID().columns.nodeID ) ;
 
             if ( pHandle )
             {
@@ -1454,6 +1509,7 @@ namespace engine
    */
    _pmdRemoteSessionMgr::_pmdRemoteSessionMgr()
    {
+      _pHandle= NULL ;
       _pAgent = NULL ;
    }
 
@@ -1464,13 +1520,15 @@ namespace engine
       _pAgent = NULL ;
    }
 
-   INT32 _pmdRemoteSessionMgr::init( netRouteAgent * pAgent )
+   INT32 _pmdRemoteSessionMgr::init( netRouteAgent * pAgent,
+                                     IRemoteMgrHandle *pHandle )
    {
       if ( !pAgent )
       {
          return SDB_INVALIDARG ;
       }
       _pAgent = pAgent ;
+      _pHandle = pHandle ;
 
       return SDB_OK ;
    }
@@ -1488,21 +1546,39 @@ namespace engine
       pmdRemoteSessionSite &site = _mapTID2EDU[ cb->getTID() ] ;
       site.setEduCB( cb ) ;
       site.setRouteAgent( _pAgent ) ;
+      cb->attachRemoteSite( &site ) ;
+
+      if ( _pHandle )
+      {
+         _pHandle->onRegister( &site, cb ) ;
+      }
       return &site ;
    }
 
    void _pmdRemoteSessionMgr::unregEUD( _pmdEDUCB * cb )
    {
-      pmdRemoteSessionSite *pSite = getSite( cb ) ;
+      pmdRemoteSessionSite *pSite = NULL ;
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+#ifdef _DEBUG
+      SDB_ASSERT( pSite == getSite( cb ), "Site is not the same" ) ;
+#endif //_DEBUG
       if ( pSite )
       {
          // first to disconnect all sub session
          pSite->disconnectAllSubSession() ;
 
          _edusLatch.get() ;
+         if ( _pHandle )
+         {
+            _pHandle->onUnreg( pSite, cb ) ;
+         }
          _mapTID2EDU.erase( cb->getTID() ) ;
          _edusLatch.release() ;
+
+         pSite->setEduCB( NULL ) ;
       }
+
+      cb->detachRemoteSite() ;
    }
 
    pmdRemoteSessionSite* _pmdRemoteSessionMgr::getSite( _pmdEDUCB *cb )
@@ -1595,7 +1671,11 @@ namespace engine
                                                         INT64 timeout,
                                                         IRemoteSessionHandler *pHandle )
    {
-      pmdRemoteSessionSite *pSite = getSite( cb ) ;
+      pmdRemoteSessionSite *pSite = NULL ;
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+#ifdef _DEBUG
+      SDB_ASSERT( pSite == getSite( cb ), "Site is not the same" ) ;
+#endif //_DEBUG
       if ( !pSite )
       {
          PD_LOG( PDERROR, "Session[%s] is not registered for remote session",
