@@ -38,6 +38,8 @@
 #include "msgMessage.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+#include "rtn.hpp"
+#include "catCommon.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -972,7 +974,7 @@ namespace engine
                                                        INT32 *pBufSize )
    {
       pMsg->opCode = MSG_CAT_CREATE_COLLECTION_REQ ;
-      *ppMsgBuf = pMsg ;
+      *ppMsgBuf = (CHAR*)pMsg ;
       *pBufSize = pMsg->messageLength ;
 
       return SDB_OK ;
@@ -1138,7 +1140,7 @@ namespace engine
    {
       pMsg->opCode = MSG_CAT_DROP_COLLECTION_REQ ;
       *ppMsgBuf = (CHAR*)pMsg ;
-      pBufSize = pMsg->messageLength ;
+      *pBufSize = pMsg->messageLength ;
 
       return SDB_OK ;
    }
@@ -1363,6 +1365,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_SUBCL_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( _subCLName.empty() )
@@ -1379,6 +1382,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_COLLECTION_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( pArgs->_targetName.empty() )
@@ -1395,6 +1399,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_LOWBOUND_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
 
@@ -1404,6 +1409,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_UPBOUND_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
       }
@@ -1450,7 +1456,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( COORD_LINKCL_GENROLLBACKMSG ) ;
 
-      rc = msgBuildUnlinkCLMsg( ppMsgBuf, &pBufSize,
+      rc = msgBuildUnlinkCLMsg( ppMsgBuf, pBufSize,
                                 pArgs->_targetName.c_str(),
                                 _subCLName.c_str(), 0, cb ) ;
       if ( rc )
@@ -1533,6 +1539,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_SUBCL_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( _subCLName.empty() )
@@ -1549,6 +1556,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_COLLECTION_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( pArgs->_targetName.empty() )
@@ -1603,7 +1611,7 @@ namespace engine
       PD_TRACE_ENTRY ( COORD_UNLINKCL_GENROLLBACKMSG ) ;
 
       // The Data Group doesn't care about lowBound and upBound
-      rc = msgBuildLinkCLMsg( ppMsgBuf, &pBufSize,
+      rc = msgBuildLinkCLMsg( ppMsgBuf, pBufSize,
                               pArgs->_targetName.c_str(),
                               _subCLName.c_str(),
                               NULL, NULL, 0, cb ) ;
@@ -1703,7 +1711,7 @@ namespace engine
                                    CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
                                    0, 1, FLG_QUERY_WITH_RETURNDATA ) ;
 
-      rc = queryOption->toQueryMsg( &pMsg, &bufSize, cb ) ;
+      rc = queryOption.toQueryMsg( &pMsg, bufSize, cb ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Build get count message failed in command[%s], "
@@ -1766,7 +1774,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CHAR *pQuery = NULL ;
-      CoordGroupList &srcGrpLst ;
+      CoordGroupList srcGrpLst ;
 
       // first round we perform prepare, so catalog node is able to do sanity
       // check for collection name and nodes
@@ -2462,7 +2470,7 @@ namespace engine
                                   lowBound, buf ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Get low bound failed, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Get lowbound failed, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -2474,7 +2482,7 @@ namespace engine
                                      upBound, buf ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Get up bound failed, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Get upbound failed, rc: %d", rc ) ;
             goto error ;
          }
       }
@@ -2599,6 +2607,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_COLLECTION, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( pArgs->_targetName.empty() )
@@ -2615,6 +2624,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     FIELD_NAME_INDEX, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
 
@@ -2625,6 +2635,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     IXM_FIELD_NAME_NAME, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( _indexName.empty() )
@@ -2656,7 +2667,7 @@ namespace engine
                                                  INT32 *pBufSize )
    {
       pMsg->opCode = MSG_CAT_CREATE_IDX_REQ ;
-      *ppMsgBuf = pMsg ;
+      *ppMsgBuf = (CHAR*)pMsg ;
       *pBufSize = pMsg->messageLength ;
       return SDB_OK ;
    }
@@ -2787,6 +2798,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                     CAT_COLLECTION, getName(), rc ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( pArgs->_targetName.empty() )

@@ -38,6 +38,7 @@
 #define COORD_COMMAND_DOMAIN_HPP__
 
 #include "coordCommandBase.hpp"
+#include "coordFactory.hpp"
 
 using namespace bson ;
 
