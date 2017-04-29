@@ -212,6 +212,8 @@ namespace engine
                                         rtnContextBuf &buffObj )
          {}
 
+         virtual UINT32   getCachedRecordNum() ;
+
          OSS_INLINE BOOLEAN  isEmpty () const ;
 
          INT64    numRecords () const { return _bufferNumRecords ; }
@@ -674,6 +676,8 @@ namespace engine
          virtual void     getErrorInfo( INT32 rc,
                                         pmdEDUCB *cb,
                                         rtnContextBuf &buffObj ) ;
+
+         virtual UINT32   getCachedRecordNum() ;
 
       public:
 
