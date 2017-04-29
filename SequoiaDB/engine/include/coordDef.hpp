@@ -48,6 +48,8 @@ using namespace bson ;
 
 namespace engine
 {
+   #define COORD_GROUPS_AVG_NUM              ( 20 )
+
    struct coordErrorInfo
    {
       INT32       _rc ;
@@ -80,29 +82,31 @@ namespace engine
          }
       }
    } ;
-   typedef std::queue<CHAR *>                         REPLY_QUE ;
-   typedef _utilMap< UINT64, coordErrorInfo, 20 >     ROUTE_RC_MAP ;
-   typedef _utilMap< UINT64, MsgHeader*, 20 >         ROUTE_REPLY_MAP ;
-   typedef _utilMap< UINT32, netIOVec, 20 >           GROUP_2_IOVEC ;
-   typedef std::set< INT32 >                          SET_RC ;
+   typedef std::queue<CHAR *>                                        REPLY_QUE ;
+   typedef _utilMap< UINT64, coordErrorInfo, COORD_GROUPS_AVG_NUM >  ROUTE_RC_MAP ;
+   typedef _utilMap< UINT64, MsgHeader*, COORD_GROUPS_AVG_NUM >      ROUTE_REPLY_MAP ;
+   typedef _utilMap< UINT32, netIOVec, COORD_GROUPS_AVG_NUM >        GROUP_2_IOVEC ;
+   typedef std::set< INT32 >                                         SET_RC ;
+   typedef std::set< UINT64 >                                        SET_ROUTEID ;
 
-   typedef _utilMap< UINT32, UINT32, 20 >             CoordGroupList ;
-   typedef clsNodeItem                                CoordNodeInfo ;
-   typedef VEC_NODE_INFO                              CoordVecNodeInfo ;
+   typedef _utilMap< UINT32, UINT32, COORD_GROUPS_AVG_NUM >          CoordGroupList ;
+   typedef clsNodeItem                                               CoordNodeInfo ;
+   typedef VEC_NODE_INFO                                             CoordVecNodeInfo ;
 
-   typedef clsGroupItem                               CoordGroupInfo ;
+   typedef clsGroupItem                                              CoordGroupInfo ;
 
-   typedef boost::shared_ptr<CoordGroupInfo>          CoordGroupInfoPtr;
-   typedef _utilMap< UINT32, CoordGroupInfoPtr, 20 >  CoordGroupMap;
-   typedef std::vector< CoordGroupInfoPtr >           GROUP_VEC ;
-   typedef std::vector<std::string>                   CoordSubCLlist;
-   typedef _utilMap< UINT32, CoordSubCLlist, 20 >     CoordGroupSubCLMap;
+   typedef boost::shared_ptr<CoordGroupInfo>                         CoordGroupInfoPtr;
+   typedef _utilMap< UINT32, CoordGroupInfoPtr, COORD_GROUPS_AVG_NUM >  CoordGroupMap;
+   typedef std::vector< CoordGroupInfoPtr >                          GROUP_VEC ;
+   typedef std::vector<std::string>                                  CoordSubCLlist;
+   typedef _utilMap< UINT32, CoordSubCLlist, COORD_GROUPS_AVG_NUM >  CoordGroupSubCLMap;
 
+   /*
+      _CoordCataInfo define
+   */
    class _CoordCataInfo : public SDBObject
    {
    public:
-      // if the catalogue-info is update,
-      // build a new one, don't modify the old
       _CoordCataInfo( INT32 version, const char *pCollectionName )
       :_catlogSet ( pCollectionName, FALSE )
       {
@@ -112,37 +116,42 @@ namespace engine
       ~_CoordCataInfo()
       {}
 
-      void getGroupLst( CoordGroupList &groupLst )
+      void getGroupLst( CoordGroupList &groupLst ) const
       {
          groupLst = _groupLst ;
       }
 
-      INT32 getGroupNum()
+      const CoordGroupList& getGroupLst() const
       {
-         return _groupLst.size();
+         return _groupLst ;
       }
 
-      BOOLEAN isMainCL()
+      INT32 getGroupNum() const
       {
-         return _catlogSet.isMainCL();
+         return _groupLst.size() ;
+      }
+
+      BOOLEAN isMainCL() const
+      {
+         return _catlogSet.isMainCL() ;
       }
 
       INT32 getSubCLList( CoordSubCLlist &subCLLst )
       {
-         return _catlogSet.getSubCLList( subCLLst );
+         return _catlogSet.getSubCLList( subCLLst ) ;
       }
 
-      BOOLEAN isContainSubCL( const std::string &subCLName )
+      BOOLEAN isContainSubCL( const string &subCLName ) const
       {
-         return _catlogSet.isContainSubCL( subCLName );
+         return _catlogSet.isContainSubCL( subCLName ) ;
       }
 
-      INT32 getSubCLCount ()
+      INT32 getSubCLCount () const
       {
          return _catlogSet.getSubCLCount() ;
       }
 
-      INT32 getGroupByMatcher( const bson::BSONObj & matcher,
+      INT32 getGroupByMatcher( const BSONObj &matcher,
                                CoordGroupList &groupLst )
       {
          INT32 rc = SDB_OK;
@@ -153,60 +162,62 @@ namespace engine
          }
          else
          {
-            UINT32 i = 0;
-            VEC_GROUP_ID vecGroup;
-            rc = _catlogSet.findGroupIDS( matcher, vecGroup );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to find the match groups(rc=%d)",
-                        rc );
+            UINT32 i = 0 ;
+            VEC_GROUP_ID vecGroup ;
+            rc = _catlogSet.findGroupIDS( matcher, vecGroup ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
             for ( ; i < vecGroup.size(); i++ )
             {
                groupLst[vecGroup[i]] = vecGroup[i];
             }
          }
       done:
-         return rc;
+         return rc ;
       error:
-         goto done;
+         goto done ;
       }
 
-      INT32 getGroupByRecord( const bson::BSONObj &recordObj,
+      INT32 getGroupByRecord( const BSONObj &recordObj,
                               UINT32 &groupID )
       {
          return _catlogSet.findGroupID ( recordObj, groupID ) ;
       }
 
-      INT32 getSubCLNameByRecord( const bson::BSONObj &recordObj,
-                                  std::string &subCLName )
+      INT32 getSubCLNameByRecord( const BSONObj &recordObj,
+                                  string &subCLName )
       {
-         return _catlogSet.findSubCLName( recordObj, subCLName );
+         return _catlogSet.findSubCLName( recordObj, subCLName ) ;
       }
 
-      INT32 getMatchSubCLs( const bson::BSONObj &matcher,
+      INT32 getMatchSubCLs( const BSONObj &matcher,
                             CoordSubCLlist &subCLList )
       {
          if ( matcher.isEmpty() )
          {
-            return _catlogSet.getSubCLList( subCLList );
+            return _catlogSet.getSubCLList( subCLList ) ;
          }
          else
          {
-            return _catlogSet.findSubCLNames( matcher, subCLList );
+            return _catlogSet.findSubCLNames( matcher, subCLList ) ;
          }
       }
 
-      INT32 getVersion()
+      INT32 getVersion() const
       {
          return _catlogSet.getVersion() ;
       }
-      INT32 fromBSONObj ( const bson::BSONObj &boRecord )
+
+      INT32 fromBSONObj ( const BSONObj &boRecord )
       {
          INT32 rc = _catlogSet.updateCatSet ( boRecord, 0 ) ;
          if ( SDB_OK == rc )
          {
             UINT32 groupID = 0 ;
             VEC_GROUP_ID *vecGroup = _catlogSet.getAllGroupID() ;
-            for ( UINT32 index = 0 ; index < vecGroup->size() ;++index )
+            for ( UINT32 index = 0 ; index < vecGroup->size() ; ++index )
             {
                groupID = (*vecGroup)[index] ;
                _groupLst[groupID] = groupID ;
@@ -215,17 +226,17 @@ namespace engine
          return rc ;
       }
 
-      void getShardingKey ( bson::BSONObj &shardingKey )
+      void getShardingKey ( BSONObj &shardingKey ) const
       {
          shardingKey = _catlogSet.getShardingKey() ;
       }
 
-      BOOLEAN isIncludeShardingKey( const bson::BSONObj &record )
+      BOOLEAN isIncludeShardingKey( const BSONObj &record ) const
       {
-         return _catlogSet.isIncludeShardingKey( record );
+         return _catlogSet.isIncludeShardingKey( record ) ;
       }
 
-      BOOLEAN isSharded ()
+      BOOLEAN isSharded () const
       {
          return _catlogSet.isSharding() ;
       }
@@ -235,7 +246,7 @@ namespace engine
          return _catlogSet.isRangeSharding() ;
       }
 
-      INT32 getGroupLowBound( UINT32 groupID, BSONObj &lowBound )
+      INT32 getGroupLowBound( UINT32 groupID, BSONObj &lowBound ) const
       {
          return _catlogSet.getGroupLowBound( groupID, lowBound ) ;
       }
@@ -245,7 +256,12 @@ namespace engine
          return &_catlogSet ;
       }
 
-      const CHAR* getName()
+      BSONObj toBSON()
+      {
+         return _catlogSet.toCataInfoBson() ;
+      }
+
+      const CHAR* getName() const
       {
          return _catlogSet.name() ;
       }
@@ -255,7 +271,7 @@ namespace engine
          return _catlogSet.getShardingKeySiteID() ;
       }
 
-      INT32 getLobGroupID( const bson::OID &oid,
+      INT32 getLobGroupID( const OID &oid,
                            UINT32 sequence,
                            UINT32 &groupID )
       {
@@ -281,3 +297,4 @@ namespace engine
 }
 
 #endif // COORDDEF_HPP__
+

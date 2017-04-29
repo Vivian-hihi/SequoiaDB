@@ -183,14 +183,14 @@ namespace engine
          bool              ensureShardingIndex() const { return _ensureShardingIndex ; }
          const CHAR        *name () const ;
          VEC_GROUP_ID      *getAllGroupID () ;
-         UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) ;
+         UINT32            getAllGroupID ( VEC_GROUP_ID &vecGroup ) const ;
          UINT32            groupCount () const ;
          Ordering*         getOrdering () ;
-         BSONObj&          getShardingKey () ;
-         BSONObj           OwnedShardingKey () ;
+         const BSONObj&    getShardingKey () const  ;
+         BSONObj           OwnedShardingKey () const ;
          BOOLEAN           isWholeRange () const ;
          BOOLEAN           isSharding () const ;
-         BOOLEAN           isIncludeShardingKey( const bson::BSONObj &record ) const;
+         BOOLEAN           isIncludeShardingKey( const BSONObj &record ) const;
 
          INT32             genKeyObj ( const BSONObj &obj, BSONObj &keyObj ) ;
          INT32             findItem ( const BSONObj & obj,
@@ -227,18 +227,18 @@ namespace engine
          BOOLEAN           isHashSharding() const ;
          BOOLEAN           isRangeSharding() const ;
 
-         UINT32            getItemNum() ;
+         UINT32            getItemNum() const ;
          POSITION          getFirstItem() ;
          clsCatalogItem*   getNextItem( POSITION &pos ) ;
          UINT32            getAttribute() const { return _attribute ; }
 
-         BOOLEAN           isMainCL();
-         INT32             getSubCLList( std::vector<std::string> &subCLLst,
+         BOOLEAN           isMainCL() const ;
+         INT32             getSubCLList( vector< string > &subCLLst,
                                          CLS_SUBCL_SORT_TYPE sortType =
-                                         SUBCL_SORT_BY_ID );
-         BOOLEAN           isContainSubCL( const std::string &subCLName );
-         INT32             getSubCLCount () ;
-         std::string       getMainCLName();
+                                         SUBCL_SORT_BY_ID ) ;
+         BOOLEAN           isContainSubCL( const string &subCLName ) const ;
+         INT32             getSubCLCount () const ;
+         const string&     getMainCLName() const ;
          INT32             addSubCL ( const CHAR *subCLName,
                                       const BSONObj &lowBound,
                                       const BSONObj &upBound,
@@ -246,7 +246,7 @@ namespace engine
 
          INT32 delSubCL ( const CHAR *subCLName ) ;
 
-         INT32 getSubCLBounds ( const std::string &subCLName,
+         INT32 getSubCLBounds ( const string &subCLName,
                                 BSONObj &lowBound,
                                 BSONObj &upBound ) const ;
 

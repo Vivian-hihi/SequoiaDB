@@ -475,7 +475,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_GETALLGPID, "_clsCatalogSet::getAllGroupID" )
-   UINT32 _clsCatalogSet::getAllGroupID ( VEC_GROUP_ID &vecGroup )
+   UINT32 _clsCatalogSet::getAllGroupID ( VEC_GROUP_ID &vecGroup ) const
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_GETALLGPID ) ;
       vecGroup.clear() ;
@@ -502,14 +502,14 @@ namespace engine
       return NULL ;
    }
 
-   BSONObj& _clsCatalogSet::getShardingKey ()
+   const BSONObj& _clsCatalogSet::getShardingKey () const
    {
       return _shardingKey ;
    }
 
-   BSONObj _clsCatalogSet::OwnedShardingKey ()
+   BSONObj _clsCatalogSet::OwnedShardingKey () const
    {
-      return _shardingKey.copy () ;
+      return _shardingKey.getOwned() ;
    }
 
    BOOLEAN _clsCatalogSet::isWholeRange () const
@@ -664,7 +664,7 @@ namespace engine
       goto done ;
    }
 
-   UINT32 _clsCatalogSet::getItemNum ()
+   UINT32 _clsCatalogSet::getItemNum () const
    {
       return _mapItems.size() ;
    }
@@ -943,7 +943,7 @@ namespace engine
    }
 
    INT32 _clsCatalogSet::getGroupLowBound( UINT32 groupID,
-                                           BSONObj &lowBound )const
+                                           BSONObj &lowBound ) const
    {
       clsCatalogItem *item = NULL ;
       MAP_CAT_ITEM::const_iterator it = _mapItems.begin() ;
@@ -961,7 +961,7 @@ namespace engine
    }
 
    INT32 _clsCatalogSet::getGroupUpBound( UINT32 groupID,
-                                          BSONObj &upBound )const
+                                          BSONObj &upBound ) const
    {
       clsCatalogItem *item = NULL ;
       MAP_CAT_ITEM::const_reverse_iterator rit = _mapItems.rbegin() ;
@@ -1881,11 +1881,11 @@ namespace engine
       return ret ;
    }
 
-   BOOLEAN _clsCatalogSet::isMainCL()
+   BOOLEAN _clsCatalogSet::isMainCL() const
    {
       return _isMainCL;
    }
-   INT32 _clsCatalogSet::getSubCLList( std::vector<std::string> &subCLLst,
+   INT32 _clsCatalogSet::getSubCLList( vector< string > &subCLLst,
                                        CLS_SUBCL_SORT_TYPE sortType )
    {
       /// sort by id desc, newest sub cl in first
@@ -1910,29 +1910,29 @@ namespace engine
       }
       return SDB_OK;
    }
-   BOOLEAN _clsCatalogSet::isContainSubCL( const std::string &subCLName )
+
+   BOOLEAN _clsCatalogSet::isContainSubCL( const string &subCLName ) const
    {
-      std::multimap<UINT32, std::string>::iterator it = _subCLList.begin();
+      std::multimap<UINT32, std::string>::const_iterator it = _subCLList.begin() ;
       while( it != _subCLList.end() )
       {
          if ( 0 == subCLName.compare( it->second ) )
          {
-            return TRUE;
+            return TRUE ;
          }
-         ++it;
+         ++it ;
       }
-      return FALSE;
+      return FALSE ;
    }
 
-
-   INT32 _clsCatalogSet::getSubCLCount ()
+   INT32 _clsCatalogSet::getSubCLCount () const
    {
       return _subCLList.size() ;
    }
 
-   std::string _clsCatalogSet::getMainCLName()
+   const string& _clsCatalogSet::getMainCLName() const
    {
-      return _mainCLName;
+      return _mainCLName ;
    }
 
    INT32 _clsCatalogSet::addSubCL ( const CHAR *subCLName,
@@ -2075,7 +2075,7 @@ namespace engine
       MAP_CAT_ITEM_IT it = _mapItems.begin() ;
       while ( it != _mapItems.end() )
       {
-         std::string strSubClName = it->second->getSubClName();
+         string strSubClName = it->second->getSubClName();
          if ( 0 == strSubClName.compare( subCLName ) )
          {
             _mapItems.erase( it++ ) ;
@@ -2085,7 +2085,7 @@ namespace engine
             ++it ;
          }
       }
-      return SDB_OK;
+      return SDB_OK ;
    }
 
    INT32 _clsCatalogSet::getSubCLBounds ( const std::string &subCLName,

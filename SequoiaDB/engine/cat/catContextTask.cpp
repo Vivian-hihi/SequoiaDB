@@ -654,7 +654,7 @@ namespace engine
       /// check the sharding key
       try
       {
-         BSONObj &shardingKey = cataSet.getShardingKey() ;
+         const BSONObj &shardingKey = cataSet.getShardingKey() ;
          BSONObjIterator shardingItr ( shardingKey ) ;
          while ( shardingItr.more() )
          {
