@@ -47,6 +47,796 @@
 
 namespace engine
 {
+
+   /*
+      _dmsEventHolder implement
+    */
+   _dmsEventHolder::_dmsEventHolder ( dmsStorageUnit *su )
+   {
+      SDB_ASSERT( su, "Storage Unit is no valid" ) ;
+      _su = su ;
+      unregAllHandlers() ;
+   }
+
+   _dmsEventHolder::~_dmsEventHolder ()
+   {
+      unregAllHandlers() ;
+   }
+
+   void _dmsEventHolder::regHandler ( _IDmsEventHandler *pHandler )
+   {
+      if ( !pHandler )
+      {
+         return ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         if ( *iter == pHandler )
+         {
+            return ;
+         }
+      }
+
+      _handlers.push_back( pHandler ) ;
+   }
+
+   void _dmsEventHolder::unregHandler ( _IDmsEventHandler *pHandler )
+   {
+      if ( pHandler )
+      {
+         return ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         if ( *iter == pHandler )
+         {
+            _handlers.erase( iter ) ;
+            break ;
+         }
+      }
+   }
+
+   void _dmsEventHolder::unregAllHandlers ()
+   {
+      _handlers.clear() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCRTCS, "_dmsEventHolder::onCreateCS" )
+   INT32 _dmsEventHolder::onCreateCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONCRTCS ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onCreateCS( this, _pCacheHolder, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONCRTCS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONLOADCS, "_dmsEventHolder::onLoadCS" )
+   INT32 _dmsEventHolder::onLoadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONLOADCS ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onLoadCS( this, _pCacheHolder, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONLOADCS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONUNLOADCS, "_dmsEventHolder::onUnloadCS" )
+   INT32 _dmsEventHolder::onUnloadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONUNLOADCS ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onUnloadCS( this, _pCacheHolder, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONUNLOADCS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONRENAMECS, "_dmsEventHolder::onRenameCS" )
+   INT32 _dmsEventHolder::onRenameCS ( UINT32 mask, const CHAR *pOldCSName,
+                                       const CHAR *pNewCSName, pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONRENAMECS ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onRenameCS( this, _pCacheHolder, pOldCSName,
+                                                pNewCSName, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONRENAMECS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONDROPCS, "_dmsEventHolder::onDropCS" )
+   INT32 _dmsEventHolder::onDropCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONDROPCS ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onDropCS( this, _pCacheHolder,
+                                              cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONDROPCS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCRTCL, "_dmsEventHolder::onCreateCL" )
+   INT32 _dmsEventHolder::onCreateCL ( UINT32 mask, const dmsCLItem &clItem,
+                                       pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONCRTCL ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onCreateCL( this, _pCacheHolder, clItem,
+                                                cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONCRTCL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONRENAMECL, "_dmsEventHolder::onRenameCL" )
+   INT32 _dmsEventHolder::onRenameCL ( UINT32 mask, const dmsCLItem &clItem,
+                                       const CHAR *pNewCLName,
+                                       pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONRENAMECL ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onRenameCL( this, _pCacheHolder, clItem,
+                                                pNewCLName, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONRENAMECL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONTRUNCCL, "_dmsEventHolder::onTruncateCL" )
+   INT32 _dmsEventHolder::onTruncateCL ( UINT32 mask, const dmsCLItem &clItem,
+                                         pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONTRUNCCL ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onTruncateCL( this, _pCacheHolder, clItem,
+                                                  cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONTRUNCCL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONDROPCL, "_dmsEventHolder::onDropCL" )
+   INT32 _dmsEventHolder::onDropCL ( UINT32 mask, const dmsCLItem &clItem,
+                                     pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONDROPCL ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onDropCL( this, _pCacheHolder, clItem,
+                                              cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONDROPCL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCRTIDX, "_dmsEventHolder::onCreateIndex" )
+   INT32 _dmsEventHolder::onCreateIndex ( UINT32 mask, const dmsCLItem &clItem,
+                                          const dmsIdxItem &idxItem,
+                                          pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONCRTIDX ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onCreateIndex( this, _pCacheHolder, clItem,
+                                                   idxItem, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONCRTIDX, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONDROPIDX, "_dmsEventHolder::onDropIndex" )
+   INT32 _dmsEventHolder::onDropIndex ( UINT32 mask, const dmsCLItem &clItem,
+                                        const dmsIdxItem &idxItem,
+                                        pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONDROPIDX ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onDropIndex( this, _pCacheHolder, clItem,
+                                                 idxItem, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONDROPIDX, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONLINKCL, "_dmsEventHolder::onLinkCL" )
+   INT32 _dmsEventHolder::onLinkCL ( UINT32 mask, const dmsCLItem &clItem,
+                                     const CHAR *pMainCLName,
+                                     _pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONLINKCL ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onLinkCL( this, _pCacheHolder, clItem,
+                                              pMainCLName, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONLINKCL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONUNLINKCL, "_dmsEventHolder::onUnlinkCL" )
+   INT32 _dmsEventHolder::onUnlinkCL ( UINT32 mask, const dmsCLItem &clItem,
+                                       const CHAR *pMainCLName,
+                                       _pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSEVTHLD_ONUNLINKCL ) ;
+
+      // Event could not be handled in main thread
+      if ( !cb || cb->getType() == EDU_TYPE_MAIN )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      for ( HANDLER_LIST::iterator iter = _handlers.begin() ;
+            iter != _handlers.end() ;
+            ++ iter )
+      {
+         _IDmsEventHandler *pHandler = (*iter) ;
+         if ( pHandler && ( pHandler->getMask() & mask ) )
+         {
+            INT32 tmprc = pHandler->onUnlinkCL( this, _pCacheHolder, clItem,
+                                                pMainCLName, cb, dpsCB ) ;
+            if ( SDB_OK != tmprc )
+            {
+               rc = tmprc ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSEVTHLD_ONUNLINKCL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   const CHAR *_dmsEventHolder::getCSName () const
+   {
+      return _su->CSName() ;
+   }
+
+   /*
+      _dmsCacheHolder implement
+    */
+   _dmsCacheHolder::_dmsCacheHolder ( dmsStorageUnit *su )
+   : _IUtilSUCacheHolder()
+   {
+      SDB_ASSERT( su, "Storage Unit is not valid" ) ;
+
+      _su = su ;
+      ossMemset( _pSUCaches, 0, sizeof( _pSUCaches ) ) ;
+   }
+
+   _dmsCacheHolder::~_dmsCacheHolder ()
+   {
+      deleteAllSUCaches() ;
+   }
+
+   const CHAR *_dmsCacheHolder::getCSName () const
+   {
+      return _su->CSName() ;
+   }
+
+   BOOLEAN _dmsCacheHolder::isSysSU () const
+   {
+      return dmsIsSysCSName( getCSName() ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_CHKUNIT, "_dmsCacheHolder::checkCacheUnit" )
+   BOOLEAN _dmsCacheHolder::checkCacheUnit ( utilSUCacheUnit *pCacheUnit )
+   {
+      BOOLEAN exists = FALSE ;
+
+      PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_CHKUNIT ) ;
+
+      switch ( pCacheUnit->getUnitType() )
+      {
+         case UTIL_SU_CACHE_UNIT_CLSTAT :
+         {
+            if ( SDB_OK != _checkCollectionStat( (dmsCollectionStat *)pCacheUnit ) )
+            {
+               PD_LOG( PDWARNING, "Failed to check collection statistics" ) ;
+               goto error ;
+            }
+            exists = TRUE ;
+            break ;
+         }
+         case UTIL_SU_CACHE_UNIT_IDXSTAT :
+         {
+            if ( SDB_OK != _checkIndexStat( (dmsIndexStat *)pCacheUnit , NULL ) )
+            {
+               PD_LOG( PDWARNING, "Failed to check index statistics" ) ;
+               goto error ;
+            }
+            exists = TRUE ;
+            break ;
+         }
+         default :
+            break ;
+      }
+
+   done :
+      PD_TRACE_EXIT( SDB__DMSCACHEHOLDER_CHKUNIT ) ;
+      return exists ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_CRTCACHE, "_dmsCacheHolder::createSUCache" )
+   BOOLEAN _dmsCacheHolder::createSUCache( UINT32 type )
+   {
+      BOOLEAN created = FALSE ;
+
+      PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_CRTCACHE ) ;
+
+      if ( type < DMS_CACHE_TYPE_NUM &&
+           NULL == _pSUCaches[ type ] )
+      {
+         switch ( type )
+         {
+            case DMS_CACHE_TYPE_STAT :
+            {
+               if ( !isSysSU() )
+               {
+                  _pSUCaches[ type ] = SDB_OSS_NEW dmsStatCache( this ) ;
+               }
+               break ;
+            }
+         }
+         if ( _pSUCaches[ type ] )
+         {
+            created = TRUE ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__DMSCACHEHOLDER_CRTCACHE ) ;
+
+      return created ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_DELCACHE, "_dmsCacheHolder::deleteSUCache" )
+   BOOLEAN _dmsCacheHolder::deleteSUCache( UINT32 type )
+   {
+      BOOLEAN deleted = FALSE ;
+
+      PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_DELCACHE ) ;
+
+      if ( type < DMS_CACHE_TYPE_NUM && NULL != _pSUCaches[ type ] )
+      {
+         if ( _pSUCaches[ type ] != NULL )
+         {
+            _pSUCaches[ type ]->clearCacheUnits() ;
+            SDB_OSS_DEL _pSUCaches[ type ] ;
+            _pSUCaches[ type ] = NULL ;
+            deleted = TRUE ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__DMSCACHEHOLDER_DELCACHE ) ;
+
+      return deleted ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_DELALLCACHES, "_dmsCacheHolder::deleteAllSUCaches" )
+   void _dmsCacheHolder::deleteAllSUCaches ()
+   {
+      PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_DELALLCACHES ) ;
+
+      for ( UINT32 type = 0 ; type < DMS_CACHE_TYPE_NUM ; type ++ )
+      {
+         if ( _pSUCaches[ type ] != NULL )
+         {
+            _pSUCaches[ type ]->clearCacheUnits() ;
+            SDB_OSS_DEL _pSUCaches[ type ] ;
+            _pSUCaches[ type ] = NULL ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__DMSCACHEHOLDER_DELALLCACHES ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_CHKCLSTAT, "_dmsCacheHolder::_checkCollectionStat" )
+   INT32 _dmsCacheHolder::_checkCollectionStat( dmsCollectionStat *pCollectionStat )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_CHKCLSTAT ) ;
+
+      dmsMBContext *mbContext = NULL ;
+      const CHAR *pCLName = pCollectionStat->getCLName() ;
+      INDEX_STAT_MAP &indexStats = pCollectionStat->getIndexStats() ;
+      INDEX_STAT_MAP::iterator iter = indexStats.begin() ;
+
+      rc = _su->data()->getMBContext( &mbContext, pCLName, SHARED ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get collection [%s], rc: %d",
+                   pCLName, rc ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get collection [%s], rc: %d",
+                   pCLName, rc ) ;
+
+      while ( iter != indexStats.end() )
+      {
+         dmsIndexStat *pIndexStat = iter->second ;
+         if ( SDB_OK != _checkIndexStat( pIndexStat, mbContext ) )
+         {
+            iter = indexStats.erase( iter ) ;
+            SAFE_OSS_DELETE( pIndexStat ) ;
+         }
+         else
+         {
+            ++ iter ;
+         }
+      }
+
+   done :
+      if ( mbContext )
+      {
+         _su->data()->releaseMBContext( mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSCACHEHOLDER_CHKCLSTAT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_CHKIDXSTAT, "_dmsCacheHolder::_checkCollectionStat" )
+   INT32 _dmsCacheHolder::_checkIndexStat ( dmsIndexStat *pIndexStat,
+                                            dmsMBContext *mbContext )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_CHKIDXSTAT ) ;
+
+      BOOLEAN needAllocate = !mbContext ;
+      dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
+      const CHAR *pCLName = pIndexStat->getCLName() ;
+      const CHAR *pIndexName = pIndexStat->getIndexName() ;
+
+      if ( !mbContext )
+      {
+         rc = _su->data()->getMBContext( &mbContext, pCLName, SHARED ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get collection [%s], rc: %d",
+                      pCLName, rc ) ;
+      }
+
+      rc = _su->index()->getIndexCBExtent( mbContext, pIndexName, indexCBExtent ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get index [%s], rc: %d",
+                   pIndexName, rc ) ;
+
+      {
+         ixmIndexCB indexCB ( indexCBExtent, _su->index(), NULL ) ;
+         PD_CHECK( indexCB.isInitialized(),
+                   SDB_DMS_INIT_INDEX, error, PDWARNING,
+                   "Index [%s] is invalid", pIndexName ) ;
+         PD_CHECK( indexCB.getFlag() == IXM_INDEX_FLAG_NORMAL,
+                   SDB_IXM_UNEXPECTED_STATUS, error, PDDEBUG,
+                   "Index [%s] is not normal status",pIndexName ) ;
+         PD_CHECK( 0 == pIndexStat->getKeyPattern().woCompare(
+                               indexCB.keyPattern(), BSONObj(), TRUE ),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Keys of index [%s] are not matched", pIndexName ) ;
+      }
+
+   done :
+      if ( needAllocate && mbContext )
+      {
+         _su->data()->releaseMBContext( mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSCACHEHOLDER_CHKIDXSTAT, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU, "_dmsStorageUnit::_dmsStorageUnit" )
    _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName,
                                       UINT32 sequence,
@@ -54,12 +844,13 @@ namespace engine
                                       INT32 pageSize,
                                       INT32 lobPageSize )
    :_apm( this ),
-    _statMgr( this, pSUName ),
     _pDataSu( NULL ),
     _pIndexSu( NULL ),
     _pLobSu( NULL ),
     _pMgr( pMgr ),
-    _pCacheUnit( NULL )
+    _pCacheUnit( NULL ),
+    _eventHolder ( this ),
+    _cacheHolder ( this )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU ) ;
       SDB_ASSERT ( pSUName, "name can't be null" ) ;
@@ -101,7 +892,7 @@ namespace engine
                    _storageInfo._suName, sequence, DMS_INDEX_SU_EXT_NAME ) ;
 
       _pDataSu = SDB_OSS_NEW dmsStorageData( dataFileName, &_storageInfo,
-                                             &_statMgr ) ;
+                                             &_eventHolder ) ;
       if ( _pDataSu )
       {
          _pIndexSu = SDB_OSS_NEW dmsStorageIndex( idxFileName, &_storageInfo,
@@ -128,6 +919,10 @@ namespace engine
                                               _pCacheUnit ) ;
       }
 
+      // Create caches
+      _cacheHolder.createSUCache( DMS_CACHE_TYPE_STAT ) ;
+      _eventHolder.setCacheHolder( &_cacheHolder ) ;
+
       PD_TRACE_EXIT ( SDB__DMSSU ) ;
    }
 
@@ -136,6 +931,9 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_DESC ) ;
       close() ;
+
+      _eventHolder.unregAllHandlers() ;
+      _cacheHolder.deleteAllSUCaches() ;
 
       if ( _pIndexSu )
       {
@@ -1783,6 +2581,31 @@ namespace engine
       /// _pLobSu may be NULL, set it as 1
       lobFlag = ( NULL == _pLobSu || !_pLobSu->isOpened() ) ?
                 TRUE : ( _pLobSu->getCommitFlag() ? TRUE : FALSE ) ;
+   }
+
+   _IDmsEventHolder *_dmsStorageUnit::getEventHolder ()
+   {
+      return &_eventHolder ;
+   }
+
+   void _dmsStorageUnit::regEventHandler ( _IDmsEventHandler *pHandler )
+   {
+      _eventHolder.regHandler( pHandler ) ;
+   }
+
+   void _dmsStorageUnit::unregEventHandler ( _IDmsEventHandler *pHandler )
+   {
+      _eventHolder.unregHandler( pHandler ) ;
+   }
+
+   void _dmsStorageUnit::unregEventHandlers ()
+   {
+      _eventHolder.unregAllHandlers() ;
+   }
+
+   utilSUCache *_dmsStorageUnit::getSUCache ( UINT32 type )
+   {
+      return _cacheHolder.getSUCache( type ) ;
    }
 
 }  // namespace engine

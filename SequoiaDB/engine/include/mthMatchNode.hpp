@@ -46,7 +46,7 @@
 #include "utilArray.hpp"
 #include "rtnPredicate.hpp"
 #include "optCommon.hpp"
-#include "rtnStatObj.hpp"
+#include "optStatUnit.hpp"
 #include "utilAllocator.hpp"
 #include <vector>
 
@@ -381,7 +381,7 @@ namespace engine
 
          virtual UINT32 getWeight() = 0 ;
 
-         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) = 0 ;
 
          virtual BOOLEAN isTotalConverted() = 0 ;

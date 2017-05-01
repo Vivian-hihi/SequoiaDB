@@ -42,7 +42,7 @@
 #include "ossLatch.hpp"
 #include "ossUtil.hpp"
 #include "monDMS.hpp"
-#include "dmsTempCB.hpp"
+#include "dmsTempSUMgr.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "pdTrace.hpp"
@@ -84,8 +84,8 @@ namespace engine
    :_writeCounter(0),
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
-    _tempCB(this),
-    _statCB( this ),
+    _tempSUMgr( this ),
+    _statSUMgr( this ),
     _ixmKeySorterCreator( NULL )
    {
       for ( UINT32 i = 0 ; i< DMS_MAX_CS_NUM ; ++i )
@@ -130,14 +130,14 @@ namespace engine
                       rc ) ;
       }
 
-      // 2. init temp cb
-      rc = _tempCB.init() ;
+      // 2. init temp cs mgr
+      rc = _tempSUMgr.init() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init temp cb, rc: %d", rc ) ;
 
-      // 3. init stat cb
+      // 3. init stat cs cb
       if ( SDB_ROLE_DATA == pmdGetDBRole() )
       {
-         rc = _statCB.init() ;
+         rc = _statSUMgr.init() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init stat cb, rc: %d", rc ) ;
       }
 
@@ -570,10 +570,6 @@ namespace engine
       SDB_ASSERT ( pCSCB->_su, "su can't be null" ) ;
       csLID = pCSCB->_su->LogicalCSID() ;
 
-      // Ignore errors
-      pCSCB->_su->getStatMgr()->onRenameCollectionSpace( pName, pNewName,
-                                                         cb, dpsCB ) ;
-
       rc = pCSCB->_su->renameCS( pNewName ) ;
       if ( rc )
       {
@@ -606,6 +602,9 @@ namespace engine
 
          dpsCB->writeData( info ) ;
       }
+
+      pCSCB->_su->getEventHolder()->onRenameCS( DMS_EVENT_MASK_ALL,
+                                                pName, pNewName, cb, dpsCB ) ;
 
    done :
       if ( isLocked )
@@ -1184,6 +1183,8 @@ namespace engine
          dpsCB->writeData( info ) ;
       }
 
+      su->regEventHandler( &_statSUMgr ) ;
+
    done :
       if ( isLocked )
       {
@@ -1227,17 +1228,17 @@ namespace engine
          goto error ;
       }
 
-      // Ignore errors
-      pCSCB->_su->getStatMgr()->onDropCollectionSpace( cb, dpsCB ) ;
-
       if ( removeFile )
       {
+         pCSCB->_su->getEventHolder()->onDropCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
          rc = pCSCB->_su->remove() ;
       }
       else
       {
+         pCSCB->_su->getEventHolder()->onUnloadCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
          pCSCB->_su->close() ;
       }
+
       SDB_OSS_DEL pCSCB ;
 
       if ( rc )
@@ -1399,6 +1400,8 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      pCSCB->_su->getEventHolder()->onDropCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
 
       // if remove file failed, we can do nothing
       rc = pCSCB->_su->remove() ;
@@ -1663,14 +1666,14 @@ namespace engine
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO4 );
    }
 
-   dmsTempCB *_SDB_DMSCB::getTempCB ()
+   dmsTempSUMgr *_SDB_DMSCB::getTempSUMgr ()
    {
-      return &_tempCB ;
+      return &_tempSUMgr ;
    }
 
-   dmsStatCB *_SDB_DMSCB::getStatCB ()
+   dmsStatSUMgr *_SDB_DMSCB::getStatSUMgr ()
    {
-      return &_statCB ;
+      return &_statSUMgr ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )

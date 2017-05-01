@@ -15,13 +15,13 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = dmsSysCB.hpp
+   Source File Name = dmsSysSUMgr.hpp
 
-   Descriptive Name = Data Management Service Sys Control Block Header
+   Descriptive Name = Data Management Service SYS Storage Unit Header
 
    When/how to use: this program may be used on binary and text-formatted
    versions of data management component. This file contains structure for
-   DMS System Table Control Block.
+   DMS System Storage Unit management.
 
    Dependencies: N/A
 
@@ -34,8 +34,8 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef DMSSYSCB_HPP__
-#define DMSSYSCB_HPP__
+#ifndef DMSSYSSUMGR_HPP__
+#define DMSSYSSUMGR_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -54,18 +54,18 @@ namespace engine
    class _dmsMBContext ;
 
    /*
-      _dmsSysCB define
+      _dmsSysSUMgr define
    */
-   class _dmsSysCB : public SDBObject
+   class _dmsSysSUMgr : public SDBObject
    {
       public :
-         _dmsSysCB ( _SDB_DMSCB *dmsCB )
+         _dmsSysSUMgr ( _SDB_DMSCB *dmsCB )
          : _dmsCB( dmsCB )
          {
             _su = NULL ;
          }
 
-         virtual ~_dmsSysCB () {}
+         virtual ~_dmsSysSUMgr () {}
 
          _dmsStorageUnit *getSU ()
          {
@@ -73,15 +73,15 @@ namespace engine
          }
 
       protected :
-      #ifdef DMSSYSCB_XLOCK
-      #undef DMSSYSCB_XLOCK
+      #ifdef DMSSYSSUMGR_XLOCK
+      #undef DMSSYSSUMGR_XLOCK
       #endif
-      #define DMSSYSCB_XLOCK ossScopedLock _lock(&_mutex, EXCLUSIVE);
+      #define DMSSYSSUMGR_XLOCK ossScopedLock _lock(&_mutex, EXCLUSIVE);
 
-      #ifdef DMSSYSCB_SLOCK
-      #undef DMSSYSCB_SLOCK
+      #ifdef DMSSYSSUMGR_SLOCK
+      #undef DMSSYSSUMGR_SLOCK
       #endif
-      #define DMSSYSCB_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
+      #define DMSSYSSUMGR_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
 
          ossSpinSLatch        _mutex ;
          _dmsStorageUnit      *_su ;
@@ -91,5 +91,5 @@ namespace engine
 
 }
 
-#endif //DMSSYSCB_HPP__
+#endif //DMSSYSSUMGR_HPP__
 

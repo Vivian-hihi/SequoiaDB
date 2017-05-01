@@ -104,17 +104,33 @@ namespace engine
 
       INT32 _estimatePlans ( _dmsMBContext *mbContext ) ;
 
-      INT32 _estimateIxScanPlan ( rtnCollectionStat &collectionStat,
+      INT32 _estimateIxScanPlan ( _dmsMBContext *mbContext,
+                                  optCollectionStat &collectionStat,
+                                  const CHAR *pIndexName,
+                                  OPT_PLAN_PATH_PRIORITY priority,
+                                  UINT64 sortBufferSize,
+                                  INT32 estCacheSize,
+                                  optScanPath &ixScanPath ) ;
+
+      INT32 _estimateIxScanPlan ( _dmsMBContext *mbContext,
+                                  optCollectionStat &collectionStat,
+                                  const OID &indexOID,
+                                  OPT_PLAN_PATH_PRIORITY priority,
+                                  UINT64 sortBufferSize,
+                                  INT32 estCacheSize,
+                                  optScanPath &ixScanPath ) ;
+
+      INT32 _estimateIxScanPlan ( optCollectionStat &collectionStat,
                                   dmsExtentID indexCBExtent,
                                   OPT_PLAN_PATH_PRIORITY priority,
                                   UINT64 sortBufferSize,
                                   INT32 estCacheSize,
-                                  optScanPath &path ) ;
+                                  optScanPath &ixScanPath ) ;
 
-      INT32 _estimateTbScanPlan ( const rtnCollectionStat &collectionStat,
+      INT32 _estimateTbScanPlan ( optCollectionStat &collectionStat,
                                   UINT64 sortBufferSize,
                                   INT32 estCacheSize,
-                                  optScanPath &path ) ;
+                                  optScanPath &tbScanPath ) ;
 
       INT32 _usePath ( optScanPath &path ) ;
 

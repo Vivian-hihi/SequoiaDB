@@ -164,6 +164,7 @@ utilFiles = [
       "util/utilFileStream.cpp",
       "util/utilZlibStream.cpp",
       "util/utilJsonFile.cpp",
+      "util/utilSUCache.cpp"
       ]
 
 rtnFiles = [
@@ -252,8 +253,6 @@ rtnFiles = [
       "rtn/rtnAlterJob.cpp",
       "rtn/rtnIxmKeySorter.cpp",
       "rtn/rtnDictCreatorJob.cpp",
-      "rtn/rtnStatObj.cpp",
-      "rtn/rtnStatMgr.cpp"
       ]
 
 msgFiles = [
@@ -272,7 +271,7 @@ dmsFiles = [
       "dms/dmsDump.cpp",
       "dms/dmsInspect.cpp",
       "dms/dmsStorageUnit.cpp",
-      "dms/dmsTempCB.cpp",
+      "dms/dmsTempSUMgr.cpp",
       "dms/dmsCB.cpp",
       "dms/dmsReorgUnit.cpp",
       "dms/dmsSMEMgr.cpp",
@@ -288,8 +287,8 @@ dmsFiles = [
       "dms/dmsLobDirectOutBuffer.cpp",
       "dms/dmsIndexBuilder.cpp",
       "dms/dmsIndexBuilderImpl.cpp",
-      "dms/dmsStatObj.cpp",
-      "dms/dmsStatCB.cpp"
+      "dms/dmsStatSUMgr.cpp",
+      "dms/dmsStatUnit.cpp",
       ]
 
 ixmFiles = [
@@ -330,7 +329,8 @@ optFiles = [
       "opt/optQgmSpecStrategy.cpp",
       "opt/optQgmOptimizer.cpp",
       "opt/optCommon.cpp",
-      "opt/optPlanPath.cpp"
+      "opt/optPlanPath.cpp",
+      "opt/optStatUnit.cpp"
       ]
 
 monFiles = [

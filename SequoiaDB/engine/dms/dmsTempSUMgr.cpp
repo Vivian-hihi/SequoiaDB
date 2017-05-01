@@ -15,9 +15,9 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = dmsTempCB.cpp
+   Source File Name = dmsTempSUMgr.cpp
 
-   Descriptive Name = Data Management Service Temp Table Control Block
+   Descriptive Name = DMS Temp Storage Unit Management
 
    When/how to use: this program may be used on binary and text-formatted
    versions of data management component. This file contains code logic for
@@ -36,7 +36,7 @@
 
 *******************************************************************************/
 
-#include "dmsTempCB.hpp"
+#include "dmsTempSUMgr.hpp"
 #include "../bson/bson.h"
 #include "dmsStorageUnit.hpp"
 #include "rtn.hpp"
@@ -54,15 +54,15 @@ namespace fs = boost::filesystem ;
 
 namespace engine
 {
-   _dmsTempCB::_dmsTempCB ( SDB_DMSCB *dmsCB ) : _dmsSysCB( dmsCB )
+   _dmsTempSUMgr::_dmsTempSUMgr ( SDB_DMSCB *dmsCB ) : _dmsSysSUMgr( dmsCB )
    {
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_INIT, "_dmsTempCB::init" )
-   INT32 _dmsTempCB::init ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPSUMGR_INIT, "_dmsTempSUMgr::init" )
+   INT32 _dmsTempSUMgr::init ()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSTMPCB_INIT ) ;
+      PD_TRACE_ENTRY ( SDB__DMSTMPSUMGR_INIT ) ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
 
       SDB_ASSERT ( _dmsCB, "dmsCB can't be NULL" ) ;
@@ -72,7 +72,7 @@ namespace engine
 
       // exclusive lock temp cb. this function should be called during process
       // initialization, so it shouldn't be called in parallel by agents
-      DMSSYSCB_XLOCK
+      DMSSYSSUMGR_XLOCK
 
       // first to load collection space
       rc = rtnCollectionSpaceLock( SDB_DMSTEMP_NAME, _dmsCB, TRUE,
@@ -140,7 +140,7 @@ namespace engine
       {
          _dmsCB->suUnlock ( suID ) ;
       }
-      PD_TRACE_EXITRC ( SDB__DMSTMPCB_INIT, rc );
+      PD_TRACE_EXITRC ( SDB__DMSTMPSUMGR_INIT, rc );
       return rc ;
    error :
       goto done ;
@@ -150,11 +150,11 @@ namespace engine
    // exist in occupiedCollections (shared latch), and then will truncate the
    // collection+index (no latch), and remove the entry and add it
    // back to freeCollection (exclusive latch).
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_RELEASE, "_dmsTempCB::release" )
-   INT32 _dmsTempCB::release ( dmsMBContext *&context )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPSUMGR_RELEASE, "_dmsTempSUMgr::release" )
+   INT32 _dmsTempSUMgr::release ( dmsMBContext *&context )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSTMPCB_RELEASE ) ;
+      PD_TRACE_ENTRY ( SDB__DMSTMPSUMGR_RELEASE ) ;
       INT32 num = 0 ;
 
       _mutex.get() ;
@@ -175,16 +175,16 @@ namespace engine
       // release mb context
       _su->data()->releaseMBContext( context ) ;
 
-      PD_TRACE_EXITRC ( SDB__DMSTMPCB_RELEASE, rc );
+      PD_TRACE_EXITRC ( SDB__DMSTMPSUMGR_RELEASE, rc );
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_RESERVE, "_dmsTempCB::reserve" )
-   INT32 _dmsTempCB::reserve ( dmsMBContext **ppContext, UINT64 eduID )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPSUMGR_RESERVE, "_dmsTempSUMgr::reserve" )
+   INT32 _dmsTempSUMgr::reserve ( dmsMBContext **ppContext, UINT64 eduID )
    {
       INT32 rc = SDB_OK ;
       UINT16 mbID = DMS_INVALID_MBID ;
-      PD_TRACE_ENTRY ( SDB__DMSTMPCB_RESERVE );
+      PD_TRACE_ENTRY ( SDB__DMSTMPSUMGR_RESERVE );
       if ( !_su )
       {
          rc = SDB_INVALIDARG ;
@@ -192,7 +192,7 @@ namespace engine
       }
 
       {
-         DMSSYSCB_XLOCK
+         DMSSYSSUMGR_XLOCK
          if ( 0 == _freeCollections.size() )
          {
             rc = SDB_DMS_NO_MORE_TEMP ;
@@ -208,13 +208,13 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB__DMSTMPCB_RESERVE, rc ) ;
+      PD_TRACE_EXITRC ( SDB__DMSTMPSUMGR_RESERVE, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   INT32 _dmsTempCB::_initTmpPath()
+   INT32 _dmsTempSUMgr::_initTmpPath()
    {
       INT32 rc = SDB_OK ;
       const CHAR *path = pmdGetOptionCB()->getTmpPath() ;

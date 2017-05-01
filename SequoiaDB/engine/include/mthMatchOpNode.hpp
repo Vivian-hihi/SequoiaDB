@@ -500,7 +500,7 @@ namespace engine
 
          virtual void setWeight( UINT32 weight ) ;
 
-         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
 
          virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
@@ -533,7 +533,7 @@ namespace engine
                               const BSONElement &element) ;
          virtual void _clear() ;
 
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
 
          UINT32 _evalFuncCPUCost () ;
@@ -595,7 +595,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -616,7 +616,7 @@ namespace engine
          virtual void release() ;
 
       protected :
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -638,7 +638,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -660,7 +660,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -682,7 +682,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -704,7 +704,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -731,7 +731,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
       protected:
          BOOLEAN _isMatch( const BSONElement &ele ) ;
@@ -932,7 +932,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
 
       protected:
@@ -970,7 +970,7 @@ namespace engine
                                     const BSONElement &right,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
-         virtual void _evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
 
       private:

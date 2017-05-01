@@ -52,7 +52,6 @@
 #include "pmdEnv.hpp"
 #include "sdbIPersistence.hpp"
 
-
 #include <string>
 
 using namespace std ;

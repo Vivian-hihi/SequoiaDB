@@ -201,7 +201,7 @@ namespace engine
       }
    }
 
-   void _mthMatchLogicAndNode::evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchLogicAndNode::evalEstimation ( const optCollectionStat *pCollectionStat,
                                                 double &selectivity,
                                                 UINT32 &cpuCost )
    {
@@ -315,7 +315,7 @@ namespace engine
       }
    }
 
-   void _mthMatchLogicOrNode::evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchLogicOrNode::evalEstimation ( const optCollectionStat *pCollectionStat,
                                                double &selectivity,
                                                UINT32 &cpuCost )
    {
@@ -419,7 +419,7 @@ namespace engine
       }
    }
 
-   void _mthMatchLogicNotNode::evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchLogicNotNode::evalEstimation ( const optCollectionStat *pCollectionStat,
                                                 double &selectivity,
                                                 UINT32 &cpuCost )
    {

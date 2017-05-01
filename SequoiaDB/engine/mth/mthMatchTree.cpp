@@ -370,6 +370,8 @@ namespace engine
 
       _isEstimated         = FALSE ;
       _estSelectivity      = 1.0 ;
+      _predSelectivity     = 1.0 ;
+      _scanSelectivity     = 1.0 ;
       _estCPUCost          = 0 ;
    }
 
@@ -1603,6 +1605,8 @@ namespace engine
 
       _isEstimated         = FALSE ;
       _estSelectivity      = 1.0 ;
+      _predSelectivity     = 1.0 ;
+      _scanSelectivity     = 1.0 ;
       _estCPUCost          = 0 ;
 
    done :
@@ -2320,24 +2324,32 @@ namespace engine
       return _attrFieldName ;
    }
 
-   void _mthMatchTree::_evalEstimation ( const rtnCollectionStat *pCollectionStat )
+   void _mthMatchTree::_evalEstimation ( optCollectionStat *pCollectionStat )
    {
+      double predSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
+      double scanSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
       double tmpSelectivity = OPT_MTH_DEFAULT_SELECTIVITY ;
       UINT32 tmpCPUCost = OPT_MTH_DEFAULT_CPU_COST ;
 
       if ( _isInitialized && _root )
       {
-         double predSelectivity = pCollectionStat->evalPredicateSet( _predicateSet ) ;
+         if ( pCollectionStat )
+         {
+            predSelectivity = pCollectionStat->evalPredicateSet( _predicateSet,
+                                                                 scanSelectivity ) ;
+         }
          _root->evalEstimation( pCollectionStat, tmpSelectivity, tmpCPUCost ) ;
          tmpSelectivity *= predSelectivity ;
       }
 
       _estSelectivity = OPT_ROUND_SELECTIVITY( tmpSelectivity ) ;
+      _predSelectivity = OPT_ROUND_SELECTIVITY( predSelectivity ) ;
+      _scanSelectivity = OPT_ROUND_SELECTIVITY( scanSelectivity ) ;
       _estCPUCost = tmpCPUCost ;
       _isEstimated = TRUE ;
    }
 
-   void _mthMatchTree::getEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchTree::getEstimation ( optCollectionStat *pCollectionStat,
                                        double &estSelectivity,
                                        UINT32 &estCPUCost )
    {

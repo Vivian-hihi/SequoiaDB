@@ -43,9 +43,9 @@
 #include "dmsStorageIndex.hpp"
 #include "dmsStorageLob.hpp"
 #include "rtnAPM.hpp"
-#include "rtnStatMgr.hpp"
 #include "monDMS.hpp"
 #include "utilCache.hpp"
+#include "dmsEventHandler.hpp"
 
 using namespace bson ;
 
@@ -56,11 +56,20 @@ namespace engine
    class _monStorageUnit ;
    class _monIndex ;
    class _ixmIndexCB ;
-   class _dmsTempCB ;
+   class _dmsTempSUMgr ;
    class _SDB_DMSCB ;
    class _pmdEDUCB ;
    class _mthMatchTree ;
    class _mthModifier ;
+
+   class _dmsStorageUnit ;
+   typedef _dmsStorageUnit dmsStorageUnit ;
+
+   class _dmsCacheHolder ;
+   typedef class _dmsCacheHolder dmsCacheHolder ;
+
+   class _dmsEventHolder ;
+   typedef class _dmsEventHolder dmsEventHolder ;
 
    /*
       _dmsStorageUnitStat define
@@ -83,11 +92,125 @@ namespace engine
    #define DMS_SU_ALL            ( 0xFFFF )
 
    /*
+      _dmsCacheHolder
+    */
+   class _dmsCacheHolder : public _IUtilSUCacheHolder
+   {
+      public :
+         _dmsCacheHolder ( dmsStorageUnit *su ) ;
+
+         virtual ~_dmsCacheHolder () ;
+
+         virtual const CHAR *getCSName () const ;
+
+         virtual BOOLEAN isSysSU () const ;
+
+         virtual BOOLEAN checkCacheUnit ( utilSUCacheUnit *pCacheUnit ) ;
+
+         virtual BOOLEAN createSUCache ( UINT32 type ) ;
+
+         virtual BOOLEAN deleteSUCache ( UINT32 type ) ;
+
+         virtual void deleteAllSUCaches () ;
+
+         OSS_INLINE virtual utilSUCache *getSUCache ( UINT32 type )
+         {
+            if ( type < DMS_CACHE_TYPE_NUM )
+            {
+               return _pSUCaches[ type ] ;
+            }
+            return NULL ;
+         }
+
+      protected :
+         INT32 _checkCollectionStat ( dmsCollectionStat *pCollectionStat ) ;
+         INT32 _checkIndexStat ( dmsIndexStat *pIndexStat,
+                                 dmsMBContext *mbContext ) ;
+
+      protected :
+         dmsStorageUnit *        _su ;
+         utilSUCache *           _pSUCaches [ DMS_CACHE_TYPE_NUM ] ;
+   } ;
+
+   /*
+      _dmsEventHolder define
+    */
+   class _dmsEventHolder : public _IDmsEventHolder
+   {
+      public :
+         _dmsEventHolder( dmsStorageUnit *su ) ;
+
+         virtual ~_dmsEventHolder () ;
+
+         virtual void regHandler ( _IDmsEventHandler *pHandler ) ;
+
+         virtual void unregHandler ( _IDmsEventHandler *pHandler ) ;
+
+         virtual void unregAllHandlers () ;
+
+         virtual INT32 onCreateCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onLoadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onUnloadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onRenameCS ( UINT32 mask, const CHAR *pOldCSName,
+                                    const CHAR *pNewCSName, pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onDropCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onCreateCL ( UINT32 mask, const dmsCLItem &clItem,
+                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onRenameCL ( UINT32 mask, const dmsCLItem &clItem,
+                                    const CHAR *pNewCLName,
+                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onTruncateCL ( UINT32 mask, const dmsCLItem &clItem,
+                                      pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onDropCL ( UINT32 mask, const dmsCLItem &clItem,
+                                  pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onCreateIndex ( UINT32 mask, const dmsCLItem &clItem,
+                                       const dmsIdxItem &idxItem, pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onDropIndex ( UINT32 mask, const dmsCLItem &clItem,
+                                     const dmsIdxItem &idxItem, pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onLinkCL ( UINT32 mask, const dmsCLItem &clItem,
+                                  const CHAR *pMainCLName, pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onUnlinkCL ( UINT32 mask, const dmsCLItem &clItem,
+                                    const CHAR *pMainCLName, pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
+
+         virtual const CHAR *getCSName () const ;
+
+         OSS_INLINE virtual void setCacheHolder ( dmsCacheHolder *pCacheHolder )
+         {
+            _pCacheHolder = pCacheHolder ;
+         }
+
+      protected :
+         typedef _utilList<_IDmsEventHandler *> HANDLER_LIST ;
+
+         dmsStorageUnit *     _su ;
+         dmsCacheHolder *     _pCacheHolder ;
+         HANDLER_LIST         _handlers ;
+   } ;
+
+
+   /*
       _dmsStorageUnit define
    */
    class _dmsStorageUnit : public SDBObject
    {
-      friend class _dmsTempCB ;
+      friend class _dmsTempSUMgr ;
       friend class _SDB_DMSCB ;
 
       public:
@@ -113,7 +236,6 @@ namespace engine
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }
          rtnAccessPlanManager *getAPM () { return &_apm ; }
-         rtnStatMgr        *getStatMgr () { return &_statMgr ; }
          utilCacheUnit     *cacheUnit() { return _pCacheUnit ; }
 
          INT32       getPageSize() const { return _storageInfo._pageSize ; }
@@ -275,9 +397,17 @@ namespace engine
          INT32    loadExtent ( dmsMBContext *mbContext, const CHAR *pBuffer,
                                UINT16 numPages ) ;
 
+      public :
+         _IDmsEventHolder * getEventHolder () ;
+
+         void regEventHandler ( _IDmsEventHandler *pHandler ) ;
+         void unregEventHandler ( _IDmsEventHandler *pHandler ) ;
+         void unregEventHandlers () ;
+
+         utilSUCache *getSUCache ( UINT32 type ) ;
+
       private :
          rtnAccessPlanManager                _apm ;
-         rtnStatMgr                          _statMgr ;
 
          dmsStorageData                      *_pDataSu ;
          dmsStorageIndex                     *_pIndexSu ;
@@ -287,8 +417,9 @@ namespace engine
          utilCacheMgr                        *_pMgr ;
          utilCacheUnit                       *_pCacheUnit ;
 
+         dmsEventHolder                       _eventHolder ;
+         dmsCacheHolder                       _cacheHolder ;
    } ;
-   typedef _dmsStorageUnit dmsStorageUnit ;
 
    /*
       _dmsStorageUnit OSS_INLINE functions

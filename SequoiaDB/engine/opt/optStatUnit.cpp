@@ -1,0 +1,1214 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = optStatUnit.cpp
+
+   Descriptive Name = Optimizer Statistics Object Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Runtime component. This file contains structure for Statistics
+   Objects.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "optStatUnit.hpp"
+#include "dmsStorageUnit.hpp"
+#include "catCommon.hpp"
+#include "pdTrace.hpp"
+#include "optTrace.hpp"
+#include "pmd.hpp"
+#include "ixm.hpp"
+#include "ixmExtent.hpp"
+#include "optCommon.hpp"
+
+namespace engine
+{
+
+   /*
+      _optStatListKey implement
+    */
+   _optStatListKey::_optStatListKey ()
+   : _utilList<const rtnKeyBoundary *> (),
+     _dmsStatKey( TRUE )
+   {
+   }
+
+   INT32 _optStatListKey::compareValue ( INT32 incFlag,
+                                         const BSONObj &rValue )
+   {
+      INT32 res = 0 ;
+
+      _optStatListKey::iterator iterLeft = begin() ;
+      BSONObjIterator iterRight( rValue ) ;
+
+      // If the Length of this key will be shorter than the given value :
+      // 1. incFlag is -1, a visual $minKey will be appended to this key
+      // 2. incFlag is 1, a visual $maxKey will be appended to this key
+      // 3. incFlag is 0, do nothing
+
+      while ( iterLeft != end() && iterRight.more() )
+      {
+         const BSONElement &beLeft = (*iterLeft)->_bound ;
+         iterLeft ++ ;
+
+         BSONElement beRight = iterRight.next() ;
+
+         res = beLeft.woCompare( beRight, FALSE ) ;
+
+         if ( 0 != res )
+         {
+            break ;
+         }
+      }
+
+      if ( 0 == res )
+      {
+         // Compared elements are equal, but we need to adjust with incFlag
+         if ( iterRight.more() )
+         {
+            res = _equalButRightMore( incFlag ) ;
+         }
+         else if ( iterLeft != end() )
+         {
+            res = _equalButLeftMore( incFlag ) ;
+         }
+         else
+         {
+            res = _equalDefault( incFlag ) ;
+         }
+      }
+
+      return res ;
+   }
+
+   BOOLEAN _optStatListKey::compareAllValues ( UINT32 startIdx, INT32 expRes,
+                                               const BSONObj &rValue )
+   {
+      if ( startIdx > size() || startIdx > (UINT32)rValue.nFields() )
+      {
+         return FALSE ;
+      }
+
+      if ( size() != (UINT32)rValue.nFields() )
+      {
+         return FALSE ;
+      }
+
+      _optStatListKey::iterator iterLeft = begin() ;
+      BSONObjIterator iterRight( rValue ) ;
+      UINT32 idx = 0 ;
+
+      while ( iterLeft != end() && iterRight.more() )
+      {
+         const BSONElement &beLeft = (*iterLeft)->_bound ;
+         BOOLEAN inclusive = (*iterLeft)->_inclusive ;
+         iterLeft ++ ;
+
+         BSONElement beRight = iterRight.next() ;
+
+         if ( idx >= startIdx )
+         {
+            INT32 res = beLeft.woCompare( beRight, FALSE ) ;
+
+            if ( expRes > 0 && res <= 0 )
+            {
+               // bigger is expected, but got smaller value
+               if ( inclusive && res < 0 )
+               {
+                  return FALSE ;
+               }
+               else if ( !inclusive )
+               {
+                  return FALSE ;
+               }
+            }
+            else if ( expRes < 0 && res >= 0 )
+            {
+               // smaller is expected, but got bigger value
+               if ( inclusive && res > 0 )
+               {
+                  return FALSE ;
+               }
+               else if ( !inclusive )
+               {
+                  return FALSE ;
+               }
+            }
+            else if ( expRes == 0 && res != 0 )
+            {
+               // equal is expected, but got non-equal value
+               return FALSE ;
+            }
+         }
+         idx ++ ;
+      }
+
+      if ( iterLeft == end() && !iterRight.more() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   string _optStatListKey::toString ()
+   {
+      if ( empty() )
+      {
+         return "{}" ;
+      }
+
+      BOOLEAN first = TRUE ;
+      StringBuilder s ;
+      s << "{ " ;
+
+      iterator iter = begin() ;
+      while ( iter != end() )
+      {
+         if ( first )
+         {
+            first = FALSE ;
+         }
+         else
+         {
+            s << ", " ;
+         }
+
+         (*iter)->_bound.toString( s, TRUE, TRUE ) ;
+
+         iter ++ ;
+      }
+
+      s << " }" ;
+
+      return s.str() ;
+   }
+
+   /*
+      _optStatElementKey implement
+    */
+   _optStatElementKey::_optStatElementKey ( const BSONElement &element,
+                                            BOOLEAN included )
+   : BSONElement( element ),
+     _dmsStatKey( included )
+   {
+   }
+
+   INT32 _optStatElementKey::compareValue ( INT32 incFlag,
+                                            const BSONObj &rValue )
+   {
+      INT32 res = 0 ;
+      BSONObjIterator iterRight( rValue ) ;
+
+      if ( iterRight.more() )
+      {
+         BSONElement beRight = iterRight.next() ;
+         res = woCompare( beRight, FALSE ) ;
+      }
+
+      if ( 0 == res )
+      {
+         if ( iterRight.more() )
+         {
+            res = _equalButRightMore( incFlag ) ;
+         }
+         else if ( rValue.nFields() == 0 )
+         {
+            res = _equalButLeftMore( incFlag ) ;
+         }
+         else
+         {
+            res = _equalDefault( incFlag ) ;
+         }
+      }
+
+      return res ;
+   }
+
+   BOOLEAN _optStatElementKey::compareAllValues ( UINT32 startIdx, INT32 expRes,
+                                                  const BSONObj &rValue )
+   {
+      if ( startIdx > 0 )
+      {
+         return FALSE ;
+      }
+
+      BSONObjIterator iterRight( rValue ) ;
+
+      if ( iterRight.more() )
+      {
+         BSONElement beRight = iterRight.next() ;
+         INT32 res = woCompare( beRight, FALSE ) ;
+         if ( expRes > 0 && res <= 0 )
+         {
+            // bigger is expected, but got smaller value
+            return FALSE ;
+         }
+         else if ( expRes < 0 && res >= 0 )
+         {
+            // smaller is expected, but got bigger value
+            return FALSE ;
+         }
+         else if ( expRes == 0 && res != 0 )
+         {
+            // equal is expected, but got non-equal value
+            return FALSE ;
+         }
+      }
+      else
+      {
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
+   /*
+      _optStatUnit implement
+    */
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTSTATUNIT_EVALPRED, "_optStatUnit::evalPredicate" )
+   double _optStatUnit::evalPredicate ( const CHAR *pFieldName,
+                                        rtnPredicate &predicate,
+                                        BOOLEAN &isAllRange ) const
+   {
+      double selectivity = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTSTATUNIT_EVALPRED ) ;
+
+      if ( predicate.isEvaluated() )
+      {
+         isAllRange = predicate.isAllRange() ;
+         selectivity = predicate.getSelectivity() ;
+      }
+      else
+      {
+         selectivity = 0.0 ;
+
+         for ( vector<rtnStartStopKey>::iterator iterSSKey = predicate._startStopKeys.begin();
+               iterSSKey != predicate._startStopKeys.end() ;
+               iterSSKey ++ )
+         {
+            const rtnKeyBoundary &startKey = iterSSKey->_startKey ;
+            const rtnKeyBoundary &stopKey = iterSSKey->_stopKey ;
+
+            optStatElementKey beStart( startKey._bound, startKey._inclusive ) ;
+            optStatElementKey beStop( stopKey._bound, stopKey._inclusive ) ;
+
+            if ( beStart.type() == MinKey && beStop.type() == MaxKey )
+            {
+               isAllRange = TRUE ;
+               break ;
+            }
+
+            BOOLEAN subIsEqual = iterSSKey->isEquality() ;
+
+            double subSelectivity = 1.0, dummy = 1.0 ;
+
+            subSelectivity = evalKeyPair( pFieldName, beStart, beStop,
+                                          subIsEqual, dummy ) ;
+            selectivity += subSelectivity ;
+         }
+
+         if ( isAllRange )
+         {
+            selectivity = 1.0 ;
+         }
+         else
+         {
+            selectivity = OPT_ROUND_SELECTIVITY( selectivity ) ;
+         }
+
+         // Cache the selectivity to avoid duplicated evaluations
+         predicate.setSelectivity( selectivity, isAllRange ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTSTATUNIT_EVALPRED ) ;
+
+      return selectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTSTATUNIT__EVALKEYPAIR, "_optStatUnit::_evalKeyPair" )
+   INT32 _optStatUnit::_evalKeyPair ( const dmsIndexStat *pIndexStat,
+                                      rtnStatPredList::iterator &predIter,
+                                      optStatListKey &startKeys,
+                                      optStatListKey &stopKeys,
+                                      BOOLEAN isEqual,
+                                      double &predSelectivity,
+                                      double &scanSelectivity ) const
+   {
+      SDB_ASSERT( isValid(), "Should not be invalid" ) ;
+
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTSTATUNIT__EVALKEYPAIR ) ;
+
+      rtnStatPredList::iterator curPred = predIter ;
+      rtnStatPredList::iterator nextPred = ++ predIter ;
+      if ( curPred == nextPred )
+      {
+         if ( isEqual )
+         {
+            rc = pIndexStat->evalETOperator( startKeys, predSelectivity, scanSelectivity ) ;
+         }
+         else
+         {
+            rc = pIndexStat->evalRangeOperator( startKeys, stopKeys,
+                                                predSelectivity, scanSelectivity ) ;
+         }
+      }
+      else
+      {
+         rtnPredicate *pPredicate = *curPred ;
+
+         BOOLEAN startIncluded = startKeys.isIncluded() ;
+         BOOLEAN stopIncluded = stopKeys.isIncluded() ;
+
+         if ( pPredicate )
+         {
+            double tmpScanSel = 0.0, tmpPredSel = 0.0 ;
+            for ( vector<rtnStartStopKey>::const_iterator iterSSKey = pPredicate->_startStopKeys.begin();
+                  iterSSKey != pPredicate->_startStopKeys.end() ;
+                  iterSSKey ++ )
+            {
+               BOOLEAN subIsEqual = isEqual && iterSSKey->isEquality() ;
+               double subScanSel = 1.0, subPredSel = 1.0 ;
+
+               startKeys.pushKeyBound( &(iterSSKey->_startKey) ) ;
+               stopKeys.pushKeyBound( &(iterSSKey->_stopKey) ) ;
+
+               rc = _evalKeyPair( pIndexStat, nextPred,
+                                  startKeys, stopKeys,
+                                  subIsEqual, subPredSel, subScanSel ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+
+               tmpPredSel += subPredSel ;
+               tmpScanSel += subScanSel ;
+
+               startKeys.popElement( startIncluded ) ;
+               stopKeys.popElement( stopIncluded ) ;
+            }
+
+            predSelectivity = OPT_ROUND_SELECTIVITY( tmpPredSel ) ;
+            scanSelectivity = OPT_ROUND_SELECTIVITY( tmpScanSel ) ;
+         }
+         else
+         {
+            static rtnKeyBoundary minKeyBound( minKey.firstElement(), TRUE ) ;
+            static rtnKeyBoundary maxKeyBound( maxKey.firstElement(), TRUE ) ;
+
+            startKeys.pushKeyBound( &minKeyBound ) ;
+            stopKeys.pushKeyBound( &maxKeyBound ) ;
+
+            rc = _evalKeyPair( pIndexStat, nextPred, startKeys, stopKeys,
+                               FALSE, predSelectivity, scanSelectivity ) ;
+
+            startKeys.popElement( startIncluded ) ;
+            stopKeys.popElement( stopIncluded ) ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTSTATUNIT__EVALKEYPAIR, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   /*
+      _optIndexStat implement
+    */
+   _optIndexStat::_optIndexStat ( const optCollectionStat &collectionStat,
+                                  const ixmIndexCB &indexCB )
+   : _optStatUnit( collectionStat.getCollectionName(),
+                   collectionStat.getTotalRecords( TRUE ) ),
+     _collectionStat( collectionStat )
+   {
+      _pIndexName = indexCB.getName() ;
+      _pIndexStat = collectionStat.getIndexStat( _pIndexName ) ;
+      _keyPattern = indexCB.keyPattern().copy() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALPREDLIST, "_optStatUnit::evalPredicateList" )
+   double _optIndexStat::evalPredicateList ( const CHAR *pFirstFieldName,
+                                             rtnStatPredList &predList,
+                                             double &scanSelectivity ) const
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      double predSelectivity = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTIDXSTAT_EVALPREDLIST ) ;
+
+      if ( predList.size() == 0 )
+      {
+         predSelectivity = 1.0 ;
+         scanSelectivity = 1.0 ;
+      }
+      else if ( isValid() )
+      {
+         rtnStatPredList::iterator predIter = predList.begin() ;
+         optStatListKey startKeys, stopKeys ;
+         rc = _evalKeyPair( _pIndexStat, predIter, startKeys, stopKeys,
+                            TRUE, predSelectivity, scanSelectivity ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         rtnPredicate *pPredicate = predList.front() ;
+
+         if ( pPredicate )
+         {
+            BOOLEAN isAllRange = FALSE ;
+            predSelectivity = evalPredicate( pFirstFieldName, *pPredicate, isAllRange ) ;
+         }
+         else
+         {
+            predSelectivity = 1.0 ;
+         }
+         scanSelectivity = predSelectivity ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTIDXSTAT_EVALPREDLIST ) ;
+
+      return predSelectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALKEYPAIR, "_optStatUnit::evalKeyPair" )
+   double _optIndexStat::evalKeyPair ( const CHAR *pFieldName,
+                                       dmsStatKey &startKey,
+                                       dmsStatKey &stopKey,
+                                       BOOLEAN isEqual,
+                                       double &scanSelectivity ) const
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      double predSelectivity = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTIDXSTAT_EVALKEYPAIR ) ;
+
+      if ( isValid() )
+      {
+         if ( isEqual )
+         {
+            rc = _pIndexStat->evalETOperator( startKey, predSelectivity, scanSelectivity ) ;
+         }
+         else
+         {
+            rc = _pIndexStat->evalRangeOperator( startKey, stopKey,
+                                                 predSelectivity,
+                                                 scanSelectivity ) ;
+         }
+      }
+
+      if ( SDB_OK != rc )
+      {
+         // Simply evaluate one
+         predSelectivity = _collectionStat.evalKeyPair( pFieldName,
+                                                        startKey, stopKey,
+                                                        isEqual,
+                                                        scanSelectivity ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTIDXSTAT_EVALKEYPAIR ) ;
+
+      return predSelectivity ;
+   }
+
+   /*
+      _optCollectionStat implement
+    */
+   _optCollectionStat::_optCollectionStat ( const CHAR *pCollectionName,
+                                            UINT32 pageSize,
+                                            _dmsMBContext *mbContext,
+                                            const utilSUCache *statCache )
+   : _optStatUnit( pCollectionName, 0 )
+   {
+      _pageSize = pageSize ;
+      _totalDataPages = 0 ;
+      _totalDataSize = 0 ;
+
+      _numIndexes = 0 ;
+      _totalIndexPages = 0 ;
+      _totalIndexSize = 0 ;
+      _avgIndexPages = 0 ;
+      _avgIndexSize = 0 ;
+
+      _pCollectionStat = NULL ;
+      if ( statCache )
+      {
+         // For statistics cache, mbID is ID of cache unit
+         _pCollectionStat = (dmsCollectionStat *)
+                            statCache->getCacheUnit( mbContext->mbID() ) ;
+      }
+
+      initCurStat( mbContext ) ;
+
+      _bestIndexStat = NULL ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCLSTAT_INITCURSTAT, "_optCollectionStat::initCurStat" )
+   INT32 _optCollectionStat::initCurStat( _dmsMBContext *mbContext )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTCLSTAT_INITCURSTAT ) ;
+
+      _totalRecords = mbContext->mbStat()->_totalRecords ;
+      _totalDataPages = mbContext->mbStat()->_totalDataPages ;
+      _totalDataSize = mbContext->mbStat()->_totalOrgDataLen ;
+
+      _numIndexes = mbContext->mb()->_numIndexes ;
+      if ( _numIndexes > 0 )
+      {
+         _totalIndexPages = mbContext->mbStat()->_totalIndexPages ;
+         _totalIndexSize = mbContext->mbStat()->_totalIndexPages * _pageSize -
+                         mbContext->mbStat()->_totalIndexFreeSpace ;
+         _avgIndexPages = (UINT32)ceil( (double)_totalIndexPages / (double)_numIndexes ) ;
+         _avgIndexSize = OPT_ROUND_NUM( (UINT64)ceil( (double)_totalIndexSize / (double)_numIndexes ) ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB_OPTCLSTAT_INITCURSTAT, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALPREDSET, "_optCollectionStat::evalPredicateSet" )
+   double _optCollectionStat::evalPredicateSet ( rtnPredicateSet &predicateSet,
+                                                 double &scanSelectivity )
+   {
+      double selectivity = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT_EVALPREDSET ) ;
+
+      RTN_PREDICATE_MAP predicates = predicateSet.predicates() ;
+      const dmsIndexStat *pIndexStat = NULL ;
+
+      if ( predicates.size() == 0 )
+      {
+         selectivity = 1.0 ;
+         scanSelectivity = 1.0 ;
+         goto done ;
+      }
+
+      if ( isValid() )
+      {
+         pIndexStat = _getMatchedIndex( predicateSet ) ;
+      }
+
+      if ( pIndexStat )
+      {
+         rtnStatPredList predicateList ;
+         BSONObjIterator iterKey( pIndexStat->getKeyPattern() ) ;
+         while ( iterKey.more() )
+         {
+            BSONElement beKey = iterKey.next() ;
+            const CHAR *pFieldName = beKey.fieldName() ;
+            RTN_PREDICATE_MAP::iterator iterPred = predicates.find( pFieldName ) ;
+            if ( iterPred == predicates.end() || iterPred->second.isEmpty() )
+            {
+               predicateList.push_back( NULL ) ;
+            }
+            else
+            {
+               predicateList.push_back( &( iterPred->second ) ) ;
+            }
+         }
+         rtnStatPredList::iterator predIter = predicateList.begin() ;
+         optStatListKey startKeys, stopKeys ;
+         INT32 rc = _optStatUnit::_evalKeyPair ( pIndexStat, predIter,
+                                                 startKeys, stopKeys,
+                                                 TRUE, selectivity,
+                                                 scanSelectivity ) ;
+
+         if ( SDB_OK == rc )
+         {
+            _setBestIndex( pIndexStat ) ;
+            goto done ;
+         }
+      }
+
+      // Need to evaluate one by one
+      selectivity = 1.0 ;
+      for ( RTN_PREDICATE_MAP::iterator iterPred = predicates.begin() ;
+            iterPred != predicates.end();
+            iterPred ++ )
+      {
+         BOOLEAN isAllRange = FALSE ;
+         const CHAR *pFieldName = iterPred->first.c_str() ;
+         rtnPredicate &predicate = iterPred->second ;
+
+         double curSelectivity = 1.0 ;
+         curSelectivity = evalPredicate( pFieldName, predicate, isAllRange ) ;
+         selectivity *= curSelectivity ;
+      }
+
+      scanSelectivity = selectivity ;
+
+   done :
+      PD_TRACE_EXIT( SDB__OPTCLSTAT_EVALPREDSET ) ;
+      return selectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALKEYPAIR, "_optCollectionStat::evalKeyPair" )
+   double _optCollectionStat::evalKeyPair ( const CHAR *pFieldName,
+                                            dmsStatKey &startKey,
+                                            dmsStatKey &stopKey,
+                                            BOOLEAN isEqual,
+                                            double &scanSelectivity ) const
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      double predSelectivity = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT_EVALKEYPAIR ) ;
+
+      // Use the first field only
+      const BSONElement &beStart = startKey.firstElement() ;
+      const BSONElement &beStop = stopKey.firstElement() ;
+      BOOLEAN startIncluded = startKey.isIncluded() ;
+      BOOLEAN stopIncluded = stopKey.isIncluded() ;
+
+      // Try to use the field statistics first
+      const dmsIndexStat *pIndexStat = getFieldStat( pFieldName ) ;
+      if ( pIndexStat )
+      {
+         if ( isEqual && pIndexStat->getNumKeys() == 1 )
+         {
+            optStatElementKey eleKey( beStart, TRUE ) ;
+            rc = pIndexStat->evalETOperator( eleKey, predSelectivity, scanSelectivity ) ;
+         }
+         else
+         {
+            // First key only
+            optStatElementKey startEleKey( beStart, startIncluded ) ;
+            optStatElementKey stopEleKey( beStop, stopIncluded ) ;
+            rc = pIndexStat->evalRangeOperator( startEleKey, stopEleKey,
+                                                predSelectivity, scanSelectivity ) ;
+         }
+      }
+
+      // Failed to use field statistics, evaluate by default
+      if ( SDB_OK != rc )
+      {
+         if ( isEqual )
+         {
+            predSelectivity = _evalETOperator( beStart ) ;
+         }
+         else
+         {
+            predSelectivity = _evalKeyPair( beStart, startIncluded,
+                                            beStop, stopIncluded ) ;
+         }
+         scanSelectivity = predSelectivity ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT_EVALKEYPAIR ) ;
+
+      return predSelectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALETOPTR, "_optCollectionStat::evalETOpterator" )
+   double _optCollectionStat::evalETOpterator ( const CHAR *pFieldName,
+                                                const BSONElement &beValue ) const
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      double selectivity = 1.0, dummy = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT_EVALETOPTR ) ;
+
+      // Try to use the field statistics first
+      const dmsIndexStat *pIndexStat = getFieldStat( pFieldName ) ;
+      if ( pIndexStat && pIndexStat->isValid() )
+      {
+         optStatElementKey statKey( beValue, TRUE ) ;
+         if ( pIndexStat->getNumKeys() == 1 )
+         {
+            rc = pIndexStat->evalETOperator( statKey, selectivity, dummy ) ;
+         }
+         else
+         {
+            rc = pIndexStat->evalRangeOperator( statKey, statKey, selectivity, dummy ) ;
+         }
+      }
+
+      if ( SDB_OK != rc )
+      {
+         // Failed to use field statistics, evaluate by default
+         selectivity = _evalETOperator( beValue ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT_EVALETOPTR ) ;
+
+      return selectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALGTOPTR, "_optCollectionStat::evalGTOpterator" )
+   double _optCollectionStat::evalGTOpterator ( const CHAR *pFieldName,
+                                                const BSONElement &beValue,
+                                                BOOLEAN included ) const
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      double selectivity = 1.0, dummy = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT_EVALGTOPTR ) ;
+
+      const dmsIndexStat *pIndexStat = getFieldStat( pFieldName ) ;
+      if ( pIndexStat && pIndexStat->isValid() )
+      {
+         optStatElementKey statKey( beValue, included ) ;
+         rc = pIndexStat->evalGTOperator( statKey, selectivity, dummy ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         // Failed to use field statistics, evaluate by default
+         selectivity = _evalGTOperator( beValue, included ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT_EVALGTOPTR ) ;
+
+      return selectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALLTOPTR, "_optCollectionStat::evalLTOpterator" )
+   double _optCollectionStat::evalLTOpterator ( const CHAR *pFieldName,
+                                                const BSONElement &beValue,
+                                                BOOLEAN included ) const
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      double selectivity = 1.0, dummy = 1.0 ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT_EVALLTOPTR ) ;
+
+      const dmsIndexStat *pIndexStat = getFieldStat( pFieldName ) ;
+      if ( pIndexStat && pIndexStat->isValid() )
+      {
+         optStatElementKey statKey( beValue, included ) ;
+         rc = pIndexStat->evalLTOperator( statKey, selectivity, dummy ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         // Failed to use field statistics, evaluate by default
+         selectivity = _evalLTOperator( beValue, included ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT_EVALLTOPTR ) ;
+
+      return selectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT__EVALKEYPAIR, "_optCollectionStat::_evalKeyPair" )
+   double _optCollectionStat::_evalKeyPair ( const BSONElement &startKey,
+                                             BOOLEAN startIncluded,
+                                             const BSONElement &stopKey,
+                                             BOOLEAN stopIncluded ) const
+   {
+      double selectivity = OPT_PRED_DEF_SELECTIVITY ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALKEYPAIR ) ;
+
+      if ( startKey.type() == stopKey.type() )
+      {
+         selectivity = _evalRangeOperator( startKey, startIncluded,
+                                           stopKey, stopIncluded ) ;
+      }
+      else if ( startKey.type() == MinKey &&
+                stopKey.type() == MaxKey )
+      {
+         // Cover all values
+         selectivity = 1.0 ;
+      }
+      else if ( stopKey.type() == MaxKey )
+      {
+         selectivity = _evalGTOperator( startKey, startIncluded ) ;
+      }
+      else if ( startKey.type() == MinKey )
+      {
+         selectivity = _evalLTOperator( stopKey, stopIncluded ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT__EVALKEYPAIR ) ;
+
+      return selectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT__EVALETOPTR, "_optCollectionStat::_evalETOperator" )
+   double _optCollectionStat::_evalETOperator ( const BSONElement &beValue ) const
+   {
+      double selectivity = OPT_PRED_EQ_DEF_SELECTIVITY ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALETOPTR ) ;
+
+      if ( beValue.type() == Bool )
+      {
+         selectivity = 0.5 ;
+      }
+      else if ( getTotalRecords() > 0 )
+      {
+         // Assume that each records have different values
+         selectivity = OSS_MIN( OPT_PRED_EQ_DEF_SELECTIVITY,
+                                1.0 / (double)getTotalRecords() ) ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT__EVALETOPTR ) ;
+
+      return selectivity ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT__EVALRANGEOPTR, "_optCollectionStat::_evalRangeOperator" )
+   double _optCollectionStat::_evalRangeOperator ( const BSONElement &beStart,
+                                                   BOOLEAN startIncluded,
+                                                   const BSONElement &beStop,
+                                                   BOOLEAN stopIncluded ) const
+   {
+      double selectivity = OPT_PRED_RANGE_DEF_SELECTIVITY ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALRANGEOPTR ) ;
+
+      if ( beStart.type() == beStop.type() )
+      {
+         switch ( beStart.type() )
+         {
+            case Bool :
+            {
+               if ( startIncluded && stopIncluded )
+               {
+                  // [ true, false ] is all range
+                  selectivity = 1.0 ;
+               }
+               else if ( startIncluded || stopIncluded )
+               {
+                  // Either true or false
+                  selectivity = 0.5 ;
+               }
+               else
+               {
+                  // No matched
+                  selectivity = 0.0 ;
+               }
+               break ;
+            }
+            case NumberDouble :
+            case NumberInt :
+            case NumberLong :
+            case NumberDecimal :
+            {
+               double start = OPT_ROUND_BSON_NUM( beStart.number() ) ;
+               double stop = OPT_ROUND_BSON_NUM( beStop.number() ) ;
+               selectivity = fabs( stop - start ) /
+                             ( OPT_BSON_NUM_MAX - OPT_BSON_NUM_MIN ) ;
+               break ;
+            }
+            case Timestamp :
+            case Date :
+            {
+               double start = OPT_ROUND_BSON_NUM( beStart.number() ) ;
+               double stop = OPT_ROUND_BSON_NUM( beStop.number() ) ;
+               selectivity = fabs( stop - start ) /
+                             ( OPT_BSON_NUM_MAX - OPT_BSON_NUM_MIN ) ;
+               break ;
+            }
+            case String :
+            {
+               UINT32 startSize = beStart.valuestrsize() ;
+               const CHAR *pStartStr = beStart.valuestr() ;
+               startSize = OSS_MIN( startSize, OPT_BSON_STR_MIN_LEN ) ;
+
+               UINT32 stopSize = beStop.valuestrsize() ;
+               const CHAR *pStopStr = beStop.valuestr() ;
+               stopSize = OSS_MIN( stopSize, OPT_BSON_STR_MIN_LEN ) ;
+
+               selectivity = fabs( optConvertStrToScalar( pStopStr, stopSize,
+                                                          OPT_BSON_STR_MIN,
+                                                          OPT_BSON_STR_MAX ) -
+                                   optConvertStrToScalar( pStartStr, startSize,
+                                                          OPT_BSON_STR_MIN,
+                                                          OPT_BSON_STR_MAX ) ) ;
+               break ;
+            }
+            default :
+            {
+               selectivity = OPT_PRED_RANGE_DEF_SELECTIVITY ;
+               break ;
+            }
+         }
+      }
+      else
+      {
+         // Start key and stop key are different types
+         selectivity = OPT_PRED_DEF_SELECTIVITY ;
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT__EVALRANGEOPTR ) ;
+
+      return OPT_ROUND_SELECTIVITY( selectivity ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT__EVALGTOPTR, "_optCollectionStat::_evalGTOperator" )
+   double _optCollectionStat::_evalGTOperator ( const BSONElement &beStart,
+                                                BOOLEAN startIncluded ) const
+   {
+      double selectivity = OPT_PRED_DEF_SELECTIVITY ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALGTOPTR ) ;
+
+      switch ( beStart.type() )
+      {
+         case Bool :
+         {
+            if ( beStart.boolean() )
+            {
+               if ( startIncluded )
+               {
+                  // >= true
+                  selectivity = 0.5 ;
+               }
+               else
+               {
+                  // > true
+                  selectivity = 0.0 ;
+               }
+            }
+            else
+            {
+               if ( startIncluded )
+               {
+                  // >= false
+                  selectivity = 1.0 ;
+               }
+               else
+               {
+                  // > false
+                  selectivity = 0.5 ;
+               }
+            }
+            break ;
+         }
+         case NumberDouble :
+         case NumberInt :
+         case NumberLong :
+         case NumberDecimal :
+         {
+            double start = OPT_ROUND_BSON_NUM( beStart.number() ) ;
+            selectivity = ( OPT_BSON_NUM_MAX - start ) /
+                          ( OPT_BSON_NUM_MAX - OPT_BSON_NUM_MIN ) ;
+            break ;
+         }
+         case Timestamp :
+         case Date :
+         {
+            double start = OPT_ROUND_BSON_NUM( beStart.number() ) ;
+            selectivity = ( OPT_BSON_NUM_MAX - start ) /
+                          ( OPT_BSON_NUM_MAX - OPT_BSON_NUM_MIN ) ;
+            break ;
+         }
+         case String :
+         {
+            UINT32 strSize = beStart.valuestrsize() ;
+            const CHAR *pStr = beStart.valuestr() ;
+            strSize = OSS_MIN( strSize, OPT_BSON_STR_MIN_LEN ) ;
+            selectivity = 1.0 - optConvertStrToScalar( pStr, strSize,
+                                                       OPT_BSON_STR_MIN,
+                                                       OPT_BSON_STR_MAX ) ;
+            break ;
+         }
+         default :
+         {
+            selectivity = OPT_PRED_DEF_SELECTIVITY ;
+            break ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT__EVALGTOPTR ) ;
+
+      return OPT_ROUND_SELECTIVITY( selectivity ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT__EVALLTOPTR, "_optCollectionStat::_evalLTOperator" )
+   double _optCollectionStat::_evalLTOperator ( const BSONElement &beStop,
+                                                BOOLEAN stopIncluded ) const
+   {
+      double selectivity = OPT_PRED_DEF_SELECTIVITY ;
+
+      PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALLTOPTR ) ;
+
+      switch ( beStop.type() )
+      {
+         case Bool :
+         {
+            if ( beStop.boolean() )
+            {
+               if ( stopIncluded )
+               {
+                  // <= true
+                  selectivity = 1.0 ;
+               }
+               else
+               {
+                  // < true
+                  selectivity = 0.5 ;
+               }
+            }
+            else
+            {
+               if ( stopIncluded )
+               {
+                  // <= false
+                  selectivity = 0.5 ;
+               }
+               else
+               {
+                  // < false
+                  selectivity = 0.0 ;
+               }
+            }
+            break ;
+         }
+         case NumberDouble :
+         case NumberInt :
+         case NumberLong :
+         case NumberDecimal :
+         {
+            double stop = OPT_ROUND_BSON_NUM( beStop.number() ) ;
+            selectivity = ( stop - OPT_BSON_NUM_MIN ) /
+                          ( OPT_BSON_NUM_MAX - OPT_BSON_NUM_MIN ) ;
+            break ;
+         }
+         case Timestamp :
+         case Date :
+         {
+            double stop = OPT_ROUND_BSON_NUM( beStop.number() ) ;
+            selectivity = ( stop - OPT_BSON_NUM_MIN ) /
+                          ( OPT_BSON_NUM_MAX - OPT_BSON_NUM_MIN );
+            break ;
+         }
+         case String :
+         {
+            UINT32 strSize = beStop.valuestrsize() ;
+            const CHAR *pStr = beStop.valuestr() ;
+            strSize = OSS_MIN( strSize, OPT_BSON_STR_MIN_LEN ) ;
+            selectivity = optConvertStrToScalar( pStr, strSize,
+                                                 OPT_BSON_STR_MIN,
+                                                 OPT_BSON_STR_MAX ) ;
+            break ;
+         }
+         default :
+         {
+            selectivity = OPT_PRED_DEF_SELECTIVITY ;
+            break ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB__OPTCLSTAT__EVALLTOPTR ) ;
+
+      return OPT_ROUND_SELECTIVITY( selectivity ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTCLSTAT_GETMATCHEDIDX, "_optCollectionStat::_getMatchedIndex" )
+   const dmsIndexStat * _optCollectionStat::_getMatchedIndex ( rtnPredicateSet &predicateSet ) const
+   {
+      PD_TRACE_ENTRY( SDB_OPTCLSTAT_GETMATCHEDIDX ) ;
+
+      if ( !isValid() )
+      {
+         return NULL ;
+      }
+
+      RTN_PREDICATE_MAP &predicates = predicateSet.predicates() ;
+
+      if ( predicates.size() == 0 )
+      {
+         return NULL ;
+      }
+      else if ( predicates.size() == 1 )
+      {
+         RTN_PREDICATE_MAP::const_iterator iterPred = predicates.begin() ;
+         return getFieldStat( iterPred->first.c_str() ) ;
+      }
+
+      const dmsIndexStat *pBestIndexStat = NULL ;
+      const INDEX_STAT_MAP &indexStats = _pCollectionStat->getIndexStats() ;
+
+      for ( INDEX_STAT_CONST_ITERATOR iter = indexStats.begin() ;
+            iter != indexStats.end() ;
+            ++ iter )
+      {
+         const dmsIndexStat *pIndexStat = iter->second ;
+
+         if ( pIndexStat->getNumKeys() < predicates.size() )
+         {
+            // The index could not cover all predicates, it is not the best
+            // matched index
+            continue ;
+         }
+
+         BSONObjIterator iterKey( pIndexStat->getKeyPattern() ) ;
+         UINT32 matchedCount = 0 ;
+         while ( iterKey.more() )
+         {
+            BSONElement beKey = iterKey.next() ;
+            RTN_PREDICATE_MAP::iterator iterPred = predicates.find( beKey.fieldName() ) ;
+            if ( iterPred == predicates.end() ||
+                 iterPred->second.isEmpty() )
+            {
+               break ;
+            }
+            matchedCount ++ ;
+         }
+
+         if ( matchedCount == predicates.size() )
+         {
+            // The index covers all predicates, which is a candidate of the best
+            // matched index
+            if ( matchedCount == pIndexStat->getNumKeys() )
+            {
+               // The number of keys are matched, it is the best one
+               pBestIndexStat = pIndexStat ;
+               goto done ;
+            }
+
+            // The number of keys are different, find the smaller one
+            if ( pBestIndexStat )
+            {
+               if ( pIndexStat->getNumKeys() < pBestIndexStat->getNumKeys() )
+               {
+                  pBestIndexStat = pIndexStat ;
+               }
+            }
+            else
+            {
+               pBestIndexStat = pIndexStat ;
+            }
+         }
+      }
+
+   done :
+      PD_TRACE_EXIT( SDB_OPTCLSTAT_GETMATCHEDIDX ) ;
+      return pBestIndexStat ;
+   }
+
+}
+

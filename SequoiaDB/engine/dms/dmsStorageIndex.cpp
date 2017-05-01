@@ -588,6 +588,15 @@ namespace engine
                         DMS_MB_ATTR_NOIDINDEX ) ;
       }
 
+      if ( _pDataSu->_pEventHolder )
+      {
+         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
+                           context->clLID() ) ;
+         dmsIdxItem idxItem ( indexName, index ) ;
+         _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
+                                                 idxItem, cb, dpscb ) ;
+      }
+
       /// creating index may cost long time. we mark file dirty again here.
    done :
       if ( 0 != logRecSize )
@@ -681,9 +690,14 @@ namespace engine
          {
             found = TRUE ;
 
-            // Ignore errors
-            _pDataSu->_pStatMgr->onDropIndex( context->mbID(), indexCB.getName(),
-                                              cb, dpscb ) ;
+            if ( _pDataSu->_pEventHolder )
+            {
+               dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
+                                 context->clLID() ) ;
+               dmsIdxItem idxItem( indexCB.getName(), indexCB.getDef() ) ;
+               _pDataSu->_pEventHolder->onDropIndex( DMS_EVENT_MASK_ALL,
+                                                     clItem, idxItem, cb, dpscb ) ;
+            }
 
             rc = dropIndex ( context, indexID, indexCB.getLogicalID(),
                              cb, dpscb, isSys ) ;
@@ -744,9 +758,14 @@ namespace engine
          {
             found = TRUE ;
 
-            // Ignore errors
-            _pDataSu->_pStatMgr->onDropIndex( context->mbID(), indexName,
-                                              cb, dpscb ) ;
+            if ( _pDataSu->_pEventHolder )
+            {
+               dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
+                                 context->clLID() ) ;
+               dmsIdxItem idxItem( indexCB.getName(), indexCB.getDef() ) ;
+               _pDataSu->_pEventHolder->onDropIndex( DMS_EVENT_MASK_ALL,
+                                                     clItem, idxItem, cb, dpscb ) ;
+            }
 
             rc = dropIndex ( context, indexID, indexCB.getLogicalID(),
                              cb, dpscb, isSys ) ;

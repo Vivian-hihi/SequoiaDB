@@ -1857,7 +1857,7 @@ namespace engine
       SDB_ASSERT( FALSE, "no need to setWeight in _mthMatchOpNode" ) ;
    }
 
-   void _mthMatchOpNode::evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNode::evalEstimation ( const optCollectionStat *pCollectionStat,
                                           double &selectivity,
                                           UINT32 &cpuCost )
    {
@@ -1874,7 +1874,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNode::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNode::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                            double &selectivity,
                                            UINT32 &cpuCost )
    {
@@ -2680,7 +2680,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeET::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeET::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
@@ -2758,7 +2758,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeNE::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeNE::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
@@ -2835,7 +2835,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeLT::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeLT::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
@@ -2911,7 +2911,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeLTE::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeLTE::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                               double &selectivity,
                                               UINT32 &cpuCost )
    {
@@ -2987,7 +2987,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeGT::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeGT::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
@@ -3063,7 +3063,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeGTE::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeGTE::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                               double &selectivity,
                                               UINT32 &cpuCost )
    {
@@ -3300,7 +3300,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeIN::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeIN::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                              double &selectivity,
                                              UINT32 &cpuCost )
    {
@@ -4293,7 +4293,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeELEMMATCH::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeELEMMATCH::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                                     double &selectivity,
                                                     UINT32 &cpuCost )
    {
@@ -4562,7 +4562,7 @@ namespace engine
       }
    }
 
-   void _mthMatchOpNodeRegex::_evalEstimation ( const rtnCollectionStat *pCollectionStat,
+   void _mthMatchOpNodeRegex::_evalEstimation ( const optCollectionStat *pCollectionStat,
                                                 double &selectivity,
                                                 UINT32 &cpuCost )
    {

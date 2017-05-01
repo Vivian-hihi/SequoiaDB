@@ -41,7 +41,7 @@
 #include "dmsStorageUnit.hpp"
 #include "../bson/ordering.h"
 #include "rtnAPM.hpp"
-#include "rtnStatObj.hpp"
+#include "optStatUnit.hpp"
 #include "pdTrace.hpp"
 #include "optTrace.hpp"
 #include "pmd.hpp"
@@ -125,20 +125,89 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTIXPLAN_NAME, "_optAccessPlan::_estimateIxScanPlan" )
+   INT32 _optAccessPlan::_estimateIxScanPlan ( _dmsMBContext *mbContext,
+                                               optCollectionStat &collectionStat,
+                                               const CHAR *pIndexName,
+                                               OPT_PLAN_PATH_PRIORITY priority,
+                                               UINT64 sortBufferSize,
+                                               INT32 estCacheSize,
+                                               optScanPath &ixScanPath )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTIXPLAN_NAME ) ;
+
+      dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
+
+      // Search by index name
+      rc = _su->index()->getIndexCBExtent( mbContext, pIndexName, indexCBExtent ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get index extent ID from "
+                   "collection [%s], index [%s], rc: %d",
+                   _collectionFullName, pIndexName, rc ) ;
+
+      rc = _estimateIxScanPlan( collectionStat, indexCBExtent,
+                                priority, sortBufferSize, estCacheSize,
+                                ixScanPath ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to estimate ixscan plan for "
+                   "collection [%s], index: [%s], rc: %d",
+                   _collectionFullName, pIndexName, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTIXPLAN_NAME, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTIXPLAN_OID, "_optAccessPlan::_estimateIxScanPlan" )
+   INT32 _optAccessPlan::_estimateIxScanPlan ( _dmsMBContext *mbContext,
+                                               optCollectionStat &collectionStat,
+                                               const OID &indexOID,
+                                               OPT_PLAN_PATH_PRIORITY priority,
+                                               UINT64 sortBufferSize,
+                                               INT32 estCacheSize,
+                                               optScanPath &ixScanPath )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTIXPLAN_OID ) ;
+
+      dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
+
+      // Search by OID
+      rc = _su->index()->getIndexCBExtent( mbContext, indexOID, indexCBExtent ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get index extent ID from "
+                   "collection [%s], index [%s], rc: %d",
+                   _collectionFullName, indexOID.toString().c_str(), rc ) ;
+
+      rc = _estimateIxScanPlan( collectionStat, indexCBExtent,
+                                priority, sortBufferSize, estCacheSize,
+                                ixScanPath ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to estimate ixscan plan for "
+                   "collection [%s], index: [%s], rc: %d",
+                   _collectionFullName, indexOID.toString().c_str(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTIXPLAN_OID, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTIXPLAN, "_optAccessPlan::_estimateIxScanPlan" )
-   INT32 _optAccessPlan::_estimateIxScanPlan ( rtnCollectionStat &collectionStat,
+   INT32 _optAccessPlan::_estimateIxScanPlan ( optCollectionStat &collectionStat,
                                                dmsExtentID indexCBExtent,
                                                OPT_PLAN_PATH_PRIORITY priority,
                                                UINT64 sortBufferSize,
                                                INT32 estCacheSize,
-                                               optScanPath &path )
+                                               optScanPath &ixScanPath )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTIXPLAN ) ;
 
       ixmIndexCB indexCB ( indexCBExtent, _su->index(), NULL ) ;
-      optScanPath ixScanPath( &_planAllocator ) ;
 
       PD_CHECK( indexCB.isInitialized(), SDB_DMS_INIT_INDEX, error, PDWARNING,
                 "Index [%d] in collection [%s] is invalid",
@@ -150,7 +219,7 @@ namespace engine
 
       try
       {
-         rtnIndexStat indexStat( collectionStat, indexCB ) ;
+         optIndexStat indexStat( collectionStat, indexCB ) ;
 
          rc = ixScanPath.createIxScan( _collectionFullName, indexCB,
                                        _selector, _matcher, _orderBy,
@@ -172,29 +241,25 @@ namespace engine
       {
          ixScanPath.evaluate( _orderBy, _numToSkip, _numToReturn,
                               sortBufferSize ) ;
-         PD_LOG( PDDEBUG, "Optimizer: %s", ixScanPath.toString().c_str() ) ;
       }
-
-      path.swap( ixScanPath ) ;
 
    done :
        PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTIXPLAN, rc ) ;
       return rc ;
    error :
+      ixScanPath.clearPath() ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTTBPLAN, "_optAccessPlan::_estimateTbScanPlan" )
-   INT32 _optAccessPlan::_estimateTbScanPlan ( const rtnCollectionStat &collectionStat,
+   INT32 _optAccessPlan::_estimateTbScanPlan ( optCollectionStat &collectionStat,
                                                UINT64 sortBufferSize,
                                                INT32 estCacheSize,
-                                               optScanPath &path )
+                                               optScanPath &tbScanPath )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTTBPLAN ) ;
-
-      optScanPath tbScanPath( &_planAllocator ) ;
 
       rc = tbScanPath.createTbScan( _collectionFullName, _selector, _matcher,
                                      estCacheSize, collectionStat ) ;
@@ -203,14 +268,12 @@ namespace engine
 
       tbScanPath.evaluate( _orderBy, _numToSkip, _numToReturn,
                             sortBufferSize ) ;
-      PD_LOG( PDDEBUG, "Optimizer: %s", tbScanPath.toString().c_str() ) ;
-
-      path.swap( tbScanPath ) ;
 
    done :
        PD_TRACE_EXITRC( SDB__OPTACCPLAN__ESTTBPLAN, rc ) ;
       return rc ;
    error :
+      tbScanPath.clearPath() ;
       goto done ;
    }
 
@@ -222,12 +285,12 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__OPTACCPLAN_ESTHINTPLANS ) ;
 
-      rtnStatMgr *statMgr = _su->getStatMgr() ;
+      const utilSUCache *statCache = _su->getSUCache( DMS_CACHE_TYPE_STAT ) ;
       UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
       INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
 
-      rtnCollectionStat collectionStat( _collectionFullName, _su->getPageSize(),
-                                        mbContext, statMgr ) ;
+      optCollectionStat collectionStat( _collectionFullName, _su->getPageSize(),
+                                        mbContext, statCache ) ;
 
       UINT64 bestEstimateCost = OSS_UINT64_MAX ;
       optScanPath bestPath( &_planAllocator ) ;
@@ -238,17 +301,10 @@ namespace engine
               OSS_BIT_TEST( _queryFlags, FLG_QUERY_WITHOUT_SORT ) ) ;
 
       UINT32 validHints = 0 ;
-
-      PD_LOG( PDDEBUG,
-              "Optimizer: Creating plan %s selector %s matcher %s order by %s hint %s",
-              _collectionFullName,
-              _selector.toString( FALSE, TRUE ).c_str(),
-              _matcher.toString().c_str(),
-              _orderBy.toString( FALSE, TRUE ).c_str(),
-              _hint.toString( FALSE, TRUE ).c_str() ) ;
-
       BSONObjIterator iter( _hint ) ;
+
       PD_LOG ( PDDEBUG, "Hint is provided: %s", _hint.toString().c_str() ) ;
+
       rc = SDB_RTN_INVALID_HINT ;
 
       // user can define more than one index name/oid in hint, it will pickup
@@ -263,7 +319,6 @@ namespace engine
                const CHAR *pIndexName = hint.valuestr() ;
                if ( '\0' != *( pIndexName ) )
                {
-                  dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
                   optScanPath ixScanPath( &_planAllocator ) ;
 
                   OPT_PLAN_PATH_PRIORITY priority = sortedIdxRequired ?
@@ -272,23 +327,9 @@ namespace engine
 
                   PD_LOG ( PDDEBUG, "Try to use index: %s", pIndexName ) ;
 
-                  // search based on index name
-                  rc = _su->index()->getIndexCBExtent( mbContext, pIndexName,
-                                                       indexCBExtent ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDWARNING, "Failed to get index extent ID from "
-                             "collection [%s], name [%s], rc: %d",
-                             _collectionFullName, pIndexName, rc ) ;
-                     break ;
-                  }
-
-                  validHints ++ ;
-
-                  rc = _estimateIxScanPlan( collectionStat, indexCBExtent,
-                                            priority, sortBufferSize,
+                  rc = _estimateIxScanPlan( mbContext, collectionStat,
+                                            pIndexName, priority, sortBufferSize,
                                             estCacheSize, ixScanPath ) ;
-
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDWARNING, "Failed to estimate index scan for "
@@ -296,6 +337,9 @@ namespace engine
                               _collectionFullName, pIndexName, rc ) ;
                      break ;
                   }
+
+                  validHints ++ ;
+
                   if ( ixScanPath.isCandidate() &&
                        ixScanPath.getTotalCost() < bestEstimateCost )
                   {
@@ -315,7 +359,6 @@ namespace engine
             case jstOID :
             {
                const OID &indexOID = hint.__oid() ;
-               dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
                optScanPath ixScanPath( &_planAllocator ) ;
 
                OPT_PLAN_PATH_PRIORITY priority = sortedIdxRequired ?
@@ -325,20 +368,7 @@ namespace engine
                PD_LOG ( PDDEBUG, "Try to use index: %s",
                         indexOID.toString().c_str() ) ;
 
-               // search based on OID
-               rc = _su->index()->getIndexCBExtent( mbContext, indexOID,
-                                                    indexCBExtent ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDWARNING, "Failed to get index extent ID from "
-                          "collection [%s], index OID [%s], rc: %d",
-                          _collectionFullName, indexOID.toString().c_str(), rc ) ;
-                  break ;
-               }
-
-               validHints ++ ;
-
-               rc = _estimateIxScanPlan( collectionStat, indexCBExtent,
+               rc = _estimateIxScanPlan( mbContext, collectionStat, indexOID,
                                          priority, sortBufferSize, estCacheSize,
                                          ixScanPath ) ;
                if ( SDB_OK != rc )
@@ -348,6 +378,9 @@ namespace engine
                           _collectionFullName, indexOID.toString().c_str(), rc ) ;
                   break ;
                }
+
+               validHints ++ ;
+
                if ( ixScanPath.isCandidate() &&
                     ixScanPath.getTotalCost() < bestEstimateCost )
                {
@@ -428,17 +461,18 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTPLANS ) ;
 
-      rtnStatMgr *statMgr = _su->getStatMgr() ;
+      const utilSUCache *statCache = _su->getSUCache( DMS_CACHE_TYPE_STAT ) ;
       const rtnPredicateSet &predicateSet = _matcher.getPredicateSet() ;
       UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
       INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
 
       UINT64 bestEstimateCost = OSS_UINT64_MAX ;
+      dmsExtentID bestIdxExtID = DMS_INVALID_EXTENT ;
 
       optScanPath tbScanPath( &_planAllocator ), bestPath( &_planAllocator ) ;
 
-      rtnCollectionStat collectionStat( _collectionFullName, _su->getPageSize(),
-                                        mbContext, statMgr ) ;
+      optCollectionStat collectionStat( _collectionFullName, _su->getPageSize(),
+                                        mbContext, statCache ) ;
       UINT32 candidateCount = 0 ;
       UINT64 minCandidateCost = 0 ;
 
@@ -475,13 +509,6 @@ namespace engine
          }
       }
 
-      PD_LOG( PDDEBUG,
-              "Optimizer: Creating plan %s selector %s matcher %s order by %s",
-              _collectionFullName,
-              _selector.toString( FALSE, TRUE ).c_str(),
-              _matcher.toString().c_str(),
-              _orderBy.toString( FALSE, TRUE ).c_str() ) ;
-
       if ( priority == OPT_PLAN_IDX_PREFERRED ||
            priority == OPT_PLAN_DEFAULT_PRIORITY )
       {
@@ -496,6 +523,35 @@ namespace engine
       if ( predicateSet.getSize() > 0 ||
            !_orderBy.isEmpty() )
       {
+         // We had found a best index earlier, check it first
+         if ( collectionStat.getBestIndexName() )
+         {
+            const CHAR *pIndexName = collectionStat.getBestIndexName() ;
+            optScanPath ixScanPath( &_planAllocator ) ;
+
+            rc = _estimateIxScanPlan( mbContext, collectionStat, pIndexName,
+                                      priority, sortBufferSize, estCacheSize,
+                                      ixScanPath ) ;
+
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING, "Failed to estimate index scan for "
+                       "collection [%s], index [%s], rc: %d",
+                       _collectionFullName, pIndexName, rc ) ;
+            }
+            else
+            {
+               bestIdxExtID = ixScanPath.getIndexExtID() ;
+               if ( ixScanPath.isCandidate() &&
+                    ixScanPath.getTotalCost() < bestEstimateCost )
+               {
+                  bestEstimateCost = ixScanPath.getTotalCost() ;
+                  bestPath.swap( ixScanPath ) ;
+                  candidateCount ++ ;
+               }
+            }
+         }
+
          // Go through indexes to find candidate plans
          for ( INT32 idx = 0 ; idx < DMS_COLLECTION_MAX_INDEX ; idx ++ )
          {
@@ -515,6 +571,11 @@ namespace engine
                PD_LOG( PDWARNING, "Failed to get index extent ID from "
                        "collection [%s], index [%d], rc: %d",
                        _collectionFullName, idx, rc ) ;
+               continue ;
+            }
+            if ( bestIdxExtID == indexCBExtent )
+            {
+               // Already evaluated
                continue ;
             }
 

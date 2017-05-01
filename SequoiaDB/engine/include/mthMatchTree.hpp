@@ -120,8 +120,20 @@ namespace engine
          BOOLEAN hasReturnMatch() ;
          const CHAR *getAttrFieldName() ;
 
-         void getEstimation ( const rtnCollectionStat *pCollectionStat,
+         void getEstimation ( optCollectionStat *pCollectionStat,
                               double &estSelectivity, UINT32 &estCPUCost ) ;
+
+         OSS_INLINE void getPredSelectivity ( double &predSelectivity,
+                                              double &scanSelectivity )
+         {
+            predSelectivity = _predSelectivity ;
+            scanSelectivity = _scanSelectivity ;
+         }
+
+         OSS_INLINE BOOLEAN isEstimated ()
+         {
+            return _isEstimated ;
+         }
 
       private:
          INT32    _matches( const BSONObj &matchTarget, BOOLEAN &result,
@@ -196,7 +208,7 @@ namespace engine
 
          INT32    _adjustReturnMatchIndex( _mthMatchTreeContext &context ) ;
 
-         void     _evalEstimation ( const rtnCollectionStat *pCollectionStat ) ;
+         void     _evalEstimation ( optCollectionStat *pCollectionStat ) ;
 
       private:
          _mthMatchNode     *_root ;
@@ -218,6 +230,8 @@ namespace engine
 
          BOOLEAN           _isEstimated ;
          double            _estSelectivity ;
+         double            _predSelectivity ;
+         double            _scanSelectivity ;
          UINT32            _estCPUCost ;
    } ;
 

@@ -42,7 +42,7 @@
 #include "monCB.hpp"
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
-#include "dmsTempCB.hpp"
+#include "dmsTempSUMgr.hpp"
 #include "rtnContext.hpp"
 #include "qgmUtil.hpp"
 #include "pdTrace.hpp"

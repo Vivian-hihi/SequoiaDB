@@ -58,6 +58,15 @@ namespace engine
    class rtnKeyBoundary : public SDBObject
    {
    public :
+      rtnKeyBoundary ()
+      {
+         _inclusive = FALSE ;
+      }
+      rtnKeyBoundary ( const BSONElement &bound, BOOLEAN inclusive )
+      {
+         _bound = bound ;
+         _inclusive = inclusive ;
+      }
       BSONElement _bound ;
       BOOLEAN _inclusive ;
       BOOLEAN operator==( const rtnKeyBoundary &r ) const

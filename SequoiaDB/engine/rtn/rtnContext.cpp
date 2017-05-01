@@ -2169,7 +2169,7 @@ namespace engine
       // release temp collection
       if ( _dmsCB && _mbContext )
       {
-         _dmsCB->getTempCB()->release( _mbContext ) ;
+         _dmsCB->getTempSUMgr()->release( _mbContext ) ;
       }
    }
 

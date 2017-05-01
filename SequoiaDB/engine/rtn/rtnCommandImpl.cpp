@@ -849,7 +849,7 @@ namespace engine
                                        pmdGetOptionCB()->getIndexPath(),
                                        pmdGetOptionCB()->getLobPath(),
                                        pmdGetOptionCB()->getLobMetaPath(),
-                                       dmsCB, FALSE ) ;
+                                       cb, dmsCB, FALSE ) ;
          if ( rc != SDB_DMS_CS_NOTEXIST )
          {
             PD_LOG ( PDERROR, "The container file for collect space %s exists "
@@ -888,6 +888,7 @@ namespace engine
                          optCB->getSyncRecordNum(),
                          optCB->getSyncDirtyRatio() ) ;
       su->setSyncDeep( optCB->isSyncDeep() ) ;
+
       /// add collctionspace
       rc = dmsCB->addCollectionSpace( pCollectionSpace, 1, su, cb, dpsCB ) ;
       if ( rc )
@@ -905,6 +906,9 @@ namespace engine
          su->remove() ;
          goto error ;
       }
+
+      su->getEventHolder()->onCreateCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
+
       PD_LOG( PDEVENT, "Create collectionspace[%s] succeed, PageSize:%u, "
               "LobPageSize:%u", pCollectionSpace, pageSize, lobPageSize ) ;
 

@@ -42,7 +42,7 @@
 #include "dmsExtent.hpp"
 #include "dpsLogWrapper.hpp"
 #include "dmsCompress.hpp"
-#include "rtnStatMgr.hpp"
+#include "dmsEventHandler.hpp"
 
 #include <map>
 
@@ -769,7 +769,7 @@ namespace engine
       public:
          _dmsStorageData ( const CHAR *pSuFileName,
                            dmsStorageInfo *pInfo,
-                           rtnStatMgr *pStatMgr ) ;
+                           _IDmsEventHolder *pEventHolder ) ;
          virtual ~_dmsStorageData () ;
 
          virtual void  syncMemToMmap() ;
@@ -778,10 +778,11 @@ namespace engine
          dmsStorageUnitID CSID () const { return _CSID ; }
 
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
-                                         UINT32 clLID, INT32 lockType = -1 );
+                                         UINT32 clLID, INT32 lockType = -1 ) ;
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext,
                                          const CHAR* pName,
                                          INT32 lockType = -1 ) ;
+         OSS_INLINE INT32  checkMBContext( const CHAR *pName, UINT16 mbID ) ;
          OSS_INLINE void   releaseMBContext( dmsMBContext *&pContext ) ;
 
          OSS_INLINE const dmsMBStatInfo* getMBStatInfo( UINT16 mbID ) const ;
@@ -975,8 +976,7 @@ namespace engine
                                                  _pmdEDUCB *cb ) ;
 
          INT32          _truncateCollection ( dmsMBContext *context,
-                                              BOOLEAN needChangeCLID = TRUE,
-                                              SDB_DPSCB *dpsCB = NULL ) ;
+                                              BOOLEAN needChangeCLID = TRUE ) ;
 
          INT32          _truncateCollectionLoads( dmsMBContext *context ) ;
 
@@ -1033,7 +1033,7 @@ namespace engine
 
          _dmsCompressorEntry                 _compressorEntry[ DMS_MME_SLOTS ] ;
 
-         rtnStatMgr                          *_pStatMgr ;
+         _IDmsEventHolder                    *_pEventHolder ;
 
    };
    typedef _dmsStorageData dmsStorageData ;

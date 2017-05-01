@@ -479,6 +479,7 @@ namespace engine
                                   const CHAR *indexPath,
                                   const CHAR *lobPath,
                                   const CHAR *lobMetaPath,
+                                  pmdEDUCB *cb,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly )
    {
@@ -556,6 +557,7 @@ namespace engine
                                                     optCB->getSyncRecordNum(),
                                                     optCB->getSyncDirtyRatio() ) ;
                         storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
+
                         /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                          storageUnit, NULL,
@@ -577,6 +579,13 @@ namespace engine
                            }
                            continue ;
                         }
+
+                        if ( cb != NULL )
+                        {
+                           storageUnit->getEventHolder()->onLoadCS(
+                                       DMS_EVENT_MASK_ALL, cb, NULL ) ;
+                        }
+
                         storageUnit = NULL ;
                         /*
                          * Scan all the collections, to check if any one should be
@@ -709,6 +718,9 @@ namespace engine
                         PMD_RESTART_DB( rc ) ;
                         goto error ;
                      }
+
+                     // Note: do not call onLoad here
+
                      storageUnit = NULL ;
 
                      /*
@@ -967,7 +979,7 @@ namespace engine
                                        pmdGetOptionCB()->getIndexPath(),
                                        pmdGetOptionCB()->getLobPath(),
                                        pmdGetOptionCB()->getLobMetaPath(),
-                                       dmsCB, FALSE ) ;
+                                       NULL, dmsCB, FALSE ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Unable to load collection %s from %s",

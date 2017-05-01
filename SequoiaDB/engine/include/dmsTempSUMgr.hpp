@@ -15,13 +15,13 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = dmsTempCB.hpp
+   Source File Name = dmsTempSUMgr.hpp
 
-   Descriptive Name = Data Management Service Temp Control Block Header
+   Descriptive Name = DMS Temp Storage Unit Management Header
 
    When/how to use: this program may be used on binary and text-formatted
    versions of data management component. This file contains structure for
-   DMS Temporary Table Control Block.
+   DMS Temporary Storage Unit Management.
 
    Dependencies: N/A
 
@@ -35,14 +35,14 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef DMSTEMPCB_HPP__
-#define DMSTEMPCB_HPP__
+#ifndef DMSTMPSUMGR_HPP__
+#define DMSTMPSUMGR_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossLatch.hpp"
 #include "dms.hpp"
-#include "dmsSysCB.hpp"
+#include "dmsSysSUMgr.hpp"
 #include <queue>
 #include <map>
 
@@ -52,9 +52,9 @@ namespace engine
 {
 
    /*
-      _dmsTempCB define
+      _dmsTempSUMgr define
    */
-   class _dmsTempCB : public _dmsSysCB
+   class _dmsTempSUMgr : public _dmsSysSUMgr
    {
    private :
       // fifo queue, reserve operation always reserve the first one
@@ -63,7 +63,7 @@ namespace engine
       map<UINT16, UINT64>  _occupiedCollections ;
 
    public :
-      _dmsTempCB ( _SDB_DMSCB *dmsCB ) ;
+      _dmsTempSUMgr ( _SDB_DMSCB *dmsCB ) ;
 
       // this function verify whether SYSTEMP collection space exist. If it
       // is not exist then create one. And then reset all temp collections
@@ -77,9 +77,9 @@ namespace engine
       INT32 _initTmpPath() ;
 
    } ;
-   typedef class _dmsTempCB dmsTempCB ;
+   typedef class _dmsTempSUMgr dmsTempSUMgr ;
 
 }
 
-#endif //DMSTEMPCB_HPP__
+#endif //DMSTMPSUMGR_HPP__
 

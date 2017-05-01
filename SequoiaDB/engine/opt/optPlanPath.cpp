@@ -146,14 +146,18 @@ namespace engine
       _estCacheSize = estCacheSize ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCAN__PREEVAL, "_optScanNode::_preEvaluate" )
    void _optScanNode::_preEvaluate ( const BSONObj &selector,
                                      _mthMatchTree &matcher,
-                                     const rtnCollectionStat &collectionStat )
+                                     optCollectionStat &collectionStat )
    {
+      PD_TRACE_ENTRY( SDB_OPTSCAN__PREEVAL ) ;
+
       _inputRecords = OPT_ROUND_NUM_DEF( collectionStat.getTotalRecords(),
-                                           STAT_DEF_TOTAL_RECORDS ) ;
+                                         DMS_STAT_DEF_TOTAL_RECORDS ) ;
       _inputPages = OPT_ROUND_NUM( collectionStat.getTotalDataPages() ) ;
-      _inputRecordSize = OPT_ROUND_NUM( collectionStat.getTotalDataLen() / _inputRecords ) ;
+      _inputRecordSize = OPT_ROUND_NUM( (UINT32)ceil( (double)collectionStat.getTotalDataSize() /
+                                                      (double)_inputRecords ) ) ;
 
       _pageSize = collectionStat.getPageSize() ;
       _inputNumFields = collectionStat.getAvgNumFields() ;
@@ -161,10 +165,15 @@ namespace engine
       matcher.getEstimation( &collectionStat, _mthSelectivity, _mthCPUCost ) ;
 
       _outputNumFields = selector.nFields() ;
+
+      PD_TRACE_EXIT( SDB_OPTSCAN__PREEVAL ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCAN_EVALOUTRECSIZE, "_optScanNode::_evalOutRecordSize" )
    void _optScanNode::_evalOutRecordSize ()
    {
+      PD_TRACE_ENTRY( SDB_OPTSCAN_EVALOUTRECSIZE ) ;
+
       if ( _outputNumFields > 0 && _inputNumFields > 0 )
       {
          _outputRecordSize = _outputNumFields * _inputRecordSize / _inputNumFields ;
@@ -174,6 +183,8 @@ namespace engine
          _outputNumFields = _inputNumFields ;
          _outputRecordSize = _inputRecordSize ;
       }
+
+      PD_TRACE_EXIT( SDB_OPTSCAN_EVALOUTRECSIZE ) ;
    }
 
    void _optScanNode::_toInputBSON( BSONObjBuilder &builder ) const
@@ -196,16 +207,24 @@ namespace engine
    {
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTTBSCAN_PREEVAL, "_optTbScanNode::preEvaluate" )
    void _optTbScanNode::preEvaluate ( const BSONObj &selector,
                                       _mthMatchTree &matcher,
-                                      const rtnCollectionStat &collectionStat )
+                                      optCollectionStat &collectionStat )
    {
+      PD_TRACE_ENTRY( SDB_OPTTBSCAN_PREEVAL ) ;
+
       _preEvaluate( selector, matcher, collectionStat ) ;
       _isCandidate = TRUE ;
+
+      PD_TRACE_EXIT( SDB_OPTTBSCAN_PREEVAL ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTTBSCAN_EVAL, "_optTbScanNode::evaluate" )
    void _optTbScanNode::evaluate ()
    {
+      PD_TRACE_ENTRY( SDB_OPTTBSCAN_EVAL ) ;
+
       UINT64 scanIOCost = 0, scanCPUCost = 0 ;
 
       if ( _estCacheSize >= 0 &&
@@ -232,6 +251,8 @@ namespace engine
                        (UINT64)ceil( (double)_inputRecords * _mthSelectivity ) ) ;
 
       _evalOutRecordSize() ;
+
+      PD_TRACE_EXIT( SDB_OPTTBSCAN_EVAL ) ;
    }
 
    void _optTbScanNode::_toBSON ( BSONObjBuilder &builder ) const
@@ -285,18 +306,23 @@ namespace engine
       _idxOutRecords = 0 ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_PREEVAL, "_optIxScanNode::preEvaluate" )
    void _optIxScanNode::preEvaluate ( const BSONObj &selector,
                                       _mthMatchTree &matcher,
                                       const BSONObj &boOrder,
                                       OPT_PLAN_PATH_PRIORITY priority,
-                                      const rtnCollectionStat &collectionStat,
-                                      const rtnIndexStat &indexStat )
+                                      optCollectionStat &collectionStat,
+                                      optIndexStat &indexStat )
    {
+      PD_TRACE_ENTRY( SDB_OPTIXSCAN_PREEVAL ) ;
+
       _preEvaluate( selector, matcher, collectionStat ) ;
       _indexPages = indexStat.getIndexPages() ;
       _indexLevels = indexStat.getIndexLevels() ;
 
-      _evalPredEstimation( matcher, boOrder, indexStat ) ;
+      BOOLEAN isBestIndex = collectionStat.isBestIndex( indexStat ) ;
+
+      _evalPredEstimation( matcher, boOrder, isBestIndex, indexStat ) ;
 
       switch ( priority )
       {
@@ -334,21 +360,25 @@ namespace engine
             break;
          }
       }
+
+      PD_TRACE_EXIT( SDB_OPTIXSCAN_PREEVAL ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_EVAL, "_optIxScanNode::evaluate" )
    void _optIxScanNode::evaluate ()
    {
+      PD_TRACE_ENTRY( SDB_OPTIXSCAN_EVAL ) ;
+
       UINT64 scanIOCost = 0, scanCPUCost = 0 ;
 
       // Number of index pages and records will be read ( based on _scanSelectivity )
-      // From the first start key to the last stop key of the predicates
       UINT32 idxReadPages = OPT_ROUND_NUM(
                             (UINT32)ceil( (double)_indexPages * _scanSelectivity ) ) ;
       _idxReadRecords = OPT_ROUND_NUM(
                         (UINT64)ceil( (double)_inputRecords * _scanSelectivity ) ) ;
 
       // Number of data pages and records will be read ( based on _predSelectivity )
-      // Evaluated by each start and stop key-pairs in predicates
+      // which is also the number of items output from index
       UINT32 dataReadPages = OPT_ROUND_NUM(
                              (UINT32)ceil( (double)_inputPages * _predSelectivity ) ) ;
       _idxOutRecords = OPT_ROUND_NUM(
@@ -391,6 +421,8 @@ namespace engine
       }
 
       _evalOutRecordSize() ;
+
+      PD_TRACE_EXIT( SDB_OPTIXSCAN_EVAL ) ;
    }
 
    void _optIxScanNode::_toBSON ( BSONObjBuilder &builder ) const
@@ -404,10 +436,14 @@ namespace engine
       _toEstimateBSON( builder ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTIXSCAN_EVALPREDEST, "_optIxScanNode::_evalPredEstimation" )
    void _optIxScanNode::_evalPredEstimation ( _mthMatchTree &matcher,
                                               const BSONObj &boOrder,
-                                              const rtnIndexStat &indexStat )
+                                              BOOLEAN isBestIndex,
+                                              const optIndexStat &indexStat )
    {
+      PD_TRACE_ENTRY( SDB_OPTIXSCAN_EVALPREDEST ) ;
+
       UINT32 iterIdx = 0,
              matchedFields = 0,
              matchedOrders = 0 ;
@@ -419,22 +455,27 @@ namespace engine
       BOOLEAN needMatchOrder = TRUE ;
       INT32 direction = 1 ;
 
-      BSONObjIterator iterKey( keyPattern ) ;
-      BSONObjIterator iterOrder( boOrder ) ;
-
-      double tempSelectivity = 1.0 ;
+      double predSelectivity = 1.0 ;
       double scanSelectivity = 1.0 ;
 
       BOOLEAN isEqual = TRUE ;
-      BOOLEAN multiPredPaths = FALSE ;
       const CHAR *pFirstField = NULL ;
-      dmsStatListKey startList, stopList ;
 
       // The statistics of index are invalid, we need to evaluate each predicate
       // in the predicate set
       BOOLEAN fieldOnly = !indexStat.isValid() ;
 
       RTN_PREDICATE_MAP &predicates = matcher.getPredicates() ;
+
+      if ( !matcher.isEstimated() )
+      {
+         // The matcher has not been estimated, which could not be used
+         // to evaluate predicates
+         isBestIndex = FALSE ;
+      }
+
+      BSONObjIterator iterKey( keyPattern ) ;
+      BSONObjIterator iterOrder( boOrder ) ;
 
       while ( iterKey.more() )
       {
@@ -488,14 +529,8 @@ namespace engine
          {
             // The key is not included in the predicates
             // Cover all values in this key
-            if ( fieldOnly && iterIdx == 0 )
+            if ( !fieldOnly && !isBestIndex )
             {
-               scanSelectivity = 1.0 ;
-            }
-            else
-            {
-               startList.push_back( minKey.firstElement() ) ;
-               stopList.push_back( maxKey.firstElement() ) ;
                predicateList.push_back( NULL ) ;
                isEqual = FALSE ;
             }
@@ -512,64 +547,50 @@ namespace engine
                                                                  curPredicate,
                                                                  curIsAllRange ) ;
 
-               tempSelectivity *= curSelectivity ;
-               matchedFields ++ ;
-
-               if ( iterIdx == 0 )
-               {
-                  scanSelectivity = curSelectivity ;
-               }
+               predSelectivity *= curSelectivity ;
             }
-            else
+            else if ( !isBestIndex )
             {
                // Need to evaluate the whole predicate set together, add the
                // predicates into list, and evaluate them later
-               startList.push_back( curPredicate.min() ) ;
-               stopList.push_back( curPredicate.max() ) ;
-
                predicateList.push_back( &curPredicate ) ;
 
                isEqual &= curPredicate.isEquality() ;
                startIncluded &= curPredicate.minInclusive() ;
                stopIncluded &= curPredicate.maxInclusive() ;
-
-               if ( !multiPredPaths && curPredicate._startStopKeys.size() > 1 )
-               {
-                  multiPredPaths = FALSE ;
-               }
-
-               matchedFields ++ ;
             }
+
+            matchedFields ++ ;
          }
 
          iterIdx ++ ;
       }
 
-      if ( !fieldOnly && matchedFields > 0 )
+      // Matched key in index
+      if ( matchedFields > 0 )
       {
-         // Evaluate the matched predicates
-         // First, evaluate the scan selectivity, from the first start key to
-         // the last stop key
-         scanSelectivity = indexStat.evalStartStopKeys( pFirstField,
-                                                        startList, startIncluded,
-                                                        stopList, stopIncluded,
-                                                        isEqual ) ;
-
-         if ( multiPredPaths )
+         if ( fieldOnly && matchedFields > 0 )
          {
-            // The predicates contain multiple start stop key-pairs, evaluate
-            // each of them
-            tempSelectivity = indexStat.evalPredicateList( pFirstField,
-                                                           predicateList ) ;
+            scanSelectivity = predSelectivity ;
+         }
+         else if ( isBestIndex )
+         {
+            // The best index has been evaluated and cached in matcher
+            matcher.getPredSelectivity( predSelectivity, scanSelectivity ) ;
          }
          else
          {
-            tempSelectivity = scanSelectivity ;
+            // The predicates contain multiple start stop key-pairs, evaluate
+            // each of them
+            predSelectivity = indexStat.evalPredicateList( pFirstField,
+                                                           predicateList,
+                                                           scanSelectivity ) ;
          }
       }
 
       if ( !boOrder.isEmpty() )
       {
+         // Set the scan direction
          _direction = direction ;
          if ( matchedOrders == (UINT32)boOrder.nFields() )
          {
@@ -595,9 +616,11 @@ namespace engine
       _matchedFields = matchedFields ;
       _matchedOrders = matchedOrders ;
 
+      _predSelectivity = OPT_ROUND_SELECTIVITY( predSelectivity ) ;
       _scanSelectivity = OPT_ROUND_SELECTIVITY( scanSelectivity ) ;
-      _predSelectivity = OPT_ROUND_SELECTIVITY( tempSelectivity ) ;
       _predCPUCost = OPT_MTH_OPTR_BASE_CPU_COST * keyNum ;
+
+      PD_TRACE_EXIT( SDB_OPTIXSCAN_EVALPREDEST ) ;
    }
 
    void _optIxScanNode::_toIndexBSON ( BSONObjBuilder &builder ) const
@@ -621,53 +644,57 @@ namespace engine
       _numOrders = 0 ;
    }
 
-   void _optSortNode::evaluate ( const BSONObj &boOrder,
-                                 UINT64 sortBufferSize )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSORT_EVAL, "_optSortNode::evaluate" )
+   void _optSortNode::evaluate ( const BSONObj &boOrder, UINT64 sortBufferSize )
    {
+      PD_TRACE_ENTRY( SDB_OPTSORT_EVAL ) ;
+
+      SDB_ASSERT( _pLNode, "Child node should not be NULL" ) ;
+
       _numOrders = boOrder.nFields() ;
       _sortBufferSize = sortBufferSize ;
 
-      if ( !_pLNode )
+      if ( _pLNode )
       {
-         return ;
+         UINT64 comparisionCPUCost = 2 * OPT_OPTR_BASE_CPU_COST * _numOrders ;
+         UINT64 inputSize = _pLNode->getOutputRecords() * _pLNode->getOutputRecordSize() ;
+         double inputRecords = (double)( OSS_MAX( 2, _pLNode->getOutputRecords() ) ) ;
+
+         UINT64 sortCPUCost = (UINT64)( (double)comparisionCPUCost *
+                              inputRecords * OPT_LOG2( inputRecords ) ) ;
+         UINT64 sortIOCost = 0 ;
+
+         // Check input size against sort buffer size
+         if ( inputSize > _sortBufferSize )
+         {
+            // Use external merge-sort
+            _sortType = OPT_PLAN_EXT_SORT ;
+            UINT32 pages = OPT_ROUND_NUM( inputSize / DMS_PAGE_SIZE_BASE ) ;
+            sortIOCost = (UINT64)pages * ( (double) OPT_SEQ_SCAN_IO_COST * 2.0 +
+                                           (double) OPT_SEQ_SCAN_IO_COST * 0.75 +
+                                           (double) OPT_RANDOM_SCAN_IO_COST * 0.25 ) ;
+         }
+         else
+         {
+            // Use in-memory sort
+            _sortType = OPT_PLAN_IN_MEM_SORT ;
+            sortIOCost = 0 ;
+         }
+
+         _startCost = _pLNode->getTotalCost() +
+                      OPT_IO_CPU_RATE * sortIOCost +
+                      sortCPUCost ;
+
+         _runCost = OPT_OPTR_BASE_CPU_COST * _pLNode->getOutputRecords() ;
+         _totalCost = _startCost + _runCost ;
+
+         _outputRecordSize = _pLNode->getOutputRecordSize() ;
+         _outputRecords = _pLNode->getOutputRecords() ;
+         _outputNumFields = _pLNode->getOutputNumFields() ;
+         _sorted = TRUE ;
       }
 
-      UINT64 comparisionCPUCost = 2 * OPT_OPTR_BASE_CPU_COST * _numOrders ;
-      UINT64 inputSize = _pLNode->getOutputRecords() * _pLNode->getOutputRecordSize() ;
-      double inputRecords = (double)( OSS_MAX( 2, _pLNode->getOutputRecords() ) ) ;
-
-      UINT64 sortCPUCost = (UINT64)( (double)comparisionCPUCost *
-                           inputRecords * OPT_LOG2( inputRecords ) ) ;
-      UINT64 sortIOCost = 0 ;
-
-      // Check input size against sort buffer size
-      if ( inputSize > _sortBufferSize )
-      {
-         // Use external merge-sort
-         _sortType = OPT_PLAN_EXT_SORT ;
-         UINT32 pages = OPT_ROUND_NUM( inputSize / DMS_PAGE_SIZE_BASE ) ;
-         sortIOCost = (UINT64)pages * ( (double) OPT_SEQ_SCAN_IO_COST * 2.0 +
-                                            (double) OPT_SEQ_SCAN_IO_COST * 0.75 +
-                                            (double) OPT_RANDOM_SCAN_IO_COST * 0.25 ) ;
-      }
-      else
-      {
-         // Use in-memory sort
-         _sortType = OPT_PLAN_IN_MEM_SORT ;
-         sortIOCost = 0 ;
-      }
-
-      _startCost = _pLNode->getTotalCost() +
-                   OPT_IO_CPU_RATE * sortIOCost +
-                   sortCPUCost ;
-
-      _runCost = OPT_OPTR_BASE_CPU_COST * _pLNode->getOutputRecords() ;
-      _totalCost = _startCost + _runCost ;
-
-      _outputRecordSize = _pLNode->getOutputRecordSize() ;
-      _outputRecords = _pLNode->getOutputRecords() ;
-      _outputNumFields = _pLNode->getOutputNumFields() ;
-      _sorted = TRUE ;
+      PD_TRACE_EXIT( SDB_OPTSORT_EVAL ) ;
    }
 
    void _optSortNode::_toBSON ( BSONObjBuilder &builder ) const
@@ -691,42 +718,47 @@ namespace engine
       _numToReturn = -1 ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTRETURN_EVAL, "_optReturnNode::evaluate" )
    void _optReturnNode::evaluate ( SINT64 numToSkip, SINT64 numToReturn )
    {
+      PD_TRACE_ENTRY( SDB_OPTRETURN_EVAL ) ;
+
+      SDB_ASSERT( _pLNode, "Child node should not be NULL" ) ;
+
       _numToSkip = OSS_MAX( numToSkip, 0 ) ;
       _numToReturn = numToReturn ;
 
-      if ( !_pLNode )
+      if ( _pLNode )
       {
-         return ;
+         UINT64 avgRecordCost = 0 ;
+         UINT64 skipCost = 0 ;
+
+         if ( _pLNode->getOutputRecords() > 0 )
+         {
+            avgRecordCost = (UINT64)( (double)_pLNode->getRunCost() /
+                                      (double)_pLNode->getOutputRecords() ) ;
+         }
+
+         if ( _numToReturn < 0 )
+         {
+            _outputRecords = _pLNode->getOutputRecords() - _numToSkip ;
+         }
+         else
+         {
+            _outputRecords = _numToReturn ;
+         }
+
+         skipCost = avgRecordCost * _numToSkip ;
+         _startCost = _pLNode->getStartCost() + skipCost ;
+         _runCost = _pLNode->getRunCost() - skipCost ;
+         _totalCost = _startCost + _runCost ;
+
+         _outputRecordSize = _pLNode->getOutputRecordSize() ;
+         _outputNumFields = _pLNode->getOutputNumFields() ;
+         _sorted = _pLNode->isSorted() ;
       }
 
-      UINT64 avgRecordCost = 0 ;
-      UINT64 skipCost = 0 ;
-
-      if ( _pLNode->getOutputRecords() > 0 )
-      {
-         avgRecordCost = (UINT64)( (double)_pLNode->getRunCost() /
-                                   (double)_pLNode->getOutputRecords() ) ;
-      }
-
-      if ( _numToReturn < 0 )
-      {
-         _outputRecords = _pLNode->getOutputRecords() - _numToSkip ;
-      }
-      else
-      {
-         _outputRecords = _numToReturn ;
-      }
-
-      skipCost = avgRecordCost * _numToSkip ;
-      _startCost = _pLNode->getStartCost() + skipCost ;
-      _runCost = _pLNode->getRunCost() - skipCost ;
-      _totalCost = _startCost + _runCost ;
-
-      _outputRecordSize = _pLNode->getOutputRecordSize() ;
-      _outputNumFields = _pLNode->getOutputNumFields() ;
-      _sorted = _pLNode->isSorted() ;
+      PD_TRACE_EXIT( SDB_OPTRETURN_EVAL ) ;
    }
 
    void _optReturnNode::_toBSON ( BSONObjBuilder &builder ) const
@@ -814,10 +846,13 @@ namespace engine
       }
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPATH_CRTSORT, "_optPlanPath::_createSortNode" )
    INT32 _optPlanPath::_createSortNode ( const BSONObj &boOrder,
                                          UINT64 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTPATH_CRTSORT ) ;
 
       optSortNode *pSort = NULL ;
 
@@ -835,16 +870,20 @@ namespace engine
       pSort->evaluate( boOrder, sortBufferSize ) ;
 
    done :
+      PD_TRACE_EXITRC( SDB_OPTPATH_CRTSORT, rc ) ;
       return rc ;
    error :
       SAFE_OSS_DELETE( pSort ) ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTPATH_CRTRETURN, "_optPlanPath::_createReturnNode" )
    INT32 _optPlanPath::_createReturnNode ( SINT64 numToSkip,
                                            SINT64 numToReturn )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTPATH_CRTRETURN ) ;
 
       optReturnNode *pReturn = NULL ;
 
@@ -863,6 +902,7 @@ namespace engine
       pReturn->evaluate( numToSkip, numToReturn ) ;
 
    done :
+      PD_TRACE_EXITRC( SDB_OPTPATH_CRTRETURN, rc ) ;
       return rc ;
    error :
       SAFE_OSS_DELETE( pReturn ) ;
@@ -879,13 +919,16 @@ namespace engine
       _sortRequired = FALSE ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTTBSCAN, "_optPlanPath::createTbScan" )
    INT32 _optScanPath::createTbScan ( const CHAR *pCollection,
                                       const BSONObj &selector,
                                       _mthMatchTree &matcher,
                                       INT32 estCacheSize,
-                                      const rtnCollectionStat &collectionStat )
+                                      optCollectionStat &collectionStat )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_CRTTBSCAN ) ;
 
       optTbScanNode *pTbScan = NULL ;
 
@@ -907,12 +950,14 @@ namespace engine
       pTbScan->preEvaluate( selector, matcher, collectionStat ) ;
 
    done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH_CRTTBSCAN, rc ) ;
       return rc ;
    error :
       SAFE_OSS_DELETE( pTbScan ) ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_CRTIXSCAN, "_optPlanPath::createIxScan" )
    INT32 _optScanPath::createIxScan ( const CHAR *pCollection,
                                       const ixmIndexCB &indexCB,
                                       const BSONObj &selector,
@@ -920,10 +965,12 @@ namespace engine
                                       const BSONObj &boOrder,
                                       OPT_PLAN_PATH_PRIORITY priority,
                                       INT32 estCacheSize,
-                                      const rtnCollectionStat &collectionStat,
-                                      const rtnIndexStat &indexStat )
+                                      optCollectionStat &collectionStat,
+                                      optIndexStat &indexStat )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_CRTIXSCAN ) ;
 
       optIxScanNode *pIdxScan = NULL ;
 
@@ -946,18 +993,22 @@ namespace engine
                              collectionStat, indexStat ) ;
 
    done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH_CRTIXSCAN, rc ) ;
       return rc ;
    error :
       SAFE_OSS_DELETE( pIdxScan ) ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OPTSCANPATH_EVAL, "_optScanPath::evaluate" )
    INT32 _optScanPath::evaluate ( const BSONObj &boOrder,
                                   SINT64 numToSkip,
                                   SINT64 numToReturn,
                                   UINT64 sortBufferSize )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_OPTSCANPATH_EVAL ) ;
 
       if ( !_pScanNode || !_pScanNode->isCandidate() )
       {
@@ -981,6 +1032,7 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC( SDB_OPTSCANPATH_EVAL, rc ) ;
       return rc ;
    error :
       goto done ;

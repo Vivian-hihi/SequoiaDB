@@ -42,7 +42,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "mthMatchTree.hpp"
-#include "rtnStatObj.hpp"
+#include "optStatUnit.hpp"
 #include "optCommon.hpp"
 #include "utilAllocator.hpp"
 
@@ -278,7 +278,7 @@ namespace engine
       protected :
          void _preEvaluate ( const BSONObj &selector,
                              _mthMatchTree &matcher,
-                             const rtnCollectionStat &collectionStat ) ;
+                             optCollectionStat &collectionStat ) ;
 
          void _evalOutRecordSize () ;
 
@@ -327,7 +327,7 @@ namespace engine
 
          void preEvaluate ( const BSONObj &selector,
                             _mthMatchTree &matcher,
-                            const rtnCollectionStat &collectionStat ) ;
+                            optCollectionStat &collectionStat ) ;
 
          virtual void evaluate () ;
 
@@ -379,8 +379,8 @@ namespace engine
                             _mthMatchTree &matcher,
                             const BSONObj &boOrder,
                             OPT_PLAN_PATH_PRIORITY priority,
-                            const rtnCollectionStat &collectionStat,
-                            const rtnIndexStat &indexStat ) ;
+                            optCollectionStat &collectionStat,
+                            optIndexStat &indexStat ) ;
 
          virtual void evaluate () ;
 
@@ -439,7 +439,8 @@ namespace engine
       protected :
          void _evalPredEstimation ( _mthMatchTree &matcher,
                                     const BSONObj &boOrder,
-                                    const rtnIndexStat &indexStat ) ;
+                                    BOOLEAN isBestIndex,
+                                    const optIndexStat &indexStat ) ;
 
          virtual void _toBSON ( BSONObjBuilder &builder ) const ;
 
@@ -468,8 +469,8 @@ namespace engine
          dmsExtentID       _indexLID ;
          OID               _indexOID ;
 
-         // The range to scan the index
-         // From the first start key to the last stop key in the predicates
+         // The range to scan the index: from the start key to the stop key
+         // of each key-pairs in the predicates
          double            _scanSelectivity ;
 
          // The selectivity of output from index with each start and stop
@@ -485,7 +486,7 @@ namespace engine
          // Number of index levels
          UINT32            _indexLevels ;
 
-         // Number of records will be read in index
+         // Number of records could be read in index
          // ( based on _scanSelectivity )
          UINT64            _idxReadRecords ;
 
@@ -632,6 +633,11 @@ namespace engine
             return builder.obj().toString( FALSE, TRUE ) ;
          }
 
+         OSS_INLINE virtual void clearPath ()
+         {
+            _deleteNodes () ;
+         }
+
       protected :
          void _deleteNodes () ;
 
@@ -671,7 +677,7 @@ namespace engine
                               const BSONObj &selector,
                               _mthMatchTree &matcher,
                               INT32 estCacheSize,
-                              const rtnCollectionStat &collectionStat ) ;
+                              optCollectionStat &collectionStat ) ;
 
          INT32 createIxScan ( const CHAR *pCollection,
                               const ixmIndexCB &indexCB,
@@ -680,8 +686,8 @@ namespace engine
                               const BSONObj &boOrder,
                               OPT_PLAN_PATH_PRIORITY priority,
                               INT32 estCacheSize,
-                              const rtnCollectionStat &collectionStat,
-                              const rtnIndexStat &indexStat ) ;
+                              optCollectionStat &collectionStat,
+                              optIndexStat &indexStat ) ;
 
          OSS_INLINE BOOLEAN isCandidate () const
          {
@@ -736,6 +742,13 @@ namespace engine
                           UINT64 sortBufferSize ) ;
 
          void swap ( optScanPath &path ) ;
+
+         OSS_INLINE virtual void clearPath ()
+         {
+            _optPlanPath::clearPath() ;
+            _pScanNode = NULL ;
+            _sortRequired = FALSE ;
+         }
 
       protected :
          optScanNode *     _pScanNode ;

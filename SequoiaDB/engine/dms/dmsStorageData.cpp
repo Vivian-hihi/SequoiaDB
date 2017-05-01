@@ -466,7 +466,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA, "_dmsStorageData::_dmsStorageData" )
    _dmsStorageData::_dmsStorageData ( const CHAR *pSuFileName,
                                       dmsStorageInfo *pInfo,
-                                      rtnStatMgr *pStatMgr )
+                                      _IDmsEventHolder *pEventHolder )
    :_dmsStorageBase( pSuFileName, pInfo )
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA ) ;
@@ -476,7 +476,7 @@ namespace engine
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
       _mmeSegID         = 0 ;
-      _pStatMgr         = pStatMgr ;
+      _pEventHolder     = pEventHolder ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 
@@ -1420,8 +1420,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION, "_dmsStorageData::_truncateCollection" )
    INT32 _dmsStorageData::_truncateCollection( dmsMBContext *context,
-                                               BOOLEAN needChangeCLID,
-                                               SDB_DPSCB *dpsCB )
+                                               BOOLEAN needChangeCLID )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtRW lastRW ;
@@ -1440,9 +1439,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION ) ;
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-
-      // Ignore errors
-      _pStatMgr->onDropCollection( context->mbID(), pmdGetThreadEDUCB(), dpsCB ) ;
 
       currentExt = context->mb()->_lastExtentID ;
       // If there is only one extent, set reachLast as TRUE.
@@ -2172,6 +2168,13 @@ namespace engine
                                                    cb->isDoRollback() ) ;
       }
 
+      if ( _pEventHolder )
+      {
+         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
+                           context->clLID() ) ;
+         _pEventHolder->onCreateCL( DMS_EVENT_MASK_ALL, clItem, cb, dpscb ) ;
+      }
+
    done:
       if ( context )
       {
@@ -2279,6 +2282,13 @@ namespace engine
          goto error ;
       }
 
+      if ( _pEventHolder )
+      {
+         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
+                           context->clLID() ) ;
+         _pEventHolder->onDropCL( DMS_EVENT_MASK_ALL, clItem, cb, dpscb ) ;
+      }
+
       // it is not need to lock that drop temp collection while startup
       // which cb is NULL
       if ( cb && dpscb )
@@ -2297,7 +2307,7 @@ namespace engine
       // truncate the collection
       _rmCompressor( context ) ;
 
-      rc = _truncateCollection( context, TRUE, dpscb ) ;
+      rc = _truncateCollection( context ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to truncate the collection[%s], rc: %d",
                    pName, rc ) ;
 
@@ -2487,7 +2497,7 @@ namespace engine
       {
          _rmCompressor( context ) ;
       }
-      rc = _truncateCollection( context, needChangeCLID, dpscb ) ;
+      rc = _truncateCollection( context, needChangeCLID ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] data failed, rc: %d",
                    pName, rc ) ;
 
@@ -2520,6 +2530,13 @@ namespace engine
       else if ( cb->getLsnCount() > 0 )
       {
          context->mbStat()->updateLastLSN( cb->getEndLsn(), DMS_FILE_DATA ) ;
+      }
+
+      if ( _pEventHolder )
+      {
+         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
+                           context->clLID() ) ;
+         _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, cb, dpscb ) ;
       }
 
    done:
@@ -2647,9 +2664,6 @@ namespace engine
          goto error ;
       }
 
-      // Ignore errors
-      _pStatMgr->onRenameCollection( mbID, oldName, newName, cb, dpscb ) ;
-
       _collectionNameRemove ( oldName ) ;
       _collectionNameInsert ( newName, mbID ) ;
       ossMemset ( _dmsMME->_mbList[mbID]._collectionName, 0,
@@ -2664,6 +2678,12 @@ namespace engine
                        clLID, DMS_INVALID_EXTENT ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert clrename to log, rc = %d",
                       rc ) ;
+      }
+
+      if ( _pEventHolder )
+      {
+         dmsCLItem clItem( oldName, mbID, clLID ) ;
+         _pEventHolder->onRenameCL( DMS_EVENT_MASK_ALL, clItem, newName, cb, dpscb ) ;
       }
 
    done :

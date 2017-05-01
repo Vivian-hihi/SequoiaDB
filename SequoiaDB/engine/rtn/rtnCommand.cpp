@@ -3403,7 +3403,7 @@ namespace engine
                                      pmdGetOptionCB()->getIndexPath(),
                                      pmdGetOptionCB()->getLobPath(),
                                      pmdGetOptionCB()->getLobMetaPath(),
-                                     dmsCB, FALSE ) ;
+                                     cb, dmsCB, FALSE ) ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER( _rtnUnloadCollectionSpace )

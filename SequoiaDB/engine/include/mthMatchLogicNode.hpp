@@ -88,7 +88,7 @@ namespace engine
                                 BOOLEAN &result ) ;
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
-         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -107,7 +107,7 @@ namespace engine
          virtual INT32 calcPredicate( _rtnPredicateSet &predicateSet ) ;
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
          virtual void release() ;
-         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 
@@ -127,7 +127,7 @@ namespace engine
          virtual INT32 extraEqualityMatches( BSONObjBuilder &builder ) ;
          virtual BOOLEAN isTotalConverted() ;
          virtual void release() ;
-         virtual void evalEstimation ( const rtnCollectionStat *pCollectionStat,
+         virtual void evalEstimation ( const optCollectionStat *pCollectionStat,
                                        double &selectivity, UINT32 &cpuCost ) ;
    } ;
 }
