@@ -41,15 +41,13 @@ private[spark] class SdbSchemaSampler(sdbRDD: SdbBsonRDD,
             }
         }
 
-        val structFields = schemaData.flatMap {
-            obj => {
-                if (!samplingWithId && obj.containsField("_id")) {
-                    obj.removeField("_id")
-                }
-                val doc = obj.toMap.map {
-                    case (k, v) => k.asInstanceOf[String] -> v.asInstanceOf[AnyRef]
-                }.toMap
-                doc.mapValues(f => BSONConverter.typeOfData(f))
+        val structFields = schemaData.flatMap { obj =>
+            if (!samplingWithId && obj.containsField("_id")) {
+                obj.removeField("_id")
+            }
+            obj.keySet().map { key =>
+                val value = obj.get(key)
+                key -> BSONConverter.typeOfData(value)
             }
         }.reduceByKey(BSONConverter.compatibleType).aggregate(Seq[StructField]())(
             (fields, newField) => fields :+ StructField(newField._1, newField._2),
