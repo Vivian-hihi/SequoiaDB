@@ -473,6 +473,7 @@ namespace engine
                                          rtnContextCoord **ppContext,
                                          rtnContextBuf *buf )
    {
+      INT32 rc = SDB_OK ;
       coordQueryOperator queryOpr( isReadOnly() ) ;
       coordQueryConf queryConf ;
       coordSendOptions sendOpt ;
@@ -490,17 +491,33 @@ namespace engine
          sendOpt._useSpecialGrp = TRUE ;
       }
 
+      rc = queryOpr.init( _pResource, cb, getTimeout() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init query operator failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
       if ( !pSucGrpLst )
       {
-         return queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
-                                        sendOpt, &queryConf, buf ) ;
+         rc = queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
+                                      sendOpt, &queryConf, buf ) ;
       }
       else
       {
-         return queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
-                                        sendOpt, *pSucGrpLst, &queryConf,
-                                        buf ) ;
+         rc = queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
+                                      sendOpt, *pSucGrpLst, &queryConf,
+                                      buf ) ;
       }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _coordCommandBase::queryOnCL( MsgHeader *pMsg,
@@ -511,6 +528,7 @@ namespace engine
                                        const CoordGroupList *pSpecGrpLst,
                                        rtnContextBuf *buf )
    {
+      INT32 rc = SDB_OK ;
       coordQueryOperator queryOpr( FALSE ) ;
       coordQueryConf queryConf ;
       coordSendOptions sendOpt ;
@@ -524,8 +542,24 @@ namespace engine
          sendOpt._useSpecialGrp = TRUE ;
       }
 
-      return queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
-                                     sendOpt, &queryConf, buf ) ;
+      rc = queryOpr.init( _pResource, cb, getTimeout() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init query operator failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = queryOpr.queryOrDoOnCL( pMsg, cb, ppContext,
+                                   sendOpt, &queryConf, buf ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_CMDBASE_QUERYONCATA, "_coordCommandBase::queryOnCatalog" )

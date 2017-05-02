@@ -104,6 +104,13 @@ namespace engine
                        "error:%s", e.what() ) ;
       }
 
+      rc = queryOpr.init( _pResource, cb, getTimeout() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init query operator failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
       rc = queryOpr.queryOrDoOnCL( pMsg, cb, &pContext,
                                    sendOpt, &queryConf, buf ) ;
       PD_RC_CHECK( rc, PDERROR, "Query failed, rc: %d", rc ) ;

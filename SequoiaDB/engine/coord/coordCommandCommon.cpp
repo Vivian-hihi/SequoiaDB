@@ -360,7 +360,7 @@ namespace engine
       else
       {
          pFactory = coordGetFactory() ;
-         rc = pFactory->create( getIntrCMDName(), pOperator ) ;
+         rc = pFactory->create( getIntrCMDName() + 1, pOperator ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",

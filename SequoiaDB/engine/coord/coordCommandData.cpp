@@ -2180,7 +2180,13 @@ namespace engine
             rc = SDB_OK ;
             goto done ;
          }
-
+         rc = pOperator->init( _pResource, cb, getTimeout() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    pOperator->getName(), rc ) ;
+            goto error ;
+         }
          rc = pOperator->execute( (MsgHeader *)pNotifyMsg, cb,
                                   contextID, buf ) ;
          if ( rc )
