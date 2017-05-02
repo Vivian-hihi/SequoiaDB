@@ -31,7 +31,6 @@
 *******************************************************************************/
 #include "omStrategyMgr.hpp"
 #include "omDef.hpp"
-#include "catCommon.hpp"
 #include "rtn.hpp"
 #include "../util/fromjson.hpp"
 
@@ -73,7 +72,7 @@ namespace engine
       m_pDmsCB = m_pKrCB->getDMSCB() ;
       m_pRtnCB = m_pKrCB->getRTNCB() ;
 
-      rc = catTestAndCreateCL( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnTestAndCreateCL( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
                                cb, m_pDmsCB, NULL, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create collection(name:%s, rc:%d)",
                    OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO, rc ) ;
@@ -81,7 +80,7 @@ namespace engine
       rc = fromjson ( OM_CS_STRATEGY_CL_BUSINESSTASKPROIDX1, indexDef ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to build index object, rc = %d",
                     rc ) ;
-      rc = catTestAndCreateIndex( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
+      rc = rtnTestAndCreateIndex( OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO,
                                   indexDef, cb, m_pDmsCB, NULL, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create index(cl:%s, index:%s, rc:%d)",
                    OM_CS_STRATEGY_CL_BUSINESS_TASK_PRO, OM_CS_STRATEGY_CL_BUSINESSTASKPROIDX1,

@@ -501,6 +501,16 @@ namespace engine
                     const CHAR *pSpecCSName = NULL,
                     BOOLEAN block = FALSE ) ;
 
+   INT32 rtnTestAndCreateCL ( const CHAR *pCLFullName, pmdEDUCB *cb,
+                              _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB,
+                              BOOLEAN sys = TRUE ) ;
+
+   INT32 rtnTestAndCreateIndex ( const CHAR *pCLFullName,
+                                 const BSONObj &indexDef,
+                                 pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                 _dpsLogWrapper *dpsCB, BOOLEAN sys = TRUE,
+                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
+
 }
 
 #endif

@@ -40,7 +40,6 @@
 #include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
-#include "catCommon.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -599,12 +598,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = catTestAndCreateCL( DMS_STAT_COLLECTION_CL_NAME, cb, _dmsCB, NULL,
+      rc = rtnTestAndCreateCL( DMS_STAT_COLLECTION_CL_NAME, cb, _dmsCB, NULL,
                                TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create collection [%s], rc: %d",
                    DMS_STAT_COLLECTION_CL_NAME, rc ) ;
 
-      rc = catTestAndCreateCL( DMS_STAT_INDEX_CL_NAME, cb, _dmsCB, NULL, TRUE ) ;
+      rc = rtnTestAndCreateCL( DMS_STAT_INDEX_CL_NAME, cb, _dmsCB, NULL, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create collection [%s], rc: %d",
                    DMS_STAT_INDEX_CL_NAME, rc ) ;
 
@@ -615,8 +614,10 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build index object [%s], rc: %d",
                       DMS_STAT_CL_IDX_DEF, rc ) ;
 
-         rc = catTestAndCreateIndex( DMS_STAT_COLLECTION_CL_NAME, idxDef, cb,
-                                     _dmsCB, NULL, TRUE ) ;
+         // Initialized before rtn, so no sorterCreator could be used, set
+         // sort buffer size to 0 to build index without sorterCreator
+         rc = rtnTestAndCreateIndex( DMS_STAT_COLLECTION_CL_NAME, idxDef, cb,
+                                     _dmsCB, NULL, TRUE, 0 ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create index [%s], rc: %d",
                       DMS_STAT_CL_IDX_DEF, rc ) ;
       }
@@ -628,8 +629,10 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to build index object [%s], rc: %d",
                       DMS_STAT_IDX_IDX_DEF, rc ) ;
 
-         rc = catTestAndCreateIndex( DMS_STAT_INDEX_CL_NAME, idxDef, cb,
-                                     _dmsCB, NULL, TRUE ) ;
+         // Initialized before rtn, so no sorterCreator could be used, set
+         // sort buffer size to 0 to build index without sorterCreator
+         rc = rtnTestAndCreateIndex( DMS_STAT_INDEX_CL_NAME, idxDef, cb,
+                                     _dmsCB, NULL, TRUE, 0 ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create index [%s], rc: %d",
                       DMS_STAT_IDX_IDX_DEF, rc ) ;
       }

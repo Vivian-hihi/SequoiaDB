@@ -221,15 +221,6 @@ namespace engine
    /* Other Tools */
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed ) ;
 
-   INT32 catTestAndCreateCL( const CHAR *pCLFullName, pmdEDUCB *cb,
-                             _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB,
-                             BOOLEAN sys = TRUE ) ;
-
-   INT32 catTestAndCreateIndex( const CHAR *pCLFullName,
-                                const BSONObj &indexDef,
-                                pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                _dpsLogWrapper *dpsCB, BOOLEAN sys = TRUE) ;
-
    UINT32 catCalcBucketID( const CHAR *pData, UINT32 length,
                            UINT32 bucketSize = CAT_BUCKET_SIZE ) ;
 

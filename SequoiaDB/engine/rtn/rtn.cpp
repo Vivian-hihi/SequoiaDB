@@ -1607,5 +1607,92 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTESTCRTCL, "rtnTestAndCreateCL" )
+   INT32 rtnTestAndCreateCL ( const CHAR *pCLFullName, pmdEDUCB *cb,
+                              _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB,
+                              BOOLEAN sys )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNTESTCRTCL ) ;
+
+      rc = rtnTestCollectionCommand( pCLFullName, dmsCB ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
+      {
+         rc = rtnCreateCollectionCommand( pCLFullName, 0, cb, dmsCB, dpsCB,
+                                          UTIL_COMPRESSOR_INVALID,
+                                          FLG_CREATE_WHEN_NOT_EXIST, sys ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create collection[%s], rc: %d",
+                      pCLFullName, rc ) ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "Test collection[%s] failed, rc: %d", pCLFullName,
+                 rc ) ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNTESTCRTCL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTESTCRTIDX, "rtnTestAndCreateIndex" )
+   INT32 rtnTestAndCreateIndex ( const CHAR *pCLFullName,
+                                 const BSONObj &indexDef,
+                                 pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                 _dpsLogWrapper *dpsCB, BOOLEAN sys,
+                                 INT32 sortBufferSize )
+   {
+      INT32 rc          = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_RTNTESTCRTIDX ) ;
+
+      BOOLEAN isSame    = FALSE ;
+
+      try
+      {
+         rc = rtnTestIndex( pCLFullName, "", dmsCB, &indexDef, &isSame ) ;
+         if ( SDB_IXM_NOTEXIST == rc || ( SDB_OK == rc && isSame == FALSE ) )
+         {
+            if ( SDB_OK == rc && isSame == FALSE )
+            {
+               BSONElement ele = indexDef.getField( IXM_NAME_FIELD ) ;
+               rc = rtnDropIndexCommand( pCLFullName, ele, cb, dmsCB,
+                                         dpsCB, sys ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to drop index[%s] for "
+                            "collection[%s], rc: %d", ele.valuestr(),
+                            pCLFullName, rc ) ;
+            }
+            // create index
+            rc = rtnCreateIndexCommand( pCLFullName, indexDef, cb, dmsCB,
+                                        dpsCB, sys, sortBufferSize ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to create index[%s] for "
+                         "collection[%s], rc: %d", indexDef.toString().c_str(),
+                         pCLFullName, rc ) ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Test index[%s] for collection[%s] failed, "
+                    "rc: %d", indexDef.toString().c_str(), pCLFullName, rc ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_RTNTESTCRTIDX, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
 }
 

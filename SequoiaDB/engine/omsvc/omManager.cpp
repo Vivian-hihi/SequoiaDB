@@ -37,7 +37,6 @@
 #include "pmd.hpp"
 #include "../bson/bsonobj.h"
 #include "../util/fromjson.hpp"
-#include "catCommon.hpp"
 #include "ossProc.hpp"
 #include "rtn.hpp"
 #include "rtnBackgroundJob.hpp"
@@ -744,7 +743,7 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to build index object, rc = %d",
                     rc ) ;
 
-      rc = catTestAndCreateIndex( pCollection, indexDef, cb, _pDmsCB,
+      rc = rtnTestAndCreateIndex( pCollection, indexDef, cb, _pDmsCB,
                                   NULL, TRUE ) ;
       if ( rc )
       {
@@ -759,7 +758,7 @@ namespace engine
 
    INT32 _omManager::_createCollection ( const CHAR *pCollection, pmdEDUCB *cb )
    {
-      return catTestAndCreateCL( pCollection, cb, _pDmsCB, NULL, TRUE ) ;
+      return rtnTestAndCreateCL( pCollection, cb, _pDmsCB, NULL, TRUE ) ;
    }
 
    INT32 _omManager::active ()

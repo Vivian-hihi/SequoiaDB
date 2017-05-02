@@ -35,7 +35,6 @@
 #include "rtn.hpp"
 #include "authTrace.hpp"
 #include "pmdCB.hpp"
-#include "catCommon.hpp"
 
 using namespace bson ;
 
@@ -323,7 +322,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_AUTHCB_INITAUTH ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
 
-      rc = catTestAndCreateCL( AUTH_USR_COLLECTION, cb, dmsCB, NULL, TRUE ) ;
+      rc = rtnTestAndCreateCL( AUTH_USR_COLLECTION, cb, dmsCB, NULL, TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -337,7 +336,7 @@ namespace engine
          builder.appendBool( IXM_FIELD_NAME_UNIQUE, TRUE ) ;
          BSONObj indexDef = builder.obj() ;
 
-         rc = catTestAndCreateIndex( AUTH_USR_COLLECTION, indexDef, cb, dmsCB,
+         rc = rtnTestAndCreateIndex( AUTH_USR_COLLECTION, indexDef, cb, dmsCB,
                                      NULL, TRUE ) ;
          if ( SDB_OK != rc )
          {

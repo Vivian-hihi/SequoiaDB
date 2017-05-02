@@ -505,7 +505,7 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to build index object, rc = %d",
                     rc ) ;
 
-      rc = catTestAndCreateIndex( pCollection, indexDef, cb, _pDmsCB,
+      rc = rtnTestAndCreateIndex( pCollection, indexDef, cb, _pDmsCB,
                                   NULL, TRUE ) ;
       if ( rc )
       {
@@ -528,7 +528,7 @@ namespace engine
       PD_TRACE1 ( SDB_CATMAINCT__CREATESYSCOL,
                   PD_PACK_STRING ( pCollection ) ) ;
 
-      rc = catTestAndCreateCL( pCollection, cb, _pDmsCB, NULL, TRUE ) ;
+      rc = rtnTestAndCreateCL( pCollection, cb, _pDmsCB, NULL, TRUE ) ;
       if ( rc )
       {
          goto error ;
