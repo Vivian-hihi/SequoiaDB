@@ -40,6 +40,7 @@ public class CL10203 extends SdbTestBase {
 			}
 			CommLib.clearCS(sdb, csName);
 			sdb.createCollectionSpace(csName).createCollection(clName);
+			CommLib.insertData(sdb, csName, clName);
 		}catch(BaseException e){
 			sdb.disconnect();
 			Assert.fail(e.getMessage());
