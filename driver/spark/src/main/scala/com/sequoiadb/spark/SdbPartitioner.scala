@@ -24,6 +24,7 @@ import org.bson.types.BasicBSONList
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.Breaks
 
 /**
   * SequoiaDB partitioner
@@ -32,7 +33,7 @@ import scala.collection.mutable.ArrayBuffer
   * @param filter query filter
   */
 abstract class SdbPartitioner(config: SdbConfig, filter: SdbFilter)
-    extends Serializable {
+    extends Serializable with Logging {
 
     def computePartitions(): Array[SdbPartition]
 }
@@ -73,6 +74,11 @@ private object SdbPartitioner extends Logging {
                 if (sharding.scanType == "ixscan") {
                     return PartitionMode.Sharding
                 }
+            }
+
+            // partition num limit is too small, use Sharding mode
+            if (config.partitionMaxNum > 0 && config.partitionMaxNum <= shardings.length) {
+                return PartitionMode.Sharding
             }
         } finally {
             sdb.disconnect()
@@ -399,39 +405,74 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
     extends SdbPartitioner(config, filter) {
 
     override def computePartitions(): Array[SdbPartition] = {
-        val partitions = ArrayBuffer[SdbPartition]()
+        var groups: Map[String, List[String]] = null
+        var shardings: List[ShardingInfo] = null
 
         val sdb = new Sequoiadb(config.host, config.username, config.password, null)
         try {
-            val groups = SdbPartitioner.getReplicaGroups(sdb)
-            val shardings = SdbPartitioner.getShardingInfo(sdb, config, filter)
-
-            for (sharding <- shardings) {
-                var urls: List[String] = null
-                if (sharding.groupName == "") {
-                    urls = List(sharding.nodeName)
-                } else {
-                    urls = groups(sharding.groupName)
-                }
-
-                val queryMetas = SdbPartitioner.getQueryMeta(urls, sharding.csName, sharding.clName, config)
-                val groupSize = config.partitionBlockNum
-                for (meta <- queryMetas) {
-                    for (blocks <- meta.datablocks.sliding(groupSize, groupSize)) {
-                        val partition = SdbPartition(List(meta.url),
-                            sharding.csName,
-                            sharding.clName,
-                            filter,
-                            PartitionMode.Datablock,
-                            blocks)
-                        partitions += partition
-                    }
-                }
-            }
+            groups = SdbPartitioner.getReplicaGroups(sdb)
+            shardings = SdbPartitioner.getShardingInfo(sdb, config, filter)
         } finally {
             sdb.disconnect()
         }
 
-        SdbPartitioner.shufflePartitions(partitions.toArray)
+        var partitions: Array[SdbPartition] = null
+        var blockNum = config.partitionBlockNum
+
+        val breaker = new Breaks
+        breaker.breakable {
+            while (true) {
+                partitions = generatePartitions(groups, shardings, blockNum)
+
+                // zero means no limit for partition max num
+                if (config.partitionMaxNum == 0) {
+                    breaker.break()
+                }
+
+                // partition num is satisfied or only one partition per sharding
+                if (partitions.length < config.partitionMaxNum ||
+                    partitions.length == shardings.size) {
+                    breaker.break()
+                }
+
+                // we should increase block num of each partition to decrease partition num
+                blockNum += 1
+            }
+        }
+
+        logInfo(s"get ${partitions.length} partitions with $blockNum data blocks per partition")
+
+        SdbPartitioner.shufflePartitions(partitions)
+    }
+
+    private def generatePartitions(groups: Map[String, List[String]],
+                                   shardings: List[ShardingInfo],
+                                   blockNum: Int)
+    : Array[SdbPartition] = {
+        val partitions = ArrayBuffer[SdbPartition]()
+
+        for (sharding <- shardings) {
+            var urls: List[String] = null
+            if (sharding.groupName == "") {
+                urls = List(sharding.nodeName)
+            } else {
+                urls = groups(sharding.groupName)
+            }
+
+            val queryMetas = SdbPartitioner.getQueryMeta(urls, sharding.csName, sharding.clName, config)
+            for (meta <- queryMetas) {
+                for (blocks <- meta.datablocks.sliding(blockNum, blockNum)) {
+                    val partition = SdbPartition(List(meta.url),
+                        sharding.csName,
+                        sharding.clName,
+                        filter,
+                        PartitionMode.Datablock,
+                        blocks)
+                    partitions += partition
+                }
+            }
+        }
+
+        partitions.toArray
     }
 }

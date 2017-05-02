@@ -115,6 +115,14 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
         invalidConfigValue(SdbConfig.PartitionBlockNum, partitionBlockNum)
     }
 
+    val partitionMaxNum: Int = properties.get(SdbConfig.PartitionMaxNum)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultPartitionMaxNum)
+
+    // zero means no limit for partition max num when partitionMode is Datablock
+    if (partitionMaxNum < 0) {
+        invalidConfigValue(SdbConfig.PartitionMaxNum, partitionMaxNum)
+    }
+
     val preferredLocation: Boolean = properties.get(SdbConfig.PreferredLocation)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultPreferredLocation)
 }
@@ -135,6 +143,7 @@ object SdbConfig {
     val PartitionMode = "partitionMode"
     // single, sharding, datablock, auto
     val PartitionBlockNum = "partitionBlockNum"
+    val PartitionMaxNum = "partitionMaxNum"
     val PreferredLocation = "preferredLocation"
 
     val CURSOR_TYPE_FAST = "fast"
@@ -177,6 +186,7 @@ object SdbConfig {
     val DefaultCursorType = "fast"
     val DefaultPartitionMode = "auto"
     val DefaultPartitionBlockNum = 4
+    val DefaultPartitionMaxNum = 1000
     val DefaultPreferredLocation = false
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
