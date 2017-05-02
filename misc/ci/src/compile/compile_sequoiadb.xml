@@ -31,7 +31,8 @@
       <antcall target="compile_pg_connector"/>
       <antcall target="compile_hive_connector"/>
       <antcall target="compile_hadoop_connector"/>
-      <antcall target="compile_spark_connector"/>
+      <!--TODO-->
+      <!--antcall target="compile_spark_connector"/-->
       <antcall target="build_driver_package"/>
       <if>
          <equals arg1="${IS_INCREMENTAL_COMPILE}" arg2="true"/>
@@ -266,7 +267,7 @@
       </copy>
    </target>
    
-   <target name="compile_spark_connector">
+   <!--target name="compile_spark_connector">
       <var name="src_dir" value="${srccode_dir}/driver/spark" />
       <delete dir="${src_dir}/target" failonerror="false"/>
       
@@ -276,7 +277,7 @@
         <property name="root.dir" value="${src_dir}" />
         <property name="WORKSPACE" value="${WORKSPACE}" />
       </ant>
-   </target>
+   </target-->
    
    <target name="compile_php_driver">
       <property name="php_version_list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0,5.6.0" />
