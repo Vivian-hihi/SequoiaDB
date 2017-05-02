@@ -21,7 +21,21 @@
    <parameter name="WORKDIR"        value="/tmp/javatest" />
    
    <test name="javadriver" parallel="classes" thread-count="5">
- 
+      <classes>
+         <class name="com.sequoiadb.basicoperation.TestInsertToJson7151"/>
+         <class name="com.sequoiadb.basicoperation.TestInsertToBson7152"/>
+         <class name="com.sequoiadb.basicoperation.TestBulkInsert11319"/>
+         <class name="com.sequoiadb.basicoperation.TestUpdateToJson7157"/>
+         <class name="com.sequoiadb.basicoperation.TestUpdateToBson7158"/>
+         <class name="com.sequoiadb.basicoperation.TestUpsert7159"/>
+         <class name="com.sequoiadb.basicoperation.Index7165"/>
+         <class name="com.sequoiadb.basicoperation.Index7164"/>
+         <class name="com.sequoiadb.basicoperation.TestLob7097"/>
+         <class name="com.sequoiadb.basicoperation.TestQuery7086"/>
+         <class name="com.sequoiadb.basicoperation.testQueryAndUpdate7088"/>
+         <class name="com.sequoiadb.basicoperation.TestQueryAndRemove7089"/>
+         <class name="com.sequoiadb.metadata.MetaData7080"/>
+      </classes>
    </test>
    
  
