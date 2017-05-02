@@ -21,7 +21,11 @@
    <parameter name="WORKDIR"        value="/tmp/javatest" />
    
    <test name="javadriver" parallel="classes" thread-count="5">
- 
+      <classes>
+         <class name="com.sequoiadb.split.Split10501"/>
+         <class name="com.sequoiadb.split.Split10505"/>
+         <class name="com.sequoiadb.split.Split10499"/>
+      </classes>
    </test>
    
  
