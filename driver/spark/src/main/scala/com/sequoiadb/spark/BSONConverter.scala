@@ -150,7 +150,7 @@ private[spark] object BSONConverter {
             }
         } catch {
             case sdbEx: SdbException => throw sdbEx
-            case e: Exception => throw new SdbException(e)
+            case e: Exception => null
         }
     }
 
@@ -471,8 +471,11 @@ private[spark] object BSONConverter {
             //case value: java.math.BigInteger => value.toString
             //case value: java.math.BigDecimal => value.toString
             case value: BSONDecimal => value.getValue
-            case value: BSONTimestamp => new Date(value.getTime.toLong * 1000 + value.getInc / 1000).toString
-            //case value: java.util.Date => value.toString
+            case value: BSONTimestamp =>
+                val ts = new Timestamp(value.getTime.toLong * 1000)
+                ts.setNanos(value.getInc * 1000)
+                ts.toString
+            case value: java.util.Date => new Date(value.getTime).toString
             case value: String => value
             case value: Binary => new String(value.getData, "UTF-8")
             //case value: UUID => value.toString
