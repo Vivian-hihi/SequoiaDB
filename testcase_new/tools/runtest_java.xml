@@ -64,6 +64,9 @@
          <case value="CONFIGURETEST">
             <var name="srcxmlfile" value="configure.xml"/>
          </case>
+         <case value="SMOKETEST">
+            <var name="srcxmlfile" value="smoke.xml"/>
+         </case>
          <case value="SYNCTEST">
             <var name="srcxmlfile" value="sync.xml"/>
          </case>
