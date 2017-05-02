@@ -133,7 +133,7 @@ private[spark] object BSONConverter {
                 case ByteType => toByte(value)
                 //case CalendarIntervalType => toCalendarInterval(value)
                 case DateType => toDate(value)
-                case DecimalType() => toDecimal(value, desiredType.asInstanceOf[DecimalType])
+                case DecimalType() => toDecimal(value)
                 case DoubleType => toDouble(value)
                 case FloatType => toFloat(value)
                 case IntegerType => toInt(value)
@@ -150,7 +150,7 @@ private[spark] object BSONConverter {
             }
         } catch {
             case sdbEx: SdbException => throw sdbEx
-            case e: Exception => null
+            case _: Exception => null
         }
     }
 
@@ -279,7 +279,7 @@ private[spark] object BSONConverter {
         }
     }
 
-    private def toDecimal(value: Any, struct: DecimalType): Decimal = {
+    private def toDecimal(value: Any): Decimal = {
         value match {
             case value: java.lang.Boolean => if (value) Decimal(1) else Decimal(0)
             case value: java.lang.Float => Decimal(value.toDouble)
