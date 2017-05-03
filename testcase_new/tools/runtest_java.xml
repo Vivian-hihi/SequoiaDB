@@ -20,20 +20,24 @@
 
       <switch value="${TESTCASE_TYPE}">
          <case value="driver_java">             
-            <property name="testcase_dir" value="${basedir}../../../testcase_new/driver/java"/>
-            <property name="report_dir" value="${basedir}../../../testcase_new/driver/java"/>
+            <property name="testcase_dir" value="${basedir}../../testcase_new/driver/java"/>
+            <property name="report_dir" value="${basedir}../../testcase_new/driver/java"/>
          </case>
          <case value="tdd_java">             
-            <property name="testcase_dir" value="${basedir}../../../testcase_new/tdd/java"/>
-            <property name="report_dir" value="${basedir}../../../testcase_new/tdd/java"/>
+            <property name="testcase_dir" value="${basedir}../../testcase_new/tdd/java"/>
+            <property name="report_dir" value="${basedir}../../testcase_new/tdd/java"/>
          </case>
          <case value="story_java">             
-            <property name="testcase_dir" value="${basedir}../../../testcase_new/story/java"/>
-            <property name="report_dir" value="${basedir}../../../testcase_new/story/java"/>
+            <property name="testcase_dir" value="${basedir}../../testcase_new/story/java"/>
+            <property name="report_dir" value="${basedir}../../testcase_new/story/java"/>
+         </case>
+         <case value="reliability">
+            <property name="testcase_dir" value="${basedir}../../testcase_new/reliability"/>
+            <property name="report_dir" value="${basedir}../../testcase_new/reliability"/>
          </case>
          <default>
-            <property name="testcase_dir" value="${basedir}../../../testcase_new/sdv/java"/>
-            <property name="report_dir" value="${basedir}../../../testcase_new/sdv/java"/>
+            <property name="testcase_dir" value="${basedir}../../testcase_new/sdv/java"/>
+            <property name="report_dir" value="${basedir}../../testcase_new/sdv/java"/>
          </default>
       </switch>
       <mkdir dir="${report_dir}"/>
@@ -306,7 +310,7 @@
       <sequential>
          <delete dir="@{srcdir}/build" failonerror="false" />
          <mkdir dir="@{srcdir}/build"/>
-         <!--copy file="@{dbdir}/java/lib/sequoiadb.jar" todir="@{srcdir}/lib" overwrite="true" /-->
+         <copy file="/opt/sequoiadb/java/sequoiadb.jar" todir="@{srcdir}/lib" overwrite="true" />
          <copy file="${basedir}../thirdparty/testng-master/lib/linux64/testng-6.10.1-SNAPSHOT.jar" todir="@{srcdir}/lib" overwrite="true" />
          <javac executable="javac" 
                 srcdir="@{srcdir}" 
