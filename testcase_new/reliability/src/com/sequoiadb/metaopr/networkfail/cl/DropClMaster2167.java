@@ -1,0 +1,70 @@
+package com.sequoiadb.metaopr.networkfail.cl;
+
+import com.sequoiadb.exception.ReliabilityException;
+import com.sequoiadb.fault.BrokenNetwork;
+import com.sequoiadb.metaopr.metaoprtask.DBoperateTask;
+import com.sequoiadb.metaopr.comm.StandTestInterface;
+import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.TaskMgr;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.List;
+
+import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static org.testng.Assert.*;
+
+/**
+ * @FileName
+ * @Author laojingtang
+ * @Date 17-4-28
+ * @Version 1.00
+ */
+public class DropClMaster2167 implements StandTestInterface {
+    final String csName="cs2167";
+    List<String> clnames;
+    @BeforeClass
+    @Override
+    public void setup() {
+        printBeginTime(this);
+        checkBusiness();
+        createCS(csName);
+        clnames=createNames("cl2167",1000);
+    }
+
+    @AfterClass
+    @Override
+    public void tearDown() {
+        dropCS(csName);
+        printEndTime(this);
+
+    }
+
+    /**
+     * seqDB-2167 :: 版本: 1 :: 删除CL时catalog主节点断网_rlb.netSplit.metaOpr.CL.005
+     * <p>
+     * 1、创建CS，在该CS下创建多个CL
+     * 2、执行删除CL操作（构造脚本循环执行删除CL操作）
+     * 3、删除CL时catalog主节点所在主机网络中断（构造网络中断故障，如ifdown网卡）
+     * 3、查看CL信息和catalog主节点状态
+     * 4、恢复网络故障（如ifup启动网卡）
+     * 5、再次执行删除CL操作
+     * 6、查看CL信息（执行listCollections（）命令查看CL信息）
+     * 9、查看catalog主备节点是否存在该CL相关信息
+     */
+    @Test
+    public void test() throws ReliabilityException {
+        createClInSingleCs(csName,clnames);
+
+        DBoperateTask task=DBoperateTask.getTaskDropCLInOneCs(clnames,csName);
+        String hostname=getMasterNodeOfCatalog().hostName();
+        FaultMakeTask faultMakeTask= BrokenNetwork.getFaultMakeTask(hostname,0,5);
+        TaskMgr mgr=new TaskMgr(faultMakeTask,task);
+        mgr.execute();
+
+        dropCls(csName,clnames.subList(task.getBreakIndex(),clnames.size()));
+        assertTrue(isClAllDeleted(csName,clnames));
+        assertTrue(isCatalogGroupSync());
+    }
+}
