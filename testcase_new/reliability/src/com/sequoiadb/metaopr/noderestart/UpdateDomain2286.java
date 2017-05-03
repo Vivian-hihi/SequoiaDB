@@ -10,6 +10,7 @@ import com.sequoiadb.metaopr.comm.DBoperateTask;
 import com.sequoiadb.metaopr.comm.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
+import com.sun.java.browser.plugin2.DOM;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -90,6 +91,7 @@ public class UpdateDomain2286 {
         TaskMgr taskMgr = TaskMgr.getTaskMgr(fault, task);
         taskMgr.execute();
 
+        alterDomain(DOMAINNAME,groupNames.get(0),groupNames.get(2));
         assertTrue(taskMgr.isAllSuccess());
         assertTrue(isCatalogGroupSync());
         createCl(CSNAME, CLNAME);
@@ -99,7 +101,7 @@ public class UpdateDomain2286 {
 
         long num = getClCountFromNode(groupNames.get(0));
         num += getClCountFromNode(groupNames.get(2));
-        assertTrue(num == 100);
+        assertTrue(num == 100,String.valueOf(num));
         assertTrue(isCatalogGroupSync());
     }
 

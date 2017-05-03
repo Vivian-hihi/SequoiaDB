@@ -95,15 +95,10 @@ public class CreateCS2290 implements StandTestInterface {
         taskMgr.execute();
         if (taskMgr.isAllSuccess() == true)
             throw new SkipException("没遇上异常环境");
-        for (int i = csTask.getBrokenIndex(); i < csNames.size(); i++) {
-            try {
-                db.createCollectionSpace(csNames.get(i));
-            } catch (BaseException e) {
-                assertTrue(false, e.getMessage());
-            }
-        }
-        assertTrue(MyUtil.isCatalogGroupSync());
+
+        MyUtil.createCS(csNames.subList(csTask.getBrokenIndex(),csNames.size()));
         assertTrue(MyUtil.isCsAllCreated(csNames));
+        assertTrue(MyUtil.isCatalogGroupSync());
         MyUtil.createClInManyCs(csNames.subList(0, 10), "cl");
         assertTrue(isClCreated());
     }

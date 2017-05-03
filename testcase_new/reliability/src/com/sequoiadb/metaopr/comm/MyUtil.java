@@ -581,6 +581,8 @@ public class MyUtil {
             mgr = new GroupMgr();
             GroupWrapper groupWrapper = mgr.getGroupByName(groupName);
             NodeWrapper node = groupWrapper.getMaster();
+            if(node==null)
+                return 0;
             db = node.connect();
             return db.getCollectionSpace(csName).getCollection(clName).getCount();
         } catch (BaseException e) {
