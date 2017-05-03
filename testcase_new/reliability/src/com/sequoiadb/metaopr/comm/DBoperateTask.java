@@ -1,4 +1,4 @@
-package com.sequoiadb.metaopr.metaoprtask;
+package com.sequoiadb.metaopr.comm;
 
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Domain;

@@ -6,7 +6,7 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
-import com.sequoiadb.metaopr.metaoprtask.DBoperateTask;
+import com.sequoiadb.metaopr.comm.DBoperateTask;
 import com.sequoiadb.metaopr.comm.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
