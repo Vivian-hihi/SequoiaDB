@@ -59,7 +59,7 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
     val samplingRatio: Double = properties.get(SdbConfig.SamplingRatio)
         .map(_.toDouble).getOrElse(SdbConfig.DefaultSamplingRatio)
 
-    if (samplingRatio <= 0) {
+    if (samplingRatio <= 0 || samplingRatio > 1.0) {
         invalidConfigValue(SdbConfig.SamplingRatio, samplingRatio)
     }
 
@@ -94,6 +94,13 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
         case SdbConfig.CURSOR_TYPE_NORMAL =>
         case _ =>
             invalidConfigValue(SdbConfig.CursorType, cursorType)
+    }
+
+    val fastCursorBufSize: Int = properties.get(SdbConfig.FastCursorBufSize)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultFastCursorBufSize)
+
+    if (fastCursorBufSize <= 0) {
+        invalidConfigValue(SdbConfig.FastCursorBufSize, fastCursorBufSize)
     }
 
     val partitionMode: String = properties
@@ -140,6 +147,7 @@ object SdbConfig {
     val BulkSize = "bulkSize"
     val CursorType = "cursorType"
     // fast, normal
+    val FastCursorBufSize = "fastCursorBufSize"
     val PartitionMode = "partitionMode"
     // single, sharding, datablock, auto
     val PartitionBlockNum = "partitionBlockNum"
@@ -165,8 +173,10 @@ object SdbConfig {
         SamplingWithId,
         BulkSize,
         CursorType,
+        FastCursorBufSize,
         PartitionMode,
         PartitionBlockNum,
+        PartitionMaxNum,
         PreferredLocation
     )
 
@@ -184,6 +194,7 @@ object SdbConfig {
     val DefaultSamplingWithId = false
     val DefaultBulkSize = 500
     val DefaultCursorType = "fast"
+    val DefaultFastCursorBufSize = 500
     val DefaultPartitionMode = "auto"
     val DefaultPartitionBlockNum = 4
     val DefaultPartitionMaxNum = 1000

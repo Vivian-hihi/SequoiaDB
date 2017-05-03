@@ -64,10 +64,6 @@ class SdbFastCursor implements SdbCursor {
         decodeThread.start();
     }
 
-    public SdbFastCursor(DBCursor cursor) {
-        this(cursor, 1000);
-    }
-
     private class Query implements Runnable {
         @Override
         public void run() {
