@@ -47,8 +47,10 @@
 192.168.30.57 ci-test-pm2
 192.168.30.58 ci-test-pm3
 
-#null
+#commit_build
 192.168.30.104 ci-test-rhel3
+192.168.20.176 ci-test-ubun8
+192.168.30.185 jenkins-master
 
 #compile power
 192.168.28.121 ci-cmpl-ppc
