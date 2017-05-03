@@ -45,7 +45,14 @@ class SdbRelation(@transient val sqlContext: SQLContext,
     logInfo(s"SdbRelation{config: $config, providedSchema: $providedSchema}")
 
     private lazy val lazySchema: StructType = {
-        val rdd = new SdbBsonRDD(sqlContext.sparkContext, config,
+        val conf: SdbConfig = if (config.samplingSingle) {
+            val props = config.properties +
+                (SdbConfig.PartitionMode -> SdbConfig.PARTITION_MODE_SINGLE)
+            SdbConfig(props)
+        } else {
+            config
+        }
+        val rdd = new SdbBsonRDD(sqlContext.sparkContext, conf,
             numReturned = config.samplingNum)
         new SdbSchemaSampler(rdd, config.samplingRatio, config.samplingWithId).sample()
     }

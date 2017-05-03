@@ -77,6 +77,12 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultSamplingWithId)
 
     /**
+      * use single partition mode for schema sampling if true, use partitionMode if false.
+      */
+    val samplingSingle: Boolean = properties.get(SdbConfig.SamplingSingle)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultSamplingSingle)
+
+    /**
       * bulk size when insert into SequoiaDB collection
       */
     val bulkSize: Int = properties.get(SdbConfig.BulkSize)
@@ -141,18 +147,19 @@ object SdbConfig {
     val Collection = "collection"
     val Username = "username"
     val Password = "password"
-    val SamplingRatio = "samplingRatio"
-    val SamplingNum = "samplingNum"
-    val SamplingWithId = "samplingWithId"
-    val BulkSize = "bulkSize"
-    val CursorType = "cursorType"
+    val SamplingRatio = "samplingratio"
+    val SamplingNum = "samplingnum"
+    val SamplingWithId = "samplingwithid"
+    val SamplingSingle = "samplingsingle"
+    val BulkSize = "bulksize"
+    val CursorType = "cursortype"
     // fast, normal
-    val FastCursorBufSize = "fastCursorBufSize"
-    val PartitionMode = "partitionMode"
+    val FastCursorBufSize = "fastcursorbufsize"
+    val PartitionMode = "partitionmode"
     // single, sharding, datablock, auto
-    val PartitionBlockNum = "partitionBlockNum"
-    val PartitionMaxNum = "partitionMaxNum"
-    val PreferredLocation = "preferredLocation"
+    val PartitionBlockNum = "partitionblocknum"
+    val PartitionMaxNum = "partitionmaxnum"
+    val PreferredLocation = "preferredlocation"
 
     val CURSOR_TYPE_FAST = "fast"
     val CURSOR_TYPE_NORMAL = "normal"
@@ -171,6 +178,7 @@ object SdbConfig {
         SamplingRatio,
         SamplingNum,
         SamplingWithId,
+        SamplingSingle,
         BulkSize,
         CursorType,
         FastCursorBufSize,
@@ -192,6 +200,7 @@ object SdbConfig {
     val DefaultSamplingRatio = 1.0
     val DefaultSamplingNum = 1000L
     val DefaultSamplingWithId = false
+    val DefaultSamplingSingle = true
     val DefaultBulkSize = 500
     val DefaultCursorType = "fast"
     val DefaultFastCursorBufSize = 500

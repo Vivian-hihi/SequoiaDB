@@ -55,6 +55,7 @@ private object SdbPartitioner extends Logging {
     }
 
     private def determinatePartitionMode(config: SdbConfig, filter: SdbFilter): PartitionMode = {
+        logInfo(s"config.partitionMode=${config.partitionMode}")
         config.partitionMode.toLowerCase match {
             case SdbConfig.PARTITION_MODE_SINGLE => PartitionMode.Single
             case SdbConfig.PARTITION_MODE_SHARDING => PartitionMode.Sharding
