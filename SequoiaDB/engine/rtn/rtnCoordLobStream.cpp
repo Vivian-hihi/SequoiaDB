@@ -674,7 +674,7 @@ namespace engine
                                             _sendMap ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%d], rc:%d",
                     dg.id.columns.groupID, dg.id.columns.nodeID, rc ) ;
                goto error ;
             }
@@ -771,7 +771,7 @@ namespace engine
                                             _sendMap ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%d], rc:%d",
                     dg.id.columns.groupID, dg.id.columns.nodeID, rc ) ;
                goto error ;
             }
@@ -924,7 +924,7 @@ namespace engine
                                          _sendMap ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+            PD_LOG( PDERROR, "failed to send msg to node[%d:%d], rc:%d",
                     sub->id.columns.groupID, sub->id.columns.nodeID, rc ) ;
             goto error ;
          }
@@ -1016,7 +1016,7 @@ namespace engine
                                             _sendMap ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%d], rc:%d",
                     itr->second.id.columns.groupID,
                     itr->second.id.columns.nodeID, rc ) ;
                goto error ;
@@ -1086,7 +1086,7 @@ namespace engine
                                             route, cb, sendMap ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to kill sub context on node[%d:%hd], rc:%d",
+               PD_LOG( PDERROR, "failed to kill sub context on node[%d:%d], rc:%d",
                        itr->second.id.columns.groupID,
                        itr->second.id.columns.nodeID, rc ) ;
                /// try to rollback all substreams, so do not goto error.
@@ -1241,7 +1241,7 @@ namespace engine
                                             _sendMap ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%d], rc:%d",
                        dg.id.columns.groupID,
                        dg.id.columns.nodeID, rc ) ;
                goto error ;
@@ -1518,7 +1518,7 @@ namespace engine
          if ( SDB_OK != ( *itr )->flags )
          {
             rc = ( *itr )->flags ;
-            PD_LOG( PDERROR, "failed to read lob on node[%d:%hd], rc:%d",
+            PD_LOG( PDERROR, "failed to read lob on node[%d:%d], rc:%d",
                     ( *itr )->header.routeID.columns.groupID,
                     ( *itr )->header.routeID.columns.nodeID, rc ) ;
             goto error ;
