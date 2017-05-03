@@ -1201,6 +1201,42 @@ namespace engine
       return deleted ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_RMFLDSTAT, "_dmsCollectionStat::removeFieldStat" )
+   BOOLEAN _dmsCollectionStat::removeFieldStat ( const CHAR *pFieldName,
+                                                 BOOLEAN findNewFieldStat )
+   {
+      BOOLEAN deleted = FALSE ;
+
+      PD_TRACE_ENTRY( SDB_DMSCLSTAT_RMFLDSTAT ) ;
+
+      if ( pFieldName )
+      {
+         INDEX_STAT_ITERATOR iter = _fieldStats.find( pFieldName ) ;
+         if ( iter != _fieldStats.end() )
+         {
+            dmsIndexStat *pDeletingStat = iter->second ;
+            if ( pDeletingStat )
+            {
+               if ( findNewFieldStat )
+               {
+                  _findNewFieldStat( pDeletingStat ) ;
+               }
+               else
+               {
+                  _removeFieldStat( pDeletingStat ) ;
+               }
+            }
+            // Erase item only, no need to delete statistics
+            _fieldStats.erase( iter ) ;
+            deleted = TRUE ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_DMSCLSTAT_RMFLDSTAT ) ;
+
+      return deleted ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_GETIDXSTAT, "_dmsCollectionStat::getIndexStat" )
    const dmsIndexStat * _dmsCollectionStat::getIndexStat ( const CHAR *pIndexName ) const
    {

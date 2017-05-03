@@ -768,7 +768,12 @@ namespace engine
          dmsIndexStat *pIndexStat = iter->second ;
          if ( SDB_OK != _checkIndexStat( pIndexStat, mbContext ) )
          {
+            // Remove field statistics reference
+            pCollectionStat->removeFieldStat( pIndexStat->getFirstField(),
+                                              TRUE ) ;
+            // Remove index statistics reference
             iter = indexStats.erase( iter ) ;
+            // Delete the index statistics
             SAFE_OSS_DELETE( pIndexStat ) ;
          }
          else

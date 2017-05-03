@@ -590,6 +590,9 @@ namespace engine
          BOOLEAN removeIndexStat ( const CHAR *pIndexName,
                                    BOOLEAN findNewFieldStat ) ;
 
+         BOOLEAN removeFieldStat ( const CHAR *pFieldName,
+                                   BOOLEAN findNewFieldStat ) ;
+
          OSS_INLINE void renameCS ( const CHAR *pCSName )
          {
             setCSName( pCSName ) ;
