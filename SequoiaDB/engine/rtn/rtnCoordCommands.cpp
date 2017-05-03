@@ -611,6 +611,7 @@ namespace engine
       {
          contextID = pContext->contextID() ;
       }
+	  PD_TRACE_EXITRC ( SDB_RTNCOCOM_QUERYONCATALOG, rc );
       return rc ;
    error :
       // make sure to clear context whenever error happened
@@ -620,7 +621,7 @@ namespace engine
          pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
          pContext = NULL ;
       }
-      PD_TRACE_EXIT ( SDB_RTNCOCOM_QUERYONCATALOG ) ;
+      //PD_TRACE_EXIT ( SDB_RTNCOCOM_QUERYONCATALOG ) ;
       goto done ;
    }
 
