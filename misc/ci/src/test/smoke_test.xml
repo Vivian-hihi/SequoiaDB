@@ -84,6 +84,13 @@
       </copy>
       
       <chmod file="${INSTALL_DIR}/java/jdk/bin/javac" perm="777"/>
+      <for list="${testhost_list}" param="testhost" parallel="true">
+         <sequential>            
+            <staf location="@{testhost}" service="PROCESS"                  
+                  request="START SHELL COMMAND chmod 777 ${INSTALL_DIR}/tools/server/php/bin -R WAIT 10m"
+                  throwBuildException="1"/>
+         </sequential>
+      </for>
       
    </target>
 
