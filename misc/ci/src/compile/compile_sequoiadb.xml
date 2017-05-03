@@ -370,6 +370,7 @@
       <mkdir dir="${release_driver_dir}/PHP"/>
       <mkdir dir="${release_driver_dir}/Postgresql" />
       <mkdir dir="${release_driver_dir}/Python" />
+      <mkdir dir="${release_driver_dir}/Spark" />
       
       <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
             tofile="${release_driver_dir}/C#/sequoiadb.dll" />
@@ -384,8 +385,12 @@
       <copy todir="${release_driver_dir}/Hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
       </copy>     
-      <copy todir="${release_driver_dir}/Hadoop" >
+      <copy todir="${release_driver_dir}/Spark" >
          <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
+      </copy>
+      
+      <copy todir="${release_driver_dir}/Hadoop" >
+         <fileset dir="${srccode_dir}/driver/spark/target" includes="*.jar" />
       </copy>
       
       <copy todir="${release_driver_dir}/Java" 
@@ -477,6 +482,7 @@
       <mkdir dir="${release_db_dir}/tools/server/php" />  
       <mkdir dir="${release_db_dir}/web" />
       <mkdir dir="${release_db_dir}/www" />
+      <mkdir dir="${release_db_dir}/spark" />
       
       <copy file="${srccode_dir}/driver/C#.Net/build/release/sequoiadb.dll" 
             tofile="${release_db_dir}/CSharp/sequoiadb.dll" />
@@ -512,16 +518,9 @@
          <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
       </copy>
       
-      <!--when debug tar spark to sdb -->
-      <if>
-         <equals arg1="${IS_DEBUG}" arg2="true"/>
-         <then>
-            <mkdir dir="${release_db_dir}/spark" />
-            <copy todir="${release_db_dir}/spark" >
-               <fileset dir="${srccode_dir}/driver/spark/target" includes="*.jar" />
-            </copy>
-         </then>
-      </if>
+      <copy todir="${release_db_dir}/spark" >
+         <fileset dir="${srccode_dir}/driver/spark/target" includes="*.jar" />
+      </copy>
       
       <copy todir="${release_db_dir}/include">
          <fileset dir="${srccode_dir}/client/include" includes="**/*" />
