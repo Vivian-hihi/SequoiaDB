@@ -45,25 +45,6 @@ namespace engine
 {
 
    /*
-      _coordInterruptHandler implement
-   */
-   _coordInterruptHandler::_coordInterruptHandler()
-   {
-   }
-
-   _coordInterruptHandler::~_coordInterruptHandler()
-   {
-   }
-
-   INT32 _coordInterruptHandler::onSendConnect( _pmdSubSession *pSub,
-                                                const MsgHeader *pReq,
-                                                BOOLEAN isFirst )
-   {
-      /// already disconnect
-      return SDB_NET_NOT_CONNECT ;
-   }
-
-   /*
       _coordInterrupt implement
    */
    _coordInterrupt::_coordInterrupt()
@@ -85,7 +66,7 @@ namespace engine
       SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
       pmdRemoteSessionSite *pSite = NULL ;
       pmdRemoteSession *pSession = NULL ;
-      coordInterruptHandler interruptHandler ;
+      coordNoSessionInitHandler interruptHandler ;
       INT64 tmpContextID = -1 ;
 
       contextID = -1 ;

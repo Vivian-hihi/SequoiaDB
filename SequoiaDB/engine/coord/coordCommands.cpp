@@ -35,11 +35,7 @@
 *******************************************************************************/
 
 #include "coordCommands.hpp"
-#include "pmd.hpp"
-#include "rtnCB.hpp"
-#include "pmdOptions.h"
-#include "utilCommon.hpp"
-#include "coordQueryOperator.hpp"
+#include "msgMessage.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 
@@ -97,25 +93,43 @@ namespace engine
       try
       {
          BSONObj boQuery ;
-         BSONElement bePreferRepl ;
+         BSONElement ele ;
          INT32 sessReplType = PREFER_REPL_TYPE_MIN ;
+         INT64 timeout = -1 ;
 
          boQuery = BSONObj( pQuery );
-         bePreferRepl = boQuery.getField( FIELD_NAME_PREFERED_INSTANCE );
-         PD_CHECK( bePreferRepl.type() == NumberInt, SDB_INVALIDARG, error,
-                   PDERROR, "Failed to set session attribute, failed to get "
-                   "the field[%s]", FIELD_NAME_PREFERED_INSTANCE );
-         sessReplType = bePreferRepl.Int();
-         PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
-                   sessReplType < PREFER_REPL_TYPE_MAX,
-                   SDB_INVALIDARG, error, PDERROR,
-                   "Failed to set preferedInstanace, invalid value[%d], "
-                   "Value range:(%d~%d)", sessReplType,
-                   PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX ) ;
+         ele = boQuery.getField( FIELD_NAME_PREFERED_INSTANCE ) ;
 
-         /// set and clear last nodes
-         pPropSite->setPreferInsType( sessReplType ) ;
-         pPropSite->clear() ;
+         /// preferedInstance
+         if ( !ele.eoo() )
+         {
+            PD_CHECK( ele.type() == NumberInt, SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] is not numberInt",
+                      FIELD_NAME_PREFERED_INSTANCE );
+            sessReplType = ele.Int();
+            PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
+                      sessReplType < PREFER_REPL_TYPE_MAX,
+                      SDB_INVALIDARG, error, PDERROR,
+                      "Failed to set preferedInstanace, invalid value[%d], "
+                      "Value range:(%d~%d)", sessReplType,
+                      PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX ) ;
+
+            /// set and clear last nodes
+            pPropSite->setPreferInsType( sessReplType ) ;
+            pPropSite->clear() ;
+         }
+
+         /// timeout
+         ele = boQuery.getField( FIELD_NAME_TIMEOUT ) ;
+         if ( !ele.eoo() )
+         {
+            PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error,
+                      PDERROR, "Feild[%s] is not number",
+                      FIELD_NAME_TIMEOUT ) ;
+            timeout = (INT64)ele.numberLong() ;
+
+            pPropSite->setOprTimeout( timeout ) ;
+         }
       }
       catch ( std::exception &e )
       {

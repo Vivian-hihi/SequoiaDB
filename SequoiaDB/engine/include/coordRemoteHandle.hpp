@@ -81,6 +81,26 @@ namespace engine
    typedef _coordRemoteHandlerBase coordRemoteHandlerBase ;
 
    /*
+      _coordNoSessionInitHandler define
+   */
+   class _coordNoSessionInitHandler : public _coordRemoteHandlerBase
+   {
+      public:
+         _coordNoSessionInitHandler() ;
+         virtual ~_coordNoSessionInitHandler() ;
+
+      public:
+         /*
+            if return SDB_OK, will continue
+            else, send failed
+         */
+         virtual INT32  onSendConnect( _pmdSubSession *pSub,
+                                       const MsgHeader *pReq,
+                                       BOOLEAN isFirst ) ;
+   } ;
+   typedef _coordNoSessionInitHandler coordNoSessionInitHandler ;
+
+   /*
       _coordRemoteHandler define
    */
    class _coordRemoteHandler : public _coordRemoteHandlerBase

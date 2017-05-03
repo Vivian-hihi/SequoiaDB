@@ -322,6 +322,42 @@ namespace engine
       goto done ;
    }
 
+   INT32 coordGroupList2GroupPtr( coordResource *pResource,
+                                  pmdEDUCB *cb,
+                                  CoordGroupList &groupList,
+                                  CoordGroupMap &groupMap,
+                                  BOOLEAN reNew )
+   {
+      INT32 rc = SDB_OK ;
+      CoordGroupInfoPtr ptr ;
+
+      if ( reNew )
+      {
+         groupMap.clear() ;
+      }
+
+      CoordGroupList::iterator it = groupList.begin() ;
+      while ( it != groupList.end() )
+      {
+         if ( !reNew && groupMap.end() != groupMap.find( it->second ) )
+         {
+            // alredy exist, don't update group info
+            ++it ;
+            continue ;
+         }
+         rc = pResource->getOrUpdateGroupInfo( it->second, ptr, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get group[%d] info, rc: %d",
+                      it->second, rc ) ;
+         groupMap[ it->second ] = ptr ;
+         ++it ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void coordGroupPtr2GroupList( GROUP_VEC &groupPtrs,
                                  CoordGroupList &groupList )
    {

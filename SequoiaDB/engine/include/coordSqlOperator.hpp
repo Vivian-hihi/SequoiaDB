@@ -1,5 +1,6 @@
 /*******************************************************************************
 
+
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -14,11 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = coordInterruptOperator.hpp
-
-   Descriptive Name =
-
-   When/how to use:
+   Source File Name = coordSqlOperator.hpp
 
    Dependencies: N/A
 
@@ -33,34 +30,30 @@
 
 *******************************************************************************/
 
-#ifndef COORD_INTERRUPT_OPERATOR_HPP__
-#define COORD_INTERRUPT_OPERATOR_HPP__
+#ifndef COORD_SQL_OPERATOR_HPP_
+#define COORD_SQL_OPERATOR_HPP_
 
 #include "coordOperator.hpp"
 
 namespace engine
 {
-
    /*
-      _coordInterrupt define
+      _coordSqlOperator define
    */
-   class _coordInterrupt : public _coordOperator
+   class _coordSqlOperator : public _coordOperator
    {
       public:
-         _coordInterrupt() ;
-         virtual ~_coordInterrupt() ;
+         _coordSqlOperator() ;
+         virtual ~_coordSqlOperator() ;
 
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
-      private:
-         void     _sendInterrupt( pmdRemoteSession *pSession,
-                                  pmdEDUCB *cb,
-                                  SET_ROUTEID &routeMap ) ;
    } ;
-   typedef _coordInterrupt coordInterrupt ;
+   typedef _coordSqlOperator coordSqlOperator ;
 
 }
 
-#endif // COORD_INTERRUPT_OPERATOR_HPP__
+#endif // COORD_SQL_OPERATOR_HPP_
+

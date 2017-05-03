@@ -78,6 +78,12 @@ namespace engine
                                   CoordGroupList &groupList,
                                   GROUP_VEC & groupPtrs ) ;
 
+   INT32 coordGroupList2GroupPtr( coordResource *pResource,
+                                  _pmdEDUCB *cb,
+                                  CoordGroupList &groupList,
+                                  CoordGroupMap &groupMap,
+                                  BOOLEAN reNew ) ;
+
    void  coordGroupPtr2GroupList( GROUP_VEC &groupPtrs,
                                   CoordGroupList &groupList ) ;
 

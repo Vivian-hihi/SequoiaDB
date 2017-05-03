@@ -227,6 +227,25 @@ namespace engine
    }
 
    /*
+      _coordNoSessionInitHandler implement
+   */
+   _coordNoSessionInitHandler::_coordNoSessionInitHandler()
+   {
+   }
+
+   _coordNoSessionInitHandler::~_coordNoSessionInitHandler()
+   {
+   }
+
+   INT32 _coordNoSessionInitHandler::onSendConnect( _pmdSubSession *pSub,
+                                                    const MsgHeader *pReq,
+                                                    BOOLEAN isFirst )
+   {
+      /// already disconnect
+      return SDB_NET_NOT_CONNECT ;
+   }
+
+   /*
       _coordRemoteHandler implement
    */
    _coordRemoteHandler::_coordRemoteHandler()
