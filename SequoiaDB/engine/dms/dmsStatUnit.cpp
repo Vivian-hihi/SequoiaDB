@@ -333,10 +333,10 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATMCV_EVALOPTR, "_dmsStatMCVSet::evalOperator" )
    INT32 _dmsStatMCVSet::evalOperator ( dmsStatKey *pStartKey,
-                                         dmsStatKey *pStopKey,
-                                         BOOLEAN &hitMCV,
-                                         double &predSelectivity,
-                                         double &scanSelectivity ) const
+                                        dmsStatKey *pStopKey,
+                                        BOOLEAN &hitMCV,
+                                        double &predSelectivity,
+                                        double &scanSelectivity ) const
    {
       INT32 rc = SDB_OK ;
 
@@ -485,9 +485,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATMCV_EVALETOPTR, "_dmsStatMCVSet::evalETOperator" )
    INT32 _dmsStatMCVSet::evalETOperator ( dmsStatKey &key,
-                                           BOOLEAN &hitMCV,
-                                           double &predSelectivity,
-                                           double &scanSelectivity ) const
+                                          BOOLEAN &hitMCV,
+                                          double &predSelectivity,
+                                          double &scanSelectivity ) const
    {
       INT32 rc = SDB_OK ;
 
@@ -689,8 +689,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT_EVALETOPTR, "_dmsIndexStat::evalETOperator" )
    INT32 _dmsIndexStat::evalETOperator ( dmsStatKey &key,
-                                          double &predSelectivity,
-                                          double &scanSelectivity ) const
+                                         double &predSelectivity,
+                                         double &scanSelectivity ) const
    {
       INT32 rc = SDB_OK ;
 
@@ -737,8 +737,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT_EVALGTOPTR, "_dmsIndexStat::evalGTOperator" )
    INT32 _dmsIndexStat::evalGTOperator ( dmsStatKey &startKey,
-                                          double &predSelectivity,
-                                          double &scanSelectivity ) const
+                                         double &predSelectivity,
+                                         double &scanSelectivity ) const
    {
       INT32 rc = SDB_OK ;
 
@@ -753,8 +753,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT_EVALLTOPTR, "_dmsIndexStat::evalLTOperator" )
    INT32 _dmsIndexStat::evalLTOperator ( dmsStatKey &stopKey,
-                                          double &predSelectivity,
-                                          double &scanSelectivity ) const
+                                         double &predSelectivity,
+                                         double &scanSelectivity ) const
    {
       INT32 rc = SDB_OK ;
 
@@ -769,9 +769,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT__EVALOPTR, "_dmsIndexStat::_evalOperator" )
    INT32 _dmsIndexStat::_evalOperator ( dmsStatKey *pStartKey,
-                                         dmsStatKey *pStopKey,
-                                         double &predSelectivity,
-                                         double &scanSelectivity ) const
+                                        dmsStatKey *pStopKey,
+                                        double &predSelectivity,
+                                        double &scanSelectivity ) const
    {
       INT32 rc = SDB_OK ;
 
