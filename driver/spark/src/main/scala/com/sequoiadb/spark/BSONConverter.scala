@@ -63,6 +63,13 @@ private[spark] object BSONConverter {
                     bsonList
                 case (struct: StructType, value: GenericRow) =>
                     rowToBson(value, struct)
+                case (mapType: MapType, map: Map[String, Any]) =>
+                    val bson: BSONObject = new BasicBSONObject()
+                    for ((key, value) <- map) {
+                        val v = toBsonObj(value, mapType.valueType)
+                        bson.put(key, v)
+                    }
+                    bson
                 case (_: DecimalType, value: java.math.BigDecimal) =>
                     new BSONDecimal(value)
                 case (_: DecimalType, value: Decimal) =>
@@ -72,6 +79,7 @@ private[spark] object BSONConverter {
                 case (_: ByteType, value: Byte) => value.toInt
                 case (_: ShortType, value: Short) => value.toInt
                 case (_: BinaryType, value: Array[Byte]) => new Binary(value)
+                case (_: CalendarIntervalType, _) => null
                 case _ => v
             }
         }.orNull
