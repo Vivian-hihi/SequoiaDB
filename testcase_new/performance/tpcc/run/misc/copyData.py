@@ -6,13 +6,7 @@ import os
 import commands
 import sys
 
-def copyData(dir, size):
-   if not os.access(dir, os.F_OK):
-      return
-   srcDir = os.path.join(dir, size)
-   if not os.access(srcDir, os.F_OK):
-      return
-   
+def copyData(dir, srcDir):
    for parent,dirnames, filenames in os.walk(srcDir):
       for filename in filenames:
          shutil.copy(os.path.join(parent, filename), dir) 
@@ -39,6 +33,15 @@ def startSdbcm():
    if status != 0:
       print output
       sys.exit(1)
+
+def getSrcDir(destDir):
+   (absDir, tmp) = os.path.split(destDir)
+   tmpDir = absDir
+   while True:
+      curDir = os.path.basename(tmpDir)
+      tmpDir = os.path.dirname(tmpDir)
+      if (curDir == "sequoiadb"):
+         return tmpDir
 
 def getInstallPath():
    defaultInstallPath='/opt/sequoiadb/'
@@ -90,8 +93,16 @@ def main():
    dirs = output.split('\n')
    for dir in dirs:
       if not os.access(dir, os.F_OK):
-         continue
-      t = threading.Thread(target=copyData , args=(dir, datasize))
+         print "%s don't access"%(dir)
+         sys.exit(2)
+
+      srcDir = getSrcDir(dir)
+      srcDir = os.path.join(srcDir, datasize)
+      if not os.access(srcDir, os.F_OK):
+         print "%s don't access"%(srcDir)
+         sys.exit(2)
+
+      t = threading.Thread(target=copyData , args=(dir, srcDir))
       threads.append(t) 
    stopSdbcm()
    for t in threads:
