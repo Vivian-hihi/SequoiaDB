@@ -1325,11 +1325,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_ADDFLDSTAT, "_dmsCollectionStat::addFieldStat" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__ADDFLDSTAT, "_dmsCollectionStat::addFieldStat" )
    void _dmsCollectionStat::_addFieldStat ( dmsIndexStat *pIndexStat,
                                             BOOLEAN ignoreVersion )
    {
-      PD_TRACE_ENTRY( SDB_DMSCLSTAT_ADDFLDSTAT ) ;
+      PD_TRACE_ENTRY( SDB_DMSCLSTAT__ADDFLDSTAT ) ;
 
       if ( pIndexStat &&
            pIndexStat->isValid() &&
@@ -1358,13 +1358,13 @@ namespace engine
          }
       }
 
-      PD_TRACE_EXIT( SDB_DMSCLSTAT_ADDFLDSTAT ) ;
+      PD_TRACE_EXIT( SDB_DMSCLSTAT__ADDFLDSTAT ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_RMFLDSTAT, "_dmsCollectionStat::removeFieldStat" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__RMFLDSTAT, "_dmsCollectionStat::removeFieldStat" )
    void _dmsCollectionStat::_removeFieldStat ( dmsIndexStat *pDeletingStat )
    {
-      PD_TRACE_ENTRY( SDB_DMSCLSTAT_RMFLDSTAT ) ;
+      PD_TRACE_ENTRY( SDB_DMSCLSTAT__RMFLDSTAT ) ;
 
       const CHAR *pFieldName = pDeletingStat->getFirstField() ;
       INDEX_STAT_ITERATOR iterField = _fieldStats.find( pFieldName ) ;
@@ -1374,13 +1374,13 @@ namespace engine
          _fieldStats.erase( iterField ) ;
       }
 
-      PD_TRACE_EXIT( SDB_DMSCLSTAT_RMFLDSTAT ) ;
+      PD_TRACE_EXIT( SDB_DMSCLSTAT__RMFLDSTAT ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_FINDFLDSTAT, "_dmsCollectionStat::_findNewFieldStat" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__FINDFLDSTAT, "_dmsCollectionStat::_findNewFieldStat" )
    void _dmsCollectionStat::_findNewFieldStat ( dmsIndexStat *pDeletingStat )
    {
-      PD_TRACE_ENTRY( SDB_DMSCLSTAT_RMFLDSTAT ) ;
+      PD_TRACE_ENTRY( SDB_DMSCLSTAT__FINDFLDSTAT ) ;
 
       dmsIndexStat *pNewFieldStat = NULL ;
       const CHAR *pFieldName = pDeletingStat->getFirstField() ;
@@ -1418,7 +1418,7 @@ namespace engine
          }
       }
 
-      PD_TRACE_EXIT( SDB_DMSCLSTAT_RMFLDSTAT ) ;
+      PD_TRACE_EXIT( SDB_DMSCLSTAT__FINDFLDSTAT ) ;
    }
 
    /*
