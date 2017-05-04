@@ -1131,7 +1131,16 @@ public class jTPCCTData {
             rs = stmt.executeQuery() ;
             while ( rs.next() ) {
                 Timestamp ol_delivery_d ;
-
+                
+                if (ol_idx >= orderStatus.ol_i_id.length){
+                    System.out.println("ol_i_id=" + rs.getInt( "ol_i_id" ));
+                    System.out.println("ol_supply_w_id=" + rs.getInt( "ol_supply_w_id" ));
+                    System.out.println("ol_quantity=" + rs.getInt( "ol_quantity" ));
+                    System.out.println("ol_amount=" + rs.getDouble( "ol_amount" ));
+                    System.out.println("ol_delivery_d=" + rs.getTimestamp( "ol_delivery_d" ));
+                    continue;
+                    
+                }
                 orderStatus.ol_i_id[ol_idx] = rs.getInt( "ol_i_id" ) ;
                 orderStatus.ol_supply_w_id[ol_idx] = rs
                         .getInt( "ol_supply_w_id" ) ;
