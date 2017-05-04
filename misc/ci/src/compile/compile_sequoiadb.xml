@@ -448,10 +448,10 @@
    
    <target name="tar_commit_tool_package">
       <!-- ready php bin-->
-      <delete dir="${srccode_dir}/tools/server/php/bin" failonerror="false"/>
-      <mkdir dir="${srccode_dir}/tools/server/php/bin"/>
-      <copy todir="${srccode_dir}/tools/server/php/bin">
-         <fileset dir="${srccode_dir}/tools/server/php_linux/bin" includes="**/*"/>
+      <delete dir="${srccode_dir}/tools/server/php" failonerror="false"/>
+      <mkdir dir="${srccode_dir}/tools/server/php"/>
+      <copy todir="${srccode_dir}/tools/server/php">
+         <fileset dir="${srccode_dir}/tools/server/php_linux" includes="**/*"/>
       </copy>
       <!--conf,bin,jdk -->
       <tar destfile="${release_dir}/sequoiadb-commit-build-tools.tar.gz" 
