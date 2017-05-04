@@ -46,6 +46,8 @@ namespace engine
    */
    _coordSqlOperator::_coordSqlOperator()
    {
+      const static string s_name( "Sql" ) ;
+      setName( s_name ) ;
    }
 
    _coordSqlOperator::~_coordSqlOperator()

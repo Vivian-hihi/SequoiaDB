@@ -49,6 +49,8 @@ namespace engine
    */
    _coordInterrupt::_coordInterrupt()
    {
+      const static string s_name( "Interrupt" ) ;
+      setName( s_name ) ;
    }
 
    _coordInterrupt::~_coordInterrupt()

@@ -59,6 +59,9 @@ namespace engine
    _coordUpdateOperator::_coordUpdateOperator()
    {
       _insertedNum = 0 ;
+
+      const static string s_name( "Update" ) ;
+      setName( s_name ) ;
    }
 
    _coordUpdateOperator::~_coordUpdateOperator()

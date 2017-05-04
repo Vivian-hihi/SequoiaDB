@@ -52,6 +52,8 @@ namespace engine
    */
    _coordAggrOperator::_coordAggrOperator()
    {
+      const static string s_name( "Arrg" ) ;
+      setName( s_name ) ;
    }
 
    _coordAggrOperator::~_coordAggrOperator()

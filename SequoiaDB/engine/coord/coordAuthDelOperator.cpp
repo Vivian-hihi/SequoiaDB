@@ -42,6 +42,8 @@ namespace engine
    */
    _coordAuthDelOperator::_coordAuthDelOperator()
    {
+      const static string s_name( "AuthDelete" ) ;
+      setName( s_name ) ;
    }
 
    _coordAuthDelOperator::~_coordAuthDelOperator()

@@ -42,6 +42,19 @@ using namespace bson ;
 
 namespace engine
 {
+   /*
+      _coordOpenLob implement
+   */
+   _coordOpenLob::_coordOpenLob()
+   {
+      const static string s_name( "LobOpen" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordOpenLob::~_coordOpenLob()
+   {
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( COORD_OPENLOB_EXE, "_coordOpenLob::execute" )
    INT32 _coordOpenLob::execute( MsgHeader *pMsg,
                                  pmdEDUCB *cb,
@@ -81,6 +94,19 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   /*
+      _coordWriteLob implement
+   */
+   _coordWriteLob::_coordWriteLob()
+   {
+      const static string s_name( "WriteLob" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordWriteLob::~_coordWriteLob()
+   {
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_WRITELOB_EXE, "_coordWriteLob::execute" )
@@ -123,6 +149,19 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   /*
+      _coordReadLob implement
+   */
+   _coordReadLob::_coordReadLob()
+   {
+      const static string s_name( "ReadLob" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordReadLob::~_coordReadLob()
+   {
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_READLOB_EXE, "_coordReadLob::execute" )
@@ -173,6 +212,19 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _coordCloseLob implement
+   */
+   _coordCloseLob::_coordCloseLob()
+   {
+      const static string s_name( "CloseLob" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordCloseLob::~_coordCloseLob()
+   {
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( COORD_CLOSELOB_EXE, "_coordCloseLob::execute" )
    INT32 _coordCloseLob::execute( MsgHeader *pMsg,
                                   pmdEDUCB *cb,
@@ -206,6 +258,19 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   /*
+      _coordRemoveLob implement
+   */
+   _coordRemoveLob::_coordRemoveLob()
+   {
+      const static string s_name( "RemoveLob" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordRemoveLob::~_coordRemoveLob()
+   {
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( COORD_REMOVELOB_EXE, "_coordRemoveLob::execute" )

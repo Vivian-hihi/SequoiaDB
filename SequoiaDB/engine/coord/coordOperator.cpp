@@ -311,6 +311,7 @@ namespace engine
       }
 
    done:
+      _groupSession.clear() ;
       return rc ;
    error:
       goto done ;

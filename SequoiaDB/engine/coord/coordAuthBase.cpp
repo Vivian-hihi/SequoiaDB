@@ -157,6 +157,7 @@ namespace engine
       }
 
     done:
+      _groupSession.clear() ;
       PD_TRACE_EXITRC ( COORD_AUTHBASE_FORWARD, rc ) ;
       return rc ;
    error:

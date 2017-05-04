@@ -593,6 +593,7 @@ namespace engine
       {
          contextID = pContext->contextID() ;
       }
+      PD_TRACE_EXITRC ( COORD_CMDBASE_QUERYONCATA, rc ) ;
       return rc ;
    error :
       // make sure to clear context whenever error happened
@@ -602,7 +603,6 @@ namespace engine
          pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
          pContext = NULL ;
       }
-      PD_TRACE_EXIT ( COORD_CMDBASE_QUERYONCATA ) ;
       goto done ;
    }
 

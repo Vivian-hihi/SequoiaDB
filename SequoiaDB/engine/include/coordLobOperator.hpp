@@ -43,8 +43,8 @@ namespace engine
    class _coordOpenLob : public _coordOperator
    {
       public:
-         _coordOpenLob(){}
-         virtual ~_coordOpenLob(){}
+         _coordOpenLob() ;
+         virtual ~_coordOpenLob() ;
       public:
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
@@ -59,8 +59,8 @@ namespace engine
    class _coordWriteLob : public _coordOperator
    {
       public:
-         _coordWriteLob(){}
-         virtual ~_coordWriteLob(){}
+         _coordWriteLob() ;
+         virtual ~_coordWriteLob() ;
       public:
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
@@ -75,8 +75,8 @@ namespace engine
    class _coordReadLob : public _coordOperator
    {
       public:
-         _coordReadLob(){}
-         virtual ~_coordReadLob(){}
+         _coordReadLob() ;
+         virtual ~_coordReadLob() ;
       public:
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
@@ -91,8 +91,8 @@ namespace engine
    class _coordCloseLob : public _coordOperator
    {
       public:
-         _coordCloseLob(){}
-         virtual ~_coordCloseLob(){}
+         _coordCloseLob() ;
+         virtual ~_coordCloseLob() ;
       public:
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
@@ -107,8 +107,8 @@ namespace engine
    class _coordRemoveLob : public _coordOperator
    {
       public:
-         _coordRemoveLob(){}
-         virtual ~_coordRemoveLob(){}
+         _coordRemoveLob() ;
+         virtual ~_coordRemoveLob() ;
       public:
          virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,

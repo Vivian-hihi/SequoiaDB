@@ -59,6 +59,9 @@ namespace engine
       _pContext = NULL ;
       _processRet = SDB_OK ;
       setReadOnly( readOnly ) ;
+
+      const static string s_name( "Query" ) ;
+      setName( s_name ) ;
    }
 
    _coordQueryOperator::~_coordQueryOperator()
@@ -409,8 +412,11 @@ namespace engine
          rc = pFactory->create( &pCollectionName[1], pOperator ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
-                    pCollectionName, rc ) ;
+            if ( SDB_COORD_UNKNOWN_OP_REQ != rc )
+            {
+               PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                       pCollectionName, rc ) ;
+            }
             goto error ;
          }
 

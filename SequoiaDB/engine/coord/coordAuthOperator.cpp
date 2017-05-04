@@ -41,6 +41,8 @@ namespace engine
    */
    _coordAuthOperator::_coordAuthOperator()
    {
+      const static string s_name( "Auth" ) ;
+      setName( s_name ) ;
    }
 
    _coordAuthOperator::~_coordAuthOperator()

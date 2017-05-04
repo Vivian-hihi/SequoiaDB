@@ -60,10 +60,7 @@ namespace engine
                                           pmdEDUCB *cb,
                                           coordProcessResult &result ) ;
 
-         virtual INT32        rollback( MsgHeader *pMsg,
-                                        pmdEDUCB *cb,
-                                        INT64 &contextID,
-                                        rtnContextBuf *buf ) ;
+         virtual INT32        rollback( pmdEDUCB *cb ) ;
 
       protected:
          /*
@@ -92,6 +89,148 @@ namespace engine
 
    } ;
    typedef _coordTransOperator coordTransOperator ;
+
+   /*
+      _coordTransBegin define
+   */
+   class _coordTransBegin : public _coordOperator
+   {
+      public:
+         _coordTransBegin() ;
+         virtual ~_coordTransBegin() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordTransBegin coordTransBegin ;
+
+   /*
+      _coord2PhaseCommit define
+   */
+   class _coord2PhaseCommit : public _coordOperator
+   {
+      public:
+         _coord2PhaseCommit() ;
+         virtual ~_coord2PhaseCommit() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+
+      private:
+         virtual INT32 doPhase1( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 INT64 &contextID,
+                                 rtnContextBuf *buf ) ;
+
+         virtual INT32 doPhase2( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 INT64 &contextID,
+                                 rtnContextBuf *buf ) ;
+
+         virtual INT32 cancelOp( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 INT64 &contextID,
+                                 rtnContextBuf *buf ) ;
+
+         virtual INT32 buildPhase1Msg( const CHAR *pReceiveBuffer,
+                                       CHAR **pMsg,
+                                       INT32 *pMsgSize,
+                                       pmdEDUCB *cb ) = 0 ;
+
+         virtual INT32 buildPhase2Msg( const CHAR *pReceiveBuffer,
+                                       CHAR **pMsg,
+                                       INT32 *pMsgSize,
+                                       pmdEDUCB *cb ) = 0 ;
+
+         virtual void  releasePhase1Msg( CHAR *pMsg,
+                                         INT32 msgSize,
+                                         pmdEDUCB *cb ) = 0 ;
+
+         virtual void  releasePhase2Msg( CHAR *pMsg,
+                                         INT32 msgSize,
+                                         pmdEDUCB *cb ) = 0 ;
+
+         virtual INT32 executeOnDataGroup ( MsgHeader *pMsg,
+                                            pmdEDUCB *cb,
+                                            INT64 &contextID,
+                                            rtnContextBuf *buf ) = 0 ;
+   } ;
+   typedef _coord2PhaseCommit coord2PhaseCommit ;
+
+   /*
+      _coordTransCommit define
+   */
+   class _coordTransCommit : public _coord2PhaseCommit
+   {
+      public:
+         _coordTransCommit() ;
+         virtual ~_coordTransCommit() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+
+         virtual BOOLEAN      needRollback() const ;
+
+      private:
+         virtual INT32 buildPhase1Msg( const CHAR *pReceiveBuffer,
+                                       CHAR **pMsg,
+                                       INT32 *pMsgSize,
+                                       pmdEDUCB *cb ) ;
+
+         virtual INT32 buildPhase2Msg( const CHAR *pReceiveBuffer,
+                                       CHAR **pMsg,
+                                       INT32 *pMsgSize,
+                                       pmdEDUCB *cb ) ;
+
+         virtual void  releasePhase1Msg( CHAR *pMsg,
+                                         INT32 msgSize,
+                                         pmdEDUCB *cb ) ;
+
+         virtual void  releasePhase2Msg( CHAR *pMsg,
+                                         INT32 msgSize,
+                                         pmdEDUCB *cb ) ;
+
+         virtual INT32 executeOnDataGroup ( MsgHeader *pMsg,
+                                            pmdEDUCB *cb,
+                                            INT64 &contextID,
+                                            rtnContextBuf *buf ) ;
+
+      private:
+         MsgOpTransCommitPre              _phase1Msg ;
+         MsgOpTransCommit                 _phase2Msg ;
+         
+   } ;
+   typedef _coordTransCommit coordTransCommit ;
+
+   /*
+      _coordTransRollback define
+   */
+   class _coordTransRollback : public _coordTransOperator
+   {
+      public:
+         _coordTransRollback() ;
+         virtual ~_coordTransRollback() ;
+
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+
+         virtual BOOLEAN      needRollback() const ;
+
+      protected:
+
+         virtual void         _prepareForTrans( pmdEDUCB *cb,
+                                                MsgHeader *pMsg ) ;
+
+   } ;
+   typedef _coordTransRollback coordTransRollback ;
 
 }
 

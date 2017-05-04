@@ -52,6 +52,8 @@ namespace engine
    */
    _coordDeleteOperator::_coordDeleteOperator()
    {
+      const static string s_name( "Delete" ) ;
+      setName( s_name ) ;
    }
 
    _coordDeleteOperator::~_coordDeleteOperator()

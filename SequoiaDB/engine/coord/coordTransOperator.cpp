@@ -208,10 +208,7 @@ namespace engine
       return rc ;
    }
 
-   INT32 _coordTransOperator::rollback( MsgHeader *pMsg,
-                                        pmdEDUCB *cb,
-                                        INT64 &contextID,
-                                        rtnContextBuf *buf )
+   INT32 _coordTransOperator::rollback( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       SET_NODEID nodes ;
@@ -306,6 +303,405 @@ namespace engine
    error :
       /// will rollback all suc node and the node before session
       goto done ;
+   }
+
+   /*
+      _coordTransBegin implement
+   */
+   _coordTransBegin::_coordTransBegin()
+   {
+      const static string s_name( "TransBegin" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordTransBegin::~_coordTransBegin()
+   {
+   }
+
+   INT32 _coordTransBegin::execute( MsgHeader *pMsg,
+                                    pmdEDUCB *cb,
+                                    INT64 &contextID,
+                                    rtnContextBuf *buf )
+   {
+      INT32 rc    = SDB_OK ;
+      contextID   = -1 ;
+
+      rc = cb->createTransaction() ;
+      PD_RC_CHECK( rc, PDERROR, "Create transaction failed, rc: %d",
+                   rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _coord2PhaseCommit implement
+   */
+   _coord2PhaseCommit::_coord2PhaseCommit()
+   {
+   }
+
+   _coord2PhaseCommit::~_coord2PhaseCommit()
+   {
+   }
+
+   INT32 _coord2PhaseCommit::execute( MsgHeader *pMsg,
+                                      pmdEDUCB *cb,
+                                      INT64 &contextID,
+                                      rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN needCancel = FALSE ;
+
+      contextID                        = -1 ;
+
+      if ( !cb->isTransaction() )
+      {
+         goto done ;
+      }
+
+      needCancel = TRUE ;
+      rc = doPhase1( pMsg, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute failed on phase1 in operator[%s], rc: %d",
+                 getName(), rc ) ;
+         goto error ;
+      }
+
+      needCancel = FALSE ;
+      rc = doPhase2( pMsg, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute failed on phase2 in operator[%s], rc: %d",
+                 getName(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( needCancel )
+      {
+         INT32 rcTmp = cancelOp( pMsg, cb, contextID, buf ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDWARNING, "Execute cancel phase in operator[%s], rc: %d",
+                    getName(), rcTmp ) ;
+         }
+      }
+      goto done ;
+   }
+
+   INT32 _coord2PhaseCommit::doPhase1( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
+                                       rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK;
+      CHAR *pMsgReq                    = NULL ;
+      INT32 msgSize                    = 0 ;
+
+      rc = buildPhase1Msg( (const CHAR*)pMsg, &pMsgReq, &msgSize, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build message failed in operator[%s] phase1, "
+                 "rc: %d", getName(), rc ) ;
+         goto error ;
+      }
+
+      // execute on data nodes
+      rc = executeOnDataGroup( (MsgHeader*)pMsgReq, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute on data group failed in operator[%s] "
+                 "phase1, rc: %d", getName(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( pMsgReq )
+      {
+         releasePhase1Msg( pMsgReq, msgSize, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coord2PhaseCommit::doPhase2( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
+                                       rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pMsgReq                    = NULL ;
+      INT32 msgSize                    = 0 ;
+
+      rc = buildPhase2Msg( (const CHAR*)pMsg, &pMsgReq, &msgSize, cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build message failed in operator[%s] phase2, "
+                 "rc: %d", getName(), rc ) ;
+         goto error ;
+      }
+
+      // execute on data nodes
+      rc = executeOnDataGroup( (MsgHeader*)pMsgReq, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute on data group failed in operator[%s] "
+                 "phase2, rc: %d", getName(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( pMsgReq )
+      {
+         releasePhase2Msg( pMsgReq, msgSize, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coord2PhaseCommit::cancelOp( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
+                                       rtnContextBuf *buf )
+   {
+      // do nothing, rollback will do in session
+      return SDB_OK ;
+   }
+
+   /*
+      _coordTransCommit implement
+   */
+   _coordTransCommit::_coordTransCommit()
+   {
+      const static string s_name( "TransCommit" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordTransCommit::~_coordTransCommit()
+   {
+   }
+
+   INT32 _coordTransCommit::executeOnDataGroup( MsgHeader *pMsg,
+                                                pmdEDUCB *cb,
+                                                INT64 &contextID,
+                                                rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 rcTmp = SDB_OK ;
+
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
+      pmdSubSession *pSub = NULL ;
+      pmdSubSessionItr itr ;
+
+      DpsTransNodeMap *pNodeMap = cb->getTransNodeLst() ;
+      DpsTransNodeMap::iterator iterMap = pNodeMap->begin() ;
+      ROUTE_RC_MAP nokRC ;
+
+      /// clear
+      _groupSession.clear() ;
+
+      while( iterMap != pNodeMap->end() )
+      {
+         pSub = pSession->addSubSession( iterMap->second.value ) ;
+         pSub->setReqMsg( pMsg, PMD_EDU_MEM_NONE ) ;
+
+         rcTmp = pSession->sendMsg( pSub ) ;
+         if ( rcTmp )
+         {
+            rc = rc ? rc : rcTmp ;
+            PD_LOG ( PDWARNING, "Failed to send commit request to the "
+                     "node[%s], rc: %d",
+                     routeID2String( iterMap->second ).c_str(),
+                     rcTmp ) ;
+            nokRC[ iterMap->second.value ] = rcTmp ;
+         }
+         ++iterMap ;
+      }
+
+      rcTmp = pSession->waitReply1( TRUE ) ;
+      if ( rcTmp )
+      {
+         rc = rc ? rc : rcTmp ;
+         PD_LOG( PDERROR, "Failed to get the reply, rc: %d", rcTmp ) ;
+      }
+
+      itr = pSession->getSubSessionItr( PMD_SSITR_REPLY ) ;
+      while ( itr.more() )
+      {
+         MsgOpReply *pReply = NULL ;
+         pSub = itr.next() ;
+
+         pReply = (MsgOpReply *)pSub->getRspMsg( FALSE ) ;
+         rcTmp = pReply->flags ;
+
+         if ( rcTmp )
+         {
+            rc = rc ? rc : rcTmp ;
+            PD_LOG( PDERROR, "Data node[%s] commit transaction failed, rc: %d",
+                    routeID2String( pReply->header.routeID ).c_str(),
+                    rcTmp ) ;
+            nokRC[ pReply->header.routeID.value ] = coordErrorInfo( pReply ) ;
+         }
+      }
+
+      if ( rc )
+      {
+         goto error ;
+      }
+   done:
+      _groupSession.clear() ;
+      return rc ;
+   error:
+      if ( ( rc && nokRC.size() > 0 ) && buf )
+      {
+         *buf = _rtnContextBuf( coordBuildErrorObj( _pResource, rc,
+                                                    cb, &nokRC ) ) ;
+      }
+      goto done ;
+   }
+
+   INT32 _coordTransCommit::buildPhase1Msg( const CHAR *pReceiveBuffer,
+                                            CHAR **pMsg,
+                                            INT32 *pMsgSize,
+                                            pmdEDUCB *cb )
+   {
+      _phase1Msg.header.messageLength = sizeof( _phase1Msg ) ;
+      _phase1Msg.header.opCode = MSG_BS_TRANS_COMMITPRE_REQ ;
+      _phase1Msg.header.routeID.value = MSG_INVALID_ROUTEID ;
+      _phase1Msg.header.requestID = 0 ;
+      _phase1Msg.header.TID = cb->getTID() ;
+
+      *pMsg = ( CHAR* )&_phase1Msg ;
+      *pMsgSize = _phase1Msg.header.messageLength ;
+
+      return SDB_OK ;
+   }
+
+   void _coordTransCommit::releasePhase1Msg( CHAR *pMsg,
+                                             INT32 msgSize,
+                                             pmdEDUCB *cb )
+   {
+   }
+
+   INT32 _coordTransCommit::buildPhase2Msg( const CHAR *pReceiveBuffer,
+                                            CHAR **pMsg,
+                                            INT32 *pMsgSize,
+                                            pmdEDUCB *cb )
+   {
+      _phase2Msg.header.messageLength = sizeof( _phase1Msg ) ;
+      _phase2Msg.header.opCode = MSG_BS_TRANS_COMMIT_REQ ;
+      _phase2Msg.header.routeID.value = MSG_INVALID_ROUTEID ;
+      _phase2Msg.header.requestID = 0 ;
+      _phase2Msg.header.TID = cb->getTID() ;
+
+      *pMsg = ( CHAR* )&_phase2Msg ;
+      *pMsgSize = _phase2Msg.header.messageLength ;
+
+      return SDB_OK ;
+   }
+
+   void _coordTransCommit::releasePhase2Msg( CHAR *pMsg,
+                                             INT32 msgSize,
+                                             pmdEDUCB *cb )
+   {
+   }
+
+   INT32 _coordTransCommit::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
+                                     rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_TRANS_COMMIT_REQ,
+                          "TransactionID: 0x%016x(%llu)",
+                          cb->getTransID(),
+                          cb->getTransID() ) ;
+
+      rc = _coord2PhaseCommit::execute( pMsg, cb, contextID, buf ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // complete, delete transaction
+      cb->delTransaction() ;
+
+   done:
+      return rc ;
+   error:
+      // rollback in session
+      goto done ;
+   }
+
+   BOOLEAN _coordTransCommit::needRollback() const
+   {
+      return TRUE ;
+   }
+
+   /*
+      _coordTransRollback implement
+   */
+   _coordTransRollback::_coordTransRollback()
+   {
+      const static string s_name( "TransRollback" ) ;
+      setName( s_name ) ;
+   }
+
+   _coordTransRollback::~_coordTransRollback()
+   {
+   }
+
+   INT32 _coordTransRollback::execute( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
+                                       rtnContextBuf *buf )
+   {
+      INT32 rc                         = SDB_OK ;
+
+      contextID                        = -1 ;
+
+      if ( !cb->isTransaction() )
+      {
+         goto done ;
+      }
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_TRANS_ROLLBACK_REQ,
+                          "TransactionID: 0x%016x(%llu)",
+                          cb->getTransID(),
+                          cb->getTransID() ) ;
+
+      rc = _coordTransOperator::rollback( cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Rollback transaction failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done;
+   }
+
+   void _coordTransRollback::_prepareForTrans( pmdEDUCB *cb,
+                                               MsgHeader *pMsg )
+   {
+   }
+
+   BOOLEAN _coordTransRollback::needRollback() const
+   {
+      return FALSE ;
    }
 
 }

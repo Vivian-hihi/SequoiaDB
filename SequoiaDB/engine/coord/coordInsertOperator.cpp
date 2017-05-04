@@ -54,6 +54,9 @@ namespace engine
    {
       _insertedNum = 0 ;
       _ignoredNum = 0 ;
+
+      const static string s_insertStr("Insert" ) ;
+      setName( s_insertStr ) ;
    }
 
    _coordInsertOperator::~_coordInsertOperator()
