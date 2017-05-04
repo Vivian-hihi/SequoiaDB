@@ -385,11 +385,11 @@
       <copy todir="${release_driver_dir}/Hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hive/build" includes="**/*" />
       </copy>     
-      <copy todir="${release_driver_dir}/Spark" >
+      <copy todir="${release_driver_dir}/Hadoop" >
          <fileset dir="${srccode_dir}/driver/hadoop/hadoop-connector/build" includes="**/*" />
       </copy>
       
-      <copy todir="${release_driver_dir}/Hadoop" >
+      <copy todir="${release_driver_dir}/Spark" >
          <fileset dir="${srccode_dir}/driver/spark/target" includes="*.jar" />
       </copy>
       
