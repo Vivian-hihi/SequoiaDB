@@ -29,6 +29,7 @@ import org.bson.types._
 import org.bson.{BSONObject, BasicBSONObject}
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.math.min
 
@@ -139,8 +140,13 @@ private[spark] object BSONConverter {
                 case IntegerType => toInt(value)
                 case LongType => toLong(value)
                 case MapType(StringType, valueType, _) =>
-                    val map = value.asInstanceOf[Map[String, Any]]
-                    map.mapValues(toRowField(_, valueType)).map(identity)
+                    val obj = value.asInstanceOf[BSONObject]
+                    val map = new mutable.HashMap[String, Any]
+                    obj.keySet().foreach { key =>
+                        val value = obj.get(key)
+                        map += (key -> toRowField(value, valueType))
+                    }
+                    map
                 case NullType => null
                 case ShortType => toShort(value)
                 case StringType => toString(value)
