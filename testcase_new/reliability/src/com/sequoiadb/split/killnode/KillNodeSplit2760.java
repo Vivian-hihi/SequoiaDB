@@ -65,7 +65,7 @@ public class KillNodeSplit2760 extends SdbTestBase {
             CollectionSpace commCS = commSdb.getCollectionSpace(csName);
             DBCollection cl = commCS.createCollection(clName,
                     (BSONObject) JSON
-                            .parse("{ShardingKey:{'sk':1},Partition:4096,ShardingType:'hash',Group:'"
+                            .parse("{ShardingKey:{'sk':1},Partition:4096,ReplSize:-1,ShardingType:'hash',Group:'"
                                     + srcGroupName + "'}"));
             // 准备切分的数据
             insertData(cl, 0, 5000);
