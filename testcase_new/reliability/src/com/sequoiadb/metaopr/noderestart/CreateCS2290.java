@@ -1,6 +1,7 @@
 package com.sequoiadb.metaopr.noderestart;
 
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
@@ -11,6 +12,7 @@ import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -19,10 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.sequoiadb.base.Sequoiadb;
-import org.testng.annotations.AfterClass;
-
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 
 /**
  * 1、创建CS，构造脚本循环执行创建domain操作db.createCS（）

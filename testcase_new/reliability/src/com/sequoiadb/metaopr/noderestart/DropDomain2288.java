@@ -18,11 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.sequoiadb.metaopr.comm.MyUtil.createDomains;
-import static com.sequoiadb.metaopr.comm.MyUtil.isCatalogGroupSync;
-
-import static com.sequoiadb.metaopr.comm.MyUtil.isDomainsDeleted;
-import static org.testng.Assert.*;
+import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static org.testng.Assert.assertTrue;
 /**
  * 1、创建domian，构造脚本循环执行创建domain操作db.createDomain（）
  * 2、执行删除domian操作（构造脚本循环执行删除多个domain操作）

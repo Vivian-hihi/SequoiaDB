@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 import static com.sequoiadb.metaopr.comm.MyUtil.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @FileName
@@ -24,6 +24,7 @@ import static org.testng.Assert.*;
 public class DropClMaster2167 implements StandTestInterface {
     final String csName="cs2167";
     List<String> clnames;
+
     @BeforeClass
     @Override
     public void setup() {

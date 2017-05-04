@@ -1,6 +1,7 @@
 package com.sequoiadb.metaopr.noderestart;
 
-import com.sequoiadb.base.*;
+import com.sequoiadb.base.DBCollection;
+import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.exception.BaseException;
@@ -10,16 +11,15 @@ import com.sequoiadb.metaopr.comm.DBoperateTask;
 import com.sequoiadb.metaopr.comm.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
-import com.sun.java.browser.plugin2.DOM;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static com.sequoiadb.metaopr.comm.MyUtil.*;
-import static org.testng.Assert.*;
-
 import java.util.List;
+
+import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static org.testng.Assert.assertTrue;
 
 /**
  * 1、创建domian，在域中添加两个数据组（如group1和group2），且设置AutoSplit参数为自动切分

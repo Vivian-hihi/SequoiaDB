@@ -13,7 +13,8 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 import static com.sequoiadb.metaopr.comm.MyUtil.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @FileName

@@ -1,25 +1,6 @@
 package com.sequoiadb.metaopr.diskfull;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.BasicBSONList;
-import org.bson.util.JSON;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.DBCursor;
-import com.sequoiadb.base.Domain;
-import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.*;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
@@ -30,6 +11,20 @@ import com.sequoiadb.fault.DiskFull;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
+import org.bson.util.JSON;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @FileName seqDB-2406: 更新domain时catalog主节点所在服务器磁盘满

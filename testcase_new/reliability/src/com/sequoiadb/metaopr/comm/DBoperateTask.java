@@ -9,9 +9,7 @@ import org.bson.util.JSON;
 
 import java.util.List;
 
-import static com.sequoiadb.metaopr.comm.MyUtil.alterDomain;
-import static com.sequoiadb.metaopr.comm.MyUtil.getDataGroupNames;
-import static com.sequoiadb.metaopr.comm.MyUtil.getSdb;
+import static com.sequoiadb.metaopr.comm.MyUtil.*;
 
 /**
  * @FileName

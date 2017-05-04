@@ -15,7 +15,8 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import static org.testng.Assert.*;
+
+import static org.testng.Assert.assertTrue;
 
 /**
  * 1、创建CS，构造脚本循环执行创建CS操作db.createCS（）

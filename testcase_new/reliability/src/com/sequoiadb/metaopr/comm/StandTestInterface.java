@@ -1,10 +1,7 @@
 package com.sequoiadb.metaopr.comm;
 
-import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.exception.ReliabilityException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * @FileName

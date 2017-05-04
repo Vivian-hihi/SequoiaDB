@@ -18,8 +18,8 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.testng.Assert.*;
 import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @FileName
