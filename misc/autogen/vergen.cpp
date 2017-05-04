@@ -9,6 +9,10 @@ using namespace std ;
 #define VER_MAJOR       "major"
 #define VER_MINOR       "minor"
 
+#ifndef SDB_ENGINE_FIXVERSION_CURRENT
+    #define SDB_ENGINE_FIXVERSION_CURRENT 0
+#endif
+
 static void genDoc()
 {
    #define VER_DOC_PATH    "../../doc/config/version.json"
