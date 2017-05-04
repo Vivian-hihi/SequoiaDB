@@ -63,13 +63,17 @@ private[spark] object BSONConverter {
                     bsonList
                 case (struct: StructType, value: GenericRow) =>
                     rowToBson(value, struct)
-                case (mapType: MapType, map: Map[String, Any]) =>
-                    val bson: BSONObject = new BasicBSONObject()
-                    for ((key, value) <- map) {
-                        val v = toBsonObj(value, mapType.valueType)
-                        bson.put(key, v)
+                case (mapType: MapType, map: Map[String@unchecked, Any@unchecked]) =>
+                    if (mapType.keyType == StringType) {
+                        val bson: BSONObject = new BasicBSONObject()
+                        for ((key, value) <- map) {
+                            val v = toBsonObj(value, mapType.valueType)
+                            bson.put(key, v)
+                        }
+                        bson
+                    } else {
+                        null
                     }
-                    bson
                 case (_: DecimalType, value: java.math.BigDecimal) =>
                     new BSONDecimal(value)
                 case (_: DecimalType, value: Decimal) =>
