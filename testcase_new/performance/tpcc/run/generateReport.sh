@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -ne 1 ] ; then
-    echo "usage: $(basename $0) RESULT_DIR" >&2
+    echo "usage: $(basename $0) PROPS_FILE" >&2
     exit 2
 fi
 source ./tools.sh
@@ -33,10 +33,12 @@ function getProp()
     grep "^${1}=" run.properties | sed -e "s/^${1}=//"
 }
 
-./generateGraphs.sh "${1}/data"
-cd "${1}"
-hosts=$(getHosts $1)
-echo -n "Generating ${1}/report.html ... "
+resultDir=$(grep "^resultDirectory=" $1 | sed -e "s/^resultDirectory=//")
+sdbUrl=$(grep "^sdburl=" $1 | sed -e "s/^sdburl=//")
+./generateGraphs.sh "${resultDir}/data"
+cd "${resultDir}"
+hosts=$(getHosts $resultDir)
+echo -n "Generating ${resultDir}/report.html ... "
 
 # ----
 # Start the report.
@@ -251,10 +253,10 @@ if [ $pos -ne 0 ];then
   </p>
 _EOF_
 fi 
-if [ -d $1/deploy ];then
-groupNames=$(getAllGroupName "$1/deploy")
-nodeNumOfGroupPerHost=$(getNodeNumOfGroupPerHost "$1/deploy")
-dbhosts=$(getHostsBySdbUrl $2)
+if [ -d ${resultDir}/deploy ];then
+groupNames=$(getAllGroupName "${resultDir}/deploy")
+nodeNumOfGroupPerHost=$(getNodeNumOfGroupPerHost "${resultDir}/deploy")
+dbhosts=$(getHostsBySdbUrl ${sdbUrl})
 cat >>report.html <<_EOF_
   <h2>
   SequoiaDB deploy
