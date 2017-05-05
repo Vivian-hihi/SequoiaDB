@@ -6,6 +6,7 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
+import com.sequoiadb.metaopr.comm.MySequoiadb;
 import com.sequoiadb.metaopr.comm.MyUtil;
 import com.sequoiadb.metaopr.comm.StandTestInterface;
 import com.sequoiadb.task.FaultMakeTask;
@@ -64,7 +65,7 @@ public class CreateCS2290 implements StandTestInterface {
     @Override
     public void setup() {
         MyUtil.printBeginTime(this);
-        db = MyUtil.getSdb();
+        db = MyUtil.getMySdb().getSequoiadb();
         for (int i = 0; i < 1000; i++) {
             String name = "cs2290_" + i;
             csNames.add(name);
@@ -131,7 +132,7 @@ public class CreateCS2290 implements StandTestInterface {
 
         @Override
         public void exec() {
-            try (Sequoiadb db = MyUtil.getSdb()) {
+            try (MySequoiadb db = MyUtil.getMySdb()) {
                 MyUtil.dropCS(csNames);
                 for (int i = 0; i < csNames.size(); i++) {
                     Thread.sleep(delayMillis);

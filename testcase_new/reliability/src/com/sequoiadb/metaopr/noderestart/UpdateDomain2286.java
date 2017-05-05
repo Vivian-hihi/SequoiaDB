@@ -48,7 +48,7 @@ public class UpdateDomain2286 {
     @BeforeClass
     public void setup() throws ReliabilityException {
         MyUtil.printBeginTime(this);
-        db = getSdb();
+        db = getMySdb().getSequoiadb();
         groupNames = new GroupMgr().getAllDataGroupName();
     }
 

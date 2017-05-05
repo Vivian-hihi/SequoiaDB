@@ -7,7 +7,7 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
-import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.datasource.SequoiadbDatasource;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import org.bson.BSONObject;
@@ -68,8 +68,14 @@ public class MyUtil {
      *
      * @return
      */
-    public static Sequoiadb getSdb() {
-        return new Sequoiadb(SdbTestBase.coordUrl, "", "");
+    public static MySequoiadb getMySdb() {
+        SequoiadbDatasource ds=MyDataSource.getDataSource();
+        try {
+            MySequoiadb db=new MySequoiadb(ds.getConnection(),ds);
+            return db;
+        } catch (InterruptedException e) {
+            return null;
+        }
     }
 
     /**
@@ -103,7 +109,7 @@ public class MyUtil {
      * @param number
      */
     public static void insertSimpleDataIntoCl(String csName, String clName, int number) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             List<BSONObject> list = new ArrayList<>(number);
             for (int i = 0; i < number; i++) {
                 list.add(new BasicBSONObject("a", i));
@@ -170,7 +176,7 @@ public class MyUtil {
      */
     public static int createClInManyCs(List<String> csnames, String clname) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String name : csnames) {
                 try {
                     db.getCollectionSpace(name).createCollection(clname);
@@ -191,7 +197,7 @@ public class MyUtil {
      */
     public static int createClInSingleCs(String csname, List<String> clNames) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             CollectionSpace cs = db.getCollectionSpace(csname);
             for (String name : clNames) {
                 try {
@@ -212,7 +218,7 @@ public class MyUtil {
      * @return
      */
     public static int createCl(String csName, String clName) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             db.getCollectionSpace(csName)
                     .createCollection(clName);
             return 1;
@@ -229,7 +235,7 @@ public class MyUtil {
      */
     public static int createCS(List<String> names) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String name : names) {
                 try {
                     db.createCollectionSpace(name);
@@ -250,7 +256,7 @@ public class MyUtil {
      * @return
      */
     public static int createCS(String csName, String domainName) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             BSONObject options = (BSONObject) JSON.parse("{'Domain':'" + domainName + "'}");
             db.createCollectionSpace(csName, options);
             return 1;
@@ -261,7 +267,7 @@ public class MyUtil {
 
 
     public static boolean createCS(String name) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             db.createCollectionSpace(name);
             return true;
         } catch (BaseException e) {
@@ -278,7 +284,7 @@ public class MyUtil {
      * @return
      */
     public static int createDomain(String domainName, String groupName1, String groupName2) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             BSONObject options = (BSONObject) JSON.parse("{'Groups':['" + groupName1 + "','" + groupName2 + "']}");
             db.createDomain(domainName, options);
             return 1;
@@ -296,7 +302,7 @@ public class MyUtil {
      * @return
      */
     public static int createDomainAutoSplit(String domainName, String groupName1, String groupName2) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             BSONObject options = (BSONObject) JSON.parse("{'Groups':['" + groupName1 + "','" + groupName2 + "'],'AutoSplit':true})");
             db.createDomain(domainName, options);
             return 1;
@@ -325,7 +331,7 @@ public class MyUtil {
      * @param groupName2
      */
     public static boolean alterDomain(String domainName, String groupName1, String groupName2) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             Domain domain = db.getDomain(domainName);
             BSONObject options = (BSONObject) JSON.parse("{'Groups':['" + groupName1 + "','" + groupName2 + "'],'AutoSplit':true})");
             domain.alterDomain(options);
@@ -344,7 +350,7 @@ public class MyUtil {
      */
     public static int createDomains(List<String> domainNames) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             List<String> groupNames = getDataGroupNames();
             String groupName1 = groupNames.get(0);
             String groupName2 = groupNames.get(1);
@@ -370,7 +376,7 @@ public class MyUtil {
      */
     public static int dropSingleClManyCs(List<String> csNames, String clName) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String name :
                     csNames) {
                 try {
@@ -390,7 +396,7 @@ public class MyUtil {
     }
 
     public static int dropDomain(String domainName) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             db.dropDomain(domainName);
             return 1;
         } catch (BaseException e) {
@@ -400,7 +406,7 @@ public class MyUtil {
 
     public static int dropDomain(List<String> domains) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String name : domains) {
                 try {
                     db.dropDomain(name);
@@ -420,7 +426,7 @@ public class MyUtil {
      */
     public static int dropCS(List<String> csNames) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String name :
                     csNames) {
                 try {
@@ -440,7 +446,7 @@ public class MyUtil {
      * @return
      */
     public static boolean isDomainsDeleted(List<String> domains) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String domain : domains) {
                 if (db.isDomainExist(domain))
                     return false;
@@ -450,7 +456,7 @@ public class MyUtil {
     }
 
     public static boolean isDomainAllCreated(List<String> domains) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String domain : domains) {
                 if (db.isDomainExist(domain) == false)
                     return false;
@@ -469,7 +475,7 @@ public class MyUtil {
      */
     public static int dropCls(String csName, List<String> clNames) {
         int count = 0;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             CollectionSpace cs = db.getCollectionSpace(csName);
             for (String clName : clNames) {
                 try {
@@ -489,7 +495,7 @@ public class MyUtil {
      * @return
      */
     public static boolean isCsAllDeleted(List<String> csNames) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String name : csNames) {
                 boolean isExist = db.isCollectionSpaceExist(name);
                 if (isExist == true)
@@ -506,7 +512,7 @@ public class MyUtil {
      * @return
      */
     public static boolean isCsAllCreated(List<String> csNames) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             for (String csName : csNames) {
                 if (db.isCollectionSpaceExist(csName) == false)
                     return false;
@@ -517,7 +523,7 @@ public class MyUtil {
 
     public static boolean isCsExisted(String csName) {
         boolean flag = false;
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             DBCursor cursor = db.listCollectionSpaces();
             while (cursor.hasNext())
                 if (cursor.getNext().get("Name").equals(csName))
@@ -557,7 +563,7 @@ public class MyUtil {
      * @return
      */
     public static boolean deleteAllInCl(String csName, String clName) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             db.getCollectionSpace(csName)
                     .getCollection(clName).delete((BSONObject) null);
             return true;
@@ -583,7 +589,7 @@ public class MyUtil {
             mgr = new GroupMgr();
             GroupWrapper groupWrapper = mgr.getGroupByName(groupName);
             NodeWrapper node = groupWrapper.getMaster();
-            if(node==null)
+            if (node == null)
                 return 0;
             db = node.connect();
             return db.getCollectionSpace(csName).getCollection(clName).getCount();
@@ -607,7 +613,7 @@ public class MyUtil {
      * @return
      */
     public static boolean isClAllDeleted(String csName, List<String> clNames) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             CollectionSpace cs = db.getCollectionSpace(csName);
             for (String clName : clNames) {
                 if (cs.isCollectionExist(clName))
@@ -623,7 +629,7 @@ public class MyUtil {
      * @return
      */
     public static boolean isClAllCreated(String csName, List<String> clNames) {
-        try (Sequoiadb db = getSdb()) {
+        try (MySequoiadb db = getMySdb()) {
             CollectionSpace cs = db.getCollectionSpace(csName);
             for (String name : clNames) {
                 if (cs.isCollectionExist(name) == false)

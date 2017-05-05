@@ -46,7 +46,7 @@ public class CreateDomain2285 implements StandTestInterface {
     @BeforeClass
     public void setup() {
         MyUtil.printBeginTime(this);
-        db = MyUtil.getSdb();
+        db = MyUtil.getMySdb().getSequoiadb();
         for (int i = 0; i < 100; i++) {
             domainNames.add("domain" + i);
         }

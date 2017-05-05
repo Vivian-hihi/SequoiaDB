@@ -26,8 +26,8 @@ public abstract class DBoperateTask extends OperateTask {
 
     @Override
     public void exec() {
-        try (Sequoiadb db = getSdb()) {
-            operate(db);
+        try (MySequoiadb db = getMySdb()) {
+            operate(db.getSequoiadb());
         } catch (InterruptedException e) {
         }
     }

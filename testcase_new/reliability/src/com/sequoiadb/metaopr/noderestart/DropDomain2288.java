@@ -46,7 +46,7 @@ public class DropDomain2288 {
     @BeforeClass
     public void setup() {
         MyUtil.printBeginTime(this);
-        db = MyUtil.getSdb();
+        db = MyUtil.getMySdb().getSequoiadb();
         for (int i = 0; i < 500; i++) {
             String name = "domain" + i;
             domainNames.add(name);
