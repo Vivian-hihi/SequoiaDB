@@ -1,86 +1,116 @@
-##开始使用 SparkSQL##
+##从SparkSQL访问SequoiaDB##
 
-SparkSQL 是 Spark 下处理结构化数据执行的模块，它提供了名为 DataFrames 的程序抽象工具，同时他还能作为分布式的 SQL 查询引擎。
+SparkSQL是Spark下处理结构化数据执行的模块，它提供了名为DataFrame的数据抽象工具，同时他还能作为分布式的SQL查询引擎。
 
-只要 Spark 的安装配置符合要求，通过 SequoiaDB 使用 SparkSQL 也是很简单的。
+只要Spark的安装配置符合要求，通过SparkSQL访问SequoiaDB是很简单的。
 
-假设集合名为“test.data”，协调节点在 serverX 和 serverY 上，以下指令可以在 spark-shell 执行，并创建一个临时表来对应 SequoiaDB 的 Collection（集合）：
+使用Spark API以及Spark自带的命令行工具spark-shell、spark-sql、beeline均可以通过SQL访问SequoiaDB。
 
-```lang-javascript
-scala> sqlContext.sql("CREATE TEMPORARY TABLE datatable USING com.sequoiadb.spark OPTIONS ( host 'serverX:11810,serverY:11810', collectionspace 'test', collection 'data')")
-```
+##创建SequoiaDB表或视图##
 
-除了特别定义的表模式，其将会扫描整个表同时根据每条记录的字段信息来构建表的模式。如果集合中的记录非常多，处理速度将会很慢。
-
-另一种构建表的方式是使用 CREATE TABLE 指令来构建表模式：
+###建表语句###
+在SparkSQL中创建SequoiaDB表的SQL语句如下
 
 ```lang-javascript
-scala> sqlContext.sql("CREATE temporary table datatable ( c1 string, c2 int, c3 int ) using com.sequoiadb.spark OPTIONS ( host 'serverX:11810,serverY:11810', collectionspace 'test', collection 'data')")
+create [temporary] <table|view> <tableName> [(schema)] using com.sequoiadb.spark options (<option>, <option>, ...)
 ```
 
->**Note:**
->
->临时表只在它被创建的那一个 Session 期间有效。
+说明：  
 
-以下 query 查询可被用于获取表中的数据
+1. temporary表示为临时表或视图，只在创建表或视图的会话中有效，会话退出后自动删除；
+2. 表名后紧跟的schema可不填，连接器会自动生成。自动生成的schema字段顺序与集合中记录的顺序不一致，因此如果对schema的字段顺序有要求，应该显式定义schema；
+3. option为参数列表，参数是键和值都为字符串类型的键值对，其中值的前后需要有单引号，多个参数之间用逗号分隔。
+
+###参数说明###
+
+|名称|说明|实际类型|默认值|是否必填|
+|---|---|---|---|---|
+|host|SequoiaDB协调节点/独立节点地址，多个地址以","分隔。例如："server1:11810,server2:11810"|string|-|是|
+|collectionspace|集合空间名称|string|-|是|
+|collection|集合名称（不包含集合空间名称）|string|-|是|
+|username|用户名|string|""|否|
+|password|用户名对应的密码|string|""|否|
+|samplingratio|schema采样率，取值(0, 1.0]|double|1.0|否|
+|samplingnum|schema采样数量（每个分区），取值大于0。|long|1000|否|
+|samplingwithid|schema采样时是否带"_id"字段，取值为"true"或"false"。|boolean|false|否|
+|samplingsingle|schema采样时使用一个分区，取值为"true"或"false"。|boolean|true|否|
+|bulksize|向SequoiaDB集合插入数据时批插的数据量，取值大于0。|int|500|否|
+|partitionmode|分区模式，取值可以是"single","sharding","datablock","auto"。设为auto时根据情况自动选择"sharding"或"datablock"。|string|auto|否|
+|partitionblocknum|每个分区的数据块数，在按datablock分区时有效。取值大于0。|int|4|否|
+|partitionmaxnum|最大分区数量，在按datablock分区时有效。取值大于等于0，等于0时表示不限制分区最大数量。由于partitionMaxNum的限制，每个分区的数据块数可能与partitionBlockNum不同。|int|1000|否|
+
+###示例###
+
+假设集合名为“test.data”，协调节点在 serverX 和 serverY 上，以下指令可以在spark-sql执行，并创建一个表来对应SequoiaDB的Collection（集合）：
 
 ```lang-javascript
-scala> sqlContext.sql("select * from datatable").foreach(println)
+spark-sql> create table datatable(c1 string, c2 int, c3 int) using com.sequoiadb.spark options(host 'serverX:11810,serverY:11810', collectionspace 'test', collection 'data');
 ```
 
-##在 SparkSQL 使用 JDBC##
-
-此处使用的 Thrift JDBC/ODBC 服务器对应着 Hive 0.12 的 HiveServer2。你可以用直线脚本在 Hive0.12 或者 Spark 测试 JDBC 服务器。
-
-Spark 的镜像需要在选项-Phive,-Phivethriftserver 下配置。否则 sbin/start-thriftserver.sh 将会显示以下的错误信息：
-
-```lang-diy
-failed to launch org.apache.spark.sql.hive.thriftserver.HiveThriftServer2:
-You need to build Spark with -Phive and -Phive-thriftserver.
-```
-
-需要启动 JDBC/ODBC server，请执行以下的 Spark 目录内容：
+也可以不指定schema，由连接器自动生成：
 
 ```lang-javascript
-$ ./sbin/start-thriftserver.sh
+spark-sql> create table datatable using com.sequoiadb.spark options(host 'serverX:11810,serverY:11810', collectionspace 'test', collection 'data');
 ```
 
-此处的脚本接收所有 bin/spark-submit 的命令行选项，同时还有 --hiveconf 选项来置顶 Hive 属性。你可以执行以下命令来获取所有可用的选项。
+创建表或视图之后就可以在表上执行SQL语句。以下query 查询可被用于统计表中的记录数
 
 ```lang-javascript
-./sbin/start-thriftserver.sh –help
+spark-sql> select * from datatable;
 ```
 
-服务器默认的监听端口为 localhost:10000 你可以使用以下任意环境变量来重写它：
+也可以从SequoiaDB的一个表向另一个插入数据：
 
 ```lang-javascript
-$ export HIVE_SERVER2_THRIFT_PORT=&lt;listening-port&gt;
-$ export HIVE_SERVER2_THRIFT_BIND_HOST=&lt;listening-host&gt;
-$ ./sbin/start-thriftserver.sh   --master &lt;master-uri&gt;   
-...
+spark-sql> insert into table t2 select * from t1;
 ```
 
-或是系统属性：
+如果两个表的schema相同，则不需指定列名，否则需要指定。
 
-```lang-javascript
-$ ./sbin/start-thriftserver.sh  --hiveconf hive.server2.thrift.port=&lt;listening-port&gt;   --hiveconf hive.server2.thrift.bind.host=&lt;listening-host&gt;   --master &lt;master-uri&gt;   
-...
-```
+##SequoiaDB与SparkSQL类型映射##
 
-现在可使用直线脚本测试 Thrift JDBC/ODBC server:
+|SequoiaDB类型|SparkSQL类型|SQL类型|
+|---|---|---|
+|int32|IntegerType|int|
+|int64|LongType|bigint|
+|double|DoubleType|double|
+|decimal|DecimalType|decimal|
+|string|StringType|string|
+|ObjectId|StringType|string|
+|boolean|BooleanType|boolean|
+|date|DateType|date|
+|timestamp|TimestampType|timestamp|
+|binary|BinaryType|binary|
+|null|NullType|null|
+|BSON(嵌套对象)|StructType|struct\<field:type,…>|
+|array|ArrayType|array<type>|
 
-```lang-javascript
-$ ./bin/beeline
-```
+##SequoiaDB向SparkSQL类型转换的兼容性##
 
-在直线脚本连接 JDBC/ODBC server in beeline :
+Y表示兼容，N表示不兼容
 
-```lang-javascript
-beeline> !connect jdbc:hive2://localhost:10000
-```
+|	|ByteType|ShortType|IntegerType|LongType|FloatType|DoubleType|DecimalType|BooleanType	|StringType|DateType|TimestampType|BinaryType|ArrayType|StructType|NullType|MapType|
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+|int32|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|
+|int64|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|
+|double|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|N|Y|N|
+|decimal|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|
+|string|Y|Y|Y|Y|Y|Y|Y|N|Y|Y|Y|Y|N|N|Y|N|
+|ObjectId|N|N|N|N|N|N|N|N|Y|N|N|Y|N|N|Y|N|
+|boolean|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|N|Y|N|
+|date|Y|Y|Y|Y|Y|Y|Y|N|Y|Y|Y|Y|N|N|Y|N|
+|timestamp|Y|Y|Y|Y|Y|Y|Y|N|Y|Y|Y|Y|N|N|Y|N|
+|binary|N|N|N|N|N|N|N|N|Y|N|N|Y|N|N|Y|N|
+|null|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|
+|BSON|N|N|N|N|N|N|N|N|Y|N|N|N|N|Y|Y|Y|
+|array|N|N|N|N|N|N|N|N|Y|N|N|N|Y|N|Y|N|
 
-Beeline 直线脚本会询问用户名和密码。在非安全模式下，简单输入 username 和空白密码即可。在安全模式下，请按照 [beeline documentation](https://cwiki.apache.org/confluence/display/Hive/HiveServer2%20Clients) 下的说明来执行。
+> Note:  
+> 1. 不支持SparkSQL的CalendarIntervalType类型；  
+> 2. null转换为任意类型仍为null；  
+> 3. 不兼容类型转换时变为目标类型的零值；  
+> 4. date和timestamp与数值类型转换时取其毫秒值；  
+> 5. string如果是数值的字符串类型，则可转为对应的数值时。否则，转换为null；  
+> 6. boolean值转为数值类型时，true为1，false为0；  
+> 7. 数值类型之间转换可能会溢出或损失精度。
 
-Hive 的配置将 hive-site.xml 文件移动到 conf 目录下
-
-你也可以使用 Hive 自带的直线脚本。
