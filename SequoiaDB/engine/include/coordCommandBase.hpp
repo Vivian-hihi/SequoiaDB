@@ -38,7 +38,7 @@
 #define COORD_COMMAND_BASE_HPP__
 
 #include "coordOperator.hpp"
-#include "rtnContext.hpp"
+#include "coordContext.hpp"
 #include "rtnQueryOptions.hpp"
 #include "coordCommon.hpp"
 

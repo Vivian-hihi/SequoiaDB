@@ -36,6 +36,8 @@
 
 #include "coordTransOperator.hpp"
 #include "msgMessageFormat.hpp"
+#include "coordUtil.hpp"
+#include "rtnCommandDef.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 

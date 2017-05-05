@@ -37,7 +37,7 @@
 #define COORD_QUERY_OPERATOR_HPP__
 
 #include "coordOperator.hpp"
-#include "rtnContext.hpp"
+#include "coordContext.hpp"
 
 using namespace bson ;
 
