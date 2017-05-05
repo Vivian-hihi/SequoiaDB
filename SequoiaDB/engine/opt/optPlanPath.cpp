@@ -548,6 +548,10 @@ namespace engine
                                                                  curIsAllRange ) ;
 
                predSelectivity *= curSelectivity ;
+               if ( iterIdx == 0 )
+               {
+                  scanSelectivity = curSelectivity ;
+               }
             }
             else if ( !isBestIndex )
             {
@@ -569,9 +573,10 @@ namespace engine
       // Matched key in index
       if ( matchedFields > 0 )
       {
-         if ( fieldOnly && matchedFields > 0 )
+         if ( fieldOnly )
          {
-            scanSelectivity = predSelectivity ;
+            // Do nothing
+            // scanSelectivity is estimated by the first field
          }
          else if ( isBestIndex )
          {
