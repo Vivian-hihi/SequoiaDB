@@ -1162,9 +1162,7 @@ namespace engine
       }
       else
       {
-         _assitNodeLatch.get() ;
          _assitNodes.insert( nodeID ) ;
-         _assitNodeLatch.release() ;
       }
       return pos ;
    }
@@ -1181,9 +1179,7 @@ namespace engine
       }
       else
       {
-         _assitNodeLatch.get() ;
          _assitNodes.erase( nodeID ) ;
-         _assitNodeLatch.release() ;
       }
    }
 
@@ -1196,7 +1192,6 @@ namespace engine
             return TRUE ;
          }
       }
-      ossScopedLock lock( &_assitNodeLatch, SHARED ) ;
       if ( _assitNodes.count( nodeID ) > 0 )
       {
          return TRUE ;
