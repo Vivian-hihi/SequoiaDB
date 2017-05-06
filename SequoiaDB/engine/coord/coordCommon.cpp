@@ -149,8 +149,8 @@ namespace engine
       return rc ;
    }
 
-   static INT32 coordParseString( BSONElement &e, const CHAR *&value,
-                                  UINT32 mask )
+   INT32 coordParseString( BSONElement &e, const CHAR *&value,
+                           UINT32 mask )
    {
       INT32 rc = SDB_INVALIDARG ;
       /// a:"xxx"
@@ -174,9 +174,9 @@ namespace engine
       return rc ;
    }
 
-   static INT32 coordParseString( BSONElement &e,
-                                  vector<const CHAR*> &vecValue,
-                                  UINT32 mask )
+   INT32 coordParseString( BSONElement &e,
+                           vector<const CHAR*> &vecValue,
+                           UINT32 mask )
    {
       INT32 rc = SDB_INVALIDARG ;
       const CHAR *value = NULL ;
