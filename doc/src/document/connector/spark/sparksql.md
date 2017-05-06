@@ -83,7 +83,7 @@ spark-sql> insert into table t2 select * from t1;
 |binary|BinaryType|binary|
 |null|NullType|null|
 |BSON(嵌套对象)|StructType|struct\<field:type,…>|
-|array|ArrayType|array<type>|
+|array|ArrayType|array\<type>|
 
 ##SequoiaDB向SparkSQL类型转换的兼容性##
 
