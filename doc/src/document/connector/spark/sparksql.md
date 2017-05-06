@@ -89,21 +89,37 @@ spark-sql> insert into table t2 select * from t1;
 
 Y表示兼容，N表示不兼容
 
-|	|ByteType|ShortType|IntegerType|LongType|FloatType|DoubleType|DecimalType|BooleanType	|StringType|DateType|TimestampType|BinaryType|ArrayType|StructType|NullType|MapType|
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-|int32|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|
-|int64|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|
-|double|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|N|Y|N|
-|decimal|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|
-|string|Y|Y|Y|Y|Y|Y|Y|N|Y|Y|Y|Y|N|N|Y|N|
-|ObjectId|N|N|N|N|N|N|N|N|Y|N|N|Y|N|N|Y|N|
-|boolean|Y|Y|Y|Y|Y|Y|Y|Y|Y|N|N|Y|N|N|Y|N|
-|date|Y|Y|Y|Y|Y|Y|Y|N|Y|Y|Y|Y|N|N|Y|N|
-|timestamp|Y|Y|Y|Y|Y|Y|Y|N|Y|Y|Y|Y|N|N|Y|N|
-|binary|N|N|N|N|N|N|N|N|Y|N|N|Y|N|N|Y|N|
-|null|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|Y|
-|BSON|N|N|N|N|N|N|N|N|Y|N|N|N|N|Y|Y|Y|
-|array|N|N|N|N|N|N|N|N|Y|N|N|N|Y|N|Y|N|
+|	|ByteType|ShortType|IntegerType|LongType|FloatType|DoubleType|DecimalType|BooleanType|
+|---|---|---|---|---|---|---|---|---|
+|int32|Y|Y|Y|Y|Y|Y|Y|Y|
+|int64|Y|Y|Y|Y|Y|Y|Y|Y|
+|double|Y|Y|Y|Y|Y|Y|Y|Y|
+|decimal|Y|Y|Y|Y|Y|Y|Y|Y|
+|string|Y|Y|Y|Y|Y|Y|Y|N|
+|ObjectId|N|N|N|N|N|N|N|N|
+|boolean|Y|Y|Y|Y|Y|Y|Y|Y|
+|date|Y|Y|Y|Y|Y|Y|Y|N|
+|timestamp|Y|Y|Y|Y|Y|Y|Y|N|
+|binary|N|N|N|N|N|N|N|N|
+|null|Y|Y|Y|Y|Y|Y|Y|Y|
+|BSON|N|N|N|N|N|N|N|N|
+|array|N|N|N|N|N|N|N|N|
+
+|	|StringType|DateType|TimestampType|BinaryType|ArrayType|StructType|NullType|MapType|
+|---|---|---|---|---|---|---|---|---|
+|int32|Y|Y|Y|Y|N|N|Y|N|
+|int64|Y|Y|Y|Y|N|N|Y|N|
+|double|Y|N|N|Y|N|N|Y|N|
+|decimal|Y|Y|Y|Y|N|N|Y|N|
+|string|Y|Y|Y|Y|N|N|Y|N|
+|ObjectId|Y|N|N|Y|N|N|Y|N|
+|boolean|Y|N|N|Y|N|N|Y|N|
+|date|Y|Y|Y|Y|N|N|Y|N|
+|timestamp|Y|Y|Y|Y|N|N|Y|N|
+|binary|Y|N|N|Y|N|N|Y|N|
+|null|Y|Y|Y|Y|Y|Y|Y|Y|
+|BSON|Y|N|N|N|N|Y|Y|Y|
+|array|Y|N|N|N|Y|N|Y|N|
 
 > Note:  
 > 1. 不支持SparkSQL的CalendarIntervalType类型；  
