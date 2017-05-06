@@ -1430,7 +1430,7 @@ namespace engine
             else
             {
                onceLen = _curOffset + DMS_SEGMENT_SZ ;
-               if ( onceLen > pLobData->getFileSz() )
+               if ( onceLen > (UINT64)pLobData->getFileSz() )
                {
                   onceLen = pLobData->getFileSz() ;
                }
