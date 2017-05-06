@@ -1115,7 +1115,6 @@ namespace engine
       {
          MsgOpKillContexts killMsg ;
 
-         coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
          pmdRemoteSession *pSession = _pGroupSession->getSession() ;
          pmdSubSession *pSub = NULL ;
 

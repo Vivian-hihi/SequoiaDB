@@ -2435,7 +2435,6 @@ namespace engine
    void _coordCMDRemoveNode::_notify2GroupNodes( pmdEDUCB *cb,
                                                  coordCMDArguments *pArgs )
    {
-      INT32 rc = SDB_OK ;
       CoordGroupInfoPtr groupPtr ;
       pmdRemoteSessionSite *pSite = NULL ;
       pmdRemoteSession *pSession = NULL ;
@@ -2446,7 +2445,6 @@ namespace engine
       if ( !pSite )
       {
          PD_LOG( PDERROR, "Remote session is NULL in cb" ) ;
-         rc = SDB_SYS ;
          goto error ;
       }
       pSession = pSite->addSession( getTimeout(), &baseHander ) ;
@@ -2454,7 +2452,6 @@ namespace engine
       {
          PD_LOG( PDERROR, "Create remote session failed in session[%s]",
                  cb->getName() ) ;
-         rc = SDB_OOM ;
          goto error ;
       }
 
