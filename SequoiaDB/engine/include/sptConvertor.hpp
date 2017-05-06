@@ -51,7 +51,7 @@ class sptConvertor
 {
 public:
    sptConvertor( JSContext *cx )
-   :_cx( cx ), _hasSetErrMsg( FALSE )
+   :_hasSetErrMsg( FALSE ), _cx( cx )
    {
 
    }
