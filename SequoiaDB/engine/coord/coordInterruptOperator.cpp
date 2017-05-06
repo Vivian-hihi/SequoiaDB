@@ -73,6 +73,9 @@ namespace engine
 
       contextID = -1 ;
 
+
+      /// send interrupt to all nodes associate with the session,
+      /// and kill all context
       if ( cb->getRemoteSite() )
       {
          SET_ROUTEID routeSet ;

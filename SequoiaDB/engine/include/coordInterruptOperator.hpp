@@ -54,6 +54,7 @@ namespace engine
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
+
       private:
          void     _sendInterrupt( pmdRemoteSession *pSession,
                                   pmdEDUCB *cb,

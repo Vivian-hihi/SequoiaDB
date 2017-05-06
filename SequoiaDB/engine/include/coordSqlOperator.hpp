@@ -50,6 +50,12 @@ namespace engine
                                 pmdEDUCB *cb,
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
+
+         virtual BOOLEAN      needRollback() const ;
+
+      public:
+         BOOLEAN        _needRollback ;
+
    } ;
    typedef _coordSqlOperator coordSqlOperator ;
 

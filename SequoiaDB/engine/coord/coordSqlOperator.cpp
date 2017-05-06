@@ -48,10 +48,17 @@ namespace engine
    {
       const static string s_name( "Sql" ) ;
       setName( s_name ) ;
+
+      _needRollback = FALSE ;
    }
 
    _coordSqlOperator::~_coordSqlOperator()
    {
+   }
+
+   BOOLEAN _coordSqlOperator::needRollback() const
+   {
+      return _needRollback ;
    }
 
    INT32 _coordSqlOperator::execute( MsgHeader *pMsg,
@@ -78,7 +85,7 @@ namespace engine
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
                           "%s", sql ) ;
 
-      rc = sqlcb->exec( sql, cb, contextID ) ;
+      rc = sqlcb->exec( sql, cb, contextID, _needRollback ) ;
 
    done:
       return rc ;

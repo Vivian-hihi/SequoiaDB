@@ -65,6 +65,7 @@ namespace engine
       PD_TRACE_ENTRY( COORD_OPENLOB_EXE ) ;
       SDB_ASSERT( NULL != buf, "can not be null" ) ;
 
+      rtnLobStream *pStream = NULL ;
       const MsgOpLob *header = NULL ;
       BSONObj obj ;
       contextID = -1 ;
@@ -80,8 +81,16 @@ namespace engine
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
                           "Option:%s", obj.toString().c_str() ) ;
 
-      rc = rtnOpenLob( obj, header->flags, FALSE, cb,
-                       NULL, 0, contextID, *buf ) ;
+      /// pStream will free in context
+      pStream = SDB_OSS_NEW _coordLobStream( _pResource, &_groupSession ) ;
+      if ( !pStream )
+      {
+         PD_LOG( PDERROR, "Create lob stream failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnOpenLob( obj, header->flags, cb, NULL, pStream,
+                       0, contextID, *buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to open lob:%s, rc:%d",

@@ -956,8 +956,17 @@ namespace engine
 
          if ( _pEDUCB->isInterrupted() )
          {
-            rc = SDB_APP_INTERRUPT ;
-            goto error ;
+            /// If only interrupt self, stop sub session and
+            /// need to recv the replys
+            if ( _pEDUCB->isOnlySelfWhenInterrupt() )
+            {
+               stopSubSession() ;
+            }
+            else
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
          }
 
          if ( !waitAll && replyNum > 0 )
@@ -1162,7 +1171,9 @@ namespace engine
       }
       else
       {
+         _assitNodeLatch.get() ;
          _assitNodes.insert( nodeID ) ;
+         _assitNodeLatch.release() ;
       }
       return pos ;
    }
@@ -1179,7 +1190,9 @@ namespace engine
       }
       else
       {
+         _assitNodeLatch.get() ;
          _assitNodes.erase( nodeID ) ;
+         _assitNodeLatch.release() ;
       }
    }
 
@@ -1192,6 +1205,7 @@ namespace engine
             return TRUE ;
          }
       }
+      ossScopedLock lock( &_assitNodeLatch, SHARED ) ;
       if ( _assitNodes.count( nodeID ) > 0 )
       {
          return TRUE ;
@@ -1203,7 +1217,8 @@ namespace engine
                                             const _MsgRouteID & id )
    {
       // if assit node can't find the nodeID not to send disconnect
-      if ( FALSE == existNode( id.columns.nodeID ) )
+      if ( !eduCB()->isTransaction() &&
+           FALSE == existNode( id.columns.nodeID ) )
       {
          goto done ;
       }
@@ -1311,6 +1326,14 @@ namespace engine
       if ( MSG_BS_DISCONNECT == pReply->opCode )
       {
          MAP_SUB_SESSIONPTR disSubs ;
+
+         if ( eduCB()->isTransNode( pReply->routeID ) )
+         {
+            eduCB()->setTransRC( ((MsgOpReply*)pReply)->flags ) ;
+            PD_LOG( PDERROR, "Session[%s] disconnect with node[%s] in "
+                    "transaction", _pEDUCB->toString().c_str(),
+                    routeID2String(pReply->routeID).c_str() ) ;
+         }
 
          itPtr = _mapReq2SubSession.begin() ;
          while ( itPtr != _mapReq2SubSession.end() )

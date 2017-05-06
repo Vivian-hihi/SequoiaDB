@@ -82,6 +82,7 @@ namespace engine
 
          INT32       init( _netRouteAgent *pAgent,
                            pmdOptionsCB *pOptionsCB ) ;
+         void        fini() ;
 
          void        invalidateCataInfo() ;
          void        invalidateGroupInfo( UINT64 identify = 0 ) ;

@@ -450,6 +450,7 @@ namespace engine
          // last for free entry
          posAndNode           _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE + 1 ] ;
          SET_NODES            _assitNodes ;
+         ossSpinSLatch        _assitNodeLatch ;
 
          UINT32               _sessionHWNum ;
          MAP_REMOTE_SESSION   _mapSession ;

@@ -124,6 +124,15 @@ namespace engine
       goto done ;
    }
 
+   void _coordResource::fini()
+   {
+      /// need to clear the catalog map, because the catalogset will
+      /// use the global var, so need clear before main eixt
+      _mapCataInfo.clear() ;
+      _mapGroupInfo.clear() ;
+      _mapGroupName.clear() ;
+   }
+
    void _coordResource::_initAddressFromOption( CoordVecNodeInfo &vecAddr )
    {
       vector< _pmdAddrPair > catAddrs = _pOptionsCB->catAddrs() ;
