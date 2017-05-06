@@ -451,7 +451,6 @@ namespace engine
       CHAR *pBuff             = NULL ;
       UINT32 buffLen          = 0 ;
       UINT32 buffPos          = 0 ;
-      vector<CHAR*> *pBlock   = NULL ;
 
       CoordGroupSubCLMap &grpSubCl = cataSel.getGroup2SubsMap() ;
       CoordGroupSubCLMap::iterator it ;

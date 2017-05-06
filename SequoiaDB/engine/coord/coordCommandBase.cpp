@@ -430,7 +430,6 @@ namespace engine
                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
-      UINT32 retryTimes = 0 ;
       coordCataSel cataSel ;
 
       rc = cataSel.bind( _pResource, pCLName, cb, TRUE, TRUE ) ;
