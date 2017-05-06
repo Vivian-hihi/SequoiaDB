@@ -384,7 +384,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( CATALOG_GROUPID == rc )
+      if ( CATALOG_GROUPID == groupID )
       {
          rc = updateCataGroupInfo( groupPtr, cb ) ;
       }

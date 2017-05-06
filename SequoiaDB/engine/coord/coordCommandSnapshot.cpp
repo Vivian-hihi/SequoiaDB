@@ -400,7 +400,7 @@ namespace engine
       _coordCMDSnapshotContextCurIntr implement
    */
    COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDSnapshotContextCurIntr,
-                                      CMD_NAME_SNAPSHOT_SESSIONCUR_INTR,
+                                      CMD_NAME_SNAPSHOT_CONTEXTCUR_INTR,
                                       TRUE ) ;
    _coordCMDSnapshotContextCurIntr::_coordCMDSnapshotContextCurIntr()
    {
