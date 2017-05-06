@@ -214,7 +214,8 @@ private object SdbPartitioner extends Logging {
                     blocks += blockId.asInstanceOf[Int]
                 }
 
-                val meta = new QueryMeta(hostName + ":" + serviceName, blocks.toList)
+                val meta = new QueryMeta(hostName + ":" + serviceName,
+                    csName, clName, blocks.toList)
                 queryMetas += meta
             }
         } finally {
@@ -347,7 +348,10 @@ private class ShardingInfo(val name: String,
   * @param url        url of SequoiaDB node that hode the datablocks
   * @param datablocks datablocks of partition
   */
-private class QueryMeta(val url: String, val datablocks: List[Int]) {
+private class QueryMeta(val url: String,
+                        val csName: String,
+                        val clName: String,
+                        val datablocks: List[Int]) {
 }
 
 // Single partitioner generates only one partition using the host in SdbConfig
@@ -417,13 +421,15 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
             sdb.disconnect()
         }
 
+        val queryMetas = getQueryMetas(groups, shardings)
+
         var partitions: Array[SdbPartition] = null
         var blockNum = config.partitionBlockNum
 
         val breaker = new Breaks
         breaker.breakable {
             while (true) {
-                partitions = generatePartitions(groups, shardings, blockNum)
+                partitions = generatePartitions(queryMetas, blockNum)
 
                 // zero means no limit for partition max num
                 if (config.partitionMaxNum == 0) {
@@ -446,11 +452,10 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
         SdbPartitioner.shufflePartitions(partitions)
     }
 
-    private def generatePartitions(groups: Map[String, List[String]],
-                                   shardings: List[ShardingInfo],
-                                   blockNum: Int)
-    : Array[SdbPartition] = {
-        val partitions = ArrayBuffer[SdbPartition]()
+    private def getQueryMetas(groups: Map[String, List[String]],
+                              shardings: List[ShardingInfo])
+    : Array[QueryMeta] = {
+        val queryMetas = ArrayBuffer[QueryMeta]()
 
         for (sharding <- shardings) {
             var urls: List[String] = null
@@ -460,17 +465,27 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
                 urls = groups(sharding.groupName)
             }
 
-            val queryMetas = SdbPartitioner.getQueryMeta(urls, sharding.csName, sharding.clName, config)
-            for (meta <- queryMetas) {
-                for (blocks <- meta.datablocks.sliding(blockNum, blockNum)) {
-                    val partition = SdbPartition(List(meta.url),
-                        sharding.csName,
-                        sharding.clName,
-                        filter,
-                        PartitionMode.Datablock,
-                        blocks)
-                    partitions += partition
-                }
+            val metas = SdbPartitioner.getQueryMeta(urls, sharding.csName, sharding.clName, config)
+            queryMetas ++= metas
+        }
+
+        queryMetas.toArray
+    }
+
+    private def generatePartitions(queryMetas: Array[QueryMeta],
+                                   blockNum: Int)
+    : Array[SdbPartition] = {
+        val partitions = ArrayBuffer[SdbPartition]()
+
+        for (meta <- queryMetas) {
+            for (blocks <- meta.datablocks.sliding(blockNum, blockNum)) {
+                val partition = SdbPartition(List(meta.url),
+                    meta.csName,
+                    meta.clName,
+                    filter,
+                    PartitionMode.Datablock,
+                    blocks)
+                partitions += partition
             }
         }
 
