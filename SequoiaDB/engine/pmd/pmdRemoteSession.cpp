@@ -956,17 +956,8 @@ namespace engine
 
          if ( _pEDUCB->isInterrupted() )
          {
-            /// If only interrupt self, stop sub session and
-            /// need to recv the replys
-            if ( _pEDUCB->isOnlySelfWhenInterrupt() )
-            {
-               stopSubSession() ;
-            }
-            else
-            {
-               rc = SDB_APP_INTERRUPT ;
-               goto error ;
-            }
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
          }
 
          if ( !waitAll && replyNum > 0 )
