@@ -1775,7 +1775,7 @@ namespace engine
          }
       }
 
-      SDB_ASSERT( objNum == pReply->numReturned,
+      SDB_ASSERT( objNum == (UINT32)pReply->numReturned,
                   "Return number is invalid" ) ;
 
       if ( objNum < 1 || isSpec )
