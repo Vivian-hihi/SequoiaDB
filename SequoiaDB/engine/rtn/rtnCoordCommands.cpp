@@ -2717,6 +2717,7 @@ namespace engine
       // fill default-reply(delete success)
       contextID = -1 ;
 
+      CoordSession *pSession           = NULL ;
       CHAR *pQuery                     = NULL ;
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
                             &pQuery, NULL, NULL, NULL );
@@ -2724,39 +2725,51 @@ namespace engine
                    "Failed to parse unlink collection request(rc=%d)",
                    rc ) ;
 
+      pSession = cb->getCoordSession() ;
+      PD_CHECK( pSession != NULL, SDB_SYS, error, PDERROR,
+                "Failed to get session!" ) ;
+
       try
       {
-         CoordSession *pSession = NULL;
-         BSONObj boQuery ;
-         BSONElement bePreferRepl ;
-         INT32 sessReplType = PREFER_REPL_TYPE_MIN ;
-         GROUP_VEC groupLstTmp ;
+         BSONElement ele ;
+         BSONObj boQuery( pQuery ) ;
+         BSONObjIterator itr( boQuery ) ;
+         while( itr.more() )
+         {
+            ele = itr.next() ;
 
-         pSession = cb->getCoordSession();
-         PD_CHECK( pSession != NULL, SDB_SYS, error, PDERROR,
-                   "Failed to get session!" ) ;
-         boQuery = BSONObj( pQuery );
-         bePreferRepl = boQuery.getField( FIELD_NAME_PREFERED_INSTANCE );
-         PD_CHECK( bePreferRepl.type() == NumberInt, SDB_INVALIDARG, error,
-                   PDERROR, "Failed to set session attribute, failed to get "
-                   "the field(%s)", FIELD_NAME_PREFERED_INSTANCE );
-         sessReplType = bePreferRepl.Int();
-         PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
-                   sessReplType < PREFER_REPL_TYPE_MAX,
-                   SDB_INVALIDARG, error, PDERROR,
-                   "Failed to set prefer-replica-type, invalid value!"
-                   "(range:%d~%d)", PREFER_REPL_TYPE_MIN,
-                   PREFER_REPL_TYPE_MAX ) ;
-         pSession->setPreferReplType( sessReplType ) ;
+            /// preferedInstance
+            if ( 0 == ossStrcmp( ele.fieldName(),
+                                 FIELD_NAME_PREFERED_INSTANCE ) )
+            {
+               INT32 sessReplType = PREFER_REPL_TYPE_MIN ;
+               PD_CHECK( ele.type() == NumberInt, SDB_INVALIDARG, error,
+                         PDERROR, "Field[%s] is not numberInt",
+                         FIELD_NAME_PREFERED_INSTANCE );
+               sessReplType = ele.Int();
+               PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
+                         sessReplType < PREFER_REPL_TYPE_MAX,
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to set preferedInstanace, invalid value[%d], "
+                         "Value range:(%d~%d)", sessReplType,
+                         PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX ) ;
 
-         rc = rtnCoordGetAllGroupList( cb, groupLstTmp );
-         PD_RC_CHECK( rc, PDERROR, "Failed to update all group info!(rc=%d)",
-                      rc ) ;
+               /// set and clear last nodes
+               pSession->setPreferReplType( sessReplType ) ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Options[%s] is not support in operator[%s]",
+                       ele.toString().c_str(), CMD_NAME_SETSESS_ATTR ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
       }
       catch ( std::exception &e )
       {
-         rc = SDB_INVALIDARG;
-         PD_LOG( PDERROR, "Failed to unlink collection, received unexpected "
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Failed to set sessionAttr, received unexpected "
                  "error:%s", e.what() ) ;
          goto error ;
       }
