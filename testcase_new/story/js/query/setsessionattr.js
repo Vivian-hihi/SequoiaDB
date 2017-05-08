@@ -42,11 +42,11 @@ function main()
       }
       else
       {
-   	 println("db.setSessionAttr({}) parameter illegal")
+         println("db.setSessionAttr({}) parameter illegal")
          throw e
       }
    }
-   if ( true == bRet )
+   if ( false == bRet )
    {
       println("db.setSessionAttr({}) parameter illegal")
       throw -1
