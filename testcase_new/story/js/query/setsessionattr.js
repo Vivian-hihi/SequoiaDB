@@ -46,7 +46,7 @@ function main()
          throw e
       }
    }
-   if ( false == bRet )
+   if ( true == bRet )
    {
       println("db.setSessionAttr({}) parameter illegal")
       throw -1
@@ -82,7 +82,7 @@ function main()
    }
    catch(e)
    {
-	    if (-6 == e)
+      if (-6 == e)
       {
          bRet=false; 
       }
