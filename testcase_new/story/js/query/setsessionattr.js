@@ -42,17 +42,17 @@ function main()
       }
       else
       {
-   	     println("db.setSessionAttr({}) parameter illegal")
+   	 println("db.setSessionAttr({}) parameter illegal")
          throw e
       }
    }
-   if (true == bRet)
+   if ( false == bRet )
    {
       println("db.setSessionAttr({}) parameter illegal")
       throw -1
    }
 
-   bRet = true;
+   bRet = true ;
    try
    {
       db.setSessionAttr({"PreferedInstance":8})
@@ -65,7 +65,7 @@ function main()
       }
       else
       {
-   	     println("db.setSessionAttr({\"PreferedInstance\":8} parameter illegal")
+   	 println("db.setSessionAttr({\"PreferedInstance\":8} parameter illegal")
          throw e
       }
    }
