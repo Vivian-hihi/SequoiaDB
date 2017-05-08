@@ -74,9 +74,9 @@
       </copy>
       
       <!--ready sequoiadb.jar -->
-      <staf location="local" service="PROCESS"
+      <!--staf location="local" service="PROCESS"
             request="START SHELL COMMAND chmod 777 ${INSTALL_DIR}/driver -R WAIT 10m RETURNSTDERR"
-            throwBuildException="1"/>
+            throwBuildException="1"/-->
       
       <copy file="${INSTALL_DIR}/driver/Java/sequoiadb.jar" todir="${INSTALL_DIR}/java"/>
       <copy todir="${INSTALL_DIR}/java/jdk">
@@ -87,7 +87,13 @@
       <for list="${testhost_list}" param="testhost" parallel="true">
          <sequential>            
             <staf location="@{testhost}" service="PROCESS"                  
-                  request="START SHELL COMMAND chmod 777 ${INSTALL_DIR}/tools/server/php/bin -R WAIT 10m"
+                  request="START SHELL COMMAND chmod 777 ${INSTALL_DIR}/tools/server/php/bin -R WAIT 2m"
+                  throwBuildException="1"/>
+            <staf location="local" service="FS"
+                  request="COPY DIRECTORY ${INSTALL_DIR}/driver/PHP/ TODIRECTORY ${INSTALL_DIR}/lib/phplib TOMACHINE @{testhost}"
+                  throwBuildException="1"/>
+            <staf location="@{testhost}" service="PROCESS"                  
+                  request="START SHELL COMMAND chmod 777 ${INSTALL_DIR} -R WAIT 2m RETURNSTDERR"
                   throwBuildException="1"/>
          </sequential>
       </for>
@@ -293,7 +299,7 @@
                   throwBuildException="1"/>
             
             <staf location="@{testhost}" service="PROCESS"
-                  request="START SHELL COMMAND tar zxvf ${CI_WORK_DIR}/script/script.tar.gz -C ${CI_WORK_DIR}/script WAIT 10m RETURNSTDERR"
+                  request="START SHELL COMMAND tar zxvf ${CI_WORK_DIR}/script/script.tar.gz -C ${CI_WORK_DIR}/script WAIT 2m RETURNSTDERR"
                   throwBuildException="1"/>
             <staf location="@{testhost}" service="FS"
                   request="DELETE ENTRY ${CI_WORK_DIR}/script/script.tar.gz RECURSE CONFIRM"
