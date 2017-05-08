@@ -28,12 +28,12 @@ public class GroupWrapper {
     private ReplicaGroup group;
     private List<NodeWrapper> nodes = new ArrayList<NodeWrapper>();
     private BasicBSONObject groupInfo;
-    private final String CATA_RG_NAME = "SYSCatalogGroup";
-    private final String SYSCAT = "SYSCAT";
-    private final String SYSCOLLECTIONS = "SYSCOLLECTIONS";
-    private final String SYSCOLLECTIONSPACES = "SYSCOLLECTIONSPACES";
-    private final String SYSDOMAINS = "SYSDOMAINS";
-    private final String SYSNODES = "SYSNODES";
+    private static final String CATA_RG_NAME = "SYSCatalogGroup";
+    private static final String SYSCAT = "SYSCAT";
+    private static final String SYSCOLLECTIONS = "SYSCOLLECTIONS";
+    private static final String SYSCOLLECTIONSPACES = "SYSCOLLECTIONSPACES";
+    private static final String SYSDOMAINS = "SYSDOMAINS";
+    private static final String SYSNODES = "SYSNODES";
     private GroupMgr mgr;
 
     public GroupWrapper(BasicBSONObject groupInfo, ReplicaGroup group,GroupMgr mgr) {
@@ -167,9 +167,7 @@ public class GroupWrapper {
         if (getGroupName().equals("SYSCoord")) {
             return checkRes;
         }
-        
-        
-        
+
         checkRes.groupName = getGroupName();
         checkRes.groupID = getGroupID();
         checkRes.primaryNode = groupInfo.getInt("PrimaryNode");
