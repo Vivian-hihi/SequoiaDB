@@ -1045,8 +1045,6 @@ namespace engine
 
    void _pmdCoordProcessor::_onAttach()
    {
-      INT32 rc = SDB_OK ;
-
       // must call base _onAttach first
       pmdDataProcessor::_onAttach() ;
       // do self
