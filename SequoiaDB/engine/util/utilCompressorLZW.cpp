@@ -475,7 +475,7 @@ namespace engine
 
       if ( rc )
       {
-         PD_LOG( ( SDB_UTIL_COMPRESS_ABORT == rc ) ? PDINFO : PDERROR,
+         PD_LOG( ( ( SDB_UTIL_COMPRESS_ABORT == rc ) ? PDINFO : PDERROR ),
                    "Failed to compress data, rc: %d", rc ) ;
          goto error ;
       }
