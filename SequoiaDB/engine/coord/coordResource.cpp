@@ -133,6 +133,11 @@ namespace engine
       _mapGroupName.clear() ;
    }
 
+   _netRouteAgent* _coordResource::getRouteAgent()
+   {
+      return _pAgent ;
+   }
+
    void _coordResource::_initAddressFromOption( CoordVecNodeInfo &vecAddr )
    {
       vector< _pmdAddrPair > catAddrs = _pOptionsCB->catAddrs() ;
@@ -408,8 +413,11 @@ namespace engine
       }
       if ( rc )
       {
-         PD_LOG( PDERROR, "Update group[%u] info failed, rc: %d",
-                 groupID, rc ) ;
+         if ( SDB_CAT_NO_ADDR_LIST != rc )
+         {
+            PD_LOG( PDERROR, "Update group[%u] info failed, rc: %d",
+                    groupID, rc ) ;
+         }
          goto error ;
       }
 
@@ -1025,7 +1033,7 @@ namespace engine
       msgGroupReq.header.opCode = MSG_CAT_GRP_REQ ;
       msgGroupReq.header.routeID.value = 0 ;
 
-      groupItem = groupPtr.get() ;
+      groupItem = cataGroupPtr.get() ;
       SDB_ASSERT( groupItem && groupItem->nodeCount() > 0,
                   "Group item's node count must grater than zero" ) ;
 
@@ -1446,6 +1454,9 @@ namespace engine
    void _coordResource::addCataInfo( CoordCataInfoPtr &cataPtr )
    {
       _cataMutex.get() ;
+      /// need to erase it first, because replace the name(it->first) is used
+      /// the old cataPtr's name ptr, will occur exception
+      _mapCataInfo.erase( cataPtr->getName() ) ;
       _mapCataInfo[ cataPtr->getName() ] = cataPtr ;
       _cataMutex.release() ;
    }
@@ -1735,7 +1746,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "Recieved unexpected reply for catalog info "
                  "request from node[%s], flag: %d",
-                 routeID2String( pMsg->requestID ).c_str(), rc ) ;
+                 routeID2String( pMsg->routeID ).c_str(), rc ) ;
          goto error ;
       }
 

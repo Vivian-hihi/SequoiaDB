@@ -760,6 +760,9 @@ namespace engine
    /*
       _coordCMDDropCollectionSpace implement
    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDDropCollectionSpace,
+                                      CMD_NAME_DROP_COLLECTIONSPACE,
+                                      FALSE ) ;
    _coordCMDDropCollectionSpace::_coordCMDDropCollectionSpace()
    {
    }
@@ -933,7 +936,7 @@ namespace engine
                                          shardingType ) ;
             if ( SDB_OK == rc )
             {
-               if ( 0 != shardingType.compare( FIELD_NAME_SHARDTYPE_HASH ) )
+               if ( 0 != shardingType.compare( FIELD_NAME_SHARDTYPE_RANGE ) )
                {
                   PD_LOG( PDERROR, "Sharding type must be range in "
                           "main colllection" ) ;
@@ -941,7 +944,11 @@ namespace engine
                   goto error ;
                }
             }
-            else if ( SDB_FIELD_NOT_EXIST != rc )
+            else if ( SDB_FIELD_NOT_EXIST == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else
             {
                PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                        FIELD_NAME_SHARDTYPE_HASH, getName(), rc ) ;
@@ -1193,7 +1200,7 @@ namespace engine
                   goto error ;
                }
                _pResource->addCataInfo( cataPtr ) ;
-               ((MsgOpQuery*)ppMsgBuf)->version = cataPtr->getVersion() ;
+               ((MsgOpQuery*)(*ppMsgBuf))->version = cataPtr->getVersion() ;
             }
          }
          catch ( std::exception &e )
@@ -2019,7 +2026,6 @@ namespace engine
    INT32 _coordCMDSplit::_splitReady( pmdEDUCB *cb,
                                       INT64 &contextID,
                                       rtnContextBuf *buf,
-                                      CoordGroupList &dstGrpLst,
                                       UINT64 &taskID,
                                       BSONObj &taskInfoObj )
    {
@@ -2028,6 +2034,7 @@ namespace engine
       INT32 readyMsgSize = 0 ;
       MsgOpQuery *pSplitReadyMsg = NULL ;
       vector< BSONObj > vecObjs ;
+      CoordGroupList dstGrpLst ;
 
       try
       {
@@ -2101,6 +2108,19 @@ namespace engine
          goto error ;
       }
 
+      /// notify to data
+      pSplitReadyMsg->header.opCode = MSG_BS_QUERY_REQ ;
+      pSplitReadyMsg->version = _cataSel.getCataPtr()->getVersion() ;
+
+      rc = executeOnCL( (MsgHeader *)pSplitReadyMsg, cb, _clName.c_str(),
+                        FALSE, &dstGrpLst, NULL, NULL, NULL, buf ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Execute split on data node failed, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
+
    done:
       if ( pReadyMsg )
       {
@@ -2111,26 +2131,18 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordCMDSplit::_splitNotify( const CoordGroupList &dstGrpLst,
-                                       UINT64 taskID,
-                                       pmdEDUCB *cb,
-                                       INT64 &contextID,
-                                       rtnContextBuf *buf )
+   INT32 _coordCMDSplit::_splitRollback( UINT64 taskID, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      CHAR *pNotifyMsg = NULL ;
+      CHAR *pMsg = NULL ;
       INT32 msgSize = 0 ;
-      MsgOpQuery *pSplitNtyMsg = NULL ;
-      coordCommandFactory *pFactory = NULL ;
-      coordOperator *pOperator = NULL ;
-      rtnContextDump *pContext ;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      BOOLEAN canRollback = TRUE ;
+      MsgOpQuery *pRollbackMsg = NULL ;
+      rtnContextBuf buff ;
 
       try
       {
          BSONObj boSend = BSON( CAT_TASKID_NAME << (long long)taskID ) ;
-         rc = msgBuildQueryMsg( &pNotifyMsg, &msgSize,
+         rc = msgBuildQueryMsg( &pMsg, &msgSize,
                                 CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
                                 0, 0, 0, -1,
                                 &boSend, NULL, NULL, NULL,
@@ -2149,28 +2161,67 @@ namespace engine
          goto error ;
       }
 
-      pSplitNtyMsg = (MsgOpQuery *)pNotifyMsg ;
-      pSplitNtyMsg->header.opCode = MSG_BS_QUERY_REQ ;
-      pSplitNtyMsg->version = _cataSel.getCataPtr()->getVersion() ;
+      pRollbackMsg = ( MsgOpQuery* )pMsg ;
+      pRollbackMsg->header.opCode = MSG_CAT_SPLIT_CANCEL_REQ ;
 
-      rc = executeOnCL( (MsgHeader *)pNotifyMsg, cb, _clName.c_str(),
-                        FALSE, &dstGrpLst, NULL, NULL, NULL, buf ) ;
+      rc = executeOnCataGroup ( (MsgHeader*)pRollbackMsg, cb, TRUE,
+                                NULL, NULL, &buff ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Execute split on data node failed, rc: %d",
-                 rc ) ;
+         PD_LOG( PDWARNING, "Execute split cancel on catalog failed, "
+                 "rc: %d", rc ) ;
          goto error ;
       }
 
-      /// can't rollback
-      canRollback = FALSE ;
+   done:
+      if ( pMsg )
+      {
+         msgReleaseBuffer( pMsg, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _coordCMDSplit::_splitPost( UINT64 taskID,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
+                                     rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pMsg = NULL ;
+      INT32 msgSize = 0 ;
+      coordCommandFactory *pFactory = NULL ;
+      coordOperator *pOperator = NULL ;
+      rtnContextDump *pContext = NULL ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
 
       // if sync, need to wait task finished
       if ( !_async )
       {
-         pFactory = coordGetFactory() ;
-         pOperator = NULL ;
+         try
+         {
+            BSONObj boSend = BSON( CAT_TASKID_NAME << (long long)taskID ) ;
+            rc = msgBuildQueryMsg( &pMsg, &msgSize,
+                                   CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                   0, 0, 0, -1,
+                                   &boSend, NULL, NULL, NULL,
+                                   cb ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Build split notify message failed, rc: %d",
+                       rc ) ;
+               goto error ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
 
+         pFactory = coordGetFactory() ;
          rc = pFactory->create( CMD_NAME_WAITTASK, pOperator ) ;
          if ( rc )
          {
@@ -2187,7 +2238,7 @@ namespace engine
                     pOperator->getName(), rc ) ;
             goto error ;
          }
-         rc = pOperator->execute( (MsgHeader *)pNotifyMsg, cb,
+         rc = pOperator->execute( (MsgHeader *)pMsg, cb,
                                   contextID, buf ) ;
          if ( rc )
          {
@@ -2218,9 +2269,9 @@ namespace engine
       }
 
    done:
-      if ( pNotifyMsg )
+      if ( pMsg )
       {
-         msgReleaseBuffer( pNotifyMsg, cb ) ;
+         msgReleaseBuffer( pMsg, cb ) ;
       }
       if ( pOperator )
       {
@@ -2228,18 +2279,6 @@ namespace engine
       }
       return rc ;
    error:
-      /// rollback
-      if ( pSplitNtyMsg && canRollback )
-      {
-         pSplitNtyMsg->header.opCode = MSG_CAT_SPLIT_CANCEL_REQ ;
-         INT32 tmpRC = executeOnCataGroup ( (MsgHeader*)pSplitNtyMsg,
-                                            cb, TRUE, NULL, NULL, buf ) ;
-         if ( tmpRC )
-         {
-            PD_LOG( PDWARNING, "Execute split cancel on catalog failed, "
-                    "rc: %d", tmpRC ) ;
-         }
-      }
       if ( -1 != contextID )
       {
          rtnCB->contextDelete( contextID, cb ) ;
@@ -2257,7 +2296,6 @@ namespace engine
       INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( COORD_SPLIT_EXE ) ;
       coordSessionPropSite *pSiteProp  = NULL ;
-      CoordGroupList dstGrpLst ;
       UINT64 taskID = CLS_INVALID_TASKID ;
       BSONObj taskInfoObj ;
       INT32 preferedType = 0 ;
@@ -2286,14 +2324,19 @@ namespace engine
       }
 
       /// ready
-      rc = _splitReady( cb, contextID, buf, dstGrpLst, taskID, taskInfoObj ) ;
+      rc = _splitReady( cb, contextID, buf, taskID, taskInfoObj ) ;
       if ( rc )
       {
+         if ( CLS_INVALID_TASKID != taskID )
+         {
+            /// rollback
+            _splitRollback( taskID, cb ) ;
+         }
          goto error ;
       }
 
-      /// notify and wait
-      rc = _splitNotify( dstGrpLst, taskID, cb, contextID, buf ) ;
+      /// wait
+      rc = _splitPost( taskID, cb, contextID, buf ) ;
       if ( rc )
       {
          goto error ;

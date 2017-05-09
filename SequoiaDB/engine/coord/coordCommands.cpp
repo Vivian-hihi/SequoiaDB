@@ -92,43 +92,51 @@ namespace engine
 
       try
       {
-         BSONObj boQuery ;
          BSONElement ele ;
-         INT32 sessReplType = PREFER_REPL_TYPE_MIN ;
-         INT64 timeout = -1 ;
-
-         boQuery = BSONObj( pQuery );
-         ele = boQuery.getField( FIELD_NAME_PREFERED_INSTANCE ) ;
-
-         /// preferedInstance
-         if ( !ele.eoo() )
+         BSONObj boQuery( pQuery ) ;
+         BSONObjIterator itr( boQuery ) ;
+         while( itr.more() )
          {
-            PD_CHECK( ele.type() == NumberInt, SDB_INVALIDARG, error,
-                      PDERROR, "Field[%s] is not numberInt",
-                      FIELD_NAME_PREFERED_INSTANCE );
-            sessReplType = ele.Int();
-            PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
-                      sessReplType < PREFER_REPL_TYPE_MAX,
-                      SDB_INVALIDARG, error, PDERROR,
-                      "Failed to set preferedInstanace, invalid value[%d], "
-                      "Value range:(%d~%d)", sessReplType,
-                      PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX ) ;
+            ele = itr.next() ;
 
-            /// set and clear last nodes
-            pPropSite->setPreferInsType( sessReplType ) ;
-            pPropSite->clear() ;
-         }
+            /// preferedInstance
+            if ( 0 == ossStrcmp( ele.fieldName(),
+                                 FIELD_NAME_PREFERED_INSTANCE ) )
+            {
+               INT32 sessReplType = PREFER_REPL_TYPE_MIN ;
+               PD_CHECK( ele.type() == NumberInt, SDB_INVALIDARG, error,
+                         PDERROR, "Field[%s] is not numberInt",
+                         FIELD_NAME_PREFERED_INSTANCE );
+               sessReplType = ele.Int();
+               PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
+                         sessReplType < PREFER_REPL_TYPE_MAX,
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to set preferedInstanace, invalid value[%d], "
+                         "Value range:(%d~%d)", sessReplType,
+                         PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX ) ;
 
-         /// timeout
-         ele = boQuery.getField( FIELD_NAME_TIMEOUT ) ;
-         if ( !ele.eoo() )
-         {
-            PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error,
-                      PDERROR, "Feild[%s] is not number",
-                      FIELD_NAME_TIMEOUT ) ;
-            timeout = (INT64)ele.numberLong() ;
+               /// set and clear last nodes
+               pPropSite->setPreferInsType( sessReplType ) ;
+               pPropSite->clear() ;
+            }
+            /// timeout
+            else if ( 0 == ossStrcmp( ele.fieldName(), FIELD_NAME_TIMEOUT ) )
+            {
+               INT64 timeout = -1 ;
+               PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error,
+                         PDERROR, "Feild[%s] is not number",
+                         FIELD_NAME_TIMEOUT ) ;
+               timeout = (INT64)ele.numberLong() ;
 
-            pPropSite->setOprTimeout( timeout ) ;
+               pPropSite->setOprTimeout( timeout ) ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Options[%s] is not support in operator[%s]",
+                       ele.toString().c_str(), getName() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
          }
       }
       catch ( std::exception &e )

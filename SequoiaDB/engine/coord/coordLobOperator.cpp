@@ -82,7 +82,7 @@ namespace engine
                           "Option:%s", obj.toString().c_str() ) ;
 
       /// pStream will free in context
-      pStream = SDB_OSS_NEW _coordLobStream( _pResource, &_groupSession ) ;
+      pStream = SDB_OSS_NEW _coordLobStream( _pResource, getTimeout() ) ;
       if ( !pStream )
       {
          PD_LOG( PDERROR, "Create lob stream failed" ) ;
@@ -295,7 +295,7 @@ namespace engine
       BSONObj obj ;
       BSONElement ele ;
       const CHAR *fullName = NULL ;
-      coordLobStream stream( _pResource, &_groupSession ) ;
+      coordLobStream stream( _pResource, getTimeout() ) ;
       contextID = -1 ;
 
       rc = msgExtractRemoveLobRequest( (const CHAR*)pMsg, &header,
@@ -329,6 +329,9 @@ namespace engine
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
                           "Option:%s", obj.toString().c_str() ) ;
 
+      /// release operator's groupSession to improve perfermance
+      _groupSession.release() ;
+      /// then open stream, will init it's groupSession
       rc = stream.open( fullName,
                         ele.__oid(), SDB_LOB_MODE_REMOVE,
                         header->flags,

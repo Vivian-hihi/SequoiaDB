@@ -420,18 +420,6 @@ namespace engine
             goto error ;
          }
 
-         // add last op info
-         MON_SAVE_CMD_DETAIL( cb->getMonAppCB(), CMD_UNKNOW - 1,
-                              "Command:%s, Match:%s, "
-                              "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
-                              "Limit:%lld, Flag:0x%08x(%u)",
-                              pCollectionName,
-                              BSONObj(pQuery).toString().c_str(),
-                              BSONObj(pSelector).toString().c_str(),
-                              BSONObj(pOrderby).toString().c_str(),
-                              BSONObj(pHint).toString().c_str(),
-                              numToSkip, numToReturn, flag, flag ) ;
-
          rc = pOperator->init( _pResource, cb, getTimeout() ) ;
          if ( rc )
          {

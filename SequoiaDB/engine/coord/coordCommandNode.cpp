@@ -882,7 +882,7 @@ namespace engine
          BSONObjBuilder bobNodeInfo( boConfig.objsize() ) ;
          BSONElement ele ;
 
-         if ( _ignoreGroupNameWhenNodeInfo() )
+         if ( !_ignoreGroupNameWhenNodeInfo() )
          {
             ele = boConfig.getField( FIELD_NAME_GROUPNAME ) ;
             if ( String != ele.type() )
@@ -2436,24 +2436,7 @@ namespace engine
                                                  coordCMDArguments *pArgs )
    {
       CoordGroupInfoPtr groupPtr ;
-      pmdRemoteSessionSite *pSite = NULL ;
-      pmdRemoteSession *pSession = NULL ;
-      coordRemoteHandlerBase baseHander ;
-      pmdSubSession *pSub           = NULL ;
-
-      pSite = (pmdRemoteSessionSite*)cb->getRemoteSite() ;
-      if ( !pSite )
-      {
-         PD_LOG( PDERROR, "Remote session is NULL in cb" ) ;
-         goto error ;
-      }
-      pSession = pSite->addSession( getTimeout(), &baseHander ) ;
-      if ( !pSession )
-      {
-         PD_LOG( PDERROR, "Create remote session failed in session[%s]",
-                 cb->getName() ) ;
-         goto error ;
-      }
+      _netRouteAgent *pAgent = _pResource->getRouteAgent() ;
 
       if ( SDB_OK == _pResource->updateGroupInfo( pArgs->_targetName.c_str(),
                                                   groupPtr,
@@ -2468,18 +2451,11 @@ namespace engine
          while ( SDB_OK == groupPtr->getNodeID( index++, routeID,
                                                 MSG_ROUTE_SHARD_SERVCIE ) )
          {
-            pSub = pSession->addSubSession( routeID.value ) ;
-            pSub->setReqMsg( (MsgHeader*)&updated, PMD_EDU_MEM_NONE ) ;
-
-            pSession->sendMsg( pSub ) ;
+            pAgent->syncSend( routeID, (void*)&updated ) ;
          }
       }
 
    done:
-      if ( pSession )
-      {
-         pSite->removeSession( pSession->sessionID() ) ;
-      }
       return ;
    error:
       goto done ;

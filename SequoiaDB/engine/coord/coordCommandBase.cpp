@@ -478,7 +478,10 @@ namespace engine
       coordSendOptions sendOpt ;
 
       queryConf._allCataGroups = TRUE ;
-      queryConf._realCLName = pCLName ;
+      if ( pCLName )
+      {
+         queryConf._realCLName = pCLName ;
+      }
       queryConf._updateAndGetCata = firstUpdateCata ;
       queryConf._openEmptyContext = TRUE ;
 
@@ -532,7 +535,10 @@ namespace engine
       coordQueryConf queryConf ;
       coordSendOptions sendOpt ;
 
-      queryConf._realCLName = pCLName ;
+      if ( pCLName )
+      {
+         queryConf._realCLName = pCLName ;
+      }
 
       sendOpt._primary = onPrimary ;
       if ( pSpecGrpLst )
@@ -742,10 +748,10 @@ namespace engine
          pSub = pRemote->addSubSession( *it ) ;
          pSub->setReqMsg( pMsg, PMD_EDU_MEM_NONE ) ;
 
-         rc = pRemote->sendMsg( pSub ) ;
-         if ( rc )
+         rcTmp = pRemote->sendMsg( pSub ) ;
+         if ( rcTmp )
          {
-            faileds[ *it ] = rc ;
+            faileds[ *it ] = rcTmp ;
             pRemote->delSubSession( *it ) ;
          }
          ++it ;
@@ -1002,7 +1008,7 @@ namespace engine
       }
 
    done:
-      if ( pNewMsg != (CHAR*)pMsg )
+      if ( pNewMsg && pNewMsg != (CHAR*)pMsg )
       {
          cb->releaseBuff( pNewMsg ) ;
          pNewMsg = NULL ;

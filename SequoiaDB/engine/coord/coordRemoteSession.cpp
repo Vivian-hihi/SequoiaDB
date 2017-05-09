@@ -292,8 +292,11 @@ namespace engine
          }
          if ( rc )
          {
-            PD_LOG( PDERROR, "Get or update group[%u] info failed, rc: %d",
-                    groupID, rc ) ;
+            if ( SDB_CAT_NO_ADDR_LIST != rc )
+            {
+               PD_LOG( PDERROR, "Get or update group[%u] info failed, rc: %d",
+                       groupID, rc ) ;
+            }
             goto error ;
          }
          addGroupPtr2Map( _groupPtr ) ;
@@ -1069,13 +1072,10 @@ namespace engine
 
    _coordGroupSession::~_coordGroupSession()
    {
-      if ( _pSession )
-      {
-         _pSite->removeSession( _pSession ) ;
-      }
+      release() ;
+
       _pSite      = NULL ;
       _pPropSite  = NULL ;
-      _pSession   = NULL ;
       _pGroupHandle = NULL ;
    }
 
@@ -1147,6 +1147,15 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _coordGroupSession::release()
+   {
+      if ( _pSession )
+      {
+         _pSite->removeSession( _pSession ) ;
+         _pSession = NULL ;
+      }
    }
 
    void _coordGroupSession::clear()
@@ -1261,6 +1270,7 @@ namespace engine
                     msg2String( pSrcMsg ).c_str(), it->first, rc ) ;
             goto error ;
          }
+         ++it ;
       }
 
    done:

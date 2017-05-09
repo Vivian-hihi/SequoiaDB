@@ -543,6 +543,10 @@ namespace engine
          pRtncb->contextDelete ( (*ppContext)->contextID(), cb ) ;
          (*ppContext) = NULL ;
       }
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+      }
       goto done ;
    }
 

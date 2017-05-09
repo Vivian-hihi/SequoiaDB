@@ -318,7 +318,7 @@ namespace engine
          *buf = rtnContextBuf( coordBuildErrorObj( _pResource, rc,
                                                    cb, &nokRC ) ) ;
       }
-      goto done;
+      goto done ;
    }
 
    INT32 _coordUpdateOperator::_upsert( const CHAR *pCollectionName,

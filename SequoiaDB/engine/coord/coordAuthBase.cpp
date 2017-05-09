@@ -112,7 +112,12 @@ namespace engine
       _groupSession.clear() ;
 
       rc = _groupSession.sendMsg( pMsg, CATALOG_GROUPID, NULL, &pSub ) ;
-      if ( rc && sWhenNoPrimary )
+      if ( SDB_CAT_NO_ADDR_LIST == rc )
+      {
+         PD_LOG( PDINFO, "There is no catalog address" ) ;
+         goto error ;
+      }
+      else if ( rc && sWhenNoPrimary )
       {
          pSel->setPrimary( FALSE ) ;
          _groupSession.clear() ;
@@ -134,7 +139,7 @@ namespace engine
          goto error ;
       }
 
-      pReply = pSub->getReqMsg() ;
+      pReply = pSub->getRspMsg() ;
       if ( !pReply )
       {
          PD_LOG( PDERROR, "Reply is NULL in sub session" ) ;

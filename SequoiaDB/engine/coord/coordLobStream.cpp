@@ -59,16 +59,14 @@ namespace engine
 
    #define LOB_MAX_RETRYTIMES                ( 5 )
 
-   _coordLobStream::_coordLobStream( coordResource *pResource,
-                                     coordGroupSession *pSession )
+   _coordLobStream::_coordLobStream( coordResource *pResource, INT64 timeout )
    :_metaGroup( 0 ),
     _alignBuf( 0 ),
     _pResource( pResource ),
-    _pGroupSession( pSession )
+    _timeout( timeout )
    {
       _pageSize = 0 ;
       SDB_ASSERT( _pResource, "Resource can't be NULL" ) ;
-      SDB_ASSERT( _pGroupSession, "Group session can't be NULL" ) ;
    }
 
    _coordLobStream::~_coordLobStream()
@@ -96,6 +94,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_PREPARE ) ;
 
+      rc = _groupSession.init( _pResource, cb, _timeout,
+                               &_remoteHandler, &_groupHandler ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init group session failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
       rc = _updateCataInfo( FALSE, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -105,9 +111,9 @@ namespace engine
       }
 
       /// set primary
-      _pGroupSession->getGroupSel()->setPrimary( ( SDB_LOB_MODE_R != mode ) ?
-                                                 TRUE : FALSE ) ;
-      _pGroupSession->getGroupCtrl()->setMaxRetryTimes( LOB_MAX_RETRYTIMES ) ;
+      _groupSession.getGroupSel()->setPrimary( ( SDB_LOB_MODE_R != mode ) ?
+                                               TRUE : FALSE ) ;
+      _groupSession.getGroupCtrl()->setMaxRetryTimes( LOB_MAX_RETRYTIMES ) ;
 
       rc = _openSubStreams( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
@@ -235,8 +241,8 @@ namespace engine
       netIOVec iov ;
       CoordGroupMap::iterator itMap ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      coordGroupSel *pSel = _pGroupSession->getGroupSel() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      coordGroupSel *pSel = _groupSession.getGroupSel() ;
 
       /// reset retry times
       pCtrl->resetRetry() ;
@@ -296,10 +302,10 @@ namespace engine
             /// add group info
             pSel->addGroupPtr2Map( itMap->second ) ;
 
-            rc = _pGroupSession->sendMsg( (MsgHeader*)&header,
-                                          itr->first,
-                                          &iov,
-                                          NULL ) ;
+            rc = _groupSession.sendMsg( (MsgHeader*)&header,
+                                        itr->first,
+                                        &iov,
+                                        NULL ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Failed to send open msg to group[%d], rc: %d",
@@ -365,8 +371,8 @@ namespace engine
 
       _rtnLobDataPool::tuple dataTuple ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      coordGroupSel *pSel = _pGroupSession->getGroupSel() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      coordGroupSel *pSel = _groupSession.getGroupSel() ;
 
       /// reset retry times
       pCtrl->resetRetry() ;
@@ -391,10 +397,10 @@ namespace engine
          /// add group info
          pSel->addGroupPtr2Map( _metaGroupInfo ) ;
 
-         rc = _pGroupSession->sendMsg( (MsgHeader*)&header,
-                                       _metaGroup,
-                                       &iov,
-                                       NULL ) ;
+         rc = _groupSession.sendMsg( (MsgHeader*)&header,
+                                     _metaGroup,
+                                     &iov,
+                                     NULL ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to send open msg to group[%d], rc: %d",
@@ -564,8 +570,8 @@ namespace engine
       const subStream *sub = NULL ;
       netIOVec iov ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      pmdRemoteSession *pSession = _pGroupSession->getSession() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
 
       /// reset retry times
@@ -650,8 +656,8 @@ namespace engine
       BOOLEAN reshard = TRUE ;
       MsgOpLob header ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      pmdRemoteSession *pSession = _pGroupSession->getSession() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
 
       /// reset retry times
@@ -756,8 +762,8 @@ namespace engine
       BOOLEAN needReshard = TRUE ;
       MsgOpLob header ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      pmdRemoteSession *pSession = _pGroupSession->getSession() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
 
       /// reset retry times
@@ -928,8 +934,8 @@ namespace engine
       netIOVec iov ;
       MsgOpLob header ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      pmdRemoteSession *pSession = _pGroupSession->getSession() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
 
       /// reset retry times
@@ -1029,8 +1035,8 @@ namespace engine
 
       MsgOpLob header ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      pmdRemoteSession *pSession = _pGroupSession->getSession() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
 
       /// reset retry times
@@ -1109,13 +1115,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_CLOSESUBSTREAMWITHEXCEP ) ;
 
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       /// When the cb->isInterrupted(), don't kill context, because the
       /// session will send interrupt or disconnect message to peer node
-      if ( !cb->isInterrupted() )
+      if ( pSession && !cb->isInterrupted() )
       {
          MsgOpKillContexts killMsg ;
 
-         pmdRemoteSession *pSession = _pGroupSession->getSession() ;
          pmdSubSession *pSub = NULL ;
 
          killMsg.header.messageLength = sizeof ( MsgOpKillContexts ) ;
@@ -1153,7 +1159,7 @@ namespace engine
       }
 
    done:
-      _pGroupSession->clear() ;
+      _groupSession.clear() ;
       _subs.clear() ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_CLOSESUBSTREAMWITHEXCEP, rc ) ;
       return rc ;
@@ -1242,8 +1248,8 @@ namespace engine
       DONE_LST doneLst ;
       MsgOpLob header ;
 
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      pmdRemoteSession *pSession = _pGroupSession->getSession() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
 
       /// reset retry times
@@ -1375,9 +1381,9 @@ namespace engine
 
       coordCataSel cataSel ;
       MsgOpReply *pReply = NULL ;
-      coordGroupSessionCtrl *pCtrl = _pGroupSession->getGroupCtrl() ;
-      coordGroupSel *pSel = _pGroupSession->getGroupSel() ;
-      pmdRemoteSession *pSession = _pGroupSession->getSession() ;
+      coordGroupSessionCtrl *pCtrl = _groupSession.getGroupCtrl() ;
+      coordGroupSel *pSel = _groupSession.getGroupSel() ;
+      pmdRemoteSession *pSession = _groupSession.getSession() ;
       pmdSubSession *pSub = NULL ;
       pmdSubSessionItr itr ;
       MsgRouteID id ;
@@ -1456,7 +1462,7 @@ namespace engine
       }
 
    done:
-      _pGroupSession->clear() ;
+      _groupSession.clear() ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_GETREPLY, rc ) ;
       return rc ;
    error:
@@ -1472,7 +1478,7 @@ namespace engine
       }
 
       _results.clear() ;
-      _pGroupSession->clear() ;
+      _groupSession.clear() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_REOPENSUBSTREAMS, "_coordLobStream::_reopenSubStreams" ) 
