@@ -87,6 +87,8 @@ namespace engine
          void        invalidateCataInfo() ;
          void        invalidateGroupInfo( UINT64 identify = 0 ) ;
 
+         _netRouteAgent* getRouteAgent() ;
+
       public:
 
          INT32       getGroupInfo( UINT32 groupID,

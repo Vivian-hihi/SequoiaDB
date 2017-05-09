@@ -248,6 +248,7 @@ namespace engine
    */
    class _coordCMDDropCollectionSpace : public _coordDataCMD3Phase
    {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
       public:
          _coordCMDDropCollectionSpace() ;
          virtual ~_coordCMDDropCollectionSpace() ;
@@ -552,15 +553,15 @@ namespace engine
          INT32 _splitReady( pmdEDUCB *cb,
                             INT64 &contextID,
                             rtnContextBuf *buf,
-                            CoordGroupList &dstGrpLst,
                             UINT64 &taskID,
                             BSONObj &taskInfoObj ) ;
 
-         INT32 _splitNotify( const CoordGroupList &dstGrpLst,
-                             UINT64 taskID,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
+         INT32 _splitPost( UINT64 taskID,
+                           pmdEDUCB *cb,
+                           INT64 &contextID,
+                           rtnContextBuf *buf ) ;
+
+         INT32 _splitRollback( UINT64 taskID, pmdEDUCB *cb ) ;
 
          INT32 _splitParamCheck( const BSONObj &obj,
                                  pmdEDUCB *cb ) ;

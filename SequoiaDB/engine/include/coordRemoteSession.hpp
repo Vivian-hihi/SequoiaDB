@@ -313,6 +313,8 @@ namespace engine
                                  IRemoteSessionHandler *pHandle = NULL,
                                  IGroupSessionHandler *pGroupHandle = NULL ) ;
 
+         void              release() ;
+
          void              clear() ;
 
          INT32             sendMsg( MsgHeader *pSrcMsg,
