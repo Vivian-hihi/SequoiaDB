@@ -2580,7 +2580,7 @@ namespace engine
 
       CHAR *pQuery = NULL ;
       BSONObj procedures ;
-      spcCoordDownloader downloader( this, cb ) ;
+      spdCoordDownloader downloader( NULL, cb ) ;
       BSONObj runInfo ;
 
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,

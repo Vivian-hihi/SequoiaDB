@@ -47,6 +47,7 @@ namespace engine
       INT32 rc          = SDB_OK ;
       SQL_CB *sqlcb     = pmdGetKRCB()->getSqlCB() ;
       CHAR *sql         = NULL ;
+      BOOLEAN isNeedRollback = FALSE ;
 
       contextID         = -1 ;
 
@@ -62,7 +63,7 @@ namespace engine
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
                           "%s", sql ) ;
 
-      rc = sqlcb->exec( sql, cb, contextID ) ;
+      rc = sqlcb->exec( sql, cb, contextID, isNeedRollback ) ;
 
    done:
       return rc ;

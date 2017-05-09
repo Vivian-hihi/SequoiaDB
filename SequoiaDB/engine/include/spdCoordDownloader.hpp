@@ -42,13 +42,16 @@
 
 namespace engine
 {
-   class rtnCoordCommand ;
+   class _coordCommandBase ;
    class _SDB_RTNCB ;
 
+   /*
+      _spdCoordDownloader define
+   */
    class _spdCoordDownloader : public _spdFuncDownloader
    {
    public:
-      _spdCoordDownloader( rtnCoordCommand *command,
+      _spdCoordDownloader( _coordCommandBase *command,
                            _pmdEDUCB *cb ) ;
       virtual ~_spdCoordDownloader() ;
 
@@ -59,13 +62,13 @@ namespace engine
    private:
       _rtnContextBuf _context ;
       SINT64 _contextID ;
-      rtnCoordCommand *_command ;
+      _coordCommandBase *_command ;
       _pmdEDUCB *_cb ;
       _SDB_RTNCB *_rtnCB ;
    } ;
 
-   typedef class _spdCoordDownloader spcCoordDownloader ;
+   typedef class _spdCoordDownloader spdCoordDownloader ;
 }
 
-#endif
+#endif // SPDCOORDDOWNLOADER_HPP_
 

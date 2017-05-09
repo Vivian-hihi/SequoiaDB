@@ -32,6 +32,7 @@
 *******************************************************************************/
 
 #include "rtnContextShdOfLob.hpp"
+#include "rtnLobStream.hpp"
 #include "pmdEDU.hpp"
 #include "rtnTrace.hpp"
 #include "rtnLob.hpp"

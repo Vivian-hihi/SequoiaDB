@@ -31,7 +31,6 @@
 *******************************************************************************/
 
 #include "pmdProcessor.hpp"
-
 #include "rtn.hpp"
 #include "../bson/bson.h"
 #include "pmdSession.hpp"
@@ -39,10 +38,21 @@
 #include "msgMessage.hpp"
 #include "sqlCB.hpp"
 #include "rtnLob.hpp"
+#include "rtnLocalLobStream.hpp"
 #include "coordCB.hpp"
-#include "rtnCoord.hpp"
-#include "rtnCoordCommands.hpp"
-#include "rtnCoordTransaction.hpp"
+#include "coordFactory.hpp"
+#include "coordMsgOperator.hpp"
+#include "coordInsertOperator.hpp"
+#include "coordUpdateOperator.hpp"
+#include "coordSqlOperator.hpp"
+#include "coordDeleteOperator.hpp"
+#include "coordAggrOperator.hpp"
+#include "coordLobOperator.hpp"
+#include "coordAuthCrtOperator.hpp"
+#include "coordAuthDelOperator.hpp"
+#include "coordQueryOperator.hpp"
+#include "coordInterruptOperator.hpp"
+#include "pmdController.hpp"
 
 using namespace bson ;
 
@@ -119,7 +129,7 @@ namespace engine
                rc = _onKillContextsReqMsg( msg ) ;
                break ;
             case MSG_BS_SQL_REQ :
-               rc = _onSQLMsg( msg, contextID ) ;
+               rc = _onSQLMsg( msg, contextID, getDPSCB() ) ;
                break ;
             case MSG_BS_TRANS_BEGIN_REQ :
                rc = _onTransBeginMsg() ;
@@ -579,11 +589,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdDataProcessor::_onSQLMsg( MsgHeader *msg, INT64 &contextID )
+   INT32 _pmdDataProcessor::_onSQLMsg( MsgHeader *msg,
+                                       INT64 &contextID,
+                                       SDB_DPSCB *dpsCB )
    {
       CHAR *sql = NULL ;
       INT32 rc = SDB_OK ;
       SQL_CB *sqlcb = pmdGetKRCB()->getSqlCB() ;
+      BOOLEAN needRollback = FALSE ;
 
       rc = msgExtractSql( (CHAR*)msg, &sql ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract sql msg failed, rc: %d",
@@ -593,7 +606,19 @@ namespace engine
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "%s", sql ) ;
 
-      rc = sqlcb->exec( sql, eduCB(), contextID ) ;
+      rc = sqlcb->exec( sql, eduCB(), contextID, needRollback ) ;
+      if ( rc )
+      {
+         if ( needRollback )
+         {
+            INT32 rcTmp = rtnTransRollback( eduCB(), dpsCB );
+            if ( rcTmp )
+            {
+               PD_LOG ( PDERROR, "Failed to rollback, rc: %d", rcTmp );
+            }
+         }
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -745,6 +770,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
+      rtnLobStream *pStream = NULL ;
       BSONObj lob ;
       rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
       if ( SDB_OK != rc )
@@ -759,9 +785,16 @@ namespace engine
          MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                              "Option:%s", lob.toString().c_str() ) ;
 
-         rc = rtnOpenLob( lob, header->flags, TRUE, eduCB(),
-                          dpsCB, header->w, contextID,
-                          buffObj ) ;
+         /// pStream will delete in context
+         pStream = SDB_OSS_NEW _rtnLocalLobStream() ;
+         if ( !pStream )
+         {
+            PD_LOG( PDERROR, "Create lob stream failed" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         rc = rtnOpenLob( lob, header->flags, eduCB(), dpsCB, pStream,
+                          header->w, contextID, buffObj ) ;
          /// Jduge
          if ( SDB_OK != rc )
          {
@@ -937,7 +970,6 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
       }
-      eduCB()->clearTransInfo() ;
 
       return SDB_OK ;
    }
@@ -1018,16 +1050,9 @@ namespace engine
       // must call base _onAttach first
       pmdDataProcessor::_onAttach() ;
       // do self
-      _CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
-      if ( NULL != pCoordCB )
+      if ( sdbGetPMDController()->getRSManager() )
       {
-         netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
-         rc = pRouteAgent->addSession( eduCB() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Add coord session failed in session[%s], rc: %d",
-                    getSession()->sessionName(), rc ) ;
-         }
+         sdbGetPMDController()->getRSManager()->registerEDU( eduCB() ) ;
       }
    }
 
@@ -1037,11 +1062,9 @@ namespace engine
       // need the coordSession
       pmdDataProcessor::_onDetach() ;
       // do self
-      _CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
-      if ( eduCB() && pCoordCB )
+      if ( sdbGetPMDController()->getRSManager() )
       {
-         netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
-         pRouteAgent->delSession( eduCB()->getTID() ) ;
+         sdbGetPMDController()->getRSManager()->unregEUD( eduCB() ) ;
       }
    }
 
@@ -1050,11 +1073,9 @@ namespace engine
                                                rtnContextBuf &contextBuff )
    {
       INT32 rc = SDB_OK ;
-
       BOOLEAN needRollback = FALSE ;
-      CoordCB *pCoordcb  = _pKrcb->getCoordCB();
-      rtnCoordProcesserFactory *pProcesserFactory
-                                        = pCoordcb->getProcesserFactory();
+      CoordCB *pCoordCB = _pKrcb->getCoordCB() ;
+      coordResource *pResource = pCoordCB->getResource() ;
 
       if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
       {
@@ -1078,60 +1099,188 @@ namespace engine
 
       switch ( msg->opCode )
       {
-      case MSG_BS_GETMORE_REQ :
-      case MSG_BS_KILL_CONTEXT_REQ :
-         rc = SDB_COORD_UNKNOWN_OP_REQ ;
-         break ;
-      case MSG_BS_QUERY_REQ:
+         case MSG_BS_INTERRUPTE :
          {
-            MsgOpQuery *pQueryMsg   = ( MsgOpQuery * )msg ;
-            CHAR *pQueryName        = pQueryMsg->name ;
-            SINT32 queryNameLen     = pQueryMsg->nameLength ;
-            if ( queryNameLen > 0 && '$' == pQueryName[0] )
-            {
-               rtnCoordCommand *pCmdProcesser = 
-                           pProcesserFactory->getCommandProcesser( pQueryMsg ) ;
-               if ( NULL != pCmdProcesser )
-               {
-                  rc = pCmdProcesser->execute( msg, eduCB(), contextID,
-                                               &contextBuff ) ;
-                  break ;
-               }
-            }
-            /// warning: will go on default when not a command.
+            coordInterrupt opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
          }
-      default:
+         case MSG_BS_MSG_REQ :
          {
-            rtnContextBase *pContext = NULL ;
-            rtnCoordOperator *pOperator = 
-                           pProcesserFactory->getOperator( msg->opCode ) ;
-            needRollback = pOperator->needRollback() ;
-            rc = pOperator->execute( msg, eduCB(), contextID, &contextBuff ) ;
-            // query with return data
-            if ( MSG_BS_QUERY_REQ == msg->opCode 
-                 && ( ((MsgOpQuery*)msg)->flags & FLG_QUERY_WITH_RETURNDATA )
-                 && -1 != contextID 
-                 && NULL != ( pContext = _pRTNCB->contextFind( contextID ) ) )
-            {
-               rc = pContext->getMore( -1, contextBuff, eduCB() ) ;
-               if ( rc || pContext->eof() )
-               {
-                  _pRTNCB->contextDelete( contextID, eduCB() ) ;
-                  contextID = -1 ;
-               }
-
-               if ( SDB_DMS_EOC == rc )
-               {
-                  rc = SDB_OK ;
-               }
-               else if ( rc )
-               {
-                  PD_LOG( PDERROR, "Failed to query with return data, "
-                          "rc: %d", rc ) ;
-               }
-            }
+            coordMsgOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
          }
-         break;
+         case MSG_BS_INSERT_REQ :
+         {
+            coordInsertOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_UPDATE_REQ :
+         {
+            coordUpdateOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_SQL_REQ :
+         {
+            coordSqlOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            /// needRollback call must after opr.execute, because the sql
+            /// command is parsed in execute
+            needRollback = opr.needRollback() ;
+            break ;
+         }
+         case MSG_BS_DELETE_REQ :
+         {
+            coordDeleteOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_TRANS_BEGIN_REQ :
+         {
+            coordTransBegin opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_TRANS_COMMIT_REQ :
+         {
+            coordTransCommit opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_TRANS_ROLLBACK_REQ :
+         {
+            coordTransRollback opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_AGGREGATE_REQ :
+         {
+            coordAggrOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_OPEN_REQ :
+         {
+            coordOpenLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_WRITE_REQ :
+         {
+            coordWriteLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_READ_REQ :
+         {
+            coordReadLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_CLOSE_REQ :
+         {
+            coordCloseLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_LOB_REMOVE_REQ :
+         {
+            coordRemoveLob opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_AUTH_CRTUSR_REQ :
+         {
+            coordAuthCrtOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_AUTH_DELUSR_REQ :
+         {
+            coordAuthDelOperator opr ;
+            rc = opr.init( pResource, eduCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                         opr.getName(), rc ) ;
+            needRollback = opr.needRollback() ;
+            rc = opr.execute( msg, eduCB(), contextID, &contextBuff ) ;
+            break ;
+         }
+         case MSG_BS_QUERY_REQ :
+         {
+            rc = _onQueryReqMsg( msg, contextBuff, contextID, needRollback ) ;
+            break ;
+         }
+         default :
+         {
+            rc = SDB_COORD_UNKNOWN_OP_REQ ;
+            break ;
+         }
       }
 
       if ( rc && contextBuff.size() == 0 )
@@ -1143,12 +1292,143 @@ namespace engine
 
       if ( needRollback && rc )
       {
-         rtnCoordTransRollback rollbackOpr ;
-         rollbackOpr.rollBack( eduCB(), pCoordcb->getRouteAgent() ) ;
+         coordTransRollback rollbackOpr ;
+         INT32 rcTmp = rollbackOpr.init( pResource, eduCB() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                      rollbackOpr.getName(), rcTmp ) ;
+
+         rollbackOpr.rollback( eduCB() ) ;
       }
 
    done:
       return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdCoordProcessor::_onQueryReqMsg( MsgHeader *msg,
+                                             _rtnContextBuf &buffObj,
+                                             INT64 &contextID,
+                                             BOOLEAN &needRollback )
+   {
+      INT32 rc = SDB_OK ;
+      coordResource *pResource = NULL ;
+      coordCommandFactory *pFactory = NULL ;
+      coordOperator *pOpr = NULL ;
+      pResource = pmdGetKRCB()->getCoordCB()->getResource() ;
+
+      CHAR *pCollectionName            = NULL ;
+      INT32 flag                       = 0 ;
+      INT64 numToSkip                  = 0 ;
+      INT64 numToReturn                = 0 ;
+      CHAR *pQuery                     = NULL ;
+      CHAR *pSelector                  = NULL ;
+      CHAR *pOrderby                   = NULL ;
+      CHAR *pHint                      = NULL ;
+
+      rc = msgExtractQuery( (CHAR*)msg, &flag, &pCollectionName,
+                            &numToSkip, &numToReturn, &pQuery, &pSelector,
+                            &pOrderby, &pHint ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse query request, rc: %d", rc ) ;
+         pCollectionName = NULL ;
+         goto error ;
+      }
+
+      /// command
+      if ( pCollectionName && CMD_ADMIN_PREFIX[0] == pCollectionName[0] )
+      {
+         pFactory = coordGetFactory() ;
+         rc = pFactory->create( &pCollectionName[1], pOpr ) ;
+         if ( rc )
+         {
+            if ( SDB_COORD_UNKNOWN_OP_REQ != rc )
+            {
+               PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                       pCollectionName, rc ) ;
+            }
+            goto error ;
+         }
+
+         // add last op info
+         MON_SAVE_CMD_DETAIL( eduCB()->getMonAppCB(), CMD_UNKNOW - 1,
+                              "Command:%s, Match:%s, "
+                              "Selector:%s, OrderBy:%s, Hint:%s, Skip:%llu, "
+                              "Limit:%lld, Flag:0x%08x(%u)",
+                              pCollectionName,
+                              BSONObj(pQuery).toString().c_str(),
+                              BSONObj(pSelector).toString().c_str(),
+                              BSONObj(pOrderby).toString().c_str(),
+                              BSONObj(pHint).toString().c_str(),
+                              numToSkip, numToReturn, flag, flag ) ;
+
+         rc = pOpr->init( pResource, eduCB() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    pOpr->getName(), rc ) ;
+            goto error ;
+         }
+
+         needRollback = pOpr->needRollback() ;
+
+         rc = pOpr->execute( msg, eduCB(), contextID, &buffObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    pOpr->getName(), rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rtnContextBase *pContext = NULL ;
+         coordQueryOperator opr ;
+         rc = opr.init( pResource, eduCB() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Init operator[%s] failed, rc: %d",
+                      opr.getName(), rc ) ;
+         needRollback = opr.needRollback() ;
+         rc = opr.execute( msg, eduCB(), contextID, &buffObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
+            goto error ;
+         }
+
+         // query with return data
+         if ( ( flag & FLG_QUERY_WITH_RETURNDATA ) &&
+              -1 != contextID &&
+              NULL != ( pContext = _pRTNCB->contextFind( contextID ) ) )
+         {
+            rc = pContext->getMore( -1, buffObj, eduCB() ) ;
+            if ( rc || pContext->eof() )
+            {
+               _pRTNCB->contextDelete( contextID, eduCB() ) ;
+               contextID = -1 ;
+            }
+
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+            }
+            else if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to query with return data, "
+                       "rc: %d", rc ) ;
+            }
+         }
+      }
+
+   done:
+      if ( pOpr )
+      {
+         pFactory->release( pOpr ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _pmdCoordProcessor::processMsg( MsgHeader *msg,

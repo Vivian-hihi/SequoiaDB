@@ -39,8 +39,10 @@
 #include "qgmConditionNodeHelper.hpp"
 #include "msgDef.h"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
-#include "rtnCoordDelete.hpp"
+#include "dmsCB.hpp"
+#include "dpsLogWrapper.hpp"
+#include "coordCB.hpp"
+#include "coordDeleteOperator.hpp"
 #include "msgMessage.hpp"
 #include "rtn.hpp"
 #include "qgmUtil.hpp"
@@ -89,6 +91,11 @@ namespace engine
       return ss.str() ;
    }
 
+   BOOLEAN _qgmPlDelete::needRollback() const
+   {
+      return TRUE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLDELETE__EXEC, "_qgmPlDelete::_execute" )
    INT32 _qgmPlDelete::_execute( _pmdEDUCB *eduCB )
    {
@@ -98,22 +105,34 @@ namespace engine
       _SDB_KRCB *krcb = pmdGetKRCB() ;
       SDB_ROLE role = krcb->getDBRole() ;
       CHAR *msg = NULL ;
+      INT32 bufSize = 0 ;
+
       if ( SDB_ROLE_COORD == role )
       {
-         INT32 bufSize = 0 ;
+         CoordCB *pCoord = krcb->getCoordCB() ;
          INT64 contextID = -1 ;
-         rtnCoordDelete del ;
+         rtnContextBuf buff ;
+
+         coordDeleteOperator opr ;
          rc = msgBuildDeleteMsg( &msg, &bufSize,
                                  _collection.toString().c_str(),
                                  0, 0,
-                                 _condition.isEmpty()?
-                                 NULL : &_condition ) ;
-         if ( SDB_OK != rc )
+                                 _condition.isEmpty() ? NULL : &_condition,
+                                 NULL, eduCB ) ;
+         if ( rc )
          {
+            PD_LOG( PDERROR, "Build delete message failed, rc: %d", rc ) ;
             goto error ;
          }
 
-         rc = del.execute( (MsgHeader*)msg, eduCB, contextID, NULL ) ;
+         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
+            goto error ;
+         }
+         rc = opr.execute( (MsgHeader*)msg, eduCB, contextID, &buff ) ;
       }
       else
       {
@@ -130,15 +149,15 @@ namespace engine
                          dmsCB, dpsCB ) ;
       }
 
-      if ( SDB_OK != rc )
+      if ( rc )
       {
          goto error ;
       }
+
    done:
       if ( NULL != msg )
       {
-         SDB_OSS_FREE( msg ) ;
-         msg = NULL ;
+         msgReleaseBuffer( msg, eduCB ) ;
       }
       PD_TRACE_EXITRC( SDB__QGMPLDELETE__EXEC, rc ) ;
       return rc ;

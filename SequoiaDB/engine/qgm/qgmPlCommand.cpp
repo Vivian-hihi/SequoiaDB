@@ -38,13 +38,15 @@
 #include "qgmPlCommand.hpp"
 #include "rtn.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
+#include "dmsCB.hpp"
+#include "rtnCB.hpp"
+#include "dpsLogWrapper.hpp"
+#include "coordCB.hpp"
+#include "coordFactory.hpp"
+#include "coordTransOperator.hpp"
 #include "msgMessage.hpp"
 #include "qgmBuilder.hpp"
-#include "rtnCoordTransaction.hpp"
-#include "rtnCoordDataCommands.hpp"
 #include "rtnCommandList.hpp"
-#include "rtnCoordList.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 #include <sstream>
@@ -164,7 +166,16 @@ namespace engine
       return ss.str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__EXEC, "_qgmPlCommand::_execute" )
+   BOOLEAN _qgmPlCommand::needRollback() const
+   {
+      if ( SQL_GRAMMAR::COMMIT == _commandType )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__EXEC, "_qgmPlCommand::_execute" )
    INT32 _qgmPlCommand::_execute( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLCOMMAND__EXEC ) ;
@@ -185,58 +196,44 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND_EXECONCOORD, "_qgmPlCommand::_executeOnCoord" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND_EXECONCOORD, "_qgmPlCommand::_executeOnCoord" )
    INT32 _qgmPlCommand::_executeOnCoord( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLCOMMAND_EXECONCOORD ) ;
       INT32 rc = SDB_OK ;
 
+      CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;
+      coordCommandFactory *pFactory = coordGetFactory() ;
+      coordOperator *pOpr = NULL ;
+
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
+      const CHAR *pCommand = NULL ;
+      rtnContextBuf buff ;
 
       if ( SQL_GRAMMAR::CRTCS == _commandType )
       {
-         rtnCoordCMDCreateCollectionSpace coord ;
+         pCommand = CMD_NAME_CREATE_COLLECTIONSPACE ;
          BSONObj obj = BSON( FIELD_NAME_NAME << _fullName.toString() ) ;
-         rc = msgBuildQueryMsg( &msg,
-                                &bufSize,
-                                string ( CMD_ADMIN_PREFIX
-                                   CMD_NAME_CREATE_COLLECTIONSPACE ).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+         rc = msgBuildQueryMsg( &msg, &bufSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::DROPCS == _commandType )
       {
-         rtnCoordCMDDropCollectionSpace coord ;
+         pCommand = CMD_NAME_DROP_COLLECTIONSPACE ;
          BSONObj obj = BSON( FIELD_NAME_NAME << _fullName.toString() ) ;
-         rc = msgBuildQueryMsg( &msg,
-                                &bufSize,
-                                string ( CMD_ADMIN_PREFIX
-                                   CMD_NAME_DROP_COLLECTIONSPACE ).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+         rc = msgBuildQueryMsg( &msg, &bufSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTIONSPACE,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::CRTCL == _commandType )
       {
-         rtnCoordCMDCreateCollection coord ;
+         pCommand = CMD_NAME_CREATE_COLLECTION ;
          BSONObj obj ;
          if ( _partition.isEmpty() )
          {
@@ -244,51 +241,28 @@ namespace engine
          }
          else
          {
-            obj = BSON( FIELD_NAME_NAME << _fullName.toString()
-                        << FIELD_NAME_SHARDINGKEY
-                        << _partition ) ;
+            obj = BSON( FIELD_NAME_NAME << _fullName.toString() <<
+                        FIELD_NAME_SHARDINGKEY << _partition ) ;
          }
-         rc = msgBuildQueryMsg( &msg,
-                                &bufSize,
-                                string ( CMD_ADMIN_PREFIX
-                                   CMD_NAME_CREATE_COLLECTION ).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+         rc = msgBuildQueryMsg( &msg, &bufSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::DROPCL == _commandType )
       {
-         rtnCoordCMDDropCollection coord ;
+         pCommand = CMD_NAME_DROP_COLLECTION ;
          BSONObj obj = BSON( FIELD_NAME_NAME << _fullName.toString() ) ;
-         rc = msgBuildQueryMsg( &msg,
-                                &bufSize,
-                                string ( CMD_ADMIN_PREFIX
-                                   CMD_NAME_DROP_COLLECTION ).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+         rc = msgBuildQueryMsg( &msg, &bufSize,
+                                CMD_ADMIN_PREFIX CMD_NAME_DROP_COLLECTION,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::CRTINDEX == _commandType )
       {
-         rtnCoordCMDCreateIndex coord ;
+         pCommand = CMD_NAME_CREATE_INDEX ;
          BSONObjBuilder builder ;
          qgmOPFieldVec::const_iterator itr = _indexColumns.begin() ;
          for ( ; itr != _indexColumns.end(); itr++ )
@@ -301,157 +275,187 @@ namespace engine
          BSONObj index ;
          if ( !_uniqIndex )
          {
-            index = BSON( "key"<<builder.obj()
-                           <<"name"<<_indexName.toString()) ;
+            index = BSON( IXM_FIELD_NAME_KEY << builder.obj() <<
+                          IXM_FIELD_NAME_NAME << _indexName.toString() ) ;
          }
          else
          {
             BSONObjBuilder indexBuilder ;
-            indexBuilder.append( "key", builder.obj()) ;
-            indexBuilder.append("name", _indexName.toString()) ;
-            indexBuilder.appendBool( "unique", TRUE ) ;
+            indexBuilder.append( IXM_FIELD_NAME_KEY, builder.obj()) ;
+            indexBuilder.append( IXM_FIELD_NAME_NAME, _indexName.toString()) ;
+            indexBuilder.appendBool( IXM_FIELD_NAME_UNIQUE, TRUE ) ;
             index = indexBuilder.obj() ;
          }
 
-         BSONObj obj = BSON( FIELD_NAME_COLLECTION << _fullName.toString()
-                             << FIELD_NAME_INDEX << index ) ;
+         BSONObj obj = BSON( FIELD_NAME_COLLECTION << _fullName.toString() <<
+                             FIELD_NAME_INDEX << index ) ;
          rc = msgBuildQueryMsg( &msg, &bufSize,
-                                string ( CMD_ADMIN_PREFIX
-                                         CMD_NAME_CREATE_INDEX ).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+                                CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::DROPINDEX == _commandType )
       {
-         rtnCoordCMDDropIndex coord ;
-         BSONObj obj = BSON( FIELD_NAME_COLLECTION << _fullName.toString()
-                             << FIELD_NAME_INDEX
-                             << BSON("name" << _indexName.toString()
-                                     << "key" << "" )) ;
+         pCommand = CMD_NAME_DROP_INDEX ;
+         BSONObj obj = BSON( FIELD_NAME_COLLECTION << _fullName.toString() <<
+                             FIELD_NAME_INDEX <<
+                                 BSON( IXM_FIELD_NAME_NAME << _indexName.toString() << 
+                                       IXM_FIELD_NAME_KEY << "" )
+                            ) ;
          rc = msgBuildQueryMsg( &msg, &bufSize,
-                                string ( CMD_ADMIN_PREFIX
-                                         CMD_NAME_DROP_INDEX ).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+                                CMD_ADMIN_PREFIX CMD_NAME_DROP_INDEX,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::LISTCS == _commandType )
       {
-         rtnCoordCMDListCollectionSpace coord ;
+         pCommand = CMD_NAME_LIST_COLLECTIONSPACES ;
          BSONObj obj ;
          rc = msgBuildQueryMsg( &msg, &bufSize,
-                                string( CMD_ADMIN_PREFIX
-                                      CMD_NAME_LIST_COLLECTIONSPACES).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+                                CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONSPACES,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::LISTCL == _commandType )
       {
-         rtnCoordCMDListCollection coord ;
+         pCommand = CMD_NAME_LIST_COLLECTIONS ;
          BSONObj obj ;
          rc = msgBuildQueryMsg( &msg, &bufSize,
-                                string( CMD_ADMIN_PREFIX
-                                        CMD_NAME_LIST_COLLECTIONS).c_str(),
-                                0, 0, 0, -1, &obj ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+                                CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONS,
+                                0, 0, 0, -1,
+                                &obj, NULL, NULL, NULL,
+                                eduCB ) ;
       }
       else if ( SQL_GRAMMAR::BEGINTRAN == _commandType )
       {
-         rtnCoordTransBegin coord ;
-         _MsgHeader transMsg ;
-         transMsg.messageLength = sizeof( transMsg ) ;
-         transMsg.opCode = MSG_BS_TRANS_BEGIN_REQ ;
-         transMsg.TID = 0 ;
-         transMsg.routeID.value = 0 ;
+         coordTransBegin opr ;
+         MsgOpTransBegin transMsg ;
+         transMsg.header.messageLength = sizeof( MsgOpTransBegin ) ;
+         transMsg.header.opCode = MSG_BS_TRANS_BEGIN_REQ ;
+         transMsg.header.TID = 0 ;
+         transMsg.header.routeID.value = 0 ;
 
-         rc = coord.execute( ( MsgHeader *)(&transMsg),
-                              eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
+         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         if ( rc )
          {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
+            goto error ;
+         }
+         rc = opr.execute( ( MsgHeader *)&transMsg, eduCB,
+                           _contextID, &buff ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
             goto error ;
          }
       }
       else if ( SQL_GRAMMAR::ROLLBACK == _commandType )
       {
-         rtnCoordTransRollback coord ;
-         rc = msgBuildTransRollbackMsg( &msg, &bufSize ) ;
-         if ( SDB_OK != rc )
+         coordTransRollback opr ;
+         MsgOpTransRollback transMsg ;
+         transMsg.header.messageLength = sizeof( MsgOpTransRollback ) ;
+         transMsg.header.opCode = MSG_BS_TRANS_ROLLBACK_REQ ;
+         transMsg.header.TID = 0 ;
+         transMsg.header.routeID.value = 0 ;
+
+         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         if ( rc )
          {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
             goto error ;
          }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
+         rc = opr.execute( ( MsgHeader *)&transMsg, eduCB,
+                           _contextID, &buff ) ;
+         if ( rc )
          {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
             goto error ;
          }
       }
       else if ( SQL_GRAMMAR::COMMIT == _commandType )
       {
-         rtnCoordTransCommit coord ;
-         rc = msgBuildTransCommitMsg( &msg, &bufSize ) ;
-         if ( SDB_OK != rc )
+         coordTransCommit opr ;
+         MsgOpTransCommit transMsg ;
+         transMsg.header.messageLength = sizeof( MsgOpTransCommit ) ;
+         transMsg.header.opCode = MSG_BS_TRANS_COMMIT_REQ ;
+         transMsg.header.TID = 0 ;
+         transMsg.header.routeID.value = 0 ;
+
+         rc = opr.init( pCoord->getResource(), eduCB ) ;
+         if ( rc )
          {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
             goto error ;
          }
-
-         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
-         if ( SDB_OK != rc )
+         rc = opr.execute( ( MsgHeader *)&transMsg, eduCB,
+                           _contextID, &buff ) ;
+         if ( rc )
          {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    opr.getName(), rc ) ;
             goto error ;
          }
       }
       else
       {
-         PD_LOG( PDERROR, "invalid command type:%d", _commandType ) ;
+         PD_LOG( PDERROR, "Invalid command type:%d", _commandType ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      if ( SDB_OK != rc )
+      if ( rc )
       {
+         PD_LOG( PDERROR, "Build message failed, rc: %d", rc ) ;
          goto error ;
+      }
+
+      if ( pCommand )
+      {
+         rc = pFactory->create( pCommand, pOpr ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Create operator by name[%s] failed, rc: %d",
+                    pCommand, rc ) ;
+            goto error ;
+         }
+         rc = pOpr->init( pCoord->getResource(), eduCB ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Init operator[%s] failed, rc: %d",
+                    pOpr->getName(), rc ) ;
+            goto error ;
+         }
+         SDB_ASSERT( msg, "Msg cant' be NULL" ) ;
+         if ( !msg )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         rc = pOpr->execute( (MsgHeader*)msg, eduCB, _contextID, &buff ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+                    pOpr->getName(), rc ) ;
+            goto error ;
+         }
       }
 
    done:
       if ( NULL != msg )
       {
-         SDB_OSS_FREE( msg ) ;
-         msg = NULL ;
+         msgReleaseBuffer( msg, eduCB ) ;
+      }
+      if ( pOpr )
+      {
+         pFactory->release( pOpr ) ;
       }
       PD_TRACE_EXITRC( SDB__QGMPLCOMMAND_EXECONCOORD, rc ) ;
       return rc ;
@@ -476,15 +480,13 @@ namespace engine
 
       if ( SQL_GRAMMAR::CRTCS == _commandType )
       {
-         rc = rtnCreateCollectionSpaceCommand(
-                                  _fullName.toString().c_str(),
-                                  eduCB, dmsCB, dpsCB ) ;
+         rc = rtnCreateCollectionSpaceCommand( _fullName.toString().c_str(),
+                                               eduCB, dmsCB, dpsCB ) ;
       }
       else if ( SQL_GRAMMAR::DROPCS == _commandType )
       {
-         rc = rtnDropCollectionSpaceCommand(
-                                    _fullName.toString().c_str(),
-                                    eduCB, dmsCB, dpsCB ) ;
+         rc = rtnDropCollectionSpaceCommand( _fullName.toString().c_str(),
+                                             eduCB, dmsCB, dpsCB ) ;
       }
       else if ( SQL_GRAMMAR::CRTCL == _commandType )
       {
@@ -492,23 +494,20 @@ namespace engine
          {
             // pass 0 for attributes, which indicates no-compression for the
             // moment
-            rc = rtnCreateCollectionCommand(
-                        _fullName.toString().c_str(),
-                        0, eduCB, dmsCB, dpsCB ) ;
+            rc = rtnCreateCollectionCommand( _fullName.toString().c_str(),
+                                             0, eduCB, dmsCB, dpsCB ) ;
          }
          else
          {
-            rc = rtnCreateCollectionCommand(
-                            _fullName.toString().c_str(),
-                            _partition, 0,
-                            eduCB, dmsCB, dpsCB ) ;
+            rc = rtnCreateCollectionCommand( _fullName.toString().c_str(),
+                                             _partition, 0,
+                                             eduCB, dmsCB, dpsCB ) ;
          }
       }
       else if ( SQL_GRAMMAR::DROPCL == _commandType )
       {
-         rc = rtnDropCollectionCommand(
-                         _fullName.toString().c_str(),
-                         eduCB, dmsCB, dpsCB ) ;
+         rc = rtnDropCollectionCommand( _fullName.toString().c_str(),
+                                        eduCB, dmsCB, dpsCB ) ;
       }
       else if ( SQL_GRAMMAR::CRTINDEX == _commandType )
       {
@@ -524,30 +523,28 @@ namespace engine
          index = builder.obj() ;
          if ( !_uniqIndex )
          {
-            rc = rtnCreateIndexCommand(
-                        _fullName.toString().c_str(),
-                        BSON("key"<<index<<"name"<<_indexName.toString()),
-                        eduCB, dmsCB, dpsCB ) ;
+            rc = rtnCreateIndexCommand( _fullName.toString().c_str(),
+                                        BSON( IXM_FIELD_NAME_KEY << index <<
+                                              IXM_FIELD_NAME_NAME << _indexName.toString() ),
+                                        eduCB, dmsCB, dpsCB ) ;
          }
          else
          {
             BSONObjBuilder indexBuilder ;
-            indexBuilder.append( "key", index) ;
-            indexBuilder.append("name", _indexName.toString()) ;
-            indexBuilder.appendBool( "unique", TRUE ) ;
-            rc =  rtnCreateIndexCommand(
-                        _fullName.toString().c_str(),
-                        indexBuilder.obj(),
-                        eduCB, dmsCB, dpsCB ) ;
+            indexBuilder.append( IXM_FIELD_NAME_KEY, index ) ;
+            indexBuilder.append( IXM_FIELD_NAME_NAME, _indexName.toString() ) ;
+            indexBuilder.appendBool( IXM_FIELD_NAME_UNIQUE, TRUE ) ;
+            rc =  rtnCreateIndexCommand( _fullName.toString().c_str(),
+                                         indexBuilder.obj(),
+                                         eduCB, dmsCB, dpsCB ) ;
          }
       }
       else if ( SQL_GRAMMAR::DROPINDEX == _commandType )
       {
-         BSONObj identifier = BSON( "name" << _indexName.toString() ) ;
+         BSONObj identifier = BSON( IXM_FIELD_NAME_NAME << _indexName.toString() ) ;
          BSONElement ele = identifier.firstElement() ;
-         rc = rtnDropIndexCommand(
-                          _fullName.toString().c_str(),
-                          ele, eduCB, dmsCB, dpsCB ) ;
+         rc = rtnDropIndexCommand( _fullName.toString().c_str(),
+                                   ele, eduCB, dmsCB, dpsCB ) ;
       }
       else if ( SQL_GRAMMAR::LISTCS == _commandType )
       {
@@ -620,7 +617,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__FETCHNEXT, "_qgmPlCommand::_fetchNext" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__FETCHNEXT, "_qgmPlCommand::_fetchNext" )
    INT32 _qgmPlCommand::_fetchNext( qgmFetchOut &next )
    {
       PD_TRACE_ENTRY( SDB__QGMPLCOMMAND__FETCHNEXT ) ;

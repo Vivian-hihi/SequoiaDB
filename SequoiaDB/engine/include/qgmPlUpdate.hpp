@@ -65,6 +65,8 @@ namespace engine
          return ss.str() ;
       }
 
+      virtual BOOLEAN needRollback() const ;
+
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
 

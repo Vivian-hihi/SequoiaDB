@@ -78,7 +78,9 @@ namespace engine
                                                    rtnContextBuf &buffObj,
                                                    INT64 &contextID ) ;
          INT32                   _onKillContextsReqMsg( MsgHeader *msg ) ;
-         INT32                   _onSQLMsg( MsgHeader *msg, INT64 &contextID ) ;
+         INT32                   _onSQLMsg( MsgHeader *msg,
+                                            INT64 &contextID,
+                                            SDB_DPSCB *dpsCB ) ;
          INT32                   _onTransBeginMsg () ;
          INT32                   _onTransCommitMsg ( SDB_DPSCB *dpsCB ) ;
          INT32                   _onTransRollbackMsg ( SDB_DPSCB *dpsCB ) ;
@@ -127,6 +129,11 @@ namespace engine
       protected:
          virtual void                  _onAttach () ;
          virtual void                  _onDetach () ;
+
+         INT32                   _onQueryReqMsg( MsgHeader *msg,
+                                                 _rtnContextBuf &buffObj,
+                                                 INT64 &contextID,
+                                                 BOOLEAN &needRollback ) ;
 
       private:
          INT32                   _processCoordMsg( MsgHeader *msg, 

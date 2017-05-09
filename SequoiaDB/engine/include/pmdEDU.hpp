@@ -96,7 +96,6 @@ namespace engine
    } ;
 
    class _pmdEDUMgr ;
-   class CoordSession ;
 
    /*
       _pmdEDUCB define
@@ -224,11 +223,12 @@ namespace engine
       CHAR*       getUncompressBuff( UINT32 len ) ;
       INT32       getUncompressBuffLen() const { return _uncompressBuffLen ; }
 
-      void        interrupt () ;
+      void        interrupt ( BOOLEAN onlySelf = FALSE ) ;
       void        disconnect () ;
       void        force () ;
       void        resetInterrupt () ;
       void        resetDisconnect () ;
+      BOOLEAN     isOnlySelfWhenInterrupt() const ;
 
       INT32       printInfo ( EDU_INFO_TYPE type, const CHAR *format, ... ) ;
       const CHAR* getInfo ( EDU_INFO_TYPE type ) ;
@@ -281,7 +281,8 @@ namespace engine
             ++_processEventCount ;
             if ( data._eventType == PMD_EDU_EVENT_TERM )
             {
-               _ctrlFlag |= ( EDU_CTRL_DISCONNECTED|EDU_CTRL_INTERRUPTED );
+               _ctrlFlag |= ( EDU_CTRL_DISCONNECTED|EDU_CTRL_INTERRUPTED ) ;
+               _isInterruptSelf = FALSE ;
             }
             else if ( resetStat )
             {
@@ -350,12 +351,6 @@ namespace engine
       monAppCB * getMonAppCB() { return & _monApplCB ; }
 
       ossEvent & getEvent () { return _event ; }
-
-      void setCoordSession( CoordSession *pSession )
-      {
-         _pCoordSession = pSession;
-      }
-      CoordSession *getCoordSession() { return _pCoordSession ; }
 
       void contextInsert ( SINT64 contextID )
       {
@@ -476,9 +471,6 @@ namespace engine
 
       std::set<SINT64>        _contextList ;
 
-      // coord related variables
-      CoordSession            *_pCoordSession;
-
       UINT64                  _curRequestID ;
 
       // transaction related variables
@@ -510,6 +502,7 @@ namespace engine
       sdbLockItem             _lockInfo[ SDB_LOCK_MAX ] ;
 
       INT32                   _ctrlFlag ;
+      BOOLEAN                 _isInterruptSelf ;
       BOOLEAN                 _writingDB ;
       UINT64                  _writingID ;
       /// aligned memory.

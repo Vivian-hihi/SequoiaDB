@@ -43,6 +43,7 @@
 #include "rtnContextListLob.hpp"
 #include "catContextData.hpp"
 #include "catContextNode.hpp"
+#include "coordContext.hpp"
 #include "dmsCB.hpp"
 #include "rtnIxmKeySorter.hpp"
 #include "../omsvc/omContextTransfer.hpp"

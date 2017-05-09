@@ -184,7 +184,8 @@ namespace engine
          INT32 _openOtherStreams( const CHAR *fullName,
                                   const bson::OID &oid,
                                   INT32 mode,
-                                  _pmdEDUCB *cb ) ;
+                                  _pmdEDUCB *cb,
+                                  UINT32 *pSpecGroupID = NULL ) ;
 
          INT32 _extractMeta( const MsgOpReply *header,
                              bson::BSONObj &obj,
@@ -212,7 +213,8 @@ namespace engine
          INT32 _shardData( const MsgOpLob &header,
                            const RTN_LOB_TUPLES &tuples,
                            BOOLEAN isWrite,
-                           const DONE_LST &doneLst ) ;
+                           const DONE_LST &doneLst,
+                           _pmdEDUCB *cb ) ;
 
          INT32 _handleReadResults( _pmdEDUCB *cb, DONE_LST &doneLst ) ;
 

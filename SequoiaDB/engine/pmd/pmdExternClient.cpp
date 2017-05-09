@@ -39,8 +39,7 @@
    #include "omManager.hpp"
    #include "msgAuth.hpp"
    #include "coordCB.hpp"
-   #include "rtnCoord.hpp"
-   #include "rtnCoordOperator.hpp"
+   #include "coordAuthOperator.hpp"
    #include "msgMessage.hpp"
    #include "netFrame.hpp"
 #endif // SDB_ENGINE
@@ -164,13 +163,19 @@ namespace engine
          INT64 contextID = -1 ;
          rtnContextBuf buf ;
 
-         CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB();
-         rtnCoordProcesserFactory *pProcesserFactory =
-            pCoordcb->getProcesserFactory();
-         rtnCoordOperator *pOperator = NULL ;
-         pOperator = pProcesserFactory->getOperator( pMsg->opCode );
-         rc = pOperator->execute( pMsg, _pEDUCB, contextID, &buf ) ;
+         CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
+         coordResource *pResource = pCoordcb->getResource() ;
 
+         coordAuthOperator opr ;
+         rc = opr.init( pResource, _pEDUCB ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Client[%s]: Init operator[%s] failed, rc: %d",
+                    clientName(), opr.getName(), rc ) ;
+            goto error ;
+         }
+
+         rc = opr.execute( pMsg, _pEDUCB, contextID, &buf ) ;
          // special handling for password verification when there is no
          // addrlist specified. Usually this happen when there is only
          // one coord node before creating the first catalog

@@ -37,7 +37,7 @@
 #define RTNCOORDQUERY_HPP__
 
 #include "rtnCoordOperator.hpp"
-#include "rtnContext.hpp"
+#include "coordContext.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;

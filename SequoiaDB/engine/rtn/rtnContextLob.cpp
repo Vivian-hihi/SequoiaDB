@@ -33,8 +33,7 @@
 
 #include "rtnContextLob.hpp"
 #include "pmd.hpp"
-#include "rtnLocalLobStream.hpp"
-#include "rtnCoordLobStream.hpp"
+#include "rtnLobStream.hpp"
 #include "rtnLobFetcher.hpp"
 #include "rtnTrace.hpp"
 
@@ -42,46 +41,58 @@ using namespace bson ;
 
 namespace engine
 {
+   /*
+      _rtnContextLob implement
+   */
    _rtnContextLob::_rtnContextLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _stream( NULL ),
     _offset( -1 ),
     _readLen( 0 )
    {
-
    }
 
    _rtnContextLob::~_rtnContextLob()
    {
       if ( NULL != _stream && _stream->isOpened() )
       {
-         pmdKRCB *krcb = pmdGetKRCB() ;
-         pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
-         pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
+         pmdEDUCB *cb = pmdGetThreadEDUCB() ;
          _stream->closeWithException( cb ) ;
       }
-
-      SAFE_OSS_DELETE( _stream ) ;
+      if ( _stream )
+      {
+         SDB_OSS_DEL _stream ;
+         _stream = NULL ;
+      }
    }
 
    _dmsStorageUnit* _rtnContextLob::getSU()
    {
-      return NULL == _stream ?
-            NULL : _stream->getSU() ;
+      return NULL == _stream ? NULL : _stream->getSU() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTLOB_OPEN, "_rtnContextLob::open" )
    INT32 _rtnContextLob::open( const BSONObj &lob,
-                               BOOLEAN isLocal,
                                INT32 flags,
                                _pmdEDUCB *cb,
-                               SDB_DPSCB *dpsCB )
+                               SDB_DPSCB *dpsCB,
+                               _rtnLobStream *pStream )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTLOB_OPEN ) ;
       BSONElement mode ;
       BSONElement oid ;
-      BSONElement fullName = lob.getField( FIELD_NAME_COLLECTION ) ;
+      BSONElement fullName ;
+
+      SDB_ASSERT( pStream, "Stream can't be NULL" ) ;
+      if ( !pStream )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      _stream = pStream ;
+
+      fullName = lob.getField( FIELD_NAME_COLLECTION ) ;
       if ( String != fullName.type() )
       {
          PD_LOG( PDERROR, "can not find collection name in lob[%s]",
@@ -105,22 +116,6 @@ namespace engine
          PD_LOG( PDERROR, "invalid mode in meta bsonobj:%s",
                  lob.toString( FALSE, TRUE ).c_str() ) ;
          rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( isLocal )
-      {
-         _stream = SDB_OSS_NEW _rtnLocalLobStream() ;
-      }
-      else
-      {
-         _stream = SDB_OSS_NEW _rtnCoordLobStream() ;
-      }
-
-      if ( NULL == _stream )
-      {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
-         rc = SDB_OOM ;
          goto error ;
       }
 

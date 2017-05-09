@@ -43,6 +43,9 @@ namespace engine
    class _rtnLobStream ;
    class _rtnLobFetcher ;
 
+   /*
+      _rtnContextLob define
+   */
    class _rtnContextLob : public _rtnContextBase
    {
    public:
@@ -54,11 +57,14 @@ namespace engine
       virtual _dmsStorageUnit*  getSU () ;
 
    public:
+      /*
+         Note: The pStream will be takeover in cases both failed and succed
+      */
       INT32 open( const BSONObj &lob,
-                  BOOLEAN isLocal,
                   INT32 flags,
                   _pmdEDUCB *cb,
-                  SDB_DPSCB *dpsCB ) ;
+                  SDB_DPSCB *dpsCB,
+                  _rtnLobStream *pStream ) ;
 
       INT32 read( UINT32 len,
                   SINT64 offset,
@@ -82,9 +88,9 @@ namespace engine
       virtual void  _toString( stringstream &ss ) ;
 
    private:
-      rtnLobStream *_stream ;
-      SINT64 _offset ;
-      UINT32 _readLen ;
+      _rtnLobStream     *_stream ;
+      SINT64            _offset ;
+      UINT32            _readLen ;
    } ;
    typedef class _rtnContextLob rtnContextLob ;
 

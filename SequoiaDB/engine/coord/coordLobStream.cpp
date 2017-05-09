@@ -47,9 +47,21 @@ using namespace bson ;
            SUB_STREAMS::iterator itr = _subs.find( groupID ) ;\
            if ( _subs.end() == itr )\
            {\
-              PD_LOG( PDERROR, "group:%d is not in sub streams", groupID ) ;\
-              rc = SDB_SYS ;\
-              goto error ;\
+              rc = _openOtherStreams( getFullName(), getOID(),\
+                                      _getMode(), cb, &groupID ) ;\
+              if ( rc )\
+              {\
+                  PD_LOG( PDERROR, "Open sub stream in group[%d] failed, "\
+                          "rc: %d", groupID, rc ) ; \
+                  goto error ;\
+              }\
+              itr = _subs.find( groupID ) ;\
+              if ( _subs.end() == itr )\
+              {\
+                 PD_LOG( PDERROR, "group:%d is not in sub streams", groupID ) ;\
+                 rc = SDB_SYS ;\
+                 goto error ;\
+              }\
            }\
            s = &( itr->second ) ;\
         } while ( FALSE )
@@ -211,12 +223,6 @@ namespace engine
          goto error ;
       }
 
-      rc = _openOtherStreams( fullName, oid, mode, cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to open other streams:%d", rc ) ;
-         goto error ;
-      }
    done:
       PD_TRACE_EXITRC( COORD_LOBSTREAM_OPENSUBSTREAMS, rc ) ;
       return rc ;
@@ -228,7 +234,8 @@ namespace engine
    INT32 _coordLobStream::_openOtherStreams( const CHAR *fullName,
                                              const bson::OID &oid,
                                              INT32 mode,
-                                             _pmdEDUCB *cb )
+                                             _pmdEDUCB *cb,
+                                             UINT32 *pSpecGroupID )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
@@ -269,8 +276,17 @@ namespace engine
       {
          INT32 tag = RETRY_TAG_NULL ;
          _clearMsgData() ;
-         _cataInfo->getGroupLst( gpLst ) ;
-         SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
+         CoordGroupList sendGrpLst ;
+
+         if ( !pSpecGroupID )
+         {
+            _cataInfo->getGroupLst( gpLst ) ;
+            SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
+         }
+         else
+         {
+            gpLst[ *pSpecGroupID ] = *pSpecGroupID ;
+         }
 
          rc = coordGroupList2GroupPtr( _pResource, cb, gpLst,
                                        _mapGroupInfo, FALSE ) ;
@@ -302,16 +318,17 @@ namespace engine
             /// add group info
             pSel->addGroupPtr2Map( itMap->second ) ;
 
-            rc = _groupSession.sendMsg( (MsgHeader*)&header,
-                                        itr->first,
-                                        &iov,
-                                        NULL ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to send open msg to group[%d], rc: %d",
-                       itr->first, rc ) ;
-               goto error ;
-            }
+            sendGrpLst[ itr->first ] = itr->second ;
+         }
+
+         rc = _groupSession.sendMsg( (MsgHeader*)&header,
+                                     sendGrpLst,
+                                     &iov ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to send open msg to groups, rc: %d",
+                    rc ) ;
+            goto error ;
          }
 
          rc = _getReply( cb, FALSE, tag ) ;
@@ -675,7 +692,7 @@ namespace engine
 
          if ( reshard )
          {
-            rc = _shardData( header, tuples, TRUE, doneLst ) ;
+            rc = _shardData( header, tuples, TRUE, doneLst, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -780,7 +797,7 @@ namespace engine
 
          if ( needReshard )
          {
-            rc = _shardData( header, tuples, FALSE, doneLst ) ;
+            rc = _shardData( header, tuples, FALSE, doneLst, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -1266,7 +1283,7 @@ namespace engine
          header.version = _cataInfo->getVersion() ;
          if ( reshard )
          {
-            rc = _shardData( header, tuples, TRUE, doneLst ) ;
+            rc = _shardData( header, tuples, TRUE, doneLst, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -1493,14 +1510,6 @@ namespace engine
          goto error ;
       }
 
-      /// main stream was opened before, the meta piece may be synced
-      ///  to other group. we open all streams as normal.
-      rc = _openOtherStreams( getFullName(), getOID(), _getMode(), cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to open sub streams:%d", rc ) ;
-         goto error ;
-      }
    done:
       PD_TRACE_EXITRC( COORD_LOBSTREAM_REOPENSUBSTREAMS, rc ) ;
       return rc ;
@@ -1512,7 +1521,8 @@ namespace engine
    INT32 _coordLobStream::_shardData( const MsgOpLob &header,
                                       const RTN_LOB_TUPLES &tuples,
                                       BOOLEAN isWrite,
-                                      const DONE_LST &doneLst )
+                                      const DONE_LST &doneLst,
+                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( COORD_LOBSTREAM_SHARDDATA ) ;

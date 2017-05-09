@@ -65,8 +65,8 @@ namespace engine
       MON_SAVE_OP_DETAIL( cb->getMonAppCB(), pMsg->opCode,
                           "Option:%s", obj.toString().c_str() ) ;
 
-      rc = rtnOpenLob( obj, header->flags, FALSE, cb,
-                       NULL, 0, contextID, *buf ) ;
+      rc = rtnOpenLob( obj, header->flags, cb, NULL, NULL,
+                       0, contextID, *buf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob:%s, rc:%d",

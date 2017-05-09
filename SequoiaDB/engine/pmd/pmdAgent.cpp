@@ -34,30 +34,13 @@
    Last Changed =
 
 *******************************************************************************/
-#include "core.hpp"
-#include <stdio.h>
-#include "pd.hpp"
-#include "pmdEDUMgr.hpp"
+
 #include "pmdEDU.hpp"
-#include "msgMessage.hpp"
-#include "oss.hpp"
-#include "ossSocket.hpp"
-#include "ossMem.hpp"
-#include "ossUtil.hpp"
-#include "rtn.hpp"
-#include "../bson/bson.h"
 #include "pmd.hpp"
-#include "restAdaptorold.hpp"
-#include "rtnCoord.hpp"
-#include "rtnCoordCommands.hpp"
-#include "coordSession.hpp"
 #include "pmdSession.hpp"
+#include "pmdProcessor.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "pmdCB.hpp"
-#include "pmdProcessor.hpp"
-
-using namespace bson ;
 
 namespace engine
 {

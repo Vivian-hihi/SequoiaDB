@@ -148,6 +148,7 @@ namespace engine
       _status           = PMD_EDU_UNKNOW ;
       _eduType          = type ;
       _ctrlFlag         = 0 ;
+      _isInterruptSelf  = FALSE ;
       _writingDB        = FALSE ;
       _writingID        = 0 ;
       _processEventCount= 0 ;
@@ -180,7 +181,6 @@ namespace engine
 #endif // _LINUX
 
 #if defined ( SDB_ENGINE )
-      _pCoordSession    = NULL ;
       _relatedTransLSN  = DPS_INVALID_LSN_OFFSET ;
       _pTransNodeMap    = NULL ;
       _transRC          = SDB_OK ;
@@ -243,6 +243,7 @@ namespace engine
       _passWord = "" ;
 
       _ctrlFlag = 0 ;
+      _isInterruptSelf = FALSE ;
       resetLsn() ;
       writingDB( FALSE ) ;
       releaseAlignedBuff() ;
@@ -337,9 +338,10 @@ namespace engine
       _eduType = type ;
    }
 
-   void _pmdEDUCB::interrupt ()
+   void _pmdEDUCB::interrupt( BOOLEAN onlySelf )
    {
       _ctrlFlag |= EDU_CTRL_INTERRUPTED ;
+      _isInterruptSelf = onlySelf ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DISCONNECT, "_pmdEDUCB::disconnect" )
@@ -366,6 +368,7 @@ namespace engine
    void _pmdEDUCB::resetInterrupt ()
    {
       _ctrlFlag &= ~EDU_CTRL_INTERRUPTED ;
+      _isInterruptSelf = FALSE ;
    }
 
    void _pmdEDUCB::resetDisconnect ()
@@ -781,6 +784,7 @@ namespace engine
          if ( _pClientSock->isClosed() )
          {
             _ctrlFlag |= ( EDU_CTRL_INTERRUPTED | EDU_CTRL_DISCONNECTED ) ;
+            _isInterruptSelf = FALSE ;
             ret = TRUE ;
          }
          else
@@ -789,11 +793,13 @@ namespace engine
             MsgHeader header ;
             INT32 rc = _pClientSock->recv( (CHAR*)&header , sizeof(header),
                                            receivedLen, 0, MSG_PEEK, TRUE, TRUE ) ;
-            if ( ( rc >= (INT32)sizeof(header)
-                   && MSG_BS_DISCONNECT == header.opCode )
-                 || SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc )
+            if ( ( rc >= (INT32)sizeof(header) &&
+                   MSG_BS_DISCONNECT == header.opCode ) ||
+                 SDB_NETWORK_CLOSE == rc ||
+                 SDB_NETWORK == rc )
             {
                _ctrlFlag |= ( EDU_CTRL_INTERRUPTED | EDU_CTRL_DISCONNECTED ) ;
+               _isInterruptSelf = FALSE ;
                ret = TRUE ;
             }
             else if ( rc >= (INT32)sizeof(header) &&
@@ -801,6 +807,8 @@ namespace engine
                         MSG_BS_INTERRUPTE_SELF == header.opCode ) )
             {
                _ctrlFlag |= EDU_CTRL_INTERRUPTED ;
+               _isInterruptSelf = MSG_BS_INTERRUPTE_SELF == header.opCode ?
+                                  TRUE : FALSE ;
                ret = TRUE ;
             }
          }
@@ -809,6 +817,11 @@ namespace engine
       PD_TRACE1 ( SDB__PMDEDUCB_ISINT, PD_PACK_INT(ret) );
       PD_TRACE_EXIT ( SDB__PMDEDUCB_ISINT );
       return ret ;
+   }
+
+   BOOLEAN _pmdEDUCB::isOnlySelfWhenInterrupt() const
+   {
+      return _isInterruptSelf ;
    }
 
    BOOLEAN _pmdEDUCB::isDisconnected ()

@@ -40,14 +40,12 @@
 
 #include "qgmPlan.hpp"
 #include "rtn.hpp"
-#include "rtnCoordQuery.hpp"
 #include "msg.h"
 #include "qgmSelector.hpp"
 
 namespace engine
 {
    struct _qgmConditionNode ;
-   class netMultiRouteAgent ;
 
    class _qgmPlScan : public _qgmPlan
    {
@@ -100,9 +98,6 @@ namespace engine
       BSONObj _hint ;
       INT64 _skip ;
       INT64 _return ;
-
-      /// if it is a coord
-      rtnCoordQuery _coordQuery ;
 
       /// if it is a data
       SDB_DMSCB *_dmsCB ;

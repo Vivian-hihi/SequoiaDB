@@ -338,6 +338,10 @@ namespace engine
 
    _pmdRemoteSession::~_pmdRemoteSession()
    {
+      if ( _pSite )
+      {
+         clear() ;
+      }
       _pAgent        = NULL ;
       _pHandle       = NULL ;
       _pSite         = NULL ;
@@ -799,6 +803,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Session[%s] onSendConnect failed, rc: %d",
                     _pEDUCB->toString().c_str(), rc ) ;
+            _pSite->removeNodeNet( pSub->getNodeIDUInt() ) ;
             goto error ;
          }
       }
@@ -841,6 +846,7 @@ namespace engine
                {
                   PD_LOG( PDERROR, "Session[%s] onSendConnect failed, rc: %d",
                           _pEDUCB->toString().c_str(), rc ) ;
+                  _pSite->removeNodeNet( pSub->getNodeIDUInt() ) ;
                   goto error ;
                }
             }
@@ -956,8 +962,17 @@ namespace engine
 
          if ( _pEDUCB->isInterrupted() )
          {
-            rc = SDB_APP_INTERRUPT ;
-            goto error ;
+            /// If only interrupt self, stop sub session and
+            /// need to recv the replys
+            if ( _pEDUCB->isOnlySelfWhenInterrupt() )
+            {
+               stopSubSession() ;
+            }
+            else
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
          }
 
          if ( !waitAll && replyNum > 0 )
@@ -1055,7 +1070,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdRemoteSession::postMsg( MsgHeader * pMsg, pmdSubSession * pSub )
+   INT32 _pmdRemoteSession::postMsg( MsgHeader *pMsg, pmdSubSession *pSub )
    {
       INT32 rc = SDB_OK ;
 
@@ -1096,6 +1111,7 @@ namespace engine
    {
       _pEDUCB = NULL ;
       _pAgent = NULL ;
+      _pLatch = NULL ;
 
       ossMemset( _assitNodeBuff, 0, sizeof( _assitNodeBuff ) ) ;
 
@@ -1117,6 +1133,11 @@ namespace engine
       SDB_ASSERT( 0 == _mapSession.size(), "Has session not removed" ) ;
       SDB_ASSERT( NULL == _pEDUCB, "EDU is not NULL" ) ;
       _pEDUCB = NULL ;
+
+      if ( _pLatch )
+      {
+         SDB_OSS_DEL _pLatch ;
+      }
    }
 
    void _pmdRemoteSessionSite::addSubSession( pmdSubSession *pSub )
@@ -1162,7 +1183,20 @@ namespace engine
       }
       else
       {
+         if ( !_pLatch )
+         {
+            _pLatch = SDB_OSS_NEW ossSpinSLatch ;
+            SDB_ASSERT( _pLatch, "Alloc latch failed" ) ;
+         }
+         if ( _pLatch )
+         {
+            _pLatch->get() ;
+         }
          _assitNodes.insert( nodeID ) ;
+         if ( _pLatch )
+         {
+            _pLatch->release() ;
+         }
       }
       return pos ;
    }
@@ -1179,24 +1213,47 @@ namespace engine
       }
       else
       {
+         if ( _pLatch )
+         {
+            _pLatch->get() ;
+         }
          _assitNodes.erase( nodeID ) ;
+         if ( _pLatch )
+         {
+            _pLatch->release() ;
+         }
       }
    }
 
    BOOLEAN _pmdRemoteSessionSite::existNode( UINT16 nodeID )
    {
+      BOOLEAN bFound = FALSE ;
+
       for ( UINT32 i = 0 ; i < PMD_SITE_NODEID_BUFF_SIZE ; ++i )
       {
          if ( _assitNodeBuff[ i ]._nodeID == nodeID )
          {
-            return TRUE ;
+            bFound = TRUE ;
+            goto done ;
          }
+      }
+
+      /// This is called by net thread, so need to use latch for _assitNodes
+      if ( _pLatch )
+      {
+         _pLatch->get_shared() ;
       }
       if ( _assitNodes.count( nodeID ) > 0 )
       {
-         return TRUE ;
+         bFound = TRUE ;
       }
-      return FALSE ;
+      if ( _pLatch )
+      {
+         _pLatch->release_shared() ;
+      }
+
+   done:
+      return bFound ;
    }
 
    void _pmdRemoteSessionSite::handleClose( const NET_HANDLE & handle,

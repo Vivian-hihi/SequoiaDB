@@ -8050,10 +8050,11 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
       // get key
       key = bson_iterator_key( &it ) ;
       // get value
-      if ( strcmp( FIELD_NAME_PREFERED_INSTANCE, key ) )
+      if ( 0 != strcmp( FIELD_NAME_PREFERED_INSTANCE, key ) )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         // append element
+         bson_append_element( &newObj, NULL, &it ) ;
+         continue ;
       }
 
       switch ( bson_iterator_type( &it ) )
@@ -8086,7 +8087,6 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
       }
       // append element
       BSON_APPEND( newObj, key, value, int ) ;
-      break ;
    } // while
 
    BSON_FINISH ( newObj ) ;

@@ -37,14 +37,22 @@
 #include "rtn.hpp"
 #include "dmsLobDef.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
+   class _rtnLobStream ;
+
    /// interfaces for stream
+
+   /*
+      Note: The pStream will be takeover in cases both failed and succed
+   */
    INT32 rtnOpenLob( const BSONObj &lob,
                      SINT32 flags,
-                     BOOLEAN isLocal,
                      _pmdEDUCB *cb,
                      SDB_DPSCB *dpsCB,
+                     _rtnLobStream *pStream,
                      SINT16 w,
                      SINT64 &contextID,
                      rtnContextBuf &buffObj ) ;

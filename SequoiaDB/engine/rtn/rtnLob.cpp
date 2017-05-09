@@ -205,9 +205,9 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNOPENLOB, "rtnOpenLob" )
    INT32 rtnOpenLob( const BSONObj &lob,
                      SINT32 flags,
-                     BOOLEAN isLocal,
                      _pmdEDUCB *cb,
                      SDB_DPSCB *dpsCB,
+                     _rtnLobStream *pStream,
                      SINT16 w,
                      SINT64 &contextID,
                      rtnContextBuf &buffObj )
@@ -227,7 +227,9 @@ namespace engine
       }
 
       SDB_ASSERT( NULL != lobContext, "can not be null" ) ;
-      rc = lobContext->open( lob, isLocal, flags, cb, dpsCB ) ;
+      rc = lobContext->open( lob, flags, cb, dpsCB, pStream ) ;
+      /// when called open function, the pStream has been take over
+      pStream = NULL ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to open lob context, rc:%d", rc ) ;
@@ -250,6 +252,10 @@ namespace engine
       }
 
    done:
+      if ( pStream )
+      {
+         SDB_OSS_DEL pStream ;
+      }
       PD_TRACE_EXITRC( SDB_RTNOPENLOB, rc ) ;
       return rc ;
    error:

@@ -55,12 +55,10 @@
 #include "dmsCB.hpp"
 #include "rtnQueryOptions.hpp"
 #include "dmsLobDef.hpp"
-#include "rtnLocalLobStream.hpp"
 #include "rtnContextBuff.hpp"
 #include "rtnQueryModifier.hpp"
 #include "rtnFetchBase.hpp"
 #include "utilMap.hpp"
-#include "coordDef.hpp"
 
 using namespace bson ;
 
@@ -74,8 +72,8 @@ namespace engine
    class _SDB_DMSCB ;
    class _dmsMBContext ;
    class _rtnContextBase ;
-   class netMultiRouteAgent ;
 
+   #define RTN_CONTEXT_GETNUM_ONCE              (1000)
    /*
       _rtnPrefWatcher define
    */
@@ -568,184 +566,7 @@ namespace engine
    } ;
    typedef _rtnContextDump rtnContextDump ;
 
-   /*
-      _coordOrderKey define
-   */
-   class _coordOrderKey : public SDBObject
-   {
-      typedef std::vector< BSONElement >  OrderKeyList;
-      typedef std::vector< BSONElement >  OrderKeyEleList;
-      typedef std::vector< BSONObj >      OrderKeyObjList;
-      public:
-         _coordOrderKey( const _coordOrderKey &orderKey ) ;
-         _coordOrderKey() ;
-
-      public:
-         BOOLEAN operator<( const _coordOrderKey &rhs ) const ;
-         void clear() ;
-         void setOrderBy( const BSONObj &orderBy ) ;
-         INT32 generateKey( const BSONObj &record,
-                           _ixmIndexKeyGen *keyGen ) ;
-
-      private:
-         BSONObj              _orderBy ;
-         ixmHashValue         _hash ;
-         BSONObj              _keyObj ;
-         BSONElement          _arrEle ;
-   } ;
-   typedef _coordOrderKey coordOrderKey ;
-
-   /*
-      coordSubContext define
-   */
-   class _coordSubContext : public SDBObject
-   {
-      public:
-         _coordSubContext ( MsgRouteID routeID,
-                           SINT64 contextID,
-                           _ixmIndexKeyGen *keyGen ) ;
-         ~_coordSubContext () ;
-
-      public:
-
-         void     appendData ( MsgOpReply *pReply ) ;
-         void     clearData () ;
-         SINT64   getContextID() ;
-         MsgRouteID getRouteID() ;
-         CHAR*    front () ;
-         INT32    pop() ;
-         INT32    popN( SINT32 num ) ;
-         INT32    popAll() ;
-         SINT32   getRecordNum() ;
-         UINT32   getRemainLen() ;
-         INT32    getOrderKey( coordOrderKey &orderKey,
-                              _ixmIndexKeyGen *keyGen ) ;
-         void     setOrderBy( const BSONObj &orderBy ) ;
-
-      private:
-         _coordSubContext () ;
-         _coordSubContext ( const _coordSubContext &srcContext ) ;
-
-      private:
-         MsgRouteID           _routeID ;
-         SINT64               _contextID ;
-         INT32                _curOffset ;
-         MsgOpReply           *_pData ;
-         coordOrderKey        _orderKey ;
-         BSONObj              _orderBy ;
-         BOOLEAN              _isOrderKeyChange ;
-         SINT32               _recordNum ;
-         _ixmIndexKeyGen      *_keyGen ;
-
-   } ;
-   typedef _coordSubContext coordSubContext ;
-
-   typedef std::multimap< coordOrderKey, coordSubContext* > SUB_CONTEXT_MAP ;
-   typedef _utilMap< UINT64, coordSubContext*, 20 >         EMPTY_CONTEXT_MAP ;
-   typedef _utilMap< UINT64, MsgRouteID, 20 >               PREPARE_NODES_MAP ;
-
-   /*
-      _rtnContextCoord define
-   */
-   class _rtnContextCoord : public _rtnContextBase
-   {
-      public:
-         _rtnContextCoord ( INT64 contextID, UINT64 eduID,
-                           BOOLEAN preRead = TRUE ) ;
-         virtual ~_rtnContextCoord () ;
-
-         INT32    addSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
-         INT32    addSubContext ( MsgOpReply *pReply, BOOLEAN &takeOver ) ;
-
-         void     addSubDone( _pmdEDUCB *cb ) ;
-
-         INT32    open( const BSONObj &orderBy,
-                        const BSONObj &selector,
-                        INT64 numToReturn = -1,
-                        INT64 numToSkip = 0,
-                        BOOLEAN preRead = TRUE ) ;
-         INT32    reopen () ;
-
-         void     killSubContexts( _pmdEDUCB *cb ) ;
-
-         INT64    getSkipNum() const { return _numToSkip ; }
-         void     setSkipNum( INT64 numToSkip ) { _numToSkip = numToSkip ; }
-         INT64    getLimitNum() const { return _numToReturn ; }
-         void     setLimitNum( INT64 limitNum ) { _numToReturn = limitNum ; }
-
-         virtual void     getErrorInfo( INT32 rc,
-                                        pmdEDUCB *cb,
-                                        rtnContextBuf &buffObj ) ;
-
-         virtual UINT32   getCachedRecordNum() ;
-
-      public:
-
-         virtual RTN_CONTEXT_TYPE getType () const ;
-         virtual _dmsStorageUnit* getSU () { return NULL ; }
-
-         OSS_INLINE  BOOLEAN requireOrder () const ;
-
-         void enablePreRead() { _preRead = TRUE ; }
-         void disablePreRead() { _preRead = FALSE ; }
-
-      protected:
-         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
-         virtual void   _toString( stringstream &ss ) ;
-
-      private:
-         INT32    _getSubData () ;
-         INT32    _getSubDataNormal () ;
-         INT32    _getSubDataByOrder () ;
-         INT32    _appendSubData ( CHAR *pData ) ;
-
-         void     _delPrepareContext( const MsgRouteID &routeID ) ;
-
-         INT32    _send2EmptyNodes( _pmdEDUCB *cb ) ;
-         INT32    _getPrepareNodesData( _pmdEDUCB *cb, BOOLEAN waitAll ) ;
-
-         INT32    _reOrderSubContext() ;
-
-      private:
-         // rest number of records to expect, -1 means select all
-         SINT64                     _numToReturn ;
-         // rest number of records need to skip
-         SINT64                     _numToSkip ;
-
-         SUB_CONTEXT_MAP            _subContextMap ;
-         EMPTY_CONTEXT_MAP          _emptyContextMap ;
-         EMPTY_CONTEXT_MAP          _prepareContextMap ;
-         PREPARE_NODES_MAP          _prepareNodeMap ;
-
-         netMultiRouteAgent         *_netAgent ;
-
-         coordOrderKey              _emptyKey ;
-         BSONObj                    _orderBy ;
-         BOOLEAN                    _preRead ;
-
-         _ixmIndexKeyGen            *_keyGen ;
-
-         BOOLEAN                    _needReOrder ;
-         /// error info
-         ROUTE_RC_MAP               _nokRC ;
-   } ;
-   typedef _rtnContextCoord rtnContextCoord ;
-
-   /*
-      _rtnContextCoord OSS_INLINE functions
-   */
-   OSS_INLINE BOOLEAN _rtnContextCoord::requireOrder () const
-   {
-      if ( _orderBy.isEmpty() ||
-           _subContextMap.size() + _emptyContextMap.size() +
-           _prepareContextMap.size() <= 1 )
-      {
-         return FALSE ;
-      }
-      return TRUE ;
-   }
-
-   typedef class _rtnContextBase rtnContext ;
+   typedef _rtnContextBase rtnContext ;
 
    /*
       _rtnContextSP OSS_INLINE functions
@@ -772,6 +593,32 @@ namespace engine
 
    typedef class _rtnContextSP rtnContextSP ;
 
+   /*
+      _coordOrderKey define
+   */
+   class _coordOrderKey : public SDBObject
+   {
+      typedef std::vector< BSONElement >  OrderKeyList;
+      typedef std::vector< BSONElement >  OrderKeyEleList;
+      typedef std::vector< BSONObj >      OrderKeyObjList;
+      public:
+         _coordOrderKey( const _coordOrderKey &orderKey ) ;
+         _coordOrderKey() ;
+
+      public:
+         BOOLEAN operator<( const _coordOrderKey &rhs ) const ;
+         void clear() ;
+         void setOrderBy( const BSONObj &orderBy ) ;
+         INT32 generateKey( const BSONObj &record,
+                           _ixmIndexKeyGen *keyGen ) ;
+
+      private:
+         BSONObj              _orderBy ;
+         ixmHashValue         _hash ;
+         BSONObj              _keyObj ;
+         BSONElement          _arrEle ;
+   } ;
+   typedef _coordOrderKey coordOrderKey ;
 
    /*
       _rtnSubCLBuf
