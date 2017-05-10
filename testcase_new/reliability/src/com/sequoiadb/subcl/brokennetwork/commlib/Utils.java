@@ -126,65 +126,71 @@ public class Utils {
     }
 
     public static void checkConsistency(GroupWrapper cataGroup) throws ReliabilityException {
-        cataGroup.refresh();
-        List<String> urls = cataGroup.getAllUrls();
-        List<List<BSONObject>> resList = new ArrayList<List<BSONObject>>();
-        // get catalog info from all catalog nodes
-        for (String url : urls) {
-            Sequoiadb cataDB = new Sequoiadb(url, "", "");
-            DBCollection cl = cataDB.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
-            DBCursor cursor = cl.query(null, null, (BSONObject) JSON.parse("{ _id: 1 }"), null);
-            List<BSONObject> res = new ArrayList<BSONObject>();
-            while (cursor.hasNext()) {
-                res.add(cursor.getNext());
+        int checkTimes = 20;
+        int checkInterval = 500; // 0.5s
+        boolean success = false;
+        String lastErrMsg = null;
+        for (int t = 0; t < checkTimes; ++t) {
+            success = true;
+            cataGroup.refresh();
+            List<String> urls = cataGroup.getAllUrls();
+            List<List<BSONObject>> resList = new ArrayList<List<BSONObject>>();
+            // get catalog info from all catalog nodes
+            for (String url : urls) {
+                Sequoiadb cataDB = new Sequoiadb(url, "", "");
+                DBCollection cl = cataDB.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
+                DBCursor cursor = cl.query(null, null, (BSONObject) JSON.parse("{ _id: 1 }"), null);
+                List<BSONObject> res = new ArrayList<BSONObject>();
+                while (cursor.hasNext()) {
+                    res.add(cursor.getNext());
+                }
+                cursor.close();
+                cataDB.close();
+                resList.add(res);
             }
-            cursor.close();
-            cataDB.close();
-            resList.add(res);
-        }
-        // check catalog count
-        if (resList.get(0).size() != resList.get(1).size() || resList.get(1).size() != resList.get(2).size()) {
-            System.out.println("catalog count is different between catalog nodes! ");
-            System.out.println(resList.get(0).size() + " " + resList.get(1).size() + " " + resList.get(2).size());
-            throw new ReliabilityException("checkConsistency failed. ");
-        }
-        // check catalog content
-        List<BSONObject> srcList = resList.get(0);
-        for (int i = 1; i < resList.size(); i++) {
-            List<BSONObject> dstList = resList.get(i);
-            for (int j = 0; j < srcList.size(); j++) {
-                if (!srcList.get(j).equals(dstList.get(j))) {
-                    System.out.println("records below are different! ");
-                    System.out.println(urls.get(0) + " : " + srcList.get(j));
-                    System.out.println(urls.get(i) + " : " + dstList.get(j));
-                    throw new ReliabilityException("checkConsistency failed. ");
+            // check catalog count
+            if (resList.get(0).size() != resList.get(1).size() || resList.get(1).size() != resList.get(2).size()) {
+                lastErrMsg = "";
+                lastErrMsg += "catalog count is different between catalog nodes! \n";
+                lastErrMsg += resList.get(0).size() + " " + resList.get(1).size() + " " + resList.get(2).size() + "\n";
+                lastErrMsg += "checkConsistency failed. see details on console";
+                success = false;
+            }
+            // check catalog content
+            List<BSONObject> srcList = resList.get(0);
+            for (int i = 1; i < resList.size(); i++) {
+                List<BSONObject> dstList = resList.get(i);
+                for (int j = 0; j < srcList.size(); j++) {
+                    if (!srcList.get(j).equals(dstList.get(j))) {
+                        lastErrMsg = "";
+                        lastErrMsg += "records below are different! ";
+                        lastErrMsg += urls.get(0) + " : " + srcList.get(j);
+                        lastErrMsg += urls.get(i) + " : " + dstList.get(j);
+                        lastErrMsg += "checkConsistency failed. see details on console";
+                        success = false;
+                        break;
+                    }
+                }
+                if (!success) {
+                    break;
                 }
             }
+            
+            if (success) {
+                break;
+            }
+            
+            try {
+                Thread.sleep(checkInterval);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        
+        if (!success) {
+            throw new ReliabilityException(lastErrMsg);
         }
     }
-    
-//    public static void killRemainContext(Sequoiadb db) {
-//        String cataPriNodeName = db.getReplicaGroup("SYSCatalogGroup").getMaster().getNodeName();
-//        DBCursor cursor = db.getSnapshot(Sequoiadb.SDB_SNAP_CONTEXTS, "{ NodeName: '" + cataPriNodeName + "' }", null, null);
-//        while (cursor.hasNext()) {
-//            System.out.println(cursor.getNext());
-//            boolean isRemainSession = false;
-//            BasicBSONList contexts = (BasicBSONList)(cursor.getNext().get("Contexts"));
-//            for (int i = 0; i < contexts.size(); ++i) {
-//                BSONObject context = (BSONObject)contexts.get(i);
-//                if (!((String)context.get("Type")).equals("DUMP")) {
-//                    isRemainSession = true;
-//                } else {
-//                    System.out.println(context.get("Type"));
-//                }
-//            }
-//            
-//            if (isRemainSession) {
-//                db.forceSession(); // no such interface named "forceSession"
-//            }
-//        }
-//        cursor.close();
-//    }
 
     public static String getKeyStack(Exception e, Object classObj) {
         StringBuffer stackBuffer = new StringBuffer();
