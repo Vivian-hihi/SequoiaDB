@@ -82,7 +82,7 @@ function readyCL( csName, mainclName, subclName )
 	commDropCL( db, csName, mainclName, true, true, "drop main cl in begin" );	
 	commDropCL( db, csName, subclName , true, true, "drop sub cl in begin" );	
 	
-	var mainOpt = {ShardingKey:{mainSk:1}, ShardingType:"range", IsMainCL:true };
+	var mainOpt = {ShardingKey:{mainSk:1}, ShardingType:"range", IsMainCL:true, ReplSize:0 };
 	var subOpt  = {ReplSize:0};
    var maincl = 
    commCreateCLByOption( db, csName, mainclName, mainOpt, true, false, "create mian cl in begin" ); 
