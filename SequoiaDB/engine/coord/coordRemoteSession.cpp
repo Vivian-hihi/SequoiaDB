@@ -1048,8 +1048,7 @@ namespace engine
       {
          bRetry = TRUE ;
 
-         if ( canUpdate && !cataSel.hasUpdated() &&
-              SDB_OK != cataSel.updateCataInfo( NULL, cb ) )
+         if ( canUpdate && SDB_OK != cataSel.updateCataInfo( NULL, cb ) )
          {
             bRetry = FALSE ;
          }
