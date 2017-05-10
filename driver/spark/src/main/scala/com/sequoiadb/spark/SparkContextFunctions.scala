@@ -18,7 +18,7 @@ package com.sequoiadb.spark
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import org.bson.BSONObject
+import org.bson.{BSONObject, BasicBSONObject}
 import org.bson.util.JSON
 
 import scala.collection.mutable
@@ -54,14 +54,21 @@ class SparkContextFunctions(sc: SparkContext) {
 
     def loadFromSequoiadb(csName: String,
                           clName: String,
-                          matcher: String = "",
+                          matcher: String = "{}",
                           parameters: Map[String, String] = Map())
     : RDD[BSONObject] = {
+        if (csName == null || csName.isEmpty) {
+            throw new SdbException("Invalid csName")
+        }
+        if (clName == null || clName.isEmpty) {
+            throw new SdbException("Invalid clName")
+        }
         val collectionMap = Map(
             (SdbConfig.CollectionSpace, csName),
             (SdbConfig.Collection, clName))
-        val conf = buildConf(sc.getConf, parameters ++ collectionMap)
-        val matcherObj = JSON.parse(matcher).asInstanceOf[BSONObject]
+        val newParameters = if (parameters == null) collectionMap else parameters ++ collectionMap
+        val conf = buildConf(sc.getConf, newParameters)
+        val matcherObj = Option(JSON.parse(matcher).asInstanceOf[BSONObject]).getOrElse(new BasicBSONObject())
         new SdbBsonRDD(sc, SdbConfig(conf), filter = SdbFilter(matcherObj))
     }
 }

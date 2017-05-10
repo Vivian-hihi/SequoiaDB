@@ -162,6 +162,19 @@ class SdbBsonRDDFunctions(rdd: RDD[BSONObject]) {
                         username: String = "",
                         password: String = "",
                         bulkSize: Int = SdbConfig.DefaultBulkSize): Unit = {
+        if (host == null || host.isEmpty) {
+            throw new SdbException("Invalid host")
+        }
+        if (csName == null || csName.isEmpty) {
+            throw new SdbException("Invalid csName")
+        }
+        if (clName == null || clName.isEmpty) {
+            throw new SdbException("Invalid clName")
+        }
+        if (bulkSize <= 0) {
+            throw new SdbException(s"Invalid bulkSize: $bulkSize")
+        }
+
         val config = Map(
             (SdbConfig.Host, host),
             (SdbConfig.CollectionSpace, csName),

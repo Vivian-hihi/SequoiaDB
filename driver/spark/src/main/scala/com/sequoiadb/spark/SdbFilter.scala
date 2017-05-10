@@ -54,7 +54,9 @@ class SdbFilter extends Serializable {
       */
     def this(matcher: BSONObject) {
         this()
-        this.matcher = matcher.toString
+        if (matcher != null) {
+            this.matcher = matcher.toString
+        }
     }
 
     def BSONObj(): BSONObject = JSON.parse(matcher).asInstanceOf[BSONObject]
