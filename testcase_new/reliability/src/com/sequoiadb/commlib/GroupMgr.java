@@ -228,37 +228,38 @@ public class GroupMgr {
                     ret = false;
                 }
             } catch (BaseException e) {
+                ret = false;
                 if (printAndThrowAllException) {
                     System.out.println(
                             "Check business:failed to query test collection(clForTestBusiness_reliability) on SYSCatalogGroup:"
                                     + e.getErrorCode());
-                    throw new ReliabilityException(e);
                 }
-                ret = false;
             } finally {
                 db.close();
             }
         }
-        Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+        Sequoiadb db = null;
         try {
-            db.getCollectionSpace(SdbTestBase.csName)
-                    .dropCollection("clForTestBusiness_reliability");
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            db.getCollectionSpace(SdbTestBase.csName).dropCollection("clForTestBusiness_reliability");
         } catch (BaseException e) {
+            ret = false;
             System.out.println("Check business:failed to drop test collection:" + e.getErrorCode());
-            throw new ReliabilityException(e);
         } finally {
-            db.close();
+            if (db != null)
+                db.close();
         }
         return ret;
     }
 
-    private boolean createTestCollection(boolean printAndThrowAllException)
-            throws ReliabilityException {
-        Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
-        CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
+    private boolean createTestCollection(boolean printAndThrowAllException) throws ReliabilityException {
+        Sequoiadb db = null;
         List<String> groupNames = new GroupMgr().getAllDataGroupName();
         int index = 0;
+        boolean result = true;
         try {
+            db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
             for (index = 0; index < groupNames.size(); index++) {
                 cs.createCollection("clForTestBusiness_reliability", (BSONObject) JSON
                         .parse("{ReplSize:3,Group:'" + groupNames.get(index) + "'}"));
@@ -269,17 +270,18 @@ public class GroupMgr {
             }
 
         } catch (BaseException e) {
+            result = false;
             if (printAndThrowAllException) {
                 System.out.println(
                         "Check business:failed to create test collection(clForTestBusiness_reliability) on "
                                 + groupNames.get(index) + ":" + e.getErrorCode());
                 throw new ReliabilityException(e);
             }
-            return false;
         } finally {
-            db.close();
+            if (db != null)
+                db.close();
+            return result;
         }
-        return true;
     }
 
     /**
