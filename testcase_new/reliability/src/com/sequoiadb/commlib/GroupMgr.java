@@ -295,7 +295,7 @@ public class GroupMgr {
         long timestamp = System.currentTimeMillis();
         while (!checkBusinessWithLSN(false)) {
             if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
-                return checkBusinessWithLSN();
+                return checkBusinessWithLSN(true);
             }
             try {
                 Thread.sleep(1000);
@@ -358,7 +358,7 @@ public class GroupMgr {
         long timestamp = System.currentTimeMillis();
         while (!checkBusinessWithLSNAndDisk(false)) {
             if (System.currentTimeMillis() - timestamp > timeOutSecond * 1000) {
-                return checkBusinessWithLSNAndDisk();
+                return checkBusinessWithLSNAndDisk(true);
             }
             try {
                 Thread.sleep(1000);
