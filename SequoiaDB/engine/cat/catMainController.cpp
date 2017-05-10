@@ -41,7 +41,6 @@
 #include "catDef.hpp"
 #include "rtn.hpp"
 #include "dpsLogWrapper.hpp"
-#include "rtnCoord.hpp"
 #include "msgMessage.hpp"
 #include "msgAuth.hpp"
 #include "../util/fromjson.hpp"
