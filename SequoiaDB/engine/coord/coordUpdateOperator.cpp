@@ -345,7 +345,7 @@ namespace engine
 
          coordInsertOperator insertOpr ;
 
-         rc = matcherTree.loadPattern ( matcher ) ;
+         rc = matcherTree.loadPattern ( matcher, FALSE ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to load matcher[%s], rc: %d",
                        matcher.toString().c_str(), rc ) ;
 
