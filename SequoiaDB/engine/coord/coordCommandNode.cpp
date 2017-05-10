@@ -1610,7 +1610,7 @@ namespace engine
          {
             rc = SDB_OK ;
          }
-         else
+         else if ( rc )
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", CMD_NAME_ENFORCED, getName(), rc ) ;
@@ -1845,7 +1845,7 @@ namespace engine
          {
             rc = SDB_OK ;
          }
-         else
+         else if ( rc )
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", FIELD_NAME_ONLY_ATTACH, getName(), rc ) ;
@@ -1881,7 +1881,7 @@ namespace engine
             {
                rc = SDB_OK ;
             }
-            else
+            else if ( rc )
             {
                PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                        "rc: %d", FIELD_NAME_KEEP_DATA, getName(), rc ) ;
@@ -2197,7 +2197,7 @@ namespace engine
          {
             rc = SDB_OK ;
          }
-         else
+         else if ( rc )
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", FIELD_NAME_ONLY_DETACH, getName(), rc ) ;
@@ -2212,7 +2212,7 @@ namespace engine
          {
             rc = SDB_OK ;
          }
-         else
+         else if ( rc )
          {
             PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                     "rc: %d", CMD_NAME_ENFORCED, getName(), rc ) ;
@@ -2248,7 +2248,7 @@ namespace engine
             {
                rc = SDB_OK ;
             }
-            else
+            else if ( rc )
             {
                PD_LOG( PDERROR, "Get field[%s] failed on command[%s], "
                        "rc: %d", FIELD_NAME_KEEP_DATA, getName(), rc ) ;
