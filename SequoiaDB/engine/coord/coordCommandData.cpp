@@ -940,7 +940,7 @@ namespace engine
                {
                   PD_LOG( PDERROR, "Sharding type must be range in "
                           "main colllection" ) ;
-                  rc = SDB_INVALIDARG ;
+                  rc = SDB_INVALID_MAIN_CL_TYPE ;
                   goto error ;
                }
             }
