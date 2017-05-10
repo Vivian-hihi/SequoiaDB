@@ -70,7 +70,7 @@ public class CreateMainCl19 extends SdbTestBase{
 			cs.createCollection(clName,options);
 			Assert.fail("success to create maincl by not appoint shardingkey");
 		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -6,e.getMessage());
+			Assert.assertEquals(e.getErrorCode(), -245,e.getMessage());
 		}
 	}	
 }

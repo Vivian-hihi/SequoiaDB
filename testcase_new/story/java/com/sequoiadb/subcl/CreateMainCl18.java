@@ -79,7 +79,7 @@ public class CreateMainCl18 extends SdbTestBase{
 			cs.createCollection(clName,options);	
 			Assert.fail("create maincl by hash successfully ");
 		}catch(BaseException e){
-			Assert.assertEquals(e.getErrorCode(), -6, e.getMessage());
+			Assert.assertEquals(e.getErrorCode(), -244, e.getMessage());
 		}
 	}	
 }
