@@ -63,8 +63,10 @@ def writeDeployPerHost( deployInfo ):
    props.load()
    resultDir = props.getProp( 'resultDirectory' )
    resultDir = os.path.join( os.getcwd(),resultDir )
+   if not os.access(resultDir, os.F_OK):
+      os.mkdir( resultDir )
    resultDir = os.path.join( resultDir, 'deploy' )
-   if not os.path.isdir( resultDir ):
+   if not os.access( resultDir, os.F_OK ):
       os.mkdir( resultDir )
 
    for key in deployInfo:
