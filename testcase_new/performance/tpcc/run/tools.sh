@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 function getHosts()
 {
    cd data
@@ -110,7 +109,7 @@ function getFileByHost()
 {
    for file in `ls $1`;
    do
-      if [ $file == $1 ];then
+      if [ $file == $2 ];then
          echo $file
          break
       fi
@@ -180,7 +179,7 @@ function getHostsBySdbUrl()
     hosts=()
     OIFS=$IFS
     IFS=','
-    addrs=$(grep sdburl $1 |awk -F '=' '{print $2}')
+    addrs=($1)
     for ((i=0; i < ${#addrs[*]};++i))
     do
        host=$(echo ${addrs[$i]}|awk -F ':' '{print $1}')
