@@ -554,12 +554,14 @@ public class jTPCC implements jTPCCConfig {
                             + sessionStart ) ;
                 } catch ( Exception e1 ) {
                     errorMessage( "This session ended with errors!" ) ;
+                    e1.printStackTrace();
                     printStreamReport.close() ;
                     fileOutputStream.close() ;
                     throw new Exception() ;
                 }
             } catch ( Exception ex ) {
-
+               ex.printStackTrace();
+               System.exit(1);
             }
         }
         updateStatusLine() ;
