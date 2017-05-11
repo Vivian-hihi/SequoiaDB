@@ -85,6 +85,7 @@ namespace engine
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       _closeSubStreamsWithException( cb ) ;
+      _clearMsgData() ;
    }
 
    void _coordLobStream::getErrorInfo( INT32 rc,
