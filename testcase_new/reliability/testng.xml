@@ -21,9 +21,9 @@
 			<package name="com.sequoiadb.subcl.killnode"></package>
 			<package name="com.sequoiadb.subcl.restartnode"></package>
 			<package name="com.sequoiadb.clsmgr.brokennetwork"></package>
-			<package name="com.sequoiadb.split.killnode"></package>
+<!--			<package name="com.sequoiadb.split.killnode"></package>
 			<package name="com.sequoiadb.split.restartnode"></package>
-			<package name="com.sequoiadb.split.brokennetwork"/>
+			<package name="com.sequoiadb.split.brokennetwork"/> -->
 			<package name="com.sequoiadb.metaopr.killnode" />
 		</packages>
 	</test>
