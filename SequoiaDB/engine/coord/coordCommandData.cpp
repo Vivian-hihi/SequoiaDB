@@ -928,7 +928,8 @@ namespace engine
             {
                PD_LOG( PDERROR, "Get field[%s] failed on command[%s], rc: %d",
                        FIELD_NAME_SHARDINGKEY, getName(), rc ) ;
-               rc = SDB_INVALIDARG ;
+               rc = SDB_FIELD_NOT_EXIST == rc ?
+                    SDB_NO_SHARDINGKEY : SDB_INVALIDARG ;
                goto error ;
             }
 
