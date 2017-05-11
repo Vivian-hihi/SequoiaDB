@@ -316,6 +316,7 @@ namespace engine
          void              release() ;
 
          void              clear() ;
+         void              resetSubSession() ;
 
          INT32             sendMsg( MsgHeader *pSrcMsg,
                                     UINT32 groupID,

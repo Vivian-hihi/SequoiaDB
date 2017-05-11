@@ -281,6 +281,9 @@ namespace engine
          pmdSubSession* getSubSession( UINT64 nodeID ) ;
          void           delSubSession( UINT64 nodeID ) ;
          void           clearSubSession() ;
+
+         void           resetSubSession( UINT64 nodeID ) ;
+         void           resetAllSubSession() ;
          /*
             Send MSG_BS_INTERRUPT_SELF to running sub sessions
          */

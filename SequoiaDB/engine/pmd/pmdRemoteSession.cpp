@@ -390,8 +390,28 @@ namespace engine
             _pSite->delSubSession( it->second.getReqID() ) ;
             _pSite->removeAssitNode( it->second.getAddPos(),
                                      it->second.getNodeID().columns.nodeID ) ;
+            it->second.setNeedToDel( FALSE ) ;
          }
          _mapSubSession.erase( it ) ;
+      }
+   }
+
+   void _pmdRemoteSession::resetSubSession( UINT64 nodeID )
+   {
+      _mapPendingSubSession.erase( nodeID ) ;
+      MAP_SUB_SESSION_IT it = _mapSubSession.find( nodeID ) ;
+      if ( it != _mapSubSession.end() )
+      {
+         if ( it->second.isNeedToDel() )
+         {
+            stopSubSession( &(it->second) ) ;
+            _pSite->delSubSession( it->second.getReqID() ) ;
+            _pSite->removeAssitNode( it->second.getAddPos(),
+                                     it->second.getNodeID().columns.nodeID ) ;
+            it->second.setNeedToDel( FALSE ) ;
+         }
+         it->second.resetForResend() ;
+         it->second.clearRequestInfo() ;
       }
    }
 
@@ -409,10 +429,33 @@ namespace engine
             _pSite->delSubSession( it->second.getReqID() ) ;
             _pSite->removeAssitNode( it->second.getAddPos(),
                                      it->second.getNodeID().columns.nodeID ) ;
+            it->second.setNeedToDel( FALSE ) ;
          }
          ++it ;
       }
       _mapSubSession.clear() ;
+   }
+
+   void _pmdRemoteSession::resetAllSubSession()
+   {
+      _mapPendingSubSession.clear() ;
+
+      stopSubSession() ;
+
+      MAP_SUB_SESSION_IT it = _mapSubSession.begin() ;
+      while ( it != _mapSubSession.end() )
+      {
+         if ( it->second.isNeedToDel() )
+         {
+            _pSite->delSubSession( it->second.getReqID() ) ;
+            _pSite->removeAssitNode( it->second.getAddPos(),
+                                     it->second.getNodeID().columns.nodeID ) ;
+            it->second.setNeedToDel( FALSE ) ;
+         }
+         it->second.resetForResend() ;
+         it->second.clearRequestInfo() ;
+         ++it ;
+      }
    }
 
    void _pmdRemoteSession::stopSubSession()

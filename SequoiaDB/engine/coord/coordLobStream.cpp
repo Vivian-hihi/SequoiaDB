@@ -1176,7 +1176,7 @@ namespace engine
       }
 
    done:
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
       _subs.clear() ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_CLOSESUBSTREAMWITHEXCEP, rc ) ;
       return rc ;
@@ -1479,7 +1479,7 @@ namespace engine
       }
 
    done:
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
       PD_TRACE_EXITRC( COORD_LOBSTREAM_GETREPLY, rc ) ;
       return rc ;
    error:
@@ -1495,7 +1495,7 @@ namespace engine
       }
 
       _results.clear() ;
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( COORD_LOBSTREAM_REOPENSUBSTREAMS, "_coordLobStream::_reopenSubStreams" ) 

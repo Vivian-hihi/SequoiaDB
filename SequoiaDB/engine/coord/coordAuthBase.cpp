@@ -109,7 +109,7 @@ namespace engine
    retry:
       pSel->setPrimary( TRUE ) ;
       pSel->setServiceType( MSG_ROUTE_CAT_SERVICE ) ;
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
 
       rc = _groupSession.sendMsg( pMsg, CATALOG_GROUPID, NULL, &pSub ) ;
       if ( SDB_CAT_NO_ADDR_LIST == rc )
@@ -120,7 +120,7 @@ namespace engine
       else if ( rc && sWhenNoPrimary )
       {
          pSel->setPrimary( FALSE ) ;
-         _groupSession.clear() ;
+         _groupSession.resetSubSession() ;
          rc = _groupSession.sendMsg( pMsg, CATALOG_GROUPID, NULL, &pSub ) ;
       }
       if ( rc )
@@ -162,7 +162,7 @@ namespace engine
       }
 
     done:
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
       PD_TRACE_EXITRC ( COORD_AUTHBASE_FORWARD, rc ) ;
       return rc ;
    error:

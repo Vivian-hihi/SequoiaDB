@@ -1165,6 +1165,14 @@ namespace engine
       }
    }
 
+   void _coordGroupSession::resetSubSession()
+   {
+      if ( _pSession )
+      {
+         _pSession->resetAllSubSession() ;
+      }
+   }
+
    pmdRemoteSession* _coordGroupSession::getSession()
    {
       return _pSession ;

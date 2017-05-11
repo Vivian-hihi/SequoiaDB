@@ -193,7 +193,7 @@ namespace engine
    retry:
       needRetry = FALSE ;
       /// clear sub-sessions
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
 
       /// send request to groups
       if ( !inMsg.hasData() )
@@ -311,7 +311,7 @@ namespace engine
       }
 
    done:
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
       return rc ;
    error:
       goto done ;

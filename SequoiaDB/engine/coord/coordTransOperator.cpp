@@ -159,7 +159,7 @@ namespace engine
       msgReq.header.TID = cb->getTID() ;
 
       pSession = _groupSession.getSession() ;
-      pSession->clearSubSession() ;
+      pSession->resetAllSubSession() ;
 
       SET_NODEID::iterator itSet = nodes.begin() ;
       while( itSet != nodes.end() )
@@ -176,7 +176,7 @@ namespace engine
             PD_LOG( PDWARNING, "Release node[%s] failed, rc: %d",
                     routeID2String( *itSet ).c_str(), rc ) ;
             /// remove the sub session
-            pSession->delSubSession( *itSet ) ;
+            pSession->resetSubSession( *itSet ) ;
          }
          ++itSet ;
       }
@@ -205,7 +205,7 @@ namespace engine
       }
 
       /// clear all sub session
-      pSession->clearSubSession() ;
+      pSession->resetAllSubSession() ;
 
       return rc ;
    }
@@ -508,7 +508,7 @@ namespace engine
       ROUTE_RC_MAP nokRC ;
 
       /// clear
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
 
       while( iterMap != pNodeMap->end() )
       {
@@ -559,7 +559,7 @@ namespace engine
          goto error ;
       }
    done:
-      _groupSession.clear() ;
+      _groupSession.resetSubSession() ;
       return rc ;
    error:
       if ( ( rc && nokRC.size() > 0 ) && buf )
