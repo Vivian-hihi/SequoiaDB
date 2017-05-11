@@ -26,7 +26,7 @@
    void 
 */
 
-//setLogLevel( PDDEBUG ) ;
+setLogLevel( PDDEBUG ) ;
 
 var FILE_NAME_REBUILD_OM = "rebuildOM.js" ;
 var logger = new Logger(FILE_NAME_REBUILD_OM) ;
@@ -373,7 +373,7 @@ ConfigMgr.prototype._appendClusterInfo =
    retObj[Desc]         = this._getField( FIELD_CLUSTER_DESCRIPTION ) ;
    retObj[SdbUser]      = this._getField( FIELD_SDB_ADMIN_USER_NAME ) ;
    retObj[SdbPasswd]    = this._getField( FIELD_SDB_ADMIN_PASSWORD ) ;
-   retObj[SdbUserGroup] = retObj[SdbUser]+ "_group" ;
+   retObj[SdbUserGroup] = this._getField( FIELD_SDB_ADMIN_GROUP_NAME ) ;
    retObj[InstallPath]  = 
       adaptPath( this._getField( FIELD_SDB_DEFAULT_INSTALL_PATH ) ) ;
    this._clusterInfo    = retObj ;
@@ -384,6 +384,7 @@ ConfigMgr.prototype._appendModuleInfo =
    retObj               = new ModuleInfo() ;
    retObj[ClusterName]  = this._getField( FIELD_CLUSTER_NAME ) ;
    retObj[BusinessName] = this._getField( FIELD_MODULE_NAME ) ;
+   retObj[Time]         = { "$timestamp" : Timestamp()._t } ;
    this._moduleInfo     = retObj ;
 } ;
 
@@ -459,7 +460,7 @@ ConfigMgr.prototype._appendSdbAdminInfo =
    function ConfigMgr__appendSdbAdminInfo() {
    var sdbUserName       = this._getField( FIELD_SDB_ADMIN_USER_NAME ) ;
    var sdbPassword       = this._getField( FIELD_SDB_ADMIN_PASSWORD ) ;
-   var sdbUserGroupName  = sdbPassword + "_group" ;
+   var sdbUserGroupName  = this._getField( FIELD_SDB_ADMIN_GROUP_NAME ) ;
    var len               = this._hostInfoArr.length ;
    for ( var i = 0; i < len; i++ ) {
       var hostInfo = this._hostInfoArr[i] ;
@@ -480,8 +481,7 @@ ConfigMgr.prototype._appendOMAdminInfo =
 
 ConfigMgr.prototype._appendDBConfigOption = 
    function ConfigMgr__appendDBConfigOption() {
-   var confStr          = this._getField( FIELD_DB_CONFIG_OPTION ) ;
-   this._dbConfigOption = this.changeToObj( confStr ) ;
+   this._dbConfigOption = new Object() ;
    this._dbConfigOption[ClusterName3]  = this._clusterInfo[ClusterName] ;
    this._dbConfigOption[BusinessName3] = this._moduleInfo[BusinessName] ;
    this._dbConfigOption[UserTag3]      = "" ;
@@ -647,15 +647,6 @@ ConfigMgr.prototype._firstlyCheck =
 
    // 6. admin account can ssh or not
    this._checkSsh( "admin" ) ;
-
-   // 7. the db config option is ok or not
-   try {
-      this._checkDBConfigOption( FIELD_DB_CONFIG_SVC_SCHEDULER ) ;
-   } catch( e ) {
-      exp = new SdbError( e, "invalid db config option" ) ;
-      logger.log( PDERROR, exp ) ;
-      throw exp ;
-   }
    
    // 8. check cluster info
    if ( this._clusterInfo[ClusterName] == null ||
@@ -790,6 +781,19 @@ ConfigMgr.prototype._appendHostName = function ConfigMgr__appendHostName() {
       throw new SdbError( SDB_SYS, errMsgArr.toString() ) ;
    }
 } ;
+
+ConfigMgr.prototype._appendHostNameToModuleInfo =
+   function ConfigMgr__appendHostNameToModuleInfo() {
+      var arr = [] ;
+      var len = this._hostInfoArr.length ;
+      for ( var i = 0; i < len; i++ ) {
+         var hostName  = this._hostInfoArr[i].hostName ;
+         var obj = new Object() ;
+         obj[HostName] = hostName ;
+         arr.push( obj ) ;
+      }
+      this._moduleInfo[Location] = arr ;
+   } ;
 
 ConfigMgr.prototype._appendRemoteInstalledInfo = 
    function ConfigMgr__appendRemoteInstalledInfo() {
@@ -1264,7 +1268,7 @@ ConfigMgr.prototype._doit = function ConfigMgr__doit() {
    if ( this._getAction() == ACTION_REMOVE_OM ) {
       return ;
    }
-   // appending info abount build om
+   // appending info about build om
    this._appendDBInstallPacket() ;
    if ( this._getAction() == ACTION_BUILD_OM ) {
       return ;
@@ -1284,6 +1288,7 @@ ConfigMgr.prototype._doit = function ConfigMgr__doit() {
    this._appendSshObj() ;
    this._appendIP() ;
    this._appendHostName() ;
+   this._appendHostNameToModuleInfo() ;
    this._appendRemoteInstalledInfo() ;
    // checking
    this._secondlyCheck() ; 
@@ -2198,8 +2203,8 @@ CheckHost.prototype._doit = function CheckHost__doit() {
       this._resultArr[i][Disk]    = 
          this._collDiskInfo( ssh, installPath, this._hostInfoArr[i].hostName ) ;
       this._resultArr[i][Net]     = this._collNetCardInfo( ssh, installPath ) ;
-      this._resultArr[i][Port]    = this._collPortInfo( ssh, installPath ) ;
-      this._resultArr[i][Service] = this._collServiceInfo( ssh, installPath ) ;
+      this._resultArr[i][Port]    = [] ;
+      this._resultArr[i][Service] = [] ;
       this._resultArr[i][Safety]  = this._collSafetyInfo( ssh, installPath ) ;
       // add agent service
       this._resultArr[i][AgentService] = this._resultArr[i][OMA][Service] ;
@@ -2236,6 +2241,9 @@ CollectNodeInfo.prototype._getNodeConfResult =
       var wrapper     = this._resultArr[i] ;
       confInfoObj[BusinessName] = wrapper[BusinessName] ;
       confInfoObj[HostName]     = wrapper[HostName] ;
+      confInfoObj[ClusterName]  = wrapper[ClusterName] ;
+      confInfoObj[BusinessType] = "sequoiadb" ;
+      confInfoObj[DeployMod]    = "distribution" ;
       var adapterArr            = wrapper[Adapter] ;
       var configArr             = [] ;
       for ( var j = 0; j < adapterArr.length; j++ ) {
@@ -2335,10 +2343,30 @@ CollectNodeInfo.prototype._extractInfo =
       this._getField( nodeInfoObj, FIELD_CONF_SVCNAME ) ;
    confObj[FIELD_CONF_ROLE]              = 
       this._getField( nodeInfoObj, FIELD_CONF_ROLE ) ;
+   confObj[FIELD_CONF_ARCHIVECOMPRESSON] = 
+      this._getField( nodeInfoObj, FIELD_CONF_ARCHIVECOMPRESSON ).toLowerCase() ;
+   confObj[FIELD_CONF_ARCHIVEEXPIRED] = 
+      this._getField( nodeInfoObj, FIELD_CONF_ARCHIVEEXPIRED ) ;
+   confObj[FIELD_CONF_ARCHIVEON] = 
+      this._getField( nodeInfoObj, FIELD_CONF_ARCHIVEON ).toLowerCase() ;
+   confObj[FIELD_CONF_ARCHIVEPATH] = 
+      this._getField( nodeInfoObj, FIELD_CONF_ARCHIVEPATH ) ;
+   confObj[FIELD_CONF_ARCHIVEQUOTA] = 
+      this._getField( nodeInfoObj, FIELD_CONF_ARCHIVEQUOTA ) ;
+   confObj[FIELD_CONF_ARCHIVETIMEOUT] = 
+      this._getField( nodeInfoObj, FIELD_CONF_ARCHIVETIMEOUT ) ;
+   confObj[FIELD_CONF_BKUPPATH] = 
+      this._getField( nodeInfoObj, FIELD_CONF_BKUPPATH ) ;
    confObj[FIELD_CONF_DIAGLEVEL]         = 
       this._getField( nodeInfoObj, FIELD_CONF_DIAGLEVEL ) ;
    confObj[FIELD_CONF_HJBUF]             = 
       this._getField( nodeInfoObj, FIELD_CONF_HJBUF ) ;
+   confObj[FIELD_CONF_INDEXPATH] = 
+      this._getField( nodeInfoObj, FIELD_CONF_INDEXPATH ) ;
+   confObj[FIELD_CONF_LOBMETAPATH] = 
+      this._getField( nodeInfoObj, FIELD_CONF_LOBMETAPATH ) ;
+   confObj[FIELD_CONF_LOBPATH] = 
+      this._getField( nodeInfoObj, FIELD_CONF_LOBPATH ) ;
    confObj[FIELD_CONF_LOGBUFFSIZE]       = 
       this._getField( nodeInfoObj, FIELD_CONF_LOGBUFFSIZE ) ;
    confObj[FIELD_CONF_LOGFILENUM]        = 
@@ -2347,18 +2375,20 @@ CollectNodeInfo.prototype._extractInfo =
       this._getField( nodeInfoObj, FIELD_CONF_LOGFILESZ ) ;
    confObj[FIELD_CONF_MAXPREFPOOL]       = 
       this._getField( nodeInfoObj, FIELD_CONF_MAXPREFPOOL ) ;
-   confObj[FIELD_CONF_MAXREPLSYNC]       = 
-      this._getField( nodeInfoObj, FIELD_CONF_MAXREPLSYNC ) ;
-   confObj[FIELD_CONF_NUMPAGECLEANER]    = 
-      this._getField( nodeInfoObj, FIELD_CONF_NUMPAGECLEANER ) ;
    confObj[FIELD_CONF_NUMPRELOAD]        = 
       this._getField( nodeInfoObj, FIELD_CONF_NUMPRELOAD ) ;
-   confObj[FIELD_CONF_PAGECLEANINTERVAL] = 
-      this._getField( nodeInfoObj, FIELD_CONF_PAGECLEANINTERVAL ) ;
+   confObj[FIELD_CONF_MAXSYNCJOB]        = 
+      this._getField( nodeInfoObj, FIELD_CONF_MAXSYNCJOB ) ;
    confObj[FIELD_CONF_PREFEREDINSTANCE]  = 
       this._getField( nodeInfoObj, FIELD_CONF_PREFEREDINSTANCE ) ;
    confObj[FIELD_CONF_SORTBUF]           = 
       this._getField( nodeInfoObj, FIELD_CONF_SORTBUF ) ;
+   confObj[FIELD_CONF_SYNCDEEP] = 
+      this._getField( nodeInfoObj, FIELD_CONF_SYNCDEEP ).toLowerCase() ;
+   confObj[FIELD_CONF_SYNCINTERVAL] = 
+      this._getField( nodeInfoObj, FIELD_CONF_SYNCINTERVAL ) ;
+   confObj[FIELD_CONF_SYNCRECORDNUM] = 
+      this._getField( nodeInfoObj, FIELD_CONF_SYNCRECORDNUM ) ;
    confObj[FIELD_CONF_SYNCSTRATEGY]      = 
       this._getField( nodeInfoObj, FIELD_CONF_SYNCSTRATEGY ).toLowerCase() ;
    confObj[FIELD_CONF_TRANSACTION]       = 
@@ -2380,13 +2410,13 @@ CollectNodeInfo.prototype._doit = function CollectNodeInfo__doit() {
    
    this._init() ;
    var moduleInfo = this._configMgr._getModuleInfo() ;
-   var moduleName = moduleInfo[BusinessName] ;
    for ( var i = 0; i < this._hostInfoArr.length; i++ ) {
       var ssh                           = this._hostInfoArr[i].rootSshObj ;
       var installPath                   = this._hostInfoArr[i].installPath ;
       var nodeConfInfoWrapper           = new NodeConfInfoWrapper() ;
+      nodeConfInfoWrapper[ClusterName]  = moduleInfo[ClusterName] ;
+      nodeConfInfoWrapper[BusinessName] = moduleInfo[BusinessName] ;
       nodeConfInfoWrapper[HostName]     = this._hostInfoArr[i].hostName ;
-      nodeConfInfoWrapper[BusinessName] = moduleName ;
       // get node's config info
       this.execCommand( ssh, installPath, cmd1, false ) ;
       var retStr = this.execCommand( ssh, installPath, cmd2, false ) ;
@@ -3048,20 +3078,7 @@ AddBusiness.prototype._insertConfigInfo =
    function AddBusiness__insertConfigInfo() {
    var csName = "SYSDEPLOY" ;
    var clName = "SYSCONFIGURE" ;
-   // append om address info
-   try {
-      for( var i = 0; i < this._configInfoArr.length; i++ ) {
-         var nodeNum = this._configInfoArr[i][Config].length ;
-         for ( var j = 0; j < nodeNum; j++ ) {
-            this._configInfoArr[i][Config][j][FIELD_CONF_OM_ADDR] = this._omAddr ;
-         }
-      }
-   } catch( e ) {
-      var exp = new SdbError( e, 
-         "failed to add om address info into configure record" ) ;
-      logger.log( PDERROR, exp ) ;
-      throw exp ;
-   }
+   
    // insert info
    try {
       var cs = this._omObj.getCS( csName ) ;
@@ -3267,11 +3284,6 @@ function main() {
             logger.log( PDEVENT, "excuting task: add business" ) ;
             addBusinessTask._doit() ;
          } catch( e ) {
-            /*
-            exp = new SdbError( e, "failed to add business to local om" ) ;
-            logger.log( PDERROR, exp ) ;
-            throw exp ;
-            */
             errMsg = "failed to add business to local om" ;
             exp = new SdbError( e, errMsg ) ;
             logger.log( PDERROR, exp ) ;
@@ -3287,47 +3299,6 @@ function main() {
             } else {
                throw exp ;
             }
-         }
-      }
-
-      // 7. flush some new config option into all the nodes' config file
-      //    and restart all the nodes
-      if ( configMgr._getAction() == ACTION_ADD_BUSINESS || 
-           configMgr._getAction() == ACTION_FLUSH_CONFIG ) {
-         // flush config
-         try {
-            var nodeConfPathArr = collectNodeInfoTask._getNodeConfPaths() ;
-            var flushConfigTask = new FlushConfig( configMgr, nodeConfPathArr ) ;
-            logger.log( PDEVENT, "excuting task: flush config" ) ;
-            flushConfigTask._doit() ;
-         } catch( e ) {
-            errMsg = "failed to flush configuration information" ;
-            exp = new SdbError( e, errMsg ) ;
-            logger.log( PDERROR, exp ) ;
-            if ( exp.getErrCode() == SDBCM_NODE_NOTEXISTED ) {
-               errMsg = sprintf( "Error: can't flush new configuration " + 
-                  "information into node's config file, for there is no " + 
-                  "om in local, and we can't get the address of it. " +
-                  "Please use command[?] to install om, and then try " + 
-                  "to flush again. ", 
-                  "./ombuild.sh --action buildom --conf ombuild.conf"  ) ;
-               println( errMsg ) ;
-               // stop running
-               return -1 ;
-            } else {
-               throw exp ;
-            }
-         }
-         // restart nodes
-         try {
-            var restartNodesTask = new RestartNodes( configMgr ) ;
-            logger.log( PDEVENT, "excuting task: restart nodes" ) ;
-            restartNodesTask._doit() ;
-         } catch( e ) {
-            exp = new SdbError( e, 
-               "failed to restart all the nodes in current cluster" ) ;
-            logger.log( PDERROR, exp ) ;
-            throw exp ;
          }
       }
    } finally {

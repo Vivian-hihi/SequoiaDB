@@ -20,7 +20,7 @@ function displayUsage()
    echo "  --help            display the usage "
    echo "  --action <action> [--conf <config file>] "
    echo "                    specified the action for running, can be one of the follow: "
-   echo "                       'buildom'|'removeom'|'addbusiness'|'updatecoord'|'flushconfig',"
+   echo "                       'buildom'|'removeom'|'addbusiness'|'updatecoord',"
    echo "                    default to be 'addbusiness'. e.g. --action addbusiness --conf ombuild.conf"
    echo "                    when action is 'removeom', no need to specifiy the config file"
 }

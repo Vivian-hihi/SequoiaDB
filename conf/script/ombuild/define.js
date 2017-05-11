@@ -25,6 +25,9 @@
    void 
 */
 
+var AdditionType                          = "AddtionType" ;
+var Location                              = "Location" ;
+
 var FIELD_HOST_NAME                       = "host_name" ;
 var FIELD_DEFAULT_ROOT_USER               = "default_root_user" ;
 var FIELD_DEFAULT_ROOT_PASSWD             = "default_root_passwd" ;
@@ -35,7 +38,7 @@ var FIELD_CLUSTER_NAME                    = "cluster_name" ;
 var FIELD_CLUSTER_DESCRIPTION             = "cluster_description" ;
 var FIELD_SDB_ADMIN_USER_NAME             = "sdb_admin_user_name" ;
 var FIELD_SDB_ADMIN_PASSWORD              = "sdb_admin_password" ;
-var FIELD_SDB_USER_GROUP_NAME             = "sdb_user_group_name" ;
+var FIELD_SDB_ADMIN_GROUP_NAME            = "sdb_admin_group_name" ;
 var FIELD_SDB_DEFAULT_INSTALL_PATH        = "sdb_default_install_path" ;
 var FIELD_DB_AUTH_USER                    = "db_auth_user" ;
 var FIELD_DB_AUTH_PASSWD                  = "db_auth_passwd" ;
@@ -75,16 +78,33 @@ var FIELD_CONF_DATAGROUPNAME              = "datagroupname" ;
 var FIELD_CONF_ROLE                       = "role" ;
 var FIELD_CONF_DIAGLEVEL                  = "diaglevel" ;
 var FIELD_CONF_HJBUF                      = "hjbuf" ;
+
+var FIELD_CONF_ARCHIVECOMPRESSON          = "archivecompresson" ;
+var FIELD_CONF_ARCHIVEEXPIRED             = "archiveexpired" ;
+var FIELD_CONF_ARCHIVEON                  = "archiveon" ;
+var FIELD_CONF_ARCHIVEPATH                = "archivepath" ;
+var FIELD_CONF_ARCHIVEQUOTA               = "archivequota" ;
+var FIELD_CONF_ARCHIVETIMEOUT             = "archivetimeout" ;
+var FIELD_CONF_BKUPPATH                   = "bkuppath" ;
+
+var FIELD_CONF_INDEXPATH                  = "indexpath" ; 
+var FIELD_CONF_LOBMETAPATH                = "lobmetapath" ;
+var FIELD_CONF_LOBPATH                    = "lobpath" ;
+
 var FIELD_CONF_LOGBUFFSIZE                = "logbuffsize" ;
 var FIELD_CONF_LOGFILENUM                 = "logfilenum" ;
 var FIELD_CONF_LOGFILESZ                  = "logfilesz" ;
 var FIELD_CONF_MAXPREFPOOL                = "maxprefpool" ;
 var FIELD_CONF_MAXREPLSYNC                = "maxreplsync" ;
-var FIELD_CONF_NUMPAGECLEANER             = "numpagecleaners" ;
+var FIELD_CONF_MAXSYNCJOB                 = "maxsyncjob" ;
 var FIELD_CONF_NUMPRELOAD                 = "numpreload" ;
-var FIELD_CONF_PAGECLEANINTERVAL          = "pagecleaninterval" ;
 var FIELD_CONF_PREFEREDINSTANCE           = "preferedinstance" ;
 var FIELD_CONF_SORTBUF                    = "sortbuf" ;
+
+var FIELD_CONF_SYNCDEEP                   = "syncdeep" ;
+var FIELD_CONF_SYNCINTERVAL               = "syncinterval" ;
+var FIELD_CONF_SYNCRECORDNUM              = "syncrecordnum" ;
+
 var FIELD_CONF_SYNCSTRATEGY               = "syncstrategy" ;
 var FIELD_CONF_TRANSACTION                = "transactionon" ;
 var FIELD_CONF_WEIGHT                     = "weight" ;
@@ -149,10 +169,13 @@ var ClusterInfo = function() {
 } ;
 
 var ModuleInfo = function() {
-   this[BusinessName]       = "" ;
+   this[AdditionType]       = 0 ;
    this[BusinessType]       = "sequoiadb" ;
    this[DeployMod]          = "distribution" ;
+   this[BusinessName]       = "" ;
    this[ClusterName]        = "" ;
+   this[Location]           = [] ;
+   this[Time]               = "" ;
    
 	ModuleInfo.prototype.toString = function() {
       return JSON.stringify( this ) ;
@@ -215,9 +238,7 @@ var NodeConfInfo = function() {
    this[FIELD_CONF_LOGFILESZ]         = "" ;
    this[FIELD_CONF_MAXPREFPOOL]       = "" ;
    this[FIELD_CONF_MAXREPLSYNC]       = "" ;
-   this[FIELD_CONF_NUMPAGECLEANER]    = "" ;
    this[FIELD_CONF_NUMPRELOAD]        = "" ;
-   this[FIELD_CONF_PAGECLEANINTERVAL] = "" ;
    this[FIELD_CONF_PREFEREDINSTANCE]  = "" ;
    this[FIELD_CONF_SORTBUF]           = "" ;
    this[FIELD_CONF_SYNCSTRATEGY]      = "" ;
