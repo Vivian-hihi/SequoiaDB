@@ -26,7 +26,7 @@
    void 
 */
 
-setLogLevel( PDDEBUG ) ;
+//setLogLevel( PDDEBUG ) ;
 
 var FILE_NAME_REBUILD_OM = "rebuildOM.js" ;
 var logger = new Logger(FILE_NAME_REBUILD_OM) ;
