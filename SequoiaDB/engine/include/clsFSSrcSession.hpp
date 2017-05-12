@@ -267,6 +267,7 @@ namespace engine
 
       protected:
          INT32   _genKeyObj ( const BSONObj &obj, BSONObj &keyObj ) ;
+         BOOLEAN _containMultiKey ( const BSONObj &obj ) ;
          BOOLEAN _GEThanRangeKey ( const BSONObj &keyObj ) ;
          BOOLEAN _LThanRangeEndKey( const BSONObj &keyObj ) ;
          BOOLEAN _LEThanScanObj ( const BSONObj &keyObj ) ;

@@ -2827,6 +2827,23 @@ namespace engine
       goto done ;
    }
 
+   BOOLEAN _clsSplitSrcSession::_containMultiKey ( const BSONObj & obj )
+   {
+      BSONObjIterator iter( _shardingKey ) ;
+      while ( iter.more() )
+      {
+         BSONElement key = iter.next() ;
+         BSONElement field = obj.getField( key.fieldName() ) ;
+         if ( field.type() == Array &&
+              field.embeddedObject().nFields() > 1 )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
+   }
+
    BOOLEAN _clsSplitSrcSession::_GEThanRangeKey( const BSONObj & keyObj )
    {
       INT32 rc = 0 ;
@@ -2922,9 +2939,36 @@ namespace engine
       INT32 indexPos = 0 ;
       const CHAR *pBuffIndex = inBuff + indexPos;
 
-      // split by index, all data is corrent, not need filter
+      // split by index, all is correct, but need to check arrays
       if ( IXSCAN == _scanType() && FALSE == _hasEndRange )
       {
+         try
+         {
+            while ( indexPos < inSize )
+            {
+               BSONObj recordObj ( pBuffIndex ) ;
+
+               if ( _containMultiKey( recordObj ) )
+               {
+                  PD_LOG ( PDERROR, "Session[%s]: More than one sharding key "
+                           "is detected[%s]", sessionName(),
+                           recordObj.toString().c_str() ) ;
+                  rc = SDB_MULTI_SHARDING_KEY ;
+                  goto error ;
+               }
+
+               indexPos += ossRoundUpToMultipleX ( recordObj.objsize(), 4 ) ;
+               pBuffIndex = inBuff + indexPos ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Session[%s]: filter object exception: %s",
+                     sessionName(), e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
          outSize = inSize ;
          goto done ;
       }
