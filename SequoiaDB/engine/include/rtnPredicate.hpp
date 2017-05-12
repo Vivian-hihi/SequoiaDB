@@ -50,7 +50,12 @@ using namespace std ;
 namespace engine
 {
 
-   INT32 rtnKeyCompare ( const BSONElement &l, const BSONElement &r );
+   INT32 rtnKeyCompare ( const BSONElement &l, const BSONElement &r ) ;
+
+   BSONObj rtnKeyGetMinType ( BSONType type ) ;
+   BSONObj rtnKeyGetMaxType ( BSONType type ) ;
+   BSONObj rtnKeyGetMinForCmp ( BSONType type, BOOLEAN mixCmp ) ;
+   BSONObj rtnKeyGetMaxForCmp ( BSONType type, BOOLEAN mixCmp ) ;
 
    // bound of a field, say {c1:5}
    // bound doesn't include upper/lower information, it only have the
@@ -118,8 +123,10 @@ namespace engine
    public :
       rtnKeyBoundary _startKey ;
       rtnKeyBoundary _stopKey ;
+
       // equality = 1 means this is == key, otherwise it's ranged query key
-      mutable INT32 _equality ;
+      mutable INT8 _equality ;
+
       BOOLEAN isValid () const
       {
          INT32 result = _startKey._bound.woCompare ( _stopKey._bound, FALSE);
@@ -183,9 +190,14 @@ namespace engine
       BOOLEAN _isInitialized ;
       vector<BSONObj> _objData ;
 
-      INT32 _equalFlag ;
-      INT32 _allEqualFlag ;
-      BOOLEAN _evaluated ; // _equalFlag == 1 means is equal operation
+      // _equalFlag == 1 means is equal operation
+      INT8 _equalFlag ;
+
+      // _allEqualFlag == 1 means all start-stop key-pairs are equal operation
+      INT8 _allEqualFlag ;
+
+      // Evaluate for optimizer
+      BOOLEAN _evaluated ;
       BOOLEAN _allRange ;
       double _selectivity ;
 
@@ -201,15 +213,16 @@ namespace engine
       vector<rtnStartStopKey> _startStopKeys ;
       rtnPredicate ( )
       {
-         rtnPredicate ( BSONObj().firstElement(), FALSE ) ;
+         rtnPredicate ( BSONObj().firstElement(), 0, FALSE, TRUE ) ;
       }
-      rtnPredicate ( const BSONElement &e, BOOLEAN isNot ) ;
+      rtnPredicate ( const BSONElement &e, INT32 opType,
+                     BOOLEAN isNot, BOOLEAN mixCmp ) ;
       ~rtnPredicate ()
       {
          _startStopKeys.clear() ;
       }
       // intersection operation for two keysets
-      const rtnPredicate &operator&= (const rtnPredicate &right) ;
+      const rtnPredicate &operator&= (rtnPredicate &right) ;
       // union operation for two keysets
       const rtnPredicate &operator|= (const rtnPredicate &right) ;
       // exclude operation for two keysets
@@ -329,6 +342,25 @@ namespace engine
          _allRange = allRange ;
          _selectivity = selectivity ;
       }
+
+   protected :
+      // Helper functions for create predicate
+      INT32 _initIN ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initRegEx ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initET ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initNE ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initLT ( const BSONElement &e, BOOLEAN isNot, BOOLEAN inclusive,
+                     BOOLEAN mixCmp ) ;
+      INT32 _initGT ( const BSONElement &e, BOOLEAN isNot, BOOLEAN inclusive,
+                     BOOLEAN mixCmp ) ;
+      INT32 _initALL ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initMOD ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initTYPE ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initEXISTS ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initISNULL ( const BSONElement &e, BOOLEAN isNot ) ;
+
+      INT32 _initFullRange () ;
+      INT32 _initTypeRange ( BSONType type, BOOLEAN forCmp ) ;
    } ;
 
    typedef map< string, rtnPredicate > RTN_PREDICATE_MAP ;
@@ -343,7 +375,8 @@ namespace engine
       RTN_PREDICATE_MAP &predicates() { return _predicates ; }
       INT32 matchLevelForIndex ( const BSONObj &keyPattern ) const ;
       INT32 addPredicate ( const CHAR *fieldName, const BSONElement &e,
-                           BOOLEAN isNot ) ;
+                           INT32 opType, BOOLEAN isNot,
+                           BOOLEAN mixCmp ) ;
       UINT32 getSize () const { return _predicates.size() ; }
       void clear()
       {

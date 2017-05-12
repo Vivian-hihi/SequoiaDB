@@ -181,11 +181,9 @@ namespace engine
    void _SDB_DMSCB::_logCSCBNameMap ()
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__LGCSCBNMMAP );
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end() ;
             it ++ )
       {
@@ -236,11 +234,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( cscb, "cscb can't be null!" ) ;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+
+      CSCB_MAP_CONST_ITER it ;
+
       if ( _cscbNameMap.end() == (it = _cscbNameMap.find(pName)) )
       {
          rc = SDB_DMS_CS_NOTEXIST ;
@@ -843,11 +839,9 @@ namespace engine
    void _SDB_DMSCB::_CSCBNameMapCleanup ()
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB__CSCBNMMAPCLN );
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          dmsStorageUnitID suID = (*it).second ;
@@ -1424,11 +1418,8 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       ossScopedLock _lock(&_mutex, SHARED) ;
 
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          su = NULL ;
@@ -1457,11 +1448,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPCSSIMPLE );
 
       ossScopedLock _lock(&_mutex, SHARED) ;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); ++it )
       {
          SDB_DMS_CSCB *cscb = _cscbVec[(*it).second] ;
@@ -1497,11 +1486,8 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       ossScopedLock _lock(&_mutex, SHARED) ;
 
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          su = NULL ;
@@ -1534,11 +1520,9 @@ namespace engine
       INT64 totalLobFreeSize     = 0 ;
 
       ossScopedLock _lock(&_mutex, SHARED) ;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          dmsStorageUnitID suID = (*it).second ;
@@ -1610,11 +1594,8 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       ossScopedLock _lock(&_mutex, SHARED) ;
 
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          su = NULL ;
@@ -1644,11 +1625,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPINFO4 );
       dmsStorageUnit *su = NULL ;
       ossScopedLock _lock(&_mutex, SHARED) ;
-#if defined (_WINDOWS)
-      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
-#elif defined (_LINUX)
-      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
-#endif
+
+      CSCB_MAP_CONST_ITER it ;
+
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          su = NULL ;
@@ -1674,6 +1653,35 @@ namespace engine
    dmsStatSUMgr *_SDB_DMSCB::getStatSUMgr ()
    {
       return &_statSUMgr ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_CLRSUCACHES, "_SDB_DMSCB::clearSUCaches" )
+   void _SDB_DMSCB::clearSUCaches ()
+   {
+      //TODO: add type to specify plan caches or statistics caches, etc
+      // Currently only used to clear plan caches
+
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_CLRSUCACHES ) ;
+
+      ossScopedLock _lock( &_mutex, SHARED ) ;
+
+      CSCB_MAP_CONST_ITER it ;
+
+      for ( it = _cscbNameMap.begin() ;
+            it != _cscbNameMap.end() ;
+            it++ )
+      {
+         dmsStorageUnitID suID = (*it).second ;
+
+         SDB_DMS_CSCB *cscb = _cscbVec[ suID ] ;
+         if ( !cscb )
+         {
+            continue ;
+         }
+         cscb->_su->getAPM()->clear( TRUE ) ;
+      }
+
+      PD_TRACE_EXIT ( SDB__SDB_DMSCB_CLRSUCACHES ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DISPATCHDICTJOB, "_SDB_DMSCB::dispatchDictJob" )

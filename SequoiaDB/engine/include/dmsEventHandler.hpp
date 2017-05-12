@@ -54,7 +54,7 @@ namespace engine
    {
       DMS_CACHE_TYPE_STAT = 0,
       DMS_CACHE_TYPE_NUM,
-      DMS_CACHE_TYPE_INVALID
+      DMS_CACHE_TYPE_INVALID,
    } ;
 
    class _IDmsEventHolder ;

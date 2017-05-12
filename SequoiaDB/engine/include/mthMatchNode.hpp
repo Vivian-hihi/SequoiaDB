@@ -343,7 +343,21 @@ namespace engine
          UINT32 _index ;
    } ;
 
+   // Allocator for _mthMatchNode
    typedef _utilAllocator<MTH_ALLOCATOR_SIZE> _mthNodeAllocator ;
+
+   // Configure arguments for _mthMatchNode
+   typedef struct _mthNodeConfig
+   {
+      _mthNodeConfig ()
+      {
+         _mixCmp = FALSE ;
+      }
+
+      BOOLEAN _mixCmp ;
+   } _mthNodeConfig ;
+
+   const _mthNodeConfig *mthGetDefaultNodeConfig () ;
 
    class _mthMatchNode
    {
@@ -409,8 +423,14 @@ namespace engine
 
          _mthMatchNode *getParent() ;
 
+         OSS_INLINE void setConfig( const _mthNodeConfig *config )
+         {
+            _config = config ? config : mthGetDefaultNodeConfig() ;
+         }
+
       protected:
          _mthNodeAllocator *_allocator ;
+         const _mthNodeConfig *_config ;
 
          _mthMatchNode *_parent ;
          UINT32 _idx_in_parent ;

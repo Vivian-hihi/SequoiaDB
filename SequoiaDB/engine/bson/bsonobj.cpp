@@ -447,9 +447,15 @@ namespace bson {
                       fn[4] == 'e' && fn[5] == 0 )
                 return BSONObj::opSIZE;
             else if ( fn[1] == 'e' ) {
-                if ( fn[2] == 'x' && fn[3] == 'i' && fn[4] == 's' &&
-                     fn[5] == 't' && fn[6] == 's' && fn[7] == 0 )
-                    return BSONObj::opEXISTS;
+                if ( fn[2] == 'x' )
+                {
+                    if ( fn[3] == 'i' && fn[4] == 's' &&
+                         fn[5] == 't' && fn[6] == 's' && fn[7] == 0 )
+                       return BSONObj::opEXISTS;
+                    if ( fn[3] == 'p' && fn[4] == 'a' &&
+                         fn[5] == 'n' && fn[6] == 'd' && fn[7] == 0 )
+                       return BSONObj::opEXPAND;
+                }
                 if ( fn[2] == 'l' && fn[3] == 'e' && fn[4] == 'm' &&
                      fn[5] == 'M' && fn[6] == 'a' && fn[7] == 't' &&
                      fn[8] == 'c' && fn[9] == 'h' && fn[10] == 0 )
@@ -1376,7 +1382,11 @@ namespace bson {
             return;
         }
         case Bool: appendBool( fieldName , false); return;
-        case Date: appendDate( fieldName , 0); return;
+        case Date:
+        {
+            appendDate( fieldName , numeric_limits<INT64>::min() ) ;
+            return ;
+        }
         case jstNULL: appendNull( fieldName ); return;
         case Symbol:
         case String: append( fieldName , "" ); return;
@@ -1397,7 +1407,12 @@ namespace bson {
         }
         case Code: appendCode( fieldName , "" ); return;
         case CodeWScope: appendCodeWScope( fieldName , "" , BSONObj() ); return;
-        case Timestamp: appendTimestamp( fieldName , 0); return;
+        case Timestamp:
+        {
+            OpTime t( numeric_limits<SINT32>::min(), 0 ) ;
+            appendTimestamp( fieldName, t.asDate() ) ;
+            return ;
+        }
 
         };
         log() << "type not support for appendMinElementForType: " << t << endl;
@@ -1434,15 +1449,22 @@ namespace bson {
         case jstNULL:
             appendMinForType( fieldName , NumberInt );
         case Bool: appendBool( fieldName , true); break;
-        case Date: appendDate( fieldName , 0xFFFFFFFFFFFFFFFFLL ); break;
+        case Date:
+        {
+            appendDate( fieldName , numeric_limits<INT64>::max() ) ;
+            break;
+        }
         case Symbol:
         case String: append( fieldName , BSONObj() ); break;
         case Code:
         case CodeWScope:
             appendCodeWScope( fieldName , "ZZZ" , BSONObj() ); break;
         case Timestamp:
-          appendTimestamp(fieldName, numeric_limits<unsigned long long>::max());
+        {
+            OpTime t( numeric_limits<SINT32>::max(), 999999 ) ;
+            appendTimestamp( fieldName, t.asDate() ) ;
             break;
+        }
         default:
             appendMinForType( fieldName , t + 1 );
         }

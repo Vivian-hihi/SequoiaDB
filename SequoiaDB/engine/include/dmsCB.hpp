@@ -145,6 +145,20 @@ namespace engine
       // collection spaces mutex in create and drop operations
       std::vector< ossSpinXLatch* >       _vecCSMutex ;
 
+#if defined (_WINDOWS)
+      typedef std::map<const CHAR*,
+                       dmsStorageUnitID,
+                       cmp_cscb>::const_iterator CSCB_MAP_CONST_ITER ;
+      typedef std::map<const CHAR*,
+                       dmsStorageUnitID,
+                       cmp_cscb>::iterator CSCB_MAP_ITER ;
+#elif defined (_LINUX)
+      typedef std::map<const CHAR*,
+                       dmsStorageUnitID>::const_iterator CSCB_MAP_CONST_ITER ;
+      typedef std::map<const CHAR*,
+                       dmsStorageUnitID>::iterator CSCB_MAP_ITER ;
+#endif
+
       /*
        * List of collections which are waitting for dictionaies creation.
        * Here we store the storage unit id and mb ID of the collection.
@@ -265,6 +279,8 @@ namespace engine
       dmsTempSUMgr *getTempSUMgr () ;
 
       dmsStatSUMgr *getStatSUMgr () ;
+
+      void clearSUCaches () ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );

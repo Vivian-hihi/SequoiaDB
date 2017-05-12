@@ -434,11 +434,20 @@ namespace engine
       return NULL ;
    }
 
+   //********************** _mthNodeConfig **************************
+   const _mthNodeConfig *mthGetDefaultNodeConfig ()
+   {
+      static _mthNodeConfig defaultConfig ;
+
+      return &defaultConfig ;
+   }
+
    //********************** _mthMatchNode ***************************
    _mthMatchNode::_mthMatchNode( _mthNodeAllocator *allocator )
                  :_allocator( allocator ), _parent( NULL ),
                  _idx_in_parent( -1 ), _isUnderLogicNot( FALSE )
    {
+      _config = mthGetDefaultNodeConfig() ;
    }
 
    _mthMatchNode::~_mthMatchNode()

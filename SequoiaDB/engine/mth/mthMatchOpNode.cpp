@@ -1954,9 +1954,14 @@ namespace engine
       PD_LOG( PDDEBUG, "add preicate[%s] to predicates set",
               rebuildName ? buf : fieldName ) ;
       if ( SDB_OK == predicateSet.addPredicate ( rebuildName ? buf : fieldName,
-                                                 _toMatch, _isUnderLogicNot ) )
+                                                 _toMatch, getBSONOpType(),
+                                                 _isUnderLogicNot,
+                                                 _config->_mixCmp ) )
       {
-         _addedToPred = TRUE ;
+         if ( isTotalConverted() )
+         {
+            _addedToPred = TRUE ;
+         }
       }
 
    done:
@@ -2605,6 +2610,11 @@ namespace engine
       return ( INT32 )EN_MATCH_OPERATOR_ET ;
    }
 
+   INT32 _mthMatchOpNodeET::getBSONOpType ()
+   {
+      return BSONObj::Equality ;
+   }
+
    const CHAR* _mthMatchOpNodeET::getOperatorStr()
    {
       return MTH_OPERATOR_STR_ET ;
@@ -2655,6 +2665,7 @@ namespace engine
                                          _mthMatchTreeContext &context,
                                          BOOLEAN &result )
    {
+      // No need to check mix-compare mode
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( 0 == compareElementValues( left, right ) )
@@ -2708,6 +2719,11 @@ namespace engine
    INT32 _mthMatchOpNodeNE::getType()
    {
       return EN_MATCH_OPERATOR_NE ;
+   }
+
+   INT32 _mthMatchOpNodeNE::getBSONOpType ()
+   {
+      return BSONObj::NE ;
    }
 
    const CHAR* _mthMatchOpNodeNE::getOperatorStr()
@@ -2790,6 +2806,11 @@ namespace engine
       return ( INT32 ) EN_MATCH_OPERATOR_LT ;
    }
 
+   INT32 _mthMatchOpNodeLT::getBSONOpType ()
+   {
+      return BSONObj::LT ;
+   }
+
    const CHAR* _mthMatchOpNodeLT::getOperatorStr()
    {
       return MTH_OPERATOR_STR_LT ;
@@ -2810,9 +2831,33 @@ namespace engine
                                          _mthMatchTreeContext &context,
                                          BOOLEAN &result )
    {
+      // Special cases for minKey and maxKey
+      if ( right.canonicalType() == MinKey )
+      {
+         // $lt:$minKey returns nothing
+         result = FALSE ;
+         return SDB_OK ;
+      }
+      else if ( right.canonicalType() == MaxKey )
+      {
+         // $lt:$maxKey returns everything except for $maxKey
+         result = ( left.canonicalType() != MaxKey ) ;
+         return SDB_OK ;
+      }
+
+      // If in mix-compare mode, left and right could have different canonical
+      // types, otherwise, they should have the same canonical types
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) < 0 )
+         {
+            result = TRUE ;
+            return SDB_OK ;
+         }
+      }
+      else if ( _config->_mixCmp )
+      {
+         if ( left.woCompare( right, FALSE ) < 0 )
          {
             result = TRUE ;
             return SDB_OK ;
@@ -2866,6 +2911,11 @@ namespace engine
       return ( INT32 ) EN_MATCH_OPERATOR_LTE ;
    }
 
+   INT32 _mthMatchOpNodeLTE::getBSONOpType ()
+   {
+      return BSONObj::LTE ;
+   }
+
    const CHAR* _mthMatchOpNodeLTE::getOperatorStr()
    {
       return MTH_OPERATOR_STR_LTE ;
@@ -2886,9 +2936,33 @@ namespace engine
                                           _mthMatchTreeContext &context,
                                           BOOLEAN &result )
    {
+      // Special cases for minKey and maxKey
+      if ( right.canonicalType() == MinKey )
+      {
+         // $lte:$minKey returns only $minKey
+         result = ( left.canonicalType() == MinKey ) ;
+         return SDB_OK ;
+      }
+      else if ( right.canonicalType() == MaxKey )
+      {
+         // $lte:$maxKey returns everything
+         result = TRUE ;
+         return SDB_OK ;
+      }
+
+      // If in mix-compare mode, left and right could have different canonical
+      // types, otherwise, they should have the same canonical types
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) <= 0 )
+         {
+            result = TRUE ;
+            return SDB_OK ;
+         }
+      }
+      else if ( _config->_mixCmp )
+      {
+         if ( left.woCompare( right, FALSE ) <= 0 )
          {
             result = TRUE ;
             return SDB_OK ;
@@ -2942,6 +3016,11 @@ namespace engine
       return EN_MATCH_OPERATOR_GT ;
    }
 
+   INT32 _mthMatchOpNodeGT::getBSONOpType ()
+   {
+      return BSONObj::GT ;
+   }
+
    const CHAR* _mthMatchOpNodeGT::getOperatorStr()
    {
       return MTH_OPERATOR_STR_GT ;
@@ -2962,9 +3041,33 @@ namespace engine
                                          _mthMatchTreeContext &context,
                                          BOOLEAN &result )
    {
+      // Special cases for minKey and maxKey
+      if ( right.canonicalType() == MinKey )
+      {
+         // $gt:$minKey returns everything except for $minKey
+         result = ( left.canonicalType() != MinKey ) ;
+         return SDB_OK ;
+      }
+      else if ( right.canonicalType() == MaxKey )
+      {
+         // $gt:$maxKey returns nothing
+         result = FALSE ;
+         return SDB_OK ;
+      }
+
+      // If in mix-compare mode, left and right could have different canonical
+      // types, otherwise, they should have the same canonical types
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) > 0 )
+         {
+            result = TRUE ;
+            return SDB_OK ;
+         }
+      }
+      else if ( _config->_mixCmp )
+      {
+         if ( left.woCompare( right, FALSE ) > 0 )
          {
             result = TRUE ;
             return SDB_OK ;
@@ -3018,6 +3121,11 @@ namespace engine
       return EN_MATCH_OPERATOR_GTE ;
    }
 
+   INT32 _mthMatchOpNodeGTE::getBSONOpType ()
+   {
+      return BSONObj::GTE ;
+   }
+
    const CHAR* _mthMatchOpNodeGTE::getOperatorStr()
    {
       return MTH_OPERATOR_STR_GTE ;
@@ -3038,9 +3146,33 @@ namespace engine
                                           _mthMatchTreeContext &context,
                                           BOOLEAN &result )
    {
+      // Special cases for minKey and maxKey
+      if ( right.canonicalType() == MinKey )
+      {
+         // $gte:$minKey returns everything
+         result = TRUE ;
+         return SDB_OK ;
+      }
+      else if ( right.canonicalType() == MaxKey )
+      {
+         // $gte:$maxKey returns $maxKey
+         result = ( left.canonicalType() == MaxKey ) ;
+         return SDB_OK ;
+      }
+
+      // If in mix-compare mode, left and right could have different canonical
+      // types, otherwise, they should have the same canonical types
       if ( left.canonicalType() == right.canonicalType() )
       {
          if ( compareElementValues ( left, right ) >= 0 )
+         {
+            result = TRUE ;
+            return SDB_OK ;
+         }
+      }
+      else if ( _config->_mixCmp )
+      {
+         if ( left.woCompare( right, FALSE ) >= 0 )
          {
             result = TRUE ;
             return SDB_OK ;
@@ -3107,11 +3239,13 @@ namespace engine
          while ( iter.more() )
          {
             BSONElement subEle = iter.next() ;
+#ifdef NOTUSE
             if ( subEle.type() == RegEx )
             {
                _mthMatchNode *node             = NULL ;
                _mthMatchOpNodeRegex *regexNode = NULL ;
                node = mthGetMatchNodeFactory()->createOpNode( _allocator,
+                                                              _config,
                                                      EN_MATCH_OPERATOR_REGEX ) ;
                if ( NULL == node )
                {
@@ -3144,6 +3278,7 @@ namespace engine
                _regexVector.push_back( regexNode ) ;
             }
             else
+#endif
             {
                _valueSet.insert( subEle ) ;
             }
@@ -3175,6 +3310,11 @@ namespace engine
    INT32 _mthMatchOpNodeIN::getType()
    {
       return EN_MATCH_OPERATOR_IN ;
+   }
+
+   INT32 _mthMatchOpNodeIN::getBSONOpType ()
+   {
+      return BSONObj::opIN ;
    }
 
    const CHAR* _mthMatchOpNodeIN::getOperatorStr()
@@ -3332,6 +3472,11 @@ namespace engine
       return EN_MATCH_OPERATOR_NIN ;
    }
 
+   INT32 _mthMatchOpNodeNIN::getBSONOpType ()
+   {
+      return BSONObj::NIN ;
+   }
+
    const CHAR* _mthMatchOpNodeNIN::getOperatorStr()
    {
       return MTH_OPERATOR_STR_NIN ;
@@ -3436,6 +3581,11 @@ namespace engine
    INT32 _mthMatchOpNodeALL::getType()
    {
       return EN_MATCH_OPERATOR_ALL ;
+   }
+
+   INT32 _mthMatchOpNodeALL::getBSONOpType ()
+   {
+      return BSONObj::opALL ;
    }
 
    const CHAR* _mthMatchOpNodeALL::getOperatorStr()
@@ -3722,6 +3872,11 @@ namespace engine
       return EN_MATCH_OPERATOR_EXISTS ;
    }
 
+   INT32 _mthMatchOpNodeEXISTS::getBSONOpType ()
+   {
+      return BSONObj::opEXISTS ;
+   }
+
    const CHAR* _mthMatchOpNodeEXISTS::getOperatorStr()
    {
       return MTH_OPERATOR_STR_EXISTS ;
@@ -3848,6 +4003,11 @@ namespace engine
       return EN_MATCH_OPERATOR_MOD ;
    }
 
+   INT32 _mthMatchOpNodeMOD::getBSONOpType ()
+   {
+      return BSONObj::opMOD ;
+   }
+
    const CHAR* _mthMatchOpNodeMOD::getOperatorStr()
    {
       return MTH_OPERATOR_STR_MOD ;
@@ -3960,6 +4120,11 @@ namespace engine
       return EN_MATCH_OPERATOR_TYPE ;
    }
 
+   INT32 _mthMatchOpNodeTYPE::getBSONOpType ()
+   {
+      return BSONObj::opTYPE ;
+   }
+
    const CHAR* _mthMatchOpNodeTYPE::getOperatorStr()
    {
       return MTH_OPERATOR_STR_TYPE ;
@@ -4010,6 +4175,11 @@ namespace engine
    INT32 _mthMatchOpNodeISNULL::getType()
    {
       return EN_MATCH_OPERATOR_ISNULL ;
+   }
+
+   INT32 _mthMatchOpNodeISNULL::getBSONOpType ()
+   {
+      return BSONObj::opISNULL ;
    }
 
    const CHAR* _mthMatchOpNodeISNULL::getOperatorStr()
@@ -4084,6 +4254,11 @@ namespace engine
    INT32 _mthMatchOpNodeEXPAND::getType()
    {
       return EN_MATCH_ATTR_EXPAND ;
+   }
+
+   INT32 _mthMatchOpNodeEXPAND::getBSONOpType ()
+   {
+      return BSONObj::opEXPAND ;
    }
 
    const CHAR* _mthMatchOpNodeEXPAND::getOperatorStr()
@@ -4192,6 +4367,11 @@ namespace engine
    INT32 _mthMatchOpNodeELEMMATCH::getType()
    {
       return EN_MATCH_OPERATOR_ELEMMATCH ;
+   }
+
+   INT32 _mthMatchOpNodeELEMMATCH::getBSONOpType ()
+   {
+      return BSONObj::opELEM_MATCH ;
    }
 
    const CHAR* _mthMatchOpNodeELEMMATCH::getOperatorStr()
@@ -4450,6 +4630,11 @@ namespace engine
       return ( INT32 ) EN_MATCH_OPERATOR_REGEX ;
    }
 
+   INT32 _mthMatchOpNodeRegex::getBSONOpType ()
+   {
+      return BSONObj::opREGEX ;
+   }
+
    const CHAR* _mthMatchOpNodeRegex::getOperatorStr()
    {
       return MTH_OPERATOR_STR_REGEX ;
@@ -4542,9 +4727,6 @@ namespace engine
          {
             return _re->PartialMatch( ele.valuestr() ) ;
          }
-      case RegEx:
-         return ( 0 == ossStrcmp( _regex, ele.regex() ) &&
-                  0 == ossStrcmp( _options, ele.regexFlags() ) ) ;
       default:
          return FALSE ;
       }

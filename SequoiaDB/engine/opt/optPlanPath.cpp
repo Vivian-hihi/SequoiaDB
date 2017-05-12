@@ -543,9 +543,9 @@ namespace engine
             {
                // Evaluate the predicate for this field only
                BOOLEAN curIsAllRange = FALSE ;
-               double curSelectivity =  indexStat.evalPredicate( pFieldName,
-                                                                 curPredicate,
-                                                                 curIsAllRange ) ;
+               double curSelectivity =  indexStat.evalPredicate(
+                     pFieldName, curPredicate, matcher.enabledMixCmp(),
+                     curIsAllRange ) ;
 
                predSelectivity *= curSelectivity ;
                if ( iterIdx == 0 )
@@ -587,9 +587,9 @@ namespace engine
          {
             // The predicates contain multiple start stop key-pairs, evaluate
             // each of them
-            predSelectivity = indexStat.evalPredicateList( pFirstField,
-                                                           predicateList,
-                                                           scanSelectivity ) ;
+            predSelectivity = indexStat.evalPredicateList(
+                  pFirstField, predicateList, matcher.enabledMixCmp(),
+                  scanSelectivity ) ;
          }
       }
 

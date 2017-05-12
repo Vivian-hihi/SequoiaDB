@@ -55,6 +55,7 @@ namespace engine
    _SDB_RTNCB::_SDB_RTNCB()
    {
       _contextHWM = 0 ;
+      _enableMixCmp = FALSE ;
    }
 
    _SDB_RTNCB::~_SDB_RTNCB()
@@ -80,6 +81,8 @@ namespace engine
       }
 
       sdbGetDMSCB()->setIxmKeySorterCreator( creator ) ;
+
+      _enableMixCmp = pmdGetOptionCB()->isEnabledMixCmp() ;
 
    done:
       return rc ;
@@ -107,6 +110,19 @@ namespace engine
       }
 
       return SDB_OK ;
+   }
+
+   void _SDB_RTNCB::onConfigChange ()
+   {
+      BOOLEAN enableMixCmp = _enableMixCmp ;
+
+      _enableMixCmp = pmdGetOptionCB()->isEnabledMixCmp() ;
+
+      if ( _enableMixCmp != enableMixCmp )
+      {
+         // parameter changed, need to clear cached plans
+         sdbGetDMSCB()->clearSUCaches() ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_RTNCB_CONTEXTDEL, "_SDB_RTNCB::contextDelete" )

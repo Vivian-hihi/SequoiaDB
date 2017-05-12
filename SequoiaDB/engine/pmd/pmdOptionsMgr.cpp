@@ -89,6 +89,7 @@ namespace engine
    #define PMD_DFT_DMS_CHK_INTERVAL    (0) // disable
    #define PMD_DFT_CACHE_MERGE_SZ      (0)
    #define PMD_DFT_OPT_EST_CACHE_SIZE  (10)
+   #define PMD_DFT_ENABLE_MIX_CMP      (FALSE)
 
    /*
       _pmdCfgExchange implement
@@ -1379,6 +1380,7 @@ namespace engine
       _cacheMergeSize = PMD_DFT_CACHE_MERGE_SZ ;
       _perfStat = FALSE ;
       _optEstCacheSize = PMD_DFT_OPT_EST_CACHE_SIZE ;
+      _enableMixCmp = PMD_DFT_ENABLE_MIX_CMP ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1680,6 +1682,10 @@ namespace engine
       rdxInt( pEX, PMD_OPTION_OPT_EST_CACHE_SIZE, _optEstCacheSize, FALSE,
               TRUE, PMD_DFT_OPT_EST_CACHE_SIZE, TRUE ) ;
       rdvMinMax( pEX, _optEstCacheSize, -1, INT_MAX, TRUE ) ;
+
+      // --enablemixcmp
+      rdxBooleanS( pEX, PMD_OPTION_ENABLE_MIX_CMP, _enableMixCmp, FALSE,
+                   TRUE, PMD_DFT_ENABLE_MIX_CMP, TRUE ) ;
 
       // end map
 
@@ -2023,7 +2029,7 @@ namespace engine
       }
 
       // om and catalog, prefetch and preload and multi-replsync not enable
-      // and syncstrategy is none
+      // and syncstrategy is none, and enablemixcmp should not be enabled
       if ( SDB_ROLE_CATALOG == dbRole || SDB_ROLE_OM == dbRole )
       {
          _numPreLoaders    = 0 ;
@@ -2040,6 +2046,8 @@ namespace engine
          {
             _syncRecordNum = 10 ;
          }
+
+         _enableMixCmp = FALSE ;
       }
 
       if ( 0 == _vecOm.size() )

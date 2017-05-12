@@ -111,7 +111,13 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE ) ;
-      rc = _predicateSet.addPredicate( pFieldName, beField, FALSE ) ;
+
+      // We don't know the setting of enableMixCmp in data groups, we need a
+      // larger range to cover all cases, so use mix-compare mode
+      rc = _predicateSet.addPredicate( pFieldName, beField,
+                                       beField.getGtLtOp(), FALSE, TRUE ) ;
+
+
       PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, rc ) ;
       return rc ;
    }

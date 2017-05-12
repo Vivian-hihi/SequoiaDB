@@ -179,8 +179,8 @@ namespace engine
             BSONObjIterator iterValue( _pValues[idx] ) ;
             while( iterKey.more() && iterValue.more() )
             {
-               const BSONElement &beKey = iterKey.next() ;
-               const BSONElement &beValue = iterValue.next() ;
+               const BSONElement beKey = iterKey.next() ;
+               const BSONElement beValue = iterValue.next() ;
 
                PD_CHECK( 0 == ossStrcmp( beKey.fieldName(), beValue.fieldName() ),
                          SDB_INVALIDARG, error, PDWARNING,
@@ -198,10 +198,10 @@ namespace engine
             BSONObjBuilder valueBuilder ;
             while( iterKey.more() )
             {
-               const BSONElement &beKey = iterKey.next() ;
+               const BSONElement beKey = iterKey.next() ;
                if ( iterValue.more() )
                {
-                  const BSONElement &beValue = iterValue.next() ;
+                  const BSONElement beValue = iterValue.next() ;
 
                   PD_CHECK( 0 == ossStrcmp( beKey.fieldName(), beValue.fieldName() ),
                             SDB_INVALIDARG, error, PDWARNING,

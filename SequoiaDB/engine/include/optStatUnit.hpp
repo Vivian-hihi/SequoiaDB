@@ -161,12 +161,14 @@ namespace engine
 
          virtual double evalPredicate ( const CHAR *pFieldName,
                                         rtnPredicate &predicate,
+                                        BOOLEAN mixCmp,
                                         BOOLEAN &isAllRange ) const ;
 
          virtual double evalKeyPair ( const CHAR *pFieldName,
                                       dmsStatKey &startKey,
                                       dmsStatKey &stopKey,
                                       BOOLEAN isEqual,
+                                      BOOLEAN mixCmp,
                                       double &scanSelectivity ) const = 0 ;
 
          virtual BOOLEAN isValid () const = 0 ;
@@ -232,12 +234,14 @@ namespace engine
 
          double evalPredicateList ( const CHAR *pFieldName,
                                     rtnStatPredList &predList,
+                                    BOOLEAN mixCmp,
                                     double &scanSelectivity ) const ;
 
          virtual double evalKeyPair ( const CHAR *pFieldName,
                                       dmsStatKey &startKey,
                                       dmsStatKey &stopKey,
                                       BOOLEAN isEqual,
+                                      BOOLEAN mixCmp,
                                       double &scanSelectivity ) const ;
 
       protected :
@@ -342,12 +346,14 @@ namespace engine
          INT32 initCurStat ( _dmsMBContext *mbContext ) ;
 
          double evalPredicateSet ( rtnPredicateSet &predicateSet,
+                                   BOOLEAN mixCmp,
                                    double &scanSelectivity ) ;
 
          virtual double evalKeyPair ( const CHAR *pFieldName,
                                       dmsStatKey &startKey,
                                       dmsStatKey &stopKey,
                                       BOOLEAN isEqual,
+                                      BOOLEAN mixCmp,
                                       double &scanSelectivity ) const ;
 
          double evalETOpterator ( const CHAR *pFieldName,
@@ -384,7 +390,7 @@ namespace engine
          double _evalKeyPair ( const BSONElement &startKey,
                                BOOLEAN startIncluded,
                                const BSONElement &stopKey,
-                               BOOLEAN stopIncluded ) const ;
+                               BOOLEAN stopIncluded, BOOLEAN mixCmp ) const ;
 
          double _evalETOperator ( const BSONElement &beValue ) const ;
 

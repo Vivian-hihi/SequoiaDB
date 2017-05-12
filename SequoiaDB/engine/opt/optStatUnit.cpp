@@ -292,6 +292,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTSTATUNIT_EVALPRED, "_optStatUnit::evalPredicate" )
    double _optStatUnit::evalPredicate ( const CHAR *pFieldName,
                                         rtnPredicate &predicate,
+                                        BOOLEAN mixCmp,
                                         BOOLEAN &isAllRange ) const
    {
       double selectivity = 1.0 ;
@@ -328,7 +329,7 @@ namespace engine
             double subSelectivity = 1.0, dummy = 1.0 ;
 
             subSelectivity = evalKeyPair( pFieldName, beStart, beStop,
-                                          subIsEqual, dummy ) ;
+                                          subIsEqual, mixCmp, dummy ) ;
             selectivity += subSelectivity ;
          }
 
@@ -457,6 +458,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTIDXSTAT_EVALPREDLIST, "_optStatUnit::evalPredicateList" )
    double _optIndexStat::evalPredicateList ( const CHAR *pFirstFieldName,
                                              rtnStatPredList &predList,
+                                             BOOLEAN mixCmp,
                                              double &scanSelectivity ) const
    {
       INT32 rc = SDB_INVALIDARG ;
@@ -484,7 +486,8 @@ namespace engine
          if ( pPredicate )
          {
             BOOLEAN isAllRange = FALSE ;
-            predSelectivity = evalPredicate( pFirstFieldName, *pPredicate, isAllRange ) ;
+            predSelectivity = evalPredicate( pFirstFieldName, *pPredicate,
+                                             mixCmp, isAllRange ) ;
          }
          else
          {
@@ -503,6 +506,7 @@ namespace engine
                                        dmsStatKey &startKey,
                                        dmsStatKey &stopKey,
                                        BOOLEAN isEqual,
+                                       BOOLEAN mixCmp,
                                        double &scanSelectivity ) const
    {
       INT32 rc = SDB_INVALIDARG ;
@@ -529,7 +533,7 @@ namespace engine
          // Simply evaluate one
          predSelectivity = _collectionStat.evalKeyPair( pFieldName,
                                                         startKey, stopKey,
-                                                        isEqual,
+                                                        isEqual, mixCmp,
                                                         scanSelectivity ) ;
       }
 
@@ -597,6 +601,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTCLSTAT_EVALPREDSET, "_optCollectionStat::evalPredicateSet" )
    double _optCollectionStat::evalPredicateSet ( rtnPredicateSet &predicateSet,
+                                                 BOOLEAN mixCmp,
                                                  double &scanSelectivity )
    {
       double selectivity = 1.0 ;
@@ -661,7 +666,8 @@ namespace engine
          rtnPredicate &predicate = iterPred->second ;
 
          double curSelectivity = 1.0 ;
-         curSelectivity = evalPredicate( pFieldName, predicate, isAllRange ) ;
+         curSelectivity = evalPredicate( pFieldName, predicate, mixCmp,
+                                         isAllRange ) ;
          selectivity *= curSelectivity ;
       }
 
@@ -677,6 +683,7 @@ namespace engine
                                             dmsStatKey &startKey,
                                             dmsStatKey &stopKey,
                                             BOOLEAN isEqual,
+                                            BOOLEAN mixCmp,
                                             double &scanSelectivity ) const
    {
       INT32 rc = SDB_INVALIDARG ;
@@ -719,7 +726,7 @@ namespace engine
          else
          {
             predSelectivity = _evalKeyPair( beStart, startIncluded,
-                                            beStop, stopIncluded ) ;
+                                            beStop, stopIncluded, mixCmp ) ;
          }
          scanSelectivity = predSelectivity ;
       }
@@ -824,30 +831,60 @@ namespace engine
    double _optCollectionStat::_evalKeyPair ( const BSONElement &startKey,
                                              BOOLEAN startIncluded,
                                              const BSONElement &stopKey,
-                                             BOOLEAN stopIncluded ) const
+                                             BOOLEAN stopIncluded,
+                                             BOOLEAN mixCmp ) const
    {
       double selectivity = OPT_PRED_DEF_SELECTIVITY ;
 
       PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALKEYPAIR ) ;
 
-      if ( startKey.type() == stopKey.type() )
-      {
-         selectivity = _evalRangeOperator( startKey, startIncluded,
-                                           stopKey, stopIncluded ) ;
-      }
-      else if ( startKey.type() == MinKey &&
-                stopKey.type() == MaxKey )
+      if ( startKey.type() == MinKey &&
+           stopKey.type() == MaxKey )
       {
          // Cover all values
          selectivity = 1.0 ;
+      }
+      else if ( startKey.type() == MinKey )
+      {
+         selectivity = _evalLTOperator( stopKey, stopIncluded ) ;
       }
       else if ( stopKey.type() == MaxKey )
       {
          selectivity = _evalGTOperator( startKey, startIncluded ) ;
       }
-      else if ( startKey.type() == MinKey )
+
+      else if ( mixCmp )
       {
-         selectivity = _evalLTOperator( stopKey, stopIncluded ) ;
+         selectivity = _evalRangeOperator( startKey, startIncluded,
+                                           stopKey, stopIncluded ) ;
+      }
+      else
+      {
+         BSONElement minEle = rtnKeyGetMinForCmp( startKey.type(),
+                                                  FALSE ).firstElement() ;
+         BSONElement maxEle = rtnKeyGetMaxForCmp( stopKey.type(),
+                                                  FALSE ).firstElement() ;
+
+         BOOLEAN startIsMin = ( 0 == startKey.woCompare( minEle, FALSE ) ) ;
+         BOOLEAN stopIsMax = ( 0 == stopKey.woCompare( maxEle, FALSE ) ) ;
+
+         if ( startIsMin && stopIsMax )
+         {
+            selectivity = 1.0 ;
+         }
+         else if ( startIsMin )
+         {
+            selectivity = _evalLTOperator( stopKey, stopIncluded ) ;
+         }
+         else if ( stopIsMax )
+         {
+            selectivity = _evalGTOperator( startKey, startIncluded ) ;
+         }
+         else
+         {
+            selectivity = _evalRangeOperator( startKey, startIncluded,
+                                              stopKey, stopIncluded ) ;
+         }
       }
 
       PD_TRACE_EXIT( SDB__OPTCLSTAT__EVALKEYPAIR ) ;
@@ -888,7 +925,7 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALRANGEOPTR ) ;
 
-      if ( beStart.type() == beStop.type() )
+      if ( beStart.canonicalType() == beStop.canonicalType() )
       {
          switch ( beStart.type() )
          {

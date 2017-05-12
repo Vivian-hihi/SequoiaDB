@@ -39,6 +39,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
+#include "rtnCB.hpp"
 #include <string>
 
 using namespace bson ;
@@ -148,6 +149,7 @@ namespace engine
 
    _mthMatchOpNode* _mthMatchNodeFactory::createOpNode(
                                                    _mthNodeAllocator *allocator,
+                                                   const _mthNodeConfig *config,
                                                    EN_MATCH_OP_FUNC_TYPE type )
    {
       _mthMatchOpNode *opNode = NULL ;
@@ -203,11 +205,17 @@ namespace engine
          break ;
       }
 
+      if ( opNode )
+      {
+         opNode->setConfig( config ) ;
+      }
+
       return opNode ;
    }
 
    _mthMatchLogicNode* _mthMatchNodeFactory::createLogicNode(
                                                    _mthNodeAllocator *allocator,
+                                                   const _mthNodeConfig *config,
                                                    EN_MATCH_OP_FUNC_TYPE type )
    {
       _mthMatchLogicNode *logicNode = NULL ;
@@ -229,6 +237,11 @@ namespace engine
       default :
          //do nothing
          break ;
+      }
+
+      if ( logicNode )
+      {
+         logicNode->setConfig( config ) ;
       }
 
       return logicNode ;
@@ -438,7 +451,8 @@ namespace engine
          nodeType = EN_MATCH_OPERATOR_ET ;
       }
 
-      node = mthGetMatchNodeFactory()->createOpNode( &_allocator, nodeType ) ;
+      node = mthGetMatchNodeFactory()->createOpNode( &_allocator, &_config,
+                                                     nodeType ) ;
       if ( NULL == node )
       {
          rc = SDB_INVALIDARG ;
@@ -502,6 +516,7 @@ namespace engine
       BOOLEAN hasAddToTree  = FALSE ;
 
       node = mthGetMatchNodeFactory()->createOpNode( &_allocator,
+                                                     &_config,
                                                      EN_MATCH_ATTR_EXPAND ) ;
       if ( NULL == node )
       {
@@ -542,6 +557,7 @@ namespace engine
       BOOLEAN hasAddToTree            = FALSE ;
 
       node = mthGetMatchNodeFactory()->createOpNode( &_allocator,
+                                                     &_config,
                                                      EN_MATCH_OPERATOR_REGEX ) ;
       if ( NULL == node )
       {
@@ -607,6 +623,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       MTH_FUNC_LIST empty ;
+
       rc = _addRegExOp( ele.fieldName(), ele.regex(), ele.regexFlags(), empty,
                         parent ) ;
       if ( SDB_OK != rc )
@@ -629,6 +646,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       MTH_FUNC_LIST empty ;
       const CHAR *eFieldName = ele.fieldName() ;
+
       //fieldName can't start with '$'
       if ( MTH_OPERATOR_EYECATCHER == eFieldName[0] )
       {
@@ -660,6 +678,7 @@ namespace engine
 
       // iterator array
       BSONObjIterator iterArray( ele.embeddedObject() ) ;
+
       while ( iterArray.more() )
       {
          BSONElement eleArrayItem = iterArray.next() ;
@@ -681,6 +700,7 @@ namespace engine
                // under LOGIC_AND
                _mthMatchLogicNode *child = NULL ;
                child = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                                  &_config,
                                                  EN_MATCH_OPERATOR_LOGIC_AND ) ;
                if ( NULL == child )
                {
@@ -750,6 +770,7 @@ namespace engine
       }
 
       logicAnd = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                            &_config,
                                                 EN_MATCH_OPERATOR_LOGIC_AND ) ;
       if ( !logicAnd )
       {
@@ -817,6 +838,7 @@ namespace engine
       }
 
       logicOr = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                           &_config,
                                                 EN_MATCH_OPERATOR_LOGIC_OR ) ;
       if ( !logicOr )
       {
@@ -884,6 +906,7 @@ namespace engine
       }
 
       logicNot = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                            &_config,
                                                 EN_MATCH_OPERATOR_LOGIC_NOT ) ;
       if ( !logicNot )
       {
@@ -938,6 +961,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const CHAR *fieldName = ele.fieldName() ;
+
       if ( MTH_OPERATOR_EYECATCHER == fieldName[0] )
       {
          EN_MATCH_OP_FUNC_TYPE nodeType ;
@@ -1003,49 +1027,135 @@ namespace engine
       goto done ;
    }
 
-   /* ignoreCurrentField: default FALSE */
-   BOOLEAN _mthMatchTree::_isExistOpFieldRecursive( const BSONElement &ele,
-                                                    BOOLEAN ignoreCurrentField )
+   INT32 _mthMatchTree::_checkInnerObject ( const BSONElement &ele,
+                                            UINT32 level,
+                                            BSONElement *pOutEle )
    {
-      const CHAR *fieldName = ele.fieldName() ;
-      if ( Object == ele.type() || Array == ele.type() )
-      {
-         EN_MATCH_OP_FUNC_TYPE nodeType ;
-         nodeType = mthGetMatchNodeFactory()->getMatchNodeType(
-                                                             ele.fieldName() ) ;
-         if ( EN_MATCH_OPERATOR_ELEMMATCH == nodeType )
-         {
-            //we treat $eleMatch as not OpField
-            return FALSE ;
-         }
+      INT32 rc = SDB_OK ;
 
-         if ( ignoreCurrentField || MTH_OPERATOR_EYECATCHER != fieldName[0] )
+      if ( NULL != pOutEle )
+      {
+         (*pOutEle) = ele ;
+      }
+
+      switch ( ele.type() )
+      {
+         case Array :
          {
-            BSONObjIterator j( ele.embeddedObject() ) ;
-            while ( j.more () )
+            // Check each element in array
+            const BSONObj &boInner = ele.embeddedObject() ;
+            BSONObjIterator iter( boInner ) ;
+            while ( iter.more() )
             {
-               if ( _isExistOpFieldRecursive( j.next() ) )
+               const BSONElement &beSub = iter.next() ;
+               rc = _checkInnerObject( beSub, level + 1, NULL ) ;
+               PD_RC_CHECK( rc, PDERROR, "Inner array %s is invalid",
+                            ele.toString( TRUE, TRUE ).c_str() ) ;
+            }
+            break ;
+         }
+         case Object :
+         {
+            BOOLEAN hasRegex = FALSE ;
+            BOOLEAN hasOptions = FALSE ;
+
+            const BSONObj &boInner = ele.embeddedObject() ;
+            BSONObjIterator iter( boInner ) ;
+            while ( iter.more() )
+            {
+               const BSONElement &beSub = iter.next() ;
+               const CHAR *subName = beSub.fieldName() ;
+
+               if ( MTH_OPERATOR_EYECATCHER == subName[0] )
                {
-                  return TRUE ;
+                  // It is a  { $xx: ... }, which could only be below case:
+                  // 1. $field:'a'
+                  EN_MATCH_OP_FUNC_TYPE subType =
+                        mthGetMatchNodeFactory()->getMatchNodeType( subName ) ;
+
+                  if ( EN_MATCH_OPERATOR_FIELD == subType )
+                  {
+                     // $field could only exist in the top level
+                     PD_CHECK( 1 == boInner.nFields() && 0 == level &&
+                               String == beSub.type(),
+                               SDB_INVALIDARG, error, PDERROR,
+                               "Inner $field %s is invalid",
+                               ele.toString( TRUE, TRUE ).c_str() ) ;
+                     // $field only needs sub element
+                     if ( NULL != pOutEle )
+                     {
+                        (*pOutEle) = beSub ;
+                     }
+                  }
+                  else if ( EN_MATCH_OPERATOR_REGEX == subType )
+                  {
+                     PD_CHECK( !hasRegex && String == beSub.type(),
+                               SDB_INVALIDARG, error, PDERROR,
+                               "Inner $regex %s is invalid",
+                               ele.toString( TRUE, TRUE ).c_str() ) ;
+                     hasRegex = TRUE ;
+                  }
+                  else if ( EN_MATCH_OPERATOR_OPTIONS == subType )
+                  {
+                     PD_CHECK( !hasOptions && String == beSub.type(),
+                               SDB_INVALIDARG, error, PDERROR,
+                               "Inner $options %s is invalid",
+                               ele.toString( TRUE, TRUE ).c_str() ) ;
+                     hasOptions = TRUE ;
+                  }
+                  else
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_LOG( PDERROR, "Inner operator %s is invalid",
+                             ele.toString( TRUE, TRUE ).c_str() ) ;
+                     goto error ;
+                  }
+               }
+               else
+               {
+                  PD_CHECK( !hasRegex && !hasOptions,
+                            SDB_INVALIDARG, error, PDERROR,
+                            "Inner object %s is invalid",
+                            ele.toString( TRUE, TRUE).c_str() ) ;
+                  rc = _checkInnerObject( beSub, level + 1, NULL ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Inner object %s is invalid",
+                               ele.toString( TRUE, TRUE ).c_str() ) ;
                }
             }
 
-            return FALSE ;
+            if ( hasRegex && hasOptions )
+            {
+               PD_CHECK( 2 == boInner.nFields(),
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Inner $regex %s is invalid",
+                         ele.toString( TRUE, TRUE ).c_str() ) ;
+            }
+            else if ( hasRegex )
+            {
+               PD_CHECK( 1 == boInner.nFields(),
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Inner $regex %s is invalid",
+                         ele.toString( TRUE, TRUE ).c_str() ) ;
+            }
+            else if ( hasOptions )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "Inner $options %s is invalid",
+                       ele.toString( TRUE, TRUE ).c_str() ) ;
+               goto error ;
+            }
+            break ;
          }
+         default :
+            break ;
+      }
 
-         return TRUE ;
-      }
-      else
-      {
-         if ( MTH_OPERATOR_EYECATCHER == fieldName[0] )
-         {
-            return TRUE ;
-         }
-         else
-         {
-            return FALSE ;
-         }
-      }
+      rc = SDB_OK ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
    INT32 _mthMatchTree::_getElementKeysFormat( const BSONElement &ele )
@@ -1201,7 +1311,7 @@ namespace engine
            EN_MATCH_ATTR_RETURNMATCH == nodeType )
       {
          rc = _parseAttribute( ele.fieldName(), innerEle, nodeType,
-                               funcList );
+                               funcList ) ;
          PD_RC_CHECK( rc, PDERROR, "_parseAttribute failed:rc=%d", rc ) ;
          goto done ;
       }
@@ -1245,53 +1355,50 @@ namespace engine
       }
       else
       {
-         // { a : { $xx : {...} } }
-         if ( _isExistOpFieldRecursive( innerEle, TRUE ) )
-         {
-            // { a : { $xx : { $xx : ... } } }
-            BSONObjIterator k( innerEle.embeddedObject() ) ;
-            while ( k.more() )
-            {
-               BSONElement tElem       = k.next () ;
-               const CHAR *tEleFieName = tElem.fieldName () ;
-               EN_MATCH_OP_FUNC_TYPE tmpType ;
-               tmpType = mthGetMatchNodeFactory()->getMatchNodeType(
-                                                                tEleFieName ) ;
-               if ( EN_MATCH_OPERATOR_FIELD != tmpType
-                    && _isExistOpFieldRecursive( innerEle ) )
-               {
-                  //only support $field
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG ( PDERROR, "Matching syntax can not "
-                           "have more than one operator") ;
-                  goto error ;
-               }
+         BSONElement beSub ;
 
-               rc = _addOperator( ele.fieldName(), tElem, nodeType, funcList,
-                                  parent ) ;
-               PD_RC_CHECK( rc, PDERROR, "_addOperator failed:tElem=%s,rc=%d",
-                            tElem.toString().c_str(), rc ) ;
-            }
+         // { a : { $xx : {...} } }
+         if ( nodeType >= EN_MATCH_OPERATOR_LOGIC_AND &&
+              nodeType < EN_MATCH_OPERATOR_LOGIC_END )
+         {
+            // $xx must not be logical operator
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR,
+                    "Unsupported inner matching operator [%s]",
+                    innerEle.toString( TRUE, TRUE ).c_str() ) ;
+            goto error ;
+         }
+
+         // Check object inside $xx
+         // Note: $elemMatch will do the check itself
+         if ( EN_MATCH_OPERATOR_ELEMMATCH != nodeType )
+         {
+            rc = _checkInnerObject( innerEle, 0, &beSub ) ;
+            PD_RC_CHECK( rc, PDERROR, "Unsupported inner matching operator [%s]",
+                         innerEle.toString( TRUE, TRUE ).c_str() ) ;
          }
          else
          {
-            // { a : { $xx : { xx : ... } } }
-            if ( ( nodeType < EN_MATCH_OPERATOR_END &&
-                   nodeType >= EN_MATCH_OPERATOR_ET ) )
-            {
-               rc = _addOperator( ele.fieldName(), innerEle, nodeType, funcList,
-                                  parent ) ;
-               PD_RC_CHECK( rc, PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
-                            innerEle.toString().c_str(), rc ) ;
-            }
-            else
-            {
-               rc = _addFunction( ele.fieldName(), innerEle, nodeType,
-                                  funcList ) ;
-               PD_RC_CHECK( rc, PDERROR, "add function failed:fieldName=%s,"
-                            "innerEle=%s,rc=%d", ele.fieldName(),
-                            innerEle.toString().c_str(), rc ) ;
-            }
+            beSub = innerEle ;
+         }
+
+         if ( nodeType >= EN_MATCH_OPERATOR_ET &&
+              nodeType < EN_MATCH_OPERATOR_END )
+         {
+            // $xx is a match operator
+            rc = _addOperator( ele.fieldName(), beSub, nodeType, funcList,
+                               parent ) ;
+            PD_RC_CHECK( rc, PDERROR, "_addOperator failed:innerEle=%s,rc=%d",
+                         innerEle.toString().c_str(), rc ) ;
+         }
+         else
+         {
+            // $xx is a function
+            rc = _addFunction( ele.fieldName(), innerEle, nodeType,
+                               funcList ) ;
+            PD_RC_CHECK( rc, PDERROR, "add function failed:fieldName=%s,"
+                         "innerEle=%s,rc=%d", ele.fieldName(),
+                         innerEle.toString().c_str(), rc ) ;
          }
       }
 
@@ -1358,6 +1465,7 @@ namespace engine
       INT32 keysFormat = 0 ;
       MTH_FUNC_LIST funcList ;
       const CHAR *fieldName = ele.fieldName() ;
+
       //fieldName can't start with '$'
       if ( MTH_OPERATOR_EYECATCHER == fieldName[0] )
       {
@@ -1522,6 +1630,7 @@ namespace engine
                                        _mthMatchLogicNode *parent )
    {
       PD_TRACE_ENTRY( SDB__MTHMATCHTREE_PARSEELEMENT ) ;
+
       INT32 rc = SDB_OK ;
       switch ( ele.type() )
       {
@@ -1547,7 +1656,8 @@ namespace engine
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMATCHTREE_LOADPATTERN, "_mthMatchTree::loadPattern" )
    INT32 _mthMatchTree::loadPattern( const BSONObj &matcher,
-                                     BOOLEAN needPredicate /* = TRUE */)
+                                     BOOLEAN needPredicate /* = TRUE */,
+                                     BOOLEAN needConfig /* = TRUE */ )
    {
       PD_TRACE_ENTRY( SDB__MTHMATCHTREE_LOADPATTERN ) ;
       SDB_ASSERT ( !_isInitialized, "mthMatcher can't be initialized "
@@ -1557,11 +1667,17 @@ namespace engine
       _isMatchesAll = TRUE ;
       INT32 eleNum  = 0 ;
 
+      if ( needConfig )
+      {
+         _config._mixCmp = sdbGetRTNCB()->isEnabledMixCmp() ;
+      }
+
       BSONObjIterator i( _matchPattern ) ;
       try
       {
          //create root node( AND )
          _root = mthGetMatchNodeFactory()->createLogicNode( &_allocator,
+                                                            &_config,
                                                  EN_MATCH_OPERATOR_LOGIC_AND ) ;
          if ( NULL == _root )
          {
@@ -2335,8 +2451,8 @@ namespace engine
       {
          if ( pCollectionStat )
          {
-            predSelectivity = pCollectionStat->evalPredicateSet( _predicateSet,
-                                                                 scanSelectivity ) ;
+            predSelectivity = pCollectionStat->evalPredicateSet(
+                  _predicateSet, _config._mixCmp, scanSelectivity ) ;
          }
          _root->evalEstimation( pCollectionStat, tmpSelectivity, tmpCPUCost ) ;
          tmpSelectivity *= predSelectivity ;

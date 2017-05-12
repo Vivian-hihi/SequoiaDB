@@ -523,6 +523,8 @@ namespace engine
          void getFuncList( MTH_FUNC_LIST &funcList ) ;
          BOOLEAN hasReturnMatch() ;
 
+         virtual INT32 getBSONOpType () = 0 ;
+
       protected: /* from itself */
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
@@ -584,6 +586,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -607,6 +610,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -628,6 +632,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -650,6 +655,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -672,6 +678,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -694,6 +701,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -718,6 +726,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -736,7 +745,6 @@ namespace engine
       protected:
          BOOLEAN _isMatch( const BSONElement &ele ) ;
 
-
       protected:
          typedef set<BSONElement, element_cmp_lt> VALUE_SET ;
          set<BSONElement, element_cmp_lt> _valueSet ;
@@ -753,6 +761,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -773,6 +782,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -804,6 +814,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -824,6 +835,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -853,6 +865,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -878,6 +891,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -898,6 +912,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -919,6 +934,7 @@ namespace engine
 
       public:
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual UINT32 getWeight() ;
          virtual BOOLEAN isTotalConverted() ;
@@ -955,6 +971,7 @@ namespace engine
                      const CHAR *options ) ;
 
          virtual INT32 getType() ;
+         virtual INT32 getBSONOpType () ;
          virtual const CHAR *getOperatorStr() ;
          virtual BSONObj toBson() ;
          virtual BOOLEAN isTotalConverted() ;

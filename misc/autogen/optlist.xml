@@ -1272,5 +1272,16 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_ENABLE_MIX_CMP</name>
+      <long>enablemixcmp</long>
+      <description>
+         <en>Specify the compare mode of query matcher. Enabled means query could match with different BSON canonical types. Otherwise, it means query could only match with the same BSON canonical type. Default is false</en>
+         <cn>指定查询的匹配模式，如果是true，则可以对不同比较优先级的数据进行匹配，否则只匹配与参数有相同比较优先级的数据。默认是 false</cn>
+      </description>
+      <default>false</default>
+      <hidden>true</hidden>
+   </opt>
+
 </optlist>
 

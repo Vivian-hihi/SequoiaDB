@@ -68,8 +68,10 @@ namespace engine
 
    public:
       _mthMatchOpNode*        createOpNode( _mthNodeAllocator *allocator,
+                                            const _mthNodeConfig *config,
                                             EN_MATCH_OP_FUNC_TYPE type ) ;
       _mthMatchLogicNode*     createLogicNode( _mthNodeAllocator *allocator,
+                                               const _mthNodeConfig *config,
                                                EN_MATCH_OP_FUNC_TYPE type ) ;
       void                    releaseNode( _mthMatchNode *node ) ;
 
@@ -97,7 +99,8 @@ namespace engine
 
       public:
          INT32    loadPattern( const BSONObj &matcher,
-                               BOOLEAN needPredicate = TRUE ) ;
+                               BOOLEAN needPredicate = TRUE,
+                               BOOLEAN needConfig = TRUE ) ;
 
          //TODO: delete
          INT32    matches( const BSONObj &matchTarget, BOOLEAN &result,
@@ -135,6 +138,11 @@ namespace engine
             return _isEstimated ;
          }
 
+         OSS_INLINE BOOLEAN enabledMixCmp ()
+         {
+            return _config._mixCmp ;
+         }
+
       private:
          INT32    _matches( const BSONObj &matchTarget, BOOLEAN &result,
                             _mthMatchTreeContext &context ) ;
@@ -166,8 +174,8 @@ namespace engine
                                    _mthMatchLogicNode *parent ) ;
          INT32    _parseArrayElement( const BSONElement &ele,
                                       _mthMatchLogicNode *parent ) ;
-         BOOLEAN  _isExistOpFieldRecursive( const BSONElement &ele,
-                                          BOOLEAN ignoreCurrentField = FALSE ) ;
+         INT32    _checkInnerObject ( const BSONElement &innerEle,
+                                      UINT32 level, BSONElement *pOutEle ) ;
          INT32    _getElementKeysFormat( const BSONElement &ele ) ;
 
          void     _clearFuncList( MTH_FUNC_LIST &funcList ) ;
@@ -233,6 +241,8 @@ namespace engine
          double            _predSelectivity ;
          double            _scanSelectivity ;
          UINT32            _estCPUCost ;
+
+         _mthNodeConfig        _config ;
    } ;
 
    class _mthRecordGenerator

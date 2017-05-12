@@ -71,6 +71,8 @@ namespace engine
       std::map<SINT64, rtnContext *> _contextList ;
       SINT64 _contextHWM ;
 
+      BOOLEAN _enableMixCmp ;
+
    public :
       _SDB_RTNCB() ;
       virtual ~_SDB_RTNCB() ;
@@ -82,6 +84,7 @@ namespace engine
       virtual INT32  active () ;
       virtual INT32  deactive () ;
       virtual INT32  fini () ;
+      virtual void   onConfigChange () ;
 
       SINT32 contextNew ( RTN_CONTEXT_TYPE type, rtnContext **context,
                           SINT64 &contextID, _pmdEDUCB * pEDUCB ) ;
@@ -178,6 +181,11 @@ namespace engine
                contextList.insert( item ) ;
             }
          }
+      }
+
+      OSS_INLINE BOOLEAN isEnabledMixCmp () const
+      {
+         return _enableMixCmp ;
       }
 
    } ;

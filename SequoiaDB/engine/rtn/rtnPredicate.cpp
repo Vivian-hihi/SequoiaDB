@@ -55,6 +55,295 @@ namespace bson
 }
 namespace engine
 {
+   static BSONObj _rtnKeyBuildMinTypeObj ( BSONType type ) ;
+   static BSONObj _rtnKeyBuildMaxTypeObj ( BSONType type ) ;
+
+   static BSONObj _rtnKeyMinMinKey = _rtnKeyBuildMinTypeObj( MinKey ) ;
+   static BSONObj _rtnKeyMinNumberDouble = _rtnKeyBuildMinTypeObj( NumberDouble ) ;
+   static BSONObj _rtnKeyMinString = _rtnKeyBuildMinTypeObj( String ) ;
+   static BSONObj _rtnKeyMinObject = _rtnKeyBuildMinTypeObj( Object ) ;
+   static BSONObj _rtnKeyMinArray = _rtnKeyBuildMinTypeObj( Array ) ;
+   static BSONObj _rtnKeyMinBinData = _rtnKeyBuildMinTypeObj( BinData ) ;
+   static BSONObj _rtnKeyMinUndefined = _rtnKeyBuildMinTypeObj( Undefined ) ;
+   static BSONObj _rtnKeyMinJstOID = _rtnKeyBuildMinTypeObj( jstOID ) ;
+   static BSONObj _rtnKeyMinBool = _rtnKeyBuildMinTypeObj( Bool ) ;
+   static BSONObj _rtnKeyMinDate = _rtnKeyBuildMinTypeObj( Date ) ;
+   static BSONObj _rtnKeyMinJstNULL = _rtnKeyBuildMinTypeObj( jstNULL ) ;
+   static BSONObj _rtnKeyMinRegEx = _rtnKeyBuildMinTypeObj( RegEx ) ;
+   static BSONObj _rtnKeyMinDBRef = _rtnKeyBuildMinTypeObj( DBRef ) ;
+   static BSONObj _rtnKeyMinCode = _rtnKeyBuildMinTypeObj( Code ) ;
+   static BSONObj _rtnKeyMinSymbol = _rtnKeyBuildMinTypeObj( Symbol ) ;
+   static BSONObj _rtnKeyMinCodeWScope = _rtnKeyBuildMinTypeObj( CodeWScope ) ;
+   static BSONObj _rtnKeyMinNumberInt = _rtnKeyBuildMinTypeObj( NumberInt ) ;
+   static BSONObj _rtnKeyMinTimestamp = _rtnKeyBuildMinTypeObj( Timestamp ) ;
+   static BSONObj _rtnKeyMinNumberLong = _rtnKeyBuildMinTypeObj( NumberLong ) ;
+   static BSONObj _rtnKeyMinNumberDecimal = _rtnKeyBuildMinTypeObj( NumberDecimal ) ;
+   static BSONObj _rtnKeyMinMaxKey = _rtnKeyBuildMinTypeObj( MaxKey ) ;
+
+   static BSONObj _rtnKeyMaxMinKey = _rtnKeyBuildMaxTypeObj( MinKey ) ;
+   static BSONObj _rtnKeyMaxNumberDouble = _rtnKeyBuildMaxTypeObj( NumberDouble ) ;
+   static BSONObj _rtnKeyMaxString = _rtnKeyBuildMaxTypeObj( String ) ;
+   static BSONObj _rtnKeyMaxObject = _rtnKeyBuildMaxTypeObj( Object ) ;
+   static BSONObj _rtnKeyMaxArray = _rtnKeyBuildMaxTypeObj( Array ) ;
+   static BSONObj _rtnKeyMaxBinData = _rtnKeyBuildMaxTypeObj( BinData ) ;
+   static BSONObj _rtnKeyMaxUndefined = _rtnKeyBuildMaxTypeObj( Undefined ) ;
+   static BSONObj _rtnKeyMaxJstOID = _rtnKeyBuildMaxTypeObj( jstOID ) ;
+   static BSONObj _rtnKeyMaxBool = _rtnKeyBuildMaxTypeObj( Bool ) ;
+   static BSONObj _rtnKeyMaxDate = _rtnKeyBuildMaxTypeObj( Date ) ;
+   static BSONObj _rtnKeyMaxJstNULL = _rtnKeyBuildMaxTypeObj( jstNULL ) ;
+   static BSONObj _rtnKeyMaxRegEx = _rtnKeyBuildMaxTypeObj( RegEx ) ;
+   static BSONObj _rtnKeyMaxDBRef = _rtnKeyBuildMaxTypeObj( DBRef ) ;
+   static BSONObj _rtnKeyMaxCode = _rtnKeyBuildMaxTypeObj( Code ) ;
+   static BSONObj _rtnKeyMaxSymbol = _rtnKeyBuildMaxTypeObj( Symbol ) ;
+   static BSONObj _rtnKeyMaxCodeWScope = _rtnKeyBuildMaxTypeObj( CodeWScope ) ;
+   static BSONObj _rtnKeyMaxNumberInt = _rtnKeyBuildMaxTypeObj( NumberInt ) ;
+   static BSONObj _rtnKeyMaxTimestamp = _rtnKeyBuildMaxTypeObj( Timestamp ) ;
+   static BSONObj _rtnKeyMaxNumberLong = _rtnKeyBuildMaxTypeObj( NumberLong ) ;
+   static BSONObj _rtnKeyMaxNumberDecimal = _rtnKeyBuildMaxTypeObj( NumberDecimal ) ;
+   static BSONObj _rtnKeyMaxMaxKey = _rtnKeyBuildMaxTypeObj( MaxKey ) ;
+
+   static BSONObj _rtnKeyBuildMinTypeObj ( BSONType type )
+   {
+      BSONObjBuilder b ;
+      b.appendMinForType( "", type ) ;
+      return b.obj() ;
+   }
+
+   static BSONObj _rtnKeyBuildMaxTypeObj ( BSONType type )
+   {
+      BSONObjBuilder b ;
+      b.appendMaxForType( "", type ) ;
+      return b.obj() ;
+   }
+
+   BSONObj rtnKeyGetMinType ( BSONType type )
+   {
+      switch ( type )
+      {
+         case MinKey :
+            return minKey ;
+         case NumberDouble :
+            return _rtnKeyMinNumberDouble ;
+         case String :
+            return _rtnKeyMinString ;
+         case Object :
+            return _rtnKeyMinObject ;
+         case Array :
+            return _rtnKeyMinArray ;
+         case BinData :
+            return _rtnKeyMinBinData ;
+         case Undefined :
+            return _rtnKeyMinUndefined ;
+         case jstOID :
+            return _rtnKeyMinJstOID ;
+         case Bool :
+            return _rtnKeyMinBool ;
+         case Date :
+            return _rtnKeyMinDate ;
+         case jstNULL :
+            return _rtnKeyMinJstNULL ;
+         case RegEx :
+            return _rtnKeyMinRegEx ;
+         case DBRef :
+            return _rtnKeyMinDBRef ;
+         case Code :
+            return _rtnKeyMinCode ;
+         case Symbol :
+            return _rtnKeyMinSymbol ;
+         case CodeWScope :
+            return _rtnKeyMinCodeWScope ;
+         case NumberInt :
+            return _rtnKeyMinNumberInt ;
+         case Timestamp :
+            return _rtnKeyMinTimestamp ;
+         case NumberLong :
+            return _rtnKeyMinNumberLong ;
+         case NumberDecimal :
+            return _rtnKeyMinNumberDecimal ;
+         case MaxKey :
+            return maxKey ;
+         default :
+            break ;
+      }
+
+      return minKey ;
+   }
+
+   BSONObj rtnKeyGetMaxType ( BSONType type )
+   {
+      switch ( type )
+      {
+         case MinKey :
+            return minKey ;
+         case NumberDouble :
+            return _rtnKeyMaxNumberDouble ;
+         case String :
+            return _rtnKeyMaxString ;
+         case Object :
+            return _rtnKeyMaxObject ;
+         case Array :
+            return _rtnKeyMaxArray ;
+         case BinData :
+            return _rtnKeyMaxBinData ;
+         case Undefined :
+            return _rtnKeyMaxUndefined ;
+         case jstOID :
+            return _rtnKeyMaxJstOID ;
+         case Bool :
+            return _rtnKeyMaxBool ;
+         case Date :
+            return _rtnKeyMaxDate ;
+         case jstNULL :
+            return _rtnKeyMaxJstNULL ;
+         case RegEx :
+            return _rtnKeyMaxRegEx ;
+         case DBRef :
+            return _rtnKeyMaxDBRef ;
+         case Code :
+            return _rtnKeyMaxCode ;
+         case Symbol :
+            return _rtnKeyMaxSymbol ;
+         case CodeWScope :
+            return _rtnKeyMaxCodeWScope ;
+         case NumberInt :
+            return _rtnKeyMaxNumberInt ;
+         case Timestamp :
+            return _rtnKeyMaxTimestamp ;
+         case NumberLong :
+            return _rtnKeyMaxNumberLong ;
+         case NumberDecimal :
+            return _rtnKeyMaxNumberDecimal ;
+         case MaxKey :
+            return maxKey ;
+         default :
+            break ;
+      }
+
+      return maxKey ;
+   }
+
+   BSONObj rtnKeyGetMinForCmp ( BSONType type, BOOLEAN mixCmp )
+   {
+      if ( mixCmp )
+      {
+         return minKey ;
+      }
+
+      switch ( type )
+      {
+         case MinKey :
+            return _rtnKeyMinMinKey ;
+
+         // Should perform a full range compare
+         case MaxKey :
+            return minKey ;
+
+         // Decimal should cover Double, Int and Long
+         case NumberDouble :
+         case NumberInt :
+         case NumberLong :
+         case NumberDecimal :
+            return _rtnKeyMinNumberDecimal ;
+
+         // Date should cover Timestamp
+         case Date :
+         case Timestamp :
+            return _rtnKeyMinDate ;
+
+         case String :
+            return _rtnKeyMinString ;
+         case Object :
+            return _rtnKeyMinObject ;
+         case Array :
+            return _rtnKeyMinArray ;
+         case BinData :
+            return _rtnKeyMinBinData ;
+         case Undefined :
+            return _rtnKeyMinUndefined ;
+         case jstOID :
+            return _rtnKeyMinJstOID ;
+         case Bool :
+            return _rtnKeyMinBool ;
+         case jstNULL :
+            return _rtnKeyMinJstNULL ;
+         case RegEx :
+            return _rtnKeyMinRegEx ;
+         case DBRef :
+            return _rtnKeyMinDBRef ;
+         case Code :
+            return _rtnKeyMinCode ;
+         case Symbol :
+            return _rtnKeyMinSymbol ;
+         case CodeWScope :
+            return _rtnKeyMinCodeWScope ;
+         default :
+            break ;
+      }
+
+      return minKey ;
+   }
+
+   BSONObj rtnKeyGetMaxForCmp ( BSONType type, BOOLEAN mixCmp )
+   {
+      if ( mixCmp )
+      {
+         return maxKey ;
+      }
+
+      switch ( type )
+      {
+         // Should perform a full range compare
+         case MinKey :
+            return maxKey ;
+
+         case MaxKey :
+            return _rtnKeyMaxMaxKey ;
+
+         // Decimal should cover Double, Int and Long
+         case NumberDouble :
+         case NumberInt :
+         case NumberLong :
+         case NumberDecimal :
+            return _rtnKeyMaxNumberDecimal ;
+
+         // Date should cover Timestamp
+         case Date :
+         case Timestamp :
+            return _rtnKeyMaxDate ;
+
+         case String :
+            return _rtnKeyMaxString ;
+         case Object :
+            return _rtnKeyMaxObject ;
+         case Array :
+            return _rtnKeyMaxArray ;
+         case BinData :
+            return _rtnKeyMaxBinData ;
+         case Undefined :
+            return _rtnKeyMaxUndefined ;
+         case jstOID :
+            return _rtnKeyMaxJstOID ;
+         case Bool :
+            return _rtnKeyMaxBool ;
+         case jstNULL :
+            return _rtnKeyMaxJstNULL ;
+         case RegEx :
+            return _rtnKeyMaxRegEx ;
+         case DBRef :
+            return _rtnKeyMaxDBRef ;
+         case Code :
+            return _rtnKeyMaxCode ;
+         case Symbol :
+            return _rtnKeyMaxSymbol ;
+         case CodeWScope :
+            return _rtnKeyMaxCodeWScope ;
+         default :
+            break ;
+      }
+
+      return maxKey ;
+   }
+
    // this class is only used in rtnPredicate::operator|=
    class startStopKeyUnionBuilder : boost::noncopyable
    {
@@ -634,13 +923,15 @@ namespace engine
    // return TRUE when l and r are intersect, and result is set to the intersect
    // of l and r
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PREDOVERLAP, "predicatesOverlap" )
-   BOOLEAN predicatesOverlap ( const rtnStartStopKey &l,
-                               const rtnStartStopKey &r,
+   BOOLEAN predicatesOverlap ( rtnStartStopKey &l,
+                               rtnStartStopKey &r,
                                rtnStartStopKey &result )
    {
       PD_TRACE_ENTRY ( SDB_PREDOVERLAP ) ;
+
       result._startKey = maxKeyBound ( l._startKey, r._startKey, TRUE ) ;
       result._stopKey = minKeyBound ( l._stopKey, r._stopKey, TRUE ) ;
+
       PD_TRACE_EXIT ( SDB_PREDOVERLAP ) ;
       return result.isValid() ;
    }
@@ -659,13 +950,12 @@ namespace engine
    // intersection operation for two keysets
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_OPEQU, "rtnPredicate::operator&=" )
    const rtnPredicate &rtnPredicate::operator&=
-                      (const rtnPredicate &right)
+                      (rtnPredicate &right)
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_OPEQU ) ;
       vector<rtnStartStopKey> newKeySet ;
-      vector<rtnStartStopKey>::const_iterator i = _startStopKeys.begin() ;
-      vector<rtnStartStopKey>::const_iterator j =
-                        right._startStopKeys.begin() ;
+      vector<rtnStartStopKey>::iterator i = _startStopKeys.begin() ;
+      vector<rtnStartStopKey>::iterator j = right._startStopKeys.begin() ;
       while ( i != _startStopKeys.end() && j != right._startStopKeys.end())
       {
          rtnStartStopKey overlap ;
@@ -895,319 +1185,90 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_RTNPRED, "rtnPredicate::rtnPredicate" )
-   rtnPredicate::rtnPredicate ( const BSONElement &e, BOOLEAN isNot )
+   rtnPredicate::rtnPredicate ( const BSONElement &e, INT32 opType,
+                                BOOLEAN isNot, BOOLEAN mixCmp )
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_RTNPRED ) ;
+
+      INT32 rc = SDB_OK ;
+
       _isInitialized = FALSE ;
+
       _equalFlag = -1 ;
       _allEqualFlag = -1 ;
+
       _evaluated = FALSE ;
       _allRange = TRUE ;
       _selectivity = OPT_PRED_DEFAULT_SELECTIVITY ;
-      INT32 op = e.getGtLtOp() ;
-      if ( ( !isNot && !e.eoo() && e.type() != RegEx && op == BSONObj::opIN ) )
-      {
-         // for IN statement without isNot or if the element type is array
-         // and we want equality match {c1:{$et:[1,2,3]}}
-         set<BSONElement, element_cmp_lt> vals ;
-         vector<rtnPredicate> regexes ;
-         BSONObjIterator i ( e.embeddedObject() ) ;
 
-         // if e is an empty array. just add it to vals.(this will be add to the _startStopKeys)
-         if ( !i.more() )
-         {
-            vals.insert ( e ) ;
-         }
-         // for each element in the array
-         while ( i.more() )
-         {
-            BSONElement ie = i.next() ;
-            // make sure we don't have embedded object with ELEM_MATCH operation
-            if ( ie.type() == Object &&
-                 ie.embeddedObject().firstElement().getGtLtOp() ==
-                       BSONObj::opELEM_MATCH )
-            {
-               pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                       "$eleMatch is not allowed within $in" ) ;
-               return ;
-            }
-            // for regular expression match, let's create a new rtnPredicate
-            if ( ie.type() == RegEx )
-            {
-               regexes.push_back ( rtnPredicate ( ie, FALSE ) ) ;
-               if ( !regexes.back().isInit() )
-               {
-                  pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                          "Failed to create regex predicate" ) ;
-                  return ;
-               }
-            }
-            // otherwise let's simply insert the element into the set
-            else
-            {
-               vals.insert ( ie ) ;
-            }
-         }
-         // after going through all elements, let's push all in $in into
-         // start/stopkey list
-         for ( set<BSONElement,element_cmp_lt>::const_iterator i = vals.begin();
-               i!=vals.end(); i++ )
-         {
-            _startStopKeys.push_back ( rtnStartStopKey ( *i ) ) ;
-         }
-         // and then union with regular expression
-         for ( vector<rtnPredicate>::const_iterator i = regexes.begin();
-               i!=regexes.end(); i++ )
-         {
-            *this |= *i ;
-         }
-         _isInitialized = TRUE ;
-         return ;
-      }
-
-      // by default we match everything
-      _startStopKeys.push_back ( rtnStartStopKey() ) ;
-      rtnStartStopKey &initial = _startStopKeys[0] ;
-      BSONElement &startKey = initial._startKey._bound ;
-      BOOLEAN &startKeyInclusive = initial._startKey._inclusive ;
-      BSONElement &stopKey = initial._stopKey._bound ;
-      BOOLEAN &stopKeyInclusive = initial._stopKey._inclusive ;
-      startKey = bson::minKey.firstElement() ;
-      startKeyInclusive = TRUE ;
-      stopKey = bson::maxKey.firstElement() ;
-      stopKeyInclusive = TRUE ;
-
-      // we return if the bsonelement doesn't include anything
       if ( e.eoo() )
       {
-         _isInitialized = TRUE ;
-         return ;
+         rc = _initFullRange() ;
       }
-
-      BOOLEAN existsSpec = FALSE ;
-      if ( BSONObj::opEXISTS == op )
+      else
       {
-         existsSpec = e.trueValue() ;
-      }
-      else if ( BSONObj::opISNULL == op )
-      {
-         existsSpec = !e.trueValue() ;
-      }
-      // if input is RegEx, or we have $regex as object name
-      if ( e.type() == RegEx ||
-           (e.type() == Object && !e.embeddedObject()["$regex"].eoo() ))
-      {
-         if ( op != BSONObj::Equality && op != BSONObj::opREGEX )
+         switch ( opType )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Invalid regular expression operator" ) ;
-            return ;
-         }
-         if ( !isNot )
-         {
-            // let's try to generate regex string if it's simple
-            const string r = simpleRegex(e) ;
-            if ( r.size() )
-            {
-               // yes we can have a simple regex
-               startKey = addObj(BSON(""<<r)).firstElement() ;
-               stopKey = addObj(BSON(""<<simpleRegexEnd(r))).firstElement() ;
-               stopKeyInclusive = FALSE ;
-            }
-            // regex matches itself type
-            if ( e.type() == RegEx )
-            {
-               BSONElement re = addObj(BSON(""<<e)).firstElement() ;
-               _startStopKeys.push_back ( rtnStartStopKey ( re ) ) ;
-            }
-            else
-            {
-               BSONObj orig = e.embeddedObject() ;
-               BSONObjBuilder b ;
-               b.appendRegex("", orig["$regex"].valuestrsafe(),
-                                 orig["$options"].valuestrsafe()) ;
-               BSONElement re = addObj(b.obj()).firstElement() ;
-               _startStopKeys.push_back ( rtnStartStopKey ( re ) ) ;
-            }
-         }
-         _isInitialized = TRUE ;
-         return ;
-      }
-
-      // otherwise if isNot
-      if ( isNot )
-      {
-         switch ( op )
-         {
-         // few operations can't have index, so we simply have full match by
-         // default (in isNot phase)
-         case BSONObj::opALL:
-         case BSONObj::opIN:
-         case BSONObj::opMOD:
-         case BSONObj::opTYPE:
-            _isInitialized = TRUE ;
-            return ;
-         case BSONObj::Equality:
-            op = BSONObj::NE ;
-            break ;
-         case BSONObj::NE:
-            op = BSONObj::Equality ;
-            break ;
-         case BSONObj::LT:
-            op = BSONObj::GTE ;
-            break ;
-         case BSONObj::LTE:
-            op = BSONObj::GT ;
-            break ;
-         case BSONObj::GT:
-            op = BSONObj::LTE ;
-            break ;
-         case BSONObj::GTE:
-            op = BSONObj::LT ;
-            break ;
-         case BSONObj::opEXISTS:
-         case BSONObj::opISNULL:
-            existsSpec = !existsSpec ;
-            break ;
-         default:
-            break ;
-         }
-      }
-      // after swich isNot, let's check the operators
-      switch(op)
-      {
-      case BSONObj::Equality:
-         if ( e.type() == Array )
-         {
-            BSONObjIterator i ( e.embeddedObject()) ;
-            while ( i.more() )
-            {
-               BSONElement x = i.next() ;
-               if ( x.type() == Object &&
-                    x.embeddedObject().firstElement().getGtLtOp() ==
-                    BSONObj::opELEM_MATCH )
-                  continue ;
-               if ( x.type() != RegEx )
-               {
-                  startKey = stopKey = x ;
-                  break ;
-               }
-            }
-         }
-         else
-         {
-            startKey = stopKey = e ;
-         }
-         break ;
-      case BSONObj::NE:
-      {
-         // push another one into the list since we'll break NE into two parts
-         _startStopKeys.push_back ( rtnStartStopKey() ) ;
-         _startStopKeys[0]._stopKey._bound = e ;
-         _startStopKeys[0]._stopKey._inclusive = FALSE ;
-         _startStopKeys[1]._startKey._bound = e ;
-         _startStopKeys[1]._startKey._inclusive = FALSE ;
-         _startStopKeys[1]._stopKey._bound = maxKey.firstElement() ;
-         _startStopKeys[1]._stopKey._inclusive = TRUE ;
-         break ;
-      }
-      case BSONObj::LT:
-         stopKeyInclusive = FALSE ;
-      case BSONObj::LTE:
-         stopKey = e ;
-         break ;
-      case BSONObj::GT:
-         startKeyInclusive = FALSE ;
-      case BSONObj::GTE:
-         startKey = e ;
-         break ;
-      case BSONObj::opALL:
-      {
-         // for opALL, let's get one of the non-regex and non-object element
-         if ( e.type() != Array )
-         {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Must be array type for opALL" ) ;
-            return ;
-         }
-         BSONObjIterator i ( e.embeddedObject()) ;
-         while ( i.more() )
-         {
-            BSONElement x = i.next() ;
-            if ( x.type() == Object &&
-                 x.embeddedObject().firstElement().getGtLtOp() ==
-                 BSONObj::opELEM_MATCH )
-               continue ;
-            if ( x.type() != RegEx )
-            {
-               startKey = stopKey = x ;
+            case BSONObj::opIN :
+               rc = _initIN( e, isNot ) ;
                break ;
-            }
+            case BSONObj::opREGEX :
+            case BSONObj::opOPTIONS :
+               rc = _initRegEx( e, isNot ) ;
+               break ;
+            case BSONObj::Equality :
+               rc = _initET( e, isNot ) ;
+               break ;
+            case BSONObj::NE :
+               rc = _initNE( e, isNot ) ;
+               break ;
+            case BSONObj::LT :
+               rc = _initLT( e, isNot, FALSE, mixCmp ) ;
+               break ;
+            case BSONObj::LTE :
+               rc = _initLT( e, isNot, TRUE, mixCmp ) ;
+               break ;
+            case BSONObj::GT :
+               rc = _initGT( e, isNot, FALSE, mixCmp ) ;
+               break ;
+            case BSONObj::GTE :
+               rc = _initGT( e, isNot, TRUE, mixCmp ) ;
+               break ;
+            case BSONObj::opALL :
+               rc = _initALL( e, isNot ) ;
+               break ;
+            case BSONObj::opMOD :
+               rc = _initMOD( e, isNot ) ;
+               break ;
+            case BSONObj::opTYPE :
+               rc = _initTYPE( e, isNot ) ;
+               break ;
+            case BSONObj::opEXISTS :
+               rc = _initEXISTS( e, isNot ) ;
+               break ;
+            case BSONObj::opISNULL :
+               rc = _initISNULL( e, isNot ) ;
+               break ;
+            default :
+               break ;
          }
-         break ;
       }
-      case BSONObj::opMOD:
+
+      if ( SDB_OK == rc && _startStopKeys.empty() )
       {
-         {
-            BSONObjBuilder b ;
-            b.appendMinForType ( "", NumberDouble ) ;
-            startKey = addObj(b.obj()).firstElement() ;
-         }
-         {
-            BSONObjBuilder b ;
-            b.appendMaxForType ( "", NumberDouble ) ;
-            stopKey = addObj(b.obj()).firstElement() ;
-         }
-         break ;
+         rc = _initFullRange () ;
       }
-      case BSONObj::opTYPE:
-      {
-         BSONType t = (BSONType) e.numberInt() ;
-         {
-            BSONObjBuilder b ;
-            b.appendMinForType ( "", t ) ;
-            startKey = addObj(b.obj()).firstElement() ;
-         }
-         {
-            BSONObjBuilder b ;
-            b.appendMaxForType ( "", t ) ;
-            stopKey = addObj(b.obj()).firstElement() ;
-         }
-         break ;
-      }
-      case BSONObj::opREGEX:
-      case BSONObj::opOPTIONS:
-      case BSONObj::opELEM_MATCH:
-         break ;
-      case BSONObj::opEXISTS:
-         if ( !existsSpec )
-         {
-            startKey = stopKey = bson::staticUndefined.firstElement() ;
-         }
-         break ;
-      case BSONObj::opISNULL:
-         if ( !existsSpec )
-         {
-            _startStopKeys.push_back ( rtnStartStopKey() ) ;
-            _startStopKeys[0]._startKey._bound =
-                  _startStopKeys[0]._stopKey._bound =
-                  bson::staticUndefined.firstElement() ;
-            _startStopKeys[1]._startKey._bound =
-                  _startStopKeys[1]._stopKey._bound =
-                  bson::staticNull.firstElement() ;
-            _startStopKeys[0]._startKey._inclusive =
-                  _startStopKeys[0]._stopKey._inclusive =
-                  TRUE ;
-            _startStopKeys[1]._startKey._inclusive =
-                  _startStopKeys[1]._stopKey._inclusive =
-                  TRUE ;
-         }
-         break ;
-      default:
-         break ;
-      }
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to create predicate, rc: %d", rc ) ;
+
       _isInitialized = TRUE ;
-      PD_TRACE_EXIT ( SDB_RTNPRED_RTNPRED ) ;
+
+   done :
+      PD_TRACE_EXIT( SDB_RTNPRED_RTNPRED ) ;
+      return ;
+   error :
+      _isInitialized = FALSE ;
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_REVERSE, "rtnPredicate::reverse" )
@@ -1244,6 +1305,476 @@ namespace engine
       buf << " }" ;
       PD_TRACE_EXIT ( SDB_RTNPRED_TOSTRING ) ;
       return buf.str() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITIN, "_rtnPredicateSet::_initIN" )
+   INT32 rtnPredicate::_initIN ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITIN ) ;
+
+      PD_CHECK( Array == e.type(), SDB_INVALIDARG, error, PDERROR,
+                "Invalid $in expression" ) ;
+
+      if ( !isNot )
+      {
+         // for IN statement without isNot or if the element type is array
+         // and we want equality match {c1:{$et:[1,2,3]}}
+         set<BSONElement, element_cmp_lt> vals ;
+         vector<rtnPredicate> regexes ;
+         BSONObjIterator i ( e.embeddedObject() ) ;
+
+         // if e is an empty array. just add it to vals.(this will be add to the _startStopKeys)
+         if ( !i.more() )
+         {
+            vals.insert ( e ) ;
+         }
+         // for each element in the array
+         while ( i.more() )
+         {
+            BSONElement ie = i.next() ;
+
+            // make sure we don't have embedded object with ELEM_MATCH operation
+            if ( ie.type() == Object &&
+                 ie.embeddedObject().firstElement().getGtLtOp() ==
+                       BSONObj::opELEM_MATCH )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "$eleMatch is not allowed within $in" ) ;
+               goto done ;
+            }
+#ifdef NOTUSE
+            // for regular expression match, let's create a new rtnPredicate
+            if ( ie.type() == RegEx )
+            {
+               regexes.push_back ( rtnPredicate ( ie, FALSE ) ) ;
+               PD_CHECL( regexes.back().isInit(),
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to create regex predicate" ) ;
+            }
+#endif
+            // otherwise let's simply insert the element into the set
+            else
+            {
+               vals.insert ( ie ) ;
+            }
+         }
+         // after going through all elements, let's push all in $in into
+         // start/stopkey list
+         for ( set<BSONElement,element_cmp_lt>::const_iterator i = vals.begin();
+               i!=vals.end(); i++ )
+         {
+            _startStopKeys.push_back ( rtnStartStopKey ( *i ) ) ;
+         }
+         // and then union with regular expression
+         for ( vector<rtnPredicate>::const_iterator i = regexes.begin();
+               i!=regexes.end(); i++ )
+         {
+            *this |= *i ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITIN, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITREGEX, "_rtnPredicateSet::_initRegEx" )
+   INT32 rtnPredicate::_initRegEx ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITREGEX ) ;
+
+      // 1. RegEx { $regex:'xx', $options:'xx }
+      // 2. Object { $regex: 'xx' }
+      // 3. Object { $options: 'xx', $regex: 'xx' }
+      PD_CHECK( e.type() == RegEx ||
+                ( e.type() == Object && !e.embeddedObject()[ "$regex" ].eoo() ),
+                SDB_INVALIDARG, error, PDERROR,
+                "Invalid regular expression operator" ) ;
+
+      if ( !isNot )
+      {
+         // let's try to generate regex string if it's simple
+         const string r = simpleRegex(e) ;
+
+         if ( r.size() )
+         {
+            // yes we can have a simple regex
+            _startStopKeys.push_back( rtnStartStopKey() ) ;
+            rtnStartStopKey &keyPair = _startStopKeys.back() ;
+            keyPair._startKey._bound = addObj( BSON( "" << r ) ).firstElement() ;
+            keyPair._startKey._inclusive = TRUE ;
+            keyPair._stopKey._bound =
+                  addObj( BSON( "" << simpleRegexEnd( r ) ) ).firstElement() ;
+            keyPair._stopKey._inclusive = FALSE ;
+         }
+         else
+         {
+            // RegEx is restricted to String and Symbol
+            // Note: String and Symbol are same currently
+            _initTypeRange( String, FALSE ) ;
+         }
+
+#ifdef NOTUSE
+         // regex matches itself type
+         if ( e.type() == RegEx )
+         {
+            BSONElement re = addObj( BSON( "" << e ) ).firstElement() ;
+            _startStopKeys.push_back( rtnStartStopKey ( re ) ) ;
+         }
+         else
+         {
+            BSONObj orig = e.embeddedObject() ;
+            BSONObjBuilder b ;
+            b.appendRegex( "", orig[ "$regex" ].valuestrsafe(),
+                               orig[ "$options" ].valuestrsafe() ) ;
+            BSONElement re = addObj( b.obj() ).firstElement() ;
+            _startStopKeys.push_back( rtnStartStopKey ( re ) ) ;
+         }
+#endif
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITREGEX, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITET, "_rtnPredicateSet::_initET" )
+   INT32 rtnPredicate::_initET ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITET ) ;
+
+      if ( isNot )
+      {
+         // $not:$et -> $ne
+         rc = _initNE( e, FALSE ) ;
+      }
+      else if ( Array == e.type() )
+      {
+         rc = _initALL( e, FALSE ) ;
+      }
+      else
+      {
+         _startStopKeys.push_back ( rtnStartStopKey( e ) ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITET, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITNE, "_rtnPredicateSet::_initNE" )
+   INT32 rtnPredicate::_initNE ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITNE ) ;
+
+      if ( isNot )
+      {
+         // $not:ne -> $ne
+         rc = _initET( e, FALSE ) ;
+      }
+      else
+      {
+         // [ $minKey, e ) and ( e, $maxKey ]
+         {
+            _startStopKeys.push_back( rtnStartStopKey() ) ;
+            rtnStartStopKey &keyPair = _startStopKeys.back() ;
+
+            keyPair._startKey._bound = minKey.firstElement() ;
+            keyPair._startKey._inclusive = TRUE ;
+
+            keyPair._stopKey._bound = e ;
+            keyPair._stopKey._inclusive = FALSE ;
+         }
+
+         {
+            _startStopKeys.push_back( rtnStartStopKey() ) ;
+            rtnStartStopKey &keyPair = _startStopKeys.back() ;
+
+            keyPair._startKey._bound = e ;
+            keyPair._startKey._inclusive = FALSE ;
+
+            keyPair._stopKey._bound = maxKey.firstElement() ;
+            keyPair._stopKey._inclusive = TRUE ;
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITNE, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITLT, "_rtnPredicateSet::_initLT" )
+   INT32 rtnPredicate::_initLT ( const BSONElement &e, BOOLEAN isNot,
+                                 BOOLEAN inclusive, BOOLEAN mixCmp )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITLT ) ;
+
+      if ( isNot )
+      {
+         // $not:$lte -> $gt
+         // $not:$lt -> $gte
+         rc = _initGT( e, FALSE, !inclusive, mixCmp ) ;
+      }
+      else
+      {
+         _startStopKeys.push_back( rtnStartStopKey() ) ;
+         rtnStartStopKey &keyPair = _startStopKeys.back() ;
+
+         BSONElement startKey =
+               rtnKeyGetMinForCmp( e.type(), mixCmp ).firstElement() ;
+         // 1. If it is mixCmp, start key is $minKey which should be included
+         // 2. If it is $lt:$maxKey or $lte:$maxKey, start key is also $minKey
+         //    which should be included
+         // 3. If the start key is not the same canonical type as given key,
+         //    it should not be included, otherwise it should be included
+         BOOLEAN startInclusive =
+               ( ( mixCmp || e.type() == MaxKey ) ? TRUE :
+                 ( startKey.canonicalType() == e.canonicalType() ) ) ;
+
+         keyPair._startKey._bound = startKey ;
+         keyPair._startKey._inclusive = startInclusive ;
+
+         keyPair._stopKey._bound = e ;
+         keyPair._stopKey._inclusive = inclusive ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITLT, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITGT, "_rtnPredicateSet::_initGT" )
+   INT32 rtnPredicate::_initGT ( const BSONElement &e, BOOLEAN isNot,
+                                 BOOLEAN inclusive, BOOLEAN mixCmp )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITGT ) ;
+
+      if ( isNot )
+      {
+         // $not:$gte -> $lt
+         // $not:$gt -> $lte
+         rc = _initLT( e, FALSE, !inclusive, mixCmp ) ;
+      }
+      else
+      {
+         _startStopKeys.push_back( rtnStartStopKey() ) ;
+         rtnStartStopKey &keyPair = _startStopKeys.back() ;
+
+         keyPair._startKey._bound = e ;
+         keyPair._startKey._inclusive = inclusive ;
+
+         BSONElement stopKey =
+               rtnKeyGetMaxForCmp( e.type(), mixCmp ).firstElement() ;
+         // 1. If it is mixCmp, stop key is $maxKey which should be included
+         // 2. If it is $gt:$minKey or $gte:$minKey, stop key is also $maxKey
+         //    which should be included
+         // 3. If the stop key is not the same canonical type as given key,
+         //    it should not be included, otherwise it should be included
+         BOOLEAN stopInclusive =
+               ( ( mixCmp || e.type() == MinKey ) ? TRUE :
+                 ( stopKey.canonicalType() == e.canonicalType() ) ) ;
+         keyPair._stopKey._bound = stopKey ;
+         keyPair._stopKey._inclusive = stopInclusive ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITGT, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITALL, "_rtnPredicateSet::_initALL" )
+   INT32 rtnPredicate::_initALL ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITALL ) ;
+
+      PD_CHECK( e.type() == Array, SDB_INVALIDARG, error, PDERROR,
+                "Must be array type for opALL" ) ;
+
+      if ( !isNot )
+      {
+         // For index, get one in the array to do the index match
+         BSONObjIterator i ( e.embeddedObject()) ;
+         while ( i.more() )
+         {
+            BSONElement x = i.next() ;
+            if ( x.type() == Object &&
+                 x.embeddedObject().firstElement().getGtLtOp() ==
+                 BSONObj::opELEM_MATCH )
+               continue ;
+            _startStopKeys.push_back( rtnStartStopKey( x ) ) ;
+            break ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITALL, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITMOD, "_rtnPredicateSet::_initMOD" )
+   INT32 rtnPredicate::_initMOD ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITMOD ) ;
+
+      if ( !isNot )
+      {
+         // [ minDouble, maxDouble ]
+         rc = _initTypeRange( NumberDouble, TRUE ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITMOD, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITTYPE, "_rtnPredicateSet::_initTYPE" )
+   INT32 rtnPredicate::_initTYPE ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITTYPE ) ;
+
+      if ( !isNot )
+      {
+         // [ minForType, maxForType ]
+         BSONType type = (BSONType) e.numberInt() ;
+         rc = _initTypeRange( type, FALSE ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITTYPE, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITEXISTS, "_rtnPredicateSet::_initEXISTS" )
+   INT32 rtnPredicate::_initEXISTS ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITEXISTS ) ;
+
+      BOOLEAN existsSpec = e.trueValue() ;
+
+      if ( isNot )
+      {
+         existsSpec = !existsSpec ;
+      }
+
+      if ( !existsSpec )
+      {
+         // [ $undefined, $undefined ]
+         _startStopKeys.push_back (
+               rtnStartStopKey( staticUndefined.firstElement() ) ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITEXISTS, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITISNULL, "_rtnPredicateSet::_initISNULL" )
+   INT32 rtnPredicate::_initISNULL ( const BSONElement &e, BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITISNULL ) ;
+
+      BOOLEAN existsSpec = !e.trueValue() ;
+
+      if ( isNot )
+      {
+         existsSpec = !existsSpec ;
+      }
+
+      if ( !existsSpec )
+      {
+         // [ $undefined, $undefined ]
+         _startStopKeys.push_back (
+               rtnStartStopKey( staticUndefined.firstElement() ) ) ;
+
+         // [ null, null ]
+         _startStopKeys.push_back (
+               rtnStartStopKey( staticNull.firstElement() ) ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITISNULL, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITFULLRANGE, "_rtnPredicateSet::_initFullRange" )
+   INT32 rtnPredicate::_initFullRange ()
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITFULLRANGE ) ;
+
+      _startStopKeys.push_back ( rtnStartStopKey() ) ;
+      rtnStartStopKey &keyPair = _startStopKeys.back() ;
+
+      keyPair._startKey._bound = minKey.firstElement() ;
+      keyPair._startKey._inclusive = TRUE ;
+
+      keyPair._stopKey._bound = maxKey.firstElement() ;
+      keyPair._stopKey._inclusive = TRUE ;
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITFULLRANGE, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITTYPERANGE, "_rtnPredicateSet::_initTypeRange" )
+   INT32 rtnPredicate::_initTypeRange ( BSONType type, BOOLEAN forCmp )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITTYPERANGE ) ;
+
+      _startStopKeys.push_back ( rtnStartStopKey() ) ;
+      rtnStartStopKey &keyPair = _startStopKeys.back() ;
+
+      BSONElement startKey = forCmp ?
+                             rtnKeyGetMinForCmp( type, FALSE ).firstElement() :
+                             rtnKeyGetMinType( type ).firstElement() ;
+      BOOLEAN startInclusive =
+            ( getBSONCanonicalType( type ) == startKey.canonicalType() ) ;
+      keyPair._startKey._bound = startKey ;
+      keyPair._startKey._inclusive = startInclusive ;
+
+      BSONElement stopKey = forCmp ?
+                            rtnKeyGetMaxForCmp( type, FALSE ).firstElement() :
+                            rtnKeyGetMaxType( type ).firstElement() ;
+      BOOLEAN stopInclusive =
+            ( getBSONCanonicalType( type ) == stopKey.canonicalType() ) ;
+      keyPair._stopKey._bound = stopKey ;
+      keyPair._stopKey._inclusive = stopInclusive ;
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITTYPERANGE, rc ) ;
+
+      return rc ;
    }
 
    string _rtnPredicateSet::toString() const
@@ -1289,8 +1820,10 @@ namespace engine
          // we assign rtnPredicate object to a static pointer
          // this memory is not released until process terminate
          if ( !genericPredicate )
+         {
             genericPredicate = SDB_OSS_NEW rtnPredicate
-                                     (BSONObj().firstElement(),FALSE);
+                                 ( BSONObj().firstElement(), 0, FALSE, TRUE ) ;
+         }
          return *genericPredicate ;
       }
       PD_TRACE_EXIT ( SDB__RTNPRED_PRED ) ;
@@ -1318,12 +1851,13 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_ADDPRED, "_rtnPredicateSet::addPredicate" )
    INT32 _rtnPredicateSet::addPredicate ( const CHAR *fieldName,
                                           const BSONElement &e,
-                                          BOOLEAN isNot )
+                                          INT32 opType, BOOLEAN isNot,
+                                          BOOLEAN mixCmp )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNPREDSET_ADDPRED ) ;
       std::pair< RTN_PREDICATE_MAP::iterator, BOOLEAN > ret ;
-      rtnPredicate pred ( e, isNot ) ;
+      rtnPredicate pred ( e, opType, isNot, mixCmp ) ;
       if ( !pred.isInit() )
       {
          PD_LOG ( PDERROR, "Failed to add predicate %s: %s",
@@ -1332,8 +1866,7 @@ namespace engine
          goto error ;
       }
 
-      ret = _predicates.insert( std::make_pair( fieldName,
-                                                pred ) ) ;
+      ret = _predicates.insert( std::make_pair( fieldName, pred ) ) ;
       if ( !(ret.second) )
       {
          ret.first->second &= pred ;
