@@ -116,6 +116,7 @@ public class CursorTest {
         selector1.put("hello", "");
         cursor = cl.query(record, null, null, null);
         System.out.println(cursor.getCurrent());
+		cursor.close();
         // query
         BSONObject selector = new BasicBSONObject();
         selector.put("hello", "");
