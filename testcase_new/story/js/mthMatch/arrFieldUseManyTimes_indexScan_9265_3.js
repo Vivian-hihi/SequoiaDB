@@ -69,8 +69,7 @@ function main()
    
    //lt and
    var findCondition13 = {$and:[{"a.0":{$lt:1000}},{"a.0":{$lt:2000}},{"a.0":{$lt:3000}}]};
-   var expRecs3 = [{No:1,a:[500]},{No:2,a:[1000]},{No:3,a:[1500]},{No:4,a:[2000]},{No:5,a:[2500]}, {No:6,a:[3000]},{No:7,a:[3500]},
-                   {No:8,a:{0:500}},
+   var expRecs3 = [{No:8,a:{0:500}},
 	                {No:15,a:[{0:500}]}];
    checkResult( dbcl, findCondition13, null, expRecs3, {No:1} );
    
@@ -91,8 +90,7 @@ function main()
    
    //lte and
    var findCondition19 = {$and:[{"a.0":{$lte:1000}},{"a.0":{$lte:2000}},{"a.0":{$lte:3000}}]};
-   var expRecs4 = [{No:1,a:[500]},{No:2,a:[1000]},{No:3,a:[1500]},{No:4,a:[2000]},{No:5,a:[2500]}, {No:6,a:[3000]},{No:7,a:[3500]},
-                   {No:8,a:{0:500}},{No:9,a:{0:1000}},
+   var expRecs4 = [{No:8,a:{0:500}},{No:9,a:{0:1000}},
 	                {No:15,a:[{0:500}]},{No:16,a:[{0:1000}]}];
    checkResult( dbcl, findCondition19, null, expRecs4, {No:1} );
    

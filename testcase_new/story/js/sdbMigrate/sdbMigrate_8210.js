@@ -61,11 +61,16 @@ function main( db )
          cmdToolRun( impCmd, impCmdOption ) ;
          println( "success to import data" ) ;
          // verify import data
-         if( recordNum != newCL.find( record[0] ).count() )
+         matcher = { "key_oid" : {"$oid": "123abcd00ef12358902300ef"},
+                     "key_binary" : {"$binary":"aGVsbG8gd29ybGQ=",
+                                     "$type" : "1" },
+                     "key_regex" : { "$et": { "$regex" : "^张",
+                                              "$options" : "i" } } }
+         if( recordNum != newCL.find( matcher ).count() )
          {
             println( JSON.stringify( record[0] ) ) ;
             println( "expect query number: " + recordNum +
-                     ", actual query number: " + newCL.find( record[0] ).count() ) ;
+                     ", actual query number: " + newCL.find( matcher ).count() ) ;
             throw "ErrorImportNewTypeData" ;
          }
       }

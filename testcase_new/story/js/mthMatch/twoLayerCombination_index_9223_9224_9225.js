@@ -69,7 +69,7 @@ function main()
                        IndexName:"age",
                        UseExtSort:false,
                        Query:{$and:[{age:{$gte:20}},{$or:[{name:{$elemMatch:{firstName:"zhang1"}}},{"addr.2":{$in:["xiasha2","xiasha4","xiasha1"]}}]}]},
-                       IXBound:{age:[[{$maxElement:1},20]]},
+                       IXBound:{age:[[{"$decimal":"MAX"},20]]},
                        NeedMatch:true}];
    checkExplainResult( dbcl, findCondition3, null, null, explainExpRecs3 );
    
@@ -93,7 +93,7 @@ function main()
                        IndexName:"age",
                        UseExtSort:false,
                        Query:{$and:[{age:{$gte:20}},{$not:[{name:{$elemMatch:{firstName:"zhang1"}}},{"addr.2":{$in:["xiasha3","xiasha4","xiasha1"]}}]}]},
-                       IXBound:{age:[[{$maxElement:1},20]]},
+                       IXBound:{age:[[{"$decimal":"MAX"},20]]},
                        NeedMatch:true}];
    checkExplainResult( dbcl, findCondition3, null, null, explainExpRecs3 );
 }

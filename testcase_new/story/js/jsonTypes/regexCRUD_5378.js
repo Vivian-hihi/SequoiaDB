@@ -12,12 +12,12 @@ function main( db )
    cl.insert( {reg:Regex("^W","i")} ) ;
    
    // 以Regex函数的方式查询数据
-   var rc = cl.find( {reg:Regex("^W","i")}, {reg:""} ) ;
+   var rc = cl.find( {reg:{$et:Regex("^W","i")}}, {reg:""} ) ;
    var expRecs = {reg:{$regex:"^W", $options:"i"}} ;
    checkRec( rc,[expRecs] ) ;
    
    // 以普通方式查询数据
-   rc = cl.find( {reg:{"$regex":"^W", "$options":"i"}}, {reg:""} ) ;
+   rc = cl.find( {reg:{$et:{"$regex":"^W", "$options":"i"}}}, {reg:""} ) ;
    expRecs = {reg:{$regex:"^W", $options:"i"}} ;   
    checkRec( rc,[expRecs] ) ;
    

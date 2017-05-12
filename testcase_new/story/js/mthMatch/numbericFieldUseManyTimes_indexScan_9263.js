@@ -50,17 +50,7 @@ function main()
    var expRecs1 = [{No:52,a:3001},{No:53,a:3002},{No:54,a:3003},{No:55,a:3004},{No:56,a:3005},
                    {No:57,a:3006},{No:58,a:3007},{No:59,a:3008},{No:60,a:3009},{No:61,a:3500},
                    {No:62,a:3501},{No:63,a:3502},{No:64,a:3503},{No:65,a:3504},{No:66,a:3505},
-                   {No:67,a:3506},{No:68,a:3507},{No:69,a:3508},{No:70,a:3509},
-                   {No:71,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:72,a:{$date:"2000-01-01"}},
-	                {No:73,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:74,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:75,a:{$regex:"^z","$options":"i"}},
-                   {No:77,a:"abc"},
-                   {No:79,a:{$maxKey:1}},
-                   {No:80,a:true},
-                   {No:81,a:false},
-                   {No:82,a:{name:"zhang"}}];
+                   {No:67,a:3506},{No:68,a:3507},{No:69,a:3508},{No:70,a:3509}];
    checkResult( dbcl, findCondition1, null, expRecs1, {No:1} );
   
    var findCondition2 = {$and:[{a:{$gt:1000}},{a:{$gt:3000}},{a:{$gt:2000}}]};
@@ -83,17 +73,7 @@ function main()
    var expRecs2 = [{No:51,a:3000},{No:52,a:3001},{No:53,a:3002},{No:54,a:3003},{No:55,a:3004},
                    {No:56,a:3005},{No:57,a:3006},{No:58,a:3007},{No:59,a:3008},{No:60,a:3009},
                    {No:61,a:3500},{No:62,a:3501},{No:63,a:3502},{No:64,a:3503},{No:65,a:3504},
-                   {No:66,a:3505},{No:67,a:3506},{No:68,a:3507},{No:69,a:3508},{No:70,a:3509},
-                   {No:71,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:72,a:{$date:"2000-01-01"}},
-	                {No:73,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:74,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:75,a:{$regex:"^z","$options":"i"}},
-                   {No:77,a:"abc"},
-                   {No:79,a:{$maxKey:1}},
-                   {No:80,a:true},
-                   {No:81,a:false},
-                   {No:82,a:{name:"zhang"}}];
+                   {No:66,a:3505},{No:67,a:3506},{No:68,a:3507},{No:69,a:3508},{No:70,a:3509}];
    checkResult( dbcl, findCondition7, null, expRecs2, {No:1} );
    
    var findCondition8 = {$and:[{a:{$gte:1000}},{a:{$gte:2000}},{a:{$gte:3000}}]};
@@ -115,10 +95,7 @@ function main()
    var findCondition13 = {$and:[{a:{$lt:1000}},{a:{$lt:2000}},{a:{$lt:3000}}]};
    var expRecs3 = [{No:1,a:500},{No:2,a:501},{No:3,a:502},{No:4,a:503},
                    {No:5,a:504},{No:6,a:505},{No:7,a:506},{No:8,a:507},
-                   {No:9,a:508},{No:10,a:509},
-                   {No:76,a:null},
-                   {No:78,a:{$minKey:1}},
-	                {No:83,a:[1,2,3]}];
+                   {No:9,a:508},{No:10,a:509},{No:83,a:[1,2,3]}];
    checkResult( dbcl, findCondition13, null, expRecs3, {No:1} );
    
    var findCondition14 = {$and:[{a:{$lt:1000}},{a:{$lt:3000}},{a:{$lt:2000}}]};
@@ -141,9 +118,7 @@ function main()
    var expRecs4 = [{No:1,a:500},{No:2,a:501},{No:3,a:502},{No:4,a:503},
                    {No:5,a:504},{No:6,a:505},{No:7,a:506},{No:8,a:507},
                    {No:9,a:508},{No:10,a:509},{No:11,a:1000},
-                   {No:76,a:null},
-                   {No:78,a:{$minKey:1}},
-	                {No:83,a:[1,2,3]}];
+                   {No:83,a:[1,2,3]}];
    checkResult( dbcl, findCondition19, null, expRecs4, {No:1} );
    
    var findCondition20 = {$and:[{a:{$lte:1000}},{a:{$lte:3000}},{a:{$lte:2000}}]};

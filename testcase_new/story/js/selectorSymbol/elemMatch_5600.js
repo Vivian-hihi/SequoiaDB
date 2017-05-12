@@ -98,7 +98,7 @@ function main()
                     {No:13,arr:[]},{No:14,arr:[]},{No:15,arr:[]},{No:16,arr:[]}];
    checkResult( dbcl, null, selectCondition10, expRecs10, {No:1} );
    
-   var selectCondition11 = {arr:{$elemMatch:{value2:{$regex:"^z",$options:"i"}}}};
+   var selectCondition11 = {arr:{$elemMatch:{value2:{$et:{$regex:"^z",$options:"i"}}}}};
    var expRecs11 = [{No:1,arr:[]},{No:2,arr:[]},{No:3,arr:[]},{No:4,arr:[]},{No:5,arr:[]},{No:6,arr:[]},{No:7,arr:[]},{No:8,arr:[]},{No:9,arr:[]},{No:10,arr:[]},{No:11,arr:[]},
                     {No:12,arr:[{type:"regex",value2:{$regex:"^z",$options:"i"}}]},{No:13,arr:[{type:"regex",value2:{$regex:"^z",$options:"i"}}]},
                     {No:14,arr:[]},{No:15,arr:[]},{No:16,arr:[]}];

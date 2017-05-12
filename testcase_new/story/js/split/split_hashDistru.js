@@ -72,7 +72,7 @@ function intTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function longTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -101,7 +101,7 @@ function longTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, expRecArr);
+	checkHashEachRec( csName, clName, expRecArr, SDKEYNAME );
 }
 
 function floatTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -128,7 +128,7 @@ function floatTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function arrayTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -149,7 +149,7 @@ function arrayTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function stringTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -170,7 +170,7 @@ function stringTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 		
 function objectTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -197,7 +197,7 @@ function objectTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function binaryTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -227,7 +227,7 @@ function binaryTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function dateTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -255,7 +255,7 @@ function dateTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-//	checkHashEachRec( csName, clName, recArr);
+//	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function timestampTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -287,7 +287,7 @@ function timestampTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-//	checkHashEachRec( csName, clName, recArr);
+//	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function regexTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -314,7 +314,7 @@ function regexTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 function oidTest( csName, clName, groupsName, SDKEYNAME, recSum )
@@ -336,7 +336,7 @@ function oidTest( csName, clName, groupsName, SDKEYNAME, recSum )
 	db.getCS(csName).getCL(clName).insert( recArr );
 	//check hash
 	checkHashDistru ( csName, clName, groupsName, recSum, dataType );
-	checkHashEachRec( csName, clName, recArr);
+	checkHashEachRec( csName, clName, recArr, SDKEYNAME );
 }
 
 /******************************************
@@ -387,14 +387,19 @@ function checkHashDistru( csName, clName, groupsName, expSum, dataType )
 /**********************************
 对每条记录，用分区键字段count
 **********************************/
-function checkHashEachRec( csName, clName, recArr )
+function checkHashEachRec( csName, clName, recArr, SDKEYNAME )
 {
 	println("------begin to find each rec with ShardingKey condition");
 	
 	for(var i = 0; i < recArr.length; i++)
-	{		
-		var cnt = db.getCS(csName).getCL(clName).count(recArr[i]);		
-		if( cnt != 1) 
+	{
+      var cond = {}
+      cond["type"] = recArr[i]["type"]
+      var etCond = {}
+      etCond["$et"] = recArr[i][SDKEYNAME]
+      cond[SDKEYNAME] = etCond
+		var cnt = db.getCS(csName).getCL(clName).count(cond);
+		if( cnt != 1)
 		{
 			println("ERROR! i="+i+", count="+cnt+", count( "+JSON.stringify(recArr[i])+" )");
 			throw "ERROR!";

@@ -99,7 +99,7 @@ function main()
                     {No:3,arr:[{type:"bin",value:{$binary:"aGVsbG8gd29ybGQ=",$type:"1"}}]}];
    checkResult( dbcl, null, selectCondition10, expRecs10, {No:1} );
    
-   var selectCondition11 = {arr:{$elemMatchOne:{value:{$regex:"^z",$options:"i"}}}};
+   var selectCondition11 = {arr:{$elemMatchOne:{value:{$et:{$regex:"^z",$options:"i"}}}}};
    var expRecs11 = [{No:1,arr:[]},
                     {No:2,arr:[{type:"regex",value:{$regex:"^z",$options:"i"}}]},
                     {No:3,arr:[{type:"regex",value:{$regex:"^z",$options:"i"}}]}];

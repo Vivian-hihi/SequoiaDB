@@ -48,19 +48,13 @@ function main()
    
    //$lt:2
    var findCondition3 = {"a.0":{$lt:2}};
-   var expRecs3 = [{No:1,a:[1]},
-	                {No:2,a:[2]},
-	                {No:3,a:[3]},
-                   {No:4,a:[{0:1}]},
+   var expRecs3 = [{No:4,a:[{0:1}]},
 	                {No:7,a:{0:1}}];
    checkResult( dbcl, findCondition3, null, expRecs3, {No:1} );
    
    //$lte:2
    var findCondition4 = {"a.0":{$lte:2}};
-   var expRecs4 = [{No:1,a:[1]},
-	                {No:2,a:[2]},
-	                {No:3,a:[3]},
-                   {No:4,a:[{0:1}]},
+   var expRecs4 = [{No:4,a:[{0:1}]},
 	                {No:5,a:[{0:2}]},
 	                {No:7,a:{0:1}},
 	                {No:8,a:{0:2}}];

@@ -73,15 +73,6 @@ function main()
 	                {No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}},
 	                {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition1, null, expRecs1, {No:1} );
    
@@ -102,15 +93,6 @@ function main()
 	                {No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}},
 	                {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition2, null, expRecs2, {No:1} );
    
@@ -129,9 +111,7 @@ function main()
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:71,a:{$decimal:"-1001.01"}},
 	                {No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02}];
    checkResult( dbcl, findCondition3, null, expRecs3, {No:1} );
    
    //$lte:0
@@ -150,9 +130,7 @@ function main()
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:71,a:{$decimal:"-1001.01"}},
 	                {No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02}];
    checkResult( dbcl, findCondition4, null, expRecs4, {No:1} );
    
    //$gt:1002
@@ -165,16 +143,7 @@ function main()
 	                {No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition5, null, expRecs5, {No:1} );
    
    //$gte:1002
@@ -189,16 +158,7 @@ function main()
 	                {No:60,a:{$decimal:"1002"}},{No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition6, null, expRecs6, {No:1} );
    
    //$lt:1002
@@ -218,8 +178,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition7, null, expRecs7, {No:1} );
    
@@ -240,8 +198,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition8, null, expRecs8, {No:1} );
    
@@ -255,16 +211,7 @@ function main()
 	                {No:61,a:{$decimal:"1003"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition9, null, expRecs9, {No:1} );
    
    //$gte:1002.01
@@ -277,16 +224,7 @@ function main()
 	                {No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition10, null, expRecs10, {No:1} );
    
    //$lt:1002.01
@@ -306,8 +244,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition11, null, expRecs11, {No:1} );
    
@@ -328,8 +264,6 @@ function main()
 	                {No:72,a:1002.01},{No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition12, null, expRecs12, {No:1} );
    
@@ -350,16 +284,7 @@ function main()
 	                 {No:71,a:{$decimal:"-1001.01"}},{No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},{No:77,a:-1001.01},
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},{No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
-	                 {No:102,a:[1,2,3]}];
+                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition13, null, expRecs13, {No:1} );
    
    //$gte:-1002
@@ -387,16 +312,7 @@ function main()
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},
 	                 {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
-	                 {No:102,a:[1,2,3]}];
+                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition14, null, expRecs14, {No:1} );
    
    //$lt:-1002
@@ -408,9 +324,7 @@ function main()
 	                {No:64,a:{$decimal:"-1003"}},
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:75,a:-1002.01},{No:76,a:-1003.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition15, null, expRecs15, {No:1} );
    
    //$lte:-1002
@@ -422,9 +336,7 @@ function main()
 	                {No:63,a:{$decimal:"-1002"}},{No:64,a:{$decimal:"-1003"}},
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:75,a:-1002.01},{No:76,a:-1003.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition16, null, expRecs16, {No:1} );
    
    //$gt:-1002.01
@@ -452,15 +364,6 @@ function main()
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},
 	                 {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition17, null, expRecs17, {No:1} );
    
@@ -489,15 +392,6 @@ function main()
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},
 	                 {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition18, null, expRecs18, {No:1} );
    
@@ -508,9 +402,7 @@ function main()
 	                 {No:51,a:{$decimal:"-1002.02"}},{No:52,a:{$decimal:"-1003.02"}},{No:57,a:-1002.02},{No:58,a:-1003.02},
 	                 {No:64,a:{$decimal:"-1003"}},{No:70,a:{$decimal:"-1003.01"}},
 	                 {No:76,a:-1003.01},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                 {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                 {No:95,a:null},
-	                 {No:97,a:{$minKey:1}}];
+	                 {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition19, null, expRecs19, {No:1} );
    
    //$lte:-1002.01
@@ -520,9 +412,7 @@ function main()
 	                 {No:51,a:{$decimal:"-1002.02"}},{No:52,a:{$decimal:"-1003.02"}},{No:57,a:-1002.02},{No:58,a:-1003.02},
 	                 {No:64,a:{$decimal:"-1003"}},{No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},
 	                 {No:75,a:-1002.01},{No:76,a:-1003.01},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                 {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                 {No:95,a:null},
-	                 {No:97,a:{$minKey:1}}];
+	                 {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition20, null, expRecs20, {No:1} );
    
    //decimal
@@ -542,15 +432,6 @@ function main()
 	                {No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}},
 	                {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition21, null, expRecs21, {No:1} );
    
@@ -571,15 +452,6 @@ function main()
 	                {No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}},
 	                {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition22, null, expRecs22, {No:1} );
    
@@ -598,9 +470,7 @@ function main()
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:71,a:{$decimal:"-1001.01"}},
 	                {No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02}];
    checkResult( dbcl, findCondition23, null, expRecs23, {No:1} );
    
    //$lte:0
@@ -619,9 +489,7 @@ function main()
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:71,a:{$decimal:"-1001.01"}},
 	                {No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02}];
    checkResult( dbcl, findCondition24, null, expRecs24, {No:1} );
    
    //$gt:1002
@@ -634,16 +502,7 @@ function main()
 	                {No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition25, null, expRecs25, {No:1} );
    
    //$gte:1002
@@ -658,16 +517,7 @@ function main()
 	                {No:60,a:{$decimal:"1002"}},{No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition26, null, expRecs26, {No:1} );
    
    //$lt:1002
@@ -687,8 +537,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition27, null, expRecs27, {No:1} );
    
@@ -709,8 +557,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition28, null, expRecs28, {No:1} );
    
@@ -724,16 +570,7 @@ function main()
 	                {No:61,a:{$decimal:"1003"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition29, null, expRecs29, {No:1} );
    
    //$gte:1002.01
@@ -746,16 +583,7 @@ function main()
 	                {No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition30, null, expRecs30, {No:1} );
    
    //$lt:1002.01
@@ -775,8 +603,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition31, null, expRecs31, {No:1} );
    
@@ -797,8 +623,6 @@ function main()
 	                {No:72,a:1002.01},{No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition32, null, expRecs32, {No:1} );
    
@@ -819,15 +643,6 @@ function main()
 	                 {No:71,a:{$decimal:"-1001.01"}},{No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},{No:77,a:-1001.01},
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},{No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition33, null, expRecs33, {No:1} );
    
@@ -856,15 +671,6 @@ function main()
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},
 	                 {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition34, null, expRecs34, {No:1} );
    
@@ -877,9 +683,7 @@ function main()
 	                {No:64,a:{$decimal:"-1003"}},
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:75,a:-1002.01},{No:76,a:-1003.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition35, null, expRecs35, {No:1} );
    
    //$lte:-1002
@@ -891,9 +695,7 @@ function main()
 	                {No:63,a:{$decimal:"-1002"}},{No:64,a:{$decimal:"-1003"}},
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:75,a:-1002.01},{No:76,a:-1003.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition36, null, expRecs36, {No:1} );
    
    //$gt:-1002.01
@@ -921,15 +723,6 @@ function main()
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},
 	                 {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition37, null, expRecs37, {No:1} );
    
@@ -958,15 +751,6 @@ function main()
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},
 	                 {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition38, null, expRecs38, {No:1} );
    
@@ -977,9 +761,7 @@ function main()
 	                 {No:51,a:{$decimal:"-1002.02"}},{No:52,a:{$decimal:"-1003.02"}},{No:57,a:-1002.02},{No:58,a:-1003.02},
 	                 {No:64,a:{$decimal:"-1003"}},{No:70,a:{$decimal:"-1003.01"}},
 	                 {No:76,a:-1003.01},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                 {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                 {No:95,a:null},
-	                 {No:97,a:{$minKey:1}}];
+	                 {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition39, null, expRecs39, {No:1} );
    
    //$lte:-1002.01
@@ -989,9 +771,7 @@ function main()
 	                 {No:51,a:{$decimal:"-1002.02"}},{No:52,a:{$decimal:"-1003.02"}},{No:57,a:-1002.02},{No:58,a:-1003.02},
 	                 {No:64,a:{$decimal:"-1003"}},{No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},
 	                 {No:75,a:-1002.01},{No:76,a:-1003.01},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                 {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                 {No:95,a:null},
-	                 {No:97,a:{$minKey:1}}];
+	                 {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition40, null, expRecs40, {No:1} );
    
    //numberLong
@@ -1011,15 +791,6 @@ function main()
 	                {No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}},
 	                {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition41, null, expRecs41, {No:1} );
    
@@ -1040,15 +811,6 @@ function main()
 	                {No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}},
 	                {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition42, null, expRecs42, {No:1} );
    
@@ -1067,9 +829,7 @@ function main()
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:71,a:{$decimal:"-1001.01"}},
 	                {No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02}];
    checkResult( dbcl, findCondition43, null, expRecs43, {No:1} );
    
    //$lte:0
@@ -1088,9 +848,7 @@ function main()
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:71,a:{$decimal:"-1001.01"}},
 	                {No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02}];
    checkResult( dbcl, findCondition44, null, expRecs44, {No:1} );
    
    //$gt:1002
@@ -1103,16 +861,7 @@ function main()
 	                {No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition45, null, expRecs45, {No:1} );
    
    //$gte:1002
@@ -1127,16 +876,7 @@ function main()
 	                {No:60,a:{$decimal:"1002"}},{No:61,a:{$decimal:"1003"}},{No:66,a:{$decimal:"1002.01"}},{No:67,a:{$decimal:"1003.01"}},
 	                {No:72,a:1002.01},{No:73,a:1003.01},
 	                {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},
-	                {No:84,a:1002.02},{No:85,a:1003.02},
-	                {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                {No:91,a:{$date:"2000-01-01"}},
-	                {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                   {No:94,a:{$regex:"^z","$options":"i"}},
-                   {No:96,a:"abc"},
-                   {No:98,a:{$maxKey:1}},
-                   {No:99,a:true},{No:100,a:false},
-                   {No:101,a:{name:"zhang"}}];
+	                {No:84,a:1002.02},{No:85,a:1003.02}];
    checkResult( dbcl, findCondition46, null, expRecs46, {No:1} );
    
    //$lt:1002
@@ -1156,8 +896,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition47, null, expRecs47, {No:1} );
    
@@ -1178,8 +916,6 @@ function main()
 	                {No:74,a:1001.01},{No:75,a:-1002.01},{No:76,a:-1003.01},{No:77,a:-1001.01},
 	                {No:80,a:{$decimal:"1001.02"}},{No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},{No:83,a:{$decimal:"-1001.02"}},
 	                {No:86,a:1001.02},{No:87,a:-1002.02},{No:88,a:-1003.02},{No:89,a:-1001.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}},
                    {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition48, null, expRecs48, {No:1} );
    
@@ -1200,15 +936,6 @@ function main()
 	                 {No:71,a:{$decimal:"-1001.01"}},{No:72,a:1002.01},{No:73,a:1003.01},{No:74,a:1001.01},{No:77,a:-1001.01},
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},{No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition49, null, expRecs49, {No:1} );
    
@@ -1237,15 +964,6 @@ function main()
 	                 {No:78,a:{$decimal:"1002.02"}},{No:79,a:{$decimal:"1003.02"}},{No:80,a:{$decimal:"1001.02"}},
 	                 {No:83,a:{$decimal:"-1001.02"}},
 	                 {No:84,a:1002.02},{No:85,a:1003.02},{No:86,a:1001.02},{No:89,a:-1001.02},
-	                 {No:90,a:{$oid:"123abcd00ef12358902300ef"}},
-	                 {No:91,a:{$date:"2000-01-01"}},
-	                 {No:92,a:{$timestamp:"2000-01-01-15.32.18.000000"}},
-	                 {No:93,a:{$binary:"aGVsbG8gd29ybGQ=","$type":"1"}},
-                    {No:94,a:{$regex:"^z","$options":"i"}},
-                    {No:96,a:"abc"},
-                    {No:98,a:{$maxKey:1}},
-                    {No:99,a:true},{No:100,a:false},
-                    {No:101,a:{name:"zhang"}},
 	                 {No:102,a:[1,2,3]}];
    checkResult( dbcl, findCondition50, null, expRecs50, {No:1} );
    
@@ -1258,9 +976,7 @@ function main()
 	                {No:64,a:{$decimal:"-1003"}},
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:75,a:-1002.01},{No:76,a:-1003.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition51, null, expRecs51, {No:1} );
    
    //$lte:-1002
@@ -1272,9 +988,7 @@ function main()
 	                {No:63,a:{$decimal:"-1002"}},{No:64,a:{$decimal:"-1003"}},
 	                {No:69,a:{$decimal:"-1002.01"}},{No:70,a:{$decimal:"-1003.01"}},{No:75,a:-1002.01},{No:76,a:-1003.01},
 	                {No:81,a:{$decimal:"-1002.02"}},{No:82,a:{$decimal:"-1003.02"}},
-	                {No:87,a:-1002.02},{No:88,a:-1003.02},
-	                {No:95,a:null},
-	                {No:97,a:{$minKey:1}}];
+	                {No:87,a:-1002.02},{No:88,a:-1003.02}];
    checkResult( dbcl, findCondition52, null, expRecs52, {No:1} );
 }
 main()
