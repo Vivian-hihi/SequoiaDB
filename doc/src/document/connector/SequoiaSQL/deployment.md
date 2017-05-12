@@ -136,7 +136,7 @@
     ```lang-javascript
    $ bin/sdb_sql_ctl status
    INSTANCE   PID      SVCNAME   PGDATA                        PGLOG                                   
-   myinst     20502    5432      /opt/sequoiasqloltp/pg_data   /opt/sequoiasqloltp/pg_data/yt.log     
+   myinst     20502    5432      /opt/sequoiasqloltp/pg_data   /opt/sequoiasqloltp/pg_data/myinst.log     
    Total: 1; Run: 1
    ```
 
