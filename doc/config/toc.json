@@ -791,6 +791,38 @@
                      "en": "Development"
                   }
                ]
+            },
+            {
+               "id": 1494564487,
+               "dir": "SeqequoiaSQL",
+               "cn": "SeqequoiaSQL",
+               "en": "SeqequoiaSQL",
+               "contents": [
+                  {
+                     "id": 1494564497,
+                     "file": "overview",
+                     "cn": "概述",
+                     "en": "Overview"
+                  },
+                  {
+                     "id": 1494564504,
+                     "file": "deployment",
+                     "cn": "部署",
+                     "en": "Deployment"
+                  },
+                  {
+                     "id": 1494564512,
+                     "file": "connection",
+                     "cn": "连接",
+                     "en": "Connection"
+                  },
+                  {
+                     "id": 1494564519,
+                     "file": "development",
+                     "cn": "开发",
+                     "en": "Development"
+                  }
+               ]
             }
          ]
       },
