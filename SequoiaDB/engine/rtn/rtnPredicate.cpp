@@ -1322,10 +1322,10 @@ namespace engine
          // for IN statement without isNot or if the element type is array
          // and we want equality match {c1:{$et:[1,2,3]}}
          set<BSONElement, element_cmp_lt> vals ;
-         vector<rtnPredicate> regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
 
-         // if e is an empty array. just add it to vals.(this will be add to the _startStopKeys)
+         // if e is an empty array. just add it to vals.(this will be add to
+         // the _startStopKeys)
          if ( !i.more() )
          {
             vals.insert ( e ) ;
@@ -1344,21 +1344,7 @@ namespace engine
                PD_LOG( PDERROR, "$eleMatch is not allowed within $in" ) ;
                goto done ;
             }
-#ifdef NOTUSE
-            // for regular expression match, let's create a new rtnPredicate
-            if ( ie.type() == RegEx )
-            {
-               regexes.push_back ( rtnPredicate ( ie, FALSE ) ) ;
-               PD_CHECL( regexes.back().isInit(),
-                         SDB_INVALIDARG, error, PDERROR,
-                         "Failed to create regex predicate" ) ;
-            }
-#endif
-            // otherwise let's simply insert the element into the set
-            else
-            {
-               vals.insert ( ie ) ;
-            }
+            vals.insert ( ie ) ;
          }
          // after going through all elements, let's push all in $in into
          // start/stopkey list
@@ -1366,12 +1352,6 @@ namespace engine
                i!=vals.end(); i++ )
          {
             _startStopKeys.push_back ( rtnStartStopKey ( *i ) ) ;
-         }
-         // and then union with regular expression
-         for ( vector<rtnPredicate>::const_iterator i = regexes.begin();
-               i!=regexes.end(); i++ )
-         {
-            *this |= *i ;
          }
       }
 
@@ -1419,24 +1399,6 @@ namespace engine
             // Note: String and Symbol are same currently
             _initTypeRange( String, FALSE ) ;
          }
-
-#ifdef NOTUSE
-         // regex matches itself type
-         if ( e.type() == RegEx )
-         {
-            BSONElement re = addObj( BSON( "" << e ) ).firstElement() ;
-            _startStopKeys.push_back( rtnStartStopKey ( re ) ) ;
-         }
-         else
-         {
-            BSONObj orig = e.embeddedObject() ;
-            BSONObjBuilder b ;
-            b.appendRegex( "", orig[ "$regex" ].valuestrsafe(),
-                               orig[ "$options" ].valuestrsafe() ) ;
-            BSONElement re = addObj( b.obj() ).firstElement() ;
-            _startStopKeys.push_back( rtnStartStopKey ( re ) ) ;
-         }
-#endif
       }
 
    done :

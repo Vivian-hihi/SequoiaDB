@@ -748,9 +748,6 @@ namespace engine
       protected:
          typedef set<BSONElement, element_cmp_lt> VALUE_SET ;
          set<BSONElement, element_cmp_lt> _valueSet ;
-
-         typedef vector<_mthMatchOpNodeRegex *> REGEX_VECTOR ;
-         REGEX_VECTOR _regexVector ;
    } ;
 
    class _mthMatchOpNodeNIN : public _mthMatchOpNodeIN

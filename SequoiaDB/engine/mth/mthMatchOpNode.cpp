@@ -3239,49 +3239,7 @@ namespace engine
          while ( iter.more() )
          {
             BSONElement subEle = iter.next() ;
-#ifdef NOTUSE
-            if ( subEle.type() == RegEx )
-            {
-               _mthMatchNode *node             = NULL ;
-               _mthMatchOpNodeRegex *regexNode = NULL ;
-               node = mthGetMatchNodeFactory()->createOpNode( _allocator,
-                                                              _config,
-                                                     EN_MATCH_OPERATOR_REGEX ) ;
-               if ( NULL == node )
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "createOpNodeByOp failed:type=%d,rc=%d",
-                          EN_MATCH_OPERATOR_REGEX, rc ) ;
-                  goto error ;
-               }
-
-               regexNode = dynamic_cast< _mthMatchOpNodeRegex * > ( node ) ;
-               if ( NULL == regexNode )
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "dynamic_cast(OpNode->OpNodeRegex) failed:"
-                          "node=%s,rc=%d", node->toString().c_str(), rc ) ;
-                  mthGetMatchNodeFactory()->releaseNode( node ) ;
-                  goto error ;
-               }
-
-               rc = regexNode->init( fieldName, subEle.regex(),
-                                     subEle.regexFlags() ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "init regexNode failed:regex=%s,rc=%d",
-                          subEle.toString().c_str(), rc ) ;
-                  mthGetMatchNodeFactory()->releaseNode( node ) ;
-                  goto error ;
-               }
-
-               _regexVector.push_back( regexNode ) ;
-            }
-            else
-#endif
-            {
-               _valueSet.insert( subEle ) ;
-            }
+            _valueSet.insert( subEle ) ;
          }
       }
 
@@ -3296,14 +3254,6 @@ namespace engine
 
    void _mthMatchOpNodeIN::_clear()
    {
-      UINT32 i = 0 ;
-      for ( i = 0 ; i < _regexVector.size() ; i++ )
-      {
-         _regexVector[i]->clear() ;
-         mthGetMatchNodeFactory()->releaseNode( _regexVector[i] ) ;
-      }
-
-      _regexVector.clear() ;
       _valueSet.clear() ;
    }
 
@@ -3329,33 +3279,15 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeIN::isTotalConverted()
    {
-      if ( _mthMatchOpNode::isTotalConverted() )
-      {
-         if ( _regexVector.size() == 0 )
-         {
-            return TRUE ;
-         }
-      }
-
-      return FALSE ;
+      return _mthMatchOpNode::isTotalConverted() ;
    }
 
    BOOLEAN _mthMatchOpNodeIN::_isMatch( const BSONElement &ele )
    {
-      UINT32 i = 0 ;
-
       INT32 count = _valueSet.count( ele ) ;
       if ( count > 0 )
       {
          return TRUE ;
-      }
-
-      for ( i = 0 ; i < _regexVector.size() ; i++ )
-      {
-         if ( _regexVector[i]->matches( ele ) )
-         {
-            return TRUE ;
-         }
       }
 
       return FALSE ;
@@ -3368,8 +3300,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN tmpResult = FALSE ;
-      if ( _valueSet.size() == 0 && _regexVector.size() == 0 &&
-           left.type() == Array )
+      if ( _valueSet.size() == 0 && left.type() == Array )
       {
          BSONObj obj = left.embeddedObject() ;
          if ( obj.nFields() == 0 )
@@ -3445,14 +3376,13 @@ namespace engine
                                              UINT32 &cpuCost )
    {
       selectivity = OPT_MTH_OPTR_DEFAULT_SELECTIVITY ;
-      if ( _valueSet.empty() && _regexVector.empty() )
+      if ( _valueSet.empty() )
       {
          cpuCost = OPT_MTH_OPTR_BASE_CPU_COST ;
       }
       else
       {
-         cpuCost = OPT_MTH_OPTR_BASE_CPU_COST *
-                   ( _valueSet.size() + _regexVector.size() ) ;
+         cpuCost = OPT_MTH_OPTR_BASE_CPU_COST * _valueSet.size() ;
       }
    }
 
@@ -3499,8 +3429,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN tmpResult = TRUE ;
-      if ( _valueSet.size() == 0 && _regexVector.size() == 0 &&
-           left.type() == Array )
+      if ( _valueSet.size() == 0 && left.type() == Array )
       {
          BSONObj obj = left.embeddedObject() ;
          if ( obj.nFields() == 0 )
@@ -3626,7 +3555,6 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeALL::_isMatchSingle( const BSONElement &ele )
    {
-      UINT32 i = 0 ;
       VALUE_SET::iterator iterSet ;
       iterSet = _valueSet.begin() ;
       while ( iterSet != _valueSet.end() )
@@ -3638,15 +3566,6 @@ namespace engine
          }
 
          iterSet++ ;
-      }
-
-      for ( i = 0 ; i < _regexVector.size() ; i++ )
-      {
-         // all regexs in _regexVector must equals left
-         if ( !_regexVector[i]->matches( ele ) )
-         {
-            return FALSE ;
-         }
       }
 
       return TRUE ;
@@ -3663,8 +3582,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       VALUE_SET::iterator iterSet ;
       ELEMENT_MAP::iterator iter ;
-
-      UINT32 i = 0 ;
 
       if ( left.type() != Array )
       {
@@ -3705,37 +3622,6 @@ namespace engine
          iterSet++ ;
       }
 
-      for ( i = 0 ; i < _regexVector.size() ; i++ )
-      {
-         // all regexs in _regexVector must exist in leftValueSet
-         BOOLEAN tmpResult = FALSE ;
-
-         INT32 index = 0 ;
-         BSONObj tmpObj = left.embeddedObject() ;
-         BSONObjIterator iter( tmpObj ) ;
-         while ( iter.more() )
-         {
-            BOOLEAN singleResult = FALSE ;
-            BSONElement ele = iter.next() ;
-            singleResult = _regexVector[i]->matches( ele ) ;
-            if ( singleResult )
-            {
-               tmpResult = singleResult ;
-            }
-
-            rc = _saveElement( context, singleResult, index ) ;
-            PD_RC_CHECK( rc, PDERROR, "_saveElement failed:rc=%d", rc ) ;
-
-            index++ ;
-         }
-
-         if ( !tmpResult )
-         {
-            result = FALSE ;
-            goto done ;
-         }
-      }
-
       result = TRUE ;
 
       if ( _hasReturnMatch )
@@ -3754,7 +3640,6 @@ namespace engine
                                                     const BSONElement &left,
                                                     const BSONElement &right )
    {
-      UINT32 i = 0 ;
       VALUE_SET::iterator iterSet ;
       VALUE_SET leftValueSet ;
       if ( Array != left.type() )
@@ -3784,28 +3669,6 @@ namespace engine
          iterSet++ ;
       }
 
-      for ( i = 0 ; i < _regexVector.size() ; i++ )
-      {
-         // all regexs in _regexVector must exist in leftValueSet
-         BOOLEAN isMatch = FALSE ;
-         iterSet = leftValueSet.begin() ;
-         while ( iterSet != leftValueSet.end() )
-         {
-            if ( _regexVector[i]->matches( *iterSet ) )
-            {
-               isMatch = TRUE ;
-               break ;
-            }
-
-            iterSet++ ;
-         }
-
-         if ( !isMatch )
-         {
-            return FALSE ;
-         }
-      }
-
       return TRUE ;
    }
 
@@ -3819,7 +3682,7 @@ namespace engine
 
       if ( Array != left.type() && Object != left.type() )
       {
-         if ( _valueSet.size() == 0 && _regexVector.size() == 0 )
+         if ( _valueSet.size() == 0 )
          {
             // {a:1} do not match {a:{$all:[]}}, while {a:[1]} do
             result = FALSE ;
