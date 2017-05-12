@@ -77,7 +77,7 @@
       <property name="package_dir" location="${WORKSPACE}/archive/current" />
       
       <first id="package_fullname">
-         <fileset dir="${package_dir}" includes="SequoiaSQL*.run" />
+         <fileset dir="${package_dir}" includes="sequoiasql*.run" />
       </first>
       <property name="package_fullname" location="${toString:package_fullname}" />
       <basename property="package_name_part" file="${package_fullname}" suffix=".run"/>

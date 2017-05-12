@@ -54,7 +54,7 @@
          <resourcecontains resource="${archive_dir}/${SELECT_PG_PACKAGE}/pg.version" substring="Release"/>
          <then>
             <copy todir="${archive_dir}/current">
-               <fileset dir="${archive_dir}/${SELECT_PG_PACKAGE}" includes="SequoiaSQL*.run"/>
+               <fileset dir="${archive_dir}/${SELECT_PG_PACKAGE}" includes="sequoiasql*.run"/>
             </copy><!--change to move-->
          </then>
          <else>
