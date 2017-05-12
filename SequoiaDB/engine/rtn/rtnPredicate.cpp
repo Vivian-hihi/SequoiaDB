@@ -1240,9 +1240,6 @@ namespace engine
             case BSONObj::opMOD :
                rc = _initMOD( e, isNot ) ;
                break ;
-            case BSONObj::opTYPE :
-               rc = _initTYPE( e, isNot ) ;
-               break ;
             case BSONObj::opEXISTS :
                rc = _initEXISTS( e, isNot ) ;
                break ;
@@ -1608,25 +1605,6 @@ namespace engine
       }
 
       PD_TRACE_EXITRC( SDB__RTNPRED__INITMOD, rc ) ;
-
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITTYPE, "_rtnPredicateSet::_initTYPE" )
-   INT32 rtnPredicate::_initTYPE ( const BSONElement &e, BOOLEAN isNot )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB__RTNPRED__INITTYPE ) ;
-
-      if ( !isNot )
-      {
-         // [ minForType, maxForType ]
-         BSONType type = (BSONType) e.numberInt() ;
-         rc = _initTypeRange( type, FALSE ) ;
-      }
-
-      PD_TRACE_EXITRC( SDB__RTNPRED__INITTYPE, rc ) ;
 
       return rc ;
    }

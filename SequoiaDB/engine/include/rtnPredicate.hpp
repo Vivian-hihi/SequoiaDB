@@ -355,7 +355,6 @@ namespace engine
                      BOOLEAN mixCmp ) ;
       INT32 _initALL ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initMOD ( const BSONElement &e, BOOLEAN isNot ) ;
-      INT32 _initTYPE ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initEXISTS ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initISNULL ( const BSONElement &e, BOOLEAN isNot ) ;
 
