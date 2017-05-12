@@ -1872,7 +1872,7 @@ namespace engine
                PD_LOG( PDERROR, "Attach node only support for data "
                        "group now" ) ;
                rc = SDB_INVALIDARG ;
-               goto error ;               
+               goto error ;
             }
 
             rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_KEEP_DATA,
@@ -2236,10 +2236,10 @@ namespace engine
             if ( 0 == pArgs->_targetName.compare( COORD_GROUPNAME ) ||
                  0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) )
             {
-               PD_LOG( PDERROR, "Attach node only support for data "
+               PD_LOG( PDERROR, "Detach node only support for data "
                        "group now" ) ;
                rc = SDB_INVALIDARG ;
-               goto error ;               
+               goto error ;
             }
 
             rc = rtnGetBooleanElement( pArgs->_boQuery, FIELD_NAME_KEEP_DATA,
