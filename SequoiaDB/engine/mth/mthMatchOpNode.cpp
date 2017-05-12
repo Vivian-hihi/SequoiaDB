@@ -4121,7 +4121,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeEXPAND::getBSONOpType ()
    {
-      return BSONObj::opEXPAND ;
+      return -1 ;
    }
 
    const CHAR* _mthMatchOpNodeEXPAND::getOperatorStr()

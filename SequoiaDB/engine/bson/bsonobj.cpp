@@ -427,6 +427,9 @@ namespace bson {
                      fn[11] == 'e' && fn[12] == 0 )
                     return BSONObj::opMAX_DISTANCE;
             }
+            else if ( fn[1] == 't' && fn[2] == 'y' && fn[3] == 'p' &&
+                      fn[4] == 'e' && fn[5] == 0 )
+                return BSONObj::opTYPE;
             else if ( fn[1] == 'i' ) {
                 if ( fn[2] == 'n' && fn[3] == 0 )
                     return BSONObj::opIN;
@@ -440,16 +443,13 @@ namespace bson {
             else if ( fn[1] == 'a' && fn[2] == 'l' && fn[3] == 'l' &&
                       fn[4] == 0 )
                 return BSONObj::opALL;
+            else if ( fn[1] == 's' && fn[2] == 'i' && fn[3] == 'z' &&
+                      fn[4] == 'e' && fn[5] == 0 )
+                return BSONObj::opSIZE;
             else if ( fn[1] == 'e' ) {
-                if ( fn[2] == 'x' )
-                {
-                    if ( fn[3] == 'i' && fn[4] == 's' &&
-                         fn[5] == 't' && fn[6] == 's' && fn[7] == 0 )
-                       return BSONObj::opEXISTS;
-                    if ( fn[3] == 'p' && fn[4] == 'a' &&
-                         fn[5] == 'n' && fn[6] == 'd' && fn[7] == 0 )
-                       return BSONObj::opEXPAND;
-                }
+                if ( fn[2] == 'x' && fn[3] == 'i' && fn[4] == 's' &&
+                     fn[5] == 't' && fn[6] == 's' && fn[7] == 0 )
+                    return BSONObj::opEXISTS;
                 if ( fn[2] == 'l' && fn[3] == 'e' && fn[4] == 'm' &&
                      fn[5] == 'M' && fn[6] == 'a' && fn[7] == 't' &&
                      fn[8] == 'c' && fn[9] == 'h' && fn[10] == 0 )

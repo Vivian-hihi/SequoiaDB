@@ -1393,8 +1393,8 @@ namespace engine
          else
          {
             // RegEx is restricted to String and Symbol
-            // Note: String and Symbol are same currently
-            _initTypeRange( String, FALSE ) ;
+            // Note: String and Symbol are the same canonical types currently
+            _initTypeRange( String, TRUE ) ;
          }
       }
 

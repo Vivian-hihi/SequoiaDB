@@ -350,9 +350,9 @@ namespace engine
       INT32 _initET ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initNE ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initLT ( const BSONElement &e, BOOLEAN isNot, BOOLEAN inclusive,
-                     BOOLEAN mixCmp ) ;
+                      BOOLEAN mixCmp ) ;
       INT32 _initGT ( const BSONElement &e, BOOLEAN isNot, BOOLEAN inclusive,
-                     BOOLEAN mixCmp ) ;
+                      BOOLEAN mixCmp ) ;
       INT32 _initALL ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initMOD ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initEXISTS ( const BSONElement &e, BOOLEAN isNot ) ;
