@@ -30,6 +30,7 @@ public class KillNode extends Fault {
 
     @Override
     public void make() throws FaultException {
+        System.out.println("target node:" + hostName + " : " + svcName);
         try {
             ssh.exec(remotePath + "/" + scriptName + " " + svcName);
             pid = ssh.getStdout().substring(0, ssh.getStdout().length() - 1);

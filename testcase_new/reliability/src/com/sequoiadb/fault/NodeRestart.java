@@ -28,6 +28,7 @@ public class NodeRestart extends Fault {
     }
 
     public void make() throws FaultException {
+        System.out.println("target node:" + this.node.hostName() + " : " + this.node.svcName());
         try {
             this.node.stop();
         }

@@ -79,6 +79,7 @@ public class DiskFull extends Fault {
     }
 
     public void make() throws FaultException {
+        System.out.println("target path: " + hostName + " : " + padPath);
         fillUpDisk(100);
     }
 
@@ -196,7 +197,7 @@ public class DiskFull extends Fault {
     public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,
             int duration, DBCollection sysCataCL) {
         int defaultPercent = 97;
-        return getFaultMakeTask(hostName, padPath, maxDelay, duration, null, defaultPercent);
+        return getFaultMakeTask(hostName, padPath, maxDelay, duration, sysCataCL, defaultPercent);
     }
     
     public static FaultMakeTask getFaultMakeTask(String hostName, String padPath, int maxDelay,

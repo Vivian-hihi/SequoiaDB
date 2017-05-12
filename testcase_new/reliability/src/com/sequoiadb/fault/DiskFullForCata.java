@@ -23,6 +23,7 @@ public class DiskFullForCata extends DiskFull{
     
     @Override
     public void make() {
+        System.out.println("target cl: " + sysCataCL.getName());
         CommLib.fillUpCL(sysCataCL, 128);
     }
     

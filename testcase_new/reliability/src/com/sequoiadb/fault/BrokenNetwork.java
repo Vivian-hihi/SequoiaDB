@@ -66,6 +66,7 @@ public class BrokenNetwork extends Fault {
     public void make() throws FaultException {
         try {
             if (group == null) {
+                System.out.println("brokenHost: " + hostName);
                 ssh.execBackground("nohup " + remotePath + "/" + scriptName + " " + duration
                         + " > /tmp/brokenNet.log &");
                 brokenTime = System.currentTimeMillis();
