@@ -4139,6 +4139,12 @@ namespace engine
       return FALSE ;
    }
 
+   INT32 _mthMatchOpNodeEXPAND::calcPredicate( _rtnPredicateSet &predicateSet )
+   {
+      // $expand has no predicate
+      return SDB_OK ;
+   }
+
    INT32 _mthMatchOpNodeEXPAND::_valueMatch( const BSONElement &left,
                                              const BSONElement &right,
                                              _mthMatchTreeContext &context,
