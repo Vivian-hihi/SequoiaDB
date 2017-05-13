@@ -108,10 +108,15 @@ class DataOperator04 extends BaseOperator
          {
             echo "\nFailed to findAndRemove. Errno: ". $errno ."\n";
          }
-         
+         $conditionNum = 0 ;
          while( $tmpInfo = $cursor -> next() )
          {
             array_push( $updateReturnArray, $tmpInfo );
+            $conditionNum++ ;
+         }
+         if( $conditionNum == 0 )
+         {
+            echo "\nfindAndRemove no match record. condition: ". json_encode( $condition ) ."\n";
          }
       }
       return $updateReturnArray;
