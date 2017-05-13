@@ -168,6 +168,7 @@ namespace engine
                                       dmsStatKey &startKey,
                                       dmsStatKey &stopKey,
                                       BOOLEAN isEqual,
+                                      INT32 majorType,
                                       BOOLEAN mixCmp,
                                       double &scanSelectivity ) const = 0 ;
 
@@ -241,6 +242,7 @@ namespace engine
                                       dmsStatKey &startKey,
                                       dmsStatKey &stopKey,
                                       BOOLEAN isEqual,
+                                      INT32 majorType,
                                       BOOLEAN mixCmp,
                                       double &scanSelectivity ) const ;
 
@@ -353,6 +355,7 @@ namespace engine
                                       dmsStatKey &startKey,
                                       dmsStatKey &stopKey,
                                       BOOLEAN isEqual,
+                                      INT32 majorType,
                                       BOOLEAN mixCmp,
                                       double &scanSelectivity ) const ;
 
@@ -390,7 +393,9 @@ namespace engine
          double _evalKeyPair ( const BSONElement &startKey,
                                BOOLEAN startIncluded,
                                const BSONElement &stopKey,
-                               BOOLEAN stopIncluded, BOOLEAN mixCmp ) const ;
+                               BOOLEAN stopIncluded,
+                               INT32 majorType,
+                               BOOLEAN mixCmp ) const ;
 
          double _evalETOperator ( const BSONElement &beValue ) const ;
 

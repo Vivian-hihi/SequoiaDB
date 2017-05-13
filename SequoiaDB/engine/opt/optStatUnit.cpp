@@ -325,11 +325,13 @@ namespace engine
             }
 
             BOOLEAN subIsEqual = iterSSKey->isEquality() ;
+            INT32 majorType = iterSSKey->_majorType ;
 
             double subSelectivity = 1.0, dummy = 1.0 ;
 
             subSelectivity = evalKeyPair( pFieldName, beStart, beStop,
-                                          subIsEqual, mixCmp, dummy ) ;
+                                          subIsEqual, majorType, mixCmp,
+                                          dummy ) ;
             selectivity += subSelectivity ;
          }
 
@@ -506,6 +508,7 @@ namespace engine
                                        dmsStatKey &startKey,
                                        dmsStatKey &stopKey,
                                        BOOLEAN isEqual,
+                                       INT32 majorType,
                                        BOOLEAN mixCmp,
                                        double &scanSelectivity ) const
    {
@@ -533,7 +536,8 @@ namespace engine
          // Simply evaluate one
          predSelectivity = _collectionStat.evalKeyPair( pFieldName,
                                                         startKey, stopKey,
-                                                        isEqual, mixCmp,
+                                                        isEqual, majorType,
+                                                        mixCmp,
                                                         scanSelectivity ) ;
       }
 
@@ -683,6 +687,7 @@ namespace engine
                                             dmsStatKey &startKey,
                                             dmsStatKey &stopKey,
                                             BOOLEAN isEqual,
+                                            INT32 majorType,
                                             BOOLEAN mixCmp,
                                             double &scanSelectivity ) const
    {
@@ -726,7 +731,8 @@ namespace engine
          else
          {
             predSelectivity = _evalKeyPair( beStart, startIncluded,
-                                            beStop, stopIncluded, mixCmp ) ;
+                                            beStop, stopIncluded, majorType,
+                                            mixCmp ) ;
          }
          scanSelectivity = predSelectivity ;
       }
@@ -832,6 +838,7 @@ namespace engine
                                              BOOLEAN startIncluded,
                                              const BSONElement &stopKey,
                                              BOOLEAN stopIncluded,
+                                             INT32 majorType,
                                              BOOLEAN mixCmp ) const
    {
       double selectivity = OPT_PRED_DEF_SELECTIVITY ;
@@ -860,10 +867,18 @@ namespace engine
       }
       else
       {
-         BSONElement minEle = rtnKeyGetMinForCmp( startKey.type(),
-                                                  FALSE ).firstElement() ;
-         BSONElement maxEle = rtnKeyGetMaxForCmp( stopKey.type(),
-                                                  FALSE ).firstElement() ;
+         BSONElement minEle, maxEle ;
+
+         if ( majorType == RTN_KEY_MAJOR_DEFAULT )
+         {
+            minEle = rtnKeyGetMinForCmp( startKey.type(), FALSE ).firstElement() ;
+            maxEle = rtnKeyGetMaxForCmp( stopKey.type(), FALSE ).firstElement() ;
+         }
+         else
+         {
+            minEle = rtnKeyGetMinForCmp( majorType, FALSE ).firstElement() ;
+            maxEle = rtnKeyGetMaxForCmp( majorType, FALSE ).firstElement() ;
+         }
 
          BOOLEAN startIsMin = ( 0 == startKey.woCompare( minEle, FALSE ) ) ;
          BOOLEAN stopIsMax = ( 0 == stopKey.woCompare( maxEle, FALSE ) ) ;

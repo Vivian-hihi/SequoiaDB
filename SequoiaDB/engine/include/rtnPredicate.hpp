@@ -52,10 +52,10 @@ namespace engine
 
    INT32 rtnKeyCompare ( const BSONElement &l, const BSONElement &r ) ;
 
-   BSONObj rtnKeyGetMinType ( BSONType type ) ;
-   BSONObj rtnKeyGetMaxType ( BSONType type ) ;
-   BSONObj rtnKeyGetMinForCmp ( BSONType type, BOOLEAN mixCmp ) ;
-   BSONObj rtnKeyGetMaxForCmp ( BSONType type, BOOLEAN mixCmp ) ;
+   BSONObj rtnKeyGetMinType ( INT32 bsonType ) ;
+   BSONObj rtnKeyGetMaxType ( INT32 bsonType ) ;
+   BSONObj rtnKeyGetMinForCmp ( INT32 bsonType, BOOLEAN mixCmp ) ;
+   BSONObj rtnKeyGetMaxForCmp ( INT32 bsonType, BOOLEAN mixCmp ) ;
 
    // bound of a field, say {c1:5}
    // bound doesn't include upper/lower information, it only have the
@@ -117,6 +117,9 @@ namespace engine
              pos == RTN_SSK_RANGE_POS_RET ;
    }
 
+   // bson::MinKey - 1
+   #define RTN_KEY_MAJOR_DEFAULT ( -2 )
+
    // range of a start/stop key
    class rtnStartStopKey : public SDBObject
    {
@@ -126,6 +129,8 @@ namespace engine
 
       // equality = 1 means this is == key, otherwise it's ranged query key
       mutable INT8 _equality ;
+
+      INT32 _majorType ;
 
       BOOLEAN isValid () const
       {
@@ -146,18 +151,21 @@ namespace engine
       rtnStartStopKey()
       {
          _equality = -1 ;
+         _majorType = RTN_KEY_MAJOR_DEFAULT ;
       }
       rtnStartStopKey ( const BSONElement &e )
       {
          _startKey._bound = _stopKey._bound = e ;
          _startKey._inclusive = _stopKey._inclusive = TRUE ;
          _equality = 1 ;
+         _majorType = e.type() ;
       }
       rtnStartStopKey( INT32 imPossibleCondition )
       {
          _startKey._bound = _stopKey._bound = maxKey.firstElement() ;
          _startKey._inclusive = _stopKey._inclusive = FALSE ;
          _equality = 1 ;
+         _majorType = RTN_KEY_MAJOR_DEFAULT ; ;
       }
       string toString() const ;
       // convert rtnStartStopKey to bson element

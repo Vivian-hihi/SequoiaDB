@@ -116,9 +116,9 @@ namespace engine
       return b.obj() ;
    }
 
-   BSONObj rtnKeyGetMinType ( BSONType type )
+   BSONObj rtnKeyGetMinType ( INT32 bsonType )
    {
-      switch ( type )
+      switch ( bsonType )
       {
          case MinKey :
             return minKey ;
@@ -169,9 +169,9 @@ namespace engine
       return minKey ;
    }
 
-   BSONObj rtnKeyGetMaxType ( BSONType type )
+   BSONObj rtnKeyGetMaxType ( INT32 bsonType )
    {
-      switch ( type )
+      switch ( bsonType )
       {
          case MinKey :
             return minKey ;
@@ -222,14 +222,14 @@ namespace engine
       return maxKey ;
    }
 
-   BSONObj rtnKeyGetMinForCmp ( BSONType type, BOOLEAN mixCmp )
+   BSONObj rtnKeyGetMinForCmp ( INT32 bsonType, BOOLEAN mixCmp )
    {
       if ( mixCmp )
       {
          return minKey ;
       }
 
-      switch ( type )
+      switch ( bsonType )
       {
          case MinKey :
             return _rtnKeyMinMinKey ;
@@ -283,14 +283,14 @@ namespace engine
       return minKey ;
    }
 
-   BSONObj rtnKeyGetMaxForCmp ( BSONType type, BOOLEAN mixCmp )
+   BSONObj rtnKeyGetMaxForCmp ( INT32 bsonType, BOOLEAN mixCmp )
    {
       if ( mixCmp )
       {
          return maxKey ;
       }
 
-      switch ( type )
+      switch ( bsonType )
       {
          // Should perform a full range compare
          case MinKey :
@@ -395,6 +395,11 @@ namespace engine
                                     !n._stopKey._inclusive ))
          {
             _tail._stopKey = n._stopKey ;
+            // Have different major types, set to default
+            if ( _tail._majorType != n._majorType )
+            {
+               _tail._majorType = RTN_KEY_MAJOR_DEFAULT ;
+            }
          }
       }
       BOOLEAN _init ;
@@ -932,6 +937,12 @@ namespace engine
       result._startKey = maxKeyBound ( l._startKey, r._startKey, TRUE ) ;
       result._stopKey = minKeyBound ( l._stopKey, r._stopKey, TRUE ) ;
 
+      // left and right have the same major type, set to the result
+      if ( l._majorType == r._majorType )
+      {
+         result._majorType = l._majorType ;
+      }
+
       PD_TRACE_EXIT ( SDB_PREDOVERLAP ) ;
       return result.isValid() ;
    }
@@ -1281,6 +1292,7 @@ namespace engine
          rtnStartStopKey temp ;
          temp._startKey = i->_stopKey ;
          temp._stopKey = i->_startKey ;
+         temp._majorType = i->_majorType ;
          result._startStopKeys.push_back ( temp ) ;
       }
       PD_TRACE_EXIT ( SDB_RTNPRED_REVERSE ) ;
@@ -1413,6 +1425,7 @@ namespace engine
             keyPair._stopKey._bound =
                   addObj( BSON( "" << simpleRegexEnd( r ) ) ).firstElement() ;
             keyPair._stopKey._inclusive = FALSE ;
+            keyPair._majorType = String ;
          }
          else
          {
@@ -1479,6 +1492,8 @@ namespace engine
 
             keyPair._stopKey._bound = e ;
             keyPair._stopKey._inclusive = FALSE ;
+
+            keyPair._majorType = e.type() ;
          }
 
          {
@@ -1490,6 +1505,8 @@ namespace engine
 
             keyPair._stopKey._bound = maxKey.firstElement() ;
             keyPair._stopKey._inclusive = TRUE ;
+
+            keyPair._majorType = e.type() ;
          }
       }
 
@@ -1533,6 +1550,8 @@ namespace engine
 
          keyPair._stopKey._bound = e ;
          keyPair._stopKey._inclusive = inclusive ;
+
+         keyPair._majorType = e.type() ;
       }
 
       PD_TRACE_EXITRC( SDB__RTNPRED__INITLT, rc ) ;
@@ -1574,6 +1593,8 @@ namespace engine
                  ( stopKey.canonicalType() == e.canonicalType() ) ) ;
          keyPair._stopKey._bound = stopKey ;
          keyPair._stopKey._inclusive = stopInclusive ;
+
+         keyPair._majorType = e.type() ;
       }
 
       PD_TRACE_EXITRC( SDB__RTNPRED__INITGT, rc ) ;
@@ -1624,8 +1645,8 @@ namespace engine
 
       if ( !isNot )
       {
-         // [ minDouble, maxDouble ]
-         rc = _initTypeRange( NumberDouble, TRUE ) ;
+         // [ minDecimal, maxDecimal ]
+         rc = _initTypeRange( NumberDecimal, TRUE ) ;
       }
 
       PD_TRACE_EXITRC( SDB__RTNPRED__INITMOD, rc ) ;
@@ -1735,6 +1756,8 @@ namespace engine
             ( getBSONCanonicalType( type ) == stopKey.canonicalType() ) ;
       keyPair._stopKey._bound = stopKey ;
       keyPair._stopKey._inclusive = stopInclusive ;
+
+      keyPair._majorType = type ;
 
       PD_TRACE_EXITRC( SDB__RTNPRED__INITTYPERANGE, rc ) ;
 
