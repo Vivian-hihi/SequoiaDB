@@ -538,7 +538,9 @@ public class CompatibilityTest {
 		}
 		
 		// regex
-		cur = cl.query(obj9, null, null, null);
+		String strMthRegex = "{ k_regex : { \"$et\" : { \"$regex\" : \"^张\", \"$options\" : \"i\" } } }";
+		BSONObject mthRegexObj = (BSONObject) JSON.parse(strMthRegex);
+		cur = cl.query(mthRegexObj, null, null, null);
 		assertTrue(cur.hasNext());
 		obj = cur.getNext();
 		Pattern pattern = null;
