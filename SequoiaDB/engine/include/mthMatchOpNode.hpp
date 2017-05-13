@@ -540,6 +540,11 @@ namespace engine
 
          UINT32 _evalFuncCPUCost () ;
 
+         OSS_INLINE virtual BOOLEAN _flagExpandRegex ()
+         {
+            return FALSE ;
+         }
+
       protected:
          INT32 _execute( const CHAR *pFieldName, const BSONObj &obj,
                          BOOLEAN isArrayObj,
@@ -742,12 +747,16 @@ namespace engine
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
                                         double &selectivity, UINT32 &cpuCost ) ;
+
       protected:
          BOOLEAN _isMatch( const BSONElement &ele ) ;
 
       protected:
          typedef set<BSONElement, element_cmp_lt> VALUE_SET ;
          set<BSONElement, element_cmp_lt> _valueSet ;
+
+         typedef vector<_mthMatchOpNodeRegex *> REGEX_VECTOR ;
+         REGEX_VECTOR _regexVector ;
    } ;
 
    class _mthMatchOpNodeNIN : public _mthMatchOpNodeIN

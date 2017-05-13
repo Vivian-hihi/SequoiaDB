@@ -1210,7 +1210,7 @@ namespace engine
          switch ( opType )
          {
             case BSONObj::opIN :
-               rc = _initIN( e, isNot ) ;
+               rc = _initIN( e, isNot, mixCmp, FALSE ) ;
                break ;
             case BSONObj::opREGEX :
             case BSONObj::opOPTIONS :
@@ -1305,7 +1305,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITIN, "_rtnPredicateSet::_initIN" )
-   INT32 rtnPredicate::_initIN ( const BSONElement &e, BOOLEAN isNot )
+   INT32 rtnPredicate::_initIN ( const BSONElement &e, BOOLEAN isNot,
+                                 BOOLEAN mixCmp, BOOLEAN expandRegex )
    {
       INT32 rc = SDB_OK ;
 
@@ -1319,10 +1320,11 @@ namespace engine
          // for IN statement without isNot or if the element type is array
          // and we want equality match {c1:{$et:[1,2,3]}}
          set<BSONElement, element_cmp_lt> vals ;
+         vector<rtnPredicate> regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
 
          // if e is an empty array. just add it to vals.(this will be add to
-         // the _startStopKeys)
+         // the _startStopKeys
          if ( !i.more() )
          {
             vals.insert ( e ) ;
@@ -1341,14 +1343,36 @@ namespace engine
                PD_LOG( PDERROR, "$eleMatch is not allowed within $in" ) ;
                goto done ;
             }
+
+            // for regular expression match, let's create a new rtnPredicate
+            if ( expandRegex &&
+                 ( ie.type() == RegEx ||
+                   ( e.type() == Object &&
+                     !e.embeddedObject()[ "$regex" ].eoo() ) ) )
+            {
+               regexes.push_back ( rtnPredicate ( ie, BSONObj::opREGEX, FALSE,
+                                                  mixCmp ) ) ;
+               PD_CHECK( regexes.back().isInit(),
+                         SDB_INVALIDARG, error, PDERROR,
+                         "Failed to create regex predicate" ) ;
+            }
+
             vals.insert ( ie ) ;
          }
+
          // after going through all elements, let's push all in $in into
          // start/stopkey list
          for ( set<BSONElement,element_cmp_lt>::const_iterator i = vals.begin();
                i!=vals.end(); i++ )
          {
             _startStopKeys.push_back ( rtnStartStopKey ( *i ) ) ;
+         }
+
+         // and then union with regular expression
+         for ( vector<rtnPredicate>::const_iterator i = regexes.begin();
+               i!=regexes.end(); i++ )
+         {
+            *this |= *i ;
          }
       }
 
@@ -1377,7 +1401,7 @@ namespace engine
       if ( !isNot )
       {
          // let's try to generate regex string if it's simple
-         const string r = simpleRegex(e) ;
+         const string r = simpleRegex( e ) ;
 
          if ( r.size() )
          {
@@ -1761,8 +1785,9 @@ namespace engine
          // this memory is not released until process terminate
          if ( !genericPredicate )
          {
-            genericPredicate = SDB_OSS_NEW rtnPredicate
-                                 ( BSONObj().firstElement(), 0, FALSE, TRUE ) ;
+            genericPredicate =
+                  SDB_OSS_NEW rtnPredicate( BSONObj().firstElement(), 0, FALSE,
+                                            TRUE ) ;
          }
          return *genericPredicate ;
       }

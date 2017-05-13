@@ -215,8 +215,8 @@ namespace engine
       {
          rtnPredicate ( BSONObj().firstElement(), 0, FALSE, TRUE ) ;
       }
-      rtnPredicate ( const BSONElement &e, INT32 opType,
-                     BOOLEAN isNot, BOOLEAN mixCmp ) ;
+      rtnPredicate ( const BSONElement &e, INT32 opType, BOOLEAN isNot,
+                     BOOLEAN mixCmp ) ;
       ~rtnPredicate ()
       {
          _startStopKeys.clear() ;
@@ -345,7 +345,8 @@ namespace engine
 
    protected :
       // Helper functions for create predicate
-      INT32 _initIN ( const BSONElement &e, BOOLEAN isNot ) ;
+      INT32 _initIN ( const BSONElement &e, BOOLEAN isNot,
+                      BOOLEAN mixCmp, BOOLEAN expandRegex ) ;
       INT32 _initRegEx ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initET ( const BSONElement &e, BOOLEAN isNot ) ;
       INT32 _initNE ( const BSONElement &e, BOOLEAN isNot ) ;
@@ -374,8 +375,7 @@ namespace engine
       RTN_PREDICATE_MAP &predicates() { return _predicates ; }
       INT32 matchLevelForIndex ( const BSONObj &keyPattern ) const ;
       INT32 addPredicate ( const CHAR *fieldName, const BSONElement &e,
-                           INT32 opType, BOOLEAN isNot,
-                           BOOLEAN mixCmp ) ;
+                           INT32 opType, BOOLEAN isNot, BOOLEAN mixCmp ) ;
       UINT32 getSize () const { return _predicates.size() ; }
       void clear()
       {
