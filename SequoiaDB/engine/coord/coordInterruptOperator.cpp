@@ -67,30 +67,20 @@ namespace engine
       PD_TRACE_ENTRY ( COORD_INTERRUPT_EXE ) ;
       SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
       pmdRemoteSessionSite *pSite = NULL ;
-      pmdRemoteSession *pSession = NULL ;
-      coordNoSessionInitHandler interruptHandler ;
       INT64 tmpContextID = -1 ;
 
       contextID = -1 ;
-
 
       /// send interrupt to all nodes associate with the session,
       /// and kill all context
       if ( cb->getRemoteSite() )
       {
-         SET_ROUTEID routeSet ;
          pSite = (pmdRemoteSessionSite*)cb->getRemoteSite() ;
-         pSite->getAllNodeID( routeSet ) ;
-
-         pSession = pSite->addSession( getTimeout(), &interruptHandler ) ;
-         if ( !pSession )
-         {
-            PD_LOG( PDERROR, "Create session[%s] failed", cb->getName() ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         _sendInterrupt( pSession, cb, routeSet ) ;
+         pSite->interruptAllSubSession() ;
       }
+
+      /// set cb interrupted
+      cb->interrupt() ;
 
       // delete all opened contexts when received the interrupt message
       while ( -1 != ( tmpContextID = cb->contextPeek() ) )
@@ -99,49 +89,10 @@ namespace engine
       }
 
    done:
-      if ( pSession )
-      {
-         pSite->removeSession( pSession->sessionID() ) ;
-      }
       PD_TRACE_EXITRC ( COORD_INTERRUPT_EXE, rc ) ;
       return rc ;
    error:
       goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( COORD_INTERRUPT_SENDINTERRUPT, "_coordInterrupt::_sendInterrupt" )
-   void _coordInterrupt::_sendInterrupt( pmdRemoteSession *pSession,
-                                         pmdEDUCB *cb,
-                                         SET_ROUTEID &routeMap )
-   {
-      PD_TRACE_ENTRY ( COORD_INTERRUPT_SENDINTERRUPT ) ;
-
-      INT32 rc = SDB_OK ;
-      pmdSubSession *pSub           = NULL ;
-      SET_ROUTEID::iterator it ;
-
-      MsgHeader interruptMsg ;
-      interruptMsg.messageLength = sizeof( MsgHeader ) ;
-      interruptMsg.opCode = MSG_BS_INTERRUPTE ;
-
-      /// send msg
-      it = routeMap.begin() ;
-      while( it != routeMap.end() )
-      {
-         pSub = pSession->addSubSession( *it ) ;
-         pSub->setReqMsg( &interruptMsg, PMD_EDU_MEM_NONE ) ;
-
-         rc = pSession->sendMsg( pSub ) ;
-         ++it ;
-
-         if ( rc )
-         {
-            PD_LOG( PDWARNING, "Send interrupt message to node[%s] failed, "
-                    "rc: %d", routeID2String( *it ).c_str(), rc ) ;
-         }
-      }
-
-      PD_TRACE_EXIT ( COORD_INTERRUPT_SENDINTERRUPT ) ;
    }
 
 }
