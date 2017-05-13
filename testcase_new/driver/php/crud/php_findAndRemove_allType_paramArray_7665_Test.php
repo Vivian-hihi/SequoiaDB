@@ -92,7 +92,11 @@ class DataOperator04 extends BaseOperator
       $updateReturnArray = array();
       for( $i = 0; $i < count( $recsArray ) - 3 ; $i++ )  //filter 3 records after find
       {
-         if( $i < 12 || $i > 13 ) //last record is minKey/maxKey, can not match the records to remove 
+         if( $i === 10 ) //regex, match regex bson, must add $et
+         {
+            $condition = array( 'b' => array( '$et' => $recsArray[$i]['b'] ) ) ;
+         }
+         else if( $i < 12 || $i > 13 ) //last record is minKey/maxKey, can not match the records to remove 
          {
             $condition = array( 'b' => $recsArray[$i]['b'] );
          }
