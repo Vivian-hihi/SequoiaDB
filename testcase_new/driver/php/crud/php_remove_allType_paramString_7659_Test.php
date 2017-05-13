@@ -82,7 +82,7 @@ class DataOperator12 extends BaseOperator
       $clDB -> remove( '{a: 7, b: {"$numberLong": "9223372036854775807"} }', null );
       $clDB -> remove( '{a: 8, b: {"$date": "2038-01-18"} }', null );
       $clDB -> remove( '{a: 9, b: {"$binary": "aGVsbG8gd29ybGQ=", "$type": "1"} }', null );
-      $clDB -> remove( '{a: 10, b: {"$regex": "^rg", "$options": "i"} }', null );
+      $clDB -> remove( '{a: 10, b: {$et: {"$regex": "^rg", "$options": "i"} } }', null );
       $clDB -> remove( '{a: 11, b: {"$timestamp": "2038-01-18-23.59.59.999999"} }', null );
       $clDB -> remove( '{a: 12}', null );
       $clDB -> remove( '{a: 13}', null );

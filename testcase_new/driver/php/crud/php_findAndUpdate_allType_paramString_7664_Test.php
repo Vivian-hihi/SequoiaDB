@@ -106,7 +106,7 @@ class DataOperator07 extends BaseOperator
          else if( $i === 7 ){ $condition = '{b: -9223372036854775808}'; }
          else if( $i === 8 ){ $condition = '{b:{$date:"1991-11-27"}}'; }
          else if( $i === 9 ){ $condition = '{b:{$binary:"aGVsbG8gd29ybGQ=", $type:"1"}}'; }
-         else if( $i === 10 ){ $condition = '{b:{$regex:"^rg", $options:"i"}}'; }
+         else if( $i === 10 ){ $condition = '{b:{$et:{$regex:"^rg", $options:"i"}}}'; }
          else if( $i === 11 ){ $condition = '{b:{$timestamp:"1901-12-15-00.00.00.000000"}}'; }
          else if( $i === 12 ){ $condition = '{a:12}'; }  //can not match minkey/maxkey, same sdb shell
          else if( $i === 13 ){ $condition = '{a:13}'; }
