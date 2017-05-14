@@ -492,6 +492,7 @@ namespace engine
          BSONObj                    _shardingKey ;
          UINT32                     _attributes ;
          UTIL_COMPRESSOR_TYPE       _compressorType ;
+         dmsCollectionOptions       _options ;
    };
 
    class _rtnCreateCollectionspace : public _rtnCommand
@@ -519,7 +520,7 @@ namespace engine
          const CHAR                 *_spaceName ;
          INT32                      _pageSize ;
          INT32                      _lobPageSize ;
-
+         DMS_STORAGE_TYPE           _storageType ;
    };
 
    class _rtnCreateIndex : public _rtnCommand
@@ -1220,6 +1221,47 @@ namespace engine
    private:
       const CHAR * _fullName ;
    } ;
+
+   class _rtnPop : public _rtnCommand
+   {
+   DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnPop()
+      : _fullName( NULL ),
+        _logicalID( 0 ),
+        _direction( 1 )
+      {
+      }
+
+      virtual ~_rtnPop() {}
+
+   public:
+      virtual const CHAR *name() { return NAME_POP ; }
+      virtual RTN_COMMAND_TYPE type() { return CMD_POP; }
+      virtual BOOLEAN writable()
+      {
+         return TRUE ;
+      }
+
+      virtual const CHAR* collectionFullName()
+      {
+         return _fullName ;
+      }
+
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+   private:
+      const CHAR *_fullName ;
+      INT64 _logicalID ;
+      INT8 _direction ;
+   };
 
    class _rtnAlterCollection: public _rtnCommand
    {

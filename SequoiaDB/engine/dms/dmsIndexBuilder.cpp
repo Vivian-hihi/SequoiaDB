@@ -138,7 +138,7 @@ namespace engine
       if ( DMS_INVALID_EXTENT == _currentExtentID )
       {
          /// when the collection is empty, we complete the index creating
-         /// fast( when unlock the context and scan the data, because the 
+         /// fast( when unlock the context and scan the data, because the
          /// scanExtLID always is -1, so when scan finished, the new instor
          /// will not insert to the index )
          _indexCB->setFlag ( IXM_INDEX_FLAG_NORMAL ) ;

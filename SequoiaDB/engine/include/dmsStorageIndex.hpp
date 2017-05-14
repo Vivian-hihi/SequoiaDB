@@ -46,6 +46,7 @@ using namespace bson ;
 namespace engine
 {
 
+   class _dmsStorageDataCommon ;
    class _dmsStorageData ;
    class _pmdEDUCB ;
    class _ixmIndexCB ;
@@ -62,7 +63,7 @@ namespace engine
    {
       public:
          _dmsStorageIndex ( const CHAR *pSuFileName, dmsStorageInfo *pInfo,
-                            _dmsStorageData *pDataSu ) ;
+                            _dmsStorageDataCommon *pDataSu ) ;
          ~_dmsStorageIndex () ;
 
          virtual void  syncMemToMmap() ;
@@ -184,7 +185,7 @@ namespace engine
       protected:
 
       private:
-         _dmsStorageData               *_pDataSu ;
+         _dmsStorageData         *_pDataSu ;
 
       friend class _dmsIndexBuilder ;
    };

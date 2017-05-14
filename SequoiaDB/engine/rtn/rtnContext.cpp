@@ -1235,36 +1235,19 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb,
-                                            DMS_ACCESS_TYPE accessType,
-                                            vector<INT64>* dollarList )
+   INT32 _rtnContextData::_prepareNormalTbScan( pmdEDUCB * cb,
+                                                DMS_ACCESS_TYPE accessType,
+                                                vector<INT64>* dollarList,
+                                                _mthMatchTree *matcher,
+                                                mthSelector *selector )
    {
-      INT32 rc                = SDB_OK ;
-      _mthMatchTree *matcher  = NULL ;
-      mthSelector *selector   = NULL ;
-      monAppCB * pMonAppCB    = cb ? cb->getMonAppCB() : NULL ;
-      BOOLEAN hasLocked       = _mbContext->isMBLock() ;
+      INT32 rc = SDB_OK ;
 
-      if ( _matcher && _matcher->isInitialized() && !_matcher->isMatchesAll() )
-      {
-         matcher = _matcher ;
-      }
-      if ( _selector.isInitialized() )
-      {
-         selector = &_selector ;
-      }
-
-      _mthRecordGenerator generator ;
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
-
-      if ( DMS_INVALID_EXTENT == _extentID )
-      {
-         SDB_ASSERT( FALSE, "extentID can't be INVALID" ) ;
-         _hitEnd = TRUE ;
-         rc = SDB_DMS_EOC ;
-         goto error ;
-      }
+      _mthRecordGenerator generator ;
+      BOOLEAN hasLocked = _mbContext->isMBLock() ;
+      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
 
       if ( NULL != _queryModifier )
       {
@@ -1396,6 +1379,141 @@ namespace engine
       {
          _mbContext->pause() ;
       }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_prepareCappedTbScan( pmdEDUCB * cb,
+                                                DMS_ACCESS_TYPE accessType,
+                                                vector<INT64>* dollarList,
+                                                _mthMatchTree *matcher,
+                                                mthSelector *selector )
+   {
+      INT32 rc = SDB_OK ;
+      dmsRecordID recordID ;
+      _mthRecordGenerator generator ;
+      ossValuePtr recordDataPtr = 0 ;
+
+      if ( DMS_INVALID_EXTENT == _extentID )
+      {
+         SDB_ASSERT( FALSE, "extentID can't be INVALID" ) ;
+         _hitEnd = FALSE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      while ( isEmpty() )
+      {
+         _mthMatchTreeContext mthContext ;
+         dmsCappedExtScanner extScanner( (dmsStorageDataCapped *)_su->data(),
+                                         _mbContext, matcher, _extentID,
+                                         DMS_ACCESS_TYPE_FETCH, _numToReturn,
+                                         _numToSkip ) ;
+         while ( SDB_OK == (rc = extScanner.advance( recordID, generator,
+                                                     cb, &mthContext ) ) )
+         {
+            try
+            {
+               generator.getDataPtr( recordDataPtr ) ;
+               BSONObj obj( (const CHAR *)recordDataPtr ) ;
+
+               rc = _innerAppend( selector, generator ) ;
+               PD_RC_CHECK( rc, PDERROR, "innerAppend failed, rc: %d", rc ) ;
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            if ( _numToReturn > 0 )
+            {
+               --_numToReturn ;
+            }
+
+            mthContext.clearRecordInfo() ;
+         }
+
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Extent scanner failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         _extentID = extScanner.nextExtentID() ;
+         if ( DMS_INVALID_EXTENT == _extentID )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb,
+                                            DMS_ACCESS_TYPE accessType,
+                                            vector<INT64>* dollarList )
+   {
+      INT32 rc                = SDB_OK ;
+      _mthMatchTree *matcher  = NULL ;
+      mthSelector *selector   = NULL ;
+
+      if ( _matcher && _matcher->isInitialized() && !_matcher->isMatchesAll() )
+      {
+         matcher = _matcher ;
+      }
+      if ( _selector.isInitialized() )
+      {
+         selector = &_selector ;
+      }
+
+      _mthRecordGenerator generator ;
+
+      if ( DMS_INVALID_EXTENT == _extentID )
+      {
+         SDB_ASSERT( FALSE, "extentID can't be INVALID" ) ;
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      if ( NULL != _queryModifier )
+      {
+         generator.setQueryModify( TRUE ) ;
+      }
+
+      if ( DMS_STORAGE_CAPPED == _su->type() )
+      {
+         rc = _prepareCappedTbScan( cb, accessType, dollarList,
+                                    matcher, selector ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to prepare data on capped "
+                      "collection, rc: %d", rc ) ;
+      }
+      else
+      {
+         rc = _prepareNormalTbScan( cb, accessType, dollarList,
+                                    matcher, selector ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to prepare data on "
+                      "collection, rc: %d", rc ) ;
+      }
+
+   done:
       return rc ;
    error:
       goto done ;

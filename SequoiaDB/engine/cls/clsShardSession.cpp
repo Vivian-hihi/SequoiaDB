@@ -591,7 +591,8 @@ namespace engine
 
       UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
       UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
-      rc = _pShdMgr->rGetCSPageSize( csName, pageSize, lobPageSize ) ;
+      DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
+      rc = _pShdMgr->rGetCSInfo( csName, pageSize, lobPageSize, type ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Session[%s]: Get collection space[%s] page "
@@ -600,7 +601,7 @@ namespace engine
          goto error ;
       }
       rc = rtnCreateCollectionSpaceCommand( csName, _pEDUCB, _pDmsCB, _pDpsCB,
-                                            pageSize, lobPageSize ) ;
+                                            pageSize, lobPageSize, type ) ;
       if ( SDB_DMS_CS_EXIST == rc )
       {
          rc = SDB_OK ;
@@ -630,9 +631,10 @@ namespace engine
       UINT32 attribute        = 0 ;
       BOOLEAN isMainCL        = FALSE;
       UINT32 groupCount       = 0 ;
-      UTIL_COMPRESSOR_TYPE compressType = UTIL_COMPRESSOR_INVALID ;
       BSONObj shardingKey ;
       vector< string > subCLList ;
+      UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
+      dmsCollectionOptions options ;
 
       /// get sharding key
    retry:
@@ -664,7 +666,12 @@ namespace engine
       attribute = set->getAttribute() ;
       isMainCL = set->isMainCL() ;
       groupCount = set->groupCount() ;
-      compressType = set->getCompressType() ;
+      compType = set->getCompressType() ;
+      if ( DMS_MB_ATTR_CAPPED & attribute )
+      {
+         options._maxSize = set->getMaxSize() ;
+         options._maxRecNum = set->getMaxRecNum() ;
+      }
 
       if ( isMainCL )
       {
@@ -709,7 +716,7 @@ namespace engine
 
          rc = rtnCreateCollectionCommand( clFullName, shardingKey, attribute,
                                           _pEDUCB, _pDmsCB, _pDpsCB,
-                                          compressType, 0, FALSE ) ;
+                                          compType, 0, FALSE, options ) ;
          if ( SDB_DMS_EXIST == rc )
          {
             rc = SDB_OK ;

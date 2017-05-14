@@ -44,6 +44,7 @@
 #include "dmsTrace.hpp"
 #include "dmsStorageLob.hpp"
 #include "pmdStartup.hpp"
+#include "dmsStorageDataFactory.hpp"
 
 namespace engine
 {
@@ -847,7 +848,8 @@ namespace engine
                                       UINT32 sequence,
                                       utilCacheMgr *pMgr,
                                       INT32 pageSize,
-                                      INT32 lobPageSize )
+                                      INT32 lobPageSize,
+                                      DMS_STORAGE_TYPE type )
    :_apm( this ),
     _pDataSu( NULL ),
     _pIndexSu( NULL ),
@@ -890,15 +892,17 @@ namespace engine
       // make secret value
       _storageInfo._secretValue = ossPack32To64( (UINT32)time(NULL),
                                                  (UINT32)(ossRand()*239641) ) ;
+      _storageInfo._type = type ;
 
       ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
                    _storageInfo._suName, sequence, DMS_DATA_SU_EXT_NAME ) ;
       ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
                    _storageInfo._suName, sequence, DMS_INDEX_SU_EXT_NAME ) ;
 
-      _pDataSu = SDB_OSS_NEW dmsStorageData( dataFileName, &_storageInfo,
-                                             &_eventHolder ) ;
-      if ( _pDataSu )
+      _pDataSu = getDMSStorageDataFactory()->createProduct( type, dataFileName,
+                                                            &_storageInfo,
+                                                            &_eventHolder ) ;
+      if ( _pDataSu  )
       {
          _pIndexSu = SDB_OSS_NEW dmsStorageIndex( idxFileName, &_storageInfo,
                                                   _pDataSu ) ;
@@ -1313,9 +1317,9 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      // reset delete list
-      _pDataSu->_mapExtent2DelList( mbContext->mb(), extAddr,
-                                    allocatedExtent ) ;
+
+      _pDataSu->postLoadExt( mbContext, extAddr, allocatedExtent ) ;
+
       // add count
       addExtentRecordCount( mbContext->mb(), extAddr->_recCount ) ;
 
@@ -1842,6 +1846,47 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONOPTIONS, "_dmsStorageUnit::getCollectionOptions" )
+   INT32 _dmsStorageUnit::getCollectionOptions( const CHAR *pName,
+                                                dmsCollectionOptions &options,
+                                                dmsMBContext *context )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSU_GETCOLLECTIONOPTIONS ) ;
+      BOOLEAN getContext = FALSE ;
+
+      if ( !context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+         rc = _pDataSu->getMBContext( &context, pName, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else
+      {
+         if ( !context->isMBLock() )
+         {
+            rc = context->mbLock( SHARED ) ;
+            PD_RC_CHECK( rc, PDERROR, "Lock collection failed, rc: %d", rc ) ;
+         }
+      }
+
+      //options._compressType = context->mb()->_compressorType ;
+      options._maxSize = context->mb()->_maxSize ;
+      options._maxRecNum = context->mb()->_maxRecNum ;
+
+   done:
+      if ( getContext && context )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSU_GETCOLLECTIONOPTIONS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _dmsStorageUnit::getCollectionCompType( const CHAR *pName,
                                                  UTIL_COMPRESSOR_TYPE &compType,
                                                  dmsMBContext *context )
@@ -2187,6 +2232,9 @@ namespace engine
          info._dataIsValid = mbStat->_commitFlag.peek() ? TRUE : FALSE ;
          info._idxIsValid = mbStat->_idxCommitFlag.peek() ? TRUE : FALSE ;
          info._lobIsValid = mbStat->_lobCommitFlag.peek() ? TRUE : FALSE ;
+
+         info._maxSize = mb->_maxSize ;
+         info._maxRecNum = mb->_maxRecNum ;
 
          if ( !_pLobSu->isOpened() )
          {

@@ -39,7 +39,7 @@
 #ifndef DMSSTORAGEUNIT_HPP_
 #define DMSSTORAGEUNIT_HPP_
 
-#include "dmsStorageData.hpp"
+#include "dmsStorageDataCommon.hpp"
 #include "dmsStorageIndex.hpp"
 #include "dmsStorageLob.hpp"
 #include "rtnAPM.hpp"
@@ -218,7 +218,8 @@ namespace engine
                            UINT32 sequence,
                            utilCacheMgr *pMgr,
                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
-                           INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ) ;
+                           INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ,
+                           DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ) ;
          ~_dmsStorageUnit() ;
 
          INT32 open ( const CHAR *pDataPath,
@@ -231,8 +232,8 @@ namespace engine
          INT32 remove () ;
 
          INT32 renameCS( const CHAR *pNewName ) ;
+         dmsStorageDataCommon *data() { return _pDataSu ; }
 
-         dmsStorageData    *data() { return _pDataSu ; }
          dmsStorageIndex   *index() { return _pIndexSu ; }
          dmsStorageLob     *lob() { return _pLobSu ; }
          rtnAccessPlanManager *getAPM () { return &_apm ; }
@@ -250,6 +251,8 @@ namespace engine
          {
             return _pDataSu ? _pDataSu->CSID() : DMS_INVALID_SUID ;
          }
+
+         DMS_STORAGE_TYPE type() const { return _storageInfo._type ; }
 
          INT64       totalSize ( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalDataPages( UINT32 type = DMS_SU_ALL ) const ;
@@ -302,7 +305,7 @@ namespace engine
       // only for LOAD
       public:
          OSS_INLINE void    mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
-                                           SINT32 extentID ) ;
+                                               SINT32 extentID ) ;
 
          OSS_INLINE INT32   extentRemoveRecord( dmsMBContext *context,
                                                 dmsExtRW &extRW,
@@ -385,6 +388,10 @@ namespace engine
                                                UINT32 newAttributes,
                                                dmsMBContext *context = NULL ) ;
 
+         INT32    getCollectionOptions( const CHAR *pName,
+                                        dmsCollectionOptions &options,
+                                        dmsMBContext *context = NULL ) ;
+
          INT32    getCollectionCompType ( const CHAR *pName,
                                           UTIL_COMPRESSOR_TYPE &compType,
                                           dmsMBContext *context = NULL ) ;
@@ -408,28 +415,17 @@ namespace engine
 
       private :
          rtnAccessPlanManager                _apm ;
-
-         dmsStorageData                      *_pDataSu ;
+         dmsStorageDataCommon                *_pDataSu ;
          dmsStorageIndex                     *_pIndexSu ;
          dmsStorageInfo                      _storageInfo ;
          dmsStorageLob                       *_pLobSu ;
 
          utilCacheMgr                        *_pMgr ;
          utilCacheUnit                       *_pCacheUnit ;
-
          dmsEventHolder                       _eventHolder ;
          dmsCacheHolder                       _cacheHolder ;
    } ;
 
-   /*
-      _dmsStorageUnit OSS_INLINE functions
-   */
-   OSS_INLINE void _dmsStorageUnit::mapExtent2DelList( dmsMB * mb,
-                                                   dmsExtent *extAddr,
-                                                   SINT32 extentID )
-   {
-      return _pDataSu->_mapExtent2DelList( mb, extAddr, extentID ) ;
-   }
    OSS_INLINE INT32 _dmsStorageUnit::extentRemoveRecord( dmsMBContext *context,
                                                          dmsExtRW &extRW,
                                                          dmsRecordRW &recordRW,

@@ -394,19 +394,51 @@ namespace engine
             }
             break ;
          }
+         case LOG_TYPE_DATA_POP:
+         {
+            const CHAR *fullName = NULL ;
+            INT64 logicalID = 0 ;
+            INT8 direction = 1 ;
+            rc = dpsRecord2Pop( (CHAR *)recordHeader, &fullName,
+                                logicalID, direction );
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            rc = rtnPopCommand( fullName, logicalID, eduCB, _dmsCB,
+                                _dpsCB, 1, direction ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to pop from collection[%s], rc: %d",
+                       fullName, rc ) ;
+               goto error ;
+            }
+            break ;
+         }
          case LOG_TYPE_CS_CRT :
          {
             const CHAR *cs = NULL ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
+            INT8 type = 0 ;
             rc = dpsRecord2CSCrt( (CHAR *)recordHeader,
-                                  &cs, pageSize, lobPageSize ) ;
+                                  &cs, pageSize, lobPageSize, type ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
+
+            if ( type < DMS_STORAGE_NORMAL || type >= DMS_STORAGE_DUMMY )
+            {
+               PD_LOG( PDERROR, "Invalid cs type[%c] in replica log", type ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
             rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB, _dpsCB,
-                                                  pageSize, lobPageSize ) ;
+                                                  pageSize, lobPageSize,
+                                                  (DMS_STORAGE_TYPE)type ) ;
             if ( SDB_DMS_CS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection space[%s] already exist when "
@@ -448,15 +480,19 @@ namespace engine
             const CHAR *cl = NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
+            dmsCollectionOptions options ;
             rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, attribute,
-                                  compType ) ;
+                                  compType, options._maxSize,
+                                  options._maxRecNum ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
 
             rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
-                           _dpsCB, (UTIL_COMPRESSOR_TYPE)compType, 0, TRUE ) ;
+                                             _dpsCB,
+                                             (UTIL_COMPRESSOR_TYPE)compType,
+                                             0, TRUE, options ) ;
             if ( SDB_DMS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection [%s] already exist when "
@@ -841,8 +877,9 @@ namespace engine
             const CHAR *cs = NULL ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
+            INT8 type = 0 ;
             rc = dpsRecord2CSCrt( (const CHAR *)recordHeader,
-                                  &cs, pageSize, lobPageSize ) ;
+                                  &cs, pageSize, lobPageSize, type ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -868,8 +905,10 @@ namespace engine
             const CHAR *fullname = NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
-            rc = dpsRecord2CLCrt( (const CHAR *)recordHeader,
-                                  &fullname, attribute, compType) ;
+            INT64 maxSize = 0 ;
+            INT64 maxRecNum = 0 ;
+            rc = dpsRecord2CLCrt( (const CHAR *)recordHeader, &fullname,
+                                  attribute, compType, maxSize, maxRecNum ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1114,7 +1153,7 @@ namespace engine
    }
 
    INT32 _clsReplayer::replayCrtCS( const CHAR *cs, INT32 pageSize,
-                                    INT32 lobPageSize,
+                                    INT32 lobPageSize, DMS_STORAGE_TYPE type,
                                     _pmdEDUCB *eduCB )
    {
       SDB_ASSERT( NULL != cs, "cs should not be NULL" ) ;
@@ -1123,8 +1162,7 @@ namespace engine
       {
          rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
                                                _dpsCB, pageSize,
-                                               lobPageSize,
-                                               TRUE ) ;
+                                               lobPageSize, type, TRUE ) ;
       }
       return rc ;
    }
@@ -1132,14 +1170,16 @@ namespace engine
    INT32 _clsReplayer::replayCrtCollection( const CHAR *collection,
                                             UINT32 attributes,
                                             _pmdEDUCB *eduCB,
-                                            UTIL_COMPRESSOR_TYPE compType )
+                                            UTIL_COMPRESSOR_TYPE compType,
+                                            const dmsCollectionOptions &options )
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       INT32 rc = rtnTestCollectionCommand( collection, _dmsCB ) ;
       if ( SDB_DMS_NOTEXIST == rc )
       {
          rc = rtnCreateCollectionCommand( collection, attributes, eduCB,
-                                          _dmsCB, _dpsCB, compType, 0, TRUE ) ;
+                                          _dmsCB, _dpsCB, compType,
+                                          0, TRUE, options ) ;
       }
       return rc ;
    }

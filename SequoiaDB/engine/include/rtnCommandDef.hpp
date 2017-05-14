@@ -103,6 +103,7 @@ namespace engine
 #define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
 #define NAME_ALTER_DC                        CMD_NAME_ALTER_DC
 #define NAME_SYNC_DB                         CMD_NAME_SYNC_DB
+#define NAME_POP                             CMD_NAME_POP
 #define NAME_RELOAD_CONFIG                   CMD_NAME_RELOAD_CONFIG
 
 // the commands that does not supported by data nodes or standalone mode
@@ -250,6 +251,7 @@ namespace engine
       CMD_FORCE_STEP_UP                      = 224,
 
       CMD_SYNC_DB                            = 251,
+      CMD_POP                                = 252,
       CMD_UNKNOW                             = 65535
    };
 

@@ -46,6 +46,8 @@
 
 namespace engine
 {
+   const dmsCollectionOptions g_cl_default_option ;
+
    BOOLEAN dmsIsSysCSName ( const CHAR *collectionSpaceName )
    {
       if ( collectionSpaceName && ossStrlen ( collectionSpaceName ) >= 3 &&
@@ -208,7 +210,7 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          PD_LOG ( PDERROR, "collection name is system: %s", collectionName ) ;
-         goto error ;         
+         goto error ;
       }
    done :
       PD_TRACE_EXITRC ( SDB_DMSCHKCLNM, rc );

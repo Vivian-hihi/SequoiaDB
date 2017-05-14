@@ -71,6 +71,9 @@ namespace engine
    #define CAT_MASK_AUTOREBALAN     0x00000200
    #define CAT_MASK_AUTOINDEXID     0x00000400
    #define CAT_MASK_COMPRESSIONTYPE 0x00000800
+   #define CAT_MASK_CAPPED          0x00001000
+   #define CAT_MASK_CLMAXRECNUM     0x00002000
+   #define CAT_MASK_CLMAXSIZE       0x00004000
 
    struct _catCollectionInfo
    {
@@ -91,6 +94,10 @@ namespace engine
       INT32       _assignType ;
       BOOLEAN     _autoIndexId ;
       UTIL_COMPRESSOR_TYPE _compressorType ;
+      BOOLEAN     _capped ;
+      //DMS_CL_TYPE _type ;
+      INT64       _maxRecNum ;
+      INT64       _maxSize ;
 
       std::vector<std::string>   _subCLList;
 
@@ -112,6 +119,10 @@ namespace engine
          _assignType          = ASSIGN_RANDOM ;
          _autoIndexId         = TRUE ;
          _compressorType      = UTIL_COMPRESSOR_INVALID ;
+         _capped              = FALSE ;
+         //_type                = DMS_CL_NORMAL ;
+         _maxRecNum           = 0 ;
+         _maxSize             = 0 ;
       }
    };
    typedef _catCollectionInfo catCollectionInfo ;
@@ -122,6 +133,7 @@ namespace engine
       INT32       _pageSize ;
       const CHAR  *_domainName ;
       INT32       _lobPageSize ;
+      DMS_STORAGE_TYPE _type ;
 
       _catCSInfo()
       {
@@ -129,6 +141,7 @@ namespace engine
          _pageSize = DMS_PAGE_SIZE_DFT ;
          _domainName = NULL ;
          _lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+         _type = DMS_STORAGE_NORMAL ;
       }
 
       BSONObj toBson()
@@ -141,6 +154,7 @@ namespace engine
             builder.append( CAT_DOMAIN_NAME, _domainName ) ;
          }
          builder.append( CAT_LOB_PAGE_SZ_NAME, _lobPageSize ) ;
+         builder.append( CAT_TYPE_NAME, _type ) ;
          return builder.obj() ;
       }
    } ;

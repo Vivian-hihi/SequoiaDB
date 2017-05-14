@@ -55,11 +55,12 @@ namespace engine
 
    _dmsStorageIndex::_dmsStorageIndex( const CHAR * pSuFileName,
                                        dmsStorageInfo * pInfo,
-                                       dmsStorageData * pDataSu )
+                                       dmsStorageDataCommon * pDataSu )
    :_dmsStorageBase( pSuFileName, pInfo )
    {
       SDB_ASSERT( pDataSu, "Data Su can't be NULL" ) ;
-      _pDataSu = pDataSu ;
+      // TODO: temporary cast
+      _pDataSu = (dmsStorageData *)pDataSu ;
 
       _pDataSu->_attach( this ) ;
    }

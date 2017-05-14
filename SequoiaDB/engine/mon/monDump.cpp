@@ -2115,7 +2115,7 @@ namespace engine
 
          /// cache info
          ob.append ( FIELD_NAME_DIRTY_PAGE, (INT32)full._dirtyPage ) ;
-
+         ob.append( FIELD_NAME_TYPE, (INT32)full._type ) ;
          obj = ob.obj() ;
 
          /// remove the current

@@ -172,7 +172,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__CREATEDICT, "_rtnDictCreatorJob::_createDict" )
-   INT32 _rtnDictCreatorJob::_createDict( dmsStorageData *sd,
+   INT32 _rtnDictCreatorJob::_createDict( dmsStorageDataCommon *sd,
                                           dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
@@ -266,7 +266,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTN_DICTCREATORJOB__TRANSFERDICT, "_rtnDictCreatorJob::_transferDict" )
-   INT32 _rtnDictCreatorJob::_transferDict( dmsStorageData *sd,
+   INT32 _rtnDictCreatorJob::_transferDict( dmsStorageDataCommon *sd,
                                             dmsMBContext *context,
                                             CHAR *dictStream,
                                             UINT32 dictSize )

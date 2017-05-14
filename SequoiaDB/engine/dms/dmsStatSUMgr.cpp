@@ -101,7 +101,8 @@ namespace engine
          // create new SYSSTAT collection space
          rc = rtnCreateCollectionSpaceCommand ( DMS_STAT_SPACE_NAME, NULL, _dmsCB,
                                                 NULL, DMS_PAGE_SIZE_MAX,
-                                                DMS_DO_NOT_CREATE_LOB, TRUE ) ;
+                                                DMS_DO_NOT_CREATE_LOB,
+                                                DMS_STORAGE_NORMAL, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to create SYSSTAT collection space, rc: %d",
                       rc ) ;

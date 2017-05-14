@@ -191,6 +191,7 @@
 #define FIELD_NAME_NUMCOLLECTIONS            "NumCollections"
 #define FIELD_NAME_COLLECTIONHWM             "CollectionHWM"
 #define FIELD_NAME_SIZE                      "Size"
+#define FIELD_NAME_MAX                       "Max"
 #define FIELD_NAME_TRACE                     "trace"
 #define FIELD_NAME_BREAKPOINTS               "BreakPoint"
 #define FIELD_NAME_TO                        "To"
@@ -367,6 +368,8 @@
 #define FIELD_NAME_KEEP_DATA                 "KeepData"
 #define FIELD_NAME_DEEP                      "Deep"
 #define FIELD_NAME_BLOCK                     "Block"
+#define FIELD_NAME_CAPPED                    "Capped"
+#define FIELD_NAME_DIRECTION                 "Direction"
 
 #define FIELD_OP_VALUE_UPDATE                "update"
 #define FIELD_OP_VALUE_REMOVE                "remove"
@@ -482,6 +485,7 @@
 #define CMD_NAME_TRUNCATE                    "truncate"
 #define CMD_NAME_LIST_USERS                  "list users"
 #define CMD_NAME_SYNC_DB                     "sync db"
+#define CMD_NAME_POP                         "pop"
 #define CMD_NAME_RELOAD_CONFIG               "reload config"
 
 #define CMD_NAME_SNAPSHOT_DATABASE_INTR      "SNAPSHOT_DB"

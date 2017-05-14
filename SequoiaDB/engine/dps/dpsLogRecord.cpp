@@ -563,6 +563,43 @@ namespace engine
             }
             break ;
          }
+         case LOG_TYPE_DATA_POP:
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Type   : %s(%d)"OSS_NEWLINE,
+                                "POP", LOG_TYPE_DATA_POP ) ;
+            dpsLogRecord::iterator itrFullName, itrLID, itrDirect ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
+            if ( !itrFullName.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find fullname in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " CLName : %s"OSS_NEWLINE,
+                                itrFullName.value() ) ;
+            itrLID = this->find( DPS_LOG_POP_LID ) ;
+            if ( !itrLID.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find pop LogicalID in record" ) ;
+               goto done ;
+            }
+
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Pop logicalID: %u"OSS_NEWLINE,
+                                *( (INT64*)itrLID.value() ) ) ;
+
+            itrDirect = this->find( DPS_LOG_POP_DIRECTION ) ;
+            if ( !itrDirect.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find pop Direction in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Pop direction: %c"OSS_NEWLINE,
+                                *( (INT8*)itrDirect.value() ) ) ;
+            break ;
+         }
          case LOG_TYPE_CS_CRT:
          {
             len += ossSnprintf ( outBuf + len, outSize - len,

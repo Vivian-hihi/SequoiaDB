@@ -64,12 +64,12 @@ namespace engine
    _dmsStorageLob::_dmsStorageLob( const CHAR *lobmFileName,
                                    const CHAR *lobdFileName,
                                    dmsStorageInfo *info,
-                                   dmsStorageData *pDataSu,
+                                   dmsStorageDataCommon *pDataSu,
                                    utilCacheUnit *pCacheUnit )
    :_dmsStorageBase( lobmFileName, info ),
     _dmsBME( NULL ),
     _segmentSize( 0 ),
-    _dmsData( pDataSu ),
+    _dmsData( (dmsStorageData *)pDataSu ),      // TODO: temporary cast
     _data( lobdFileName, info->_enableSparse, info->_directIO ),
     _pCacheUnit( pCacheUnit ),
     _pSyncMgrTmp( NULL )
@@ -328,7 +328,7 @@ namespace engine
       dmsLobRecord piece ;
       piece.set( &oid, DMS_LOB_META_SEQUENCE, 0,
                  sizeof( meta ), NULL ) ;
-      rc = read( piece, mbContext, cb, 
+      rc = read( piece, mbContext, cb,
                  ( CHAR * )( &meta ), readSz ) ;
       if ( SDB_OK == rc )
       {
@@ -1276,7 +1276,7 @@ namespace engine
          else
          {
             pageInBucket = blk->_nextPageInBucket ;
-            continue ; 
+            continue ;
          }
       }
 
@@ -2006,7 +2006,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__REMOVEPAGE ) ;
-      UINT32 bucketNumber = 0 ;     
+      UINT32 bucketNumber = 0 ;
 
       if ( NULL != bucket )
       {
@@ -2191,7 +2191,7 @@ namespace engine
          }
          if ( mbContext->clLID() != readBlk->_clLogicalID )
          {
-            continue ; 
+            continue ;
          }
 
          /// change to write mode

@@ -52,7 +52,7 @@ namespace engine
    /*
       _dmsScanner implement
    */
-   _dmsScanner::_dmsScanner( dmsStorageData *su, dmsMBContext *context,
+   _dmsScanner::_dmsScanner( dmsStorageDataCommon *su, dmsMBContext *context,
                              _mthMatchTree *match, DMS_ACCESS_TYPE accessType )
    {
       SDB_ASSERT( su, "storage data can't be NULL" ) ;
@@ -72,7 +72,7 @@ namespace engine
    /*
       _dmsExtScanner implement
    */
-   _dmsExtScanner::_dmsExtScanner( dmsStorageData *su, dmsMBContext *context,
+   _dmsExtScanner::_dmsExtScanner( dmsStorageDataCommon *su, dmsMBContext *context,
                                    _mthMatchTree *match, dmsExtentID curExtentID,
                                    DMS_ACCESS_TYPE accessType,
                                    INT64 maxRecords, INT64 skipNum )
@@ -443,10 +443,225 @@ namespace engine
       _curRID._offset = DMS_INVALID_OFFSET ;
    }
 
+   _dmsCappedExtScanner::_dmsCappedExtScanner( _dmsStorageDataCapped *su,
+                                               dmsMBContext *context,
+                                               _mthMatchTree *match,
+                                               dmsExtentID curExtentID,
+                                               DMS_ACCESS_TYPE accessType,
+                                               INT64 maxRecords,
+                                               INT64 skipNum )
+   : _dmsScanner( su, context, match, accessType )
+   {
+      _maxRecords = maxRecords ;
+      _skipNum = skipNum ;
+      _firstRun = TRUE ;
+      _curRID._extent = curExtentID ;
+      _recordXLock = FALSE ;
+      _mbStatInfo = NULL ;
+      _workExtInfo = NULL ;
+      _lastOffset = DMS_INVALID_OFFSET ;
+      _recordBuf = NULL ;
+      _recordBufSize = 0 ;
+
+   }
+
+   _dmsCappedExtScanner::~_dmsCappedExtScanner()
+   {
+      if ( _recordBuf )
+      {
+         _cb->releaseBuff( _recordBuf ) ;
+      }
+   }
+
+   INT32 _dmsCappedExtScanner::getRecordBuf( UINT32 size )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _recordBufSize < size )
+      {
+         if ( _recordBuf )
+         {
+            _cb->releaseBuff( _recordBuf ) ;
+            _recordBuf = NULL ;
+         }
+         _recordBufSize = 0 ;
+
+         rc = _cb->allocBuff( size, &_recordBuf, &_recordBufSize ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsCappedExtScanner::_firstInit( pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 lockType = _recordXLock ? EXCLUSIVE : SHARED ;
+
+      _extRW = _pSu->extent2RW( _curRID._extent, _context->mbID() ) ;
+      _extRW.setNothrow( TRUE ) ;
+      _extent = _extRW.readPtr<dmsExtent>() ;
+      if ( NULL == _extent )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // some other check...
+      if ( !_context->mbLock( lockType ) )
+      {
+         rc = _context->mbLock( lockType ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;
+      }
+
+      _mbStatInfo = _pSu->getMBStatInfo( _context->mbID() ) ;
+      _workExtInfo = (( _dmsStorageDataCapped * )_pSu)->getWorkExtInfo(
+                                                            _context->mbID() ) ;
+
+      // Check if we are about to scan the working extent. As the extent is very
+      // big, in order to improve performance, try to avoid getting the last
+      // offset again and again from the extent head when in advance.
+      if ( _curRID._extent == _workExtInfo->getID() )
+      {
+         _next = _workExtInfo->_firstRecordOffset ;
+         _lastOffset = _workExtInfo->_lastRecordOffset ;
+      }
+      else
+      {
+         _next = _extent->_firstRecordOffset ;
+         _lastOffset = _extent->_lastRecordOffset ;
+      }
+
+      if ( !_extent->validate( _context->mbID() ) )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      _cb = cb ;
+      _firstRun = FALSE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsCappedExtScanner::advance( dmsRecordID &recordID,
+                                        _mthRecordGenerator &generator,
+                                        pmdEDUCB *cb,
+                                        _mthMatchTreeContext *mthContext )
+   {
+      INT32 rc = SDB_OK ;
+      ossValuePtr recordDataPtr ;
+      dmsRecordData recordData ;
+      const dmsRecord *record = NULL ;
+      UINT32 currExtRecNum = 0 ;
+
+      if ( _firstRun )
+      {
+         rc = _firstInit( cb ) ;
+         PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
+      }
+
+      // Update the _lastOffset if necessary. Some new documents may have been
+      // added during the scanning.
+      if ( _curRID._extent == _workExtInfo->getID() )
+      {
+         currExtRecNum = _workExtInfo->_recCount ;
+         if ( _lastOffset != _workExtInfo->_lastRecordOffset )
+         {
+            _lastOffset = _workExtInfo->_lastRecordOffset ;
+         }
+      }
+      else
+      {
+         currExtRecNum = _extent->_recCount ;
+      }
+
+      if ( !_match && _skipNum > 0 && _skipNum >= currExtRecNum )
+      {
+         _skipNum -= currExtRecNum ;
+         _next = DMS_INVALID_OFFSET ;
+      }
+
+      while ( _next < _lastOffset && DMS_INVALID_OFFSET != _next &&
+              0 != _maxRecords )
+      {
+         _curRID._offset = _next ;
+         _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
+         record= _recordRW.readPtr( 0 ) ;
+         _next += record->getSize() ;
+
+         if ( !_match && _skipNum > 0 )
+         {
+            --_skipNum ;
+         }
+         else
+         {
+            recordID = _curRID ;
+            rc = _pSu->extractData( _context, _recordRW, cb, recordData ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Extract record data failed, rc: %d", rc ) ;
+               goto error ;
+            }
+            recordDataPtr = ( ossValuePtr )recordData.data() ;
+            generator.setDataPtr( recordDataPtr ) ;
+
+            try
+            {
+               BSONObj obj( recordData.data() ) ;
+               rc = generator.resetValue( obj, mthContext ) ;
+               PD_RC_CHECK( rc, PDERROR, "resetValue failed, rc: %d", rc ) ;
+            }
+            catch( std::exception &e )
+            {
+               rc = SDB_SYS ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to create BSON object: %s",
+                            e.what() ) ;
+               goto error ;
+            }
+
+            if ( _maxRecords > 0 )
+            {
+               --_maxRecords ;
+            }
+
+            goto done ;
+         }
+      }
+
+      rc =  SDB_DMS_EOC ;
+      goto error ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _dmsCappedExtScanner::stop()
+   {
+      _next = DMS_INVALID_OFFSET ;
+      _curRID._offset = DMS_INVALID_OFFSET ;
+   }
+
+   dmsExtentID _dmsCappedExtScanner::nextExtentID () const
+   {
+      return DMS_INVALID_EXTENT ;
+   }
+
    /*
       _dmsTBScanner implement
    */
-   _dmsTBScanner::_dmsTBScanner( dmsStorageData *su, dmsMBContext *context,
+   _dmsTBScanner::_dmsTBScanner( dmsStorageDataCommon *su, dmsMBContext *context,
                                  _mthMatchTree *match, DMS_ACCESS_TYPE accessType,
                                  INT64 maxRecords, INT64 skipNum )
    :_dmsScanner( su, context, match, accessType ),
@@ -545,7 +760,7 @@ namespace engine
    /*
       _dmsIXSecScanner implement
    */
-   _dmsIXSecScanner::_dmsIXSecScanner( dmsStorageData *su,
+   _dmsIXSecScanner::_dmsIXSecScanner( dmsStorageDataCommon *su,
                                        dmsMBContext *context,
                                        _mthMatchTree *match,
                                        rtnIXScanner *scanner,
@@ -1080,7 +1295,8 @@ namespace engine
    /*
       _dmsIXScanner implement
    */
-   _dmsIXScanner::_dmsIXScanner( dmsStorageData *su, dmsMBContext *context,
+   _dmsIXScanner::_dmsIXScanner( dmsStorageDataCommon *su,
+                                 dmsMBContext *context,
                                  _mthMatchTree *match, rtnIXScanner *scanner,
                                  BOOLEAN ownedScanner,
                                  DMS_ACCESS_TYPE accessType,

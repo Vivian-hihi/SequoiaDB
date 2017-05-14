@@ -93,7 +93,8 @@ namespace engine
       // create new systemp collection space
       rc = rtnCreateCollectionSpaceCommand ( SDB_DMSTEMP_NAME, NULL, _dmsCB,
                                              NULL, DMS_PAGE_SIZE_MAX,
-                                             DMS_DO_NOT_CREATE_LOB, TRUE ) ;
+                                             DMS_DO_NOT_CREATE_LOB,
+                                             DMS_STORAGE_NORMAL, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create temp collectionspace, rc: %d",

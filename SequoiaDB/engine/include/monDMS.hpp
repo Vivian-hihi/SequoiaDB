@@ -89,6 +89,9 @@ namespace engine
       BOOLEAN _idxIsValid ;
       BOOLEAN _lobIsValid ;
 
+      INT64  _maxSize ;
+      INT64  _maxRecNum ;
+
       _detailedInfo ()
       {
          _numIndexes          = 0 ;
@@ -121,6 +124,9 @@ namespace engine
          _dataIsValid         = FALSE ;
          _idxIsValid          = FALSE ;
          _lobIsValid          = FALSE ;
+
+         _maxSize             = DMS_INVALID_CL_SIZE ;
+         _maxRecNum           = DMS_INVALID_CL_RECNUM ;
       }
    } ;
    typedef class _detailedInfo detailedInfo ;
@@ -241,6 +247,7 @@ namespace engine
 
       /// cache info
       UINT32 _dirtyPage ;
+      DMS_STORAGE_TYPE _type ;
 
       _monCollectionSpace ()
       {
@@ -266,6 +273,7 @@ namespace engine
          _lobIsValid = FALSE ;
 
          _dirtyPage = 0 ;
+         _type = DMS_STORAGE_NORMAL ;
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
@@ -292,6 +300,7 @@ namespace engine
          _lobIsValid = right._lobIsValid ;
 
          _dirtyPage = right._dirtyPage ;
+         _type = right._type ;
       }
       ~_monCollectionSpace()
       {
@@ -327,7 +336,7 @@ namespace engine
          _lobIsValid = right._lobIsValid ;
 
          _dirtyPage = right._dirtyPage ;
-
+         _type = right._type ;
          return *this ;
       }
    } ;

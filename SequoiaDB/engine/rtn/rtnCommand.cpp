@@ -486,8 +486,8 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollection)
    _rtnCreateCollection::_rtnCreateCollection ()
    :_collectionName ( NULL ),
-    _attributes(0),
-    _compressorType(UTIL_COMPRESSOR_INVALID)
+    _attributes( 0 ),
+    _compressorType( UTIL_COMPRESSOR_INVALID )
    {
    }
 
@@ -522,6 +522,7 @@ namespace engine
       BOOLEAN enSureIndex = TRUE ;
       BOOLEAN isCompressed = FALSE ;
       BOOLEAN autoIndexId = TRUE ;
+      BOOLEAN capped = FALSE ;
       const CHAR *compressionType = NULL ;
       PD_TRACE_ENTRY ( SDB__RTNCREATECL_INIT ) ;
       BSONObj matcher ( pMatcherBuff ) ;
@@ -618,6 +619,48 @@ namespace engine
       {
          _attributes |= DMS_MB_ATTR_NOIDINDEX ;
       }
+
+      rc = rtnGetBooleanElement( matcher, FIELD_NAME_CAPPED, capped ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+         capped = FALSE ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Field[%s] value error in obj[%s]",
+                   FIELD_NAME_CAPPED, matcher.toString().c_str() ) ;
+
+      if ( capped )
+      {
+         _attributes |= DMS_MB_ATTR_CAPPED ;
+         rc = rtnGetNumberLongElement( matcher, FIELD_NAME_SIZE,
+                                       _options._maxSize ) ;
+         if ( rc )
+         {
+            if ( SDB_FIELD_NOT_EXIST == rc )
+            {
+               PD_LOG( PDERROR, "Field[%s] must be specified for capped "
+                       "collection in obj[%s]",
+                       FIELD_NAME_SIZE, matcher.toString().c_str() ) ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Field[%s] value is error in obj[%s]",
+                       FIELD_NAME_SIZE, matcher.toString().c_str() ) ;
+            }
+            goto error ;
+         }
+
+         // Max is optional.
+         rc = rtnGetNumberLongElement( matcher, FIELD_NAME_MAX,
+                                       _options._maxRecNum ) ;
+         if ( SDB_OK != rc && SDB_FIELD_NOT_EXIST != rc )
+         {
+            PD_LOG( PDERROR, "Field[%s] value is error in obj[%s]",
+                    FIELD_NAME_MAX, matcher.toString().c_str() ) ;
+            goto error ;
+         }
+      }
+
       rc = SDB_OK ;
    done :
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_INIT, rc ) ;
@@ -641,7 +684,7 @@ namespace engine
 
       rc = rtnCreateCollectionCommand ( _collectionName, _shardingKey,
                                         _attributes, cb, dmsCB, dpsCB,
-                                        _compressorType ) ;
+                                         _compressorType, 0, FALSE, _options ) ;
 
       if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {
@@ -651,11 +694,12 @@ namespace engine
          PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
                            _collectionName, rc,
                            "ShardingKey:%s, Attribute:0x%08x(%s), "
-                           "CompressType:%d(%s)",
+                           "CompressType:%d(%s), Size:%lld, Max:%lld",
                            _shardingKey.toString().c_str(),
                            _attributes, szTmp,
                            _compressorType,
-                           utilCompressType2String( _compressorType ) ) ;
+                           utilCompressType2String( _compressorType ),
+                           _options._maxSize, _options._maxRecNum ) ;
       }
 
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_DOIT, rc ) ;
@@ -666,7 +710,8 @@ namespace engine
    _rtnCreateCollectionspace::_rtnCreateCollectionspace ()
    :_spaceName ( NULL ),
     _pageSize( 0 ),
-    _lobPageSize( 0 )
+    _lobPageSize( 0 ),
+    _storageType( DMS_STORAGE_NORMAL )
    {
 
    }
@@ -712,6 +757,17 @@ namespace engine
          _lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       }
 
+      BOOLEAN capped = FALSE ;
+      rc = rtnGetBooleanElement( mather, FIELD_NAME_CAPPED, capped ) ;
+      if ( SDB_OK == rc && capped  )
+      {
+         _storageType = DMS_STORAGE_CAPPED ;
+      }
+      else
+      {
+         _storageType = DMS_STORAGE_NORMAL ;
+      }
+
       return rtnGetStringElement ( mather, FIELD_NAME_NAME, &_spaceName ) ;
    }
 
@@ -723,8 +779,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNCREATECS_DOIT ) ;
 
-      rc = rtnCreateCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB,
-                                             _pageSize, _lobPageSize ) ;
+      rc = rtnCreateCollectionSpaceCommand ( _spaceName, cb, dmsCB,
+                                             dpsCB, _pageSize,
+                                             _lobPageSize, _storageType ) ;
 
       if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {
@@ -3029,6 +3086,101 @@ namespace engine
       }
    done:
       PD_TRACE_EXITRC( SDB__RTNTRUNCATE_DOIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnPop )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNPOP_INIT, "_rtnPop::init" )
+   INT32 _rtnPop::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                         const CHAR *pMatcherBuff,
+                         const CHAR *pSelectBuff,
+                         const CHAR *pOrderByBuff,
+                         const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNPOP_INIT ) ;
+      try
+      {
+         BSONObj query( pMatcherBuff ) ;
+         BSONElement eleName, eleLID, eleDirection ;
+         eleName = query.getField( FIELD_NAME_COLLECTION ) ;
+         if ( String != eleName.type() )
+         {
+            PD_LOG( PDERROR, "Invalid collection name in command: %s",
+                    query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _fullName = eleName.valuestr() ;
+
+         eleLID = query.getField( FIELD_NAME_LOGICAL_ID ) ;
+         if ( EOO == eleLID.type() )
+         {
+            PD_LOG( PDERROR, "Logical id for pop operation is not provided: %s",
+                    query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( NumberLong != eleLID.type()
+              && NumberInt != eleLID.type() )
+         {
+            PD_LOG( PDERROR, "Type for LogicalID is invalid:%s",
+                    query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _logicalID = eleLID.numberLong() ;
+
+         eleDirection = query.getField( FIELD_NAME_DIRECTION ) ;
+         if ( EOO == eleDirection.type() )
+         {
+            _direction = 1 ;
+         }
+         else
+         {
+            if ( NumberInt != eleDirection.type() )
+            {
+               PD_LOG( PDERROR, "Type for Direction is invalid: %s",
+                       query.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            else
+            {
+               _direction = eleDirection.numberInt() ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNPOP_INIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNPOP_DOIT, ""_rtnPop::doit" )
+   INT32 _rtnPop::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                         _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                         INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNPOP_DOIT ) ;
+
+      rc = rtnPopCommand( _fullName, _logicalID, cb,
+                          dmsCB, dpsCB, w, _direction ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to pop record from collection[%s], "
+                   "rc: %d", _fullName, rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__RTNPOP_DOIT, rc ) ;
       return rc ;
    error:
       goto done ;

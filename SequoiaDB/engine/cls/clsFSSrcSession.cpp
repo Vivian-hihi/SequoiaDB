@@ -474,14 +474,25 @@ namespace engine
       BSONObjBuilder builder2 ;
       UINT32 attributes = 0 ;
       UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
+      dmsCollectionOptions options ;
+
       su->getCollectionAttributes( collection, attributes ) ;
+      su->getCollectionOptions( collection, options ) ;
       su->getCollectionCompType( collection, compType ) ;
 
-      builder1.append( CLS_FS_PAGE_SIZE,
-                       su->getPageSize() ) ;
+      builder1.append( CLS_FS_PAGE_SIZE, su->getPageSize() ) ;
       builder1.append( CLS_FS_ATTRIBUTES, attributes ) ;
       builder1.append( CLS_FS_COMP_TYPE, (INT32)compType ) ;
+
+      // For capped collection, need to append the max size and max record num.
+      if ( attributes & DMS_MB_ATTR_CAPPED )
+      {
+         builder1.append( CLS_FS_CL_MAX_SIZE, options._maxSize ) ;
+         builder1.append( CLS_FS_CL_MAX_RECNUM, options._maxRecNum ) ;
+      }
+
       builder1.append( CLS_FS_LOB_PAGE_SIZE, su->getLobPageSize() ) ;
+      builder1.append( CLS_FS_CS_TYPE, (INT32)su->type() ) ;
       builder2.append( CLS_FS_CS_META_NAME, builder1.obj() ) ;
       builder2.append( CLS_FS_CS_NAME, cs ) ;
       builder2.append( CLS_FS_COLLECTION_NAME, collection ) ;
@@ -1883,7 +1894,9 @@ namespace engine
                                             CLS_FS_PAGE_SIZE <<
                                             itCS->_pageSize <<
                                             CLS_FS_LOB_PAGE_SIZE <<
-                                            itCS->_lobPageSize ) ) ;
+                                            itCS->_lobPageSize <<
+                                            CLS_FS_CS_TYPE <<
+                                            itCS->_type ) ) ;
             }
          }
          b.appendArray( CLS_FS_CSNAMES, csArrayBuilder.arr() ) ;

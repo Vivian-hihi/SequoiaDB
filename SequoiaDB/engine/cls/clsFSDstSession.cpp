@@ -438,7 +438,9 @@ namespace engine
                                                UINT32 &pageSize,
                                                UINT32 &attributes,
                                                INT32 &lobPageSize,
-                                               UTIL_COMPRESSOR_TYPE &compType )
+                                               DMS_STORAGE_TYPE &csType,
+                                               UTIL_COMPRESSOR_TYPE &compType,
+                                               dmsCollectionOptions &clOptions )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__EXTMETA );
@@ -451,6 +453,7 @@ namespace engine
          BSONElement attri ;
          BSONElement compressorType ;
          BSONElement lobPageEle ;
+         BSONElement typeEle ;
          BSONElement csEle = obj.getField( CLS_FS_CS_NAME ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta data: %s", sessionName(),
                  obj.toString().c_str() ) ;
@@ -494,7 +497,26 @@ namespace engine
          {
             goto error ;
          }
+         //clOptions._compressType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
          compType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
+
+         if ( attributes & DMS_MB_ATTR_CAPPED )
+         {
+            BSONElement elemTmp =
+               ele.embeddedObject().getField( CLS_FS_CL_MAX_SIZE ) ;
+            if ( elemTmp.eoo() || NumberLong != elemTmp.type() )
+            {
+               goto error ;
+            }
+            clOptions._maxSize = elemTmp.numberLong() ;
+
+            elemTmp = ele.embeddedObject().getField( CLS_FS_CL_MAX_RECNUM ) ;
+            if ( elemTmp.eoo() || NumberLong != elemTmp.type() )
+            {
+               goto error ;
+            }
+            clOptions._maxRecNum = elemTmp.numberLong() ;
+         }
 
          lobPageEle =  ele.embeddedObject().getField( CLS_FS_LOB_PAGE_SIZE ) ;
          if ( NumberInt != lobPageEle.type() && !lobPageEle.eoo() )
@@ -509,6 +531,28 @@ namespace engine
          {
             /// forward-compatible -- yunwu
             lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+         }
+
+         typeEle = ele.embeddedObject().getField( CLS_FS_CS_TYPE ) ;
+         if ( !typeEle.eoo() && NumberInt != typeEle.type() )
+         {
+            goto error ;
+         }
+         else if ( NumberInt == typeEle.type() )
+         {
+            if (  typeEle.numberInt() >= DMS_STORAGE_NORMAL &&
+                  typeEle.numberInt() < DMS_STORAGE_DUMMY )
+            {
+               csType = (DMS_STORAGE_TYPE)( typeEle.numberInt() ) ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+         else
+         {
+            csType= DMS_STORAGE_NORMAL ;
          }
       }
       catch ( std::exception &e )
@@ -627,18 +671,22 @@ namespace engine
          UINT32 pageSize = 0 ;
          UINT32 attributes = 0 ;
          UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
+         dmsCollectionOptions clOptions ;
          CHAR fullName[DMS_COLLECTION_NAME_SZ +
                        DMS_COLLECTION_SPACE_NAME_SZ + 2] ;
          CHAR *objdata = ( CHAR *)( &( msg->header ) ) +
                                     sizeof( MsgClsFSMetaRes ) ;
          INT32 lobPageSize = 0 ;
+         DMS_STORAGE_TYPE csType = DMS_STORAGE_NORMAL ;
          // extract the meta response
          if ( SDB_OK != _extractMeta( objdata,
                                       cs, collection,
                                       pageSize,
                                       attributes,
                                       lobPageSize,
-                                      compType) )
+                                      csType,
+                                      compType,
+                                      clOptions ) )
          {
             _disconnect() ;
             goto done ;
@@ -660,9 +708,9 @@ namespace engine
 
          // create local cs and collection
          rc = _replayer.replayCrtCS( cs.c_str(), pageSize, lobPageSize,
-                                     eduCB() ) ;
+                                     csType, eduCB() ) ;
          rc = _replayer.replayCrtCollection( fullName, attributes,
-                                             eduCB(), compType ) ;
+                                             eduCB(), compType, clOptions ) ;
          if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
          {
             PD_LOG( PDERROR, "Session[%s]: Failed to create collection"
@@ -1331,12 +1379,13 @@ namespace engine
 
       // create empty collection space
       {
-         CS_PS_TUPLES::iterator itCS = _mapEmptyCS.begin() ;
+         CS_INFO_TUPLES::iterator itCS = _mapEmptyCS.begin() ;
          while ( itCS != _mapEmptyCS.end() )
          {
             rc = _replayer.replayCrtCS( itCS->first.c_str(),
                                         itCS->second.pageSize,
                                         itCS->second.lobPageSize,
+                                        itCS->second.type,
                                         eduCB() ) ;
             if ( SDB_OK != rc && SDB_DMS_CS_EXIST != rc )
             {
@@ -1684,8 +1733,10 @@ namespace engine
                BSONElement eleName = csObj.getField( CLS_FS_CSNAME ) ;
                BSONElement elePageSZ = csObj.getField( CLS_FS_PAGE_SIZE ) ;
                BSONElement eleLobPageSZ = csObj.getField( CLS_FS_LOB_PAGE_SIZE ) ;
+               BSONElement eleType = csObj.getField( CLS_FS_CS_TYPE ) ;
                INT32 pageSz = 0 ;
                INT32 lobPageSz = DMS_DEFAULT_LOB_PAGE_SZ ;
+               DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
 
                if ( String != eleName.type() ||
                     NumberInt != elePageSZ.type() )
@@ -1710,8 +1761,32 @@ namespace engine
                   lobPageSz = eleLobPageSZ.numberInt() ;
                }
 
-               _mapEmptyCS[ eleName.str() ] = clsPageSzTuple( pageSz,
-                                                              lobPageSz ) ;
+               if ( NumberInt != eleType.type() && !eleType.eoo() )
+               {
+                  PD_LOG( PDERROR, "Session[%s]: wrong type of storage "
+                          "type[%s]", sessionName(),
+                          next.toString().c_str() ) ;
+                  goto error ;
+               }
+               else if ( NumberInt == eleType.type() )
+               {
+                  INT32 typeVal = eleType.numberInt() ;
+                  if ( typeVal >= DMS_STORAGE_NORMAL &&
+                       typeVal < DMS_STORAGE_DUMMY )
+                  {
+                     type = (DMS_STORAGE_TYPE)typeVal ;
+                  }
+                  else
+                  {
+                     PD_LOG( PDERROR, "Storage type[%d] is invalid", typeVal ) ;
+                     rc = SDB_SYS ;
+                     goto done ;
+                  }
+               }
+
+               _mapEmptyCS[ eleName.str() ] = clsCSInfoTuple( pageSz,
+                                                              lobPageSz,
+                                                              type ) ;
             }
          }
 

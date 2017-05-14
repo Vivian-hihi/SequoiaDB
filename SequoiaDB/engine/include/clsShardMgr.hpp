@@ -86,12 +86,14 @@ namespace engine
          ossEvent       event ;
          UINT32         pageSize ;
          UINT32         lobPageSize ;
+         DMS_STORAGE_TYPE    type ;
          NET_HANDLE     netHandle ;
 
          _clsCSEventItem()
          {
             pageSize = 0 ;
             lobPageSize = 0 ;
+            type = DMS_STORAGE_NORMAL ;
             netHandle = NET_INVALID_HANDLE ;
          }
    } ;
@@ -183,9 +185,10 @@ namespace engine
                                      BOOLEAN *pUpdated = NULL ) ;
          INT32 unlockGroupItem( clsGroupItem *item ) ;
 
-         INT32 rGetCSPageSize( const CHAR *csName, UINT32 &pageSize,
-                               UINT32 &lobPageSize,
-                               INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
+         INT32 rGetCSInfo( const CHAR *csName, UINT32 &pageSize,
+                           UINT32 &lobPageSize,
+                           DMS_STORAGE_TYPE &type,
+                           INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
       public:
          INT32  sendToCatlog ( MsgHeader * msg,

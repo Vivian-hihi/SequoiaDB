@@ -78,7 +78,7 @@ namespace engine
       _dmsStorageLob( const CHAR *lobmFileName,
                       const CHAR *lobdFileName,
                       dmsStorageInfo *info,
-                      dmsStorageData *pDataSu,
+                      dmsStorageDataCommon *pDataSu,
                       utilCacheUnit* pCacheUnit ) ;
       virtual ~_dmsStorageLob() ;
 
@@ -232,7 +232,7 @@ namespace engine
 
       INT32 _rollback( DMS_LOB_PAGEID page,
                        dmsMBContext *mbContext,
-                       BOOLEAN pageFilled ) ;                       
+                       BOOLEAN pageFilled ) ;
 
    private:
       dmsBucketsManagementExtent    *_dmsBME ;

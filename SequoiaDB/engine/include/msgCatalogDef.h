@@ -130,4 +130,9 @@
 #define CAT_DELAY_SYNC_LSN_NAME           "DELAYSYNCLSN"
 #define CAT_DELAY_SYNC_W_NAME             "DELAYSYNCW"
 
+#define CAT_TYPE_NAME                     FIELD_NAME_TYPE
+#define CAT_CAPPED_NAME                   FIELD_NAME_CAPPED
+#define CAT_CL_MAX_SIZE                   FIELD_NAME_SIZE
+#define CAT_CL_MAX_RECNUM                 FIELD_NAME_MAX
+
 #endif // MSGCATALOGDEF_HPP__

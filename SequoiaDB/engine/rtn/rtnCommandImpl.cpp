@@ -781,6 +781,7 @@ namespace engine
                                            pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                            SDB_DPSCB *dpsCB, INT32 pageSize,
                                            INT32 lobPageSize,
+                                           DMS_STORAGE_TYPE type,
                                            BOOLEAN sysCall )
    {
       INT32 rc = SDB_OK ;
@@ -862,7 +863,8 @@ namespace engine
       su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1,
                                         pmdGetBuffPool(),
                                         pageSize,
-                                        lobPageSize ) ;
+                                        lobPageSize,
+                                        type ) ;
       if ( !su )
       {
          PD_LOG ( PDERROR, "Failed to allocate new storage unit" ) ;
@@ -943,13 +945,15 @@ namespace engine
                                       SDB_DPSCB *dpsCB,
                                       UTIL_COMPRESSOR_TYPE compressorType,
                                       INT32 flags,
-                                      BOOLEAN sysCall )
+                                      BOOLEAN sysCall,
+                                      const dmsCollectionOptions &options )
    {
       BSONObj obj ;
       return rtnCreateCollectionCommand ( pCollection,
                                           obj, attributes,
                                           cb, dmsCB, dpsCB,
-                                          compressorType, flags, sysCall ) ;
+                                          compressorType,
+                                          flags, sysCall, options ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCREATECLCOMMAND, "rtnCreateCollectionCommand" )
@@ -959,8 +963,9 @@ namespace engine
                                       _pmdEDUCB * cb,
                                       SDB_DMSCB *dmsCB,
                                       SDB_DPSCB *dpsCB,
-                                      UTIL_COMPRESSOR_TYPE compressorType,
-                                      INT32 flags, BOOLEAN sysCall )
+                                      UTIL_COMPRESSOR_TYPE compType,
+                                      INT32 flags, BOOLEAN sysCall,
+                                      const dmsCollectionOptions &options )
    {
       INT32 rc              = SDB_OK ;
       INT32 rcTmp           = SDB_OK ;
@@ -982,6 +987,9 @@ namespace engine
          CHAR temp [ DMS_COLLECTION_SPACE_NAME_SZ +
                      DMS_COLLECTION_NAME_SZ + 2 ] = {0} ;
          ossStrncpy ( temp, pCollection, sizeof(temp) ) ;
+         // TODO: Any problem to create a capped CS here ?
+         DMS_STORAGE_TYPE type = ( attributes & DMS_MB_ATTR_CAPPED ) ?
+                                 DMS_STORAGE_CAPPED : DMS_STORAGE_NORMAL ;
          SDB_ASSERT ( pCollectionShortName > pCollection, "Collection pointer "
                       "is not part of full collection name" ) ;
          // set '.' to '\0'
@@ -990,6 +998,7 @@ namespace engine
                                                           dmsCB, dpsCB,
                                                           DMS_PAGE_SIZE_DFT,
                                                           DMS_DEFAULT_LOB_PAGE_SZ,
+                                                          type,
                                                           sysCall ) )
          {
             //restore '\0' to '.'
@@ -1006,13 +1015,23 @@ namespace engine
          goto error ;
       }
 
+      if ( DMS_STORAGE_CAPPED != su->type() &&
+           ( attributes & DMS_MB_ATTR_CAPPED ) )
+      {
+         PD_LOG( PDERROR, "Capped collection[%s] can only be created on "
+                 "capped collection space[%s]",
+                 pCollectionShortName, su->CSName() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       rc = dmsCB->writable( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
 
       rc = su->data()->addCollection ( pCollectionShortName, &collectionID,
                                        attributes, cb, dpsCB, 0, sysCall,
-                                       compressorType, &logicalID ) ;
+                                       compType, &logicalID, options ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create collection %s, rc: %d",
@@ -1048,7 +1067,7 @@ namespace engine
       }
 
       if ( OSS_BIT_TEST( attributes, DMS_MB_ATTR_COMPRESSED ) &&
-           UTIL_COMPRESSOR_LZW == compressorType )
+           UTIL_COMPRESSOR_LZW == compType )
       {
          /*
           * If the compression type is snappy, set it directly. If it's lzw, push
@@ -1064,8 +1083,8 @@ namespace engine
          PD_LOG( PDEVENT, "Create collection[%s] succeed, ShardingKey:%s, "
                  "Attr:%s(0x%08x), CompressType:%s(%d)", pCollection,
                  shardingKey.toString().c_str(), attrStr, attributes,
-                 utilCompressType2String( (UINT8)compressorType ),
-                 compressorType ) ;
+                 utilCompressType2String( (UINT8)compType ),
+                 compType ) ;
       }
 
    done :
@@ -1617,5 +1636,84 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPOPCOMMAND, "rtnPopCommand" )
+   INT32 rtnPopCommand( const CHAR *pCollectionName, INT64 logicalID,
+                        pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
+                        INT16 w, INT8 direction )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNPOPCOMMAND ) ;
+
+      SDB_ASSERT( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT( cb, "eduCB can't be NULL" ) ;
+      SDB_ASSERT( dmsCB, "dmsCB can't be NULL" ) ;
+
+      BOOLEAN writable = FALSE ;
+      dmsStorageUnit *su = NULL ;
+      const CHAR *clShortName = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      dmsMBContext *mbContext = NULL ;
+      dmsRecordID recordID ;
+
+      if ( logicalID < 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "LogicalID for pop is invalid[%lld], rc: %d",
+                 logicalID, rc ) ;
+         goto error ;
+      }
+
+      rc = rtnResolveCollectionNameAndLock( pCollectionName, dmsCB, &su,
+                                            &clShortName, suID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name %s, rc: %d",
+                   pCollectionName, rc ) ;
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc: %d", rc ) ;
+      writable = TRUE ;
+
+      // pop can only be done on capped collections.
+      if ( DMS_STORAGE_CAPPED != su->type() )
+      {
+         PD_LOG( PDERROR, "pop can only be used on capped collection" ) ;
+         rc = SDB_PERM ;
+         goto error ;
+      }
+
+      rc = su->data()->getMBContext( &mbContext, clShortName, EXCLUSIVE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                   "rc: %d", pCollectionName, rc ) ;
+
+      rc = su->data()->popRecord( mbContext, logicalID, cb, dpsCB, direction ) ;
+      PD_RC_CHECK( rc, PDERROR, "Pop record failed, rc: %d", rc ) ;
+
+   done:
+      if ( mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock( suID ) ;
+      }
+
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
+      }
+      if ( cb )
+      {
+         if ( SDB_OK == rc && dpsCB )
+         {
+            rc = dpsCB->completeOpr( cb, w ) ;
+         }
+      }
+
+      PD_TRACE_EXITRC( SDB_RTNPOPCOMMAND, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

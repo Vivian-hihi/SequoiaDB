@@ -75,12 +75,13 @@ namespace engine
                             _pmdEDUCB *eduCB, _clsBucket *pBucket ) ;
 
       INT32 replayCrtCS( const CHAR *cs, INT32 pageSize, INT32 lobPageSize,
-                         _pmdEDUCB *eduCB ) ;
+                         DMS_STORAGE_TYPE type, _pmdEDUCB *eduCB ) ;
 
       INT32 replayCrtCollection( const CHAR *collection,
                                  UINT32 attributes,
                                  _pmdEDUCB *eduCB,
-                                 UTIL_COMPRESSOR_TYPE compType ) ;
+                                 UTIL_COMPRESSOR_TYPE compType,
+                                 const dmsCollectionOptions &options ) ;
 
       INT32 replayIXCrt( const CHAR *collection,
                          BSONObj &index,

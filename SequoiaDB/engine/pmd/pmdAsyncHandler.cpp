@@ -104,7 +104,7 @@ namespace engine
             eventMsg->timeoutMsg.timerID = timerID ;
 
             // post the timeout event of current timestamp
-            _pMgrCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT, 
+            _pMgrCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT,
                                               PMD_EDU_MEM_ALLOC,
                                               (void*)eventMsg ) ) ;
          }
@@ -153,8 +153,8 @@ namespace engine
 
    // This function will not be used concurrently, so we don't need to latch it
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND_HNDMSG, "_pmdAsyncMsgHandler::handleMsg" )
-   INT32 _pmdAsyncMsgHandler::handleMsg( const NET_HANDLE & handle, 
-                                         const _MsgHeader * header, 
+   INT32 _pmdAsyncMsgHandler::handleMsg( const NET_HANDLE & handle,
+                                         const _MsgHeader * header,
                                          const CHAR * msg)
    {
       //If TID not Zero, implicate external business require form client
@@ -289,7 +289,7 @@ namespace engine
       // Check the received code
       if ( MSG_BS_DISCONNECT == header->opCode )
       {
-         PD_LOG ( PDINFO, "Session[%s] recieved disconnect message", 
+         PD_LOG ( PDINFO, "Session[%s] recieved disconnect message",
                   pSession->sessionName() ) ;
          _pSessionMgr->onSessionDisconnect( pSession ) ;
          // Session will be released and we don't need to push message
@@ -303,7 +303,7 @@ namespace engine
       }
       else if ( MSG_BS_INTERRUPTE == header->opCode )
       {
-         PD_LOG ( PDINFO, "Session[%s] recieved interrupt message", 
+         PD_LOG ( PDINFO, "Session[%s] recieved interrupt message",
                   pSession->sessionName() ) ;
          pSession->eduCB()->interrupt() ;
          // For interrupt message, we have to continue in order to push the

@@ -2054,10 +2054,11 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _clsShardMgr::rGetCSPageSize( const CHAR * csName,
-                                       UINT32 &pageSize,
-                                       UINT32 &lobPageSize,
-                                       INT64 waitMillSec )
+   INT32 _clsShardMgr::rGetCSInfo( const CHAR * csName,
+                                   UINT32 &pageSize,
+                                   UINT32 &lobPageSize,
+                                   DMS_STORAGE_TYPE &type,
+                                   INT64 waitMillSec )
    {
       INT32 rc = SDB_OK ;
       clsCSEventItem *item = NULL ;
@@ -2146,6 +2147,7 @@ namespace engine
 
       pageSize = item->pageSize ;
       lobPageSize = item->lobPageSize ;
+      type = item->type ;
 
    done:
       _catLatch.get() ;
@@ -2256,6 +2258,17 @@ namespace engine
          else
          {
             csItem->lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+         }
+
+         ele = objList[0].getField( CAT_TYPE_NAME ) ;
+         if ( ele.isNumber() &&
+              (INT32)DMS_STORAGE_CAPPED == ele.numberInt() )
+         {
+            csItem->type = DMS_STORAGE_CAPPED ;
+         }
+         else
+         {
+            csItem->type = DMS_STORAGE_NORMAL ;
          }
       }
 

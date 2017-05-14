@@ -212,8 +212,8 @@ INT32 msgExtractReply ( CHAR *pBuffer, SINT32 *flag, SINT64 *contextID,
 // Reply need sessionID ( nodeID + reqID ) to reply to sender, so we need to
 // pass both
 void msgBuildReplyMsgHeader ( MsgOpReply &replyHeader, SINT32 packetLength,
-                              INT32 opCode, SINT32 flag, SINT64 contextID, 
-                              SINT32 startFrom, SINT32 numReturned, 
+                              INT32 opCode, SINT32 flag, SINT64 contextID,
+                              SINT32 startFrom, SINT32 numReturned,
                               MsgRouteID &routeID, UINT64 reqID ) ;
 
 INT32 msgBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,

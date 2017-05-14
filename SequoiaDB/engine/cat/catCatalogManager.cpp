@@ -744,6 +744,25 @@ namespace engine
                        error, PDERROR, "PageSize must be 4K/8K/16K/32K/64K/128K/256K/512K" ) ;
             ++expected ;
          }
+         // capped option
+         else if ( 0 == ossStrcmp( ele.fieldName(), CAT_TYPE_NAME ) )
+         {
+            PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                      "Field[%s] type[%d] error", CAT_TYPE_NAME,
+                      ele.type() ) ;
+            if ( ele.numberInt() >= (INT32)DMS_STORAGE_NORMAL &&
+                 ele.numberInt() < (INT32)DMS_STORAGE_DUMMY )
+            {
+               csInfo._type = (DMS_STORAGE_TYPE)ele.numberInt() ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Filed[%s] value[%d] error", CAT_TYPE_NAME,
+                       ele.numberInt() ) ;
+               goto error ;
+            }
+            ++expected ;
+         }
          else
          {
             PD_RC_CHECK ( SDB_INVALIDARG, PDERROR,

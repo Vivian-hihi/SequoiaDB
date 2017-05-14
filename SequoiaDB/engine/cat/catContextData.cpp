@@ -1150,6 +1150,30 @@ namespace engine
                    "Failed to check create collection obj [%s], rc: %d",
                    _boQuery.toString().c_str(), rc ) ;
 
+      {
+         // Capped collection check.
+         BSONElement eleType = boSpace.getField( CAT_TYPE_NAME ) ;
+         if ( NumberInt == eleType.type() )
+         {
+            INT32 type = eleType.numberInt() ;
+            if ( ( DMS_STORAGE_NORMAL == type ) && clInfo._capped )
+            {
+               PD_LOG( PDERROR, "Capped colleciton can only be created on "
+                       "Capped collection space" ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            // If the user create a collection on a Capped CS, without specify
+            // "Capped" for collection, it's also OK.
+            if ( ( DMS_STORAGE_CAPPED == type ) && !clInfo._capped )
+            {
+               clInfo._capped = TRUE ;
+               fieldMask |= CAT_MASK_CAPPED ;
+            }
+         }
+      }
+
       // Get last history version of collection name
       _version = catGetBucketVersion( _targetName.c_str(), cb ) ;
       clInfo._version = _version ;

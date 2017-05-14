@@ -62,6 +62,7 @@ namespace engine
    */
    #define DMS_EXTENT_FLAG_INUSE          0x01
    #define DMS_EXTENT_FLAG_FREED          0x02
+   #define DMS_EXTENT_FLAG_RESERVE        0x04
    /*
       Version define
    */
@@ -118,7 +119,6 @@ namespace engine
    } ;
    typedef struct _dmsExtent           dmsExtent ;
    #define DMS_EXTENT_METADATA_SZ      sizeof(dmsExtent)
-
 
    /*
       Eyecatcher define
@@ -241,7 +241,6 @@ namespace engine
    } ;
    typedef _dmsDictExtent dmsDictExtent ;
    #define DMS_DICTEXTENT_HEADER_SZ    sizeof(dmsDictExtent)
-
 }
 
 #endif //DMSEXTENT_HPP_

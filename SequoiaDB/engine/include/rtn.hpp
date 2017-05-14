@@ -190,6 +190,7 @@ namespace engine
                                            SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
                                            INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ,
+                                           DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL,
                                            BOOLEAN sysCall = FALSE ) ;
 
    INT32 rtnCreateCollectionCommand ( const CHAR *pCollection,
@@ -200,7 +201,9 @@ namespace engine
                                       UTIL_COMPRESSOR_TYPE compressorType =
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
-                                      BOOLEAN sysCall = FALSE ) ;
+                                      BOOLEAN sysCall = FALSE,
+                                      const dmsCollectionOptions &options=
+                                          g_cl_default_option ) ;
 
    INT32 rtnCreateCollectionCommand ( const CHAR *pCollection,
                                       const BSONObj &shardingKey,
@@ -211,7 +214,9 @@ namespace engine
                                       UTIL_COMPRESSOR_TYPE compressorType =
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
-                                      BOOLEAN sysCall = FALSE ) ;
+                                      BOOLEAN sysCall = FALSE,
+                                      const dmsCollectionOptions &options=
+                                          g_cl_default_option ) ;
 
    INT32 rtnGetMore ( SINT64 contextID,            // input, context id
                       SINT32 maxNumToReturn,       // input, max record to read
@@ -416,6 +421,10 @@ namespace engine
 
    INT32 rtnTestCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                          SDB_DMSCB *dmsCB ) ;
+
+   INT32 rtnPopCommand( const CHAR *pCollectionName, INT64 logicalID,
+                        pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
+                        INT16 w, INT8 direction = 1 ) ;
 
    INT32 rtnTestIndex( const CHAR *pCollection,
                        const CHAR *pIndexName,

@@ -242,7 +242,10 @@ msgFiles = [
 
 dmsFiles = [
       "dms/dmsStorageBase.cpp",
+      "dms/dmsStorageDataCommon.cpp",
       "dms/dmsStorageData.cpp",
+      "dms/dmsStorageDataCapped.cpp",
+      "dms/dmsStorageDataFactory.cpp",
       "dms/dmsStorageIndex.cpp",
       "dms/dmsScanner.cpp",
       "dms/dmsDump.cpp",

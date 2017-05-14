@@ -93,7 +93,7 @@ namespace sdbclient
       //INT32 updateCurrent ( BSONObj &rule ) ;
       //INT32 delCurrent    () ;
    } ;
-   
+
    typedef class _sdbCursorImpl sdbCursorImpl ;
 
    /*
@@ -228,6 +228,11 @@ namespace sdbclient
       INT32 del    ( const BSONObj &condition = _sdbStaticObject,
                      const BSONObj &hint = _sdbStaticObject
                    ) ;
+
+      // pop bson objects from current collection
+      // given:
+      // pop condition ( required )
+      INT32 pop    ( const BSONObj &option = _sdbStaticObject ) ;
 
       // query objects from current collection
       // given:
@@ -431,7 +436,7 @@ namespace sdbclient
 
       /// lob
       INT32 createLob( _sdbLob **lob, const bson::OID *oid = NULL ) ;
-      
+
       virtual INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )
       {
          return createLob( &lob.pLob, oid ) ;
@@ -440,14 +445,14 @@ namespace sdbclient
       virtual INT32 removeLob( const bson::OID &oid ) ;
 
       INT32 openLob( _sdbLob **lob, const bson::OID &oid ) ;
-      
+
       virtual INT32 openLob( sdbLob &lob, const bson::OID &oid )
       {
          return openLob( &lob.pLob, oid ) ;
       }
 
       INT32 listLobs ( _sdbCursor **cursor ) ;
-      
+
       virtual INT32 listLobs( sdbCursor &cursor )
       {
          return listLobs( &cursor.pCursor ) ;
@@ -460,7 +465,7 @@ namespace sdbclient
       INT32 createIdIndex( const bson::BSONObj &options = _sdbStaticObject ) ;
 
       INT32 dropIdIndex() ;
-      
+
    private:
       INT32 _alterCollection1( const bson::BSONObj &options ) ;
       INT32 _alterCollection2( const bson::BSONObj &options ) ;
@@ -469,7 +474,7 @@ namespace sdbclient
                            INT32 sortBufferSize ) ;
 
    } ;
-   
+
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
 
    /*
@@ -643,9 +648,9 @@ namespace sdbclient
       INT32 detachNode( const CHAR *pHostName,
                         const CHAR *pSvcName,
                         const bson::BSONObj &options = _sdbStaticObject ) ;
-      
+
    } ;
-   
+
    typedef class _sdbReplicaGroupImpl sdbReplicaGroupImpl ;
 
    /*
@@ -784,7 +789,7 @@ namespace sdbclient
    class _sdbDataCenterImpl : public _sdbDataCenter
    {
       friend class _sdbImpl ;
-      
+
    private :
       _sdbDataCenterImpl ( const _sdbDataCenterImpl& other ) ;
       _sdbDataCenterImpl& operator= ( const _sdbDataCenterImpl& other ) ;
@@ -892,7 +897,7 @@ namespace sdbclient
       virtual INT32 getOid( bson::OID &oid ) ;
 
       virtual INT32 getSize( SINT64 *size ) ;
-         
+
       virtual INT32 getCreateTime ( UINT64 *millis ) ;
 
       virtual BOOLEAN isClosed() ;
@@ -900,9 +905,9 @@ namespace sdbclient
       virtual bson::OID getOid() ;
 
       virtual SINT64 getSize() ;
-         
+
       virtual UINT64 getCreateTime () ;
-      
+
    } ;
 
    typedef class _sdbLobImpl sdbLobImpl ;
@@ -1315,7 +1320,7 @@ namespace sdbclient
       INT32 evalJS( const CHAR *code,
                     SDB_SPD_RES_TYPE &type,
                     _sdbCursor **cursor,
-                    bson::BSONObj &errmsg ) ; 
+                    bson::BSONObj &errmsg ) ;
       INT32 evalJS( const CHAR *code,
                     SDB_SPD_RES_TYPE &type,
                     sdbCursor &cursor,
@@ -1374,7 +1379,7 @@ namespace sdbclient
       INT32 createDomain ( const CHAR *pDomainName,
                            const bson::BSONObj &options,
                            _sdbDomain **domain ) ;
-      
+
       INT32 createDomain ( const CHAR *pDomainName,
                            const bson::BSONObj &options,
                            sdbDomain &domain )
@@ -1399,7 +1404,7 @@ namespace sdbclient
                           const bson::BSONObj &orderBy,
                           const bson::BSONObj &hint
                          ) ;
-      
+
       INT32 listDomains ( sdbCursor &cursor,
                           const bson::BSONObj &condition,
                           const bson::BSONObj &selector,
@@ -1411,7 +1416,7 @@ namespace sdbclient
       }
 
       INT32 getDC( _sdbDataCenter **dc ) ;
-      
+
       INT32 getDC( sdbDataCenter &dc )
       {
          return getDC( &dc.pDC ) ;

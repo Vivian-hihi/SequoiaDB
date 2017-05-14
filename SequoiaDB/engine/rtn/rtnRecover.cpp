@@ -1286,7 +1286,7 @@ namespace engine
 
    INT32 _rtnRecoverUnit::init( dmsStorageUnit *pSu )
    {
-      dmsStorageData    *pData   = NULL ;
+      dmsStorageDataCommon    *pData   = NULL ;
       dmsStorageLob     *pLob    = NULL ;
 
       _pSU = pSu ;

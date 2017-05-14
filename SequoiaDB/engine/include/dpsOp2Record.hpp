@@ -87,15 +87,28 @@ namespace engine
                            const CHAR **fullName,
                            BSONObj &oldObj ) ;
 
+   INT32 dpsPop2Record( const CHAR *fullName,
+                        const dmsRecordID &firstRID,
+                        const INT64 &logicalID,
+                        const INT8 &direction,
+                        dpsLogRecord &record ) ;
+
+   INT32 dpsRecord2Pop( const CHAR *logRecord,
+                        const CHAR **fullName,
+                        INT64 &logicalID,
+                        INT8 &direction ) ;
+
    INT32 dpsCSCrt2Record( const CHAR *csName,
                           const INT32 &pageSize,
                           const INT32 &lobPageSize,
+                          const INT8 &type,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CSCrt( const CHAR *logRecord,
                           const CHAR **csName,
                           INT32 &pageSize,
-                          INT32 &lobPageSize ) ;
+                          INT32 &lobPageSize,
+                          INT8 &type ) ;
 
    INT32 dpsCSDel2Record( const CHAR *csName,
                           dpsLogRecord &record ) ;
@@ -113,13 +126,17 @@ namespace engine
 
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
-                          UINT8 &compressorType,
+                          const UINT8 &compressorType,
+                          const INT64 &maxSize,
+                          const INT64 &maxRecNum,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
                           UINT32 &attribute,
-                          UINT8 &compressorType ) ;
+                          UINT8 &compressorType,
+                          INT64 &maxSize,
+                          INT64 &maxRecNum ) ;
 
    INT32 dpsCLDel2Record( const CHAR *fullName,
                           dpsLogRecord &record ) ;

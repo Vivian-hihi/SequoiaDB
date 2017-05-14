@@ -3617,6 +3617,35 @@ namespace engine
 
             fieldMask |= CAT_MASK_COMPRESSIONTYPE ;
          }
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CAPPED_NAME ) )
+         {
+            PD_CHECK( Bool == eleTmp.type(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] type [%d] error",
+                      CAT_CAPPED_NAME, eleTmp.type() ) ;
+            clInfo._capped = eleTmp.boolean() ;
+            fieldMask |= CAT_MASK_CAPPED ;
+         }
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_MAX_RECNUM ) )
+         {
+            PD_CHECK( NumberLong == eleTmp.type()
+                      || NumberInt == eleTmp.type(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] type [%d] error",
+                      CAT_CL_MAX_RECNUM, eleTmp.type() ) ;
+            clInfo._maxRecNum = eleTmp.numberLong() ;
+            fieldMask |= CAT_MASK_CLMAXRECNUM ;
+         }
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_MAX_SIZE ) )
+         {
+            PD_CHECK( NumberLong == eleTmp.type()
+                      || NumberInt == eleTmp.type(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] type [%d] error",
+                      CAT_CL_MAX_SIZE, eleTmp.type() ) ;
+            clInfo._maxSize = eleTmp.numberLong() ;
+            fieldMask |= CAT_MASK_CLMAXSIZE ;
+         }
          else
          {
             PD_RC_CHECK ( SDB_INVALIDARG, PDWARNING,
@@ -3636,6 +3665,11 @@ namespace engine
          PD_CHECK( !( CAT_MASK_AUTOINDEXID & fieldMask ),
                    SDB_INVALIDARG, error, PDWARNING,
                    "can not set auto-index-id on main collection" ) ;
+         PD_CHECK( !( ( CAT_MASK_CAPPED & fieldMask ) ||
+                      ( CAT_MASK_CLMAXRECNUM & fieldMask ) ||
+                      ( CAT_MASK_CLMAXSIZE & fieldMask ) ),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "can not set Capped|Max|Size on main collection" ) ;
       }
 
       if ( clInfo._autoSplit || clInfo._autoRebalance )
@@ -3681,6 +3715,14 @@ namespace engine
                    SDB_INVALIDARG, error, PDWARNING,
                    "CompressionType can only be set when Compressed is true."
                    ) ;
+      }
+
+      // If "Capped" is not set as true, but Max is specified, set
+      // Capped as true. Later check it with the CS type outside.
+      if ( !clInfo._capped && clInfo._maxSize )
+      {
+         clInfo._capped = TRUE ;
+         fieldMask |= CAT_MASK_CAPPED ;
       }
 
    done :
@@ -3771,6 +3813,10 @@ namespace engine
       if ( ( mask & CAT_MASK_AUTOINDEXID ) && !clInfo._autoIndexId )
       {
          attribute |= DMS_MB_ATTR_NOIDINDEX ;
+      }
+      if ( ( mask & CAT_MASK_CAPPED ) && clInfo._capped )
+      {
+         attribute |= DMS_MB_ATTR_CAPPED ;
       }
       mbAttr2String( attribute, szAttr, sizeof( szAttr ) - 1 ) ;
 
@@ -3930,6 +3976,26 @@ namespace engine
       if ( mask & CAT_MASK_AUTOINDEXID )
       {
          builder.appendBool( CAT_AUTO_INDEX_ID, clInfo._autoIndexId ) ;
+      }
+
+      if ( mask & CAT_MASK_CAPPED )
+      {
+         // builder.appendBool( CAT_CAPPED_NAME, clInfo._capped ) ;
+         builder.append( FIELD_NAME_TYPE, DMS_STORAGE_CAPPED ) ;
+      }
+      else
+      {
+         builder.append( FIELD_NAME_TYPE, DMS_STORAGE_NORMAL ) ;
+      }
+
+      if ( mask & CAT_MASK_CLMAXRECNUM )
+      {
+         builder.append( CAT_CL_MAX_RECNUM, (INT64)clInfo._maxRecNum ) ;
+      }
+
+      if ( mask & CAT_MASK_CLMAXSIZE )
+      {
+         builder.append( CAT_CL_MAX_SIZE, (INT64)clInfo._maxSize ) ;
       }
 
       catRecord = builder.obj () ;

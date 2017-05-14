@@ -1114,6 +1114,7 @@ namespace engine
       dpsLogRecord &record = info.getMergeBlock().record();
       INT32 pageSize = 0 ;
       INT32 lobPageSz = 0 ;
+      INT8 type = 0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_ADDCS );
 
@@ -1125,11 +1126,12 @@ namespace engine
 
       pageSize = su->getPageSize() ;
       lobPageSz = su->getLobPageSize() ;
+      type = su->type() ;
 
       if ( NULL != dpsCB )
       {
          // reserved log-size
-         rc = dpsCSCrt2Record( pName, pageSize, lobPageSz, record ) ;
+         rc = dpsCSCrt2Record( pName, pageSize, lobPageSz, type, record ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to build record:%d", rc ) ;
@@ -1579,6 +1581,7 @@ namespace engine
 
          /// cache info
          cs._dirtyPage = su->cacheUnit()->dirtyPages() ;
+         cs._type = su->type() ;
 
          su->dumpInfo ( cs._collections, sys ) ;
          csList.insert ( cs ) ;

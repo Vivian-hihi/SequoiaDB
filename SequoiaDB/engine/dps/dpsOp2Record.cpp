@@ -417,10 +417,94 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_POP2RECORD, "dpsPop2Record" )
+   INT32 dpsPop2Record( const CHAR *fullName, const dmsRecordID &firstRID,
+                        const INT64 &logicalID, const INT8 &direction,
+                        dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_POP2RECORD ) ;
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_DATA_POP ;
+
+      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
+                        ossStrlen( fullName ) + 1,
+                        fullName ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push fullname to record, rc: %d", rc ) ;
+
+      rc = record.push( DPS_LOG_POP_LID, sizeof( logicalID ),
+                        (CHAR *)( &logicalID ) ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push LogicalID object to record, rc: %d", rc ) ;
+
+      rc = record.push( DPS_LOG_POP_DIRECTION, sizeof( direction ),
+                        (CHAR *)( &direction ) ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Failed to push Direction object to record, rc: %d", rc ) ;
+
+      header._length = record.alignedLen() ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_POP2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2POP, "dpsRecord2Pop" )
+   INT32 dpsRecord2Pop( const CHAR *logRecord, const CHAR **fullName,
+                        INT64 &logicalID, INT8 &direction )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2POP ) ;
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load pop record, rc: %d", rc ) ;
+
+      {
+         dpsLogRecord::iterator itrName, itrLID, itrDirection ;
+         itrName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
+         if ( !itrName.valid() )
+         {
+            PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         itrLID = record.find( DPS_LOG_POP_LID ) ;
+         if ( !itrLID.valid() )
+         {
+            PD_LOG( PDERROR, "Failed to find tag LogicalID in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         itrDirection = record.find( DPS_LOG_POP_DIRECTION ) ;
+         if ( !itrDirection.valid() )
+         {
+            PD_LOG( PDERROR, "Failed to find tag Direction in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         *fullName = itrName.value() ;
+         logicalID = *(INT64 *)( itrLID.value() ) ;
+         direction = *(INT8 *)( itrDirection.value() ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2POP, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CSCRT2RECORD, "dpsCSCrt2Record" )
    INT32 dpsCSCrt2Record( const CHAR *csName,
                           const INT32 &pageSize,
                           const INT32 &lobPageSize,
+                          const INT8 &type,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CSCRT2RECORD ) ;
@@ -456,6 +540,10 @@ namespace engine
          goto error ;
       }
 
+      rc = record.push( DPS_LOG_CSCRT_CSTYPE,
+                        sizeof( type ),
+                        (CHAR *)( &type ) ) ;
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CSCRT2RECORD, rc ) ;
@@ -468,7 +556,8 @@ namespace engine
    INT32 dpsRecord2CSCrt( const CHAR *logRecord,
                           const CHAR **csName,
                           INT32 &pageSize,
-                          INT32 &lobPageSize )
+                          INT32 &lobPageSize,
+                          INT8 &type )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CSCRT ) ;
       INT32 rc = SDB_OK ;
@@ -482,7 +571,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrCsName, itrPageSize, itrLobPageSz ;
+      dpsLogRecord::iterator itrCsName, itrPageSize, itrLobPageSz, itrType ;
       itrCsName = record.find( DPS_LOG_CSCRT_CSNAME ) ;
       if ( !itrCsName.valid() )
       {
@@ -512,6 +601,19 @@ namespace engine
       else
       {
          lobPageSize = *(( INT32 *)itrLobPageSz.value()) ;
+      }
+
+      itrType = record.find( DPS_LOG_CSCRT_CSTYPE ) ;
+      if ( !itrType.valid() )
+      {
+         // For compatible with elder versions.
+         PD_LOG( PDWARNING, "Failed to find tag CS type in record, use normal "
+                 "type(0)" ) ;
+         type = 0 ;
+      }
+      else
+      {
+         type = *( ( INT8 *)itrType.value() ) ;
       }
       }
    done:
@@ -667,7 +769,9 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLCRT2RECORD, "dpsCLCrt2Record" )
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
-                          UINT8 &compressorType,
+                          const UINT8 &compressorType,
+                          const INT64 &maxSize,
+                          const INT64 &maxRecNum,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CLCRT2RECORD ) ;
@@ -694,8 +798,37 @@ namespace engine
          goto error ;
       }
 
-      record.push( DPS_LOG_CLCRT_COMPRESS_TYPE, sizeof( UINT8 ),
-                   (const CHAR *)(&compressorType)) ;
+      rc = record.push( DPS_LOG_CLCRT_COMPRESS_TYPE, sizeof( compressorType ),
+                        (const CHAR *)(&compressorType)) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR,
+                 "Failed to push compression type to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      if ( DMS_INVALID_CL_SIZE != maxSize )
+      {
+         rc = record.push( DPS_LOG_CLCRT_MAX_SIZE, sizeof( maxSize ),
+                           (const CHAR *)( &maxSize ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to push Size to record, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+      if ( DMS_INVALID_CL_RECNUM != maxRecNum )
+      {
+         SDB_ASSERT( DMS_INVALID_CL_SIZE != maxSize,
+                     "Size should not be invalid" ) ;
+         rc = record.push( DPS_LOG_CLCRT_MAX_RECNUM, sizeof( maxRecNum ),
+                           (const CHAR *)( &maxRecNum ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to push Max to record, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
 
       header._length = record.alignedLen() ;
    done:
@@ -709,7 +842,9 @@ namespace engine
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
                           UINT32 &attribute,
-                          UINT8 &compressorType )
+                          UINT8 &compressorType,
+                          INT64 &maxSize,
+                          INT64 &maxRecNum )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLCRT ) ;
       INT32 rc = SDB_OK ;
@@ -724,27 +859,39 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName, itrAttri, itrCompressorType ;
-      itrFullName = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
-      if ( !itrFullName.valid() )
+      dpsLogRecord::iterator recordItr ;
+      recordItr = record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
+      if ( !recordItr.valid() )
       {
          PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      *fullName = itrFullName.value() ;
+      *fullName = recordItr.value() ;
 
-      itrAttri = record.find( DPS_LOG_CLCRT_ATTRIBUTE ) ;
-      if ( itrAttri.valid() )
+      recordItr = record.find( DPS_LOG_CLCRT_ATTRIBUTE ) ;
+      if ( recordItr.valid() )
       {
-         attribute = *((UINT32 *)itrAttri.value() ) ;
+         attribute = *((UINT32 *)recordItr.value() ) ;
       }
 
-      itrCompressorType = record.find( DPS_LOG_CLCRT_COMPRESS_TYPE ) ;
-      if ( itrCompressorType.valid() )
+      recordItr = record.find( DPS_LOG_CLCRT_COMPRESS_TYPE ) ;
+      if ( recordItr.valid() )
       {
-         compressorType = *((UINT8 *)itrCompressorType.value());
+         compressorType = *((UINT8 *)recordItr.value());
+      }
+
+      recordItr = record.find( DPS_LOG_CLCRT_MAX_SIZE ) ;
+      if ( recordItr.valid() )
+      {
+         maxSize = *( (INT64 *)recordItr.value() ) ;
+      }
+
+      recordItr = record.find( DPS_LOG_CLCRT_MAX_RECNUM ) ;
+      if ( recordItr.valid() )
+      {
+         maxRecNum = *( (INT64 *)recordItr.value() ) ;
       }
 
       }

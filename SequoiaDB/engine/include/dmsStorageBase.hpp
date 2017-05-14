@@ -89,6 +89,8 @@ namespace engine
       BOOLEAN     _dataIsOK ;
       UINT64      _curLSNOnStart ;
 
+      DMS_STORAGE_TYPE _type ;
+
       _dmsStorageInfo ()
       {
          _pageSize      = DMS_PAGE_SIZE_DFT ;
@@ -105,6 +107,7 @@ namespace engine
 
          _dataIsOK       = FALSE ;
          _curLSNOnStart  = ~0 ;
+         _type = DMS_STORAGE_NORMAL ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;
@@ -421,6 +424,11 @@ namespace engine
          OSS_INLINE void        markDirty( INT32 collectionID,
                                            INT32 extentID,
                                            DMS_CHG_STEP step ) ;
+
+         OSS_INLINE DMS_STORAGE_TYPE getStorageType()
+         {
+            return _pStorageInfo->_type ;
+         }
 
       private:
          /*

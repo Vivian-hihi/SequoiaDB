@@ -2500,6 +2500,46 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_POP, "collection_pop" )
+static JSBool collection_pop( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_COLL_POP ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+   sdbCollectionStruct *collection = NULL ;
+   JSObject *jsOption = NULL ;
+   bson *bsOption = NULL ;
+   jsval *argv = JS_ARGV( cx, vp ) ;
+
+   REPORT( 1 == argc,
+           "SdbCollection.pop(): need one argument" ) ;
+
+   clHandle = ( sdbCollectionHandle * )
+      JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( clHandle, "SdbCollection.pop(): no collection handle" ) ;
+
+   collection = ( sdbCollectionStruct * )( *clHandle ) ;
+
+   GET_OBJ_FROM_ARG_ARR( cx, argc, argv, 1, jsOption,
+                         bsOption, "SdbCollection.pop()" ) ;
+
+   rc = sdbPop( collection->_connection,
+                collection->_collectionFullName,
+                bsOption ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.pop()", rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+
+done:
+   SAFE_BSON_DISPOSE( bsOption ) ;
+   PD_TRACE_EXIT( SDB_COLL_POP ) ;
+   return ret ;
+error:
+   TRY_REPORT( cx, "SdbCollection.pop(): false" ) ;
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_ID_IX, "collection_crt_id_index" )
 static JSBool collection_crt_id_index ( JSContext *cx , uintN argc , jsval *vp )
 {
@@ -2668,6 +2708,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "update" , collection_update , 1 , 0 ) ,
     JS_FS ( "upsert" , collection_upsert , 1 , 0 ) ,
     JS_FS ( "remove" , collection_remove , 0 , 0 ) ,
+    JS_FS ( "pop", collection_pop, 1, 0 ) ,
     JS_FS ( "_count" , collection_count , 0 , 0 ) ,
     JS_FS ( "createIndex" , collection_create_index , 2 , 0 ) ,
     JS_FS ( "_getIndexes" , collection_get_indexes , 1 , 0 ) ,

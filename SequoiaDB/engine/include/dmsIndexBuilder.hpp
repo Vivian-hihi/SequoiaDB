@@ -93,7 +93,7 @@ namespace engine
                                                _dmsStorageData* dataSU,
                                                _dmsMBContext* mbContext,
                                                _pmdEDUCB* eduCB,
-                                               dmsExtentID indexExtentID, 
+                                               dmsExtentID indexExtentID,
                                                INT32 sortBufferSize ) ;
       static void releaseInstance( _dmsIndexBuilder* builder ) ;
    } ;
