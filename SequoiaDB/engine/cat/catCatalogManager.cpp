@@ -745,22 +745,13 @@ namespace engine
             ++expected ;
          }
          // capped option
-         else if ( 0 == ossStrcmp( ele.fieldName(), CAT_TYPE_NAME ) )
+         else if ( 0 == ossStrcmp( ele.fieldName(), CAT_CAPPED_NAME ) )
          {
-            PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                      "Field[%s] type[%d] error", CAT_TYPE_NAME,
+            PD_CHECK( ele.isBoolean(), SDB_INVALIDARG, error, PDERROR,
+                      "Field[%s] type[%d] error", CAT_CAPPED_NAME,
                       ele.type() ) ;
-            if ( ele.numberInt() >= (INT32)DMS_STORAGE_NORMAL &&
-                 ele.numberInt() < (INT32)DMS_STORAGE_DUMMY )
-            {
-               csInfo._type = (DMS_STORAGE_TYPE)ele.numberInt() ;
-            }
-            else
-            {
-               PD_LOG( PDERROR, "Filed[%s] value[%d] error", CAT_TYPE_NAME,
-                       ele.numberInt() ) ;
-               goto error ;
-            }
+            csInfo._type = ( true == ele.boolean() ) ?
+                           DMS_STORAGE_CAPPED : DMS_STORAGE_NORMAL ;
             ++expected ;
          }
          else
