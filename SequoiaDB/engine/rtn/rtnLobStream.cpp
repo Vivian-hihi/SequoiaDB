@@ -352,8 +352,8 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDWARNING, "Lob[%s] is closed with exception",
-                 getOID().str().c_str() ) ;
+         PD_LOG( PDWARNING, "Lob[%s] is closed with exception, mode:0x%08x",
+                 getOID().str().c_str(), _mode ) ;
       }
 
       _opened = FALSE ;
