@@ -340,7 +340,7 @@ namespace engine
 
       if ( SDB_LOB_MODE_CREATEONLY & _mode ) 
       {
-         PD_LOG( PDERROR, "lob[%s] is closed with exception, rollback",
+         PD_LOG( PDERROR, "Lob[%s] is closed with exception, rollback",
                  getOID().str().c_str() ) ;
          rc = _rollback( cb ) ;
          if ( SDB_OK != rc )
@@ -349,6 +349,11 @@ namespace engine
                     _oid.str().c_str(), rc ) ;
             goto error ;
          }
+      }
+      else
+      {
+         PD_LOG( PDWARNING, "Lob[%s] is closed with exception",
+                 getOID().str().c_str() ) ;
       }
 
       _opened = FALSE ;

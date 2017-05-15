@@ -73,6 +73,11 @@ namespace engine
          SDB_ASSERT( cb->getID() == eduID(), "impossible" ) ;
          _rollback( cb ) ;
       }
+      else if ( _closeWithException )
+      {
+         PD_LOG( PDWARNING, "Lob[%s] is closed with exception",
+                 getOID().str().c_str() ) ;
+      }
 
       close( cb ) ;
 
