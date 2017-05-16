@@ -9,6 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
@@ -42,6 +43,7 @@ public class AttachCL2171 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private boolean runSuccess = false;
     private String mclName = "cl_2171";
+
     @BeforeClass
     public void setUp() {
         Sequoiadb db = null;
@@ -72,7 +74,7 @@ public class AttachCL2171 extends SdbTestBase {
         try {
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             String cataPriHost = cataGroup.getMaster().hostName();
-            
+
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(cataGroup, 3, 1);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(cataPriHost);
@@ -81,8 +83,10 @@ public class AttachCL2171 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-            
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
+
             Utils.checkConsistency(cataGroup);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             Utils.checkIntegrated(db, mclName);
@@ -100,7 +104,9 @@ public class AttachCL2171 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -115,26 +121,37 @@ public class AttachCL2171 extends SdbTestBase {
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
         }
     }
-    
+
     private void dropCLRepeatly(Sequoiadb db) throws ReliabilityException {
+        CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
+        // drop all sub cl repeatly in 5min
         int timeout = 300000; // 5min
-        int checkInterval = 15000; // 15s
-        int checkTimes = timeout / checkInterval;
-        for (int i = 0; i < checkTimes; ++i) {
-            try {
-                Utils.dropMclAndScl(db, mclName);
-                return ;
-            } catch(BaseException e) {
-                if (e.getErrorCode() != -147) {
-                    throw new ReliabilityException("fail to drop cl ", e);
+        int dropInterval = 15000; // 15s
+        int dropTimes = timeout / dropInterval;
+        for (int i = 0; i < Utils.SCLNUM; ++i) {
+            String sclName = mclName + "_" + i;
+            int j;
+            for (j = 0; j < dropTimes; ++j) {
+                try {
+                    cs.dropCollection(sclName);
+                    break;
+                } catch (BaseException e) {
+                    if (e.getErrorCode() != -147) {
+                        e.printStackTrace();
+                        throw new ReliabilityException("fail to drop " + sclName + " rc: " + e.getErrorCode());
+                    }
+                }
+                
+                try {
+                    Thread.sleep(dropInterval);
+                } catch (InterruptedException e) {
                 }
             }
-            
-            try {
-                Thread.sleep(checkInterval);
-            } catch (InterruptedException e) {
+            if (j == dropTimes) {
+                throw new ReliabilityException("dropCLRepeatly occurs timeout");
             }
         }
-        throw new ReliabilityException("dropCLRepeatly occurs timeout");
+        // drop the main cl finally
+        cs.dropCollection(mclName);
     }
 }

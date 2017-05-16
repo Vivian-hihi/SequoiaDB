@@ -53,6 +53,8 @@ public class Insert2191 extends SdbTestBase {
     private static final int SCLNUM = Utils.SCLNUM;
     private static final int RANGE_WIDTH = Utils.RANGE_WIDTH;
     private static final int TOTAL_COUNT = 20;
+    private GroupWrapper dataGroup = null;
+    private String dataPriHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -66,8 +68,16 @@ public class Insert2191 extends SdbTestBase {
                 throw new SkipException("checkBusiness failed");
             }
 
-            db = new Sequoiadb(coordUrl, "", "");
             clGroup = groupMgr.getAllDataGroupName().get(0);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            dataGroup = groupMgr.getGroupByName(clGroup);
+            dataPriHost = dataGroup.getMaster().hostName();
+            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
+
+            db = new Sequoiadb(coordUrl, "", "");
             Utils.createMclAndScl(db, mclName, clGroup);
             Utils.attachAllScl(db, mclName);
         } catch (ReliabilityException e) {
@@ -84,14 +94,6 @@ public class Insert2191 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
-            String dataPriHost = dataGroup.getMaster().hostName();
-            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-            
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 1, 18);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
@@ -100,8 +102,10 @@ public class Insert2191 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-            
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
+
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail("data is different on " + dataGroup.getGroupName());
             }
@@ -121,7 +125,9 @@ public class Insert2191 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -140,7 +146,7 @@ public class Insert2191 extends SdbTestBase {
     class InsertTask extends OperateTask {
         private int insertedCnt = 0;
         private String safeUrl = null;
-        
+
         public InsertTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -166,23 +172,23 @@ public class Insert2191 extends SdbTestBase {
                 }
             }
         }
-        
+
         public int getInsertedCnt() {
             return insertedCnt;
         }
     }
-    
-    private String getRandomString(int length){
+
+    private String getRandomString(int length) {
         String base = "abcdefahijklmnopqrstuvwxyz0123456789";
         Random random = new Random();
-        StringBuffer sb = new StringBuffer(); 
-        for (int i = 0; i < length; ++i){
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < length; ++i) {
             char ch = base.charAt(random.nextInt(base.length()));
             sb.append(ch);
-        }    
+        }
         return sb.toString();
     }
-    
+
     private void checkInserted(Sequoiadb db, int insertedCnt) {
         DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
         if (mcl.getCount() < insertedCnt) {
@@ -191,8 +197,8 @@ public class Insert2191 extends SdbTestBase {
         DBCursor cursor = mcl.query(null, null, "{ _id: 1 }", null);
         for (int i = 0; i < insertedCnt; i++) {
             BSONObject res = cursor.getNext();
-            if ((int)res.get("a") != i || !res.get("bigRec").equals(bigRecord)) {
-                Assert.fail("fail to checkInserted. expected: " + (int)res.get("a") + " but found: " + i);
+            if ((int) res.get("a") != i || !res.get("bigRec").equals(bigRecord)) {
+                Assert.fail("fail to checkInserted. expected: " + (int) res.get("a") + " but found: " + i);
             }
         }
         cursor.close();

@@ -10,6 +10,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
@@ -164,24 +165,35 @@ public class AttachCL2169 extends SdbTestBase {
     }
 
     private void dropCLRepeatly(Sequoiadb db) throws ReliabilityException {
+        CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
+        // drop all sub cl repeatly in 5min
         int timeout = 300000; // 5min
-        int checkInterval = 15000; // 15s
-        int checkTimes = timeout / checkInterval;
-        for (int i = 0; i < checkTimes; ++i) {
-            try {
-                Utils.dropMclAndScl(db, mclName);
-                return;
-            } catch (BaseException e) {
-                if (e.getErrorCode() != -147) {
-                    throw new ReliabilityException("fail to drop cl ", e);
+        int dropInterval = 15000; // 15s
+        int dropTimes = timeout / dropInterval;
+        for (int i = 0; i < Utils.SCLNUM; ++i) {
+            String sclName = mclName + "_" + i;
+            int j;
+            for (j = 0; j < dropTimes; ++j) {
+                try {
+                    cs.dropCollection(sclName);
+                    break;
+                } catch (BaseException e) {
+                    if (e.getErrorCode() != -147) {
+                        e.printStackTrace();
+                        throw new ReliabilityException("fail to drop " + sclName + " rc: " + e.getErrorCode());
+                    }
+                }
+                
+                try {
+                    Thread.sleep(dropInterval);
+                } catch (InterruptedException e) {
                 }
             }
-
-            try {
-                Thread.sleep(checkInterval);
-            } catch (InterruptedException e) {
+            if (j == dropTimes) {
+                throw new ReliabilityException("dropCLRepeatly occurs timeout");
             }
         }
-        throw new ReliabilityException("dropCLRepeatly occurs timeout");
+        // drop the main cl finally
+        cs.dropCollection(mclName);
     }
 }

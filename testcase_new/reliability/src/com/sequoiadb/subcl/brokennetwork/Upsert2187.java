@@ -52,6 +52,8 @@ public class Upsert2187 extends SdbTestBase {
     private String clGroup = null;
     private static final int SCLNUM = Utils.SCLNUM;
     private static final int RANGE_WIDTH = Utils.RANGE_WIDTH;
+    private GroupWrapper dataGroup = null;
+    private String dataSlvHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -65,9 +67,17 @@ public class Upsert2187 extends SdbTestBase {
                 throw new SkipException("checkBusiness failed");
             }
 
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            clGroup = groupMgr.getAllDataGroupName().get(0);
+            dataGroup = groupMgr.getGroupByName(clGroup);
+            dataSlvHost = dataGroup.getSlave().hostName();
+            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
+
             db = new Sequoiadb(coordUrl, "", "");
             createDomainAndCs(db, groupMgr.getAllDataGroupName());
-            clGroup = groupMgr.getAllDataGroupName().get(0);
             createMclAndScl(db);
             attachAllScl(db);
         } catch (ReliabilityException e) {
@@ -84,14 +94,6 @@ public class Upsert2187 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
-            String dataSlvHost = dataGroup.getSlave().hostName();
-            if (cataPriHost.equals(dataSlvHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-            
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataSlvHost, 0, 10);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataSlvHost);
@@ -100,8 +102,10 @@ public class Upsert2187 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-            
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
+
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail();
             }
@@ -121,7 +125,9 @@ public class Upsert2187 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -141,7 +147,7 @@ public class Upsert2187 extends SdbTestBase {
         private int insertedCnt = 0;
         private String safeUrl = null;
         private static final int RECORD_TOTAL = 10000;
-        
+
         public UpsertTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -156,9 +162,9 @@ public class Upsert2187 extends SdbTestBase {
                 int mclRange = SCLNUM * RANGE_WIDTH;
                 for (int i = 0; i < RECORD_TOTAL; i++) {
                     int valueInRange = i % mclRange;
-                    BSONObject matcher = (BSONObject)JSON.parse("{ i: " + i + " }");
-                    BSONObject modifier = (BSONObject)JSON.parse("{ $set: { a: " + valueInRange + " } }");
-                    BSONObject setOnIns = (BSONObject)JSON.parse("{ b: " + valueInRange + " }");
+                    BSONObject matcher = (BSONObject) JSON.parse("{ i: " + i + " }");
+                    BSONObject modifier = (BSONObject) JSON.parse("{ $set: { a: " + valueInRange + " } }");
+                    BSONObject setOnIns = (BSONObject) JSON.parse("{ b: " + valueInRange + " }");
                     mcl.upsert(matcher, modifier, null, setOnIns);
                     insertedCnt++;
                 }
@@ -169,12 +175,12 @@ public class Upsert2187 extends SdbTestBase {
                 }
             }
         }
-        
+
         public int getInsertedCnt() {
             return insertedCnt;
         }
     }
-    
+
     private void createDomainAndCs(Sequoiadb db, List<String> dataRGNames) {
         BSONObject domainOpt = new BasicBSONObject();
         BSONObject groups = new BasicBSONList();
@@ -184,24 +190,24 @@ public class Upsert2187 extends SdbTestBase {
         domainOpt.put("Groups", groups);
         domainOpt.put("AutoSplit", false);
         db.createDomain(domainName, domainOpt);
-        
+
         BSONObject csOpt = new BasicBSONObject();
         csOpt.put("Domain", domainName);
         db.createCollectionSpace(csName, csOpt);
     }
-    
+
     private void createMclAndScl(Sequoiadb db) {
         CollectionSpace cs = db.getCollectionSpace(csName);
-        cs.createCollection(mclName, (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, "
+        cs.createCollection(mclName, (BSONObject) JSON.parse("{ ShardingKey: { a: 1 }, "
                 + "ShardingType: 'range', IsMainCL: true, Group: '" + clGroup + "', ReplSize: 0 }"));
-        BSONObject sclOpt = (BSONObject)JSON.parse("{ ShardingKey: { a: 1 }, "
-                + "ShardingType: 'hash', Group: '" + clGroup + "', ReplSize: 0 }");
+        BSONObject sclOpt = (BSONObject) JSON
+                .parse("{ ShardingKey: { a: 1 }, " + "ShardingType: 'hash', Group: '" + clGroup + "', ReplSize: 0 }");
         for (int i = 0; i < SCLNUM; i++) {
             String sclName = mclName + "_" + i;
             cs.createCollection(sclName, sclOpt);
         }
     }
-    
+
     private void attachAllScl(Sequoiadb db) {
         DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
         int rangeStart = 0;
@@ -213,7 +219,7 @@ public class Upsert2187 extends SdbTestBase {
             rangeStart += RANGE_WIDTH;
         }
     }
-    
+
     private void checkUpserted(Sequoiadb db, int insertedCnt) {
         DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
         if (mcl.getCount() < insertedCnt) {
@@ -224,9 +230,9 @@ public class Upsert2187 extends SdbTestBase {
         for (int i = 0; i < insertedCnt; i++) {
             BSONObject res = cursor.getNext();
             int expValue = i % mclRange;
-            int iField = (int)res.get("i");
-            int aField = (int)res.get("a");
-            int bField = (int)res.get("b");
+            int iField = (int) res.get("i");
+            int aField = (int) res.get("a");
+            int bField = (int) res.get("b");
             if (iField != i) {
                 Assert.fail("fail to checkInserted. i field expected: " + i + " but found: " + iField);
             }
@@ -256,7 +262,7 @@ public class Upsert2187 extends SdbTestBase {
             Assert.fail(e.getMessage());
         }
     }
-    
+
     private void dropDomainAndCs(Sequoiadb db) {
         db.dropCollectionSpace(csName);
         db.dropDomain(domainName);

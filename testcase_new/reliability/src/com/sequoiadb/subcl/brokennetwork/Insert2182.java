@@ -48,6 +48,8 @@ public class Insert2182 extends SdbTestBase {
     private String clGroup = null;
     private static final int SCLNUM = Utils.SCLNUM;
     private static final int RANGE_WIDTH = Utils.RANGE_WIDTH;
+    private GroupWrapper dataGroup = null;
+    private String dataPriHost = null;
 
     @BeforeClass
     public void setUp() {
@@ -61,8 +63,16 @@ public class Insert2182 extends SdbTestBase {
                 throw new SkipException("checkBusiness failed");
             }
 
-            db = new Sequoiadb(coordUrl, "", "");
             clGroup = groupMgr.getAllDataGroupName().get(0);
+            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
+            String cataPriHost = cataGroup.getMaster().hostName();
+            dataGroup = groupMgr.getGroupByName(clGroup);
+            dataPriHost = dataGroup.getMaster().hostName();
+            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
+                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
+            }
+
+            db = new Sequoiadb(coordUrl, "", "");
             Utils.createMclAndScl(db, mclName, clGroup);
             Utils.attachAllScl(db, mclName);
         } catch (ReliabilityException e) {
@@ -79,14 +89,6 @@ public class Insert2182 extends SdbTestBase {
     public void test() {
         Sequoiadb db = null;
         try {
-            GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
-            String cataPriHost = cataGroup.getMaster().hostName();
-            GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
-            String dataPriHost = dataGroup.getMaster().hostName();
-            if (cataPriHost.equals(dataPriHost) && !cataGroup.changePrimary()) {
-                throw new SkipException(cataGroup.getGroupName() + " reelect fail");
-            }
-
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataPriHost, 0, 18);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
@@ -95,8 +97,10 @@ public class Insert2182 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-            
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
+
             if (!dataGroup.checkInspect(1)) {
                 Assert.fail("data is different on " + dataGroup.getGroupName());
             }
@@ -116,7 +120,9 @@ public class Insert2182 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -136,7 +142,7 @@ public class Insert2182 extends SdbTestBase {
         private int insertedCnt = 0;
         private String safeUrl = null;
         private static final int RECORD_TOTAL = 100000;
-        
+
         public InsertTask(String safeUrl) {
             this.safeUrl = safeUrl;
         }
@@ -161,12 +167,12 @@ public class Insert2182 extends SdbTestBase {
                 }
             }
         }
-        
+
         public int getInsertedCnt() {
             return insertedCnt;
         }
     }
-    
+
     private void checkInserted(Sequoiadb db, int insertedCnt) {
         DBCollection mcl = db.getCollectionSpace(csName).getCollection(mclName);
         if (mcl.getCount() < insertedCnt) {
@@ -179,7 +185,7 @@ public class Insert2182 extends SdbTestBase {
         for (int i = 0; i < insertedCnt; i++) {
             BSONObject res = cursor.getNext();
             int expValue = i % mclRange;
-            int actValue = (int)res.get("a");
+            int actValue = (int) res.get("a");
             if (actValue != expValue) {
                 Assert.fail("fail to checkInserted. expected: " + expValue + " but found: " + actValue);
             }

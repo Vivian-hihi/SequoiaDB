@@ -76,7 +76,7 @@ public class DetachCL2179 extends SdbTestBase {
         try {
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroup);
             String dataPriHost = dataGroup.getMaster().hostName();
-            
+
             FaultMakeTask faultTask = BrokenNetwork.getFaultMakeTask(dataGroup, 3, 1);
             TaskMgr mgr = new TaskMgr(faultTask);
             String safeUrl = CommLib.getSafeCoordUrl(dataPriHost);
@@ -85,8 +85,10 @@ public class DetachCL2179 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) { Assert.fail("checkBusinessWithLSN() occurs timeout"); }
-            
+            if (!groupMgr.checkBusinessWithLSN(600)) {
+                Assert.fail("checkBusinessWithLSN() occurs timeout");
+            }
+
             GroupWrapper cataGroup = groupMgr.getGroupByName("SYSCatalogGroup");
             Utils.checkConsistency(cataGroup);
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
@@ -105,7 +107,9 @@ public class DetachCL2179 extends SdbTestBase {
 
     @AfterClass
     public void tearDown() {
-        if (!runSuccess) { throw new SkipException("to save environment"); }
+        if (!runSuccess) {
+            throw new SkipException("to save environment");
+        }
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
