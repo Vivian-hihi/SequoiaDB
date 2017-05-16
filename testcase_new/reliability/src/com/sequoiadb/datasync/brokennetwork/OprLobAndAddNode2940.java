@@ -18,14 +18,13 @@ import org.testng.annotations.Test;
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBLob;
+import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.datasync.brokennetwork.commlib.AddNodeTask;
-import com.sequoiadb.datasync.brokennetwork.commlib.Utils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
@@ -216,5 +215,33 @@ public class OprLobAndAddNode2940 extends SdbTestBase {
     private void removeNewNode(Sequoiadb db) {
         ReplicaGroup clGroup = db.getReplicaGroup(clGroupName);
         clGroup.removeNode(randomHost, randomPort, (BSONObject) null);
+    }
+    
+    private class AddNodeTask extends OperateTask {
+        private String groupName = null;
+        private String host = null;
+        private int port;
+        
+        public AddNodeTask(String groupName, String host, int port) {
+            this.groupName = groupName;
+            this.host = host;
+            this.port = port;
+        }
+        
+        @Override
+        public void init() {
+            // 为了避免节点启动前就已经断网，在启动任务前启动节点
+            Sequoiadb db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
+            ReplicaGroup randomGroup = db.getReplicaGroup(groupName);
+            String nodePath = SdbTestBase.reservedDir + "/data/" + port;
+            Node newNode = randomGroup.createNode(host, port, nodePath, (BSONObject)null);
+            newNode.start();
+            db.close();
+        }
+        
+        @Override
+        public void exec() throws Exception {
+            // 同步正在后台进行...
+        }
     }
 }

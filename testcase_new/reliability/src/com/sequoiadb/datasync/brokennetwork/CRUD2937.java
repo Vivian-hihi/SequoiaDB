@@ -18,12 +18,11 @@ import com.sequoiadb.commlib.CommLib;
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
-import com.sequoiadb.datasync.brokennetwork.commlib.CRUDTask;
-import com.sequoiadb.datasync.brokennetwork.commlib.Utils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.task.FaultMakeTask;
+import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
@@ -143,5 +142,37 @@ public class CRUD2937 extends SdbTestBase {
         CollectionSpace commCS = db.getCollectionSpace(csName);
         BSONObject option = (BSONObject) JSON.parse("{ Group: '" + clGroupName + "', ReplSize: 1 }");
         return commCS.createCollection(clName, option);
+    }
+    
+    private class CRUDTask extends OperateTask {
+        private String safeUrl = null;
+        private String clName = null;
+        
+        public CRUDTask(String safeUrl, String clName) {
+            this.safeUrl = safeUrl;
+            this.clName = clName;
+        }
+
+        @Override
+        public void exec() throws Exception {
+            Sequoiadb db = null;
+            try {
+                db = new Sequoiadb(safeUrl, "", "");
+                DBCollection cl = db.getCollectionSpace(SdbTestBase.csName).getCollection(clName);
+                int repeatTimes = 5000;
+                for (int i = 0; i < repeatTimes; i++) {
+                    BSONObject rec = (BSONObject)JSON.parse("{ a: " + i + " }");
+                    cl.insert(rec);
+                    BSONObject modifier = (BSONObject)JSON.parse("{ $set: { b: 1 } }");
+                    cl.update(rec, modifier, null);
+                    cl.delete(rec);
+                }
+            } catch (BaseException e) {
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+        }
     }
 }
