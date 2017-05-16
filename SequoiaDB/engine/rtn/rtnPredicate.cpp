@@ -1475,9 +1475,15 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__RTNPRED__INITNE ) ;
 
+      if ( e.type() == Array )
+      {
+         // Operator with array shoule not generate predicate
+         goto done ;
+      }
+
       if ( isNot )
       {
-         // $not:ne -> $ne
+         // $not:ne -> $et
          rc = _initET( e, FALSE ) ;
       }
       else
@@ -1510,8 +1516,8 @@ namespace engine
          }
       }
 
+   done :
       PD_TRACE_EXITRC( SDB__RTNPRED__INITNE, rc ) ;
-
       return rc ;
    }
 
@@ -1522,6 +1528,12 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__RTNPRED__INITLT ) ;
+
+      if ( e.type() == Array )
+      {
+         // Operator with array shoule not generate predicate
+         goto done ;
+      }
 
       if ( isNot )
       {
@@ -1554,8 +1566,8 @@ namespace engine
          keyPair._majorType = e.type() ;
       }
 
+   done :
       PD_TRACE_EXITRC( SDB__RTNPRED__INITLT, rc ) ;
-
       return rc ;
    }
 
@@ -1566,6 +1578,12 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__RTNPRED__INITGT ) ;
+
+      if ( e.type() == Array )
+      {
+         // Operator with array shoule not generate predicate
+         goto done ;
+      }
 
       if ( isNot )
       {
@@ -1597,8 +1615,8 @@ namespace engine
          keyPair._majorType = e.type() ;
       }
 
+   done :
       PD_TRACE_EXITRC( SDB__RTNPRED__INITGT, rc ) ;
-
       return rc ;
    }
 

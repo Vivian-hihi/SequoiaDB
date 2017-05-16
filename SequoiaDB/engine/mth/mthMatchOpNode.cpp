@@ -2818,7 +2818,19 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeLT::isTotalConverted()
    {
-      return _mthMatchOpNode::isTotalConverted() ;
+      if ( _mthMatchOpNode::isTotalConverted() )
+      {
+         if ( _toMatch.type() == Array )
+         {
+            // Should not generate rtnPredicate for array
+            return FALSE ;
+         }
+         else
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
    }
 
    UINT32 _mthMatchOpNodeLT::getWeight()
@@ -2928,7 +2940,19 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeLTE::isTotalConverted()
    {
-      return _mthMatchOpNode::isTotalConverted() ;
+      if ( _mthMatchOpNode::isTotalConverted() )
+      {
+         if ( _toMatch.type() == Array )
+         {
+            // Should not generate rtnPredicate for array
+            return FALSE ;
+         }
+         else
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
    }
 
    INT32 _mthMatchOpNodeLTE::_valueMatch( const BSONElement &left,
@@ -3033,7 +3057,19 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeGT::isTotalConverted()
    {
-      return _mthMatchOpNode::isTotalConverted() ;
+      if ( _mthMatchOpNode::isTotalConverted() )
+      {
+         if ( _toMatch.type() == Array )
+         {
+            // Should not generate rtnPredicate for array
+            return FALSE ;
+         }
+         else
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
    }
 
    INT32 _mthMatchOpNodeGT::_valueMatch( const BSONElement &left,
@@ -3138,7 +3174,19 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeGTE::isTotalConverted()
    {
-      return _mthMatchOpNode::isTotalConverted() ;
+      if ( _mthMatchOpNode::isTotalConverted() )
+      {
+         if ( _toMatch.type() == Array )
+         {
+            // Should not generate rtnPredicate for array
+            return FALSE ;
+         }
+         else
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
    }
 
    INT32 _mthMatchOpNodeGTE::_valueMatch( const BSONElement &left,
