@@ -184,11 +184,6 @@ public class GroupMgr {
      */
     // TODO:可被替代，屏蔽
     private boolean checkBusiness(boolean printAndThrowAllException) throws ReliabilityException {
-        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
-        if (createTestCollection(printAndThrowAllException) == false
-                || testCatalogSync(printAndThrowAllException) == false)
-            return false;
-
         List<GroupCheckResult> results = checkGroup(printAndThrowAllException);
 
         for (GroupCheckResult result : results) {
@@ -199,34 +194,28 @@ public class GroupMgr {
                 return false;
             }
         }
-        return true;
+        
+        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+        if (createTestCollection(printAndThrowAllException)) {
+            // 因为catalog的同步策略不受ReplSize影响，所以删除cl后要等待catalog同步，以免影响外部
+            return dropTestCollection(printAndThrowAllException) && waitCatalogSync(printAndThrowAllException);
+        } else {
+            return false;
+        }
     }
 
-
-    private boolean testCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
+    private boolean isCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
         GroupWrapper catagroup = new GroupMgr().getGroupByName("SYSCatalogGroup");
         List<NodeWrapper> nodes = catagroup.getNodes();
         boolean ret = true;
+        long[] clCount = new long[nodes.size()];
+        int i = 0;
         for (NodeWrapper node : nodes) {
             Sequoiadb db = node.connect();
             try {
                 DBCollection cl = db.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS");
-                if (cl == null) {
-                    if (printAndThrowAllException) {
-                        System.out.println(
-                                "Check business:failed to query test collection(clForTestBusiness_reliability) on SYSCatalogGroup:Can not find SYSCAT.SYSCOLLECTIONS");
-                    }
-                    ret = false;
-                }
-                long count = cl.getCount(
-                        "{Name:'" + SdbTestBase.csName + ".clForTestBusiness_reliability'}");
-                if (count == 0) {
-                    if (printAndThrowAllException) {
-                        System.out.println(
-                                "Check business:failed to query test collection(clForTestBusiness_reliability) on SYSCatalogGroup:Can not find clForTestBusiness_reliability");
-                    }
-                    ret = false;
-                }
+                long count = cl.getCount();
+                clCount[i++] = count;
             } catch (BaseException e) {
                 ret = false;
                 if (printAndThrowAllException) {
@@ -238,26 +227,73 @@ public class GroupMgr {
                 db.close();
             }
         }
+        if (ret == false) {
+            return ret;
+        } else {
+            boolean isConsistency = true;
+            long aCount = clCount[0];
+            for (i = 1; i < clCount.length; ++i) {
+                long bCount = clCount[i];
+                if (aCount != bCount) {
+                    isConsistency = false;
+                    break;
+                }
+            }
+            ret = isConsistency;
+            return ret;
+        }
+    }
+    
+    private boolean waitCatalogSync(boolean printAndThrowAllException) throws ReliabilityException {
+        int checkTimes = 30;
+        int checkInterval = 1000; // 1s
+        boolean ret = false;
+        for (int i = 0; i < checkTimes; ++i) {
+            if (isCatalogSync(false)) {
+                ret = true;
+                break;
+            }
+            try {
+                Thread.sleep(checkInterval);
+            } catch (InterruptedException e) {
+            }
+        }
+        if (ret) {
+            return ret;
+        } else if (printAndThrowAllException) {
+            ret = isCatalogSync(printAndThrowAllException);
+            return ret;
+        } else {
+            return ret;
+        }
+    }
+    
+    private boolean dropTestCollection(boolean printAndThrowAllException) throws ReliabilityException {
+        boolean ret = true;
         Sequoiadb db = null;
         try {
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             db.getCollectionSpace(SdbTestBase.csName).dropCollection("clForTestBusiness_reliability");
         } catch (BaseException e) {
             ret = false;
-            System.out.println("Check business:failed to drop test collection:" + e.getErrorCode());
+            if (printAndThrowAllException) {
+                System.out.println("Check business:failed to drop test collection:" + e.getErrorCode());
+            }
         } finally {
-            if (db != null)
+            if (db != null) {
                 db.close();
+            }
         }
         return ret;
     }
 
     private boolean createTestCollection(boolean printAndThrowAllException) throws ReliabilityException {
         Sequoiadb db = null;
-        List<String> groupNames = new GroupMgr().getAllDataGroupName();
+        List<String> groupNames = null;
         int index = 0;
         boolean result = true;
         try {
+            groupNames = new GroupMgr().getAllDataGroupName();
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             CollectionSpace cs = db.getCollectionSpace(SdbTestBase.csName);
             for (index = 0; index < groupNames.size(); index++) {
@@ -278,10 +314,11 @@ public class GroupMgr {
                 throw new ReliabilityException(e);
             }
         } finally {
-            if (db != null)
+            if (db != null) {
                 db.close();
-            return result;
+            }
         }
+        return result;
     }
 
     /**
@@ -329,11 +366,6 @@ public class GroupMgr {
      */
     // TODO:可被替代，屏蔽
     private boolean checkBusinessWithLSN(boolean printAndThrowAllException) throws ReliabilityException {
-        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
-        if (createTestCollection(printAndThrowAllException) == false
-                || testCatalogSync(printAndThrowAllException) == false)
-            return false;
-
         List<GroupCheckResult> results = checkGroup(printAndThrowAllException);
 
         for (GroupCheckResult result : results) {
@@ -344,7 +376,14 @@ public class GroupMgr {
                 return false;
             }
         }
-        return true;
+        
+        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+        if (createTestCollection(printAndThrowAllException)) {
+            // 因为catalog的同步策略不受ReplSize影响，所以删除cl后要等待catalog同步，以免影响外部
+            return dropTestCollection(printAndThrowAllException) && waitCatalogSync(printAndThrowAllException);
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -393,10 +432,6 @@ public class GroupMgr {
     // TODO:可被替代，屏蔽
     private boolean checkBusinessWithLSNAndDisk(boolean printAndThrowAllException)
             throws ReliabilityException {
-        if (createTestCollection(printAndThrowAllException) == false
-                || testCatalogSync(printAndThrowAllException) == false)
-            return false;
-
 
         List<GroupCheckResult> results = checkGroup(printAndThrowAllException);
         for (GroupCheckResult result : results) {
@@ -407,7 +442,14 @@ public class GroupMgr {
                 return false;
             }
         }
-        return true;
+        
+        // 尝试创建一个ReplSize=3的测试集合（检测所有数据节点是否Alive）
+        if (createTestCollection(printAndThrowAllException)) {
+            // 因为catalog的同步策略不受ReplSize影响，所以删除cl后要等待catalog同步，以免影响外部
+            return dropTestCollection(printAndThrowAllException) && waitCatalogSync(printAndThrowAllException);
+        } else {
+            return false;
+        }
     }
 
     /**
