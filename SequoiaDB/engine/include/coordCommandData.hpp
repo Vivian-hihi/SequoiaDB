@@ -714,6 +714,24 @@ namespace engine
    } ;
    typedef _coordCMDDropIndex coordCMDDropIndex ;
 
+#if 0
+// Do not support pop operation on coord for now.
+   /*
+      _coordCMDPop define
+   */
+   class _coordCMDPop : public _coordCommandBase
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+      public:
+         _coordCMDPop() ;
+         virtual ~_coordCMDPop() ;
+         virtual INT32 execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf ) ;
+   } ;
+   typedef _coordCMDPop coordCMDPop ;
+#endif
 }
 
 #endif // COORD_COMMAND_DATA_HPP__

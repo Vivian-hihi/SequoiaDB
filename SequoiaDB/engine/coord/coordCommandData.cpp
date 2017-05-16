@@ -2892,6 +2892,77 @@ namespace engine
    {
    }
 
+#if 0
+// Do not support pop operation on coord for now.
+   /*
+      _coordCMDPop implement
+   */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDPop,
+                                      CMD_NAME_POP,
+                                      FALSE ) ;
+   _coordCMDPop::_coordCMDPop()
+   {
+   }
+
+   _coordCMDPop::~_coordCMDPop()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( COORD_POP_EXE, "_coordCMDPop::execute" )
+   INT32 _coordCMDPop::execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
+                                rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( COORD_POP_EXE ) ;
+      CHAR *option = NULL;
+      BSONObj boQuery ;
+      const CHAR *fullName = NULL ;
+      rc = msgExtractQuery( ( CHAR * )pMsg, NULL, NULL,
+                            NULL, NULL, &option, NULL,
+                            NULL, NULL );
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         boQuery = BSONObj( option );
+         BSONElement e = boQuery.getField( FIELD_NAME_COLLECTION );
+         if ( String != e.type() )
+         {
+            PD_LOG( PDERROR, "invalid pop msg:%s",
+                    boQuery.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         fullName = e.valuestr() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error;
+      }
+
+      rc = executeOnCL( pMsg, cb, fullName, FALSE, NULL, NULL,
+                        NULL, NULL, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to truncate cl:%s, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( COORD_POP_EXE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+#endif
 }
 
 

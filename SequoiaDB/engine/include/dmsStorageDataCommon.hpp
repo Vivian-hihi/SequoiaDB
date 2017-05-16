@@ -969,15 +969,15 @@ namespace engine
          virtual INT32 _onInsertFail( dmsMBContext *context, BOOLEAN hasInsert,
                                       dmsRecordID rid, SDB_DPSCB *dpscb,
                                       ossValuePtr dataPtr, _pmdEDUCB *cb ) = 0 ;
+         virtual INT32  _onOpened() ;
+         virtual void   _onClosed() ;
+         virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
 
       private:
          virtual UINT64 _dataOffset() ;
          virtual UINT32 _curVersion() const ;
          virtual INT32  _checkVersion( dmsStorageUnitHeader *pHeader ) ;
          virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
-         virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
-         virtual INT32  _onOpened() ;
-         virtual void   _onClosed() ;
 
          virtual INT32  _onFlushDirty( BOOLEAN force, BOOLEAN sync ) ;
 

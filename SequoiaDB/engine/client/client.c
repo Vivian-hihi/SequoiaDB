@@ -9755,7 +9755,6 @@ SDB_EXPORT INT32 sdbPop( sdbConnectionHandle cHandle,
                rc = SDB_DRIVER_BSON_ERROR ;
                goto error ;
             }
-            break ;
          }
       }
    }

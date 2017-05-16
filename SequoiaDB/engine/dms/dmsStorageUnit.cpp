@@ -2661,5 +2661,61 @@ namespace engine
       return _cacheHolder.getSUCache( type ) ;
    }
 
+   INT32 getSUTypeFromFile( const CHAR *fileName, DMS_STORAGE_TYPE &type )
+   {
+      INT32 rc = SDB_OK ;
+      OSSFILE file ;
+      INT64 fileSize = 0 ;
+      INT64 readSize = 0 ;
+      CHAR eyeCatcher[DMS_HEADER_EYECATCHER_LEN + 1 ] = { 0 } ;
+
+      if ( !fileName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "File name is not given, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = ossOpen( fileName, OSS_READONLY, OSS_DEFAULTFILE, file ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to open file[%s], rc: %d",
+                   fileName, rc ) ;
+      rc = ossGetFileSize( &file, &fileSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get file size, rc: %d", rc ) ;
+      // Only read the eyecathcer
+      if ( fileSize < DMS_HEADER_EYECATCHER_LEN )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Invalid file size[%lld], rc: %d", fileSize, rc ) ;
+         goto error ;
+      }
+
+      rc = ossReadN( &file, DMS_HEADER_EYECATCHER_LEN, eyeCatcher, readSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to read data from file[%s], rc: %d",
+                   fileName, rc ) ;
+
+      if ( 0 == ossStrcmp( DMS_DATASU_EYECATCHER, eyeCatcher ) )
+      {
+         type = DMS_STORAGE_NORMAL ;
+      }
+      else if ( 0 == ossStrcmp( DMS_DATACAPSU_EYECATCHER, eyeCatcher ) )
+      {
+         type = DMS_STORAGE_CAPPED ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid eye catcher[%s] in file, rc: %d",
+                      eyeCatcher, rc ) ;
+      }
+   done:
+      if ( file.isOpened() )
+      {
+         ossClose( file ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }  // namespace engine
 

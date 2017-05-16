@@ -452,6 +452,8 @@ namespace engine
       }
    }
 
+   INT32 getSUTypeFromFile( const CHAR *fileName, DMS_STORAGE_TYPE &type ) ;
+
 }
 
 #endif //DMSSTORAGEUNIT_HPP_

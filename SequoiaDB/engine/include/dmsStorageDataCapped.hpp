@@ -42,65 +42,43 @@
 
 namespace engine
 {
+#define DMS_INVALID_REC_LOGICALID         0xffffffffffffffff
+#define DMS_CAP_EXTENT_SZ                 (32 * 1024 * 1024)
+#define DMS_CAP_EXTENT_BODY_SZ            ( DMS_CAP_EXTENT_SZ - sizeof( dmsExtent ) )
+#define DMS_CAP_EXTENT_PAGE_NUM           \
+   (DMS_CAP_EXTENT_SZ >> pageSizeSquareRoot())
+
    class _pmdEDUCB ;
    class _mthModifier ;
 
-   #define DMS_INVALID_REC_LOGICALID   0xffffffffffffffff
 
    // Information of the working extent.
    struct _dmsExtentInfo
    {
       dmsExtentID _id ;
+      INT64 _extLogicID ;
       UINT32 _recCount ;
       INT32 _freeSpace ;
       dmsOffset _firstRecordOffset ;
       dmsOffset _lastRecordOffset ;
-      INT64 _recLogicID ;
       UINT32 _totalOrgDataLen ;
       UINT32 _totalDataLen ;
 
       _dmsExtentInfo()
       {
-         reset( FALSE ) ;
+         reset() ;
       }
 
-      void reset( BOOLEAN keepRecLID = TRUE )
+      void reset()
       {
          _id = DMS_INVALID_EXTENT ;
+         _extLogicID = DMS_INVALID_EXTENT ;
          _recCount = 0 ;
          _freeSpace = 0 ;
          _firstRecordOffset = DMS_INVALID_OFFSET ;
          _lastRecordOffset = DMS_INVALID_OFFSET ;
-         if ( !keepRecLID )
-         {
-            _recLogicID = -1 ;
-         }
          _totalOrgDataLen = 0 ;
          _totalDataLen = 0 ;
-      }
-
-      void setInfo( dmsExtentID extentID, const dmsExtent *extent )
-      {
-         /*
-         SDB_ASSERT( extent, "Extent is invalid" ) ;
-         _id = extentID ;
-         _recCount = extent->_recCount ;
-         _freeSpace = extent->_freeSpace - DMS_CAPPED_EXTENT_TAIL_SZ ;
-         _firstRecordOffset = extent->_firstRecordOffset ;
-         _lastRecordOffset = extent->_lastRecordOffset ;
-         if ( -1 == _recLogicID )
-         {
-            _recLogicID = sizeof( dmsExtent ) ;
-         }
-         else
-         {
-            _recLogicID = ( _recLogicID / DMS_CAP_EXTENT_SZ + 1 )
-                          * DMS_CAP_EXTENT_SZ + sizeof( dmsExtent ) ;
-         }
-
-         _totalOrgDataLen = 0 ;
-         _totalDataLen = 0 ;
-         */
       }
 
       const dmsExtentID getID() const { return _id ; }
@@ -110,7 +88,16 @@ namespace engine
                 sizeof( dmsExtent ) : _lastRecordOffset ;
       }
 
-      INT64 getRecordLogicID() { return _recLogicID ; }
+      INT64 getRecordLogicID()
+      {
+         INT64 logicID = _extLogicID * DMS_CAP_EXTENT_BODY_SZ ;
+         if ( DMS_INVALID_OFFSET != _lastRecordOffset )
+         {
+            logicID += _lastRecordOffset - sizeof( dmsExtent ) ;
+         }
+
+         return logicID ;
+      }
    } ;
    typedef _dmsExtentInfo dmsExtentInfo ;
 
@@ -132,6 +119,9 @@ namespace engine
 
    private:
       virtual const CHAR* _getEyeCatcher() const ;
+      virtual INT32 _onMapMeta( UINT64 curOffSet ) ;
+      virtual INT32 _onOpened() ;
+      virtual void _onClosed() ;
       virtual INT32 _onAllocExtent( dmsMBContext *context,
                                     dmsExtent * extAddr,
                                     SINT32 extentID,
@@ -180,36 +170,32 @@ namespace engine
 
       virtual INT32 _operationPermChk( DMS_ACCESS_TYPE accessType ) ;
 
-      void _getExtLIDAndOffsetByLID( INT64 logicalID,
-                                     dmsExtentID &extID,
-                                     INT32 &offset ) ;
-
       INT32 _getIdleExt( dmsMBContext *context, dmsExtentID &extID ) ;
 
       INT32 _transferIdleExt( dmsMBContext *context, dmsExtentID lastIdleExt ) ;
-      INT32 _recycleExtent( dmsMBContext *context ) ;
+      INT32 _recycleOneExtent( dmsMBContext *context ) ;
       INT32 _recycleWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
-      INT32 _recycleActiveExt( dmsMBContext *context, dmsExtentID extID ) ;
-
-      INT32 _popFromWorkExt( dmsMBContext *context, INT64 logicalID) ;
-
-      INT32 _calcRecNumAndSize( const dmsMBContext *context,
-                                dmsExtentID extentID,
-                                UINT32 beginRecOffset,
-                                UINT32 endRecOffset,
-                                UINT32 &recNum,
-                                UINT32 &next ) ;
-
-      INT32 _switchWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
-      INT32 _attachWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
-      INT32 _detachWorkExt( dmsMBContext *context, BOOLEAN sync = TRUE ) ;
-
-      INT32 _popRecordForward( dmsMBContext *context,
+      INT32 _recycleActiveExt( dmsMBContext *context,
                                dmsExtentID extID,
-                               INT32 offset ) ;
-      INT32 _popRecordBackward( dmsMBContext *context,
-                                dmsExtentID extID,
-                                INT32 offset ) ;
+                               BOOLEAN moveToEnd = TRUE ) ;
+
+      INT32 _popFromWorkExt( dmsMBContext *context, dmsExtentID extID,
+                             dmsOffset offset, INT8 direction = 1 ) ;
+
+      INT32 _popFromActiveExt( dmsMBContext *context,
+                               dmsExtentID extentID,
+                               dmsOffset offset,
+                               INT8 direction ) ;
+
+      INT32 _syncWorkExtInfo( UINT16 collectionID ) ;
+      INT32 _switchWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
+      INT32 _attachWorkExt( UINT16 collectionID, dmsExtentID extID ) ;
+      INT32 _detachWorkExt( UINT16 collectionID, BOOLEAN sync = TRUE ) ;
+
+      INT32 _popRecord( dmsMBContext *context,
+                        dmsExtentID extID,
+                        dmsOffset offset,
+                        INT8 direction = 1 ) ;
 
       OSS_INLINE void _updateCLStat( dmsMBStatInfo &mbStat, UINT32 totalSize,
                                      const dmsRecordData &recordData ) ;
@@ -220,6 +206,21 @@ namespace engine
                                        UINT32 recordSize,
                                        const dmsRecordData &recordData ) ;
       OSS_INLINE BOOLEAN _exceedLimit( dmsMBContext *context, UINT32 size ) ;
+      OSS_INLINE void _getExtLIDAndOffsetByLID( INT64 logicalID,
+                                                dmsExtentID &extID,
+                                                dmsOffset &offset ) ;
+      OSS_INLINE dmsExtentID _logicID2ExtID( dmsMBContext *context,
+                                             INT64 logicalID ) ;
+
+      BOOLEAN _extractRecLID( dmsMBContext *context,
+                              INT64 logicalID,
+                              dmsExtentID &extentID,
+                              dmsExtentID &extLID,
+                              dmsOffset &offset ) ;
+
+      INT32 _recycleExtents( dmsMBContext *context,
+                             dmsExtentID targetExtID,
+                             INT8 direction ) ;
 
    private:
       // The information of the working extents of each collection.
@@ -271,7 +272,6 @@ namespace engine
          extInfo._lastRecordOffset += totalSize ;
       }
 
-      extInfo._recLogicID += totalSize ;
       extInfo._totalOrgDataLen += recordData.orgLen() ;
       extInfo._totalDataLen += recordData.len() ;
    }
@@ -303,6 +303,78 @@ namespace engine
       }
 
       return FALSE ;
+   }
+
+   OSS_INLINE void _dmsStorageDataCapped::_getExtLIDAndOffsetByLID(
+                                                         INT64 logicalID,
+                                                         dmsExtentID &extID,
+                                                         dmsOffset &offset )
+   {
+      if ( logicalID < 0 )
+      {
+         extID = DMS_INVALID_EXTENT ;
+         offset = 0 ;
+      }
+
+      extID = logicalID / DMS_CAP_EXTENT_BODY_SZ ;
+      offset = logicalID % DMS_CAP_EXTENT_BODY_SZ + sizeof( dmsExtent ) ;
+   }
+
+   OSS_INLINE dmsExtentID _dmsStorageDataCapped::_logicID2ExtID( dmsMBContext *context,
+                                                                 INT64 logicalID )
+   {
+      dmsExtRW extRW ;
+      const dmsExtent *extent = NULL ;
+      dmsExtentID extentID = DMS_INVALID_EXTENT ;
+      dmsExtentID extLID = DMS_INVALID_EXTENT ;
+      dmsOffset offset = 0 ;
+
+      dmsExtentInfo *extentInfo =  getWorkExtInfo( context->mbID() ) ;
+
+      SDB_ASSERT( extentInfo, "Impossible" ) ;
+
+      _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
+      if ( DMS_INVALID_EXTENT == logicalID )
+      {
+         extentID = DMS_INVALID_EXTENT ;
+         goto error ;
+      }
+
+      extentID = context->mb()->_firstExtentID ;
+
+      do
+      {
+         extRW = extent2RW( extentID, context->mbID() ) ;
+         extRW.setNothrow( TRUE ) ;
+         extent = extRW.readPtr<dmsExtent>() ;
+         if ( extLID < extent->_logicID )
+         {
+            extentID = DMS_INVALID_EXTENT ;
+            goto error ;
+         }
+         else if ( extLID == extent->_logicID )
+         {
+            // Found the target extent.
+            break ;
+         }
+         else
+         {
+            // Recycle the current extent.
+            extentID = extent->_nextExtent ;
+         }
+
+         if ( extentID == extentInfo->getID() )
+         {
+            // If hit the working extent, and still not found, stop.
+            extentID = DMS_INVALID_EXTENT ;
+            break ;
+         }
+      } while ( DMS_INVALID_EXTENT != extentID ) ;
+
+   done:
+      return extentID ;
+   error:
+      goto done ;
    }
  }
 
