@@ -81,7 +81,7 @@ public class CreateIndex3214 extends SdbTestBase {
         }
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() {
         Sequoiadb db = null;
         try {

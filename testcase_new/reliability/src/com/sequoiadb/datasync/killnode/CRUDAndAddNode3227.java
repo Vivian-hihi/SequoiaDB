@@ -101,9 +101,9 @@ public class CRUDAndAddNode3227 extends SdbTestBase {
         Sequoiadb db = null;
         try {
             GroupWrapper dataGroup = groupMgr.getGroupByName(clGroupName);
-            NodeWrapper priNode = dataGroup.getMaster();
+            NodeWrapper slvNode = dataGroup.getSlave();
 
-            FaultMakeTask faultTask = KillNode.getFaultMakeTask(priNode.hostName(), priNode.svcName(), 1);
+            FaultMakeTask faultTask = KillNode.getFaultMakeTask(slvNode.hostName(), slvNode.svcName(), 1);
             TaskMgr mgr = new TaskMgr(faultTask);
             CRUDTask cTask = new CRUDTask();
             AddNodeTask aTask = new AddNodeTask();
