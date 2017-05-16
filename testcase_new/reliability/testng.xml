@@ -31,7 +31,8 @@
 	<test name="reliability_fullSync">
       <packages>
 		  <package name="com.sequoiadb.datasync.brokennetwork" />
-		   <package name="com.sequoiadb.datasync.killnode" />
+		  <package name="com.sequoiadb.datasync.killnode" />
+		  <package name="com.sequoiadb.datasync.restartnode" />
       </packages>
 	</test>
 
