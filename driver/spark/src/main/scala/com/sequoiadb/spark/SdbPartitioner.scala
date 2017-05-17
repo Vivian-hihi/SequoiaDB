@@ -117,7 +117,7 @@ private object SdbPartitioner extends Logging {
                     }
                 }
 
-                map += (groupName -> nodeList.toList)
+                map += (groupName -> nodeList.sorted.toList)
             }
         } catch {
             case e: BaseException =>
@@ -390,7 +390,7 @@ private[spark] class SdbShardingPartitioner(config: SdbConfig, filter: SdbFilter
                 }
 
                 val partition = SdbPartition(
-                    groups(sharding.groupName),
+                    urls,
                     sharding.csName,
                     sharding.clName,
                     filter,
