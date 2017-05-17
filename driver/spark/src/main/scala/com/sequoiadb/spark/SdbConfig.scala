@@ -109,6 +109,13 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
         invalidConfigValue(SdbConfig.FastCursorBufSize, fastCursorBufSize)
     }
 
+    val fastCursorDecoderNum: Int = properties.get(SdbConfig.FastCursorDecoderNum)
+        .map(_.toInt).getOrElse(SdbConfig.DefaultFastCursorDecoderNum)
+
+    if (fastCursorDecoderNum <= 0 || fastCursorDecoderNum > 16) {
+        invalidConfigValue(SdbConfig.FastCursorDecoderNum, fastCursorDecoderNum)
+    }
+
     val partitionMode: String = properties
         .getOrElse(SdbConfig.PartitionMode, SdbConfig.DefaultPartitionMode)
 
@@ -155,6 +162,7 @@ object SdbConfig {
     val CursorType = "cursortype"
     // fast, normal
     val FastCursorBufSize = "fastcursorbufsize"
+    val FastCursorDecoderNum = "fastcursordecodernum"
     val PartitionMode = "partitionmode"
     // single, sharding, datablock, auto
     val PartitionBlockNum = "partitionblocknum"
@@ -182,6 +190,7 @@ object SdbConfig {
         BulkSize,
         CursorType,
         FastCursorBufSize,
+        FastCursorDecoderNum,
         PartitionMode,
         PartitionBlockNum,
         PartitionMaxNum,
@@ -204,6 +213,7 @@ object SdbConfig {
     val DefaultBulkSize = 500
     val DefaultCursorType = "fast"
     val DefaultFastCursorBufSize = 500
+    val DefaultFastCursorDecoderNum = 2
     val DefaultPartitionMode = "auto"
     val DefaultPartitionBlockNum = 4
     val DefaultPartitionMaxNum = 1000

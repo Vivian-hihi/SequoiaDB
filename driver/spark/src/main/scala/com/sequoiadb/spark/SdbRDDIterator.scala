@@ -113,8 +113,10 @@ abstract class SdbRDDIterator[T: ClassTag](config: SdbConfig,
 
     protected lazy val sdbCursor: SdbCursor = {
         if (config.cursorType.equalsIgnoreCase(SdbConfig.CURSOR_TYPE_FAST)) {
-            logInfo(s"create fast cursor, buf size = ${config.fastCursorBufSize}")
-            new SdbFastCursor(cursor, config.fastCursorBufSize)
+            logInfo(s"create fast cursor, " +
+                s"buf size = ${config.fastCursorBufSize}, " +
+                s"decoder num = ${config.fastCursorDecoderNum}")
+            new SdbFastCursor(cursor, config.fastCursorBufSize, config.fastCursorDecoderNum)
         } else {
             logInfo("create normal cursor")
             new SdbNormalCursor(cursor)

@@ -22,10 +22,13 @@ import org.bson.BSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class SdbFastCursor implements SdbCursor {
     private static final Logger logger = LoggerFactory.getLogger(SdbFastCursor.class);
@@ -33,21 +36,26 @@ class SdbFastCursor implements SdbCursor {
     private final int bufSize;
     private final BlockingQueue<byte[]> rawObjs;
     private final BlockingQueue<BSONObject> bsonObjs;
+    private final AtomicInteger decodingThreadNum = new AtomicInteger();
     private final AtomicBoolean queryEOC = new AtomicBoolean();
     private final AtomicBoolean decodeEOC = new AtomicBoolean();
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final AtomicBoolean hasThreadException = new AtomicBoolean();
     private Throwable threadException;
     private final Thread queryThread;
-    private final Thread decodeThread;
+    private final List<Thread> decodeThreads;
 
-    public SdbFastCursor(DBCursor cursor, int bufSize) {
+    public SdbFastCursor(DBCursor cursor, int bufSize, int decoderNum) {
         if (cursor == null) {
             throw new SdbException("Cursor is null.");
         }
 
         if (bufSize <= 0) {
             throw new SdbException("Invalid bufSize: " + bufSize);
+        }
+
+        if (decoderNum <= 0) {
+            throw new SdbException("Invalid decoderNum: " + decoderNum);
         }
 
         this.cursor = cursor;
@@ -59,9 +67,14 @@ class SdbFastCursor implements SdbCursor {
         queryThread.setDaemon(true);
         queryThread.start();
 
-        decodeThread = new Thread(new Decode());
-        decodeThread.setDaemon(true);
-        decodeThread.start();
+        decodeThreads = new ArrayList<>(decoderNum);
+        for (int i = 0; i < decoderNum; i++) {
+            Thread thread = new Thread(new Decode());
+            thread.setDaemon(true);
+            thread.start();
+            decodingThreadNum.incrementAndGet();
+            decodeThreads.add(thread);
+        }
     }
 
     private class Query implements Runnable {
@@ -97,7 +110,10 @@ class SdbFastCursor implements SdbCursor {
                     byte[] raw = rawObjs.poll(1, TimeUnit.MILLISECONDS);
                     if (raw == null) {
                         if (queryEOC.get() && rawObjs.size() == 0) {
-                            decodeEOC.set(true);
+                            int num = decodingThreadNum.decrementAndGet();
+                            if (num == 0) {
+                                decodeEOC.set(true);
+                            }
                             break;
                         } else {
                             continue;
@@ -174,7 +190,9 @@ class SdbFastCursor implements SdbCursor {
             isClosed.set(true);
             try {
                 queryThread.join();
-                decodeThread.join();
+                for (Thread t : decodeThreads) {
+                    t.join();
+                }
             } catch (InterruptedException e) {
                 throw new SdbException(e);
             }
