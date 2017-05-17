@@ -33,8 +33,8 @@ import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
 
 /**
- * @FileName seqDB-3228: LOB写入加新建节点过程中主节点节点异常重启，该主节点为同步的源节点
- *           seqDB-3237: LOB写入加新建节点过程中主节点节点异常重启，该主节点为同步的目的节点
+ * @FileName seqDB-3228: LOB写入加新建节点过程中备节点节点异常重启，该主节点为同步的源节点
+ *           seqDB-3237: LOB写入加新建节点过程中备节点节点异常重启，该主节点为同步的目的节点
  * @Author linsuqiang
  * @Date 2017-03-20
  * @Version 1.00
