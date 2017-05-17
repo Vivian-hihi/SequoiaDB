@@ -5,8 +5,8 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
-import com.sequoiadb.metaopr.comm.DBoperateTask;
-import com.sequoiadb.metaopr.comm.MyUtil;
+import com.sequoiadb.metaopr.commons.DBoperateTask;
+import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.TaskMgr;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static com.sequoiadb.metaopr.commons.MyUtil.*;
 import static org.testng.Assert.assertTrue;
 /**
  * 1、创建domian，构造脚本循环执行创建domain操作db.createDomain（）
@@ -46,7 +46,7 @@ public class DropDomain2288 {
     @BeforeClass
     public void setup() {
         MyUtil.printBeginTime(this);
-        db = MyUtil.getMySdb().getSequoiadb();
+        db = MyUtil.getSdb();
         for (int i = 0; i < 500; i++) {
             String name = "domain" + i;
             domainNames.add(name);

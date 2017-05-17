@@ -3,10 +3,10 @@ package com.sequoiadb.metaopr.noderestart;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.GroupMgr;
+import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
-import com.sequoiadb.metaopr.comm.DBoperateTask;
-import com.sequoiadb.metaopr.comm.MyUtil;
-import com.sequoiadb.metaopr.comm.StandTestInterface;
+import com.sequoiadb.metaopr.commons.DBoperateTask;
+import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -46,7 +46,7 @@ public class CreateDomain2285 implements StandTestInterface {
     @BeforeClass
     public void setup() {
         MyUtil.printBeginTime(this);
-        db = MyUtil.getMySdb().getSequoiadb();
+        db = MyUtil.getSdb();
         for (int i = 0; i < 100; i++) {
             domainNames.add("domain" + i);
         }

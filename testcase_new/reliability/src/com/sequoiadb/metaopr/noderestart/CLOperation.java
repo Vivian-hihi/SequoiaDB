@@ -2,11 +2,11 @@ package com.sequoiadb.metaopr.noderestart;
 
 import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.NodeWrapper;
+import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
-import com.sequoiadb.metaopr.comm.DBoperateTask;
-import com.sequoiadb.metaopr.comm.MyUtil;
-import com.sequoiadb.metaopr.comm.StandTestInterface;
+import com.sequoiadb.metaopr.commons.DBoperateTask;
+import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.OperateTask;
 import com.sequoiadb.task.TaskMgr;
@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static com.sequoiadb.metaopr.commons.MyUtil.*;
 import static org.testng.Assert.assertTrue;
 
 /**

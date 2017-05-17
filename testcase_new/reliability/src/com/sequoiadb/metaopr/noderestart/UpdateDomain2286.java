@@ -7,8 +7,8 @@ import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
-import com.sequoiadb.metaopr.comm.DBoperateTask;
-import com.sequoiadb.metaopr.comm.MyUtil;
+import com.sequoiadb.metaopr.commons.DBoperateTask;
+import com.sequoiadb.metaopr.commons.MyUtil;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
 import org.testng.SkipException;
@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static com.sequoiadb.metaopr.commons.MyUtil.*;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -48,7 +48,7 @@ public class UpdateDomain2286 {
     @BeforeClass
     public void setup() throws ReliabilityException {
         MyUtil.printBeginTime(this);
-        db = getMySdb().getSequoiadb();
+        db = getSdb();
         groupNames = new GroupMgr().getAllDataGroupName();
     }
 
