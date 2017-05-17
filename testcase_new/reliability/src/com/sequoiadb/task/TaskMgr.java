@@ -105,6 +105,29 @@ public class TaskMgr {
             entry.getValue().start();
         }
     }
+    
+    public void join() {
+        for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
+            try {
+                entry.getValue().join();
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+    }
+    
+    public void check() throws ReliabilityException {
+        if (!this.isAllSuccess()) {
+            throw new ReliabilityException(this.getErrorMsg());
+        }
+        for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
+            try {
+                entry.getValue().check();
+            } catch (ReliabilityException e) {
+                throw e;
+            }
+        }
+    }
 
     /**
      * @return 所有任务反初始化成功，返回true，任一任务反初始化失败，则返回false
@@ -113,21 +136,8 @@ public class TaskMgr {
     public boolean fini() throws ReliabilityException {
         for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
             entry.getValue().fini();
-
         }
-
         return true;
-    }
-
-    public void join() {
-        for (Map.Entry<String, Task> entry : taskSet.entrySet()) {
-            try {
-                entry.getValue().join();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-
-            }
-        }
     }
 
     /**

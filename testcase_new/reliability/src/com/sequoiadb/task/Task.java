@@ -43,6 +43,10 @@ public abstract class Task extends Thread {
     public void init() throws ReliabilityException {
 
     }
+    
+    public void check() throws ReliabilityException {
+        
+    }
 
     public void fini() throws ReliabilityException {
 
