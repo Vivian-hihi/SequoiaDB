@@ -3,7 +3,6 @@ package com.sequoiadb.lob;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
 import org.bson.util.JSON;
 
 import static com.sequoiadb.metaopr.commons.MyUtil.*;
