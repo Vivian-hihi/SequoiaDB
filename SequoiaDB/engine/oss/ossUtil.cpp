@@ -166,6 +166,19 @@ void ossGetCurrentTime( ossTimestamp &TM )
 #endif
 }
 
+UINT64 ossGetCurrentMicroseconds()
+{
+   ossTimestamp current ;
+   ossGetCurrentTime( current ) ;
+
+   return ( (UINT64)current.time ) * 1000000L + current.microtm ;
+}
+
+UINT64 ossGetCurrentMilliseconds()
+{
+   return ossGetCurrentMicroseconds() / 1000L ;
+}
+
 // Get CPU usage for current process
 #define OSS_PROC_FIELD_TO_SKIP_FOR_UTIME 13
 #define OSS_PROC_PATH_LEN_MAX 255

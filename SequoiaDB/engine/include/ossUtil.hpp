@@ -177,6 +177,9 @@ void ossGmtime ( time_t &Time, struct tm &TM ) ;
 // Get current time, expressed as seconds and microseconds since the Epoch
 void ossGetCurrentTime( ossTimestamp &TM ) ;
 
+UINT64 ossGetCurrentMicroseconds() ;
+UINT64 ossGetCurrentMilliseconds() ;
+
 SINT32 ossGetCPUUsage
 (
    ossTime &usrTime,
