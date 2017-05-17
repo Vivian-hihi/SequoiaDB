@@ -87,5 +87,48 @@ if (size != 2 || !bAddNew)
 	throw -1;
 }
 
+//zhaoyu add
+try
+{
+   varCL.upsert( {$set:{a:5}}, {$or:[{b:1}]}) ;
+}
+catch ( e )
+{
+   println( "failed to insert record, rc= " + e ) ;
+   throw e ;
+}
+
+try
+{
+   rc = varCL.find() ;
+}
+catch ( e )
+{
+   println( "failed to read record, rc= " + e ) ;
+   throw e ;
+}
+
+size = 0;
+
+var bAddNew = false;
+while(rc.next())
+{
+	var recordObj = rc.current().toObj();
+	var recordStr = rc.current().toJson();
+	if (recordObj["a"] == 5 && recordObj["b"] === 1)
+	{
+		bAddNew = true;
+	}
+	size++;
+}
+
+if (size != 3 || !bAddNew)
+{
+	println("The size is not equal 3 or The new record no be added. size=" + size);
+	println(varCL.find());
+	throw -1;
+}
+
+
 // clear end
 commDropCL( db, COMMCSNAME, COMMCLNAME, false, false, "drop cl in the end" ) ;
