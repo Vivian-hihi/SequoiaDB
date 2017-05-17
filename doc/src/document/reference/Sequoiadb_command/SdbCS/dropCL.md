@@ -1,44 +1,51 @@
+##名称##
+
+dropCL - 删除当前集合空间下指定的集合。
+
 ##语法##
+
 ***db.collectionspace.dropCL( \<name\> )***
 
-删除指定集合空间下指定的集合。
+##类别##
 
-##参数描述##
+集合空间
 
-| 参数名 | 参数类型 | 描述 | 是否必填 |
-| ------ | ------ | ------ |------ |
-| name | string | 集合名，在同一个集合空间中，集合名必须唯一。 | 是 |
+##描述##
+
+删除当前集合空间下指定的集合。
+
+##参数##
+
+* `name` ( *String*， *必填* )
+
+	集合名。
 
 ##返回值##
 
-无返回值，出错抛异常，并输出错误信息，可以通过
-[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
-关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
+成功：无。
+
+失败：抛出异常。
 
 ##错误##
-| 错误码 		| 可能的原因 	| 解决方法					|
-| ------ 		| ------ 		| ------					|
-| -23			| 集合不存在    | 使用列表查看集合是否存在	|
 
-[错误码](reference/Sequoiadb_error_code.md)
+`dropCL()`函数常见异常如下：
 
-##格式##
+| 错误码 | 错误类型 | 描述 | 解决方法 |
+| ------ | ------ | --- | ------ |
+| -23 | SDB_DMS_NOTEXIST | 集合不存在。| 检查集合是否存在。|
 
-dropCL() 方法的定义格式必须指定 name 参数，并且 name 的值在集合空间中存在，否则操作异常。
+当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
+或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
+可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
 
- ```
-{ "name": "<集合名>" }
- ```
+##版本##
 
-> **Note:**
+v1.0及以上版本
 
-> * name 的值不能是空串，含点（.）或者美元符号（$），并且长度不能超过127B，否则操作失败
-> * 集合名必须在集合空间中存在，否则操作异常
+##例子##
 
-##示例##
+1. 删除集合空间 foo 下的集合 bar。
 
-* 删除集合空间 foo 下的集合 bar，假定集合存在
-
- ```lang-javascript
-> db.foo.dropCL( "bar" )
- ```
+	```lang-javascript
+	> db.foo.dropCL( "bar" )
+ 	```
