@@ -2738,6 +2738,9 @@ namespace engine
 
    BOOLEAN _mthMatchOpNodeNE::isTotalConverted()
    {
+      // We need further matching to exclusive multiple-element array
+      // with given value after index-scan
+      // e.g. $ne:3, we don't want [3,5] to be returned
       return FALSE ;
    }
 
