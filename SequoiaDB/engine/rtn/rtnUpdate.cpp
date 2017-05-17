@@ -62,7 +62,8 @@ namespace engine
       SDB_DMSCB *dmsCB = krcb->getDMSCB () ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB () ;
 
-      if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
+      if ( dpsCB && cb->isFromLocal() &&
+           !cb->dpsEnabled()  && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
       }
