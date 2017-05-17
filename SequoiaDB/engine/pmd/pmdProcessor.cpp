@@ -1374,7 +1374,8 @@ namespace engine
          rc = pOpr->execute( msg, eduCB(), contextID, &buffObj ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Execute operator[%s] failed, rc: %d",
+            PD_LOG( ( SDB_COORD_UNKNOWN_OP_REQ == rc ? PDINFO : PDERROR ),
+                    "Execute operator[%s] failed, rc: %d",
                     pOpr->getName(), rc ) ;
             goto error ;
          }
