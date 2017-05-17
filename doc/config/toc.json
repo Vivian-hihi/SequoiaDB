@@ -1937,6 +1937,12 @@
                      "en": "Oma",
                      "contents": [
                         {
+                           "id": 1495022521,
+                           "file": "Oma",
+                           "cn": "Oma()",
+                           "en": "Oma()"
+                        },
+                        {
                            "id": 1432190889,
                            "file": "close",
                            "cn": "close()",
