@@ -135,7 +135,7 @@ more detail.
 ##HISTORY##
 Since v1.0
 
-##Examples##
+##EXAMPLES##
 1. Create collection "bar" in collection space "foo" without shard key. If
    the collection space "foo" doesn't exist, it will automatically
    generate collection space "foo".

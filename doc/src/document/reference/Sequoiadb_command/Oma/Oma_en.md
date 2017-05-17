@@ -45,7 +45,7 @@ more detail.
 
 since v1.12
 
-##Examples##
+##EXAMPLES##
 
 1. Create an Oma object from localhost
 
