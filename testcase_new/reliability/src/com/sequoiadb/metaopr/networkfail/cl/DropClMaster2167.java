@@ -1,9 +1,9 @@
 package com.sequoiadb.metaopr.networkfail.cl;
 
+import com.sequoiadb.commlib.StandTestInterface;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
-import com.sequoiadb.metaopr.comm.DBoperateTask;
-import com.sequoiadb.metaopr.comm.StandTestInterface;
+import com.sequoiadb.metaopr.commons.DBoperateTask;
 import com.sequoiadb.task.FaultMakeTask;
 import com.sequoiadb.task.TaskMgr;
 import org.testng.annotations.AfterClass;
@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static com.sequoiadb.metaopr.comm.MyUtil.*;
+import static com.sequoiadb.metaopr.commons.MyUtil.*;
 import static org.testng.Assert.assertTrue;
 
 /**
