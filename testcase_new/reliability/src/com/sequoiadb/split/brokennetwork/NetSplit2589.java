@@ -43,6 +43,7 @@ public class NetSplit2589 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private String connectUrl;
     private boolean clearFlag = false;
+    private boolean splitComplete = false;
     private String brokenNetHost;
 
     @BeforeClass()
@@ -114,32 +115,34 @@ public class NetSplit2589 extends SdbTestBase {
             // 最长等待2分钟的集群环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
-            // 再次插入数据
-            db = new Sequoiadb(connectUrl, "", "");
-            db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 10000, 11000);
+            if (splitComplete) {
+                // 再次插入数据
+                db = new Sequoiadb(connectUrl, "", "");
+                db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                insertData(cl, 10000, 11000);
 
-            // 等待切分任务的结束（由于cata断网，同步切分返回不一定在目标组建立了集合）
-            Utils.waitSplit(db, cl.getFullName());
+                // 等待切分任务的结束（由于cata断网，同步切分返回不一定在目标组建立了集合）
+                Utils.waitSplit(db, cl.getFullName());
 
-            // 源和目标数据量比对
-            int bound = getBound(db);
-            // 5000 + 5000 + 1000 - bound :插入线程插入的数据 + setUp插入的数据 + 所有线程结束后插入的数据
-            // - 切分至源组的数据 = 目标组数据量
-            checkGroupData(db, destGroupName, "{sk:{$gte:" + bound + "}}",
-                    5000 + 5000 + 1000 - bound);
-            checkGroupData(db, srcGroupName, "{sk:{$lt:" + bound + "}}", bound);
-            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:11000}}"), 11000);
+                // 源和目标数据量比对
+                int bound = getBound(db);
+                // 5000 + 5000 + 1000 - bound :插入线程插入的数据 + setUp插入的数据 +
+                // 所有线程结束后插入的数据
+                // - 切分至源组的数据 = 目标组数据量
+                checkGroupData(db, destGroupName, "{sk:{$gte:" + bound + "}}",
+                        5000 + 5000 + 1000 - bound);
+                checkGroupData(db, srcGroupName, "{sk:{$lt:" + bound + "}}", bound);
+                Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:11000}}"), 11000);
 
-            // 组间一致性校验，尝试至多30次，每次间隔1秒
-            GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
-            GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            GroupWrapper cataGroup = groupMgr.getGroupByName(Utils.CATA_RG_NAME);
-            Assert.assertEquals(srcGroup.checkInspect(60), true);
-            Assert.assertEquals(destGroup.checkInspect(60), true);
-            Assert.assertEquals(cataGroup.checkInspect(60), true);
-
+                // 组间一致性校验，尝试至多30次，每次间隔1秒
+                GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
+                GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
+                GroupWrapper cataGroup = groupMgr.getGroupByName(Utils.CATA_RG_NAME);
+                Assert.assertEquals(srcGroup.checkInspect(60), true);
+                Assert.assertEquals(destGroup.checkInspect(60), true);
+                Assert.assertEquals(cataGroup.checkInspect(60), true);
+            }
             clearFlag = true;
         }
         catch (ReliabilityException e) {
@@ -261,7 +264,13 @@ public class NetSplit2589 extends SdbTestBase {
                 sdb = new Sequoiadb(connectUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, 50);
+                try {
+                    cl.split(srcGroupName, destGroupName, 50);
+                    splitComplete = true;
+                }
+                catch (BaseException e) {
+                    System.out.println("split have exception:" + e.getMessage());
+                }
             }
             catch (BaseException e) {
                 throw e;

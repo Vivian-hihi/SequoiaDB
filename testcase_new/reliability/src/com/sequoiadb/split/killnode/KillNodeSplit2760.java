@@ -41,6 +41,7 @@ public class KillNodeSplit2760 extends SdbTestBase {
     private int totalCount;
     private Sequoiadb commSdb;
     private boolean clearFlag = false;
+    private boolean splitComplete = false;
 
     @BeforeClass()
     public void setUp() {
@@ -108,21 +109,22 @@ public class KillNodeSplit2760 extends SdbTestBase {
             // 最长等待2分钟的集群环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
-            // 再次插入数据
-            commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-            DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 5000, 5100);
+            if (splitComplete) {
+                // 再次插入数据
+                commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
+                insertData(cl, 5000, 5100);
 
-            // 范围切分覆盖
-            // Assert.assertEquals(destGroup.checkInspect(60), true);
-            // Assert.assertEquals(srcGroup.checkInspect(60), true);
+                // 范围切分覆盖
+                // Assert.assertEquals(destGroup.checkInspect(60), true);
+                // Assert.assertEquals(srcGroup.checkInspect(60), true);
 
-            // 源和目标数据量比对
-            long destCount = checkGroupData(commSdb, destGroupName);
-            long srcCount = checkGroupData(commSdb, srcGroupName);
-            Assert.assertEquals(srcCount + destCount, totalCount);
-            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:5100}}"), 5100);
-
+                // 源和目标数据量比对
+                long destCount = checkGroupData(commSdb, destGroupName);
+                long srcCount = checkGroupData(commSdb, srcGroupName);
+                Assert.assertEquals(srcCount + destCount, totalCount);
+                Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:5100}}"), 5100);
+            }
             clearFlag = true;
         }
         catch (ReliabilityException e) {
@@ -189,7 +191,13 @@ public class KillNodeSplit2760 extends SdbTestBase {
                 sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, 50);
+                try {
+                    cl.split(srcGroupName, destGroupName, 50);
+                    splitComplete = true;
+                }
+                catch (BaseException e) {
+                    System.out.println("split have exception:" + e.getMessage());
+                }
             }
             catch (BaseException e) {
                 throw e;

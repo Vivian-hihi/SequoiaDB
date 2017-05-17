@@ -41,6 +41,7 @@ public class NetSplit2583 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private String connectUrl;
     private boolean clearFlag = false;
+    private boolean splitComplete = false;
     private String brokenNetHost;
 
     @BeforeClass()
@@ -108,25 +109,28 @@ public class NetSplit2583 extends SdbTestBase {
             // 最长等待2分钟的环境恢复
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
-            // 再次插入数据
-            db = new Sequoiadb(connectUrl, "", "");
-            db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-            DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
-            insertData(cl, 9000, 10000);
+            if (splitComplete) {
+                // 再次插入数据
+                db = new Sequoiadb(connectUrl, "", "");
+                db.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = db.getCollectionSpace(csName).getCollection(clName);
+                insertData(cl, 9000, 10000);
 
-            // 百分比切分覆盖
-            // GroupWrapper srcGroup = groupMgr.getGroupByName(srcGroupName);
-            // GroupWrapper destGroup = groupMgr.getGroupByName(destGroupName);
-            // GroupWrapper cataGroup =
-            // groupMgr.getGroupByName(Utils.CATA_RG_NAME);
-            // Assert.assertEquals(srcGroup.checkInspect(60), true);
-            // Assert.assertEquals(destGroup.checkInspect(60), true);
-            // Assert.assertEquals(cataGroup.checkInspect(60), true);
+                // 百分比切分覆盖
+                // GroupWrapper srcGroup =
+                // groupMgr.getGroupByName(srcGroupName);
+                // GroupWrapper destGroup =
+                // groupMgr.getGroupByName(destGroupName);
+                // GroupWrapper cataGroup =
+                // groupMgr.getGroupByName(Utils.CATA_RG_NAME);
+                // Assert.assertEquals(srcGroup.checkInspect(60), true);
+                // Assert.assertEquals(destGroup.checkInspect(60), true);
+                // Assert.assertEquals(cataGroup.checkInspect(60), true);
 
-            checkGroupData(db, destGroupName, "{sk:{$gte:2500,$lt:7500}}", 5000);
-            checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:7500}},{sk:{$lt:2500}}]}", 5000);
-            Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), 10000);
-
+                checkGroupData(db, destGroupName, "{sk:{$gte:2500,$lt:7500}}", 5000);
+                checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:7500}},{sk:{$lt:2500}}]}", 5000);
+                Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), 10000);
+            }
             clearFlag = true;
         }
         catch (ReliabilityException e) {
@@ -207,8 +211,14 @@ public class NetSplit2583 extends SdbTestBase {
                 sdb = new Sequoiadb(connectUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:2500}"), // 切分
-                        (BSONObject) JSON.parse("{sk:7500}"));
+                try {
+                    cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{sk:2500}"), // 切分
+                            (BSONObject) JSON.parse("{sk:7500}"));
+                    splitComplete = true;
+                }
+                catch (BaseException e) {
+                    System.out.println("split have exception:" + e.getMessage());
+                }
             }
             catch (BaseException e) {
                 throw e;
