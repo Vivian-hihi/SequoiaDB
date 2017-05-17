@@ -218,8 +218,14 @@ public class CreateCLAndKillPrimaryCatalog2280 extends SdbTestBase {
 	* randomly select a cl insert data,check the data split groups by domain
 	*/   
     private void insertByCL() { 
-    	Random random = new Random();    	
-    	String clName = preCLName + "_" + random.nextInt(count);
+    	String clName = "";
+    	if (count != 0){
+    		Random random = new Random();    	
+        	clName = preCLName + "_" + random.nextInt(count);
+    	}else{
+    		clName = preCLName + "_" +count;
+    	}
+    	
     	long insertNum = 1000;
     	try{
 			 List<BSONObject>list = new ArrayList<BSONObject>();			 
