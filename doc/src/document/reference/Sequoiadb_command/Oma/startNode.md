@@ -1,37 +1,58 @@
+##名称##
+
+startNode - 在目标集群控制器（sdbcm）所在的机器中启动指定节点。
+
 ##语法##
-***oma.startNode( \<svcname\> )***
+
+***oma.startNode( <svcname> )***
+
+##类别##
+
+Oma
+
+##描述##
 
 在目标集群控制器（sdbcm）所在的机器中启动指定节点。
 
-##参数描述##
+**Note:**
 
-| 参数名 | 参数类型 | 描述 | 是否必填 |
-| ------ | ------ | ------ | ------ |
-| svcname | string | 节点端口号。 | 是 |
+* oma对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
 
-> **Note:**
-> 
-> * oma对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
-> * 指定启动的节点必须存在，否则出现异常。
+* 指定启动的节点必须存在，否则出现异常。
+
+##参数##
+
+* `svcname` ( *String*， *必填* )
+
+	节点端口号。
 
 ##返回值##
 
-无返回值，出错抛异常，并输出错误信息，可以通过
-[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
-关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
+成功：无。
+
+失败：抛出异常。
 
 ##错误##
-| 错误码 		| 可能的原因 	| 解决方法					|
-| ------ 		| ------ 		| ------					|
-| -146			| 节点不存在    | 使用列表查看节点是否存在	|
 
-[错误码](reference/Sequoiadb_error_code.md)
+`startNode()`函数常见异常如下：
+
+| 错误码 | 错误类型 | 描述 | 解决方法 |
+| ------ | ------ | --- | ------ |
+| -146 | SDBCM_NODE_NOTEXISTED | 节点不存在 | 使用列表查看节点是否存在 |
+
+当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
+或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
+可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
+
+##版本##
+
+v2.0及以上版本
 
 ##示例##
 
-* 在本地启动一个端口号为11830的节点
+1. 在本地启动一个端口号为11830的节点。
 
- ```lang-javascript
-> var oma = new Oma( "localhost", 11790 )
-> oma.startNode( 11830 )
- ```
+ 	```lang-javascript
+	> var oma = new Oma( "localhost", 11790 )
+	> oma.startNode( 11830 )
+ 	```

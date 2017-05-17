@@ -1,41 +1,68 @@
+##名称##
+
+createOM - 在目标集群控制器（sdbcm）所在的机器中创建sdbom服务进程（ SequoiaDB 管理中心进程）。
+
 ##语法##
 ***oma.createOM( \<svcname\>, \<dbpath\>, [config obj] )***
 
+##类别##
+
+Oma
+
+##描述##
+
 在目标集群控制器（sdbcm）所在的机器中创建sdbom服务进程（ SequoiaDB 管理中心进程）。
 
-##参数描述##
+**Note:**
 
-| 参数名 | 参数类型 | 描述 | 是否必填 |
-| ------ | ------ | ------ | ------ |
-| svcname | string | 节点端口号。 | 是 |
-| dbpath | string | 节点路径。 | 是 |
-| config obj | Json 对象 | 节点配置信息，如配置日志大小，是否打开事务等，具体可参考[数据库配置](database_management/runtime_configuration.md)。 | 否 |
+* oma 对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
 
-> **Note:**
-> 
-> * oma 对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
-> * 一个集群只能归属于一个S equoiaDB 管理中心管理，但一个 SequoiaDB 管理中心却可管理多个集群。一般只创建一个 sdbom 服务进程即可。
+* 一个集群只能归属于一个SequoiaDB 管理中心管理，但一个 SequoiaDB 管理中心却可管理多个集群。一般只创建一个 sdbom 服务进程即可。
+
+##参数##
+
+* `svcname` ( *String*， *必填* )
+
+    节点端口号。
+
+* `dbpath` ( *String*， *必填* )
+
+    节点路径。
+
+* `config obj` ( *Object*， *选填* )
+
+	节点配置信息，如配置日志大小，是否打开事务等，具体可参考[数据库配置](database_management/runtime_configuration.md)。
 
 ##返回值##
 
-返回 OM 对象，出错抛异常，并输出错误信息，可以通过
-[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
-关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
+成功：返回 OM 对象。
+
+失败：抛出异常。
 
 ##错误##
-| 错误码 		| 可能的原因 	| 解决方法					|
-| ------ 		| ------ 		| ------					|
-| -6			| 参数错误      | 确认参数类型和参数个数是否正确	|
-| -145			| 节点已存在    | 使用列表查看节点是否存在	|
 
-[错误码](reference/Sequoiadb_error_code.md)
+`createOM()`函数常见异常如下：
+
+| 错误码 | 错误类型 | 描述 | 解决方法 |
+| ------ | ------ | --- | ------ |
+| -6 | SDB_INVALIDARG | 参数错误      | 确认参数类型和参数个数是否正确	|
+| -145 | SDBCM_NODE_EXISTED | 节点已存在    | 使用列表查看节点是否存在	|
+
+当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
+或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
+可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
+
+##版本##
+
+v2.0及以上版本
 
 ##示例##
 
-*在本地中创建并启动一个本地端口号为11780，http端口为8000，web路径为/opt/sequoiadb/web的sdbom进程
+1. 在本地中创建并启动一个本地端口号为11780，http端口为8000，web路径为/opt/sequoiadb/web的sdbom进程
 
- ```lang-javascript
-> var oma = new Oma("localhost", 11790)
-> oma.createOM( 11780, "/opt/sequoiadb/database/sms/11780", { httpname: 8000, wwwpath: "/opt/sequoiadb/web" } )
-> oma.startNode( 11780 )
- ```
+	```lang-javascript
+	> var oma = new Oma("localhost", 11790)
+	> oma.createOM( 11780, "/opt/sequoiadb/database/sms/11780", 
+					{ httpname: 8000, wwwpath:"/opt/sequoiadb/web" } )
+	> oma.startNode( 11780 )
+ 	```
