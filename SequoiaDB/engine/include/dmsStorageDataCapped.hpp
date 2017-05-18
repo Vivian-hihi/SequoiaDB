@@ -212,11 +212,11 @@ namespace engine
       OSS_INLINE dmsExtentID _logicID2ExtID( dmsMBContext *context,
                                              INT64 logicalID ) ;
 
-      BOOLEAN _extractRecLID( dmsMBContext *context,
-                              INT64 logicalID,
-                              dmsExtentID &extentID,
-                              dmsExtentID &extLID,
-                              dmsOffset &offset ) ;
+      INT32 _extractRecLID( dmsMBContext *context,
+                            INT64 logicalID,
+                            dmsExtentID &extentID,
+                            dmsExtentID &extLID,
+                            dmsOffset &offset ) ;
 
       INT32 _recycleExtents( dmsMBContext *context,
                              dmsExtentID targetExtID,
