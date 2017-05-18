@@ -204,23 +204,24 @@ namespace engine
                                            _dmsCB, _dpsCB ) ;
             PD_LOG ( PDEVENT, "Job[%s] drop the collection[%s], rc:%d", name(),
                      _clFullName.c_str(), rc ) ;
-            if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
+            if ( SDB_DMS_CS_NOTEXIST == rc )
             {
                rc = SDB_OK ;
             }
-            else if ( SDB_OK == rc )
+            else if ( SDB_OK == rc || SDB_DMS_NOTEXIST == rc )
             {
                // drop empty collectionspace, ignore errors
                _dmsCB->dropEmptyCollectionSpace(
                         dmsGetCSNameFromFullName( _clFullName ).c_str(),
                         eduCB(), _dpsCB ) ;
+               rc = SDB_OK ;
             }
             pTaskMgr->releaseReg( SHARED ) ;
             goto done ;
          }
          pTaskMgr->releaseReg( SHARED ) ;
       }
- 
+
       if ( CLS_CLEANUP_BY_SHARDINGINDEX == _cleanupType() )
       {
          rc = _cleanBySplitKeyObj ( w ) ;
@@ -469,16 +470,17 @@ retry:
                                               _dpsCB ) ;
                PD_LOG ( PDEVENT, "Job[%s] drop the collection[%s], rc:%d",
                         name(), fullName, rc ) ;
-               if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
+               if ( SDB_DMS_CS_NOTEXIST == rc )
                {
                   rc = SDB_OK ;
                }
-               else if ( SDB_OK == rc )
+               else if ( SDB_OK == rc || SDB_DMS_NOTEXIST == rc )
                {
                   // drop empty collectionspace, ignore errors
                   _dmsCB->dropEmptyCollectionSpace(
                            dmsGetCSNameFromFullName( _clFullName ).c_str(),
                            eduCB(), _dpsCB ) ;
+                  rc = SDB_OK ;
                }
                pTaskMgr->releaseReg( SHARED ) ;
                goto done ;
