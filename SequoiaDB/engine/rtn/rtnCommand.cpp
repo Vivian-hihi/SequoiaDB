@@ -2039,7 +2039,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
-      pmdOptionsCB tmpCB ;
+      pmdOptionsCB tmpCB( PMD_CFG_MASK_SHOWALL ) ;
       BSONObj cfgObj ;
 
       rc = tmpCB.initFromFile( optCB->getConfFile(), FALSE ) ;
@@ -2064,7 +2064,11 @@ namespace engine
                  cfgObj.toString().c_str(), rc ) ;
          goto error ;
       }
-      PD_LOG( PDEVENT, "Reload config succeed" ) ;
+      /// dump memory config
+      optCB->toBSON( cfgObj, PMD_CFG_MASK_ONLYMEM ) ;
+
+      PD_LOG( PDEVENT, "Reload config succeed. All configs: %s",
+              cfgObj.toString().c_str() ) ;
 
    done:
       return rc ;
