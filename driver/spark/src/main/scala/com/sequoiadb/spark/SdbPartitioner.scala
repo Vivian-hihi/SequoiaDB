@@ -182,10 +182,10 @@ private object SdbPartitioner extends Logging {
         shardingList.toList
     }
 
-    def getQueryMeta(urls: List[String], csName: String, clName: String, config: SdbConfig): List[QueryMeta] = {
+    def getQueryMeta(url: String, csName: String, clName: String, config: SdbConfig): List[QueryMeta] = {
         val queryMetas = ArrayBuffer[QueryMeta]()
 
-        val sdb = new Sequoiadb(urls, config.username, config.password, null)
+        val sdb = new Sequoiadb(url, config.username, config.password, null)
         try {
             val cs = if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.getCollectionSpace(csName)
@@ -225,93 +225,26 @@ private object SdbPartitioner extends Logging {
         queryMetas.toList
     }
 
-    // Host container for shufflePartitions
-    private class Host(val host: String) {
-        val nodes: ArrayBuffer[Node] = ArrayBuffer[Node]()
-        val nodeMap: mutable.HashMap[Int, Node] = mutable.HashMap[Int, Node]()
-        var partitionNum: Int = 0
-        var refCount: Int = 0
-    }
-
-    // Node container for shufflePartitions
-    private class Node(val host: String, val port: Int) {
-        val partitions: ArrayBuffer[SdbPartition] = ArrayBuffer[SdbPartition]()
-        var refCount: Int = 0
-    }
-
     // shuffle partitions to rearrange partition position
     def shufflePartitions(partitions: Array[SdbPartition]): Array[SdbPartition] = {
-        val hostMap = mutable.HashMap[String, Host]()
+        val partitionSelector: PartitionSelector = new PartitionSelector
 
         // collect which host and node the partition is placed
         partitions.foreach { partition =>
             val url = partition.urls.head
-            val u = url.split(':')
-            val hostName = u(0).trim
-            val port = u(1).trim.toInt
-
-            val host = hostMap.get(hostName)
-            if (host.isEmpty) {
-                val newNode = new Node(hostName, port)
-                newNode.partitions += partition
-
-                val newHost = new Host(hostName)
-                newHost.nodeMap += (port -> newNode)
-                newHost.nodes += newNode
-                newHost.partitionNum += 1
-
-                hostMap += (hostName -> newHost)
-            } else {
-                val oldHost = host.get
-                val node = oldHost.nodeMap.get(port)
-                if (node.isEmpty) {
-                    val newNode = new Node(hostName, port)
-                    newNode.partitions += partition
-                    oldHost.nodeMap += (port -> newNode)
-                    oldHost.nodes += newNode
-                    oldHost.partitionNum += 1
-                } else {
-                    node.get.partitions += partition
-                    oldHost.partitionNum += 1
-                }
-            }
+            partitionSelector.addPartition(url, partition)
         }
-
-        val hosts = ArrayBuffer[Host]()
-        hostMap.values.foreach(host => hosts += host)
 
         val newPartitions = ArrayBuffer[SdbPartition]()
 
         // chose partition which is in the least used host and node one by one
-        while (hosts.nonEmpty) {
-            var minHost: Host = hosts.head
-
-            hosts.foreach { host: Host =>
-                if (host.refCount < minHost.refCount) {
-                    minHost = host
-                }
-            }
-
-            var minNode: Node = minHost.nodes.head
-            minHost.nodes.foreach { node: Node =>
-                if (node.refCount < minNode.refCount) {
-                    minNode = node
-                }
-            }
+        while (partitionSelector.hasHosts) {
+            val minNode = partitionSelector.getLeastUsedNode
 
             val partition = minNode.partitions.head
             newPartitions += partition
-            minNode.partitions -= partition
-            minNode.refCount += 1
-            minHost.refCount += 1
-            minHost.partitionNum -= 1
 
-            if (minNode.partitions.isEmpty) {
-                minHost.nodes -= minNode
-                if (minHost.nodes.isEmpty) {
-                    hosts -= minHost
-                }
-            }
+            partitionSelector.removePartition(minNode, partition)
         }
 
         if (newPartitions.size != partitions.length) {
@@ -323,6 +256,195 @@ private object SdbPartitioner extends Logging {
         }
 
         newPartitions.toArray
+    }
+}
+
+// Host container
+private class Host(val host: String) {
+    val nodes: ArrayBuffer[Node] = ArrayBuffer[Node]()
+    val nodeMap: mutable.HashMap[Int, Node] = mutable.HashMap[Int, Node]()
+    var partitionNum: Int = 0
+    var refCount: Int = 0
+
+    override def toString: String = host
+}
+
+// Node container
+private class Node(val host: String, val port: Int) {
+    val partitions: ArrayBuffer[SdbPartition] = ArrayBuffer[SdbPartition]()
+    var refCount: Int = 0
+
+    override def toString: String = s"$host:$port"
+}
+
+private class PartitionSelector {
+    private val hostMap = mutable.HashMap[String, Host]()
+
+    def hasHosts: Boolean = hostMap.nonEmpty
+
+    def addPartition(url: String, partition: SdbPartition): Unit = {
+        val u = url.split(':')
+        val hostName = u(0).trim
+        val port = u(1).trim.toInt
+
+        val host = hostMap.get(hostName)
+        if (host.isEmpty) {
+            val newNode = new Node(hostName, port)
+            newNode.partitions += partition
+
+            val newHost = new Host(hostName)
+            newHost.nodeMap += (port -> newNode)
+            newHost.nodes += newNode
+            newHost.partitionNum += 1
+
+            hostMap += (hostName -> newHost)
+        } else {
+            val oldHost = host.get
+            val node = oldHost.nodeMap.get(port)
+            if (node.isEmpty) {
+                val newNode = new Node(hostName, port)
+                newNode.partitions += partition
+                oldHost.nodeMap += (port -> newNode)
+                oldHost.nodes += newNode
+                oldHost.partitionNum += 1
+            } else {
+                node.get.partitions += partition
+                oldHost.partitionNum += 1
+            }
+        }
+    }
+
+    def removePartition(node:Node, partition: SdbPartition):Unit = {
+        val host: Host = hostMap.get(node.host).orNull
+        if (host == null) {
+            throw new SdbException(s"No host for node $node")
+        }
+
+        node.partitions -= partition
+        node.refCount += 1
+        host.refCount += 1
+        host.partitionNum -= 1
+
+        if (node.partitions.isEmpty) {
+            host.nodes -= node
+            if (host.nodes.isEmpty) {
+                hostMap.remove(node.host)
+            }
+        }
+    }
+
+    def getLeastUsedNode: Node = {
+        var minHost: Host = null
+
+        hostMap.values.foreach { host: Host =>
+            if (minHost == null) {
+                minHost = host
+            } else {
+                if (host.refCount < minHost.refCount) {
+                    minHost = host
+                }
+            }
+        }
+
+        if (minHost == null) {
+            return null
+        }
+
+        var minNode: Node = minHost.nodes.head
+        minHost.nodes.foreach { node: Node =>
+            if (node.refCount < minNode.refCount) {
+                minNode = node
+            }
+        }
+
+        minNode
+    }
+}
+
+private class NodeSelector {
+    private val hostMap = mutable.HashMap[String, Host]()
+
+    private def ensureHost(hostName: String): Unit = {
+        val host = hostMap.get(hostName)
+        if (host.isEmpty) {
+            val newHost = new Host(hostName)
+            hostMap += (hostName -> newHost)
+        }
+    }
+
+    private def ensureNode(hostName: String, port: Int): Unit = {
+        ensureHost(hostName)
+        val host = hostMap.get(hostName)
+        if (host.isEmpty) {
+            throw new SdbException(s"No host: [$hostName]")
+        }
+
+        val node = host.get.nodeMap.get(port)
+        if (node.isEmpty) {
+            val newNode = new Node(hostName, port)
+            host.get.nodeMap += (port -> newNode)
+            host.get.nodes += newNode
+        }
+
+        if (host.get.nodeMap.get(port).isEmpty) {
+            throw new SdbException(s"No node: [$hostName:$port]")
+        }
+    }
+
+    def increaseNodeRefCount(url: String): Unit = {
+        val u = url.split(':')
+        val hostName = u(0).trim
+        val port = u(1).trim.toInt
+
+        ensureNode(hostName, port)
+
+        val host = hostMap(hostName)
+        val node = host.nodeMap(port)
+
+        host.refCount += 1
+        node.refCount += 1
+    }
+
+    def getLeastUsedNode(urls: List[String]): String = {
+        var leastUsedHost: Host = null
+        var leastUsedNode: Node = null
+        var leastUsedUrl: String = null
+
+        if (urls == null || urls.isEmpty) {
+            throw new SdbException("Null or empty urls")
+        }
+
+        urls.foreach { url =>
+            val u = url.split(':')
+            val hostName = u(0).trim
+            val port = u(1).trim.toInt
+
+            ensureNode(hostName, port)
+
+            val host = hostMap(hostName)
+            val node = host.nodeMap(port)
+
+            if (leastUsedNode == null) {
+                leastUsedHost = host
+                leastUsedNode = node
+                leastUsedUrl = url
+            } else {
+                if (host != leastUsedHost) {
+                    if (host.refCount < leastUsedHost.refCount) {
+                        leastUsedHost = host
+                        leastUsedNode = node
+                        leastUsedUrl = url
+                    }
+                } else {
+                    if (node.refCount < leastUsedNode.refCount) {
+                        leastUsedNode = node
+                        leastUsedUrl = url
+                    }
+                }
+            }
+        }
+
+        leastUsedUrl
     }
 }
 
@@ -456,16 +578,19 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
                               shardings: List[ShardingInfo])
     : Array[QueryMeta] = {
         val queryMetas = ArrayBuffer[QueryMeta]()
+        val nodeSelector = new NodeSelector
 
         for (sharding <- shardings) {
-            var urls: List[String] = null
+            var url: String = null
             if (sharding.groupName == "") {
-                urls = List(sharding.nodeName)
+                url = sharding.nodeName
             } else {
-                urls = groups(sharding.groupName)
+                val groupNodeUrls = groups(sharding.groupName)
+                url = nodeSelector.getLeastUsedNode(groupNodeUrls)
+                nodeSelector.increaseNodeRefCount(url)
             }
 
-            val metas = SdbPartitioner.getQueryMeta(urls, sharding.csName, sharding.clName, config)
+            val metas = SdbPartitioner.getQueryMeta(url, sharding.csName, sharding.clName, config)
             queryMetas ++= metas
         }
 
