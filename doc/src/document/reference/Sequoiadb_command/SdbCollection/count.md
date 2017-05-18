@@ -1,36 +1,59 @@
+##名称##
+
+count - 统计当前集合符合条件的记录总数。
+
 ##语法##
-***db.collectionspace.collection.count\(\[cond\]\)***
+**db.collectionspace.collection.count([cond])**
 
-统计指定集合空间下指定集合的记录总数。
+**db.collectionspace.collection.count([cond]).hint([hint])**
 
-##参数描述##
+##类别##
 
-|参数名 |  参数类型   | 描述   |是否必填 |
-| ------| ----------- | ------ | --------|
-| cond  | Json 对象   | 选择条件。为空时，统计集合下所有的记录总数；不为空时，统计符合条的记录总数。  | 否|
+Collection
 
-> **Note:**
->
-> * 指定cond字段时可使用对应[匹配符](reference/operator/match_operator/overview.md)查询。
+##描述##
+统计当前集合符合条件的记录总数，可通过hint指定查询使用的索引。
+
+##参数##
+
+参数`cond`和`hint`的用法与[find()](reference/Sequoiadb_command/SdbCollection/find.md)的相同。
 
 ##返回值##
 
-无返回值，出错抛异常，并输出错误信息，可以通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误信息码。
+成功：返回符合条件的记录总数。  
+
+失败：抛出异常。
 
 ##错误##
 
-[错误码](reference/Sequoiadb_error_code.md)
+`count()`函数常见异常如下：
+
+| 错误码 | 错误类型 | 描述 | 解决方法 |
+| ------ | ------ | --- | ------ |
+| -6 | SDB_INVALIDARG | 参数错误。 | 查看参数是否填写正确。|
+| -34 | SDB_DMS_CS_NOTEXIST | 集合空间不存在。| 检查集合空间是否存在。|
+| -23 | SDB_DMS_NOTEXIST| 集合不存在。 | 检查集合是否存在。|
+
+当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
+或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
+可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
 
 ##示例##
 
-* 统计集合 bar 所有的记录数，即不指定参数 cond
+1. 统计集合 bar 所有的记录数，即不指定参数 cond。
 
- ```lang-javascript
- > db.foo.bar.count()
- ```
+	```lang-javascript
+ 	> db.foo.bar.count()
+ 	```
 
-* 统计符合条件 name 字段的值为“Tom”且 age 字段的值大于25的记录数
+2. 统计符合条件 name 字段的值为"Tom"且 age 字段的值大于25的记录数。
 
- ```lang-javascript
- > db.foo.bar.count( { name: "Tom", age: { $gt: 25 } } )
- ```
+	```lang-javascript
+	> db.foo.bar.count( { name: "Tom", age: { $gt: 25 } } )
+	```
+
+3. 统计符合条件 name 字段的值为"Tom"且 age 字段的值大于25的记录数，使用"nameIdx"索引。
+
+	```lang-javascript
+	> db.foo.bar.count( { name: "Tom", age: { $gt: 25 } } ).hint({"":"nameIdx"})
+	```
