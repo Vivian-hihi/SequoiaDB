@@ -96,21 +96,36 @@ namespace engine
    */
    _pmdCfgExchange::_pmdCfgExchange( const BSONObj &dataObj,
                                      BOOLEAN load,
-                                     PMD_CFG_STEP step )
-   :_cfgStep( step ), _isLoad( load ), _dataObj( dataObj )
+                                     PMD_CFG_STEP step,
+                                     BOOLEAN onlyMem,
+                                     MAP_K2V *pMapField )
+   :_cfgStep( step ), _isLoad( load ), _dataObj( dataObj ), _onlyMem( onlyMem )
    {
       _dataType   = PMD_CFG_DATA_BSON ;
       _pVMFile    = NULL ;
       _pVMCmd     = NULL ;
+
+      if ( pMapField )
+      {
+         _mapKeyField = *pMapField ;
+      }
    }
 
    _pmdCfgExchange::_pmdCfgExchange( po::variables_map *pVMCmd,
                                      po::variables_map * pVMFile,
                                      BOOLEAN load,
-                                     PMD_CFG_STEP step )
-   :_cfgStep( step ), _isLoad( load ), _pVMFile( pVMFile ), _pVMCmd( pVMCmd )
+                                     PMD_CFG_STEP step,
+                                     BOOLEAN onlyMem,
+                                     MAP_K2V *pMapField )
+   :_cfgStep( step ), _isLoad( load ), _pVMFile( pVMFile ), _pVMCmd( pVMCmd ),
+    _onlyMem( onlyMem )
    {
       _dataType   = PMD_CFG_DATA_CMD ;
+
+      if ( pMapField )
+      {
+         _mapKeyField = *pMapField ;
+      }
    }
 
    _pmdCfgExchange::~_pmdCfgExchange()
@@ -262,6 +277,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      MAP_K2V::iterator it = _mapKeyField.find( pFieldName ) ;
+      if ( it != _mapKeyField.end() && ! it->second._hasMapped )
+      {
+         if ( _onlyMem )
+         {
+            it->second._hasMapped = TRUE ;
+         }
+         else
+         {
+            goto done ;
+         }
+      }
+      
       if ( PMD_CFG_DATA_BSON == _dataType )
       {
          _dataBuilder.append( pFieldName, value ) ;
@@ -274,6 +302,8 @@ namespace engine
       {
          rc = SDB_SYS ;
       }
+      
+   done:
       return rc ;
    }
 
@@ -282,6 +312,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      MAP_K2V::iterator it = _mapKeyField.find( pFieldName ) ;
+      if ( it != _mapKeyField.end() && ! it->second._hasMapped )
+      {
+         if ( _onlyMem )
+         {
+            it->second._hasMapped = TRUE ;
+         }
+         else
+         {
+            goto done ;
+         }
+      }
+      
       if ( PMD_CFG_DATA_BSON == _dataType )
       {
          _dataBuilder.append( pFieldName, pValue ) ;
@@ -294,6 +337,8 @@ namespace engine
       {
          rc = SDB_SYS ;
       }
+
+   done:   
       return rc ;
    }
 
@@ -620,7 +665,8 @@ namespace engine
       rc = preSaving() ;
       if ( SDB_OK == rc )
       {
-         pmdCfgExchange ex( BSONObj(), FALSE, PMD_CFG_STEP_INIT ) ;
+         pmdCfgExchange ex( BSONObj(), FALSE, PMD_CFG_STEP_INIT,
+                            FALSE, &_mapKeyValue ) ;
          rc = doDataExchange( &ex ) ;
          if ( SDB_OK == rc )
          {
@@ -649,7 +695,8 @@ namespace engine
       rc = preSaving() ;
       if ( SDB_OK == rc )
       {
-         pmdCfgExchange ex( NULL, NULL, FALSE, PMD_CFG_STEP_INIT ) ;
+         pmdCfgExchange ex( NULL, NULL, FALSE, PMD_CFG_STEP_INIT,
+                            FALSE, &_mapKeyValue ) ;
          INT32 rc = doDataExchange( &ex ) ;
          if ( SDB_OK == rc )
          {
