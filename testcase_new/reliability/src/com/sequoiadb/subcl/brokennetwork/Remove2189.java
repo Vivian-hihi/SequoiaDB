@@ -104,7 +104,7 @@ public class Remove2189 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) {
+            if (!groupMgr.checkBusinessWithLSN(1200)) {
                 Assert.fail("checkBusinessWithLSN() occurs timeout");
             }
 
