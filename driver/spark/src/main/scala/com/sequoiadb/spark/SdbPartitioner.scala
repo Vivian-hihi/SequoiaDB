@@ -499,8 +499,9 @@ private[spark] class SdbShardingPartitioner(config: SdbConfig, filter: SdbFilter
 
         val sdb = new Sequoiadb(config.host, config.username, config.password, null)
         try {
-            val groups = SdbPartitioner.getReplicaGroups(sdb)
+            val nodeSelector = new NodeSelector
 
+            val groups = SdbPartitioner.getReplicaGroups(sdb)
             val shardings = SdbPartitioner.getShardingInfo(sdb, config, filter)
 
             for (sharding <- shardings) {
@@ -508,7 +509,14 @@ private[spark] class SdbShardingPartitioner(config: SdbConfig, filter: SdbFilter
                 if (sharding.groupName == "") {
                     urls = List(sharding.nodeName)
                 } else {
-                    urls = groups(sharding.groupName)
+                    if (config.shardingPartitionSingleNode) {
+                        val groupNodeUrls = groups(sharding.groupName)
+                        val url = nodeSelector.getLeastUsedNode(groupNodeUrls)
+                        nodeSelector.increaseNodeRefCount(url)
+                        urls = List(url)
+                    } else {
+                        urls = groups(sharding.groupName)
+                    }
                 }
 
                 val partition = SdbPartition(

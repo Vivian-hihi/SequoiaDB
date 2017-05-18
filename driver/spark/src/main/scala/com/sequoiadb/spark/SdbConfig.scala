@@ -145,6 +145,9 @@ class SdbConfig(val properties: Map[String, String]) extends Serializable {
 
     val preferredLocation: Boolean = properties.get(SdbConfig.PreferredLocation)
         .map(_.toBoolean).getOrElse(SdbConfig.DefaultPreferredLocation)
+
+    val shardingPartitionSingleNode: Boolean = properties.get(SdbConfig.ShardingPartitionSingleNode)
+        .map(_.toBoolean).getOrElse(SdbConfig.DefaultShardingPartitionSingleNode)
 }
 
 object SdbConfig {
@@ -167,6 +170,7 @@ object SdbConfig {
     // single, sharding, datablock, auto
     val PartitionBlockNum = "partitionblocknum"
     val PartitionMaxNum = "partitionmaxnum"
+    val ShardingPartitionSingleNode = "shardingpartitionsinglenode"
     val PreferredLocation = "preferredlocation"
 
     val CURSOR_TYPE_FAST = "fast"
@@ -194,6 +198,7 @@ object SdbConfig {
         PartitionMode,
         PartitionBlockNum,
         PartitionMaxNum,
+        ShardingPartitionSingleNode,
         PreferredLocation
     )
 
@@ -217,7 +222,8 @@ object SdbConfig {
     val DefaultPartitionMode = "auto"
     val DefaultPartitionBlockNum = 4
     val DefaultPartitionMaxNum = 1000
-    val DefaultPreferredLocation = false
+    val DefaultShardingPartitionSingleNode = true
+    val DefaultPreferredLocation = true
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
 }
