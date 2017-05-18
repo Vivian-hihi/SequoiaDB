@@ -4,7 +4,7 @@ getLastError - 获取当前操作的错误码。
 
 ##语法##
 
-***getLastError()***
+**getLastError()**
 
 ##类别##
 
@@ -24,7 +24,7 @@ Global
 
 ##版本##
 
-v2.6及以上版本
+v2.6及以上版本。
 
 ##示例##
 

@@ -38,6 +38,10 @@ Collection
 或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
 可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
 
+##版本##
+
+v1.0及以上版本。
+
 ##示例##
 
 1. 统计集合 bar 所有的记录数，即不指定参数 cond。

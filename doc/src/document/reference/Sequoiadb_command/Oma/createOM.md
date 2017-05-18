@@ -3,7 +3,7 @@
 createOM - 在目标集群控制器（sdbcm）所在的机器中创建sdbom服务进程（ SequoiaDB 管理中心进程）。
 
 ##语法##
-***oma.createOM( \<svcname\>, \<dbpath\>, [config obj] )***
+**oma.createOM( \<svcname\>, \<dbpath\>, [config obj] )**
 
 ##类别##
 
@@ -54,7 +54,7 @@ Oma
 
 ##版本##
 
-v2.0及以上版本
+v2.0及以上版本。
 
 ##示例##
 

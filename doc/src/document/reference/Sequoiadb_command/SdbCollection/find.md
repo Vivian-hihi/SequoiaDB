@@ -4,13 +4,13 @@ find - 查询记录。
 
 ##语法##
 
-***db.collectionspace.collection.find([cond],[sel])***
+**db.collectionspace.collection.find([cond],[sel])**
 
-***db.collectionspace.collection.find([cond],[sel]).hint([hint])***
+**db.collectionspace.collection.find([cond],[sel]).hint([hint])**
 
-***db.collectionspace.collection.find([cond],[sel]).skip([skipNum]).limit([retNum]).sort([sort])***
+**db.collectionspace.collection.find([cond],[sel]).skip([skipNum]).limit([retNum]).sort([sort])**
 
-***db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])]***
+**db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])]**
 
 ##类别##
 
@@ -18,7 +18,7 @@ Collection
 
 ##描述##
 
-选择集合的记录，并通过游标（cursor）将记录返回。在SequoiaDB中，游标是一个指针，指向一个查询结果集，客户端可以通过游标遍历检索结果。
+选择集合的记录，并通过游标（cursor）将记录返回。在 SequoiaDB 中，游标是一个指针，指向一个查询结果集，客户端可以通过游标遍历检索结果。
 
 ##参数##
 
@@ -81,6 +81,10 @@ Collection
 当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
 或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
 可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
+
+##版本##
+
+v1.0及以上版本。
 
 ##示例##
 

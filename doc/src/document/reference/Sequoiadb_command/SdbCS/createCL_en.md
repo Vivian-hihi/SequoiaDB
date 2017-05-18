@@ -3,7 +3,7 @@
 createCL - Create a new collection.
 
 ##SYNOPSIS##
-***db.collectionspace.createCL(\<name\>,[option])***
+**db.collectionspace.createCL(\<name\>,[option])**
 
 ##CATEGORY##
 Collection Space
@@ -133,9 +133,9 @@ to get the error code. See [troubleshooting](troubleshooting/general/general_gui
 more detail.
 
 ##HISTORY##
-Since v1.0
+Since v1.0.
 
-##EXAMPLES##
+##Examples##
 1. Create collection "bar" in collection space "foo" without shard key. If
    the collection space "foo" doesn't exist, it will automatically
    generate collection space "foo".

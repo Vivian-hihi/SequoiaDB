@@ -3,7 +3,7 @@
 getCL - 获取当前集合空间下指定的集合的对象引用。
 
 ##语法##
-***db.collectionspace.getCL( \<name\> )***
+**db.collectionspace.getCL( \<name\> )**
 
 ##类别##
 
@@ -31,7 +31,7 @@ getCL - 获取当前集合空间下指定的集合的对象引用。
 
 ##版本##
 
-v1.0及以上版本
+v1.0及以上版本。
 
 ##示例##
 

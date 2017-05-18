@@ -1,16 +1,10 @@
-<!--manpage_exclude_begin-->
-<!--
-Meta:{"className":"SdbCS", "funcName":"createCL", "methodType:"static", "returnType":"SdbCollection"}
--->
-<!--manpage_exclude_end-->
-
 ##名称##
 
 createCL - 创建一个新的集合。
 
 ##语法##
 
-***db.collectionspace.createCL(\<name\>,[option])***
+**db.collectionspace.createCL(\<name\>,[option])**
 
 ##类别##
 
@@ -144,7 +138,7 @@ createCL - 创建一个新的集合。
 
 ##版本##
 
-v1.0及以上版本
+v1.0及以上版本。
 
 ##例子##
 

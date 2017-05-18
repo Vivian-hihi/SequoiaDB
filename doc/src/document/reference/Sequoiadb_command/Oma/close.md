@@ -1,5 +1,10 @@
+##名称##
+
+close - 关闭 Oma 连接对象。
+
 ##语法##
-***oma.close()***
+
+**oma.close()**
 
 关闭 oma 连接对象
 
@@ -24,7 +29,7 @@
 
 ##示例##
 
-* 连接到本地的集群管理服务进程sdbcm，关闭 oma
+* 连接到本地的集群管理服务进程 sdbcm，关闭 oma
 
  ```lang-javascript
 > var oma = new Oma( "localhost", 11790 )

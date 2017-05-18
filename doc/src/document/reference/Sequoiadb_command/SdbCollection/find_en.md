@@ -4,13 +4,13 @@ find - Select records from database.
 
 ##SYNOPSIS##
 
-***db.collectionspace.collection.find([cond],[sel])***
+**db.collectionspace.collection.find([cond],[sel])**
 
-***db.collectionspace.collection.find([cond],[sel]).hint([hint])***
+**db.collectionspace.collection.find([cond],[sel]).hint([hint])**
 
-***db.collectionspace.collection.find([cond],[sel]).skip([skipNum]).limit([retNum]).sort([sort])***
+**db.collectionspace.collection.find([cond],[sel]).skip([skipNum]).limit([retNum]).sort([sort])**
 
-***db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])]***
+**db.collectionspace.collection.find([cond],[sel])[.hint([hint])][.skip([skipNum])][.limit([retNum])][.sort([sort])]**
 
 ##CATEGORY##
 
@@ -92,6 +92,10 @@ the exceptions of `find()` are as below:
 | -23 | SDB_DMS_NOTEXIST| Collection does not exist. | heck whether the collection exist or not. |
 
 when exception happen, use [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) to get the [error code](reference/Sequoiadb_error_code.md)  and use [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) to get [error message](reference/Sequoiadb_command/Global/getLastErrMsg.md). For more detial, please  reference to [Troubleshooting](troubleshooting/general/general_guide.md).
+
+##HISTORY##
+
+Since v1.0.
 
 ##EXAMPLES##
 

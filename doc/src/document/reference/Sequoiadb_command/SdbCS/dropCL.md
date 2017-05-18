@@ -4,7 +4,7 @@ dropCL - 删除当前集合空间下指定的集合。
 
 ##语法##
 
-***db.collectionspace.dropCL( \<name\> )***
+**db.collectionspace.dropCL( \<name\> )**
 
 ##类别##
 
@@ -40,7 +40,7 @@ dropCL - 删除当前集合空间下指定的集合。
 
 ##版本##
 
-v1.0及以上版本
+v1.0及以上版本。
 
 ##例子##
 

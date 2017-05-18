@@ -3,7 +3,7 @@
 alter - 修改集合的属性。
 
 ##语法##
-***db.collectionspace.collection.alter(\<options\>)***
+**db.collectionspace.collection.alter(\<options\>)**
 
 ##类别##
 
@@ -74,7 +74,7 @@ Collection
 
 ##版本##
 
-v1.12及以上版本
+v1.12及以上版本。
 
 ##示例##
 
