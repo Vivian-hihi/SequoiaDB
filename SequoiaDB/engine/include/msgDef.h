@@ -323,7 +323,6 @@
 #define FIELD_NAME_FUNC                      "func"
 #define FIELD_NAME_FUNCTYPE                  "funcType"
 #define FIELD_NAME_PREFERED_INSTANCE         "PreferedInstance"
-#define FIELD_NAME_SESSION_REPLENABLE        "SessionReplEnable"
 #define FIELD_NAME_TIMEOUT                   "Timeout"
 #define FIELD_NAME_NODE_SELECT               "NodeSelect"
 #define FIELD_NAME_RAWDATA                   "RawData"

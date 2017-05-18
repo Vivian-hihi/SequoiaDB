@@ -2986,55 +2986,25 @@ namespace engine
                                    const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN hasValidAttr = FALSE ;
       try
       {
          INT32 prefType = PREFER_REPL_TYPE_MIN ;
          BSONObj obj( pMatcherBuff ) ;
          BSONElement e =  obj.getField( FIELD_NAME_PREFERED_INSTANCE ) ;
-         if ( e.type() != EOO )
+         if ( e.type() != NumberInt )
          {
-            hasValidAttr = TRUE ;
-            if ( e.type() != NumberInt )
-            {
-               PD_LOG( PDERROR, "Field[%s] is not numberInt in obj[%s]",
-                       FIELD_NAME_PREFERED_INSTANCE, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            prefType = e.numberInt() ;
-            if ( prefType <= PREFER_REPL_TYPE_MIN ||
-                 prefType >=  PREFER_REPL_TYPE_MAX )
-            {
-               PD_LOG( PDERROR, "Prefer instance value[%d] invalid, must in "
-                       "rang(%d, %d)", prefType, PREFER_REPL_TYPE_MIN,
-                       PREFER_REPL_TYPE_MAX ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
+            PD_LOG( PDERROR, "Feild[%s] is not numberInt in obj[%s]",
+                    FIELD_NAME_PREFERED_INSTANCE, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
-
-         e = obj.getField( FIELD_NAME_SESSION_REPLENABLE ) ;
-         if ( e.type() != EOO )
+         prefType = e.numberInt() ;
+         if ( prefType <= PREFER_REPL_TYPE_MIN ||
+              prefType >=  PREFER_REPL_TYPE_MAX )
          {
-            if ( !hasValidAttr )
-            {
-               hasValidAttr = TRUE ;
-            }
-            if ( e.type() != Bool )
-            {
-               PD_LOG( PDERROR, "Field[%s] is not Bool in obj[%s]",
-                       FIELD_NAME_SESSION_REPLENABLE, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            _replEnable = e.boolean() ;
-         }
-
-         if ( !hasValidAttr )
-         {
-            PD_LOG( PDERROR, "No valid attribute in obj[%s]",
-                    obj.toString().c_str() ) ;
+            PD_LOG( PDERROR, "Prefer instance value[%d] invalid, must in "
+                    "rang(%d, %d)", prefType, PREFER_REPL_TYPE_MIN,
+                    PREFER_REPL_TYPE_MAX ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -3056,20 +3026,7 @@ namespace engine
                                    _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                    INT16 w, INT64 *pContextID )
    {
-      INT32 rc = SDB_OK ;
-      rc = cb->getSession()->setAttr( FIELD_NAME_SESSION_REPLENABLE,
-                                      (void *)&_replEnable,
-                                      sizeof( BOOLEAN ) ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to change attribute[%s] to value[%d] for "
-                   "session[%s], rc: %d",
-                   FIELD_NAME_SESSION_REPLENABLE, _replEnable,
-                   cb->getSession()->sessionName(), rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnTruncate)

@@ -8027,7 +8027,6 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
    SINT64 contextID      = 0 ;
    const CHAR *key       = NULL ;
    INT32 value           = PREFER_REPL_TYPE_MAX ;
-   BOOLEAN replEnable    = FALSE ;
    const CHAR *str_value = NULL ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
    BOOLEAN bsoninit      = FALSE ;
@@ -8050,53 +8049,44 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
    {
       // get key
       key = bson_iterator_key( &it ) ;
-      if ( 0 == ossStrcmp( FIELD_NAME_PREFERED_INSTANCE, key ) )
+      // get value
+      if ( 0 != strcmp( FIELD_NAME_PREFERED_INSTANCE, key ) )
       {
-         switch ( bson_iterator_type( &it ) )
-         {
-            case BSON_STRING :
-               str_value = bson_iterator_string ( &it ) ;
-               if ( !ossStrcasecmp("M", str_value) )        // master
-                  value = PREFER_REPL_MASTER ;
-               else if ( !ossStrcasecmp( "S", str_value ) ) // slave
-                  value = PREFER_REPL_SLAVE ;
-               else if ( !ossStrcasecmp( "A", str_value ) ) // anyone
-                  value = PREFER_REPL_ANYONE ;
-               else
-               {
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-               break ;
-            case BSON_INT :
-               value = bson_iterator_int ( &it ) ;
-               if ( value < PREFER_REPL_NODE_1 || value > PREFER_REPL_NODE_7 )
-               {
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-               break ;
-            default :
+         // append element
+         bson_append_element( &newObj, NULL, &it ) ;
+         continue ;
+      }
+
+      switch ( bson_iterator_type( &it ) )
+      {
+         case BSON_STRING :
+            str_value = bson_iterator_string ( &it ) ;
+            if ( !ossStrcasecmp("M", str_value) )        // master
+               value = PREFER_REPL_MASTER ;
+            else if ( !ossStrcasecmp( "S", str_value ) ) // slave
+               value = PREFER_REPL_SLAVE ;
+            else if ( !ossStrcasecmp( "A", str_value ) ) // anyone
+               value = PREFER_REPL_ANYONE ;
+            else
+            {
                rc = SDB_INVALIDARG ;
                goto error ;
-         }
-         // append element
-         BSON_APPEND( newObj, key, value, int ) ;
-      }
-      else if ( 0 == ossStrcmp( FIELD_NAME_SESSION_REPLENABLE, key ) )
-      {
-         if ( BSON_BOOL != bson_iterator_type( &it ) )
-         {
+            }
+            break ;
+         case BSON_INT :
+            value = bson_iterator_int ( &it ) ;
+            if ( value < PREFER_REPL_NODE_1 || value > PREFER_REPL_NODE_7 )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            break ;
+         default :
             rc = SDB_INVALIDARG ;
             goto error ;
-         }
-         replEnable = bson_iterator_bool( &it ) ;
-         BSON_APPEND( newObj, key, replEnable, bool ) ;
       }
-      else
-      {
-         bson_append_element( &newObj, NULL, &it ) ;
-      }
+      // append element
+      BSON_APPEND( newObj, key, value, int ) ;
    } // while
 
    BSON_FINISH ( newObj ) ;

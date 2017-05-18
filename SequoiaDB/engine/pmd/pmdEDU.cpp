@@ -593,7 +593,7 @@ namespace engine
          {
             SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
             _alignedMemSize = 0 ;
-            _alignedMem = NULL ;
+            _alignedMem = NULL ; 
          }
 
          _alignedMem = ossAlignedAlloc( alignment, size ) ;
@@ -1204,37 +1204,6 @@ namespace engine
       transInfo._waitLock     = _waitLock ;
    }
 
-   BOOLEAN _pmdEDUCB::dpsEnabled()
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN enabled = FALSE ;
-      if ( !_pSession )
-      {
-         goto done ;
-      }
-
-      rc = _pSession->getAttr( FIELD_NAME_SESSION_REPLENABLE, (void *)&enabled,
-                               sizeof( BOOLEAN ) ) ;
-      if ( rc )
-      {
-         if ( SDB_FIELD_NOT_EXIST == rc )
-         {
-            enabled = FALSE ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "Failed to get session attribute[%s] value, "
-                    "rc: %d", FIELD_NAME_SESSION_REPLENABLE, rc ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return enabled ;
-   error:
-      goto done ;
-   }
-
 #endif // SDB_ENGINE
 
    #define PMD_EDU_MAX_TIMEOUT               ( 300 * OSS_ONE_SEC )
@@ -1282,7 +1251,7 @@ namespace engine
       BOOLEAN     isHdlCreated = false ;
 
       if ( DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
-                            GetCurrentProcess(), &tHdl, 0, false,
+                            GetCurrentProcess(), &tHdl, 0, false, 
                             DUPLICATE_SAME_ACCESS ) )
       {
          isHdlCreated = true ;

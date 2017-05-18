@@ -1168,10 +1168,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _rtnSetSessionAttr()
-         {
-            _replEnable = FALSE ;
-         }
+         _rtnSetSessionAttr() {}
          virtual ~_rtnSetSessionAttr() {}
 
       public:
@@ -1186,8 +1183,6 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
-      private:
-         BOOLEAN _replEnable ;
    } ;
 
    class _rtnTruncate : public _rtnCommand

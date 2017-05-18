@@ -53,7 +53,6 @@ namespace engine
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _needReply = TRUE ;
       _needRollback = FALSE ;
-      _dpsEnabled = FALSE ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
@@ -68,87 +67,6 @@ namespace engine
    SDB_SESSION_TYPE _pmdLocalSession::sessionType() const
    {
       return SDB_SESSION_LOCAL ;
-   }
-
-   INT32 _pmdLocalSession::setAttr( const CHAR *attrName,
-                                    void *attrVal,
-                                    INT32 valLen )
-   {
-      INT32 rc = SDB_OK ;
-
-      SDB_ASSERT( attrName, "Attribute name should not be NULL" ) ;
-      SDB_ASSERT( attrVal && valLen, "Attribute value or value length should "
-                  "not be NULL" ) ;
-
-      if ( 0 != ossStrcmp( FIELD_NAME_SESSION_REPLENABLE, attrName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid session attribute[%s], rc: %d",
-                 attrName, rc ) ;
-         goto error ;
-      }
-
-      if ( sizeof( BOOLEAN ) != valLen )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid session attribute value, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      _dpsEnabled = *( (BOOLEAN *)attrVal ) ;
-
-      if ( _dpsEnabled && !_pDPSCB )
-      {
-         _pDPSCB = pmdGetKRCB()->getDPSCB() ;
-      }
-
-      if ( !_dpsEnabled && _pDPSCB )
-      {
-         _pDPSCB = NULL ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _pmdLocalSession::getAttr( const CHAR *attrName, void *valBuff,
-                                    INT32 bufSize )
-   {
-      INT32 rc = SDB_OK ;
-
-      SDB_ASSERT( attrName, "Attribute name should not be NULL" ) ;
-
-      if ( !valBuff || ( bufSize <= 0 ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid buffer to get session attribute[%s] value",
-                 attrName ) ;
-         goto error ;
-      }
-
-      if ( 0 != ossStrcmp( FIELD_NAME_SESSION_REPLENABLE, attrName ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Invalid session attribute[%s] to get", attrName ) ;
-         goto error ;
-      }
-
-      if ( bufSize < (INT32)sizeof( BOOLEAN ) )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Buffer size[%d] is too small to get attribute[%s] "
-                 "value", bufSize, attrName ) ;
-         goto error ;
-      }
-
-      *(BOOLEAN *)valBuff = _dpsEnabled ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    void _pmdLocalSession::_onAttach ()
@@ -280,7 +198,7 @@ namespace engine
                }
                break ;
             }
-
+ 
             // increase process event count
             _pEDUCB->incEventCount() ;
             pBuff[ msgSize ] = 0 ;

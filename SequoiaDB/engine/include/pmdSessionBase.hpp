@@ -67,19 +67,6 @@ namespace engine
          virtual const CHAR*     sessionName() const ;
          virtual IClient*        getClient() { return &_client ; }
          virtual IProcessor*     getProcessor() ;
-         virtual INT32           setAttr( const CHAR *attrName,
-                                          void *attrVal,
-                                          INT32 valLen )
-         {
-            return SDB_OK ;
-         }
-
-         virtual INT32           getAttr( const CHAR *attrName,
-                                          void *valBuff,
-                                          INT32 bufSize )
-         {
-            return SDB_FIELD_NOT_EXIST ;
-         }
 
          virtual INT32           run() = 0 ;
 

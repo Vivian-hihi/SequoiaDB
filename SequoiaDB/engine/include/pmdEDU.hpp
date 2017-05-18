@@ -415,7 +415,6 @@ namespace engine
       void     dumpInfo ( monEDUFull &full ) ;
 
       void     dumpTransInfo( monTransInfo &transInfo ) ;
-      BOOLEAN  dpsEnabled() ;
 
    #endif // SDB_ENGINE
 

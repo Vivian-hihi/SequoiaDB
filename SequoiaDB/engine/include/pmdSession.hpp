@@ -59,12 +59,6 @@ namespace engine
 
          virtual INT32     getServiceType() const ;
          virtual SDB_SESSION_TYPE sessionType() const ;
-         virtual INT32     setAttr( const CHAR *attrName,
-                                    void *attrVal,
-                                    INT32 valLen ) ;
-         virtual INT32     getAttr( const CHAR *attrName,
-                                    void *valBuff,
-                                    INT32 bufSize ) ;
 
          virtual INT32     run() ;
 
@@ -93,8 +87,6 @@ namespace engine
          BOOLEAN              _needRollback ;
 
          BSONObj              _errorInfo ;
-         BOOLEAN              _dpsEnabled ;     // dps enabled by user, by using
-                                                // setSessionAttr
 
    } ;
    typedef _pmdLocalSession pmdLocalSession ;

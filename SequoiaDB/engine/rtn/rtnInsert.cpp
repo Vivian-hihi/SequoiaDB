@@ -60,8 +60,7 @@ namespace engine
       SDB_DPSCB *dpsCB = krcb->getDPSCB () ;
       //EDUID eduId = cb->getID() ;
 
-      if ( dpsCB && cb->isFromLocal() &&
-           !cb->dpsEnabled() && !dpsCB->isLogLocal() )
+      if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
       }

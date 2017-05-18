@@ -296,16 +296,11 @@ namespace engine
          virtual SDB_SESSION_TYPE   sessionType() const = 0 ;
          virtual INT32              getServiceType() const = 0 ;
          virtual IClient*           getClient() = 0 ;
-         virtual INT32              setAttr( const CHAR *attrName,
-                                             void *attrVal,
-                                             INT32 valLen ) = 0 ;
-         virtual INT32              getAttr( const CHAR *attrName,
-                                             void *valBuff,
-                                             INT32 bufSize ) = 0 ;
 
       protected:
          virtual void               _onAttach () {}
          virtual void               _onDetach () {}
+
    } ;
    typedef _ISession ISession ;
 
