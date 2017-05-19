@@ -24,8 +24,8 @@ function main()
       var noCLName  = COMMCLNAME+"_no" ;
       var lzwCLName = COMMCLNAME+"_lzw" ;
       var rgName = getDataGroupsName()[0]; 
-      var dtNumber = 200000 ;  //records number of single data type
-      var checkRecsNum  = 2 ; //get random 3 records
+      var dtNumber = 80000 ;  //records number of single data type
+      var checkRecsNum  = 5 ; //get random 3 records
 
       println("\n---Begin to drop CS in the pre-condition.");
       commDropCS( db, noCSName, true, "Failed to drop CS["+ noCSName +"].");
@@ -103,10 +103,10 @@ function insertRecs( cl, csName, clName, dtNumber, dataTypes, dataValues )
    {
       println('   insertNum: '+ dtNumber +', data type: "'+ dataTypes[i] +'"');
       
-      for( k = 0; k < dtNumber; k += 50000 )
+      for( k = 0; k < dtNumber; k += 40000 )
       {
          var doc = [];
-         for( j = 0+k; j < 50000+k; j++ )
+         for( j = 0+k; j < 40000+k; j++ )
          {
             doc.push( {a: j+h, dataType: dataTypes[i], typeValue: dataValues[i]} )
          };
@@ -126,14 +126,21 @@ function checkRecs( cl, dtNumber, checkRecsNum, dataTypes, dataValues )
    var h = 0;
    for( i = 0; i < dataTypes.length; i++ )
    {
-      println('\n   recs: {a: k, dataType: "'+ dataTypes[i] +'", typeValue: "'+ JSON.stringify(dataValues[i]) +'"}');
+      println('\n   recs: {a: k, dataType: "'+ dataTypes[i] +'", typeValue: '+ JSON.stringify(dataValues[i]) +'}');
       
       for( j = 0; j < checkRecsNum; j++ )
       {
          var k = Math.random() * dtNumber + h ;
          k = parseInt( k, 10 );  //10: decimal system
          println("   random k: "+ k );
-         var recsCnt = cl.find( {a: k, dataType: dataTypes[i], typeValue: dataValues[i]} ).count();
+         if(dataTypes[i] === "regex")
+         {
+            var recsCnt = cl.find( {a: k, dataType: dataTypes[i], typeValue: {$et: dataValues[i]}} ).count();
+         }
+         else
+         {
+            var recsCnt = cl.find( {a: k, dataType: dataTypes[i], typeValue: dataValues[i]} ).count();
+         }
          var expctCnt = 1 ;
          if( parseInt(recsCnt) !== expctCnt )
          {
