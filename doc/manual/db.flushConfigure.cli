@@ -36,10 +36,10 @@ Flush the configurations to the configuration files.
        \fBType\fR
 .br
               Configure filter type. 3 in default.
-              0 for non-filter,
-              1 for excluding the hide-default-parameter,
-              2 for excluding the all-default-parameter,
-              3 for excluding the non-configured-parameter in the file.
+              0 for no filter.
+              1 for excluding the hidden-parameters with default value.
+              2 for excluding the parameters with default value.
+              3 for excluding the un-configured parameters in the file.
 .br
               Type:3.
 .sp 2
