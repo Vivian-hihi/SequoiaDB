@@ -6138,7 +6138,7 @@ static JSBool sdb_flush_configure( JSContext *cx, uintN argc, jsval *vp )
    REPORT ( ret, "Sdb.flushConfigure(): wrong arguments" ) ;
 
    // bsonData is freed in done:
-   if ( JS_FALSE == objToBson ( cx , objData , &bsonData ) )
+   if ( objData && JS_FALSE == objToBson ( cx , objData , &bsonData ) )
    {
       rc = SDB_INVALIDARG ;
       REPORT_RC ( JS_FALSE , "Sdb.flushConfigure: failed"
