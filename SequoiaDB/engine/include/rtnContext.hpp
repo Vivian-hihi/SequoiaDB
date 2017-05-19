@@ -259,6 +259,8 @@ namespace engine
          virtual INT32     _prepareData( _pmdEDUCB *cb ) = 0 ;
          virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
          virtual void      _toString( stringstream &ss ) {}
+         virtual BOOLEAN   _canPrepareMoreData() const { return FALSE ;}
+         INT32             _prepareMoreData( _pmdEDUCB *cb );
 
       protected:
          INT32    _reallocBuffer ( SINT32 requiredSize ) ;
@@ -381,6 +383,10 @@ namespace engine
             // If contain modifier, do not use prefetch
             return ( _queryModifier ? FALSE : TRUE ) ;
          }
+         virtual BOOLEAN   _canPrepareMoreData() const
+         {
+            return TRUE ;
+         }
          virtual void      _toString( stringstream &ss ) ;
 
       protected:
@@ -485,6 +491,10 @@ namespace engine
          void           _removeSubContext( rtnContextData *pContext ) ;
          INT32          _getSubCtxWithData ( rtnContextData **ppContext,
                                              _pmdEDUCB *cb ) ;
+         virtual BOOLEAN _canPrepareMoreData() const
+         {
+            return TRUE ;
+         }
 
       protected:
          std::vector< _rtnContextData* >           _vecContext ;
@@ -529,7 +539,11 @@ namespace engine
          INT32 open( _qgmPlanContainer *accPlan ) ;
 
       protected:
-         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+         virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
+         virtual BOOLEAN _canPrepareMoreData() const
+         {
+            return TRUE ;
+         }
 
       private:
          _qgmPlanContainer          *_accPlan ;
@@ -597,7 +611,11 @@ namespace engine
       INT32 open( _spdSession *sp ) ;
 
    protected:
-      virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+      virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
+      virtual BOOLEAN _canPrepareMoreData() const
+      {
+         return TRUE ;
+      }
 
    private:
       _spdSession *_sp ;
@@ -735,7 +753,11 @@ namespace engine
       INT32 open( _qgmPlan *qp ) ;
 
    protected:
-      virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+      virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
+      virtual BOOLEAN _canPrepareMoreData() const
+      {
+         return TRUE ;
+      }
 
    private:
       _qgmPlan *_qp ;

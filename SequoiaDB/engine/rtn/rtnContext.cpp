@@ -566,6 +566,53 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnContextBase::_prepareMoreData( _pmdEDUCB *cb )
+   {
+      const INT32 PREPARE_DATA_SIZE_LIMIT = 1024 * 1024 ; // 1MB
+      const INT32 PREPARE_TIMEOUT = 10000 ; // 10ms
+
+      INT32 rc = SDB_OK ;
+      UINT64 beginTime ;
+
+      SDB_ASSERT( isEmpty(), "buf is not empty" ) ;
+
+      beginTime = ossGetCurrentMicroseconds() ;
+
+      while ( !eof() )
+      {
+         INT32 startOffset = _bufferEndOffset ;
+         INT32 currentPreparedSize ;
+         UINT64 currentTime ;
+
+         rc = _prepareData( cb ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         currentPreparedSize = _bufferEndOffset - startOffset ;
+
+         // assume next prepared size equals current,
+         // so break if data size exceeds limit when prepare once more time
+         if ( _bufferEndOffset + currentPreparedSize >= PREPARE_DATA_SIZE_LIMIT )
+         {
+            break ;
+         }
+
+         // prepare timeout
+         currentTime = ossGetCurrentMicroseconds() ;
+         if ( currentTime - beginTime >= PREPARE_TIMEOUT )
+         {
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnContextBase::getMore( INT32 maxNumToReturn,
                                    rtnContextBuf &buffObj,
                                    pmdEDUCB *cb )
@@ -620,12 +667,22 @@ namespace engine
       if ( isEmpty() && !eof() )
       {
          UINT64 tmpTotalRead = cb->getMonAppCB()->totalDataRead ;
-         rc = _prepareData( cb ) ;
+
+         if ( _canPrepareMoreData() )
+         {
+            rc = _prepareMoreData( cb ) ;
+         }
+         else
+         {
+            rc = _prepareData( cb ) ;
+         }
+
          if ( rc && SDB_DMS_EOC != rc )
          {
             PD_LOG( PDERROR, "Prepare data failed, rc: %d", rc ) ;
             goto error ;
          }
+
          _monCtxCB.dataRead += ( cb->getMonAppCB()->totalDataRead -
                                  tmpTotalRead ) ;
       }
@@ -1242,6 +1299,7 @@ namespace engine
                                                 mthSelector *selector )
    {
       INT32 rc = SDB_OK ;
+      INT32 startNumRecords = numRecords() ;
 
       dmsRecordID recordID ;
       ossValuePtr recordDataPtr = 0 ;
@@ -1254,7 +1312,7 @@ namespace engine
          generator.setQueryModify( TRUE ) ;
       }
 
-      while ( isEmpty() )
+      while ( numRecords() == startNumRecords )
       {
          _mthMatchTreeContext mthContext ;
          if ( NULL != dollarList )
@@ -1394,6 +1452,7 @@ namespace engine
       dmsRecordID recordID ;
       _mthRecordGenerator generator ;
       ossValuePtr recordDataPtr = 0 ;
+      INT32 startNumRecords = numRecords();
 
       if ( DMS_INVALID_EXTENT == _extentID )
       {
@@ -1403,7 +1462,7 @@ namespace engine
          goto error ;
       }
 
-      while ( isEmpty() )
+      while ( numRecords() == startNumRecords )
       {
          _mthMatchTreeContext mthContext ;
          dmsCappedExtScanner extScanner( (dmsStorageDataCapped *)_su->data(),
@@ -1529,6 +1588,7 @@ namespace engine
       mthSelector *selector      = NULL ;
       monAppCB * pMonAppCB       = cb ? cb->getMonAppCB() : NULL ;
       BOOLEAN hasLocked          = _mbContext->isMBLock() ;
+      INT32 startNumRecords      = numRecords();
 
       dmsRecordID rid ;
       BSONObj dataRecord ;
@@ -1552,7 +1612,7 @@ namespace engine
       }
 
       // loop until we read something in the buffer
-      while ( isEmpty() )
+      while ( numRecords() == startNumRecords )
       {
          _mthMatchTreeContext mthContext ;
          if ( NULL != dollarList )
@@ -2160,8 +2220,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       rtnContextData *pContext = NULL ;
       INT64 maxReturnNum = -1 ;
+      INT32 startNumRecords = numRecords();
 
-      while ( isEmpty() && 0 != _numToReturn )
+      while ( numRecords() == startNumRecords && 0 != _numToReturn )
       {
          pContext = NULL ;
          if ( cb->isInterrupted() )
