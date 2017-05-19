@@ -1,9 +1,10 @@
 ##名称##
 
-createOM - 在目标集群控制器（sdbcm）所在的机器中创建sdbom服务进程（ SequoiaDB 管理中心进程）。
+createOM - 在目标集群控制器（sdbcm）所在的机器中创建 sdbom 服务进程（ SequoiaDB 管理中心进程）。
 
 ##语法##
-**oma.createOM( \<svcname\>, \<dbpath\>, [config obj] )**
+
+**oma.createOM(\<svcname\>, \<dbpath\>, [config])**
 
 ##类别##
 
@@ -29,13 +30,13 @@ Oma
 
     节点路径。
 
-* `config obj` ( *Object*， *选填* )
+* `config` ( *Object*， *选填* )
 
-	节点配置信息，如配置日志大小，是否打开事务等，具体可参考[数据库配置](database_management/runtime_configuration.md)。
+	节点配置信息，如配置日志大小等，具体可参考[数据库配置](database_management/runtime_configuration.md)。
 
 ##返回值##
 
-成功：返回 OM 对象。
+成功：返回 Oma 对象。
 
 失败：抛出异常。
 

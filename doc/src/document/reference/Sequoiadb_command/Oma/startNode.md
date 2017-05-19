@@ -4,7 +4,7 @@ startNode - 在目标集群控制器（sdbcm）所在的机器中启动指定节
 
 ##语法##
 
-**oma.startNode( <svcname> )**
+**oma.startNode(\<svcname\>)**
 
 ##类别##
 

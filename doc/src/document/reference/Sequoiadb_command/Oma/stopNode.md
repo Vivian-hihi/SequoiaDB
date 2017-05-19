@@ -1,37 +1,52 @@
+##名称##
+
+stopNode - 在目标集群控制器（sdbcm）所在的机器中停止指定节点。
+
 ##语法##
-***oma.stopNode( \<svcname\> )***
 
-在目标集群控制器（sdbcm）所在的机器中停止一个节点。
+**oma.stopNode(\<svcname\>)**
 
-##参数描述##
+##描述##
 
-| 参数名 | 参数类型 | 描述 | 是否必填 |
-| ------ | ------ | ------ | ------ |
-| svcname | string | 节点端口号。 | 是 |
+在目标集群控制器（sdbcm）所在的机器中停止指定节点。
 
-> **Note:**
-> 
-> * oma对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
-> * 指定停止的节点必须存在，否则出现异常。
+**Note:**
+
+* oma对象为连接到目标（本地/远端机器）集群控制器（sdbcm）获得的连接对象。
+
+* 指定启动的节点必须存在，否则出现异常。
+
+##参数##
+
+* `svcname` ( *String*， *必填* )
+
+	节点端口号。
 
 ##返回值##
 
-无返回值，出错抛异常，并输出错误信息，可以通过
-[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息或通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取错误码。
-关于错误处理可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)。
+成功：无。
 
-##错误##
-| 错误码 		| 可能的原因 	| 解决方法					|
-| ------ 		| ------ 		| ------					|
-| -6			| 参数错误    | 查看参数是否填写正确	|
+失败：抛出异常。
 
-[错误码](reference/Sequoiadb_error_code.md)
+`stopNode()`函数常见异常如下：
+
+| 错误码 | 错误类型 | 描述 | 解决方法 |
+| ------ | ------ | --- | ------ |
+| -146 | SDBCM_NODE_NOTEXISTED | 节点不存在 | 使用列表查看节点是否存在 |
+
+当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
+或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
+可以参考[常见错误处理指南](troubleshooting/general/general_guide.md)了解更多内容。
+
+##版本##
+
+v2.0及以上版本。
 
 ##示例##
 
-* 在本地停止一个端口号为11830的节点
+1. 在本地停止一个端口号为11830的节点。
 
- ```lang-javascript
-> var oma = new Oma( "localhost", 11790 )
-> oma.stopNode( 11830 )
- ```
+	```lang-javascript
+	> var oma = new Oma( "localhost", 11790 )
+	> oma.stopNode( 11830 )
+	```
