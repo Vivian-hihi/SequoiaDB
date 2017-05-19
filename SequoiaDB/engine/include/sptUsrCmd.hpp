@@ -34,6 +34,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "sptUsrCmdCommon.hpp"
 #include "sptApi.hpp"
 
 #include <string>
@@ -95,17 +96,8 @@ namespace engine
       static INT32 staticHelp( const _sptArguments &arg,
                                _sptReturnVal &rval,
                                bson::BSONObj &detail ) ;
-
    private:
-      INT32 _setRVal( _ossCmdRunner *runner,
-                      _sptReturnVal &rval,
-                      BOOLEAN setToRVal,
-                      bson::BSONObj &detail ) ;
-
-   private:
-      UINT32         _retCode ;
-      string         _strOut ;
-      string         _command ;
+      _sptUsrCmdCommon _cmdCommon ;
    } ;
    typedef class _sptUsrCmd sptUsrCmd ;
 }

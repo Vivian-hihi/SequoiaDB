@@ -30,10 +30,6 @@
 *******************************************************************************/
 
 #include "sptUsrCmd.hpp"
-#include "ossCmdRunner.hpp"
-#include "ossMem.hpp"
-#include "ossUtil.hpp"
-#include "utilStr.hpp"
 
 using namespace bson ;
 
@@ -65,11 +61,9 @@ namespace engine
       JS_ADD_STATIC_FUNC( "help", staticHelp )
    JS_MAPPING_END()
 
-   #define SPT_USER_CMD_ONCE_SLEEP_TIME            ( 2 )
 
    _sptUsrCmd::_sptUsrCmd()
    {
-      _retCode    = 0 ;
    }
 
    _sptUsrCmd::~_sptUsrCmd()
@@ -127,24 +121,63 @@ namespace engine
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      rval.getReturnVal().setValue( _retCode ) ;
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string err ;
+      UINT32 lastRet ;
+
+      rc = _cmdCommon.getLastRet( err, lastRet ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << err.c_str() ) ;
+         goto error ;
+      }
+      rval.getReturnVal().setValue( lastRet ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrCmd::getLastOut( const _sptArguments & arg,
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      rval.getReturnVal().setValue( _strOut ) ;
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string err ;
+      string lastOut ;
+
+      rc = _cmdCommon.getLastOut( err, lastOut ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << err.c_str() ) ;
+         goto error ;
+      }
+      rval.getReturnVal().setValue( lastOut ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrCmd::getCommand( const _sptArguments & arg,
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
-      rval.getReturnVal().setValue( _command ) ;
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string err ;
+      string lastCommand ;
+
+      rc = _cmdCommon.getCommand( err, lastCommand ) ;
+      if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << err.c_str() ) ;
+         goto error ;
+      }
+      rval.getReturnVal().setValue( lastCommand ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrCmd::exec( const _sptArguments &arg,
@@ -155,18 +188,17 @@ namespace engine
       string ev ;
       UINT32 timeout = 0 ;
       UINT32 useShell = TRUE ;
-      ossCmdRunner runner ;
+      string command ;
+      string err ;
+      string strOut ;
 
-      _command.clear() ;
-
-      rc = arg.getString( 0, _command ) ;
+      rc = arg.getString( 0, command ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
          detail = BSON( SPT_ERR << "cmd must be config" ) ;
          goto error ;
       }
-      utilStrTrim( _command ) ;
 
       rc = arg.getString( 1, ev ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -174,11 +206,6 @@ namespace engine
          rc = SDB_INVALIDARG ;
          detail = BSON( SPT_ERR << "environment should be a string" ) ;
          goto error ;
-      }
-      else if ( SDB_OK == rc && !ev.empty() )
-      {
-         _command += " " ;
-         _command += ev ;
       }
 
       rc = arg.getNative( 2, (void*)&timeout, SPT_NATIVE_INT32 ) ;
@@ -200,38 +227,13 @@ namespace engine
       }
       rc = SDB_OK ;
 
-      _strOut = "" ;
-      _retCode = 0 ;
-      rc = runner.exec( _command.c_str(), _retCode, FALSE,
-                        0 == timeout ? -1 : (INT64)timeout,
-                        FALSE, NULL, useShell ? TRUE : FALSE ) ;
-      if ( SDB_OK != rc )
+      rc = _cmdCommon.exec( command, ev, timeout, useShell, err, strOut ) ;
+      if( SDB_OK != rc )
       {
-         stringstream ss ;
-         ss << "run[" << _command << "] failed" ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
+         detail = BSON( SPT_ERR << err.c_str() ) ;
          goto error ;
       }
-      else
-      {
-         rc = runner.read( _strOut ) ;
-         if ( rc )
-         {
-            stringstream ss ;
-            ss << "read run command[" << _command << "] result failed" ;
-            detail = BSON( SPT_ERR << ss.str() ) ;
-            goto error ;
-         }
-         else if ( SDB_OK != _retCode )
-         {
-            detail = BSON( SPT_ERR << _strOut ) ;
-            rc = _retCode ;
-            goto error ;
-         }
-
-         rval.getReturnVal().setValue( _strOut ) ;
-      }
-
+      rval.getReturnVal().setValue( strOut ) ;
    done:
       return rc ;
    error:
@@ -244,29 +246,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string ev ;
-      ossCmdRunner runner ;
+      string command ;
+      string err ;
+      INT32 pid ;
       UINT32 useShell = 1 ;
       UINT32 timeout  = 100 ;
-      OSSHANDLE processHandle = (OSSHANDLE)0 ;
-#if defined( _LINUX )
-      struct sigaction    ignore ;
-      struct sigaction    savechild ;
-      sigset_t            childmask ;
-      sigset_t            savemask ;
-      BOOLEAN             restoreSigMask         = FALSE ;
-      BOOLEAN             restoreSIGCHLDHandling = FALSE ;
-#endif // _LINUX
+      string retStr ;
 
-      _command.clear() ;
-
-      rc = arg.getString( 0, _command ) ;
+      rc = arg.getString( 0, command ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
          detail = BSON( SPT_ERR << "cmd must be config" ) ;
          goto error ;
       }
-      utilStrTrim( _command ) ;
 
       rc = arg.getString( 1, ev ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -274,12 +267,6 @@ namespace engine
          rc = SDB_INVALIDARG ;
          detail = BSON( SPT_ERR << "environment should be a string" ) ;
          goto error ;
-      }
-      else if ( SDB_OK == rc && !ev.empty() )
-      {
-         _command += " " ;
-         _command += ev ;
-         utilStrTrim( _command ) ;
       }
 
       // useShell, default : 1
@@ -302,112 +289,14 @@ namespace engine
       }
       rc = SDB_OK ;
 
-#if defined( _LINUX )
-      // we should block SIGCHLD and rembmer caller's mask
-      sigemptyset ( &childmask ) ;
-      sigaddset ( &childmask, SIGCHLD ) ;
-      // set new mask, save old mask
-      rc = pthread_sigmask( SIG_BLOCK, &childmask, &savemask ) ;
-      if ( rc )
+      rc = _cmdCommon.start( command, ev, useShell, timeout, err, pid, retStr ) ;
+      if( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Failed to block sigchld, err=%d", rc ) ;
-         rc = SDB_SYS ;
+         detail = BSON( SPT_ERR << err.c_str() ) ;
          goto error ;
       }
-      // once we changed signal mask, we have to restore it later
-      restoreSigMask = TRUE ;
-
-      // change sigchld action to default
-      ignore.sa_handler = SIG_DFL ;
-      sigemptyset ( &ignore.sa_mask ) ;
-      ignore.sa_flags = 0 ;
-      rc = sigaction ( SIGCHLD, &ignore, &savechild ) ;
-      if ( rc < 0 )
-      {
-         PD_LOG ( PDERROR, "Failed to run sigaction, err = %d", rc ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      // once we change signal handler, we have to restore it later
-      restoreSIGCHLDHandling = TRUE ;
-#endif //_LINUX
-
-      _strOut = "" ;
-      _retCode = 0 ;
-      rc = runner.exec( _command.c_str(), _retCode, TRUE, -1, FALSE,
-                        timeout > 0 ? &processHandle : NULL,
-                        useShell ? TRUE : FALSE,
-                        timeout > 0 ? TRUE : FALSE ) ;
-      if ( SDB_OK != rc )
-      {
-         stringstream ss ;
-         ss << "run[" << _command << "] failed" ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
-      else
-      {
-         OSSPID pid = runner.getPID() ;
-         if ( 0 != processHandle )
-         {
-            UINT32 times = 0 ;
-            while ( times < timeout )
-            {
-               if ( ossIsProcessRunning( pid ) )
-               {
-                  ossSleep( SPT_USER_CMD_ONCE_SLEEP_TIME ) ;
-                  times += SPT_USER_CMD_ONCE_SLEEP_TIME ;
-               }
-               else
-               {
-                  /// get exitcode and out string
-                  rc = ossGetExitCodeProcess( processHandle, _retCode ) ;
-                  if ( rc )
-                  {
-                     stringstream ss ;
-                     ss << "get exit code from process[ " << runner.getPID()
-                        << " ] failed" ;
-                     detail = BSON( SPT_ERR << ss.str() ) ;
-                     goto error ;
-                  }
-                  rc = runner.read( _strOut ) ;
-                  if ( rc )
-                  {
-                     stringstream ss ;
-                     ss << "read run command[" << _command
-                        << "] result failed" ;
-                     detail = BSON( SPT_ERR << ss.str() ) ;
-                     goto error ;
-                  }
-
-                  if ( SDB_OK != _retCode )
-                  {
-                     detail = BSON( SPT_ERR << _strOut ) ;
-                     rc = _retCode ;
-                     goto error ;
-                  }
-                  break ;
-               }
-            }
-         }
-         rval.getReturnVal().setValue( (INT32)pid ) ;
-      }
-
+      rval.getReturnVal().setValue( pid ) ;
    done:
-      if ( 0 != processHandle )
-      {
-         ossCloseProcessHandle( processHandle ) ;
-      }
-#if defined( _LINUX )
-      if ( restoreSIGCHLDHandling )
-      {
-         sigaction ( SIGCHLD, &savechild, NULL ) ;
-      }
-      if ( restoreSigMask )
-      {
-         pthread_sigmask ( SIG_SETMASK, &savemask, NULL ) ;
-      }
-#endif // _LINUX
       return rc ;
    error:
       goto done ;
@@ -456,36 +345,6 @@ namespace engine
          << "   runJS( code )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
-   }
-
-   INT32 _sptUsrCmd::_setRVal( _ossCmdRunner *runner,
-                               _sptReturnVal &rval,
-                               BOOLEAN setToRVal,
-                               BSONObj &detail )
-   {
-      INT32 rc = SDB_OK ;
-      string outStr ;
-
-      rc = runner->read( outStr ) ;
-      if ( rc )
-      {
-         detail = BSON( SPT_ERR << "read run result failed" ) ;
-         goto error ;
-      }
-
-      if ( setToRVal )
-      {
-         rval.getReturnVal().setValue( outStr ) ;
-      }
-      else
-      {
-         detail = BSON( SPT_ERR << outStr ) ;
-      }
-
-   done:
-      return rc  ;
-   error:
-      goto done ;
    }
 }
 

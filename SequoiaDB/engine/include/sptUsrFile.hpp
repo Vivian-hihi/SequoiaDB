@@ -35,7 +35,7 @@
 
 #include "sptApi.hpp"
 #include "ossIO.hpp"
-
+#include "sptUsrFileCommon.hpp"
 namespace engine
 {
    class _sptUsrFile : public SDBObject
@@ -170,12 +170,6 @@ namespace engine
                                    bson::BSONObj &detail ) ;
 
    private:
-      static INT32 _extractListInfo( const CHAR* buf,
-                                     bson::BSONObjBuilder &builder,
-                                     BOOLEAN showDetail ) ;
-
-      static INT32 _extractFindInfo( const CHAR* buf,
-                                     bson::BSONObjBuilder &builder ) ;
 
       INT32 _readContentLocal( const _sptArguments &arg,
                                bson::BSONObj &detail,
@@ -191,8 +185,7 @@ namespace engine
       INT32 _writeContentRemote( const _sptArguments &arg,
                                  bson::BSONObj &detail ) ;
    private:
-      OSSFILE _file ;
-      string  _filename ;
+      _sptUsrFileCommon _fileCommon ;
    } ;
 }
 

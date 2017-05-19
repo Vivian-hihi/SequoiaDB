@@ -534,6 +534,7 @@ Remote.prototype.getSystem = function() {
 
 Remote.prototype.getFile = function( filename, permission, openMode ) {
    var file = File._getFileObj() ;
+   var option = {} ;
    file._remote = this ;
 
    if ( 1 <= arguments.length )
@@ -546,25 +547,18 @@ Remote.prototype.getFile = function( filename, permission, openMode ) {
 
       if( undefined != permission )
       {
+         option.permission = permission ;
          if( undefined != openMode )
          {
-            this._runCommand( "file open",
-                              { "permission": permission, "mode": openMode },
-                              {}, { "filename": filename } ) ;
-         }
-         else
-         {
-            this._runCommand( "file open", { "permission": permission }, {},
-                              { "filename": filename } ) ;
+            option.mode = openMode ;
          }
       }
-      else
-      {
-         this._runCommand( "file open", {}, {}, { "filename": filename } ) ;
-      }
+
+      this._runCommand( "file open", option, {}, { "filename": filename } ) ;
       file._filename = filename ;
       file._location = 0 ;
       file._isOpened = true ;
+      file._option = option ;
    }
    return file ;
 }
@@ -1575,8 +1569,8 @@ System.prototype.killProcess = function( optionObj ) {
    if ( undefined != this._remote )
    {
       this._remote._runCommand( "system kill process",
-                                { "sig" : optionObj.sig },
-                                { "pid": optionObj.pid } ) ;
+                                { "sig" : optionObj.sig,
+                                  "pid": optionObj.pid } ) ;
    }
    else
    {
@@ -1917,25 +1911,28 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
    // remote call
    if ( undefined != this._remote )
    {
+      var retObj ;
 
-      var retObj = this._remote._runCommand( "cmd run",
-                                             { "timeout": timeout,
-                                               "useShell": useShell }, {},
-                                             { "command": cmd,
-                                               "args": args } ).toObj() ;
-
-      this._retCode = retObj.retCode ;
-      this._strOut = retObj.strOut ;
-
-      if ( 0 != this._retCode )
+      try
       {
-         setLastErrMsg( this._strOut ) ;
-         throw this._retCode ;
+         retObj = this._remote._runCommand( "cmd run",
+                                            { "timeout": timeout,
+                                              "useShell": useShell }, {},
+                                            { "command": cmd,
+                                              "args": args } ).toObj() ;
+         this._retCode = getLastError() ;
+         this._strOut = retObj.strOut ;
       }
-      else
+      catch( e )
       {
-         retStr = this._strOut ;
+         if( 0 <= e )
+         {
+            this._retCode = e ;
+            this._strOut = getLastErrMsg() ;
+         }
+         throw e ;
       }
+      retStr = this._strOut ;
    }
    else
    {
@@ -1948,7 +1945,7 @@ Cmd.prototype.run = function( cmd, args, timeout, useShell ) {
 }
 
 Cmd.prototype.start = function( cmd, args, useShell, timeout ) {
-   var retStr ;
+   var retPid ;
 
    // check argument
    if ( 1 > arguments.length )
@@ -1989,32 +1986,33 @@ Cmd.prototype.start = function( cmd, args, useShell, timeout ) {
 
    if ( undefined != this._remote )
    {
-      var recvObj = this._remote._runCommand( "cmd start",
-                                              { "useShell": useShell,
-                                                "timeout": timeout }, {},
-                                               { "command": cmd,
-                                                 "args": args } ) ;
-      var getObj = recvObj.toObj() ;
-
-      this._retCode = getObj.retCode ;
-      this._strOut = getObj.strOut ;
-
-      if ( 0 != this._retCode )
+      var recvObj ;
+      try
       {
-         setLastErrMsg( getObj.strOut ) ;
-         throw getObj.retCode ;
+         recvObj = this._remote._runCommand( "cmd start",
+                                             { "useShell": useShell,
+                                               "timeout": timeout }, {},
+                                             { "command": cmd,
+                                               "args": args } ).toObj() ;
+         this._retCode = getLastError() ;
+         this._strOut = recvObj.strOut ;
       }
-      else
+      catch( e )
       {
-         retStr = getObj.pid ;
+         if( 0 <= e )
+         {
+            this._retCode = e ;
+            this._strOut = getLastErrMsg() ;
+         }
+         throw e ;
       }
+      retPid = recvObj.pid ;
    }
    else
    {
-      retStr = this._start( cmd, args, useShell, timeout ) ;
+      retPid = this._start( cmd, args, useShell, timeout ) ;
    }
-
-   return retStr ;
+   return retPid ;
 }
 
 Cmd.prototype.runJS = function( code ) {
@@ -2373,16 +2371,16 @@ File.prototype.read = function( size ) {
       var retObj ;
       if ( undefined != size )
       {
-         retObj = this._remote._runCommand( "file read",{}, {},
-                                           { "size":size,
-                                             "filename": this._filename,
-                                             "location": this._location } ) ;
+         retObj = this._remote._runCommand( "file read", this._option, {},
+                                            { "size": size,
+                                              "filename": this._filename,
+                                              "location": this._location } ) ;
       }
       else
       {
-         retObj = this._remote._runCommand( "file read",{}, {},
-                                           { "filename": this._filename,
-                                             "location": this._location } ) ;
+         retObj = this._remote._runCommand( "file read", this._option, {},
+                                            { "filename": this._filename,
+                                              "location": this._location } ) ;
       }
       var recvObj = retObj.toObj() ;
       str = recvObj.readContent ;
@@ -2443,7 +2441,7 @@ File.prototype.write = function( content ){
          throw SDB_IO ;
       }
 
-      this._remote._runCommand( "file write", {}, {},
+      this._remote._runCommand( "file write", this._option, {},
                                 { "filename": this._filename,
                                   "location": this._location,
                                   "content": content } ) ;

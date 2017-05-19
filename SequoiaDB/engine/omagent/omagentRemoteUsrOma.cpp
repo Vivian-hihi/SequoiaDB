@@ -36,6 +36,7 @@
 #include "utilParam.hpp"
 #include "pmdDef.hpp"
 #include "ossProc.hpp"
+#include "sptUsrOmaCommon.hpp"
 #include "../bson/bsonobjbuilder.h"
 using namespace bson ;
 
@@ -64,8 +65,21 @@ namespace engine
 
    INT32 _remoteOmaGetOmaInstallFile::doit( BSONObj &retObj )
    {
-      retObj = BSON( "installFile" << SDB_INSTALL_FILE_NAME ) ;
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string installFile ;
+      string err ;
+
+      rc = _sptUsrOmaCommon::getOmaInstallFile( installFile, err ) ;
+      if( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
+         goto error ;
+      }
+      retObj = BSON( "installFile" << installFile ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -89,23 +103,13 @@ namespace engine
    INT32 _remoteOmaGetOmaInstallInfo::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-      utilInstallInfo info ;
+      string err ;
 
-      // get install info
-      rc = utilGetInstallInfo( info ) ;
-      if ( rc )
+      rc = _sptUsrOmaCommon::getOmaInstallInfo( retObj, err ) ;
+      if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "Install file is not exist" ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
-      }
-      else
-      {
-         BSONObjBuilder builder ;
-         builder.append( SDB_INSTALL_RUN_FILED, info._run ) ;
-         builder.append( SDB_INSTALL_USER_FIELD, info._user ) ;
-         builder.append( SDB_INSTALL_PATH_FIELD, info._path ) ;
-         builder.append( SDB_INSTALL_MD5_FIELD, info._md5 ) ;
-         retObj = builder.obj() ;
       }
    done:
       return rc ;
@@ -135,15 +139,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string confFile ;
+      string err ;
 
-      rc = _getOmaConfFile( confFile ) ;
-      if ( SDB_OK != rc )
+      rc = _sptUsrOmaCommon::getOmaConfigFile( confFile, err ) ;
+      if( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
       }
-
-      retObj = BSON( "confFile" << confFile.c_str() ) ;
+      retObj = BSON( "confFile" << confFile ) ;
    done:
       return rc ;
    error:
@@ -173,39 +177,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       string confFile ;
       BSONObj conf ;
-      string errMsg ;
+      string err ;
 
-      // get confFile
-      if ( FALSE == _matchObj.isEmpty() )
+      rc = _sptUsrOmaCommon::getOmaConfigs( _matchObj, retObj, err ) ;
+      if( SDB_OK != rc )
       {
-         if ( FALSE == _matchObj.hasField( "confFile" ) ||
-              String != _matchObj.getField( "confFile" ).type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "confFile must be string" ) ;
-            goto error ;
-         }
-         confFile = _matchObj.getStringField( "confFile" ) ;
-      }
-      else
-      {
-         rc = _getOmaConfFile( confFile ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
-            goto error ;
-         }
-      }
-
-      // get config info
-      rc = _getOmaConfInfo( confFile, conf, errMsg ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, errMsg.c_str() ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
       }
-
-      retObj = conf ;
    done:
       return rc ;
    error:
@@ -233,10 +212,8 @@ namespace engine
    INT32 _remoteOmaSetOmaConfigs::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-      string confFile ;
       BSONObj conf ;
-      string str ;
-      string errMsg ;
+      string err ;
 
       // get configsObj
       if ( FALSE == _valueObj.hasField( "configsObj" ) )
@@ -253,41 +230,10 @@ namespace engine
       }
       conf = _valueObj.getObjectField( "configsObj" );
 
-      // get confFile
-      if ( _matchObj.hasField( "confFile" ) )
+      rc = _sptUsrOmaCommon::setOmaConfigs( _matchObj, conf, err ) ;
+      if( SDB_OK != rc )
       {
-         if ( String != _matchObj.getField( "confFile" ).type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "confFile must be string" ) ;
-            goto error ;
-         }
-         confFile = _matchObj.getStringField( "confFile" ) ;
-      }
-      else
-      {
-         rc = _getOmaConfFile( confFile ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
-            goto error ;
-         }
-      }
-
-      rc = _confObj2Str( conf, str, errMsg ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, errMsg.c_str() ) ;
-         goto error ;
-      }
-
-      // write confFile
-      rc = utilWriteConfigFile( confFile.c_str(), str.c_str(), FALSE ) ;
-      if ( rc )
-      {
-         stringstream ss ;
-         ss << "write conf file[" << confFile << "] failed" ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
       }
 
@@ -318,81 +264,16 @@ namespace engine
    INT32 _remoteOmaGetAOmaSvcName::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-      string hostname ;
-      string confFile ;
-      BSONObj confObj ;
-      string errMsg ;
+      string err ;
+      string retStr ;
 
-      // get hostname
-      if ( FALSE == _matchObj.hasField( "hostname" ) )
+      rc = _sptUsrOmaCommon::getAOmaSvcName( _matchObj, retStr, err ) ;
+      if( SDB_OK != rc )
       {
-         rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "hostname must be config" ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
       }
-      else if ( String != _matchObj.getField( "hostname" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "hostname must be string" ) ;
-         goto error ;
-      }
-      hostname = _matchObj.getStringField( "hostname" ) ;
-
-      // get config File
-      if ( _matchObj.hasField( "confFile" ) )
-      {
-         if ( String != _matchObj.getField( "confFile" ).type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "confFile must be string" ) ;
-            goto error ;
-         }
-         confFile = _matchObj.getStringField( "confFile" ) ;
-      }
-      else
-      {
-         rc = _getOmaConfFile( confFile ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
-            goto error ;
-         }
-      }
-
-      // get config obj and match
-      rc = _getOmaConfInfo( confFile, confObj, errMsg ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, errMsg.c_str() ) ;
-         goto error ;
-      }
-      else
-      {
-         const CHAR *p = ossStrstr( hostname.c_str(), SDBCM_CONF_PORT ) ;
-         if ( !p || ossStrlen( p ) != ossStrlen( SDBCM_CONF_PORT ) )
-         {
-            hostname += SDBCM_CONF_PORT ;
-         }
-         BSONElement e = confObj.getField( hostname ) ;
-         if ( e.eoo() )
-         {
-            e = confObj.getField( SDBCM_CONF_DFTPORT ) ;
-         }
-
-         if ( e.type() == String )
-         {
-            retObj = BSON( "svcName" << e.valuestr() ) ;
-         }
-         else
-         {
-            stringstream ss ;
-            ss << e.toString() << " is invalid" ;
-            PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-      }
-
+      retObj = BSON( "svcName" << retStr ) ;
    done:
       return rc ;
    error:
@@ -420,147 +301,13 @@ namespace engine
    INT32 _remoteOmaAddAOmaSvcName::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-      INT32 isReplace = TRUE ;
-      string hostname ;
-      string svcname ;
-      string errMsg ;
-      string confFile ;
-      BSONObj confObj ;
-      string str ;
+      string err ;
 
-      // get hostname
-      if ( FALSE == _valueObj.hasField( "hostname" ) )
+      rc = _sptUsrOmaCommon::addAOmaSvcName( _valueObj, _optionObj,
+                                            _matchObj, err ) ;
+      if( SDB_OK != rc )
       {
-         rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "hostname must be config" ) ;
-         goto error ;
-      }
-      else if ( String != _valueObj.getField( "hostname" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "hostname must be string" ) ;
-         goto error ;
-      }
-      hostname = _valueObj.getStringField( "hostname" ) ;
-      if ( hostname.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "hostname can't be empty" ) ;
-         goto error ;
-      }
-
-      // get svcname
-      if ( FALSE == _valueObj.hasField( "svcname" ) )
-      {
-         rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "svcname must be config" ) ;
-         goto error ;
-      }
-      else if ( String != _valueObj.getField( "svcname" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "svcname must be string" ) ;
-         goto error ;
-      }
-      svcname = _valueObj.getStringField( "svcname" ) ;
-      if ( svcname.empty() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "svcname can't be empty" ) ;
-         goto error ;
-      }
-
-      // get isReplace
-      if ( _optionObj.hasField( "isReplace" ) )
-      {
-         if ( Bool != _optionObj.getField( "isReplace" ).type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "isReplace must be BOOLEAN" ) ;
-            goto error ;
-         }
-         isReplace = _optionObj.getBoolField( "isReplace" ) ;
-      }
-
-      // get confFile
-      if ( _matchObj.hasField( "confFile" ) )
-      {
-         if ( String != _matchObj.getField( "confFile" ).type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "confFile must be string" ) ;
-            goto error ;
-         }
-         confFile = _matchObj.getStringField( "confFile" ) ;
-      }
-      else
-      {
-         rc = _getOmaConfFile( confFile ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
-            goto error ;
-         }
-      }
-
-      rc = _getOmaConfInfo( confFile, confObj, errMsg, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, errMsg.c_str() ) ;
-         goto error ;
-      }
-      else
-      {
-         const CHAR *p = ossStrstr( hostname.c_str(), SDBCM_CONF_PORT ) ;
-         if ( !p || ossStrlen( p ) != ossStrlen( SDBCM_CONF_PORT ) )
-         {
-            hostname += SDBCM_CONF_PORT ;
-         }
-         BSONElement e = confObj.getField( hostname ) ;
-         BSONElement e1 = confObj.getField( SDBCM_CONF_DFTPORT ) ;
-
-         if ( e.type() == String )
-         {
-            if ( 0 == ossStrcmp( e.valuestr(), svcname.c_str() ) )
-            {
-               // same with hostname, not change
-               goto done ;
-            }
-            else if ( !isReplace )
-            {
-               stringstream ss ;
-               ss << hostname << " already exist" ;
-               PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-         }
-         else if ( e1.type() == String &&
-                   0 == ossStrcmp( e1.valuestr(), svcname.c_str() ) )
-         {
-            // same with default, not change
-            goto done ;
-         }
-      }
-
-      rc = _confObj2Str( confObj, str, errMsg, hostname.c_str() ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, errMsg.c_str() ) ;
-         goto error ;
-      }
-      str += hostname ;
-      str += "=" ;
-      str += svcname ;
-      str += OSS_NEWLINE ;
-
-      // write conf file
-      rc = utilWriteConfigFile( confFile.c_str(), str.c_str(), FALSE ) ;
-      if ( rc )
-      {
-         stringstream ss ;
-         ss << "write conf file[" << confFile << "] failed" ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
       }
    done:
@@ -590,84 +337,12 @@ namespace engine
    INT32 _remoteOmaDelAOmaSvcName::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-      string hostname ;
-      string confFile ;
-      BSONObj confObj ;
-      string str ;
-      string errMsg ;
+      string err ;
 
-      // get hostname
-      if ( FALSE == _matchObj.hasField( "hostname" ) )
+      rc = _sptUsrOmaCommon::delAOmaSvcName( _matchObj, err ) ;
+      if( SDB_OK != rc )
       {
-         rc = SDB_OUT_OF_BOUND ;
-         PD_LOG_MSG( PDERROR, "hostname must be config" ) ;
-         goto error ;
-      }
-      else if ( String != _matchObj.getField( "hostname" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "hostname must be string" ) ;
-         goto error ;
-      }
-      hostname = _matchObj.getStringField( "hostname" ) ;
-
-      // get confFile
-      if ( _matchObj.hasField( "confFile" ) )
-      {
-         if ( String != _matchObj.getField( "confFile" ).type() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "confFile must be string" ) ;
-            goto error ;
-         }
-         confFile = _matchObj.getStringField( "confFile" ) ;
-      }
-      else
-      {
-         rc = _getOmaConfFile( confFile ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG_MSG( PDERROR, "Failed to get config file" ) ;
-            goto error ;
-         }
-      }
-
-      rc = _getOmaConfInfo( confFile, confObj, errMsg, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, errMsg.c_str() ) ;
-         goto error ;
-      }
-      else
-      {
-         const CHAR *p = ossStrstr( hostname.c_str(), SDBCM_CONF_PORT ) ;
-         if ( !p || ossStrlen( p ) != ossStrlen( SDBCM_CONF_PORT ) )
-         {
-            hostname += SDBCM_CONF_PORT ;
-         }
-         BSONElement e = confObj.getField( hostname ) ;
-         if ( e.eoo() )
-         {
-            // not exist, don't delete
-            goto done ;
-         }
-      }
-
-      // turn into str
-      rc = _confObj2Str( confObj, str, errMsg, hostname.c_str() ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, errMsg.c_str() ) ;
-         goto error ;
-      }
-
-      // write confFile
-      rc = utilWriteConfigFile( confFile.c_str(), str.c_str(), FALSE ) ;
-      if ( rc )
-      {
-         stringstream ss ;
-         ss << "write conf file[" << confFile << "] failed" ;
-         PD_LOG_MSG( PDERROR, ss.str().c_str() ) ;
+         PD_LOG_MSG( PDERROR, err.c_str() ) ;
          goto error ;
       }
    done:
