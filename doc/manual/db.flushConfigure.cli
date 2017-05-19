@@ -7,8 +7,7 @@
 .SH "NAME"
 
 .sp 2
-flushConfigure - Flush the configurations to the configuration file
-files.
+flushConfigure - Flush the configurations to the configuration files.
 .SH "SYNOPSIS"
 
 .sp 2
