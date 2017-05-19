@@ -144,8 +144,10 @@ function toolGetHosts()
 ******************************************************************************/
 function toolGetLocalhost()
 {
-   var cmd = new Cmd() ;
+   var remote = new Remote( COORDHOSTNAME, CMSVCNAME ) ;
+   var cmd = remote.getCmd() ;
    var localhost = cmd.run( "hostname" ).split( "\n" )[0] ;
+   remote.close() ;
    return localhost ;
 }
 
