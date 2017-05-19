@@ -2744,7 +2744,7 @@ namespace engine
       try
       {
          BSONObj matcher( pMatcherBuff ) ;
-         BSONElement e = matcher.getField( FIELD_NAME_REELECTION_LEVEL ) ;
+         BSONElement e = matcher.getField( FIELD_NAME_TYPE ) ;
          if ( e.eoo() )
          {
             _mask = PMD_CFG_MASK_SKIP_UNFIELD ;
