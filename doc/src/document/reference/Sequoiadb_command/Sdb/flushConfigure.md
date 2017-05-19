@@ -1,19 +1,25 @@
 ##语法##
-***db.flushConfigure( \<rule\> )***
+***db.flushConfigure( \[options\] )***
 
-将配置刷盘至配置文件
+将节点内存中的配置刷盘至配置文件
 
 ##参数描述##
 
 |参数名    |参数类型    |描述         |是否必填|
 |--------- |----------- |------------ |----------|
-|rule      |Json 对象   |刷盘规则     |是|
+| options  | Json对象   | 设定配置过滤类型 以及 **[命令位置参数](reference/Sequoiadb_command/Overview/location.md)** | 否 |
 
-1. **rule 格式**
+1. **options 格式**
 
- |属性名   |  描述                       |                             格式|
- |---------| ----------------------------------------------------- |  --------|
- |Global   | true 表示将全系统配置刷盘，false 表示只将本节点配置刷盘  | Global: true|
+ | 属性名 | 描述 | 格式 |
+ | ------ | ------ | ------ |
+ | Type   | 配置过滤类型， 0:所有配置; 1:屏敝未修改的隐藏参数; 2:屏敝未修改的所有参数; 3:屏敝未配置的参数。缺省取值为 3。 | Type:3 |
+ | Location Elements | 命令位置参数项，详细见 **[命令位置参数](reference/Sequoiadb_command/Overview/location.md)** | GroupName:"db1" |
+
+> **Note:**
+>
+> * 配置过滤类型不正确时默认设置为 3。
+> * 无位置参数时，缺省只对本身节点生效。
 
 ##返回值##
 
@@ -24,5 +30,5 @@
 - 刷盘数据库配置
 
  ```lang-javascript
- > db.flushConfigure( { Global: true } )
+ > db.flushConfigure( { Global : true } )
  ```
