@@ -1097,12 +1097,8 @@ namespace engine
    INT32 _sptUsrSystemCommon::getIpTablesInfo( string &err,
                                               BSONObj &retObj )
    {
-      INT32 rc = SDB_OK ;
       retObj = BSON( "FireWall" << "unknown" ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
 #if defined( _LINUX )

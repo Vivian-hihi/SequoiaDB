@@ -113,6 +113,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       ossCmdRunner runner ;
       OSSHANDLE processHandle = (OSSHANDLE)0 ;
+
 #if defined( _LINUX )
       struct sigaction    ignore ;
       struct sigaction    savechild ;
@@ -181,7 +182,7 @@ namespace engine
          OSSPID childPid = runner.getPID() ;
          if ( 0 != processHandle )
          {
-            UINT32 times = 0 ;
+            INT64 times = 0 ;
             while ( times < timeout )
             {
                if ( ossIsProcessRunning( childPid ) )

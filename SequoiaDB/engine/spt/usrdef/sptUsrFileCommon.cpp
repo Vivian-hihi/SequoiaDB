@@ -1082,7 +1082,6 @@ namespace engine
    INT32 _sptUsrFileCommon::setUmask( INT32 mask, string &err )
    {
 #if defined(_LINUX)
-      INT32              rc = SDB_OK ;
       INT32              userMask ;
 
       userMask = 0 ;
@@ -1125,10 +1124,7 @@ namespace engine
 
       // set mask
       umask( userMask ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
 
 #elif defined (_WINDOWS)
       return SDB_OK ;

@@ -392,8 +392,9 @@ do                                                                          \
       if ( NULL == connection->_sock )
       {
          rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Failed to get valid sock, rc: %d", rc ) ;
+         goto error ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get valid sock, rc: %d", rc) ;
 
       rc = clientSend ( connection->_sock, pMsg, msgLength,
                         SDB_CLIENT_DFT_NETWORK_TIMEOUT ) ;
