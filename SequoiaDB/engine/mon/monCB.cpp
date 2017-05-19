@@ -49,10 +49,8 @@ namespace engine
 
       totalDataRead   = 0 ;
       totalIndexRead  = 0 ;
-      totalLobRead    = 0 ;
       totalDataWrite  = 0 ;
       totalIndexWrite = 0 ;
-      totalLobWrite   = 0 ;
 
       totalUpdate     = 0 ;
       totalDelete     = 0 ;
@@ -89,10 +87,8 @@ namespace engine
       mondbcb                   = pmdGetKRCB()->getMonDBCB() ;
       totalDataRead             = rhs.totalDataRead ;
       totalIndexRead            = rhs.totalIndexRead ;
-      totalLobRead              = rhs.totalLobRead ;
       totalDataWrite            = rhs.totalDataWrite ;
       totalIndexWrite           = rhs.totalIndexWrite ;
-      totalLobWrite             = rhs.totalLobWrite ;
 
       totalUpdate               = rhs.totalUpdate ;
       totalDelete               = rhs.totalDelete ;
@@ -121,10 +117,8 @@ namespace engine
    {
       totalDataRead              += rhs.totalDataRead ;
       totalIndexRead             += rhs.totalIndexRead ;
-      totalLobRead               += rhs.totalLobRead ;
       totalDataWrite             += rhs.totalDataWrite ;
       totalIndexWrite            += rhs.totalIndexWrite ;
-      totalLobWrite              += rhs.totalLobWrite ;
 
       totalUpdate                += rhs.totalUpdate ;
       totalDelete                += rhs.totalDelete ;
@@ -147,10 +141,8 @@ namespace engine
    {
       totalDataRead = 0 ;
       totalIndexRead = 0 ;
-      totalLobRead   = 0 ;
       totalDataWrite = 0 ;
       totalIndexWrite = 0 ;
-      totalLobWrite   = 0 ;
 
       totalUpdate = 0 ;
       totalDelete = 0 ;
