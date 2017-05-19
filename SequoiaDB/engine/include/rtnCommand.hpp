@@ -285,22 +285,22 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_PROCEDURES ; }
    } ;
 
-   class _rtnCrtProcedure : public _rtnCoordOnly
+   class _rtnCreateProcedure : public _rtnCoordOnly
    {
       DECLARE_CMD_AUTO_REGISTER()
       public:
-         _rtnCrtProcedure () {}
-         virtual ~_rtnCrtProcedure () {}
+         _rtnCreateProcedure () {}
+         virtual ~_rtnCreateProcedure () {}
          virtual const CHAR * name () { return NAME_CREATE_PROCEDURE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_CREATE_PROCEDURE ; }
    } ;
 
-   class _rtnRmProcedure : public _rtnCoordOnly
+   class _rtnRemoveProcedure : public _rtnCoordOnly
    {
       DECLARE_CMD_AUTO_REGISTER()
       public:
-         _rtnRmProcedure () {}
-         virtual ~_rtnRmProcedure () {}
+         _rtnRemoveProcedure () {}
+         virtual ~_rtnRemoveProcedure () {}
          virtual const CHAR * name () { return NAME_REMOVE_PROCEDURE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_REMOVE_PROCEDURE ; }
    } ;
