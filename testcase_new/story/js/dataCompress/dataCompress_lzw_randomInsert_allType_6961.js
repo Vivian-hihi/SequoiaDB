@@ -25,7 +25,7 @@ function main()
       var lzwCLName = COMMCLNAME+"_lzw" ;
       var rgName = getDataGroupsName()[0]; 
       var dtNumber = 80000 ;  //records number of single data type
-      var checkRecsNum  = 5 ; //get random 3 records
+      var checkRecsNum  = 2 ; //get random 3 records
 
       println("\n---Begin to drop CS in the pre-condition.");
       commDropCS( db, noCSName, true, "Failed to drop CS["+ noCSName +"].");
