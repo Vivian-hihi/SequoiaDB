@@ -1084,7 +1084,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
 
       public :
-         _rtnExportConf(){}
+         _rtnExportConf() ;
          virtual ~_rtnExportConf(){}
 
          virtual const CHAR * name () { return NAME_EXPORT_CONFIGURATION ; }
@@ -1094,14 +1094,14 @@ namespace engine
                               const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff )
-         {
-            return SDB_OK ;
-         }
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+      private:
+         UINT32            _mask ;
 
    } ;
 

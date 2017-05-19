@@ -85,7 +85,60 @@ namespace engine
                                          ROUTE_RC_MAP &faileds )
    {
       /// do on local
-      INT32 rc = pmdGetKRCB()->getOptionCB()->reflush2File() ;
+      UINT32 mask = 0 ;
+      INT32 rc = SDB_OK ;
+      CHAR *pMatcherBuff = NULL ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &pMatcherBuff, NULL, NULL, NULL ) ;
+
+      try
+      {
+         BSONObj matcher( pMatcherBuff ) ;
+         BSONElement e = matcher.getField( FIELD_NAME_REELECTION_LEVEL ) ;
+         if ( e.eoo() )
+         {
+            mask = PMD_CFG_MASK_SKIP_UNFIELD ;
+         }
+         else if ( e.isNumber() )
+         {
+            INT32 type = e.numberInt() ;
+            /// 0: ignore none
+            /// 1: ignore hide default
+            /// 2: ignore default
+            /// 3: ignore unfield
+            switch( type )
+            {
+               case 0 :
+                  mask = 0 ;
+                  break ;
+               case 1 :
+                  mask = PMD_CFG_MASK_SKIP_HIDEDFT ;
+                  break ;
+               case 2 :
+                  mask = PMD_CFG_MASK_SKIP_HIDEDFT | PMD_CFG_MASK_SKIP_NORMALDFT ;
+                  break ;
+               default :
+                  mask = PMD_CFG_MASK_SKIP_UNFIELD ;
+                  break ;
+            }
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Field[%s] should be numberInt",
+                    e.toString( TRUE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = pmdGetKRCB()->getOptionCB()->reflush2File( mask ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Flush local config to file failed, rc: %d", rc ) ;

@@ -6134,7 +6134,7 @@ static JSBool sdb_flush_configure( JSContext *cx, uintN argc, jsval *vp )
    REPORT ( connection, "Sdb.flushConfigure: no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "o" , &objData) ;
+                               "/o" , &objData) ;
    REPORT ( ret, "Sdb.flushConfigure(): wrong arguments" ) ;
 
    // bsonData is freed in done:

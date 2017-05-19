@@ -371,7 +371,7 @@ namespace engine
 
          INT32 makeAllDir() ;
 
-         INT32 reflush2File() ;
+         INT32 reflush2File( UINT32 mask = PMD_CFG_MASK_SKIP_UNFIELD ) ;
 
       public:
          OSS_INLINE const CHAR *getConfPath() const

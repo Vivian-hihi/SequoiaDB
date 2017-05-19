@@ -2184,11 +2184,19 @@ namespace engine
       ossStrncpy( _catAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
       _catAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
       /// make sure hasField
-      _addToFieldMap( PMD_OPTION_CATALOG_ADDR, _catAddrLine, TRUE, TRUE ) ;
+      if ( 0 != _catAddrLine[ 0 ] )
+      {
+         _addToFieldMap( PMD_OPTION_CATALOG_ADDR, _catAddrLine, TRUE, TRUE ) ;
+      }
 
       addr = makeAddressLine( _vecOm ) ;
       ossStrncpy( _omAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
       _omAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
+      /// make sure PMD_OPTION_OM_ADDR hasField
+      if ( 0 != _omAddrLine[ 0 ] )
+      {
+         _addToFieldMap( PMD_OPTION_OM_ADDR, _omAddrLine, TRUE, TRUE ) ;
+      }
 
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
@@ -2552,14 +2560,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_REFLUSH2FILE, "_pmdOptionsMgr::reflush2file" )
-   INT32 _pmdOptionsMgr::reflush2File()
+   INT32 _pmdOptionsMgr::reflush2File( UINT32 mask )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY (SDB__PMDOPTMGR_REFLUSH2FILE ) ;
       std::string line ;
       CHAR conf[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
 
-      rc = pmdCfgRecord::toString( line, PMD_CFG_MASK_SKIP_UNFIELD ) ;
+      rc = pmdCfgRecord::toString( line, mask ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to get the line str:%d", rc ) ;

@@ -2726,6 +2726,73 @@ namespace engine
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnExportConf)
+
+   _rtnExportConf::_rtnExportConf()
+   {
+      _mask = 0 ;
+   }
+
+   INT32 _rtnExportConf::init( INT32 flags, INT64 numToSkip,
+                               INT64 numToReturn,
+                               const CHAR *pMatcherBuff,
+                               const CHAR *pSelectBuff,
+                               const CHAR *pOrderByBuff,
+                               const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj matcher( pMatcherBuff ) ;
+         BSONElement e = matcher.getField( FIELD_NAME_REELECTION_LEVEL ) ;
+         if ( e.eoo() )
+         {
+            _mask = PMD_CFG_MASK_SKIP_UNFIELD ;
+         }
+         else if ( e.isNumber() )
+         {
+            INT32 type = e.numberInt() ;
+            /// 0: ignore none
+            /// 1: ignore hide default
+            /// 2: ignore default
+            /// 3: ignore unfield
+            switch( type )
+            {
+               case 0 :
+                  _mask = 0 ;
+                  break ;
+               case 1 :
+                  _mask = PMD_CFG_MASK_SKIP_HIDEDFT ;
+                  break ;
+               case 2 :
+                  _mask = PMD_CFG_MASK_SKIP_HIDEDFT | PMD_CFG_MASK_SKIP_NORMALDFT ;
+                  break ;
+               default :
+                  _mask = PMD_CFG_MASK_SKIP_UNFIELD ;
+                  break ;
+            }
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Field[%s] should be numberInt",
+                    e.toString( TRUE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNEXPCONF, "_rtnExportConf::doit" )
    INT32 _rtnExportConf::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
@@ -2733,7 +2800,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNEXPCONF ) ;
-      rc = pmdGetKRCB()->getOptionCB()->reflush2File() ;
+      rc = pmdGetKRCB()->getOptionCB()->reflush2File( _mask ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to export configration:%d",rc ) ;

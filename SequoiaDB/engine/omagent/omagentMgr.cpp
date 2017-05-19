@@ -321,6 +321,11 @@ namespace engine
       string omAddrLine = makeAddressLine( _vecOMAddr ) ;
       ossStrncpy( _omAddress, omAddrLine.c_str(), OSS_MAX_PATHSIZE ) ;
       _omAddress[ OSS_MAX_PATHSIZE ] = 0 ;
+      /// make omaddress to field
+      if ( 0 != _omAddress[ 0 ] )
+      {
+         _addToFieldMap( SDBCM_CONF_OMADDR, _omAddress, TRUE, TRUE ) ;
+      }
 
       return SDB_OK ;
    }
