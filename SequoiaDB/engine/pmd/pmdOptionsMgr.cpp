@@ -1037,6 +1037,12 @@ namespace engine
             pValue[ len - 1 ] = 0 ;
             utilCatPath( pValue, len, "" ) ;
          }
+         /// update map's value
+         MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;
+         if ( it != _mapKeyValue.end() )
+         {
+            it->second._value = pValue ;
+         }
       }
       return _result ;
    }
@@ -1057,6 +1063,13 @@ namespace engine
       if ( SDB_OK == _result && pEX->isLoad() )
       {
          ossStrToBoolean( szTmp, &value ) ;
+
+         /// update map's value
+         MAP_K2V::iterator it = _mapKeyValue.find( pFieldName ) ;
+         if ( it != _mapKeyValue.end() )
+         {
+            it->second._value = value ? "TRUE" : "FALSE" ;
+         }
       }
       return _result ;
    }
@@ -2249,6 +2262,8 @@ namespace engine
       {
          ossStrcpy( _krcbConfPath, PMD_CURRENT_PATH ) ;
       }
+      /// update conf path
+      _addToFieldMap( PMD_OPTION_CONFPATH, _krcbConfPath, TRUE, FALSE ) ;
 
    done:
       return rc ;
@@ -2380,6 +2395,8 @@ namespace engine
       else
       {
          ossStrcpy( _krcbConfPath, cfgTempPath ) ;
+         /// update conf path
+         _addToFieldMap( PMD_OPTION_CONFPATH, _krcbConfPath, TRUE, FALSE ) ;
       }
 
    done:
