@@ -83,6 +83,8 @@ testFiles27 = [ "./misc/code.cpp" ]
 
 testFiles28 = [ "./misc/bson_oid.cpp" ]
 
+testFiles29 = [ "./misc/handle.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -97,7 +99,7 @@ numberLong     = dllBuildEnv.Program("numberLong",    [testFiles2, testCommon, g
 turnOncache    = dllBuildEnv.Program("turnOncache",   [testFiles3, testCommon, gtestMainObj])
 restAbnormal   = dllBuildEnv.Program("restAbnormal",  [testFiles4, testCommon, gtestMainObj])
 procedure      = dllBuildEnv.Program("procedure",  [testFiles5, testCommon, gtestMainObj])
-#socketMutex    = dllBuildEnv.Program("socketMutex",  [testFiles6, testCommon, gtestMainObj])
+# socketMutex    = dllBuildEnv.Program("socketMutex",  [testFiles6, testCommon, gtestMainObj])
 index          = dllBuildEnv.Program("index",  [testFiles7, testCommon, gtestMainObj])
 dropCsAndWriteLob = dllBuildEnv.Program("dropCsAndWriteLob",  [testFiles8, testCommon, gtestMainObj])
 concurrentCs   = dllBuildEnv.Program("concurrentCs",  [testFiles9, testCommon, gtestMainObj])
@@ -120,6 +122,7 @@ reloadConf     = dllBuildEnv.Program("reloadConf",  [testFiles25, testCommon, gt
 setPDLevel     = dllBuildEnv.Program("setPDLevel",  [testFiles26, testCommon, gtestMainObj])
 code           = dllBuildEnv.Program("code",  [testFiles27, testCommon, gtestMainObj])
 bson_oid       = dllBuildEnv.Program("bson_oid",  [testFiles28, testCommon, gtestMainObj])
+handle         = dllBuildEnv.Program("handle",  [testFiles29, testCommon, gtestMainObj])
 
 # static compile
 
@@ -128,7 +131,7 @@ numberLong.static    = staticBuildEnv.Program("numberLong.static",   [testFiles2
 turnOncache.static   = staticBuildEnv.Program("turnOncache.static",  [testFiles3, testCommon, gtestMainObj])
 restAbnormal.static  = staticBuildEnv.Program("restAbnormal.static", [testFiles4, testCommon, gtestMainObj])
 procedure.static     = staticBuildEnv.Program("procedure.static",    [testFiles5, testCommon, gtestMainObj])
-#socketMutex.static   = staticBuildEnv.Program("socketMutex.static",    [testFiles6, testCommon, gtestMainObj])
+# socketMutex.static   = staticBuildEnv.Program("socketMutex.static",    [testFiles6, testCommon, gtestMainObj])
 index.static         = staticBuildEnv.Program("index.static",    [testFiles7, testCommon, gtestMainObj])
 dropCsAndWriteLob.static = staticBuildEnv.Program("dropCsAndWriteLob.static",    [testFiles8, testCommon, gtestMainObj])
 concurrentCs.static  = staticBuildEnv.Program("concurrentCs.static",    [testFiles9, testCommon, gtestMainObj])
@@ -151,6 +154,7 @@ reloadConf.static        = staticBuildEnv.Program("reloadConf.static",  [testFil
 setPDLevel.static        = staticBuildEnv.Program("setPDLevel.static",  [testFiles26, testCommon, gtestMainObj])
 code.static              = staticBuildEnv.Program("code.static",  [testFiles27, testCommon, gtestMainObj])
 bson_oid.static          = staticBuildEnv.Program("bson_oid.static",  [testFiles28, testCommon, gtestMainObj])
+handle.static            = staticBuildEnv.Program("handle.static",  [testFiles29, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -169,7 +173,7 @@ env.Install( '#/build_test', [   decimal,
 								 idIndex,
 								 attachAndDetachNode,
 								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible,
-								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid
+								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid,handle
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -188,6 +192,6 @@ env.Install( '#/build_test', [   decimal.static,
 								 idIndex.static,
 								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
 								 forceSession.static,JSCompatible.static,loadUnloadCS.static,rename.static,
-								 reloadConf.static,setPDLevel.static,code.static,bson_oid.static
+								 reloadConf.static,setPDLevel.static,code.static,bson_oid.static,handle.static
                               ] )
 
