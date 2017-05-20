@@ -60,7 +60,7 @@ using std::set ;
 namespace engine
 {
    INT32 _sptUsrSystemCommon::ping( const string &hostname, string &err,
-                                   BSONObj &retObj )
+                                    BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
@@ -210,7 +210,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrSystemCommon::_extractReleaseInfo( const CHAR *buf, BSONObjBuilder &builder )
+   INT32 _sptUsrSystemCommon::_extractReleaseInfo( const CHAR *buf,
+                                                   BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
@@ -304,8 +305,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::getAHostMap( const string &hostname,
-                                          string &err,
-                                          string& ip )
+                                           string &err,
+                                           string &ip )
    {
       INT32 rc = SDB_OK ;
       VEC_HOST_ITEM vecItems ;
@@ -340,9 +341,9 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::addAHostMap( const string &hostname,
-                                          const string &ip,
-                                          const BOOLEAN &isReplace,
-                                          string &err )
+                                           const string &ip,
+                                           const BOOLEAN &isReplace,
+                                           string &err )
    {
       INT32 rc = SDB_OK ;
       VEC_HOST_ITEM vecItems ;
@@ -405,7 +406,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::delAHostMap( const string &hostname,
-                                          string &err )
+                                           string &err )
    {
       INT32 rc = SDB_OK ;
       VEC_HOST_ITEM vecItems ;
@@ -601,7 +602,7 @@ namespace engine
 #endif
 
    INT32 _sptUsrSystemCommon::snapshotCpuInfo( string &err,
-                                              BSONObj &retObj )
+                                               BSONObj &retObj )
    {
       INT32 rc     = SDB_OK ;
       SINT64 user  = 0 ;
@@ -635,7 +636,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::getMemInfo( string &err,
-                                         BSONObj &retObj )
+                                          BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
@@ -708,7 +709,7 @@ namespace engine
 
 #if defined( _LINUX )
    INT32 _sptUsrSystemCommon::getDiskInfo( string &err,
-                                          BSONObj &retObj )
+                                           BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       SINT64 read = 0 ;
@@ -765,7 +766,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractDiskInfo( const CHAR *buf,
-                                               BSONObj &retObj )
+                                                BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
@@ -901,7 +902,7 @@ namespace engine
 
 #elif defined( _WINDOWS )
    INT32 _sptUsrSystemCommon::getDiskInfo( string &err,
-                                          BSONObj &retObj )
+                                           BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
@@ -958,7 +959,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractDiskInfo( const CHAR *buf,
-                                               BSONObj retObj )
+                                                BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
@@ -1074,7 +1075,7 @@ namespace engine
 #endif
 
    INT32 _sptUsrSystemCommon::getNetcardInfo( string &err,
-                                             BSONObj &retObj )
+                                              BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
@@ -1095,7 +1096,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::getIpTablesInfo( string &err,
-                                              BSONObj &retObj )
+                                               BSONObj &retObj )
    {
       retObj = BSON( "FireWall" << "unknown" ) ;
       return SDB_OK ;
@@ -1103,7 +1104,7 @@ namespace engine
 
 #if defined( _LINUX )
    INT32 _sptUsrSystemCommon::snapshotNetcardInfo( string &err,
-                                                  BSONObj &retObj )
+                                                   BSONObj &retObj )
    {
       INT32 rc        = SDB_OK ;
       UINT32 exitCode = 0 ;
@@ -1157,7 +1158,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractNetCardSnapInfo( const CHAR *buf,
-                                                      BSONObjBuilder &builder )
+                                                       BSONObjBuilder &builder )
    {
       time_t myTime = time( NULL ) ;
       BSONArrayBuilder arrayBuilder ;
@@ -1279,7 +1280,7 @@ namespace engine
    }
 #elif defined( _WINDOWS )
    INT32 _sptUsrSystemCommon::snapshotNetcardInfo( string &err,
-                                                  BSONObj &retObj )
+                                                   BSONObj &retObj )
    {
       INT32 rc              = SDB_OK ;
       UINT32 exitCode       = 0 ;
@@ -1393,7 +1394,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrSystemCommon::_extractNetcardsSnapInfo( const CHAR *buf,
+   INT32 _sptUsrSystemCommon::_extractNetCardSnapInfo( const CHAR *buf,
                                                        BSONObjBuilder &builder )
    {
       return SDB_INVALIDARG ;
@@ -1401,7 +1402,7 @@ namespace engine
 #endif
 
    INT32 _sptUsrSystemCommon::getHostName( string &err,
-                                          string &hostname )
+                                           string &hostname )
    {
       INT32 rc = SDB_OK ;
       CHAR hostName[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
@@ -1420,7 +1421,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::sniffPort( const UINT32& port, string &err,
-                                        BSONObj &retObj )
+                                         BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       stringstream ss ;
@@ -1470,8 +1471,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::listProcess( const BOOLEAN& showDetail,
-                                          string &err,
-                                          BSONObj &retObj )
+                                           string &err,
+                                           BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       UINT32 exitCode  = 0 ;
@@ -1532,7 +1533,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::killProcess( const BSONObj &optionObj,
-                                          string &err )
+                                           string &err )
    {
       INT32 rc = SDB_OK ;
       UINT32 exitCode    = 0 ;
@@ -1626,7 +1627,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::addUser( const BSONObj &configObj,
-                                      string &err )
+                                       string &err )
    {
 #if defined (_LINUX)
       INT32 rc          = SDB_OK ;
@@ -1752,7 +1753,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::addGroup( const BSONObj &configObj,
-                                       string &err )
+                                        string &err )
    {
 #if defined (_LINUX)
       INT32 rc        = SDB_OK ;
@@ -1857,7 +1858,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::setUserConfigs( const BSONObj &configObj,
-                                             string &err )
+                                              string &err )
    {
 #if defined(_LINUX)
       INT32 rc          = SDB_OK ;
@@ -1991,7 +1992,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::delUser( const BSONObj &configObj,
-                                      string &err )
+                                       string &err )
    {
 #if defined (_LINUX)
       INT32 rc          = SDB_OK ;
@@ -2068,7 +2069,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::delGroup( const string &groupName,
-                                       string &err )
+                                        string &err )
    {
 #if defined (_LINUX)
       INT32 rc          = SDB_OK ;
@@ -2120,8 +2121,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::listLoginUsers( const BSONObj &optionObj,
-                                             string &err,
-                                             BSONObj &retObj )
+                                              string &err,
+                                              BSONObj &retObj )
    {
 #if defined (_LINUX)
       INT32 rc           = SDB_OK ;
@@ -2183,8 +2184,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::listAllUsers( const BSONObj &optionObj,
-                                           string &err,
-                                           BSONObj &retObj )
+                                            string &err,
+                                            BSONObj &retObj )
    {
 #if defined (_LINUX)
       INT32 rc           = SDB_OK ;
@@ -2246,8 +2247,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::listGroups( const BSONObj &optionObj,
-                                         string &err,
-                                         BSONObj &retObj )
+                                          string &err,
+                                          BSONObj &retObj )
    {
 #if defined (_LINUX)
       INT32 rc           = SDB_OK ;
@@ -2309,7 +2310,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::getCurrentUser( string &err,
-                                             BSONObj &retObj )
+                                              BSONObj &retObj )
    {
 #if defined (_LINUX)
       INT32 rc           = SDB_OK ;
@@ -2393,8 +2394,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::getSystemConfigs( const string &type,
-                                               string &err,
-                                               BSONObj &retObj )
+                                                string &err,
+                                                BSONObj &retObj )
    {
 #if defined (_LINUX)
       INT32 rc           = SDB_OK ;
@@ -2468,7 +2469,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::getProcUlimitConfigs( string &err,
-                                                   BSONObj &retObj )
+                                                    BSONObj &retObj )
    {
 #if defined (_LINUX)
       INT32 rc               = SDB_OK ;
@@ -2522,7 +2523,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::setProcUlimitConfigs( const BSONObj &configsObj,
-                                                   string &err )
+                                                    string &err )
    {
 #if defined (_LINUX)
       INT32 rc           = SDB_OK ;
@@ -2621,10 +2622,10 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::runService( const string& serviceName,
-                                         const string& command,
-                                         const string& options,
-                                         string &err,
-                                         string& retStr )
+                                          const string& command,
+                                          const string& options,
+                                          string &err,
+                                          string& retStr )
    {
       INT32 rc           = SDB_OK ;
       UINT32 exitCode    = 0 ;
@@ -2917,8 +2918,8 @@ namespace engine
 
 #if defined( _LINUX )
    INT32 _sptUsrSystemCommon::_extractProcessInfo( const CHAR *buf,
-                                                  const BOOLEAN &showDetail,
-                                                  BSONObjBuilder &builder )
+                                                   const BOOLEAN &showDetail,
+                                                   BSONObjBuilder &builder )
    {
       INT32 rc          = SDB_OK ;
       vector<string>    splited ;
@@ -3084,8 +3085,8 @@ namespace engine
    }
 #elif defined( _WINDOWS )
    INT32 _sptUsrSystemCommon::_extractProcessInfo( const CHAR *buf,
-                                                  const BOOLEAN &showDetail,
-                                                  BSONObjBuilder &builder )
+                                                   const BOOLEAN &showDetail,
+                                                   BSONObjBuilder &builder )
    {
       INT32 rc            = SDB_OK ;
       vector<string>      splited ;
@@ -3245,7 +3246,7 @@ namespace engine
 #endif // _LINUX
 
    INT32 _sptUsrSystemCommon::_parseHostsFile( VEC_HOST_ITEM & vecItems,
-                                              string &err )
+                                               string &err )
    {
       INT32 rc = SDB_OK ;
       OSSFILE file ;
@@ -3323,7 +3324,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_writeHostsFile( VEC_HOST_ITEM & vecItems,
-                                              string & err )
+                                               string & err )
    {
       INT32 rc = SDB_OK ;
       std::string tmpFile = HOSTS_FILE ;
@@ -3409,7 +3410,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractHosts( const CHAR *buf,
-                                            VEC_HOST_ITEM &vecItems )
+                                             VEC_HOST_ITEM &vecItems )
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
@@ -3507,7 +3508,7 @@ namespace engine
    }
 
    void _sptUsrSystemCommon::_buildHostsResult( VEC_HOST_ITEM & vecItems,
-                                               BSONObjBuilder &builder )
+                                                BSONObjBuilder &builder )
    {
       BSONArrayBuilder arrBuilder ;
       VEC_HOST_ITEM::iterator it = vecItems.begin() ;
@@ -3530,7 +3531,7 @@ namespace engine
 #if defined (_LINUX)
    #if defined (_PPCLIN64)
    INT32 _sptUsrSystemCommon::_etractCpuInfo( const CHAR *buf,
-                                             BSONObjBuilder &builder )
+                                              BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
@@ -3693,7 +3694,7 @@ namespace engine
    }
    #else
    INT32 _sptUsrSystemCommon::_extractCpuInfo( const CHAR *buf,
-                                              BSONObjBuilder &builder )
+                                               BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
@@ -3908,7 +3909,7 @@ namespace engine
 
 #if defined (_WINDOWS)
    INT32 _sptUsrSystemCommon::_extractCpuInfo( const CHAR *buf,
-                                              BSONObjBuilder &builder )
+                                               BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
@@ -4004,7 +4005,7 @@ namespace engine
 #endif //_WINDOWs
 
    INT32 _sptUsrSystemCommon::_extractMemInfo( const CHAR *buf,
-                                              BSONObjBuilder &builder )
+                                               BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       vector<string> splited ;
@@ -4168,8 +4169,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractLoginUsersInfo( const CHAR *buf,
-                                                     BSONObjBuilder &builder,
-                                                     BOOLEAN showDetail )
+                                                      BSONObjBuilder &builder,
+                                                      BOOLEAN showDetail )
    {
       INT32 rc            = SDB_OK ;
       vector<string>      splited ;
@@ -4350,8 +4351,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractAllUsersInfo( const CHAR *buf,
-                                                   BSONObjBuilder &builder,
-                                                   BOOLEAN showDetail )
+                                                    BSONObjBuilder &builder,
+                                                    BOOLEAN showDetail )
    {
       INT32 rc           = SDB_OK ;
       vector<string>     splited ;
@@ -4478,8 +4479,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractGroupsInfo( const CHAR *buf,
-                                                 BSONObjBuilder &builder,
-                                                 BOOLEAN showDetail )
+                                                  BSONObjBuilder &builder,
+                                                  BOOLEAN showDetail )
    {
       INT32 rc           = SDB_OK ;
       vector<string>     splited ;
@@ -4641,7 +4642,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_getSystemInfo( vector< string > typeSplit,
-                                             BSONObjBuilder &builder )
+                                              BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       INT32 bufLen = 1024 + 1 ;
@@ -4829,7 +4830,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystemCommon::_extractEnvInfo( const CHAR *buf,
-                                              BSONObjBuilder &builder )
+                                               BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       vector< string > splited ;
