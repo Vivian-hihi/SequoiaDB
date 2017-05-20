@@ -4,7 +4,7 @@ class Group_Test extends PHPUnit_Framework_TestCase
    protected $hostname ;
    protected $port ;
    protected $address ;
-
+   
    protected function setUp()
    {
       $this -> hostname = empty( $_POST['hostname'] ) ? '127.0.0.1' : $_POST['hostname'] ;
@@ -96,6 +96,36 @@ class Group_Test extends PHPUnit_Framework_TestCase
       }
    }
 
+   private function checkGroupMasterNode( $db, $groupName, $waitTimes, $sleepSeconds )
+   {
+      for( $i = 0; $i < $waitTimes; ++$i )
+      {
+         $cs = $db -> selectCS( "php_test_foo_cs" ) ;
+         $err = $db -> getError() ;
+         if( $err['errno'] == -104 )
+         {
+            sleep( $sleepSeconds ) ;
+            continue ;
+         }
+   
+         $cl = $cs -> selectCL( "php_test_bar_cl", array( 'Group' => $groupName ) ) ;
+         $err = $db -> getError() ;
+         if( $err['errno'] == -104 )
+         {
+            sleep( $sleepSeconds ) ;
+            continue ;
+         }
+         
+         $db -> dropCS( "php_test_foo_cs" ) ;
+         
+         return true ;
+      }
+      
+      $db -> dropCS( "php_test_foo_cs" ) ;
+      
+      return false ;
+   }
+
    /**
     * @depends test_connect
     * @depends test_getGroup
@@ -105,11 +135,16 @@ class Group_Test extends PHPUnit_Framework_TestCase
    {
       if( $group != null && $isStandlone == false )
       {
+         $groupName = $group -> getName() ;
+
          $err = $group -> stop() ;
          $this -> assertEquals( 0, $err['errno'], 'stop错误' ) ;
-         
+
          $err = $group -> start() ;
          $this -> assertEquals( 0, $err['errno'], 'start错误' ) ;
+
+         $result = $this->checkGroupMasterNode( $db, $groupName, 50, 6 ) ;
+         $this -> assertEquals( true, $result, '5分钟没有选出主节点' ) ;
       }
    }
    

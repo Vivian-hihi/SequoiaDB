@@ -36,7 +36,7 @@ class Node_Test extends PHPUnit_Framework_TestCase
       $this -> assertNotEmpty( $cursor, 'list错误' ) ;
       return false ;
    }
-   
+
    /**
     * @depends test_connect
     * @depends test_isStandlone
@@ -65,7 +65,7 @@ class Node_Test extends PHPUnit_Framework_TestCase
          $this -> assertEquals( 0, $err['errno'], 'getGroup错误' ) ;
          $this -> assertNotEmpty( $group, 'getGroup错误' ) ;
 
-         $node = $group -> getMaster() ;
+         $node = $group -> getSlave() ;
          $err = $db -> getError() ;
          $this -> assertEquals( 0, $err['errno'], 'getMaster错误' ) ;
          $this -> assertNotEmpty( $group, 'getMaster错误' ) ;
