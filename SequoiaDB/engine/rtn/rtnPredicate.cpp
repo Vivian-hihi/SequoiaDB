@@ -1224,7 +1224,6 @@ namespace engine
                rc = _initIN( e, isNot, mixCmp, FALSE ) ;
                break ;
             case BSONObj::opREGEX :
-            case BSONObj::opOPTIONS :
                rc = _initRegEx( e, isNot ) ;
                break ;
             case BSONObj::Equality :

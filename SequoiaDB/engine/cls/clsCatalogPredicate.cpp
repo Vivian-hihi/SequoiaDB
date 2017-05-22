@@ -107,15 +107,16 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, "clsCatalogPredicateTree::addPredicate" )
    INT32 clsCatalogPredicateTree::addPredicate( const CHAR *pFieldName,
-                                                BSONElement beField )
+                                                BSONElement beField,
+                                                INT32 opType )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE ) ;
 
       // We don't know the setting of enableMixCmp in data groups, we need a
       // larger range to cover all cases, so use mix-compare mode
-      rc = _predicateSet.addPredicate( pFieldName, beField, beField.getGtLtOp(),
-                                       FALSE, TRUE ) ;
+      rc = _predicateSet.addPredicate( pFieldName, beField, opType, FALSE,
+                                       TRUE ) ;
 
 
       PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, rc ) ;
