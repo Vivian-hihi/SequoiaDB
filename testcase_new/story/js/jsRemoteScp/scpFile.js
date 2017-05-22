@@ -140,7 +140,7 @@ main();
 
 function scpTest(srcFileName, dstFileName, srcFile, dstFile, mode, isReplace){
    try{
-      File.scp(srcFileName, dstFileName, mode, isReplace);
+      File.scp(srcFileName, dstFileName, isReplace, mode);
       
       srcIndex = srcFileName.indexOf("@");
       dstIndex = dstFileName.indexOf("@");
@@ -174,7 +174,7 @@ function scpTest(srcFileName, dstFileName, srcFile, dstFile, mode, isReplace){
 
 function checkArgumentScp(srcFileName, dstFileName, dstFile, mode, isReplace){
    try{
-      File.scp(srcFileName, dstFileName, mode, isReplace);
+      File.scp(srcFileName, dstFileName, isReplace, mode);
       throw "EXPECT GET AN ERROR";
    }catch(e){
       if(e !== -6 && e !== -1 && e !== -4 && e !== -3){
