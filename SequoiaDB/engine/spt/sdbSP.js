@@ -2209,7 +2209,7 @@ File.getUmask = function( base ) {
    return umask ;
 }
 
-File.scp = function( src, dst, mode, isReplace ) {
+File.scp = function( src, dst, isReplace, mode ) {
 
    if( undefined == src )
    {
