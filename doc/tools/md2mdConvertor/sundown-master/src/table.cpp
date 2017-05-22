@@ -212,7 +212,7 @@ size_t _char_to_word(string &text, vector<string> &output)
             }
             else
             {
-                // keep the word and digits had cached first
+                // save the word and digits which had been cached first
                 if (!word.empty())
                 {
                     output.push_back(word);
@@ -223,13 +223,13 @@ size_t _char_to_word(string &text, vector<string> &output)
                     output.push_back(digit);
                     digit.clear();
                 }
-                // and then keep the current charactor
+                // and then save the current charactor
                 output.push_back(*it);
             }
         }
         else if (word_len > 1)
         {
-            // keep the word and digits we had cached first
+            // keep the word and digits which had been cached first
             if (!word.empty())
             {
                 output.push_back(word);
