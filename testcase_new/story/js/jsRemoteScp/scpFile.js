@@ -59,7 +59,7 @@ function main(){
       replaceFile = remote.getFile(remoteDstFileName);
       File.scp(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
                remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-               undefined, false);
+               false);
       throw "EXPECT GET AN ERROR";
    }catch(e){
       if( e !== -5){
