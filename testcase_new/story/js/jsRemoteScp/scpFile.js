@@ -168,7 +168,7 @@ function scpTest(srcFileName, dstFileName, srcFile, dstFile, mode, isReplace){
          throw "MD5_MODE_NOT_SAME";
       }
    }catch(e){
-      throw buildException("scp()", e, e, "expectMd5:" + expectMd5, ",actualMd5:" + actualMd5);
+      throw buildException("scp()", e, e, "expectMd5:" + expectMd5 + ",mode:" + mode, ",actualMd5:" + actualMd5 + ",dstMode:" + dstMode);
    }  
 }
 
