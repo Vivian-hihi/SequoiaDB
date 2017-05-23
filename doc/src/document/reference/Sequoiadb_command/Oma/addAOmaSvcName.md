@@ -4,7 +4,7 @@ addAOmaSvcName - 将目标机器为 sdbcm 设置的服务端口号写到该 sdbc
 
 ##语法##
 
-**Oma.addAOmaSvcName(\<hostname\>, \<svcname\>, [isReplace], [confFile])**
+**Oma.addAOmaSvcName(\<hostname\>,\<svcname\>,[isReplace],[confFile])**
 
 ##类别##
 

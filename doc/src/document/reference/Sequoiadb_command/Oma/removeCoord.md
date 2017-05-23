@@ -4,7 +4,7 @@ removeCoord - 在目标集群控制器（sdbcm）所在的机器中删除一个 
 
 ##语法##
 
-**oma.removeCoord( \<svcname\> )**
+**oma.removeCoord(\<svcname\>)**
 
 ##类别##
 

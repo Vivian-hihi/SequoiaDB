@@ -4,7 +4,7 @@ removeCoord - Remove the specified coord node in target host of sdbcm.
 
 ##SYNOPSIS##
 
-**oma.removeCoord( \<svcname\> )**
+**oma.removeCoord(\<svcname\>)**
 
 ##CATEGORY##
 

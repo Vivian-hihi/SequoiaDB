@@ -4,7 +4,7 @@ createCoord - 在目标集群控制器（sdbcm）所在的机器中创建一个 
 
 ##语法##
 
-**oma.createCoord( \<svcname\>, \<dbpath\>, [config] )**
+**oma.createCoord(\<svcname\>,\<dbpath\>,[config])**
 
 ##类别##
 

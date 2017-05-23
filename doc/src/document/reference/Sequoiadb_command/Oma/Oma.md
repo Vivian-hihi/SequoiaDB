@@ -3,9 +3,10 @@
 Oma - 集群管理对象。
 
 ##语法##
-**var oma = new Oma( [hostname], [svcname] )**
+**var oma = new Oma([hostname],[svcname])**
 
 ##类别##
+
 Oma
 
 ##描述##

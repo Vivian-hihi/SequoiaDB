@@ -6,6 +6,10 @@ removeOM - 在目标集群控制器（sdbcm）所在的机器中删除 sdbom 服
 
 **oma.removeOM(\<svcname\>)**
 
+##类别##
+
+Oma
+
 ##描述##
 
 在目标集群控制器（sdbcm）所在的机器中删除 sdbom 服务进程（SequoiaDB 管理中心进程）。

@@ -1,6 +1,6 @@
 ##NAME##
 
-getNodeConfigs - Get the configuration information from the configuration file of specified SequoiaDB node.
+getNodeConfigs - Get the configuration information from the  configuration file of specified SequoiaDB node.
 
 ##SYNOPSIS##
 

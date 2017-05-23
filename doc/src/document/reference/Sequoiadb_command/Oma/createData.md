@@ -4,7 +4,11 @@ createData - 在目标集群控制器（sdbcm）所在的机器中创建一个 s
 
 ##语法##
 
-**oma.createData( \<svcname\>, \<dbpath\>, [config] )**
+**oma.createData(\<svcname\>,\<dbpath\>,[config])**
+
+##类别##
+
+Oma
 
 ##描述##
 

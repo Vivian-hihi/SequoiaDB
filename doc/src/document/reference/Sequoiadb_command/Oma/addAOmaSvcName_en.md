@@ -4,7 +4,7 @@ addAOmaSvcName - Specify the service name of sdbcm in target host.
 
 ##SYNOPSIS##
 
-**Oma.addAOmaSvcName(\<hostname\>, \<svcname\>, [isReplace], [confFile])**
+**Oma.addAOmaSvcName(\<hostname\>,\<svcname\>,[isReplace],[confFile])**
 
 ##CATEGORY##
 

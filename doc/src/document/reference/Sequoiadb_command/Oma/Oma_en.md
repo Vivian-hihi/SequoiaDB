@@ -3,9 +3,10 @@
 Oma - Class for cluster management.
 
 ##SYNOPSIS##
-**var oma = new Oma( [hostname], [svcname] )**
+**var oma = new Oma([hostname],[svcname])**
 
 ##CATEGORY##
+
 Oma
 
 ##DESCRIPTION##

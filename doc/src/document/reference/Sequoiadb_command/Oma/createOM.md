@@ -4,7 +4,7 @@ createOM - 在目标集群控制器（sdbcm）所在的机器中创建 sdbom 服
 
 ##语法##
 
-**oma.createOM(\<svcname\>, \<dbpath\>, [config])**
+**oma.createOM(\<svcname\>,\<dbpath\>,[config])**
 
 ##类别##
 

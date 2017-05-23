@@ -4,7 +4,7 @@ setNodeConfigs - Use the new configuration information to overwrite the contents
 
 ##SYNOPSIS##
 
-**oma.setNodeConfigs(\<svcname\>, \<config\>)**
+**oma.setNodeConfigs(\<svcname\>,\<config\>)**
 
 ##CATEGORY##
 
