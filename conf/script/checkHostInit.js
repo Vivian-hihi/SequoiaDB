@@ -267,7 +267,7 @@ function _installTmpCM( ssh, ip )
            "start temporary sdbcm in host: " + ssh.getPeerIP() ) ;
    _startTmpCM( ssh, port, OMA_TMP_SDBCM_ALIVE_TIME ) ;
 
-   PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
+   PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST_INIT,
            sprintf( "start temporary sdbcm successfully in host ?, the port is: ?",
                      ssh.getPeerIP(), port ) ) ;
    // 6. return the temporary sdbcm to omsvc
