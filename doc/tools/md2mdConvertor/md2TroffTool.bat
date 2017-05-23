@@ -123,18 +123,32 @@ for /R %INPUT_DIR% %%s in (*) do (
 :: get the function name
    set suffix=
    set targetFile=
-   for /f "delims=_. tokens=1-2" %%x in ("!fileName!") do (
+   for /f "delims=_. tokens=1-3" %%x in ("!fileName!") do (
       set funcName=%%x
-      set tmp=%%y
-      if "!tmp!" == "md" ( set suffix=!SUFFIX_CN! ) else ( set suffix=!SUFFIX_EN! )
-      set targetFile=!funcName!
-      set targetFile=!targetFile!!suffix!
-:: build the full name of output file
-      set OUTPUT_FILE=!OUTPUT_DIR!\!targetFile!
-:: transforming
-      call :TRANSFORM !INPUT_FILE! !OUTPUT_FILE!
+      set lang=%%y
+      set suffix=%%z
+      if "!lang!" == "md" ( 
+         set suffix=!SUFFIX_CN!
+         set targetFile=!funcName!
+         set targetFile=!targetFile!!suffix!
+         set OUTPUT_FILE=!OUTPUT_DIR!\!targetFile!
+         call :TRANSFORM !INPUT_FILE! !OUTPUT_FILE!         
+      ) else ( 
+         if "!lang!" == "en" (
+            if "!suffix!" == "md" (
+               set suffix=!SUFFIX_EN!
+               set targetFile=!funcName!
+               set targetFile=!targetFile!!suffix!
+               set OUTPUT_FILE=!OUTPUT_DIR!\!targetFile!
+               call :TRANSFORM !INPUT_FILE! !OUTPUT_FILE!
+            ) else (
+               set /A TOTAL_NUM-=1
+            )
+         ) else (
+            set /A TOTAL_NUM-=1
+         )
+      )
    )
-   
 )
 goto END:
 
