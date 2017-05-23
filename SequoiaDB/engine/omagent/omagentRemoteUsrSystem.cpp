@@ -1334,8 +1334,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string err ;
-
-      rc = _sptUsrSystemCommon::setProcUlimitConfigs( _valueObj, err ) ;
+      BSONObj configsObj ;
+      if( FALSE == _valueObj.hasField( "configs" ) )
+      {
+         PD_LOG_MSG( PDERROR, "configsObj must be config" ) ;
+         goto error ;
+      }
+      else if( Object != _valueObj.getField( "configs" ).type() )
+      {
+         PD_LOG_MSG( PDERROR, "configsObj must be obj" ) ;
+         goto error ;
+      }
+      configsObj = _valueObj.getObjectField( "configs" ) ;
+      rc = _sptUsrSystemCommon::setProcUlimitConfigs( configsObj, err ) ;
       if( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, err.c_str() ) ;
