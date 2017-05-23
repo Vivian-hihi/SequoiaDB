@@ -42,11 +42,13 @@
 #include "oss.hpp"
 #include "rtnContext.hpp"
 #include "ossLatch.hpp"
+#include "ossAtomic.hpp"
 #include "pd.hpp"
 #include "monEDU.hpp"
 #include "dmsCB.hpp"
 #include "pmdEDU.hpp"
 #include "sdbInterface.hpp"
+#include "utilConcurrentMap.hpp"
 #include <map>
 #include <set>
 
@@ -58,20 +60,11 @@ namespace engine
    class _SDB_RTNCB : public _IControlBlock
    {
    private :
-   #ifdef RTNCB_XLOCK
-   #undef RTNCB_XLOCK
-   #endif
-   #define RTNCB_XLOCK ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-   #ifdef RTNCB_SLOCK
-   #undef RTNCB_SLOCK
-   #endif
-   #define RTNCB_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
-      ossSpinSLatch _mutex ;
-
-      std::map<SINT64, rtnContext *> _contextList ;
-      SINT64 _contextHWM ;
-
-      BOOLEAN _enableMixCmp ;
+      typedef utilConcurrentMap<INT64, rtnContext*> RTN_CTX_MAP ;
+      
+      ossAtomicSigned64 _contextIdGenerator ;
+      RTN_CTX_MAP       _contextMap ;
+      BOOLEAN           _enableMixCmp ;
 
    public :
       _SDB_RTNCB() ;
@@ -93,30 +86,22 @@ namespace engine
 
       OSS_INLINE rtnContext *contextFind ( SINT64 contextID )
       {
-         RTNCB_SLOCK
-         std::map<SINT64, rtnContext*>::const_iterator it ;
-         if ( _contextList.end() == (it = _contextList.find(contextID)))
-            return NULL ;
-         return (*it).second ;
+         rtnContext** ctx = _contextMap.find( contextID ) ;
+         return ctx == NULL ? NULL : *ctx ;
       }
 
       OSS_INLINE INT32 contextNum ()
       {
-         RTNCB_SLOCK
-         return _contextList.size() ;
+         return _contextMap.size() ;
       }
 
       OSS_INLINE void contextDump ( std::map<UINT64, std::set<SINT64> > &contextList,
                                     EDUID filterEDUID = PMD_INVALID_EDUID )
       {
-         EDUID eduID = PMD_INVALID_EDUID ;
-         INT64  contextID = -1  ;
-
-         RTNCB_SLOCK
-         std::map<SINT64, rtnContext*>::const_iterator it ;
-         for ( it = _contextList.begin() ; it != _contextList.end(); ++it )
+         FOR_EACH_CMAP_ELEMENT_S( RTN_CTX_MAP, _contextMap )
          {
-            eduID = (*it).second->eduID() ;
+            INT64 contextID = -1  ;
+            EDUID eduID = (*it).second->eduID() ;
 
             if ( PMD_INVALID_EDUID != filterEDUID &&
                  eduID != filterEDUID )
@@ -127,20 +112,17 @@ namespace engine
             contextID = (*it).second->contextID() ;
             contextList[ eduID ].insert( contextID ) ;
          }
+         FOR_EACH_CMAP_ELEMENT_END
       }
 
       OSS_INLINE void monContextSnap ( std::map<UINT64,std::set<monContextFull> > &contextList,
                                        EDUID filterEDUID = PMD_INVALID_EDUID )
       {
-         EDUID eduID = PMD_INVALID_EDUID ;
-         INT64  contextID = -1  ;
-         monContextCB *monCB = NULL ;
-
-         RTNCB_SLOCK
-         std::map<SINT64, rtnContext*>::const_iterator it ;
-         for ( it = _contextList.begin() ; it != _contextList.end(); ++it )
+         FOR_EACH_CMAP_ELEMENT_S( RTN_CTX_MAP, _contextMap )
          {
-            eduID = (*it).second->eduID() ;
+            INT64 contextID = -1  ;
+            monContextCB *monCB = NULL ;
+            EDUID eduID = (*it).second->eduID() ;
 
             if ( PMD_INVALID_EDUID != filterEDUID &&
                  eduID != filterEDUID )
@@ -157,30 +139,24 @@ namespace engine
 
             contextList[ eduID ].insert( item ) ;
          }
+         FOR_EACH_CMAP_ELEMENT_END
       }
 
       OSS_INLINE void monContextSnap( UINT64 eduID,
                                       std::set<monContextFull> &contextList )
       {
-         INT64  contextID = -1  ;
-         monContextCB *monCB = NULL ;
-
-         RTNCB_SLOCK
-         std::map<SINT64, rtnContext*>::const_iterator it ;
-         for ( it = _contextList.begin() ; it != _contextList.end() ; ++it )
+         FOR_EACH_CMAP_ELEMENT_S( RTN_CTX_MAP, _contextMap )
          {
-            if ( (*it).second->eduID() == eduID )
-            {
-               contextID = (*it).second->contextID() ;
-               monCB = (*it).second->getMonCB() ;
+            INT64 contextID = (*it).second->contextID() ;
+            monContextCB* monCB = (*it).second->getMonCB() ;
 
-               monContextFull item( contextID, *monCB ) ;
-               item._typeDesp = getContextTypeDesp( (*it).second->getType() ) ;
-               item._info = (*it).second->toString() ;
+            monContextFull item( contextID, *monCB ) ;
+            item._typeDesp = getContextTypeDesp( (*it).second->getType() ) ;
+            item._info = (*it).second->toString() ;
 
-               contextList.insert( item ) ;
-            }
+            contextList.insert( item ) ;
          }
+         FOR_EACH_CMAP_ELEMENT_END
       }
 
       OSS_INLINE BOOLEAN isEnabledMixCmp () const

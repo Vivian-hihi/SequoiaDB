@@ -53,19 +53,20 @@ namespace engine
 {
 
    _SDB_RTNCB::_SDB_RTNCB()
+      : _contextIdGenerator( 0 )
    {
-      _contextHWM = 0 ;
       _enableMixCmp = FALSE ;
    }
 
    _SDB_RTNCB::~_SDB_RTNCB()
    {
-      std::map<SINT64, rtnContext *>::const_iterator it ;
-      for ( it = _contextList.begin(); it != _contextList.end(); it++ )
+      FOR_EACH_CMAP_ELEMENT_S( RTN_CTX_MAP, _contextMap )
       {
          SDB_OSS_DEL ((*it).second) ;
       }
-      _contextList.clear() ;
+      FOR_EACH_CMAP_ELEMENT_END ;
+
+      _contextMap.clear() ;
    }
 
    INT32 _SDB_RTNCB::init ()
@@ -131,7 +132,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__SDB_RTNCB_CONTEXTDEL ) ;
 
       rtnContext *pContext = NULL ;
-      std::map<SINT64, rtnContext*>::iterator it ;
 
       if ( cb )
       {
@@ -139,12 +139,11 @@ namespace engine
       }
 
       {
-         RTNCB_XLOCK
-         it = _contextList.find( contextID ) ;
-         if ( _contextList.end() != it )
+         rtnContext** ctx = _contextMap.find( contextID ) ;
+         if ( ctx != NULL )
          {
-            pContext = it->second;
-            _contextList.erase( it ) ;
+            _contextMap.erase( contextID ) ;
+            pContext = *ctx ;
          }
       }
 
@@ -176,9 +175,14 @@ namespace engine
    {
       SDB_ASSERT ( context, "context pointer can't be NULL" ) ;
       {
-         RTNCB_XLOCK
          // if hit max signed 64 bit integer?
-         if ( _contextHWM+1 < 0 )
+         if ( _contextIdGenerator.fetch() < 0 )
+         {
+            return SDB_SYS ;
+         }
+
+         INT64 _contextId = _contextIdGenerator.inc() ;
+         if ( _contextId < 0 )
          {
             return SDB_SYS ;
          }
@@ -186,133 +190,133 @@ namespace engine
          switch ( type )
          {
             case RTN_CONTEXT_DATA :
-               (*context) = SDB_OSS_NEW rtnContextData ( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextData ( _contextId,
                                                          pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_DUMP :
-               (*context) = SDB_OSS_NEW rtnContextDump ( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextDump ( _contextId,
                                                          pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_COORD :
-               (*context) = SDB_OSS_NEW rtnContextCoord ( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextCoord ( _contextId,
                                                           pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_QGM :
-               (*context) = SDB_OSS_NEW rtnContextQGM ( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextQGM ( _contextId,
                                                         pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_TEMP :
-               (*context) = SDB_OSS_NEW rtnContextTemp ( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextTemp ( _contextId,
                                                          pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_SP :
-               (*context) = SDB_OSS_NEW rtnContextSP ( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextSP ( _contextId,
                                                        pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_PARADATA :
-               (*context) = SDB_OSS_NEW rtnContextParaData( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextParaData( _contextId,
                                                             pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_MAINCL :
-               (*context) = SDB_OSS_NEW rtnContextMainCL( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextMainCL( _contextId,
                                                          pEDUCB->getID() );
                break;
             case RTN_CONTEXT_SORT :
-               (*context) = SDB_OSS_NEW rtnContextSort( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextSort( _contextId,
                                                         pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_QGMSORT :
-               (*context) = SDB_OSS_NEW rtnContextQgmSort( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextQgmSort( _contextId,
                                                             pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_DELCS :
-               (*context) = SDB_OSS_NEW rtnContextDelCS( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextDelCS( _contextId,
                                                             pEDUCB->getID() ) ;
                break;
             case RTN_CONTEXT_DELCL :
-               (*context) = SDB_OSS_NEW rtnContextDelCL( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextDelCL( _contextId,
                                                             pEDUCB->getID() ) ;
                break;
             case RTN_CONTEXT_DELMAINCL :
-               (*context) = SDB_OSS_NEW rtnContextDelMainCL( _contextHWM,
+               (*context) = SDB_OSS_NEW rtnContextDelMainCL( _contextId,
                                                             pEDUCB->getID() ) ;
                break;
             case RTN_CONTEXT_EXPLAIN :
-                (*context) = SDB_OSS_NEW rtnContextExplain( _contextHWM,
+                (*context) = SDB_OSS_NEW rtnContextExplain( _contextId,
                                                             pEDUCB->getID() ) ;
                 break ;
             case RTN_CONTEXT_LOB :
-                 (*context) = SDB_OSS_NEW rtnContextLob( _contextHWM,
+                 (*context) = SDB_OSS_NEW rtnContextLob( _contextId,
                                                          pEDUCB->getID() ) ;
                 break ;
             case RTN_CONTEXT_SHARD_OF_LOB :
-                 (*context) = SDB_OSS_NEW rtnContextShdOfLob( _contextHWM,
+                 (*context) = SDB_OSS_NEW rtnContextShdOfLob( _contextId,
                                                               pEDUCB->getID() ) ;
                 break ;
             case RTN_CONTEXT_LIST_LOB:
-                 (*context) = SDB_OSS_NEW rtnContextListLob( _contextHWM,
+                 (*context) = SDB_OSS_NEW rtnContextListLob( _contextId,
                                                              pEDUCB->getID() ) ;
                 break ;
             case RTN_CONTEXT_OM_TRANSFER:
-                 (*context) = SDB_OSS_NEW omContextTransfer( _contextHWM,
+                 (*context) = SDB_OSS_NEW omContextTransfer( _contextId,
                                                              pEDUCB->getID() ) ;
                  break;
             case RTN_CONTEXT_LOB_FETCHER:
-                 (*context) = SDB_OSS_NEW rtnContextLobFetcher( _contextHWM,
+                 (*context) = SDB_OSS_NEW rtnContextLobFetcher( _contextId,
                                                                 pEDUCB->getID() ) ;
                  break ;
 
             /// Catalog contexts
             case RTN_CONTEXT_CAT_DROP_CS :
-               (*context) = SDB_OSS_NEW catCtxDropCS( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxDropCS( _contextId,
                                                       pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_CREATE_CL :
-               (*context) = SDB_OSS_NEW catCtxCreateCL( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxCreateCL( _contextId,
                                                         pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_DROP_CL :
-               (*context) = SDB_OSS_NEW catCtxDropCL( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxDropCL( _contextId,
                                                       pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_ALTER_CL :
-               (*context) = SDB_OSS_NEW catCtxAlterCL( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxAlterCL( _contextId,
                                                        pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_LINK_CL :
-               (*context) = SDB_OSS_NEW catCtxLinkCL( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxLinkCL( _contextId,
                                                       pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_UNLINK_CL :
-               (*context) = SDB_OSS_NEW catCtxUnlinkCL( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxUnlinkCL( _contextId,
                                                         pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_CREATE_IDX :
-               (*context) = SDB_OSS_NEW catCtxCreateIdx( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxCreateIdx( _contextId,
                                                          pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_DROP_IDX :
-               (*context) = SDB_OSS_NEW catCtxDropIdx( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxDropIdx( _contextId,
                                                        pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_ACTIVE_GROUP :
-               (*context) = SDB_OSS_NEW catCtxActiveGrp( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxActiveGrp( _contextId,
                                                          pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_SHUTDOWN_GROUP :
-               (*context) = SDB_OSS_NEW catCtxShutdownGrp( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxShutdownGrp( _contextId,
                                                            pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_REMOVE_GROUP :
-               (*context) = SDB_OSS_NEW catCtxRemoveGrp( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxRemoveGrp( _contextId,
                                                          pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_CREATE_NODE :
-               (*context) = SDB_OSS_NEW catCtxCreateNode( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxCreateNode( _contextId,
                                                           pEDUCB->getID() ) ;
                break ;
             case RTN_CONTEXT_CAT_REMOVE_NODE :
-               (*context) = SDB_OSS_NEW catCtxRemoveNode( _contextHWM,
+               (*context) = SDB_OSS_NEW catCtxRemoveNode( _contextId,
                                                           pEDUCB->getID() ) ;
                break ;
 
@@ -326,13 +330,14 @@ namespace engine
             return SDB_OOM ;
          }
 
-         _contextList[_contextHWM] = *context ;
-         pEDUCB->contextInsert( _contextHWM ) ;
-         contextID = _contextHWM ;
-         ++_contextHWM ;
+         _contextMap.insert( _contextId, *context ) ;
+         pEDUCB->contextInsert( _contextId ) ;
+         contextID = _contextId ;
       }
+
       PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d[%s])",
                contextID, type, getContextTypeDesp(type) ) ;
+
       return SDB_OK ;
    }
 
