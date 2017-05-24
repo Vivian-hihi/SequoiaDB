@@ -70,13 +70,8 @@ public class NodeRestart extends Fault {
         }
     }
 
-    public boolean checkRestoreResult() throws FaultException {
-        try {
-            return this.node.isNodeActive() == true;
-        }
-        catch (ReliabilityException e) {
-            throw new FaultException(e);
-        }
+    public boolean checkRestoreResult() {
+        return this.node.isNodeActive();
     }
 
     @Override
