@@ -2012,7 +2012,8 @@ namespace engine
    INT32 _mthMatchOpNode::_dollarMatches( const CHAR *pFieldName,
                                           const BSONElement &element,
                                           _mthMatchTreeContext &context,
-                                          BOOLEAN &result )
+                                          BOOLEAN &result,
+                                          BOOLEAN &gotUndefined )
    {
       PD_TRACE_ENTRY( SDB__MTHMATCHOPNODE_DOLLARMATCHES ) ;
       INT32 rc = SDB_OK ;
@@ -2049,7 +2050,8 @@ namespace engine
                     Array == e.type() )
                {
                   // a.$0.$1, now childName is .$1
-                  rc = _dollarMatches( childName + 1, e, context, result ) ;
+                  rc = _dollarMatches( childName + 1, e, context, result,
+                                       gotUndefined ) ;
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDERROR, "failed to child field name:%s, rc:%d",
@@ -2061,7 +2063,7 @@ namespace engine
                {
                   // a.$0.b, now childName is .b
                   rc = _execute( childName + 1, e.embeddedObject(), FALSE,
-                                 context, result ) ;
+                                 context, result, gotUndefined ) ;
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDERROR, "_execute failed:childName=%s,rc:%d",
@@ -2215,7 +2217,8 @@ namespace engine
    INT32 _mthMatchOpNode::_execute( const CHAR *pFieldName,
                                     const BSONObj &obj, BOOLEAN isArrayObj,
                                     _mthMatchTreeContext &context,
-                                    BOOLEAN &result )
+                                    BOOLEAN &result,
+                                    BOOLEAN &gotUndefined )
    {
       PD_TRACE_ENTRY( SDB__MTHMATCHOPNODE__EXECUTE ) ;
       INT32 rc = SDB_OK ;
@@ -2244,7 +2247,8 @@ namespace engine
             //xxx.$1.xxx
             if ( MTH_OPERATOR_EYECATCHER == *(p + 1) )
             {
-               rc = _dollarMatches( p + 1, ele, context, result ) ;
+               rc = _dollarMatches( p + 1, ele, context, result,
+                                    gotUndefined ) ;
                PD_RC_CHECK( rc, PDERROR, "_dollarMatches failed:rc=%d", rc ) ;
             }
             else
@@ -2255,7 +2259,7 @@ namespace engine
                // ele.type() == Array:
                //   subObj: { 0 : { "b" : 1 }, 1 : { "c" : 2 } }
                rc = _execute( p + 1, subObj, ( ele.type() == Array ), context,
-                              result ) ;
+                              result, gotUndefined ) ;
                PD_RC_CHECK( rc, PDERROR, "failed to match child field:rc=%d",
                             rc ) ;
             }
@@ -2287,7 +2291,8 @@ namespace engine
             {
                BSONObj subObj = z.embeddedObject() ;
                //pass the input pFieldName, not pTmpFieldName
-               rc = _execute( pFieldName, subObj, FALSE, context, result ) ;
+               rc = _execute( pFieldName, subObj, FALSE, context, result,
+                              gotUndefined ) ;
                PD_RC_CHECK( rc, PDERROR, "_execute failed:rc=%d", rc ) ;
 
                if ( result )
@@ -2302,6 +2307,7 @@ namespace engine
 
       if ( p && !_flagAcceptUndefined() )
       {
+         gotUndefined = TRUE ;
          result = FALSE ;
          goto done ;
       }
@@ -2311,6 +2317,7 @@ namespace engine
          toMatchEle = context._originalObj.getFieldDotted( _cmpFieldName ) ;
          if ( toMatchEle.eoo() )
          {
+            gotUndefined = TRUE ;
             result = FALSE ;
             goto done ;
          }
@@ -2338,6 +2345,7 @@ namespace engine
 
       if ( recordEle.eoo() && !_flagAcceptUndefined() )
       {
+         gotUndefined = TRUE ;
          result = FALSE ;
          goto done ;
       }
@@ -2417,13 +2425,15 @@ namespace engine
       PD_TRACE_ENTRY( SDB__MTHMATCHOPNODE_EXECUTE ) ;
 
       INT32 rc = SDB_OK ;
+      BOOLEAN gotUndefined = FALSE ;
 
       if ( _hasReturnMatch )
       {
          context.setReturnMatchExecuted( TRUE ) ;
       }
 
-      rc = _execute( _fieldName.getFieldName(), obj, FALSE, context, result ) ;
+      rc = _execute( _fieldName.getFieldName(), obj, FALSE, context, result,
+                     gotUndefined ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_execute failed:rc=%d", rc ) ;
@@ -2766,15 +2776,32 @@ namespace engine
                                      BOOLEAN &result )
    {
       INT32 rc = SDB_OK ;
+
       BOOLEAN tmpResult = FALSE ;
-      rc = _mthMatchOpNodeET::execute( obj, context, tmpResult ) ;
+      BOOLEAN gotUndefined = FALSE ;
+
+      if ( _hasReturnMatch )
+      {
+         context.setReturnMatchExecuted( TRUE ) ;
+      }
+
+      rc = _mthMatchOpNodeET::_execute( _fieldName.getFieldName(), obj, FALSE,
+                                        context, tmpResult, gotUndefined ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to execute _mthMatchOpNodeNE:rc=%d", rc ) ;
          goto error ;
       }
 
-      result = !tmpResult ;
+      if ( gotUndefined )
+      {
+         // Exclude undefined
+         result = FALSE ;
+      }
+      else
+      {
+         result = !tmpResult ;
+      }
 
    done:
       return rc ;

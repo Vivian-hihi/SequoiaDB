@@ -1488,31 +1488,8 @@ namespace engine
       else
       {
          // [ $minKey, e ) and ( e, $maxKey ]
-         {
-            _startStopKeys.push_back( rtnStartStopKey() ) ;
-            rtnStartStopKey &keyPair = _startStopKeys.back() ;
-
-            keyPair._startKey._bound = minKey.firstElement() ;
-            keyPair._startKey._inclusive = TRUE ;
-
-            keyPair._stopKey._bound = e ;
-            keyPair._stopKey._inclusive = FALSE ;
-
-            keyPair._majorType = e.type() ;
-         }
-
-         {
-            _startStopKeys.push_back( rtnStartStopKey() ) ;
-            rtnStartStopKey &keyPair = _startStopKeys.back() ;
-
-            keyPair._startKey._bound = e ;
-            keyPair._startKey._inclusive = FALSE ;
-
-            keyPair._stopKey._bound = maxKey.firstElement() ;
-            keyPair._stopKey._inclusive = TRUE ;
-
-            keyPair._majorType = e.type() ;
-         }
+         _initLT( e, FALSE, FALSE, TRUE ) ;
+         _initGT( e, FALSE, FALSE, TRUE ) ;
       }
 
    done :
