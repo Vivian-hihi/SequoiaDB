@@ -64,7 +64,7 @@ public class Remove2189 extends SdbTestBase {
                     + new SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS").format(new Date()));
 
             groupMgr = new GroupMgr();
-            if (!groupMgr.checkBusiness()) {
+            if (!groupMgr.checkBusinessWithLSN(300)) {
                 throw new SkipException("checkBusiness failed");
             }
 
@@ -92,7 +92,7 @@ public class Remove2189 extends SdbTestBase {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test() {
         Sequoiadb db = null;
         try {
@@ -104,7 +104,7 @@ public class Remove2189 extends SdbTestBase {
             mgr.execute();
             Assert.assertEquals(mgr.isAllSuccess(), true, mgr.getErrorMsg());
 
-            if (!groupMgr.checkBusinessWithLSN(600)) {
+            if (!groupMgr.checkBusinessWithLSN(1200)) {
                 Assert.fail("checkBusinessWithLSN() occurs timeout");
             }
             
