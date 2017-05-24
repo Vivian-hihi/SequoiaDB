@@ -208,18 +208,18 @@ namespace engine
          bucket.erase( key ) ;
       }
 
-      OSS_INLINE T* find( const Key& key )
+      OSS_INLINE std::pair<T, bool> find( const Key& key )
       {
          Bucket& bucket = getBucket( key ) ;
          BUCKET_SLOCK( bucket ) ;
          map_const_iterator it = bucket.find( key ) ;
          if ( it == bucket.end() )
          {
-            return NULL ;
+            return std::pair<T, bool>( T(), false ) ;
          }
          else
          {
-            return (T*)( &( (*it).second ) ) ;
+            return std::pair<T, bool>( (*it).second, true ) ;
          }
       }
 

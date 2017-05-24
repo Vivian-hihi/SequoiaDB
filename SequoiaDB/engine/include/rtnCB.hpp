@@ -86,8 +86,8 @@ namespace engine
 
       OSS_INLINE rtnContext *contextFind ( SINT64 contextID )
       {
-         rtnContext** ctx = _contextMap.find( contextID ) ;
-         return ctx == NULL ? NULL : *ctx ;
+         std::pair<rtnContext*, bool> ret = _contextMap.find( contextID ) ;
+         return ret.second ? ret.first : NULL ;
       }
 
       OSS_INLINE INT32 contextNum ()

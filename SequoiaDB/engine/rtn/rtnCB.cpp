@@ -139,11 +139,11 @@ namespace engine
       }
 
       {
-         rtnContext** ctx = _contextMap.find( contextID ) ;
-         if ( ctx != NULL )
+         pair<rtnContext*, bool> ret = _contextMap.find( contextID ) ;
+         if ( ret.second )
          {
             _contextMap.erase( contextID ) ;
-            pContext = *ctx ;
+            pContext = ret.first ;
          }
       }
 
