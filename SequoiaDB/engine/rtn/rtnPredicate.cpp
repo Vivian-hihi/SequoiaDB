@@ -1476,7 +1476,7 @@ namespace engine
 
       if ( e.type() == Array )
       {
-         // Operator with array shoule not generate predicate
+         // Operator with array should not generate predicate
          goto done ;
       }
 
@@ -1530,7 +1530,7 @@ namespace engine
 
       if ( e.type() == Array )
       {
-         // Operator with array shoule not generate predicate
+         // Operator with array should not generate predicate
          goto done ;
       }
 
@@ -1580,7 +1580,7 @@ namespace engine
 
       if ( e.type() == Array )
       {
-         // Operator with array shoule not generate predicate
+         // Operator with array should not generate predicate
          goto done ;
       }
 
