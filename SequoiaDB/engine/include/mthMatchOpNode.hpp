@@ -528,6 +528,7 @@ namespace engine
       protected: /* from itself */
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) = 0 ;
 
@@ -601,6 +602,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -646,6 +648,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -669,6 +672,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -692,6 +696,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -715,6 +720,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -743,6 +749,7 @@ namespace engine
          virtual void _clear() ;
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -776,6 +783,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
    } ;
@@ -798,6 +806,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
 
@@ -829,6 +838,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
    } ;
@@ -852,6 +862,7 @@ namespace engine
                               const BSONElement &element ) ;
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
 
@@ -882,6 +893,7 @@ namespace engine
                               const BSONElement &element ) ;
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
 
@@ -906,6 +918,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
    } ;
@@ -929,6 +942,7 @@ namespace engine
       protected:
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
    } ;
@@ -954,6 +968,7 @@ namespace engine
          virtual void _clear() ;
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,
@@ -993,6 +1008,7 @@ namespace engine
          virtual void _clear() ;
          virtual INT32 _valueMatch( const BSONElement &left,
                                     const BSONElement &right,
+                                    BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
          virtual void _evalEstimation ( const optCollectionStat *pCollectionStat,

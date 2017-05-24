@@ -2137,7 +2137,8 @@ namespace engine
          resultEle = resultObj.firstElement() ;
       }
 
-      rc = _valueMatch( resultEle, matchTarget, context, matchResult) ;
+      rc = _valueMatch( resultEle, matchTarget, _config->_mixCmp, context,
+                        matchResult ) ;
       PD_RC_CHECK( rc, PDERROR, "_valueMatch failed:rc=%d", rc ) ;
 
    done:
@@ -2331,7 +2332,8 @@ namespace engine
          recordEle = funcResultObj.firstElement() ;
       }
 
-      rc = _valueMatch( recordEle, toMatchEle, context, result ) ;
+      rc = _valueMatch( recordEle, toMatchEle, _config->_mixCmp, context,
+                        result ) ;
       PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
       if ( EN_MATCH_OPERATOR_EXISTS == getType() ||
@@ -2352,11 +2354,16 @@ namespace engine
             BSONObj eEmbObj = recordEle.embeddedObject() ;
             BSONObjIterator iter( eEmbObj ) ;
             INT32 index = 0 ;
+            // If parameter is a array, we only match array elements inside
+            BOOLEAN innerMixCmp = ( toMatchEle.type() == Array ?
+                                    FALSE : _config->_mixCmp ) ;
             while ( iter.more() )
             {
                BOOLEAN tmpResult = FALSE ;
                BSONElement innerEle = iter.next() ;
-               rc = _valueMatch( innerEle, toMatchEle, context, tmpResult ) ;
+
+               rc = _valueMatch( innerEle, toMatchEle, innerMixCmp, context,
+                                 tmpResult ) ;
                PD_RC_CHECK( rc, PDERROR, "_valueMatch failed:rc=%d", rc ) ;
                if ( EN_MATCH_OPERATOR_NE == getType() )
                {
@@ -2662,6 +2669,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeET::_valueMatch( const BSONElement &left,
                                          const BSONElement &right,
+                                         BOOLEAN mixCmp,
                                          _mthMatchTreeContext &context,
                                          BOOLEAN &result )
    {
@@ -2843,6 +2851,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeLT::_valueMatch( const BSONElement &left,
                                          const BSONElement &right,
+                                         BOOLEAN mixCmp,
                                          _mthMatchTreeContext &context,
                                          BOOLEAN &result )
    {
@@ -2870,8 +2879,14 @@ namespace engine
             return SDB_OK ;
          }
       }
-      else if ( _config->_mixCmp )
+      else if ( mixCmp )
       {
+         if ( left.type() == Array && right.type() != Array )
+         {
+            // Let the caller split array
+            result = FALSE ;
+            return SDB_OK ;
+         }
          if ( left.woCompare( right, FALSE ) < 0 )
          {
             result = TRUE ;
@@ -2960,6 +2975,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeLTE::_valueMatch( const BSONElement &left,
                                           const BSONElement &right,
+                                          BOOLEAN mixCmp,
                                           _mthMatchTreeContext &context,
                                           BOOLEAN &result )
    {
@@ -2987,8 +3003,14 @@ namespace engine
             return SDB_OK ;
          }
       }
-      else if ( _config->_mixCmp )
+      else if ( mixCmp )
       {
+         if ( left.type() == Array && right.type() != Array )
+         {
+            // Let the caller split array
+            result = FALSE ;
+            return SDB_OK ;
+         }
          if ( left.woCompare( right, FALSE ) <= 0 )
          {
             result = TRUE ;
@@ -3077,6 +3099,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeGT::_valueMatch( const BSONElement &left,
                                          const BSONElement &right,
+                                         BOOLEAN mixCmp,
                                          _mthMatchTreeContext &context,
                                          BOOLEAN &result )
    {
@@ -3104,8 +3127,14 @@ namespace engine
             return SDB_OK ;
          }
       }
-      else if ( _config->_mixCmp )
+      else if ( mixCmp )
       {
+         if ( left.type() == Array && right.type() != Array )
+         {
+            // Let the caller split array
+            result = FALSE ;
+            return SDB_OK ;
+         }
          if ( left.woCompare( right, FALSE ) > 0 )
          {
             result = TRUE ;
@@ -3194,6 +3223,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeGTE::_valueMatch( const BSONElement &left,
                                           const BSONElement &right,
+                                          BOOLEAN mixCmp,
                                           _mthMatchTreeContext &context,
                                           BOOLEAN &result )
    {
@@ -3221,8 +3251,14 @@ namespace engine
             return SDB_OK ;
          }
       }
-      else if ( _config->_mixCmp )
+      else if ( mixCmp )
       {
+         if ( left.type() == Array && right.type() != Array )
+         {
+            // Let the caller split array
+            result = FALSE ;
+            return SDB_OK ;
+         }
          if ( left.woCompare( right, FALSE ) >= 0 )
          {
             result = TRUE ;
@@ -3424,6 +3460,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeIN::_valueMatch( const BSONElement &left,
                                          const BSONElement &right,
+                                         BOOLEAN mixCmp,
                                          _mthMatchTreeContext &context,
                                          BOOLEAN &result )
    {
@@ -3555,6 +3592,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeNIN::_valueMatch( const BSONElement &left,
                                           const BSONElement &right,
+                                          BOOLEAN mixCmp,
                                           _mthMatchTreeContext &context,
                                           BOOLEAN &result )
    {
@@ -3872,6 +3910,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeALL::_valueMatch( const BSONElement &left,
                                           const BSONElement &right,
+                                          BOOLEAN mixCmp,
                                           _mthMatchTreeContext &context,
                                           BOOLEAN &result )
    {
@@ -3955,6 +3994,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeEXISTS::_valueMatch( const BSONElement &left,
                                              const BSONElement &right,
+                                             BOOLEAN mixCmp,
                                              _mthMatchTreeContext &context,
                                              BOOLEAN &result )
    {
@@ -4086,6 +4126,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeMOD::_valueMatch( const BSONElement &left,
                                           const BSONElement &right,
+                                          BOOLEAN mixCmp,
                                           _mthMatchTreeContext &context,
                                           BOOLEAN &result )
    {
@@ -4203,6 +4244,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeTYPE::_valueMatch( const BSONElement &left,
                                            const BSONElement &right,
+                                           BOOLEAN mixCmp,
                                            _mthMatchTreeContext &context,
                                            BOOLEAN &result )
    {
@@ -4260,6 +4302,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeISNULL::_valueMatch( const BSONElement &left,
                                              const BSONElement &right,
+                                             BOOLEAN mixCmp,
                                              _mthMatchTreeContext &context,
                                              BOOLEAN &result )
    {
@@ -4345,6 +4388,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeEXPAND::_valueMatch( const BSONElement &left,
                                              const BSONElement &right,
+                                             BOOLEAN mixCmp,
                                              _mthMatchTreeContext &context,
                                              BOOLEAN &result )
    {
@@ -4398,7 +4442,9 @@ namespace engine
          goto error ;
       }
 
-      rc = _subTree->loadPattern( element.embeddedObject(), FALSE ) ;
+      _subTree->setMixCmp( _config->_mixCmp ) ;
+
+      rc = _subTree->loadPattern( element.embeddedObject(), FALSE, FALSE ) ;
       PD_RC_CHECK( rc, PDERROR, "failed to loadPattern:obj=%s,rc=%d",
                    element.embeddedObject().toString().c_str(), rc ) ;
 
@@ -4458,6 +4504,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeELEMMATCH::_valueMatch( const BSONElement &left,
                                                 const BSONElement &right,
+                                                BOOLEAN mixCmp,
                                                 _mthMatchTreeContext &context,
                                                 BOOLEAN &result )
    {
@@ -4479,6 +4526,12 @@ namespace engine
       if ( context.isDollarListEnabled() )
       {
          subContext.enableDollarList() ;
+      }
+
+      // It might have a different mix-cmp mode
+      if ( mixCmp != _config->_mixCmp )
+      {
+         _subTree->setMixCmp( mixCmp ) ;
       }
 
       if ( Array == left.type() )
@@ -4520,6 +4573,11 @@ namespace engine
          rc = _subTree->matches( left.embeddedObject(), result, &subContext ) ;
          PD_RC_CHECK( rc, PDERROR, "matches subtree failed:rc=%d", rc ) ;
          context.appendDollarList( subContext._dollarList ) ;
+      }
+
+      if ( mixCmp != _config->_mixCmp )
+      {
+         _subTree->setMixCmp( _config->_mixCmp ) ;
       }
 
    done:
@@ -4773,6 +4831,7 @@ namespace engine
 
    INT32 _mthMatchOpNodeRegex::_valueMatch( const BSONElement &left,
                                             const BSONElement &right,
+                                            BOOLEAN mixCmp,
                                             _mthMatchTreeContext &context,
                                             BOOLEAN &result )
    {

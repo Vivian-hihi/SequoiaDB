@@ -143,6 +143,11 @@ namespace engine
             return _config._mixCmp ;
          }
 
+         OSS_INLINE void setMixCmp ( BOOLEAN mixCmp )
+         {
+            _config._mixCmp = mixCmp ;
+         }
+
       private:
          INT32    _matches( const BSONObj &matchTarget, BOOLEAN &result,
                             _mthMatchTreeContext &context ) ;
