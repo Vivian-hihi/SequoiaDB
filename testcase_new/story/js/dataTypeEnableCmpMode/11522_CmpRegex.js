@@ -113,8 +113,7 @@ function main(){
       	           {a:[1,20,30]},
       	           {a:null},
       	           {a:{$minKey:1}},
-      	           {a:{$maxKey:1}},
-      	           {b:1}];         
+      	           {a:{$maxKey:1}}];
    checkResult( dbcl, findConf11, hintConf, sortConf, expRecs11 );
    
    var findConf12 = {a:{$ne:{$regex:"ab",$options:"ij"}}};
@@ -137,8 +136,7 @@ function main(){
       	           {a:[1,20,30]},
       	           {a:null},
       	           {a:{$minKey:1}},
-      	           {a:{$maxKey:1}},
-      	           {b:1}];         
+      	           {a:{$maxKey:1}}];
    checkResult( dbcl, findConf12, hintConf, sortConf, expRecs12 );
 }
 main();

@@ -83,8 +83,7 @@ function main(){
       	           {a:[0,-10,-20]},{a:[0,30,40]},{a:[1,20]},
       	           {a:null},
       	           {a:{$minKey:1}},
-      	           {a:{$maxKey:1}},
-      	           {b:1}];         
+      	           {a:{$maxKey:1}}];
    checkResult( dbcl, findConf6, hintConf, sortConf, expRecs6 );  
 }
 main();

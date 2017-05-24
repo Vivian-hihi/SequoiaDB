@@ -212,7 +212,6 @@ function main(){
    //ne
    var findConf1 = {a:{$ne:null}};
    var expRecs1 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:22},{a:3},{a:24},
       	           {a:"aa"},{a:"ab"},{a:"b"},
       	           {a:{b:1}},{a:{d:2}},{a:{f:0}},
@@ -231,7 +230,6 @@ function main(){
    
    var findConf2 = {a:{$ne:3}};
    var expRecs2 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:null},
       	           {a:22},{a:24},
       	           {a:"aa"},{a:"ab"},{a:"b"},
@@ -251,7 +249,6 @@ function main(){
    
    var findConf3 = {a:{$ne:"ab"}};
    var expRecs3 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:null},
       	           {a:22},{a:3},{a:24},
       	           {a:"aa"},{a:"b"},
@@ -271,7 +268,6 @@ function main(){
    
    var findConf4 = {a:{$ne:{d:2}}};
    var expRecs4 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:null},
       	           {a:22},{a:3},{a:24},
       	           {a:"aa"},{a:"ab"},{a:"b"},
@@ -291,7 +287,6 @@ function main(){
    
    var findConf5 = {a:{$ne:{$binary:"aGVsbG8gd29ybGQ=",$type:"1"}}};
    var expRecs5 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:null},
       	           {a:22},{a:3},{a:24},
       	           {a:"aa"},{a:"ab"},{a:"b"},
@@ -310,7 +305,6 @@ function main(){
    
    var findConf6 = {a:{$ne:{$oid:"591e6a7e3fb026ec2f000013"}}};
    var expRecs6 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:null},
       	           {a:22},{a:3},{a:24},
       	           {a:"aa"},{a:"ab"},{a:"b"},
@@ -329,7 +323,6 @@ function main(){
    
    var findConf7 = {a:{$ne:false}};
    var expRecs7 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:null},
       	           {a:22},{a:3},{a:24},
       	           {a:"aa"},{a:"ab"},{a:"b"},
@@ -349,7 +342,6 @@ function main(){
    
    var findConf8 = {a:{$ne:{$date:"2014-01-03"}}};
    var expRecs8 = [ {a:{$minKey:1}},
-      	           {b:1},
       	           {a:null},
       	           {a:22},{a:3},{a:24},
       	           {a:"aa"},{a:"ab"},{a:"b"},
