@@ -16,7 +16,7 @@ Global
 
 ##参数##
 
-* `error code` ( *Int32*， *Required* )
+* `error code` ( *Int32*， *必填* )
 
 	[错误码](reference/Sequoiadb_error_code.md)。
 

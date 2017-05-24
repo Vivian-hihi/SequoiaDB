@@ -8,17 +8,23 @@ help - Dispaly the help information.
 
 **help(\<method\>)**
 
-**\<class\>.help()**
-
-**\<class\>.help(\<method\>)**
-
 ##CATEGORY##
 
 Global
 
 ##DESCRIPTION##
 
-Dispaly the help information.
+Display help information in global scope.
+
+* help() - display the help information in global scope.
+
+* help(\<method\>) - display the detail of a method in global scope.
+
+We can display the help information of a class or an object:
+
+* \<class\>.help() - display all the methods in specified class or object.
+
+* \<class\>.help(\<method\>) - display the detail of method in specified class or object.
 
 ##PARAMETERS##
 

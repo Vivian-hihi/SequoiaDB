@@ -8,31 +8,31 @@ help - 显示帮助信息。
 
 **help(\<method\>)**
 
-**\<class\>.help()**
-
-**\<class\>.help(\<method\>)**
-
 ##类别##
 
 Global
 
 ##描述##
 
-help() - 显示全局的帮助信息。
+在全局范围内显示帮助信息：
 
-help(\<method\>) - 显示具体方法的详细文档信息。
+* help() - 显示全局的帮助信息。
 
-\<class\>.help() - 显示指定类包含的所有方法。
+* help(\<method\>) - 显示具体方法的详细文档信息。
 
-\<class\>.help(\<method\>) - 显示指定类中具体方法的详细文档信息。
+另外，也可以在类和对象范围查看帮助信息：
+
+* \<class\>.help() - 显示该类或对象包含的所有方法。
+
+* \<class\>.help(\<method\>) - 显示类或对象具体方法的详细文档信息。
 
 ##参数##
 
-* `class` ( *Object*， *Requird* )
+* `class` ( *Object*， *必填* )
 
 	javascript 类或者对象。
 
-* `method` ( *String*， *Requird* )
+* `method` ( *String*， *必填* )
 
 	类或者对象的方法名。
 

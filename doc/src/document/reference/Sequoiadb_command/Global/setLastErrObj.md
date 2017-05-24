@@ -16,7 +16,7 @@ Global
 
 ##参数##
 
-* `obj` ( *Object*， *Required* )
+* `obj` ( *Object*， *必填* )
 
 	bson 错误对象。
 
