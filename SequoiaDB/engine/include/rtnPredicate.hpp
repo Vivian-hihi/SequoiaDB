@@ -369,6 +369,7 @@ namespace engine
 
       INT32 _initFullRange () ;
       INT32 _initTypeRange ( BSONType type, BOOLEAN forCmp ) ;
+      INT32 _initMinRange ( BOOLEAN startIncluded ) ;
    } ;
 
    typedef map< string, rtnPredicate > RTN_PREDICATE_MAP ;

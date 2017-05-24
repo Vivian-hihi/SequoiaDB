@@ -546,6 +546,11 @@ namespace engine
             return FALSE ;
          }
 
+         OSS_INLINE virtual BOOLEAN _flagAcceptUndefined ()
+         {
+            return FALSE ;
+         }
+
       protected:
          INT32 _execute( const CHAR *pFieldName, const BSONObj &obj,
                          BOOLEAN isArrayObj,
@@ -841,6 +846,11 @@ namespace engine
                                     BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+
+         OSS_INLINE virtual BOOLEAN _flagAcceptUndefined ()
+         {
+            return TRUE ;
+         }
    } ;
 
    class _mthMatchOpNodeMOD : public _mthMatchOpNode
@@ -921,6 +931,11 @@ namespace engine
                                     BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+
+         OSS_INLINE virtual BOOLEAN _flagAcceptUndefined ()
+         {
+            return TRUE ;
+         }
    } ;
 
    class _mthMatchOpNodeEXPAND : public _mthMatchOpNode

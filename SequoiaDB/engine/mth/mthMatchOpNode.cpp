@@ -2124,6 +2124,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj resultObj ;
       BSONElement resultEle = original ;
+      BOOLEAN mixCmp = _config->_mixCmp ;
 
       if ( _funcList.size() > 0 )
       {
@@ -2135,10 +2136,12 @@ namespace engine
          }
 
          resultEle = resultObj.firstElement() ;
+
+         // Expect the same canonical type of inputs
+         mixCmp = FALSE ;
       }
 
-      rc = _valueMatch( resultEle, matchTarget, _config->_mixCmp, context,
-                        matchResult ) ;
+      rc = _valueMatch( resultEle, matchTarget, mixCmp, context, matchResult ) ;
       PD_RC_CHECK( rc, PDERROR, "_valueMatch failed:rc=%d", rc ) ;
 
    done:
@@ -2223,6 +2226,8 @@ namespace engine
       BSONElement toMatchEle ;
       CHAR *p  = NULL ;
 
+      BOOLEAN mixCmp = _config->_mixCmp ;
+
       rc = mthFieldName.setFieldName( pFieldName ) ;
       PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
                    pFieldName, rc ) ;
@@ -2295,14 +2300,10 @@ namespace engine
          goto done ;
       }
 
-      if ( p )
+      if ( p && !_flagAcceptUndefined() )
       {
-         if ( EN_MATCH_OPERATOR_EXISTS != getType() &&
-              EN_MATCH_OPERATOR_ISNULL != getType() )
-         {
-            result = FALSE ;
-            goto done ;
-         }
+         result = FALSE ;
+         goto done ;
       }
 
       if ( _isCompareField )
@@ -2330,10 +2331,18 @@ namespace engine
          }
 
          recordEle = funcResultObj.firstElement() ;
+
+         // Expect the same canonical type of inputs
+         mixCmp = FALSE ;
       }
 
-      rc = _valueMatch( recordEle, toMatchEle, _config->_mixCmp, context,
-                        result ) ;
+      if ( recordEle.eoo() && !_flagAcceptUndefined() )
+      {
+         result = FALSE ;
+         goto done ;
+      }
+
+      rc = _valueMatch( recordEle, toMatchEle, mixCmp, context, result ) ;
       PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
       if ( EN_MATCH_OPERATOR_EXISTS == getType() ||
@@ -2355,8 +2364,7 @@ namespace engine
             BSONObjIterator iter( eEmbObj ) ;
             INT32 index = 0 ;
             // If parameter is a array, we only match array elements inside
-            BOOLEAN innerMixCmp = ( toMatchEle.type() == Array ?
-                                    FALSE : _config->_mixCmp ) ;
+            BOOLEAN innerMixCmp = toMatchEle.type() == Array ? FALSE : mixCmp ;
             while ( iter.more() )
             {
                BOOLEAN tmpResult = FALSE ;
@@ -2407,6 +2415,7 @@ namespace engine
                                    BOOLEAN &result )
    {
       PD_TRACE_ENTRY( SDB__MTHMATCHOPNODE_EXECUTE ) ;
+
       INT32 rc = SDB_OK ;
 
       if ( _hasReturnMatch )

@@ -845,13 +845,24 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__OPTCLSTAT__EVALKEYPAIR ) ;
 
-      if ( startKey.type() == MinKey &&
+      if ( ( startKey.type() == MinKey ||
+             startKey.type() == Undefined ) &&
            stopKey.type() == MaxKey )
       {
          // Cover all values
          selectivity = 1.0 ;
       }
-      else if ( startKey.type() == MinKey )
+      else if ( ( startKey.type() == MinKey &&
+                  ( stopKey.type() == MinKey ||
+                    ( stopKey.type() == Undefined && !stopIncluded ) ) ) ||
+                ( startKey.type() == MaxKey && stopKey.type() == MaxKey ) )
+      {
+         // [$minKey, $minKey], [$minKey, $undefined), [$maxKey, $maxKey]
+         // which could be ignored
+         selectivity = 0.0 ;
+      }
+      else if ( startKey.type() == MinKey ||
+                startKey.type() == Undefined )
       {
          selectivity = _evalLTOperator( stopKey, stopIncluded ) ;
       }

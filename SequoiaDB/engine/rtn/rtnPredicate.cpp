@@ -1542,19 +1542,39 @@ namespace engine
       }
       else
       {
+         BSONElement startKey ;
+         BOOLEAN startInclusive = TRUE ;
+
+         if ( mixCmp || e.type() == MaxKey )
+         {
+            if ( e.canonicalType() <=
+                 staticUndefined.firstElement().canonicalType() )
+            {
+               // Stop key is smaller than $undefined
+               startKey = minKey.firstElement() ;
+               startInclusive = TRUE ;
+            }
+            else
+            {
+               // Add a special range [ $minKey, $undefined )
+               _initMinRange( TRUE ) ;
+
+               // We start from $undefined to exclude undefined fields
+               startKey = staticUndefined.firstElement() ;
+               startInclusive = FALSE ;
+            }
+         }
+         else
+         {
+            startKey = rtnKeyGetMinForCmp( e.type(), FALSE ).firstElement() ;
+
+            // If the start key is not the same canonical type as given key,
+            // it should not be included, otherwise it should be included
+            startInclusive = ( startKey.canonicalType() == e.canonicalType() ) ;
+         }
+
          _startStopKeys.push_back( rtnStartStopKey() ) ;
          rtnStartStopKey &keyPair = _startStopKeys.back() ;
-
-         BSONElement startKey =
-               rtnKeyGetMinForCmp( e.type(), mixCmp ).firstElement() ;
-         // 1. If it is mixCmp, start key is $minKey which should be included
-         // 2. If it is $lt:$maxKey or $lte:$maxKey, start key is also $minKey
-         //    which should be included
-         // 3. If the start key is not the same canonical type as given key,
-         //    it should not be included, otherwise it should be included
-         BOOLEAN startInclusive =
-               ( ( mixCmp || e.type() == MaxKey ) ? TRUE :
-                 ( startKey.canonicalType() == e.canonicalType() ) ) ;
 
          keyPair._startKey._bound = startKey ;
          keyPair._startKey._inclusive = startInclusive ;
@@ -1592,11 +1612,30 @@ namespace engine
       }
       else
       {
+         BOOLEAN minRangeAdded = FALSE ;
+
+         if ( e.canonicalType() <=
+              staticUndefined.firstElement().canonicalType() )
+         {
+            // Add a special range [ $minKey, $undefined )
+            _initMinRange( inclusive ) ;
+            minRangeAdded = TRUE ;
+         }
+
          _startStopKeys.push_back( rtnStartStopKey() ) ;
          rtnStartStopKey &keyPair = _startStopKeys.back() ;
 
-         keyPair._startKey._bound = e ;
-         keyPair._startKey._inclusive = inclusive ;
+         if ( minRangeAdded )
+         {
+            // Then we start from $undefined
+            keyPair._startKey._bound = staticUndefined.firstElement() ;
+            keyPair._startKey._inclusive = FALSE ;
+         }
+         else
+         {
+            keyPair._startKey._bound = e ;
+            keyPair._startKey._inclusive = inclusive ;
+         }
 
          BSONElement stopKey =
                rtnKeyGetMaxForCmp( e.type(), mixCmp ).firstElement() ;
@@ -1777,6 +1816,27 @@ namespace engine
       keyPair._majorType = type ;
 
       PD_TRACE_EXITRC( SDB__RTNPRED__INITTYPERANGE, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED__INITMINRANGE, "_rtnPredicateSet::_initMinRange" )
+   INT32 rtnPredicate::_initMinRange ( BOOLEAN startIncluded )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNPRED__INITMINRANGE ) ;
+
+      _startStopKeys.push_back ( rtnStartStopKey() ) ;
+      rtnStartStopKey &keyPair = _startStopKeys.back() ;
+
+      keyPair._startKey._bound = minKey.firstElement() ;
+      keyPair._startKey._inclusive = startIncluded ;
+
+      keyPair._stopKey._bound = staticUndefined.firstElement() ;
+      keyPair._stopKey._inclusive = FALSE ;
+
+      PD_TRACE_EXITRC( SDB__RTNPRED__INITMINRANGE, rc ) ;
 
       return rc ;
    }
