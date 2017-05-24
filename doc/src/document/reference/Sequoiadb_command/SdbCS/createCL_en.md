@@ -15,12 +15,12 @@ belong to one and only one collection.
 
 ##PARAMETERS##
 
-* name ( *String* , *Required* )
+* `name` ( *String* , *Required* )
 
     The name of the collection, should be unique to each other in 
     a collection space.
 
-* options ( *Object*, *Optional* )
+* `options` ( *Object*, *Optional* )
 
     The options for creating the collection, could be a combination of 
     the following options:
