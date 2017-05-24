@@ -103,8 +103,7 @@ function main()
 	               {No:4,a:{0:4,1:5,2:6,2:7,4:8}},
 	               {No:5,a:1},
 	               {No:7,a:[3,7,8]},
-	               {No:8,a:[13,17,18]},
-				   {No:9,b:[1,2,3,4,5,6,7]}];
+	               {No:8,a:[13,17,18]}];
    checkResult( dbcl, findCondition3, null, expRecs3, {No:1} );
    
    var findCondition4 = {a:{$slice:[2,3],$returnMatch:0,$all:[5,3]}};

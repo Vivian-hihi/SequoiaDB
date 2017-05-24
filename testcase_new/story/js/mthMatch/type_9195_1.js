@@ -25,7 +25,7 @@ function main()
    
    //many field,some exists,some Non-exists,use gt/lt
    var findCondition1 = {a:{$type:1,$gt:2},b:{$type:1,$lt:17},c:{$type:1,$mod:[2,0]},d:{$type:1,$ne:"null"}};
-   var expRecs1 = [{No:4,a:{0:1},b:[1,2,3],c:null}];
+   var expRecs1 = [];
    checkResult( dbcl, findCondition1, null, expRecs1, {No:1} );
    
    var explainRecs1 = [{Name:COMMCSNAME + "." + COMMCLNAME,
@@ -35,7 +35,19 @@ function main()
 	                    IXBound:null,
 	                    NeedMatch:true}];
    checkExplainResult( dbcl, findCondition1, null, {No:1}, explainRecs1 );
+
+   var findCondition1a = {a:{$type:1,$gt:2},b:{$type:1,$lt:17},c:{$type:1,$mod:[2,0]}};
+   var expRecs1a = [{No:4,a:{0:1},b:[1,2,3],c:null}];
+   checkResult( dbcl, findCondition1a, null, expRecs1a, {No:1} );
    
+   var explainRecs1a = [{Name:COMMCSNAME + "." + COMMCLNAME,
+	                     ScanType:"tbscan",
+	                     IndexName:"",
+	                     Query:{$and:[{a:{$type:1,$gt:2}},{b:{$type:1,$lt:17}},{c:{$type:1,$mod:[2,0]}}]},
+	                     IXBound:null,
+	                     NeedMatch:true}];
+   checkExplainResult( dbcl, findCondition1a, null, {No:1}, explainRecs1a );
+
    //use in/nin/all
    var findCondition2 = {a:{$type:1,$in:[2,-1,16,17,3]},b:{$type:2,$in:["int64","array"]}};
    var expRecs2 = [{No:1,a:123,b:{$numberLong:"9223372036854775807"},c:123.123,d:{$decimal:"123.00",$precision:[5,2]}},
@@ -51,8 +63,7 @@ function main()
    checkExplainResult( dbcl, findCondition2, null, {No:1}, explainRecs2 );
    
    var findCondition3 = {a:{$type:1,$nin:[16,2]},b:{$type:2,$nin:["decimal","minkey"]}};
-   var expRecs3 = [{No:3,a:{$timestamp:"2012-01-01-13.14.26.124233"},c:{$binary:"aGVsbG8gd29ybGQ=",$type:"1"},d:{$regex:'^string$',$options:'i'}},
-	                {No:4,a:{0:1},b:[1,2,3],c:null}];
+   var expRecs3 = [{No:4,a:{0:1},b:[1,2,3],c:null}];
    checkResult( dbcl, findCondition3, null, expRecs3, {No:1} );
    
    var explainRecs3 = [{Name:COMMCSNAME + "." + COMMCLNAME,

@@ -58,8 +58,7 @@ function main(){
       	          {a:{$regex:"^a",$options:"i"}},
       	          {a:{b:1}},
       	          {a:[1,2,3]},
-      	          {a:null},
-      	          {b:1}];         
+      	          {a:null}];
    checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
  
    var findConf2 = {a:{$gte:{$minKey:1},$lte:{$maxKey:1}}};
@@ -80,8 +79,7 @@ function main(){
       	          {a:[1,2,3]},
       	          {a:null},
       	          {a:{$minKey:1}},
-      	          {a:{$maxKey:1}},
-      	          {b:1}];
+      	          {a:{$maxKey:1}}];
    checkResult( dbcl, findConf2, hintConf, sortConf, expRecs2 );
    
    //maxKey or minKey
@@ -150,8 +148,7 @@ function main(){
          	        {a:{b:1}},
          	        {a:[1,2,3]},
          	        {a:null},
-         	        {a:{$minKey:1}},
-         	        {b:1}];         
+         	        {a:{$minKey:1}}];
    checkResult( dbcl, findConf12, hintConf, sortConf, expRecs12 );
    
    var findConf13 = {a:{$ne:{$minKey:1}}};
@@ -171,8 +168,7 @@ function main(){
          	        {a:{b:1}},
          	        {a:[1,2,3]},
          	        {a:null},
-         	        {a:{$maxKey:1}},
-         	        {b:1}];         
+         	        {a:{$maxKey:1}}];
    checkResult( dbcl, findConf13, hintConf, sortConf, expRecs13 );
 }
 main();
