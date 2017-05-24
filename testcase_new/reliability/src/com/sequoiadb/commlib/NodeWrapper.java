@@ -108,7 +108,7 @@ public class NodeWrapper {
         }
     }
 
-    public boolean isNodeActive() throws ReliabilityException {
+    public boolean isNodeActive() {
         try {
             Sequoiadb db = node.connect();
             BSONObject nullObj = null;
@@ -120,7 +120,7 @@ public class NodeWrapper {
             cursor.close();
         }
         catch (BaseException e) {
-            throw new ReliabilityException(e);
+            return false;
         }
         return true;
     }
