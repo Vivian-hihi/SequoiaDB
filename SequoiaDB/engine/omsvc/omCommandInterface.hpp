@@ -40,6 +40,7 @@
 #include "pmdRemoteSession.hpp"
 #include "restAdaptor.hpp"
 #include "pmdRestSession.hpp"
+#include "omCommandTool.hpp"
 #include <map>
 #include <string>
 
@@ -166,6 +167,8 @@ namespace engine
          string            _errorDetail ;
          restAdaptor*      _restAdaptor ;
          pmdRestSession*   _restSession ;
+
+         omErrorTool       _errorMsg ;
    } ;
 
    class omAgentReqBase : public omCommandInterafce

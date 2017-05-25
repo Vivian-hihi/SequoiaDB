@@ -67,6 +67,7 @@ namespace engine
    #define OM_CONF_DETAIL_PCNUM              PMD_OPTION_NUMPAGECLEANERS
    #define OM_CONF_DETAIL_PCINTERVAL         PMD_OPTION_PAGECLEANINTERVAL
    #define OM_CONF_DETAIL_DATAGROUPNAME      "datagroupname"
+   #define OM_CONF_DETAIL_TRANSACTIONON      PMD_OPTION_TRANSACTIONON
 
    // Zookeeper's template configure
    #define OM_TEMPLATE_ZOO_NUM               "zoonodenum"
@@ -261,6 +262,7 @@ namespace engine
       OM_TASK_TYPE_ADD_BUSINESS    = 2,
       OM_TASK_TYPE_REMOVE_BUSINESS = 3,
       OM_TASK_TYPE_SSQL_EXEC       = 4,
+      OM_TASK_TYPE_EXTEND_BUSINESS = 5,
 
       OM_TASK_TYPE_END
    } ;
@@ -270,6 +272,7 @@ namespace engine
    #define OM_TASK_TYPE_ADD_BUSINESS_STR      "ADD_BUSINESS"
    #define OM_TASK_TYPE_REMOVE_BUSINESS_STR   "REMOVE_BUSINESS"
    #define OM_TASK_TYPE_SSQL_EXEC_STR         "SSQL_EXEC"
+   #define OM_TASK_TYPE_EXTEND_BUSINESS_STR   "EXTEND_BUSINESS"
 
    const CHAR *getTaskTypeStr( INT32 taskType ) ;
 
@@ -335,6 +338,20 @@ namespace engine
    #define  OM_DEFAULT_LOCAL_HOST            "localhost"
    // agent default port
    #define  OM_AGENT_DEFAULT_PORT            SDBCM_DFT_PORT
+
+   /*
+      get business config and get business template
+      operation type
+   */
+   #define  OM_REST_OPERATION_DEPLOY         "deploy"
+   #define  OM_REST_OPERATION_EXTEND         "extend"
+
+   /*
+      get business config, operation type is extend
+   */
+   #define OM_REST_DEPLOYMOD_HORIZONTAL      "horizontal"
+   #define OM_REST_DEPLOYMOD_VERTICAL        "vertical"
+
 
    // milliseconds
    //two hours
@@ -407,9 +424,11 @@ namespace engine
    #define  OM_TASK_STRATEGY_DEL_REQ         "del task strategy"
 
    #define  OM_UPDATE_HOST_INFO_REQ          "update host info"
-   
+
    #define  OM_SSQL_EXEC_REQ                 "ssql exec"
    #define  OM_GET_SYSTEM_INFO_REQ           "get system info"
+   #define  OM_EXTEND_BUSINESS_REQ           "extend business"
+
    //**************************************************************************
 
    //*********************param between rest and om****************************
@@ -514,6 +533,15 @@ namespace engine
    #define  OM_BSON_FIELD_DBUSER             "DbUser"
    #define  OM_BSON_FIELD_DBPASSWD           "DbPasswd"
 
+   #define OM_NODE_ROLE_STANDALONE           SDB_ROLE_STANDALONE_STR
+   #define OM_NODE_ROLE_COORD                SDB_ROLE_COORD_STR
+   #define OM_NODE_ROLE_CATALOG              SDB_ROLE_CATALOG_STR
+   #define OM_NODE_ROLE_DATA                 SDB_ROLE_DATA_STR
+   #define OM_NODE_COORDLIST                 "Coord"
+
+   #define OM_DEPLOY_MOD_STANDALONE          "standalone"
+   #define OM_DEPLOY_MOD_DISTRIBUTION        "distribution"
+
    #define  OM_CONF_PATH_STR                 "conf"
    #define  OM_LOG_PATH_STR                  "log"
 
@@ -522,10 +550,12 @@ namespace engine
    #define  OM_XMLATTR_KEY                   "<xmlattr>"
    #define  OM_XMLATTR_TYPE                  "<xmlattr>.type"
    #define  OM_XMLATTR_TYPE_ARRAY            "array"
+   #define  OM_EXTEND_TEMPLATE_FILE_NAME     "_"OM_REST_OPERATION_EXTEND
    #define  OM_TEMPLATE_FILE_NAME            "_template"
    #define  OM_REST_BUSINESS_TYPE            OM_BSON_BUSINESS_TYPE
    #define  OM_BSON_DEPLOY_MOD_LIST          "DeployModList"
    #define  OM_BSON_DEPLOY_MOD               "DeployMod"
+   #define  OM_BSON_OPERATION_TYPE           "OperationType"
    #define  OM_BSON_SEPARATE_CONFIG          "SeparateConfig"
    #define  OM_BSON_PROPERTY_ARRAY           "Property"
    #define  OM_BSON_PROPERTY_NAME            "Name"
@@ -575,6 +605,7 @@ namespace engine
    #define REST_KEY_NAME_UPBOUND             "Upbound"
    #define REST_KEY_NAME_CODE                "Code"
    #define REST_KEY_NAME_FUNCTION            "Function"
+
 }
 
 #endif // OM_DEF_HPP__

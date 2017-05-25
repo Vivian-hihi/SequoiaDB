@@ -130,6 +130,9 @@ namespace engine
          virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
 
       private:
+         INT32             _storeBusinessInfo( BSONObj &taskInfoValue ) ;
+
+      protected:
          BOOLEAN           _isHostConfExist( const string &hostName, 
                                              const string &businessName ) ;
 
@@ -148,13 +151,30 @@ namespace engine
 
          void              _updateHostOMVersion( const string &hostName ) ;
 
-         INT32             _storeBusinessInfo( BSONObj &taskInfoValue ) ;
-
          INT32             _storeConfigInfo( BSONObj &taskInfoValue ) ;
 
       private:
          INT64             _taskID ;
          INT32             _taskType ;
+   } ;
+
+   class omExtendBusinessTask : public omAddBusinessTask
+   {
+   public:
+      omExtendBusinessTask( INT64 taskID ) ;
+      virtual ~omExtendBusinessTask() ;
+
+   public:
+      virtual INT32 finish( BSONObj &resultInfo ) ;
+
+      virtual INT32 getType() ;
+
+      virtual INT64 getTaskID() ;
+   private:
+
+   private:
+      INT64 _taskID ;
+      INT32 _taskType ;
    } ;
 
    class omRemoveBusinessTask : public omTaskBase

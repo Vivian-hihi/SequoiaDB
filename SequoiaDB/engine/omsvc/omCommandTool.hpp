@@ -1,0 +1,181 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = omCommandTool.hpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/17/2017  HJW Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef OM_COMMAND_TOOL_HPP__
+#define OM_COMMAND_TOOL_HPP__
+
+#include "rtnCB.hpp"
+#include "pmd.hpp"
+#include "omManager.hpp"
+#include "../bson/bson.h"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <map>
+#include <string>
+
+using namespace bson ;
+using namespace std ;
+using namespace boost::property_tree;
+
+namespace engine
+{
+   class omXmlTool ;
+   class omConfigTool ;
+   class omDatabaseTool ;
+   class omTaskTool ;
+   class omErrorTool ;
+
+   class omXmlTool : public SDBObject
+   {
+   public:
+      INT32 readXml2Bson( const string& fileName, BSONObj& obj ) ;
+
+   private:
+      BOOLEAN _isStringValue( ptree& pt ) ;
+      BOOLEAN _isArray( ptree& pt ) ;
+      void _recurseParseObj( ptree& pt, BSONObj& out ) ;
+      void _parseArray( ptree& pt, BSONArrayBuilder& arrayBuilder ) ;
+      void _xml2Bson( ptree& pt, BSONObj& out ) ;
+   } ;
+
+   class omConfigTool : public omXmlTool
+   {
+   public:
+      omConfigTool( string& rootPath, string& languageFileSep ) :
+            _rootPath( rootPath ),
+            _languageFileSep( languageFileSep )
+      {
+      }
+
+      string getBuzTemplatePath( const string& businessType,
+                                 const string& operationType ) ;
+      string getBuzConfigPath( const string& businessType,
+                               const string& deployMod,
+                               BOOLEAN isSeparateConfig ) ;
+      string getBuzConfigPath( const string& businessType,
+                               const string& deployMod,
+                               const string& isSeparateConfig ) ;
+
+      INT32 readBuzTypeList( list<BSONObj>& businessList ) ;
+      INT32 readBuzTemplate( const string& businessType,
+                             const string& operationType,
+                             list<BSONObj>& objList ) ;
+      INT32 readBuzConfig( const string& businessType,
+                           const string& deployMod,
+                           BOOLEAN isSeparateConfig,
+                           BSONObj& obj ) ;
+      INT32 readBuzConfig( const string& businessType,
+                           const string& deployMod,
+                           const string& isSeparateConfig,
+                           BSONObj& obj ) ;
+
+   private:
+      string _rootPath ;
+      string _languageFileSep ;
+   } ;
+
+   class omDatabaseTool : public SDBObject
+   {
+   public:
+      omDatabaseTool( pmdEDUCB* cb ) : _cb( cb )
+      {
+         _pKRCB  = pmdGetKRCB() ;
+         _pRTNCB = _pKRCB->getRTNCB() ;
+         _pDMSCB = _pKRCB->getDMSCB() ;
+      }
+
+   public:
+      INT64 getTaskIdOfRunningBuz( const string &businessName ) ;
+      INT32 getBusinessInfo( const string &businessName,
+                             string &businessType,
+                             string &deployMod,
+                             string &clusterName ) ;
+      INT32 getBusinessInfoForCluster( const string &clusterName,
+                                       BSONObj &clusterBusinessInfo ) ;
+
+   public:
+      INT32 getOneHostConfig( const string& hostName,
+                              BSONObj &config ) ;
+      INT32 getHostInfoForCluster( const string& clusterName,
+                                   BSONObj &hostsDetail ) ;
+
+   private:
+      pmdEDUCB    *_cb ;
+      SDB_RTNCB   *_pRTNCB ;
+      pmdKRCB     *_pKRCB ;
+      SDB_DMSCB   *_pDMSCB ;
+   } ;
+
+   class omTaskTool : public SDBObject
+   {
+   public:
+      omTaskTool( pmdEDUCB* cb, string& localAgentHost,
+                  string& localAgentService) :
+            _cb( cb ),
+            _localAgentHost( localAgentHost ),
+            _localAgentService( localAgentService )
+      {
+      }
+      INT32 createTask( INT32 taskType, INT64 taskID, const string &taskName,
+                        const BSONObj &taskInfo, const BSONArray &resultInfo ) ;
+      INT32 notifyAgentTask( INT64 taskID ) ;
+
+   private:
+      INT32 _sendMsgToLocalAgent( omManager *om,
+                                  pmdRemoteSession *remoteSession,
+                                  MsgHeader *pMsg ) ;
+      INT32 _receiveFromAgent( pmdRemoteSession *remoteSession,
+                               SINT32 &flag, BSONObj &result ) ;
+      void _clearSession( omManager *om, pmdRemoteSession *remoteSession ) ;
+
+   private:
+      pmdEDUCB* _cb ;
+      string _localAgentHost ;
+      string _localAgentService ;
+   } ;
+
+   class omErrorTool : public SDBObject
+   {
+   public:
+      omErrorTool() : _isSet( FALSE )
+      {
+      }
+      void setError( BOOLEAN isCover, const CHAR* pFormat, ... ) ;
+      const CHAR* getError() ;
+
+   private:
+      CHAR _errorDetail[ PD_LOG_STRINGMAX + 1 ] ;
+      BOOLEAN _isSet ;
+   } ;
+}
+
+#endif /* OM_COMMAND_TOOL_HPP__ */

@@ -121,6 +121,49 @@ namespace engine
          string          _languageFileSep ;
    };
 
+   class omExtendBusinessCommand : public omAuthCommand
+   {
+      public:
+         omExtendBusinessCommand( restAdaptor *pRestAdaptor,
+                                  pmdRestSession *pRestSession,
+                                  const CHAR *pRootPath,
+                                  string& localAgentHost,
+                                  string& localAgentService ) ;
+         ~omExtendBusinessCommand() ;
+
+      public:
+         virtual INT32 doCommand() ;
+
+      private:
+         INT32 _getRestInfo( BSONObj &extendConfig, string& extendConfigMod ) ;
+         INT32 _checkBusiness() ;
+         INT32 _readConfigProperties( const string& extendConfigMod,
+                                      BSONObj& buzDetail ) ;
+         INT32 _getClusterInfo( BSONObj& hostsInfoForCluster,
+                                BSONObj& buzInfoForCluster ) ;
+         INT32 _checkExtendConfig( const BSONObj& confProperties,
+                                   const BSONObj& hostsDetail,
+                                   const BSONObj& buzInfoForCluster,
+                                   BSONObj& extendConfig ) ;
+         INT32 _createExtendTask( const BSONObj& extendConfig,
+                                  const BSONObj& hostsInfoForCluster,
+                                  INT64& taskID ) ;
+         INT32 _generateTaskInfo( const BSONObj& hostsInfoForCluster,
+                                  const BSONObj& extendConfig,
+                                  BSONObj& taskConfig ) ;
+         INT32 _generateTaskResultInfo( const BSONObj &taskConfig,
+                                        BSONArray &resultInfo ) ;
+
+      private:
+         string _rootPath ;
+         string _localAgentHost ;
+         string _localAgentService ;
+         string _clusterName ;
+         string _businessName ;
+         string _businessType ;
+         string _deployMod ;
+   } ;
+
    class omLogoutCommand : public omAuthCommand
    {
       public:
@@ -484,8 +527,6 @@ namespace engine
          INT32          _readConfDetail( const string &file,
                                          BSONObj &bsonConfDetail ) ;
 
-      protected:
-
    } ;
 
    class omConfigBusinessCommand : public omGetBusinessTemplateCommand
@@ -518,6 +559,7 @@ namespace engine
          INT32          _generateConfig( const BSONObj &bsonTemplate,
                                          const BSONObj &bsonHostInfo,
                                          const BSONObj &bsonConfigItem,
+                                         const BSONObj &bsonHostList,
                                          BSONObj &bsonConfig ) ;
          void           _addProperties( BSONObjBuilder &builder,
                                         const BSONObj &bsonTemplate,
@@ -525,7 +567,8 @@ namespace engine
          INT32          _getConfigDetail( const BSONObj &bsonTemplate,
                                         BSONObj &bsonConfDetail ) ;
          INT32          _getTemplateInfo( BSONObj &bsonTemplate,
-                                          BSONObj &bsonHostInfo ) ;
+                                          BSONObj &bsonHostInfo,
+                                          BSONObj &bsonHostList ) ;
          INT32          _fillTemplateInfo( BSONObj &bsonTemplate ) ;
          INT32          _getPropertyNameValue( BSONObj &bsonTemplate,
                                                string propertyName,
@@ -542,6 +585,7 @@ namespace engine
          string         _deployMod ;
          string         _businessType ;
          string         _businessName ;
+         string         _operationType ;
 
    } ;
 

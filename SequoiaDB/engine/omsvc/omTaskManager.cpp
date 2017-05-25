@@ -1005,6 +1005,73 @@ namespace engine
       goto done ;
    }
 
+   omExtendBusinessTask::omExtendBusinessTask( INT64 taskID ) :
+         omAddBusinessTask( taskID )
+   {
+      _taskID   = taskID ;
+      _taskType = OM_TASK_TYPE_EXTEND_BUSINESS;
+   }
+
+   omExtendBusinessTask::~omExtendBusinessTask()
+   {
+   }
+
+   INT32 omExtendBusinessTask::finish( BSONObj &resultInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessName ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      BSONObj taskInfo ;
+      BSONObj taskInfoValue ;
+   
+      matcher  = BSON( OM_TASKINFO_FIELD_TASKID << _taskID ) ;
+      selector = BSON( OM_TASKINFO_FIELD_INFO << 1 ) ;
+
+      rc = queryOneTask( selector, matcher, orderBy, hint, taskInfo ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "get task info failed:taskID="
+                          OSS_LL_PRINT_FORMAT",rc=%d", _taskID, rc ) ;
+         goto error ;     
+      }
+   
+      taskInfoValue = taskInfo.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+   
+      rc = _storeConfigInfo( taskInfoValue ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "store configure info failed:rc=%d", rc ) ;
+         goto error ;     
+      }
+   
+      businessName = taskInfoValue.getStringField( OM_BSON_BUSINESS_NAME );
+
+      rc = _updateBizHostInfo( businessName ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "update business host info failed:rc=%d", rc ) ;
+         goto error ;     
+      }
+   
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omExtendBusinessTask::getType()
+   {
+      return _taskType ;
+   }
+   
+   INT64 omExtendBusinessTask::getTaskID()
+   {
+      return _taskID ;
+   }
+   
    omRemoveBusinessTask::omRemoveBusinessTask( INT64 taskID )
    {
       _taskID   = taskID ;
@@ -1413,6 +1480,10 @@ namespace engine
 
       case OM_TASK_TYPE_SSQL_EXEC :
          pTask = SDB_OSS_NEW omSsqlExecTask( taskID ) ;
+         break ;
+
+      case OM_TASK_TYPE_EXTEND_BUSINESS:
+         pTask = SDB_OSS_NEW omExtendBusinessTask( taskID ) ;
          break ;
 
       default :

@@ -1044,6 +1044,13 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omGetSystemInfoCommand( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_EXTEND_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omExtendBusinessCommand( pAdptor, this,
+                                                             _wwwRootPath.c_str(),
+                                                             localAgentHost,
+                                                             localAgentPort ) ;
+         }
          else
          {
             rc = SDB_INVALIDARG ;

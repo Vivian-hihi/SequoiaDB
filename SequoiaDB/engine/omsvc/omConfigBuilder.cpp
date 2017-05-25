@@ -762,14 +762,29 @@ namespace engine
       return "" ;
    }
    
-   INT32 OmConfigBuilder::createInstance( const OmBusinessInfo& businessInfo, OmConfigBuilder*& builder)
+   INT32 OmConfigBuilder::createInstance( const OmBusinessInfo& businessInfo,
+                                          string &operationType,
+                                          OmConfigBuilder*& builder)
    {
       INT32 rc = SDB_OK ;
       OmConfigBuilder* _builder = NULL ;
 
       if ( businessInfo.businessType == OM_BUSINESS_SEQUOIADB )
       {
-         _builder = SDB_OSS_NEW OmSdbConfigBuilder( businessInfo ) ;
+         if( operationType == OM_REST_OPERATION_DEPLOY )
+         {
+            _builder = SDB_OSS_NEW OmSdbConfigBuilder( businessInfo ) ;
+         }
+         else if( operationType == OM_REST_OPERATION_EXTEND )
+         {
+            _builder = SDB_OSS_NEW OmExtendSdbConfigBuilder( businessInfo ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "invalid deploy mode: %s", businessInfo.deployMode.c_str() ) ;
+            goto error ;
+         }
       }
       else if ( businessInfo.businessType == OM_BUSINESS_SEQUOIASQL )
       {
@@ -805,6 +820,7 @@ namespace engine
       }
 
       builder = _builder ;
+      _builder->setOperationType( operationType ) ;
 
    done:
       return rc ;
@@ -859,12 +875,22 @@ namespace engine
                                           const BSONObj &confProperties, 
                                           const BSONObj &bsonHostInfo,
                                           const BSONObj &bsonBusinessInfo,
+                                          const set<string>& hostNames,
                                           BSONObj &bsonConfig )
    {
       INT32 rc = SDB_OK ;
       OmBusiness* business = NULL ;
+      BSONObj bsonBuildHost ;
 
-      rc = _cluster.init( bsonBusinessInfo, bsonHostInfo ) ;
+      _bsonHostInfo = bsonHostInfo.copy() ;
+      rc = _filterGenerateHost( bsonHostInfo, hostNames, bsonBuildHost ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "init cluster failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _cluster.init( bsonBusinessInfo, bsonBuildHost ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "init cluster failed:rc=%d", rc ) ;
@@ -888,21 +914,43 @@ namespace engine
          goto error ;
       }
 
-      business = SDB_OSS_NEW OmBusiness( _businessInfo ) ;
-      if ( NULL == business )
+      if( _operationType == OM_REST_OPERATION_DEPLOY )
       {
-         rc = SDB_OOM ;
-         PD_LOG_MSG( PDERROR, "failed to alloc new OmBusiness: %s, out of memory",
-                     _businessInfo.businessName.c_str(), rc ) ;
-         goto error ;
-      }
+         //delete in ~Omcluster
+         business = SDB_OSS_NEW OmBusiness( _businessInfo ) ;
+         if ( NULL == business )
+         {
+            rc = SDB_OOM ;
+            PD_LOG_MSG( PDERROR,
+                        "failed to alloc new OmBusiness: %s, out of memory",
+                        _businessInfo.businessName.c_str(), rc ) ;
+            goto error ;
+         }
 
-      rc = _cluster.addBusiness( business ) ;
-      if ( SDB_OK != rc )
+         rc = _cluster.addBusiness( business ) ;
+         if ( SDB_OK != rc )
+         {
+            SAFE_OSS_DELETE( business ) ;
+            PD_LOG( PDERROR, "failed to add business [%s] to cluster: rc=%d",
+                    _businessInfo.businessName.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else if( _operationType == OM_REST_OPERATION_EXTEND )
       {
-         SAFE_OSS_DELETE( business ) ;
-         PD_LOG( PDERROR, "failed to add business [%s] to cluster: rc=%d",
-                 _businessInfo.businessName.c_str(), rc ) ;
+         rc = _cluster.getBusiness( _businessInfo.businessName, business ) ;
+         if( rc )
+         {
+            PD_LOG_MSG( PDERROR, "business does not exists: %s",
+                        _businessInfo.businessName.c_str() );
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "invalid operation type: %s",
+                     _operationType.c_str() ) ;
          goto error ;
       }
 
@@ -990,6 +1038,70 @@ namespace engine
    }
 
    /*
+      bsonHostInfo(in):
+         { 
+           "HostInfo":[
+                         {
+                            "HostName":"host1", "ClusterName":"c1", 
+                            "Disk":{"Name":"/dev/sdb", Size:"", Mount:"", Used:""},
+                            "Config":[{"BusinessName":"b2","dbpath":"", svcname:"", 
+                                       "role":"", ... }, ...]
+                         }
+                          , ... 
+                      ]
+         }
+
+      bsonBuildHost(out)
+   */
+   INT32 OmConfigBuilder::_filterGenerateHost( const BSONObj& bsonHostInfo,
+                                               const set<string>& hostNames,
+                                               BSONObj& bsonBuildHost )
+   {
+      INT32 rc = SDB_OK ;
+
+      if( hostNames.empty() )
+      {
+         bsonBuildHost = bsonHostInfo.copy() ;
+      }
+      else
+      {
+         BSONObj info ;
+         BSONObjBuilder bsonBuild ;
+         BSONArrayBuilder buildArray ;
+         set<string>::iterator hostNameIter ;
+
+         info = bsonHostInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+
+         BSONObjIterator iter( info ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "field's element is not Object:field=%s"
+                           ",type=%d", OM_BSON_FIELD_CONFIG, ele.type() ) ;
+               goto error ;
+            }
+            hostNameIter = hostNames.find( ele.embeddedObject()
+                                   .getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
+            if( hostNameIter != hostNames.end() )
+            {
+               buildArray.append( ele ) ;
+            }
+         }
+         bsonBuild.append( OM_BSON_FIELD_HOST_INFO, buildArray.arr() ) ;
+         bsonBuildHost = bsonBuild.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   /*
    newBusinessConfig:
    {
       "BusinessType":"sequoiadb", "BusinessName":"b1", "DeployMod":"xx", 
@@ -1037,10 +1149,20 @@ namespace engine
    INT32 OmConfigBuilder::checkConfig( const BSONObj &confProperties, 
                                        const BSONObj &bsonHostInfo,
                                        const BSONObj &bsonBusinessInfo,
+                                       const set<string>& hostNames,
                                        BSONObj &newBusinessConfig )
    {
       INT32 rc = SDB_OK ;
       OmBusiness* business = NULL ;
+      BSONObj bsonBuildHost ;
+
+      _bsonHostInfo = bsonHostInfo.copy() ;
+      rc = _filterGenerateHost( bsonHostInfo, hostNames, bsonBuildHost ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "init cluster failed:rc=%d", rc ) ;
+         goto error ;
+      }
 
       rc = _cluster.init( bsonBusinessInfo, bsonHostInfo ) ;
       if ( SDB_OK != rc )
@@ -1056,30 +1178,51 @@ namespace engine
          goto error ;
       }
 
-      rc = _cluster.getBusiness( _businessInfo.businessName, business) ;
-      if ( SDB_OK == rc )
+      if( _operationType == OM_REST_OPERATION_DEPLOY )
+      {
+         rc = _cluster.getBusiness( _businessInfo.businessName, business) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "business[%s] already exists",
+                    _businessInfo.businessName.c_str() ) ;
+            goto error ;
+         }
+
+         business = SDB_OSS_NEW OmBusiness( _businessInfo ) ;
+         if ( NULL == business )
+         {
+            rc = SDB_OOM ;
+            PD_LOG_MSG( PDERROR, "failed to alloc new OmBusiness: %s, "
+                        "out of memory", _businessInfo.businessName.c_str() ) ;
+            goto error ;
+         }
+         
+         rc = _cluster.addBusiness( business ) ;
+         if ( SDB_OK != rc )
+         {
+            SAFE_OSS_DELETE( business ) ;
+            PD_LOG( PDERROR, "failed to add business [%s] to cluster: rc=%d",
+                    _businessInfo.businessName.c_str(), rc ) ;
+            goto error ;
+         }
+
+      }
+      else if( _operationType == OM_REST_OPERATION_EXTEND )
+      {
+         rc = _cluster.getBusiness( _businessInfo.businessName, business ) ;
+         if( rc )
+         {
+            PD_LOG_MSG( PDERROR, "business does not exists: %s",
+                        _businessInfo.businessName.c_str() );
+            goto error ;
+         }
+      }
+      else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "business[%s] already exists",
-                 _businessInfo.businessName.c_str() ) ;
-         goto error ;
-      }
-
-      business = SDB_OSS_NEW OmBusiness( _businessInfo ) ;
-      if ( NULL == business )
-      {
-         rc = SDB_OOM ;
-         PD_LOG_MSG( PDERROR, "failed to alloc new OmBusiness: %s, out of memory",
-                 _businessInfo.businessName.c_str() ) ;
-         goto error ;
-      }
-
-      rc = _cluster.addBusiness( business ) ;
-      if ( SDB_OK != rc )
-      {
-         SAFE_OSS_DELETE( business ) ;
-         PD_LOG( PDERROR, "failed to add business [%s] to cluster: rc=%d",
-                 _businessInfo.businessName.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "invalid operation type: %s",
+                     _operationType.c_str() ) ;
          goto error ;
       }
 
@@ -1099,12 +1242,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 OmConfigBuilder::getHostNames( const BSONObj& bsonConfig, set<string>& hostNames )
+   INT32 OmConfigBuilder::getHostNames( const BSONObj& bsonConfig,
+                                        const CHAR *pFieldName,
+                                        set<string>& hostNames )
    {
       INT32 rc = SDB_OK ;
       BSONObj config ;
 
-      config = bsonConfig.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      config = bsonConfig.getObjectField( pFieldName ) ;
 
       {
          BSONObjIterator iter( config ) ;
@@ -1120,7 +1265,8 @@ namespace engine
                goto error ;
             }
             oneNode = ele.embeddedObject() ;
-            hostNames.insert( oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
+            hostNames.insert( oneNode.getStringField(
+                                                   OM_BSON_FIELD_HOST_NAME ) ) ;
          }
       }
 
