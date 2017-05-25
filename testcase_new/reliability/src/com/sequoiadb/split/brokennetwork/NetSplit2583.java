@@ -127,7 +127,7 @@ public class NetSplit2583 extends SdbTestBase {
                 // Assert.assertEquals(destGroup.checkInspect(60), true);
                 // Assert.assertEquals(cataGroup.checkInspect(60), true);
 
-                waitSplitOver(db);
+                Utils.waitSplit(db, cl.getFullName());
                 checkGroupData(db, destGroupName, "{sk:{$gte:2500,$lt:7500}}", 5000);
                 checkGroupData(db, srcGroupName, "{$or:[{sk:{$gte:7500}},{sk:{$lt:2500}}]}", 5000);
                 Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:10000}}"), 10000);
@@ -204,31 +204,6 @@ public class NetSplit2583 extends SdbTestBase {
 
     }
     
-    private void waitSplitOver(Sequoiadb db) throws ReliabilityException {
-        int waitTime = 180000; // 3min
-        int checkInterval = 500; // 0.5s
-        int checkTimes = waitTime / checkInterval;
-        boolean checkOk = false;
-        String lastTaskInfo = "";
-        for (int i = 0; i < checkTimes; ++i) {
-            DBCursor taskCursor = db.listTasks(null, null, null, null);
-            if (!taskCursor.hasNext()) {
-                checkOk = true;
-                break;
-            } else {
-                checkOk = false;
-                lastTaskInfo = "";
-                while (taskCursor.hasNext()) {
-                    lastTaskInfo += taskCursor.getNext().toString();
-                }
-            }
-        }
-        if (!checkOk) {
-            System.out.println("lastTaskInfo: " + lastTaskInfo);
-            throw new ReliabilityException("waitSplitOver occurs timeout, see details on console.");
-        }
-    }
-
     class Split extends OperateTask {
         @Override
         public void exec() throws Exception {
