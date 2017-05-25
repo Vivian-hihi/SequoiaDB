@@ -101,14 +101,14 @@ namespace engine
    INT32 dpsCSCrt2Record( const CHAR *csName,
                           const INT32 &pageSize,
                           const INT32 &lobPageSize,
-                          const INT8 &type,
+                          const INT32 &type,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CSCrt( const CHAR *logRecord,
                           const CHAR **csName,
                           INT32 &pageSize,
                           INT32 &lobPageSize,
-                          INT8 &type ) ;
+                          INT32 &type ) ;
 
    INT32 dpsCSDel2Record( const CHAR *csName,
                           dpsLogRecord &record ) ;

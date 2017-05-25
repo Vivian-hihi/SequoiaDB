@@ -765,7 +765,7 @@ namespace engine
       BOOLEAN detached = FALSE ;
       dmsExtentID currWorkExt = DMS_INVALID_EXTENT ;
       dmsExtentInfo *workExtInfo = getWorkExtInfo( context->mbID() ) ;
-      SDB_ASSERT( workExtInfo, "impossible" ) ;
+      SDB_ASSERT( workExtInfo, "Work extent info pointer should not be NULL" ) ;
 
       currWorkExt = workExtInfo->getID() ;
 
@@ -825,7 +825,7 @@ namespace engine
       const dmsExtent *extent = NULL ;
       dmsExtentInfo *workExtInfo = getWorkExtInfo( collectionID ) ;
 
-      SDB_ASSERT( workExtInfo, "impossible" ) ;
+      SDB_ASSERT( workExtInfo, "Work extent info pointer should not be NULL" ) ;
 
       if ( DMS_INVALID_EXTENT == extID )
       {
@@ -882,7 +882,7 @@ namespace engine
       dmsExtentID workExtID = DMS_INVALID_EXTENT ;
       dmsExtentInfo *workExtInfo = getWorkExtInfo( collectionID ) ;
 
-      SDB_ASSERT( workExtInfo, "impossible" ) ;
+      SDB_ASSERT( workExtInfo, "Work extent info pointer should not be NULL" ) ;
       workExtID = workExtInfo->getID() ;
 
       if ( DMS_INVALID_EXTENT == workExtID )
@@ -1071,7 +1071,7 @@ namespace engine
       dmsExtentInfo *workExtInfo = getWorkExtInfo( context->mbID() ) ;
       // Check the logical ID of all the extents.
 
-      SDB_ASSERT( workExtInfo, "impossible" ) ;
+      SDB_ASSERT( workExtInfo, "Work extent info pointer should not be NULL" ) ;
 
       if ( !( context->isMBLock( EXCLUSIVE ) ) )
       {

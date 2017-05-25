@@ -1114,7 +1114,7 @@ namespace engine
       dpsLogRecord &record = info.getMergeBlock().record();
       INT32 pageSize = 0 ;
       INT32 lobPageSz = 0 ;
-      INT8 type = 0 ;
+      INT32 type = 0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_ADDCS );
 

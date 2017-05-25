@@ -504,7 +504,7 @@ namespace engine
    INT32 dpsCSCrt2Record( const CHAR *csName,
                           const INT32 &pageSize,
                           const INT32 &lobPageSize,
-                          const INT8 &type,
+                          const INT32 &type,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CSCRT2RECORD ) ;
@@ -557,7 +557,7 @@ namespace engine
                           const CHAR **csName,
                           INT32 &pageSize,
                           INT32 &lobPageSize,
-                          INT8 &type )
+                          INT32 &type )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CSCRT ) ;
       INT32 rc = SDB_OK ;
@@ -613,7 +613,7 @@ namespace engine
       }
       else
       {
-         type = *( ( INT8 *)itrType.value() ) ;
+         type = *( ( INT32 *)itrType.value() ) ;
       }
       }
    done:

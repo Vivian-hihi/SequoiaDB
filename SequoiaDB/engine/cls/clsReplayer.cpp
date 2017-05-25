@@ -421,7 +421,7 @@ namespace engine
             const CHAR *cs = NULL ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
-            INT8 type = 0 ;
+            INT32 type = 0 ;
             rc = dpsRecord2CSCrt( (CHAR *)recordHeader,
                                   &cs, pageSize, lobPageSize, type ) ;
             if ( SDB_OK != rc )
@@ -877,7 +877,7 @@ namespace engine
             const CHAR *cs = NULL ;
             INT32 pageSize = 0 ;
             INT32 lobPageSize = 0 ;
-            INT8 type = 0 ;
+            INT32 type = 0 ;
             rc = dpsRecord2CSCrt( (const CHAR *)recordHeader,
                                   &cs, pageSize, lobPageSize, type ) ;
             if ( SDB_OK != rc )

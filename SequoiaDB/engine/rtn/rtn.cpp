@@ -524,21 +524,11 @@ namespace engine
 
                      if ( !checkOnly )
                      {
-                        DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
-                        rc = utilBuildFullPath( dataPath, pFileName,
-                                                OSS_MAX_PATHSIZE, fullFileName ) ;
-                        PD_RC_CHECK( rc, PDERROR, "Failed to build full path "
-                                     "for file[%s], rc: %d", pFileName, rc ) ;
-                        rc = getSUTypeFromFile( fullFileName, type ) ;
-                        PD_RC_CHECK( rc, PDERROR, "Failed to get storage unit "
-                                     "type from file[%s], rc: %d",
-                                     pFileName, rc ) ;
                         storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                                    sequence,
                                                                    pmdGetBuffPool(),
                                                                    DMS_PAGE_SIZE_DFT,
-                                                                   DMS_DEFAULT_LOB_PAGE_SZ,
-                                                                   type ) ;
+                                                                   DMS_DEFAULT_LOB_PAGE_SZ ) ;
                         if ( !storageUnit )
                         {
                            PD_LOG_MSG ( PDERROR, "Failed to allocate "
@@ -688,21 +678,11 @@ namespace engine
                                                          DMS_SU_FILENAME_SZ,
                                                          sequence ) )
                   {
-                     DMS_STORAGE_TYPE type = DMS_STORAGE_NORMAL ;
-                     PD_LOG ( PDDEBUG, "Candidate Filename: %s", pFileName ) ;
-                     rc = utilBuildFullPath( dataPath, pFileName,
-                                             OSS_MAX_PATHSIZE, fullFileName ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Failed to build full path for "
-                                  "file[%s], rc: %d", pFileName, rc ) ;
-                     rc = getSUTypeFromFile( fullFileName, type ) ;
-                     PD_RC_CHECK( rc, PDERROR, "Failed to get storage unit type"
-                                  " from file[%s], rc: %d", pFileName, rc ) ;
                      storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                                 sequence,
                                                                 pmdGetBuffPool(),
                                                                 DMS_PAGE_SIZE_DFT,
-                                                                DMS_DEFAULT_LOB_PAGE_SZ,
-                                                                type ) ;
+                                                                DMS_DEFAULT_LOB_PAGE_SZ ) ;
                      PD_CHECK ( storageUnit, SDB_OOM, error, PDERROR,
                                 "Failed to allocate dmsStorageUnit for %s",
                                 dir_iter->path().string().c_str() ) ;

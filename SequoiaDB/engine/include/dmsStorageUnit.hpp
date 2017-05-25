@@ -413,6 +413,11 @@ namespace engine
 
          utilSUCache *getSUCache ( UINT32 type ) ;
 
+      private:
+         INT32 _createStorageObjs() ;
+         INT32 _getTypeFromFile( const CHAR *dataPath,
+                                 DMS_STORAGE_TYPE &type ) ;
+
       private :
          rtnAccessPlanManager                _apm ;
          dmsStorageDataCommon                *_pDataSu ;
@@ -451,9 +456,6 @@ namespace engine
          _pDataSu->_CSID = CSID ;
       }
    }
-
-   INT32 getSUTypeFromFile( const CHAR *fileName, DMS_STORAGE_TYPE &type ) ;
-
 }
 
 #endif //DMSSTORAGEUNIT_HPP_

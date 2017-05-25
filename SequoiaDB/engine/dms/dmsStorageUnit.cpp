@@ -874,9 +874,6 @@ namespace engine
          lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       }
 
-      CHAR dataFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
-      CHAR idxFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
-
       _storageInfo._pageSize = pageSize ;
       _storageInfo._lobdPageSize = lobPageSize ;
       ossStrncpy( _storageInfo._suName, pSUName, DMS_SU_NAME_SZ ) ;
@@ -893,40 +890,6 @@ namespace engine
       _storageInfo._secretValue = ossPack32To64( (UINT32)time(NULL),
                                                  (UINT32)(ossRand()*239641) ) ;
       _storageInfo._type = type ;
-
-      ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
-                   _storageInfo._suName, sequence, DMS_DATA_SU_EXT_NAME ) ;
-      ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
-                   _storageInfo._suName, sequence, DMS_INDEX_SU_EXT_NAME ) ;
-
-      _pDataSu = getDMSStorageDataFactory()->createProduct( type, dataFileName,
-                                                            &_storageInfo,
-                                                            &_eventHolder ) ;
-      if ( _pDataSu  )
-      {
-         _pIndexSu = SDB_OSS_NEW dmsStorageIndex( idxFileName, &_storageInfo,
-                                                  _pDataSu ) ;
-      }
-
-      /// alloc cache unit
-      _pCacheUnit = SDB_OSS_NEW utilCacheUnit() ;
-
-      if ( NULL != _pDataSu && NULL != _pIndexSu && NULL != _pCacheUnit )
-      {
-         /// reuse buf for lob
-         ossMemset( dataFileName, 0, sizeof( dataFileName ) ) ;
-         ossMemset( idxFileName, 0 , sizeof( idxFileName ) ) ;
-         ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
-                      _storageInfo._suName, _storageInfo._sequence,
-                      DMS_LOB_META_SU_EXT_NAME ) ;
-         ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
-                      _storageInfo._suName, _storageInfo._sequence,
-                      DMS_LOB_DATA_SU_EXT_NAME ) ;
-
-         _pLobSu = SDB_OSS_NEW dmsStorageLob( dataFileName, idxFileName,
-                                              &_storageInfo, _pDataSu,
-                                              _pCacheUnit ) ;
-      }
 
       // Create caches
       _cacheHolder.createSUCache( DMS_CACHE_TYPE_STAT ) ;
@@ -978,12 +941,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_OPEN ) ;
-      if ( !_pDataSu || !_pIndexSu || !_pLobSu || !_pCacheUnit )
+
+      // If openning existing storage unit, get the type from the header.
+      if ( !createNew )
       {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Alloc memory failed" ) ;
-         goto error ;
+         rc = _getTypeFromFile( pDataPath, _storageInfo._type ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get type for storage unit[ %s ] from "
+                      "file failed[ %d ]", _storageInfo._suName, rc ) ;
       }
+
+      rc = _createStorageObjs() ;
+      PD_RC_CHECK( rc, PDERROR, "Create storage objects for storage unit[ %s ] "
+                   "failed[ %d ]", _storageInfo._suName, rc ) ;
 
       rc = _pCacheUnit->init( _pMgr, _pLobSu->getLobData(),
                               _storageInfo._lobdPageSize ) ;
@@ -2661,37 +2630,145 @@ namespace engine
       return _cacheHolder.getSUCache( type ) ;
    }
 
-   INT32 getSUTypeFromFile( const CHAR *fileName, DMS_STORAGE_TYPE &type )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__CREATESTORAGEOBJS, "_dmsStorageUnit::_createStorageObjs" )
+   INT32 _dmsStorageUnit::_createStorageObjs()
    {
       INT32 rc = SDB_OK ;
-      OSSFILE file ;
-      INT64 fileSize = 0 ;
-      INT64 readSize = 0 ;
-      CHAR eyeCatcher[DMS_HEADER_EYECATCHER_LEN + 1 ] = { 0 } ;
+      PD_TRACE_ENTRY( SDB__DMSSU__CREATESTORAGEOBJS ) ;
+      CHAR dataFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
+      CHAR idxFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
 
-      if ( !fileName )
+      ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   _storageInfo._suName, _storageInfo._sequence,
+                   DMS_DATA_SU_EXT_NAME ) ;
+      ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   _storageInfo._suName, _storageInfo._sequence,
+                   DMS_INDEX_SU_EXT_NAME ) ;
+
+      _pDataSu = getDMSStorageDataFactory()->createProduct( _storageInfo._type,
+                                                            dataFileName,
+                                                            &_storageInfo,
+                                                            &_eventHolder ) ;
+      if ( !_pDataSu )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "File name is not given, rc: %d", rc ) ;
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Create storage data structure of type[ %d ] with "
+                 "data file[ %s ] failed[ %d ]",
+                 _storageInfo._type, dataFileName, rc ) ;
          goto error ;
       }
 
-      rc = ossOpen( fileName, OSS_READONLY, OSS_DEFAULTFILE, file ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to open file[%s], rc: %d",
-                   fileName, rc ) ;
+      _pIndexSu = SDB_OSS_NEW dmsStorageIndex( idxFileName, &_storageInfo,
+                                               _pDataSu ) ;
+      if ( !_pIndexSu )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Create index structure with "
+                 "index file[ %s ] failed[ %d ]",
+                 idxFileName, rc ) ;
+         goto error ;
+      }
+
+      /// alloc cache unit
+      _pCacheUnit = SDB_OSS_NEW utilCacheUnit() ;
+      if ( !_pCacheUnit )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Create cache unit failed[ %d ]", rc ) ;
+         goto error ;
+      }
+
+      /// reuse buf for lob
+      ossMemset( dataFileName, 0, sizeof( dataFileName ) ) ;
+      ossMemset( idxFileName, 0 , sizeof( idxFileName ) ) ;
+      ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   _storageInfo._suName, _storageInfo._sequence,
+                   DMS_LOB_META_SU_EXT_NAME ) ;
+      ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   _storageInfo._suName, _storageInfo._sequence,
+                   DMS_LOB_DATA_SU_EXT_NAME ) ;
+
+      _pLobSu = SDB_OSS_NEW dmsStorageLob( dataFileName, idxFileName,
+                                           &_storageInfo, _pDataSu,
+                                           _pCacheUnit ) ;
+      if ( !_pLobSu )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Create lob structure with file[ %s, %s ] "
+                 "failed[ %d ]", dataFileName, idxFileName, rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSU__CREATESTORAGEOBJS, rc ) ;
+      return rc ;
+   error:
+      if ( _pDataSu )
+      {
+         SDB_OSS_DEL _pDataSu ;
+         _pDataSu = NULL ;
+      }
+      if ( _pIndexSu )
+      {
+         SDB_OSS_DEL _pIndexSu ;
+         _pIndexSu = NULL ;
+      }
+      if ( _pCacheUnit )
+      {
+         SDB_OSS_DEL _pCacheUnit ;
+         _pCacheUnit = NULL ;
+      }
+      if ( _pLobSu )
+      {
+         SDB_OSS_DEL _pLobSu ;
+         _pLobSu = NULL ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__GETTYPEFROMFILE, "_dmsStorageUnit::_getTypeFromFile" )
+   INT32 _dmsStorageUnit::_getTypeFromFile( const CHAR *dataPath,
+                                            DMS_STORAGE_TYPE &type )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSU__GETTYPEFROMFILE ) ;
+      OSSFILE file ;
+      INT64 fileSize = 0 ;
+      INT64 readSize = 0 ;
+      CHAR fileName[ DMS_SU_FILENAME_SZ + 1 ] = { 0 } ;
+      CHAR fullFilePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR eyeCatcher[DMS_HEADER_EYECATCHER_LEN + 1 ] = { 0 } ;
+
+      SDB_ASSERT( dataPath, "Data path should not be NULL" ) ;
+
+      ossSnprintf( fileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                   _storageInfo._suName, _storageInfo._sequence,
+                   DMS_DATA_SU_EXT_NAME ) ;
+
+      rc = utilBuildFullPath( dataPath, fileName,
+                              OSS_MAX_PATHSIZE, fullFilePath ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build full path for path[ %s ] and file[ %s ] "
+                   "failed[ %d ]", dataPath, _storageInfo._suName, rc ) ;
+
+      rc = ossOpen( fullFilePath, OSS_READONLY, OSS_DEFAULTFILE, file ) ;
+      PD_RC_CHECK( rc, PDERROR, "Open file[ %s ] failed[ %d ]",
+                   fullFilePath, rc ) ;
       rc = ossGetFileSize( &file, &fileSize ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get file size, rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get file[ %s ] size failed[ %d ]",
+                   fullFilePath, rc ) ;
       // Only read the eyecathcer
       if ( fileSize < DMS_HEADER_EYECATCHER_LEN )
       {
          rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Invalid file size[%lld], rc: %d", fileSize, rc ) ;
+         PD_LOG( PDERROR, "File size[ %lld ] is too small. Maybe the file is "
+                 "corrupted", fileSize ) ;
          goto error ;
       }
 
       rc = ossReadN( &file, DMS_HEADER_EYECATCHER_LEN, eyeCatcher, readSize ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to read data from file[%s], rc: %d",
-                   fileName, rc ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                   "Read eyecatcher data from file[ %s ] failed[ %d ]",
+                   fullFilePath, rc ) ;
 
       if ( 0 == ossStrcmp( DMS_DATASU_EYECATCHER, eyeCatcher ) )
       {
@@ -2704,18 +2781,18 @@ namespace engine
       else
       {
          rc = SDB_SYS ;
-         PD_RC_CHECK( rc, PDERROR, "Invalid eye catcher[%s] in file, rc: %d",
-                      eyeCatcher, rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Eye catcher[ %s ] in file is invalid",
+                      eyeCatcher ) ;
       }
    done:
       if ( file.isOpened() )
       {
          ossClose( file ) ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSU__GETTYPEFROMFILE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
-
 }  // namespace engine
 

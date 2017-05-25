@@ -14,10 +14,11 @@ namespace engine
       switch ( type )
       {
       case DMS_STORAGE_NORMAL:
-         data = new dmsStorageData( suFileName, info, pEventHolder ) ;
+         data = SDB_OSS_NEW dmsStorageData( suFileName, info, pEventHolder ) ;
          break ;
       case DMS_STORAGE_CAPPED:
-         data = new dmsStorageDataCapped( suFileName, info, pEventHolder ) ;
+         data = SDB_OSS_NEW dmsStorageDataCapped( suFileName, info,
+                                                  pEventHolder ) ;
          break ;
       default:
          data = NULL ;
