@@ -59,6 +59,7 @@
 #include "rtnQueryModifier.hpp"
 #include "rtnFetchBase.hpp"
 #include "utilMap.hpp"
+#include <string>
 
 using namespace bson ;
 
@@ -248,7 +249,7 @@ namespace engine
          void     waitForPrefetch() ;
 
       public:
-
+         virtual std::string      name() const = 0 ;
          virtual RTN_CONTEXT_TYPE getType () const = 0 ;
          virtual _dmsStorageUnit* getSU () = 0 ;
          virtual _optAccessPlan*  getPlan () { return NULL ; }
@@ -337,11 +338,68 @@ namespace engine
       return _resultBufferSize - ossAlign4((UINT32)_bufferEndOffset) ;
    }
 
+   typedef _rtnContextBase* (*RTN_CTX_NEW_FUNC)( INT64 contextId, EDUID eduId ) ;
+
+   class _rtnContextAssit: public SDBObject
+   {
+   public:
+      _rtnContextAssit( RTN_CONTEXT_TYPE type,
+                             std::string name,
+                             RTN_CTX_NEW_FUNC func ) ;
+      ~_rtnContextAssit() ;
+   } ;
+
+#define DECLARE_RTN_CTX_AUTO_REGISTER() \
+   public: \
+      static _rtnContextBase *newThis ( INT64 contextId, EDUID eduId ) ;
+
+#define RTN_CTX_AUTO_REGISTER(theClass, type, name ) \
+   _rtnContextBase *theClass::newThis ( INT64 contextId, EDUID eduId ) \
+   { \
+      return SDB_OSS_NEW theClass( contextId, eduId ) ;\
+   } \
+   _rtnContextAssit theClass##Assit ( type, std::string( name ), theClass::newThis ) ;
+
+   struct _rtnContextInfo: public SDBObject
+   {
+      RTN_CONTEXT_TYPE  type ;
+      std::string       name ;
+      RTN_CTX_NEW_FUNC  newFunc ;
+   } ;
+
+   class _rtnContextBuilder: public SDBObject
+   {
+      friend class _rtnContextAssit ;
+
+   public:
+      _rtnContextBuilder() ;
+      ~_rtnContextBuilder() ;
+
+      _rtnContextBase* create ( RTN_CONTEXT_TYPE type, INT64 contextId, EDUID eduId ) ;
+      void             release ( _rtnContextBase* context ) ;
+
+   private:
+      INT32 _register( RTN_CONTEXT_TYPE type,
+                        std::string name,
+                        RTN_CTX_NEW_FUNC func ) ;
+      _rtnContextInfo* _find( RTN_CONTEXT_TYPE type ) ;
+      INT32 _insert( _rtnContextInfo* contextInfo ) ;
+      void _releaseContextInfos() ;
+
+   private:
+      std::map<RTN_CONTEXT_TYPE, _rtnContextInfo*> _contextInfoMap ;
+      typedef std::pair<RTN_CONTEXT_TYPE, _rtnContextInfo*> pair_type ;
+      typedef std::map<RTN_CONTEXT_TYPE, _rtnContextInfo*>::const_iterator ctx_info_iterator ;
+   } ;
+
+   _rtnContextBuilder* sdbGetRTNContextBuilder() ;
+
    /*
       _rtnContextData define
    */
    class _rtnContextData : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextData ( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextData () ;
@@ -367,6 +425,7 @@ namespace engine
          void setQueryModifier ( rtnQueryModifier* modifier ) ;
 
       public:
+         virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return _su ; }
          virtual _optAccessPlan*  getPlan () { return _plan ; }
@@ -463,6 +522,7 @@ namespace engine
    */
    class _rtnContextParaData : public _rtnContextData
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextParaData( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextParaData () ;
@@ -475,6 +535,7 @@ namespace engine
                              INT32 direction = 1 ) ;
 
       public:
+         virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
 
       protected:
@@ -512,11 +573,13 @@ namespace engine
    */
    class _rtnContextTemp : public _rtnContextData
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextTemp ( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextTemp ();
 
       public:
+         virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
 
    } ;
@@ -527,12 +590,13 @@ namespace engine
    */
    class _rtnContextQGM : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextQGM ( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextQGM () ;
 
       public:
-
+         virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return NULL ; }
 
@@ -556,6 +620,7 @@ namespace engine
    */
    class _rtnContextDump : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextDump ( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextDump () ;
@@ -572,7 +637,7 @@ namespace engine
          INT64 getNumToReturn() const { return _numToReturn ; }
 
       public:
-
+         virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return NULL ; }
 
@@ -601,11 +666,13 @@ namespace engine
 
    class _rtnContextSP : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextSP( INT64 contextID, UINT64 eduID ) ;
       virtual ~_rtnContextSP() ;
 
    public:
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const ;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       INT32 open( _spdSession *sp ) ;
@@ -684,10 +751,11 @@ namespace engine
    class _rtnContextMainCL : public _rtnContextBase
    {
    typedef _utilMap< SINT64, _rtnSubCLBuf, 20 >    SubCLBufList ;
-
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextMainCL( SINT64 contextID, UINT64 eduID ) ;
       ~_rtnContextMainCL();
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 
@@ -742,11 +810,13 @@ namespace engine
 
    class _rtnContextQgmSort : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextQgmSort( INT64 contextID, UINT64 eduID ) ;
       virtual ~_rtnContextQgmSort() ;
 
    public:
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const ;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 
@@ -776,9 +846,11 @@ namespace engine
          DELCSPHASE_0 = 0,
          DELCSPHASE_1
       };
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextDelCS( SINT64 contextID, UINT64 eduID ) ;
       ~_rtnContextDelCS();
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }
@@ -818,9 +890,11 @@ namespace engine
    */
    class _rtnContextDelCL : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextDelCL( SINT64 contextID, UINT64 eduID );
       ~_rtnContextDelCL();
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
       virtual BOOLEAN          isWrite() const { return TRUE ; }
@@ -865,10 +939,11 @@ namespace engine
    class _rtnContextDelMainCL : public _rtnContextBase
    {
    typedef _utilMap< std::string, SINT64, 20 >  SUBCL_CONTEXT_LIST ;
-
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextDelMainCL( SINT64 contextID, UINT64 eduID );
       ~_rtnContextDelMainCL();
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 
@@ -901,11 +976,13 @@ namespace engine
 
    class _rtnContextExplain : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextExplain( INT64 contextID, UINT64 eduID ) ;
       virtual ~_rtnContextExplain() ;
 
    public:
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_EXPLAIN ; }
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 

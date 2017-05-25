@@ -46,11 +46,13 @@ namespace engine
 {
    class _rtnContextSort : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextSort( INT64 contextID, UINT64 eduID ) ;
       virtual ~_rtnContextSort() ;
 
    public:
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType() const ;
       virtual _dmsStorageUnit*  getSU () { return NULL ; }
       virtual _optAccessPlan *getPlan() { return _planForExplain ; }

@@ -569,7 +569,7 @@ namespace engine
    INT32 _rtnContextBase::_prepareMoreData( _pmdEDUCB *cb )
    {
       const INT32 PREPARE_DATA_SIZE_LIMIT = 1024 * 1024 ; // 1MB
-      const INT32 PREPARE_TIMEOUT = 10000 ; // 10ms
+      const UINT32 PREPARE_TIMEOUT = 10000 ; // 10ms
 
       INT32 rc = SDB_OK ;
       UINT64 beginTime ;
@@ -787,9 +787,159 @@ namespace engine
       return _bufferNumRecords ;
    }
 
+   _rtnContextAssit::_rtnContextAssit( RTN_CONTEXT_TYPE type,
+                                            std::string name,
+                                            RTN_CTX_NEW_FUNC func )
+   {
+      SDB_ASSERT( NULL != func, "func is null" ) ;
+      SDB_ASSERT( !name.empty(), "name is empty" ) ;
+
+      sdbGetRTNContextBuilder()->_register( type, name, func ) ;
+   }
+
+   _rtnContextAssit::~_rtnContextAssit()
+   {
+   }
+
+   _rtnContextBuilder::_rtnContextBuilder()
+   {
+   }
+
+   _rtnContextBuilder::~_rtnContextBuilder()
+   {
+      _releaseContextInfos() ;
+   }
+
+   _rtnContextBase* _rtnContextBuilder::create ( RTN_CONTEXT_TYPE type,
+                                                   INT64 contextId,
+                                                   EDUID eduId )
+   {
+      _rtnContextInfo* info = _find( type ) ;
+
+      if ( NULL != info )
+      {
+         SDB_ASSERT( type == info->type, "invalid context info" ) ;
+         SDB_ASSERT( NULL != info->newFunc, "null pointer of newFunc" ) ;
+
+         _rtnContextBase* ctx = (*(info->newFunc))( contextId, eduId ) ;
+         SDB_ASSERT( ctx->name() == info->name, "name is wrong" ) ;
+         SDB_ASSERT( ctx->getType() == info->type, "type is wrong" ) ;
+         return ctx ;
+      }
+      else
+      {
+         SDB_ASSERT( FALSE, "unknown RTN_CONTEXT_TYPE" ) ;
+         return NULL ;
+      }
+   }
+
+   void _rtnContextBuilder::release ( _rtnContextBase* context )
+   {
+      if ( NULL != context)
+      {
+         SDB_OSS_DEL context ;
+      }
+   }
+
+   INT32 _rtnContextBuilder::_register( RTN_CONTEXT_TYPE type,
+                                       std::string name,
+                                       RTN_CTX_NEW_FUNC func )
+   {
+      INT32 rc = SDB_OK ;
+      _rtnContextInfo* info = NULL ;
+
+      info = _find( type ) ;
+      if ( NULL != info )
+      {
+         PD_LOG( PDERROR, "RTN context info is registered: type=%d, name=%s",
+                 info->type, info->name.c_str() ) ;
+         SDB_ASSERT( FALSE, "RTN context info is registered" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      info = SDB_OSS_NEW _rtnContextInfo() ;
+      if ( NULL == info )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      info->type = type ;
+      info->name = name ;
+      info->newFunc = func ;
+
+      rc = _insert( info ) ;
+      if ( SDB_OK != rc )
+      {
+         SDB_OSS_DEL info ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   _rtnContextInfo* _rtnContextBuilder::_find( RTN_CONTEXT_TYPE type )
+   {
+      ctx_info_iterator it = _contextInfoMap.find( type ) ;
+      if ( it != _contextInfoMap.end() )
+      {
+         return (*it).second ;
+      }
+      else
+      {
+         return NULL ;
+      }
+   }
+
+   INT32 _rtnContextBuilder::_insert( _rtnContextInfo* contextInfo )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != contextInfo, "contextInfo is null") ;
+
+      try
+      {
+         _contextInfoMap.insert( pair_type( contextInfo->type, contextInfo ) ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG(PDERROR, "unexpected error happened: %s", e.what());
+         rc = SDB_SYS ;
+      }
+
+      return rc ;
+   }
+
+   void _rtnContextBuilder::_releaseContextInfos()
+   {
+      for ( ctx_info_iterator it = _contextInfoMap.begin() ;
+            it != _contextInfoMap.end() ;
+            it++ )
+      {
+         _rtnContextInfo* info = (*it).second ;
+         SDB_ASSERT( NULL != info, "info is null" ) ;
+         SDB_OSS_DEL info ;
+      }
+
+      _contextInfoMap.clear() ;
+   }
+
+   _rtnContextBuilder* sdbGetRTNContextBuilder()
+   {
+      static _rtnContextBuilder ctxBuilder ;
+      return &ctxBuilder ;
+   }
+
    /*
       _rtnContextData implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextData, RTN_CONTEXT_DATA, "DATA")
+
    _rtnContextData::_rtnContextData( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
@@ -839,6 +989,11 @@ namespace engine
          _queryModifier = NULL ;
          _dmsCB->writeDown( pmdGetThreadEDUCB() ) ;
       }
+   }
+
+   std::string _rtnContextData::name() const
+   {
+      return "DATA" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextData::getType() const
@@ -1914,6 +2069,9 @@ namespace engine
    /*
       _rtnContextParaData implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextParaData, RTN_CONTEXT_PARADATA, "PARADATA")
+
    _rtnContextParaData::_rtnContextParaData( INT64 contextID, UINT64 eduID )
    :_rtnContextData( contextID, eduID )
    {
@@ -1938,6 +2096,11 @@ namespace engine
          ++it ;
       }
       _vecContext.clear () ;
+   }
+
+   std::string _rtnContextParaData::name() const
+   {
+      return "PARADATA" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextParaData::getType () const
@@ -2334,6 +2497,9 @@ namespace engine
    /*
       _rtnContextTemp implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextTemp, RTN_CONTEXT_TEMP, "TEMP")
+
    _rtnContextTemp::_rtnContextTemp( INT64 contextID, UINT64 eduID )
    :_rtnContextData( contextID, eduID )
    {
@@ -2348,6 +2514,11 @@ namespace engine
       }
    }
 
+   std::string _rtnContextTemp::name() const
+   {
+      return "TEMP" ;
+   }
+
    RTN_CONTEXT_TYPE _rtnContextTemp::getType () const
    {
       return RTN_CONTEXT_TEMP ;
@@ -2356,6 +2527,9 @@ namespace engine
    /*
       _rtnContextQGM implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextQGM, RTN_CONTEXT_QGM, "QGM")
+
    _rtnContextQGM::_rtnContextQGM( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
@@ -2369,6 +2543,11 @@ namespace engine
          SAFE_OSS_DELETE( _accPlan ) ;
          _accPlan = NULL ;
       }
+   }
+
+   std::string _rtnContextQGM::name() const
+   {
+      return "QGM" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextQGM::getType () const
@@ -2470,6 +2649,9 @@ namespace engine
    /*
       _rtnContextDump implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextDump, RTN_CONTEXT_DUMP, "DUMP")
+
    _rtnContextDump::_rtnContextDump( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
@@ -2498,6 +2680,11 @@ namespace engine
       }
       _pFetch = pFetch ;
       _ownnedFetch = ownned ;
+   }
+
+   std::string _rtnContextDump::name() const
+   {
+      return "DUMP" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextDump::getType () const
@@ -2735,6 +2922,9 @@ namespace engine
    /*
       _rtnContextSP define
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextSP, RTN_CONTEXT_SP, "SP")
+
    _rtnContextSP::_rtnContextSP( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _sp(NULL)
@@ -2745,6 +2935,11 @@ namespace engine
    _rtnContextSP::~_rtnContextSP()
    {
       SAFE_OSS_DELETE( _sp ) ;
+   }
+
+   std::string _rtnContextSP::name() const
+   {
+      return "SP" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextSP::getType() const
@@ -3022,6 +3217,8 @@ namespace engine
       _remainNum = buffer.recordNum();
    }
 
+   RTN_CTX_AUTO_REGISTER(_rtnContextMainCL, RTN_CONTEXT_MAINCL, "MAINCL")
+
    _rtnContextMainCL::_rtnContextMainCL( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _includeShardingOrder( FALSE ),
@@ -3044,6 +3241,11 @@ namespace engine
       }
       _subCLBufList.clear();
       SAFE_OSS_DELETE( _keyGen );
+   }
+
+   std::string _rtnContextMainCL::name() const
+   {
+      return "MAINCL" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextMainCL::getType () const
@@ -3614,6 +3816,8 @@ namespace engine
       goto done;
    }
 
+   RTN_CTX_AUTO_REGISTER(_rtnContextSort, RTN_CONTEXT_SORT, "SORT")
+
    _rtnContextSort::_rtnContextSort( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _dataContext( NULL ),
@@ -3640,6 +3844,11 @@ namespace engine
       }
 
       _eduCB = NULL ;
+   }
+
+   std::string _rtnContextSort::name() const
+   {
+      return "SORT" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextSort::getType() const
@@ -3930,6 +4139,8 @@ namespace engine
       }
    }
 
+   RTN_CTX_AUTO_REGISTER(_rtnContextQgmSort, RTN_CONTEXT_QGMSORT, "QGMSORT")
+
    _rtnContextQgmSort::_rtnContextQgmSort( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _qp(NULL)
@@ -3941,6 +4152,11 @@ namespace engine
    {
      /// qgmPlan should be released by plan tree.
       _qp = NULL ;
+   }
+
+   std::string _rtnContextQgmSort::name() const
+   {
+      return "QGMSORT" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextQgmSort::getType () const
@@ -4023,6 +4239,8 @@ namespace engine
       goto done ;
    }
 
+   RTN_CTX_AUTO_REGISTER(_rtnContextDelCS, RTN_CONTEXT_DELCS, "DELCS")
+
    _rtnContextDelCS::_rtnContextDelCS( SINT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
@@ -4054,6 +4272,11 @@ namespace engine
          _status = DELCSPHASE_0;
       }
       _clean( cb );
+   }
+
+   std::string _rtnContextDelCS::name() const
+   {
+      return "DELCS" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextDelCS::getType () const
@@ -4262,6 +4485,8 @@ namespace engine
       }
    }
 
+   RTN_CTX_AUTO_REGISTER(_rtnContextDelCL, RTN_CONTEXT_DELCL, "DELCL")
+
    _rtnContextDelCL::_rtnContextDelCL( SINT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
@@ -4331,6 +4556,11 @@ namespace engine
          _hasLock = FALSE ;
       }
       return SDB_OK ;
+   }
+
+   std::string _rtnContextDelCL::name() const
+   {
+      return "DELCL" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextDelCL::getType () const
@@ -4481,6 +4711,8 @@ namespace engine
       _isOpened = FALSE ;
    }
 
+   RTN_CTX_AUTO_REGISTER(_rtnContextDelMainCL, RTN_CONTEXT_DELMAINCL, "DELMAINCL")
+
    _rtnContextDelMainCL::_rtnContextDelMainCL( SINT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
@@ -4508,6 +4740,11 @@ namespace engine
          }
          iter = _subContextList.erase( iter );
       }
+   }
+
+   std::string _rtnContextDelMainCL::name() const
+   {
+      return "DELMAINCL" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextDelMainCL::getType () const
@@ -4637,6 +4874,8 @@ namespace engine
          << ",Version:" << _version ;
    }
 
+   RTN_CTX_AUTO_REGISTER(_rtnContextExplain, RTN_CONTEXT_EXPLAIN, "EXPLAIN")
+
    _rtnContextExplain::_rtnContextExplain( INT64 contextID,
                                            UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
@@ -4662,6 +4901,11 @@ namespace engine
          _queryContextID = -1 ;
          _cbOfQuery = NULL ;
       }
+   }
+
+   std::string _rtnContextExplain::name() const
+   {
+      return "EXPLAIN" ;
    }
 
    INT32 _rtnContextExplain::open( const rtnQueryOptions &options,

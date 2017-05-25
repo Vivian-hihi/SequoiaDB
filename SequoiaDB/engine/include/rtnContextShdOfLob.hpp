@@ -44,11 +44,13 @@ namespace engine
 
    class _rtnContextShdOfLob : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextShdOfLob( INT64 contextID, UINT64 eduID ) ;
       virtual ~_rtnContextShdOfLob() ;
 
    public:
+      virtual std::string      name() const { return "SHARD_OF_LOB" ; };
       virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_SHARD_OF_LOB ; }
       virtual _dmsStorageUnit*  getSU () ;
 

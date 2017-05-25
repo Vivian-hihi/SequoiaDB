@@ -44,6 +44,9 @@ namespace engine
    /*
       _rtnContextLob implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextLob, RTN_CONTEXT_LOB, "LOB")
+
    _rtnContextLob::_rtnContextLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _stream( NULL ),
@@ -281,9 +284,17 @@ namespace engine
       }
    }
 
+   std::string _rtnContextLob::name() const
+   {
+      return "LOB" ;
+   }
+
    /*
       _rtnContextLobFetcher implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextLobFetcher, RTN_CONTEXT_LOB_FETCHER, "LOB_FETCHER")
+
    _rtnContextLobFetcher::_rtnContextLobFetcher( INT64 contextID,
                                                  UINT64 eduID )
    :rtnContextBase( contextID, eduID )
@@ -322,6 +333,11 @@ namespace engine
    rtnLobFetcher* _rtnContextLobFetcher::getLobFetcher()
    {
       return _pFetcher ;
+   }
+
+   std::string _rtnContextLobFetcher::name() const
+   {
+      return "LOB_FETCHER" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextLobFetcher::getType () const

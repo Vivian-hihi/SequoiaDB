@@ -42,6 +42,8 @@ using namespace bson ;
 
 namespace engine
 {
+   RTN_CTX_AUTO_REGISTER(_rtnContextShdOfLob, RTN_CONTEXT_SHARD_OF_LOB, "SHARD_OF_LOB")
+
    _rtnContextShdOfLob::_rtnContextShdOfLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _mode( SDB_LOB_MODE_R ),

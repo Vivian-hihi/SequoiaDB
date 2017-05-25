@@ -48,11 +48,13 @@ namespace engine
    */
    class _rtnContextLob : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _rtnContextLob( INT64 contextID, UINT64 eduID ) ;
       virtual ~_rtnContextLob() ;
 
    public:
+      virtual std::string      name() const ;
       virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_LOB ; }
       virtual _dmsStorageUnit*  getSU () ;
 
@@ -99,6 +101,7 @@ namespace engine
    */
    class _rtnContextLobFetcher : public rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextLobFetcher( INT64 contextID, UINT64 eduID ) ;
          virtual ~_rtnContextLobFetcher() ;
@@ -117,6 +120,7 @@ namespace engine
          _rtnLobFetcher*   getLobFetcher() ;
 
       public:
+         virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () ;
 

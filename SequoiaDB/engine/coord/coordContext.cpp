@@ -54,6 +54,9 @@ namespace engine
    /*
       _rtnContextCoord implement
    */
+
+   RTN_CTX_AUTO_REGISTER(_rtnContextCoord, RTN_CONTEXT_COORD, "COORD")
+
    _rtnContextCoord::_rtnContextCoord( INT64 contextID, UINT64 eduID,
                                        BOOLEAN preRead )
    :_rtnContextBase( contextID, eduID )
@@ -202,6 +205,11 @@ namespace engine
          ++it ;
       }
       _prepareContextMap.clear() ;
+   }
+
+   std::string _rtnContextCoord::name() const
+   {
+      return "COORD" ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextCoord::getType () const

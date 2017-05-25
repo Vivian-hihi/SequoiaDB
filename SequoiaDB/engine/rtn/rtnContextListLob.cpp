@@ -39,6 +39,8 @@ using namespace bson ;
 
 namespace engine
 {
+   RTN_CTX_AUTO_REGISTER(_rtnContextListLob, RTN_CONTEXT_LIST_LOB, "LIST_LOB")
+
    _rtnContextListLob::_rtnContextListLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _buf( NULL ),

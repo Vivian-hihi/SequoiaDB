@@ -104,6 +104,7 @@ namespace engine
    */
    class _rtnContextCoord : public _rtnContextBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
          _rtnContextCoord ( INT64 contextID, UINT64 eduID,
                            BOOLEAN preRead = TRUE ) ;
@@ -135,7 +136,7 @@ namespace engine
          virtual UINT32   getCachedRecordNum() ;
 
       public:
-
+         virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return NULL ; }
 
