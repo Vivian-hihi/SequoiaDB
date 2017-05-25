@@ -20,7 +20,7 @@ Display help information in global scope.
 
 * help(\<method\>) - display the detail of a method in global scope.
 
-We can display the help information of a class or an object:
+Display the help information of a class or an object:
 
 * \<class\>.help() - display all the methods in specified class or object.
 
