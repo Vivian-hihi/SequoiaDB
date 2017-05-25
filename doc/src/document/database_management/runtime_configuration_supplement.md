@@ -1,0 +1,33 @@
+##参数配置##
+SequoiaDB支持命令行方式及配置文件方式进行参数配置。
+
+###命令行方式配置###
+
+在启动sequoiadb时传入配置参数值：
+
+```lang-javascript
+$ ./sequoiadb --businessname yyy --catalogaddr ubuntu-wjm:30003,ubuntu-wjm:30013,ubuntu-wjm:30023 --clustername xxx --dbpath /home/users/wjm/sequoiadb/trunk/50000 --diaglevel 3 --role coord --svcname 50000
+```
+
+###配置文件方式配置###
+
+在启动sequoiadb时传入配置文件路径：
+
+```lang-javascript
+$ ./sequoiadb -c ../conf/local/50000/
+```
+
+配置文件内容如下：
+
+```
+businessname=yyy
+catalogaddr=ubuntu-wjm:30003,ubuntu-wjm:30013,ubuntu-wjm:30023
+clustername=xxx
+dbpath=/home/users/wjm/sequoiadb/trunk/50000
+diaglevel=3
+role=coord
+svcname=50000
+```
+
+>**Note:**  
+>1. 当两种方式并存时，命令行参数将会覆盖配置文件中的相同的配置项。 

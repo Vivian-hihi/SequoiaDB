@@ -11,6 +11,9 @@
 #define OPTXMLSRCFILE          "optlist.xml"
 #define OPTOTHERINFOFORWEBFILE "optOtherInfoForWeb.xml"
 
+// md source file
+#define OPT_SUPPLEMENTFILE "../../doc/src/document/database_management/runtime_configuration_supplement.md"
+
 // output file path
 #define OPT_MDPATH "../../doc/src/document/database_management/runtime_configuration.md"
 
@@ -53,6 +56,7 @@ class OptGenForWeb
     void loadOtherInfoFromXML () ;
     void loadFromXML () ;
     std::string genOptions () ;
+	std::string genSupplement() ;
     void gendoc () ;
 
 public:
