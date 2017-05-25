@@ -153,10 +153,16 @@ namespace engine
     */
    class _catCtxDropCS : public _catCtxCLMultiTask
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxDropCS ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxDropCS () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_DROP_CS" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -196,10 +202,16 @@ namespace engine
     */
    class _catCtxCreateCL : public _catCtxDataBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxCreateCL ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxCreateCL () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_CREATE_CL" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -238,10 +250,16 @@ namespace engine
     */
    class _catCtxDropCL : public _catCtxCLMultiTask
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxDropCL ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxDropCL () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_DROP_CL" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -277,10 +295,16 @@ namespace engine
     */
    class _catCtxAlterCL : public _catCtxIndexMultiTask
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxAlterCL ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxAlterCL () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_ALTER_CL" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -324,10 +348,16 @@ namespace engine
     */
    class _catCtxLinkCL : public _catCtxDataBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _catCtxLinkCL ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxLinkCL () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_LINK_CL" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -358,10 +388,16 @@ namespace engine
     */
    class _catCtxUnlinkCL : public _catCtxDataBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
       _catCtxUnlinkCL ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxUnlinkCL () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_UNLINK_CL" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -392,10 +428,16 @@ namespace engine
     */
    class _catCtxCreateIdx : public _catCtxIndexMultiTask
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxCreateIdx ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxCreateIdx () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_CREATE_IDX" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -418,10 +460,16 @@ namespace engine
     */
    class _catCtxDropIdx : public _catCtxIndexMultiTask
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxDropIdx ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxDropIdx () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_DROP_IDX" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {

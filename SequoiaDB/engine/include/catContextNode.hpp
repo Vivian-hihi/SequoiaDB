@@ -79,10 +79,16 @@ namespace engine
     */
    class _catCtxActiveGrp : public _catCtxNodeBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxActiveGrp ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxActiveGrp () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_ACTIVE_GROUP" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -106,10 +112,16 @@ namespace engine
     */
    class _catCtxShutdownGrp : public _catCtxNodeBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxShutdownGrp ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxShutdownGrp () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_SHUTDOWN_GROUP" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -133,10 +145,16 @@ namespace engine
     */
    class _catCtxRemoveGrp : public _catCtxNodeBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxRemoveGrp ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxRemoveGrp () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_REMOVE_GROUP" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -160,10 +178,16 @@ namespace engine
     */
    class _catCtxCreateNode : public _catCtxNodeBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxCreateNode ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxCreateNode () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_CREATE_NODE" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {
@@ -208,10 +232,16 @@ namespace engine
     */
    class _catCtxRemoveNode : public _catCtxNodeBase
    {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
    public :
       _catCtxRemoveNode ( INT64 contextID, UINT64 eduID ) ;
 
       virtual ~_catCtxRemoveNode () ;
+
+      virtual std::string name() const
+      {
+         return "CAT_REMOVE_NODE" ;
+      }
 
       virtual RTN_CONTEXT_TYPE getType () const
       {

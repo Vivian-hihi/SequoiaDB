@@ -615,6 +615,9 @@ namespace engine
    /*
     * _catCtxDropCS implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxDropCS, RTN_CONTEXT_CAT_DROP_CS,
+                          "CAT_DROP_CS" )
+
    _catCtxDropCS::_catCtxDropCS ( INT64 contextID, UINT64 eduID )
    : _catCtxCLMultiTask( contextID, eduID )
    {
@@ -1018,6 +1021,9 @@ namespace engine
    /*
     * _catCtxCreateCL implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxCreateCL, RTN_CONTEXT_CAT_CREATE_CL,
+                          "CAT_CREATE_CL" )
+
    _catCtxCreateCL::_catCtxCreateCL ( INT64 contextID, UINT64 eduID )
    : _catCtxDataBase( contextID, eduID )
    {
@@ -1465,6 +1471,9 @@ namespace engine
    /*
     * _catCtxDropCL implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxDropCL, RTN_CONTEXT_CAT_DROP_CL,
+                          "CAT_DROP_CL" )
+
    _catCtxDropCL::_catCtxDropCL ( INT64 contextID, UINT64 eduID )
    : _catCtxCLMultiTask( contextID, eduID )
    {
@@ -1797,6 +1806,9 @@ namespace engine
    /*
     * _catCtxAlterCL implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxAlterCL, RTN_CONTEXT_CAT_ALTER_CL,
+                          "CAT_ALTER_CL" )
+
    _catCtxAlterCL::_catCtxAlterCL ( INT64 contextID, UINT64 eduID )
    : _catCtxIndexMultiTask( contextID, eduID )
    {
@@ -2181,6 +2193,9 @@ namespace engine
    /*
     * _catCtxLinkCL implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxLinkCL, RTN_CONTEXT_CAT_LINK_CL,
+                          "CAT_LINK_CL" )
+
    _catCtxLinkCL::_catCtxLinkCL ( INT64 contextID, UINT64 eduID )
    : _catCtxDataBase( contextID, eduID )
    {
@@ -2403,6 +2418,9 @@ namespace engine
    /*
     *  _catCtxUnlinkCL implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxUnlinkCL, RTN_CONTEXT_CAT_UNLINK_CL,
+                          "CAT_UNLINK_CL" )
+
    _catCtxUnlinkCL::_catCtxUnlinkCL ( INT64 contextID, UINT64 eduID )
    : _catCtxDataBase( contextID, eduID )
    {
@@ -2645,6 +2663,9 @@ namespace engine
    /*
     * _catCtxCreateIdx implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxCreateIdx, RTN_CONTEXT_CAT_CREATE_IDX,
+                          "CAT_CREATE_IDX" )
+
    _catCtxCreateIdx::_catCtxCreateIdx ( INT64 contextID, UINT64 eduID )
    : _catCtxIndexMultiTask( contextID, eduID )
    {
@@ -2720,6 +2741,9 @@ namespace engine
    /*
     * _catCtxDropIdx implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxDropIdx, RTN_CONTEXT_CAT_DROP_IDX,
+                          "CAT_DROP_IDX" )
+
    _catCtxDropIdx::_catCtxDropIdx ( INT64 contextID, UINT64 eduID )
    : _catCtxIndexMultiTask( contextID, eduID )
    {

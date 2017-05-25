@@ -126,6 +126,9 @@ namespace engine
    /*
     * _catCtxActiveGrp implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxActiveGrp, RTN_CONTEXT_CAT_ACTIVE_GROUP,
+                          "CAT_ACTIVE_GROUP" )
+
    _catCtxActiveGrp::_catCtxActiveGrp ( INT64 contextID, UINT64 eduID )
    : _catCtxNodeBase( contextID, eduID )
    {
@@ -265,6 +268,9 @@ namespace engine
    /*
     * _catCtxShutdownGrp implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxShutdownGrp, RTN_CONTEXT_CAT_SHUTDOWN_GROUP,
+                          "CAT_SHUTDOWN_GROUP" )
+
    _catCtxShutdownGrp::_catCtxShutdownGrp ( INT64 contextID, UINT64 eduID )
    : _catCtxNodeBase( contextID, eduID )
    {
@@ -362,6 +368,9 @@ namespace engine
    /*
     * _catCtxRemoveGrp implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxRemoveGrp, RTN_CONTEXT_CAT_REMOVE_GROUP,
+                          "CAT_REMOVE_GROUP" )
+
    _catCtxRemoveGrp::_catCtxRemoveGrp ( INT64 contextID, UINT64 eduID )
    : _catCtxNodeBase( contextID, eduID )
    {
@@ -567,6 +576,9 @@ namespace engine
    /*
     * _catCtxCreateNode implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxCreateNode, RTN_CONTEXT_CAT_CREATE_NODE,
+                          "CAT_CREATE_NODE" )
+
    _catCtxCreateNode::_catCtxCreateNode ( INT64 contextID, UINT64 eduID )
    : _catCtxNodeBase( contextID, eduID )
    {
@@ -914,6 +926,9 @@ namespace engine
    /*
     * _catCtxRemoveNode implement
     */
+   RTN_CTX_AUTO_REGISTER( _catCtxRemoveNode, RTN_CONTEXT_CAT_REMOVE_NODE,
+                          "CAT_REMOVE_NODE" )
+
    _catCtxRemoveNode::_catCtxRemoveNode ( INT64 contextID, UINT64 eduID )
    : _catCtxNodeBase( contextID, eduID )
    {
