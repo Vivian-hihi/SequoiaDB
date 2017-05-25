@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <iterator>
 
 // optlist.xml elements for web page
 #define OPTLISTTAG            "optlist"
@@ -326,45 +325,16 @@ string OptGenForWeb::genOptions ()
     }
     oss << endl ;
 
-    if( !(*ite)->firsttag.empty() )
-    {
-        oss << ">**Note:**  " << endl ;
-        oss << ">1. " << (*ite)->firsttag << "  " << endl ;
-        if( !(*ite)->secondtag.empty() )
-        {
-            oss << ">2. " << (*ite)->secondtag << "  " << endl ;
-        }
-    }
-    oss << endl ;
+    oss << ">**Note:**  " << endl ;
+    oss << ">1. " << (*ite)->firsttag << "  " << endl ;
+    oss << ">2. " << (*ite)->secondtag << "  " << endl ;
+
     return oss.str() ;
-}
-
-string OptGenForWeb::genSupplement()
-{
-    string str ;
-
-    if ( 0 == strcmp( pLanguage[0], language ) )
-    {
-    }
-    else if ( 0 == strcmp( pLanguage[1], language ) )
-    {
-        string fileName = string( OPT_SUPPLEMENTFILE ) ;
-        ifstream fin( fileName ) ;
-        str = string( istreambuf_iterator< char >( fin ),
-                      istreambuf_iterator< char >() ) ;
-    }
-    else
-    {
-        cout << "The language is not support: " << language << endl ;
-    }
-
-    return str ;
 }
 
 void OptGenForWeb::gendoc()
 {
-    string optStr ;
-    string suppleStr ;
+    string str ;
     string fileName ;
 
     if ( 0 == strcmp( pLanguage[0], language ) )
@@ -380,17 +350,16 @@ void OptGenForWeb::gendoc()
         cout << "The language is not support: " << language << endl ;
     }
 
-    optStr = genOptions() ;
-    if ( "" == optStr )
+    str = genOptions() ;
+    if ( "" == str )
     {
         cout << "Failed to generate database configuration options." << endl ;
         exit ( 0 ) ;
     }
 
-    suppleStr = genSupplement() ;
     ofstream fout( fileName.c_str() ) ;
 
-    fout << optStr << suppleStr << endl ;
+    fout << str << endl ;
 }
 
 void OptGenForWeb::run ()
