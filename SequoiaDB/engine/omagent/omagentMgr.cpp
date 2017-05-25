@@ -1404,19 +1404,23 @@ namespace engine
                      taskType, rc ) ;
          goto error ;
       }
+
       // get task sub type
-      if ( OMA_TASK_ADD_BUS == taskType || OMA_TASK_REMOVE_BUS == taskType )
+      if ( OMA_TASK_ADD_BUS == taskType || OMA_TASK_REMOVE_BUS == taskType ||
+           OMA_TASK_EXTEND_BUZ == taskType )
       {
          rc = omaGetObjElement( obj, OMA_FIELD_INFO, infoObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_INFO, rc ) ;
+
          // businessType
          rc = omaGetStringElement( infoObj, OMA_FIELD_BUSINESSTYPE,
                                    &pBusinessType) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_BUSINESSTYPE, rc ) ;
+
          // deploy mode
          rc = omaGetStringElement( infoObj, OMA_FIELD_DEPLOYMOD,
                                    &pDeployMode ) ;
@@ -1450,7 +1454,7 @@ namespace engine
                goto error ;
             }
          }
-         else
+         else if( OMA_TASK_REMOVE_BUS == taskType )
          {
             if ( string(OMA_BUS_TYPE_SEQUOIADB) == string(pBusinessType) )
             {
@@ -1467,6 +1471,20 @@ namespace engine
             {
                *type = OMA_TASK_REMOVE_SSQL_OLAP ;
                goto done ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Unknow task sub type with name[%s], "
+                           "rc = %d", pBusinessType, rc ) ;
+               goto error ;
+            }
+         }
+         else if( taskType == OMA_TASK_EXTEND_BUZ )
+         {
+            if( string( pBusinessType ) == OMA_BUS_TYPE_SEQUOIADB )
+            {
+               *type = OMA_TASK_EXTEND_DB ;
             }
             else
             {

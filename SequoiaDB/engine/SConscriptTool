@@ -213,6 +213,7 @@ omagentFiles = [
       "omagent/omagentNodeCmd.cpp",
       "omagent/omagentTaskBase.cpp",
       "omagent/omagentTask.cpp",
+      "omagent/omagentAsyncTask.cpp",
       "omagent/omagentSubTask.cpp",
       "omagent/omagentJob.cpp",
       "omagent/omagentNodePathGuard.cpp",

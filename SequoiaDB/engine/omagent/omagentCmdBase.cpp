@@ -69,6 +69,28 @@ namespace engine
       }
    }
 
+   INT32 _omaCommand::addUserDefineVar( const CHAR* pVariable )
+   {
+      INT32 rc = SDB_OK ;
+      string variable ;
+
+      if( pVariable == NULL )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Invalid variable value" ) ;
+         goto error ;
+      }
+
+      variable = pVariable ;
+
+      _userDefineVar.push_back( variable ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omaCommand::setJsFile( const CHAR *fileName )
    {
       INT32 rc = SDB_OK ;
@@ -130,13 +152,23 @@ namespace engine
    INT32 _omaCommand::getExcuteJsContent( string &content )
    {
       INT32 rc = SDB_OK ;
+      vector<string>::iterator varIter ;
       vector< pair<string, string> >::iterator it = _jsFiles.begin() ;
 
       if ( it == _jsFiles.end() )
       {
          goto done ;
       }
+
       content.clear() ;
+
+      for( varIter = _userDefineVar.begin(); varIter != _userDefineVar.end();
+          ++varIter )
+      {
+         content += *varIter ;
+         content += OSS_NEWLINE ;
+      }
+
       for ( ; it != _jsFiles.end(); it++ )
       {
          rc = setJsFile( it->first.c_str() ) ;
@@ -155,7 +187,7 @@ namespace engine
             goto error ;
          }
          content += it->second ;
-         content += OSS_NEWLINE ;  
+         content += OSS_NEWLINE ;
          content += _fileBuff ;
          content += OSS_NEWLINE ;
       }
@@ -262,6 +294,12 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _omaCommand::convertResult( const BSONObj& itemInfo,
+                                     BSONObj& taskInfo )
+   {
+      return SDB_OK ;
    }
 
    /*

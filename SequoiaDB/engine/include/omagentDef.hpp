@@ -127,6 +127,7 @@ namespace engine
    /*
       oma background command
    */
+
    #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
    #define OMA_CMD_REMOVE_HOST                        OM_REMOVE_HOST_REQ
    #define OMA_CMD_CHECK_ADD_HOST_INFO                "check add host info"
@@ -141,6 +142,7 @@ namespace engine
    #define OMA_CMD_RM_CATA_RG                         "remove cataloggroup"
    #define OMA_CMD_RM_COORD_RG                        "remove coordgroup"
    #define OMA_CMD_RM_DATA_RG                         "remove datagroup"
+   #define OMA_CMD_EXTEND_SEQUOIADB                   "extend sequoiadb"
    #define OMA_ROLLBACK_STANDALONE                    "rollback installed standalone"
    #define OMA_ROLLBACK_CATALOG                       "rollback installed catalog"
    #define OMA_ROLLBACK_COORD                         "rollback installed coord"
@@ -207,6 +209,8 @@ namespace engine
    #define FILE_ROLLBACK_COORD              "rollbackCoord.js"
    #define FILE_ROLLBACK_DATA_RG            "rollbackDataRG.js"
 
+   #define FILE_EXTEND_SEQUOIADB            "extendSequoiaDB.js"
+
    #define FILE_INIT_ENV                    "initEnv.js"
    #define FILE_INSTALL_ZOOKEEPER           "installZNode.js"
    #define FILE_REMOVE_ZOOKEEPER            "removeZNode.js"
@@ -247,6 +251,10 @@ namespace engine
    */
    #define DEPLAY_SA                        "standalone"
    #define DEPLAY_DB                        "distribution"
+
+   // oma extend mode
+   #define EXTEND_HORZ                      "horizontal"
+   #define EXTEND_VERT                      "vertical"
 
    /*
       oma misc

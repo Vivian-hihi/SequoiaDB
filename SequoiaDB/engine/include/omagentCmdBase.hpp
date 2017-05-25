@@ -43,7 +43,6 @@
 #include "omagentDef.hpp"
 #include "omagentMsgDef.hpp"
 #include "omagent.hpp"
-#include "omagentTask.hpp"
 #include "sptScope.hpp"
 #include <map>
 #include <string>
@@ -76,6 +75,9 @@ namespace engine
          virtual BOOLEAN needCheckBusiness() const { return TRUE ; }
 
       public:
+
+         INT32 addUserDefineVar( const CHAR* pVariable ) ;
+
          virtual const CHAR * name () = 0 ;
 
          virtual INT32 prime () ; 
@@ -85,6 +87,9 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
          virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
+
+         virtual INT32 convertResult( const BSONObj& retObj,
+                                      BSONObj& newRetObj ) ;
 
          virtual INT32 setJsFile ( const CHAR *fileName ) ;
          
@@ -104,6 +109,7 @@ namespace engine
          UINT32                          _readSize ;
          vector<BSONObj>                 _hosts ;
          string                          _content ;
+         vector<string>                  _userDefineVar ;
          vector< pair<string, string> >  _jsFiles ;
          _sptScope            *_scope ;
    } ;

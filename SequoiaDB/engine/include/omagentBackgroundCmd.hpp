@@ -40,6 +40,7 @@ using namespace std ;
 
 namespace engine
 {
+
    /*
       _omaAddHost
    */
@@ -569,6 +570,32 @@ namespace engine
 
       private:
          SsqlExecInfo      _ssqlInfo ;
+   } ;
+
+   /*
+      extend sequoiadb
+   */
+   class _omaExtendDB : public _omaCommand
+   {
+
+   DECLARE_OACMD_AUTO_REGISTER() ;
+
+   public:
+      _omaExtendDB() ;
+      virtual ~_omaExtendDB() ;
+
+   public:
+      virtual const CHAR* name() { return OMA_CMD_EXTEND_SEQUOIADB ; }
+      virtual INT32 init( const CHAR *pInstallInfo ) ;
+      virtual INT32 convertResult( const BSONObj& itemInfo,
+                                   BSONObj& taskInfo ) ;
+
+   private:
+      void _aggrFlowArray( const BSONObj& array1, const BSONObj& array2,
+                           BSONArray& out ) ;
+
+   private:
+      INT64 _taskID ;
    } ;
 
 } // namespace engine

@@ -244,7 +244,7 @@ namespace engine
          
    } ;
    typedef _omaInstDBBusTask omaInstDBBusTask ;
-   
+
    /*
       remove db business task
    */
