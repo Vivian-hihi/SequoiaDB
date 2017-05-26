@@ -184,7 +184,7 @@ function main()
    checkResult( dbcl, findConf3, hintConf, sortConf, expRecs3 );
    
    //field
-   /*var findConf4 = {a:{$gte:{$field:"b"}}};
+   var findConf4 = {a:{$gte:{$field:"b"}}};
    var expRecs4 = [//subcl1
       	           {a:-1000,b:-1000},
       	           {a:-999,b:-999},
@@ -208,6 +208,6 @@ function main()
       	           {a:[1001],b:[-999]},
       	           {a:[1998],b:[0]},
       	           {a:[1999],b:[1]}];
-   checkResult( dbcl, findConf4, hintConf, sortConf, expRecs4 );*/
+   checkResult( dbcl, findConf4, hintConf, sortConf, expRecs4 );
 }
 main()

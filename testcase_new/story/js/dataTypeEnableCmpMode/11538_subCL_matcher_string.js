@@ -236,7 +236,7 @@ function main()
    checkResult( dbcl, findConf9, hintConf, sortConf, expRecs9 );
    
    //{$regex},SEQUOIADBMAINSTREAM-2458
-   /*var findConf10 = {a:{$regex:"^a",$options:"i"}};
+   var findConf10 = {a:{$regex:"^a",$options:"i"}};
    var expRecs10 = [//subcl1
       	           {a:"aa",b:-1000},
       	           {a:"ab",b:-999},
@@ -246,6 +246,71 @@ function main()
       	           {a:["ab"],b:[-999]},
       	           {a:["ac"],b:[0]},
       	           {a:["ad"],b:[1]}];
+   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   var findConf10 = {a:{$regex:"^a",$options:"i",$lt:"ad"}};
+   var expRecs10 = [//subcl1
+      	           {a:"aa",b:-1000},
+      	           {a:"ab",b:-999},
+      	           {a:"ac",b:0},
+      	           {a:["aa"],b:[-1000]},
+      	           {a:["ab"],b:[-999]},
+      	           {a:["ac"],b:[0]}];
+   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   var findConf10 = {a:{$options:"i",$regex:"^a"}};
+   var expRecs10 = [//subcl1
+      	           {a:"aa",b:-1000},
+      	           {a:"ab",b:-999},
+      	           {a:"ac",b:0},
+      	           {a:"ad",b:1},
+      	           {a:["aa"],b:[-1000]},
+      	           {a:["ab"],b:[-999]},
+      	           {a:["ac"],b:[0]},
+      	           {a:["ad"],b:[1]}];
+   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   var findConf10 = {a:{$options:"i",$regex:"^a",$gte:"ab"}};
+   var expRecs10 = [//subcl1
+      	           {a:"ab",b:-999},
+      	           {a:"ac",b:0},
+      	           {a:"ad",b:1},
+      	           {a:["ab"],b:[-999]},
+      	           {a:["ac"],b:[0]},
+      	           {a:["ad"],b:[1]}];
+   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   var findConf10 = {a:{$gte:"ab",$options:"i",$regex:"^a"}};
+   var expRecs10 = [//subcl1
+      	           {a:"ab",b:-999},
+      	           {a:"ac",b:0},
+      	           {a:"ad",b:1},
+      	           {a:["ab"],b:[-999]},
+      	           {a:["ac"],b:[0]},
+      	           {a:["ad"],b:[1]}];
+   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   var findConf10 = {a:{$regex:"^a"}};
+   var expRecs10 = [//subcl1
+      	           {a:"aa",b:-1000},
+      	           {a:"ab",b:-999},
+      	           {a:"ac",b:0},
+      	           {a:"ad",b:1},
+      	           {a:["aa"],b:[-1000]},
+      	           {a:["ab"],b:[-999]},
+      	           {a:["ac"],b:[0]},
+      	           {a:["ad"],b:[1]}];
+   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   
+   //SEQUOIADBMAINSTREAM-2449
+   /*var findConf10 = {a:{$regex:"^a",$lt:"ad"}};
+   var expRecs10 = [//subcl1
+      	           {a:"aa",b:-1000},
+      	           {a:"ab",b:-999},
+      	           {a:"ac",b:0},
+      	           {a:["aa"],b:[-1000]},
+      	           {a:["ab"],b:[-999]},
+      	           {a:["ac"],b:[0]}];
    checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );*/
    
 }

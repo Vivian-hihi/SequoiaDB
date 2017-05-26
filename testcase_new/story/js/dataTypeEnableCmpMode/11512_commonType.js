@@ -72,6 +72,10 @@ function main(){
    var expRecs8 = [{a:{$date:"2014-01-03"}}];         
    checkResult( dbcl, findConf8, hintConf, sortConf, expRecs8 );
    
+   var findConf9 = {a:{$gt:22,$lt:{$date:"2014-01-03"}}};
+   var expRecs9 = [ ];         
+   checkResult( dbcl, findConf9, hintConf, sortConf, expRecs9 );
+   
    //gte
    var findConf1 = {a:{$gte:null}};
    var expRecs1 = [ {a:null}];         

@@ -56,8 +56,8 @@ function main(){
    var expRecs3 = [{a:"ab"}];         
    checkResult( dbcl, findConf3, hintConf, sortConf, expRecs3 );
    
-   /*
-   var findConf3 = {a:{$regex:"^a",$et:"ab"}};
+   //SEQUOIADBMAINSTREAM-2449
+   /*var findConf3 = {a:{$regex:"^a",$et:"ab"}};
    var expRecs3 = [{a:"ab"}];         
    checkResult( dbcl, findConf3, hintConf, sortConf, expRecs3 );*/
    

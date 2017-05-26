@@ -122,6 +122,17 @@ function main()
       	           {a:[1999],b:[1]}];
    checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
    
+   var findConf1 = {$and:[{b:{$gt:[-1000]}},{a:{$gt:[100]}}]};
+   var expRecs1 = [//subcl2
+      	           {a:[101],b:[-999]},
+      	           {a:[198],b:[0]},
+      	           {a:[199],b:[1]},
+      	           //subcl3
+      	           {a:[1001],b:[-999]},
+      	           {a:[1998],b:[0]},
+      	           {a:[1999],b:[1]}];
+   checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
+   
    //gte
    var findConf2 = {$and:[{b:{$gte:-999}},{a:{$gte:101}}]};
    var expRecs2 = [//subcl2
@@ -140,6 +151,17 @@ function main()
       	           {a:[1999],b:[1]}];
    checkResult( dbcl, findConf2, hintConf, sortConf, expRecs2 );
    
+   var findConf2 = {$and:[{b:{$gte:[-999]}},{a:{$gte:[101]}}]};
+   var expRecs2 = [//subcl2
+      	           {a:[101],b:[-999]},
+      	           {a:[198],b:[0]},
+      	           {a:[199],b:[1]},
+      	           //subcl3
+      	           {a:[1001],b:[-999]},
+      	           {a:[1998],b:[0]},
+      	           {a:[1999],b:[1]}];
+   checkResult( dbcl, findConf2, hintConf, sortConf, expRecs2 );
+   
    //lt
    var findConf3 = {$and:[{b:{$lt:0}},{a:{$lt:102}}]};
    var expRecs3 = [//subcl1
@@ -150,6 +172,15 @@ function main()
       	           //subcl2
       	           {a:100,b:-1000},
       	           {a:101,b:-999},
+      	           {a:[100],b:[-1000]},
+      	           {a:[101],b:[-999]}];
+   checkResult( dbcl, findConf3, hintConf, sortConf, expRecs3 );
+   
+   var findConf3 = {$and:[{b:{$lt:[0]}},{a:{$lt:[102]}}]};
+   var expRecs3 = [//subcl1
+      	           {a:[-1000],b:[-1000]},
+      	           {a:[-999],b:[-999]},
+      	           //subcl2
       	           {a:[100],b:[-1000]},
       	           {a:[101],b:[-999]}];
    checkResult( dbcl, findConf3, hintConf, sortConf, expRecs3 );
@@ -172,10 +203,26 @@ function main()
       	           {a:[198],b:[0]}];
    checkResult( dbcl, findConf4, hintConf, sortConf, expRecs4 );
    
+   var findConf4 = {$and:[{b:{$lte:[0]}},{a:{$lte:[198]}}]};
+   var expRecs4 = [//subcl1
+      	           {a:[-1000],b:[-1000]},
+      	           {a:[-999],b:[-999]},
+      	           {a:[-2],b:[0]},
+      	           //subcl2
+      	           {a:[100],b:[-1000]},
+      	           {a:[101],b:[-999]},
+      	           {a:[198],b:[0]}];
+   checkResult( dbcl, findConf4, hintConf, sortConf, expRecs4 );
+   
    //et
    var findConf5 = {a:{$et:100}};
    var expRecs5 = [//subcl2
       	           {a:100,b:-1000},
+      	           {a:[100],b:[-1000]}];
+   checkResult( dbcl, findConf5, hintConf, sortConf, expRecs5 );
+   
+   var findConf5 = {a:{$et:[100]}};
+   var expRecs5 = [//subcl2
       	           {a:[100],b:[-1000]}];
    checkResult( dbcl, findConf5, hintConf, sortConf, expRecs5 );
    
@@ -191,6 +238,35 @@ function main()
       	           {a:[-2],b:[0]},
       	           {a:[-1],b:[1]},
       	           //subcl2
+      	           {a:101,b:-999},
+      	           {a:198,b:0},
+      	           {a:199,b:1},
+      	           {a:[101],b:[-999]},
+      	           {a:[198],b:[0]},
+      	           {a:[199],b:[1]},
+      	           //subcl3
+      	           {a:1000,b:-1000},
+      	           {a:1001,b:-999},
+      	           {a:1998,b:0},
+      	           {a:1999,b:1},
+      	           {a:[1000],b:[-1000]},
+      	           {a:[1001],b:[-999]},
+      	           {a:[1998],b:[0]},
+      	           {a:[1999],b:[1]}];
+   checkResult( dbcl, findConf6, hintConf, sortConf, expRecs6 );
+   
+   var findConf6 = {a:{$ne:[100]}};
+   var expRecs6 = [//subcl1
+      	           {a:-1000,b:-1000},
+      	           {a:-999,b:-999},
+      	           {a:-2,b:0},
+      	           {a:-1,b:1},
+      	           {a:[-1000],b:[-1000]},
+      	           {a:[-999],b:[-999]},
+      	           {a:[-2],b:[0]},
+      	           {a:[-1],b:[1]},
+      	           //subcl2
+      	           {a:100,b:-1000},
       	           {a:101,b:-999},
       	           {a:198,b:0},
       	           {a:199,b:1},

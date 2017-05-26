@@ -58,7 +58,7 @@ function main(){
       	          {a:{$regex:"^a",$options:"i"}},
       	          {a:{b:1}},
       	          {a:[1,2,3]},
-      	          {a:null}];
+      	          {a:null}];         
    checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
  
    var findConf2 = {a:{$gte:{$minKey:1},$lte:{$maxKey:1}}};
@@ -148,7 +148,7 @@ function main(){
          	        {a:{b:1}},
          	        {a:[1,2,3]},
          	        {a:null},
-         	        {a:{$minKey:1}}];
+         	        {a:{$minKey:1}}];         
    checkResult( dbcl, findConf12, hintConf, sortConf, expRecs12 );
    
    var findConf13 = {a:{$ne:{$minKey:1}}};
@@ -168,7 +168,49 @@ function main(){
          	        {a:{b:1}},
          	        {a:[1,2,3]},
          	        {a:null},
-         	        {a:{$maxKey:1}}];
+         	        {a:{$maxKey:1}}];         
    checkResult( dbcl, findConf13, hintConf, sortConf, expRecs13 );
+   
+   var findConf14 = {a:{$gt:{$minKey:1}}};
+   var expRecs14 = [  {a:1},
+         	          {a:2},
+         	          {a:1.23},
+         	          {a:{$decimal:"3"}},
+         	          {a:"aa"},{a:"ab"},{a:"b"},
+         	          {a:{$oid:"591cf397a54fe50425000000"}},
+         	          {a:true},
+         	          {a:{$date:"2014-01-01"}},
+         	          {a:{$date:"2014-01-02"}},
+         	          {a:{$date:"2014-01-03"}},
+         	          {a:{$timestamp:"2015-06-05-16.10.33.000000"}},
+         	          {a:{$timestamp:"2015-06-05-16.10.34.000000"}},
+         	          {a:{$timestamp:"2015-06-05-16.10.35.000000"}},
+         	          {a:{$binary:"aGVsbG8gd29ybGQ=",$type:"1"}},
+         	          {a:{$regex:"^a",$options:"i"}},
+         	          {a:{b:1}},
+         	          {a:[1,2,3]},
+         	          {a:null},
+	                   {a:{$maxKey:1}},];         
+   checkResult( dbcl, findConf14, hintConf, sortConf, expRecs14 );
+   
+   var findConf15 = {a:{$lt:{$maxKey:1}}};
+   var expRecs15 = [{a:1},
+      	          {a:2},
+      	          {a:1.23},
+      	          {a:{$decimal:"3"}},
+      	          {a:"aa"},{a:"ab"},{a:"b"},
+      	          {a:{$oid:"591cf397a54fe50425000000"}},
+      	          {a:true},
+      	          {a:{$date:"2014-01-01"}},{a:{$date:"2014-01-02"}},{a:{$date:"2014-01-03"}},
+      	          {a:{$timestamp:"2015-06-05-16.10.33.000000"}},
+      	          {a:{$timestamp:"2015-06-05-16.10.34.000000"}},
+      	          {a:{$timestamp:"2015-06-05-16.10.35.000000"}},
+      	          {a:{$binary:"aGVsbG8gd29ybGQ=",$type:"1"}},
+      	          {a:{$regex:"^a",$options:"i"}},
+      	          {a:{b:1}},
+      	          {a:[1,2,3]},
+      	          {a:null},
+      	          {a:{$minKey:1}}];         
+   checkResult( dbcl, findConf15, hintConf, sortConf, expRecs15 );
 }
 main();
