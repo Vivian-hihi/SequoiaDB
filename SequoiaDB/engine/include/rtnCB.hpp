@@ -134,7 +134,7 @@ namespace engine
             monCB = (*it).second->getMonCB() ;
 
             monContextFull item( contextID, *monCB ) ;
-            item._typeDesp = getContextTypeDesp( (*it).second->getType() ) ;
+            item._typeDesp = (*it).second->name() ;
             item._info = (*it).second->toString() ;
 
             contextList[ eduID ].insert( item ) ;
@@ -151,7 +151,7 @@ namespace engine
             monContextCB* monCB = (*it).second->getMonCB() ;
 
             monContextFull item( contextID, *monCB ) ;
-            item._typeDesp = getContextTypeDesp( (*it).second->getType() ) ;
+            item._typeDesp = (*it).second->name() ;
             item._info = (*it).second->toString() ;
 
             contextList.insert( item ) ;

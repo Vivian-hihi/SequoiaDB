@@ -77,7 +77,6 @@ namespace engine
 
    public:
       // Override functions
-      virtual std::string name() const { return "" ; }
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 
       // Catalog context functions

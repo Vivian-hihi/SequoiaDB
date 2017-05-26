@@ -61,76 +61,18 @@ namespace engine
    */
    const CHAR* getContextTypeDesp( RTN_CONTEXT_TYPE type )
    {
-      switch ( type )
+      const _rtnContextInfo* info = sdbGetRTNContextBuilder()->find( type ) ;
+      if ( NULL != info )
       {
-         case RTN_CONTEXT_DATA :
-            return "DATA" ;
-         case RTN_CONTEXT_DUMP :
-            return "DUMP" ;
-         case RTN_CONTEXT_COORD :
-            return "COORD" ;
-         case RTN_CONTEXT_QGM :
-            return "QGM" ;
-         case RTN_CONTEXT_TEMP :
-            return "TEMP" ;
-         case RTN_CONTEXT_SP :
-            return "SP" ;
-         case RTN_CONTEXT_PARADATA :
-            return "PARADATA" ;
-         case RTN_CONTEXT_MAINCL :
-            return "MAINCL" ;
-         case RTN_CONTEXT_SORT :
-            return "SORT" ;
-         case RTN_CONTEXT_QGMSORT :
-            return "QGMSORT" ;
-         case RTN_CONTEXT_DELCS :
-            return "DELCS" ;
-         case RTN_CONTEXT_DELCL :
-            return "DELCL" ;
-         case RTN_CONTEXT_DELMAINCL :
-            return "DELMAINCL" ;
-         case RTN_CONTEXT_EXPLAIN :
-            return "EXPLAIN" ;
-         case RTN_CONTEXT_LOB :
-            return "LOB" ;
-         case RTN_CONTEXT_SHARD_OF_LOB :
-            return "SHARD_OF_LOB" ;
-         case RTN_CONTEXT_LIST_LOB :
-            return "LIST_LOB" ;
-         case RTN_CONTEXT_OM_TRANSFER :
-            return "OM_TRANSFER" ;
-         case RTN_CONTEXT_LOB_FETCHER :
-            return "LOB_FETCHER" ;
-         case RTN_CONTEXT_CAT_REMOVE_GROUP :
-            return "CAT_REMOVE_GROUP" ;
-         case RTN_CONTEXT_CAT_ACTIVE_GROUP :
-            return "CAT_ACTIVE_GROUP" ;
-         case RTN_CONTEXT_CAT_SHUTDOWN_GROUP:
-            return "CAT_SHUTDOWN_GROUP" ;
-         case RTN_CONTEXT_CAT_CREATE_NODE :
-            return "CAT_CREATE_NODE" ;
-         case RTN_CONTEXT_CAT_REMOVE_NODE :
-            return "CAT_REMOVE_NODE" ;
-         case RTN_CONTEXT_CAT_DROP_CS :
-            return "CAT_DROP_CS" ;
-         case RTN_CONTEXT_CAT_CREATE_CL :
-            return "CAT_CREATE_CL" ;
-         case RTN_CONTEXT_CAT_DROP_CL :
-            return "CAT_DROP_CL" ;
-         case RTN_CONTEXT_CAT_ALTER_CL :
-            return "CAT_ALTER_CL" ;
-         case RTN_CONTEXT_CAT_LINK_CL :
-            return "CAT_LINK_CL" ;
-         case RTN_CONTEXT_CAT_UNLINK_CL :
-            return "CAT_UNLINK_CL" ;
-         case RTN_CONTEXT_CAT_CREATE_IDX :
-            return "CAT_CREATE_IDX" ;
-         case RTN_CONTEXT_CAT_DROP_IDX :
-            return "CAT_DROP_IDX" ;
-         default :
-            break ;
+         SDB_ASSERT( type == info->type, "invalid context info" ) ;
+         SDB_ASSERT( NULL != info->newFunc, "null pointer of newFunc" ) ;
+
+         return info->name.c_str() ;
       }
-      return "UNKNOW" ;
+      else
+      {
+         return "UNKNOW" ;
+      }
    }
 
    /*
@@ -808,8 +750,7 @@ namespace engine
                                                    INT64 contextId,
                                                    EDUID eduId )
    {
-      _rtnContextInfo* info = _find( type ) ;
-
+      const _rtnContextInfo* info = find( type ) ;
       if ( NULL != info )
       {
          SDB_ASSERT( type == info->type, "invalid context info" ) ;
@@ -835,48 +776,7 @@ namespace engine
       }
    }
 
-   INT32 _rtnContextBuilder::_register( RTN_CONTEXT_TYPE type,
-                                       std::string name,
-                                       RTN_CTX_NEW_FUNC func )
-   {
-      INT32 rc = SDB_OK ;
-      _rtnContextInfo* info = NULL ;
-
-      info = _find( type ) ;
-      if ( NULL != info )
-      {
-         PD_LOG( PDERROR, "RTN context info is registered: type=%d, name=%s",
-                 info->type, info->name.c_str() ) ;
-         SDB_ASSERT( FALSE, "RTN context info is registered" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      info = SDB_OSS_NEW _rtnContextInfo() ;
-      if ( NULL == info )
-      {
-         rc = SDB_OOM ;
-         goto error ;
-      }
-
-      info->type = type ;
-      info->name = name ;
-      info->newFunc = func ;
-
-      rc = _insert( info ) ;
-      if ( SDB_OK != rc )
-      {
-         SDB_OSS_DEL info ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   _rtnContextInfo* _rtnContextBuilder::_find( RTN_CONTEXT_TYPE type )
+   const _rtnContextInfo* _rtnContextBuilder::find( RTN_CONTEXT_TYPE type ) const
    {
       ctx_info_iterator it = _contextInfoMap.find( type ) ;
       if ( it != _contextInfoMap.end() )
@@ -887,6 +787,47 @@ namespace engine
       {
          return NULL ;
       }
+   }
+
+   INT32 _rtnContextBuilder::_register( RTN_CONTEXT_TYPE type,
+                                       std::string name,
+                                       RTN_CTX_NEW_FUNC func )
+   {
+      INT32 rc = SDB_OK ;
+      _rtnContextInfo* newInfo = NULL ;
+
+      const _rtnContextInfo* info = find( type ) ;
+      if ( NULL != info )
+      {
+         PD_LOG( PDERROR, "RTN context info is registered: type=%d, name=%s",
+                 info->type, info->name.c_str() ) ;
+         SDB_ASSERT( FALSE, "RTN context info is registered" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      newInfo = SDB_OSS_NEW _rtnContextInfo() ;
+      if ( NULL == newInfo )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      newInfo->type = type ;
+      newInfo->name = name ;
+      newInfo->newFunc = func ;
+
+      rc = _insert( newInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         SDB_OSS_DEL newInfo ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _rtnContextBuilder::_insert( _rtnContextInfo* contextInfo )

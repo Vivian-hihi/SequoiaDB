@@ -374,12 +374,12 @@ namespace engine
 
       _rtnContextBase* create ( RTN_CONTEXT_TYPE type, INT64 contextId, EDUID eduId ) ;
       void             release ( _rtnContextBase* context ) ;
+      const _rtnContextInfo* find( RTN_CONTEXT_TYPE type ) const ;
 
    private:
       INT32 _register( RTN_CONTEXT_TYPE type,
                         std::string name,
                         RTN_CTX_NEW_FUNC func ) ;
-      _rtnContextInfo* _find( RTN_CONTEXT_TYPE type ) ;
       INT32 _insert( _rtnContextInfo* contextInfo ) ;
       void _releaseContextInfos() ;
 
