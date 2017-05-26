@@ -35,7 +35,9 @@
 #include "ossUtil.h"
 #include "sptWords.hpp"
 #include "sptHelp.hpp"
+#if defined( _LINUX ) || defined (_AIX)
 #include "../mdocml/parseMandocCpp.hpp"
+#endif
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -68,16 +70,21 @@ namespace engine
       _lang = lang ;
    }
 
+
    // "fuzzyFuncName" can be "Oma/Oma::createCoord/createCoord" or something like 
    // "create" for fuzzy searching 
    INT32 _sptHelp::displayManpage( const string &fuzzyFuncName,
                                    const string &matcher,
                                    BOOLEAN isInstance )
    {
+#if defined (_WINDOWS)
+      ossPrintf( "No support in current system."OSS_NEWLINE ) ;
+      return SDB_OK ;
+#else
       INT32 rc = SDB_OK ;
       string filePath ;
       vector<string> vec ;
-
+      
       rc = _meta.queryFuncInfo( fuzzyFuncName, matcher, isInstance, vec ) ;
       if ( rc )
       {
@@ -202,7 +209,9 @@ namespace engine
       return rc ;
    error:
       goto done ;
+#endif
    }
+
 
    INT32 _sptHelp::displayMethod( const string &className, 
                                   BOOLEAN isInstance )

@@ -10,7 +10,6 @@ if usesm:
 sptFiles = [
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
-      "spt/sptParseTroff.cpp",
       "spt/sptConvertorHelper.cpp",
       "spt/sptCommon.cpp"
       ]
@@ -241,24 +240,32 @@ shellEnv.StaticLibrary('ssh2', ssh2Files)
 #Utilities
 shellEnv.StaticLibrary('util', utilFiles)
 shellEnv.StaticLibrary('util2', util2Files)
-#Mdocml
-shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 #Process Model
 shellEnv.StaticLibrary('pmd', pmdFiles)
+#Mdocml
+if "linux" == guess_os:
+   shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Shell Executable
-sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
-      _LIBDEPS='$_LIBDEPS_OBJS' )
+#Shell Backend  Executable
+if "linux" == guess_os:
+   sdb = shellEnv.Program("sdb", shellMain,
+         LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+   sdbbp = shellEnv.Program("sdbbp", shellBpMain,
+         LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+else:
+   sdb = shellEnv.Program("sdb", shellMain,
+         LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+   sdbbp = shellEnv.Program("sdbbp", shellBpMain,
+         LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdb )
-
-#Shell Backend  Executable
-sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml","ssh2", "util2", "spt2", "pmd"],
-      _LIBDEPS='$_LIBDEPS_OBJS' )
-
 shellEnv.Install( '#/bin', sdbbp )
+
 if "win32" == guess_os:
    if usesm:
       shellEnv.Install( '#/bin', smlib_file)

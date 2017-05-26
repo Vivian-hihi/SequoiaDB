@@ -692,8 +692,8 @@ namespace engine
       CHAR *begin = NULL ;
       CHAR *end = NULL ;
 
-      begin = ossStrstr( pFileBuff, pMark1 ) ;
-      end = ossStrstr( pFileBuff, pMark2 ) ;
+      begin = ossStrstr( (CHAR *)pFileBuff, (CHAR *)pMark1 ) ;
+      end = ossStrstr( (CHAR *)pFileBuff, (CHAR *)pMark2 ) ;
       if ( NULL == begin || NULL == end )
       {
          rc = SDB_INVALIDARG ;

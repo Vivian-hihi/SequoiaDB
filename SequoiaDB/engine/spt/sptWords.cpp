@@ -32,10 +32,11 @@
    Last Changed =
 
 *******************************************************************************/
-
+/*
 #if defined (_WIN32)
 #include <windows.h>
 #endif
+*/
 #include "sptWords.hpp"
 #include "string.h"
 #include <boost/algorithm/string.hpp>
@@ -46,7 +47,7 @@
 #define COMMA_EN           ","
 #define BACKSLASH          "\\"
 #define TABLE_LINE_LEN     24
-
+/*
 #if defined (_WIN32)
 string _gbk2utf8(const string &input)
 {
@@ -66,7 +67,7 @@ string _gbk2utf8(const string &input)
     return output;
 }
 #endif
-
+*/
 void sdbUTF82CharSet(const string &input, vector<string> &output)
 {
    string c ;
@@ -199,6 +200,9 @@ void sdbSplitWords( const string &text, INT32 lineLen, vector<string> &vec_out )
             if ( *it == COMMA_EN ||
                  *it == PERIOD_EN ||
                  pre_char == BACKSLASH ||
+                 *it == COMMA_CH ||
+                 *it == PERIOD_CH )
+/*
 #if defined (_WIN32)
                  *it == _gbk2utf8(COMMA_CH) ||
                  *it == _gbk2utf8(PERIOD_CH) )
@@ -206,6 +210,7 @@ void sdbSplitWords( const string &text, INT32 lineLen, vector<string> &vec_out )
                  *it == COMMA_CH ||
                  *it == PERIOD_CH )
 #endif
+*/
             {
                 one_line += *it ;
                 has_handle = TRUE ;
