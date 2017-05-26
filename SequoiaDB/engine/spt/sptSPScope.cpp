@@ -42,10 +42,178 @@
 #include "sptConvertorHelper.hpp"
 #include "sptCommon.hpp"
 #include "spt.hpp"
+#include "sptFuncDef.hpp"
+#include "sptHelp.hpp"
 #include "../spt/js_in_cpp.hpp"
+#include <sstream>
 
 namespace engine
 {
+
+   /*
+      case 1: when no argument, we display the functions of class/instance
+      case 2: when getting argument in format of "Oma"/"Oma.createCoord"
+              /"createCoord" or something like "create" for fuzzy searching, 
+              we display the manpage of the specifed function
+   */
+   static JSBool __instance_help( JSContext *cx , uintN argc , jsval *vp )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      SDB_ASSERT( NULL != cx && NULL != vp, "can not be NULL" ) ;
+
+      jsval jsVal = JSVAL_VOID ;
+      JSObject *constructor = NULL ;
+      JSString *jsStr = NULL ;
+      CHAR *pStr = NULL ;
+      _sptSPArguments arg( cx, argc, vp ) ;
+      string jsClassName ;
+
+      // set return value
+      JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+      // try to get the js class name
+      constructor = JS_GetConstructor( cx, JS_THIS_OBJECT ( cx , vp ) ) ;
+      if ( !constructor )
+      {
+         rc = SDB_SYS ;
+         ss << "Failed to get constructor" ;
+         goto error ;
+      }
+      if ( !JS_GetProperty( cx, constructor, "name", &jsVal ) || 
+           !JSVAL_IS_STRING( jsVal ) )
+      {
+         rc = SDB_SYS ;
+         ss << "Failed to get the js class name" ;
+         goto error ;
+      }
+      jsStr = JS_ValueToString( cx, jsVal ) ;
+      if ( !jsStr )
+      {
+         rc = SDB_SYS ;
+         ss << "Failed to convert js class name" ;
+         goto error ;
+      }
+      pStr = JS_EncodeString( cx, jsStr ) ;
+      if ( !pStr )
+      {
+         rc = SDB_SYS ;
+         ss << "Failed to encode js class name" ;
+         goto error ;
+      }
+      jsClassName.assign( pStr ) ;
+      JS_free( cx, pStr ) ;
+      
+      // display method or manpage
+      if ( arg.argc() == 0 )
+      {
+         rc = sptHelp::getInstance().displayMethod( jsClassName, TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      else if ( arg.argc() >= 1 )
+      {
+         string fuzzyFuncName ;
+         rc = arg.getString( 0, fuzzyFuncName ) ;
+         if ( rc )
+         {
+            ss << "The 1st param must be string"  ;
+            goto error ;
+         }
+         rc = sptHelp::getInstance().displayManpage(
+            fuzzyFuncName, jsClassName, TRUE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      if ( !ss.str().empty() )
+      {
+         std::cout << ss.str().c_str() << std::endl ;
+      }
+      goto done ;
+   }
+
+   static JSBool __static_help( JSContext *cx , uintN argc , jsval *vp )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      SDB_ASSERT( NULL != cx && NULL != vp, "can not be NULL" ) ;
+
+      jsval jsVal = JSVAL_VOID ;
+      JSString *jsStr = NULL ;
+      CHAR *pStr = NULL ;
+      _sptSPArguments arg( cx, argc, vp ) ;
+      string jsClassName ;
+
+      // set return value
+      JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+      
+      // get js class name
+      if ( !JS_GetProperty( cx, JS_THIS_OBJECT ( cx , vp ), "name", &jsVal ) ||
+           !JSVAL_IS_STRING( jsVal ) )
+      {
+         rc = SDB_SYS ;
+         ss << "Failed to get the js class name" ;
+         goto error ;
+      }
+      jsStr = JS_ValueToString( cx, jsVal ) ;
+      if ( !jsStr )
+      {
+         rc = SDB_SYS ;
+         ss << "Failed to convert string" ;
+         goto error ;
+      }
+      pStr = JS_EncodeString( cx, jsStr ) ;
+      if ( !pStr )
+      {
+         rc = SDB_SYS ;
+         ss << "Failed to encode string" ;
+         goto error ;
+      }
+      jsClassName.assign( pStr ) ;
+      JS_free( cx, pStr ) ;
+      
+      // display method or manpage
+      if ( arg.argc() == 0 )
+      {
+         rc = sptHelp::getInstance().displayMethod( jsClassName, FALSE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      else if ( arg.argc() >= 1 )
+      {
+         string fuzzyFuncName ;
+         rc = arg.getString( 0, fuzzyFuncName ) ;
+         if ( rc )
+         {
+            ss << "The 1st param must be string"  ;
+            goto error ;
+         }
+         rc = sptHelp::getInstance().displayManpage(
+            fuzzyFuncName, jsClassName, FALSE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      
+   done:
+      return rc ;
+   error:
+      if ( !ss.str().empty() )
+      {
+         std::cout << ss.str().c_str() << std::endl ;
+      }
+      goto done ;
+   }
+
    /*
       Local function define
    */
@@ -483,17 +651,16 @@ namespace engine
          }
          parent_proto = (JSObject*)parentDesc->getPrototypeDef() ;
       }
- 
-      /// +1 for FS_END
-      fSpecs = new JSFunctionSpec[memberFuncs.size() + 1] ;
+
+      /// one for instance help method, another for FS_END
+      fSpecs = new JSFunctionSpec[memberFuncs.size() + 1 + 1] ;
       if ( NULL == fSpecs )
       {
          ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
          rc = SDB_OOM ;
          goto error ;
       }
-
-      sfSpecs = new JSFunctionSpec[staticFuncs.size() + 1] ;
+      sfSpecs = new JSFunctionSpec[staticFuncs.size() + 1 + 1] ;
       if ( NULL == sfSpecs )
       {
          ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
@@ -511,6 +678,21 @@ namespace engine
             fSpecs[i].nargs = 0 ;
             fSpecs[i].flags = itr->second._attr ;
          }
+         if ( memberFuncs.end() != memberFuncs.find( "help" ) )
+         {
+            fSpecs[i].name = NULL ;
+            fSpecs[i].call = NULL ;
+            fSpecs[i].nargs = 0 ;
+            fSpecs[i].flags = 0 ;
+         }
+         else
+         {
+            fSpecs[i].name = "help" ;
+            fSpecs[i].call = __instance_help ;
+            fSpecs[i].nargs = 0 ;
+            fSpecs[i].flags = SPT_FUNC_DEFAULT ;
+         }
+         i++ ;
          fSpecs[i].name = NULL ;
          fSpecs[i].call = NULL ;
          fSpecs[i].nargs = 0 ;
@@ -525,6 +707,21 @@ namespace engine
             sfSpecs[i].nargs = 0 ;
             sfSpecs[i].flags = itr->second._attr ;
          }
+         if ( staticFuncs.end() != staticFuncs.find( "help" ) )
+         {
+            sfSpecs[i].name = NULL ;
+            sfSpecs[i].call = NULL ;
+            sfSpecs[i].nargs = 0 ;
+            sfSpecs[i].flags = 0 ;
+         }
+         else
+         {
+            sfSpecs[i].name = "help" ;
+            sfSpecs[i].call = __static_help ;
+            sfSpecs[i].nargs = 0 ;
+            sfSpecs[i].flags = SPT_FUNC_DEFAULT ;
+         }
+         i++ ;
          sfSpecs[i].name = NULL ;
          sfSpecs[i].call = NULL ;
          sfSpecs[i].nargs = 0 ;

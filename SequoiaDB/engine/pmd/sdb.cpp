@@ -48,6 +48,7 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "../mdocml/parseMandocCpp.hpp"
+#include "../spt/sptHelp.hpp"
 #include "sptParseTroff.hpp"
 #include <string>
 #include <boost/algorithm/string/trim.hpp>
@@ -60,6 +61,7 @@
 #include "sptContainer.hpp"
 #include "ossSignal.hpp"
 #include "ossIO.hpp"
+#include <locale.h>
 
 using namespace bson ;
 
@@ -84,6 +86,9 @@ po::variables_map vm ;
    #define SDB_PB_PROGRAM_NAME         "sdbbp"
 #endif // _WINDOWS
 
+#define SPT_LANG_EN                    "en"
+#define SPT_LANG_CN                    "cn"
+
 enum RunMode
 {
    INTERACTIVE_MODE,
@@ -98,6 +103,7 @@ struct ArgInfo
    string       filename ; // available in batch mode
    string       cmd ; // available in front-end mode
    string       variable ; // variable
+   string       language ; // language, can be "en" or "cn"
 } ;
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_READFILE, "readFile" )
@@ -231,7 +237,13 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
    SDB_ASSERT ( argc >= 1 , "argc must be >= 1" ) ;
 
    argInfo.program = (string)( argv[0] ) ;
-
+   argInfo.language = SPT_LANG_EN ;
+   if ( vm.count( "language" ) )
+   {
+      string l = vm["language"].as<string>() ;
+      argInfo.language = (l == SPT_LANG_EN || l == SPT_LANG_CN) ? l : SPT_LANG_EN ;
+      argc -= 2 ;
+   }
    if ( 1 == argc )
    {
       // Empty. Normal interactive mode
@@ -364,7 +376,7 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERINTATVMODE, "enterInteractiveMode" )
-INT32 enterInteractiveMode ( sptScope *scope )
+INT32 enterInteractiveMode ( sptScope *scope, const CHAR *lang )
 {
    INT32    rc          = SDB_OK ;
    CHAR *   result      = NULL ;
@@ -378,6 +390,9 @@ INT32 enterInteractiveMode ( sptScope *scope )
 
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );
+
+   // set language for dispaly help info
+   sptHelp::setLanguage( lang ) ;
 
    // initialize and load the history
    historyInit () ;
@@ -854,6 +869,7 @@ int main ( int argc , CHAR **argv )
    ArgInfo           argInfo ;
    CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
+   setlocale(LC_CTYPE, "zh_CN.UTF-8");
 #if defined( _LINUX )
    signal( SIGCHLD, SIG_IGN ) ;
 #endif // _LINUX
@@ -885,7 +901,7 @@ int main ( int argc , CHAR **argv )
    switch ( argInfo.mode )
    {
    case INTERACTIVE_MODE :
-      rc = enterInteractiveMode( scope ) ;
+      rc = enterInteractiveMode( scope, argInfo.language.c_str() ) ;
       break ;
 
    case BATCH_MODE :

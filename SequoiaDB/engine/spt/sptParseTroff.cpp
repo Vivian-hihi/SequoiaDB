@@ -1,4 +1,4 @@
-/*******************************************************************************
+/******************************************************************************
 
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
@@ -48,42 +48,59 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
-#define MFILE_SUFFIX ".cli"
+#define MFILE_SUFFIX              ".cli"
+#define MFILE_SUFFIX_EN           MFILE_SUFFIX
+#define MFILE_SUFFIX_CN           MFILE_SUFFIX
 
-#define GLOBAL_CATEGORY     "global"
-#define DB_CATEGORY         "db"
-#define CS_CATEGORY         "cs"
-#define CL_CATEGORY         "cl"
-#define RG_CATEGORY         "rg"
-#define NODE_CATEGORY       "node"
-#define CURSOR_CATEGORY     "cursor"
-#define CLCOUNT_CATEGORY    "count"
-#define DOMAIN_CATEGORY     "domain"
-#define OMA_CATEGORY        "oma"
-#define DC_CATEGORY         "dc"
-#define QUERY_CATEGORY      "query"
-#define QUERY_GEN_CATEGORY  "query_gen"
-#define QUERY_COND_CATEGORY "query_cond"
-#define QUERY_CURS_CATEGORY "query_curs"
+#define MFILE_LANG_EN             "_en"
+#define MFILE_LANG_CN             "_cn"
 
-#define READ_CHARACTOR_NUM 1024
-#define CMD_NAME_LEN  255
+#define MFILE_SUFFIX_LEN          6 // strlen(MFILE_SUFFIX)
+#define MFILE_LANG_TAG_LEN        3  // strlen("_cn")
 
-#define READ_CUTLINE_BEGIN ".SH \"NAME\""
-#define READ_CUTLINE_END  ".SH \"SYNOPSIS\""
-#define READ_SYN_BEGIN READ_CUTLINE_END
-#define READ_SYN_END ".SH \"CATEGORY\""
-#define MARK1 "\\fB"
-#define MARK2 "\\fR"
-#define MARK3 "("
+#define GLOBAL_CATEGORY           "global"
+#define DB_CATEGORY               "db"
+#define CS_CATEGORY               "cs"
+#define CL_CATEGORY               "cl"
+#define RG_CATEGORY               "rg"
+#define NODE_CATEGORY             "node"
+#define CURSOR_CATEGORY           "cursor"
+#define CLCOUNT_CATEGORY          "count"
+#define DOMAIN_CATEGORY           "domain"
+#define OMA_CATEGORY              "oma"
+#define DC_CATEGORY               "dc"
+#define QUERY_CATEGORY            "query"
+#define QUERY_GEN_CATEGORY        "query_gen"
+#define QUERY_COND_CATEGORY       "query_cond"
+#define QUERY_CURS_CATEGORY       "query_curs"
 
-#define INDENT_WIDTH1  3
-#define INDENT_WIDTH2  30
-#define CONTENT_LEN    50
-#define FORMAT_LEN     100
+#define READ_CHARACTOR_NUM        1024
+#define CMD_NAME_LEN              255
 
-#define SPLIT_POINT1 '.'
-#define SPLIT_POINT2 '_'
+#define READ_CUTLINE_BEGIN_EN     ".SH \"NAME\""
+#define READ_CUTLINE_END_EN       ".SH \"SYNOPSIS\""
+#define READ_SYN_BEGIN_EN         READ_CUTLINE_END_EN
+#define READ_SYN_END_EN           ".SH \"CATEGORY\""
+
+#define READ_CUTLINE_BEGIN_CN     ".SH 名称"
+#define READ_CUTLINE_END_CN       ".SH 语法"
+#define READ_SYN_BEGIN_CN         READ_CUTLINE_END_CN
+#define READ_SYN_END_CN           ".SH 类别"
+
+#define MARK1_V1                  "\\fB"
+#define MARK2_V1                  "\\fR"
+#define MARK1_V2                  "\\f[B]"
+#define MARK2_V2                  "\\f[I]"
+#define MARK3_V2                  "\\f[]"
+
+#define INDENT_WIDTH1             3
+#define INDENT_WIDTH2             30
+#define CONTENT_LEN               50
+#define FORMAT_LEN                100
+
+#define SPLIT_POINT1              '.'
+#define SPLIT_POINT2              '_'
+#define SPLIT_POINT3              '-'
 
 namespace fs = boost::filesystem ;
 
@@ -132,25 +149,32 @@ static INT32 splitCutline( const CHAR *cutline, vector<string> &vec ) ;
 static INT32 getSplitPos( const CHAR *pCur, INT32 part_len, INT32 *ret ) ;
 
 
-
 manHelp& manHelp::getInstance( const CHAR *path )
 {
    static manHelp _instance( path ) ;
    return _instance ;
 }
 
+manHelp& manHelp::setLanguage( const CHAR *lang )
+{
+   _lang = ( lang == string("en") ) ? SPT_PRINT_EN : SPT_PRINT_CN ;
+   return *this ;
+}
+
 manHelp::manHelp( const CHAR *path )
 {
-   INT32 rc = SDB_OK;
-   INT32 len = ossStrlen( path );
-   ossMemcpy( _filePath, path , len );
-   _filePath[len] = 0;
-   troffFileNotEixt = FALSE ;
+   INT32 rc          = SDB_OK ;
+   INT32 len         = ossStrlen( path ) ;
+   ossMemcpy( _filePath, path , len ) ;
+   _filePath[len]    = 0 ;
+   _troffFileNotEixt = FALSE ;
+   _lang             = SPT_PRINT_EN ;
+
    // scan the .cli files
    rc = scanFile();
    if ( rc )
    {
-      troffFileNotEixt = TRUE ;
+      _troffFileNotEixt = TRUE ;
    }
    // init classify info
    _classify.insert( pair< string, ssmap_ref >( string(GLOBAL_CATEGORY),
@@ -183,32 +207,32 @@ manHelp::~manHelp() {}
 
 INT32 manHelp::scanFile()
 {
-   INT32 rc = SDB_OK;
-   INT32 tmp_buf_len = READ_CHARACTOR_NUM ;
-   INT32 file_buf_len = READ_CHARACTOR_NUM ;
-   // use to save the contents of the troff file, i don't know
-   // how large the troff file is, so i won't use array
-   CHAR *file_buffer = (CHAR *)SDB_OSS_MALLOC( file_buf_len ) ;
-   // use to save the contents read from file_buffer
-   CHAR *tmp_buffer = (CHAR *)SDB_OSS_MALLOC( tmp_buf_len + 1 ) ;
    typedef vector<fs::path> vec;
    vec v;
-
-   const INT32 file_name_len = OSS_PROCESS_NAME_LEN ;
-   fs::path p( _filePath );
-   CHAR *pFileName = NULL ;
-
+   INT32 rc                    = SDB_OK ;
+   INT32 tmp_buf_len           = READ_CHARACTOR_NUM ;
+   INT32 file_buf_len          = READ_CHARACTOR_NUM ;
+   const INT32 file_name_len   = OSS_PROCESS_NAME_LEN ;
+   // use to save the contents of the troff file, i don't know
+   // how large the troff file is, so i won't use array
+   CHAR *file_buffer           = (CHAR *)SDB_OSS_MALLOC( file_buf_len ) ;
+   // use to save the contents read from file_buffer
+   CHAR *tmp_buffer            = (CHAR *)SDB_OSS_MALLOC( tmp_buf_len + 1 ) ;
    // pFileName is free in done
-   pFileName = (CHAR *)SDB_OSS_MALLOC( file_name_len + 1 );
-   if ( !pFileName )
+   CHAR * pFileName            = (CHAR *)SDB_OSS_MALLOC( file_name_len + 1 );
+   fs::path p( _filePath );
+
+   // check
+   if ( !file_buffer || !tmp_buffer || !pFileName )
    {
-      ossPrintf( "Memory malloc failed(size = %d), %s:%d "OSS_NEWLINE,
-                 file_name_len + 1,  __FILE__, __LINE__ ) ;
+      ossPrintf( "Memory malloc failed, %s:%d "OSS_NEWLINE, 
+                 __FILE__, __LINE__ ) ;
       rc = SDB_OOM ;
       goto error ;
    }
 
-   // i am going to extrace all the .cli file in /opt/sequoiadb/doc/manual
+   // i am going to extrace all the _cn.troff and _en.troff file 
+   // in /opt/sequoiadb/doc/manual
    // to a vector<fs::path> and extrace what i want from this vector
 
    // check the path
@@ -220,7 +244,7 @@ INT32 manHelp::scanFile()
    // scan all the file in manual directory
    std::copy( fs::directory_iterator(p), fs::directory_iterator(),
               std::back_inserter(v) );
-   // extract ".cli" file in vector to sset
+   // extract ".troff" file in vector to sset
    for ( vec::const_iterator it(v.begin()), it_end(v.end());
          it != it_end; it++ )
    {
@@ -229,50 +253,86 @@ INT32 manHelp::scanFile()
       // nerver use const CHAR* pTmp = fs::extension(*it).c_str();
       string fSuffix = fs::extension(*it);
       const CHAR *pfSuffix = fSuffix.c_str();
-      // if it is ".cli" file, save the file name
+      // if it is ".troff" file, save the file name
       // 1: save the file name to sset
       // 2: save synopsis and cutline to ssmap
-      if ( ossStrncmp( pfSuffix, MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) ) == 0 )
+      if ( ossStrncmp( pfSuffix, MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) + 1 ) == 0 )
       {
-         INT32 strLen = 0;
+         INT32 fullNameLen = 0 ;
+         string fileFullName ;
          string fileName ;
+         string langTag ; // "en", "cn"
          string fileNameLower ;
          string categoryName ; // db, cs, cl ...
          string funcName ; // createCL, createCS ...
-         const CHAR* pLeaf = NULL;
-         CHAR *pSplit      = NULL ;
-         CHAR *pSplit2     = NULL ;
+         CHAR *pSplit                = NULL ;
+         CHAR *pSplit2               = NULL ;
+         const CHAR *pFileFullName   = NULL ;
+         const CHAR *pCutlineBegin   = NULL ;
+         const CHAR *pCutlineEnd     = NULL ;
+         const CHAR *pSynopsisEnd    = NULL ;
+         SPT_PRINT_LANG langType     = SPT_PRINT_EN ;
          // get the file name
          // get the file name without the file path
-         std::string leaf = (*it).leaf().string();
-         pLeaf = leaf.c_str();
-         strLen = ossStrlen( pLeaf ) - ossStrlen( MFILE_SUFFIX );
-         if ( strLen > file_name_len )
+         fileFullName  = (*it).leaf().string() ;
+         pFileFullName = fileFullName.c_str() ;
+         fullNameLen   = ossStrlen( pFileFullName ) ;
+         if ( fullNameLen > file_name_len || 
+              fullNameLen <= MFILE_LANG_TAG_LEN + MFILE_SUFFIX_LEN )
          {
-            ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE,
-                        __FILE__, __LINE__ ) ;
+            ossPrintf( "Invalid langth(%d) of the file name, %s:%d "OSS_NEWLINE,
+                       fullNameLen, __FILE__, __LINE__ ) ;
             rc = SDB_INVALIDARG ;
             goto error;
          }
-         ossMemcpy( pFileName, pLeaf, strLen );
-         *(pFileName + strLen) = 0;
-         fileName =  pFileName ;
-         fileNameLower = pFileName ;
-
+         ossMemcpy( pFileName, pFileFullName, fullNameLen ) ;
+         fileNameLower = fileName = string( pFileName, 0, 
+                       (fullNameLen - MFILE_LANG_TAG_LEN - MFILE_SUFFIX_LEN) ) ;
+         langTag = string( pFileName, 
+                           (fullNameLen - MFILE_LANG_TAG_LEN - MFILE_SUFFIX_LEN),
+                           MFILE_LANG_TAG_LEN ) ;
          // save name pair like "cl.createcl cl.createCL" to _nmap for search
          boost::to_lower( fileNameLower ) ;
          _nmap.insert( pair<string, string>(fileNameLower, fileName) ) ;
          // split the file name cs.createCL
+         *(pFileName + ( fullNameLen - MFILE_LANG_TAG_LEN - MFILE_SUFFIX_LEN ) ) = 0 ;
          pSplit = ossStrrchr( pFileName, SPLIT_POINT1 ) ;
          if ( !pSplit )
          {
-            ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE,
-                        __FILE__, __LINE__ ) ;
+            ossPrintf( "Invalid file name: %s, %s:%d "OSS_NEWLINE,
+                        pFileName, __FILE__, __LINE__ ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          *pSplit = '\0' ;
          funcName = ++pSplit ;
+         // set info about language
+         langType = SPT_PRINT_EN ;
+         pCutlineBegin = READ_CUTLINE_BEGIN_EN ;
+         pCutlineEnd   = READ_CUTLINE_END_EN ;
+         pSynopsisEnd  = READ_SYN_END_EN ;
+         /*
+         if ( langTag == MFILE_LANG_EN )
+         {
+            langType = SPT_PRINT_EN ;
+            pCutlineBegin = READ_CUTLINE_BEGIN_EN ;
+            pCutlineEnd   = READ_CUTLINE_END_EN ;
+            pSynopsisEnd  = READ_SYN_END_EN ;
+         }
+         else if ( langTag == MFILE_LANG_CN )
+         {
+            langType = SPT_PRINT_CN ;
+            pCutlineBegin = READ_CUTLINE_BEGIN_CN ;
+            pCutlineEnd   = READ_CUTLINE_END_CN ;
+            pSynopsisEnd  = READ_SYN_END_CN ;
+         }
+         else
+         {
+            ossPrintf( "Invalid troff file name %s "OSS_NEWLINE, pfPath ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         */
          // i am going to save category and cutline to ssmap
          // and save funcName and fileName to smmap
          if ( isCategory( pFileName, CATE_ARR, CATE_SIZE ) )
@@ -280,43 +340,44 @@ INT32 manHelp::scanFile()
             // read brief cutline from troff file
             std::ifstream fin ;
             INT32 troff_file_len = 0 ;
-            INT32 read_real_len = 0 ;
-            INT32 cutline_len = 0 ;
-            CHAR* r_beg = NULL ;
-            CHAR* r_end = NULL ;
-            CHAR* r_pos = NULL ;
-            std::string cutline ;
-            std::string synopsis ;
+            INT32 read_real_len  = 0 ;
+            CHAR* r_beg          = NULL ;
+            CHAR* r_end          = NULL ;
+            CHAR* r_pos          = NULL ;
+            string cutline ;
+            string synopsis ;
             // open file
             fin.open( pfPath ) ;
             // get the troff_file_len of file
-            fin.seekg ( 0, fin.end ) ;
+            fin.seekg( 0, fin.end ) ;
             troff_file_len = fin.tellg() ;
-            fin.seekg ( 0, fin.beg ) ;
+            fin.seekg( 0, fin.beg ) ;
             // check the file_buffer
-            rc = checkBuffer ( &file_buffer, &file_buf_len, troff_file_len ) ;
+            rc = checkBuffer( &file_buffer, &file_buf_len, troff_file_len ) ;
             if ( rc )
             {
                goto exit ;
             }
             // read troff file
-            fin.read ( file_buffer, troff_file_len ) ;
+            fin.read( file_buffer, troff_file_len ) ;
 
             // extract cutline
-            // i am going to extract the content between '.SH "NAME"' and ''.SH "SYNOPSIS"'
-            // in troff file as the cutline, i will abandon null string and some useless content
-            r_beg = ossStrstr( file_buffer, READ_CUTLINE_BEGIN ) ;
+            // i am going to extract the content between 
+            // '.SH "NAME"' and ''.SH "SYNOPSIS"'
+            // in troff file as the cutline, i will abandon null string 
+            // and some useless content
+            r_beg = ossStrstr( file_buffer, pCutlineBegin ) ;
             if ( !r_beg )
             {
-               ossPrintf( "Failed to deal with file %s, for having no "
+               ossPrintf( "Failed to handle file %s, for having no "
                           "tag \"NAME\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
-            r_end = ossStrstr( file_buffer, READ_CUTLINE_END ) ;
+            r_end = ossStrstr( file_buffer, pCutlineEnd ) ;
             if ( !r_end )
             {
-               ossPrintf( "Failed to deal with file %s, for having no "
+               ossPrintf( "Failed to handle file %s, for having no "
                           "tag \"SYNOPSIS\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
@@ -326,9 +387,21 @@ INT32 manHelp::scanFile()
             r_pos =  ossStrstr( r_beg, pSplit ) ;
             if ( !r_pos )
             {
-               ossPrintf ( "Failed to deal with file %s, for the content of "
+               ossPrintf ( "Failed to handle file %s, for the content of "
                            "tag \"NAME\" having no short name %s"OSS_NEWLINE,
                            pfPath, pSplit ) ;
+               rc = SDB_INVALIDARG ;
+               goto exit ;
+            }
+            while( SPLIT_POINT3 != *r_pos && '\0' != *r_pos )
+            {
+               r_pos++ ;
+            }
+            if ( SPLIT_POINT3 != *r_pos )
+            {
+               ossPrintf ( "Failed to handle file %s, for the content of "
+                           "tag \"NAME\" having no cutline"OSS_NEWLINE,
+                           pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -343,9 +416,8 @@ INT32 manHelp::scanFile()
                            __FILE__, __LINE__ ) ;
                goto exit ;
             }
-            cutline_len = read_real_len - ossStrlen(pSplit) ;
-            ossMemcpy( tmp_buffer, r_pos + ossStrlen(pSplit), cutline_len ) ;
-            tmp_buffer[ cutline_len ] = '\0' ;
+            ossMemcpy( tmp_buffer, r_pos, read_real_len ) ;
+            tmp_buffer[ read_real_len ] = '\0' ;
             // replace "\n", "\r\n", "\f" with " "
             #if defined ( _WINDOWS )
             rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\r\n", " " ) ;
@@ -358,10 +430,10 @@ INT32 manHelp::scanFile()
             r_beg = r_end + 1 ;
             r_pos = NULL ;
             r_end = NULL ;
-            r_end = ossStrstr( r_beg, READ_SYN_END ) ;
+            r_end = ossStrstr( r_beg, pSynopsisEnd ) ;
             if ( !r_end )
             {
-               ossPrintf( "Failed to deal with file %s, for having no tag "
+               ossPrintf( "Failed to handle file %s, for having no tag "
                           "\"CATEGORY\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
@@ -371,7 +443,7 @@ INT32 manHelp::scanFile()
             r_pos = ossStrstr ( r_beg, pSplit ) ;
             if ( !r_pos )
             {
-               ossPrintf ( "Failed to deal with file %s, for the content of "
+               ossPrintf ( "Failed to handle file %s, for the content of "
                            "tag \"SYNOPIS\" having no short name %s"OSS_NEWLINE,
                            pfPath, pSplit ) ;
                rc = SDB_INVALIDARG ;
@@ -391,8 +463,11 @@ INT32 manHelp::scanFile()
             ossMemcpy( tmp_buffer, r_pos, read_real_len ) ;
             tmp_buffer[read_real_len] = '\0' ;
             // remove the useless mark
-            rc = removeMark( tmp_buffer, read_real_len, MARK1 ) ;
-            rc = removeMark( tmp_buffer, read_real_len, MARK2 ) ;
+            rc = removeMark( tmp_buffer, read_real_len, MARK1_V1 ) ;
+            rc = removeMark( tmp_buffer, read_real_len, MARK1_V2 ) ;
+            rc = removeMark( tmp_buffer, read_real_len, MARK2_V1 ) ;
+            rc = removeMark( tmp_buffer, read_real_len, MARK2_V2 ) ;
+            rc = removeMark( tmp_buffer, read_real_len, MARK3_V2 ) ;
             #if defined ( _WINDOWS )
             rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\r\n", " " ) ;
             #else
@@ -418,57 +493,79 @@ INT32 manHelp::scanFile()
             if ( string(GLOBAL_CATEGORY) == categoryName )
             {
                _global._first.insert( pair<string, string>(funcName, pFileName) ) ;
-               _global._second.insert( pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _global._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _global._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(DB_CATEGORY) == categoryName )
             {
                _db._first.insert( pair<string, string>(funcName, pFileName) ) ;
-               _db._second.insert( pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _db._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _db._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(CS_CATEGORY) == categoryName )
             {
                _cs._first.insert( std::pair<string, string>(funcName, pFileName) ) ;
-               _cs._second.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _cs._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _cs._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(CL_CATEGORY) == categoryName )
             {
                _cl._first.insert( std::pair<string, string>(funcName, pFileName) ) ;
-               _cl._second.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _cl._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _cl._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(RG_CATEGORY) == categoryName )
             {
                _rg._first.insert( std::pair<string, string>(funcName, pFileName) ) ;
-               _rg._second.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _rg._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _rg._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(NODE_CATEGORY) == categoryName )
             {
                _node._first.insert( std::pair<string, string>(funcName, pFileName) ) ;
-               _node._second.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _node._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _node._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(CURSOR_CATEGORY) == categoryName )             
             {
                _cursor._first.insert( pair<string, string>(funcName, pFileName) ) ;
-               _cursor._second.insert( pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _cursor._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _cursor._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(CLCOUNT_CATEGORY) == categoryName )
             {
                _clcount._first.insert( pair<string, string>(funcName, pFileName) ) ;
-               _clcount._second.insert( pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _clcount._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _clcount._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(DOMAIN_CATEGORY) == categoryName )
             {
                _domain._first.insert( pair<string, string>(funcName, pFileName) ) ;
-               _domain._second.insert( pair<string, string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _domain._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _domain._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(OMA_CATEGORY) == categoryName )
             {
                _oma._first.insert( pair<string, string>(funcName, pFileName) ) ;
-               _oma._second.insert( pair<string,string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _oma._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _oma._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(DC_CATEGORY) == categoryName )
             {
                _dc._first.insert( pair<string, string>(funcName, pFileName) ) ;
-               _dc._second.insert( pair<string,string>(synopsis, cutline) ) ;
+               langType == SPT_PRINT_EN ?
+               _dc._second.insert( pair<string, string>(synopsis, cutline) ) :
+               _dc._third.insert( pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( string(QUERY_CATEGORY) == categoryName )
             {
@@ -477,20 +574,23 @@ INT32 manHelp::scanFile()
                if ( ossMemcmp( pFileName, QUERY_GEN_CATEGORY,
                                ossStrlen( pFileName ) ) == 0 )
                {
-                  _query_gen._second.insert( pair<string,string>(synopsis,
-                                             cutline) ) ;
+                  langType == SPT_PRINT_EN ?
+                  _query_gen._second.insert( pair<string, string>(synopsis, cutline) ) :
+                  _query_gen._third.insert( pair<string, string>(synopsis, cutline) ) ;
                }
                else if ( ossMemcmp( pFileName, QUERY_COND_CATEGORY,
                                     ossStrlen( pFileName ) ) == 0 )
                {
-                  _query_cond._second.insert( pair<string,string>(synopsis,
-                                              cutline) ) ;
+                  langType == SPT_PRINT_EN ?
+                  _query_cond._second.insert( pair<string, string>(synopsis, cutline) ) :
+                  _query_cond._third.insert( pair<string, string>(synopsis, cutline) ) ;
                }
                else if ( ossMemcmp( pFileName, QUERY_CURS_CATEGORY,
                                     ossStrlen( pFileName ) ) == 0 )
                {
-                  _query_curs._second.insert( pair<string,string>(synopsis,
-                                              cutline) ) ;
+                  langType == SPT_PRINT_EN ?
+                  _query_curs._second.insert( pair<string, string>(synopsis, cutline) ) :
+                  _query_curs._third.insert( pair<string, string>(synopsis, cutline) ) ;
                }
                else
                {
@@ -517,7 +617,7 @@ INT32 manHelp::scanFile()
          }
          else
          {
-            ossPrintf( "Failed to deal with file %s, for the wrong file "
+            ossPrintf( "Failed to handle file %s, for the wrong file "
                        "name %s"OSS_NEWLINE, pfPath, pFileName ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
@@ -545,7 +645,7 @@ error :
    goto done;
 }
 
-INT32 manHelp::getFileHelp( const CHAR* name )
+INT32 manHelp::getFileHelp( const CHAR *name )
 {
    INT32 rc = SDB_OK;
    sset fuzzy_match ;
@@ -558,17 +658,16 @@ INT32 manHelp::getFileHelp( const CHAR* name )
    boost::to_lower( nameLower ) ;
    nameL = nameLower.c_str() ;
    // check wether success to scan file or not
-   if ( troffFileNotEixt )
+   if ( _troffFileNotEixt )
    {
       ossPrintf( "Failed to scan troff file"OSS_NEWLINE ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
    // check argument
-   if ( name == NULL || ossStrcmp(name, "") == 0 )
+   if ( name == NULL || ossStrcmp( name, "" ) == 0 )
    {
-      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__,
-                 __LINE__ ) ;
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -612,9 +711,18 @@ INT32 manHelp::getFileHelp( const CHAR* name )
       sset::const_iterator it(fuzzy_match.begin());
       ossMemcpy( fPath, _filePath, ossStrlen(_filePath) );
       ossStrncat( fPath, (*it).c_str(), ossStrlen((*it).c_str()) );
-      ossStrncat( fPath, MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) );
+      if ( SPT_PRINT_EN == _lang )
+      {
+         ossStrncat( fPath, MFILE_SUFFIX_EN, ossStrlen(MFILE_SUFFIX_EN) );
+      }
+      else
+      {
+         ossStrncat( fPath, MFILE_SUFFIX_CN, ossStrlen(MFILE_SUFFIX_CN) );
+      }
       // parse
+      ossResetTty();
       rc = parseMandoc::getInstance().parse ( fPath ) ;
+      ossResetTty();
       if ( rc != SDB_OK )
       {
          ossPrintf( "Failed to parse troff file, %s:%d "OSS_NEWLINE,
@@ -622,14 +730,14 @@ INT32 manHelp::getFileHelp( const CHAR* name )
          goto error ;
       }
    }
-
 done :
    return rc;
 error :
    goto done;
 }
 
-INT32 manHelp::getFileHelp( const CHAR* category, const CHAR* cmd )
+INT32 manHelp::getFileHelp( const CHAR *category, 
+                            const CHAR *cmd )
 {
    INT32 rc = SDB_OK;
    // check argument
@@ -676,72 +784,73 @@ ssmap& manHelp::getCategoryMap( const CHAR *category )
     if ( ossMemcmp( category, GLOBAL_CATEGORY,
                     ossStrlen( category ) ) == 0 )
     {
-       return _global._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _global._second : _global._third ;
     }
     else if ( ossMemcmp( category, DB_CATEGORY,
                     ossStrlen( category ) ) == 0 )
     {
-       return _db._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _db._second : _db._third ;
     }
     else if ( ossMemcmp( category, CS_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _cs._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _cs._second : _cs._third ;
     }
     else if ( ossMemcmp( category, CL_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _cl._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _cl._second : _cl._third ;
     }
     else if ( ossMemcmp( category, RG_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _rg._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _rg._second : _rg._third ;
     }
     else if ( ossMemcmp( category, NODE_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _node._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _node._second : _node._third ;
     }
     else if ( ossMemcmp( category, CURSOR_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _cursor._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _cursor._second : _cursor._third ;
     }
     else if ( ossMemcmp( category, CLCOUNT_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
        return _clcount._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _clcount._second : _clcount._third ;
     }
     else if ( ossMemcmp( category, DOMAIN_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _domain._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _domain._second : _domain._third ;
     }
     else if ( ossMemcmp( category, OMA_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _oma._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _oma._second : _oma._third ;
     }
     else if ( ossMemcmp( category, DC_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _dc._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _dc._second : _dc._third ;
     }
     else if ( ossMemcmp( category, QUERY_GEN_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _query_gen._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _query_gen._second : _query_gen._third ;
     }
     else if ( ossMemcmp( category, QUERY_COND_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _query_cond._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _query_cond._second : _query_cond._third ;
     }
     else if ( ossMemcmp( category, QUERY_CURS_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _query_curs._second ;
+       return ( SPT_PRINT_EN == _lang ) ? _query_curs._second : _query_curs._third ;
     }
     else
     {
@@ -759,14 +868,14 @@ INT32 manHelp::displayMethod( const CHAR *category )
    }
    else
    {
-      const CHAR *p_first = NULL ;
-      const CHAR *p_second = NULL ;
-      ssmap::iterator it = cate.begin() ;
+      const CHAR *pSynopsis = NULL ;
+      const CHAR *pCutline  = NULL ;
+      ssmap::iterator it    = cate.begin() ;
       for ( ; it != cate.end(); it++ )
       {
-         p_first = (it->first).c_str() ;
-         p_second = (it->second).c_str() ;
-         rc =  display( p_first, p_second, INDENT_WIDTH1, INDENT_WIDTH2 ) ;
+         pSynopsis = (it->first).c_str() ; // first part
+         pCutline = (it->second).c_str() ; // second part
+         rc =  display( pSynopsis, pCutline, INDENT_WIDTH1, INDENT_WIDTH2 ) ;
          if ( rc )
          {
             goto error ;

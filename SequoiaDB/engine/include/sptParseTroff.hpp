@@ -51,18 +51,29 @@ typedef std::map<string, string> ssmap ;
 typedef std::map<string, string>& ssmap_ref ;
 typedef std::map< string, ssmap_ref > smmap ;
 
+enum _SPT_PRINT_LANG
+{
+   SPT_PRINT_CN,
+   SPT_PRINT_EN,
+   SPT_PRINT_END
+} ;
+typedef enum _SPT_PRINT_LANG SPT_PRINT_LANG ;
+
 struct Classified_info
 {
-   ssmap _first ; // save "funcName, fileName", use them in display manumal
-   ssmap _second ; // save "synopsis, cutline", use them in diaplay functions
+   ssmap _first ;  // save "funcName, fileName", use them in display manumal
+   ssmap _second ; // save "synopsis, cutline(en)", use them in diaplay functions
+   ssmap _third ;  // save "synopsis, cutline(cn)", use them in diaplay functions
 } ;
 
 class manHelp : public SDBObject
 {
 public:
    static manHelp& getInstance( const CHAR *path ) ;
+   manHelp& setLanguage( const CHAR *lang ) ;
    INT32 getFileHelp( const CHAR *cmd ) ;
-   INT32 getFileHelp( const CHAR *category, const CHAR *cmd ) ;
+   INT32 getFileHelp( const CHAR *category, 
+                      const CHAR *cmd ) ;
    
 private:
    manHelp( const CHAR* path ) ;
@@ -96,7 +107,8 @@ private:
    // mapping functions to the top category,
    // e.g. query.cond.hint is show as query.hint
    smmap _classify ; 
-   BOOLEAN troffFileNotEixt ;
+   BOOLEAN _troffFileNotEixt ;
+   SPT_PRINT_LANG  _lang ;
 } ;
 
 #endif // SPTPARSETROFF_HPP__

@@ -100,6 +100,8 @@ BOOLEAN ossIsTimestampValid( INT64 tm ) ;
 
 INT32 ossDup2( int oldFd, int newFd ) ;
 
+INT32 ossResetTty() ;
+
 #if defined (_WINDOWS)
    #define  ossDup(fd)                 _dup(fd)
    #define  ossCloseFd(fd)             _close(fd)

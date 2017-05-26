@@ -35,13 +35,7 @@
 #include "ossProc.hpp"
 #include "utilStr.hpp"
 #include "pdTrace.hpp"
-#include "sptParseTroff.hpp"
-
-#if defined (_WINDOWS)
-   #define TF_REL_PATH "..\\doc\\manual\\"
-#else
-   #define TF_REL_PATH "../doc/manual/"
-#endif // _WINDOWS
+#include "sptHelp.hpp"
 
 using namespace bson ;
 
@@ -57,6 +51,8 @@ JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, print )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, showClass )
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, showClassfull)
 JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, forceGC )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, displayManual )
+JS_GLOBAL_FUNC_DEFINE_NORESET( _sptGlobalFunc, displayMethod )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, traceFmt )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, globalHelp )
@@ -71,7 +67,9 @@ JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "sleep", sleep )
    JS_ADD_GLOBAL_FUNC( "print", print )
    JS_ADD_GLOBAL_FUNC( "traceFmt", traceFmt )
-   JS_ADD_GLOBAL_FUNC( "man", globalHelp )
+   JS_ADD_GLOBAL_FUNC( "globalHelp", globalHelp )
+   JS_ADD_GLOBAL_FUNC( "displayMethod", displayMethod )
+   JS_ADD_GLOBAL_FUNC( "displayManual", displayManual )
    JS_ADD_GLOBAL_FUNC( "showClass", showClass )
    JS_ADD_GLOBAL_FUNC( "showClassfull", showClassfull )
    JS_ADD_GLOBAL_FUNC( "forceGC", forceGC )
@@ -288,45 +286,124 @@ JS_MAPPING_END()
                                      BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      string cata ;
-      string cmd ;
-      CHAR cmdPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-      rc = arg.getString( 0, cata ) ;
-      if ( rc )
+      if ( arg.argc() == 0 )
       {
-         detail = BSON( SPT_ERR << "The 1st param must be string" ) ;
-         goto error ;
-      }
-
-      if ( arg.argc() >= 2 )
-      {
-         rc = arg.getString( 1, cmd ) ;
+         rc = sptHelp::getInstance().displayGlobalMethod() ;
          if ( rc )
          {
-            detail = BSON( SPT_ERR << "The 2nd param should be string" ) ;
             goto error ;
          }
       }
+      else if ( arg.argc() >= 1 )
+      {
+         string fuzzyFuncName ;
+         rc = arg.getString( 0, fuzzyFuncName ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "The 1st param must be a function name" ) ;
+            goto error ;
+         }
+         rc = sptHelp::getInstance().displayManpage( fuzzyFuncName, "", FALSE ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
-      rc = ossGetEWD( cmdPath, OSS_MAX_PATHSIZE ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = utilCatPath( cmdPath, OSS_MAX_PATHSIZE, TF_REL_PATH ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = manHelp::getInstance( cmdPath ).getFileHelp( cata.c_str(),
-                                                        cmd.empty() ?
-                                                        NULL : cmd.c_str() ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
+   INT32 _sptGlobalFunc::displayMethod( const _sptArguments &arg,
+                                        _sptReturnVal &rval,
+                                        BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
 
+      if ( arg.argc() < 2 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         string className ;
+         BOOLEAN isInstance = FALSE ;
+         
+         rc = arg.getString( 0, className ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "The 1st param must be the class name" ) ;
+            goto error ;
+         }
+         rc = arg.getNative( 1, (void *)(&isInstance), SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "The 2nd param must be a bool value" ) ;
+            goto error ;
+         }
+         rc = sptHelp::getInstance().displayMethod( className, isInstance ) ;
+         if ( rc )
+         {
+            goto error ;
+         }         
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptGlobalFunc::displayManual( const _sptArguments &arg,
+                                        _sptReturnVal &rval,
+                                        BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( arg.argc() < 3 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         string fuzzyFuncName ;
+         string matcher ;
+         BOOLEAN isInstance = FALSE ;
+         
+         rc = arg.getString( 0, fuzzyFuncName ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << 
+                           "The 1st param must be the name of the function" ) ;
+            goto error ;
+         }
+         rc = arg.getString( 1, matcher ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << 
+                           "The 2nd param must be the name of the class" ) ;
+            goto error ;
+         }
+         rc = arg.getNative( 2, (void *)(&isInstance), SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "The 3rd param must be a bool value" ) ;
+            goto error ;
+         }
+         
+         rc = sptHelp::getInstance().displayManpage( fuzzyFuncName, 
+                                                     matcher, isInstance ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      
    done:
       return rc ;
    error:

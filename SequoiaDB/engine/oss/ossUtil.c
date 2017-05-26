@@ -449,6 +449,27 @@ INT32 ossDup2( int oldFd, int newFd )
    return SDB_OK ;
 }
 
+INT32 ossResetTty()
+{
+   INT32 rc     = SDB_OK ;
+   FILE *stream = NULL ;
+#if defined(_WINDOWS)
+   stream = freopen( "CON", "w", stdout ) ;
+#else
+   stream = freopen( "/dev/tty", "w", stdout ) ;
+#endif
+   if ( NULL == stream )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+
 BOOLEAN ossIsTimestampValid( INT64 tm )
 {
    if( tm > OSS_TIMESTAMP_MAX || tm < OSS_TIMESTAMP_MIN )

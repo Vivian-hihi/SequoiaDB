@@ -290,15 +290,9 @@ int main ( int argc , const char * argv[] )
    // thay will be redirected to log file
    if ( ! freopen ( SDB_BP_LOG_FILE , "a" , stdout ) )
    {
-      FILE *stream = NULL ;
-#if defined(_WINDOWS)
-      stream = freopen( "CON", "w", stdout ) ;
-#else
-      stream = freopen( "/dev/tty", "w", stdout ) ;
-#endif
-      if ( NULL == stream )
+      rc = ossResetTty() ;
+      if ( SDB_OK == rc )
       {
-         rc = SDB_SYS ;
          goto error ;
       }
       // this can only display in linux, for in linux, father and son process

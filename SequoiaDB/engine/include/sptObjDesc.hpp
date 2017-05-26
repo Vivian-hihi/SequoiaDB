@@ -35,7 +35,6 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "sptFuncMap.hpp"
 #include "jsapi.h"
 #include <string>
 #include <vector>

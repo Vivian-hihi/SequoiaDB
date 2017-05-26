@@ -510,19 +510,6 @@ Oma.prototype.reloadConfigs = function()
 {
    this._runCommand( "reload config" ) ;
 }
-
-Oma.prototype.help = function( val ) {
-   if ( val == undefined )
-   {
-      println("OMA methods:") ;
-      println("   oma.help(<method>)          help on specified method of oma, e.g. oma.help(\'createData\')");
-      man( "oma" ) ;
-   }
-   else
-   {
-      man( "oma", val ) ;
-   }
-}
 // end Oma
 
 // Remote member function
