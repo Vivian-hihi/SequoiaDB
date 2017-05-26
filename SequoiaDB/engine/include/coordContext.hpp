@@ -38,7 +38,7 @@
 #ifndef COORD_CONTEXT_HPP__
 #define COORD_CONTEXT_HPP__
 
-#include "rtnContext.hpp"
+#include "rtnContextMainCL.hpp"
 #include "ixmIndexKey.hpp"
 #include "coordDef.hpp"
 

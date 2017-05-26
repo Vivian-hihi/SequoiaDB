@@ -39,6 +39,7 @@
 #include "rtnDataSet.hpp"
 #include "rtnContextShdOfLob.hpp"
 #include "rtnContextDump.hpp"
+#include "rtnContextMainCL.hpp"
 #include "utilCompressor.hpp"
 
 using namespace bson ;
