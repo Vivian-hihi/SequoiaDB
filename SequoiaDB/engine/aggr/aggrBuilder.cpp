@@ -39,6 +39,7 @@
 #include "optQgmOptimizer.hpp"
 #include "qgmBuilder.hpp"
 #include "rtnCB.hpp"
+#include "rtnContextDump.hpp"
 #include "pmd.hpp"
 #include "aggrGroup.hpp"
 #include "aggrMatcher.hpp"

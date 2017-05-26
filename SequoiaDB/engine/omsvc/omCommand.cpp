@@ -34,6 +34,7 @@
 #include "omCommand.hpp"
 #include "omDef.hpp"
 #include "rtn.hpp"
+#include "rtnContextDump.hpp"
 #include "omManager.hpp"
 #include "omConfigBuilder.hpp"
 #include "omTaskManager.hpp"

@@ -56,7 +56,6 @@
 #include "mthSelector.hpp"
 #include "rtnQueryOptions.hpp"
 #include "rtnContextBuff.hpp"
-#include "rtnFetchBase.hpp"
 #include "utilMap.hpp"
 #include <string>
 
@@ -307,6 +306,7 @@ namespace engine
          BOOLEAN                 _countOnly ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
+   typedef _rtnContextBase rtnContext ;
 
    /*
       _rtnContextBase OSS_INLINE functions
@@ -419,50 +419,6 @@ namespace engine
 
    } ;
    typedef _rtnContextQGM rtnContextQGM ;
-
-   /*
-      _rtnContextDump define
-   */
-   class _rtnContextDump : public _rtnContextBase
-   {
-      DECLARE_RTN_CTX_AUTO_REGISTER()
-      public:
-         _rtnContextDump ( INT64 contextID, UINT64 eduID ) ;
-         virtual ~_rtnContextDump () ;
-
-         INT32 open ( const BSONObj &selector, const BSONObj &matcher,
-                      INT64 numToReturn = -1, INT64 numToSkip = 0 ) ;
-
-         INT32 monAppend( const BSONObj &result ) ;
-
-         void  setMonFetch( rtnFetchBase *pFetch, BOOLEAN ownned ) ;
-         rtnFetchBase* getMonFetch() { return _pFetch ; }
-         BOOLEAN isMonFetchOwnned() const { return _ownnedFetch ; }
-
-         INT64 getNumToReturn() const { return _numToReturn ; }
-
-      public:
-         virtual std::string      name() const ;
-         virtual RTN_CONTEXT_TYPE getType () const ;
-         virtual _dmsStorageUnit* getSU () { return NULL ; }
-
-      protected:
-         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
-         virtual void   _toString( stringstream &ss ) ;
-
-      private:
-         // rest number of records to expect, -1 means select all
-         SINT64                     _numToReturn ;
-         // rest number of records need to skip
-         SINT64                     _numToSkip ;
-
-         rtnFetchBase               *_pFetch ;
-         BOOLEAN                    _ownnedFetch ;
-
-   } ;
-   typedef _rtnContextDump rtnContextDump ;
-
-   typedef _rtnContextBase rtnContext ;
 
    /*
       _rtnContextSP OSS_INLINE functions

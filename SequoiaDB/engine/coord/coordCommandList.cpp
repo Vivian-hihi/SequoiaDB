@@ -37,6 +37,7 @@
 #include "msgMessage.hpp"
 #include "pmd.hpp"
 #include "rtnCB.hpp"
+#include "rtnContextDump.hpp"
 #include "catDef.hpp"
 #include "authDef.hpp"
 #include "coordQueryOperator.hpp"

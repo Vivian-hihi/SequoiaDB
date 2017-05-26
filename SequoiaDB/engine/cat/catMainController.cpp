@@ -40,6 +40,7 @@
 #include "pd.hpp"
 #include "catDef.hpp"
 #include "rtn.hpp"
+#include "rtnContextDump.hpp"
 #include "dpsLogWrapper.hpp"
 #include "msgMessage.hpp"
 #include "msgAuth.hpp"

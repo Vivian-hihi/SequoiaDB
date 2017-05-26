@@ -57,6 +57,7 @@ namespace engine
 
    class _dmsScanner ;
    class _rtnContextData ;
+   class _rtnContextDump ;
 
    INT32 rtnReallocBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                             INT32 newLength, INT32 alignmentSize ) ;
@@ -286,7 +287,7 @@ namespace engine
                            const CHAR *backupName,
                            const BSONObj &option ) ;
 
-   INT32 rtnDumpBackups ( const BSONObj &hint, rtnContextDump *context ) ;
+   INT32 rtnDumpBackups ( const BSONObj &hint, _rtnContextDump *context ) ;
 
    BOOLEAN rtnIsInBackup () ;
 
@@ -415,7 +416,7 @@ namespace engine
                           const BSONObj &hint,
                           SDB_DMSCB *dmsCB,
                           pmdEDUCB *cb,
-                          rtnContextDump *context ) ;
+                          _rtnContextDump *context ) ;
 
    INT32 rtnTestCollectionCommand ( const CHAR *pCollection,
                                     SDB_DMSCB *dmsCB ) ;

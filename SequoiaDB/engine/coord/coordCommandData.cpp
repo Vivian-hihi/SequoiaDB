@@ -39,6 +39,7 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "rtn.hpp"
+#include "rtnContextDump.hpp"
 #include "catCommon.hpp"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"

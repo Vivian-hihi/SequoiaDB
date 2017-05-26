@@ -38,6 +38,7 @@
 #include "clsTrace.hpp"
 #include "rtnDataSet.hpp"
 #include "rtnContextShdOfLob.hpp"
+#include "rtnContextDump.hpp"
 #include "utilCompressor.hpp"
 
 using namespace bson ;
