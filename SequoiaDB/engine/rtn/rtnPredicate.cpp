@@ -1455,7 +1455,10 @@ namespace engine
       }
       else if ( Array == e.type() )
       {
-         rc = _initALL( e, FALSE ) ;
+         // do nothing
+         // Note: $et with array could generate predicate if the array is
+         // expanded recursively, but now it is only expanded for one level
+         // rc = _initALL( e, FALSE ) ;
       }
       else
       {
