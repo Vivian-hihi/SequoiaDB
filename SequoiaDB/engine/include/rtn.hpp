@@ -56,6 +56,7 @@ namespace engine
 {
 
    class _dmsScanner ;
+   class _rtnContextData ;
 
    INT32 rtnReallocBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                             INT32 newLength, INT32 alignmentSize ) ;
@@ -182,7 +183,7 @@ namespace engine
                              SDB_DMSCB *dmsCB,
                              SDB_RTNCB *rtnCB,
                              SINT64 &contextID,
-                             rtnContextData **ppContext = NULL,
+                             _rtnContextData **ppContext = NULL,
                              BOOLEAN enablePrefetch = FALSE ) ;
 
    INT32 rtnCreateCollectionSpaceCommand ( const CHAR *pCollectionSpace,

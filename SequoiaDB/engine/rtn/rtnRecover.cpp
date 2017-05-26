@@ -40,6 +40,7 @@
 #include "rtnRecover.hpp"
 #include "pmdStartup.hpp"
 #include "rtn.hpp"
+#include "rtnContextData.hpp"
 
 using namespace bson ;
 

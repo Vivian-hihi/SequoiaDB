@@ -42,6 +42,7 @@
 #include "rtnIXScanner.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
+#include "rtnContextData.hpp"
 #include "rtnContextSort.hpp"
 #include "rtnQueryModifier.hpp"
 
