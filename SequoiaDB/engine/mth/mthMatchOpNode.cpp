@@ -2272,12 +2272,15 @@ namespace engine
       {
          // obj: { 0 : { "b" : 1 }, 1 : { "c" : 2 } }
          BSONObjIterator it ( obj ) ;
+         BOOLEAN tmpUndefined = TRUE ;
          result = FALSE ;
          while ( it.more() )
          {
+            BOOLEAN subUndefined = FALSE ;
             BSONElement z = it.next() ;
             if ( ossStrcmp( z.fieldName(), pTmpFieldName ) == 0 )
             {
+               subUndefined = FALSE ;
                rc = _doFuncMatch( z, _toMatch, context, result ) ;
                PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
@@ -2292,7 +2295,7 @@ namespace engine
                BSONObj subObj = z.embeddedObject() ;
                //pass the input pFieldName, not pTmpFieldName
                rc = _execute( pFieldName, subObj, FALSE, context, result,
-                              gotUndefined ) ;
+                              subUndefined ) ;
                PD_RC_CHECK( rc, PDERROR, "_execute failed:rc=%d", rc ) ;
 
                if ( result )
@@ -2300,8 +2303,11 @@ namespace engine
                   goto done ;
                }
             }
+            tmpUndefined = tmpUndefined && subUndefined ;
          }
-
+         // Report undefined only when all sub-elements got undefined
+         // Note: empty array in this case is undefined
+         gotUndefined = tmpUndefined ;
          goto done ;
       }
 
@@ -2351,7 +2357,7 @@ namespace engine
       }
 
       rc = _valueMatch( recordEle, toMatchEle, mixCmp, context, result ) ;
-      PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "_valueMatch failed:rc=%d", rc ) ;
 
       if ( EN_MATCH_OPERATOR_EXISTS == getType() ||
            EN_MATCH_OPERATOR_ISNULL == getType() ||
