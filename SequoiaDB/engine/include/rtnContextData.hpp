@@ -1,7 +1,7 @@
 /*******************************************************************************
 
 
-   Copyright (C) 2011-2014 SequoiaDB Ltd.
+   Copyright (C) 2011-2017 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
    it under the term of the GNU Affero General Public License, version 3,

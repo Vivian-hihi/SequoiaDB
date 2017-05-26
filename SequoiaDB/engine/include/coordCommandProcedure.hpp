@@ -44,6 +44,7 @@ using namespace bson ;
 
 namespace engine
 {
+   class _spdSession ;
 
    /*
       _coordCMDCrtProcedure define

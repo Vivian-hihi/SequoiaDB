@@ -40,7 +40,6 @@
 #include "rtnContext.hpp"
 #include "dmsStorageUnit.hpp"
 #include "msgMessage.hpp"
-#include "spdSession.hpp"
 #include "rtn.hpp"
 #include "dpsOp2Record.hpp"
 #include "pdTrace.hpp"
@@ -980,106 +979,6 @@ namespace engine
          goto error ;
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   /*
-      _rtnContextSP define
-   */
-
-   RTN_CTX_AUTO_REGISTER(_rtnContextSP, RTN_CONTEXT_SP, "SP")
-
-   _rtnContextSP::_rtnContextSP( INT64 contextID, UINT64 eduID )
-   :_rtnContextBase( contextID, eduID ),
-    _sp(NULL)
-   {
-
-   }
-
-   _rtnContextSP::~_rtnContextSP()
-   {
-      SAFE_OSS_DELETE( _sp ) ;
-   }
-
-   std::string _rtnContextSP::name() const
-   {
-      return "SP" ;
-   }
-
-   RTN_CONTEXT_TYPE _rtnContextSP::getType() const
-   {
-      return RTN_CONTEXT_SP ;
-   }
-
-   INT32 _rtnContextSP::open( _spdSession *sp )
-   {
-      INT32 rc = SDB_OK ;
-      if ( _isOpened )
-      {
-         rc = SDB_DMS_CONTEXT_IS_OPEN ;
-         goto error ;
-      }
-      if ( NULL == sp )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      _sp = sp ;
-      _isOpened = TRUE ;
-      _hitEnd = FALSE ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32  _rtnContextSP::_prepareData( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj obj ;
-      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
-
-      for ( INT32 i = 0; i < RTN_CONTEXT_GETNUM_ONCE; i++ )
-      {
-         rc = _sp->next( obj ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            _hitEnd = TRUE ;
-            break ;
-         }
-         else if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to fetch spdSession:%d", rc ) ;
-            goto error ;
-         }
-         else
-         {
-            rc = append( obj ) ;
-            PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
-                      obj.toString().c_str(), rc ) ;
-         }
-
-         DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
-
-         if ( buffEndOffset() + DMS_RECORD_MAX_SZ > RTN_RESULTBUFFER_SIZE_MAX )
-         {
-            break ;
-         }
-      }
-
-      if ( !isEmpty() )
-      {
-         rc = SDB_OK ;
-      }
-      else
-      {
-         rc = SDB_DMS_EOC ;
-         goto error ;
-      }
    done:
       return rc ;
    error:

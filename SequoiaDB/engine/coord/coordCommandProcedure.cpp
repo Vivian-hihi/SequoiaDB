@@ -37,6 +37,7 @@
 #include "coordCommandProcedure.hpp"
 #include "pmd.hpp"
 #include "rtnCB.hpp"
+#include "rtnContextSP.hpp"
 #include "utilCommon.hpp"
 #include "spdSession.hpp"
 #include "spdCoordDownloader.hpp"

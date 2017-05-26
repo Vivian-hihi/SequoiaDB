@@ -421,37 +421,6 @@ namespace engine
    typedef _rtnContextQGM rtnContextQGM ;
 
    /*
-      _rtnContextSP OSS_INLINE functions
-   */
-   class _spdSession ;
-
-   class _rtnContextSP : public _rtnContextBase
-   {
-      DECLARE_RTN_CTX_AUTO_REGISTER()
-   public:
-      _rtnContextSP( INT64 contextID, UINT64 eduID ) ;
-      virtual ~_rtnContextSP() ;
-
-   public:
-      virtual std::string      name() const ;
-      virtual RTN_CONTEXT_TYPE getType () const ;
-      virtual _dmsStorageUnit* getSU () { return NULL ; }
-      INT32 open( _spdSession *sp ) ;
-
-   protected:
-      virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
-      virtual BOOLEAN _canPrepareMoreData() const
-      {
-         return TRUE ;
-      }
-
-   private:
-      _spdSession *_sp ;
-   } ;
-
-   typedef class _rtnContextSP rtnContextSP ;
-
-   /*
       _coordOrderKey define
    */
    class _coordOrderKey : public SDBObject
