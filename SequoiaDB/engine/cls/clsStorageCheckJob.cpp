@@ -39,6 +39,7 @@
 #include "clsShardMgr.hpp"
 #include "clsMgr.hpp"
 #include "rtn.hpp"
+#include "rtnContextDel.hpp"
 #include "clsStorageCheckJob.hpp"
 
 namespace engine

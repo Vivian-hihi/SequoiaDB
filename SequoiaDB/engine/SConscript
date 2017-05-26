@@ -173,6 +173,7 @@ rtnFiles = [
       "rtn/rtnContextDump.cpp",
       "rtn/rtnContextSP.cpp",
       "rtn/rtnContextMainCL.cpp",
+      "rtn/rtnContextDel.cpp",
       "rtn/rtnContextBuff.cpp",
       "rtn/rtnFetchBase.cpp",
       "rtn/rtnUpdate.cpp",
