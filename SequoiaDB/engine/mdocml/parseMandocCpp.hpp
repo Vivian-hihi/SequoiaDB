@@ -17,8 +17,9 @@
 #ifndef   PARSE_MANDOC_HPP__
 #define   PARSE_MANDOC_HPP__
 #include <core.hpp>
-#include "config.h"
+SDB_EXTERN_C_START
 #include "parseMandoc.h"
+SDB_EXTERN_C_END
 
 class parseMandoc
 {
@@ -30,8 +31,8 @@ private:
    parseMandoc( const parseMandoc& ) ;
    parseMandoc& operator=( const parseMandoc& ) ;
    ~parseMandoc() ;
-   struct curparse curp ;
-   enum mparset type ;
+//   struct curparse _curp ;
+//   struct manconf _conf ;
 } ;
 
 #endif // PARSE_MANDOC_HPP__
