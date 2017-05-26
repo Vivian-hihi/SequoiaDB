@@ -493,7 +493,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNLOADCS );
       CHAR csName[ DMS_SU_NAME_SZ + 1 ]        = {0} ;
       UINT32 sequence                          = 0 ;
-      CHAR fullFileName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       dmsStorageUnit *storageUnit              = NULL ;
       pmdOptionsCB *optCB                      = pmdGetOptionCB() ;
 
@@ -648,7 +647,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNLOADCSS );
       CHAR csName [ DMS_SU_FILENAME_SZ + 1 ]   = {0} ;
       UINT32 sequence                          = 0 ;
-      CHAR fullFileName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       dmsStorageUnit *storageUnit              = NULL ;
       pmdOptionsCB *optCB                      = pmdGetOptionCB() ;
 
