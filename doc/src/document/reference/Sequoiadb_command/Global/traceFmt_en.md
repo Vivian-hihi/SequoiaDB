@@ -1,6 +1,6 @@
 ##NAME##
 
-traceFmt - Format trace input(in) to output(out) by type.
+traceFmt - Format trace input to output by type.
 
 ##SYNOPSIS##
 
