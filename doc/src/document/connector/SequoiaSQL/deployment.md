@@ -93,6 +93,8 @@
 
 2. 创建实例
 
+   指定实例名为myinst，该实例名映射相应的数据目录和日志路径，用户可以根据自己需要指定不同的实例名。
+
    ```lang-javascript
    $ bin/sdb_sql_ctl addinst myinst -D pg_data/
    ```
@@ -102,7 +104,7 @@
    ```lang-javascript
    $ bin/sdb_sql_ctl listinst
    NAME       PGDATA                         PGLOG                                   
-   myinst     /opt/sequoiasqloltp/pg_data    /opt/sequoiasqloltp/pg_data/myinst.log     
+   myinst     /opt/sequoiasqloltp/pg_data    /opt/sequoiasqloltp/myinst.log     
    Total: 1
    ```
 
