@@ -569,6 +569,7 @@ namespace engine
          INT32 _doFuncMatch( const BSONElement &original,
                              const BSONElement &matchTarget,
                              _mthMatchTreeContext &context,
+                             BOOLEAN mixCmp,
                              BOOLEAN &matchResult ) ;
 
          INT32 _saveElement( _mthMatchTreeContext &context,  BOOLEAN isMatch,

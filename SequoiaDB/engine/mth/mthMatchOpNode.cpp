@@ -2083,7 +2083,7 @@ namespace engine
                {
                   right = context._originalObj.getFieldDotted( _cmpFieldName ) ;
                }
-               rc = _doFuncMatch( e, right, context, result ) ;
+               rc = _doFuncMatch( e, right, context, _config->_mixCmp, result ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
@@ -2121,12 +2121,12 @@ namespace engine
    INT32 _mthMatchOpNode::_doFuncMatch( const BSONElement &original,
                                         const BSONElement &matchTarget,
                                         _mthMatchTreeContext &context,
+                                        BOOLEAN mixCmp,
                                         BOOLEAN &matchResult )
    {
       INT32 rc = SDB_OK ;
       BSONObj resultObj ;
       BSONElement resultEle = original ;
-      BOOLEAN mixCmp = _config->_mixCmp ;
 
       if ( _funcList.size() > 0 )
       {
@@ -2281,7 +2281,8 @@ namespace engine
             if ( ossStrcmp( z.fieldName(), pTmpFieldName ) == 0 )
             {
                subUndefined = FALSE ;
-               rc = _doFuncMatch( z, _toMatch, context, result ) ;
+               // Inside an array, mix-compare mode should be disabled
+               rc = _doFuncMatch( z, _toMatch, context, FALSE, result ) ;
                PD_RC_CHECK( rc, PDERROR, "_doFuncMatch failed:rc=%d", rc ) ;
 
                if ( result )
