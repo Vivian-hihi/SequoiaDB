@@ -43,7 +43,7 @@
 #include "rtn.hpp"
 #include "dmsStorageUnit.hpp"
 #include "dmsTempSUMgr.hpp"
-#include "rtnContext.hpp"
+#include "rtnContextQGM.hpp"
 #include "qgmUtil.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"

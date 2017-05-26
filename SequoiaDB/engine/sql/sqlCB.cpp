@@ -44,6 +44,7 @@
 #include "optQgmOptimizer.hpp"
 #include "rtnSQLFunc.hpp"
 #include "rtnSQLFuncFactory.hpp"
+#include "rtnContextQGM.hpp"
 
 namespace engine
 {

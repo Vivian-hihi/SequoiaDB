@@ -46,7 +46,6 @@
 #include "monCB.hpp"
 #include "ixm.hpp"
 #include "optAccessPlan.hpp"
-#include "qgmPlanContainer.hpp"
 #include "msg.h"
 #include "ossAtomic.hpp"
 #include "../bson/bsonobj.h"
@@ -389,64 +388,6 @@ namespace engine
    } ;
 
    _rtnContextBuilder* sdbGetRTNContextBuilder() ;
-
-   /*
-      _rtnContextQGM define
-   */
-   class _rtnContextQGM : public _rtnContextBase
-   {
-      DECLARE_RTN_CTX_AUTO_REGISTER()
-      public:
-         _rtnContextQGM ( INT64 contextID, UINT64 eduID ) ;
-         virtual ~_rtnContextQGM () ;
-
-      public:
-         virtual std::string      name() const ;
-         virtual RTN_CONTEXT_TYPE getType () const ;
-         virtual _dmsStorageUnit* getSU () { return NULL ; }
-
-         INT32 open( _qgmPlanContainer *accPlan ) ;
-
-      protected:
-         virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
-         virtual BOOLEAN _canPrepareMoreData() const
-         {
-            return TRUE ;
-         }
-
-      private:
-         _qgmPlanContainer          *_accPlan ;
-
-   } ;
-   typedef _rtnContextQGM rtnContextQGM ;
-
-   class _qgmPlan ;
-
-   class _rtnContextQgmSort : public _rtnContextBase
-   {
-      DECLARE_RTN_CTX_AUTO_REGISTER()
-   public:
-      _rtnContextQgmSort( INT64 contextID, UINT64 eduID ) ;
-      virtual ~_rtnContextQgmSort() ;
-
-   public:
-      virtual std::string      name() const ;
-      virtual RTN_CONTEXT_TYPE getType () const ;
-      virtual _dmsStorageUnit* getSU () { return NULL ; }
-
-      INT32 open( _qgmPlan *qp ) ;
-
-   protected:
-      virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
-      virtual BOOLEAN _canPrepareMoreData() const
-      {
-         return TRUE ;
-      }
-
-   private:
-      _qgmPlan *_qp ;
-   } ;
-   typedef class _rtnContextQgmSort rtnContextQgmSort ;
 
 }
 
