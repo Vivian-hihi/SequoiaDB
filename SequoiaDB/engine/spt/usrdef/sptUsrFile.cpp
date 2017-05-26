@@ -698,7 +698,8 @@ JS_MAPPING_END()
          << "   read( [size] )" << endl
          << "   write( content )" << endl
          << "   readContent( [size] )" << endl
-         << "   writeContent( fileContent )" << endl
+         << "   writeContent( fileContent )"
+         << "   - fileContent: a FileContent obj" << endl
          << "   seek( offset, [where] ) " << endl
          << "   close()" << endl
          << "   remove( filepath )" << endl
@@ -717,7 +718,8 @@ JS_MAPPING_END()
          << "   isDir( pathname )" << endl
          << "   isEmptyDir( dirName )" << endl
          << "   stat( filename )" << endl
-         << "   md5( filename )" << endl ;
+         << "   md5( filename )" << endl
+         << "   getInfo()" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

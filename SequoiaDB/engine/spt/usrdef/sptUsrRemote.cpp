@@ -357,7 +357,8 @@ namespace engine
          << "   getSystem()" << endl
          << "   getFile( [filename], [mode] )" << endl
          << "   getCmd()" << endl
-         << "   close()" << endl ;
+         << "   close()" << endl
+         << "   getInfo()" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }
@@ -371,7 +372,8 @@ namespace engine
          << "   getSystem()" << endl
          << "   getFile( [filename], [mode] )" << endl
          << "   getCmd()" << endl
-         << "   close()" << endl ;
+         << "   close()" << endl
+         << "   getInfo()" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

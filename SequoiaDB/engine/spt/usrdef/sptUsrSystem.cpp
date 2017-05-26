@@ -313,7 +313,7 @@ namespace engine
    }
 
    INT32 _sptUsrSystem::getAHostMap( const _sptArguments & arg,
-                                     _sptReturnVal & rval,
+                                     _sptReturnVal &rval,
                                      BSONObj & detail )
    {
       INT32 rc = SDB_OK ;
@@ -1485,7 +1485,8 @@ namespace engine
          << "   getSystemConfigs( [type] )" << endl
          << "   buildTrusty()" << endl
          << "   removeTrusty()" << endl
-         << "   runService( servicename, command, [option] )" << endl ;
+         << "   runService( servicename, command, [option] )" << endl
+         << "   getInfo()" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
       return SDB_OK ;
    }

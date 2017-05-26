@@ -317,6 +317,7 @@ namespace engine
          << "   getCommand()" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl
+         << "   getInfo()" << endl
          << "Remote Cmd functions:" << endl
          << "   runJS( code )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
@@ -341,6 +342,7 @@ namespace engine
          << "   getCommand()" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl
+		 << "   getInfo()" << endl
          << "Remote Cmd member functions:" << endl
          << "   runJS( code )" << endl ;
       rval.getReturnVal().setValue( ss.str() ) ;
