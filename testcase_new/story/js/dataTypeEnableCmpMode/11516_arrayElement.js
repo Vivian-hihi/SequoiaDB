@@ -17,7 +17,7 @@ function main(){
    commCreateIndex( dbcl, "a", {a:1});
    commCreateIndex( dbcl, "a1", {"a.1":1});
    
-   var hintConf = [{"":"a"},{"":null},{"":"a.1"}];
+   var hintConf = [{"":"a"},{"":null},{"":"a1"}];
    var sortConf = {_id:1};
    
    //insert all type data 
@@ -131,20 +131,29 @@ function main(){
    var expRecs9 = [ {a:[1,2,3]}];         
    checkResult( dbcl, findConf9, hintConf, sortConf, expRecs9 );
    
-   //"a.1" query
+   //"a.1" query,index scan use {"a.1":1} or {"a":1} has different result;
+   var hintConf1 = [{"":"a"},{"":null}];
+   var hintConf2 = [{"":"a1"}];
+   
    //gt
    var findConf10 = {"a.1":{$gt:2}};
-   var expRecs10 = [ {a:[2,3,4]},
+   var expRecs10 = [{a:[2,3,4]},
 	                 {a:[3,4,5]},
 	                 {a:[{0:2},{1:3},{2:4}]},
       	           {a:[{0:3},{1:4},{2:5}]},
       	           {a:{0:2,1:3,2:4}},
       	           {a:{0:3,1:4,2:5}}];         
-   checkResult( dbcl, findConf10, hintConf, sortConf, expRecs10 );
+   checkResult( dbcl, findConf10, hintConf1, sortConf, expRecs10 );
+   
+   var expRecs10 = [{a:[{0:2},{1:3},{2:4}]},
+      	           {a:[{0:3},{1:4},{2:5}]},
+      	           {a:{0:2,1:3,2:4}},
+      	           {a:{0:3,1:4,2:5}}];         
+   checkResult( dbcl, findConf10, hintConf2, sortConf, expRecs10 );
    
    //gte
    var findConf11 = {"a.1":{$gte:2}};
-   var expRecs11 = [ {a:[1,2,3]},
+   var expRecs11 = [{a:[1,2,3]},
       	           {a:[2,3,4]},
       	           {a:[3,4,5]},
 	                 {a:[{0:1},{1:2},{2:3}]},
@@ -153,35 +162,57 @@ function main(){
       	           {a:{0:1,1:2,2:3}},
       	           {a:{0:2,1:3,2:4}},
       	           {a:{0:3,1:4,2:5}}];         
-   checkResult( dbcl, findConf11, hintConf, sortConf, expRecs11 );
+   checkResult( dbcl, findConf11, hintConf1, sortConf, expRecs11 );
+   
+   var expRecs11 = [{a:[{0:1},{1:2},{2:3}]},
+      	           {a:[{0:2},{1:3},{2:4}]},
+      	           {a:[{0:3},{1:4},{2:5}]},
+      	           {a:{0:1,1:2,2:3}},
+      	           {a:{0:2,1:3,2:4}},
+      	           {a:{0:3,1:4,2:5}}];         
+   checkResult( dbcl, findConf11, hintConf2, sortConf, expRecs11 );
    
    //lte
    var findConf12 = {"a.1":{$lte:2}};
-   var expRecs12 = [ {a:[-1,-2,-3]},
+   var expRecs12 = [{a:[-1,-2,-3]},
       	           {a:[1,2,3]},
       	           {a:[{0:-1},{1:-2},{2:-3}]},
       	           {a:[{0:1},{1:2},{2:3}]},
       	           {a:{0:-1,1:-2,2:-3}},
       	           {a:{0:1,1:2,2:3}}];         
-   checkResult( dbcl, findConf12, hintConf, sortConf, expRecs12 );
+   checkResult( dbcl, findConf12, hintConf1, sortConf, expRecs12 );
+   
+   var expRecs12 = [{a:[{0:-1},{1:-2},{2:-3}]},
+      	           {a:[{0:1},{1:2},{2:3}]},
+      	           {a:{0:-1,1:-2,2:-3}},
+      	           {a:{0:1,1:2,2:3}}];         
+   checkResult( dbcl, findConf12, hintConf2, sortConf, expRecs12 );
    
    //lt
    var findConf13 = {"a.1":{$lt:2}};
-   var expRecs13 = [ {a:[-1,-2,-3]},
+   var expRecs13 = [{a:[-1,-2,-3]},
       	           {a:[{0:-1},{1:-2},{2:-3}]},
       	           {a:{0:-1,1:-2,2:-3}}];         
-   checkResult( dbcl, findConf13, hintConf, sortConf, expRecs13 );
+   checkResult( dbcl, findConf13, hintConf1, sortConf, expRecs13 );
+   
+   var expRecs13 = [{a:[{0:-1},{1:-2},{2:-3}]},
+      	           {a:{0:-1,1:-2,2:-3}}];         
+   checkResult( dbcl, findConf13, hintConf2, sortConf, expRecs13 );
    
    //mod
    var findConf14 = {"a.1":{$mod:[2,1]}};
-   var expRecs14 = [ {a:[2,3,4]},
+   var expRecs14 = [{a:[2,3,4]},
       	           {a:[{0:2},{1:3},{2:4}]},
       	           {a:{0:2,1:3,2:4}}];         
-   checkResult( dbcl, findConf14, hintConf, sortConf, expRecs14 );
+   checkResult( dbcl, findConf14, hintConf1, sortConf, expRecs14 );
+   
+   var expRecs14 = [{a:[{0:2},{1:3},{2:4}]},
+      	           {a:{0:2,1:3,2:4}}];         
+   checkResult( dbcl, findConf14, hintConf2, sortConf, expRecs14 );
    
    //ne,SEQUOIADBMAINSTREAM-2469
    var findConf15 = {"a.1":{$ne:2}};
-   var expRecs15 = [ {a:[-1,-2,-3]},
+   var expRecs15 = [{a:[-1,-2,-3]},
       	           {a:[2,3,4]},
       	           {a:[3,4,5]},
       	           /*{a:[{0:-1},{1:-2},{2:-3}]},
@@ -190,11 +221,15 @@ function main(){
       	           {a:{0:-1,1:-2,2:-3}},
       	           {a:{0:2,1:3,2:4}},
       	           {a:{0:3,1:4,2:5}}];         
-   checkResult( dbcl, findConf15, hintConf, sortConf, expRecs15 );
+   checkResult( dbcl, findConf15, hintConf1, sortConf, expRecs15 );
    
-   //index scan use {"a.1":1} or {"a":1} has different result;
-   var hintConf1 = [{"":"a"},{"":null}];
-   var hintConf2 = [{"":"a.1"}];
+   var expRecs15 = [/*{a:[{0:-1},{1:-2},{2:-3}]},
+      	           {a:[{0:2},{1:3},{2:4}]},
+      	           {a:[{0:3},{1:4},{2:5}]},*/
+      	           {a:{0:-1,1:-2,2:-3}},
+      	           {a:{0:2,1:3,2:4}},
+      	           {a:{0:3,1:4,2:5}}];         
+   checkResult( dbcl, findConf15, hintConf2, sortConf, expRecs15 );
    
    //et
    var findConf16 = {"a.1":{$et:2}};
