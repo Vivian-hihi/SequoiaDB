@@ -35,6 +35,7 @@
 #define RTN_CONTEXTSHDOFLOB_HPP_
 
 #include "rtnContext.hpp"
+#include "dmsLobDef.hpp"
 
 namespace engine
 {

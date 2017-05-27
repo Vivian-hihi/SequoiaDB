@@ -44,7 +44,6 @@
 #include "ossMem.hpp"
 #include "ossLatch.hpp"
 #include "ossRWMutex.hpp"
-#include "msg.h"
 #include "ossAtomic.hpp"
 #include "../bson/bsonobj.h"
 

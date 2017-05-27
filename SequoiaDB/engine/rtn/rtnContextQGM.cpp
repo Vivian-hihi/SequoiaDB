@@ -38,6 +38,7 @@
 #include "rtnContextQGM.hpp"
 #include "qgmPlanContainer.hpp"
 #include "dmsStorageBase.hpp"
+#include "pmdEDU.hpp"
 
 namespace engine
 {
@@ -97,7 +98,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextQGM::_prepareData( pmdEDUCB * cb )
+   INT32 _rtnContextQGM::_prepareData( _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;

@@ -39,6 +39,7 @@
 #define RTN_CONTEXT_MAIN_CL_HPP_
 
 #include "rtnContext.hpp"
+#include "rtnQueryOptions.hpp"
 
 namespace engine
 {

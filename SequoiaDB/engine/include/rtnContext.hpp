@@ -38,22 +38,15 @@
 #ifndef RTNCONTEXT_HPP_
 #define RTNCONTEXT_HPP_
 
-#include "dms.hpp"
-#include "pd.hpp"
 #include "ossMem.hpp"
 #include "ossLatch.hpp"
 #include "ossRWMutex.hpp"
 #include "monCB.hpp"
-#include "ixm.hpp"
-#include "optAccessPlan.hpp"
-#include "msg.h"
 #include "ossAtomic.hpp"
-#include "../bson/bsonobj.h"
 #include "dmsCB.hpp"
-#include "dmsLobDef.hpp"
+#include "dpsLogWrapper.hpp"
 #include "mthMatchTree.hpp"
 #include "mthSelector.hpp"
-#include "rtnQueryOptions.hpp"
 #include "rtnContextBuff.hpp"
 #include "utilMap.hpp"
 #include <string>
@@ -62,59 +55,7 @@ using namespace bson ;
 
 namespace engine
 {
-
-   class _pmdEDUCB ;
-   class _dmsStorageUnit ;
-   class _rtnIXScanner ;
-   class _optAccessPlan ;
-   class _SDB_DMSCB ;
-   class _dmsMBContext ;
-   class _rtnContextBase ;
-
    #define RTN_CONTEXT_GETNUM_ONCE              (1000)
-   /*
-      _rtnPrefWatcher define
-   */
-   class _rtnPrefWatcher : public SDBObject
-   {
-      public:
-         _rtnPrefWatcher () :_prefNum(0), _needWait(FALSE) {}
-         ~_rtnPrefWatcher () {}
-         void     reset ()
-         {
-            _needWait = _prefNum > 0 ? TRUE : FALSE ;
-            _prefEvent.reset() ;
-         }
-         void     ntyBegin ()
-         { 
-            ++_prefNum ;
-            _needWait = TRUE ;
-         }
-         void     ntyEnd ()
-         {
-            --_prefNum ;
-            _prefEvent.signalAll() ;
-         }
-         INT32    waitDone( INT64 millisec = -1 )
-         {
-            if ( !_needWait && _prefNum <= 0 )
-            {
-               return 0 ;
-            }
-            INT32 rc = _prefEvent.wait( millisec, NULL ) ;
-            if ( SDB_OK == rc )
-            {
-               return 1 ;
-            }
-            return rc ;
-         }
-
-      private:
-         UINT32         _prefNum ;
-         BOOLEAN        _needWait ;
-         ossEvent       _prefEvent ;
-   } ;
-   typedef _rtnPrefWatcher rtnPrefWatcher ;
 
    /*
       RTN_CONTEXT_TYPE define
@@ -169,6 +110,56 @@ namespace engine
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
 
+   class _pmdEDUCB ;
+   class _dmsStorageUnit ;
+   class _optAccessPlan ;
+   class _SDB_DMSCB ;
+   class _dmsMBContext ;
+
+   /*
+      _rtnPrefWatcher define
+   */
+   class _rtnPrefWatcher : public SDBObject
+   {
+      public:
+         _rtnPrefWatcher () :_prefNum(0), _needWait(FALSE) {}
+         ~_rtnPrefWatcher () {}
+         void     reset ()
+         {
+            _needWait = _prefNum > 0 ? TRUE : FALSE ;
+            _prefEvent.reset() ;
+         }
+         void     ntyBegin ()
+         { 
+            ++_prefNum ;
+            _needWait = TRUE ;
+         }
+         void     ntyEnd ()
+         {
+            --_prefNum ;
+            _prefEvent.signalAll() ;
+         }
+         INT32    waitDone( INT64 millisec = -1 )
+         {
+            if ( !_needWait && _prefNum <= 0 )
+            {
+               return 0 ;
+            }
+            INT32 rc = _prefEvent.wait( millisec, NULL ) ;
+            if ( SDB_OK == rc )
+            {
+               return 1 ;
+            }
+            return rc ;
+         }
+
+      private:
+         UINT32         _prefNum ;
+         BOOLEAN        _needWait ;
+         ossEvent       _prefEvent ;
+   } ;
+   typedef _rtnPrefWatcher rtnPrefWatcher ;
+
    /*
       _rtnContextBase define
    */
@@ -201,7 +192,7 @@ namespace engine
                                    _pmdEDUCB *cb ) ;
 
          virtual void     getErrorInfo( INT32 rc,
-                                        pmdEDUCB *cb,
+                                        _pmdEDUCB *cb,
                                         rtnContextBuf &buffObj )
          {}
 

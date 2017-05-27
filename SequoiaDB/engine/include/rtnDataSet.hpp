@@ -38,13 +38,17 @@
 #ifndef RTN_BSONSET_HPP_
 #define RTN_BSONSET_HPP_
 
-#include "rtnContext.hpp"
+#include "rtnContextBuff.hpp"
+#include "rtnQueryOptions.hpp"
 #include "msg.h"
 
 using namespace bson ;
 
 namespace engine
 {
+   class _pmdEDUCB ;
+   class _SDB_RTNCB ;
+
    class _rtnDataSet : public SDBObject
    {
    public:

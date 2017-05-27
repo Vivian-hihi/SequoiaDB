@@ -39,13 +39,13 @@
 #define RTN_CONTEXT_SP_HPP_
 
 #include "rtnContext.hpp"
+#include "spdSession.hpp"
 
 namespace engine
 {
    /*
       _rtnContextSP OSS_INLINE functions
    */
-   class _spdSession ;
    class _dmsStorageUnit ;
 
    class _rtnContextSP : public _rtnContextBase

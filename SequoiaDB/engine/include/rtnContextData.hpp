@@ -39,10 +39,14 @@
 #define RTN_CONTEXT_DATA_HPP_
 
 #include "rtnContext.hpp"
+#include "rtnQueryOptions.hpp"
 #include "rtnQueryModifier.hpp"
+#include "optAccessPlan.hpp"
 
 namespace engine
 {
+   class _rtnIXScanner ;
+
    /*
       _rtnContextData define
    */
@@ -131,7 +135,7 @@ namespace engine
                                      vector<INT64>* dollarList,
                                      _mthMatchTree *matcher,
                                      mthSelector *selector ) ;
-         INT32 _prepareCappedTbScan( pmdEDUCB * cb,
+         INT32 _prepareCappedTbScan( _pmdEDUCB * cb,
                                      DMS_ACCESS_TYPE accessType,
                                      vector<INT64>* dollarList,
                                      _mthMatchTree *matcher,

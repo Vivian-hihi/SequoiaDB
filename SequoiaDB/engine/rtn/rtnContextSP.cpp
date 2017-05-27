@@ -36,8 +36,8 @@
 
 *******************************************************************************/
 #include "rtnContextSP.hpp"
-#include "spdSession.hpp"
 #include "dmsStorageBase.hpp"
+#include "pmdEDU.hpp"
 
 namespace engine
 {

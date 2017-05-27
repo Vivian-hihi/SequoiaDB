@@ -45,8 +45,10 @@ namespace engine
    /*
       _rtnContextDelCS define
    */
-   class _clsCatalogAgent;
-   class dpsTransCB;
+   class _clsCatalogAgent ;
+   class dpsTransCB ;
+   class _SDB_DMSCB ;
+
    class _rtnContextDelCS : public _rtnContextBase
    {
       enum delCSPhase
@@ -83,7 +85,7 @@ namespace engine
 
    private:
       delCSPhase           _status;
-      SDB_DMSCB            *_pDmsCB;
+      _SDB_DMSCB            *_pDmsCB;
       dpsTransCB           *_pTransCB;
       _clsCatalogAgent     *_pCatAgent;
       CHAR                 _name[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ];
@@ -126,7 +128,7 @@ namespace engine
       void _clean( _pmdEDUCB *cb );
 
    private:
-      SDB_DMSCB            *_pDmsCB;
+      _SDB_DMSCB           *_pDmsCB;
       _clsCatalogAgent     *_pCatAgent;
       dpsTransCB           *_pTransCB;
       CHAR                 _collectionName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
