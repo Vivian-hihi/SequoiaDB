@@ -177,7 +177,7 @@ namespace engine
       rc = ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to get ewd, rc: %s", rc ) ;
+         PD_LOG( PDERROR, "Failed to get ewd, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -185,7 +185,7 @@ namespace engine
       rc = utilCatPath( confFile, OSS_MAX_PATHSIZE, ewdConfPath.c_str() ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to cat path: %s", rc ) ;
+         PD_LOG( PDERROR, "Failed to cat path: %d", rc ) ;
          goto error ;
       }
 
