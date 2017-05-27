@@ -839,6 +839,52 @@ namespace engine
       goto done ;
    }
 
+   omRestTool::omRestTool( restAdaptor* pRestAdaptor,
+                           pmdRestSession* pRestSession )
+   {
+      _restAdaptor = pRestAdaptor ;
+      _restSession = pRestSession ;
+   }
+
+   void omRestTool::sendRecord2Web( list<BSONObj>& records,
+                                    const BSONObj* filter,
+                                    BOOLEAN inFilter )
+   {
+      list<BSONObj>::iterator iter ;
+      for( iter = records.begin(); iter != records.end(); ++iter )
+      {
+         if( filter )
+         {
+            BSONObj tmp = iter->filterFieldsUndotted( *filter, inFilter ) ;
+            _restAdaptor->appendHttpBody( _restSession, tmp.objdata(),
+                                          tmp.objsize(), 1 ) ;
+         }
+         else
+         {
+            _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
+                                          iter->objsize(), 1 ) ;
+         }
+      }
+
+      sendResponse( SDB_OK, "" ) ;
+   }
+
+   void omRestTool::sendResponse( INT32 rc, const string& detail )
+   {
+      sendResponse( rc, detail.c_str() ) ;
+   }
+
+   void omRestTool::sendResponse( INT32 rc, const char* detail )
+   {
+      BSONObj res = BSON( OM_REST_RES_RETCODE << rc <<
+                          OM_REST_RES_DESP << getErrDesp( rc ) <<
+                          OM_REST_RES_DETAIL << detail ) ;
+
+      _restAdaptor->setOPResult( _restSession, rc, res ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+   }
+
    INT32 omTaskTool::createTask( INT32 taskType, INT64 taskID,
                                  const string &taskName,
                                  const BSONObj &taskInfo,

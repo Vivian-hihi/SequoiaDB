@@ -402,6 +402,7 @@ namespace engine
    #define  OM_INSTALL_BUSINESS_REQ          "add business"
    #define  OM_LIST_NODE_REQ                 "list nodes"
    #define  OM_GET_NODE_CONF_REQ             "get node configure"
+   #define  OM_QUERY_NODE_CONF_REQ           "query node configure"
    #define  OM_LIST_BUSINESS_REQ             "list businesses"
    #define  OM_LIST_HOST_BUSINESS_REQ        "list host businesses"
    #define  OM_QUERY_BUSINESS_REQ            "query business"

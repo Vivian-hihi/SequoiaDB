@@ -688,12 +688,12 @@ namespace engine
          void           _sendNodeList2Web( list<simpleNodeInfo> &nodeList ) ;
    } ;
 
-   class omQueryNodeConfCommand : public omAuthCommand
+   class omGetNodeConfCommand : public omAuthCommand
    {
       public:
-         omQueryNodeConfCommand( restAdaptor *pRestAdaptor,
-                                 pmdRestSession *pRestSession ) ;
-         virtual ~omQueryNodeConfCommand() ;
+         omGetNodeConfCommand( restAdaptor *pRestAdaptor,
+                               pmdRestSession *pRestSession ) ;
+         virtual ~omGetNodeConfCommand() ;
 
       public:
          virtual INT32  doCommand() ;
@@ -706,6 +706,17 @@ namespace engine
                                          const string &svcName,
                                          BSONObj &nodeinfo ) ;
          void           _sendNodeInfo2Web( BSONObj &nodeList ) ;
+   } ;
+
+   class omQueryNodeConfCommand : public omAuthCommand
+   {
+   public:
+      omQueryNodeConfCommand( restAdaptor *pRestAdaptor,
+                              pmdRestSession *pRestSession ) ;
+      virtual ~omQueryNodeConfCommand() ;
+
+   public:
+      virtual INT32 doCommand() ;
    } ;
 
    class omQueryBusinessCommand : public omAuthCommand

@@ -36,6 +36,7 @@
 #include "rtnCB.hpp"
 #include "pmd.hpp"
 #include "omManager.hpp"
+#include "restAdaptor.hpp"
 #include "../bson/bson.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -133,6 +134,22 @@ namespace engine
       SDB_RTNCB   *_pRTNCB ;
       pmdKRCB     *_pKRCB ;
       SDB_DMSCB   *_pDMSCB ;
+   } ;
+
+   class omRestTool : public SDBObject
+   {
+   public:
+      omRestTool( restAdaptor* pRestAdaptor, pmdRestSession* pRestSession ) ;
+
+      void sendRecord2Web( list<BSONObj>& records,
+                           const BSONObj* filter = NULL,
+                           BOOLEAN inFilter = TRUE ) ;
+      void sendResponse( INT32 rc, const string& detail ) ;
+      void sendResponse( INT32 rc, const char* detail ) ;
+
+   private:
+      restAdaptor*      _restAdaptor ;
+      pmdRestSession*   _restSession ;
    } ;
 
    class omTaskTool : public SDBObject

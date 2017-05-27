@@ -6808,20 +6808,20 @@ namespace engine
       goto done ;
    }
 
-   // *****************omQueryNodeConfCommand *****************************
-   omQueryNodeConfCommand::omQueryNodeConfCommand( restAdaptor *pRestAdaptor,
-                                                  pmdRestSession *pRestSession )
+   // *****************omGetNodeConfCommand *****************************
+   omGetNodeConfCommand::omGetNodeConfCommand( restAdaptor *pRestAdaptor,
+                                               pmdRestSession *pRestSession )
                           :omAuthCommand( pRestAdaptor, pRestSession )
    {
    }
 
-   omQueryNodeConfCommand::~omQueryNodeConfCommand()
+   omGetNodeConfCommand::~omGetNodeConfCommand()
    {
    }
 
-   void omQueryNodeConfCommand::_expandNodeInfo( BSONObj &oneConfig,
-                                                 const string &svcName,
-                                                 BSONObj &nodeinfo )
+   void omGetNodeConfCommand::_expandNodeInfo( BSONObj &oneConfig,
+                                               const string &svcName,
+                                               BSONObj &nodeinfo )
    {
       string hostName ;
       string business ;
@@ -6849,9 +6849,9 @@ namespace engine
       }
    }
 
-   INT32 omQueryNodeConfCommand::_getNodeInfo( const string &hostName,
-                                               const string &svcName,
-                                               BSONObj &nodeinfo )
+   INT32 omGetNodeConfCommand::_getNodeInfo( const string &hostName,
+                                             const string &svcName,
+                                             BSONObj &nodeinfo )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
@@ -6909,7 +6909,7 @@ namespace engine
       goto done ;
    }
 
-   void omQueryNodeConfCommand::_sendNodeInfo2Web( BSONObj &nodeInfo )
+   void omGetNodeConfCommand::_sendNodeInfo2Web( BSONObj &nodeInfo )
    {
       if ( !nodeInfo.isEmpty() )
       {
@@ -6920,7 +6920,7 @@ namespace engine
       return ;
    }
 
-   INT32 omQueryNodeConfCommand::doCommand()
+   INT32 omGetNodeConfCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       const CHAR* pHostName = NULL ;
@@ -6954,6 +6954,56 @@ namespace engine
    error:
       goto done ;
    }
+
+   // *****************omQueryNodeConfCommand *****************************
+   omQueryNodeConfCommand::omQueryNodeConfCommand( restAdaptor *pRestAdaptor,
+                                                  pmdRestSession *pRestSession )
+                  :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omQueryNodeConfCommand::~omQueryNodeConfCommand()
+   {
+   }
+
+   INT32 omQueryNodeConfCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 skip      = 0 ;
+      SINT64 returnNum = -1 ;
+      BSONObj matcher ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      list<BSONObj> nodes ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+
+      rc = _getQueryPara( selector, matcher, order, hint, skip, returnNum ) ;
+      if( rc )
+      {
+         _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+         PD_LOG( PDERROR, "%s, rc=%d", _errorMsg.getError(), rc ) ;
+         goto error ;
+      }
+
+      rc = _queryTable( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order,
+                        hint, 0, skip, returnNum, nodes ) ;
+      if( rc )
+      {
+         _errorMsg.setError( TRUE, omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ) ;
+         PD_LOG( PDERROR, "%s, rc=%d", _errorMsg.getError(), rc ) ;
+         goto error ;
+      }
+
+      restTool.sendRecord2Web( nodes ) ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
 
    // *****************omListBusinessCommand *****************************
    omListBusinessCommand::omListBusinessCommand( restAdaptor *pRestAdaptor,

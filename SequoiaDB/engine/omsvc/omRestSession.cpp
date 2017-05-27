@@ -914,6 +914,10 @@ namespace engine
          }
          else if ( ossStrcasecmp( pSubCommand, OM_GET_NODE_CONF_REQ ) == 0 )
          {
+            commandIf = SDB_OSS_NEW omGetNodeConfCommand( pAdptor, this ) ;
+         }
+         else if( ossStrcasecmp( pSubCommand, OM_QUERY_NODE_CONF_REQ ) == 0 )
+         {
             commandIf = SDB_OSS_NEW omQueryNodeConfCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_LIST_BUSINESS_REQ ) == 0 )
