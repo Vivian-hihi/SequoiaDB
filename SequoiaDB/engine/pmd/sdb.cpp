@@ -47,9 +47,7 @@
 #include "ossVer.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-//#include "../mdocml/parseMandocCpp.hpp"
 #include "../spt/sptHelp.hpp"
-#include "sptParseTroff.hpp"
 #include <string>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/erase.hpp>
