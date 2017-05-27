@@ -35,9 +35,7 @@
 #include "ossUtil.h"
 #include "sptWords.hpp"
 #include "sptHelp.hpp"
-#if defined( _LINUX ) || defined (_AIX)
-//#include "../mdocml/parseMandocCpp.hpp"
-#endif
+#include "../mdocml/parseMandocCpp.hpp"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -73,14 +71,10 @@ namespace engine
 
    // "fuzzyFuncName" can be "Oma/Oma::createCoord/createCoord" or something like 
    // "create" for fuzzy searching 
-   INT32 _sptHelp::displayManpage( const string &fuzzyFuncName,
-                                   const string &matcher,
-                                   BOOLEAN isInstance )
+   INT32 _sptHelp::displayManual( const string &fuzzyFuncName,
+                                  const string &matcher,
+                                  BOOLEAN isInstance )
    {
-#if defined (_WINDOWS)
-      ossPrintf( "No support in current system."OSS_NEWLINE ) ;
-      return SDB_OK ;
-#else
       INT32 rc = SDB_OK ;
       string filePath ;
       vector<string> vec ;
@@ -197,10 +191,13 @@ namespace engine
          goto error ;
       }
       // display manual
+#if defined ( _WINDOWS )
+   rc = parseMandoc::getInstance().parse( filePath.c_str() ) ;
+#else
       ossResetTty();
-// TODO:
-//      rc = parseMandoc::getInstance().parse( filePath.c_str() ) ;
+      rc = parseMandoc::getInstance().parse( filePath.c_str() ) ;
       ossResetTty();
+#endif
       if ( rc != SDB_OK )
       {
          goto error ;
@@ -210,7 +207,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-#endif
    }
 
 
@@ -327,7 +323,7 @@ namespace engine
             goto error ;
          }
       }
-      cout << endl ;
+
    done:
       return rc ;
    error:
@@ -411,16 +407,12 @@ namespace engine
          }
          it = vec.begin() ;
          // display the first line
-         #if defined ( _WINDOWS )
-         cout << setw( synopsisIndent ) << " " << lastSynopsis.c_str() ;
-         #else
          cout << setw( synopsisIndent ) << " " << lastSynopsis.c_str() 
               << setw( briefIndent - synopsisLen + 1 ) << " " << *it << endl ;
          for( it++; it != vec.end(); it++ )
          {
             cout << setw( briefIndent + SPT_BRIEF_ALIGNED ) << " " << *it << endl ;
          }
-         #endif
       }
       // in this case, display like this:
       //                                 synopsis
@@ -428,9 +420,6 @@ namespace engine
       else
       {
          // display the first part
-         #if defined ( _WINDOWS )
-         cout << setw( synopsisIndent ) << " " << lastSynopsis.c_str() ;
-         #else
          cout << setw( synopsisIndent ) << " " << lastSynopsis.c_str() << endl ;
          // display the second part
          rc = _splitBrief( brief, vec ) ;
@@ -449,7 +438,6 @@ namespace engine
          {
             cout << setw( briefIndent + SPT_BRIEF_ALIGNED ) << " " << *it << endl ;
          }
-         #endif
       }
 
    done :

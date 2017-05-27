@@ -132,68 +132,51 @@ clientCFiles = [
       ]
 
 mdocmlFiles = [
-      "mdocml/att.c",
-      "mdocml/chars.c",
-      "mdocml/compat_err.c",
-      "mdocml/compat_fts.c",
-      "mdocml/compat_getline.c",
-      "mdocml/compat_getsubopt.c",
-      "mdocml/compat_isblank.c",
-      "mdocml/compat_mkdtemp.c",
-      "mdocml/compat_ohash.c",
-      "mdocml/compat_progname.c",
-      "mdocml/compat_reallocarray.c",
-      "mdocml/compat_sqlite3_errstr.c",
-      "mdocml/compat_strcasestr.c",
-      "mdocml/compat_stringlist.c",
-      "mdocml/compat_strlcat.c",
-      "mdocml/compat_strlcpy.c",
-      "mdocml/compat_strsep.c",
-      "mdocml/compat_strtonum.c",
-      "mdocml/compat_vasprintf.c",
-      "mdocml/eqn.c",
+      "mdocml/parseMandocCpp.cpp",
       "mdocml/eqn_html.c",
-      "mdocml/eqn_term.c",
       "mdocml/html.c",
-      "mdocml/lib.c",
-      "mdocml/man.c",
-      "mdocml/man_hash.c",
       "mdocml/man_html.c",
-      "mdocml/man_macro.c",
-      "mdocml/man_term.c",
-      "mdocml/man_validate.c",
-      "mdocml/mandoc.c",
-      "mdocml/mandoc_aux.c",
-      "mdocml/mandoc_ohash.c",
-      "mdocml/manpath.c",
-      "mdocml/mdoc.c",
-      "mdocml/mdoc_argv.c",
-      "mdocml/mdoc_hash.c",
       "mdocml/mdoc_html.c",
-      "mdocml/mdoc_macro.c",
-      "mdocml/mdoc_man.c",
-      "mdocml/mdoc_state.c",
-      "mdocml/mdoc_term.c",
-      "mdocml/mdoc_validate.c",
-      "mdocml/msec.c",
-      "mdocml/out.c",
-      "mdocml/preconv.c",
-      "mdocml/read.c",
-      "mdocml/roff.c",
-      "mdocml/st.c",
-      "mdocml/tag.c",
-      "mdocml/tbl.c",
-      "mdocml/tbl_data.c",
       "mdocml/tbl_html.c",
-      "mdocml/tbl_layout.c",
-      "mdocml/tbl_opts.c",
-      "mdocml/tbl_term.c",
+      "mdocml/mdoc_man.c",
+      "mdocml/eqn_term.c",
+      "mdocml/man_term.c",
+      "mdocml/mdoc_term.c",
       "mdocml/term.c",
       "mdocml/term_ascii.c",
       "mdocml/term_ps.c",
-      "mdocml/tree.c",
-      "mdocml/parseMandocCpp.cpp",
+      "mdocml/tbl_term.c",
       "mdocml/parseMandoc.c",
+      "mdocml/out.c",
+      "mdocml/tree.c",
+      "mdocml/compat_fgetln.c",
+      "mdocml/compat_getsubopt.c",
+      "mdocml/compat_strlcat.c",
+      "mdocml/compat_strlcpy.c",
+      "mdocml/man.c",
+      "mdocml/man_hash.c",
+      "mdocml/man_macro.c",
+      "mdocml/man_validate.c",
+      "mdocml/arch.c",
+      "mdocml/att.c",
+      "mdocml/lib.c",
+      "mdocml/mdoc.c",
+      "mdocml/mdoc_argv.c",
+      "mdocml/mdoc_hash.c",
+      "mdocml/mdoc_macro.c",
+      "mdocml/mdoc_validate.c",
+      "mdocml/st.c",
+      "mdocml/vol.c",
+      "mdocml/eqn.c",
+      "mdocml/roff.c",
+      "mdocml/tbl.c",
+      "mdocml/tbl_data.c",
+      "mdocml/tbl_layout.c",
+      "mdocml/tbl_opts.c",
+      "mdocml/chars.c",
+      "mdocml/mandoc.c",
+      "mdocml/msec.c",
+      "mdocml/read.c",
       "mdocml/common.c"
       ]
 
@@ -243,25 +226,16 @@ shellEnv.StaticLibrary('util2', util2Files)
 #Process Model
 shellEnv.StaticLibrary('pmd', pmdFiles)
 #Mdocml
-if "linux" == guess_os:
-   shellEnv.StaticLibrary('mdocml', mdocmlFiles)
+shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Shell Executable
 #Shell Backend  Executable
-if "linux" == guess_os:
-   sdb = shellEnv.Program("sdb", shellMain,
-         LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
-         _LIBDEPS='$_LIBDEPS_OBJS' )
-   sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-         LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
-         _LIBDEPS='$_LIBDEPS_OBJS' )
-else:
-   sdb = shellEnv.Program("sdb", shellMain,
-         LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
-         _LIBDEPS='$_LIBDEPS_OBJS' )
-   sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-         LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
-         _LIBDEPS='$_LIBDEPS_OBJS' )
+sdb = shellEnv.Program("sdb", shellMain,
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
+      _LIBDEPS='$_LIBDEPS_OBJS' )
+sdbbp = shellEnv.Program("sdbbp", shellBpMain,
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
+      _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdb )
 shellEnv.Install( '#/bin', sdbbp )

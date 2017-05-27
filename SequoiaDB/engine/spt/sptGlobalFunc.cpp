@@ -304,7 +304,7 @@ JS_MAPPING_END()
             detail = BSON( SPT_ERR << "The 1st param must be a function name" ) ;
             goto error ;
          }
-         rc = sptHelp::getInstance().displayManpage( fuzzyFuncName, "", FALSE ) ;
+         rc = sptHelp::getInstance().displayManual( fuzzyFuncName, "", FALSE ) ;
          if ( rc )
          {
             goto error ;
@@ -331,7 +331,7 @@ JS_MAPPING_END()
       else
       {
          string className ;
-         BOOLEAN isInstance = FALSE ;
+         INT32 isInstance = 0 ;
          
          rc = arg.getString( 0, className ) ;
          if ( rc )
@@ -345,7 +345,8 @@ JS_MAPPING_END()
             detail = BSON( SPT_ERR << "The 2nd param must be a bool value" ) ;
             goto error ;
          }
-         rc = sptHelp::getInstance().displayMethod( className, isInstance ) ;
+         rc = sptHelp::getInstance().displayMethod( className, 
+                                                    (BOOLEAN)isInstance ) ;
          if ( rc )
          {
             goto error ;
@@ -373,7 +374,7 @@ JS_MAPPING_END()
       {
          string fuzzyFuncName ;
          string matcher ;
-         BOOLEAN isInstance = FALSE ;
+         INT32 isInstance = 0 ;
          
          rc = arg.getString( 0, fuzzyFuncName ) ;
          if ( rc )
@@ -396,8 +397,9 @@ JS_MAPPING_END()
             goto error ;
          }
          
-         rc = sptHelp::getInstance().displayManpage( fuzzyFuncName, 
-                                                     matcher, isInstance ) ;
+         rc = sptHelp::getInstance().displayManual( fuzzyFuncName, 
+                                                    matcher, 
+                                                    (INT32)isInstance ) ;
          if ( rc )
          {
             goto error ;

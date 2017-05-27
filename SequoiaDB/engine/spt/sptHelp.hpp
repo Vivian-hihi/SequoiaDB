@@ -56,9 +56,9 @@ namespace engine
    public:
       static _sptHelp&            getInstance() ;
       static void                 setLanguage( const string &lang ) ;
-      INT32                       displayManpage( const string &fuzzyFuncName,
-                                                  const string &matcher,
-                                                  BOOLEAN isInstance ) ;
+      INT32                       displayManual( const string &fuzzyFuncName,
+                                                 const string &matcher,
+                                                 BOOLEAN isInstance ) ;
       INT32                       displayMethod( const string &className,
                                                  BOOLEAN isInstance ) ;
       INT32                       displayGlobalMethod() ;

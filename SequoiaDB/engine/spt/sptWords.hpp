@@ -41,11 +41,11 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
-/*
-#ifdef _WIN32
+
+#if defined ( _WINDOWS )
 #include <stdint.h>
 #endif
-*/
+
 using std::vector ;
 using std::string ;
 

@@ -121,8 +121,8 @@ namespace engine
             ss << "The 1st param must be string"  ;
             goto error ;
          }
-         rc = sptHelp::getInstance().displayManpage(
-            fuzzyFuncName, jsClassName, TRUE ) ;
+         rc = sptHelp::getInstance().displayManual( fuzzyFuncName, 
+                                                    jsClassName, TRUE ) ;
          if ( rc )
          {
             goto error ;
@@ -196,8 +196,8 @@ namespace engine
             ss << "The 1st param must be string"  ;
             goto error ;
          }
-         rc = sptHelp::getInstance().displayManpage(
-            fuzzyFuncName, jsClassName, FALSE ) ;
+         rc = sptHelp::getInstance().displayManual( fuzzyFuncName, 
+                                                    jsClassName, FALSE ) ;
          if ( rc )
          {
             goto error ;

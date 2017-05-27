@@ -51,7 +51,7 @@ using std::cout ;
 using std::endl ;
 namespace fs = boost::filesystem ;
 
-#if defined (_WINDOWS32)
+#if defined ( _WINDOWS )
 #define SPT_SDB_SHELL_TROFF_DIR   "..\\doc\\manual\\"
 #define DIRECTORY_DELIMITER       "\\"
 #else
