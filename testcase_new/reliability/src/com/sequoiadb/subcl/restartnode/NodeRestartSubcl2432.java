@@ -69,6 +69,7 @@ public class NodeRestartSubcl2432 extends SdbTestBase {
             mainCL.attachCollection(cl.getFullName(),
                     (BSONObject) JSON.parse("{LowBound:{sk:0},UpBound:{sk:5000}}"));
             insertData();
+				Assert.assertTrue(groupMgr.getGroupByName(subClGroupName).checkInspect(120));
         }
         catch (ReliabilityException e) {
             if (commSdb != null) {
