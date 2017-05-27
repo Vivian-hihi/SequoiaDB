@@ -78,9 +78,9 @@ function main()
    checkResult( dbcl, findCondition1, hintConf, sortConf, expRecs1 );
    
    //SEQUOIADBMAINSTREAM-2468
-   /*var findCondition1 = {a:{$et:[0]}};
+   var findCondition1 = {a:{$et:[0]}};
    var expRecs1 = [{a:[0]},{a:[[0]]}];
-   checkResult( dbcl, findCondition1, hintConf, sortConf, expRecs1 );*/
+   checkResult( dbcl, findCondition1, hintConf, sortConf, expRecs1 );
    
    var findCondition2 = {a:{$et:{$date: "2017-05-01"}}};
    var expRecs2 = [{a:{$date: "2017-05-01"}}];

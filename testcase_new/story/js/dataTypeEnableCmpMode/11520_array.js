@@ -98,11 +98,11 @@ function main(){
    checkResult( dbcl, findConf4, hintConf, sortConf, expRecs4 );
    
    //et,SEQUOIADBMAINSTREAM-2468
-   /*var findConf5 = {a:{$et:[1,20,30]}};
+   var findConf5 = {a:{$et:[1,20,30]}};
    var expRecs5 = [{a:[1,20,30]},
                    {a:[1,20,30]},
                    {a:[[0,20,30],[1,20,30]]}];         
-   checkResult( dbcl, findConf5, hintConf, sortConf, expRecs5 );*/
+   checkResult( dbcl, findConf5, hintConf, sortConf, expRecs5 );
    
    //ne
    var findConf6 = {a:{$ne:[1,20,30]}};
