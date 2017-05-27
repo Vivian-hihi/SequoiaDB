@@ -226,6 +226,7 @@ add_option( "doc", "build document(pdf, word)", 0, False)
 add_option( "website", "build web site document", 0, False)
 add_option( "chm", "build chm document", 0, False)
 add_option( "doxygen", "build doxygen document", 0, False)
+add_option( "noautogen", "do not run autogen", 0, False)
 
 # language could be en or cn
 add_option( "language" , "description language" , 1 , False )
@@ -1035,11 +1036,15 @@ if not os.path.isfile ( "gitbuild" ):
       os.system("sed \"s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g\" misc/autogen/ossVer.tmp > oss.tmp")
       os.system("sed 's/\$//g' oss.tmp > SequoiaDB/engine/include/ossVer_Autogen.h")
 
-language = get_option ( "language" )
-if language is None:
-   os.system ( "scons -C misc/autogen" )
-else:
-   os.system ( "scons -C misc/autogen --language=" + language )
+if not has_option("noautogen"):
+   language = get_option ( "language" )
+   autogen_result = 0
+   if language is None:
+      autogen_result = os.system ( "scons -C misc/autogen" )
+   else:
+      autogen_result = os.system ( "scons -C misc/autogen --language=" + language )
+   if autogen_result != 0:
+      os._exit( 1 )
 
 if hasDoc:
    errno = os.system ( 'python doc/build.py --doc' )
