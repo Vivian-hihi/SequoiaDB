@@ -17,7 +17,6 @@ bsonFiles = [
 sptFiles = [
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
-      "spt/sptParseTroff.cpp",
       "spt/sptConvertorHelper.cpp",
       "spt/sptCommon.cpp"
       ]
@@ -36,6 +35,10 @@ spt2Files = [
       "spt/sptLibssh2Session.cpp",
       "spt/sptSshSession.cpp",
       "spt/sptRemote.cpp",
+      "spt/sptClassMetaInfo.cpp",
+      "spt/sptHelp.cpp",
+      "spt/sptWords.cpp",
+      "spt/sptFuncDef.cpp",
       "spt/usrdef/sptUsrSsh.cpp",
       "spt/sptProperty.cpp",
       "spt/sptGlobalFunc.cpp",
@@ -230,10 +233,10 @@ fmpEnv.StaticLibrary('spt', sptFiles)
 fmpEnv.StaticLibrary('spt2', spt2Files)
 fmpEnv.StaticLibrary('ssh2', ssh2Files)
 #Mdocml
-fmpEnv.StaticLibrary('mdocml', mdocmlFiles)
+#fmpEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["oss","pd","util","clientc","fmp","bson","pmd","mdocml","spt","spt2", "ssh2"],
+      LIBDEPS=["oss","pd","util","clientc","fmp","bson","pmd","spt","spt2", "ssh2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )

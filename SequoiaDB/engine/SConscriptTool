@@ -227,7 +227,6 @@ omagentFiles = [
 sptFiles = [
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
-      "spt/sptParseTroff.cpp",
       "spt/sptConvertorHelper.cpp",
       "spt/sptCommon.cpp"
       ]
@@ -245,6 +244,10 @@ spt2Files = [
       "spt/sptBsonobjArray.cpp",
       "spt/sptLibssh2Session.cpp",
       "spt/sptSshSession.cpp",
+      "spt/sptClassMetaInfo.cpp",
+      "spt/sptHelp.cpp",
+      "spt/sptWords.cpp",
+      "spt/sptFuncDef.cpp",
       "spt/usrdef/sptUsrSsh.cpp",
       "spt/sptRemote.cpp",
       "spt/sptProperty.cpp",
@@ -616,7 +619,7 @@ toolEnv.StaticLibrary('spt', sptFiles)
 toolEnv.StaticLibrary('spt2', spt2Files)
 toolEnv.StaticLibrary('ssh2', ssh2Files)
 #Mdocml
-toolEnv.StaticLibrary('mdocml', mdocmlFiles)
+# toolEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Export Executable
 sdbimprt2 = toolEnv.Program("sdbimprt", importFiles,
@@ -656,7 +659,7 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","util","net","pmd","omagent","client","mdocml","spt","spt2","ssh2"],
+         LIBDEPS=["pd","oss","msg","bson","util","net","pmd","omagent","client","spt","spt2","ssh2"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,

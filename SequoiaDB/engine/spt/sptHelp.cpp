@@ -36,7 +36,7 @@
 #include "sptWords.hpp"
 #include "sptHelp.hpp"
 #if defined( _LINUX ) || defined (_AIX)
-#include "../mdocml/parseMandocCpp.hpp"
+//#include "../mdocml/parseMandocCpp.hpp"
 #endif
 #include <iostream>
 #include <sstream>
@@ -198,7 +198,8 @@ namespace engine
       }
       // display manual
       ossResetTty();
-      rc = parseMandoc::getInstance().parse( filePath.c_str() ) ;
+// TODO:
+//      rc = parseMandoc::getInstance().parse( filePath.c_str() ) ;
       ossResetTty();
       if ( rc != SDB_OK )
       {
