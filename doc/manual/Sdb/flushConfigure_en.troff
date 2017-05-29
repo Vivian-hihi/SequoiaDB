@@ -16,17 +16,68 @@ Sequoiadb
 .sp 2
 Flush the configurations to the configuration files.
 .sp 2
-\fBrule (json object)\fR
+\fBoptions (json object)\fR
 .br
-       Flush rules.
+       Specify the configure filter type and location params,
+       such as GroupID, GroupName, NodeID, HostName,
+       svcname, etc.
+.sp 2
+       \fBType\fR
+.br
+              Configure filter type. 3 in default.
+              0 for no filter.
+              1 for excluding the hidden-parameters with default value.
+              2 for excluding the parameters with default value.
+              3 for excluding the un-configured parameters in the file.
+.br
+              Type:3.
 .sp 2
        \fBGlobal\fR
 .br
-              True indicates to flush the entire system's
-              configurations. False indicates to flush the
-              current node's configurations.
+              Specify the command's location which is local or global.
+              Default is local mode.
 .br
-              Global:true
+              Global:false  : run on local
+              Global:true   : run on global nodes
+.sp 2
+       \fBGroupID\fR
+.br
+              Specify the command's location by group ID.
+.br
+              GroupID:1000
+              GroupID:[1000, 1001, ...]
+.sp 2
+       \fBGroupName\fR
+.br
+              Specify the command's location by group name.
+.br
+              GroupName:"db1"
+              GroupName:["db1", "db2", ...]
+.sp 2
+       \fBNodeID\fR
+.br
+              Specify the command's location by node ID.
+.br
+              NodeID:1000
+              NodeID:[1000, 1001, ...]
+.sp 2
+       \fBHostName\fR
+.br
+              Specify the command's location by node name.
+              The param should be used with 'svcname'.
+.br
+              HostName:"host-01"
+              HostName:[ "centos-01", "ubuntu-02", ... ]
+.sp 2
+       \fBsvcname\fR
+.br
+              Specify the command's location by svcname.
+              The param should be used with 'HostName'.
+.br
+              svcname:"11820"
+              svcname:[ "11780", "11810", ... ]
+.sp 2
+
 .SH "Examples"
 
 .sp 2
