@@ -65,7 +65,7 @@ public class Ssh {
             session = jsch.getSession(username, host, port);
             session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
-            session.connect();
+            session.connect(60 * 1000);
         }
         catch (JSchException e) {
             if (session != null) {
@@ -86,7 +86,7 @@ public class Ssh {
         ChannelSftp channel = null;
         try {
             channel = (ChannelSftp) session.openChannel("sftp");
-            channel.connect();
+            channel.connect(60 * 1000);
             channel.put(localPath, remotePath);
         }
         catch (Exception e) {
@@ -110,7 +110,7 @@ public class Ssh {
         ChannelSftp channel = null;
         try {
             channel = (ChannelSftp) session.openChannel("sftp");
-            channel.connect();
+            channel.connect(60 * 1000);
             channel.get(remotePath, localPath);
         }
         catch (Exception e) {
@@ -136,7 +136,7 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            channel.connect();
+            channel.connect(60 * 1000);
             getResult(channel, Integer.MAX_VALUE);
             if (exitStatus != 0) {
                 throw new ReliabilityException("ssh failed to execute commond '" + command
@@ -166,7 +166,7 @@ public class Ssh {
         try {
             channel = session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
-            channel.connect();
+            channel.connect(60 * 1000);
             backgroundCMD.put(channel.getId(), channel);
             return channel.getId();
         }
