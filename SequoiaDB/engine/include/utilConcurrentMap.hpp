@@ -72,6 +72,7 @@ namespace engine
          SDB_ASSERT( BUCKET_NUM <= UTIL_CONCURRENT_MAP_MAX_BUCKET_NUM &&
                      BUCKET_NUM > 1,
             "bucket num must > 1 and <= UTIL_CONCURRENT_MAP_MAX_BUCKET_NUM" ) ;
+         SDB_ASSERT( BUCKET_NUM % 2 == 0, "bucket num must be a power of 2" ) ;
       }
 
       ~utilConcurrentMap()
@@ -257,7 +258,24 @@ namespace engine
 
          bool operator== ( const bucket_iterator& rhs ) const
          {
-            return _index == rhs._index && _map == rhs._map ;
+            if ( _map != rhs._map )
+            {
+               return false ;
+            }
+
+            if ( _index == rhs._index )
+            {
+               return true ;
+            }
+
+            // out of range index is end iterator
+            if ( ( _index < 0 || _index >= BUCKET_NUM ) &&
+                 ( rhs._index < 0 || rhs._index >= BUCKET_NUM ) )
+            {
+               return true ;
+            }
+
+            return false ;
          }
 
          bool operator!= ( const bucket_iterator& rhs ) const
@@ -274,7 +292,7 @@ namespace engine
 
          bucket_iterator& operator++ ()
          {
-            if ( _index <= BUCKET_NUM )
+            if ( _index < BUCKET_NUM )
             {
                _index++ ;
             }
