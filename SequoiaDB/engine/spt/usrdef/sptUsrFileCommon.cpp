@@ -153,7 +153,7 @@ namespace engine
    }
 
    INT32 _sptUsrFileCommon::read( const bson::BSONObj &optionObj, string &err,
-                                 CHAR** buf, SINT64 &readLen )
+                                  CHAR** buf, SINT64 &readLen )
    {
       INT32 rc = SDB_OK ;
 #define SPT_READ_LEN 1024
@@ -166,10 +166,17 @@ namespace engine
          if( NumberInt != optionObj.getField( "size" ).type() &&
              NumberLong != optionObj.getField( "size" ).type() )
          {
+            rc = SDB_INVALIDARG ;
             err = "size must be number" ;
             goto error ;
          }
          size = optionObj.getIntField( "size" ) ;
+         if( size < 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            err = "size must be zero or positive number" ;
+            goto error ;
+         }
       }
 
       if ( !_file.isOpened() )

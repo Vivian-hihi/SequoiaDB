@@ -355,7 +355,7 @@ JS_MAPPING_END()
       }
       else if( SDB_OUT_OF_BOUND != rc )
       {
-         detail = BSON( SPT_ERR << "size must be native type" ) ;
+         detail = BSON( SPT_ERR << "size must be number" ) ;
          PD_LOG( PDERROR, "Failed to get size, rc: %d", rc ) ;
          goto error ;
       }
@@ -431,7 +431,7 @@ JS_MAPPING_END()
       }
       else if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
-         detail = BSON( SPT_ERR << "size must be int" ) ;
+         detail = BSON( SPT_ERR << "size must be number" ) ;
          goto error ;
       }
 
