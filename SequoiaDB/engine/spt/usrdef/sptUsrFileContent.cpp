@@ -135,15 +135,11 @@ JS_MAPPING_END()
                                            _sptReturnVal &rval,
                                            bson::BSONObj &detail )
    {
-      INT32 rc = SDB_OK ;
       string retStr ;
 
-      retStr  = base64::encode( _buf, _length ) ;
-      rval.getReturnVal().setValue( retStr  ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      retStr = base64::encode( _buf, _length ) ;
+      rval.getReturnVal().setValue( retStr ) ;
+      return SDB_OK ;
    }
 
    INT32 _sptUsrFileContent::memberHelp( const _sptArguments &arg,
