@@ -27,10 +27,10 @@ function testOmaStart()
       return ;
    }
    
-   // option为port:svcname standalone:true alivetime:2时启动cm
+   // option为port:svcname standalone:true alivetime:10时启动cm
    var option = {} ;
    option["port"] = svcname ;
-   option["alivetime"] = 2 ;
+   option["alivetime"] = 10 ;
    option["standalone"] = true ;
    
    try
@@ -40,7 +40,7 @@ function testOmaStart()
    }
    catch( e )
    {
-      throw buildException( "testOmaStart", e, "start standalone cm", 0, e ) ;
+      throw buildException( "testOmaStart", e, "start 10s standalone cm", 0, e ) ;
    }
    
    // 检查cm端口及超时
@@ -57,13 +57,13 @@ function testOmaStart()
       sleep( 1000 ) ;
       num = oma.listNodes( { type: "cm", showalone: true } ).toArray().length ;
       var end = new Date().getTime() ;
-      if( end - start > 5*1000 )
+      if( end - start > 20*1000 )
          break ;
    }
    if( num !== 2 )
    {
       throw buildException( "testOmaStart", null, 
-                            "check cm after standalone cm timeout", 2, num ) ;
+                            "check cm after 10s standalone cm timeout", 2, num ) ;
    }
    
    // 启动一个非standalone的cm时，首先需要先停止当前的cm
