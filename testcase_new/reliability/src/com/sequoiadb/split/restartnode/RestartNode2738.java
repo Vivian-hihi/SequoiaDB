@@ -45,7 +45,7 @@ public class RestartNode2738 extends SdbTestBase {
     private Sequoiadb commSdb;
     private boolean clearFlag = false;
     private boolean isSplitComplete = false;
-	 
+
     @BeforeClass()
     public void setUp() {
         try {
@@ -111,28 +111,28 @@ public class RestartNode2738 extends SdbTestBase {
             Assert.assertEquals(groupMgr.checkBusiness(120), true, "failed to restore business");
 
             // 再次插入数据
-				if(isSplitComplete){
-					commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
-					DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
-					insertData(cl, 5000, 6000);
+            if (isSplitComplete) {
+                commSdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
+                DBCollection cl = commSdb.getCollectionSpace(csName).getCollection(clName);
+                insertData(cl, 5000, 6000);
 
-					// 范围切分覆盖
-					// Assert.assertEquals(destGroup.checkInspect(60), true);
-					// Assert.assertEquals(srcGroup.checkInspect(60), true);
+                // 范围切分覆盖
+                // Assert.assertEquals(destGroup.checkInspect(60), true);
+                // Assert.assertEquals(srcGroup.checkInspect(60), true);
 
-					// 源和目标数据量比对
-					int splitBound = getBound(commSdb);
+                // 源和目标数据量比对
+                int splitBound = getBound(commSdb);
 
-					long destCount = getGroupData(commSdb, destGroupName);
-					Assert.assertEquals(destCount, 6000 - splitBound);
+                long destCount = getGroupData(commSdb, destGroupName);
+                Assert.assertEquals(destCount, 6000 - splitBound);
 
-					long srcCount = getGroupData(commSdb, srcGroupName);
-					Assert.assertEquals(srcCount, splitBound);
+                long srcCount = getGroupData(commSdb, srcGroupName);
+                Assert.assertEquals(srcCount, splitBound);
 
-					Assert.assertEquals(srcCount + destCount, totalCount);
-					Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), 6000);
-				}            
-				clearFlag = true;
+                Assert.assertEquals(srcCount + destCount, totalCount);
+                Assert.assertEquals(cl.getCount("{sk:{$gte:0,$lt:6000}}"), 6000);
+            }
+            clearFlag = true;
         }
         catch (ReliabilityException e) {
             Assert.fail(e.getMessage() + "\r\n" + Utils.getStackString(e));
@@ -235,8 +235,13 @@ public class RestartNode2738 extends SdbTestBase {
                 sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, 50);
-					 isSplitComplete = true;
+                try {
+                    cl.split(srcGroupName, destGroupName, 50);
+                    isSplitComplete = true;
+                }
+                catch (BaseException e) {
+                    System.out.println("split have exception:" + e.getMessage());
+                }
             }
             catch (BaseException e) {
                 throw e;

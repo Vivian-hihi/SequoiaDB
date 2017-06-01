@@ -193,9 +193,13 @@ public class RestartNode2727 extends SdbTestBase {
                 sdb = new Sequoiadb(SdbTestBase.coordUrl, "", "");
                 sdb.setSessionAttr((BSONObject) JSON.parse("{PreferedInstance:'M'}"));
                 DBCollection cl = sdb.getCollectionSpace(csName).getCollection(clName);
-                cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{Partition:0}"), // 切分
-                        (BSONObject) JSON.parse("{Partition:2048}"));
-					 isSplitComplete = true;
+					 try{
+						 cl.split(srcGroupName, destGroupName, (BSONObject) JSON.parse("{Partition:0}"), // 切分
+									(BSONObject) JSON.parse("{Partition:2048}"));
+						 isSplitComplete = true;
+					 }catch (BaseException e) {
+                    System.out.println("split have exception:" + e.getMessage());
+                }
             }
             catch (BaseException e) {
                 throw e;
