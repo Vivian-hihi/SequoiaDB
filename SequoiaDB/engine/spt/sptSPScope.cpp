@@ -53,7 +53,7 @@ namespace engine
    /*
       case 1: when no argument, we display the functions of class/instance
       case 2: when getting argument in format of "Oma"/"Oma.createCoord"
-              /"createCoord" or something like "create" for fuzzy searching, 
+              /"createCoord" or something like "create" for fuzzy searching,
               we display the manpage of the specifed function
    */
    static JSBool __instance_help( JSContext *cx , uintN argc , jsval *vp )
@@ -79,7 +79,7 @@ namespace engine
          ss << "Failed to get constructor" ;
          goto error ;
       }
-      if ( !JS_GetProperty( cx, constructor, "name", &jsVal ) || 
+      if ( !JS_GetProperty( cx, constructor, "name", &jsVal ) ||
            !JSVAL_IS_STRING( jsVal ) )
       {
          rc = SDB_SYS ;
@@ -102,7 +102,7 @@ namespace engine
       }
       jsClassName.assign( pStr ) ;
       JS_free( cx, pStr ) ;
-      
+
       // display method or manpage
       if ( arg.argc() == 0 )
       {
@@ -121,7 +121,7 @@ namespace engine
             ss << "The 1st param must be string"  ;
             goto error ;
          }
-         rc = sptHelp::getInstance().displayManual( fuzzyFuncName, 
+         rc = sptHelp::getInstance().displayManual( fuzzyFuncName,
                                                     jsClassName, TRUE ) ;
          if ( rc )
          {
@@ -152,7 +152,7 @@ namespace engine
 
       // set return value
       JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
-      
+
       // get js class name
       if ( !JS_GetProperty( cx, JS_THIS_OBJECT ( cx , vp ), "name", &jsVal ) ||
            !JSVAL_IS_STRING( jsVal ) )
@@ -177,7 +177,7 @@ namespace engine
       }
       jsClassName.assign( pStr ) ;
       JS_free( cx, pStr ) ;
-      
+
       // display method or manpage
       if ( arg.argc() == 0 )
       {
@@ -196,14 +196,14 @@ namespace engine
             ss << "The 1st param must be string"  ;
             goto error ;
          }
-         rc = sptHelp::getInstance().displayManual( fuzzyFuncName, 
+         rc = sptHelp::getInstance().displayManual( fuzzyFuncName,
                                                     jsClassName, FALSE ) ;
          if ( rc )
          {
             goto error ;
          }
       }
-      
+
    done:
       return rc ;
    error:
@@ -422,7 +422,7 @@ namespace engine
          goto error ;
       }
 
-      JS_SetOptions( _context, JSOPTION_VAROBJFIX );
+      JS_SetOptions( _context, JSOPTION_VAROBJFIX | JSOPTION_WERROR );
       JS_SetVersion( _context, JSVERSION_LATEST );
       JS_SetErrorReporter( _context, sdbReportError ) ;
 
@@ -621,11 +621,11 @@ namespace engine
 
       JSClass cDef = { ( CHAR * )objName,
                     flags,
-                    JS_PropertyStub, 
+                    JS_PropertyStub,
                     JS_PropertyStub,
                     JS_PropertyStub,
                     JS_StrictPropertyStub,
-                    JS_EnumerateStub,       
+                    JS_EnumerateStub,
                     resolveOp,
                     JS_ConvertStub,
                     destruct,
