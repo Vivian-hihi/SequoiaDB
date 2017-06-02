@@ -18,7 +18,10 @@
       <mkdir dir="${report_dir}"/>
       <!--SYNCTEST do not detect sequoiadb start-->
       <if>
-         <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+         <or>
+            <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+            <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         </or>
          <else>
             <antcall target="detect_remote_env">
                <param name="detect_target_name" value="dectect_node_status"/>
@@ -33,9 +36,12 @@
       </antcall>
       <!-- testcase core dump report xml -->
       <antcall target="generate_testcase_core_report"/>
-      <!-- node exception report xml -->
+      <!-- node exception report xml -->RELIABILITYTEST
       <if>
-         <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+         <or>
+            <equals arg1="${TEST_TYPE}" arg2="SYNCTEST"/>
+            <equals arg1="${TEST_TYPE}" arg2="RELIABILITYTEST"/>
+         </or>
          <else>
             <antcall target="generate_node_start_report"/>
          </else>
