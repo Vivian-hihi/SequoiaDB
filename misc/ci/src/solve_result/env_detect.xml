@@ -361,6 +361,13 @@
    <target name="dectect_testcase_core">
       <property file="${basedir}/src/conf/test.conf" />
       <property name="report_dir" value="${CI_WORK_DIR}/report/env_detect"/>
+      <available property="isExist" file="${report_dir}" type="dir"/>
+      <if>
+         <equals arg1="${isExist}" arg2="true"/>
+         <else>
+            <mkdir dir="${report_dir}"/>
+         </else>
+      </if>
       <hostinfo prefix="host" />
       <resourcecount property="corefilenum">
          <fileset dir="${CI_WORK_DIR}" includes="testcase/**/*core*" excludes="testcase/**/*core*.jar"/>
