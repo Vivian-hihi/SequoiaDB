@@ -48,10 +48,10 @@ Sdb
 
 		格式：`Prefix: "%g_bk_"`
 
-    7. `EnableDataDir` ( *Bool* )：是否开启日期子目录功能，如果开启则会自动根据
+    7. `EnableDateDir` ( *Bool* )：是否开启日期子目录功能，如果开启则会自动根据
                                    当前日期创建 “YYYY-MM-DD” 的子目录，缺省为 false。
 
-		格式：`EnableDataDir: false`
+		格式：`EnableDateDir: false`
 
     8. `Description` ( *String* )：备份描述。
 
