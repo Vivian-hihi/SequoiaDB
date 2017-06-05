@@ -37,136 +37,253 @@ function dataGenerator()
       return getRandomValue( dataType );
    }
 }
-
+   
 function getRandomRecords( recNum, dataTypes, fieldNames )
 {
-  if( fieldNames === undefined ) { fieldNames = getRandomFieldNames(); }
-  if( dataTypes.constructor !== Array ) { dataTypes = [ dataTypes ]; }
-  
-  var recs = [];
-  var i = 0;
-  for( var i = 0; i < recNum; i++ )
-  {          
-	 // generate 1 record
-	 var rec = {};
-	 rec["No"] = i;
-	 for( var j in fieldNames )
-	 {
-	   var filedName = fieldNames[j];
+   if( fieldNames === undefined ) { fieldNames = getRandomFieldNames(); }
+   if( dataTypes.constructor !== Array ) { dataTypes = [ dataTypes ]; }
    
-      var dataType = dataTypes[ parseInt( Math.random() * dataTypes.length ) ];  //randomly get 1 data type
-      var filedVal =  getRandomValue( dataType );  
-		// generate 1 filed
-		/*var rdn = parseInt( Math.random() * dataTypes.length );
-		if( rdn % 2 == 0){
-			var filedName = fieldNames[j];
-			var dataType = dataTypes[rdn];  //randomly get 1 data type
-			var filedVal =  getRandomValue( dataType );
-		}*/
-		if( filedVal !== undefined ) rec[filedName] = filedVal;
-	 } 
-	 
-	 recs.push( rec );
-  }   
-  return recs;
+   var recs = [];
+   for( var i = 0; i < recNum; i++ )
+   {          
+      // generate 1 record
+      var rec = {};      
+      for( var j in fieldNames )
+      {  
+         // generate 1 filed
+         /*var filedName = fieldNames[j];
+
+         var dataType = dataTypes[ parseInt( Math.random() * dataTypes.length ) ];  //randomly get 1 data type
+         var filedVal =  getRandomValue( dataType );*/
+         
+         // generate 1 filed
+   		var rdn = parseInt( Math.random() * dataTypes.length );
+   		if( rdn % 2 == 0){
+   			var filedName = fieldNames[j];
+   			var dataType = dataTypes[rdn];  //randomly get 1 data type
+   			var filedVal =  getRandomValue( dataType );
+   		}
+         if( filedVal !== undefined ) rec[filedName] = filedVal;       
+      } 
+      
+      recs.push( rec );
+   }   
+   return recs;
+}
+
+function getRandomValue( dataType )
+{
+   var value = undefined;
+   
+   switch( dataType )
+   {
+      case "int":
+         value = getRandomInt( -2147483648, 2147483647 );
+         break;
+      case "long":
+         value = getRandomLong( -922337203685477600, 922337203685477600 );
+         break;
+      case "float":
+         value = getRandomFloat( -999999, 999999 );
+         break;
+      case "string":
+         value = getRandomString( 0, 20 );
+         break; 
+      case "OID":
+         value = ObjectId();
+         break;
+      case "bool":
+         value = getRandomBool();
+         break; 
+      case "date":
+         value = getRandomDate();
+         break;
+      case "timestamp":
+         value = getRandomTimestamp();
+         break; 
+      case "binary":
+         value = getRandomBinary();
+         break;
+      case "regex":
+         value = getRandomRegex();
+         break; 
+      case "object":
+         value = getRandomObject();
+         break;
+      case "array":
+         value = getRandomArray();
+         break; 
+      case "null":
+         value = null;
+         break;
+      case "non-existed":
+         break;                 
+   }
+   
+   return value;
 }
 
 function getRandomFieldNames( minNum, maxNum )
 {
-  if( minNum == undefined ) { minNum = 0; }
-  if( maxNum == undefined ) { maxNum = 16; }
-  
-  var fieldNames = [];
-  var fieldNum = getRandomInt( minNum, maxNum );
-  
-  for( var i = 0; i < fieldNum; i++ )
-  {
-	 //get 1 field name
-	 var fieldName = "";
-	 var fieldNameLen = getRandomInt( 1, 9 );
-	 for( var j = 0; j < fieldNameLen; j++ )
-	 {
-		//get 1 char
-		var ascii = getRandomInt( 97, 123 ); // 'a'~'z'
-		var c = String.fromCharCode( ascii );
-		fieldName += c;
-	 }
-	 fieldNames.push( fieldName );
-  }
-  
-  return fieldNames;
-}
-
-/**********************************************************************
-@Description:  generate all kinds of types data randomly
-@author:       Ting YU
-@usage:        var rd = new commDataGenerator();
-               1.var recs = rd.getRecords( 300, "int", ['a','b'] );
-               2.var recs = rd.getRecords( 3, ["int", "string"] );
-               3.rd.getValue("string");
-***********************************************************************/
-function getRandomValue( dataType )
-{
-  var value = undefined;
-  
-  switch( dataType )
-  {
-	 case "int":
-		value = getRandomInt( -2147483648, 2147483647 );
-		break;
-	 case "long":
-		value = getRandomLong( -922337203685477600, 922337203685477600 );
-		break;
-	 case "float":
-		value = getRandomFloat( -999999, 999999 );
-		break;
-	 case "array":
-		value = getRandomArray();
-		break; 
-	 case "non-existed":
-		break;                 
-  }
-  
-  return value;
+   if( minNum == undefined ) { minNum = 0; }
+   if( maxNum == undefined ) { maxNum = 16; }
+   
+   var fieldNames = [];
+   var fieldNum = getRandomInt( minNum, maxNum );
+   
+   for( var i = 0; i < fieldNum; i++ )
+   {
+      //get 1 field name
+      var fieldName = "";
+      var fieldNameLen = getRandomInt( 1, 9 );
+      for( var j = 0; j < fieldNameLen; j++ )
+      {
+         //get 1 char
+         var ascii = getRandomInt( 97, 123 ); // 'a'~'z'
+         var c = String.fromCharCode( ascii );
+         fieldName += c;
+      }
+      fieldNames.push( fieldName );
+   }
+   
+   return fieldNames;
 }
 
 function getRandomInt( min, max ) // [min, max)
-   {
-      var range = max - min;
-      var value = min + parseInt( Math.random() * range );
-      return value;
-   }
-   
+{
+   var range = max - min;
+   var value = min + parseInt( Math.random() * range );
+   return value;
+}
+
 function getRandomLong( min, max )
 {
-  var value = getRandomInt( min, max );
-  return NumberLong(value);
+   var value = getRandomInt( min, max );
+   return NumberLong(value);
 }
 
 function getRandomFloat( min, max )
 {
-  var range = max - min;
-  var value = min + Math.random() * range;
-  return value;
+   var range = max - min;
+   var value = min + Math.random() * range;
+   return value;
+}
+
+function getRandomString( minLen, maxLen ) //string length value locate in [minLen, maxLen)
+{
+   var strLen = getRandomInt( minLen, maxLen );   
+   var str = "";
+   
+   for( var i = 0; i < strLen; i++ )
+   {
+      var ascii = getRandomInt( 48, 127 ); // '0' -- '~'
+      var c = String.fromCharCode( ascii );
+      str += c;
+   }
+   return str;
+}
+
+function getRandomBool()
+{
+   var Bools = [ true, false ];
+   var index = parseInt( Math.random() * Bools.length );  
+   var value = Bools[ index ]; 
+   
+   return value;
+}
+ 
+function getRandomDate()
+{
+   var sec = getRandomInt( -2208902400, 253402128000 ); //1900-01-02 ~ 9999-12-30
+   var d = new Date( sec * 1000 );
+   var dateVal = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+   
+   var value = {"$date":dateVal};
+   return value;
+}
+  
+function getRandomTimestamp()
+{   
+   var sec = getRandomInt( -2147397248, 2147397247 ); //1901-12-14-20.45.52 ~ 2038-01-18-03.14.07
+   var d = new Date( sec * 1000 );
+   
+   var ns = getRandomInt( 0, 1000000 ).toString();
+   if( ns.length < 6 )
+   {
+      var addZero = 6 - ns.length;
+      for(var i = 0; i < addZero; i++ ) { ns = '0' + ns; }   
+   }
+   
+   var timeVal = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate() + '-' +
+                 d.getHours() + '.' +  d.getMinutes() + '.' + d.getSeconds() + '.' + ns;
+   
+   var value = {"$timestamp": timeVal};
+   return value;
+}
+
+function getRandomBinary()
+{   
+   var str = getRandomString( 1, 50 );
+
+   var cmd = new Cmd();
+   var binaryVal = cmd.run( "echo -n '" + str + "' | base64 -w 0" );
+   
+   var typeVal = getRandomInt( 0, 256 );
+   typeVal = typeVal.toString();
+   
+   var value = {"$binary":binaryVal, "$type":typeVal};
+   return value;
+}
+
+function getRandomRegex()
+{
+   var opts = [ "i", "m", "x", "s" ];
+   var index = parseInt( Math.random() * opts.length );  
+   var optVal = opts[ index ]; 
+   
+   var regexVal = getRandomString( 1, 10 );
+   
+   var value = {"$regex":regexVal, "$options":optVal};
+   return value;
+}
+  
+function getRandomObject( n )
+{ 
+   var obj = {};   
+   var dataTypes= [ "int", "long", "float", "string", "OID", "bool", "date", 
+                    "timestamp", "binary", "regex", "object", "array", "null" ];
+  
+   var fieldNames = getRandomFieldNames( 1, 5 );
+   
+   for( var i in fieldNames )
+   {
+      var dataType = dataTypes[ parseInt( Math.random() * dataTypes.length ) ];  //randomly get 1 data type 
+   
+      var filedName = fieldNames[i]
+      obj[filedName] = getRandomValue( dataType );
+   }
+   
+   return obj;
 }
 
 function getRandomArray()
 {
-  var arr = [];   
-  var dataTypes= [ "int", "long", "float" ];
-				   
-  var arrLen = getRandomInt( 1, 5 );  
-  for( var i = 0; i < arrLen; i++ )
-  {
-	 var dataType = dataTypes[ parseInt( Math.random() * dataTypes.length ) ];  //randomly get 1 data type 
-	 
-	 var elem = getRandomValue( dataType );
-	 arr.push( elem );
-  }
-  
-  return arr;
+   var arr = [];   
+   var dataTypes= [ "int", "long", "float", "string", "date", 
+                    "timestamp", "regex", "array" ];
+                    
+   var arrLen = getRandomInt( 1, 5 );  
+   for( var i = 0; i < arrLen; i++ )
+   {
+      var dataType = dataTypes[ parseInt( Math.random() * dataTypes.length ) ];  //randomly get 1 data type 
+      
+      var elem = getRandomValue( dataType );
+      arr.push( elem );
+   }
+   
+   return arr;
 }
- 
+
 function genRandomFindCondition( matches, fieldNames )
 {
 	var recs = [];
@@ -180,10 +297,10 @@ function genRandomFindCondition( matches, fieldNames )
 		if( rdn % 2 === 0){
 			var match = matches[rdn];
 			rec[filedName] = match;
-			recs.push( rec ); 
+			recs.push( rec );
 		}
 	}   
-  return recs;
+   return recs;
 }
 
 function getFindCondition( recNum, dataTypes, matches )
