@@ -451,6 +451,7 @@ function main()
                   {a:{$maxKey:1}},
                   {a:true},
                   {a:{name:"Jack"}},
+                  {b:1},
                   {a:-34,b:-34},
    	            {a:-34,b:-33},
    	            {a:-34,b:-35},

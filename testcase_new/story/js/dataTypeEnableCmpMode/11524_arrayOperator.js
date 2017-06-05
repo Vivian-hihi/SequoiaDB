@@ -63,7 +63,8 @@ function main(){
       	           {a:30},
       	           {a:null},
       	           {a:{$minKey:1}},
-      	           {a:{$maxKey:1}}];         
+      	           {a:{$maxKey:1}},
+                    {b:1}];
    checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
    
    //returnMatch
@@ -93,7 +94,7 @@ function main(){
    checkResult( dbcl, findCondition1, hintConf, sortConf, expRecs1);
    
    var findCondition3 = {d:{$expand:1}};
-   checkResult( dbcl, findCondition3, hintConf, sortConf, [] );
+   checkResult( dbcl, findCondition3, hintConf, sortConf, doc );
    
    var findCondition15 = {b:{$expand:1,$in:[5,10]}};
    var expRecs15 = [{No:3,b:5,c:[5,6,[7,8]]},

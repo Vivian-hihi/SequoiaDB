@@ -97,7 +97,7 @@ function main()
    
    //seqDB-10327
    var findCondition3 = {d:{$expand:1}};
-   checkResult( dbcl, findCondition3, null, [], {No:1} );
+   checkResult( dbcl, findCondition3, null, doc, {No:1} );
    
    //seqDB-10328
    var findCondition4 = {b:{$expand:0},c:{$expand:1}};

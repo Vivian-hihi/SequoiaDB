@@ -94,7 +94,8 @@ function main()
 	                {a:3},
 	                {a:101},
 	                {a:999},
-	                {a:"abc"}];
+	                {a:"abc"},
+                   {b:1}];
    checkResult( dbcl, findCondition1, hintConf, sortConf, expRecs1 );
    
    
