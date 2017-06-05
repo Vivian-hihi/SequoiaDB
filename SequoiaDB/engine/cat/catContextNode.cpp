@@ -153,9 +153,6 @@ namespace engine
 
       try
       {
-         BSONObj boIdx ;
-         BSONElement beIdx ;
-
          rc = rtnGetSTDStringElement( _boQuery, CAT_GROUPNAME_NAME, _targetName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field [%s], rc: %d",
@@ -295,9 +292,6 @@ namespace engine
 
       try
       {
-         BSONObj boIdx ;
-         BSONElement beIdx ;
-
          rc = rtnGetSTDStringElement( _boQuery, CAT_GROUPNAME_NAME, _targetName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field [%s], rc: %d",
@@ -395,9 +389,6 @@ namespace engine
 
       try
       {
-         BSONObj boIdx ;
-         BSONElement beIdx ;
-
          rc = rtnGetSTDStringElement( _boQuery, CAT_GROUPNAME_NAME, _targetName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field [%s], rc: %d",
@@ -586,7 +577,8 @@ namespace engine
       _needRollback = TRUE ;
       _nodeID = CAT_INVALID_NODEID ;
       _nodeStatus = SDB_CAT_GRP_DEACTIVE ;
-      _nodeRole = SDB_ROLE_DATA ;
+      _nodeRole = SDB_ROLE_MAX ;
+      _groupRole = SDB_ROLE_DATA ;
    }
 
    _catCtxCreateNode::~_catCtxCreateNode ()
@@ -606,8 +598,7 @@ namespace engine
 
       try
       {
-         BSONObj boIdx ;
-         BSONElement beIdx ;
+         const CHAR *roleName ;
 
          rc = rtnGetSTDStringElement( _boQuery, CAT_GROUPNAME_NAME, _targetName ) ;
          PD_RC_CHECK( rc, PDERROR,
@@ -623,6 +614,18 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field[%s], rc: %d",
                       PMD_OPTION_DBPATH, rc ) ;
+
+         rc = rtnGetStringElement( _boQuery, PMD_OPTION_ROLE, &roleName ) ;
+         if ( SDB_OK == rc )
+         {
+            _nodeRole = utilGetRoleEnum( roleName ) ;
+            PD_LOG( PDDEBUG, "Got node role [%d]", _nodeRole ) ;
+         }
+         else
+         {
+            rc = SDB_OK ;
+            _nodeRole = SDB_ROLE_MAX ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -661,7 +664,7 @@ namespace engine
                    "Failed to get field [%s], rc: %d",
                    CAT_GROUPID_NAME, rc ) ;
 
-      rc = rtnGetIntElement( _boTarget, CAT_ROLE_NAME, _nodeRole ) ;
+      rc = rtnGetIntElement( _boTarget, CAT_ROLE_NAME, _groupRole ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to get field [%s], rc: %d",
                    CAT_ROLE_NAME, rc ) ;
@@ -757,6 +760,20 @@ namespace engine
       PD_CHECK( !svcExist,
                 SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
                 "Shard service [%s] conflict", _shardSvc.c_str() ) ;
+
+      if ( SDB_ROLE_MAX == _nodeRole )
+      {
+         // Role of node is not specified, use the role of group
+         _nodeRole = _groupRole ;
+      }
+      else
+      {
+         // Role of node is specified, should be the same with the group
+         PD_CHECK( _nodeRole == _groupRole,
+                   SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
+                   "Role of node [%d] conflicts with role of group [%d]",
+                   _nodeRole, _groupRole ) ;
+      }
 
       if ( SDB_ROLE_CATALOG == _nodeRole )
       {
@@ -956,9 +973,6 @@ namespace engine
 
       try
       {
-         BSONObj boIdx ;
-         BSONElement beIdx ;
-
          rc = rtnGetSTDStringElement( _boQuery, CAT_GROUPNAME_NAME, _targetName ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get field [%s], rc: %d",

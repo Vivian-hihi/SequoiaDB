@@ -1866,11 +1866,10 @@ namespace engine
 
          if ( _onlyAttach )
          {
-            if ( 0 == pArgs->_targetName.compare( COORD_GROUPNAME ) ||
-                 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) )
+            if ( 0 == pArgs->_targetName.compare( COORD_GROUPNAME ) )
             {
                PD_LOG( PDERROR, "Attach node only support for data "
-                       "group now" ) ;
+                       "group or catalog group now" ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -2233,11 +2232,10 @@ namespace engine
 
          if ( _onlyDetach )
          {
-            if ( 0 == pArgs->_targetName.compare( COORD_GROUPNAME ) ||
-                 0 == pArgs->_targetName.compare( CATALOG_GROUPNAME ) )
+            if ( 0 == pArgs->_targetName.compare( COORD_GROUPNAME ) )
             {
                PD_LOG( PDERROR, "Detach node only support for data "
-                       "group now" ) ;
+                       "group or catalog group now" ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
