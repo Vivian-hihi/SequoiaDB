@@ -7,7 +7,7 @@
 listReplicaGroups \- List replica groups.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.listReplicaGroups\f[]\f[]
+\f[B]\f[I]db.listReplicaGroups()\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
