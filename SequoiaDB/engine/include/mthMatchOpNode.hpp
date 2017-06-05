@@ -963,6 +963,11 @@ namespace engine
                                     BOOLEAN mixCmp,
                                     _mthMatchTreeContext &context,
                                     BOOLEAN &result ) ;
+
+         OSS_INLINE virtual BOOLEAN _flagAcceptUndefined ()
+         {
+            return TRUE ;
+         }
    } ;
 
    class _mthMatchTree ;

@@ -2231,6 +2231,8 @@ namespace engine
 
       BOOLEAN mixCmp = _config->_mixCmp ;
 
+      gotUndefined = FALSE ;
+
       rc = mthFieldName.setFieldName( pFieldName ) ;
       PD_RC_CHECK( rc, PDERROR, "set fieldName failed:fieldName=%s,rc=%d",
                    pFieldName, rc ) ;
@@ -2276,7 +2278,7 @@ namespace engine
          result = FALSE ;
          while ( it.more() )
          {
-            BOOLEAN subUndefined = FALSE ;
+            BOOLEAN subUndefined = TRUE ;
             BSONElement z = it.next() ;
             if ( ossStrcmp( z.fieldName(), pTmpFieldName ) == 0 )
             {
@@ -2309,6 +2311,14 @@ namespace engine
          // Report undefined only when all sub-elements got undefined
          // Note: empty array in this case is undefined
          gotUndefined = tmpUndefined ;
+
+         if ( gotUndefined && _flagAcceptUndefined() )
+         {
+            rc = _execute( pFieldName, BSONObj(), FALSE, context, result,
+                           tmpUndefined ) ;
+            PD_RC_CHECK( rc, PDERROR, "_execute failed:rc=%d", rc ) ;
+         }
+
          goto done ;
       }
 
