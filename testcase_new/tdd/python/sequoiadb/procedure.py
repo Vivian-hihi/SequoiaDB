@@ -9,6 +9,9 @@ from pysequoiadb.error import (SDBTypeError, SDBBaseError, SDBEndOfCursor)
 import sys,getopt
 import traceback
 
+from bson.json_util import loads 
+from bson.json_util import dumps
+
 hostname=None
 service=None
 
@@ -80,12 +83,15 @@ def procedure():
    while True:
       try:
          record = cursor.next()
+         code = dumps(record['func'])
+         
+         json = '{"$code": "function sum(x,y){return x+y;}", "$scope": {}}'
          i = i + 1
       except SDBEndOfCursor :
          break
       except SDBBaseError :
          raise e
-   if( i != 1 ):
+   if( i != 1 or code != json  ):
       print( 'exeute: db.list_procedures( condition=%s )' % ( cond ) )
       print( 'return record number, expect: 1, actual: %d' % ( i ) )
       raise  Exception( 'COUNT_ERROR' ) 
