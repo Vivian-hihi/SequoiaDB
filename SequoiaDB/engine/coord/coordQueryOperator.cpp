@@ -469,6 +469,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Query failed, rc: %d", rc ) ;
 
          contextID = pContext->contextID() ;
+
+         if ( ! (flag & FLG_QUERY_MODIFY ) )
+         {
+            pContext->setPrepareMoreData( TRUE ) ;
+         }
       }
 
    done:

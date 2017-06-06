@@ -67,6 +67,8 @@ namespace engine
       _keyGen           = NULL ;
       _needReOrder      = FALSE ;
 
+      _canPrepareMore   = FALSE ;
+
       _pSite            = NULL ;
       _pSession         = NULL ;
    }
@@ -755,8 +757,9 @@ namespace engine
       coordSubContext *pSubContext  = NULL ;
       SINT32 recordNum              = 0 ;
       CHAR *pData                   = NULL ;
+      INT32 startNumRecords = numRecords() ;
 
-      while ( isEmpty() )
+      while ( numRecords() == startNumRecords )
       {
          if ( 0 == _numToReturn )
          {
@@ -933,8 +936,9 @@ namespace engine
       SUB_CONTEXT_MAP::iterator iterFirst ;
       coordSubContext *pSubContext = NULL ;
       CHAR *pData = NULL ;
+      INT32 startNumRecords = numRecords() ;
 
-      while ( isEmpty() )
+      while ( numRecords() == startNumRecords )
       {
          // must sub context all have data
          if ( _emptyContextMap.size() + _prepareContextMap.size() > 0 )

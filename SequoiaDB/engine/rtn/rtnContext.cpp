@@ -496,8 +496,8 @@ namespace engine
 
    INT32 _rtnContextBase::_prepareMoreData( _pmdEDUCB *cb )
    {
-      const INT32 PREPARE_DATA_SIZE_LIMIT = 1024 * 1024 ; // 1MB
-      const UINT32 PREPARE_TIMEOUT = 10000 ; // 10ms
+      const INT32 PREPARE_DATA_SIZE_LIMIT = 512 * 1024 ; // 512KB
+      const UINT32 PREPARE_TIMEOUT = 2000 ; // 2ms
 
       INT32 rc = SDB_OK ;
       UINT64 beginTime ;
