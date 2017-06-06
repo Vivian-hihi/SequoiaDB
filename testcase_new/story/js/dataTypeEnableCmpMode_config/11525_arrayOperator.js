@@ -63,7 +63,8 @@ function main(){
       	           {a:30},
       	           {a:null},
       	           {a:{$minKey:1}},
-      	           {a:{$maxKey:1}}];         
+      	           {a:{$maxKey:1}},
+				   {b:1}];         
    checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
    
    //returnMatch
