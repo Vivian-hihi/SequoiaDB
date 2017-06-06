@@ -94,6 +94,9 @@ public class CreateCLAndPrimaryNodeCutNet2933 extends SdbTestBase {
             
             //check result
             checkCreateCLResult();
+            
+            //check whether the cluster is normal and lsn consistency ,the longest waiting time is 600S
+            Assert.assertEquals(groupMgr.checkBusinessWithLSN(600), true, "check LSN consistency fail");
             checkConsistency();
             //Normal operating environment
             clearFlag = true;
