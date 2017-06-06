@@ -16,7 +16,9 @@ foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127
 
 >**Note:** 
 >
->如果没有配置数据库密码验证，可以忽略user与password字段。
+> 如果没有配置数据库密码验证，可以忽略user与password字段。
+>
+> 如果需要提供多个协调节点地址，options 中的 address 字段可以按格式 'ip1:port1,ip2:port2,ip3:port3'填写。此时，service 字段可填写任意一个非空字符串。
 
 3) 关联SequoiaDB的集合空间与集合
 
