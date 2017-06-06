@@ -599,9 +599,7 @@ namespace engine
 
                // Needn't to evaluate all indexes in below cases:
                // 1. got enough candidate plans
-               // 2. best index-scan plan is much better than table-scan plan
-               if ( candidateCount >= OPT_MAX_CANDIDATE_COUNT ||
-                    bestEstimateCost < minCandidateCost )
+               if ( candidateCount >= OPT_MAX_CANDIDATE_COUNT )
                {
                   break ;
                }
