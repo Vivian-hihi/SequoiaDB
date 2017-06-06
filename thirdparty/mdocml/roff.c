@@ -896,6 +896,7 @@ roff_free(struct roff *r)
 	free(r);
 }
 
+static int _hasInit = 0;
 struct roff *
 roff_alloc(struct mparse *parse, int options)
 {
@@ -907,7 +908,11 @@ roff_alloc(struct mparse *parse, int options)
 	r->format = options & (MPARSE_MDOC | MPARSE_MAN);
 	r->rstackpos = -1;
 
-	roffhash_init();
+    if ( 0 == _hasInit )
+    {
+        roffhash_init();
+        _hasInit = 1;
+    }
 
 	return r;
 }

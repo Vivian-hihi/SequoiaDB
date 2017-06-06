@@ -36,21 +36,32 @@ int dummy;
 int
 vasprintf(char **ret, const char *format, va_list ap)
 {
-	char	 buf[2];
-	va_list	 ap2;
-	int	 sz;
+#ifndef _WIN32
+    char     buf[2];
+    int  sz;
 
-	va_copy(ap2, ap);
-	sz = vsnprintf(buf, sizeof(buf), format, ap2);
-	va_end(ap2);
+    va_list  ap2;
+    va_copy(ap2, ap);
+    sz = vsnprintf(buf, sizeof(buf), format, ap2);
+    va_end(ap2);
 
-	if (sz != -1 && (*ret = malloc(sz + 1)) != NULL) {
-		if (vsnprintf(*ret, sz + 1, format, ap) == sz)
-			return sz;
-		free(*ret);
-	}
-	*ret = NULL;
-	return -1;
+    if (sz != -1 && (*ret = malloc(sz + 1)) != NULL) {
+        if (vsnprintf(*ret, sz + 1, format, ap) == sz)
+            return sz;
+        free(*ret);
+    }
+    *ret = NULL;
+    return -1;
+#else
+    int len ;
+    len = _vscprintf_p(format, ap) + 1;
+    *ret = (char *) malloc (len * sizeof(char));
+    if (!*ret)
+    {
+        return -1;
+    }
+    return _vsprintf_p(*ret, len, format, ap);
+#endif
 }
 
 #endif

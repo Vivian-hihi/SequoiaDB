@@ -264,7 +264,8 @@ state_sh(STATE_ARGS)
 		 */
 
 		n->sec = n->parent->sec = secname == NULL ?
-		    SEC_CUSTOM : mdoc_a2sec(secname);
+		    SEC_CUSTOM : SEC_CUSTOM ;
+//          mdoc_a2sec(secname);
 		for (nch = n->child; nch != NULL; nch = nch->next)
 			nch->sec = n->sec;
 		free(secname);

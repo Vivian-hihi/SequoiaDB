@@ -22,7 +22,9 @@
 #include <locale.h>
 #include <stdio.h>
 #include <wchar.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 int
 main(void)

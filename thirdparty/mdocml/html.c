@@ -26,8 +26,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#if !defined ( _WIN32 )
 #include <unistd.h>
-
+#endif
 #include "mandoc.h"
 #include "mandoc_aux.h"
 #include "out.h"

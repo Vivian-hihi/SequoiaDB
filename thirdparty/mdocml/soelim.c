@@ -41,7 +41,9 @@
 #else
 #include "compat_stringlist.h"
 #endif
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #define C_OPTION 0x1
 

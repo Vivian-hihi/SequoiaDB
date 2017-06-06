@@ -47,7 +47,9 @@ int dummy;
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "compat_fts.h"
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))

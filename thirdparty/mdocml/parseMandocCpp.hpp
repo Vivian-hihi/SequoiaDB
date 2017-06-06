@@ -1,6 +1,6 @@
-/*      $Id: tag.h,v 1.7 2015/11/20 21:59:54 schwarze Exp $    */
+/*   $Id: main.h,v 1.15 2011/10/06 22:29:12 kristaps Exp $ */
 /*
- * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,30 +14,25 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef   PARSE_MANDOC_HPP__
+#define   PARSE_MANDOC_HPP__
+#include <core.hpp>
+SDB_EXTERN_C_START
+#include "parseMandoc.h"
+SDB_EXTERN_C_END
 
-#if defined (_WIN32)
-   #include <ws2tcpip.h>
-   #include <Windows.h>
-   #include <WinBase.h>
-#endif
+class parseMandoc
+{
+public:
+   static parseMandoc& getInstance() ;
+   INT32 parse( const CHAR* filename ) ;
+private:
+   parseMandoc() ;
+   parseMandoc( const parseMandoc& ) ;
+   parseMandoc& operator=( const parseMandoc& ) ;
+   ~parseMandoc() ;
+//   struct curparse _curp ;
+//   struct manconf _conf ;
+} ;
 
-
-struct	tag_files {
-	char	 ofn[20];
-	char	 tfn[20];
-	int	 ofd;
-	int	 tfd;
-#if defined _WIN32
-	DWORD	 tcpgid;
-	DWORD	 pager_pid;
-#else
-	pid_t	 tcpgid;
-	pid_t	 pager_pid;
-#endif
-};
-
-
-struct tag_files *tag_init(void);
-void	 tag_put(const char *, int, size_t);
-void	 tag_write(void);
-void	 tag_unlink(void);
+#endif // PARSE_MANDOC_HPP__

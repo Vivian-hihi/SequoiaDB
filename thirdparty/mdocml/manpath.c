@@ -44,7 +44,7 @@ manconf_parse(struct manconf *conf, const char *file,
 		char *defp, char *auxp)
 {
 #if HAVE_MANPATH
-	char		 cmd[(PATH_MAX * 3) + 20];
+	char		 cmd[(MAX_PATHSIZE * 3) + 20];
 	FILE		*stream;
 	char		*buf;
 	size_t		 sz, bsz;
@@ -162,12 +162,16 @@ manpath_parseline(struct manpaths *dirs, char *path, int complain)
 static void
 manpath_add(struct manpaths *dirs, const char *dir, int complain)
 {
-	char		 buf[PATH_MAX];
+	char		 buf[MAX_PATHSIZE];
 	struct stat	 sb;
 	char		*cp;
 	size_t		 i;
 
-	if (NULL == (cp = realpath(dir, buf))) {
+#if defined (_WIN32)
+	if (NULL == (cp = _fullpath(dir, buf, sizeof(dir)))) {
+#else
+    if (NULL == (cp = realpath(dir, buf))) {
+#endif
 		if (complain)
 			warn("manpath: %s", dir);
 		return;

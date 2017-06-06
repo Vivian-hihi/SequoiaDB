@@ -17,11 +17,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "config.h"
-
+#if !defined ( _WIN32 )
 #include <sys/types.h>
+#endif
 #if HAVE_MMAP
+#if !defined ( _WIN32 )
 #include <sys/mman.h>
 #include <sys/stat.h>
+#endif
+
 #endif
 
 #include <assert.h>
@@ -36,7 +40,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if !defined ( _WIN32 )
 #include <unistd.h>
+#endif
+
 #include <zlib.h>
 
 #include "mandoc_aux.h"
@@ -611,7 +618,12 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 {
 	gzFile		 gz;
 	size_t		 off;
+#if defined _WIN32
+    size_t     ssz;
+#else
 	ssize_t		 ssz;
+#endif
+
 
 #if HAVE_MMAP
 	struct stat	 st;
@@ -760,7 +772,7 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 	int		 with_mmap;
 	int		 save_filenc;
 
-	if (read_whole_file(curp, file, fd, &blk, &with_mmap)) {
+	if (read_whole_file(curp, file, fd, &blk, &with_mmap)) {      
 		save_filenc = curp->filenc;
 		curp->filenc = curp->options &
 		    (MPARSE_UTF8 | MPARSE_LATIN1);

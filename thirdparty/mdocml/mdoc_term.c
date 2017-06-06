@@ -34,8 +34,8 @@
 #include "mdoc.h"
 #include "out.h"
 #include "term.h"
-#include "tag.h"
-#include "main.h"
+//#include "tag.h"
+//#include "main.h"
 
 struct	termpair {
 	struct termpair	 *ppair;
@@ -1459,10 +1459,10 @@ termp_fn_pre(DECL_ARGS)
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, n->string);
 	term_fontpop(p);
-
+/*
 	if (n->sec == SEC_DESCRIPTION)
 		tag_put(n->string, ++fn_prio, p->line);
-
+*/
 	if (pretty) {
 		term_flushln(p);
 		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND | TERMP_HANG);
@@ -2220,19 +2220,20 @@ termp_under_pre(DECL_ARGS)
 static int
 termp_er_pre(DECL_ARGS)
 {
-
+/*
 	if (n->sec == SEC_ERRORS &&
 	    (n->parent->tok == MDOC_It ||
 	     (n->parent->tok == MDOC_Bq &&
 	      n->parent->parent->parent->tok == MDOC_It)))
 		tag_put(n->child->string, 1, p->line);
+*/
 	return 1;
 }
 
 static int
 termp_tag_pre(DECL_ARGS)
 {
-
+/*
 	if (n->child != NULL &&
 	    n->child->type == ROFFT_TEXT &&
 	    n->prev == NULL &&
@@ -2241,5 +2242,6 @@ termp_tag_pre(DECL_ARGS)
 	      n->parent->parent->prev == NULL &&
 	      n->parent->parent->parent->tok == MDOC_It)))
 		tag_put(n->child->string, 1, p->line);
+*/
 	return 1;
 }

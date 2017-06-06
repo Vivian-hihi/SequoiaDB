@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "config.h"
-
 #include <sys/types.h>
 
 #include <assert.h>
@@ -26,7 +25,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+
 #if HAVE_WCHAR
 #include <wchar.h>
 #endif
@@ -95,7 +97,6 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 		 * various functions, for example strftime(3).  As a
 		 * worst case, it might even cause buffer overflows.
 		 */
-
 		v = TERMENC_LOCALE == enc ?
 		    setlocale(LC_CTYPE, "") :
 		    setlocale(LC_CTYPE, "en_US.UTF-8");

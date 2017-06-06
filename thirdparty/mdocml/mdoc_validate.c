@@ -17,10 +17,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "config.h"
-
 #include <sys/types.h>
 #ifndef OSNAME
+#if !defined ( _WIN32 )
 #include <sys/utsname.h>
+#endif
 #endif
 
 #include <assert.h>
@@ -2060,7 +2061,7 @@ post_dt(POST_ARGS)
 		goto out;  /* msec and arch remain NULL. */
 	}
 
-	mdoc->meta.msec = mandoc_strdup(nn->string);
+    mdoc->meta.msec = mandoc_strdup(nn->string);
 
 	/* Infer volume title from section number. */
 
@@ -2074,8 +2075,9 @@ post_dt(POST_ARGS)
 
 	/* Optional third argument: architecture. */
 
-	if ((nn = nn->next) == NULL)
+	if ((nn = nn->next) == NULL) {
 		goto out;
+	}
 
 	for (p = nn->string; *p != '\0'; p++)
 		*p = tolower((unsigned char)*p);

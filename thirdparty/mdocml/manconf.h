@@ -16,6 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef   MANDOCF_H
+#define   MANDOCF_H
+
 /* List of unique, absolute paths to manual trees. */
 
 struct	manpaths {
@@ -46,3 +49,5 @@ struct	manconf {
 void	 manconf_parse(struct manconf *, const char *, char *, char *);
 void	 manconf_output(struct manoutput *, const char *);
 void	 manconf_free(struct manconf *);
+
+#endif /*!MANDOCF_H*/
