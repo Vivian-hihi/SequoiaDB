@@ -259,7 +259,6 @@
 #define FIELD_NAME_ELAPSED_TIME              "ElapsedTime"
 #define FIELD_NAME_RETURN_NUM                "ReturnNum"
 #define FIELD_NAME_RUN                       "Run"
-#define FIELD_NAME_DETAIL                    "Detail"
 #define FIELD_NAME_CLUSTERNAME               "ClusterName"
 #define FIELD_NAME_BUSINESSNAME              "BusinessName"
 #define FIELD_NAME_DATACENTER                "DataCenter"
