@@ -103,10 +103,10 @@ function createIndex( dbcl_IndexScan )
 //insert random numberical data
 function insertRandomData( dbcl_IndexScan )
 {
-   for(var i= 0; i< 40;i++)
+   for(var i= 0; i< 50;i++)
    {
       var rd = new dataGenerator();
-      var recs = rd.getRecords( 50000, ["int", "long", "float", "string", "bool", "date", "timestamp", "regex", "array", "null"], fieldNames );
+      var recs = rd.getRecords( 30000, ["int", "long", "float", "string", "bool", "date", "timestamp", "regex", "array", "null"], fieldNames );
       insertData(dbcl_IndexScan, recs);
       rd = null;
       recs.length = 0;  // release space
