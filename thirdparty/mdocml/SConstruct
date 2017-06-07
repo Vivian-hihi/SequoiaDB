@@ -27,7 +27,6 @@ import stat
 from os.path import join, dirname, abspath
 #import libdeps
 root_dir = dirname(File('SConstruct').rfile().abspath)
-zlib_dir = join(root_dir, '..\\zlib')
 src_dir = root_dir
 lib_dir = join(root_dir, "lib")
 include_dir = join(root_dir, "include")
@@ -175,9 +174,6 @@ else:
    build_dir = join(build_dir, "dd")
    
 # define env
-#print "111111111111111111111111111111111111111 variantDir is: %s" % (build_dir)
-#print "222222222222222222222 zlib_dir is: %s" % (zlib_dir)
-
 env = Environment( BUILD_DIR=build_dir,
                    tools=["default"],
                    PYSYSPLATFORM=os.sys.platform,
@@ -233,8 +229,7 @@ def findVersion( root , choices ):
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
 
-env.Append(CPPPATH=[zlib_dir, src_dir] )
-
+env.Append(CPPPATH=[src_dir] )
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
 
 # specify dependent libraries for javascript engine and boost
@@ -394,10 +389,6 @@ def getSysInfo():
     else:
         return " ".join( os.uname() )
 
-# we do not want c/cpp client to have those "CPPFLAGS",
-# so just append them here
-# those flags "LINKFLAGS" will cause LNK2001 errors
-# when we build dlls of cpp, so just append them here.
 if windows:
     if release:
         env.Append( CPPFLAGS= " /MT " )

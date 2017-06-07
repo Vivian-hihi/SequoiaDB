@@ -12,18 +12,8 @@ Import("debugBuild")
 release_build = release
 debug_build = debugBuild
 
-
 # set the compile options
 staticLibEnv = env.Clone()
-
-
-# set compile options for building in windows 
-#if windows:
-#    if release_build:
-#        staticLibEnv.Append( CPPFLAGS= " /MT " )
-#    elif debug_build:
-#        staticLibEnv.Append( CPPFLAGS= " /MTd " )
-
 
 # files
 mdocmlFiles = [
@@ -94,13 +84,16 @@ mdocmlLibFiles = [
       ]
 
 #Static Library
-if release_build:
+if linux:
    staticLib = staticLibEnv.StaticLibrary('mdocml', [mdocmlLibFiles])
-   staticLibEnv.Install( '#/lib/release/static', staticLib )
-elif debug_build:
-   staticLib = staticLibEnv.StaticLibrary('mdocmld', [mdocmlLibFiles])
-   staticLibEnv.Install( '#/lib/debug/static', staticLib )
-
+   staticLibEnv.Install( '#/lib/linux64', staticLib )
+   
+if windows:
+   if release_build:
+      staticLib = staticLibEnv.StaticLibrary('mdocml', [mdocmlLibFiles])
+   elif debug_build:
+      staticLib = staticLibEnv.StaticLibrary('mdocmld', [mdocmlLibFiles])
+   staticLibEnv.Install( '#/lib/win64', staticLib )
 
 #Header files
 staticLibEnv.Install( '#/include', "src/parseMandoc.h" )

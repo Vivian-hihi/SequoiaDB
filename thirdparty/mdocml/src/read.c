@@ -44,7 +44,7 @@
 #include <unistd.h>
 #endif
 
-#include <zlib.h>
+//#include <zlib.h>
 
 #include "mandoc_aux.h"
 #include "mandoc.h"
@@ -616,7 +616,7 @@ static int
 read_whole_file(struct mparse *curp, const char *file, int fd,
 		struct buf *fb, int *with_mmap)
 {
-	gzFile		 gz;
+//	gzFile		 gz;
 	size_t		 off;
 #if defined _WIN32
     size_t     ssz;
@@ -650,13 +650,13 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 			return 1;
 	}
 #endif
-
+/*
 	if (curp->gzip) {
 		if ((gz = gzdopen(fd, "rb")) == NULL)
 			err((int)MANDOCLEVEL_SYSERR, "%s", file);
 	} else
 		gz = NULL;
-
+*/
 	/*
 	 * If this isn't a regular file (like, say, stdin), then we must
 	 * go the old way and just read things in bit by bit.
@@ -675,9 +675,12 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 			}
 			resize_buf(fb, 65536);
 		}
+/*
 		ssz = curp->gzip ?
 		    gzread(gz, fb->buf + (int)off, fb->sz - off) :
 		    read(fd, fb->buf + (int)off, fb->sz - off);
+*/
+        ssz = read(fd, fb->buf + (int)off, fb->sz - off); 
 		if (ssz == 0) {
 			fb->sz = off;
 			return 1;
