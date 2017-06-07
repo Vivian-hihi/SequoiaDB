@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include "../common/testcommon.hpp"
 
-/*
 #define CHECK_RC_CODE( rc, msg ) \
 if( rc != SDB_OK ) \
 { \
@@ -285,4 +284,3 @@ TEST( reloadConf, weight )
 	sdbReleaseReplicaGroup( rg ) ;
 	sdbReleaseNode( node ) ;
 }
-*/
