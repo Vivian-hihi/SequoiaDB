@@ -35,7 +35,7 @@
 #include "ossUtil.h"
 #include "sptWords.hpp"
 #include "sptHelp.hpp"
-#include "../mdocml/parseMandocCpp.hpp"
+#include "sptParseMandoc.hpp"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -75,6 +75,7 @@ namespace engine
                                   const string &matcher,
                                   BOOLEAN isInstance )
    {
+#if defined ( SDB_SHELL )
       INT32 rc = SDB_OK ;
       string filePath ;
       vector<string> vec ;
@@ -192,27 +193,30 @@ namespace engine
       }
       // display manual
 #if defined ( _WINDOWS )
-   rc = parseMandoc::getInstance().parse( filePath.c_str() ) ;
+      rc = sptParseMandoc::getInstance().parse( filePath.c_str() ) ;
 #else
       ossResetTty();
-      rc = parseMandoc::getInstance().parse( filePath.c_str() ) ;
+      rc = sptParseMandoc::getInstance().parse( filePath.c_str() ) ;
       ossResetTty();
 #endif
       if ( rc != SDB_OK )
       {
          goto error ;
       }
-      
    done:
       return rc ;
    error:
       goto done ;
+#else
+   return SDB_OK ;
+#endif // if defined ( SDB_SHELL )
    }
 
 
    INT32 _sptHelp::displayMethod( const string &className, 
                                   BOOLEAN isInstance )
    {
+#if defined ( SDB_SHELL )
       INT32 rc = SDB_OK ;
       vector<sptFuncMetaInfo> vec ;
 
@@ -260,15 +264,19 @@ namespace engine
             if ( rc ) goto error ;
          }
       }
-      
+
    done:
       return rc ;
    error:
       goto done ;
+#else
+   return SDB_OK ;
+#endif // if defined ( SDB_SHELL )
    }
 
    INT32 _sptHelp::displayGlobalMethod()
    {
+#if defined ( SDB_SHELL )
       INT32 rc = SDB_OK ;
       vector<sptFuncMetaInfo> vec ;
       
@@ -282,10 +290,14 @@ namespace engine
          rc = _displayMethod( vec, 3, 54 ) ;
          if ( rc ) goto error ;
       }
+
    done:
       return rc ;
    error:
       goto done ;
+#else
+   return SDB_OK ;
+#endif // if defined ( SDB_SHELL )
    }
 
    INT32 _sptHelp::_displayConstructorMethod( const string &className,

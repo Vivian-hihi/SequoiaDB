@@ -1,12 +1,11 @@
 import os
 
 Import("shellEnv")
-Import("ssllib_file")
-Import("ssllib_file1")
 Import("guess_os")
 Import("usesm")
 if usesm:
     Import("smlib_file")
+
 sptFiles = [
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
@@ -33,6 +32,7 @@ spt2Files = [
       "spt/sptClassMetaInfo.cpp",
       "spt/sptHelp.cpp",
       "spt/sptWords.cpp",
+      "spt/sptParseMandoc.cpp",
       "spt/sptFuncDef.cpp",
       "spt/usrdef/sptUsrSsh.cpp",
       "spt/usrdef/sptUsrCmd.cpp",
@@ -131,55 +131,6 @@ clientCFiles = [
       "client/network.c"
       ]
 
-mdocmlFiles = [
-      "mdocml/parseMandocCpp.cpp",
-      "mdocml/eqn_html.c",
-      "mdocml/html.c",
-      "mdocml/man_html.c",
-      "mdocml/mdoc_html.c",
-      "mdocml/tbl_html.c",
-      "mdocml/mdoc_man.c",
-      "mdocml/eqn_term.c",
-      "mdocml/man_term.c",
-      "mdocml/mdoc_term.c",
-      "mdocml/term.c",
-      "mdocml/term_ascii.c",
-      "mdocml/term_ps.c",
-      "mdocml/tbl_term.c",
-      "mdocml/parseMandoc.c",
-      "mdocml/out.c",
-      "mdocml/tree.c",
-      "mdocml/compat_fgetln.c",
-      "mdocml/compat_getsubopt.c",
-      "mdocml/compat_strlcat.c",
-      "mdocml/compat_strlcpy.c",
-      "mdocml/man.c",
-      "mdocml/man_hash.c",
-      "mdocml/man_macro.c",
-      "mdocml/man_validate.c",
-      "mdocml/arch.c",
-      "mdocml/att.c",
-      "mdocml/lib.c",
-      "mdocml/mdoc.c",
-      "mdocml/mdoc_argv.c",
-      "mdocml/mdoc_hash.c",
-      "mdocml/mdoc_macro.c",
-      "mdocml/mdoc_validate.c",
-      "mdocml/st.c",
-      "mdocml/vol.c",
-      "mdocml/eqn.c",
-      "mdocml/roff.c",
-      "mdocml/tbl.c",
-      "mdocml/tbl_data.c",
-      "mdocml/tbl_layout.c",
-      "mdocml/tbl_opts.c",
-      "mdocml/chars.c",
-      "mdocml/mandoc.c",
-      "mdocml/msec.c",
-      "mdocml/read.c",
-      "mdocml/common.c"
-      ]
-
 ssh2Files = [
       "ssh2/agent.c",
       "ssh2/channel.c",
@@ -225,20 +176,18 @@ shellEnv.StaticLibrary('util', utilFiles)
 shellEnv.StaticLibrary('util2', util2Files)
 #Process Model
 shellEnv.StaticLibrary('pmd', pmdFiles)
-#Mdocml
-shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Shell Executable
 #Shell Backend  Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2", "pmd"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "ssh2", "util2", "spt2", "pmd"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
+shellEnv.Install( '#/bin', sdbbp )
 
 shellEnv.Install( '#/bin', sdb )
-shellEnv.Install( '#/bin', sdbbp )
 
 if "win32" == guess_os:
    if usesm:

@@ -49,7 +49,13 @@
 using std::vector ;
 using std::string ;
 
-void sdbSplitWords( const string &text, 
-                    INT32 wordNum, vector<string> &vec_out ) ;
+namespace engine {
 
+#if defined ( _WINDOWS )
+   INT32 sptGBKToUTF8( const std::string& strGBK, std::string &strUTF8 ) ;
+   INT32 sptUTF8ToGBK( const std::string &strUTF8, std::string &strGBK ) ;
+#endif
+   void sdbSplitWords( const string &text, 
+                       INT32 wordNum, vector<string> &output ) ;
+}
 #endif // SPTWORDS_HPP__

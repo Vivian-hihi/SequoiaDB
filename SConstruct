@@ -45,6 +45,8 @@ zlib_dir = join(thirdparty_dir, 'zlib')
 zlib_lib_dir = join(zlib_dir, 'lib')
 snappy_dir = join(thirdparty_dir, 'snappy')
 snappy_lib_dir = join(snappy_dir, 'lib')
+mdocml_dir = join(thirdparty_dir, 'mdocml' )
+mdocml_include_dir = join(mdocml_dir,'include')
 gtest_dir = join(engine_dir,'gtest')
 ncursesinclude_dir = join(engine_dir, 'ncurses/include')
 driver_dir = join(db_dir,'driver')
@@ -501,6 +503,7 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux64') )
+        env.Append( EXTRALIBPATH=join(mdocml_dir,'lib/linux64') )
         env.Append( EXTRALIBPATH=join(zlib_lib_dir,'linux64') )
         env.Append( EXTRALIBPATH=join(lz4_lib_dir,'linux64') )
         env.Append( EXTRALIBPATH=join(snappy_lib_dir,'linux64') )
@@ -629,7 +632,7 @@ if guess_os == "linux":
 
     nix = True
 
-elif "win32" == guess_os:
+elif guess_os == "win32":
     # when building windows
     windows = True
     # check VC compiler
@@ -651,6 +654,7 @@ elif "win32" == guess_os:
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
+        env.Append( EXTRALIBPATH=join(mdocml_dir,'lib/win64') )
         # use 64 bit spidermonkey
         if usesm:
             if debugBuild:
@@ -923,6 +927,13 @@ fmpEnv = env.Clone() ;
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
+    if debugBuild:
+        shellEnv.Append( LIBS=['mdocmld'] )
+    else:
+        shellEnv.Append( LIBS=['mdocml'] )
+elif linux:
+    shellEnv.Append( LIBS=['mdocml'] )
+shellEnv.Append(CPPPATH=[mdocml_include_dir])
 
 # add engine and client variable
 env.Append( CPPDEFINES=[ "SDB_ENGINE" ] )

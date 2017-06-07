@@ -294,55 +294,6 @@ ssh2Files = [
       "ssh2/version.c"
       ]
 
-mdocmlFiles = [
-      "mdocml/parseMandocCpp.cpp",
-      "mdocml/eqn_html.c",
-      "mdocml/html.c",
-      "mdocml/man_html.c",
-      "mdocml/mdoc_html.c",
-      "mdocml/tbl_html.c",
-      "mdocml/mdoc_man.c",
-      "mdocml/eqn_term.c",
-      "mdocml/man_term.c",
-      "mdocml/mdoc_term.c",
-      "mdocml/term.c",
-      "mdocml/term_ascii.c",
-      "mdocml/term_ps.c",
-      "mdocml/tbl_term.c",
-      "mdocml/parseMandoc.c",
-      "mdocml/out.c",
-      "mdocml/tree.c",
-      "mdocml/compat_fgetln.c",
-      "mdocml/compat_getsubopt.c",
-      "mdocml/compat_strlcat.c",
-      "mdocml/compat_strlcpy.c",
-      "mdocml/man.c",
-      "mdocml/man_hash.c",
-      "mdocml/man_macro.c",
-      "mdocml/man_validate.c",
-      "mdocml/arch.c",
-      "mdocml/att.c",
-      "mdocml/lib.c",
-      "mdocml/mdoc.c",
-      "mdocml/mdoc_argv.c",
-      "mdocml/mdoc_hash.c",
-      "mdocml/mdoc_macro.c",
-      "mdocml/mdoc_validate.c",
-      "mdocml/st.c",
-      "mdocml/vol.c",
-      "mdocml/eqn.c",
-      "mdocml/roff.c",
-      "mdocml/tbl.c",
-      "mdocml/tbl_data.c",
-      "mdocml/tbl_layout.c",
-      "mdocml/tbl_opts.c",
-      "mdocml/chars.c",
-      "mdocml/mandoc.c",
-      "mdocml/msec.c",
-      "mdocml/read.c",
-      "mdocml/common.c"
-]
-
 clientFiles = [
       "client/client.c",
       "client/common.c",
@@ -618,8 +569,6 @@ if linux:
 toolEnv.StaticLibrary('spt', sptFiles)
 toolEnv.StaticLibrary('spt2', spt2Files)
 toolEnv.StaticLibrary('ssh2', ssh2Files)
-#Mdocml
-toolEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Export Executable
 sdbimprt2 = toolEnv.Program("sdbimprt", importFiles,
@@ -659,7 +608,7 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","util","net","pmd","omagent","client", "mdocml", "spt","spt2","ssh2"],
+         LIBDEPS=["pd","oss","msg","bson","util","net","pmd","omagent","client", "spt","spt2","ssh2"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,
