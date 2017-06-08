@@ -7,7 +7,7 @@
 flushConfigure \- Flush the configurations to the configuration files.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.flushConfigure(<rule>)\f[]\f[]
+\f[B]\f[I]db.flushConfigure(<options>)\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
