@@ -4,11 +4,11 @@ createCL - 创建一个新的集合。
 
 ##语法##
 
-***db.collectionspace.createCL(\<name\>,[option])***
+***db.collectionspace.createCL(\<name\>,[options])***
 
 ##类别##
 
-Collection
+Collection Space
 
 ##描述##
 

@@ -8,7 +8,7 @@ dropCL - 删除当前集合空间下指定的集合。
 
 ##类别##
 
-集合空间
+Collection Space
 
 ##描述##
 
