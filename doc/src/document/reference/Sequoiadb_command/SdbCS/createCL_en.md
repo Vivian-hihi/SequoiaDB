@@ -3,7 +3,7 @@
 createCL - Create a new collection.
 
 ##SYNOPSIS##
-**db.collectionspace.createCL(\<name\>,[option])**
+**db.collectionspace.createCL(\<name\>,[options])**
 
 ##CATEGORY##
 Collection Space
