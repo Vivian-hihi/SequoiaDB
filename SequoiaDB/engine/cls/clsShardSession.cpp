@@ -1349,6 +1349,15 @@ namespace engine
          }
          else
          {
+            if ( CMD_CREATE_COLLECTION == pCommand->type() )
+            {
+               rc = rtnTestCollectionCommand( pCommand->collectionFullName(),
+                                              _pDmsCB ) ;
+               if( SDB_DMS_CS_NOTEXIST == rc )
+               {
+                  goto error ;
+               }
+            }
             //run command
             rc = rtnRunCommand( pCommand, getServiceType(),
                                 _pEDUCB, _pDmsCB, _pRtnCB,
