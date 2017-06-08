@@ -673,6 +673,20 @@
                      "en": "Network Security"
                   }
                ]
+            },
+            {
+               "id": 1496923310,
+               "dir": "statistics",
+               "cn": "统计信息",
+               "en": "Statistics",
+               "contents": [
+                  {
+                     "id": 1496923311,
+                     "file": "statistics",
+                     "cn": "统计信息",
+                     "en": "Statistics"
+                  }
+               ]
             }
          ]
       },
@@ -1439,6 +1453,12 @@
                            "file": "sync",
                            "cn": "sync()",
                            "en": "sync()"
+                        },
+                        {
+                           "id": 1496923440,
+                           "file": "analyze",
+                           "cn": "analyze()",
+                           "en": "analyze()"
                         },
                         {
                            "id": 1483064791,
