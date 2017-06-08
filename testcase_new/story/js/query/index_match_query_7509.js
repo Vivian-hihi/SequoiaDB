@@ -58,18 +58,18 @@ function main()
 
 try
 {
-   //commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
-            //   "failed to drop collection in the begin" ) ;
+   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
+               "failed to drop collection in the begin" ) ;
    main( db ) ;
-   //commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
-   //            "failed to drop collection in the end, correct" ) ;
+   commDropCL( db, COMMCSNAME, COMMCLNAME, false, false,
+               "failed to drop collection in the end, correct" ) ;
    db.close() ;
 }
 catch( e )
 {
    //commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
    //            "failed to drop collection in the end, wrong" ) ;
-   db.close() ;
+   //db.close() ;
    throw e ;
 }
 
