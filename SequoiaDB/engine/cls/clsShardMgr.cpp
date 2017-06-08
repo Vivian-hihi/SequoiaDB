@@ -420,15 +420,20 @@ namespace engine
    {
       if ( primary && SDB_EVT_OCCUR_BEFORE == type )
       {
-           // clear catalog info
+         pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+         _SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+
+         // clear catalog info
          _pCatAgent->lock_w() ;
          _pCatAgent->clearAll() ;
          _pCatAgent->release_w() ;
+
+         // Clear statistics
+         rtnClearStats( cb, dmsCB ) ;
       }
       else if ( primary && SDB_EVT_OCCUR_AFTER == type )
       {
-         const CHAR *pDummyName = "SYS" ;
-         sdbGetClsCB()->invalidateCata( pDummyName ) ;
+         sdbGetClsCB()->invalidateStatistics() ;
       }
    }
 

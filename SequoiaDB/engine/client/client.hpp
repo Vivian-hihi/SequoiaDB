@@ -3156,7 +3156,10 @@ namespace sdbclient
       virtual UINT64 getLastAliveTime() const = 0 ;
 
       virtual INT32 syncDB(
-         const bson::BSONObj &options = _sdbStaticObject ) = 0;
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 analyze(
+         const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
    } ;
 /** \typedef class _sdb _sdb
 */
@@ -4459,6 +4462,35 @@ namespace sdbclient
          if ( !pSDB )
             return SDB_NOT_CONNECTED ;
          return pSDB->syncDB ( options ) ;
+      }
+
+      /** \fn INT32 analyze(const bson::BSONObj &options)
+          \brief analyze collection or index to collect statistics information
+          \param [in] cHandle The database connection handle
+          \param [in] options The control options:
+
+              CollectionSpace: (String) Specify the collectionspace to be analyzed.
+              Collection: (String) Specify the collection to be analyzed.
+              Index: (String) Specify the index to be analyzed.
+              Mode: (Int32) Specify the analyze, 0 is reload only, 1 is sampling
+                    analyze, 2 is full analyze
+              Some of other options are as below:(only take effect in coordinate nodes,
+                             please visit the official website to search "analyze" or
+                             "Location Elements" for more detail.)
+              GroupID:INT32,
+              GroupName:String,
+              NodeID:INT32,
+              HostName:String,
+              svcname:String,
+              ...
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 analyze ( const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if ( !pSDB )
+            return SDB_NOT_CONNECTED ;
+         return pSDB->analyze ( options ) ;
       }
 
 /*      INT32 modifyConfig ( INT32 nodeID,

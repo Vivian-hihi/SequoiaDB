@@ -89,6 +89,14 @@ namespace engine
                           std::vector< BSONObj > &idxBlocks,
                           std::vector< dmsRecordID > &idxRIDs ) ;
 
+   class _rtnInternalSorting ;
+
+   INT32 rtnGetIndexSamples ( _dmsStorageUnit *su,
+                              ixmIndexCB *indexCB,
+                              UINT32 sampleCount,
+                              _rtnInternalSorting &sorter,
+                              UINT32 &levels, UINT32 &pages ) ;
+
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb,
                      INT32 *pInsertedNum = NULL,
@@ -271,7 +279,9 @@ namespace engine
                                            SDB_DMSCB *dmsCB,
                                            dmsStorageUnit **ppsu,
                                            const CHAR **ppCollectionName,
-                                           dmsStorageUnitID &suID ) ;
+                                           dmsStorageUnitID &suID,
+                                           OSS_LATCH_MODE lockType = SHARED,
+                                           INT32 millisec = -1 ) ;
 
    INT32 rtnFindCollection ( const CHAR *pCollection,
                              SDB_DMSCB *dmsCB ) ;
@@ -521,6 +531,25 @@ namespace engine
                                  pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                  _dpsLogWrapper *dpsCB, BOOLEAN sys = TRUE,
                                  INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
+
+   INT32 rtnAnalyze ( const CHAR *pCSName,
+                      const CHAR *pCLName,
+                      const CHAR *pIXName,
+                      const rtnAnalyzeParam &param,
+                      pmdEDUCB *cb,
+                      _SDB_DMSCB *dmsCB,
+                      _SDB_RTNCB *rtnCB,
+                      _dpsLogWrapper *dpsCB ) ;
+
+   INT32 rtnClearStats ( pmdEDUCB *cb, _SDB_DMSCB *dmsCB ) ;
+
+   INT32 rtnReloadCLStats ( dmsStorageUnit *pSU, dmsMBContext *mbContext,
+                            pmdEDUCB *cb, _SDB_DMSCB *dmsCB ) ;
+
+   INT32 rtnAnalyzeDpsLog ( const CHAR *pCSName,
+                            const CHAR *pCLFullName,
+                            const CHAR *pIndexName,
+                            _dpsLogWrapper *dpsCB ) ;
 
 }
 

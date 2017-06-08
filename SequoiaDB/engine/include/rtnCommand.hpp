@@ -1391,6 +1391,77 @@ namespace engine
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
    } ;
 
+   struct _rtnAnalyzeParam
+   {
+      _rtnAnalyzeParam ()
+      {
+         _mode = SDB_ANALYZE_MODE_SAMPLE ;
+         _sampleByNum = TRUE ;
+         _sampleNum = SDB_ANALYZE_SAMPLE_DEF ;
+         _samplePercent = 0.0 ;
+         _needCheck = TRUE ;
+      }
+
+      INT32    _mode ;
+      BOOLEAN  _sampleByNum ;
+      INT32    _sampleNum ;
+      double   _samplePercent ;
+      BOOLEAN  _needCheck ;
+   } ;
+
+   typedef struct _rtnAnalyzeParam rtnAnalyzeParam ;
+
+   class _rtnAnalyze : public _rtnCommand
+   {
+
+   DECLARE_CMD_AUTO_REGISTER()
+
+   public :
+
+      _rtnAnalyze () ;
+
+      virtual ~_rtnAnalyze () ;
+
+   public :
+
+      virtual const CHAR * name () { return NAME_ANALYZE ; }
+
+      virtual RTN_COMMAND_TYPE type () { return CMD_ANALYZE ; }
+
+      virtual BOOLEAN writable ()
+      {
+         // Reload is read-only operation
+         return ( _param._mode != SDB_ANALYZE_MODE_RELOAD &&
+                  _param._mode != SDB_ANALYZE_MODE_CLEAR ) ;
+      }
+
+      virtual const CHAR * collectionFullName ()
+      {
+         return _clname ;
+      }
+
+      const rtnAnalyzeParam &getAnalyzeParam () const
+      {
+         return _param ;
+      }
+
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
+
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+   private :
+      const CHAR *      _csname ;
+      const CHAR *      _clname ;
+      const CHAR *      _ixname ;
+      rtnAnalyzeParam   _param ;
+   } ;
+
 }
 
 const UINT32 pdGetTraceFunctionListNum();

@@ -1621,8 +1621,8 @@ namespace engine
       UINT32 totalCount = 0 ;
       UINT32 sucNum = 0 ;
 
-      set< monCSSimple >  csList ;
-      set< monCSSimple >::iterator it ;
+      MON_CS_SIM_LIST csList ;
+      MON_CS_SIM_LIST::iterator it ;
 
       rc = _onBegin( cb ) ;
       if ( rc )
@@ -1645,7 +1645,7 @@ namespace engine
       }
 
       /// dump all collectionspace
-      dmsCB->dumpInfo( csList, TRUE ) ;
+      dmsCB->dumpInfo( csList, TRUE, FALSE, FALSE ) ;
       totalCount = csList.size() ;
 
       for ( it = csList.begin() ; it != csList.end() ; ++it )

@@ -52,7 +52,7 @@ namespace engine
       const UINT32 pLen = 512 ;
       //SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       //SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
-      std::set<monCollectionSpace> csList ;
+      MON_CS_LIST csList ;
 
       /// 1. malloc
       CHAR *p = (CHAR *)SDB_OSS_MALLOC( pLen ) ;

@@ -45,7 +45,9 @@
 #include "utilMap.hpp"
 #include "utilList.hpp"
 #include "utilSUCache.hpp"
+#include "dmsEventHandler.hpp"
 #include "../bson/bson.h"
+#include <cmath>
 
 using namespace std ;
 using namespace bson ;
@@ -55,7 +57,6 @@ namespace engine
    // Fields to create indexes of SYSSTAT collections
    #define DMS_STAT_COLLECTION_SPACE           "CollectionSpace"
    #define DMS_STAT_COLLECTION                 "Collection"
-   #define DMS_STAT_COLLECTION_MBID            "CollectionMBID"
 
    #define DMS_STAT_IDX_INDEX                  "Index"
 
@@ -72,8 +73,16 @@ namespace engine
    // Default selectivity of a $et predicate
    #define DMS_STAT_PRED_EQ_DEF_SELECTIVITY    ( 0.005 )
 
-   #define DMS_STAT_ROUND( x, min, max )       ( OSS_MIN( OSS_MAX( ( x ), ( min ) ), ( max ) ) )
-   #define DMS_STAT_ROUND_SELECTIVITY( x )     DMS_STAT_ROUND( ( x ), ( 0.0 ), ( 1.0 ) )
+   #define DMS_STAT_ROUND( x, min, max ) \
+           ( OSS_MIN( OSS_MAX( ( x ), ( min ) ), ( max ) ) )
+
+   #define DMS_STAT_ROUND_SELECTIVITY( x ) \
+           DMS_STAT_ROUND( ( x ), ( 0.0 ), ( 1.0 ) )
+
+   #define DMS_STAT_FRACTION_SCALE             ( 10000 )
+
+   #define DMS_STAT_ROUND_INT( x ) \
+           ( ( ( x ) >= 0.0 ) ? floor( ( x ) + 0.5 ) : ceil( ( x ) - 0.5 ) )
 
    /*
       _dmsStatKey define
@@ -85,10 +94,10 @@ namespace engine
 
          virtual ~_dmsStatKey () {}
 
-         virtual INT32 compareValue ( INT32 incFlag,
+         virtual INT32 compareValue ( INT32 cmpFlag, INT32 incFlag,
                                       const BSONObj &rValue ) = 0 ;
 
-         virtual BOOLEAN compareAllValues ( UINT32 startIdx, INT32 expRes,
+         virtual BOOLEAN compareAllValues ( UINT32 startIdx, INT32 cmpFlag,
                                             const BSONObj &rValue ) = 0 ;
 
          virtual string toString () = 0 ;
@@ -141,31 +150,6 @@ namespace engine
    typedef class _dmsStatKey dmsStatKey ;
 
    /*
-      _dmsStatSubUnitKey define
-    */
-   typedef struct _dmsStatSubUnitKey dmsStatSubUnitKey ;
-
-   struct _dmsStatSubUnitKey
-   {
-      OSS_INLINE _dmsStatSubUnitKey ( const CHAR * pName = NULL )
-      {
-         _pName = pName ;
-      }
-
-      const CHAR * _pName ;
-
-      OSS_INLINE bool operator== ( const dmsStatSubUnitKey &objName ) const
-      {
-         return ossStrcmp( _pName, objName._pName ) == 0 ;
-      }
-
-      OSS_INLINE bool operator< ( const dmsStatSubUnitKey &objName ) const
-      {
-         return ossStrcmp( _pName, objName._pName ) < 0 ;
-      }
-   } ;
-
-   /*
       _dmsStatValues define
     */
    class _dmsStatValues : public SDBObject
@@ -175,10 +159,12 @@ namespace engine
 
          virtual ~_dmsStatValues () ;
 
-         INT32 init ( UINT32 size ) ;
+         INT32 init ( UINT32 size, UINT32 allocSize ) ;
 
-         INT32 binarySearch ( dmsStatKey &keyValue, INT32 keyIncFlag,
-                              BOOLEAN &isEqual ) const ;
+         INT32 pushBack ( const BSONObj &boValue ) ;
+
+         INT32 binarySearch ( dmsStatKey &keyValue, INT32 cmpFlag,
+                              INT32 keyIncFlag, BOOLEAN &isEqual ) const ;
 
          OSS_INLINE UINT32 getSize () const
          {
@@ -211,6 +197,7 @@ namespace engine
       protected :
          UINT32            _numKeys ;
          UINT32            _size ;
+         UINT32            _allocSize ;
          BSONObj *         _pValues ;
    } ;
 
@@ -224,9 +211,11 @@ namespace engine
 
          virtual ~_dmsStatMCVSet () ;
 
-         INT32 init ( UINT32 size ) ;
+         INT32 init ( UINT32 size, UINT32 allocSize ) ;
 
-         OSS_INLINE void setFrac ( UINT32 idx, double fraction )
+         INT32 pushBack ( const BSONObj &boValue, UINT16 fraction ) ;
+
+         OSS_INLINE void setFrac ( UINT32 idx, UINT16 fraction )
          {
             if ( idx < _size )
             {
@@ -238,19 +227,34 @@ namespace engine
          {
             if ( idx < _size )
             {
-               return _pFractions[ idx ] ;
+               return (double)_pFractions[ idx ] / (double)DMS_STAT_FRACTION_SCALE ;
             }
             return 0.0 ;
          }
 
-         OSS_INLINE void setTotalFrac ( double totalFrac )
+         OSS_INLINE UINT16 getFracInt ( UINT32 idx ) const
          {
+            if ( idx < _size )
+            {
+               return _pFractions[ idx ] ;
+            }
+            return 0 ;
+         }
+
+         OSS_INLINE void setTotalFrac ()
+         {
+            UINT16 totalFrac = 0 ;
+            for ( UINT32 i = 0 ; i < _size ; i++ )
+            {
+               totalFrac += _pFractions[ i ] ;
+            }
+            totalFrac = DMS_STAT_ROUND( totalFrac, 0, DMS_STAT_FRACTION_SCALE ) ;
             _totalFrac = totalFrac ;
          }
 
          OSS_INLINE double getTotalFrac () const
          {
-            return _totalFrac ;
+            return (double)_totalFrac / (double)DMS_STAT_FRACTION_SCALE ;
          }
 
          void clear () ;
@@ -265,8 +269,8 @@ namespace engine
                                 double &scanSelectivity ) const ;
 
       protected :
-         double *          _pFractions ;
-         double            _totalFrac ;
+         UINT16 *          _pFractions ;
+         UINT16            _totalFrac ;
    } ;
 
    typedef class _dmsStatMCVSet dmsStatMCVSet ;
@@ -280,7 +284,8 @@ namespace engine
          _dmsStatUnit () ;
 
          // For statistics cache, mbID is ID of unit
-         _dmsStatUnit ( UINT16 mbID, UINT64 version ) ;
+         _dmsStatUnit ( UINT32 suLID, UINT16 mbID, UINT32 clLID,
+                        UINT64 createTime ) ;
 
          virtual ~_dmsStatUnit () {}
 
@@ -290,9 +295,40 @@ namespace engine
             return getUnitID() ;
          }
 
-         OSS_INLINE UINT64 getSampleNum () const
+         OSS_INLINE void setMBID( UINT16 mbID )
+         {
+            // For statistics cache, mbID is ID of unit
+            _setUnitID( mbID ) ;
+         }
+
+         OSS_INLINE UINT32 getSULogicalID () const
+         {
+            return _suLogicalID ;
+         }
+
+         OSS_INLINE void setSULogicalID ( UINT32 suLogicalID )
+         {
+            _suLogicalID = suLogicalID ;
+         }
+
+         OSS_INLINE UINT32 getCLLogicalID () const
+         {
+            return _clLogicalID ;
+         }
+
+         OSS_INLINE void setCLLogicalID ( UINT32 clLogicalID )
+         {
+            _clLogicalID = clLogicalID ;
+         }
+
+         OSS_INLINE UINT64 getSampleRecords () const
          {
             return _sampleRecords ;
+         }
+
+         OSS_INLINE void setSampleRecords( UINT64 sampleRecords )
+         {
+            _sampleRecords = sampleRecords ;
          }
 
          OSS_INLINE UINT64 getTotalRecords () const
@@ -300,14 +336,23 @@ namespace engine
             return _totalRecords ;
          }
 
+         OSS_INLINE void setTotalRecords ( UINT64 totalRecords )
+         {
+            _totalRecords = totalRecords ;
+         }
+
          INT32 init ( const BSONObj &boStat ) ;
 
-      protected :
-         void _initItems () ;
+         INT32 postInit () ;
 
-         virtual INT32 _initItem ( const BSONElement &beItem ) = 0 ;
+         virtual BSONObj toBSON () const ;
+
+      protected :
+         virtual INT32 _initItem ( const BSONObj &boStat ) = 0 ;
 
          virtual INT32 _postInit () = 0 ;
+
+         virtual void _toBSON ( BSONObjBuilder &builder ) const = 0 ;
 
       protected :
          // Number of records in the sample
@@ -315,6 +360,9 @@ namespace engine
 
          // Number of records in the collection when collecting this statistics
          UINT64   _totalRecords ;
+
+         UINT32   _suLogicalID ;
+         UINT32   _clLogicalID ;
    } ;
 
    /*
@@ -325,8 +373,9 @@ namespace engine
       public :
          _dmsIndexStat () ;
 
-         _dmsIndexStat ( const CHAR *pCSName, const CHAR *pCLName, UINT16 mbID,
-                         UINT64 version, const CHAR *pIndexName ) ;
+         _dmsIndexStat ( const CHAR *pCSName, const CHAR *pCLName,
+                         const CHAR *pIndexName, UINT32 suLID, UINT16 mbID,
+                         UINT32 clLID, UINT64 createTime ) ;
 
          virtual ~_dmsIndexStat () ;
 
@@ -350,13 +399,13 @@ namespace engine
             _pCLName = pCLName ;
          }
 
-         OSS_INLINE virtual UTIL_SU_CACHE_UMIT_TYPE getUnitType () const
+         OSS_INLINE virtual UINT8 getUnitType () const
          {
-            return UTIL_SU_CACHE_UNIT_IDXSTAT ;
+            return UTIL_SU_CACHE_UNIT_IXSTAT ;
          }
 
          OSS_INLINE virtual BOOLEAN addSubUnit ( utilSUCacheUnit *pSubUnit,
-                                                 BOOLEAN ignoreVersion )
+                                                 BOOLEAN ignoreCrtTime )
          {
             return FALSE ;
          }
@@ -370,16 +419,35 @@ namespace engine
 
          OSS_INLINE void setIndexName ( const CHAR *pIndexName )
          {
-            ossMemset( _pIndexName, 0, sizeof( _pIndexName ) ) ;
             if ( pIndexName )
             {
+               ossMemset( _pIndexName, 0, sizeof( _pIndexName ) ) ;
                ossMemcpy( _pIndexName, pIndexName, ossStrlen( pIndexName ) ) ;
             }
+            else
+            {
+               _pIndexName[ 0 ] = '\0' ;
+            }
+         }
+
+         OSS_INLINE dmsExtentID getIndexLogicalID () const
+         {
+            return _indexLogicalID ;
+         }
+
+         OSS_INLINE void setIndexLogicalID( dmsExtentID indexLogicalID )
+         {
+            _indexLogicalID = indexLogicalID ;
          }
 
          OSS_INLINE const BSONObj &getKeyPattern () const
          {
             return _keyPattern ;
+         }
+
+         OSS_INLINE void setKeyPattern ( const BSONObj &keyPattern )
+         {
+            _initKeyPattern( keyPattern ) ;
          }
 
          OSS_INLINE const CHAR *getFirstField () const
@@ -397,9 +465,19 @@ namespace engine
             return _indexPages ;
          }
 
+         OSS_INLINE void setIndexPages( UINT32 indexPages )
+         {
+            _indexPages = indexPages ;
+         }
+
          OSS_INLINE UINT32 getIndexLevels () const
          {
             return _indexLevels ;
+         }
+
+         OSS_INLINE void setIndexLevels ( UINT32 indexLevels )
+         {
+            _indexLevels = indexLevels ;
          }
 
          OSS_INLINE BOOLEAN isUnique () const
@@ -407,25 +485,44 @@ namespace engine
             return _isUnique ;
          }
 
+         OSS_INLINE void setUnique ( BOOLEAN isUnique )
+         {
+            _isUnique = isUnique ;
+         }
+
          OSS_INLINE UINT64 getDistinctValues () const
          {
             return _distinctValues ;
          }
 
+         OSS_INLINE void setDistinctValues ( UINT64 distinctValues )
+         {
+            _distinctValues = distinctValues ;
+         }
+
          OSS_INLINE double getNullFrac () const
          {
-            return _nullFrac ;
+            return (double)_nullFrac / (double)DMS_STAT_FRACTION_SCALE ;
+         }
+
+         OSS_INLINE void setNullFrac ( UINT16 nullFrac )
+         {
+            _nullFrac = DMS_STAT_ROUND( nullFrac, 0, DMS_STAT_FRACTION_SCALE ) ;
          }
 
          OSS_INLINE double getUndefFrac () const
          {
-            return _undefFrac ;
+            return (double)_undefFrac / (double)DMS_STAT_FRACTION_SCALE ;
          }
 
-         OSS_INLINE const dmsStatMCVSet &getMCVSet () const
+         OSS_INLINE void setUndefFrac ( UINT16 undefFrac )
          {
-            return _mcvSet ;
+            _undefFrac = DMS_STAT_ROUND( undefFrac, 0, DMS_STAT_FRACTION_SCALE ) ;
          }
+
+         INT32 initMCVSet ( UINT32 allocSize ) ;
+
+         INT32 pushMCVSet ( const BSONObj &boValue, double fraction ) ;
 
          INT32 evalRangeOperator ( dmsStatKey &startKey,
                                    dmsStatKey &stopKey,
@@ -450,10 +547,11 @@ namespace engine
          }
 
       protected :
-         void _initItems () ;
+         void _initDefaultItems () ;
 
-         virtual INT32 _initItem ( const BSONElement &beItem ) ;
+         virtual INT32 _initItem ( const BSONObj &boStat ) ;
          virtual INT32 _postInit () ;
+         virtual void _toBSON ( BSONObjBuilder &builder ) const ;
 
          INT32 _initKeyPattern ( const BSONObj &boKeyPattern ) ;
          INT32 _initMCV ( const BSONObj &boMCV ) ;
@@ -466,6 +564,8 @@ namespace engine
          const CHAR *      _pCLName ;
 
          CHAR              _pIndexName [ IXM_INDEX_NAME_SIZE + 1 ] ;
+
+         dmsExtentID       _indexLogicalID ;
 
          // Definition of the index
          BSONObj           _keyPattern ;
@@ -488,15 +588,15 @@ namespace engine
          // Number of distinct values in the index
          UINT64            _distinctValues ;
 
-         double            _nullFrac ;
-         double            _undefFrac ;
+         UINT16            _nullFrac ;
+         UINT16            _undefFrac ;
 
          dmsStatMCVSet     _mcvSet ;
    } ;
 
    typedef _dmsIndexStat dmsIndexStat ;
 
-   typedef _utilMap< dmsStatSubUnitKey, dmsIndexStat * > INDEX_STAT_MAP ;
+   typedef _utilMap< _utilMapStringKey, dmsIndexStat * > INDEX_STAT_MAP ;
 
    typedef INDEX_STAT_MAP::iterator INDEX_STAT_ITERATOR ;
    typedef INDEX_STAT_MAP::const_iterator INDEX_STAT_CONST_ITERATOR ;
@@ -510,7 +610,8 @@ namespace engine
          _dmsCollectionStat () ;
 
          _dmsCollectionStat ( const CHAR *pCSName, const CHAR *pCLName,
-                              UINT16 mbID, UINT64 version ) ;
+                              UINT32 suLID, UINT16 mbID, UINT32 clLID,
+                              UINT64 createTime ) ;
 
          virtual ~_dmsCollectionStat () ;
 
@@ -521,10 +622,14 @@ namespace engine
 
          OSS_INLINE virtual void setCSName ( const CHAR *pCSName )
          {
-            ossMemset ( _pCSName, 0, sizeof( _pCSName ) ) ;
             if ( pCSName )
             {
-               ossStrncpy ( _pCSName, pCSName, sizeof( _pCSName ) ) ;
+               ossMemset( _pCSName, 0, sizeof( _pCSName ) ) ;
+               ossStrncpy( _pCSName, pCSName, sizeof( _pCSName ) ) ;
+            }
+            else
+            {
+               _pCSName[ 0 ] = '\0' ;
             }
          }
 
@@ -535,14 +640,18 @@ namespace engine
 
          OSS_INLINE virtual void setCLName ( const CHAR *pCLName )
          {
-            ossMemset ( _pCLName, 0, sizeof( _pCLName ) ) ;
             if ( pCLName )
             {
-               ossStrncpy ( _pCLName, pCLName, sizeof( _pCLName ) ) ;
+               ossMemset( _pCLName, 0, sizeof( _pCLName ) ) ;
+               ossStrncpy( _pCLName, pCLName, sizeof( _pCLName ) ) ;
+            }
+            else
+            {
+               _pCLName[ 0 ] = '\0' ;
             }
          }
 
-         OSS_INLINE virtual UTIL_SU_CACHE_UMIT_TYPE getUnitType () const
+         OSS_INLINE virtual UINT8 getUnitType () const
          {
             return UTIL_SU_CACHE_UNIT_CLSTAT ;
          }
@@ -552,14 +661,29 @@ namespace engine
             return _totalDataPages ;
          }
 
+         OSS_INLINE void setTotalDataPages ( UINT32 totalDataPages )
+         {
+            _totalDataPages = totalDataPages ;
+         }
+
          OSS_INLINE UINT64 getTotalDataSize () const
          {
             return _totalDataSize ;
          }
 
+         OSS_INLINE void setTotalDataSize ( UINT64 totalDataSize )
+         {
+            _totalDataSize = totalDataSize ;
+         }
+
          OSS_INLINE UINT32 getAvgNumFields () const
          {
             return _avgNumFields ;
+         }
+
+         OSS_INLINE void setAvgNumFields ( UINT32 avgNumFields )
+         {
+            _avgNumFields = avgNumFields ;
          }
 
          OSS_INLINE const INDEX_STAT_MAP & getIndexStats () const
@@ -573,7 +697,7 @@ namespace engine
          }
 
          virtual BOOLEAN addSubUnit ( utilSUCacheUnit *pSubUnit,
-                                      BOOLEAN ignoreVersion ) ;
+                                      BOOLEAN ignoreCrtTime ) ;
 
          virtual void clearSubUnits () ;
 
@@ -582,9 +706,9 @@ namespace engine
          const dmsIndexStat *getFieldStat ( const CHAR *pFieldName ) const ;
 
          OSS_INLINE BOOLEAN addIndexStat ( dmsIndexStat *pIndexStat,
-                                           BOOLEAN ignoreVersion )
+                                           BOOLEAN ignoreCrtTime )
          {
-            return addSubUnit( pIndexStat, ignoreVersion ) ;
+            return addSubUnit( pIndexStat, ignoreCrtTime ) ;
          }
 
          BOOLEAN removeIndexStat ( const CHAR *pIndexName,
@@ -604,12 +728,13 @@ namespace engine
          }
 
       protected :
-         void _initItems () ;
+         void _initDefaultItems () ;
 
-         virtual INT32 _initItem ( const BSONElement &beItem ) ;
+         virtual INT32 _initItem ( const BSONObj &boStat ) ;
          virtual INT32 _postInit () { return SDB_OK ; }
+         virtual void _toBSON ( BSONObjBuilder &builder ) const ;
 
-         void _addFieldStat ( dmsIndexStat *pIndexStat, BOOLEAN ignoreVersion ) ;
+         void _addFieldStat ( dmsIndexStat *pIndexStat, BOOLEAN ignoreCrtTime ) ;
 
          void _removeFieldStat ( dmsIndexStat *pDeletingStat ) ;
 
@@ -635,10 +760,10 @@ namespace engine
    /*
       _dmsStatCache define
     */
-   class _dmsStatCache : public utilSUCache
+   class _dmsStatCache : public dmsSUCache
    {
       public :
-         _dmsStatCache( _IUtilSUCacheHolder *pHolder = NULL ) ;
+         _dmsStatCache( IDmsSUCacheHolder *pHolder = NULL ) ;
 
          virtual ~_dmsStatCache () {}
    } ;

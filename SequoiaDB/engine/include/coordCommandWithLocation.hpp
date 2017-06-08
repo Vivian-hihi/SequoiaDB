@@ -185,6 +185,40 @@ namespace engine
    } ;
    typedef _coordReloadConf coordReloadConf ;
 
+   /*
+      _coordCMDAnalyze define
+   */
+   class _coordCMDAnalyze : public _coordCmdWithLocation
+   {
+      COORD_DECLARE_CMD_AUTO_REGISTER() ;
+
+      public:
+         _coordCMDAnalyze () ;
+
+         virtual ~_coordCMDAnalyze () ;
+
+      private:
+         virtual BOOLEAN _useContext () { return FALSE ; }
+
+         virtual INT32   _onLocalMode ( INT32 flag ) { return flag ; }
+
+         virtual void    _preSet ( pmdEDUCB *cb, coordCtrlParam &ctrlParam ) ;
+
+         virtual UINT32  _getControlMask () const ;
+
+         virtual INT32   _preExcute ( MsgHeader *pMsg,
+                                      pmdEDUCB *cb,
+                                      coordCtrlParam &ctrlParam ) ;
+
+         INT32   _getCSGrps ( const CHAR *csname, pmdEDUCB *cb,
+                              coordCtrlParam &ctrlParam ) ;
+
+         INT32   _getCLGrps ( const CHAR *clname, pmdEDUCB *cb,
+                              coordCtrlParam &ctrlParam ) ;
+   } ;
+
+   typedef _coordCMDAnalyze coordCMDAnalyze ;
+
 }
 
 #endif // COORD_COMMAND_WITH_LOCATION_HPP__

@@ -46,6 +46,8 @@
 #include "msgDef.h"
 #include "msgMessage.hpp"
 #include "ixmExtent.hpp"
+#include "rtnInternalSorting.hpp"
+#include "utilList.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 
@@ -252,7 +254,7 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
-      vector<monIndex> resultIndexes ;
+      MON_IDX_LIST resultIndexes ;
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
@@ -373,6 +375,66 @@ namespace engine
       return count ;
    }
 
+   static UINT32 _rtnIndexKeyNodeInfo ( dmsExtentID rootExtentID,
+                                        dmsStorageUnit *su,
+                                        UINT32 sampleRecords,
+                                        UINT32 &deep,
+                                        UINT32 &levels,
+                                        UINT32 &pages )
+   {
+      UINT32 count = 0, deepCount = 0, extentCount = 0, nextCount = 0 ;
+      _utilList< dmsExtentID, 32 > extentIDStack ;
+
+      extentIDStack.push_back( rootExtentID ) ;
+      extentCount = 1 ;
+
+      deep = 0 ;
+      levels = 0 ;
+      pages = 0 ;
+      count = 0 ;
+
+      while ( extentIDStack.size() > 0 )
+      {
+         dmsExtentID curExtentID = extentIDStack.front() ;
+         ixmExtent extent( curExtentID, su->index() ) ;
+
+         extentIDStack.pop_front() ;
+
+         for ( UINT16 i = 0 ; i <= extent.getNumKeyNode() ; ++i )
+         {
+            dmsExtentID childID = extent.getChildExtentID( i ) ;
+            if ( DMS_INVALID_EXTENT != childID )
+            {
+               extentIDStack.push_back( childID ) ;
+               nextCount ++ ;
+            }
+         }
+
+         if ( deep == 0 )
+         {
+            count += extent.getNumKeyNode() ;
+         }
+         pages ++ ;
+         extentCount -- ;
+         if ( extentCount == 0 )
+         {
+            levels ++ ;
+            if ( deep == 0 &&
+                ( count > sampleRecords || extentIDStack.size() == 0 ) )
+            {
+               deep = levels ;
+               deepCount = count ;
+            }
+
+            extentCount = nextCount ;
+            nextCount = 0 ;
+            count = 0 ;
+         }
+      }
+
+      return deepCount ;
+   }
+
    static const CHAR* _rtnIndexKeyData( dmsExtentID extentID,
                                         dmsStorageUnit *su,
                                         UINT32 deep,
@@ -416,6 +478,53 @@ namespace engine
             else
             {
                return _rtnIndexKeyData( childID, su, deep - 1, index, rid ) ;
+            }
+         }
+      }
+
+      return NULL ;
+   }
+
+   static const CHAR* _rtnIndexGetKey ( dmsExtentID extentID,
+                                        dmsStorageUnit *su,
+                                        UINT32 deep,
+                                        UINT32 index )
+   {
+      if ( 0 == deep || DMS_INVALID_EXTENT == extentID )
+      {
+         return NULL ;
+      }
+
+      ixmExtent extent( extentID, su->index() ) ;
+
+      if ( 1 == deep )
+      {
+         const ixmKeyNode *keyNode = extent.getKeyNode( index ) ;
+         if ( !keyNode )
+         {
+            return NULL ;
+         }
+         return extent.getKeyData( index ) ;
+      }
+      else
+      {
+         dmsExtentID childID = DMS_INVALID_EXTENT ;
+         UINT32 count = 0 ;
+         for ( UINT16 i = 0 ; i <= extent.getNumKeyNode() ; ++i )
+         {
+            childID = extent.getChildExtentID( i ) ;
+            if ( DMS_INVALID_EXTENT == childID )
+            {
+               continue ;
+            }
+            count = _rtnIndexKeyNodeCount( childID, su, deep - 1 ) ;
+            if ( count <= index )
+            {
+               index -= count ;
+            }
+            else
+            {
+               return _rtnIndexGetKey( childID, su, deep - 1, index ) ;
             }
          }
       }
@@ -577,6 +686,66 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 rtnGetIndexSamples ( _dmsStorageUnit *su,
+                              ixmIndexCB *indexCB,
+                              UINT32 sampleRequired,
+                              _rtnInternalSorting &sorter,
+                              UINT32 &levels, UINT32 &pages )
+   {
+      INT32 rc = SDB_OK ;
+
+      dmsExtentID rootID = indexCB->getRoot() ;
+      const CHAR *keyData = NULL ;
+      BSONObj key ;
+      BSONObj dummy ;
+
+      UINT32 deep = 1 ;
+      UINT32 mod  = 0 ;
+      UINT32 step = 1 ;
+      UINT32 index = 0 ;
+      UINT32 keyNodeCount = _rtnIndexKeyNodeInfo( rootID, su, sampleRequired,
+                                                  deep, levels, pages ) ;
+
+      PD_LOG( PDDEBUG, "index info deep %u key %u levels %u pages %u",
+              deep, keyNodeCount, levels, pages ) ;
+
+      if ( keyNodeCount > 0 && keyNodeCount < sampleRequired )
+      {
+         sampleRequired = keyNodeCount ;
+      }
+
+      step = keyNodeCount / sampleRequired ;
+      mod  = keyNodeCount % sampleRequired ;
+
+      sorter.clearBuf() ;
+
+      while ( index < keyNodeCount )
+      {
+         keyData = _rtnIndexGetKey( rootID, su, deep, index ) ;
+         index += step ;
+
+         if ( mod > 0 )
+         {
+            ++index ;
+            --mod ;
+         }
+
+         if ( NULL == keyData )
+         {
+            continue ;
+         }
+         key = ixmKey( keyData ).toBson() ;
+         rc = sorter.push( key, dummy.objdata(), dummy.objsize(), NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push item into sorter, "
+                      "rc: %d", rc ) ;
+      }
+
+   done :
+      return rc ;
+   error :
       goto done ;
    }
 
@@ -909,12 +1078,27 @@ namespace engine
          goto error ;
       }
 
-      su->getEventHolder()->onCreateCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
+      {
+         // Since the cs name mutex has not been released, the storage unit
+         // should be valid at this time, but we need to lock the storage unit
+         // for creating or dropping collections in it
+         dmsEventSUItem suItem( su->CSName(), su->CSID(), su->LogicalCSID() ) ;
+         dmsStorageUnit *pTmpSU = NULL ;
+         INT32 tmprc = dmsCB->verifySUAndLock( &suItem, &pTmpSU, EXCLUSIVE,
+                                               OSS_ONE_SEC ) ;
+         if ( SDB_OK == tmprc )
+         {
+            pTmpSU->getEventHolder()->onCreateCS( DMS_EVENT_MASK_ALL, cb,
+                                                  dpsCB ) ;
+            dmsCB->suUnlock( suItem._suID, EXCLUSIVE ) ;
+         }
+      }
 
       PD_LOG( PDEVENT, "Create collectionspace[%s] succeed, PageSize:%u, "
               "LobPageSize:%u", pCollectionSpace, pageSize, lobPageSize ) ;
 
    done :
+      // Unlock the existing storage unit
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;

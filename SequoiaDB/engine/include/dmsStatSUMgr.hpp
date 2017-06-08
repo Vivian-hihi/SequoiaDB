@@ -43,12 +43,15 @@
 #include "dms.hpp"
 #include "dmsSysSUMgr.hpp"
 #include "dmsEventHandler.hpp"
+#include "monDMS.hpp"
 #include "dmsStatUnit.hpp"
 
 using namespace std ;
 
 namespace engine
 {
+
+   typedef _utilMap< _utilMapStringKey, dmsStatCache * > dmsStatCacheMap ;
 
    /*
       _dmsStatSUMgr define
@@ -61,54 +64,98 @@ namespace engine
 
          INT32 init () ;
 
-         INT32 reloadStats ( pmdEDUCB *cb ) ;
+         OSS_INLINE BOOLEAN initialized ()
+         {
+            return _initialized ;
+         }
+
+         INT32 loadAllCollectionStats ( const MON_CS_SIM_LIST &monCSList,
+                                        dmsStatCacheMap &statCacheMap,
+                                        pmdEDUCB *cb,
+                                        _SDB_DMSCB *dmsCB,
+                                        _SDB_RTNCB *rtnCB ) ;
+
+         INT32 loadAllIndexStats ( const MON_CS_SIM_LIST &monCSList,
+                                   dmsStatCacheMap &statCacheMap,
+                                   pmdEDUCB *cb,
+                                   _SDB_DMSCB *dmsCB,
+                                   _SDB_RTNCB *rtnCB ) ;
+
+         INT32 loadSUCollectionStats ( const monCSSimple *pMonCS,
+                                       dmsStatCache *pStatCache, pmdEDUCB *cb,
+                                       _SDB_DMSCB *dmsCB, _SDB_RTNCB *rtnCB ) ;
+
+         INT32 loadSUIndexStats ( const monCSSimple *pMonCS,
+                                  dmsStatCache *pStatCache, pmdEDUCB *cb,
+                                  _SDB_DMSCB *dmsCB, _SDB_RTNCB *rtnCB ) ;
+
+         INT32 loadCollectionStat ( const monCSSimple *pMonCS,
+                                    const monCLSimple *pMonCL,
+                                    dmsStatCache *pStatCache, pmdEDUCB *cb,
+                                    _SDB_DMSCB *dmsCB, _SDB_RTNCB *rtnCB ) ;
+
+         INT32 loadCLIndexStats ( const monCSSimple *pMonCS,
+                                  const monCLSimple *pMonCL,
+                                  dmsStatCache *pStatCache, pmdEDUCB *cb,
+                                  _SDB_DMSCB *dmsCB, _SDB_RTNCB *rtnCB ) ;
+
+         INT32 loadIndexStats ( const monCSSimple *pMonCS,
+                                const monCLSimple *pMonCL,
+                                const monIndex *pMonIX,
+                                dmsStatCache *pStatCache, pmdEDUCB *cb,
+                                _SDB_DMSCB *dmsCB, _SDB_RTNCB *rtnCB ) ;
+
+         INT32 updateCollectionStat ( const dmsCollectionStat *pCollectionStat,
+                                      pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                      _SDB_RTNCB *rtnCB,
+                                      _dpsLogWrapper *dpsCB ) ;
+
+         INT32 updateIndexStat ( const dmsIndexStat *pIndexStat,
+                                 pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                 _SDB_RTNCB *rtnCB,
+                                 _dpsLogWrapper *dpsCB ) ;
 
       public :
-         // dmsEventHandler
-         virtual INT32 onLoadCS ( _IDmsEventHolder *pEventHolder,
-                                  _IUtilSUCacheHolder *pCacheHolder,
-                                  pmdEDUCB *cb,
-                                  SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onUnloadCS ( _IDmsEventHolder *pEventHolder,
-                                    _IUtilSUCacheHolder *pCacheHolder,
+         virtual INT32 onUnloadCS ( IDmsEventHolder *pEventHolder,
+                                    IDmsSUCacheHolder *pCacheHolder,
                                     pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onRenameCS ( _IDmsEventHolder *pEventHolder,
-                                    _IUtilSUCacheHolder *pCacheHolder,
+         virtual INT32 onRenameCS ( IDmsEventHolder *pEventHolder,
+                                    IDmsSUCacheHolder *pCacheHolder,
                                     const CHAR *pOldCSName,
                                     const CHAR *pNewCSName,
                                     pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onDropCS ( _IDmsEventHolder *pEventHolder,
-                                  _IUtilSUCacheHolder *pCacheHolder,
+         virtual INT32 onDropCS ( IDmsEventHolder *pEventHolder,
+                                  IDmsSUCacheHolder *pCacheHolder,
                                   pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onRenameCL ( _IDmsEventHolder *pEventHolder,
-                                    _IUtilSUCacheHolder *pCacheHolder,
-                                    const dmsCLItem &clItem,
+         virtual INT32 onRenameCL ( IDmsEventHolder *pEventHolder,
+                                    IDmsSUCacheHolder *pCacheHolder,
+                                    const dmsEventCLItem &clItem,
                                     const CHAR *pNewCLName,
-                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onTruncateCL ( _IDmsEventHolder *pEventHolder,
-                                      _IUtilSUCacheHolder *pCacheHolder,
-                                      const dmsCLItem &clItem,
+         virtual INT32 onTruncateCL ( IDmsEventHolder *pEventHolder,
+                                      IDmsSUCacheHolder *pCacheHolder,
+                                      const dmsEventCLItem &clItem,
                                       pmdEDUCB *cb,
                                       SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onDropCL ( _IDmsEventHolder *pEventHolder,
-                                  _IUtilSUCacheHolder *pCacheHolder,
-                                  const dmsCLItem &clItem,
+         virtual INT32 onDropCL ( IDmsEventHolder *pEventHolder,
+                                  IDmsSUCacheHolder *pCacheHolder,
+                                  const dmsEventCLItem &clItem,
                                   pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onDropIndex ( _IDmsEventHolder *pEventHolder,
-                                     _IUtilSUCacheHolder *pCacheHolder,
-                                     const dmsCLItem &clItem,
-                                     const dmsIdxItem &idxItem,
+         virtual INT32 onDropIndex ( IDmsEventHolder *pEventHolder,
+                                     IDmsSUCacheHolder *pCacheHolder,
+                                     const dmsEventCLItem &clItem,
+                                     const dmsEventIdxItem &idxItem,
                                      pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
 
          OSS_INLINE virtual UINT32 getMask ()
@@ -118,37 +165,30 @@ namespace engine
 
       protected :
 
-         typedef _utilMap< dmsStatSubUnitKey, utilSUCache * > CS_STAT_MAP ;
-
          INT32 _ensureStatMetadata ( pmdEDUCB *cb ) ;
 
-         INT32 _loadStats ( pmdEDUCB *cb ) ;
-
-         INT32 _loadCollectionStats ( CS_STAT_MAP &csStatMap, pmdEDUCB *cb ) ;
-
-         INT32 _loadIndexStats ( CS_STAT_MAP &csStatMap, pmdEDUCB *cb ) ;
-
-         INT32 _loadCollectionStatsByCS ( const CHAR *pCSName,
-                                          utilSUCache &statMap,
-                                          pmdEDUCB *cb ) ;
-
-         INT32 _loadIndexStatsByCS ( const CHAR *pCSName, utilSUCache &statMap,
-                                     pmdEDUCB *cb ) ;
-
-         INT32 _clearStats () ;
-
-         INT32 _replaceCollectionStats ( const CHAR *pCSName,
-                                           utilSUCache *pStatMap ) ;
-
-         INT32 _removeCollectionStats ( const CHAR *pCSName ) ;
-
-         INT32 _addCollectionStat ( CS_STAT_MAP &csStatMap,
+         INT32 _addCollectionStat ( const MON_CS_SIM_LIST &monCSList,
+                                    dmsStatCacheMap &statCacheMap,
                                     dmsCollectionStat *pCollectionStat,
-                                    BOOLEAN ignoreVersion ) ;
+                                    BOOLEAN ignoreCrtTime ) ;
 
-         INT32 _addIndexStat ( CS_STAT_MAP &csStatMap,
+         INT32 _addIndexStat ( const MON_CS_SIM_LIST &monCSList,
+                               dmsStatCacheMap &statCacheMap,
                                dmsIndexStat *pIndexStat,
-                               BOOLEAN ignoreVersion ) ;
+                               BOOLEAN ignoreCrtTime ) ;
+
+         INT32 _addSUCollectionStat ( const monCSSimple *pMonCS,
+                                      const monCLSimple *pMonCL,
+                                      dmsStatCache *pStatCache,
+                                      dmsCollectionStat *pCollectionStat,
+                                      BOOLEAN ignoreCrtTime ) ;
+
+         INT32 _addSUIndexStat ( const monCSSimple *pMonCS,
+                                 const monCLSimple *pMonCL,
+                                 const monIndex *pMonIX,
+                                 dmsStatCache *pStatCache,
+                                 dmsIndexStat *pIndexStat,
+                                 BOOLEAN ignoreCrtTime ) ;
 
          INT32 _deleteCollectionStat ( const BSONObj &boMatcher, _pmdEDUCB *cb,
                                        SDB_DPSCB *dpsCB ) ;
@@ -164,8 +204,26 @@ namespace engine
                                   const BSONObj &boUpdator,
                                   _pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
 
+         INT32 _loadCollectionStats ( const monCSSimple *pMonCS,
+                                      const monCLSimple *pMonCL,
+                                      dmsStatCache *pStatCache,
+                                      const BSONObj &boMatcher,
+                                      pmdEDUCB *cb,
+                                      _SDB_DMSCB *dmsCB,
+                                      _SDB_RTNCB *rtnCB ) ;
+
+         INT32 _loadIndexStats ( const monCSSimple *pMonCS,
+                                 const monCLSimple *pMonCL,
+                                 const monIndex *pMonIX,
+                                 dmsStatCache *pStatCache,
+                                 const BSONObj &boMatcher,
+                                 pmdEDUCB *cb,
+                                 _SDB_DMSCB *dmsCB,
+                                 _SDB_RTNCB *rtnCB ) ;
+
       protected :
          BOOLEAN _initialized ;
+         BSONObj _tbScanHint ;
          BSONObj _collectionHint ;
          BSONObj _indexHint ;
    } ;

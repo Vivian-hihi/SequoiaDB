@@ -163,8 +163,7 @@ utilFiles = [
       "util/utilStream.cpp",
       "util/utilFileStream.cpp",
       "util/utilZlibStream.cpp",
-      "util/utilJsonFile.cpp",
-      "util/utilSUCache.cpp"
+      "util/utilJsonFile.cpp"
       ]
 
 rtnFiles = [
@@ -236,6 +235,7 @@ rtnFiles = [
       "rtn/rtnAlterJob.cpp",
       "rtn/rtnIxmKeySorter.cpp",
       "rtn/rtnDictCreatorJob.cpp",
+      "rtn/rtnAnalyze.cpp"
       ]
 
 msgFiles = [

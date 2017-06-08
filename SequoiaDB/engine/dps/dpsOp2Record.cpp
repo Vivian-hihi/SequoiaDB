@@ -1396,26 +1396,56 @@ namespace engine
 
 */
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_INVALIDCATA2RECORD, "dpsInvalidCata2Record" )
-   INT32 dpsInvalidCata2Record( const CHAR * clFullName,
+   INT32 dpsInvalidCata2Record( const UINT8 &type,
+                                const CHAR * clFullName,
+                                const CHAR * ixName,
                                 dpsLogRecord &record )
    {
-      PD_TRACE_ENTRY( SDB__DPS_INVALIDCATA2RECORD ) ;
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DPS_INVALIDCATA2RECORD ) ;
+
+      // For invalidate catalog, must have clFullName
       SDB_ASSERT( NULL != clFullName, "Collection name can't be NULL" ) ;
+
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_INVALIDATE_CATA ;
 
-      rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
-                        ossStrlen( clFullName ) + 1,
-                        clFullName ) ;
-
+      rc = record.push( DPS_LOG_INVALIDCATA_TYPE,
+                        sizeof( type ),
+                        (CHAR *)( &type ) ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d",rc ) ;
+         PD_LOG( PDERROR, "Failed to push type to record, rc: %d",rc ) ;
          goto error ;
       }
 
+      if ( clFullName )
+      {
+         rc = record.push( DPS_LOG_PUBLIC_FULLNAME,
+                           ossStrlen( clFullName ) + 1,
+                           clFullName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to push fullname to record, rc: %d",rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( ixName )
+      {
+         rc = record.push( DPS_LOG_INVALIDCATA_IXNAME,
+                           ossStrlen( ixName ) + 1,
+                           ixName ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to push ixname to record, rc: %d",rc ) ;
+            goto error ;
+         }
+      }
+
       header._length = record.alignedLen() ;
+
    done:
       PD_TRACE_EXITRC( SDB__DPS_INVALIDCATA2RECORD, rc ) ;
       return rc ;
@@ -1425,12 +1455,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2INVALIDCATA, "dpsRecord2InvalidCata")
    INT32 dpsRecord2InvalidCata( const CHAR *logRecord,
-                                const CHAR **clFullName )
+                                UINT8 &type,
+                                const CHAR **clFullName,
+                                const CHAR **ixName )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2INVALIDCATA ) ;
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
+
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
       {
@@ -1439,17 +1472,43 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName =
-                  record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
-      if ( !itrFullName.valid() )
-      {
-         PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         dpsLogRecord::iterator itrType =
+                     record.find( DPS_LOG_INVALIDCATA_TYPE ) ;
+         if ( itrType.valid() )
+         {
+            type = *( ( UINT8 * )( itrType.value() ) ) ;
+         }
+         else
+         {
+            type = DPS_LOG_INVALIDCATA_TYPE_CATA ;
+         }
       }
 
-      *clFullName = itrFullName.value() ;
+      {
+         dpsLogRecord::iterator itrFullName =
+                     record.find( DPS_LOG_PUBLIC_FULLNAME ) ;
+         if ( !itrFullName.valid() )
+         {
+            PD_LOG( PDERROR, "Failed to find tag fullname in record" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         *clFullName = itrFullName.value() ;
       }
+
+      {
+         dpsLogRecord::iterator itrIXName =
+                     record.find( DPS_LOG_INVALIDCATA_IXNAME ) ;
+         if ( itrIXName.valid() )
+         {
+            *ixName = itrIXName.value() ;
+         }
+         else
+         {
+            *ixName = NULL ;
+         }
+      }
+
    done:
       return rc ;
    error:
@@ -2217,5 +2276,6 @@ namespace engine
    error:
       goto done ;
    }
+
 }
 

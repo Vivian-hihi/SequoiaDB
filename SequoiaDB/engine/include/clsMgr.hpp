@@ -237,6 +237,7 @@ namespace engine
          BOOLEAN  isPrimary () ;
          INT32    clearAllData () ;
          INT32    invalidateCata ( const CHAR *name ) ;
+         INT32    invalidateStatistics () ;
 
       protected:
 

@@ -38,7 +38,7 @@
 #define OPTSTATUNIT_HPP__
 
 #include "dmsStatUnit.hpp"
-#include "utilSUCache.hpp"
+#include "dmsEventHandler.hpp"
 #include "rtnPredicate.hpp"
 #include "ixm.hpp"
 #include "../bson/bson.h"
@@ -67,10 +67,10 @@ namespace engine
 
          virtual ~_optStatListKey () {}
 
-         virtual INT32 compareValue( INT32 incFlag,
+         virtual INT32 compareValue( INT32 cmpFlag, INT32 incFlag,
                                      const BSONObj &rValue ) ;
 
-         virtual BOOLEAN compareAllValues ( UINT32 startIdx, INT32 expRes,
+         virtual BOOLEAN compareAllValues ( UINT32 startIdx, INT32 cmpFlag,
                                             const BSONObj &rValue ) ;
 
          virtual string toString () ;
@@ -115,9 +115,10 @@ namespace engine
 
          virtual ~_optStatElementKey () {}
 
-         virtual INT32 compareValue ( INT32 incFlag, const BSONObj &rValue ) ;
+         virtual INT32 compareValue ( INT32 cmpFlag, INT32 incFlag,
+                                      const BSONObj &rValue ) ;
 
-         virtual BOOLEAN compareAllValues ( UINT32 startIdx, INT32 expRes,
+         virtual BOOLEAN compareAllValues ( UINT32 startIdx, INT32 cmpFlag,
                                             const BSONObj &rValue ) ;
 
          OSS_INLINE virtual string toString ()
@@ -265,7 +266,7 @@ namespace engine
          _optCollectionStat ( const CHAR *pCollectionName,
                               UINT32 pageSize,
                               _dmsMBContext *mbContext,
-                              const utilSUCache *statCache ) ;
+                              const dmsStatCache *statCache ) ;
 
          virtual ~_optCollectionStat () {}
 

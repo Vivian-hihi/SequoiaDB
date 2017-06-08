@@ -1411,8 +1411,11 @@ namespace engine
                                          MsgHeader* header )
    {
       PD_TRACE_ENTRY ( SDB__CLSFSDS_HNDENDRES );
+
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       DPS_LSN lsn = dpsCB->expectLsn() ;
+      rtnAnalyzeParam param ;
 
       if ( CLS_FS_STATUS_END != _status )
       {
@@ -1421,6 +1424,8 @@ namespace engine
          _disconnect () ;
          goto done ;
       }
+
+      rtnClearStats( eduCB(), dmsCB ) ;
 
       _quit = TRUE ;
 
@@ -1887,13 +1892,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      set< monCSSimple > csList ;
-      set< monCSSimple >::iterator it ;
+      MON_CS_SIM_LIST csList ;
+      MON_CS_SIM_LIST::iterator it ;
 
       BSONObjBuilder builder ;
       BSONArrayBuilder validCLBD( builder.subarrayStart( CLS_FS_VALIDCLS ) ) ;
 
-      dmsCB->dumpInfo( csList, TRUE ) ;
+      dmsCB->dumpInfo( csList, TRUE, FALSE, FALSE ) ;
 
       for ( it = csList.begin() ; it != csList.end() ; ++it )
       {

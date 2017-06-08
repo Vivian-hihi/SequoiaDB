@@ -143,6 +143,8 @@ namespace engine
 
    enum DPS_LOG_INVALIDCATA
    {
+      DPS_LOG_INVALIDCATA_TYPE = 1,
+      DPS_LOG_INVALIDCATA_IXNAME
    } ;
 
    enum DPS_LOG_ROW
@@ -161,6 +163,14 @@ namespace engine
       DPS_LOG_LOB_PAGE,
       DPS_LOG_LOB_OLD_LEN,
       DPS_LOG_LOB_OLD_DATA,
+   } ;
+
+   enum DPS_LOG_ANALYZE
+   {
+      DPS_LOG_ANALYZE_CSNAME = 1,
+      DPS_LOG_ANALYZE_CLNAME,
+      DPS_LOG_ANALYZE_IXNAME,
+      DPS_LOG_ANALYZE_MODE
    } ;
 }
 

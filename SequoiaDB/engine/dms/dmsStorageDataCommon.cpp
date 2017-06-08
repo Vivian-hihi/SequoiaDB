@@ -1840,8 +1840,9 @@ namespace engine
 
       if ( _pEventHolder )
       {
-         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
-                           context->clLID() ) ;
+         dmsEventCLItem clItem( context->mb()->_collectionName,
+                                context->mbID(),
+                                context->clLID() ) ;
          _pEventHolder->onCreateCL( DMS_EVENT_MASK_ALL, clItem, cb, dpscb ) ;
       }
 
@@ -1954,8 +1955,9 @@ namespace engine
 
       if ( _pEventHolder )
       {
-         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
-                           context->clLID() ) ;
+         dmsEventCLItem clItem( context->mb()->_collectionName,
+                                context->mbID(),
+                                context->clLID() ) ;
          _pEventHolder->onDropCL( DMS_EVENT_MASK_ALL, clItem, cb, dpscb ) ;
       }
 
@@ -2204,8 +2206,9 @@ namespace engine
 
       if ( _pEventHolder )
       {
-         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
-                           context->clLID() ) ;
+         dmsEventCLItem clItem( context->mb()->_collectionName,
+                                context->mbID(),
+                                context->clLID() ) ;
          _pEventHolder->onTruncateCL( DMS_EVENT_MASK_ALL, clItem, cb, dpscb ) ;
       }
 
@@ -2352,7 +2355,7 @@ namespace engine
 
       if ( _pEventHolder )
       {
-         dmsCLItem clItem( oldName, mbID, clLID ) ;
+         dmsEventCLItem clItem( oldName, mbID, clLID ) ;
          _pEventHolder->onRenameCL( DMS_EVENT_MASK_ALL, clItem, newName, cb, dpscb ) ;
       }
 

@@ -77,6 +77,8 @@ namespace engine
 
       INT32 next( _rtnSortTuple **tuple ) ;
 
+      UINT64 getObjNum () { return _objNum ; }
+
 //      static INT32 compare(const BSONObj &obj1, _rtnSortTuple *tuple1,
 //                           const BSONObj &obj2, _rtnSortTuple *tuple2,
 //                           const bson::Ordering &order ) ;

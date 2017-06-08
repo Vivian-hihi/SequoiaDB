@@ -188,11 +188,15 @@ namespace engine
 //                                  const DPS_LSN_OFFSET &preTransLsn,
 //                                  dpsLogRecord &record ) ;
 
-   INT32 dpsInvalidCata2Record( const CHAR * clFullName,
+   INT32 dpsInvalidCata2Record( const UINT8 &type,
+                                const CHAR * clFullName,
+                                const CHAR * ixName,
                                 dpsLogRecord &record ) ;
 
    INT32 dpsRecord2InvalidCata( const CHAR *logRecord,
-                                const CHAR **clFullName ) ;
+                                UINT8 &type,
+                                const CHAR **clFullName,
+                                const CHAR **ixName ) ;
 
    INT32 dpsLobW2Record( const CHAR *fullName,
                          const bson::OID *oid,
@@ -272,6 +276,7 @@ namespace engine
 
    INT32 dpsRecord2LobTruncate( const CHAR *raw,
                                 const CHAR **fullName ) ;
+
 }
 
 #endif

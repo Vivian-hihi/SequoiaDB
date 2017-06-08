@@ -8397,6 +8397,24 @@ error :
       goto done ;
    }
 
+   INT32 _sdbImpl::analyze ( const bson::BSONObj &options )
+   {
+      INT32 rc                  = SDB_OK ;
+      const CHAR *pCommand      = CMD_ADMIN_PREFIX CMD_NAME_ANALYZE ;
+
+      // run command
+      rc = _runCommand( pCommand, &options ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
 
 /*   INT32 _sdbImpl::modifyConfig ( INT32 nodeID,
                                   std::map<std::string,std::string> &config )

@@ -94,7 +94,7 @@ namespace engine
    /*
       _dmsCacheHolder
     */
-   class _dmsCacheHolder : public _IUtilSUCacheHolder
+   class _dmsCacheHolder : public IDmsSUCacheHolder
    {
       public :
          _dmsCacheHolder ( dmsStorageUnit *su ) ;
@@ -103,17 +103,21 @@ namespace engine
 
          virtual const CHAR *getCSName () const ;
 
+         virtual UINT32 getSUID () const ;
+
+         virtual UINT32 getSULID () const ;
+
          virtual BOOLEAN isSysSU () const ;
 
          virtual BOOLEAN checkCacheUnit ( utilSUCacheUnit *pCacheUnit ) ;
 
-         virtual BOOLEAN createSUCache ( UINT32 type ) ;
+         virtual BOOLEAN createSUCache ( UINT8 type ) ;
 
-         virtual BOOLEAN deleteSUCache ( UINT32 type ) ;
+         virtual BOOLEAN deleteSUCache ( UINT8 type ) ;
 
          virtual void deleteAllSUCaches () ;
 
-         OSS_INLINE virtual utilSUCache *getSUCache ( UINT32 type )
+         OSS_INLINE virtual dmsSUCache *getSUCache ( UINT8 type )
          {
             if ( type < DMS_CACHE_TYPE_NUM )
             {
@@ -122,14 +126,19 @@ namespace engine
             return NULL ;
          }
 
+         dmsStorageUnit *getSU ()
+         {
+            return _su ;
+         }
+
       protected :
          INT32 _checkCollectionStat ( dmsCollectionStat *pCollectionStat ) ;
          INT32 _checkIndexStat ( dmsIndexStat *pIndexStat,
                                  dmsMBContext *mbContext ) ;
 
       protected :
-         dmsStorageUnit *        _su ;
-         utilSUCache *           _pSUCaches [ DMS_CACHE_TYPE_NUM ] ;
+         dmsStorageUnit *     _su ;
+         dmsSUCache *         _pSUCaches [ DMS_CACHE_TYPE_NUM ] ;
    } ;
 
    /*
@@ -148,48 +157,78 @@ namespace engine
 
          virtual void unregAllHandlers () ;
 
-         virtual INT32 onCreateCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onLoadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onUnloadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onRenameCS ( UINT32 mask, const CHAR *pOldCSName,
-                                    const CHAR *pNewCSName, pmdEDUCB *cb,
+         virtual INT32 onCreateCS ( UINT32 mask,
+                                    pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onDropCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onCreateCL ( UINT32 mask, const dmsCLItem &clItem,
-                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onRenameCL ( UINT32 mask, const dmsCLItem &clItem,
-                                    const CHAR *pNewCLName,
-                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onTruncateCL ( UINT32 mask, const dmsCLItem &clItem,
-                                      pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onDropCL ( UINT32 mask, const dmsCLItem &clItem,
-                                  pmdEDUCB *cb, SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onCreateIndex ( UINT32 mask, const dmsCLItem &clItem,
-                                       const dmsIdxItem &idxItem, pmdEDUCB *cb,
-                                       SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onDropIndex ( UINT32 mask, const dmsCLItem &clItem,
-                                     const dmsIdxItem &idxItem, pmdEDUCB *cb,
-                                     SDB_DPSCB *dpsCB ) ;
-
-         virtual INT32 onLinkCL ( UINT32 mask, const dmsCLItem &clItem,
-                                  const CHAR *pMainCLName, pmdEDUCB *cb,
+         virtual INT32 onLoadCS ( UINT32 mask,
+                                  pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onUnlinkCL ( UINT32 mask, const dmsCLItem &clItem,
-                                    const CHAR *pMainCLName, pmdEDUCB *cb,
+         virtual INT32 onUnloadCS ( UINT32 mask,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onRenameCS ( UINT32 mask,
+                                    const CHAR *pOldCSName,
+                                    const CHAR *pNewCSName,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onDropCS ( UINT32 mask,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onCreateCL ( UINT32 mask,
+                                    const dmsEventCLItem &clItem,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onRenameCL ( UINT32 mask,
+                                    const dmsEventCLItem &clItem,
+                                    const CHAR *pNewCLName,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onTruncateCL ( UINT32 mask,
+                                      const dmsEventCLItem &clItem,
+                                      pmdEDUCB *cb,
+                                      SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onDropCL ( UINT32 mask,
+                                  const dmsEventCLItem &clItem,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onCreateIndex ( UINT32 mask,
+                                       const dmsEventCLItem &clItem,
+                                       const dmsEventIdxItem &idxItem,
+                                       pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onDropIndex ( UINT32 mask,
+                                     const dmsEventCLItem &clItem,
+                                     const dmsEventIdxItem &idxItem,
+                                     pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onLinkCL ( UINT32 mask,
+                                  const dmsEventCLItem &clItem,
+                                  const CHAR *pMainCLName,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) ;
+
+         virtual INT32 onUnlinkCL ( UINT32 mask,
+                                    const dmsEventCLItem &clItem,
+                                    const CHAR *pMainCLName,
+                                    pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) ;
 
          virtual const CHAR *getCSName () const ;
+
+         virtual UINT32 getSUID () const ;
+
+         virtual UINT32 getSULID () const ;
 
          OSS_INLINE virtual void setCacheHolder ( dmsCacheHolder *pCacheHolder )
          {
@@ -280,13 +319,24 @@ namespace engine
                                    BOOLEAN &lobFlag ) const ;
 
       public:
-         void     dumpInfo ( set<monCLSimple> &collectionList,
+         void     dumpInfo ( MON_CL_SIM_LIST &clList,
                              BOOLEAN sys = FALSE ) ;
-         void     dumpInfo ( vector<monCLSimple> &collectionList,
+         INT32    dumpInfo ( monCLSimple &collection,
+                             UINT16 mbID,
+                             BOOLEAN dumpIdx = FALSE ) ;
+         void     dumpInfo ( MON_CL_SIM_VEC &clList,
+                             BOOLEAN sys = FALSE,
+                             BOOLEAN dumpIdx = FALSE ) ;
+         void     dumpInfo ( MON_CL_LIST &clList,
                              BOOLEAN sys = FALSE ) ;
-         void     dumpInfo ( set<_monCollection> &collectionList,
-                             BOOLEAN sys = FALSE ) ;
-         void     dumpInfo ( set<_monStorageUnit> &storageUnitList,
+         INT32    dumpInfo ( monCollection &collection,
+                             UINT16 mbID ) ;
+         void     dumpInfo ( monStorageUnit &storageUnit ) ;
+         void     dumpInfo ( monCSSimple &collectionSpace,
+                             BOOLEAN sys = FALSE,
+                             BOOLEAN dumpCL = FALSE,
+                             BOOLEAN dumpIdx = FALSE ) ;
+         void     dumpInfo ( monCollectionSpace &collectionSpace,
                              BOOLEAN sys = FALSE ) ;
 
          INT32    getSegExtents ( const CHAR *pName,
@@ -294,13 +344,20 @@ namespace engine
                                   dmsMBContext *context = NULL ) ;
 
          INT32    getIndexes ( const CHAR *pName,
-                               vector<_monIndex> &resultIndexes,
+                               MON_IDX_LIST &resultIndexes,
                                dmsMBContext *context = NULL ) ;
 
-         INT32    getIndex( const CHAR *pName,
-                            const CHAR *pIndexName,
-                            _monIndex &resultIndex,
-                            dmsMBContext *context = NULL ) ;
+         INT32    getIndex ( const CHAR *pName,
+                             const CHAR *pIndexName,
+                             _monIndex &resultIndex,
+                             dmsMBContext *context = NULL ) ;
+
+         INT32    getIndexes ( const dmsMB *mb,
+                               MON_IDX_LIST &resultIndexes ) ;
+
+         INT32    getIndex ( const dmsMB *mb,
+                             const CHAR *pIndexName,
+                             monIndex &resultIndex ) ;
 
       // only for LOAD
       public:
@@ -411,7 +468,9 @@ namespace engine
          void unregEventHandler ( _IDmsEventHandler *pHandler ) ;
          void unregEventHandlers () ;
 
-         utilSUCache *getSUCache ( UINT32 type ) ;
+         dmsSUCache *getSUCache ( UINT32 type ) ;
+
+         dmsStatCache *getStatCache () ;
 
       private:
          INT32 _createStorageObjs() ;

@@ -591,9 +591,10 @@ namespace engine
 
       if ( _pDataSu->_pEventHolder )
       {
-         dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
-                           context->clLID() ) ;
-         dmsIdxItem idxItem ( indexName, index ) ;
+         dmsEventCLItem clItem( context->mb()->_collectionName,
+                                context->mbID(),
+                                context->clLID() ) ;
+         dmsEventIdxItem idxItem ( indexName, indexLID, index ) ;
          _pDataSu->_pEventHolder->onCreateIndex( DMS_EVENT_MASK_ALL, clItem,
                                                  idxItem, cb, dpscb ) ;
       }
@@ -693,11 +694,15 @@ namespace engine
 
             if ( _pDataSu->_pEventHolder )
             {
-               dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
-                                 context->clLID() ) ;
-               dmsIdxItem idxItem( indexCB.getName(), indexCB.getDef() ) ;
+               dmsEventCLItem clItem( context->mb()->_collectionName,
+                                      context->mbID(),
+                                      context->clLID() ) ;
+               dmsEventIdxItem idxItem( indexCB.getName(),
+                                        indexCB.getLogicalID(),
+                                        indexCB.getDef() ) ;
                _pDataSu->_pEventHolder->onDropIndex( DMS_EVENT_MASK_ALL,
-                                                     clItem, idxItem, cb, dpscb ) ;
+                                                     clItem, idxItem, cb,
+                                                     dpscb ) ;
             }
 
             rc = dropIndex ( context, indexID, indexCB.getLogicalID(),
@@ -761,11 +766,15 @@ namespace engine
 
             if ( _pDataSu->_pEventHolder )
             {
-               dmsCLItem clItem( context->mb()->_collectionName, context->mbID(),
-                                 context->clLID() ) ;
-               dmsIdxItem idxItem( indexCB.getName(), indexCB.getDef() ) ;
+               dmsEventCLItem clItem( context->mb()->_collectionName,
+                                      context->mbID(),
+                                      context->clLID() ) ;
+               dmsEventIdxItem idxItem( indexCB.getName(),
+                                        indexCB.getLogicalID(),
+                                        indexCB.getDef() ) ;
                _pDataSu->_pEventHolder->onDropIndex( DMS_EVENT_MASK_ALL,
-                                                     clItem, idxItem, cb, dpscb ) ;
+                                                     clItem, idxItem, cb,
+                                                     dpscb ) ;
             }
 
             rc = dropIndex ( context, indexID, indexCB.getLogicalID(),

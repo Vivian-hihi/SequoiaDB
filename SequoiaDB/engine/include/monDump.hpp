@@ -74,7 +74,7 @@ namespace engine
 
    void  monAppendVersion ( BSONObjBuilder &ob ) ;
 
-   INT32 monDumpIndexes( vector<monIndex> &indexes, rtnContextDump *context ) ;
+   INT32 monDumpIndexes( MON_IDX_LIST &indexes, rtnContextDump *context ) ;
 
    INT32 monDumpTraceStatus ( rtnContextDump *context ) ;
 
@@ -250,8 +250,8 @@ namespace engine
          UINT32                     _addInfoMask ;
          BOOLEAN                    _hitEnd ;
 
-         std::set< monCLSimple >    _collectionList ;
-         std::set< monCollection >  _collectionInfo ;
+         MON_CL_SIM_LIST            _collectionList ;
+         MON_CL_LIST                _collectionInfo ;
    } ;
    typedef _monCollectionFetch monCollectionFetch ;
 
@@ -290,8 +290,8 @@ namespace engine
          UINT32                     _addInfoMask ;
          BOOLEAN                    _hitEnd ;
 
-         std::set< monCSSimple >          _csList ;
-         std::set< monCollectionSpace >   _csInfo ;
+         MON_CS_SIM_LIST            _csList ;
+         MON_CS_LIST                _csInfo ;
    } ;
    typedef _monCollectionSpaceFetch monCollectionSpaceFetch ;
 
@@ -389,7 +389,7 @@ namespace engine
          UINT32                  _addInfoMask ;
          BOOLEAN                 _hitEnd ;
 
-         std::set<monStorageUnit>   _suInfo ;
+         MON_SU_LIST             _suInfo ;
    } ;
    typedef _monStorageUnitFetch monStorageUnitFetch ;
 
@@ -424,7 +424,7 @@ namespace engine
          BOOLEAN                 _hitEnd ;
 
          UINT32                  _pos ;
-         vector<monIndex>        _indexInfo ;
+         MON_IDX_LIST            _indexInfo ;
    } ;
    typedef _monIndexFetch monIndexFetch ;
 

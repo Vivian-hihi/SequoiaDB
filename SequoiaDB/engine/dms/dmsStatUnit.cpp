@@ -44,7 +44,7 @@
 namespace engine
 {
 
-   #define DMS_STAT_VERSION                   "Version"
+   #define DMS_STAT_CREATE_TIME               "CreateTime"
    #define DMS_STAT_SAMPLE_RECORDS            "SampleRecords"
    #define DMS_STAT_TOTAL_RECORDS             FIELD_NAME_TOTAL_RECORDS
 
@@ -80,6 +80,7 @@ namespace engine
    {
       _numKeys = 0 ;
       _size = 0 ;
+      _allocSize = 0 ;
       _pValues = NULL ;
    }
 
@@ -88,20 +89,26 @@ namespace engine
       _clear() ;
    }
 
-   INT32 _dmsStatValues::init ( UINT32 size )
+   INT32 _dmsStatValues::init ( UINT32 size, UINT32 allocSize )
    {
       INT32 rc = SDB_OK ;
 
-      if ( size == 0 )
+      if ( allocSize < size )
+      {
+         allocSize = size ;
+      }
+
+      if ( allocSize == 0 )
       {
          goto done ;
       }
 
-      _pValues = new(std::nothrow) BSONObj[ size ] ;
+      _pValues = new(std::nothrow) BSONObj[ allocSize ] ;
       PD_CHECK( _pValues, SDB_OOM, error, PDWARNING,
-                "Failed to allocate %u values", size ) ;
+                "Failed to allocate %u values", allocSize ) ;
 
       _size = size ;
+      _allocSize = allocSize ;
 
    done :
       return rc ;
@@ -109,9 +116,19 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStatValues::binarySearch ( dmsStatKey &keyValue,
-                                        INT32 keyIncFlag,
-                                        BOOLEAN &isEqual ) const
+   INT32 _dmsStatValues::pushBack ( const BSONObj &boValue )
+   {
+      if ( _size == _allocSize )
+      {
+         return SDB_OOM ;
+      }
+      _pValues[ _size ] = boValue.copy() ;
+      _size ++ ;
+      return SDB_OK ;
+   }
+
+   INT32 _dmsStatValues::binarySearch ( dmsStatKey &keyValue, INT32 cmpFlag,
+                                        INT32 keyIncFlag, BOOLEAN &isEqual ) const
    {
       isEqual = FALSE ;
 
@@ -137,7 +154,8 @@ namespace engine
       {
          mid = ( low + high ) / 2 ;
 
-         INT32 res = keyValue.compareValue( keyIncFlag, _pValues[ mid ] ) ;
+         INT32 res = keyValue.compareValue( cmpFlag, keyIncFlag,
+                                            _pValues[ mid ] ) ;
 
          if ( 0 == res )
          {
@@ -283,7 +301,7 @@ namespace engine
    : _dmsStatValues ()
    {
       _pFractions = NULL ;
-      _totalFrac = 0.0 ;
+      _totalFrac = 0 ;
    }
 
    _dmsStatMCVSet::~_dmsStatMCVSet ()
@@ -295,29 +313,48 @@ namespace engine
       }
    }
 
-   INT32 _dmsStatMCVSet::init ( UINT32 size )
+   INT32 _dmsStatMCVSet::init ( UINT32 size, UINT32 allocSize )
    {
       INT32 rc = SDB_OK ;
 
-      if ( size == 0 )
+      if ( allocSize < size )
+      {
+         allocSize = size ;
+      }
+
+      if ( allocSize == 0 )
       {
          goto done ;
       }
 
-      rc = _dmsStatValues::init( size ) ;
+      rc = _dmsStatValues::init( size, allocSize ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to init values, rc: %d", rc ) ;
 
-      _pFractions = new(std::nothrow)double[ size ] ;
+      _pFractions = new(std::nothrow)UINT16[ allocSize ] ;
       PD_CHECK( _pFractions, SDB_OOM, error, PDWARNING,
-                "Failed to allocate memory for fractions" ) ;
+                "Failed to allocate memory for %u fractions",
+                allocSize ) ;
 
-      _totalFrac = 0.0 ;
+      _totalFrac = 0 ;
 
    done :
       return rc ;
    error :
       _clear() ;
       goto done ;
+   }
+
+   INT32 _dmsStatMCVSet::pushBack ( const BSONObj &boValue, UINT16 fraction )
+   {
+      INT32 rc = _dmsStatValues::pushBack( boValue ) ;
+
+      if ( SDB_OK == rc )
+      {
+         SDB_ASSERT( _size > 0, "_size is invalid" ) ;
+         _pFractions[ _size - 1 ] = fraction ;
+      }
+
+      return rc ;
    }
 
    void _dmsStatMCVSet::clear ()
@@ -327,7 +364,7 @@ namespace engine
          delete [] _pFractions ;
          _pFractions = NULL ;
       }
-      _totalFrac = 0.0 ;
+      _totalFrac = 0 ;
       _dmsStatValues::_clear() ;
    }
 
@@ -347,7 +384,7 @@ namespace engine
       INT32 startFlag = 0, stopFlag = 0 ;
       INT32 startIdx = -1, stopIdx = -1 ;
       UINT32 rangeCount = 0 ;
-      double tmpPredSel = 0.0, tmpScanSel = 0.0 ;
+      UINT16 tmpPredSel = 0, tmpScanSel = 0 ;
 
       BOOLEAN checkHoles = FALSE ;
 
@@ -369,8 +406,8 @@ namespace engine
       if ( pStartKey )
       {
          startIncluded = pStartKey->isIncluded() ;
-         startFlag = startIncluded ? -1 : ( _numKeys == pStartKey->size() ? 0 : 1 ) ;
-         startIdx = binarySearch( *pStartKey, startFlag, startEqual ) ;
+         startFlag = startIncluded ? -1 : 1 ;
+         startIdx = binarySearch( *pStartKey, -1, startFlag, startEqual ) ;
          PD_CHECK( startIdx >= 0, SDB_INVALIDARG, error, PDWARNING,
                    "Failed to locate start key %s in MCV set",
                    pStartKey->toString().c_str() ) ;
@@ -387,8 +424,8 @@ namespace engine
       if ( pStopKey )
       {
          stopIncluded = pStopKey->isIncluded() ;
-         stopFlag = stopIncluded ? 1 : ( _numKeys == pStopKey->size() ? 0 : -1 ) ;
-         stopIdx = binarySearch( *pStopKey, stopFlag, stopEqual ) ;
+         stopFlag = stopIncluded ? 1 : -1 ;
+         stopIdx = binarySearch( *pStopKey, 1, stopFlag, stopEqual ) ;
          PD_CHECK( stopIdx >= 0, SDB_INVALIDARG, error, PDWARNING,
                    "Failed to locate stop key %s in MCV set",
                    pStopKey->toString().c_str() ) ;
@@ -413,11 +450,11 @@ namespace engine
          if ( startIncluded || !startEqual )
          {
             // The start key <= value case, add the first selected MCV item
-            tmpScanSel += getFrac( startIdx ) ;
+            tmpScanSel += getFracInt( startIdx ) ;
             if ( checkHoles && ( ( startIncluded && startEqual ) ||
                                  _inRange( (UINT32)startIdx, pStartKey, pStopKey ) ) )
             {
-               tmpPredSel += getFrac( startIdx ) ;
+               tmpPredSel += getFracInt( startIdx ) ;
             }
             rangeCount ++ ;
          }
@@ -426,10 +463,10 @@ namespace engine
          for ( INT32 idx = startIdx + 1 ; idx < stopIdx ; idx ++ )
          {
             // Every ranges between selected MCV items are needed
-            tmpScanSel += getFrac( idx ) ;
+            tmpScanSel += getFracInt( idx ) ;
             if ( checkHoles && _inRange( idx, pStartKey, pStopKey ) )
             {
-               tmpPredSel += getFrac( idx ) ;
+               tmpPredSel += getFracInt( idx ) ;
             }
             rangeCount ++ ;
          }
@@ -439,10 +476,10 @@ namespace engine
          {
             // The stop key is equal to the last selected MCV item, add
             // the last selected MCV item
-            tmpScanSel += getFrac( stopIdx ) ;
+            tmpScanSel += getFracInt( stopIdx ) ;
             if ( checkHoles )
             {
-               tmpPredSel += getFrac( stopIdx ) ;
+               tmpPredSel += getFracInt( stopIdx ) ;
             }
             rangeCount ++ ;
          }
@@ -456,19 +493,22 @@ namespace engine
          {
             // The stop key is equal to the selected MCV item, which should
             // be included
-            tmpScanSel = getFrac( startIdx ) ;
+            tmpScanSel = getFracInt( startIdx ) ;
             if ( checkHoles )
             {
-               tmpPredSel += getFrac( startIdx ) ;
+               tmpPredSel += getFracInt( startIdx ) ;
             }
             rangeCount ++ ;
          }
       }
 
-      scanSelectivity = DMS_STAT_ROUND_SELECTIVITY( tmpScanSel ) ;
+      scanSelectivity = (double)tmpScanSel / (double)DMS_STAT_FRACTION_SCALE  ;
+      scanSelectivity = DMS_STAT_ROUND_SELECTIVITY( scanSelectivity ) ;
+
       if ( checkHoles )
       {
-         predSelectivity = DMS_STAT_ROUND_SELECTIVITY( tmpPredSel ) ;
+         predSelectivity = (double)tmpPredSel / (double)DMS_STAT_FRACTION_SCALE ;
+         predSelectivity = DMS_STAT_ROUND_SELECTIVITY( predSelectivity ) ;
       }
       else
       {
@@ -500,7 +540,7 @@ namespace engine
       PD_CHECK( getSize() > 0, SDB_INVALIDARG, error, PDWARNING,
                 "No MCV set is available" ) ;
 
-      idx = binarySearch( key, 0, equal ) ;
+      idx = binarySearch( key, 0, 0, equal ) ;
       PD_CHECK( idx >= 0, SDB_INVALIDARG, error, PDWARNING,
                 "Failed to locate start key %s in MCV set",
                 key.toString().c_str() ) ;
@@ -531,13 +571,22 @@ namespace engine
    _dmsStatUnit::_dmsStatUnit ()
    : _utilSUCacheUnit()
    {
-      _initItems() ;
+      _clLogicalID = DMS_INVALID_CLID ;
+      _suLogicalID = DMS_INVALID_LOGICCSID ;
+
+      _sampleRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
+      _totalRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
    }
 
-   _dmsStatUnit::_dmsStatUnit ( UINT16 mbID, UINT64 version )
-   : _utilSUCacheUnit( mbID, version )
+   _dmsStatUnit::_dmsStatUnit ( UINT32 suLID, UINT16 mbID, UINT32 clLID,
+                                UINT64 createTime )
+   : _utilSUCacheUnit( mbID, createTime )
    {
-      _initItems() ;
+      _suLogicalID = suLID ;
+      _clLogicalID = clLID ;
+
+      _sampleRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
+      _totalRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATBASE_INIT, "_dmsStatUnit::init" )
@@ -549,83 +598,52 @@ namespace engine
 
       try
       {
-         BSONObjIterator iter( boStat ) ;
+         BSONElement beItem ;
 
-         while ( iter.more() )
-         {
-            BSONElement beItem = iter.next() ;
+         // Required fields
 
-            if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_COLLECTION_SPACE ) )
-            {
-               const CHAR *pCSName = NULL ;
+         beItem = boStat.getField( DMS_STAT_COLLECTION_SPACE ) ;
+         PD_CHECK( String == beItem.type(),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Field [%s] is not matched", DMS_STAT_COLLECTION_SPACE ) ;
+         setCSName( beItem.valuestr() ) ;
 
-               PD_CHECK( String == beItem.type(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] is not matched", DMS_STAT_COLLECTION_SPACE ) ;
+         beItem = boStat.getField( DMS_STAT_COLLECTION ) ;
+         PD_CHECK( String == beItem.type(),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Field [%s] is not matched", DMS_STAT_COLLECTION ) ;
+         setCLName( beItem.valuestr() ) ;
 
-               pCSName = beItem.valuestr() ;
-               setCSName( pCSName ) ;
-            }
-            else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_COLLECTION ) )
-            {
-               const CHAR *pCLName = NULL ;
+         beItem = boStat.getField( DMS_STAT_CREATE_TIME ) ;
+         PD_CHECK( beItem.isNumber(),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Field [%s] is not matched", DMS_STAT_CREATE_TIME ) ;
+         setCreateTime( (UINT64)beItem.numberLong() ) ;
 
-               PD_CHECK( String == beItem.type(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] is not matched", DMS_STAT_COLLECTION ) ;
+         beItem = boStat.getField( DMS_STAT_SAMPLE_RECORDS ) ;
+         PD_CHECK( beItem.isNumber(),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Field [%s] is not matched", DMS_STAT_SAMPLE_RECORDS ) ;
+         setSampleRecords( (UINT64)beItem.numberLong() ) ;
 
-               pCLName = beItem.valuestr() ;
-               setCLName( pCLName ) ;
-            }
-            else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_COLLECTION_MBID ) )
-            {
-               PD_CHECK( NumberInt == beItem.type() &&
-                         (UINT32)beItem.Int() < DMS_MME_SLOTS,
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] is not matched", DMS_STAT_COLLECTION_MBID ) ;
-               // For statistics cache, mbID is ID of unit
-               _setUnitID( (UINT16)beItem.Int() ) ;
-            }
-            else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_VERSION ) )
-            {
-               PD_CHECK( beItem.isNumber(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] is not matched", DMS_STAT_VERSION ) ;
-               setVersion( (UINT64)beItem.numberLong() ) ;
-            }
-            else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_SAMPLE_RECORDS ) )
-            {
-               PD_CHECK( beItem.isNumber(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] is not matched", DMS_STAT_SAMPLE_RECORDS ) ;
-               _sampleRecords = (UINT64)beItem.numberLong() ;
-            }
-            else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_TOTAL_RECORDS ) )
-            {
-               PD_CHECK( beItem.isNumber(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] is not matched", DMS_STAT_TOTAL_RECORDS ) ;
-               _totalRecords = (UINT64)beItem.numberLong() ;
-            }
-            else
-            {
-               rc = _initItem( beItem ) ;
-               if ( SDB_OK != rc )
-               {
-                  goto error ;
-               }
-            }
-         }
+         beItem = boStat.getField( DMS_STAT_TOTAL_RECORDS ) ;
+         PD_CHECK( beItem.isNumber(),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Field [%s] is not matched", DMS_STAT_TOTAL_RECORDS ) ;
+         setTotalRecords( (UINT64)beItem.numberLong() ) ;
 
-         rc = _postInit() ;
+         rc = _initItem( boStat ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to initialize items, rc: %d", rc ) ;
+
+         rc = postInit() ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to process after initialization, rc: %d", rc ) ;
       }
       catch ( std::exception &e )
       {
          PD_LOG( PDERROR, "Failed to initialize statistics object, received "
-                 "unexpected error: %s", e.what() );
-         rc = SDB_INVALIDARG;
+                 "unexpected error: %s", e.what() ) ;
+         rc = SDB_SYS ;
          goto error;
       }
 
@@ -637,10 +655,29 @@ namespace engine
       goto done ;
    }
 
-   void _dmsStatUnit::_initItems ()
+   INT32 _dmsStatUnit::postInit ()
    {
-      _sampleRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
-      _totalRecords = DMS_STAT_DEF_TOTAL_RECORDS ;
+      return _postInit() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATBASE_TOBSON, "_dmsStatUnit::toBSON" )
+   BSONObj _dmsStatUnit::toBSON () const
+   {
+      BSONObjBuilder builder ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATBASE_TOBSON ) ;
+
+      builder.append( DMS_STAT_COLLECTION_SPACE, getCSName() ) ;
+      builder.append( DMS_STAT_COLLECTION, getCLName() ) ;
+      builder.append( DMS_STAT_CREATE_TIME, (INT64)getCreateTime() ) ;
+      builder.append( DMS_STAT_SAMPLE_RECORDS, (INT64)getSampleRecords() ) ;
+      builder.append( DMS_STAT_TOTAL_RECORDS, (INT64)getTotalRecords() ) ;
+
+      _toBSON( builder ) ;
+
+      PD_TRACE_EXIT( SDB_DMSSTATBASE_TOBSON ) ;
+
+      return builder.obj() ;
    }
 
    /*
@@ -652,22 +689,87 @@ namespace engine
       setCSName( NULL ) ;
       setCLName( NULL ) ;
       setIndexName( NULL ) ;
-      _initItems() ;
+      _initDefaultItems() ;
    }
 
    _dmsIndexStat::_dmsIndexStat ( const CHAR *pCSName, const CHAR *pCLName,
-                                  UINT16 mbID, UINT64 version,
-                                  const CHAR *pIndexName )
-   : _dmsStatUnit( mbID, version )
+                                  const CHAR *pIndexName, UINT32 suLID,
+                                  UINT16 mbID, UINT32 clLID,
+                                  UINT64 createTime )
+   : _dmsStatUnit( suLID, mbID, clLID, createTime )
    {
       setCSName( pCSName ) ;
       setCLName( pCLName ) ;
       setIndexName( pIndexName ) ;
-      _initItems() ;
+      _initDefaultItems() ;
    }
 
    _dmsIndexStat::~_dmsIndexStat ()
    {
+   }
+
+   INT32 _dmsIndexStat::initMCVSet ( UINT32 allocSize )
+   {
+      _mcvSet.clear() ;
+      return _mcvSet.init( 0, allocSize ) ;
+   }
+
+   INT32 _dmsIndexStat::pushMCVSet ( const BSONObj &boValue, double fraction )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObjBuilder keyBuilder ;
+      BSONObj boFullValue ;
+
+      UINT16 scaledFraction = 0 ;
+
+      BSONObjIterator iterKey( _keyPattern ) ;
+      BSONObjIterator iterCur ( boValue ) ;
+      while ( iterKey.more() && iterCur.more() )
+      {
+         BSONElement beKey = iterKey.next() ;
+         BSONElement beCur = iterCur.next() ;
+
+         switch ( beKey.type() )
+         {
+            case NumberDouble :
+            case NumberInt :
+            case NumberLong :
+            case NumberDecimal :
+            case String :
+            case Bool :
+            case Date :
+            case Timestamp :
+            case jstOID :
+            case jstNULL :
+            case Undefined :
+               break ;
+            default :
+               // Ignore non-supported types
+               goto done ;
+         }
+
+         keyBuilder.appendAs( beCur, beKey.fieldName() ) ;
+      }
+
+      PD_CHECK( !iterKey.more() && !iterCur.more(), SDB_SYS, error, PDERROR,
+                "Size of keys are not matched" ) ;
+
+      boFullValue = keyBuilder.obj() ;
+
+      // Round to 0 ~ 1.0 and scaled to 10000x
+      fraction = DMS_STAT_ROUND_SELECTIVITY( fraction ) *
+                 DMS_STAT_FRACTION_SCALE ;
+      // Round to integer
+      scaledFraction = (UINT16)DMS_STAT_ROUND_INT( fraction ) ;
+      rc = _mcvSet.pushBack( boFullValue, scaledFraction ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to insert mcv value [%s], rc: %d",
+                   boFullValue.toString( FALSE, TRUE ).c_str(), rc ) ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT_EVALRANGEOPTR, "_dmsIndexStat::evalRangeOperator" )
@@ -802,7 +904,7 @@ namespace engine
       goto done ;
    }
 
-   void _dmsIndexStat::_initItems ()
+   void _dmsIndexStat::_initDefaultItems ()
    {
       _pFirstField = NULL ;
       _numKeys = 0 ;
@@ -813,114 +915,74 @@ namespace engine
       _isUnique = FALSE ;
       _distinctValues = 0 ;
 
-      _nullFrac = 0.0 ;
-      _undefFrac = 0.0 ;
+      _nullFrac = 0 ;
+      _undefFrac = 0 ;
+
+      _indexLogicalID = DMS_INVALID_EXTENT ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT__INITITEM, "_dmsIndexStat::_initItem" )
-   INT32 _dmsIndexStat::_initItem ( const BSONElement &beItem )
+   INT32 _dmsIndexStat::_initItem ( const BSONObj &boStat )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_DMSIDXSTAT__INITITEM ) ;
 
-      if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_INDEX ) )
-      {
-         const CHAR *pIndexName = NULL ;
+      BSONElement beItem ;
 
-         PD_CHECK( String == beItem.type(),
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "Field [%s] is not matched", DMS_STAT_IDX_INDEX ) ;
+      // Required fields
 
-         pIndexName = beItem.valuestr() ;
-         setIndexName( pIndexName ) ;
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_INDEX_PAGES ) )
+      beItem = boStat.getField( DMS_STAT_IDX_INDEX ) ;
+      PD_CHECK( String == beItem.type(), SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_IDX_INDEX ) ;
+      setIndexName( beItem.valuestr() ) ;
+
+      beItem = boStat.getField( DMS_STAT_IDX_KEY_PATTERN ) ;
+      PD_CHECK( Object == beItem.type(), SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_IDX_KEY_PATTERN ) ;
+      rc = _initKeyPattern ( beItem.embeddedObject() ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to init key pattern, rc: %d", rc ) ;
+
+      beItem = boStat.getField( DMS_STAT_IDX_IS_UNIQUE ) ;
+      PD_CHECK( Bool == beItem.type(), SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_IDX_IS_UNIQUE ) ;
+      setUnique( beItem.booleanSafe() ) ;
+
+      beItem = boStat.getField( DMS_STAT_IDX_INDEX_PAGES ) ;
+      PD_CHECK( beItem.isNumber(), SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_IDX_INDEX_PAGES ) ;
+      setIndexPages( (UINT32)beItem.numberInt() ) ;
+
+      beItem = boStat.getField( DMS_STAT_IDX_LEVELS ) ;
+      PD_CHECK( beItem.isNumber(), SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_IDX_LEVELS ) ;
+      setIndexLevels( (UINT32)beItem.numberInt() ) ;
+
+      // Optional fields
+
+      beItem = boStat.getField( DMS_STAT_IDX_NULL_FRAC ) ;
+      if ( beItem.isNumber() )
       {
-         PD_CHECK( beItem.isNumber(),
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "Field [%s] is not matched", DMS_STAT_IDX_INDEX_PAGES ) ;
-         _indexPages = (UINT32)beItem.numberInt() ;
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_LEVELS ) )
-      {
-         PD_CHECK( beItem.isNumber(),
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "Field [%s] is not matched", DMS_STAT_IDX_LEVELS ) ;
-         _indexLevels = (UINT32)beItem.numberInt() ;
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_KEY_PATTERN ) )
-      {
-         PD_CHECK( Object == beItem.type(),
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "Field [%s] is not matched", DMS_STAT_IDX_KEY_PATTERN ) ;
-         rc = _initKeyPattern ( beItem.embeddedObject() ) ;
-         PD_RC_CHECK( rc, PDWARNING, "Failed to init key pattern, rc: %d",
-                      rc ) ;
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_IS_UNIQUE ) )
-      {
-         PD_CHECK( Bool == beItem.type(),
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "Field [%s] is not matched", DMS_STAT_IDX_IS_UNIQUE ) ;
-         _isUnique = beItem.booleanSafe() ;
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_NULL_FRAC ) )
-      {
-         if ( beItem.isNumber() )
-         {
-            _nullFrac = beItem.numberDouble() ;
-         }
-         else
-         {
-            PD_LOG( PDWARNING,
-                    "Type of field [%s] is not matched, "
-                    "expected is %d, actually is %d",
-                    DMS_STAT_IDX_NULL_FRAC, NumberDouble, beItem.type() ) ;
-         }
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_UNDEF_FRAC ) )
-      {
-         if ( beItem.isNumber() )
-         {
-            _undefFrac = beItem.numberDouble() ;
-         }
-         else
-         {
-            PD_LOG( PDWARNING,
-                    "Field [%s] is not matched", DMS_STAT_IDX_UNDEF_FRAC ) ;
-         }
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_DISTINCT_VALUES ) )
-      {
-         if ( beItem.isNumber() )
-         {
-            _distinctValues = (UINT64)beItem.numberLong() ;
-         }
-         else
-         {
-            PD_LOG( PDWARNING,
-                    "Field [%s] is not matched", DMS_STAT_IDX_DISTINCT_VALUES ) ;
-         }
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_IDX_MCV ) )
-      {
-         if ( Object == beItem.type() )
-         {
-            rc = _initMCV( beItem.embeddedObject() ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING, "Failed to init mcv, rc: %d", rc ) ;
-            }
-         }
-         else
-         {
-            PD_LOG( PDWARNING,
-                    "Field [%s] is not matched", DMS_STAT_IDX_MCV ) ;
-         }
+         setNullFrac( (UINT16)beItem.numberInt() ) ;
       }
 
-      rc = SDB_OK ;
+      beItem = boStat.getField( DMS_STAT_IDX_UNDEF_FRAC ) ;
+      if ( beItem.isNumber() )
+      {
+         setUndefFrac( (UINT16)beItem.numberInt() ) ;
+      }
+
+      beItem = boStat.getField( DMS_STAT_IDX_DISTINCT_VALUES ) ;
+      if ( beItem.isNumber() )
+      {
+         setDistinctValues( (UINT64)beItem.numberLong() ) ;
+      }
+
+      beItem = boStat.getField( DMS_STAT_IDX_MCV ) ;
+      if ( Object == beItem.type() )
+      {
+         _initMCV( beItem.embeddedObject() ) ;
+      }
 
    done :
       PD_TRACE_EXITRC( SDB_DMSIDXSTAT__INITITEM, rc ) ;
@@ -954,11 +1016,50 @@ namespace engine
       PD_RC_CHECK( rc, PDWARNING, "Failed to set numKeys of MCV set, rc: %d",
                    rc ) ;
 
+      _mcvSet.setTotalFrac() ;
+
    done :
       PD_TRACE_EXITRC( SDB_DMSIDXSTAT__POSTINIT, rc ) ;
       return rc ;
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT__TOBSON, "_dmsIndexStat::_toBSON" )
+   void _dmsIndexStat::_toBSON ( BSONObjBuilder &builder ) const
+   {
+      PD_TRACE_ENTRY( SDB_DMSIDXSTAT__TOBSON ) ;
+
+      builder.append( DMS_STAT_IDX_INDEX, getIndexName() ) ;
+      builder.append( DMS_STAT_IDX_INDEX_PAGES, (INT32)getIndexPages() ) ;
+      builder.append( DMS_STAT_IDX_LEVELS, (INT32)getIndexLevels() ) ;
+      builder.append( DMS_STAT_IDX_KEY_PATTERN, getKeyPattern() ) ;
+      builder.appendBool( DMS_STAT_IDX_IS_UNIQUE, isUnique() ) ;
+
+      if ( _mcvSet.getSize() > 0 )
+      {
+         BSONObjBuilder mcvBuilder( builder.subobjStart( DMS_STAT_IDX_MCV ) ) ;
+
+         BSONArrayBuilder mcvValueBuilder(
+               mcvBuilder.subarrayStart( DMS_STAT_IDX_MCV_VALUES ) ) ;
+         for ( UINT32 i = 0 ; i < _mcvSet.getSize() ; i++ )
+         {
+            mcvValueBuilder.append( _mcvSet.getValue( i ) ) ;
+         }
+         mcvValueBuilder.done() ;
+
+         BSONArrayBuilder mcvFracBuilder(
+                        mcvBuilder.subarrayStart( DMS_STAT_IDX_MCV_FRAC ) ) ;
+         for ( UINT32 i = 0 ; i < _mcvSet.getSize() ; i++ )
+         {
+            mcvFracBuilder.append( (INT32)_mcvSet.getFracInt( i ) ) ;
+         }
+         mcvFracBuilder.done() ;
+
+         mcvBuilder.done() ;
+      }
+
+      PD_TRACE_EXIT( SDB_DMSIDXSTAT__TOBSON ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSIDXSTAT__INITKEYPTN, "_dmsIndexStat::_initKeyPattern" )
@@ -990,78 +1091,68 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_DMSIDXSTAT__INITMCV ) ;
 
-      double totalFrac = 0.0 ;
+      BSONElement beItem ;
 
-      BSONObjIterator iter( boMCV ) ;
-      while ( iter.more() )
+      beItem = boMCV.getField( DMS_STAT_IDX_MCV_VALUES ) ;
+      PD_CHECK( Array == beItem.type(),
+                SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_IDX_MCV_VALUES ) ;
       {
-         BSONElement eleTemp = iter.next() ;
+         BSONObj boValues = beItem.embeddedObject() ;
+         BSONObjIterator iterValue( boValues ) ;
+         UINT32 idx = 0 ;
 
-         if ( 0 == ossStrcmp( eleTemp.fieldName(), DMS_STAT_IDX_MCV_VALUES ) )
+         if ( _mcvSet.getSize() == 0 && boValues.nFields() > 0 )
          {
-            PD_CHECK( Array == eleTemp.type(),
-                      SDB_INVALIDARG, error, PDWARNING,
-                      "Field [%s] 's type is not matched",
-                      eleTemp.toString().c_str() ) ;
-            BSONObj boValues = eleTemp.embeddedObject() ;
-            if ( _mcvSet.getSize() == 0 && boValues.nFields() > 0 )
-            {
-               rc = _mcvSet.init( boValues.nFields() ) ;
-               PD_RC_CHECK( rc, PDWARNING, "Failed to init mcv, rc: %d", rc ) ;
-            }
-            PD_CHECK( _mcvSet.getSize() == (UINT32)boValues.nFields(),
-                      SDB_INVALIDARG, error, PDWARNING,
-                      "Field [%s] 's type is not matched",
-                      eleTemp.toString().c_str() ) ;
-            BSONObjIterator iterValue( boValues ) ;
-            UINT32 idx = 0 ;
-            while ( iterValue.more() )
-            {
-               BSONElement tempVal = iterValue.next() ;
-               PD_CHECK( Object == tempVal.type(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] 's type is not matched",
-                         tempVal.toString().c_str() ) ;
-               _mcvSet.setValue( idx, tempVal.embeddedObject() ) ;
-               ++ idx ;
-            }
+            UINT32 size = boValues.nFields() ;
+            rc = _mcvSet.init( size, size ) ;
+            PD_RC_CHECK( rc, PDWARNING, "Failed to initialize MCV, rc: %d",
+                         rc ) ;
          }
-         else if ( 0 == ossStrcmp( eleTemp.fieldName(), DMS_STAT_IDX_MCV_FRAC ) )
+         PD_CHECK( _mcvSet.getSize() == (UINT32)boValues.nFields(),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Field [%s] 's lenght is not matched",
+                   beItem.toString().c_str() ) ;
+
+         while ( iterValue.more() )
          {
-            PD_CHECK( Array == eleTemp.type(),
+            BSONElement tempVal = iterValue.next() ;
+            PD_CHECK( Object == tempVal.type(),
                       SDB_INVALIDARG, error, PDWARNING,
                       "Field [%s] 's type is not matched",
-                      eleTemp.toString().c_str() ) ;
-            BSONObj boFrac = eleTemp.embeddedObject() ;
-            if ( _mcvSet.getSize() == 0 && boFrac.nFields() > 0 )
-            {
-               rc = _mcvSet.init( boFrac.nFields() ) ;
-               PD_RC_CHECK( rc, PDWARNING, "Failed to init mcv, rc: %d", rc ) ;
-            }
-            PD_CHECK( _mcvSet.getSize() == (UINT32)boFrac.nFields(),
-                      SDB_INVALIDARG, error, PDWARNING,
-                      "Field [%s] 's type is not matched",
-                      eleTemp.toString().c_str() ) ;
-            BSONObjIterator iterFrac( boFrac ) ;
-            UINT32 idx = 0 ;
-            while ( iterFrac.more() )
-            {
-               double frac = 0.0 ;
-               BSONElement tempFrac = iterFrac.next() ;
-               PD_CHECK( tempFrac.isNumber(),
-                         SDB_INVALIDARG, error, PDWARNING,
-                         "Field [%s] 's type is not matched",
-                         tempFrac.toString().c_str() ) ;
-               frac = tempFrac.number() ;
-               _mcvSet.setFrac( idx, frac ) ;
-               totalFrac += frac ;
-               ++ idx ;
-            }
+                      tempVal.toString().c_str() ) ;
+            _mcvSet.setValue( idx, tempVal.embeddedObject() ) ;
+            ++ idx ;
          }
       }
 
-      totalFrac = DMS_STAT_ROUND_SELECTIVITY( totalFrac ) ;
-      _mcvSet.setTotalFrac( totalFrac ) ;
+      beItem = boMCV.getField( DMS_STAT_IDX_MCV_FRAC ) ;
+      PD_CHECK( Array == beItem.type(),
+                SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_IDX_MCV_FRAC ) ;
+      {
+         BSONObj boFrac = beItem.embeddedObject() ;
+         BSONObjIterator iterFrac( boFrac ) ;
+         UINT32 idx = 0 ;
+
+         PD_CHECK( _mcvSet.getSize() == (UINT32)boFrac.nFields(),
+                   SDB_INVALIDARG, error, PDWARNING,
+                   "Field [%s] 's length is not matched",
+                   beItem.toString().c_str() ) ;
+
+         while ( iterFrac.more() )
+         {
+            UINT32 frac = 0 ;
+            BSONElement tempFrac = iterFrac.next() ;
+            PD_CHECK( tempFrac.isNumber(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] 's type is not matched",
+                      tempFrac.toString().c_str() ) ;
+            frac = (UINT16)tempFrac.numberInt() ;
+            _mcvSet.setFrac( idx, frac ) ;
+            ++ idx ;
+         }
+      }
 
    done :
       PD_TRACE_EXITRC( SDB_DMSIDXSTAT__INITMCV, rc ) ;
@@ -1079,17 +1170,20 @@ namespace engine
    {
       setCSName( NULL ) ;
       setCLName( NULL ) ;
-      _initItems() ;
+      _initDefaultItems() ;
    }
 
    _dmsCollectionStat::_dmsCollectionStat ( const CHAR *pCSName,
                                             const CHAR *pCLName,
-                                            UINT16 mbID, UINT64 version )
-   : _dmsStatUnit( mbID, version )
+                                            UINT32 suLID,
+                                            UINT16 mbID,
+                                            UINT32 clLID,
+                                            UINT64 createTime )
+   : _dmsStatUnit( suLID, mbID, clLID, createTime )
    {
       setCSName( pCSName ) ;
       setCLName( pCLName ) ;
-      _initItems() ;
+      _initDefaultItems() ;
    }
 
    _dmsCollectionStat::~_dmsCollectionStat ()
@@ -1099,14 +1193,14 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT_ADDSUBUNIT, "_dmsCollectionStat::addSubUnit" )
    BOOLEAN _dmsCollectionStat::addSubUnit ( utilSUCacheUnit *pSubUnit,
-                                            BOOLEAN ignoreVersion )
+                                            BOOLEAN ignoreCrtTime )
    {
       PD_TRACE_ENTRY( SDB_DMSCLSTAT_ADDSUBUNIT ) ;
 
       BOOLEAN added = FALSE ;
 
       if ( pSubUnit &&
-           pSubUnit->getUnitType() == UTIL_SU_CACHE_UNIT_IDXSTAT &&
+           pSubUnit->getUnitType() == UTIL_SU_CACHE_UNIT_IXSTAT &&
            pSubUnit->getUnitID() == getUnitID() )
       {
          dmsIndexStat *pIndexStat = (dmsIndexStat *)pSubUnit ;
@@ -1116,8 +1210,8 @@ namespace engine
          {
             dmsIndexStat *pTempStat = iter->second ;
 
-            if ( ignoreVersion ||
-                 pTempStat->getVersion() < pIndexStat->getVersion() )
+            if ( ignoreCrtTime ||
+                 pTempStat->getCreateTime() < pIndexStat->getCreateTime() )
             {
                _indexStats.erase( iter ) ;
                SAFE_OSS_DELETE( pTempStat ) ;
@@ -1137,7 +1231,7 @@ namespace engine
             // The name pointer should be fixed
             pIndexStat->setCSName( _pCSName ) ;
             pIndexStat->setCLName( _pCLName ) ;
-            _addFieldStat( pIndexStat, ignoreVersion ) ;
+            _addFieldStat( pIndexStat, ignoreCrtTime ) ;
          }
       }
 
@@ -1151,16 +1245,16 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DMSCLSTAT_CLEARSUBUNITS ) ;
 
-      INDEX_STAT_ITERATOR iter ;
-
-      for ( iter = _indexStats.begin() ;
-            iter != _indexStats.end() ;
-            ++ iter )
-      {
-         SDB_OSS_DEL iter->second ;
-      }
-      _indexStats.clear() ;
       _fieldStats.clear() ;
+
+      INDEX_STAT_ITERATOR iterIndex = _indexStats.begin() ;
+      while ( iterIndex != _indexStats.end() )
+      {
+         dmsIndexStat *pIndexStat = iterIndex->second ;
+         iterIndex = _indexStats.erase( iterIndex ) ;
+
+         SAFE_OSS_DELETE( pIndexStat ) ;
+      }
 
       PD_TRACE_EXIT( SDB_DMSCLSTAT_CLEARSUBUNITS ) ;
    }
@@ -1273,7 +1367,7 @@ namespace engine
       return pFieldStat ;
    }
 
-   void _dmsCollectionStat::_initItems ()
+   void _dmsCollectionStat::_initDefaultItems ()
    {
       _totalDataPages = DMS_STAT_DEF_TOTAL_PAGES ;
       _totalDataSize = DMS_STAT_DEF_DATA_SIZE * DMS_STAT_DEF_TOTAL_RECORDS ;
@@ -1281,40 +1375,34 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__INITITEM, "_dmsCollectionStat::_initItem" )
-   INT32 _dmsCollectionStat::_initItem ( const BSONElement &beItem )
+   INT32 _dmsCollectionStat::_initItem ( const BSONObj &boStat )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_DMSCLSTAT__INITITEM ) ;
 
-      if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_CL_TOTAL_DATA_PAGES ) )
+      BSONElement beItem ;
+
+      // Required fields
+
+      beItem = boStat.getField( DMS_STAT_CL_TOTAL_DATA_PAGES ) ;
+      PD_CHECK( beItem.isNumber(),
+                SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_CL_TOTAL_DATA_PAGES ) ;
+      setTotalDataPages( (UINT32)beItem.numberInt() ) ;
+
+      beItem = boStat.getField( DMS_STAT_CL_TOTAL_DATA_SIZE ) ;
+      PD_CHECK( beItem.isNumber(),
+                SDB_INVALIDARG, error, PDWARNING,
+                "Field [%s] is not matched", DMS_STAT_CL_TOTAL_DATA_SIZE ) ;
+      setTotalDataSize( (UINT64)beItem.numberLong() ) ;
+
+      // Optional fields
+
+      beItem = boStat.getField( DMS_STAT_CL_AVG_NUM_FIELDS ) ;
+      if ( beItem.isNumber() )
       {
-         // Required
-         PD_CHECK( beItem.isNumber(),
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "Field [%s] is not matched", DMS_STAT_CL_TOTAL_DATA_SIZE ) ;
-         _totalDataPages = (UINT32)beItem.numberInt() ;
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_CL_TOTAL_DATA_SIZE ) )
-      {
-         // Required
-         PD_CHECK( beItem.isNumber(),
-                   SDB_INVALIDARG, error, PDWARNING,
-                   "Field [%s] is not matched", DMS_STAT_CL_TOTAL_DATA_SIZE ) ;
-         _totalDataSize = (UINT64)beItem.numberLong() ;
-      }
-      else if ( 0 == ossStrcmp( beItem.fieldName(), DMS_STAT_CL_AVG_NUM_FIELDS ) )
-      {
-         // Optional
-         if ( beItem.isNumber() )
-         {
-            _avgNumFields = (UINT32)beItem.numberInt() ;
-         }
-         else
-         {
-            PD_LOG( PDWARNING,
-                    "Field [%s] is not matched", DMS_STAT_CL_AVG_NUM_FIELDS ) ;
-         }
+         setAvgNumFields( (UINT32)beItem.numberInt() ) ;
       }
 
    done :
@@ -1325,9 +1413,21 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__TOBSON, "_dmsCollectionStat::_toBSON" )
+   void _dmsCollectionStat::_toBSON ( BSONObjBuilder &builder ) const
+   {
+      PD_TRACE_ENTRY( SDB_DMSCLSTAT__TOBSON ) ;
+
+      builder.append( DMS_STAT_CL_TOTAL_DATA_PAGES, (INT32)getTotalDataPages() ) ;
+      builder.append( DMS_STAT_CL_TOTAL_DATA_SIZE, (INT64)getTotalDataSize() ) ;
+      builder.append( DMS_STAT_CL_AVG_NUM_FIELDS, (INT32)getAvgNumFields() ) ;
+
+      PD_TRACE_EXIT( SDB_DMSCLSTAT__TOBSON ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCLSTAT__ADDFLDSTAT, "_dmsCollectionStat::addFieldStat" )
    void _dmsCollectionStat::_addFieldStat ( dmsIndexStat *pIndexStat,
-                                            BOOLEAN ignoreVersion )
+                                            BOOLEAN ignoreCrtTime )
    {
       PD_TRACE_ENTRY( SDB_DMSCLSTAT__ADDFLDSTAT ) ;
 
@@ -1346,8 +1446,8 @@ namespace engine
                _fieldStats[ pFirstField ] = pIndexStat ;
             }
             else if ( pTempStat->getNumKeys() == pIndexStat->getNumKeys() &&
-                      ( ignoreVersion ||
-                        pTempStat->getVersion() < pIndexStat->getVersion() ) )
+                      ( ignoreCrtTime ||
+                        pTempStat->getCreateTime() < pIndexStat->getCreateTime() ) )
             {
                _fieldStats[ pFirstField ] = pIndexStat ;
             }
@@ -1405,7 +1505,7 @@ namespace engine
                   pNewFieldStat = pTempFieldStat ;
                }
                else if ( pTempFieldStat->getNumKeys() == pNewFieldStat->getNumKeys() &&
-                         pTempFieldStat->getVersion() < pNewFieldStat->getVersion() )
+                         pTempFieldStat->getCreateTime() < pNewFieldStat->getCreateTime() )
                {
                   pNewFieldStat = pTempFieldStat ;
                }
@@ -1424,11 +1524,9 @@ namespace engine
    /*
       _dmsStatCache define
     */
-   _dmsStatCache::_dmsStatCache ( _IUtilSUCacheHolder *pHolder )
-   : utilSUCache( DMS_MME_SLOTS, DMS_CACHE_TYPE_STAT,
-                  UTIL_SU_CACHE_UNIT_CLSTAT, pHolder )
+   _dmsStatCache::_dmsStatCache ( IDmsSUCacheHolder *pHolder )
+   : dmsSUCache( DMS_CACHE_TYPE_STAT, UTIL_SU_CACHE_UNIT_CLSTAT, pHolder )
    {
    }
-
 }
 

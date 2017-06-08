@@ -73,7 +73,6 @@ namespace engine
 
       CHAR _collectionName[ DMS_COLLECTION_NAME_SZ+1 ] ;
       CHAR _collectionFullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
-      CHAR _idxName[IXM_INDEX_NAME_SIZE + 1] ;
 
       BSONObj _selector ;           // selector
       BSONObj _orderBy ;            // order by called by the user
@@ -100,9 +99,11 @@ namespace engine
    private:
       INT32 _checkOrderBy() ;
 
-      INT32 _estimateHintPlans ( _dmsMBContext *mbContext ) ;
+      INT32 _estimateHintPlans ( _dmsMBContext *mbContext,
+                                 dmsStatCache *statCache ) ;
 
-      INT32 _estimatePlans ( _dmsMBContext *mbContext ) ;
+      INT32 _estimatePlans ( _dmsMBContext *mbContext,
+                             dmsStatCache *statCache ) ;
 
       INT32 _estimateIxScanPlan ( _dmsMBContext *mbContext,
                                   optCollectionStat &collectionStat,

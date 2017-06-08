@@ -75,7 +75,7 @@ namespace engine
                               checkInterval * STORAGE_CHECK_UNIT_INTERVAL :
                               STORAGE_CHECK_UNIT_INTERVAL ;
 
-         std::set<monCollectionSpace> csList ;
+         MON_CS_LIST csList ;
 
          /*
           * Before any one is found in the queue, the status of this thread is

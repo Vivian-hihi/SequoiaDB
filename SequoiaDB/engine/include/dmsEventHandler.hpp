@@ -40,66 +40,100 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "dms.hpp"
+#include "ixm.hpp"
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "pmd.hpp"
 #include "dpsLogWrapper.hpp"
-#include "utilList.hpp"
 #include "utilSUCache.hpp"
 
 namespace engine
 {
 
-   enum DMS_CACHE_TYPE
-   {
-      DMS_CACHE_TYPE_STAT = 0,
-      DMS_CACHE_TYPE_NUM,
-      DMS_CACHE_TYPE_INVALID,
-   } ;
+   #define DMS_CACHE_TYPE_STAT ( 0 )
+   #define DMS_CACHE_TYPE_NUM  ( 1 )
 
    class _IDmsEventHolder ;
-   class _IUtilSUCacheHolder ;
+   typedef class _IDmsEventHolder IDmsEventHolder ;
+
+   typedef class _utilSUCache<DMS_MME_SLOTS> dmsSUCache ;
+   typedef class _IUtilSUCacheHolder<DMS_MME_SLOTS> IDmsSUCacheHolder ;
 
    #define DMS_EVENT_MASK_ALL    0xFFFFFFFF
    #define DMS_EVENT_MASK_STAT   0x00000001
 
-   typedef struct _dmsCLItem
+   /*
+      _dmsEventSUItem define
+    */
+   typedef struct _dmsEventSUItem
    {
-      _dmsCLItem ()
+      _dmsEventSUItem ()
+      {
+         _pCSName = NULL ;
+         _suID = DMS_INVALID_SUID ;
+         _suLID = DMS_INVALID_LOGICCSID ;
+      }
+
+      _dmsEventSUItem( const CHAR *pCSName, dmsStorageUnitID suID,
+                       UINT32 suLID )
+      {
+         _pCSName = pCSName ;
+         _suID = suID ;
+         _suLID = suLID ;
+      }
+
+      const CHAR *      _pCSName ;
+      dmsStorageUnitID  _suID ;
+      UINT32            _suLID ;
+   } dmsEventSUItem ;
+
+   /*
+      _dmsEventCLItem define
+    */
+   typedef struct _dmsEventCLItem
+   {
+      _dmsEventCLItem ()
       {
          _pCLName = NULL ;
          _mbID = DMS_INVALID_MBID ;
          _clLID = DMS_INVALID_CLID ;
       }
 
-      _dmsCLItem ( const CHAR *pCLName, UINT16 mbID, UINT32 clLID )
+      _dmsEventCLItem ( const CHAR *pCLName, UINT16 mbID, UINT32 clLID )
       {
          _pCLName = pCLName ;
          _mbID = mbID ;
-         clLID = clLID ;
+         _clLID = clLID ;
       }
 
       const CHAR *   _pCLName ;
       UINT16         _mbID ;
       UINT32         _clLID ;
-   } dmsCLItem ;
+   } dmsEventCLItem ;
 
-   typedef struct _dmsIdxItem
+   /*
+      _dmsEventIdxItem define
+    */
+   typedef struct _dmsEventIdxItem
    {
-      _dmsIdxItem ()
+      _dmsEventIdxItem ()
       {
-         _pIdxName = NULL ;
+         _pIXName = NULL ;
+         _idxLID = DMS_INVALID_EXTENT ;
       }
 
-      _dmsIdxItem ( const CHAR *pIdxName, const BSONObj &boDefine )
+      _dmsEventIdxItem ( const CHAR *pIXName, dmsExtentID idxLID,
+                         const BSONObj &boDefine )
       {
-         _pIdxName = pIdxName ;
+         _pIXName = pIXName ;
+         _idxLID = idxLID ;
          _boDefine = boDefine ;
       }
 
-      const CHAR *   _pIdxName ;
+      const CHAR *   _pIXName ;
+      dmsExtentID    _idxLID ;
       BSONObj        _boDefine ;
-   } dmsIdxItem ;
+   } dmsEventIdxItem ;
 
    /*
       _IDmsEventHandler
@@ -111,32 +145,32 @@ namespace engine
 
          virtual ~_IDmsEventHandler () {}
 
-         OSS_INLINE virtual INT32 onCreateCS ( _IDmsEventHolder *pEventHolder,
-                                               _IUtilSUCacheHolder *pCacheHolder,
+         OSS_INLINE virtual INT32 onCreateCS ( IDmsEventHolder *pEventHolder,
+                                               IDmsSUCacheHolder *pCacheHolder,
                                                pmdEDUCB *cb,
                                                SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onLoadCS ( _IDmsEventHolder *pEventHolder,
-                                             _IUtilSUCacheHolder *pCacheHolder,
+         OSS_INLINE virtual INT32 onLoadCS ( IDmsEventHolder *pEventHolder,
+                                             IDmsSUCacheHolder *pCacheHolder,
                                              pmdEDUCB *cb,
                                              SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onUnloadCS ( _IDmsEventHolder *pEventHolder,
-                                               _IUtilSUCacheHolder *pCacheHolder,
+         OSS_INLINE virtual INT32 onUnloadCS ( IDmsEventHolder *pEventHolder,
+                                               IDmsSUCacheHolder *pCacheHolder,
                                                pmdEDUCB *cb,
                                                SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onRenameCS ( _IDmsEventHolder *pEventHolder,
-                                               _IUtilSUCacheHolder *pCacheHolder,
+         OSS_INLINE virtual INT32 onRenameCS ( IDmsEventHolder *pEventHolder,
+                                               IDmsSUCacheHolder *pCacheHolder,
                                                const CHAR *pOldCSName,
                                                const CHAR *pNewCSName,
                                                pmdEDUCB *cb,
@@ -145,26 +179,26 @@ namespace engine
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onDropCS ( _IDmsEventHolder *pEventHolder,
-                                             _IUtilSUCacheHolder *pCacheHolder,
+         OSS_INLINE virtual INT32 onDropCS ( IDmsEventHolder *pEventHolder,
+                                             IDmsSUCacheHolder *pCacheHolder,
                                              pmdEDUCB *cb,
                                              SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onCreateCL ( _IDmsEventHolder *pEventHolder,
-                                               _IUtilSUCacheHolder *pCacheHolder,
-                                               const dmsCLItem &clItem,
+         OSS_INLINE virtual INT32 onCreateCL ( IDmsEventHolder *pEventHolder,
+                                               IDmsSUCacheHolder *pCacheHolder,
+                                               const dmsEventCLItem &clItem,
                                                pmdEDUCB *cb,
                                                SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onRenameCL ( _IDmsEventHolder *pEventHolder,
-                                               _IUtilSUCacheHolder *pCacheHolder,
-                                               const dmsCLItem &clItem,
+         OSS_INLINE virtual INT32 onRenameCL ( IDmsEventHolder *pEventHolder,
+                                               IDmsSUCacheHolder *pCacheHolder,
+                                               const dmsEventCLItem &clItem,
                                                const CHAR *pNewCLName,
                                                pmdEDUCB *cb,
                                                SDB_DPSCB *dpsCB )
@@ -172,56 +206,56 @@ namespace engine
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onTruncateCL ( _IDmsEventHolder *pEventHolder,
-                                                 _IUtilSUCacheHolder *pCacheHolder,
-                                                 const dmsCLItem &clItem,
+         OSS_INLINE virtual INT32 onTruncateCL ( IDmsEventHolder *pEventHolder,
+                                                 IDmsSUCacheHolder *pCacheHolder,
+                                                 const dmsEventCLItem &clItem,
                                                  pmdEDUCB *cb,
                                                  SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onDropCL ( _IDmsEventHolder *pEventHolder,
-                                             _IUtilSUCacheHolder *pCacheHolder,
-                                             const dmsCLItem &clItem,
+         OSS_INLINE virtual INT32 onDropCL ( IDmsEventHolder *pEventHolder,
+                                             IDmsSUCacheHolder *pCacheHolder,
+                                             const dmsEventCLItem &clItem,
                                              pmdEDUCB *cb,
                                              SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onCreateIndex ( _IDmsEventHolder *pEventHolder,
-                                                  _IUtilSUCacheHolder *pCacheHolder,
-                                                  const dmsCLItem &clItem,
-                                                  const dmsIdxItem &idxItem,
+         OSS_INLINE virtual INT32 onCreateIndex ( IDmsEventHolder *pEventHolder,
+                                                  IDmsSUCacheHolder *pCacheHolder,
+                                                  const dmsEventCLItem &clItem,
+                                                  const dmsEventIdxItem &idxItem,
                                                   pmdEDUCB *cb,
                                                   SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onDropIndex ( _IDmsEventHolder *pEventHolder,
-                                                _IUtilSUCacheHolder *pCacheHolder,
-                                                const dmsCLItem &clItem,
-                                                const dmsIdxItem &idxItem,
+         OSS_INLINE virtual INT32 onDropIndex ( IDmsEventHolder *pEventHolder,
+                                                IDmsSUCacheHolder *pCacheHolder,
+                                                const dmsEventCLItem &clItem,
+                                                const dmsEventIdxItem &idxItem,
                                                 pmdEDUCB *cb,
                                                 SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onLinkCL ( _IDmsEventHolder *pEventHolder,
-                                             _IUtilSUCacheHolder *pCacheHolder,
-                                             const dmsCLItem &clItem,
+         OSS_INLINE virtual INT32 onLinkCL ( IDmsEventHolder *pEventHolder,
+                                             IDmsSUCacheHolder *pCacheHolder,
+                                             const dmsEventCLItem &clItem,
                                              const CHAR *pMainCLName,
                                              pmdEDUCB *cb, SDB_DPSCB *dpsCB )
          {
             return SDB_OK ;
          }
 
-         OSS_INLINE virtual INT32 onUnlinkCL ( _IDmsEventHolder *pEventHolder,
-                                               _IUtilSUCacheHolder *pCacheHolder,
-                                               const dmsCLItem &clItem,
+         OSS_INLINE virtual INT32 onUnlinkCL ( IDmsEventHolder *pEventHolder,
+                                               IDmsSUCacheHolder *pCacheHolder,
+                                               const dmsEventCLItem &clItem,
                                                const CHAR *pMainCLName,
                                                pmdEDUCB *cb,
                                                SDB_DPSCB *dpsCB )
@@ -248,48 +282,78 @@ namespace engine
 
          virtual void unregAllHandlers () = 0 ;
 
-         virtual INT32 onCreateCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
+         virtual INT32 onCreateCS ( UINT32 mask,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) = 0 ;
 
-         virtual INT32 onLoadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onUnloadCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onRenameCS ( UINT32 mask, const CHAR *pOldCSName,
-                                    const CHAR *pNewCSName,
-                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onDropCS ( UINT32 mask, pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onCreateCL ( UINT32 mask, const dmsCLItem &clItem,
-                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onRenameCL ( UINT32 mask, const dmsCLItem &clItem,
-                                    const CHAR *pNewCLName,
-                                    pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onTruncateCL ( UINT32 mask, const dmsCLItem &clItem,
-                                      pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onDropCL ( UINT32 mask, const dmsCLItem &clItem,
-                                  pmdEDUCB *cb, SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onCreateIndex ( UINT32 mask, const dmsCLItem &clItem,
-                                       const dmsIdxItem &idxItem, pmdEDUCB *cb,
-                                       SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onDropIndex ( UINT32 mask, const dmsCLItem &clItem,
-                                     const dmsIdxItem &idxItem, pmdEDUCB *cb,
-                                     SDB_DPSCB *dpsCB ) = 0 ;
-
-         virtual INT32 onLinkCL ( UINT32 mask, const dmsCLItem &clItem,
-                                  const CHAR *pMainCLName, pmdEDUCB *cb,
+         virtual INT32 onLoadCS ( UINT32 mask,
+                                  pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) = 0 ;
 
-         virtual INT32 onUnlinkCL ( UINT32 mask, const dmsCLItem &clItem,
-                                    const CHAR *pMainCLName, pmdEDUCB *cb,
+         virtual INT32 onUnloadCS ( UINT32 mask,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onRenameCS ( UINT32 mask,
+                                    const CHAR *pOldCSName,
+                                    const CHAR *pNewCSName,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onDropCS ( UINT32 mask,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onCreateCL ( UINT32 mask,
+                                    const dmsEventCLItem &clItem,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onRenameCL ( UINT32 mask,
+                                    const dmsEventCLItem &clItem,
+                                    const CHAR *pNewCLName,
+                                    pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onTruncateCL ( UINT32 mask,
+                                      const dmsEventCLItem &clItem,
+                                      pmdEDUCB *cb,
+                                      SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onDropCL ( UINT32 mask,
+                                  const dmsEventCLItem &clItem,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onCreateIndex ( UINT32 mask,
+                                       const dmsEventCLItem &clItem,
+                                       const dmsEventIdxItem &idxItem,
+                                       pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onDropIndex ( UINT32 mask,
+                                     const dmsEventCLItem &clItem,
+                                     const dmsEventIdxItem &idxItem,
+                                     pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onLinkCL ( UINT32 mask,
+                                  const dmsEventCLItem &clItem,
+                                  const CHAR *pMainCLName,
+                                  pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB ) = 0 ;
+
+         virtual INT32 onUnlinkCL ( UINT32 mask,
+                                    const dmsEventCLItem &clItem,
+                                    const CHAR *pMainCLName,
+                                    pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) = 0 ;
 
          virtual const CHAR *getCSName () const = 0 ;
+
+         virtual UINT32 getSUID () const = 0 ;
+
+         virtual UINT32 getSULID () const = 0 ;
    } ;
 
 }

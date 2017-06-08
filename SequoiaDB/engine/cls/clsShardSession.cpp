@@ -2336,6 +2336,12 @@ namespace engine
          writable = TRUE ;
          rc = _truncateMainCL( pCommand->collectionFullName() ) ;
          break ;
+
+      case CMD_ANALYZE :
+         writable = pCommand->writable() ;
+         rc = _analyzeMainCL( pCommand ) ;
+         break ;
+
       default:
          rc = SDB_MAIN_CL_OP_ERR;
          break;
@@ -3728,6 +3734,48 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_analyzeMainCL ( _rtnCommand *command )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( command->type() == CMD_ANALYZE, "command is invalid" ) ;
+
+      const CHAR *pMainCLName = command->collectionFullName() ;
+      vector< string > strSubCLList ;
+      vector< string >::iterator iterSubCL ;
+
+      _rtnAnalyze *pAnalyzeCmd = (_rtnAnalyze *)command ;
+
+      rc = _getSubCLList( pMainCLName, strSubCLList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list of "
+                   "main-collection [%s], rc: %d", pMainCLName, rc ) ;
+
+      iterSubCL = strSubCLList.begin() ;
+      while( iterSubCL != strSubCLList.end() )
+      {
+         const CHAR *pSubCLName = iterSubCL->c_str() ;
+
+         if ( _pEDUCB->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         rc = rtnAnalyze( NULL, pSubCLName, NULL,
+                          pAnalyzeCmd->getAnalyzeParam(),
+                          _pEDUCB, _pDmsCB, _pRtnCB, _pDpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to analyze sub-collection [%s], "
+                      "rc: %d", pSubCLName, rc ) ;
+
+         ++iterSubCL ;
+      }
+
+   done :
+      return rc ;
+   error :
       goto done ;
    }
 

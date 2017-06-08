@@ -915,7 +915,8 @@ namespace engine
          dpsMergeInfo info ;
          info.setInfoEx( ~0, ~0, DMS_INVALID_EXTENT, NULL ) ;
          dpsLogRecord &record = info.getMergeBlock().record() ;
-         rc = dpsInvalidCata2Record( name, record ) ;
+         rc = dpsInvalidCata2Record( DPS_LOG_INVALIDCATA_TYPE_CATA, name, NULL,
+                                     record ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to build invalid-cata log:%d",rc ) ;
@@ -932,6 +933,28 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__CLSMGR_INVDATACAT, rc );
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_INVALIDSTAT, "_clsMgr::invalidateStatistics" )
+   INT32 _clsMgr::invalidateStatistics ()
+   {
+      INT32 rc = SDB_CLS_NOT_PRIMARY ;
+
+      PD_TRACE_ENTRY( SDB__CLSMGR_INVALIDSTAT ) ;
+
+      if ( isPrimary() &&
+           SDB_ROLE_DATA == pmdGetDBRole() )
+      {
+         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+         rc = rtnAnalyzeDpsLog( NULL, NULL, NULL, dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to write analyze log, rc: %d", rc ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__CLSMGR_INVALIDSTAT, rc ) ;
+      return rc ;
+   error :
       goto done ;
    }
 

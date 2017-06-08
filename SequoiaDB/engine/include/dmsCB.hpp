@@ -53,6 +53,7 @@
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
 #include "dmsIxmKeySorter.hpp"
+#include "utilMap.hpp"
 #include <map>
 #include <set>
 
@@ -244,6 +245,11 @@ namespace engine
                               OSS_LATCH_MODE lockType = SHARED,
                               INT32 millisec = -1 ) ;
 
+      INT32 verifySUAndLock ( const dmsEventSUItem *pSUItem,
+                              _dmsStorageUnit **ppSU,
+                              OSS_LATCH_MODE lockType = SHARED,
+                              INT32 millisec = -1 ) ;
+
       _dmsStorageUnit *suLock ( dmsStorageUnitID suID ) ;
       void suUnlock ( dmsStorageUnitID suID,
                       OSS_LATCH_MODE lockType = SHARED ) ;
@@ -262,16 +268,18 @@ namespace engine
                                    _pmdEDUCB *cb,
                                    SDB_DPSCB *dpsCB ) ;
 
-      void dumpInfo ( std::set<monCLSimple> &collectionList,
+      void dumpInfo ( MON_CL_SIM_LIST &collectionList,
                       BOOLEAN sys = FALSE ) ;
-      void dumpInfo ( std::set<monCSSimple> &csList,
-                      BOOLEAN sys = FALSE ) ;
+      void dumpInfo ( MON_CS_SIM_LIST &csList,
+                      BOOLEAN sys = FALSE,
+                      BOOLEAN dumpCL = FALSE,
+                      BOOLEAN dumpIdx = FALSE ) ;
 
-      void dumpInfo ( std::set<monCollection> &collectionList,
+      void dumpInfo ( MON_CL_LIST &collectionList,
                       BOOLEAN sys = FALSE ) ;
-      void dumpInfo ( std::set<monCollectionSpace> &csList,
+      void dumpInfo ( MON_CS_LIST &csList,
                       BOOLEAN sys = FALSE ) ;
-      void dumpInfo ( std::set<monStorageUnit> &storageUnitList,
+      void dumpInfo ( MON_SU_LIST &storageUnitList,
                       BOOLEAN sys = FALSE ) ;
 
       void dumpInfo ( INT64 &totalFileSize );

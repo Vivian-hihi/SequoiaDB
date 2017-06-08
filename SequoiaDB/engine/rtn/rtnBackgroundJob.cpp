@@ -283,8 +283,8 @@ namespace engine
       pmdEDUMgr        *eduMgr   = krcb->getEDUMgr () ;
       pmdEDUCB         *eduCB    = eduMgr->getEDU() ;
       dmsStorageLoadOp dmsLoadExtent ;
-      std::set<monCollectionSpace> csList ;
-      std::set<monCollectionSpace>::iterator it ;
+      MON_CS_LIST csList ;
+      MON_CS_LIST::iterator it ;
 
       if ( SDB_ROLE_STANDALONE != krcb->getDBRole() &&
            SDB_ROLE_DATA != krcb->getDBRole() )
@@ -296,8 +296,8 @@ namespace engine
 
       for ( it = csList.begin(); it != csList.end(); ++it )
       {
-         std::set<monCollection> clList ;
-         std::set<monCollection>::iterator itCollection ;
+         MON_CL_LIST clList ;
+         MON_CL_LIST::iterator itCollection ;
          rc = rtnCollectionSpaceLock ( (*it)._name,
                                        dmsCB,
                                        FALSE,
@@ -311,7 +311,7 @@ namespace engine
    
          dmsLoadExtent.init ( su ) ;
 
-         su->dumpInfo ( clList ) ;
+         su->dumpInfo ( clList, FALSE ) ;
          for ( itCollection = clList.begin();
                itCollection != clList.end();
                ++itCollection )

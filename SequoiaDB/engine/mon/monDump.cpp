@@ -522,7 +522,7 @@ namespace engine
 
    // dump information for all collections
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPINDEXES, "monDumpIndexes" )
-   INT32 monDumpIndexes( vector<monIndex> &indexes, rtnContextDump *context )
+   INT32 monDumpIndexes( MON_IDX_LIST &indexes, rtnContextDump *context )
    {
       INT32 rc = SDB_OK ;
       string flagDesp ;
@@ -531,7 +531,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_MONDUMPINDEXES ) ;
       try
       {
-         std::vector<monIndex>::iterator it ;
+         MON_IDX_LIST::iterator it ;
          for ( it = indexes.begin(); it!=indexes.end(); ++it )
          {
             monIndex &indexItem = (*it) ;
@@ -1761,7 +1761,7 @@ namespace engine
       try
       {
          BSONObjBuilder ob ;
-         std::set< monCLSimple >::iterator it ;
+         MON_CL_SIM_LIST::iterator it ;
 
          it = _collectionList.begin() ;
          const monCLSimple &simple = *it ;
@@ -1805,8 +1805,8 @@ namespace engine
       try
       {
          BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
-         std::set< monCollection >::iterator it ;
-         std::map<UINT32, detailedInfo>::const_iterator itDetail ;
+         MON_CL_LIST::iterator it ;
+         MON_CL_DETAIL_MAP::const_iterator itDetail ;
 
          it = _collectionInfo.begin() ;
          const monCollection &full = *it ;
@@ -1942,7 +1942,7 @@ namespace engine
 
       if ( !_detail )
       {
-         dmsCB->dumpInfo( _csList, _includeSys ) ;
+         dmsCB->dumpInfo( _csList, _includeSys, FALSE, FALSE ) ;
          _hitEnd = _csList.empty() ? TRUE : FALSE ;
       }
       else
@@ -2008,7 +2008,7 @@ namespace engine
       try
       {
          BSONObjBuilder ob ;
-         std::set< monCSSimple >::iterator it ;
+         MON_CS_SIM_LIST::iterator it ;
 
          it = _csList.begin() ;
          const monCSSimple &simple = *it ;
@@ -2055,8 +2055,8 @@ namespace engine
          INT64 dataCapSize    = 0 ;
          INT64 lobCapSize     = 0 ;
          BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
-         std::set< monCollectionSpace >::iterator it ;
-         std::map<UINT32, detailedInfo>::const_iterator itDetail ;
+         MON_CS_LIST::iterator it ;
+         MON_CL_DETAIL_MAP::const_iterator itDetail ;
 
          it = _csInfo.begin() ;
          const monCollectionSpace &full = *it ;
@@ -2071,7 +2071,7 @@ namespace engine
          // do not list detailed collections if we are on temp cs
          if ( ossStrcmp ( full._name, SDB_DMSTEMP_NAME ) != 0 )
          {
-            std::vector<monCLSimple>::const_iterator it1 ;
+            MON_CL_SIM_VEC::const_iterator it1 ;
             for ( it1 = full._collections.begin();
                   it1!= full._collections.end();
                   it1++ )
@@ -2505,7 +2505,7 @@ namespace engine
       try
       {
          BSONObjBuilder ob( MON_DUMP_DFT_BUILDER_SZ / 2 ) ;
-         std::set< monStorageUnit >::iterator it ;
+         MON_SU_LIST::iterator it ;
 
          it = _suInfo.begin() ;
          const monStorageUnit &su = *it ;

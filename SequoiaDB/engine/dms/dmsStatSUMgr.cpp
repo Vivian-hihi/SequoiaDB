@@ -44,6 +44,11 @@
 
 using namespace bson ;
 
+namespace bson
+{
+   extern BSONObj staticNull ;
+}
+
 namespace engine
 {
 #define DMS_STAT_SPACE_NAME          "SYSSTAT"
@@ -55,15 +60,19 @@ namespace engine
 #define DMS_STAT_CL_IDX_DEF \
    "{ "IXM_FIELD_NAME_NAME"      : \""DMS_STAT_CL_IDX_NAME"\", \
       "IXM_FIELD_NAME_KEY"       : { "DMS_STAT_COLLECTION_SPACE" : 1, \
-                                     "DMS_STAT_COLLECTION_MBID" : 1 } }"
+                                     "DMS_STAT_COLLECTION" : 1 }, \
+      "IXM_FIELD_NAME_UNIQUE"    : true, \
+      "IXM_FIELD_NAME_ENFORCED"  : true }"
 
 #define DMS_STAT_IDX_IDX_NAME       "STATIDXIDX"
 
 #define DMS_STAT_IDX_IDX_DEF \
    "{ "IXM_FIELD_NAME_NAME"      : \""DMS_STAT_IDX_IDX_NAME"\", \
       "IXM_FIELD_NAME_KEY"       : { "DMS_STAT_COLLECTION_SPACE" : 1, \
-                                     "DMS_STAT_COLLECTION_MBID" : 1, \
-                                     "DMS_STAT_IDX_INDEX" : 1 } }"
+                                     "DMS_STAT_COLLECTION" : 1, \
+                                     "DMS_STAT_IDX_INDEX" : 1 } , \
+      "IXM_FIELD_NAME_UNIQUE"    : true, \
+      "IXM_FIELD_NAME_ENFORCED"  : true }"
 
    /*
       _dmsStatSUMgr implement
@@ -72,6 +81,7 @@ namespace engine
    : _dmsSysSUMgr( dmsCB )
    {
       _initialized = FALSE ;
+      _tbScanHint = staticNull ;
       _collectionHint = BSON( "" << DMS_STAT_CL_IDX_NAME ) ;
       _indexHint = BSON( "" << DMS_STAT_IDX_IDX_NAME ) ;
    }
@@ -88,6 +98,9 @@ namespace engine
 
       SDB_ASSERT ( _dmsCB, "dmsCB can't be NULL" ) ;
 
+      SDB_ASSERT( cb && EDU_TYPE_MAIN == cb->getType(),
+                  "Must register in main thread" ) ;
+
       // exclusive lock SYSSTAT cb. this function should be called during
       // process initialization, so it shouldn't be called in parallel by
       // agents
@@ -99,24 +112,23 @@ namespace engine
       if ( SDB_DMS_CS_NOTEXIST == rc )
       {
          // create new SYSSTAT collection space
-         rc = rtnCreateCollectionSpaceCommand ( DMS_STAT_SPACE_NAME, NULL, _dmsCB,
-                                                NULL, DMS_PAGE_SIZE_MAX,
+         rc = rtnCreateCollectionSpaceCommand ( DMS_STAT_SPACE_NAME, NULL,
+                                                _dmsCB, NULL,
+                                                DMS_PAGE_SIZE_MAX,
                                                 DMS_DO_NOT_CREATE_LOB,
                                                 DMS_STORAGE_NORMAL, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to create SYSSTAT collection space, rc: %d",
-                      rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create SYSSTAT collection "
+                      "space, rc: %d", rc ) ;
 
          rc = rtnCollectionSpaceLock ( DMS_STAT_SPACE_NAME, _dmsCB, TRUE,
                                        &_su, suID ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to lock SYSSTAT collection space, rc: %d", rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock SYSSTAT collection space, "
+                      "rc: %d", rc ) ;
       }
       else if ( SDB_OK != rc )
       {
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to lock collection space [%s], rc: %d",
-                      DMS_STAT_SPACE_NAME, rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock collection space [%s], "
+                      "rc: %d", DMS_STAT_SPACE_NAME, rc ) ;
       }
 
       _dmsCB->suUnlock( suID ) ;
@@ -125,8 +137,6 @@ namespace engine
       rc = _ensureStatMetadata( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create statistics collections or "
                    "indexes, rc: %d", rc ) ;
-
-      _loadStats( cb ) ;
 
       _initialized = TRUE ;
 
@@ -141,89 +151,441 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_RELOADSTATS, "_dmsStatSUMgr::reloadStats" )
-   INT32 _dmsStatSUMgr::reloadStats ( pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADALLCLSTATS, "_dmsStatSUMgr::loadAllCollectionStats" )
+   INT32 _dmsStatSUMgr::loadAllCollectionStats ( const MON_CS_SIM_LIST &monCSList,
+                                                 dmsStatCacheMap &statCacheMap,
+                                                 pmdEDUCB *cb,
+                                                 _SDB_DMSCB *dmsCB,
+                                                 _SDB_RTNCB *rtnCB )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_RELOADSTATS ) ;
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADALLCLSTATS ) ;
 
-      // Make sure only one reload in one time
-      DMSSYSSUMGR_XLOCK
+      INT64 contextID = -1 ;
+      BSONObj boDummy ;
 
-      PD_CHECK( _initialized, SDB_SYS, error, PDWARNING,
-                "Statistics SU is not initialized" ) ;
+      if ( NULL == dmsCB )
+      {
+         dmsCB = _dmsCB ;
+      }
 
-      rc = _loadStats( cb ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Failed to load statistics, rc: %d", rc ) ;
+      if ( NULL == rtnCB )
+      {
+         rtnCB = pmdGetKRCB()->getRTNCB() ;
+      }
+
+      // query
+      rc = rtnQuery( DMS_STAT_COLLECTION_CL_NAME, boDummy, boDummy, boDummy,
+                     _tbScanHint, 0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Query collection [%s] failed, rc: %d",
+                   DMS_STAT_COLLECTION_CL_NAME, rc ) ;
+
+      // get more
+      while ( TRUE )
+      {
+         dmsCollectionStat *pCollectionStat = NULL ;
+         rtnContextBuf contextBuf ;
+
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
+
+         pCollectionStat = SDB_OSS_NEW dmsCollectionStat() ;
+         PD_CHECK( pCollectionStat, SDB_OOM, error, PDWARNING,
+                   "Failed to allocate memory for index statistics" ) ;
+
+         try
+         {
+            BSONObj boCollectionStat = BSONObj( contextBuf.data() ) ;
+
+            rc = pCollectionStat->init( boCollectionStat ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING,
+                       "Failed to initialize collection statistics with %s",
+                       boCollectionStat.toString( FALSE, TRUE ).c_str() ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING,
+                    "Get index statistics for collection occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_SYS ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            SAFE_OSS_DELETE( pCollectionStat ) ;
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         rc = _addCollectionStat( monCSList, statCacheMap, pCollectionStat,
+                                  FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Failed to add collection statistics [%s.%s], rc: %d",
+                    pCollectionStat->getCSName(), pCollectionStat->getCLName(),
+                    rc ) ;
+            SAFE_OSS_DELETE( pCollectionStat ) ;
+         }
+         // Continue
+         rc = SDB_OK ;
+      }
 
    done :
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_RELOADSTATS, rc ) ;
-      return SDB_OK ;
+      if ( -1 != contextID )
+      {
+         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+      }
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADALLCLSTATS, rc ) ;
+      return rc ;
 
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONLOADCS, "_dmsStatSUMgr::onLoadCS" )
-   INT32 _dmsStatSUMgr::onLoadCS ( _IDmsEventHolder *pEventHolder,
-                                   _IUtilSUCacheHolder *pCacheHolder,
-                                   pmdEDUCB *cb,
-                                   SDB_DPSCB *dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADALLIDXSTATS, "_dmsStatSUMgr::loadAllIndexStats" )
+   INT32 _dmsStatSUMgr::loadAllIndexStats ( const MON_CS_SIM_LIST &monCSList,
+                                            dmsStatCacheMap &statCacheMap,
+                                            pmdEDUCB *cb,
+                                            _SDB_DMSCB *dmsCB,
+                                            _SDB_RTNCB *rtnCB )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONLOADCS ) ;
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADALLIDXSTATS ) ;
 
-      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+      INT64 contextID = -1 ;
+      BSONObj boDummy ;
 
-      PD_CHECK( _initialized, SDB_INVALIDARG, error, PDWARNING,
-                "Statistics SU is not initialized" ) ;
-
-      if ( pCacheHolder )
+      if ( NULL == dmsCB )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         dmsCB = _dmsCB ;
+      }
 
-         if ( pCache && pCache->isValid() )
-         {
-              rc = _loadCollectionStatsByCS( pCacheHolder->getCSName(),
-                                             *pCache, cb ) ;
-              if ( SDB_OK != rc )
-              {
-                 PD_LOG( PDWARNING, "Failed to load collection statistics for "
-                         "collection space [%s], rc: %d",
-                         pCacheHolder->getCSName(), rc ) ;
-                 pCache->clearCacheUnits() ;
-                 goto error ;
-              }
+      if ( NULL == rtnCB )
+      {
+         rtnCB = pmdGetKRCB()->getRTNCB() ;
+      }
 
-              rc = _loadIndexStatsByCS( pCacheHolder->getCSName(), *pCache, cb ) ;
-              if ( SDB_OK != rc )
-              {
-                 PD_LOG( PDWARNING, "Failed to load index statistics for "
-                         "collection space [%s], rc: %d",
-                         pCacheHolder->getCSName(), rc ) ;
-                 pCache->clearCacheUnits() ;
-                 goto error ;
-             }
-         }
-         else
+      // query
+      rc = rtnQuery( DMS_STAT_INDEX_CL_NAME, boDummy, boDummy, boDummy,
+                     _tbScanHint, 0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Query collection [%s] failed, rc: %d",
+                   DMS_STAT_INDEX_CL_NAME, rc ) ;
+
+      // get more
+      while ( TRUE )
+      {
+         dmsIndexStat *pIndexStat = NULL ;
+         rtnContextBuf contextBuf ;
+
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
          {
-            PD_LOG( PDWARNING, "Failed to load statistics for collection space [%s]",
-                    pCacheHolder->getCSName() ) ;
+            rc = SDB_OK ;
+            break ;
          }
+         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
+
+         pIndexStat = SDB_OSS_NEW dmsIndexStat() ;
+         PD_CHECK( pIndexStat, SDB_OOM, error, PDWARNING,
+                   "Failed to allocate memory for index statistics" ) ;
+
+         try
+         {
+            BSONObj boIndexStat = BSONObj( contextBuf.data() ) ;
+
+            rc = pIndexStat->init( boIndexStat ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING,
+                       "Failed to initialize index statistics with %s",
+                       boIndexStat.toString( FALSE, TRUE ).c_str() ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING,
+                    "Get index statistics for index occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            SAFE_OSS_DELETE( pIndexStat ) ;
+            rc = SDB_OK ;
+            continue ;
+         }
+
+         rc = _addIndexStat( monCSList, statCacheMap, pIndexStat, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING,
+                    "Failed to add index statistics [%s.%s, %s], rc: %d",
+                    pIndexStat->getCSName(), pIndexStat->getCLName(),
+                    pIndexStat->getIndexName(), rc ) ;
+            SAFE_OSS_DELETE( pIndexStat ) ;
+         }
+         // Continue
+         rc = SDB_OK ;
       }
 
    done :
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_ONLOADCS, rc ) ;
+      if ( -1 != contextID )
+      {
+         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+      }
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADALLIDXSTATS, rc ) ;
       return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADSUCLSTATS_MON, "_dmsStatSUMgr::loadSUCollectionStats" )
+   INT32 _dmsStatSUMgr::loadSUCollectionStats ( const monCSSimple *pMonCS,
+                                                dmsStatCache *pStatCache,
+                                                pmdEDUCB *cb,
+                                                _SDB_DMSCB *dmsCB,
+                                                _SDB_RTNCB *rtnCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADSUCLSTATS_MON ) ;
+
+      SDB_ASSERT( pMonCS, "pMonCS is invalid" ) ;
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
+
+      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pMonCS->_name ) ) ;
+
+      rc = _loadCollectionStats( pMonCS, NULL, pStatCache, boMatcher, cb, dmsCB,
+                                 rtnCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to load collection statistics for "
+                   "collection space [%s], rc: %d", pMonCS->_name, rc ) ;
+
+      pStatCache->setStatus( UTIL_SU_CACHE_UNIT_STATUS_CACHED ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADSUCLSTATS_MON, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADSUIDXSTATS_MON, "_dmsStatSUMgr::loadSUIndexStats" )
+   INT32 _dmsStatSUMgr::loadSUIndexStats ( const monCSSimple *pMonCS,
+                                           dmsStatCache *pStatCache,
+                                           pmdEDUCB *cb,
+                                           _SDB_DMSCB *dmsCB,
+                                           _SDB_RTNCB *rtnCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADSUIDXSTATS_MON ) ;
+
+      SDB_ASSERT( pMonCS, "pMonCS is invalid" ) ;
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
+
+      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pMonCS->_name ) ) ;
+
+      rc = _loadIndexStats( pMonCS, NULL, NULL, pStatCache, boMatcher, cb,
+                            dmsCB, rtnCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to load index statistics for "
+                   "collection space [%s], rc: %d", pMonCS->_name, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADSUIDXSTATS_MON, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADCLSTAT, "_dmsStatSUMgr::loadCollectionStat" )
+   INT32 _dmsStatSUMgr::loadCollectionStat ( const monCSSimple *pMonCS,
+                                             const monCLSimple *pMonCL,
+                                             dmsStatCache *pStatCache,
+                                             pmdEDUCB *cb,
+                                             _SDB_DMSCB *dmsCB,
+                                             _SDB_RTNCB *rtnCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADCLSTAT ) ;
+
+      SDB_ASSERT( pMonCS, "pMonCS is invalid" ) ;
+      SDB_ASSERT( pMonCL, "pMonCL is invalid" ) ;
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
+
+      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pMonCS->_name <<
+                               DMS_STAT_COLLECTION << pMonCL->_clname ) ) ;
+
+      rc = _loadCollectionStats( pMonCS, pMonCL, pStatCache, boMatcher, cb,
+                                 dmsCB, rtnCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to load collection statistics for "
+                   "collection [%s], rc: %d", pMonCL->_name, rc ) ;
+
+      pStatCache->setStatus( pMonCL->_blockID,
+                             UTIL_SU_CACHE_UNIT_STATUS_CACHED ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADCLSTAT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADCLIDXSTATS, "_dmsStatSUMgr::loadCLIndexStats" )
+   INT32 _dmsStatSUMgr::loadCLIndexStats ( const monCSSimple *pMonCS,
+                                           const monCLSimple *pMonCL,
+                                           dmsStatCache *pStatCache,
+                                           pmdEDUCB *cb,
+                                           _SDB_DMSCB *dmsCB,
+                                           _SDB_RTNCB *rtnCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADCLIDXSTATS ) ;
+
+      SDB_ASSERT( pMonCS, "pMonCS is invalid" ) ;
+      SDB_ASSERT( pMonCL, "pMonCL is invalid" ) ;
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
+
+      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pMonCS->_name <<
+                               DMS_STAT_COLLECTION << pMonCL->_clname ) ) ;
+
+      rc = _loadIndexStats( pMonCS, pMonCL, NULL, pStatCache, boMatcher, cb,
+                            dmsCB, rtnCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to load index statistics for "
+                   "collection [%s], rc: %d", pMonCL->_name, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADCLIDXSTATS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADIDXSTATS, "_dmsStatSUMgr::loadIndexStats" )
+   INT32 _dmsStatSUMgr::loadIndexStats ( const monCSSimple *pMonCS,
+                                         const monCLSimple *pMonCL,
+                                         const monIndex *pMonIX,
+                                         dmsStatCache *pStatCache,
+                                         pmdEDUCB *cb,
+                                         _SDB_DMSCB *dmsCB,
+                                         _SDB_RTNCB *rtnCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADIDXSTATS ) ;
+
+      SDB_ASSERT( pMonCS, "pMonCS is invalid" ) ;
+      SDB_ASSERT( pMonCL, "pMonCL is invalid" ) ;
+      SDB_ASSERT( pMonIX, "pMonIX is invalid" ) ;
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
+
+      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pMonCS->_name <<
+                               DMS_STAT_COLLECTION << pMonCL->_clname <<
+                               DMS_STAT_IDX_INDEX << pMonIX->getIndexName() ) ) ;
+
+      rc = _loadIndexStats( pMonCS, pMonCL, pMonIX, pStatCache, boMatcher,
+                            cb, dmsCB, rtnCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to load index statistics [%s %s], "
+                   "rc: %d", pMonCL->_name, pMonIX->getIndexName(), rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADIDXSTATS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_UPDATECLSTAT, "_dmsStatSUMgr::updateCollectionStat" )
+   INT32 _dmsStatSUMgr::updateCollectionStat ( const dmsCollectionStat *pCollectionStat,
+                                               pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                               _SDB_RTNCB *rtnCB,
+                                               _dpsLogWrapper *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_UPDATECLSTAT ) ;
+
+      SDB_ASSERT( pCollectionStat, "pCollectionStat is invalid" ) ;
+
+      const CHAR *pCSName = pCollectionStat->getCSName() ;
+      const CHAR *pCLName = pCollectionStat->getCLName() ;
+
+      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
+                               DMS_STAT_COLLECTION << pCLName ) ) ;
+      BSONObj boUpdator = BSON( "$set" << pCollectionStat->toBSON() ) ;
+
+      rc = rtnUpdate( DMS_STAT_COLLECTION_CL_NAME, boMatcher,
+                      boUpdator, _collectionHint, FLG_UPDATE_UPSERT,
+                      cb, dmsCB, dpsCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to update collection statistics "
+                   "[%s.%s], rc: %d", pCSName, pCLName, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_UPDATECLSTAT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_UPDATEIDXSTAT, "_dmsStatSUMgr::updateIndexStat" )
+   INT32 _dmsStatSUMgr::updateIndexStat ( const dmsIndexStat *pIndexStat,
+                                          pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                          _SDB_RTNCB *rtnCB,
+                                          _dpsLogWrapper *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_UPDATEIDXSTAT ) ;
+
+      SDB_ASSERT( pIndexStat, "pIndexStat is invalid" ) ;
+
+      const CHAR *pCSName = pIndexStat->getCSName() ;
+      const CHAR *pCLName = pIndexStat->getCLName() ;
+      const CHAR *pIXName = pIndexStat->getIndexName() ;
+
+      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
+                               DMS_STAT_COLLECTION << pCLName <<
+                               DMS_STAT_IDX_INDEX << pIXName ) ) ;
+      BSONObj boUpdator = BSON( "$set" << pIndexStat->toBSON() ) ;
+
+      rc = rtnUpdate( DMS_STAT_INDEX_CL_NAME, boMatcher,
+                      boUpdator, _indexHint, FLG_UPDATE_UPSERT,
+                      cb, dmsCB, dpsCB ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Failed to update index statistics "
+                   "[%s.%s %s], rc: %d", pCSName, pCLName, pIXName, rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_UPDATEIDXSTAT, rc ) ;
+      return rc ;
+
    error :
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONUNLOADCS, "_dmsStatSUMgr::onUnloadCS" )
-   INT32 _dmsStatSUMgr::onUnloadCS ( _IDmsEventHolder *pEventHolder,
-                                     _IUtilSUCacheHolder *pCacheHolder,
+   INT32 _dmsStatSUMgr::onUnloadCS ( IDmsEventHolder *pEventHolder,
+                                     IDmsSUCacheHolder *pCacheHolder,
                                      pmdEDUCB *cb,
                                      SDB_DPSCB *dpsCB )
    {
@@ -238,7 +600,7 @@ namespace engine
 
       if ( pCacheHolder )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
          if ( pCache )
          {
             pCache->clearCacheUnits() ;
@@ -253,15 +615,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONRENAMECS, "_dmsStatSUMgr::onRenameCS" )
-   INT32 _dmsStatSUMgr::onRenameCS ( _IDmsEventHolder *pEventHolder,
-                                     _IUtilSUCacheHolder *pCacheHolder,
+   INT32 _dmsStatSUMgr::onRenameCS ( IDmsEventHolder *pEventHolder,
+                                     IDmsSUCacheHolder *pCacheHolder,
                                      const CHAR *pOldCSName,
                                      const CHAR *pNewCSName,
                                      pmdEDUCB *cb,
                                      SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN renamed = FALSE ;
+      BOOLEAN needUpdate = FALSE ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONRENAMECS ) ;
 
@@ -272,7 +634,7 @@ namespace engine
 
       if ( pCacheHolder )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
          if ( pCache )
          {
             for ( UINT16 unitID = 0 ; unitID < pCache->getSize() ; unitID ++ )
@@ -282,13 +644,13 @@ namespace engine
                if ( pCollectionStat )
                {
                   pCollectionStat->renameCS( pNewCSName ) ;
-                  renamed = TRUE ;
                }
             }
+            needUpdate = TRUE ;
          }
       }
 
-      if ( renamed && pEventHolder && dpsCB )
+      if ( needUpdate && pEventHolder )
       {
          const CHAR *pOldCSName = pEventHolder->getCSName() ;
 
@@ -296,13 +658,13 @@ namespace engine
          BSONObj boNewName( BSON( DMS_STAT_COLLECTION_SPACE << pNewCSName ) ) ;
          BSONObj boUpdator( BSON( "$set" << boNewName ) ) ;
 
-         rc = _updateCollectionStat( boMatcher, boUpdator, cb, dpsCB ) ;
+         rc = _updateCollectionStat( boMatcher, boUpdator, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to update collection statistics when rename "
                       "collection space [%s] to [%s], rc: %d",
                       pOldCSName, pNewCSName, rc ) ;
 
-         rc = _updateIndexStat( boMatcher, boUpdator, cb, dpsCB ) ;
+         rc = _updateIndexStat( boMatcher, boUpdator, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to update index statistics when rename "
                       "collection space [%s] to [%s], rc: %d",
@@ -317,13 +679,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONDROPCS, "_dmsStatSUMgr::onDropCS" )
-   INT32 _dmsStatSUMgr::onDropCS ( _IDmsEventHolder *pEventHolder,
-                                   _IUtilSUCacheHolder *pCacheHolder,
+   INT32 _dmsStatSUMgr::onDropCS ( IDmsEventHolder *pEventHolder,
+                                   IDmsSUCacheHolder *pCacheHolder,
                                    pmdEDUCB *cb,
                                    SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN deleted = FALSE ;
+      BOOLEAN needDelete = FALSE ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONDROPCS ) ;
 
@@ -334,25 +696,26 @@ namespace engine
 
       if ( pCacheHolder )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
          if ( pCache )
          {
-            deleted = pCache->clearCacheUnits() ;
+            pCache->clearCacheUnits() ;
+            needDelete = TRUE ;
          }
       }
 
-      if ( deleted && pEventHolder && dpsCB )
+      if ( needDelete && pEventHolder )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
 
          BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName ) ) ;
 
-         rc = _deleteCollectionStat( boMatcher, cb, dpsCB ) ;
+         rc = _deleteCollectionStat( boMatcher, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to drop collection statistics when dropping "
                       "collection space [%s], rc: %d", pCSName, rc ) ;
 
-         rc = _deleteIndexStat( boMatcher, cb, dpsCB ) ;
+         rc = _deleteIndexStat( boMatcher, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to delete index statistics when dropping "
                       "collection space [%s], rc: %d", pCSName, rc ) ;
@@ -366,14 +729,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONRENAMECL, "_dmsStatSUMgr::onRenameCL" )
-   INT32 _dmsStatSUMgr::onRenameCL ( _IDmsEventHolder *pEventHolder,
-                                     _IUtilSUCacheHolder *pCacheHolder,
-                                     const dmsCLItem &clItem,
+   INT32 _dmsStatSUMgr::onRenameCL ( IDmsEventHolder *pEventHolder,
+                                     IDmsSUCacheHolder *pCacheHolder,
+                                     const dmsEventCLItem &clItem,
                                      const CHAR *pNewCLName,
-                                     pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+                                     pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN renamed = FALSE ;
+      BOOLEAN needUpdate = FALSE ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONRENAMECL ) ;
 
@@ -384,42 +748,48 @@ namespace engine
 
       if ( pCacheHolder )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
          if ( pCache )
          {
-            // For statistics cache, mbID is ID of cache unit
-            dmsCollectionStat *pCollectionStat =
-                  (dmsCollectionStat *)pCache->getCacheUnit( clItem._mbID ) ;
-            if ( pCollectionStat )
+            if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
             {
-               pCollectionStat->renameCL( pNewCLName ) ;
-               renamed = TRUE ;
+               needUpdate = TRUE ;
+            }
+            else
+            {
+               // For statistics cache, mbID is ID of cache unit
+               dmsCollectionStat *pCollectionStat =
+                     (dmsCollectionStat *)pCache->getCacheUnit( clItem._mbID ) ;
+               if ( pCollectionStat )
+               {
+                  pCollectionStat->renameCL( pNewCLName ) ;
+                  needUpdate = TRUE ;
+               }
             }
          }
       }
 
-      if ( renamed && pEventHolder && dpsCB )
+      if ( needUpdate && pEventHolder )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
          const CHAR *pOldCLName = clItem._pCLName ;
-         UINT16 mbID = clItem._mbID ;
 
          BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
-                                  DMS_STAT_COLLECTION_MBID << (INT32)mbID ) ) ;
+                                  DMS_STAT_COLLECTION << pOldCLName ) ) ;
          BSONObj boNewName( BSON( DMS_STAT_COLLECTION << pNewCLName ) ) ;
          BSONObj boUpdator( BSON( "$set" << boNewName ) ) ;
 
-         rc = _updateCollectionStat( boMatcher, boUpdator, cb, dpsCB ) ;
+         rc = _updateCollectionStat( boMatcher, boUpdator, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to update collection statistics when rename "
-                      "collection [%s.%s] to [%s.%s] mbID [%d], rc: %d",
-                      pCSName, pOldCLName, pCSName, pNewCLName, mbID, rc ) ;
+                      "collection [%s.%s] to [%s.%s], rc: %d",
+                      pCSName, pOldCLName, pCSName, pNewCLName, rc ) ;
 
-         rc = _updateIndexStat( boMatcher, boUpdator, cb, dpsCB ) ;
+         rc = _updateIndexStat( boMatcher, boUpdator, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to update index statistics when rename "
-                      "collection [%s.%s] to [%s.%s] mbID [%d], rc: %d",
-                      pCSName, pOldCLName, pCSName, pNewCLName, mbID, rc ) ;
+                      "collection [%s.%s] to [%s.%s], rc: %d",
+                      pCSName, pOldCLName, pCSName, pNewCLName, rc ) ;
       }
 
    done :
@@ -430,14 +800,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONTRUNCCL, "_dmsStatSUMgr::onTruncateCL" )
-   INT32 _dmsStatSUMgr::onTruncateCL ( _IDmsEventHolder *pEventHolder,
-                                       _IUtilSUCacheHolder *pCacheHolder,
-                                       const dmsCLItem &clItem,
+   INT32 _dmsStatSUMgr::onTruncateCL ( IDmsEventHolder *pEventHolder,
+                                       IDmsSUCacheHolder *pCacheHolder,
+                                       const dmsEventCLItem &clItem,
                                        pmdEDUCB *cb,
                                        SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN deleted = FALSE ;
+      BOOLEAN needDelete = FALSE ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONTRUNCCL ) ;
 
@@ -448,33 +818,38 @@ namespace engine
 
       if ( pCacheHolder )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
          if ( pCache )
          {
-            // For statistics cache, mbID is key of cache unit
-            deleted = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
+            if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
+            {
+               needDelete = TRUE ;
+            }
+            else
+            {
+               // For statistics cache, mbID is key of cache unit
+               needDelete = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
+            }
          }
       }
 
-      if ( deleted && pEventHolder && dpsCB )
+      if ( needDelete && pEventHolder )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
-         UINT16 mbID = clItem._mbID ;
+         const CHAR *pCLName = clItem._pCLName ;
 
          BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
-                                  DMS_STAT_COLLECTION_MBID << (INT32)mbID ) ) ;
+                                  DMS_STAT_COLLECTION << pCLName ) ) ;
 
-         rc = _deleteCollectionStat( boMatcher, cb, dpsCB ) ;
+         rc = _deleteCollectionStat( boMatcher, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to delete collection statistics when truncating "
-                      "collection [ space %s mbID %d ], rc: %d",
-                      pCSName, mbID, rc ) ;
+                      "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
 
-         rc = _deleteIndexStat( boMatcher, cb, dpsCB ) ;
+         rc = _deleteIndexStat( boMatcher, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to delete index statistics when truncating "
-                      "collection [ space %s mbID %d ], rc: %d",
-                      pCSName, mbID, rc ) ;
+                      "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
       }
 
    done :
@@ -485,14 +860,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONDROPCL, "_dmsStatSUMgr::onDropCL" )
-   INT32 _dmsStatSUMgr::onDropCL ( _IDmsEventHolder *pEventHolder,
-                                   _IUtilSUCacheHolder *pCacheHolder,
-                                   const dmsCLItem &clItem,
+   INT32 _dmsStatSUMgr::onDropCL ( IDmsEventHolder *pEventHolder,
+                                   IDmsSUCacheHolder *pCacheHolder,
+                                   const dmsEventCLItem &clItem,
                                    pmdEDUCB *cb,
                                    SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN deleted = FALSE ;
+      BOOLEAN needDelete = FALSE ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONDROPCL ) ;
 
@@ -503,33 +878,35 @@ namespace engine
 
       if ( pCacheHolder )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
-         if ( pCache )
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
+         {
+            needDelete = TRUE ;
+         }
+         else
          {
             // For statistics cache, mbID is key of cache unit
-            deleted = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
+            needDelete = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
          }
       }
 
-      if ( deleted && pEventHolder && dpsCB )
+      if ( needDelete && pEventHolder )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
-         UINT16 mbID = clItem._mbID ;
+         const CHAR *pCLName = clItem._pCLName ;
 
          BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
-                                  DMS_STAT_COLLECTION_MBID << (INT32)mbID ) ) ;
+                                  DMS_STAT_COLLECTION << pCLName ) ) ;
 
-         rc = _deleteCollectionStat( boMatcher, cb, dpsCB ) ;
+         rc = _deleteCollectionStat( boMatcher, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to delete collection statistics when dropping "
-                      "collection [ space %s mbID %d ], rc: %d",
-                      pCSName, mbID, rc ) ;
+                      "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
 
-         rc = _deleteIndexStat( boMatcher, cb, dpsCB ) ;
+         rc = _deleteIndexStat( boMatcher, cb, NULL ) ;
          PD_RC_CHECK( rc, PDWARNING,
                       "Failed to delete index statistics when dropping "
-                      "collection [ space %s mbID %d ], rc: %d",
-                      pCSName, mbID, rc ) ;
+                      "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
       }
 
    done :
@@ -540,14 +917,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONDROPIDX, "_dmsStatSUMgr::onDropIndex" )
-   INT32 _dmsStatSUMgr::onDropIndex ( _IDmsEventHolder *pEventHolder,
-                                      _IUtilSUCacheHolder *pCacheHolder,
-                                      const dmsCLItem &clItem,
-                                      const dmsIdxItem &idxItem,
+   INT32 _dmsStatSUMgr::onDropIndex ( IDmsEventHolder *pEventHolder,
+                                      IDmsSUCacheHolder *pCacheHolder,
+                                      const dmsEventCLItem &clItem,
+                                      const dmsEventIdxItem &idxItem,
                                       pmdEDUCB *cb, SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN deleted = FALSE ;
+      BOOLEAN needDelete = FALSE ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONDROPIDX ) ;
 
@@ -558,34 +935,40 @@ namespace engine
 
       if ( pCacheHolder )
       {
-         utilSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
          if ( pCache )
          {
-            // For statistics cache, mbID is ID of cache unit
-            dmsCollectionStat *pCollectionStat =
-                  (dmsCollectionStat *)pCache->getCacheUnit( clItem._mbID ) ;
-            if ( pCollectionStat )
+            if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
             {
-               deleted = pCollectionStat->removeIndexStat( idxItem._pIdxName, TRUE ) ;
+               needDelete = TRUE ;
+            }
+            else
+            {
+               // For statistics cache, mbID is ID of cache unit
+               dmsCollectionStat *pCollectionStat =
+                     (dmsCollectionStat *)pCache->getCacheUnit( clItem._mbID ) ;
+               if ( pCollectionStat )
+               {
+                  needDelete = pCollectionStat->removeIndexStat( idxItem._pIXName, TRUE ) ;
+               }
             }
          }
       }
 
-      if ( deleted && pEventHolder && dpsCB )
+      if ( needDelete && pEventHolder )
       {
          const CHAR *pCSName = pEventHolder->getCSName() ;
-         UINT16 mbID = clItem._mbID ;
-         const CHAR *pIdxName = idxItem._pIdxName ;
+         const CHAR *pCLName = clItem._pCLName ;
+         const CHAR *pIXName = idxItem._pIXName ;
 
          BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
-                                  DMS_STAT_COLLECTION_MBID << (INT32)mbID <<
-                                  DMS_STAT_IDX_INDEX << pIdxName ) ) ;
+                                  DMS_STAT_COLLECTION << pCLName <<
+                                  DMS_STAT_IDX_INDEX << pIXName ) ) ;
 
-         rc = _deleteIndexStat( boMatcher, cb, dpsCB ) ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "Failed to delete index statistics when dropping "
-                      "index [ space %s mbID %d index %s ] , rc: %d",
-                      pCSName, mbID, pIdxName, rc ) ;
+         rc = _deleteIndexStat( boMatcher, cb, NULL ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to delete index statistics "
+                      "when dropping index [%s.%s %s] , rc: %d", pCSName,
+                      pCLName, pIXName, rc ) ;
       }
 
    done :
@@ -645,493 +1028,59 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_LOADSTATS, "_dmsStatSUMgr::_loadStats" )
-   INT32 _dmsStatSUMgr::_loadStats ( pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_LOADSTATS ) ;
-
-      CS_STAT_MAP csStatMap ;
-      set<monCollectionSpace> csList ;
-
-      _dmsCB->dumpInfo( csList, FALSE ) ;
-
-      for ( set<monCollectionSpace>::iterator iterCS = csList.begin() ;
-            iterCS != csList.end() ;
-            ++ iterCS )
-      {
-         const _monCollectionSpace &cs = *iterCS ;
-         csStatMap[ cs._name ] = NULL ;
-      }
-
-      rc = _loadCollectionStats( csStatMap, cb ) ;
-      PD_RC_CHECK ( rc, PDWARNING, "Failed to load collection statistics, rc: %d", rc ) ;
-
-      rc = _loadIndexStats( csStatMap, cb ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Failed to load index statistics, rc: %d", rc ) ;
-
-      for ( CS_STAT_MAP::iterator iterStat = csStatMap.begin() ;
-            iterStat != csStatMap.end() ;
-            ++ iterStat )
-      {
-         const CHAR *pCSName = iterStat->first._pName ;
-         utilSUCache *pStatMap = iterStat->second ;
-         _replaceCollectionStats( pCSName, pStatMap ) ;
-      }
-
-   done :
-      for ( CS_STAT_MAP::iterator iterStat = csStatMap.begin() ;
-            iterStat != csStatMap.end() ;
-            ++ iterStat )
-      {
-         utilSUCache *pStatMap = iterStat->second ;
-         SAFE_OSS_DELETE( pStatMap ) ;
-      }
-
-      csStatMap.clear() ;
-
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_LOADSTATS, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__LOADCLSTATS, "_dmsStatSUMgr::_loadCollectionStats" )
-   INT32 _dmsStatSUMgr::_loadCollectionStats ( CS_STAT_MAP &csStatMap,
-                                               pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__LOADCLSTATS ) ;
-
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-
-      INT64 contextID = -1 ;
-      BSONObj boDummy ;
-
-      // query
-      rc = rtnQuery( DMS_STAT_COLLECTION_CL_NAME, boDummy, boDummy,
-                     boDummy, boDummy, 0, cb, 0, -1, _dmsCB, rtnCB,
-                     contextID ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Query collection [%s] failed, rc: %d",
-                   DMS_STAT_COLLECTION_CL_NAME, rc ) ;
-
-      // get more
-      while ( TRUE )
-      {
-         dmsCollectionStat *pCollectionStat = NULL ;
-         rtnContextBuf contextBuf ;
-
-         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc = SDB_OK ;
-            break ;
-         }
-         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
-
-         pCollectionStat = SDB_OSS_NEW dmsCollectionStat() ;
-         PD_CHECK( pCollectionStat, SDB_OOM, error, PDWARNING,
-                   "Failed to allocate memory for index statistics" ) ;
-
-         try
-         {
-            BSONObj boCollectionStat = BSONObj( contextBuf.data() ) ;
-
-            rc = pCollectionStat->init( boCollectionStat ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING,
-                       "Failed to initialize collection statistics with %s",
-                       boCollectionStat.toString( FALSE, TRUE ).c_str() ) ;
-               SAFE_OSS_DELETE( pCollectionStat ) ;
-            }
-         }
-         catch( std::exception &e )
-         {
-            PD_LOG( PDWARNING,
-                    "Get index statistics for collection occur exception: %s",
-                    e.what() ) ;
-            rc = SDB_SYS ;
-            SAFE_OSS_DELETE( pCollectionStat ) ;
-         }
-
-         if ( SDB_OK != rc )
-         {
-            continue ;
-         }
-
-         rc = _addCollectionStat( csStatMap, pCollectionStat, FALSE ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING,
-                    "Failed to add collection statistics [%s.%s], rc: %d",
-                    pCollectionStat->getCSName(), pCollectionStat->getCLName(),
-                    rc ) ;
-            SAFE_OSS_DELETE( pCollectionStat ) ;
-            goto error ;
-         }
-      }
-
-   done :
-      if ( -1 != contextID )
-      {
-         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
-      }
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__LOADCLSTATS, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__LOADIDXSTATS, "_dmsStatSUMgr::_loadIndexStats" )
-   INT32 _dmsStatSUMgr::_loadIndexStats ( CS_STAT_MAP &csStatMap, pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__LOADIDXSTATS ) ;
-
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-
-      INT64 contextID = -1 ;
-      BSONObj boDummy ;
-
-      // query
-      rc = rtnQuery( DMS_STAT_INDEX_CL_NAME, boDummy, boDummy,
-                     boDummy, boDummy, 0, cb, 0, -1, _dmsCB, rtnCB,
-                     contextID ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Query collection [%s] failed, rc: %d",
-                   DMS_STAT_INDEX_CL_NAME, rc ) ;
-
-      // get more
-      while ( TRUE )
-      {
-         dmsIndexStat *pIndexStat = NULL ;
-         rtnContextBuf contextBuf ;
-
-         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc = SDB_OK ;
-            break ;
-         }
-         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
-
-         pIndexStat = SDB_OSS_NEW dmsIndexStat() ;
-         PD_CHECK( pIndexStat, SDB_OOM, error, PDWARNING,
-                   "Failed to allocate memory for index statistics" ) ;
-
-         try
-         {
-            BSONObj boIndexStat = BSONObj( contextBuf.data() ) ;
-
-            rc = pIndexStat->init( boIndexStat ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING,
-                       "Failed to initialize index statistics with %s",
-                       boIndexStat.toString( FALSE, TRUE ).c_str() ) ;
-               SAFE_OSS_DELETE( pIndexStat ) ;
-               goto error ;
-            }
-         }
-         catch( std::exception &e )
-         {
-            PD_LOG( PDWARNING,
-                    "Get index statistics for index occur exception: %s",
-                    e.what() ) ;
-            rc = SDB_SYS ;
-            SAFE_OSS_DELETE( pIndexStat ) ;
-            goto error ;
-         }
-
-         rc = _addIndexStat( csStatMap, pIndexStat, FALSE ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING,
-                    "Failed to add index statistics [%s.%s, %s], rc: %d",
-                    pIndexStat->getCSName(), pIndexStat->getCLName(),
-                    pIndexStat->getIndexName(), rc ) ;
-            SAFE_OSS_DELETE( pIndexStat ) ;
-            goto error ;
-         }
-      }
-
-   done :
-      if ( -1 != contextID )
-      {
-         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
-      }
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__LOADIDXSTATS, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__LOADCLSTATS_CS, "_dmsStatSUMgr::_loadCollectionStats" )
-   INT32 _dmsStatSUMgr::_loadCollectionStatsByCS ( const CHAR *pCSName,
-                                                   utilSUCache &statMap,
-                                                   pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__LOADCLSTATS_CS ) ;
-
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-
-      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName ) ) ;
-      BSONObj boDummy ;
-
-      INT64 contextID = -1 ;
-
-      // query
-      rc = rtnQuery( DMS_STAT_COLLECTION_CL_NAME, boDummy, boMatcher,
-                     boDummy, _collectionHint, 0, cb, 0, -1, _dmsCB, rtnCB,
-                     contextID ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Query statistics of collection space [%s] "
-                   "from [%s] failed, rc: %d", pCSName,
-                   DMS_STAT_COLLECTION_CL_NAME, rc ) ;
-
-      // get more
-      while ( TRUE )
-      {
-         dmsCollectionStat *pCollectionStat = NULL ;
-         rtnContextBuf contextBuf ;
-
-         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc = SDB_OK ;
-            break ;
-         }
-         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
-
-         pCollectionStat = SDB_OSS_NEW dmsCollectionStat() ;
-         PD_CHECK( pCollectionStat, SDB_OOM, error, PDWARNING,
-                   "Failed to allocate memory for index statistics" ) ;
-
-         try
-         {
-            BSONObj boCollectionStat = BSONObj( contextBuf.data() ) ;
-
-            rc = pCollectionStat->init( boCollectionStat ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING,
-                       "Failed to initialize collection statistics with %s",
-                       boCollectionStat.toString( FALSE, TRUE ).c_str() ) ;
-               SAFE_OSS_DELETE( pCollectionStat ) ;
-            }
-         }
-         catch( std::exception &e )
-         {
-            PD_LOG( PDWARNING,
-                    "Get index statistics for collection occur exception: %s",
-                    e.what() ) ;
-            rc = SDB_SYS ;
-            SAFE_OSS_DELETE( pCollectionStat ) ;
-         }
-
-         if ( SDB_OK != rc )
-         {
-            continue ;
-         }
-
-         if ( !statMap.addCacheUnit( pCollectionStat, FALSE ) )
-         {
-            PD_LOG( PDWARNING,
-                    "Failed to add collection statistics [%s.%s]",
-                    pCollectionStat->getCSName(), pCollectionStat->getCLName() ) ;
-            SAFE_OSS_DELETE( pCollectionStat ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-      }
-
-   done :
-      if ( -1 != contextID )
-      {
-         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
-      }
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__LOADCLSTATS_CS, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__LOADIDXSTATS_CS, "_dmsStatSUMgr::_loadIndexStats" )
-   INT32 _dmsStatSUMgr::_loadIndexStatsByCS ( const CHAR *pCSName,
-                                              utilSUCache &statMap,
-                                              pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__LOADIDXSTATS_CS ) ;
-
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-
-      INT64 contextID = -1 ;
-      BSONObj boDummy ;
-
-      // query
-      rc = rtnQuery( DMS_STAT_INDEX_CL_NAME, boDummy, boDummy,
-                     boDummy, boDummy, 0, cb, 0, -1, _dmsCB, rtnCB,
-                     contextID ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Query collection [%s] failed, rc: %d",
-                   DMS_STAT_INDEX_CL_NAME, rc ) ;
-
-      // get more
-      while ( TRUE )
-      {
-         dmsIndexStat *pIndexStat = NULL ;
-         rtnContextBuf contextBuf ;
-
-         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc = SDB_OK ;
-            break ;
-         }
-         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
-
-         pIndexStat = SDB_OSS_NEW dmsIndexStat() ;
-         PD_CHECK( pIndexStat, SDB_OOM, error, PDWARNING,
-                   "Failed to allocate memory for index statistics" ) ;
-
-         try
-         {
-            BSONObj boIndexStat = BSONObj( contextBuf.data() ) ;
-
-            rc = pIndexStat->init( boIndexStat ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDWARNING,
-                       "Failed to initialize index statistics with %s",
-                       boIndexStat.toString( FALSE, TRUE ).c_str() ) ;
-               SAFE_OSS_DELETE( pIndexStat ) ;
-            }
-         }
-         catch( std::exception &e )
-         {
-            PD_LOG( PDWARNING,
-                    "Get index statistics for index occur exception: %s",
-                    e.what() ) ;
-            rc = SDB_SYS ;
-            SAFE_OSS_DELETE( pIndexStat ) ;
-         }
-
-         if ( SDB_OK != rc )
-         {
-            continue ;
-         }
-
-         if ( !statMap.addCacheSubUnit( pIndexStat, FALSE ) )
-         {
-            PD_LOG( PDWARNING, "Failed to add index statistics [%s.%s, %s]",
-                    pIndexStat->getCSName(), pIndexStat->getCLName(),
-                    pIndexStat->getIndexName() ) ;
-            SAFE_OSS_DELETE( pIndexStat ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-      }
-
-   done :
-      if ( -1 != contextID )
-      {
-         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
-      }
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__LOADIDXSTATS_CS, rc ) ;
-      return rc ;
-
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__CLEARSTATS, "_dmsStatSUMgr::_clearStats" )
-   INT32 _dmsStatSUMgr::_clearStats ()
-   {
-      INT32 rc = SDB_OK ;
-
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__CLEARSTATS ) ;
-
-      std::set<monCollectionSpace> csList ;
-      _dmsCB->dumpInfo( csList, FALSE ) ;
-
-      for ( std::set<_monCollectionSpace>::const_iterator iterCS = csList.begin() ;
-            iterCS != csList.end () ;
-            iterCS ++ )
-      {
-         const _monCollectionSpace &cs = *iterCS ;
-         dmsStorageUnitID suID = DMS_INVALID_SUID ;
-         dmsStorageUnit *su = NULL ;
-         utilSUCache *pStatCache = NULL ;
-
-         INT32 rc = _dmsCB->nameToSUAndLock( cs._name, suID, &su, SHARED ) ;
-
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "Failed to get storage unit [%s], rc: %d",
-                    cs._name, rc ) ;
-            if ( DMS_INVALID_SUID != suID )
-            {
-               _dmsCB->suUnlock( suID, SHARED ) ;
-            }
-            continue ;
-         }
-
-         pStatCache = su->getSUCache( DMS_CACHE_TYPE_STAT ) ;
-         if ( pStatCache )
-         {
-            pStatCache->clearCacheUnits() ;
-         }
-
-         if ( DMS_INVALID_SUID != suID )
-         {
-            _dmsCB->suUnlock( suID, SHARED ) ;
-         }
-      }
-
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__CLEARSTATS, rc ) ;
-
-      return rc ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__ADDCLSTAT, "_dmsStatSUMgr::_addCollectionStat" )
-   INT32 _dmsStatSUMgr::_addCollectionStat ( CS_STAT_MAP &csStatMap,
+   INT32 _dmsStatSUMgr::_addCollectionStat ( const MON_CS_SIM_LIST &monCSList,
+                                             dmsStatCacheMap &statCacheMap,
                                              dmsCollectionStat *pCollectionStat,
-                                             BOOLEAN ignoreVersion )
+                                             BOOLEAN ignoreCrtTime )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__ADDCLSTAT ) ;
 
       const CHAR *pCSName = pCollectionStat->getCSName() ;
-      utilSUCache *pStatMap = NULL ;
+      const CHAR *pCLName = pCollectionStat->getCLName() ;
 
-      CS_STAT_MAP::iterator iterCS = csStatMap.find( pCSName ) ;
-      PD_CHECK( iterCS != csStatMap.end(), SDB_INVALIDARG, error, PDWARNING,
-                "Collection space [%s] is not valid for statistics", pCSName ) ;
+      dmsStatCacheMap::iterator iterSUStat ;
+      dmsStatCache *pStatCache = NULL ;
 
-      pStatMap = iterCS->second ;
-      if ( !iterCS->second )
+      const monCSSimple *pMonCS = NULL ;
+
+      // Get collection space information
+      pMonCS = monCSSimple::getCollectionSpace( monCSList, pCSName ) ;
+      PD_CHECK( pMonCS, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
+                "Could not get collection space [%s] for statistics",
+                pCSName ) ;
+
+      // Get statistics cache
+      iterSUStat = statCacheMap.find( pCSName ) ;
+      if ( iterSUStat == statCacheMap.end() )
       {
-         iterCS->second = SDB_OSS_NEW dmsStatCache( NULL ) ;
-         pStatMap = iterCS->second ;
+         pStatCache = SDB_OSS_NEW dmsStatCache( NULL ) ;
+         PD_CHECK( pStatCache, SDB_OOM, error, PDWARNING,
+                   "Failed to allocate memory for statistics map" ) ;
+         statCacheMap[ pCSName ] = pStatCache ;
       }
-      PD_CHECK( pStatMap, SDB_INVALIDARG, error, PDWARNING,
-                "Could not allocate statistics map [%s]", pCSName ) ;
+      else
+      {
+         pStatCache = iterSUStat->second ;
+         if ( NULL == pStatCache )
+         {
+            statCacheMap.erase( iterSUStat ) ;
 
-      PD_CHECK( pStatMap->addCacheUnit( pCollectionStat, ignoreVersion ),
-                SDB_INVALIDARG, error, PDWARNING,
-                "Could not add collection statistics [%s] to statistics map [%s]",
-                pCollectionStat->getCLName(), pCSName ) ;
+            pStatCache = SDB_OSS_NEW dmsStatCache( NULL ) ;
+            PD_CHECK( pStatCache, SDB_OOM, error, PDWARNING,
+                      "Failed to allocate memory for statistics map" ) ;
 
+            statCacheMap[ pCSName ] = pStatCache ;
+         }
+      }
+
+      rc = _addSUCollectionStat( pMonCS, NULL, pStatCache, pCollectionStat,
+                                 FALSE ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to add collection statistics [%s.%s], rc: %d",
+                   pCSName, pCLName, rc ) ;
   done :
       PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__ADDCLSTAT, rc ) ;
       return rc ;
@@ -1140,29 +1089,46 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__ADDIDXSTAT, "_dmsStatSUMgr::_addIndexStat" )
-   INT32 _dmsStatSUMgr::_addIndexStat ( CS_STAT_MAP &csStatMap,
+   INT32 _dmsStatSUMgr::_addIndexStat ( const MON_CS_SIM_LIST &monCSList,
+                                        dmsStatCacheMap &statCacheMap,
                                         dmsIndexStat *pIndexStat,
-                                        BOOLEAN ignoreVersion )
+                                        BOOLEAN ignoreCrtTime )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__ADDIDXSTAT ) ;
 
       const CHAR *pCSName = pIndexStat->getCSName() ;
-      utilSUCache *pStatMap = NULL ;
 
-      CS_STAT_MAP::iterator iterCS = csStatMap.find( pCSName ) ;
-      PD_CHECK( iterCS != csStatMap.end(), SDB_INVALIDARG, error, PDWARNING,
-                "Collection space [%s] is not valid for statistics", pCSName ) ;
+      dmsStatCacheMap::iterator iterSUStat ;
+      dmsStatCache *pStatCache = NULL ;
 
-      pStatMap = iterCS->second ;
-      PD_CHECK( pStatMap, SDB_INVALIDARG, error, PDWARNING,
-                "Could not find statistics map [%s]", pCSName ) ;
+      const monCSSimple *pMonCS = NULL ;
 
-      PD_CHECK( pStatMap->addCacheSubUnit( pIndexStat, ignoreVersion ),
-                SDB_INVALIDARG, error, PDWARNING,
-                "Could not add index statistics [%s] to collection statistics [%s]",
-                pIndexStat->getIndexName(), pIndexStat->getCLName() ) ;
+      // Get collection space information
+      pMonCS = monCSSimple::getCollectionSpace( monCSList, pCSName ) ;
+      PD_CHECK( pMonCS, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
+                "Could not get collection space [%s] for statistics",
+                pCSName ) ;
+
+      // Get statistics cache
+      iterSUStat = statCacheMap.find( pCSName ) ;
+
+      PD_CHECK( iterSUStat != statCacheMap.end(), SDB_DMS_CS_NOTEXIST, error,
+                PDWARNING, "Collection space [%s] is not found for statistics",
+                pCSName ) ;
+
+      pStatCache = iterSUStat->second ;
+      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDWARNING,
+                "Collection space [%s] is not found for statistics",
+                pCSName ) ;
+
+      rc = _addSUIndexStat( pMonCS, NULL, NULL, pStatCache,
+                            pIndexStat, ignoreCrtTime ) ;
+      PD_RC_CHECK( rc, PDWARNING,
+                   "Failed to add index statistics [%s.%s, %s], rc: %d",
+                   pCSName, pIndexStat->getCLName(),
+                   pIndexStat->getIndexName(), rc ) ;
 
   done :
       PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__ADDIDXSTAT, rc ) ;
@@ -1171,95 +1137,177 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__ADDCLSTATS, "_dmsStatSUMgr::_replaceCollectionStats" )
-   INT32 _dmsStatSUMgr::_replaceCollectionStats ( const CHAR *pCSName,
-                                                  utilSUCache *pStatMap )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__ADDSUCLSTAT, "_dmsStatSUMgr::_addSUCollectionStat" )
+   INT32 _dmsStatSUMgr::_addSUCollectionStat ( const monCSSimple *pMonCS,
+                                               const monCLSimple *pMonCL,
+                                               dmsStatCache *pStatCache,
+                                               dmsCollectionStat *pCollectionStat,
+                                               BOOLEAN ignoreCrtTime )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__ADDCLSTATS ) ;
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__ADDSUCLSTAT ) ;
 
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
-      dmsStorageUnit *pSu = NULL ;
+      const CHAR *pCSName = pCollectionStat->getCSName() ;
+      const CHAR *pCLName = pCollectionStat->getCLName() ;
 
-      utilSUCache *pStatCache = NULL ;
+      BOOLEAN needCheck = TRUE ;
 
-      rc = _dmsCB->nameToSUAndLock ( pCSName, suID, &pSu, EXCLUSIVE, OSS_ONE_SEC ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get collection space [%s], rc: %d",
-                   pCSName, rc ) ;
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
 
-      pStatCache = pSu->getSUCache( DMS_CACHE_TYPE_STAT ) ;
-      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDWARNING,
-                "No statistics manger in storage unit [%s]", pCSName ) ;
-
-      pStatCache->clearCacheUnits() ;
-
-      if ( pStatMap )
+      if ( pMonCS )
       {
-         for ( UINT16 unitID = 0 ; unitID < pStatMap->getSize() ; unitID ++ )
+         PD_CHECK( 0 == ossStrcmp( pMonCS->_name, pCSName ),
+                   SDB_SYS, error, PDWARNING,
+                   "Names of collection spaces are different, dump [%s], "
+                   "statistics [%s]", pMonCS->_name, pCSName ) ;
+
+         if ( NULL == pMonCL )
          {
-            dmsCollectionStat *pCollectionStat =
-                  (dmsCollectionStat *)pStatMap->getCacheUnit( unitID ) ;
-            if ( pCollectionStat != NULL &&
-                 pStatCache->addCacheUnit( pCollectionStat, TRUE ) )
-            {
-               pStatMap->removeCacheUnit( unitID, FALSE ) ;
-            }
+            pMonCL = pMonCS->getCollection( pCLName ) ;
+            PD_CHECK( pMonCL, SDB_DMS_NOTEXIST, error, PDWARNING,
+                      "Could not get collection [%s.%s] for statistics",
+                      pCSName, pCLName ) ;
          }
+         else
+         {
+            PD_CHECK( 0 == ossStrcmp( pMonCL->_clname, pCLName ),
+                      SDB_SYS, error, PDWARNING,
+                      "Names of collection are different, dump [%s], "
+                      "statistics [%s]", pMonCL->_clname, pCLName ) ;
+         }
+
+         pCollectionStat->setSULogicalID( pMonCS->_logicalID ) ;
+         pCollectionStat->setCLLogicalID( pMonCL->_logicalID ) ;
+         pCollectionStat->setMBID( pMonCL->_blockID ) ;
+
+         needCheck = FALSE ;
       }
+
+      PD_CHECK( pStatCache->addCacheUnit( pCollectionStat, ignoreCrtTime,
+                                          needCheck ),
+                SDB_INVALIDARG, error, PDWARNING,
+                "Could not add collection statistics [%s.%s] to statistics map",
+                pCSName, pCLName ) ;
 
    done :
-      if ( DMS_INVALID_CS != suID )
-      {
-         _dmsCB->suUnlock( suID, EXCLUSIVE ) ;
-      }
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__ADDCLSTATS, rc ) ;
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__ADDSUCLSTAT, rc ) ;
       return rc ;
-
    error :
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__RMCLSTATS, "_dmsStatSUMgr::_removeCollectionStats" )
-   INT32 _dmsStatSUMgr::_removeCollectionStats ( const CHAR *pCSName )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__ADDSUIDXSTAT, "_dmsStatSUMgr::_addSUIndexStat" )
+   INT32 _dmsStatSUMgr::_addSUIndexStat ( const monCSSimple *pMonCS,
+                                          const monCLSimple *pMonCL,
+                                          const monIndex *pMonIX,
+                                          dmsStatCache *pStatCache,
+                                          dmsIndexStat *pIndexStat,
+                                          BOOLEAN ignoreCrtTime )
    {
       INT32 rc = SDB_OK ;
 
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__RMCLSTATS ) ;
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__ADDSUIDXSTAT ) ;
 
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
-      dmsStorageUnit *pSu = NULL ;
+      const CHAR *pCSName = pIndexStat->getCSName() ;
+      const CHAR *pCLName = pIndexStat->getCLName() ;
+      const CHAR *pIXName = pIndexStat->getIndexName() ;
 
-      utilSUCache *pStatCache = NULL ;
+      BOOLEAN needCheck = TRUE ;
 
-      rc = _dmsCB->nameToSUAndLock ( pCSName, suID, &pSu, EXCLUSIVE, OSS_ONE_SEC ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get collection space [%s], rc: %d",
-                   pCSName, rc ) ;
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
 
-      pStatCache = pSu->getSUCache( DMS_CACHE_TYPE_STAT ) ;
-      PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDWARNING,
-                "No statistics manger in storage unit [%s]", pCSName ) ;
-
-      pStatCache->clearCacheUnits() ;
-
-   done :
-      if ( DMS_INVALID_CS != suID )
+      if ( pMonCS )
       {
-         _dmsCB->suUnlock( suID, EXCLUSIVE ) ;
-      }
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__RMCLSTATS, rc ) ;
-      return rc ;
+         PD_CHECK( 0 == ossStrcmp( pMonCS->_name, pCSName ),
+                   SDB_SYS, error, PDWARNING,
+                   "Names of collection spaces are different, dump [%s], "
+                   "statistics [%s]", pMonCS->_name, pCSName ) ;
 
+         if ( pMonCL == NULL )
+         {
+            pMonCL = pMonCS->getCollection( pCLName ) ;
+            PD_CHECK( pMonCL, SDB_DMS_NOTEXIST, error, PDWARNING,
+                      "Could not get collection [%s.%s] for statistics",
+                      pCSName, pCLName ) ;
+         }
+         else
+         {
+            PD_CHECK( 0 == ossStrcmp( pMonCL->_clname, pCLName ),
+                      SDB_SYS, error, PDWARNING,
+                      "Names of collection are different, dump [%s], "
+                      "statistics [%s]", pMonCL->_clname, pCLName ) ;
+         }
+
+         if ( NULL == pMonIX )
+         {
+            pMonIX = pMonCL->getIndex( pIXName ) ;
+            PD_CHECK( pMonIX, SDB_DMS_NOTEXIST, error, PDWARNING,
+                      "Could not get index [%s.%s %s] for statistics",
+                      pCSName, pCLName, pIXName ) ;
+         }
+         else
+         {
+            PD_CHECK( 0 == ossStrcmp( pMonIX->getIndexName(), pIXName ),
+                      SDB_SYS, error, PDWARNING,
+                      "Names of indexes are different, dump [%s], "
+                      "statistics [%s]", pMonIX->getIndexName(), pIXName ) ;
+         }
+
+         try
+         {
+            BSONObj dumpKeyPattern = pMonIX->getKeyPattern() ;
+            BSONObj statKeyPattern = pIndexStat->getKeyPattern() ;
+            PD_CHECK( 0 == dumpKeyPattern.woCompare( statKeyPattern, BSONObj(),
+                                                     TRUE ),
+                      SDB_IXM_NOTEXIST, error, PDWARNING,
+                      "Index [%s.%s %s] is not found for statistics: "
+                      "different key pattern, dump [%s], stat [%s]",
+                      pCSName, pCLName, pIXName,
+                      dumpKeyPattern.toString( FALSE, TRUE ).c_str(),
+                      statKeyPattern.toString( FALSE, TRUE ).c_str() ) ;
+
+            PD_CHECK( pMonIX->isUnique() == pIndexStat->isUnique(),
+                      SDB_IXM_NOTEXIST, error, PDWARNING,
+                      "Index [%s.%s %s] is not found for statistics: "
+                      "different unique definition, dump [%s], stat [%s]",
+                      pCSName, pCLName, pIXName,
+                      pMonIX->isUnique() ? "true" : "false",
+                      pIndexStat->isUnique() ? "true" : "false" ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING, "Checking index [%s.%s, %s] occur exception: %s",
+                    pCSName, pCLName, pIXName, e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         pIndexStat->setSULogicalID( pMonCS->_logicalID ) ;
+         pIndexStat->setCLLogicalID( pMonCL->_logicalID ) ;
+         pIndexStat->setMBID( pMonCL->_blockID ) ;
+         pIndexStat->setIndexLogicalID( pMonIX->_indexLID ) ;
+
+         needCheck = FALSE ;
+      }
+
+      PD_CHECK( pStatCache->addCacheSubUnit( pIndexStat, ignoreCrtTime,
+                                             needCheck ),
+                SDB_INVALIDARG, error, PDWARNING, "Failed to add index "
+                "statistics [%s.%s %s] to statistics", pCSName, pCLName,
+                pIXName ) ;
+
+  done :
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__ADDSUIDXSTAT, rc ) ;
+      return rc ;
    error :
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__DELCLSTAT, "_dmsStatSUMgr::_deleteCollectionStat" )
    INT32 _dmsStatSUMgr::_deleteCollectionStat ( const BSONObj &boMatcher,
-                                             _pmdEDUCB *cb,
-                                             SDB_DPSCB *dpsCB )
+                                                _pmdEDUCB *cb,
+                                                SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -1279,8 +1327,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__DELIDXSTAT, "_dmsStatSUMgr::_deleteIndexStat" )
-   INT32 _dmsStatSUMgr::_deleteIndexStat ( const BSONObj &boMatcher, _pmdEDUCB *cb,
-                                        SDB_DPSCB *dpsCB )
+   INT32 _dmsStatSUMgr::_deleteIndexStat ( const BSONObj &boMatcher,
+                                           _pmdEDUCB *cb,
+                                           SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -1341,6 +1390,253 @@ namespace engine
    done :
       PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__UPDATEIDXSTAT, rc ) ;
       return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__LOADCLSTATS, "_dmsStatSUMgr::_loadCollectionStats" )
+   INT32 _dmsStatSUMgr::_loadCollectionStats ( const monCSSimple *pMonCS,
+                                               const monCLSimple *pMonCL,
+                                               dmsStatCache *pStatCache,
+                                               const BSONObj &boMatcher,
+                                               pmdEDUCB *cb,
+                                               _SDB_DMSCB *dmsCB,
+                                               _SDB_RTNCB *rtnCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__LOADCLSTATS ) ;
+
+      BSONObj boDummy ;
+      INT64 contextID = -1 ;
+
+      // The collection is specified, could not skip errors
+      BOOLEAN couldContinue = !pMonCL ;
+
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
+
+      if ( NULL == dmsCB )
+      {
+         dmsCB = _dmsCB ;
+      }
+
+      if ( NULL == rtnCB )
+      {
+         rtnCB = pmdGetKRCB()->getRTNCB() ;
+      }
+
+      // query
+      rc = rtnQuery( DMS_STAT_COLLECTION_CL_NAME, boDummy, boMatcher, boDummy,
+                     _collectionHint, 0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Query statistics [%s] from [%s] failed, "
+                   "rc: %d", boMatcher.toString( FALSE, TRUE ).c_str(),
+                   DMS_STAT_COLLECTION_CL_NAME, rc ) ;
+
+      // get more
+      while ( TRUE )
+      {
+         dmsCollectionStat *pCollectionStat = NULL ;
+         rtnContextBuf contextBuf ;
+
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
+
+         pCollectionStat = SDB_OSS_NEW dmsCollectionStat() ;
+         PD_CHECK( pCollectionStat, SDB_OOM, error, PDWARNING,
+                   "Failed to allocate memory for collection statistics" ) ;
+
+         try
+         {
+            BSONObj boCollectionStat = BSONObj( contextBuf.data() ) ;
+
+            rc = pCollectionStat->init( boCollectionStat ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING,
+                       "Failed to initialize collection statistics with %s",
+                       boCollectionStat.toString( FALSE, TRUE ).c_str() ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING,
+                    "Get index statistics for collection occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_SYS ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            SAFE_OSS_DELETE( pCollectionStat ) ;
+            if ( couldContinue )
+            {
+               rc = SDB_OK ;
+               continue ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+
+         rc = _addSUCollectionStat( pMonCS, pMonCL, pStatCache,
+                                    pCollectionStat, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( couldContinue ? PDWARNING : PDERROR,
+                    "Failed to add collection statistics [%s.%s], rc: %d",
+                    pCollectionStat->getCSName(), pCollectionStat->getCLName(),
+                    rc ) ;
+            SAFE_OSS_DELETE( pCollectionStat ) ;
+
+            if ( !couldContinue )
+            {
+               rc = SDB_OK ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+      }
+
+   done :
+      if ( -1 != contextID )
+      {
+         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+      }
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__LOADCLSTATS, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR__LOADIDXSTATS, "_dmsStatSUMgr::_loadIndexStats" )
+   INT32 _dmsStatSUMgr::_loadIndexStats ( const monCSSimple *pMonCS,
+                                          const monCLSimple *pMonCL,
+                                          const monIndex *pMonIX,
+                                          dmsStatCache *pStatCache,
+                                          const BSONObj &boMatcher,
+                                          pmdEDUCB *cb,
+                                          _SDB_DMSCB *dmsCB,
+                                          _SDB_RTNCB *rtnCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__LOADIDXSTATS ) ;
+
+      BSONObj boDummy ;
+      INT64 contextID = -1 ;
+
+      // The index is specified, could not skip errors
+      BOOLEAN couldContinue = !pMonIX ;
+
+      SDB_ASSERT( pStatCache, "pStatCache is invalid" ) ;
+
+      if ( NULL == dmsCB )
+      {
+         dmsCB = _dmsCB ;
+      }
+
+      if ( NULL == rtnCB )
+      {
+         rtnCB = pmdGetKRCB()->getRTNCB() ;
+      }
+
+      // query
+      rc = rtnQuery( DMS_STAT_INDEX_CL_NAME, boDummy, boMatcher, boDummy,
+                     _indexHint, 0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Query statistics [%s] from [%s] failed, "
+                   "rc: %d", boMatcher.toString( FALSE, TRUE ).c_str(),
+                   DMS_STAT_INDEX_CL_NAME, rc ) ;
+
+      // get more
+      while ( TRUE )
+      {
+         dmsIndexStat *pIndexStat = NULL ;
+         rtnContextBuf contextBuf ;
+
+         rc = rtnGetMore( contextID, 1, contextBuf, cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         PD_RC_CHECK( rc, PDWARNING, "Get more failed, rc: %d", rc ) ;
+
+         pIndexStat = SDB_OSS_NEW dmsIndexStat() ;
+         PD_CHECK( pIndexStat, SDB_OOM, error, PDWARNING,
+                   "Failed to allocate memory for index statistics" ) ;
+
+         try
+         {
+            BSONObj boIndexStat = BSONObj( contextBuf.data() ) ;
+
+            rc = pIndexStat->init( boIndexStat ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDWARNING,
+                       "Failed to initialize index statistics with %s",
+                       boIndexStat.toString( FALSE, TRUE ).c_str() ) ;
+            }
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDWARNING,
+                    "Get index statistics for index occur exception: %s",
+                    e.what() ) ;
+            rc = SDB_SYS ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            SAFE_OSS_DELETE( pIndexStat ) ;
+            if ( couldContinue )
+            {
+               rc = SDB_OK ;
+               continue ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+
+         rc = _addSUIndexStat( pMonCS, pMonCL, pMonIX, pStatCache,
+                               pIndexStat, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( couldContinue ? PDWARNING : PDERROR,
+                    "Failed to add index statistics [%s.%s, %s], rc: %d",
+                    pIndexStat->getCSName(), pIndexStat->getCLName(),
+                    pIndexStat->getIndexName(), rc ) ;
+            SAFE_OSS_DELETE( pIndexStat ) ;
+
+            if ( !couldContinue )
+            {
+               rc = SDB_OK ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+      }
+
+   done :
+      if ( -1 != contextID )
+      {
+         rtnKillContexts( 1 , &contextID, cb, rtnCB ) ;
+      }
+      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR__LOADIDXSTATS, rc ) ;
+      return rc ;
+
    error :
       goto done ;
    }

@@ -497,5 +497,301 @@ namespace engine
       return COORD_CTRL_MASK_ALL ;
    }
 
+   /*
+      _coordCMDAnalyze implement
+    */
+   COORD_IMPLEMENT_CMD_AUTO_REGISTER( _coordCMDAnalyze,
+                                      CMD_NAME_ANALYZE,
+                                      TRUE ) ;
+
+   _coordCMDAnalyze::_coordCMDAnalyze  ()
+   {
+   }
+
+   _coordCMDAnalyze::~_coordCMDAnalyze()
+   {
+   }
+
+   void _coordCMDAnalyze::_preSet( pmdEDUCB *cb,
+                                   coordCtrlParam &ctrlParam )
+   {
+      // On global mode
+      ctrlParam._isGlobal = TRUE ;
+
+      // Put options in matcher
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+
+      // On primary node
+      ctrlParam._emptyFilterSel = NODE_SEL_PRIMARY ;
+
+      // On data group
+      ctrlParam.resetRole() ;
+      ctrlParam._role[ SDB_ROLE_DATA ] = 1 ;
+   }
+
+   UINT32 _coordCMDAnalyze::_getControlMask() const
+   {
+      // Only allow node selection
+      return COORD_CTRL_MASK_NODE_SELECT ;
+   }
+
+   INT32 _coordCMDAnalyze::_preExcute ( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        coordCtrlParam &ctrlParam )
+   {
+      INT32 rc = SDB_OK ;
+
+      CHAR *pQuery = NULL ;
+      const CHAR *csname = NULL ;
+      const CHAR *clname = NULL ;
+      const CHAR *ixname = NULL ;
+      INT32 mode = SDB_ANALYZE_MODE_SAMPLE ;
+      BOOLEAN sampleByNum = FALSE, sampleByPercent = FALSE ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
+                            &pQuery, NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Extract message failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj obj( pQuery ) ;
+         BSONElement e ;
+
+         // Check collection space name
+         e = obj.getField( FIELD_NAME_COLLECTIONSPACE ) ;
+         if ( String == e.type() )
+         {
+            csname = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_COLLECTION, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check collection name
+         e = obj.getField( FIELD_NAME_COLLECTION ) ;
+         if ( String == e.type() )
+         {
+            clname = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_COLLECTIONSPACE, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check index name
+         e = obj.getField( FIELD_NAME_INDEX ) ;
+         if ( String == e.type() )
+         {
+            ixname = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_INDEX, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check mode
+         e = obj.getField( FIELD_NAME_ANALYZE_MODE ) ;
+         if ( NumberInt == e.type() )
+         {
+            mode = e.numberInt() ;
+            if ( SDB_ANALYZE_MODE_SAMPLE == mode ||
+                 SDB_ANALYZE_MODE_FULL == mode ||
+                 SDB_ANALYZE_MODE_GENDFT == mode ||
+                 SDB_ANALYZE_MODE_RELOAD == mode ||
+                 SDB_ANALYZE_MODE_CLEAR == mode )
+            {
+               /// do nothing
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Value of field[%s] is invalid",
+                       FIELD_NAME_ANALYZE_MODE ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_ANALYZE_MODE, obj.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check sample number
+         e = obj.getField( FIELD_NAME_ANALYZE_NUM ) ;
+         if ( NumberInt == e.type() )
+         {
+            INT32 sampleNum = e.numberInt() ;
+            if ( sampleNum > SDB_ANALYZE_SAMPLE_MAX ||
+                 sampleNum < SDB_ANALYZE_SAMPLE_MIN )
+            {
+               PD_LOG( PDERROR, "Field[%s] %d is out of range [ %d - %d ]",
+                       sampleNum, SDB_ANALYZE_SAMPLE_MIN,
+                       SDB_ANALYZE_SAMPLE_MAX ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            sampleByNum = TRUE ;
+         }
+
+         // Check sample percent
+         e = obj.getField( FIELD_NAME_ANALYZE_PERCENT ) ;
+         if ( NumberInt == e.type() )
+         {
+            double samplePercent = e.numberInt() ;
+            if ( samplePercent > 100.0 ||
+                 samplePercent <= 0.0 )
+            {
+               PD_LOG( PDERROR, "Field[%s] %.2f is out of range ( %.2f - %.2f ]",
+                       samplePercent, 0.0, 100.0 ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            sampleByPercent = TRUE ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // Check conflicts
+      if ( NULL != csname )
+      {
+         if ( NULL != clname )
+         {
+            PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",
+                    FIELD_NAME_COLLECTIONSPACE, FIELD_NAME_COLLECTION ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else if ( NULL != ixname )
+         {
+            PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",
+                    FIELD_NAME_COLLECTIONSPACE, FIELD_NAME_INDEX ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != ixname && NULL == clname )
+      {
+         PD_LOG( PDERROR, "Field[%s] requires Field[%s]",
+                 FIELD_NAME_INDEX, FIELD_NAME_COLLECTION ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( sampleByNum && sampleByPercent )
+      {
+         PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",
+                 FIELD_NAME_ANALYZE_NUM, FIELD_NAME_ANALYZE_PERCENT ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( NULL != csname )
+      {
+         rc = _getCSGrps( csname, cb, ctrlParam ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get groups of collectionspace[%s], "
+                      "rc: %d", csname, rc ) ;
+      }
+      else if ( NULL != clname )
+      {
+         rc = _getCLGrps( clname, cb, ctrlParam ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get groups of collection[%s], rc: %d",
+                      clname, rc ) ;
+      }
+
+      if ( SDB_ANALYZE_MODE_RELOAD == mode ||
+           SDB_ANALYZE_MODE_CLEAR == mode )
+      {
+         ctrlParam._emptyFilterSel = NODE_SEL_ANY ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _coordCMDAnalyze::_getCSGrps ( const CHAR *csname, pmdEDUCB *cb,
+                                        coordCtrlParam &ctrlParam )
+   {
+      INT32 rc = SDB_OK ;
+
+      CHAR *pNewMsg = NULL ;
+      INT32 newMsgSize = 0 ;
+
+      CoordGroupList grpLst ;
+      rtnQueryOptions queryOpt ;
+
+      queryOpt._fullName = "CAT" ;
+      queryOpt._query = BSON( CAT_COLLECTION_SPACE_NAME << csname ) ;
+      rc = queryOpt.toQueryMsg( &pNewMsg, newMsgSize, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Alloc query msg failed, rc: %d", rc ) ;
+
+      /// change the opCode
+      ((MsgHeader*)pNewMsg)->opCode = MSG_CAT_QUERY_SPACEINFO_REQ ;
+      rc = executeOnCataGroup( (MsgHeader*)pNewMsg, cb, &grpLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collectionspace[%s] info from catalog "
+                   "failed, rc: %d", csname, rc ) ;
+
+      ctrlParam._useSpecialGrp = TRUE ;
+      ctrlParam._specialGrps = grpLst ;
+
+   done :
+      if ( pNewMsg )
+      {
+         msgReleaseBuffer( pNewMsg, cb ) ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _coordCMDAnalyze::_getCLGrps ( const CHAR *clname, pmdEDUCB *cb,
+                                        coordCtrlParam &ctrlParam )
+   {
+      INT32 rc = SDB_OK ;
+
+      coordCataSel cataSel ;
+      CoordGroupList grpLst, exceptLst ;
+
+      rc = cataSel.bind( _pResource, clname, cb, TRUE, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update collection[%s]'s catalog info failed, "
+                   "rc: %d", clname, rc ) ;
+
+
+      rc = cataSel.getGroupLst( cb, exceptLst, grpLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get collection[%s]'s group list failed, "
+                   "rc: %d", clname, rc ) ;
+
+      ctrlParam._useSpecialGrp = TRUE ;
+      ctrlParam._specialGrps = grpLst ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
 }
 

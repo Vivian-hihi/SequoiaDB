@@ -118,7 +118,6 @@ namespace engine
       rc = _predicateSet.addPredicate( pFieldName, beField, opType, FALSE,
                                        TRUE ) ;
 
-
       PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, rc ) ;
       return rc ;
    }

@@ -308,7 +308,7 @@ static JSBool bson_to_json ( JSContext *cx , uintN argc , jsval *vp )
    size = bson_sprint_length ( record ) ;
    VERIFY ( size > 0 ) ;
 
-   //ÒòÎªbson_sprint_lengthÆÀ¹ÀµÄ³¤¶È¸úÊµ¼ÊÐèÒªÓÐ²î¾à£¬ËùÒÔ¼Ó´ó¹ÀËã³¤¶È
+   //ï¿½ï¿½Îªbson_sprint_lengthï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½È¸ï¿½Êµï¿½ï¿½ï¿½ï¿½Òªï¿½Ð²ï¿½à£¬ï¿½ï¿½ï¿½Ô¼Ó´ï¿½ï¿½ï¿½ã³¤ï¿½ï¿½
    size = size * 2 ;
 
    // buf is freed in done:
@@ -8246,6 +8246,53 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_ANALYZE, "sdb_analyze" )
+static JSBool sdb_analyze ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_ANALYZE ) ;
+   engine::sdbClearErrorInfo() ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle *connection  = NULL ;
+   JSObject *jsObj = NULL ;
+   BOOLEAN opSpecified = FALSE ;
+   bson options ;
+   bson_init( &options ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/o" , &jsObj ) ;
+   REPORT ( ret , "Sdb.analyze(): wrong arguments" ) ;
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.analyze(): no connection handle" ) ;
+
+   if ( NULL != jsObj )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( jsObj, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+      opSpecified = TRUE ;
+   }
+
+   rc = sdbAnalyze( *connection, opSpecified ? &options : NULL ) ;
+   if ( SDB_OK == rc )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+   }
+   else
+   {
+      REPORT_RC( FALSE, "Sdb.analyze()", rc ) ;
+   }
+
+done:
+   bson_destroy( &options ) ;
+   PD_TRACE_EXIT( SDB_SDB_ANALYZE ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "Sdb.analyze(): false" ) ;
+   goto done ;
+}
+
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
    JS_FS ( "getRG" , sdb_get_rg , 1 , 0 ) ,
@@ -8297,6 +8344,7 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "setPDLevel", sdb_set_pdlevel, 0, 0 ),
    JS_FS ( "reloadConf", sdb_reload_config, 0, 0 ),
    JS_FS ( "renameCS", sdb_rename_cs, 0, 0 ),
+   JS_FS ( "analyze", sdb_analyze, 0, 0 ),
    JS_FS_END
 } ;
 

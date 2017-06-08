@@ -582,13 +582,27 @@ namespace engine
                            continue ;
                         }
 
+                        storageUnit = NULL ;
+
                         if ( cb != NULL )
                         {
-                           storageUnit->getEventHolder()->onLoadCS(
-                                       DMS_EVENT_MASK_ALL, cb, NULL ) ;
+                           // We need to lock the storage unit for creating
+                           // or dropping collections in it
+                           dmsStorageUnitID suID = DMS_INVALID_SUID ;
+                           dmsStorageUnit *pTmpSU = NULL ;
+                           INT32 tmprc = dmsCB->nameToSUAndLock(
+                                 csName, suID, &pTmpSU, EXCLUSIVE, OSS_ONE_SEC ) ;
+                           if ( SDB_OK == tmprc )
+                           {
+                              pTmpSU->getEventHolder()->onLoadCS(
+                                    DMS_EVENT_MASK_ALL, cb, NULL ) ;
+                           }
+                           if ( DMS_INVALID_SUID != suID )
+                           {
+                              dmsCB->suUnlock( suID, EXCLUSIVE ) ;
+                           }
                         }
 
-                        storageUnit = NULL ;
                         /*
                          * Scan all the collections, to check if any one should be
                          * put into the dictionary creating list. This should be
@@ -1004,7 +1018,9 @@ namespace engine
                                            SDB_DMSCB *dmsCB,
                                            dmsStorageUnit **ppsu,
                                            const CHAR **ppCollectionName,
-                                           dmsStorageUnitID &suID )
+                                           dmsStorageUnitID &suID,
+                                           OSS_LATCH_MODE lockType,
+                                           INT32 millisec )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNRESOLVECLNAL );
@@ -1052,7 +1068,7 @@ namespace engine
       }
 
       rc = rtnCollectionSpaceLock ( strCollectionFullName, dmsCB,
-                                    FALSE, ppsu, suID ) ;
+                                    FALSE, ppsu, suID, lockType, millisec ) ;
       if ( rc )
       {
          PD_LOG ( PDINFO, "Failed to lock collection space %s, rc: %d",
@@ -1460,7 +1476,7 @@ namespace engine
       UINT64 beginTick = pmdGetDBTick() ;
       DPS_LSN commitLSN ;
       BOOLEAN sync = FALSE ;
-      std::set<monCollectionSpace> allCS ;
+      MON_CS_LIST allCS ;
       BOOLEAN dmsLocked = FALSE ;
       BOOLEAN syncSpecCS = FALSE ;
       UINT32 syncCSNum = 0 ;
@@ -1520,7 +1536,7 @@ namespace engine
       /// Dump all collectionspace, except SYSTEM
       dmsCB->dumpInfo( allCS, TRUE ) ;
 
-      for ( std::set<monCollectionSpace>::const_iterator itr = allCS.begin() ;
+      for ( MON_CS_LIST::const_iterator itr = allCS.begin() ;
             itr != allCS.end() ;
             ++itr )
       {

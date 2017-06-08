@@ -275,6 +275,8 @@ namespace engine
                              pmdEDUCB *cb,
                              SDB_DPSCB *dpsCB ) ;
 
+         INT32 _analyzeMainCL( _rtnCommand *command ) ;
+
          INT32 _checkPrimaryStatus() ;
 
          INT32 _checkRollbackStatus() ;

@@ -40,6 +40,7 @@
 #include "optAccessPlan.hpp"
 #include "dmsStorageUnit.hpp"
 #include "../bson/ordering.h"
+#include "rtn.hpp"
 #include "rtnAPM.hpp"
 #include "optStatUnit.hpp"
 #include "pdTrace.hpp"
@@ -62,7 +63,6 @@ namespace engine
    : _useCount(0),
      _scanPath( &_planAllocator )
    {
-      //ossMemset( _idxName, 0, sizeof( _idxName ) ) ;
       ossMemset ( _collectionName, 0, sizeof(_collectionName) ) ;
       ossStrncpy ( _collectionName, collectionName,
                    sizeof(_collectionName) - 1 ) ;
@@ -279,13 +279,13 @@ namespace engine
 
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN_ESTHINTPLANS, "_optAccessPlan::_estimateHintPlans" )
-   INT32 _optAccessPlan::_estimateHintPlans ( _dmsMBContext *mbContext )
+   INT32 _optAccessPlan::_estimateHintPlans ( _dmsMBContext *mbContext,
+                                              dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTACCPLAN_ESTHINTPLANS ) ;
 
-      const utilSUCache *statCache = _su->getSUCache( DMS_CACHE_TYPE_STAT ) ;
       UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
       INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
 
@@ -455,13 +455,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTPLANS, "_optAccessPlan::_estimatePlans" )
-   INT32 _optAccessPlan::_estimatePlans ( _dmsMBContext *mbContext )
+   INT32 _optAccessPlan::_estimatePlans ( _dmsMBContext *mbContext,
+                                          dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY( SDB__OPTACCPLAN__ESTPLANS ) ;
 
-      const utilSUCache *statCache = _su->getSUCache( DMS_CACHE_TYPE_STAT ) ;
       const rtnPredicateSet &predicateSet = _matcher.getPredicateSet() ;
       UINT64 sortBufferSize = pmdGetOptionCB()->getSortBufSize() * 1024 * 1024 ;
       INT32 estCacheSize = pmdGetOptionCB()->getOptEstCacheSize() ;
@@ -724,6 +724,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__OPTACCPLAN_OPT ) ;
 
       dmsMBContext *mbContext = NULL ;
+      dmsStatCache *statCache = NULL ;
 
       rc = _checkOrderBy() ;
       PD_RC_CHECK( rc, PDERROR, "failed to check orderby", rc ) ;
@@ -738,23 +739,42 @@ namespace engine
       rc = _su->data()->getMBContext( &mbContext, _collectionName, SHARED ) ;
       PD_RC_CHECK( rc, PDERROR, "Get dms mb context failed, rc: %d", rc ) ;
 
+      // Try reload status, error could be ignored
+      statCache = _su->getStatCache() ;
+      if ( NULL != statCache &&
+           UTIL_SU_CACHE_UNIT_STATUS_EMPTY ==
+                 statCache->getStatus( mbContext->mbID() ) )
+      {
+         if ( SDB_OK == mbContext->mbLock( EXCLUSIVE ) )
+         {
+            if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY ==
+                  statCache->getStatus( mbContext->mbID() ) )
+            {
+               pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+               _SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+               rtnReloadCLStats ( _su, mbContext, cb, dmsCB ) ;
+            }
+         }
 
-      rc = SDB_OK ;
+         rc = mbContext->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock dms mb context SHARED failed, "
+                      "rc: %d", rc ) ;
+      }
 
       if ( _hint.isEmpty() )
       {
-         rc = _estimatePlans( mbContext ) ;
+         rc = _estimatePlans( mbContext, statCache ) ;
       }
       else
       {
          // Evaluate hints first
-         rc = _estimateHintPlans( mbContext ) ;
+         rc = _estimateHintPlans( mbContext, statCache ) ;
          if ( SDB_OK != rc &&
               SDB_RTN_QUERYMODIFY_SORT_NO_IDX != rc )
          {
             // Hint failed, could evaluate with all candidate plans again
             // Without sorted index should be reported
-            rc = _estimatePlans( mbContext ) ;
+            rc = _estimatePlans( mbContext, statCache ) ;
          }
       }
 

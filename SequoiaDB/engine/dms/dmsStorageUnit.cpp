@@ -293,8 +293,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCRTCL, "_dmsEventHolder::onCreateCL" )
-   INT32 _dmsEventHolder::onCreateCL ( UINT32 mask, const dmsCLItem &clItem,
-                                       pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _dmsEventHolder::onCreateCL ( UINT32 mask,
+                                       const dmsEventCLItem &clItem,
+                                       pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -331,9 +333,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONRENAMECL, "_dmsEventHolder::onRenameCL" )
-   INT32 _dmsEventHolder::onRenameCL ( UINT32 mask, const dmsCLItem &clItem,
+   INT32 _dmsEventHolder::onRenameCL ( UINT32 mask,
+                                       const dmsEventCLItem &clItem,
                                        const CHAR *pNewCLName,
-                                       pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+                                       pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -370,8 +374,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONTRUNCCL, "_dmsEventHolder::onTruncateCL" )
-   INT32 _dmsEventHolder::onTruncateCL ( UINT32 mask, const dmsCLItem &clItem,
-                                         pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _dmsEventHolder::onTruncateCL ( UINT32 mask,
+                                         const dmsEventCLItem &clItem,
+                                         pmdEDUCB *cb,
+                                         SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -408,8 +414,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONDROPCL, "_dmsEventHolder::onDropCL" )
-   INT32 _dmsEventHolder::onDropCL ( UINT32 mask, const dmsCLItem &clItem,
-                                     pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _dmsEventHolder::onDropCL ( UINT32 mask,
+                                     const dmsEventCLItem &clItem,
+                                     pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -446,9 +454,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONCRTIDX, "_dmsEventHolder::onCreateIndex" )
-   INT32 _dmsEventHolder::onCreateIndex ( UINT32 mask, const dmsCLItem &clItem,
-                                          const dmsIdxItem &idxItem,
-                                          pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _dmsEventHolder::onCreateIndex ( UINT32 mask,
+                                          const dmsEventCLItem &clItem,
+                                          const dmsEventIdxItem &idxItem,
+                                          pmdEDUCB *cb,
+                                          SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -485,9 +495,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONDROPIDX, "_dmsEventHolder::onDropIndex" )
-   INT32 _dmsEventHolder::onDropIndex ( UINT32 mask, const dmsCLItem &clItem,
-                                        const dmsIdxItem &idxItem,
-                                        pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+   INT32 _dmsEventHolder::onDropIndex ( UINT32 mask,
+                                        const dmsEventCLItem &clItem,
+                                        const dmsEventIdxItem &idxItem,
+                                        pmdEDUCB *cb,
+                                        SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -524,9 +536,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONLINKCL, "_dmsEventHolder::onLinkCL" )
-   INT32 _dmsEventHolder::onLinkCL ( UINT32 mask, const dmsCLItem &clItem,
+   INT32 _dmsEventHolder::onLinkCL ( UINT32 mask,
+                                     const dmsEventCLItem &clItem,
                                      const CHAR *pMainCLName,
-                                     _pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+                                     _pmdEDUCB *cb,
+                                     SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -563,9 +577,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSEVTHLD_ONUNLINKCL, "_dmsEventHolder::onUnlinkCL" )
-   INT32 _dmsEventHolder::onUnlinkCL ( UINT32 mask, const dmsCLItem &clItem,
+   INT32 _dmsEventHolder::onUnlinkCL ( UINT32 mask,
+                                       const dmsEventCLItem &clItem,
                                        const CHAR *pMainCLName,
-                                       _pmdEDUCB *cb, SDB_DPSCB *dpsCB )
+                                       _pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -606,11 +622,21 @@ namespace engine
       return _su->CSName() ;
    }
 
+   UINT32 _dmsEventHolder::getSUID () const
+   {
+      return _su->CSID() ;
+   }
+
+   UINT32 _dmsEventHolder::getSULID () const
+   {
+      return _su->LogicalCSID() ;
+   }
+
    /*
       _dmsCacheHolder implement
     */
    _dmsCacheHolder::_dmsCacheHolder ( dmsStorageUnit *su )
-   : _IUtilSUCacheHolder()
+   : IDmsSUCacheHolder()
    {
       SDB_ASSERT( su, "Storage Unit is not valid" ) ;
 
@@ -626,6 +652,16 @@ namespace engine
    const CHAR *_dmsCacheHolder::getCSName () const
    {
       return _su->CSName() ;
+   }
+
+   UINT32 _dmsCacheHolder::getSUID () const
+   {
+      return _su->CSID() ;
+   }
+
+   UINT32 _dmsCacheHolder::getSULID () const
+   {
+      return _su->LogicalCSID() ;
    }
 
    BOOLEAN _dmsCacheHolder::isSysSU () const
@@ -652,7 +688,7 @@ namespace engine
             exists = TRUE ;
             break ;
          }
-         case UTIL_SU_CACHE_UNIT_IDXSTAT :
+         case UTIL_SU_CACHE_UNIT_IXSTAT :
          {
             if ( SDB_OK != _checkIndexStat( (dmsIndexStat *)pCacheUnit , NULL ) )
             {
@@ -674,7 +710,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_CRTCACHE, "_dmsCacheHolder::createSUCache" )
-   BOOLEAN _dmsCacheHolder::createSUCache( UINT32 type )
+   BOOLEAN _dmsCacheHolder::createSUCache ( UINT8 type )
    {
       BOOLEAN created = FALSE ;
 
@@ -706,7 +742,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSCACHEHOLDER_DELCACHE, "_dmsCacheHolder::deleteSUCache" )
-   BOOLEAN _dmsCacheHolder::deleteSUCache( UINT32 type )
+   BOOLEAN _dmsCacheHolder::deleteSUCache ( UINT8 type )
    {
       BOOLEAN deleted = FALSE ;
 
@@ -733,7 +769,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_DELALLCACHES ) ;
 
-      for ( UINT32 type = 0 ; type < DMS_CACHE_TYPE_NUM ; type ++ )
+      for ( UINT8 type = 0 ; type < DMS_CACHE_TYPE_NUM ; type ++ )
       {
          if ( _pSUCaches[ type ] != NULL )
          {
@@ -753,33 +789,62 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB__DMSCACHEHOLDER_CHKCLSTAT ) ;
 
+      SDB_ASSERT( pCollectionStat, "pCollectionStat is invalid" ) ;
+
       dmsMBContext *mbContext = NULL ;
+      const CHAR *pCSName = pCollectionStat->getCSName() ;
       const CHAR *pCLName = pCollectionStat->getCLName() ;
       INDEX_STAT_MAP &indexStats = pCollectionStat->getIndexStats() ;
-      INDEX_STAT_MAP::iterator iter = indexStats.begin() ;
+      INDEX_STAT_MAP::iterator iterIdx ;
+
+      BOOLEAN needCheck =
+            ( pCollectionStat->getMBID() != UTIL_SU_INVALID_UNITID ) ;
+
+      if ( needCheck )
+      {
+         PD_CHECK( _su->LogicalCSID() == pCollectionStat->getSULogicalID(),
+                   SDB_DMS_NOTEXIST, error, PDWARNING, "Failed to get "
+                   "collection space [%s] for statistics", pCSName ) ;
+      }
+      else
+      {
+         pCollectionStat->setSULogicalID( _su->LogicalCSID() ) ;
+      }
 
       rc = _su->data()->getMBContext( &mbContext, pCLName, SHARED ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to get collection [%s], rc: %d",
                    pCLName, rc ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Failed to get collection [%s], rc: %d",
-                   pCLName, rc ) ;
 
-      while ( iter != indexStats.end() )
+      if ( needCheck )
       {
-         dmsIndexStat *pIndexStat = iter->second ;
+         PD_CHECK( mbContext->mbID() == pCollectionStat->getMBID() &&
+                   mbContext->clLID() == pCollectionStat->getCLLogicalID(),
+                   SDB_DMS_NOTEXIST, error, PDWARNING, "Failed to get "
+                   "collection [%s.%s] for statistics", pCSName, pCLName ) ;
+      }
+      else
+      {
+         pCollectionStat->setMBID( mbContext->mbID() ) ;
+         pCollectionStat->setCLLogicalID( mbContext->clLID() ) ;
+      }
+
+      iterIdx = indexStats.begin() ;
+      while ( iterIdx != indexStats.end() )
+      {
+         dmsIndexStat *pIndexStat = iterIdx->second ;
          if ( SDB_OK != _checkIndexStat( pIndexStat, mbContext ) )
          {
             // Remove field statistics reference
             pCollectionStat->removeFieldStat( pIndexStat->getFirstField(),
                                               TRUE ) ;
             // Remove index statistics reference
-            iter = indexStats.erase( iter ) ;
+            iterIdx = indexStats.erase( iterIdx ) ;
             // Delete the index statistics
             SAFE_OSS_DELETE( pIndexStat ) ;
          }
          else
          {
-            ++ iter ;
+            ++ iterIdx ;
          }
       }
 
@@ -804,8 +869,22 @@ namespace engine
 
       BOOLEAN needAllocate = !mbContext ;
       dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
+      const CHAR *pCSName = pIndexStat->getCSName() ;
       const CHAR *pCLName = pIndexStat->getCLName() ;
       const CHAR *pIndexName = pIndexStat->getIndexName() ;
+
+      BOOLEAN needCheck = ( pIndexStat->getMBID() != UTIL_SU_INVALID_UNITID ) ;
+
+      if ( needCheck )
+      {
+         PD_CHECK( _su->LogicalCSID() == pIndexStat->getSULogicalID(),
+                   SDB_DMS_CS_NOTEXIST, error, PDWARNING, "Failed to get "
+                   "collection space [%s] for statistics", pCSName ) ;
+      }
+      else
+      {
+         pIndexStat->setSULogicalID( _su->LogicalCSID() ) ;
+      }
 
       if ( !mbContext )
       {
@@ -814,21 +893,47 @@ namespace engine
                       pCLName, rc ) ;
       }
 
+      if ( needCheck )
+      {
+         PD_CHECK( mbContext->mbID() == pIndexStat->getMBID() &&
+                   mbContext->clLID() == pIndexStat->getCLLogicalID(),
+                   SDB_DMS_NOTEXIST, error, PDWARNING, "Failed to get "
+                   "collection [%s.%s] for statistics", pCSName, pCLName ) ;
+      }
+      else
+      {
+         pIndexStat->setMBID( mbContext->mbID() ) ;
+         pIndexStat->setCLLogicalID( mbContext->clLID() ) ;
+      }
+
       rc = _su->index()->getIndexCBExtent( mbContext, pIndexName, indexCBExtent ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to get index [%s], rc: %d",
                    pIndexName, rc ) ;
 
       {
          ixmIndexCB indexCB ( indexCBExtent, _su->index(), NULL ) ;
+
          PD_CHECK( indexCB.isInitialized(),
                    SDB_DMS_INIT_INDEX, error, PDWARNING,
                    "Index [%s] is invalid", pIndexName ) ;
          PD_CHECK( indexCB.getFlag() == IXM_INDEX_FLAG_NORMAL,
                    SDB_IXM_UNEXPECTED_STATUS, error, PDDEBUG,
                    "Index [%s] is not normal status",pIndexName ) ;
+
+         if ( needCheck )
+         {
+            PD_CHECK( pIndexStat->getIndexLogicalID() == indexCB.getLogicalID(),
+                      SDB_IXM_NOTEXIST, error, PDWARNING,
+                      "Logical ID of index [%s] are not matched", pIndexName ) ;
+         }
+         else
+         {
+            pIndexStat->setIndexLogicalID( indexCB.getLogicalID() ) ;
+         }
+
          PD_CHECK( 0 == pIndexStat->getKeyPattern().woCompare(
                                indexCB.keyPattern(), BSONObj(), TRUE ),
-                   SDB_INVALIDARG, error, PDWARNING,
+                   SDB_IXM_NOTEXIST, error, PDWARNING,
                    "Keys of index [%s] are not matched", pIndexName ) ;
       }
 
@@ -1965,14 +2070,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEXES, "_dmsStorageUnit::getIndexes" )
    INT32 _dmsStorageUnit::getIndexes( const CHAR *pName,
-                                      vector< _monIndex > &resultIndexes,
+                                      MON_IDX_LIST &resultIndexes,
                                       dmsMBContext * context )
    {
       INT32 rc                     = SDB_OK ;
-      BOOLEAN getContext           = FALSE ;
-      UINT32 indexID               = 0 ;
-      monIndex indexItem ;
+
       PD_TRACE_ENTRY ( SDB__DMSSU_GETINDEXES ) ;
+
+      BOOLEAN getContext           = FALSE ;
+
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -1988,23 +2094,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       }
 
-      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
-      {
-         if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
-         {
-            break ;
-         }
-
-         ixmIndexCB indexCB ( context->mb()->_indexExtent[indexID],
-                              _pIndexSu, NULL ) ;
-         indexItem._indexFlag = indexCB.getFlag () ;
-         indexItem._scanExtLID = indexCB.scanExtLID () ;
-         indexItem._version = indexCB.version () ;
-         // copy the index def to it's owned buffer
-         indexItem._indexDef = indexCB.getDef().copy () ;
-         // add
-         resultIndexes.push_back ( indexItem ) ;
-      }
+      rc = getIndexes( context->mb(), resultIndexes ) ;
+      PD_RC_CHECK( rc, PDERROR, "dump indexes failed, rc: %d", rc ) ;
 
    done :
       if ( context && getContext )
@@ -2013,8 +2104,46 @@ namespace engine
       }
       PD_TRACE_EXITRC ( SDB__DMSSU_GETINDEXES, rc ) ;
       return rc ;
+
    error :
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEXES_MB, "_dmsStorageUnit::_getIndexes" )
+   INT32 _dmsStorageUnit::getIndexes ( const dmsMB *mb,
+                                       MON_IDX_LIST &resultIndexes )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__DMSSU_GETINDEXES_MB ) ;
+
+      UINT32 indexID = 0 ;
+
+      SDB_ASSERT( mb, "mb is invalid" ) ;
+
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+      {
+         if ( DMS_INVALID_EXTENT == mb->_indexExtent[indexID] )
+         {
+            break ;
+         }
+
+         monIndex indexItem ;
+         ixmIndexCB indexCB ( mb->_indexExtent[indexID], _pIndexSu, NULL ) ;
+
+         indexItem._indexFlag = indexCB.getFlag () ;
+         indexItem._scanExtLID = indexCB.scanExtLID () ;
+         indexItem._indexLID = indexCB.getLogicalID () ;
+         indexItem._version = indexCB.version () ;
+         // copy the index def to it's owned buffer
+         indexItem._indexDef = indexCB.getDef().copy () ;
+         // add
+         resultIndexes.push_back ( indexItem ) ;
+      }
+
+      PD_TRACE_EXITRC( SDB__DMSSU_GETINDEXES_MB, rc ) ;
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEX, "_dmsStorageUnit::getIndex" )
@@ -2025,9 +2154,9 @@ namespace engine
    {
       INT32 rc                     = SDB_IXM_NOTEXIST ;
       BOOLEAN getContext           = FALSE ;
-      UINT32 indexID               = 0 ;
 
       PD_TRACE_ENTRY ( SDB__DMSSU_GETINDEX ) ;
+
       SDB_ASSERT( pIndexName, "Index name can't be NULL" ) ;
 
       if ( NULL == context )
@@ -2045,27 +2174,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       }
 
-      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
-      {
-         if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
-         {
-            break ;
-         }
-
-         ixmIndexCB indexCB ( context->mb()->_indexExtent[indexID],
-                              _pIndexSu, NULL ) ;
-         if ( 0 == ossStrcmp( indexCB.getName(), pIndexName ) )
-         {
-            resultIndex._indexFlag = indexCB.getFlag () ;
-            resultIndex._scanExtLID = indexCB.scanExtLID () ;
-            resultIndex._version = indexCB.version () ;
-            // copy the index def to it's owned buffer
-            resultIndex._indexDef = indexCB.getDef().copy () ;
-
-            rc = SDB_OK ;
-            break ;
-         }
-      }
+      getIndex( context->mb(), pIndexName, resultIndex ) ;
 
    done :
       if ( context && getContext )
@@ -2078,41 +2187,87 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( vector<monCLSimple> &collectionList,
-                                    BOOLEAN sys )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEX_MB, "_dmsStorageUnit::getIndex" )
+   INT32 _dmsStorageUnit::getIndex ( const dmsMB *mb,
+                                     const CHAR *pIndexName,
+                                     monIndex &resultIndex )
    {
-      PD_TRACE_ENTRY( SDB__DMSSU_DUMPINFO ) ;
+      INT32 rc = SDB_IXM_NOTEXIST ;
+      UINT32 indexID = 0 ;
+
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETINDEX_MB ) ;
+
+      SDB_ASSERT( pIndexName, "Index name can't be NULL" ) ;
+
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+      {
+         if ( DMS_INVALID_EXTENT == mb->_indexExtent[indexID] )
+         {
+            break ;
+         }
+
+         ixmIndexCB indexCB ( mb->_indexExtent[indexID], _pIndexSu, NULL ) ;
+         if ( 0 == ossStrcmp( indexCB.getName(), pIndexName ) )
+         {
+            resultIndex._indexFlag = indexCB.getFlag () ;
+            resultIndex._scanExtLID = indexCB.scanExtLID () ;
+            resultIndex._indexLID = indexCB.getLogicalID () ;
+            resultIndex._version = indexCB.version () ;
+            // copy the index def to it's owned buffer
+            resultIndex._indexDef = indexCB.getDef().copy () ;
+
+            rc = SDB_OK ;
+            break ;
+         }
+      }
+
+      PD_TRACE_EXITRC ( SDB__DMSSU_GETINDEX_MB, rc ) ;
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLSIMVEC, "_dmsStorageUnit::dumpInfo" )
+   void _dmsStorageUnit::dumpInfo ( MON_CL_SIM_VEC &clList,
+                                    BOOLEAN sys,
+                                    BOOLEAN dumpIdx )
+   {
+      PD_TRACE_ENTRY( SDB__DMSSU_DUMPINFO_CLSIMVEC ) ;
+
       // lock meta data
       _pDataSu->_metadataLatch.get_shared() ;
 
       dmsStorageData::COLNAME_MAP_IT it = _pDataSu->_collectionNameMap.begin() ;
       while ( it != _pDataSu->_collectionNameMap.end() )
       {
+         monCLSimple collection ;
+
          if ( !sys && dmsIsSysCLName( it->first ) )
          {
             ++it ;
             continue ;
          }
-         monCLSimple info ;
-         ossStrncpy ( info._name, it->first, DMS_COLLECTION_NAME_SZ ) ;
-         info._name[ DMS_COLLECTION_NAME_SZ ] = 0 ;
-         // add
-         collectionList.push_back ( info ) ;
+
+         if ( SDB_OK == dumpInfo( collection, it->second, dumpIdx ) )
+         {
+            // add
+            clList.push_back ( collection ) ;
+         }
 
          ++it ;
       }
 
       // release meta lock
       _pDataSu->_metadataLatch.release_shared() ;
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO ) ;
+
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CLSIMVEC ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPCLSIMPLE, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo( set<monCLSimple> &collectionList,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLSIMLIST, "_dmsStorageUnit::dumpInfo" )
+   void _dmsStorageUnit::dumpInfo( MON_CL_SIM_LIST &clList,
                                    BOOLEAN sys )
    {
-      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPCLSIMPLE ) ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CLSIMLIST ) ;
+
       // lock meta
       _pDataSu->_metadataLatch.get_shared() ;
 
@@ -2120,36 +2275,68 @@ namespace engine
       while ( it != _pDataSu->_collectionNameMap.end() )
       {
          monCLSimple collection ;
+
          if ( !sys && dmsIsSysCLName( it->first ) )
          {
             ++it ;
             continue ;
          }
 
-         ossMemset ( collection._name, 0, sizeof(collection._name) ) ;
-         ossStrncpy ( collection._name, CSName(), DMS_SU_NAME_SZ ) ;
-         ossStrncat ( collection._name, ".", 1 ) ;
-         ossStrncat ( collection._name, it->first,
-                      DMS_COLLECTION_NAME_SZ ) ;
-         //add
-         collectionList.insert ( collection ) ;
+         if ( SDB_OK == dumpInfo( collection, it->second, FALSE ) )
+         {
+            //add
+            clList.insert ( collection ) ;
+         }
 
          ++it ;
       }
 
       // release meta
       _pDataSu->_metadataLatch.release_shared() ;
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPCLSIMPLE ) ;
+
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CLSIMLIST ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO1, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( set<_monCollection> &collectionList,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLSIMPLE, "_dmsStorageUnit::dumpInfo" )
+   INT32 _dmsStorageUnit::dumpInfo ( monCLSimple &collection,
+                                     UINT16 mbID,
+                                     BOOLEAN dumpIdx )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CLSIMPLE ) ;
+
+      const dmsMB *mb = NULL ;
+
+      PD_CHECK( mbID < DMS_MME_SLOTS, SDB_INVALIDARG, error, PDERROR,
+                "Invalid mbID [%u]", mbID ) ;
+
+      mb = _pDataSu->getMBInfo( mbID ) ;
+
+      PD_CHECK( DMS_IS_MB_INUSE( mb->_flag ), SDB_INVALIDARG, error, PDERROR,
+                "Invalid mbID [%u], metablock is not in-used", mbID ) ;
+
+      collection.setName( CSName(), mb->_collectionName ) ;
+      collection._blockID = mb->_blockID ;
+      collection._logicalID = mb->_logicalID ;
+
+      if ( dumpIdx )
+      {
+         getIndexes( mb, collection._idxList ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__DMSSU_DUMPINFO_CLSIMPLE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CLLIST, "_dmsStorageUnit::dumpInfo" )
+   void _dmsStorageUnit::dumpInfo ( MON_CL_LIST &clList,
                                     BOOLEAN sys )
    {
-      dmsMB *mb = NULL ;
-      dmsMBStatInfo *mbStat = NULL ;
-
-      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO1 ) ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CLLIST ) ;
       // lock meta
       _pDataSu->_metadataLatch.get_shared() ;
 
@@ -2157,31 +2344,61 @@ namespace engine
       while ( it != _pDataSu->_collectionNameMap.end() )
       {
          monCollection collection ;
+
          if ( !sys && dmsIsSysCLName( it->first ) )
          {
             ++it ;
             continue ;
          }
 
-         mb = &_pDataSu->_dmsMME->_mbList[it->second] ;
-         mbStat = &_pDataSu->_mbStatInfo[it->second] ;
+         if ( SDB_OK == dumpInfo( collection, it->second ) )
+         {
+            //add
+            clList.insert ( collection ) ;
+         }
 
-         ossMemset ( collection._name, 0, sizeof(collection._name) ) ;
-         ossStrncpy ( collection._name, CSName(), DMS_SU_NAME_SZ ) ;
-         ossStrncat ( collection._name, ".", 1 ) ;
-         ossStrncat ( collection._name, mb->_collectionName,
-                      DMS_COLLECTION_NAME_SZ ) ;
-         detailedInfo &info = collection.addDetails ( CSSequence(),
-                                                      mb->_numIndexes,
-                                                      mb->_blockID,
-                                                      mb->_flag,
-                                                      mb->_logicalID,
-                                                      mbStat->_totalRecords,
-                                                      mbStat->_totalDataPages,
-                                                      mbStat->_totalIndexPages,
-                                                      mbStat->_totalLobPages,
-                                                      mbStat->_totalDataFreeSpace,
-                                                      mbStat->_totalIndexFreeSpace ) ;
+         ++it ;
+      }
+
+      // release meta
+      _pDataSu->_metadataLatch.release_shared() ;
+
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CLLIST ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CL, "_dmsStorageUnit::dumpInfo" )
+   INT32 _dmsStorageUnit::dumpInfo ( monCollection &collection, UINT16 mbID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CL ) ;
+
+      const dmsMB *mb = NULL ;
+      const dmsMBStatInfo *mbStat = NULL ;
+
+      PD_CHECK( mbID < DMS_MME_SLOTS, SDB_INVALIDARG, error, PDERROR,
+                "Invalid mbID [%u]", mbID ) ;
+
+      mb = _pDataSu->getMBInfo( mbID ) ;
+      mbStat = _pDataSu->getMBStatInfo( mbID ) ;
+
+      PD_CHECK( DMS_IS_MB_INUSE ( mb->_flag ), SDB_INVALIDARG, error, PDERROR,
+                "Invalid mbID [%u], metablock is not in-used", mbID ) ;
+
+      collection.setName( CSName(), mb->_collectionName ) ;
+
+      {
+         detailedInfo &info = collection.addDetails( CSSequence(),
+                                                     mb->_numIndexes,
+                                                     mb->_blockID,
+                                                     mb->_flag,
+                                                     mb->_logicalID,
+                                                     mbStat->_totalRecords,
+                                                     mbStat->_totalDataPages,
+                                                     mbStat->_totalIndexPages,
+                                                     mbStat->_totalLobPages,
+                                                     mbStat->_totalDataFreeSpace,
+                                                     mbStat->_totalIndexFreeSpace ) ;
 
          info._attribute = mb->_attributes ;
          info._dictCreated = mb->_dictExtentID != DMS_INVALID_EXTENT ? 1 : 0 ;
@@ -2210,46 +2427,103 @@ namespace engine
             info._lobCommitLSN = 0 ;
             info._lobIsValid = TRUE ;
          }
-
-         //add
-         collectionList.insert ( collection ) ;
-
-         ++it ;
       }
 
-      // release meta
-      _pDataSu->_metadataLatch.release_shared() ;
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO1 ) ;
+   done :
+      PD_TRACE_EXITRC( SDB__DMSSU_DUMPINFO_CL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO2, "_dmsStorageUnit::dumpInfo" )
-   void _dmsStorageUnit::dumpInfo ( set<_monStorageUnit> &storageUnitList,
-                                    BOOLEAN sys )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_SU, "_dmsStorageUnit::dumpInfo" )
+   void _dmsStorageUnit::dumpInfo ( monStorageUnit &storageUnit )
    {
-      monStorageUnit su ;
       const dmsStorageUnitHeader *dataHeader = _pDataSu->getHeader() ;
 
-      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO2 ) ;
-      if ( !sys && dmsIsSysCSName( CSName() ) )
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_SU ) ;
+
+      storageUnit.setName( CSName() ) ;
+
+      storageUnit._pageSize = getPageSize() ;
+      storageUnit._lobPageSize = getLobPageSize() ;
+      storageUnit._sequence = CSSequence() ;
+      storageUnit._numCollections = dataHeader->_numMB ;
+      storageUnit._collectionHWM = dataHeader->_MBHWM ;
+      storageUnit._size = totalSize() ;
+      storageUnit._CSID = CSID() ;
+      storageUnit._logicalCSID = LogicalCSID() ;
+
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_SU ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CSSIM, "_dmsStorageUnit::dumpInfo" )
+   void _dmsStorageUnit::dumpInfo ( monCSSimple &collectionSpace,
+                                    BOOLEAN sys,
+                                    BOOLEAN dumpCL,
+                                    BOOLEAN dumpIdx )
+   {
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CSSIM ) ;
+
+      collectionSpace.setName( CSName() ) ;
+      collectionSpace._suID = CSID() ;
+      collectionSpace._logicalID = LogicalCSID() ;
+
+      if ( dumpCL )
       {
-         goto done ;
+         dumpInfo ( collectionSpace._clList, sys, dumpIdx ) ;
       }
 
-      ossMemset ( su._name, 0, sizeof ( su._name ) ) ;
-      ossStrncpy ( su._name, CSName(), DMS_SU_NAME_SZ ) ;
-      su._pageSize = getPageSize() ;
-      su._lobPageSize = getLobPageSize() ;
-      su._sequence = CSSequence() ;
-      su._numCollections = dataHeader->_numMB ;
-      su._collectionHWM = dataHeader->_MBHWM ;
-      su._size = totalSize() ;
-      su._CSID = CSID() ;
-      su._logicalCSID = LogicalCSID() ;
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CSSIM ) ;
+   }
 
-      //add
-      storageUnitList.insert ( su ) ;
-   done :
-      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO2 ) ;
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO_CS, "_dmsStorageUnit::dumpInfo" )
+   void _dmsStorageUnit::dumpInfo ( monCollectionSpace &collectionSpace,
+                                    BOOLEAN sys )
+   {
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO_CS ) ;
+
+      dmsStorageUnitStat statInfo ;
+
+      // get stat info
+      getStatInfo( statInfo ) ;
+      INT64 totalDataFreeSize    = totalFreeSize( DMS_SU_DATA ) +
+                                   statInfo._totalDataFreeSpace ;
+      INT64 totalIndexFreeSize   = totalFreeSize( DMS_SU_INDEX ) +
+                                   statInfo._totalIndexFreeSpace ;
+      INT64 totalLobFreeSize     = totalFreeSize( DMS_SU_LOB ) ;
+
+      ossMemset( collectionSpace._name, 0, sizeof(collectionSpace._name) ) ;
+      ossStrncpy( collectionSpace._name, CSName(), DMS_COLLECTION_SPACE_NAME_SZ );
+      collectionSpace._pageSize = getPageSize() ;
+      collectionSpace._lobPageSize = getLobPageSize() ;
+      collectionSpace._totalSize = totalSize() ;
+      collectionSpace._clNum    = statInfo._clNum ;
+      collectionSpace._totalRecordNum = statInfo._totalCount ;
+      collectionSpace._freeSize = totalDataFreeSize + totalIndexFreeSize +
+                                  totalLobFreeSize ;
+      collectionSpace._totalDataSize = totalSize( DMS_SU_DATA ) ;
+      collectionSpace._freeDataSize  = totalDataFreeSize ;
+      collectionSpace._totalIndexSize = totalSize( DMS_SU_INDEX ) ;
+      collectionSpace._freeIndexSize = totalIndexFreeSize ;
+      collectionSpace._totalLobSize = totalSize( DMS_SU_LOB ) ;
+      collectionSpace._freeLobSize = totalLobFreeSize ;
+
+      /// sync info
+      collectionSpace._dataCommitLsn = getCurrentDataLSN() ;
+      collectionSpace._idxCommitLsn = getCurrentIdxLSN() ;
+      collectionSpace._lobCommitLsn = getCurrentLobLSN() ;
+      getValidFlag( collectionSpace._dataIsValid,
+                    collectionSpace._idxIsValid,
+                    collectionSpace._lobIsValid ) ;
+
+      /// cache info
+      collectionSpace._dirtyPage = cacheUnit()->dirtyPages() ;
+      collectionSpace._type = type() ;
+
+      dumpInfo ( collectionSpace._collections, sys, FALSE ) ;
+
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO_CS ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALSIZE, "_dmsStorageUnit::totalSize" )
@@ -2625,9 +2899,14 @@ namespace engine
       _eventHolder.unregAllHandlers() ;
    }
 
-   utilSUCache *_dmsStorageUnit::getSUCache ( UINT32 type )
+   dmsSUCache *_dmsStorageUnit::getSUCache ( UINT32 type )
    {
       return _cacheHolder.getSUCache( type ) ;
+   }
+
+   dmsStatCache *_dmsStorageUnit::getStatCache ()
+   {
+      return (dmsStatCache *)getSUCache( DMS_CACHE_TYPE_STAT ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__CREATESTORAGEOBJS, "_dmsStorageUnit::_createStorageObjs" )

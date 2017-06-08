@@ -370,6 +370,10 @@
 #define FIELD_NAME_CAPPED                    "Capped"
 #define FIELD_NAME_DIRECTION                 "Direction"
 
+#define FIELD_NAME_ANALYZE_MODE              "Mode"
+#define FIELD_NAME_ANALYZE_NUM               "SampleNum"
+#define FIELD_NAME_ANALYZE_PERCENT           "SamplePercent"
+
 #define FIELD_OP_VALUE_UPDATE                "update"
 #define FIELD_OP_VALUE_REMOVE                "remove"
 
@@ -486,6 +490,7 @@
 #define CMD_NAME_SYNC_DB                     "sync db"
 #define CMD_NAME_POP                         "pop"
 #define CMD_NAME_RELOAD_CONFIG               "reload config"
+#define CMD_NAME_ANALYZE                     "analyze"
 
 #define CMD_NAME_SNAPSHOT_DATABASE_INTR      "SNAPSHOT_DB"
 #define CMD_NAME_SNAPSHOT_SYSTEM_INTR        "SNAPSHOT_SYSTEM"
@@ -581,6 +586,17 @@ enum SDB_LOB_MODE
    SDB_LOB_MODE_R = 0x00000004,
    SDB_LOB_MODE_W = 0x00000008, /// not supported yet.
 } ;
+
+
+#define SDB_ANALYZE_MODE_SAMPLE     ( 1 )
+#define SDB_ANALYZE_MODE_FULL       ( 2 )
+#define SDB_ANALYZE_MODE_GENDFT     ( 3 )
+#define SDB_ANALYZE_MODE_RELOAD     ( 4 )
+#define SDB_ANALYZE_MODE_CLEAR      ( 5 )
+
+#define SDB_ANALYZE_SAMPLE_MIN      ( 100 )
+#define SDB_ANALYZE_SAMPLE_DEF      ( 200 )
+#define SDB_ANALYZE_SAMPLE_MAX      ( 10000 )
 
 #define SDB_ALTER_VERSION 1
 

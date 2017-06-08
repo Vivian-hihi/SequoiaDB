@@ -294,7 +294,7 @@ namespace engine
    void _clsDataSrcBaseSession::_eraseDefaultIndex ()
    {
       PD_TRACE_ENTRY ( SDB__CLSDSBS__ERSDFTINX );
-      vector<monIndex>::iterator itr = _indexs.begin() ;
+      MON_IDX_LIST::iterator itr = _indexs.begin() ;
       while ( itr != _indexs.end() )
       {
          // get name
@@ -311,7 +311,7 @@ namespace engine
 
    BOOLEAN _clsDataSrcBaseSession::_existIndex( const CHAR * indexName )
    {
-      vector<monIndex>::iterator itr = _indexs.begin() ;
+      MON_IDX_LIST::iterator itr = _indexs.begin() ;
       while ( itr != _indexs.end() )
       {
          // get name
@@ -451,7 +451,7 @@ namespace engine
       {
          builder.appendBool( CLS_FS_NOMORE, FALSE ) ;
          BSONArrayBuilder array ;
-         vector<monIndex>::const_iterator itr = _indexs.begin() ;
+         MON_IDX_LIST::const_iterator itr = _indexs.begin() ;
          for ( ; itr != _indexs.end(); itr++ )
          {
             BSONObjBuilder index ;
@@ -1876,9 +1876,9 @@ namespace engine
                                                    MAP_SU_STATUS &validCLs )
    {
       INT32 rc = SDB_OK ;
-      std::set< monCollectionSpace > csList ;
+      MON_CS_LIST csList ;
       pmdGetKRCB()->getDMSCB()->dumpInfo( csList, TRUE ) ;
-      std::set<_monCollection> collectionList ;
+      MON_CL_LIST collectionList ;
       pmdGetKRCB()->getDMSCB()->dumpInfo( collectionList, TRUE ) ;
       BSONObjBuilder b ;
 
@@ -1886,7 +1886,7 @@ namespace engine
       {
          // empty space
          BSONArrayBuilder csArrayBuilder ;
-         std::set< monCollectionSpace >::iterator itCS = csList.begin() ;
+         MON_CS_LIST::iterator itCS = csList.begin() ;
          for ( ; itCS != csList.end() ; ++itCS )
          {
             if ( 0 == itCS->_collections.size() )
@@ -1904,8 +1904,7 @@ namespace engine
 
          // collection list
          BSONArrayBuilder clArrayBuilder ;
-         std::set<_monCollection>::const_iterator itr =
-                                         collectionList.begin() ;
+         MON_CL_LIST::const_iterator itr = collectionList.begin() ;
          for ( ; itr != collectionList.end(); itr++ )
          {
             clArrayBuilder.append( BSON( CLS_FS_FULLNAME << itr->_name ) ) ;

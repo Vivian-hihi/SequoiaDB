@@ -38,6 +38,7 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "rtnContextDel.hpp"
+#include "rtnContext.hpp"
 #include "dmsStorageUnit.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
@@ -3647,6 +3648,224 @@ namespace engine
       return rtnUnloadCollectionSpace( _csName, cb, dmsCB ) ;
    }
 
-}
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAnalyze )
+   _rtnAnalyze::_rtnAnalyze()
+   {
+      _csname = NULL ;
+      _clname = NULL ;
+      _ixname = NULL ;
+   }
 
+   _rtnAnalyze::~_rtnAnalyze()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNANALYZE_INIT, "_rtnAnalyze::init" )
+   INT32 _rtnAnalyze::init ( INT32 flags, INT64 numToSkip,
+                             INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNANALYZE_INIT ) ;
+
+      BOOLEAN sampleByNum = FALSE, sampleByPercent = FALSE ;
+
+      try
+      {
+         BSONObj matcher( pMatcherBuff ) ;
+         BSONElement e ;
+
+         // Check collection space name
+         e = matcher.getField( FIELD_NAME_COLLECTIONSPACE ) ;
+         if ( String == e.type() )
+         {
+            _csname = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_COLLECTION, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check collection name
+         e = matcher.getField( FIELD_NAME_COLLECTION ) ;
+         if ( String == e.type() )
+         {
+            _clname = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_COLLECTIONSPACE, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check index name
+         e = matcher.getField( FIELD_NAME_INDEX ) ;
+         if ( String == e.type() )
+         {
+            _ixname = e.valuestr() ;
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_INDEX, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check mode
+         e = matcher.getField( FIELD_NAME_ANALYZE_MODE ) ;
+         if ( NumberInt == e.type() )
+         {
+            _param._mode = e.numberInt() ;
+            if ( SDB_ANALYZE_MODE_SAMPLE == _param._mode ||
+                 SDB_ANALYZE_MODE_FULL == _param._mode ||
+                 SDB_ANALYZE_MODE_GENDFT == _param._mode ||
+                 SDB_ANALYZE_MODE_RELOAD == _param._mode ||
+                 SDB_ANALYZE_MODE_CLEAR == _param._mode )
+            {
+               /// do nothing
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Value of field[%s] is invalid",
+                       FIELD_NAME_ANALYZE_MODE ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else if ( !e.eoo() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                    FIELD_NAME_ANALYZE_MODE, matcher.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         // Check sample number
+         e = matcher.getField( FIELD_NAME_ANALYZE_NUM ) ;
+         if ( NumberInt == e.type() )
+         {
+            _param._sampleNum = e.numberInt() ;
+            if ( _param._sampleNum > SDB_ANALYZE_SAMPLE_MAX ||
+                 _param._sampleNum < SDB_ANALYZE_SAMPLE_MIN )
+            {
+               PD_LOG( PDERROR, "Field[%s] %d is out of range [ %d - %d ]",
+                       _param._sampleNum, SDB_ANALYZE_SAMPLE_MIN,
+                       SDB_ANALYZE_SAMPLE_MAX ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            sampleByNum = TRUE ;
+         }
+
+         // Check sample percent
+         e = matcher.getField( FIELD_NAME_ANALYZE_PERCENT ) ;
+         if ( NumberInt == e.type() )
+         {
+            _param._samplePercent = e.numberInt() ;
+            if ( _param._samplePercent > 100.0 ||
+                 _param._samplePercent <= 0.0 )
+            {
+               PD_LOG( PDERROR, "Field[%s] %.2f is out of range ( %.2f - %.2f ]",
+                       _param._samplePercent, 0.0, 100.0 ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            sampleByPercent = TRUE ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // Check conflicts
+      if ( NULL != _csname )
+      {
+         if ( NULL != _clname )
+         {
+            PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",
+                    FIELD_NAME_COLLECTIONSPACE, FIELD_NAME_COLLECTION ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else if ( NULL != _ixname )
+         {
+            PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",
+                    FIELD_NAME_COLLECTIONSPACE, FIELD_NAME_INDEX ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != _ixname && NULL == _clname )
+      {
+         PD_LOG( PDERROR, "Field[%s] requires Field[%s]",
+                 FIELD_NAME_INDEX, FIELD_NAME_COLLECTION ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( sampleByNum && sampleByPercent )
+      {
+         PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",
+                 FIELD_NAME_ANALYZE_NUM, FIELD_NAME_ANALYZE_PERCENT ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // Adjust parameters
+      if ( SDB_ANALYZE_MODE_FULL == _param._mode )
+      {
+         PD_LOG( PDWARNING, "Analyze full mode is not supported yet, "
+                 "use sample mode" ) ;
+         _param._mode = SDB_ANALYZE_MODE_SAMPLE ;
+      }
+
+      if ( sampleByPercent )
+      {
+         _param._sampleByNum = FALSE ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNANALYZE_INIT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNANALYZE_DOIT, "_rtnAnalyze::doit" )
+   INT32 _rtnAnalyze::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                             _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                             INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY( SDB__RTNANALYZE_DOIT ) ;
+
+      rc = rtnAnalyze( _csname, _clname, _ixname, _param,
+                       cb, dmsCB, rtnCB, dpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to run analyze command, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC( SDB__RTNANALYZE_DOIT, rc ) ;
+      return rc ;
+
+   error :
+      goto done ;
+   }
+
+}
 

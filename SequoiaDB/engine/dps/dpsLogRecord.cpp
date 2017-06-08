@@ -921,22 +921,42 @@ namespace engine
          case LOG_TYPE_INVALIDATE_CATA :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 " Type    : %s(%d)"OSS_NEWLINE,
                                  "INVALIDATE CATA", LOG_TYPE_INVALIDATE_CATA ) ;
-            dpsLogRecord::iterator itrCL =
-                                       this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
+            dpsLogRecord::iterator itrType, itrCL, itrIX ;
+            UINT32 invType = 0 ;
+            itrType = this->find( DPS_LOG_INVALIDCATA_TYPE ) ;
+            if ( itrType.valid() )
+            {
+               invType = *( ( UINT32 * )( itrType.value() ) ) ;
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " InvType : 0x%02x (%u)"OSS_NEWLINE,
+                                    invType, invType ) ;
+            }
+
+            itrCL = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                len += ossSnprintf ( outBuf + len, outSize - len,
-                                    "*ERROR* : %s"OSS_NEWLINE,
+                                    "*ERROR*  : %s"OSS_NEWLINE,
                                     "Failed to find fullname in record" ) ;
                PD_LOG( PDERROR, "Failed to find fullname in record") ;
                goto done ;
             }
+            else
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " Name    : %s"OSS_NEWLINE,
+                                    itrCL.value() ) ;
+            }
 
-            len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Name : %s"OSS_NEWLINE,
-                                 itrCL.value() ) ;
+            itrIX = this->find( DPS_LOG_INVALIDCATA_IXNAME ) ;
+            if ( itrIX.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    " IXName  : %s"OSS_NEWLINE,
+                                    itrIX.value() ) ;
+            }
             break ;
          }
          case LOG_TYPE_TS_COMMIT:

@@ -44,15 +44,23 @@
 namespace engine
 {
 
+   // Same as DMS_MME_SLOTS
+   #define UTIL_SU_CACHE_DFT_SIZE ( 4096 )
+
+   // Same as DMS_INVALID_MBID
    #define UTIL_SU_INVALID_UNITID ( 65535 )
 
+   template < UINT16 CACHESIZE >
+   class _utilSUCache ;
+
+   template < UINT16 CACHESIZE >
    class _IUtilSUCacheHolder ;
 
-   enum UTIL_SU_CACHE_UMIT_TYPE
-   {
-      UTIL_SU_CACHE_UNIT_CLSTAT,
-      UTIL_SU_CACHE_UNIT_IDXSTAT
-   } ;
+   #define UTIL_SU_CACHE_UNIT_STATUS_EMPTY   ( 0 )
+   #define UTIL_SU_CACHE_UNIT_STATUS_CACHED  ( 1 )
+
+   #define UTIL_SU_CACHE_UNIT_CLSTAT ( 1 )
+   #define UTIL_SU_CACHE_UNIT_IXSTAT ( 2 )
 
    class _utilSUCacheUnit ;
    typedef class _utilSUCacheUnit utilSUCacheUnit ;
@@ -66,13 +74,13 @@ namespace engine
          _utilSUCacheUnit ()
          {
             _unitID = UTIL_SU_INVALID_UNITID ;
-            _version = 0 ;
+            _createTime = 0 ;
          }
 
-         _utilSUCacheUnit ( UINT16 unitID, UINT64 version )
+         _utilSUCacheUnit ( UINT16 unitID, UINT64 crtTime )
          {
             _unitID = unitID ;
-            _version = version ;
+            _createTime = crtTime ;
          }
 
          virtual ~_utilSUCacheUnit () {}
@@ -82,14 +90,14 @@ namespace engine
             return _unitID ;
          }
 
-         OSS_INLINE UINT64 getVersion () const
+         OSS_INLINE UINT64 getCreateTime () const
          {
-            return _version ;
+            return _createTime ;
          }
 
-         OSS_INLINE void setVersion ( UINT64 version )
+         OSS_INLINE void setCreateTime ( UINT64 crtTime )
          {
-            _version = version ;
+            _createTime = crtTime ;
          }
 
          virtual const CHAR *getCSName () const = 0 ;
@@ -100,10 +108,10 @@ namespace engine
 
          virtual void setCLName ( const CHAR *pCLName ) = 0 ;
 
-         virtual UTIL_SU_CACHE_UMIT_TYPE getUnitType () const = 0 ;
+         virtual UINT8 getUnitType () const = 0 ;
 
          virtual BOOLEAN addSubUnit ( utilSUCacheUnit *pSubUnit,
-                                      BOOLEAN ignoreVersion ) = 0 ;
+                                      BOOLEAN ignoreCrtTime ) = 0 ;
 
          virtual void clearSubUnits () = 0 ;
 
@@ -117,77 +125,215 @@ namespace engine
          // Unit ID to index in cache
          UINT16   _unitID ;
 
-         // Version (timestamp) of the cache unit
-         UINT64   _version ;
+         // CreateTime (timestamp) of the cache unit
+         UINT64   _createTime ;
    } ;
 
    /*
       _utilSUCache define
     */
+   template < UINT16 CACHESIZE = UTIL_SU_CACHE_DFT_SIZE >
    class _utilSUCache : public SDBObject
    {
       public :
-         _utilSUCache ( UINT16 size, UINT32 type,
-                        UTIL_SU_CACHE_UMIT_TYPE uintType,
-                        _IUtilSUCacheHolder *pHolder = NULL ) ;
-
-         virtual ~_utilSUCache () ;
-
-         OSS_INLINE BOOLEAN isValid () const
+         _utilSUCache ( UINT8 type, UINT8 unitType,
+                        _IUtilSUCacheHolder<CACHESIZE> *pHolder = NULL )
          {
-            return NULL != _pUnits ;
+            _type = type ;
+            _unitType = unitType ;
+            _pHolder = pHolder ;
+
+            ossMemset( _units, 0, sizeof( _units ) ) ;
+            setStatus( UTIL_SU_CACHE_UNIT_STATUS_EMPTY ) ;
          }
 
-         OSS_INLINE UINT32 getType () const
+         virtual ~_utilSUCache ()
+         {
+            clearCacheUnits() ;
+         }
+
+         OSS_INLINE UINT8 getType () const
          {
             return _type ;
          }
 
          OSS_INLINE const utilSUCacheUnit *getCacheUnit ( UINT16 unitID ) const
          {
-            if ( _pUnits && unitID < _size )
+            if ( unitID < CACHESIZE )
             {
-               return _pUnits[ unitID ] ;
+               return _units[ unitID ] ;
             }
             return NULL ;
          }
 
          OSS_INLINE utilSUCacheUnit *getCacheUnit ( UINT16 unitID )
          {
-            if ( _pUnits && unitID < _size )
+            if ( unitID < CACHESIZE )
             {
-               return _pUnits[ unitID ] ;
+               return _units[ unitID ] ;
             }
             return NULL ;
          }
 
          OSS_INLINE UINT32 getSize () const
          {
-            return _size ;
+            return CACHESIZE ;
          }
 
-         BOOLEAN addCacheUnit ( utilSUCacheUnit *pUnit, BOOLEAN ignoreVersion ) ;
+         BOOLEAN addCacheUnit ( utilSUCacheUnit *pUnit,
+                                BOOLEAN ignoreCrtTime,
+                                BOOLEAN needCheck )
+         {
+            BOOLEAN added = FALSE ;
+
+            UINT16 unitID = UTIL_SU_INVALID_UNITID ;
+            utilSUCacheUnit *pTmpUnit = NULL ;
+
+            if ( NULL ==  pUnit ||
+                 pUnit->getUnitType() != _unitType )
+            {
+               goto done ;
+            }
+
+            if ( needCheck && NULL != _pHolder &&
+                 !_pHolder->checkCacheUnit( pUnit ) )
+            {
+               // Failed to check cache unit
+               goto done ;
+            }
+
+            unitID = pUnit->getUnitID() ;
+            pTmpUnit = getCacheUnit( unitID ) ;
+
+            if ( NULL != pTmpUnit )
+            {
+               if ( ignoreCrtTime ||
+                    pTmpUnit->getCreateTime() < pUnit->getCreateTime() )
+               {
+                  SDB_OSS_DEL pTmpUnit ;
+                  _units[ unitID ] = pUnit ;
+                  _unitStatus[ unitID ] = UTIL_SU_CACHE_UNIT_STATUS_CACHED ;
+                  added = TRUE ;
+               }
+            }
+            else if ( unitID < CACHESIZE )
+            {
+               _units[ unitID ] = pUnit ;
+               _unitStatus[ unitID ] = UTIL_SU_CACHE_UNIT_STATUS_CACHED ;
+               added = TRUE ;
+            }
+
+         done :
+            return added ;
+         }
 
          BOOLEAN addCacheSubUnit ( utilSUCacheUnit *pSubUnit,
-                                   BOOLEAN ignoreVersion ) ;
+                                   BOOLEAN ignoreCrtTime,
+                                   BOOLEAN needCheck )
+         {
+            BOOLEAN added = FALSE ;
+            utilSUCacheUnit *pUnit = NULL ;
 
-         BOOLEAN removeCacheUnit ( UINT16 unitID, BOOLEAN needDelete ) ;
+            if ( NULL ==  pSubUnit )
+            {
+               goto done ;
+            }
 
-         BOOLEAN clearCacheUnits () ;
+            if ( needCheck && NULL != _pHolder &&
+                 !_pHolder->checkCacheUnit( pSubUnit ) )
+            {
+               // Failed to check cache unit
+               goto done ;
+            }
+
+            pUnit = getCacheUnit( pSubUnit->getUnitID() ) ;
+            if ( NULL != pUnit )
+            {
+               added = pUnit->addSubUnit( pSubUnit, ignoreCrtTime ) ;
+            }
+
+         done :
+            return added ;
+         }
+
+         BOOLEAN removeCacheUnit ( UINT16 unitID, BOOLEAN needDelete )
+         {
+            BOOLEAN deleted = FALSE ;
+
+            if ( unitID < CACHESIZE )
+            {
+               utilSUCacheUnit *pTmpUnit = _units[ unitID ] ;
+               if ( pTmpUnit )
+               {
+                  if ( needDelete )
+                  {
+                     SDB_OSS_DEL pTmpUnit ;
+                  }
+                  _units[ unitID ] = NULL ;
+                  deleted = TRUE ;
+               }
+               _unitStatus[ unitID ] = UTIL_SU_CACHE_UNIT_STATUS_EMPTY ;
+            }
+
+            return deleted ;
+         }
+
+         BOOLEAN clearCacheUnits ()
+         {
+            BOOLEAN deleted = FALSE ;
+
+            for ( UINT16 unitID = 0 ; unitID < CACHESIZE ; unitID ++ )
+            {
+               utilSUCacheUnit *pTmpUnit = _units[ unitID ] ;
+               if ( pTmpUnit )
+               {
+                  SDB_OSS_DEL pTmpUnit ;
+                  _units[ unitID ] = NULL ;
+                  deleted = TRUE ;
+               }
+               _unitStatus[ unitID ] = UTIL_SU_CACHE_UNIT_STATUS_EMPTY ;
+            }
+
+            return deleted ;
+         }
+
+         UINT8 getStatus ( UINT16 unitID ) const
+         {
+            if ( unitID < CACHESIZE )
+            {
+               return _unitStatus[ unitID ] ;
+            }
+            return UTIL_SU_CACHE_UNIT_STATUS_EMPTY ;
+         }
+
+         void setStatus ( UINT16 unitID, UINT8 status )
+         {
+            if ( unitID < CACHESIZE )
+            {
+               _unitStatus[ unitID ] = status ;
+            }
+         }
+
+         void setStatus ( UINT8 status )
+         {
+            for ( UINT16 unitID = 0 ; unitID < CACHESIZE ; unitID ++ )
+            {
+               _unitStatus[ unitID ] = status ;
+            }
+         }
 
       protected :
-         UINT16                  _size ;
-         UINT32                  _type ;
-         UTIL_SU_CACHE_UMIT_TYPE _unitType ;
-         _IUtilSUCacheHolder *   _pHolder ;
-         utilSUCacheUnit **      _pUnits ;
+         UINT8                            _type ;
+         UINT8                            _unitType ;
+         utilSUCacheUnit *                _units[ CACHESIZE ] ;
+         UINT8                            _unitStatus[ CACHESIZE ] ;
+         _IUtilSUCacheHolder<CACHESIZE> * _pHolder ;
    } ;
-
-   typedef class _utilSUCache utilSUCache ;
 
    /*
       _IUtilSUCacheHolder define
     */
+   template < UINT16 CACHESIZE = UTIL_SU_CACHE_DFT_SIZE >
    class _IUtilSUCacheHolder
    {
       public :
@@ -197,17 +343,21 @@ namespace engine
 
          virtual const CHAR *getCSName () const = 0 ;
 
+         virtual UINT32 getSUID () const = 0 ;
+
+         virtual UINT32 getSULID () const = 0 ;
+
          virtual BOOLEAN isSysSU () const = 0 ;
 
          virtual BOOLEAN checkCacheUnit ( utilSUCacheUnit *pCacheUnit ) = 0 ;
 
-         virtual BOOLEAN createSUCache ( UINT32 type ) = 0 ;
+         virtual BOOLEAN createSUCache ( UINT8 type ) = 0 ;
 
-         virtual BOOLEAN deleteSUCache ( UINT32 type ) = 0 ;
+         virtual BOOLEAN deleteSUCache ( UINT8 type ) = 0 ;
 
          virtual void deleteAllSUCaches () = 0 ;
 
-         virtual utilSUCache *getSUCache ( UINT32 type ) = 0 ;
+         virtual _utilSUCache<CACHESIZE> *getSUCache( UINT8 type ) = 0 ;
    } ;
 
 }

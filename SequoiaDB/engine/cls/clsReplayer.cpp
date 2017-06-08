@@ -608,27 +608,66 @@ namespace engine
          }
          case LOG_TYPE_INVALIDATE_CATA :
          {
-            catAgent *pCatAgent = sdbGetShardCB()->getCataAgent() ;
-            const CHAR *name = NULL ;
+            UINT8 type = 0 ;
+            const CHAR *csName = NULL ;
+            const CHAR *clFullName = NULL ;
+            const CHAR *ixName = NULL ;
+
             rc = dpsRecord2InvalidCata( (CHAR *)recordHeader,
-                                        &name ) ;
+                                        type,
+                                        &clFullName,
+                                        &ixName ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
-            /// when sdbrestore, the cata agent is NULL
-            if ( pCatAgent )
+
+            // Check if only contains name of collection space
+            if ( NULL != clFullName &&
+                 NULL == ossStrchr( clFullName, '.' ) )
             {
-               pCatAgent->lock_w() ;
-               if ( ossStrchr( name, '.' ) )
+               csName = clFullName ;
+               clFullName = NULL ;
+            }
+
+            if ( OSS_BIT_TEST( type, DPS_LOG_INVALIDCATA_TYPE_STAT ) )
+            {
+               rtnAnalyzeParam param ;
+               param._mode = SDB_ANALYZE_MODE_CLEAR ;
+               param._needCheck = FALSE ;
+
+               if ( csName && 0 == ossStrcmp( csName, "SYS" ) )
                {
-                  pCatAgent->clear( name ) ;
+                  // Reload all statistics
+                  csName = NULL ;
                }
-               else
+
+               rtnAnalyze( csName, clFullName, ixName, param,
+                           eduCB, _dmsCB, NULL, NULL ) ;
+            }
+
+            if ( OSS_BIT_TEST( type, DPS_LOG_INVALIDCATA_TYPE_CATA ) )
+            {
+               catAgent *pCatAgent = sdbGetShardCB()->getCataAgent() ;
+               if ( pCatAgent )
                {
-                  pCatAgent->clearBySpaceName( name ) ;
+                  pCatAgent->lock_w() ;
+                  if ( NULL != clFullName )
+                  {
+                     pCatAgent->clear( clFullName ) ;
+                  }
+                  else if ( NULL != csName )
+                  {
+                     pCatAgent->clearBySpaceName( csName ) ;
+                  }
+                  else
+                  {
+                     PD_LOG( PDERROR, "Failed to find fullname in record" ) ;
+                     rc = SDB_SYS ;
+                     goto error ;
+                  }
+                  pCatAgent->release_w() ;
                }
-               pCatAgent->release_w() ;
             }
 
             rc = SDB_OK ;

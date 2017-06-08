@@ -150,7 +150,7 @@ namespace engine
       protected:
          BSONObj                          _rangeKeyObj ;
          BSONObj                          _rangeEndKeyObj ;
-         vector<_monIndex>                _indexs ;
+         MON_IDX_LIST                     _indexs ;
          _netRouteAgent                   *_agent ;
          DPS_LSN                          _lsn ;
          DPS_LSN_OFFSET                   _beginLSNOffset ;

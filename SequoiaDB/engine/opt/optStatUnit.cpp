@@ -57,7 +57,7 @@ namespace engine
    {
    }
 
-   INT32 _optStatListKey::compareValue ( INT32 incFlag,
+   INT32 _optStatListKey::compareValue ( INT32 cmpFlag, INT32 incFlag,
                                          const BSONObj &rValue )
    {
       INT32 res = 0 ;
@@ -65,14 +65,10 @@ namespace engine
       _optStatListKey::iterator iterLeft = begin() ;
       BSONObjIterator iterRight( rValue ) ;
 
-      // If the Length of this key will be shorter than the given value :
-      // 1. incFlag is -1, a visual $minKey will be appended to this key
-      // 2. incFlag is 1, a visual $maxKey will be appended to this key
-      // 3. incFlag is 0, do nothing
-
       while ( iterLeft != end() && iterRight.more() )
       {
          const BSONElement &beLeft = (*iterLeft)->_bound ;
+         BOOLEAN inclusive = (*iterLeft)->_inclusive ;
          iterLeft ++ ;
 
          BSONElement beRight = iterRight.next() ;
@@ -83,11 +79,19 @@ namespace engine
          {
             break ;
          }
+         else if ( !inclusive && cmpFlag != 0 )
+         {
+            // Result is equal but not included, adjust with cmpFlag
+            // cmpFlag is -1, left is bigger than right
+            // cmpFlag is 1, left is smaller than right
+            res = cmpFlag > 0 ? -1 : 1 ;
+            break ;
+         }
       }
 
       if ( 0 == res )
       {
-         // Compared elements are equal, but we need to adjust with incFlag
+         // Compared elements are equal, adjust with incFlag
          if ( iterRight.more() )
          {
             res = _equalButRightMore( incFlag ) ;
@@ -105,7 +109,7 @@ namespace engine
       return res ;
    }
 
-   BOOLEAN _optStatListKey::compareAllValues ( UINT32 startIdx, INT32 expRes,
+   BOOLEAN _optStatListKey::compareAllValues ( UINT32 startIdx, INT32 cmpFlag,
                                                const BSONObj &rValue )
    {
       if ( startIdx > size() || startIdx > (UINT32)rValue.nFields() )
@@ -134,7 +138,7 @@ namespace engine
          {
             INT32 res = beLeft.woCompare( beRight, FALSE ) ;
 
-            if ( expRes > 0 && res <= 0 )
+            if ( cmpFlag > 0 && res <= 0 )
             {
                // bigger is expected, but got smaller value
                if ( inclusive && res < 0 )
@@ -146,7 +150,7 @@ namespace engine
                   return FALSE ;
                }
             }
-            else if ( expRes < 0 && res >= 0 )
+            else if ( cmpFlag < 0 && res >= 0 )
             {
                // smaller is expected, but got bigger value
                if ( inclusive && res > 0 )
@@ -158,7 +162,7 @@ namespace engine
                   return FALSE ;
                }
             }
-            else if ( expRes == 0 && res != 0 )
+            else if ( cmpFlag == 0 && res != 0 )
             {
                // equal is expected, but got non-equal value
                return FALSE ;
@@ -217,7 +221,7 @@ namespace engine
    {
    }
 
-   INT32 _optStatElementKey::compareValue ( INT32 incFlag,
+   INT32 _optStatElementKey::compareValue ( INT32 cmpFlag, INT32 incFlag,
                                             const BSONObj &rValue )
    {
       INT32 res = 0 ;
@@ -229,8 +233,17 @@ namespace engine
          res = woCompare( beRight, FALSE ) ;
       }
 
+      if ( !_included && 0 == res && cmpFlag != 0 )
+      {
+         // Result is equal but not included, adjust with cmpFlag
+         // cmpFlag is -1, left is bigger than right
+         // cmpFlag is 1, left is smaller than right
+         res = cmpFlag > 0 ? -1 : 1 ;
+      }
+
       if ( 0 == res )
       {
+         // Compared elements are equal, adjust with incFlag
          if ( iterRight.more() )
          {
             res = _equalButRightMore( incFlag ) ;
@@ -248,7 +261,7 @@ namespace engine
       return res ;
    }
 
-   BOOLEAN _optStatElementKey::compareAllValues ( UINT32 startIdx, INT32 expRes,
+   BOOLEAN _optStatElementKey::compareAllValues ( UINT32 startIdx, INT32 cmpFlag,
                                                   const BSONObj &rValue )
    {
       if ( startIdx > 0 )
@@ -262,17 +275,17 @@ namespace engine
       {
          BSONElement beRight = iterRight.next() ;
          INT32 res = woCompare( beRight, FALSE ) ;
-         if ( expRes > 0 && res <= 0 )
+         if ( cmpFlag > 0 && res <= 0 )
          {
             // bigger is expected, but got smaller value
             return FALSE ;
          }
-         else if ( expRes < 0 && res >= 0 )
+         else if ( cmpFlag < 0 && res >= 0 )
          {
             // smaller is expected, but got bigger value
             return FALSE ;
          }
-         else if ( expRes == 0 && res != 0 )
+         else if ( cmpFlag == 0 && res != 0 )
          {
             // equal is expected, but got non-equal value
             return FALSE ;
@@ -372,7 +385,7 @@ namespace engine
       rtnStatPredList::iterator nextPred = ++ predIter ;
       if ( curPred == nextPred )
       {
-         if ( isEqual )
+         if ( isEqual && startKeys.size() == pIndexStat->getNumKeys() )
          {
             rc = pIndexStat->evalETOperator( startKeys, predSelectivity, scanSelectivity ) ;
          }
@@ -519,7 +532,7 @@ namespace engine
 
       if ( isValid() )
       {
-         if ( isEqual )
+         if ( isEqual && startKey.size() == _pIndexStat->getNumKeys() )
          {
             rc = _pIndexStat->evalETOperator( startKey, predSelectivity, scanSelectivity ) ;
          }
@@ -552,7 +565,7 @@ namespace engine
    _optCollectionStat::_optCollectionStat ( const CHAR *pCollectionName,
                                             UINT32 pageSize,
                                             _dmsMBContext *mbContext,
-                                            const utilSUCache *statCache )
+                                            const dmsStatCache *statCache )
    : _optStatUnit( pCollectionName, 0 )
    {
       _pageSize = pageSize ;
@@ -569,7 +582,7 @@ namespace engine
       if ( statCache )
       {
          // For statistics cache, mbID is ID of cache unit
-         _pCollectionStat = (dmsCollectionStat *)
+         _pCollectionStat = (const dmsCollectionStat *)
                             statCache->getCacheUnit( mbContext->mbID() ) ;
       }
 
@@ -594,7 +607,7 @@ namespace engine
       {
          _totalIndexPages = mbContext->mbStat()->_totalIndexPages ;
          _totalIndexSize = mbContext->mbStat()->_totalIndexPages * _pageSize -
-                         mbContext->mbStat()->_totalIndexFreeSpace ;
+                           mbContext->mbStat()->_totalIndexFreeSpace ;
          _avgIndexPages = (UINT32)ceil( (double)_totalIndexPages / (double)_numIndexes ) ;
          _avgIndexSize = OPT_ROUND_NUM( (UINT64)ceil( (double)_totalIndexSize / (double)_numIndexes ) ) ;
       }
@@ -636,21 +649,24 @@ namespace engine
             BSONElement beKey = iterKey.next() ;
             const CHAR *pFieldName = beKey.fieldName() ;
             RTN_PREDICATE_MAP::iterator iterPred = predicates.find( pFieldName ) ;
-            if ( iterPred == predicates.end() || iterPred->second.isEmpty() )
+            if ( iterPred == predicates.end() ||
+                 iterPred->second.isEmpty() )
             {
-               predicateList.push_back( NULL ) ;
+               // We don't want full range predicates
+               break ;
             }
             else
             {
                predicateList.push_back( &( iterPred->second ) ) ;
             }
          }
+
          rtnStatPredList::iterator predIter = predicateList.begin() ;
          optStatListKey startKeys, stopKeys ;
-         INT32 rc = _optStatUnit::_evalKeyPair ( pIndexStat, predIter,
-                                                 startKeys, stopKeys,
-                                                 TRUE, selectivity,
-                                                 scanSelectivity ) ;
+         INT32 rc = _optStatUnit::_evalKeyPair( pIndexStat, predIter,
+                                                startKeys, stopKeys,
+                                                TRUE, selectivity,
+                                                scanSelectivity ) ;
 
          if ( SDB_OK == rc )
          {
@@ -1237,6 +1253,7 @@ namespace engine
             if ( iterPred == predicates.end() ||
                  iterPred->second.isEmpty() )
             {
+               // We don't want full range predicates
                break ;
             }
             matchedCount ++ ;
