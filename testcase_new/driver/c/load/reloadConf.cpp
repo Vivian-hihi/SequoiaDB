@@ -53,6 +53,10 @@ INT32 isMasterNode( sdbReplicaGroupHandle& rg, const char* host, const char* svc
 
     sdbNodeHandle master ;
     rc = sdbGetNodeMaster( rg, &master ) ;
+    while( rc == SDB_CLS_NODE_NOT_EXIST )
+    {
+        rc = sdbGetNodeMaster( rg, &master ) ;
+    }
     CHECK_RC_CODE( rc, "fail to get master node in function isMasterNode" ) ;
     const char *host1, *svc1, *nodename1 ;
     INT32 nodeId1 ;
