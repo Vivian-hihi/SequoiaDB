@@ -27,7 +27,7 @@ sdbcm 配置文件名。默认为/opt/sequoiadb/conf/sdbcm.conf。
 NULL
 .SH 版本
 .PP
-Since v1.0.
+v1.0及以上版本。
 .SH 示例
 .IP "1." 3
 获取 sdbcm 配置文件。
