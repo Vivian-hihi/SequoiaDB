@@ -53,6 +53,7 @@ if %errorlevel% == 0 (set inputIsDir=1 & popd) else ( set inputIsDir=0 )
 set outputIsDir=0
 pushd "%TARGET%" 2>null
 if %errorlevel% == 0 (set outputIsDir=1 & popd) else ( set outputIsDir=0 )
+del null
 if %inputIsDir% == 0 (
    if %outputIsDir% == 1 (
       echo Error: the input is a file, the output can not be a directory.
