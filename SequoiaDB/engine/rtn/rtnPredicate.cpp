@@ -1858,6 +1858,8 @@ namespace engine
    const rtnPredicate &_rtnPredicateSet::predicate (const CHAR *fieldName) const
    {
       PD_TRACE_ENTRY ( SDB__RTNPRED_PRED ) ;
+
+      const rtnPredicate *pRet = NULL ;
       RTN_PREDICATE_MAP::const_iterator f = _predicates.find(fieldName);
       if ( _predicates.end() == f )
       {
@@ -1869,10 +1871,14 @@ namespace engine
                   SDB_OSS_NEW rtnPredicate( BSONObj().firstElement(), 0, FALSE,
                                             TRUE ) ;
          }
-         return *genericPredicate ;
+         pRet = genericPredicate ;
+      }
+      else
+      {
+         pRet = &(f->second) ;
       }
       PD_TRACE_EXIT ( SDB__RTNPRED_PRED ) ;
-      return f->second ;
+      return *pRet ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_MALEFORINDEX, "_rtnPredicateSet::matchLevelForIndex" )
