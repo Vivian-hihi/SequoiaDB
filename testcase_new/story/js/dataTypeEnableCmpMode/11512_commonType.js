@@ -370,14 +370,24 @@ function main(){
    
    //{isnull:1}
    var findConf2 = {a:{$isnull:1}};
-   var expRecs2 = [ {b:1},
-      	           {a:null}];         
+   var expRecs2 = [{b:1},
+      	          {a:null}];         
    checkResult( dbcl, findConf2, hintConf, sortConf, expRecs2 );
    
    //{exists:0}
    var findConf3 = {a:{$exists:0}};
    var expRecs3 = [ {b:1}];         
    checkResult( dbcl, findConf3, hintConf, sortConf, expRecs3 );
+   
+   //field
+   var findConf4 = {a:{$field:"b"}};         
+   checkResult( dbcl, findConf4, hintConf, sortConf, [] );
+   
+   var findConf5 = {b:{$field:"a"}};         
+   checkResult( dbcl, findConf5, hintConf, sortConf, [] );
+   
+   var findConf6 = {c:{$field:"d"}};         
+   checkResult( dbcl, findConf6, hintConf, sortConf, [] );
    
 }
 main();
