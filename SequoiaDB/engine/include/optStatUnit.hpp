@@ -38,7 +38,7 @@
 #define OPTSTATUNIT_HPP__
 
 #include "dmsStatUnit.hpp"
-#include "utilSUCache.hpp"
+#include "dmsSUCache.hpp"
 #include "rtnPredicate.hpp"
 #include "ixm.hpp"
 #include "utilList.hpp"
@@ -267,7 +267,7 @@ namespace engine
          _optCollectionStat ( const CHAR *pCollectionName,
                               UINT32 pageSize,
                               _dmsMBContext *mbContext,
-                              const dmsSUCache *statCache ) ;
+                              const dmsStatCache *statCache ) ;
 
          virtual ~_optCollectionStat () {}
 

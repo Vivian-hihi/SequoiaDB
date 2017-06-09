@@ -44,7 +44,7 @@
 #include "ossMem.hpp"
 #include "pmd.hpp"
 #include "dpsLogWrapper.hpp"
-#include "utilSUCache.hpp"
+#include "dmsSUCache.hpp"
 
 namespace engine
 {
@@ -353,22 +353,6 @@ namespace engine
 
          virtual UINT32 getSULID () const = 0 ;
    } ;
-
-   /*
-      _dmsStatCache define
-    */
-   class _dmsStatCache : public dmsSUCache
-   {
-      public :
-         _dmsStatCache( IDmsSUCacheHolder *pHolder = NULL )
-         : dmsSUCache( DMS_CACHE_TYPE_STAT, UTIL_SU_CACHE_UNIT_CLSTAT, pHolder )
-         {
-         }
-
-         virtual ~_dmsStatCache () {}
-   } ;
-
-   typedef class _dmsStatCache dmsStatCache ;
 
 }
 

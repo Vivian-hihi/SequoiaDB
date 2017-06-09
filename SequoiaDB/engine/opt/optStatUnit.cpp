@@ -565,7 +565,7 @@ namespace engine
    _optCollectionStat::_optCollectionStat ( const CHAR *pCollectionName,
                                             UINT32 pageSize,
                                             _dmsMBContext *mbContext,
-                                            const dmsSUCache *statCache )
+                                            const dmsStatCache *statCache )
    : _optStatUnit( pCollectionName, 0 )
    {
       _pageSize = pageSize ;

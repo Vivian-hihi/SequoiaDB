@@ -280,7 +280,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN_ESTHINTPLANS, "_optAccessPlan::_estimateHintPlans" )
    INT32 _optAccessPlan::_estimateHintPlans ( _dmsMBContext *mbContext,
-                                              dmsSUCache *statCache )
+                                              dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 
@@ -456,7 +456,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTPLANS, "_optAccessPlan::_estimatePlans" )
    INT32 _optAccessPlan::_estimatePlans ( _dmsMBContext *mbContext,
-                                          dmsSUCache *statCache )
+                                          dmsStatCache *statCache )
    {
       INT32 rc = SDB_OK ;
 

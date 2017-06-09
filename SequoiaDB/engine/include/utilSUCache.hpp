@@ -360,8 +360,6 @@ namespace engine
          virtual _utilSUCache<CACHESIZE> *getSUCache( UINT8 type ) = 0 ;
    } ;
 
-   typedef class _utilSUCache<UTIL_SU_CACHE_DFT_SIZE> dmsSUCache ;
-
 }
 
 #endif //UTILSUCACHE_HPP__
