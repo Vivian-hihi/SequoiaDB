@@ -8,27 +8,27 @@ if guess_os == "win32":
    sundownFiles = [
       "src/autolink.c",
       "src/buffer.c",
-      "src/markdown.c",
+      "src/markdown.cpp",
       "src/stack.c",
       "src/renderer.c",
       "src/table.cpp",
-      "src/main.c",
-      "win/getopt.c"
+      "src/main.cpp",
+      "src/win/getopt.c"
       ]
 else:
    sundownFiles = [
       "src/autolink.c",
       "src/buffer.c",
-      "src/markdown.c",
+      "src/markdown.cpp",
       "src/stack.c",
       "src/renderer.c",
       "src/table.cpp",
-      "src/main.c"
+      "src/main.cpp"
       ]
       
 #md2TroffTool convertor executable
 md2TroffTool = env.Program("md2TroffTool", sundownFiles,
-                    _LIBDEPS='$_LIBDEPS_OBJS' )
+                           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 env.Install( bin_dir, md2TroffTool )
 
