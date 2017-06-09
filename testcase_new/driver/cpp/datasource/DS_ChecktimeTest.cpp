@@ -28,7 +28,9 @@ TEST(TimeTest,checkIntervalLong)
 	{
 		ds.releaseConnection(vec[i]) ;
 	}
-	ossSleep(4*1000) ;
+	prinf( "before sleep, datasource idle connection num: %d\n", ds.getIdleConnNum() ) ;
+	ossSleep( 6*1000 ) ;
+	printf( "after sleep, datasource idle connection num: %d\n", ds.getIdleConnNum() ) ;
 	EXPECT_EQ(ds.getIdleConnNum(),20) ;
 	ds.close() ;
 }
