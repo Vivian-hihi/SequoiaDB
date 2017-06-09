@@ -140,11 +140,11 @@ namespace engine
                                     pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB ) ;
 
-         virtual INT32 onTruncateCL ( IDmsEventHolder *pEventHolder,
-                                      IDmsSUCacheHolder *pCacheHolder,
-                                      const dmsEventCLItem &clItem,
-                                      pmdEDUCB *cb,
-                                      SDB_DPSCB *dpsCB ) ;
+         //virtual INT32 onTruncateCL ( IDmsEventHolder *pEventHolder,
+         //                             IDmsSUCacheHolder *pCacheHolder,
+         //                             const dmsEventCLItem &clItem,
+         //                             pmdEDUCB *cb,
+         //                             SDB_DPSCB *dpsCB ) ;
 
          virtual INT32 onDropCL ( IDmsEventHolder *pEventHolder,
                                   IDmsSUCacheHolder *pCacheHolder,

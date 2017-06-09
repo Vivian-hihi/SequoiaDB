@@ -799,65 +799,65 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONTRUNCCL, "_dmsStatSUMgr::onTruncateCL" )
-   INT32 _dmsStatSUMgr::onTruncateCL ( IDmsEventHolder *pEventHolder,
-                                       IDmsSUCacheHolder *pCacheHolder,
-                                       const dmsEventCLItem &clItem,
-                                       pmdEDUCB *cb,
-                                       SDB_DPSCB *dpsCB )
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN needDelete = FALSE ;
+   //// PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONTRUNCCL, "_dmsStatSUMgr::onTruncateCL" )
+   //INT32 _dmsStatSUMgr::onTruncateCL ( IDmsEventHolder *pEventHolder,
+   //                                    IDmsSUCacheHolder *pCacheHolder,
+   //                                    const dmsEventCLItem &clItem,
+   //                                    pmdEDUCB *cb,
+   //                                    SDB_DPSCB *dpsCB )
+   //{
+   //   INT32 rc = SDB_OK ;
+   //   BOOLEAN needDelete = FALSE ;
 
-      PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONTRUNCCL ) ;
+   //   PD_TRACE_ENTRY( SDB_DMSSTATSUMGR_ONTRUNCCL ) ;
 
-      SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
+   //   SDB_ASSERT( pEventHolder, "Event holder is invalid" ) ;
 
-      PD_CHECK( _initialized, SDB_INVALIDARG, error, PDWARNING,
-                "Statistics SU is not initialized" ) ;
+   //   PD_CHECK( _initialized, SDB_INVALIDARG, error, PDWARNING,
+   //             "Statistics SU is not initialized" ) ;
 
-      if ( pCacheHolder )
-      {
-         dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
-         if ( pCache )
-         {
-            if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
-            {
-               needDelete = TRUE ;
-            }
-            else
-            {
-               // For statistics cache, mbID is key of cache unit
-               needDelete = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
-            }
-         }
-      }
+   //   if ( pCacheHolder )
+   //   {
+   //      dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
+   //      if ( pCache )
+   //      {
+   //         if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
+   //         {
+   //            needDelete = TRUE ;
+   //         }
+   //         else
+   //         {
+   //            // For statistics cache, mbID is key of cache unit
+   //            needDelete = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
+   //         }
+   //      }
+   //   }
 
-      if ( needDelete && pEventHolder )
-      {
-         const CHAR *pCSName = pEventHolder->getCSName() ;
-         const CHAR *pCLName = clItem._pCLName ;
+   //   if ( needDelete && pEventHolder )
+   //   {
+   //      const CHAR *pCSName = pEventHolder->getCSName() ;
+   //      const CHAR *pCLName = clItem._pCLName ;
 
-         BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
-                                  DMS_STAT_COLLECTION << pCLName ) ) ;
+   //      BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
+   //                               DMS_STAT_COLLECTION << pCLName ) ) ;
 
-         rc = _deleteCollectionStat( boMatcher, cb, NULL ) ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "Failed to delete collection statistics when truncating "
-                      "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
+   //      rc = _deleteCollectionStat( boMatcher, cb, NULL ) ;
+   //      PD_RC_CHECK( rc, PDWARNING,
+   //                   "Failed to delete collection statistics when truncating "
+   //                   "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
 
-         rc = _deleteIndexStat( boMatcher, cb, NULL ) ;
-         PD_RC_CHECK( rc, PDWARNING,
-                      "Failed to delete index statistics when truncating "
-                      "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
-      }
+   //      rc = _deleteIndexStat( boMatcher, cb, NULL ) ;
+   //      PD_RC_CHECK( rc, PDWARNING,
+   //                   "Failed to delete index statistics when truncating "
+   //                   "collection [%s.%s], rc: %d", pCSName, pCLName, rc ) ;
+   //   }
 
-   done :
-      PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_ONTRUNCCL, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
+   //done :
+   //   PD_TRACE_EXITRC( SDB_DMSSTATSUMGR_ONTRUNCCL, rc ) ;
+   //   return rc ;
+   //error :
+   //   goto done ;
+   //}
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTATSUMGR_ONDROPCL, "_dmsStatSUMgr::onDropCL" )
    INT32 _dmsStatSUMgr::onDropCL ( IDmsEventHolder *pEventHolder,
