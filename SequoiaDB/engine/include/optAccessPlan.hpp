@@ -100,10 +100,10 @@ namespace engine
       INT32 _checkOrderBy() ;
 
       INT32 _estimateHintPlans ( _dmsMBContext *mbContext,
-                                 dmsStatCache *statCache ) ;
+                                 dmsSUCache *statCache ) ;
 
       INT32 _estimatePlans ( _dmsMBContext *mbContext,
-                             dmsStatCache *statCache ) ;
+                             dmsSUCache *statCache ) ;
 
       INT32 _estimateIxScanPlan ( _dmsMBContext *mbContext,
                                   optCollectionStat &collectionStat,

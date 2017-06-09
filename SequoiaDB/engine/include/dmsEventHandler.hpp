@@ -40,7 +40,6 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "dms.hpp"
-#include "ixm.hpp"
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "pmd.hpp"
@@ -56,7 +55,6 @@ namespace engine
    class _IDmsEventHolder ;
    typedef class _IDmsEventHolder IDmsEventHolder ;
 
-   typedef class _utilSUCache<DMS_MME_SLOTS> dmsSUCache ;
    typedef class _IUtilSUCacheHolder<DMS_MME_SLOTS> IDmsSUCacheHolder ;
 
    #define DMS_EVENT_MASK_ALL    0xFFFFFFFF
@@ -355,6 +353,22 @@ namespace engine
 
          virtual UINT32 getSULID () const = 0 ;
    } ;
+
+   /*
+      _dmsStatCache define
+    */
+   class _dmsStatCache : public dmsSUCache
+   {
+      public :
+         _dmsStatCache( IDmsSUCacheHolder *pHolder = NULL )
+         : dmsSUCache( DMS_CACHE_TYPE_STAT, UTIL_SU_CACHE_UNIT_CLSTAT, pHolder )
+         {
+         }
+
+         virtual ~_dmsStatCache () {}
+   } ;
+
+   typedef class _dmsStatCache dmsStatCache ;
 
 }
 

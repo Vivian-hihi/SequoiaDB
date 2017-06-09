@@ -38,7 +38,6 @@
 #include "dmsStatUnit.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
-#include "dmsEventHandler.hpp"
 #include "msgDef.hpp"
 
 namespace engine
@@ -1521,12 +1520,5 @@ namespace engine
       PD_TRACE_EXIT( SDB_DMSCLSTAT__FINDFLDSTAT ) ;
    }
 
-   /*
-      _dmsStatCache define
-    */
-   _dmsStatCache::_dmsStatCache ( IDmsSUCacheHolder *pHolder )
-   : dmsSUCache( DMS_CACHE_TYPE_STAT, UTIL_SU_CACHE_UNIT_CLSTAT, pHolder )
-   {
-   }
 }
 

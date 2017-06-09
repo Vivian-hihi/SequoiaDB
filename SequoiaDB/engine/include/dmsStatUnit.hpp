@@ -45,7 +45,6 @@
 #include "utilMap.hpp"
 #include "utilList.hpp"
 #include "utilSUCache.hpp"
-#include "dmsEventHandler.hpp"
 #include "../bson/bson.h"
 #include <cmath>
 
@@ -757,18 +756,6 @@ namespace engine
 
    typedef _dmsCollectionStat dmsCollectionStat ;
 
-   /*
-      _dmsStatCache define
-    */
-   class _dmsStatCache : public dmsSUCache
-   {
-      public :
-         _dmsStatCache( IDmsSUCacheHolder *pHolder = NULL ) ;
-
-         virtual ~_dmsStatCache () {}
-   } ;
-
-   typedef class _dmsStatCache dmsStatCache ;
 }
 
 #endif //DMSSTATUNIT_HPP__
