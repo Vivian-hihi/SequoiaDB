@@ -924,11 +924,11 @@ namespace engine
                                  " Type    : %s(%d)"OSS_NEWLINE,
                                  "INVALIDATE CATA", LOG_TYPE_INVALIDATE_CATA ) ;
             dpsLogRecord::iterator itrType, itrCL, itrIX ;
-            UINT32 invType = 0 ;
+            UINT8 invType = 0 ;
             itrType = this->find( DPS_LOG_INVALIDCATA_TYPE ) ;
             if ( itrType.valid() )
             {
-               invType = *( ( UINT32 * )( itrType.value() ) ) ;
+               invType = *( ( UINT8 * )( itrType.value() ) ) ;
                len += ossSnprintf ( outBuf + len, outSize - len,
                                     " InvType : 0x%02x (%u)"OSS_NEWLINE,
                                     invType, invType ) ;
