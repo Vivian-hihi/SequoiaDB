@@ -616,5 +616,15 @@ function main(){
    var expRecs3 = [ {b:1}];         
    checkResult( dbcl, findConf3, hintConf, sortConf, expRecs3 );
    
+   //field
+   var findConf4 = {a:{$field:"b"}};         
+   checkResult( dbcl, findConf4, hintConf, sortConf, [] );
+   
+   var findConf5 = {b:{$field:"a"}};         
+   checkResult( dbcl, findConf5, hintConf, sortConf, [] );
+   
+   var findConf6 = {c:{$field:"d"}};         
+   checkResult( dbcl, findConf6, hintConf, sortConf, [] );
+   
 }
 main();
