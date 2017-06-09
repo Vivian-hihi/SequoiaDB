@@ -21,7 +21,8 @@ FOR %%A in (%*) DO SET /A ARGS_COUNT+=1
 
 :: 1) check tool program exist or not
 if not EXIST "%PROG_PATH%" (
-   echo Error: "%TOOL1%" or "%TOOL2%" do not exist.
+   echo Error: "%TOOL1%" or "%TOOL2%" do not exist. Please build  
+   echo        "%TOOL1%" from source files or install %TOOL2% first.
    goto END:
 )
 
