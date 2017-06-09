@@ -47,6 +47,8 @@ function main(){
 	           {a:[[0,20,30],[1,20,30]]},
 	           {a:[[0,20,30],[2,20,30]]},
 	           {a:[[1,20,35],[1,25,30]]},
+	           {a:[[1,20,30],50]},
+	           {a:[[1,20,30],0]},
 	           {a:null},
 	           {a:{$minKey:1}},
 	           {a:{$maxKey:1}},
@@ -69,6 +71,8 @@ function main(){
       	           {a:[[0,20,30],[1,20,30]]},
       	           {a:[[0,20,30],[2,20,30]]},
       	           {a:[[1,20,35],[1,25,30]]},
+      	           {a:[[1,20,30],50]},
+	                 {a:[[1,20,30],0]},
       	           {a:{$maxKey:1}}];         
    checkResult( dbcl, findConf1, hintConf, sortConf, expRecs1 );
    
@@ -90,6 +94,8 @@ function main(){
 	                 {a:[[0,20,30],[1,20,30]]},
       	           {a:[[0,20,30],[2,20,30]]},
       	           {a:[[1,20,35],[1,25,30]]},
+      	           {a:[[1,20,30],50]},
+	                 {a:[[1,20,30],0]},
       	           {a:{$maxKey:1}}];         
    checkResult( dbcl, findConf2, hintConf, sortConf, expRecs2 );
    
@@ -129,6 +135,8 @@ function main(){
       	           {a:[1,20]},
       	           {a:[[0,20,30],[1,20,30]]},
       	           {a:[[0,20,30],[2,20,30]]},
+      	           {a:[[1,20,30],50]},
+	                 {a:[[1,20,30],0]},
       	           {a:null},
       	           {a:{$minKey:1}}];         
    checkResult( dbcl, findConf4, hintConf, sortConf, expRecs4 );
@@ -137,7 +145,9 @@ function main(){
    var findConf5 = {a:{$et:[1,20,30]}};
    var expRecs5 = [{a:[1,20,30]},
                    {a:[1,20,30]},
-                   {a:[[0,20,30],[1,20,30]]}];         
+                   {a:[[0,20,30],[1,20,30]]},
+                   {a:[[1,20,30],50]},
+	                {a:[[1,20,30],0]},];         
    checkResult( dbcl, findConf5, hintConf, sortConf, expRecs5 );
    
    //ne
