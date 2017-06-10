@@ -1620,6 +1620,8 @@ namespace engine
          }
 
          su->dumpInfo ( storageUnit ) ;
+
+         storageUnitList.insert( storageUnit ) ;
       } // for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO3 );
    }  // void dumpInfo
