@@ -308,7 +308,7 @@ static JSBool bson_to_json ( JSContext *cx , uintN argc , jsval *vp )
    size = bson_sprint_length ( record ) ;
    VERIFY ( size > 0 ) ;
 
-   //��Ϊbson_sprint_length�����ĳ��ȸ�ʵ����Ҫ�в�࣬���ԼӴ���㳤��
+   //因为bson_sprint_length评估的长度跟实际需要有差距，所以加大估算长度
    size = size * 2 ;
 
    // buf is freed in done:
