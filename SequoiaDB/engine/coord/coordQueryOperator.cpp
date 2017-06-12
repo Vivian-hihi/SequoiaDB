@@ -470,7 +470,8 @@ namespace engine
 
          contextID = pContext->contextID() ;
 
-         if ( ! (flag & FLG_QUERY_MODIFY ) )
+         if ( OSS_BIT_TEST(flag, FLG_QUERY_PREPARE_MORE ) &&
+              !OSS_BIT_TEST(flag, FLG_QUERY_MODIFY ) )
          {
             pContext->setPrepareMoreData( TRUE ) ;
          }

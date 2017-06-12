@@ -48,6 +48,9 @@ using namespace bson ;
 namespace engine
 {
 
+   #define RTN_CTX_PREPARE_MORE_DATA_INIT    (1024 * 4)     /* 4KB */
+   #define RTN_CTX_PREPARE_MORE_DATA_MAX     (1024 * 512)   /* 512KB */
+
    /*
       Functions
    */
@@ -98,6 +101,9 @@ namespace engine
       _countOnly           = FALSE ;
       _pDpsCB              = NULL ;
       _w                   = 1 ;
+
+      _canPrepareMore      = FALSE ;
+      _prepareMoreDataLimit = RTN_CTX_PREPARE_MORE_DATA_INIT ;
    }
 
    _rtnContextBase::~_rtnContextBase()
@@ -496,8 +502,7 @@ namespace engine
 
    INT32 _rtnContextBase::_prepareMoreData( _pmdEDUCB *cb )
    {
-      const INT32 PREPARE_DATA_SIZE_LIMIT = 512 * 1024 ; // 512KB
-      const UINT32 PREPARE_TIMEOUT = 2000 ; // 2ms
+      const UINT32 PREPARE_TIMEOUT = 1000 ; // 1ms
 
       INT32 rc = SDB_OK ;
       UINT64 beginTime ;
@@ -522,7 +527,7 @@ namespace engine
 
          // assume next prepared size equals current,
          // so break if data size exceeds limit when prepare once more time
-         if ( _bufferEndOffset + currentPreparedSize >= PREPARE_DATA_SIZE_LIMIT )
+         if ( _bufferEndOffset + currentPreparedSize >= _prepareMoreDataLimit )
          {
             break ;
          }
@@ -533,6 +538,11 @@ namespace engine
          {
             break ;
          }
+      }
+
+      if ( _prepareMoreDataLimit < RTN_CTX_PREPARE_MORE_DATA_MAX )
+      {
+         _prepareMoreDataLimit *= 2 ;
       }
 
    done:

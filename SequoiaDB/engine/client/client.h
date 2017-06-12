@@ -143,6 +143,8 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
 #define QUERY_PARALLED            0x00000100
 /** In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance */
 #define QUERY_WITH_RETURNDATA     0x00000200
+/** Enable prepare more data when query */
+#define QUERY_PREPARE_MORE        0x00004000
 
 
 /** \fn INT32 initClient ( sdbClientConf* config ) ;

@@ -451,6 +451,12 @@ namespace engine
                                contextID, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create new data context" ) ;
 
+      if ( OSS_BIT_TEST(flags, FLG_QUERY_PREPARE_MORE ) &&
+           !OSS_BIT_TEST(flags, FLG_QUERY_MODIFY ) )
+      {
+         dataContext->setPrepareMoreData( TRUE ) ;
+      }
+
       if ( Object == hint.getField( FIELD_NAME_META ).type() )
       {
          BSONObjBuilder build ;

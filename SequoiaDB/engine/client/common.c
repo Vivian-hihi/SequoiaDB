@@ -866,6 +866,7 @@ error:
 #define _QUERY_FORCE_HINT          0x00000080
 #define _QUERY_PARALLED            0x00000100
 #define _QUERY_WITH_RETURNDATA     0x00000200
+#define _QUERY_PREPARE_MORE        0x00004000
 
 struct _QueryFlagStat
 {
@@ -877,7 +878,8 @@ typedef struct _QueryFlagStat QueryFlagStat ;
 static QueryFlagStat stats[] = {
    { _QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT },
    { _QUERY_PARALLED, FLG_QUERY_PARALLED },
-   {_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA }
+   { _QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA },
+   { _QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE }
 } ;
 
 static const QueryFlagStat* _getQueryFlagPair( const INT32 flag )

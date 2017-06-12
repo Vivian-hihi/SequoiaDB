@@ -67,8 +67,6 @@ namespace engine
       _keyGen           = NULL ;
       _needReOrder      = FALSE ;
 
-      _canPrepareMore   = FALSE ;
-
       _pSite            = NULL ;
       _pSession         = NULL ;
    }

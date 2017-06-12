@@ -232,6 +232,10 @@ namespace engine
          INT32    prefetchResult() const { return _prefetchRet ; }
          INT32    prefetch ( _pmdEDUCB *cb, UINT32 prefetchID ) ;
          void     waitForPrefetch() ;
+         void     setPrepareMoreData( BOOLEAN canPrepare )
+         {
+            _canPrepareMore = canPrepare ;
+         }
 
       public:
          virtual std::string      name() const = 0 ;
@@ -245,7 +249,7 @@ namespace engine
          virtual INT32     _prepareData( _pmdEDUCB *cb ) = 0 ;
          virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
          virtual void      _toString( stringstream &ss ) {}
-         virtual BOOLEAN   _canPrepareMoreData() const { return FALSE ;}
+         BOOLEAN           _canPrepareMoreData() const { return _canPrepareMore ;}
          INT32             _prepareMoreData( _pmdEDUCB *cb );
 
       protected:
@@ -294,6 +298,9 @@ namespace engine
          _monAppCB               *_pMonAppCB ;
 
          BOOLEAN                 _countOnly ;
+
+         BOOLEAN                 _canPrepareMore ;
+         INT32                   _prepareMoreDataLimit ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
    typedef _rtnContextBase rtnContext ;

@@ -1892,6 +1892,12 @@ namespace engine
                    "Failed to create new main-collection context(rc=%d)",
                    rc );
 
+      if ( OSS_BIT_TEST(flags, FLG_QUERY_PREPARE_MORE ) &&
+           !OSS_BIT_TEST(flags, FLG_QUERY_MODIFY ) )
+      {
+         pContextMainCL->setPrepareMoreData( TRUE ) ;
+      }
+
       rc = pContextMainCL->open( options,
                                  strSubCLList,
                                  includeShardingOrder,
@@ -2443,6 +2449,13 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                   "failed to create new main-collection context(rc=%d)",
                   rc );
+
+      if ( OSS_BIT_TEST(flags, FLG_QUERY_PREPARE_MORE ) &&
+           !OSS_BIT_TEST(flags, FLG_QUERY_MODIFY ) )
+      {
+         pContextMainCL->setPrepareMoreData( TRUE ) ;
+      }
+
       rc = pContextMainCL->open( boEmpty, numToReturn, numToSkip ) ;
       PD_RC_CHECK( rc, PDERROR, "open main-collection context failed(rc=%d)",
                    rc );

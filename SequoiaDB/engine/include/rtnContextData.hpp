@@ -95,10 +95,6 @@ namespace engine
             // If contain modifier, do not use prefetch
             return ( _queryModifier ? FALSE : TRUE ) ;
          }
-         virtual BOOLEAN   _canPrepareMoreData() const
-         {
-            return TRUE ;
-         }
          virtual void      _toString( stringstream &ss ) ;
 
       protected:
@@ -205,10 +201,6 @@ namespace engine
          void           _removeSubContext( rtnContextData *pContext ) ;
          INT32          _getSubCtxWithData ( rtnContextData **ppContext,
                                              _pmdEDUCB *cb ) ;
-         virtual BOOLEAN _canPrepareMoreData() const
-         {
-            return TRUE ;
-         }
 
       protected:
          std::vector< _rtnContextData* >           _vecContext ;

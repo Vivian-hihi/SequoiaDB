@@ -145,13 +145,7 @@ namespace engine
          void enablePreRead() { _preRead = TRUE ; }
          void disablePreRead() { _preRead = FALSE ; }
 
-         void setPrepareMoreData( BOOLEAN canPrepare )
-         {
-            _canPrepareMore = canPrepare ;
-         }
-
       protected:
-         virtual BOOLEAN _canPrepareMoreData() const { return _canPrepareMore ;}
          virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
          virtual void    _toString( stringstream &ss ) ;
 
@@ -181,8 +175,6 @@ namespace engine
          coordOrderKey              _emptyKey ;
          BSONObj                    _orderBy ;
          BOOLEAN                    _preRead ;
-
-         BOOLEAN                    _canPrepareMore ;
 
          _ixmIndexKeyGen            *_keyGen ;
 

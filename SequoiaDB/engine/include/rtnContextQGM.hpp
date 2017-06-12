@@ -63,10 +63,6 @@ namespace engine
 
       protected:
          virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
-         virtual BOOLEAN _canPrepareMoreData() const
-         {
-            return TRUE ;
-         }
 
       private:
          _qgmPlanContainer          *_accPlan ;
@@ -92,10 +88,6 @@ namespace engine
 
    protected:
       virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
-      virtual BOOLEAN _canPrepareMoreData() const
-      {
-         return TRUE ;
-      }
 
    private:
       _qgmPlan *_qp ;
