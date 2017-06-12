@@ -53,8 +53,12 @@ namespace engine {
 
 #if defined ( _WINDOWS )
 
-   INT32 _sptMultiByte2MultiByte( UINT32 sourceCodePage, UINT32 targetCodePage,
-                                  const std::string& strGBK, std::string &strUTF8 )
+   // both GBK and UTF8 are multi-byte coding schemes,
+   // we can use the function to convert one to another.
+   INT32 _sptConvertMultiByte( UINT32 sourceCodePage, 
+                               UINT32 targetCodePage,
+                               const std::string& sourceStr, 
+                               std::string &targetStr )
    {
       INT32 rc = SDB_OK ;
       INT32 requiredSize = 0 ;
@@ -63,7 +67,7 @@ namespace engine {
       WCHAR *wchars = NULL ;
 
       // multi byte(GBK/UTF-8) to wide chars(Unicode)
-      requiredSize = MultiByteToWideChar( sourceCodePage, 0, strGBK.c_str(), 
+      requiredSize = MultiByteToWideChar( sourceCodePage, 0, sourceStr.c_str(), 
                                           -1, NULL, 0 ) ;
       wchars = (WCHAR *)SDB_OSS_MALLOC( requiredSize * sizeof(WCHAR) ) ;
       if ( !wchars )
@@ -72,7 +76,7 @@ namespace engine {
          goto error ;
       }
       ossMemset( wchars, 0, requiredSize * sizeof(WCHAR) ) ;
-      MultiByteToWideChar( sourceCodePage, 0, strGBK.c_str(), 
+      MultiByteToWideChar( sourceCodePage, 0, sourceStr.c_str(), 
                            -1, wchars, requiredSize ) ;
       // wide chars(Unicode) to multi byte(UTF-8/GBK)
       requiredSize = WideCharToMultiByte( targetCodePage, 0, wchars, 
@@ -87,7 +91,7 @@ namespace engine {
       WideCharToMultiByte( targetCodePage, 0, wchars, -1, 
                            chars, requiredSize, NULL, NULL ) ;
       // return
-      strUTF8 = chars ;
+      targetStr = chars ;
       
    done:
       SAFE_OSS_FREE( chars ) ;
@@ -100,13 +104,13 @@ namespace engine {
    // transform GBK to UTF-8
    INT32 sptGBKToUTF8( const std::string& strGBK, std::string &strUTF8 )
    {
-      return _sptMultiByte2MultiByte( CP_ACP, CP_UTF8, strGBK, strUTF8 ) ;
+      return _sptConvertMultiByte( CP_ACP, CP_UTF8, strGBK, strUTF8 ) ;
    }
 
    // transform UTF-8 to GBK
    INT32 sptUTF8ToGBK( const std::string &strUTF8, std::string &strGBK )
    {
-      return _sptMultiByte2MultiByte( CP_UTF8, CP_ACP, strUTF8, strGBK ) ;
+      return _sptConvertMultiByte( CP_UTF8, CP_ACP, strUTF8, strGBK ) ;
    }
 #endif
 
@@ -207,7 +211,7 @@ namespace engine {
            output.push_back( word ) ;
            word.clear() ;
        }
-       if ( !digit.empty() ) 
+       if ( !digit.empty() )
        {
            output.push_back( digit ) ;
            digit.clear() ;
