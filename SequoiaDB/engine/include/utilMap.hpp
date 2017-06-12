@@ -1026,6 +1026,17 @@ namespace engine
       const CHAR * _pString ;
    } ;
 
+   template < typename T, UINT32 stackSize = UTIL_MAP_DEFAULT_STACK_SIZE >
+   class _utilStringMap : public _utilMap< _utilMapStringKey, T, stackSize >
+   {
+      private :
+         OSS_INLINE T& operator[] ( const _utilMapStringKey& key )
+         {
+            // Disabled
+            return _utilMap< _utilMapStringKey, T, stackSize >::operator[]( key ) ;
+         }
+   } ;
+
 }
 
 #endif // UTIL_MAP_HPP_

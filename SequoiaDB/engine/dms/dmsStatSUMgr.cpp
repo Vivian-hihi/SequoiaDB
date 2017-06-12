@@ -1059,7 +1059,8 @@ namespace engine
          pStatCache = SDB_OSS_NEW dmsStatCache( NULL ) ;
          PD_CHECK( pStatCache, SDB_OOM, error, PDWARNING,
                    "Failed to allocate memory for statistics map" ) ;
-         statCacheMap[ pCSName ] = pStatCache ;
+         statCacheMap.insert( dmsStatCacheMap::value_type( pMonCS->_name,
+                                                           pStatCache ) ) ;
       }
       else
       {
@@ -1072,7 +1073,8 @@ namespace engine
             PD_CHECK( pStatCache, SDB_OOM, error, PDWARNING,
                       "Failed to allocate memory for statistics map" ) ;
 
-            statCacheMap[ pCSName ] = pStatCache ;
+            statCacheMap.insert( dmsStatCacheMap::value_type( pMonCS->_name,
+                                                              pStatCache ) ) ;
          }
       }
 

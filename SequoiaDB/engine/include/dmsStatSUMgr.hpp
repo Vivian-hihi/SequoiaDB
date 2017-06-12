@@ -51,7 +51,7 @@ using namespace std ;
 namespace engine
 {
 
-   typedef _utilMap< _utilMapStringKey, dmsStatCache * > dmsStatCacheMap ;
+   typedef _utilStringMap< dmsStatCache * > dmsStatCacheMap ;
 
    /*
       _dmsStatSUMgr define

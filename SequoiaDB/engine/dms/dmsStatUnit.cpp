@@ -1204,6 +1204,8 @@ namespace engine
       {
          dmsIndexStat *pIndexStat = (dmsIndexStat *)pSubUnit ;
          const CHAR *pIndexName = pIndexStat->getIndexName() ;
+         INDEX_STAT_MAP::value_type idxStatValue( pIndexName, pIndexStat ) ;
+
          INDEX_STAT_ITERATOR iter = _indexStats.find( pIndexName ) ;
          if ( iter != _indexStats.end() )
          {
@@ -1215,13 +1217,13 @@ namespace engine
                _indexStats.erase( iter ) ;
                SAFE_OSS_DELETE( pTempStat ) ;
 
-               _indexStats[ pIndexName ] = pIndexStat ;
+               _indexStats.insert( idxStatValue ) ;
                added = TRUE ;
             }
          }
          else
          {
-            _indexStats[ pIndexName ] = pIndexStat ;
+            _indexStats.insert( idxStatValue ) ;
             added = TRUE ;
          }
 
@@ -1435,6 +1437,7 @@ namespace engine
            pIndexStat->getNumKeys() > 0 )
       {
          const CHAR *pFirstField = pIndexStat->getFirstField() ;
+         INDEX_STAT_MAP::value_type fieldStatValue( pFirstField, pIndexStat ) ;
          INDEX_STAT_ITERATOR iter = _fieldStats.find( pFirstField ) ;
          if ( iter != _fieldStats.end() )
          {
@@ -1442,18 +1445,18 @@ namespace engine
 
             if ( pIndexStat->getNumKeys() < pTempStat->getNumKeys() )
             {
-               _fieldStats[ pFirstField ] = pIndexStat ;
+               _fieldStats.insert( fieldStatValue ) ;
             }
             else if ( pTempStat->getNumKeys() == pIndexStat->getNumKeys() &&
                       ( ignoreCrtTime ||
                         pTempStat->getCreateTime() < pIndexStat->getCreateTime() ) )
             {
-               _fieldStats[ pFirstField ] = pIndexStat ;
+               _fieldStats.insert( fieldStatValue ) ;
             }
          }
          else
          {
-            _fieldStats[ pFirstField ] = pIndexStat ;
+            _fieldStats.insert( fieldStatValue ) ;
          }
       }
 
@@ -1513,7 +1516,9 @@ namespace engine
          _fieldStats.erase( iterField ) ;
          if ( pNewFieldStat )
          {
-            _fieldStats[ pNewFieldStat->getFirstField() ] = pNewFieldStat ;
+            INDEX_STAT_MAP::value_type fieldStatValue(
+                  pNewFieldStat->getFirstField(), pNewFieldStat ) ;
+            _fieldStats.insert( fieldStatValue ) ;
          }
       }
 

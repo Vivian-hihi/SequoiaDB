@@ -595,7 +595,7 @@ namespace engine
 
    typedef _dmsIndexStat dmsIndexStat ;
 
-   typedef _utilMap< _utilMapStringKey, dmsIndexStat * > INDEX_STAT_MAP ;
+   typedef _utilStringMap< dmsIndexStat * > INDEX_STAT_MAP ;
 
    typedef INDEX_STAT_MAP::iterator INDEX_STAT_ITERATOR ;
    typedef INDEX_STAT_MAP::const_iterator INDEX_STAT_CONST_ITERATOR ;
