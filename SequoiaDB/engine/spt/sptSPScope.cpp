@@ -232,7 +232,7 @@ namespace engine
    } ;
 
    #define SPT_RVAL_KEY          ""
-   const UINT32 RUNTIME_SIZE = 32 * 1024 * 1024 ;
+   const UINT32 RUNTIME_SIZE = 64 * 1024 * 1024 ;
 
    /*
       _sptSPResultVal implement
