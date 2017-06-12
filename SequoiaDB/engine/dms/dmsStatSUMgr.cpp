@@ -97,9 +97,7 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
 
       SDB_ASSERT ( _dmsCB, "dmsCB can't be NULL" ) ;
-
-      SDB_ASSERT( cb && EDU_TYPE_MAIN == cb->getType(),
-                  "Must register in main thread" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
 
       // exclusive lock SYSSTAT cb. this function should be called during
       // process initialization, so it shouldn't be called in parallel by
