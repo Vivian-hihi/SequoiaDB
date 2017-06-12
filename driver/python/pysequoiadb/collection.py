@@ -36,6 +36,7 @@ from pysequoiadb.error import (SDBBaseError,
 QUERY_FLG_WITH_RETURNDATA = 0x00000080
 QUERY_FLG_PARALLED        = 0x00000100
 QUERY_FLG_FORCE_HINT      = 0x00000200
+QUERY_PREPARE_MORE        = 0x00004000
 
 class collection(object):
    """Collection for SequoiaDB
@@ -538,6 +539,7 @@ class collection(object):
          QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
          QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
          QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
+         QUERY_PREPARE_MORE        : Enable prepare more data when query
       """
 
       bson_condition = None
@@ -1229,6 +1231,7 @@ class collection(object):
          QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
          QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
          QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
+         QUERY_PREPARE_MORE        : Enable prepare more data when query
       """
       bson_condition = None
       bson_selector = None

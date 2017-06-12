@@ -73,6 +73,12 @@ public class DBQuery {
      */
     static final int FLG_QUERY_MODIFY = 0x00001000;
 
+    /**
+     * @memberof FLG_QUERY_PREPARE_MORE 0x00004000
+     * @brief Enable prepare more data when query.
+     */
+    public static final int FLG_QUERY_PREPARE_MORE = 0x00004000;
+
     final static Map<Integer, Integer> flagsMap = new HashMap<Integer, Integer>();
 
     static {
@@ -80,6 +86,7 @@ public class DBQuery {
         flagsMap.put(FLG_QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT);
         flagsMap.put(FLG_QUERY_PARALLED, FLG_QUERY_PARALLED);
         flagsMap.put(FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA);
+        flagsMap.put(FLG_QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE);
     }
 
     public DBQuery() {
