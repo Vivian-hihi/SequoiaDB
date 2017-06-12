@@ -715,7 +715,7 @@ namespace engine
       }
       else if ( NULL != clname )
       {
-         rc = _getCLGrps( clname, cb, ctrlParam ) ;
+         rc = _getCLGrps( pMsg, clname, cb, ctrlParam ) ;
          PD_RC_CHECK( rc, PDERROR, "Get groups of collection[%s], rc: %d",
                       clname, rc ) ;
       }
@@ -767,13 +767,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 _coordCMDAnalyze::_getCLGrps ( const CHAR *clname, pmdEDUCB *cb,
+   INT32 _coordCMDAnalyze::_getCLGrps ( MsgHeader *pMsg,
+                                        const CHAR *clname,
+                                        pmdEDUCB *cb,
                                         coordCtrlParam &ctrlParam )
    {
       INT32 rc = SDB_OK ;
 
       coordCataSel cataSel ;
       CoordGroupList grpLst, exceptLst ;
+      MsgOpQuery *pRequest = (MsgOpQuery *)pMsg;
 
       rc = cataSel.bind( _pResource, clname, cb, TRUE, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Update collection[%s]'s catalog info failed, "
@@ -783,6 +786,9 @@ namespace engine
       rc = cataSel.getGroupLst( cb, exceptLst, grpLst ) ;
       PD_RC_CHECK( rc, PDERROR, "Get collection[%s]'s group list failed, "
                    "rc: %d", clname, rc ) ;
+
+      // Set the version for verify in data-groups
+      pRequest->version = cataSel.getCataPtr()->getVersion() ;
 
       ctrlParam._useSpecialGrp = TRUE ;
       ctrlParam._specialGrps = grpLst ;
