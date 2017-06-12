@@ -1415,7 +1415,6 @@ namespace engine
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       DPS_LSN lsn = dpsCB->expectLsn() ;
-      rtnAnalyzeParam param ;
 
       if ( CLS_FS_STATUS_END != _status )
       {
