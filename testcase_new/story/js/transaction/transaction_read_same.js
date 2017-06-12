@@ -17,6 +17,8 @@ function dbArrayNew( db )
       for( i = 0; i < CONNECTNUM; ++i )
       {
          db[i] = new Sdb( COORDHOSTNAME, COORDSVCNAME ) ;
+         commDropCL( db[i], COMMCSNAME, COMMCLNAME, true, true,
+               "drop collection in the beginning" ) ;
       }
    }
    catch( e )
@@ -62,7 +64,7 @@ function dbReadDifferent( db )
       println( " failed to begin transaction: " + e ) ;
       throw e ;
    }
-   for( i = 0; i < 10000; ++i )
+   for( i = 0; i < 1000; ++i )
    {
       cl1.insert( { "transTest":i } ) ;
    }
