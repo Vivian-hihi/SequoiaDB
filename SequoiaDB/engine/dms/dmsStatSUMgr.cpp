@@ -1383,7 +1383,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DMSSTATSUMGR__UPDATEIDXSTAT ) ;
 
       rc = rtnUpdate( DMS_STAT_INDEX_CL_NAME, boMatcher, boUpdator,
-                      _collectionHint, 0, cb, _dmsCB, dpsCB, 1 ) ;
+                      _indexHint, 0, cb, _dmsCB, dpsCB, 1 ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Update index statistics [%s] with [%s] failed, rc: %d",
                    boMatcher.toString( FALSE, TRUE ).c_str(),

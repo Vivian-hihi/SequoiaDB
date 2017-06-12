@@ -600,8 +600,17 @@ namespace engine
          dpsCB->writeData( info ) ;
       }
 
-      pCSCB->_su->getEventHolder()->onRenameCS( DMS_EVENT_MASK_ALL,
-                                                pName, pNewName, cb, dpsCB ) ;
+      if ( SDB_OK == _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
+      {
+         if ( isLocked )
+         {
+            _mutex.release () ;
+            isLocked = FALSE ;
+         }
+         pCSCB->_su->getEventHolder()->onRenameCS( DMS_EVENT_MASK_ALL,
+                                                   pName, pNewName, cb, dpsCB ) ;
+         _latchVec[suID]->release_w() ;
+      }
 
    done :
       if ( isLocked )
