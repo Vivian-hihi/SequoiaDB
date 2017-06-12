@@ -11,6 +11,11 @@
    <parameter name="RSRVNODEDIR" value="/opt/sequoiadb/database/" />
    <parameter name="WORKDIR" value="/tmp/javatest" />
    
+   <test name="parralclass">
+      <packages>
+		  	<package name="com.sequoiadb.crud.biglob" />
+      </packages>      
+   </test>
 
 </suite>
    
