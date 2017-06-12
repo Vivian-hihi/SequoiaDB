@@ -55,7 +55,7 @@ private[spark] object BSONConverter {
     private def toBsonObj(value: Any, dataType: DataType): Any = {
         Option(value).map { v =>
             (dataType, v) match {
-                case (ArrayType(elementType, _), array: ArrayBuffer[Any@unchecked]) =>
+                case (ArrayType(elementType, _), array: Seq[Any@unchecked]) =>
                     val bsonList: BasicBSONList = new BasicBSONList
                     array.zipWithIndex.foreach {
                         case (obj, i) => bsonList.put(i, toBsonObj(obj, elementType))
