@@ -55,6 +55,9 @@ namespace engine
 
    typedef multiset<DPS_LSN_OFFSET> CLS_WAKE_PLAN ;
 
+   /*
+      _clsSyncManager define
+   */
    class _clsSyncManager : public SDBObject
    {
    public:
