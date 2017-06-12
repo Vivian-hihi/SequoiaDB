@@ -135,7 +135,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to init temp cb, rc: %d", rc ) ;
 
       // 3. init stat cs cb
-      if ( SDB_ROLE_DATA == pmdGetDBRole() )
+      if ( SDB_ROLE_DATA == pmdGetDBRole() ||
+           SDB_ROLE_STANDALONE == pmdGetDBRole() )
       {
          rc = _statSUMgr.init() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init stat cb, rc: %d", rc ) ;

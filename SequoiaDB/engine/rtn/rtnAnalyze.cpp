@@ -200,7 +200,8 @@ namespace engine
 
       PD_TRACE_ENTRY( SDB_RTNANALYZE ) ;
 
-      if ( SDB_ROLE_DATA != pmdGetDBRole() )
+      if ( SDB_ROLE_DATA != pmdGetDBRole() &&
+           SDB_ROLE_STANDALONE != pmdGetDBRole() )
       {
          goto done ;
       }
@@ -245,7 +246,8 @@ namespace engine
       rtnAnalyzeParam param ;
       param._mode = SDB_ANALYZE_MODE_CLEAR ;
 
-      if ( SDB_ROLE_DATA != pmdGetDBRole() )
+      if ( SDB_ROLE_DATA != pmdGetDBRole() &&
+           SDB_ROLE_STANDALONE != pmdGetDBRole() )
       {
          goto done ;
       }
@@ -270,6 +272,12 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNRELOADCLSTATS ) ;
 
       dmsStatCache *pStatCache = pSU->getStatCache() ;
+
+      if ( SDB_ROLE_DATA != pmdGetDBRole() &&
+           SDB_ROLE_STANDALONE != pmdGetDBRole() )
+      {
+         goto done ;
+      }
 
       if ( NULL != pStatCache )
       {
