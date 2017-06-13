@@ -1602,6 +1602,23 @@ namespace engine
       PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
                 "No statistics manger in storage unit [%s]", pCSName ) ;
 
+      if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pStatCache->getStatus( mbContext->mbID() ) )
+      {
+         rc = mbContext->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock dms mb context EXCLUSIVE failed, "
+                      "rc: %d", rc ) ;
+
+         if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY ==
+               pStatCache->getStatus( mbContext->mbID() ) )
+         {
+            rtnReloadCLStats ( pSU, mbContext, cb, dmsCB ) ;
+         }
+
+         rc = mbContext->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock dms mb context SHARED failed, "
+                      "rc: %d", rc ) ;
+      }
+
       if ( NULL == pStatCache->getCacheUnit( mbContext->mbID() ) )
       {
          // Collection statistics is missing, re-analyze one

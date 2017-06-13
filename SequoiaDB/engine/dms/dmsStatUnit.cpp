@@ -1215,6 +1215,8 @@ namespace engine
                  pTempStat->getCreateTime() < pIndexStat->getCreateTime() )
             {
                _indexStats.erase( iter ) ;
+               // Update field statistics before delete it
+               _findNewFieldStat( pTempStat ) ;
                SAFE_OSS_DELETE( pTempStat ) ;
 
                _indexStats.insert( idxStatValue ) ;
