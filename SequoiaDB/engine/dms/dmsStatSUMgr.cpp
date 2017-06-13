@@ -877,14 +877,17 @@ namespace engine
       if ( pCacheHolder )
       {
          dmsSUCache *pCache = pCacheHolder->getSUCache( DMS_CACHE_TYPE_STAT ) ;
-         if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
+         if ( pCache )
          {
-            needDelete = TRUE ;
-         }
-         else
-         {
-            // For statistics cache, mbID is key of cache unit
-            needDelete = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
+            if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pCache->getStatus( clItem._mbID ) )
+            {
+               needDelete = TRUE ;
+            }
+            else
+            {
+               // For statistics cache, mbID is key of cache unit
+               needDelete = pCache->removeCacheUnit( clItem._mbID, TRUE ) ;
+            }
          }
       }
 
