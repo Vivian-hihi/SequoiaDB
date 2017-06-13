@@ -59,6 +59,8 @@ namespace engine
 
    #define DMS_STAT_IDX_INDEX                  "Index"
 
+   #define DMS_STAT_IDX_MCV                   "MCV"
+
    #define DMS_STAT_DEF_VERSION                ( 0 )
    #define DMS_STAT_DEF_AVG_NUM_FIELDS         ( 10 )
    #define DMS_STAT_DEF_TOTAL_PAGES            ( 1 )
@@ -540,7 +542,7 @@ namespace engine
                                 double &predSelectivity,
                                 double &scanSelectivity ) const ;
 
-         OSS_INLINE BOOLEAN isValid () const
+         OSS_INLINE BOOLEAN isValidForEstimate () const
          {
             return _mcvSet.getSize() > 0 ;
          }

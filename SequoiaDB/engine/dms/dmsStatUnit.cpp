@@ -1435,7 +1435,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_DMSCLSTAT__ADDFLDSTAT ) ;
 
       if ( pIndexStat &&
-           pIndexStat->isValid() &&
+           pIndexStat->isValidForEstimate() &&
            pIndexStat->getNumKeys() > 0 )
       {
          const CHAR *pFirstField = pIndexStat->getFirstField() ;

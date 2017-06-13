@@ -565,7 +565,19 @@ namespace engine
       BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pCSName <<
                                DMS_STAT_COLLECTION << pCLName <<
                                DMS_STAT_IDX_INDEX << pIXName ) ) ;
-      BSONObj boUpdator = BSON( "$set" << pIndexStat->toBSON() ) ;
+      BSONObj boUpdator ;
+
+      if ( pIndexStat->isValidForEstimate() )
+      {
+         boUpdator = BSON( "$set" << pIndexStat->toBSON() ) ;
+      }
+      else
+      {
+         // Unset optional fields, which do not exist in default statistics
+         boUpdator = BSON( "$set" << pIndexStat->toBSON() <<
+                           "$unset" << BSON( DMS_STAT_IDX_MCV << "" ) ) ;
+      }
+
 
       rc = rtnUpdate( DMS_STAT_INDEX_CL_NAME, boMatcher,
                       boUpdator, _indexHint, FLG_UPDATE_UPSERT,

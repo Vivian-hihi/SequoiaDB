@@ -232,7 +232,7 @@ namespace engine
 
          OSS_INLINE virtual BOOLEAN isValid () const
          {
-            return ( _pIndexStat && _pIndexStat->isValid() ) ;
+            return ( _pIndexStat && _pIndexStat->isValidForEstimate() ) ;
          }
 
          double evalPredicateList ( const CHAR *pFieldName,

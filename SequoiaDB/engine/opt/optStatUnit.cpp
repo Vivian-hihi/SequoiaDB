@@ -769,7 +769,7 @@ namespace engine
 
       // Try to use the field statistics first
       const dmsIndexStat *pIndexStat = getFieldStat( pFieldName ) ;
-      if ( pIndexStat && pIndexStat->isValid() )
+      if ( pIndexStat && pIndexStat->isValidForEstimate() )
       {
          optStatElementKey statKey( beValue, TRUE ) ;
          if ( pIndexStat->getNumKeys() == 1 )
@@ -804,7 +804,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__OPTCLSTAT_EVALGTOPTR ) ;
 
       const dmsIndexStat *pIndexStat = getFieldStat( pFieldName ) ;
-      if ( pIndexStat && pIndexStat->isValid() )
+      if ( pIndexStat && pIndexStat->isValidForEstimate() )
       {
          optStatElementKey statKey( beValue, included ) ;
          rc = pIndexStat->evalGTOperator( statKey, selectivity, dummy ) ;
@@ -832,7 +832,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__OPTCLSTAT_EVALLTOPTR ) ;
 
       const dmsIndexStat *pIndexStat = getFieldStat( pFieldName ) ;
-      if ( pIndexStat && pIndexStat->isValid() )
+      if ( pIndexStat && pIndexStat->isValidForEstimate() )
       {
          optStatElementKey statKey( beValue, included ) ;
          rc = pIndexStat->evalLTOperator( statKey, selectivity, dummy ) ;
