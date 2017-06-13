@@ -124,7 +124,15 @@
                      </then>
                      <else>
                         <copyfile src="${casedir}/@{onexml}" dest="${casedir}/proxyxml_release.xml"/>
-                        <var name="xmlfile" value="${xmlfile},proxyxml_release.xml"/>
+                        <if>
+                           <isset property="xmlfile"/>
+                           <then>
+                              <var name="xmlfile" value="${xmlfile},proxyxml_release.xml"/>
+                           </then>
+                           <else>
+                              <var name="xmlfile" value="proxyxml_release.xml"/>
+                           </else>
+                        </if>
                      </else>
                   </if>
                </sequential>
