@@ -33,6 +33,8 @@ class SequoiaCL
    define( "SDB_FLG_FIND_PARALLED",        0x00000100 ) ;
    /** In general, query won't return data until cursor get from database, when add this flag, return data in query response, it will be more high-performance. */
    define( "SDB_FLG_FIND_WITH_RETURNDATA", 0x00000200 ) ;
+   /** Enable prepare more data when query */
+   define( "SDB_FLG_QUERY_PREPARE_MORE",   0x00004000 ) ;
    
    /** Force to use specified hint to query, if database have no index assigned by the hint, fail to query */
    define( "SDB_FLG_QUERY_FORCE_HINT",     0x00000080 ) ;
@@ -508,6 +510,7 @@ class SequoiaCL
     *                                   SDB_FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
     *                                   SDB_FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
     *                                                                               when add this flag, return data in query response, it will be more high-performance
+    *                                   SDB_FLG_QUERY_PREPARE_MORE(0x00004000)    : Enable prepare more data when query
     *                                   @endcode
     *
     * @return Returns a new SequoiaCursor object.
