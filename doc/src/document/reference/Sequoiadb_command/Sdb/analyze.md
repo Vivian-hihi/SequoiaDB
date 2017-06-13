@@ -29,11 +29,11 @@
 
 无返回值，出错抛异常，并输出错误信息。可以通过 [getLastErrObj()](reference/Sequoiadb_command/Global/getLastErrObj.md)  或 [getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md) 获取错误信息 或 通过 [getLastError()](reference/Sequoiadb_command/Global/getLastError.md) 获取错误码。该操作主要的异常如下：
 
-  *  **SDB_DMS_CS_NOTEXIST**(-34)  
+  *  **SDB_DMS_CS_NOTEXIST**(-34)
      指定的集合空间不存在。
-  *  **SDB_CS_NOTEXIST**(-23)  
+  *  **SDB_CS_NOTEXIST**(-23)
      指定的集合不存在。
-  *  **SDB_IXM_NOTEXIST**(-47)  
+  *  **SDB_IXM_NOTEXIST**(-47)
      指定的索引不存在。
   *  **SDB_INVALIDARG**(-6)
      指定的参数可能存在冲突，请参考**Options**的约束。
@@ -69,7 +69,13 @@
   > db.analyze( { Collection : "foo.bar", SampleNum : 1000 } )
   ```
 
-5. 对指定集合"foo.bar"生成清空统计信息缓存
+5. 对指定集合"foo.bar"的索引"index"进行统计信息收集
+
+  ```lang-javascript
+  > db.analyze( { Collection : "foo.bar", Index : "index" } )
+  ```
+
+6. 对指定集合"foo.bar"生成清空统计信息缓存
 
    ```lang-javascript
    > db.analyze( { Collection : "foo.bar", Mode : 5 } )
