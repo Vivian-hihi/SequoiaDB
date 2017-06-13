@@ -181,7 +181,6 @@ public class Aggregate2190 extends SdbTestBase {
                 }
                 cursor.close();
             } catch (BaseException e) {
-                throw e;
             } finally {
                 if (db != null) {
                     db.close();
