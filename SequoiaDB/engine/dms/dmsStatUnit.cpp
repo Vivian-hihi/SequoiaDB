@@ -60,7 +60,6 @@ namespace engine
    #define DMS_STAT_IDX_DISTINCT_VALUES       "DistinctValues"
    #define DMS_STAT_IDX_NULL_FRAC             "NullFrac"
    #define DMS_STAT_IDX_UNDEF_FRAC            "UndefFrac"
-   #define DMS_STAT_IDX_MCV                   "MCV"
    #define DMS_STAT_IDX_MCV_VALUES            "Values"
    #define DMS_STAT_IDX_MCV_FRAC              DMS_STAT_FIELD_FRAC_NAME
    #define DMS_STAT_IDX_HISTOGRAM             "Histogram"

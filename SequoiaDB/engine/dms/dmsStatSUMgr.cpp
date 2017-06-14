@@ -662,8 +662,6 @@ namespace engine
 
       if ( needUpdate && pEventHolder )
       {
-         const CHAR *pOldCSName = pEventHolder->getCSName() ;
-
          BSONObj boMatcher( BSON( DMS_STAT_COLLECTION_SPACE << pOldCSName ) ) ;
          BSONObj boNewName( BSON( DMS_STAT_COLLECTION_SPACE << pNewCSName ) ) ;
          BSONObj boUpdator( BSON( "$set" << boNewName ) ) ;
