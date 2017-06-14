@@ -279,6 +279,61 @@ var OMA_MISC_CONFIG_PORT                   = "_Port" ;
 var OMA_MISC_OM_VERSION                    = "version: " ;
 var OMA_MISC_OM_RELEASE                    = "Release: " ;
 
+// status
+var STATUS_INIT                            = 0 ;
+var STATUS_RUNNING                         = 1 ;
+var STATUS_ROLLBACK                        = 2 ;
+var STATUS_CANCEL                          = 3 ;
+var STATUS_FINISH                          = 4 ;
+var STATUS_FAIL                            = 10 ;
+
+var DESC_STATUS_INIT                       = "INIT" ;
+var DESC_STATUS_RUNNING                    = "RUNNING" ;
+var DESC_STATUS_ROLLBACK                   = "ROLLBACK" ;
+var DESC_STATUS_CANCEL                     = "CANCEL" ;
+var DESC_STATUS_FINISH                     = "FINISH" ;
+var DESC_STATUS_FAIL                       = "FAIL" ;
+
+// new field, normative naming
+var FIELD_TASKID                           = TaskID ;
+var FIELD_CONFIG                           = Config ;
+var FIELD_PLAN                             = "Plan" ;
+var FIELD_RESULTINFO                       = "ResultInfo" ;
+var FIELD_HOSTNAME                         = HostName ;
+var FIELD_SVCNAME                          = SvcName3 ;
+var FIELD_SERVICE                          = Service ;
+var FIELD_DBPATH                           = "dbpath" ;
+var FIELD_ROLE                             = Role ;
+var FIELD_COORD                            = "coord" ;
+var FIELD_COORD2                           = "Coord" ;
+var FIELD_CATALOG                          = "catalog" ;
+var FIELD_DATA                             = "data" ;
+var FIELD_INFO                             = Info ;
+var FIELD_DATAGROUPNAME                    = "datagroupname" ;
+var FIELD_STATUS                           = Status ;
+var FIELD_STATUS_DESC                      = "StatusDesc" ;
+var FIELD_FLOW                             = "Flow" ;
+var FIELD_ERRNO                            = Errno ;
+var FIELD_DETAIL                           = Detail ;
+var FIELD_GROUPNAME                        = GroupName ;
+var FIELD_DEPLOYMOD                        = DeployMod ;
+var FIELD_PROGRESS                         = "Progress" ;
+var FIELD_USER                             = User ;
+var FIELD_PASSWD                           = Passwd ;
+var FIELD_GROUP                            = Group ;
+var FIELD_SECONDS                          = "Seconds" ;
+var FIELD_PRIMARY_NODE                     = PrimaryNode ;
+var FIELD_NODE_ID                          = "NodeID" ;
+var FIELD_NAME                             = Name ;
+var FIELD_CMD                              = "cmd" ;
+
+// Async task step
+var STEP_GENERATE_PLAN                     = "Generate plan" ;
+var STEP_DOIT                              = "Doit" ;
+var STEP_CHECK_RESULT                      = "Check result" ;
+var STEP_ROLLBACK                          = "Rollback" ;
+
+
 // port
 var OMA_PORT_DEFAULT_SDBCM_PORT            = "" ;
 try
@@ -316,7 +371,7 @@ var OMA_SYS_CATALOG_RG                     = "SYSCatalogGroup" ;
 var OMA_SYS_COORD_RG                       = "SYSCoord" ;
 var OMA_LINUX                              = "LINUX" ;
 var OMA_WINDOWS                            = "WINDOWS" ;
-var OMA_TMP_SDBCM_ALIVE_TIME               = 300 // sec
+var OMA_TMP_SDBCM_ALIVE_TIME               = 300 ; // sec
 var OMA_SLEEP_TIME                         = 500 ; // ms
 var OMA_TRY_TIMES                          = 6 ;
 var OMA_WAIT_CATA_RG_TRY_TIMES             = 600 ; // sec
@@ -324,3 +379,5 @@ var OMA_GTE_VERSION_TIME                   = 10000 // ms
 var OMA_WAIT_CATALOG_TRY_TIMES             = 30 ; 
 var OMA_WAIT_ZN_TRY_TIMES                  = 30 ;
 
+var OMA_WAIT_PRIMARY_NODE_TIMES            = 30 ;
+var OMA_REELECT_TIMEOUT                    = 60 ; //seconds
