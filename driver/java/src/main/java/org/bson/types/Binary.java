@@ -22,6 +22,7 @@
 package org.bson.types;
 
 import org.bson.BSON;
+import org.bson.util.JSON;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -84,5 +85,10 @@ public class Binary implements Serializable {
         int result = (int) type;
         result = 31 * result + Arrays.hashCode(data);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return JSON.serialize(this);
     }
 }

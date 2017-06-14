@@ -18,6 +18,7 @@ package org.bson.util;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -57,9 +58,10 @@ public class JSONSerializers {
 		ClassMapBasedObjectSerializer serializer = addCommonSerializers();
 
 		serializer.addObjectSerializer(Date.class, new LegacyDateSerializer(serializer));
+		serializer.addObjectSerializer(Timestamp.class, new LegacyBSONTimestampSerializer(serializer));
 		serializer.addObjectSerializer(BSONTimestamp.class, new LegacyBSONTimestampSerializer(serializer));
-		serializer.addObjectSerializer(Binary.class, new LegacyBinarySerializer());
-		serializer.addObjectSerializer(byte[].class, new LegacyBinarySerializer());
+		serializer.addObjectSerializer(Binary.class, new BinarySerializer(serializer));
+		serializer.addObjectSerializer(byte[].class, new ByteArraySerializer(serializer));
 		return serializer;
 	}
 
@@ -75,6 +77,7 @@ public class JSONSerializers {
 		ClassMapBasedObjectSerializer serializer = addCommonSerializers();
 
 		serializer.addObjectSerializer(Date.class, new DateSerializer(serializer));
+		serializer.addObjectSerializer(Timestamp.class, new BSONTimestampSerializer(serializer));
 		serializer.addObjectSerializer(BSONTimestamp.class, new BSONTimestampSerializer(serializer));
 		serializer.addObjectSerializer(Binary.class, new BinarySerializer(serializer));
 		serializer.addObjectSerializer(byte[].class, new ByteArraySerializer(serializer));
@@ -159,7 +162,12 @@ public class JSONSerializers {
 
 		////@Override
 		public void serialize(Object obj, StringBuilder buf) {
-			BSONTimestamp t = (BSONTimestamp) obj;
+			BSONTimestamp t;
+			if (obj instanceof Timestamp) {
+				t = new BSONTimestamp((Timestamp) obj);
+			} else {
+				t = (BSONTimestamp) obj;
+			}
 			BasicBSONObject temp = new BasicBSONObject();
 			temp.put("$ts", Integer.valueOf(t.getTime()));
 			temp.put("$inc", Integer.valueOf(t.getInc()));
@@ -407,7 +415,12 @@ public class JSONSerializers {
 
 		////@Override
 		public void serialize(Object obj, StringBuilder buf) {
-			BSONTimestamp t = (BSONTimestamp) obj;
+			BSONTimestamp t;
+			if (obj instanceof Timestamp) {
+				t = new BSONTimestamp((Timestamp) obj);
+			} else {
+				t = (BSONTimestamp) obj;
+			}
 			BasicBSONObject temp = new BasicBSONObject();
 			temp.put("$t", Integer.valueOf(t.getTime()));
 			temp.put("$i", Integer.valueOf(t.getInc()));
@@ -470,7 +483,7 @@ public class JSONSerializers {
 		protected void serialize(byte[] bytes, byte type, StringBuilder buf) {
 			BSONObject temp = new BasicBSONObject();
 			temp.put("$binary", (new Base64Codec()).encode(bytes));
-			temp.put("$type", type);
+			temp.put("$type", String.valueOf(type));
 			serializer.serialize(temp, buf);
 		}
 	}

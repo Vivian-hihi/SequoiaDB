@@ -3,11 +3,15 @@ package com.sequoiadb.base;
 import org.bson.*;
 import org.bson.io.Bits;
 import org.bson.types.*;
+import org.bson.util.JSON;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -140,5 +144,90 @@ public class TestBSON {
             fail();
         }
         assertEquals(Bits.readInt(bytes), length);
+    }
+
+    @Test
+    public void testBSONTimestamp() {
+        Date srcDate = new Date();
+        BSONTimestamp ts = new BSONTimestamp(srcDate);
+        Date toDate = ts.toDate();
+        assertEquals(srcDate, toDate);
+
+        Timestamp srcTS = new Timestamp(srcDate.getTime());
+        srcTS.setNanos(123456000);
+        // nanoseconds loss
+        BSONTimestamp ts2 = new BSONTimestamp(srcTS);
+        Timestamp toTS = ts2.toTimestamp();
+        assertEquals(srcTS, toTS);
+    }
+
+    @Test
+    public void testBSONCodecTimestamp() {
+        Timestamp ts = new Timestamp(new Date().getTime());
+        ts.setNanos(123456000);
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put("ts", ts);
+
+        byte[] bytes = BSON.encode(obj);
+        BSONObject obj2 = BSON.decode(bytes);
+
+        BSONTimestamp bts = (BSONTimestamp)obj2.get("ts");
+        Timestamp ts2 = bts.toTimestamp();
+
+        assertEquals(ts, ts2);
+    }
+
+    @Test
+    public void testJSONParseDate() {
+        Date date = null;
+        try {
+            date = new SimpleDateFormat("yyyy-MM-dd").parse("2017-06-14");
+        } catch (ParseException e) {
+            e.printStackTrace();
+            fail();
+        }
+        java.sql.Date date2 = new java.sql.Date(date.getTime());
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put("date", date);
+        obj.put("date2", date2);
+
+        String json = obj.toString();
+
+        BSONObject obj2 = (BSONObject) JSON.parse(json);
+
+        assertEquals(obj, obj2);
+    }
+
+    @Test
+    public void testJSONParseTimestamp() {
+        Timestamp ts = new Timestamp(new Date().getTime());
+        ts.setNanos(123456000);
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put("ts", ts);
+
+        BSONObject obj2 = new BasicBSONObject();
+        obj2.put("ts", new BSONTimestamp(ts));
+
+        String json = JSON.serialize(obj);
+        BSONObject obj3 = (BSONObject) JSON.parse(json);
+
+        assertEquals(obj2, obj3);
+    }
+
+    @Test
+    public void testJSONParseBinary() {
+        String str = "hello world";
+        Binary binary = new Binary(str.getBytes());
+
+        BSONObject obj = new BasicBSONObject();
+        obj.put("bin", binary);
+
+        String json = obj.toString();
+        BSONObject obj2 = (BSONObject) JSON.parse(json);
+
+        assertEquals(obj, obj2);
     }
 }
