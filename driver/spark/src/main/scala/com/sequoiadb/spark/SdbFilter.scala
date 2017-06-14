@@ -20,8 +20,7 @@ import java.util.regex.Pattern
 
 import org.apache.spark.sql.sources._
 import org.bson.types.BasicBSONList
-import org.bson.util.JSON
-import org.bson.{BSONObject, BasicBSONObject}
+import org.bson.{BSON, BSONObject, BasicBSONObject}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
@@ -32,7 +31,7 @@ import scala.collection.mutable.ArrayBuffer
 class SdbFilter extends Serializable {
 
     // BSONObject is not serializable, so we convert it to string
-    private var matcher: String = "{}"
+    private var matcher: Array[Byte] = BSON.encode(new BasicBSONObject())
     private var unhandled: Array[Filter] = Array()
 
     /**
@@ -43,7 +42,7 @@ class SdbFilter extends Serializable {
     def this(filters: Array[Filter]) {
         this()
         val (m, u) = SdbFilter.toBSONObj(filters)
-        this.matcher = m.toString
+        this.matcher = BSON.encode(m)
         this.unhandled = u
     }
 
@@ -55,15 +54,15 @@ class SdbFilter extends Serializable {
     def this(matcher: BSONObject) {
         this()
         if (matcher != null) {
-            this.matcher = matcher.toString
+            this.matcher = BSON.encode(matcher)
         }
     }
 
-    def BSONObj(): BSONObject = JSON.parse(matcher).asInstanceOf[BSONObject]
+    def BSONObj(): BSONObject = BSON.decode(matcher)
 
     def unhandledFilters(): Array[Filter] = unhandled
 
-    override def toString: String = matcher
+    override def toString: String = BSONObj().toString
 }
 
 object SdbFilter {
