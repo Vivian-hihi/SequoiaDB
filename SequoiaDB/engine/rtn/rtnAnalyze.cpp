@@ -157,6 +157,7 @@ namespace engine
                                        const monCLSimple *pMonCL,
                                        const monIndex *pMonIX,
                                        UINT32 sampleRecords,
+                                       BOOLEAN needUpdateCL,
                                        CHAR *pSortBuf,
                                        pmdEDUCB *cb,
                                        _SDB_DMSCB *dmsCB,
@@ -167,6 +168,7 @@ namespace engine
                                            dmsMBContext *mbContext,
                                            ixmIndexCB *indexCB,
                                            UINT32 sampleRecords,
+                                           BOOLEAN needUpdateCL,
                                            CHAR *pSortBuf,
                                            pmdEDUCB *cb,
                                            _SDB_DMSCB *dmsCB,
@@ -705,7 +707,8 @@ namespace engine
          suID = DMS_INVALID_SUID ;
          mbContext = NULL ;
 
-         rc = _rtnAnalyzeIndexStat( &monCS, &monCL, &monIX, sampleRecords, NULL,
+         rc = _rtnAnalyzeIndexStat( &monCS, &monCL, &monIX,
+                                    sampleRecords, TRUE, NULL,
                                     cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze statistics for "
                       "index [%s %s], rc: %d", pCLFullName, pIndexName, rc ) ;
@@ -1321,8 +1324,9 @@ namespace engine
             goto error ;
          }
 
-         rc = _rtnAnalyzeIndexStat( pMonCS, pMonCL, pMonIX, sampleRecords,
-                                    pSortBuf, cb, dmsCB, rtnCB, dpsCB ) ;
+         rc = _rtnAnalyzeIndexStat( pMonCS, pMonCL, pMonIX,
+                                    sampleRecords, FALSE, pSortBuf,
+                                    cb, dmsCB, rtnCB, dpsCB ) ;
          if ( SDB_DMS_CS_NOTEXIST == rc ||
               SDB_DMS_NOTEXIST == rc ||
               SDB_APP_INTERRUPT == rc )
@@ -1444,6 +1448,7 @@ namespace engine
                                 const monCLSimple *pMonCL,
                                 const monIndex *pMonIX,
                                 UINT32 sampleRecords,
+                                BOOLEAN needUpdateCL,
                                 CHAR *pSortBuf,
                                 pmdEDUCB *cb,
                                 _SDB_DMSCB *dmsCB,
@@ -1533,8 +1538,8 @@ namespace engine
          }
 
          rc = _rtnAnalyzeIndexInternal( pSU, mbContext, &indexCB,
-                                        sampleRecords, pSortBuf, cb, dmsCB,
-                                        rtnCB, dpsCB ) ;
+                                        sampleRecords, needUpdateCL, pSortBuf,
+                                        cb, dmsCB, rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze index [%s.%s %s], "
                       "rc: %d", pCSName, pCLName, pIXName, rc ) ;
       }
@@ -1571,6 +1576,7 @@ namespace engine
                                     dmsMBContext *mbContext,
                                     ixmIndexCB *indexCB,
                                     UINT32 sampleRecords,
+                                    BOOLEAN needUpdateCL,
                                     CHAR *pSortBuf,
                                     pmdEDUCB *cb,
                                     _SDB_DMSCB *dmsCB,
@@ -1602,30 +1608,18 @@ namespace engine
       PD_CHECK( pStatCache, SDB_INVALIDARG, error, PDERROR,
                 "No statistics manger in storage unit [%s]", pCSName ) ;
 
-      if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY == pStatCache->getStatus( mbContext->mbID() ) )
+      if ( needUpdateCL )
       {
-         rc = mbContext->mbLock( EXCLUSIVE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Lock dms mb context EXCLUSIVE failed, "
-                      "rc: %d", rc ) ;
-
-         if ( UTIL_SU_CACHE_UNIT_STATUS_EMPTY ==
-               pStatCache->getStatus( mbContext->mbID() ) )
-         {
-            rtnReloadCLStats ( pSU, mbContext, cb, dmsCB ) ;
-         }
-
-         rc = mbContext->mbLock( SHARED ) ;
-         PD_RC_CHECK( rc, PDERROR, "Lock dms mb context SHARED failed, "
-                      "rc: %d", rc ) ;
-      }
-
-      if ( NULL == pStatCache->getCacheUnit( mbContext->mbID() ) )
-      {
-         // Collection statistics is missing, re-analyze one
+         // Re-analyze collection statistics
          rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, cb, dmsCB,
                                      rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection [%s.%s], "
                       "rc: %d", pCSName, pCLName, rc ) ;
+
+         // Lock shared to allow parallel reading during analyze index
+         rc = mbContext->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock collection [%s.%s], rc: %d",
+                      pCSName, pCLName, rc ) ;
       }
 
       try
