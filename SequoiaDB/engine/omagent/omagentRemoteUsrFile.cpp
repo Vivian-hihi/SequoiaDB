@@ -144,32 +144,40 @@ namespace engine
       {
          _location = 0 ;
       }
-      else if ( NumberInt != _valueObj.getField( "location" ).type() &&
-                NumberLong != _valueObj.getField( "location" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "location must be number" ) ;
-         goto error ;
-      }
       else
       {
-         _location = _valueObj.getIntField( "location" ) ;
+         BSONElement element  = _valueObj.getField( "location" ) ;
+         if( NumberInt != element.type() &&
+             NumberLong != element.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "location must be number" ) ;
+            goto error ;
+         }
+         else
+         {
+            _location = element.numberLong() ;
+         }
       }
 
       if ( FALSE == _valueObj.hasField( "size" ) )
       {
          _size = SPT_READ_LEN ;
       }
-      else if ( NumberInt != _valueObj.getField( "size" ).type() &&
-                NumberLong != _valueObj.getField( "size" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "size must be number" ) ;
-         goto error ;
-      }
       else
       {
-         _size = _valueObj.getIntField( "size" ) ;
+         BSONElement element  = _valueObj.getField( "size" ) ;
+         if( NumberInt != element.type() &&
+             NumberLong != element.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "size must be number" ) ;
+            goto error ;
+         }
+         else
+         {
+            _size = element.numberLong() ;
+         }
       }
    done:
       return rc ;

@@ -175,14 +175,15 @@ namespace engine
 
       if( optionObj.hasField( "size" ) )
       {
-         if( NumberInt != optionObj.getField( "size" ).type() &&
-             NumberLong != optionObj.getField( "size" ).type() )
+         BSONElement element = optionObj.getField( "size" ) ;
+         if( NumberInt != element.type() &&
+             NumberLong != element.type() )
          {
             rc = SDB_INVALIDARG ;
             err = "size must be number" ;
             goto error ;
          }
-         size = optionObj.getIntField( "size" ) ;
+         size = element.numberLong() ;
          if( size < 0 )
          {
             rc = SDB_INVALIDARG ;
