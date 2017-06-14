@@ -95,11 +95,11 @@ v1.0及以上版本。
    然后使用 $group 对记录按字段 major 进行分组，并使用 $avg 返回每个分组中嵌套
    对象 age 字段的平均值。
 
- 	```lang-javascript
- 	> db.foo.bar( { $match: { dep:  "计算机学院" } },
-				  { $group: { _id:  "$major", Major: { $first: "$major" }, 
- 					avg_age: { $avg: "$info.age" } } } ) 
- 	{
+   ```lang-javascript
+   > db.foo.bar.aggregate( { $match: { dep:  "计算机学院" } },
+                           { $group: { _id:  "$major", Major: { $first: "$major" }, 
+                             avg_age: { $avg: "$info.age" } } } ) 
+   {
       	"Major": "计算机工程",
       	"avg_age": 25
  	}
