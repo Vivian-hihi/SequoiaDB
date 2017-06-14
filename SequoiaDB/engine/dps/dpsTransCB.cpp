@@ -88,7 +88,8 @@ namespace engine
       pmdGetKRCB()->regEventHandler( this ) ;
 
       // if enabled dps
-      if ( pmdGetKRCB()->isCBValue( SDB_CB_DPS ) )
+      if ( pmdGetKRCB()->isCBValue( SDB_CB_DPS ) &&
+           !pmdGetKRCB()->isRestore() )
       {
          UINT64 logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
          UINT32 logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
