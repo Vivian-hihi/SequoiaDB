@@ -44,10 +44,17 @@ namespace SequoiaDB
 	     */
         internal const int FLG_QUERY_MODIFY = 0x00001000;
 
+
+        /** \memberof FLG_QUERY_PREPARE_MORE 0x00004000
+         *  \brief Enable prepare more data when query.
+         */
+        internal const int FLG_QUERY_PREPARE_MORE = 0x00004000;
+
         internal static readonly Dictionary<int, int> flagsDir = new Dictionary<int, int>() {
             {FLG_QUERY_FORCE_HINT, FLG_QUERY_FORCE_HINT},
             {FLG_QUERY_PARALLED, FLG_QUERY_PARALLED},
-            {FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA}
+            {FLG_QUERY_WITH_RETURNDATA, FLG_QUERY_WITH_RETURNDATA},
+            {FLG_QUERY_PREPARE_MORE, FLG_QUERY_PREPARE_MORE}
         };
 
        /** \property Matcher
