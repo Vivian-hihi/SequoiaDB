@@ -723,7 +723,7 @@ namespace engine
       if ( SDB_ANALYZE_MODE_RELOAD == mode ||
            SDB_ANALYZE_MODE_CLEAR == mode )
       {
-         ctrlParam._emptyFilterSel = NODE_SEL_ANY ;
+         ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
       }
 
    done :
