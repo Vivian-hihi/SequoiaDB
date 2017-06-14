@@ -2,11 +2,11 @@
 var SDB_FILE_CREATEONLY =    0x00000001 ;
 var SDB_FILE_REPLACE =       0x00000002 ;
 var SDB_FILE_CREATE =        SDB_FILE_CREATEONLY | SDB_FILE_REPLACE ;
-var SDB_FILE_READONLY =      0x00000004 ;
-var SDB_FILE_WRITEONLY =     0x00000008 ;
-var SDB_FILE_READWRITE =     SDB_FILE_READONLY | SDB_FILE_WRITEONLY ;
 var SDB_FILE_SHAREREAD =     0x00000010 ;
 var SDB_FILE_SHAREWROTE =    SDB_FILE_SHAREREAD | 0x00000020 ;
+var SDB_FILE_READONLY =      0x00000004 | SDB_FILE_SHAREREAD ;
+var SDB_FILE_WRITEONLY =     0x00000008 ;
+var SDB_FILE_READWRITE =     SDB_FILE_READONLY | SDB_FILE_WRITEONLY ;
 var SDB_FILE_WRITETHROUGH =  0x00000040 ;
 var SDB_FILE_DIRECTIO =      0x00000080 ;
 
@@ -545,6 +545,15 @@ Remote.prototype.getFile = function( filename, permission, openMode ) {
       file._filename = filename ;
       file._location = 0 ;
       file._isOpened = true ;
+
+      if( 0 != ( option.mode & SDB_FILE_CREATEONLY ) )
+      {
+         option.mode &= ~SDB_FILE_CREATEONLY ;
+      }
+      if( 0 != ( option.mode & SDB_FILE_REPLACE ) )
+      {
+         option.mode &= ~SDB_FILE_REPLACE ;
+      }
       file._option = option ;
    }
    return file ;
@@ -2239,7 +2248,7 @@ File.scp = function( src, dst, isReplace, mode ) {
       {
          mode = fileMgr._getPermission( srcArr[1] ) ;
       }
-      srcFile = remote.getFile( srcArr[1] ) ;
+      srcFile = remote.getFile( srcArr[1], 0644, SDB_FILE_READONLY ) ;
    }
    else
    {
@@ -2252,7 +2261,7 @@ File.scp = function( src, dst, isReplace, mode ) {
       {
          mode = File._getPermission( srcArr[0] ) ;
       }
-      srcFile = new File( srcArr[0] ) ;
+      srcFile = new File( srcArr[0], 0644, SDB_FILE_READONLY ) ;
    }
 
    var dstArr = dst.split( "@" ) ;
@@ -2299,7 +2308,7 @@ File.scp = function( src, dst, isReplace, mode ) {
       else
       {
          dstFile = new File( dstArr[0], mode,
-                              SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
+                             SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
       }
    }
 

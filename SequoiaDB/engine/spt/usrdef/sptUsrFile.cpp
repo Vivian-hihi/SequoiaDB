@@ -1488,9 +1488,9 @@ JS_MAPPING_END()
    {
       stringstream ss ;
       ss << "Methods to access:" << endl
-         << " var file = new File( filename, [mode] )" << endl
+         << " var file = new File( filename, [permission], [mode] )" << endl
          << " var file = remoteObj.getFile()" << endl
-         << " var file = remoteObj.getFile( filename, [mode] )" << endl
+         << " var file = remoteObj.getFile( filename, [permission], [mode] )" << endl
          << "File functions:" << endl
          << "   read( [size] )" << endl
          << "   write( content )" << endl

@@ -72,6 +72,18 @@ namespace engine
       UINT32 iMode = OSS_READWRITE | OSS_CREATE ;
 
       _filename = filename ;
+
+      {
+         SDB_OSS_FILETYPE type ;
+         // check path type
+         rc = ossGetPathType( filename.c_str(), &type ) ;
+         if ( SDB_OK == rc && SDB_OSS_DIR == type )
+         {
+            rc = SDB_INVALIDARG ;
+            err = "filename must not be dir" ;
+            goto error ;
+         }
+      }
       // get mode
       if ( optionObj.hasField( "permission" ) )
       {
