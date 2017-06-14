@@ -77,6 +77,7 @@ namespace engine
 
       BOOLEAN isSubDir        = FALSE ;
       BOOLEAN enableDateDir   = FALSE ;
+      BOOLEAN backupLog       = FALSE ;
       const CHAR *prefix      = NULL ;
 
       // option config
@@ -114,6 +115,14 @@ namespace engine
       PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_PREFIX, rc ) ;
 
+      rc = rtnGetBooleanElement( option, FIELD_NAME_BACKUP_LOG, backupLog ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_BACKUP_LOG, rc ) ;
+
       if ( maxDataFileSize < BAR_MIN_DATAFILE_SIZE ||
            maxDataFileSize > BAR_MAX_DATAFILE_SIZE )
       {
@@ -144,6 +153,7 @@ namespace engine
                         BAR_BACKUP_OP_TYPE_FULL, rewrite, desp ) ;
       PD_RC_CHECK( rc, PDERROR, "Init off line backup logger failed, rc: %d",
                    rc ) ;
+      logger.setBackupLog( backupLog ) ;
 
       rc = logger.backup( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Off line backup failed, rc: %d", rc ) ;
