@@ -47,6 +47,12 @@
 
 7. 删除DataCenter接口，待相关功能发布之后再提供接口。
 
+8. org.bson.BSONObject接口实现java.io.Serializable接口。
+
+9. org.bson.types.BSONTimestamp支持从java.util.Date和java.sql.Timestamp构造，并增加转换为java.util.Date和java.sql.Timestamp的方法。
+
+10. BSONObject支持java.sql.Timestamp，将java.sql.Timestamp编码为timestamp类型。
+
 **Version 1.10**
 
 1. DBCollection类新添加的接口：
