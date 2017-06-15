@@ -990,9 +990,16 @@ namespace engine
       }
       else
       {
+         MsgOpQuery *pQueryMsg = ( MsgOpQuery* )pMsg ;
+         INT32 version = pQueryMsg->version ;
+
          rc = queryOption.toQueryMsg( &pNewMsg, newMsgSize, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Build new query message failed, rc: %d",
                       rc ) ;
+
+         // Set version
+         pQueryMsg = ( MsgOpQuery* )pNewMsg ;
+         pQueryMsg->version = version ;
       }
 
       /// 8. execute
