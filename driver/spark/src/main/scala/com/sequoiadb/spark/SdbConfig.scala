@@ -16,6 +16,8 @@
 
 package com.sequoiadb.spark
 
+import com.sequoiadb.net.ConfigOptions
+
 /**
   * SequoiaDB configurations
   *
@@ -226,4 +228,11 @@ object SdbConfig {
     val DefaultPreferredLocation = true
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
+
+    private[spark] val SdbConnectionOptions: ConfigOptions = {
+        val opt = new ConfigOptions()
+        opt.setConnectTimeout(3000)
+        opt.setMaxAutoConnectRetryTime(0)
+        opt
+    }
 }

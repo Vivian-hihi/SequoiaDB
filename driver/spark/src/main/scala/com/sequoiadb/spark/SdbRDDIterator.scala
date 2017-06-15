@@ -19,7 +19,6 @@ package com.sequoiadb.spark
 import java.net.InetAddress
 
 import com.sequoiadb.base.{DBCollection, DBCursor, Sequoiadb}
-import com.sequoiadb.net.ConfigOptions
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
 import org.bson.types.BasicBSONList
@@ -68,7 +67,7 @@ abstract class SdbRDDIterator[T: ClassTag](config: SdbConfig,
         url,
         config.username,
         config.password,
-        SdbRDDIterator.configOptions)
+        SdbConfig.SdbConnectionOptions)
 
     // build query hint for datablock partition
     private val hint: BSONObject = {
@@ -138,13 +137,6 @@ abstract class SdbRDDIterator[T: ClassTag](config: SdbConfig,
 }
 
 object SdbRDDIterator {
-    private val configOptions = {
-        val opt = new ConfigOptions()
-        opt.setConnectTimeout(5000)
-        opt.setMaxAutoConnectRetryTime(0)
-        opt
-    }
-
     private def createSelector(requiredColumns: Array[String]): BSONObject = {
         val selector: BSONObject = new BasicBSONObject
         requiredColumns.map {

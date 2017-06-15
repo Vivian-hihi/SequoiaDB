@@ -68,7 +68,7 @@ private object SdbPartitioner extends Logging {
 
     // Sharding if query can use index, otherwise Datablock
     private def autodetectPartitionMode(config: SdbConfig, filter: SdbFilter): PartitionMode = {
-        val sdb = new Sequoiadb(config.host, config.username, config.password, null)
+        val sdb = new Sequoiadb(config.host, config.username, config.password, SdbConfig.SdbConnectionOptions)
         try {
             val shardings = getShardingInfo(sdb, config, filter)
             for (sharding <- shardings) {
@@ -88,8 +88,43 @@ private object SdbPartitioner extends Logging {
         PartitionMode.Datablock
     }
 
+    def getAbnormalNodes(sdb: Sequoiadb): Map[String, Int] = {
+        val map = new mutable.HashMap[String, Int]()
+
+        try {
+            val cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_SYSTEM,
+                null.asInstanceOf[BSONObject], null, null)
+            while (cursor.hasNext) {
+                val obj = cursor.getNext
+
+                if (obj.containsField("ErrNodes")) {
+                    val list = obj.get("ErrNodes").asInstanceOf[BasicBSONList]
+                    list.foreach { value =>
+                        val node = value.asInstanceOf[BSONObject]
+                        val nodeName = node.get("NodeName").asInstanceOf[String]
+                        val flag = node.get("Flag").asInstanceOf[Int]
+                        map += (nodeName -> flag)
+                    }
+                }
+            }
+        } catch {
+            case e: BaseException =>
+                if (!e.getErrorType.equals("SDB_RTN_COORD_ONLY")) {
+                    throw e
+                }
+            case x: Throwable => throw x
+        }
+
+        map.toMap
+    }
+
     def getReplicaGroups(sdb: Sequoiadb): Map[String, List[String]] = {
         val map = new mutable.HashMap[String, List[String]]()
+
+        val abnormalNodes = getAbnormalNodes(sdb)
+        if (abnormalNodes.nonEmpty) {
+            logInfo(s"Abnormal nodes: $map")
+        }
 
         try {
             val cursor = sdb.listReplicaGroups()
@@ -112,7 +147,10 @@ private object SdbPartitioner extends Logging {
                             val serviceName = portObj.get("Name").asInstanceOf[String]
 
                             val node = hostName + ":" + serviceName
-                            nodeList += node
+
+                            if (abnormalNodes.isEmpty || !abnormalNodes.contains(node)) {
+                                nodeList += node
+                            }
                         }
                     }
                 }
@@ -185,7 +223,7 @@ private object SdbPartitioner extends Logging {
     def getQueryMeta(url: String, csName: String, clName: String, config: SdbConfig): List[QueryMeta] = {
         val queryMetas = ArrayBuffer[QueryMeta]()
 
-        val sdb = new Sequoiadb(url, config.username, config.password, null)
+        val sdb = new Sequoiadb(url, config.username, config.password, SdbConfig.SdbConnectionOptions)
         try {
             val cs = if (sdb.isCollectionSpaceExist(csName)) {
                 sdb.getCollectionSpace(csName)
@@ -497,7 +535,7 @@ private[spark] class SdbShardingPartitioner(config: SdbConfig, filter: SdbFilter
     override def computePartitions(): Array[SdbPartition] = {
         val partitions = ArrayBuffer[SdbPartition]()
 
-        val sdb = new Sequoiadb(config.host, config.username, config.password, null)
+        val sdb = new Sequoiadb(config.host, config.username, config.password, SdbConfig.SdbConnectionOptions)
         try {
             val nodeSelector = new NodeSelector
 
@@ -509,13 +547,16 @@ private[spark] class SdbShardingPartitioner(config: SdbConfig, filter: SdbFilter
                 if (sharding.groupName == "") {
                     urls = List(sharding.nodeName)
                 } else {
+                    val groupNodeUrls = groups(sharding.groupName)
+                    if (groupNodeUrls.isEmpty) {
+                        throw new SdbException(s"Group ${sharding.groupName} has no normal node")
+                    }
                     if (config.shardingPartitionSingleNode) {
-                        val groupNodeUrls = groups(sharding.groupName)
                         val url = nodeSelector.getLeastUsedNode(groupNodeUrls)
                         nodeSelector.increaseNodeRefCount(url)
                         urls = List(url)
                     } else {
-                        urls = groups(sharding.groupName)
+                        urls = groupNodeUrls
                     }
                 }
 
@@ -543,7 +584,7 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
         var groups: Map[String, List[String]] = null
         var shardings: List[ShardingInfo] = null
 
-        val sdb = new Sequoiadb(config.host, config.username, config.password, null)
+        val sdb = new Sequoiadb(config.host, config.username, config.password, SdbConfig.SdbConnectionOptions)
         try {
             groups = SdbPartitioner.getReplicaGroups(sdb)
             shardings = SdbPartitioner.getShardingInfo(sdb, config, filter)
@@ -594,6 +635,9 @@ private[spark] class SdbDatablockPartitioner(config: SdbConfig, filter: SdbFilte
                 url = sharding.nodeName
             } else {
                 val groupNodeUrls = groups(sharding.groupName)
+                if (groupNodeUrls.isEmpty) {
+                    throw new SdbException(s"Group ${sharding.groupName} has no normal node")
+                }
                 url = nodeSelector.getLeastUsedNode(groupNodeUrls)
                 nodeSelector.increaseNodeRefCount(url)
             }
