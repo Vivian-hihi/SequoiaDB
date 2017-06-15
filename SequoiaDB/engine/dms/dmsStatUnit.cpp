@@ -728,7 +728,7 @@ namespace engine
          BSONElement beKey = iterKey.next() ;
          BSONElement beCur = iterCur.next() ;
 
-         switch ( beKey.type() )
+         switch ( beCur.type() )
          {
             case NumberDouble :
             case NumberInt :
