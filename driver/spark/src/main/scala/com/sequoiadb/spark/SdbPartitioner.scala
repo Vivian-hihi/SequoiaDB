@@ -123,7 +123,7 @@ private object SdbPartitioner extends Logging {
 
         val abnormalNodes = getAbnormalNodes(sdb)
         if (abnormalNodes.nonEmpty) {
-            logInfo(s"Abnormal nodes: $map")
+            logInfo(s"Abnormal nodes: $abnormalNodes")
         }
 
         try {
