@@ -191,6 +191,9 @@ namespace engine
       return propSite ;
    }
 
+   #define COORD_GROUP_SEL_INVALID        ( -1 )
+   #define COORD_GROUP_SEL_NONE           ( -2 )
+
    /*
       _coordGroupSel implement
    */
@@ -201,7 +204,7 @@ namespace engine
       _primary       = FALSE ;
       _svcType       = MSG_ROUTE_SHARD_SERVCIE ;
       _hasUpdate     = FALSE ;
-      _pos           = -1 ;
+      _pos           = COORD_GROUP_SEL_INVALID ;
       _selTimes      = 0 ;
       _ignoredNum    = 0 ;
       _lastNodeID.value = MSG_INVALID_ROUTEID ;
@@ -249,7 +252,7 @@ namespace engine
 
    void _coordGroupSel::_resetStatus()
    {
-      _pos = -1 ;
+      _pos = COORD_GROUP_SEL_INVALID ;
       _selTimes = 0 ;
       _ignoredNum = 0 ;
       _hasUpdate = FALSE ;
@@ -277,7 +280,8 @@ namespace engine
    INT32 _coordGroupSel::selBegin( UINT32 groupID, MsgRouteID &nodeID )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( -1 == _pos, "Last sel doesn't call selDone" ) ;
+      SDB_ASSERT( COORD_GROUP_SEL_INVALID == _pos,
+                  "Last sel doesn't call selDone" ) ;
 
       _resetStatus() ;
 
@@ -377,11 +381,13 @@ namespace engine
 
       nodeID.value = _pPropSite->getLastNode( groupID ) ;
       // last node is valid and in group info
-      if ( MSG_INVALID_ROUTEID != nodeID.value )
+      if ( MSG_INVALID_ROUTEID != nodeID.value &&
+           COORD_GROUP_SEL_INVALID == _pos )
       {
          if ( _groupPtr->nodePos( nodeID.columns.nodeID ) >= 0 )
          {
             nodeID.columns.serviceID = _svcType ;
+            _pos = COORD_GROUP_SEL_NONE ;
             goto done ;
          }
          _pPropSite->delLastNode( groupID ) ;
@@ -433,14 +439,21 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( -1 == _pos )
+      if ( COORD_GROUP_SEL_INVALID == _pos )
       {
          rc = SDB_CLS_NODE_BSFAULT ;
          goto error ;
       }
 
-      rc = _nextPos( _groupPtr, _pPropSite->getPreferInstype(),
-                     _selTimes, _pos, nodeID ) ;
+      if ( COORD_GROUP_SEL_NONE == _pos )
+      {
+         rc = _selOtherBegin( nodeID ) ;
+      }
+      else
+      {
+         rc = _nextPos( _groupPtr, _pPropSite->getPreferInstype(),
+                        _selTimes, _pos, nodeID ) ;
+      }
       if ( rc )
       {
          goto error ;
