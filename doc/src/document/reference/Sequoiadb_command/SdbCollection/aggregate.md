@@ -97,8 +97,8 @@ v1.0及以上版本。
 
    ```lang-javascript
    > db.foo.bar.aggregate( { $match: { dep:  "计算机学院" } },
-                           { $group: { _id:  "$major", Major: { $first: "$major" }, 
-                             avg_age: { $avg: "$info.age" } } } ) 
+                            { $group: { _id:  "$major", Major: { $first: "$major" }, 
+                              avg_age: { $avg: "$info.age" } } } ) 
    {
       	"Major": "计算机工程",
       	"avg_age": 25
