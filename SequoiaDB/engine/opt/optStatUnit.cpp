@@ -652,8 +652,7 @@ namespace engine
             if ( iterPred == predicates.end() ||
                  iterPred->second.isEmpty() )
             {
-               // We don't want full range predicates
-               break ;
+               predicateList.push_back( NULL ) ;
             }
             else
             {
@@ -1253,8 +1252,11 @@ namespace engine
             if ( iterPred == predicates.end() ||
                  iterPred->second.isEmpty() )
             {
-               // We don't want full range predicates
-               break ;
+               if ( 0 == matchedCount )
+               {
+                  break ;
+               }
+               continue ;
             }
             matchedCount ++ ;
          }
