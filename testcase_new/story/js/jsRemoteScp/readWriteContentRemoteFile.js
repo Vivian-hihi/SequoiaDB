@@ -73,12 +73,6 @@ function main(){
    remoteFile.remove(emptyFileName);
    println("read content from empty file success");
    
-   //many times read and write,size default
-   var readFile = remote.getFile(readFileName);
-   var writeFile = remote.getFile(writeFileName);
-   readWriteContentManyTimes(readFile, writeFile);
-   println("many times read and write content 1024 size success");
-   
    //many times read and write,size 1M
    var readFile = remote.getFile(readFileName);
    var writeFile = remote.getFile(writeFileName);

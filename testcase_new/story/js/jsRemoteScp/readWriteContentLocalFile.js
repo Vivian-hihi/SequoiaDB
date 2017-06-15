@@ -70,12 +70,6 @@ function main(){
    File.remove(emptyFileName);
    println("read content from empty file success");
    
-   //many times read and write,size default
-   var readFile = new File(readFileName);
-   var writeFile = new File(writeFileName);
-   readWriteContentManyTimes(readFile, writeFile);
-   println("many times read and write content 1024 size success");
-   
    //many times read and write,size 1M
    var readFile = new File(readFileName);
    var writeFile = new File(writeFileName);
