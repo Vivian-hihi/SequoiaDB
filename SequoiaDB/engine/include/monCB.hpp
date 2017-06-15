@@ -108,9 +108,11 @@ namespace engine
       MON_COUNTER_OPERATION_NONE = 0,
       MON_DATA_READ,
       MON_INDEX_READ,
+      MON_LOB_READ,
       MON_TEMP_READ,
       MON_DATA_WRITE,
       MON_INDEX_WRITE,
+      MON_LOB_WRITE,
       MON_TEMP_WRITE,
       MON_UPDATE,
       MON_DELETE,
@@ -135,8 +137,10 @@ namespace engine
 
       UINT64 totalDataRead ;
       UINT64 totalIndexRead ;
+      UINT64 totalLobRead ;
       UINT64 totalDataWrite ;
       UINT64 totalIndexWrite ;
+      UINT64 totalLobWrite ;
 
       UINT64 totalUpdate ;
       UINT64 totalDelete ;
@@ -188,12 +192,20 @@ namespace engine
                totalIndexRead += delta ;
                break ;
 
+            case MON_LOB_READ :
+               totalLobRead += delta ;
+               break ;
+
             case MON_DATA_WRITE :
                totalDataWrite += delta ;
                break ;
 
             case MON_INDEX_WRITE :
                totalIndexWrite += delta ;
+               break ;
+
+            case MON_LOB_WRITE :
+               totalLobWrite += delta ;
                break ;
 
             case MON_UPDATE :
@@ -281,8 +293,10 @@ namespace engine
 
          totalDataRead             = rhs.totalDataRead ;
          totalIndexRead            = rhs.totalIndexRead ;
+         totalLobRead              = rhs.totalLobRead ;
          totalDataWrite            = rhs.totalDataWrite ;
          totalIndexWrite           = rhs.totalIndexWrite ;
+         totalLobWrite             = rhs.totalLobWrite ;
 
          totalUpdate               = rhs.totalUpdate ;
          totalDelete               = rhs.totalDelete ;
@@ -319,8 +333,10 @@ namespace engine
       monDBCB *mondbcb ;
       UINT64 totalDataRead ;
       UINT64 totalIndexRead ;
+      UINT64 totalLobRead ;
       UINT64 totalDataWrite ;
       UINT64 totalIndexWrite ;
+      UINT64 totalLobWrite ;
 
       UINT64 totalUpdate ;
       UINT64 totalDelete ;
@@ -371,12 +387,20 @@ namespace engine
                totalIndexRead += delta ;
                break ;
 
+            case MON_LOB_READ :
+               totalLobRead += delta ;
+               break ;
+
             case MON_DATA_WRITE :
                totalDataWrite += delta ;
                break ;
 
             case MON_INDEX_WRITE :
                totalIndexWrite += delta ;
+               break ;
+
+            case MON_LOB_WRITE :
+               totalLobWrite += delta ;
                break ;
 
             case MON_UPDATE :
