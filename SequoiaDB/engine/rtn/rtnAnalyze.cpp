@@ -1716,6 +1716,8 @@ namespace engine
          sampleRecords = DMS_STAT_ROUND( sampleRecords,
                                          SDB_ANALYZE_SAMPLE_MIN,
                                          SDB_ANALYZE_SAMPLE_MAX ) ;
+
+         sampleRecords = OSS_MIN( sampleRecords, totalRecords ) ;
       }
 
       return sampleRecords ;
