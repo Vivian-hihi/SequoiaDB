@@ -426,21 +426,6 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
 
 }
 
-//void formatFunctionRecord(std::vector<FunctionRecord> &funcRecords, ossPrimitiveFileOp *funcFile)
-//{
-//   int ifunc = 0 ;
-//   for ( ; ifunc < funcRecords.size(); ifunc++ )
-//   {
-//      funcFile->fWrite ( "%u: ", funcRecords[ifunc]._sequenceNum ) ;
-//      //funcFile->fWrite ( "tid:%u: ", funcRecords[ifunc]._tid ) ;
-//      funcFile->fWrite ( "%s", pdGetTraceFunction(funcRecords[ifunc]._functionID)) ;
-//      funcFile->fWrite ( " cost %ld: \n", funcRecords[ifunc]._cost ) ;
-//      /*ossTimestampToString ( funcRecords[ifunc]._start, timestamp ) ;
-//      funcFile->fWrite ( ": %s\n", timestamp ) ;*/
-//
-//   }
-//}
-
 INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequenceNum)
 {
    INT32 rc = SDB_OK ;
@@ -453,20 +438,14 @@ INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequ
 
    // write sequence
    rc = out->fWrite ( "%u: ", sequenceNum ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-      "Failed to write into trace file, errno = %d", rc ) ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
    // write function id and timestamp
    ossTimestampToString ( record->_timestamp, timestamp ) ;
-   rc = out->fWrite ( "%s(%u): %s"OSS_NEWLINE,
-      pdGetTraceFunction(record->_functionID),
-      record->_line, timestamp ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-      "Failed to write into trace file, errno = %d", rc ) ;
+   rc = out->fWrite ( "%s(%u): %s"OSS_NEWLINE, pdGetTraceFunction(record->_functionID), record->_line, timestamp ) ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
    // write pid/tid/arguments
-   rc = out->fWrite ( "tid: %u, numArgs: %u"OSS_NEWLINE,
-      record->_tid, record->_numArgs ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-      "Failed to write into trace file, errno = %d", rc ) ;
+   rc = out->fWrite ( "tid: %u, numArgs: %u"OSS_NEWLINE, record->_tid, record->_numArgs ) ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
 
    pArgs = &tempBuf[sizeof(pdTraceRecord)] ;
    for ( UINT32 i = 0; i < record->_numArgs; i++ )
@@ -475,8 +454,7 @@ INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequ
       if ( pArgs - &tempBuf[0] >= TRACE_RECORD_MAX_SIZE ||
          pArgs - &tempBuf[0] < (INT32)sizeof(pdTraceRecord) )
       {
-         PD_RC_CHECK ( SDB_PD_TRACE_FILE_INVALID, PDERROR,
-            "Invalid argument offset" ) ;
+         PD_RC_CHECK ( SDB_PD_TRACE_FILE_INVALID, PDERROR, "Invalid argument offset" ) ;
       }
       // assign the pointer to a temp argument structure
       pdTraceArgument *arg = (pdTraceArgument*)pArgs ;
@@ -484,116 +462,110 @@ INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequ
       pArgs += arg->_argumentSize ;
       // write out the argument
       rc = out->fWrite ( "\targ%d:"OSS_NEWLINE, i ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-         "Failed to write into trace file, errno = %d", rc ) ;
+      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
       switch ( arg->_argumentType )
       {
-      case PD_TRACE_ARGTYPE_NULL :
+       case PD_TRACE_ARGTYPE_NULL :
          rc = out->fWrite ( "\t\tNULL"OSS_NEWLINE ) ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
+                            "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_CHAR :
-         rc = out->fWrite ( "\t\t%c"OSS_NEWLINE,
-            (*(CHAR*)(((CHAR*)arg)+
-            sizeof(pdTraceArgument))));
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+       case PD_TRACE_ARGTYPE_CHAR :
+         rc = out->fWrite ( "\t\t%c"OSS_NEWLINE, (*(CHAR*)(((CHAR*)arg)+ sizeof(pdTraceArgument))));
+         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_BYTE :
+       case PD_TRACE_ARGTYPE_BYTE :
          rc = out->fWrite ( "\t\t0x%x"OSS_NEWLINE,
-            (UINT32)(*(CHAR*)(((CHAR*)arg)+
-            sizeof(pdTraceArgument))));
+                             (UINT32)(*(CHAR*)(((CHAR*)arg)+ sizeof(pdTraceArgument))));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                     "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_SHORT :
+       case PD_TRACE_ARGTYPE_SHORT :
          rc = out->fWrite ( "\t\t%d"OSS_NEWLINE,
-            (INT32)(*(INT16*)(((CHAR*)arg)+
-            sizeof(pdTraceArgument))));
+                            (INT32)(*(INT16*)(((CHAR*)arg)+
+                            sizeof(pdTraceArgument))));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                     "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_USHORT :
+       case PD_TRACE_ARGTYPE_USHORT :
          rc = out->fWrite ( "\t\t%u"OSS_NEWLINE,
-            (UINT32)(*(UINT16*)(((CHAR*)arg)+
-            sizeof(pdTraceArgument))));
+                           (UINT32)(*(UINT16*)(((CHAR*)arg)+
+                           sizeof(pdTraceArgument))));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                     "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_INT :
+       case PD_TRACE_ARGTYPE_INT :
          rc = out->fWrite ( "\t\t%d"OSS_NEWLINE,
-            *(INT32*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
+                           *(INT32*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                           "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_UINT :
+       case PD_TRACE_ARGTYPE_UINT :
          rc = out->fWrite ( "\t\t%u"OSS_NEWLINE,
-            *(UINT32*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
+                           *(UINT32*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                    "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_LONG :
+       case PD_TRACE_ARGTYPE_LONG :
          rc = out->fWrite ( "\t\t%lld"OSS_NEWLINE,
-            *(INT64*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
+                            *(INT64*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                     "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_ULONG :
+       case PD_TRACE_ARGTYPE_ULONG :
          rc = out->fWrite ( "\t\t%llu"OSS_NEWLINE,
-            *(UINT64*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
+                            *(UINT64*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                            "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_FLOAT :
+       case PD_TRACE_ARGTYPE_FLOAT :
          rc = out->fWrite ( "\t\t%f"OSS_NEWLINE,
-            *(FLOAT32*)(((CHAR*)arg)+
-            sizeof(pdTraceArgument)));
+                           *(FLOAT32*)(((CHAR*)arg)+
+                           sizeof(pdTraceArgument)));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                    "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_DOUBLE :
+       case PD_TRACE_ARGTYPE_DOUBLE :
          rc = out->fWrite ( "\t\t%f"OSS_NEWLINE,
-            *(FLOAT64*)(((CHAR*)arg)+
-            sizeof(pdTraceArgument)));
+                           *(FLOAT64*)(((CHAR*)arg)+
+                           sizeof(pdTraceArgument)));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                  "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_STRING :
+       case PD_TRACE_ARGTYPE_STRING :
          rc = out->fWrite ( "\t\t%s"OSS_NEWLINE,
-            (((CHAR*)arg)+
-            sizeof(pdTraceArgument)));
+                           (((CHAR*)arg)+ sizeof(pdTraceArgument)));
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-            "Failed to write into trace file, errno = %d", rc ) ;
+                     "Failed to write into trace file, errno = %d", rc ) ;
          break ;
-      case PD_TRACE_ARGTYPE_RAW :
+       case PD_TRACE_ARGTYPE_RAW :
          {
             INT32 rawSize = arg->_argumentSize - sizeof(pdTraceArgument) ;
             UINT32 outSize = 10*rawSize ;
             CHAR *pTempBuffer = (CHAR*)SDB_OSS_MALLOC ( outSize ) ;
             PD_CHECK ( pTempBuffer, SDB_OOM, error, PDERROR,
-               "Failed to allocate memory for temp buffer" ) ;
+                        "Failed to allocate memory for temp buffer" ) ;
             ossHexDumpBuffer ( (((CHAR*)arg)+
-               sizeof(pdTraceArgument)),
-               rawSize,
-               pTempBuffer,
-               outSize,
-               NULL,
-               OSS_HEXDUMP_INCLUDE_ADDR ) ;
+                                 sizeof(pdTraceArgument)),
+                                 rawSize,
+                                 pTempBuffer,
+                                 outSize,
+                                 NULL,
+                                 OSS_HEXDUMP_INCLUDE_ADDR ) ;
             rc = out->fWrite ( "%s"OSS_NEWLINE, pTempBuffer ) ;
-            SDB_OSS_FREE ( pTempBuffer ) ;
+                               SDB_OSS_FREE ( pTempBuffer ) ;
             PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-               "Failed to write into trace file, errno = %d", rc ) ;
+                       "Failed to write into trace file, errno = %d", rc ) ;
             break ;
          }
-      case PD_TRACE_ARGTYPE_NONE :
-      default :
+       case PD_TRACE_ARGTYPE_NONE :
+       default :
          break ;
       }
    }
    rc = out->fWrite ( OSS_NEWLINE ) ;
    PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-      "Failed to write into trace file, errno = %d", rc ) ;
+              "Failed to write into trace file, errno = %d", rc ) ;
 
 done :
    return rc ;
