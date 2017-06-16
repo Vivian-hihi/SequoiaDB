@@ -23,6 +23,7 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.datasync.Utils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.KillNode;
@@ -69,6 +70,7 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
             // 准备用例的公用内容，如cl
             db = new Sequoiadb(SdbTestBase.coordUrl, "", "");
             clGroupName = groupMgr.getAllDataGroupName().get(0);
+            Utils.makeReplicaLogFull(clGroupName);
             createCLOnGroup(db, clGroupName);
             clGroupWrapper = groupMgr.getGroupByName(clGroupName);
             NodeWrapper priNode = clGroupWrapper.getMaster();

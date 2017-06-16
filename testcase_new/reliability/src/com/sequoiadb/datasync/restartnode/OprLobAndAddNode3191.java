@@ -25,6 +25,7 @@ import com.sequoiadb.commlib.GroupMgr;
 import com.sequoiadb.commlib.GroupWrapper;
 import com.sequoiadb.commlib.NodeWrapper;
 import com.sequoiadb.commlib.SdbTestBase;
+import com.sequoiadb.datasync.Utils;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.NodeRestart;
@@ -79,6 +80,8 @@ public class OprLobAndAddNode3191 extends SdbTestBase {
             List<String> hosts = groupMgr.getAllHosts();
             randomHost = hosts.get(ran.nextInt(hosts.size()));
             randomPort = ran.nextInt(reservedPortEnd - reservedPortBegin) + reservedPortBegin;
+            
+            Utils.makeReplicaLogFull(clGroupName);
         } catch (ReliabilityException e) {
             Assert.fail(this.getClass().getName() + " setUp error, error description:" + e.getMessage() + "\r\n"
                     + Utils.getKeyStack(e, this));
