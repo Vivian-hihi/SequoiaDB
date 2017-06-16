@@ -82,21 +82,21 @@ struct FunctionRecord
    FunctionRecord(){}
    FunctionRecord( UINT32 indexidx, 
                    UINT32 sequence, 
-                   UINT64 funcID, 
                    UINT32 tid, 
                    UINT32 nchild, 
                    UINT64 cost,
                    UINT64 totalCost,
                    UINT64  maxTimeInterval,
+                   UINT64 funcID, 
                    ossTimestamp starttime): 
                      _indexidx(indexidx), 
                      _sequenceNum(sequence), 
-                     _functionID(funcID), 
                      _tid(tid), 
                      _nChild(nchild), 
                      _cost(cost), 
                      _totalCost(totalCost),
                      _maxTimeInterval(maxTimeInterval),
+                     _functionID(funcID), 
                      _start(starttime){}
 
    bool operator < (const FunctionRecord &another) const

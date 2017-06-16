@@ -197,7 +197,7 @@ void  outputErrorFunctions(std::map<UINT64, std::vector<UINT32> > &errFunctions,
    for ( std::map<UINT64, std::vector<UINT32> >::iterator it = errFunctions.begin(); it != errFunctions.end(); it++ )
    {
       file->fWrite( "%d: %s \n       (", nCount, pdGetTraceFunction( it->first ) ) ;
-      for (int item = 0; item < it->second.size(); item++)
+      for (UINT32 item = 0; item < it->second.size(); item++)
       {
          file->fWrite("%d ", it->second[item]) ;
       }
@@ -307,7 +307,7 @@ INT32 analysisRecordsByThread(UINT32 tid,
 {
   INT32 rc = SDB_OK ;
   CHAR tempBuf [ TRACE_RECORD_MAX_SIZE ] ;
-  INT32 idx = 0 ;
+  UINT32 idx = 0 ;
   INT32 numIndent = 0 ;
   UINT64 cursor;
   UINT64 preTimestamp = 0, curTimeStamp ;
@@ -363,7 +363,6 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
                            std::map<UINT64, FunctionSummaryRecord> &summaryRecords)
 {
    FunctionRecord popRecord, topRecord ;
-   UINT64 timeStamp ;
    BOOLEAN isEmpty = funStack.empty() ;
 
    //
@@ -577,7 +576,6 @@ INT32 outputTraceRecordByThread(ossPrimitiveFileOp *flwFile, UINT32 sequence, IN
 {
    INT32 rc = SDB_OK ;
    CHAR timestamp[64] ;
-   UINT64 curTimestamp ;
    pdTraceRecord *record = (pdTraceRecord *)recordBuf ;
 
 
@@ -711,7 +709,6 @@ INT32 outputTraceRecord(ossPrimitiveFileOp *flwFile, pdTraceRecord &record, UINT
 {
    INT32 rc = SDB_OK ;
    CHAR timestamp[64] ;
-   UINT64 curTimestamp ;
 
    // write sequence
    rc = flwFile->fWrite ( OSS_NEWLINE"%6u:  ", sequence ) ;
@@ -793,7 +790,7 @@ INT32  outputExceptionReport(pdTraceCB *cb,
          isPrintAll = FALSE ;
       }
 
-      for (int idx = rit->_indexidx; idx < tid2recordsmap[tid].size() && !isFinish; idx++)
+      for (UINT32 idx = rit->_indexidx; idx < tid2recordsmap[tid].size() && !isFinish; idx++)
       {
          timeInterval = 0 ; 
          isChild = TRUE ;

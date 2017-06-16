@@ -185,14 +185,14 @@ done :
 
 _pdTraceCB::_pdTraceCB()
 :_traceStarted(FALSE),
- _currentWriter(0),
- _componentMask(0xFFFFFFFF),
- _totalSize(0),
  _freeBlockHead(0),
  _freeBlockTail(0),
+ _totalSize(0),
+ _currentWriter(0),
+ _componentMask(0xFFFFFFFF),
+  _pBuffer(NULL),
  _threadmonitorStart(FALSE),
- _nMonitoredNum(0),
- _pBuffer(NULL)
+ _nMonitoredNum(0)
 {
    _headerSize = sizeof(_pdTraceCB) ;
    ossMemcpy ( _eyeCatcher, TRACECB_EYE_CATCHER,
@@ -208,7 +208,7 @@ _pdTraceCB::~_pdTraceCB()
 
 void * _pdTraceCB::reserveMemory(UINT32 size)
 {
-   ossValuePtr reservePtr = NULL;
+   ossValuePtr reservePtr = (ossValuePtr)NULL;
    CHAR buff[TRACE_SLOT_SIZE] ;
    _pdTraceRecord *pRecord = NULL;
    UINT64 freeSize;
