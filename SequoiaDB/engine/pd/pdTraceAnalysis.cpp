@@ -1,7 +1,7 @@
 ﻿#include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
-#include "pdTraceAnalysis.h"
+#include "pdTraceAnalysis.hpp"
 #include "pd.hpp"
 #if defined (SDB_ENGINE)
 #include "pmd.hpp"

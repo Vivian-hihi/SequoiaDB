@@ -37,7 +37,7 @@
 #include "ossIO.hpp"
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
-#include "pdTraceAnalysis.h"
+#include "pdTraceAnalysis.hpp"
 #include "pd.hpp"
 #if defined (SDB_ENGINE)
 #include "pmd.hpp"
