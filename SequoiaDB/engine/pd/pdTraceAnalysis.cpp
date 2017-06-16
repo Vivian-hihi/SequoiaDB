@@ -1,4 +1,4 @@
-﻿#include "core.hpp"
+#include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "pdTraceAnalysis.hpp"
