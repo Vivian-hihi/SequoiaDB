@@ -1610,11 +1610,14 @@ namespace engine
 
       if ( needUpdateCL )
       {
-         // Re-analyze collection statistics
+         // Re-analyze collection statistics if needed
          rc = _rtnAnalyzeCLInternal( pSU, mbContext, sampleRecords, cb, dmsCB,
                                      rtnCB, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to analyze collection [%s.%s], "
                       "rc: %d", pCSName, pCLName, rc ) ;
+
+         // Make statistics of other indexes are loaded
+         rtnReloadCLStats( pSU, mbContext, cb, dmsCB ) ;
 
          // Lock shared to allow parallel reading during analyze index
          rc = mbContext->mbLock( SHARED ) ;
