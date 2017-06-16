@@ -3817,6 +3817,13 @@ namespace engine
          goto error ;
       }
 
+      if ( SDB_ANALYZE_MODE_GENDFT == _param._mode )
+      {
+         PD_CHECK( NULL != _clname, SDB_INVALIDARG, error, PDERROR,
+                   "Only support generating default statistics on specified "
+                   "collection or index" ) ;
+      }
+
       if ( sampleByNum && sampleByPercent )
       {
          PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",
@@ -3857,6 +3864,16 @@ namespace engine
 
       rc = rtnAnalyze( _csname, _clname, _ixname, _param,
                        cb, dmsCB, rtnCB, dpsCB ) ;
+
+      if ( SDB_DMS_CS_NOTEXIST == rc ||
+           SDB_DMS_NOTEXIST == rc )
+      {
+         // The error should be found earlier in clsShardSesssion
+         // If report here, means the collection or collection space had been
+         // dropped, ignore the error to avoid clsShardSession to retry
+         rc = SDB_OK ;
+      }
+
       PD_RC_CHECK( rc, PDERROR, "Failed to run analyze command, rc: %d", rc ) ;
 
    done :

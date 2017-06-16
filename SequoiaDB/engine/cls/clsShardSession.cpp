@@ -3780,8 +3780,25 @@ namespace engine
          rc = rtnAnalyze( NULL, pSubCLName, NULL,
                           pAnalyzeCmd->getAnalyzeParam(),
                           _pEDUCB, _pDmsCB, _pRtnCB, _pDpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to analyze sub-collection [%s], "
-                      "rc: %d", pSubCLName, rc ) ;
+         if ( SDB_OK != rc )
+         {
+
+            if ( SDB_DMS_CS_NOTEXIST == rc ||
+                 SDB_DMS_NOTEXIST == rc )
+            {
+               // The error should be found earlier in clsShardSesssion
+               // If report here, means the collection or collection space had
+               // been dropped, ignore the error to avoid clsShardSession to
+               // retry
+               rc = SDB_OK ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to analyze sub-collection [%s], rc: %d",
+                       pSubCLName, rc ) ;
+            }
+            break ;
+         }
 
          ++iterSubCL ;
       }

@@ -1255,7 +1255,7 @@ namespace engine
          if ( NULL == pMonIX )
          {
             pMonIX = pMonCL->getIndex( pIXName ) ;
-            PD_CHECK( pMonIX, SDB_DMS_NOTEXIST, error, PDWARNING,
+            PD_CHECK( pMonIX, SDB_IXM_NOTEXIST, error, PDWARNING,
                       "Could not get index [%s.%s %s] for statistics",
                       pCSName, pCLName, pIXName ) ;
          }

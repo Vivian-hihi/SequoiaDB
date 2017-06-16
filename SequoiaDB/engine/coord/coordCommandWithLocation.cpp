@@ -699,6 +699,13 @@ namespace engine
          goto error ;
       }
 
+      if ( SDB_ANALYZE_MODE_GENDFT == mode )
+      {
+         PD_CHECK( NULL != clname, SDB_INVALIDARG, error, PDERROR,
+                   "Only support generating default statistics on specified "
+                   "collection or index" ) ;
+      }
+
       if ( sampleByNum && sampleByPercent )
       {
          PD_LOG( PDERROR, "Field[%s] and Field[%s] conflict",

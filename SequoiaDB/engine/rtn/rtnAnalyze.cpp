@@ -1519,7 +1519,7 @@ namespace engine
 
          PD_CHECK( indexCB.getLogicalID() == pMonIX->_indexLID &&
                    indexCB.isSameDef( pMonIX->_indexDef , TRUE ),
-                   SDB_DMS_NOTEXIST, error, PDERROR,
+                   SDB_IXM_NOTEXIST, error, PDERROR,
                    "Index [%s %s] had been updated: "
                    "orig [ logical ID: %u, define: %s ], "
                    "now [ logical ID: %u, define: %s ]",
