@@ -621,11 +621,10 @@ namespace engine
          if ( traceStarted )
          {
             builder.appendBool ( FIELD_NAME_WRAPPED,
-                                 traceCB->_currentSlot.peek() >
-                                 traceCB->getSlotNum() ) ;
+                                 traceCB->_freeBlockTail != 
+                                 traceCB->_totalSize ) ;
             builder.appendNumber ( FIELD_NAME_SIZE,
-                                   (INT32)(traceCB->getSlotNum() *
-                                           TRACE_SLOT_SIZE) ) ;
+                                   (INT32)(traceCB->_totalSize) ) ;
             BSONArrayBuilder arr ;
             for ( INT32 i = 0; i < _pdTraceComponentNum; ++i )
             {

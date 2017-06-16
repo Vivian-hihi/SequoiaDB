@@ -113,7 +113,8 @@ pdFiles = [
       "pd/pd.cpp",
       "pd/pdTrace.cpp",
       "pd/pdComponents.cpp",
-      "pd/pdFunctionList.cpp"
+      "pd/pdFunctionList.cpp",
+      "pd/pdTraceAnalysis.cpp"
       ]
 
 utilFiles = [

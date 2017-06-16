@@ -48,6 +48,7 @@
 #endif
 
 #define PD_TRACE_MAX_BP_NUM         10
+#define PD_TRACE_MAX_MONITORED_THREAD_NUM    10
 /*
  * Slots and chunks
  *
@@ -63,6 +64,8 @@
  */
 #define TRACE_CHUNK_SIZE      131072 /* bytes */
 #define TRACE_SLOT_SIZE       64     /* bytes */
+//#define TRACE_CHUNK_SIZE      81920  /* bytes */
+//#define TRACE_SLOT_SIZE       40     /* bytes */
 // ( 2048 slots per chunk )
 #define TRACE_SLOTS_PER_CHUNK (TRACE_CHUNK_SIZE/TRACE_SLOT_SIZE)
 
@@ -76,6 +79,9 @@
 #define TRACE_MIN_BUFFER_SIZE (4*TRACE_CHUNK_SIZE)  /* bytes */
 #define TRACE_MAX_BUFFER_SIZE ( 1*1024*1024*1024 )  /* bytes */
 #define TRACE_DFT_BUFFER_SIZE ( 256*1024*1024 )     /* bytes */
+//#define TRACE_MIN_BUFFER_SIZE (4*TRACE_CHUNK_SIZE)  /* bytes */
+//#define TRACE_MAX_BUFFER_SIZE ( 1*1024*1024*1000 )  /* bytes */
+//#define TRACE_DFT_BUFFER_SIZE ( 256*1024*1000 )     /* bytes */
 
 /*
  * Put \n ( newline ) as eye catcher. We put this one in trace file header,
@@ -193,19 +199,30 @@ typedef class _pdTraceArgument pdTraceArgument ;
 
 #define PD_TRACE_MAX_ARG_NUM 9
 
-class _pdTraceRecord : public SDBObject
+//class _pdTraceRecord : public SDBObject
+//{
+//public :
+//   CHAR          _eyeCatcher [ TRACE_EYE_CATCHER_SIZE ] ;
+//   UINT32        _recordSize ;
+//   UINT32        _functionID ;
+//   UINT32        _flag ;
+//   UINT32        _tid ;
+//   UINT32        _line ;
+//   UINT32        _numArgs ;
+//   ossTimestamp  _timestamp ;
+//} ;
+struct _pdTraceRecord 
 {
-public :
    CHAR          _eyeCatcher [ TRACE_EYE_CATCHER_SIZE ] ;
-   UINT32        _recordSize ;
    UINT32        _functionID ;
-   UINT32        _flag ;
    UINT32        _tid ;
-   UINT32        _line ;
-   UINT32        _numArgs ;
+   UINT16        _line ;
+   UINT16        _recordSize ;
+   UINT8         _numArgs ;
+   UINT8         _flag ;
    ossTimestamp  _timestamp ;
 } ;
-typedef class _pdTraceRecord pdTraceRecord ;
+typedef struct _pdTraceRecord pdTraceRecord ;
 
 namespace engine
 {
@@ -221,20 +238,19 @@ public :
    UINT32        _headerSize ;
    // whether trace is started or not
    ossAtomic32   _traceStarted ;
-   // the slot that we are going to write next, note this number is logical and
-   // increment only. the physical slot need to be calculated by _currentSlot &
-   // _totalSlots
-   ossAtomic64   _currentSlot ;
+   UINT64        _freeBlockHead ;
+   UINT64        _freeBlockTail ;
+   UINT64        _totalSize ;
    // number of sessions that currently writing into trace buffer
    ossAtomic32   _currentWriter ;
    // each bit represent one component
    UINT32        _componentMask ;
-   // total number of chunks
-   UINT32        _totalChunks ;
-   // total number of slots
-   UINT32        _totalSlots ;
    // trace memory
    CHAR         *_pBuffer ;
+
+   ossAtomic32  _threadmonitorStart;
+   UINT8        _nMonitoredNum ;
+   UINT32       _monitoredThreads[ PD_TRACE_MAX_MONITORED_THREAD_NUM ] ;
 
 #if defined (SDB_ENGINE)
    // num of break points
@@ -247,15 +263,13 @@ public :
    std::list<engine::_pmdEDUCB*>  _pmdEDUCBList ;
 #endif
 
-   void         *reserveOneSlot () ;
-   void         *reserveSlots ( UINT32 numSlots ) ;
+   INT32         getCurrent();
+   void         *reserveMemory ( UINT32 size ) ;
    void         *fillIn ( void *pPos, const void *pInput, INT32 size ) ;
    void          startWrite () ;
    void          finishWrite () ;
    void          setMask ( UINT32 mask ) ;
    UINT32        getMask () ;
-   UINT32        getSlotNum () ;
-   UINT32        getChunkNum () ;
    INT32         start ( UINT64 size, UINT32 mask,
                          std::vector<UINT64> *funcCode ) ;
    INT32         start ( UINT64 size, UINT32 mask ) ;
@@ -267,6 +281,7 @@ public :
    INT32         dump ( const CHAR *pFileName ) ;
    void          destroy () ; // stop trace and destroy memory
    void          reset () ;
+
 #if defined (SDB_ENGINE)
    INT32 addBreakPoint( UINT64 functionCode );
    void removeAllBreakPoint();

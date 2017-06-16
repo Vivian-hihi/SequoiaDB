@@ -34,8 +34,10 @@
 *******************************************************************************/
 #include "core.hpp"
 #include "oss.hpp"
+#include "ossIO.hpp"
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
+#include "pdTraceAnalysis.h"
 #include "pd.hpp"
 #if defined (SDB_ENGINE)
 #include "pmd.hpp"
@@ -46,13 +48,40 @@
 #include "ossLatch.hpp"
 #include "ossPrimitiveFileOp.hpp"
 #include <math.h>
+#include <stack>
 
 using namespace engine ;
 
 ossSpinXLatch gPDTraceMutex;
+ossSpinXLatch gPDTraceReserveMutex;
 // extract high 32 bit as function component mask, and OR with
 // cb->_componentMask, if the result is 0 that means the component is not what
 // we want
+
+static BOOLEAN isThreadMonited( UINT32 tid, pdTraceCB *cb )
+{
+   BOOLEAN isMonited = FALSE;
+   INT32 idx = 0 ;
+
+   do 
+   {
+      if ( cb->_threadmonitorStart.compare(FALSE) )
+      {
+         isMonited = TRUE ;
+         break;
+      }
+      for (; idx < cb->_nMonitoredNum; idx++)
+      {
+         if (cb->_monitoredThreads[idx] == tid) 
+         {
+            isMonited = TRUE;
+            break;
+         }
+      }
+   } while (0);
+
+   return isMonited ;
+}
 static BOOLEAN pdTraceMask ( UINT64 funcCode, pdTraceCB *cb )
 {
    SDB_ASSERT ( cb, "trace cb can't be NULL" ) ;
@@ -93,22 +122,28 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
    // make sure the function is what we want
    if ( !pdTraceMask ( funcCode, sdbGetPDTraceCB() ) )
       return ;
-   INT32 numSlots = 0 ;
+   UINT32 tid;
    pdTraceRecord record ;
    void *pBuffer = NULL ;
    UINT32 code = (UINT32)funcCode&0xFFFFFFFF;
+
+
+   tid = ossGetCurrentThreadID () ;
+   if ( !isThreadMonited( tid, sdbGetPDTraceCB() ) )
+      return;
+
    ossMemcpy ( record._eyeCatcher, TRACE_EYE_CATCHER,
                TRACE_EYE_CATCHER_SIZE ) ;
    record._recordSize = sizeof(record) ;
    record._functionID = code ;
-   record._flag       = type ;
-   record._tid        = ossGetCurrentThreadID () ;
-   record._line       = line ;
+   record._flag       = (UINT8)type ;
+   record._tid        = tid ;
+   record._line       = (UINT16)line ;
    record._numArgs    = 0 ;
    ossGetCurrentTime ( record._timestamp ) ;
 
    // parse arguments and calcualte the total size of buffer we need
-   for ( INT32 i = 0; i < PD_TRACE_MAX_ARG_NUM; ++i )
+   for ( INT8 i = 0; i < PD_TRACE_MAX_ARG_NUM; ++i )
    {
       if ( PD_TRACE_ARGTYPE_NONE != tuple[i].x )
       {
@@ -118,17 +153,14 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
                                sizeof(tuple[i].z);
       }
    }
-   // calculate how many slots
-   numSlots = (INT32)ceil( (FLOAT64)record._recordSize /
-                           (FLOAT64)TRACE_SLOT_SIZE ) ;
-   // reserve space
-   pBuffer = sdbGetPDTraceCB()->reserveSlots ( numSlots ) ;
+
+   pBuffer = sdbGetPDTraceCB()->reserveMemory( record._recordSize ) ;
    if ( !pBuffer )
       goto done ;
    sdbGetPDTraceCB()->startWrite () ;
    // fill trace buffer
    pBuffer = sdbGetPDTraceCB()->fillIn ( pBuffer, &record, sizeof(record) ) ;
-   for ( INT32 i = 0; i < PD_TRACE_MAX_ARG_NUM; ++i )
+   for ( INT8 i = 0; i < PD_TRACE_MAX_ARG_NUM; ++i )
    {
       if ( PD_TRACE_ARGTYPE_NONE != tuple[i].x )
       {
@@ -153,11 +185,13 @@ done :
 
 _pdTraceCB::_pdTraceCB()
 :_traceStarted(FALSE),
- _currentSlot(0),
  _currentWriter(0),
  _componentMask(0xFFFFFFFF),
- _totalChunks(0),
- _totalSlots(0),
+ _totalSize(0),
+ _freeBlockHead(0),
+ _freeBlockTail(0),
+ _threadmonitorStart(FALSE),
+ _nMonitoredNum(0),
  _pBuffer(NULL)
 {
    _headerSize = sizeof(_pdTraceCB) ;
@@ -171,23 +205,53 @@ _pdTraceCB::~_pdTraceCB()
    reset () ;
 }
 
-void* _pdTraceCB::reserveOneSlot ()
-{
-   INT32 slot = (INT32)_currentSlot.inc () ;
-   slot %= _totalSlots ;
-   return &_pBuffer[slot*TRACE_SLOT_SIZE] ;
-}
 
-void* _pdTraceCB::reserveSlots ( UINT32 numSlots )
+void * _pdTraceCB::reserveMemory(UINT32 size)
 {
-   INT32 slot = (INT32)_currentSlot.add ( numSlots ) ;
-   slot %= _totalSlots ;
-   return &_pBuffer[slot*TRACE_SLOT_SIZE] ;
+   ossValuePtr reservePtr = NULL;
+   CHAR buff[TRACE_SLOT_SIZE] ;
+   _pdTraceRecord *pRecord = NULL;
+   UINT64 freeSize;
+
+   gPDTraceReserveMutex.get() ;
+
+   reservePtr = (ossValuePtr)_pBuffer + _freeBlockHead ;
+   if ( _freeBlockHead < _freeBlockTail )
+   {
+      freeSize = _freeBlockTail - _freeBlockHead ;
+   }
+   else
+   {
+      freeSize = (_freeBlockTail + _totalSize - _freeBlockHead) % _totalSize ;
+   }
+
+   if ( freeSize < size )
+   {
+      do 
+      {
+         if ( _freeBlockTail + sizeof(_pdTraceRecord) > _totalSize )
+         {
+            ossMemcpy ( buff, (CHAR*)((ossValuePtr)_pBuffer + _freeBlockTail), _totalSize-_freeBlockTail ) ;
+            ossMemcpy ( buff + _totalSize-_freeBlockTail, _pBuffer, sizeof(_pdTraceRecord)+_freeBlockTail-_totalSize) ;
+            pRecord = (_pdTraceRecord *)&buff ;
+         }
+         else
+         {
+            pRecord = (_pdTraceRecord *)((ossValuePtr)_pBuffer + _freeBlockTail) ;
+         }
+         _freeBlockTail = (_freeBlockTail + pRecord->_recordSize) % _totalSize ;
+         freeSize += pRecord->_recordSize ;
+      } while ( freeSize < size );
+   }
+
+   _freeBlockHead = (_freeBlockHead + size) % _totalSize ;
+
+   gPDTraceReserveMutex.release() ;
+   return (void*)reservePtr ;
 }
 
 void* _pdTraceCB::fillIn ( void *pPos, const void *pInput, INT32 size )
 {
-   INT32 traceBufferSize = _totalSlots*TRACE_SLOT_SIZE ;
    CHAR *pRetAddr        = NULL ;
    ossValuePtr posStart  = 0 ;
    ossValuePtr posEnd    = 0 ;
@@ -202,10 +266,10 @@ void* _pdTraceCB::fillIn ( void *pPos, const void *pInput, INT32 size )
    }
    posStart = (ossValuePtr)_pBuffer +
                  (((ossValuePtr)pPos-(ossValuePtr)_pBuffer) %
-                 traceBufferSize ) ;
+                 _totalSize ) ;
    posEnd = (ossValuePtr)_pBuffer +
                  (((ossValuePtr)pPos-(ossValuePtr)_pBuffer + size) %
-                 traceBufferSize ) ;
+                 _totalSize ) ;
    if ( posStart > posEnd )
    {
       // if the message need to be wrapped, let's break it to two parts ( we
@@ -250,16 +314,6 @@ UINT32 _pdTraceCB::getMask ()
    return _componentMask ;
 }
 
-UINT32 _pdTraceCB::getSlotNum ()
-{
-   return _totalSlots ;
-}
-
-UINT32 _pdTraceCB::getChunkNum ()
-{
-   return _totalChunks ;
-}
-
 INT32 _pdTraceCB::start ( UINT64 size )
 {
    return start ( size, 0xFFFFFFFF, NULL ) ;
@@ -299,18 +353,39 @@ INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask,
       }
    }
 #endif
+#ifdef THREADMONITOR
+   std::vector<UINT32> tids;
+   _nMonitoredNum = tids.size() ;
+   if ( _nMonitoredNum > PD_TRACE_MAX_MONITORED_THREAD_NUM )
+   {
+      PD_LOG ( PDWARNING, "too many threads monitored (up to 10)" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   else if ( _nMonitoredNum )
+   {
+
+      _threadmonitorStart.init( TRUE ) ;
+      for ( UINT32 i = 0; i < _nMonitoredNum; i++ )
+      {
+         _monitoredThreads[i] = tids[i] ;
+      }
+   }
+#endif
    // start trace
    PD_LOG ( PDEVENT, "Trace starts, buffersize = %llu, mask = 0x%x",
             size, mask ) ;
    size           = ossRoundUpToMultipleX ( size, TRACE_CHUNK_SIZE ) ;
    size           = OSS_MAX ( size, TRACE_MIN_BUFFER_SIZE ) ;
    size           = OSS_MIN ( size, TRACE_MAX_BUFFER_SIZE ) ;
+
+   _totalSize = size ;
+   _freeBlockHead = 0;
+   _freeBlockTail = _totalSize;
    // memory will be freed in destructor or reset
    _pBuffer       = (CHAR*)SDB_OSS_MALLOC ( (size_t)size ) ;
    if ( _pBuffer )
    {
-      _totalChunks   = (UINT32)(size / TRACE_CHUNK_SIZE) ;
-      _totalSlots    = _totalChunks * TRACE_SLOTS_PER_CHUNK ;
       _componentMask = mask ;
       _traceStarted.init ( TRUE ) ;
    }
@@ -337,6 +412,8 @@ INT32 _pdTraceCB::dump ( const CHAR *pFileName )
 {
    INT32 rc = SDB_OK ;
    ossPrimitiveFileOp file ;
+   UINT32 totalChunks;
+
    gPDTraceMutex.get () ;
    PD_CHECK ( _traceStarted.compare ( FALSE ), SDB_PD_TRACE_IS_STARTED,
               error, PDWARNING,
@@ -362,7 +439,8 @@ INT32 _pdTraceCB::dump ( const CHAR *pFileName )
               "Failed to write trace to file %s, errno=%d",
               pFileName, rc ) ;
    // write buffer
-   for ( UINT32 i = 0; i < _totalChunks; ++i )
+   totalChunks = _totalSize/TRACE_CHUNK_SIZE ;
+   for ( UINT32 i = 0; i < totalChunks; ++i )
    {
       rc = file.Write ( &_pBuffer[i*TRACE_CHUNK_SIZE],
                         TRACE_CHUNK_SIZE ) ;
@@ -370,6 +448,12 @@ INT32 _pdTraceCB::dump ( const CHAR *pFileName )
                  "Failed to write trace to file %s, errno=%d",
                  pFileName, rc ) ;
    }
+   if ( _pBuffer )
+   {
+      SDB_OSS_FREE ( _pBuffer ) ;
+      _pBuffer = NULL ;
+   }
+   
 done :
    file.Close () ;
    gPDTraceMutex.release () ;
@@ -378,370 +462,88 @@ error :
    goto done ;
 }
 
-class _pdTraceFormatSession : public SDBObject
-{
-public :
-   UINT32 _tid ;
-   std::vector<UINT32> _sequenceNum ;
-   std::vector<UINT32> _slotNum ;
-} ;
 
-class _pdTraceFormatSystem : public SDBObject
-{
-public :
-   std::map<UINT32, _pdTraceFormatSession *> _threadLists ;
-   ~_pdTraceFormatSystem ()
-   {
-      clear () ;
-   }
-   void clear ()
-   {
-      std::map<UINT32, _pdTraceFormatSession *>::iterator it ;
-      for ( it = _threadLists.begin() ;
-            it != _threadLists.end() ;
-            ++it )
-      {
-         SDB_OSS_DEL ( (*it).second ) ;
-      }
-      _threadLists.clear() ;
-   }
-} ;
 
-_pdTraceFormatSystem gTraceFormatSystem ;
-
-static INT32 pdTraceFormatProcessSlot ( ossPrimitiveFileOp *file,
-                                        ossPrimitiveFileOp *out,
-                                        UINT32 totalSlots,
-                                        _pdTraceFormatType formatType,
-                                        UINT32 &sequenceNum,
-                                        INT32 &numIndent,
-                                        UINT32 &slot,    // input and output
-                                        UINT32 headerSize )
+INT32 loadDumpFile( const CHAR *pInputFileName ,
+                    ossPrimitiveFileOp *file ,
+                    _pdTraceCB &traceCB 
+                    )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc               = SDB_OK ;
+   INT32 byteRead         = 0 ;
+   UINT64 fileSize        = 0 ;
    ossPrimitiveFileOp::offsetType offset ;
-   CHAR tempBuf [ TRACE_RECORD_MAX_SIZE ] ;
-   SDB_ASSERT ( file, "file can't be NULL" ) ;
-   INT32 readSize = 0 ;
-   INT32 numSlots = 0 ;
-   pdTraceRecord *record = NULL ;
-   UINT32 slotRead = 0 ;
-   // first let's read from the slot
-   offset.offset = headerSize + slot*TRACE_SLOT_SIZE ;
-   file->seekToOffset ( offset ) ;
-   rc = file->Read ( TRACE_SLOT_SIZE, tempBuf, &readSize ) ;
-   slotRead = slot ;
-   slot = (slot+1)%totalSlots ;
+
+   rc = file->Open ( pInputFileName,
+      OSS_PRIMITIVE_FILE_OP_READ_ONLY |
+      OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS ) ;
    PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-              "Failed to read from trace file, errno=%d", rc ) ;
-   PD_CHECK ( readSize == TRACE_SLOT_SIZE, SDB_PD_TRACE_FILE_INVALID,
-              error, PDERROR,
-              "Unable to read full slot for %u", slotRead ) ;
-   record = (pdTraceRecord*)&tempBuf ;
-   // sanity check for slot
-   if ( ossMemcmp ( record->_eyeCatcher,
-                    TRACE_EYE_CATCHER,
-                    TRACE_EYE_CATCHER_SIZE ) != 0 )
+      "Failed to dump trace to file %s, errno=%d",
+      pInputFileName, rc ) ;
+   rc = file->getSize ( &offset ) ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
+      "Failed to get trace file size for %s, errno=%d",
+      pInputFileName, rc ) ;
+   fileSize = offset.offset ;
+   // open output file for write only
+
+   // read traceCB first
+   rc = file->Read ( sizeof(_pdTraceCB), &traceCB, &byteRead ) ;
+   // reset buffer since it's fake
+   traceCB._pBuffer = NULL ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
+      "Failed to write trace to file %s, errno=%d",
+      pInputFileName, rc ) ;
+   PD_CHECK ( byteRead == sizeof(_pdTraceCB),
+      SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
+      "Unable to read header" ) ;
+   PD_CHECK ( ossMemcmp ( traceCB._eyeCatcher, TRACECB_EYE_CATCHER,
+      TRACE_EYE_CATCHER_SIZE ) == 0,
+      SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
+      "Invalid eye catcher" ) ;
+   // if the header size doesn't match _pdTraceCB, it may caused by
+   // server/client differnece for pdTraceCB, so let's read rest
+   if ( traceCB._totalSize + traceCB._headerSize != fileSize )
    {
-      // the slot does not start from eye catcher, that means it may not be a
-      // valid slot
-      goto done ;
+      PD_LOG ( PDWARNING,
+         "Trace file header is not valid, should be greater "
+         "or equal to %lld bytes, but actual %lld bytes",
+         sizeof(_pdTraceCB), traceCB._headerSize ) ;
+      goto error ;
    }
-   PD_CHECK ( record->_recordSize <= TRACE_RECORD_MAX_SIZE,
-              SDB_PD_TRACE_FILE_INVALID, error, PDERROR,
-              "Too big trace record in slot %u", slotRead ) ;
-   numSlots = (INT32)ceil( (FLOAT64)record->_recordSize /
-                           (FLOAT64)TRACE_SLOT_SIZE ) ;
-
-   // for flow prepare phase, we do not write into file. We simply pickup the
-   // tid and check if it's already in
-   if ( formatType == PD_TRACE_FORMAT_TYPE_FLOW_PREPARE )
+   if ( sizeof(_pdTraceCB) < traceCB._headerSize )
    {
-      UINT32 tid = record->_tid ;
-      std::map<UINT32, _pdTraceFormatSession *>::iterator it ;
-      if ( ( it = gTraceFormatSystem._threadLists.find ( tid ) ) ==
-           gTraceFormatSystem._threadLists.end() )
-      {
-         _pdTraceFormatSession *formatSession = new _pdTraceFormatSession() ;
-         PD_CHECK ( formatSession, SDB_OOM, error, PDERROR,
-                    "Failed to allocate memory for _pdTraceFormatSession" ) ;
-         formatSession->_tid = tid ;
-         gTraceFormatSystem._threadLists[tid] = formatSession ;
-         it = gTraceFormatSystem._threadLists.find ( tid ) ;
-         SDB_ASSERT ( it != gTraceFormatSystem._threadLists.end(),
-                      "we must be able to find the session" ) ;
-      }
-      (*it).second->_sequenceNum.push_back ( sequenceNum ) ;
-      (*it).second->_slotNum.push_back ( slotRead ) ;
-      slot = ( slotRead + numSlots ) % totalSlots ;
-      sequenceNum ++ ;
+      ossPrimitiveFileOp::offsetType off ;
+      off.offset = traceCB._headerSize ;
+      file->seekToOffset ( off ) ;
    }
-   else if ( formatType == PD_TRACE_FORMAT_TYPE_FLOW )
+   else if ( sizeof(_pdTraceCB) > traceCB._headerSize )
    {
-      SDB_ASSERT ( out, "out can't be NULL" ) ;
-      CHAR timestamp[64] ;
-      // for flow type, let's dump the record
-      // first let's read the entire record
-      // actual read the slot
-      for ( INT32 i = 1; i < numSlots; ++i )
-      {
-         offset.offset = headerSize + slot*TRACE_SLOT_SIZE ;
-         file->seekToOffset ( offset ) ;
-
-         rc = file->Read ( TRACE_SLOT_SIZE,
-                           &tempBuf[(i)*TRACE_SLOT_SIZE],
-                           &readSize ) ;
-         slotRead = slot ;
-         slot = (slot+1)%totalSlots ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to read from trace file, errno=%d", rc ) ;
-         PD_CHECK ( readSize == TRACE_SLOT_SIZE, SDB_PD_TRACE_FILE_INVALID,
-                    error, PDERROR,
-                    "Unable to read full slot for %u", slotRead ) ;
-      }
-      // write sequence
-      rc = out->fWrite ( "%u: ", sequenceNum ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                 "Failed to write into trace file, errno = %d", rc ) ;
-
-      // for exit, let's decrease numIndent
-      if ( record->_flag == PD_TRACE_RECORD_FLAG_EXIT )
-      {
-         numIndent -- ;
-         if ( numIndent < 0 )
-            numIndent = 0 ;
-      }
-      // write indents
-      for ( INT32 i = 0; i < numIndent; ++i )
-      {
-         rc = out->Write ( "| ", 2 ) ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to write into trace file, errno = %d", rc ) ;
-      }
-
-      // output the main part
-      rc = out->fWrite ( "%s",
-                         pdGetTraceFunction(record->_functionID),
-                         record->_line ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                 "Failed to write into trace file, errno = %d", rc ) ;
-
-      // then check if it's start/exit
-      if ( record->_flag == PD_TRACE_RECORD_FLAG_ENTRY )
-      {
-         rc = out->fWrite ( " Entry" ) ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to write into trace file, errno = %d", rc ) ;
-
-         numIndent ++ ;
-      }
-      else if ( record->_flag == PD_TRACE_RECORD_FLAG_EXIT )
-      {
-         SDB_ASSERT ( sizeof(pdTraceRecord) + sizeof(pdTraceArgument) +
-                      sizeof(UINT32) <= TRACE_SLOT_SIZE,
-                      "trace header with single rc is greater than slot size" ) ;
-         rc = out->fWrite ( " Exit" ) ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to write into trace file, errno = %d", rc ) ;
-         // exit with rc
-         if ( record->_numArgs == 1 )
-         {
-            pdTraceArgument *arg =
-                  (pdTraceArgument*)&tempBuf[sizeof(pdTraceRecord)] ;
-            if ( PD_TRACE_ARGTYPE_INT == arg->_argumentType )
-            {
-               INT32 retCode = *(INT32*)(((CHAR*)arg)+sizeof(pdTraceArgument));
-               // show return code only when it's not SDB_OK
-               if ( SDB_OK != retCode )
-               {
-                  rc = out->fWrite ( "[retCode=%d]", retCode ) ;
-                  PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                             "Failed to write into trace file, errno = %d",
-                             rc ) ;
-               }
-            } // if ( PD_TRACE_ARGTYPE_INT == arg->_argumentType )
-         } // if ( record->_numArgs == 1 )
-      } // else if ( record->_flag == PD_TRACE_RECORD_FLAG_EXIT )
-      // finally write function name and timestamp
-      ossTimestampToString ( record->_timestamp, timestamp ) ;
-      rc = out->fWrite ( "(%u): %s"OSS_NEWLINE, record->_line, timestamp ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                 "Failed to write into trace file, errno = %d", rc ) ;
+      PD_LOG ( PDWARNING,
+         "Trace file header is not valid, should be greater "
+         "or equal to %lld bytes, but actual %lld bytes",
+         sizeof(_pdTraceCB), traceCB._headerSize ) ;
+      goto error ;
    }
-   else if ( formatType == PD_TRACE_FORMAT_TYPE_FORMAT )
-   {
-      SDB_ASSERT ( out, "out can't be NULL" ) ;
-      CHAR timestamp[64] ;
-      CHAR *pArgs ;
-      for ( INT32 i = 1; i < numSlots; ++i )
-      {
-         offset.offset = headerSize + slot*TRACE_SLOT_SIZE ;
-         file->seekToOffset ( offset ) ;
-         rc = file->Read ( TRACE_SLOT_SIZE,
-                           &tempBuf[(i)*TRACE_SLOT_SIZE],
-                           &readSize ) ;
-         slotRead = slot ;
-         slot = (slot+1)%totalSlots ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to read from trace file, errno=%d", rc ) ;
-         PD_CHECK ( readSize == TRACE_SLOT_SIZE, SDB_PD_TRACE_FILE_INVALID,
-                    error, PDERROR,
-                    "Unable to read full slot for %u", slotRead ) ;
-      }
-      // write sequence
-      rc = out->fWrite ( "%u: ", sequenceNum ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                 "Failed to write into trace file, errno = %d", rc ) ;
-      sequenceNum ++ ;
-      // write function id and timestamp
-      ossTimestampToString ( record->_timestamp, timestamp ) ;
-      rc = out->fWrite ( "%s(%u): %s"OSS_NEWLINE,
-                         pdGetTraceFunction(record->_functionID),
-                         record->_line, timestamp ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                 "Failed to write into trace file, errno = %d", rc ) ;
-      // write pid/tid/arguments
-      rc = out->fWrite ( "tid: %u, numArgs: %u"OSS_NEWLINE,
-                         record->_tid, record->_numArgs ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                 "Failed to write into trace file, errno = %d", rc ) ;
 
-      pArgs = &tempBuf[sizeof(pdTraceRecord)] ;
-      for ( UINT32 i = 0; i < record->_numArgs; i++ )
-      {
-         // sanity check, make sure the argument pointer is within valid range
-         if ( pArgs - &tempBuf[0] >= TRACE_RECORD_MAX_SIZE ||
-              pArgs - &tempBuf[0] < (INT32)sizeof(pdTraceRecord) )
-         {
-            PD_RC_CHECK ( SDB_PD_TRACE_FILE_INVALID, PDERROR,
-                          "Invalid argument offset" ) ;
-         }
-         // assign the pointer to a temp argument structure
-         pdTraceArgument *arg = (pdTraceArgument*)pArgs ;
-         // move pArgs to next
-         pArgs += arg->_argumentSize ;
-         // write out the argument
-         rc = out->fWrite ( "\targ%d:"OSS_NEWLINE, i ) ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to write into trace file, errno = %d", rc ) ;
-         switch ( arg->_argumentType )
-         {
-         case PD_TRACE_ARGTYPE_NULL :
-            rc = out->fWrite ( "\t\tNULL"OSS_NEWLINE ) ;
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_CHAR :
-            rc = out->fWrite ( "\t\t%c"OSS_NEWLINE,
-                               (*(CHAR*)(((CHAR*)arg)+
-                               sizeof(pdTraceArgument))));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_BYTE :
-            rc = out->fWrite ( "\t\t0x%x"OSS_NEWLINE,
-                               (UINT32)(*(CHAR*)(((CHAR*)arg)+
-                               sizeof(pdTraceArgument))));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_SHORT :
-            rc = out->fWrite ( "\t\t%d"OSS_NEWLINE,
-                               (INT32)(*(INT16*)(((CHAR*)arg)+
-                               sizeof(pdTraceArgument))));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_USHORT :
-            rc = out->fWrite ( "\t\t%u"OSS_NEWLINE,
-                               (UINT32)(*(UINT16*)(((CHAR*)arg)+
-                               sizeof(pdTraceArgument))));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_INT :
-            rc = out->fWrite ( "\t\t%d"OSS_NEWLINE,
-                               *(INT32*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_UINT :
-            rc = out->fWrite ( "\t\t%u"OSS_NEWLINE,
-                               *(UINT32*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_LONG :
-            rc = out->fWrite ( "\t\t%lld"OSS_NEWLINE,
-                               *(INT64*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_ULONG :
-            rc = out->fWrite ( "\t\t%llu"OSS_NEWLINE,
-                               *(UINT64*)(((CHAR*)arg)+sizeof(pdTraceArgument)));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_FLOAT :
-            rc = out->fWrite ( "\t\t%f"OSS_NEWLINE,
-                               *(FLOAT32*)(((CHAR*)arg)+
-                                            sizeof(pdTraceArgument)));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_DOUBLE :
-            rc = out->fWrite ( "\t\t%f"OSS_NEWLINE,
-                               *(FLOAT64*)(((CHAR*)arg)+
-                                            sizeof(pdTraceArgument)));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_STRING :
-            rc = out->fWrite ( "\t\t%s"OSS_NEWLINE,
-                               (((CHAR*)arg)+
-                               sizeof(pdTraceArgument)));
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         case PD_TRACE_ARGTYPE_RAW :
-         {
-            INT32 rawSize = arg->_argumentSize - sizeof(pdTraceArgument) ;
-            UINT32 outSize = 10*rawSize ;
-            CHAR *pTempBuffer = (CHAR*)SDB_OSS_MALLOC ( outSize ) ;
-            PD_CHECK ( pTempBuffer, SDB_OOM, error, PDERROR,
-                       "Failed to allocate memory for temp buffer" ) ;
-            ossHexDumpBuffer ( (((CHAR*)arg)+
-                               sizeof(pdTraceArgument)),
-                               rawSize,
-                               pTempBuffer,
-                               outSize,
-                               NULL,
-                               OSS_HEXDUMP_INCLUDE_ADDR ) ;
-            rc = out->fWrite ( "%s"OSS_NEWLINE, pTempBuffer ) ;
-            SDB_OSS_FREE ( pTempBuffer ) ;
-            PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                       "Failed to write into trace file, errno = %d", rc ) ;
-            break ;
-         }
-         case PD_TRACE_ARGTYPE_NONE :
-         default :
-            break ;
-         }
-      }
-      rc = out->fWrite ( OSS_NEWLINE ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                 "Failed to write into trace file, errno = %d", rc ) ;
-   }
-   else
-   {
-      PD_RC_CHECK ( SDB_SYS, PDERROR, "Unexpected format type: %d",
-                    formatType ) ;
-   }
 done :
    return rc ;
 error :
    goto done ;
+}
+
+void removeSuffix(char *path)
+{
+   int idx = ossStrlen(path)-1;
+   while(idx >= 0 && path[idx] != '\\' && path[idx] != '/')
+   {
+      if (path[idx] == '.')
+      {
+         path[idx] = 0;
+         break;
+      }
+      idx--;
+   }
 }
 
 // load external dumped file and format
@@ -750,162 +552,75 @@ INT32 _pdTraceCB::format ( const CHAR *pInputFileName,
                            _pdTraceFormatType type )
 {
    INT32 rc               = SDB_OK ;
-   INT32 byteRead         = 0 ;
-   UINT64 fileSize        = 0 ;
+
    _pdTraceCB traceCB ;
-   CHAR *pFormatBuffer    = NULL ;
-   BOOLEAN wrap           = FALSE ;
-   ossPrimitiveFileOp::offsetType offset ;
    ossPrimitiveFileOp file ;
-   ossPrimitiveFileOp out ;
-   INT32  numIndent = 0 ;
-   // open the file in read only mode
-   rc = file.Open ( pInputFileName,
-                    OSS_PRIMITIVE_FILE_OP_READ_ONLY |
-                    OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-              "Failed to dump trace to file %s, errno=%d",
-              pInputFileName, rc ) ;
-   rc = file.getSize ( &offset ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-              "Failed to get trace file size for %s, errno=%d",
-              pInputFileName, rc ) ;
-   fileSize = offset.offset ;
-   // open output file for write only
-   rc = out.Open ( pOutputFileName,
-                   OSS_PRIMITIVE_FILE_OP_WRITE_ONLY |
-                   OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS |
-                   OSS_PRIMITIVE_FILE_OP_OPEN_TRUNC ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-              "Failed to dump trace to file %s, errno=%d",
-              pOutputFileName, rc ) ;
-   // read traceCB first
-   rc = file.Read ( sizeof(_pdTraceCB), &traceCB, &byteRead ) ;
-   // reset buffer since it's fake
-   traceCB._pBuffer = NULL ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-              "Failed to write trace to file %s, errno=%d",
-              pInputFileName, rc ) ;
-   PD_CHECK ( byteRead == sizeof(_pdTraceCB),
-              SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
-              "Unable to read header" ) ;
-   // make sure file size is right
-   PD_CHECK ( fileSize == traceCB._totalChunks*TRACE_CHUNK_SIZE +
-                 traceCB._headerSize,
-              SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
-              "Trace file is not valid, real size: %lld, expected %lld",
-              fileSize, traceCB._totalChunks*TRACE_CHUNK_SIZE +
-                 traceCB._headerSize  ) ;
-   // make sure eye catcher is right
-   PD_CHECK ( ossMemcmp ( traceCB._eyeCatcher, TRACECB_EYE_CATCHER,
-                          TRACE_EYE_CATCHER_SIZE ) == 0,
-              SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
-              "Invalid eye catcher" ) ;
-   // if the header size doesn't match _pdTraceCB, it may caused by
-   // server/client differnece for pdTraceCB, so let's read rest
-   if ( sizeof(_pdTraceCB) < traceCB._headerSize )
+   CHAR fmtFilePath[PATH_MAX] = {0} ;
+   CHAR flwFilePath[PATH_MAX] = {0} ;
+   CHAR summaryFilePath[PATH_MAX] = {0} ; 
+   CHAR exceptFilePath[PATH_MAX] = {0} ;
+   CHAR errorFilePath[PATH_MAX] = {0} ;
+   CHAR funcRecordFilePath[PATH_MAX] = {0} ;
+   CHAR filePath[PATH_MAX] = {0} ;
+   std::map<UINT32, std::vector<TraceRecordIndex> > tid2recordsMap ;
+
+   /*ossStrcpy( filePath, pOutputFileName ) ; 
+   removeSuffix( filePath ) ;
+
+   if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
    {
-      ossPrimitiveFileOp::offsetType off ;
-      off.offset = traceCB._headerSize ;
-      file.seekToOffset ( off ) ;
-   }
-   else if ( sizeof(_pdTraceCB) > traceCB._headerSize )
-   {
-      PD_LOG ( PDWARNING,
-               "Trace file header is not valid, should be greater "
-               "or equal to %lld bytes, but actual %lld bytes",
-               sizeof(_pdTraceCB), traceCB._headerSize ) ;
-      goto error ;
-   }
-   // check if wrap happen, and then calculate the current slot
-   if ( traceCB._currentSlot.peek() >= traceCB._totalSlots )
-   {
-      wrap = TRUE ;
-   }
-   traceCB._currentSlot.init ( traceCB._currentSlot.peek() %
-                               traceCB._totalSlots ) ;
-   if ( wrap )
-   {
-      UINT32 sequenceNum = 0 ;
-      BOOLEAN wrapped = FALSE ;
-      UINT32 prev = 0 ;
-      // if wrap happen, we should start at _currentSlot+1 to _totalSlots, and
-      // then from 0 to _currentSlot
-      UINT32 i = ( traceCB._currentSlot.peek() + 1 ) % traceCB._totalSlots ;
-      while ( !wrapped || i < traceCB._currentSlot.peek() )
-      {
-         prev = i ;
-         rc = pdTraceFormatProcessSlot ( &file, &out, traceCB._totalSlots,
-              type == PD_TRACE_FORMAT_TYPE_FORMAT ?
-              PD_TRACE_FORMAT_TYPE_FORMAT:
-              PD_TRACE_FORMAT_TYPE_FLOW_PREPARE,
-              sequenceNum, numIndent, i, traceCB._headerSize ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to format slot %d, rc = %d",
-                       i, rc ) ;
-         if ( i < prev )
-         {
-            wrapped = TRUE ;
-         }
-      }
+      ossSnprintf( fmtFilePath, PATH_MAX, "%s.fmt", filePath ) ;
    }
    else
    {
-      UINT32 sequenceNum = 0 ;
-      // if wrap not happen, we should start at 0 and end before _currentSlot
-      for ( UINT32 i = 0; i < traceCB._currentSlot.peek(); )
-      {
-         rc = pdTraceFormatProcessSlot ( &file, &out, traceCB._totalSlots,
-              type == PD_TRACE_FORMAT_TYPE_FORMAT ?
-              PD_TRACE_FORMAT_TYPE_FORMAT:
-              PD_TRACE_FORMAT_TYPE_FLOW_PREPARE,
-              sequenceNum, numIndent, i, traceCB._headerSize ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to format slot %d, rc = %d",
-                       i, rc ) ;
-      }
-   }
-   if ( type == PD_TRACE_FORMAT_TYPE_FLOW )
-   {
-      std::map<UINT32, _pdTraceFormatSession *>::iterator it ;
-      // loop for each thread
-      for ( it = gTraceFormatSystem._threadLists.begin() ;
-            it != gTraceFormatSystem._threadLists.end() ;
-            ++it )
-      {
-         numIndent = 0 ;
-         rc = out.fWrite ( "tid: %u"OSS_NEWLINE, (*it).second->_tid ) ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to write into trace file, errno = %d", rc ) ;
+      ossSnprintf( flwFilePath, PATH_MAX, "%s.flw", filePath ) ;
+      ossSnprintf( exceptFilePath, PATH_MAX, "%s.except", filePath ) ;
+      ossSnprintf( summaryFilePath, PATH_MAX, "%s.sumary", filePath ) ;
+      ossSnprintf( errorFilePath, PATH_MAX, "%s.error", filePath ) ;
+      ossSnprintf( funcRecordFilePath, PATH_MAX, "%s.funcRecord.csv", filePath ) ;
 
-         std::vector<UINT32>::iterator slotit ;
-         std::vector<UINT32>::iterator seqit ;
-         slotit = (*it).second->_slotNum.begin() ;
-         seqit  = (*it).second->_sequenceNum.begin() ;
-         PD_CHECK ( (*it).second->_slotNum.size() ==
-                    (*it).second->_sequenceNum.size(),
-                    SDB_SYS, error, PDERROR,
-                    "slot num and sequence num must be same" ) ;
-         for ( ; slotit != (*it).second->_slotNum.end();
-               ++slotit, ++seqit )
-         {
-            rc = pdTraceFormatProcessSlot ( &file, &out, traceCB._totalSlots,
-                    PD_TRACE_FORMAT_TYPE_FLOW,
-                    *seqit, numIndent, *slotit, traceCB._headerSize ) ;
-            PD_RC_CHECK ( rc, PDERROR, "Failed to format slot %d, rc = %d",
-                          *slotit, rc ) ;
-         }
-         rc = out.fWrite ( OSS_NEWLINE ) ;
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-                    "Failed to write into trace file, errno = %d", rc ) ;
-      }
-   } // if ( type == PD_TRACE_FORMAT_TYPE_FLOW )
+   }*/
+
+
+   if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
+   {
+      ossSnprintf( fmtFilePath, PATH_MAX, "%s/trace.fmt", pOutputFileName ) ;
+   }
+   else
+   {
+      ossSnprintf( flwFilePath, PATH_MAX, "%s/trace.flw", pOutputFileName ) ;
+      ossSnprintf( exceptFilePath, PATH_MAX, "%s/trace.except", pOutputFileName ) ;
+      ossSnprintf( summaryFilePath, PATH_MAX, "%s/trace.sumary", pOutputFileName ) ;
+      ossSnprintf( errorFilePath, PATH_MAX, "%s/trace.error", pOutputFileName ) ;
+      ossSnprintf( funcRecordFilePath, PATH_MAX, "%s/trace.funcRecord.csv", pOutputFileName ) ;
+
+   }
+
+   if( ossAccess( pOutputFileName ) )
+   {
+      rc = ossMkdir( pOutputFileName ) ;
+      PD_CHECK ( 0 == rc || SDB_PERM == rc, rc, error, PDERROR, "Failed to mkdir(%s), errno=%d", pOutputFileName, rc ) ;
+   }
+
+   rc = loadDumpFile( pInputFileName, &file, traceCB ) ;
+   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to load dump file(%s), errno=%d", pInputFileName, rc ) ;
+
+   //step 1
+   rc = parseTraceDumpFile( &file, &traceCB, fmtFilePath, tid2recordsMap );
+   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to parse file(%s), errno=%d", pInputFileName, rc ) ;
+
+   if ( type != PD_TRACE_FORMAT_TYPE_FORMAT )
+   {
+      rc = analysisTraceRecords( &file, &traceCB, tid2recordsMap, 
+                                 errorFilePath, funcRecordFilePath, flwFilePath, summaryFilePath, exceptFilePath );
+      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to analysis trace records, errno=%d", rc ) ;
+   }
+
+
+ 
+   
 done :
    file.Close () ;
-   out.Close () ;
-   if ( pFormatBuffer )
-   {
-      SDB_OSS_FREE ( pFormatBuffer ) ;
-      pFormatBuffer = NULL ;
-   }
    return rc ;
 error :
    goto done ;
@@ -930,11 +645,11 @@ void _pdTraceCB::reset ()
       _pBuffer = NULL ;
    }
    _traceStarted.init ( FALSE ) ;
-   _currentSlot.init ( 0 ) ;
+   _freeBlockHead = 0 ;
+   _freeBlockTail = 0 ;
+   _totalSize = 0 ;
    _currentWriter.init ( 0 ) ;
    _componentMask = 0xFFFFFFFF ;
-   _totalChunks   = 0 ;
-   _totalSlots    = 0 ;
    ossMemcpy ( _eyeCatcher, TRACECB_EYE_CATCHER,
                TRACE_EYE_CATCHER_SIZE ) ;
 #if defined (SDB_ENGINE)
@@ -1001,6 +716,12 @@ void _pdTraceCB::resumePausedEDUs ()
    _pmdEDUCBLatch.release () ;
 }
 
+INT32 _pdTraceCB::getCurrent()
+{
+   return (INT32)_freeBlockHead;
+}
+
+
 #endif // SDB_ENGINE
 
 /*
@@ -1011,4 +732,7 @@ pdTraceCB* sdbGetPDTraceCB ()
    static pdTraceCB s_pdTraceCB ;
    return &s_pdTraceCB ;
 }
+
+
+
 
