@@ -163,6 +163,11 @@ function _getGroup( db, role, dataGroupName, isAutoCreate )
             }
             break ;
          }
+         else if( rc == SDB_CLS_GRP_NOT_EXIST && role == FIELD_DATA )
+         {
+            var error = new SdbError( rc, "Failed to get data group" ) ;
+            throw error ;
+         }
          else if( rc == SDB_CLS_NOT_PRIMARY )
          {
             PD_LOGGER.logTask( PDWARNING, "Catalog has no primary" ) ;
@@ -376,8 +381,26 @@ function _removeNode( db, nodeResult )
 
    result[FIELD_FLOW].push( sprintf( "Rollbacking ?[?:?]",
                                       role, hostName, svcname ) ) ;
+   try
+   {
+      rg = _getGroup( db, role, groupName, false ) ;
+   }
+   catch( e )
+   {
+      if( e.getErrCode() == SDB_CLS_GRP_NOT_EXIST )
+      {
+         PD_LOGGER.logTask( PDEVENT, sprintf( "Finish rollback ?[?:?]",
+                                              role, hostName, svcname ) ) ;
 
-   rg = _getGroup( db, role, groupName, false ) ;
+         result[FIELD_FLOW].push( sprintf( "Finish rollback ?[?:?]",
+                                           role, hostName, svcname ) ) ;
+         return result ;
+      }
+      else
+      {
+         throw e ;
+      }
+   }
 
    cur = rg.getDetail() ;
    detail = cur.next().toObj() ;
@@ -435,6 +458,24 @@ function _removeNode( db, nodeResult )
             var error = new SdbError( SDB_SYS,
                              sprintf( "Failed to remove ?[?:?], only one node",
                                       role, hostName, svcname ) ) ;
+            PD_LOGGER.logTask( PDERROR, error ) ;
+            throw error ;
+         }
+      }
+   }
+   else
+   {
+      if( role == FIELD_DATA )
+      {
+         try
+         {
+            db.removeRG( groupName, { "enforced": true } ) ;
+         }
+         catch( e )
+         {
+            rc = getLastError() ;
+            var error = new SdbError( rc, sprintf( "Failed to remove Group[?]",
+                                                   groupName ) ) ;
             PD_LOGGER.logTask( PDERROR, error ) ;
             throw error ;
          }
