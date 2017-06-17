@@ -378,12 +378,12 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
       funStack.push( 
                      FunctionRecord(recdIndexIdx, 
                                     sequenceNum,
-                                    curRecord._functionID, 
                                     curRecord._tid,
                                     0, 
                                     (INT64)(curRecord._timestamp.time * 1000000L + curRecord._timestamp.microtm),
                                     0,
                                     0,
+                                    curRecord._functionID, 
                                     curRecord._timestamp) 
                     );
    }
