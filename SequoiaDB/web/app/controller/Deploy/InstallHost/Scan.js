@@ -6,10 +6,41 @@
       //初始化
       var scanHostTmp        = $rootScope.tempData( 'Deploy', 'ScanHost' ) ;
       var successNum         = 0 ;
-      $scope.HostList        = scanHostTmp == null ? [] : scanHostTmp ;
-      $scope.HostGridOptions = { 'titleWidth': [ '30px', 16, 20, 16, 12, 12, 12, 12 ] } ;
-      $scope.HostGridTool    = sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), $scope.HostList.length, successNum ) ;
+      var hostList        = scanHostTmp == null ? [] : scanHostTmp ;
       $scope.checkedHostNum  = 0 ;
+      //主机列表表格
+      $scope.HostListTable = {
+         'title': {
+            'Check':      '',
+            'Errno':      $scope.autoLanguage( '状态' ),
+            'HostName':   $scope.autoLanguage( '主机名' ),
+            'IP':         $scope.autoLanguage( 'IP地址' ),
+            'User':       $scope.autoLanguage( '用户名' ),
+            'Password':   $scope.autoLanguage( '密码' ),
+            'SSH':        $scope.autoLanguage( 'SSH端口' ),
+            'Proxy':      $scope.autoLanguage( '代理端口' )
+         },
+         'body': hostList,
+         'options': {
+            'width': {
+               'Check':            '30px',
+               'Errno':            16,
+               'HostName':         20,
+               'IP':               16,
+               'User':             12,
+               'Password':         12,
+               'SSH':              12,
+               'Proxy':            12
+            },
+            'max': 50,
+            
+            'text': {
+               'default': sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), hostList.length, successNum )
+            }
+         },
+         'callback': {}
+      } ;
+
       $scope.ScanForm = {
          'inputList': [
             {
@@ -70,6 +101,12 @@
          ]
       } ;
 
+      //帮助窗口
+      $scope.Helper = {
+         'config': {},
+         'callback': {}
+      } ;
+
       var deployModel  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       var deplpyModule = $rootScope.tempData( 'Deploy', 'Module' ) ;
       var clusterName  = $rootScope.tempData( 'Deploy', 'ClusterName' ) ;
@@ -94,7 +131,7 @@
       $scope.CountCheckedHostNum = function(){
          setTimeout( function(){
             $scope.checkedHostNum = 0 ;
-            $.each( $scope.HostList, function( index, hostInfo ){
+            $.each( hostList, function( index, hostInfo ){
                if( hostInfo['checked'] == true )
                {
                   ++$scope.checkedHostNum ;
@@ -106,7 +143,7 @@
 
       var countSuccessHostNum = function(){
          successNum = 0 ;
-         $.each( $scope.HostList, function( index2, hostInfo ){
+         $.each( hostList, function( index2, hostInfo ){
             if( hostInfo['Errno'] == 0 )
             {
                ++successNum ;
@@ -118,95 +155,78 @@
       $scope.CountCheckedHostNum() ;
 
       $scope.SelectAll = function(){
-         $.each( $scope.HostList, function( index ){
-            if( $scope.HostList[index]['Errno'] == 0 )
+         $.each( hostList, function( index ){
+            if( hostList[index]['Errno'] == 0 )
             {
-               $scope.HostList[index]['checked'] = true ;
+               hostList[index]['checked'] = true ;
             }
          } ) ;
       }
 
       $scope.Unselected = function(){
-         $.each( $scope.HostList, function( index ){
-            if( $scope.HostList[index]['Errno'] == 0 )
+         $.each( hostList, function( index ){
+            if( hostList[index]['Errno'] == 0 )
             {
-               $scope.HostList[index]['checked'] = !$scope.HostList[index]['checked'] ;
+               hostList[index]['checked'] = !hostList[index]['checked'] ;
             }
          } ) ;
       }
 
       $scope.ClearErrorHost = function(){
          var newHostList = [] ;
-         $.each( $scope.HostList, function( index, hostInfo ){
+         $.each( hostList, function( index, hostInfo ){
             if( hostInfo['Errno'] == 0 )
             {
                newHostList.push( hostInfo ) ;
             }
          } ) ;
-         $scope.HostList = newHostList ;
-         $scope.HostGridTool = sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), $scope.HostList.length, $scope.HostList.length ) ;
-         $rootScope.tempData( 'Deploy', 'ScanHost', $scope.HostList ) ;
+         $scope.HostListTable['body'] = newHostList ;
+         $scope.HostListTable['options']['text']['default'] = sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), $scope.HostListTable['body'].length, $scope.HostListTable['body'].length ) ;
+         $rootScope.tempData( 'Deploy', 'ScanHost', hostList ) ;
       }
 
-      $scope.Helper = function(){
-         $scope.Components.Modal.icon = '' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( '帮助' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.Context = '\
-<p>' + $scope.autoLanguage( '请输入主机名或IP地址，然后单击<b>扫描</b>。您还可以指定主机名和IP地址范围：' ) + '</p>\
-<table class="table loosen border">\
-   <tr>\
-      <td><b>' + $scope.autoLanguage( '使用此延展范围' ) + '</b></td>\
-      <td><b>' + $scope.autoLanguage( '要指定的主机' ) + '</b></td>\
-   </tr>\
-   <tr>\
-      <td>10.1.1.[1-4]</td>\
-      <td>10.1.1.1, 10.1.1.2, 10.1.1.3, 10.1.1.4</td>\
-   </tr>\
-   <tr>\
-      <td>pc[1-4]host</td>\
-      <td>pc1host, pc2host, pc3host, pc4host</td>\
-   </tr>\
-   <tr>\
-      <td>pc[098-101]host</td>\
-      <td>pc098host, pc099host, pc100host, pc101host</td>\
-   </tr>\
-</table>\
-<p>' + $scope.autoLanguage( '您可以添加多个主机名、IP地址和主机名范围、IP地址范围，但要注意主机名和IP地址是唯一。' ) + '</p>\
-<p>' + $scope.autoLanguage( '扫描结果将包括所有扫描的地址，但只有运行SSH服务的主机才会被选择包含在集群中。如果是用户名、密码或SSH填写不正确，可以点击主机名或IP地址修改。' ) + '</p>\
-<p><b>' + $scope.autoLanguage( '注意' ) + '</b>:' + $scope.autoLanguage( '如果您不知道主机的HostName和IP，可输入更大的范围进行扫描。但是范围越大，扫描时间越长。' ) + '</p>' ;
-         $scope.Components.Modal.ok = function(){
-            return true ;
-         }
+      //打开帮助窗口
+      $scope.ShowHelper = function(){
+         //设置确定按钮
+         $scope.Helper['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            $scope.Helper['callback']['Close']() ;
+         } ) ;
+         //设置标题
+         $scope.Helper['callback']['SetTitle']( $scope.autoLanguage( '帮助' ) ) ;
+         //设置图标
+         $scope.Helper['callback']['SetIcon']( '' ) ;
+         //打开窗口
+         $scope.Helper['callback']['Open']() ;
       }
 
       function ScanAllHost( formVal )
       {
-         var hostList = parseHostString( formVal['address'] ) ;
+         var ipList = parseHostString( formVal['address'] ) ;
          var index = 0 ;
          var scanHostOnce = function(){
-            if( index < hostList.length )
+            if( index < ipList.length )
             {
-               var hostInfo = { "ClusterName": clusterName, "HostInfo": hostList[index], "User": formVal['user'], "Passwd": formVal['password'], "SshPort": formVal['ssh'],"AgentService": formVal['proxy'] } ;
+               var hostInfo = { "ClusterName": clusterName, "HostInfo": ipList[index], "User": formVal['user'], "Passwd": formVal['password'], "SshPort": formVal['ssh'],"AgentService": formVal['proxy'] } ;
                var data = { 'cmd': 'scan host', 'HostInfo': JSON.stringify( hostInfo ) } ;
                SdbRest.OmOperation( data, {
-                  'success': function( hostList ){
-                     $.each( hostList, function( index, hostInfo ){
-                        var isExists = checkHostIsExist( $scope.HostList, hostInfo['HostName'], hostInfo['IP'] ) ;
+                  'success': function( scanHostList ){
+                     $.each( scanHostList, function( index, hostInfo ){
+                        var isExists = checkHostIsExist( hostList, hostInfo['HostName'], hostInfo['IP'] ) ;
                         var newHostInfo = { 'checked': ( hostInfo['errno'] == 0 ? true : false ), 'Errno': hostInfo['errno'], 'Detail': hostInfo['detail'], 'HostName': hostInfo['HostName'], 'IP': hostInfo['IP'], 'User': formVal['user'], 'Password': formVal['password'], 'SSH': formVal['ssh'], 'Proxy': formVal['proxy']  } ;
                         if( isExists == -1 || isExists == -2 )
                         {
-                           $scope.HostList.push( newHostInfo ) ;
+                           hostList.push( newHostInfo ) ;
                         }
                         else
                         {
-                           $scope.HostList[isExists] = newHostInfo ;
+                           hostList[isExists] = newHostInfo ;
                         }
                      } ) ;
-                     $rootScope.tempData( 'Deploy', 'ScanHost', $scope.HostList ) ;
+                     $scope.HostListTable['body'] = hostList ;
+                     $rootScope.tempData( 'Deploy', 'ScanHost', $scope.HostListTable['body'] ) ;
                      countSuccessHostNum() ;
+                     $scope.HostListTable['options']['text']['default'] = sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), hostList.length, successNum ) ;
                      $scope.CountCheckedHostNum() ;
-                     $scope.HostGridTool = sprintf( $scope.autoLanguage( '已扫描 ? 台主机, 共 ? 台主机连接成功。' ), $scope.HostList.length, successNum ) ;
                      $rootScope.bindResize() ;
                      $scope.$apply() ;
                      ++index ;
@@ -224,13 +244,17 @@
          scanHostOnce() ;
       }
 
-      $scope.ChangeHostInfo = function( index ){
-         var hostInfo = $scope.HostList[index] ;
-         $scope.Components.Modal.icon = '' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( '修改主机信息' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.form = {
-            inputList: [
+      //修改主机信息 弹窗
+      $scope.ChangeHostInfoWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 修改主机信息 弹窗
+      $scope.ShowChangeHostInfo = function( index ){
+         var hostInfo = hostList[index] ;
+         $scope.ChangeHostInfoWindow['config'] = {
+            'inputList': [
                {
                   "name": "address",
                   "webName": $scope.autoLanguage( 'IP地址/主机名' ),
@@ -280,9 +304,8 @@
                }
             ]
          } ;
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-         $scope.Components.Modal.ok = function(){
-            var isAllClear = $scope.Components.Modal.form.check( function( val ){
+         $scope.ChangeHostInfoWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.ChangeHostInfoWindow['config'].check( function( val ){
                var errInfo = [] ;
                if( !checkPort( val['ssh'] ) )
                {
@@ -296,11 +319,13 @@
             } ) ;
             if( isAllClear )
             {
-               var formVal = $scope.Components.Modal.form.getValue() ;
+               var formVal = $scope.ChangeHostInfoWindow['config'].getValue() ;
                ScanAllHost( formVal ) ;
             }
             return isAllClear ;
-         }
+         } ) ;
+         $scope.ChangeHostInfoWindow['callback']['SetTitle']( $scope.autoLanguage( '修改主机信息' ) ) ;
+         $scope.ChangeHostInfoWindow['callback']['Open']() ;
       }
 
       $scope.ScanHost = function( event ){
@@ -347,7 +372,7 @@
                'SshPort': '-',
                'AgentService': '-'
             } ;
-            $.each( $scope.HostList, function( index, hostInfo ){
+            $.each( hostList, function( index, hostInfo ){
                if( hostInfo['checked'] == true )
                {
                   newHostList['HostInfo'].push( {

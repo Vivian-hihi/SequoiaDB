@@ -1,7 +1,7 @@
 ﻿(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
-   sacApp.controllerProvider.register( 'Monitor.SdbOverview.NodesNature.Ctrl', function( $scope, $compile, $location, $timeout, $interval, SdbRest, SdbFunction ){
+   sacApp.controllerProvider.register( 'Monitor.SdbOverview.NodesSync.Ctrl', function( $scope, $compile, $location, $timeout, $interval, SdbRest, SdbFunction ){
       
       _IndexPublic.checkMonitorEdition( $location ) ; //检测是不是企业版
 
@@ -23,13 +23,14 @@
 
       //初始化
       $scope.IntervalTimeConfig = {
-         'interval': 5,
-         'play': false
+         'interval': 3,
+         'beginRun': true,
+         'play': true
       } ;
       //刷新状态
-      $scope.RefreshType = $scope.autoLanguage( '启动刷新' ) ;
-      //是否初始化
-      var isBuildKeyList = false ;
+      $scope.RefreshType = $scope.autoLanguage( '停止刷新' ) ;
+      //显示全部或者只显示数据不同步的节点
+      var selector = 'different' ;
       //上一次的值
       $scope.LastValue = [] ;
       //节点列表的表格
@@ -43,27 +44,26 @@
             'Role':                    'Role',
             'TotalRecords':            'TotalRecords',
             'TotalLobs':               'TotalLobs',
-            'BeginLSN.Offset':         false,
-            'BeginLSN.Version':        false,
-            'CurrentLSN.Offset':       false,
-            'CurrentLSN.Version':      false,
-            'CommittedLSN.Offset':     false,
-            'CommittedLSN.Version':    false,
-            'TransInfo.TotalCount':    false,
-            'TransInfo.BeginLSN':      false,
-            'TotalUpdate':             'TotalUpdate',
-            'TotalDelete':             'TotalDelete',
-            'TotalInsert':             'TotalInsert',
-            'TotalRead':               'TotalRead'
+            'CompleteLSN':             'CompleteLSN'
          },
          'body': [],
          'options': {
             'width': {
                'ServiceStatus':  '80px',
-               'IsPrimary':      '70px',
+               'IsPrimary':      '100px',
                'Role':           '70px'
             },
-            'sort': {},
+            'sort': {
+               'ServiceStatus':           true,
+               'NodeName':                true,
+               'HostName':                true,
+               'GroupName':               true,
+               'IsPrimary':               true,
+               'Role':                    true,
+               'TotalRecords':            true,
+               'TotalLobs':               true,
+               'CompleteLSN':             true
+            },
             'max': 50,
             'filter': {
                'ServiceStatus': [
@@ -81,26 +81,16 @@
                   { 'key': 'Catalog', 'value': 'catalog' },
                   { 'key': 'Data',    'value': 'data' }
                ],
+               'NodeName':                'indexof',
+               'HostName':                'indexof',
+               'GroupName':               'indexof',
                'TotalRecords':            'number',
                'TotalLobs':               'number',
-               'BeginLSN.Offset':         'number',
-               'BeginLSN.Version':        'number',
-               'CurrentLSN.Offset':       'number',
-               'CurrentLSN.Version':      'number',
-               'CommittedLSN.Offset':     'number',
-               'CommittedLSN.Version':    'number',
-               'TransInfo.TotalCount':    'number',
-               'TransInfo.BeginLSN':      'number',
-               'TotalUpdate':             'number',
-               'TotalDelete':             'number',
-               'TotalInsert':             'number',
-               'TotalRead':               'number'
+               'CompleteLSN':             'number'
             }
          },
          'callback': {}
       } ;
-      //数据类型 默认：全量
-      $scope.ShowType = 'full' ;
       //定时器
       $scope.Timer = {
          'config': $scope.IntervalTimeConfig,
@@ -111,11 +101,6 @@
          'config': {},
          'callback': {}
       } ;
-      //显示列 下拉菜单
-      $scope.FieldDropdown = {
-         'config': [],
-         'callback': {}
-      } ;
 
       //获取节点列表
       var getNodesList = function( dbList, clList ){
@@ -123,7 +108,8 @@
          SdbRest.DataOperation( data, {
             'success': function( groups ){
                var nodesList = [] ;
-               $scope.GroupList = groups ;
+               var isPrimaryList = [] ;
+               var noPrimaryList = [] ;
                $.each( groups, function( index, groupInfo ){
                   if( groupInfo['Role'] == 2 )
                   {
@@ -141,6 +127,8 @@
                      nodesList.push( { 'HostName': nodeInfo['HostName'], 'ServiceName': nodeInfo['Service']['0']['Name'], 'GroupName': groupInfo['GroupName'], 'Role': groupInfo['Role']  } )
                   } ) ;
                } ) ;
+
+
                $.each( nodesList, function( index, nodeInfo ){
                   nodesList[index]['ServiceStatus'] = true ;
                   nodesList[index]['Status'] = 'Normal' ;
@@ -148,11 +136,6 @@
                   nodesList[index]['IsPrimary'] = false ;
                   nodesList[index]['TotalRecords'] = 0 ;
                   nodesList[index]['TotalLobs'] = 0 ;
-                  nodesList[index]['TotalCL'] = 0 ;
-                  nodesList[index]['TotalInsert'] = 0 ;
-                  nodesList[index]['TotalUpdate'] = 0 ;
-                  nodesList[index]['TotalDelete'] = 0 ;
-                  nodesList[index]['TotalRead'] = 0 ;
                   nodesList[index]['i'] = index ;
 
                   //统计节点信息
@@ -164,13 +147,11 @@
                      }
                   } ) ;
 
-                  //统计节点的记录和Lob
+                  //统计节点的记录
                   $.each( clList, function( index3, clInfo ){
                      if( nodesList[index]['NodeName'] == clInfo['NodeName'] )
                      {
-                        nodesList[index]['TotalCL'] += 1 ;
                         nodesList[index]['TotalRecords'] += clInfo['TotalRecords'] ;
-                        nodesList[index]['TotalLobs'] += clInfo['TotalLobs'] ;
                      }
                   } ) ;
 
@@ -186,90 +167,48 @@
                               nodesList[index]['Flag'] = errNodeInfo['Flag'] ;
                               nodesList[index]['TotalRecords'] = '-' ;
                               nodesList[index]['TotalLobs'] = '-' ;
-                              nodesList[index]['TotalCL'] = '-' ;
-                              nodesList[index]['TotalInsert'] = '-' ;
-                              nodesList[index]['TotalUpdate'] = '-' ;
-                              nodesList[index]['TotalDelete'] = '-' ;
-                              nodesList[index]['TotalRead'] = '-' ;
+                              nodesList[index]['CompleteLSN'] = '-' ;
                               return false ;
                            }
                         } ) ;
                      }
                   } ) ;
-               } ) ;
-               $scope.LastValue = $scope.NodeTable['body'] ;
-               $scope.NodeTable['body'] = nodesList ;
-            
-               //第一次创建字段列表
-               if( isBuildKeyList == false )
-               {
-                  $scope.LastValue = nodesList ;
-                  isBuildKeyList = true ;
-                  if( $scope.NodeTable['body'].length > 0 )
+                  if( nodesList[index]['IsPrimary'] == true )
                   {
-                     //寻找一个运行正常的节点
-                     $.each( $scope.NodeTable['body'], function( normalIndex, nodeInfo ){
-                        if( isNaN( nodeInfo['Flag'] ) == true || nodeInfo['Flag'] == 0 )
+                     isPrimaryList.push( nodesList[index] ) ;
+                  }
+                  else if( nodesList[index]['IsPrimary'] == false )
+                  {
+                     noPrimaryList.push( nodesList[index] ) ;
+                  }
+               } ) ;
+               if( selector == 'different' )
+               {
+                  nodesList = [] ;
+                  $.each( isPrimaryList, function( nodeIndex, nodeInfo ){
+                     $.each( noPrimaryList, function( nodeIndex2, nodeInfo2 ){
+                        if( nodeInfo['GroupName'] == nodeInfo2['GroupName'] && nodeInfo['CompleteLSN'] != nodeInfo2['CompleteLSN'] )
                         {
-                           //构造表格字段
-                           $.each( nodeInfo, function( key, val ){
-                              //过滤一些不需要显示的字段
-                              if( key == 'i' ||
-                                  key == 'ServiceStatus' ||
-                                  key == 'NodeID' ||
-                                  key == 'ServiceName' ||
-                                  key == 'Version' ||
-                                  key == 'Edition' ||
-                                  key == 'Disk' ||
-                                  key == 'UserCPU' ||
-                                  key == 'SysCPU' ||
-                                  key == 'svcNetIn' ||
-                                  key == 'svcNetOut' ||
-                                  key == 'shardNetIn' ||
-                                  key == 'shardNetOut' ||
-                                  key == 'replNetIn' ||
-                                  key == 'replNetOut' ||
-                                  key == 'BeginLSN' ||
-                                  key == 'CurrentLSN' ||
-                                  key == 'CommittedLSN' ||
-                                  key == 'TransInfo' )
-                              {
-                                 return true ;
-                              }
-                              //构造表格标题
-                              if( typeof( $scope.NodeTable['title'][key] ) == 'undefined' )
-                              {
-                                 $scope.NodeTable['title'][key] = false ;
-                              }
-                              //构造表格排序字段
-                              if( typeof( $scope.NodeTable['options']['sort'][key] ) == 'undefined' )
-                              {
-                                 $scope.NodeTable['options']['sort'][key] = true ;
-                              }
-                              //构造表格过滤字段
-                              if( typeof( $scope.NodeTable['options']['filter'][key] ) == 'undefined' )
-                              {
-                                 if( typeof( val ) == 'number' )
-                                    $scope.NodeTable['options']['filter'][key] = 'number' ;
-                                 else
-                                    $scope.NodeTable['options']['filter'][key] = 'indexof' ;
-                              }
-                           } ) ;
-                           //构造选择列显示的下拉菜单
-                           $.each( $scope.NodeTable['title'], function( key ){
-                              if( key == 'ServiceStatus' || key == 'Status' )
-                                 return true ;
-                              $scope.FieldDropdown['config'].push( { 'key': key, 'show': typeof( $scope.NodeTable['title'][key] ) == 'string' } ) ;
-                           } ) ;
-                           return false ;
+                           if( nodeInfo['show'] != false )
+                           {
+                              nodesList.push( nodeInfo ) ;
+                           }
+                           nodeInfo['show'] = false ;
+                           nodesList.push( nodeInfo2 ) ;
+                           return ;
                         }
                      } ) ;
-                  }
+                  } ) ;
                }
-               if( $scope.Timer['callback']['GetStatus']() == 'start' || $scope.Timer['callback']['GetStatus']() == 'complete' ) //如果开了定时器，就开始
+
+               $scope.LastValue = $scope.NodeTable['body'] ;
+               $scope.NodeTable['body'] = nodesList ;
+
+               if( $scope.IntervalTimeConfig['play'] == true )
                {
-                  $scope.Timer['callback']['Complete']() ;
+                  $scope.Timer['callback']['Start']( getDbList ) ;
                }
+
 
             },
             'failed': function( errorInfo ){
@@ -278,14 +217,14 @@
                   return true ;
                } ) ;
             }
-         }, {
+         },{
             'showLoading': false
          } ) ;
       }
 
       //获取CL快照
       var getClList = function( dbList ){
-         var sql = 'SELECT t1.Name,t1.Details.TotalRecords, t1.Details.TotalLobs,t1.Details.NodeName from (SELECT Name, Details FROM $SNAPSHOT_CL WHERE Global = true split By Details) As t1' ;
+         var sql = 'SELECT t1.Name, t1.Details.TotalRecords, t1.Details.NodeName from (SELECT Name, Details FROM $SNAPSHOT_CL WHERE Global = true split By Details) As t1' ;
          SdbRest.Exec( sql, {
             'success': function( clList ){
                getNodesList( dbList, clList ) ;
@@ -301,7 +240,7 @@
 
       //获取DB快照
       var getDbList = function(){
-         var sql  = 'SELECT * FROM $SNAPSHOT_DB' ;
+         var sql  = 'SELECT NodeName, HostName, ServiceName, GroupName, IsPrimary, CompleteLSN FROM $SNAPSHOT_DB' ;
          SdbRest.Exec( sql, {
             'success': function( dbList ){
                getClList( dbList ) ;
@@ -317,44 +256,30 @@
 
       getDbList() ;
 
-      //显示模式 下拉菜单
-      $scope.modeDropdown = {
+      
+      //选择全部 or 数据不同步 下拉菜单
+      $scope.SelectorMenu = {
          'config': [
-            { 'key': $scope.autoLanguage( '全量模式' ), 'checked': true,  'type': 'full' },
-            { 'key': $scope.autoLanguage( '增量模式' ), 'checked': false, 'type': 'inc' },
-            { 'key': $scope.autoLanguage( '均量模式' ), 'checked': false, 'type': 'avg' },
+            { 'field': $scope.autoLanguage( '全部节点' ), 'checked': false, 'type': "all" },
+            { 'field': $scope.autoLanguage( '数据不同步节点' ), 'checked': true, 'type': "different" }
          ],
          'OnClick': function( index ){
-            $.each( $scope.modeDropdown['config'], function( index2, config ){
-               $scope.modeDropdown['config'][index2]['checked'] = false ;
+            $.each( $scope.SelectorMenu['config'], function( index2, config ){
+               $scope.SelectorMenu['config'][index2]['checked'] = false ;
             } ) ;
-            $scope.modeDropdown['config'][index]['checked'] = true ;
-            $scope.modeDropdown['callback']['Close']() ;
-            $scope.ShowType = $scope.modeDropdown['config'][index]['type'] ;
+            selector = $scope.SelectorMenu['config'][index]['type'] ;
+            $scope.SelectorMenu['config'][index]['checked'] = true ;
+            $scope.SelectorMenu['callback']['Close']() ;
+            getDbList() ;
          },
          'callback': {}
       } ;
 
-      //打开 显示模式 的下拉菜单
-      $scope.OpenModeDropdown = function( event ){
-         $scope.modeDropdown['callback']['Open']( event.currentTarget ) ;
+      //打开 选择显示节点 弹窗
+      $scope.ShowSelectorMenu = function( event ){
+         $scope.SelectorMenu['callback']['Open']( event.currentTarget ) ;
       }
 
-      //打开 显示列 的下拉菜单
-      $scope.OpenShowFieldDropdown = function( event ){
-         $.each( $scope.FieldDropdown['config'], function( index, fieldInfo ){
-            $scope.FieldDropdown['config'][index]['show'] = typeof( $scope.NodeTable['title'][fieldInfo['key']] ) == 'string' ;
-         } ) ;
-         $scope.FieldDropdown['callback']['Open']( event.currentTarget ) ;
-      }
-
-      //保存 显示列
-      $scope.SaveField = function(){
-         $.each( $scope.FieldDropdown['config'], function( index, fieldInfo ){
-            $scope.NodeTable['title'][fieldInfo['key']] = fieldInfo['show'] ? fieldInfo['key'] : false ;
-         } ) ;
-         $scope.NodeTable['callback']['ShowCurrentPage']() ;
-      }
 
       //打开 实时刷新 弹窗
       $scope.OpenBrushWindows = function(){
@@ -379,7 +304,7 @@
             if( isAllClear )
             {
                var formVal = brushForm.getValue() ;
-               $scope.IntervalTimeConfig = formVal ;
+               $scope.IntervalTimeConfig['interval'] = formVal['interval'] ;
                $scope.Timer['callback']['SetInterval']( formVal['interval'] ) ;
             }
             return isAllClear ;
@@ -403,49 +328,49 @@
          {
             $scope.IntervalTimeConfig['play'] = true ; 
             $scope.RefreshType = $scope.autoLanguage( '停止刷新' ) ;
-            $scope.Timer['callback']['Start']( getDbList )
+            getDbList() ;
+            //$scope.Timer['callback']['Start']( getDbList ) ;
          }
       }
-
        //跳转至资源
       $scope.GotoResources = function(){
          $location.path( '/Monitor/SDB-Resources/Session' ).search( { 'r': new Date().getTime() } ) ;
-      } ;
+      }
 
       //跳转至主机列表
       $scope.GotoHostList = function(){
          $location.path( '/Monitor/SDB-Host/List/Index' ).search( { 'r': new Date().getTime() } ) ;
-      } ;
+      }
       
       
       //跳转至节点列表
       $scope.GotoNodes = function(){
          $location.path( '/Monitor/SDB-Nodes/Nodes' ).search( { 'r': new Date().getTime() } ) ;
-      } ;
+      }
     
       //跳转至节点信息
       $scope.GotoNode = function( HostName, ServiceName ){
          SdbFunction.LocalData( 'SdbHostName', HostName ) ;
          SdbFunction.LocalData( 'SdbServiceName', ServiceName ) ;
          $location.path( '/Monitor/SDB-Nodes/Node/Index' ).search( { 'r': new Date().getTime() } ) ;
-      } ;
+      }
 
       //跳转至分区组信息
       $scope.GotoGroup = function( GroupName ){
          SdbFunction.LocalData( 'SdbGroupName', GroupName ) ;
          $location.path( '/Monitor/SDB-Nodes/Group/Index' ).search( { 'r': new Date().getTime() } ) ;
-      } ;
+      }
 
       //跳转至主机信息
       $scope.GotoHostInfo = function( HostName ){
          SdbFunction.LocalData( 'SdbHostName', HostName ) ;
          $location.path( '/Monitor/SDB-Host/Info/Index' ).search( { 'r': new Date().getTime() } ) ;
-      } ;
+      }
 
       //跳转至数据库操作
       $scope.GotoDatabase = function(){
          $location.path( '/Data/SDB-Database/Index' ).search( { 'r': new Date().getTime() } ) ;
-      } ;
+      }
 
    } ) ;
 }());

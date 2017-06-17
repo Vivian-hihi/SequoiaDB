@@ -266,12 +266,9 @@
          $rootScope.bindResize() ;
       }
 
-      //创建 添加自定义路径 弹窗
-      $scope.CreateAddCustomPathModel = function(){
-         $scope.Components.Modal.icon = '' ;
-         $scope.Components.Modal.title = $scope.autoLanguage( '添加自定义路径' ) ;
-         $scope.Components.Modal.isShow = true ;
-         $scope.Components.Modal.form = {
+      //添加自定义路径 弹窗
+      $scope.AddCustomPathWindow = {
+         'config': {
             inputList: [
                {
                   "name": "Name",
@@ -314,10 +311,14 @@
                   }
                }
             ]
-         } ;
-         $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-         $scope.Components.Modal.ok = function(){
-            var isAllClear = $scope.Components.Modal.form.check( function( formVal ){
+         },
+         'callback': {}
+      } ;
+
+      //打开 添加自定义路径 弹窗
+      $scope.ShowAddCustomPath = function(){
+         $scope.AddCustomPathWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
+            var isAllClear = $scope.AddCustomPathWindow['config'].check( function( formVal ){
                var error = [] ;
                if( formVal['Free'] > formVal['Size'] )
                {
@@ -327,7 +328,7 @@
             } ) ;
             if( isAllClear )
             {
-               var formVal = $scope.Components.Modal.form.getValue() ;
+               var formVal = $scope.AddCustomPathWindow['config'].getValue() ;
                formVal['IsUse']   = true ;
                formVal['CanUse']  = true ;
                formVal['IsLocal'] = true ;
@@ -347,7 +348,9 @@
                $scope.bindResize() ;
             }
             return isAllClear ;
-         }
+         } ) ;
+         $scope.AddCustomPathWindow['callback']['SetTitle']( $scope.autoLanguage( '添加自定义路径' ) ) ;
+         $scope.AddCustomPathWindow['callback']['Open']() ;
       }
 
       //计算磁盘

@@ -387,7 +387,7 @@ _Deploy.GotoStep = function( $location, action ){
    $location.path( '/Deploy/' + action ).search( { 'r': new Date().getTime() } ) ;
 }
 
-//生成步骤图
+//生成部署步骤图
 _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployModule ){
    var stepList = {
       'step': 0,
@@ -510,6 +510,35 @@ _Deploy.BuildSdbStep = function( $scope, $location, deployModel, action, deployM
       break ;
    }
    }
+   return stepList ;
+}
+
+//生成扩容步骤图
+_Deploy.BuildSdbExtStep = function( $scope, $location, action, deployModule ){
+   var stepList = {
+      'step': 0,
+      'info': [] 
+   } ;
+
+   switch( action )
+   {
+   case 'SDB-ExtendConf':
+      stepList['step'] = 1 ;
+      break ;
+   case 'SDB-Extend':
+      stepList['step'] = 2 ;
+      break ;
+   case 'SDB-ExtendInstall':
+      stepList['step'] = 3 ;
+      break ;
+   }
+   if( deployModule == 'sequoiadb' )
+   {
+      stepList['info'].push( { 'text': $scope.autoLanguage( '扩容配置' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ExtendConf' ); } } ) ;
+      stepList['info'].push( { 'text': $scope.autoLanguage( '修改业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-Extend'  ); } } ) ;
+   }
+   stepList['info'].push( { 'text': $scope.autoLanguage( '安装业务' ), 'click': function(){ _Deploy.GotoStep( $location, 'SDB-ExtendInstall'  ); } } ) ;
+
    return stepList ;
 }
 

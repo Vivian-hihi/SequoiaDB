@@ -827,7 +827,7 @@ function parseConditionValue( condition )
             subCondition[ field['field'] ] = fieldValue ;
             break ;
          case 'size':
-            subCondition[ field['field'] ] = { '$size': fieldValue } ;
+            subCondition[ field['field'] ] = { '$size': 1, '$et': fieldValue } ;
             break ;
          case 'regex':
             var regex = trim( fieldValue ) ;
@@ -913,7 +913,7 @@ function parseConditionValue( condition )
                fieldValue = parseInt( fieldValue ) ;
                break ;
             }
-            subCondition[ field['field'] ] = { '$type': fieldValue } ;
+            subCondition[ field['field'] ] = { '$type': 1, '$et': fieldValue } ;
             break ;
          case 'null':
             subCondition[ field['field'] ] = { '$isnull': 1 } ;
@@ -1753,15 +1753,7 @@ function deleteJson( json, keys )
 {
    var newJson = {} ;
    $.each( json, function( key, value ){
-      var isFind = false ;
-      $.each( keys, function( index ){
-         if( key == keys[index] )
-         {
-            isFind = true ;
-            return false ;
-         }
-      } ) ;
-      if( isFind == false )
+      if( keys.indexOf( key ) == -1 )
       {
          newJson[key] = value ;
       }

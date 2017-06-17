@@ -18,6 +18,9 @@
       } ;
       $scope.TaskInfo = [] ;
 
+      //输出到表格task的数据
+      $scope.NewTaskInfo = [] ;
+
       var installTask = $rootScope.tempData( 'Deploy', 'ModuleTaskID' ) ;
       $scope.DeployType  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       $scope.ModuleType  = $rootScope.tempData( 'Deploy', 'Module' ) ;
@@ -127,40 +130,29 @@
          }
       }
 
-      //获取日志
-      $scope.GetLog = function(){
+      //获取日志 弹窗
+      $scope.GetLogWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 获取日志 弹窗
+      $scope.ShowGetLog = function(){
          var data = { 'cmd': 'get log', 'name': './task/' + installTask + '.log' } ;
-         var pre = null ;
-         var div = null ;
          SdbRest.GetLog( data, function( logstr ){
-            $scope.Components.Modal.icon = '' ;
-            $scope.Components.Modal.title = $scope.autoLanguage( '日志' ) ;
-            $scope.Components.Modal.isShow = true ;
-            $scope.Components.Modal.Context = function( bodyEle ){
-               pre = $( '<pre></pre>' ).text( logstr ).css( {
-                  'padding': '10px',
-                  'margin': '0',
-                  'white-space': 'pre-wrap'
-               } ) ;
-               div = $( '<div></div>' ).addClass( 'well' ).append( pre ).css( { 'overflow-y': 'auto' } ) ;
-               $( bodyEle ).html( div ) ;
-            }
-            $scope.Components.Modal.onResize = function( width, height ){
-               if( div !== null )
-               {
-                  div.css( { 'height': height - 5 } ) ;
-               }
-            }
-            $scope.Components.Modal.ok = function(){
-               return true ;
-            }
+            $scope.Logstr = logstr ;
          }, function(){
             _IndexPublic.createRetryModel( $scope, null, function(){
-               $scope.GetLog() ;
+               $scope.ShowGetLog() ;
                return true ;
             }, $scope.autoLanguage( '错误' ), $scope.autoLanguage( '获取日志失败。' ) ) ;
          } ) ;
+         $scope.GetLogWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ) ) ;
+         $scope.GetLogWindow['callback']['SetTitle']( $scope.autoLanguage( '日志' ) ) ;
+         $scope.GetLogWindow['callback']['Open']() ;
       }
+
+      var firstTime = true ;
 
       //循环查询任务信息
       var queryTask = function( taskID ){
@@ -296,7 +288,29 @@
                         $scope.TaskInfo['Progress'] = 90 ;
                      }
                   }
-               
+                  
+                  if( firstTime == true )
+                  {
+                     $scope.NewTaskInfo = $scope.TaskInfo ;
+                  }
+                  $.each( $scope.NewTaskInfo['ResultInfo'], function( index, hostInfo ){
+                     if( hostInfo['Status'] == $scope.TaskInfo['ResultInfo'][index]['Status'] && hostInfo['errno'] == $scope.TaskInfo['ResultInfo'][index]['errno'] )
+                     {
+                        $scope.NewTaskInfo['ResultInfo'][index]['StatusDesc'] = $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['detail'] = $scope.TaskInfo['ResultInfo'][index]['detail'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['Flow'] = $scope.TaskInfo['ResultInfo'][index]['Flow'] ;
+                     }
+                     else
+                     {
+                        $scope.NewTaskInfo['ResultInfo'][index]['Status'] = $scope.TaskInfo['ResultInfo'][index]['Status'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['StatusDesc'] = $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['detail'] = $scope.TaskInfo['ResultInfo'][index]['detail'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['Flow'] = $scope.TaskInfo['ResultInfo'][index]['Flow'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['errno'] = $scope.TaskInfo['ResultInfo'][index]['errno'] ;
+                     }
+                  } ) ;
+
+                  firstTime = false ;
                   $rootScope.bindResize() ;
                   $scope.$apply() ;
 

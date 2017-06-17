@@ -2,7 +2,6 @@
    var sacApp = window.SdbSacManagerModule ;
    //全局模板
    sacApp.controller( 'Index.Ctrl', function( $scope, $window, $rootScope, $location, Tip, SdbFunction, Loading, SdbRest ){
-
       //校验登录信息
       if( SdbFunction.LocalData( 'SdbUser' ) === null || SdbFunction.LocalData( 'SdbSessionID' ) === null )
 		{
@@ -54,6 +53,8 @@
       //-------- 全局函数 ---------
       //格式化
       $rootScope.sprintf = sprintf ;
+      //保留几位小数
+      $rootScope.fixedNumber = fixedNumber ;
       //判断数组
       $rootScope.isArray = isArray ;
       //Json转字符串
@@ -201,6 +202,11 @@
             {
                $rootScope.tempData( 'Deploy', 'HostTaskID', taskInfo['TaskID'] ) ;
                $location.path( '/Deploy/InstallHost' ).search( params ) ;
+            }
+            else if( taskInfo['TaskName'] == 'EXTEND_BUSINESS' )
+            {
+               $rootScope.tempData( 'Deploy', 'ModuleTaskID', taskInfo['TaskID'] ) ;
+               $location.path( '/Deploy/SDB-ExtendInstall' ).search( params ) ;
             }
             else
             {

@@ -143,6 +143,12 @@
            resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/NodesSnapshot.js' ] )
          }
       },
+      { path: '/Monitor/SDB-Nodes/NodesSync',
+        options: {
+           templateUrl: './app/template/Monitor/Sdb/Node/NodesSync.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Sdb/Node/NodesSync.js' ] )
+         }
+      },
       //节点-分区组
       { path: '/Monitor/SDB-Nodes/Group/Index',
         options: {
@@ -345,6 +351,24 @@
            resolve: resolveFun( [ './app/controller/Deploy/Task/Module.js' ] )
         }
       },
+      { path: '/Deploy/SDB-ExtendConf',
+        options: {
+           templateUrl: './app/template/Deploy/ExtendModule/Sdb/Conf.html',
+           resolve: resolveFun( [ './app/controller/Deploy/ExtendModule/Sdb/Conf.js' ] )
+        }
+      },
+      { path: '/Deploy/SDB-Extend',
+        options: {
+           templateUrl: './app/template/Deploy/ExtendModule/Sdb/Extend.html',
+           resolve: resolveFun( [ './app/controller/Deploy/ExtendModule/Sdb/Extend.js' ] )
+        }
+      },
+      { path: '/Deploy/SDB-ExtendInstall',
+        options: {
+           templateUrl: './app/template/Deploy/ExtendModule/Sdb/Install.html',
+           resolve: resolveFun( [ './app/controller/Deploy/ExtendModule/Sdb/Install.js' ] )
+        }
+      },
       { path: '/Deploy/ZKP-Mod',
         options: {
            templateUrl: './app/template/Deploy/InstallModule/Zookeeper/Mod.html',
@@ -361,6 +385,30 @@
         options: {
            templateUrl: './app/template/Deploy/InstallModule/Ssql/Mod.html',
            resolve: resolveFun( [ './app/controller/Deploy/InstallModule/Ssql/Mod.js' ] )
+        }
+      },
+      { path: '/Deploy/SDB-DiscoverConf',
+        options: {
+           templateUrl: './app/template/Deploy/DiscoverModule/Sdb/conf.html',
+           resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/Sdb/conf.js' ] )
+        }
+      },
+      { path: '/Deploy/SDB-DiscoverMod',
+        options: {
+           templateUrl: './app/template/Deploy/DiscoverModule/Sdb/mod.html',
+           resolve: resolveFun( [ './app/controller/Deploy/DiscoverModule/Sdb/mod.js' ] )
+        }
+      },
+      { path: '/Deploy/SDB-SyncConf',
+        options: {
+           templateUrl: './app/template/Deploy/SyncModule/Sdb/conf.html',
+           resolve: resolveFun( [ './app/controller/Deploy/SyncModule/Sdb/conf.js' ] )
+        }
+      },
+      { path: '/Deploy/SDB-SyncMod',
+        options: {
+           templateUrl: './app/template/Deploy/SyncModule/Sdb/mod.html',
+           resolve: resolveFun( [ './app/controller/Deploy/SyncModule/Sdb/mod.js' ] )
         }
       }
    ] ;

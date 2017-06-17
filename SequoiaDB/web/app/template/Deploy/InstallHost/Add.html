@@ -177,8 +177,10 @@
                      </tr>
                   </table>
                </div>
-
-               <div style="height:25px;margin-top:20px;">{{autoLanguage("磁盘列表")}}&nbsp;<button class="btn btn-primary" ng-if="HostDataList[CurrentHost]['errno'] == 0" ng-click="CreateAddCustomPathModel()">{{autoLanguage("添加自定义路径")}}</button></div>
+               <div ng-windows="form as AddCustomPathWindow.config" windows-callback="AddCustomPathWindow.callback">
+                  <div form-create para="form"></div>
+               </div>
+               <div style="height:25px;margin-top:20px;">{{autoLanguage("磁盘列表")}}&nbsp;<button class="btn btn-primary" ng-if="HostDataList[CurrentHost]['errno'] == 0" ng-click="ShowAddCustomPath()">{{autoLanguage("添加自定义路径")}}</button></div>
                <div class="Grid" style="border-bottom:1px solid #E3E7E8;max-height:200px;margin-top:5px;*position:relative;" ng-grid="HostDiskGrid">
                   <div class="GridHeader">
                      <div class="GridTr">

@@ -20,10 +20,12 @@
       //上下文类型
       $scope.ContextType = 'all' ;
       //定时器
+      $scope.IntervalTimeConfig = {
+         'interval': 5,
+         'play': false
+      } ;
       $scope.Timer = {
-         'config': {
-            interval: 5
-         },
+         'config': $scope.IntervalTimeConfig,
          'callback': {}
       } ;
       //实时刷新设置 弹窗
@@ -31,6 +33,8 @@
          'config': {},
          'callback': {}
       } ;
+      //刷新状态
+      $scope.RefreshType = $scope.autoLanguage( '启动刷新' ) ;
       //上下文详细信息 弹窗
       $scope.ContextInfo = {
          'config': {},
@@ -165,16 +169,6 @@
          var brushForm = {
             'inputList': [
                {
-                  "name": "play",
-                  "webName": $scope.autoLanguage( '自动刷新' ),
-                  "type": "select",
-                  "value": $scope.Timer['callback']['GetStatus']() != 'stop',
-                  "valid": [
-                     { 'key': $scope.autoLanguage( '开启' ), 'value': true },
-                     { 'key': $scope.autoLanguage( '停止' ), 'value': false }
-                  ]
-               },
-               {
                   "name": "interval",
                   "webName": $scope.autoLanguage( '刷新间距(秒)' ),
                   "type": "int",
@@ -192,15 +186,8 @@
             if( isAllClear )
             {
                var formVal = brushForm.getValue() ;
+               $scope.IntervalTimeConfig = formVal ;
                $scope.Timer['callback']['SetInterval']( formVal['interval'] ) ;
-               if( formVal['play'] == true )
-               {
-                  $scope.Timer['callback']['Start']( getContextList ) ;
-               }
-               else
-               {
-                  $scope.Timer['callback']['Stop']() ;
-               }
             }
             return isAllClear ;
          } ) ;
@@ -211,6 +198,23 @@
          //打开窗口
          $scope.CreateBrush['callback']['Open']() ;
       }
+
+      //是否刷新
+      $scope.RefreshCtrl = function(){
+         if( $scope.IntervalTimeConfig['play'] == true )
+         {
+            $scope.IntervalTimeConfig['play'] = false ; 
+            $scope.RefreshType = $scope.autoLanguage( '启动刷新' )
+            $scope.Timer['callback']['Stop']() ;
+         }
+         else
+         {
+            $scope.IntervalTimeConfig['play'] = true ; 
+            $scope.RefreshType = $scope.autoLanguage( '停止刷新' ) ;
+            $scope.Timer['callback']['Start']( getContextList ) ;
+         }
+      }
+
 
       //打开 显示列 下拉菜单
       $scope.OpenShowFieldDropdown = function( event ){
@@ -225,7 +229,6 @@
          $.each( $scope.FieldDropdown['config'], function( index, fieldInfo ){
             $scope.ContextTable['title'][fieldInfo['key']] = fieldInfo['show'] ? fieldInfo['key'] : false ;
          } ) ;
-         $scope.FieldDropdown['callback']['Close']() ;
          $scope.ContextTable['callback']['ShowCurrentPage']() ;
       }
 

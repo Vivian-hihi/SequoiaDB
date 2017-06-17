@@ -38,7 +38,7 @@
             'GroupName':            $scope.autoLanguage( '分区组' ),
             'CurrentTransLSN':      $scope.autoLanguage( '当前事务LSN' ),
             'IsRollback':           $scope.autoLanguage( '是否回滚' ),
-            'WaitLockNum':          $scope.autoLanguage( '等待锁' ),
+            'WaitLockNum':             $scope.autoLanguage( '等待锁' ),
             'TransactionLocksNum':  $scope.autoLanguage( '锁总数' )
          },
          'body': [],
@@ -51,7 +51,7 @@
                'GroupName':            true,
                'CurrentTransLSN':      true,
                'IsRollback':           true,
-               'WaitLockNum':          true,
+               'WaitLockNum':             true,
                'TransactionLocksNum':  true
             },
             'max': 50,

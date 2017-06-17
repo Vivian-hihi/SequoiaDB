@@ -11,16 +11,41 @@
          </ul>
       </div>
       <div ng-container="{offsetY:-50}"  ng-hide="currentPage!='module'">
+         <div ng-windows="form as InstallModule.config" windows-callback="InstallModule.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="form as AppendModule.config" windows-callback="AppendModule.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="form as AppendSSQL.config" windows-callback="AppendSSQL.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="form as AppendOtherModule.config" windows-callback="AppendOtherModule.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="form as UninstallModuleWindow.config" windows-callback="UninstallModuleWindow.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="form as ExtendWindow.config" windows-callback="ExtendWindow.callback">
+            <div form-create para="form"></div>
+         </div>
          <div ng-container="{height:40}">
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="CreateInstallModuleModel()"><i class="fa fa-plus"></i> {{autoLanguage("添加业务")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-click="CreateAppendModuleModel()"><i class="fa fa-plus"></i> {{autoLanguage("发现业务")}}</button>
-            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || ModuleNum == 0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-click="CreateUninstallModuleModel()"><i class="fa fa-trash-o"></i> {{autoLanguage("卸载业务")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-click="ShowInstallModule()"><i class="fa fa-plus"></i> {{autoLanguage("添加业务")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-disabled="clusterList.length==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-click="ShowAppendModule()"><i class="fa fa-plus"></i> {{autoLanguage("发现业务")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || ModuleNum == 0]" ng-disabled="clusterList.length==0||ModuleNum==0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-click="ShowUninstallModule()"><i class="fa fa-trash-o"></i> {{autoLanguage("卸载业务")}}</button>
+            <button class="topBtn" ng-class="{true:'disabled'}[clusterList.length == 0 || ModuleNum == 0]" ng-disabled="clusterList.length==0 || ModuleNum == 0" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-click="ShowExtendWindow()"><i class="fa fa-plus"></i> {{autoLanguage("业务扩容")}}</button>
          </div>
 
          <div style="padding-right:15px;overflow-y:auto;border:1px solid #ccc;padding:10px;position:relative;" ng-container="{offsetY:-40}">
 
             <div class="DataListBox" style="padding:15px 20px;margin-bottom:15px;position:relative;" ng-repeat="moduleInfo in moduleList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == moduleInfo['ClusterName']" ng-class="{'0':'green','1':'yellow','2':'blue','3':'violet'}[moduleInfo['Color']%4]" ng-show="clusterList.length > 0">
-
+               <div ng-windows="authorityForm as SetAuthority.config" windows-callback="SetAuthority.callback">
+                  <div form-create para="authorityForm"></div>
+               </div>
+               <div ng-dropdown="config in AuthorityDropdown.config" dropdown-callback="AuthorityDropdown.callback">
+                  <label class="Ellipsis" style="padding:5px 10px;display:block;" ng-show="config.value == 'edit'" ng-click="ShowSetAuthority()">{{config.field}}</label>
+                  <label class="Ellipsis" style="padding:5px 10px;display:block;" ng-show="config.value == 'delete'" ng-click="DropAuthorityModel()">{{config.field}}</label>
+               </div>
                <div style="height:50px;">
                   <div class="pull-left" style="width:40px;height:40px;">
                      <i class="fa fa-database" style="color:#02CCAA;font-size:230%;"></i>
@@ -28,11 +53,11 @@
                   <div class="pull-left" ng-container="{offsetX:-100,height:40}">
                      <div class="Ellipsis2" style="font-weight:bold;height:21px;">
                         <span ng-if="moduleInfo['BusinessType']=='sequoiadb'&&moduleInfo['DeployMod']=='distribution'">
-                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}"  dropdown-menu="SelectMenu" ng-click="SaveBsName(moduleInfo['BusinessName'])">
+                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority']" ng-attr="{'data-desc':autoLanguage('鉴权已开启。')}" ng-click="OpenShowAuthorityDropdown($event,moduleInfo['BusinessName'])">
                               <i class="fa fa-lock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
                            </a>
-                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority'] == undefined" ng-click="SetAuthorityModel(moduleInfo['BusinessName'])" ng-attr="{'data-desc':autoLanguage('未开启鉴权，点击设置。')}">
+                           <a class="linkButton" style="font-size:100%;" ng-if="moduleInfo['authority'] == undefined" ng-click="ShowSetAuthority(moduleInfo['BusinessName'])" ng-attr="{'data-desc':autoLanguage('未开启鉴权，点击设置。')}">
                               <i class="fa fa-unlock"></i>
                               <span>{{autoLanguage("鉴权")}} </span>
                            </a>
@@ -102,46 +127,50 @@
 
          </div>
       </div>
-      
+      <div ng-windows="info as UpdateHostIP.config" windows-callback="UpdateHostIP.callback">
+         <table class="table loosen border">
+            <tr style="background-color:#F1F4F5;height:30px;">
+               <td>{{autoLanguage("主机名")}}</td>
+               <td>{{autoLanguage("IP地址")}}</td>
+               <td>{{autoLanguage("状态")}}</td>
+            </tr>
+            <tr ng-repeat="hostInfo in UpdateHostList track by $index">
+               <td class="Ellipsis" style="word-break:break-all;">{{hostInfo['HostName']}}</td>
+               <td class="Ellipsis" style="word-break:break-all;">
+                  <input class="form-control" ng-if="hostInfo['Flag'] != 0" ng-model="hostInfo['IP']" />
+                  <span ng-if="hostInfo['Flag'] == 0" ng-bind="hostInfo['IP']"></span>
+               </td>
+               <td class="Ellipsis" style="word-break:break-all;">
+                  {{hostInfo['Status']}}
+               </td>
+            </tr>
+         </table>
+      </div>
+
       <div ng-container="{offsetY:-50}"  ng-hide="currentPage!='host'">
          <div ng-container="{height:40}">
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="AddHost()"><i class="fa fa-plus"></i> {{autoLanguage("添加主机")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="RemoveHost()"><i class="fa fa-trash-o"></i> {{autoLanguage("删除主机")}}</button>
-            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="CreateUpdateIpModel()">{{autoLanguage("更新主机信息")}}</button>
+            <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="ShowUpdateHostIP()">{{autoLanguage("更新主机信息")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="SelectAll()">{{autoLanguage("全选")}}</button>
             <button class="topBtn" ng-class="{0:'disabled'}[clusterList.length]" ng-style="{'true':{'padding':'1px 6px'}}[WindowWidth < 1080]" ng-disabled="clusterList.length==0" ng-click="Unselect()">{{autoLanguage("反选")}}</button>
          </div>
-         <div class="Grid" style="border-bottom:1px solid #E3E7E8;" ng-container="{offsetY:-40}" ng-hide="currentPage!='host'" ng-grid="HostGridOptions" >
-            <div class="GridHeader">
-               <div class="GridTr">
-                  <div class="GridTd Ellipsis"></div>
-                  <div class="GridTd Ellipsis">{{autoLanguage("状态")}}</div>
-                  <div class="GridTd Ellipsis">{{autoLanguage("主机名")}}</div>
-                  <div class="GridTd Ellipsis">{{autoLanguage("IP地址")}}</div>
-                  <div class="GridTd Ellipsis">{{autoLanguage("业务")}}</div>
-                  <div class="clear-float"></div>
-               </div>
+         <div ng-container="{offsetY:-40}" ng-table="HostListTable['options']" table-title="HostListTable['title']" table-content="hostInfo in HostListTable['body']" table-callback="HostListTable['callback']">
+            <div class="Ellipsis" table-key="Check">
+               <input type="checkbox" ng-model="hostInfo['checked']" />
             </div>
-            <div class="GridBody">
-               <div class="GridTr" ng-repeat="hostInfo in HostList track by $index" ng-if="clusterList[currentCluster]['ClusterName'] == hostInfo['ClusterName']">
-                  <div class="GridTd Ellipsis" style="word-break:break-all;">
-                     <input type="checkbox" ng-model="hostInfo['checked']"/>
-                  </div>
-                  <div class="GridTd Ellipsis" style="word-break:break-all;">
-                     <i class="fa fa-circle" style="color:#00CC66;" ng-if="hostInfo['Error']['Flag'] == 0"></i>
-                     <i class="fa fa-circle error" ng-attr="{'data-desc':hostInfo['Error']['Message']}" ng-if="hostInfo['Error']['Flag'] != 0"></i>
-                  </div>
-                  <div class="GridTd Ellipsis" style="word-break:break-all;">{{hostInfo['HostName']}}</div>
-                  <div class="GridTd Ellipsis" style="word-break:break-all;">{{hostInfo['IP']}}</div>
-                  <div class="GridTd Ellipsis" style="word-break:break-all;">
-                     <span ng-repeat="moduleInfo in moduleList track by $index">
-                        <span ng-repeat="installInfo in moduleInfo['Location'] track by $index" ng-if="hostInfo['HostName']==installInfo['HostName']">
-                           <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a><span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>&nbsp;
-                        </span>
-                     </span>
-                  </div>
-                  <div class="clear-float"></div>
-               </div>
+            <div class="Ellipsis" table-key="Error.Flag">
+               <i class="fa fa-circle" style="color:#00CC66;" ng-if="hostInfo['Error']['Flag'] == 0"></i>
+               <i class="fa fa-circle error" ng-attr="{'data-desc':hostInfo['Error']['Message']}" ng-if="hostInfo['Error']['Flag'] != 0"></i>
+            </div>
+            <div class="Ellipsis" table-key="HostName">{{hostInfo['HostName']}}</div>
+            <div class="Ellipsis" table-key="IP">{{hostInfo['IP']}}</div>
+            <div class="Ellipsis" table-key="BusinessName">
+               <span ng-repeat="moduleInfo in moduleList track by $index">
+                  <span ng-repeat="installInfo in moduleInfo['Location'] track by $index" ng-if="hostInfo['HostName']==installInfo['HostName']">
+                     <a class="linkButton" ng-if="moduleInfo['BusinessType']=='sequoiadb'" ng-click="GotoDataModule(moduleInfo['ClusterName'],moduleInfo['BusinessType'],moduleInfo['DeployMod'],moduleInfo['BusinessName'])">{{moduleInfo['BusinessName']}}</a><span style="color:#666;" ng-if="moduleInfo['BusinessType']!='sequoiadb'">{{moduleInfo['BusinessName']}}</span>&nbsp;
+                  </span>
+               </span>
             </div>
          </div>
       </div>
@@ -165,18 +194,28 @@
          </div>
       </div>
       <div ng-container="{marginTop:10,height:113}">
+         <div ng-windows="form as CreateClusterWindow.config" windows-callback="CreateClusterWindow.callback">
+            <div form-create para="form"></div>
+         </div>
+         <div ng-windows="form as RemoveClusterWindow.config" windows-callback="RemoveClusterWindow.callback">
+            <div form-create para="form"></div>
+         </div>
+
+         <div ng-windows="form as DeployModuleWindow.config" windows-callback="DeployModuleWindow.callback">
+            <div form-create para="form"></div>
+         </div>
          <table class="table border loosen" style="font-size:90%;">
             <tr>
                <th style="background-color:#F1F4F5;">{{autoLanguage("操作")}}</th>
             </tr>
             <tr>
-               <td><a class="linkButton" ng-click="CreateDeployModuleModel()">{{autoLanguage("一键部署")}}</a></td>
+               <td><a class="linkButton" ng-click="ShowDeployModule()">{{autoLanguage("一键部署")}}</a></td>
             </tr>
             <tr>
-               <td><a class="linkButton" ng-click="CreateAddClusterModel()">{{autoLanguage("创建集群")}}</a></td>
+               <td><a class="linkButton" ng-click="ShowCreateCluster()">{{autoLanguage("创建集群")}}</a></td>
             </tr>
             <tr>
-               <td><a class="linkButton" ng-class="{false:'disabled'}[clusterList.length > 0]" ng-click="CreateRemoveClusterModel()">{{autoLanguage("删除集群")}}</a></td>
+               <td><a class="linkButton" ng-class="{false:'disabled'}[clusterList.length > 0]" ng-click="ShowRemoveCluster()">{{autoLanguage("删除集群")}}</a></td>
             </tr>
          </table>
       </div>

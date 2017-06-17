@@ -81,8 +81,7 @@
                      task['data'] = value ;
                   }
                }
-               g._post( task['type'], task['url'], task['data'],
-                        task['before'],
+               g._post( task['type'], task['url'], task['data'], task['before'],
                         function( json, textStatus, jqXHR ){
                            g._errorNum = 0 ;
                            g._status = NORMAL ;
@@ -97,9 +96,11 @@
                            g._status = NORMAL ;
                            if( typeof( task['failed'] ) == 'function' )
                            {
-                              task['failed']( errInfo, function(){
-                                 g._queue.push( task ) ;
-                              } ) ;
+                              (function( task ){
+                                 task['failed']( errInfo, function(){
+                                    g._queue.push( task ) ;
+                                 } ) ;
+                              }( task )) ;
                            }
                            g._execLoop( task, 'failed' ) ;
                         },
@@ -119,6 +120,7 @@
                               task['complete']( XMLHttpRequest, textStatus ) ;
                            }
                            g._execLoop( task, true ) ;
+                           task = null ;
                         },
                         task['showLoading'], task['errJson'] ) ;
                setTimeout( g._run, 1 ) ;
@@ -173,8 +175,10 @@
                complete 完成
          options 选项
                delay: 延迟多少毫秒
-               loop: 循环; 'success':执行成功时循环 'failed':执行失败时循环 true:成功失败都循环
+               loop: 循环; 'success':执行成功时循环 'failed':执行失败时循环 true:成功失败都循环 false:不循环, 默认是false
                scope: 作用域; false:所有页面  true:当前页面, 默认是true
+               showLoading:  显示Loading动画; true:显示, false:不显示, 默认是false
+
       */
       g._insert = function( type, url, data, event, options, errJson ){
          if( typeof( options ) != 'object' || options === null )
@@ -193,17 +197,20 @@
          {
             options['scope'] = options['scope'] ? $location.url() : false ;
          }
-         var task = $.extend( {}, { 'type': type, 'url': url, 'data': data }, event, options ) ;
-         task['errJson'] = errJson ;
+         var task = $.extend( {}, { 'type': type, 'url': url, 'data': data, 'errJson': errJson }, event, options ) ;
          if( task['delay'] > 0 && !task['loop'] )
          {
-            setTimeout( function(){
-               g._queue.push( task ) ;
-            }, task['delay'] ) ;
+            (function( task ){
+               setTimeout( function(){
+                  g._queue.push( task ) ;
+                  task = null ;
+               }, task['delay'] ) ;
+            }( task ) ) ;
          }
          else
          {
             g._queue.push( task ) ;
+            task = null ;
          }
          if( g._runStatus == IDLE )
          {
@@ -279,14 +286,21 @@
                   }
                   catch( e )
                   {
-                     printfDebug( e.stack ) ;
-                     $rootScope.Components.Confirm.isShow = true ;
-                     $rootScope.Components.Confirm.type = 1 ;
-                     $rootScope.Components.Confirm.title = 'System error' ;
-                     $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
-                     $rootScope.Components.Confirm.ok = function(){
-                        Loading.close() ;
-                        $rootScope.Components.Confirm.isShow = false ;
+                     if( window.SdbDebug === true )
+                     {
+                        success( jsonArr, textStatus, jqXHR ) ;
+                     }
+                     else
+                     {
+                        printfDebug( e.stack ) ;
+                        $rootScope.Components.Confirm.isShow = true ;
+                        $rootScope.Components.Confirm.type = 1 ;
+                        $rootScope.Components.Confirm.title = 'System error' ;
+                        $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                        $rootScope.Components.Confirm.ok = function(){
+                           Loading.close() ;
+                           $rootScope.Components.Confirm.isShow = false ;
+                        }
                      }
                   }
                }
@@ -304,14 +318,21 @@
                   }
                   catch( e )
                   {
-                     printfDebug( e.stack ) ;
-                     $rootScope.Components.Confirm.isShow = true ;
-                     $rootScope.Components.Confirm.type = 1 ;
-                     $rootScope.Components.Confirm.title = 'System error' ;
-                     $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
-                     $rootScope.Components.Confirm.ok = function(){
-                        Loading.close() ;
-                        $rootScope.Components.Confirm.isShow = false ;
+                     if( window.SdbDebug === true )
+                     {
+                        failed( jsonArr[0] ) ;
+                     }
+                     else
+                     {
+                        printfDebug( e.stack ) ;
+                        $rootScope.Components.Confirm.isShow = true ;
+                        $rootScope.Components.Confirm.type = 1 ;
+                        $rootScope.Components.Confirm.title = 'System error' ;
+                        $rootScope.Components.Confirm.context = 'Javascript error: ' + e.message ;
+                        $rootScope.Components.Confirm.ok = function(){
+                           Loading.close() ;
+                           $rootScope.Components.Confirm.isShow = false ;
+                        }
                      }
                   }
                }
@@ -509,7 +530,7 @@
 		      }
 	      }
 	      return json_array ;
-      }
+      }     
 
       //获取文件
       g.getFile = function( url, async, success, error )
@@ -550,29 +571,29 @@
       }
 
       //数据操作
-      g.DataOperation = function( data, success, failed, error, complete, errJson, showLoading ){
-         g._insert( 'POST', '/', data, {
-            'before': function( jqXHR ){
-	            var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
-	            if( clusterName !== null )
-	            {
-		            jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
-	            }
-	            var businessName = SdbFunction.LocalData( 'SdbModuleName' )
-	            if( businessName !== null )
-	            {
-		            jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
-	            }
-            },
-            'success': success,
-            'failed': failed,
-            'error': error,
-            'complete': complete
-         }, {
-            'showLoading': showLoading,
-            'delay': -1,
-            'loop': false
-         }, errJson ) ;
+      g.DataOperation = function( data, event, options, errJson ){
+         if( typeof( event ) == 'function' )
+         {
+            alert( JSON.stringify( data ) )
+         }
+         var oldBefore = event ? event['before'] : null ;
+         event['before'] = function( jqXHR ){
+	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+	         if( clusterName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
+	         }
+	         var businessName = SdbFunction.LocalData( 'SdbModuleName' )
+	         if( businessName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
+	         }
+            if( typeof( oldBefore ) == 'function' )
+            {
+               return oldBefore( jqXHR ) ;
+            }
+         }
+         g._insert( 'POST', '/', data, event, options, errJson ) ;
       }
 
       //数据操作( 手工设置cluster和module )

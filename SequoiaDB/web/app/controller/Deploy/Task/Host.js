@@ -5,10 +5,6 @@
 
       //初始化
       $scope.ContainerBox = [ { offsetY: -70 }, { offsetY: -4 } ] ;
-      $scope.HostTaskGridOptions = { 'titleWidth': [ '24px', 30, 20, 15, 35 ] } ;
-      $scope.SdbTaskGridOptions  = { 'titleWidth': [ '24px', 25, 15, '100px', 15, 10, 35 ] } ;
-      $scope.SsqlTaskGridOptions = { 'titleWidth': [ '24px', 30, 20, 20, 30 ] } ;
-      $scope.ZkpTaskGridOptions  = { 'titleWidth': [ '24px', 15, 30, 15, 40 ] } ;
       $scope.IsFinish            = false ;
       $scope.TimeLeft            = '' ;
       $scope.BarColor            = 0 ;
@@ -16,6 +12,35 @@
       $scope.DeployType  = $rootScope.tempData( 'Deploy', 'Model' ) ;
       $scope.ModuleType  = $rootScope.tempData( 'Deploy', 'Module' ) ;
       var installTask    = $rootScope.tempData( 'Deploy', 'HostTaskID' ) ;
+
+      $scope.TaskInfo = [] ;
+      //输出到表格的task数据
+      $scope.NewTaskInfo = [] ;
+      
+      //第一次加载
+      var firstTime = true ;
+
+      //任务表格
+      $scope.TaskTable = {
+         'title': {
+            'Status':         '',
+            'HostName':       $scope.autoLanguage( '主机名' ),
+            'IP':             $scope.autoLanguage( 'IP地址' ),
+            'StatusDesc':     $scope.autoLanguage( '状态' ),
+            'Flow':           $scope.autoLanguage( '描述' )
+         },
+         'options': {
+            'width':{
+               'Status': '24px',
+               'HostName': '30%',
+               'IP': '20%',
+               'StatusDesc': '15%',
+               'Flow': '35%'
+            },
+            'max': 50
+         }
+      } ;
+
       if( $scope.DeployType == null || $scope.ModuleType == null || installTask == null )
       {
          $location.path( '/Deploy/Index' ).search( { 'r': new Date().getTime() } ) ;
@@ -73,39 +98,26 @@
          }
       }
 
-      //获取日志
-      $scope.GetLog = function(){
+      //获取日志 弹窗
+      $scope.GetLogWindow = {
+         'config': {},
+         'callback': {}
+      } ;
+
+      //打开 获取日志 弹窗
+      $scope.ShowGetLog = function(){
          var data = { 'cmd': 'get log', 'name': './task/' + installTask + '.log' } ;
-         var pre = null ;
-         var div = null ;
          SdbRest.GetLog( data, function( logstr ){
-            $scope.Components.Modal.icon = '' ;
-            $scope.Components.Modal.title = $scope.autoLanguage( '日志' ) ;
-            $scope.Components.Modal.isShow = true ;
-            $scope.Components.Modal.Context = function( bodyEle ){
-               pre = $( '<pre></pre>' ).text( logstr ).css( {
-                  'padding': '10px',
-                  'margin': '0',
-                  'white-space': 'pre-wrap'
-               } ) ;
-               div = $( '<div></div>' ).addClass( 'well' ).append( pre ).css( { 'overflow-y': 'auto' } ) ;
-               $( bodyEle ).html( div ) ;
-            }
-            $scope.Components.Modal.onResize = function( width, height ){
-               if( div !== null )
-               {
-                  div.css( { 'height': height - 5 } ) ;
-               }
-            }
-            $scope.Components.Modal.ok = function(){
-               return true ;
-            }
+            $scope.Logstr = logstr ;
          }, function(){
             _IndexPublic.createRetryModel( $scope, null, function(){
-               $scope.GetLog() ;
+               $scope.ShowGetLog() ;
                return true ;
             }, $scope.autoLanguage( '错误' ), $scope.autoLanguage( '获取日志失败。' ) ) ;
          } ) ;
+         $scope.GetLogWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ) ) ;
+         $scope.GetLogWindow['callback']['SetTitle']( $scope.autoLanguage( '日志' ) ) ;
+         $scope.GetLogWindow['callback']['Open']() ;
       }
 
       //循环查询任务信息
@@ -181,8 +193,30 @@
                         $scope.TaskInfo['Progress'] = 90 ;
                      }
                   }
-               
-                  $rootScope.bindResize() ;
+
+                  if( firstTime == true )
+                  {
+                     $scope.NewTaskInfo = $scope.TaskInfo ;
+                  }
+                  $.each( $scope.NewTaskInfo['ResultInfo'], function( index, hostInfo ){
+                     if( hostInfo['Status'] == $scope.TaskInfo['ResultInfo'][index]['Status'] && hostInfo['errno'] == $scope.TaskInfo['ResultInfo'][index]['errno'] )
+                     {
+                        $scope.NewTaskInfo['ResultInfo'][index]['StatusDesc'] = $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['detail'] = $scope.TaskInfo['ResultInfo'][index]['detail'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['Flow'] = $scope.TaskInfo['ResultInfo'][index]['Flow'] ;
+                     }
+                     else
+                     {
+                        $scope.NewTaskInfo['ResultInfo'][index]['Status'] = $scope.TaskInfo['ResultInfo'][index]['Status'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['StatusDesc'] = $scope.TaskInfo['ResultInfo'][index]['StatusDesc'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['detail'] = $scope.TaskInfo['ResultInfo'][index]['detail'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['Flow'] = $scope.TaskInfo['ResultInfo'][index]['Flow'] ;
+                        $scope.NewTaskInfo['ResultInfo'][index]['errno'] = $scope.TaskInfo['ResultInfo'][index]['errno'] ;
+                     }
+                  } ) ;
+                  
+                  firstTime = false ;
+                  //$rootScope.bindResize() ;
                   $scope.$apply() ;
 
                   if( $scope.IsFinish == false )

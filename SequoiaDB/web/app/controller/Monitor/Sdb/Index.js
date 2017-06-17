@@ -400,7 +400,7 @@
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  getSessions() ;
+                  getVersion() ;
                   return true ;
                } ) ;
             }
@@ -432,18 +432,21 @@
       //获取组信息
       var getGroups = function(){
          var data = { 'cmd': 'list groups' } ;
-         SdbRest.DataOperation( data, function( groups ){
-            $scope.moduleInfo['groups'] = groups.length ;
-            $scope.moduleInfo['nodes'] = 0 ;
-            $.each( groups, function( index, value ){
-               $scope.moduleInfo['nodes'] += value['Group'].length ;
-            } )
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getGroups() ;
-               return true ;
-            } ) ;
-         }, null, null, null, false ) ;
+         SdbRest.DataOperation( data, {
+            'success': function( groups ){
+               $scope.moduleInfo['groups'] = groups.length ;
+               $scope.moduleInfo['nodes'] = 0 ;
+               $.each( groups, function( index, value ){
+                  $scope.moduleInfo['nodes'] += value['Group'].length ;
+               } )
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getGroups() ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
       } ;
       if( moduleMode == 'distribution' )
          getGroups() ;
@@ -451,14 +454,17 @@
       //获取域数量
       var getDomains = function(){
          var data = { 'cmd': 'list domains' } ;
-         SdbRest.DataOperation( data, function( domains ){
-            $scope.moduleInfo['domains'] = domains.length ;
-         }, function( errorInfo ){
-            _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-               getDomains() ;
-               return true ;
-            } ) ;
-         }, null, null, null, false ) ;
+         SdbRest.DataOperation( data, {
+            'success': function( domains ){
+               $scope.moduleInfo['domains'] = domains.length ;
+            },
+            'failed': function( errorInfo ){
+               _IndexPublic.createRetryModel( $scope, errorInfo, function(){
+                  getDomains() ;
+                  return true ;
+               } ) ;
+            }
+         } ) ;
       } ;
       if( moduleMode == 'distribution' )
          getDomains();
