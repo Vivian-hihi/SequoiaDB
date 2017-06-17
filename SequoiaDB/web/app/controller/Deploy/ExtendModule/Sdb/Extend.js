@@ -455,6 +455,10 @@
 
       //打开 删除节点 弹窗
       var openRmNode = function( groupInfo ){
+         if( groupInfo['extendNodeNum'] <= 0 )
+         {
+            return ;
+         }
          var nodeInput = $scope.RemoveNodeWindow['config']['inputList'][0] ;
          var results   = SdbSignal.commit( 'GetNodeName', groupInfo ) ;
          var nodeList  = results[0] ;
@@ -477,6 +481,10 @@
 
       //打开 修改分区组名 弹窗
       var openRenameGroup = function( groupInfo ){
+         if( groupInfo['exist'] == true )
+         {
+            return ;
+         }
          $scope.RenameGroupWindow['config']['inputList'][0]['value'] = groupInfo['groupName'] ;
          $scope.RenameGroupWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             var isAllClear = $scope.RenameGroupWindow['config'].check( function( thisValue ){
@@ -514,6 +522,10 @@
 
       //打开 删除分区组 弹窗
       var openDropGroup = function( index, groupInfo ){
+         if( groupInfo['exist'] == true )
+         {
+            return ;
+         }
          if( groupInfo['extendNodeNum'] > 0 && groupInfo['exist'] == false )
          {
             _IndexPublic.createInfoModel( $scope, sprintf( $scope.autoLanguage( '确定要把分区组?和分区组下的?个节点都删除吗？' ), groupInfo['groupName'], groupInfo['extendNodeNum'] ), $scope.autoLanguage( '是的' ), function(){
@@ -1430,6 +1442,7 @@
          $.each( extendNodeList, function( index, nodeInfo ){
             if( nodeInfo['role'] == role && role != 'data' )
             {
+               var nodeName = nodeInfo['HostName'] + ':' + nodeInfo['svcname'] ;
                nodeNameList.push( { 'key': nodeName, 'value': nodeInfo } ) ;
             }
             else if( role == 'data' && nodeInfo['datagroupname'] == groupName )
