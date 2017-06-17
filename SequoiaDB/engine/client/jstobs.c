@@ -63,7 +63,8 @@ static BOOLEAN bsonConvertJson( CHAR **pbuf,
                                 const CHAR *data ,
                                 INT32 isobj,
                                 BOOLEAN toCSV,
-                                BOOLEAN skipUndefined ) ;
+                                BOOLEAN skipUndefined,
+                                BOOLEAN isStrict ) ;
 static INT32 strlen_a( const CHAR *data ) ;
 static void local_time( time_t *Time, struct tm *TM ) ;
 
@@ -243,12 +244,40 @@ BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
     if ( bufsize <= 0 || !buffer || !b )
        return FALSE ;
     //memset ( pbuf, 0, bufsize ) ;
-    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1, toCSV, skipUndefined ) ;
+    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1,
+                               toCSV, skipUndefined, FALSE ) ;
     if ( !result || !leftsize )
        return FALSE ;
     *pbuf = '\0' ;
     return TRUE ;
 }
+
+/*
+ * bson convert json interface
+ * buffer : output bson convert json string
+ * bufsize : buffer's size
+ * b : bson object
+ * isStrict: Strict export of data types
+ * return : the conversion result
+*/
+/* THIS IS EXTERNAL FUNCTION TO CONVERT FROM BSON OBJECT INTO JSON STRING */
+BOOLEAN bsonToJson2 ( CHAR *buffer, INT32 bufsize, const bson *b,
+                      BOOLEAN isStrict )
+{
+    CHAR *pbuf = buffer ;
+    BOOLEAN result = FALSE ;
+    INT32 leftsize = bufsize ;
+    if ( bufsize <= 0 || !buffer || !b )
+       return FALSE ;
+    //memset ( pbuf, 0, bufsize ) ;
+    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1,
+                               FALSE, TRUE, isStrict ) ;
+    if ( !result || !leftsize )
+       return FALSE ;
+    *pbuf = '\0' ;
+    return TRUE ;
+}
+
 
 static BOOLEAN date2Time( const CHAR *pDate,
                           CJSON_VALUE_TYPE valType,
@@ -1425,7 +1454,8 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
                                  const CHAR *data ,
                                  INT32 isobj,
                                  BOOLEAN toCSV,
-                                 BOOLEAN skipUndefined )
+                                 BOOLEAN skipUndefined,
+                                 BOOLEAN isStrict )
 {
    bson_iterator i ;
    const CHAR *key ;
@@ -1836,7 +1866,8 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          CHAR *format ;
          int64_t val = bson_iterator_long( &i ) ;
          memset ( temp, 0, BSON_TEMP_SIZE_512 ) ;
-         if ( val < LONG_JS_MIN || val > LONG_JS_MAX )
+         if ( isStrict == TRUE ||
+              ( val < LONG_JS_MIN || val > LONG_JS_MAX ) )
          {
             format = "{ \"$numberLong\": \"%lld\" }" ;
          }
@@ -1937,7 +1968,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
             break ;
          }
          if ( !bsonConvertJson( pbuf, left, bson_iterator_value( &i ) ,
-                                1, toCSV, skipUndefined ) )
+                                1, toCSV, skipUndefined, isStrict ) )
             return  FALSE ;
          CHECK_LEFT ( left )
          break ;
@@ -1950,7 +1981,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
             break ;
          }
          if ( !bsonConvertJson( pbuf, left, bson_iterator_value( &i ),
-                                0, toCSV, skipUndefined ) )
+                                0, toCSV, skipUndefined, isStrict ) )
             return FALSE ;
          CHECK_LEFT ( left )
          break ;
