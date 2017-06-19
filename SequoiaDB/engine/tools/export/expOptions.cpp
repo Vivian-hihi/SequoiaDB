@@ -318,12 +318,14 @@ namespace exprt
                               _fileLimit     (DEFAULT_FILELIMIT),
                               _skip          (0),
                               _limit         (-1),
+                              _strict        (FALSE),
                               _delChar       (DEFAULT_DELCHAR_CHAR),
                               _delField      (DEFAULT_DELFIELD_CHAR),
                               _headLine      (TRUE),
                               _includeBinary (FALSE),
                               _includeRegex  (FALSE),
                               _force         (FALSE),
+                              _kickNull      (FALSE),
                               _genFields     (TRUE)
    {
    }
