@@ -33,8 +33,9 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef pdTraceAnalysis_h__
-#define pdTraceAnalysis_h__
+#ifndef PDTRACEANALYSIS_HPP__
+#define PDTRACEANALYSIS_HPP__
+
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -66,14 +67,14 @@ struct TraceRecordIndex
    TraceRecordIndex(UINT32 sequenceNum, UINT64 offset): _sequenceNum(sequenceNum),_offset(offset){}
 };
 
-//函数记录结构
+
 struct FunctionRecord
 {
-   UINT32        _indexidx ;             //输出片段使用
+   UINT32        _indexidx ;            
    UINT32        _sequenceNum ;
    UINT32        _tid ;
    UINT32        _nChild ;
-   UINT64        _cost ;            //当前消耗，不包含子函数
+   UINT64        _cost ;           
    UINT64        _totalCost ;       
    UINT64        _maxTimeInterval ;
    UINT64        _functionID ;
@@ -114,7 +115,7 @@ struct FunctionSummaryRecord
    UINT32          _count ;
    UINT32          _minCost ;
    double          _avgcost ;
-   FunctionRecord  _reserveRecords[NUMBER_OF_FUNCTION_RECORD_RESERVATION] ; //记录保留的最长间隔的记录
+   FunctionRecord  _reserveRecords[NUMBER_OF_FUNCTION_RECORD_RESERVATION] ; 
 
    FunctionSummaryRecord(): _count(0), _avgcost(0){}
    void insert(FunctionRecord record)
@@ -152,18 +153,15 @@ struct FunctionSummaryRecord
 };
 
 
-
-
-// 分析trace序列，并输出到相应的文件中
-// 1）	输出每个线程的记录索引信息
-// 2）	输出fmt文件
+// step1: output fmt file
+// step2: analyze the record index
 INT32 parseTraceDumpFile(ossPrimitiveFileOp *file, 
                          pdTraceCB *cb,
                          CHAR *fmtFilePath,
                          std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap
                          );
 
-// 分析trace序列，并输出到相应的文件中
+
 INT32 analysisTraceRecords( ossPrimitiveFileOp *file, 
                             pdTraceCB *cb,
                             std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap,
@@ -173,10 +171,9 @@ INT32 analysisTraceRecords( ossPrimitiveFileOp *file,
                             CHAR *summaryFilePath, 
                             CHAR *exceptFilePath );
 
-// 分析指定线程的trace序列
-// 1 输出该trace执行序列
-// 2 分析trace中每个函数执行时间情况
-// 3 记录异常trace记录
+// 1 output program execution sequence
+// 2 calculate function execution time
+// 3 analyze exception record
 INT32 analysisRecordsByThread(   UINT32 tid,
                                  pdTraceCB *cb,
                                  std::vector<TraceRecordIndex> recIdxs,
@@ -187,12 +184,9 @@ INT32 analysisRecordsByThread(   UINT32 tid,
 
 
 
-// 函数执行栈分析
-// 1 分析函数的起止记录
-// 2 统计函数当前层所执行所耗时间
-// 3 记录当前层的最大时间间隔（峰值）（timeInterval）
-// 4 获取trace记录异常点（trace记录不匹配）
-// 5 统计函数当前层所含记录数
+// 1 calculate function execution time
+// 2 maxtimeInterval
+// 3 handing error records
 void  analysisFunctionStack(std::stack<FunctionRecord> &funStack,
                             UINT32 recdIndexIdx,
                             UINT32 sequenceNum,
@@ -202,9 +196,8 @@ void  analysisFunctionStack(std::stack<FunctionRecord> &funStack,
                             std::map<UINT64, FunctionSummaryRecord> &summaryRecords);
 
 
-// 异常记录片段处理
-// 1 选取异常片段记录
-// 2 输出异常片段，片段行数不满40，全部输出，超过40时的只输出异常点
+// 1 select exception 
+// 2 output exception 
 INT32 dealWithExceptRecords(pdTraceCB *cb,
                             ossPrimitiveFileOp *dumpFile, 
                             ossPrimitiveFileOp *funcRecFile,
@@ -218,4 +211,4 @@ INT32 dealWithExceptRecords(pdTraceCB *cb,
 
 
 
-#endif // pdTraceAnalysis_h__
+#endif // PDTRACEANALYSIS_HPP__

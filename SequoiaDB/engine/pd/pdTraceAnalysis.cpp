@@ -1,3 +1,38 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = pdTraceAnalysis.hpp
+
+   Descriptive Name = define the operation for analysis trace
+
+   When/how to use: this program may be used to analyze trace file
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who            Description
+   ====== =========== ===            ===========================================
+          06/16/2017  Huangansheng   Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
@@ -144,35 +179,33 @@ INT32 parseTraceDumpFile(ossPrimitiveFileOp *file,
 
    if ( ossStrlen(fmtFilePath) )
    {
-      rc = fmtfile.Open ( fmtFilePath,
-                   OSS_PRIMITIVE_FILE_OP_WRITE_ONLY |
-                   OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS |
-                   OSS_PRIMITIVE_FILE_OP_OPEN_TRUNC ) ;
+      rc = fmtfile.Open( fmtFilePath,
+                         OSS_PRIMITIVE_FILE_OP_WRITE_ONLY |
+                         OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS |
+                         OSS_PRIMITIVE_FILE_OP_OPEN_TRUNC ) ;
       PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-              "Failed to dump trace to file %s, errno=%d",
-              fmtFilePath, rc ) ;
+                 "Failed to dump trace to file %s, errno=%d",
+                 fmtFilePath, rc ) ;
    }
    else
    {
       isFmt = FALSE ;
    }
-   
 
    //read record
    cursor = cb->_freeBlockTail % cb->_totalSize + cb->_headerSize ;
    endPos = cb->_freeBlockHead % cb->_totalSize + cb->_headerSize ;
 
-
-   do 
+   while ( cursor != endPos )
    {
       recIdx = TraceRecordIndex( sequenceNum, cursor ) ;
       rc = readTraceRecord( file, cursor, cb->_headerSize, cb->_headerSize+cb->_totalSize, tempBuf );
-      if(rc) break;
+      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Trace file is not valid" ) ;
 
-      if (isFmt)
+      if ( isFmt )
       {
          rc = outputTraceRecordByFMT( &fmtfile, tempBuf, sequenceNum ) ;
-         if(rc) break;
+         PD_CHECK ( 0 == rc, rc, error, PDERROR, "Trace file is not valid" ) ;
       }
       else
       {
@@ -181,7 +214,7 @@ INT32 parseTraceDumpFile(ossPrimitiveFileOp *file,
       }
 
       sequenceNum++;
-   } while ( !rc && cursor != endPos );
+   }
 
 
 done :
@@ -291,11 +324,6 @@ error :
 }
 
 
-
-// 分析指定线程的trace序列
-// 1 输出该trace执行序列
-// 2 分析trace中每个函数执行时间情况
-// 3 记录异常trace记录
 INT32 analysisRecordsByThread(UINT32 tid, 
                               pdTraceCB *cb,
                               std::vector<TraceRecordIndex> recIdxs, 
@@ -339,7 +367,6 @@ INT32 analysisRecordsByThread(UINT32 tid,
                  "Failed to write into trace file, errno = %d", rc ) ;
 
      preTimestamp = curTimeStamp ;
-
   }
 
 done :
@@ -348,12 +375,9 @@ error :
    goto done ;
 }
 
-// 函数执行栈分析
-// 1 分析函数的起止记录
-// 2 统计函数当前层所执行所耗时间
-// 3 记录当前层的最大时间间隔（峰值）（timeInterval）
-// 4 获取trace记录异常点（trace记录不匹配）
-// 5 统计函数当前层所含记录数
+// 1 calculate function execution time
+// 2 maxtimeInterval
+// 3 handing error records
 void analysisFunctionStack(std::stack<FunctionRecord> &funStack, 
                            UINT32 recdIndexIdx,
                            UINT32 sequenceNum,
@@ -364,6 +388,7 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
 {
    FunctionRecord popRecord, topRecord ;
    BOOLEAN isEmpty = funStack.empty() ;
+   INT64 curTimestamp = (INT64)(curRecord._timestamp.time * 1000000L + curRecord._timestamp.microtm) ;
 
    //
    if ( !isEmpty )
@@ -380,7 +405,7 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
                                     sequenceNum,
                                     curRecord._tid,
                                     0, 
-                                    (INT64)(curRecord._timestamp.time * 1000000L + curRecord._timestamp.microtm),
+                                    curTimestamp,
                                     0,
                                     0,
                                     curRecord._functionID, 
@@ -396,9 +421,8 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
       // step 2 match function
       if ( popRecord._functionID == curRecord._functionID )
       {
-         popRecord._cost = curRecord._timestamp.time * 1000000L + curRecord._timestamp.microtm - popRecord._cost ;
-         popRecord._totalCost = curRecord._timestamp.time * 1000000L + curRecord._timestamp.microtm - 
-                                   ( popRecord._start.time * 1000000L + popRecord._start.microtm );
+         popRecord._cost = curTimestamp - popRecord._cost ;
+         popRecord._totalCost = curTimestamp - ( popRecord._start.time * 1000000L + popRecord._start.microtm );
          summaryRecords[popRecord._functionID].insert(popRecord);
          
          if ( !funStack.empty() )
@@ -437,14 +461,19 @@ INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequ
 
    // write sequence
    rc = out->fWrite ( "%u: ", sequenceNum ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+              "Failed to write into trace file, errno = %d", rc ) ;
    // write function id and timestamp
    ossTimestampToString ( record->_timestamp, timestamp ) ;
-   rc = out->fWrite ( "%s(%u): %s"OSS_NEWLINE, pdGetTraceFunction(record->_functionID), record->_line, timestamp ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
+   rc = out->fWrite ( "%s(%u): %s"OSS_NEWLINE, 
+                      pdGetTraceFunction(record->_functionID), 
+                      record->_line, timestamp ) ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+              "Failed to write into trace file, errno = %d", rc ) ;
    // write pid/tid/arguments
    rc = out->fWrite ( "tid: %u, numArgs: %u"OSS_NEWLINE, record->_tid, record->_numArgs ) ;
-   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
+   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+              "Failed to write into trace file, errno = %d", rc ) ;
 
    pArgs = &tempBuf[sizeof(pdTraceRecord)] ;
    for ( UINT32 i = 0; i < record->_numArgs; i++ )
@@ -461,7 +490,8 @@ INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequ
       pArgs += arg->_argumentSize ;
       // write out the argument
       rc = out->fWrite ( "\targ%d:"OSS_NEWLINE, i ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
+      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                 "Failed to write into trace file, errno = %d", rc ) ;
       switch ( arg->_argumentType )
       {
        case PD_TRACE_ARGTYPE_NULL :
@@ -471,7 +501,8 @@ INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequ
          break ;
        case PD_TRACE_ARGTYPE_CHAR :
          rc = out->fWrite ( "\t\t%c"OSS_NEWLINE, (*(CHAR*)(((CHAR*)arg)+ sizeof(pdTraceArgument))));
-         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into trace file, errno = %d", rc ) ;
+         PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                    "Failed to write into trace file, errno = %d", rc ) ;
          break ;
        case PD_TRACE_ARGTYPE_BYTE :
          rc = out->fWrite ( "\t\t0x%x"OSS_NEWLINE,
@@ -675,6 +706,10 @@ INT32 selectExceptRecords(FunctionSummaryRecord &record, std::set<FunctionRecord
    return rc;
 }
 
+
+
+// 1 select exception 
+// 2 output exception 
 INT32 dealWithExceptRecords(pdTraceCB *cb, 
                             ossPrimitiveFileOp *dumpFile, 
                             ossPrimitiveFileOp *funcRecFile,

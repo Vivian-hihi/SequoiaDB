@@ -271,7 +271,7 @@ public :
    void          setMask ( UINT32 mask ) ;
    UINT32        getMask () ;
    INT32         start ( UINT64 size, UINT32 mask,
-                         std::vector<UINT64> *funcCode ) ;
+                         std::vector<UINT64> *funcCode, std::vector<UINT32> *tids ) ;
    INT32         start ( UINT64 size, UINT32 mask ) ;
    INT32         start ( UINT64 size ) ; // size for trace buffer size on bytes
    void          stop () ; // stop trace but keep memory available

@@ -6635,7 +6635,8 @@ error :
 SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
                                  UINT32 traceBufferSize,
                                  CHAR * comp,
-                                 CHAR * breakPoint )
+                                 CHAR * breakPoint,
+                                 CHAR * pcTids )
 {
    INT32 rc         = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -6677,6 +6678,27 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
          goto error;
       }
       rc = sdbTraceStrtok ( &obj, breakPoint ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      rc = bson_append_finish_array( &obj );
+      if ( rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+   }
+
+   if ( pcTids )
+   {
+      rc = bson_append_start_array( &obj, FIELD_NAME_THREADS );
+      if( rc )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error;
+      }
+      rc = sdbTraceStrtok ( &obj, pcTids ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

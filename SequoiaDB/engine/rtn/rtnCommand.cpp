@@ -2114,6 +2114,7 @@ namespace engine
          UINT32 one = 1 ;
          BSONElement eleComp = arg.getField( FIELD_NAME_COMPONENTS );
          BSONElement eleBreakPoint = arg.getField(FIELD_NAME_BREAKPOINTS);
+         //BSONElement elestrTids    = arg.getField(FIELD_NAME_MONITORTHREADS);
          if ( eleComp.type() == Array )
          {
             _mask = 0 ;
@@ -2175,9 +2176,14 @@ namespace engine
             while ( it.more () )
             {
                BSONElement ele = it.next() ;
-               if ( ele.isNumber() )
+               /*if ( ele.isNumber() )
                {
                   _tid.push_back ( (UINT32)ele.numberLong() ) ;
+               }*/
+               if ( ele.type() == String )
+               {
+                  UINT32 tid = ossAtoi( ele.valuestr() ) ;
+                  _tid.push_back( tid ) ;
                }
             } // while ( it.more () )
          } // if ( eleTID.type() == Array )
@@ -2208,7 +2214,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTART_DOIT ) ;
-      rc = sdbGetPDTraceCB()->start ( (UINT64)_size, _mask, &_funcCode ) ;
+      rc = sdbGetPDTraceCB()->start ( (UINT64)_size, _mask, &_funcCode, &_tid ) ;
       PD_TRACE_EXITRC ( SDB__RTNTRACESTART_DOIT, rc ) ;
       return rc ;
    }

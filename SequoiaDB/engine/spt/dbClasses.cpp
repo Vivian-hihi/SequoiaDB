@@ -7093,14 +7093,16 @@ static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
    sdbConnectionHandle *   connection   = NULL ;
    JSString               *strComp      = NULL;
    JSString               *strBreakPoint= NULL;
+   JSString               *strMonitorthreads = NULL;
    CHAR                   *comp         = NULL;
    CHAR                   *breakPoint   = NULL;
+   CHAR                   *monitorthreads   = NULL;
    connection = ( sdbConnectionHandle * )
          JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( connection, "Sdb.traceOn(): no connection handle" ) ;
 
-   ret = JS_ConvertArguments( cx, argc, argv, "i/SS",
-                        &bufferSize, &strComp, &strBreakPoint );
+   ret = JS_ConvertArguments( cx, argc, argv, "i/SSS",
+                        &bufferSize, &strComp, &strBreakPoint, &strMonitorthreads );
    REPORT( ret, "Sdb.traceOn(): invalid arguments");
 
    if ( argc >= 2 )
@@ -7115,7 +7117,13 @@ static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
       VERIFY( breakPoint ) ;
    }
 
-   rc = sdbTraceStart ( *connection, bufferSize, comp, breakPoint ) ;
+   if ( argc >= 4 )
+   {
+      monitorthreads = (CHAR*)JS_EncodeString( cx, strMonitorthreads ) ;
+      VERIFY( monitorthreads ) ;
+   }
+
+   rc = sdbTraceStart ( *connection, bufferSize, comp, breakPoint, monitorthreads ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.traceOn()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 done :

@@ -316,16 +316,16 @@ UINT32 _pdTraceCB::getMask ()
 
 INT32 _pdTraceCB::start ( UINT64 size )
 {
-   return start ( size, 0xFFFFFFFF, NULL ) ;
+   return start ( size, 0xFFFFFFFF, NULL, NULL ) ;
 }
 
 INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask )
 {
-   return start ( size, mask, NULL ) ;
+   return start ( size, mask, NULL, NULL ) ;
 }
 
 INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask,
-                          std::vector<UINT64> *funcCode )
+                         std::vector<UINT64> *funcCode, std::vector<UINT32> *tids )
 {
    INT32 rc = SDB_OK ;
    gPDTraceMutex.get() ;
@@ -353,9 +353,7 @@ INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask,
       }
    }
 #endif
-#ifdef THREADMONITOR
-   std::vector<UINT32> tids;
-   _nMonitoredNum = tids.size() ;
+   _nMonitoredNum = tids->size() ;
    if ( _nMonitoredNum > PD_TRACE_MAX_MONITORED_THREAD_NUM )
    {
       PD_LOG ( PDWARNING, "too many threads monitored (up to 10)" ) ;
@@ -368,10 +366,9 @@ INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask,
       _threadmonitorStart.init( TRUE ) ;
       for ( UINT32 i = 0; i < _nMonitoredNum; i++ )
       {
-         _monitoredThreads[i] = tids[i] ;
+         _monitoredThreads[i] = tids->at(i) ;
       }
    }
-#endif
    // start trace
    PD_LOG ( PDEVENT, "Trace starts, buffersize = %llu, mask = 0x%x",
             size, mask ) ;
@@ -405,6 +402,7 @@ error :
 void _pdTraceCB::stop ()
 {
    PD_LOG ( PDEVENT, "Trace stops" ) ;
+   _threadmonitorStart.compareAndSwap( TRUE, FALSE ) ;
    _traceStarted.compareAndSwap ( TRUE, FALSE ) ;
 }
 
@@ -555,13 +553,13 @@ INT32 _pdTraceCB::format ( const CHAR *pInputFileName,
 
    _pdTraceCB traceCB ;
    ossPrimitiveFileOp file ;
-   CHAR fmtFilePath[PATH_MAX] = {0} ;
-   CHAR flwFilePath[PATH_MAX] = {0} ;
-   CHAR summaryFilePath[PATH_MAX] = {0} ; 
-   CHAR exceptFilePath[PATH_MAX] = {0} ;
-   CHAR errorFilePath[PATH_MAX] = {0} ;
-   CHAR funcRecordFilePath[PATH_MAX] = {0} ;
-   CHAR filePath[PATH_MAX] = {0} ;
+   CHAR fmtFilePath[OSS_MAX_PATHSIZE] = {0} ;
+   CHAR flwFilePath[OSS_MAX_PATHSIZE] = {0} ;
+   CHAR summaryFilePath[OSS_MAX_PATHSIZE] = {0} ; 
+   CHAR exceptFilePath[OSS_MAX_PATHSIZE] = {0} ;
+   CHAR errorFilePath[OSS_MAX_PATHSIZE] = {0} ;
+   CHAR funcRecordFilePath[OSS_MAX_PATHSIZE] = {0} ;
+   CHAR filePath[OSS_MAX_PATHSIZE] = {0} ;
    std::map<UINT32, std::vector<TraceRecordIndex> > tid2recordsMap ;
 
    /*ossStrcpy( filePath, pOutputFileName ) ; 
@@ -569,30 +567,30 @@ INT32 _pdTraceCB::format ( const CHAR *pInputFileName,
 
    if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
    {
-      ossSnprintf( fmtFilePath, PATH_MAX, "%s.fmt", filePath ) ;
+      ossSnprintf( fmtFilePath, OSS_MAX_PATHSIZE, "%s.fmt", filePath ) ;
    }
    else
    {
-      ossSnprintf( flwFilePath, PATH_MAX, "%s.flw", filePath ) ;
-      ossSnprintf( exceptFilePath, PATH_MAX, "%s.except", filePath ) ;
-      ossSnprintf( summaryFilePath, PATH_MAX, "%s.sumary", filePath ) ;
-      ossSnprintf( errorFilePath, PATH_MAX, "%s.error", filePath ) ;
-      ossSnprintf( funcRecordFilePath, PATH_MAX, "%s.funcRecord.csv", filePath ) ;
+      ossSnprintf( flwFilePath, OSS_MAX_PATHSIZE, "%s.flw", filePath ) ;
+      ossSnprintf( exceptFilePath, OSS_MAX_PATHSIZE, "%s.except", filePath ) ;
+      ossSnprintf( summaryFilePath, OSS_MAX_PATHSIZE, "%s.sumary", filePath ) ;
+      ossSnprintf( errorFilePath, OSS_MAX_PATHSIZE, "%s.error", filePath ) ;
+      ossSnprintf( funcRecordFilePath, OSS_MAX_PATHSIZE, "%s.funcRecord.csv", filePath ) ;
 
    }*/
 
 
    if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
    {
-      ossSnprintf( fmtFilePath, PATH_MAX, "%s/trace.fmt", pOutputFileName ) ;
+      ossSnprintf( fmtFilePath, OSS_MAX_PATHSIZE, "%s/trace.fmt", pOutputFileName ) ;
    }
    else
    {
-      ossSnprintf( flwFilePath, PATH_MAX, "%s/trace.flw", pOutputFileName ) ;
-      ossSnprintf( exceptFilePath, PATH_MAX, "%s/trace.except", pOutputFileName ) ;
-      ossSnprintf( summaryFilePath, PATH_MAX, "%s/trace.sumary", pOutputFileName ) ;
-      ossSnprintf( errorFilePath, PATH_MAX, "%s/trace.error", pOutputFileName ) ;
-      ossSnprintf( funcRecordFilePath, PATH_MAX, "%s/trace.funcRecord.csv", pOutputFileName ) ;
+      ossSnprintf( flwFilePath, OSS_MAX_PATHSIZE, "%s/trace.flw", pOutputFileName ) ;
+      ossSnprintf( exceptFilePath, OSS_MAX_PATHSIZE, "%s/trace.except", pOutputFileName ) ;
+      ossSnprintf( summaryFilePath, OSS_MAX_PATHSIZE, "%s/trace.sumary", pOutputFileName ) ;
+      ossSnprintf( errorFilePath, OSS_MAX_PATHSIZE, "%s/trace.error", pOutputFileName ) ;
+      ossSnprintf( funcRecordFilePath, OSS_MAX_PATHSIZE, "%s/trace.funcRecord.csv", pOutputFileName ) ;
 
    }
 
@@ -636,6 +634,7 @@ void _pdTraceCB::destroy ()
 void _pdTraceCB::reset ()
 {
    // stop trace if it's already started
+   _threadmonitorStart.compareAndSwap( TRUE, FALSE ) ;
    _traceStarted.compareAndSwap ( TRUE, FALSE ) ;
    // wait until there's no one write into the buffer
    while ( !_currentWriter.compare(0) ) ;
