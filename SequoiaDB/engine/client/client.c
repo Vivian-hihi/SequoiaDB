@@ -6635,13 +6635,14 @@ error :
 SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
                                  UINT32 traceBufferSize,
                                  CHAR * comp,
-                                 CHAR * breakPoint,
-                                 CHAR * pcTids )
+                                 CHAR * breakPoint/*,
+                                 CHAR * pcTids */)
 {
    INT32 rc         = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
    BOOLEAN bsoninit = FALSE ;
    bson obj ;
+   CHAR * pcTids = NULL ;
 
    BSON_INIT( obj );
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;

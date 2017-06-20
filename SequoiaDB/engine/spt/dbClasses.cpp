@@ -7123,7 +7123,7 @@ static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
       VERIFY( monitorthreads ) ;
    }
 
-   rc = sdbTraceStart ( *connection, bufferSize, comp, breakPoint, monitorthreads ) ;
+   rc = sdbTraceStart ( *connection, bufferSize, comp, breakPoint/*, monitorthreads*/ ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.traceOn()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 done :
