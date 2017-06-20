@@ -85,6 +85,8 @@ testFiles28 = [ "./misc/bson_oid.cpp" ]
 
 testFiles29 = [ "./misc/handle.cpp" ]
 
+testFiles30 = [ "./misc/date.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -123,6 +125,7 @@ setPDLevel     = dllBuildEnv.Program("setPDLevel",  [testFiles26, testCommon, gt
 code           = dllBuildEnv.Program("code",  [testFiles27, testCommon, gtestMainObj])
 bson_oid       = dllBuildEnv.Program("bson_oid",  [testFiles28, testCommon, gtestMainObj])
 handle         = dllBuildEnv.Program("handle",  [testFiles29, testCommon, gtestMainObj])
+date		   = dllBuildEnv.Program("date",  [testFiles30, testCommon, gtestMainObj])
 
 # static compile
 
@@ -155,6 +158,7 @@ setPDLevel.static        = staticBuildEnv.Program("setPDLevel.static",  [testFil
 code.static              = staticBuildEnv.Program("code.static",  [testFiles27, testCommon, gtestMainObj])
 bson_oid.static          = staticBuildEnv.Program("bson_oid.static",  [testFiles28, testCommon, gtestMainObj])
 handle.static            = staticBuildEnv.Program("handle.static",  [testFiles29, testCommon, gtestMainObj])
+date.static				 = staticBuildEnv.Program("date.static",  [testFiles30, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -173,7 +177,7 @@ env.Install( '#/build_test', [   decimal,
 								 idIndex,
 								 attachAndDetachNode,
 								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible,
-								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid,handle
+								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid,handle,date
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -192,6 +196,7 @@ env.Install( '#/build_test', [   decimal.static,
 								 idIndex.static,
 								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
 								 forceSession.static,JSCompatible.static,loadUnloadCS.static,rename.static,
-								 reloadConf.static,setPDLevel.static,code.static,bson_oid.static,handle.static
+								 reloadConf.static,setPDLevel.static,code.static,bson_oid.static,handle.static,
+								 date.static
                               ] )
 
