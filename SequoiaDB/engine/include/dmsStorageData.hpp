@@ -150,12 +150,6 @@ namespace engine
                                    const BSONObj &newObj,
                                    _pmdEDUCB *cb ) ;
 
-
-
-
-
-
-
    } ;
    typedef _dmsStorageData dmsStorageData ;
 }

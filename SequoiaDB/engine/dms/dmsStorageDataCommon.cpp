@@ -471,8 +471,8 @@ namespace engine
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON, "_dmsStorageDataCommon::_dmsStorageDataCommon" )
    _dmsStorageDataCommon::_dmsStorageDataCommon ( const CHAR *pSuFileName,
-                                               dmsStorageInfo *pInfo,
-                                               _IDmsEventHolder *pEventHolder )
+                                                  dmsStorageInfo *pInfo,
+                                                  _IDmsEventHolder *pEventHolder )
    :_dmsStorageBase( pSuFileName, pInfo )
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON ) ;
@@ -1040,13 +1040,13 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__LOGDPS, "_dmsStorageDataCommon::_logDPS" )
    INT32 _dmsStorageDataCommon::_logDPS( SDB_DPSCB * dpsCB,
-                                   dpsMergeInfo & info,
-                                   pmdEDUCB * cb,
-                                   ossSLatch * pLatch,
-                                   OSS_LATCH_MODE mode,
-                                   BOOLEAN & locked,
-                                   UINT32 clLID,
-                                   dmsExtentID extLID )
+                                         dpsMergeInfo & info,
+                                         pmdEDUCB * cb,
+                                         ossSLatch * pLatch,
+                                         OSS_LATCH_MODE mode,
+                                         BOOLEAN & locked,
+                                         UINT32 clLID,
+                                         dmsExtentID extLID )
    {
       INT32 rc = SDB_OK ;
 
@@ -1082,11 +1082,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__LOGDPS1, "_dmsStorageDataCommon::_logDPS" )
    INT32 _dmsStorageDataCommon::_logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
-                                   pmdEDUCB *cb, dmsMBContext *context,
-                                   dmsExtentID extLID,
-                                   BOOLEAN needUnLock,
-                                   DMS_FILE_TYPE type,
-                                   UINT32 *clLID )
+                                         pmdEDUCB *cb, dmsMBContext *context,
+                                         dmsExtentID extLID,
+                                         BOOLEAN needUnLock,
+                                         DMS_FILE_TYPE type,
+                                         UINT32 *clLID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON__LOGDPS1 ) ;
@@ -1271,7 +1271,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__TRUNCATECOLLECTION, "_dmsStorageDataCommon::_truncateCollection" )
    INT32 _dmsStorageDataCommon::_truncateCollection( dmsMBContext *context,
-                                               BOOLEAN needChangeCLID )
+                                                     BOOLEAN needChangeCLID )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtRW lastRW ;
@@ -1489,8 +1489,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_ADDEXTENT2META, "_dmsStorageDataCommon::addExtent2Meta" )
    INT32 _dmsStorageDataCommon::addExtent2Meta( dmsExtentID extID,
-                                          dmsExtent *extent,
-                                          dmsMBContext *context )
+                                                dmsExtent *extent,
+                                                dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
       dmsExtRW mbExRW ;
@@ -1886,9 +1886,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_DROPCOLLECTION, "_dmsStorageDataCommon::dropCollection" )
    INT32 _dmsStorageDataCommon::dropCollection( const CHAR * pName, pmdEDUCB * cb,
-                                          SDB_DPSCB * dpscb,
-                                          BOOLEAN sysCollection,
-                                          dmsMBContext * context )
+                                                SDB_DPSCB * dpscb,
+                                                BOOLEAN sysCollection,
+                                                dmsMBContext * context )
    {
       INT32 rc                = 0 ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
@@ -2057,12 +2057,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_TRUNCATECOLLECTION, "_dmsStorageDataCommon::truncateCollection" )
    INT32 _dmsStorageDataCommon::truncateCollection( const CHAR *pName,
-                                              pmdEDUCB *cb,
-                                              SDB_DPSCB *dpscb,
-                                              BOOLEAN sysCollection,
-                                              dmsMBContext *context,
-                                              BOOLEAN needChangeCLID,
-                                              BOOLEAN truncateLob )
+                                                    pmdEDUCB *cb,
+                                                    SDB_DPSCB *dpscb,
+                                                    BOOLEAN sysCollection,
+                                                    dmsMBContext *context,
+                                                    BOOLEAN needChangeCLID,
+                                                    BOOLEAN truncateLob )
    {
       INT32 rc           = SDB_OK ;
       BOOLEAN getContext = FALSE ;
@@ -2238,7 +2238,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_TRUNCATECOLLECTIONLOADS, "_dmsStorageDataCommon::truncateCollectionLoads" )
    INT32 _dmsStorageDataCommon::truncateCollectionLoads( const CHAR *pName,
-                                                   dmsMBContext * context )
+                                                         dmsMBContext * context )
    {
       INT32 rc           = SDB_OK ;
       BOOLEAN getContext = FALSE ;
@@ -2276,10 +2276,10 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_RENAMECOLLECTION, "_dmsStorageDataCommon::renameCollecion" )
    INT32 _dmsStorageDataCommon::renameCollection( const CHAR * oldName,
-                                            const CHAR * newName,
-                                            pmdEDUCB * cb,
-                                            SDB_DPSCB * dpscb,
-                                            BOOLEAN sysCollection )
+                                                  const CHAR * newName,
+                                                  pmdEDUCB * cb,
+                                                  SDB_DPSCB * dpscb,
+                                                  BOOLEAN sysCollection )
    {
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_RENAMECOLLECTION ) ;
@@ -2381,7 +2381,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_FINDCOLLECTION, "_dmsStorageDataCommon::findCollection" )
    INT32 _dmsStorageDataCommon::findCollection( const CHAR * pName,
-                                          UINT16 & collectionID )
+                                                UINT16 & collectionID )
    {
       INT32 rc            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_FINDCOLLECTION ) ;

@@ -1080,7 +1080,7 @@ namespace engine
       OSS_INLINE functions :
    */
    OSS_INLINE void _dmsStorageDataCommon::_collectionNameInsert( const CHAR * pName,
-                                                           UINT16 mbID )
+                                                                 UINT16 mbID )
    {
       _collectionNameMap[ ossStrdup( pName ) ] = mbID ;
    }
@@ -1119,7 +1119,7 @@ namespace engine
       return (UINT32)_collectionNameMap.size() ;
    }
    OSS_INLINE dmsRecordRW _dmsStorageDataCommon::record2RW( const dmsRecordID &record,
-                                                      UINT16 collectionID )
+                                                            UINT16 collectionID )
    {
       dmsRecordRW rRW ;
       rRW._pData = this ;
@@ -1128,10 +1128,9 @@ namespace engine
       rRW._doneAddr() ;
       return rRW ;
    }
-   OSS_INLINE const CHAR* _dmsStorageDataCommon::_clFullName(
-                                                        const CHAR *clName,
-                                                        CHAR * clFullName,
-                                                        UINT32 fullNameLen )
+   OSS_INLINE const CHAR* _dmsStorageDataCommon::_clFullName( const CHAR *clName,
+                                                              CHAR * clFullName,
+                                                              UINT32 fullNameLen )
    {
       SDB_ASSERT( fullNameLen > DMS_COLLECTION_FULL_NAME_SZ,
                   "Collection full name len error" ) ;
@@ -1163,8 +1162,9 @@ namespace engine
       }
    }
    OSS_INLINE INT32 _dmsStorageDataCommon::getMBContext( dmsMBContext ** pContext,
-                                                   UINT16 mbID, UINT32 clLID,
-                                                   INT32 lockType )
+                                                         UINT16 mbID,
+                                                         UINT32 clLID,
+                                                         INT32 lockType )
    {
       if ( mbID >= DMS_MME_SLOTS )
       {
@@ -1208,8 +1208,8 @@ namespace engine
       return SDB_OK ;
    }
    OSS_INLINE INT32 _dmsStorageDataCommon::getMBContext( dmsMBContext ** pContext,
-                                                   const CHAR * pName,
-                                                   INT32 lockType )
+                                                         const CHAR * pName,
+                                                         INT32 lockType )
    {
       UINT16 mbID = DMS_INVALID_MBID ;
       UINT32 clLID = DMS_INVALID_CLID ;
@@ -1251,15 +1251,13 @@ namespace engine
       pContext = NULL ;
    }
 
-   OSS_INLINE _dmsCompressorEntry *_dmsStorageDataCommon::getCompressorEntry(
-                                                                  UINT16 mbID )
+   OSS_INLINE _dmsCompressorEntry *_dmsStorageDataCommon::getCompressorEntry( UINT16 mbID )
    {
       SDB_ASSERT( DMS_INVALID_MBID != mbID, "mb ID is invalid" ) ;
       return &_compressorEntry[ mbID ] ;
    }
 
-   OSS_INLINE const dmsMBStatInfo* _dmsStorageDataCommon::getMBStatInfo(
-                                                            UINT16 mbID ) const
+   OSS_INLINE const dmsMBStatInfo* _dmsStorageDataCommon::getMBStatInfo( UINT16 mbID ) const
    {
       if ( mbID >= DMS_MME_SLOTS )
       {
