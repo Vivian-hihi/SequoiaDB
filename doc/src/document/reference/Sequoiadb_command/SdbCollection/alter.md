@@ -13,7 +13,7 @@ Collection
 
 修改集合的属性。
 
-##参##
+##参数##
 
 * `options` ( *Object*， *必填* )
 
@@ -35,7 +35,7 @@ Collection
 
         格式：`ShardingKey:{<字段1> : <1|-1>,[<字段2> : <1|-1>, ...]}`
 
-    3. `ShardingType` ( *String* )：分区方式。其可选取值如下：
+    3. `ShardingType` ( *String* )：分区方式，默认为 hash 分区。其可选取值如下：
 
         * "hash"：hash 分区。
         * "range"：范围分区。
