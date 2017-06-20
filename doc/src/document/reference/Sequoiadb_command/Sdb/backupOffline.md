@@ -65,6 +65,14 @@ Sdb
 
 		格式：`OverWrite: false`
 
+    11. `Compressed` ( *Bool* )：是否开启数据压缩，缺少为 true。
+
+        格式：`Compressed: true`
+
+    12. `BackupLog` ( *Bool* )：当全量备份时是否需要备份所有日志，缺省为 false。
+
+        格式：`BackupLog: false`
+
 ##返回值##
 
 成功：返回新集合的对象。  
@@ -76,8 +84,12 @@ Sdb
 `backupOffline()`函数常见异常如下：
 
 | 错误码 | 错误类型 | 描述 | 解决方法 |
-| ------ | ------ | --- | ------ |
-||||
+| ------ | ----------------------- | --- | ------ |
+| -240   | SDB_BAR_BACKUP_EXIST    | 相同名字的备份已存在 | 先删除该备份或开启 `OverWrite: true` |
+| -241   | SDB_BAR_BACKUP_NOTEXIST | 增量备份对应的全量备份不存在 | 先执行一次全量备份 |
+| -70    | SDB_BAR_DAMAGED_BK_FILE | 备份文件已损坏 | - |
+| -57    | SDB_DPS_LOG_NOT_IN_BUF  | 增量备份的开始日志已不存在 | 重新执行全量备份后再增量备份 |
+| -98    | SDB_DPS_CORRUPTED_LOG   | 相同日志Hash校验不一致，日志发生变更 | 重新执行全量备份后再增量备份 |
 
 当异常抛出时，可以通过[getLastError()](reference/Sequoiadb_command/Global/getLastError.md)获取[错误码](reference/Sequoiadb_error_code.md)，
 或通过[getLastErrMsg()](reference/Sequoiadb_command/Global/getLastErrMsg.md)获取错误信息。
@@ -85,7 +97,8 @@ Sdb
 
 ##版本##
 
-v1.2及以上版本。
+v1.2及以上版本。  
+v2.8.2及以上版本增加 `Compressed` 和 `BackupLog` 参数。
 
 ##示例##
 
@@ -95,34 +108,18 @@ v1.2及以上版本。
 	> db.backupOffline( { Name: "FullBackup1" } )
 	> db.listBackup()
 	{
+		"Version": 2,
 	  	"Name": "FullBackup1",
+		"ID": 0,
 	  	"NodeName": "susetzb:30000",
   		"GroupName": "SYSCatalogGroup",
   		"EnsureInc": false,
 	  	"BeginLSNOffset": 0,
-  		"EndLSNOffset": 5299104,
+  		"EndLSNOffset": 195652068,
   		"StartTime": "2015-10-20-16:52:42",
+		"LastLSN": 195652020,
+		"LastLSNCode": 1845751176,
   		"HasError": false
 	}
-	{
-  		"Name": "FullBackup1",
-  		"NodeName": "susetzb:40000",
-  		"GroupName": "db2",
-  		"EnsureInc": false,
-  		"BeginLSNOffset": 0,
-  		"EndLSNOffset": 230209508,
-  		"StartTime": "2015-10-20-16:52:42",
-  		"HasError": false
-	}
-	{
-  		"Name": "FullBackup1",
-  		"NodeName": "susetzb:20000",
-  		"GroupName": "db1",
-  		"EnsureInc": false,
-  		"BeginLSNOffset": 0,
-  		"EndLSNOffset": 272453160,
-  		"StartTime": "2015-10-20-16:52:42",
-  		"HasError": false
-	}
-	Return 3 row(s).
+	Return 1 row(s).
 	```
