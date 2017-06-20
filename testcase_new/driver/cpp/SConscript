@@ -48,6 +48,8 @@ testFiles15 = [ "./misc/closeAllCursors.cpp" ]
 
 testFiles16 = [ "./misc/bson_oid.cpp" ]
 
+testFiles17 = [ "./misc/date.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -69,6 +71,7 @@ lob                = dllBuildEnv.Program("lob", [testFiles13, gtestMainObj, test
 code               = dllBuildEnv.Program("code", [testFiles14, gtestMainObj, testCommonFiles])
 closeAllCursors    = dllBuildEnv.Program("closeAllCursors", [testFiles15, gtestMainObj, testCommonFiles])
 bson_oid           = dllBuildEnv.Program("bson_oid", [testFiles16, gtestMainObj, testCommonFiles])
+date			   = dllBuildEnv.Program("date", [testFiles17, gtestMainObj, testCommonFiles])
 
 # static compile
 # dll compile
@@ -87,16 +90,17 @@ lob.static                = staticBuildEnv.Program("lob.static",[testFiles13, gt
 code.static               = staticBuildEnv.Program("code.static",[testFiles14, gtestMainObj, testCommonFiles])
 closeAllCursors.static    = staticBuildEnv.Program("closeAllCursors.static",[testFiles15, gtestMainObj, testCommonFiles])
 bson_oid.static           = staticBuildEnv.Program("bson_oid.static",[testFiles16, gtestMainObj, testCommonFiles])
+date.static				  = staticBuildEnv.Program("date.static",[testFiles17, gtestMainObj, testCommonFiles])
 
 # dll compile
 env.Install( '#/build_test',[ decimal,numberLong,trunOncache,time,DS_InvalidArgTest,
 			                  DS_InvalidConnTest,DS_ConnTest,DS_ThreadTest,DS_ChecktimeTest,DS_ClTest,DS_InvalidUsrTest,
-                              lob,code,closeAllCursors,bson_oid ] )
+                              lob,code,closeAllCursors,bson_oid,date ] )
 
 # static compile
 env.Install( '#/build_test',[ decimal.static,numberLong.static,trunOncache.static,
 							  time.static,DS_InvalidArgTest.static,DS_InvalidConnTest.static,
 							  DS_ConnTest.static,DS_ThreadTest.static,DS_ChecktimeTest.static,
-							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,
-							  closeAllCursors.static,bson_oid.static ] )
+							  DS_ClTest.static,DS_InvalidUsrTest.static,lob.static,code.static,closeAllCursors.static,
+							  bson_oid.static,date.static ] )
 
