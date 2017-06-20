@@ -67,6 +67,8 @@
                   return true ;
                } ) ;
             }
+         },{
+            'showLoading': false
          } ) ;
       } ;
 

@@ -304,7 +304,7 @@
                   return true ;
                } ) ;
             }
-         } ) ;
+         }, { 'showLoading': false } ) ;
       }
 
       getGroupList() ;

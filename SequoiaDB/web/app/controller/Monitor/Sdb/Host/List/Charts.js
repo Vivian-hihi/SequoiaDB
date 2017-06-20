@@ -165,6 +165,8 @@
                   return true ;
                } ) ;
             }
+         },{
+            'showLoading': false
          } ) ;
       } ;
       getModuleInfo() ;

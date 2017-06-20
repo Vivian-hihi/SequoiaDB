@@ -220,6 +220,8 @@
                   return true ;
                } ) ;
             }
+         },{
+            'showLoading': false
          } ) ;
       }
 

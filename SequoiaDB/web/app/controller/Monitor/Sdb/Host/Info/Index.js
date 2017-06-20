@@ -73,6 +73,8 @@
                   return true ;
                } ) ;
             }
+         },{
+            'showLoading': false
          } ) ;
       }
       
@@ -195,6 +197,8 @@
                   return true ;
                } ) ;
             } 
+         },{
+            'showLoading': false
          } ) ;
       }
       

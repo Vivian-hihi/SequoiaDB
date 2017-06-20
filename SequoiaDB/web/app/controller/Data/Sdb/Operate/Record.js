@@ -503,6 +503,8 @@
                   $scope.Components.Modal.isShow = false ;
                   $scope.$apply() ;
                }
+            },{
+               'showLoading': false
             } ) ;
             return false ;
          }
@@ -900,6 +902,8 @@
                            $scope.Components.Modal.isShow = false ;
                            $scope.$apply() ;
                         }
+                     },{
+                        'showLoading': false
                      } ) ;
                   }
                   if( isEmpty( data ) )
@@ -941,6 +945,8 @@
                         $scope.Components.Modal.isShow = false ;
                         $scope.$apply() ;
                      }
+                  },{
+                     'showLoading': false
                   } ) ;
                }
                if( isEmpty( data ) )

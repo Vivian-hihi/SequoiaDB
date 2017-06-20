@@ -77,8 +77,9 @@
                   return true ;
                } ) ;
             }
+         },{
+            'showLoading': false
          } ) ;
-         
       }
 
       //查询业务信息
@@ -98,6 +99,8 @@
                   return true ;
                } ) ;
             }
+         },{
+            'showLoading': false
          } ) ;
       }
 

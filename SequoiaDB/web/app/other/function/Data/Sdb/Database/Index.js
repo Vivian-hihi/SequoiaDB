@@ -393,6 +393,8 @@ _DataDatabaseIndex.getCSInfo = function( $scope, SdbRest ){
              return true ;
          } ) ;
       }
+   },{
+      'showLoading': false
    } ) ;
 }
 
@@ -516,6 +518,8 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
                      return true ;
                   } ) ;
                }
+            },{
+               'showLoading': false
             } ) ;
          }
       },
@@ -525,5 +529,7 @@ _DataDatabaseIndex.getCLInfo = function( $scope, SdbRest )
             return true ;
          } ) ;
       }
+   },{
+      'showLoading': false
    } ) ;
 }

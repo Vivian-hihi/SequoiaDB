@@ -185,7 +185,7 @@
                   return true ;
                } ) ;
             } 
-         } ) ;
+         }, { 'showLoading': false } ) ;
       }
 
       //获取domain列表
@@ -220,7 +220,7 @@
                   return true ;
                } ) ;
             }
-         } ) ;
+         }, { 'showLoading': false } ) ;
       }
 
       getDomainList();

@@ -81,7 +81,7 @@
                   return true ;
                } ) ;
             }
-         } ) ;
+         }, { 'showLoading': false } ) ;
       }
       getProcedureList() ;
 
