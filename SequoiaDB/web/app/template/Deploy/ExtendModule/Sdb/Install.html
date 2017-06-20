@@ -95,7 +95,7 @@
       </div>
       <div style="text-align:center;" ng-container="{height:30,marginTop:20}">
          <button class="btn btn-default" ng-if="DeployType == 'Task'" ng-click="GotoPrev()"><i class="fa fa-chevron-left"></i> {{autoLanguage("返回")}}</button>
-         <button class="btn btn-default" ng-if="DeployType != 'Task'" ng-click="GotoPrev()"><i class="fa fa-chevron-left"></i> {{autoLanguage("上一步")}}</button>
+         <button class="btn btn-default" ng-if="DeployType != 'Task' && IsFinish && IsError" ng-click="GotoPrev()"><i class="fa fa-chevron-left"></i> {{autoLanguage("上一步")}}</button>
          &nbsp;&nbsp;&nbsp;
          <button class="btn" ng-class="{'true':'btn-primary','false':'btn-danger'}[IsFinish]" ng-click="GotoDeploy()">
             {{autoLanguage("完成")}} <i class="fa fa-chevron-right"></i>

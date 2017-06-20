@@ -28,6 +28,7 @@
       //初始化
       var barColor = 0 ;
       SdbSwap.TaskInfo = {} ;
+      $scope.IsError  = false ;
       $scope.IsFinish = false ;
 
       //循环查询任务信息
@@ -76,6 +77,10 @@
                   if( taskInfo['Status'] == 4 )
                   {
                      $scope.IsFinish = true ;
+                     if( typeof( taskInfo['errno'] ) == 'number' && taskInfo['errno'] != 0 )
+                     {
+                        $scope.IsError = true ;
+                     }
                   }
                   if( $scope.IsFinish == false )
                   {
