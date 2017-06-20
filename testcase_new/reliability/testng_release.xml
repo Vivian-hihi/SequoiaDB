@@ -17,9 +17,9 @@
 
 	<test name="reliability">
 		<packages>			
-			<package name="com.sequoiadb.subcl.diskfull"></package>		
+		<!--	<package name="com.sequoiadb.subcl.diskfull"></package>	-->	
 			<package name="com.sequoiadb.split.diskfull"></package>
-			<package name="com.sequoiadb.metaopr.diskfull" />
+		<!--	<package name="com.sequoiadb.metaopr.diskfull" /> -->
 		</packages>
 	</test>
 	
