@@ -35,7 +35,7 @@ Modify the collection properties.
 .sp 2
        \fBShardingType\fR
 .br
-              Sharding type, the default value is range.
+              Sharding type, the default value is hash.
 .br
               ShardingType:"hash"|"range"
 .sp 2
