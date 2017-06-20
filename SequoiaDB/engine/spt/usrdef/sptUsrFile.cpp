@@ -51,6 +51,8 @@ using namespace bson ;
 
 namespace engine
 {
+   #define FILE_TRANSFORM_UNIT_512K 524288
+   
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, write )
@@ -381,9 +383,9 @@ JS_MAPPING_END()
       _sptUsrRemote *pRemote = NULL ;
       string filename ;
       SINT64 location = 0 ;
-      SINT64 size = 0 ;
-      BSONObjBuilder builder ;
-      BSONObj retObj ;
+      SINT64 size = 1024 ;
+      SINT64 hasRead ;
+      SINT64 readTimes ;
       const CHAR* retBuf = NULL ;
 
       rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
@@ -409,7 +411,6 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << "filename must be string" ) ;
          goto error ;
       }
-      builder.append( "filename", filename ) ;
 
       rc = arg.getNative( 2, (void*)&location, SPT_NATIVE_INT64 ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -422,70 +423,95 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << "location must be int" ) ;
          goto error ;
       }
-      builder.append( "location", location ) ;
 
       rc = arg.getNative( 3, (void*)&size, SPT_NATIVE_INT64 ) ;
-      if( SDB_OK == rc )
-      {
-         builder.append( "size", size ) ;
-      }
-      else if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "size must be number" ) ;
          goto error ;
       }
 
-      rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, BSONObj(), BSONObj(),
-                                builder.obj(), detail, retObj ) ;
-      if( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-      if( FALSE == retObj.hasField( "readContent" ) )
-      {
-         rc = SDB_OUT_OF_BOUND ;
-         detail = BSON( SPT_ERR << "retObj must has field: 'readContent'" ) ;
-         goto error ;
-      }
-      if( String != retObj.getField( "readContent" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "readContent must be string" ) ;
-         goto error ;
-      }
-      retBuf = retObj.getStringField( "readContent" ) ;
-
-      if( FALSE == retObj.hasField( "readLen" ) )
-      {
-         rc = SDB_OUT_OF_BOUND ;
-         detail = BSON( SPT_ERR << "retObj must has field: 'readLen'" ) ;
-         goto error ;
-      }
-      if( NumberLong != retObj.getField( "readLen" ).type() )
-      {
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "readLen must be NumberLong" ) ;
-         goto error ;
-      }
-      len = retObj.getIntField( "readLen" ) ;
-
-      *buf = ( CHAR* )SDB_OSS_MALLOC( len+1 ) ;
+      *buf = ( CHAR* )SDB_OSS_MALLOC( size+1 ) ;
       if( NULL == *buf )
       {
          rc = SDB_OOM ;
          detail = BSON( SPT_ERR << "Failed to alloc buff" ) ;
          goto error ;
       }
-      ossMemcpy( *buf, retBuf, len ) ;
-      (*buf)[len] = '\0' ;
 
+      hasRead = 0 ;
+      readTimes = 0 ;
+      while( hasRead < size )
+      {
+         BSONObjBuilder builder ;
+         BSONObj retObj ;
+         SINT64 readLen = 0 ;
+         SINT64 realRead = 0 ;
+         if( size - hasRead > FILE_TRANSFORM_UNIT_512K )
+         {
+            readLen = FILE_TRANSFORM_UNIT_512K ;
+         }
+         else
+         {
+            readLen = size - hasRead ;
+         }
+
+         builder.append( "filename", filename ) ;
+         builder.append( "location", location + hasRead ) ;
+         builder.append( "size", readLen ) ;
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, BSONObj(), BSONObj(),
+                                   builder.obj(), detail, retObj ) ;
+         if( SDB_OK != rc )
+         {
+            if( 0 < readTimes && SDB_EOF == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            goto error ;
+         }
+
+         if( FALSE == retObj.hasField( "readContent" ) )
+         {
+            rc = SDB_OUT_OF_BOUND ;
+            detail = BSON( SPT_ERR << "retObj must has field: 'readContent'" ) ;
+            goto error ;
+         }
+         if( String != retObj.getField( "readContent" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "readContent must be string" ) ;
+            goto error ;
+         }
+         retBuf = retObj.getStringField( "readContent" ) ;
+
+         if( FALSE == retObj.hasField( "readLen" ) )
+         {
+            rc = SDB_OUT_OF_BOUND ;
+            detail = BSON( SPT_ERR << "retObj must has field: 'readLen'" ) ;
+            goto error ;
+         }
+         if( NumberLong != retObj.getField( "readLen" ).type() )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "readLen must be NumberLong" ) ;
+            goto error ;
+         }
+         realRead = retObj.getIntField( "readLen" ) ;
+
+         ossMemcpy( ( *buf ) + hasRead, retBuf, realRead ) ;
+         readTimes++ ;
+         hasRead += realRead ;
+      }
+
+      (*buf)[hasRead] = '\0' ;
+      len = hasRead ;
    done:
       return rc ;
    error:
       if( *buf )
       {
-         SDB_OSS_FREE( buf ) ;
+         SDB_OSS_FREE( *buf ) ;
          *buf = NULL ;
       }
       goto done ;
@@ -530,9 +556,10 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
       _sptUsrRemote *pRemote = NULL ;
       sptUsrFileContent *pFileContent = NULL ;
-      BSONObjBuilder builder ;
       string filename ;
       SINT64 location = 0 ;
+      SINT64 size ;
+      SINT64 hasWrite ;
       BSONObj retObj ;
 
       rc = arg.getUserObj( 0, "Remote", ( const void** )&pRemote ) ;
@@ -558,7 +585,6 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << "filename must be string" ) ;
          goto error ;
       }
-      builder.append( "filename", filename ) ;
 
       rc = arg.getNative( 2, (void*)&location, SPT_NATIVE_INT64 ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -571,7 +597,6 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << "location must be int" ) ;
          goto error ;
       }
-      builder.append( "location", location ) ;
 
       rc = arg.getUserObj( 3, "FileContent", (const void**)&pFileContent ) ;
       if( SDB_OUT_OF_BOUND == rc )
@@ -584,12 +609,31 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << "fileContent must be FileContent" ) ;
          goto error ;
       }
-      builder.append( "content", pFileContent->getBuf(),
-                      pFileContent->getLength() ) ;
-      builder.append( "size", pFileContent->getLength() ) ;
 
-      rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, BSONObj(), BSONObj(),
-                                builder.obj(), detail, retObj ) ;
+      size = pFileContent->getLength() ;
+      hasWrite = 0 ;
+      while( size > hasWrite )
+      {
+         SINT64 writeSize ;
+         BSONObjBuilder builder ;
+
+         if( size - hasWrite > FILE_TRANSFORM_UNIT_512K )
+         {
+            writeSize = FILE_TRANSFORM_UNIT_512K ;
+         }
+         else
+         {
+            writeSize = size - hasWrite ;
+         }
+         builder.append( "filename", filename ) ;
+         builder.append( "location", location + hasWrite ) ;
+         builder.append( "content", pFileContent->getBuf() + hasWrite,
+                         writeSize ) ;
+         builder.append( "size", writeSize ) ;
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, BSONObj(), BSONObj(),
+                                   builder.obj(), detail, retObj ) ;
+         hasWrite += writeSize ;
+      }
       if( SDB_OK != rc )
       {
          goto error ;
