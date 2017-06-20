@@ -980,7 +980,7 @@ namespace engine
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
    INT32 _dmsStorageDataCapped::_popFromActiveExt( dmsMBContext *context,
@@ -1058,7 +1058,7 @@ namespace engine
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
    INT32 _dmsStorageDataCapped::_popRecord( dmsMBContext *context,

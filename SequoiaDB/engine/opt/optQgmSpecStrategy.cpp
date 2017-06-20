@@ -523,7 +523,7 @@ namespace engine
            aggrNode->hasExpr() )
       {
          result = OPT_SS_REFUSE ;
-         goto done ; 
+         goto done ;
       }
 
       while ( it != fields->end() )
@@ -812,7 +812,7 @@ namespace engine
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
    const CHAR* _optQgmAggrFilterSty::strategyName() const
