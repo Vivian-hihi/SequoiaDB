@@ -79,9 +79,13 @@
          else
          {
             if( nodeRole == 1 )
+            {
                sql = 'select count(t1.Contexts.ContextID) as ContextNum from (select * from $SNAPSHOT_CONTEXT where GLOBAL=false split by ErrNodes) as t1 where t1.ErrNodes is null split by t1.Contexts' ;
+            }
             else
+            {
                sql = 'select count(t1.Contexts.ContextID) as ContextNum from (select * from $SNAPSHOT_CONTEXT where HostName="' + hostName +'" and svcname="'+ svcname + '" split by ErrNodes) as t1 where t1.ErrNodes is null split by t1.Contexts' ;
+            }
          }
          SdbRest.Exec( sql, {
             'before': function( jqXHR ){
@@ -119,9 +123,13 @@
          else
          {
             if( nodeRole == 1 )
+            {
                sql = 'select count(t1.SessionID) as SessionNum from (select * from $SNAPSHOT_SESSION where GLOBAL=false split by ErrNodes) as t1 where t1.ErrNodes is null' ;
+            }
             else
+            {
                sql = 'select count(t1.SessionID) as SessionNum from (select * from $SNAPSHOT_SESSION where HostName="' + hostName +'" and svcname="'+ svcname + '" split by ErrNodes) as t1 where t1.ErrNodes is null' ;
+            }
          }
          SdbRest.Exec( sql, {
             'before': function( jqXHR ){
@@ -159,9 +167,13 @@
          else
          {
             if( nodeRole == 1 )
+            {
                sql = 'select count(t1.TransactionID) as transNum from (select * from $SNAPSHOT_TRANS where GLOBAL=false split by ErrNodes) as t1 where t1.ErrNodes is null' ;
+            }
             else
+            {
                sql = 'select count(t1.TransactionID) as transNum from (select * from $SNAPSHOT_TRANS where HostName="' + hostName +'" and svcname="'+ svcname + '" split by ErrNodes) as t1 where t1.ErrNodes is null' ;
+            }
          }
          SdbRest.Exec( sql, {
             'before': function( jqXHR ){
