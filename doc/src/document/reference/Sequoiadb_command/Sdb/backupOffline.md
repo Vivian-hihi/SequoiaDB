@@ -102,7 +102,7 @@ v2.8.2及以上版本增加 `Compressed` 和 `BackupLog` 参数。
 
 ##示例##
 
-1. 对整个数据库进行全量备份。
+1. 对数据库节点进行全量备份。
 
 	```lang-javascript
 	> db.backupOffline( { Name: "FullBackup1" } )
