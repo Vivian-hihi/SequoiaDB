@@ -97,6 +97,9 @@ namespace engine
 
    /* Get the name of the compressor in string format. */
    const CHAR *utilCompressType2String( UINT8 type ) ;
+
+   UTIL_COMPRESSOR_TYPE utilString2CompressType( const CHAR *pStr ) ;
+
 }
 
 #endif /* UTIL_COMPRESSOR__ */
