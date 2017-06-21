@@ -23,7 +23,7 @@ TEST( invalidHandle, connectionHandle )
 	rc = sdbGetList( db, SDB_LIST_CONTEXTS, NULL, NULL, NULL, &cursor ) ;     ASSERT_EQ( rc, SDB_INVALIDARG ) ;
 
 	// trace
-	rc = sdbTraceStart( db, 1024*1024, NULL, NULL ) ; ASSERT_EQ( rc, SDB_INVALIDARG ) ;
+	rc = sdbTraceStart( db, 1024*1024, NULL, NULL, NULL, 0 ) ; ASSERT_EQ( rc, SDB_INVALIDARG ) ;
 	rc = sdbTraceResume( db ) ;                       ASSERT_EQ( rc, SDB_INVALIDARG ) ;
 	rc = sdbTraceStop( db, NULL ) ;                   ASSERT_EQ( rc, SDB_INVALIDARG ) ; 
 	rc = sdbTraceStatus( db, &cursor ) ;              ASSERT_EQ( rc, SDB_INVALIDARG ) ;
