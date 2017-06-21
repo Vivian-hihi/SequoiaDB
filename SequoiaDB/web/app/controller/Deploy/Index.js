@@ -21,6 +21,8 @@
       $scope.moduleType = [] ;
       //业务列表数量
       $scope.ModuleNum = 0 ;
+      //业务集群模式数量
+      $scope.DistributionNum = 0 ;
       //主机列表数量
       $scope.HostNum = 0 ;
       //选择主机的网格选项
@@ -622,6 +624,7 @@
          {
             var clusterName = $scope.clusterList[ index ]['ClusterName'] ;
             $scope.ModuleNum = 0 ;
+            $scope.DistributionNum = 0 ;
             autoQueryModuleIndex = [] ;
             $.each( $scope.moduleList, function( index2, moduleInfo ){
                if( moduleInfo['ClusterName'] == clusterName )
@@ -630,6 +633,10 @@
                   autoQueryModuleIndex.push( index2 ) ;
                   if( moduleInfo['BusinessType'] == 'sequoiadb' )
                   {
+                     if( moduleInfo['DeployMod'] == 'distribution' )
+                     {
+                        ++ $scope.DistributionNum ;
+                     }
                      getNodesList( index2 ) ;
                      getCollectionInfo( index2, index ) ;
                      getErrNodes( index2, index ) ;
@@ -744,7 +751,7 @@
 
       //打开 业务扩容 弹窗
       $scope.ShowExtendWindow = function(){
-         if( $scope.clusterList.length > 0 || $scope.ModuleNum != 0 )
+         if( $scope.clusterList.length > 0 && $scope.DistributionNum != 0 )
          {
             $scope.ExtendWindow['config'] = {
                inputList: [
