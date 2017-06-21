@@ -90,6 +90,27 @@ error:
    goto done;  
 }
 
+// create collection
+INT32 createNormalCl( sdbConnectionHandle* db, sdbCSHandle* cs, sdbCollectionHandle* cl,
+                	  const char* csname, const char* clname )
+{
+	INT32 rc = SDB_OK ;
+	// connect sdb
+ 	getConf() ;
+    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, db ) ;
+    CHECK_RC( rc, "fail to connect sdb" ) ;
+	// create cs
+	rc = sdbCreateCollectionSpace( *db, csname, SDB_PAGESIZE_4K, cs ) ;
+    CHECK_RC( rc, "fail to create cs" ) ;
+	// create cl
+	rc = sdbCreateCollection( *cs, clname, cl ) ;
+    CHECK_RC( rc, "fail to create cl" ) ;	
+done:
+	return rc ;
+error:
+	goto done ;
+}
+
 BOOLEAN isStandalone( sdbConnectionHandle db )
 {
    BOOLEAN isStdalone = FALSE;
