@@ -58,17 +58,18 @@
 #define  MAX_LENGTH_PRINT_LINE_EXCEPTION_RECORD 40
 #define  TRACE_RECORD_EXCEPTION_TIME_THRESHOLD 1000
 
-struct TraceRecordIndex
+struct _pdTraceRecordIndex
 {
    UINT32  _sequenceNum;
    UINT64  _offset;
 
-   TraceRecordIndex(){}
-   TraceRecordIndex(UINT32 sequenceNum, UINT64 offset): _sequenceNum(sequenceNum),_offset(offset){}
+   _pdTraceRecordIndex(){}
+   _pdTraceRecordIndex(UINT32 sequenceNum, UINT64 offset): _sequenceNum(sequenceNum),
+                                                           _offset(offset){}
 };
 
 
-struct FunctionRecord
+struct _pdFunctionRecord
 {
    UINT32        _indexidx ;            
    UINT32        _sequenceNum ;
@@ -80,8 +81,8 @@ struct FunctionRecord
    UINT64        _functionID ;
    ossTimestamp  _start ;
 
-   FunctionRecord(){}
-   FunctionRecord( UINT32 indexidx, 
+   _pdFunctionRecord(){}
+   _pdFunctionRecord( UINT32 indexidx, 
                    UINT32 sequence, 
                    UINT32 tid, 
                    UINT32 nchild, 
@@ -100,7 +101,7 @@ struct FunctionRecord
                      _functionID(funcID), 
                      _start(starttime){}
 
-   bool operator < (const FunctionRecord &another) const
+   bool operator < (const _pdFunctionRecord &another) const
    {
       return _maxTimeInterval < another._maxTimeInterval ;
    }
@@ -110,15 +111,15 @@ struct FunctionRecord
 
 
 #define NUMBER_OF_FUNCTION_RECORD_RESERVATION 5
-struct FunctionSummaryRecord
+struct _pdFunctionSummaryRecord
 {
    UINT32          _count ;
    UINT32          _minCost ;
    double          _avgcost ;
-   FunctionRecord  _reserveRecords[NUMBER_OF_FUNCTION_RECORD_RESERVATION] ; 
+   _pdFunctionRecord  _reserveRecords[NUMBER_OF_FUNCTION_RECORD_RESERVATION] ; 
 
-   FunctionSummaryRecord(): _count(0), _avgcost(0){}
-   void insert(FunctionRecord record)
+   _pdFunctionSummaryRecord(): _count(0), _avgcost(0){}
+   void insert(_pdFunctionRecord record)
    {
       INT8 idx = OSS_MIN ( _count, NUMBER_OF_FUNCTION_RECORD_RESERVATION ) ;  
       for ( idx = idx - 1; idx >= 0; idx-- )
@@ -159,55 +160,54 @@ struct FunctionSummaryRecord
 
 // step1: output fmt file
 // step2: analyze the record index
-INT32 parseTraceDumpFile(ossPrimitiveFileOp *file, 
-                         pdTraceCB *cb,
-                         CHAR *fmtFilePath,
-                         std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap
-                         );
-
-
-INT32 analysisTraceRecords( ossPrimitiveFileOp *file, 
+INT32 _pdParseTraceDumpFile(ossPrimitiveFileOp *file, 
                             pdTraceCB *cb,
-                            std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap,
-                            CHAR *errorFilePath, 
-                            CHAR *funcRecordPath, 
-                            CHAR *flwFilePath, 
-                            CHAR *summaryFilePath, 
-                            CHAR *exceptFilePath );
+                            CHAR *fmtFilePath,
+                            std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap );
+
+
+INT32 _pdAnalysisTraceRecords( ossPrimitiveFileOp *file, 
+                               pdTraceCB *cb,
+                               std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap,
+                               CHAR *errorFilePath, 
+                               CHAR *funcRecordPath, 
+                               CHAR *flwFilePath, 
+                               CHAR *summaryFilePath, 
+                               CHAR *exceptFilePath );
 
 // 1 output program execution sequence
 // 2 calculate function execution time
 // 3 analyze exception record
-INT32 analysisRecordsByThread(   UINT32 tid,
-                                 pdTraceCB *cb,
-                                 std::vector<TraceRecordIndex> recIdxs,
-                                 ossPrimitiveFileOp *file,
-                                 ossPrimitiveFileOp *flwFile,
-                                 std::map<UINT64, std::vector<UINT32> > &errFunctions, 
-                                 std::map<UINT64, FunctionSummaryRecord> &summaryRecords);
+INT32 _pdAnalysisRecordsByThread( UINT32 tid,
+                                  pdTraceCB *cb,
+                                  std::vector<_pdTraceRecordIndex> recIdxs,
+                                  ossPrimitiveFileOp *file,
+                                  ossPrimitiveFileOp *flwFile,
+                                  std::map<UINT64, std::vector<UINT32> > &errFunctions, 
+                                  std::map<UINT64, _pdFunctionSummaryRecord> &summaryRecords );
 
 
 
 // 1 calculate function execution time
 // 2 maxtimeInterval
 // 3 handing error records
-void  analysisFunctionStack(std::stack<FunctionRecord> &funStack,
-                            UINT32 recdIndexIdx,
-                            UINT32 sequenceNum,
-                            UINT64 timeInterval,
-                            pdTraceRecord curRecord,
-                            std::map<UINT64, std::vector<UINT32> > &errFunctions, 
-                            std::map<UINT64, FunctionSummaryRecord> &summaryRecords);
+void  _pdAnalysisFunctionStack(std::stack<_pdFunctionRecord> &funStack,
+                               UINT32 recdIndexIdx,
+                               UINT32 sequenceNum,
+                               UINT64 timeInterval,
+                               pdTraceRecord curRecord,
+                               std::map<UINT64, std::vector<UINT32> > &errFunctions, 
+                               std::map<UINT64, _pdFunctionSummaryRecord> &summaryRecords );
 
 
 // 1 select exception 
 // 2 output exception 
-INT32 dealWithExceptRecords(pdTraceCB *cb,
-                            ossPrimitiveFileOp *dumpFile, 
-                            ossPrimitiveFileOp *funcRecFile,
-                            ossPrimitiveFileOp *exceptFile, 
-                            std::map<UINT64, FunctionSummaryRecord> &summaryRecords,
-                            std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap) ;
+INT32 _pdDealWithExceptRecords( pdTraceCB *cb,
+                                ossPrimitiveFileOp *dumpFile, 
+                                ossPrimitiveFileOp *funcRecFile,
+                                ossPrimitiveFileOp *exceptFile, 
+                                std::map<UINT64, _pdFunctionSummaryRecord> &summaryRecords,
+                                std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap ) ;
 
 
 

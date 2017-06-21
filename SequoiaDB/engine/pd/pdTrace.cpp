@@ -462,10 +462,9 @@ error :
 
 
 
-INT32 loadDumpFile( const CHAR *pInputFileName ,
+static INT32 _pdLoadDumpFile( const CHAR *pInputFileName ,
                     ossPrimitiveFileOp *file ,
-                    _pdTraceCB &traceCB 
-                    )
+                    _pdTraceCB &traceCB )
 {
    INT32 rc               = SDB_OK ;
    INT32 byteRead         = 0 ;
@@ -473,15 +472,15 @@ INT32 loadDumpFile( const CHAR *pInputFileName ,
    ossPrimitiveFileOp::offsetType offset ;
 
    rc = file->Open ( pInputFileName,
-      OSS_PRIMITIVE_FILE_OP_READ_ONLY |
-      OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS ) ;
+                     OSS_PRIMITIVE_FILE_OP_READ_ONLY |
+                     OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS ) ;
    PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-      "Failed to dump trace to file %s, errno=%d",
-      pInputFileName, rc ) ;
+              "Failed to dump trace to file %s, errno=%d",
+              pInputFileName, rc ) ;
    rc = file->getSize ( &offset ) ;
    PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-      "Failed to get trace file size for %s, errno=%d",
-      pInputFileName, rc ) ;
+              "Failed to get trace file size for %s, errno=%d",
+              pInputFileName, rc ) ;
    fileSize = offset.offset ;
    // open output file for write only
 
@@ -490,23 +489,23 @@ INT32 loadDumpFile( const CHAR *pInputFileName ,
    // reset buffer since it's fake
    traceCB._pBuffer = NULL ;
    PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
-      "Failed to write trace to file %s, errno=%d",
-      pInputFileName, rc ) ;
+              "Failed to write trace to file %s, errno=%d",
+              pInputFileName, rc ) ;
    PD_CHECK ( byteRead == sizeof(_pdTraceCB),
-      SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
-      "Unable to read header" ) ;
+              SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
+              "Unable to read header" ) ;
    PD_CHECK ( ossMemcmp ( traceCB._eyeCatcher, TRACECB_EYE_CATCHER,
-      TRACE_EYE_CATCHER_SIZE ) == 0,
-      SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
-      "Invalid eye catcher" ) ;
+               TRACE_EYE_CATCHER_SIZE ) == 0,
+               SDB_PD_TRACE_FILE_INVALID, error, PDWARNING,
+               "Invalid eye catcher" ) ;
    // if the header size doesn't match _pdTraceCB, it may caused by
    // server/client differnece for pdTraceCB, so let's read rest
    if ( traceCB._totalSize + traceCB._headerSize != fileSize )
    {
       PD_LOG ( PDWARNING,
-         "Trace file header is not valid, should be greater "
-         "or equal to %lld bytes, but actual %lld bytes",
-         sizeof(_pdTraceCB), traceCB._headerSize ) ;
+               "Trace file header is not valid, should be greater "
+               "or equal to %lld bytes, but actual %lld bytes",
+               sizeof(_pdTraceCB), traceCB._headerSize ) ;
       goto error ;
    }
    if ( sizeof(_pdTraceCB) < traceCB._headerSize )
@@ -518,9 +517,9 @@ INT32 loadDumpFile( const CHAR *pInputFileName ,
    else if ( sizeof(_pdTraceCB) > traceCB._headerSize )
    {
       PD_LOG ( PDWARNING,
-         "Trace file header is not valid, should be greater "
-         "or equal to %lld bytes, but actual %lld bytes",
-         sizeof(_pdTraceCB), traceCB._headerSize ) ;
+               "Trace file header is not valid, should be greater "
+               "or equal to %lld bytes, but actual %lld bytes",
+               sizeof(_pdTraceCB), traceCB._headerSize ) ;
       goto error ;
    }
 
@@ -530,7 +529,7 @@ error :
    goto done ;
 }
 
-void removeSuffix(char *path)
+static void _pdRemoveSuffix(char *path)
 {
    int idx = ossStrlen(path)-1;
    while(idx >= 0 && path[idx] != '\\' && path[idx] != '/')
@@ -560,10 +559,10 @@ INT32 _pdTraceCB::format ( const CHAR *pInputFileName,
    CHAR errorFilePath[OSS_MAX_PATHSIZE] = {0} ;
    CHAR funcRecordFilePath[OSS_MAX_PATHSIZE] = {0} ;
    CHAR filePath[OSS_MAX_PATHSIZE] = {0} ;
-   std::map<UINT32, std::vector<TraceRecordIndex> > tid2recordsMap ;
+   std::map<UINT32, std::vector<_pdTraceRecordIndex> > tid2recordsMap ;
 
-   /*ossStrcpy( filePath, pOutputFileName ) ; 
-   removeSuffix( filePath ) ;
+   ossStrcpy( filePath, pOutputFileName ) ; 
+   _pdRemoveSuffix( filePath ) ;
 
    if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
    {
@@ -577,10 +576,10 @@ INT32 _pdTraceCB::format ( const CHAR *pInputFileName,
       ossSnprintf( errorFilePath, OSS_MAX_PATHSIZE, "%s.error", filePath ) ;
       ossSnprintf( funcRecordFilePath, OSS_MAX_PATHSIZE, "%s.funcRecord.csv", filePath ) ;
 
-   }*/
+   }
 
 
-   if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
+   /*if ( type == PD_TRACE_FORMAT_TYPE_FORMAT )
    {
       ossSnprintf( fmtFilePath, OSS_MAX_PATHSIZE, "%s/trace.fmt", pOutputFileName ) ;
    }
@@ -597,21 +596,30 @@ INT32 _pdTraceCB::format ( const CHAR *pInputFileName,
    if( ossAccess( pOutputFileName ) )
    {
       rc = ossMkdir( pOutputFileName ) ;
-      PD_CHECK ( 0 == rc || SDB_PERM == rc, rc, error, PDERROR, "Failed to mkdir(%s), errno=%d", pOutputFileName, rc ) ;
-   }
+      PD_CHECK ( 0 == rc || SDB_PERM == rc, rc, error, PDERROR, 
+                 "Failed to mkdir(%s), errno=%d", pOutputFileName, rc ) ;
+   }*/
 
-   rc = loadDumpFile( pInputFileName, &file, traceCB ) ;
-   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to load dump file(%s), errno=%d", pInputFileName, rc ) ;
+   rc = _pdLoadDumpFile( pInputFileName, &file, traceCB ) ;
+   PD_CHECK ( 0 == rc, rc, error, PDERROR, 
+              "Failed to load dump file(%s), errno=%d", pInputFileName, rc ) ;
 
    //step 1
-   rc = parseTraceDumpFile( &file, &traceCB, fmtFilePath, tid2recordsMap );
-   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to parse file(%s), errno=%d", pInputFileName, rc ) ;
+   rc = _pdParseTraceDumpFile( &file, &traceCB, fmtFilePath, tid2recordsMap );
+   PD_CHECK ( 0 == rc, rc, error, PDERROR, 
+              "Failed to parse file(%s), errno=%d", pInputFileName, rc ) ;
 
    if ( type != PD_TRACE_FORMAT_TYPE_FORMAT )
    {
-      rc = analysisTraceRecords( &file, &traceCB, tid2recordsMap, 
-                                 errorFilePath, funcRecordFilePath, flwFilePath, summaryFilePath, exceptFilePath );
-      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to analysis trace records, errno=%d", rc ) ;
+      rc = _pdAnalysisTraceRecords( &file, &traceCB, 
+                                    tid2recordsMap, 
+                                    errorFilePath, 
+                                    funcRecordFilePath, 
+                                    flwFilePath, 
+                                    summaryFilePath, 
+                                    exceptFilePath ) ;
+      PD_CHECK ( 0 == rc, rc, error, PDERROR, 
+                 "Failed to analysis trace records, errno=%d", rc ) ;
    }
 
 

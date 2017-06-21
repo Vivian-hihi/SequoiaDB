@@ -51,54 +51,73 @@
 
 using namespace engine ;
 
-INT32 selectExceptRecords(FunctionSummaryRecord &record, std::set<FunctionRecord> &exceptRecords) ;
-INT32 outputFunctionSummaryRecord(UINT64 funcId, FunctionSummaryRecord &record, ossPrimitiveFileOp *funcFile) ;
-INT32  outputExceptionReport(pdTraceCB *cb,
-                             ossPrimitiveFileOp *dumpFile, 
-                             ossPrimitiveFileOp *reportFile, 
-                             std::set<FunctionRecord> &exceptRecords,
-                             std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap) ;
+static INT32 _pdSelectExceptRecords( _pdFunctionSummaryRecord &record, 
+                                     std::set<_pdFunctionRecord> &exceptRecords ) ;
+
+static INT32 _pdOutputFunctionSummaryRecord( UINT64 funcId, 
+                                             _pdFunctionSummaryRecord &record, 
+                                             ossPrimitiveFileOp *funcFile) ;
+
+static INT32 _pdOutputExceptionReport( pdTraceCB *cb,
+                                       ossPrimitiveFileOp *dumpFile, 
+                                       ossPrimitiveFileOp *reportFile, 
+                                       std::set<_pdFunctionRecord> &exceptRecords,
+                                       std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap ) ;
 
 
 
-INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequenceNum);
-INT32 outputTraceRecordByThread(ossPrimitiveFileOp *flwFile, 
-                                UINT32 sequence,
-                                INT32 &numIndent,
-                                UINT64 timeInterval,
-                                CHAR    *recordBuf);
-INT32 readTraceRecord( ossPrimitiveFileOp *file,
-                      UINT64 &cursor,
-                      UINT32 headerSize,
-                      UINT64 fileLength,
-                      CHAR   *tempBuf); 
+static INT32 _pdOutputTraceRecordByFMT( ossPrimitiveFileOp *out, 
+                                        CHAR *tempBuf, 
+                                        UINT32 sequenceNum );
 
-INT32 readFileData(ossPrimitiveFileOp *file, 
-                   CHAR *pbuff, 
-                   UINT64 &cursor, 
-                   INT32  size, 
-                   UINT32 headerSize, 
-                   UINT64 fileLength); 
+static INT32 _pdOutputTraceRecordByThread ( ossPrimitiveFileOp *flwFile, 
+                                            UINT32 sequence,
+                                            INT32 &numIndent,
+                                            UINT64 timeInterval,
+                                            CHAR    *recordBuf ) ;
+static INT32 _pdReadTraceRecord ( ossPrimitiveFileOp *file,
+                                  UINT64 &cursor, 
+                                  UINT32 headerSize,
+                                  UINT64 fileLength,
+                                  CHAR   *tempBuf ); 
 
-INT32 readTraceRecord(ossPrimitiveFileOp *file, 
-                      UINT64 &cursor, 
-                      UINT32 headerSize,
-                      UINT64 fileLength,
-                      CHAR   *tempBuf)
+static INT32 _pdReadFileData ( ossPrimitiveFileOp *file, 
+                               CHAR *pbuff, 
+                               UINT64 &cursor, 
+                               INT32  size, 
+                               UINT32 headerSize, 
+                               UINT64 fileLength ); 
+
+static INT32 _pdReadTraceRecord( ossPrimitiveFileOp *file, 
+                                  UINT64 &cursor, 
+                                  UINT32 headerSize,
+                                  UINT64 fileLength,
+                                  CHAR   *tempBuf )
 {
    INT32 rc = SDB_OK ;
    SDB_ASSERT ( file, "file can't be NULL" ) ;
    pdTraceRecord *record = NULL ;
 
-   rc = readFileData( file, &tempBuf[0], cursor, sizeof(pdTraceRecord), headerSize, fileLength ) ;
+   rc = _pdReadFileData( file, 
+                         &tempBuf[0], 
+                         cursor, 
+                         sizeof(pdTraceRecord), 
+                         headerSize, 
+                         fileLength ) ;
    PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
               "Failed to read from trace file, errno=%d", rc ) ;
    record = (pdTraceRecord*)tempBuf ;
 
    if ( record->_recordSize > sizeof(pdTraceRecord) )
    {
-      rc = readFileData( file, &tempBuf[sizeof(pdTraceRecord)], cursor, record->_recordSize-sizeof(pdTraceRecord), headerSize, fileLength ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to read from trace file, errno=%d", rc ) ;
+      rc = _pdReadFileData( file, 
+                            &tempBuf[sizeof(pdTraceRecord)], 
+                            cursor, 
+                            record->_recordSize-sizeof(pdTraceRecord), 
+                            headerSize, 
+                            fileLength ) ;
+      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                 "Failed to read from trace file, errno=%d", rc ) ;
    }
 
    // sanity check for slot
@@ -110,7 +129,8 @@ INT32 readTraceRecord(ossPrimitiveFileOp *file,
       // valid slot
       //goto done ;
       rc = SDB_PD_TRACE_FILE_INVALID ;
-      PD_CHECK ( 0 == rc, SDB_PD_TRACE_FILE_INVALID, error, PDERROR, "trace file invalid, errno=%d", rc ) ;
+      PD_CHECK ( 0 == rc, SDB_PD_TRACE_FILE_INVALID, error, PDERROR,
+                 "trace file invalid, errno=%d", rc ) ;
    }
    PD_CHECK ( record->_recordSize <= TRACE_RECORD_MAX_SIZE,
               SDB_PD_TRACE_FILE_INVALID, error, PDERROR, "read failed" ) ;
@@ -121,7 +141,7 @@ error :
    goto done ;
 }
 
-INT32 readFileData(ossPrimitiveFileOp *file, 
+static INT32 _pdReadFileData(ossPrimitiveFileOp *file, 
                     CHAR *pbuff, 
                     UINT64 &cursor, 
                     INT32  size, 
@@ -162,11 +182,10 @@ INT32 readFileData(ossPrimitiveFileOp *file,
 
  
 
-INT32 parseTraceDumpFile(ossPrimitiveFileOp *file, 
-                         pdTraceCB *cb, 
-                         CHAR *fmtFilePath,
-                         std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap
-                         )
+INT32 _pdParseTraceDumpFile( ossPrimitiveFileOp *file, 
+                             pdTraceCB *cb, 
+                             CHAR *fmtFilePath,
+                             std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap )
 {
    INT32 rc = SDB_OK;
    BOOLEAN isFmt = TRUE ;
@@ -174,7 +193,7 @@ INT32 parseTraceDumpFile(ossPrimitiveFileOp *file,
    UINT64 cursor, endPos ;
    CHAR tempBuf [ TRACE_RECORD_MAX_SIZE ] ;
    UINT32 sequenceNum = 0 ;
-   TraceRecordIndex recIdx ;
+   _pdTraceRecordIndex recIdx ;
    pdTraceRecord *record ;
 
    if ( ossStrlen(fmtFilePath) )
@@ -198,13 +217,14 @@ INT32 parseTraceDumpFile(ossPrimitiveFileOp *file,
 
    while ( cursor != endPos )
    {
-      recIdx = TraceRecordIndex( sequenceNum, cursor ) ;
-      rc = readTraceRecord( file, cursor, cb->_headerSize, cb->_headerSize+cb->_totalSize, tempBuf );
+      recIdx = _pdTraceRecordIndex( sequenceNum, cursor ) ;
+      rc = _pdReadTraceRecord( file, cursor, cb->_headerSize, 
+                               cb->_headerSize+cb->_totalSize, tempBuf );
       PD_CHECK ( 0 == rc, rc, error, PDERROR, "Trace file is not valid" ) ;
 
       if ( isFmt )
       {
-         rc = outputTraceRecordByFMT( &fmtfile, tempBuf, sequenceNum ) ;
+         rc = _pdOutputTraceRecordByFMT( &fmtfile, tempBuf, sequenceNum ) ;
          PD_CHECK ( 0 == rc, rc, error, PDERROR, "Trace file is not valid" ) ;
       }
       else
@@ -224,10 +244,13 @@ error :
    goto done ;
 }
 
-void  outputErrorFunctions(std::map<UINT64, std::vector<UINT32> > &errFunctions, ossPrimitiveFileOp *file)
+static void  _pdOutputErrorFunctions( std::map<UINT64, std::vector<UINT32> > &errFunctions, 
+                                      ossPrimitiveFileOp *file )
 {
    INT32 nCount = 0 ;
-   for ( std::map<UINT64, std::vector<UINT32> >::iterator it = errFunctions.begin(); it != errFunctions.end(); it++ )
+   for ( std::map<UINT64, std::vector<UINT32> >::iterator it = errFunctions.begin();
+                                                          it != errFunctions.end(); 
+                                                          it++ )
    {
       file->fWrite( "%d: %s \n       (", nCount, pdGetTraceFunction( it->first ) ) ;
       for (UINT32 item = 0; item < it->second.size(); item++)
@@ -240,13 +263,13 @@ void  outputErrorFunctions(std::map<UINT64, std::vector<UINT32> > &errFunctions,
 }
 
 
-INT32 analysisTraceRecords(ossPrimitiveFileOp *file, pdTraceCB *cb,
-                      std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap, 
-                      CHAR *errorFilePath, 
-                      CHAR *funcRecordPath, 
-                      CHAR *flwFilePath, 
-                      CHAR *summaryFilePath, 
-                      CHAR *exceptFilePath)
+INT32 _pdAnalysisTraceRecords( ossPrimitiveFileOp *file, pdTraceCB *cb,
+                               std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap, 
+                               CHAR *errorFilePath, 
+                               CHAR *funcRecordPath, 
+                               CHAR *flwFilePath, 
+                               CHAR *summaryFilePath, 
+                               CHAR *exceptFilePath )
 {
    INT32 rc = SDB_OK ;
    ossPrimitiveFileOp errFile ;
@@ -255,7 +278,7 @@ INT32 analysisTraceRecords(ossPrimitiveFileOp *file, pdTraceCB *cb,
    //ossPrimitiveFileOp smryFile ;
    ossPrimitiveFileOp exceptFile ;
    std::map<UINT64, std::vector<UINT32> > errFunctions;
-   std::map<UINT64, FunctionSummaryRecord> summaryRecords ;
+   std::map<UINT64, _pdFunctionSummaryRecord> summaryRecords ;
    //create file
    rc = errFile.Open ( errorFilePath,
                    OSS_PRIMITIVE_FILE_OP_WRITE_ONLY |
@@ -298,20 +321,21 @@ INT32 analysisTraceRecords(ossPrimitiveFileOp *file, pdTraceCB *cb,
 
 
    //analysis thread
-   for ( std::map<UINT32, std::vector<TraceRecordIndex> >::iterator it = tid2recordsmap.begin();
+   for ( std::map<UINT32, std::vector<_pdTraceRecordIndex> >::iterator it = tid2recordsmap.begin();
          it != tid2recordsmap.end();
          it++ )
    {
-      rc = analysisRecordsByThread( it->first, cb, it->second, file, &flwFile, errFunctions, summaryRecords ) ;
-      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to analysisRecordsByThread, errno=%d", rc ) ;
+      rc = _pdAnalysisRecordsByThread( it->first, cb, it->second, 
+                                       file, &flwFile, errFunctions, summaryRecords ) ;
+      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to _pdAnalysisRecordsByThread, errno=%d", rc ) ;
    }
 
    //analysis result
-   rc = dealWithExceptRecords( cb, file, &funcRecFile, &exceptFile, summaryRecords, tid2recordsmap ) ;
-   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to dealWithExceptRecords, errno=%d", rc ) ;
+   rc = _pdDealWithExceptRecords( cb, file, &funcRecFile, &exceptFile, summaryRecords, tid2recordsmap ) ;
+   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to _pdDealWithExceptRecords, errno=%d", rc ) ;
 
    //output
-   outputErrorFunctions( errFunctions, &errFile ) ;
+   _pdOutputErrorFunctions( errFunctions, &errFile ) ;
 
 done :
    errFile.Close() ;
@@ -324,14 +348,13 @@ error :
 }
 
 
-INT32 analysisRecordsByThread(UINT32 tid, 
-                              pdTraceCB *cb,
-                              std::vector<TraceRecordIndex> recIdxs, 
-                              ossPrimitiveFileOp *file, 
-                              ossPrimitiveFileOp *flwFile, 
-                              std::map<UINT64, std::vector<UINT32> > &errFunctions, 
-                              std::map<UINT64, FunctionSummaryRecord> &summaryRecords
-                              )
+INT32 _pdAnalysisRecordsByThread( UINT32 tid, 
+                                  pdTraceCB *cb,
+                                  std::vector<_pdTraceRecordIndex> recIdxs, 
+                                  ossPrimitiveFileOp *file, 
+                                  ossPrimitiveFileOp *flwFile, 
+                                  std::map<UINT64, std::vector<UINT32> > &errFunctions, 
+                                  std::map<UINT64, _pdFunctionSummaryRecord> &summaryRecords )
 {
   INT32 rc = SDB_OK ;
   CHAR tempBuf [ TRACE_RECORD_MAX_SIZE ] ;
@@ -341,7 +364,7 @@ INT32 analysisRecordsByThread(UINT32 tid,
   UINT64 preTimestamp = 0, curTimeStamp ;
   UINT64 timeInterval = 0 ;
   pdTraceRecord *pRecord = NULL ;
-  std::stack<FunctionRecord> funcStack ;
+  std::stack<_pdFunctionRecord> funcStack ;
 
   rc = flwFile->fWrite( OSS_NEWLINE"tid: %u"OSS_NEWLINE, tid ) ;
   PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
@@ -349,7 +372,8 @@ INT32 analysisRecordsByThread(UINT32 tid,
   for( ; idx < recIdxs.size(); idx++ )
   {
      cursor = recIdxs[idx]._offset;
-     rc = readTraceRecord (file, cursor, cb->_headerSize, cb->_headerSize+cb->_totalSize, tempBuf ) ;
+     rc = _pdReadTraceRecord( file, cursor, cb->_headerSize, 
+                              cb->_headerSize+cb->_totalSize, tempBuf ) ;
      if( rc ) goto error ;
 
      pRecord = (pdTraceRecord*)&tempBuf[0] ;
@@ -360,9 +384,11 @@ INT32 analysisRecordsByThread(UINT32 tid,
         timeInterval = curTimeStamp - preTimestamp ;
      }
      //TODO: analysis function 
-     analysisFunctionStack( funcStack, idx, recIdxs[idx]._sequenceNum, timeInterval, *pRecord, errFunctions, summaryRecords ) ;
+     _pdAnalysisFunctionStack( funcStack, idx, recIdxs[idx]._sequenceNum, 
+                               timeInterval, *pRecord, errFunctions, summaryRecords ) ;
      //todo: write to flw file
-     rc = outputTraceRecordByThread( flwFile, recIdxs[idx]._sequenceNum, numIndent, timeInterval, tempBuf );
+     rc = _pdOutputTraceRecordByThread( flwFile, recIdxs[idx]._sequenceNum, 
+                                        numIndent, timeInterval, tempBuf );
      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
                  "Failed to write into trace file, errno = %d", rc ) ;
 
@@ -378,15 +404,15 @@ error :
 // 1 calculate function execution time
 // 2 maxtimeInterval
 // 3 handing error records
-void analysisFunctionStack(std::stack<FunctionRecord> &funStack, 
-                           UINT32 recdIndexIdx,
-                           UINT32 sequenceNum,
-                           UINT64 timeInterval,
-                           pdTraceRecord curRecord, 
-                           std::map<UINT64, std::vector<UINT32> > &errFunctions, 
-                           std::map<UINT64, FunctionSummaryRecord> &summaryRecords)
+void _pdAnalysisFunctionStack( std::stack<_pdFunctionRecord> &funStack, 
+                               UINT32 recdIndexIdx,
+                               UINT32 sequenceNum,
+                               UINT64 timeInterval,
+                               pdTraceRecord curRecord, 
+                               std::map<UINT64, std::vector<UINT32> > &errFunctions, 
+                               std::map<UINT64, _pdFunctionSummaryRecord> &summaryRecords )
 {
-   FunctionRecord popRecord, topRecord ;
+   _pdFunctionRecord popRecord, topRecord ;
    BOOLEAN isEmpty = funStack.empty() ;
    INT64 curTimestamp = (INT64)(curRecord._timestamp.time * 1000000L + curRecord._timestamp.microtm) ;
 
@@ -401,7 +427,7 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
       if ( !isEmpty )
          funStack.top()._nChild++ ;
       funStack.push( 
-                     FunctionRecord(recdIndexIdx, 
+                     _pdFunctionRecord(recdIndexIdx, 
                                     sequenceNum,
                                     curRecord._tid,
                                     0, 
@@ -422,7 +448,8 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
       if ( popRecord._functionID == curRecord._functionID )
       {
          popRecord._cost = curTimestamp - popRecord._cost ;
-         popRecord._totalCost = curTimestamp - ( popRecord._start.time * 1000000L + popRecord._start.microtm );
+         popRecord._totalCost = curTimestamp - 
+                                ( popRecord._start.time * 1000000L + popRecord._start.microtm );
          summaryRecords[popRecord._functionID].insert(popRecord);
          
          if ( !funStack.empty() )
@@ -437,7 +464,7 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
       {
          //errFunctions.insert(popRecord._functionID) ;
          errFunctions[popRecord._functionID].push_back( sequenceNum ) ;
-         std::stack<FunctionRecord> nullStack ;
+         std::stack<_pdFunctionRecord> nullStack ;
          std::swap( funStack, nullStack ) ;
       }
 
@@ -449,7 +476,9 @@ void analysisFunctionStack(std::stack<FunctionRecord> &funStack,
 
 }
 
-INT32 outputTraceRecordByFMT(ossPrimitiveFileOp *out, CHAR *tempBuf, UINT32 sequenceNum)
+static INT32 _pdOutputTraceRecordByFMT( ossPrimitiveFileOp *out, 
+                                        CHAR *tempBuf, 
+                                        UINT32 sequenceNum)
 {
    INT32 rc = SDB_OK ;
    SDB_ASSERT ( out, "out can't be NULL" ) ;
@@ -603,7 +632,11 @@ error :
    goto done ;
 }
 
-INT32 outputTraceRecordByThread(ossPrimitiveFileOp *flwFile, UINT32 sequence, INT32 &numIndent, UINT64 timeInterval, CHAR *recordBuf)
+static INT32 _pdOutputTraceRecordByThread( ossPrimitiveFileOp *flwFile, 
+                                           UINT32 sequence, 
+                                           INT32 &numIndent, 
+                                           UINT64 timeInterval, 
+                                           CHAR *recordBuf )
 {
    INT32 rc = SDB_OK ;
    CHAR timestamp[64] ;
@@ -674,7 +707,9 @@ error :
    goto done ;
 }
 
-INT32 outputFunctionSummaryRecord(UINT64 funcId, FunctionSummaryRecord &record, ossPrimitiveFileOp *funcFile)
+static INT32 _pdOutputFunctionSummaryRecord( UINT64 funcId,
+                                             _pdFunctionSummaryRecord &record, 
+                                             ossPrimitiveFileOp *funcFile )
 {
    INT32 rc = SDB_OK ;
 
@@ -697,7 +732,8 @@ INT32 outputFunctionSummaryRecord(UINT64 funcId, FunctionSummaryRecord &record, 
 }
 
 
-INT32 selectExceptRecords(FunctionSummaryRecord &record, std::set<FunctionRecord> &exceptRecords)
+static INT32 _pdSelectExceptRecords( _pdFunctionSummaryRecord &record, 
+                                     std::set<_pdFunctionRecord> &exceptRecords )
 {
    INT32 rc = SDB_OK ;
    if ( record._count && 
@@ -713,31 +749,31 @@ INT32 selectExceptRecords(FunctionSummaryRecord &record, std::set<FunctionRecord
 
 // 1 select exception 
 // 2 output exception 
-INT32 dealWithExceptRecords(pdTraceCB *cb, 
+INT32 _pdDealWithExceptRecords(pdTraceCB *cb, 
                             ossPrimitiveFileOp *dumpFile, 
                             ossPrimitiveFileOp *funcRecFile,
                             ossPrimitiveFileOp *exceptFile, 
-                            std::map<UINT64, FunctionSummaryRecord> &summaryRecords, 
-                            std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap)
+                            std::map<UINT64, _pdFunctionSummaryRecord> &summaryRecords, 
+                            std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap)
 {
    INT32 rc = SDB_OK ;
-   std::set<FunctionRecord> exceptRecords ;
+   std::set<_pdFunctionRecord> exceptRecords ;
    rc = funcRecFile->fWrite("name, count, avgcost, min, first, second, third, fourth, fifth") ;
    PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to write to file, errno=%d", rc ) ;
 
-   for ( std::map<UINT64, FunctionSummaryRecord>::iterator it = summaryRecords.begin(); 
+   for ( std::map<UINT64, _pdFunctionSummaryRecord>::iterator it = summaryRecords.begin(); 
                                                            it != summaryRecords.end(); 
                                                            it++ )
    {
-      rc = selectExceptRecords( it->second, exceptRecords ) ;
-      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to selectExceptRecords, errno=%d", rc ) ;
+      rc = _pdSelectExceptRecords( it->second, exceptRecords ) ;
+      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to _pdSelectExceptRecords, errno=%d", rc ) ;
 
-      rc = outputFunctionSummaryRecord( it->first, it->second, funcRecFile ) ;
-      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to outputFunctionSummaryRecord, errno=%d", rc ) ;
+      rc = _pdOutputFunctionSummaryRecord( it->first, it->second, funcRecFile ) ;
+      PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to _pdOutputFunctionSummaryRecord, errno=%d", rc ) ;
    }
 
-   rc = outputExceptionReport( cb, dumpFile, exceptFile, exceptRecords, tid2recordsmap ) ;
-   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to outputExceptionReport, errno=%d", rc ) ;
+   rc = _pdOutputExceptionReport( cb, dumpFile, exceptFile, exceptRecords, tid2recordsmap ) ;
+   PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to _pdOutputExceptionReport, errno=%d", rc ) ;
 
 done :
    return rc ;
@@ -745,7 +781,10 @@ error :
    goto done ;
 }
 
-INT32 outputTraceRecord(ossPrimitiveFileOp *flwFile, pdTraceRecord &record, UINT32 sequence, BOOLEAN isChild)
+INT32 _pdOutputTraceRecord( ossPrimitiveFileOp *flwFile, 
+                            pdTraceRecord &record, 
+                            UINT32 sequence, 
+                            BOOLEAN isChild )
 {
    INT32 rc = SDB_OK ;
    CHAR timestamp[64] ;
@@ -785,11 +824,11 @@ error :
 // 输出异常记录片段
 // 1、值输出异常所在层执行序列
 // 2 片段行数不满40，全部输出，超过40时的只输出异常点
-INT32  outputExceptionReport(pdTraceCB *cb,
-                          ossPrimitiveFileOp *dumpFile, 
-                          ossPrimitiveFileOp *reportFile, 
-                          std::set<FunctionRecord> &exceptRecords,
-                          std::map<UINT32, std::vector<TraceRecordIndex> > &tid2recordsmap)
+static INT32  _pdOutputExceptionReport( pdTraceCB *cb,
+                                        ossPrimitiveFileOp *dumpFile, 
+                                        ossPrimitiveFileOp *reportFile, 
+                                        std::set<_pdFunctionRecord> &exceptRecords,
+                                        std::map<UINT32, std::vector<_pdTraceRecordIndex> > &tid2recordsmap )
 {
    INT32 rc = SDB_OK ;
    UINT32 tid;
@@ -805,7 +844,9 @@ INT32  outputExceptionReport(pdTraceCB *cb,
    UINT64 preTimestamp, curTimestap, timeInterval ;
 
 
-   for (std::set<FunctionRecord>::reverse_iterator rit = exceptRecords.rbegin(); rit != exceptRecords.rend(); rit++)
+   for ( std::set<_pdFunctionRecord>::reverse_iterator rit = exceptRecords.rbegin(); 
+                                                       rit != exceptRecords.rend(); 
+                                                       rit++ )
    {
       isPrintAll = TRUE ;
       indent = 0 ;
@@ -815,28 +856,40 @@ INT32  outputExceptionReport(pdTraceCB *cb,
       tid = rit->_tid ;
 
       rc = reportFile->fWrite( OSS_NEWLINE"-------------------------------------------------------------------------"OSS_NEWLINE);
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into except file, errno = %d", rc ) ;
+      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                 "Failed to write into except file, errno = %d", rc ) ;
 
 
       rc = reportFile->fWrite( "%s "OSS_NEWLINE, pdGetTraceFunction( rit->_functionID ) ) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into except file, errno = %d", rc ) ;
+      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                 "Failed to write into except file, errno = %d", rc ) ;
 
-      rc = reportFile->fWrite( "sequence: %u tid: %u  cost: %ld (%ld) "OSS_NEWLINE, rit->_sequenceNum, 
-                                                                 tid, rit->_cost, rit->_maxTimeInterval) ;
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into except file, errno = %d", rc ) ;
+      rc = reportFile->fWrite( "sequence: %u tid: %u  cost: %ld (%ld) "OSS_NEWLINE, 
+                                                                 rit->_sequenceNum, 
+                                                                 tid, 
+                                                                 rit->_cost, 
+                                                                 rit->_maxTimeInterval ) ;
+      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                 "Failed to write into except file, errno = %d", rc ) ;
 
       if (rit->_nChild > MAX_LENGTH_PRINT_LINE_EXCEPTION_RECORD)
       {
          isPrintAll = FALSE ;
       }
 
-      for (UINT32 idx = rit->_indexidx; idx < tid2recordsmap[tid].size() && !isFinish; idx++)
+      for ( UINT32 idx = rit->_indexidx; 
+                   idx < tid2recordsmap[tid].size() && !isFinish; 
+                   idx++ )
       {
          timeInterval = 0 ; 
          isChild = TRUE ;
 
          cursor = tid2recordsmap[tid][idx]._offset;
-         rc = readTraceRecord (dumpFile, cursor, cb->_headerSize, cb->_headerSize+cb->_totalSize, tempBuf ) ;
+         rc = _pdReadTraceRecord( dumpFile, 
+                                  cursor, 
+                                  cb->_headerSize, 
+                                  cb->_headerSize+cb->_totalSize, 
+                                  tempBuf ) ;
          if( rc ) break ;
 
          pRecord = (pdTraceRecord*)&tempBuf[0] ;
@@ -870,32 +923,47 @@ INT32  outputExceptionReport(pdTraceCB *cb,
          
          if (isPrintAll)
          {
-            rc = outputTraceRecord(reportFile, *pRecord, tid2recordsmap[tid][idx]._sequenceNum, isChild);
+            rc = _pdOutputTraceRecord( reportFile, 
+                                       *pRecord, 
+                                       tid2recordsmap[tid][idx]._sequenceNum, 
+                                       isChild ) ;
             if (timeInterval)
             {
                rc = reportFile->fWrite ( "      (%ld)", timeInterval ) ;
-               PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into except file, errno = %d", rc ) ;
+               PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                          "Failed to write into except file, errno = %d", rc ) ;
             }
          }
          else
          {
             if ( !preTimestamp  )
             {
-               rc = outputTraceRecord(reportFile, *pRecord, tid2recordsmap[tid][idx]._sequenceNum, isChild);
+               rc = _pdOutputTraceRecord( reportFile, 
+                                          *pRecord, 
+                                          tid2recordsmap[tid][idx]._sequenceNum, 
+                                          isChild ) ;
             }
             else if ( isFinish || timeInterval > TRACE_RECORD_EXCEPTION_TIME_THRESHOLD )
             {
                if( nScan > 2 )  
                {
                   rc = reportFile->fWrite ( OSS_NEWLINE"           . . . .  " ) ;
-                  PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into except file, errno = %d", rc ) ;
+                  PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                             "Failed to write into except file, errno = %d", rc ) ;
                }
-               if( nScan > 1 ) rc = outputTraceRecord(reportFile, preRecord, tid2recordsmap[tid][idx-1]._sequenceNum, TRUE);
-               rc = outputTraceRecord(reportFile, *pRecord, tid2recordsmap[tid][idx]._sequenceNum, isChild);
+               if( nScan > 1 ) rc = _pdOutputTraceRecord( reportFile, 
+                                                          preRecord, 
+                                                          tid2recordsmap[tid][idx-1]._sequenceNum, 
+                                                          TRUE ) ;
+               rc = _pdOutputTraceRecord( reportFile, 
+                                          *pRecord, 
+                                          tid2recordsmap[tid][idx]._sequenceNum, 
+                                          isChild ) ;
                if (timeInterval)
                {
                   rc = reportFile->fWrite ( "      (%ld)", timeInterval ) ;
-                  PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into except file, errno = %d", rc ) ;
+                  PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                             "Failed to write into except file, errno = %d", rc ) ;
                }
                nScan = 0 ;
             }
@@ -906,7 +974,8 @@ INT32  outputExceptionReport(pdTraceCB *cb,
          preTimestamp = curTimestap ;
       }
       rc = reportFile->fWrite( OSS_NEWLINE );
-      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, "Failed to write into except file, errno = %d", rc ) ;
+      PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR, 
+                 "Failed to write into except file, errno = %d", rc ) ;
 
    }
 
