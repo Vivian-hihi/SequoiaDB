@@ -449,7 +449,7 @@ namespace engine
          level = strategy->_level ;
       }
 
-      maxSize = sourceLen * minRatio / 100 ;
+      maxSize = (UINT32)( (UINT64)sourceLen * minRatio / 100 ) ;
 
       dictionary.attach( (void *)dictHandle ) ;
       context.setDictionary( &dictionary ) ;
