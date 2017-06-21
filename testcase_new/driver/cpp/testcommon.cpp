@@ -117,3 +117,21 @@ bool IsStandalone( sdb& db )
 	else
 		return false ;
 }
+
+INT32 createNormalCl( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl,
+                      const char* csname, const char* clname )
+{
+	int rc = SDB_OK ;
+	// connect and create cs cl
+	getConf() ;
+	rc = db.connect( HOSTNAME, SVCNAME, "", "" ) ;
+	CHECK_RC( rc, "fail to connect sdb" ) ; 
+	rc = db.createCollectionSpace( csname, SDB_PAGESIZE_4K, cs ) ;
+	CHECK_RC( rc, "fail to create cs" ) ;
+	rc = cs.createCollection( clname, cl ) ;
+	CHECK_RC( rc, "fail to create cl" ) ;
+done:
+	return rc ;
+error:
+	goto done ;
+}
