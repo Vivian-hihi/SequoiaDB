@@ -36,7 +36,8 @@ function main()
    	                 {timestamp: {"$timestamp": "2038-01-18-23.59.59.999999"}} ];
       insertRecs( cl, rawData, dataType );
       
-      var numType  = [ 16, 1, 10, 2, 8, 3, 4, 18, 100, 7, 11, 5, 9, 17 ];
+      var numType  = [ 16, 1, 10, 2, 8, 3, 4, 
+                       18, 100, 7, 11, 5, 9, 17 ];
       var findRecsArray = findRecs( cl, dataType, numType );
       
       checkResult( cl, indexName, findRecsArray, rawData, dataType, numType );
@@ -75,7 +76,7 @@ function findRecs( cl, dataType, numType )
    {  
       println("---Find for type["+ dataType[i] +"---"+ numType[i] +"].");
       
-      var rc = cl.find( {b:{$type:1, $et: numType[i]}} ).sort({a:1});
+      var rc = cl.find( {b:{$type:1, $et: numType[i]}}, {_id:{$include:0}} ).sort({a:1});
       var tmpArray = [];
       while( tmpRecs = rc.next() )
       {
@@ -123,10 +124,15 @@ function checkResult( cl, indexName, findRecsArray, rawData, dataType, numType )
          var actB = findRecsArray[i][0]["b"];
          var expB = rawData[i][dataType[i]];
       }
-      else if( i === 5 )   //type: subObj, return "subObj" and "array"
-      {
-         var actB = findRecsArray[i][0]["b"].toString();
-         var expB = rawData[i]["subObj"].toString();
+      else if( i === 5 )   //type: subObj, return "subObj" 
+      {  
+         var actB = JSON.stringify( findRecsArray[i] );
+         var expB = '[{"a":5,"b":{"0":{"c":"test"}}}]';
+      }
+      else if( i === 6 )   //type: subObj, return "subObj" 
+      {  
+         var actB = JSON.stringify( findRecsArray[i] );
+         var expB = '[{"a":6,"b":[{"c":"test"}]}]';
       }
       else if( i > 6 && i < dataType.length - 2 )  //i=6, bug: 1745
       {
@@ -137,8 +143,8 @@ function checkResult( cl, indexName, findRecsArray, rawData, dataType, numType )
       if( actB !== expB ) 
       {
          throw buildException("checkResult", null, "[compare number and key-b]", 
-                             "[b: "+ expB +"]",
-                             "[b: "+ actB +"]");
+                             "[exp: "+ expB +"]",
+                             "[act: "+ actB +"]");
       }
    }
 }
