@@ -440,8 +440,9 @@ SDB_EXPORT INT32 sdbResetSnapshot ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
                                  UINT32 traceBufferSize,
                                  CHAR * component,
-                                 CHAR * breakPoint /*,
-                                CHAR * pcTids */) ;
+                                 CHAR * breakPoint ,
+                                 UINT32 *tids,
+                                 UINT32 nTids ) ;
 /** \fn INT32 sdbTraceResume ( sdbConnectionHandle cHandle )
     \brief Resume trace
     \param [in] cHandle The connection handle

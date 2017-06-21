@@ -679,14 +679,17 @@ INT32 outputFunctionSummaryRecord(UINT64 funcId, FunctionSummaryRecord &record, 
    INT32 rc = SDB_OK ;
 
    // name, count, avgcost, min, first, second, third, fourth, fifth
-   rc = funcFile->fWrite ( OSS_NEWLINE"%s,%d,%.1f,%u", pdGetTraceFunction(funcId), record._count, record._avgcost, record._minCost ) ;
+   rc = funcFile->fWrite ( OSS_NEWLINE"%s,%d,%.1f,%u", pdGetTraceFunction(funcId), 
+                                                       record._count, 
+                                                       record._avgcost, 
+                                                       record._minCost ) ;
    int count = OSS_MIN ( record._count, NUMBER_OF_FUNCTION_RECORD_RESERVATION ) ;
    for (int ifunc = 0; ifunc < count && (SDB_OK == rc); ifunc++)
    {
-      rc = funcFile->fWrite ( ",\"(%u, %ld, %ld, %ld)\"", record._reserveRecords[ifunc]._sequenceNum, 
-                                                               record._reserveRecords[ifunc]._totalCost,
-                                                               record._reserveRecords[ifunc]._cost, 
-                                                               record._reserveRecords[ifunc]._maxTimeInterval  ) ;
+      rc = funcFile->fWrite( ",\"(%u, %ld, %ld, %ld)\"", record._reserveRecords[ifunc]._sequenceNum, 
+                                                         record._reserveRecords[ifunc]._totalCost,
+                                                         record._reserveRecords[ifunc]._cost, 
+                                                         record._reserveRecords[ifunc]._maxTimeInterval  ) ;
       //funcFile->fWrite ( "   tid:%u \n", it->second._reserveRecords[ifunc]._tid ) ;
    }
 
@@ -697,9 +700,9 @@ INT32 outputFunctionSummaryRecord(UINT64 funcId, FunctionSummaryRecord &record, 
 INT32 selectExceptRecords(FunctionSummaryRecord &record, std::set<FunctionRecord> &exceptRecords)
 {
    INT32 rc = SDB_OK ;
-   if (record._count && record._reserveRecords[0]._maxTimeInterval > 3 * TRACE_RECORD_EXCEPTION_TIME_THRESHOLD)
+   if ( record._count && 
+        record._reserveRecords[0]._maxTimeInterval > 3 * TRACE_RECORD_EXCEPTION_TIME_THRESHOLD )
    {
-      //insertFixedArray( it->second._reserveRecords[0], recordArray, count, MAX_LENGTH_EXCEPTION_RECORD ) ;
       exceptRecords.insert(record._reserveRecords[0]) ;
    }
 
@@ -722,7 +725,9 @@ INT32 dealWithExceptRecords(pdTraceCB *cb,
    rc = funcRecFile->fWrite("name, count, avgcost, min, first, second, third, fourth, fifth") ;
    PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to write to file, errno=%d", rc ) ;
 
-   for (std::map<UINT64, FunctionSummaryRecord>::iterator it = summaryRecords.begin(); it != summaryRecords.end(); it++)
+   for ( std::map<UINT64, FunctionSummaryRecord>::iterator it = summaryRecords.begin(); 
+                                                           it != summaryRecords.end(); 
+                                                           it++ )
    {
       rc = selectExceptRecords( it->second, exceptRecords ) ;
       PD_CHECK ( 0 == rc, rc, error, PDERROR, "Failed to selectExceptRecords, errno=%d", rc ) ;

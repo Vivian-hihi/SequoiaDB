@@ -2176,14 +2176,10 @@ namespace engine
             while ( it.more () )
             {
                BSONElement ele = it.next() ;
-               /*if ( ele.isNumber() )
+               if ( ele.isNumber() )
                {
-                  _tid.push_back ( (UINT32)ele.numberLong() ) ;
-               }*/
-               if ( ele.type() == String )
-               {
-                  UINT32 tid = ossAtoi( ele.valuestr() ) ;
-                  _tid.push_back( tid ) ;
+                  UINT32 tid = (UINT32)ele.numberInt() ;
+                  _tid.push_back ( tid ) ;
                }
             } // while ( it.more () )
          } // if ( eleTID.type() == Array )

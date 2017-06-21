@@ -6635,14 +6635,16 @@ error :
 SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
                                  UINT32 traceBufferSize,
                                  CHAR * comp,
-                                 CHAR * breakPoint/*,
-                                 CHAR * pcTids */)
+                                 CHAR * breakPoint ,
+                                 UINT32 *tids,
+                                 UINT32 nTids )
 {
    INT32 rc         = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
    BOOLEAN bsoninit = FALSE ;
    bson obj ;
-   CHAR * pcTids = NULL ;
+   UINT32 itid = 0 ;
+   CHAR key[128] = { 0 } ;
 
    BSON_INIT( obj );
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
@@ -6691,7 +6693,7 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
       }
    }
 
-   if ( pcTids )
+   if ( nTids )
    {
       rc = bson_append_start_array( &obj, FIELD_NAME_THREADS );
       if( rc )
@@ -6699,10 +6701,10 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error;
       }
-      rc = sdbTraceStrtok ( &obj, pcTids ) ;
-      if ( SDB_OK != rc )
+      for ( ; itid < nTids; itid++ )
       {
-         goto error ;
+         ossSnprintf ( key, sizeof(key), "%d", itid ) ;
+         BSON_APPEND( obj, key, tids[itid], int ) ;
       }
       rc = bson_append_finish_array( &obj );
       if ( rc )

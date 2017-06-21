@@ -7081,6 +7081,7 @@ error:
    goto done ;
 }
 
+#define PD_TRACE_MAX_MONITORED_THREAD_NUM   10
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRACE_ON, "sdb_trace_on" )
 static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
 {
@@ -7097,12 +7098,15 @@ static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
    CHAR                   *comp         = NULL;
    CHAR                   *breakPoint   = NULL;
    CHAR                   *monitorthreads   = NULL;
+   UINT32                  tids[PD_TRACE_MAX_MONITORED_THREAD_NUM] = {0} ;
+   JSObject               *tidsObj     = NULL ;
+   jsuint                  nTids       = 0 ;
    connection = ( sdbConnectionHandle * )
          JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( connection, "Sdb.traceOn(): no connection handle" ) ;
 
-   ret = JS_ConvertArguments( cx, argc, argv, "i/SSS",
-                        &bufferSize, &strComp, &strBreakPoint, &strMonitorthreads );
+   ret = JS_ConvertArguments( cx, argc, argv, "i/SS",
+                              &bufferSize, &strComp, &strBreakPoint );
    REPORT( ret, "Sdb.traceOn(): invalid arguments");
 
    if ( argc >= 2 )
@@ -7116,14 +7120,41 @@ static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
       breakPoint = (CHAR*)JS_EncodeString( cx, strBreakPoint ) ;
       VERIFY( breakPoint ) ;
    }
-
    if ( argc >= 4 )
    {
-      monitorthreads = (CHAR*)JS_EncodeString( cx, strMonitorthreads ) ;
-      VERIFY( monitorthreads ) ;
+      if ( JSVAL_IS_PRIMITIVE( argv[3] ) )
+      {
+         REPORT ( JSVAL_IS_INT ( argv[3] ),
+                  "Sdb.traceOn(): the 4th argument must be an Interger or array" ) ;
+
+         tids[0] = (UINT32)JSVAL_TO_INT( argv[3] ) ;
+         nTids = 1 ;
+      }
+      else
+      {
+         tidsObj = JSVAL_TO_OBJECT ( argv[3] ) ;
+         VERIFY ( tidsObj ) ;
+         REPORT ( JS_IsArrayObject ( cx, tidsObj ),
+                  "Sdb.traceOn(): the 4th argument must be an Interger or array" ) ;
+         // iterate each element in array and push to bson object
+
+         VERIFY ( JS_GetArrayLength ( cx, tidsObj, &nTids ) ) ;
+         REPORT ( nTids < PD_TRACE_MAX_MONITORED_THREAD_NUM,
+                  "Sdb.traceOn(): the number of Thread cannot exceed 10" ) ;
+         for ( UINT32 i = 0; i < nTids; ++i )
+         {
+            jsval v ;
+            INT32 tid ;
+            // get the i'th element in the array
+            VERIFY ( JS_GetElement ( cx, tidsObj, (jsint)i, &v ) ) ;
+            //JS_ValueToInt32 ( cx, v, tid ) ;
+            VERIFY ( JS_ValueToInt32 ( cx, v, &tid ) ) ;
+            tids[i] = tid ;
+         }
+      }
    }
 
-   rc = sdbTraceStart ( *connection, bufferSize, comp, breakPoint/*, monitorthreads*/ ) ;
+   rc = sdbTraceStart ( *connection, bufferSize, comp, breakPoint, tids, nTids ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.traceOn()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 done :

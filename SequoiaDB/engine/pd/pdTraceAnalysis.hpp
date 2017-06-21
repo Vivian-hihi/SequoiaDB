@@ -123,7 +123,11 @@ struct FunctionSummaryRecord
       INT8 idx = OSS_MIN ( _count, NUMBER_OF_FUNCTION_RECORD_RESERVATION ) ;  
       for ( idx = idx - 1; idx >= 0; idx-- )
       {
-         if (record._maxTimeInterval <= _reserveRecords[idx]._maxTimeInterval) break; 
+         if (record._maxTimeInterval <= _reserveRecords[idx]._maxTimeInterval) 
+         {
+            break; 
+         }
+            
          if ( idx != NUMBER_OF_FUNCTION_RECORD_RESERVATION-1 )
          {
             _reserveRecords[idx+1] = _reserveRecords[idx] ;
