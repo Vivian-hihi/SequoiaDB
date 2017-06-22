@@ -364,6 +364,7 @@ namespace engine
       else
       {
          _lastNodeID.value = nodeID.value ;
+         _pos = COORD_GROUP_SEL_NONE ;
       }
 
    done:
