@@ -577,6 +577,7 @@ namespace bson {
             // else fall through
         case NumberInt:
         case NumberDouble: {
+            int sign = 0 ;
             double left = l.number();
             double right = r.number();
             bool lNan = isNaN( left ) ;
@@ -591,6 +592,21 @@ namespace bson {
             }
             else if ( rNan ) {
                 return 1;
+            }
+            if( isInf( left, &sign ) && isInf( right, &sign ) )
+            {
+               if( left == right )
+               {
+                  return 0 ;
+               }
+               else if( left < right )
+               {
+                  return -1 ;
+               }
+               else
+               {
+                  return 1 ;
+               }
             }
             x = left - right;
             if ( x < 0 ) return -1;
