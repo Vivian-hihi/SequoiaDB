@@ -43,6 +43,7 @@ import com.sequoiadb.task.TaskMgr;
  * 3、将dataRG备节点网络恢复，查询dataRG备节点数据是否完整一致 
  */
 
+// TODO: 用例暂时停用，待JIRA-2479问题解决后再启用
 public class Remove2189 extends SdbTestBase {
     private GroupMgr groupMgr = null;
     private boolean runSuccess = false;
@@ -92,7 +93,7 @@ public class Remove2189 extends SdbTestBase {
         }
     }
 
-    @Test
+    @Test(enabled = false)
     public void test() {
         Sequoiadb db = null;
         try {
@@ -160,6 +161,7 @@ public class Remove2189 extends SdbTestBase {
                 DBCollection mcl = cs.getCollection(mclName);
                 mcl.delete("{}");
             } catch (BaseException e) {
+                throw e;
             } finally {
                 if (db != null) {
                     db.close();
