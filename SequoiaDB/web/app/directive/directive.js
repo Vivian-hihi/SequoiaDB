@@ -5573,7 +5573,7 @@
                      if( scope.loadStatus['onFilter']['status'] ) //如果已经做了过滤，那么要把数据复制到备份中，不然会丢数据
                      {
                         scope.loadStatus['onFilter']['dataBackup'] = null ;
-                        scope.loadStatus['onFilter']['dataBackup'] = $.extend( true, [], scope.table['body'] ) ;
+                        scope.loadStatus['onFilter']['dataBackup'] = $.extend( [], scope.table['body'] ) ;
                      }
                      scope.find() ;
                      /*
@@ -5836,7 +5836,7 @@
                         else
                         {
                            //有过滤条件，必须做数据复制
-                           dataList = $.extend( true, [], scope.loadStatus['onFilter']['dataBackup'] ) ;
+                           dataList = $.extend( [], scope.loadStatus['onFilter']['dataBackup'] ) ;
                         }
                      }
                      else
@@ -5850,7 +5850,7 @@
                         {
                            scope.loadStatus['onFilter']['dataBackup'] = null ;
                            scope.loadStatus['onFilter']['dataBackup'] = scope.table['body'] ;
-                           dataList = $.extend( true, [], scope.table['body'] ) ;
+                           dataList = $.extend( [], scope.table['body'] ) ;
                            scope.loadStatus['onFilter']['status'] = true ;
                         }
                      }
