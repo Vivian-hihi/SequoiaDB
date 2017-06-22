@@ -7,7 +7,7 @@
 traceOn \- Turn on the trace function of the database engine.
 .SH SYNOPSIS
 .PP
-\f[B]\f[I]db.traceOn(<bufferSize>,[strComp], [strBreakPoint], [tids])\f[]\f[]
+\f[B]\f[I]db.traceOn(<bufferSize>, [strComp], [strBreakPoint], [tids])\f[]\f[]
 .SH CATEGORY
 .PP
 Sequoiadb
@@ -27,7 +27,7 @@ Turn on the trace function of the database engine.
 \fBstrBreakPoint (String)\fR
 .br
        Add a breakpoint in function to trace.
- .sp 2
+.sp 2
 \fBtids (Array)\fR
 .br
        specify the target threads.
