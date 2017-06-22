@@ -1034,6 +1034,48 @@ TEST( sdb, SdbIsValid )
    ASSERT_TRUE( result == FALSE ) ;
 }
 
+TEST( sdb, syncDB )
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   SINT64 num = 1 ;
+   BSONObj options = BSON("Deep" << 1 << "Block" << true);
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // prepare records
+   insertRecords( cl, num ) ;
+
+   // sync db
+   rc = connection.syncDB( options );
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   insertRecords( cl, num ) ;
+
+   rc = connection.syncDB();
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
+
 
 /*************************************
   the follow tests have some problems
