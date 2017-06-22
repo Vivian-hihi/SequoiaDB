@@ -69,7 +69,11 @@ Sdb
 
         格式：`Compressed: true`
 
-    12. `BackupLog` ( *Bool* )：当全量备份时是否需要备份所有日志，缺省为 false。
+    12. `CompressionType` ( *String* )：压缩格式类型，取值"lz4"、"snappy"和"zlib"，缺省为 "snappy"。
+
+        格式：`CompressionType: "zlib" `
+
+    13. `BackupLog` ( *Bool* )：当全量备份时是否需要备份所有日志，缺省为 false。
 
         格式：`BackupLog: false`
 
@@ -98,7 +102,7 @@ Sdb
 ##版本##
 
 v1.2及以上版本。  
-v2.8.2及以上版本增加 `Compressed` 和 `BackupLog` 参数。
+v2.8.2及以上版本增加 `Compressed`、`CompressionType` 和 `BackupLog` 参数。
 
 ##示例##
 
