@@ -49,7 +49,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
   bson_append_finish_array( newobj );
   bson_append_start_object ( newobj, "address" );
   bson_append_string ( newobj, "city", "Toronto" );
-  bson_append_string ( newobj, "provice", "Ontario" );
+  bson_append_string ( newobj, "province", "Ontario" );
   bson_append_finish_object ( newobj );
   if( BSON_OK != bson_finish ( newobj ) ) 
   {
@@ -120,7 +120,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
   // display the value
   if ( BSON_STRING == type )
   {
-      printf( "Value: %s, bson_iterator_string( &i ) );
+      printf( "Value: %s\n", bson_iterator_string( &i ) );
   }
 
   // release resource
@@ -144,7 +144,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
   type = bson_find ( &i, &newobj, "Name" );
   if ( BSON_EOO != type )
   {
-      printf( "Name: %s, bson_iterator_string( &i ) );
+      printf( "Name: %s\n", bson_iterator_string( &i ) );
   }
 
   // release resource
