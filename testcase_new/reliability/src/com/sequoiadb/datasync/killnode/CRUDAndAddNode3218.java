@@ -184,13 +184,14 @@ public class CRUDAndAddNode3218 extends SdbTestBase {
         @Override
         public void check() throws ReliabilityException {
             // 随机检查插入前数据
-            if (insertedCnt > 0) {
-                int randVal = new Random().nextInt(insertedCnt);
-                BSONObject randRec = (BSONObject) JSON.parse("{ a: " + randVal + " }");
-                if (1 != cl.getCount(randRec)) {
-                    throw new ReliabilityException("previous record " + randRec + " not found");
-                }
-            }
+            // 副本数为1，丢数据为正常，检查插入前的数据无意义，因此注释
+//            if (insertedCnt > 0) {
+//                int randVal = new Random().nextInt(insertedCnt);
+//                BSONObject randRec = (BSONObject) JSON.parse("{ a: " + randVal + " }");
+//                if (1 != cl.getCount(randRec)) {
+//                    throw new ReliabilityException("previous record " + randRec + " not found");
+//                }
+//            }
             // 恢复后插入数据正常
             BSONObject rec = (BSONObject) JSON.parse("{ c: 'Hello World' }"); 
             cl.insert(rec);
