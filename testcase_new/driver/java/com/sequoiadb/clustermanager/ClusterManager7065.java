@@ -43,7 +43,6 @@ import com.sequoiadb.testcommon.SdbTestBase;
 * @version 1.00
 */
 
-@Test
 public class ClusterManager7065 extends SdbTestBase{
 	private Sequoiadb sdb ;
 	private String dataRGName = "dataAddGroup7065";
@@ -87,6 +86,7 @@ public class ClusterManager7065 extends SdbTestBase{
 		}
 	}
 	
+	@Test
 	public void test(){
 		//set node configure
 		int dataPortAdd1 = reservedPortBegin + 650 ;
