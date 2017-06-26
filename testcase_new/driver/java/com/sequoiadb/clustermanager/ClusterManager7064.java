@@ -83,7 +83,7 @@ public class ClusterManager7064 extends SdbTestBase{
 	public void test(){
 		//create cata Node
 		cataPortAdd = reservedPortBegin + 640 ;
-		String cataPathAdd = workDir + cataPortAdd + "/";
+		String cataPathAdd = workDir + "/" + cataPortAdd + "/";
 		BSONObject cataConfigue = null;
 		
 		ReplicaGroup cataGroup = null;

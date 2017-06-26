@@ -71,7 +71,7 @@ public class ClusterManager7072 extends SdbTestBase{
 	public void test(){
 		//set data node configure
 		int dataPortAdd1 = reservedPortBegin + 720 ;
-		String dataPathAdd1 = workDir + dataPortAdd1 + "/";
+		String dataPathAdd1 = workDir + "/" + dataPortAdd1 + "/";
 		BSONObject dataConfigue = null;
 		
 		//create data groups

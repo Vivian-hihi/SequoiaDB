@@ -90,7 +90,7 @@ public class ClusterManager7065 extends SdbTestBase{
 	public void test(){
 		//set node configure
 		int dataPortAdd1 = reservedPortBegin + 650 ;
-		String dataPathAdd1 = workDir + dataPortAdd1 + "/";
+		String dataPathAdd1 = workDir + "/" + dataPortAdd1 + "/";
 		BSONObject dataConfigue1 = (BSONObject) JSON.parse("{logfilesz:64}");
 		
 		//create data groups
@@ -212,7 +212,7 @@ public class ClusterManager7065 extends SdbTestBase{
 		
 		//create another data node
 		int dataPortAdd2 = reservedPortBegin + 660 ;
-		String dataPathAdd2 = workDir + dataPortAdd2 + "/";
+		String dataPathAdd2 = workDir + "/" + dataPortAdd2 + "/";
 		BSONObject dataConfigue2 = null;
 		try{
 			Node node = dataRGAdd.createNode(coordIP, dataPortAdd2, dataPathAdd2, dataConfigue2 );

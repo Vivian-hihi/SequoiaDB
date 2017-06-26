@@ -78,11 +78,11 @@ public class ClusterManager7069 extends SdbTestBase{
 	public void test(){
 		//set node configure
 		int dataPortAdd1 = reservedPortBegin + 690 ;
-		String dataPathAdd1 = workDir + dataPortAdd1 + "/";
+		String dataPathAdd1 = workDir + "/" + dataPortAdd1 + "/";
 		BSONObject dataConfigue = null;
 		
 		int dataPortAdd2 = reservedPortBegin + 700 ;
-		String dataPathAdd2 = workDir + dataPortAdd2 + "/";
+		String dataPathAdd2 = workDir + "/" + dataPortAdd2 + "/";
 		BSONObject dataConfigue1 = (BSONObject) JSON.parse("{KeepData:true}");
 		
 		ReplicaGroup dataRGAdd1 = null;

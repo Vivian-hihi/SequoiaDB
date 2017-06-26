@@ -81,7 +81,7 @@ public class ClusterManager7071 extends SdbTestBase{
 	public void test(){
 		//set node configure
 		int dataPortAdd1 = reservedPortBegin + 710 ;
-		String dataPathAdd1 = workDir + dataPortAdd1 + "/";
+		String dataPathAdd1 = workDir + "/" + dataPortAdd1 + "/";
 		BSONObject dataConfigue = null;
 		
 		//create data groups
@@ -105,7 +105,7 @@ public class ClusterManager7071 extends SdbTestBase{
 		}
 		
 		int nodeId = 0;
-		String hostName = null;
+		String dataHostName = null;
 		String nodeName = null;
 		int port = 0;
 		ReplicaGroup dataReplicaGroup = null;
@@ -113,7 +113,7 @@ public class ClusterManager7071 extends SdbTestBase{
 		com.sequoiadb.base.Node.NodeStatus status = null;
 		try{
 			nodeId = data.getNodeId();
-			hostName = data.getHostName();
+			dataHostName = data.getHostName();
 			nodeName = data.getNodeName();
 			port = data.getPort();
 			dataReplicaGroup = data.getReplicaGroup();
@@ -125,7 +125,7 @@ public class ClusterManager7071 extends SdbTestBase{
 //		System.out.println("sdb1:"+sdb1);
 		Assert.assertNotEquals(nodeId, 0);
 		//SEQUOIADBMAINSTREAM-2003
-		//Assert.assertEquals(hostName, coordIP);
+		//Assert.assertEquals(dataHostName, coordIP);
 		//Assert.assertEquals(nodeName, coordIP + ":" + dataPortAdd1);
 		Assert.assertEquals(port, dataPortAdd1);
 		Assert.assertEquals(dataReplicaGroup.getGroupName(), dataRGName);
