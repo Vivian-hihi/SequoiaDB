@@ -3191,7 +3191,7 @@ namespace engine
          }
          _fullName = eleName.valuestr() ;
 
-         eleLID = query.getField( FIELD_NAME_LID ) ;
+         eleLID = query.getField( FIELD_NAME_LOGICAL_ID ) ;
          if ( EOO == eleLID.type() )
          {
             PD_LOG( PDERROR, "Logical id for pop operation is not provided: %s",

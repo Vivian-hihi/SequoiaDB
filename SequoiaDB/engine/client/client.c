@@ -9771,7 +9771,7 @@ SDB_EXPORT INT32 sdbPop( sdbConnectionHandle cHandle,
       while ( BSON_EOO != bson_iterator_next( &it ) )
       {
          const CHAR *key = bson_iterator_key( &it ) ;
-         if ( 0 == ossStrcmp( key, FIELD_NAME_LID ) ||
+         if ( 0 == ossStrcmp( key, FIELD_NAME_LOGICAL_ID) ||
               0 == ossStrcmp( key, FIELD_NAME_DIRECTION ) )
          {
             rc = bson_append_element( &newObj, NULL, &it ) ;
