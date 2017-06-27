@@ -370,6 +370,7 @@
 #define FIELD_NAME_BLOCK                     "Block"
 #define FIELD_NAME_CAPPED                    "Capped"
 #define FIELD_NAME_DIRECTION                 "Direction"
+#define FIELD_NAME_LID                       "_lid"
 
 #define FIELD_NAME_ANALYZE_MODE              "Mode"
 #define FIELD_NAME_ANALYZE_NUM               "SampleNum"
