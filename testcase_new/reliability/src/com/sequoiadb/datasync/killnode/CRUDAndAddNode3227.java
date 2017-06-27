@@ -191,6 +191,14 @@ public class CRUDAndAddNode3227 extends SdbTestBase {
     }
 
     private void removeNewNode(Sequoiadb db) {
+        try {
+            GroupWrapper clGroupWrapper = groupMgr.getGroupByName(clGroupName);
+            if (clGroupWrapper.getMaster().svcName().equals("" + randomPort)) { 
+                clGroupWrapper.changePrimary();
+            }
+        } catch (ReliabilityException e) {
+            e.printStackTrace();
+        }
         ReplicaGroup clGroup = db.getReplicaGroup(clGroupName);
         clGroup.removeNode(randomHost, randomPort, (BSONObject)null);
     }

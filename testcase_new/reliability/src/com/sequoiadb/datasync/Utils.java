@@ -31,12 +31,12 @@ public class Utils {
             try (Sequoiadb dataDB = group.getMaster().connect()) {
                 long fullLSN = 20 * 64 * 1024 * 1024; // 默认20份同步日志，1份64M
                 long currentLSN = 0;
-                System.out.println("fullLSN: " + fullLSN);
                 
                 if (getCurrentLSN(dataDB) > fullLSN) {
                     return ;
                 }
                 
+                System.out.println("fullLSN: " + fullLSN);
                 String tmpCSName = "csToMakeRgLogFull";
                 String tmpCLName = "clToMakeRgLogFull";
                 DBCollection tmpCL = db.createCollectionSpace(tmpCSName).createCollection(tmpCLName, new BasicBSONObject("Group", groupName));
