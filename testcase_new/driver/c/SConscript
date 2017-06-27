@@ -89,6 +89,8 @@ testFiles30 = [ "./misc/date.cpp" ]
 
 testFiles31 = [ "./misc/analyze.cpp" ]
 
+testFiles32 = [ "./misc/prepareMore.cpp" ]
+
 # compile common lib
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -129,6 +131,7 @@ bson_oid       = dllBuildEnv.Program("bson_oid",  [testFiles28, testCommon, gtes
 handle         = dllBuildEnv.Program("handle",  [testFiles29, testCommon, gtestMainObj])
 date		   = dllBuildEnv.Program("date",  [testFiles30, testCommon, gtestMainObj])
 analyze		   = dllBuildEnv.Program("analyze",  [testFiles31, testCommon, gtestMainObj])
+prepareMore    = dllBuildEnv.Program("prepareMore",  [testFiles32, testCommon, gtestMainObj]) 
 
 # static compile
 
@@ -163,6 +166,7 @@ bson_oid.static          = staticBuildEnv.Program("bson_oid.static",  [testFiles
 handle.static            = staticBuildEnv.Program("handle.static",  [testFiles29, testCommon, gtestMainObj])
 date.static				 = staticBuildEnv.Program("date.static",  [testFiles30, testCommon, gtestMainObj])
 analyze.static			 = staticBuildEnv.Program("analyze.static",  [testFiles31, testCommon, gtestMainObj])
+prepareMore.static		 = staticBuildEnv.Program("prepareMore.static",  [testFiles32, testCommon, gtestMainObj])
 
 # dll compile
 env.Install( '#/build_test', [   decimal,
@@ -181,7 +185,8 @@ env.Install( '#/build_test', [   decimal,
 								 idIndex,
 								 attachAndDetachNode,
 								 concurrentNode,concurrentRg,sslFalse,sslTrue,forceSession,JSCompatible,
-								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid,handle,date,analyze
+								 loadUnloadCS,rename,reloadConf,setPDLevel,code,bson_oid,handle,date,analyze,
+							     prepareMore
                               ] )
 # static compile
 env.Install( '#/build_test', [   decimal.static,
@@ -201,6 +206,6 @@ env.Install( '#/build_test', [   decimal.static,
 								 concurrentNode.static,concurrentRg.static,sslFalse.static,sslTrue.static,
 								 forceSession.static,JSCompatible.static,loadUnloadCS.static,rename.static,
 								 reloadConf.static,setPDLevel.static,code.static,bson_oid.static,handle.static,
-								 date.static,analyze.static
+								 date.static,analyze.static,prepareMore.static
                               ] )
 
