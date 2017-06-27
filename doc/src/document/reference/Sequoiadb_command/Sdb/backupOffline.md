@@ -33,14 +33,11 @@ Sdb
 
 		格式：`Name: "backup-2014-1-1"`
 
-    4. `Path` ( *String* )：备份路径，缺省为配置参数指定的备份路径。
-                            该路径支持通配符
-                        （%g/%G: group name, %h/%H: host name, %s/%S: service name）。
+    4. `Path` ( *String* )：备份路径，缺省为配置参数指定的备份路径。 该路径支持通配符 （%g/%G: group name, %h/%H: host name, %s/%S: service name）。 当在协调节点上执行命令使用该参数时，需要使用通配符，以避免所有的节点往同一个路径下进行操作而导致未知IO错误。
 
 		格式：`Path: "/opt/sequoiadb/backup/%g"`
 
-    5. `IsSubDir` ( *Bool* )：上述 Path 参数所配置的路径是否为配置
-                              参数指定的备份路径的子目录，缺省为 false。
+    5. `IsSubDir` ( *Bool* )：上述 `Path` 参数所配置的路径是否为配置参数指定的备份路径的子目录，如果为true，则真实的备份目录为：" 配置参数中指定的备份目录 / `Path`目录 "。 缺省为 false。
 
 		格式：`IsSubDir: false`
 
@@ -48,8 +45,7 @@ Sdb
 
 		格式：`Prefix: "%g_bk_"`
 
-    7. `EnableDateDir` ( *Bool* )：是否开启日期子目录功能，如果开启则会自动根据
-                                   当前日期创建 “YYYY-MM-DD” 的子目录，缺省为 false。
+    7. `EnableDateDir` ( *Bool* )：是否开启日期子目录功能，如果开启则会自动根据当前日期创建 “YYYY-MM-DD” 的子目录，缺省为 false。
 
 		格式：`EnableDateDir: false`
 
