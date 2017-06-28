@@ -50,7 +50,7 @@ using namespace bson ;
 
 namespace engine
 {
-   #define SDB_SDBCM_WAIT_TIMEOUT      ( 6 )   /// seconds
+   #define SDB_SDBCM_WAIT_TIMEOUT      ( 15 )   /// seconds
 
    /*
       Function Define
