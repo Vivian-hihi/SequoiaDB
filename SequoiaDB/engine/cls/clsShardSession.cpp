@@ -670,7 +670,7 @@ namespace engine
       isMainCL = set->isMainCL() ;
       groupCount = set->groupCount() ;
       compType = set->getCompressType() ;
-      if ( DMS_MB_ATTR_CAPPED & attribute )
+      if ( OSS_BIT_TEST( attribute, DMS_MB_ATTR_CAPPED ) )
       {
          options._maxSize = set->getMaxSize() ;
          options._maxRecNum = set->getMaxRecNum() ;

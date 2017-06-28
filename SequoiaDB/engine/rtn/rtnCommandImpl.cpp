@@ -1171,9 +1171,9 @@ namespace engine
          CHAR temp [ DMS_COLLECTION_SPACE_NAME_SZ +
                      DMS_COLLECTION_NAME_SZ + 2 ] = {0} ;
          ossStrncpy ( temp, pCollection, sizeof(temp) ) ;
-         // TODO: Any problem to create a capped CS here ?
-         DMS_STORAGE_TYPE type = ( attributes & DMS_MB_ATTR_CAPPED ) ?
-                                 DMS_STORAGE_CAPPED : DMS_STORAGE_NORMAL ;
+         DMS_STORAGE_TYPE type =
+            OSS_BIT_TEST( attributes, DMS_MB_ATTR_CAPPED ) ?
+            DMS_STORAGE_CAPPED : DMS_STORAGE_NORMAL ;
          SDB_ASSERT ( pCollectionShortName > pCollection, "Collection pointer "
                       "is not part of full collection name" ) ;
          // set '.' to '\0'
@@ -1200,7 +1200,7 @@ namespace engine
       }
 
       if ( DMS_STORAGE_CAPPED != su->type() &&
-           ( attributes & DMS_MB_ATTR_CAPPED ) )
+           OSS_BIT_TEST( attributes, DMS_MB_ATTR_CAPPED ) )
       {
          PD_LOG( PDERROR, "Capped collection[%s] can only be created on "
                  "capped collection space[%s]",
@@ -1319,6 +1319,13 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
                   pCollection, rc ) ;
+         goto error ;
+      }
+
+      if ( DMS_STORAGE_CAPPED == su->type() )
+      {
+         PD_LOG( PDERROR, "Index is not support on capped collection" ) ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
          goto error ;
       }
 
@@ -1860,7 +1867,7 @@ namespace engine
       if ( DMS_STORAGE_CAPPED != su->type() )
       {
          PD_LOG( PDERROR, "pop can only be used on capped collection" ) ;
-         rc = SDB_PERM ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
          goto error ;
       }
 

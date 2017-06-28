@@ -486,7 +486,7 @@ namespace engine
       builder1.append( CLS_FS_COMP_TYPE, (INT32)compType ) ;
 
       // For capped collection, need to append the max size and max record num.
-      if ( attributes & DMS_MB_ATTR_CAPPED )
+      if ( OSS_BIT_TEST( attributes, DMS_MB_ATTR_CAPPED ) )
       {
          builder1.append( CLS_FS_CL_MAX_SIZE, options._maxSize ) ;
          builder1.append( CLS_FS_CL_MAX_RECNUM, options._maxRecNum ) ;

@@ -714,8 +714,6 @@ namespace engine
    } ;
    typedef _coordCMDDropIndex coordCMDDropIndex ;
 
-#if 0
-// Do not support pop operation on coord for now.
    /*
       _coordCMDPop define
    */
@@ -731,7 +729,6 @@ namespace engine
                                 rtnContextBuf *buf ) ;
    } ;
    typedef _coordCMDPop coordCMDPop ;
-#endif
 }
 
 #endif // COORD_COMMAND_DATA_HPP__

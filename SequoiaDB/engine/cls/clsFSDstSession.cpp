@@ -500,7 +500,7 @@ namespace engine
          //clOptions._compressType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
          compType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
 
-         if ( attributes & DMS_MB_ATTR_CAPPED )
+         if ( OSS_BIT_TEST( attributes, DMS_MB_ATTR_CAPPED ) )
          {
             BSONElement elemTmp =
                ele.embeddedObject().getField( CLS_FS_CL_MAX_SIZE ) ;

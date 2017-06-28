@@ -634,6 +634,14 @@ namespace engine
 
       if ( capped )
       {
+         if ( isCompressed || autoIndexId )
+         {
+            PD_LOG( PDERROR, "Sharding/Compress/Index is not support on capped "
+                    "collection" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
          _attributes |= DMS_MB_ATTR_CAPPED ;
          rc = rtnGetNumberLongElement( matcher, FIELD_NAME_SIZE,
                                        _options._maxSize ) ;
