@@ -1373,12 +1373,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
+      BOOLEAN aquired = FALSE ;
 
       if ( !pName || !pNewName )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      aquireCSMutex( pName ) ;
+      aquired = TRUE ;
 
       /// check the new collection space
       _mutex.get_shared() ;
@@ -1405,6 +1409,10 @@ namespace engine
       }
 
    done:
+      if ( aquired )
+      {
+         releaseCSMutex( pName ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -1805,6 +1813,22 @@ namespace engine
       {
          _ixmKeySorterCreator->releaseSorter( sorter ) ;
       }
+   }
+
+   /*
+      _dmsCSMutexScope implement
+   */
+   _dmsCSMutexScope::_dmsCSMutexScope( SDB_DMSCB *pDMSCB, const CHAR *pName )
+   {
+      _pDMSCB = pDMSCB ;
+      _pName = pName ;
+
+      _pDMSCB->aquireCSMutex( _pName ) ;
+   }
+
+   _dmsCSMutexScope::~_dmsCSMutexScope()
+   {
+      _pDMSCB->releaseCSMutex( _pName ) ;
    }
 
    /*
