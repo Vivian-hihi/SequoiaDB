@@ -72,19 +72,19 @@ $ chmod 755 sdbsupport.sh
 4.  收集指定主机信息。
 
     ```lang-javascript
-    $ ./sdbsuport.sh -s hostname1
+    $ ./sdbsupport.sh -s hostname1
     ```
 
 5.  收集指定主机指定端口信息。
 
     ```lang-javascript
-    $ ./sdbsuppor.sh -s hostname1 -p 11810
+    $ ./sdbsupport.sh -s hostname1 -p 11810
     ```
 
 6.  收集操作系统信息。
 
     ```lang-javascript
-    $ ./sdbsupport.h --osinfo
+    $ ./sdbsupport.sh --osinfo
     ```
 
 7.  收集特定主机特定端口的日志信息及快照信息。
@@ -107,7 +107,7 @@ $ chmod 755 sdbsupport.sh
 >   数据库集群内的机器，如果没有配置信任关系，在收集时，需要输入密码，如：
 >
 >   ```lang-javascript
->   $ /opt/sequoiadb/tools/sdbsupport/expect/expect
+>   $ /opt/sequoiadb/tools/expect/expect/expect
 >   Success to export System environment variable : /opt/sequoiadb/tools/sdbsupport/expect/
 >   Check over Environment!
 >   Complete database database cluster
