@@ -1495,7 +1495,9 @@ namespace engine
          rtnDelContextForCollectionSpace( pCollectionSpace, cb ) ;
       }
 
+      dmsCB->aquireCSMutex( pCollectionSpace ) ;
       rc = dmsCB->dropCollectionSpaceP1( pCollectionSpace, cb, dpsCB ) ;
+      dmsCB->releaseCSMutex( pCollectionSpace ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to drop collectionspace %s, "
                    "rc: %d", pCollectionSpace, rc ) ;
 
@@ -1525,7 +1527,9 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      rc = dmsCB->dropCollectionSpaceP1Cancel( pCollectionSpace, cb, dpsCB );
+      dmsCB->aquireCSMutex( pCollectionSpace ) ;
+      rc = dmsCB->dropCollectionSpaceP1Cancel( pCollectionSpace, cb, dpsCB ) ;
+      dmsCB->releaseCSMutex( pCollectionSpace ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to cancel remove cs(name:%s, rc=%d)",
                    pCollectionSpace, rc );
