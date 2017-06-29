@@ -153,8 +153,8 @@ namespace engine
                                 DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH,
                                 INT64 maxRecords = -1, INT64 skipNum = 0 ) ;
          virtual ~_dmsCappedExtScanner() ;
-
-         INT32 getRecordBuf( UINT32 size ) ;
+         INT64 getMaxRecords() const { return _maxRecords ; }
+         INT64 getSkipNum () const { return _skipNum ; }
 
       public:
          virtual INT32 advance ( dmsRecordID &recordID,
@@ -170,21 +170,17 @@ namespace engine
          INT32 _firstInit( _pmdEDUCB *cb ) ;
 
       private:
-         INT64 _maxRecords ;
-         INT64 _skipNum ;
-         dmsExtRW _extRW ;
-         const dmsExtent *_extent ;
-         dmsRecordID _curRID ;
-         dmsRecordRW _recordRW ;
-         dmsOffset _next ;
-         BOOLEAN _firstRun ;
-         BOOLEAN _recordXLock ;
-         _pmdEDUCB *_cb ;
-         const _dmsMBStatInfo *_mbStatInfo ;
+         INT64                _maxRecords ;
+         INT64                _skipNum ;
+         dmsExtRW             _extRW ;
+         const dmsExtent      *_extent ;
+         dmsRecordID          _curRID ;
+         dmsRecordRW          _recordRW ;
+         dmsOffset            _next ;
+         BOOLEAN              _firstRun ;
+         _pmdEDUCB            *_cb ;
          const _dmsExtentInfo *_workExtInfo ;
-         dmsOffset _lastOffset ;
-         CHAR *_recordBuf ;
-         UINT32 _recordBufSize ;
+         dmsOffset            _lastOffset ;
    } ;
    typedef _dmsCappedExtScanner dmsCappedExtScanner ;
 

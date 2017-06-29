@@ -240,20 +240,20 @@ namespace engine
    }
 
    OSS_INLINE void _dmsStorageDataCapped::_updateCLStat( dmsMBStatInfo &mbStat,
-                                               UINT32 totalSize,
-                                               const dmsRecordData &recordData )
+                                                         UINT32 totalSize,
+                                                         const dmsRecordData &recordData )
    {
       ++( mbStat._totalRecords ) ;
+      mbStat._totalDataFreeSpace -= totalSize ;
       mbStat._totalOrgDataLen += recordData.orgLen() ;
       mbStat._totalDataLen += recordData.len() ;
       mbStat._lastCompressRatio =
          (UINT8)( recordData.getCompressRatio() * 100 ) ;
    }
 
-   OSS_INLINE void _dmsStorageDataCapped::_updateWorkExtStat(
-                                               _dmsExtentInfo &extInfo,
-                                               UINT32 totalSize,
-                                               const dmsRecordData &recordData )
+   OSS_INLINE void _dmsStorageDataCapped::_updateWorkExtStat( _dmsExtentInfo &extInfo,
+                                                              UINT32 totalSize,
+                                                              const dmsRecordData &recordData )
    {
       ++( extInfo._recCount ) ;
       extInfo._freeSpace -= totalSize ;
@@ -276,19 +276,17 @@ namespace engine
       extInfo._totalDataLen += recordData.len() ;
    }
 
-   OSS_INLINE void _dmsStorageDataCapped::_updateStatInfo(
-                                              dmsMBContext *context,
-                                              UINT32 recordSize,
-                                              const dmsRecordData &recordData )
+   OSS_INLINE void _dmsStorageDataCapped::_updateStatInfo( dmsMBContext *context,
+                                                           UINT32 recordSize,
+                                                           const dmsRecordData &recordData )
    {
       _updateWorkExtStat( _workExtInfo[ context->mbID() ],
                           recordSize, recordData ) ;
       _updateCLStat( _mbStatInfo[ context->mbID() ], recordSize, recordData ) ;
    }
 
-   OSS_INLINE BOOLEAN _dmsStorageDataCapped::_exceedLimit(
-                                                         dmsMBContext *context,
-                                                         UINT32 size )
+   OSS_INLINE BOOLEAN _dmsStorageDataCapped::_exceedLimit( dmsMBContext *context,
+                                                           UINT32 size )
    {
       const dmsMBStatInfo *mbStatInfo = getMBStatInfo( context->mbID() ) ;
       SDB_ASSERT( mbStatInfo, "mbStatInfo should not be NULL" ) ;
@@ -305,10 +303,9 @@ namespace engine
       return FALSE ;
    }
 
-   OSS_INLINE void _dmsStorageDataCapped::_getExtLIDAndOffsetByLID(
-                                                         INT64 logicalID,
-                                                         dmsExtentID &extID,
-                                                         dmsOffset &offset )
+   OSS_INLINE void _dmsStorageDataCapped::_getExtLIDAndOffsetByLID( INT64 logicalID,
+                                                                    dmsExtentID &extID,
+                                                                    dmsOffset &offset )
    {
       if ( logicalID < 0 )
       {
@@ -330,8 +327,6 @@ namespace engine
       dmsOffset offset = 0 ;
 
       dmsExtentInfo *extentInfo =  getWorkExtInfo( context->mbID() ) ;
-
-      SDB_ASSERT( extentInfo, "Impossible" ) ;
 
       _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
       if ( DMS_INVALID_EXTENT == logicalID )

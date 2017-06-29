@@ -769,6 +769,15 @@ namespace engine
             goto error ;
          }
 
+         _numToReturn = extScanner.getMaxRecords() ;
+         _numToSkip   = extScanner.getSkipNum() ;
+
+         if ( 0 == _numToReturn )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+
          _extentID = extScanner.nextExtentID() ;
          if ( DMS_INVALID_EXTENT == _extentID )
          {

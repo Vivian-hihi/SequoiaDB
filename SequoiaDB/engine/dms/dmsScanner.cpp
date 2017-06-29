@@ -454,55 +454,23 @@ namespace engine
    {
       _maxRecords = maxRecords ;
       _skipNum = skipNum ;
-      _firstRun = TRUE ;
+      _extent = NULL ;
       _curRID._extent = curExtentID ;
-      _recordXLock = FALSE ;
-      _mbStatInfo = NULL ;
+      _next = DMS_INVALID_OFFSET ;
+      _firstRun = TRUE ;
+      _cb = NULL ;
       _workExtInfo = NULL ;
       _lastOffset = DMS_INVALID_OFFSET ;
-      _recordBuf = NULL ;
-      _recordBufSize = 0 ;
-
    }
 
    _dmsCappedExtScanner::~_dmsCappedExtScanner()
    {
-      if ( _recordBuf )
-      {
-         _cb->releaseBuff( _recordBuf ) ;
-      }
-   }
-
-   INT32 _dmsCappedExtScanner::getRecordBuf( UINT32 size )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( _recordBufSize < size )
-      {
-         if ( _recordBuf )
-         {
-            _cb->releaseBuff( _recordBuf ) ;
-            _recordBuf = NULL ;
-         }
-         _recordBufSize = 0 ;
-
-         rc = _cb->allocBuff( size, &_recordBuf, &_recordBufSize ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _dmsCappedExtScanner::_firstInit( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      INT32 lockType = _recordXLock ? EXCLUSIVE : SHARED ;
+      INT32 lockType = SHARED ;
 
       _extRW = _pSu->extent2RW( _curRID._extent, _context->mbID() ) ;
       _extRW.setNothrow( TRUE ) ;
@@ -520,7 +488,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;
       }
 
-      _mbStatInfo = _pSu->getMBStatInfo( _context->mbID() ) ;
       _workExtInfo = (( _dmsStorageDataCapped * )_pSu)->getWorkExtInfo(
                                                             _context->mbID() ) ;
 
@@ -655,6 +622,10 @@ namespace engine
 
    dmsExtentID _dmsCappedExtScanner::nextExtentID () const
    {
+      if ( _extent )
+      {
+         return _extent->_nextExtent ;
+      }
       return DMS_INVALID_EXTENT ;
    }
 

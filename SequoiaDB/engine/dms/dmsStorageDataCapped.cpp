@@ -177,8 +177,6 @@ namespace engine
       SDB_ASSERT( cb, "edu cb should not be NULL" ) ;
 
       workExtInfo = getWorkExtInfo( context->mbID() ) ;
-      SDB_ASSERT( workExtInfo, "Impossible" ) ;
-
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
          rc = SDB_SYS ;
@@ -233,9 +231,6 @@ namespace engine
             extSwitched = TRUE ;
          }
       }
-
-      _mbStatInfo[context->mbID()]._totalDataFreeSpace -= size ;
-      workExtInfo->_freeSpace -= size ;
 
       foundRID._extent = workExtInfo->getID() ;
       foundRID._offset = workExtInfo->getNextRecOffset() ;
