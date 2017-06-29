@@ -385,6 +385,9 @@ namespace engine
       UINT16 mbID = context->mbID() ;
       dmsExtRW extRW ;
       dmsExtent *extent = NULL ;
+      INT64 recNum = 0 ;
+      INT64 dataSize = 0 ;
+      INT64 totalSize = 0 ;
       dmsExtentInfo *extInfo = getWorkExtInfo( context->mbID() ) ;
 
       extRW = extent2RW( extID, mbID ) ;
@@ -397,12 +400,17 @@ namespace engine
          goto error ;
       }
 
+      _countRecNumAndSize( context, extID, extInfo->_firstRecordOffset,
+                           extent->_lastRecordOffset, 1, recNum, dataSize,
+                           totalSize ) ;
+
       // Initialize the extent, update the statistic information in _mbStatInfo
       // and work extent info.
        extent->init( DMS_CAP_EXTENT_PAGE_NUM, mbID, DMS_CAP_EXTENT_SZ ) ;
       _mbStatInfo[mbID]._totalRecords -= extInfo->_recCount ;
       _mbStatInfo[mbID]._totalDataLen -= extInfo->_totalDataLen ;
       _mbStatInfo[mbID]._totalOrgDataLen -= extInfo->_totalOrgDataLen ;
+      _mbStatInfo[mbID]._totalDataFreeSpace -= extent->_freeSpace ;
 
       extInfo->_recCount = 0 ;
       extInfo->_firstRecordOffset = extInfo->_lastRecordOffset ;
@@ -426,6 +434,9 @@ namespace engine
       UINT16 mbID = context->mbID() ;
       dmsExtRW extRW ;
       dmsExtent *extent = NULL ;
+      INT64 recNum = 0 ;
+      INT64 dataSize = 0 ;
+      INT64 totalSize = 0 ;
 
       extRW = extent2RW( extID, mbID ) ;
       extRW.setNothrow( TRUE ) ;
@@ -440,9 +451,14 @@ namespace engine
       // Set the extent as reserved.
       context->mb()->_flag = DMS_EXTENT_FLAG_RESERVE ;
 
+      _countRecNumAndSize( context, extID, extent->_firstRecordOffset,
+                           extent->_lastRecordOffset, 1, recNum, dataSize,
+                           totalSize ) ;
+
       _mbStatInfo[mbID]._totalRecords -= extent->_recCount ;
-      _mbStatInfo[mbID]._totalDataPages -= extent->_blockSize ;
       _mbStatInfo[mbID]._totalDataFreeSpace -= extent->_freeSpace ;
+      _mbStatInfo[mbID]._totalOrgDataLen -= totalSize ;
+      _mbStatInfo[mbID]._totalDataLen -= totalSize ;
 
       if ( moveToEnd )
       {
@@ -496,7 +512,7 @@ namespace engine
          SDB_ASSERT( foundExtent->_flag & DMS_EXTENT_FLAG_RESERVE,
                      "Extent flag invalid" ) ;
          foundExtent->init( DMS_CAP_EXTENT_PAGE_NUM, context->mbID(),
-                       DMS_CAP_EXTENT_SZ ) ;
+                            DMS_CAP_EXTENT_SZ ) ;
          if ( foundExtID == context->mb()->_lastIdleExt )
          {
             // No more idle extents at the tail of the extent list.
@@ -627,12 +643,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__EXTENTINSERTRECORD, "_dmsStorageDataCapped::_extentInsertRecord" )
    INT32 _dmsStorageDataCapped::_extentInsertRecord( dmsMBContext *context,
-                                               dmsExtRW &extRW,
-                                               dmsRecordRW &recordRW,
-                                               const dmsRecordData &recordData,
-                                               UINT32 recordSize,
-                                               pmdEDUCB *cb,
-                                               BOOLEAN isInsert )
+                                                     dmsExtRW &extRW,
+                                                     dmsRecordRW &recordRW,
+                                                     const dmsRecordData &recordData,
+                                                     UINT32 recordSize,
+                                                     pmdEDUCB *cb,
+                                                     BOOLEAN isInsert )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__EXTENTINSERTRECORD ) ;
@@ -670,11 +686,11 @@ namespace engine
    }
 
    INT32 _dmsStorageDataCapped::_extentUpdatedRecord( dmsMBContext *context,
-                                              dmsExtRW &extRW,
-                                              dmsRecordRW &recordRW,
-                                              const dmsRecordData &recordData,
-                                              const BSONObj &newObj,
-                                              pmdEDUCB *cb )
+                                                      dmsExtRW &extRW,
+                                                      dmsRecordRW &recordRW,
+                                                      const dmsRecordData &recordData,
+                                                      const BSONObj &newObj,
+                                                      pmdEDUCB *cb )
    {
       SDB_ASSERT( FALSE, "Should not be here" ) ;
       return SDB_PERM ;
@@ -699,10 +715,29 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      // TODO: Need to remove the record, and recycle the space.
       if ( hasInsert )
       {
          // Revert all what has been done in _extentInsertRecord.
+         dmsExtRW extRW ;
+         dmsExtent *extent = NULL ;
+         INT64 logicalID = -1 ;
+
+         extRW = extent2RW( rid._extent, context->mbID() ) ;
+         extRW.setNothrow( TRUE ) ;
+         extent = extRW.writePtr<dmsExtent>() ;
+         if ( !extent )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Invalid extent: %d, rc: %d", rid._extent, rc ) ;
+            goto error ;
+         }
+
+         logicalID = (INT64)extent->_logicID * DMS_CAP_EXTENT_BODY_SZ +
+                     rid._offset - sizeof( dmsExtent ) ;
+
+         rc = popRecord( context, logicalID, cb, dpscb, 1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove the inserted record failed[ %d ]",
+                      rc ) ;
       }
 
    done:
@@ -905,72 +940,35 @@ namespace engine
                                                  INT8 direction )
    {
       INT32 rc = SDB_OK ;
-      dmsExtRW extRW ;
-      dmsExtent *extent = NULL ;
-      dmsOffset currOffset =  0 ;
-      dmsRecordRW recordRW ;
-      const dmsRecord *record = NULL ;
-      UINT32 recNum = 0 ;
+      INT64 recNum = 0 ;
+      INT64 dataSize = 0 ;
+      INT64 totalSize = 0 ;
       dmsExtentInfo *workExtInfo = &_workExtInfo[context->mbID()] ;
-
-      if ( offset >= workExtInfo->_lastRecordOffset )
-      {
-         if ( direction >= 0 )
-         {
-            // TODO: all records are going to be popped.
-            workExtInfo->_recCount = 0 ;
-            workExtInfo->_firstRecordOffset = workExtInfo->_lastRecordOffset ;
-            workExtInfo->_totalOrgDataLen = 0 ;
-            workExtInfo->_totalDataLen = 0 ;
-            // TODO: update mbstat
-            // TODO: sync ?
-         }
-         goto done ;
-      }
-
-      currOffset = workExtInfo->_firstRecordOffset ;
-      // If pop forward, need to go beyond the offset.
-      // If pop backward, need to go beyond or just on the offset.
-      while ( currOffset <= offset )
-      {
-         if ( currOffset == offset && direction < 0 )
-         {
-            break ;
-         }
-         dmsRecordID rid( extentID, currOffset ) ;
-         recordRW = record2RW( rid, context->mbID() ) ;
-         recordRW.setNothrow( TRUE ) ;
-         record = recordRW.readPtr<dmsRecord>() ;
-         SDB_ASSERT( record->getSize() > 0, "Invalid record size" ) ;
-         recNum++ ;
-         currOffset += record->getSize() ;
-      }
 
       if ( direction >= 0 )
       {
-         workExtInfo->_firstRecordOffset = currOffset ;
-         workExtInfo->_recCount -= recNum ;
-         // workExtInfo->_freeSpace +=
+         _countRecNumAndSize( context, extentID,
+                              workExtInfo->_firstRecordOffset, offset,
+                              direction, recNum, dataSize, totalSize ) ;
+         workExtInfo->_firstRecordOffset += totalSize ;
       }
       else
       {
-         workExtInfo->_lastRecordOffset = currOffset ;
-         workExtInfo->_recCount = recNum ;
-         workExtInfo->_freeSpace = DMS_CAP_EXTENT_BODY_SZ - currOffset ;
+         _countRecNumAndSize( context, extentID, offset,
+                              workExtInfo->_lastRecordOffset,
+                              direction, recNum, dataSize, totalSize ) ;
+         workExtInfo->_lastRecordOffset -= totalSize ;
       }
 
-      extRW = extent2RW( extentID, context->mbID() ) ;
-      extRW.setNothrow( TRUE ) ;
-      extent = extRW.writePtr<dmsExtent>() ;
-      SDB_ASSERT( extent, "Invalid extent" ) ;
-      extent->_firstRecordOffset = workExtInfo->_firstRecordOffset ;
-      extent->_lastRecordOffset = workExtInfo->_lastRecordOffset ;
-      extent->_recCount = workExtInfo->_recCount ;
-      extent->_freeSpace = workExtInfo->_freeSpace ;
+      workExtInfo->_recCount -= recNum ;
+      workExtInfo->_freeSpace += totalSize ;
+      workExtInfo->_totalOrgDataLen -= dataSize ;
+      workExtInfo->_totalDataLen -= dataSize ;
 
-      _mbStatInfo[context->mbID()]._totalRecords = workExtInfo->_recCount ;
-      // TODO: more data to sync
-      // TODO: sync ?
+      _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
+      _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= dataSize ;
+      _mbStatInfo[ context->mbID() ]._totalDataLen -= dataSize ;
+      _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
 
    done:
       return rc ;
@@ -986,10 +984,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       dmsExtRW extRW ;
       dmsExtent *extent = NULL ;
-      dmsOffset currOffset =  0 ;
-      dmsRecordRW recordRW ;
-      const dmsRecord *record = NULL ;
-      UINT32 recNum = 0 ;
+      INT64 recNum = 0 ;
+      INT64 dataSize = 0 ;
+      INT64 totalSize = 0 ;
 
       extRW = extent2RW( extentID, context->mbID() ) ;
       extRW.setNothrow( TRUE ) ;
@@ -1001,54 +998,26 @@ namespace engine
          goto error ;
       }
 
-      if ( offset >= extent->_lastRecordOffset )
-      {
-         if ( direction >= 0 )
-         {
-            // TODO: all records are going to be popped.
-            extent->_recCount = 0 ;
-            extent->_firstRecordOffset = extent->_lastRecordOffset ;
-            // TODO: update mbstat
-            // TODO: sync ?
-         }
-         goto done ;
-      }
-
-      currOffset = extent->_firstRecordOffset ;
-      // If pop forward, need to go beyond the offset.
-      // If pop backward, need to go beyond or just on the offset.
-      while ( currOffset <= offset )
-      {
-         if ( currOffset == offset && direction < 0 )
-         {
-            break ;
-         }
-         dmsRecordID rid( extentID, currOffset ) ;
-         recordRW = record2RW( rid, context->mbID() ) ;
-         recordRW.setNothrow( TRUE ) ;
-         record = recordRW.readPtr<dmsRecord>() ;
-         SDB_ASSERT( record->getSize() > 0, "Invalid record size" ) ;
-         recNum++ ;
-         currOffset += record->getSize() ;
-      }
-
       if ( direction >= 0 )
       {
-         extent->_firstRecordOffset = currOffset ;
-         extent->_recCount -= recNum ;
-         // workExtInfo->_freeSpace +=
+         _countRecNumAndSize( context, extentID, extent->_firstRecordOffset,
+                              offset, direction, recNum, dataSize, totalSize ) ;
+         extent->_firstRecordOffset += totalSize ;
       }
       else
       {
-         // TODO: switch back one by one and pop from work ext?
-         // workExtInfo->_lastRecordOffset = currOffset ;
-         // workExtInfo->_recCount = recNum ;
-         // workExtInfo->_freeSpace = DMS_CAP_EXTENT_BODY_SZ - currOffset ;
+         _countRecNumAndSize( context, extentID, offset, extent->_lastRecordOffset,
+                              direction, recNum, dataSize, totalSize ) ;
+         extent->_lastRecordOffset -= totalSize ;
       }
 
-      _mbStatInfo[context->mbID()]._totalRecords = extent->_recCount ;
-      // TODO: more data to sync
-      // TODO: sync ?
+      extent->_recCount -= recNum ;
+      extent->_freeSpace += totalSize ;
+
+      _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
+      _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= dataSize ;
+      _mbStatInfo[ context->mbID() ]._totalDataLen -= dataSize ;
+      _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
 
    done:
       return rc ;
@@ -1224,6 +1193,41 @@ namespace engine
       goto done ;
    }
 
+   void _dmsStorageDataCapped::_countRecNumAndSize( dmsMBContext *context,
+                                                    dmsExtentID extentID,
+                                                    dmsOffset beginOffset,
+                                                    dmsOffset endOffset,
+                                                    INT32 direction,
+                                                    INT64 &recNum,
+                                                    INT64 &dataSize,
+                                                    INT64 &totalSize )
+   {
+      dmsRecordRW recordRW ;
+      const dmsRecord *record = NULL ;
+
+      recNum = 0 ;
+      dataSize = 0 ;
+      totalSize = 0 ;
+      // If pop forward, need to go beyond the offset.
+      // If pop backward, need to go beyond or just on the offset.
+      while ( beginOffset <= endOffset )
+      {
+         if ( beginOffset == endOffset && direction < 0 )
+         {
+            break ;
+         }
+         dmsRecordID rid( extentID, beginOffset ) ;
+         recordRW = record2RW( rid, context->mbID() ) ;
+         recordRW.setNothrow( TRUE ) ;
+         record = recordRW.readPtr<dmsRecord>() ;
+         SDB_ASSERT( record->getSize() > 0, "Invalid record size" ) ;
+         recNum++ ;
+         beginOffset += record->getSize() ;
+         dataSize += record->getDataLength() ;
+         totalSize += record->getSize() ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_POPRECORD, "_dmsStorageDataCapped::popRecord" )
    INT32 _dmsStorageDataCapped::popRecord ( dmsMBContext *context,
                                             INT64 logicalID,
@@ -1256,7 +1260,8 @@ namespace engine
       SDB_ASSERT( cb, "edu cb should not be NULL" ) ;
 
       rc = _extractRecLID( context, logicalID, extentID, extLID, offset ) ;
-      PD_RC_CHECK( rc, PDERROR, "Invalid LogicalID[%lld], rc: %d", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Invalid LogicalID[%lld], rc: %d",
+                   logicalID, rc ) ;
 
       if ( !context->isMBLock( EXCLUSIVE ) )
       {
@@ -1329,7 +1334,6 @@ namespace engine
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED_POPRECORD, rc ) ;
       return rc ;
    error:
-      // TODO: restore the data which have been popped out.
       goto done ;
    }
 }

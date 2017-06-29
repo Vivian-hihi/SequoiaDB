@@ -222,6 +222,15 @@ namespace engine
                              dmsExtentID targetExtID,
                              INT8 direction ) ;
 
+      void _countRecNumAndSize( dmsMBContext *context,
+                                dmsExtentID extentID,
+                                dmsOffset beginOffset,
+                                dmsOffset endOffset,
+                                INT32 direction,
+                                INT64 &recNum,
+                                INT64 &dataSize,
+                                INT64 &totalSize ) ;
+
    private:
       // The information of the working extents of each collection.
       // Working extent is the one which we are using for inserting record now.
@@ -328,12 +337,13 @@ namespace engine
 
       dmsExtentInfo *extentInfo =  getWorkExtInfo( context->mbID() ) ;
 
-      _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
-      if ( DMS_INVALID_EXTENT == logicalID )
+      if ( logicalID < 0 )
       {
          extentID = DMS_INVALID_EXTENT ;
          goto error ;
       }
+
+      _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
 
       extentID = context->mb()->_firstExtentID ;
 
@@ -352,17 +362,16 @@ namespace engine
             // Found the target extent.
             break ;
          }
-         else
-         {
-            // Recycle the current extent.
-            extentID = extent->_nextExtent ;
-         }
-
-         if ( extentID == extentInfo->getID() )
+         else if ( extentID == extentInfo->getID() )
          {
             // If hit the working extent, and still not found, stop.
             extentID = DMS_INVALID_EXTENT ;
             break ;
+         }
+         else
+         {
+            // Recycle the current extent.
+            extentID = extent->_nextExtent ;
          }
       } while ( DMS_INVALID_EXTENT != extentID ) ;
 
