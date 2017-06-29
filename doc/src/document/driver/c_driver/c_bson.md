@@ -134,6 +134,7 @@ BSON 是 JSON 的二进制表现形式，通过记录每个对象，元素，以
   ```lang-javascript
   bson newobj;
   bson_iterator i;
+  bson_type type;
 
   // build a bson
   bson_init( &newobj );
