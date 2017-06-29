@@ -102,7 +102,7 @@ namespace engine
       while( it != _subContextMap.end() )
       {
          coordSubContext *pSub = it->second ;
-         recordNum += pSub->getRecordNum() ;
+         recordNum += pSub->recordNum() ;
          ++it ;
       }
       if ( _numToSkip > recordNum )
@@ -169,7 +169,7 @@ namespace engine
          {
             SINT64 contextID = -1 ;
             pSubContext = it->second ;
-            contextID = pSubContext->getContextID() ;
+            contextID = pSubContext->contextId() ;
             if ( -1 == contextID )
             {
                // Ignore invalid context ID
@@ -320,7 +320,7 @@ namespace engine
       emptyIter = _emptyContextMap.begin() ;
       while( emptyIter != _emptyContextMap.end() )
       {
-         if ( -1 == emptyIter->second->getContextID() )
+         if ( -1 == emptyIter->second->contextId() )
          {
             SDB_OSS_DEL emptyIter->second ;
             emptyIter = _emptyContextMap.erase( emptyIter ) ;
@@ -328,7 +328,7 @@ namespace engine
          }
 
          routeID.value = emptyIter->first ;
-         msgReq.contextID = emptyIter->second->getContextID() ;
+         msgReq.contextID = emptyIter->second->contextId() ;
 
          pSub = _pSession->addSubSession( routeID.value ) ;
          pSub->setReqMsg( (MsgHeader*)&msgReq, PMD_EDU_MEM_NONE ) ;
@@ -518,8 +518,8 @@ namespace engine
       if ( _needReOrder && 1 == _subContextMap.size() && requireOrder() )
       {
          coordSubContext *pSubContext = _subContextMap.begin()->second ;
-         coordOrderKey orderKey ;
-         rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
+         rtnOrderKey orderKey ;
+         rc = pSubContext->getOrderKey( orderKey ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
 
          _subContextMap.clear() ;
@@ -566,12 +566,12 @@ namespace engine
       pSubContext = iter->second ;
       SDB_ASSERT( pSubContext != NULL, "subContext can't be NULL" ) ;
 
-      if ( pSubContext->getContextID() != pReply->contextID )
+      if ( pSubContext->contextId() != pReply->contextID )
       {
          rc = SDB_INVALIDARG;
          PD_LOG ( PDERROR, "Failed to append the data, no match context"
                   "(expectContextID=%lld, contextID=%lld)",
-                  pSubContext->getContextID(), pReply->contextID ) ;
+                  pSubContext->contextId(), pReply->contextID ) ;
          goto error ;
       }
 
@@ -588,7 +588,7 @@ namespace engine
       }
       else
       {
-         coordOrderKey orderKey ;
+         rtnOrderKey orderKey ;
 
          if ( _needReOrder )
          {
@@ -601,7 +601,7 @@ namespace engine
             }
          }
 
-         rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
+         rc = pSubContext->getOrderKey( orderKey ) ;
          if ( rc != SDB_OK )
          {
             pSubContext->clearData() ;
@@ -639,22 +639,21 @@ namespace engine
          PD_LOG( PDERROR, "Repeat to add sub-context (groupID=%u, nodeID=%u, "
                  "serviceID=%u, oldContextID=%lld, newContextID=%lld)",
                  routeID.columns.groupID, routeID.columns.nodeID,
-                 routeID.columns.serviceID, iter->second->getContextID(),
+                 routeID.columns.serviceID, iter->second->contextId(),
                  contextID ) ;
          goto error ;
       }
 
-      pSubContext = SDB_OSS_NEW coordSubContext( routeID,
+      pSubContext = SDB_OSS_NEW coordSubContext( _orderBy,
+                                                 _keyGen,
                                                  contextID,
-                                                 _keyGen ) ;
+                                                 routeID ) ;
       if ( NULL == pSubContext )
       {
          rc = SDB_OOM;
          PD_LOG ( PDERROR, "Failed to alloc memory" ) ;
          goto error ;
       }
-
-      pSubContext->setOrderBy( _orderBy ) ;
 
       _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type( routeID.value,
                                pSubContext ) ) ;
@@ -754,7 +753,7 @@ namespace engine
       SUB_CONTEXT_MAP::iterator iter ;
       coordSubContext *pSubContext  = NULL ;
       SINT32 recordNum              = 0 ;
-      CHAR *pData                   = NULL ;
+      const CHAR *pData             = NULL ;
       INT32 startNumRecords = numRecords() ;
 
       while ( numRecords() == startNumRecords )
@@ -781,7 +780,7 @@ namespace engine
 
          iter = _subContextMap.begin() ;
          pSubContext = iter->second ;
-         recordNum = pSubContext->getRecordNum() ;
+         recordNum = pSubContext->recordNum() ;
 
          // skip the records
          if ( _numToSkip > 0 )
@@ -813,14 +812,14 @@ namespace engine
             }
          }
 
-         recordNum = pSubContext->getRecordNum() ;
+         recordNum = pSubContext->recordNum() ;
 
          if ( ( _numToReturn < 0 || recordNum <= _numToReturn ) &&
-              ( buffEndOffset() + pSubContext->getRemainLen() <=
+              ( buffEndOffset() + pSubContext->remainLength() <=
                 RTN_RESULTBUFFER_SIZE_MAX ) && !_selector.isInitialized() )
          {
             rc = appendObjs( pSubContext->front(),
-                             (INT32)pSubContext->getRemainLen(), recordNum ) ;
+                             (INT32)pSubContext->remainLength(), recordNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
 
             rc = pSubContext->popAll() ;
@@ -898,7 +897,7 @@ namespace engine
             }
          }
 
-         if ( pSubContext->getRecordNum() <= 0 )
+         if ( pSubContext->recordNum() <= 0 )
          {
             _subContextMap.erase ( iter ) ;
             _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
@@ -933,7 +932,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       SUB_CONTEXT_MAP::iterator iterFirst ;
       coordSubContext *pSubContext = NULL ;
-      CHAR *pData = NULL ;
+      const CHAR *pData = NULL ;
       INT32 startNumRecords = numRecords() ;
 
       while ( numRecords() == startNumRecords )
@@ -1020,7 +1019,7 @@ namespace engine
             rc = pSubContext->pop() ;
             PD_RC_CHECK( rc, PDERROR, "Failed to get the data(rc=%d)", rc ) ;
 
-            if ( pSubContext->getRecordNum() <= 0 )
+            if ( pSubContext->recordNum() <= 0 )
             {
                _subContextMap.erase ( iterFirst ) ;
                _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
@@ -1030,8 +1029,8 @@ namespace engine
             }
             else
             {
-               coordOrderKey orderKey ;
-               rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
+               rtnOrderKey orderKey ;
+               rc = pSubContext->getOrderKey( orderKey ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
 
                _subContextMap.erase ( iterFirst ) ;
@@ -1094,31 +1093,16 @@ namespace engine
    /*
       _coordSubContext implement
    */
-   _coordSubContext::_coordSubContext ()
-   {
-      _routeID.value = 0 ;
-      _contextID = -1 ;
-      _pData = NULL ;
-      _curOffset = 0 ;
-      _recordNum = 0 ;
-      _isOrderKeyChange = FALSE ;
-   }
-
-   _coordSubContext::_coordSubContext ( const _coordSubContext &srcContext )
-   {
-   }
-
-   _coordSubContext::_coordSubContext ( MsgRouteID routeID,
-                                        SINT64 contextID,
-                                        _ixmIndexKeyGen *keyGen )
-   : _routeID( routeID ),
-     _contextID( contextID ),
-     _keyGen( keyGen )
+   _coordSubContext::_coordSubContext ( BSONObj& orderBy,
+                              _ixmIndexKeyGen* keyGen,
+                              INT64 contextID,
+                              MsgRouteID routeID )
+   : _rtnSubContext( orderBy, keyGen, contextID ),
+     _routeID( routeID )
    {
       _pData = NULL ;
       _curOffset = 0 ;
       _recordNum = 0 ;
-      _isOrderKeyChange = FALSE ;
    }
 
    _coordSubContext::~_coordSubContext ()
@@ -1128,10 +1112,9 @@ namespace engine
          SDB_OSS_FREE ( _pData ) ;
          _pData = NULL;
       }
-      _keyGen = NULL ;
    }
 
-   UINT32 _coordSubContext::getRemainLen()
+   INT32 _coordSubContext::remainLength()
    {
       if ( _pData->header.messageLength > _curOffset )
       {
@@ -1167,18 +1150,13 @@ namespace engine
       _isOrderKeyChange = TRUE;
    }
 
-   SINT64 _coordSubContext::getContextID()
-   {
-      return _contextID ;
-   }
-
    MsgRouteID _coordSubContext::getRouteID()
    {
       return _routeID;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_FRONT, "coordSubContext::front" )
-   CHAR* _coordSubContext::front ()
+   const CHAR* _coordSubContext::front ()
    {
       PD_TRACE_ENTRY ( SDB_COSUBCON_FRONT ) ;
       if ( _recordNum > 0 && _pData->header.messageLength > _curOffset )
@@ -1228,7 +1206,7 @@ namespace engine
       return rc;
    }
 
-   INT32 _coordSubContext::popN( SINT32 num )
+   INT32 _coordSubContext::popN( INT32 num )
    {
       INT32 rc = SDB_OK ;
       while ( num > 0 )
@@ -1251,14 +1229,13 @@ namespace engine
       return SDB_OK ;
    }
 
-   SINT32 _coordSubContext::getRecordNum()
+   INT32 _coordSubContext::recordNum()
    {
       return _recordNum ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_GETORDERKEY, "coordSubContext::getOrderKey" )
-   INT32 _coordSubContext::getOrderKey( coordOrderKey &orderKey,
-                                       _ixmIndexKeyGen *keyGen )
+   INT32 _coordSubContext::getOrderKey( rtnOrderKey &orderKey )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_COSUBCON_GETORDERKEY ) ;
@@ -1300,12 +1277,5 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_COSUBCON_GETORDERKEY, rc ) ;
       return rc;
    }
-
-   void _coordSubContext::setOrderBy( const BSONObj &orderBy )
-   {
-      _orderBy = orderBy ;
-      _orderKey.setOrderBy( orderBy ) ;
-   }
-
 }
 

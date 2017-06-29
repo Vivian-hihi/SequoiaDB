@@ -38,8 +38,8 @@
 #ifndef COORD_CONTEXT_HPP__
 #define COORD_CONTEXT_HPP__
 
-#include "rtnContextMainCL.hpp"
-#include "ixmIndexKey.hpp"
+#include "rtnContext.hpp"
+#include "rtnSubContext.hpp"
 #include "coordDef.hpp"
 
 using namespace bson ;
@@ -53,49 +53,43 @@ namespace engine
    /*
       coordSubContext define
    */
-   class _coordSubContext : public SDBObject
+   class _coordSubContext : public _rtnSubContext
    {
-      public:
-         _coordSubContext ( MsgRouteID routeID,
-                            SINT64 contextID,
-                           _ixmIndexKeyGen *keyGen ) ;
-         ~_coordSubContext () ;
+   public:
+      _coordSubContext ( BSONObj& orderBy,
+                         _ixmIndexKeyGen* keyGen,
+                         INT64 contextID,
+                         MsgRouteID routeID ) ;
+      ~_coordSubContext () ;
 
-      public:
 
-         void     appendData ( MsgOpReply *pReply ) ;
-         void     clearData () ;
-         SINT64   getContextID() ;
-         MsgRouteID getRouteID() ;
-         CHAR*    front () ;
-         INT32    pop() ;
-         INT32    popN( SINT32 num ) ;
-         INT32    popAll() ;
-         SINT32   getRecordNum() ;
-         UINT32   getRemainLen() ;
-         INT32    getOrderKey( coordOrderKey &orderKey,
-                              _ixmIndexKeyGen *keyGen ) ;
-         void     setOrderBy( const BSONObj &orderBy ) ;
+   public:
+      void           appendData ( MsgOpReply *pReply ) ;
+      void           clearData () ;
+      MsgRouteID     getRouteID() ;
+      const CHAR*    front () ;
+      INT32          pop() ;
+      INT32          popN( INT32 num ) ;
+      INT32          popAll() ;
+      INT32          recordNum() ;
+      INT32          remainLength() ;
+      INT32          getOrderKey( rtnOrderKey &orderKey ) ;
 
-      private:
-         _coordSubContext () ;
-         _coordSubContext ( const _coordSubContext &srcContext ) ;
+   private:
+      // disallow copy and assign
+      _coordSubContext () ;
+      _coordSubContext ( const _coordSubContext& ) ;
+      void operator=( const _coordSubContext& ) ;
 
-      private:
-         MsgRouteID           _routeID ;
-         SINT64               _contextID ;
-         INT32                _curOffset ;
-         MsgOpReply           *_pData ;
-         coordOrderKey        _orderKey ;
-         BSONObj              _orderBy ;
-         BOOLEAN              _isOrderKeyChange ;
-         SINT32               _recordNum ;
-         _ixmIndexKeyGen      *_keyGen ;
-
+   private:
+      MsgRouteID           _routeID ;
+      INT32                _curOffset ;
+      MsgOpReply*          _pData ;
+      INT32                _recordNum ;
    } ;
    typedef _coordSubContext coordSubContext ;
 
-   typedef std::multimap< coordOrderKey, coordSubContext* > SUB_CONTEXT_MAP ;
+   typedef std::multimap< rtnOrderKey, coordSubContext* >   SUB_CONTEXT_MAP ;
    typedef _utilMap< UINT64, coordSubContext*, 20 >         EMPTY_CONTEXT_MAP ;
    typedef _utilMap< UINT64, MsgRouteID, 20 >               PREPARE_NODES_MAP ;
 
@@ -172,7 +166,7 @@ namespace engine
          EMPTY_CONTEXT_MAP          _emptyContextMap ;
          EMPTY_CONTEXT_MAP          _prepareContextMap ;
 
-         coordOrderKey              _emptyKey ;
+         rtnOrderKey                _emptyKey ;
          BSONObj                    _orderBy ;
          BOOLEAN                    _preRead ;
 

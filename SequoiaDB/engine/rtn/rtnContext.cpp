@@ -47,9 +47,260 @@ using namespace bson ;
 
 namespace engine
 {
-
+   #define RTN_CONTEXT_MAX_BUFF_SIZE         ( 5 * RTN_RESULTBUFFER_SIZE_MAX )
    #define RTN_CTX_PREPARE_MORE_DATA_INIT    (1024 * 4)     /* 4KB */
    #define RTN_CTX_PREPARE_MORE_DATA_MAX     (1024 * 512)   /* 512KB */
+
+   _rtnContextStoreBuf::_rtnContextStoreBuf()
+   {
+      _buffer = NULL ;
+      _numRecords = 0 ;
+      _bufferSize = 0 ;
+      _readOffset = 0 ;
+      _writeOffset = 0 ;
+      _countOnly = FALSE ;
+   }
+
+   _rtnContextStoreBuf::~_rtnContextStoreBuf()
+   {
+      release() ;
+   }
+
+   INT32 _rtnContextStoreBuf::_ensureBufferSize( INT32 ensuredSize )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR* oldBuffer = _buffer ;
+      INT32 newSize ;
+
+      if ( ensuredSize <= _bufferSize )
+      {
+         goto done ;
+      }
+
+      newSize = ( _bufferSize == 0 ) ? RTN_DFT_BUFFERSIZE : _bufferSize ;
+
+      // make sure we get enough memory in result buffer
+      while ( newSize < ensuredSize )
+      {
+         // make sure we haven't hit max
+         if ( newSize >= RTN_CONTEXT_MAX_BUFF_SIZE )
+         {
+            PD_LOG ( PDERROR, "Result buffer is greater than %d bytes",
+                     RTN_CONTEXT_MAX_BUFF_SIZE ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         
+         // double buffer size until hitting RTN_CONTEXT_MAX_BUFF_SIZE
+         newSize = newSize << 1 ;
+         if (newSize > RTN_CONTEXT_MAX_BUFF_SIZE )
+         {
+            newSize = RTN_CONTEXT_MAX_BUFF_SIZE ;
+         }
+      }
+
+      if ( NULL == _buffer )
+      {
+         _buffer = ( CHAR* )SDB_OSS_MALLOC(
+                                 RTN_BUFF_TO_PTR_SIZE( newSize ) ) ;
+      }
+      else
+      {
+         // reallocate memory
+         _buffer = (CHAR*)SDB_OSS_REALLOC(
+                                 RTN_BUFF_TO_REAL_PTR( _buffer ),
+                                 RTN_BUFF_TO_PTR_SIZE( newSize ) ) ;
+      }
+
+      if ( NULL == _buffer )
+      {
+         PD_LOG ( PDERROR, "Unable to allocate buffer for %d bytes",
+                  newSize ) ;
+         _buffer = oldBuffer ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      _buffer = RTN_REAL_PTR_TO_BUFF( _buffer ) ;
+      _bufferSize = newSize ;
+
+      if ( NULL == oldBuffer )
+      {
+         *RTN_GET_REFERENCE( _buffer ) = 0 ;
+         *RTN_GET_CONTEXT_FLAG( _buffer ) = 1 ;
+      }
+
+   done:
+      return rc; 
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextStoreBuf::append( const BSONObj& obj )
+   {
+      INT32 rc = SDB_OK ;
+      
+      if ( !isCountMode() )
+      {
+         _writeOffset = ossAlign4( (UINT32)_writeOffset ) ;
+         if ( _writeOffset + obj.objsize () > _bufferSize )
+         {
+            rc = _ensureBufferSize ( _writeOffset + obj.objsize() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "Failed to reallocate buffer for context, rc: "
+                        "%d", rc ) ;
+               goto error ;
+            }
+         }
+
+         ossMemcpy ( &(_buffer[_writeOffset]), obj.objdata(), obj.objsize() ) ;
+         _writeOffset += obj.objsize() ;
+      }
+
+      _numRecords++ ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   INT32 _rtnContextStoreBuf::appendObjs( const CHAR* objBuf,
+                                             INT32 len,
+                                             INT32 num,
+                                             BOOLEAN needAligned )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( len >= 0, "len should >= 0" ) ;
+      SDB_ASSERT( num >= 0, "num should >= 0" ) ;
+
+      if ( !isCountMode() )
+      {
+         if ( len > 0 )
+         {
+            if ( needAligned )
+            {
+               _writeOffset = ossAlign4( (UINT32)_writeOffset ) ;
+            }
+
+            if ( _writeOffset + len > _writeOffset )
+            {
+               rc = _ensureBufferSize ( _writeOffset + len ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to reallocate buffer for context, "
+                           "rc: %d", rc ) ;
+                  goto error ;
+               }
+            }
+
+            ossMemcpy ( &(_buffer[_writeOffset]), objBuf, len ) ;
+            _writeOffset += len ;
+         }
+      }
+
+      _numRecords += num ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextStoreBuf::get( INT32 maxNumToReturn,
+                                    rtnContextBuf& buf )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( !isEmpty(), "inner buf is empty" ) ;
+
+      buf.release() ;
+
+      if ( !isCountMode() )
+      {
+         _readOffset = ossAlign4( (UINT32)_readOffset ) ;
+         buf._pOrgBuff = _buffer ;
+         buf._pBuff = &_buffer[ _readOffset ] ;
+         //buf._startFrom = _totalRecords - _numRecords ;
+
+         // return current all records
+         if ( maxNumToReturn < 0 )
+         {
+            buf._buffSize = _writeOffset - _readOffset ;
+            buf._recordNum = _numRecords ;
+            _readOffset = _writeOffset ;
+            _numRecords = 0 ;
+         }
+         else
+         {
+            INT32 prevCurOffset = _readOffset ;
+            while ( _readOffset < _writeOffset &&
+                    maxNumToReturn > 0 )
+            {
+               try
+               {
+                  BSONObj obj( &_buffer[_readOffset] ) ;
+                  _readOffset += ossAlign4( (UINT32)obj.objsize() ) ;
+               }
+               catch ( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Can't convert into BSON object: %s",
+                          e.what() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+
+               buf._recordNum++ ;
+               _numRecords-- ;
+               maxNumToReturn-- ;
+            } // end while
+
+            if ( _readOffset > _writeOffset )
+            {
+               _readOffset = _writeOffset ;
+               SDB_ASSERT( 0 == _numRecords, "buffer num records must "
+                           " be zero" ) ;
+            }
+            buf._buffSize = _readOffset - prevCurOffset ;
+         }
+
+         
+      }
+      else
+      {
+         if ( maxNumToReturn < 0 || maxNumToReturn >= _numRecords )
+         {
+            buf._recordNum = _numRecords ;
+            _numRecords = 0 ;
+         }
+         else
+         {
+            buf._recordNum = maxNumToReturn ;
+            _numRecords -= maxNumToReturn ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnContextStoreBuf::release()
+   {
+      if ( NULL != _buffer )
+      {
+         *RTN_GET_CONTEXT_FLAG( _buffer ) = 0 ;
+
+         if ( *RTN_GET_REFERENCE( _buffer ) == 0 )
+         {
+            SDB_OSS_FREE( RTN_BUFF_TO_REAL_PTR( _buffer ) ) ;
+            _buffer = NULL ;
+         }
+      }
+   }
 
    /*
       Functions
@@ -79,11 +330,6 @@ namespace engine
       _contextID           = contextID ;
       _eduID               = eduID ;
 
-      _pResultBuffer       = NULL ;
-      _resultBufferSize    = 0 ;
-      _bufferCurrentOffset = 0 ;
-      _bufferEndOffset     = 0 ;
-      _bufferNumRecords    = 0 ;
       _totalRecords        = 0 ;
 
       _hitEnd              = TRUE ;
@@ -110,16 +356,10 @@ namespace engine
    {
       _close() ;
 
-      if ( _pResultBuffer )
+      if ( _buffer.hasMem() )
       {
-         *RTN_GET_CONTEXT_FLAG( _pResultBuffer ) = 0 ;
-
-         if ( *RTN_GET_REFERENCE( _pResultBuffer ) == 0 )
-         {
-            SDB_OSS_FREE( RTN_BUFF_TO_REAL_PTR( _pResultBuffer ) ) ;
-            _pResultBuffer = NULL ;
-         }
-         else
+         *( _buffer.getContextFlag() ) = 0 ;
+         if ( _buffer.getRefCount() != 0 )
          {
             _dataLock.release_r() ;
          }
@@ -159,11 +399,7 @@ namespace engine
 
    INT32 _rtnContextBase::getReference() const
    {
-      if ( _pResultBuffer )
-      {
-         return *RTN_GET_REFERENCE( _pResultBuffer ) ;
-      }
-      return 0 ;
+      return _buffer.getRefCount() ;
    }
 
    void _rtnContextBase::enablePrefetch( _pmdEDUCB * cb,
@@ -180,15 +416,16 @@ namespace engine
 
       ss << "IsOpened:" << ( _isOpened ? 1 : 0 )
          << ",HitEnd:" << ( _hitEnd ? 1 : 0 )
-         << ",BufferSize:" << _resultBufferSize ;
+         << ",BufferSize:" << _buffer.bufferSize() ;
 
       if ( _totalRecords > 0 )
       {
          ss << ",TotalRecordNum:" << _totalRecords ;
       }
-      if ( _bufferNumRecords > 0 )
+
+      if ( _buffer.numRecords() > 0 )
       {
-         ss << ",BufferRecordNum:" << _bufferNumRecords ;
+         ss << ",BufferRecordNum:" << _buffer.numRecords() ;
       }
 
       if ( isOpened() )
@@ -223,77 +460,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   #define RTN_CONTEXT_MAX_BUFF_SIZE      ( 5 * RTN_RESULTBUFFER_SIZE_MAX )
-
-   INT32 _rtnContextBase::_reallocBuffer( SINT32 requiredSize )
-   {
-      INT32 rc = SDB_OK ;
-      CHAR *originalPointer = _pResultBuffer ;
-      SINT32 originalSize   = _resultBufferSize ;
-
-      if ( 0 == originalSize )
-      {
-         _resultBufferSize = RTN_DFT_BUFFERSIZE ;
-      }
-
-      // make sure we get enough memory in result buffer
-      while ( requiredSize > _resultBufferSize )
-      {
-         // make sure we haven't hit max
-         if ( _resultBufferSize >= RTN_CONTEXT_MAX_BUFF_SIZE )
-         {
-            PD_LOG ( PDERROR, "Result buffer is greater than %d bytes",
-                     RTN_CONTEXT_MAX_BUFF_SIZE ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         // double buffer size until hitting RTN_CONTEXT_MAX_BUFF_SIZE
-         _resultBufferSize = _resultBufferSize << 1 ;
-         if (_resultBufferSize > RTN_CONTEXT_MAX_BUFF_SIZE )
-         {
-            _resultBufferSize = RTN_CONTEXT_MAX_BUFF_SIZE ;
-         }
-      }
-
-      if ( NULL == _pResultBuffer )
-      {
-         _pResultBuffer = ( CHAR* )SDB_OSS_MALLOC(
-                                 RTN_BUFF_TO_PTR_SIZE( _resultBufferSize ) ) ;
-      }
-      else
-      {
-         // reallocate memory
-         _pResultBuffer = (CHAR*)SDB_OSS_REALLOC(
-                                 RTN_BUFF_TO_REAL_PTR( _pResultBuffer ),
-                                 RTN_BUFF_TO_PTR_SIZE( _resultBufferSize ) ) ;
-      }
-      // if reallocation fail, we exit
-      if ( !_pResultBuffer )
-      {
-         PD_LOG ( PDERROR, "Unable to allocate buffer for %d bytes",
-                  _resultBufferSize ) ;
-         _pResultBuffer = originalPointer ;
-         _resultBufferSize = originalSize ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      else
-      {
-         _pResultBuffer = RTN_REAL_PTR_TO_BUFF( _pResultBuffer ) ;
-
-         if ( !originalPointer )
-         {
-            *RTN_GET_REFERENCE( _pResultBuffer ) = 0 ;
-            *RTN_GET_CONTEXT_FLAG( _pResultBuffer ) = 1 ;
-         }
-      }
-
-   done :
-      return rc ;
-   error :
-      goto done ;
-   }
-
    INT32 _rtnContextBase::append( const BSONObj &result )
    {
       INT32 rc = SDB_OK ;
@@ -304,31 +470,15 @@ namespace engine
          _isOpened = TRUE ;
       }
 
-      if ( !_countOnly )
+      rc = _buffer.append( result ) ;
+      if ( SDB_OK != rc )
       {
-         _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
-         if ( _bufferEndOffset + result.objsize () > _resultBufferSize )
-         {
-            rc = _reallocBuffer ( _bufferEndOffset + result.objsize() ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to reallocate buffer for context, rc: "
-                        "%d", rc ) ;
-               goto error ;
-            }
-         }
-         ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), result.objdata(),
-                     result.objsize() ) ;
+         PD_LOG ( PDERROR, "Failed to append obj to context buffer, rc: "
+                           "%d", rc ) ;
+         goto error ;
+      }
 
-         ++_totalRecords ; // total num
-         ++_bufferNumRecords ; // cur buff num
-         _bufferEndOffset += result.objsize() ;
-      }
-      else
-      {
-         ++_totalRecords ; // total num
-         ++_bufferNumRecords ; // cur buff num
-      }
+      _totalRecords++ ;
 
    done:
       return rc ;
@@ -346,38 +496,15 @@ namespace engine
          _isOpened = TRUE ;
       }
 
-      if ( !_countOnly )
+      rc = _buffer.appendObjs( pObjBuff, len, num, needAliened ) ;
+      if ( SDB_OK != rc )
       {
-         if ( 0 < len )
-         {
-            if ( needAliened )
-            {
-               _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
-            }
-
-            if ( _bufferEndOffset + len > _resultBufferSize )
-            {
-               rc = _reallocBuffer ( _bufferEndOffset + len ) ;
-               if ( rc )
-               {
-                  PD_LOG ( PDERROR, "Failed to reallocate buffer for context, "
-                           "rc: %d", rc ) ;
-                  goto error ;
-               }
-            }
-
-            ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), pObjBuff, len ) ;
-         }
-
-         _totalRecords += num ; // total num
-         _bufferNumRecords += num ; // cur buff num
-         _bufferEndOffset += len ;
+         PD_LOG ( PDERROR, "Failed to append objs to context buffer, rc: "
+                           "%d", rc ) ;
+         goto error ;
       }
-      else
-      {
-         _totalRecords += num ; // total num
-         _bufferNumRecords += num ; // cur buff num
-      }
+
+      _totalRecords += num ;
 
    done:
       return rc ;
@@ -513,7 +640,7 @@ namespace engine
 
       while ( !eof() )
       {
-         INT32 startOffset = _bufferEndOffset ;
+         INT32 startOffset = _buffer.writeOffset() ;
          INT32 currentPreparedSize ;
          UINT64 currentTime ;
 
@@ -523,11 +650,11 @@ namespace engine
             goto error ;
          }
 
-         currentPreparedSize = _bufferEndOffset - startOffset ;
+         currentPreparedSize = _buffer.writeOffset() - startOffset ;
 
          // assume next prepared size equals current,
          // so break if data size exceeds limit when prepare once more time
-         if ( _bufferEndOffset + currentPreparedSize >= _prepareMoreDataLimit )
+         if ( _buffer.writeOffset() + currentPreparedSize >= _prepareMoreDataLimit )
          {
             break ;
          }
@@ -617,7 +744,7 @@ namespace engine
 
          if ( rc && SDB_DMS_EOC != rc )
          {
-            PD_LOG( PDERROR, "Prepare data failed, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to prepare data, rc: %d", rc ) ;
             goto error ;
          }
 
@@ -628,79 +755,29 @@ namespace engine
       // if not empty, get current data
       if ( !isEmpty() )
       {
-         if ( !_countOnly )
+         if ( !isCountMode() )
          {
-            _bufferCurrentOffset = ossAlign4( (UINT32)_bufferCurrentOffset ) ;
-            buffObj._pOrgBuff = _pResultBuffer ;
-            buffObj._pBuff = &_pResultBuffer[ _bufferCurrentOffset ] ;
-            buffObj._startFrom = _totalRecords - _bufferNumRecords ;
+            buffObj._startFrom = _totalRecords - _buffer.numRecords() ;
+         }
 
-            // return cur all
-            if ( maxNumToReturn < 0 )
-            {
-               buffObj._buffSize = _bufferEndOffset - _bufferCurrentOffset ;
-               buffObj._recordNum = _bufferNumRecords ;
-               // clean info
-               _bufferCurrentOffset = _bufferEndOffset ;
-               _bufferNumRecords = 0 ;
-            }
-            else
-            {
-               INT32 prevCurOffset = _bufferCurrentOffset ;
-               while ( _bufferCurrentOffset < _bufferEndOffset &&
-                       maxNumToReturn > 0 )
-               {
-                  try
-                  {
-                     BSONObj obj( &_pResultBuffer[_bufferCurrentOffset] ) ;
-                     _bufferCurrentOffset += ossAlign4( (UINT32)obj.objsize() ) ;
-                  }
-                  catch ( std::exception &e )
-                  {
-                     PD_LOG( PDERROR, "Can't convert into BSON object: %s",
-                             e.what() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
+         rc = _buffer.get( maxNumToReturn, buffObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get objs from context buffer: %d", rc ) ;
+            goto error ;
+         }
 
-                  ++buffObj._recordNum ;
-                  --_bufferNumRecords ;
-                  --maxNumToReturn ;
-               } // end while
-
-               if ( _bufferCurrentOffset > _bufferEndOffset )
-               {
-                  _bufferCurrentOffset = _bufferEndOffset ;
-                  SDB_ASSERT( 0 == _bufferNumRecords, "buffer num records must "
-                              " be zero" ) ;
-               }
-               buffObj._buffSize = _bufferCurrentOffset - prevCurOffset ;
-            }
-
-            buffObj._reference( RTN_GET_REFERENCE( _pResultBuffer ), &_dataLock ) ;
+         if ( !isCountMode() )
+         {
+            buffObj._reference( _buffer.getRefCountPointer(), &_dataLock ) ;
             locked = FALSE ;
-            rc = SDB_OK ;
 
             // if get all data
             if ( isEmpty() && !eof() )
             {
-               _bufferCurrentOffset = 0 ;
-               _bufferEndOffset     = 0 ;
+               _buffer.empty() ;
 
                _onDataEmpty() ;
-            }
-         }
-         else
-         {
-            if ( maxNumToReturn < 0 || maxNumToReturn >= _bufferNumRecords )
-            {
-               buffObj._recordNum = _bufferNumRecords ;
-               _bufferNumRecords = 0 ;
-            }
-            else
-            {
-               buffObj._recordNum = maxNumToReturn ;
-               _bufferNumRecords -= maxNumToReturn ;
             }
          }
       }
@@ -722,7 +799,7 @@ namespace engine
 
    UINT32 _rtnContextBase::getCachedRecordNum()
    {
-      return _bufferNumRecords ;
+      return _buffer.numRecords() ;
    }
 
    _rtnContextAssit::_rtnContextAssit( RTN_CONTEXT_TYPE type,

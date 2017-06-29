@@ -160,6 +160,73 @@ namespace engine
    } ;
    typedef _rtnPrefWatcher rtnPrefWatcher ;
 
+   class _rtnContextStoreBuf: public SDBObject
+   {
+   public:
+      _rtnContextStoreBuf() ;
+      ~_rtnContextStoreBuf() ;
+
+   public:
+      INT32    append( const BSONObj &obj ) ;
+      INT32    appendObjs( const CHAR *objBuf,
+                              INT32 len,
+                              INT32 num,
+                              BOOLEAN needAligned = TRUE ) ;
+      INT32    get( INT32 maxNumToReturn,
+                     rtnContextBuf& buf ) ;
+      void     release() ;
+
+   public:
+      OSS_INLINE void      enableCountMode() { _countOnly = TRUE ; }
+      OSS_INLINE BOOLEAN   isCountMode() const { return _countOnly ; }
+      OSS_INLINE INT32     bufferSize() const { return _bufferSize ; }
+      OSS_INLINE INT64     numRecords() const { return _numRecords ; }
+      OSS_INLINE INT32     readOffset() const { return _readOffset ; }
+      OSS_INLINE INT32     writeOffset() const { return _writeOffset ; }
+      OSS_INLINE INT32     freeSize() const 
+      {
+         return _bufferSize - ossAlign4((UINT32)_writeOffset) ;
+      }
+      OSS_INLINE BOOLEAN   hasMem() const
+      {
+         return (NULL != _buffer) ? TRUE : FALSE ;
+      }
+      OSS_INLINE INT32*    getContextFlag()
+      {
+         return hasMem() ? RTN_GET_CONTEXT_FLAG(_buffer) : NULL ;
+      }
+      OSS_INLINE INT32*    getRefCountPointer()
+      { 
+         return hasMem() ? RTN_GET_REFERENCE(_buffer) : NULL ; 
+      }
+      OSS_INLINE INT32     getRefCount() const 
+      { 
+         return hasMem() ? *RTN_GET_REFERENCE(_buffer) : 0 ;
+      }
+      OSS_INLINE BOOLEAN   isEmpty() const
+      {
+         return ( _numRecords == 0 ) ? TRUE : FALSE ;
+      }
+      OSS_INLINE void      empty()
+      {
+         _numRecords = 0 ;
+         _readOffset = 0 ;
+         _writeOffset = 0 ;
+      }
+
+   private:
+      INT32    _ensureBufferSize( INT32 ensuredSize ) ;
+
+   private:
+      CHAR*    _buffer ;
+      INT64    _numRecords ;
+      INT32    _bufferSize ;
+      INT32    _readOffset ;
+      INT32    _writeOffset ;
+      BOOLEAN  _countOnly ;
+   } ;
+   typedef _rtnContextStoreBuf rtnContextStoreBuf ;
+
    /*
       _rtnContextBase define
    */
@@ -200,18 +267,22 @@ namespace engine
 
          OSS_INLINE BOOLEAN  isEmpty () const ;
 
-         INT64    numRecords () const { return _bufferNumRecords ; }
-         INT32    buffSize () const { return _resultBufferSize ; }
+         INT64    numRecords () const { return _buffer.numRecords() ; }
+         INT32    buffSize () const { return _buffer.bufferSize() ; }
          INT64    totalRecords () const { return _totalRecords ; }
          OSS_INLINE INT32 freeSize () const ;
-         INT32    buffEndOffset () const { return _bufferEndOffset ; }
+         INT32    buffEndOffset () const { return _buffer.writeOffset() ; }
 
          BOOLEAN  isOpened () const { return _isOpened ; }
          BOOLEAN  eof () const { return _hitEnd ; }
 
          INT32    getReference() const ;
 
-         void     enableCountMode() { _countOnly = TRUE ; }
+         void     enableCountMode() 
+         {
+            _buffer.enableCountMode() ;
+            _countOnly = TRUE ;
+         }
          BOOLEAN  isCountMode() const { return _countOnly ; }
 
          /// write info( some context will write data, drop collection, etc..)
@@ -253,7 +324,6 @@ namespace engine
          INT32             _prepareMoreData( _pmdEDUCB *cb );
 
       protected:
-         INT32    _reallocBuffer ( SINT32 requiredSize ) ;
          OSS_INLINE void _empty () ;
          OSS_INLINE void _close () { _isOpened = FALSE ; }
          UINT32   _getWaitPrefetchNum () { return _waitPrefetchNum.peek() ; }
@@ -279,13 +349,7 @@ namespace engine
       private:
          INT64                   _contextID ;
          UINT64                  _eduID ;
-         // buffer
-         CHAR                   *_pResultBuffer ;
-         INT32                   _resultBufferSize ;
-         INT32                   _bufferCurrentOffset ;
-         INT32                   _bufferEndOffset ;
-         INT64                   _bufferNumRecords ;
-         // control param
+         _rtnContextStoreBuf     _buffer ;
          INT64                   _totalRecords ;
          // mutex
          ossRWMutex              _dataLock ;
@@ -310,25 +374,16 @@ namespace engine
    */
    OSS_INLINE BOOLEAN _rtnContextBase::isEmpty () const
    {
-      if ( !_countOnly )
-      {
-         return _bufferCurrentOffset >= _bufferEndOffset ;
-      }
-      else
-      {
-         return _bufferNumRecords <= 0 ? TRUE : FALSE ;
-      }
+      return _buffer.isEmpty() ;
    }
    OSS_INLINE void _rtnContextBase::_empty ()
    {
-      _bufferCurrentOffset = 0 ;
-      _bufferEndOffset     = 0 ;
-      _totalRecords        = _totalRecords - _bufferNumRecords ;
-      _bufferNumRecords    = 0 ;
+      _totalRecords = _totalRecords - _buffer.numRecords() ;
+      _buffer.empty() ;
    }
    OSS_INLINE INT32 _rtnContextBase::freeSize () const
    {
-      return _resultBufferSize - ossAlign4((UINT32)_bufferEndOffset) ;
+      return _buffer.freeSize() ;
    }
 
    typedef _rtnContextBase* (*RTN_CTX_NEW_FUNC)( INT64 contextId, EDUID eduId ) ;

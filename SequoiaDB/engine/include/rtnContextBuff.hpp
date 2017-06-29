@@ -137,6 +137,7 @@ namespace engine
    class _rtnContextBuf : public rtnObjBuff
    {
       friend class _rtnContextBase ;
+      friend class _rtnContextStoreBuf ;
 
       private:
          void  _reference( INT32 *pCounter, ossRWMutex *pMutex ) ;
