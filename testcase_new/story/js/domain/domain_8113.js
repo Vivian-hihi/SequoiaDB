@@ -2,6 +2,7 @@
 @Description : Test create 10 domain,the domains' group is equal with each other.
 @Modify list :
                2014-6-24  xiaojun Hu  Init
+			   seqDB-11892
 ******************************************************************************/
 
 function main( db )
