@@ -259,6 +259,7 @@ function GeneratePlan( taskID )
    var coordTask   = [] ;
    var catalogTask = [] ;
    var dataTask    = [] ;
+   var restoreTask = [] ;
    var nodeNum     = 0 ;
    var progressStep = 0 ;
 
@@ -274,7 +275,7 @@ function GeneratePlan( taskID )
    }
 
    nodeNum = planInfo[FIELD_CONFIG].length ;
-   progressStep = parseInt( 90 / nodeNum / 2 ) ;
+   progressStep = parseInt( 30 / nodeNum ) ;
 
    for( var index in planInfo[FIELD_CONFIG] )
    {
@@ -312,12 +313,20 @@ function GeneratePlan( taskID )
       groupConfig[FIELD_RESULTINFO] = resultInfo[index] ;
       groupConfig[FIELD_RESULTINFO][FIELD_PROGRESS] = progressStep ;
       groupTask.push( groupConfig ) ;
+      
+      var restoreConfig = {} ;
+      restoreConfig[FIELD_CMD]    = "restore node config" ;
+      restoreConfig[FIELD_TASKID] = taskID ;
+      restoreConfig[FIELD_RESULTINFO] = resultInfo[index] ;
+      restoreConfig[FIELD_RESULTINFO][FIELD_PROGRESS] = progressStep ;
+      restoreTask.push( restoreConfig ) ;
    }
 
    plan[FIELD_PLAN].push( coordTask ) ;
    plan[FIELD_PLAN].push( catalogTask ) ;
    plan[FIELD_PLAN].push( dataTask ) ;
    plan[FIELD_PLAN].push( groupTask ) ;
+   plan[FIELD_PLAN].push( restoreTask ) ;
 
    PD_LOGGER.logTask( PDEVENT, "Finish generate plan" ) ;
 
@@ -364,7 +373,24 @@ function _getNodeID( groupDetail, hostName, svcname )
    return primaryNode ;
 }
 
-function _removeNode( db, nodeResult )
+function _checkNodeByScript( taskID, hostName, svcname )
+{
+   try
+   {
+      var agentPort = Oma.getAOmaSvcName( hostName ) ;
+      var oma = new Oma( hostName, agentPort ) ;
+      var config = oma.getNodeConfigs( svcname ) ;
+      var configObj = JSON.parse( config ) ;
+      return !(configObj[FIELD_SAC_TASKID] === taskID.toString()) ;
+   }
+   catch( e )
+   {
+      return true ;
+   }
+   
+}
+
+function _removeNode( db, nodeResult, taskID )
 {
    var rc = SDB_OK ;
    var result    = nodeResult ;
@@ -381,6 +407,18 @@ function _removeNode( db, nodeResult )
 
    result[FIELD_FLOW].push( sprintf( "Rollbacking ?[?:?]",
                                       role, hostName, svcname ) ) ;
+
+   if( _checkNodeByScript( taskID, hostName, svcname ) )
+   {
+      PD_LOGGER.logTask( PDEVENT, sprintf( "Finish rollback ?[?:?]",
+                                           role, hostName, svcname ) ) ;
+
+      result[FIELD_FLOW].push( sprintf( "Finish rollback ?[?:?]",
+                                         role, hostName, svcname ) ) ;
+   
+      return result ;
+   }
+
    try
    {
       rg = _getGroup( db, role, groupName, false ) ;
@@ -404,7 +442,7 @@ function _removeNode( db, nodeResult )
 
    cur = rg.getDetail() ;
    detail = cur.next().toObj() ;
-
+   
    if( detail[FIELD_GROUP].length > 1 )
    {
       var nodeID = _getNodeID( detail, hostName, svcname ) ;
@@ -491,7 +529,7 @@ function _removeNode( db, nodeResult )
    return result ;
 }
 
-function Rollback()
+function Rollback( taskID )
 {
    var taskInfo    = BUS_JSON[FIELD_INFO] ;
    var resultInfo  = BUS_JSON[FIELD_RESULTINFO] ;
@@ -513,7 +551,7 @@ function Rollback()
       nodeResult[FIELD_FLOW] = [] ;
       try
       {
-         nodeResult = _removeNode( db, nodeResult ) ;
+         nodeResult = _removeNode( db, nodeResult, taskID ) ;
          nodeResult[FIELD_STATUS] = STATUS_FINISH ;
          nodeResult[FIELD_STATUS_DESC] = DESC_STATUS_FINISH ;
       }
@@ -575,7 +613,7 @@ function _createNode( coordList, user, passwd, hostName, svcname, dbpath,
    return resultInfo ;
 }
 
-function InstallNode()
+function InstallNode( taskID )
 {
    var coordList   = BUS_JSON[FIELD_COORD2] ;
    var user        = BUS_JSON[FIELD_USER] ;
@@ -586,6 +624,8 @@ function InstallNode()
    var hostName    = nodeConfig[FIELD_HOSTNAME] ;
    var svcname     = nodeConfig[FIELD_SVCNAME] ;
    var dbpath      = nodeConfig[FIELD_DBPATH] ;
+
+   nodeConfig[FIELD_SAC_TASKID] = taskID ;
 
    try
    {
@@ -649,24 +689,72 @@ function StartGroup()
 
       resultInfo[FIELD_FLOW].push( sprintf( "Finish install ?[?:?]",
                                             role, hostName, svcname ) ) ;
+
+      resultInfo[FIELD_STATUS] = STATUS_FINISH ;
+      resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FINISH ;
    }
    catch( e )
    {
-      PD_LOGGER.logTask( PDEVENT, sprintf( "Failed to start ?[?:?], ?, errcode=? ",
+      var errMsg = getLastErrMsg() ;
+      rc = getLastError() ;
+      PD_LOGGER.logTask( PDERROR, sprintf( "Failed to start ?[?:?], ?, errcode=? ",
                                            role, hostName, svcname,
-                                           getLastErrMsg(), getLastError() ) ) ;
+                                           rc, errMsg ) ) ;
 
-      resultInfo[FIELD_ERRNO] = getLastError() ;
-      resultInfo[FIELD_DETAIL] = getLastErrMsg() ;
+      resultInfo[FIELD_ERRNO]  = rc ;
+      resultInfo[FIELD_DETAIL] = errMsg ;
       resultInfo[FIELD_STATUS] = STATUS_FAIL ;
       resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FAIL ;
       resultInfo[FIELD_FLOW].push( sprintf( "Failed to start ?[?:?]",
                                    role, hostName, svcname ) ) ;
+      
    }
 
-   resultInfo[FIELD_STATUS] = STATUS_FINISH ;
-   resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FINISH ;
+   return resultInfo ;
+}
 
+function _restoreNodeByScript( taskID, hostName, svcname )
+{
+   try
+   {
+      var agentPort = Oma.getAOmaSvcName( hostName ) ;
+      var oma = new Oma( hostName, agentPort ) ;
+      var config = oma.getNodeConfigs( svcname ) ;
+      var configObj = JSON.parse( config ) ;
+      if( configObj[FIELD_SAC_TASKID] === taskID.toString() )
+      {
+         delete configObj[FIELD_SAC_TASKID] ;
+         oma.setNodeConfigs( svcname, configObj ) ;
+      }
+      return true ;
+   }
+   catch( e )
+   {
+      return false ;
+   }
+}
+
+function RestoreNodeConfig( taskID )
+{
+   var rc = SDB_OK ;
+   var resultInfo  = BUS_JSON[FIELD_RESULTINFO] ;
+   var hostName    = resultInfo[FIELD_HOSTNAME] ;
+   var svcname     = resultInfo[FIELD_SVCNAME] ;
+
+   PD_LOGGER.logTask( PDEVENT, sprintf( "Restore node config [?:?]",
+                                        hostName, svcname ) ) ;
+
+   if( _restoreNodeByScript( taskID, hostName, svcname ) )
+   {
+      PD_LOGGER.logTask( PDEVENT, sprintf( "Finish restore node config [?:?]",
+                                            hostName, svcname ) ) ;
+   }
+   else
+   {
+      PD_LOGGER.logTask( PDWARNING,
+                         sprintf( "Failed to restore node config [?:?]",
+                                  hostName, svcname ) ) ;
+   }
    return resultInfo ;
 }
 
@@ -701,11 +789,15 @@ function main()
    {
       if( BUS_JSON[FIELD_CMD] == "create node" )
       {
-         result = InstallNode() ;
+         result = InstallNode( taskID ) ;
       }
       else if( BUS_JSON[FIELD_CMD] == "start group" )
       {
          result = StartGroup() ;
+      }
+      else if( BUS_JSON[FIELD_CMD] == "restore node config" )
+      {
+         result = RestoreNodeConfig( taskID ) ;
       }
       else
       {
@@ -722,7 +814,7 @@ function main()
    }
    else if( SYS_STEP == STEP_ROLLBACK )
    {
-      result = Rollback() ;
+      result = Rollback( taskID ) ;
    }
    else
    {

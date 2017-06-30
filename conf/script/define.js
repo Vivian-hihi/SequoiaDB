@@ -326,6 +326,7 @@ var FIELD_PRIMARY_NODE                     = PrimaryNode ;
 var FIELD_NODE_ID                          = "NodeID" ;
 var FIELD_NAME                             = Name ;
 var FIELD_CMD                              = "cmd" ;
+var FIELD_SAC_TASKID                       = "sactaskid" ;
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
