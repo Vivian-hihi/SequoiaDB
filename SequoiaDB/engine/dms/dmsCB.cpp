@@ -480,7 +480,7 @@ namespace engine
       UINT32 csLID = ~0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       BOOLEAN isReserved = FALSE;
-      BOOLEAN isLocked = FALSE ;
+      BOOLEAN isLocked = FALSE, isLatchLocked = FALSE ;
       UINT32 logRecSize = 0;
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record() ;
@@ -523,13 +523,14 @@ namespace engine
          rc = SDB_LOCK_FAILED ;
          goto error ;
       }
+      isLatchLocked = TRUE ;
       if ( !_mutex.try_get() )
       {
          _latchVec[suID]->release_w () ;
+         isLatchLocked = FALSE ;
          goto retry ;
       }
       isLocked = TRUE ;
-      _latchVec[suID]->release_w () ;
 
       // there is a small timing hole before getting the latch, so we have
       // to get current suID again to verify
@@ -600,22 +601,23 @@ namespace engine
          dpsCB->writeData( info ) ;
       }
 
-      if ( SDB_OK == _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
+      // Release the mutex first, since event handler needs the mutex
+      if ( isLocked )
       {
-         if ( isLocked )
-         {
-            _mutex.release () ;
-            isLocked = FALSE ;
-         }
-         pCSCB->_su->getEventHolder()->onRenameCS( DMS_EVENT_MASK_ALL,
-                                                   pName, pNewName, cb, dpsCB ) ;
-         _latchVec[suID]->release_w() ;
+         _mutex.release () ;
+         isLocked = FALSE ;
       }
+      pCSCB->_su->getEventHolder()->onRenameCS( DMS_EVENT_MASK_ALL, pName,
+                                                pNewName, cb, dpsCB ) ;
 
    done :
       if ( isLocked )
       {
          _mutex.release () ;
+      }
+      if ( isLatchLocked )
+      {
+         _latchVec[suID]->release_w() ;
       }
       if ( isReserved )
       {
@@ -1187,11 +1189,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_ADDCS, "_SDB_DMSCB::addCollectionSpace" )
-   INT32 _SDB_DMSCB::addCollectionSpace(const CHAR * pName,
-                                        UINT32 topSequence,
-                                        _dmsStorageUnit * su,
-                                        _pmdEDUCB *cb,
-                                        SDB_DPSCB *dpsCB )
+   INT32 _SDB_DMSCB::addCollectionSpace( const CHAR * pName,
+                                         UINT32 topSequence,
+                                         _dmsStorageUnit * su,
+                                         _pmdEDUCB *cb,
+                                         SDB_DPSCB *dpsCB,
+                                         BOOLEAN isCreate )
    {
       INT32 rc = SDB_OK ;
       dmsStorageUnitID suID ;
@@ -1269,6 +1272,20 @@ namespace engine
       }
 
       su->regEventHandler( &_statSUMgr ) ;
+
+      if ( isLocked )
+      {
+         _mutex.release() ;
+         isLocked = FALSE ;
+      }
+      if ( isCreate )
+      {
+         su->getEventHolder()->onCreateCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
+      }
+      else
+      {
+         su->getEventHolder()->onLoadCS( DMS_EVENT_MASK_ALL, cb, dpsCB ) ;
+      }
 
    done :
       if ( isLocked )

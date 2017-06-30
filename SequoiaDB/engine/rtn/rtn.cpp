@@ -563,7 +563,7 @@ namespace engine
                         /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                          storageUnit, NULL,
-                                                         NULL ) ;
+                                                         NULL, FALSE ) ;
                         if ( rc )
                         {
                            SDB_OSS_DEL storageUnit ;
@@ -583,25 +583,6 @@ namespace engine
                         }
 
                         storageUnit = NULL ;
-
-                        if ( cb != NULL )
-                        {
-                           // We need to lock the storage unit for creating
-                           // or dropping collections in it
-                           dmsStorageUnitID suID = DMS_INVALID_SUID ;
-                           dmsStorageUnit *pTmpSU = NULL ;
-                           INT32 tmprc = dmsCB->nameToSUAndLock(
-                                 csName, suID, &pTmpSU, EXCLUSIVE, OSS_ONE_SEC ) ;
-                           if ( SDB_OK == tmprc )
-                           {
-                              pTmpSU->getEventHolder()->onLoadCS(
-                                    DMS_EVENT_MASK_ALL, cb, NULL ) ;
-                           }
-                           if ( DMS_INVALID_SUID != suID )
-                           {
-                              dmsCB->suUnlock( suID, EXCLUSIVE ) ;
-                           }
-                        }
 
                         /*
                          * Scan all the collections, to check if any one should be
@@ -725,7 +706,7 @@ namespace engine
                      /// add collectionspace
                      rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                       storageUnit, NULL,
-                                                      NULL ) ;
+                                                      NULL, FALSE ) ;
                      if ( rc )
                      {
                         SDB_OSS_DEL storageUnit ;

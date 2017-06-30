@@ -1061,7 +1061,7 @@ namespace engine
       su->setSyncDeep( optCB->isSyncDeep() ) ;
 
       /// add collctionspace
-      rc = dmsCB->addCollectionSpace( pCollectionSpace, 1, su, cb, dpsCB ) ;
+      rc = dmsCB->addCollectionSpace( pCollectionSpace, 1, su, cb, dpsCB, TRUE ) ;
       if ( rc )
       {
          if ( SDB_DMS_CS_EXIST == rc )
@@ -1076,22 +1076,6 @@ namespace engine
          /// need to remove the files
          su->remove() ;
          goto error ;
-      }
-
-      {
-         // Since the cs name mutex has not been released, the storage unit
-         // should be valid at this time, but we need to lock the storage unit
-         // for creating or dropping collections in it
-         dmsEventSUItem suItem( su->CSName(), su->CSID(), su->LogicalCSID() ) ;
-         dmsStorageUnit *pTmpSU = NULL ;
-         INT32 tmprc = dmsCB->verifySUAndLock( &suItem, &pTmpSU, EXCLUSIVE,
-                                               OSS_ONE_SEC ) ;
-         if ( SDB_OK == tmprc )
-         {
-            pTmpSU->getEventHolder()->onCreateCS( DMS_EVENT_MASK_ALL, cb,
-                                                  dpsCB ) ;
-            dmsCB->suUnlock( suItem._suID, EXCLUSIVE ) ;
-         }
       }
 
       PD_LOG( PDEVENT, "Create collectionspace[%s] succeed, PageSize:%u, "

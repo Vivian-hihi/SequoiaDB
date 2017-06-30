@@ -257,7 +257,7 @@ namespace engine
 
       INT32 addCollectionSpace ( const CHAR *pName, UINT32 topSequence,
                                  _dmsStorageUnit *su, _pmdEDUCB *cb,
-                                 SDB_DPSCB *dpsCB ) ;
+                                 SDB_DPSCB *dpsCB, BOOLEAN isCreate ) ;
       INT32 dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) ;
       INT32 dropEmptyCollectionSpace( const CHAR *pName, _pmdEDUCB *cb,
