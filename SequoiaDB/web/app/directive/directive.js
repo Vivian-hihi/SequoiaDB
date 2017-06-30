@@ -2822,6 +2822,11 @@
                         var index = items.indexOf( item ) ;
                         items.splice( index, 1 ) ;
                      }
+                     else
+                     {
+                        items[0][0]['value'] = '' ;
+                        items[0][1]['value'] = '' ;
+                     }
                   }
                   scope.onChange = function( inputInfo ){
                      if( typeof( inputInfo.onChange ) == 'function' )
@@ -3279,8 +3284,15 @@
          marginLeft  = ( typeof( marginLeft ) != 'number' ? 0 : marginLeft ) ;
          marginRight  = ( typeof( marginRight ) != 'number' ? 0 : marginRight ) ;
          offsetX  = ( typeof( offsetX ) != 'number' ? 0 : offsetX ) ;
-         width += offsetX ;
-         ele.outerWidth( width ).css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
+         if( typeof( width ) == 'number' )
+         {
+            width += offsetX ;
+            ele.outerWidth( width ).css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
+         }
+         else
+         {
+             ele.css( { marginLeft: marginLeft, marginRight: marginRight } ) ;
+         }
       }
       function _renderHeight( scope, ele, height )
       {
@@ -3344,6 +3356,9 @@
             {
                width = parseInt( parent.width() * parseInt( width ) * 0.01 ) ;
             }
+            else if( width == 'auto' )
+            {
+            }
             else
             {
                width  = parent.width() ;
@@ -3360,6 +3375,10 @@
             if( maxHeight.charAt( length - 1 ) == '%' )
             {  
                maxHeight = parseInt( parent.height() * parseInt( maxHeight ) * 0.01 ) ;
+            }
+            else
+            {
+               maxHeight = parseInt( maxHeight ) ;
             }
             _renderMaxHeight( scope, ele, maxHeight ) ;
          }
@@ -5517,7 +5536,14 @@
                         scope.loadStatus['tableWidth'] = width ;
 
                         //预留表格工具栏的高度
-                        scope.tools['height'] = -1 * $( toolEle ).outerHeight() ;
+                        if( scope.table['options']['tools'] === false )
+                        {
+                           scope.tools['height'] = -1 ;
+                        }
+                        else
+                        {
+                           scope.tools['height'] = -1 * $( toolEle ).outerHeight() ;
+                        }
                      }, 0, false ) ;
                   }
 

@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=Extend.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Deploy.Sdb.Extend.Ctrl', function( $scope, $location, $rootScope, SdbRest, SdbFunction, SdbPromise, SdbSwap ){
@@ -667,7 +668,7 @@
          },
          'callback': {}
       } ;
-      //编辑节点 弹窗
+      //查看节点 弹窗
       $scope.CheckNodeConfWindow = {
          'config': [],
          'callback': {}
@@ -730,6 +731,7 @@
       var initEditNodeInput = function(){
          $scope.SetNodeConfWindow['config']['HostName'] = '' ;
          $scope.SetNodeConfWindow['config']['form1']['inputList'] = _Deploy.ConvertTemplate( template, 0 ) ;
+         $scope.SetNodeConfWindow['config']['form1']['inputList'][0]['valid'] = {} ;
          $scope.SetNodeConfWindow['config']['form2']['inputList'] = _Deploy.ConvertTemplate( template, 1 ) ;
          $scope.SetNodeConfWindow['config']['form3']['inputList'] = [
             {
@@ -986,6 +988,51 @@
          }
       }
 
+      //保存单个节点
+      var saveOneNodeConf = function( nodeConfig, newNodeConf, isBatchSave, nodeNum ){
+         var nodeFields = {} ;
+         newNodeConf['svcname'] = portEscape( newNodeConf['svcname'], nodeNum ) ;
+         newNodeConf['dbpath']  = dbpathEscape( newNodeConf['dbpath'], nodeConfig['HostName'], newNodeConf['svcname'],
+                                                nodeConfig['role'], nodeConfig['datagroupname'] ) ;
+         //记录原节点拥有的字段
+         $.each( nodeConfig, function( key, val ){
+            nodeFields[key] = false ;
+            if( key == 'HostName' || key == 'datagroupname' || key == 'role' || key == '_other' )
+            {
+               nodeFields[key] = true ;
+            }
+         } ) ;
+         $.each( newNodeConf, function( key, value ){
+            value = value.toString() ;
+            if( isBatchSave )
+            {
+               if( ( key == 'dbpath' || key == 'svcname' ) && value.length == 0 )
+               {
+                  nodeFields[key] = true ;
+                  return true ;
+               }
+               if( value.length == 0 )
+               {
+                  nodeFields[key] = true ;
+                  return true ;
+               }
+            }
+            if( key.length == 0 )
+            {
+               return true ;
+            }
+            nodeConfig[key] = value.toString() ;
+            nodeFields[key] = true ;
+         } ) ;
+         //把原节点配置有的，newNodeConf没有的字段删除
+         $.each( nodeFields, function( key, isExist ){
+            if( isExist == false )
+            {
+               delete nodeConfig[key] ;
+            }
+         } ) ;
+      }
+
       //保存节点
       var saveNodeConf = function( type, nodeIndex ){
          var result = checkNodeConf( type ) ;
@@ -997,16 +1044,7 @@
          if( type == 3 )
          {
             //保存单个节点配置
-            newNodeConf['svcname'] = portEscape( newNodeConf['svcname'], 0 ) ;
-            newNodeConf['dbpath']  = dbpathEscape( newNodeConf['dbpath'], newNodeConf['HostName'], newNodeConf['svcname'],
-                                                   newNodeConf['role'], newNodeConf['datagroupname'] ) ;
-            $.each( newNodeConf, function( key, value ){
-               if( key == '' )
-               {
-                  return true ;
-               }
-               extendNodeList[nodeIndex][key] = value ;
-            } ) ;
+            saveOneNodeConf( extendNodeList[nodeIndex], newNodeConf, false, 0 ) ;
          }
          else if( type == 4 )
          {
@@ -1017,20 +1055,7 @@
                {
                   //把配置复制出来，作为模板
                   var newFormVal = $.extend( true, {}, newNodeConf ) ;
-                  //根据实际节点，转换服务名和路径
-                  newFormVal['svcname'] = portEscape( newFormVal['svcname'], num ) ;
-                  newFormVal['dbpath']  = dbpathEscape( newNodeConf['dbpath'],
-                                                         newNodeConf['HostName'],
-                                                         newFormVal['svcname'].length == 0 ? nodeInfo['svcname'] : newFormVal['svcname'],
-                                                         nodeInfo['role'],
-                                                         newNodeConf['datagroupname'] ) ;
-                  $.each( newFormVal, function( key, value ){
-                     if( ( ( key == 'dbpath' || key == 'svcname' ) && value.length == 0 ) || key == '' )
-                     {
-                        return true ;
-                     }
-                     nodeInfo[key] = value ;
-                  } ) ;
+                  saveOneNodeConf( nodeInfo, newFormVal, true, num ) ;
                   ++num ;
                }
             } ) ;
@@ -1097,7 +1122,7 @@
             var key  = item['Name'] ;
             if( key === 'role' )
             {
-
+               return true ;
             }
             $scope.CheckNodeConfWindow['config'].push( { 'key': name, 'value': existNodeList[nodeIndex][key] } ) ;
          } ) ;
