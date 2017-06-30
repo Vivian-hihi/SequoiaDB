@@ -1,3 +1,4 @@
+//@ sourceURL=Conf.js
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
@@ -77,24 +78,22 @@
             }
          } ) ;
       }
-    
-      //获取分区组列表
-      var getGroups = function(){
-         var data = { 'cmd': 'list groups' } ;
-         SdbRest.DataOperation( data, {
+
+      //获取节点配置
+      var getModuleConfig = function(){
+         var data = { 'cmd': 'query node configure', 'filter': JSON.stringify( { 'ClusterName': SdbSwap.clusterName, 'BusinessName': $scope.ModuleName } ) } ;
+         SdbRest.OmOperation( data, {
             'success': function( result ){
                SdbSwap.beforeExtendDefer.resolve( 'GroupList', result ) ;
             },
             'failed': function( errorInfo ){
                _IndexPublic.createRetryModel( $scope, errorInfo, function(){
-                  getGroups() ;
+                  getModuleConfig() ;
                   return true ;
                } ) ;
             }
-         }, {
-            'showLoading': true
          } ) ;
-      } ;
+      }
       
       //获取业务信息
       var getBusiness = function(){
@@ -166,7 +165,7 @@
          } ) ;
       }
 
-      getGroups() ;
+      getModuleConfig() ;
       getBusiness() ;
       getHostList() ;
       getBusinessTemplate() ;
@@ -556,23 +555,38 @@
          var maxReplicaNum   = 0 ;
 
          var tempReplicaNumArr = [] ;
-
-         $.each( result['GroupList'], function( index, groupInfo ){
-            if( groupInfo['Role'] == 0 )
-            {
-               tempReplicaNumArr.push( groupInfo['Group'].length ) ;
-               dataNum += groupInfo['Group'].length ;
-               ++dataGroupNum ;
-            }
-            else if( groupInfo['Role'] == 1 )
-            {
-               coordNum = groupInfo['Group'].length ;
-            }
-            else
-            {
-               cataNum = groupInfo['Group'].length ;
-            }
+         var groups = {} ;
+         $.each( result['GroupList'], function( index, hostInfo  ){
+            $.each( hostInfo['Config'], function( index2, nodeInfo ){
+               if( nodeInfo['role'] == 'data' )
+               {
+                  if( typeof( groups[nodeInfo['datagroupname']] ) == 'undefined' )
+                  {
+                     groups[nodeInfo['datagroupname']] = 1 ;
+                  }
+                  else
+                  {
+                     ++ groups[nodeInfo['datagroupname']] ;
+                  }
+                  ++ dataNum ;
+               }
+               else if( nodeInfo['role'] == 'coord' )
+               {
+                  ++ coordNum ;
+               }
+               else
+               {
+                  ++ cataNum ;
+               }
+               
+            } ) ;
          } ) ;
+
+         $.each( groups, function( index, num ){
+            tempReplicaNumArr.push( num ) ;
+            ++ dataGroupNum ;
+         } ) ;
+
          minReplicaNum = Math.min.apply( null, tempReplicaNumArr ) ;
          maxReplicaNum = Math.max.apply( null, tempReplicaNumArr ) ;
          SdbSwap.replicaNumArr.resolve( 'max', Math.max.apply( null, tempReplicaNumArr ) ) ;
@@ -590,7 +604,6 @@
             'NumCoord':       coordNum,
             'NumCatalog':     cataNum,
             'NumData':        dataNum,
-
             'replicaNumArr': tempReplicaNumArr
          } ;
 
