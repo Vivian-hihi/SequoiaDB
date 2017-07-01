@@ -37,6 +37,7 @@
 #include "coordCommandData.hpp"
 #include "msgMessage.hpp"
 #include "pmd.hpp"
+#include "dms.hpp"
 #include "pmdCB.hpp"
 #include "rtn.hpp"
 #include "rtnContextDump.hpp"
@@ -1200,6 +1201,14 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         if ( dmsCheckFullCLName( pArgs->_targetName.c_str() ) )
+         {
+            PD_LOG( PDERROR, "Collection name is invalid[%s]",
+                    pArgs->_targetName.c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
          if ( pArgs->_targetName.empty() )
          {
             PD_LOG( PDERROR, "Collection name is empty in command[%s]",
