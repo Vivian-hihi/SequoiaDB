@@ -70,10 +70,12 @@ namespace engine
 
    private:
       virtual const CHAR* _getEyeCatcher() const ;
+
       virtual INT32 _onAllocExtent( dmsMBContext *context,
                                     dmsExtent *extAddr,
                                     SINT32 extentID,
                                     BOOLEAN map2DelList ) ;
+
       virtual INT32 _allocRecordSpace( dmsMBContext *context,
                                        UINT32 size,
                                        dmsRecordID &foundRID,
@@ -100,33 +102,37 @@ namespace engine
       virtual INT32 _operationPermChk( DMS_ACCESS_TYPE accessType ) ;
 
    private:
-         //   must be hold the mb EXCLUSIVE lock in this functions :
+      //   must be hold the mb EXCLUSIVE lock in this functions :
 
-         /*
-            When recordSize == 0, will not change the delete record size
-         */
-         INT32          _saveDeletedRecord ( dmsMB *mb,
-                                             const dmsRecordID &recordID,
-                                             INT32 recordSize = 0 ) ;
-         INT32          _saveDeletedRecord ( dmsMB *mb,
-                                             const dmsRecordID &rid,
-                                             INT32 recordSize,
-                                             dmsExtent *extAddr,
-                                             dmsDeletedRecord *pRecord ) ;
+      /*
+         When recordSize == 0, will not change the delete record size
+      */
+      INT32 _saveDeletedRecord ( dmsMB *mb,
+                                 const dmsRecordID &recordID,
+                                 INT32 recordSize = 0 ) ;
 
-         void           _mapExtent2DelList ( dmsMB *mb, dmsExtent *extAddr,
-                                             SINT32 extentID ) ;
+      INT32 _saveDeletedRecord ( dmsMB *mb,
+                                 const dmsRecordID &rid,
+                                 INT32 recordSize,
+                                 dmsExtent *extAddr,
+                                 dmsDeletedRecord *pRecord ) ;
 
-         INT32          _freeExtent ( dmsExtentID extentID,
-                                      INT32 collectionID ) ;
-         INT32 _reserveFromDeleteList ( dmsMBContext *context,
-                                        UINT32 requiredSize,
-                                        dmsRecordID &resultID,
-                                        _pmdEDUCB *cb ) ;
-         INT32          _truncateCollection ( dmsMBContext *context,
-                                              BOOLEAN needChangeCLID = TRUE ) ;
+      void  _mapExtent2DelList ( dmsMB *mb, dmsExtent *extAddr,
+                                 SINT32 extentID ) ;
 
-         INT32          _truncateCollectionLoads( dmsMBContext *context ) ;
+      INT32 _freeExtent ( dmsExtentID extentID,
+                          INT32 collectionID ) ;
+
+      INT32 _reserveFromDeleteList ( dmsMBContext *context,
+                                     UINT32 requiredSize,
+                                     dmsRecordID &resultID,
+                                     _pmdEDUCB *cb ) ;
+
+      INT32 _truncateCollection ( dmsMBContext *context,
+                                  BOOLEAN needChangeCLID = TRUE ) ;
+
+      INT32 _truncateCollectionLoads( dmsMBContext *context ) ;
+
       INT32 _extentInsertRecord ( dmsMBContext *context,
                                   dmsExtRW &extRW,
                                   dmsRecordRW &recordRW,

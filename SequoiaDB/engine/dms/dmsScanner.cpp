@@ -624,7 +624,7 @@ namespace engine
    {
       if ( _extent )
       {
-         return _extent->_nextExtent ;
+         return ((dmsCappedExtent*)_extent)->_nextLogicExtent ;
       }
       return DMS_INVALID_EXTENT ;
    }

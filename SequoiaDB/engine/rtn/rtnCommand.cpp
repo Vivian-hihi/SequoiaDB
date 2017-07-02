@@ -3208,7 +3208,8 @@ namespace engine
             goto error ;
          }
          if ( NumberLong != eleLID.type()
-              && NumberInt != eleLID.type() )
+              && NumberInt != eleLID.type()
+              && NumberDouble != eleLID.type() )
          {
             PD_LOG( PDERROR, "Type for LogicalID is invalid:%s",
                     query.toString( FALSE, TRUE ).c_str() ) ;

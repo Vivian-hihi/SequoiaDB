@@ -44,7 +44,7 @@ namespace engine
 {
 #define DMS_INVALID_REC_LOGICALID         0xffffffffffffffff
 #define DMS_CAP_EXTENT_SZ                 (32 * 1024 * 1024)
-#define DMS_CAP_EXTENT_BODY_SZ            ( DMS_CAP_EXTENT_SZ - sizeof( dmsExtent ) )
+#define DMS_CAP_EXTENT_BODY_SZ            ( DMS_CAP_EXTENT_SZ - DMS_CAPPEDEXTENT_METADATA_SZ )
 #define DMS_CAP_EXTENT_PAGE_NUM           \
    (DMS_CAP_EXTENT_SZ >> pageSizeSquareRoot())
 
@@ -85,7 +85,7 @@ namespace engine
       dmsOffset getNextRecOffset() const
       {
          return ( DMS_INVALID_OFFSET == _lastRecordOffset ) ?
-                sizeof( dmsExtent ) : _lastRecordOffset ;
+                DMS_CAPPEDEXTENT_METADATA_SZ : _lastRecordOffset ;
       }
 
       INT64 getRecordLogicID()
@@ -93,7 +93,7 @@ namespace engine
          INT64 logicID = _extLogicID * DMS_CAP_EXTENT_BODY_SZ ;
          if ( DMS_INVALID_OFFSET != _lastRecordOffset )
          {
-            logicID += _lastRecordOffset - sizeof( dmsExtent ) ;
+            logicID += _lastRecordOffset - DMS_CAPPEDEXTENT_METADATA_SZ ;
          }
 
          return logicID ;
@@ -126,6 +126,9 @@ namespace engine
                                     dmsExtent * extAddr,
                                     SINT32 extentID,
                                     BOOLEAN map2DelList ) ;
+      virtual INT32 _onFreeExtent( dmsMBContext *context,
+                                   dmsExtent *extAddr,
+                                   SINT32 extentID ) ;
 
       virtual void _finalRecordSize( UINT32 &size,
                                      const dmsRecordData &recordData ) ;
@@ -169,15 +172,10 @@ namespace engine
                                  dmsRecordData &recordData ) ;
 
       virtual INT32 _operationPermChk( DMS_ACCESS_TYPE accessType ) ;
-
-      INT32 _getIdleExt( dmsMBContext *context, dmsExtentID &extID ) ;
-
-      INT32 _transferIdleExt( dmsMBContext *context, dmsExtentID lastIdleExt ) ;
       INT32 _recycleOneExtent( dmsMBContext *context ) ;
       INT32 _recycleWorkExt( dmsMBContext *context, dmsExtentID extID ) ;
       INT32 _recycleActiveExt( dmsMBContext *context,
-                               dmsExtentID extID,
-                               BOOLEAN moveToEnd = TRUE ) ;
+                               dmsExtentID extID ) ;
 
       INT32 _popFromWorkExt( dmsMBContext *context, dmsExtentID extID,
                              dmsOffset offset, INT8 direction = 1 ) ;
@@ -271,8 +269,8 @@ namespace engine
          SDB_ASSERT( DMS_INVALID_OFFSET ==
                      extInfo._lastRecordOffset,
                      "last record offset should be invalid" ) ;
-         extInfo._firstRecordOffset = sizeof( dmsExtent ) ;
-         extInfo._lastRecordOffset = sizeof( dmsExtent ) + totalSize ;
+         extInfo._firstRecordOffset = DMS_CAPPEDEXTENT_METADATA_SZ ;
+         extInfo._lastRecordOffset = DMS_CAPPEDEXTENT_METADATA_SZ + totalSize ;
       }
       else
       {
@@ -323,14 +321,15 @@ namespace engine
       }
 
       extID = logicalID / DMS_CAP_EXTENT_BODY_SZ ;
-      offset = logicalID % DMS_CAP_EXTENT_BODY_SZ + sizeof( dmsExtent ) ;
+      offset = logicalID % DMS_CAP_EXTENT_BODY_SZ +
+               DMS_CAPPEDEXTENT_METADATA_SZ ;
    }
 
    OSS_INLINE dmsExtentID _dmsStorageDataCapped::_logicID2ExtID( dmsMBContext *context,
                                                                  INT64 logicalID )
    {
       dmsExtRW extRW ;
-      const dmsExtent *extent = NULL ;
+      const dmsCappedExtent *extent = NULL ;
       dmsExtentID extentID = DMS_INVALID_EXTENT ;
       dmsExtentID extLID = DMS_INVALID_EXTENT ;
       dmsOffset offset = 0 ;
@@ -345,13 +344,13 @@ namespace engine
 
       _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
 
-      extentID = context->mb()->_firstExtentID ;
+      extentID = context->mb()->_firstLogicExtentID ;
 
       do
       {
          extRW = extent2RW( extentID, context->mbID() ) ;
          extRW.setNothrow( TRUE ) ;
-         extent = extRW.readPtr<dmsExtent>() ;
+         extent = extRW.readPtr<dmsCappedExtent>() ;
          if ( extLID < extent->_logicID )
          {
             extentID = DMS_INVALID_EXTENT ;
@@ -371,7 +370,7 @@ namespace engine
          else
          {
             // Recycle the current extent.
-            extentID = extent->_nextExtent ;
+            extentID = extent->_nextLogicExtent;
          }
       } while ( DMS_INVALID_EXTENT != extentID ) ;
 

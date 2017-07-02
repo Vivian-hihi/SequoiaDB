@@ -113,12 +113,13 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ONALLOCEXTENT, "_dmsStorageDataCapped::_onAllocExtent" )
    INT32 _dmsStorageDataCapped::_onAllocExtent( dmsMBContext *context,
-                                                dmsExtent * extAddr,
+                                                dmsExtent *extAddr,
                                                 SINT32 extentID,
                                                 BOOLEAN map2DelList )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ONALLOCEXTENT ) ;
+      dmsCappedExtent *extent = (dmsCappedExtent *)extAddr ;
       SDB_ASSERT( context, "Context should not be NULL" ) ;
       SDB_ASSERT( extAddr, "Extent address should not be NULL" ) ;
 
@@ -129,13 +130,79 @@ namespace engine
          goto error ;
       }
 
+      if ( DMS_INVALID_EXTENT == context->mb()->_firstLogicExtentID )
+      {
+         dmsExtRW extRWTmp = extent2RW( extentID, context->mbID() ) ;
+         extRWTmp.setNothrow( TRUE ) ;
+         dmsCappedExtent *cappedExt = extRWTmp.writePtr<dmsCappedExtent>() ;
+         if ( !cappedExt )
+         {
+            PD_LOG( PDERROR, "Invalid extent[ %d ]",
+                    context->mb()->_lastLogicExtentID ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         context->mb()->_firstLogicExtentID = extentID ;
+         context->mb()->_lastLogicExtentID = extentID ;
+         cappedExt->_preLogicExtent = DMS_INVALID_EXTENT ;
+         cappedExt->_nextLogicExtent = DMS_INVALID_EXTENT ;
+         cappedExt->_logicID = 0 ;
+      }
+      else
+      {
+         // Link to logical extent list.
+         SDB_ASSERT( DMS_INVALID_EXTENT != context->mb()->_lastLogicExtentID,
+                     "Last logical extent id is invalid" ) ;
+         dmsExtRW lastExtRW = extent2RW( context->mb()->_lastLogicExtentID,
+                                         context->mbID() ) ;
+         lastExtRW.setNothrow( TRUE ) ;
+         dmsCappedExtent *lastCapExt = lastExtRW.writePtr<dmsCappedExtent>(0) ;
+         if ( !lastCapExt )
+         {
+            PD_LOG( PDERROR, "Invalid extent[ %d ]",
+                    context->mb()->_lastLogicExtentID ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         extent->_logicID = lastCapExt->_logicID + 1 ;
+         extent->_preLogicExtent = context->mb()->_lastLogicExtentID ;
+         extent->_nextLogicExtent = DMS_INVALID_EXTENT ;
+         lastCapExt->_nextLogicExtent = extentID ;
+         context->mb()->_lastLogicExtentID = extentID ;
+      }
+
       _mbStatInfo[context->mbID()]._totalDataFreeSpace +=
-            ( (extAddr->_blockSize) << pageSizeSquareRoot() ) - sizeof( dmsExtent ) ;
+            ( (extAddr->_blockSize) << pageSizeSquareRoot() ) -
+            DMS_CAPPEDEXTENT_METADATA_SZ ;
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__ONALLOCEXTENT, rc ) ;
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ONFREEEXTENT, "_dmsStorageDataCapped::_onFreeExtent" )
+   INT32 _dmsStorageDataCapped::_onFreeExtent( dmsMBContext *context,
+                                               dmsExtent *extAddr,
+                                               SINT32 extentID )
+   {
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ONFREEEXTENT ) ;
+      dmsCappedExtent *cappedExt = (dmsCappedExtent *)extAddr ;
+
+      if ( extentID == context->mb()->_firstLogicExtentID )
+      {
+         context->mb()->_firstLogicExtentID = cappedExt->_nextLogicExtent ;
+      }
+
+      if ( extentID == context->mb()->_lastLogicExtentID )
+      {
+         context->mb()->_lastLogicExtentID = cappedExt->_preLogicExtent ;
+      }
+
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__ONFREEEXTENT ) ;
+
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__FINALRECORDSIZE, "_dmsStorageDataCapped::_finalRecordSize" )
@@ -160,6 +227,12 @@ namespace engine
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__FINALRECORDSIZE ) ;
    }
 
+   // The record space allocation strategy is as follows:
+   // 1. Before reaching the limit( both size and number ), continue to write
+   //    forward. If the freespace in the current extent is not enough,
+   //    allocate a new one. No recycle needs to be done.
+   // 2. If we reach the limit( either size or number ), recycle the eldest
+   //    extent.
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ALLOCRECORDSPACE, "_dmsStorageDataCapped::_allocRecordSpace" )
    INT32 _dmsStorageDataCapped::_allocRecordSpace( dmsMBContext *context,
                                                    UINT32 size,
@@ -196,34 +269,31 @@ namespace engine
                                FALSE, FALSE, &extID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to allocate extent, rc: %d", rc ) ;
          newExtAlloc = TRUE ;
-         rc = _switchWorkExt( context, extID ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to switch working extent, rc: %d", rc ) ;
+
+         rc = _attachWorkExt( context->mbID(), extID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Attach new working extent failed: %d",
+                      rc ) ;
          extSwitched = TRUE ;
       }
       else
       {
          // Check if exceeding the Size and Max limitations.
+         // If yes, return error or recycle extent, depending on the option.
          if ( _exceedLimit( context, size ) )
          {
             rc = _recycleOneExtent( context ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to recycle extent, rc: %d", rc ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Recycle the eldest extent failed[ %d ]", rc ) ;
          }
 
          // If free space in current working extent is not enough, get another.
          if ( workExtInfo->_freeSpace < (INT32)size )
          {
-            rc = _getIdleExt( context, extID ) ;
+            rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, FALSE,
+                                  FALSE, &extID ) ;
             PD_RC_CHECK( rc, PDERROR,
-                         "Failed to reuse idle extent, rc: %d", rc ) ;
-            if ( DMS_INVALID_EXTENT == extID )
-            {
-               rc = _allocateExtent( context, DMS_CAP_EXTENT_PAGE_NUM, FALSE,
-                                     FALSE, &extID ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to allocate extent, rc: %d", rc ) ;
-               newExtAlloc = TRUE ;
-            }
+                         "Failed to allocate extent, rc: %d", rc ) ;
+            newExtAlloc = TRUE ;
 
             rc = _switchWorkExt( context, extID ) ;
             PD_RC_CHECK( rc, PDERROR,
@@ -384,7 +454,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__RECYCLEWORKEXT ) ;
       UINT16 mbID = context->mbID() ;
       dmsExtRW extRW ;
-      dmsExtent *extent = NULL ;
+      dmsCappedExtent *extent = NULL ;
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
@@ -392,7 +462,7 @@ namespace engine
 
       extRW = extent2RW( extID, mbID ) ;
       extRW.setNothrow( TRUE ) ;
-      extent = extRW.writePtr<dmsExtent>() ;
+      extent = extRW.writePtr<dmsCappedExtent>() ;
       if ( !extent )
       {
          PD_LOG( PDERROR, "Invalid extent: %d", extID ) ;
@@ -426,30 +496,26 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__RECYCLEACTIVEEXT, "_dmsStorageDataCapped::_recycleActiveExt" )
    INT32 _dmsStorageDataCapped::_recycleActiveExt( dmsMBContext *context,
-                                                   dmsExtentID extID,
-                                                   BOOLEAN moveToEnd )
+                                                   dmsExtentID extID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__RECYCLEACTIVEEXT ) ;
       UINT16 mbID = context->mbID() ;
       dmsExtRW extRW ;
-      dmsExtent *extent = NULL ;
+      dmsCappedExtent *extent = NULL ;
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
 
       extRW = extent2RW( extID, mbID ) ;
       extRW.setNothrow( TRUE ) ;
-      extent = extRW.writePtr<dmsExtent>() ;
+      extent = extRW.writePtr<dmsCappedExtent>() ;
       if ( !extent )
       {
          PD_LOG( PDERROR, "Invalid extent: %d", extID ) ;
          rc = SDB_SYS ;
          goto error ;
       }
-
-      // Set the extent as reserved.
-      context->mb()->_flag = DMS_EXTENT_FLAG_RESERVE ;
 
       _countRecNumAndSize( context, extID, extent->_firstRecordOffset,
                            extent->_lastRecordOffset, 1, recNum, dataSize,
@@ -460,131 +526,11 @@ namespace engine
       _mbStatInfo[mbID]._totalOrgDataLen -= totalSize ;
       _mbStatInfo[mbID]._totalDataLen -= totalSize ;
 
-      if ( moveToEnd )
-      {
-         _transferIdleExt( context, extID ) ;
-      }
+      rc = _freeExtent( context, extID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Free extent[%d] failed: %d", extID, rc ) ;
 
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__RECYCLEACTIVEEXT, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _dmsStorageDataCapped::_getIdleExt( dmsMBContext *context,
-                                             dmsExtentID &extID )
-   {
-      INT32 rc = SDB_OK ;
-      dmsExtRW extRW ;
-      const dmsExtent *extent = NULL ;
-      dmsExtentID foundExtID = DMS_INVALID_EXTENT ;
-
-      extRW = extent2RW( context->mb()->_lastExtentID, context->mbID() ) ;
-      extRW.setNothrow( TRUE ) ;
-      extent = extRW.readPtr<dmsExtent>() ;
-      if ( !extent )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Invalid extent[%d], rc: %d",
-                 context->mb()->_lastExtentID, rc ) ;
-         goto error ;
-      }
-      foundExtID = extent->_nextExtent ;
-
-      if ( DMS_INVALID_EXTENT != foundExtID )
-      {
-         // There are idle extents after the last extent.
-         dmsExtent *foundExtent = NULL ;
-         SDB_ASSERT( DMS_INVALID_EXTENT != context->mb()->_lastIdleExt,
-                     "Last idle extent in mb should not be invalid" ) ;
-         extRW = extent2RW( foundExtID, context->mbID() ) ;
-         extRW.setNothrow( TRUE ) ;
-         foundExtent = extRW.writePtr<dmsExtent>() ;
-         if ( !foundExtent )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Invalid extent[%d], rc: %d",
-                    context->mb()->_lastExtentID, rc ) ;
-            goto error ;
-         }
-
-         SDB_ASSERT( foundExtent->_flag & DMS_EXTENT_FLAG_RESERVE,
-                     "Extent flag invalid" ) ;
-         foundExtent->init( DMS_CAP_EXTENT_PAGE_NUM, context->mbID(),
-                            DMS_CAP_EXTENT_SZ ) ;
-         if ( foundExtID == context->mb()->_lastIdleExt )
-         {
-            // No more idle extents at the tail of the extent list.
-            context->mb()->_lastIdleExt = DMS_INVALID_EXTENT ;
-         }
-         context->mb()->_lastExtentID = foundExtID ;
-         // flushMeta( isSyncDeep() ) ;
-      }
-
-      extID = foundExtID ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _dmsStorageDataCapped::_transferIdleExt( dmsMBContext *context,
-                                                  dmsExtentID lastIdleExt )
-   {
-      // Transfer the idle extents from the head to the tail of the extent list.
-      INT32 rc = SDB_OK ;
-      dmsExtRW extRW ;
-      dmsExtent *extent = NULL ;
-      dmsMB *mb = context->mb() ;
-      dmsExtentID firstIdleExt = DMS_INVALID_EXTENT ;
-
-      if ( DMS_INVALID_EXTENT == lastIdleExt )
-      {
-         goto done ;
-      }
-
-      // Change the first extent of the collection.
-      if ( lastIdleExt == mb->_firstExtentID )
-      {
-         extRW = extent2RW( lastIdleExt, context->mbID() ) ;
-         extRW.setNothrow( TRUE ) ;
-         extent = extRW.writePtr<dmsExtent>() ;
-         if ( !extent )
-         {
-            PD_LOG( PDERROR, "Invalid extent: %d", lastIdleExt ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         mb->_firstExtentID = extent->_nextExtent ;
-         extent->_nextExtent = DMS_INVALID_EXTENT ;
-      }
-
-      // Link the idle extents to the end of the extent list, and change the
-      // last extent of the collection.
-      if ( DMS_INVALID_EXTENT != mb->_lastIdleExt )
-      {
-         extRW = extent2RW( mb->_lastIdleExt, context->mbID() ) ;
-      }
-      else
-      {
-         extRW = extent2RW( mb->_lastExtentID, context->mbID() ) ;
-      }
-
-      extRW.setNothrow( TRUE ) ;
-      extent = extRW.writePtr<dmsExtent>() ;
-      if ( !extent )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Invalid extent, rc: %d", rc ) ;
-         goto error ;
-      }
-      extent->_nextExtent = firstIdleExt ;
-      mb->_lastIdleExt = lastIdleExt ;
-
-      flushMeta( isSyncDeep() ) ;
-   done:
       return rc ;
    error:
       goto done ;
@@ -594,42 +540,28 @@ namespace engine
    INT32 _dmsStorageDataCapped::_recycleOneExtent( dmsMBContext *context )
    {
       // Extent will be recycled when the size or record number threshold is hit
-      // or when all the records in the extent are popped. After recycling, one
-      // extent becomes idle extent. If the idle extent number reaches 4, they
-      // will be put at the end of the extent list.
+      // or when all the records in the extent are popped.
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__RECYCLEEXTENT ) ;
       dmsExtentID extentID = DMS_INVALID_EXTENT ;
       dmsExtentInfo *workExtInfo = getWorkExtInfo( context->mbID() ) ;
 
-      if ( !context->isMBLock( EXCLUSIVE ) )
-      {
-         PD_LOG( PDERROR, "Caller must hold mb exclusive lock[%s]" ,
-                 context->toString().c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( !workExtInfo )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Failed to get working extent, rc: %d", rc ) ;
-         goto error ;
-      }
-
+      // Always recycle the eldest extent. There are two scenarios:
+      // 1. Only one extent in the collection.
+      // 2. More than one extents in the collection.
+      // The first scenario is a little complicated, as it's the working extent,
+      // so some sync or cleaning has to be done.
       extentID = context->mb()->_firstExtentID ;
       if ( extentID == workExtInfo->getID() )
       {
+         workExtInfo->reset() ;
          rc = _recycleWorkExt( context, extentID ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to recycle working extent, rc: %d", rc ) ;
-         rc = _transferIdleExt( context, extentID ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to transfer idle extents, rc: %d", rc ) ;
       }
       else
       {
-         rc = _recycleActiveExt( context, extentID, TRUE ) ;
+         rc = _recycleActiveExt( context, extentID ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to recycle active extent, rc: %d", rc ) ;
       }
@@ -706,6 +638,7 @@ namespace engine
       return SDB_PERM ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__ONINSERTFAIL, "_dmsStorageDataCapped::_onInsertFail" )
    INT32 _dmsStorageDataCapped::_onInsertFail( dmsMBContext *context,
                                                BOOLEAN hasInsert,
                                                dmsRecordID rid,
@@ -714,17 +647,18 @@ namespace engine
                                                pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ONINSERTFAIL ) ;
 
       if ( hasInsert )
       {
          // Revert all what has been done in _extentInsertRecord.
          dmsExtRW extRW ;
-         dmsExtent *extent = NULL ;
+         dmsCappedExtent *extent = NULL ;
          INT64 logicalID = -1 ;
 
          extRW = extent2RW( rid._extent, context->mbID() ) ;
          extRW.setNothrow( TRUE ) ;
-         extent = extRW.writePtr<dmsExtent>() ;
+         extent = extRW.writePtr<dmsCappedExtent>() ;
          if ( !extent )
          {
             rc = SDB_SYS ;
@@ -741,17 +675,20 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__ONINSERTFAIL, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__SYNCWORKEXTINFO, "_dmsStorageDataCapped::_syncWorkExtInfo" )
    INT32 _dmsStorageDataCapped::_syncWorkExtInfo( UINT16 collectionID )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__SYNCWORKEXTINFO ) ;
       dmsExtentID extID = DMS_INVALID_EXTENT ;
       dmsExtRW extRW ;
-      dmsExtent *extent = NULL ;
+      dmsCappedExtent *extent = NULL ;
       dmsExtentInfo *extInfo = getWorkExtInfo( collectionID ) ;
 
       SDB_ASSERT( extInfo, "Impossible" ) ;
@@ -764,7 +701,7 @@ namespace engine
 
       extRW = extent2RW( extID, collectionID ) ;
       extRW.setNothrow( TRUE ) ;
-      extent = extRW.writePtr<dmsExtent>() ;
+      extent = extRW.writePtr<dmsCappedExtent>() ;
       if ( !extent )
       {
          rc = SDB_SYS ;
@@ -778,6 +715,7 @@ namespace engine
       extent->_lastRecordOffset = extInfo->_lastRecordOffset ;
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__SYNCWORKEXTINFO, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -852,7 +790,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ATTACHWORKEXT ) ;
       dmsExtRW extRW ;
-      const dmsExtent *extent = NULL ;
+      const dmsCappedExtent *extent = NULL ;
       dmsExtentInfo *workExtInfo = getWorkExtInfo( collectionID ) ;
 
       SDB_ASSERT( workExtInfo, "Work extent info pointer should not be NULL" ) ;
@@ -866,7 +804,7 @@ namespace engine
 
       extRW = extent2RW( extID, collectionID ) ;
       extRW.setNothrow( TRUE ) ;
-      extent = extRW.readPtr<dmsExtent>() ;
+      extent = extRW.readPtr<dmsCappedExtent>() ;
       if ( !extent )
       {
          PD_LOG( PDERROR, "Invalid extent: %d", extID ) ;
@@ -881,18 +819,6 @@ namespace engine
       workExtInfo->_lastRecordOffset = extent->_lastRecordOffset ;
       workExtInfo->_extLogicID = extent->_logicID ;
 
-/*
-      if ( DMS_INVALID_REC_LOGICALID == workExtInfo->_recLogicID )
-      {
-         workExtInfo->_recLogicID = DMS_CAP_EXTENT_BODY_SZ * extent->_logicID ;
-      }
-      else
-      {
-         workExtInfo->_recLogicID =
-            ( workExtInfo->_recLogicID / DMS_CAP_EXTENT_SZ + 1 )
-            * DMS_CAP_EXTENT_SZ + sizeof( dmsExtent ) ;
-      }
-*/
       workExtInfo->_totalOrgDataLen = extent->_lastRecordOffset ;
       workExtInfo->_totalDataLen = extent->_lastRecordOffset ;
 
@@ -930,16 +856,15 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__DETACHWORKEXT, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__POPFROMWORKEXT, "_dmsStorageDataCapped::_popFromWorkExt" )
    INT32 _dmsStorageDataCapped::_popFromWorkExt( dmsMBContext *context,
                                                  dmsExtentID extentID,
                                                  dmsOffset offset,
                                                  INT8 direction )
    {
-      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__POPFROMWORKEXT ) ;
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
@@ -958,39 +883,40 @@ namespace engine
                               workExtInfo->_lastRecordOffset,
                               direction, recNum, dataSize, totalSize ) ;
          workExtInfo->_lastRecordOffset -= totalSize ;
+         // Do not increase the free space when direction is 1, as that
+         workExtInfo->_freeSpace += totalSize ;
+         _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
       }
 
       workExtInfo->_recCount -= recNum ;
-      workExtInfo->_freeSpace += totalSize ;
       workExtInfo->_totalOrgDataLen -= dataSize ;
       workExtInfo->_totalDataLen -= dataSize ;
 
       _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
       _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= dataSize ;
       _mbStatInfo[ context->mbID() ]._totalDataLen -= dataSize ;
-      _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__POPFROMWORKEXT ) ;
+      return SDB_OK ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__POPFROMACTIVEEXTENT, "_dmsStorageDataCapped::_popFromActiveExt" )
    INT32 _dmsStorageDataCapped::_popFromActiveExt( dmsMBContext *context,
                                                    dmsExtentID extentID,
                                                    dmsOffset offset,
                                                    INT8 direction )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__POPFROMACTIVEEXTENT ) ;
       dmsExtRW extRW ;
-      dmsExtent *extent = NULL ;
+      dmsCappedExtent *extent = NULL ;
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
 
       extRW = extent2RW( extentID, context->mbID() ) ;
       extRW.setNothrow( TRUE ) ;
-      extent = extRW.writePtr<dmsExtent>() ;
+      extent = extRW.writePtr<dmsCappedExtent>() ;
       if ( !extent )
       {
          rc = SDB_SYS ;
@@ -1020,17 +946,20 @@ namespace engine
       _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__POPFROMACTIVEEXTENT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__POPRECORD, "_dmsStorageDataCapped::_popRecord" )
    INT32 _dmsStorageDataCapped::_popRecord( dmsMBContext *context,
                                             dmsExtentID extID,
                                             dmsOffset offset,
                                             INT8 direction )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__POPRECORD ) ;
       dmsExtRW extRW ;
       dmsExtentInfo *workExtInfo = getWorkExtInfo( context->mbID() ) ;
       // Check the logical ID of all the extents.
@@ -1059,11 +988,13 @@ namespace engine
                    extID, offset, direction, rc ) ;
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__POPRECORD, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED__EXTRACTRECLID, "_dmsStorageDataCapped::_extractRecLID" )
    INT32 _dmsStorageDataCapped::_extractRecLID( dmsMBContext *context,
                                                 INT64 logicalID,
                                                 dmsExtentID &extentID,
@@ -1071,6 +1002,7 @@ namespace engine
                                                 dmsOffset &offset )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__EXTRACTRECLID ) ;
       dmsRecordID recordID ;
       dmsRecordRW recordRW ;
       const dmsRecord *record = NULL ;
@@ -1121,25 +1053,28 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__EXTRACTRECLID, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_RECYCLEEXTENTS, "_dmsStorageDataCapped::_recycleExtents" )
    INT32 _dmsStorageDataCapped::_recycleExtents( dmsMBContext *context,
                                                  dmsExtentID targetExtID,
                                                  INT8 direction )
    {
       // Recycle all the extents which will be freed by pop.
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_RECYCLEEXTENTS ) ;
       dmsExtentID extentID = DMS_INVALID_EXTENT ;
       dmsExtentID endExtID = DMS_INVALID_EXTENT ;
       dmsExtRW extRW ;
-      const dmsExtent *extent = NULL ;
+      const dmsCappedExtent *extent = NULL ;
 
       extRW = extent2RW( targetExtID, context->mbID() ) ;
       extRW.setNothrow( TRUE ) ;
-      extent = extRW.readPtr<dmsExtent>() ;
+      extent = extRW.readPtr<dmsCappedExtent>() ;
       if ( !extent )
       {
          rc = SDB_SYS ;
@@ -1149,13 +1084,13 @@ namespace engine
 
       if ( direction >= 0 )
       {
-         extentID = context->mb()->_firstExtentID ;
-         endExtID = extent->_prevExtent ;
+         extentID = context->mb()->_firstLogicExtentID ;
+         endExtID = extent->_preLogicExtent ;
       }
       else
       {
          endExtID = getWorkExtInfo( context->mbID() )->getID() ;
-         extentID = extent->_nextExtent ;
+         extentID = extent->_nextLogicExtent ;
          rc = _switchWorkExt( context, targetExtID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to switch working extent, rc: %d",
                       rc ) ;
@@ -1165,7 +1100,7 @@ namespace engine
       {
          extRW = extent2RW( extentID, context->mbID() ) ;
          extRW.setNothrow( TRUE ) ;
-         extent = extRW.readPtr<dmsExtent>() ;
+         extent = extRW.readPtr<dmsCappedExtent>() ;
          if ( !extent )
          {
             rc = SDB_SYS ;
@@ -1177,22 +1112,24 @@ namespace engine
             break ;
          }
 
-         rc = _recycleActiveExt( context, extentID, ( direction >= 0 ) ) ;
+         rc = _recycleActiveExt( context, extentID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to recycle active extent, rc: %d", rc ) ;
          if ( extentID == endExtID )
          {
             break ;
          }
 
-         extentID = extent->_nextExtent ;
+         extentID = extent->_nextLogicExtent;
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED_RECYCLEEXTENTS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE, "_dmsStorageDataCapped::_countRecNumAndSize" )
    void _dmsStorageDataCapped::_countRecNumAndSize( dmsMBContext *context,
                                                     dmsExtentID extentID,
                                                     dmsOffset beginOffset,
@@ -1202,6 +1139,7 @@ namespace engine
                                                     INT64 &dataSize,
                                                     INT64 &totalSize )
    {
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;
       dmsRecordRW recordRW ;
       const dmsRecord *record = NULL ;
 
@@ -1226,6 +1164,8 @@ namespace engine
          dataSize += record->getDataLength() ;
          totalSize += record->getSize() ;
       }
+
+      PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_POPRECORD, "_dmsStorageDataCapped::popRecord" )
@@ -1239,7 +1179,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_POPRECORD ) ;
       dmsRecordID firstRID ;
       dmsExtRW extRW ;
-      const dmsExtent *startExtent = NULL ;
+      const dmsCappedExtent *startExtent = NULL ;
       UINT32 logRecSize = 0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB() ;
       dpsMergeInfo info ;
@@ -1320,7 +1260,7 @@ namespace engine
                    "rc: %d", logicalID, rc ) ;
 
       extRW = extent2RW( context->mb()->_firstExtentID, context->mbID() ) ;
-      startExtent = extRW.readPtr<dmsExtent>() ;
+      startExtent = extRW.readPtr<dmsCappedExtent>() ;
       if ( dpscb )
       {
          info.enableTrans() ;

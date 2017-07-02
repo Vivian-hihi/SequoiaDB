@@ -62,7 +62,6 @@ namespace engine
    */
    #define DMS_EXTENT_FLAG_INUSE          0x01
    #define DMS_EXTENT_FLAG_FREED          0x02
-   #define DMS_EXTENT_FLAG_RESERVE        0x04
    /*
       Version define
    */
@@ -119,6 +118,21 @@ namespace engine
    } ;
    typedef struct _dmsExtent           dmsExtent ;
    #define DMS_EXTENT_METADATA_SZ      sizeof(dmsExtent)
+
+   struct _dmsCappedExtent : public _dmsExtent
+   {
+      dmsExtentID _preLogicExtent ;
+      dmsExtentID _nextLogicExtent ;
+
+      void init( UINT16 numPages, UINT16 mbID, UINT32 totalSize )
+      {
+         _dmsExtent::init( numPages, mbID, totalSize ) ;
+         _preLogicExtent = DMS_INVALID_EXTENT ;
+         _nextLogicExtent = DMS_INVALID_EXTENT ;
+      }
+   } ;
+   typedef struct _dmsCappedExtent     dmsCappedExtent ;
+   #define DMS_CAPPEDEXTENT_METADATA_SZ sizeof(dmsCappedExtent)
 
    /*
       Eyecatcher define

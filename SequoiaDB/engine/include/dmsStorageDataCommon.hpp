@@ -269,10 +269,11 @@ namespace engine
       UINT64         _lobCommitTime ;
       // end persistence
 
-      dmsExtentID    _lastIdleExt ;
       INT64          _maxSize ;
       INT64          _maxRecNum ;
-      CHAR           _pad [ 268 ] ;
+      dmsExtentID    _firstLogicExtentID ;
+      dmsExtentID    _lastLogicExtentID ;
+      CHAR           _pad [ 264 ] ;
 
       void reset ( const CHAR *clName = NULL,
                    UINT16 mbID = DMS_INVALID_MBID,
@@ -342,9 +343,10 @@ namespace engine
          _lobCommitLSN           = ~0 ;
          _lobCommitTime          = 0 ;
 
-         _lastIdleExt            = DMS_INVALID_EXTENT ;
          _maxSize                = maxSize ;
          _maxRecNum              = maxRecNum ;
+         _firstLogicExtentID     = DMS_INVALID_EXTENT ;
+         _lastLogicExtentID      = DMS_INVALID_EXTENT ;
 
          /// set compressor type
          if ( OSS_BIT_TEST( attr, DMS_MB_ATTR_COMPRESSED ) )
@@ -814,6 +816,9 @@ namespace engine
          // must hold mb exclusive lock
          INT32         addExtent2Meta( dmsExtentID extID, dmsExtent *extent,
                                        dmsMBContext *context ) ;
+         INT32         removeExtentFromMeta( dmsMBContext *context,
+                                             dmsExtentID extID,
+                                             dmsExtent *extent ) ;
 
          OSS_INLINE void   updateCreateLobs( UINT32 createLobs ) ;
 
@@ -922,6 +927,12 @@ namespace engine
                                        dmsExtent *extAddr,
                                        SINT32 extentID,
                                        BOOLEAN map2DelList ) = 0 ;
+         virtual INT32 _onFreeExtent( dmsMBContext *context,
+                                      dmsExtent *extAddr,
+                                      SINT32 extentID )
+         {
+            return SDB_OK ;
+         }
 
          virtual INT32 _allocRecordSpace( dmsMBContext *context,
                                           UINT32 size,
@@ -1018,6 +1029,7 @@ namespace engine
                         DMS_FILE_TYPE type, UINT32 *clLID = NULL ) ;
 
          INT32 _freeExtent ( dmsExtentID extentID, INT32 collectionID ) ;
+         INT32 _freeExtent ( dmsMBContext *context, dmsExtentID extentID ) ;
 
       private:
          void               _initializeMME () ;

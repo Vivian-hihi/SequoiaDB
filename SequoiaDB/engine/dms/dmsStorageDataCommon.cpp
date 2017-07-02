@@ -1269,6 +1269,64 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__FREEEXTENT2, "_dmsStorageDataCommon::_freeExtent" )
+   INT32 _dmsStorageDataCommon::_freeExtent( dmsMBContext *context,
+                                             dmsExtentID extentID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON__FREEEXTENT2 ) ;
+      dmsExtRW extRW ;
+      dmsExtent *extAddr = NULL ;
+
+      if ( DMS_INVALID_EXTENT == extentID )
+      {
+         PD_LOG( PDERROR, "Invalid extent id for free" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !context->isMBLock( EXCLUSIVE ) )
+      {
+         PD_LOG( PDERROR, "Caller must hold exclusive lock" ) ;
+         rc = SDB_SYS ;
+         goto done ;
+      }
+
+      extRW = extent2RW( extentID, context->mbID() ) ;
+      extRW.setNothrow( TRUE ) ;
+      extAddr = extRW.writePtr<dmsExtent>() ;
+
+      if ( !extAddr || !extAddr->validate() )
+      {
+         PD_LOG ( PDERROR, "Invalid eye catcher or flag for extent %d",
+                  extentID ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = _onFreeExtent( context, extAddr, extentID ) ;
+      PD_RC_CHECK( rc, PDERROR, "onFreeExtent for extent: %d failed: %d",
+                   extentID, rc ) ;
+
+      rc = removeExtentFromMeta( context, extentID, extAddr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Remove extent from meta failed: %d", rc ) ;
+
+      extAddr->_flag = DMS_EXTENT_FLAG_FREED ;
+      extAddr->_logicID = DMS_INVALID_EXTENT ;
+
+      rc = _releaseSpace( extentID, extAddr->_blockSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to release page, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACOMMON__FREEEXTENT2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__TRUNCATECOLLECTION, "_dmsStorageDataCommon::_truncateCollection" )
    INT32 _dmsStorageDataCommon::_truncateCollection( dmsMBContext *context,
                                                      BOOLEAN needChangeCLID )
@@ -1637,6 +1695,131 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATACOMMON_ADDEXTENT2META, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_REMOVEEXTENTFROMMETA, "_dmsStorageDataCommon::removeExtentFromMeta" )
+   INT32 _dmsStorageDataCommon::removeExtentFromMeta( dmsMBContext *context,
+                                                      dmsExtentID extID,
+                                                      dmsExtent *extent )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACOMMON_REMOVEEXTENTFROMMETA ) ;
+      dmsExtRW mbExRW ;
+      dmsMBEx *mbEx = NULL ;
+      dmsExtentID firstExtID = DMS_INVALID_EXTENT ;
+      dmsExtentID lastExtID = DMS_INVALID_EXTENT ;
+      dmsExtRW prevRW ;
+      dmsExtRW nextRW ;
+      dmsExtent *prevExt = NULL ;
+      dmsExtent *nextExt = NULL ;
+
+      UINT32 segID = extent2Segment( extID ) ;- dataStartSegID() ;
+
+      if ( isTempSU() )
+      {
+         goto done ;
+      }
+
+      mbExRW = extent2RW( context->mb()->_mbExExtentID, context->mbID() ) ;
+      mbExRW.setNothrow( TRUE ) ;
+      mbEx = mbExRW.writePtr<dmsMBEx>() ;
+      if ( NULL == mbEx )
+      {
+         PD_LOG( PDERROR, "dms mb expand extent is invalid: %d",
+                 context->mb()->_mbExExtentID ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( segID >= mbEx->_header._segNum )
+      {
+         PD_LOG( PDERROR, "Invalid segID: %d, max segNum: %d", segID,
+                 mbEx->_header._segNum ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      mbEx = mbExRW.writePtr<dmsMBEx>( 0,
+                                       (UINT32)mbEx->_header._blockSize <<
+                                       pageSizeSquareRoot() ) ;
+      mbEx->getFirstExtentID( segID, firstExtID ) ;
+      mbEx->getLastExtentID( segID, lastExtID ) ;
+
+      // Get the previous and next extents, if exist.
+      if ( DMS_INVALID_EXTENT != extent->_prevExtent )
+      {
+         prevRW = extent2RW( extent->_prevExtent, context->mbID() ) ;
+         prevRW.setNothrow( TRUE ) ;
+         prevExt = prevRW.writePtr<dmsExtent>() ;
+         if ( !prevExt )
+         {
+            PD_LOG( PDERROR, "Extent[%d] is invalid", extent->_prevExtent ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      if ( DMS_INVALID_EXTENT != extent->_nextExtent )
+      {
+         nextRW= extent2RW( extent->_nextExtent, context->mbID() ) ;
+         nextRW.setNothrow( TRUE ) ;
+         nextExt = nextRW.writePtr<dmsExtent>() ;
+         if( !nextExt )
+         {
+            PD_LOG( PDERROR, "Extent[%d] is invalid", extent->_nextExtent ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      // Modify the first/last extent in meta.
+      if ( extID == firstExtID && extID == lastExtID )
+      {
+         mbEx->setFirstExtentID( segID, DMS_INVALID_EXTENT ) ;
+         mbEx->setLastExtentID( segID, DMS_INVALID_EXTENT ) ;
+         --(mbEx->_header._usedSegNum ) ;
+      }
+      else if ( extID == firstExtID )
+      {
+         mbEx->setFirstExtentID( segID, extent->_nextExtent ) ;
+      }
+      else if ( extID == lastExtID )
+      {
+         mbEx->setLastExtentID( segID, extent->_prevExtent ) ;
+      }
+
+      // Modify the extent list in mb.
+      if ( extID == context->mb()->_firstExtentID )
+      {
+         context->mb()->_firstExtentID = extent->_nextExtent ;
+         if ( nextExt )
+         {
+            nextExt->_prevExtent = DMS_INVALID_EXTENT ;
+         }
+      }
+      else if ( extID == context->mb()->_lastExtentID )
+      {
+         context->mb()->_lastExtentID = extent->_prevExtent ;
+         if ( !prevExt )
+         {
+            prevExt->_nextExtent = DMS_INVALID_EXTENT ;
+         }
+      }
+      else
+      {
+         SDB_ASSERT( nextExt && prevExt,
+                     "Prev and next extent should not be NULL" ) ;
+         prevExt->_nextExtent = extent->_nextExtent ;
+         nextExt->_prevExtent = extent->_prevExtent ;
+      }
+
+      context->mbStat()->_totalDataPages -= extent->_blockSize ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACOMMON_REMOVEEXTENTFROMMETA, rc ) ;
       return rc ;
    error:
       goto done ;
