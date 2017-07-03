@@ -62,6 +62,7 @@ public class DropCsMaster2161 implements StandTestInterface {
         TaskMgr mgr=new TaskMgr(faultMakeTask,task);
         mgr.execute();
 
+        checkBusiness();
         int breakIndex=task.getBreakIndex();
         dropCS(csNames.subList(breakIndex,csNames.size()));
         assertEquals(dropCS(csNames),0);

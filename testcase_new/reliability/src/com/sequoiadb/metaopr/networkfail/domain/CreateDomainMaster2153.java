@@ -39,7 +39,7 @@ public class CreateDomainMaster2153 implements StandTestInterface {
     @Override
     public void tearDown() {
         dropCS(csNames);
-        dropDomain(domains);
+        dropDomains(domains);
         printEndTime(this);
     }
 
@@ -61,6 +61,7 @@ public class CreateDomainMaster2153 implements StandTestInterface {
         TaskMgr taskMgr = new TaskMgr(faultMakeTask, task);
         taskMgr.execute();
 
+        checkBusiness();
         createDomains(domains.subList(task.getBreakIndex(), domains.size()));
         assertEquals(createDomains(domains), 0);
         assertTrue(isDomainAllCreated(domains));

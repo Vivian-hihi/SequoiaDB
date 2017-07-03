@@ -49,6 +49,7 @@ public class AlterDomainMaster2155 implements StandTestInterface {
         TaskMgr mgr = new TaskMgr(faultMakeTask, task);
         mgr.execute();
 
+        checkBusiness();
         //再次执行更新domain操作，
         assertTrue(alterDomain(domain, groupNames.get(0), groupNames.get(1)));
         assertTrue(isCatalogGroupSync());

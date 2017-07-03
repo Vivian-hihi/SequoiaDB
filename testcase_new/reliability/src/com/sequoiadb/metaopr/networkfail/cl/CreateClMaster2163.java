@@ -1,10 +1,6 @@
 package com.sequoiadb.metaopr.networkfail.cl;
 
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.commlib.StandTestInterface;
-import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.exception.ReliabilityException;
 import com.sequoiadb.fault.BrokenNetwork;
 import com.sequoiadb.metaopr.commons.DBoperateTask;
@@ -14,7 +10,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.sequoiadb.metaopr.commons.MyUtil.*;
@@ -34,7 +29,6 @@ public class CreateClMaster2163 implements StandTestInterface {
     @BeforeClass
     @Override
     public void setup() {
-        dropCS(csName);
         printBeginTime(this);
         clNames = createNames("cl2163", 1000);
         createCS(csName);
@@ -44,6 +38,7 @@ public class CreateClMaster2163 implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
+        dropCS(csName);
         printEndTime(this);
     }
 

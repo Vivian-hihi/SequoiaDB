@@ -39,7 +39,6 @@ public class DropClMaster2167 implements StandTestInterface {
     public void tearDown() {
         dropCS(csName);
         printEndTime(this);
-
     }
 
     /**
@@ -64,6 +63,7 @@ public class DropClMaster2167 implements StandTestInterface {
         TaskMgr mgr=new TaskMgr(faultMakeTask,task);
         mgr.execute();
 
+        checkBusiness();
         dropCls(csName,clnames.subList(task.getBreakIndex(),clnames.size()));
         assertTrue(isClAllDeleted(csName,clnames));
         assertTrue(isCatalogGroupSync());

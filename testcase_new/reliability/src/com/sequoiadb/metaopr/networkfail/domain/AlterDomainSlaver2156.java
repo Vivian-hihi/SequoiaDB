@@ -48,6 +48,7 @@ public class AlterDomainSlaver2156 implements StandTestInterface {
         TaskMgr mgr = new TaskMgr(faultMakeTask, task);
         mgr.execute();
 
+        checkBusiness();
         assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
         alterDomain(domain, groupNames.get(1), groupNames.get(2));
         assertTrue(isCatalogGroupSync());

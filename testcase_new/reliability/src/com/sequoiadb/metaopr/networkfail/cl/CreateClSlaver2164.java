@@ -61,6 +61,7 @@ public class CreateClSlaver2164 implements StandTestInterface {
         TaskMgr mgr = new TaskMgr(faultMakeTask, task);
         mgr.execute();
 
+        checkBusiness();
         assertTrue(mgr.isAllSuccess(), mgr.getErrorMsg());
         assertEquals(createClInSingleCs(csName, clnames), 0);
         assertTrue(isClAllCreated(csName, clnames));

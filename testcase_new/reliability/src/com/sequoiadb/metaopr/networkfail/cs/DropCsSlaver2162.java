@@ -61,6 +61,7 @@ public class DropCsSlaver2162 implements StandTestInterface {
         TaskMgr mgr= new TaskMgr(faultMakeTask,task);
         mgr.execute();
 
+        checkBusiness();
         dropCS(names.subList(task.getBreakIndex(),names.size()));
         assertEquals(dropCS(names),0);
         assertTrue(isCsAllDeleted(names));

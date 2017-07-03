@@ -42,7 +42,7 @@ public class CreateClMaster2165 implements StandTestInterface {
     @Override
     public void tearDown() {
         dropCS(csName);
-        dropCS(domain);
+        dropDomain(domain);
         printEndTime(this);
     }
 
@@ -66,6 +66,7 @@ public class CreateClMaster2165 implements StandTestInterface {
         TaskMgr mgr = new TaskMgr(faultMakeTask, task);
         mgr.execute();
 
+        checkBusiness();
         //从断点开始再次创建cl
         createClInSingleCs(csName, clNames.subList(task.getBreakIndex(), clNames.size()));
         assertEquals(createClInSingleCs(csName, clNames), 0);

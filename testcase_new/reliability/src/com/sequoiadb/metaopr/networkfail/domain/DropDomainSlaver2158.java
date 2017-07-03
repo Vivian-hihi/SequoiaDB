@@ -36,6 +36,7 @@ public class DropDomainSlaver2158 implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
+        dropDomains(domains);
         printEndTime(this);
     }
 
@@ -62,10 +63,11 @@ public class DropDomainSlaver2158 implements StandTestInterface {
         TaskMgr taskMgr = new TaskMgr(faultMakeTask, task);
         taskMgr.execute();
 
+        checkBusiness();
         assertTrue(taskMgr.isAllSuccess());
         assertTrue(isDomainsDeleted(domains));
         //再次删除，期望成功删除数量为0
-        assertTrue(dropDomain(domains) == 0);
+        assertTrue(dropDomains(domains) == 0);
         assertTrue(isCatalogGroupSync());
     }
 

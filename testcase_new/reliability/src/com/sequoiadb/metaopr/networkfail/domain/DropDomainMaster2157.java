@@ -36,7 +36,7 @@ public class DropDomainMaster2157 implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
-        dropDomain(domains);
+        dropDomains(domains);
         printEndTime(this);
     }
 
@@ -62,7 +62,8 @@ public class DropDomainMaster2157 implements StandTestInterface {
         TaskMgr mgr = new TaskMgr(faultMakeTask, task);
         mgr.execute();
 
-        dropDomain(domains.subList(task.getBreakIndex(), domains.size()));
+        checkBusiness();
+        dropDomains(domains.subList(task.getBreakIndex(), domains.size()));
         assertTrue(isDomainsDeleted(domains));
         assertTrue(isCatalogGroupSync());
     }

@@ -44,7 +44,7 @@ public class CreateDomainSlaver2154 implements StandTestInterface {
     @Override
     public void tearDown() {
         dropCS(csNames);
-        dropDomain(domains);
+        dropDomains(domains);
         printEndTime(this);
     }
 
@@ -66,6 +66,7 @@ public class CreateDomainSlaver2154 implements StandTestInterface {
         TaskMgr taskMg = new TaskMgr(faultMakeTask, task);
         taskMg.execute();
 
+        checkBusiness();
         assertTrue(task.isSuccess());
         assertTrue(isDomainAllCreated(domains));
         //再次创建，期望成功创建数量为0

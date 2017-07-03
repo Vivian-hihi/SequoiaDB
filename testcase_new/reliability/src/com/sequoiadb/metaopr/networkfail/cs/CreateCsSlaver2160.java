@@ -61,6 +61,7 @@ public class CreateCsSlaver2160 implements StandTestInterface {
         TaskMgr mgr=new TaskMgr(faultMakeTask,task);
         mgr.execute();
 
+        checkBusiness();
         assertTrue(mgr.isAllSuccess(),mgr.getErrorMsg());
         assertTrue(isCsAllCreated(csNames));
         //再次创建，期望成功数量为0
