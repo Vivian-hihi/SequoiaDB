@@ -1696,41 +1696,5 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCHKFULLCLNM, "rtnCheckFullCLName" )
-   INT32 rtnCheckFullCLName(const CHAR *collectionName, BOOLEAN sys /*= FALSE */)
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCHKFULLCLNM );
-      CHAR buffer [ DMS_COLLECTION_NAME_SZ + DMS_COLLECTION_SPACE_NAME_SZ + 2 ] = {0} ;
-      ossStrncpy ( buffer, collectionName,
-                   DMS_COLLECTION_NAME_SZ +
-                   DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
-      CHAR *p = ossStrchr ( buffer, '.' ) ;
-      if ( !p )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "full collection name should include '.': %s", collectionName ) ;
-         goto error ;
-      }
-      *p = '\0' ;
-      p++ ;
-      rc = dmsCheckCSName ( buffer, sys ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = dmsCheckCLName ( p, sys ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB_RTNCHKFULLCLNM, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
-
 }
 

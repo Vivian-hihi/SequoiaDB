@@ -551,8 +551,6 @@ namespace engine
                             const CHAR *pIndexName,
                             _dpsLogWrapper *dpsCB ) ;
 
-   INT32 rtnCheckFullCLName ( const CHAR *collectionName, BOOLEAN sys = FALSE ) ;
-
 }
 
 #endif
