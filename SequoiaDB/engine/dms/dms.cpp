@@ -136,44 +136,6 @@ namespace engine
       return FALSE ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCHKFULLCLNM, "dmsCheckFullCLName" )
-   INT32 dmsCheckFullCLName ( const CHAR *fullCollectionName,
-                              BOOLEAN sys )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_DMSCHKFULLCLNM );
-      CHAR buffer [ DMS_COLLECTION_NAME_SZ +
-                    DMS_COLLECTION_SPACE_NAME_SZ + 2 ] = {0} ;
-      ossStrncpy ( buffer, fullCollectionName,
-                   DMS_COLLECTION_NAME_SZ +
-                   DMS_COLLECTION_SPACE_NAME_SZ + 1 ) ;
-      CHAR *p = ossStrchr ( buffer, '.' ) ;
-      if ( !p )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "full collection name should include '.': %s",
-                  fullCollectionName ) ;
-         goto error ;
-      }
-      *p = '\0' ;
-      p++ ;
-      rc = dmsCheckCSName ( buffer, sys ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = dmsCheckCLName ( p, sys ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB_DMSCHKFULLCLNM, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSCHKCLNM, "dmsCheckCLName" )
    INT32 dmsCheckCLName ( const CHAR *collectionName,
                           BOOLEAN sys )

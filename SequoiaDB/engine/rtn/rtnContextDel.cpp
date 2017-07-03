@@ -382,7 +382,7 @@ namespace engine
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
                "pCollectionName is null!" );
-      rc = dmsCheckFullCLName( pCollectionName );
+      rc = rtnCheckFullCLName( pCollectionName );
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name(name:%s)",
                    pCollectionName ) ;
 
@@ -572,7 +572,7 @@ namespace engine
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
                 "pCollectionName is null!" ) ;
 
-      rc = dmsCheckFullCLName( pCollectionName ) ;
+      rc = rtnCheckFullCLName( pCollectionName ) ;
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name[%s])",
                    pCollectionName ) ;
 

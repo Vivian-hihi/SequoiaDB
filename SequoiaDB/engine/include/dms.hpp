@@ -260,8 +260,6 @@ namespace engine
    BOOLEAN  dmsIsSysCLName ( const CHAR *collectionName ) ;
    INT32    dmsCheckCLName ( const CHAR *collectionName,
                              BOOLEAN sys = FALSE ) ;
-   INT32    dmsCheckFullCLName ( const CHAR *collectionName,
-                                 BOOLEAN sys = FALSE ) ;
    BOOLEAN  dmsIsSysIndexName ( const CHAR *indexName ) ;
    INT32    dmsCheckIndexName ( const CHAR *indexName,
                                 BOOLEAN sys = FALSE ) ;
