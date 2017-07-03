@@ -833,8 +833,9 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       total += 5 ;
       break ;
    case BSON_DATE :
-      /* { "$date": "YYYY-MM-DD" } */
-      total += 26 ;
+      /* { "$date": "YYYY-MM-DD" } or */
+      /* { "$date": +/-number } +/-number max length 20 */
+      total += 34 ;
       break ;
    case BSON_BINDATA :
       /* { "$binary" : "<bin data>", "$type" : "<type>" } */
