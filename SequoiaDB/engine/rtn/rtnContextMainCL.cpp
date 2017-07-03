@@ -173,11 +173,14 @@ namespace engine
    {
 
    }
+
    _rtnContextMainCL::~_rtnContextMainCL()
    {
       pmdKRCB *pKrcb = pmdGetKRCB();
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       pmdEDUCB *cb = pKrcb->getEDUMgr()->getEDUByID( eduID() );
+
+      // clean normal context
       SUBCL_CTX_MAP::iterator iter = _subContextMap.begin();
       while( iter != _subContextMap.end() )
       {
@@ -186,6 +189,17 @@ namespace engine
          ++iter;
       }
       _subContextMap.clear();
+
+      // clean ordered context
+      SUBCL_ORDER_CTX_MAP::iterator orderIter = _orderContextMap.begin() ;
+      while ( orderIter != _orderContextMap.end() )
+      {
+         pRtncb->contextDelete( orderIter->second->contextId(), cb );
+         SDB_OSS_DEL orderIter->second ;
+         ++orderIter ;
+      }
+      _orderContextMap.clear() ;
+
       SAFE_OSS_DELETE( _keyGen );
    }
 
@@ -259,7 +273,6 @@ namespace engine
                !_includeShardingOrder ) ?
              _subs.size() : 5 ;
 
-
       while ( 0 < loop-- )
       {
          contextID = -1 ;
@@ -298,7 +311,7 @@ namespace engine
                                              INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
-      SINT64 context = -1 ;
+      INT64 context = -1 ;
       _SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContextBase *contextObj = NULL ;
       if ( !_subs.empty() )
@@ -310,11 +323,14 @@ namespace engine
                         _options._orderBy,
                         _options._hint,
                         _options._flag,
-                        cb, _options._skip,
+                        cb,
+                        _options._skip,
                         _options._limit,
-                        sdbGetDMSCB(), rtnCB,
+                        sdbGetDMSCB(),
+                        rtnCB,
                         context,
-                        &contextObj ) ;
+                        &contextObj,
+                        TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to query on cl:%s, rc:%d",
@@ -425,7 +441,8 @@ namespace engine
 
    BOOLEAN _rtnContextMainCL::requireOrder () const
    {
-      return 1 < _subContextMap.size() && !(_options._orderBy.isEmpty() ) ;
+      return !( _options._orderBy.isEmpty() ) &&
+             ( _orderContextMap.size() > 0 || _subContextMap.size() > 1 ) ;
    }
 
    INT32 _rtnContextMainCL::_prepareSubCLData( SINT64 contextID,
@@ -531,6 +548,75 @@ namespace engine
       }
    }
 
+   INT32 _rtnContextMainCL::_prepareAllSubCLDataByOrder( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      _SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB();
+
+      if ( _subContextMap.size() == 0 )
+      {
+         goto done ;
+      }
+
+      for ( SUBCL_CTX_MAP::iterator iter = _subContextMap.begin() ;
+            iter != _subContextMap.end() ; )
+      {
+         rtnOrderKey orderKey ;
+         rtnSubCLContext* subCtx = iter->second ;
+
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         if ( subCtx->recordNum() <= 0 )
+         {
+            rtnContextBuf contextBuf;
+            rtnContext* rtnCtx = rtnCB->contextFind( subCtx->contextId() );
+            PD_CHECK( rtnCtx, SDB_RTN_CONTEXT_NOTEXIST, error, PDERROR,
+                      "Context %lld does not exist", subCtx->contextId() );
+
+            rc = rtnCtx->getMore( -1, contextBuf, cb );
+            if ( SDB_OK == rc )
+            {
+               subCtx->setBuffer( contextBuf ) ;
+            }
+            else if ( SDB_DMS_EOC == rc )
+            {
+               rtnCB->contextDelete( subCtx->contextId(), cb );
+               SDB_OSS_DEL iter->second ;
+               iter = _subContextMap.erase( iter ) ;
+               rc = SDB_OK ;
+               continue ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "getmore failed(rc=%d)", rc );
+               goto error;
+            }
+         }
+
+         SDB_ASSERT( subCtx->recordNum() > 0, "no data for sub ctx" ) ;
+
+         rc = subCtx->getOrderKey( orderKey ) ;
+         if ( rc != SDB_OK )
+         {
+            PD_LOG ( PDERROR, "Failed to get orderKey failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         iter = _subContextMap.erase( iter ) ;
+         _orderContextMap.insert( SUBCL_ORDER_CTX_MAP::value_type(
+                                    orderKey, subCtx ) ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnContextMainCL::_prepareDataByOrder( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
@@ -552,8 +638,39 @@ namespace engine
             goto error ;
          }
 
-         SUBCL_CTX_MAP::iterator iterSubCTXFirst = _subContextMap.begin();
-         if ( _subContextMap.end() == iterSubCTXFirst )
+         if ( _subContextMap.size() > 0 )
+         {
+            // get data from all empty sub contexts
+            rc = _prepareAllSubCLDataByOrder( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to prepare all sub collections' data, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+
+         SDB_ASSERT( _subContextMap.size() == 0, "_subContextMap should be empty" ) ;
+
+         if ( _orderContextMap.size() == 0 )
+         {
+            _hitEnd = TRUE ;
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
+
+         if ( 0 == _numToReturn )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+
+         if ( eof() )
+         {
+            break ;
+         }
+
+         SUBCL_ORDER_CTX_MAP::iterator iter = _orderContextMap.begin();
+         if ( _orderContextMap.end() == iter )
          {
             _hitEnd = TRUE ;
             if ( isEmpty() )
@@ -562,69 +679,14 @@ namespace engine
             }
             break;
          }
-         if ( iterSubCTXFirst->second->recordNum() <= 0 )
-         {
-            if ( !isEmpty() )
-            {
-               goto done;
-            }
-            /// _subs shoud be empty in this function.
-            /// so no new element will be put into _subContextMap.
-            rc = _prepareSubCLData( iterSubCTXFirst->first, cb, -1 );
-            if ( rc )
-            {
-               pRtncb->contextDelete( iterSubCTXFirst->first, cb );
-               _subContextMap.erase( iterSubCTXFirst );
-               if ( rc != SDB_DMS_EOC )
-               {
-                  goto error;
-               }
-               continue;
-            }
-         }
-         SUBCL_CTX_MAP::iterator iterSubCTXCur = iterSubCTXFirst;
-         ++iterSubCTXCur;
-         _rtnOrderKey firstOrderKey;
-         _rtnOrderKey curOrderKey;
-         rc = iterSubCTXFirst->second->getOrderKey( firstOrderKey );
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to generate order-key(rc=%d)", rc );
-         while( iterSubCTXCur != _subContextMap.end() )
-         {
-            if ( iterSubCTXCur->second->recordNum() <= 0 )
-            {
-               if ( !isEmpty() )
-               {
-                  goto done;
-               }
-               rc = _prepareSubCLData( iterSubCTXCur->first, cb, -1 );
-               if ( rc )
-               {
-                  pRtncb->contextDelete( iterSubCTXCur->first, cb );
-                  iterSubCTXCur = _subContextMap.erase( iterSubCTXCur );
-                  if ( rc != SDB_DMS_EOC )
-                  {
-                     goto error;
-                  }
-                  continue;
-               }
-            }
-            rc = iterSubCTXCur->second->getOrderKey( curOrderKey );
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to generate order-key(rc=%d)", rc );
-            if ( curOrderKey < firstOrderKey )
-            {
-               iterSubCTXFirst = iterSubCTXCur;
-               firstOrderKey = curOrderKey;
-            }
-            ++iterSubCTXCur;
-         }
+
+         rtnSubCLContext* ctx = iter->second ;
 
          if ( _numToSkip <= 0 )
          {
             try
             {
-               BSONObj obj( iterSubCTXFirst->second->front() );
+               BSONObj obj( ctx->front() );
                rc = append( obj ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to append data(rc=%d)", rc );
@@ -644,10 +706,42 @@ namespace engine
          {
             --_numToSkip ;
          }
-         rc = iterSubCTXFirst->second->pop();
+
+         rc = ctx->pop();
          if ( rc )
          {
             goto error;
+         }
+
+         if ( ctx->recordNum() <= 0 )
+         {
+            _orderContextMap.erase ( iter ) ;
+            _subContextMap.insert( SUBCL_CTX_MAP::value_type(
+                                       ctx->contextId(),
+                                       ctx ) ) ;
+            break ;
+         }
+         else
+         {
+            rtnOrderKey orderKey ;
+            rc = ctx->getOrderKey( orderKey ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
+
+            _orderContextMap.erase ( iter ) ;
+            _orderContextMap.insert( SUBCL_ORDER_CTX_MAP::value_type( orderKey,
+                                       ctx ) ) ;
+         }
+
+         // make sure we still have room to read another
+         // record_max_sz (i.e. 16MB). if we have less than 16MB
+         // to 256MB, we can't safely assume the next record we
+         // read will not overflow the buffer, so let's just break
+         // before reading the next record
+         if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
+              RTN_RESULTBUFFER_SIZE_MAX )
+         {
+            // let's break if there's no room for another max record
+            break ;
          }
       }
 

@@ -41,6 +41,7 @@
 #include "rtnContext.hpp"
 #include "rtnQueryOptions.hpp"
 #include "rtnSubContext.hpp"
+#include "utilMap.hpp"
 
 namespace engine
 {
@@ -77,6 +78,7 @@ namespace engine
    */
    class _rtnContextMainCL : public _rtnContextBase
    {
+   typedef std::multimap< rtnOrderKey, _rtnSubCLContext* > SUBCL_ORDER_CTX_MAP ;
    typedef _utilMap< INT64, _rtnSubCLContext*, 20 >    SUBCL_CTX_MAP ;
       DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
@@ -106,6 +108,7 @@ namespace engine
       INT32 _prepareSubCLData( SINT64 contextID,
                                 _pmdEDUCB * cb,
                                 INT32 maxNumToReturn = -1 );
+      INT32 _prepareAllSubCLDataByOrder( _pmdEDUCB *cb ) ;
       INT32 _prepareDataByOrder( _pmdEDUCB *cb );
       INT32 _prepareDataNormal( _pmdEDUCB *cb ) ;
 
@@ -119,13 +122,14 @@ namespace engine
                        BOOLEAN shardSort ) ;
 
    private:
-      _rtnQueryOptions  _options ;
-      SUBCL_CTX_MAP     _subContextMap ;
-      BOOLEAN           _includeShardingOrder ;
-      _ixmIndexKeyGen*  _keyGen ;
-      std::list< std::string > _subs ;
-      INT64             _numToReturn ;
-      INT64             _numToSkip ;
+      _rtnQueryOptions           _options ;
+      SUBCL_CTX_MAP              _subContextMap ;
+      SUBCL_ORDER_CTX_MAP        _orderContextMap ;
+      BOOLEAN                    _includeShardingOrder ;
+      _ixmIndexKeyGen*           _keyGen ;
+      std::list< std::string >   _subs ;
+      INT64                      _numToReturn ;
+      INT64                      _numToSkip ;
    };
    typedef class _rtnContextMainCL rtnContextMainCL;
 }
