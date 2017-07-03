@@ -418,7 +418,7 @@ public class MyUtil {
         }
     }
 
-    public static int dropDomain(List<String> domains) {
+    public static int dropDomains(List<String> domains) {
         int count = 0;
         try (MySequoiadb db = getMySdb()) {
             for (String name : domains) {
