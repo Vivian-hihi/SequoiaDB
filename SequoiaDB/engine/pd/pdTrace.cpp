@@ -357,6 +357,10 @@ INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask,
    {
       _nMonitoredNum = tids->size() ;
    }
+   else
+   {
+      _nMonitoredNum = 0 ;
+   }
    if ( _nMonitoredNum > PD_TRACE_MAX_MONITORED_THREAD_NUM )
    {
       PD_LOG ( PDWARNING, "too many threads monitored (up to 10)" ) ;
@@ -405,6 +409,8 @@ error :
 void _pdTraceCB::stop ()
 {
    PD_LOG ( PDEVENT, "Trace stops" ) ;
+   _nMonitoredNum = 0 ;
+   ossMemset( _monitoredThreads, 0, PD_TRACE_MAX_MONITORED_THREAD_NUM *sizeof(UINT32) ) ;
    _threadmonitorStart.compareAndSwap( TRUE, FALSE ) ;
    _traceStarted.compareAndSwap ( TRUE, FALSE ) ;
 }
