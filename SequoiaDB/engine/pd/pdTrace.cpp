@@ -353,7 +353,10 @@ INT32 _pdTraceCB::start ( UINT64 size, UINT32 mask,
       }
    }
 #endif
-   _nMonitoredNum = tids->size() ;
+   if ( tids )
+   {
+      _nMonitoredNum = tids->size() ;
+   }
    if ( _nMonitoredNum > PD_TRACE_MAX_MONITORED_THREAD_NUM )
    {
       PD_LOG ( PDWARNING, "too many threads monitored (up to 10)" ) ;
