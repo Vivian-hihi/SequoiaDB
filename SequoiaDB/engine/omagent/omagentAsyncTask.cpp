@@ -130,6 +130,7 @@ namespace engine
       }
 
    done:
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
       return rc ;
    error:
       goto done ;

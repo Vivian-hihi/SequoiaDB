@@ -327,6 +327,14 @@ namespace engine
          _addToFieldMap( SDBCM_CONF_OMADDR, _omAddress, TRUE, TRUE ) ;
       }
 
+      // make IsGeneralAgent to field
+      if ( TRUE == _isGeneralAgent )
+      {
+         _addToFieldMap( SDBCM_CONF_ISGENERAL,
+                         _isGeneralAgent ? "TRUE" : "FALSE",
+                         TRUE, TRUE ) ;
+      }
+
       return SDB_OK ;
    }
 
