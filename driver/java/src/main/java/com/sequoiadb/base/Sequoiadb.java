@@ -1282,18 +1282,22 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * @param options  Contains configuration infomations for remove backups, list all the backups in the default backup path if null.
-     *                 The "options" contains 3 options as below. All the elements in options are optional.
+     * @param options  Contains configuration information for listing backups, list all the backups in the default backup path if null.
+     *                 The "options" contains several options as below. All the elements in options are optional.
      *                 eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
      *                 <ul>
-     *                 <li>GroupName   : Assign the backups of specifed replica groups to be list
-     *                 <li>Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
-     *                 <li>Name        : Assign the backups with specifed name to be list
+     *                 <li>GroupID     : Specified the group id of the backups, default to list all the backups of all the groups.
+     *                 <li>GroupName   : Specified the group name of the backups, default to list all the backups of all the groups.
+     *                 <li>Path        : Specified the path of the backups, default to use the backup path asigned in the configuration file.
+     *                 <li>Name        : Specified the name of backup, default to list all the backups.
+     *                 <li>IsSubDir    : Specified the "Path" is a subdirectory of the backup path asigned in the configuration file or not, default to be false.
+     *                 <li>Prefix      : Specified the prefix name of the backups, support for using wildcards("%g","%G","%h","%H","%s","%s"),such as: Prefix:"%g_bk_", default to not using wildcards.
+     *                 <li>Detail      : Display the detail of the backups or not, default to be false.
      *                 </ul>
      * @param matcher  The matching rule, return all the documents if null
      * @param selector The selective rule, return the whole document if null
      * @param orderBy  The ordered rule, never sort if null
-     * @return the DBCursor of the backup or null while having no backup infonation.
+     * @return the DBCursor of the backup or null while having no backup information.
      * @throws com.sequoiadb.exception.BaseException
      * @fn DBCursor listBackup ( BSONObject options, BSONObject matcher,
      * BSONObject selector, BSONObject orderBy )
@@ -1301,18 +1305,6 @@ public class Sequoiadb implements Closeable {
      */
     public DBCursor listBackup(BSONObject options, BSONObject matcher,
                                BSONObject selector, BSONObject orderBy) throws BaseException {
-        if (null != options) {
-            for (String key : options.keySet()) {
-                if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_NAME)
-                    || key.equals(SdbConstants.FIELD_NAME_PATH)) {
-                    continue;
-                } else {
-                    throw new BaseException(SDBError.SDB_INVALIDARG, key);
-                }
-            }
-        }
-
         AdminRequest request = new AdminRequest(AdminCommand.LIST_BACKUP, matcher, selector, orderBy, options);
         SdbReply response = requestAndResponse(request);
 
@@ -1334,31 +1326,23 @@ public class Sequoiadb implements Closeable {
     }
 
     /**
-     * @param options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null.
-     *                The "options" contains 3 options as below. All the elements in options are optional.
+     * @param options Contains configuration information for removing backups, remove all the backups in the default backup path if null.
+     *                The "options" contains several options as below. All the elements in options are optional.
      *                eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
-     *                <ul>
-     *                <li>GroupName   : Assign the backups of specifed replica grouops to be remove
-     *                <li>Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
-     *                <li>Name        : Assign the backups with specifed name to be remove
-     *                </ul>
+     *                 <ul>
+     *                 <li>GroupID     : Specified the group id of the backups, default to list all the backups of all the groups.
+     *                 <li>GroupName   : Specified the group name of the backups, default to list all the backups of all the groups.
+     *                 <li>Path        : Specified the path of the backups, default to use the backup path asigned in the configuration file.
+     *                 <li>Name        : Specified the name of backup, default to list all the backups.
+     *                 <li>IsSubDir    : Specified the "Path" is a subdirectory of the backup path assigned in the configuration file or not, default to be false.
+     *                 <li>Prefix      : Specified the prefix name of the backups, support for using wildcards("%g","%G","%h","%H","%s","%s"),such as: Prefix:"%g_bk_", default to not using wildcards.
+     *                 <li>Detail      : Display the detail of the backups or not, default to be false.
+     *                 </ul>
      * @throws com.sequoiadb.exception.BaseException
      * @fn void removeBackup ( BSONObject options )
      * @brief Remove the backups.
      */
     public void removeBackup(BSONObject options) throws BaseException {
-        if (null != options) {
-            for (String key : options.keySet()) {
-                if (key.equals(SdbConstants.FIELD_NAME_GROUPNAME)
-                    || key.equals(SdbConstants.FIELD_NAME_NAME)
-                    || key.equals(SdbConstants.FIELD_NAME_PATH)) {
-                    continue;
-                } else {
-                    throw new BaseException(SDBError.SDB_INVALIDARG);
-                }
-            }
-        }
-
         AdminRequest request = new AdminRequest(AdminCommand.REMOVE_BACKUP, options);
         SdbReply response = requestAndResponse(request);
         reportIfError(response);
