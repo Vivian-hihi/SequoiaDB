@@ -23,9 +23,9 @@ import static org.testng.Assert.assertTrue;
  * @Version 1.00
  */
 public class CreateClMaster2165 implements StandTestInterface {
-    final String domain = "domain2165";
-    final String csName = "cs2165";
-    List<String> clNames;
+    private final String domain = "domain2165";
+    private final String csName = "cs2165";
+    private List<String> clNames;
 
     @BeforeClass
     @Override
@@ -41,6 +41,7 @@ public class CreateClMaster2165 implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
+        checkBusiness();
         dropCS(csName);
         dropDomain(domain);
         printEndTime(this);
