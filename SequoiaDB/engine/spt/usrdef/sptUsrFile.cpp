@@ -431,6 +431,12 @@ JS_MAPPING_END()
          goto error ;
       }
 
+      if( size < 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "size must be zero or positive number" ) ;
+         goto error ;
+      }
       *buf = ( CHAR* )SDB_OSS_MALLOC( size+1 ) ;
       if( NULL == *buf )
       {
