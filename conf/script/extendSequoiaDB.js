@@ -194,58 +194,6 @@ function _getGroup( db, role, dataGroupName, isAutoCreate )
    return rg ;
 }
 
-function _reelect( rg, nodeID )
-{
-   var rc = SDB_OK ;
-   var cur    = null ;
-   var detail = null ;
-   var primaryNode = 0 ;
-   var option = {} ;
-   option[FIELD_SECONDS] = OMA_REELECT_TIMEOUT ;
-
-   var i = 0 ;
-   for( i = 0; i < OMA_WAIT_PRIMARY_NODE_TIMES; ++i )
-   {
-      try
-      {
-         cur = rg.getDetail() ;
-         detail = cur.next().toObj() ;
-         primaryNode = detail[FIELD_PRIMARY_NODE] ;
-
-         if( primaryNode != nodeID )
-         {
-            break ;
-         }
-
-         rg.reelect( option ) ;
-      }
-      catch( e )
-      {
-         rc = getLastError() ;
-         if( rc == SDB_CLS_NOT_PRIMARY )
-         {
-            sleep( 1000 ) ;
-         }
-         else
-         {
-            var error = new SdbError( rc, "Failed to reelect" ) ;
-            PD_LOGGER.logTask( PDERROR, error ) ;
-            throw error ;
-         }
-      }
-   }
-   
-   if( i >= OMA_WAIT_PRIMARY_NODE_TIMES )
-   {
-      var error = new SdbError( SDB_TIMEOUT,
-                                "Failed to reelect node" ) ;
-      PD_LOGGER.logTask( PDERROR, error ) ;
-      throw error ;
-   }
-  
-   return primaryNode ;
-}
-
 function GeneratePlan( taskID )
 {
    var plan = {} ;
@@ -354,40 +302,32 @@ function CheckResult()
    return result ;
 }
 
-function _getNodeID( groupDetail, hostName, svcname )
-{
-   var detail = groupDetail ;
-   var nodeNum = detail[FIELD_GROUP].length ;
-   var primaryNode = -1 ;
-
-   for( var i = 0; i < nodeNum; ++i )
-   {
-      if( detail[FIELD_GROUP][i][FIELD_HOSTNAME] == hostName &&
-          detail[FIELD_GROUP][i][FIELD_SERVICE][0][FIELD_NAME] == svcname )
-      {
-         primaryNode = detail[FIELD_GROUP][i][FIELD_NODE_ID] ;
-         break ;
-      }
-   }
-
-   return primaryNode ;
-}
-
 function _checkNodeByScript( taskID, hostName, svcname )
 {
-   try
+   var isPrintWarning = false ;
+   for( var i = 0; i < 10; ++i )
    {
-      var agentPort = Oma.getAOmaSvcName( hostName ) ;
-      var oma = new Oma( hostName, agentPort ) ;
-      var config = oma.getNodeConfigs( svcname ) ;
-      var configObj = JSON.parse( config ) ;
-      return !(configObj[FIELD_SAC_TASKID] === taskID.toString()) ;
+      try
+      {
+         var agentPort = Oma.getAOmaSvcName( hostName ) ;
+         var oma = new Oma( hostName, agentPort ) ;
+         var config = oma.getNodeConfigs( svcname ) ;
+         var configObj = JSON.parse( config ) ;
+         return !(configObj[FIELD_SAC_TASKID] === taskID.toString()) ;
+      }
+      catch( e )
+      {
+         if( isPrintWarning == false )
+         {
+            PD_LOGGER.logTask( PDWARNING,
+                               sprintf( "Failed to get node info [?:?]",
+                                        hostName, svcname ) ) ;
+            isPrintWarning = true ;
+         }
+         sleep( 1000 ) ;
+      }
    }
-   catch( e )
-   {
-      return true ;
-   }
-   
+   return true ;
 }
 
 function _removeNode( db, nodeResult, taskID )
@@ -442,72 +382,33 @@ function _removeNode( db, nodeResult, taskID )
 
    cur = rg.getDetail() ;
    detail = cur.next().toObj() ;
-   
+  
    if( detail[FIELD_GROUP].length > 1 )
    {
-      var nodeID = _getNodeID( detail, hostName, svcname ) ;
-      if( nodeID !== -1 )
+      try
       {
-         if( role == FIELD_CATALOG || role == FIELD_DATA )
-         {
-            PD_LOGGER.logTask( PDEVENT, sprintf( "Reelect data group[?]",
-                                                 groupName ) ) ;
-            _reelect( rg, nodeID ) ;
-         }
-         try
-         {
-            rg.removeNode( hostName, svcname ) ;
-         }
-         catch( e )
-         {
-            rc = getLastError() ;
-            if( rc != SDB_CLS_NODE_NOT_EXIST )
-            {
-               var error = new SdbError( rc, sprintf( "Failed to remove node[?:?]",
-                                                      hostName, svcname ) ) ;
-               PD_LOGGER.logTask( PDERROR, error ) ;
-               throw error ;
-            }
-         }
+         rg.removeNode( hostName, svcname, { "enforced": true } ) ;
       }
-   }
-   else if( detail[FIELD_GROUP].length == 1 )
-   {
-      if( detail[FIELD_GROUP][0][FIELD_HOSTNAME] === hostName &&
-          detail[FIELD_GROUP][0][FIELD_SERVICE][0][FIELD_NAME] === svcname )
+      catch( e )
       {
-         if( role == FIELD_DATA )
+         rc = getLastError() ;
+         if( rc != SDB_CLS_NODE_NOT_EXIST )
          {
-            try
-            {
-               db.removeRG( groupName, { "enforced": true } ) ;
-            }
-            catch( e )
-            {
-               rc = getLastError() ;
-               var error = new SdbError( rc, sprintf( "Failed to remove node[?:?]",
-                                                      hostName, svcname ) ) ;
-               PD_LOGGER.logTask( PDERROR, error ) ;
-               throw error ;
-            }
-         }
-         else
-         {
-            var error = new SdbError( SDB_SYS,
-                             sprintf( "Failed to remove ?[?:?], only one node",
-                                      role, hostName, svcname ) ) ;
+            var error = new SdbError( rc, sprintf( "Failed to remove node[?:?]",
+                                                   hostName, svcname ) ) ;
             PD_LOGGER.logTask( PDERROR, error ) ;
             throw error ;
          }
       }
    }
-   else
+
+   if( detail[FIELD_GROUP].length == 1 || detail[FIELD_GROUP].length == 0 )
    {
       if( role == FIELD_DATA )
       {
          try
          {
-            db.removeRG( groupName, { "enforced": true } ) ;
+            db.removeRG( groupName ) ;
          }
          catch( e )
          {
@@ -740,6 +641,9 @@ function RestoreNodeConfig( taskID )
    var resultInfo  = BUS_JSON[FIELD_RESULTINFO] ;
    var hostName    = resultInfo[FIELD_HOSTNAME] ;
    var svcname     = resultInfo[FIELD_SVCNAME] ;
+
+   resultInfo[FIELD_STATUS] = STATUS_FINISH ;
+   resultInfo[FIELD_STATUS_DESC] = DESC_STATUS_FINISH ;
 
    PD_LOGGER.logTask( PDEVENT, sprintf( "Restore node config [?:?]",
                                         hostName, svcname ) ) ;
