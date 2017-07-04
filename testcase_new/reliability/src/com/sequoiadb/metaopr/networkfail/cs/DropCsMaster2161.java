@@ -53,7 +53,7 @@ public class DropCsMaster2161 implements StandTestInterface {
      * 7、查看catalog主备节点是否存在该CS相关信息
      */
     @Test
-    public void test() throws ReliabilityException {
+    public void test() throws ReliabilityException, InterruptedException {
         createCS(csNames);
 
         DBoperateTask task=DBoperateTask.getTaskDropCs(csNames);
@@ -63,6 +63,8 @@ public class DropCsMaster2161 implements StandTestInterface {
         mgr.execute();
 
         checkBusiness();
+        if(hostName.equals(getMasterNodeOfCatalog().hostName()))
+            Thread.sleep(5*60*1000+10*1000);
         int breakIndex=task.getBreakIndex();
         dropCS(csNames.subList(breakIndex,csNames.size()));
         assertEquals(dropCS(csNames),0);

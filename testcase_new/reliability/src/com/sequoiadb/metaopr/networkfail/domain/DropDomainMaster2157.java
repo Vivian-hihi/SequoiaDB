@@ -53,7 +53,7 @@ public class DropDomainMaster2157 implements StandTestInterface {
      * 7、查看catalog主备节点是否存在该domain相关信息
      */
     @Test
-    public void dropDomainMaster() throws ReliabilityException {
+    public void dropDomainMaster() throws ReliabilityException, InterruptedException {
         createDomains(domains);
 
         DBoperateTask task = DBoperateTask.getTaskDropDomains(domains);
@@ -63,6 +63,8 @@ public class DropDomainMaster2157 implements StandTestInterface {
         mgr.execute();
 
         checkBusiness();
+        if(hostName.equals(getMasterNodeOfCatalog().hostName()))
+            Thread.sleep(5*60*1000+10*1000);
         dropDomains(domains.subList(task.getBreakIndex(), domains.size()));
         assertTrue(isDomainsDeleted(domains));
         assertTrue(isCatalogGroupSync());

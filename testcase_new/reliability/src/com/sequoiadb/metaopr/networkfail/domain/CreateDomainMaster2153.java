@@ -55,13 +55,16 @@ public class CreateDomainMaster2153 implements StandTestInterface {
      * 7、查看catalog主备节点是否存在该domain相关信息
      */
     @Test
-    public void createDomainMaster() throws ReliabilityException {
+    public void createDomainMaster() throws ReliabilityException, InterruptedException {
         DBoperateTask task = DBoperateTask.getTaskCreateDomains(domains);
-        FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(getMasterNodeOfCatalog().hostName(), 1, 5);
+        String hostName=getMasterNodeOfCatalog().hostName();
+        FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostName, 1, 5);
         TaskMgr taskMgr = new TaskMgr(faultMakeTask, task);
         taskMgr.execute();
 
         checkBusiness();
+        if(hostName.equals(getMasterNodeOfCatalog().hostName()))
+            Thread.sleep(5*60*1000+10*1000);
         createDomains(domains.subList(task.getBreakIndex(), domains.size()));
         assertEquals(createDomains(domains), 0);
         assertTrue(isDomainAllCreated(domains));

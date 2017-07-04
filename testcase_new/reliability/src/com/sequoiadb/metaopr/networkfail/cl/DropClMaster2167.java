@@ -54,7 +54,7 @@ public class DropClMaster2167 implements StandTestInterface {
      * 9、查看catalog主备节点是否存在该CL相关信息
      */
     @Test
-    public void test() throws ReliabilityException {
+    public void test() throws ReliabilityException, InterruptedException {
         createClInSingleCs(csName,clnames);
 
         DBoperateTask task=DBoperateTask.getTaskDropCLInOneCs(clnames,csName);
@@ -64,6 +64,8 @@ public class DropClMaster2167 implements StandTestInterface {
         mgr.execute();
 
         checkBusiness();
+        if(hostname.equals(getMasterNodeOfCatalog().hostName()))
+            Thread.sleep(5*60*1000+10*1000);
         dropCls(csName,clnames.subList(task.getBreakIndex(),clnames.size()));
         assertTrue(isClAllDeleted(csName,clnames));
         assertTrue(isCatalogGroupSync());

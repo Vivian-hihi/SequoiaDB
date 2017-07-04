@@ -41,7 +41,7 @@ public class AlterDomainMaster2155 implements StandTestInterface {
      * 7、查看catalog主备节点上该domain信息是否正确
      */
     @Test
-    public void alterDomainMaster() throws ReliabilityException {
+    public void alterDomainMaster() throws ReliabilityException, InterruptedException {
         //循环1000次更改domain
         DBoperateTask task = DBoperateTask.getTaskAlterDomain(domain, 1000, groupNames);
         String hostName = getMasterNodeOfCatalog().hostName();
@@ -50,6 +50,8 @@ public class AlterDomainMaster2155 implements StandTestInterface {
         mgr.execute();
 
         checkBusiness();
+        if(hostName.equals(getMasterNodeOfCatalog().hostName()))
+            Thread.sleep(5*60*1000+10*1000);
         //再次执行更新domain操作，
         assertTrue(alterDomain(domain, groupNames.get(0), groupNames.get(1)));
         assertTrue(isCatalogGroupSync());

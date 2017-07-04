@@ -41,7 +41,6 @@ public class CreateClMaster2165 implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
-        checkBusiness();
         dropCS(csName);
         dropDomain(domain);
         printEndTime(this);
@@ -60,7 +59,7 @@ public class CreateClMaster2165 implements StandTestInterface {
      * 7、查看catalog主备节点是否存在该CS相关信息
      */
     @Test
-    public void test() throws ReliabilityException {
+    public void test() throws ReliabilityException, InterruptedException {
         DBoperateTask task = DBoperateTask.getTaskCreateCLInOneCs(clNames, csName);
         String hostname = getMasterNodeOfCatalog().hostName();
         FaultMakeTask faultMakeTask = BrokenNetwork.getFaultMakeTask(hostname, 0, 5);
@@ -68,6 +67,8 @@ public class CreateClMaster2165 implements StandTestInterface {
         mgr.execute();
 
         checkBusiness();
+        if(hostname.equals(getMasterNodeOfCatalog().hostName()))
+            Thread.sleep(5*60*1000+10*1000);
         //从断点开始再次创建cl
         createClInSingleCs(csName, clNames.subList(task.getBreakIndex(), clNames.size()));
         assertEquals(createClInSingleCs(csName, clNames), 0);

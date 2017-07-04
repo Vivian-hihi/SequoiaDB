@@ -55,7 +55,7 @@ public class CreateClMaster2163 implements StandTestInterface {
      * 7、查看catalog主备节点是否存在该CL相关信息
      */
     @Test()
-    public void test() throws ReliabilityException {
+    public void test() throws ReliabilityException, InterruptedException {
         checkBusiness();
 
         DBoperateTask task = DBoperateTask.getTaskCreateCLInOneCs(clNames, csName);
@@ -65,6 +65,8 @@ public class CreateClMaster2163 implements StandTestInterface {
         mgr.execute();
 
         checkBusiness();
+        if(hostName.equals(getMasterNodeOfCatalog().hostName()))
+            Thread.sleep(5*60*1000+10*1000);
         createClInSingleCs(csName, clNames.subList(task.getBreakIndex(), clNames.size()));
         //再次创建，期望成功创建的数量为0
         assertEquals(createClInSingleCs(csName,clNames),0);
