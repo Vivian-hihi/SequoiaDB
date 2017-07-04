@@ -119,8 +119,10 @@ TEST_F( DateTest, mills )
 	bson_date_t mills[] = { 
 		-62167248352000,   // 0000-01-01 00:00:00
 		253402271999000,   // 9999-12-31 23:59:59
-		-62167248353000,   // -0001-12-31 23:59:59 
-		253402272000000    // 10000-01-01 00:00:00
+		-62167248353000,   // < 0000-01-01 00:00:00
+		253402272000000,   // > 9999-12-31 23:59:59
+		-9223372036854775808,  // -2^63
+		9223372036854775807    // 2^63-1
 	} ;
 
 	// insert mills and query
@@ -144,6 +146,7 @@ TEST_F( DateTest, mills )
 		ASSERT_EQ( rc, BSON_OK ) << "fail to append myDate on obj, mills: " << mills[i] ;
         rc = bson_finish( &obj ) ;
 		ASSERT_EQ( rc, BSON_OK ) << "fail to finish obj, mills: " << mills[i] ;
+		bson_print( &obj ) ;
 
         rc = sdbInsert( cl, &obj ) ;
         bson_destroy( &obj ) ;
@@ -156,7 +159,7 @@ TEST_F( DateTest, mills )
         rc = sdbNext( cursor, &res ) ;
         ASSERT_EQ( rc, SDB_OK ) << "fail to get next of cursor in cl " << clName ;
         
-		// bson_print( &res ) ;
+		bson_print( &res ) ;
 		bson_iterator it ;
 		bson_find( &it, &res, "myDate" ) ;
 		bson_type type = bson_iterator_type( &it ) ;
