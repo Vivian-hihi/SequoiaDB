@@ -2,6 +2,7 @@ package com.sequoiadb.lob;
 
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.exception.BaseException;
 import org.bson.BSONObject;
 import org.bson.util.JSON;
 
@@ -34,6 +35,14 @@ public class LobUtil {
                 .getCollection(clName);
 
         cl.split("group1", "group2", 50);
+        db.close();
+    }
+
+    public static void dropLobCS(){
+        Sequoiadb db=getSdb();
+        try {
+            db.dropCollectionSpace(csName);
+        }catch (BaseException e){}
         db.close();
     }
 

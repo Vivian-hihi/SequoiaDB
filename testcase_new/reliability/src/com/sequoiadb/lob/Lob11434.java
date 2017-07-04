@@ -37,6 +37,7 @@ public class Lob11434 implements StandTestInterface {
     @BeforeClass
     @Override
     public void setup() {
+        MyUtil.printBeginTime(this);
         LobUtil.createLobCsAndCl();
         MyUtil.deleteAllLobs(csName, clName);
         for (int i = 0; i < 100; i++) {
@@ -47,7 +48,8 @@ public class Lob11434 implements StandTestInterface {
     @AfterClass
     @Override
     public void tearDown() {
-
+        LobUtil.dropLobCS();
+        MyUtil.printEndTime(this);
     }
 
     /**
