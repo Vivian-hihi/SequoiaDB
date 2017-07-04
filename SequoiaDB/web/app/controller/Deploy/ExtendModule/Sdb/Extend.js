@@ -402,6 +402,11 @@
          var modelInput    = inputList[0] ;
          var hostNameInput = inputList[1] ;
 
+         if( inputList.length > 2 )
+         {
+            inputList.splice( 2, inputList.length - 2 ) ;
+         }
+
          modelInput['onChange'] = function( name, key, value ){
             if( value == 2 )
             {
@@ -992,7 +997,8 @@
       var saveOneNodeConf = function( nodeConfig, newNodeConf, isBatchSave, nodeNum ){
          var nodeFields = {} ;
          newNodeConf['svcname'] = portEscape( newNodeConf['svcname'], nodeNum ) ;
-         newNodeConf['dbpath']  = dbpathEscape( newNodeConf['dbpath'], nodeConfig['HostName'], newNodeConf['svcname'],
+         newNodeConf['dbpath']  = dbpathEscape( newNodeConf['dbpath'], nodeConfig['HostName'],
+                                                newNodeConf['svcname'].length == 0 ? nodeConfig['svcname'] : newNodeConf['svcname'],
                                                 nodeConfig['role'], nodeConfig['datagroupname'] ) ;
          //记录原节点拥有的字段
          $.each( nodeConfig, function( key, val ){
