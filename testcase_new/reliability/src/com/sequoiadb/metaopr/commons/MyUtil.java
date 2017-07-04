@@ -447,6 +447,7 @@ public class MyUtil {
                     db.dropCollectionSpace(name);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         }
