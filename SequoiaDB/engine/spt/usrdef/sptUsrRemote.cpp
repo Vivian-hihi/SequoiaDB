@@ -355,7 +355,7 @@ namespace engine
       ss << "Remote functions:" << endl
          << "var remote = new Remote( [hostname], [svcname] )" << endl
          << "   getSystem()" << endl
-         << "   getFile( [filename], [mode] )" << endl
+         << "   getFile( [filename], [permission], [mode] )" << endl
          << "   getCmd()" << endl
          << "   close()" << endl
          << "   getInfo()" << endl ;
@@ -370,7 +370,7 @@ namespace engine
       stringstream ss ;
       ss << "Remote member functions:" << endl
          << "   getSystem()" << endl
-         << "   getFile( [filename], [mode] )" << endl
+         << "   getFile( [filename], [permission], [mode] )" << endl
          << "   getCmd()" << endl
          << "   close()" << endl
          << "   getInfo()" << endl ;

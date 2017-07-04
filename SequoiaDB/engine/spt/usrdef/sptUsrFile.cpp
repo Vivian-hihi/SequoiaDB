@@ -52,7 +52,7 @@ using namespace bson ;
 namespace engine
 {
    #define FILE_TRANSFORM_UNIT_512K 524288
-   
+
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, write )
@@ -1534,7 +1534,7 @@ JS_MAPPING_END()
       ss << "Methods to access:" << endl
          << " var file = new File( filename, [permission], [mode] )" << endl
          << " var file = remoteObj.getFile()" << endl
-         << " var file = remoteObj.getFile( filename, [permission], [mode] )" << endl
+         << " var file = remoteObj.getFile( [filename], [permission], [mode] )" << endl
          << "File functions:" << endl
          << "   read( [size] )" << endl
          << "   write( content )" << endl
