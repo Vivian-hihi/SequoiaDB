@@ -719,7 +719,12 @@ namespace engine
             _subContextMap.insert( SUBCL_CTX_MAP::value_type(
                                        ctx->contextId(),
                                        ctx ) ) ;
-            break ;
+            // if main buffer is not empty, break to return objs,
+            // so this sub context can prefetch simultaneously
+            if ( !isEmpty() )
+            {
+               break ;
+            }
          }
          else
          {
