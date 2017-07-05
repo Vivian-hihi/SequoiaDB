@@ -93,11 +93,16 @@ function main(){
    var readFile = new File(readFileName);
    var writeFile = new File(writeFileName);
    checkArgumentRead(readFile, "a");
+   println("check string size success");
   
-  //negative int;SEQUOIADBMAINSTREAM-2375 
-  //checkArgumentRead(readFileName, -10);
-  //checkArgumentRead(readFileName, -1023);
+  //negative int;
+  checkArgumentRead(readFile, -10);
+  checkArgumentRead(readFile, -1023);
   println("check negative int size success");
+  
+  //long
+  checkArgumentRead(readFile, 9007199254740992, -2 );
+  println("check long size success");
   
   //writeContent argument illegal
   //miss argument

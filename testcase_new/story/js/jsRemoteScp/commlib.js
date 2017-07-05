@@ -123,12 +123,13 @@ function readWriteContentManyTimes(readFile, writeFile, length){
    }
 }
 
-function checkArgumentRead(readFile, length){
+function checkArgumentRead(readFile, length, errCode){
+   if ( typeof(errCode) == "undefined" ) { errCode = -6; }
    try{
       var content = readFile.readContent(length);
       throw "EXPECT GET AN ERROR"
    }catch(e){
-      if(e !== -6){
+      if(e !== errCode){
          throw buildException("checkArgumentRead()", e, e, "FAILED", "SUCCESS");
       }
    }
