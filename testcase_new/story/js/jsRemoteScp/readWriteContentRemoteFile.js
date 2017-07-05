@@ -44,9 +44,9 @@ function main(){
    println("read and write content 4194304 size success");
    
    //size = fileLength
-   /*var readFile = remote.getFile(readFileName);
+   var readFile = remote.getFile(readFileName);
    var writeFile = remote.getFile(writeFileName);
-   var fileSize = parseInt(file.stat(readFileName).toObj().size);
+   var fileSize = parseInt(readFile.stat(readFileName).toObj().size);
    readWriteContentAndCheck(readFile, writeFile, fileSize);
    println("read and write content " + fileSize + " size success");
 
@@ -55,7 +55,7 @@ function main(){
    var writeFile = remote.getFile(writeFileName);
    var overSize = fileSize + 104857600;
    readWriteContentAndCheck(readFile, writeFile, overSize, fileSize);
-   println("read and write content " + overSize + " size success");*/
+   println("read and write content " + overSize + " size success");
    
    //read empty file
    try{
@@ -80,10 +80,10 @@ function main(){
    println("many times read and write content 102400 size success");
    
    //many times read and write,size 100M
-   /*var readFile = remote.getFile(readFileName);
+   var readFile = remote.getFile(readFileName);
    var writeFile = remote.getFile(writeFileName);
    readWriteContentManyTimes(readFile, writeFile, 104857600);
-   println("many times read and write content 104857600 size success");*/
+   println("many times read and write content 104857600 size success");
    
    //argument check
    //float size
