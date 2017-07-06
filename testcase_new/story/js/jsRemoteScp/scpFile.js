@@ -51,11 +51,9 @@ function main(){
            localFile, remoteFile);
    println("check scp from source to destination success");
    
-   //seqDB-11339      
+   //seqDB-11339
+   //remote to remote
    try{
-      if(remoteFile.exist(remoteDstFileName)){
-         remoteFile.remove(remoteDstFileName)
-      }
       replaceFile = remote.getFile(remoteDstFileName);
       File.scp(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
                remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
@@ -66,73 +64,114 @@ function main(){
          throw buildException("scp()", e, e, -5, e);
       }
    }
-   remoteFile.remove(remoteDstFileName);
-   println("check replace set false success");
+   replaceFile.remove(remoteDstFileName);
    
-   
+   //local to remote
    try{
-      if(remoteFile.exist(remoteDstFileName)){
-         remoteFile.remove(remoteDstFileName);
-      }
-      var srcMode = 447;
-      replaceFile = remote.getFile(remoteDstFileName, srcMode);
-      File.scp(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
-               remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-               0711, true);
-      
-      //check size         
-      var expectMd5 = remoteFile.md5(remoteSrcFileName);
-      var actualMd5 = remoteFile.md5(remoteDstFileName);
-      if( expectMd5 !== actualMd5){
-         throw "REPLACE_SET_TRUE_NOT_OK";
-      }
-      
-      //check mode
-      var umask = remoteFile.getUmask();
-      var expectMode = srcMode - umask;
-      var actualMode = remoteFile._getPermission(remoteDstFileName);
-      if(expectMode !== actualMode){
-         throw "MODE_NOT_OK";
-      }
-   }catch(e){
-      throw buildException("scp()", e, e, expectMode, dstMode);
-      
-   }
-   remoteFile.remove(remoteDstFileName);
-   println("check replace set true success");
+	  replaceFile = remote.getFile(remoteDstFileName);
+	  File.scp(localSrcFileName, 
+			   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+			   false);
+	  throw "EXPECT GET AN ERROR";
+	}catch(e){
+	  if( e !== -5){
+		 throw buildException("scp()", e, e, -5, e);
+	  }
+	}
+	replaceFile.remove(remoteDstFileName);
    
-   //seqDB-11340
-   scpTest(localSrcFileName, 
-           remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-           localFile, remoteFile, 448)
-   println("check set mode copy success");
+   //remote to local
+   try{
+      replaceFile = new File(localDstFileName);
+	  File.scp(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+			   localDstFileName,
+			   false);
+	  throw "EXPECT GET AN ERROR";
+	}catch(e){
+	  if( e !== -5){
+		 throw buildException("scp()", e, e, -5, e);
+	  }
+	}
+	replaceFile.remove(localDstFileName);
    
-   //seqDB-11346        
-   checkArgumentScp(localInstallPath, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-                    remoteFile, 0755, true);
-                    
-   checkArgumentScp(remotehost + ":" + CMSVCNAME + remoteSrcFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-                    remoteFile, 0755, true);
-   
-   checkArgumentScp("", remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, remoteFile, 0755, true);
-                    
-   checkArgumentScp(localSrcFileName, remotehost + CMSVCNAME + "@" + remoteDstFileName,
-                    remoteFile, 0755, true);
-                 
-   checkArgumentScp(localSrcFileName, WORKDIR, remoteFile, 0755, true);
-   
-   checkArgumentScp(localSrcFileName, "", remoteFile, 0755, true);
-   
-   //SEQUOIADBMAINSTREAM-2378
-   /*checkArgumentScp(localSrcFileName, 
-                    remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 0800, true);
-                    
-   checkArgumentScp(localSrcFileName, 
-                    remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 512, true);*/
-   
-   scpTest(localSrcFileName, 
-           remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 
-           localFile, remoteFile, 0755, "a");
+   //local to local
+   try{
+	  replaceFile = new File(localDstFileName);
+	  File.scp(localSrcFileName, 
+			   localDstFileName,
+			   false);
+	  throw "EXPECT GET AN ERROR";
+	}catch(e){
+	  if( e !== -5){
+		 throw buildException("scp()", e, e, -5, e);
+	  }
+	}
+	replaceFile.remove(localDstFileName);
+	println("check replace set false success");
+
+	try{
+	  if(remoteFile.exist(remoteDstFileName)){
+		 remoteFile.remove(remoteDstFileName);
+	  }
+	  var srcMode = 447;
+	  replaceFile = remote.getFile(remoteDstFileName, srcMode);
+	  File.scp(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
+			   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+			   0711, true);
+	  
+	  //check size         
+	  var expectMd5 = remoteFile.md5(remoteSrcFileName);
+	  var actualMd5 = remoteFile.md5(remoteDstFileName);
+	  if( expectMd5 !== actualMd5){
+		 throw "REPLACE_SET_TRUE_NOT_OK";
+	  }
+	  
+	  //check mode
+	  var umask = remoteFile.getUmask();
+	  var expectMode = srcMode - umask;
+	  var actualMode = remoteFile._getPermission(remoteDstFileName);
+	  if(expectMode !== actualMode){
+		 throw "MODE_NOT_OK";
+	  }
+	}catch(e){
+	  throw buildException("scp()", e, e, expectMode, dstMode);
+	  
+	}
+	remoteFile.remove(remoteDstFileName);
+	println("check replace set true success");
+
+	//seqDB-11340
+	scpTest(localSrcFileName, 
+		   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+		   localFile, remoteFile, 448)
+	println("check set mode copy success");
+
+	//seqDB-11346        
+	checkArgumentScp(localInstallPath, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+					remoteFile, 0755, true);
+					
+	checkArgumentScp(remotehost + ":" + CMSVCNAME + remoteSrcFileName, remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
+					remoteFile, 0755, true);
+
+	checkArgumentScp("", remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, remoteFile, 0755, true);
+					
+	checkArgumentScp(localSrcFileName, remotehost + CMSVCNAME + "@" + remoteDstFileName,
+					remoteFile, 0755, true);
+				 
+	checkArgumentScp(localSrcFileName, WORKDIR, remoteFile, 0755, true);
+
+	checkArgumentScp(localSrcFileName, "", remoteFile, 0755, true);
+
+	//SEQUOIADBMAINSTREAM-2378
+	/*checkArgumentScp(localSrcFileName, 
+					remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 0800, true);
+					
+	checkArgumentScp(localSrcFileName, 
+					remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 512, true);*/
+
+	scpTest(localSrcFileName, 
+		   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName, 
+		   localFile, remoteFile, 0755, "a");
 		 
 	File.remove(localFileName);
 }
