@@ -200,7 +200,9 @@ function scpTest(srcFileName, dstFileName, srcFile, dstFile, mode, isReplace){
       var srcMode = srcFile._getPermission(md5SrcFileName);
       var dstMode = dstFile._getPermission(md5DstFileName);
       if ( typeof(mode) == "undefined" ) { mode = srcMode; }
-      
+     
+      var umask = dstFile.getUmask() ;
+      mode = mode & ~umask ; 
       dstFile.remove(md5DstFileName);
       
       if(expectMd5 !== actualMd5 || mode !== dstMode){

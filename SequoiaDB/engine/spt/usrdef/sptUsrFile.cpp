@@ -384,6 +384,7 @@ JS_MAPPING_END()
       string filename ;
       SINT64 location = 0 ;
       SINT64 size = 1024 ;
+      BSONObj optionObj ;
       SINT64 hasRead ;
       SINT64 readTimes ;
       const CHAR* retBuf = NULL ;
@@ -400,7 +401,19 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getString( 1, filename ) ;
+      rc = arg.getBsonobj( 1, optionObj ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be Obj" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 2, filename ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "filename must be config" ) ;
@@ -412,7 +425,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getNative( 2, (void*)&location, SPT_NATIVE_INT64 ) ;
+      rc = arg.getNative( 3, (void*)&location, SPT_NATIVE_INT64 ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "location must be config" ) ;
@@ -424,7 +437,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getNative( 3, (void*)&size, SPT_NATIVE_INT64 ) ;
+      rc = arg.getNative( 4, (void*)&size, SPT_NATIVE_INT64 ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "size must be number" ) ;
@@ -465,8 +478,8 @@ JS_MAPPING_END()
          builder.append( "filename", filename ) ;
          builder.append( "location", location + hasRead ) ;
          builder.append( "size", readLen ) ;
-         rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, BSONObj(), BSONObj(),
-                                   builder.obj(), detail, retObj ) ;
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_READ, optionObj,
+                                   BSONObj(), builder.obj(), detail, retObj ) ;
          if( SDB_OK != rc )
          {
             if( 0 < readTimes && SDB_EOF == rc )
@@ -564,6 +577,7 @@ JS_MAPPING_END()
       sptUsrFileContent *pFileContent = NULL ;
       string filename ;
       SINT64 location = 0 ;
+      BSONObj optionObj ;
       SINT64 size ;
       SINT64 hasWrite ;
       BSONObj retObj ;
@@ -580,7 +594,19 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getString( 1, filename ) ;
+      rc = arg.getBsonobj( 1, optionObj ) ;
+      if( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be config" ) ;
+         goto error ;
+      }
+      else if( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "optionObj must be Obj" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 2, filename ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "filename must be config" ) ;
@@ -592,7 +618,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getNative( 2, (void*)&location, SPT_NATIVE_INT64 ) ;
+      rc = arg.getNative( 3, (void*)&location, SPT_NATIVE_INT64 ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "location must be config" ) ;
@@ -604,7 +630,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getUserObj( 3, "FileContent", (const void**)&pFileContent ) ;
+      rc = arg.getUserObj( 4, "FileContent", (const void**)&pFileContent ) ;
       if( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "fileContent must be config" ) ;
@@ -636,7 +662,7 @@ JS_MAPPING_END()
          builder.append( "content", pFileContent->getBuf() + hasWrite,
                          writeSize ) ;
          builder.append( "size", writeSize ) ;
-         rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, BSONObj(), BSONObj(),
+         rc = pRemote->runCommand( OMA_REMOTE_FILE_WRITE, optionObj, BSONObj(),
                                    builder.obj(), detail, retObj ) ;
          hasWrite += writeSize ;
       }

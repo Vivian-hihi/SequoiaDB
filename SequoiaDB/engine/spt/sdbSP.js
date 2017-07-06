@@ -6,7 +6,7 @@ var SDB_FILE_SHAREREAD =     0x00000010 ;
 var SDB_FILE_SHAREWROTE =    SDB_FILE_SHAREREAD | 0x00000020 ;
 var SDB_FILE_READONLY =      0x00000004 | SDB_FILE_SHAREREAD ;
 var SDB_FILE_WRITEONLY =     0x00000008 ;
-var SDB_FILE_READWRITE =     SDB_FILE_READONLY | SDB_FILE_WRITEONLY ;
+var SDB_FILE_READWRITE =     0x00000004 | SDB_FILE_WRITEONLY ;
 var SDB_FILE_WRITETHROUGH =  0x00000040 ;
 var SDB_FILE_DIRECTIO =      0x00000080 ;
 
@@ -2233,6 +2233,7 @@ File.scp = function( src, dst, isReplace, mode ) {
    var dstFile ;
    var COPY_UNIT = 4*1024*1024 ;
    var srcArr = src.split( "@" ) ;
+   var dstFilename ;
    if( srcArr.length > 1 )
    {
       var hostPortSplit = srcArr[0].split( ":" ) ;
@@ -2265,13 +2266,15 @@ File.scp = function( src, dst, isReplace, mode ) {
    }
 
    var dstArr = dst.split( "@" ) ;
+   var isDstExist = false ;
    if( dstArr.length > 1 )
    {
       var hostPortSplit = dstArr[0].split( ":" ) ;
       var remote = new Remote( hostPortSplit[0], hostPortSplit[1] ) ;
       var fileMgr = remote.getFile() ;
-
-      if( true == fileMgr.exist( dstArr[1] ) )
+      dstFilename = dstArr[1] ;
+      isDstExist = fileMgr.exist( dstFilename ) ;
+      if( true == isDstExist )
       {
          if( false == isReplace )
          {
@@ -2280,19 +2283,20 @@ File.scp = function( src, dst, isReplace, mode ) {
          }
          else
          {
-            dstFile = remote.getFile( dstArr[1], mode,
+            dstFile = remote.getFile( dstFilename, 0777,
                                       SDB_FILE_REPLACE| SDB_FILE_READWRITE ) ;
          }
       }
       else
       {
-         dstFile = remote.getFile( dstArr[1], mode,
+         dstFile = remote.getFile( dstFilename, 0777,
                                    SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
       }
    }
    else
    {
-      if( true == File.exist( dstArr[0] ) )
+      dstFilename = dstArr[0] ;
+      if( true == File.exist( dstFilename ) )
       {
          if( false == isReplace )
          {
@@ -2301,13 +2305,13 @@ File.scp = function( src, dst, isReplace, mode ) {
          }
          else
          {
-            dstFile = new File( dstArr[0], mode,
+            dstFile = new File( dstFilename, 0777,
                                 SDB_FILE_REPLACE | SDB_FILE_READWRITE ) ;
          }
       }
       else
       {
-         dstFile = new File( dstArr[0], mode,
+         dstFile = new File( dstFilename, 0777,
                              SDB_FILE_CREATEONLY | SDB_FILE_READWRITE ) ;
       }
    }
@@ -2324,6 +2328,11 @@ File.scp = function( src, dst, isReplace, mode ) {
    {
       if( -9 == e )
       {
+         if( false == isDstExist )
+         {
+            var umask = dstFile.getUmask() ;
+            dstFile.chmod( dstFilename, mode & ~umask ) ;
+         }
          println( "Success to copy file from " + src + " to " + dst ) ;
       }
       else
@@ -2403,12 +2412,12 @@ File.prototype.readContent = function( size )
    {
       if( undefined != size )
       {
-         retObj = this._readContent( this._remote, this._filename,
+         retObj = this._readContent( this._remote, this._option, this._filename,
                                      this._location, size ) ;
       }
       else
       {
-         retObj = this._readContent( this._remote, this._filename,
+         retObj = this._readContent( this._remote, this._option, this._filename,
                                      this._location ) ;
       }
       this._location += retObj.getLength() ;
@@ -2453,10 +2462,9 @@ File.prototype.writeContent = function( content )
 {
    if( undefined != this._remote )
    {
-      this._writeContent( this._remote, this._filename,
+      this._writeContent( this._remote, this._option, this._filename,
                           this._location, content ) ;
       this._location += content.getLength() ;
-
    }
    else
    {
