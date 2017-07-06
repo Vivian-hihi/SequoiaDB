@@ -2440,6 +2440,7 @@ INT32 ossLockFile ( OSSFILE *pFile, OSS_FILE_LOCK lockType )
    rc = SDB_OK ;
 #endif
 done :
+   PD_TRACE_EXITRC ( SDB_OSSLOCKFILE, rc );
    return rc ;
 error :
    goto done ;
