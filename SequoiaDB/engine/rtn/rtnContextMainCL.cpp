@@ -75,7 +75,7 @@ namespace engine
       return rc;
    }
 
-   INT32 _rtnSubCLContext::popN( SINT32 num )
+   INT32 _rtnSubCLContext::popN( INT32 num )
    {
       INT32 rc = SDB_OK;
       _isOrderKeyChange = TRUE;
@@ -620,7 +620,6 @@ namespace engine
    INT32 _rtnContextMainCL::_prepareDataByOrder( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
-      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB();
 
       if ( !_subs.empty() )
       {
@@ -761,15 +760,59 @@ namespace engine
       goto done;
    }
 
+   INT32 _rtnContextMainCL::_getNonemptySubContext( _pmdEDUCB* cb, rtnSubCLContext*& subCtx )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB();
+
+      subCtx = NULL ;
+
+      for ( ;; )
+      {
+         SUBCL_CTX_MAP::iterator iter = _subContextMap.begin();
+         if ( _subContextMap.end() == iter )
+         {
+            rc = SDB_DMS_EOC;
+            goto error ;
+         }
+
+         rtnSubCLContext* ctx = iter->second ;
+
+         if ( ctx->recordNum() <= 0 )
+         {
+            rc = _prepareSubCLData( ctx->contextId(), cb, -1 ) ;
+            if ( rc != SDB_OK )
+            {
+               rtnCB->contextDelete( ctx->contextId(), cb );
+               _subContextMap.erase( ctx->contextId() );
+               SDB_OSS_DEL ctx ;
+               if ( SDB_DMS_EOC != rc )
+               {
+                  goto error;
+               }
+               else
+               {
+                  rc = SDB_OK ;
+                  continue ;
+               }
+            }
+         }
+
+         subCtx = ctx ;
+         break ;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
    INT32 _rtnContextMainCL::_prepareDataNormal( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN hasData = FALSE;
-      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB();
 
-      // buffer is empty and not need order,
-      // directly get data from sub-context
-      while( !hasData )
+      while ( 0 != _numToReturn )
       {
          if ( cb->isInterrupted() )
          {
@@ -777,67 +820,47 @@ namespace engine
             goto error ;
          }
 
-         // skip the records
-         while ( _numToSkip > 0 )
-         {
-            SUBCL_CTX_MAP::iterator iterSubCTXSkip = _subContextMap.begin();
-            if ( _subContextMap.end() == iterSubCTXSkip ||
-                 iterSubCTXSkip->second->recordNum() <= 0 )
-            {
-               break;
-            }
-            if ( _numToSkip >= iterSubCTXSkip->second->recordNum() )
-            {
-               _numToSkip -= iterSubCTXSkip->second->recordNum();
-               iterSubCTXSkip->second->popAll();
-            }
-            else
-            {
-               iterSubCTXSkip->second->popN( _numToSkip );
-               _numToSkip = 0;
-
-               // popN() only changed the offset of rtnContextBuf, so it's
-               // need to jump over '_numToSkip' records
-               rtnContextBuf buf = iterSubCTXSkip->second->buffer() ;
-               rc = appendObjs( buf.front(),
-                                buf.size() - buf.offset(),
-                                iterSubCTXSkip->second->recordNum() ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
-
-               /// clear data in buff
-               iterSubCTXSkip->second->popAll();
-               goto done ;
-            }
-         }
-
-         SINT64 curContext = -1 ;
-         SUBCL_CTX_MAP::iterator iterSubCTX = _subContextMap.begin();
-         if ( _subContextMap.end() == iterSubCTX )
+         if ( 0 == _numToReturn )
          {
             _hitEnd = TRUE ;
-            _isOpened = FALSE ;
-            rc = SDB_DMS_EOC;
+            break ;
+         }
+
+         if ( eof() )
+         {
+            break ;
+         }
+
+         rtnSubCLContext* ctx = NULL ;
+
+         rc = _getNonemptySubContext( cb, ctx ) ;
+         if ( SDB_OK != rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               _hitEnd = TRUE ;
+            }
             goto error ;
          }
 
-         curContext = iterSubCTX->first ;
-         if ( iterSubCTX->second->recordNum() <= 0 )
+         SDB_ASSERT( ctx != NULL, "ctx should not be null" ) ;
+
+         if ( _numToSkip > 0 )
          {
-            rc = _prepareSubCLData( curContext, cb, -1 ) ;
-            if ( rc != SDB_OK )
+            if ( _numToSkip >= ctx->recordNum() )
             {
-               pRtncb->contextDelete( curContext, cb );
-               _subContextMap.erase( curContext );
-               if ( SDB_DMS_EOC != rc )
-               {
-                  goto error;
-               }
+               _numToSkip -= ctx->recordNum() ;
+               ctx->popAll() ;
+               continue ;
             }
-            continue ;
+            else
+            {
+               ctx->popN( _numToSkip ) ;
+               _numToSkip = 0 ;
+            }
          }
 
-         rtnContextBuf buffObj = iterSubCTX->second->buffer() ;
-         iterSubCTX->second->popAll() ;
+         rtnContextBuf buffObj = ctx->buffer() ;
 
          if ( _numToReturn > 0 )
          {
@@ -852,7 +875,9 @@ namespace engine
                           buffObj.size() - buffObj.offset(),
                           buffObj.recordNum() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
-         hasData = TRUE ;
+
+         ctx->popAll() ;
+         break ;
       }
 
       if ( 0 == _numToReturn )

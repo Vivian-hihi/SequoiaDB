@@ -111,6 +111,7 @@ namespace engine
       INT32 _prepareAllSubCLDataByOrder( _pmdEDUCB *cb ) ;
       INT32 _prepareDataByOrder( _pmdEDUCB *cb );
       INT32 _prepareDataNormal( _pmdEDUCB *cb ) ;
+      INT32 _getNonemptySubContext( _pmdEDUCB *cb, rtnSubCLContext*& subCtx ) ;
 
       INT32 _initSubCLContext( _pmdEDUCB *cb ) ;
 
