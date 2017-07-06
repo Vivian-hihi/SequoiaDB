@@ -12,7 +12,7 @@ SparkSQL是Spark下处理结构化数据执行的模块，它提供了名为Data
 在SparkSQL中创建SequoiaDB表的SQL语句如下
 
 ```lang-javascript
-create [temporary] <table|view> <tableName> [(schema)] using com.sequoiadb.spark options (<option>, <option>, ...)
+create <[temporary] table| temporary view> <tableName> [(schema)] using com.sequoiadb.spark options (<option>, <option>, ...)
 ```
 
 说明：  
