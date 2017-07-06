@@ -1050,6 +1050,7 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << err ) ;
          goto error ;
       }
+      rval.getReturnVal().setValue( buf ) ;
    done:
       SDB_OSS_FREE( buf ) ;
       return rc ;
