@@ -117,7 +117,7 @@ function main(){
 	  replaceFile = remote.getFile(remoteDstFileName, srcMode);
 	  File.scp(remotehost + ":" + CMSVCNAME + "@" + remoteSrcFileName, 
 			   remotehost + ":" + CMSVCNAME + "@" + remoteDstFileName,
-			   0711, true);
+			   true, 0711);
 	  
 	  //check size         
 	  var expectMd5 = remoteFile.md5(remoteSrcFileName);
@@ -128,13 +128,13 @@ function main(){
 	  
 	  //check mode
 	  var umask = remoteFile.getUmask();
-	  var expectMode = srcMode - umask;
+	  var expectMode = srcMode&~umask;
 	  var actualMode = remoteFile._getPermission(remoteDstFileName);
 	  if(expectMode !== actualMode){
 		 throw "MODE_NOT_OK";
 	  }
 	}catch(e){
-	  throw buildException("scp()", e, e, expectMode, dstMode);
+	  throw buildException("scp()", e, e, expectMode, actualMode);
 	  
 	}
 	remoteFile.remove(remoteDstFileName);
