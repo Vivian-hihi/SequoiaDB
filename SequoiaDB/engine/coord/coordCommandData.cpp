@@ -2665,7 +2665,7 @@ namespace engine
       {
          UINT64 totalCount    = 0 ;
          INT64 skipCount      = 0 ;
-         INT32 flag = FLG_QUERY_WITHOUT_SORT | FLG_QUERY_WITH_RETURNDATA ;
+         INT32 flag = FLG_QUERY_FORCE_IDX_BY_SORT | FLG_QUERY_WITH_RETURNDATA ;
          BSONObj hint = BSON( "" << "" ) ;
 
          while ( TRUE )

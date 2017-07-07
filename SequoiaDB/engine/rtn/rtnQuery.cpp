@@ -850,7 +850,7 @@ namespace engine
       SINT32 explainFlags = flags ;
       if ( OSS_BIT_TEST( flags, FLG_QUERY_MODIFY ) && !orderBy.isEmpty() )
       {
-         OSS_BIT_SET( explainFlags, FLG_QUERY_WITHOUT_SORT ) ;
+         OSS_BIT_SET( explainFlags, FLG_QUERY_FORCE_IDX_BY_SORT ) ;
       }
       OSS_BIT_CLEAR( explainFlags, FLG_QUERY_EXPLAIN | FLG_QUERY_MODIFY ) ;
 

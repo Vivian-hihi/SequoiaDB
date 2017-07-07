@@ -517,8 +517,8 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 #define FLG_QUERY_PRIMARY             0x00000800
 // query and modify
 #define FLG_QUERY_MODIFY              0x00001000
-// query without sort
-#define FLG_QUERY_WITHOUT_SORT        0x00002000
+// query must use index by sort
+#define FLG_QUERY_FORCE_IDX_BY_SORT   0x00002000
 // query prepare more data
 #define FLG_QUERY_PREPARE_MORE        0x00004000
 

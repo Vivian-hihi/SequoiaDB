@@ -298,7 +298,7 @@ namespace engine
       BOOLEAN sortedIdxRequired =
             ( !_orderBy.isEmpty() ) &&
             ( OSS_BIT_TEST( _queryFlags, FLG_QUERY_MODIFY ) ||
-              OSS_BIT_TEST( _queryFlags, FLG_QUERY_WITHOUT_SORT ) ) ;
+              OSS_BIT_TEST( _queryFlags, FLG_QUERY_FORCE_IDX_BY_SORT ) ) ;
 
       UINT32 validHints = 0 ;
       BSONObjIterator iter( _hint ) ;
@@ -481,7 +481,7 @@ namespace engine
 
       if ( !_orderBy.isEmpty() &&
            ( OSS_BIT_TEST( _queryFlags, FLG_QUERY_MODIFY ) ||
-             OSS_BIT_TEST( _queryFlags, FLG_QUERY_WITHOUT_SORT ) ) )
+             OSS_BIT_TEST( _queryFlags, FLG_QUERY_FORCE_IDX_BY_SORT ) ) )
       {
          // Have order-by and with query flags to required sorted index
          priority = OPT_PLAN_SORTED_IDX_REQUIRED ;
@@ -839,7 +839,7 @@ namespace engine
 
       // query with modifier should use index to sort
       if ( ( OSS_BIT_TEST( flags, FLG_QUERY_MODIFY ) ||
-             OSS_BIT_TEST( flags, FLG_QUERY_WITHOUT_SORT ) ) &&
+             OSS_BIT_TEST( flags, FLG_QUERY_FORCE_IDX_BY_SORT ) ) &&
            _scanPath.isSortRequired() )
       {
          PD_LOG( PDDEBUG, "Must not have sort" ) ;
