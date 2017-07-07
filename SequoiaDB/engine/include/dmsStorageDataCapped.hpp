@@ -413,12 +413,12 @@ namespace engine
 
       extentID = context->mb()->_firstExtentID ;
 
-      do
+      while ( DMS_INVALID_EXTENT != extentID )
       {
          extRW = extent2RW( extentID, context->mbID() ) ;
          extRW.setNothrow( TRUE ) ;
          extent = extRW.readPtr<dmsExtent>() ;
-         if ( extLID < extent->_logicID )
+         if ( !extent || extLID < extent->_logicID )
          {
             extentID = DMS_INVALID_EXTENT ;
             goto error ;
@@ -439,7 +439,7 @@ namespace engine
             // Recycle the current extent.
             extentID = extent->_nextExtent;
          }
-      } while ( DMS_INVALID_EXTENT != extentID ) ;
+      }
 
    done:
       return extentID ;

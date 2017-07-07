@@ -599,8 +599,9 @@ namespace engine
 
       if ( !extOptions || !extOptions->valid() )
       {
-         PD_LOG( PDERROR, "Extent option object is invalid" ) ;
-         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Only capped collection with valid options[Capped/"
+                 "Size/Max] can be created on capped collection space" ) ;
+         rc = SDB_OPERATION_INCOMPATIBLE ;
          goto error ;
       }
 
