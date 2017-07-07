@@ -1122,7 +1122,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON__ALLOCATEEXTENT, "_dmsStorageDataCommon::_allocateExtent" )
    INT32 _dmsStorageDataCommon::_allocateExtent( dmsMBContext *context,
                                                  UINT16 numPages,
-                                                 BOOLEAN map2DelList,
+                                                 BOOLEAN deepInit,
                                                  BOOLEAN add2LoadList,
                                                  dmsExtentID *allocExtID )
    {
@@ -1134,7 +1134,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON__ALLOCATEEXTENT ) ;
       PD_TRACE3 ( SDB__DMSSTORAGEDATACOMMON__ALLOCATEEXTENT,
                   PD_PACK_USHORT ( numPages ),
-                  PD_PACK_UINT ( map2DelList ),
+                  PD_PACK_UINT ( deepInit ),
                   PD_PACK_UINT ( add2LoadList ) ) ;
       if ( numPages > segmentPages() || numPages < 1 )
       {
@@ -1199,13 +1199,16 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Add extent to meta failed, rc: %d", rc ) ;
       }
 
-      _onAllocExtent( context, extAddr, firstFreeExtentID, map2DelList ) ;
-
       if ( allocExtID )
       {
          *allocExtID = firstFreeExtentID ;
          PD_TRACE1 ( SDB__DMSSTORAGEDATACOMMON__ALLOCATEEXTENT,
                      PD_PACK_INT ( firstFreeExtentID ) ) ;
+      }
+
+      if ( deepInit )
+      {
+         _onAllocExtent( context, extAddr, firstFreeExtentID ) ;
       }
 
    done :
@@ -1303,10 +1306,6 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-
-      rc = _onFreeExtent( context, extAddr, extentID ) ;
-      PD_RC_CHECK( rc, PDERROR, "onFreeExtent for extent: %d failed: %d",
-                   extentID, rc ) ;
 
       rc = removeExtentFromMeta( context, extentID, extAddr ) ;
       PD_RC_CHECK( rc, PDERROR, "Remove extent from meta failed: %d", rc ) ;
@@ -1569,8 +1568,8 @@ namespace engine
          goto error ;
       }
 
-      // SYSTEMP SU
-      if ( isTempSU() )
+      // Currently including system temp su and capped su.
+      if ( !isBlockScanSupport() )
       {
          extent->_prevExtent = context->mb()->_lastExtentID ;
 
@@ -1716,104 +1715,140 @@ namespace engine
       dmsExtent *prevExt = NULL ;
       dmsExtent *nextExt = NULL ;
 
-      UINT32 segID = extent2Segment( extID ) ;- dataStartSegID() ;
+      UINT32 segID = extent2Segment( extID ) - dataStartSegID() ;
 
-      if ( isTempSU() )
+      if ( !isBlockScanSupport() )
       {
-         goto done ;
-      }
-
-      mbExRW = extent2RW( context->mb()->_mbExExtentID, context->mbID() ) ;
-      mbExRW.setNothrow( TRUE ) ;
-      mbEx = mbExRW.writePtr<dmsMBEx>() ;
-      if ( NULL == mbEx )
-      {
-         PD_LOG( PDERROR, "dms mb expand extent is invalid: %d",
-                 context->mb()->_mbExExtentID ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( segID >= mbEx->_header._segNum )
-      {
-         PD_LOG( PDERROR, "Invalid segID: %d, max segNum: %d", segID,
-                 mbEx->_header._segNum ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      mbEx = mbExRW.writePtr<dmsMBEx>( 0,
-                                       (UINT32)mbEx->_header._blockSize <<
-                                       pageSizeSquareRoot() ) ;
-      mbEx->getFirstExtentID( segID, firstExtID ) ;
-      mbEx->getLastExtentID( segID, lastExtID ) ;
-
-      // Get the previous and next extents, if exist.
-      if ( DMS_INVALID_EXTENT != extent->_prevExtent )
-      {
-         prevRW = extent2RW( extent->_prevExtent, context->mbID() ) ;
-         prevRW.setNothrow( TRUE ) ;
-         prevExt = prevRW.writePtr<dmsExtent>() ;
-         if ( !prevExt )
+         if ( DMS_INVALID_EXTENT != extent->_prevExtent )
          {
-            PD_LOG( PDERROR, "Extent[%d] is invalid", extent->_prevExtent ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            prevRW = extent2RW( extent->_prevExtent, context->mbID() ) ;
+            prevRW.setNothrow( TRUE ) ;
+            prevExt = prevRW.writePtr<dmsExtent>() ;
+            if ( !prevExt )
+            {
+               PD_LOG( PDERROR, "Invalid extent: %d", extent->_prevExtent ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            prevExt->_nextExtent = extent->_nextExtent ;
          }
-      }
-
-      if ( DMS_INVALID_EXTENT != extent->_nextExtent )
-      {
-         nextRW= extent2RW( extent->_nextExtent, context->mbID() ) ;
-         nextRW.setNothrow( TRUE ) ;
-         nextExt = nextRW.writePtr<dmsExtent>() ;
-         if( !nextExt )
+         else if ( extID == context->mb()->_firstExtentID )
          {
-            PD_LOG( PDERROR, "Extent[%d] is invalid", extent->_nextExtent ) ;
-            rc = SDB_SYS ;
-            goto error ;
+            context->mb()->_firstExtentID = extent->_nextExtent ;
          }
-      }
 
-      // Modify the first/last extent in meta.
-      if ( extID == firstExtID && extID == lastExtID )
-      {
-         mbEx->setFirstExtentID( segID, DMS_INVALID_EXTENT ) ;
-         mbEx->setLastExtentID( segID, DMS_INVALID_EXTENT ) ;
-         --(mbEx->_header._usedSegNum ) ;
-      }
-      else if ( extID == firstExtID )
-      {
-         mbEx->setFirstExtentID( segID, extent->_nextExtent ) ;
-      }
-      else if ( extID == lastExtID )
-      {
-         mbEx->setLastExtentID( segID, extent->_prevExtent ) ;
-      }
-
-      // Modify the extent list in mb.
-      if ( extID == context->mb()->_firstExtentID )
-      {
-         context->mb()->_firstExtentID = extent->_nextExtent ;
-         if ( nextExt )
+         if ( DMS_INVALID_EXTENT != extent->_nextExtent )
          {
-            nextExt->_prevExtent = DMS_INVALID_EXTENT ;
+            nextRW = extent2RW( extent->_nextExtent, context->mbID() ) ;
+            nextRW.setNothrow( TRUE ) ;
+            nextExt = nextRW.writePtr<dmsExtent>() ;
+            if ( !nextExt )
+            {
+               PD_LOG( PDERROR, "Invalid extent: %d", extent->_nextExtent ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            nextExt->_prevExtent = extent->_prevExtent ;
          }
-      }
-      else if ( extID == context->mb()->_lastExtentID )
-      {
-         context->mb()->_lastExtentID = extent->_prevExtent ;
-         if ( !prevExt )
+         else if ( extID == context->mb()->_lastExtentID )
          {
-            prevExt->_nextExtent = DMS_INVALID_EXTENT ;
+            context->mb()->_lastExtentID = extent->_prevExtent ;
          }
       }
       else
       {
-         SDB_ASSERT( nextExt && prevExt,
-                     "Prev and next extent should not be NULL" ) ;
-         prevExt->_nextExtent = extent->_nextExtent ;
-         nextExt->_prevExtent = extent->_prevExtent ;
+         mbExRW = extent2RW( context->mb()->_mbExExtentID, context->mbID() ) ;
+         mbExRW.setNothrow( TRUE ) ;
+         mbEx = mbExRW.writePtr<dmsMBEx>() ;
+         if ( NULL == mbEx )
+         {
+            PD_LOG( PDERROR, "dms mb expand extent is invalid: %d",
+                    context->mb()->_mbExExtentID ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         if ( segID >= mbEx->_header._segNum )
+         {
+            PD_LOG( PDERROR, "Invalid segID: %d, max segNum: %d", segID,
+                    mbEx->_header._segNum ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         mbEx = mbExRW.writePtr<dmsMBEx>( 0,
+                                          (UINT32)mbEx->_header._blockSize <<
+                                          pageSizeSquareRoot() ) ;
+         mbEx->getFirstExtentID( segID, firstExtID ) ;
+         mbEx->getLastExtentID( segID, lastExtID ) ;
+
+         // Get the previous and next extents, if exist.
+         if ( DMS_INVALID_EXTENT != extent->_prevExtent )
+         {
+            prevRW = extent2RW( extent->_prevExtent, context->mbID() ) ;
+            prevRW.setNothrow( TRUE ) ;
+            prevExt = prevRW.writePtr<dmsExtent>() ;
+            if ( !prevExt )
+            {
+               PD_LOG( PDERROR, "Extent[%d] is invalid", extent->_prevExtent ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+
+         if ( DMS_INVALID_EXTENT != extent->_nextExtent )
+         {
+            nextRW= extent2RW( extent->_nextExtent, context->mbID() ) ;
+            nextRW.setNothrow( TRUE ) ;
+            nextExt = nextRW.writePtr<dmsExtent>() ;
+            if( !nextExt )
+            {
+               PD_LOG( PDERROR, "Extent[%d] is invalid", extent->_nextExtent ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+
+         // Modify the first/last extent in meta.
+         if ( extID == firstExtID && extID == lastExtID )
+         {
+            mbEx->setFirstExtentID( segID, DMS_INVALID_EXTENT ) ;
+            mbEx->setLastExtentID( segID, DMS_INVALID_EXTENT ) ;
+            --(mbEx->_header._usedSegNum ) ;
+         }
+         else if ( extID == firstExtID )
+         {
+            mbEx->setFirstExtentID( segID, extent->_nextExtent ) ;
+         }
+         else if ( extID == lastExtID )
+         {
+            mbEx->setLastExtentID( segID, extent->_prevExtent ) ;
+         }
+
+         // Modify the extent list in mb.
+         if ( extID == context->mb()->_firstExtentID )
+         {
+            context->mb()->_firstExtentID = extent->_nextExtent ;
+            if ( nextExt )
+            {
+               nextExt->_prevExtent = DMS_INVALID_EXTENT ;
+            }
+         }
+         else if ( extID == context->mb()->_lastExtentID )
+         {
+            context->mb()->_lastExtentID = extent->_prevExtent ;
+            if ( !prevExt )
+            {
+               prevExt->_nextExtent = DMS_INVALID_EXTENT ;
+            }
+         }
+         else
+         {
+            SDB_ASSERT( nextExt && prevExt,
+                        "Prev and next extent should not be NULL" ) ;
+            prevExt->_nextExtent = extent->_nextExtent ;
+            nextExt->_prevExtent = extent->_prevExtent ;
+         }
       }
 
       context->mbStat()->_totalDataPages -= extent->_blockSize ;
@@ -1835,7 +1870,7 @@ namespace engine
                                                BOOLEAN sysCollection,
                                                UINT8 compressionType,
                                                UINT32 *logicID,
-                                               const dmsCollectionOptions &options )
+                                               const BSONObj *extOptions )
    {
       INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_ADDCOLLECTION ) ;
@@ -1853,7 +1888,9 @@ namespace engine
 
       UINT32 segNum           = DMS_MAX_PG >> segmentPagesSquareRoot() ;
       UINT32 mbExSize         = (( segNum << 3 ) >> pageSizeSquareRoot()) + 1 ;
+      UINT16 optExtSize       = 0 ;
       dmsExtentID mbExExtent  = DMS_INVALID_EXTENT ;
+      dmsExtentID mbOptExtent = DMS_INVALID_EXTENT ;
       dmsMetaExtent *mbExtent = NULL ;
 
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
@@ -1867,8 +1904,7 @@ namespace engine
       {
          rc = dpsCLCrt2Record( _clFullName(pName, fullName, sizeof(fullName)),
                                attributes, compressionType,
-                               options._maxSize,
-                               options._maxRecNum, record ) ;
+                               extOptions, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
          rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
@@ -1885,9 +1921,12 @@ namespace engine
          }
       }
 
-      if ( !isTempSU () )
+      rc = _prepareAddCollection( extOptions, mbOptExtent, optExtSize ) ;
+      PD_RC_CHECK( rc, PDERROR, "onAddCollection operation failed: %d", rc ) ;
+
+      // Only allocate the meta extent when block scan is supported.
+      if ( isBlockScanSupport() )
       {
-         // allocate mbEx extent
          rc = _findFreeSpace( mbExSize, mbExExtent, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Allocate metablock expand extent failed, "
                       "pageNum: %d, rc: %d", mbExSize, rc ) ;
@@ -1932,16 +1971,13 @@ namespace engine
       // set mb meta data and header data
       logicalID = _dmsHeader->_MBHWM++ ;
       mb = &_dmsMME->_mbList[newCollectionID] ;
-      mb->reset( pName, newCollectionID, logicalID, attributes,
-                 compressionType, options._maxSize, options._maxRecNum ) ;
+      mb->reset( pName, newCollectionID, logicalID, attributes, compressionType ) ;
       _mbStatInfo[ newCollectionID ].reset() ;
-      _mbStatInfo[ newCollectionID ]._maxSize = options._maxSize ;
-      _mbStatInfo[ newCollectionID ]._maxRecNum = options._maxRecNum ;
 
       _dmsHeader->_numMB++ ;
       _collectionNameInsert( pName, newCollectionID ) ;
 
-      if ( !isTempSU () )
+      if ( isBlockScanSupport() )
       {
          dmsExtRW rw = extent2RW( mbExExtent, newCollectionID ) ;
          rw.setNothrow( TRUE ) ;
@@ -1954,6 +1990,11 @@ namespace engine
          mb->_mbExExtentID = mbExExtent ;
          mbExExtent = DMS_INVALID_EXTENT ;
       }
+
+      rc = _onAddCollection( extOptions, mbOptExtent,
+                             optExtSize, newCollectionID ) ;
+      PD_RC_CHECK( rc, PDERROR, "onAddCollection operation failed: %d", rc ) ;
+      mb->_mbOptExtentID = mbOptExtent ;
 
       // write dps log
       if ( dpscb )
@@ -2052,6 +2093,10 @@ namespace engine
       if ( DMS_INVALID_EXTENT != mbExExtent )
       {
          _releaseSpace( mbExExtent, mbExSize ) ;
+      }
+      if ( DMS_INVALID_EXTENT != mbOptExtent )
+      {
+         _releaseSpace( mbOptExtent, optExtSize ) ;
       }
       if ( DMS_INVALID_MBID != newCollectionID )
       {
@@ -2189,6 +2234,20 @@ namespace engine
             _releaseSpace( context->mb()->_mbExExtentID, metaExt->_blockSize ) ;
          }
          context->mb()->_mbExExtentID = DMS_INVALID_EXTENT ;
+      }
+
+      // Release the option extent.
+      if ( DMS_INVALID_EXTENT != context->mb()->_mbOptExtentID )
+      {
+         dmsExtRW rw = extent2RW( context->mb()->_mbOptExtentID,
+                                  context->mbID() ) ;
+         rw.setNothrow( TRUE ) ;
+         const dmsOptExtent *optExt = rw.readPtr<dmsOptExtent>() ;
+         if ( optExt )
+         {
+            _releaseSpace( context->mb()->_mbOptExtentID, optExt->_blockSize ) ;
+         }
+         context->mb()->_mbOptExtentID = DMS_INVALID_EXTENT ;
       }
 
       // release mb lock
@@ -2598,11 +2657,8 @@ namespace engine
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD ) ;
-      IDToInsert oid ;
-      idToInsertEle oidEle((CHAR*)(&oid)) ;
       UINT32 dmsRecordSize          = 0 ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
-      CHAR *pMergedData             = NULL ;
       BSONObj insertObj             = record ;
       BOOLEAN hasInsert             = FALSE ;
       dpsTransCB *pTransCB          = pmdGetKRCB()->getTransCB() ;
@@ -2622,51 +2678,21 @@ namespace engine
       dmsExtRW extRW ;
       dmsRecordRW recordRW ;
       const dmsExtent *pExtent      = NULL ;
+      BOOLEAN newMem                = FALSE ;
+      CHAR *pMergedData             = NULL ;
       _dmsCompressorEntry *compressorEntry = &_compressorEntry[context->mbID()] ;
-
-      /* For concurrency protection with drop CL and set compresor. */
-      dmsCompressorGuard compGuard( compressorEntry, SHARED ) ;
 
       try
       {
-         // Step 1: Prepare the data, add OID and compress if necessary.
+         rc = _prepareInsertData( record, mustOID, cb, recordData, newMem ) ;
+         PD_RC_CHECK( rc, PDERROR, "Prepare data for insertion failed, rc: %d",
+                      rc ) ;
+         if ( newMem )
+         {
+            pMergedData = (CHAR *)recordData.data() ;
+         }
 
-         recordData.setData( record.objdata(), record.objsize(),
-                             FALSE, TRUE ) ;
-         // verify whether the record got "_id" inside
-         BSONElement ele = record.getField( DMS_ID_KEY_NAME ) ;
-         const CHAR *pCheckErr = "" ;
-         if ( !dmsIsRecordIDValid( ele, TRUE, &pCheckErr ) )
-         {
-            PD_LOG( PDERROR, "Record[%s] _id is error: %s",
-                    record.toString().c_str(), pCheckErr ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         // judge must oid
-         if ( mustOID && ele.eoo() )
-         {
-            oid._oid.init() ;
-            rc = cb->allocBuff( oidEle.size() + record.objsize(),
-                                &pMergedData ) ;
-            if ( rc )
-            {
-               PD_LOG( PDERROR, "Alloc memory[size:%u] failed, rc: %d",
-                       oidEle.size() + record.objsize(), rc ) ;
-               goto error ;
-            }
-            /// copy to new data
-            *(UINT32*)pMergedData = oidEle.size() + record.objsize() ;
-            ossMemcpy( pMergedData + sizeof(UINT32), oidEle.rawdata(),
-                       oidEle.size() ) ;
-            ossMemcpy( pMergedData + sizeof(UINT32) + oidEle.size(),
-                       record.objdata() + sizeof(UINT32),
-                       record.objsize() - sizeof(UINT32) ) ;
-            recordData.setData( pMergedData,
-                                oidEle.size() + record.objsize(),
-                                FALSE, TRUE ) ;
-            insertObj = BSONObj( pMergedData ) ;
-         }
+         insertObj = BSONObj( recordData.data() ) ;
          dmsRecordSize = recordData.len() ;
 
          // check
@@ -2677,51 +2703,55 @@ namespace engine
             goto error ;
          }
 
-         if ( compressorEntry->ready() )
          {
-            const CHAR *compressedData    = NULL ;
-            INT32 compressedDataSize      = 0 ;
-            UINT8 compressRatio           = 0 ;
-            rc = dmsCompress( cb, compressorEntry,
-                              recordData.data(), recordData.len(),
-                              &compressedData, &compressedDataSize,
-                              compressRatio ) ;
-            // Compression is valid and ratio is less the threshold
-            if ( SDB_OK == rc &&
-                 compressedDataSize + sizeof(UINT32) < recordData.orgLen() &&
-                 compressRatio < DMS_COMPRESS_RATIO_THRESHOLD )
+            /* For concurrency protection with drop CL and set compresor. */
+            dmsCompressorGuard compGuard( compressorEntry, SHARED ) ;
+            if ( compressorEntry->ready() )
             {
-               // 4 bytes len + compressed record
-               dmsRecordSize = compressedDataSize + sizeof(UINT32) ;
-               PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
-                           PD_PACK_STRING ( "size after compress" ),
-                           PD_PACK_UINT ( dmsRecordSize ) ) ;
+               const CHAR *compressedData    = NULL ;
+               INT32 compressedDataSize      = 0 ;
+               UINT8 compressRatio           = 0 ;
+               rc = dmsCompress( cb, compressorEntry,
+                                 recordData.data(), recordData.len(),
+                                 &compressedData, &compressedDataSize,
+                                 compressRatio ) ;
+               // Compression is valid and ratio is less the threshold
+               if ( SDB_OK == rc &&
+                    compressedDataSize + sizeof(UINT32) < recordData.orgLen() &&
+                    compressRatio < DMS_COMPRESS_RATIO_THRESHOLD )
+               {
+                  // 4 bytes len + compressed record
+                  dmsRecordSize = compressedDataSize + sizeof(UINT32) ;
+                  PD_TRACE2 ( SDB__DMSSTORAGEDATACOMMON_INSERTRECORD,
+                              PD_PACK_STRING ( "size after compress" ),
+                              PD_PACK_UINT ( dmsRecordSize ) ) ;
 
-               // set the compression data
-               recordData.setData( compressedData, compressedDataSize,
-                                   TRUE, FALSE ) ;
-            }
-            else if ( rc )
-            {
-               // In any case of error, leave it, and use the original data.
-               if ( SDB_UTIL_COMPRESS_ABORT == rc )
-               {
-                  PD_LOG( PDINFO, "Record compression aborted. "
-                          "Insert the original data. rc: %d", rc ) ;
+                  // set the compression data
+                  recordData.setData( compressedData, compressedDataSize,
+                                      TRUE, FALSE ) ;
                }
-               else
+               else if ( rc )
                {
-                  PD_LOG( PDWARNING, "Record compression failed. "
-                          "Insert the original data. rc: %d", rc ) ;
+                  // In any case of error, leave it, and use the original data.
+                  if ( SDB_UTIL_COMPRESS_ABORT == rc )
+                  {
+                     PD_LOG( PDINFO, "Record compression aborted. "
+                             "Insert the original data. rc: %d", rc ) ;
+                  }
+                  else
+                  {
+                     PD_LOG( PDWARNING, "Record compression failed. "
+                             "Insert the original data. rc: %d", rc ) ;
+                  }
+                  rc = SDB_OK ;
                }
-               rc = SDB_OK ;
             }
+
+            /*
+             * Release the guard to avoid deadlock with truncate/drop collection.
+             */
+            compGuard.release() ;
          }
-
-         /*
-          * Release the guard to avoid deadlock with truncate/drop collection.
-          */
-         compGuard.release() ;
 
          // Step 2: Calculate the required space size, and allocate it, both
          // for data record and replication log.
@@ -2808,10 +2838,11 @@ namespace engine
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INSERT, 1 ) ;
          _incWriteRecord() ;
 
-         rc = _postInsert( context, extRW, insertObj, foundRID, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to do post operation after data "
-                      "insertion, rc: %d ", rc ) ;
-       }
+         // insert object's indexes
+         rc = _pIdxSU->indexesInsert( context, pExtent->_logicID,
+                                      insertObj, foundRID, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
+      }
       catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
@@ -2894,7 +2925,7 @@ namespace engine
       dmsRecord *pRecord            = NULL ;
       dmsRecordData recordData ;
 
-      rc = _operationPermChk( DMS_ACCESS_TYPE_UPDATE ) ;
+      rc = _operationPermChk( DMS_ACCESS_TYPE_DELETE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed in permission check of delete, rc: %d", rc ) ;
 

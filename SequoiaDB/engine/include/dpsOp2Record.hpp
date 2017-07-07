@@ -127,16 +127,14 @@ namespace engine
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
                           const UINT8 &compressorType,
-                          const INT64 &maxSize,
-                          const INT64 &maxRecNum,
+                          const BSONObj *extOptions,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
                           const CHAR **fullName,
                           UINT32 &attribute,
                           UINT8 &compressorType,
-                          INT64 &maxSize,
-                          INT64 &maxRecNum ) ;
+                          BSONObj &extOptions ) ;
 
    INT32 dpsCLDel2Record( const CHAR *fullName,
                           dpsLogRecord &record ) ;

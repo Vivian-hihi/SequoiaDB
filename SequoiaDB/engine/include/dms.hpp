@@ -106,8 +106,6 @@ namespace engine
 #define DMS_INVALID_MBID            65535
 #define DMS_INVALID_PAGESIZE        0
 #define DMS_INVALID_LOGICCSID       0xffffffff
-#define DMS_INVALID_CL_SIZE         -1
-#define DMS_INVALID_CL_RECNUM       -1
 
 #define DMS_DATA_SU_EXT_NAME        "data"
 #define DMS_INDEX_SU_EXT_NAME       "idx"
@@ -235,22 +233,6 @@ namespace engine
       DMS_STORAGE_CAPPED,
       DMS_STORAGE_DUMMY
    } ;
-
-   struct _dmsCollectionOptions
-   {
-      // The following two members are for capped collections.
-      INT64 _maxSize ;
-      INT64 _maxRecNum ;
-
-      _dmsCollectionOptions()
-      : _maxSize( DMS_INVALID_CL_SIZE ),
-        _maxRecNum( DMS_INVALID_CL_RECNUM )
-      {
-      }
-   } ;
-   typedef _dmsCollectionOptions dmsCollectionOptions ;
-
-   extern const dmsCollectionOptions g_cl_default_option ;
 
    // helper function, check DMS/IXM object name validity
    BOOLEAN  dmsIsSysCSName ( const CHAR *collectionSpaceName ) ;

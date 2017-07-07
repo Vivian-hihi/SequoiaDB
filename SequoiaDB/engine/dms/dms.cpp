@@ -46,8 +46,6 @@
 
 namespace engine
 {
-   const dmsCollectionOptions g_cl_default_option ;
-
    BOOLEAN dmsIsSysCSName ( const CHAR *collectionSpaceName )
    {
       if ( collectionSpaceName && ossStrlen ( collectionSpaceName ) >= 3 &&

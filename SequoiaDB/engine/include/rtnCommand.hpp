@@ -304,7 +304,7 @@ namespace engine
          virtual const CHAR * name () { return NAME_REMOVE_PROCEDURE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_REMOVE_PROCEDURE ; }
    } ;
-   
+
    class _rtnListCSInDomain : public _rtnCoordOnly
    {
       DECLARE_CMD_AUTO_REGISTER()
@@ -508,11 +508,11 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
 
       protected:
-         const CHAR                 *_collectionName ;
-         BSONObj                    _shardingKey ;
-         UINT32                     _attributes ;
-         UTIL_COMPRESSOR_TYPE       _compressorType ;
-         dmsCollectionOptions       _options ;
+         const CHAR              *_collectionName ;
+         BSONObj                 _shardingKey ;
+         UINT32                  _attributes ;
+         UTIL_COMPRESSOR_TYPE    _compressorType ;
+         BSONObj                 _extOptions ; // Store options accorrding to attributes.
    };
 
    class _rtnCreateCollectionspace : public _rtnCommand

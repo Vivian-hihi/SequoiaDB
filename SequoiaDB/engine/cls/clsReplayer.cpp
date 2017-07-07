@@ -212,6 +212,20 @@ namespace engine
             }
             _dmsCB->suUnlock( suID, SHARED ) ;
          }
+
+         // Currently parallel replaying on capped collection is forbidden,
+         // because we need to be sure the records are exactly the same with
+         // the ones on primary node, including their positions.
+         // The _id type of capped collection is NumberLong, so filter it here
+         // for now.
+         if ( LOG_TYPE_DATA_INSERT == recordHeader->_type )
+         {
+            BSONElement eleTmp = obj.getField( DMS_ID_KEY_NAME ) ;
+            if ( NumberLong == eleTmp.type() )
+            {
+               paralla = FALSE ;
+            }
+         }
       }
 
       if ( paralla )
@@ -480,10 +494,9 @@ namespace engine
             const CHAR *cl = NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
-            dmsCollectionOptions options ;
+            BSONObj extOptions ;
             rc = dpsRecord2CLCrt( (CHAR *)recordHeader, &cl, attribute,
-                                  compType, options._maxSize,
-                                  options._maxRecNum ) ;
+                                  compType, extOptions ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -492,7 +505,9 @@ namespace engine
             rc = rtnCreateCollectionCommand( cl, attribute, eduCB, _dmsCB,
                                              _dpsCB,
                                              (UTIL_COMPRESSOR_TYPE)compType,
-                                             0, TRUE, options ) ;
+                                             0, TRUE,
+                                             ( extOptions.isEmpty() ?
+                                               NULL : &extOptions ) ) ;
             if ( SDB_DMS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection [%s] already exist when "
@@ -948,10 +963,9 @@ namespace engine
             const CHAR *fullname = NULL ;
             UINT32 attribute = 0 ;
             UINT8 compType = UTIL_COMPRESSOR_INVALID ;
-            INT64 maxSize = 0 ;
-            INT64 maxRecNum = 0 ;
+            BSONObj extOptions ;
             rc = dpsRecord2CLCrt( (const CHAR *)recordHeader, &fullname,
-                                  attribute, compType, maxSize, maxRecNum ) ;
+                                  attribute, compType, extOptions ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1214,7 +1228,7 @@ namespace engine
                                             UINT32 attributes,
                                             _pmdEDUCB *eduCB,
                                             UTIL_COMPRESSOR_TYPE compType,
-                                            const dmsCollectionOptions &options )
+                                            const BSONObj *extOptions )
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       INT32 rc = rtnTestCollectionCommand( collection, _dmsCB ) ;
@@ -1222,7 +1236,7 @@ namespace engine
       {
          rc = rtnCreateCollectionCommand( collection, attributes, eduCB,
                                           _dmsCB, _dpsCB, compType,
-                                          0, TRUE, options ) ;
+                                          0, TRUE, extOptions ) ;
       }
       return rc ;
    }

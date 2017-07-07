@@ -60,6 +60,9 @@ namespace engine
                                 dmsExtent *extAddr,
                                 SINT32 extentID ) ;
 
+      virtual INT32 dumpExtOptions( dmsMBContext *context,
+                                    BSONObj &extOptions ) ;
+
       // the dataRecord is not owned
       // Caller must hold mb exclusive/shared lock
       INT32 fetch ( dmsMBContext *context,
@@ -68,13 +71,29 @@ namespace engine
                     _pmdEDUCB *cb,
                     BOOLEAN dataOwned = FALSE ) ;
 
+
+
    private:
       virtual const CHAR* _getEyeCatcher() const ;
 
-      virtual INT32 _onAllocExtent( dmsMBContext *context,
-                                    dmsExtent *extAddr,
-                                    SINT32 extentID,
-                                    BOOLEAN map2DelList ) ;
+      virtual INT32 _prepareAddCollection( const BSONObj *extOption,
+                                           dmsExtentID &extOptExtent,
+                                           UINT16 &extentPageNum ) ;
+
+      virtual INT32 _onAddCollection( const BSONObj *extOption,
+                                      dmsExtentID extOptExtent,
+                                      UINT32 extentSize,
+                                      UINT16 collectionID ) ;
+
+      virtual void _onAllocExtent( dmsMBContext *context,
+                                   dmsExtent *extAddr,
+                                   SINT32 extentID ) ;
+
+      virtual INT32 _prepareInsertData( const BSONObj &record,
+                                        BOOLEAN mustOID,
+                                        pmdEDUCB *cb,
+                                        dmsRecordData &recordData,
+                                        BOOLEAN &memReallocate ) ;
 
       virtual INT32 _allocRecordSpace( dmsMBContext *context,
                                        UINT32 size,
@@ -92,12 +111,6 @@ namespace engine
                                  dmsRecordRW &recordRW,
                                  _pmdEDUCB *cb,
                                  dmsRecordData &recordData ) ;
-
-      virtual INT32 _postInsert( dmsMBContext *context,
-                                 dmsExtRW &extRW,
-                                 BSONObj &record,
-                                 const dmsRecordID &recordID,
-                                 _pmdEDUCB *cb ) ;
 
       virtual INT32 _operationPermChk( DMS_ACCESS_TYPE accessType ) ;
 

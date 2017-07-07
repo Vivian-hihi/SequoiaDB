@@ -57,20 +57,97 @@ namespace engine
    {
    }
 
+   INT32 _dmsStorageData::_prepareAddCollection( const BSONObj *extOption,
+                                                 dmsExtentID &extOptExtent,
+                                                 UINT16 &extentPageNum )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _dmsStorageData::_onAddCollection( const BSONObj *extOption,
+                                            dmsExtentID extOptExtent,
+                                            UINT32 extentSize,
+                                            UINT16 collectionID )
+   {
+      return SDB_OK ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONALLOCEXTENT, "_dmsStorageData::_onAllocExtent" )
-   INT32 _dmsStorageData::_onAllocExtent( dmsMBContext *context,
-                                          dmsExtent *extAddr,
-                                          SINT32 extentID,
-                                          BOOLEAN map2DelList )
+   void _dmsStorageData::_onAllocExtent( dmsMBContext *context,
+                                         dmsExtent *extAddr,
+                                         SINT32 extentID )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA__ONALLOCEXTENT ) ;
-      if ( map2DelList )
-      {
-         _mapExtent2DelList( context->mb(), extAddr, extentID ) ;
-      }
+      SDB_ASSERT( context, "Context should not be NULL" ) ;
+      SDB_ASSERT( extAddr, "Extent address should not be NULL" ) ;
+
+      _mapExtent2DelList( context->mb(), extAddr, extentID ) ;
 
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATA__ONALLOCEXTENT ) ;
-      return SDB_OK ;
+   }
+
+   INT32 _dmsStorageData::_prepareInsertData( const BSONObj &record,
+                                              BOOLEAN mustOID,
+                                              pmdEDUCB *cb,
+                                              dmsRecordData &recordData,
+                                              BOOLEAN &memReallocate )
+   {
+      INT32 rc = SDB_OK ;
+      IDToInsert oid ;
+      idToInsertEle oidEle((CHAR*)(&oid)) ;
+      CHAR *pMergedData = NULL ;
+
+      try
+      {
+         // Step 1: Prepare the data, add OID and compress if necessary.
+         recordData.setData( record.objdata(), record.objsize(),
+                             FALSE, TRUE ) ;
+         // verify whether the record got "_id" inside
+         BSONElement ele = record.getField( DMS_ID_KEY_NAME ) ;
+         const CHAR *pCheckErr = "" ;
+         if ( !dmsIsRecordIDValid( ele, TRUE, &pCheckErr ) )
+         {
+            PD_LOG( PDERROR, "Record[%s] _id is error: %s",
+                    record.toString().c_str(), pCheckErr ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         // judge must oid
+         if ( mustOID && ele.eoo() )
+         {
+            oid._oid.init() ;
+            rc = cb->allocBuff( oidEle.size() + record.objsize(),
+                                &pMergedData ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Alloc memory[size:%u] failed, rc: %d",
+                       oidEle.size() + record.objsize(), rc ) ;
+               goto error ;
+            }
+            /// copy to new data
+            *(UINT32*)pMergedData = oidEle.size() + record.objsize() ;
+            ossMemcpy( pMergedData + sizeof(UINT32), oidEle.rawdata(),
+                       oidEle.size() ) ;
+            ossMemcpy( pMergedData + sizeof(UINT32) + oidEle.size(),
+                       record.objdata() + sizeof(UINT32),
+                       record.objsize() - sizeof(UINT32) ) ;
+            recordData.setData( pMergedData,
+                                oidEle.size() + record.objsize(),
+                                FALSE, TRUE ) ;
+            memReallocate = TRUE ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = pdGetLastError() ? pdGetLastError() : SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ALLOCRECORDSPACE, "_dmsStorageData::_allocRecordSpace" )
@@ -957,30 +1034,21 @@ namespace engine
 
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__POSTINSERT, "_dmsStorageData::_postInsert" )
-   INT32 _dmsStorageData::_postInsert( dmsMBContext *context,
-                                       dmsExtRW &extRW,
-                                       BSONObj &record,
-                                       const dmsRecordID &recordID,
-                                       _pmdEDUCB *cb )
+   INT32 _dmsStorageData::_operationPermChk( DMS_ACCESS_TYPE accessType )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__DMSSTORAGEDATA__POSTINSERT ) ;
-      const dmsExtent *extent = extRW.readPtr<dmsExtent>() ;
-      rc = _pIdxSU->indexesInsert( context, extent->_logicID,
-                                   record, recordID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to insert to index, rc: %d", rc ) ;
+      if ( DMS_ACCESS_TYPE_POP == accessType )
+      {
+         PD_LOG( PDERROR, "Operation type[ %d ] is incompatible with "
+                 "collection", accessType ) ;
+         rc = SDB_OPERATION_INCOMPATIBLE ;
+         goto error ;
+      }
 
    done:
-      PD_TRACE_EXITRC( SDB__DMSSTORAGEDATA__POSTINSERT, rc ) ;
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 _dmsStorageData::_operationPermChk( DMS_ACCESS_TYPE accessType )
-   {
-      return SDB_OK ;
    }
 
    const CHAR* _dmsStorageData::_getEyeCatcher() const
@@ -994,6 +1062,12 @@ namespace engine
                                       SINT32 extentID )
    {
       _mapExtent2DelList( context->mb(), extAddr, extentID ) ;
+   }
+
+   INT32 _dmsStorageData::dumpExtOptions( dmsMBContext *context,
+                                          BSONObj &extOptions )
+   {
+      return SDB_OK ;
    }
 }
 

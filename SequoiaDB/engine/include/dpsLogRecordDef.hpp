@@ -103,8 +103,7 @@ namespace engine
    {
       DPS_LOG_CLCRT_ATTRIBUTE = 1,
       DPS_LOG_CLCRT_COMPRESS_TYPE = 2,
-      DPS_LOG_CLCRT_MAX_SIZE = 3,
-      DPS_LOG_CLCRT_MAX_RECNUM = 4
+      DPS_LOG_CLCRT_EXT_OPTIONS = 3
    } ;
 
    enum DPS_LOG_CLDEL

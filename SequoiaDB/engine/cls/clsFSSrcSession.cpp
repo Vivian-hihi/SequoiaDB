@@ -475,21 +475,18 @@ namespace engine
       BSONObjBuilder builder2 ;
       UINT32 attributes = 0 ;
       UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
-      dmsCollectionOptions options ;
+      BSONObj extOptions ;
 
       su->getCollectionAttributes( collection, attributes ) ;
-      su->getCollectionOptions( collection, options ) ;
       su->getCollectionCompType( collection, compType ) ;
+      su->getCollectionExtOptions( collection, extOptions ) ;
 
       builder1.append( CLS_FS_PAGE_SIZE, su->getPageSize() ) ;
       builder1.append( CLS_FS_ATTRIBUTES, attributes ) ;
       builder1.append( CLS_FS_COMP_TYPE, (INT32)compType ) ;
-
-      // For capped collection, need to append the max size and max record num.
-      if ( OSS_BIT_TEST( attributes, DMS_MB_ATTR_CAPPED ) )
+      if ( !extOptions.isEmpty() )
       {
-         builder1.append( CLS_FS_CL_MAX_SIZE, options._maxSize ) ;
-         builder1.append( CLS_FS_CL_MAX_RECNUM, options._maxRecNum ) ;
+         builder1.append( CLS_FS_EXT_OPTION, extOptions ) ;
       }
 
       builder1.append( CLS_FS_LOB_PAGE_SIZE, su->getLobPageSize() ) ;

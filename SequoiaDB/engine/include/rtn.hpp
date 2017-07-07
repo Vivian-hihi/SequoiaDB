@@ -212,8 +212,7 @@ namespace engine
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
                                       BOOLEAN sysCall = FALSE,
-                                      const dmsCollectionOptions &options=
-                                          g_cl_default_option ) ;
+                                      const BSONObj *extOptions = NULL ) ;
 
    INT32 rtnCreateCollectionCommand ( const CHAR *pCollection,
                                       const BSONObj &shardingKey,
@@ -225,8 +224,7 @@ namespace engine
                                           UTIL_COMPRESSOR_INVALID,
                                       INT32 flags = 0,
                                       BOOLEAN sysCall = FALSE,
-                                      const dmsCollectionOptions &options=
-                                          g_cl_default_option ) ;
+                                      const BSONObj *extOptions = NULL ) ;
 
    INT32 rtnGetMore ( SINT64 contextID,            // input, context id
                       SINT32 maxNumToReturn,       // input, max record to read

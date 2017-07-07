@@ -55,39 +55,6 @@ namespace engine
 
    #define DMS_RECORD_USER_MAX_SZ      (DMS_RECORD_MAX_SZ-4096)
 
-#pragma pack(1)
-   class _logicIdToInsert : public SDBObject
-   {
-   public :
-      CHAR _type ;
-      CHAR _name[5] ; // _lid + '\0'
-      INT64 _lid ;
-      _logicIdToInsert ()
-      {
-         _type = (CHAR)bson::NumberLong ;
-         _name[0] = '_' ;
-         _name[1] = 'l' ;
-         _name[2] = 'i' ;
-         _name[3] = 'd' ;
-         _name[4] = 0 ;
-         _lid = -1 ;
-      }
-      void setID( INT64 id )
-      {
-         _lid = id ;
-      }
-   } ;
-   typedef class _logicIdToInsert logicIdToInsert ;
-
-   class _logicIdToInsertEle : public bson::BSONElement
-   {
-   public :
-      _logicIdToInsertEle( CHAR* x ) : bson::BSONElement((CHAR*) ( x )){}
-   } ;
-   typedef class _logicIdToInsertEle logicIdToInsertEle ;
-
-#pragma pack()
-
    /*
       _dmsRecordData define
    */
@@ -208,9 +175,6 @@ namespace engine
    */
    class _dmsRecord : public SDBObject
    {
-      // use the space of _previousOffset and _nextOffset for logic id for
-      // capped collection record
-      #define RECORD_LOGICID_OFFSET 8
    public:
       union
       {
@@ -412,52 +376,6 @@ namespace engine
             ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ,
                        data.data(), data.len() ) ;
          }
-      }
-
-      // This is for capped collection record. Logical ID should be added.
-      void setData( INT64 logicID, const dmsRecordData &data )
-      {
-         // logic id will be added in the front of the final bson object.
-         if ( data.isEmpty() )
-         {
-            return ;
-         }
-
-         // Store a copy of the logic id in the record head.
-         setLogicID( logicID ) ;
-
-         if ( data.isCompressed() )
-         {
-            // TODO:
-            setCompressed() ;
-            *(UINT32*)((CHAR*)this+DMS_RECORD_METADATA_SZ) = data.len() ;
-            ossMemcpy( (CHAR*)this+DMS_RECORD_METADATA_SZ+sizeof(UINT32),
-                       data.data(), data.len() ) ;
-         }
-         else
-         {
-            CHAR *writePtr = (CHAR *)this + DMS_RECORD_METADATA_SZ ;
-            unsetCompressed() ;
-            logicIdToInsert id ;
-            logicIdToInsertEle idEle( (CHAR *)&id ) ;
-            id.setID( logicID ) ;
-            *(UINT32 *)writePtr = data.len() + idEle.size() ;
-            writePtr += sizeof( UINT32 ) ;
-            ossMemcpy( writePtr, idEle.rawdata(), idEle.size() ) ;
-            writePtr += idEle.size() ;
-            ossMemcpy( writePtr, data.data() + sizeof( UINT32 ),
-                       data.len() - sizeof( UINT32 ) ) ;
-         }
-      }
-
-      void setLogicID( INT64 logicID )
-      {
-         *(INT64 *)((CHAR *)this + RECORD_LOGICID_OFFSET) = logicID ;
-      }
-
-      const INT64 getLogicID() const
-      {
-         return *(INT64 *)((CHAR *)this + RECORD_LOGICID_OFFSET) ;
       }
    } ;
    typedef _dmsRecord dmsRecord ;

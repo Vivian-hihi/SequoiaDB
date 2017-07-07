@@ -406,6 +406,10 @@ namespace engine
          OSS_INLINE INT32   maxSegID () const ;
          OSS_INLINE UINT32  dataStartSegID () const ;
          OSS_INLINE BOOLEAN isTempSU () const { return _isTempSU ; }
+         OSS_INLINE BOOLEAN isBlockScanSupport() const
+         {
+            return _blockScanSupport ;
+         }
 
          OSS_INLINE UINT32  extent2Segment( dmsExtentID extentID,
                                             UINT32 *pSegOffset = NULL ) ;
@@ -529,6 +533,8 @@ namespace engine
 
          void     _incWriteRecord() ;
 
+         void     _disableBlockScan() ;
+
       private:
          INT32    _initializeStorageUnit () ;
          void     _initHeader ( dmsStorageUnitHeader *pHeader ) ;
@@ -579,7 +585,7 @@ namespace engine
          UINT32                        _pageSizeSquare ;
          CHAR                          _fullPathName[ OSS_MAX_PATHSIZE + 1 ] ;
          BOOLEAN                       _isTempSU ;
-
+         BOOLEAN                       _blockScanSupport ;
    } ;
    typedef _dmsStorageBase dmsStorageBase ;
 

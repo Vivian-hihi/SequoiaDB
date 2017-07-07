@@ -130,9 +130,6 @@ namespace engine
       BOOLEAN _idxIsValid ;
       BOOLEAN _lobIsValid ;
 
-      INT64  _maxSize ;
-      INT64  _maxRecNum ;
-
       _detailedInfo ()
       {
          _numIndexes          = 0 ;
@@ -165,9 +162,6 @@ namespace engine
          _dataIsValid         = FALSE ;
          _idxIsValid          = FALSE ;
          _lobIsValid          = FALSE ;
-
-         _maxSize             = DMS_INVALID_CL_SIZE ;
-         _maxRecNum           = DMS_INVALID_CL_RECNUM ;
       }
    } ;
    typedef class _detailedInfo detailedInfo ;

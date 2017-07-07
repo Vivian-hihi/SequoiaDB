@@ -460,7 +460,6 @@ namespace engine
       _firstRun = TRUE ;
       _cb = NULL ;
       _workExtInfo = NULL ;
-      _lastOffset = DMS_INVALID_OFFSET ;
    }
 
    _dmsCappedExtScanner::~_dmsCappedExtScanner()
@@ -481,15 +480,14 @@ namespace engine
          goto error ;
       }
 
-      // some other check...
       if ( !_context->mbLock( lockType ) )
       {
          rc = _context->mbLock( lockType ) ;
          PD_RC_CHECK( rc, PDERROR, "dms mb lock failed, rc: %d", rc ) ;
       }
 
-      _workExtInfo = (( _dmsStorageDataCapped * )_pSu)->getWorkExtInfo(
-                                                            _context->mbID() ) ;
+      _workExtInfo =
+         (( _dmsStorageDataCapped * )_pSu)->getWorkExtInfo( _context->mbID() ) ;
 
       // Check if we are about to scan the working extent. As the extent is very
       // big, in order to improve performance, try to avoid getting the last
@@ -497,12 +495,10 @@ namespace engine
       if ( _curRID._extent == _workExtInfo->getID() )
       {
          _next = _workExtInfo->_firstRecordOffset ;
-         _lastOffset = _workExtInfo->_lastRecordOffset ;
       }
       else
       {
          _next = _extent->_firstRecordOffset ;
-         _lastOffset = _extent->_lastRecordOffset ;
       }
 
       if ( !_extent->validate( _context->mbID() ) )
@@ -520,12 +516,30 @@ namespace engine
       goto done ;
    }
 
+   void _dmsCappedExtScanner::_checkMaxRecordsNum( _mthRecordGenerator &generator )
+   {
+      if ( _maxRecords > 0 )
+      {
+         if ( _maxRecords >= generator.getRecordNum() )
+         {
+            _maxRecords -= generator.getRecordNum() ;
+         }
+         else
+         {
+            INT32 num = generator.getRecordNum() - _maxRecords ;
+            generator.popTail( num ) ;
+            _maxRecords = 0 ;
+         }
+      }
+   }
+
    INT32 _dmsCappedExtScanner::advance( dmsRecordID &recordID,
                                         _mthRecordGenerator &generator,
                                         pmdEDUCB *cb,
                                         _mthMatchTreeContext *mthContext )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN result = TRUE ;
       ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
       const dmsRecord *record = NULL ;
@@ -537,33 +551,34 @@ namespace engine
          PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
       }
 
-      // Update the _lastOffset if necessary. Some new documents may have been
-      // added during the scanning.
-      if ( _curRID._extent == _workExtInfo->getID() )
-      {
-         currExtRecNum = _workExtInfo->_recCount ;
-         if ( _lastOffset != _workExtInfo->_lastRecordOffset )
-         {
-            _lastOffset = _workExtInfo->_lastRecordOffset ;
-         }
-      }
-      else
-      {
-         currExtRecNum = _extent->_recCount ;
-      }
+      currExtRecNum = _extent->_recCount ;
 
-      if ( !_match && _skipNum > 0 && _skipNum >= currExtRecNum )
+      if ( !_match && _skipNum > 0 && _skipNum >= currExtRecNum &&
+           ( _curRID._extent != _context->mb()->_lastExtentID ) )
       {
          _skipNum -= currExtRecNum ;
          _next = DMS_INVALID_OFFSET ;
       }
 
-      while ( _next < _lastOffset && DMS_INVALID_OFFSET != _next &&
+      while ( _next <= DMS_CAP_EXTENT_SZ && DMS_INVALID_OFFSET != _next &&
               0 != _maxRecords )
       {
          _curRID._offset = _next ;
          _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
+         _recordRW.setNothrow( TRUE ) ;
          record= _recordRW.readPtr( 0 ) ;
+         if ( !record )
+         {
+            PD_LOG( PDERROR, "Get record failed" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         if ( 0 == record->_head._flag_and_size )
+         {
+            // Reach the end of the current extent.
+            break ;
+         }
+
          _next += record->getSize() ;
 
          if ( !_match && _skipNum > 0 )
@@ -582,26 +597,78 @@ namespace engine
             recordDataPtr = ( ossValuePtr )recordData.data() ;
             generator.setDataPtr( recordDataPtr ) ;
 
-            try
+            if ( _match )
             {
-               BSONObj obj( recordData.data() ) ;
-               rc = generator.resetValue( obj, mthContext ) ;
-               PD_RC_CHECK( rc, PDERROR, "resetValue failed, rc: %d", rc ) ;
-            }
-            catch( std::exception &e )
-            {
-               rc = SDB_SYS ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to create BSON object: %s",
-                            e.what() ) ;
-               goto error ;
-            }
+               result = TRUE ;
+               try
+               {
+                  BSONObj obj( recordData.data() ) ;
+                  //do not clear dollarlist flag
+                  mthContextClearRecordInfoSafe( mthContext ) ;
+                  rc = _match->matches( obj, result, mthContext ) ;
+                  if ( rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to match record, rc: %d", rc ) ;
+                     goto error ;
+                  }
+                  if ( result )
+                  {
+                     rc = generator.resetValue( obj, mthContext ) ;
+                     PD_RC_CHECK( rc, PDERROR, "resetValue failed:rc=%d", rc ) ;
 
-            if ( _maxRecords > 0 )
-            {
-               --_maxRecords ;
-            }
+                     if ( _skipNum > 0 )
+                     {
+                        if ( _skipNum >= generator.getRecordNum() )
+                        {
+                           _skipNum -= generator.getRecordNum() ;
+                        }
+                        else
+                        {
+                           generator.popFront( _skipNum ) ;
+                           _skipNum = 0 ;
+                           _checkMaxRecordsNum( generator ) ;
 
-            goto done ;
+                           goto done ;
+                        }
+                     }
+                     else
+                     {
+                        _checkMaxRecordsNum( generator ) ;
+                        goto done ; // find ok
+                     }
+                  }
+               }
+               catch( std::exception &e )
+               {
+                  PD_LOG ( PDERROR, "Failed to create BSON object: %s",
+                           e.what() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+            } // if ( _match )
+            else
+            {
+               try
+               {
+                  BSONObj obj( recordData.data() ) ;
+                  rc = generator.resetValue( obj, mthContext ) ;
+                  PD_RC_CHECK( rc, PDERROR, "resetValue failed, rc: %d", rc ) ;
+               }
+               catch( std::exception &e )
+               {
+                  rc = SDB_SYS ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to create BSON object: %s",
+                               e.what() ) ;
+                  goto error ;
+               }
+
+               if ( _maxRecords > 0 )
+               {
+                  --_maxRecords ;
+               }
+
+               goto done ;
+            }
          }
       }
 
@@ -624,7 +691,7 @@ namespace engine
    {
       if ( _extent )
       {
-         return ((dmsCappedExtent*)_extent)->_nextLogicExtent ;
+         return _extent->_nextExtent ;
       }
       return DMS_INVALID_EXTENT ;
    }

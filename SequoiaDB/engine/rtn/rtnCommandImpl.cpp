@@ -1114,14 +1114,14 @@ namespace engine
                                       UTIL_COMPRESSOR_TYPE compressorType,
                                       INT32 flags,
                                       BOOLEAN sysCall,
-                                      const dmsCollectionOptions &options )
+                                      const BSONObj *extOptions )
    {
       BSONObj obj ;
       return rtnCreateCollectionCommand ( pCollection,
                                           obj, attributes,
                                           cb, dmsCB, dpsCB,
                                           compressorType,
-                                          flags, sysCall, options ) ;
+                                          flags, sysCall, extOptions ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCREATECLCOMMAND, "rtnCreateCollectionCommand" )
@@ -1133,7 +1133,7 @@ namespace engine
                                       SDB_DPSCB *dpsCB,
                                       UTIL_COMPRESSOR_TYPE compType,
                                       INT32 flags, BOOLEAN sysCall,
-                                      const dmsCollectionOptions &options )
+                                      const BSONObj *extOptions )
    {
       INT32 rc              = SDB_OK ;
       INT32 rcTmp           = SDB_OK ;
@@ -1199,7 +1199,7 @@ namespace engine
 
       rc = su->data()->addCollection ( pCollectionShortName, &collectionID,
                                        attributes, cb, dpsCB, 0, sysCall,
-                                       compType, &logicalID, options ) ;
+                                       compType, &logicalID, extOptions ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create collection %s, rc: %d",

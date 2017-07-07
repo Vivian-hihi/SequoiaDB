@@ -269,19 +269,17 @@ namespace engine
       UINT64         _lobCommitTime ;
       // end persistence
 
-      INT64          _maxSize ;
-      INT64          _maxRecNum ;
-      dmsExtentID    _firstLogicExtentID ;
-      dmsExtentID    _lastLogicExtentID ;
-      CHAR           _pad [ 264 ] ;
+      // Extend option extent id for collection.
+      // If one storage type has its own special options, allocate one seperate
+      // page to store them, instead of putting them in this common structure.
+      dmsExtentID    _mbOptExtentID ;
+      CHAR           _pad [ 284 ] ;
 
       void reset ( const CHAR *clName = NULL,
                    UINT16 mbID = DMS_INVALID_MBID,
                    UINT32 clLID = DMS_INVALID_CLID,
                    UINT32 attr = 0,
-                   UINT8 compressType = UTIL_COMPRESSOR_INVALID,
-                   INT64 maxSize = DMS_INVALID_CL_SIZE,
-                   INT64 maxRecNum = DMS_INVALID_CL_RECNUM )
+                   UINT8 compressType = UTIL_COMPRESSOR_INVALID )
       {
          INT32 i = 0 ;
          ossMemset( _collectionName, 0, sizeof( _collectionName ) ) ;
@@ -343,10 +341,7 @@ namespace engine
          _lobCommitLSN           = ~0 ;
          _lobCommitTime          = 0 ;
 
-         _maxSize                = maxSize ;
-         _maxRecNum              = maxRecNum ;
-         _firstLogicExtentID     = DMS_INVALID_EXTENT ;
-         _lastLogicExtentID      = DMS_INVALID_EXTENT ;
+         _mbOptExtentID          = DMS_INVALID_EXTENT ;
 
          /// set compressor type
          if ( OSS_BIT_TEST( attr, DMS_MB_ATTR_COMPRESSED ) )
@@ -472,9 +467,6 @@ namespace engine
       UINT64      _lobLastWriteTick ;
       BOOLEAN     _lobIsCrash ;
 
-      INT64       _maxSize ;
-      INT64       _maxRecNum ;
-
       void reset()
       {
          _totalRecords           = 0 ;
@@ -500,8 +492,6 @@ namespace engine
          _lobLastLSN.init( ~0 ) ;
          _lobLastWriteTick       = 0 ;
          _lobIsCrash             = FALSE ;
-         _maxSize                = DMS_INVALID_CL_SIZE ;
-         _maxRecNum              = DMS_INVALID_CL_RECNUM ;
       }
 
       void updateLastLSN( UINT64 lsn, DMS_FILE_TYPE type )
@@ -837,8 +827,7 @@ namespace engine
                                BOOLEAN sysCollection = FALSE,
                                UINT8 compressionType = UTIL_COMPRESSOR_INVALID,
                                UINT32 *logicID = NULL,
-                               const dmsCollectionOptions &options =
-                                 g_cl_default_option ) ;
+                               const BSONObj *extOptions = NULL ) ;
 
          INT32 dropCollection ( const CHAR *pName,
                                 _pmdEDUCB *cb,
@@ -921,18 +910,28 @@ namespace engine
          {
          }
 
+         virtual INT32 dumpExtOptions( dmsMBContext *context,
+                                       BSONObj &extOptions ) = 0 ;
+
       protected:
-         // Functions which should be implemented by subclasses.
-         virtual INT32 _onAllocExtent( dmsMBContext *context,
-                                       dmsExtent *extAddr,
-                                       SINT32 extentID,
-                                       BOOLEAN map2DelList ) = 0 ;
-         virtual INT32 _onFreeExtent( dmsMBContext *context,
+         virtual INT32 _prepareAddCollection( const BSONObj *extOption,
+                                              dmsExtentID &extOptExtent,
+                                              UINT16 &extentPageNum ) = 0 ;
+
+         virtual INT32 _onAddCollection( const BSONObj *extOption,
+                                         dmsExtentID extOptExtent,
+                                         UINT32 extentSize,
+                                         UINT16 collectionID ) = 0 ;
+
+         virtual void _onAllocExtent( dmsMBContext *context,
                                       dmsExtent *extAddr,
-                                      SINT32 extentID )
-         {
-            return SDB_OK ;
-         }
+                                      SINT32 extentID ) = 0 ;
+
+         virtual INT32 _prepareInsertData( const BSONObj &record,
+                                           BOOLEAN mustOID,
+                                           pmdEDUCB *cb,
+                                           dmsRecordData &recordData,
+                                           BOOLEAN &memReallocate ) = 0 ;
 
          virtual INT32 _allocRecordSpace( dmsMBContext *context,
                                           UINT32 size,
@@ -946,15 +945,6 @@ namespace engine
                                             UINT32 recordSize,
                                             _pmdEDUCB *cb,
                                             BOOLEAN isInsert = TRUE ) = 0 ;
-
-         virtual INT32 _postInsert( dmsMBContext *context,
-                                    dmsExtRW &extRW,
-                                    BSONObj &record,
-                                    const dmsRecordID &recordID,
-                                    _pmdEDUCB *cb )
-         {
-            return SDB_OK ;
-         }
 
          virtual INT32 _operationPermChk( DMS_ACCESS_TYPE accessType ) = 0 ;
 
@@ -980,6 +970,7 @@ namespace engine
          virtual INT32 _onInsertFail( dmsMBContext *context, BOOLEAN hasInsert,
                                       dmsRecordID rid, SDB_DPSCB *dpscb,
                                       ossValuePtr dataPtr, _pmdEDUCB *cb ) = 0 ;
+
          virtual INT32  _onOpened() ;
          virtual void   _onClosed() ;
          virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
@@ -1017,9 +1008,13 @@ namespace engine
          void _setCompressor( dmsMBContext *context ) ;
          void _rmCompressor( _dmsMBContext *context ) ;
 
+         // This function allocates a new extent. When the extent is allocated,
+         // different storage types( sub classes of this base class ) may have
+         // different further in-extent initialize operations. The parameter
+         // 'deepInit' specifies if those operations should happen.
          INT32 _allocateExtent ( dmsMBContext *context,
                                  UINT16 numPages,
-                                 BOOLEAN map2DelList = TRUE,
+                                 BOOLEAN deepInit = TRUE,
                                  BOOLEAN add2LoadList = FALSE,
                                  dmsExtentID *allocExtID = NULL ) ;
 

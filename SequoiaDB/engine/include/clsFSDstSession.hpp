@@ -141,7 +141,7 @@ namespace engine
                                       INT32 &lobPageSize,
                                       DMS_STORAGE_TYPE &csType,
                                       UTIL_COMPRESSOR_TYPE &compType,
-                                      dmsCollectionOptions &clOptions ) ;
+                                      BSONObj &extOptions ) ;
 
          INT32          _extractIndex( const CHAR *objdata,
                                        vector<BSONObj> &index,

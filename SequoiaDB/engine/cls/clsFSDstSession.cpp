@@ -440,7 +440,7 @@ namespace engine
                                                INT32 &lobPageSize,
                                                DMS_STORAGE_TYPE &csType,
                                                UTIL_COMPRESSOR_TYPE &compType,
-                                               dmsCollectionOptions &clOptions )
+                                               BSONObj &extOptions )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__EXTMETA );
@@ -454,6 +454,7 @@ namespace engine
          BSONElement compressorType ;
          BSONElement lobPageEle ;
          BSONElement typeEle ;
+         BSONElement extOptEle ;
          BSONElement csEle = obj.getField( CLS_FS_CS_NAME ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta data: %s", sessionName(),
                  obj.toString().c_str() ) ;
@@ -497,25 +498,12 @@ namespace engine
          {
             goto error ;
          }
-         //clOptions._compressType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
          compType = (UTIL_COMPRESSOR_TYPE)compressorType.Int() ;
 
-         if ( OSS_BIT_TEST( attributes, DMS_MB_ATTR_CAPPED ) )
+         extOptEle = ele.embeddedObject().getField( CLS_FS_EXT_OPTION ) ;
+         if ( Object == extOptEle.type() )
          {
-            BSONElement elemTmp =
-               ele.embeddedObject().getField( CLS_FS_CL_MAX_SIZE ) ;
-            if ( elemTmp.eoo() || NumberLong != elemTmp.type() )
-            {
-               goto error ;
-            }
-            clOptions._maxSize = elemTmp.numberLong() ;
-
-            elemTmp = ele.embeddedObject().getField( CLS_FS_CL_MAX_RECNUM ) ;
-            if ( elemTmp.eoo() || NumberLong != elemTmp.type() )
-            {
-               goto error ;
-            }
-            clOptions._maxRecNum = elemTmp.numberLong() ;
+            extOptions = extOptEle.Obj() ;
          }
 
          lobPageEle =  ele.embeddedObject().getField( CLS_FS_LOB_PAGE_SIZE ) ;
@@ -671,7 +659,7 @@ namespace engine
          UINT32 pageSize = 0 ;
          UINT32 attributes = 0 ;
          UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
-         dmsCollectionOptions clOptions ;
+         BSONObj extOptions ;
          CHAR fullName[DMS_COLLECTION_NAME_SZ +
                        DMS_COLLECTION_SPACE_NAME_SZ + 2] ;
          CHAR *objdata = ( CHAR *)( &( msg->header ) ) +
@@ -686,7 +674,7 @@ namespace engine
                                       lobPageSize,
                                       csType,
                                       compType,
-                                      clOptions ) )
+                                      extOptions ) )
          {
             _disconnect() ;
             goto done ;
@@ -710,7 +698,9 @@ namespace engine
          rc = _replayer.replayCrtCS( cs.c_str(), pageSize, lobPageSize,
                                      csType, eduCB() ) ;
          rc = _replayer.replayCrtCollection( fullName, attributes,
-                                             eduCB(), compType, clOptions ) ;
+                                             eduCB(), compType,
+                                             ( extOptions.isEmpty() ?
+                                               NULL : &extOptions ) ) ;
          if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
          {
             PD_LOG( PDERROR, "Session[%s]: Failed to create collection"

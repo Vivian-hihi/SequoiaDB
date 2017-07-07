@@ -530,6 +530,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNCREATECL_INIT ) ;
       BSONObj matcher ( pMatcherBuff ) ;
       BSONElement ele ;
+
       rc = rtnGetStringElement ( matcher, FIELD_NAME_NAME,
                                  &_collectionName ) ;
       if ( rc )
@@ -634,6 +635,9 @@ namespace engine
 
       if ( capped )
       {
+         INT64 maxSize = 0 ;
+         INT64 maxRecNum = 0 ;
+         BSONObjBuilder builder ;
          if ( isCompressed || autoIndexId )
          {
             PD_LOG( PDERROR, "Sharding/Compress/Index is not support on capped "
@@ -643,8 +647,7 @@ namespace engine
          }
 
          _attributes |= DMS_MB_ATTR_CAPPED ;
-         rc = rtnGetNumberLongElement( matcher, FIELD_NAME_SIZE,
-                                       _options._maxSize ) ;
+         rc = rtnGetNumberLongElement( matcher, FIELD_NAME_SIZE, maxSize ) ;
          if ( rc )
          {
             if ( SDB_FIELD_NOT_EXIST == rc )
@@ -660,16 +663,18 @@ namespace engine
             }
             goto error ;
          }
+         builder.append( FIELD_NAME_SIZE, maxSize ) ;
 
          // Max is optional.
-         rc = rtnGetNumberLongElement( matcher, FIELD_NAME_MAX,
-                                       _options._maxRecNum ) ;
+         rc = rtnGetNumberLongElement( matcher, FIELD_NAME_MAX, maxRecNum ) ;
          if ( SDB_OK != rc && SDB_FIELD_NOT_EXIST != rc )
          {
             PD_LOG( PDERROR, "Field[%s] value is error in obj[%s]",
                     FIELD_NAME_MAX, matcher.toString().c_str() ) ;
             goto error ;
          }
+         builder.append( FIELD_NAME_MAX, maxRecNum ) ;
+         _extOptions = builder.obj() ;
       }
 
       rc = SDB_OK ;
@@ -695,7 +700,9 @@ namespace engine
 
       rc = rtnCreateCollectionCommand ( _collectionName, _shardingKey,
                                         _attributes, cb, dmsCB, dpsCB,
-                                         _compressorType, 0, FALSE, _options ) ;
+                                        _compressorType, 0, FALSE,
+                                        ( _extOptions.isEmpty() ?
+                                         NULL : &_extOptions ) ) ;
 
       if ( CMD_SPACE_SERVICE_LOCAL == getFromService() )
       {
@@ -705,12 +712,12 @@ namespace engine
          PD_AUDIT_COMMAND( AUDIT_DDL, name(), AUDIT_OBJ_CL,
                            _collectionName, rc,
                            "ShardingKey:%s, Attribute:0x%08x(%s), "
-                           "CompressType:%d(%s), Size:%lld, Max:%lld",
+                           "CompressType:%d(%s), extend options: %s",
                            _shardingKey.toString().c_str(),
                            _attributes, szTmp,
                            _compressorType,
                            utilCompressType2String( _compressorType ),
-                           _options._maxSize, _options._maxRecNum ) ;
+                           _extOptions.toString().c_str() ) ;
       }
 
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_DOIT, rc ) ;

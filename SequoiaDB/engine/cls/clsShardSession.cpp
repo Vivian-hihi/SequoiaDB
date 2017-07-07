@@ -637,7 +637,8 @@ namespace engine
       BSONObj shardingKey ;
       vector< string > subCLList ;
       UTIL_COMPRESSOR_TYPE compType = UTIL_COMPRESSOR_INVALID ;
-      dmsCollectionOptions options ;
+      BSONObj extOptions ;
+      BSONObjBuilder builder ;
 
       /// get sharding key
    retry:
@@ -672,10 +673,11 @@ namespace engine
       compType = set->getCompressType() ;
       if ( OSS_BIT_TEST( attribute, DMS_MB_ATTR_CAPPED ) )
       {
-         options._maxSize = set->getMaxSize() ;
-         options._maxRecNum = set->getMaxRecNum() ;
+         builder.append( FIELD_NAME_SIZE, set->getMaxSize() ) ;
+         builder.append( FIELD_NAME_MAX, set->getMaxRecNum() ) ;
+		 extOptions = builder.done() ;
       }
-
+      
       if ( isMainCL )
       {
          set->getSubCLList( subCLList ) ;
@@ -719,7 +721,7 @@ namespace engine
 
          rc = rtnCreateCollectionCommand( clFullName, shardingKey, attribute,
                                           _pEDUCB, _pDmsCB, _pDpsCB,
-                                          compType, 0, FALSE, options ) ;
+                                          compType, 0, FALSE, &extOptions ) ;
          if ( SDB_DMS_EXIST == rc )
          {
             rc = SDB_OK ;

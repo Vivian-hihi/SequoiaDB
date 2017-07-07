@@ -1920,52 +1920,13 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONOPTIONS, "_dmsStorageUnit::getCollectionOptions" )
-   INT32 _dmsStorageUnit::getCollectionOptions( const CHAR *pName,
-                                                dmsCollectionOptions &options,
-                                                dmsMBContext *context )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__DMSSU_GETCOLLECTIONOPTIONS ) ;
-      BOOLEAN getContext = FALSE ;
-
-      if ( !context )
-      {
-         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
-         rc = _pDataSu->getMBContext( &context, pName, SHARED ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
-                      "rc: %d", pName, rc ) ;
-         getContext = TRUE ;
-      }
-      else
-      {
-         if ( !context->isMBLock() )
-         {
-            rc = context->mbLock( SHARED ) ;
-            PD_RC_CHECK( rc, PDERROR, "Lock collection failed, rc: %d", rc ) ;
-         }
-      }
-
-      //options._compressType = context->mb()->_compressorType ;
-      options._maxSize = context->mb()->_maxSize ;
-      options._maxRecNum = context->mb()->_maxRecNum ;
-
-   done:
-      if ( getContext && context )
-      {
-         _pDataSu->releaseMBContext( context ) ;
-      }
-      PD_TRACE_EXITRC( SDB__DMSSU_GETCOLLECTIONOPTIONS, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONCOMPTYPE, "_dmsStorageUnit::getCollectionCompType" )
    INT32 _dmsStorageUnit::getCollectionCompType( const CHAR *pName,
                                                  UTIL_COMPRESSOR_TYPE &compType,
                                                  dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSU_GETCOLLECTIONCOMPTYPE ) ;
       BOOLEAN getContext = FALSE ;
 
       if ( !context )
@@ -1988,6 +1949,45 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSU_GETCOLLECTIONCOMPTYPE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONEXTOPTIONS, "_dmsStorageUnit::getCollectionExtOptions" )
+   INT32 _dmsStorageUnit::getCollectionExtOptions( const CHAR *pName,
+                                                   BSONObj &extOptions,
+                                                   dmsMBContext *context )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSU_GETCOLLECTIONEXTOPTIONS ) ;
+      BOOLEAN getContext = FALSE ;
+
+      if ( !context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+         rc = _pDataSu->getMBContext( &context, pName, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else if ( !context->isMBLock() )
+      {
+         rc = context->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Lock collection failed, rc: %d", rc ) ;
+      }
+
+      rc = _pDataSu->dumpExtOptions( context, extOptions ) ;
+      PD_RC_CHECK( rc, PDERROR, "Dump collection extend options failed: %d",
+                   rc ) ;
+
+   done:
+      if ( getContext && context )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      PD_TRACE_EXITRC( SDB__DMSSU_GETCOLLECTIONEXTOPTIONS, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -2419,8 +2419,6 @@ namespace engine
          info._idxIsValid = mbStat->_idxCommitFlag.peek() ? TRUE : FALSE ;
          info._lobIsValid = mbStat->_lobCommitFlag.peek() ? TRUE : FALSE ;
 
-         info._maxSize = mb->_maxSize ;
-         info._maxRecNum = mb->_maxRecNum ;
 
          if ( !_pLobSu->isOpened() )
          {

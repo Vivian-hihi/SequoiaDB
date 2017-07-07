@@ -197,7 +197,7 @@ namespace engine
             {
                beginPos += 8 ;
             }
-            else 
+            else
             {
                if ( isDirty( beginPos ) )
                {
@@ -363,6 +363,7 @@ namespace engine
       _segmentPagesSquare = 0 ;
       _pageSizeSquare     = 0 ;
       _isTempSU           = FALSE ;
+      _blockScanSupport   = TRUE ;
       _pageSize           = 0 ;
       _lobPageSize        = 0 ;
 
@@ -373,6 +374,7 @@ namespace engine
       if ( 0 == ossStrcmp( pInfo->_suName, SDB_DMSTEMP_NAME ) )
       {
          _isTempSU = TRUE ;
+         _blockScanSupport = FALSE ;
       }
 
       _pSyncMgr           = NULL ;
@@ -907,7 +909,7 @@ namespace engine
       }
       _maxSegID = (INT32)segmentSize() - 1 ;
 
-      // create dirtyList to record dirty pages. Note dirty list doesn't 
+      // create dirtyList to record dirty pages. Note dirty list doesn't
       // contain header and metadata segments, only for data segments
       rc = _dirtyList.init( maxSegmentNum() ) ;
       if ( rc )
@@ -1304,7 +1306,7 @@ namespace engine
          goto error ;
       }
 
-      // must be set storage info page size here, because lob meta page size 
+      // must be set storage info page size here, because lob meta page size
       // is 256B, so can't be assign to storage page size in later code
       if ( (UINT32)_pStorageInfo->_pageSize != pHeader->_pageSize )
       {
@@ -1915,6 +1917,11 @@ namespace engine
    void _dmsStorageBase::_incWriteRecord()
    {
       ++_writeReordNum ;
+   }
+
+   void _dmsStorageBase::_disableBlockScan()
+   {
+      _blockScanSupport = FALSE ;
    }
 
    /*

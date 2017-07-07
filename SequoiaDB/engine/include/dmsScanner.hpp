@@ -168,19 +168,19 @@ namespace engine
 
       protected:
          INT32 _firstInit( _pmdEDUCB *cb ) ;
+         void _checkMaxRecordsNum( _mthRecordGenerator &generator ) ;
 
       private:
-         INT64                _maxRecords ;
-         INT64                _skipNum ;
-         dmsExtRW             _extRW ;
-         const dmsExtent      *_extent ;
-         dmsRecordID          _curRID ;
-         dmsRecordRW          _recordRW ;
-         dmsOffset            _next ;
-         BOOLEAN              _firstRun ;
-         _pmdEDUCB            *_cb ;
-         const _dmsExtentInfo *_workExtInfo ;
-         dmsOffset            _lastOffset ;
+         INT64                   _maxRecords ;
+         INT64                   _skipNum ;
+         dmsExtRW                _extRW ;
+         const dmsExtent         *_extent ;
+         dmsRecordID             _curRID ;
+         dmsRecordRW             _recordRW ;
+         dmsOffset               _next ;
+         BOOLEAN                 _firstRun ;
+         _pmdEDUCB               *_cb ;
+         const _dmsExtentInfo    *_workExtInfo ;
    } ;
    typedef _dmsCappedExtScanner dmsCappedExtScanner ;
 

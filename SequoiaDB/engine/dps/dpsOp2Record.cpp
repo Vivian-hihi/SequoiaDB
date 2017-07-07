@@ -543,6 +543,11 @@ namespace engine
       rc = record.push( DPS_LOG_CSCRT_CSTYPE,
                         sizeof( type ),
                         (CHAR *)( &type ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push cs type to record, rc: %d", rc ) ;
+         goto error ;
+      }
 
       header._length = record.alignedLen() ;
    done:
@@ -735,7 +740,7 @@ namespace engine
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to load cs del record, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to load cs rename record, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -770,8 +775,7 @@ namespace engine
    INT32 dpsCLCrt2Record( const CHAR *fullName,
                           const UINT32 &attribute,
                           const UINT8 &compressorType,
-                          const INT64 &maxSize,
-                          const INT64 &maxRecNum,
+                          const BSONObj *extOptions,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CLCRT2RECORD ) ;
@@ -807,27 +811,19 @@ namespace engine
          goto error ;
       }
 
-      if ( DMS_INVALID_CL_SIZE != maxSize )
+      if ( extOptions )
       {
-         rc = record.push( DPS_LOG_CLCRT_MAX_SIZE, sizeof( maxSize ),
-                           (const CHAR *)( &maxSize ) ) ;
-         if ( SDB_OK != rc )
+         if ( !extOptions->valid() )
          {
-            PD_LOG( PDERROR, "Failed to push Size to record, rc: %d", rc ) ;
+            PD_LOG( PDERROR, "Extend option object is invalid" ) ;
+            rc = SDB_SYS ;
             goto error ;
          }
-      }
-      if ( DMS_INVALID_CL_RECNUM != maxRecNum )
-      {
-         SDB_ASSERT( DMS_INVALID_CL_SIZE != maxSize,
-                     "Size should not be invalid" ) ;
-         rc = record.push( DPS_LOG_CLCRT_MAX_RECNUM, sizeof( maxRecNum ),
-                           (const CHAR *)( &maxRecNum ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "Failed to push Max to record, rc: %d", rc ) ;
-            goto error ;
-         }
+
+         rc = record.push( DPS_LOG_CLCRT_EXT_OPTIONS, extOptions->objsize(),
+                           extOptions->objdata() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to push extend options to record, "
+                      "rc: %d", rc ) ;
       }
 
       header._length = record.alignedLen() ;
@@ -843,8 +839,7 @@ namespace engine
                           const CHAR **fullName,
                           UINT32 &attribute,
                           UINT8 &compressorType,
-                          INT64 &maxSize,
-                          INT64 &maxRecNum )
+                          BSONObj &extOptions )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLCRT ) ;
       INT32 rc = SDB_OK ;
@@ -854,7 +849,7 @@ namespace engine
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to load delete record, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to load cl create record, rc: %d", rc ) ;
          goto error ;
       }
 
@@ -882,16 +877,20 @@ namespace engine
          compressorType = *((UINT8 *)recordItr.value());
       }
 
-      recordItr = record.find( DPS_LOG_CLCRT_MAX_SIZE ) ;
+      recordItr = record.find( DPS_LOG_CLCRT_EXT_OPTIONS ) ;
       if ( recordItr.valid() )
       {
-         maxSize = *( (INT64 *)recordItr.value() ) ;
-      }
-
-      recordItr = record.find( DPS_LOG_CLCRT_MAX_RECNUM ) ;
-      if ( recordItr.valid() )
-      {
-         maxRecNum = *( (INT64 *)recordItr.value() ) ;
+         try
+         {
+            extOptions = BSONObj( recordItr.value() ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Exception occurred when fetching option "
+                    "object: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
 
       }

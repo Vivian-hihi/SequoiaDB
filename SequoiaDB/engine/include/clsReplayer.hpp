@@ -81,7 +81,7 @@ namespace engine
                                  UINT32 attributes,
                                  _pmdEDUCB *eduCB,
                                  UTIL_COMPRESSOR_TYPE compType,
-                                 const dmsCollectionOptions &options ) ;
+                                 const BSONObj *extOptions ) ;
 
       INT32 replayIXCrt( const CHAR *collection,
                          BSONObj &index,
