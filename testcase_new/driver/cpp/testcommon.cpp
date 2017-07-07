@@ -19,6 +19,7 @@ char RSRVPORTBEGIN[100]    = "26000" ;
 char RSRVPORTEND[100]      = "27000" ;
 char RSRVNODEDIR[100]      = "/opt/sequoiadb/database/" ;
 char WORKDIR[100]          = "/tmp/cpptest" ;
+char COORD[100]   		   = "localhost:11810" ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName )
 {
@@ -77,6 +78,7 @@ void getConf()
 	  else if( para == "--workdir" || para == "-w" )
 		 strcpy( WORKDIR,g_argvs[i+1].c_str() ) ; 
     }
+	sprintf( COORD, "%s%s%s", HOSTNAME, ":", SVCNAME ) ;
    
     cout << "HostName: " << HOSTNAME << endl ;
     cout << "SvcName: " << SVCNAME << endl ;
@@ -85,6 +87,7 @@ void getConf()
 	cout << "RSPVPORTEND: " << RSRVPORTEND << endl ;
 	cout << "RSPVNODEDIR: " << RSRVNODEDIR << endl ;
 	cout << "WORKDIR: " << WORKDIR << endl ;
+	cout << "COORD: " << COORD << endl ;
 }
 
 void ossSleep(int milliseconds)

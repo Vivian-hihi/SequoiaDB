@@ -8,6 +8,7 @@ using namespace sdbclient ;
 // 用户信息非法时，init/enable正常返回,getConnection报错
 TEST(InvalidArgTest,userInfo)
 {
+	getConf() ;
 	if(isStandalone())
 	{
 		cout<<"Standalone can't create user"<<endl ;

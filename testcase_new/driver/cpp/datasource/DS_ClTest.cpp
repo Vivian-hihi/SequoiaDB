@@ -8,6 +8,7 @@ using namespace std ;
 TEST(libTest,sdb)
 {
 	sdb db ;
+    getConf() ;
 	EXPECT_EQ(SDB_OK,db.connect(HOST, SERVER)) ;
 	sdbCollectionSpace cs ;
 	EXPECT_EQ(SDB_OK,db.createCollectionSpace("testcs",65536,cs)) ;

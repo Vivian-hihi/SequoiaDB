@@ -10,6 +10,7 @@ using namespace sdbclient ;
 // 休眠时间>checkInterval,检查连接池空闲连接数量= maxIdleConnNum
 TEST(TimeTest,checkIntervalLong)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	string url = COORD ;
 	sdbDataSource ds ;
@@ -22,6 +23,8 @@ TEST(TimeTest,checkIntervalLong)
 	while(vec.size() <= conf.getMaxIdleCount())
 	{
 		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		// printf( "vec size: %d, max idle count: %d\n", vec.size(), conf.getMaxIdleCount() ) ;
+		// sleep( 1000 ) ;
 		vec.push_back(conn) ;
 	}
 	for(int i = 0;i != vec.size();++i)
@@ -38,6 +41,7 @@ TEST(TimeTest,checkIntervalLong)
 // 休眠时间<checkInterval,检查连接池空闲连接数量> maxIdleConnNum
 TEST(TimeTest,checkIntervalShort)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	string url = COORD ;
 	sdbDataSource ds ;
@@ -67,6 +71,7 @@ TEST(TimeTest,checkIntervalShort)
 // 设置keepAliveTimeout=0,检查连接有效性
 TEST(TimeTest,keepAliveTimoutZero)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	string url = COORD ;
 	sdbDataSource ds ;
@@ -88,6 +93,7 @@ TEST(TimeTest,keepAliveTimoutZero)
 // 设置keepAliveTimeout!=0,检查连接有效性
 TEST(TimeTest,keepAliveTimoutNotZero)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	string url = COORD ;
 	sdbDataSource ds ;
@@ -109,6 +115,7 @@ TEST(TimeTest,keepAliveTimoutNotZero)
 // 设置keepAliveTimeout!=0,检查连接有效性
 TEST(TimeTest,keepAliveTimoutNotZeroAgain)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	string url = COORD ;
 	sdbDataSource ds ;

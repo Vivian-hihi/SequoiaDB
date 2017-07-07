@@ -4,23 +4,22 @@
 
 using namespace sdbclient ;
 
-string url = COORD ;
-
 // 启用连接池获取及释放连接，添加及删除节点
 TEST(ConnTest,enableConn)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
 	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
 	ds.releaseConnection(conn) ;	// 释放连接无返回值
 
-	ds.addCoord(url) ;	//
+	ds.addCoord(COORD) ;	//
 	EXPECT_EQ(1,ds.getNormalCoordNum()) ;
 	ds.addCoord("localhost:11910") ;
 	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
@@ -39,9 +38,10 @@ TEST(ConnTest,enableConn)
 // 启用连接池获取连接到连接池满后继续申请连接
 TEST(ConnTest,fullConn)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 
 	sdb* conn = NULL ;
@@ -58,24 +58,26 @@ TEST(ConnTest,fullConn)
 // 禁用连接池获取连接
 TEST(ConnTest,disableConn)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.disable()) ;
 
 	sdb* conn = NULL ;
 	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
-	ds.addCoord(url) ;			// 添加节点无返回值
-	ds.removeCoord(url) ;		// 删除节点无返回值
+	ds.addCoord(COORD) ;			// 添加节点无返回值
+	ds.removeCoord(COORD) ;		// 删除节点无返回值
 	ds.close() ;
 }
 
 // 禁用连接池后资源回收情况,禁用连接池后，连接队列被清空
 TEST(ConnTest,disableResource)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 	sdb* conn ;
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
@@ -90,9 +92,10 @@ TEST(ConnTest,disableResource)
 // 重复禁用连接池后资源回收情况,禁用连接池后，连接队列被清空
 TEST(ConnTest,disableResourceAgain)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 	sdb* conn ;
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
@@ -110,15 +113,16 @@ TEST(ConnTest,disableResourceAgain)
 // 调用close后继续执行相关操作
 TEST(ConnTest,close)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 	ds.close() ;
 	
 	sdb* conn ;
 	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
-	ds.addCoord(url) ;  
+	ds.addCoord(COORD) ;  
 	EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
 	EXPECT_EQ(SDB_OK,ds.disable()) ; //  close后能正常调用disable
 	EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
@@ -128,6 +132,7 @@ TEST(ConnTest,close)
 // 没有调用init就执行相关操作
 TEST(ConnTest,withoutInit)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(false) ;
 	sdbDataSource ds ;
@@ -135,7 +140,7 @@ TEST(ConnTest,withoutInit)
         EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ;	
    
 	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
-	ds.addCoord(url) ;	
+	ds.addCoord(COORD) ;	
 	EXPECT_EQ(SDB_OK,ds.disable()) ;		
 	ds.close() ;		
 }
@@ -144,9 +149,10 @@ TEST(ConnTest,withoutInit)
  //获取连接后没有释放，直接disable 正常返回
 TEST(ConnTest,disableWithoutRelease)
 {
+	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
 	EXPECT_EQ(SDB_OK,ds.enable()) ;
 	sdb* conn = NULL ;
 	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;

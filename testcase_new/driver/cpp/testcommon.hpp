@@ -15,7 +15,6 @@ do { \
 	} \
 } while( 0 ) ;
 
-#define COORD                 "192.168.31.19:11810"
 #define HOST                  "localhost"
 #define SERVER                "11810" 
 #define CSNAME                "story_cpp_test_cs" 
@@ -27,6 +26,7 @@ extern char RSRVPORTBEGIN[100] ;
 extern char RSRVPORTEND[100] ;
 extern char RSRVNODEDIR[100] ;
 extern char WORKDIR[100] ;
+extern char COORD[100] ;
 
 void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName );
 void getConf() ;

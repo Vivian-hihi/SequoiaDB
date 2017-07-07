@@ -17,6 +17,7 @@ void init(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
+	getConf() ;
     std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 }
@@ -25,6 +26,7 @@ void init_enable(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
+	getConf() ;
     std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,arg->getDs().enable()) ;
@@ -34,6 +36,7 @@ void init_disable(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
+	getConf() ;
     std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,arg->getDs().disable()) ;
@@ -43,6 +46,7 @@ void init_close(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
+	getConf() ;
     std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	arg->getDs().close() ;
@@ -52,6 +56,7 @@ void init_conn(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
+	getConf() ;
     std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	EXPECT_EQ(SDB_OK,arg->getDs().enable()) ;
@@ -64,6 +69,7 @@ void init_coord(DsArgs *arg)
 {
 	ossSleep(getRand()*100) ;
 	sdbclient::sdbDataSourceConf conf ;
+	getConf() ;
     std::string url = COORD ;
 	EXPECT_EQ(SDB_OK,arg->getDs().init(url,conf)) ;
 	std::string url2 = "localhost:11910" ;
@@ -234,6 +240,7 @@ void addCoord_remove(DsArgs *arg)
 void removeCoord(DsArgs *arg)
 {
 	ossSleep(getRand() * 100) ;
+	getConf() ;
 	string url = COORD ;
 	arg->getDs().removeCoord(url) ;
 	EXPECT_EQ(0,arg->getDs().getNormalCoordNum()) ;
