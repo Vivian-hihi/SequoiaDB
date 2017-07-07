@@ -847,6 +847,8 @@ namespace engine
       BOOLEAN isRecursive = FALSE ;
 
       isRecursive = optionObj.getBoolField( "isRecursive" ) ;
+
+      mode = mode & 0xfff ;
       // build cmd
       cmd << "chmod" ;
       if ( TRUE == isRecursive )
