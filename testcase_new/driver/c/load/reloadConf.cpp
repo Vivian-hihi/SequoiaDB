@@ -95,7 +95,13 @@ INT32 createSlaveNode( sdbConnectionHandle& db, sdbReplicaGroupHandle& rg, sdbNo
 			bson_init( &obj ) ;
 			continue ;
 		}
-
+		vector<string> vec ;
+		rc = getGroupNodes( db, rgname, vec ) ;
+		CHECK_RC_CODE( rc, "fail to get rg nodes" ) ;
+		// if rg has only one node, after reelect and change primary node to new add node, 
+		// then stop the primary node, group can't make elect
+		if( vec.size() == 1 )  continue ;   
+	
 		rc = sdbGetReplicaGroup( db, rgname, &rg ) ;
         CHECK_RC_CODE( rc, "fail to get rg" ) ;
 		break ;			

@@ -2,6 +2,10 @@
 #define TESTCOMMON_HPP__
 #include "client.h"
 #include <stdio.h>
+#include <vector>
+#include <string>
+
+using namespace std ;
 
 #define USER                  ""
 #define PASSWD                "" 
@@ -51,6 +55,12 @@ void getHost() ;
 
 // get idle port between RSRVPORTBEGIN and RSRVPORTEND
 void getIdlePort( char* port ) ;
+
+// get all data groups
+INT32 getGroups( sdbConnectionHandle db, vector<string>& vec ) ;
+
+// get all group nodes
+INT32 getGroupNodes( sdbConnectionHandle db, const CHAR* groupname, vector<string>& vec ) ;
 
 SDB_EXTERN_C_END
 
