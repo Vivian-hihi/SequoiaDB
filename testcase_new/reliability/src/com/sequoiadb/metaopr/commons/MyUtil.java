@@ -186,6 +186,7 @@ public class MyUtil {
                     db.getCollectionSpace(name).createCollection(clname);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -208,6 +209,7 @@ public class MyUtil {
                     cs.createCollection(name);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -227,6 +229,7 @@ public class MyUtil {
                     .createCollection(clName);
             return 1;
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -237,6 +240,7 @@ public class MyUtil {
                     .createCollection(clName, option);
             return 1;
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -255,6 +259,7 @@ public class MyUtil {
                     db.createCollectionSpace(name);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -275,6 +280,7 @@ public class MyUtil {
             db.createCollectionSpace(csName, options);
             return 1;
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -285,6 +291,7 @@ public class MyUtil {
             db.createCollectionSpace(name);
             return true;
         } catch (BaseException e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -303,6 +310,7 @@ public class MyUtil {
             db.createDomain(domainName, options);
             return 1;
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -321,6 +329,7 @@ public class MyUtil {
             db.createDomain(domainName, options);
             return 1;
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -351,6 +360,7 @@ public class MyUtil {
             domain.alterDomain(options);
             return true;
         } catch (BaseException e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -374,6 +384,7 @@ public class MyUtil {
                     db.createDomain(name, options);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         } finally {
@@ -397,6 +408,7 @@ public class MyUtil {
                     db.getCollectionSpace(name).dropCollection(clName);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -414,6 +426,7 @@ public class MyUtil {
             db.dropDomain(domainName);
             return 1;
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -426,6 +439,7 @@ public class MyUtil {
                     db.dropDomain(name);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -497,6 +511,7 @@ public class MyUtil {
                     cs.dropCollection(clName);
                     count++;
                 } catch (BaseException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -527,12 +542,16 @@ public class MyUtil {
      * @return
      */
     public static boolean isCsAllCreated(List<String> csNames) {
+        boolean falg=true;
         try (MySequoiadb db = getMySdb()) {
             for (String csName : csNames) {
                 if (db.isCollectionSpaceExist(csName) == false)
-                    return false;
+                {
+                    System.out.println("MyUtil.isCsAllCreated:this cs not exist: "+csName);
+                    falg=false;
+                }
             }
-            return true;
+            return falg;
         }
     }
 
@@ -583,6 +602,7 @@ public class MyUtil {
                     .getCollection(clName).delete((BSONObject) null);
             return true;
         } catch (BaseException e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -609,6 +629,7 @@ public class MyUtil {
             db = node.connect();
             return db.getCollectionSpace(csName).getCollection(clName).getCount();
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         } catch (ReliabilityException e) {
             return 0;
@@ -627,6 +648,7 @@ public class MyUtil {
             db = node.connect();
             return db.getCollectionSpace(csName).getCollection(clName).getCount();
         } catch (BaseException e) {
+            e.printStackTrace();
             return 0;
         } finally {
             if (db != null)
@@ -666,6 +688,7 @@ public class MyUtil {
                     return false;
             }
         } catch (BaseException e) {
+            e.printStackTrace();
             return false;
         }
         return true;
@@ -702,6 +725,7 @@ public class MyUtil {
             lob.read(outputStream);
             lob.close();
         } catch (BaseException e) {
+            e.printStackTrace();
             if (e.getErrorCode() != -269)
                 throw e;
             else {
@@ -744,6 +768,7 @@ public class MyUtil {
                 try {
                     cl.removeLob(id);
                 } catch (BaseException e) {
+                    e.printStackTrace();
                     if (e.getErrorCode() != -269)
                         throw e;
                 }
@@ -816,6 +841,7 @@ public class MyUtil {
                     try {
                         cl.openLob(id);
                     } catch (BaseException e) {
+                        e.printStackTrace();
                         if (e.getErrorCode() == -296)
                             continue;
                         else
