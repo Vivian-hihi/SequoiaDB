@@ -87,6 +87,40 @@ namespace engine
       {
          return _indexDef.getBoolField( IXM_UNIQUE_FIELD ) ;
       }
+
+      OSS_INLINE INT32 getIndexType( UINT16 &type ) const
+      {
+         INT32 rc = SDB_OK ;
+         UINT16 indexType = IXM_EXTENT_TYPE_NONE ;
+         if ( !ixmIndexCB::generateIndexType( _indexDef, indexType ) )
+         {
+            PD_LOG( PDERROR, "Get index type from definition failed" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_POSITIVE ) )
+         {
+            type = IXM_EXTENT_TYPE_POSITIVE ;
+         }
+         else if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_REVERSE ) )
+         {
+            type = IXM_EXTENT_TYPE_REVERSE ;
+         }
+         else if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_2D ) )
+         {
+            type = IXM_EXTENT_TYPE_2D ;
+         }
+         else if ( IXM_EXTENT_HAS_TYPE( indexType, IXM_EXTENT_TYPE_TEXT ) )
+         {
+            type = IXM_EXTENT_TYPE_TEXT ;
+         }
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+      }
    } ;
 
    typedef class _monIndex monIndex ;

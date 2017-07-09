@@ -81,6 +81,7 @@ namespace engine
       RTN_CONTEXT_SHARD_OF_LOB,
       RTN_CONTEXT_LIST_LOB,
       RTN_CONTEXT_OM_TRANSFER,
+      RTN_CONTEXT_TS_DATA,
 
       /// Catalog contexts
 
@@ -130,7 +131,7 @@ namespace engine
             _prefEvent.reset() ;
          }
          void     ntyBegin ()
-         { 
+         {
             ++_prefNum ;
             _needWait = TRUE ;
          }
@@ -183,7 +184,7 @@ namespace engine
       OSS_INLINE INT64     numRecords() const { return _numRecords ; }
       OSS_INLINE INT32     readOffset() const { return _readOffset ; }
       OSS_INLINE INT32     writeOffset() const { return _writeOffset ; }
-      OSS_INLINE INT32     freeSize() const 
+      OSS_INLINE INT32     freeSize() const
       {
          return _bufferSize - ossAlign4((UINT32)_writeOffset) ;
       }
@@ -196,11 +197,11 @@ namespace engine
          return hasMem() ? RTN_GET_CONTEXT_FLAG(_buffer) : NULL ;
       }
       OSS_INLINE INT32*    getRefCountPointer()
-      { 
-         return hasMem() ? RTN_GET_REFERENCE(_buffer) : NULL ; 
+      {
+         return hasMem() ? RTN_GET_REFERENCE(_buffer) : NULL ;
       }
-      OSS_INLINE INT32     getRefCount() const 
-      { 
+      OSS_INLINE INT32     getRefCount() const
+      {
          return hasMem() ? *RTN_GET_REFERENCE(_buffer) : 0 ;
       }
       OSS_INLINE BOOLEAN   isEmpty() const
@@ -278,7 +279,7 @@ namespace engine
 
          INT32    getReference() const ;
 
-         void     enableCountMode() 
+         void     enableCountMode()
          {
             _buffer.enableCountMode() ;
             _countOnly = TRUE ;
@@ -441,7 +442,6 @@ namespace engine
    } ;
 
    _rtnContextBuilder* sdbGetRTNContextBuilder() ;
-
 }
 
 #endif //RTNCONTEXT_HPP_

@@ -51,9 +51,35 @@
 #include "utilConcurrentMap.hpp"
 #include <map>
 #include <set>
+#include "pmdRemoteSession.hpp"
+
+#include "netMsgHandler.hpp"
+
+#define SDB_EXT_DATA_NODE_ID           999999999
 
 namespace engine
 {
+   class _rtnMsgHandler : public _netMsgHandler
+   {
+      public:
+         _rtnMsgHandler( _pmdRemoteSessionMgr *pRSManager ) ;
+         virtual ~_rtnMsgHandler() ;
+
+         void  attach( _pmdEDUCB *cb ) ;
+         void  detach() ;
+
+         virtual INT32 handleMsg( const NET_HANDLE &handle,
+                                  const _MsgHeader *header,
+                                  const CHAR *msg ) ;
+         virtual void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
+         virtual void  handleConnect( const NET_HANDLE &handle,
+                                      _MsgRouteID id,
+                                      BOOLEAN isPositive ) ;
+
+      protected:
+         _pmdRemoteSessionMgr                *_pRSManager ;
+   } ;
+   typedef _rtnMsgHandler rtnMsgHandler ;
    /*
       _SDB_RTNCB define
    */
@@ -61,10 +87,14 @@ namespace engine
    {
    private :
       typedef utilConcurrentMap<INT64, rtnContext*> RTN_CTX_MAP ;
-      
+
       ossAtomicSigned64 _contextIdGenerator ;
       RTN_CTX_MAP       _contextMap ;
       BOOLEAN           _enableMixCmp ;
+      pmdRemoteSessionMgr _rsMgr ;
+      rtnMsgHandler     *_msgHandler ;
+      netRouteAgent     *_routeAgent ;  // For communication with search engine adapter.
+      INT64             _textIdxVersion ;
 
    public :
       _SDB_RTNCB() ;
@@ -164,6 +194,19 @@ namespace engine
          return _enableMixCmp ;
       }
 
+      OSS_INLINE netRouteAgent* getRTAgent()
+      {
+         return _routeAgent ;
+      }
+
+      OSS_INLINE INT64 getTextIdxVersion()
+      {
+         return _textIdxVersion ;
+      }
+      OSS_INLINE void incTextIdxVersion()
+      {
+         ++_textIdxVersion ;
+      }
    } ;
    typedef class _SDB_RTNCB SDB_RTNCB ;
 

@@ -69,6 +69,7 @@ namespace engine
 
       SDB_CB_PMDCTRL,
       SDB_CB_OMPROXY,
+      SDB_CB_SEADAPTER,
       // THE MAX CB TYPE
       SDB_CB_MAX
    } ;
@@ -103,7 +104,8 @@ namespace engine
       SDB_SESSION_SPLIT_DST,
       SDB_SESSION_OMAGENT,
       SDB_SESSION_PROTOCOL,
-
+      SDB_SESSION_SE_INDEX,
+      SDB_SESSION_SE_AGENT,
       // Reserved
       SDB_SESSION_MAX
    } ;

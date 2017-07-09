@@ -42,6 +42,7 @@
 #include "rtnContextMainCL.hpp"
 #include "rtnContextDel.hpp"
 #include "utilCompressor.hpp"
+#include "rtnOperatorFactory.hpp"
 
 using namespace bson ;
 
@@ -677,7 +678,7 @@ namespace engine
          builder.append( FIELD_NAME_MAX, set->getMaxRecNum() ) ;
 		 extOptions = builder.done() ;
       }
-      
+
       if ( isMainCL )
       {
          set->getSubCLList( subCLList ) ;
@@ -1107,6 +1108,8 @@ namespace engine
       INT16 replSize = 0 ;
       INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
+      rtnOperatorFactory* oprFactory = NULL ;
+      rtnOperator *pOperator = NULL ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQueryBuff,
@@ -1190,9 +1193,37 @@ namespace engine
 
             if ( !_isMainCL )
             {
-               rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
-                              hint, flags, _pEDUCB, numToSkip, numToReturn,
-                              _pDmsCB, _pRtnCB, contextID, &pContext, TRUE ) ;
+               // Get an operator based on the message type. Currently only a text
+               // query operator is supported. Otherwise, the original flow will
+               // be executed.
+               // In the long run, the explain and normal query may also be
+               // abstracted into operators.
+               rtnQueryOptions options( matcher, selector, orderBy, hint,
+                                        pCollectionName, numToSkip, numToReturn,
+                                        flags ) ;
+               oprFactory = rtnGetOperatorFactory() ;
+               rc = oprFactory->create( options, &pOperator ) ;
+               PD_RC_CHECK( rc, PDERROR, "Create operator for query failed[ %d ]",
+                            rc ) ;
+               if ( pOperator )
+               {
+                  rtnContextBase *context = NULL ;
+                  rc = pOperator->init( options, eduCB(), sdbGetRTNCB(), contextID,
+                                        &context, FALSE ) ;
+                  PD_RC_CHECK( rc, PDERROR,
+                               "Initialize operator for query failed[ %d ]", rc ) ;
+
+                  rc = pOperator->execute() ;
+                  PD_RC_CHECK( rc, PDERROR, "Query operator execute failed[ %d ]", rc ) ;
+
+                  goto done ;
+               }
+               else
+               {
+                  rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
+                                 hint, flags, _pEDUCB, numToSkip, numToReturn,
+                                 _pDmsCB, _pRtnCB, contextID, &pContext, TRUE ) ;
+               }
             }
             else
             {

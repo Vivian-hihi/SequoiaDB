@@ -50,6 +50,7 @@
 #include "utilList.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
+#include "rtnExtDataHandler.hpp"
 
 using namespace bson ;
 
@@ -1059,6 +1060,7 @@ namespace engine
                          optCB->getSyncRecordNum(),
                          optCB->getSyncDirtyRatio() ) ;
       su->setSyncDeep( optCB->isSyncDeep() ) ;
+      su->regExtDataHandler( getRtnExtDataHandler() ) ;
 
       /// add collctionspace
       rc = dmsCB->addCollectionSpace( pCollectionSpace, 1, su, cb, dpsCB, TRUE ) ;

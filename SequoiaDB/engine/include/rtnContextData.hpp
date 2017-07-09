@@ -43,6 +43,8 @@
 #include "rtnQueryModifier.hpp"
 #include "optAccessPlan.hpp"
 
+#include "pmdRemoteSession.hpp"
+
 namespace engine
 {
    class _rtnIXScanner ;
@@ -121,7 +123,7 @@ namespace engine
                                 const BSONObj *blockObj,
                                 INT32 direction ) ;
 
-         INT32    _innerAppend( mthSelector *selector, 
+         INT32    _innerAppend( mthSelector *selector,
                                 _mthRecordGenerator &generator ) ;
          INT32    _selectAndAppend( mthSelector *selector, BSONObj &obj ) ;
 
@@ -280,9 +282,83 @@ namespace engine
 
       BSONObjBuilder _builder ;
       BOOLEAN _explained ;
-      
+
    } ;
    typedef class _rtnContextExplain rtnContextExplain ;
+
+   class _rtnRSHandler : public IRemoteSessionHandler
+   {
+      public:
+         _rtnRSHandler() ;
+         virtual ~_rtnRSHandler() ;
+      public:
+         virtual INT32  onSendFailed( _pmdRemoteSession *pSession,
+                                      _pmdSubSession **ppSub,
+                                      INT32 flag ) ;
+
+         virtual void   onReply( _pmdRemoteSession *pSession,
+                                 _pmdSubSession **ppSub,
+                                 const MsgHeader *pReply,
+                                 BOOLEAN isPending ) ;
+
+         virtual INT32  onSendConnect( _pmdSubSession *pSub,
+                                       const MsgHeader *pReq,
+                                       BOOLEAN isFirst ) ;
+   } ;
+   typedef _rtnRSHandler rtnRSHandler ;
+
+   // Context for text search data.
+   class _rtnContextTSData : public _rtnContextBase
+   {
+      DECLARE_RTN_CTX_AUTO_REGISTER()
+
+      #define EXT_DATA_BUF_SIZE ( 4 * 1024 * 1024 )
+
+      public:
+         _rtnContextTSData( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextTSData() ;
+
+      public:
+         virtual std::string name() const ;
+         virtual RTN_CONTEXT_TYPE getType() const ;
+         virtual _dmsStorageUnit* getSU() ;
+
+         INT32 open( const rtnQueryOptions &options, pmdEDUCB *eduCB ) ;
+         INT32 open( const MsgHeader *msg, pmdEDUCB *eduCB ) ;
+
+      protected:
+         virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
+
+         INT32 _getMoreCondData() ;
+         INT32 _genNewMatcher( BSONObj &matcher ) ;
+
+      private:
+         INT32 _getSubContextData() ;
+         INT32 _prepareRemoteSession( _pmdEDUCB *eduCB ) ;
+         INT32 _getMoreFromRemote( pmdEDUCB *eduCB ) ;
+         INT32 _sendToRemote( const MsgHeader *msg ) ;
+         INT32 _waitAndProcessRemoteReply() ;
+
+      private:
+         pmdEDUCB*       _eduCB ;
+         rtnQueryOptions _options ;
+         pmdRemoteSession *_remoteSession ;
+         rtnRSHandler _rsHandler ;
+
+         CHAR _clName[ DMS_COLLECTION_NAME_SZ + 1 ] ;
+         BSONObj _selector ;
+         BSONObj _newMatcher ;
+         BSONObj _orderBy ;
+         BSONObj _hint ;
+         INT32 _flags ;
+         INT64 _numToSkip ;
+         INT64 _numToReturn ;
+         CHAR *_extDataBuff ;
+         UINT32 _extBuffSize ;
+         SINT64 _subCtxID ;
+         rtnContextBase *_dataContext ;
+   } ;
+   typedef _rtnContextTSData rtnContextTSData ;
 }
 
 #endif /* RTN_CONTEXT_DATA_HPP_ */

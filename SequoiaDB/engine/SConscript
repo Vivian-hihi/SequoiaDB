@@ -237,7 +237,11 @@ rtnFiles = [
       "rtn/rtnAlterJob.cpp",
       "rtn/rtnIxmKeySorter.cpp",
       "rtn/rtnDictCreatorJob.cpp",
-      "rtn/rtnAnalyze.cpp"
+      "rtn/rtnAnalyze.cpp",
+      "rtn/rtnOperatorFactory.cpp",
+      "rtn/rtnOperator.cpp",
+      "rtn/rtnQueryOperator.cpp",
+      "rtn/rtnExtDataHandler.cpp"
       ]
 
 msgFiles = [

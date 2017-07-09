@@ -1,0 +1,126 @@
+#ifndef SEADPT_CONTEXT__
+#define SEADPT_CONTEXT__
+
+#include "pmdEDU.hpp"
+#include "utilCommObjBuff.hpp"
+#include "utilESClt.hpp"
+
+namespace engine
+{
+   class _pmdEDUCB ;
+
+   enum _seadptQueryRebldType
+   {
+      SE_QUERY_REBLD_QUERY = 1,
+      SE_QUERY_REBLD_SEL,
+      SE_QUERY_REBLD_ORD,
+      SE_QUERY_REBLD_HINT,
+   } ;
+
+   typedef std::map<_seadptQueryRebldType, const BSONObj*> REBUILD_ITEM_MAP ;
+   typedef const std::map<_seadptQueryRebldType, const BSONObj*>::iterator REBUILD_ITEM_MAP_ITR ;
+
+   /* Query rebuilder.
+   */
+   class _seAdptQueryRebuilder : public SDBObject
+   {
+   public:
+      _seAdptQueryRebuilder() ;
+      ~_seAdptQueryRebuilder() ;
+
+      // Initialize the rebuilder with the original message.
+      INT32 init( const BSONObj &matcher,
+                  const BSONObj &selector,
+                  const BSONObj &orderBy,
+                  const BSONObj &hint ) ;
+      INT32 rebuild( REBUILD_ITEM_MAP &rebuildItems,
+                     utilCommObjBuff &objBuff ) ;
+
+   private:
+      BSONObj _query ;
+      BSONObj _selector ;
+      BSONObj _orderBy ;
+      BSONObj _hint ;
+   } ;
+   typedef _seAdptQueryRebuilder seAdptQueryRebuilder ;
+
+   // Context for operations of adapter.
+   // It maintains the buffer.
+   class _seAdptContextBase : public SDBObject
+   {
+   public:
+      _seAdptContextBase( const string &indexName,
+                          const string &typeName,
+                          utilESClt *seClt ) ;
+      virtual ~_seAdptContextBase() ;
+
+      virtual INT32 open( const BSONObj &matcher,
+                          const BSONObj &selector,
+                          const BSONObj &orderBy,
+                          const BSONObj &hint,
+                          utilCommObjBuff &objBuff,
+                          _pmdEDUCB *eduCB ) = 0 ;
+      // Prepare the selector, matcher, order by and hint in objBuff.
+      virtual INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) = 0 ;
+
+   protected:
+      INT32 _getQueryCond( const BSONObj &matcher, std::string &queryStr ) ;
+
+   protected:
+      string _indexName ;
+      string _type ;
+      utilESClt *_esClt ;
+      string _scrollID ;
+      utilCommObjBuff _objBuff ;
+   } ;
+   typedef _seAdptContextBase seAdptContextBase ;
+
+   // Generic data query context.
+   class _seAdptContextData : public _seAdptContextBase
+   {
+   public:
+      _seAdptContextData( const string &indexName,
+                          const string &typeName,
+                          utilESClt *seClt ) ;
+      virtual ~_seAdptContextData() ;
+
+      INT32 open( const BSONObj &matcher,
+                  const BSONObj &selector,
+                  const BSONObj &orderBy,
+                  const BSONObj &hint,
+                  utilCommObjBuff &objBuff,
+                  _pmdEDUCB *eduCB ) ;
+      INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) ;
+   } ;
+
+   // Context for query modify.
+   class _seAdptContextQuery : public _seAdptContextBase
+   {
+   public:
+      _seAdptContextQuery( const string &indexName,
+                           const string &typeName,
+                           utilESClt *seClt ) ;
+      virtual ~_seAdptContextQuery() ;
+
+      INT32 open( const BSONObj &matcher,
+                  const BSONObj &selector,
+                  const BSONObj &orderBy,
+                  const BSONObj &hint,
+                  utilCommObjBuff &objBuff,
+                  _pmdEDUCB *eduCB ) ;
+
+      // Prepare the selector, matcher, order by and hint in objBuff.
+      INT32 getMore( INT32 returnNum, utilCommObjBuff &objBuff ) ;
+
+   private:
+      INT32 _buildInCond( utilCommObjBuff &objBuff,
+                          BSONObj &condition ) ;
+
+   private:
+      seAdptQueryRebuilder _queryRebuilder ;
+   } ;
+   typedef _seAdptContextQuery seAdptContextQuery ;
+}
+
+#endif /* SEADPT_CONTEXT__ */
+

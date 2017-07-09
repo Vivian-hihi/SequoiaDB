@@ -64,6 +64,7 @@ namespace engine
    #define IXM_ID_KEY_NAME             "$id"
    #define IXM_SHARD_KEY_NAME          "$shard"
    #define IXM_2D_KEY_TYPE             "2d"
+   #define IXM_TEXT_KEY_TYPE           "text"
    #define IXM_POSITIVE_KEY_TYPE       1
    #define IXM_REVERSE_KEY_TYPE        -1
 
@@ -147,6 +148,7 @@ namespace engine
    #define IXM_EXTENT_TYPE_POSITIVE       0x0001
    #define IXM_EXTENT_TYPE_REVERSE        0x0002
    #define IXM_EXTENT_TYPE_2D             0x0004
+   #define IXM_EXTENT_TYPE_TEXT           0x0008
    #define IXM_EXTENT_HAS_TYPE(type,dst)  (type&dst)
    /*
       _ixmIndexCBExtent define
@@ -486,17 +488,27 @@ namespace engine
                   }
                   hasOther = TRUE ;
                }
-               else if ( String == ele.type() &&
-                         IXM_2D_KEY_TYPE == ele.String() )
+               else if ( String == ele.type() )
                {
-                  if ( hasGeo || hasOther )
+                  if ( IXM_2D_KEY_TYPE == ele.String() )
                   {
-                     /// one index can only have one geo field.
-                     /// 2d index must be the first field.
+                     if ( hasGeo || hasOther )
+                     {
+                        /// one index can only have one geo field.
+                        /// 2d index must be the first field.
+                        goto error ;
+                     }
+                     type |= IXM_EXTENT_TYPE_2D ;
+                     hasGeo = TRUE ;
+                  }
+                  else if ( IXM_TEXT_KEY_TYPE == ele.String() )
+                  {
+                     type |= IXM_EXTENT_TYPE_TEXT ;
+                  }
+                  else
+                  {
                      goto error ;
                   }
-                  type |= IXM_EXTENT_TYPE_2D ;
-                  hasGeo = TRUE ;
                }
                else
                {
@@ -526,7 +538,7 @@ namespace engine
          INT32 fieldCount = 0 ;
          BOOLEAN isUniq = FALSE ;
          BOOLEAN enforced = FALSE ;
-         // make sure the index def is not too large 
+         // make sure the index def is not too large
          if ( obj.objsize() + sizeof(_IDToInsert) +
               IXM_INDEX_CB_EXTENT_METADATA_SIZE >= IXM_PAGE_SIZE4K )
          {

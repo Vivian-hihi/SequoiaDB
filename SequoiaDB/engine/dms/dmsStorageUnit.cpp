@@ -2907,6 +2907,36 @@ namespace engine
       return (dmsStatCache *)getSUCache( DMS_CACHE_TYPE_STAT ) ;
    }
 
+   INT32 _dmsStorageUnit::regExtDataHandler( IDmsExtDataHandler *pHandler )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( pHandler, "External data handle is NULL" ) ;
+      if ( !_pDataSu )
+      {
+         PD_LOG( PDERROR, "Storage unit has not been opened yet" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      _pDataSu->setExtDataHandler( pHandler ) ;
+      _extDataHandler = pHandler ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _dmsStorageUnit::unregExtDataHandler( IDmsExtDataHandler *pHandler )
+   {
+      return ;
+   }
+
+   IDmsExtDataHandler *_dmsStorageUnit::getExtDataHandler()
+   {
+      return _extDataHandler ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__CREATESTORAGEOBJS, "_dmsStorageUnit::_createStorageObjs" )
    INT32 _dmsStorageUnit::_createStorageObjs()
    {

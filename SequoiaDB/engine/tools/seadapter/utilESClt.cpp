@@ -1,0 +1,643 @@
+#include "utilESClt.hpp"
+
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <vector>
+
+#include "pd.hpp"
+#include "ossUtil.hpp"
+#include "../bson/bson.hpp"
+
+using namespace bson ;
+
+#define ES_HITS_KEY              "_hits"
+#define ES_TOTAL_KEY             "total"
+#define ES_SCROLL_ID_KEY         "_scroll_id"
+
+// For arguments check.
+#define ES_CLT_ARG_CHK1( index )                         \
+do                                                       \
+{                                                        \
+   if ( !(index) )                                       \
+   {                                                     \
+      PD_LOG( PDERROR, "Index name is NULL" ) ;          \
+      rc = SDB_INVALIDARG ;                              \
+      goto error ;                                       \
+   }                                                     \
+}                                                        \
+while ( 0 ) ;
+
+#define ES_CLT_ARG_CHK2( index, type )                   \
+do                                                       \
+{                                                        \
+   ES_CLT_ARG_CHK1( index ) ;                            \
+   if ( !(type) )                                        \
+   {                                                     \
+      PD_LOG( PDERROR, "Type name is NULL" ) ;           \
+      rc = SDB_INVALIDARG ;                              \
+      goto error ;                                       \
+   }                                                     \
+}                                                        \
+while ( 0 ) ;
+
+#define ES_CLT_ARG_CHK3( index, type, id )               \
+do                                                       \
+{                                                        \
+   ES_CLT_ARG_CHK2( index, type ) ;                      \
+   if ( !(id) )                                          \
+   {                                                     \
+      PD_LOG( PDERROR, "Id is NULL" ) ;                  \
+      rc = SDB_INVALIDARG ;                              \
+      goto error ;                                       \
+   }                                                     \
+}                                                        \
+while ( 0 ) ;
+
+#define ES_CLT_ARG_CHK4( index, type, id, data )         \
+do                                                       \
+{                                                        \
+   ES_CLT_ARG_CHK3( index, type, id ) ;                  \
+   if ( !(id) )                                          \
+   {                                                     \
+      PD_LOG( PDERROR, "Data is NULL" ) ;                \
+      rc = SDB_INVALIDARG ;                              \
+      goto error ;                                       \
+   }                                                     \
+}                                                        \
+while ( 0 ) ;
+
+namespace engine
+{
+   _utilESClt::_utilESClt()
+   : _readOnly( FALSE )
+   {
+   }
+
+   _utilESClt::~_utilESClt()
+   {
+   }
+
+   INT32 _utilESClt::init( const string &uri, BOOLEAN readOnly )
+   {
+      INT32 rc = SDB_OK ;
+      if ( 0 == uri.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Search engine service address should not be empty, "
+                 "rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = _http.init( uri, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init http connection with node: %s, "
+                 "rc: %d", uri.c_str(), rc ) ;
+         goto error ;
+      }
+      _readOnly = readOnly ;
+
+   done:
+      return rc  ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _utilESClt::isActive()
+   {
+      return ( SDB_OK == _http.get( NULL, NULL ) ) ? TRUE : FALSE ;
+   }
+
+   INT32 _utilESClt::getSEInfo( BSONObj &infoObj )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+
+      rc = _http.get( NULL, NULL, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, infoObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::indexExist( const CHAR *index, BOOLEAN &exist )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+      BSONObj replyInfo ;
+
+      ES_CLT_ARG_CHK1( index ) ;
+
+      rc = _http.head( index, NULL, &status, &reply, &replyLen ) ;
+      if ( SDB_OK == rc )
+      {
+         exist = TRUE ;
+         goto done ;
+      }
+      else if ( HTTP_NOT_FOUND == status )
+      {
+         // If page not found, the index does not exist.
+         exist = FALSE ;
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      // Otherwise, error happened...
+      rc = _processReply( rc, reply, replyLen, replyInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // Create index, optionally with data (settings, mappings etc)
+   INT32 _utilESClt::createIndex( const CHAR *index, const CHAR *data )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+      BSONObj replyInfo ;
+
+      ES_CLT_ARG_CHK1( index ) ;
+
+      rc = _http.put( index, data, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, replyInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // Drop given index (and all types, documents, mappings)s
+   INT32 _utilESClt::dropIndex( const CHAR *index )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+      BSONObj replyInfo ;
+
+      ES_CLT_ARG_CHK1( index ) ;
+
+      rc = _http.remove( index, NULL, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, replyInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // Index a document with a specified id.
+   INT32 _utilESClt::indexDocument( const CHAR *index, const CHAR *type,
+                                    const CHAR *id, const CHAR *jsonData )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj bsonObj ;
+      HTTP_STATUS_CODE status = 0 ;
+      CHAR url[ UTIL_SE_MAX_URL_SIZE ] = { 0 } ;
+
+      ES_CLT_ARG_CHK4( index, type, id, jsonData ) ;
+
+      // Plus 2 bytes for '/'
+      if ( strlen( index ) + strlen( type ) + strlen( id ) + 2
+           > UTIL_SE_MAX_URL_SIZE )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Url length is too long, max: %d, actual: %d",
+                 UTIL_SE_MAX_URL_SIZE,
+                 strlen( index ) + strlen( type ) + strlen( id ) + 2 ) ;
+         goto error ;
+      }
+
+      // Get the full url for operation.
+      ossSnprintf( url, UTIL_SE_MAX_URL_SIZE, "%s/%s/%s", index, type, id ) ;
+      rc = _http.put( url, jsonData, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, bsonObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::updateDocument( const CHAR *index, const CHAR *type,
+                                     const CHAR *id, const CHAR *newData )
+   {
+      INT32 rc = SDB_OK ;
+
+      ES_CLT_ARG_CHK4( index, type, id, newData ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::deleteDocument( const CHAR *index, const CHAR *type,
+                                     const CHAR *id )
+   {
+      INT32 rc = SDB_OK ;
+      std::string result ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+      BSONObj resultObj ;
+      std::ostringstream oss ;
+
+      ES_CLT_ARG_CHK3( index, type, id ) ;
+
+      SDB_ASSERT( index && type && id, "Invalid arguments for deleteDocument" ) ;
+
+      oss << index << "/" << type << "/" << id ;
+
+      rc = _http.remove( oss.str().c_str(), NULL, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, resultObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::getDocument( const CHAR *index, const CHAR *type,
+                                  const CHAR *id, BSONObj &result,
+                                  BOOLEAN withMeta )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj fullObj ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+      std::ostringstream oss ;
+      utilCommObjBuff objBuff ;
+
+      ES_CLT_ARG_CHK3( index, type, id ) ;
+
+      oss << index << "/" << type << "/" << id ;
+      rc = _http.get( oss.str().c_str(), NULL, &status, &reply, &replyLen ) ;
+      if ( withMeta )
+      {
+         rc = _processReply( rc, reply, replyLen, result ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+      }
+      else
+      {
+         rc = _processReply( rc, reply,replyLen, fullObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+         rc = _getResultObjs( fullObj, objBuff ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get result objects failed[ %d ]" ) ;
+         SDB_ASSERT( objBuff.getObjNum() <= 1, "Should be only one object" ) ;
+
+         if ( 0 == objBuff.getObjNum() )
+         {
+            PD_LOG( PDERROR, "No document found" ) ;
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
+         if ( 1 == objBuff.getObjNum() )
+         {
+            rc = objBuff.nextObj( result ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get next BSONObject in buffer "
+                         "failed[ %d ]", rc ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::getDocument( const CHAR *index, const CHAR *type,
+                                  const CHAR *key, const CHAR *value,
+                                  utilCommObjBuff &objBuff, BOOLEAN withMeta )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      HTTP_STATUS_CODE status = 0 ;
+      std::ostringstream endUrl ;
+      std::ostringstream query ;
+      BSONObj fullObj ;
+
+      ES_CLT_ARG_CHK4( index, type, key, value ) ;
+
+      endUrl << index << "/" << type << "/_search" ;
+      query << "{\"query\":{\"match\":{\"" << key << "\":\""
+            << value << "\"}}}" ;
+
+      rc = _http.get( endUrl.str().c_str(), query.str().c_str(),
+                      &status, &reply, &replyLen ) ;
+      if ( withMeta )
+      {
+         rc = _processReply( rc, reply, replyLen, fullObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+         rc = objBuff.reset() ;
+         PD_RC_CHECK( rc, PDERROR, "Reset object buffer failed[ %d ]", rc ) ;
+         rc = objBuff.appendObj( fullObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Append object to buffer failed[ %d ]", rc ) ;
+      }
+      else
+      {
+         rc = _processReply( rc, reply,replyLen, fullObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+         rc = _getResultObjs( fullObj, objBuff ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get result objects failed[ %d ]" ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::getDocument( const CHAR *index, const CHAR *type,
+                                  const CHAR *query, utilCommObjBuff &objBuff,
+                                  BOOLEAN withMeta )
+   {
+      INT32 rc = SDB_OK ;
+
+      // TODO:
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   INT32 _utilESClt::getDocCount( const CHAR *index, const CHAR *type,
+                                  UINT64 &count )
+   {
+      INT32 rc = SDB_OK ;
+      std::ostringstream oss ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj bsonObj ;
+      HTTP_STATUS_CODE status = 0 ;
+
+      ES_CLT_ARG_CHK2( index, type ) ;
+
+      oss << index << "/" << type << "/_count" ;
+
+      rc = _http.get( oss.str().c_str(), NULL, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, bsonObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+      count = bsonObj.getIntField( "count" ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::documentExist( const CHAR *index, const CHAR *type,
+                                    const CHAR *id, BOOLEAN &exist )
+   {
+      INT32 rc = SDB_OK ;
+      HTTP_STATUS_CODE status = 0 ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      std::ostringstream oss ;
+      BSONObj result ;
+
+      ES_CLT_ARG_CHK3( index, type, id ) ;
+
+      oss << index << "/" << type << "/" << id ;
+      // Only need the status code in the head.
+      rc = _http.head( oss.str().c_str(), NULL, &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, result, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+      // We are get the document by id, so if it exists, the status would be OK.
+      exist = ( HTTP_OK == status ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::documentExist( const CHAR *index, const CHAR *type,
+                                    const CHAR *key, const CHAR *value,
+                                    BOOLEAN &exist )
+   {
+      INT32 rc = SDB_OK ;
+      std::ostringstream url ;
+      std::ostringstream query ;
+      HTTP_STATUS_CODE status = 0 ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj result ;
+      INT64 hitNum = 0 ;
+
+      ES_CLT_ARG_CHK4( index, type, key, val ) ;
+
+      url << index << "/" << type ;
+      query << "{\"query\":{\"match\":{\"" << key << "\":\""
+            << value << "\"}}}" ;
+
+      rc = _http.get( url.str().c_str(), query.str().c_str(), &status,
+                      &reply, &replyLen ) ;
+      if ( rc )
+      {
+         exist = FALSE ;
+      }
+      else
+      {
+         rc = _processReply( rc, reply, replyLen, result ) ;
+         PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+         _getHitNum( result, hitNum ) ;
+         exist = ( hitNum >= 1 ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::deleteAllByType( const CHAR *index, const CHAR *type )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj resultObj ;
+      HTTP_STATUS_CODE status = 0 ;
+      std::ostringstream uri, data ;
+
+      ES_CLT_ARG_CHK2( index, type ) ;
+
+      uri << index << "/" << type << "/_query" ;
+      data << "{\"query\":{\"match_all\":{}}}" ;
+
+      rc = _http.remove( uri.str().c_str(), data.str().c_str(),
+                         &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, resultObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::refresh( const CHAR *index )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj bsonObj ;
+      std::string result ;
+      std::ostringstream oss ;
+
+      ES_CLT_ARG_CHK1( index ) ;
+
+      oss << index << "/_refresh" ;
+      rc = _http.get( oss.str().c_str(), NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process refresh request failed[ %d ]" ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::initScroll( std::string& scrollId,
+                                 const CHAR* index,
+                                 const CHAR* type,
+                                 const std::string& query,
+                                 utilCommObjBuff &result,
+                                 int scrollSize )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj replyObj ;
+      HTTP_STATUS_CODE status = 0 ;
+      std::ostringstream oss;
+
+      ES_CLT_ARG_CHK2( index, type ) ;
+
+      oss << index << "/" << type << "/_search?scroll=1m&size="
+         << scrollSize;
+
+      rc = _http.post( oss.str().c_str(), query.c_str(), &status,
+                       &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, replyObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+      PD_LOG( PDDEBUG, "Reply for init scroll: %s",
+              replyObj.toString().c_str() ) ;
+
+      rc = _getResultObjs( replyObj, result ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get result objects from reply failed[ %d ]",
+                   rc ) ;
+
+      scrollId = string( replyObj.getStringField( ES_SCROLL_ID_KEY ) ) ;
+      scrollId = "{ \"scroll_id\" : \"" + scrollId + "\" }" ;
+
+      PD_LOG( PDDEBUG, "scroll id returned: %s", scrollId.c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilESClt::scrollNext( std::string& scrollId, utilCommObjBuff &result )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *reply = NULL ;
+      INT32 replyLen = 0 ;
+      BSONObj replyObj ;
+      HTTP_STATUS_CODE status = 0 ;
+
+      rc = _http.post( "_search/scroll?scroll=1m", scrollId.c_str(),
+                       &status, &reply, &replyLen ) ;
+      rc = _processReply( rc, reply, replyLen, replyObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Process request reply failed[ %d ]", rc ) ;
+
+      rc = _getResultObjs( replyObj, result ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get objects from reply failed[ %d ]", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _utilESClt::clearScroll( const std::string& scrollId )
+   {
+      _http.remove("/_search/scroll", scrollId.c_str(), NULL, NULL, NULL );
+   }
+
+   INT32 _utilESClt::_getResultObjs( const BSONObj &replyObj,
+                                     utilCommObjBuff &resultObjs )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement sourceObj ;
+
+      rc = resultObjs.reset() ;
+      PD_RC_CHECK( rc, PDERROR, "Initialize result buffer failed[ %d ]", rc ) ;
+
+      PD_LOG( PDDEBUG, "Result object: %s", replyObj.toString().c_str() ) ;
+      {
+         BSONElement hitsObj = replyObj.getField( "hits" ) ;
+         if ( Object == hitsObj.type() )
+         {
+            BSONObj hitsObj2 = hitsObj.embeddedObject() ;
+            BSONElement hitsEle2 = hitsObj2.getField( "hits" ) ;
+            if ( Array == hitsEle2.type() )
+            {
+               vector<BSONElement> hitObjs = hitsEle2.Array() ;
+               for ( vector<BSONElement>::iterator itr = hitObjs.begin();
+                     itr != hitObjs.end(); ++itr )
+               {
+                  BSONObj sourceObj = itr->embeddedObject() ;
+                  resultObjs.appendObj( sourceObj ) ;
+               }
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _utilESClt::_getHitNum( const BSONObj &fullResult, INT64 &hitNum )
+   {
+      BSONObj hitsObj = fullResult.getObjectField( ES_HITS_KEY ) ;
+      BSONElement totalEle = hitsObj.getField( ES_TOTAL_KEY ) ;
+      if ( NumberInt == totalEle.type() ||
+           NumberLong == totalEle.type() )
+      {
+         hitNum = totalEle.numberLong() ;
+      }
+      else
+      {
+         hitNum = 0 ;
+      }
+   }
+}
+

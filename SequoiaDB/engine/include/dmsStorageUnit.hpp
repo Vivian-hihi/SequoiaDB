@@ -46,6 +46,7 @@
 #include "monDMS.hpp"
 #include "utilCache.hpp"
 #include "dmsEventHandler.hpp"
+#include "dmsExtDataHandler.hpp"
 
 using namespace bson ;
 
@@ -473,6 +474,10 @@ namespace engine
 
          dmsStatCache *getStatCache () ;
 
+         INT32 regExtDataHandler( IDmsExtDataHandler *pHandler ) ;
+         void unregExtDataHandler( IDmsExtDataHandler *pHandler ) ;
+         IDmsExtDataHandler *getExtDataHandler() ;
+
       private:
          INT32 _createStorageObjs() ;
          INT32 _getTypeFromFile( const CHAR *dataPath,
@@ -489,6 +494,7 @@ namespace engine
          utilCacheUnit                       *_pCacheUnit ;
          dmsEventHolder                       _eventHolder ;
          dmsCacheHolder                       _cacheHolder ;
+         IDmsExtDataHandler                  *_extDataHandler ;
    } ;
 
    OSS_INLINE INT32 _dmsStorageUnit::extentRemoveRecord( dmsMBContext *context,

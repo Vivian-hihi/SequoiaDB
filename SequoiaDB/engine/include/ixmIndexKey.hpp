@@ -101,9 +101,11 @@ namespace engine
       // it supposed to
       INT32 reset ( const BSONObj & info ) ;
       INT32 reset ( const _ixmIndexCB *indexCB ) ;
+      // transform: Whether break array into seperate objects.
       INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys,
-                      BSONElement *pArrEle = NULL, 
-                      BOOLEAN isKeepKeyName = FALSE ) const ;
+                      BSONElement *pArrEle = NULL,
+                      BOOLEAN isKeepKeyName = FALSE,
+                      BOOLEAN transform = TRUE ) const ;
       BSONElement missingField() const ;
       IndexSuitability suitability( const BSONObj &query ,
                                     const BSONObj &order ) const ;

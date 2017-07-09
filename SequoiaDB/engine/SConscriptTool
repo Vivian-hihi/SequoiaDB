@@ -474,22 +474,22 @@ sdbListMain = [
       ]
 
 sdbcmMain = [
-      "rtn/rtnBackgroundJobBase.cpp",
-      "pmd/pmdMemPool.cpp",
-      "pmd/pmdSyncMgr.cpp",
-      "pmd/pmd.cpp",
-      "pmd/pmdEDU.cpp",
-      "pmd/pmdEDUMgr.cpp",
-      "pmd/pmdAsyncSessionAgent.cpp",
-      "pmd/pmdInnerClient.cpp",
-      "pmd/pmdAsyncHandler.cpp",
-      "pmd/pmdAsyncSession.cpp",
-      "pmd/pmdBackgroundJob.cpp",
-      "pmd/pmdCBMgrEntryPoint.cpp",
-      "pmd/pmdAsyncNetEntryPoint.cpp",
+      toolEnv.Object("rtn/rtnBackgroundJobBase.cpp"),
+      toolEnv.Object("pmd/pmdMemPool.cpp"),
+      toolEnv.Object("pmd/pmdSyncMgr.cpp"),
+      toolEnv.Object("pmd/pmd.cpp"),
+      toolEnv.Object("pmd/pmdEDU.cpp"),
+      toolEnv.Object("pmd/pmdEDUMgr.cpp"),
+      toolEnv.Object("pmd/pmdAsyncSessionAgent.cpp"),
+      toolEnv.Object("pmd/pmdInnerClient.cpp"),
+      toolEnv.Object("pmd/pmdAsyncHandler.cpp"),
+      toolEnv.Object("pmd/pmdAsyncSession.cpp"),
+      toolEnv.Object("pmd/pmdBackgroundJob.cpp"),
+      toolEnv.Object("pmd/pmdCBMgrEntryPoint.cpp"),
+      toolEnv.Object("pmd/pmdAsyncNetEntryPoint.cpp"),
       "pmd/pmdOMAgentEDUEntryPoint.cpp",
       "pmd/pmdCMMain.cpp",
-      "pmd/pmdWindowsListener.cpp"
+      toolEnv.Object("pmd/pmdWindowsListener.cpp")
       ]
 
 sdbcmDMNMain = [
@@ -530,6 +530,35 @@ sdbReplayFiles = [
       "tools/replay/rplReplayer.cpp",
       "tools/replay/rplMonitor.cpp",
       "tools/replay/rplUtil.cpp",
+      ]
+
+sdbSEAdptFiles = [
+      toolEnv.Object("rtn/rtnBackgroundJobBase.cpp"),
+      "rtn/rtnContextBuff.cpp",
+      "rest/http_parser.cpp",
+      toolEnv.Object("pmd/pmdMemPool.cpp"),
+      toolEnv.Object("pmd/pmdSyncMgr.cpp"),
+      toolEnv.Object("pmd/pmd.cpp"),
+      toolEnv.Object("pmd/pmdEDU.cpp"),
+      toolEnv.Object("pmd/pmdEDUMgr.cpp"),
+      toolEnv.Object("pmd/pmdAsyncSessionAgent.cpp"),
+      toolEnv.Object("pmd/pmdInnerClient.cpp"),
+      toolEnv.Object("pmd/pmdAsyncHandler.cpp"),
+      toolEnv.Object("pmd/pmdAsyncSession.cpp"),
+      toolEnv.Object("pmd/pmdCBMgrEntryPoint.cpp"),
+      toolEnv.Object("pmd/pmdAsyncNetEntryPoint.cpp"),
+      toolEnv.Object("pmd/pmdWindowsListener.cpp"),
+      "tools/seadapter/pmdSEAdptMain.cpp",
+      "tools/seadapter/pmdSeAdptEDUEntryPoint.cpp",
+      "tools/seadapter/seAdptMgr.cpp",
+      "tools/seadapter/seAdptAgentSession.cpp",
+      "tools/seadapter/seAdptIndexSession.cpp",
+      "tools/seadapter/pmdSeAdptTcpListener.cpp",
+      "tools/seadapter/seAdptContext.cpp",
+      "tools/seadapter/utilHttp.cpp",
+      "tools/seadapter/utilESClt.cpp",
+      "tools/seadapter/utilESCltMgr.cpp",
+      "util/utilCommObjBuff.cpp"
       ]
 
 #cls
@@ -654,6 +683,11 @@ if linux:
                LIBDEPS=["pd", "oss","bson", "util"],
                _LIBDEPS='$_LIBDEPS_OBJS' )
 
+sdbseadapter = toolEnv.Program("sdbseadapter",
+		 sdbSEAdptFiles,
+		 LIBDEPS=["pd","oss","msg","util","bson","pmd","net"],
+		 _LIBDEPS='$_LIBDEPS_OBJS' )
+
 toolEnv.Install( '#/bin', sdbimprt2 )
 toolEnv.Install( '#/bin', sdbexprt )
 toolEnv.Install( '#/bin', sdbreplay )
@@ -675,3 +709,5 @@ toolEnv.Install( '#/bin', sdbdpsdump )
 toolEnv.Install( '#/bin', sdbinspect )
 if linux:
    toolEnv.Install( '#/bin', sdbomtool )
+
+toolEnv.Install( '#/bin', sdbseadapter )

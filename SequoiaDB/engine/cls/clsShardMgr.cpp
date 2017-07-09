@@ -35,6 +35,7 @@
 #include "pmdCB.hpp"
 #include "rtn.hpp"
 #include "msgMessage.hpp"
+#include "msgAuth.hpp"
 #include "msgCatalog.hpp"
 #include "pmdController.hpp"
 #include "../bson/bson.h"
@@ -42,6 +43,9 @@
 #include "clsTrace.hpp"
 
 using namespace bson ;
+
+#define CLS_NAME_CAPPED_COLLECTIONSPACE      "CappedCS"
+#define CLS_NAME_CAPPED_COLLECTION           "CappedCL"
 
 namespace engine
 {
@@ -269,6 +273,8 @@ namespace engine
       ON_MSG ( MSG_CAT_QUERY_CATALOG_RSP, _onCatalogReqMsg )
       ON_MSG ( MSG_CAT_QUERY_SPACEINFO_RSP, _onQueryCSInfoRsp )
       ON_MSG ( MSG_COM_REMOTE_DISC, _onHandleClose )
+      ON_MSG ( MSG_AUTH_VERIFY_REQ, _onAuthReqMsg )
+      ON_MSG ( MSG_SEADPT_UPDATE_IDXINFO_REQ, _onTextIdxInfoReqMsg )
    END_OBJ_MSG_MAP()
 
    _clsShardMgr::_clsShardMgr ( _netRouteAgent *rtAgent )
@@ -283,6 +289,8 @@ namespace engine
 
       _catVerion = 0 ;
       _nodeID.value = 0 ;
+      // Just use a fixed value for search engine adapter.
+      _seAdptID.value = SDB_EXT_DATA_NODE_ID ;
       _upCatHandle = NET_INVALID_HANDLE ;
    }
 
@@ -2332,6 +2340,281 @@ namespace engine
       }
 
       return SDB_OK ;
+   }
+
+   // In one case we need to handle the auth request message for shard session,
+   // that is when it's from search engine adapter. We do not really
+   // authenticate, but to get the adapter service information from the message.
+   // For any other auth request, just return OK.
+   INT32 _clsShardMgr::_onAuthReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj bodyObj ;
+      BSONElement ele ;
+      const CHAR *peerHost = NULL ;
+      const CHAR *peerSvc = NULL ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      netRouteAgent *rtnRTAgent = rtnCB->getRTAgent() ;
+      BSONObj myInfoObj ;
+      BSONObjBuilder builder ;
+      MsgAuthReply *reply = NULL ;
+      INT32 replySize = 0 ;
+      UINT32 groupID = pmdGetKRCB()->getGroupID() ;
+
+      SDB_ASSERT( rtnRTAgent, "rtn route agent should not be NULL" ) ;
+      rc = extractAuthMsg( msg, bodyObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract auth message failed[ %d ]", rc ) ;
+
+      // Only handle authorization of search engine adapter.
+      if ( !bodyObj.hasField( FIELD_NAME_SERVICE_TYPE ) ||
+           ( MSG_ROUTE_SE_SERVICE !=
+             bodyObj.getIntField( FIELD_NAME_SERVICE_TYPE ) ) )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      // Add the route of search engine adapter into rtnCB's net route agent.
+      peerHost = bodyObj.getStringField( FIELD_NAME_HOST ) ;
+      peerSvc = bodyObj.getStringField( FIELD_NAME_SERVICE_NAME ) ;
+
+      // Update both the route agent of rtn shard.
+      rc = rtnRTAgent->updateRoute( _seAdptID, peerHost, peerSvc ) ;
+      if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
+      {
+         PD_LOG( PDERROR, "Update route failed[ %d ], host[ %s ], "
+                 "service[ %s ]", rc, peerHost, peerSvc ) ;
+         goto error ;
+      }
+
+      rc = _pNetRtAgent->updateRoute( _seAdptID, peerHost, peerSvc ) ;
+      if ( rc && SDB_NET_UPDATE_EXISTING_NODE != rc )
+      {
+         PD_LOG( PDERROR, "Update route failed[ %d ], host[ %s ], "
+                 "service[ %s ]", rc, peerHost, peerSvc ) ;
+         goto error ;
+      }
+
+      // Need to reply with following information:
+      // Whether master node?
+      // Group id ( used as type of index in ES )
+      builder.appendBool( FIELD_NAME_IS_PRIMARY, pmdIsPrimary() ) ;
+      builder.append( FIELD_NAME_GROUPID, groupID ) ;
+      myInfoObj = builder.done() ;
+
+      replySize = sizeof( MsgAuthReply ) +
+                  ossRoundUpToMultipleX( myInfoObj.objsize(), 4 ) ;
+      reply = ( MsgAuthReply * )SDB_OSS_MALLOC( replySize ) ;
+      if ( !reply )
+      {
+         PD_LOG( PDERROR, "Allocate memory for reply message failed, size: %d",
+                 replySize ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      reply->header.messageLength = replySize ;
+      reply->header.opCode = MSG_AUTH_VERIFY_RES ;
+      reply->header.TID = msg->TID ;
+      reply->header.routeID.value = 0 ;
+      reply->header.requestID = msg->requestID ;
+      reply->flags = SDB_OK ;
+      reply->startFrom = 0 ;
+      reply->numReturned = 1 ;
+      ossMemcpy( (CHAR *)reply + sizeof( MsgAuthReply ),
+                 myInfoObj.objdata(), myInfoObj.objsize() ) ;
+
+      rc = _sendToSeAdpt( handle, (MsgHeader *)reply ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send message to search engine adapter "
+                   "failed[ %d ]", rc ) ;
+
+   done:
+      if ( reply )
+      {
+         SDB_OSS_FREE( reply ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsShardMgr::_onTextIdxInfoReqMsg( NET_HANDLE handle,
+                                             MsgHeader * msg )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *body = NULL ;
+      INT64 version = 0 ;
+      BSONObj textIdxInfo ;
+      MsgOpReply *reply = NULL ;
+      INT32 replySize = 0 ;
+
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+
+      body = (CHAR *)msg + sizeof( MsgHeader ) ;
+      try
+      {
+         BSONObj bodyObj( body ) ;
+         BSONElement verEle = bodyObj.getField( FIELD_NAME_VERSION ) ;
+         if ( verEle.eoo() )
+         {
+            PD_LOG( PDERROR, "Text index version dose not exist" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else if ( NumberLong != verEle.type() )
+         {
+            PD_LOG( PDERROR, "Text index version type is wrong" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else
+         {
+            version = verEle.numberLong() ;
+         }
+      }
+      catch (std::exception &e)
+      {
+         PD_LOG( PDERROR, "unexpected err:%s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // If the versions are not identical, dump the text indices information,
+      // and send back to search engine adapter, together with the new version.
+      if ( version != rtnCB->getTextIdxVersion() )
+      {
+         _dumpTextIdxInfo( rtnCB->getTextIdxVersion(), textIdxInfo ) ;
+      }
+      else
+      {
+         textIdxInfo =
+            BSON( FIELD_NAME_VERSION << rtnCB->getTextIdxVersion() ) ;
+      }
+
+      replySize = sizeof( MsgOpReply ) +
+                  ossRoundUpToMultipleX( textIdxInfo.objsize(), 4 ) ;
+
+      reply = (MsgOpReply *)SDB_OSS_MALLOC( replySize ) ;
+      if ( !reply )
+      {
+         PD_LOG( PDERROR, "Allocate memory for reply message failed, size: %d",
+                 replySize ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      reply->header.messageLength = sizeof( MsgOpReply )
+                                    + textIdxInfo.objsize()  ;
+      reply->header.opCode = MSG_SEADPT_UPDATE_IDXINFO_RES ;
+      reply->header.TID = msg->TID ;
+      reply->header.routeID.value = 0 ;
+      reply->header.requestID = msg->requestID ;
+      reply->flags = SDB_OK ;
+      reply->startFrom = 0 ;
+      reply->numReturned = 1 ;
+      ossMemcpy( (CHAR *)reply + sizeof( MsgOpReply ),
+                 textIdxInfo.objdata(), textIdxInfo.objsize() ) ;
+
+      rc = _sendToSeAdpt( handle, (MsgHeader *)reply ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send message to search engine adapter "
+                   "failed[ %d ]", rc ) ;
+   done:
+      if ( reply )
+      {
+         SDB_OSS_FREE( reply ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _clsShardMgr::_dumpTextIdxInfo( INT64 localVersion, BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+      MON_CS_SIM_LIST csList ;
+      MON_CS_SIM_LIST::iterator csItr ;
+
+      BSONObj infoObj ;
+      BSONObjBuilder builder ;
+      builder.append( FIELD_NAME_VERSION, localVersion ) ;
+      BSONArrayBuilder indexObjs( builder.subarrayStart( FIELD_NAME_INDEXES ) ) ;
+
+      // Dump all index information and filter text index ones.
+      dmsCB->dumpInfo( csList, FALSE, TRUE, TRUE ) ;
+      for ( csItr = csList.begin(); csItr != csList.end(); ++csItr )
+      {
+         for ( MON_CL_SIM_VEC::const_iterator clItr = csItr->_clList.begin();
+               clItr != csItr->_clList.end(); ++clItr )
+         {
+            for ( MON_IDX_LIST::const_iterator idxItr = clItr->_idxList.begin();
+                  idxItr != clItr->_idxList.end(); ++idxItr )
+            {
+               UINT16 idxType = IXM_EXTENT_TYPE_NONE ;
+               rc = idxItr->getIndexType( idxType ) ;
+               if ( rc )
+               {
+                  // Only warning, and process the remaining ones.
+                  PD_LOG( PDWARNING, "Get type of index failed[ %d ], cs[ %s ],"
+                          " cl[ %s ], index[ %s ]", rc, csItr->_name,
+                          clItr->_name, idxItr->getIndexName() ) ;
+                  continue ;
+               }
+               if ( IXM_EXTENT_TYPE_TEXT == idxType )
+               {
+                  string cappedCSName = string(SYS_PREFIX) + string(csItr->_name)
+                                     + string(clItr->_clname) +
+                                     idxItr->getIndexName() ;
+                  BSONObjBuilder subBuilder( indexObjs.subobjStart() ) ;
+                  subBuilder.append( FIELD_NAME_COLLECTIONSPACE,
+                                     csItr->_name ) ;
+                  subBuilder.append( CLS_NAME_CAPPED_COLLECTIONSPACE,
+                                     cappedCSName ) ;
+                  subBuilder.append( FIELD_NAME_COLLECTION, clItr->_clname ) ;
+                  subBuilder.append( CLS_NAME_CAPPED_COLLECTION,
+                                     cappedCSName  ) ;
+                  subBuilder.appendObject( FIELD_NAME_INDEX,
+                                           idxItr->_indexDef.objdata(),
+                                           idxItr->_indexDef.objsize() ) ;
+                  subBuilder.done() ;
+
+#ifdef _DEBUG
+                  PD_LOG( PDDEBUG, "Text index info: %s",
+                          subBuilder.done().toString().c_str() ) ;
+#endif /* _DEBUG */
+               }
+            }
+         }
+      }
+
+      indexObjs.done() ;
+      obj = builder.obj() ;
+#ifdef _DEBUG
+      PD_LOG( PDDEBUG, "All text index info: %s",
+              obj.toString().c_str() ) ;
+#endif /* _DEBUG */
+   }
+
+   INT32 _clsShardMgr::_sendToSeAdpt( NET_HANDLE handle, MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasLock = FALSE ;
+
+      _shardLatch.get_shared() ;
+      hasLock = TRUE ;
+
+      rc = _pNetRtAgent->syncSend( _seAdptID, (void *)msg, &handle ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send message to search engine adapter "
+                   "failed[ %d ]", rc ) ;
+
+   done:
+      if ( hasLock )
+      {
+         _shardLatch.release_shared() ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT64 _clsShardMgr::netIn()

@@ -43,6 +43,9 @@
 
 using namespace bson ;
 
+// Default Size of the capped collection used by the text index.
+#define DMS_DFT_TEXTINDEX_BUFF_SIZE             (30 * 1024 * 1024 * 1024LL)
+
 namespace engine
 {
 
@@ -81,6 +84,13 @@ namespace engine
                                 BOOLEAN isSys = FALSE,
                                 INT32 sortBufferSize = SDB_INDEX_SORT_BUFFER_DEFAULT_SIZE ) ;
 
+         INT32    createTextIndex( _dmsMBContext *context,
+                                   const BSONObj &indexDef,
+                                   _pmdEDUCB *cb,
+                                   SDB_DPSCB *dpsCB,
+                                   BOOLEAN isSys = FALSE,
+                                   INT32 bufferSize = DMS_DFT_TEXTINDEX_BUFF_SIZE ) ;
+
          INT32    dropIndex ( _dmsMBContext *context, OID &indexOID,
                               _pmdEDUCB *cb, SDB_DPSCB *dpscb,
                               BOOLEAN isSys = FALSE ) ;
@@ -115,7 +125,7 @@ namespace engine
                                   BSONObj &inputObj, const dmsRecordID &rid,
                                   _pmdEDUCB *cb ) ;
 
-         INT32    truncateIndexes ( _dmsMBContext *context ) ;
+         INT32    truncateIndexes ( _dmsMBContext *context, _pmdEDUCB *cb ) ;
 
          INT32    getIndexCBExtent ( _dmsMBContext *context,
                                      const CHAR *indexName,
@@ -133,6 +143,12 @@ namespace engine
          void     decStatFreeSpace ( UINT16 mbID, UINT16 size ) ;
 
       private:
+         INT32    _createIndex( _dmsMBContext *context,
+                                const BSONObj &index,
+                                _pmdEDUCB * cb,
+                                SDB_DPSCB *dpscb,
+                                BOOLEAN isSys,
+                                INT32 sortBufferSize ) ;
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
          INT32    _rebuildIndex ( _dmsMBContext *context,
@@ -150,6 +166,24 @@ namespace engine
                                  BSONObj &inputObj, const dmsRecordID &rid,
                                  _pmdEDUCB *cb, BOOLEAN dupAllowed,
                                  BOOLEAN dropDups ) ;
+
+         INT32    _textIndexInsert( _dmsMBContext *context,
+                                    _ixmIndexCB *indexCB,
+                                    BSONObj &inputObj,
+                                    _pmdEDUCB *cb ) ;
+
+         INT32    _textIndexDelete( _dmsMBContext *context,
+                                    _ixmIndexCB *indexCB,
+                                    BSONObj &inputObj,
+                                    _pmdEDUCB *cb ) ;
+         INT32    _textIndexUpdate( _dmsMBContext *context,
+                                    _ixmIndexCB *indexCB,
+                                    BSONObj &newObj,
+                                    _pmdEDUCB *cb ) ;
+
+         INT32    _textIndexTruncate( _dmsMBContext *context,
+                                      _ixmIndexCB *indexCB,
+                                      _pmdEDUCB *cb ) ;
 
          INT32    _indexUpdate ( _dmsMBContext *context, _ixmIndexCB *indexCB,
                                  BSONObj &originalObj, BSONObj &newObj,
@@ -182,7 +216,11 @@ namespace engine
 
          virtual void   _onRestore() ;
 
-      protected:
+         INT32 _verifyTextIdxDef( const BSONObj &indexDef ) ;
+
+         INT32 _allocateIdxID( _dmsMBContext *context,
+                               const BSONObj &index,
+                               INT32 &indexID ) ;
 
       private:
          _dmsStorageData         *_pDataSu ;

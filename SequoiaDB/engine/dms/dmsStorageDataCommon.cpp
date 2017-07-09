@@ -483,6 +483,7 @@ namespace engine
       _CSID             = DMS_INVALID_SUID ;
       _mmeSegID         = 0 ;
       _pEventHolder     = pEventHolder ;
+      _pExtDataHandler  = NULL ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATACOMMON ) ;
    }
 
@@ -1860,6 +1861,12 @@ namespace engine
       goto done ;
    }
 
+   void _dmsStorageDataCommon::setExtDataHandler( IDmsExtDataHandler *pExtDataHandler )
+   {
+      SDB_ASSERT( pExtDataHandler, "External data handle is NULL" ) ;
+      _pExtDataHandler = pExtDataHandler ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACOMMON_ADDCOLLECTION, "_dmsStorageDataCommon::addCollection" )
    INT32 _dmsStorageDataCommon::addCollection( const CHAR * pName,
                                                UINT16 * collectionID,
@@ -2397,7 +2404,7 @@ namespace engine
       oldRecords = context->mbStat()->_totalRecords ;
       oldLobs = context->mbStat()->_totalLobs ;
 
-      rc = _pIdxSU->truncateIndexes( context ) ;
+      rc = _pIdxSU->truncateIndexes( context, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
                    "rc: %d", pName, rc ) ;
 

@@ -179,6 +179,12 @@ namespace engine
       EDU_TYPE_RESTAGENT,
       EDU_TYPE_FAPAGENT,
 
+      EDU_TYPE_SEADPTMGR,
+      EDU_TYPE_SE_SERVICE,
+      EDU_TYPE_SE_INDEXR,
+      EDU_TYPE_SE_INDEX,
+      EDU_TYPE_SE_AGENT,
+
       // Agent EDU Type END
       EDU_TYPE_AGENT_END,
 

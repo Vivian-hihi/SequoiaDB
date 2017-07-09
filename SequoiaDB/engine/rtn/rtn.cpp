@@ -48,6 +48,7 @@
 #include "pmdStartup.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
+#include "rtnExtDataHandler.hpp"
 
 namespace fs = boost::filesystem ;
 namespace engine
@@ -559,6 +560,7 @@ namespace engine
                                                     optCB->getSyncRecordNum(),
                                                     optCB->getSyncDirtyRatio() ) ;
                         storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
+                        storageUnit->regExtDataHandler( getRtnExtDataHandler() ) ;
 
                         /// add collectionspace
                         rc = dmsCB->addCollectionSpace ( csName, sequence,
@@ -703,6 +705,7 @@ namespace engine
                                                  optCB->getSyncRecordNum(),
                                                  optCB->getSyncDirtyRatio() ) ;
                      storageUnit->setSyncDeep( optCB->isSyncDeep() ) ;
+                     storageUnit->regExtDataHandler( getRtnExtDataHandler() ) ;
                      /// add collectionspace
                      rc = dmsCB->addCollectionSpace ( csName, sequence,
                                                       storageUnit, NULL,

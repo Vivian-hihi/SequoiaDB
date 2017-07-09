@@ -43,6 +43,7 @@
 #include "dpsLogWrapper.hpp"
 #include "dmsCompress.hpp"
 #include "dmsEventHandler.hpp"
+#include "dmsExtDataHandler.hpp"
 
 #include <map>
 
@@ -811,6 +812,8 @@ namespace engine
                                              dmsExtent *extent ) ;
 
          OSS_INLINE void   updateCreateLobs( UINT32 createLobs ) ;
+         void setExtDataHandler( IDmsExtDataHandler *pExtDataHandler ) ;
+         IDmsExtDataHandler *getExtDataHandler() { return _pExtDataHandler ; }
 
          /// flush mme
          INT32          flushMME( BOOLEAN sync = FALSE ) ;
@@ -1079,6 +1082,7 @@ namespace engine
          _dmsCompressorEntry                 _compressorEntry[ DMS_MME_SLOTS ] ;
 
          _IDmsEventHolder                    *_pEventHolder ;
+         _IDmsExtDataHandler                 *_pExtDataHandler ;
 
    };
    typedef _dmsStorageDataCommon dmsStorageDataCommon ;

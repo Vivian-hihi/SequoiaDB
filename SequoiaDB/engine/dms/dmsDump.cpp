@@ -111,6 +111,11 @@ namespace engine
          appendString( szTmp, DMS_INDEXTYPE_TMP_STR_SZ, "2d" ) ;
          OSS_BIT_CLEAR( type, IXM_EXTENT_TYPE_2D ) ;
       }
+      if ( IXM_EXTENT_HAS_TYPE( type, IXM_EXTENT_TYPE_TEXT ) )
+      {
+         appendString( szTmp, DMS_INDEXTYPE_TMP_STR_SZ, "text" ) ;
+         OSS_BIT_CLEAR( type, IXM_EXTENT_TYPE_TEXT ) ;
+      }
 
       if ( type )
       {

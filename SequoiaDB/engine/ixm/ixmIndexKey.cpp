@@ -126,9 +126,10 @@ namespace engine
       // input: BSONObj obj
       // output: BSONObjSet &keys
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN_GETKEYS, "_ixmKeyGenerator::getKeys" )
-      INT32 getKeys ( const BSONObj &obj, BOOLEAN isKeepKeyName, 
+      INT32 getKeys ( const BSONObj &obj, BOOLEAN isKeepKeyName,
                       BSONObjSet &keys,
-                      BSONElement *pArrEle ) const
+                      BSONElement *pArrEle,
+                      BOOLEAN transform = TRUE ) const
       {
          INT32 rc = SDB_OK ;
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN_GETKEYS );
@@ -138,7 +139,8 @@ namespace engine
          BSONElement arrEle ;
          try
          {
-            rc = _getKeys( fieldNames, obj, isKeepKeyName, keys, &arrEle ) ;
+            rc = _getKeys( fieldNames, obj, isKeepKeyName, keys,
+                           &arrEle, transform ) ;
          }
          catch ( std::exception &e )
          {
@@ -175,7 +177,8 @@ namespace engine
                       const BSONObj &obj,
                       BOOLEAN isKeepKeyName,
                       BSONObjSet &keys,
-                      BSONElement *arrEle ) const
+                      BSONElement *arrEle,
+                      BOOLEAN transform = TRUE ) const
       {
          INT32 rc = SDB_OK ;
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GETKEYS );
@@ -239,11 +242,11 @@ namespace engine
             rc = SDB_OK ;
             goto done ;
          }
-         else if ( !arrEle->eoo() )
+         else if ( !arrEle->eoo() && transform )
          {
             rc = _genKeyWithArrayEle( keyEles, fieldNames,
                                       arrEle,
-                                      arrEleName, arrElePos, isKeepKeyName, 
+                                      arrEleName, arrElePos, isKeepKeyName,
                                       keys ) ;
             if ( SDB_OK != rc )
             {
@@ -253,7 +256,7 @@ namespace engine
          }
          else
          {
-            rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName, 
+            rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName,
                                        keys ) ;
             if ( SDB_OK != rc )
             {
@@ -289,7 +292,7 @@ namespace engine
          if ( arrObj.firstElement().eoo() )
          {
             keyEles[arrElePos] = *arrElement ;
-            rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName, 
+            rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName,
                                        keys ) ;
             if ( SDB_OK != rc )
             {
@@ -355,7 +358,7 @@ namespace engine
                {
                   goto error ;
                }
-            } 
+            }
          }
       done:
          PD_TRACE_EXITRC( SDB__IXMKEYGEN__GENKEYSWITHARRELE, rc ) ;
@@ -380,7 +383,7 @@ namespace engine
             BSONElement &e = keyELes[i] ;
             keyName = isKeepKeyName ? fieldNames[i] : "" ;
             if ( e.eoo() )
-            {  
+            {
                builder.appendAs( gUndefinedElt, keyName ) ;
             }
             else
@@ -439,15 +442,16 @@ namespace engine
    }
 
    INT32 _ixmIndexKeyGen::getKeys ( const BSONObj &obj, BSONObjSet &keys,
-                                    BSONElement *pArrEle, 
-                                    BOOLEAN isKeepKeyName ) const
+                                    BSONElement *pArrEle,
+                                    BOOLEAN isKeepKeyName,
+                                    BOOLEAN transform ) const
    {
       ixmKeyGenerator g (this) ;
       if ( pArrEle )
       {
          *pArrEle = BSONElement() ;
       }
-      return g.getKeys ( obj, isKeepKeyName, keys, pArrEle ) ;
+      return g.getKeys ( obj, isKeepKeyName, keys, pArrEle, transform ) ;
    }
 
    // return True if there are at least one element match the name
@@ -485,7 +489,7 @@ namespace engine
           return USELESS;
        return HELPFUL;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_IXMINXKEYGEN, "ixmIndexKeyGen::reset" )
    INT32 ixmIndexKeyGen::reset ( const BSONObj & info )
    {

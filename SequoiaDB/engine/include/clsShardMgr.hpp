@@ -245,6 +245,7 @@ namespace engine
                                 const CHAR *hostName,
                                 const std::string &service,
                                 NodeID &id ) ;
+         INT32 _sendToSeAdpt( NET_HANDLE handle, MsgHeader *msg ) ;
 
       //msg functions
       protected:
@@ -253,6 +254,9 @@ namespace engine
          INT32 _onCatGroupRes ( NET_HANDLE handle, MsgHeader* msg ) ;
          INT32 _onQueryCSInfoRsp( NET_HANDLE handle, MsgHeader* msg ) ;
          INT32 _onHandleClose( NET_HANDLE handle, MsgHeader* msg ) ;
+         INT32 _onAuthReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
+         INT32 _onTextIdxInfoReqMsg( NET_HANDLE handle, MsgHeader * msg ) ;
+         void  _dumpTextIdxInfo( INT64 localVersion, BSONObj &obj ) ;
 
       private:
          _netRouteAgent                *_pNetRtAgent ;
@@ -275,7 +279,7 @@ namespace engine
          ossSpinSLatch                 _shardLatch ;
 
          MsgRouteID                    _nodeID ;
-
+         MsgRouteID                    _seAdptID ;
    } ;
 
    typedef _clsShardMgr shardCB ;
