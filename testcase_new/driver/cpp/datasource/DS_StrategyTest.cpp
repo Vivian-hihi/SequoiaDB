@@ -16,16 +16,16 @@ TEST(SerialTest,syncTest)
 	conf.setSyncCoordInterval(1) ;
 	string url = "192.168.31.61:11910" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
 	ossSleep(2*1000) ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -40,16 +40,16 @@ TEST(RandomTest,syncTest)
 	conf.setSyncCoordInterval(1) ;
 	string url = "192.168.31.61:11910" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
 	ossSleep(2*1000) ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -63,16 +63,16 @@ TEST(LocalTest,syncTest)
 	conf.setSyncCoordInterval(1) ;
 	string url = "192.168.31.61:11910" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
 	ossSleep(2*1000) ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -86,16 +86,16 @@ TEST(BalanceTest,syncTest)
 	conf.setSyncCoordInterval(1) ;
 	string url = "192.168.31.61:11910" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
 	ossSleep(2*1000) ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -111,15 +111,15 @@ TEST(SerialTest,urllistTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.61:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -135,15 +135,15 @@ TEST(RandomTest,urllistTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.61:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -159,15 +159,15 @@ TEST(LocalTest,urllistTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.20:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -183,15 +183,15 @@ TEST(BalanceTest,urllistTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.61:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -205,17 +205,17 @@ TEST(SerialTest,addcoordTest)
 	conf.setSyncCoordInterval(0) ;
 	string url = "192.168.31.61:11810" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.addCoord("192.168.31.61:11910") ;
 	ds.addCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
 	cout<<endl ;
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -229,18 +229,18 @@ TEST(RandomTest,addcoordTest)
 	conf.setSyncCoordInterval(0) ;
 	string url = "192.168.31.61:11810" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.addCoord("192.168.31.61:11910") ;
 	ds.addCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
 	cout<<endl ;
 	
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -254,18 +254,18 @@ TEST(LocalTest,addcoordTest)
 	conf.setSyncCoordInterval(0) ;
 	string url = "192.168.31.61:11810" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.addCoord("192.168.31.61:11910") ;
 	ds.addCoord("192.168.31.20:11810") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
 	cout<<endl ;
 	
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -279,11 +279,11 @@ TEST(BalanceTest,addcoordTest)
 	conf.setSyncCoordInterval(0) ;
 	string url = "192.168.31.61:11810" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.addCoord("192.168.31.61:11910") ;
 	ds.addCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
 	
 	cout<<endl ;
 	
@@ -291,7 +291,7 @@ TEST(BalanceTest,addcoordTest)
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -308,17 +308,17 @@ TEST(SerialTest,removecoordTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.61:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.removeCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	cout<<endl ;
 	
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -335,17 +335,17 @@ TEST(RandomTest,removecoordTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.61:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.removeCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	cout<<endl ;
 	
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -362,17 +362,17 @@ TEST(LocalTest,removecoordTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.20:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.removeCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	cout<<endl ;
 	
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -389,17 +389,17 @@ TEST(BalanceTest,removecoordTest)
 	urllist.push_back("192.168.31.61:11910") ;
 	urllist.push_back("192.168.31.61:11810") ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.removeCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	cout<<endl ;
 	
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;
@@ -412,19 +412,19 @@ TEST(BalanceTest,enableTest)
 	conf.setSyncCoordInterval(0) ;
 	string url = "192.168.31.61:11810" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.disable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.disable()) ;
 	ds.addCoord("192.168.31.61:11910") ;
 	ds.addCoord("192.168.31.61:11920") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
 	
 	sdb* conn = NULL ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		++cnt ;
 	}
 	ds.close() ;

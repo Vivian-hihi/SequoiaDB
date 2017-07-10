@@ -11,13 +11,13 @@ TEST(memTest,check)
 	sdbDataSource ds ;
 	sdbDataSourceConf conf ;
 	string url = "localhost:11810" ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	sdb* conn ;
 	char ch ;
 	for(int i = 0;;i++)
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		ds.releaseConnection(conn) ;
 		ds.addCoord( "192.168.31.61:11910" ) ;
 		ds.removeCoord( "192.168.31.61:11910" ) ;
@@ -29,7 +29,7 @@ TEST(memTest,check)
 				break ;
 		}
 	}
-	EXPECT_EQ(SDB_OK,ds.disable()) ;
+	ASSERT_EQ(SDB_OK,ds.disable()) ;
 	ds.close() ;
 }
 */

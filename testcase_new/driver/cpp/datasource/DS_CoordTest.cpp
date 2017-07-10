@@ -22,15 +22,15 @@ TEST(coordTest,stop)
 	//conf.setSyncCoordInterval(10 * 1000) ;
 	conf.setSyncCoordInterval( 0 ) ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(urllist,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(urllist,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	cout<<endl ;
 	
 	char flags ;
 	for(int i = 0;;i++)
 	{
 		sdb* conn = NULL ;
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		if(i % 10 == 0 && i != 0)
 		{
 			cout<<"continue??[y/n]: " ;

@@ -13,8 +13,8 @@ TEST(InvalidArgTest,url)
 	sdb* conn = NULL ;
 
 	string url_wrong = "something:00000" ;
-	EXPECT_EQ( SDB_OK,ds.init(url_wrong,conf) ) ;
-	EXPECT_EQ( SDB_OK,ds.enable() ) ;
-	EXPECT_EQ( SDB_DS_NO_REACHABLE_COORD,ds.getConnection(conn) ) ;	
+	ASSERT_EQ( SDB_OK,ds.init(url_wrong,conf) ) ;
+	ASSERT_EQ( SDB_OK,ds.enable() ) ;
+	ASSERT_EQ( SDB_DS_NO_REACHABLE_COORD,ds.getConnection(conn) ) ;	
 	ds.close() ;
 }

@@ -18,11 +18,11 @@ TEST(TimeTest,checkIntervalLong)
 	vector<sdb*> vec ;
 
 	conf.setCheckIntervalInfo(3000,0) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	while(vec.size() <= conf.getMaxIdleCount())
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		// printf( "vec size: %d, max idle count: %d\n", vec.size(), conf.getMaxIdleCount() ) ;
 		// sleep( 1000 ) ;
 		vec.push_back(conn) ;
@@ -34,10 +34,11 @@ TEST(TimeTest,checkIntervalLong)
 	printf( "before sleep, datasource idle connection num: %d\n", ds.getIdleConnNum() ) ;
 	ossSleep( 6*1000 ) ;
 	printf( "after sleep, datasource idle connection num: %d\n", ds.getIdleConnNum() ) ;
-	EXPECT_EQ(ds.getIdleConnNum(),20) ;
+	ASSERT_EQ(ds.getIdleConnNum(),20) ;
 	ds.close() ;
 }
 
+/*
 // 休眠时间<checkInterval,检查连接池空闲连接数量> maxIdleConnNum
 TEST(TimeTest,checkIntervalShort)
 {
@@ -53,7 +54,7 @@ TEST(TimeTest,checkIntervalShort)
 	ds.enable() ;
 	while(vec.size() <= conf.getMaxIdleCount()+10)	// 获取连接数超过maxIdleConnNum
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		vec.push_back(conn) ;
 	}
 	cout<<"vector of connection size is "<<vec.size()<<endl ;
@@ -63,7 +64,7 @@ TEST(TimeTest,checkIntervalShort)
 	}
 	int connNum = ds.getIdleConnNum() ;			// 不休眠,空闲队列连接数应>=maxIdleConnNu
 	cout<<"Idle connNum is "<<connNum<<endl ;	
-	EXPECT_GE(connNum,20) ;
+	ASSERT_GE(connNum,20) ;
 	ds.close() ;
 }
 
@@ -80,12 +81,12 @@ TEST(TimeTest,keepAliveTimoutZero)
 	conf.setCheckIntervalInfo(3000,0) ;
 	ds.init(url,conf) ;
 	ds.enable() ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
-	EXPECT_EQ(9,ds.getIdleConnNum()) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(9,ds.getIdleConnNum()) ;
 	ossSleep(3*1000) ;
 	ds.releaseConnection(conn) ;
 	ossSleep(3*1000) ;							// 休眠时间>checkInterval,但是keepAliveTimeout=0,该连接应该有效，空闲连接数为10
-	EXPECT_EQ(10,ds.getIdleConnNum()) ;
+	ASSERT_EQ(10,ds.getIdleConnNum()) ;
 	ds.close() ;
 }
 
@@ -102,15 +103,16 @@ TEST(TimeTest,keepAliveTimoutNotZero)
 	conf.setCheckIntervalInfo(3000,6000) ;
 	ds.init(url,conf) ;
 	ds.enable() ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
-	EXPECT_EQ(9,ds.getIdleConnNum()) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(9,ds.getIdleConnNum()) ;
 	ossSleep(7*1000) ;					// 获取连接后休眠时间>keepAliveTimeout，连接超时，此时连接池里的连接也都超时了。
 	ds.releaseConnection(conn) ;
 	ossSleep(4*1000) ;					// 释放连接后休眠时间>checkInterval,连接应该被清除，连接池的空闲连接为0
-	EXPECT_EQ(0,ds.getIdleConnNum()) ;
+	ASSERT_EQ(0,ds.getIdleConnNum()) ;
 	ds.close() ;
 }
 
+*/
 /*
 // 设置keepAliveTimeout!=0,检查连接有效性
 TEST(TimeTest,keepAliveTimoutNotZeroAgain)
@@ -125,24 +127,24 @@ TEST(TimeTest,keepAliveTimoutNotZeroAgain)
 	conf.setCheckIntervalInfo(3000, 9000) ;
 	ds.init(url,conf) ;
 	ds.enable() ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
         
-	EXPECT_EQ(9, ds.getIdleConnNum()) ;   
+	ASSERT_EQ(9, ds.getIdleConnNum()) ;   
 	ossSleep(3*1000) ; 
-	EXPECT_EQ(9, ds.getIdleConnNum()) ;
+	ASSERT_EQ(9, ds.getIdleConnNum()) ;
 	ossSleep(1*1000) ; 
-	EXPECT_EQ(9, ds.getIdleConnNum()) ;
+	ASSERT_EQ(9, ds.getIdleConnNum()) ;
 	ossSleep(1*1000) ;
-	EXPECT_EQ(9, ds.getIdleConnNum()) ;   
+	ASSERT_EQ(9, ds.getIdleConnNum()) ;   
 	ossSleep(2*1000) ; 
-	EXPECT_EQ(0, ds.getIdleConnNum()) ;
+	ASSERT_EQ(0, ds.getIdleConnNum()) ;
 	
 	conn->createCollectionSpace( "datasourceTestCs_lxw",SDB_PAGESIZE_4K,cs ) ;
 	conn->dropCollectionSpace( "datasourceTestCs_lxw" ) ;
 	ds.releaseConnection(conn) ;
-	EXPECT_EQ(1,ds.getIdleConnNum()) ;
+	ASSERT_EQ(1,ds.getIdleConnNum()) ;
 	ossSleep(10*1000) ;
-	EXPECT_EQ(0, ds.getIdleConnNum()) ;
+	ASSERT_EQ(0, ds.getIdleConnNum()) ;
 	ds.close() ;
 }
 */
@@ -157,31 +159,31 @@ TEST(ValidateTest,trueTest)
 	sdb* conn = NULL ;
 	conf.setValidateConnection(true) ;
 	conf.setSyncCoordInterval(false) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;		
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;		
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 
 	sdb temp ;
-	EXPECT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
+	ASSERT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
 	sdbReplicaGroup group ;
-	EXPECT_EQ(SDB_OK,temp.getReplicaGroup(2,group)) ;
+	ASSERT_EQ(SDB_OK,temp.getReplicaGroup(2,group)) ;
 	int nodeNum = 0 ;
-	EXPECT_EQ(SDB_OK,group.getNodeNum(SDB_NODE_ALL,&nodeNum)) ;
+	ASSERT_EQ(SDB_OK,group.getNodeNum(SDB_NODE_ALL,&nodeNum)) ;
 	if(nodeNum < 2)
 		return ;
 	sdbReplicaNode node ;
-	EXPECT_EQ(SDB_OK,group.getNode("sdbserver1","11910",node)) ;
-	EXPECT_EQ(SDB_OK,node.stop()) ;
-	//EXPECT_EQ(SDB_NETWORK,temp.connect("192.168.31.61",11910)) ;
-	//EXPECT_EQ(0,conn->isValid()) ;
+	ASSERT_EQ(SDB_OK,group.getNode("sdbserver1","11910",node)) ;
+	ASSERT_EQ(SDB_OK,node.stop()) ;
+	//ASSERT_EQ(SDB_NETWORK,temp.connect("192.168.31.61",11910)) ;
+	//ASSERT_EQ(0,conn->isValid()) ;
 	cout << "before" << endl;
 	while( 1 == conn->isValid() )
 		ossSleep(1000) ;
 	cout << "end" << endl;
-	EXPECT_EQ(SDB_DS_NO_COORD,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_DS_NO_COORD,ds.getConnection(conn)) ;
 	ds.close() ;
-	EXPECT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
-	EXPECT_EQ(SDB_OK,node.start()) ;
+	ASSERT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
+	ASSERT_EQ(SDB_OK,node.start()) ;
 }
 
 // 出池不检验连接有效性，停节点能获得连接但连接无效？
@@ -193,32 +195,32 @@ TEST(ValidateTest,falseTest)
 	sdb* conn = NULL ;
 	conf.setValidateConnection(true) ;
 	conf.setSyncCoordInterval(false) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;		
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;		
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 
 	sdb temp ;
-	EXPECT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
+	ASSERT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
 	sdbReplicaGroup group ;
-	EXPECT_EQ(SDB_OK,temp.getReplicaGroup(2,group)) ;
+	ASSERT_EQ(SDB_OK,temp.getReplicaGroup(2,group)) ;
 	int nodeNum = 0 ;
-	EXPECT_EQ(SDB_OK,group.getNodeNum(SDB_NODE_ALL,&nodeNum)) ;
+	ASSERT_EQ(SDB_OK,group.getNodeNum(SDB_NODE_ALL,&nodeNum)) ;
 	if(nodeNum < 2)
 		return ;
 	sdbReplicaNode node ;
-	EXPECT_EQ(SDB_OK,group.getNode("sdbserver1","11910",node)) ;
-	EXPECT_EQ(SDB_OK,node.stop()) ;
-	//EXPECT_EQ(SDB_NETWORK,temp.connect("192.168.31.61",11910)) ;
-	//EXPECT_EQ(0,conn->isValid()) ;
+	ASSERT_EQ(SDB_OK,group.getNode("sdbserver1","11910",node)) ;
+	ASSERT_EQ(SDB_OK,node.stop()) ;
+	//ASSERT_EQ(SDB_NETWORK,temp.connect("192.168.31.61",11910)) ;
+	//ASSERT_EQ(0,conn->isValid()) ;
 	cout << "before" << endl;
 	while( 1 == conn->isValid() )
 		ossSleep(1000) ;
 	cout << "end" << endl ;
-	EXPECT_EQ(SDB_DS_NO_COORD,ds.getConnection(conn)) ;
-	//EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
-	//EXPECT_EQ(0,conn->isValid()) ;
+	ASSERT_EQ(SDB_DS_NO_COORD,ds.getConnection(conn)) ;
+	//ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	//ASSERT_EQ(0,conn->isValid()) ;
 	ds.close() ;
-	EXPECT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
-	EXPECT_EQ(SDB_OK,node.start()) ;
+	ASSERT_EQ(SDB_OK,temp.connect("192.168.31.61",11920)) ;
+	ASSERT_EQ(SDB_OK,node.start()) ;
 }
 */

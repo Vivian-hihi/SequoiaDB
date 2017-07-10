@@ -25,12 +25,12 @@ TEST(ThreadTest,init_init)
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 
 	sdbclient::sdb* conn = NULL ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;		
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;		
 	ds.releaseConnection(conn) ;	
-	EXPECT_EQ(SDB_OK,ds.disable()) ;					
+	ASSERT_EQ(SDB_OK,ds.disable()) ;					
 	ds.close() ;					
 }
 
@@ -53,11 +53,11 @@ TEST(ThreadTest,init_enable)
 
 	sdbclient::sdb* conn = NULL ;
 	if(args.getEnabled())
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;	
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;	
 	else
-		EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
+		ASSERT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
 	ds.releaseConnection(conn) ;	
-	EXPECT_EQ(SDB_OK,ds.disable()) ;	
+	ASSERT_EQ(SDB_OK,ds.disable()) ;	
 	ds.close() ;					
 }
 
@@ -145,7 +145,7 @@ TEST(ThreadTest,enable)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -159,7 +159,7 @@ TEST(ThreadTest,enable)
         delete workers[i] ;
     }
 	sdbclient::sdb *conn = NULL ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 	ds.close() ;
 }
 
@@ -170,7 +170,7 @@ TEST(ThreadTest,enable_disable)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -184,7 +184,7 @@ TEST(ThreadTest,enable_disable)
         delete workers[i] ;
     }
 	sdbclient::sdb *conn = NULL ;
-	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	ds.close() ;
 }
 
@@ -196,7 +196,7 @@ TEST(ThreadTest,enable_close)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -210,7 +210,7 @@ TEST(ThreadTest,enable_close)
         delete workers[i] ;
     }
 	sdbclient::sdb *conn = NULL ;
-	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	ds.close() ;
 }
 */
@@ -222,7 +222,7 @@ TEST(ThreadTest,enable_conn)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -247,7 +247,7 @@ TEST(ThreadTest,enable_coord)
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -271,7 +271,7 @@ TEST(ThreadTest,disable)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -295,7 +295,7 @@ TEST(ThreadTest,disable_close)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -319,8 +319,8 @@ TEST(ThreadTest,disable_conn)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -344,7 +344,7 @@ TEST(ThreadTest,disable_coord)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -368,7 +368,7 @@ TEST(ThreadTest,dsclose)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -392,8 +392,8 @@ TEST(ThreadTest,dsclose_conn)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -417,8 +417,8 @@ TEST(ThreadTest,dsclose_coord)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -441,8 +441,8 @@ TEST(ThreadTest,connection)
 	sdbclient::sdbDataSource ds ;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -466,8 +466,8 @@ TEST(ThreadTest,connection_coord)
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -490,14 +490,14 @@ TEST(ThreadTest,releaseConn)
 	sdbclient::sdbDataSource ds;
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	std::vector<sdbclient::sdb *> vec ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
 		sdbclient::sdb *conn = NULL ;
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		vec.push_back(conn) ;
 		++cnt ;
 	}
@@ -524,14 +524,14 @@ TEST(ThreadTest,releaseConn_coord)
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	std::vector<sdbclient::sdb *> vec ;
 	int cnt = 0 ;
 	while(cnt < 10)
 	{
 		sdbclient::sdb *conn = NULL ;
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		vec.push_back(conn) ;
 		++cnt ;
 	}
@@ -558,8 +558,8 @@ TEST(ThreadTest,addCoord)
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -583,8 +583,8 @@ TEST(ThreadTest,addCoord_remove)
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)
@@ -608,11 +608,11 @@ TEST(ThreadTest,removeCoord)
 	string url = COORD ;
 	sdbclient::sdbDataSourceConf conf ;
 	conf.setSyncCoordInterval(0) ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	string url2 = COORD ;
 	ds.addCoord(url2) ;
-	EXPECT_EQ(1,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(1,ds.getNormalCoordNum()) ;
 	DsArgs args(ds) ;
 	import::Worker *workers[ThreadNum] ;
 	for(int i = 0;i < ThreadNum;++i)

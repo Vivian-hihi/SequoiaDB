@@ -12,25 +12,25 @@ TEST(ConnTest,enableConn)
 	conf.setSyncCoordInterval(0) ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
-	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
-	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(COORD,conf)) ;
+	ASSERT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 	ds.releaseConnection(conn) ;	// 释放连接无返回值
 
 	ds.addCoord(COORD) ;	//
-	EXPECT_EQ(1,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(1,ds.getNormalCoordNum()) ;
 	ds.addCoord("localhost:11910") ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 	ds.addCoord("1.2.3.4:000000") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
 	ds.addCoord("something:000000") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
 	ds.removeCoord("something:000000") ;
-	EXPECT_EQ(3,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(3,ds.getNormalCoordNum()) ;
 	ds.removeCoord("1.2.3.4:000000") ;
-	EXPECT_EQ(2,ds.getNormalCoordNum()) ;
+	ASSERT_EQ(2,ds.getNormalCoordNum()) ;
 
 	ds.close() ;   // 关闭连接池无返回值
 }
@@ -41,17 +41,17 @@ TEST(ConnTest,fullConn)
 	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(COORD,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 
 	sdb* conn = NULL ;
 	vector<sdb*> vec ;
 	while(vec.size() < conf.getMaxCount())
 	{
-		EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+		ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 		vec.push_back(conn) ;
 	}
-	EXPECT_EQ(SDB_DRIVER_DS_RUNOUT,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_DRIVER_DS_RUNOUT,ds.getConnection(conn)) ;
 	ds.close() ;
 }
 
@@ -61,11 +61,11 @@ TEST(ConnTest,disableConn)
 	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.disable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(COORD,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.disable()) ;
 
 	sdb* conn = NULL ;
-	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;
 	ds.addCoord(COORD) ;			// 添加节点无返回值
 	ds.removeCoord(COORD) ;		// 删除节点无返回值
 	ds.close() ;
@@ -77,15 +77,15 @@ TEST(ConnTest,disableResource)
 	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(COORD,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	sdb* conn ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
-	EXPECT_EQ(9,ds.getIdleConnNum()) ;
-	EXPECT_EQ(1,ds.getUsedConnNum()) ;
-	EXPECT_EQ(SDB_OK,ds.disable()) ;
-    EXPECT_EQ(0,ds.getIdleConnNum()) ;
-	EXPECT_EQ(0,ds.getUsedConnNum()) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(9,ds.getIdleConnNum()) ;
+	ASSERT_EQ(1,ds.getUsedConnNum()) ;
+	ASSERT_EQ(SDB_OK,ds.disable()) ;
+    ASSERT_EQ(0,ds.getIdleConnNum()) ;
+	ASSERT_EQ(0,ds.getUsedConnNum()) ;
 	ds.close() ;
 }
 
@@ -95,18 +95,18 @@ TEST(ConnTest,disableResourceAgain)
 	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(COORD,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	sdb* conn ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
-	EXPECT_EQ(9,ds.getIdleConnNum()) ;
-	EXPECT_EQ(1,ds.getUsedConnNum()) ;
-	EXPECT_EQ(SDB_OK,ds.disable()) ;
-        EXPECT_EQ(0,ds.getIdleConnNum()) ;
-	EXPECT_EQ(0,ds.getUsedConnNum()) ;
-	EXPECT_EQ(SDB_OK,ds.disable()) ;
-        EXPECT_EQ(0,ds.getIdleConnNum()) ;
-	EXPECT_EQ(0,ds.getUsedConnNum()) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(9,ds.getIdleConnNum()) ;
+	ASSERT_EQ(1,ds.getUsedConnNum()) ;
+	ASSERT_EQ(SDB_OK,ds.disable()) ;
+        ASSERT_EQ(0,ds.getIdleConnNum()) ;
+	ASSERT_EQ(0,ds.getUsedConnNum()) ;
+	ASSERT_EQ(SDB_OK,ds.disable()) ;
+        ASSERT_EQ(0,ds.getIdleConnNum()) ;
+	ASSERT_EQ(0,ds.getUsedConnNum()) ;
 	ds.close() ;
 }
 
@@ -116,16 +116,16 @@ TEST(ConnTest,close)
 	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(COORD,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	ds.close() ;
 	
 	sdb* conn ;
-	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
+	ASSERT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
 	ds.addCoord(COORD) ;  
-	EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
-	EXPECT_EQ(SDB_OK,ds.disable()) ; //  close后能正常调用disable
-	EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
+	ASSERT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
+	ASSERT_EQ(SDB_OK,ds.disable()) ; //  close后能正常调用disable
+	ASSERT_EQ(SDB_DS_NOT_INIT,ds.enable()) ; 
 }
 
 
@@ -137,11 +137,11 @@ TEST(ConnTest,withoutInit)
 	conf.setSyncCoordInterval(false) ;
 	sdbDataSource ds ;
 	sdb* conn = NULL ;
-        EXPECT_EQ(SDB_DS_NOT_INIT,ds.enable()) ;	
+        ASSERT_EQ(SDB_DS_NOT_INIT,ds.enable()) ;	
    
-	EXPECT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
+	ASSERT_EQ(SDB_DS_NOT_ENABLE,ds.getConnection(conn)) ;	
 	ds.addCoord(COORD) ;	
-	EXPECT_EQ(SDB_OK,ds.disable()) ;		
+	ASSERT_EQ(SDB_OK,ds.disable()) ;		
 	ds.close() ;		
 }
 
@@ -152,12 +152,12 @@ TEST(ConnTest,disableWithoutRelease)
 	getConf() ;
 	sdbDataSourceConf conf ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(COORD,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(COORD,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 	sdb* conn = NULL ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 
-	EXPECT_EQ(SDB_OK,ds.disable()) ; 
+	ASSERT_EQ(SDB_OK,ds.disable()) ; 
 	ds.close() ;
 }
 

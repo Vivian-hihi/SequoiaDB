@@ -24,13 +24,6 @@ sdb _db ;
 sdbCollectionSpace _cs ;
 sdbCollection _cl ;
 
-#define ASSERT_RC_CODE( rc, msg ) \
-if( rc != SDB_OK ) \
-{ \
-	cout << msg << " rc = " << rc << endl ; \
-	exit( 1 ) ; \
-}	
-
 class BsonTest : public testing::Test
 {
 public:
@@ -44,11 +37,11 @@ void BsonTest::SetUpTestCase()
 	// connect and create cs cl
 	getConf() ;
 	rc = _db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-	ASSERT_RC_CODE( rc, "fail to connect sdb" )
+	ASSERT_RC( rc, "fail to connect sdb" )
 	rc = _db.createCollectionSpace( csName, SDB_PAGESIZE_4K, _cs ) ;
-	ASSERT_RC_CODE( rc, "fail to create cs" )
+	ASSERT_RC( rc, "fail to create cs" )
 	rc = _cs.createCollection( clName, _cl ) ;
-	ASSERT_RC_CODE( rc, "fail to create cl" )	
+	ASSERT_RC( rc, "fail to create cl" )	
 }
 
 void BsonTest::TearDownTestCase()
@@ -56,7 +49,7 @@ void BsonTest::TearDownTestCase()
 	INT32 rc = SDB_OK ;
 	// drop cs and disconnect
 	rc = _db.dropCollectionSpace( csName ) ;
-	ASSERT_RC_CODE( rc, "fail to drop cs" )
+	ASSERT_RC( rc, "fail to drop cs" )
 	_db.disconnect() ;
 }
 
@@ -78,11 +71,11 @@ void bulkInsert( ThreadArgs* args )
 
    // connect and get cs cl
    rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-   ASSERT_RC_CODE( rc, "fail to connect in thread" )
+   ASSERT_EQ( rc, SDB_OK ) << "fail to connect in thread " << tid ; 
    rc = db.getCollectionSpace( csName, cs ) ;
-   ASSERT_RC_CODE( rc, "fail to get cs in thread" )
+   ASSERT_EQ( rc, SDB_OK ) << "fail to get cs in thread " << tid ;
    rc = cs.getCollection( clName, cl ) ;
-   ASSERT_RC_CODE( rc, "fail to get cl in thread" )  
+   ASSERT_EQ( rc, SDB_OK ) << "fail to get cl in thread " << tid ;  
 
    // bulk insert record
    vector<BSONObj> vec ;
@@ -94,7 +87,7 @@ void bulkInsert( ThreadArgs* args )
       i++ ;
    }
    rc = cl.bulkInsert( 0, vec ) ;
-   ASSERT_RC_CODE( rc, "fail to bulk insert" )
+   ASSERT_EQ( rc, SDB_OK ) << "fail to bulk insert" ; 
 
    // disconnect and release handle
    db.disconnect() ;

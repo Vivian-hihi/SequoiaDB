@@ -22,17 +22,6 @@ sdbCollection cl ;
 const CHAR* csname = "lobTestCS" ;
 const CHAR* clname = "lobTestCL" ;
 
-#define ASSERT_RC_CODE( rc, msg )\
-do\
-{\
-   if( SDB_OK != rc )\
-   {\
-      cout << "rc = " << rc << " " << msg ;\
-      exit( EXIT_FAILURE ) ; \
-   }\
-}\
-while( 0 ) ;
-
 class LobTest : public testing::Test
 {
 	public:
@@ -45,18 +34,18 @@ void LobTest::SetUpTestCase()
 	INT32 rc = SDB_OK ;
     getConf() ;
     rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-    ASSERT_RC_CODE( rc, "fail to connect sdb" )
+    ASSERT_RC( rc, "fail to connect sdb" ) ;
     rc = db.createCollectionSpace( csname, SDB_PAGESIZE_4K, cs ) ;
-    ASSERT_RC_CODE( rc, "fail to create cs" )
+    ASSERT_RC( rc, "fail to create cs" ) ;
     rc = cs.createCollection( clname, cl ) ;
-    ASSERT_RC_CODE( rc, "fail to create cl" )
+    ASSERT_RC( rc, "fail to create cl" ) ;
 }
 
 void LobTest::TearDownTestCase()
 {
 	INT32 rc = SDB_OK ;
 	rc = db.dropCollectionSpace( csname ) ;
-	ASSERT_RC_CODE( rc, "fail to drop cs" ) 
+	ASSERT_RC( rc, "fail to drop cs" ) ;
 }
 
 // creat lob then close all cursors

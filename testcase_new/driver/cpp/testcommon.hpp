@@ -15,6 +15,15 @@ do { \
 	} \
 } while( 0 ) ;
 
+#define ASSERT_RC( rc, msg ) \
+do { \
+    if( rc != SDB_OK ) \
+    { \
+        std::cout << msg << ", rc = " << rc << std::endl ; \
+        exit(1) ; \
+    } \
+} while( 0 ) ;
+
 #define HOST                  "localhost"
 #define SERVER                "11810" 
 #define CSNAME                "story_cpp_test_cs" 
@@ -29,9 +38,9 @@ extern char WORKDIR[100] ;
 extern char COORD[100] ;
 
 void getConf() ;
-void ossSleep(int milliseconds) ;
+void ossSleep( int milliseconds ) ;
 bool isStandalone( sdb& db ) ;
 int createNormalCl( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl,
-					  const char* csname, const char* clname ) ;
+					const char* csname, const char* clname ) ;
 
 #endif

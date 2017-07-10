@@ -22,13 +22,6 @@ sdb db ;
 sdbCollectionSpace cs ;
 sdbCollection cl ;
 
-#define ASSERT_RC( rc, msg ) \
-if( rc != SDB_OK ) \
-{ \
-   cout << msg << ", rc = " << rc << endl ; \
-   exit(1) ; \
-}
-
 class DateTest : public testing::Test
 {
 public:
@@ -42,11 +35,11 @@ void DateTest::SetUpTestCase()
 	// connect and create cs cl
 	getConf() ;
 	rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-	ASSERT_RC( rc, "fail to connect sdb" ) 
+	ASSERT_RC( rc, "fail to connect sdb" ) ; 
 	rc = db.createCollectionSpace( csName, SDB_PAGESIZE_4K, cs ) ;
-	ASSERT_RC( rc, "fail to create cs" )
+	ASSERT_RC( rc, "fail to create cs" ) ;
 	rc = cs.createCollection( clName, cl ) ;
-	ASSERT_RC( rc, "fail to create cl" )
+	ASSERT_RC( rc, "fail to create cl" ) ;
 }
 
 void DateTest::TearDownTestCase()
@@ -54,7 +47,7 @@ void DateTest::TearDownTestCase()
 	INT32 rc = SDB_OK ;
 	// drop cs and disconnect
 	rc = db.dropCollectionSpace( csName ) ;
-	ASSERT_RC( rc, "fail to drop cs" )
+	ASSERT_RC( rc, "fail to drop cs" ) ;
 	db.disconnect() ;
 }
 

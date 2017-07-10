@@ -11,11 +11,11 @@ TEST(timeTest,jump)
 	conf.setCheckIntervalInfo(3,6) ;
 	string url = "localhost:11810" ;
 	sdbDataSource ds ;
-	EXPECT_EQ(SDB_OK,ds.init(url,conf)) ;
-	EXPECT_EQ(SDB_OK,ds.enable()) ;
+	ASSERT_EQ(SDB_OK,ds.init(url,conf)) ;
+	ASSERT_EQ(SDB_OK,ds.enable()) ;
 
 	sdb* conn = NULL ;
-	EXPECT_EQ(SDB_OK,ds.getConnection(conn)) ;
+	ASSERT_EQ(SDB_OK,ds.getConnection(conn)) ;
 	char flags ;
 	while(true)
 	{
@@ -25,7 +25,7 @@ TEST(timeTest,jump)
 			break ;
 	}
 	ds.releaseConnection(conn) ;
-	EXPECT_EQ(0,ds.getIdleConnNum()) ;
+	ASSERT_EQ(0,ds.getIdleConnNum()) ;
 	ds.close() ;
 }
 */
