@@ -115,7 +115,8 @@ namespace engine
       dmsOffset      _firstRecordOffset ;
       dmsOffset      _lastRecordOffset ;
       UINT32         _writePos ; // Currently write position in the working
-                                 // extent data area. Always 4 byte aligned.
+                                 // extent data area( the extent header
+                                 // excluded). Always 4 byte aligned.
       _dmsExtentInfo()
       {
          reset() ;
@@ -291,7 +292,8 @@ namespace engine
                                 INT32 direction,
                                 INT64 &recNum,
                                 INT64 &dataSize,
-                                INT64 &totalSize ) ;
+                                INT64 &totalSize,
+                                BOOLEAN endInclude = TRUE ) ;
 
    private:
       dmsCappedCLOptions *_options[ DMS_MME_SLOTS ] ;

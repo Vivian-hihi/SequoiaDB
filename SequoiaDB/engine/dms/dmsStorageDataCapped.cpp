@@ -1040,6 +1040,7 @@ namespace engine
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
+      INT64 beforeTotalSize = 0 ;
       dmsExtentInfo *workExtInfo = &_workExtInfo[context->mbID()] ;
 
       if ( direction >= 0 )
@@ -1051,11 +1052,29 @@ namespace engine
       }
       else
       {
+
+         {
+            // Currently the performance of pop backward is not very good, for
+            // we need to scan all the data in the extent to get the new
+            // last record offset, and the data and total size to be popped.
+            // Any better solution ?
+            INT64 recNumTmp = 0 ;
+            INT64 dataSizeTmp = 0 ;
+            // Scan the records before the target offset to get the new last
+            // record offset.
+            _countRecNumAndSize( context, extentID,
+                                 workExtInfo->_firstRecordOffset, offset,
+                                 1, recNumTmp, dataSizeTmp,
+                                 beforeTotalSize, FALSE ) ;
+         }
          _countRecNumAndSize( context, extentID, offset,
                               workExtInfo->_lastRecordOffset,
                               direction, recNum, dataSize, totalSize ) ;
-         workExtInfo->_lastRecordOffset -= totalSize ;
-         // Do not increase the free space when direction is 1, as that
+         workExtInfo->_lastRecordOffset =
+               workExtInfo->_firstRecordOffset + beforeTotalSize ;
+         workExtInfo->_writePos = offset - DMS_EXTENT_METADATA_SZ ;
+         // Do not increase the free space when direction is 1, as the space
+         // can not be used for insertion in this round.
          workExtInfo->_freeSpace += totalSize ;
          _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
       }
@@ -1065,6 +1084,27 @@ namespace engine
       _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
       _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= dataSize ;
       _mbStatInfo[ context->mbID() ]._totalDataLen -= dataSize ;
+
+      SDB_ASSERT( workExtInfo->_recCount >= 0,
+                  "Extent record number should never be negative" ) ;
+      SDB_ASSERT( workExtInfo->_firstRecordOffset >= (INT32)DMS_EXTENT_METADATA_SZ,
+                  "First record off set invalid" ) ;
+      SDB_ASSERT( workExtInfo->_lastRecordOffset >= (INT32)DMS_EXTENT_METADATA_SZ,
+                  "Last record off set invalid" ) ;
+      SDB_ASSERT( workExtInfo->_freeSpace >= 0 &&
+                  workExtInfo->_freeSpace <= (INT32)DMS_CAP_EXTENT_BODY_SZ,
+                  "Free space in extent is invalid" ) ;
+      SDB_ASSERT( _mbStatInfo[ context->mbID() ]._totalRecords >=
+                  workExtInfo->_recCount,
+                  "Record number in collection is invalid" ) ;
+      SDB_ASSERT( _mbStatInfo[ context->mbID() ]._totalOrgDataLen >=
+                  ( workExtInfo->_writePos + DMS_EXTENT_METADATA_SZ -
+                    workExtInfo->_firstRecordOffset ),
+                  "Total original data length in collection is invalid" ) ;
+      SDB_ASSERT( _mbStatInfo[ context->mbID() ]._totalDataLen >=
+                  ( workExtInfo->_writePos + DMS_EXTENT_METADATA_SZ -
+                    workExtInfo->_firstRecordOffset ),
+                  "Total original data length in collection is invalid" ) ;
 
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__POPFROMWORKEXT ) ;
       return SDB_OK ;
@@ -1083,6 +1123,7 @@ namespace engine
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
+      INT64 beforeTotalSize = 0 ;
 
       extRW = extent2RW( extentID, context->mbID() ) ;
       extRW.setNothrow( TRUE ) ;
@@ -1102,18 +1143,30 @@ namespace engine
       }
       else
       {
-         _countRecNumAndSize( context, extentID, offset, extent->_lastRecordOffset,
+         {
+            INT64 recNumTmp = 0 ;
+            INT64 dataSizeTmp = 0 ;
+            // Scan the records before the target offset to get the new last
+            // record offset.
+            _countRecNumAndSize( context, extentID,
+                                 extent->_firstRecordOffset, offset,
+                                 1, recNumTmp, dataSizeTmp,
+                                 beforeTotalSize, FALSE ) ;
+         }
+         _countRecNumAndSize( context, extentID, offset,
+                              extent->_lastRecordOffset,
                               direction, recNum, dataSize, totalSize ) ;
-         extent->_lastRecordOffset -= totalSize ;
+         extent->_lastRecordOffset =
+               extent->_firstRecordOffset + beforeTotalSize ;
+         extent->_freeSpace += totalSize ;
+         _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
       }
 
       extent->_recCount -= recNum ;
-      extent->_freeSpace += totalSize ;
 
       _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
       _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= dataSize ;
       _mbStatInfo[ context->mbID() ]._totalDataLen -= dataSize ;
-      _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
 
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__POPFROMACTIVEEXTENT, rc ) ;
@@ -1332,7 +1385,8 @@ namespace engine
                                                     INT32 direction,
                                                     INT64 &recNum,
                                                     INT64 &dataSize,
-                                                    INT64 &totalSize )
+                                                    INT64 &totalSize,
+                                                    BOOLEAN endInclude )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;
       dmsRecordRW recordRW ;
@@ -1349,6 +1403,10 @@ namespace engine
 
       while ( beginOffset <= endOffset )
       {
+         if ( !endInclude )
+         {
+            break ;
+         }
          dmsRecordID rid( extentID, beginOffset ) ;
          recordRW = record2RW( rid, context->mbID() ) ;
          recordRW.setNothrow( TRUE ) ;
@@ -1515,7 +1573,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Get extend options from extent failed for "
                    "collection[%s], rc: %d",
                    context->mb()->_collectionName, rc ) ;
-      SDB_ASSERT( sizeof( dmsOptExtent ) == optSize,
+      SDB_ASSERT( sizeof( dmsCappedCLOptions ) == optSize,
                   "Option size is not as expected" ) ;
 
       builder.append( FIELD_NAME_SIZE, options->_maxSize ) ;
