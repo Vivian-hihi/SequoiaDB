@@ -84,6 +84,16 @@ bool isStandalone( sdbConnectionHandle db )
 ****************************************************************/
 void getConf()
 {
+	static bool inited = false ;
+	if( inited )
+	{
+		return ;
+	} 
+	else
+	{
+		inited = true ;
+	}
+
     printf( "Print command args:\n" ) ;
     for( int i = 0;i < g_argvs.size();i++ )
       printf( "%s ",g_argvs[i].c_str() ) ;
