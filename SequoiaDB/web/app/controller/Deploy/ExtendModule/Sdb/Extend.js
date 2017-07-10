@@ -3,7 +3,6 @@
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Deploy.Sdb.Extend.Ctrl', function( $scope, $location, $rootScope, SdbRest, SdbFunction, SdbPromise, SdbSwap ){
-
       SdbSwap.groupDefer    = SdbPromise.init( 3 ) ;
       SdbSwap.nodeDefer     = SdbPromise.init( 3 ) ;
       SdbSwap.templateDefer = SdbPromise.init( 1 ) ;
@@ -106,6 +105,17 @@
       //跳转到下一步
       $scope.GotoExtend = function(){
          var newExtendNodeList = $.extend( true, [], extendNodeList ) ;
+         if( newExtendNodeList.length == 0 )
+         {
+            $scope.Components.Confirm.type = 3 ;
+            $scope.Components.Confirm.context = $scope.autoLanguage( '没有扩容节点，请修改扩容配置。' ) ;
+            $scope.Components.Confirm.isShow = true ;
+            $scope.Components.Confirm.okText = $scope.autoLanguage( '上一步' ) ;
+            $scope.Components.Confirm.ok = function(){
+               $scope.GotoPrev() ;
+            }
+            return ;
+         }
          $.each( newExtendNodeList, function( index, nodeInfo ){
             newExtendNodeList[index] = deleteJson( nodeInfo, [ '_other' ] ) ;
             newExtendNodeList[index] = convertJsonValueString( newExtendNodeList[index] ) ;
@@ -688,7 +698,7 @@
             'dbpath':         $scope.autoLanguage( '数据路径' ),
             'role':           $scope.autoLanguage( '角色' ),
             'datagroupname':  $scope.autoLanguage( '分区组' ),
-            '_other.type':    $scope.autoLanguage( '类型' ),
+            '_other.type':    $scope.autoLanguage( '类型' )
          },
          'body': [],
          'options': {
@@ -1122,7 +1132,6 @@
          $scope.CheckNodeConfWindow['config'].push( { 'key': $scope.autoLanguage( '主机名' ), 'value': existNodeList[nodeIndex]['HostName'] } ) ;
          $scope.CheckNodeConfWindow['config'].push( { 'key': $scope.autoLanguage( '角色' ),   'value': existNodeList[nodeIndex]['role'] } ) ;
          $scope.CheckNodeConfWindow['config'].push( { 'key': $scope.autoLanguage( '分区组' ), 'value': existNodeList[nodeIndex]['datagroupname'] } ) ;
-
          $.each( template, function( index, item ){
             var name = item['WebName']
             var key  = item['Name'] ;
