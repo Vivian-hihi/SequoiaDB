@@ -55,13 +55,13 @@
                'Flow':           $scope.autoLanguage( '描述' )
             } ;
             $scope.TaskTable['options']['width'] = {
-               'Status': '24px',
-               'HostName': '25%',
-               'svcname': '15%',
-               'role': '100px',
-               'datagroupname': '15%',
-               'StatusDesc': '10%',
-               'Flow': '35%'
+               'Status':         '24px',
+               'HostName':       '25%',
+               'svcname':        '15%',
+               'role':           '100px',
+               'datagroupname':  '15%',
+               'StatusDesc':     '10%',
+               'Flow':           '35%'
             } ;
          }
          else if( moduleType == 'sequoiasql' )
@@ -74,28 +74,28 @@
                'Flow':           $scope.autoLanguage( '描述' )
             } ;
             $scope.TaskTable['options']['width'] = {
-               'Status': '24px',
-               'HostName': '30%',
-               'role': '20%',
-               'StatusDesc': '20%',
-               'Flow': '30%'
+               'Status':      '24px',
+               'HostName':    '30%',
+               'role':        '20%',
+               'StatusDesc':  '20%',
+               'Flow':        '30%'
             } ;
          }
          else if( moduleType == 'zookeeper' )
          {
             $scope.TaskTable['title'] = {
                'Status':         '',
-               'HostName':       $scope.autoLanguage( '节点Id' ),
-               'svcname':        $scope.autoLanguage( '主机名' ),
+               'zooid':          $scope.autoLanguage( '节点Id' ),
+               'HostName':       $scope.autoLanguage( '主机名' ),
                'StatusDesc':     $scope.autoLanguage( '状态' ),
                'Flow':           $scope.autoLanguage( '描述' )
             } ;
             $scope.TaskTable['options']['width'] = {
-               'Status': '24px',
-               'HostName': '30%',
-               'svcname': '15%',
-               'StatusDesc': '15%',
-               'Flow': '40%'
+               'Status':      '24px',
+               'zooid':       '30%',
+               'HostName':    '15%',
+               'StatusDesc':  '15%',
+               'Flow':        '40%'
             } ;
          }
       }
