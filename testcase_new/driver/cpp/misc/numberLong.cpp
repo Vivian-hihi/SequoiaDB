@@ -72,7 +72,11 @@ TEST( numberLong, boundary )
    
    long long longMin = -9223372036854775808;
    cout << "---begin to checkLongVal with long = " << longMin << endl;   
-   checkLongVal( cl, longMin );   
+   checkLongVal( cl, longMin ); 
+	
+   // drop cs
+   rc = db.dropCollectionSpace( CSNAME ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;  
 }
 
 TEST( numberLong, outofBoundary )

@@ -61,6 +61,10 @@ TEST( decimal, insert_query )
    //clean
    rc = cursor.close();
    ASSERT_EQ( SDB_OK, rc );
+	
+   // drop cs
+   rc = db.dropCollectionSpace( CSNAME ) ;
+   ASSERT_EQ( SDB_OK, rc );
 }
 
 TEST( decimal, append )
