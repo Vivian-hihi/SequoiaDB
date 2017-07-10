@@ -64,6 +64,10 @@ rtnFiles = [
       "rtn/rtnPredicate.cpp"
 ]
 
+rtnJobFiles = [
+      "rtn/rtnBackgroundJobBase.cpp"
+      ]
+
 migFiles = [
 #      "mig/migExport.cpp",
 #      "mig/migImport.cpp",
@@ -151,7 +155,23 @@ pmdFiles = [
       "pmd/pmdSignalHandler.cpp",
       "pmd/pmdStartup.cpp"
       ]
-
+# pmd multiple thread model files.
+pmdMTFiles = [
+      "pmd/pmdMemPool.cpp",
+      "pmd/pmdSyncMgr.cpp",
+      "pmd/pmd.cpp",
+      "pmd/pmdEDU.cpp",
+      "pmd/pmdEDUMgr.cpp",
+      "pmd/pmdAsyncSessionAgent.cpp",
+      "pmd/pmdInnerClient.cpp",
+      "pmd/pmdAsyncHandler.cpp",
+      "pmd/pmdAsyncSession.cpp",
+      "pmd/pmdCBMgrEntryPoint.cpp",
+      "pmd/pmdAsyncNetEntryPoint.cpp",
+      "pmd/pmdBackgroundJob.cpp",
+      "pmd/pmdWindowsListener.cpp",
+      ]
+	  
 utilFiles = [
       "util/fromjson.cpp",
       "util/json2rawbson.c",
@@ -474,22 +494,8 @@ sdbListMain = [
       ]
 
 sdbcmMain = [
-      toolEnv.Object("rtn/rtnBackgroundJobBase.cpp"),
-      toolEnv.Object("pmd/pmdMemPool.cpp"),
-      toolEnv.Object("pmd/pmdSyncMgr.cpp"),
-      toolEnv.Object("pmd/pmd.cpp"),
-      toolEnv.Object("pmd/pmdEDU.cpp"),
-      toolEnv.Object("pmd/pmdEDUMgr.cpp"),
-      toolEnv.Object("pmd/pmdAsyncSessionAgent.cpp"),
-      toolEnv.Object("pmd/pmdInnerClient.cpp"),
-      toolEnv.Object("pmd/pmdAsyncHandler.cpp"),
-      toolEnv.Object("pmd/pmdAsyncSession.cpp"),
-      toolEnv.Object("pmd/pmdBackgroundJob.cpp"),
-      toolEnv.Object("pmd/pmdCBMgrEntryPoint.cpp"),
-      toolEnv.Object("pmd/pmdAsyncNetEntryPoint.cpp"),
       "pmd/pmdOMAgentEDUEntryPoint.cpp",
       "pmd/pmdCMMain.cpp",
-      toolEnv.Object("pmd/pmdWindowsListener.cpp")
       ]
 
 sdbcmDMNMain = [
@@ -533,21 +539,8 @@ sdbReplayFiles = [
       ]
 
 sdbSEAdptFiles = [
-      toolEnv.Object("rtn/rtnBackgroundJobBase.cpp"),
       "rtn/rtnContextBuff.cpp",
       "rest/http_parser.cpp",
-      toolEnv.Object("pmd/pmdMemPool.cpp"),
-      toolEnv.Object("pmd/pmdSyncMgr.cpp"),
-      toolEnv.Object("pmd/pmd.cpp"),
-      toolEnv.Object("pmd/pmdEDU.cpp"),
-      toolEnv.Object("pmd/pmdEDUMgr.cpp"),
-      toolEnv.Object("pmd/pmdAsyncSessionAgent.cpp"),
-      toolEnv.Object("pmd/pmdInnerClient.cpp"),
-      toolEnv.Object("pmd/pmdAsyncHandler.cpp"),
-      toolEnv.Object("pmd/pmdAsyncSession.cpp"),
-      toolEnv.Object("pmd/pmdCBMgrEntryPoint.cpp"),
-      toolEnv.Object("pmd/pmdAsyncNetEntryPoint.cpp"),
-      toolEnv.Object("pmd/pmdWindowsListener.cpp"),
       "tools/seadapter/pmdSEAdptMain.cpp",
       "tools/seadapter/pmdSeAdptEDUEntryPoint.cpp",
       "tools/seadapter/seAdptMgr.cpp",
@@ -567,6 +560,7 @@ toolEnv.StaticLibrary('cls', clsFiles)
 toolEnv.StaticLibrary('ixm', ixmFiles)
 #rtn
 toolEnv.StaticLibrary('rtn', rtnFiles)
+toolEnv.StaticLibrary('rtnJob', rtnJobFiles)
 #BSON
 toolEnv.StaticLibrary('bson', bsonFiles)
 #Client Driver
@@ -579,6 +573,8 @@ toolEnv.StaticLibrary('oss', ossFiles)
 toolEnv.StaticLibrary('pd', pdFiles)
 #Process Model
 toolEnv.StaticLibrary('pmd', pmdFiles)
+#Multiple thread model
+toolEnv.StaticLibrary('pmdMT', pmdMTFiles)
 #Utilities
 toolEnv.StaticLibrary('util', utilFiles)
 #mig
@@ -638,7 +634,7 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","util","net","pmd","omagent","client", "spt","spt2","ssh2"],
+         LIBDEPS=["pd","oss","msg","bson","util","net","pmd","pmdMT","omagent","client", "spt","spt2","ssh2","rtnJob"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,
@@ -685,7 +681,7 @@ if linux:
 
 sdbseadapter = toolEnv.Program("sdbseadapter",
 		 sdbSEAdptFiles,
-		 LIBDEPS=["pd","oss","msg","util","bson","pmd","net"],
+		 LIBDEPS=["pd","oss","msg","util","bson","pmd","pmdMT","net","rtnJob"],
 		 _LIBDEPS='$_LIBDEPS_OBJS' )
 
 toolEnv.Install( '#/bin', sdbimprt2 )
