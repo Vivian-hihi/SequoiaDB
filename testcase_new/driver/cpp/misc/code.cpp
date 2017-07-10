@@ -24,7 +24,7 @@ TEST( code, procedure )
     getConf() ;
     rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
     ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
-	if( IsStandalone( db ) )
+	if( isStandalone( db ) )
 	{
 		cout << "Run mode is stand alone" << endl ;
 		db.disconnect() ;

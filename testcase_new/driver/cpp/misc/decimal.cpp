@@ -22,8 +22,10 @@ TEST( decimal, insert_query )
          
    //create cl
    sdb db;
+   sdbCollectionSpace cs;
    sdbCollection cl; 
-   createCollection( db, &cl, clName );   
+   rc = createNormalCl( db, cs, cl, CSNAME, clName );   
+   ASSERT_EQ( rc, SDB_OK ) ;
    
    //decimal
    bsonDecimal decimal;

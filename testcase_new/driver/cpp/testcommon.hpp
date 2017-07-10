@@ -28,12 +28,10 @@ extern char RSRVNODEDIR[100] ;
 extern char WORKDIR[100] ;
 extern char COORD[100] ;
 
-void createCollection( sdb &db, sdbCollection *cl, const CHAR *clName );
 void getConf() ;
 void ossSleep(int milliseconds) ;
-bool isStandalone() ;
-bool IsStandalone( sdb& db ) ;
-INT32 createNormalCl( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl,
+bool isStandalone( sdb& db ) ;
+int createNormalCl( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl,
 					  const char* csname, const char* clname ) ;
 
 #endif

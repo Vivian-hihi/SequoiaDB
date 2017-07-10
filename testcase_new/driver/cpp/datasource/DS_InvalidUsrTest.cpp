@@ -9,7 +9,9 @@ using namespace sdbclient ;
 TEST(InvalidArgTest,userInfo)
 {
 	getConf() ;
-	if(isStandalone())
+    sdb db ;
+	db.connect( HOSTNAME, SVCNAME ) ;
+	if(isStandalone( db ))
 	{
 		cout<<"Standalone can't create user"<<endl ;
 		return ;

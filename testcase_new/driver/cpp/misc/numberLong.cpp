@@ -61,8 +61,10 @@ TEST( numberLong, boundary )
 {         
    //create cl
    sdb db;
+   sdbCollectionSpace cs;
    sdbCollection cl;
-   createCollection( db, &cl, clName );   
+   int rc = createNormalCl( db, cs, cl, CSNAME, clName );
+   ASSERT_EQ( rc, SDB_OK ) ;   
    
    long long longMax = 9223372036854775807;   
    cout << "---begin to checkLongVal with long = " << longMax << endl;  

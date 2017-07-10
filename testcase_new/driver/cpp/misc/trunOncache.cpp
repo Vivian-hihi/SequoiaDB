@@ -387,17 +387,6 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn)
    fini(db);
 }
 
-BOOL isStandalone(sdb &db)
-{
-   sdbCursor cursor;
-   INT32 rc = db.getList(cursor, SDB_LIST_GROUPS); 
-   if (rc == -159){
-      return TRUE;
-   }else{
-      return FALSE;
-   }
-}
-
 TEST( turnonCache, getMulCLAfterDropCS)
 {
    sdb db;
