@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <gtest/gtest.h>
+#include <stdarg.h>
 
 using namespace std;
 using namespace sdbclient;
@@ -20,6 +21,14 @@ char RSRVPORTEND[100]      = "27000" ;
 char RSRVNODEDIR[100]      = "/opt/sequoiadb/database/" ;
 char WORKDIR[100]          = "/tmp/cpptest" ;
 char COORD[100]   		   = "localhost:11810" ;
+
+void printMsg( const char* fmt, ... )
+{
+    va_list ap ;
+    va_start( ap, fmt ) ;
+    vprintf( fmt, ap ) ;
+    va_end( ap ) ;
+}
 
 void getConf()
 {

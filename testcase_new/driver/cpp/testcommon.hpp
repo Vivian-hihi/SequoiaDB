@@ -3,23 +3,24 @@
 
 #include "client.hpp"
 #include <iostream>
+#include <stdarg.h>
 
 using namespace sdbclient ; 
 
-#define CHECK_RC( rc, msg ) \
+#define CHECK_RC( rc, fmt, ... ) \
 do { \
 	if( rc != SDB_OK ) \
 	{ \
-		std::cout << msg << ", rc = " << rc << std::endl ; \
+		printMsg( fmt, ##__VA_ARGS__ ) ; \
 		goto error ; \
 	} \
 } while( 0 ) ;
 
-#define ASSERT_RC( rc, msg ) \
+#define ASSERT_RC( rc, fmt, ... ) \
 do { \
     if( rc != SDB_OK ) \
     { \
-        std::cout << msg << ", rc = " << rc << std::endl ; \
+        printMsg( fmt, ##__VA_ARGS__ ) ; \
         exit(1) ; \
     } \
 } while( 0 ) ;
@@ -37,6 +38,7 @@ extern char RSRVNODEDIR[100] ;
 extern char WORKDIR[100] ;
 extern char COORD[100] ;
 
+void printMsg( const char* fmt, ... ) ;
 void getConf() ;
 void ossSleep( int milliseconds ) ;
 bool isStandalone( sdb& db ) ;
