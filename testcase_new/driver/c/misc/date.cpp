@@ -17,13 +17,6 @@ sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 sdbCSHandle			cs = SDB_INVALID_HANDLE ;
 sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
 
-#define ASSERT_RC( rc, msg ) \
-if( rc != SDB_OK ) \
-{ \
-   printf( "%s,rc=%d\n", msg, rc ) ; \
-   exit(1) ; \
-}
-
 class DateTest : public testing::Test
 {
 public:

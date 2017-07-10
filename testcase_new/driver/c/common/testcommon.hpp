@@ -20,6 +20,15 @@ do { \
 	} \
 } while( 0 ) ;
 
+#define ASSERT_RC( rc, msg ) \
+do { \
+	if( rc != SDB_OK ) \
+	{ \
+   		printf( "%s, rc=%d\n", msg, rc ) ; \
+   		exit(1) ; \
+	} \
+} while( 0 ) ;
+
 extern char HOSTNAME[100] ;
 extern char SVCNAME[100] ;
 extern char CHANGEDPREFIX[100] ;

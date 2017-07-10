@@ -36,7 +36,7 @@ void ConcurrentTest::SetUpTestCase()
 	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
+	ASSERT_RC( rc, "fail to connect sdb in the beginning" ) ;
 	// make domain name
 	for( int i = 0;i < ThreadNum;i++ )
 	{
@@ -59,7 +59,7 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbCreateDomain( db, domainName[i], &option, &domain[i] ) ;
-	   ASSERT_EQ( rc, SDB_OK ) << "fail to create doamin " << i ;
+	   ASSERT_RC( rc, "fail to create doamin" ) ;
 	}
 	bson_destroy( &option ) ;
 }
@@ -71,7 +71,7 @@ void ConcurrentTest::TearDownTestCase()
    for( int i = 0;i < ThreadNum;i++ )
    {
       rc = sdbDropDomain( db, domainName[i] ) ;
-      ASSERT_EQ( rc, SDB_OK ) << "fail to drop domain " << i ;
+      ASSERT_RC( rc, "fail to drop domain" ) ;
       sdbReleaseDomain( domain[i] ) ;
       free( domainName[i] ) ;
    }

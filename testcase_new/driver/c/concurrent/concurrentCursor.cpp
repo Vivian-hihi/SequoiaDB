@@ -39,14 +39,14 @@ void ConcurrentTest::SetUpTestCase()
 	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
+	ASSERT_RC( rc, "fail to connect sdb in the beginning" ) ;
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
+	ASSERT_RC( rc, "fail to create cs" ) ;
 	// create cl 
 	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl" ;
+	ASSERT_RC( rc, "fail to create cl" ) ;
 	// insert records { a: i, flag:1 }
 	for( int i = 0;i < recordNum;i++ )
 	{
@@ -56,7 +56,7 @@ void ConcurrentTest::SetUpTestCase()
 	   bson_append_int( &obj, "flag", 1 ) ;
 	   bson_finish( &obj ) ;
 	   rc = sdbInsert( cl, &obj ) ;
-	   ASSERT_EQ( rc, SDB_OK ) << "fail to insert record " << i ;
+	   ASSERT_RC( rc, "fail to insert record" ) ;
 	   bson_destroy( &obj ) ; 
 	}
 	// query record
@@ -71,7 +71,7 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbQuery( cl, &cond, &sel, NULL, NULL, 0, -1, &cursor[i] ) ;
-	   ASSERT_EQ( rc, SDB_OK ) << "fail to query record " << i ;
+	   ASSERT_RC( rc, "fail to query record" ) ;
 	}
 	bson_destroy( &cond ) ;
 	bson_destroy( &sel ) ;
@@ -82,7 +82,7 @@ void ConcurrentTest::TearDownTestCase()
    int rc = SDB_OK ;
    // drop cs
    rc = sdbDropCollectionSpace( db, CsName ) ;
-   ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+   ASSERT_RC( rc, "fail to drop cs" ) ;
    // release cursor
    for( int i = 0;i < ThreadNum;i++ )
       sdbReleaseCursor( cursor[i] ) ;

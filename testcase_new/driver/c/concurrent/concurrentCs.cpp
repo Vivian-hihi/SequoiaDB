@@ -35,7 +35,7 @@ void ConcurrentTest::SetUpTestCase()
 	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
+	ASSERT_RC( rc, "fail to connect sdb in the beginning" ) ;
 	// make cs name
 	for( int i = 0;i < ThreadNum;i++ )
 	{
@@ -51,7 +51,7 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbCreateCollectionSpace( db, CsName[i], SDB_PAGESIZE_4K, &cs[i] ) ;
-	   ASSERT_EQ( rc, SDB_OK ) << "fail to create cs " << i ;
+	   ASSERT_RC( rc, "fail to create cs" ) ;
 	}
 }
 
@@ -62,7 +62,7 @@ void ConcurrentTest::TearDownTestCase()
    for( int i = 0;i < ThreadNum;i++ )
    {
       rc = sdbDropCollectionSpace( db, CsName[i] ) ;
-      ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs " << i ;
+      ASSERT_RC( rc, "fail to drop cs" ) ;
       sdbReleaseCS( cs[i] ) ;
       free( CsName[i] ) ;
    }

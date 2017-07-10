@@ -37,7 +37,7 @@ void SocketMutexTest::SetUpTestCase()
 	onfig.enableCacheStrategy = 0 ;
     config.cacheTimeInterval = 0 ;
     rc = initClient( &config ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to init client" ;
+	ASSERT_RC( rc, "fail to init client" ) ;
 
 	// make CsName
     for(i=0;i<ThreadNum;++i)
@@ -65,7 +65,7 @@ void SocketMutexTest::SetUpTestCase()
 	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect(HOSTNAME,SVCNAME,USER,PASSWD,&db) ;
-	ASSERT_EQ(rc,SDB_OK)<<"fail to connect sdb in the beginning" ;
+	ASSERT_EQ( rc, "fail to connect sdb in the beginning" ) ;
 
 	// create cs and cl
 	// make option {"ReplSize":0}
@@ -81,14 +81,14 @@ void SocketMutexTest::SetUpTestCase()
 			sdbDropCollectionSpace(db,CsName[i]) ;
 			rc = sdbCreateCollectionSpace(db,CsName[i],SDB_PAGESIZE_4K,&cs[i]) ;
 		}
-    	ASSERT_EQ(rc,SDB_OK)<<"fail to create cs "<<i ;	
+    	ASSERT_RC( rc, "fail to create cs" ) ;	
     	rc = sdbCreateCollection1(cs[i],ClName[i],&option,&cl[i]) ;
 		if(rc == SDB_DMS_EXIST)
 		{
 			sdbDropCollection(cs[i],ClName[i]) ;
 			rc = sdbCreateCollection1(cs[i],ClName[i],&option,&cl[i]) ;
 		}
-		ASSERT_EQ(rc,SDB_OK)<<"fail to create cl "<<i ;
+		ASSERT_RC( rc, "fail to create cl" ) ;
 	}
 	bson_destroy(&option) ;
 }
@@ -104,7 +104,7 @@ void SocketMutexTest::TearDownTestCase()
 	{
 		// drop cs 
 		rc = sdbDropCollectionSpace(db,CsName[i]) ;
-		ASSERT_EQ(rc,SDB_OK)<<"fail to drop cs "<<i ;
+		ASSERT_RC( rc, "fail to drop cs" ) ;
 		// release handle
 		sdbReleaseCollection(cl[i]) ;
 		sdbReleaseCS(cs[i]) ;

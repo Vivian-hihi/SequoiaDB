@@ -84,7 +84,7 @@ void AttachAndDetachNodeTest::SetUpTestCase()
     // connect to sdb
     getConf() ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-    ASSERT_EQ(rc,SDB_OK)<<"fail to connect sdb" ;	
+    ASSERT_RC(rc,"fail to connect sdb") ;	
 }
 
 void AttachAndDetachNodeTest::TearDownTestCase()

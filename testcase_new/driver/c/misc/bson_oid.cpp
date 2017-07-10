@@ -21,13 +21,6 @@ sdbConnectionHandle _db = SDB_INVALID_HANDLE ;
 sdbCSHandle         _cs = SDB_INVALID_HANDLE ;
 sdbCollectionHandle _cl = SDB_INVALID_HANDLE ;
 
-#define ASSERT_RC_CODE( rc, msg ) \
-if( rc != SDB_OK ) \
-{ \
-   printf( "%s,rc=%d\n", msg, rc ) ; \
-   exit(1) ; \
-}
-
 class BsonTest : public testing::Test
 {
 public:
@@ -41,13 +34,13 @@ void BsonTest::SetUpTestCase()
    // connect sdb
    getConf() ;
    rc = sdbConnect( HOSTNAME, SVCNAME, user, passwd, &_db ) ;
-   ASSERT_RC_CODE( rc, "fail to connect sdb" )
+   ASSERT_RC( rc, "fail to connect sdb" ) ;
    // create cs cl
    getUniqueName( csModName, csName ) ;
    rc = sdbCreateCollectionSpace( _db, csName, SDB_PAGESIZE_4K, &_cs ) ;
-   ASSERT_RC_CODE( rc, "fail to create cs" )
+   ASSERT_RC( rc, "fail to create cs" ) ;
    rc = sdbCreateCollection( _cs, clName, &_cl ) ;
-   ASSERT_RC_CODE( rc, "fail to create cl" )      
+   ASSERT_RC( rc, "fail to create cl" ) ;     
 }
 
 void BsonTest::TearDownTestCase()
@@ -55,7 +48,7 @@ void BsonTest::TearDownTestCase()
    INT32 rc = SDB_OK ;
    // drop cs
    rc = sdbDropCollectionSpace( _db, csName ) ;
-   ASSERT_RC_CODE( rc, "fail to drop cs" )
+   ASSERT_RC( rc, "fail to drop cs" ) ;
    // disconnect and release handle
    sdbDisconnect( _db ) ;
    sdbReleaseCollection( _cl ) ;
@@ -81,11 +74,11 @@ void bulkInsert( ThreadArgs* args )
 
    // connect and get cs cl
    rc = sdbConnect( HOSTNAME, SVCNAME, user, passwd, &db ) ;
-   ASSERT_RC_CODE( rc, "fail to connect in thread" )
+   ASSERT_RC( rc, "fail to connect in thread" ) ;
    rc = sdbGetCollectionSpace( db, csName, &cs ) ;
-   ASSERT_RC_CODE( rc, "fail to get cs in thread" )
+   ASSERT_RC( rc, "fail to get cs in thread" ) ;
    rc = sdbGetCollection1( cs, clName, &cl ) ;
-   ASSERT_RC_CODE( rc, "fail to get cl in thread" )  
+   ASSERT_RC( rc, "fail to get cl in thread" ) ; 
 
    // bulk insert record
    INT32 i = 0 ;
@@ -98,7 +91,7 @@ void bulkInsert( ThreadArgs* args )
       i++ ;
    }
    rc = sdbBulkInsert( cl, 0, rec, num ) ;
-   ASSERT_RC_CODE( rc, "fail to bulk insert" )
+   ASSERT_RC( rc, "fail to bulk insert" ) ;
    i = 0 ;
    while( i < num )
    {

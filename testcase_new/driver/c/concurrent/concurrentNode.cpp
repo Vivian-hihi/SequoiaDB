@@ -40,10 +40,10 @@ void ConcurrentTest::SetUpTestCase()
 	getLocalIpAddr() ;
 
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
+	ASSERT_RC( rc, "fail to connect sdb in the beginning" ) ;
 	// create replicaGroup
 	rc = sdbCreateReplicaGroup( db, rgName, &rg ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create rg in the begining" ;
+	ASSERT_RC( rc, "fail to create rg in the begining" ) ;
 	
 	// make svcName
 	for( int i = 0;i < ThreadNum;i++)
@@ -67,9 +67,9 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++)
 	{
 	   rc = sdbCreateNode( rg, IPADDR, svcName[i], dbPath[i], NULL ) ;
-	   ASSERT_EQ( rc, SDB_OK ) << "fail to create node " << i ;
+	   ASSERT_RC( rc, "fail to create node" ) ;
 	   rc = sdbGetNodeByHost( rg, IPADDR, svcName[i], &node[i] ) ;
-	   ASSERT_EQ( rc, SDB_OK ) << "fail to get node " << i ;
+	   ASSERT_RC( rc, "fail to get node" ) ;
 	}
 }
 
@@ -82,7 +82,7 @@ void ConcurrentTest::TearDownTestCase()
    // ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the end" ;
    // remove rg
    rc = sdbRemoveReplicaGroup( db, rgName ) ;
-   ASSERT_EQ( rc, SDB_OK ) << "fail to remove rg in the end" ;
+   ASSERT_RC( rc, "fail to remove rg in the end" ) ;
 	for( i = 0;i < ThreadNum;++i )
 	{
 		// release handle
@@ -97,7 +97,6 @@ void ConcurrentTest::TearDownTestCase()
 	sdbReleaseReplicaGroup( rg ) ;
 	sdbReleaseConnection( db ) ;
 }
-
 
 class ThreadArg : public WorkerArgs
 {

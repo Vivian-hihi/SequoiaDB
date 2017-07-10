@@ -33,17 +33,17 @@ void NumberLongTest::SetUp()
     // connect to sdb   
     getConf() ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+    ASSERT_RC( rc, "fail to connect sdb" ) ;
 
     // create cs cl
     const char* CsModName = "C_drivertest_syncCs" ;
     getUniqueName( CsModName, CsName ) ;
     rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
+    ASSERT_RC( rc, "fail to create cs" ) ;
     const char* ClModName = "C_drivertest_syncCl" ;
     getUniqueName( ClModName, ClName ) ;
     rc = sdbCreateCollection( cs, ClName, &cl ) ;
-    ASSERT_EQ( rc, SDB_OK ) << "fail to create cl" ;	
+    ASSERT_RC( rc, "fail to create cl" ) ;	
 }
 
 void NumberLongTest::TearDown()
@@ -52,7 +52,7 @@ void NumberLongTest::TearDown()
 	
 	// drop cs release handle
 	rc = sdbDropCollectionSpace( db, CsName ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+	ASSERT_RC( rc, "fail to drop cs" ) ;
 	sdbDisconnect( db ) ;
 	sdbReleaseCollection( cl ) ;
 	sdbReleaseCS( cs ) ;

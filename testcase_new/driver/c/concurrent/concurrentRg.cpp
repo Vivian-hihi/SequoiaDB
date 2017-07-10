@@ -45,12 +45,12 @@ void ConcurrentTest::SetUpTestCase()
 	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the beginning" ;
+	ASSERT_RC( rc, "fail to connect sdb in the beginning" ) ;
 	// create replicaGroup
 	for( i = 0;i < ThreadNum;++i )
 	{
 	   rc = sdbCreateReplicaGroup( db, rgName[i], &rg[i] ) ;
-	   ASSERT_EQ( rc, SDB_OK ) << "fail to create rg " << i ;
+	   ASSERT_RC( rc, "fail to create rg" ) ;
 	}
 }
 
@@ -65,7 +65,7 @@ void ConcurrentTest::TearDownTestCase()
 	{
 		// remove rg
 		rc = sdbRemoveReplicaGroup( db, rgName[i] ) ;
-		ASSERT_EQ( rc, SDB_OK ) << "fail to remove rg "<<i ;
+		ASSERT_RC( rc, "fail to remove rg" ) ;
 		// release handle
 		sdbReleaseReplicaGroup( rg[i] ) ;
 		// free malloc space(strdup)
