@@ -39,7 +39,7 @@ INT32 createNormalCl( sdbConnectionHandle* db, sdbCSHandle* cs, sdbCollectionHan
 				const char* csname, const char* clname ) ;
 
 // check standalone
-BOOLEAN isStandalone( sdbConnectionHandle db );
+bool isStandalone( sdbConnectionHandle db );
 
 // get CI parameter HOSTNAME/SVCNAME/CHANGEDPREFIX/RSRVPORTBEGIN/RSRVPORTEND/RSRVNODEDIR/WORKDIR
 void getConf() ;
