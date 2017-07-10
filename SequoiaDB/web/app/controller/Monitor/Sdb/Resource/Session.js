@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=Session.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.SdbResource.Session.Ctrl', function( $scope, $compile, $timeout, $location, SdbRest, SdbFunction ){

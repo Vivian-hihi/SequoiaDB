@@ -1,4 +1,5 @@
-﻿// --------------------- Data.Database.Index ---------------------
+﻿//@ sourceURL=other/Index.js
+// --------------------- Data.Database.Index ---------------------
 var _DataDatabaseIndex = {} ;
 
 //构建cl列表信息

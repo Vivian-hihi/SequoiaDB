@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=web.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Data.Other.Index.Ctrl', function( $scope, $location, $compile, SdbFunction, SdbRest ){

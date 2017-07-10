@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=Mod.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Deploy.Sdb.Mod.Ctrl', function( $scope, $compile, $location, $rootScope, $interval, SdbRest, SdbFunction, Loading ){

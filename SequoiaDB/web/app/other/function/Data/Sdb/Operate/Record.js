@@ -1,4 +1,5 @@
-﻿// --------------------- Data.Operate.Record ---------------------
+﻿//@ sourceURL=other/Record.js
+// --------------------- Data.Operate.Record ---------------------
 var _DataOperateRecord = {} ;
 
 //打开 索引详细 的窗口

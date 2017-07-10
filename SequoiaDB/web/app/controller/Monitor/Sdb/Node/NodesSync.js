@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=NodesSync.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.SdbOverview.NodesSync.Ctrl', function( $scope, $compile, $location, $timeout, $interval, SdbRest, SdbFunction ){

@@ -1,3 +1,4 @@
+//@ sourceURL=Index.js
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    var GridId ;

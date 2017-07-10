@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=Procedure.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.SdbResource.Procedure.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){

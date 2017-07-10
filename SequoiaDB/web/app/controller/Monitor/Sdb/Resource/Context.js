@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=Context.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.SdbResource.Context.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){

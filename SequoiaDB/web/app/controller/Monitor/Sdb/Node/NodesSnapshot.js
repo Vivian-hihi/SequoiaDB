@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=NodesSnapshot.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.SdbOverview.NodesNature.Ctrl', function( $scope, $compile, $location, $timeout, $interval, SdbRest, SdbFunction ){

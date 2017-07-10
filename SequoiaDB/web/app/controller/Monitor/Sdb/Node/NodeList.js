@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=NodeList.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Monitor.SdbOverview.Node.Ctrl', function( $scope, $compile, $location, SdbRest, SdbFunction ){

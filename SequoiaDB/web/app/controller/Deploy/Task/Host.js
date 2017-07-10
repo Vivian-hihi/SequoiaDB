@@ -1,4 +1,5 @@
-﻿(function(){
+﻿//@ sourceURL=Host.js
+(function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Deploy.Task.Install.Ctrl', function( $scope, $compile, $location, $rootScope, SdbRest, SdbFunction ){

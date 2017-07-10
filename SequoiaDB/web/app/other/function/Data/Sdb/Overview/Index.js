@@ -1,4 +1,5 @@
-﻿// --------------------- Data.Overview.Index ---------------------
+﻿//@ sourceURL=other/Index.js
+// --------------------- Data.Overview.Index ---------------------
 var _DataOverviewIndex = {} ;
 
 //获取集合列表的详细信息

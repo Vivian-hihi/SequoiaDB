@@ -1,3 +1,4 @@
+//@ sourceURL=Charts.js
 (function(){
    var sacApp = window.SdbSacManagerModule ;
    //控制器
