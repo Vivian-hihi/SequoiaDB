@@ -220,8 +220,6 @@
 
       //打开 选择安装业务的主机 弹窗
       SdbSwap.ShowSwitchHost = function(){
-         var hostBox = null ;
-         var grid = null ;
          var tempHostList = $.extend( true, [], $scope.HostList ) ;
          $scope.SwitchHostWindow['callback']['SetOkButton']( $scope.autoLanguage( '确定' ), function(){
             SdbSwap.updatePreview() ;

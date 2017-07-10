@@ -256,7 +256,7 @@
                }
                else
                {
-                  taskList[index]['barChart'] = { 'percent': 100, 'style': { 'progress': { 'background': '#D9534F' } } } ;
+                  taskList[index]['barChart'] = { 'percent': taskInfo['Progress'], 'style': { 'progress': { 'background': '#D9534F' } } } ;
                }
                $scope.Components.French.TaskList = taskList ;
                $scope.Top.TaskList = taskList ;
