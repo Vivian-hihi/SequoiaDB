@@ -42,7 +42,7 @@ void ConcurrentTest::SetUpTestCase()
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to create cs" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
 	// make cl name
 	for( int i = 0;i < ThreadNum;i++ )
 	{
@@ -56,7 +56,7 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbCreateCollection( cs, ClName[i], &cl[i] ) ;
-	   EXPECT_EQ( rc, SDB_OK ) << "fail to create cl " << i ;
+	   ASSERT_EQ( rc, SDB_OK ) << "fail to create cl " << i ;
 	}
 }
 
@@ -65,7 +65,7 @@ void ConcurrentTest::TearDownTestCase()
    int rc = SDB_OK ;
    // drop cs
    rc = sdbDropCollectionSpace( db, CsName ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
    // release cl 
    for( int i = 0;i < ThreadNum;i++ )
    {
@@ -97,7 +97,7 @@ void func_cl(ThreadArg* arg)
 	bson_append_int(&record,"a",i) ;
 	bson_finish(&record) ;
 	rc = sdbInsert(cl,&record) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to insert record" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to insert record" ;
 	
 	// query record find( {"a":i},{"a":""} )
 	bson select ;
@@ -106,7 +106,7 @@ void func_cl(ThreadArg* arg)
 	bson_finish(&select) ;
 	sdbCursorHandle cursor ;
 	rc = sdbQuery(cl,&record,&select,NULL,NULL,0,-1,&cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to query record" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to query record" ;
 	sdbReleaseCursor( cursor ) ;
 	
 	// update record update( {"$set":{"a":-1}},{"a":i} )
@@ -117,7 +117,7 @@ void func_cl(ThreadArg* arg)
 	bson_append_finish_object(&update) ;
 	bson_finish(&update) ;
 	rc = sdbUpdate(cl,&update,&record,NULL) ;
-	EXPECT_EQ(rc,SDB_OK) ;
+	ASSERT_EQ(rc,SDB_OK) ;
 	
 	// query record find( {"a":-1},{"a":""} )
 	bson expect ;
@@ -125,7 +125,7 @@ void func_cl(ThreadArg* arg)
 	bson_append_int(&expect,"a",-1) ;
 	bson_finish(&expect) ;
 	rc = sdbQuery(cl,&expect,&select,NULL,NULL,0,-1,&cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to check update a:-1" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to check update a:-1" ;
 	
 	// destroy bson
 	bson_destroy(&record) ;
@@ -135,7 +135,7 @@ void func_cl(ThreadArg* arg)
 	
 	// close and release cursor
 	rc = sdbCloseCursor(cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to close cursor" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to close cursor" ;
 	sdbReleaseCursor(cursor) ;
 }
 

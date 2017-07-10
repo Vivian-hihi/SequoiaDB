@@ -51,7 +51,7 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbCreateCollectionSpace( db, CsName[i], SDB_PAGESIZE_4K, &cs[i] ) ;
-	   EXPECT_EQ( rc, SDB_OK ) << "fail to create cs " << i ;
+	   ASSERT_EQ( rc, SDB_OK ) << "fail to create cs " << i ;
 	}
 }
 
@@ -62,7 +62,7 @@ void ConcurrentTest::TearDownTestCase()
    for( int i = 0;i < ThreadNum;i++ )
    {
       rc = sdbDropCollectionSpace( db, CsName[i] ) ;
-      EXPECT_EQ( rc, SDB_OK ) << "fail to drop cs " << i ;
+      ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs " << i ;
       sdbReleaseCS( cs[i] ) ;
       free( CsName[i] ) ;
    }
@@ -90,20 +90,20 @@ void func_cs( ThreadArg* arg )
    int rc = SDB_OK ;
    // create cl
    rc = sdbCreateCollection( cs, ClName, &cl ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to create cl in cs " << i ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to create cl in cs " << i ;
    // release cl before get cl
 	sdbReleaseCollection( cl ) ;
    // get cl
    rc = sdbGetCollection1( cs, ClName, &cl ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to get cl in cs " << i ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to get cl in cs " << i ;
    // drop cl
    rc = sdbDropCollection( cs, ClName ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to drop cl in cs " << i ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to drop cl in cs " << i ;
    // get cs name
    char temp[100] ;
    rc = sdbGetCSName( cs, temp, sizeof(temp) ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to get cs name of cs " << i ;
-   EXPECT_STREQ( temp, CsName[i] ) << "fail to check cs name of cs " << i ;     
+   ASSERT_EQ( rc, SDB_OK ) << "fail to get cs name of cs " << i ;
+   ASSERT_STREQ( temp, CsName[i] ) << "fail to check cs name of cs " << i ;     
    // release cl
    sdbReleaseCollection( cl ) ;
 }

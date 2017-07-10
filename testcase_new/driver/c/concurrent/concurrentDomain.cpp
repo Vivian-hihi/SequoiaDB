@@ -59,7 +59,7 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbCreateDomain( db, domainName[i], &option, &domain[i] ) ;
-	   EXPECT_EQ( rc, SDB_OK ) << "fail to create doamin " << i ;
+	   ASSERT_EQ( rc, SDB_OK ) << "fail to create doamin " << i ;
 	}
 	bson_destroy( &option ) ;
 }
@@ -71,7 +71,7 @@ void ConcurrentTest::TearDownTestCase()
    for( int i = 0;i < ThreadNum;i++ )
    {
       rc = sdbDropDomain( db, domainName[i] ) ;
-      EXPECT_EQ( rc, SDB_OK ) << "fail to drop domain " << i ;
+      ASSERT_EQ( rc, SDB_OK ) << "fail to drop domain " << i ;
       sdbReleaseDomain( domain[i] ) ;
       free( domainName[i] ) ;
    }
@@ -99,7 +99,7 @@ void func_domain( ThreadArg* arg )
    bson_finish( &option ) ;
    rc = sdbAlterDomain( dom, &option ) ;
    bson_destroy( &option ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to alter domain " << i ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to alter domain " << i ;
 }
 
 TEST_F( ConcurrentTest, Domain )

@@ -67,9 +67,9 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++)
 	{
 	   rc = sdbCreateNode( rg, IPADDR, svcName[i], dbPath[i], NULL ) ;
-	   EXPECT_EQ( rc, SDB_OK ) << "fail to create node " << i ;
+	   ASSERT_EQ( rc, SDB_OK ) << "fail to create node " << i ;
 	   rc = sdbGetNodeByHost( rg, IPADDR, svcName[i], &node[i] ) ;
-	   EXPECT_EQ( rc, SDB_OK ) << "fail to get node " << i ;
+	   ASSERT_EQ( rc, SDB_OK ) << "fail to get node " << i ;
 	}
 }
 
@@ -117,17 +117,17 @@ void func_node( ThreadArg* arg )
    const char *host, *svc, *nodeName ;
    int nodeId ;
    rc = sdbGetNodeAddr( node, &host, &svc, &nodeName, &nodeId ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to get node addr,i = " << i ;
-   EXPECT_STREQ( host, IPADDR ) << "fail to check host of node,i = " << i ;
-   EXPECT_STREQ( svc, svcName[i] ) << "fail to check svc name of node, i = " << i ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to get node addr,i = " << i ;
+   ASSERT_STREQ( host, IPADDR ) << "fail to check host of node,i = " << i ;
+   ASSERT_STREQ( svc, svcName[i] ) << "fail to check svc name of node, i = " << i ;
    printf( "%d: nodeName = %s nodeId = %d\n", i, nodeName, nodeId ) ;
    
    // start node
    rc = sdbStartNode( node ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to start node " << i ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to start node " << i ;
    // stop node
    rc = sdbStopNode( node ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to stop node " << i ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to stop node " << i ;
 }
 
 TEST_F( ConcurrentTest, Node )

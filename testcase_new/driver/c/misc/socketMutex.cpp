@@ -81,14 +81,14 @@ void SocketMutexTest::SetUpTestCase()
 			sdbDropCollectionSpace(db,CsName[i]) ;
 			rc = sdbCreateCollectionSpace(db,CsName[i],SDB_PAGESIZE_4K,&cs[i]) ;
 		}
-    	EXPECT_EQ(rc,SDB_OK)<<"fail to create cs "<<i ;	
+    	ASSERT_EQ(rc,SDB_OK)<<"fail to create cs "<<i ;	
     	rc = sdbCreateCollection1(cs[i],ClName[i],&option,&cl[i]) ;
 		if(rc == SDB_DMS_EXIST)
 		{
 			sdbDropCollection(cs[i],ClName[i]) ;
 			rc = sdbCreateCollection1(cs[i],ClName[i],&option,&cl[i]) ;
 		}
-		EXPECT_EQ(rc,SDB_OK)<<"fail to create cl "<<i ;
+		ASSERT_EQ(rc,SDB_OK)<<"fail to create cl "<<i ;
 	}
 	bson_destroy(&option) ;
 }
@@ -138,7 +138,7 @@ void func_cl(ThreadArg* arg)
 	bson_append_int(&record,"a",i) ;
 	bson_finish(&record) ;
 	rc = sdbInsert(cl,&record) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to insert record" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to insert record" ;
 
 	// query record find( {"a":i},{"a":""} )
 	bson select ;
@@ -147,7 +147,7 @@ void func_cl(ThreadArg* arg)
 	bson_finish(&select) ;
 	sdbCursorHandle cursor ;
 	rc = sdbQuery(cl,&record,&select,NULL,NULL,0,-1,&cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to query record" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to query record" ;
 	sdbReleaseCursor( cursor ) ;
 
 	// update record update( {"$set":{"a":-1}},{"a":i} )
@@ -158,7 +158,7 @@ void func_cl(ThreadArg* arg)
 	bson_append_finish_object(&update) ;
 	bson_finish(&update) ;
 	rc = sdbUpdate(cl,&update,&record,NULL) ;
-	EXPECT_EQ(rc,SDB_OK) ;
+	ASSERT_EQ(rc,SDB_OK) ;
 
 	// query record find( {"a":-1},{"a":""} )
 	bson expect ;
@@ -166,7 +166,7 @@ void func_cl(ThreadArg* arg)
 	bson_append_int(&expect,"a",-1) ;
 	bson_finish(&expect) ;
 	rc = sdbQuery(cl,&expect,&select,NULL,NULL,0,-1,&cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to check update a:-1" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to check update a:-1" ;
 
 	// destroy bson
 	bson_destroy(&record) ;
@@ -176,7 +176,7 @@ void func_cl(ThreadArg* arg)
 
 	// close and release cursor
 	rc = sdbCloseCursor(cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to close cursor" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to close cursor" ;
 	sdbReleaseCursor(cursor) ;
 }
 
@@ -195,13 +195,13 @@ void func_closeCursor1(ThreadArg *arg)
     bson_finish(&record) ;
     sdbCursorHandle cursor ;
     rc = sdbQuery(cl,&record,NULL,NULL,NULL,0,-1,&cursor) ;
-    EXPECT_TRUE(rc == SDB_OK || rc == SDB_NOT_CONNECTED || rc == SDB_NETWORK)<<"fail to query record,rc="<<rc ;
+    ASSERT_TRUE(rc == SDB_OK || rc == SDB_NOT_CONNECTED || rc == SDB_NETWORK)<<"fail to query record,rc="<<rc ;
 	printf("thread %d,query record: %d\n",i,rc) ;
     bson_destroy(&record) ;
    
 	// close and release cursor
     rc = sdbCloseCursor(cursor) ;
-    EXPECT_TRUE(rc == SDB_OK || rc == SDB_INVALIDARG || rc == SDB_NETWORK)<<"fail to close cursor,rc="<<rc ;
+    ASSERT_TRUE(rc == SDB_OK || rc == SDB_INVALIDARG || rc == SDB_NETWORK)<<"fail to close cursor,rc="<<rc ;
 	printf("thread %d,close cursor: %d\n",i,rc) ;
     sdbReleaseCursor(cursor) ;
 }
@@ -221,13 +221,13 @@ void func_closeCursor2(ThreadArg *arg)
     bson_finish(&record) ;
     sdbCursorHandle cursor ;
     rc = sdbQuery(cl,&record,NULL,NULL,NULL,0,-1,&cursor) ;
-    EXPECT_TRUE(rc == SDB_OK || rc == SDB_NOT_CONNECTED)<<"fail to query record,rc="<<rc ;
+    ASSERT_TRUE(rc == SDB_OK || rc == SDB_NOT_CONNECTED)<<"fail to query record,rc="<<rc ;
 	printf("thread %d,query record: %d\n",i,rc) ;
     bson_destroy(&record) ;
 
     // close and release cursor
     rc = sdbCloseCursor(cursor) ;
-    EXPECT_TRUE(rc == SDB_OK || rc == SDB_INVALIDARG)<<"fail to close cursor,rc="<<rc ;
+    ASSERT_TRUE(rc == SDB_OK || rc == SDB_INVALIDARG)<<"fail to close cursor,rc="<<rc ;
 	printf("thread %d,close cursor: %d\n",i,rc) ;
     sdbReleaseCursor(cursor) ;
 }
@@ -254,7 +254,7 @@ TEST_F(SocketMutexTest,cl)
 	int rc = SDB_OK ;
 	// close all cursors in the end
 	rc = sdbCloseAllCursors(db) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to close all cursor" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to close all cursor" ;
 	// disconnect in the end
 	sdbDisconnect(db) ;
 	// release handle
@@ -266,13 +266,13 @@ TEST_F(SocketMutexTest,cl)
 	sdbReleaseConnection( db ) ;
 	// after test,reconnect and get cs cl
     rc = sdbConnect(HOSTNAME,SVCNAME,USER,PASSWD,&db) ;
-    EXPECT_EQ(rc,SDB_OK) ;
+    ASSERT_EQ(rc,SDB_OK) ;
 	for(int i=0;i<ThreadNum;++i)
 	{
     	rc = sdbGetCollectionSpace(db,CsName[i],&cs[i]) ;
-    	EXPECT_EQ(rc,SDB_OK) ;
+    	ASSERT_EQ(rc,SDB_OK) ;
     	rc = sdbGetCollection1(cs[i],ClName[i],&cl[i]) ;
-    	EXPECT_EQ(rc,SDB_OK) ;
+    	ASSERT_EQ(rc,SDB_OK) ;
 	}
 }
 
@@ -313,13 +313,13 @@ TEST_F(SocketMutexTest,disconnect)
     }
     // after test,reconnect and get cs cl
 	rc = sdbConnect(HOSTNAME,SVCNAME,USER,PASSWD,&db) ;
-	EXPECT_EQ(rc,SDB_OK) ;
+	ASSERT_EQ(rc,SDB_OK) ;
 	for(int i=0;i<ThreadNum;++i)
 	{
 		rc = sdbGetCollectionSpace(db,CsName[i],&cs[i]) ;
-		EXPECT_EQ(rc,SDB_OK) ;
+		ASSERT_EQ(rc,SDB_OK) ;
 		rc = sdbGetCollection1(cs[i],ClName[i],&cl[i]) ;
-		EXPECT_EQ(rc,SDB_OK) ;
+		ASSERT_EQ(rc,SDB_OK) ;
 	}	
 }
 
@@ -345,7 +345,7 @@ TEST_F(SocketMutexTest,closeAllCursor)
     }
 	// close all cursors between threads
     rc = sdbCloseAllCursors(db) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to close all cursor" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to close all cursor" ;
 	// thread ThreadNum/2-ThreadNum close cursor after main thread closeAllCursor
 	for(int i=ThreadNum/2;i<ThreadNum;++i)
     {

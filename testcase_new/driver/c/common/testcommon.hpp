@@ -32,10 +32,8 @@ extern char HOST[100] ;
 
 SDB_EXTERN_C_START
 
-INT32 createCollection ( sdbConnectionHandle *cl, CHAR *csName, CHAR *clName );
-
 // create collection
-INT32 createNormalCl( sdbConnectionHandle* db, sdbCSHandle* cs, sdbCollectionHandle* cl,
+int createNormalCl( sdbConnectionHandle* db, sdbCSHandle* cs, sdbCollectionHandle* cl,
 				const char* csname, const char* clname ) ;
 
 // check standalone
@@ -57,10 +55,10 @@ void getHost() ;
 void getIdlePort( char* port ) ;
 
 // get all data groups
-INT32 getGroups( sdbConnectionHandle db, vector<string>& vec ) ;
+int getGroups( sdbConnectionHandle db, vector<string>& vec ) ;
 
 // get all group nodes
-INT32 getGroupNodes( sdbConnectionHandle db, const CHAR* groupname, vector<string>& vec ) ;
+int getGroupNodes( sdbConnectionHandle db, const CHAR* groupname, vector<string>& vec ) ;
 
 SDB_EXTERN_C_END
 

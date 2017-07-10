@@ -43,16 +43,16 @@ void ConcurrentTest::SetUpTestCase()
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to create cs" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
 	// create cl 
 	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to create cl" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl" ;
 	// open lob
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   bson_oid_gen( &oid[i] ) ;
 	   rc = sdbOpenLob( cl, &oid[i], SDB_LOB_CREATEONLY, &lob[i] ) ;
-	   EXPECT_EQ( rc, SDB_OK ) << "fail to open lob " << i ;
+	   ASSERT_EQ( rc, SDB_OK ) << "fail to open lob " << i ;
 	}
 }
 
@@ -61,7 +61,7 @@ void ConcurrentTest::TearDownTestCase()
    int rc = SDB_OK ;
    // drop cs
    rc = sdbDropCollectionSpace( db, CsName ) ;
-   EXPECT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+   ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
    // disconnect
    sdbDisconnect( db ) ;
    sdbReleaseCollection( cl ) ;
@@ -93,10 +93,10 @@ void func_lobWrite( ThreadArg* arg )
 	
 	// write lob
 	rc = sdbWriteLob( lob, lobBuffer, size ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to write lob " << i ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to write lob " << i ;
 	// close lob
 	rc = sdbCloseLob( &lob ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to close lob " << i ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to close lob " << i ;
 	
 	free( lobBuffer ) ;
 }
@@ -118,11 +118,11 @@ void func_lobRead( ThreadArg* arg )
 	
 	// read lob
 	rc = sdbReadLob( lob, size, lobBuffer, &readlen ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to read lob " << i ;
-	EXPECT_EQ( size, readlen ) << "fail to check read lob length,i = " << i ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to read lob " << i ;
+	ASSERT_EQ( size, readlen ) << "fail to check read lob length,i = " << i ;
 	// close lob
 	rc = sdbCloseLob( &lob ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to close lob " << i ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to close lob " << i ;
 	
 	free( lobBuffer ) ;
 }
@@ -149,7 +149,7 @@ TEST_F( ConcurrentTest, Lob )
 	for( int i = 0;i < ThreadNum;++i )
 	{
 	   rc = sdbOpenLob( cl, &oid[i], SDB_LOB_READ, &lob[i] ) ;
-	   EXPECT_EQ( rc, SDB_OK ) << "fail to open lob with read mode,i = " << i ;
+	   ASSERT_EQ( rc, SDB_OK ) << "fail to open lob with read mode,i = " << i ;
 	}
 	// create multi thread to operate different lob read
 	for( int i = 0;i < ThreadNum;++i )

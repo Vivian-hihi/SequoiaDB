@@ -27,14 +27,14 @@ TEST(ssl,sdbConnect)
 	// 使用sdbSecureConnect连接时出错
 	getConf() ;
 	rc = sdbSecureConnect(HOSTNAME,SVCNAME,USER,PASSWD,&connection) ;
-	EXPECT_EQ(SDB_NETWORK,rc) << "fail to test secure connect when ssl is closed" ;
+	ASSERT_EQ(SDB_NETWORK,rc) << "fail to test secure connect when ssl is closed" ;
 	
 	char ConnAddr[200] ;
 	sprintf(ConnAddr,"%s:%s",HOSTNAME,SVCNAME) ;
 	const char* ConnAddrs[1] ;
 	ConnAddrs[0] = ConnAddr ;
 	rc = sdbSecureConnect1(ConnAddrs,1,USER,PASSWD,&connection) ;
-	EXPECT_EQ(SDB_NET_CANNOT_CONNECT,rc) << "fail to test secure connect when ssl is close again" ;
+	ASSERT_EQ(SDB_NET_CANNOT_CONNECT,rc) << "fail to test secure connect when ssl is close again" ;
 
 	// 使用sdbConnect连接时正常创建集合空间集合
 	getUniqueName(CsModName,CsName) ;

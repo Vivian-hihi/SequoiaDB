@@ -44,7 +44,7 @@ void prepareCl()
 	// bson_print(&options) ;
 	// create cl
 	rc = sdbCreateCollection1(cs,ClName,&options,&cl) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to create cl" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to create cl" ;
 	// destroy options bson
 	bson_destroy(&options) ;
 	// insert records like {"id":1,"f1":2,"f2":3}
@@ -68,9 +68,9 @@ void cleanResource()
 	int rc = SDB_OK ;
 	// drop cs cl disconnect
 	rc = sdbDropCollection(cs,ClName) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to drop cl" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to drop cl" ;
 	rc = sdbDropCollectionSpace(db,CsName) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to drop cs" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to drop cs" ;
 	sdbDisconnect(db) ;
 	// release handle
 	sdbReleaseCollection(cl) ;
@@ -91,23 +91,23 @@ TEST(indexTest,createIndex)
 	bson_append_int(&indexDef,"id",-1) ;
 	bson_finish(&indexDef) ;
 	rc = sdbCreateIndex1(cl,&indexDef,indexName,false,false,128) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to create index" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to create index" ;
 	bson_destroy(&indexDef) ;
 
 	// get index
 	sdbCursorHandle cursor ;
 	rc = sdbGetIndexes(cl,indexName,&cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to get index" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to get index" ;
 	bson obj ;
 	bson_init(&obj) ;
 	rc = sdbNext(cursor,&obj) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to get the index cursor doc" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to get the index cursor doc" ;
 	bson_iterator it ;
 	bson_iterator_init(&it,&obj) ;
 	bson_iterator sub ;
 	bson_iterator_subiterator(&it,&sub) ;
 	const char *name = bson_iterator_string(&sub) ;
-	EXPECT_EQ(0,strcmp(name,indexName))<<"index name wrong,expect:"<<indexName<<" actual:"<<name ;
+	ASSERT_EQ(0,strcmp(name,indexName))<<"index name wrong,expect:"<<indexName<<" actual:"<<name ;
 	sdbReleaseCursor( cursor ) ;
 		
 	// query record 
@@ -121,13 +121,13 @@ TEST(indexTest,createIndex)
 	bson hint ;
 	jsonToBson(&hint,h) ;
 	rc = sdbQuery(cl,&cond,&sel,NULL,&hint,0,-1,&cursor) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to query record" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to query record" ;
 	rc = sdbNext(cursor,&obj) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to get query cursor doc" ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to get query cursor doc" ;
 	char result[100] = {0} ;
 	bson_sprint(result,sizeof(result),&obj) ;
 	char *expect = "{ \"id\": 555 }" ;
-	EXPECT_EQ(0,strcmp(expect,result))<<"fail to check query result,expect"<<expect<<" actual:"<<result ;
+	ASSERT_EQ(0,strcmp(expect,result))<<"fail to check query result,expect"<<expect<<" actual:"<<result ;
 	// destroy bson and release cursor
 	bson_destroy(&obj) ;
 	bson_destroy(&cond) ;

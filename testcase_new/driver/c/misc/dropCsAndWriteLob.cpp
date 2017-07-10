@@ -81,7 +81,7 @@ void func_lobWrite(ThreadArg *arg)
 	for(int i=0;i<lobNum;++i)
 	{
 		rc = sdbWriteLob(lob,lobBuffer,strlen(lobBuffer)) ;
-		EXPECT_TRUE(rc == SDB_OK || rc == SDB_DMS_NOTEXIST || rc == SDB_RTN_CONTEXT_NOTEXIST)<<"fail to write lob,i="<<i<<"rc="<<rc ;
+		ASSERT_TRUE(rc == SDB_OK || rc == SDB_DMS_NOTEXIST || rc == SDB_RTN_CONTEXT_NOTEXIST)<<"fail to write lob,i="<<i<<"rc="<<rc ;
 		printf("sdbWriteLob,rc=%d\n",rc) ; 
 	}
 
@@ -96,7 +96,7 @@ void func_dropCs(ThreadArg *arg)
 	int rc = SDB_OK ;
 	
 	rc = sdbDropCollectionSpace(db,CsName) ;
-	EXPECT_TRUE(rc == SDB_OK || rc == SDB_LOCK_FAILED)<<"fail to drop collection space,rc="<<rc ;
+	ASSERT_TRUE(rc == SDB_OK || rc == SDB_LOCK_FAILED)<<"fail to drop collection space,rc="<<rc ;
 	printf("over to excute drop cs.\n") ;
 }
 
@@ -112,7 +112,7 @@ TEST(lobTest,dropCsAndWriteLob)
 	// create collection
 	getUniqueName( CsModName,CsName ) ;
 	rc = createSplitCollection(&db,&cs,&cl,CsName,ClName) ;
-	EXPECT_EQ(rc,SDB_OK) ;
+	ASSERT_EQ(rc,SDB_OK) ;
 	// generate lob
 	char *lobBuffer = generateLob() ;
 	if(lobBuffer == NULL)
@@ -124,7 +124,7 @@ TEST(lobTest,dropCsAndWriteLob)
 	bson_oid_t oid ;
 	bson_oid_gen(&oid) ;
 	rc = sdbOpenLob(cl,&oid,SDB_LOB_CREATEONLY,&lob) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to open lob,rc = "<<rc ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to open lob,rc = "<<rc ;
 	// create thread
 	import::Worker *worker1,*worker2 ;
 	ThreadArg arg ;
@@ -143,7 +143,7 @@ TEST(lobTest,dropCsAndWriteLob)
 	delete worker2 ;
 	// sdb close lob
 	rc = sdbCloseLob(&lob) ;
-	EXPECT_EQ(rc,SDB_OK)<<"fail to close lob,rc="<<rc ;
+	ASSERT_EQ(rc,SDB_OK)<<"fail to close lob,rc="<<rc ;
 	// release handle
 	sdbDisconnect(db) ;
 	sdbReleaseCollection(cl) ;

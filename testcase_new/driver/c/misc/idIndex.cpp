@@ -46,7 +46,7 @@ void prepareCl()
 	// bson_print( &options ) ;
 	// create cl
 	rc = sdbCreateCollection1( cs, ClName, &options, &cl ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to create cl" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl" ;
 	// destroy options bson
 	bson_destroy( &options ) ;
 
@@ -75,9 +75,9 @@ void cleanResource()
 
 	// drop cs cl disconnect
 	rc = sdbDropCollection( cs, ClName ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to drop cl" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cl" ;
 	rc = sdbDropCollectionSpace( db, CsName ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
 	sdbDisconnect( db ) ;
 
 	// release handle
@@ -97,13 +97,13 @@ TEST(indexTest,createIdIndex)
 	bson_init( &option ) ;
 	bson_append_int( &option, "SortBufferSize", 128 ) ;
 	rc = sdbCreateIdIndex( cl, &option ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to create id index" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create id index" ;
 	bson_destroy( &option ) ;
 
 	// get id index
 	sdbCursorHandle cursor ;
 	rc = sdbGetIndexes( cl, "$id", &cursor ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to get index" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to get index" ;
 		
 	// query record 
 	const char* c = "{_id:555}" ;
@@ -116,36 +116,36 @@ TEST(indexTest,createIdIndex)
 	bson hint ;
 	jsonToBson( &hint, h ) ;
 	rc = sdbQuery( cl, &cond, &sel, NULL, &hint, 0, -1, &cursor ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to query record" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to query record" ;
 	bson obj ;
 	bson_init( &obj ) ;
 	rc = sdbNext( cursor, &obj ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to get query cursor doc" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to get query cursor doc" ;
 	char result[100] = {0} ;
 	bson_sprint( result, sizeof(result), &obj ) ;
 	char *expect = "{ \"_id\": 555 }" ;
-	EXPECT_EQ( 0, strcmp(expect,result) )<<"fail to check query result,expect"<<expect<<" actual:"<<result ;
+	ASSERT_EQ( 0, strcmp(expect,result) )<<"fail to check query result,expect"<<expect<<" actual:"<<result ;
 	bson_destroy( &obj ) ;
 	sdbCloseCursor( cursor ) ;
 	
 	// explain
 	rc = sdbExplain( cl, &cond, &sel, NULL, NULL, 0, 0, -1, NULL, &cursor ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to explain query" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to explain query" ;
 	bson_init( &obj ) ;
 	rc = sdbNext( cursor, &obj ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to get explain cursor doc" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to get explain cursor doc" ;
 	bson_iterator it ;
 	bson_find( &it, &obj, "ScanType" ) ;
 	const char* scanType = bson_iterator_string( &it ) ;
-	EXPECT_STREQ( scanType, "ixscan" ) << "fail to check scan type" ;
+	ASSERT_STREQ( scanType, "ixscan" ) << "fail to check scan type" ;
 	bson_find( &it, &obj, "IndexName" ) ;
 	const char* indexName =  bson_iterator_string( &it ) ;
-	EXPECT_STREQ( indexName, "$id" ) << "fail to check index name" ;
+	ASSERT_STREQ( indexName, "$id" ) << "fail to check index name" ;
 	sdbCloseCursor( cursor ) ;
 	
 	// drop id index
 	rc = sdbDropIdIndex( cl ) ;
-	EXPECT_EQ( rc, SDB_OK ) << "fail to drop id index" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop id index" ;
 	
 	// update after drop id index
 	bson rule ;
@@ -155,7 +155,7 @@ TEST(indexTest,createIdIndex)
     bson_append_finish_object ( &rule ) ;
     bson_finish ( &rule ) ;
     rc = sdbUpdate( cl, &rule, NULL, NULL ) ;
-    EXPECT_EQ( rc, SDB_RTN_AUTOINDEXID_IS_FALSE ) << "fail to test update after drop id index" ;
+    ASSERT_EQ( rc, SDB_RTN_AUTOINDEXID_IS_FALSE ) << "fail to test update after drop id index" ;
 	
 	// destroy bson and release cursor
 	bson_destroy( &rule ) ;
