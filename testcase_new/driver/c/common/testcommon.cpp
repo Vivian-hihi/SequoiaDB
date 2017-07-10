@@ -12,6 +12,7 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <stdarg.h>
 #include "testcommon.hpp"
 
 using namespace std ;
@@ -32,6 +33,18 @@ char WORKDIR[100]       = "/tmp/ctest" ;
 
 char IPADDR[100]        = "192.168.31.61" ;
 char HOST[100]          = "sdbserver1" ;
+
+/*****************************************************************
+* Print err msg
+*
+*****************************************************************/
+void printMsg( const char* fmt, ... )
+{
+    va_list ap ;
+    va_start( ap, fmt ) ;
+    vprintf( fmt, ap ) ;
+    va_end( ap ) ;
+}
 
 /*****************************************************************
 * create normal collection with csname clname

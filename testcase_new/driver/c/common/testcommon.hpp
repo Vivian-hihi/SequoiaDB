@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include <stdarg.h>
 
 using namespace std ;
 
@@ -11,20 +12,20 @@ using namespace std ;
 #define PASSWD                "" 
 #define RESTPORT               11814
 
-#define CHECK_RC( rc, msg ) \
+#define CHECK_RC( rc, fmt, ... ) \
 do { \
 	if( rc != SDB_OK ) \
 	{ \
-	  printf( "%s, rc = %d\n", msg, rc ) ; \
+	  printMsg( fmt, ##__VA_ARGS__ ) ; \
 	  goto error ; \
 	} \
 } while( 0 ) ;
 
-#define ASSERT_RC( rc, msg ) \
+#define ASSERT_RC( rc, fmt, ... ) \
 do { \
 	if( rc != SDB_OK ) \
 	{ \
-   		printf( "%s, rc=%d\n", msg, rc ) ; \
+   		printMsg( fmt, ##__VA_ARGS__ ) ; \
    		exit(1) ; \
 	} \
 } while( 0 ) ;
@@ -40,6 +41,8 @@ extern char IPADDR[100] ;
 extern char HOST[100] ;
 
 SDB_EXTERN_C_START
+
+void printMsg( const char* fmt, ... ) ;
 
 // create collection
 int createNormalCl( sdbConnectionHandle* db, sdbCSHandle* cs, sdbCollectionHandle* cl,
