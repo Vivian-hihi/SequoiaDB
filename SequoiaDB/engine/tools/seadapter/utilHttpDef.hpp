@@ -8,6 +8,7 @@
 //       itself will be used.
 #define HTTP_MAX_HEADER_SIZE        ( 64 * 1024 )
 #define HTTP_MAX_BODY_SIZE          ( 64 * 1024 * 1024 - HTTP_MAX_HEADER_SIZE )
+#define HTTP_CHUNK_SIZE             1024
 
 #define _TEXT_PLAIN              "text/plain"
 #define _APPLICATION_JSON        "application/json"

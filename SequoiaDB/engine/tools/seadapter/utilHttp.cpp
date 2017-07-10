@@ -484,7 +484,7 @@ namespace engine
 
       // If size is small enough, send as one message with the header.
       // Otherwise, send it in chunked mode.
-      if ( dataSize < 1024 )
+      if ( dataSize < HTTP_CHUNK_SIZE )
       {
          std::stringstream lengthStr ;
          lengthStr << dataSize ;
@@ -574,9 +574,9 @@ namespace engine
    INT32 _utilHttp::_sendInChunkMode( string &header, const CHAR *data )
    {
       INT32 rc = SDB_OK ;
-      INT32 totalSent = 0 ;
+      UINT32 totalSent = 0 ;
       string chunkEnd = "0\r\n\r\n" ;
-      size_t dataSize = ossStrlen( data ) ;
+      UINT32 dataSize = ossStrlen( data ) ;
 
       // First, send the header.
       rc = _send( header.c_str(), header.size() ) ;
@@ -584,7 +584,8 @@ namespace engine
 
       while ( totalSent < dataSize )
       {
-         size_t chunkSize = std::min( dataSize - totalSent, (size_t)1024 ) ;
+         UINT32 chunkSize =  ( dataSize - totalSent ) < HTTP_CHUNK_SIZE ?
+                             ( dataSize - totalSent ) : HTTP_CHUNK_SIZE ;
          std::stringstream chunkSizeString ;
          chunkSizeString << std::hex << chunkSize ;
 
@@ -622,12 +623,6 @@ namespace engine
       else
       {
          bodyOffset = position - buff + HTTP_BLOCK_END_STR_LEN ;
-         /*
-         if ( bodyOffset == bufSize )
-         {
-            bodyOffset = 0 ;
-         }
-         */
          return TRUE ;
       }
    }
@@ -645,26 +640,26 @@ namespace engine
             PD_LOG( PDERROR,
                     "Status: 400 Bad Request. Please reconsider the request" ) ;
             rc = SDB_INVALIDARG ;
-            break ;
+            goto error ;
          case HTTP_FORBID:
             PD_LOG( PDERROR,
                     "Status: 403 Forbidden. Please reconsider the request" ) ;
             rc = SDB_INVALIDARG ;
-            break ;
+            goto error ;
          case HTTP_NOT_FOUND:
             PD_LOG( PDERROR,
                     "Status: 404 Not Found. Please reconsider the request" ) ;
             rc = SDB_INVALIDARG ;
-            break ;
+            goto error ;
          case HTTP_SVC_UNAVAL:
             PD_LOG( PDERROR, "Status: 503 Service Unavailable. Please check "
                     "the server status" ) ;
             rc = SDB_SYS ;
-            break ;
+            goto error ;
          default:
             PD_LOG( PDERROR, "Weired status code: %u", statusCode ) ;
             rc = SDB_SYS ;
-            break ;
+            goto error ;
       }
 
    done:
@@ -863,9 +858,9 @@ namespace engine
       _paraInit( &_connection ) ;
 
       http_parser_init( parser, HTTP_RESPONSE ) ;
-      if ( len != http_parser_execute( parser,
-                                       (http_parser_settings *)_parserSetting,
-                                       buff, len ) )
+      if ( len != (INT32)http_parser_execute( parser,
+                                              (http_parser_settings *)_parserSetting,
+                                              buff, len ) )
       {
          // If it's not HPE_PAUSED(defined in http_parser, refer to
          // HTTP_ERRNO_GEN ), then error happend.
@@ -1010,7 +1005,6 @@ namespace engine
 
    const CHAR* _utilHttp::_getHeaderItemVal( const CHAR *key )
    {
-      INT32 rc = SDB_OK ;
       COLNAME_MAP_IT it ;
 
       it = _connection._requestHeaders.find( key ) ;
