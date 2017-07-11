@@ -44,6 +44,7 @@ namespace engine
 {
 #define DMS_INVALID_REC_LOGICALID         0xffffffffffffffff
 #define DMS_CAP_EXTENT_SZ                 (32 * 1024 * 1024)
+#define DMS_CAP_EXTENT_PG_NUM             (DMS_CAP_EXTENT_SZ>>pageSizeSquareRoot())
 #define DMS_CAP_CL_MIN_SZ                 DMS_CAP_EXTENT_SZ
 #define DMS_CAP_EXTENT_BODY_SZ            ( DMS_CAP_EXTENT_SZ - DMS_EXTENT_METADATA_SZ )
 #define DMS_CAP_EXTENT_PAGE_NUM           \
@@ -285,14 +286,14 @@ namespace engine
                              dmsExtentID targetExtID,
                              INT8 direction ) ;
 
-      void _countRecNumAndSize( dmsMBContext *context,
+      void _countRecNumAndSize( UINT16 collectionID,
                                 dmsExtentID extentID,
                                 dmsOffset beginOffset,
                                 dmsOffset endOffset,
-                                INT32 direction,
                                 INT64 &recNum,
                                 INT64 &dataSize,
                                 INT64 &totalSize,
+                                dmsOffset &lastRecOffset,
                                 BOOLEAN freeRecord = FALSE,
                                 BOOLEAN endInclude = TRUE ) ;
 

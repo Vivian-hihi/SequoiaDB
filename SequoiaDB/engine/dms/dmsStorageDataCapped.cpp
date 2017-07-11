@@ -514,6 +514,7 @@ namespace engine
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
+      dmsOffset lastRecOffset = DMS_INVALID_OFFSET ;
       dmsExtentInfo *extInfo = getWorkExtInfo( context->mbID() ) ;
 
       extRW = extent2RW( extID, mbID ) ;
@@ -526,9 +527,9 @@ namespace engine
          goto error ;
       }
 
-      _countRecNumAndSize( context, extID, extInfo->_firstRecordOffset,
-                           extent->_lastRecordOffset, 1, recNum, dataSize,
-                           totalSize, TRUE ) ;
+      _countRecNumAndSize( context->mbID(), extID, extInfo->_firstRecordOffset,
+                           extInfo->_lastRecordOffset, recNum, dataSize,
+                           totalSize, lastRecOffset, TRUE ) ;
 
       // Initialize the extent, update the statistic information in _mbStatInfo
       // and work extent info.
@@ -560,6 +561,7 @@ namespace engine
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
+      dmsOffset lastRecOffset = DMS_INVALID_OFFSET ;
 
       extRW = extent2RW( extID, mbID ) ;
       extRW.setNothrow( TRUE ) ;
@@ -571,14 +573,16 @@ namespace engine
          goto error ;
       }
 
-      _countRecNumAndSize( context, extID, extent->_firstRecordOffset,
-                           extent->_lastRecordOffset, 1, recNum, dataSize,
-                           totalSize, TRUE ) ;
+      _countRecNumAndSize( context->mbID(), extID, extent->_firstRecordOffset,
+                           DMS_INVALID_OFFSET, recNum, dataSize,
+                           totalSize, lastRecOffset, TRUE ) ;
 
-      _mbStatInfo[mbID]._totalRecords -= extent->_recCount ;
-      _mbStatInfo[mbID]._totalDataFreeSpace -= extent->_freeSpace ;
-      _mbStatInfo[mbID]._totalOrgDataLen -= totalSize ;
-      _mbStatInfo[mbID]._totalDataLen -= totalSize ;
+      _mbStatInfo[mbID]._totalRecords -= recNum ;
+      _mbStatInfo[mbID]._totalDataFreeSpace =
+         DMS_CAP_EXTENT_SZ - ( extent->_firstRecordOffset + totalSize ) ;
+      _mbStatInfo[mbID]._totalOrgDataLen -= dataSize ;
+      _mbStatInfo[mbID]._totalDataLen -= dataSize ;
+      _mbStatInfo[mbID]._totalDataPages -= DMS_CAP_EXTENT_PG_NUM ;
 
       rc = _freeExtent( context, extID ) ;
       PD_RC_CHECK( rc, PDERROR, "Free extent[%d] failed: %d", extID, rc ) ;
@@ -703,7 +707,6 @@ namespace engine
       extentID = context->mb()->_firstExtentID ;
       if ( extentID == workExtInfo->getID() )
       {
-         workExtInfo->reset() ;
          rc = _recycleWorkExt( context, extentID ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to recycle working extent, rc: %d", rc ) ;
@@ -945,6 +948,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED__ATTACHWORKEXT ) ;
       dmsExtRW extRW ;
+      INT64 recNum = 0 ;
+      INT64 dataSize = 0 ;
+      INT64 totalSize = 0 ;
+      dmsOffset lastRecOffset = DMS_INVALID_OFFSET ;
       const dmsExtent *extent = NULL ;
       dmsExtentInfo *workExtInfo = getWorkExtInfo( collectionID ) ;
 
@@ -968,31 +975,30 @@ namespace engine
       }
 
       workExtInfo->_id = extID ;
-      workExtInfo->_recCount = extent->_recCount ;
-      workExtInfo->_freeSpace = extent->_freeSpace ;
-      workExtInfo->_firstRecordOffset = extent->_firstRecordOffset ;
-      workExtInfo->_lastRecordOffset = extent->_lastRecordOffset ;
       workExtInfo->_extLogicID = extent->_logicID ;
-      // Calculate the write position in this extent.
-      if ( DMS_INVALID_OFFSET != extent->_lastRecordOffset )
+      if ( DMS_INVALID_OFFSET == extent->_firstRecordOffset )
       {
-         dmsRecordID recordID( extID, extent->_lastRecordOffset ) ;
-         dmsRecordRW recordRW = record2RW( recordID, collectionID ) ;
-         recordRW.setNothrow( TRUE ) ;
-         const dmsRecord *record = recordRW.readPtr<dmsRecord>() ;
-         if ( !record )
-         {
-            PD_LOG( PDERROR, "Last record in extent is invalid" ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         workExtInfo->_writePos = workExtInfo->_lastRecordOffset +
-                                  record->getSize() - DMS_EXTENT_METADATA_SZ ;
+         // Attach to an empty extent.
+         SDB_ASSERT( DMS_INVALID_EXTENT == extent->_lastRecordOffset,
+                     "last record offset should be invalid" ) ;
+         workExtInfo->_recCount = 0 ;
+         workExtInfo->_freeSpace = DMS_CAP_EXTENT_BODY_SZ ;
+         workExtInfo->_lastRecordOffset = DMS_INVALID_OFFSET ;
+         workExtInfo->_writePos = 0 ;
       }
       else
       {
-         workExtInfo->_writePos = 0 ;
+         _countRecNumAndSize( collectionID, extID, extent->_firstRecordOffset,
+                              DMS_INVALID_OFFSET, recNum, dataSize, totalSize,
+                              lastRecOffset, FALSE, FALSE ) ;
+         workExtInfo->_recCount = recNum ;
+         workExtInfo->_freeSpace =
+            DMS_CAP_EXTENT_SZ - extent->_firstRecordOffset - totalSize ;
+         workExtInfo->_lastRecordOffset = lastRecOffset ;
+         workExtInfo->_writePos =
+            extent->_firstRecordOffset + totalSize - DMS_EXTENT_METADATA_SZ;
       }
+      workExtInfo->_firstRecordOffset = extent->_firstRecordOffset ;
 
    done:
       PD_TRACE_EXITRC( SDB__DMSSTORAGEDATACAPPED__ATTACHWORKEXT, rc ) ;
@@ -1041,13 +1047,17 @@ namespace engine
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
       INT64 beforeTotalSize = 0 ;
+      dmsOffset lastRecOffset = DMS_INVALID_OFFSET ;
       dmsExtentInfo *workExtInfo = &_workExtInfo[context->mbID()] ;
 
       if ( direction >= 0 )
       {
-         _countRecNumAndSize( context, extentID,
+         _countRecNumAndSize( context->mbID(), extentID,
                               workExtInfo->_firstRecordOffset, offset,
-                              direction, recNum, dataSize, totalSize, TRUE ) ;
+                              recNum, dataSize, totalSize,
+                              lastRecOffset, TRUE ) ;
+         SDB_ASSERT( workExtInfo->_lastRecordOffset >= lastRecOffset,
+                     "last record offset in working extent info is wrong" ) ;
          workExtInfo->_firstRecordOffset += totalSize ;
       }
       else
@@ -1060,18 +1070,23 @@ namespace engine
             // Any better solution ?
             INT64 recNumTmp = 0 ;
             INT64 dataSizeTmp = 0 ;
+            dmsOffset offsetTmp = DMS_INVALID_OFFSET ;
             // Scan the records before the target offset to get the new last
             // record offset.
-            _countRecNumAndSize( context, extentID,
+            _countRecNumAndSize( context->mbID(), extentID,
                                  workExtInfo->_firstRecordOffset, offset,
-                                 1, recNumTmp, dataSizeTmp,
-                                 beforeTotalSize, FALSE, FALSE ) ;
+                                 recNumTmp, dataSizeTmp,
+                                 beforeTotalSize, lastRecOffset,
+                                 FALSE, FALSE ) ;
+            _countRecNumAndSize( context->mbID(), extentID, offset,
+                                 workExtInfo->_lastRecordOffset,
+                                 recNum, dataSize, totalSize,
+                                 offsetTmp, TRUE ) ;
+            workExtInfo->_lastRecordOffset =
+               ( DMS_INVALID_OFFSET == lastRecOffset ) ?
+               workExtInfo->_firstRecordOffset : lastRecOffset ;
          }
-         _countRecNumAndSize( context, extentID, offset,
-                              workExtInfo->_lastRecordOffset,
-                              direction, recNum, dataSize, totalSize, TRUE ) ;
-         workExtInfo->_lastRecordOffset =
-               workExtInfo->_firstRecordOffset + beforeTotalSize ;
+
          workExtInfo->_writePos = offset - DMS_EXTENT_METADATA_SZ ;
          // Do not increase the free space when direction is 1, as the space
          // can not be used for insertion in this round.
@@ -1115,7 +1130,7 @@ namespace engine
       INT64 recNum = 0 ;
       INT64 dataSize = 0 ;
       INT64 totalSize = 0 ;
-      INT64 beforeTotalSize = 0 ;
+      dmsOffset lastRecOffset = DMS_INVALID_OFFSET ;
 
       extRW = extent2RW( extentID, context->mbID() ) ;
       extRW.setNothrow( TRUE ) ;
@@ -1129,34 +1144,22 @@ namespace engine
 
       if ( direction >= 0 )
       {
-         _countRecNumAndSize( context, extentID, extent->_firstRecordOffset,
-                              offset, direction, recNum, dataSize, totalSize,
-                              TRUE ) ;
+         _countRecNumAndSize( context->mbID(), extentID,
+                              extent->_firstRecordOffset,
+                              offset, recNum, dataSize, totalSize,
+                              lastRecOffset, TRUE ) ;
          extent->_firstRecordOffset += totalSize ;
       }
       else
       {
-         {
-            INT64 recNumTmp = 0 ;
-            INT64 dataSizeTmp = 0 ;
-            // Scan the records before the target offset to get the new last
-            // record offset.
-            _countRecNumAndSize( context, extentID,
-                                 extent->_firstRecordOffset, offset,
-                                 1, recNumTmp, dataSizeTmp,
-                                 beforeTotalSize, FALSE, FALSE ) ;
-         }
-         _countRecNumAndSize( context, extentID, offset,
-                              extent->_lastRecordOffset,
-                              direction, recNum, dataSize, totalSize, TRUE ) ;
-         extent->_lastRecordOffset =
-               extent->_firstRecordOffset + beforeTotalSize ;
-         extent->_freeSpace += totalSize ;
+         _countRecNumAndSize( context->mbID(), extentID, offset,
+                              DMS_INVALID_OFFSET,
+                              recNum, dataSize, totalSize,
+                              lastRecOffset, TRUE ) ;
          _mbStatInfo[ context->mbID() ]._totalDataFreeSpace += totalSize ;
       }
 
-      extent->_recCount -= recNum ;
-
+      // extent->_recCount -= recNum ;
       _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
       _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= dataSize ;
       _mbStatInfo[ context->mbID() ]._totalDataLen -= dataSize ;
@@ -1371,14 +1374,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE, "_dmsStorageDataCapped::_countRecNumAndSize" )
-   void _dmsStorageDataCapped::_countRecNumAndSize( dmsMBContext *context,
+   void _dmsStorageDataCapped::_countRecNumAndSize( UINT16 collectionID,
                                                     dmsExtentID extentID,
                                                     dmsOffset beginOffset,
                                                     dmsOffset endOffset,
-                                                    INT32 direction,
                                                     INT64 &recNum,
                                                     INT64 &dataSize,
                                                     INT64 &totalSize,
+                                                    dmsOffset &lastRecOffset,
                                                     BOOLEAN freeRecord,
                                                     BOOLEAN endInclude )
    {
@@ -1389,27 +1392,53 @@ namespace engine
       recNum = 0 ;
       dataSize = 0 ;
       totalSize = 0 ;
+      lastRecOffset = DMS_INVALID_OFFSET ;
 
+      if ( DMS_INVALID_OFFSET == beginOffset )
+      {
+         lastRecOffset = DMS_INVALID_OFFSET ;
+         goto done ;
+      }
+      else if ( beginOffset == endOffset )
+      {
+         if ( endInclude )
+         {
+            lastRecOffset = endOffset ;
+         }
+         else
+         {
+            lastRecOffset = DMS_INVALID_OFFSET ;
+         }
+      }
+
+      // When endOffset is invalid, try to scan to the end of the extent.
       if ( DMS_INVALID_OFFSET == endOffset )
       {
          endOffset = DMS_CAP_EXTENT_SZ ;
       }
 
+      SDB_ASSERT( beginOffset >= 0, "Invalid beginOffset" ) ;
+      SDB_ASSERT( endOffset >= beginOffset,
+                  "endOffset should be greater than beginOffset" ) ;
+
       while ( beginOffset <= endOffset )
       {
-         if ( !endInclude )
+         if ( ( ( beginOffset == endOffset ) && !endInclude ) ||
+                ( beginOffset >= DMS_CAP_EXTENT_SZ ) )
          {
-            break ;
+            goto done ;
          }
          dmsRecordID rid( extentID, beginOffset ) ;
-         recordRW = record2RW( rid, context->mbID() ) ;
+         recordRW = record2RW( rid, collectionID ) ;
          recordRW.setNothrow( TRUE ) ;
          record = recordRW.writePtr<dmsRecord>() ;
          // When meet an invalid record, break;
-         if ( 0 == record->_head._flag_and_size )
+         if ( !record || 0 == record->_head._flag_and_size )
          {
-            break ;
+            goto done ;
          }
+         // Remember the last valid record.
+         lastRecOffset = beginOffset ;
          recNum++ ;
          beginOffset += record->getSize() ;
          dataSize += record->getDataLength() ;
@@ -1421,8 +1450,9 @@ namespace engine
             record->_head._flag_and_size = 0 ;
          }
       }
-
+   done:
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;
+      return ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATACAPPED_POPRECORD, "_dmsStorageDataCapped::popRecord" )
@@ -1449,6 +1479,7 @@ namespace engine
       SDB_ASSERT( context, "context should not be NULL" ) ;
       SDB_ASSERT( cb, "edu cb should not be NULL" ) ;
 
+      // Calculate the target extent id and offset.
       rc = _extractRecLID( context, logicalID, cb, extentID, extLID, offset ) ;
       PD_RC_CHECK( rc, PDERROR, "Invalid LogicalID[%lld], rc: %d",
                    logicalID, rc ) ;
@@ -1502,6 +1533,8 @@ namespace engine
          }
       }
 
+      // Recycle extents which are after(when direction is 1) or before(when
+      // direction is -1) the target extent.
       rc = _recycleExtents( context, extentID, direction ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to recycle extents, rc: %d", rc ) ;
 
