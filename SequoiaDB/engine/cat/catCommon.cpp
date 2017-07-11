@@ -3626,7 +3626,8 @@ namespace engine
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_MAX_RECNUM ) )
          {
             PD_CHECK( NumberLong == eleTmp.type()
-                      || NumberInt == eleTmp.type(),
+                      || NumberInt == eleTmp.type()
+                      || NumberDouble == eleTmp.type(),
                       SDB_INVALIDARG, error, PDWARNING,
                       "Field [%s] type [%d] error",
                       CAT_CL_MAX_RECNUM, eleTmp.type() ) ;
@@ -3636,7 +3637,8 @@ namespace engine
          else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_MAX_SIZE ) )
          {
             PD_CHECK( NumberLong == eleTmp.type()
-                      || NumberInt == eleTmp.type(),
+                      || NumberInt == eleTmp.type()
+                      || NumberDouble == eleTmp.type(),
                       SDB_INVALIDARG, error, PDWARNING,
                       "Field [%s] type [%d] error",
                       CAT_CL_MAX_SIZE, eleTmp.type() ) ;
