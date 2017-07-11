@@ -293,6 +293,7 @@ namespace engine
                                 INT64 &recNum,
                                 INT64 &dataSize,
                                 INT64 &totalSize,
+                                BOOLEAN freeRecord = FALSE,
                                 BOOLEAN endInclude = TRUE ) ;
 
    private:

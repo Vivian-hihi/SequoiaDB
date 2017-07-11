@@ -528,7 +528,7 @@ namespace engine
 
       _countRecNumAndSize( context, extID, extInfo->_firstRecordOffset,
                            extent->_lastRecordOffset, 1, recNum, dataSize,
-                           totalSize ) ;
+                           totalSize, TRUE ) ;
 
       // Initialize the extent, update the statistic information in _mbStatInfo
       // and work extent info.
@@ -573,7 +573,7 @@ namespace engine
 
       _countRecNumAndSize( context, extID, extent->_firstRecordOffset,
                            extent->_lastRecordOffset, 1, recNum, dataSize,
-                           totalSize ) ;
+                           totalSize, TRUE ) ;
 
       _mbStatInfo[mbID]._totalRecords -= extent->_recCount ;
       _mbStatInfo[mbID]._totalDataFreeSpace -= extent->_freeSpace ;
@@ -1047,7 +1047,7 @@ namespace engine
       {
          _countRecNumAndSize( context, extentID,
                               workExtInfo->_firstRecordOffset, offset,
-                              direction, recNum, dataSize, totalSize ) ;
+                              direction, recNum, dataSize, totalSize, TRUE ) ;
          workExtInfo->_firstRecordOffset += totalSize ;
       }
       else
@@ -1065,11 +1065,11 @@ namespace engine
             _countRecNumAndSize( context, extentID,
                                  workExtInfo->_firstRecordOffset, offset,
                                  1, recNumTmp, dataSizeTmp,
-                                 beforeTotalSize, FALSE ) ;
+                                 beforeTotalSize, FALSE, FALSE ) ;
          }
          _countRecNumAndSize( context, extentID, offset,
                               workExtInfo->_lastRecordOffset,
-                              direction, recNum, dataSize, totalSize ) ;
+                              direction, recNum, dataSize, totalSize, TRUE ) ;
          workExtInfo->_lastRecordOffset =
                workExtInfo->_firstRecordOffset + beforeTotalSize ;
          workExtInfo->_writePos = offset - DMS_EXTENT_METADATA_SZ ;
@@ -1097,14 +1097,6 @@ namespace engine
       SDB_ASSERT( _mbStatInfo[ context->mbID() ]._totalRecords >=
                   workExtInfo->_recCount,
                   "Record number in collection is invalid" ) ;
-      SDB_ASSERT( _mbStatInfo[ context->mbID() ]._totalOrgDataLen >=
-                  ( workExtInfo->_writePos + DMS_EXTENT_METADATA_SZ -
-                    workExtInfo->_firstRecordOffset ),
-                  "Total original data length in collection is invalid" ) ;
-      SDB_ASSERT( _mbStatInfo[ context->mbID() ]._totalDataLen >=
-                  ( workExtInfo->_writePos + DMS_EXTENT_METADATA_SZ -
-                    workExtInfo->_firstRecordOffset ),
-                  "Total original data length in collection is invalid" ) ;
 
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED__POPFROMWORKEXT ) ;
       return SDB_OK ;
@@ -1138,7 +1130,8 @@ namespace engine
       if ( direction >= 0 )
       {
          _countRecNumAndSize( context, extentID, extent->_firstRecordOffset,
-                              offset, direction, recNum, dataSize, totalSize ) ;
+                              offset, direction, recNum, dataSize, totalSize,
+                              TRUE ) ;
          extent->_firstRecordOffset += totalSize ;
       }
       else
@@ -1151,11 +1144,11 @@ namespace engine
             _countRecNumAndSize( context, extentID,
                                  extent->_firstRecordOffset, offset,
                                  1, recNumTmp, dataSizeTmp,
-                                 beforeTotalSize, FALSE ) ;
+                                 beforeTotalSize, FALSE, FALSE ) ;
          }
          _countRecNumAndSize( context, extentID, offset,
                               extent->_lastRecordOffset,
-                              direction, recNum, dataSize, totalSize ) ;
+                              direction, recNum, dataSize, totalSize, TRUE ) ;
          extent->_lastRecordOffset =
                extent->_firstRecordOffset + beforeTotalSize ;
          extent->_freeSpace += totalSize ;
@@ -1386,6 +1379,7 @@ namespace engine
                                                     INT64 &recNum,
                                                     INT64 &dataSize,
                                                     INT64 &totalSize,
+                                                    BOOLEAN freeRecord,
                                                     BOOLEAN endInclude )
    {
       PD_TRACE_ENTRY( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;
@@ -1422,7 +1416,10 @@ namespace engine
          totalSize += record->getSize() ;
          // Invalidate the record by set its _flag_and_size to 0. In the scanner
          // it will be a mark of record ending.
-         record->_head._flag_and_size = 0 ;
+         if ( freeRecord )
+         {
+            record->_head._flag_and_size = 0 ;
+         }
       }
 
       PD_TRACE_EXIT( SDB__DMSSTORAGEDATACAPPED_COUNTRECNUMANDSIZE ) ;
