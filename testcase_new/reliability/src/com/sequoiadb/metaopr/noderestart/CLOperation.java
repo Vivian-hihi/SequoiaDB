@@ -61,6 +61,7 @@ public class CLOperation implements StandTestInterface {
     @Override
     public void tearDown() {
         dropCS(CSNAME);
+        dropDomain(DOMAINNAME);
         printEndTime(this);
     }
 
