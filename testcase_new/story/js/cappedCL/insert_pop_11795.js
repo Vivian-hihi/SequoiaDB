@@ -1,5 +1,5 @@
 /************************************
-*@Description:capped cl find use sort/limit/skip 
+*@Description:capped cl, repeate insert and pop, direciton set 1 
 *@author:      zhaoyu
 *@createdate:  2017.7.11
 *@testlinkCase: seqDB-11795
