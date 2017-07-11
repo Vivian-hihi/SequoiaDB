@@ -74,7 +74,7 @@ SystemTest.prototype.toString = function()
 
 SystemTest.prototype.init = function()
 {
-   if( this.hostname === COORDHOSTNAME || this.hostname === toolGetLocalhost() )
+   if( isLocal( this.hostname ) )
    {
       this.system = System ;
       this.cmd = new Cmd() ;
@@ -303,7 +303,7 @@ function toolGetSequoiadbDir( hostname, svcname )
    dir[1] = tmp.slice( 0, ind ) ;
    remote.close() ;
    
-   if( hostname === COORDHOSTNAME || hostname === toolGetLocalhost() )
+   if( isLocal( hostname ) )
    {
       system = System ;
       tmp = system.getEWD() ;
@@ -386,4 +386,18 @@ function getCurrentTime()
     if( second < 10 ) second = "0" + second ;
     var time = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second ;
     return time ;
+}
+
+/******************************************************************************
+*@Description : check host is local or not
+*@author      : Liang XueWang              
+******************************************************************************/
+function isLocal( hostname )
+{
+    var cmd = new Cmd() ;
+    var localhostname = cmd.run( "hostname" ).split( "\n" )[0] ;
+    if( hostname === "localhost" || hostname === localhostname )
+        return true ;
+    else
+        return false ;
 }

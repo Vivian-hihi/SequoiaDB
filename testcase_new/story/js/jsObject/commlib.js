@@ -2,7 +2,6 @@
 *@Description : common function for js object System/Oma
 *@auhor       : Liang XueWang
 ******************************************************************************/
-
 function OmaTest( hostName, cmSvcName, isLegalHost, isLegalSvc )
 {
    if( hostName === undefined )
@@ -115,7 +114,7 @@ SystemTest.prototype.toString = function()
 
 SystemTest.prototype.init = function()
 {
-   if( this.hostname === COORDHOSTNAME || this.hostname === toolGetLocalhost() )
+   if( isLocal( this.hostname ) )
    {
       this.system = System ;
       this.cmd = new Cmd() ;
@@ -150,7 +149,7 @@ function FileTest( hostName, cmSvcName, fileName )
 FileTest.prototype.init = function()
 {
    this.isLocal = false ;          // 是否连接本地cm
-   if( this.hostname === toolGetLocalhost() || this.hostname === COORDHOSTNAME )
+   if( isLocal( this.hostname ) )
       this.isLocal = true ;
       
    if( this.isLocal )
@@ -229,8 +228,7 @@ CmdTest.prototype.toString = function()
 
 CmdTest.prototype.init = function()
 {
-   this.isLocal = this.hostname === COORDHOSTNAME || 
-                  this.hostname === toolGetLocalhost() ;
+   this.isLocal = isLocal( this.hostname ) ;
    if( this.isLocal )
    {
       this.cmd = new Cmd() ;
@@ -491,7 +489,7 @@ function toolGetSequoiadbDir( hostname, svcname )
    dir[1] = tmp.slice( 0, ind ) ;
    remote.close() ;
    
-   if( hostname === COORDHOSTNAME || hostname === toolGetLocalhost() )
+   if( isLocal( hostname ) )
    {
       system = System ;
       tmp = system.getEWD() ;
@@ -564,4 +562,18 @@ function toolGetDirMode( f, filename )
    var dir = filename.slice( 0, ind ) ;
    var mode = f.stat( dir ).toObj().mode ;
    return mode ;
+}
+
+/******************************************************************************
+*@Description : check host is local or not
+*@author      : Liang XueWang              
+******************************************************************************/
+function isLocal( hostname )
+{
+    var cmd = new Cmd() ;
+    var localhostname = cmd.run( "hostname" ).split( "\n" )[0] ;
+    if( hostname === "localhost" || hostname === localhostname )
+        return true ;
+    else
+        return false ;
 }
