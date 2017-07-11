@@ -256,6 +256,10 @@
                }
                else
                {
+                  if( taskInfo['TaskName'] !== 'EXTEND_BUSINESS' )
+                  {
+                     taskInfo['Progress'] = 100 ;
+                  }
                   taskList[index]['barChart'] = { 'percent': taskInfo['Progress'], 'style': { 'progress': { 'background': '#D9534F' } } } ;
                }
                $scope.Components.French.TaskList = taskList ;
