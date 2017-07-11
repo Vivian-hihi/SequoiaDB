@@ -2073,14 +2073,12 @@ namespace engine
    {
 #if defined (_LINUX)
       INT32 rc          = SDB_OK ;
-      BSONObj           optionObj ;
-      string            name ;
       string            outStr ;
       stringstream      cmd ;
       _ossCmdRunner     runner ;
       UINT32            exitCode ;
 
-      cmd << " " << name ;
+      cmd << "groupdel " << groupName ;
       // run cmd
       rc = runner.exec( cmd.str().c_str(), exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
