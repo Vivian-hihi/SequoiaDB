@@ -64,7 +64,9 @@ public class UpdateDomain2286 {
         taskMgr.execute();
 
         if (!taskMgr.isAllSuccess())
-            throw new SkipException("没有撞上异常情况");
+        {
+            MyUtil.throwSkipExeWithoutFaultEnv();
+        }
 
         assertTrue(db.isDomainExist(DOMAINNAME));
         assertTrue(isCatalogGroupSync());

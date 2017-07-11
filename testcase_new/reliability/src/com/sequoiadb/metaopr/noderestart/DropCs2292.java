@@ -68,7 +68,9 @@ public class DropCs2292 implements StandTestInterface {
         taskMgr.addTask(task);
         taskMgr.execute();
         if(taskMgr.isAllSuccess()==true)
-            throw new SkipException("");
+        {
+            MyUtil.throwSkipExeWithoutFaultEnv();
+        }
         MyUtil.dropCS(csNames.subList(task.getBreakIndex(),csNames.size()));
         assertTrue(MyUtil.isCsAllDeleted(csNames));
         assertTrue(MyUtil.isCatalogGroupSync());

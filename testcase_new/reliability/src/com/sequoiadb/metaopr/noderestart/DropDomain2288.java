@@ -84,7 +84,9 @@ public class DropDomain2288 {
         taskMgr.addTask(task);
         taskMgr.execute();
         if (taskMgr.isAllSuccess() == true)
-            throw new SkipException("没遇上异常情况");
+        {
+            MyUtil.throwSkipExeWithoutFaultEnv();
+        }
         for (int i = task.getBreakIndex(); i < domainNames.size(); i++) {
             try {
                 db.dropDomain(domainNames.get(i));

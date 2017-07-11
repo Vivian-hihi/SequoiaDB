@@ -42,7 +42,7 @@ public class CLOperation implements StandTestInterface {
         try {
             groupMgr = new GroupMgr();
         } catch (ReliabilityException e) {
-            throw new SkipException("skip");
+            MyUtil.throwSkipException("skip");
         }
         List<String> groupNames = groupMgr.getAllDataGroupName();
         groupMgr.close();
@@ -100,8 +100,9 @@ public class CLOperation implements StandTestInterface {
         taskMgr.addTask(task);
         taskMgr.execute();
 
-        if (taskMgr.isAllSuccess() == true)
-            throw new SkipException("没遇上异常环境");
+        if (taskMgr.isAllSuccess() == true) {
+            MyUtil.throwSkipExeWithoutFaultEnv();
+        }
         List<String> list = clNames.subList(task.getBreakIndex(), clNames.size());
         createClInSingleCs(CSNAME, list);
         assertTrue(isClAllCreated(CSNAME, clNames));

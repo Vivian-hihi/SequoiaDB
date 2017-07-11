@@ -579,9 +579,12 @@ public class MyUtil {
             groupMgr = new GroupMgr();
             if (groupMgr.checkBusiness() == true)
                 return true;
-            else
+            else {
+                System.out.println("当前环境异常，GroupMgr.checkBusiness()==false，跳过该用例。");
                 throw new SkipException("当前环境异常，GroupMgr.checkBusiness()==false，跳过该用例。");
+            }
         } catch (ReliabilityException e) {
+            System.out.println("当前环境异常，GroupMgr.checkBusiness()==false，跳过该用例。");
             throw new SkipException("当前环境异常，GroupMgr.checkBusiness()==false，跳过该用例。");
         } finally {
             if (groupMgr != null)
@@ -869,6 +872,15 @@ public class MyUtil {
             }
             return true;
         }
+    }
+
+    public static void throwSkipException(String msg){
+        System.out.println(msg);
+        throw new SkipException(msg);
+    }
+
+    public static void throwSkipExeWithoutFaultEnv(){
+        throwSkipException("没遇上异常环境");
     }
 }
 

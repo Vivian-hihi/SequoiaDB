@@ -36,6 +36,18 @@ import static org.testng.Assert.assertTrue;
  * @Author laojingtang
  * @Date 17-4-20
  * @Version 1.00
+ * @FileName seqDB-2290 :: 版本: 1 :: 创建CS时catalog主节点正常重启_rlb.nodeRestart.metaOpr.CS.001
+ * @Author laojingtang
+ * @Date 17-4-20
+ * @Version 1.00
+ * @FileName seqDB-2290 :: 版本: 1 :: 创建CS时catalog主节点正常重启_rlb.nodeRestart.metaOpr.CS.001
+ * @Author laojingtang
+ * @Date 17-4-20
+ * @Version 1.00
+ * @FileName seqDB-2290 :: 版本: 1 :: 创建CS时catalog主节点正常重启_rlb.nodeRestart.metaOpr.CS.001
+ * @Author laojingtang
+ * @Date 17-4-20
+ * @Version 1.00
  */
 
 
@@ -92,10 +104,11 @@ public class CreateCS2290 implements StandTestInterface {
         CreateCSTask csTask = new CreateCSTask(10);
         taskMgr.addTask(csTask);
         taskMgr.execute();
-        if (taskMgr.isAllSuccess() == true)
-            throw new SkipException("没遇上异常环境");
+        if (taskMgr.isAllSuccess() == true) {
+            MyUtil.throwSkipExeWithoutFaultEnv();
+        }
 
-        MyUtil.createCS(csNames.subList(csTask.getBrokenIndex(),csNames.size()));
+        MyUtil.createCS(csNames.subList(csTask.getBrokenIndex(), csNames.size()));
         assertTrue(MyUtil.isCsAllCreated(csNames));
         assertTrue(MyUtil.isCatalogGroupSync());
         MyUtil.createClInManyCs(csNames.subList(0, 10), "cl");
