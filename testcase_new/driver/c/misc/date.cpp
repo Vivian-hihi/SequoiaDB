@@ -8,8 +8,6 @@
 #include <client.h>
 #include "../common/testcommon.hpp"
 
-const char* user 	   = "" ;
-const char* passwd     = "" ;
 const char* csModName  = "dateTestCs" ;
 char 		csName[50] = { 0 } ;
 const char* clName 	   = "dateTestCl" ; 
@@ -29,13 +27,13 @@ void DateTest::SetUpTestCase()
 	int rc = SDB_OK ;
 	//  connect sdb, create cs cl
     getConf() ;
-    rc = sdbConnect( HOSTNAME, SVCNAME, user, passwd, &db ) ;
-    ASSERT_RC( rc, "fail to connect sdb" ) ;
+    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
+    ASSERT_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
     getUniqueName( csModName, csName ) ;
     rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
-    ASSERT_RC( rc, "fail to create cs" ) ;
+    ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", csName, rc ) ;
     rc = sdbCreateCollection( cs, clName, &cl ) ;
-    ASSERT_RC( rc, "fail to create cl" ) ;
+    ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", clName, rc ) ;
 }
 
 void DateTest::TearDownTestCase()
@@ -43,7 +41,7 @@ void DateTest::TearDownTestCase()
 	int rc = SDB_OK ;
 	// drop cs,disconnect and release handle
     rc = sdbDropCollectionSpace( db, csName ) ;
-    ASSERT_RC( rc, "fail to drop cs" ) ;
+    ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
     sdbDisconnect( db ) ;
     sdbReleaseCollection( cl ) ;
     sdbReleaseCS( cs ) ;
@@ -74,15 +72,17 @@ TEST_F( DateTest, json_bson )
 	ASSERT_EQ( rc, BSON_OK ) << "fail to finish myDate sel" ;
 	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
 	int i ;
-	for( i = 0;i < sizeof(normalDate)/sizeof(const char*);i++ )
+	for( i = 0;i < sizeof(normalDate)/sizeof(normalDate[0]);i++ )
 	{
 		rc = sdbDelete( cl, NULL, NULL ) ;
 		ASSERT_EQ( rc, SDB_OK ) << "fail to truncate cl " << clName ;
+
 		bson_init( &obj ) ;
 		ASSERT_TRUE( jsonToBson( &obj, normalDate[i] ) ) << "fail to check jsonToBson " << normalDate[i] ;
 		rc = sdbInsert( cl, &obj ) ;
 		bson_destroy( &obj ) ;
 		ASSERT_EQ( rc, SDB_OK ) << "fail to insert date " << normalDate[i] ;
+
 		rc = sdbQuery( cl, NULL, &sel, NULL, NULL, 0, -1, &cursor ) ;
 		ASSERT_EQ( rc, SDB_OK ) << "fail to query cl " << clName ;
 		bson_init( &res ) ;
@@ -90,14 +90,14 @@ TEST_F( DateTest, json_bson )
 		ASSERT_EQ( rc, SDB_OK ) << "fail to get next of cursor in cl " << clName ; 
 		// bson_print( &res ) ;
 		char buffer[1024] = { 0 } ;
-        ASSERT_TRUE( bsonToJson( buffer, sizeof(buffer), &res, false ,false ) ) ;
+        ASSERT_TRUE( bsonToJson( buffer, sizeof(buffer), &res, false, false ) ) ;
         ASSERT_STREQ( buffer, normalDate[i] ) ;
 		bson_destroy( &res ) ;
 		sdbReleaseCursor( cursor ) ;	
 	}
 
 	// check abnormal date
-    for( i = 0;i < sizeof(abnormalDate)/sizeof(const char*);i++ )
+    for( i = 0;i < sizeof(abnormalDate)/sizeof(abnormalDate[0]);i++ )
     {
         bson_init( &obj ) ;
         ASSERT_FALSE( jsonToBson( &obj, abnormalDate[i] ) ) << "fail to check jsonToBson " << abnormalDate ;

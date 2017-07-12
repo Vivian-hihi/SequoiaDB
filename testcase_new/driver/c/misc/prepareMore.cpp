@@ -8,8 +8,6 @@
 #include <client.h>
 #include "../common/testcommon.hpp"
 
-const char* user 	   = "" ;
-const char* passwd     = "" ;
 const char* csModName  = "prepareMoreTestCs" ;
 char 		csName[50] = { 0 } ;
 const char* clName 	   = "prepareMoreTestCl" ; 

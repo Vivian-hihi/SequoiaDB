@@ -58,13 +58,13 @@ int createNormalCl( sdbConnectionHandle* db, sdbCSHandle* cs, sdbCollectionHandl
 	// connect sdb
  	getConf() ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, db ) ;
-    CHECK_RC( rc, "fail to connect sdb" ) ;
+    CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
 	// create cs
 	rc = sdbCreateCollectionSpace( *db, csname, SDB_PAGESIZE_4K, cs ) ;
-    CHECK_RC( rc, "fail to create cs" ) ;
+    CHECK_RC( rc, "fail to create cs %s, rc = %d\n", csname, rc ) ;
 	// create cl
 	rc = sdbCreateCollection( *cs, clname, cl ) ;
-    CHECK_RC( rc, "fail to create cl" ) ;	
+    CHECK_RC( rc, "fail to create cl %s, rc = %d\n", clname, rc ) ;	
 done:
 	return rc ;
 error:
@@ -239,14 +239,14 @@ int getGroupNodes( sdbConnectionHandle db, const char* groupname,
     bson_init( &obj ) ;
 
     rc = bson_append_string( &cond, "GroupName", groupname ) ;
-    CHECK_RC( rc, "bson fail to append string" ) ;
+    CHECK_RC( rc, "bson fail to append GroupName:%s, rc = %d\n", groupname, rc ) ;
     rc = bson_finish( &cond ) ;
-    CHECK_RC( rc, "bson fail to finish" ) ;
+    CHECK_RC( rc, "bson fail to finish, rc = %d\n", rc ) ;
     rc = sdbGetList( db, SDB_LIST_GROUPS, &cond, NULL, NULL, &cursor ) ;
-    CHECK_RC( rc, "fail to get list groups" ) ;
+    CHECK_RC( rc, "fail to get list groups, rc = %d\n", rc ) ;
 
     rc = sdbNext( cursor, &obj ) ;
-    CHECK_RC( rc, "fail to get sdb next" ) ;
+    CHECK_RC( rc, "fail to get sdb next, rc = %d\n", rc ) ;
     bson_iterator it, sub ;
     bson_find( &it, &obj, "Group" ) ;
     bson_iterator_subiterator( &it, &sub ) ;
@@ -307,7 +307,7 @@ int getGroups( sdbConnectionHandle db, vector<string>& vec )
     bson_init( &obj ) ;
 
     rc = sdbListReplicaGroups( db, &cursor ) ;
-    CHECK_RC( rc, "fail to list replica groups" ) ;
+    CHECK_RC( rc, "fail to list replica groups, rc = %d\n", rc ) ;
     while( !sdbNext( cursor, &obj ) )
     {
         bson_iterator it ;

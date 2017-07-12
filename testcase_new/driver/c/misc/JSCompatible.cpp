@@ -28,31 +28,31 @@ public :
 
 void NumberLongTest::SetUp()
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 
     // connect to sdb   
     getConf() ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-    ASSERT_RC( rc, "fail to connect sdb" ) ;
+    ASSERT_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
 
     // create cs cl
     const char* CsModName = "C_drivertest_syncCs" ;
     getUniqueName( CsModName, CsName ) ;
     rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-    ASSERT_RC( rc, "fail to create cs" ) ;
+    ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
     const char* ClModName = "C_drivertest_syncCl" ;
     getUniqueName( ClModName, ClName ) ;
     rc = sdbCreateCollection( cs, ClName, &cl ) ;
-    ASSERT_RC( rc, "fail to create cl" ) ;	
+    ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", ClName, rc ) ;	
 }
 
 void NumberLongTest::TearDown()
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	
 	// drop cs release handle
 	rc = sdbDropCollectionSpace( db, CsName ) ;
-	ASSERT_RC( rc, "fail to drop cs" ) ;
+	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
 	sdbDisconnect( db ) ;
 	sdbReleaseCollection( cl ) ;
 	sdbReleaseCS( cs ) ;
@@ -61,7 +61,7 @@ void NumberLongTest::TearDown()
 
 TEST_F( NumberLongTest, JSfalse )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 
 	// insert int/long/double max min 
 	int a[] = { -2147483648, 0, 2147483647 } ;  // -2^31 0 2^31-1
@@ -111,7 +111,7 @@ TEST_F( NumberLongTest, JSfalse )
 
 TEST_F( NumberLongTest, JStrue )
 {
-    INT32 rc = SDB_OK ;
+    int rc = SDB_OK ;
 	bson_set_js_compatibility( true ) ;
 	
     // insert int/long/double max min 

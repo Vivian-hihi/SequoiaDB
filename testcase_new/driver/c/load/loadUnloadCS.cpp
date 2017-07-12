@@ -20,14 +20,14 @@ sdbConnectionHandle db   = SDB_INVALID_HANDLE ;
 sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
 sdbCSHandle cs           = SDB_INVALID_HANDLE ;
 sdbCollectionHandle cl   = SDB_INVALID_HANDLE ;
-INT32 groupId         = 1000 ;
+int groupId         = 1000 ;
 const char* csModName = "loadUnloadCSTestCs" ;
 char csName[100]      = ""  ;
 const char* clName    = "loadUnloadCSTestCl" ;
 
 class loadUnloadCSTest : public testing::Test
 {
-	public:
+public:
 	// run before all testcase
 	static void SetUpTestCase() ;
     // run after all testcase
@@ -36,26 +36,26 @@ class loadUnloadCSTest : public testing::Test
 
 void loadUnloadCSTest::SetUpTestCase()
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 
 	// connect sdb
     getConf() ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-    ASSERT_RC( rc, "fail to connect sdb" ) ;
+    ASSERT_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
     if( isStandalone( db ) )
         return ;
 
     // get data group with groupId 1000
     rc = sdbGetReplicaGroup1( db, groupId, &rg ) ;
-    ASSERT_RC( rc, "fail to get data group" ) ;
+    ASSERT_RC( rc, "fail to get data group %d, rc = %d\n", groupId, rc ) ;
 	char* rgName = NULL ;
 	rc = sdbGetReplicaGroupName( rg, &rgName ) ;
-	ASSERT_RC( rc, "fail to get data group name" ) ; 
+	ASSERT_RC( rc, "fail to get data group name, rc = %d\n", rc ) ; 
     
 	// create cs
     getUniqueName( csModName, csName ) ;
     rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_RC( rc, "fail to create cs" ) ;
+	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", csName, rc ) ;
 
 	// create cl in data group
     bson option ;
@@ -65,14 +65,14 @@ void loadUnloadCSTest::SetUpTestCase()
 	bson_finish( &option ) ;
 	rc = sdbCreateCollection1( cs, clName, &option, &cl ) ;
     bson_destroy( &option ) ;
-	ASSERT_RC( rc, "fail to create cl" ) ;
+	ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", clName, rc ) ;
 }
 
 void loadUnloadCSTest::TearDownTestCase()
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	rc = sdbDropCollectionSpace( db, csName ) ;
-	ASSERT_RC( rc, "fail to drop cs" ) ;
+	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
 	sdbDisconnect( db ) ;
 	sdbReleaseCollection( cl ) ;
 	sdbReleaseCS( cs ) ;
@@ -80,15 +80,15 @@ void loadUnloadCSTest::TearDownTestCase()
 	sdbReleaseConnection( db ) ;
 }
 
-INT32 checkCsExist( sdbConnectionHandle db, const char* csName, bool* exist )
+int checkCsExist( sdbConnectionHandle db, const char* csName, bool* exist )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
 	bson obj ;
     bson_init( &obj ) ;
 	*exist = false ;
     rc = sdbListCollectionSpaces( db, &cursor ) ;
-    CHECK_RC( rc, "fail to list cs" ) ;
+    CHECK_RC( rc, "fail to list cs, rc = %d\n", rc ) ;
     while( !(rc = sdbNext( cursor, &obj)) )
     {
         bson_iterator it ;
@@ -102,6 +102,8 @@ INT32 checkCsExist( sdbConnectionHandle db, const char* csName, bool* exist )
         bson_destroy( &obj ) ;
         bson_init( &obj ) ;
     }
+	rc = SDB_OK ;
+
 done:
     bson_destroy( &obj ) ;
     sdbReleaseCursor( cursor ) ;
@@ -110,9 +112,9 @@ error:
 	goto done ;
 }
 
-INT32 checkBasicOperation( sdbCollectionHandle cl )
+int checkBasicOperation( sdbCollectionHandle cl )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	char clFullName[200] ;
 	sprintf( clFullName, "%s.%s", csName, clName ) ;
 	bson record ;
@@ -122,28 +124,28 @@ INT32 checkBasicOperation( sdbCollectionHandle cl )
 	bson obj ;              
     bson_init( &obj ) ;
 	bson_iterator it ;
-	INT32 result ;
+	int result ;
 	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
 
     // truncate cl
 	rc = sdbTruncateCollection( db, clFullName ) ;
-	CHECK_RC( rc, "fail to truncate cl" ) ;
+	CHECK_RC( rc, "fail to truncate cl %s, rc = %d\n", clFullName, rc ) ;
 
 	// insert
 	bson_append_int( &record, "a", 1 ) ;
 	bson_finish( &record ) ;
 	rc = sdbInsert( cl, &record ) ;
-	CHECK_RC( rc, "fail to insert record" ) ;
+	CHECK_RC( rc, "fail to insert record, rc = %d\n", rc ) ;
 
 	// query
 	bson_append_string( &selector, "a", "" ) ;
 	bson_finish( &selector ) ;
 	rc = sdbQuery( cl, &record, &selector, NULL, NULL, 0, -1, &cursor ) ;
-	CHECK_RC( rc, "fail to query record" ) ;
+	CHECK_RC( rc, "fail to query record, rc = %d\n", rc ) ;
 
 	// check query result
 	rc = sdbNext( cursor, &obj ) ;
-	CHECK_RC( rc, "fail to get next in cursor" )
+	CHECK_RC( rc, "fail to get next in cursor, rc = %d\n", rc )
 	bson_iterator_init( &it, &obj ) ;
 	result = bson_iterator_int( &it ) ;
 	if( result != 1 )
@@ -164,12 +166,12 @@ error:
 
 TEST_F( loadUnloadCSTest, validOption )
 {
-    INT32 rc = SDB_OK ;
+    int rc = SDB_OK ;
 	sdbNodeHandle node = SDB_INVALID_HANDLE ;
 	const char* hostName = NULL ;
     const char* svcName = NULL ;
     const char* nodeName = NULL ;
-    INT32 nodeId = -1 ;
+    int nodeId = -1 ;
 
 	// check cl basic Operation
 	rc = checkBasicOperation( cl ) ;
@@ -243,7 +245,7 @@ TEST_F( loadUnloadCSTest, validOption )
 
 TEST_F( loadUnloadCSTest, invalidOption )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	bson option ;
 	bson_init( &option ) ;
 	bson_append_string( &option, "GroupName", "SYSCatalogGroup" ) ;

@@ -1,9 +1,9 @@
 /**************************************************************
 * @Description: test case for Jira questionaire
-*				    SEQUOIADBMAINSTREAM-1110
+*				SEQUOIADBMAINSTREAM-1110
 *               SEQUOIADBMAINSTREAM-849
 * @Modify     : Liang xuewang Init
-*			 	    2016-11-23
+*			 	2016-11-23
 ***************************************************************/
 #include <gtest/gtest.h>
 #include <client.h>
@@ -31,12 +31,12 @@ void prepareCl()
 	if( rc == SDB_DMS_CS_EXIST )
 	{
 		rc = sdbDropCollectionSpace( db, CsName ) ;
-		ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs existed" ;
+		ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs existed " << CsName ;
 	    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;	
 	}
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs " << CsName ;
 
-	// option is {ReplSize:0},{Compressed:true},{AutoIndexId:false}
+	// option is { ReplSize: 0 }, { Compressed: true }, { AutoIndexId: false }
 	bson options ;
 	bson_init( &options ) ;
 	bson_append_int( &options, "ReplSize", 0 ) ;
@@ -46,11 +46,11 @@ void prepareCl()
 	// bson_print( &options ) ;
 	// create cl
 	rc = sdbCreateCollection1( cs, ClName, &options, &cl ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl " << ClName ;
 	// destroy options bson
 	bson_destroy( &options ) ;
 
-	// insert records like {"_id":1,"f1":2,"f2":3}
+	// insert records like { "_id": 1, "f1": 2, "f2": 3 }
 	int num = 2000, i ;
 	bson* obj[num] ;
 	for( i = 0;i < num;++i )
@@ -62,7 +62,7 @@ void prepareCl()
 		bson_finish( obj[i] ) ;
 	}
 	rc = sdbBulkInsert( cl, 0, obj, num ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to insert record in the "<<i<<" times" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to insert record in the " << i << " times" ;
 	for( i = 0;i < num;++i )
 	{
 		bson_dispose( obj[i] ) ;
@@ -75,9 +75,9 @@ void cleanResource()
 
 	// drop cs cl disconnect
 	rc = sdbDropCollection( cs, ClName ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cl" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cl " << ClName ;
 	rc = sdbDropCollectionSpace( db, CsName ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs " << CsName ;
 	sdbDisconnect( db ) ;
 
 	// release handle
@@ -103,16 +103,16 @@ TEST(indexTest,createIdIndex)
 	// get id index
 	sdbCursorHandle cursor ;
 	rc = sdbGetIndexes( cl, "$id", &cursor ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to get index" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to get id index" ;
 		
 	// query record 
-	const char* c = "{_id:555}" ;
+	const char* c = "{ _id: 555 }" ;
 	bson cond ;
 	jsonToBson( &cond, c ) ;
-	const char* s = "{_id:\"\"}" ;
+	const char* s = "{ _id: \"\" }" ;
 	bson sel ;
 	jsonToBson( &sel, s ) ;
-	const char* h = "{_id:0}" ;
+	const char* h = "{ _id: 0 }" ;
 	bson hint ;
 	jsonToBson( &hint, h ) ;
 	rc = sdbQuery( cl, &cond, &sel, NULL, &hint, 0, -1, &cursor ) ;
@@ -124,7 +124,8 @@ TEST(indexTest,createIdIndex)
 	char result[100] = {0} ;
 	bson_sprint( result, sizeof(result), &obj ) ;
 	char *expect = "{ \"_id\": 555 }" ;
-	ASSERT_EQ( 0, strcmp(expect,result) )<<"fail to check query result,expect"<<expect<<" actual:"<<result ;
+	ASSERT_EQ( 0, strcmp( expect, result ) ) << "fail to check query result, expect: "
+											 << expect << " actual: " << result ;
 	bson_destroy( &obj ) ;
 	sdbCloseCursor( cursor ) ;
 	
@@ -150,10 +151,10 @@ TEST(indexTest,createIdIndex)
 	// update after drop id index
 	bson rule ;
 	bson_init( &rule ) ;
-    bson_append_start_object ( &rule, "$inc" ) ;
-    bson_append_int ( &rule, "f1", 1 ) ;
-    bson_append_finish_object ( &rule ) ;
-    bson_finish ( &rule ) ;
+    bson_append_start_object( &rule, "$inc" ) ;
+    bson_append_int( &rule, "f1", 1 ) ;
+    bson_append_finish_object( &rule ) ;
+    bson_finish( &rule ) ;
     rc = sdbUpdate( cl, &rule, NULL, NULL ) ;
     ASSERT_EQ( rc, SDB_RTN_AUTOINDEXID_IS_FALSE ) << "fail to test update after drop id index" ;
 	

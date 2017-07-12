@@ -10,28 +10,26 @@
 
 const char* HostName = "192.168.28.2" ;  // ppc--big endian  x86--little endian
 const char* SvcName = "11810" ;
-const char* Usr = "" ;
-const char* Passwd = "" ;
 
 TEST( EndianTest, BigAndLittle )
 {
-   sdbConnectionHandle db = SDB_INVALID_HANDLE ;
-   sdbCSHandle cs = SDB_INVALID_HANDLE ;
-   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
-   sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
-   const char* CsName = "EndianTestCs" ;
-   const char* ClName = "EndianTestCl" ;
-   int rc = SDB_OK ;
+	sdbConnectionHandle db = SDB_INVALID_HANDLE ;
+   	sdbCSHandle cs = SDB_INVALID_HANDLE ;
+   	sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   	sdbCursorHandle cursor = SDB_INVALID_HANDLE ;
+   	const char* CsName = "EndianTestCs" ;
+   	const char* ClName = "EndianTestCl" ;
+   	int rc = SDB_OK ;
    
-   // connect to sdb
-   rc = sdbConnect( HostName, SvcName, Usr, Passwd, &db ) ;
-   ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
-   // create cs
-   rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs" ;
+   	// connect to sdb
+   	rc = sdbConnect( HostName, SvcName, USER, PASSWD, &db ) ;
+   	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+   	// create cs
+   	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs " << CsName ;
 	// create cl 
 	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl " << ClName ;
 	
 	// insert record { a: 1 }
 	bson obj ;
@@ -105,12 +103,12 @@ TEST( EndianTest, BigAndLittle )
 	
 	// drop cs
 	rc = sdbDropCollectionSpace( db, CsName ) ;
-   ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
-   // release handle
-   sdbDisconnect( db ) ;
-   sdbReleaseCursor( cursor ) ;
-   sdbReleaseCollection( cl ) ;
-   sdbReleaseCS( cs ) ;
-   sdbReleaseConnection( db ) ;
+   	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs " << CsName ;
+   	// release handle
+   	sdbDisconnect( db ) ;
+   	sdbReleaseCursor( cursor ) ;
+   	sdbReleaseCollection( cl ) ;
+   	sdbReleaseCS( cs ) ;
+   	sdbReleaseConnection( db ) ;
 }
  

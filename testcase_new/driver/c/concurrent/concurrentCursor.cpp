@@ -17,16 +17,16 @@ using import::WorkerArgs ;
 #define recordNum 100
 
 sdbConnectionHandle db = SDB_INVALID_HANDLE ;
-sdbCSHandle cs = SDB_INVALID_HANDLE ;
+sdbCSHandle cs 		   = SDB_INVALID_HANDLE ;
 sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
-const char* CsModName = "concurrentTestCs" ;
+const char* CsModName  = "concurrentTestCs" ;
 char CsName[100] ;
-const char* ClName = "concurrentTestCl" ;
+const char* ClName 	   = "concurrentTestCl" ;
 sdbCursorHandle cursor[ThreadNum] ;
 
 class ConcurrentTest : public testing::Test
 {
-	public:
+public:
 	// run before all testcases
 	static void SetUpTestCase() ;
 	// run after all testcases
@@ -35,19 +35,19 @@ class ConcurrentTest : public testing::Test
 
 void ConcurrentTest::SetUpTestCase()
 {
-   // connect to sdb
+   	// connect to sdb
 	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning" ) ;
+	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_RC( rc, "fail to create cs" ) ;
+	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
 	// create cl 
 	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	ASSERT_RC( rc, "fail to create cl" ) ;
-	// insert records { a: i, flag:1 }
+	ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", ClName, rc ) ;
+	// insert records { a: i, flag: 1 }
 	for( int i = 0;i < recordNum;i++ )
 	{
 	   bson obj ;
@@ -56,7 +56,7 @@ void ConcurrentTest::SetUpTestCase()
 	   bson_append_int( &obj, "flag", 1 ) ;
 	   bson_finish( &obj ) ;
 	   rc = sdbInsert( cl, &obj ) ;
-	   ASSERT_RC( rc, "fail to insert record" ) ;
+	   ASSERT_RC( rc, "fail to insert record, rc = %d\n", rc ) ;
 	   bson_destroy( &obj ) ; 
 	}
 	// query record
@@ -71,7 +71,7 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbQuery( cl, &cond, &sel, NULL, NULL, 0, -1, &cursor[i] ) ;
-	   ASSERT_RC( rc, "fail to query record" ) ;
+	   ASSERT_RC( rc, "fail to query record, rc = %d\n", rc ) ;
 	}
 	bson_destroy( &cond ) ;
 	bson_destroy( &sel ) ;
@@ -79,51 +79,51 @@ void ConcurrentTest::SetUpTestCase()
 
 void ConcurrentTest::TearDownTestCase()
 {
-   int rc = SDB_OK ;
-   // drop cs
-   rc = sdbDropCollectionSpace( db, CsName ) ;
-   ASSERT_RC( rc, "fail to drop cs" ) ;
-   // release cursor
-   for( int i = 0;i < ThreadNum;i++ )
-      sdbReleaseCursor( cursor[i] ) ;
-   // disconnect
-   sdbDisconnect( db ) ;
-   sdbReleaseCollection( cl ) ;
-   sdbReleaseCS( cs ) ;
-   sdbReleaseConnection( db ) ;
+   	int rc = SDB_OK ;
+   	// drop cs
+   	rc = sdbDropCollectionSpace( db, CsName ) ;
+   	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+   	// release cursor
+   	for( int i = 0;i < ThreadNum;i++ )
+    	sdbReleaseCursor( cursor[i] ) ;
+   	// disconnect
+   	sdbDisconnect( db ) ;
+   	sdbReleaseCollection( cl ) ;
+   	sdbReleaseCS( cs ) ;
+   	sdbReleaseConnection( db ) ;
 }
 
 class ThreadArg : public WorkerArgs
 {
-   public:
-     sdbCursorHandle cursor ;    // cursor handle
-	  int id ;				         // cursor id
+public:
+	sdbCursorHandle cursor ;    // cursor handle
+	int id ;				    // cursor id
 } ;
 
 void func_cursor( ThreadArg* arg )
 {
-   sdbCursorHandle cursor = arg->cursor ;
-   int i = arg->id ;
-   int rc = SDB_OK ;
+	sdbCursorHandle cursor = arg->cursor ;
+   	int i = arg->id ;
+   	int rc = SDB_OK ;
    
-   bson obj ;
-   bson_init( &obj ) ;
-   int value = 0 ;
-   while( !(rc = sdbNext(cursor,&obj)) )
-   {
-      bson_iterator it ;
-      bson_iterator_init( &it, &obj ) ;
-      ASSERT_EQ( value, bson_iterator_int( &it ) ) << "fail to check cursor " << i ;
-      value++ ;
-      bson_destroy( &obj ) ;
-      bson_init( &obj ) ;
-   }
-   bson_destroy( &obj ) ;
+   	bson obj ;
+   	bson_init( &obj ) ;
+   	int value = 0 ;
+   	while( !( rc = sdbNext( cursor, &obj ) ) )
+   	{
+    	bson_iterator it ;
+      	bson_iterator_init( &it, &obj ) ;
+      	ASSERT_EQ( value, bson_iterator_int( &it ) ) << "fail to check cursor " << i ;
+      	value++ ;
+      	bson_destroy( &obj ) ;
+      	bson_init( &obj ) ;
+   	}
+   	bson_destroy( &obj ) ;
 }
 
 TEST_F( ConcurrentTest, Cursor )
 {
-   // create multi thread to operate different cursor
+   	// create multi thread to operate different cursor
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
 	for( int i = 0;i < ThreadNum;++i )

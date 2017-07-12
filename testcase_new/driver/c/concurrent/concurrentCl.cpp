@@ -4,7 +4,6 @@
 * @Modify:      Liang xuewang Init
 *				2016-11-10
 ***********************************************************/
-
 #include <gtest/gtest.h>
 #include <client.h>
 #include "../common/impWorker.hpp"
@@ -25,7 +24,7 @@ char* ClName[ThreadNum] ;
 
 class ConcurrentTest : public testing::Test
 {
-	public:
+public:
 	// run before all testcases
 	static void SetUpTestCase() ;
 	// run after all testcases
@@ -34,15 +33,15 @@ class ConcurrentTest : public testing::Test
 
 void ConcurrentTest::SetUpTestCase()
 {
-   // connect to sdb
+   	// connect to sdb
 	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning" ) ;
+	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_RC( rc, "fail to create cs" ) ;
+	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
 	// make cl name
 	for( int i = 0;i < ThreadNum;i++ )
 	{
@@ -56,102 +55,102 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbCreateCollection( cs, ClName[i], &cl[i] ) ;
-	   ASSERT_RC( rc, "fail to create cl" ) ;
+	   ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", ClName[i], rc ) ;
 	}
 }
 
 void ConcurrentTest::TearDownTestCase()
 {
-   int rc = SDB_OK ;
-   // drop cs
-   rc = sdbDropCollectionSpace( db, CsName ) ;
-   ASSERT_RC( rc, "fail to drop cs" ) ;
-   // release cl 
-   for( int i = 0;i < ThreadNum;i++ )
-   {
-      sdbReleaseCollection( cl[i] ) ;
-      free( ClName[i] ) ;
-   }
-   // disconnect
-   sdbDisconnect( db ) ;
-   sdbReleaseCS( cs ) ;
-   sdbReleaseConnection( db ) ;
+	int rc = SDB_OK ;
+   	// drop cs
+   	rc = sdbDropCollectionSpace( db, CsName ) ;
+   	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+   	// release cl 
+   	for( int i = 0;i < ThreadNum;i++ )
+   	{
+    	sdbReleaseCollection( cl[i] ) ;
+      	free( ClName[i] ) ;
+   	}
+   	// disconnect
+   	sdbDisconnect( db ) ;
+   	sdbReleaseCS( cs ) ;
+   	sdbReleaseConnection( db ) ;
 }
 
 class ThreadArg : public WorkerArgs
 {
-   public:
-     sdbCollectionHandle cl ;    // cl handle
-	  int id ;				         // cl id
+public:
+	sdbCollectionHandle cl ;    // cl handle
+	int id ;				    // cl id
 } ;
 
-void func_cl(ThreadArg* arg)
+void func_cl( ThreadArg* arg )
 {
 	sdbCollectionHandle cl = arg->cl ;
 	int i = arg->id ;
 	int rc = SDB_OK ;
 	
-	// insert record {"a":i}
+	// insert record { "a": i }
 	bson record ;
-	bson_init(&record) ;
-	bson_append_int(&record,"a",i) ;
-	bson_finish(&record) ;
-	rc = sdbInsert(cl,&record) ;
-	ASSERT_EQ(rc,SDB_OK)<<"fail to insert record" ;
+	bson_init( &record ) ;
+	bson_append_int( &record, "a", i ) ;
+	bson_finish( &record ) ;
+	rc = sdbInsert( cl, &record ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to insert record" ;
 	
-	// query record find( {"a":i},{"a":""} )
+	// query record find( { "a": i }, { "a": "" } )
 	bson select ;
-	bson_init(&select) ;
-	bson_append_string(&select,"a","") ;
-	bson_finish(&select) ;
+	bson_init( &select ) ;
+	bson_append_string( &select, "a", "" ) ;
+	bson_finish( &select ) ;
 	sdbCursorHandle cursor ;
-	rc = sdbQuery(cl,&record,&select,NULL,NULL,0,-1,&cursor) ;
-	ASSERT_EQ(rc,SDB_OK)<<"fail to query record" ;
+	rc = sdbQuery( cl, &record, &select, NULL, NULL, 0, -1, &cursor ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to query record" ;
 	sdbReleaseCursor( cursor ) ;
 	
-	// update record update( {"$set":{"a":-1}},{"a":i} )
+	// update record update( { "$set": { "a": -1 } }, { "a": i } )
 	bson update ;
-	bson_init(&update) ;
-	bson_append_start_object(&update,"$set") ;
-	bson_append_int(&update,"a",-1) ;
-	bson_append_finish_object(&update) ;
-	bson_finish(&update) ;
-	rc = sdbUpdate(cl,&update,&record,NULL) ;
-	ASSERT_EQ(rc,SDB_OK) ;
+	bson_init( &update ) ;
+	bson_append_start_object( &update, "$set" ) ;
+	bson_append_int( &update, "a", -1 ) ;
+	bson_append_finish_object( &update ) ;
+	bson_finish( &update ) ;
+	rc = sdbUpdate( cl, &update, &record, NULL ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to update record" ;
 	
-	// query record find( {"a":-1},{"a":""} )
+	// query record find( { "a": -1 }, { "a": "" } )
 	bson expect ;
-	bson_init(&expect) ;
-	bson_append_int(&expect,"a",-1) ;
-	bson_finish(&expect) ;
-	rc = sdbQuery(cl,&expect,&select,NULL,NULL,0,-1,&cursor) ;
-	ASSERT_EQ(rc,SDB_OK)<<"fail to check update a:-1" ;
+	bson_init( &expect ) ;
+	bson_append_int( &expect, "a", -1 ) ;
+	bson_finish( &expect ) ;
+	rc = sdbQuery( cl, &expect, &select, NULL, NULL, 0, -1, &cursor ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to check update a:-1" ;
 	
 	// destroy bson
-	bson_destroy(&record) ;
-	bson_destroy(&select) ;
-	bson_destroy(&update) ;
-	bson_destroy(&expect) ;
+	bson_destroy( &record ) ;
+	bson_destroy( &select ) ;
+	bson_destroy( &update ) ;
+	bson_destroy( &expect ) ;
 	
 	// close and release cursor
-	rc = sdbCloseCursor(cursor) ;
-	ASSERT_EQ(rc,SDB_OK)<<"fail to close cursor" ;
-	sdbReleaseCursor(cursor) ;
+	rc = sdbCloseCursor( cursor ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to close cursor" ;
+	sdbReleaseCursor( cursor ) ;
 }
 
 TEST_F( ConcurrentTest, Collection )
 {
-   // create multi thread to operate different cl
+	// create multi thread to operate different cl
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
-	for(int i=0;i<ThreadNum;++i)
+	for( int i = 0;i < ThreadNum;++i )
 	{
 		arg[i].cl = cl[i] ;
 		arg[i].id = i ; 
-		workers[i] = new Worker((WorkerRoutine)func_cl, &arg[i], false) ;
+		workers[i] = new Worker( (WorkerRoutine)func_cl, &arg[i], false ) ;
 		workers[i]->start() ;
 	}
-	for(int i=0;i<ThreadNum;++i)
+	for( int i = 0;i < ThreadNum;++i )
 	{
 		workers[i]->waitStop() ;
 		delete workers[i] ;
