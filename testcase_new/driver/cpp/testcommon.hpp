@@ -27,6 +27,8 @@ do { \
 
 #define HOST                  "localhost"
 #define SERVER                "11810" 
+#define USER				  ""
+#define PASSWD				  ""
 #define CSNAME                "story_cpp_test_cs" 
 
 extern char HOSTNAME[100] ;

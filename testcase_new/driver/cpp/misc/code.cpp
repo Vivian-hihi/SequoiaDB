@@ -14,13 +14,11 @@ using namespace sdbclient ;
 using namespace std ;
 using namespace bson ;
 
-const CHAR* USER   = "" ;
-const CHAR* PASSWD = "" ;
-sdb db ;
-
 TEST( code, procedure )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
+	sdb db ;
+
     getConf() ;
     rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
     ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;

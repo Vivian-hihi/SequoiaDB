@@ -102,12 +102,12 @@ int createNormalCl( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl,
 	int rc = SDB_OK ;
 	// connect and create cs cl
 	getConf() ;
-	rc = db.connect( HOSTNAME, SVCNAME, "", "" ) ;
-	CHECK_RC( rc, "fail to connect sdb" ) ; 
+	rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
+	CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ; 
 	rc = db.createCollectionSpace( csname, SDB_PAGESIZE_4K, cs ) ;
-	CHECK_RC( rc, "fail to create cs" ) ;
+	CHECK_RC( rc, "fail to create cs %s, rc = %d\n", csname, rc ) ;
 	rc = cs.createCollection( clname, cl ) ;
-	CHECK_RC( rc, "fail to create cl" ) ;
+	CHECK_RC( rc, "fail to create cl %s, rc = %d\n", clname, rc ) ;
 done:
 	return rc ;
 error:

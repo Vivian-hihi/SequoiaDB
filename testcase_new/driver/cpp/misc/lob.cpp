@@ -14,49 +14,42 @@ using namespace sdbclient ;
 using namespace std ;
 using namespace bson ;
 
-const CHAR* USER   = "" ;
-const CHAR* PASSWD = "" ;
 sdb db ;
 sdbCollectionSpace cs ;
 sdbCollection cl ;
-const CHAR* csname = "lobTestCS" ;
-const CHAR* clname = "lobTestCL" ;
+const char* csname = "lobTestCS" ;
+const char* clname = "lobTestCL" ;
 
 class LobTest : public testing::Test
 {
-	public:
+public:
 	static void SetUpTestCase() ;
 	static void TearDownTestCase() ;	
 } ;
 
 void LobTest::SetUpTestCase()
 {
-	INT32 rc = SDB_OK ;
-    getConf() ;
-    rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-    ASSERT_RC( rc, "fail to connect sdb" ) ;
-    rc = db.createCollectionSpace( csname, SDB_PAGESIZE_4K, cs ) ;
-    ASSERT_RC( rc, "fail to create cs" ) ;
-    rc = cs.createCollection( clname, cl ) ;
-    ASSERT_RC( rc, "fail to create cl" ) ;
+	int rc = SDB_OK ;
+    rc = createNormalCl( db, cs, cl, csname, clname ) ;
+    ASSERT_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
 }
 
 void LobTest::TearDownTestCase()
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	rc = db.dropCollectionSpace( csname ) ;
-	ASSERT_RC( rc, "fail to drop cs" ) ;
+	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csname, rc ) ;
 }
 
 // creat lob then close all cursors
 TEST_F( LobTest, create )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	sdbLob lob ;
 	OID oid1, oid2 ;
 	UINT64 time1, time2 ;
 	SINT64 size1, size2 ;
-	CHAR buf[10] = { 0 } ;
+	char buf[10] = { 0 } ;
 
 	// create lob
 	rc = cl.createLob( lob ) ;
@@ -82,27 +75,27 @@ TEST_F( LobTest, create )
 	ASSERT_EQ( rc, SDB_OK ) << "fail to close lob again" ;
    	BOOLEAN flag = FALSE ;
    	rc = lob.isClosed( flag ) ;
-   	ASSERT_EQ( TRUE, flag ) ;
+   	ASSERT_EQ( TRUE, flag ) << "fail to check lob closed" ;
 
    	// get oid/create time/lob size
    	oid2  = lob.getOid() ;
    	time2 = lob.getCreateTime() ;
    	size2 = lob.getSize() ;
 
-   	ASSERT_EQ( 0, oid1.compare( oid2 ) ) ;
-   	ASSERT_EQ( time1, time2 ) ;
-   	ASSERT_EQ( size1, size2 ) ;
+   	ASSERT_EQ( 0, oid1.compare( oid2 ) ) << "fail to check lob oid " << oid1.toString() << " " << oid2.toString() ;
+   	ASSERT_EQ( time1, time2 ) << "fail to check lob create time" ;
+   	ASSERT_EQ( size1, size2 ) << "fail to check lob size" ;
 }
 
 // write lob then close all cursors
 TEST_F( LobTest, write )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
     sdbLob lob ;
     OID oid1, oid2 ;
     UINT64 time1, time2 ;
     SINT64 size1, size2 ;
-    CHAR buf[10] = { 0 } ;
+    char buf[10] = { 0 } ;
 
     // create lob
     rc = cl.createLob( lob ) ;
@@ -131,27 +124,27 @@ TEST_F( LobTest, write )
     ASSERT_EQ( SDB_OK, rc ) << "fail to close lob" ;
     BOOLEAN flag = FALSE ;
     rc = lob.isClosed( flag ) ;
-    ASSERT_EQ( TRUE, flag ) ;
+    ASSERT_EQ( TRUE, flag ) << "fail to check lob closed" ;
 
 	// get oid/create time/lob size
     oid2  = lob.getOid() ;
     time2 = lob.getCreateTime() ;
     size2 = lob.getSize() ;
 
-    ASSERT_EQ( 0, oid1.compare( oid2 ) ) ;
-    ASSERT_EQ( time1, time2 ) ;
-    ASSERT_EQ( size1, size2 ) ;
+    ASSERT_EQ( 0, oid1.compare( oid2 ) ) << "fail to check lob oid " << oid1.toString() << " " << oid2.toString() ;
+    ASSERT_EQ( time1, time2 ) << "fail to check lob create time" ;
+    ASSERT_EQ( size1, size2 ) << "fail to check lob size" ;
 }
 
 // read lob then close all cursors
 TEST_F( LobTest, read )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
     sdbLob lob ;
     OID oid1, oid2 ;
     UINT64 time1, time2 ;
     SINT64 size1, size2 ;
-    CHAR buf[100] = { 0 } ;
+    char buf[100] = { 0 } ;
 
     // create lob
     rc = cl.createLob( lob ) ;
@@ -170,12 +163,12 @@ TEST_F( LobTest, read )
 	ASSERT_EQ( rc, SDB_OK ) << "fail to open lob" ;
 	time1 = lob.getCreateTime() ;
 	size1 = lob.getSize() ;
-	CHAR readBuf[100] = {} ;
+	char readBuf[100] = {} ;
 	UINT32 len = 10 ;
 	UINT32 readLen ;
 	rc = lob.read( len, readBuf, &readLen ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to read lob" ;
-	ASSERT_EQ( len, readLen ) ;
+	ASSERT_EQ( len, readLen ) << "fail to check lob read len" ;
 
     // close all cursors
     rc = db.closeAllCursors() ;
@@ -183,9 +176,9 @@ TEST_F( LobTest, read )
 
     // read lob again
 	rc = lob.seek( 10, SDB_LOB_SEEK_CUR ) ;
-    ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check seek" ;
+    ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check seek after close all cursors" ;
     rc = lob.read( len, readBuf, &readLen ) ;
-    ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check read" ;
+    ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check read after close all cursors" ;
 
     // close lob
     rc = lob.close() ;
@@ -196,15 +189,16 @@ TEST_F( LobTest, read )
     time2 = lob.getCreateTime() ;
     size2 = lob.getSize() ;
 
-    ASSERT_EQ( 0, oid1.compare( oid2 ) ) ;
-    ASSERT_EQ( time1, time2 ) ;
-    ASSERT_EQ( size1, size2 ) ;
+    ASSERT_EQ( 0, oid1.compare( oid2 ) ) << "fail to check lob oid " << oid1.toString() << " " << oid2.toString() ;
+    ASSERT_EQ( time1, time2 ) << "fail to check lob create time" ;
+    ASSERT_EQ( size1, size2 ) << "fail to check lob size" ;
 }
 
 // query then close all cursors
 TEST_F( LobTest, query )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
+
     // insert and query
 	BSONObj obj = BSON( "a" << "1" ) ;
 	rc = cl.insert( obj ) ;
@@ -212,10 +206,12 @@ TEST_F( LobTest, query )
 	BSONObj sel = BSON( "a" << "" ) ;
 	sdbCursor cursor ;
 	rc = cl.query( cursor, obj, sel ) ;
-	ASSERT_EQ( rc, SDB_OK ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to query cl" ;
+
 	// close all cursors
 	rc = db.closeAllCursors() ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to close all cursors" ;
+
 	// check cursor is closed
 	BSONObj res ;
 	rc = cursor.next( res ) ;

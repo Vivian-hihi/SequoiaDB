@@ -16,80 +16,59 @@ using namespace sdbclient ;
 using namespace std ;
 using namespace bson ;
 
-const CHAR* USER   = "" ;
-const CHAR* PASSWD = "" ;
-sdbCollectionSpace cs ;
-sdbCollection cl ;
 const CHAR* csname = "lobTestCS" ;
 const CHAR* clname = "lobTestCL" ;
 
-#define CHECK_RC_CODE( rc, msg )\
-do\
-{\
-	if( rc != SDB_OK )\
-	{\
-		cout << msg << endl ;\
-		return rc ;\
-    }\
-}\
-while( 0 ) ;	
-
-INT32 createCSCL( sdb& db, sdbCollectionSpace& cs, sdbCollection& cl, const char* csName, const char* clName )
+int insertAndQuery( sdbCollection& cl, sdbCursor& cursor )
 {
-	INT32 rc = SDB_OK ;
-	rc = db.createCollectionSpace( csName, SDB_PAGESIZE_4K, cs ) ;
-    CHECK_RC_CODE( rc, "fail to create cs" )
-    rc = cs.createCollection( clname, cl ) ;
-	CHECK_RC_CODE( rc, "fail to create cl" )
-    return rc ;
-}
-
-INT32 insertAndQuery( sdbCollection& cl, sdbCursor& cursor )
-{
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	// insert and query
     BSONObj obj = BSON( "a" << "1" ) ;
     rc = cl.insert( obj ) ;
-    CHECK_RC_CODE( rc, "fail to insert" )
+    CHECK_RC( rc, "fail to insert, rc = %d\n", rc ) ;
     rc = cl.query( cursor, obj ) ;
-    CHECK_RC_CODE( rc, "fail to query" )
+    CHECK_RC( rc, "fail to query, rc = %d\n", rc ) ;
+done:
 	return rc ;
+error:
+	goto done ;
 }
 
-INT32 dropCS( sdb& db, const char* csName )
+int dropCS( sdb& db, const char* csName )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	rc = db.dropCollectionSpace( csName ) ;
-	CHECK_RC_CODE( rc, "fail to drop cs" ) 
+	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
+done: 
 	return rc ;
+error:
+	goto done ;
 }
 
 // test close all cursors with normal connection
 TEST( closeAllCursors, normalConn )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 
 	// connect and create cs cl
-    getConf() ;
 	sdb db ;
-    rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
-	rc = createCSCL( db, cs, cl, csname, clname ) ;
+	sdbCollectionSpace cs ;
+	sdbCollection cl ;
+	rc = createNormalCl( db, cs, cl, csname, clname ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 	
 	// insert and query
-	sdbCursor cursor ;
 	rc = insertAndQuery( cl, cursor ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 	
 	// close all cursors
 	rc = db.closeAllCursors() ;
-	ASSERT_EQ( rc, SDB_OK ) ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to close all cursors" ;
 	
 	// check cursor
 	BSONObj res ;
 	rc = cursor.next( res ) ;
-	ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check cursor" ;
+	ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check cursor after close all cursors" ;
 
 	// drop cs and disconnect
 	rc = dropCS( db, csname ) ;
@@ -100,7 +79,7 @@ TEST( closeAllCursors, normalConn )
 // test close all cursors with datasource connection
 TEST( closeAllCursors, datasourceConn )
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	sdbDataSource ds ;
 	sdbDataSourceConf conf ;
 
@@ -117,9 +96,11 @@ TEST( closeAllCursors, datasourceConn )
 
 	// get connection and create cs cl
 	sdb* conn ;
+	sdbCollectionSpace cs ;
+	sdbCollection cl ;
 	rc = ds.getConnection( conn ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to get connection" ;
- 	rc = createCSCL( *conn, cs, cl, csname, clname ) ;
+ 	rc = createNormalCl( *conn, cs, cl, csname, clname ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 
 	// insert and query
@@ -133,7 +114,7 @@ TEST( closeAllCursors, datasourceConn )
 	// check cursor
 	BSONObj res ;
     rc = cursor.next( res ) ;
-    ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check cursor" ;
+    ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check cursor after release connection" ;
 
     // get connection again and drop cs
 	rc = ds.getConnection( conn ) ;

@@ -10,6 +10,5 @@
 #include <cstdlib>
 #include <client.hpp>
 #include "../testcommon.hpp"
-using namespace sdbclient ;
 
 #endif 

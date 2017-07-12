@@ -20,16 +20,16 @@ sdbCollectionSpace cs ;
 sdbCollection cl ;
 
 // explain query { a:100 }
-INT32 explainDoc( sdbCollection& cl, string& scanType )
+int explainDoc( sdbCollection& cl, string& scanType )
 {
 	int rc = SDB_OK ;
 	sdbCursor cursor ;
 	BSONObj cond = BSON( "a" << 100 ) ;
 	BSONObj obj ;
 	rc = cl.explain( cursor, cond ) ;
-	CHECK_RC( rc, "fail to explain" ) ;
+	CHECK_RC( rc, "fail to explain, rc = %d\n", rc ) ;
 	rc = cursor.next( obj ) ;
-	CHECK_RC( rc, "fail to get next" ) ;
+	CHECK_RC( rc, "fail to get next, rc = %d\n", rc ) ;
 	scanType = obj.getField( "ScanType" ).String() ;
 done:
 	return rc ;
@@ -72,12 +72,12 @@ TEST( analyzeTest, explain )
 	rc = db.analyze( option ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to analyze" ;
 
-	// explain query { a:100 } after analyze
+	// explain query { a:100 }
 	rc = explainDoc( cl, scanType ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 	ASSERT_STREQ( scanType.c_str(), "tbscan" ) ;
 
 	// drop cs
 	rc = db.dropCollectionSpace( csname ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs" ;
+	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs " << csname ;
 }

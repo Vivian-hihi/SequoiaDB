@@ -13,8 +13,6 @@ using namespace sdbclient ;
 using namespace bson ;
 using namespace std ;
 
-const char* USER   = "" ;
-const char* PASSWD = "" ;
 const char* csName = "dateTestCs" ;
 const char* clName = "dateTestCl" ;
 
@@ -33,30 +31,25 @@ void DateTest::SetUpTestCase()
 {
     int rc = SDB_OK ;
 	// connect and create cs cl
-	getConf() ;
-	rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ;
-	ASSERT_RC( rc, "fail to connect sdb" ) ; 
-	rc = db.createCollectionSpace( csName, SDB_PAGESIZE_4K, cs ) ;
-	ASSERT_RC( rc, "fail to create cs" ) ;
-	rc = cs.createCollection( clName, cl ) ;
-	ASSERT_RC( rc, "fail to create cl" ) ;
+	rc = createNormalCl( db, cs, cl, csName,clName ) ;
+	ASSERT_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
 }
 
 void DateTest::TearDownTestCase()
 {
-	INT32 rc = SDB_OK ;
+	int rc = SDB_OK ;
 	// drop cs and disconnect
 	rc = db.dropCollectionSpace( csName ) ;
-	ASSERT_RC( rc, "fail to drop cs" ) ;
+	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
 	db.disconnect() ;
 }
 
 TEST_F( DateTest, Date_t )
 {
 	unsigned long long mills[] = {
-		-62167248352000,   // 0000-01-01 00:00:00
+		-62167248000000,   // 0000-01-01 00:00:00
         253402271999000,   // 9999-12-31 23:59:59
-        -62167248353000,   // -0001-12-31 23:59:59 
+        -62167248001000,   // -0001-12-31 23:59:59 
         253402272000000    // 10000-01-01 00:00:00
 	} ;
 	int i ;
