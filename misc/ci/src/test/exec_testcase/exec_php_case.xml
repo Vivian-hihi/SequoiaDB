@@ -102,16 +102,15 @@
                                   phpversion="@{phpversion}"/>
                </then>
             </if>
-             
+            <if>
+               <equals arg1="${is_continue_exec}" arg2="false"/>
+               <then>
+                  <touch file="@{reportdir}/.TESTCASE_FAIL"/>
+               </then>
+            </if>
          </sequential>
       </for>
       
-      <if>
-         <equals arg1="${is_continue_exec}" arg2="false"/>
-         <then>
-            <touch file="@{reportdir}/.TESTCASE_FAIL"/>
-         </then>
-      </if>
       </sequential>
    </macrodef>      
 
