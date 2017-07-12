@@ -40,7 +40,7 @@
 
 #include "rtnContext.hpp"
 #include "rtnQueryOptions.hpp"
-#include "rtnSubContext.hpp"
+#include "rtnContextMain.hpp"
 #include "utilMap.hpp"
 
 namespace engine
@@ -63,6 +63,7 @@ namespace engine
       INT32 popAll() ;
       INT32 recordNum() ;
       INT32 remainLength() ;
+      INT32 truncate ( INT32 num ) ;
       INT32 getOrderKey( rtnOrderKey &orderKey );
       rtnContextBuf buffer() ;
       void setBuffer( rtnContextBuf &buffer ) ;
@@ -76,9 +77,8 @@ namespace engine
    /*
       _rtnContextMainCL define
    */
-   class _rtnContextMainCL : public _rtnContextBase
+   class _rtnContextMainCL : public _rtnContextMain
    {
-   typedef std::multimap< rtnOrderKey, _rtnSubCLContext* > SUBCL_ORDER_CTX_MAP ;
    typedef _utilMap< INT64, _rtnSubCLContext*, 20 >    SUBCL_CTX_MAP ;
       DECLARE_RTN_CTX_AUTO_REGISTER()
    public:
@@ -100,18 +100,20 @@ namespace engine
       INT32 addSubContext( SINT64 contextID );
 
       BOOLEAN requireOrder () const;
+
    protected:
-      virtual INT32 _prepareData( _pmdEDUCB *cb );
       virtual void  _toString( stringstream &ss ) ;
+      BOOLEAN _requireExplicitSorting () const ;
+      INT32   _prepareAllSubCtxDataByOrder( _pmdEDUCB *cb ) ;
+      INT32   _saveEmptyOrderedSubCtx( rtnSubContext* subCtx ) ;
+      INT32   _getNonEmptyNormalSubCtx( _pmdEDUCB *cb, rtnSubContext*& subCtx ) ;
+      INT32   _saveEmptyNormalSubCtx( rtnSubContext* subCtx ) ;
+      INT32   _saveNonEmptyNormalSubCtx( rtnSubContext* subCtx ) ;
 
    private:
       INT32 _prepareSubCLData( SINT64 contextID,
                                 _pmdEDUCB * cb,
                                 INT32 maxNumToReturn = -1 );
-      INT32 _prepareAllSubCLDataByOrder( _pmdEDUCB *cb ) ;
-      INT32 _prepareDataByOrder( _pmdEDUCB *cb );
-      INT32 _prepareDataNormal( _pmdEDUCB *cb ) ;
-      INT32 _getNonemptySubContext( _pmdEDUCB *cb, rtnSubCLContext*& subCtx ) ;
 
       INT32 _initSubCLContext( _pmdEDUCB *cb ) ;
 
@@ -125,12 +127,8 @@ namespace engine
    private:
       _rtnQueryOptions           _options ;
       SUBCL_CTX_MAP              _subContextMap ;
-      SUBCL_ORDER_CTX_MAP        _orderContextMap ;
       BOOLEAN                    _includeShardingOrder ;
-      _ixmIndexKeyGen*           _keyGen ;
       std::list< std::string >   _subs ;
-      INT64                      _numToReturn ;
-      INT64                      _numToSkip ;
    };
    typedef class _rtnContextMainCL rtnContextMainCL;
 }

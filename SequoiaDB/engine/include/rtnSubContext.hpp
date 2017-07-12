@@ -17,7 +17,7 @@
 
    Source File Name = rtnSubContext.hpp
 
-   Descriptive Name = RunTime MainCL Context Header
+   Descriptive Name = RunTime Sub-Context Header
 
    When/how to use: this program may be used on binary and text-formatted
    versions of Runtime component. This file contains structure for Runtime
@@ -90,6 +90,7 @@ namespace engine
       virtual INT32        popAll() = 0 ;
       virtual INT32        recordNum() = 0 ;
       virtual INT32        remainLength() = 0 ;
+      virtual INT32        truncate ( INT32 num ) = 0 ;
       virtual INT32        getOrderKey( _rtnOrderKey& orderKey ) = 0;
 
    protected:

@@ -59,12 +59,9 @@ namespace engine
 
    _rtnContextCoord::_rtnContextCoord( INT64 contextID, UINT64 eduID,
                                        BOOLEAN preRead )
-   :_rtnContextBase( contextID, eduID )
+   :_rtnContextMain( contextID, eduID )
    {
-      _numToReturn      = -1 ;
-      _numToSkip        = 0 ;
       _preRead          = preRead ;
-      _keyGen           = NULL ;
       _needReOrder      = FALSE ;
 
       _pSite            = NULL ;
@@ -75,7 +72,6 @@ namespace engine
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       killSubContexts( cb ) ;
-      SAFE_OSS_DELETE( _keyGen ) ;
 
       if ( _pSession )
       {
@@ -98,10 +94,10 @@ namespace engine
    UINT32 _rtnContextCoord::getCachedRecordNum()
    {
       UINT32 recordNum = 0 ;
-      SUB_CONTEXT_MAP::iterator it = _subContextMap.begin() ;
-      while( it != _subContextMap.end() )
+      SUB_ORDERED_CTX_MAP::iterator it = _orderedContextMap.begin() ;
+      while( it != _orderedContextMap.end() )
       {
-         coordSubContext *pSub = it->second ;
+         rtnSubContext *pSub = it->second ;
          recordNum += pSub->recordNum() ;
          ++it ;
       }
@@ -130,17 +126,18 @@ namespace engine
          _getPrepareNodesData( cb, TRUE ) ;
       }
 
-      // push all subContext to prepare map
-      SUB_CONTEXT_MAP::iterator itSub = _subContextMap.begin() ;
-      while ( _subContextMap.end() != itSub )
+      // push all ordered context to prepare map
+      SUB_ORDERED_CTX_MAP::iterator itSub = _orderedContextMap.begin() ;
+      while ( _orderedContextMap.end() != itSub )
       {
-         pSubContext = itSub->second ;
+         rtnSubContext* rtnSubCtx = itSub->second ;
+         pSubContext = dynamic_cast<coordSubContext*>( rtnSubCtx ) ;
          _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
                                     pSubContext->getRouteID().value,
                                     pSubContext ) ) ;
          ++itSub ;
       }
-      _subContextMap.clear() ;
+      _orderedContextMap.clear() ;
 
       EMPTY_CONTEXT_MAP::iterator it = _emptyContextMap.begin() ;
       while ( it != _emptyContextMap.end() )
@@ -315,6 +312,11 @@ namespace engine
       EMPTY_CONTEXT_MAP::iterator emptyIter ;
       pmdSubSession *pSub = NULL ;
 
+      if ( _emptyContextMap.size() == 0 )
+      {
+         goto done ;
+      }
+
       msgFillGetMoreMsg( msgReq, cb->getTID(), -1, -1, 0 ) ;
 
       emptyIter = _emptyContextMap.begin() ;
@@ -339,7 +341,7 @@ namespace engine
             PD_LOG( PDERROR, "Send get more message[ContextID:%lld] to "
                     "node[%s] failed, rc: %d", msgReq.contextID,
                     routeID2String( routeID ).c_str(), rc ) ;
-            break ;
+            goto error ;
          }
          else
          {
@@ -353,7 +355,10 @@ namespace engine
          emptyIter = _emptyContextMap.erase( emptyIter ) ;
       }
 
+   done:
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _rtnContextCoord::_getPrepareNodesData( pmdEDUCB * cb,
@@ -443,58 +448,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextCoord::_prepareData( pmdEDUCB * cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      while ( TRUE )
-      {
-         rc = _getSubData() ;
-         if ( SDB_OK == rc || SDB_DMS_EOC == rc )
-         {
-            goto done ;
-         }
-         else if ( SDB_RTN_COORD_CACHE_EMPTY != rc )
-         {
-            PD_LOG( PDERROR, "Failed to get sub data, rc: %d", rc ) ;
-            goto error ;
-         }
-
-         if ( _emptyContextMap.size() == 0 &&
-              _prepareContextMap.size() == 0 )
-         {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "Empty context map can't be empty" ) ;
-            goto error ;
-         }
-
-         rc = _send2EmptyNodes( cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Send request to empty nodes failed, rc: %d",
-                      rc ) ;
-
-         rc = _getPrepareNodesData( cb, requireOrder() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get data from prepare nodes failed, rc: %d",
-                      rc ) ;
-      }
-
-   done:
-      // pre-read
-      if ( SDB_OK == rc && _numToReturn != 0 && _preRead )
-      {
-         _send2EmptyNodes( cb ) ;
-
-         /// when all sub context is closed
-         if ( _subContextMap.empty() && _emptyContextMap.empty() &&
-              _prepareContextMap.empty() )
-         {
-            _hitEnd = TRUE ;
-         }
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void _rtnContextCoord::_toString( stringstream &ss )
    {
       if ( !_orderBy.isEmpty() )
@@ -515,16 +468,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( _needReOrder && 1 == _subContextMap.size() && requireOrder() )
+      if ( _needReOrder && 1 == _orderedContextMap.size() && requireOrder() )
       {
-         coordSubContext *pSubContext = _subContextMap.begin()->second ;
-         rtnOrderKey orderKey ;
-         rc = pSubContext->getOrderKey( orderKey ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
+         rtnSubContext* subCtx = _orderedContextMap.begin()->second ;
 
-         _subContextMap.clear() ;
-         _subContextMap.insert( SUB_CONTEXT_MAP::value_type( orderKey,
-                                pSubContext ) ) ;
+         _orderedContextMap.clear() ;
+
+         rc = _saveNonEmptyOrderedSubCtx( subCtx ) ;
+         if ( rc != SDB_OK )
+         {
+            SDB_OSS_DEL subCtx ;
+            PD_LOG ( PDERROR, "Failed to get orderKey failed, rc: %d", rc ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -583,13 +539,23 @@ namespace engine
       if ( !requireOrder() )
       {
          _prepareContextMap.erase( iter ) ;
-         _subContextMap.insert( SUB_CONTEXT_MAP::value_type( _emptyKey,
-                                pSubContext ) ) ;
+
+         try
+         {
+            _orderedContextMap.insert(
+               SUB_ORDERED_CTX_MAP::value_type( _emptyKey, pSubContext ) ) ;
+         }
+         catch( std::exception& e )
+         {
+            rc = SDB_SYS ;
+            pSubContext->clearData() ;
+            SDB_OSS_DEL pSubContext ;
+            PD_LOG( PDERROR, "occur unexpected error:%s", e.what() );
+            goto error ;
+         }
       }
       else
       {
-         rtnOrderKey orderKey ;
-
          if ( _needReOrder )
          {
             rc = _reOrderSubContext() ;
@@ -601,16 +567,16 @@ namespace engine
             }
          }
 
-         rc = pSubContext->getOrderKey( orderKey ) ;
+         _prepareContextMap.erase( iter ) ;
+
+         rc = _saveNonEmptyOrderedSubCtx( pSubContext ) ;
          if ( rc != SDB_OK )
          {
             pSubContext->clearData() ;
-            PD_LOG ( PDERROR, "Failed to get orderKey failed, rc: %d", rc ) ;
+            SDB_OSS_DEL pSubContext ;
+            PD_LOG ( PDERROR, "Failed to save sub ctx by order, rc=%d", rc ) ;
             goto error ;
          }
-         _prepareContextMap.erase( iter ) ;
-         _subContextMap.insert( SUB_CONTEXT_MAP::value_type( orderKey,
-                                pSubContext ) ) ;
       }
 
    done:
@@ -679,7 +645,7 @@ namespace engine
 
       SDB_ASSERT ( NULL != pReply, "reply can't be NULL" ) ;
 
-      if ( _subContextMap.empty() && _emptyContextMap.empty() &&
+      if ( _orderedContextMap.empty() && _emptyContextMap.empty() &&
            _prepareContextMap.empty() )
       {
          isEmpty = TRUE ;
@@ -731,348 +697,6 @@ namespace engine
       _send2EmptyNodes( cb ) ;
    }
 
-   INT32 _rtnContextCoord::_getSubData()
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( !requireOrder() )
-      {
-         rc = _getSubDataNormal() ;
-      }
-      else
-      {
-         rc = _getSubDataByOrder() ;
-      }
-
-      return rc ;
-   }
-
-   INT32 _rtnContextCoord::_getSubDataNormal ()
-   {
-      INT32 rc                      = SDB_OK ;
-      SUB_CONTEXT_MAP::iterator iter ;
-      coordSubContext *pSubContext  = NULL ;
-      SINT32 recordNum              = 0 ;
-      const CHAR *pData             = NULL ;
-      INT32 startNumRecords = numRecords() ;
-
-      while ( numRecords() == startNumRecords )
-      {
-         if ( 0 == _numToReturn )
-         {
-            _hitEnd = TRUE ;
-            rc = SDB_DMS_EOC ;
-            goto error ;
-         }
-         if ( _subContextMap.size() == 0 )
-         {
-            if ( _emptyContextMap.size() + _prepareContextMap.size() == 0 )
-            {
-               _hitEnd = TRUE ;
-               rc = SDB_DMS_EOC ;
-            }
-            else
-            {
-               rc = SDB_RTN_COORD_CACHE_EMPTY ;
-            }
-            goto error ;
-         }
-
-         iter = _subContextMap.begin() ;
-         pSubContext = iter->second ;
-         recordNum = pSubContext->recordNum() ;
-
-         // skip the records
-         if ( _numToSkip > 0 )
-         {
-            if ( _numToSkip >= recordNum )
-            {
-               rc = pSubContext->popAll() ;
-               if ( rc != SDB_OK )
-               {
-                  PD_LOG ( PDERROR, "Failed to skip the data(rc=%d)", rc ) ;
-                  goto error ;
-               }
-               _subContextMap.erase ( iter ) ;
-               _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
-                                        pSubContext->getRouteID().value,
-                                        pSubContext ) ) ;
-               _numToSkip -= recordNum ;
-               continue ;
-            }
-            else
-            {
-               rc = pSubContext->popN( _numToSkip ) ;
-               if ( rc != SDB_OK )
-               {
-                  PD_LOG ( PDERROR, "Failed to skip the data(rc=%d)", rc ) ;
-                  goto error ;
-               }
-               _numToSkip = 0 ;
-            }
-         }
-
-         recordNum = pSubContext->recordNum() ;
-
-         if ( ( _numToReturn < 0 || recordNum <= _numToReturn ) &&
-              ( buffEndOffset() + pSubContext->remainLength() <=
-                RTN_RESULTBUFFER_SIZE_MAX ) && !_selector.isInitialized() )
-         {
-            rc = appendObjs( pSubContext->front(),
-                             (INT32)pSubContext->remainLength(), recordNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
-
-            rc = pSubContext->popAll() ;
-            PD_RC_CHECK( rc, PDERROR, "Pop sub context all objs failed, rc: %d",
-                         rc ) ;
-
-            if ( _numToReturn > 0 )
-            {
-               _numToReturn -= recordNum ;
-            }
-         }
-         else
-         {
-            while ( 0 != _numToReturn && recordNum > 0 )
-            {
-               pData = pSubContext->front() ;
-               if ( NULL == pData )
-               {
-                  rc = SDB_SYS ;
-                  PD_LOG ( PDERROR, "Failed to get the data, rc: %d", rc ) ;
-                  goto error ;
-               }
-
-               try
-               {
-                  BSONObj boRecord( pData ) ;
-                  BSONObj boSelected ;
-                  BSONObj *boRealRecord = NULL ;
-                  if ( !_selector.isInitialized() )
-                  {
-                     boRealRecord = &boRecord ;
-                  }
-                  else
-                  {
-                     rc = _selector.select( boRecord, boSelected ) ;
-                     if ( SDB_OK != rc )
-                     {
-                        PD_LOG( PDERROR, "failed to select fields:%d", rc ) ;
-                        goto error ;
-                     }
-                     boRealRecord = &boSelected ;
-                  }
-
-                  rc = append( *boRealRecord ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
-                               boRecord.toString().c_str(), rc ) ;
-               }
-               catch ( std::exception &e )
-               {
-                  rc = SDB_SYS ;
-                  PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
-                  goto error ;
-               }
-
-               rc = pSubContext->pop() ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to pop data, rc: %d", rc ) ;
-
-               --recordNum ;
-               if ( _numToReturn > 0 )
-               {
-                  --_numToReturn ;
-               }
-
-               // make sure we still have room to read another
-               // record_max_sz (i.e. 16MB). if we have less than 16MB
-               // to 256MB, we can't safely assume the next record we
-               // read will not overflow the buffer, so let's just break
-               // before reading the next record
-               if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
-                    RTN_RESULTBUFFER_SIZE_MAX )
-               {
-                  // let's break if there's no room for another max record
-                  break ;
-               }
-            }
-         }
-
-         if ( pSubContext->recordNum() <= 0 )
-         {
-            _subContextMap.erase ( iter ) ;
-            _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
-                                     pSubContext->getRouteID().value,
-                                     pSubContext ) ) ;
-         }
-      } // end while
-
-      if ( 0 == _numToReturn )
-      {
-         _hitEnd = TRUE ;
-      }
-
-      if ( !isEmpty() )
-      {
-         rc = SDB_OK ;
-      }
-      else
-      {
-         rc = SDB_RTN_COORD_CACHE_EMPTY ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnContextCoord::_getSubDataByOrder ()
-   {
-      INT32 rc = SDB_OK ;
-      SUB_CONTEXT_MAP::iterator iterFirst ;
-      coordSubContext *pSubContext = NULL ;
-      const CHAR *pData = NULL ;
-      INT32 startNumRecords = numRecords() ;
-
-      while ( numRecords() == startNumRecords )
-      {
-         // must sub context all have data
-         if ( _emptyContextMap.size() + _prepareContextMap.size() > 0 )
-         {
-            rc = SDB_RTN_COORD_CACHE_EMPTY ;
-            goto error ;
-         }
-         else if ( _subContextMap.size() == 0 )
-         {
-            _hitEnd = TRUE ;
-            rc = SDB_DMS_EOC ;
-            goto error ;
-         }
-         if ( eof() )
-         {
-            break ;
-         }
-
-         for ( INT32 index = 0 ; index < RTN_CONTEXT_GETNUM_ONCE ; ++index )
-         {
-            if ( 0 == _numToReturn )
-            {
-               _hitEnd = TRUE ;
-               break ;
-            }
-
-            iterFirst = _subContextMap.begin() ;
-            pSubContext = iterFirst->second ;
-            pData = pSubContext->front() ;
-            if ( NULL == pData )
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "Failed to get the data, rc: %d", rc ) ;
-               goto error ;
-            }
-
-            if ( _numToSkip > 0 )
-            {
-               --_numToSkip ;
-            }
-            else
-            {
-               try
-               {
-                  BSONObj obj( pData ) ;
-                  BSONObj selected ;
-                  const BSONObj *record = NULL ;
-
-                  if ( !_selector.isInitialized() )
-                  {
-                     record = &obj ;
-                  }
-                  else
-                  {
-                     rc = _selector.select( obj, selected ) ;
-                     if ( SDB_OK != rc )
-                     {
-                        PD_LOG( PDERROR, "failed to select fields from obj:%d", rc ) ;
-                        goto error ;
-                     }
-                     record = &selected ;
-                  }
-
-                  rc = append( *record ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
-                               obj.toString().c_str(), rc ) ;
-               }
-               catch ( std::exception &e )
-               {
-                  rc = SDB_SYS ;
-                  PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-                  goto error ;
-               }
-
-               if ( _numToReturn > 0 )
-               {
-                  --_numToReturn ;
-               }
-            }
-
-            rc = pSubContext->pop() ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get the data(rc=%d)", rc ) ;
-
-            if ( pSubContext->recordNum() <= 0 )
-            {
-               _subContextMap.erase ( iterFirst ) ;
-               _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
-                                        pSubContext->getRouteID().value,
-                                        pSubContext ) ) ;
-               break ;
-            }
-            else
-            {
-               rtnOrderKey orderKey ;
-               rc = pSubContext->getOrderKey( orderKey ) ;
-               PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
-
-               _subContextMap.erase ( iterFirst ) ;
-               _subContextMap.insert( SUB_CONTEXT_MAP::value_type( orderKey,
-                                      pSubContext ) ) ;
-            }
-
-            // make sure we still have room to read another
-            // record_max_sz (i.e. 16MB). if we have less than 16MB
-            // to 256MB, we can't safely assume the next record we
-            // read will not overflow the buffer, so let's just break
-            // before reading the next record
-            if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
-                 RTN_RESULTBUFFER_SIZE_MAX )
-            {
-               // let's break if there's no room for another max record
-               break ;
-            }
-         }
-      }
-
-      if ( 0 == _numToReturn )
-      {
-         _hitEnd = TRUE ;
-      }
-
-      if ( !isEmpty() )
-      {
-         rc = SDB_OK ;
-      }
-      else
-      {
-         rc = SDB_RTN_COORD_CACHE_EMPTY ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void _rtnContextCoord::_delPrepareContext( const MsgRouteID & routeID )
    {
       EMPTY_CONTEXT_MAP::iterator iter =
@@ -1088,6 +712,156 @@ namespace engine
          }
          _prepareContextMap.erase ( iter ) ;
       }
+   }
+
+   BOOLEAN _rtnContextCoord::_requireExplicitSorting () const
+   {
+      return requireOrder() ;
+   }
+
+   INT32 _rtnContextCoord::_prepareSubCtxData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _emptyContextMap.size() == 0 &&
+           _prepareContextMap.size() == 0 )
+      {
+         goto done ;
+      }
+
+      rc = _send2EmptyNodes( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Send request to empty nodes failed, rc: %d",
+                   rc ) ;
+
+      rc = _getPrepareNodesData( cb, requireOrder() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get data from prepare nodes failed, rc: %d",
+                   rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::_prepareAllSubCtxDataByOrder( _pmdEDUCB *cb )
+   {
+      return _prepareSubCtxData( cb ) ;
+   }
+   
+   INT32 _rtnContextCoord::_saveEmptyOrderedSubCtx( rtnSubContext* subCtx )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != subCtx, "subCtx should be not null" ) ;
+
+      try
+      {
+         coordSubContext* coordSubCtx = dynamic_cast<coordSubContext*>( subCtx ) ;
+         _emptyContextMap.insert(
+            EMPTY_CONTEXT_MAP::value_type(
+               coordSubCtx->getRouteID().value, coordSubCtx ) ) ;
+      }
+      catch( std::exception& e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "occur unexpected error:%s", e.what() );
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::_getNonEmptyNormalSubCtx( _pmdEDUCB *cb, rtnSubContext*& subCtx )
+   {
+      INT32 rc = SDB_OK ;
+      SUB_ORDERED_CTX_MAP::iterator iter ;
+
+      subCtx = NULL ;
+
+      while ( _orderedContextMap.size() == 0 )
+      {
+         if ( _emptyContextMap.size() + _prepareContextMap.size() == 0 )
+         {
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
+
+         rc = _prepareSubCtxData( cb ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+      SDB_ASSERT( _orderedContextMap.size() != 0, "_orderedContextMap should not be empty" ) ;
+
+      iter = _orderedContextMap.begin() ;
+      subCtx = iter->second ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::_saveEmptyNormalSubCtx( rtnSubContext* subCtx )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != subCtx, "subCtx can't be NULL" ) ;
+      SDB_ASSERT( subCtx->recordNum() == 0, "sub ctx is not empty" ) ;
+
+      // move empty sub ctx from _orderedContextMap to _emptyContextMap
+
+      // generally, subctx is first element of _orderedContextMap
+      // so don't worry about performance
+      for ( SUB_ORDERED_CTX_MAP::iterator iter = _orderedContextMap.begin() ;
+            iter != _orderedContextMap.end() ;
+            ++iter )
+      {
+         if ( iter->second == subCtx )
+         {
+            _orderedContextMap.erase ( iter ) ;
+            break ;
+         }
+      }
+
+      rc = _saveEmptyOrderedSubCtx( subCtx ) ;
+      if ( SDB_OK != rc )
+      {
+         // rtnContextMain will delete subCtx
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::_saveNonEmptyNormalSubCtx( rtnSubContext* subCtx )
+   {
+      SDB_ASSERT( NULL != subCtx, "subCtx can't be NULL" ) ;
+      SDB_ASSERT( subCtx->recordNum() > 0, "sub ctx is empty" ) ;
+
+      // sub ctx is in _orderedContextMap,
+      // no need to do anything
+      return SDB_OK ;
+   }
+
+   INT32 _rtnContextCoord::_doAfterPrepareData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _numToReturn != 0 && !_hitEnd && _preRead )
+      {
+         rc = _send2EmptyNodes( cb ) ;
+      }
+
+      return rc ;
    }
 
    /*
@@ -1121,6 +895,51 @@ namespace engine
          return _pData->header.messageLength - _curOffset ;
       }
       return 0 ;
+   }
+
+   INT32 _coordSubContext::truncate ( INT32 num )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 offset = _curOffset ;
+      INT32 recordNum = 0 ;
+
+      if ( num >= _recordNum )
+      {
+         goto done ;
+      }
+
+      while( ossAlign4( (UINT32)offset ) < (UINT32)_pData->header.messageLength &&
+             recordNum < num )
+      {
+         offset = ossAlign4( (UINT32)offset ) ;
+         try
+         {
+            BSONObj objTemp( (CHAR *)_pData + offset ) ;
+            offset += objTemp.objsize() ;
+            ++recordNum ;
+         }
+         catch( std::exception& e )
+         {
+            PD_LOG( PDERROR, "Failed to create bson object: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      if ( offset < _pData->header.messageLength )
+      {
+         _pData->header.messageLength = offset ;
+      }
+
+      if ( recordNum < _recordNum )
+      {
+         _recordNum = recordNum ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_APPENDDATA, "coordSubContext::appendData" )

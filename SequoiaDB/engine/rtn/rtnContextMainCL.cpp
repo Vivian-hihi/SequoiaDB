@@ -117,6 +117,12 @@ namespace engine
       return _buffer.size() - _buffer.offset() ;
    }
 
+   INT32 _rtnSubCLContext::truncate ( INT32 num )
+   {
+      SDB_ASSERT( num >= 0, "num can't <0 " ) ;
+      return _buffer.truncate( (UINT32) num ) ;
+   }
+
    INT32 _rtnSubCLContext::getOrderKey( _rtnOrderKey& orderKey )
    {
       INT32 rc = SDB_OK;
@@ -165,13 +171,9 @@ namespace engine
    RTN_CTX_AUTO_REGISTER(_rtnContextMainCL, RTN_CONTEXT_MAINCL, "MAINCL")
 
    _rtnContextMainCL::_rtnContextMainCL( INT64 contextID, UINT64 eduID )
-   :_rtnContextBase( contextID, eduID ),
-    _includeShardingOrder( FALSE ),
-    _keyGen( NULL ),
-    _numToReturn( -1 ),
-    _numToSkip( 0 )
+      : _rtnContextMain( contextID, eduID ),
+        _includeShardingOrder( FALSE )
    {
-
    }
 
    _rtnContextMainCL::~_rtnContextMainCL()
@@ -189,18 +191,6 @@ namespace engine
          ++iter;
       }
       _subContextMap.clear();
-
-      // clean ordered context
-      SUBCL_ORDER_CTX_MAP::iterator orderIter = _orderContextMap.begin() ;
-      while ( orderIter != _orderContextMap.end() )
-      {
-         pRtncb->contextDelete( orderIter->second->contextId(), cb );
-         SDB_OSS_DEL orderIter->second ;
-         ++orderIter ;
-      }
-      _orderContextMap.clear() ;
-
-      SAFE_OSS_DELETE( _keyGen );
    }
 
    std::string _rtnContextMainCL::name() const
@@ -442,7 +432,12 @@ namespace engine
    BOOLEAN _rtnContextMainCL::requireOrder () const
    {
       return !( _options._orderBy.isEmpty() ) &&
-             ( _orderContextMap.size() > 0 || _subContextMap.size() > 1 ) ;
+             ( _orderedContextMap.size() > 0 || _subContextMap.size() > 1 ) ;
+   }
+
+   BOOLEAN _rtnContextMainCL::_requireExplicitSorting () const
+   {
+      return requireOrder() && !_includeShardingOrder ;
    }
 
    INT32 _rtnContextMainCL::_prepareSubCLData( SINT64 contextID,
@@ -515,22 +510,6 @@ namespace engine
       goto done;
    }
 
-   INT32 _rtnContextMainCL::_prepareData( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK;
-      if ( requireOrder() && !_includeShardingOrder )
-      {
-         SDB_ASSERT( _subs.empty(), "should be empty" ) ;
-         rc = _prepareDataByOrder( cb ) ;
-      }
-      else
-      {
-         rc = _prepareDataNormal( cb ) ;
-      }
-
-      return rc;
-   }
-
    void _rtnContextMainCL::_toString( stringstream &ss )
    {
       if ( !_options._orderBy.isEmpty() )
@@ -548,10 +527,18 @@ namespace engine
       }
    }
 
-   INT32 _rtnContextMainCL::_prepareAllSubCLDataByOrder( _pmdEDUCB *cb )
+   INT32 _rtnContextMainCL::_prepareAllSubCtxDataByOrder( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       _SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB();
+
+      if ( !_subs.empty() )
+      {
+         SDB_ASSERT( FALSE, "shoud be empty" ) ;
+         PD_LOG( PDERROR, "subs shoud be empty" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       if ( _subContextMap.size() == 0 )
       {
@@ -561,7 +548,6 @@ namespace engine
       for ( SUBCL_CTX_MAP::iterator iter = _subContextMap.begin() ;
             iter != _subContextMap.end() ; )
       {
-         rtnOrderKey orderKey ;
          rtnSubCLContext* subCtx = iter->second ;
 
          if ( cb->isInterrupted() )
@@ -599,16 +585,15 @@ namespace engine
 
          SDB_ASSERT( subCtx->recordNum() > 0, "no data for sub ctx" ) ;
 
-         rc = subCtx->getOrderKey( orderKey ) ;
+         iter = _subContextMap.erase( iter ) ;
+         
+         rc = _saveNonEmptyOrderedSubCtx( subCtx ) ;
          if ( rc != SDB_OK )
          {
+            SDB_OSS_DEL subCtx ;
             PD_LOG ( PDERROR, "Failed to get orderKey failed, rc: %d", rc ) ;
             goto error ;
          }
-
-         iter = _subContextMap.erase( iter ) ;
-         _orderContextMap.insert( SUBCL_ORDER_CTX_MAP::value_type(
-                                    orderKey, subCtx ) ) ;
       }
 
    done:
@@ -617,150 +602,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextMainCL::_prepareDataByOrder( _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK;
-
-      if ( !_subs.empty() )
-      {
-         SDB_ASSERT( FALSE, "shoud be empty" ) ;
-         PD_LOG( PDERROR, "subs shoud be empty" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      while ( 0 != _numToReturn )
-      {
-         if ( cb->isInterrupted() )
-         {
-            rc = SDB_APP_INTERRUPT ;
-            goto error ;
-         }
-
-         if ( _subContextMap.size() > 0 )
-         {
-            // get data from all empty sub contexts
-            rc = _prepareAllSubCLDataByOrder( cb ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to prepare all sub collections' data, rc=%d", rc ) ;
-               goto error ;
-            }
-         }
-
-         SDB_ASSERT( _subContextMap.size() == 0, "_subContextMap should be empty" ) ;
-
-         if ( _orderContextMap.size() == 0 )
-         {
-            _hitEnd = TRUE ;
-            rc = SDB_DMS_EOC ;
-            goto error ;
-         }
-
-         if ( 0 == _numToReturn )
-         {
-            _hitEnd = TRUE ;
-            break ;
-         }
-
-         if ( eof() )
-         {
-            break ;
-         }
-
-         SUBCL_ORDER_CTX_MAP::iterator iter = _orderContextMap.begin();
-         if ( _orderContextMap.end() == iter )
-         {
-            _hitEnd = TRUE ;
-            if ( isEmpty() )
-            {
-               rc = SDB_DMS_EOC;
-            }
-            break;
-         }
-
-         rtnSubCLContext* ctx = iter->second ;
-
-         if ( _numToSkip <= 0 )
-         {
-            try
-            {
-               BSONObj obj( ctx->front() );
-               rc = append( obj ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "Failed to append data(rc=%d)", rc );
-            }
-            catch ( std::exception &e )
-            {
-               PD_LOG( PDERROR, "occur unexpected error:%s", e.what() );
-               goto error;
-            }
-
-            if ( _numToReturn > 0 )
-            {
-               --_numToReturn ;
-            }
-         }
-         else
-         {
-            --_numToSkip ;
-         }
-
-         rc = ctx->pop();
-         if ( rc )
-         {
-            goto error;
-         }
-
-         if ( ctx->recordNum() <= 0 )
-         {
-            _orderContextMap.erase ( iter ) ;
-            _subContextMap.insert( SUBCL_CTX_MAP::value_type(
-                                       ctx->contextId(),
-                                       ctx ) ) ;
-            // if main buffer is not empty, break to return objs,
-            // so this sub context can prefetch simultaneously
-            if ( !isEmpty() )
-            {
-               break ;
-            }
-         }
-         else
-         {
-            rtnOrderKey orderKey ;
-            rc = ctx->getOrderKey( orderKey ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
-
-            _orderContextMap.erase ( iter ) ;
-            _orderContextMap.insert( SUBCL_ORDER_CTX_MAP::value_type( orderKey,
-                                       ctx ) ) ;
-         }
-
-         // make sure we still have room to read another
-         // record_max_sz (i.e. 16MB). if we have less than 16MB
-         // to 256MB, we can't safely assume the next record we
-         // read will not overflow the buffer, so let's just break
-         // before reading the next record
-         if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
-              RTN_RESULTBUFFER_SIZE_MAX )
-         {
-            // let's break if there's no room for another max record
-            break ;
-         }
-      }
-
-      if ( 0 == _numToReturn )
-      {
-         _hitEnd = TRUE ;
-      }
-
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 _rtnContextMainCL::_getNonemptySubContext( _pmdEDUCB* cb, rtnSubCLContext*& subCtx )
+   INT32 _rtnContextMainCL::_getNonEmptyNormalSubCtx( _pmdEDUCB* cb, rtnSubContext*& subCtx )
    {
       INT32 rc = SDB_OK ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB();
@@ -808,87 +650,49 @@ namespace engine
       goto done;
    }
 
-   INT32 _rtnContextMainCL::_prepareDataNormal( _pmdEDUCB *cb )
+   INT32 _rtnContextMainCL::_saveEmptyOrderedSubCtx( rtnSubContext* subCtx )
    {
       INT32 rc = SDB_OK ;
 
-      while ( 0 != _numToReturn )
+      SDB_ASSERT( NULL != subCtx, "subCtx should be not null" ) ;
+
+      try
       {
-         if ( cb->isInterrupted() )
-         {
-            rc = SDB_APP_INTERRUPT ;
-            goto error ;
-         }
-
-         if ( 0 == _numToReturn )
-         {
-            _hitEnd = TRUE ;
-            break ;
-         }
-
-         if ( eof() )
-         {
-            break ;
-         }
-
-         rtnSubCLContext* ctx = NULL ;
-
-         rc = _getNonemptySubContext( cb, ctx ) ;
-         if ( SDB_OK != rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               _hitEnd = TRUE ;
-            }
-            goto error ;
-         }
-
-         SDB_ASSERT( ctx != NULL, "ctx should not be null" ) ;
-
-         if ( _numToSkip > 0 )
-         {
-            if ( _numToSkip >= ctx->recordNum() )
-            {
-               _numToSkip -= ctx->recordNum() ;
-               ctx->popAll() ;
-               continue ;
-            }
-            else
-            {
-               ctx->popN( _numToSkip ) ;
-               _numToSkip = 0 ;
-            }
-         }
-
-         rtnContextBuf buffObj = ctx->buffer() ;
-
-         if ( _numToReturn > 0 )
-         {
-            if ( buffObj.recordNum() > _numToReturn )
-            {
-               buffObj.truncate( _numToReturn ) ;
-            }
-            _numToReturn -= buffObj.recordNum() ;
-         }
-
-         rc = appendObjs( buffObj.front(),
-                          buffObj.size() - buffObj.offset(),
-                          buffObj.recordNum() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
-
-         ctx->popAll() ;
-         break ;
+         _subContextMap.insert(
+            SUBCL_CTX_MAP::value_type( subCtx->contextId(),
+               dynamic_cast<_rtnSubCLContext*>( subCtx ) ) ) ;
       }
-
-      if ( 0 == _numToReturn )
+      catch( std::exception& e )
       {
-         _hitEnd = TRUE ;
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "occur unexpected error:%s", e.what() );
+         goto error ;
       }
 
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
+   }
+
+   INT32 _rtnContextMainCL::_saveEmptyNormalSubCtx( rtnSubContext* subCtx )
+   {
+      SDB_ASSERT( NULL != subCtx, "subCtx can't be NULL" ) ;
+      SDB_ASSERT( subCtx->recordNum() == 0, "sub ctx is not empty" ) ;
+
+      // normal sub ctx is in _subContextMap,
+      // no need to do anything
+      return SDB_OK ;
+   }
+
+   INT32 _rtnContextMainCL::_saveNonEmptyNormalSubCtx( rtnSubContext* subCtx )
+   {
+      SDB_ASSERT( NULL != subCtx, "subCtx can't be NULL" ) ;
+      SDB_ASSERT( subCtx->recordNum() > 0, "sub ctx is empty" ) ;
+
+      // normal sub ctx is in _subContextMap,
+      // no need to do anything
+      return SDB_OK ;
    }
 }
 

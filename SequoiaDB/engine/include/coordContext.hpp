@@ -39,7 +39,7 @@
 #define COORD_CONTEXT_HPP__
 
 #include "rtnContext.hpp"
-#include "rtnSubContext.hpp"
+#include "rtnContextMain.hpp"
 #include "coordDef.hpp"
 
 using namespace bson ;
@@ -73,6 +73,7 @@ namespace engine
       INT32          popAll() ;
       INT32          recordNum() ;
       INT32          remainLength() ;
+      INT32          truncate ( INT32 num ) ;
       INT32          getOrderKey( rtnOrderKey &orderKey ) ;
 
    private:
@@ -89,14 +90,13 @@ namespace engine
    } ;
    typedef _coordSubContext coordSubContext ;
 
-   typedef std::multimap< rtnOrderKey, coordSubContext* >   SUB_CONTEXT_MAP ;
    typedef _utilMap< UINT64, coordSubContext*, 20 >         EMPTY_CONTEXT_MAP ;
    typedef _utilMap< UINT64, MsgRouteID, 20 >               PREPARE_NODES_MAP ;
 
    /*
       _rtnContextCoord define
    */
-   class _rtnContextCoord : public _rtnContextBase
+   class _rtnContextCoord : public _rtnContextMain
    {
       DECLARE_RTN_CTX_AUTO_REGISTER()
       public:
@@ -132,7 +132,6 @@ namespace engine
       public:
          virtual std::string      name() const ;
          virtual RTN_CONTEXT_TYPE getType () const ;
-         virtual _dmsStorageUnit* getSU () { return NULL ; }
 
          OSS_INLINE  BOOLEAN requireOrder () const ;
 
@@ -140,13 +139,18 @@ namespace engine
          void disablePreRead() { _preRead = FALSE ; }
 
       protected:
-         virtual INT32   _prepareData( _pmdEDUCB *cb ) ;
          virtual void    _toString( stringstream &ss ) ;
 
+      protected:
+         BOOLEAN _requireExplicitSorting () const ;
+         INT32   _prepareAllSubCtxDataByOrder( _pmdEDUCB *cb ) ;
+         INT32   _getNonEmptyNormalSubCtx( _pmdEDUCB *cb, rtnSubContext*& subCtx ) ;
+         INT32   _saveEmptyOrderedSubCtx( rtnSubContext* subCtx ) ;
+         INT32   _saveEmptyNormalSubCtx( rtnSubContext* subCtx ) ;
+         INT32   _saveNonEmptyNormalSubCtx( rtnSubContext* subCtx ) ;
+         INT32   _doAfterPrepareData( _pmdEDUCB *cb ) ;
+
       private:
-         INT32    _getSubData () ;
-         INT32    _getSubDataNormal () ;
-         INT32    _getSubDataByOrder () ;
          INT32    _appendSubData ( CHAR *pData ) ;
 
          void     _delPrepareContext( const MsgRouteID &routeID ) ;
@@ -155,22 +159,15 @@ namespace engine
          INT32    _getPrepareNodesData( _pmdEDUCB *cb, BOOLEAN waitAll ) ;
 
          INT32    _reOrderSubContext() ;
+         INT32    _prepareSubCtxData( _pmdEDUCB *cb ) ;
 
       private:
-         // rest number of records to expect, -1 means select all
-         SINT64                     _numToReturn ;
-         // rest number of records need to skip
-         SINT64                     _numToSkip ;
-
-         SUB_CONTEXT_MAP            _subContextMap ;
          EMPTY_CONTEXT_MAP          _emptyContextMap ;
          EMPTY_CONTEXT_MAP          _prepareContextMap ;
 
          rtnOrderKey                _emptyKey ;
          BSONObj                    _orderBy ;
          BOOLEAN                    _preRead ;
-
-         _ixmIndexKeyGen            *_keyGen ;
 
          BOOLEAN                    _needReOrder ;
          /// error info
@@ -187,7 +184,7 @@ namespace engine
    OSS_INLINE BOOLEAN _rtnContextCoord::requireOrder () const
    {
       if ( _orderBy.isEmpty() ||
-           _subContextMap.size() + _emptyContextMap.size() +
+           _orderedContextMap.size() + _emptyContextMap.size() +
            _prepareContextMap.size() <= 1 )
       {
          return FALSE ;
