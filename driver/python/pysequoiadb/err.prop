@@ -313,3 +313,4 @@
 -312 = The task is not existed
 -313 = Replica log is not archived
 -314 = Data source has not been initialized
+-315 = Operation is incompatible with the object
