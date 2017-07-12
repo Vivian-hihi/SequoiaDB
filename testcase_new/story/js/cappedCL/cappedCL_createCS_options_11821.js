@@ -1,0 +1,74 @@
+/************************************
+*@Description: 创建固定集合空间，参数校验
+*@author:      luweikang
+*@createdate:  2017.7.7
+*@testlinkCase:seqDB-11821
+**************************************/
+
+main()
+
+function main()
+{
+   var csName1 = CHANGEDPREFIX + "_11821_CS1";
+   var csName2 = CHANGEDPREFIX + "_11821_CS2";
+   var csName3 = CHANGEDPREFIX + "_11821_CS3";
+   var csName4 = CHANGEDPREFIX + "_11821_CS4";
+   var csName5 = CHANGEDPREFIX + "_11821_CS5";
+   var csName6 = CHANGEDPREFIX + "_11821_CS6";
+   
+   //clean cs before test
+   commDropCS( db, csName1, true, "drop CS in the end" );
+   commDropCS( db, csName2, true, "drop CS in the end" );
+   commDropCS( db, csName3, true, "drop CS in the end" );
+   commDropCS( db, csName4, true, "drop CS in the end" );
+   commDropCS( db, csName5, true, "drop CS in the end" );
+   commDropCS( db, csName6, true, "drop CS in the end" );
+   
+   //check cappedCS options
+   println("---check cs options---")
+   
+   //check Capped : true
+   var options1 = { Capped : true };
+   checkCreateCSOptions( csName1, options1, true );
+   
+   //check Capped : false
+   var options2 = { Capped : false };
+   checkCreateCSOptions( csName2, options2, true );
+   
+   //check Capped : "",集群下会报-6错误，单机不会报错
+   var options3 = { Capped : "" };
+   checkCreateCSOptions( csName3, options3, true );
+   
+   //check Capped : "abc"
+   var options4 = { Capped : "abc" };
+   checkCreateCSOptions( csName4, options4, true );
+   
+   //check options = ""
+   var options5 = {};
+   checkCreateCSOptions( csName5, options5, true );
+     
+   //check Caped,集群下会报-6错误，单机不会报错
+   var options6 = { Caped : true };
+   checkCreateCSOptions( csName6, options6, true );
+   
+   println("---end test---");
+}
+
+function checkCreateCSOptions( csName, options, result )
+{
+   try
+   {
+      db.createCS( csName, options );
+      if( result !== true ){
+         throw "ERR_CREATE_CAPPEDCS"
+      }
+      commDropCS( db, csName, true, "drop CS in the end" );
+   }
+   catch( e )
+   {
+      if( e !== -6 )
+      {
+         throw buildException("checkCreateCSOptions()",e,"create cappedCS", "-6",csName+":"+e);
+      }
+   }
+}
