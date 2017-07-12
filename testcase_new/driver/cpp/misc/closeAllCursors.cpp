@@ -58,6 +58,7 @@ TEST( closeAllCursors, normalConn )
 	ASSERT_EQ( rc, SDB_OK ) ;
 	
 	// insert and query
+	sdbCursor cursor ;
 	rc = insertAndQuery( cl, cursor ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
 	

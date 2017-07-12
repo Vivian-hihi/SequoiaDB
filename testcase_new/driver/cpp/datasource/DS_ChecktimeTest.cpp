@@ -38,7 +38,6 @@ TEST( TimeTest, checkIntervalLong )
 	ds.close() ;
 }
 
-/*
 // 休眠时间 < checkInterval, 检查连接池空闲连接数量 > maxIdleConnNum
 TEST( TimeTest, checkIntervalShort )
 {
@@ -109,7 +108,6 @@ TEST( TimeTest, keepAliveTimoutNotZero )
 	ASSERT_EQ( 0, ds.getIdleConnNum() ) ;
 	ds.close() ;
 }
-*/
 
 /*
 // 设置keepAliveTimeout != 0,检查连接有效性
