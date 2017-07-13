@@ -616,16 +616,20 @@ namespace engine
          BSONObj obj ;
          BSONObjBuilder builder ;
          pdTraceCB *traceCB = sdbGetPDTraceCB() ;
-         BOOLEAN traceStarted = traceCB->_traceStarted.peek() ;
+         BOOLEAN traceStarted = traceCB->isStarted() ;
          builder.appendBool ( FIELD_NAME_TRACESTARTED, traceStarted ) ;
          if ( traceStarted )
          {
             builder.appendBool ( FIELD_NAME_WRAPPED,
-                                 traceCB->_freeBlockTail != 
-                                 traceCB->_totalSize ) ;
+                                 traceCB->isWrapped() ) ;
             builder.appendNumber ( FIELD_NAME_SIZE,
-                                   (INT32)(traceCB->_totalSize) ) ;
-            BSONArrayBuilder arr ;
+                                   (INT32)traceCB->getSize() ) ;
+            builder.append( FIELD_NAME_FREE_SIZE,
+                            (INT32)traceCB->getFreeSize() ) ;
+#ifdef _DEBUG
+            builder.append( "PadSize", (INT64)traceCB->getPadSize() ) ;
+#endif // _DEBUG
+            BSONArrayBuilder arr( builder.subarrayStart( FIELD_NAME_MASK ) ) ;
             for ( INT32 i = 0; i < _pdTraceComponentNum; ++i )
             {
                UINT32 mask = ((UINT32)1)<<i ;
@@ -634,16 +638,25 @@ namespace engine
                   arr.append ( pdGetTraceComponent ( i ) ) ;
                }
             }
-            builder.append ( FIELD_NAME_MASK, arr.arr() ) ;
+            arr.done() ;
 
-            BSONArrayBuilder bpArr;
-            const UINT64 *bpList = traceCB->getBPList () ;
-            INT32 bpNum = traceCB->getBPNum () ;
-            for ( INT32 i = 0; i < bpNum; ++i )
+            BSONArrayBuilder bpArr( builder.subarrayStart( FIELD_NAME_BREAKPOINTS ) ) ;
+            const UINT64 *bpList = traceCB->getBPList() ;
+            UINT32 bpNum = traceCB->getBPNum () ;
+            for ( UINT32 i = 0; i < bpNum; ++i )
             {
                bpArr.append( pdGetTraceFunction( bpList[i] ) ) ;
             }
-            builder.append( FIELD_NAME_BREAKPOINTS, bpArr.arr() );
+            bpArr.done() ;
+
+            BSONArrayBuilder thdArr( builder.subarrayStart( FIELD_NAME_THREADS ) ) ;
+            const UINT32 *thdList = traceCB->getThreadFilterList() ;
+            UINT32 thdNum = traceCB->getThreadFilterNum() ;
+            for ( UINT32 i = 0 ; i < thdNum ; ++i )
+            {
+               thdArr.append( thdList[ i ] ) ;
+            }
+            thdArr.done() ;
          }
          obj = builder.obj() ;
          rc = context->monAppend( obj ) ;

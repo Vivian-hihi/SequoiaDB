@@ -2330,6 +2330,7 @@ namespace engine
                        "Exception when initialize trace stop command: %s",
                        e.what() ) ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__RTNTRACESTOP_INIT, rc ) ;
       return rc ;
@@ -2345,14 +2346,52 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTOP_DOIT ) ;
       pdTraceCB *traceCB = sdbGetPDTraceCB() ;
-      if ( _pDumpFileName )
+      OSSFILE outFile ;
+      BOOLEAN isOpen = FALSE ;
+      CHAR filePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      if ( _pDumpFileName && ossStrlen( _pDumpFileName ) > 0 )
       {
          traceCB->stop() ;
-         rc = traceCB->dump ( _pDumpFileName ) ;
+
+#ifdef _LINUX
+         if ( OSS_FILE_SEP_CHAR != _pDumpFileName[ 0 ] )
+#else
+         if ( NULL == ossStrchr( _pDumpFileName, ':' ) )
+#endif // _LINUX
+         {
+            pmdOptionsCB *pOptCB = pmdGetKRCB()->getOptionCB() ;
+            utilBuildFullPath( pOptCB->getDiagLogPath(),
+                               _pDumpFileName,
+                               OSS_MAX_PATHSIZE,
+                               filePath ) ;
+         }
+         else
+         {
+            ossStrncpy( filePath, _pDumpFileName, OSS_MAX_PATHSIZE ) ;
+         }
+
+         /// open file
+         rc = ossOpen( filePath, OSS_REPLACE|OSS_READWRITE,
+                       OSS_DEFAULTFILE, outFile ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Open file[%s] failed, rc: %d",
+                    filePath, rc ) ;
+            goto error ;
+         }
+         isOpen = TRUE ;
+
+         PD_LOG( PDEVENT, "Begin to dump trace to %s ...", filePath ) ;
+         rc = traceCB->dump( &outFile ) ;
          PD_RC_CHECK ( rc, PDWARNING, "Failed to stop trace, rc = %d", rc ) ;
       }
    done :
       traceCB->destroy() ;
+      if ( isOpen )
+      {
+         ossClose( outFile ) ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNTRACESTOP_DOIT, rc ) ;
       return rc ;
    error :

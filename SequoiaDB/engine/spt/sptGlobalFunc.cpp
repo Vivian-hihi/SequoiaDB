@@ -36,6 +36,7 @@
 #include "utilStr.hpp"
 #include "pdTrace.hpp"
 #include "sptHelp.hpp"
+#include "pdTraceAnalysis.hpp"
 
 using namespace bson ;
 
@@ -223,6 +224,7 @@ JS_MAPPING_END()
       INT32 formatType = 0 ;
       string input ;
       string output ;
+      pdTraceParser traceParser ;
 
       /// 1st
       rc = arg.getNative( 0, (void*)&formatType, SPT_NATIVE_INT32 ) ;
@@ -268,8 +270,15 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = pdTraceCB::format( input.c_str(), output.c_str(),
-                              (_pdTraceFormatType)formatType ) ;
+      rc = traceParser.init( input.c_str(),
+                             output.c_str(),
+                             (pdTraceFormatType)formatType ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = traceParser.parse() ;
       if ( rc )
       {
          goto error ;
