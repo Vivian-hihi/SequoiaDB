@@ -18,28 +18,21 @@ sdbConnectionHandle db ;
 sdbCSHandle cs[ThreadNum] = { 0 } ;
 sdbCollectionHandle cl[ThreadNum] = { 0 } ;
 
-class SocketMutexTest : public testing::Test
+int setup()
 {
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;	
-} ;
-
-void SocketMutexTest::SetUpTestCase()
-{
-	int i ;
-
-	// close cache
+	int rc = SDB_OK ;
 	sdbClientConf config ;
-	onfig.enableCacheStrategy = 0 ;
+	bson option ;
+    bson_init( &option ) ;
+	
+	// close cache
+	config.enableCacheStrategy = 0 ;
     config.cacheTimeInterval = 0 ;
     rc = initClient( &config ) ;
-	ASSERT_RC( rc, "fail to init client, rc = %d\n", rc ) ;
+	CHECK_RC( rc, "fail to init client, rc = %d\n", rc ) ;
 
 	// make CsName
-    for( i = 0;i < ThreadNum;++i )
+    for( int i = 0;i < ThreadNum;++i )
     {
         char temp[20] = "C_drivertest" ;
         char number[20] ;
@@ -61,49 +54,38 @@ void SocketMutexTest::SetUpTestCase()
     }
 
     // connect to sdb
-	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+	CHECK_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
 
 	// create cs and cl
-	// make option {"ReplSize":0}
-	bson option ;
-	bson_init( &option ) ;
+	// make option { "ReplSize": 0 }
 	bson_append_int( &option, "ReplSize", 0 ) ;
 	bson_finish( &option ) ;
-	for( i = 0;i < ThreadNum;++i )
+	for( int i = 0;i < ThreadNum;++i )
 	{
     	rc = sdbCreateCollectionSpace( db, CsName[i], SDB_PAGESIZE_4K, &cs[i] ) ;
-		if( rc == SDB_DMS_CS_EXIST )
-		{
-			sdbDropCollectionSpace( db, CsName[i] ) ;
-			rc = sdbCreateCollectionSpace( db, CsName[i], SDB_PAGESIZE_4K, &cs[i] ) ;
-		}
-    	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;	
+    	CHECK_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;	
     	rc = sdbCreateCollection1( cs[i], ClName[i], &option, &cl[i] ) ;
-		if( rc == SDB_DMS_EXIST )
-		{
-			sdbDropCollection( cs[i], ClName[i] ) ;
-			rc = sdbCreateCollection1( cs[i], ClName[i], &option, &cl[i] ) ;
-		}
-		ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", ClName[i], rc ) ;
+		CHECK_RC( rc, "fail to create cl %s, rc = %d\n", ClName[i], rc ) ;
 	}
 	bson_destroy( &option ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void SocketMutexTest::TearDownTestCase()
+int teardown()
 {
-	int i ;
 	int rc = SDB_OK ;
-	// connect to sdb
-	// rc = sdbConnect(HostName,SvcName,Usr,Passwd,&db) ;
-    // ASSERT_EQ(rc,SDB_OK)<<"fail to connect sdb in the end" ;
-	for( i = 0;i < ThreadNum;++i )
+
+	for( int i = 0;i < ThreadNum;++i )
 	{
 		// drop cs 
 		rc = sdbDropCollectionSpace( db, CsName[i] ) ;
-		ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName[i], rc ) ;
+		CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", CsName[i], rc ) ;
 		// release handle
 		sdbReleaseCollection( cl[i] ) ;
 		sdbReleaseCS( cs[i] ) ;
@@ -115,6 +97,11 @@ void SocketMutexTest::TearDownTestCase()
     sdbDisconnect( db ) ;
 	// release handle
 	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArg : public import::WorkerArgs
@@ -233,8 +220,12 @@ void func_closeCursor2( ThreadArg *arg )
 
 // multi threads operate multi cs cl
 // after threads close cursor and stop,main thread close all cursor and disconnect
-TEST_F( SocketMutexTest, cl )
+TEST( SocketMutexTest, cl )
 {
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
 	// create multi thread to operate different cl
 	import::Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
@@ -250,19 +241,18 @@ TEST_F( SocketMutexTest, cl )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
-	int rc = SDB_OK ;
+	
 	// close all cursors in the end
 	rc = sdbCloseAllCursors( db ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to close all cursor" ;
-	// disconnect in the end
 	sdbDisconnect( db ) ;
-	// release handle
 	for( int i = 0;i < ThreadNum;++i )
 	{
 		sdbReleaseCollection( cl[i] ) ;
 		sdbReleaseCS( cs[i] ) ;
 	}
 	sdbReleaseConnection( db ) ;
+
 	// after test,reconnect and get cs cl
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
     ASSERT_EQ( rc, SDB_OK ) ;
@@ -276,8 +266,10 @@ TEST_F( SocketMutexTest, cl )
 }
 
 // diconnect between multi threads
-TEST_F( SocketMutexTest, disconnect )
+TEST( SocketMutexTest, disconnect )
 {
+	int rc = SDB_OK ;
+
 	// create multi thread to operate different cl
     import::Worker * workers[ThreadNum] ;
     ThreadArg arg[ThreadNum] ;
@@ -288,15 +280,17 @@ TEST_F( SocketMutexTest, disconnect )
         workers[i] = new import::Worker( (import::WorkerRoutine)func_closeCursor1, &arg[i], false ) ;
         workers[i]->start() ;
     }
-    int rc = SDB_OK ;
+    
     // thread 0-ThreadNum/2 close cursor before main thread disconnect
 	for( int i = 0;i < ThreadNum/2;++i )
 	{
     	workers[i]->waitStop() ;
     	delete workers[i] ;
 	}
+	
 	// disconnect between threads
     sdbDisconnect( db ) ;
+
 	// release handle
     for(int i = 0;i < ThreadNum;++i )
     {
@@ -304,12 +298,14 @@ TEST_F( SocketMutexTest, disconnect )
         sdbReleaseCS( cs[i] ) ;
     }
     sdbReleaseConnection( db ) ;
+
 	// thread ThreadNum/2-ThreadNum close cursor after main thread disconnect
 	for(int i = ThreadNum/2;i < ThreadNum;++i )
     {
         workers[i]->waitStop() ;
         delete workers[i] ;
     }
+
     // after test,reconnect and get cs cl
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
@@ -323,9 +319,11 @@ TEST_F( SocketMutexTest, disconnect )
 }
 
 // close all cursors between multi threads
-TEST_F( SocketMutexTest, closeAllCursor )
+TEST( SocketMutexTest, closeAllCursor )
 {
-    // create multi thread to operate different cl
+	int rc = SDB_OK ;
+    
+	// create multi thread to operate different cl
     import::Worker * workers[ThreadNum] ;
     ThreadArg arg[ThreadNum] ;
     for( int i = 0;i < ThreadNum;++i )
@@ -335,20 +333,25 @@ TEST_F( SocketMutexTest, closeAllCursor )
         workers[i] = new import::Worker( (import::WorkerRoutine)func_closeCursor2, &arg[i], false ) ;
         workers[i]->start() ;
     }
-	int rc = SDB_OK ;
+	
     // thread 0-ThreadNum/2 close cursor before main thread closeAllCursor
     for(int i = 0;i < ThreadNum/2;++i )
     {
         workers[i]->waitStop() ;
         delete workers[i] ;
     }
+
 	// close all cursors between threads
     rc = sdbCloseAllCursors( db ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to close all cursor" ;
+
 	// thread ThreadNum/2-ThreadNum close cursor after main thread closeAllCursor
 	for( int i = ThreadNum/2;i < ThreadNum;++i )
     {
         workers[i]->waitStop() ;
         delete workers[i] ;
     }
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;	
 }

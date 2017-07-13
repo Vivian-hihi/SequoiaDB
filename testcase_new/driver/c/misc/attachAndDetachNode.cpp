@@ -16,36 +16,49 @@ sdbConnectionHandle db = 0 ;
 sdbReplicaGroupHandle dataRG = 0,tempRG = 0 ;
 sdbNodeHandle tempNode = 0 ;
 
-class AttachAndDetachNodeTest : public testing::Test
-{
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;
-};
-
-void AttachAndDetachNodeTest::SetUpTestCase()
+int setup()
 {
     int rc = SDB_OK ;
+
     // connect to sdb
     getConf() ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-    ASSERT_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;	
+    CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;	
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void AttachAndDetachNodeTest::TearDownTestCase()
+int teardown()
 {
+	int rc = SDB_OK ;
+
 	// disconnect and release handle
     sdbDisconnect( db ) ;
     sdbReleaseNode( tempNode ) ;
     sdbReleaseReplicaGroup( tempRG ) ;
     sdbReleaseReplicaGroup( dataRG ) ;
     sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-TEST_F(AttachAndDetachNodeTest,onlyAttachAndOnlyDetach)
+TEST( AttachAndDetachNodeTest, onlyAttachAndOnlyDetach )
 {
+	int rc = SDB_OK ;
+	vector<string> groups ;
+	const char* rgname ;
+	char tempNodeSvcName[10] ;
+	char tempNodeDbPath[100] ;
+
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
 	// check standalone
 	if( isStandalone( db ) )
 	{
@@ -56,22 +69,17 @@ TEST_F(AttachAndDetachNodeTest,onlyAttachAndOnlyDetach)
 	}
 
 	// get data group dataRG
-	int rc = SDB_OK ;
-	vector<string> vec ;
-	rc = getGroups( db, vec ) ;
+	rc = getGroups( db, groups ) ;
 	ASSERT_EQ( rc, SDB_OK ) ;
-	ASSERT_NE( 0, vec.size() ) << "no data group" ;
-	const char* rgname = vec[0].c_str() ;
+	ASSERT_GT( groups.size(), 0 ) << "no data group" ;
+	rgname = groups[0].c_str() ;
 	rc = sdbGetReplicaGroup( db, rgname, &dataRG ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to get rg " << rgname ;
 
 	// create tempNode
-	getConf() ;
-	char tempNodeSvcName[10] ;
 	getIdlePort( tempNodeSvcName ) ;
 	printf( "temp node svcname: %s\n", tempNodeSvcName ) ;
 	
-	char tempNodeDbPath[100] ;
 	strcpy( tempNodeDbPath, RSRVNODEDIR ) ;
 	strcat( tempNodeDbPath, tempNodeSvcName ) ;
 	printf( "temp node dbpath: %s\n", tempNodeDbPath ) ;
@@ -107,4 +115,7 @@ TEST_F(AttachAndDetachNodeTest,onlyAttachAndOnlyDetach)
 	// remove tempRG
 	rc = sdbRemoveReplicaGroup( db, "temp" ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to remove tempRG" ;
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

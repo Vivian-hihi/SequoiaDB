@@ -23,27 +23,19 @@ const char* rgName = "lxwgroup" ;
 char* svcName[ThreadNum] ;
 char* dbPath[ThreadNum] ;
 
-class ConcurrentTest : public testing::Test
+int setup()
 {
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;	
-} ;
-
-void ConcurrentTest::SetUpTestCase()
-{
-   	// connect to sdb
 	int rc = SDB_OK ;
+
+   	// connect to sdb
 	getConf() ;
 	getLocalIpAddr() ;
-
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+	CHECK_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+
 	// create replicaGroup
 	rc = sdbCreateReplicaGroup( db, rgName, &rg ) ;
-	ASSERT_RC( rc, "fail to create rg %s in the begining, rc = %d\n", rgName, rc ) ;
+	CHECK_RC( rc, "fail to create rg %s in the begining, rc = %d\n", rgName, rc ) ;
 	
 	// make svcName
 	for( int i = 0;i < ThreadNum;i++)
@@ -55,6 +47,7 @@ void ConcurrentTest::SetUpTestCase()
 	   	sprintf( temp, "%d", number ) ;
 	   	svcName[i] = strdup( temp ) ;
 	}
+
 	// make dbPath
 	for( int i = 0;i < ThreadNum;i++)
 	{
@@ -67,23 +60,25 @@ void ConcurrentTest::SetUpTestCase()
 	for( int i = 0;i < ThreadNum;i++)
 	{
 	   	rc = sdbCreateNode( rg, IPADDR, svcName[i], dbPath[i], NULL ) ;
-	   	ASSERT_RC( rc, "fail to create node %s:%s, dbpath: %s, rc = %d\n", IPADDR, svcName[i], dbPath[i], rc ) ;
+	   	CHECK_RC( rc, "fail to create node %s:%s, dbpath: %s, rc = %d\n", IPADDR, svcName[i], dbPath[i], rc ) ;
 	   	rc = sdbGetNodeByHost( rg, IPADDR, svcName[i], &node[i] ) ;
-	   	ASSERT_RC( rc, "fail to get node %s:%s, rc = %d\n", IPADDR, svcName[i], rc ) ;
+	   	CHECK_RC( rc, "fail to get node %s:%s, rc = %d\n", IPADDR, svcName[i], rc ) ;
 	}
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void ConcurrentTest::TearDownTestCase()
+int teardown()
 {
-	int i ;
 	int rc = SDB_OK ;
-	// connect to sdb
-	// rc = sdbConnect( HOST, SERVER, USER, PASSWD, &db ) ;
-   	// ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the end" ;
+	
    	// remove rg
    	rc = sdbRemoveReplicaGroup( db, rgName ) ;
-   	ASSERT_RC( rc, "fail to remove rg %s in the end, rc = %d\n", rgName, rc ) ;
-	for( i = 0;i < ThreadNum;++i )
+   	CHECK_RC( rc, "fail to remove rg %s in the end, rc = %d\n", rgName, rc ) ;
+	for( int i = 0;i < ThreadNum;++i )
 	{
 		// release handle
 		sdbReleaseNode( node[i] ) ;
@@ -91,11 +86,16 @@ void ConcurrentTest::TearDownTestCase()
     	free( svcName[i] ) ;
     	free( dbPath[i] ) ;
 	}
+
 	// disconnect
    	sdbDisconnect(db) ;
-	// release handle
 	sdbReleaseReplicaGroup( rg ) ;
 	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArg : public WorkerArgs
@@ -129,8 +129,12 @@ void func_node( ThreadArg* arg )
    	ASSERT_EQ( rc, SDB_OK ) << "fail to stop node " << i ;
 }
 
-TEST_F( ConcurrentTest, Node )
+TEST( ConcurrentTest, Node )
 {
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
    	// create multi thread to operate different node
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
@@ -146,4 +150,7 @@ TEST_F( ConcurrentTest, Node )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
+	
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

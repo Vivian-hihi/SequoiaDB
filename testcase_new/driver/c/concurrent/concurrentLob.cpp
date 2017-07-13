@@ -24,49 +24,47 @@ const char* ClName 	   = "concurrentTestCl" ;
 sdbLobHandle lob[ThreadNum] ;
 bson_oid_t oid[ThreadNum] ;
 
-class ConcurrentTest : public testing::Test
+int setup()
 {
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;
-} ;
-
-void ConcurrentTest::SetUpTestCase()
-{
-   	// connect to sdb
 	int rc = SDB_OK ;
-	getConf() ;
-	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
-	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
-	// create cl 
-	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", ClName, rc ) ;
+	rc = createNormalCl( &db, &cs, &cl, CsName, ClName ) ;
+	CHECK_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
+
 	// open lob
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   bson_oid_gen( &oid[i] ) ;
 	   rc = sdbOpenLob( cl, &oid[i], SDB_LOB_CREATEONLY, &lob[i] ) ;
-	   ASSERT_RC( rc, "fail to open lob, rc = %d\n", rc ) ;
+	   CHECK_RC( rc, "fail to open lob, rc = %d\n", rc ) ;
 	}
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void ConcurrentTest::TearDownTestCase()
+int teardown()
 {
    	int rc = SDB_OK ;
+
    	// drop cs
    	rc = sdbDropCollectionSpace( db, CsName ) ;
-   	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+   	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+
    	// disconnect
    	sdbDisconnect( db ) ;
    	sdbReleaseCollection( cl ) ;
    	sdbReleaseCS( cs ) ;
    	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArg : public WorkerArgs
@@ -127,8 +125,12 @@ void func_lobRead( ThreadArg* arg )
 	free( lobBuffer ) ;
 }
 
-TEST_F( ConcurrentTest, Lob )
+TEST( ConcurrentTest, Lob )
 {
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
    	// create multi thread to operate different lob write
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
@@ -144,13 +146,14 @@ TEST_F( ConcurrentTest, Lob )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
+
 	// open lob with read mode
-	int rc = SDB_OK ;
 	for( int i = 0;i < ThreadNum;++i )
 	{
 	   	rc = sdbOpenLob( cl, &oid[i], SDB_LOB_READ, &lob[i] ) ;
 	   	ASSERT_EQ( rc, SDB_OK ) << "fail to open lob with read mode,i = " << i ;
 	}
+
 	// create multi thread to operate different lob read
 	for( int i = 0;i < ThreadNum;++i )
 	{
@@ -164,4 +167,7 @@ TEST_F( ConcurrentTest, Lob )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

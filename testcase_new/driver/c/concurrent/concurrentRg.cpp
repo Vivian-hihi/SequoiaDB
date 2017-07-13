@@ -20,20 +20,12 @@ sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 sdbReplicaGroupHandle rg[ThreadNum] = { 0 } ;
 char* rgName[ThreadNum] ;
 
-class ConcurrentTest : public testing::Test
+int setup()
 {
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;	
-} ;
-
-void ConcurrentTest::SetUpTestCase()
-{
-	int i ;
+	int rc = SDB_OK ;
+	
 	// make rgName
-   	for( i = 0;i < ThreadNum;++i )
+   	for( int i = 0;i < ThreadNum;++i )
    	{
     	char temp[50] = "lxw_datagroup" ;
       	char number[10] ;
@@ -41,40 +33,48 @@ void ConcurrentTest::SetUpTestCase()
       	strcat( temp, number ) ;
       	rgName[i] = strdup( temp ) ;
    	}
+
    	// connect to sdb
-	int rc = SDB_OK ;
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+	CHECK_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+
 	// create replicaGroup
-	for( i = 0;i < ThreadNum;++i )
+	for( int i = 0;i < ThreadNum;++i )
 	{
 		rc = sdbCreateReplicaGroup( db, rgName[i], &rg[i] ) ;
-	   	ASSERT_RC( rc, "fail to create rg %s, rc = %d\n", rgName[i], rc ) ;
+	   	CHECK_RC( rc, "fail to create rg %s, rc = %d\n", rgName[i], rc ) ;
 	}
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void ConcurrentTest::TearDownTestCase()
+int teardown()
 {
-	int i ;
 	int rc = SDB_OK ;
-	// connect to sdb
-	// rc = sdbConnect( HOST, SERVER, USER, PASSWD, &db ) ;
-   	// ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb in the end" ;
-	for( i = 0;i < ThreadNum;++i )
+
+ 	for( int i = 0;i < ThreadNum;++i )
 	{
 		// remove rg
 		rc = sdbRemoveReplicaGroup( db, rgName[i] ) ;
-		ASSERT_RC( rc, "fail to remove rg %s, rc = %d\n", rgName[i], rc ) ;
+		CHECK_RC( rc, "fail to remove rg %s, rc = %d\n", rgName[i], rc ) ;
 		// release handle
 		sdbReleaseReplicaGroup( rg[i] ) ;
 		// free malloc space(strdup)
     	free( rgName[i] ) ;
 	}
+
 	// disconnect
    	sdbDisconnect( db ) ;
-	// release handle
 	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArg : public WorkerArgs
@@ -126,10 +126,12 @@ void func_rg( ThreadArg* arg )
    	ASSERT_EQ( rc, SDB_CATA_RM_NODE_FORBIDDEN ) << "fail to test remove node2 in rg " << i ;
 }
 
-TEST_F( ConcurrentTest,ReplicaGroup )
+TEST( ConcurrentTest,ReplicaGroup )
 {
-	getConf() ;
-	getLocalIpAddr() ;
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
    	// create multi thread to operate different rg
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
@@ -145,4 +147,7 @@ TEST_F( ConcurrentTest,ReplicaGroup )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

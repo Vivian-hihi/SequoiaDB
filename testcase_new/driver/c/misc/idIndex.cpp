@@ -18,41 +18,35 @@ sdbConnectionHandle db = 0 ;
 sdbCSHandle cs = 0 ;
 sdbCollectionHandle cl = 0 ;
 
-void prepareCl()
+int setup()
 {
 	int rc = SDB_OK ;
+	bson options ;
+    bson_init( &options ) ;
+	int num = 2000, i ;
+    bson* obj[num] ;
 
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+	CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
 
 	getUniqueName( CsModName, CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	if( rc == SDB_DMS_CS_EXIST )
-	{
-		rc = sdbDropCollectionSpace( db, CsName ) ;
-		ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs existed " << CsName ;
-	    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;	
-	}
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs " << CsName ;
+	CHECK_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
 
 	// option is { ReplSize: 0 }, { Compressed: true }, { AutoIndexId: false }
-	bson options ;
-	bson_init( &options ) ;
 	bson_append_int( &options, "ReplSize", 0 ) ;
 	bson_append_bool( &options, "Compressed", true ) ;
 	bson_append_bool( &options, "AutoIndexId", false ) ;
 	bson_finish( &options ) ;
 	// bson_print( &options ) ;
+
 	// create cl
 	rc = sdbCreateCollection1( cs, ClName, &options, &cl ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl " << ClName ;
-	// destroy options bson
+	CHECK_RC( rc, "fail to create cl %s, rc = %d\n", ClName, rc ) ;
 	bson_destroy( &options ) ;
 
 	// insert records like { "_id": 1, "f1": 2, "f2": 3 }
-	int num = 2000, i ;
-	bson* obj[num] ;
 	for( i = 0;i < num;++i )
 	{
 		obj[i] = bson_create() ;
@@ -62,37 +56,47 @@ void prepareCl()
 		bson_finish( obj[i] ) ;
 	}
 	rc = sdbBulkInsert( cl, 0, obj, num ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to insert record in the " << i << " times" ;
+	CHECK_RC( rc, "fail to bulk insert, rc = %d\n", rc ) ;
 	for( i = 0;i < num;++i )
 	{
 		bson_dispose( obj[i] ) ;
 	}
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void cleanResource()
+int teardown()
 {
 	int rc = SDB_OK ;
 
 	// drop cs cl disconnect
 	rc = sdbDropCollection( cs, ClName ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cl " << ClName ;
+	CHECK_RC( rc, "fail to drop cl %s, rc = %d\n", ClName, rc ) ;
 	rc = sdbDropCollectionSpace( db, CsName ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs " << CsName ;
+	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
 	sdbDisconnect( db ) ;
 
 	// release handle
 	sdbReleaseCollection( cl ) ;
 	sdbReleaseCS( cs ) ;
 	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-TEST(indexTest,createIdIndex)
+TEST( indexTest, createIdIndex )
 {
-	// prepare:create cl and insert records
-	prepareCl() ;
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 
 	// create id index
-	int rc = SDB_OK ;
 	bson option ;
 	bson_init( &option ) ;
 	bson_append_int( &option, "SortBufferSize", 128 ) ;
@@ -121,7 +125,7 @@ TEST(indexTest,createIdIndex)
 	bson_init( &obj ) ;
 	rc = sdbNext( cursor, &obj ) ;
 	ASSERT_EQ( rc, SDB_OK ) << "fail to get query cursor doc" ;
-	char result[100] = {0} ;
+	char result[100] = { 0 } ;
 	bson_sprint( result, sizeof(result), &obj ) ;
 	char *expect = "{ \"_id\": 555 }" ;
 	ASSERT_EQ( 0, strcmp( expect, result ) ) << "fail to check query result, expect: "
@@ -166,6 +170,6 @@ TEST(indexTest,createIdIndex)
 	bson_destroy( &hint ) ;
 	sdbReleaseCursor( cursor ) ;
 
-	// clean resource:drop cs cl disconnect releaseHandle
-	cleanResource() ;
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

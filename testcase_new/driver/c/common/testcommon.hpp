@@ -21,15 +21,6 @@ do { \
 	} \
 } while( 0 ) ;
 
-#define ASSERT_RC( rc, fmt, ... ) \
-do { \
-	if( rc != SDB_OK ) \
-	{ \
-   		printMsg( fmt, ##__VA_ARGS__ ) ; \
-   		exit(1) ; \
-	} \
-} while( 0 ) ;
-
 extern char HOSTNAME[100] ;
 extern char SVCNAME[100] ;
 extern char CHANGEDPREFIX[100] ;

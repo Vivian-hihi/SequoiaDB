@@ -15,42 +15,42 @@ sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 sdbCSHandle			cs = SDB_INVALID_HANDLE ;
 sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
 
-class DateTest : public testing::Test
-{
-public:
-	static void SetUpTestCase() ;
-	static void TearDownTestCase() ;
-} ;
-
-void DateTest::SetUpTestCase()
+int setup()
 {
 	int rc = SDB_OK ;
-	//  connect sdb, create cs cl
-    getConf() ;
-    rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-    ASSERT_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
+
     getUniqueName( csModName, csName ) ;
-    rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
-    ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", csName, rc ) ;
-    rc = sdbCreateCollection( cs, clName, &cl ) ;
-    ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", clName, rc ) ;
+    rc = createNormalCl( &db, &cs, &cl, csName, clName ) ;
+	CHECK_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void DateTest::TearDownTestCase()
+int teardown()
 {
 	int rc = SDB_OK ;
-	// drop cs,disconnect and release handle
+	
     rc = sdbDropCollectionSpace( db, csName ) ;
-    ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
+    CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
     sdbDisconnect( db ) ;
     sdbReleaseCollection( cl ) ;
     sdbReleaseCS( cs ) ;
     sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-TEST_F( DateTest, json_bson )
+TEST( DateTest, json_bson )
 {
 	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 
 	// normal date to insert, [ 0000-01-01, 9999-12-31 ]
 	const char* normalDate[] = {
@@ -105,7 +105,7 @@ TEST_F( DateTest, json_bson )
     }
 }
 
-TEST_F( DateTest, mills )
+TEST( DateTest, mills )
 {
 	int rc = SDB_OK ;
 	
@@ -163,4 +163,7 @@ TEST_F( DateTest, mills )
 
         sdbReleaseCursor( cursor ) ;
     }
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }	

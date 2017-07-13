@@ -22,26 +22,21 @@ const char* CsModName = "concurrentTestCs" ;
 char CsName[100] ;
 char* ClName[ThreadNum] ;
 
-class ConcurrentTest : public testing::Test
+// run before all test case
+int setup()
 {
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;
-} ;
-
-void ConcurrentTest::SetUpTestCase()
-{
-   	// connect to sdb
 	int rc = SDB_OK ;
+
+   	// connect to sdb
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+	CHECK_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
+	CHECK_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
+
 	// make cl name
 	for( int i = 0;i < ThreadNum;i++ )
 	{
@@ -51,30 +46,45 @@ void ConcurrentTest::SetUpTestCase()
 	   strcat( temp, number ) ;
 	   ClName[i] = strdup( temp ) ; 
 	}
+
 	// create cl 
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbCreateCollection( cs, ClName[i], &cl[i] ) ;
-	   ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", ClName[i], rc ) ;
+	   CHECK_RC( rc, "fail to create cl %s, rc = %d\n", ClName[i], rc ) ;
 	}
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void ConcurrentTest::TearDownTestCase()
+// run after all test case
+int teardown()
 {
 	int rc = SDB_OK ;
+
    	// drop cs
    	rc = sdbDropCollectionSpace( db, CsName ) ;
-   	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+   	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+
    	// release cl 
    	for( int i = 0;i < ThreadNum;i++ )
    	{
     	sdbReleaseCollection( cl[i] ) ;
       	free( ClName[i] ) ;
    	}
+
    	// disconnect
    	sdbDisconnect( db ) ;
    	sdbReleaseCS( cs ) ;
    	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArg : public WorkerArgs
@@ -138,8 +148,12 @@ void func_cl( ThreadArg* arg )
 	sdbReleaseCursor( cursor ) ;
 }
 
-TEST_F( ConcurrentTest, Collection )
+TEST( ConcurrentTest, Collection )
 {
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
 	// create multi thread to operate different cl
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
@@ -155,4 +169,7 @@ TEST_F( ConcurrentTest, Collection )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
+	
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

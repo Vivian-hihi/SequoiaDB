@@ -13,71 +13,83 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include "../common/testcommon.hpp"
 
 sdbConnectionHandle db   = SDB_INVALID_HANDLE ;
 sdbReplicaGroupHandle rg = SDB_INVALID_HANDLE ;
 sdbCSHandle cs           = SDB_INVALID_HANDLE ;
 sdbCollectionHandle cl   = SDB_INVALID_HANDLE ;
-int groupId         = 1000 ;
 const char* csModName = "loadUnloadCSTestCs" ;
 char csName[100]      = ""  ;
 const char* clName    = "loadUnloadCSTestCl" ;
 
-class loadUnloadCSTest : public testing::Test
-{
-public:
-	// run before all testcase
-	static void SetUpTestCase() ;
-    // run after all testcase
-	static void TearDownTestCase() ;
-} ;
-
-void loadUnloadCSTest::SetUpTestCase()
+int setup()
 {
 	int rc = SDB_OK ;
+	vector<string> groups ;
+	bson option ;
+    bson_init( &option ) ;	
+	const char* rgName ;
 
 	// connect sdb
     getConf() ;
     rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-    ASSERT_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
+    CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
     if( isStandalone( db ) )
-        return ;
+	{
+		rc = SDB_SYS ;
+		printf( "run mode is stand alone.\n" ) ;
+        goto error ;
+	}
 
-    // get data group with groupId 1000
-    rc = sdbGetReplicaGroup1( db, groupId, &rg ) ;
-    ASSERT_RC( rc, "fail to get data group %d, rc = %d\n", groupId, rc ) ;
-	char* rgName = NULL ;
-	rc = sdbGetReplicaGroupName( rg, &rgName ) ;
-	ASSERT_RC( rc, "fail to get data group name, rc = %d\n", rc ) ; 
+    // get data group
+	rc = getGroups( db, groups ) ;
+	CHECK_RC( rc, "fail to get data groups, rc = %d\n", rc ) ;
+	if( groups.size() <= 0 )
+	{
+		rc = SDB_SYS ;
+		printf( "no data group, size: %d\n", groups.size() ) ;
+		goto error ;
+	}
+	rgName = groups[0].c_str() ;
+	rc = sdbGetReplicaGroup( db, rgName, &rg ) ;
+    CHECK_RC( rc, "fail to get data group %s, rc = %d\n", rgName, rc ) ;
     
 	// create cs
     getUniqueName( csModName, csName ) ;
     rc = sdbCreateCollectionSpace( db, csName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", csName, rc ) ;
+	CHECK_RC( rc, "fail to create cs %s, rc = %d\n", csName, rc ) ;
 
 	// create cl in data group
-    bson option ;
-    bson_init( &option ) ;
     bson_append_string( &option, "Group", rgName ) ;
 	bson_append_int( &option, "ReplSize", 0 ) ;
 	bson_finish( &option ) ;
 	rc = sdbCreateCollection1( cs, clName, &option, &cl ) ;
     bson_destroy( &option ) ;
-	ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", clName, rc ) ;
+	CHECK_RC( rc, "fail to create cl %s, rc = %d\n", clName, rc ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void loadUnloadCSTest::TearDownTestCase()
+int teardown()
 {
 	int rc = SDB_OK ;
+
 	rc = sdbDropCollectionSpace( db, csName ) ;
-	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
+	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
 	sdbDisconnect( db ) ;
 	sdbReleaseCollection( cl ) ;
 	sdbReleaseCS( cs ) ;
 	sdbReleaseReplicaGroup( rg ) ;
 	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 int checkCsExist( sdbConnectionHandle db, const char* csName, bool* exist )
@@ -164,9 +176,13 @@ error:
 	goto done ;
 }
 
-TEST_F( loadUnloadCSTest, validOption )
+TEST( loadUnloadCSTest, validOption )
 {
     int rc = SDB_OK ;
+	rc = setup() ;
+	if( isStandalone( db ) )  return ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
 	sdbNodeHandle node = SDB_INVALID_HANDLE ;
 	const char* hostName = NULL ;
     const char* svcName = NULL ;
@@ -243,9 +259,11 @@ TEST_F( loadUnloadCSTest, validOption )
     ASSERT_EQ( rc, SDB_OK ) << "fail to get cl in the end" ;
 }
 
-TEST_F( loadUnloadCSTest, invalidOption )
+TEST( loadUnloadCSTest, invalidOption )
 {
 	int rc = SDB_OK ;
+	if( isStandalone( db ) ) return ;
+
 	bson option ;
 	bson_init( &option ) ;
 	bson_append_string( &option, "GroupName", "SYSCatalogGroup" ) ;
@@ -254,4 +272,7 @@ TEST_F( loadUnloadCSTest, invalidOption )
 	ASSERT_EQ( rc, SDB_COORD_NOT_ALL_DONE ) << "fail to check unload cs on SYSCatalogGroup" ;
 	rc = sdbLoadCollectionSpace( db, csName, &option ) ;
 	ASSERT_EQ( rc, SDB_COORD_NOT_ALL_DONE ) << "fail to check load cs on SYSCatalogGroup" ;
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ; 
 }

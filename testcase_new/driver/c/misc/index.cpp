@@ -17,27 +17,21 @@ sdbConnectionHandle db = 0 ;
 sdbCSHandle cs = 0 ;
 sdbCollectionHandle cl = 0 ;
 
-void prepareCl()
+int setup()
 {
 	int rc = SDB_OK ;
-	getConf() ;
+	bson options ;
+    bson_init( &options ) ;
 
+	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to connect sdb" ;
+	CHECK_RC( rc, "fail to connect sdb, rc = %d\n", rc ) ;
 
 	getUniqueName( CsModName, CsName ) ;
 	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	if( rc == SDB_DMS_CS_EXIST )
-	{
-		rc = sdbDropCollectionSpace( db, CsName ) ;
-		ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs existed " << CsName ;
-	    rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;	
-	}
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cs " << CsName ;
+	CHECK_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
 
 	// option is { ShardingKey: { id: 1 } }, { ReplSize: 0 }, { Compressed: true }
-	bson options ;
-	bson_init( &options ) ;
 	bson_append_start_object( &options, "ShardingKey" ) ;
 	bson_append_int( &options, "id", 1 ) ;
 	bson_append_finish_object( &options ) ;
@@ -45,13 +39,14 @@ void prepareCl()
 	bson_append_bool( &options, "Compressed", true ) ;
 	bson_finish( &options ) ;
 	// bson_print( &options ) ;
+
 	// create cl
 	rc = sdbCreateCollection1( cs, ClName, &options, &cl ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to create cl " << ClName ;
-	// destroy options bson
+	CHECK_RC( rc, "fail to create cl %s, rc = %d\n", ClName, rc ) ;
 	bson_destroy( &options ) ;
+
 	// insert records like { "id": 1, "f1": 2, "f2": 3 }
-	for(int i = 0;i < 1000;++i )
+	for( int i = 0;i < 1000;++i )
 	{
 		bson record ;
 		bson_init( &record ) ;
@@ -61,35 +56,42 @@ void prepareCl()
 		bson_finish( &record ) ;
 		// bson_print( &record ) ;
 		rc = sdbInsert( cl, &record ) ;
-		ASSERT_EQ( rc, SDB_OK ) << "fail to insert record in the " << i << " times" ;
+		CHECK_RC( rc, "fail to insert record in the %d time, rc = %d", i, rc ) ;
 		bson_destroy( &record ) ;
 	}
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void cleanResource()
+int teardown()
 {
 	int rc = SDB_OK ;
 
-	// drop cs cl disconnect
 	rc = sdbDropCollection( cs, ClName ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cl " << ClName ;
+	CHECK_RC( rc, "fail to drop cl %s, rc = %d\n", ClName, rc ) ;
 	rc = sdbDropCollectionSpace( db, CsName ) ;
-	ASSERT_EQ( rc, SDB_OK ) << "fail to drop cs " << CsName ;
+	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
 	sdbDisconnect( db ) ;
-
-	// release handle
 	sdbReleaseCollection( cl ) ;
 	sdbReleaseCS( cs ) ;
 	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-TEST(indexTest,createIndex)
+TEST( indexTest, createIndex )
 {
-	// prepare:create cl and insert records
-	prepareCl() ;
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 
 	// create index
-	int rc = SDB_OK ;
 	char *indexName = "myIndex" ;
 	bson indexDef ;
 	bson_init( &indexDef ) ;
@@ -140,6 +142,6 @@ TEST(indexTest,createIndex)
 	bson_destroy( &hint ) ;
 	sdbReleaseCursor( cursor ) ;
 
-	// clean resource:drop cs cl disconnect releaseHandle
-	cleanResource() ;
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

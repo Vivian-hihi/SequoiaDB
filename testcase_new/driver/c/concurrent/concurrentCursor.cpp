@@ -24,29 +24,20 @@ char CsName[100] ;
 const char* ClName 	   = "concurrentTestCl" ;
 sdbCursorHandle cursor[ThreadNum] ;
 
-class ConcurrentTest : public testing::Test
+// run before all test cases
+int setup()
 {
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;
-} ;
-
-void ConcurrentTest::SetUpTestCase()
-{
-   	// connect to sdb
 	int rc = SDB_OK ;
-	getConf() ;
-	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+	bson cond ;
+    bson_init( &cond ) ;
+	bson sel ;
+    bson_init( &sel ) ;
+
 	// create cs
 	getUniqueName( CsModName,CsName ) ;
-	rc = sdbCreateCollectionSpace( db, CsName, SDB_PAGESIZE_4K, &cs ) ;
-	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName, rc ) ;
-	// create cl 
-	rc = sdbCreateCollection( cs, ClName, &cl ) ;
-	ASSERT_RC( rc, "fail to create cl %s, rc = %d\n", ClName, rc ) ;
+	rc = createNormalCl( &db, &cs, &cl, CsName, ClName ) ;
+	CHECK_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
+
 	// insert records { a: i, flag: 1 }
 	for( int i = 0;i < recordNum;i++ )
 	{
@@ -56,41 +47,53 @@ void ConcurrentTest::SetUpTestCase()
 	   bson_append_int( &obj, "flag", 1 ) ;
 	   bson_finish( &obj ) ;
 	   rc = sdbInsert( cl, &obj ) ;
-	   ASSERT_RC( rc, "fail to insert record, rc = %d\n", rc ) ;
+	   CHECK_RC( rc, "fail to insert record, rc = %d\n", rc ) ;
 	   bson_destroy( &obj ) ; 
 	}
+
 	// query record
-	bson cond ;
-	bson_init( &cond ) ;
 	bson_append_int( &cond, "flag", 1 ) ;
 	bson_finish( &cond ) ;
-	bson sel ;
-	bson_init( &sel ) ;
 	bson_append_string( &sel, "a", "" ) ;
 	bson_finish( &sel ) ;
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   rc = sdbQuery( cl, &cond, &sel, NULL, NULL, 0, -1, &cursor[i] ) ;
-	   ASSERT_RC( rc, "fail to query record, rc = %d\n", rc ) ;
+	   CHECK_RC( rc, "fail to query record, rc = %d\n", rc ) ;
 	}
 	bson_destroy( &cond ) ;
 	bson_destroy( &sel ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void ConcurrentTest::TearDownTestCase()
+int teardown()
 {
    	int rc = SDB_OK ;
+
    	// drop cs
    	rc = sdbDropCollectionSpace( db, CsName ) ;
-   	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+   	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", CsName, rc ) ;
+
    	// release cursor
    	for( int i = 0;i < ThreadNum;i++ )
+	{
     	sdbReleaseCursor( cursor[i] ) ;
+	}
+
    	// disconnect
    	sdbDisconnect( db ) ;
    	sdbReleaseCollection( cl ) ;
    	sdbReleaseCS( cs ) ;
    	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArg : public WorkerArgs
@@ -121,8 +124,12 @@ void func_cursor( ThreadArg* arg )
    	bson_destroy( &obj ) ;
 }
 
-TEST_F( ConcurrentTest, Cursor )
+TEST( ConcurrentTest, Cursor )
 {
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
    	// create multi thread to operate different cursor
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
@@ -138,5 +145,8 @@ TEST_F( ConcurrentTest, Cursor )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }
 	

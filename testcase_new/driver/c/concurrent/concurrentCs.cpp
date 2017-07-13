@@ -19,22 +19,15 @@ sdbConnectionHandle db = SDB_INVALID_HANDLE ;
 sdbCSHandle cs[ThreadNum] ;
 char* CsName[ThreadNum] ;
 
-class ConcurrentTest : public testing::Test
+int setup()
 {
-public:
-	// run before all testcases
-	static void SetUpTestCase() ;
-	// run after all testcases
-	static void TearDownTestCase() ;
-} ;
-
-void ConcurrentTest::SetUpTestCase()
-{
-   	// connect to sdb
 	int rc = SDB_OK ;
+
+   	// connect to sdb
 	getConf() ;
 	rc = sdbConnect( HOSTNAME, SVCNAME, USER, PASSWD, &db ) ;
-	ASSERT_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+	CHECK_RC( rc, "fail to connect sdb in the beginning, rc = %d\n", rc ) ;
+
 	// make cs name
 	for( int i = 0;i < ThreadNum;i++ )
 	{
@@ -46,28 +39,41 @@ void ConcurrentTest::SetUpTestCase()
 	   	getUniqueName( temp,name ) ;
 	   	CsName[i] = strdup( name ) ; 
 	}
+
 	// create cs
 	for( int i = 0;i < ThreadNum;i++ )
 	{
 	   	rc = sdbCreateCollectionSpace( db, CsName[i], SDB_PAGESIZE_4K, &cs[i] ) ;
-	   	ASSERT_RC( rc, "fail to create cs %s, rc = %d\n", CsName[i], rc ) ;
+	   	CHECK_RC( rc, "fail to create cs %s, rc = %d\n", CsName[i], rc ) ;
 	}
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void ConcurrentTest::TearDownTestCase()
+int teardown()
 {
    	int rc = SDB_OK ;
+
    	// drop cs
    	for( int i = 0;i < ThreadNum;i++ )
    	{
       	rc = sdbDropCollectionSpace( db, CsName[i] ) ;
-      	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", CsName[i], rc ) ;
+      	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", CsName[i], rc ) ;
       	sdbReleaseCS( cs[i] ) ;
       	free( CsName[i] ) ;
    	}
+
   	// disconnect
    	sdbDisconnect( db ) ;
    	sdbReleaseConnection( db ) ;
+
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArg : public WorkerArgs
@@ -107,8 +113,12 @@ void func_cs( ThreadArg* arg )
    	sdbReleaseCollection( cl ) ;
 }
 
-TEST_F( ConcurrentTest, Collectionspace )
+TEST( ConcurrentTest, Collectionspace )
 {
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
    	// create multi thread to operate different cl
 	Worker * workers[ThreadNum] ;
 	ThreadArg arg[ThreadNum] ;
@@ -124,4 +134,7 @@ TEST_F( ConcurrentTest, Collectionspace )
 		workers[i]->waitStop() ;
 		delete workers[i] ;
 	}
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }
