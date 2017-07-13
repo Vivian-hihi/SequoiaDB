@@ -57,13 +57,41 @@ private object SdbPartitioner extends Logging {
     private def determinatePartitionMode(config: SdbConfig, filter: SdbFilter): PartitionMode = {
         logInfo(s"config.partitionMode=${config.partitionMode}")
         config.partitionMode.toLowerCase match {
-            case SdbConfig.PARTITION_MODE_SINGLE => PartitionMode.Single
+            case SdbConfig.PARTITION_MODE_SINGLE =>
+                if (isDataScheduler(config)) {
+                    logInfo(s"Host[${config.host}] is data scheduler, so use Sharding mode instead")
+                    PartitionMode.Sharding
+                } else {
+                    PartitionMode.Single
+                }
             case SdbConfig.PARTITION_MODE_SHARDING => PartitionMode.Sharding
             case SdbConfig.PARTITION_MODE_DATABLOCK => PartitionMode.Datablock
             case SdbConfig.PARTITION_MODE_AUTO => autodetectPartitionMode(config, filter)
             case _ =>
                 throw new SdbException("Unknown partition mode: " + config.partitionMode)
         }
+    }
+
+    private def isDataScheduler(config: SdbConfig): Boolean = {
+        val sdb = new Sequoiadb(config.host, config.username, config.password, SdbConfig.SdbConnectionOptions)
+        try {
+            val cursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_DATABASE,
+                null.asInstanceOf[BSONObject], null, null)
+            while (cursor.hasNext) {
+                val obj = cursor.getNext
+                if (obj.containsField("Role")) {
+                    val role = obj.get("Role").asInstanceOf[String]
+                    if (role.equals("DataScheduler")) {
+                        return true
+                    }
+                }
+            }
+            cursor.close()
+        } finally {
+            sdb.disconnect()
+        }
+
+        false
     }
 
     // Sharding if query can use index, otherwise Datablock
@@ -107,6 +135,7 @@ private object SdbPartitioner extends Logging {
                     }
                 }
             }
+            cursor.close()
         } catch {
             case e: BaseException =>
                 if (!e.getErrorType.equals("SDB_RTN_COORD_ONLY")) {
@@ -157,6 +186,7 @@ private object SdbPartitioner extends Logging {
 
                 map += (groupName -> nodeList.sorted.toList)
             }
+            cursor.close()
         } catch {
             case e: BaseException =>
                 if (!e.getErrorType.equals("SDB_RTN_COORD_ONLY")) {
