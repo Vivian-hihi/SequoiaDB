@@ -73,7 +73,7 @@ function checkCreateCLOptions( csName, clName, options, result )
    {
       if( e !== -6 )
       {
-         throw buildException("checkCreateCLOptions()",e,"create cappedCL", "-6",clName+":"+e);
+         throw buildException("checkCreateCLOptions()",e,"create cappedCL", "-6", e);
       }
    }
 }

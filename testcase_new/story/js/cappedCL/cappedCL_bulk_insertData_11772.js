@@ -17,15 +17,14 @@ function main()
    initCappedCS( csName );
    
    //create cappedCL
-   var optionObj = {Capped:true, Size:1024000000, Max:10000000, AutoIndexId:false};
+   var optionObj = {Capped:true, Size:4294967296, Max:10000000, AutoIndexId:false};
    var dbcl =  commCreateCLByOption( db, csName, clName, optionObj, false, false, "create cappedCL" );
    
    //insertData
    println( "---bulk insert data---" )
-   for( var i = 0; i < 13; i++ )
+   for( var i = 0; i < 20; i++ )
    {
       bulkInsertData( dbcl );
-      popData( dbcl );
    }
    
    //check id
@@ -40,7 +39,7 @@ function bulkInsertData( dbcl )
 {
    var doc = new Array();
    var str = createBigStr();
-   for( var i = 0; i < 10; i++ )
+   for( var i = 0; i < 100; i++ )
    {
       var options = { No : i, a : str };
       doc.push( options );
@@ -55,27 +54,12 @@ function bulkInsertData( dbcl )
    }
 }
 
-function popData( dbcl )
-{
-   var rc   = dbcl.find().sort({ "_id":1 }).skip( 9 ).limit( 1 );
-   var id  = rc.next().toObj()._id;
-   var obj = { LogicalID:id, Direction:1 };
-   try
-   {
-      dbcl.pop( obj );
-   }
-   catch( e )
-   {
-      throw buildException( "popData()", e, "pop data", "pop success", "pop fail:"+e );
-   }
-}
-
 function checkId( dbcl )
 {
    try
    {
-      dbcl.insert( { a : 1 } );
-      var cursor = dbcl.find( null,{ '_id': "" });
+      //dbcl.insert( { a : 1 } );
+      var cursor = dbcl.find( null,{ '_id': "" }).sort({ "_id":1 }).skip( 1999 ).limit( 1 );
       var id = cursor.next().toObj()._id;
       if( id <= 2147483647 )
       {
@@ -91,7 +75,7 @@ function checkId( dbcl )
 
 function createBigStr()
 {
-   var arr = new Array(16*1024*1023);
+   var arr = new Array( 1024 * 1024 );
    var str = arr.toString();
    return str;
 }
