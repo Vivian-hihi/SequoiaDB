@@ -20,8 +20,8 @@ INT32 init(sdb &db, INT32 timeLen=0, INT32 size=0)
       return rc;
    }
    
-   return db.connect(HOST, SERVER);
-   
+   getConf() ;
+   return db.connect(HOSTNAME, SVCNAME, USER, PASSWD);
 }
 
 void fini(sdb &db)
@@ -143,8 +143,9 @@ TEST( turnonCache, getCollectionSpace )
    char clName[127] = {0};
    ASSERT_EQ(SDB_OK, init(db));
    ASSERT_EQ(SDB_OK, createCS(db, csName, sizeof(csName), cs));
-   
-   rc = db1.connect(HOST, SERVER);
+  
+   getConf() ; 
+   rc = db1.connect(HOSTNAME, SVCNAME, USER, PASSWD);
    ASSERT_EQ(SDB_OK, rc);
    ASSERT_EQ(SDB_OK, getTimeOfgetCS(db1, csName, diff1));
    ASSERT_EQ(SDB_OK, getTimeOfgetCS(db, csName, diff2));
@@ -167,8 +168,9 @@ TEST( turnonCache, getCollection)
    ASSERT_EQ(SDB_OK, init(db));
    ASSERT_EQ(SDB_OK, createCS(db, csName, sizeof(csName), cs));
    ASSERT_EQ(SDB_OK, createCL(cs, clName, sizeof(clName), cl));
-   
-   rc = db1.connect(HOST, SERVER);
+  
+   getConf() ; 
+   rc = db1.connect(HOSTNAME, SVCNAME, USER, PASSWD);
    ASSERT_EQ(SDB_OK, rc);
    rc = db1.getCollectionSpace(csName, cs1);
    ASSERT_EQ(SDB_OK, rc);
@@ -195,7 +197,8 @@ TEST( turnonCache, getCollection1)
    ASSERT_EQ(SDB_OK, createCS(db, csName, sizeof(csName), cs));
    ASSERT_EQ(SDB_OK, createCL(cs, clName, sizeof(clName), cl));
    
-   rc = db1.connect(HOST, SERVER);
+   getConf() ;
+   rc = db1.connect(HOSTNAME, SVCNAME, USER, PASSWD);
    ASSERT_EQ(SDB_OK, rc);
   
    ASSERT_EQ(SDB_OK, getTimeOfgetCLByFullName(db1, csName, clName, diff1));
@@ -302,8 +305,9 @@ TEST( turnonCache, testUpdateTimeStamp)
    ASSERT_EQ(SDB_OK, init(db, 3));
    ASSERT_EQ(SDB_OK, createCS(db, csName, sizeof(csName), cs));
    ASSERT_EQ(SDB_OK, createCL(cs, clName, sizeof(clName), cl));
-   
-   rc = db1.connect(HOST, SERVER);
+  
+   getConf() ; 
+   rc = db1.connect(HOSTNAME, SVCNAME, USER, PASSWD);
    ASSERT_EQ(SDB_OK, rc);
    
    ASSERT_EQ(SDB_OK, getTimeOfgetCLByFullName(db1, csName, clName, diff1));
@@ -354,7 +358,8 @@ TEST( turnonCache, getCLOfTimeOutandDropbyOtherConn)
    ASSERT_EQ(SDB_OK, createCS(db, csName, sizeof(csName), cs));
    ASSERT_EQ(SDB_OK, createCL(cs, clName, sizeof(clName), cl));
    
-   rc = db1.connect(HOST, SERVER);
+   getConf() ;
+   rc = db1.connect(HOSTNAME, SVCNAME, USER, PASSWD);
    ASSERT_EQ(SDB_OK, rc);
    rc = db1.getCollectionSpace(csName, cs1);
    
@@ -378,7 +383,8 @@ TEST( turnonCache, getCSOfTimeOutandDropbyOtherConn)
    ASSERT_EQ(SDB_OK, init(db, 1));
    ASSERT_EQ(SDB_OK, createCS(db, csName, sizeof(csName), cs));
    
-   rc = db1.connect(HOST, SERVER);
+   getConf() ;
+   rc = db1.connect(HOSTNAME, SVCNAME, USER, PASSWD);
    ASSERT_EQ(SDB_OK, rc);
    ASSERT_EQ(SDB_OK, dropCS(db1, csName));
    usleep(1000000);

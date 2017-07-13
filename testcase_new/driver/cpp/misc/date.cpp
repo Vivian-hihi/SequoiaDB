@@ -20,41 +20,42 @@ sdb db ;
 sdbCollectionSpace cs ;
 sdbCollection cl ;
 
-class DateTest : public testing::Test
-{
-public:
-    static void SetUpTestCase() ;
-    static void TearDownTestCase() ;
-} ;
-
-void DateTest::SetUpTestCase()
+int setup()
 {
     int rc = SDB_OK ;
-	// connect and create cs cl
 	rc = createNormalCl( db, cs, cl, csName,clName ) ;
-	ASSERT_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
+	CHECK_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void DateTest::TearDownTestCase()
+int teardown()
 {
 	int rc = SDB_OK ;
-	// drop cs and disconnect
 	rc = db.dropCollectionSpace( csName ) ;
-	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
+	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
 	db.disconnect() ;
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-TEST_F( DateTest, Date_t )
+TEST( DateTest, Date_t )
 {
+	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
 	unsigned long long mills[] = {
 		-62167248000000,   // 0000-01-01 00:00:00
         253402271999000,   // 9999-12-31 23:59:59
         -62167248001000,   // -0001-12-31 23:59:59 
         253402272000000    // 10000-01-01 00:00:00
 	} ;
-	int i ;
-	int rc = SDB_OK ;
-	for( i = 0;i < sizeof(mills)/sizeof(mills[0]);i++ )
+	for( int i = 0;i < sizeof(mills)/sizeof(mills[0]);i++ )
 	{
 		BSONObjBuilder b ;
     	BSONObj obj, res ;
@@ -85,4 +86,7 @@ TEST_F( DateTest, Date_t )
 		ASSERT_EQ( date, mills[i] ) ;
 		// cout << date.toString() << endl ;
 	}
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

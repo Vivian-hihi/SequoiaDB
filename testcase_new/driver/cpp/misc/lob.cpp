@@ -20,31 +20,35 @@ sdbCollection cl ;
 const char* csname = "lobTestCS" ;
 const char* clname = "lobTestCL" ;
 
-class LobTest : public testing::Test
-{
-public:
-	static void SetUpTestCase() ;
-	static void TearDownTestCase() ;	
-} ;
-
-void LobTest::SetUpTestCase()
+int setup()
 {
 	int rc = SDB_OK ;
     rc = createNormalCl( db, cs, cl, csname, clname ) ;
-    ASSERT_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
+    CHECK_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void LobTest::TearDownTestCase()
+int teardown()
 {
 	int rc = SDB_OK ;
 	rc = db.dropCollectionSpace( csname ) ;
-	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csname, rc ) ;
+	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", csname, rc ) ;
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 // creat lob then close all cursors
-TEST_F( LobTest, create )
+TEST( LobTest, create )
 {
 	int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
 	sdbLob lob ;
 	OID oid1, oid2 ;
 	UINT64 time1, time2 ;
@@ -88,7 +92,7 @@ TEST_F( LobTest, create )
 }
 
 // write lob then close all cursors
-TEST_F( LobTest, write )
+TEST( LobTest, write )
 {
 	int rc = SDB_OK ;
     sdbLob lob ;
@@ -137,7 +141,7 @@ TEST_F( LobTest, write )
 }
 
 // read lob then close all cursors
-TEST_F( LobTest, read )
+TEST( LobTest, read )
 {
 	int rc = SDB_OK ;
     sdbLob lob ;
@@ -195,7 +199,7 @@ TEST_F( LobTest, read )
 }
 
 // query then close all cursors
-TEST_F( LobTest, query )
+TEST( LobTest, query )
 {
 	int rc = SDB_OK ;
 
@@ -216,4 +220,7 @@ TEST_F( LobTest, query )
 	BSONObj res ;
 	rc = cursor.next( res ) ;
 	ASSERT_EQ( rc, SDB_DMS_CONTEXT_IS_CLOSE ) << "fail to check cursor after close all cursors" ;
+
+	rc =teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }

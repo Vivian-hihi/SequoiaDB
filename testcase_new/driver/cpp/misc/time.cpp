@@ -26,7 +26,8 @@ TEST( time, getLastAliveTime )
    time_t timediff;
          
    // connect to database   
-   rc = db.connect( HOST, SERVER, "", "" );                                
+   getConf() ;
+   rc = db.connect( HOSTNAME, SVCNAME, USER, PASSWD );                                
    ASSERT_EQ( SDB_OK, rc ); 
    
    usleep(2050000);;

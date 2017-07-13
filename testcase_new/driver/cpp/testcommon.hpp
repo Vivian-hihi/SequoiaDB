@@ -16,17 +16,6 @@ do { \
 	} \
 } while( 0 ) ;
 
-#define ASSERT_RC( rc, fmt, ... ) \
-do { \
-    if( rc != SDB_OK ) \
-    { \
-        printMsg( fmt, ##__VA_ARGS__ ) ; \
-        exit(1) ; \
-    } \
-} while( 0 ) ;
-
-#define HOST                  "localhost"
-#define SERVER                "11810" 
 #define USER				  ""
 #define PASSWD				  ""
 #define CSNAME                "story_cpp_test_cs" 

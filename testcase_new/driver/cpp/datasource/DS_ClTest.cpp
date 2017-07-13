@@ -10,7 +10,7 @@ TEST( libTest, sdb )
 {
 	sdb db ;
     getConf() ;
-	ASSERT_EQ( SDB_OK, db.connect( HOST, SERVER ) ) ;
+	ASSERT_EQ( SDB_OK, db.connect( HOSTNAME, SVCNAME, USER, PASSWD ) ) ;
 	sdbCollectionSpace cs ;
 	ASSERT_EQ( SDB_OK, db.createCollectionSpace( "testcs", 65536, cs ) ) ;
 	sdbCollection cl ;

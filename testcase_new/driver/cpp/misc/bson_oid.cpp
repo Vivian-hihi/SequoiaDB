@@ -22,28 +22,27 @@ sdb _db ;
 sdbCollectionSpace _cs ;
 sdbCollection _cl ;
 
-class BsonTest : public testing::Test
-{
-public:
-	static void SetUpTestCase() ;
-	static void TearDownTestCase() ;
-} ;
-
-void BsonTest::SetUpTestCase()
+int setup()
 {
 	int rc = SDB_OK ;
-	// connect and create cs cl
 	rc = createNormalCl( _db, _cs, _cl, csName, clName ) ;
-	ASSERT_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;	
+	CHECK_RC( rc, "fail to create normal cl, rc = %d\n", rc ) ;	
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
-void BsonTest::TearDownTestCase()
+int teardown()
 {
 	int rc = SDB_OK ;
-	// drop cs and disconnect
 	rc = _db.dropCollectionSpace( csName ) ;
-	ASSERT_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
+	CHECK_RC( rc, "fail to drop cs %s, rc = %d\n", csName, rc ) ;
 	_db.disconnect() ;
+done:
+	return rc ;
+error:
+	goto done ;
 }
 
 class ThreadArgs : public WorkerArgs
@@ -86,9 +85,12 @@ void bulkInsert( ThreadArgs* args )
    	db.disconnect() ;
 }
 
-TEST_F( BsonTest, multiBulkInsert )
+TEST( BsonTest, multiBulkInsert )
 {
     int rc = SDB_OK ;
+	rc = setup() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
+
     int ThreadNum = 20 ;
     int RecordNum = 100 ;
     Worker* workers[ThreadNum] ;
@@ -107,4 +109,7 @@ TEST_F( BsonTest, multiBulkInsert )
    	SINT64 count = 0 ;
    	rc = _cl.getCount( count ) ;
    	ASSERT_EQ( RecordNum * ThreadNum, count ) ;
+
+	rc = teardown() ;
+	ASSERT_EQ( rc, SDB_OK ) ;
 }
