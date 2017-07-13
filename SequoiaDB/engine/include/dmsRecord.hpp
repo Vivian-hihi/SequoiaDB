@@ -403,6 +403,98 @@ namespace engine
          }                                                              \
       } while ( FALSE )
 
+   // Capped collectionr record header.
+   class _dmsCappedRecord : public SDBObject
+   {
+      // Caution: This structure will use dmsRecord structure for data and
+      // attribute setting. DO NOT modify the members!
+   public:
+      union
+      {
+         CHAR     _recordHead[4] ;
+         UINT32   _flag_and_size ;
+      }           _head ;
+      // Record number which have been inserted into this extent. It's used to
+      // calculate record number being popped in pop operation, avoid scanning
+      // the whole extent.
+      // Note: It includes records which have been popped out forward, but
+      // excludes those which have been popped out backward.
+      UINT32      _recNo ;
+      INT64       _logicalID ;
+
+   public:
+      void setSize( UINT32 size )
+      {
+         return ((dmsRecord*)this)->setSize( size ) ;
+      }
+
+      UINT32 getSize() const
+      {
+         return ((const dmsRecord*)this)->getSize() ;
+      }
+
+      void setLogicalID( INT64 logicalID )
+      {
+         _logicalID = logicalID ;
+      }
+
+      INT64 getLogicalID() const
+      {
+         return _logicalID ;
+      }
+
+      void setRecordNo( UINT32 recNo )
+      {
+         _recNo = recNo ;
+      }
+
+      UINT32 getRecordNo() const
+      {
+         return _recNo ;
+      }
+
+      void setNormal()
+      {
+         return ((dmsRecord*)this)->setNormal() ;
+      }
+
+      BOOLEAN isNormal() const
+      {
+         return ((const dmsRecord*)this)->isNormal() ;
+      }
+
+      void resetAttr()
+      {
+         return ((dmsRecord*)this)->resetAttr() ;
+      }
+
+      void setData( const dmsRecordData &data )
+      {
+         return ((dmsRecord*)this)->setData(data) ;
+      }
+
+      const CHAR* getData() const
+      {
+         return ((const dmsRecord*)this)->getData() ;
+      }
+
+      UINT32 getDataLength() const
+      {
+         return ((const dmsRecord*)this)->getDataLength() ;
+      }
+
+      BOOLEAN isCompressed() const
+      {
+         return ((const dmsRecord*)this)->isCompressed() ;
+      }
+
+      BYTE getState() const
+      {
+         return ((const dmsRecord*)this)->getState() ;
+      }
+   } ;
+   typedef _dmsCappedRecord dmsCappedRecord ;
+
    /*
       _dmsDeletedRecord defined
    */

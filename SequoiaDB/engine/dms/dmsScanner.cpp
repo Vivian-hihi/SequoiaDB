@@ -457,6 +457,7 @@ namespace engine
       _extent = NULL ;
       _curRID._extent = curExtentID ;
       _next = DMS_INVALID_OFFSET ;
+      _lastOffset = DMS_INVALID_OFFSET ;
       _firstRun = TRUE ;
       _cb = NULL ;
       _workExtInfo = NULL ;
@@ -495,10 +496,12 @@ namespace engine
       if ( _curRID._extent == _workExtInfo->getID() )
       {
          _next = _workExtInfo->_firstRecordOffset ;
+         _lastOffset = _workExtInfo->_lastRecordOffset ;
       }
       else
       {
          _next = _extent->_firstRecordOffset ;
+         _lastOffset = _extent->_lastRecordOffset ;
       }
 
       if ( !_extent->validate( _context->mbID() ) )
@@ -542,7 +545,7 @@ namespace engine
       BOOLEAN result = TRUE ;
       ossValuePtr recordDataPtr ;
       dmsRecordData recordData ;
-      const dmsRecord *record = NULL ;
+      const dmsCappedRecord *record = NULL ;
       UINT32 currExtRecNum = 0 ;
 
       if ( _firstRun )
@@ -551,7 +554,8 @@ namespace engine
          PD_RC_CHECK( rc, PDWARNING, "first init failed, rc: %d", rc ) ;
       }
 
-      currExtRecNum = _extent->_recCount ;
+      currExtRecNum = ( _curRID._extent == _workExtInfo->getID() ) ?
+                       _workExtInfo->_recCount : _extent->_recCount ;
 
       if ( !_match && _skipNum > 0 && _skipNum >= currExtRecNum &&
            ( _curRID._extent != _context->mb()->_lastExtentID ) )
@@ -560,23 +564,18 @@ namespace engine
          _next = DMS_INVALID_OFFSET ;
       }
 
-      while ( _next <= DMS_CAP_EXTENT_SZ && DMS_INVALID_OFFSET != _next &&
+      while ( _next <= _lastOffset && DMS_INVALID_OFFSET != _next &&
               0 != _maxRecords )
       {
          _curRID._offset = _next ;
          _recordRW = _pSu->record2RW( _curRID, _context->mbID() ) ;
          _recordRW.setNothrow( TRUE ) ;
-         record= _recordRW.readPtr( 0 ) ;
+         record= _recordRW.readPtr<dmsCappedRecord>( 0 ) ;
          if ( !record )
          {
             PD_LOG( PDERROR, "Get record failed" ) ;
             rc = SDB_SYS ;
             goto error ;
-         }
-         if ( 0 == record->_head._flag_and_size )
-         {
-            // Reach the end of the current extent.
-            break ;
          }
 
          _next += record->getSize() ;

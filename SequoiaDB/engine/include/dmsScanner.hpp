@@ -178,6 +178,7 @@ namespace engine
          dmsRecordID             _curRID ;
          dmsRecordRW             _recordRW ;
          dmsOffset               _next ;
+         dmsOffset               _lastOffset ;
          BOOLEAN                 _firstRun ;
          _pmdEDUCB               *_cb ;
          const _dmsExtentInfo    *_workExtInfo ;

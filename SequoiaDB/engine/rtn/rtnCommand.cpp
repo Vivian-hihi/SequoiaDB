@@ -637,6 +637,7 @@ namespace engine
       {
          INT64 maxSize = 0 ;
          INT64 maxRecNum = 0 ;
+         BOOLEAN overwrite = FALSE ;
          BSONObjBuilder builder ;
          if ( isCompressed || autoIndexId )
          {
@@ -665,7 +666,7 @@ namespace engine
          }
          builder.append( FIELD_NAME_SIZE, maxSize ) ;
 
-         // Max is optional.
+         // Max/OverWrite is optional.
          rc = rtnGetNumberLongElement( matcher, FIELD_NAME_MAX, maxRecNum ) ;
          if ( SDB_OK != rc && SDB_FIELD_NOT_EXIST != rc )
          {
@@ -674,6 +675,16 @@ namespace engine
             goto error ;
          }
          builder.append( FIELD_NAME_MAX, maxRecNum ) ;
+
+         rc = rtnGetBooleanElement( matcher, FIELD_NAME_OVERWRITE, overwrite ) ;
+         if ( SDB_OK != rc && SDB_FIELD_NOT_EXIST != rc )
+         {
+            PD_LOG( PDERROR, "Field[%s] value is error in obj[%s]",
+                    FIELD_NAME_OVERWRITE, matcher.toString().c_str() ) ;
+            goto error ;
+         }
+         builder.appendBool( FIELD_NAME_OVERWRITE, overwrite ) ;
+
          _extOptions = builder.obj() ;
       }
 

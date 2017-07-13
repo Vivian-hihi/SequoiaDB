@@ -134,5 +134,6 @@
 #define CAT_CAPPED_NAME                   FIELD_NAME_CAPPED
 #define CAT_CL_MAX_SIZE                   FIELD_NAME_SIZE
 #define CAT_CL_MAX_RECNUM                 FIELD_NAME_MAX
+#define CAT_CL_OVERWRITE                  FIELD_NAME_OVERWRITE
 
 #endif // MSGCATALOGDEF_HPP__

@@ -676,7 +676,7 @@ namespace engine
       {
          builder.append( FIELD_NAME_SIZE, set->getMaxSize() ) ;
          builder.append( FIELD_NAME_MAX, set->getMaxRecNum() ) ;
-		 extOptions = builder.done() ;
+         extOptions = builder.done() ;
       }
 
       if ( isMainCL )

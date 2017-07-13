@@ -3645,6 +3645,15 @@ namespace engine
             clInfo._maxSize = eleTmp.numberLong() ;
             fieldMask |= CAT_MASK_CLMAXSIZE ;
          }
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(), CAT_CL_OVERWRITE ) )
+         {
+            PD_CHECK( Bool == eleTmp.type(),
+                      SDB_INVALIDARG, error, PDWARNING,
+                      "Field [%s] type [%d] error",
+                      CAT_CL_OVERWRITE, eleTmp.type() ) ;
+            clInfo._overwrite = eleTmp.Bool() ;
+            fieldMask |= CAT_MASK_CLOVERWRITE ;
+         }
          else
          {
             PD_RC_CHECK ( SDB_INVALIDARG, PDWARNING,
@@ -3666,7 +3675,8 @@ namespace engine
                    "can not set auto-index-id on main collection" ) ;
          PD_CHECK( !( ( CAT_MASK_CAPPED & fieldMask ) ||
                       ( CAT_MASK_CLMAXRECNUM & fieldMask ) ||
-                      ( CAT_MASK_CLMAXSIZE & fieldMask ) ),
+                      ( CAT_MASK_CLMAXSIZE & fieldMask ) ||
+                      ( CAT_MASK_CLOVERWRITE & fieldMask ) ),
                    SDB_INVALIDARG, error, PDWARNING,
                    "can not set Capped|Max|Size on main collection" ) ;
       }
@@ -3977,16 +3987,6 @@ namespace engine
          builder.appendBool( CAT_AUTO_INDEX_ID, clInfo._autoIndexId ) ;
       }
 
-      if ( mask & CAT_MASK_CAPPED )
-      {
-         // builder.appendBool( CAT_CAPPED_NAME, clInfo._capped ) ;
-         builder.append( FIELD_NAME_TYPE, DMS_STORAGE_CAPPED ) ;
-      }
-      else
-      {
-         builder.append( FIELD_NAME_TYPE, DMS_STORAGE_NORMAL ) ;
-      }
-
       if ( mask & CAT_MASK_CLMAXRECNUM )
       {
          builder.append( CAT_CL_MAX_RECNUM, (INT64)clInfo._maxRecNum ) ;
@@ -3995,6 +3995,11 @@ namespace engine
       if ( mask & CAT_MASK_CLMAXSIZE )
       {
          builder.append( CAT_CL_MAX_SIZE, (INT64)clInfo._maxSize ) ;
+      }
+
+      if ( mask & CAT_MASK_CLOVERWRITE )
+      {
+         builder.appendBool( CAT_CL_OVERWRITE, clInfo._overwrite ) ;
       }
 
       catRecord = builder.obj () ;

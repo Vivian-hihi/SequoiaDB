@@ -74,6 +74,7 @@ namespace engine
    #define CAT_MASK_CAPPED          0x00001000
    #define CAT_MASK_CLMAXRECNUM     0x00002000
    #define CAT_MASK_CLMAXSIZE       0x00004000
+   #define CAT_MASK_CLOVERWRITE     0x00008000
 
    struct _catCollectionInfo
    {
@@ -95,9 +96,9 @@ namespace engine
       BOOLEAN     _autoIndexId ;
       UTIL_COMPRESSOR_TYPE _compressorType ;
       BOOLEAN     _capped ;
-      //DMS_CL_TYPE _type ;
       INT64       _maxRecNum ;
       INT64       _maxSize ;
+      BOOLEAN     _overwrite ;
 
       std::vector<std::string>   _subCLList;
 
@@ -120,9 +121,9 @@ namespace engine
          _autoIndexId         = TRUE ;
          _compressorType      = UTIL_COMPRESSOR_INVALID ;
          _capped              = FALSE ;
-         //_type                = DMS_CL_NORMAL ;
          _maxRecNum           = 0 ;
          _maxSize             = 0 ;
+         _overwrite           = FALSE ;
       }
    };
    typedef _catCollectionInfo catCollectionInfo ;

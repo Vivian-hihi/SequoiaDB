@@ -96,11 +96,13 @@ namespace engine
    {
       INT64 _maxSize ;
       INT64 _maxRecNum ;
+      BOOLEAN _overwrite ;
 
       _dmsCappedCLOptions()
       {
          _maxSize = DMS_DFT_CAPPEDCL_SIZE ;
          _maxRecNum = DMS_DFT_CAPPEDCL_RECNUM ;
+         _overwrite = FALSE ;
       }
    } ;
    typedef _dmsCappedCLOptions dmsCappedCLOptions ;
@@ -112,12 +114,13 @@ namespace engine
       dmsExtentID    _id ;
       INT64          _extLogicID ;
       UINT32         _recCount ;
-      INT32          _freeSpace ;
+      UINT32         _freeSpace ;
       dmsOffset      _firstRecordOffset ;
       dmsOffset      _lastRecordOffset ;
       UINT32         _writePos ; // Currently write position in the working
                                  // extent data area( the extent header
                                  // excluded). Always 4 byte aligned.
+      UINT32         _recNo ;
       _dmsExtentInfo()
       {
          reset() ;
@@ -132,6 +135,7 @@ namespace engine
          _firstRecordOffset = DMS_INVALID_OFFSET ;
          _lastRecordOffset = DMS_INVALID_OFFSET ;
          _writePos = 0 ;
+         _recNo = 0 ;
       }
 
       const dmsExtentID getID() const { return _id ; }
@@ -144,6 +148,16 @@ namespace engine
       INT64 getRecordLogicID()
       {
          return ( _extLogicID * DMS_CAP_EXTENT_BODY_SZ + _writePos ) ;
+      }
+
+      UINT32 currentRecNo() const
+      {
+         return _recNo ;
+      }
+
+      void recNoInc()
+      {
+         _recNo++ ;
       }
    } ;
    typedef _dmsExtentInfo dmsExtentInfo ;
@@ -268,7 +282,10 @@ namespace engine
       OSS_INLINE void _updateStatInfo( dmsMBContext *context,
                                        UINT32 recordSize,
                                        const dmsRecordData &recordData ) ;
-      OSS_INLINE BOOLEAN _exceedLimit( dmsMBContext *context, UINT32 size ) ;
+      OSS_INLINE BOOLEAN _sizeExceedLimit( dmsMBContext *context,
+                                           UINT32 newSize ) ;
+      OSS_INLINE BOOLEAN _numExceedLimit( dmsMBContext *context, UINT32 size ) ;
+      OSS_INLINE BOOLEAN _overwriteOnExceed( dmsMBContext *context ) ;
       OSS_INLINE void _getExtLIDAndOffsetByLID( INT64 logicalID,
                                                 dmsExtentID &extID,
                                                 dmsOffset &offset ) ;
@@ -286,16 +303,18 @@ namespace engine
                              dmsExtentID targetExtID,
                              INT8 direction ) ;
 
-      void _countRecNumAndSize( UINT16 collectionID,
-                                dmsExtentID extentID,
-                                dmsOffset beginOffset,
-                                dmsOffset endOffset,
-                                INT64 &recNum,
-                                INT64 &dataSize,
-                                INT64 &totalSize,
-                                dmsOffset &lastRecOffset,
-                                BOOLEAN freeRecord = FALSE,
-                                BOOLEAN endInclude = TRUE ) ;
+      INT32 _getPrevRecOffset( UINT16 collectionID,
+                               dmsExtentID extentID,
+                               dmsOffset offset,
+                               dmsOffset &prevOffset );
+
+      INT32 _countRecNumAndSize( UINT16 collectionID,
+                                 dmsExtentID extentID,
+                                 dmsOffset beginOffset,
+                                 dmsOffset endOffset,
+                                 UINT32 &recNum,
+                                 UINT32 &totalSize,
+                                 BOOLEAN endInclude = TRUE ) ;
 
    private:
       dmsCappedCLOptions *_options[ DMS_MME_SLOTS ] ;
@@ -321,8 +340,8 @@ namespace engine
    {
       ++( mbStat._totalRecords ) ;
       mbStat._totalDataFreeSpace -= totalSize ;
-      mbStat._totalOrgDataLen += recordData.orgLen() ;
-      mbStat._totalDataLen += recordData.len() ;
+      mbStat._totalOrgDataLen += totalSize ;
+      mbStat._totalDataLen += totalSize ;
       mbStat._lastCompressRatio =
          (UINT8)( recordData.getCompressRatio() * 100 ) ;
    }
@@ -332,14 +351,25 @@ namespace engine
                                                               const dmsRecordData &recordData )
    {
       ++( extInfo._recCount ) ;
+      extInfo.recNoInc() ;
       extInfo._freeSpace -= totalSize ;
       if ( DMS_INVALID_OFFSET == extInfo._firstRecordOffset )
       {
          SDB_ASSERT( DMS_INVALID_OFFSET ==
                      extInfo._lastRecordOffset,
                      "last record offset should be invalid" ) ;
-         extInfo._firstRecordOffset = DMS_EXTENT_METADATA_SZ ;
-         extInfo._lastRecordOffset = DMS_EXTENT_METADATA_SZ ;
+         if ( 0 == extInfo._writePos )
+         {
+            extInfo._firstRecordOffset = DMS_EXTENT_METADATA_SZ ;
+            extInfo._lastRecordOffset = DMS_EXTENT_METADATA_SZ ;
+         }
+         else
+         {
+            extInfo._firstRecordOffset =
+               extInfo._writePos + DMS_EXTENT_METADATA_SZ ;
+            extInfo._lastRecordOffset =
+               extInfo._writePos + DMS_EXTENT_METADATA_SZ ;
+         }
       }
       else
       {
@@ -361,25 +391,30 @@ namespace engine
       _updateCLStat( _mbStatInfo[ context->mbID() ], recordSize, recordData ) ;
    }
 
-   OSS_INLINE BOOLEAN _dmsStorageDataCapped::_exceedLimit( dmsMBContext *context,
-                                                           UINT32 size )
+   OSS_INLINE BOOLEAN _dmsStorageDataCapped::_sizeExceedLimit( dmsMBContext *context,
+                                                               UINT32 newSize )
    {
-      INT64 expectSize = 0 ;
-      INT64 expectRecNum = 0 ;
       const dmsMBStatInfo *mbStatInfo = getMBStatInfo( context->mbID() ) ;
       SDB_ASSERT( mbStatInfo, "mbStatInfo should not be NULL" ) ;
 
-      expectSize = mbStatInfo->_totalDataLen + size ;
-      expectRecNum = mbStatInfo->_totalRecords ;
-      // Check total data size and record number.
-      if ( ( expectSize > _options[context->mbID()]->_maxSize ) ||
-           ( _options[context->mbID()]->_maxRecNum > 0 &&
-             ( expectRecNum >= _options[context->mbID()]->_maxRecNum ) ) )
-      {
-         return TRUE ;
-      }
+      return ( mbStatInfo->_totalDataLen + newSize ) >
+               _options[context->mbID()]->_maxSize ;
+   }
 
-      return FALSE ;
+   OSS_INLINE BOOLEAN _dmsStorageDataCapped::_numExceedLimit( dmsMBContext *context,
+                                                              UINT32 newNum )
+   {
+      const dmsMBStatInfo *mbStatInfo = getMBStatInfo( context->mbID() ) ;
+      SDB_ASSERT( mbStatInfo, "mbStatInfo should not be NULL" ) ;
+
+      return ( _options[context->mbID()]->_maxRecNum > 0 &&
+               ( ( mbStatInfo->_totalRecords + newNum ) >
+                 _options[context->mbID()]->_maxRecNum ) ) ;
+   }
+
+   OSS_INLINE BOOLEAN _dmsStorageDataCapped::_overwriteOnExceed( dmsMBContext *context )
+   {
+      return _options[context->mbID()]->_overwrite ;
    }
 
    OSS_INLINE void _dmsStorageDataCapped::_getExtLIDAndOffsetByLID( INT64 logicalID,
