@@ -28,6 +28,7 @@ public class MyDataSource {
         dsOpt.setDeltaIncCount(20);
         dsOpt.setMaxIdleCount(20);
         dsOpt.setCheckInterval(60 * 1000);
+        dsOpt.setValidateConnection(true);
         ConfigOptions configOptions=new ConfigOptions();
         //不打开keepalive，某一端断网后，另一端无法感知。
         configOptions.setSocketKeepAlive(true);
