@@ -102,14 +102,9 @@ function checkCappedCL( csName, clName, nodeList )
 	   var catadb = new Sdb( nodeList[i] );
 	   var cursor = catadb.SYSCAT.SYSCOLLECTIONS.find({ 'Name' : csName + "." + clName});
       var obj    = cursor.next().toObj();
-	   var type   = obj.Type;
       var attributeDesc = obj.AttributeDesc;
       var max    = obj.Max;
       var size   = obj.Size;
-	   if( type !== 1 )
-	   {
-		   throw buildException( "check cappedCL type", null, "check cappedCL type", "1",  type);
-	   }
       if( attributeDesc !== "NoIDIndex | Capped" )
 	   {
 		   throw buildException( "check cappedCL attributeDesc", null, "check cappedCL attributeDesc", "NoIDIndex | Capped",  attributeDesc);
