@@ -54,7 +54,7 @@ function main( db )
          catch( e )
          {
             println("test cl name: " + cols[i].cl[j]);
-            println("test cs name: " + cols[i].cs)
+            println("test cs name: " + cols[i].cs);
             println( "Drop " + cols[i].cs + "." + cols[i].cl[j] + " failed after test-case: " + e ) ;
          }
       }
