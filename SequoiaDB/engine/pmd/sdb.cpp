@@ -483,7 +483,7 @@ INT32 formatArgs ( const CHAR * program ,
 
    // caller is responsible for freeing *args
    *args = (CHAR*) SDB_OSS_MALLOC ( argSize ) ;
-   if ( ! args )
+   if ( NULL == *args )
    {
       rc = SDB_OOM ;
       SH_VERIFY_RC
