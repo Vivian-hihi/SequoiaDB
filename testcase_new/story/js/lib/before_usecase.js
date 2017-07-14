@@ -36,11 +36,13 @@ function main( db )
          }
          try
          {
-            commDropCL( db, cols[i].cs, cols[i].cl[j], true, true, "before test-case" ) ;
+            var str = cols[i].cl[j];
+            var clname = str.split(".")[1];
+            commDropCL( db, cols[i].cs, clname, true, true, "before test-case" ) ;
          }
          catch( e )
          {
-            println( "Drop " + cols[i].cs + "." + cols[i].cl[j] + " failed before test-case: " + e ) ;
+            println( "Drop " + cols[i].cs + "." + clname + " failed before test-case: " + e ) ;
          }
       }
    }
