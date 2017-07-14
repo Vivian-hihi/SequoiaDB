@@ -87,6 +87,7 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
       {
          pdTraceRecord record ;
          CHAR *pBuffer = NULL ;
+         UINT16 lastSize = TRACE_RECORD_MAX_SIZE - record._recordSize ;
 
          record.saveCurTime() ;
          record._functionID = code ;
@@ -97,10 +98,18 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
          // parse arguments and calcualte the total size of buffer we need
          for ( INT8 i = 0 ; i < PD_TRACE_MAX_ARG_NUM ; ++i )
          {
-            if ( PD_TRACE_ARGTYPE_NONE != tuple[i]._arg._argumentType )
+            if ( PD_TRACE_ARGTYPE_NONE != tuple[i]._arg.getType() )
             {
+               /// make sure size is not overflow
+               if ( tuple[i]._arg.argSize() > lastSize )
+               {
+                  tuple[i]._arg.setType( PD_TRACE_ARGTYPE_NONE ) ;
+                  break ;
+               }
+
                ++record._numArgs ;
-               record._recordSize += tuple[i]._arg._argumentSize ;
+               record._recordSize += tuple[i]._arg.argSize() ;
+               lastSize -= tuple[i]._arg.argSize() ;
             }
             else
             {
@@ -119,15 +128,14 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
 
          for ( INT8 i = 0 ; i < PD_TRACE_MAX_ARG_NUM ; ++i )
          {
-            if ( PD_TRACE_ARGTYPE_NONE != tuple[i]._arg._argumentType )
+            if ( PD_TRACE_ARGTYPE_NONE != tuple[i]._arg.getType() )
             {
                pBuffer = pdCB->fillIn ( pBuffer,
                                         (const CHAR*)(&tuple[i]._arg),
-                                        sizeof( pdTraceArgument ) ) ;
+                                        tuple[i]._arg.headerSize() ) ;
                pBuffer = pdCB->fillIn ( pBuffer,
                                         (const CHAR*)(tuple[i].y),
-                                        tuple[i]._arg._argumentSize -
-                                        sizeof( pdTraceArgument ) ) ;
+                                        tuple[i]._arg.dataSize() ) ;
             }
             else
             {
@@ -376,6 +384,7 @@ INT32 _pdTraceCB::start ( UINT64 size,
    size           = ossRoundUpToMultipleX ( size, TRACE_CHUNK_SIZE ) ;
    size           = OSS_MAX ( size, TRACE_MIN_BUFFER_SIZE ) ;
    size           = OSS_MIN ( size, TRACE_MAX_BUFFER_SIZE ) ;
+   size           *= ( 1024 * 1024 ) ;
 
    // start trace
    PD_LOG ( PDEVENT, "Trace starts, buffersize = %llu, mask = 0x%x, "

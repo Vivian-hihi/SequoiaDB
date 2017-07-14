@@ -67,21 +67,33 @@
  * multiple slots.
  */
 
-/* 2048 slots per chunk */
-#define TRACE_CHUNK_SIZE      ( 65536 )   /* bytes */
-// #define TRACE_SLOT_SIZE       ( 64 )      /* bytes */
+/*
+   TRACE_RECORD_MAX_SIZE must <= 65536 and
+                              <= TRACE_CHUNK_SIZE
+   TRACE_CHUNK_SIZE must <= 1048576 and
+                         >= 4096
+*/
 
-// #define TRACE_SLOTS_PER_CHUNK (TRACE_CHUNK_SIZE/TRACE_SLOT_SIZE)
-#define TRACE_RECORD_MAX_SIZE TRACE_CHUNK_SIZE
+#define TRACE_CHUNK_SIZE      ( 65536 )      /* bytes */
+
+#if TRACE_CHUNK_SIZE > 1048576 || TRACE_CHUNK_SIZE < 4096
+   #error "TRACE_CHUNK_SIZE is invalid"
+#endif
+
+#define TRACE_RECORD_MAX_SIZE ( 65536 )      /* bytes */
+
+#if TRACE_RECORD_MAX_SIZE > TRACE_CHUNK_SIZE || TRACE_RECORD_MAX_SIZE > 65536
+   #error "TRACE_RECORD_MAX_SIZE can't more than TRACE_CHUNK_SIZE"
+#endif
 
 /*
  * Trace buffer should always be power of 2 and multiple of chunk size
  * Even thou there's no physical limitation of upper limit of buffer size, but
  * we should still limit it to a practical number, let's say 1GB
  */
-#define TRACE_MIN_BUFFER_SIZE ( 8*TRACE_CHUNK_SIZE )  /* bytes */
-#define TRACE_MAX_BUFFER_SIZE ( 1*1024*1024*1024 )    /* bytes */
-#define TRACE_DFT_BUFFER_SIZE ( 256*1024*1024 )       /* bytes */
+#define TRACE_MIN_BUFFER_SIZE ( 1 )                   /* mega bytes */
+#define TRACE_MAX_BUFFER_SIZE ( 1 * 1024 )            /* mega bytes */
+#define TRACE_DFT_BUFFER_SIZE ( 256 )                 /* mega bytes */
 
 /*
  * Put \n ( newline ) as eye catcher. We put this one in trace file header,
@@ -196,18 +208,52 @@ typedef _pdTraceArgumentType pdTraceArgumentType ;
 // each argument got 8 bytes header for size and type
 class _pdTraceArgument : public SDBObject
 {
-public :
-   pdTraceArgumentType  _argumentType ;
-   UINT32               _argumentSize ;
+private :
+   UINT8                _argumentType ;
+   UINT8                _pad ;
+   UINT16               _argumentSize ;
+
+public:
+   _pdTraceArgument()
+   {
+      _argumentType = 0 ;
+      _pad = 0 ;
+      _argumentSize = sizeof( _pdTraceArgument ) ;
+   }
 
    CHAR* argData()
    {
       return ( CHAR* )this + sizeof( _pdTraceArgument ) ;
    }
 
-   UINT32 dataSize()
+   UINT16 dataSize() const
    {
       return _argumentSize - sizeof( _pdTraceArgument ) ;
+   }
+
+   void setDataSize( UINT16 size )
+   {
+      _argumentSize = sizeof( _pdTraceArgument ) + size ;
+   }
+
+   UINT16 argSize() const
+   {
+      return _argumentSize ;
+   }
+
+   UINT16 headerSize() const
+   {
+      return sizeof( _pdTraceArgument ) ;
+   }
+
+   pdTraceArgumentType getType() const
+   {
+      return ( pdTraceArgumentType )_argumentType ;
+   }
+
+   void setType( pdTraceArgumentType type )
+   {
+      _argumentType = (UINT8)type ;
    }
 } ;
 typedef class _pdTraceArgument pdTraceArgument ;
@@ -270,7 +316,7 @@ struct _pdTraceRecord
 
       while ( id > 0 )
       {
-         pArg = pArg + ( ( pdTraceArgument* )pArg )->_argumentSize ;
+         pArg = pArg + ( ( pdTraceArgument* )pArg )->argSize() ;
          --id ;
       }
 
@@ -490,15 +536,15 @@ struct _pdTraceArgTuple
    _pdTraceArgTuple ( _pdTraceArgumentType a,
                       const void *b, INT32 c )
    {
-      _arg._argumentType = a ;
-      _arg._argumentSize = c + sizeof( pdTraceArgument ) ;
+      _arg.setType( a );
+      _arg.setDataSize( (UINT16)c ) ;
       y = b ;
    }
    _pdTraceArgTuple () {}
    _pdTraceArgTuple &operator=(const _pdTraceArgTuple &right)
    {
-      _arg._argumentType = right._arg._argumentType ;
-      _arg._argumentSize = right._arg._argumentSize ;
+      _arg.setType( right._arg.getType() ) ;
+      _arg.setDataSize( right._arg.dataSize() ) ;
       y = right.y ;
       return *this ;
    }

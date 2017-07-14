@@ -844,7 +844,7 @@ INT32 _pdTraceParser::_outputTraceRecordByThread( OSSFILE *flwFile,
       if ( 1 == record->_numArgs )
       {
          pdTraceArgument *arg = record->getArg( 0 ) ;
-         if ( PD_TRACE_ARGTYPE_INT == arg->_argumentType )
+         if ( PD_TRACE_ARGTYPE_INT == arg->getType() )
          {
             INT32 retCode = *(INT32*)arg->argData() ;
             // show return code only when it's not SDB_OK
@@ -855,7 +855,7 @@ INT32 _pdTraceParser::_outputTraceRecordByThread( OSSFILE *flwFile,
                                       "[retCode=%d]",
                                       retCode ) ;
             }
-         } // if ( PD_TRACE_ARGTYPE_INT == arg->_argumentType )
+         } // if ( PD_TRACE_ARGTYPE_INT == arg->getType() )
       } // if ( record->_numArgs == 1 )
    } // else if ( record->_flag == PD_TRACE_RECORD_FLAG_EXIT )
 
@@ -1246,7 +1246,7 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
                              "\targ%d:",
                              i ) ;
 
-      switch ( pArgs->_argumentType )
+      switch ( pArgs->getType() )
       {
        case PD_TRACE_ARGTYPE_NULL :
          length += ossSnprintf( _pFormatBuf + length,
@@ -1344,7 +1344,7 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
       }
 
       pArgs = ( pdTraceArgument* )( ( const CHAR* )pArgs +
-                                    pArgs->_argumentSize ) ;
+                                    pArgs->argSize() ) ;
    }
 
    length += ossSnprintf( _pFormatBuf + length,
