@@ -806,7 +806,7 @@ INT32 _pdTraceParser::_outputTraceRecordByThread( OSSFILE *flwFile,
    UINT32 length = 0 ;
    ossTimestamp tmpTime ;
 
-   length += ossSnprintf( _pFormatBuf, _bufSize, OSS_NEWLINE"%12u:  ",
+   length += ossSnprintf( _pFormatBuf, _bufSize, OSS_NEWLINE"%10u:  ",
                           sequence ) ;
 
    // for exit, let's decrease numIndent
@@ -1147,7 +1147,7 @@ UINT32 _pdTraceParser::_outputTraceRecordFormat( CHAR *pBuffer,
 
    // write sequence
    length = ossSnprintf( pBuffer, bufSize,
-                         OSS_NEWLINE"%12u:  ",
+                         OSS_NEWLINE"%10u:  ",
                          sequence ) ;
 
    // for exit, let's decrease numIndent
