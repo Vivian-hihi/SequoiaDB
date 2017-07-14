@@ -2350,7 +2350,8 @@ namespace engine
       BOOLEAN isOpen = FALSE ;
       CHAR filePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-      if ( _pDumpFileName && ossStrlen( _pDumpFileName ) > 0 )
+      if ( _pDumpFileName && ossStrlen( _pDumpFileName ) > 0 &&
+           traceCB->getSize() > 0 )
       {
          traceCB->stop() ;
 
