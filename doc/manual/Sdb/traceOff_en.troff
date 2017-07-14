@@ -22,7 +22,7 @@ export the information in to binary files.
 .sp 2
 \fBDump file (string)\fR
 .br
-       Name of dump file.
+       Name of dump file. If the file path is relative path, will store file into the node's 'diagpath'.
 .SH "Examples"
 
 .sp 2

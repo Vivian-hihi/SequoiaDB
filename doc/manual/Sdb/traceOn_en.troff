@@ -18,7 +18,7 @@ Turn on the trace function of the database engine.
 .sp 2
 \fBbufferSize (int)\fR
 .br
-       Trace file's size.
+       Trace file's size(MB), Value range:[1,1024].
 .sp 2
 \fBstrComp (string)\fR
 .br
@@ -37,10 +37,10 @@ Turn on the trace function of the database engine.
 Turn on the trace function of the database engine. Default is all
 the modules.
 .sp 2
-db.traceOn(10000000);
+db.traceOn(512);
 .sp 2
 Turn on the tracefunction of the database engine, and specify the
 module's name to be traced and add a breakpoint to trace.
 .sp 2
-db.traceOn(10240000, "cls, dms, mth", "_dmsTempCB::init", 12712 ) ;
-db.traceOn(10240000, "cls, dms, mth", "_dmsTempCB::init", [12712, 12713, 12714] ) ;
+db.traceOn(256, "cls, dms, mth", "_dmsTempCB::init", 12712 ) ;
+db.traceOn(256, "cls, dms, mth", "_dmsTempCB::init", [12712, 12713, 12714] ) ;

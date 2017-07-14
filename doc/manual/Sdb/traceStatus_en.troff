@@ -90,6 +90,7 @@ db.traceStatus()
 .br
   ],
 .br
-  "BreakPoint": []
+  "BreakPoint": [],
+  "Threads": [],
 .br
 }
