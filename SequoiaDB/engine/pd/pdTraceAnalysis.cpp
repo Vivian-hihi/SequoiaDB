@@ -1343,8 +1343,8 @@ INT32 _pdTraceParser::_outputTraceRecordByFMT( OSSFILE *out,
          break ;
       }
 
-      pArgs += ( pdTraceArgument* )( ( const CHAR* )pArgs +
-                                     pArgs->_argumentSize ) ;
+      pArgs = ( pdTraceArgument* )( ( const CHAR* )pArgs +
+                                    pArgs->_argumentSize ) ;
    }
 
    length += ossSnprintf( _pFormatBuf + length,
