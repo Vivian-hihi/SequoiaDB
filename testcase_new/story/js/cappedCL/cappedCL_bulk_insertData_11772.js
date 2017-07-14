@@ -22,26 +22,27 @@ function main()
    
    //insertData
    println( "---bulk insert data---" )
+   var randomNum = Math.floor( Math.random()*100 );
+   var bigStr = createBigStr( randomNum );
    for( var i = 0; i < 20; i++ )
    {
-      bulkInsertData( dbcl );
+      bulkInsertData( dbcl, bigStr, 100 );
    }
    
-   //check id
-   checkId( dbcl );
+      //check id
+   checkId( dbcl, bigStr, 2000 );
    
    //clean environment after test  
    println( "---end the test---" );
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function bulkInsertData( dbcl )
+function bulkInsertData( dbcl, bigStr, times )
 {
    var doc = new Array();
-   var str = createBigStr();
-   for( var i = 0; i < 100; i++ )
+   for( var i = 0; i < times; i++ )
    {
-      var options = { No : i, a : str };
+      var options = { a : bigStr };
       doc.push( options );
    }
    try
@@ -54,14 +55,27 @@ function bulkInsertData( dbcl )
    }
 }
 
-function checkId( dbcl )
+function checkId( dbcl, bigStr, recordNum )
 {
    try
    {
       //dbcl.insert( { a : 1 } );
-      var cursor = dbcl.find( null,{ '_id': "" }).sort({ "_id":1 }).skip( 1999 ).limit( 1 );
-      var id = cursor.next().toObj()._id;
-      if( id <= 2147483647 )
+      var cursor = dbcl.find( null,{ '_id': "" }).sort({ "_id":-1 }).limit( 1 );
+      var actID = cursor.next().toObj()._id;
+      
+      var len = fourByte( 55 + bigStr.length );
+      var blank = 33554396%len;
+      var countLen = len * recordNum;
+      var one = Math.floor( 33554396/len );
+      var blanks = Math.floor( recordNum/one ) * blank;
+      var expID = countLen + blanks - len;
+      
+      //println(actID+":"+expID)
+      if( actID <= 2147483647 )
+      {
+         throw "ERR_ID_MIN";
+      }
+      if( Number(actID) !== expID )
       {
          throw "ERR_ID_VALUE";
       }
@@ -73,9 +87,22 @@ function checkId( dbcl )
    }
 }
 
-function createBigStr()
+function fourByte( len )
 {
-   var arr = new Array( 1024 * 1024 );
-   var str = arr.toString();
+   if(len%4 !== 0 )
+   {
+      len = len - len%4 + 4;
+   }
+   return len;
+}
+
+function createBigStr( randomNum )
+{
+   var size = 1024 * (1024 + randomNum);
+   var str = "";
+   for(var i = 0; i < size; i++)
+   {
+      str = str + "a";
+   }
    return str;
 }

@@ -9,9 +9,9 @@ main();
 
 function main()
 {
-   var csName1 = CHANGEDPREFIX + "_11762_CS1";
-   var csName2 = CHANGEDPREFIX + "_11762_CS2";
-   var clName  = CHANGEDPREFIX + "_11762_CL";
+   var csName1 = CHANGEDPREFIX + "_11766_CS1";
+   var csName2 = CHANGEDPREFIX + "_11766_CS2";
+   var clName  = CHANGEDPREFIX + "_11766_CL";
    
    //clean environment before test
    commDropCS( db, csName1, true, "drop CS in the beginning" );
