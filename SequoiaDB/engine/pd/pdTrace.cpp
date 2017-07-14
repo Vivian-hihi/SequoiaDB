@@ -102,6 +102,10 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
                ++record._numArgs ;
                record._recordSize += tuple[i]._arg._argumentSize ;
             }
+            else
+            {
+               break ;
+            }
          }
 
          pBuffer = pdCB->reserveMemory( record._recordSize ) ;
@@ -124,6 +128,10 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
                                         (const CHAR*)(tuple[i].y),
                                         tuple[i]._arg._argumentSize -
                                         sizeof( pdTraceArgument ) ) ;
+            }
+            else
+            {
+               break ;
             }
          }
       }
