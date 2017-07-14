@@ -72,6 +72,7 @@ catch( e )
 	}catch(e)
 	{
 		println("insert-data into mainCL fail! rc="+e);
+		throw e;
 	}
 	println("insert-data into mainCL succ!");
 	

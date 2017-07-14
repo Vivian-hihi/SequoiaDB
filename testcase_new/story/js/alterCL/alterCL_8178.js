@@ -136,6 +136,7 @@ function main()
 	}catch(e)
 	{
 		println("insert-data into hashCL fail! rc="+e);
+		throw e;
 	}
 	println("insert-data into hashCL succ!");
 	

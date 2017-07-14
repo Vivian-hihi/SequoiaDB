@@ -63,6 +63,7 @@ try{
 }catch(e)
 {
 	println("insert-data into normalCL fail! rc="+e);
+	throw e;
 }
 println("insert-data into normalCL succ!");
 

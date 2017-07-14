@@ -135,6 +135,7 @@ function main()
 	}catch(e)
 	{
 		println("insert-data into rangeCL fail! rc="+e);
+		throw e;
 	}
 	println("insert-data into rangeCL succ!");
 	

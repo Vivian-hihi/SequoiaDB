@@ -160,6 +160,7 @@ catch( e )
 	}catch(e)
 	{
 		println("insert-data fail! rc="+e);
+		throw e;
 	}
 	println("insert-data succ!");
 	
