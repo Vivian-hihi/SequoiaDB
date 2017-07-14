@@ -42,6 +42,7 @@ function main( db )
    {
       for ( var j = 0 ; j < cols[i].cl.length; ++j )
       {
+         
          // can't drop dummy collection
          if ( COMMDUMMYCLNAME == cols[i].cl[j] )
          {
@@ -49,13 +50,14 @@ function main( db )
          }
          try
          {
-            commDropCL( db, cols[i].cs, cols[i].cl[j], true, true, "After test-case" ) ;
+            
+            var str = cols[i].cl[j];
+            var clname = str.split(".")[1];
+            commDropCL( db, cols[i].cs, clname, true, true, "After test-case" ) ;
          }
          catch( e )
          {
-            println("test cl name: " + cols[i].cl[j]);
-            println("test cs name: " + cols[i].cs);
-            println( "Drop " + cols[i].cs + "." + cols[i].cl[j] + " failed after test-case: " + e ) ;
+            println( "Drop " + cols[i].cs + "." +clname + " failed after test-case: " + e ) ;
          }
       }
    }
