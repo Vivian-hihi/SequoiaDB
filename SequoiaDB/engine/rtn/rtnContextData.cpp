@@ -2504,22 +2504,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextTSData::_getSubContextData()
-   {
-      INT32 rc = SDB_OK ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _rtnContextTSData::_prepareRemoteSession( pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
       pmdRemoteSessionMgr *rsMgr = NULL ;
       pmdRemoteSessionSite *rsSite = NULL ;
-      pmdSubSession *subSession = NULL ;
       UINT64 seAdptNodeID = 99999 ;
 
       // Register a remote session.
@@ -2538,7 +2527,7 @@ namespace engine
          goto error ;
       }
 
-      subSession = _remoteSession->addSubSession( seAdptNodeID ) ;
+      (void)_remoteSession->addSubSession( seAdptNodeID ) ;
 
    done:
       return rc ;
@@ -2577,7 +2566,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdSubSession *subSession = NULL ;
-	  
+
       UINT64 seAdptNodeID = 99999 ;
 
       subSession = _remoteSession->getSubSession( seAdptNodeID ) ;

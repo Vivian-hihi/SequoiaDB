@@ -398,7 +398,7 @@ namespace engine
       SDB_ASSERT( mbStatInfo, "mbStatInfo should not be NULL" ) ;
 
       return ( mbStatInfo->_totalDataLen + newSize ) >
-               _options[context->mbID()]->_maxSize ;
+               (UINT64)_options[context->mbID()]->_maxSize ;
    }
 
    OSS_INLINE BOOLEAN _dmsStorageDataCapped::_numExceedLimit( dmsMBContext *context,
@@ -409,7 +409,7 @@ namespace engine
 
       return ( _options[context->mbID()]->_maxRecNum > 0 &&
                ( ( mbStatInfo->_totalRecords + newNum ) >
-                 _options[context->mbID()]->_maxRecNum ) ) ;
+                 (UINT64)_options[context->mbID()]->_maxRecNum ) ) ;
    }
 
    OSS_INLINE BOOLEAN _dmsStorageDataCapped::_overwriteOnExceed( dmsMBContext *context )

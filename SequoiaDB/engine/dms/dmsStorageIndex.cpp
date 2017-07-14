@@ -319,10 +319,7 @@ namespace engine
       // TODO: Check the definition of the index. Besides the common check, also need
       // to check if all fields are "text" type.
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return rc  ;
    }
 
    INT32 _dmsStorageIndex::_allocateIdxID( dmsMBContext *context,
@@ -744,7 +741,7 @@ namespace engine
                                             pmdEDUCB *cb,
                                             SDB_DPSCB *dpsCB,
                                             BOOLEAN isSys,
-                                            INT32 bufferSize )
+                                            INT64 bufferSize )
    {
       INT32 rc = SDB_OK ;
       INT32 indexID = 0 ;
@@ -1639,7 +1636,7 @@ namespace engine
       return rc ;
    error:
       indexCB->setFlag( IXM_INDEX_FLAG_INVALID ) ;
-      goto error ;
+      goto done ;
    }
 
    // caller is responsible to rollback the change if indexesInsert fail

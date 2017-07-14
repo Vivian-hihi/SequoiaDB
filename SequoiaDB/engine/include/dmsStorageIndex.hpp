@@ -89,7 +89,7 @@ namespace engine
                                    _pmdEDUCB *cb,
                                    SDB_DPSCB *dpsCB,
                                    BOOLEAN isSys = FALSE,
-                                   INT32 bufferSize = DMS_DFT_TEXTINDEX_BUFF_SIZE ) ;
+                                   INT64 bufferSize = DMS_DFT_TEXTINDEX_BUFF_SIZE ) ;
 
          INT32    dropIndex ( _dmsMBContext *context, OID &indexOID,
                               _pmdEDUCB *cb, SDB_DPSCB *dpscb,

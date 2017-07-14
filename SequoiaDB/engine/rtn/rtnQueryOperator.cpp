@@ -59,12 +59,7 @@ namespace engine
 
    INT32 _rtnTSQueryOperator::execute()
    {
-      INT32 rc = SDB_OK ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 }
 

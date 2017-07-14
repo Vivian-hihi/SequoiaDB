@@ -329,11 +329,7 @@ namespace engine
       protected:
          virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
 
-         INT32 _getMoreCondData() ;
-         INT32 _genNewMatcher( BSONObj &matcher ) ;
-
       private:
-         INT32 _getSubContextData() ;
          INT32 _prepareRemoteSession( _pmdEDUCB *eduCB ) ;
          INT32 _getMoreFromRemote( pmdEDUCB *eduCB ) ;
          INT32 _sendToRemote( const MsgHeader *msg ) ;
