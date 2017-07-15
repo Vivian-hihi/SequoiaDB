@@ -51,9 +51,9 @@ function main()
    var options6 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OverWrite:123.456};
    checkCreateCLOptions( csName, clName6, options6, false );
    
-   //check OvWre:true
+   //check OvWre:true,单机模式下不会报错
    var options7 = { Capped : true, Size:1024000000, Max:10000000, AutoIndexId:false, OvWre:true };
-   checkCreateCLOptions( csName, clName7, options7, false );
+   checkCreateCLOptions( csName, clName7, options7, true );
    
    //clean environment after test  
    println( "---end the test---" );
