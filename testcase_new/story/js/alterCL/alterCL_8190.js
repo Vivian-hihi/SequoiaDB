@@ -158,7 +158,6 @@ function main()
 	try{
 		for(var i=0;i<3000;i++){mainCL.insert({id:i-1000,b:i,c:"abcdefghijkl"+i});}
 		println("insert-data succ");
-		throw e;
 	}catch(e)
 	{
 		println("insert-data fail! rc="+e);
