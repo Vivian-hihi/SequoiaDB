@@ -474,7 +474,6 @@ namespace engine
       optCollectionStat collectionStat( _collectionFullName, _su->getPageSize(),
                                         mbContext, statCache ) ;
       UINT32 candidateCount = 0 ;
-      UINT64 minCandidateCost = 0 ;
 
       optScanType scanType = UNKNOWNSCAN ;
       OPT_PLAN_PATH_PRIORITY priority = OPT_PLAN_DEFAULT_PRIORITY ;
@@ -517,7 +516,6 @@ namespace engine
                                    estCacheSize, tbScanPath ) ;
          PD_RC_CHECK( rc, PDWARNING, "Failed to estimate table scan for "
                       "collection [%s], rc: %d", _collectionFullName, rc ) ;
-         minCandidateCost = tbScanPath.getTotalCost() / OPT_IDX_PREFERRED_RATE ;
       }
 
       if ( predicateSet.getSize() > 0 ||
