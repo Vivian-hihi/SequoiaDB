@@ -382,7 +382,7 @@ function restartNodes( role )
 
 function markRestart( hostname, diagpath )
 {
-   println('-------begin to mark '+hostname' restart '+diagpath);
+   println('-------begin to mark '+hostname+' restart '+diagpath);
    var remote = new Remote( hostname, 11790 );
    
    var cmd = remote.getCmd();
