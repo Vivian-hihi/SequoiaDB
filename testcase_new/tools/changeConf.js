@@ -500,7 +500,6 @@ function setDynaConf( oma, role, svcname )
          break;  
          
       case "data":
-         println("111setDynaConf :" + role);
          if( isEmptyObj( dataDynaConf ) === false )
          {
             println("222setDynaConf :" + role);
