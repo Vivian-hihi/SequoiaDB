@@ -222,8 +222,8 @@ var ReadSec                                = "ReadSec" ;
 var WriteSec                               = "WriteSec" ;
 
 // deploy mode
-var  OMA_DEPLOY_CLUSTER                    = "distribution" ;
-var  OMA_DEPLOY_STANDALONE                 = "standalone" ;
+var OMA_DEPLOY_CLUSTER                    = "distribution" ;
+var OMA_DEPLOY_STANDALONE                 = "standalone" ;
 
 var SYSTEM_OS_INFO                         = "System.getReleaseInfo()" ;
 var SYSTEM_CPU_INFO                        = "System.getCpuInfo()" ;
@@ -327,6 +327,14 @@ var FIELD_NODE_ID                          = "NodeID" ;
 var FIELD_NAME                             = Name ;
 var FIELD_CMD                              = "cmd" ;
 var FIELD_SAC_TASKID                       = "sactaskid" ;
+var FIELD_ADDRESS                          = "Address" ;
+var FIELD_BUSINESS_NAME                    = BusinessName ;
+var FIELD_BUSINESS_TYPE                    = BusinessType ;
+var FIELD_CLUSTER_NAME                     = ClusterName ;
+var FIELD_CONFIG                           = Config ;
+var FIELD_HOST_INFO                        = HostInfo ;
+var FIELD_SEQUOIADB                        = "sequoiadb" ;
+
 
 // Async task step
 var STEP_GENERATE_PLAN                     = "Generate plan" ;
