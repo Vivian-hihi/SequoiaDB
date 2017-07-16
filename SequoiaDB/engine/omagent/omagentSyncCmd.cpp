@@ -54,6 +54,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaHandleTaskNotify )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaHandleInterruptTask )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaHandleSsqlGetMore )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaSyncBuzConfigure )
 
 
    /******************************* scan host *********************************/
@@ -647,6 +648,54 @@ namespace engine
       retObj = BSON( OMA_FIELD_DETAIL << detail ) ;
       goto done ;
    }
+
+   /***********************  sync business configure  *************************/
+   /*
+      _omaSyncBuzConfigure
+   */
+   _omaSyncBuzConfigure::_omaSyncBuzConfigure()
+   {
+   }
+
+   _omaSyncBuzConfigure::~_omaSyncBuzConfigure()
+   {
+   }
+
+   INT32 _omaSyncBuzConfigure::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         stringstream ss ;
+         BSONObj bus( pInstallInfo ) ;
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Scan host passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         rc = addJsFile( FILE_SYNC_BUSINESS_CONF, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_SCAN_HOST, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
 
 } // namespace engine
 

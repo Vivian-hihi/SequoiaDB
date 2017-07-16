@@ -123,6 +123,7 @@ namespace engine
    #define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
    #define OMA_CMD_QUERY_HOST_STATUS                  OM_QUERY_HOST_STATUS_REQ
 
+   #define OMA_CMD_SYNC_BUSINESS_CONF                 OM_SYNC_BUSINESS_CONF_REQ
 
    /*
       oma background command
@@ -210,6 +211,8 @@ namespace engine
    #define FILE_ROLLBACK_DATA_RG            "rollbackDataRG.js"
 
    #define FILE_EXTEND_SEQUOIADB            "extendSequoiaDB.js"
+
+   #define FILE_SYNC_BUSINESS_CONF          "syncBusinessConf.js"
 
    #define FILE_INIT_ENV                    "initEnv.js"
    #define FILE_INSTALL_ZOOKEEPER           "installZNode.js"
