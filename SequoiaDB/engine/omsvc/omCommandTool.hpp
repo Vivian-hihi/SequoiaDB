@@ -55,49 +55,56 @@ namespace engine
    class omTaskTool ;
    class omErrorTool ;
 
+   struct simpleAddressInfo : public SDBObject
+   {
+      string hostName ;
+      string port ;
+   } ;
+
+
    class omXmlTool : public SDBObject
    {
    public:
-      INT32 readXml2Bson( const string& fileName, BSONObj& obj ) ;
+      INT32 readXml2Bson( const string &fileName, BSONObj &obj ) ;
 
    private:
-      BOOLEAN _isStringValue( ptree& pt ) ;
-      BOOLEAN _isArray( ptree& pt ) ;
-      void _recurseParseObj( ptree& pt, BSONObj& out ) ;
-      void _parseArray( ptree& pt, BSONArrayBuilder& arrayBuilder ) ;
-      void _xml2Bson( ptree& pt, BSONObj& out ) ;
+      BOOLEAN _isStringValue( ptree &pt ) ;
+      BOOLEAN _isArray( ptree &pt ) ;
+      void _recurseParseObj( ptree &pt, BSONObj &out ) ;
+      void _parseArray( ptree &pt, BSONArrayBuilder &arrayBuilder ) ;
+      void _xml2Bson( ptree &pt, BSONObj &out ) ;
    } ;
 
    class omConfigTool : public omXmlTool
    {
    public:
-      omConfigTool( string& rootPath, string& languageFileSep ) :
+      omConfigTool( string &rootPath, string &languageFileSep ) :
             _rootPath( rootPath ),
             _languageFileSep( languageFileSep )
       {
       }
 
-      string getBuzTemplatePath( const string& businessType,
-                                 const string& operationType ) ;
-      string getBuzConfigPath( const string& businessType,
-                               const string& deployMod,
+      string getBuzTemplatePath( const string &businessType,
+                                 const string &operationType ) ;
+      string getBuzConfigPath( const string &businessType,
+                               const string &deployMod,
                                BOOLEAN isSeparateConfig ) ;
-      string getBuzConfigPath( const string& businessType,
-                               const string& deployMod,
-                               const string& isSeparateConfig ) ;
+      string getBuzConfigPath( const string &businessType,
+                               const string &deployMod,
+                               const string &isSeparateConfig ) ;
 
-      INT32 readBuzTypeList( list<BSONObj>& businessList ) ;
-      INT32 readBuzTemplate( const string& businessType,
-                             const string& operationType,
-                             list<BSONObj>& objList ) ;
-      INT32 readBuzConfig( const string& businessType,
-                           const string& deployMod,
+      INT32 readBuzTypeList( list<BSONObj> &businessList ) ;
+      INT32 readBuzTemplate( const string &businessType,
+                             const string &operationType,
+                             list<BSONObj> &objList ) ;
+      INT32 readBuzConfig( const string &businessType,
+                           const string &deployMod,
                            BOOLEAN isSeparateConfig,
-                           BSONObj& obj ) ;
-      INT32 readBuzConfig( const string& businessType,
-                           const string& deployMod,
-                           const string& isSeparateConfig,
-                           BSONObj& obj ) ;
+                           BSONObj &obj ) ;
+      INT32 readBuzConfig( const string &businessType,
+                           const string &deployMod,
+                           const string &isSeparateConfig,
+                           BSONObj &obj ) ;
 
    private:
       string _rootPath ;
@@ -107,6 +114,7 @@ namespace engine
    class omDatabaseTool : public SDBObject
    {
    public:
+
       omDatabaseTool( pmdEDUCB* cb ) : _cb( cb )
       {
          _pKRCB  = pmdGetKRCB() ;
@@ -115,21 +123,51 @@ namespace engine
       }
 
    public:
-      INT64 getTaskIdOfRunningBuz( const string &businessName ) ;
-      INT32 getBusinessInfo( const string &businessName,
-                             string &businessType,
-                             string &deployMod,
-                             string &clusterName ) ;
-      INT32 getBusinessInfoForCluster( const string &clusterName,
-                                       BSONObj &clusterBusinessInfo ) ;
 
-   public:
-      INT32 getOneHostConfig( const string& hostName,
+      //task
+      INT64 getTaskIdOfRunningBuz( const string &businessName ) ;
+
+      //business
+      INT32 getBusinessInfo( const string &businessName,
+                             BSONObj &businessInfo ) ;
+
+      INT32 getBusinessInfoOfCluster( const string &clusterName,
+                                      BSONObj &clusterBusinessInfo ) ;
+
+      INT32 getBusinessAddress( const string &businessName,
+                                vector<simpleAddressInfo> &addressList ) ;
+
+      BOOLEAN businessIsExist( const string &businessName ) ;
+
+      INT32 updateBusinessInfo( const string &businessName,
+                                const BSONObj &newBusinessInfo,
+                                INT64 &updateNum ) ;
+
+      //cluster
+      INT32 getClusterInfo( const string &clusterName,
+                            BSONObj &clusterInfo ) ;
+
+      BOOLEAN clusterIsExist( const string &clusterName ) ;
+
+      //configure
+      INT32 getOneHostConfig( const string &hostName,
                               BSONObj &config ) ;
-      INT32 getHostInfoForCluster( const string& clusterName,
-                                   BSONObj &hostsDetail ) ;
+      INT32 getHostConfigOfCluster( const string &clusterName,
+                                    BSONObj &config ) ;
+      INT32 upsertConfigure( const string &businessName,
+                             const string &hostName,
+                             const BSONObj &newConfig,
+                             INT64 &updateNum ) ;
+      INT32 updateNodeConfigOfBusiness( const string &businessName,
+                                        const BSONObj &newConfig ) ;
+      INT32 removeConfigure( const string &businessName,
+                             const string &hostName ) ;
+
+      //auth
+      INT32 removeAuth( const string &businessName ) ;
 
    private:
+
       pmdEDUCB    *_cb ;
       SDB_RTNCB   *_pRTNCB ;
       pmdKRCB     *_pKRCB ;
@@ -139,24 +177,27 @@ namespace engine
    class omRestTool : public SDBObject
    {
    public:
-      omRestTool( restAdaptor* pRestAdaptor, pmdRestSession* pRestSession ) ;
+      omRestTool( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
 
-      void sendRecord2Web( list<BSONObj>& records,
-                           const BSONObj* filter = NULL,
+      void sendRecord2Web( list<BSONObj> &records,
+                           const BSONObj *pFilter = NULL,
                            BOOLEAN inFilter = TRUE ) ;
-      void sendResponse( INT32 rc, const string& detail ) ;
-      void sendResponse( INT32 rc, const char* detail ) ;
+
+      void sendOkResonse() ;
+
+      void sendResponse( INT32 rc, const string &detail ) ;
+      void sendResponse( INT32 rc, const char *pDetail ) ;
 
    private:
-      restAdaptor*      _restAdaptor ;
-      pmdRestSession*   _restSession ;
+      restAdaptor    *_pRestAdaptor ;
+      pmdRestSession *_pRestSession ;
    } ;
 
    class omTaskTool : public SDBObject
    {
    public:
-      omTaskTool( pmdEDUCB* cb, string& localAgentHost,
-                  string& localAgentService) :
+      omTaskTool( pmdEDUCB *cb, string &localAgentHost,
+                  string &localAgentService) :
             _cb( cb ),
             _localAgentHost( localAgentHost ),
             _localAgentService( localAgentService )
@@ -164,15 +205,17 @@ namespace engine
       }
       INT32 createTask( INT32 taskType, INT64 taskID, const string &taskName,
                         const BSONObj &taskInfo, const BSONArray &resultInfo ) ;
-      INT32 notifyAgentTask( INT64 taskID ) ;
+      INT32 notifyAgentMsg( const CHAR *pCmd, const BSONObj &request,
+                            string &errDetail, BSONObj &result ) ;
+      INT32 notifyAgentTask( INT64 taskID, string &errDetail ) ;
 
    private:
       INT32 _sendMsgToLocalAgent( omManager *om,
-                                  pmdRemoteSession *remoteSession,
+                                  pmdRemoteSession *pRemoteSession,
                                   MsgHeader *pMsg ) ;
-      INT32 _receiveFromAgent( pmdRemoteSession *remoteSession,
+      INT32 _receiveFromAgent( pmdRemoteSession *pRemoteSession,
                                SINT32 &flag, BSONObj &result ) ;
-      void _clearSession( omManager *om, pmdRemoteSession *remoteSession ) ;
+      void _clearSession( omManager *om, pmdRemoteSession *pRemoteSession ) ;
 
    private:
       pmdEDUCB* _cb ;
@@ -186,8 +229,8 @@ namespace engine
       omErrorTool() : _isSet( FALSE )
       {
       }
-      void setError( BOOLEAN isCover, const CHAR* pFormat, ... ) ;
-      const CHAR* getError() ;
+      void setError( BOOLEAN isCover, const CHAR *pFormat, ... ) ;
+      const CHAR *getError() ;
 
    private:
       CHAR _errorDetail[ PD_LOG_STRINGMAX + 1 ] ;

@@ -808,17 +808,21 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT64 taskID = -1 ;
+      BSONObj buzInfo ;
       string clusterName ;
       omDatabaseTool dbTool( _cb ) ;
 
-      rc = dbTool.getBusinessInfo( _businessName, _businessType, _deployMod,
-                                   clusterName ) ;
+      rc = dbTool.getBusinessInfo( _businessName, buzInfo ) ;
       if( rc )
       {
          _errorMsg.setError( TRUE, "failed to get exist business:rc=%d", rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
+
+      _businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+      _deployMod    = buzInfo.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
+      clusterName   = buzInfo.getStringField( OM_BUSINESS_FIELD_CLUSTERNAME ) ;
 
       if ( _businessType == "" )
       {
@@ -941,7 +945,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       omDatabaseTool dbTool( _cb ) ;
 
-      rc = dbTool.getHostInfoForCluster( _clusterName, hostsInfoForCluster ) ;
+      rc = dbTool.getHostConfigOfCluster( _clusterName, hostsInfoForCluster ) ;
       if( rc )
       {
          _errorMsg.setError( TRUE, "failed to get host info:rc=%d", rc ) ;
@@ -949,7 +953,7 @@ namespace engine
          goto error ;
       }
 
-      rc = dbTool.getBusinessInfoForCluster( _clusterName, buzInfoForCluster );
+      rc = dbTool.getBusinessInfoOfCluster( _clusterName, buzInfoForCluster ) ;
       if( rc )
       {
          _errorMsg.setError( TRUE, "failed to get business info of cluster [%s]",
@@ -1033,6 +1037,7 @@ namespace engine
                                           INT64& taskID )
    {
       INT32 rc = SDB_OK ;
+      string errDetail ;
       BSONArray resultInfo ;
       BSONObj taskConfig ;
       omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
@@ -1064,11 +1069,12 @@ namespace engine
          goto error ;
       }
 
-      rc = taskTool.notifyAgentTask( taskID ) ;
+      rc = taskTool.notifyAgentTask( taskID, errDetail ) ;
       if( rc )
       {
          removeTask( taskID ) ;
-         _errorMsg.setError( TRUE, "fail to notify agent:rc=%d", rc ) ;
+         _errorMsg.setError( TRUE, "fail to notify agent:detail:%s,rc=%d",
+                             errDetail.c_str(), rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }
@@ -11573,6 +11579,221 @@ namespace engine
    error:
       _sendErrorRes2Web( rc, _errorDetail ) ;
       goto done ;
+   }
+
+   INT32 omSyncBusinessConfigureCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      string deployMod ;
+      BSONObj businessInfo ;
+      vector<simpleAddressInfo> addressList ;
+      omRestTool restTool( _restAdaptor, _restSession ) ;
+      omDatabaseTool dbTool( _cb ) ;
+
+      _setFileLanguageSep() ;
+
+      pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+
+      rc = _getRestInfo() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( FALSE == dbTool.clusterIsExist( _clusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "cluster does not exist: %s",
+                             _clusterName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.getBusinessInfo( _businessName, businessInfo ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to get business info,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      _businessType = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+      if ( 0 == _businessType.length() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "business does not exist: %s",
+                             _businessName.c_str() ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      deployMod = businessInfo.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD ) ;
+
+      rc = dbTool.getBusinessAddress( _businessName, addressList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_getBusinessInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _syncBusinessConfig( addressList ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "_syncBusinessConfig failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      //if sequoiadb business distribution convert to standlong, remove auth
+      {
+         string newDeployMod ;
+         //query business info again
+         rc = dbTool.getBusinessInfo( _businessName, businessInfo ) ;
+         if ( rc )
+         {
+            _errorMsg.setError( TRUE, "failed to get business info,rc=%d",
+                                rc ) ;
+            PD_LOG( PDERROR, _errorMsg.getError() ) ;
+            goto error ;
+         }
+
+         newDeployMod = businessInfo.getStringField(
+                                                OM_BUSINESS_FIELD_DEPLOYMOD ) ;
+
+         if ( OM_BUSINESS_SEQUOIADB == _businessType &&
+              OM_DEPLOY_MOD_DISTRIBUTION == deployMod &&
+              OM_DEPLOY_MOD_STANDALONE == newDeployMod )
+         {
+            dbTool.removeAuth( _businessName ) ;
+         }
+      }
+
+      restTool.sendOkResonse() ;
+
+   done:
+      return rc ;
+   error:
+      restTool.sendResponse( rc, _errorMsg.getError() ) ;
+      goto done ;
+   }
+
+   INT32 omSyncBusinessConfigureCommand::_getRestInfo()
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pBusinessName = NULL ;
+
+      _restAdaptor->getQuery( _restSession, OM_CLUSTER_FIELD_NAME,
+                              &pClusterName ) ;
+      if ( NULL == pClusterName || 0 == ossStrlen( pClusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_CLUSTER_FIELD_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      _clusterName = pClusterName ;
+
+      _restAdaptor->getQuery( _restSession, OM_BUSINESS_FIELD_NAME,
+                              &pBusinessName ) ;
+      if ( NULL == pBusinessName || 0 == ossStrlen( pBusinessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorMsg.setError( TRUE, "get rest info failed:%s is NULL",
+                             OM_BUSINESS_FIELD_NAME ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+      _businessName = pBusinessName ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omSyncBusinessConfigureCommand::_syncBusinessConfig(
+                                       vector<simpleAddressInfo> &addressList )
+   {
+      INT32 rc    = SDB_OK ;
+      BSONObj request ;
+      BSONObj result ;
+      string errDetail ;
+      omDatabaseTool dbTool( _cb ) ;
+      omTaskTool taskTool( _cb, _localAgentHost, _localAgentService ) ;
+
+      _generateRequest( addressList, request ) ;
+
+      rc = taskTool.notifyAgentMsg( CMD_ADMIN_PREFIX OM_SYNC_BUSINESS_CONF_REQ,
+                                    request, errDetail, result ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to notify agent,detail:%s,rc=%d",
+                             errDetail.c_str(), rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+      rc = dbTool.updateNodeConfigOfBusiness( _businessName, result ) ;
+      if ( rc )
+      {
+         _errorMsg.setError( TRUE, "failed to update node config,rc=%d", rc ) ;
+         PD_LOG( PDERROR, _errorMsg.getError() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void omSyncBusinessConfigureCommand::_generateRequest(
+                                       vector<simpleAddressInfo> &addressList,
+                                       BSONObj &request )
+   {
+      string authUser ;
+      string authPwd ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBuilder ;
+      vector<simpleAddressInfo>::iterator iter ;
+
+      _getBusinessAuth( _businessName, authUser, authPwd ) ;
+
+      builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, _clusterName ) ;
+      builder.append( OM_BUSINESS_FIELD_NAME, _businessName ) ;
+      builder.append( OM_BUSINESS_FIELD_TYPE, _businessType ) ;
+      
+      builder.append( OM_BUSINESSAUTH_USER, authUser ) ;
+      builder.append( OM_BUSINESSAUTH_PASSWD, authPwd ) ;
+
+      for ( iter = addressList.begin(); iter != addressList.end(); ++iter )
+      {
+         BSONObjBuilder addressBuilder ;
+
+         addressBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, iter->hostName ) ;
+         addressBuilder.append( OM_CONF_DETAIL_SVCNAME, iter->port ) ;
+         arrayBuilder.append( addressBuilder.obj() ) ;
+      }
+
+      builder.append( OM_REST_FIELD_ADDRESS, arrayBuilder.arr() ) ;
+      request = builder.obj() ;
+   }
+
+   omSyncBusinessConfigureCommand::omSyncBusinessConfigureCommand(
+                                                restAdaptor *pRestAdaptor,
+                                                pmdRestSession *pRestSession,
+                                                string &localAgentHost,
+                                                string &localAgentService )
+         : omAuthCommand( pRestAdaptor, pRestSession ),
+         _localAgentHost( localAgentHost ),
+         _localAgentService( localAgentService )
+   {
+   }
+
+   omSyncBusinessConfigureCommand::~omSyncBusinessConfigureCommand()
+   {
    }
 
 }

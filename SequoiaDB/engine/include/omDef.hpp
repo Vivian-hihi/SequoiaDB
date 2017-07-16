@@ -429,6 +429,7 @@ namespace engine
    #define  OM_SSQL_EXEC_REQ                 "ssql exec"
    #define  OM_GET_SYSTEM_INFO_REQ           "get system info"
    #define  OM_EXTEND_BUSINESS_REQ           "extend business"
+   #define  OM_SYNC_BUSINESS_CONF_REQ        "sync business configure"
 
    //**************************************************************************
 
@@ -454,6 +455,7 @@ namespace engine
    #define  OM_REST_FIELD_TASK_NAME          "TaskName"
    #define  OM_REST_FIELD_IPS                "IPs"
    #define  OM_REST_FIELD_NICE               "Nice"
+   #define  OM_REST_FIELD_ADDRESS            "Address"
 
    #define  OM_BSON_FIELD_BUSINESS_INFO      "BusinessInfo"
    #define  OM_BSON_FIELD_HOST_INFO          OM_REST_FIELD_HOST_INFO

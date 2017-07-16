@@ -38,7 +38,7 @@
 namespace engine
 {
 
-   INT32 omXmlTool::readXml2Bson( const string& fileName, BSONObj& obj )
+   INT32 omXmlTool::readXml2Bson( const string &fileName, BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       try
@@ -60,7 +60,7 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN omXmlTool::_isStringValue( ptree& pt )
+   BOOLEAN omXmlTool::_isStringValue( ptree &pt )
    {
       BOOLEAN isStringV = FALSE ;
       if( _isArray( pt ) )
@@ -96,7 +96,7 @@ namespace engine
       return isStringV ;
    }
 
-   BOOLEAN omXmlTool::_isArray( ptree& pt )
+   BOOLEAN omXmlTool::_isArray( ptree &pt )
    {
       BOOLEAN isArr = FALSE ;
       string type ;
@@ -120,7 +120,7 @@ namespace engine
       return isArr ;
    }
 
-   void omXmlTool::_recurseParseObj( ptree& pt, BSONObj& out )
+   void omXmlTool::_recurseParseObj( ptree &pt, BSONObj &out )
    {
       BSONObjBuilder builder ;
       ptree::iterator ite = pt.begin() ;
@@ -156,7 +156,7 @@ namespace engine
    }
 
 
-   void omXmlTool::_parseArray( ptree& pt, BSONArrayBuilder& arrayBuilder )
+   void omXmlTool::_parseArray( ptree &pt, BSONArrayBuilder &arrayBuilder )
    {
       ptree::iterator ite = pt.begin() ;
       for( ; ite != pt.end() ; ite++ )
@@ -174,7 +174,7 @@ namespace engine
       }
    }
 
-   void omXmlTool::_xml2Bson( ptree& pt, BSONObj& out )
+   void omXmlTool::_xml2Bson( ptree &pt, BSONObj &out )
    {
       BSONObjBuilder builder ;
       ptree::iterator ite = pt.begin() ;
@@ -209,8 +209,8 @@ namespace engine
       out = builder.obj() ;
    }
 
-   string omConfigTool::getBuzTemplatePath( const string& businessType,
-                                            const string& operationType )
+   string omConfigTool::getBuzTemplatePath( const string &businessType,
+                                            const string &operationType )
    {
       string templateFile ;
 
@@ -228,8 +228,8 @@ namespace engine
       return templateFile ;
    }
 
-   string omConfigTool::getBuzConfigPath( const string& businessType,
-                                          const string& deployMod,
+   string omConfigTool::getBuzConfigPath( const string &businessType,
+                                          const string &deployMod,
                                           BOOLEAN isSeparateConfig )
    {
       stringstream path ;
@@ -253,16 +253,16 @@ namespace engine
       return path.str() ;
    }
 
-   string omConfigTool::getBuzConfigPath( const string& businessType,
-                                          const string& deployMod,
-                                          const string& isSeparateConfig )
+   string omConfigTool::getBuzConfigPath( const string &businessType,
+                                          const string &deployMod,
+                                          const string &isSeparateConfig )
    {
       BOOLEAN sepCfg = FALSE ;
       ossStrToBoolean( isSeparateConfig.c_str(), &sepCfg ) ;
       return getBuzConfigPath( businessType, deployMod, sepCfg ) ;
    }
 
-   INT32 omConfigTool::readBuzTypeList( list<BSONObj>& businessList )
+   INT32 omConfigTool::readBuzTypeList( list<BSONObj> &businessList )
    {
       INT32 rc = SDB_OK ;
       string businessFile ;
@@ -306,9 +306,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigTool::readBuzTemplate( const string& businessType,
-                                        const string& operationType,
-                                        list<BSONObj>& objList )
+   INT32 omConfigTool::readBuzTemplate( const string &businessType,
+                                        const string &operationType,
+                                        list<BSONObj> &objList )
    {
       INT32 rc = SDB_OK ;
       string templateFile ;
@@ -348,10 +348,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigTool::readBuzConfig( const string& businessType,
-                                      const string& deployMod,
+   INT32 omConfigTool::readBuzConfig( const string &businessType,
+                                      const string &deployMod,
                                       BOOLEAN isSeparateConfig,
-                                      BSONObj& obj )
+                                      BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       string templateFile ;
@@ -372,10 +372,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigTool::readBuzConfig( const string& businessType,
-                                      const string& deployMod,
-                                      const string& isSeparateConfig,
-                                      BSONObj& obj )
+   INT32 omConfigTool::readBuzConfig( const string &businessType,
+                                      const string &deployMod,
+                                      const string &isSeparateConfig,
+                                      BSONObj &obj )
    {
       BOOLEAN sepCfg = FALSE ;
       ossStrToBoolean( isSeparateConfig.c_str(), &sepCfg ) ;
@@ -438,9 +438,11 @@ namespace engine
          taskID = result.getField( OM_TASKINFO_FIELD_TASKID ).numberLong() ;
       }
 
-      _pRTNCB->contextDelete( contextID, _cb ) ;
-
    done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
       return taskID ;
    error:
       goto done ;
@@ -459,9 +461,7 @@ namespace engine
     *
    */
    INT32 omDatabaseTool::getBusinessInfo( const string &businessName,
-                                          string &businessType,
-                                          string &deployMod,
-                                          string &clusterName )
+                                          BSONObj &businessInfo )
    {
       INT32 rc = SDB_OK ;
       SINT64 contextID  = -1 ;
@@ -469,10 +469,6 @@ namespace engine
       BSONObj order ;
       BSONObj hint ;
       BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName )  ;
-
-      businessType = "" ;
-      deployMod    = "" ;
-      clusterName  = "" ;
 
       // query table
       rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, condition, order,
@@ -504,19 +500,30 @@ namespace engine
          }
 
          BSONObj result( buffObj.data() ) ;
-         businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE );
-         deployMod    = result.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD );
-         clusterName  = result.getStringField( OM_BUSINESS_FIELD_CLUSTERNAME );
+         businessInfo = result.copy() ;
       }
 
    done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 omDatabaseTool::getBusinessInfoForCluster( const string &clusterName,
-                                                    BSONObj &clusterBusinessInfo )
+   /**
+    * Get all the business info of the cluster
+    *
+    * @param(in)  clusterName
+    *
+    * @param(out) clusterBusinessInfo
+    *
+   */
+   INT32 omDatabaseTool::getBusinessInfoOfCluster(
+                                                const string &clusterName,
+                                                BSONObj &clusterBusinessInfo )
    {
       BSONObjBuilder bsonBuilder ;
       BSONArrayBuilder arrayBuilder ;
@@ -574,28 +581,272 @@ namespace engine
    }
 
    /**
-    * Get one host info.
+    * Get all the address of the business
     *
     * @param(in)  businessName
+    *
+    * @param(out) addressList
+    *
+   */
+   INT32 omDatabaseTool::getBusinessAddress(
+                                       const string &businessName,
+                                       vector<simpleAddressInfo> &addressList )
+   {
+      INT32 rc = SDB_OK ;
+      SINT64 contextID  = -1 ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName )  ;
+      string businessType = "" ;
+      string deployMod = "" ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order,
+                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         BSONObj tmpConf ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            goto error ;
+         }
+
+         {
+            BSONObj result( buffObj.data() ) ;
+            string hostName = result.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+            if ( 0 == businessType.length() )
+            {
+               businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+            }
+
+            if ( 0 == deployMod.length() )
+            {
+               deployMod = result.getStringField(
+                                                OM_BUSINESS_FIELD_DEPLOYMOD ) ;
+            }
+
+            if ( OM_BUSINESS_SEQUOIADB == businessType )
+            {
+               BSONObj nodes = result.getObjectField(
+                                                   OM_CONFIGURE_FIELD_CONFIG ) ;
+               BSONObjIterator iterBson( nodes ) ;
+
+               while ( iterBson.more() )
+               {
+                  simpleAddressInfo address ;
+                  BSONElement ele = iterBson.next() ;
+                  BSONObj oneNode = ele.embeddedObject() ;
+                  string role = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+
+                  address.hostName = hostName ;
+                  address.port = oneNode.getStringField(
+                                                      OM_CONF_DETAIL_SVCNAME ) ;
+                  if ( OM_DEPLOY_MOD_DISTRIBUTION == deployMod &&
+                       OM_NODE_ROLE_COORD == role )
+                  {
+                     addressList.push_back( address ) ;
+                  }
+                  else if ( OM_DEPLOY_MOD_STANDALONE == deployMod &&
+                            OM_NODE_ROLE_STANDALONE == role )
+                  {
+                     addressList.push_back( address ) ;
+                  }
+               }
+            }
+            
+         }
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN omDatabaseTool::businessIsExist( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      BSONObj buzInfo ;
+      string businessType = "" ;
+
+      rc = getBusinessInfo( businessName, buzInfo ) ;
+      if ( rc )
+      {
+         isExist = FALSE ;
+      }
+      else
+      {
+         businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+         if ( businessType.length() > 0 )
+         {
+            isExist = TRUE ;
+         }
+      }
+
+      return isExist ;
+   }
+
+   INT32 omDatabaseTool::updateBusinessInfo( const string &businessName,
+                                             const BSONObj &newBusinessInfo,
+                                             INT64 &updateNum )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
+      BSONObj updator = BSON( "$replace" << newBusinessInfo ) ;
+      BSONObj hint ;
+   
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS, condition, updator, hint,
+                      FLG_UPDATE_RETURNNUM,
+                      _cb, &updateNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "falied to update business info,"
+                          "condition=%s,updator=%s,rc=%d",
+                 condition.toString().c_str(),
+                 updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /**
+    * Get cluster info
+    *
+    * @param(in)  clusterName
+    *
+    * @param(out) clusterInfo
+    *
+   */
+   INT32 omDatabaseTool::getClusterInfo( const string &clusterName,
+                                         BSONObj &clusterInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasFind   = FALSE ;
+      SINT64 contextID  = -1 ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj condition = BSON( OM_CLUSTER_FIELD_NAME << clusterName ) ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, condition, order,
+                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+         goto error ;
+      }
+
+      while( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d",
+                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+            goto error ;
+         }
+         BSONObj tmpConf( buffObj.data() ) ;
+         clusterInfo = tmpConf ;
+         hasFind = TRUE ;
+      }
+
+      if( FALSE == hasFind )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "cluster does not exist: %s", clusterName.c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN omDatabaseTool::clusterIsExist( const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN isExist = FALSE ;
+      BSONObj clusterInfo ;
+
+      rc = getClusterInfo( clusterName, clusterInfo ) ;
+      if ( rc )
+      {
+         isExist= FALSE ;
+      }
+      else
+      {
+         isExist = TRUE ;
+      }
+
+      return isExist ;
+   }
+
+   /**
+    * Get one host config.
     *
     * @param(in)  hostName
     *
     * @param(out) config
     * {
-    *    "HostInfo": [
-    *       {
-    *          "HostName": "host1", "ClusterName":"c1",
-    *          "Disk": [ { "Name":"dev", "Mount":"/mnt", ... }, ... ],
-    *          "Config": [
-    *             { "dbpath": "xxxx", "svcname":"11810", ... },
-    *             ...
-    *          ],
-    *          ...
-    *       }
-    *    ]
+    *    "Config": [
+    *        {
+    *           "BusinessName":"b1",
+    *           "BusinessType": "sequoiadb",
+    *           "DeployMod": "distribution",
+    *           "dbpath":"",
+    *           "svcname":"11810",
+    *            ...
+    *        },
+    *        ...
+    *     ]
     * }
-   */
-   INT32 omDatabaseTool::getOneHostConfig( const string& hostName,
+   **/
+   INT32 omDatabaseTool::getOneHostConfig( const string &hostName,
                                            BSONObj &config )
    {
       INT32 rc = SDB_OK ;
@@ -625,6 +876,8 @@ namespace engine
       while ( TRUE )
       {
          string businessName ;
+         string businessType ;
+         string deployMode ;
          BSONObj nodeConfig ;
          rtnContextBuf buffObj ;
 
@@ -648,6 +901,7 @@ namespace engine
                hostConfig
                {
                   "HostName": "h1", "BusinessName":"b1",
+                  "BusinessType": "sequoiadb", "DeployMod": "distribution",
                   "Config": [
                      { "dbpath":"xxxx", "svcname":"11810", ... },
                      ...
@@ -655,6 +909,10 @@ namespace engine
                }
             */
             BSONObj hostConfig( buffObj.data() ) ;
+            businessType = hostConfig.getStringField(
+                                            OM_CONFIGURE_FIELD_BUSINESSTYPE ) ;
+            deployMode   = hostConfig.getStringField(
+                                            OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
             businessName = hostConfig.getStringField(
                                             OM_CONFIGURE_FIELD_BUSINESSNAME ) ;
             nodeConfig = hostConfig.getObjectField(
@@ -662,21 +920,10 @@ namespace engine
             BSONObjIterator iter( nodeConfig ) ;
             while ( iter.more() )
             {
-               string businessType ;
-               string deployMode ;
-               string clusterNmae ;
                BSONObjBuilder innerBuilder ;
                BSONElement ele = iter.next() ;
 
                innerBuilder.appendElements( ele.embeddedObject() ) ;
-               rc = getBusinessInfo( businessName,
-                                     businessType, deployMode, clusterNmae ) ;
-               if( rc )
-               {
-                  PD_LOG( PDERROR, "failed to get businessType:businessName=%s",
-                          businessName.c_str() ) ;
-                  goto error ;
-               }
                innerBuilder.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
                innerBuilder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMode ) ;
                innerBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
@@ -686,12 +933,18 @@ namespace engine
       }
 
       /*
-         {
-            "Config": [
-               { "BusinessName":"b1", "BusinessType": "sequoiadb", "dbpath":"", "svcname":"11810", ...},
-               ...
-            ]
-         }
+      arrayBuilder
+         [
+            {
+               "BusinessName":"b1",
+               "BusinessType": "sequoiadb",
+               "DeployMod": "distribution",
+               "dbpath":"",
+               "svcname":"11810",
+                ...
+            },
+            ...
+         ]
       */
       confBuilder.append( OM_BSON_FIELD_CONFIG, arrayBuilder.arr() ) ;
       config = confBuilder.obj() ;
@@ -708,13 +961,11 @@ namespace engine
    }
 
    /**
-    * Get all host info for the cluster.
+    * Get all the host config of the cluster.
     *
     * @param(in)  clusterName
     *
-    * @param(in)  businessName
-    *
-    * @param(out) hostsDetail
+    * @param(out) config
     * {
     *    "HostInfo": [
     *       {
@@ -729,8 +980,8 @@ namespace engine
     *    ]
     * }
    */
-   INT32 omDatabaseTool::getHostInfoForCluster( const string& clusterName,
-                                                BSONObj &hostsInfoForCluster )
+   INT32 omDatabaseTool::getHostConfigOfCluster( const string &clusterName,
+                                                 BSONObj &config )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN isRecordFetched = FALSE ;
@@ -807,7 +1058,10 @@ namespace engine
                "HostName": "host1", "ClusterName":"c1",
                "Disk":[ {"Name":"dev", "Mount":"/mnt", ... }, ... ],
                "Config":[
-                  { "BusinessName": "b1", "dbpath": "xxxx", "svcname":"11810", ... },
+                  { "BusinessName": "b1", "dbpath": "xxxx",
+                    "svcname":"11810",
+                    ...
+                  },
                   ...
                ],
                ...
@@ -826,7 +1080,7 @@ namespace engine
       }
 
       hostsDetailBuilder.append( OM_BSON_FIELD_HOST_INFO, hostArrBuilder.arr() ) ;
-      hostsInfoForCluster = hostsDetailBuilder.obj() ;
+      config = hostsDetailBuilder.obj() ;
 
    done:
       if( -1 != contextID )
@@ -839,29 +1093,257 @@ namespace engine
       goto done ;
    }
 
-   omRestTool::omRestTool( restAdaptor* pRestAdaptor,
-                           pmdRestSession* pRestSession )
+   INT32 omDatabaseTool::upsertConfigure( const string &businessName,
+                                          const string &hostName,
+                                          const BSONObj &newConfig,
+                                          INT64 &updateNum )
    {
-      _restAdaptor = pRestAdaptor ;
-      _restSession = pRestSession ;
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME <<
+            businessName << OM_CONFIGURE_FIELD_HOSTNAME <<  hostName ) ;
+      BSONObj updator = BSON( "$replace" << newConfig ) ;
+      BSONObj hint ;
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, condition, updator, hint,
+                      FLG_UPDATE_UPSERT | FLG_UPDATE_RETURNNUM,
+                      _cb, &updateNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "falied to update host config,"
+                          "condition=%s,updator=%s,rc=%d",
+                 condition.toString().c_str(),
+                 updator.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
-   void omRestTool::sendRecord2Web( list<BSONObj>& records,
-                                    const BSONObj* filter,
+   /**
+    * update node config of the business
+    *
+    * @param(in) businessName
+    *
+    * @param(in) newConfig
+    * {
+    *    "HostInfo": [
+    *       {
+    *          "BusinessName": xxx,
+    *          "BusinessType": xxx,
+    *          "ClusterName": xxx,
+    *          "DeployMod": xxx,
+    *          "HostName": xxx,
+    *          "Config": [
+    *             { "role": xxx, "svcname": xxx, "dbpath": xxx, ... },
+    *             ...
+    *          ]
+    *       },
+    *       ...
+    *    ]
+    * }
+   */
+   INT32 omDatabaseTool::updateNodeConfigOfBusiness( const string &businessName,
+                                                     const BSONObj &newConfig )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 updateNum = 0 ;
+      BSONObj buzInfo ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder hostLocation ;
+      set<string> newHostList ;
+      set<string> removeHostList ;
+      string businessType = "" ;
+      string deployMod = "" ;
+
+      rc = getBusinessInfo( businessName, buzInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to get business info,name=%s,rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      businessType = buzInfo.getStringField( OM_BUSINESS_FIELD_TYPE );
+      if ( businessType.length() == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "business does not exist: %s",
+                     businessName.c_str() ) ;
+         goto error ;
+      }
+
+      //host and node info by omagent
+      {
+         BSONObj hostInfoList = newConfig.getObjectField(
+                                                   OM_BSON_FIELD_HOST_INFO ) ;
+         BSONObjIterator iter( hostInfoList ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj tmpConfig = ele.embeddedObject() ;
+            string hostName = tmpConfig.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+            if ( 0 == deployMod.length() )
+            {
+               deployMod = tmpConfig.getStringField(
+                                             OM_CONFIGURE_FIELD_DEPLOYMODE ) ;
+            }
+
+            newHostList.insert( hostName ) ;
+
+            rc = upsertConfigure( businessName, hostName, tmpConfig,
+                                  updateNum ) ;
+            if( rc )
+            {
+               PD_LOG( PDERROR, "failed to update configure,hostname=%s,rc=%d",
+                       hostName.c_str(), rc ) ;
+               goto error ;
+            }
+
+            //used to construct business info
+            hostLocation.append( BSON( OM_CONFIGURE_FIELD_HOSTNAME <<
+                                       hostName ) ) ;
+
+
+         }
+      }
+
+      //business info location hosts
+      {
+         BSONObj hostInfoList = buzInfo.getObjectField(
+                                                OM_BUSINESS_FIELD_LOCATION ) ;
+         BSONObjIterator iter( hostInfoList ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj tmpHostInfo = ele.embeddedObject() ;
+            string hostName = tmpHostInfo.getStringField(
+                                                OM_CONFIGURE_FIELD_HOSTNAME ) ;
+
+            if( newHostList.find( hostName ) == newHostList.end() )
+            {
+               //find all the hosts that have been deleted
+               removeHostList.insert( hostName ) ;
+            }
+         }
+      }
+
+
+      {
+         BSONObj condition = BSON( OM_BUSINESS_FIELD_ADDTYPE << 0 <<
+                                   OM_BUSINESS_FIELD_NAME << "" <<
+                                   OM_BUSINESS_FIELD_TYPE << "" <<
+                                   OM_BUSINESS_FIELD_CLUSTERNAME << "" <<
+                                   OM_BUSINESS_FIELD_TIME << "" ) ;
+         BSONObj businessInfo = buzInfo.filterFieldsUndotted( condition, true ) ;
+         builder.appendElements( businessInfo ) ;
+      }
+      builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, deployMod ) ;
+      builder.append( OM_BUSINESS_FIELD_LOCATION, hostLocation.arr() ) ;
+
+      rc = updateBusinessInfo( businessName, builder.obj(), updateNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to update business info,name=%s,rc=%d",
+                 businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      //delete the host config that does not exist
+      for ( set<string>::iterator iter = removeHostList.begin();
+            iter != removeHostList.end(); ++iter )
+      {
+         string hostName = *iter ;
+         rc = removeConfigure( businessName, hostName ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to remove configure,"
+                             "businessName=%s,hostName=%s,rc=%d",
+                    businessName.c_str(), hostName.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeConfigure( const string &businessName,
+                                          const string &hostName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME <<
+            businessName << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_CONFIGURE, condition, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to delete configure from table:%s,"
+                          "%s=%s,%s=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_CONFIGURE,
+                 OM_CONFIGURE_FIELD_BUSINESSNAME, businessName.c_str(),
+                 OM_CONFIGURE_FIELD_HOSTNAME, hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDatabaseTool::removeAuth( const string &businessName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj condition = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS_AUTH, condition, hint, 0, _cb ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to delete configure from table:%s,"
+                          "%s=%s,%s=%s,rc=%d",
+                 OM_CS_DEPLOY_CL_BUSINESS_AUTH,
+                 OM_BUSINESSAUTH_BUSINESSNAME, businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   omRestTool::omRestTool( restAdaptor *pRestAdaptor,
+                           pmdRestSession *pRestSession )
+   {
+      _pRestAdaptor = pRestAdaptor ;
+      _pRestSession = pRestSession ;
+   }
+
+   void omRestTool::sendRecord2Web( list<BSONObj> &records,
+                                    const BSONObj *pFilter,
                                     BOOLEAN inFilter )
    {
       list<BSONObj>::iterator iter ;
       for( iter = records.begin(); iter != records.end(); ++iter )
       {
-         if( filter )
+         if( pFilter )
          {
-            BSONObj tmp = iter->filterFieldsUndotted( *filter, inFilter ) ;
-            _restAdaptor->appendHttpBody( _restSession, tmp.objdata(),
+            BSONObj tmp = iter->filterFieldsUndotted( *pFilter, inFilter ) ;
+            _pRestAdaptor->appendHttpBody( _pRestSession, tmp.objdata(),
                                           tmp.objsize(), 1 ) ;
          }
          else
          {
-            _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
+            _pRestAdaptor->appendHttpBody( _pRestSession, iter->objdata(),
                                           iter->objsize(), 1 ) ;
          }
       }
@@ -869,19 +1351,24 @@ namespace engine
       sendResponse( SDB_OK, "" ) ;
    }
 
-   void omRestTool::sendResponse( INT32 rc, const string& detail )
+   void omRestTool::sendOkResonse()
+   {
+      sendResponse( SDB_OK, "" ) ;
+   }
+
+   void omRestTool::sendResponse( INT32 rc, const string &detail )
    {
       sendResponse( rc, detail.c_str() ) ;
    }
 
-   void omRestTool::sendResponse( INT32 rc, const char* detail )
+   void omRestTool::sendResponse( INT32 rc, const char *pDetail )
    {
       BSONObj res = BSON( OM_REST_RES_RETCODE << rc <<
                           OM_REST_RES_DESP << getErrDesp( rc ) <<
-                          OM_REST_RES_DETAIL << detail ) ;
+                          OM_REST_RES_DETAIL << pDetail ) ;
 
-      _restAdaptor->setOPResult( _restSession, rc, res ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _pRestAdaptor->setOPResult( _pRestSession, rc, res ) ;
+      _pRestAdaptor->sendResponse( _pRestSession, HTTP_OK ) ;
 
    }
 
@@ -928,27 +1415,27 @@ namespace engine
       goto done ;
    }
 
-
-   INT32 omTaskTool::notifyAgentTask( INT64 taskID )
+   INT32 omTaskTool::notifyAgentMsg( const CHAR *pCmd,
+                                     const BSONObj &request,
+                                     string &errDetail,
+                                     BSONObj &result )
    {
       INT32 rc          = SDB_OK ;
-      INT32 contentSize = 0 ;
       SINT32 flag       = SDB_OK ;
+      INT32 contentSize = 0 ;
       CHAR *pContent    = NULL ;
       MsgHeader *pMsg   = NULL ;
       omManager *om     = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
       BSONObj bsonRequest ;
-      BSONObj result ;
+      SDB_ASSERT( pCmd != NULL , "" ) ;
 
-      bsonRequest = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
       /*
          pContent has allocated memory. After the remote session ends,
          it is auto free by the destructor of the session
       */
-      rc = msgBuildQueryMsg( &pContent, &contentSize,
-                             CMD_ADMIN_PREFIX OM_NOTIFY_TASK,
-                             0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+      rc = msgBuildQueryMsg( &pContent, &contentSize, pCmd,
+                             0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
       if( rc )
       {
          PD_LOG( PDERROR, "build msg failed:cmd=%s,rc=%d", OM_NOTIFY_TASK,
@@ -986,14 +1473,15 @@ namespace engine
          goto error ;
       }
 
-      if( flag )
+      if ( flag )
       {
          rc = flag ;
-         string tmpError = result.getStringField( OM_REST_RES_DETAIL ) ;
+         errDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=(%s),rc=%d",
-                 tmpError.c_str(), rc ) ;
+                 errDetail.c_str(), rc ) ;
          goto error ;
       }
+
    done:
       if( remoteSession )
       {
@@ -1004,8 +1492,30 @@ namespace engine
       goto done ;
    }
 
+   INT32 omTaskTool::notifyAgentTask( INT64 taskID, string &errDetail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj request ;
+      BSONObj result ;
+
+      request = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
+
+      rc = notifyAgentMsg( CMD_ADMIN_PREFIX OM_NOTIFY_TASK,
+                           request, errDetail, result ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to notify agent,rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omTaskTool::_sendMsgToLocalAgent( omManager *om,
-                                           pmdRemoteSession *remoteSession,
+                                           pmdRemoteSession *pRemoteSession,
                                            MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
@@ -1013,14 +1523,14 @@ namespace engine
 
       localAgentID = om->updateAgentInfo( _localAgentHost,
                                           _localAgentService ) ;
-      if( NULL == remoteSession->addSubSession( localAgentID.value ) )
+      if( NULL == pRemoteSession->addSubSession( localAgentID.value ) )
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "addSubSession failed:id=%ld", localAgentID.value ) ;
          goto error ;
       }
 
-      rc = remoteSession->sendMsg( pMsg, PMD_EDU_MEM_ALLOC ) ;
+      rc = pRemoteSession->sendMsg( pMsg, PMD_EDU_MEM_ALLOC ) ;
       if( rc )
       {
          PD_LOG( PDERROR, "send msg to localhost's agent failed:rc=%d", rc ) ;
@@ -1033,7 +1543,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omTaskTool::_receiveFromAgent( pmdRemoteSession *remoteSession,
+   INT32 omTaskTool::_receiveFromAgent( pmdRemoteSession *pRemoteSession,
                                         SINT32 &flag,
                                         BSONObj &result )
    {
@@ -1045,7 +1555,7 @@ namespace engine
       vector<BSONObj> objVec ;
       VEC_SUB_SESSIONPTR subSessionVec ;
 
-      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      rc = pRemoteSession->waitReply( TRUE, &subSessionVec ) ;
       if( rc )
       {
          PD_LOG( PDERROR, "wait reply failed:rc=%d", rc ) ;
@@ -1097,16 +1607,16 @@ namespace engine
    }
 
    void omTaskTool::_clearSession( omManager *om,
-                                   pmdRemoteSession *remoteSession )
+                                   pmdRemoteSession *pRemoteSession )
    {
-      if( NULL != remoteSession )
+      if( NULL != pRemoteSession )
       {
-         remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( remoteSession ) ;
+         pRemoteSession->clearSubSession() ;
+         om->getRSManager()->removeSession( pRemoteSession ) ;
       }
    }
 
-   void omErrorTool::setError( BOOLEAN isCover, const CHAR* pFormat, ... )
+   void omErrorTool::setError( BOOLEAN isCover, const CHAR *pFormat, ... )
    {
       if( _isSet == FALSE || isCover == TRUE )
       {

@@ -1238,6 +1238,38 @@ namespace engine
 
          ~omGetSystemInfoCommand() ;
    };
+
+   class omSyncBusinessConfigureCommand : public omAuthCommand
+   {
+   public:
+
+      omSyncBusinessConfigureCommand( restAdaptor *pRestAdaptor,
+                                      pmdRestSession *pRestSession,
+                                      string &localAgentHost,
+                                      string &localAgentService ) ;
+
+      ~omSyncBusinessConfigureCommand();
+
+      virtual INT32 doCommand() ;
+
+   private:
+
+      INT32 _getRestInfo() ;
+
+      INT32 _syncBusinessConfig( vector<simpleAddressInfo> &addressList ) ;
+
+      void _generateRequest( vector<simpleAddressInfo> &addressList,
+                             BSONObj &request ) ;
+
+   private:
+
+      string _clusterName ;
+      string _businessName ;
+      string _businessType ;
+      string _localAgentHost ;
+      string _localAgentService ;
+   } ;
+
 }
 
 #endif /* OM_GETFILECOMMAND_HPP__ */
