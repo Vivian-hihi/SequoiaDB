@@ -192,7 +192,7 @@ namespace engine
       rc = ossAccess( confFile ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to access config file: %d, rc: %d",
+         PD_LOG( PDERROR, "Failed to access config file: %s, rc: %d",
                  confFile, rc ) ;
          goto error ;
       }
