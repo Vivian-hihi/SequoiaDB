@@ -367,7 +367,7 @@ struct _pdTraceHeader
       {
          _bufHeader = 0 ;
          _bufSize = _bufTail ;
-         _bufSize = ossRoundUpToMultipleX ( _bufSize, TRACE_CHUNK_SIZE )
+         _bufSize = ossRoundUpToMultipleX ( _bufSize, TRACE_CHUNK_SIZE ) ;
       }
    }
 
