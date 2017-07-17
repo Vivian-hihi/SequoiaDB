@@ -381,10 +381,10 @@ INT32 _pdTraceCB::start ( UINT64 size,
    }
 
    _componentMask = mask ;
-   size           = ossRoundUpToMultipleX ( size, TRACE_CHUNK_SIZE ) ;
    size           = OSS_MAX ( size, TRACE_MIN_BUFFER_SIZE ) ;
    size           = OSS_MIN ( size, TRACE_MAX_BUFFER_SIZE ) ;
    size           *= ( 1024 * 1024 ) ;
+   size           = ossRoundUpToMultipleX ( size, TRACE_CHUNK_SIZE ) ;
 
    // start trace
    PD_LOG ( PDEVENT, "Trace starts, buffersize = %llu, mask = 0x%x, "
