@@ -33,10 +33,13 @@ from pysequoiadb.error import (SDBBaseError,
                                SDBSystemError,
                                SDBEndOfCursor)
 
-QUERY_FLG_WITH_RETURNDATA = 0x00000080
-QUERY_FLG_PARALLED        = 0x00000100
-QUERY_FLG_FORCE_HINT      = 0x00000200
-QUERY_PREPARE_MORE        = 0x00004000
+QUERY_FLG_WITH_RETURNDATA              = 0x00000080
+QUERY_FLG_PARALLED                     = 0x00000100
+QUERY_FLG_FORCE_HINT                   = 0x00000200
+QUERY_PREPARE_MORE                     = 0x00004000
+QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE   = 0x00008000
+
+UPDATE_FLG_KEEP_SHARDINGKEY            = QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE
 
 class collection(object):
    """Collection for SequoiaDB
@@ -368,9 +371,13 @@ class collection(object):
                                     if not provided.
          - hint      dict     The hint, automatically match the optimal hint
                                     if not provided
+         - flags     int      The update flag
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
+      Info:
+         query flags:
+         UPDATE_FLG_KEEP_SHARDINGKEY :
       Note:
          It won't work to update the "ShardingKey" field, but the other fields
                take effect.
@@ -381,7 +388,8 @@ class collection(object):
       bson_rule = bson.BSON.encode(rule)
       bson_condition = None
       bson_hint = None
-
+      flags = 0
+      
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
             raise SDBTypeError("condition in kwargs must be an instance of dict")
@@ -390,9 +398,14 @@ class collection(object):
          if not isinstance(kwargs.get("hint"), dict):
             raise SDBTypeError("hint in kwargs must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
-
+      if "flags" in kwargs:
+         if not isinstance(kwargs.get("flags"), int):
+            raise SDBTypeError("flags must be an instance of int")
+         else:
+            flags = kwargs.get("flags")
+            
       try:
-         rc = sdb.cl_update(self._cl, bson_rule, bson_condition, bson_hint)
+         rc = sdb.cl_update(self._cl, bson_rule, bson_condition, bson_hint, flags)
          pysequoiadb._raise_if_error("Failed to update", rc)
       except SDBBaseError:
          raise
@@ -409,10 +422,15 @@ class collection(object):
                                    if not provided.
          - hint        dict  The hint, automatically match the optimal hint
                                    if not provided
-         - setOnInsert dict  The setOnInsert assigns the specified values to the fileds when insert
+         - setOnInsert dict  The setOnInsert assigns the specified values 
+                             to the fileds when insert
+         - flags       int   The update flag
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
+      Info:
+         query flags:
+         UPDATE_FLG_KEEP_SHARDINGKEY :
       Note:
          It won't work to update the "ShardingKey" field, but the other fields
                take effect.
@@ -424,7 +442,8 @@ class collection(object):
       bson_condition = None
       bson_hint = None
       bson_setOnInsert = None
-
+      flags = 0
+      
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
             raise SDBTypeError("condition must be an instance of dict")
@@ -437,9 +456,15 @@ class collection(object):
          if not isinstance(kwargs.get("setOnInsert"), dict):
             raise SDBTypeError("setOnInsert must be an instance of dict")
          bson_setOnInsert = bson.BSON.encode(kwargs.get("setOnInsert"))
-
+      if "flags" in kwargs:
+         if not isinstance(kwargs.get("flags"), int):
+            raise SDBTypeError("flags must be an instance of int")
+         else:
+            flags = kwargs.get("flags")
+            
       try:
-         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint, bson_setOnInsert)
+         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint, 
+                            bson_setOnInsert, flags)
          pysequoiadb._raise_if_error("Failed to update", rc)
       except SDBBaseError:
          raise
@@ -632,6 +657,7 @@ class collection(object):
          QUERY_FLG_WITH_RETURNDATA : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
          QUERY_FLG_PARALLED        : Enable parallel sub query, each sub query will finish scanning different part of the data
          QUERY_FLG_FORCE_HINT      : In general, query won't return data until cursor gets from database, when add this flag, return data in query response, it will be more high-performance
+         QUERY_FLG_KEEP_SHARDINGKEY_IN_UPDATE : 
       """
 
       bson_condition = None
@@ -690,11 +716,11 @@ class collection(object):
          return_new = kwargs.get('return_new')
 
       flags = 0
-      if kwargs.get('flags') != None:
-         if kwargs.get('flags') not in ( 0, QUERY_FLG_WITH_RETURNDATA,
-                                         QUERY_FLG_PARALLED,
-                                         QUERY_FLG_FORCE_HINT ):
-            raise SDBTypeError("invalid flags value")
+      if "flags" in kwargs:
+         if not isinstance(kwargs.get("flags"), int):
+            raise SDBTypeError("flags must be an instance of int")
+         else:
+            flags = kwargs.get("flags")
 
       try:
          result = cursor()
