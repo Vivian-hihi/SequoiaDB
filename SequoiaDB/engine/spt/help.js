@@ -161,7 +161,7 @@ SdbDC.prototype.help = function( func ) {
    // _help( "SdbDC", func, true ) ;
    
    // TODO: add troff file of dc, and remove the follow info.
-   if ( val == undefined )
+   if ( func == undefined )
    {
       println("DC methods:") ;
       println("   dc.help(<method>)           help on specified method of data center, e.g. dc.help(\'activate\')");
