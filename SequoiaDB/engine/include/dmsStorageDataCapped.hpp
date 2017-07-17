@@ -290,7 +290,8 @@ namespace engine
                                                 dmsExtentID &extID,
                                                 dmsOffset &offset ) ;
       OSS_INLINE dmsExtentID _logicID2ExtID( dmsMBContext *context,
-                                             INT64 logicalID ) ;
+                                             INT64 logicalID,
+                                             const dmsExtent *&extent ) ;
 
       INT32 _extractRecLID( dmsMBContext *context,
                             INT64 logicalID,
@@ -432,10 +433,10 @@ namespace engine
    }
 
    OSS_INLINE dmsExtentID _dmsStorageDataCapped::_logicID2ExtID( dmsMBContext *context,
-                                                                 INT64 logicalID )
+                                                                 INT64 logicalID,
+                                                                 const dmsExtent *&extent )
    {
       dmsExtRW extRW ;
-      const dmsExtent *extent = NULL ;
       dmsExtentID extentID = DMS_INVALID_EXTENT ;
       dmsExtentID extLID = DMS_INVALID_EXTENT ;
       dmsOffset offset = 0 ;
@@ -451,7 +452,7 @@ namespace engine
       _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
 
       extentID = context->mb()->_firstExtentID ;
-
+      extent = NULL ;
       while ( DMS_INVALID_EXTENT != extentID )
       {
          extRW = extent2RW( extentID, context->mbID() ) ;

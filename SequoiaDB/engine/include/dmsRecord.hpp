@@ -418,7 +418,8 @@ namespace engine
       // calculate record number being popped in pop operation, avoid scanning
       // the whole extent.
       // Note: It includes records which have been popped out forward, but
-      // excludes those which have been popped out backward.
+      // excludes those which have been popped out backward. In a valid record,
+      // it should always be greater than 0.
       UINT32      _recNo ;
       INT64       _logicalID ;
 

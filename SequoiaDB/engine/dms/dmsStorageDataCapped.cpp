@@ -1059,6 +1059,7 @@ namespace engine
       if ( DMS_INVALID_OFFSET == extent->_lastRecordOffset )
       {
          workExtInfo->_writePos = 0 ;
+         workExtInfo->_recNo = 0 ;
       }
       else
       {
@@ -1075,6 +1076,7 @@ namespace engine
 
          workExtInfo->_writePos =
             extent->_lastRecordOffset + record->getSize() ;
+         workExtInfo->_recNo = record->getRecordNo() ;
       }
 
    done:
@@ -1176,7 +1178,7 @@ namespace engine
                workExtInfo->_firstRecordOffset = DMS_INVALID_OFFSET ;
             }
 
-            extent = extRW.writePtr<dmsExtent>(DMS_CAP_EXTENT_SZ) ;
+            extent = extRW.writePtr<dmsExtent>( 0, DMS_CAP_EXTENT_SZ ) ;
             if ( !extent )
             {
                PD_LOG( PDERROR, "Invalid extent: %d", extentID ) ;
@@ -1279,7 +1281,6 @@ namespace engine
       }
 
       extent->_recCount -= recNum ;
-      extent->_freeSpace += totalSize ;
       _mbStatInfo[ context->mbID() ]._totalRecords -= recNum ;
       _mbStatInfo[ context->mbID() ]._totalOrgDataLen -= totalSize ;
       _mbStatInfo[ context->mbID() ]._totalDataLen -= totalSize ;
@@ -1346,6 +1347,9 @@ namespace engine
       dmsRecordID recordID ;
       dmsRecordRW recordRW ;
       const dmsCappedRecord *record = NULL ;
+      const dmsExtent *extent = NULL ;
+      BOOLEAN invalid = FALSE ;
+      dmsExtentInfo* workExtInfo = getWorkExtInfo( context->mbID() ) ;
 
       if ( logicalID < 0 )
       {
@@ -1354,7 +1358,7 @@ namespace engine
          goto error ;
       }
 
-      extentID = _logicID2ExtID( context, logicalID ) ;
+      extentID = _logicID2ExtID( context, logicalID, extent ) ;
       if ( DMS_INVALID_EXTENT == extentID )
       {
          rc = SDB_INVALIDARG ;
@@ -1363,7 +1367,35 @@ namespace engine
          goto error ;
       }
 
+      SDB_ASSERT( extent, "extent should not be NULL" ) ;
+
       _getExtLIDAndOffsetByLID( logicalID, extLID, offset ) ;
+
+      // Validate the extent id and offset, to make sure they are in range and
+      // at the right position.
+      if ( extentID == workExtInfo->getID() )
+      {
+         if ( offset < workExtInfo->_firstRecordOffset ||
+              offset > workExtInfo->_lastRecordOffset )
+         {
+            invalid = TRUE ;
+         }
+      }
+      else
+      {
+         if ( offset < extent->_firstRecordOffset ||
+              offset > extent->_lastRecordOffset )
+         {
+            invalid = TRUE ;
+         }
+      }
+      if ( invalid )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid logical id[%lld], rc: %d",
+                 logicalID, rc ) ;
+         goto error ;
+      }
 
       {
          // Check if we can access the record normally and the logical id is
@@ -1374,8 +1406,8 @@ namespace engine
          record = recordRW.readPtr<dmsCappedRecord>() ;
          // Only when the record is normal and logical id matches, it's the
          // right one.
-         if ( !record || !record->isNormal() ||
-              logicalID != record->getLogicalID() )
+         if ( !record || !record->isNormal() || ( 0 == record->getRecordNo() )
+              || ( logicalID != record->getLogicalID() )  )
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Invalid logical id[%lld], rc: %d",
