@@ -227,8 +227,8 @@ function _getNodeConfig( hostRemoval, hostList, hostName, svcname )
       }
       else
       {
-         error = new SdbError( rc, "Failed to get node config [?:?]",
-                               hostName, svcname ) ;
+         error = new SdbError( rc, sprintf( "Failed to get node config [?:?]",
+                                            hostName, svcname ) ) ;
       }
       PD_LOGGER.log( PDERROR, error ) ;
       throw error ;
@@ -252,8 +252,28 @@ function _syncSdbConfig()
 
    db = connectInfo["db"] ;
 
-   nodeConfig = _getConfig( connectInfo[FIELD_HOSTNAME],
-                            connectInfo[FIELD_SVCNAME] ) ;
+   try
+   {
+      nodeConfig = _getConfig( connectInfo[FIELD_HOSTNAME],
+                               connectInfo[FIELD_SVCNAME] ) ;
+   }
+   catch( e )
+   {
+      rc = getLastError() ;
+      if( rc == SDB_OK )
+      {
+         rc = SDB_SYS ;
+         error = new SdbError( rc, e.message ) ;
+      }
+      else
+      {
+         error = new SdbError( rc, sprintf( "Failed to get node config [?:?]",
+                                            connectInfo[FIELD_HOSTNAME],
+                                            connectInfo[FIELD_SVCNAME] ) ) ;
+      }
+      PD_LOGGER.log( PDERROR, error ) ;
+      throw error ;
+   }
 
    if( nodeConfig[FIELD_ROLE] == FIELD_COORD )
    {
