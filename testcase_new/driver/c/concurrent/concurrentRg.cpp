@@ -46,6 +46,8 @@ int setup()
 	   	CHECK_RC( rc, "fail to create rg %s, rc = %d\n", rgName[i], rc ) ;
 	}
 
+	// get local ip address to prepare create node 
+	getLocalIpAddr() ;
 done:
 	return rc ;
 error:
@@ -97,8 +99,8 @@ void func_rg( ThreadArg* arg )
    
    	// make dbPath1 2
    	char dbPath1[100], dbPath2[100] ;
-   	sprintf( dbPath1, "%s%s", RSRVNODEDIR, svcName1 ) ;
-   	sprintf( dbPath2, "%s%s", RSRVNODEDIR, svcName2 ) ;
+   	sprintf( dbPath1, "%s%s%s", RSRVNODEDIR, "data/", svcName1 ) ;
+   	sprintf( dbPath2, "%s%s%s", RSRVNODEDIR, "data/", svcName2 ) ;
    
    	// create node1 2
    	int rc = SDB_OK ;
