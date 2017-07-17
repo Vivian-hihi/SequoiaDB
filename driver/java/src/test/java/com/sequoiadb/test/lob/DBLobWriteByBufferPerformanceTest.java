@@ -26,7 +26,8 @@ public class DBLobWriteByBufferPerformanceTest {
     private static DBCollection cl;
     private static String inputFileName = null;
     private static String outputFileName = null;
-    private static int bufferSize = 128; // KB
+    private static int threadNum = 16;
+    private static int bufferSize = 2048; // KB
     private static int MAX_NUM = 1024 * 1024;
 
     @BeforeClass
@@ -58,7 +59,7 @@ public class DBLobWriteByBufferPerformanceTest {
         }
         // cl
         BSONObject conf = new BasicBSONObject();
-        conf.put("ReplSize", 0);
+        conf.put("ReplSize", 1);
         cl = cs.createCollection(Constants.TEST_CL_NAME_1, conf);
     }
 
@@ -182,22 +183,25 @@ public class DBLobWriteByBufferPerformanceTest {
      * java驱动lob写性能与v2.6的差距
      * */
     @Test
+//    @Ignore
     @Ignore
     public void testWriteRunPacketToLob() throws BaseException {
         if (System.getProperty("os.name").startsWith("Windows")) {
             inputFileName = "E:\\tmp\\sequoiadb-2.6-linux_x86_64-enterprise-installer.run";
             outputFileName = "E:\\tmp\\output\\sequoiadb-2.6-linux_x86_64-enterprise-installer.run";
         } else {
-            inputFileName = "/opt/sequoiadb/packet/sequoiadb-2.8-linux_x86_64-enterprise-installer.run";
-            outputFileName = "/opt/sequoiadb/packet/sequoiadb-2.8-linux_x86_64-enterprise-installer.run_out";
+            //inputFileName = "/opt/driver/java/sequoiadb-2.8.1-linux_x86_64-enterprise-installer.run";
+            //outputFileName = "/opt/driver/java/sequoiadb-2.8.1-linux_x86_64-enterprise-installer.run_out";
+            inputFileName = "/opt/driver/java/14m.txt";
+            outputFileName = "/opt/driver/java/14m.txt_out";
         }
-        int threadNum = 1;
         int retryTimes = 3;
         System.out.println(String.format("%d线程并发测试通过buffer的方式写lob的性能", threadNum));
+        System.out.println("write buffer is: " + bufferSize);
         long avg = execute(inputFileName, threadNum, retryTimes);
         System.out.println(
             String.format("Write %dMB's lob, %d threads run takes %dms",
-                531, threadNum, avg));
+                14, threadNum, avg));
     }
 
     /*
@@ -207,7 +211,6 @@ public class DBLobWriteByBufferPerformanceTest {
     @Ignore
     public void testWrite100kLobByBuffer() {
         // prepare file to write
-        int threadNum = 1;
         int retryTimes = 1001;
         String fileName = "100k.txt";
         LobHelper.genFile(fileName, 100 * 1024, null);
@@ -225,7 +228,6 @@ public class DBLobWriteByBufferPerformanceTest {
     @Ignore
     public void testWrite1024kLobByBuffer() {
         // prepare file to write
-        int threadNum = 1;
         int retryTimes = 101;
         String fileName = "1024k.txt";
         LobHelper.genFile(fileName, 1024 * 1024, null);

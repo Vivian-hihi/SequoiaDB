@@ -23,20 +23,22 @@ public class DBLobReadByBufferPerformanceTest {
     private static DBCollection cl;
     private static String inputFileName = null;
     private static String outputFileName = null;
-    private static int bufferSize = 128; // KB
-    private static int bufferSize2 = 64; // KB
-    private static int threadNum = 2;
+    private static int writeBuffSize = 128; // KB
+    private static int readBuffSize = 32; // KB
+    private static int threadNum = 6;
 
     @BeforeClass
     public static void setConnBeforeClass() throws Exception {
-        ds = new SequoiadbDatasource(Constants.COOR_NODE_CONN, "admin", "admin", null);
+        ds = new SequoiadbDatasource(Constants.COOR_NODE_CONN, "admin", "admin", null);        
         System.out.println(String.format("%d线程并发测试通过buffer的方式读lob的性能", threadNum));
         if (System.getProperty("os.name").startsWith("Windows")) {
             inputFileName = "E:\\tmp\\sequoiadb-2.6-linux_x86_64-enterprise-installer.run";
             outputFileName = "E:\\tmp\\output\\sequoiadb-2.6-linux_x86_64-enterprise-installer.run";
         } else {
-            inputFileName = "/opt/sequoiadb/packet/sequoiadb-2.8-linux_x86_64-enterprise-installer.run";
-            outputFileName = "/opt/sequoiadb/packet/sequoiadb-2.8-linux_x86_64-enterprise-installer.run_out";
+            //inputFileName = "/opt/driver/java/sequoiadb-2.8.1-linux_x86_64-enterprise-installer.run";
+            //outputFileName = "/opt/driver/java/sequoiadb-2.8.1-linux_x86_64-enterprise-installer.run_out";
+            inputFileName = "/opt/driver/java/14m.txt";
+            outputFileName = "/opt/driver/java/14m.txt_out";
         }
     }
 
@@ -58,7 +60,7 @@ public class DBLobReadByBufferPerformanceTest {
         }
         // cl
         BSONObject conf = new BasicBSONObject();
-        conf.put("ReplSize", 0);
+        conf.put("ReplSize", 1);
         cl = cs.createCollection(Constants.TEST_CL_NAME_1, conf);
     }
 
@@ -101,7 +103,7 @@ public class DBLobReadByBufferPerformanceTest {
         @Override
         public void run() {
             FileOutputStream fileOutputStream = null;
-            byte[] outBuffer = new byte[bufferSize2 * 1024];
+            byte[] outBuffer = new byte[readBuffSize * 1024];
             int readLen = 0;
             long startTime = 0;
             long endTime = 0;
@@ -190,6 +192,7 @@ public class DBLobReadByBufferPerformanceTest {
      * java驱动lob写性能与v2.6的差距
      * */
     @Test
+    //@Ignore
     @Ignore
     public void testReadPerformanceBetween2version() throws BaseException {
         Thread[] threads = new Thread[threadNum];
@@ -202,7 +205,7 @@ public class DBLobReadByBufferPerformanceTest {
         DBLob lob = null;
         ObjectId id = null;
         int writeLen = 0;
-        byte[] inBuffer = new byte[bufferSize * 1024];
+        byte[] inBuffer = new byte[writeBuffSize * 1024];
         try {
             lob = cl.createLob();
             id = lob.getID();
@@ -236,6 +239,13 @@ public class DBLobReadByBufferPerformanceTest {
             }
         }
 
+
+        try {
+            Thread.sleep(2000);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
         // start threads
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new Thread(
@@ -264,7 +274,7 @@ public class DBLobReadByBufferPerformanceTest {
         }
         System.out.println(
             String.format("Read buffer is %d KB, %d threads run takes %dms",
-                bufferSize2, threadNum, avg));
+                readBuffSize, threadNum, avg));
     }
 
 }
