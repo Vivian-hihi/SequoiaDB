@@ -100,72 +100,53 @@
       <hostinfo prefix="host" />
 
       <!--ready script in remote host-->
-      <if>
-          <or>
-             <equals arg1="${serial_number}" arg2="1"/>
-             <equals arg1="${serial_number}" arg2="3"/>
-          </or>
-          <then>
-             <for list="${testhost_list},${host.NAME}" param="testhost" parallel="false">
-                <sequential> 
-                   <staf location="@{testhost}" service="FS"
-                               request="DELETE ENTRY ${CI_WORK_DIR} RECURSE CONFIRM"
-                               throwBuildException=""/>
-                   <staf location="@{testhost}" service="FS"
-                               request="CREATE DIRECTORY ${CI_WORK_DIR} FULLPATH"
-                               throwBuildException="1"/>
-                   <staf location="@{testhost}" service="FS"
-                               request="CREATE DIRECTORY ${CI_WORK_DIR}/script FULLPATH"
-                               throwBuildException="1"/>
-                   <staf location="local" service="FS"
-                         request="COPY DIRECTORY ${basedir} TODIRECTORY ${CI_WORK_DIR}/script TOMACHINE @{testhost} RECURSE"
-                         throwBuildException="1"/>
-                </sequential>
-             </for>
-            
-             <mkdir dir="${CI_WORK_DIR}/report"/>
-            
-             <!--mkdir /tmp/ci_reliability for testcase-->
-             <for list="${testhost_list}" param="testhost" parallel="false">
-                <sequential>
-                   <staf location="@{testhost}" service="FS"
-                         request="DELETE ENTRY ${RELIABILITY_TESTCASE_WORK_DIR} RECURSE CONFIRM"
-                         throwBuildException=""/>  
-                   <staf location="@{testhost}" service="FS"
-                         request="CREATE DIRECTORY ${RELIABILITY_TESTCASE_WORK_DIR} FULLPATH"
-                         throwBuildException="1"/>  
-                </sequential>
-             </for>
-            
-             <mkdir dir="${CI_WORK_DIR}/testcase"/>
-             <copy todir="${CI_WORK_DIR}/testcase">
-                <fileset dir="${case_basedir}" includes="**/*"/>
-             </copy>
-             <copy todir="${WORKSPACE}/sequoiadb/misc/ci/src">
-                <fileset dir="${case_basedir}/reliability" includes="script/**/*"/>
-             </copy>
-          </then>
-      </if>
-
+      <for list="${testhost_list},${host.NAME}" param="testhost" parallel="false">
+         <sequential> 
+            <staf location="@{testhost}" service="FS"
+                        request="DELETE ENTRY ${CI_WORK_DIR} RECURSE CONFIRM"
+                        throwBuildException=""/>
+            <staf location="@{testhost}" service="FS"
+                        request="CREATE DIRECTORY ${CI_WORK_DIR} FULLPATH"
+                        throwBuildException="1"/>
+            <staf location="@{testhost}" service="FS"
+                        request="CREATE DIRECTORY ${CI_WORK_DIR}/script FULLPATH"
+                        throwBuildException="1"/>
+            <staf location="local" service="FS"
+                  request="COPY DIRECTORY ${basedir} TODIRECTORY ${CI_WORK_DIR}/script TOMACHINE @{testhost} RECURSE"
+                  throwBuildException="1"/>
+         </sequential>
+      </for>
+      
+      <mkdir dir="${CI_WORK_DIR}/report"/>
+      
+      <!--mkdir /tmp/ci_reliability for testcase-->
+      <for list="${testhost_list}" param="testhost" parallel="false">
+         <sequential>
+            <staf location="@{testhost}" service="FS"
+                  request="DELETE ENTRY ${RELIABILITY_TESTCASE_WORK_DIR} RECURSE CONFIRM"
+                  throwBuildException=""/>  
+            <staf location="@{testhost}" service="FS"
+                  request="CREATE DIRECTORY ${RELIABILITY_TESTCASE_WORK_DIR} FULLPATH"
+                  throwBuildException="1"/>  
+         </sequential>
+      </for>
+      
+      <mkdir dir="${CI_WORK_DIR}/testcase"/>
+      <copy todir="${CI_WORK_DIR}/testcase">
+         <fileset dir="${case_basedir}" includes="**/*"/>
+      </copy>
+      <copy todir="${WORKSPACE}/sequoiadb/misc/ci/src">
+         <fileset dir="${case_basedir}/reliability" includes="script/**/*"/>
+      </copy>
    </target>
 
    <target name="exec_testcase">
       
       <property name="report_basedir" value="${CI_WORK_DIR}/report" />
-
-      <if>
-          <or>
-             <equals arg1="${serial_number}" arg2="1"/>
-             <equals arg1="${serial_number}" arg2="3"/>
-          </or>
-          <then>
-             <delete dir="${report_basedir}" failonerror="false"/>
-             <mkdir dir="${report_basedir}"/>
-             <delete dir="${WORKSPACE}/report" failonerror="false"/>
-             <mkdir dir="${WORKSPACE}/report"/>
-          </then>
-      </if>
-      
+      <delete dir="${report_basedir}" failonerror="false"/>
+      <mkdir dir="${report_basedir}"/>
+      <delete dir="${WORKSPACE}/report" failonerror="false"/>
+      <mkdir dir="${WORKSPACE}/report"/>
       <!--testcase/reliability testng.xml testng_release.xml-->
       <var name="exec_file" value="${basedir}/src/test/exec_testcase/exec_java_case.xml"/>
       
