@@ -72,6 +72,7 @@ namespace replay
       OSS_INLINE BOOLEAN debug() const { return _debug; }
       OSS_INLINE BOOLEAN deflate() const { return _deflate; }
       OSS_INLINE BOOLEAN inflate() const { return _inflate; }
+      OSS_INLINE BOOLEAN isReplicaFile() const { return _isReplicaFile; }
 
    private:
       INT32 setOptions();
@@ -93,6 +94,7 @@ namespace replay
       BOOLEAN           _debug;
       BOOLEAN           _deflate;
       BOOLEAN           _inflate;
+      BOOLEAN           _isReplicaFile;
    };
 }
 

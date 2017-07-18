@@ -56,6 +56,7 @@ namespace replay
    #define RPL_OPTION_DEBUG             "debug"
    #define RPL_OPTION_DEFLATE           "deflate"
    #define RPL_OPTION_INFLATE           "inflate"
+   #define RPL_OPTION_TYPE              "type"
 
    #define RPL_EXPLAIN_HELP             "print help information"
    #define RPL_EXPLAIN_VERSION          "print version"
@@ -63,11 +64,11 @@ namespace replay
    #define RPL_EXPLAIN_SVC              "service name"
    #define RPL_EXPLAIN_USER             "username"
    #define RPL_EXPLAIN_PASSWD           "password"
-   #define RPL_EXPLAIN_PATH             "archivelog directory or file path"
+   #define RPL_EXPLAIN_PATH             "archive or replica log directory or file path"
    #define RPL_EXPLAIN_FILTER           "log filtering rule, " \
                                         "e.g. --filter '{\"OP\": [\"insert\", \"update\"]}'"
    #define RPL_EXPLAIN_DUMP             "dump log only, default is false"
-   #define RPL_EXPLAIN_DUMPHEADER       "dump archive header only, default is false"
+   #define RPL_EXPLAIN_DUMPHEADER       "dump archive header, default is false"
    #define RPL_EXPLAIN_DELETE           "delete log file after replay, " \
                                         "default is false"
    #define RPL_EXPLAIN_WATCH            "continuously watch path and replay log files, " \
@@ -82,6 +83,12 @@ namespace replay
    #define RPL_EXPLAIN_DEBUG            "log debug info"
    #define RPL_EXPLAIN_DEFLATE          "compress archive file, valid when path is file"
    #define RPL_EXPLAIN_INFLATE          "uncompress archive file, valid when path is file"
+   #define RPL_EXPLAIN_TYPE             "indicate the type of file, " \
+                                        "the value can be \"archive\" or \"replica\", " \
+                                        "default is \"archive\""
+
+   #define RPL_OPTION_TYPE_ARCHIVE      "archive"
+   #define RPL_OPTION_TYPE_REPLICA      "replica"
 
    #define _TYPE(T) utilOptType(T)
 
@@ -96,6 +103,7 @@ namespace replay
       _debug = FALSE;
       _deflate = FALSE;
       _inflate = FALSE;
+      _isReplicaFile = FALSE;
    }
 
    Options::~Options()
@@ -121,6 +129,7 @@ namespace replay
          (RPL_OPTION_WATCH,         _TYPE(string),    RPL_EXPLAIN_WATCH)
          (RPL_OPTION_DAEMON,        _TYPE(string),    RPL_EXPLAIN_DAEMON)
          (RPL_OPTION_STATUS,        _TYPE(string),    RPL_EXPLAIN_STATUS)
+         (RPL_OPTION_TYPE,          _TYPE(string),    RPL_EXPLAIN_TYPE)
       ;
 
       addOptions("Helpfull Options", TRUE)
@@ -399,6 +408,38 @@ namespace replay
       if (has(RPL_OPTION_DEBUG))
       {
          _debug = TRUE;
+      }
+
+      if (has(RPL_OPTION_TYPE))
+      {
+         string type = get<string>(RPL_OPTION_TYPE);
+         if (type == RPL_OPTION_TYPE_ARCHIVE)
+         {
+            _isReplicaFile = FALSE;
+         }
+         else if (type == RPL_OPTION_TYPE_REPLICA)
+         {
+            _isReplicaFile = TRUE;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG;
+            std::cerr << "invalid argument: " << RPL_OPTION_TYPE << std::endl;
+            PD_LOG( PDERROR, "invalid argument of %s: %s, rc=%d",
+                    RPL_OPTION_TYPE, type.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      if (_isReplicaFile && (_inflate || _deflate))
+      {
+         rc = SDB_INVALIDARG;
+         std::cerr << RPL_OPTION_INFLATE << " and " << RPL_OPTION_DEFLATE
+                   << " can't run with replica file"
+                   << std::endl;
+         PD_LOG( PDERROR, "%s and %s can't run with replica file, rc=%d",
+                 RPL_OPTION_INFLATE, RPL_OPTION_DEFLATE, rc ) ;
+         goto error ;
       }
 
    done: 

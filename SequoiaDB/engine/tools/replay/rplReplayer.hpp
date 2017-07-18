@@ -39,11 +39,23 @@
 #include "dpsArchiveFileMgr.hpp"
 #include "dpsLogFile.hpp"
 #include "ossFile.hpp"
+#include <string>
+#include <map>
 
 using namespace std;
 
 namespace replay
-{  
+{
+   struct ReplicaFileInfo
+   {
+      string name;
+      UINT32 fileSize;
+      UINT32 fileNum;
+      UINT32 fileId;
+   };
+
+   typedef map<UINT32, ReplicaFileInfo> REPLICA_FILE_MAP;
+
    class Replayer: public SDBObject
    {
    public:
@@ -57,15 +69,24 @@ namespace replay
       INT32 _readStatus();
       INT32 _writeStatus();
       INT32 _connectSdb();
-      INT32 _replayFile(const string& file);
+      INT32 _replayFile();
+      INT32 _replayDir();
+      INT32 _isDpsLogFile(const string& path, BOOLEAN& isArchive,
+                               UINT32& fileSize, UINT32& fileNum, UINT32& fileId);
+      INT32 _replayArchiveFile(const string& file);
+      INT32 _replayReplicaFile(const string& file, UINT32 fileSize, UINT32 fileNum);
       INT32 _replayLogFile(engine::dpsLogFile& logFile,
                            DPS_LSN_OFFSET startLSN, DPS_LSN_OFFSET endLSN);
       INT32 _replayLog(const CHAR* log);
       void  _dumpArchiveFileHeader(engine::dpsArchiveFile& archiveFile);
+      void  _dumpReplicaFileHeader(engine::dpsLogFile& logFile);
       void  _dumpLog(const engine::dpsLogRecord& log);
-      INT32 _replayDir();
-      INT32 _scanDir(UINT32& minFileId, UINT32& maxFileId);
-      INT32 _replayFiles(UINT32 minFileId, UINT32 maxFileId);
+      INT32 _replayArchiveDir();
+      INT32 _scanArchiveDir(UINT32& minFileId, UINT32& maxFileId);
+      INT32 _replayArchiveFiles(UINT32 minFileId, UINT32 maxFileId);
+      INT32 _replayReplicaDir();
+      INT32 _scanReplicaDir(REPLICA_FILE_MAP& replicaFiles, UINT32& minFileId, UINT32& maxFileId);
+      INT32 _replayReplicaFiles(REPLICA_FILE_MAP& replicaFiles, UINT32 minFileId, UINT32 maxFileId);
       INT32 _ensureFileSize(const string& filePath, INT64 fileSize);
       INT32 _ensureBufSize(UINT32 size);
       INT32 _setLastFileTime(const string& filePath);

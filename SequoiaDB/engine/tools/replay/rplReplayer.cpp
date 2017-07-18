@@ -39,6 +39,7 @@
 #include "ixm.hpp"
 #include <sstream>
 #include <iostream>
+#include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
 
 namespace fs = boost::filesystem ;
@@ -50,6 +51,8 @@ using namespace std;
 
 namespace replay
 {
+   #define RPL_DUMP_FIELD_WIDTH 8
+
    #define RPL_WATCH_INTERVAL (10 * 1000) // seconds
 
    #define RPL_STATUS_INTERVAL (1000)
@@ -63,7 +66,7 @@ namespace replay
    #define RPL_DEFLATE_SUFFIX                ".deflate"
    #define RPL_INFLATE_SUFFIX                ".inflate"
 
-   BOOLEAN _isRunning = FALSE;
+   static volatile BOOLEAN _isRunning = FALSE;
 
    static void _stop(INT32 sigNum)
    {
@@ -193,58 +196,16 @@ namespace replay
    INT32 Replayer::run()
    {
       INT32 rc = SDB_OK;
-      BOOLEAN printResult = TRUE;
 
       _isRunning = TRUE;
 
       if (SDB_OSS_FIL == _options->pathType())
       {
-         if (_options->deflate())
-         {
-            printResult = FALSE;
-
-            rc = _deflateFile(_path);
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to deflate file[%s], rc=%d",
-                      _path.c_str(), rc);
-               goto error;
-            }
-         }
-         else if (_options->inflate())
-         {
-            printResult = FALSE;
-
-            rc = _inflateFile(_path);
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to inflate file[%s], rc=%d",
-                      _path.c_str(), rc);
-               goto error;
-            }
-         }
-         else
-         {
-            rc = _replayFile(_path);
-            if (SDB_OK != rc)
-            {
-               PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
-                      _path.c_str(), rc);
-               goto error;
-            }
-         }
+         rc = _replayFile();
       }
       else if (SDB_OSS_DIR == _options->pathType())
       {
-         _archiveFileMgr.setArchivePath(_path);
-
          rc = _replayDir();
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "Failed to replay log files in directory[%s], rc=%d",
-                   _path.c_str(), rc);
-            goto error;
-         }
       }
       else
       {
@@ -263,7 +224,7 @@ namespace replay
             PD_LOG(PDERROR, "Failed to write status, rc=%d", rc);
          }
       }
-      if (printResult)
+      if (!_options->inflate() && !_options->deflate())
       {
          PD_LOG(PDINFO, "Replay result:\n%s", _monitor.dump().c_str());
       }
@@ -273,7 +234,183 @@ namespace replay
       goto done;
    }
 
-   INT32 Replayer::_replayFile(const string& file)
+   INT32 Replayer::_replayFile()
+   {
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(SDB_OSS_FIL == _options->pathType(), "path is not file");
+
+      if (_options->deflate())
+      {
+         rc = _deflateFile(_path);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to deflate file[%s], rc=%d",
+                   _path.c_str(), rc);
+            goto error;
+         }
+      }
+      else if (_options->inflate())
+      {
+         rc = _inflateFile(_path);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to inflate file[%s], rc=%d",
+                   _path.c_str(), rc);
+            goto error;
+         }
+      }
+      else
+      {
+         BOOLEAN isArchive = FALSE;
+         UINT32 fileSize = 0;
+         UINT32 fileNum = 0;
+         UINT32 fileId = DPS_INVALID_LOG_FILE_ID;
+
+         rc = _isDpsLogFile(_path, isArchive, fileSize, fileNum, fileId);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to check if file[%s] is log file, rc=%d",
+                   _path.c_str(), rc);
+            goto error;
+         }
+
+         if (!isArchive && !_options->isReplicaFile())
+         {
+            rc = SDB_SYS;
+            PD_LOG(PDERROR, "File[%s] is not archive file, rc=%d",
+                   _path.c_str(), rc);
+            goto error;
+         }
+
+         if (_options->isReplicaFile())
+         {
+            rc = _replayReplicaFile(_path, fileSize, fileNum);
+         }
+         else
+         {
+            rc = _replayArchiveFile(_path);
+         }
+
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
+                   _path.c_str(), rc);
+            goto error;
+         }
+      }
+   
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+   
+   INT32 Replayer::_replayDir()
+   {
+      INT32 rc = SDB_OK;
+
+      if (_options->isReplicaFile())
+      {
+         rc = _replayReplicaDir();
+      }
+      else
+      {
+         _archiveFileMgr.setArchivePath(_path);
+
+         rc = _replayArchiveDir();
+      }
+
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to replay log files in directory[%s], rc=%d",
+                _path.c_str(), rc);
+         goto error;
+      }
+      
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_isDpsLogFile(const string& path, BOOLEAN& isArchive,
+                                      UINT32& fileSize, UINT32& fileNum, UINT32& fileId)
+   {
+      INT32 rc = SDB_OK;
+      BOOLEAN exist = FALSE;
+      ossFile file;
+      _dpsLogHeader* logHeader = NULL;
+      dpsArchiveHeader* archiveHeader = NULL;
+      INT64 readSize = 0;
+
+      isArchive = FALSE;
+
+      rc = ossFile::exists( path, exist );
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to check existence of file[%s], rc=%d",
+                 path.c_str(), rc );
+         goto error;
+      }
+
+      rc = file.open( path, OSS_READONLY, OSS_DEFAULTFILE );
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to open file[%s], rc=%d",
+                 path.c_str(), rc );
+         goto error;
+      }
+
+      logHeader = SDB_OSS_NEW _dpsLogHeader();
+      if ( NULL == logHeader )
+      {
+         rc = SDB_OOM;
+         PD_LOG ( PDERROR, "Failed to create new _dpsLogHeader!" );
+         goto error;
+      }
+
+      archiveHeader = ( dpsArchiveHeader* )
+                      ( (CHAR*)logHeader + DPS_ARCHIVE_HEADER_OFFSET );
+
+      rc = file.readN( (CHAR*)logHeader, DPS_LOG_HEAD_LEN, readSize );
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to read file header, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      SDB_ASSERT( readSize == DPS_LOG_HEAD_LEN,
+                  "readSize != DPS_LOG_HEAD_LEN" ) ;
+
+      if (0 != ossStrncmp(logHeader->_eyeCatcher,
+                          DPS_LOG_HEADER_EYECATCHER,
+                          DPS_LOG_HEADER_EYECATCHER_LEN))
+      {
+         PD_LOG( PDERROR, "DPS file eye catcher error" ) ;
+         rc = SDB_DPS_FILE_NOT_RECOGNISE ;
+         goto error ;
+      }
+
+      fileSize = logHeader->_fileSize;
+      fileNum = logHeader->_fileNum;
+      fileId = logHeader->_logID;
+
+      if (0 == ossStrncmp(archiveHeader->eyeCatcher,
+                          DPS_ARCHIVE_HEADER_EYECATCHER,
+                          DPS_ARCHIVE_HEADER_EYECATCHER_LEN))
+      {
+         isArchive = TRUE;
+      }
+
+   done:
+      SAFE_OSS_DELETE(logHeader);
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_replayArchiveFile(const string& file)
    {
       INT32 rc = SDB_OK;
       dpsArchiveHeader* archiveHeader = NULL;
@@ -397,6 +534,86 @@ namespace replay
                       file.c_str(), rc);
                goto error;
             }
+         }
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_replayReplicaFile(const string& file,
+                                           UINT32 fileSize, UINT32 fileNum)
+   {
+      INT32 rc = SDB_OK ;
+      dpsLogFile logFile;
+      _dpsLogHeader* logHeader = NULL;
+      DPS_LSN_OFFSET startLSN = DPS_INVALID_LSN_OFFSET;
+      DPS_LSN_OFFSET endLSN = DPS_INVALID_LSN_OFFSET;
+
+      PD_LOG(PDEVENT, "Begin to replay replica log file[%s]",
+             file.c_str());
+
+      rc = _setLastFileTime(file);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      rc = logFile.init(file.c_str(), fileSize, fileNum);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to init replica log file[%s], rc=%d",
+                file.c_str(), rc);
+         goto error;
+      }
+
+      logHeader = &(logFile.header());
+
+      if (_monitor.getNextFileId() != DPS_INVALID_LOG_FILE_ID)
+      {
+         if (logHeader->_logID < _monitor.getNextFileId())
+         {
+            PD_LOG(PDINFO, "Replica log file[%s] is already replayed",
+                file.c_str());
+            goto done;
+         }
+      }
+
+      if (_options->dumpHeader())
+      {
+         _dumpReplicaFileHeader(logFile);
+
+         if (!_options->dump())
+         {
+            // no need to dump log
+            goto done;
+         }
+      }
+
+      startLSN = logFile.getFirstLSN().offset;
+      endLSN = startLSN + logFile.getLength();
+
+      rc = _replayLogFile(logFile, startLSN, endLSN);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to replay replica log file[%s], rc=%d",
+                file.c_str(), rc);
+         goto error;
+      }
+
+      PD_LOG(PDEVENT, "Replay replica log file[%s] successfully",
+             file.c_str());
+
+      if (_options->remove())
+      {
+         rc = ossFile::deleteFile(file);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to delete replica log file[%s], rc=%d",
+                   file.c_str(), rc);
+            goto error;
          }
       }
 
@@ -775,44 +992,70 @@ namespace replay
 
    void Replayer::_dumpArchiveFileHeader(dpsArchiveFile& archiveFile)
    {
-      #define FIELD_WIDTH 8
       dpsLogHeader* logHeader = archiveFile.getLogHeader();
       dpsArchiveHeader* archiveHeader = archiveFile.getArchiveHeader();
       stringstream ss;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "File" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "File" << ": "
          << archiveFile.path()
          << endl;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "LogHead" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "LogHead" << ": "
          << string(logHeader->_eyeCatcher, DPS_LOG_HEADER_EYECATCHER_LEN)
          << endl;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "LogID" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "LogID" << ": "
          << logHeader->_logID
          << endl;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "FirstLSN" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "FirstLSN" << ": "
          << "0x" << hex << right << setfill('0') << setw(16) << logHeader->_firstLSN.offset
          << "(" << dec << logHeader->_firstLSN.offset << ")"
          << endl;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "ArchHead" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "ArchHead" << ": "
          << string(archiveHeader->eyeCatcher, DPS_ARCHIVE_HEADER_EYECATCHER_LEN)
          << endl;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "ArchFlag" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "ArchFlag" << ": "
          << "0x" << hex << right << setfill('0') << setw(8) << archiveHeader->flag
          << endl;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "StartLSN" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "StartLSN" << ": "
          << "0x" << hex << right << setfill('0') << setw(16) << archiveHeader->startLSN.offset
          << "(" << dec << archiveHeader->startLSN.offset << ")"
          << endl;
 
-      ss << " " << left << setfill(' ') << setw(FIELD_WIDTH) << "EndLSN" << ": "
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "EndLSN" << ": "
          << "0x" << hex << right << setfill('0') << setw(16) << archiveHeader->endLSN.offset
          << "(" << dec << archiveHeader->endLSN.offset << ")"
+         << endl;
+
+      string out = ss.str();
+
+      cout << out << endl;
+   }
+
+   void Replayer::_dumpReplicaFileHeader(engine::dpsLogFile& logFile)
+   {
+      dpsLogHeader& logHeader = logFile.header();
+      stringstream ss;
+
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "File" << ": "
+         << logFile.path()
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "LogHead" << ": "
+         << string(logHeader._eyeCatcher, DPS_LOG_HEADER_EYECATCHER_LEN)
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "LogID" << ": "
+         << logHeader._logID
+         << endl;
+
+      ss << " " << left << setfill(' ') << setw(RPL_DUMP_FIELD_WIDTH) << "FirstLSN" << ": "
+         << "0x" << hex << right << setfill('0') << setw(16) << logHeader._firstLSN.offset
+         << "(" << dec << logHeader._firstLSN.offset << ")"
          << endl;
 
       string out = ss.str();
@@ -829,7 +1072,7 @@ namespace replay
       std::cout << buf << std::endl;
    }
 
-   INT32 Replayer::_replayDir()
+   INT32 Replayer::_replayArchiveDir()
    {
       INT32 rc = SDB_OK;
 
@@ -886,7 +1129,7 @@ namespace replay
             }
          }
 
-         rc = _scanDir(minFileId, maxFileId);
+         rc = _scanArchiveDir(minFileId, maxFileId);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "Failed to scan directory[%s], rc=%d",
@@ -896,7 +1139,7 @@ namespace replay
 
          if (DPS_INVALID_LOG_FILE_ID != minFileId)
          {
-            rc = _replayFiles(minFileId, maxFileId);
+            rc = _replayArchiveFiles(minFileId, maxFileId);
             if (SDB_OK != rc)
             {
                goto error;
@@ -932,7 +1175,7 @@ namespace replay
       goto done;
    }
 
-   INT32 Replayer::_scanDir(UINT32& minFileId, UINT32& maxFileId)
+   INT32 Replayer::_scanArchiveDir(UINT32& minFileId, UINT32& maxFileId)
    {
       INT32 rc = SDB_OK;
 
@@ -1048,7 +1291,7 @@ namespace replay
       goto done;
    }
 
-   INT32 Replayer::_replayFiles(UINT32 minFileId, UINT32 maxFileId)
+   INT32 Replayer::_replayArchiveFiles(UINT32 minFileId, UINT32 maxFileId)
    {
       INT32 rc = SDB_OK;
 
@@ -1135,7 +1378,7 @@ namespace replay
 
          _monitor.setLastMovedFileTime(movedTime);
 
-         rc = _replayFile(file);
+         rc = _replayArchiveFile(file);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
@@ -1203,6 +1446,337 @@ namespace replay
                // move happened, need to re-scan dir
                goto done;
             }
+         }
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_replayReplicaDir()
+   {
+      INT32 rc = SDB_OK;
+
+      for (;;)
+      {
+         REPLICA_FILE_MAP replicaFiles;
+         UINT32 minFileId = DPS_INVALID_LOG_FILE_ID;
+         UINT32 maxFileId = DPS_INVALID_LOG_FILE_ID;
+
+         if (!_isRunning)
+         {
+            rc = SDB_INTERRUPT;
+            PD_LOG(PDINFO, "Replay is interrupted");
+            goto done;
+         }
+
+         rc = _scanReplicaDir(replicaFiles, minFileId, maxFileId);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to scan directory[%s], rc=%d",
+                   _path.c_str(), rc);
+            goto error;
+         }
+
+         if (DPS_INVALID_LOG_FILE_ID != minFileId)
+         {
+            rc = _replayReplicaFiles(replicaFiles, minFileId, maxFileId);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+
+            if (_monitor.getLastLSN() != DPS_INVALID_LSN_OFFSET &&
+                _filter.largerThanMaxLSN(_monitor.getLastLSN()))
+            {
+               PD_LOG(PDDEBUG, "Last LSN[%lld] is over max LSN",
+                      _monitor.getLastLSN());
+               goto done;
+            }
+         }
+
+         if (!_options->watch())
+         {
+            break;
+         }
+
+         if (!_isRunning)
+         {
+            rc = SDB_INTERRUPT;
+            PD_LOG(PDINFO, "Replay is interrupted");
+            goto done;
+         }
+
+         ossSleep(RPL_WATCH_INTERVAL);
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_scanReplicaDir(REPLICA_FILE_MAP& replicaFiles,
+                                        UINT32& minFileId, UINT32& maxFileId)
+   {
+      INT32 rc = SDB_OK;
+
+      try
+      {
+         fs::path dir(_path);
+         fs::directory_iterator endIter;
+
+         for (fs::directory_iterator dirIter(dir);
+              dirIter != endIter;
+              ++dirIter)
+         {
+            const string filePath = dirIter->path().string();
+            BOOLEAN isArchive = FALSE;
+            UINT32 fileSize = 0;
+            UINT32 fileNum = 0;
+            UINT32 fileId = DPS_INVALID_LOG_FILE_ID;
+
+            rc = _isDpsLogFile(filePath, isArchive, fileSize, fileNum, fileId);
+            if (SDB_OK != rc)
+            {
+               if (SDB_DPS_FILE_NOT_RECOGNISE ==  rc)
+               {
+                  continue;
+               }
+
+               PD_LOG(PDERROR, "Failed to check if file[%s] is log file, rc=%d",
+                      filePath.c_str(), rc);
+               goto error;
+            }
+
+            if (DPS_INVALID_LOG_FILE_ID == fileId)
+            {
+               /*rc = SDB_SYS;
+               PD_LOG(PDERROR, "Invalid file id of file[%s], rc=%d",
+                      filePath.c_str(), rc);
+               goto error;*/
+               continue;
+            }
+
+            REPLICA_FILE_MAP::const_iterator fileIter = replicaFiles.find(fileId);
+            if (fileIter != replicaFiles.end())
+            {
+               rc = SDB_SYS;
+               PD_LOG(PDERROR, "Duplicate log file id[%u] of file[%s] and file[%s], rc=%d",
+                      fileId, filePath.c_str(), fileIter->second.name.c_str(), rc);
+               goto error;
+            }
+
+            ReplicaFileInfo fileInfo;
+            fileInfo.name = filePath;
+            fileInfo.fileSize = fileSize;
+            fileInfo.fileNum = fileNum;
+            fileInfo.fileId = fileId;
+            replicaFiles.insert(REPLICA_FILE_MAP::value_type(fileId, fileInfo));
+
+            if ( minFileId > fileId || DPS_INVALID_LOG_FILE_ID == minFileId )
+            {
+               minFileId = fileId ;
+            }
+
+            if ( maxFileId < fileId || DPS_INVALID_LOG_FILE_ID == maxFileId )
+            {
+               maxFileId = fileId ;
+            }
+         }
+      }
+      catch( fs::filesystem_error& e )
+      {
+         if ( e.code() == boost::system::errc::permission_denied ||
+              e.code() == boost::system::errc::operation_not_permitted )
+         {
+            rc = SDB_PERM ;
+         }
+         else
+         {
+            rc = SDB_IO ;
+         }
+         goto error ;
+      }
+      catch( std::exception& e )
+      {
+         PD_LOG( PDERROR, "unexpected exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // no archive log
+      if (DPS_INVALID_LOG_FILE_ID == minFileId)
+      {
+         goto done;
+      }
+
+      SDB_ASSERT(DPS_INVALID_LOG_FILE_ID != maxFileId, "invalid max file id");
+
+      if (DPS_INVALID_LOG_FILE_ID == _monitor.getNextFileId())
+      {
+         goto done;
+      }
+
+      if (maxFileId < _monitor.getNextFileId())
+      {
+         PD_LOG(PDDEBUG, "Max log file id[%u] is less than next file id[%u]",
+                maxFileId, _monitor.getNextFileId());
+         minFileId = DPS_INVALID_LOG_FILE_ID;
+         maxFileId = DPS_INVALID_LOG_FILE_ID;
+         replicaFiles.clear();
+         goto done;
+      }
+
+      if (minFileId > _monitor.getNextFileId())
+      {
+         rc = SDB_SYS;
+         PD_LOG(PDERROR, "Find min file id[%u], but expect next file id[%u]",
+                minFileId, _monitor.getNextFileId());
+         goto error;
+      }
+
+      if (maxFileId == _monitor.getNextFileId())
+      {
+         BOOLEAN exist = FALSE;
+         time_t maxFileTime = 0;
+
+         string maxFilePath = replicaFiles.rbegin()->second.name;
+         rc = ossFile::exists(maxFilePath, exist);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
+                   maxFilePath.c_str(), rc);
+            goto error;
+         }
+
+         if (exist)
+         {
+            rc = ossFile::getLastWriteTime(maxFilePath, maxFileTime);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to get last write of file[%s], rc=%d",
+                      maxFilePath.c_str(), rc);
+               goto error;
+            }
+
+            PD_LOG(PDDEBUG, "Last wirte time of file[%s] is %d, last file time is %u",
+                   maxFilePath.c_str(), maxFileTime, _monitor.getLastFileTime());
+
+            if (maxFileTime == _monitor.getLastFileTime())
+            {
+               minFileId = DPS_INVALID_LOG_FILE_ID;
+               maxFileId = DPS_INVALID_LOG_FILE_ID;
+               replicaFiles.clear();
+               goto done;
+            }
+         }
+      }
+
+      if (minFileId < _monitor.getNextFileId())
+      {
+         REPLICA_FILE_MAP::iterator it = replicaFiles.begin();
+         while (it != replicaFiles.end())
+         {
+            if (it->first < _monitor.getNextFileId())
+            {
+               replicaFiles.erase(it++);
+            }
+            else
+            {
+               break;
+            }
+         }
+         minFileId = _monitor.getNextFileId();
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Replayer::_replayReplicaFiles(REPLICA_FILE_MAP& replicaFiles,
+                                            UINT32 minFileId, UINT32 maxFileId)
+   {
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(DPS_INVALID_LOG_FILE_ID != minFileId, "invalid min file id");
+      SDB_ASSERT(DPS_INVALID_LOG_FILE_ID != maxFileId, "invalid max file id");
+      SDB_ASSERT(replicaFiles.begin()->first == minFileId, "invalid min file id");
+
+      for (REPLICA_FILE_MAP::const_iterator it = replicaFiles.begin();
+           it != replicaFiles.end();
+           it++)
+      {
+         UINT32 fileId = it->first;
+         const ReplicaFileInfo& fileInfo = it->second;
+         BOOLEAN fileExist = FALSE;
+
+         SDB_ASSERT( fileId == fileInfo.fileId, "invalid file id");
+
+         if (!_isRunning)
+         {
+            rc = SDB_INTERRUPT;
+            PD_LOG(PDINFO, "Replay is interrupted");
+            goto done;
+         }
+
+         rc = ossFile::exists(fileInfo.name, fileExist);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to access file[%s], rc=%d",
+                   fileInfo.name.c_str(), rc);
+            goto error;
+         }
+
+         if (!fileExist)
+         {
+            rc = SDB_SYS;
+            PD_LOG(PDERROR, "Replica file[%s] is not found, rc=%d",
+                   fileInfo.name.c_str(), rc);
+            goto error;
+         }
+
+         rc = _replayReplicaFile(fileInfo.name, fileInfo.fileSize, fileInfo.fileNum);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "Failed to replay file[%s], rc=%d",
+                   fileInfo.name.c_str(), rc);
+            goto error;
+         }
+
+         // current file is completely replayed
+         // fileId starts from 0
+         if (_monitor.getNextLSN() > fileInfo.fileSize * (fileInfo.fileId + 1))
+         {
+            _monitor.setNextFileId(fileId + 1);
+         }
+         else
+         {
+            _monitor.setNextFileId(fileId);
+         }
+         _monitor.setLastFileId(fileId);
+         if (_status.isOpened())
+         {
+            rc = _writeStatus();
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "Failed to write status, rc=%d",
+                      rc);
+               goto error;
+            }
+         }
+         PD_LOG(PDINFO, "current replay:\n%s", _monitor.dump().c_str());
+
+         if (_monitor.getLastLSN() != DPS_INVALID_LSN_OFFSET &&
+             _filter.largerThanMaxLSN(_monitor.getLastLSN()))
+         {
+            PD_LOG(PDDEBUG, "Last LSN[%lld] is over max LSN",
+                   _monitor.getLastLSN());
+            goto done;
          }
       }
 
