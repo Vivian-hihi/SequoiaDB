@@ -224,8 +224,8 @@ object SdbConfig {
     val DefaultPartitionMode = "auto"
     val DefaultPartitionBlockNum = 4
     val DefaultPartitionMaxNum = 1000
-    val DefaultShardingPartitionSingleNode = true
-    val DefaultPreferredLocation = true
+    val DefaultShardingPartitionSingleNode = false
+    val DefaultPreferredLocation = false
 
     def apply(parameters: Map[String, String]): SdbConfig = new SdbConfig(parameters)
 
