@@ -321,6 +321,11 @@ namespace engine
          goto error ;
       }
 
+      if ( !cataPtr->isSharded() )
+      {
+         goto done ;
+      }
+
       rc = _kickShardingKey( cataPtr, updator, newUpdator, hasShardingKey ) ;
       if ( rc )
       {
