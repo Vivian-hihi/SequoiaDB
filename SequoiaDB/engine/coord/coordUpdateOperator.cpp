@@ -245,7 +245,7 @@ namespace engine
 
          pNewUpdate->version = cataSel.getCataPtr()->getVersion() ;
          pNewUpdate->w = 0 ;
-         if ( pNewUpdate->flags | FLG_UPDATE_UPSERT )
+         if ( pNewUpdate->flags & FLG_UPDATE_UPSERT )
          {
             pNewUpdate->flags &= ~FLG_UPDATE_UPSERT ;
          }
