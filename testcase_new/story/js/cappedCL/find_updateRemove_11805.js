@@ -24,7 +24,7 @@ function main()
    {
       if( e !== -279)
       {
-		    throw buildException("find and remove", e, "find and remove", -279, e); 
+		    throw buildException("find and remove", e, null, -279, e); 
    	 }
    	 else
    	 {
@@ -39,7 +39,7 @@ function main()
    {
       if( e !== -279)
       {
-		   throw buildException("find and remove", e, "find and remove", -279, e);   
+		   throw buildException("find and remove", e, null, -279, e);   
    	}else
    	{
    	   println("check result is ok!");   		

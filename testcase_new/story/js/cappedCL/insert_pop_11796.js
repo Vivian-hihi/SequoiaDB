@@ -16,67 +16,32 @@ function main()
    var clOption = {Capped:true, Size:1073741824, AutoIndexId:false};
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
-   var stringLength = 969;
-   var string = "a";
-   recordNum = 32767;
-   insertDatas( dbcl, recordNum, stringLength, string );
-   
-   var repeatedTimes = 100;
-   repeatedInsertAndPopLastRecord( dbcl, repeatedTimes, stringLength, string );
+   var repeatedTimes = 10;
+   var minLength = 0;
+   var maxLength = 2048;
+   repeatedInsertAndPopLastRecord( dbcl, repeatedTimes, minLength, maxLength );
+   println("--end insert and check data");
    
    commDropCS( db, csName, true, "drop CS in the end" );
 }
 
-function StringBuffer()
-{
-   this._strings = new Array();
-}
-StringBuffer.prototype.append = function( stringLength, string ){
-   for(var i = 0; i< stringLength; i++)
-   {
-      this._strings.push(string);   
-   }
-};
-StringBuffer.prototype.toString = function(){
-   return this._strings.join("");
-};
-StringBuffer.prototype.clear = function(){
-   this._strings = [];
-}
-StringBuffer.prototype.size = function(){
-   return this._strings.length;
-}
-   
-function insertDatas( dbcl, recordNum, stringLength, string )
+function repeatedInsertAndPopLastRecord( dbcl, repeatedTimes, minLength, maxLength )
 {
    try
    {
-      var doc = new StringBuffer();
-      doc.append(stringLength, string);
-      var strings = doc.toString(); 
+      var rd = new commDataGenerator();
+      var recordNum = 100;
+      var recs = rd.getRecords( recordNum, [ "int", "string", "bool", "date", 
+                                             "binary", "regex", "null" ],['a'] );
+      insertDatas( dbcl, recs );
       
-      var record = [];
-      for(var i = 0; i < recordNum; i++)
-      {
-         record.push({a:strings});
-      }
-      dbcl.insert( record );
-   }catch(e)
-   {
-      throw buildException("insertDatas", e, null, "insert datas success", e);
-   }
-   
-}
-
-function repeatedInsertAndPopLastRecord( dbcl, repeatedTimes, stringLength, string )
-{
-   try
-   {
+      checkRecords( dbcl, null, null, null, null, null, recs );
+      
       //get the first logicalID
       var firstRecord = dbcl.find().sort({_id:-1}).limit(1);
       while(firstRecord.next())
       {
-         var firstLogicalID = firstRecord.current().toObj()._id
+         var firstLogicalID = firstRecord.current().toObj()._id;
       }
       
       //repeat pop and insert,check LogicalID is the same
@@ -85,18 +50,31 @@ function repeatedInsertAndPopLastRecord( dbcl, repeatedTimes, stringLength, stri
          var record = dbcl.find().sort({_id:-1}).limit(1);
          while(record.next())
          {
+            //check logical ID
             var logicalID = record.current().toObj()._id
             if(logicalID !== firstLogicalID)
             {
-               throw buildException("repeatedInsertAndPopLastRecord", null, "check logicalID", firstLogicalID, logicalID);
+               println("actual logicalID: " + logicalID + "\nexpect logicalID: " + firstLogicalID);
+               throw "LOGICAL_ID_CHECK_ERROR";
             }
+            
+            //check record
+            var expectArr = [];
+            expectArr.push(recs[recordNum -1]);
+            checkRecords( dbcl, {_id:logicalID}, null, {_id:-1}, null, null, expectArr );
+            
          }
          dbcl.pop({LogicalID:logicalID,Direction:-1});
+         recs.pop();
          
          var doc = new StringBuffer();
-         doc.append(stringLength, string);
+         var range = maxLength - minLength;
+         var stringLength = minLength + parseInt( Math.random() * range );
+         doc.append(stringLength, "a");
          var strings = doc.toString();
-         dbcl.insert({a:strings}); 
+         var insertRecord = {a:strings};
+         dbcl.insert(insertRecord); 
+         recs.push(insertRecord);
       }
    }catch(e)
    {

@@ -17,22 +17,26 @@ function main()
    var dbcl = commCreateCLByOption( db, csName, clName, clOption, true, true );
    
    insertDatas( dbcl );
+   println("--end insert data");
    
    var sortConf1 = {a:1,b:-1,c:1};
    var limitConf1 = 1;
    var expRecs1 = [{a:0,b:2,c:0}];
-   findBySortLimitSkipAndCheck( dbcl, null, null, sortConf1, limitConf1, null, expRecs1 );
+   checkRecords( dbcl, null, null, sortConf1, limitConf1, null, expRecs1 );
+   println("--end check data");
    
    var sortConf2 = {a:-1,b:1,c:-1};
    var skipConf2 = 26;
    var expRecs2 = [{a:0,b:2,c:0}];
-   findBySortLimitSkipAndCheck( dbcl, null, null, sortConf2, null, skipConf2, expRecs2 );
+   checkRecords( dbcl, null, null, sortConf2, null, skipConf2, expRecs2 );
+   println("--end check data");
    
    var sortConf3 = {a:1,b:-1,c:-1};
    var limitConf3 = 1;
    var skipConf3 = 3;
    var expRecs3 = [{a:0,b:1,c:2}];
-   findBySortLimitSkipAndCheck( dbcl, null, null, sortConf3, limitConf3, skipConf3, expRecs3 );
+   checkRecords( dbcl, null, null, sortConf3, limitConf3, skipConf3, expRecs3 );
+   println("--end check data");
    
    commDropCS( db, csName, true, "drop CS in the end" );
 }
@@ -57,7 +61,7 @@ function insertDatas( dbcl )
       }
    }catch( e )
    {
-      throw buildException("insertDatas", e, "insert data", "insert success", e);
+      throw buildException("insertDatas", e, null, null, e);
    }
 }
 
