@@ -233,8 +233,8 @@
       </if>
       
       <!--copy sdb shell to localhost-->
-      <delete dir="${CI_WORK_DIR}" failonerror="false"/>
-      <mkdir dir="${CI_WORK_DIR}"/>
+      <delete file="${CI_WORK_DIR}/sdb" failonerror="false"/>
+      <!--mkdir dir="${CI_WORK_DIR}"/-->
       <propertyregex property="firsthost" input="${testhost_list}" regexp=",(.*)" replace="" defaultValue="${testhost_list}"/>
       <staf location="${firsthost}" service="FS"
             request="COPY FILE ${INSTALL_DIR}/bin/sdb TODIRECTORY ${CI_WORK_DIR}"
